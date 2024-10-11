@@ -20,7 +20,7 @@
   import { renderPopover } from "$lib/client/utils/browser.utils";
   import { onMount } from "svelte";
   import DurationInput from "$lib/client/elements/input/durationInput/DurationInput.svelte";
-  import { Position, Orientation } from "$lib/client/types/direction.enum";
+  import { Placement, Orientation } from "$lib/client/types/direction.enum";
   import { ButtonStyle } from "$lib/client/types/button.type";
   import { InputStyle } from "$lib/client/types/input.type";
   import { cn } from "$lib/client/utils/ui.utils";
@@ -96,7 +96,7 @@
     renderPopover({
       triggerRef: estimateButtonRef,
       popRef: estimatePopupRef,
-      placement: $view.isPortrait ? Position.BottomRight : Position.Left
+      placement: $view.isPortrait ? Placement.BottomRight : Placement.Left
     });
   }
   function hideEstimatePopup() {

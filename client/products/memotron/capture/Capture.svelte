@@ -3,55 +3,140 @@
   import { captureStore } from "$lib/client/products/memotron/capture/capture.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import { isInEditMode } from "$lib/client/stores/app.store";
+  import { appStore, isInEditMode } from "$lib/client/stores/app.store";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import LinkboxOnCapture from "../common/linkbox/LinkboxOnCapture.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import TypeSelector from "./TypeSelector.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import { dataManager } from "$lib/client/persistence/dataManager";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { InputStyle } from "$lib/client/types/input.type";
   import PropertiesListView from "../collection/properties/PropertiesListView.svelte";
   import NodeAvatar from "../node/avatar/NodeAvatar.svelte";
   import { LinkType } from "$lib/client/products/memotron/node/node.type";
-  import { MemotronResourceType } from "$lib/client/products/memotron/memotron.type";
-  import type { IAvatar } from "$lib/client/types/avatar.type";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import type { IProperty } from "../collection/properties/property.type";
   import { collectionStore } from "../collection/collection.store";
-  refresh();
-  const visibilityChangeListener = async (event: Event) => {
-    if (document?.hidden) return;
-    refresh();
-  };
+  import { CaptureType } from "./capture.type";
+  import FileUploader from "./FileUploader.svelte";
+  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  import { onDestroy, onMount } from "svelte";
+  import { page } from "$app/stores";
+  import { logger } from "$lib/client/components/debug/logger.client";
+  import {
+    CollectionType,
+    type ICollectionExpanded
+  } from "../collection/collection.type";
+  import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { isValidString } from "$lib/shared/utils/text.utils";
+  import { isEmptyMd } from "$lib/client/components/markdown/markdown.utils";
+  import Icon from "$lib/client/elements/Icon.svelte";
+  export let isWindowDnD = false;
+  let bulkQueryParam: string | null = null;
+  let linkQueryParam: string | null = null;
+
   let isSaving: boolean = false;
   let isEmptyState: boolean = true;
   isInEditMode.set(true);
   let isPropertiesCollapsed: boolean = false;
-  let avatars: IAvatar[] = [];
-  let propertyConfig: IProperty[] = [];
-  function refresh() {
-    dataManager.refresh(Resource.capture);
-  }
-  $: types = $captureStore.links
-    ?.filter(
-      (x) =>
-        x.toType === MemotronResourceType.TYPED_COLLECTION &&
-        x.linkType === LinkType.DIRECT &&
-        x.from === "root"
-    )
-    ?.map((x) => x.to);
+  let types: ICollectionExpanded[] = [];
 
-  async function refreshTypeData(types: string[]) {
-    const data = await collectionStore.resolveTypes(types);
-    avatars = data.avatars;
-    propertyConfig = data.propertyConfig;
+  // $: console.log({ types, $captureStore, propertyConfig });
+
+  async function refreshTypeData() {
+    const typeIds =
+      $captureStore.links
+        ?.filter(
+          (x) =>
+            x.toSubType === CollectionType.TYPED &&
+            x.linkType === LinkType.DIRECT &&
+            x.from === "root"
+        )
+        ?.map((x) => x.to) ?? [];
+    if (typeIds.length === 0) {
+      types = [];
+      return;
+    }
+    types = await collectionStore.resolveTypes(typeIds);
+  }
+
+  onMount(async () => {
+    if ($captureStore.captureType !== CaptureType.MARKDOWN && !isWindowDnD) {
+      reset();
+    }
+    linkQueryParam = $page.url.searchParams.get("link");
+    bulkQueryParam = $page.url.searchParams.get("bulk");
+    const clipBoardQueryParam = $page.url.searchParams.get("clipboard");
+    logger.log({
+      at: "Capture.svelte",
+      linkQueryParam,
+      bulkQueryParam,
+      clipBoardQueryParam
+    });
+    if (linkQueryParam) {
+      await setTypeFromLinkParam(linkQueryParam);
+    } else {
+      refreshEmptyState();
+    }
+  });
+
+  onDestroy(() => {
+    appStore.toggleSearchParam(["link", "bulk", "clipboard"]);
+  });
+
+  async function onTypeSelect(e: CustomEvent) {
+    isEmptyState = false;
+    await captureStore.onTypeSelect(e.detail);
+    await refreshTypeData();
+  }
+
+  async function onLink(e: CustomEvent) {
+    if (e.detail.id && e.detail.type === CollectionType.TYPED) {
+      await refreshTypeData();
+    }
+  }
+  async function onUnlink(e: CustomEvent) {
+    if (e.detail && types.some(resourceInList(e.detail))) {
+      await refreshTypeData();
+    }
+  }
+
+  function refreshEmptyState(e?: CustomEvent) {
+    if (
+      isValidString($captureStore.label) ||
+      $captureStore.captureType === CaptureType.AUDIO
+    ) {
+      isEmptyState = false;
+      return;
+    }
+    if ("blocks" in $captureStore.body && !isEmptyMd($captureStore.body)) {
+      isEmptyState = false;
+      return;
+    }
+    isEmptyState = true;
+  }
+
+  async function propagatePropertyChanges(e: CustomEvent) {
+    if (!e.detail || !e.detail?.id || e.detail?.value === undefined) return;
+    captureStore.updateProperty({
+      id: e.detail.id,
+      value: e.detail.value
+    });
+  }
+
+  function reset() {
+    captureStore.reset();
+    isEmptyState = true;
+    types = [];
+  }
+
+  async function setTypeFromLinkParam(linkQueryParam: string) {
+    await captureStore.directLink(linkQueryParam);
+    await refreshTypeData();
+    isEmptyState = false;
   }
 </script>
 
 {#if isSaving}
-  <EmptyStatusView isLoadingState={true} />
+  <EmptyStatusView isLoadingState={true} loadingText="Saving..." />
   <!-- {:else if $view.isPortrait}
   <div class="w-full h-full flex flex-col">
     <div
@@ -63,74 +148,98 @@
       <Writer />
     </div>
   </div> -->
+{:else if $captureStore.captureType === CaptureType.UPLOAD}
+  <FileUploader />
 {:else}
   {#key $captureStore.refreshId}
     <div class="w-full h-full flex justify-center">
       <div class="w-full max-w-5xl h-full flex flex-col p-4 bg-bgs1">
-        <header class="flex justify-between w-full dp:px-12">
-          <div class="flex gap--4 grow">
-            <!-- TODO - if nodularized and type is added to a heading node, then replace "root" with the heading node id -->
-            <NodeAvatar {avatars} />
-            <div class="text-h2 font-medium w-full">
-              <TextInput
-                bind:value={$captureStore.label}
-                style={InputStyle.PLAIN}
-                isExperimentalMdInput={true}
-                placeholder="Untitled"
-              />
+        {#if $captureStore.captureType === CaptureType.MARKDOWN}
+          <header
+            class="flex justify-between gap-4 items-center w-full dp:px-12"
+          >
+            <div class="flex gap--4 grow">
+              <!-- TODO - if nodularized and type is added to a heading node, then replace "root" with the heading node id -->
+              <!-- <NodeAvatar {types} /> -->
+              <div class="text-h3 font-medium w-full">
+                <TextInput
+                  bind:value={$captureStore.label}
+                  style={InputStyle.PLAIN}
+                  isExperimentalMdInput={true}
+                  placeholder="Untitled"
+                  on:change={refreshEmptyState}
+                  on:keyup={refreshEmptyState}
+                />
+              </div>
             </div>
-          </div>
-          <div class="flex gap-1">
-            <!-- save, cancel, edit type actions
-            TODO: save icon
-            "hugeicons:arrow-move-up-right"
-           -->
-            {#if !isEmptyState}
-              <Button
-                label="save"
-                type={ButtonVariant.PRIMARY}
-                size={Size.sm}
-                isPreventMinWidth={true}
-                icon="ph:floppy-disk"
-                on:click={async () => {
-                  isSaving = true;
-                  const result = await captureStore.save();
-                  isSaving = false;
-                }}
-              />
-              <Button
-                label="clear"
-                style={ButtonStyle.OUTLINED}
-                isPreventMinWidth={true}
-                size={Size.sm}
-                icon="ph:x-light"
-                on:click={() => {
-                  captureStore.reset();
-                  isEmptyState = true;
-                }}
-              />
-            {/if}
-          </div>
-        </header>
+            <div class="flex gap-3 items-center">
+              {#if !isEmptyState}
+                <div class="flex items-center gap-1">
+                  <Icon
+                    icon={$captureStore.isRefreshing
+                      ? "svg-spinners:90-ring-with-bg"
+                      : "ph:check-circle-fill"}
+                    size={Size.sm}
+                    class="stroke-fgs3"
+                  />
+                  <span class="text-fgs3 whitespace-nowrap text-b3">
+                    {$captureStore.isRefreshing ? "saving..." : "draft saved"}
+                  </span>
+                </div>
+                <Button
+                  label="save"
+                  type={ButtonVariant.PRIMARY}
+                  size={Size.sm}
+                  isPreventMinWidth={true}
+                  icon="ph:floppy-disk"
+                  on:click={async () => {
+                    isSaving = true;
+                    const result = await captureStore.saveMarkdownCapture();
+                    if (bulkQueryParam === "true" && linkQueryParam) {
+                      await setTypeFromLinkParam(linkQueryParam);
+                    } else {
+                      types = [];
+                      isEmptyState = true;
+                    }
+                    isSaving = false;
+                  }}
+                />
+                <Button
+                  label="clear"
+                  style={ButtonStyle.OUTLINED}
+                  isPreventMinWidth={true}
+                  size={Size.sm}
+                  icon="ph:x-light"
+                  on:click={reset}
+                />
+              {/if}
+            </div>
+          </header>
+        {/if}
         <main class="flex flex-col gap-6 w-full flex-grow">
-          {#key types?.length}
-            {#if types && types.length > 0}
-              <!-- TODO - send only selected type if properties are to be shown upon link click -->
+          {#if types && types.length > 0}
+            <!-- TODO - send only selected type if properties are to be shown upon link click -->
+            {#key types.map((x) => x.id).join(",")}
               <PropertiesListView
                 context="capture"
-                {propertyConfig}
-                bind:properties={$captureStore.properties}
+                {types}
+                values={$captureStore.properties}
                 bind:isCollapsed={isPropertiesCollapsed}
+                on:change={propagatePropertyChanges}
               />
-            {/if}
-          {/key}
+            {/key}
+          {/if}
           <div
             class={cn("w-full", {
               "h-48": isEmptyState,
               "h-full": !isEmptyState
             })}
           >
-            <Writer bind:isEmptyState />
+            <Writer
+              bind:isEmptyState
+              bind:isSaveInProgress={isSaving}
+              on:change={refreshEmptyState}
+            />
           </div>
           {#if isEmptyState}
             <div class="w-full dp:px-10 dp:my-10">
@@ -138,21 +247,19 @@
                 bind:selected={$captureStore.captureType}
                 label={{ label: "Select a type" }}
                 isCapturePage={true}
-                on:select={(e) => {
-                  isEmptyState = false;
-                  captureStore.onTypeSelect(e.detail);
-                }}
+                on:select={onTypeSelect}
               />
             </div>
           {/if}
         </main>
         {#if !isEmptyState}
           <footer class="w-full dp:px-10 min-h-[10rem]">
-            <LinkboxOnCapture />
+            <LinkboxOnCapture on:linked={onLink} on:unlinked={onUnlink} />
           </footer>
         {/if}
       </div>
     </div>
   {/key}
 {/if}
-<svelte:document on:visibilitychange={visibilityChangeListener} />
+
+<ComponentBaseLayer hasDragAndDrop={!isWindowDnD} />

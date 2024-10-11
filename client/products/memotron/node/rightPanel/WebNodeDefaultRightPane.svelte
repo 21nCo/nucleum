@@ -12,15 +12,22 @@
   import { Size } from "$lib/client/types/size.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { onMount } from "svelte";
+  import { getContext, onMount } from "svelte";
   import Resources from "../../common/Resources.svelte";
   import LinkThumbnailItems from "../links/LinkThumbnailItems.svelte";
   import { nodeStore, type IActiveNodeStore } from "../node.store";
-  import { NodeRightPaneType, type INode } from "../node.type";
+  import {
+    NodeRightPaneType,
+    NodeType,
+    type INode,
+    type INodeLinkThumb
+  } from "../node.type";
   import { appStore } from "$lib/client/stores/app.store";
+  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
   export let node: IActiveNodeStore;
   export let pane: NodeRightPaneType | undefined = undefined;
-  let links: INode[] = [];
+  let links: { link: INodeLinkThumb; node: INode }[] = [];
+  const contentContext = getContext<any>("content");
   function onChange(e: any) {
     if ($node.notes) node.debouncedModify({ notes: $node.notes });
   }
@@ -33,19 +40,21 @@
     if (!$node.links) return;
     const result = await nodeStore.selectMany({
       filters: {
-        id: $node.links.map((x) => x.id.toString())
+        id: $node.links.map((x) => x.linkedTo.toString())
       }
     });
-    if (result && result.length > 0) links = result.slice(0, 2);
-    else links = [];
+    if (!result || result.length == 0) {
+      links = [];
+      return;
+    }
+    links = result.slice(0, 2).map((x: INode) => ({
+      link: $node.links?.find((y) => isSameResource(y.linkedTo, x.id)),
+      node: x
+    }));
   }
 
   function onLinkClick(e: CustomEvent) {
-    appStore.resourceClickHandler(
-      e.detail.event,
-      e.detail.id,
-      ResourceAccessMode.POP
-    );
+    appStore.resourceClickHandler(e.detail.event, e.detail.id);
   }
 </script>
 
@@ -61,12 +70,20 @@
           <Badge text={$node.clips?.length || 0} />
         </span>
       </span>
-      <div class="flex flex-col gap-4 overflow-auto">
+      <div class="flex flex-col w-full gap-4 overflow-auto">
         <Resources
-          data={$node.clips.slice(0, 3)}
-          accessPoint={ResourceAccessPoint.OTHER}
+          data={$node.clips.slice(0, 2)}
+          accessPoint={ResourceAccessPoint.NODE_TRACES}
           resource={Resource.node}
           size={Size.sm}
+          isPreventDefault={$node.contentType === NodeType.YOUTUBE_VIDEO}
+          on:click={(e) => {
+            if ($node.contentType !== NodeType.YOUTUBE_VIDEO) return;
+            contentContext.publish("yt-trace-click", {
+              id: e.detail.id,
+              timestamp: e.detail.body.timestamp
+            });
+          }}
         />
         {#if $node.clips?.length > 3}
           <span class="w-full flex justify-center">
@@ -81,44 +98,45 @@
         {/if}
       </div>
     </div>
-  {/if}
-  <div
-    class={cn("flex flex-col gap-2 items-start w-full min-h-0", {
-      "h-1/3": links.length > 0
-    })}
-  >
-    <span class="flex flex-row justify-between items-center w-full">
-      <span class="flex flex-row gap-1 items-center">
-        <Text content="Links" style={TextStyle.SECTION_HEADING} />
-        <Badge text={$node.links?.length || 0} />
-      </span>
-    </span>
-    <div class="w-full min-h-32 flex flex-col gap-3 overflow-auto">
-      {#if $node.links && $node.links.length > 0}
-        <LinkThumbnailItems
-          {links}
-          accessPointId={node.id}
-          on:click={onLinkClick}
-          accessPoint={ResourceAccessPoint.NODE_DEFAULT_RIGHT_PANE}
-        />
-      {:else}
-        <span
-          class="flex w-full justify-center items-center text-fgs3 text-b3 h-1/2"
-        >
-          No links found
+  {:else}
+    <div
+      class={cn("flex flex-col gap-2 items-start w-full min-h-0", {
+        "h-1/3": links.length > 0
+      })}
+    >
+      <span class="flex flex-row justify-between items-center w-full">
+        <span class="flex flex-row gap-1 items-center">
+          <Text content="Links" style={TextStyle.SECTION_HEADING} />
+          <Badge text={$node.links?.length || 0} />
         </span>
-      {/if}
-      <span class="w-full flex justify-center">
-        <Button
-          size={Size.sm}
-          label="Go to links"
-          isUnderlined={true}
-          style={ButtonStyle.PLAIN}
-          on:click={() => (pane = NodeRightPaneType.LINKS)}
-        />
       </span>
+      <div class="w-full min-h-32 flex flex-col gap-3 overflow-auto">
+        {#if $node.links && $node.links.length > 0}
+          <LinkThumbnailItems
+            {links}
+            accessPointId={node.id}
+            on:click={onLinkClick}
+            accessPoint={ResourceAccessPoint.NODE_LINKS}
+          />
+        {:else}
+          <span
+            class="flex w-full justify-center items-center text-fgs3 text-b3 h-1/2"
+          >
+            No links found
+          </span>
+        {/if}
+        <span class="w-full flex justify-center">
+          <Button
+            size={Size.sm}
+            label="Go to links"
+            isUnderlined={true}
+            style={ButtonStyle.PLAIN}
+            on:click={() => (pane = NodeRightPaneType.LINKS)}
+          />
+        </span>
+      </div>
     </div>
-  </div>
+  {/if}
   <div class="flex flex-col gap-2 items-start w-full flex-1">
     <span class="flex flex-row justify-between items-center w-full">
       <span class="flex flex-row gap-1 items-center">

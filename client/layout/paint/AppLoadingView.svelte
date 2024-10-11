@@ -22,7 +22,7 @@
       <div class="flex flex-col items-center">
         <SubAtomLogo />
         {#if message}
-          <div class="font-medium px-4 text-center text-fgs2 text-b4">
+          <div class="font-medium px-4 text-center text-fgs2 text-b3">
             {message}
           </div>
         {/if}

@@ -1,7 +1,10 @@
 <script lang="ts">
   import view from "$lib/client/stores/view.store";
   import SubGoalListItem from "./SubGoalListItem.svelte";
-  import { currentGoal } from "$lib/client/products/pointron/goals/goal.store";
+  import {
+    currentGoal,
+    goalStore
+  } from "$lib/client/products/pointron/goals/goal.store";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
@@ -12,8 +15,11 @@
   import AddNewSubGoal from "./AddNewSubGoal.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
 
   let isArchivedGoalsVisible: boolean = false;
+
+  $: subGoals = goalStore.resolveSubGoalsIfNotPresent($currentGoal.id);
 
   function toggleArchivedVisibility() {
     isArchivedGoalsVisible = !isArchivedGoalsVisible;
@@ -26,11 +32,14 @@
 <div class="flex flex-col gap-4 items-start bg-bgs2 rounded-md p-4">
   <Text content="Sub goals" style={TextStyle.PANEL_HEADING_SMALL} />
   <div class="flex flex-col gap-4 w-full">
-    {#if isValidArrayWithData($currentGoal.subGoals)}
+    {#if isValidArrayWithData(subGoals)}
       <div class="flex flex-col w-full">
-        {#each $currentGoal.subGoals.filter((item) => !item.isArchived && item) as item}
+        {#each subGoals.filter((item) => !item.isArchived && item) as item}
           <SubGoalListItem
-            on:click={() => appStore.gotoResource(Resource.goal, item.id)}
+            on:click={() =>
+              appStore.toggleSearchParam({
+                [ResourceAccessMode.INLINE]: item.id
+              })}
             >{item.label}
           </SubGoalListItem>
         {/each}
@@ -44,7 +53,10 @@
           />
           {#each archivedSubgoals as item}
             <SubGoalListItem
-              on:click={() => appStore.gotoResource(Resource.goal, item.id)}
+              on:click={() =>
+                appStore.toggleSearchParam({
+                  [ResourceAccessMode.INLINE]: item.id
+                })}
               >{item.label}
             </SubGoalListItem>
           {/each}

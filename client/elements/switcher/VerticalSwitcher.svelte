@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Orientation, Position } from "$lib/client/types/direction.enum";
+  import { Orientation, Placement } from "$lib/client/types/direction.enum";
   import type {
     ISelectItem,
     ISelectValue
@@ -15,20 +15,21 @@
   export let items: ISelectItem[];
   export let selected: ISelectValue;
   export let isHideBar: boolean = false;
+  export let parentBgIndex: number = 1;
   export let itemProps: {
     size?: Size.sm | Size.md | Size.lg;
-    activeStatusPlacement?: Position;
+    activeStatusPlacement?: Placement;
     isHideLabel?: boolean;
   } = {
     size: Size.md,
-    activeStatusPlacement: Position.Right
+    activeStatusPlacement: Placement.Right
   };
 </script>
 
 <aside
   class={cn("flex flex-col h-full w-full", {
-    "items-start": itemProps.activeStatusPlacement === Position.Left,
-    "items-end": itemProps.activeStatusPlacement === Position.Right,
+    "items-start": itemProps.activeStatusPlacement === Placement.Left,
+    "items-end": itemProps.activeStatusPlacement === Placement.Right,
     "gap-3": style === VerticalSwitcherStyle.DOT,
     "justify-center": labelOrientation === Orientation.Vertical
   })}
@@ -36,6 +37,7 @@
   {#each items as item}
     <VerticalSwitcherItem
       {item}
+      {parentBgIndex}
       {labelOrientation}
       {...itemProps}
       {style}

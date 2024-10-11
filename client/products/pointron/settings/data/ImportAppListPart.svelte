@@ -32,7 +32,9 @@
 </script>
 
 <div class="flex flex-col gap-3">
-  <div class="text-left mo:text-b2 text-fgs2">Pick an app to import data</div>
+  <div class="text-left mo:text-b2 text-fgs2">
+    Pick an app to import your time tracking data
+  </div>
   <div
     class="protrait:grid portrait:grid-cols-2 portrait:gap-3 flex gap-4 flex-wrap"
   >

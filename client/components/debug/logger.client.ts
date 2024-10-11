@@ -4,7 +4,10 @@ class Logger {
   level: LogType;
   constructor() {
     try {
-      if (window?.location?.search?.includes("log=")) {
+      if (
+        typeof window !== "undefined" &&
+        window?.location?.search?.includes("log=")
+      ) {
         const logQueryParam = window?.location?.search
           .split("?")[1]
           ?.split("&")
@@ -27,14 +30,17 @@ class Logger {
     if (type === LogType.TRACE) type = LogType.DEBUG;
     // if (type === LogType.DEBUG) type = LogType.TRACE;
     const logTypeName = LogType[type].toLowerCase();
-    console[logTypeName]({ t: new Date().toISOString(), ...message });
+    console[logTypeName]({ ...message, t: new Date().toISOString() });
   }
   private _log(message: any, type: LogType) {
     if (type <= this.level) {
       this._console(message, type);
     }
   }
-  log(message: any, type: LogType.INFO | LogType.TRACE = LogType.TRACE) {
+  log(
+    message: any,
+    type: LogType.INFO | LogType.TRACE | LogType.DEBUG = LogType.TRACE
+  ) {
     this._log(message, type);
   }
   error(message: any) {

@@ -28,6 +28,10 @@ export type IGoal = {
   created?: string;
   modified?: string;
   trashInformation?: ITrashInformation;
+  /**
+   * Temp
+   */
+  subGoalsRefreshId?: string;
 };
 
 type GoalParent = {

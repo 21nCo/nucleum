@@ -230,8 +230,8 @@
   };
   async function sync() {
     try {
-      logger.debug({ at: "sync", syncStore: $syncStore });
-      if ($syncStore.status == SyncStatus.SYNCED) {
+      logger.log({ at: "sync", syncStore: $syncStore });
+      if ($syncStore.status == SyncStatus.SYNCING) {
         return;
       }
       syncStore.updateSyncStatus(SyncStatus.SYNCING);
@@ -243,7 +243,7 @@
         ...books,
         ...bookHighlights.flat()
       ]);
-      logger.debug({ at: "KindleSyncPage save", savedResponse });
+      logger.log({ at: "KindleSyncPage save", savedResponse });
       syncStore.updateSyncStatus(SyncStatus.SYNCED);
     } catch (e) {
       logger.error(e);

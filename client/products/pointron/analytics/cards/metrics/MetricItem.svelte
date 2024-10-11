@@ -15,7 +15,7 @@
     "flex flex-col items-start justify-between border border-brs3 rounded-md min-w-fit grow",
     {
       "p-2 h-20 bg-bgs2": $view.isPortrait,
-      "p-4 h-[7rem]": !$view.isPortrait
+      "p-2 h-20 dp:p-4 dp:h-[7rem]": !$view.isPortrait
     }
   )}
 >
@@ -28,11 +28,9 @@
   </div>
   <div class="flex gap-2">
     <div
-      class={cn("font-medium min-w-fit", {
+      class={cn("font-medium min-w-fit text-base dp:text-h3 2k:text-h2", {
         "text-aps1": type === "focus",
-        "text-ass1": type === "break",
-        "text-base": $view.isPortrait,
-        "text-h2": !$view.isPortrait
+        "text-ass1": type === "break"
       })}
     >
       {formatSeconds(value, TimeFormat.VERBOSE)}

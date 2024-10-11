@@ -8,7 +8,7 @@ import {
   type IObservableStoreSubject,
   type IRecordId
 } from "$lib/client/types/data.type";
-import { Position } from "$lib/client/types/direction.enum";
+import { Placement } from "$lib/client/types/direction.enum";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
 import { AlertType } from "$lib/client/types/notification.type";
@@ -20,9 +20,9 @@ import {
   SyncStatus,
   type IFeedbackPaneStore,
   type ISyncStore,
-  type IWebpage
+  type IWebpageStore
 } from "./types";
-import { linker } from "$lib/client/products/memotron/memotron.store";
+import { linker } from "$lib/client/products/memotron/linking/link.store";
 import {
   NodeIdPrefix,
   NodeType,
@@ -33,7 +33,9 @@ import {
   type IWebScreenshotClip,
   type IWebPage,
   type IKindleBook,
-  type IKindleHighlight
+  type IKindleHighlight,
+  type ITextClip,
+  type IVideoTimestampClip
 } from "$lib/client/products/memotron/node/node.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import {
@@ -53,19 +55,21 @@ import {
   relayToBackgroundScript,
   relayToSidePanel
 } from "$lib/client/utils/extension.utils";
-import { commonMetadata } from "$lib/client/products/memotron/common/urlMap";
-import account from "$lib/client/stores/account.store";
-import { extentionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
+import { urlMap } from "$lib/client/products/memotron/common/urlMap";
+import { extensionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
 import { FluxMethod } from "$lib/client/components/flux/flux.type";
 
-class WebpageStore extends ObservableStore<IWebpage> {
+class WebpageStore extends ObservableStore<IWebpageStore> {
   previousValue: string = "";
   constructor() {
-    super("clipperContentScriptStore", StoreDataType.NA, {
-      refreshOnAppear: false
-    });
+    super("clipperContentScriptStore");
     this.set({ url: "", clips: [] });
   }
+
+  reset() {
+    this.set({ url: "", clips: [] });
+  }
+
   async loader(data: any) {
     logger.log({ at: "webpage loader", data });
     const page = data.page;
@@ -85,29 +89,30 @@ class WebpageStore extends ObservableStore<IWebpage> {
    * TODO - save url as top level field - to enable querying via dexie, fetching links
    */
   async refresh() {
-    const result = await extentionFlux({
+    const result = await extensionFlux({
       method: FluxMethod.SELECT_MANY,
       args: {
         resource: Resource.node,
         params: {
-          filters: {
-            contentType: NodeType.WEB_PAGE
+          search: {
+            properties: ["url"],
+            query: this.get().url
           }
         }
       }
     });
-    logger.debug({ at: "refresh", result });
+    logger.log({ at: "refresh", result });
     const page =
-      result && result.length > 0
-        ? result.find((r) => r.body.url === this.get().url)
+      result && Array.isArray(result) && result.length > 0
+        ? result.find((r: IWebPage) => r.url === this.get().url)
         : null;
 
-    logger.debug({ at: "refresh", url: this.get().url, page, result });
+    logger.log({ at: "refresh", url: this.get().url, page, result });
     if (!page) {
       this.loader({ page: { url: this.get().url, clips: [] } });
       return;
     }
-    const clips = await extentionFlux({
+    const clips = await extensionFlux({
       method: FluxMethod.SELECT_MANY,
       args: {
         resource: Resource.node,
@@ -118,8 +123,28 @@ class WebpageStore extends ObservableStore<IWebpage> {
         }
       }
     });
-    logger.debug({ at: "refresh", page, clips });
-    this.loader({ page: { ...page, clips: clips ?? [] } });
+    const linksResult = await extensionFlux({
+      method: FluxMethod.SELECT_MANY,
+      args: {
+        resource: Resource.link,
+        params: {
+          filters: {
+            in: [page.id, ...(clips?.map((c) => c.id) ?? [])]
+          }
+        }
+      }
+    });
+    let rootLinks: IRecordId[] = [];
+    if (linksResult && Array.isArray(linksResult)) {
+      rootLinks = linksResult.filter((l) => l.in === page.id).map((l) => l.out);
+      if (clips && Array.isArray(clips)) {
+        clips.forEach((c) => {
+          c.links = linksResult.filter((l) => l.in === c.id).map((l) => l.out);
+        });
+      }
+    }
+    logger.debug({ at: "refresh", page, clips, links: rootLinks, linksResult });
+    this.loader({ page: { ...page, clips: clips ?? [], links: rootLinks } });
   }
 
   /**
@@ -131,8 +156,9 @@ class WebpageStore extends ObservableStore<IWebpage> {
   */
   onContextChange(tab: chrome.tabs.Tab) {
     const url = resolveUrl(tab.url);
-    logger.log({ at: "onContextChange", url });
-    if (url === this.get().url) return;
+    const webpage = this.get();
+    logger.log({ at: "onContextChange", url, webpage });
+    if (url === webpage.url) return;
     this.set({ url, clips: [] });
     feedbackPane.reset();
     this.refresh();
@@ -161,9 +187,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
     async function extractData() {
       const host = window.location.host;
       if (
-        commonMetadata.some(
-          (x) => host === x.domain || host.includes("." + x.domain)
-        )
+        urlMap.some((x) => host === x.domain || host.includes("." + x.domain))
       ) {
         logger.log({
           at: "extractData",
@@ -178,29 +202,19 @@ class WebpageStore extends ObservableStore<IWebpage> {
       return tab;
 
       async function screenshotWebpage() {
-        const data = await relayToBackgroundScript({
-          event: ClipperExtensionEvent.SCREENSHOT
-        });
-        return processScreenshot(data);
-
-        async function processScreenshot(dataURL) {
-          const contentType = "image/png";
-          const s3SignedURL = await account.getSignedUrl(
-            contentType,
-            "screenshot.png",
-            false
-          );
-          const response = await relayToBackgroundScript({
-            event: ExtensionEvent.UPLOAD_TO_S3_USING_UPLOAD_URL,
-            data: { s3SignedURL, dataURL, contentType }
-          });
-          if (response == 200) {
-            return s3SignedURL.uploadURL.split("?")[0];
+        const result = await relayToBackgroundScript({
+          event: ClipperExtensionEvent.SCREENSHOT,
+          data: {
+            isUpload: true,
+            isReturnUrl: true
           }
-        }
+        });
+        console.log({ at: "screenshotWebpage", result });
+        return result;
       }
     }
   }
+
   /**
    * Saves the clip to the database. If the webpage is not saved, it will be saved first by parsing the DOM for web page metadata.
    *
@@ -211,19 +225,21 @@ class WebpageStore extends ObservableStore<IWebpage> {
    */
   async saveClip(data: IClipCapture) {
     let webpage = this.get();
-    logger.debug({ at: "saveClip", webpage, data });
+    logger.log({ at: "saveClip", webpage, data });
 
     const id = generateResourceId(Resource.node);
     if (!webpage.id) {
       await this.savePage(id);
     }
     webpage = this.get();
-    const clipUrl = resolveClipUrl(data.body);
-    const clip = {
+    const clipUrl = resolveClipUrl(data);
+    const clip: OmitForCapture<
+      IWebScreenshotClip | ITextClip | IVideoTimestampClip
+    > = {
       id,
+      url: clipUrl,
       body: {
-        ...data.body,
-        url: clipUrl
+        ...data.body
       },
       metadata: data.metadata,
       parent: webpage.id,
@@ -232,7 +248,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
     };
     const response = await nodeStore.create([clip]);
     if (!response || !Array.isArray(response)) return;
-    logger.debug({ at: "saveClip", response });
+    logger.log({ at: "saveClip", response });
     const clipNode = response[0] as IWebScreenshotClip;
     if (!clipNode) return;
     this.update((n) => {
@@ -240,15 +256,19 @@ class WebpageStore extends ObservableStore<IWebpage> {
       return n;
     });
     if (clip.contentType === NodeType.WEB_SCREENSHOT_CLIP) {
-      feedbackPane.focus(clipNode, "Clip saved!");
+      feedbackPane.focus(clipNode, {
+        message: "Clip saved!",
+        type: AlertType.SUCCESS
+      });
     }
     return clip;
 
-    function resolveClipUrl(body: any) {
-      if ("url" in body && body.url) return body.url;
+    function resolveClipUrl(data: any) {
+      if ("url" in data && data.url) return data.url;
       else return (webpage.url ?? window.location.href) + "#" + id;
     }
   }
+
   async saveTweet(
     data: OmitFields<
       ITweet & {
@@ -261,7 +281,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
     >,
     isFromTweetPage: boolean = false
   ) {
-    logger.log({ at: "saveTweet", data });
+    logger.debug({ at: "saveTweet", data });
     const id = generateResourceId(Resource.node);
     const twitterProfileId = generateResourceId(Resource.node, {
       prefix: NodeIdPrefix.TWITTER_PROFILE,
@@ -300,7 +320,10 @@ class WebpageStore extends ObservableStore<IWebpage> {
       if (isFromTweetPage) n.id = tweet.id;
       return n;
     });
-    feedbackPane.focus(tweet, "Tweet saved!");
+    feedbackPane.focus(tweet, {
+      message: "Tweet saved!",
+      type: AlertType.SUCCESS
+    });
     return tweetNode;
   }
 
@@ -327,9 +350,13 @@ class WebpageStore extends ObservableStore<IWebpage> {
       n.id = node.id;
       return n;
     });
-    feedbackPane.focus(node, "Twitter profile saved!");
+    feedbackPane.focus(node, {
+      message: "Twitter profile saved!",
+      type: AlertType.SUCCESS
+    });
     return node;
   }
+
   async linkPage(to: string) {
     const webpage = this.get();
     const isAlreadyLinked = webpage.links?.some((l) => l === to);
@@ -344,6 +371,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
     });
     return { message: "Linked!", type: AlertType.SUCCESS };
   }
+
   async removeLinkForPage(to: string) {
     const webpage = this.get();
     if (!webpage.id) return;
@@ -356,7 +384,8 @@ class WebpageStore extends ObservableStore<IWebpage> {
     });
     return { message: "Unlinked!", type: AlertType.SUCCESS };
   }
-  async linkClip(from: string, to: string) {
+
+  async linkClip(from: IRecordId, to: IRecordId) {
     const webpage = this.get();
     const clip = webpage?.clips?.find((c) => c.id === from);
     if (!clip) return;
@@ -377,7 +406,8 @@ class WebpageStore extends ObservableStore<IWebpage> {
     appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
     return { message: "Linked!", type: AlertType.SUCCESS };
   }
-  async removeLinkForClip(from: string, to: string) {
+
+  async removeLinkForClip(from: IRecordId, to: IRecordId) {
     const response = await linker.unlink(from, to);
     if (!response)
       return { message: "Unlinking failed", type: AlertType.ERROR };
@@ -393,6 +423,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
     appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
     return { message: "Unlinked!", type: AlertType.SUCCESS };
   }
+
   async removeClip(id: string) {
     const response = await nodeStore.trash(id);
     console.log({ response });
@@ -423,12 +454,12 @@ class WebpageStore extends ObservableStore<IWebpage> {
     return await nodeStore.modify(id, { notes });
   };
   private _debouncedPersistNotes = debouncer(this._persistNotes, 2000);
-  set(newValue: IWebpage) {
+  set(newValue: IWebpageStore) {
     let changedProperties: any = {};
     if (this.previousValue) {
       let differences = shallowDiff(newValue, JSON.parse(this.previousValue));
       differences.forEach((key: string) => {
-        changedProperties[key] = newValue[key as keyof IWebpage];
+        changedProperties[key] = newValue[key as keyof IWebpageStore];
       });
     }
     // console.log({
@@ -442,7 +473,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
       this._debouncedPersistNotes(newValue.id, newValue.notes);
     }
   }
-  async persistClipNotes(id: string, notes: string) {
+  async persistClipNotes(id: IRecordId, notes: string) {
     return new Promise((resolve) => {
       const result = this._debouncedPersistNotes(id, notes);
       resolve(result);
@@ -467,8 +498,11 @@ class FeedbackPaneStore extends ObservableStore<IFeedbackPaneStore> {
       return n;
     });
   }
-  focus(clip: IClip | null, message: string) {
-    logger.debug({ at: "feedbackPane.focus", clip, message });
+  focus(
+    clip: IClip | null,
+    message: string | { message: string; type: AlertType }
+  ) {
+    logger.log({ at: "feedbackPane.focus", clip, message });
     this.update((n) => {
       n.focusedClip = clip;
       n.feedback = message;
@@ -483,15 +517,14 @@ export const feedbackPane = new FeedbackPaneStore();
 class ClipperToolbarState extends KeyValueStore<
   {
     isOpen: boolean;
-    position: Position.Right | Position.Left | Position.Bottom;
+    position: Placement.Right | Placement.Left | Placement.Bottom;
   } & IObservableStoreSubject
 > {
   constructor() {
     super(
       Resource.clipperToolbarState,
-      { isOpen: true, position: Position.Right },
+      { isOpen: true, position: Placement.Right },
       {
-        refreshOnAppear: true,
         dboDependencies: ["fn::global::utils::resolveUrlParts::v2"]
       }
     );
@@ -507,7 +540,9 @@ class ClipperToolbarState extends KeyValueStore<
       }, 100);
     }
   }
-  changePosition(position: Position.Right | Position.Left | Position.Bottom) {
+  changePosition(
+    position: Placement.Right | Placement.Left | Placement.Bottom
+  ) {
     this.modify({ position });
   }
 }
@@ -543,22 +578,44 @@ class SyncStore extends ObservableStore<ISyncStore> {
   }
 
   async save(items: OmitForCaptureWithId<IKindleBook | IKindleHighlight>[]) {
-    logger.debug({ at: "syncStore save", items });
+    logger.log({ at: "syncStore save", items });
     if (!items || items.length < 1) return;
-    const limitCount = 500;
+    const limitCount = 10;
     let response;
+    this.update((n) => {
+      n.progress = 0;
+      return n;
+    });
     if (items.length > limitCount) {
-      response = await Promise.all(resolveChunks());
+      // response = await Promise.all(resolveChunks());
+      const chunks = resolveChunks();
+      for (const chunk of chunks) {
+        response = await chunk();
+        this.update((n) => {
+          n.progress = (chunks.indexOf(chunk) / chunks.length) * 100;
+          return n;
+        });
+      }
     } else {
       response = await nodeStore.create(items);
     }
-
-    function resolveChunks() {
-      const promises = [];
+    this.update((n) => {
+      n.progress = 100;
+      return n;
+    });
+    // function resolveChunks() {
+    //   const promises = [];
+    //   for (let i = 0; i < items.length; i += limitCount) {
+    //     promises.push(nodeStore.create(items.slice(i, i + limitCount)));
+    //   }
+    //   return promises;
+    // }
+    function resolveChunks(): (() => Promise<any>)[] {
+      const chunks: (() => Promise<any>)[] = [];
       for (let i = 0; i < items.length; i += limitCount) {
-        promises.push(nodeStore.create(items.slice(i, i + limitCount)));
+        chunks.push(() => nodeStore.create(items.slice(i, i + limitCount)));
       }
-      return promises;
+      return chunks;
     }
   }
 
@@ -573,13 +630,13 @@ class SyncStore extends ObservableStore<ISyncStore> {
   async refreshSyncState() {
     try {
       const id = this.get().id;
-      const result = await extentionFlux({
+      const result = await extensionFlux({
         method: FluxMethod.SELECT,
         args: {
           resourceId: "kv:clipperSync"
         }
       });
-      logger.debug({ at: "syncStore refreshSyncState", result, id });
+      logger.log({ at: "syncStore refreshSyncState", result, id });
       if (result) {
         const record = result;
         if (record[id]) {
@@ -604,7 +661,7 @@ class SyncStore extends ObservableStore<ISyncStore> {
         status: "${status}",
         updatedAt: time::now()
       };`;
-      const result = await extentionFlux({
+      const result = await extensionFlux({
         method: FluxMethod.MUTATION,
         args: {
           resource: Resource.clipperSync,
@@ -614,7 +671,7 @@ class SyncStore extends ObservableStore<ISyncStore> {
           }
         }
       });
-      const resultWithMerge = await extentionFlux({
+      const resultWithMerge = await extensionFlux({
         method: FluxMethod.MUTATION,
         args: {
           resource: Resource.kv,

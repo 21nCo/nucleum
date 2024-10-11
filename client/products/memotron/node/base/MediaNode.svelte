@@ -7,14 +7,14 @@
   import type { NodeRightPaneType } from "../node.type";
 
   export let node: IActiveNodeStore;
-  export let accessMode: ResourceAccessMode;
+
   let isShowFloatingBar: boolean = true;
   let isHoveringOnFloatingBar: boolean = false;
   let timeoutId: any;
   let rightPane: NodeRightPaneType | undefined = undefined;
 
   function onInteraction(event: MouseEvent | TouchEvent | CustomEvent) {
-    if (accessMode === ResourceAccessMode.POP) return;
+    if ($node.accessMode !== ResourceAccessMode.SLIDESHOW) return;
     isShowFloatingBar = true;
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => {
@@ -26,14 +26,13 @@
 
 {#if $node}
   <div class="relative flex flex-col w-full h-full">
-    <MediaContent {node} {accessMode} bind:rightPane />
-    {#if accessMode === ResourceAccessMode.POP || isShowFloatingBar || accessMode === ResourceAccessMode.INLINE}
+    <MediaContent {node} bind:rightPane />
+    {#if $node.accessMode !== ResourceAccessMode.SLIDESHOW || isShowFloatingBar}
       <MediaNodeFloatingBar
         bind:isHovering={isHoveringOnFloatingBar}
         {node}
-        {accessMode}
         on:fullscreen={() => {
-          appStore.toggleFocusAccessMode(accessMode, $node.id);
+          appStore.toggleFocusAccessMode($node.accessMode, $node.id);
         }}
         bind:rightPane
       />

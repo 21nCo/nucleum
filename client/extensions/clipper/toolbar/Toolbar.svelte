@@ -4,7 +4,7 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import Divider from "$lib/client/elements/Divider.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { Position, Orientation } from "$lib/client/types/direction.enum";
+  import { Placement, Orientation } from "$lib/client/types/direction.enum";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { webpage, toolbarState, syncStore } from "../contentScripts/store";
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
@@ -31,14 +31,14 @@
   $: isSaveOnly = saveOnlyPages.some((regex) => regex.test($webpage.url));
 
   if ($toolbarState.position === undefined) {
-    toolbarState.changePosition(Position.Right);
+    toolbarState.changePosition(Placement.Right);
   }
 
   $: tooltipOptions = {
     placement:
-      $toolbarState.position === Position.Bottom
-        ? Position.TopCenter
-        : Position.Left,
+      $toolbarState.position === Placement.Bottom
+        ? Placement.TopCenter
+        : Placement.Left,
     isUseAbsolutePositioning: true,
     offsetInPx: 8
   };
@@ -46,10 +46,20 @@
     tooltipOptions
   };
   function toggleAutoHighligher() {
-    isAutoHighlighterExpanded = !isAutoHighlighterExpanded;
     if (!isAutoHighlighterExpanded) {
       activeHighlighter = null;
       dispatch("color", 0);
+    } else {
+      resetAll("highlighter");
+    }
+  }
+
+  function resetAll(except: string) {
+    if (except !== "highlighter") {
+      isAutoHighlighterExpanded = false;
+    }
+    if (except !== "snip") {
+      isSnipActive = false;
     }
   }
 </script>
@@ -58,10 +68,10 @@
   class={cn(
     "fixed bg-bgs1 border border-brs3 rounded-full min-h-fit flex gap-3  justify-center items-center shadow-md",
     {
-      "right-0 top-1/2 flex-col w-10 2k:w-12 mr-4 2k:mr-6 py-3 transform -translate-y-1/2 space-y-1.5":
-        $toolbarState.position === Position.Right,
-      "bottom-0 right-1/2 transform translate-x-1/2 flex-row py-3 mb-4 px-6":
-        $toolbarState.position === Position.Bottom
+      "right-0 top-1/2 flex-col w-11 2k:w-12 mr-4 2k:mr-6 py-3 transform -translate-y-1/2 space-y-1.5":
+        $toolbarState.position === Placement.Right,
+      "bottom-0 right-1/2 transform translate-x-1/2 flex-row py-2 mb-4 px-6":
+        $toolbarState.position === Placement.Bottom
     }
   )}
 >
@@ -106,11 +116,12 @@
     />
   {/if}
   <Toggle
-    icon="cube-transparent"
+    icon="ph:crop"
     tooltip="Snip"
-    size={Size.sm}
+    size={Size.md}
     bind:on={isSnipActive}
     {tooltipOptions}
+    on:change={() => resetAll("snip")}
   />
   {#if !isScreenShotOnly && !isSaveOnly}
     <!-- TODO - enable this when generate summary is implemented -->
@@ -125,29 +136,31 @@
     <div
       class={cn("flex gap-2 items-center", {
         "flex-col w-full":
-          $toolbarState.position === Position.Right ||
-          $toolbarState.position === Position.Left,
-        "flex-row h-full": $toolbarState.position === Position.Bottom
+          $toolbarState.position === Placement.Right ||
+          $toolbarState.position === Placement.Left,
+        "flex-row h-full": $toolbarState.position === Placement.Bottom
       })}
     >
       <Divider
-        orientation={$toolbarState.position === Position.Bottom
+        orientation={$toolbarState.position === Placement.Bottom
           ? Orientation.Vertical
           : Orientation.Horizontal}
       />
-      <Button
-        icon="pencil"
-        {...buttonParams}
-        tooltip="Auto Highlight"
-        on:click={toggleAutoHighligher}
+      <Toggle
+        icon="ph:highlighter"
+        tooltip="Highlighter"
+        size={Size.md}
+        bind:on={isAutoHighlighterExpanded}
+        {tooltipOptions}
+        on:change={toggleAutoHighligher}
       />
       {#if isAutoHighlighterExpanded}
         <div
           class={cn("flex gap-2 items-center justify-center", {
             "flex-col w-full":
-              $toolbarState.position === Position.Right ||
-              $toolbarState.position === Position.Left,
-            "flex-row h-full": $toolbarState.position === Position.Bottom
+              $toolbarState.position === Placement.Right ||
+              $toolbarState.position === Placement.Left,
+            "flex-row h-full": $toolbarState.position === Placement.Bottom
           })}
         >
           {#each $highlightStore.highlighters as highlighter}
@@ -163,39 +176,39 @@
         </div>
       {/if}
       <Divider
-        orientation={$toolbarState.position === Position.Bottom
+        orientation={$toolbarState.position === Placement.Bottom
           ? Orientation.Vertical
           : Orientation.Horizontal}
       />
     </div>
   {/if}
   <Button
-    icon="sidebar-toggle"
+    icon="ph:bookmarks"
     tooltip="Open Side panel"
     {...buttonParams}
     on:click={() =>
       relayToBackgroundScript({ event: ExtensionEvent.TOGGLE_SIDEPANEL })}
   />
   <Button
-    icon={$toolbarState.position === Position.Right
-      ? "arrow-down-left"
-      : "arrow-up-right"}
-    tooltip={$toolbarState.position === Position.Right
+    icon={$toolbarState.position === Placement.Right
+      ? "ph:arrow-elbow-down-left"
+      : "ph:arrow-elbow-right-up"}
+    tooltip={$toolbarState.position === Placement.Right
       ? "Move to bottom"
       : "Move to right"}
     {...buttonParams}
     on:click={() => {
       let val;
-      if ($toolbarState.position === Position.Right) {
-        val = Position.Bottom;
-      } else if ($toolbarState.position === Position.Bottom) {
-        val = Position.Right;
+      if ($toolbarState.position === Placement.Right) {
+        val = Placement.Bottom;
+      } else if ($toolbarState.position === Placement.Bottom) {
+        val = Placement.Right;
       }
       toolbarState.changePosition(val);
     }}
   />
   <Button
-    icon="cross-circled"
+    icon="ph:x-circle"
     tooltip="Collapse"
     {...buttonParams}
     on:click={() => {

@@ -25,7 +25,8 @@ export enum ClientStorageKey {
   GUEST = "guest",
   SPACE_IN_CONTEXT = "spaceInContext",
   OFFLINE_SESSION_ID = "offlineSessionId",
-  LAST_SYNCED_AT = "lastSyncedAt",
+  LAST_SYNC_UP = "lastSyncUp",
+  LAST_SYNC_DOWN = "lastSyncDown",
   /**
    * Device access point id. This id will be unique for each access point on a given device. Ex: different broswer logins, macOS app login etc.
    *
@@ -34,7 +35,9 @@ export enum ClientStorageKey {
    */
   DAP_ID = "dapId",
 
-  INTERCOM_ID = "intercomId"
+  INTERCOM_ID = "intercomId",
+  OFFLINE_MODE = "offlineMode",
+  LOW_DATA_MODE = "lowDataMode"
 }
 
 export interface IPersistence {
@@ -91,11 +94,12 @@ export enum RemotePersistenceProvider {
 export interface IPersistenceInitParams {
   isLocalMode?: boolean;
   dbo?: string[];
+  appVersion?: string;
 }
 
 export interface ISyncHandler {
   sync(mutations: any[]): Promise<void>;
-  syncDown(): Promise<void>;
-  cloneCloudToLocal(resources: string[]): Promise<any>;
-  cloneLocalToCloud(resources: string[]): Promise<any>;
+  syncDown(): Promise<any>;
+  cloneCloudToLocal(): Promise<any>;
+  cloneLocalToCloud(): Promise<any>;
 }

@@ -11,7 +11,7 @@ import { debouncer } from "$lib/client/utils/utils";
 import { deepCopy, objIsEmpty, shallowDiff } from "$lib/shared/utils/obj.utils";
 import { flux } from "../flux";
 import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
-import { extentionFlux } from "../fluxExtentionMediator";
+import { extensionFlux } from "../fluxExtentionMediator";
 import { FluxMethod } from "../flux.type";
 
 export class KeyValueStore<T extends IObservableStoreSubject>
@@ -28,12 +28,14 @@ export class KeyValueStore<T extends IObservableStoreSubject>
   constructor(
     item: Resource,
     seed: T,
-    params?: Omit<IStore, "id" | "dataType" | "get">
+    params?: {
+      dboDependencies?: string[];
+      isPreventAutoPersist?: boolean;
+    }
   ) {
     super(item, StoreDataType.KVO, params);
     this.id = item;
     this.seed = seed;
-    this.isSynchronousCache = params?.isSynchronousCache || false;
     this.isPreventAutoPersist = params?.isPreventAutoPersist || false;
     this.isExtensionEnvironment = isExtensionEnvironment();
     this._set(seed);
@@ -55,7 +57,7 @@ export class KeyValueStore<T extends IObservableStoreSubject>
   protected async persist(n: Partial<T> | undefined = undefined) {
     if (!n) n = this.get();
     if (this.isExtensionEnvironment) {
-      return extentionFlux({
+      return extensionFlux({
         method: FluxMethod.KV_MERGE,
         args: {
           storeId: this.id,

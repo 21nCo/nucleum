@@ -1,6 +1,9 @@
 import { logger } from "$lib/client/components/debug/logger.client";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import type { IResource } from "$lib/client/components/flux/resourceStores/resource.type";
+import {
+  ResourceActionType,
+  type IResource
+} from "$lib/client/components/flux/resourceStores/resource.type";
 import {
   type IStore,
   PersistenceActionType,
@@ -8,7 +11,8 @@ import {
   StoreDataType,
   type IObservableStore,
   type IResourceSelectParams,
-  type IRecordId
+  type IRecordId,
+  type IMutation
 } from "$lib/client/types/data.type";
 import {
   detectTimeZone,
@@ -31,6 +35,7 @@ import {
 } from "$lib/client/utils/browser.utils";
 import { resolveCurrentUserId } from "$lib/client/utils/account.utils";
 import { GlobalEvent } from "$lib/client/types/event.enum";
+import { determineIfOffline } from "$lib/client/utils/network.utils";
 
 class Flux {
   static _instance: Flux | null = null;
@@ -41,6 +46,7 @@ class Flux {
   remote!: ISurrealDatabase;
   private isLocalMode: boolean = false;
   private isExtensionEnvironment: boolean = false;
+  private isSyncDownPending: boolean = false;
   private constructor() {
     this.isExtensionEnvironment = isExtensionEnvironment();
   }
@@ -52,6 +58,7 @@ class Flux {
     userId: string,
     params?: {
       isLocalMode?: boolean;
+      appVersion?: string;
     }
   ): Promise<number> {
     logger.log({ at: "flux.initialize", stores, userId, params });
@@ -59,20 +66,23 @@ class Flux {
     Flux._instance.provider = provider;
     Flux._instance.isLocalMode = params?.isLocalMode ?? false;
     Flux._instance.persistence = persistence;
+    Flux._instance.stores = stores;
+    const resources = Flux._instance.resolveSyncResources();
     switch (provider) {
       case PersistenceProvider.SURREAL_SURREAL:
       case PersistenceProvider.DEXIE_SURREAL:
         Flux._instance.remote = new SurrealDatabase();
         Flux._instance.syncer = new SurrealSync(
           Flux._instance.persistence,
-          Flux._instance.remote
+          Flux._instance.remote,
+          resources
         );
         break;
       default:
         break;
     }
-    logger.debug({ at: "flux.initialized", instance: Flux._instance });
-    return Flux._instance.initializePersistence(stores, userId, params);
+    logger.log({ at: "flux.initialized", instance: Flux._instance });
+    return Flux._instance.initializePersistence(userId, params);
   }
 
   /**
@@ -81,32 +91,27 @@ class Flux {
    * @param params
    */
   private initializePersistence(
-    stores: IStore[],
     userId: string,
     params?: {
       isLocalMode?: boolean;
     }
   ) {
-    logger.log({ at: "flux.initializePersistence", stores, userId, params });
-    this.stores = stores;
-    const dbo = [...resolveDboDependencies()];
+    logger.log({ at: "flux.initializePersistence", userId, params });
+    const dboDependencies = new Set(
+      this.stores
+        .map((x) => x.dboDependencies)
+        .filter((x) => x !== undefined)
+        .flat()
+    );
+    const dbo = [...dboDependencies];
     return this.persistence.initialize(userId, {
       ...params,
       dbo
     });
-
-    function resolveDboDependencies(): Set<string> {
-      return new Set(
-        stores
-          .map((x) => x.dboDependencies)
-          .filter((x) => x !== undefined)
-          .flat()
-      );
-    }
   }
 
-  async loadKvStores() {
-    logger.debug({ at: "flux.loadKvStores" });
+  async loadInMemoryStores() {
+    logger.log({ at: "flux.loadInMemoryStores" });
     try {
       let kvStores = this.stores.filter(
         (x) => x.dataType === StoreDataType.KVO
@@ -116,11 +121,33 @@ class Flux {
         const store = kvStores.find(
           (x) => "kv:" + x.id === record.id.toString()
         );
-        if (!store || !store.loader) return;
+        if (!store?.loader) return;
         store.loader(record);
       });
+      let inMemoryResouceStores = this.stores.filter((x) => x.isInMemory);
+      if (!inMemoryResouceStores) return;
+      for (const store of inMemoryResouceStores) {
+        const data = await this.persistence.selectMany(store.id as Resource);
+        if (data && Array.isArray(data) && store?.loader) {
+          logger.log({
+            at: "flux.loadInMemoryStores - loading resource store",
+            id: store.id,
+            data
+          });
+          store.loader(data);
+        }
+      }
     } catch (e) {
-      logger.error({ at: "flux.loadKvStores", error: e });
+      logger.error({ at: "flux.loadInMemoryStores", error: e });
+    }
+  }
+
+  private async loadInMemoryResourceStore(resource: Resource) {
+    logger.log({ at: "flux.loadInMemoryResourceStore", resource });
+    const store = this.stores.find((x) => x.id === resource);
+    if (store?.loader) {
+      const data = await this.persistence.selectMany(resource);
+      store.loader(data);
     }
   }
 
@@ -129,7 +156,7 @@ class Flux {
    * This will persist all kv seed data on cloud.
    */
   async kvSeed() {
-    logger.debug({ at: "flux.seed" });
+    logger.log({ at: "flux.seed" });
     try {
       let data = this.stores
         .filter((x) => x.dataType === StoreDataType.KVO)
@@ -193,6 +220,10 @@ class Flux {
           }, 100);
         }
       }
+      const correspondingStore = this.stores.find((x) => x.id === resource);
+      if (correspondingStore?.isInMemory) {
+        await this.loadInMemoryResourceStore(resource);
+      }
     } catch (e) {
       logger.error({
         at: "flux.mutation",
@@ -207,12 +238,23 @@ class Flux {
       at: "flux.mutation - result",
       resource,
       response,
-      params
+      action: params.action,
+      records: params.records,
+      record: params.record ?? params.records?.[0]
     });
     return response;
   }
 
-  async insertMutation<T extends IResource>(
+  /**
+   * Inserts a mutation record into the mutation table. This is used for syncing to cloud and also for resource versioning.
+   *
+   * Note: if multiple resources are involved in the mutation like INSERT operation or BULK MERGE operation, then accessLog table is logged with the information for resource versioning.
+   *
+   * @param resource
+   * @param params
+   * @returns
+   */
+  private async insertMutation<T extends IResource>(
     resource: Resource,
     params: IMutationParamsv2<T>
   ) {
@@ -220,19 +262,51 @@ class Flux {
     const mutationId = generateRandomId();
     const dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
     const userId = await resolveCurrentUserId();
-    const mutations = {
+    const mutation: IMutation = {
       id: mutationId,
       createdAt: new Date().toISOString(),
       modifiedAt: new Date().toISOString(),
-      dapId,
+      timestamp: new Date().getTime(),
+      dapId: dapId ?? "",
       userId,
       resource,
-      params
+      params,
+      resourceId: this.resolveResourceId(params),
+      action: this.resolveAction(params?.action)
     };
     return this.persistence.mutation(Resource.mutation, {
-      records: [mutations],
+      records: [mutation],
       action: PersistenceActionType.INSERT
     });
+  }
+
+  private resolveResourceId<T extends IResource>(params: IMutationParamsv2<T>) {
+    switch (params?.action) {
+      case PersistenceActionType.INSERT:
+      case PersistenceActionType.BULK_MERGE:
+        return params?.records.map((x) => x.id);
+      case PersistenceActionType.REPLACE:
+      case PersistenceActionType.MERGE:
+        return params?.record?.id;
+      case PersistenceActionType.DELETE:
+        return params?.recordId;
+      default:
+        return undefined;
+    }
+  }
+
+  private resolveAction(action: PersistenceActionType) {
+    switch (action) {
+      case PersistenceActionType.INSERT:
+        return ResourceActionType.CREATE;
+      case PersistenceActionType.REPLACE:
+      case PersistenceActionType.MERGE:
+        return ResourceActionType.EDIT;
+      case PersistenceActionType.DELETE:
+        return ResourceActionType.DELETE;
+      default:
+        return ResourceActionType.EDIT;
+    }
   }
 
   async select(resourceId: IRecordId, properties?: string[]) {
@@ -252,7 +326,7 @@ class Flux {
 
   async selectMany(resource: Resource, params?: IResourceSelectParams) {
     try {
-      logger.debug({ at: "flux.selectMany", resource, params });
+      logger.log({ at: "flux.selectMany", resource, params });
       const result = await this.persistence.selectMany(resource, params);
       logger.log({ at: "flux.selectMany - result", result });
       return result;
@@ -273,15 +347,29 @@ class Flux {
     return this.persistence.query(query, params);
   }
 
-  kvMerge(storeId: string, data: any) {
-    logger.log({ at: "kvMerge", storeId, data });
-    return this.persistence.mutation(Resource.kv, {
-      record: {
-        ...data,
-        id: `kv:${storeId}`
-      },
+  async kvMerge(storeId: string, data: any) {
+    const record = {
+      ...data,
+      id: `kv:${storeId}`
+    };
+    logger.log({ at: "kvMerge", storeId, data, record });
+    const result = await this.persistence.mutation(Resource.kv, {
+      record,
       action: PersistenceActionType.MERGE
     });
+    logger.log({ at: "kvMerge - result", storeId, record, result });
+    if (!this.isLocalMode) {
+      await this.insertMutation(Resource.kv, {
+        record,
+        action: PersistenceActionType.MERGE
+      });
+      if (this.isExtensionEnvironment) {
+        setTimeout(async () => {
+          await this.sync();
+        }, 100);
+      }
+    }
+    return result;
   }
 
   private resolveDependantStores(resource: Resource) {
@@ -295,7 +383,7 @@ class Flux {
   }
 
   async refresh(storeId: string, isShowRefreshingState: boolean = false) {
-    logger.debug({ at: "flux.refresh", storeId });
+    logger.log({ at: "flux.refresh", storeId });
   }
 
   async refreshPage(
@@ -308,25 +396,34 @@ class Flux {
    * @returns
    */
   async sync() {
-    const lastSyncedAt = await clientStorage.get(
-      ClientStorageKey.LAST_SYNCED_AT
-    );
-    logger.log({ at: "flux.sync", lastSyncedAt });
-    if (!lastSyncedAt) return;
-    const mutations = await this.persistence.selectMany(Resource.mutation, {
-      filters: {
-        createdAt: {
-          from: lastSyncedAt
-            ? new Date(+lastSyncedAt).toISOString()
-            : new Date().toISOString(),
-          to: new Date().toISOString()
-        }
-      }
-    });
+    const isOffline = await determineIfOffline();
+    if (isOffline) return;
+    const { mutations, lastSyncedAt } = await this.resolveItemsForSyncUp();
     logger.log({ at: "flux.sync", mutations, lastSyncedAt });
     if (!mutations || mutations.length === 0) return;
     await this.syncer.sync(mutations);
-    clientStorage.set(ClientStorageKey.LAST_SYNCED_AT, new Date().getTime());
+    clientStorage.set(
+      ClientStorageKey.LAST_SYNC_UP,
+      mutations[mutations.length - 1].timestamp
+    );
+  }
+
+  async resolveItemsForSyncUp() {
+    const lastSyncedAt = await clientStorage.get(ClientStorageKey.LAST_SYNC_UP);
+    logger.log({ at: "flux.resolveItemsForSyncUp", lastSyncedAt });
+    if (!lastSyncedAt) return { mutations: [], lastSyncedAt };
+    const mutations = await this.persistence.selectMany(Resource.mutation, {
+      filters: {
+        timestamp: {
+          greaterThan: +lastSyncedAt
+        }
+      },
+      orderBy: {
+        timestamp: "asc"
+      }
+    });
+    logger.log({ at: "flux.resolveItemsForSyncUp", lastSyncedAt, mutations });
+    return { mutations, lastSyncedAt };
   }
 
   async search(storeId: string, query: string) {
@@ -340,9 +437,31 @@ class Flux {
    */
   async syncDown() {
     logger.log({ at: "flux.syncDown" });
-    await this.syncer.syncDown();
-    clientStorage.set(ClientStorageKey.LAST_SYNCED_AT, new Date().getTime());
-    dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
+    try {
+      if (await determineIfOffline()) return;
+      if (this.isSyncDownPending) return;
+      this.isSyncDownPending = true;
+      const result = await this.syncer.syncDown();
+      this.isSyncDownPending = false;
+      if (result) {
+        logger.log({
+          at: "flux.syncDown - loading in memory stores",
+          result
+        });
+        await this.loadInMemoryStores();
+        await clientStorage.set(
+          ClientStorageKey.LAST_SYNC_DOWN,
+          result[result.length - 1].timestamp
+        );
+      }
+      if (!this.isExtensionEnvironment) {
+        dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
+      }
+    } catch (e) {
+      logger.error({ at: "flux.syncDown", error: e });
+    } finally {
+      this.isSyncDownPending = false;
+    }
   }
 
   /**
@@ -350,25 +469,38 @@ class Flux {
    */
   async cloneDown() {
     logger.log({ at: "flux.cloneDown", stores: this.stores });
-    const resources = this.resolveCloneResources();
-    await this.syncer.cloneCloudToLocal(resources);
-    clientStorage.set(ClientStorageKey.LAST_SYNCED_AT, new Date().getTime());
+    if (await determineIfOffline()) return;
+    const resources = this.resolveSyncResources();
+    await this.syncer.cloneCloudToLocal();
+    await this.loadInMemoryStores();
+    await clientStorage.set(
+      ClientStorageKey.LAST_SYNC_DOWN,
+      new Date().getTime()
+    );
+    await clientStorage.set(
+      ClientStorageKey.LAST_SYNC_UP,
+      new Date().getTime()
+    );
   }
 
+  /**
+   * TODO - files upload to s3
+   * @returns
+   */
   async cloneUp() {
     logger.log({ at: "flux.cloneUp" });
-    const resources = this.resolveCloneResources();
-    await this.syncer.cloneLocalToCloud(resources);
-    clientStorage.set(ClientStorageKey.LAST_SYNCED_AT, new Date().getTime());
+    if (await determineIfOffline()) return;
+    const resources = this.resolveSyncResources();
+    await this.syncer.cloneLocalToCloud();
   }
 
-  private resolveCloneResources() {
+  private resolveSyncResources(): Resource[] {
     const resources = [
       Resource.kv,
       ...(this.stores
         .filter((x) => x.dataType === StoreDataType.IFR)
         .map((x) => x.id) ?? [])
-    ];
+    ] as Resource[];
     return resources;
   }
 
@@ -376,6 +508,15 @@ class Flux {
    * Invalidates the stores and persistance connection - used during events like User logout or switching spaces.
    */
   async terminate() {}
+
+  /**
+   * Exports the local database as a backup json or csv based on user selection.
+   */
+  async export(method: "json" | "csv") {}
+  /**
+   * Imports a backup json or csv file into the local database.
+   */
+  async import() {}
 }
 
 export let flux = Flux._instance as any as Flux;
@@ -387,6 +528,7 @@ export async function initFlux(
   userId: string,
   params?: {
     isLocalMode?: boolean;
+    appVersion?: string;
   }
 ) {
   logger.log({ at: "initFlux", stores, provider, persistence, userId, params });

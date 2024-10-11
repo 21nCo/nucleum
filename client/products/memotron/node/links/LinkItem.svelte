@@ -1,39 +1,43 @@
 <script lang="ts">
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import { cn } from "$lib/client/utils/ui.utils";
-  import ResourceThumbnailBase from "$lib/client/products/memotron/common/thumbnail/ResourceThumbnailBase.svelte";
-  import type { INode } from "$lib/client/products/memotron/node/node.type";
-  import NodeThumbnailTitle from "../thumbnail/NodeThumbnailTitle.svelte";
-  import NodeThumbnailContentType from "../thumbnail/NodeThumbnailContentType.svelte";
-  import NodeThumbnailWebLink from "../thumbnail/NodeThumbnailWebLink.svelte";
+  import type {
+    INode,
+    INodeLinkThumb
+  } from "$lib/client/products/memotron/node/node.type";
   import type { IRecordId } from "$lib/client/types/data.type";
+  import LinkTagger from "../../linking/LinkTagger.svelte";
+  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
+  import LinkTags from "../../linking/LinkTags.svelte";
+  import NodeThumbnail from "../thumbnail/NodeThumbnail.svelte";
   export let accessPointId: IRecordId;
+  export let link: INodeLinkThumb;
   export let item: INode;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.NODE_LINKS;
-  let isHovering = false;
+  let isShowLinkTagger = false;
 </script>
 
 <!-- TODO - add parent breadcrumbs  and avatar in below component - moving from LinkSuggestionItem.svelte -->
-<ResourceThumbnailBase
-  {item}
-  {accessPointId}
-  bind:isHovering
-  {accessPoint}
-  on:action
->
-  <button
-    class={cn(
-      "flex flex-col gap-2 w-full p-3 border rounded-md truncate bg-bgs2 border-brs3 hover:border-aps2",
-      {}
-    )}
-    on:click
-  >
-    <NodeThumbnailTitle node={item} />
-    <div class="flex gap-2 w-full">
-      <NodeThumbnailContentType {item} />
-      {#if isHovering}
-        <NodeThumbnailWebLink {item} />
+
+<button on:click>
+  <NodeThumbnail {item} {accessPoint} {accessPointId}>
+    <span slot="right" class="flex bg-bgs2 rounded-md border border-brs3">
+      <Toggle icon="ph:tag-thin" bind:on={isShowLinkTagger} />
+    </span>
+    <span
+      slot="bottom"
+      class={cn("flex flex-col gap-2", {
+        "pt-2": (link.tags && link.tags.length > 0) || isShowLinkTagger
+      })}
+    >
+      {#if link.tags && link.tags.length > 0}
+        <LinkTags bind:link on:tagClick />
       {/if}
-    </div>
-  </button>
-</ResourceThumbnailBase>
+      {#if isShowLinkTagger}
+        <div class="w-full py-2">
+          <LinkTagger bind:link />
+        </div>
+      {/if}
+    </span>
+  </NodeThumbnail>
+</button>

@@ -5,7 +5,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import type { IActiveNodeStore } from "../node.store";
   import { getContext } from "svelte";
-  import { NodeType } from "../node.type";
+  import { canHaveTraces, NodeType } from "../node.type";
   import { highlightStore } from "../../common/highlighters/highlight.store";
   import { AnnotationType } from "../../pdfAnnotator/pdfAnnotator.type";
   import Resources from "../../common/Resources.svelte";
@@ -23,41 +23,77 @@
     if (contentType === NodeType.PDF) {
       return [
         {
-          value: "Highlights",
+          value: "clips",
+          label: "Highlights",
           icon: "bookmark"
         },
         {
-          value: "Tasks",
+          value: "tasks",
           icon: "rocket"
         }
       ];
     } else if (contentType === NodeType.WEB_PAGE) {
       return [
         {
-          value: "Clips",
+          value: "clips",
+          label: "Clips",
           icon: "bookmark"
         },
         {
-          value: "Tasks",
+          value: "tasks",
           icon: "check-circle"
+        }
+      ];
+    } else if (contentType === NodeType.TWITTER_PROFILE) {
+      return [
+        {
+          value: "clips",
+          label: "Tweets",
+          icon: "ph:x-logo"
+        },
+        {
+          value: "tasks",
+          icon: "check-circle"
+        }
+      ];
+    } else if (contentType === NodeType.YOUTUBE_VIDEO) {
+      return [
+        {
+          value: "clips",
+          label: "Clips",
+          icon: "ph:youtube-logo"
+        },
+        {
+          value: "tasks",
+          icon: "check-circle"
+        }
+      ];
+    } else if (contentType === NodeType.KINDLE_BOOK) {
+      return [
+        {
+          value: "clips",
+          label: "Highlights",
+          icon: "bookmark"
+        },
+        {
+          value: "tasks",
+          icon: "rocket"
         }
       ];
     } else if (contentType === NodeType.NODULAR_MARKDOWN) {
       return [
         {
-          value: "Bookmarks",
-          icon: "bookmark"
+          value: "clips",
+          label: "Comments",
+          icon: "ph:chat-teardrop-text"
         },
         {
-          value: "Comments",
-          icon: "chat-bubble-bottom-center"
-        },
-        {
-          value: "Tasks",
+          value: "tasks",
           icon: "check-circle"
         },
         {
-          value: "Outgoing mentions",
+          label: "Outgoing mentions",
+          value: "outgoing-mentions",
           icon: "at-symbol"
         }
       ];
@@ -123,13 +159,21 @@
       </button>
     {/each}
   </div>
-{:else if $node?.contentType === NodeType.WEB_PAGE && selectedType === "Clips"}
-  {#if $node.clips?.length > 0}
+{:else if canHaveTraces.includes($node?.contentType ?? NodeType.UNKNOWN) && selectedType === "clips"}
+  {#if $node?.clips && $node?.clips?.length > 0}
     <Resources
       data={$node.clips}
-      accessPoint={ResourceAccessPoint.OTHER}
+      accessPoint={ResourceAccessPoint.NODE_TRACES}
       resource={Resource.node}
       size={Size.sm}
+      isPreventDefault={$node.contentType === NodeType.YOUTUBE_VIDEO}
+      on:click={(e) => {
+        if (!e?.detail) return;
+        contentContext.publish("yt-trace-click", {
+          id: e.detail.id,
+          timestamp: e.detail.body.timestamp
+        });
+      }}
     />
   {:else}
     <EmptyStatusView

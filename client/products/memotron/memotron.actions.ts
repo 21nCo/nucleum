@@ -8,7 +8,6 @@ import JournalModalViewer from "$lib/client/products/memotron/journal/JournalMod
 import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
 import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
 import ProductFeatureWheel from "$lib/client/components/blank/ProductFeatureWheel.svelte";
-import Curation from "$lib/client/products/memotron/curation/Curation.svelte";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import PropertyConfig from "$lib/client/products/memotron/collection/properties/propertyConfig/PropertyConfig.svelte";
 import Library from "$lib/client/products/memotron/library/Library.svelte";
@@ -16,7 +15,10 @@ import TestHome from "$local/TestHome.svelte";
 import CreateCollection from "$lib/client/products/memotron/collection/CreateCollection.svelte";
 import PropertiesEditor from "$lib/client/products/memotron/collection/properties/PropertiesEditor.svelte";
 import { MemotronAction } from "./memotronAction.enum";
-import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
+import {
+  ResourceAccessMode,
+  ResourceActionType
+} from "$lib/client/components/flux/resourceStores/resource.type";
 import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
 import CollectionBrowser from "$lib/client/products/memotron/collection/CollectionBrowser.svelte";
 import NodeBrowser from "$lib/client/products/memotron/node/NodeBrowser.svelte";
@@ -24,19 +26,59 @@ import ResourceSearchModal from "./library/search/ResourceSearchModal.svelte";
 import Collection from "./collection/Collection.svelte";
 import { Action } from "$lib/client/types/action.enum";
 import PasteConfirmationModal from "./capture/PasteConfirmationModal.svelte";
+import { linker } from "./linking/link.store";
+import { toasts } from "$lib/client/stores/notification.store";
+import { logger } from "$lib/client/components/debug/logger.client";
+import LinkTagsControlPanel from "./linking/LinkTagsControlPanel.svelte";
+import Chat from "$lib/client/components/chat/Chat.svelte";
+import CaptureDnD from "./capture/CaptureDnD.svelte";
+import MemotronHome from "./home/MemotronHome.svelte";
 export const memotronActions: IAction[] = [
+  {
+    action: MemotronAction.OPEN_CHAT,
+    component: Chat,
+    type: ActionType.MODAL,
+    modalParams: {
+      layout: {
+        size: Size.xxl,
+        orientation: Orientation.Horizontal,
+        ignoreSafeArea: true,
+        isShowClose: true
+      },
+      isOnRight: true,
+      title: "Taco"
+    }
+  },
   {
     action: MemotronAction.CAPTURE,
     component: Capture,
     label: "Capture",
     icon: "capture",
-    type: ActionType.MODAL,
+    type: ActionType.RESOURCE,
+    accessMode: ResourceAccessMode.POP,
     modalParams: {
       layout: {
-        size: Size.xl,
+        size: Size.xxl,
         orientation: Orientation.Horizontal,
         ignoreSafeArea: true,
-        isShowCantileverClose: true
+        isShowCantileverClose: true,
+        isShowBackButton: false
+      }
+    }
+  },
+  {
+    action: MemotronAction.CAPTURE_DND,
+    component: CaptureDnD,
+    isMeta: true,
+    type: ActionType.RESOURCE,
+    accessMode: ResourceAccessMode.POP,
+    modalParams: {
+      layout: {
+        size: Size.xxl,
+        orientation: Orientation.Horizontal,
+        ignoreSafeArea: true,
+        isShowCantileverClose: true,
+        isShowBackButton: false
       }
     }
   },
@@ -72,13 +114,9 @@ export const memotronActions: IAction[] = [
     type: ActionType.MODAL,
     isMeta: true,
     modalParams: {
-      title: "Edit properties",
       layout: {
         size: Size.xxl,
-        orientation: Orientation.Horizontal,
-        primaryAction: {
-          label: "Done"
-        }
+        orientation: Orientation.Horizontal
       }
     }
   },
@@ -120,13 +158,16 @@ export const memotronActions: IAction[] = [
     action: Resource.node,
     component: Node,
     label: "Node",
+    isMeta: true,
     type: ActionType.MODAL,
     loadingComponent: NodeLoadingPulse,
     modalParams: {
       layout: {
         size: Size.xxl,
         orientation: Orientation.Horizontal,
-        ignoreSafeArea: true
+        ignoreSafeArea: true,
+        isShowCantileverClose: true,
+        isShowBackButton: true
       }
     }
   },
@@ -134,7 +175,7 @@ export const memotronActions: IAction[] = [
     action: resourceAction(Resource.collection, ResourceActionType.BROWSE),
     component: CollectionBrowser,
     label: "Collections",
-    icon: "curation",
+    icon: "ph:circles-four-light",
     type: ActionType.PAGE,
     loadingComponent: NodeLoadingPulse
   },
@@ -147,18 +188,6 @@ export const memotronActions: IAction[] = [
     loadingComponent: NodeLoadingPulse
   },
   {
-    action: Resource.nodelinks,
-    type: ActionType.MODAL,
-    component: Curation,
-    modalParams: {
-      layout: {
-        size: Size.xl,
-        orientation: Orientation.Horizontal,
-        ignoreSafeArea: true
-      }
-    }
-  },
-  {
     action: Resource.collection,
     type: ActionType.MODAL,
     component: Collection,
@@ -166,14 +195,16 @@ export const memotronActions: IAction[] = [
       layout: {
         size: Size.xxl,
         orientation: Orientation.Horizontal,
-        ignoreSafeArea: true
+        ignoreSafeArea: true,
+        isShowCantileverClose: true,
+        isShowBackButton: true
       }
     }
   },
   {
     action: Resource.combination,
     type: ActionType.MODAL,
-    component: Curation
+    component: ComingSoonView
   },
   {
     action: "journal",
@@ -181,13 +212,6 @@ export const memotronActions: IAction[] = [
     label: "Journal",
     icon: "calendar-days",
     component: Journal
-  },
-  {
-    action: "nodes",
-    type: ActionType.PAGE,
-    label: "Nodes",
-    icon: "node",
-    component: TestHome
   },
   {
     action: MemotronAction.LIBRARY,
@@ -222,6 +246,7 @@ export const memotronActions: IAction[] = [
     label: "Feature Wheel",
     type: ActionType.PAGE,
     isMenuHidden: true,
+    isMeta: true,
     component: ProductFeatureWheel,
     modalParams: {
       layout: {
@@ -247,5 +272,62 @@ export const memotronActions: IAction[] = [
         size: Size.sm
       }
     }
+  },
+  {
+    action: MemotronAction.ADD_NODE_TO_COLLECTION,
+    type: ActionType.SEARCH_CMD,
+    cmdLabel: "Add node to collection",
+    isMeta: true,
+    searchActionParams: {
+      searchStoreId: Resource.node,
+      itemLabel: "node",
+      callback: async (id: string, label?: string, componentParams?: any) => {
+        if (!componentParams?.id) {
+          toasts.error("Something went wrong. Please try again later.");
+          return;
+        }
+        const result = await linker.link(id, componentParams.id);
+        logger.log({
+          at: "addNodeToCollection",
+          id,
+          label,
+          componentParams,
+          result
+        });
+        if (!result) {
+          toasts.error("Something went wrong. Please try again later.");
+          return;
+        }
+        toasts.success(`**${label}** added to collection`);
+      }
+    }
+  },
+  {
+    action: resourceAction(Resource.linkTag, ResourceActionType.BROWSE),
+    type: ActionType.MODAL,
+    label: "Link Tags",
+    icon: "ph:tag",
+    component: LinkTagsControlPanel,
+    modalParams: {
+      title: "Link Tags",
+      layout: {
+        size: Size.lg,
+        orientation: Orientation.Horizontal
+      }
+    }
+  },
+  {
+    action: "home",
+    type: ActionType.PAGE,
+    label: "Home",
+    icon: "ph:house",
+    component: MemotronHome
+  },
+  {
+    action: "graph",
+    type: ActionType.PAGE,
+    label: "Graph",
+    icon: "ph:graph",
+    component: ComingSoonView
   }
 ];

@@ -6,22 +6,19 @@
   } from "$lib/client/components/markdown/md.type";
   import {
     headingNodeTypes,
-    NodeType,
     structuralNodeTypes
   } from "$lib/client/products/memotron/node/node.type";
   import { createEventDispatcher, onMount } from "svelte";
   import type { MdStoreType } from "../markdown.store";
   import { Size } from "$lib/client/types/size.enum";
-  import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
   import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
   import type {
     IContextMenu,
     IContextMenuItem
   } from "$lib/client/types/select.type";
-  import { Position } from "$lib/client/types/direction.enum";
+  import { Placement } from "$lib/client/types/direction.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import FocusRing from "./FocusRing.svelte";
-  import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   import { writable } from "svelte/store";
   import BlockBrowser from "../blockBrowser/BlockBrowser.svelte";
   import { appStore } from "$lib/client/stores/app.store";
@@ -30,6 +27,10 @@
   import { Action } from "$lib/client/types/action.enum";
   import { MemotronEvent } from "$lib/client/products/memotron/memotron.type";
   import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
+  import { tabs } from "$lib/client/layout/tabs/tabs.store";
+  import { popover, tooltip } from "$lib/client/actions/popover.action";
+  import ContextMenu from "$lib/client/elements/contextMenu/ContextMenu.svelte";
+  import { hoverable } from "$lib/client/actions/hover.action";
   const dispatch = createEventDispatcher();
   export let block: IBlock;
   export let mdStore: MdStoreType;
@@ -77,18 +78,18 @@
       value: BlockAction.CONVERT,
       label: "Turn into",
       icon: "sync",
-      callback: async (props?: any) => {
-        dispatch("action", {
-          action: BlockAction.CONVERT,
-          data: {
-            toType: props?.type
-          }
-        });
-      },
       secondStepComponent: {
         component: BlockBrowser,
         props: {
-          isSingleColumnMode: true
+          isSingleColumnMode: true,
+          selectCallback: async (props?: any) => {
+            dispatch("action", {
+              action: BlockAction.CONVERT,
+              data: {
+                toType: props?.type
+              }
+            });
+          }
         }
       }
     },
@@ -115,19 +116,19 @@
     [BlockAction.INSERT]: {
       value: BlockAction.INSERT,
       icon: "arrow-down",
-      callback: async (props?: any) => {
-        console.log("insert", props);
-        dispatch("action", {
-          action: BlockAction.INSERT,
-          data: {
-            blockType: props?.type
-          }
-        });
-      },
       secondStepComponent: {
         component: BlockBrowser,
         props: {
-          isSingleColumnMode: true
+          isSingleColumnMode: true,
+          selectCallback: async (props?: any) => {
+            console.log("insert", props);
+            dispatch("action", {
+              action: BlockAction.INSERT,
+              data: {
+                blockType: props?.type
+              }
+            });
+          }
         }
       }
     },
@@ -177,13 +178,11 @@
         appStore.openResource(block.id, ResourceAccessMode.FULL);
       }
     },
-    [BlockAction.OPEN_IN_TOP_BAR]: {
-      value: BlockAction.OPEN_IN_TOP_BAR,
-      icon: "rocket",
+    [BlockAction.OPEN_AS_TAB]: {
+      value: BlockAction.OPEN_AS_TAB,
+      icon: "ph:tabs-light",
       callback: async () => {
-        appStore.closeResource({ isRestrictToModals: true });
-        uiState.addResourceToTopBar(block.id);
-        appStore.openResource(block.id, ResourceAccessMode.TOPBARFOCUS);
+        tabs.open(block.id);
       }
     },
     [BlockAction.COLOR]: {
@@ -241,7 +240,7 @@
             actions[BlockAction.COPY_BLOCK_TEXT],
             // actions[BlockAction.OPEN_AS_SPLIT],
             actions[BlockAction.OPEN_IN_FULL_SCREEN],
-            actions[BlockAction.OPEN_IN_TOP_BAR],
+            actions[BlockAction.OPEN_AS_TAB],
             actions[BlockAction.SHORTCUTS],
             actions[BlockAction.DELETE]
           ]
@@ -309,33 +308,52 @@
 
   function onOtherBlocksHoverListener(e: any) {
     if (!e.detail || e.detail.id === block.id) return;
-    if (isPopoverVisible) contextMenuRef?.hide();
+    if (isPopoverVisible) {
+      contextMenuRef.dispatchEvent(new CustomEvent("hide"));
+    }
   }
 </script>
 
-<HoverableElement
-  bind:isHovering
+<div
   class={cn(
     "h-full w-full flex justify-center rounded-l-md border border-transparent hover:bg-bgs2 hover:border-brs2"
   )}
-  on:hover={() => {
-    if (isHovering) {
-      dispatchCustomEvent(MemotronEvent.BLOCK_HOVER, { id: block.id });
+  use:hoverable={{
+    onHover: (e) => {
+      isHovering = e;
+      if (isHovering) {
+        dispatchCustomEvent(MemotronEvent.BLOCK_HOVER, { id: block.id });
+      }
     }
   }}
 >
-  <ContextMenuAction
-    bind:this={contextMenuRef}
-    id="leftControls"
-    triggerMethod={PopoverTriggerMethod.CLICK}
-    bind:isPopoverVisible
-    {contextMenu}
-    tooltip="More actions"
-    heading="Options"
-    size={Size.lg}
-    position={Position.Left}
-    offsetInPx={8}
+  <button
     class="flex w-full h-full items-center justify-center"
+    use:popover={{
+      placement: Placement.Left,
+      content: ContextMenu,
+      triggerMethod: PopoverTriggerMethod.CLICK,
+      componentProps: {
+        menu: contextMenu,
+        size: Size.lg,
+        heading: "Options",
+        onSelect: (e) => {
+          contextMenuRef.dispatchEvent(new CustomEvent("hide"));
+        }
+      },
+      id: "leftControls",
+      groupId: "leftControlsGroup",
+      offsetInPx: 8
+    }}
+    on:change={(e) => {
+      isPopoverVisible = e?.detail?.open;
+    }}
+    use:tooltip={{
+      text: isNodularizable ? "Click ring to focus" : "More actions",
+      direction: Placement.Bottom,
+      delay: 500
+    }}
+    bind:this={contextMenuRef}
   >
     <!-- Note: Directly using isFocusing is working -->
     {#if isNodularizable && !isFocusing}
@@ -357,5 +375,5 @@
         <Icon icon="grab" size={Size.lg} class="fill-fgs3" />
       </span>
     {/if}
-  </ContextMenuAction>
-</HoverableElement>
+  </button>
+</div>

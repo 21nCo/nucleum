@@ -1,30 +1,33 @@
 <script lang="ts">
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import { Arrangement } from "$lib/client/types/direction.enum";
   import {
     NodeType,
-    type INodeThumbnail
+    type INodeThumb
   } from "$lib/client/products/memotron/node/node.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import NodeThumbnail from "../node/thumbnail/NodeThumbnail.svelte";
-  import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   import { afterUpdate, onMount } from "svelte";
   import { fade } from "svelte/transition";
   import view from "$lib/client/stores/view.store";
   import NodeThumbnailTitle from "../node/thumbnail/NodeThumbnailTitle.svelte";
+  import type { IRecordId } from "$lib/client/types/data.type";
+  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { hoverable } from "$lib/client/actions/hover.action";
 
-  export let nodes: INodeThumbnail[] = [];
+  export let nodes: INodeThumb[] = [];
   export let arrangement: Arrangement = Arrangement.LIST;
+  export let density = 1;
   export let parentBgIndex = 1;
   export let isApplyCustomColor: boolean = false;
-  //TODO - user setting - columns, gap
-  export let columns = Math.floor(($view.width / 500) * 2);
-  $: console.log({ columns });
+  export let isDraggable: boolean = false;
+
+  $: columns = Math.floor(($view.width / 500) * density);
+
   export let gap = 12; // Gap size in pixels
   let gridRef: any;
-  let hoveredMasonryItem: string | undefined = undefined;
+  let hoveredMasonryItem: IRecordId | undefined = undefined;
 
   $: if (arrangement === Arrangement.MASONRY && gridRef) {
     resizeAllMasonryItems();
@@ -55,6 +58,23 @@
     const rowSpan = Math.ceil((contentHeight + gap) / (rowHeight + gap));
     item.style.gridRowEnd = `span ${rowSpan}`;
     item.style.height = `calc(${rowSpan} * (${rowHeight}px + ${gap}px) - ${gap}px)`;
+    if (
+      ![
+        NodeType.IMAGE,
+        NodeType.WEB_SCREENSHOT_CLIP,
+        NodeType.YOUTUBE_TIMESTAMP_CLIP,
+        NodeType.WEB_PAGE,
+        NodeType.KINDLE_BOOK,
+        NodeType.YOUTUBE_VIDEO,
+        NodeType.TWITTER_PROFILE
+      ].includes(item.getAttribute("data-type") as NodeType)
+    ) {
+      const child = item.querySelector(".item-content");
+      if (child && child instanceof HTMLElement) {
+        child.style.height = "100%";
+        child.style.minHeight = "100px";
+      }
+    }
   }
 
   function resizeAllMasonryItems() {
@@ -73,39 +93,40 @@
     style="grid-template-columns: repeat({columns}, minmax(0, 1fr)); grid-auto-rows: {gap}px; gap: {gap}px;"
   >
     {#each nodes as item (item.id)}
-      <div class="relative grid-item w-full" data-id={item.id}>
-        <HoverableElement
+      <div
+        class="relative grid-item w-full"
+        data-id={item.id}
+        data-type={item.contentType}
+        draggable={isDraggable}
+      >
+        <button
           class="item-content w-full border rounded-md border-brs2 hover:border-aps2"
           type="button"
-          on:hover={(e) => {
-            if (e.detail) hoveredMasonryItem = item.id;
-            else if (e.detail === false && hoveredMasonryItem === item.id)
-              hoveredMasonryItem = undefined;
+          use:hoverable={{
+            onHover: (e) => {
+              if (e) hoveredMasonryItem = item.id;
+              else if (
+                e === false &&
+                hoveredMasonryItem &&
+                isSameResource(hoveredMasonryItem, item.id)
+              )
+                hoveredMasonryItem = undefined;
+            }
           }}
-          on:click={(e) =>
-            appStore.resourceClickHandler(e, item.id, ResourceAccessMode.POP)}
+          on:click={(e) => appStore.resourceClickHandler(e, item.id)}
         >
-          {#if item.contentType === NodeType.IMAGE}
-            <img
-              alt="Node thumbnail"
-              class="w-full h-auto rounded-md"
-              src={item.body.url}
-              on:load={() =>
-                resizeMasonryItem(
-                  gridRef.querySelector(`[data-id="${item.id}"]`)
-                )}
-            />
-          {:else if item.label}
-            <!-- <span
-              class="block text-left text-b2 p-4 bg-bgs2 rounded-lg shadow-md"
-            >
-              {item.label}
-            </span> -->
-            <NodeThumbnail {item} {parentBgIndex} {arrangement} />
-          {/if}
-          {#if hoveredMasonryItem === item.id && item.contentType === NodeType.IMAGE}
+          <NodeThumbnail
+            {item}
+            {parentBgIndex}
+            {arrangement}
+            on:load={() =>
+              resizeMasonryItem(
+                gridRef.querySelector(`[data-id="${item.id}"]`)
+              )}
+          />
+          {#if hoveredMasonryItem && isSameResource(hoveredMasonryItem, item.id)}
             <div
-              class="absolute bottom-0 left-0 w-full bg-bgs3 rounded-b-md h-12 p-2 truncate text-b2 border-b border-x border-aps2"
+              class="absolute bottom-0 left-0 w-full bg-bgs3 rounded-b-md h-10 p-2 truncate text-b2 border-b border-x border-aps2"
               transition:fade={{ duration: 200 }}
             >
               <!-- TODO - hover content -->
@@ -113,7 +134,7 @@
               <NodeThumbnailTitle node={item} />
             </div>
           {/if}
-        </HoverableElement>
+        </button>
       </div>
     {/each}
   </div>
@@ -133,10 +154,10 @@
           {item}
           {parentBgIndex}
           {arrangement}
+          {isDraggable}
           collectionContext={"board"}
           {isApplyCustomColor}
-          on:click={(e) =>
-            appStore.resourceClickHandler(e, item.id, ResourceAccessMode.POP)}
+          on:click={(e) => appStore.resourceClickHandler(e, item.id)}
         />
       {/each}
     </div>

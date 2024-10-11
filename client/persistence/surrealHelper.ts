@@ -1,5 +1,5 @@
 import jwt_decode from "jwt-decode";
-import { Surreal } from "surrealdb.js";
+import { Surreal } from "surrealdb";
 import type { MergeRecord, QueryParams } from "../types/persistance.type";
 import { resolveToken } from "$lib/client/utils/account.utils";
 import {
@@ -30,7 +30,8 @@ export class SurrealDatabaseUsingRest {
   }
   async connect(instance: string, options: any) {
     this.instance = instance;
-    this.token = await clientStorage.get(ClientStorageKey.STOKEN) ?? this.token;
+    this.token =
+      (await clientStorage.get(ClientStorageKey.STOKEN)) ?? this.token;
     await fetch(instance, { method: "POST" });
   }
   /**

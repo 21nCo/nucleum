@@ -1,5 +1,6 @@
 export enum Resource {
   ALL = "ALL",
+  unknown = "unknown",
   /**
    * Meta resource for everything
    */
@@ -43,6 +44,7 @@ export enum Resource {
   task = "task",
 
   //Memotron
+  vector = "vector",
   node = "node",
   curation = "curation",
   type = "type",
@@ -55,6 +57,7 @@ export enum Resource {
   file = "file",
   highlight = "highlight",
   link = "link",
+  linkTag = "linkTag",
 
   //Memotron clipper
   clipperToolbarState = "clipperToolbarState",

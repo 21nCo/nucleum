@@ -9,15 +9,23 @@ import type {
 import {
   ResourceAccessMode,
   type CaptureOmittedFields,
+  type IActiveResource,
   type OmitFields,
   type OmitForCapture
 } from "$lib/client/components/flux/resourceStores/resource.type";
 import type { IFile } from "$lib/client/components/files/file.type";
+import type {
+  IActiveCollection,
+  ICollectionExpanded
+} from "../collection/collection.type";
 
 export type INodeItemCaptured = OmitForCapture<INodeInterface> & {
   id: IRecordId;
 };
 
+/**
+ * @deprecated - use {@link INodeThumb} instead
+ */
 export type INodeThumbnail = INodeBaseV1 &
   NodeContent & {
     links: LinkThumbnail[];
@@ -33,7 +41,7 @@ type INodeBaseV1 = IMemotronItemBase & {
    * @deprecated - avatar is dynamically resolved from typed collections
    */
   avatar?: IAvatar;
-  properties?: INodeProperty[];
+  properties?: INodePropertyValue[];
   parent?: string;
   creationContext?: string;
   notes?: string;
@@ -47,7 +55,7 @@ type INodeInterface<
   body: TBody;
   contentType: TType;
   metadata?: TMetadata;
-  properties?: INodeProperty[];
+  properties?: INodePropertyValue[];
   parent?: IRecordId;
   /**
    * The context in which the node was created i.e. whether nodes like AUDIO or IMAGE or PDF created independantly or from within a markdown as block. Also, for clips, whether the parent is created independently or as a supplementary when a text clip or tweet is created.
@@ -62,7 +70,7 @@ type INodeInterface<
   file?: IRecordId;
 };
 
-export type ILink = {
+export type ILink = IMemotronItemBase & {
   id: IRecordId;
   in: IRecordId;
   out: IRecordId;
@@ -147,6 +155,7 @@ export type OtherNodeType =
   | NodeType.COLLECTION_AS_EMBED;
 
 export enum NodeType {
+  UNKNOWN = "UNKNOWN",
   NODULAR_MARKDOWN = "NODULAR_MARKDOWN",
   NON_NODULAR_MARKDOWN = "NON_NODULAR_MARKDOWN",
 
@@ -226,6 +235,16 @@ export const headingNodeTypes = [
   NodeType.HEADING5
 ];
 
+export const canHaveTraces = [
+  NodeType.NODULAR_MARKDOWN,
+  NodeType.PDF,
+  NodeType.WEB_PAGE,
+  NodeType.TWITTER_PROFILE,
+  NodeType.YOUTUBE_VIDEO,
+  NodeType.YOUTUBE_CHANNEL,
+  NodeType.KINDLE_BOOK
+];
+
 export const structuralNodeTypes = [
   NodeType.DIVIDER,
   NodeType.DOUBLE_DIVIDER,
@@ -262,9 +281,6 @@ export enum NodeRightPaneType {
   PROPERTIES = "PROPERTIES",
   TRACES = "TRACES",
   SIDENOTES = "SIDENOTES",
-  /**
-   * @deprecated - merged into properties
-   */
   METADATA = "METADATA",
   LINKS = "LINKS",
   /**
@@ -278,9 +294,20 @@ export enum NodeRightPaneType {
   SERENDIPITY = "SERENDIPITY"
 }
 
-export type INodeLink = {
-  id: IRecordId;
+type INodeLinkBase = {
   linkType: LinkType;
+  tags?: IRecordId[];
+};
+
+export type INodeLink = IMemotronItemBase &
+  INodeLinkBase & {
+    in: IRecordId;
+    out: IRecordId;
+  };
+
+export type INodeLinkThumb = INodeLinkBase & {
+  id: IRecordId;
+  linkedTo: IRecordId;
 };
 
 export type LinkThumbnail = INodeLink & {
@@ -296,8 +323,8 @@ export enum LinkType {
 
 export type INodeMetadata = { location?: any };
 
-export type INodeProperty = {
-  id: string;
+export type INodePropertyValue = {
+  id: IRecordId;
   value: IPropertyValue | null;
 };
 
@@ -352,6 +379,40 @@ type MediaNodeType =
 export type IMediaNode = INodeInterface<MediaNodeType, any, INodeMetadata> & {
   file: IRecordId;
 };
+
+// ===== Layout node types =====
+
+export type IMediaGridItem = {
+  id: string;
+  file: IRecordId;
+  position: {
+    auto: number;
+    columns: {
+      index: number;
+      columnNo: number;
+    };
+  };
+};
+
+export enum MediaGridType {
+  AUTO = "AUTO",
+  COLUMNS = "COLUMNS"
+}
+
+export type IMediaGridBody = {
+  items: IMediaGridItem[];
+  type: MediaGridType;
+  gap: number;
+  altText: string;
+  noOfColumns: number;
+  isWideLayout: boolean;
+};
+
+export type IMediaGridNode = INodeInterface<
+  NodeType.MEDIA_GRID,
+  IMediaGridBody,
+  INodeMetadata
+>;
 
 // ===== Web node types =====
 
@@ -484,7 +545,7 @@ type IWebScreenshotClipBody = {
   /**
    * @deprecated - use file instead
    */
-  s3Url: string;
+  s3Url?: string;
 };
 export type IWebScreenshotClip = INodeInterface<
   NodeType.WEB_SCREENSHOT_CLIP,
@@ -596,7 +657,10 @@ export type INodeBody =
   | IWebScreenshotClipBody
   | IKindleHighlightBody;
 
-export type IClipCapture = OmitFields<IClip, CaptureOmittedFields | "label">;
+export type IClipCapture = OmitFields<
+  IClip,
+  CaptureOmittedFields | "label" | "url" | "parent"
+>;
 
 export enum NodeIdPrefix {
   TWITTER_PROFILE = "twitterProfile"
@@ -631,24 +695,23 @@ export type INode =
   | IWebPage
   | IClip;
 
-export type IActiveNode = INode & {
-  md: IMarkdown;
-  parent?: INode;
-  file?: IFile;
-  mdParent?: IRecordId[];
-  accessMode: ResourceAccessMode;
-  focusedBlock?: string;
-  collections?: IRecordId[];
-  types?: string[];
-  avatars?: IAvatar[];
-  propertyConfig?: IProperty[];
-  wordCount?: number;
-  pdfAnnotations?: any[];
-  links?: INodeLink[];
-  children?: IActiveNode[];
-  childrenHierarchy?: IRecordId[];
-  forelinks?: LinkThumbnail[];
-};
+export type IActiveNode = INode &
+  IActiveResource & {
+    md: IMarkdown;
+    parent?: INode;
+    file?: IFile;
+    mdParent?: IRecordId[];
+    accessMode: ResourceAccessMode;
+    focusedBlock?: string;
+    collections?: IRecordId[];
+    types?: ICollectionExpanded[];
+    wordCount?: number;
+    pdfAnnotations?: any[];
+    links?: INodeLinkThumb[];
+    children?: IActiveNode[];
+    childrenHierarchy?: IRecordId[];
+    forelinks?: LinkThumbnail[];
+  };
 
 export type INodeThumb = INode & {
   file?: IFile;

@@ -14,7 +14,7 @@
   import { formatDatetime } from "$lib/client/utils/time.utils";
 
   onMount(() => {
-    logger.debug({ at: "SyncPane onMount", syncStore: $syncStore });
+    logger.log({ at: "SyncPane onMount", syncStore: $syncStore });
   });
   function resolveLabel() {
     if ($syncStore.id === NodeType.KINDLE_BOOK) return "Kindle highlights sync";
@@ -42,11 +42,22 @@
         size={Size.sm}
         type={ButtonVariant.PRIMARY}
         label={resolveButtonLabel($syncStore.status)}
+        isDisabled={$syncStore.status === SyncStatus.SYNCING}
         on:click={() => {
+          if ($syncStore.status === SyncStatus.SYNCING) return;
           appEvents.publish(ClipperExtensionEvent.START_SYNC);
         }}
       />
     </div>
+    {#if $syncStore.status === SyncStatus.SYNCING}
+      <div class="w-full flex justify-center">
+        {#if $syncStore.progress}
+          {$syncStore.progress}%
+        {:else}
+          Extracting...
+        {/if}
+      </div>
+    {/if}
     {#if $syncStore.lastSyncedAt}
       <span class="text-b3 text-fgs3 w-full flex justify-center">
         <span>

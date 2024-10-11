@@ -10,6 +10,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import type { ISelectItem } from "$lib/client/types/select.type";
   import PanelSwitcherItemLabel from "./PanelSwitcherItemLabel.svelte";
+  import { rearrangeOnAxis } from "$lib/client/actions/rearrange.action";
   const dispatch = createEventDispatcher();
   export let item: ISelectItem;
   export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
@@ -25,6 +26,7 @@
   export let parentBgIndex: number = 1;
   export let isShowNumberShortcut: boolean = false;
   export let index: number = 0;
+
   function onClick() {
     if (item.value === "$add") {
       dispatch("add");
@@ -32,12 +34,20 @@
       dispatch("click", item.value);
     }
   }
+
+  function handleRearrange(displacement: number) {
+    dispatch("rearrange", displacement);
+  }
+
+  function handleRearranged(displacement: number) {
+    dispatch("rearranged", displacement);
+  }
 </script>
 
 <!-- TODO - svelte 5 snippets for PanelSwitcherItemLabel multiple references -->
 {#if style === PanelSwitcherStyle.BAR}
   <button
-    class={cn("flex relative bg-transparent", {
+    class={cn("relative flex bg-transparent", {
       "px-4":
         (size === Size.md || size === Size.lg) &&
         barStyle === BarStyle.OVERFLOW &&
@@ -52,6 +62,12 @@
     })}
     on:click={onClick}
     disabled={isDisabled}
+    use:rearrangeOnAxis={{
+      enabled: isInEditMode,
+      onRearrange: handleRearrange,
+      onRearranged: handleRearranged,
+      threshold: 30
+    }}
   >
     <div
       class={cn("flex items-center min-w-fit", {
@@ -101,6 +117,12 @@
     })}
     disabled={isDisabled}
     on:click={onClick}
+    use:rearrangeOnAxis={{
+      enabled: isInEditMode,
+      onRearrange: handleRearrange,
+      onRearranged: handleRearranged,
+      threshold: 30
+    }}
   >
     <PanelSwitcherItemLabel
       {item}

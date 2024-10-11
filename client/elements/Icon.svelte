@@ -6,7 +6,7 @@
   import Stack from "../icons/Stack.svelte";
   import { ChatIconVariant, IconVariant } from "../types/icon.type";
   import ChevronDouble from "../icons/ChevronDouble.svelte";
-  import { Position, Orientation } from "../types/direction.enum";
+  import { Placement, Orientation } from "../types/direction.enum";
   import { Size } from "../types/size.enum";
   import Command from "../icons/Command.svelte";
   import Chevron from "../icons/Chevron.svelte";
@@ -120,9 +120,17 @@
   import Highlight from "../icons/Highlight.svelte";
   import IconifyIcon from "@iconify/svelte";
   import { logger } from "../components/debug/logger.client";
+  import { isExtensionEnvironment } from "../utils/browser.utils";
+  import Crop from "../icons/Crop.svelte";
+  import PencilSimpleLine from "../icons/PencilSimpleLine.svelte";
+  import Highlighter from "../icons/Highlighter.svelte";
+  import PhCrossCircled from "../icons/PhCrossCircled.svelte";
+  import PhBookmarks from "../icons/PhBookmarks.svelte";
+  import PhArrowElbow from "../icons/PhArrowElbow.svelte";
 
   export let icon: string | undefined = undefined;
-  export let size: Size.xs | Size.sm | Size.md | Size.lg | Size.xl = Size.md;
+  export let size: Size.xs | Size.sm | Size.md | Size.lg | Size.xl | Size.xxl =
+    Size.md;
   /**
    * When an icon context switches between normal and accent bg as its parent.
    * If undefined, the icon will not change its appearance based on the context.
@@ -138,7 +146,16 @@
    * Whether the icon is tabbable or not. Default is false as icons are used in buttons and other elements that are tabbable by default.
    */
   export let isTabbable: boolean = false;
+
+  /**
+   * Used for iconify icons to determine if the icon should be filled or not.
+   */
+  export let isFilled: boolean = false;
+
+  $: renderedIconifyIcon = resolveRenderedIconForIconify(icon, isFilled);
+
   let classListParam = "";
+  let dev_useIconifyTailwind = false;
   export { classListParam as class };
   let _classList = "";
   let variant: IconVariant = IconVariant.Outline;
@@ -226,6 +243,27 @@
         : IconVariant.Solid;
     }
   }
+
+  function resolveRenderedIconForIconify(
+    icon: string | undefined,
+    isFilled: boolean
+  ) {
+    if (!icon || !icon.includes(":")) {
+      return undefined;
+    }
+    let renderedIcon = icon;
+    if (icon.includes("fa6-brands") || icon.includes("lets-icons")) {
+      renderedIcon = icon;
+    } else if (icon.includes("-light")) {
+      renderedIcon = isFilled ? icon.replace("-light", "-fill") : icon;
+    } else if (icon.includes("-thin")) {
+      renderedIcon = isFilled ? icon.replace("-thin", "-fill") : icon;
+    }
+    if (dev_useIconifyTailwind) {
+      renderedIcon = renderedIcon.replace(":", "--");
+    }
+    return renderedIcon;
+  }
 </script>
 
 <button
@@ -233,22 +271,39 @@
   tabindex={isTabbable ? 0 : -1}
   on:click
 >
-  {#if icon?.includes(":")}
-    <!-- TODO - fix import issue on plasmo - disabling for now -->
-    <IconifyIcon
-      {icon}
-      width={size === Size.lg
-        ? "1.5rem"
-        : size === Size.md
-          ? "1.25rem"
-          : "1rem"}
-      height={size === Size.lg
-        ? "1.5rem"
-        : size === Size.md
-          ? "1.25rem"
-          : "1rem"}
-      class={_classList + " iconifysvg " + icon}
-    />
+  {#if icon?.includes(":") && renderedIconifyIcon && !isExtensionEnvironment()}
+    {#if !dev_useIconifyTailwind}
+      <!-- TODO - fix import issue on plasmo - disabling for now -->
+      {@const sizePx =
+        size === Size.xxl
+          ? "3rem"
+          : size === Size.xl
+            ? "1.75rem"
+            : size === Size.lg
+              ? "1.5rem"
+              : size === Size.md
+                ? "1.25rem"
+                : "1rem"}
+      <div
+        class={cn(renderedIconifyIcon, {
+          "w-14 h-14": size === Size.xxl,
+          "w-8 h-8": size === Size.xl,
+          "w-6 h-6": size === Size.lg,
+          "w-[1.25rem] h-[1.25rem]": size === Size.md,
+          "w-4 h-4": size === Size.sm,
+          "w-3 h-3": size === Size.xs
+        })}
+      >
+        <IconifyIcon
+          icon={renderedIconifyIcon}
+          width={sizePx}
+          height={sizePx}
+          class={_classList + " iconifysvg "}
+        />
+      </div>
+    {:else if dev_useIconifyTailwind}
+      <span class="iconify text-fgs1 {renderedIconifyIcon} w-5 h-5"></span>
+    {/if}
   {:else if icon}
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -387,43 +442,43 @@
       {:else if icon === "academic-cap"}
         <AcademicCap {variant} />
       {:else if icon === "chevleft"}
-        <Chevron direction={Position.Left} />
+        <Chevron direction={Placement.Left} />
       {:else if icon === "chevright"}
-        <Chevron direction={Position.Right} />
+        <Chevron direction={Placement.Right} />
       {:else if icon === "chevdown"}
-        <Chevron direction={Position.Bottom} />
+        <Chevron direction={Placement.Bottom} />
       {:else if icon === "chevup"}
-        <Chevron direction={Position.Top} />
+        <Chevron direction={Placement.Top} />
       {:else if icon === "download"}
         <Download {variant} />
       {:else if icon === "arrow-left"}
-        <Arrow direction={Position.Left} />
+        <Arrow direction={Placement.Left} />
       {:else if icon === "arrow-right"}
-        <Arrow direction={Position.Right} />
+        <Arrow direction={Placement.Right} />
       {:else if icon === "arrow-up"}
-        <Arrow direction={Position.Top} />
+        <Arrow direction={Placement.Top} />
       {:else if icon === "arrow-down"}
-        <Arrow direction={Position.Bottom} />
+        <Arrow direction={Placement.Bottom} />
       {:else if icon === "arrow-down-right"}
-        <Arrow direction={Position.BottomRight} />
+        <Arrow direction={Placement.BottomRight} />
       {:else if icon === "arrow-down-left"}
-        <Arrow direction={Position.BottomLeft} />
+        <Arrow direction={Placement.BottomLeft} />
       {:else if icon === "arrow-up-right"}
-        <Arrow direction={Position.TopRight} {variant} />
+        <Arrow direction={Placement.TopRight} {variant} />
       {:else if icon === "arrow-up-right-mini"}
-        <Arrow direction={Position.TopRight} variant={IconVariant.Mini} />
+        <Arrow direction={Placement.TopRight} variant={IconVariant.Mini} />
       {:else if icon === "arrow-down-right-mini"}
-        <Arrow direction={Position.BottomRight} variant={IconVariant.Mini} />
+        <Arrow direction={Placement.BottomRight} variant={IconVariant.Mini} />
       {:else if icon === "arrow-right-circled"}
-        <Arrow direction={Position.Right} isCircled={true} {variant} />
+        <Arrow direction={Placement.Right} isCircled={true} {variant} />
       {:else if icon === "arrow-right-circled-mini"}
         <Arrow
-          direction={Position.Right}
+          direction={Placement.Right}
           isCircled={true}
           variant={IconVariant.Mini}
         />
       {:else if icon === "arrow-right-mini"}
-        <Arrow direction={Position.Right} variant={IconVariant.Mini} />
+        <Arrow direction={Placement.Right} variant={IconVariant.Mini} />
       {:else if icon === "full-screen"}
         <ArrowsPointingOut {variant} />
       {:else if icon === "collapse"}
@@ -443,9 +498,9 @@
       {:else if icon === "collapse"}
         <ArrowsPointingIn {variant} />
       {:else if icon === "chevdoubleleft"}
-        <ChevronDouble direction={Position.Left} />
+        <ChevronDouble direction={Placement.Left} />
       {:else if icon === "chevdoubleright"}
-        <ChevronDouble direction={Position.Right} />
+        <ChevronDouble direction={Placement.Right} />
       {:else if icon === "search" && size != Size.xs}
         <Search {variant} />
       {:else if icon === "search" && size === Size.xs}
@@ -563,6 +618,20 @@
         <AltText />
       {:else if icon === "gift"}
         <Gift {variant} />
+      {:else if icon === "ph:crop"}
+        <Crop {variant} />
+      {:else if icon === "ph:pencil-simple-line"}
+        <PencilSimpleLine {variant} />
+      {:else if icon === "ph:highlighter"}
+        <Highlighter {variant} />
+      {:else if icon === "ph:x-circle"}
+        <PhCrossCircled {variant} />
+      {:else if icon === "ph:bookmarks"}
+        <PhBookmarks {variant} />
+      {:else if icon === "ph:arrow-elbow-down-left"}
+        <PhArrowElbow variant="down-left" />
+      {:else if icon === "ph:arrow-elbow-right-up"}
+        <PhArrowElbow variant="right-up" />
       {:else if icon === "magnifying-glass-plus"}
         <MagnifyingGlassPlus {variant} />
       {:else if icon === "magnifying-glass-minus"}
@@ -578,7 +647,7 @@
       {:else if icon === "link-arrow-left"}
         <LinkArrow2 />
       {:else if icon === "link-arrow-down"}
-        <LinkArrow2 direction={Position.Bottom} />
+        <LinkArrow2 direction={Placement.Bottom} />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"

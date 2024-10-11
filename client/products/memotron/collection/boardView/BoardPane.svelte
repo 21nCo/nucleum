@@ -4,7 +4,7 @@
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import type { ICollectionView } from "$lib/client/products/memotron/collection/collection.type";
-  import type { INodeThumbnail } from "$lib/client/products/memotron/node/node.type";
+  import type { INodeThumb } from "$lib/client/products/memotron/node/node.type";
   import type { IProperty } from "$lib/client/products/memotron/collection/properties/property.type";
   import type { ISelectValue } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
@@ -13,24 +13,68 @@
   import { cn } from "$lib/client/utils/ui.utils";
 
   import SubGroup from "./SubGroup.svelte";
-  import { resolvePropertyOptions } from "../../curation/curation.utils";
+  import { resolvePropertyOptions } from "../properties/property.utils";
   import NodeItems from "../NodeItems.svelte";
+  import {
+    isNoneResource,
+    resourceInList
+  } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import type { IRecordId } from "$lib/client/types/data.type";
+  import { logger } from "$lib/client/components/debug/logger.client";
+  import { createEventDispatcher } from "svelte";
+  import { dropzone } from "$lib/client/actions/dragAndDrop.action";
+  const dispatch = createEventDispatcher();
+
   export let view: ICollectionView;
   export let group: any;
   export let data: any;
   export let properties: IProperty[] | null = null;
   export let isBoardOverflow = false;
-  let isRenderColors = false;
+  export let isInEditMode = false;
+  let dev_isRenderColors = true;
   $: subGroups = resolveBoards(view.subGroupBy);
-  function resolveBoards(id: string) {
-    // if (view.subGroups) return view.subGroups;
-    return resolvePropertyOptions(id, properties);
+  $: _groupData = filterGroupData(group.value, data);
+
+  function filterGroupData(val: ISelectValue, data: INodeThumb[]) {
+    if (val === "unassigned") {
+      return data?.filter((node: INodeThumb) => {
+        return (
+          !node.properties?.find(resourceInList(view.groupBy)) ||
+          node.properties?.find(resourceInList(view.groupBy))?.value ===
+            "unassigned"
+        );
+      });
+    }
+    return data?.filter((node: INodeThumb) => {
+      return node.properties?.find(resourceInList(view.groupBy))?.value === val;
+    });
   }
-  function filterSubGroupData(val: ISelectValue) {
-    return data?.filter((node: INodeThumbnail) => {
-      return (
-        node.properties?.find((p) => p.id === view.subGroupBy)?.value === val
-      );
+
+  function resolveBoards(id: IRecordId) {
+    // if (view.subGroups) return view.subGroups;
+    if (isNoneResource(id) || !properties?.find(resourceInList(id))) return [];
+    return [
+      {
+        label: "Unassigned",
+        value: "unassigned"
+      },
+      ...resolvePropertyOptions(id, properties, { isBoardView: true })
+    ];
+  }
+
+  function handleDropForSubGroup(e: any) {
+    dispatch("dropItem", {
+      subGroup: e.detail.subGroup,
+      item: e.detail.id,
+      group: group.value
+    });
+  }
+
+  function handleDrop(e: any) {
+    if (!e.id) return;
+    dispatch("dropItem", {
+      item: e.id,
+      group: group.value
     });
   }
 </script>
@@ -41,18 +85,24 @@
       "board relative h-full min-w-[24rem] dp:w-[28rem] 2k:w-[30rem] flex flex-col gap-2 border border-brs3 px-4 mb-2 rounded-md",
       {
         "overflow-y-auto": isBoardOverflow,
-        "border-ccs3 bg-ccs5": isRenderColors,
-        "border-brs3 bg-bgs1": !isRenderColors
+        "border-ccs3 bg-ccs5": group.color && dev_isRenderColors,
+        "border-brs3 bg-bgs1": !group.color || !dev_isRenderColors
       }
     )}
-    style="height: calc(100vh - 95px);"
+    style="height: calc(100vh - 120px);"
+    use:dropzone={{
+      duringDragoverClasses: "!border-ccs1",
+      itemRequirement: "resource",
+      onDrop: handleDrop,
+      enabled: subGroups.length < 1
+    }}
   >
     <div
       class={cn(
-        "board-title sticky top-0 flex items-center w-full justify-between py-4",
+        "board-title sticky top-0 z-1 flex items-center w-full justify-between py-4",
         {
-          "bg-bgs1": !isRenderColors,
-          "bg-ccs5": isRenderColors
+          "bg-bgs1": !dev_isRenderColors,
+          "bg-ccs5": dev_isRenderColors
         }
       )}
     >
@@ -64,15 +114,22 @@
         {#each subGroups as subGroup}
           <SubGroup
             {subGroup}
-            data={filterSubGroupData(subGroup.value)}
+            {isInEditMode}
+            {view}
+            data={_groupData}
             arrangement={view.arrangement}
+            density={1}
+            isApplyCustomColor={group.color}
+            on:dropItem={handleDropForSubGroup}
           />
         {/each}
-      {:else if isValidArrayWithData(data)}
+      {:else if isValidArrayWithData(_groupData)}
         <NodeItems
-          nodes={data}
+          nodes={_groupData}
           arrangement={view.arrangement}
-          isApplyCustomColor={isRenderColors}
+          density={1}
+          isDraggable={true}
+          isApplyCustomColor={dev_isRenderColors && group.color}
         />
       {:else}
         <EmptyStatusView size={Size.sm} subText="No items meet this criteria" />

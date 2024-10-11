@@ -3,6 +3,8 @@ import type { UserDate } from "$lib/client/types/userDate.type";
 import { FileSizeMeasurement } from "$lib/client/types/fileSizeMeasurement.enum";
 import { ActionType } from "$lib/client/types/action.type";
 import { isValidArrayWithData } from "../../shared/utils/obj.utils";
+import { performApiCall } from "./network.utils";
+import { extractFullTabData } from "../extensions/clipper/clipper.utils";
 
 export function onInterval(
   callback: () => void,
@@ -248,3 +250,25 @@ export const nonTrashFilter = (x: any) => !x.trashInformation;
 
 export const textTruncateMapper = (x: string, length: number = 15) =>
   x?.length > length ? x.slice(0, length) + "..." : x;
+
+export async function retrieveUrlData(url: string) {
+  const response = await performApiCall("utils/n/run", "POST", {
+    url,
+    action: "get-webpage"
+  });
+  const data = await response.json();
+  let parsedData = null;
+  if (data?.text) {
+    parsedData = await parseHtml(data.text);
+    console.log("parsed html", parsedData);
+  }
+  return { ...data, parsedData };
+  function parseHtml(html: string) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    return extractFullTabData(doc, {
+      docText: html,
+      url
+    });
+  }
+}

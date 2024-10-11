@@ -20,3 +20,12 @@
     <slot />
   </ThemeLayer>
 </div>
+
+<style>
+  @font-face {
+    font-family: "Shared";
+    src: url("/fonts/Share.ttf") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+  }
+</style>

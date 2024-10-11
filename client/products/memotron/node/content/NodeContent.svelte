@@ -18,25 +18,28 @@
   import Divider from "$lib/client/elements/Divider.svelte";
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import { formatDatetime } from "$lib/client/utils/time.utils";
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import { logger } from "$lib/client/components/debug/logger.client";
   export let node: IActiveNodeStore;
   export let mdId: string;
   let previousRootStructure: string[] = [];
-  let refreshId = Date.now();
+  let refreshId: number | undefined = undefined;
   let markdownRef: any;
   import { setContext } from "svelte";
   import { BlockAction } from "$lib/client/components/markdown/md.type";
   import { wordCounter } from "$lib/client/actions/counter.action";
+  import { generateResourceId } from "$lib/client/components/flux/flux.utils";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { Size } from "$lib/client/types/size.enum";
 
   function handleEvent(event: string, data: any) {
     logger.log({ at: "node context", event, data });
     if (!event) return;
     if (event === "mention") {
-      if (!data.id || !data.location) return;
-      node.mention(data.location, data.id);
+      if (!data.item || !data.location) return;
+      node.mention(data.location, data.item.id);
     }
   }
   const contentContext = {
@@ -44,8 +47,28 @@
   };
   setContext("content", contentContext);
 
-  onMount(() => {
-    const focusEventSub = node.eventStore.subscribe((x) => {
+  let focusEventSub: any;
+
+  onMount(async () => {
+    if ($node.children && $node.children.length < 1) {
+      const id = generateResourceId(Resource.node);
+      const createdBlock = await node.createBlock(id, NodeType.SIMPLE_TEXT, {
+        body: ""
+      });
+      console.log({ createdBlock });
+      if (createdBlock?.[0]) {
+        await node.modify(
+          {
+            children: [createdBlock[0].id]
+          },
+          {
+            isPreventBackPropagation: true
+          }
+        );
+        $node.children = [createdBlock[0]];
+      }
+    }
+    focusEventSub = node.eventStore.subscribe((x) => {
       logger.log({ at: "Node content - nodeFocusEvent", x, id: $node.id });
       if (!x) return;
       const currentAccessMode = appStore.determineCurrentResourceAccessMode(
@@ -54,7 +77,7 @@
       const clickedAccessMode = appStore.determineClickAccessMode(x.event);
       console.log({ currentAccessMode, clickedAccessMode });
       if (clickedAccessMode && clickedAccessMode !== currentAccessMode) {
-        appStore.resourceClickHandler(x.event, x.id, currentAccessMode);
+        appStore.openResource(x.id, currentAccessMode);
         node.eventStore.set(undefined);
         return;
       }
@@ -64,13 +87,16 @@
       } else if (result.status === 0) {
         node.unFocus();
       } else if (result.status === -1) {
-        appStore.resourceClickHandler(x.event, x.id, currentAccessMode);
+        appStore.openResource(x.id, currentAccessMode);
       }
       node.eventStore.set(undefined);
     });
-    return () => {
-      focusEventSub();
-    };
+
+    refreshId = Date.now();
+  });
+
+  onDestroy(() => {
+    focusEventSub();
   });
 
   function refreshCounts(e: any) {
@@ -79,12 +105,8 @@
     $node.charCount = e.characters;
   }
 
-  function retireveNode() {
-    node.fetch();
-    refreshId = Date.now();
-  }
   function onMarkdownContentChange(e: CustomEvent) {
-    logger.debug({ at: "NodeContent - onMarkdownContentChange", ...e.detail });
+    logger.log({ at: "NodeContent - onMarkdownContentChange", ...e.detail });
     const block = e.detail.block;
     if (block.source && "body" in block) {
       node.updateBlock(block.source, { body: block.body });
@@ -92,7 +114,7 @@
   }
 
   function onReStructure(e: CustomEvent) {
-    logger.debug({ at: "NodeContent - onReStructure", ...e.detail });
+    logger.log({ at: "NodeContent - onReStructure", ...e.detail });
     const differences = shallowDiff(previousRootStructure, e.detail.root);
     console.log("Differences", differences);
     if (isValidArrayWithData(differences)) {
@@ -138,10 +160,10 @@
       logger.log({ at: "NodeContent - onInsert", ...e.detail });
       const detail = e.detail;
       if (!detail?.id) return;
-      const result = await node.createBlock(
-        detail.id,
-        detail.blockType ?? NodeType.SIMPLE_TEXT
-      );
+      const blockType = detail.blockType ?? NodeType.SIMPLE_TEXT;
+      const result = await node.createBlock(detail.id, blockType, {
+        body: blockType === NodeType.SIMPLE_TEXT ? "" : null
+      });
     }
 
     function onConvert(e: CustomEvent) {
@@ -152,8 +174,14 @@
             contentType: e.detail.toType,
             children: []
           });
-        } else
+        } else if (e.detail.toType === NodeType.MEDIA_GRID) {
+          node.updateBlock(e.detail.source, {
+            contentType: e.detail.toType,
+            body: null
+          });
+        } else {
           node.updateBlock(e.detail.source, { contentType: e.detail.toType });
+        }
       }
     }
 
@@ -173,54 +201,56 @@
   }
 </script>
 
-{#key refreshId}
-  <div
-    class="flex flex-col h--full grow pt-2"
-    use:wordCounter={{ onUpdate: refreshCounts }}
-  >
-    {#if $node && ($node.contentType === NodeType.NODULAR_MARKDOWN || ($node.contentType === NodeType.NON_NODULAR_MARKDOWN && "body" in $node) || (headingNodeTypes.includes($node.contentType) && "children" in $node))}
-      <NodularMarkdown
-        node={$node}
-        {mdId}
-        bind:md={$node.md}
-        bind:this={markdownRef}
-        on:change={onMarkdownContentChange}
-        on:restructure={onReStructure}
-        on:focus={onFocus}
-        on:ready={refreshCounts}
-        on:action={onBlockAction}
-      />
-      <div class="flex w-full justify-center items-center mt--20 mt-4">
-        <div class="flex flex-col gap-2 ml-12 w-full mo:w--9/10 w--4/5">
-          <Divider colorStrength={ColorStrength.Strong} />
-          <div class="flex w-full justify-between text-b3 text-fgs3">
-            <!-- <div class="text-b3 text-fgs3">End of content.</div> -->
-            <div>
-              {$node.wordCount} words
-            </div>
-            <div class="min-w-fit whitespace-nowrap">
-              Modified: {formatDatetime(
-                $userPreferences,
-                new Date($node.modifiedAt)
-              )}
+{#if refreshId}
+  {#key refreshId}
+    <div
+      class="flex flex-col h--full grow pt-2"
+      use:wordCounter={{ onUpdate: refreshCounts }}
+    >
+      {#if $node && ($node.contentType === NodeType.NODULAR_MARKDOWN || ($node.contentType === NodeType.NON_NODULAR_MARKDOWN && "body" in $node) || (headingNodeTypes.includes($node.contentType) && "children" in $node))}
+        <NodularMarkdown
+          node={$node}
+          {mdId}
+          bind:md={$node.md}
+          bind:this={markdownRef}
+          on:change={onMarkdownContentChange}
+          on:restructure={onReStructure}
+          on:focus={onFocus}
+          on:ready={refreshCounts}
+          on:action={onBlockAction}
+        />
+        <div
+          class="flex w-full justify-center items-center mt-8 exclude-from-count"
+        >
+          <div class="flex flex-col gap-2 ml-12 w-full mo:w--9/10 w--4/5">
+            <Divider colorStrength={ColorStrength.Strong} />
+            <div class="flex w-full justify-between text-b3 text-fgs3">
+              <!-- <div class="text-b3 text-fgs3">End of content.</div> -->
+              <div>
+                {$node.wordCount} words
+              </div>
+              <div class="min-w-fit whitespace-nowrap">
+                Modified: {formatDatetime(
+                  $userPreferences,
+                  new Date($node.modifiedAt)
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      <ScrollViewBottomSpacer />
-      <ScrollViewBottomSpacer />
-      <ScrollViewBottomSpacer />
-    {:else if $node?.contentType === NodeType.WEB_PAGE && $node.children && $node.children.length > 0}
-      <div class="flex flex-col items-start gap-4">
-        <Text content="Clips" style={TextStyle.SECTION_HEADING} />
-        <div class="flex flex-col items-start gap-2 overflow-auto">
-          {#each $node.children as clip}
-            <div class="bg-bgs2 rounded-md p-2">
-              {clip?.body?.text}
-            </div>
-          {/each}
+        <ScrollViewBottomSpacer size={Size.xl} />
+      {:else if $node?.contentType === NodeType.WEB_PAGE && $node.children && $node.children.length > 0}
+        <div class="flex flex-col items-start gap-4">
+          <Text content="Clips" style={TextStyle.SECTION_HEADING} />
+          <div class="flex flex-col items-start gap-2 overflow-auto">
+            {#each $node.children as clip}
+              <div class="bg-bgs2 rounded-md p-2">
+                {clip?.body?.text}
+              </div>
+            {/each}
+          </div>
         </div>
-      </div>
-    {/if}
-  </div>
-{/key}
+      {/if}
+    </div>
+  {/key}
+{/if}

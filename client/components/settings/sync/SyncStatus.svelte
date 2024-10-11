@@ -1,0 +1,40 @@
+<script lang="ts">
+  import { cn } from "$lib/client/utils/ui.utils";
+  import { onMount } from "svelte";
+  import { flux } from "../../flux/flux";
+  import { formatDatetime } from "$lib/client/utils/time.utils";
+  import { userPreferences } from "../userPreferences.store";
+  let status: "SYNCED" | "PENDING" = "SYNCED";
+  let itemsPendingForSync: any[] = [];
+  let lastSyncedAt: string | null = null;
+  onMount(async () => {
+    const { mutations, lastSyncedAt: _lastSyncedAt } =
+      await flux.resolveItemsForSyncUp();
+    console.log({ mutations, lastSyncedAt: _lastSyncedAt });
+    if (mutations && mutations.length > 0) {
+      status = "PENDING";
+      itemsPendingForSync = mutations;
+    }
+    lastSyncedAt = _lastSyncedAt;
+  });
+</script>
+
+<div class="flex items-center gap-2 border- border-brs3 px-4 py-1 rounded-md">
+  <span
+    class={cn("w-3 h-3 rounded-full", {
+      "bg-ags1": status === "SYNCED",
+      "bg-ass1": status === "PENDING"
+    })}
+  >
+  </span>
+  <span class="text-b3 text-fgs3"
+    >{status === "SYNCED"
+      ? "Synced"
+      : `Pending ${itemsPendingForSync?.length} items`}</span
+  >
+  {#if lastSyncedAt}
+    <span class="text-b3 text-fgs3"
+      >{formatDatetime($userPreferences, new Date(+lastSyncedAt))}</span
+    >
+  {/if}
+</div>

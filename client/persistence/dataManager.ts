@@ -314,6 +314,9 @@ function init() {
     }
   };
 }
+/**
+ * @deprecated - use flux instead
+ */
 export const dataManager = init();
 
 /**

@@ -2,12 +2,14 @@
   import { onMount } from "svelte";
   import { createClipPointer } from "$lib/client/extensions/clipper/clipper.utils";
   import { ExtensionEvent } from "$lib/client/types/extension.type";
-  import { NodeType } from "$lib/client/products/memotron/node/node.type";
+  import {
+    NodeType,
+    type IClipCapture
+  } from "$lib/client/products/memotron/node/node.type";
   import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
   import { webpage } from "./store";
   import { appEvents } from "$lib/client/stores/notification.store";
   import { logger } from "$lib/client/components/debug/logger.client";
-  import account from "$lib/client/stores/account.store";
   import { relayToBackgroundScript } from "$lib/client/utils/extension.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
 
@@ -40,22 +42,18 @@
         const timestamp = Math.floor(videoPlayer.currentTime);
         placePointerOnPlayer(timestamp);
         const contentType = "image/png";
-        const dataURL = captureVideoFrame(videoPlayer);
+        const dataUrl = captureVideoFrame(videoPlayer);
         let s3Url;
-        const s3SignedURL = await account.getSignedUrl(
-          contentType,
-          "screenshot.png",
-          false
-        );
         const response = await relayToBackgroundScript({
-          event: ExtensionEvent.UPLOAD_TO_S3_USING_UPLOAD_URL,
-          data: { s3SignedURL, dataURL, contentType }
+          event: ExtensionEvent.UPLOAD_FILE,
+          data: { dataUrl, contentType }
         });
-        if (response == 200) {
-          s3Url = s3SignedURL.uploadURL.split("?")[0];
-        }
         const videoUrlWithTimestamp = `https://www.youtube.com/watch?v=${videoId}&t=${timestamp}s`;
-        return { videoUrlWithTimestamp, timestamp, s3Url };
+        const fileId =
+          response && typeof response === "object" && "id" in response
+            ? response.id
+            : "";
+        return { videoUrlWithTimestamp, timestamp, fileId };
       } else {
         console.error(
           "YouTube video player not found or no video is currently playing."
@@ -144,17 +142,18 @@
   });
 
   async function onClick() {
-    const { videoUrlWithTimestamp, timestamp, s3Url } = await clip();
-
-    await webpage.saveClip({
+    const clipDetails = await clip();
+    if (!clipDetails) return;
+    const clipItem: IClipCapture = {
       contentType: NodeType.YOUTUBE_TIMESTAMP_CLIP,
+      url: clipDetails.videoUrlWithTimestamp,
       body: {
-        timestamp,
-        url: videoUrlWithTimestamp,
-        s3Url
+        timestamp: clipDetails.timestamp,
+        thumbnail: clipDetails.fileId
       },
       metadata: {}
-    });
+    };
+    await webpage.saveClip(clipItem);
     clipCount++;
     //TODO - show feedback
     chrome.runtime.sendMessage({

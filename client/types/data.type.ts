@@ -1,7 +1,8 @@
 import type { Writable } from "svelte/store";
 import type { LocalDexie } from "$local/local";
 import type { ISurrealDatabase } from "./db.type";
-import type { RecordId } from "surrealdb.js";
+import type { RecordId } from "surrealdb";
+import type { ResourceActionType } from "../components/flux/resourceStores/resource.type";
 
 /**
  * The operations which can be performed on a cacheable store
@@ -33,12 +34,17 @@ export interface IStore {
    * The type of data the store holds
    */
   dataType: StoreDataType;
+
+  isInMemory?: boolean;
+
   /**
    * The data in the store
    * @returns the data in the store
    */
   get: () => any;
+
   /**
+   * @deprecated - use ComponentLayer to listen to syncDown and change events
    * The query to be used to refresh the store
    */
   refreshQuery?: string;
@@ -50,11 +56,13 @@ export interface IStore {
   dependencies?: ResourceDependency[];
 
   /**
+   * @deprecated - use ComponentLayer to listen to syncDown and change events
    * The resources on which the store depends on
    */
   resourceDependencies?: string[];
 
   /**
+   * @deprecated - use ComponentLayer to listen to syncDown and change events
    * The resources which will be mutated by the store
    */
   mutatingResources?: string[];
@@ -83,9 +91,24 @@ export interface IStore {
    */
   dboDependencies?: string[];
   loader?: (data: any) => void;
-  search?: (query: string) => Promise<any>;
+  search?: (query: string) => any;
+  /**
+   *
+   * @deprecated - use ComponentLayer to listen to syncDown and change events
+   *
+   */
   resolveRefreshQuery?: () => string;
+  /**
+   *
+   * @deprecated - use ComponentLayer to listen to syncDown and change events
+   *
+   */
   refresh?: (params?: any) => Promise<any>;
+  /**
+   *
+   * @deprecated - use ComponentLayer to listen to syncDown and change events
+   *
+   */
   propagateDependencyChanges?: (params: any) => void;
 }
 
@@ -94,7 +117,7 @@ export interface IStore {
  */
 export enum StoreDataType {
   /**
-   * @deprecated
+   * @deprecated - use ResourceStore with inMemory: true
    * Finite and infrequently mutated Records
    */
   FIR = "FIR",
@@ -235,7 +258,7 @@ export type IMergeMutation<T> = {
 
 export type IDeleteMutation = {
   action: PersistenceActionType.DELETE;
-  recordId: string;
+  recordId: IRecordId;
 };
 
 export type IBulkEditMutation<T> = {
@@ -264,8 +287,11 @@ export type IResourceFilterValue =
   | undefined
   | IPrimitiveDbDataType[]
   | {
-      from: IPrimitiveDbDataType;
-      to: IPrimitiveDbDataType;
+      greaterThan?: IPrimitiveDbDataType;
+      lessThan?: IPrimitiveDbDataType;
+      greaterThanOrEqual?: IPrimitiveDbDataType;
+      lessThanOrEqual?: IPrimitiveDbDataType;
+      notIn?: IPrimitiveDbDataType[];
     };
 
 export type IResourceSelectOrderBy = {
@@ -311,9 +337,24 @@ export type IResourceSelectFilters =
     }
   | IResourceFilterGroup;
 
+export enum SearchType {
+  FULL_TEXT = "FULL_TEXT",
+  SEMANTIC = "SEMANTIC"
+}
+
 export type IResourceSelectParams = {
   /**
-   * Properties to be selected.
+   * Should the searh be semantic or full text.
+   */
+  searchType?: SearchType;
+  /**
+   * Number of top matches to be retireved for semantic search.
+   */
+  semanticSearchTopK?: number;
+
+  /**
+   * Properties to be selected, that is items to be present in select statement.
+   * Eg: SELECT properties[0], properties[1], properties[2] FROM table;
    */
   properties?: string[];
   /**
@@ -373,8 +414,11 @@ export type IMutation = {
   id: string;
   createdAt: string;
   modifiedAt: string;
+  timestamp: number;
   dapId: string;
   userId: string;
   resource: string;
+  resourceId?: IRecordId | IRecordId[];
+  action: ResourceActionType;
   params: IMutationParamsv2<any>;
 };

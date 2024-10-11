@@ -3,7 +3,7 @@
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { toasts } from "$lib/client/stores/notification.store";
   import Button from "$lib/client/elements/button/Button.svelte";
-  import { Position } from "$lib/client/types/direction.enum";
+  import { Placement } from "$lib/client/types/direction.enum";
   import { InputStyle } from "$lib/client/types/input.type";
   import TextSearchInput from "$lib/client/elements/input/TextSearchInput.svelte";
   import GoalSearchThumbnail from "../../../goals/thumbnails/GoalSearchThumbnail.svelte";
@@ -60,7 +60,7 @@
           icon="cross"
           tooltip="Clear"
           tooltipOptions={{
-            placement: Position.Left
+            placement: Placement.Left
           }}
         />
       </div>

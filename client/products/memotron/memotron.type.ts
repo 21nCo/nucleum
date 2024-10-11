@@ -15,15 +15,6 @@ export interface TrashInformation {
   deletedBy: string;
 }
 
-export enum MemotronResourceType {
-  NODE = "node",
-  COLLECTION = "collection",
-  TYPED_COLLECTION = "typed_collection",
-  QUERY_COLLECTION = "QUERY_COLLECTION",
-  COMBINATION = "combination",
-  TASK = "task"
-}
-
 export enum MemotronEvent {
   BLOCK_HOVER = "blockHover"
 }

@@ -2,17 +2,15 @@
   import type { IContextMenuItem } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { createEventDispatcher } from "svelte";
   import Divider from "../Divider.svelte";
   import Text from "../text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
   import ContextMenuItem from "./ContextMenuItem.svelte";
-  import ContextMenuItemWithSecondary from "./ContextMenuItemWithSecondary.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  const dispatch = createEventDispatcher();
+
   export let menu: { group: string; items: IContextMenuItem[] }[];
   export let size: Size.sm | Size.md | Size.lg = Size.md;
   export let heading: string | undefined = undefined;
+  export let onSelect: (item: IContextMenuItem) => void = () => {};
 </script>
 
 <div
@@ -24,7 +22,7 @@
 >
   {#if heading}
     <span
-      class={cn("w-full px-2", {
+      class={cn("w-full px-2 text-left", {
         "px-1.5": size === Size.sm,
         "px-2": size === Size.md,
         "px-3": size === Size.lg
@@ -36,29 +34,7 @@
   {#each menu as group, index}
     <div class="flex flex-col">
       {#each group.items as item}
-        {#if item.secondStepComponent?.component}
-          <ContextMenuItemWithSecondary {item} {size} on:select on:action />
-        {:else}
-          <button
-            class={cn(
-              "flex items-center gap-2.5 justify-between hover:bg-bgs3 rounded-md",
-              {
-                "p-1.5": size === Size.sm,
-                "p-2": size === Size.md,
-                "px-3 py-2": size === Size.lg
-              }
-            )}
-            on:click={(e) => {
-              if (item.callback) item.callback();
-              else if (item.action) appStore.runAction(item.action);
-              dispatch("select", item);
-              dispatch("action", item.value);
-              e.stopPropagation();
-            }}
-          >
-            <ContextMenuItem {item} />
-          </button>
-        {/if}
+        <ContextMenuItem {item} {size} on:select={() => onSelect(item)} />
       {/each}
     </div>
     {#if index !== menu.length - 1}

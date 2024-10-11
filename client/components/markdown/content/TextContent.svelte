@@ -1,7 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
   import {
-    type IMarkdownStore,
     type IBlock,
     BlockAction
   } from "$lib/client/components/markdown/md.type";
@@ -13,7 +12,6 @@
     ListType,
     NodeType,
     type ListContent,
-    type StructuralNodeType,
     type TextContent,
     type TextNodeType
   } from "$lib/client/products/memotron/node/node.type";
@@ -30,10 +28,10 @@
   const nodeContentContext = getContext<any>("content");
   const blockContext = getContext<any>("block");
 
-  function propagateToNode(event: string, data: any) {
+  function propagateToNodeContent(event: string, data: any) {
     if (!nodeContentContext) {
       logger.error({
-        at: "TextContent propagateToNode",
+        at: "TextContent propagateToNodeContent",
         error: "No Node context found",
         data
       });
@@ -140,9 +138,9 @@
     hidePopover();
     const focusBlockSub = mdStore.focus.subscribe((x) => {
       if (x?.id === block.id) {
-        // logger.debug({ at: "focus.subscribe", x, block });
+        // logger.log({ at: "focus.subscribe", x, block });
         setTimeout(() => {
-          textRef.focus();
+          textRef?.focus();
         }, 10);
         assignPlaceholder();
       }
@@ -340,7 +338,7 @@
     if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return false;
     const position = e.detail.position;
     const position2 = e.detail.position2;
-    // logger.debug({
+    // logger.log({
     //   at: "handleArrowKeys",
     //   position,
     //   position2,
@@ -495,7 +493,7 @@
     let match;
     while ((match = mentionPattern.exec(removed)) !== null) {
       const id = match[1];
-      propagateToNode("unmention", { location: block.id, id });
+      propagateToNodeContent("unmention", { location: block.id, id });
     }
     previousVal = deepCopy(block.body);
     relay(BlockAction.CHANGE, { body: block.body });
@@ -668,9 +666,9 @@
     const item = event.detail.item;
     textRef.addMention(item);
     hidePopover("mentionSearch");
-    propagateToNode("mention", {
+    propagateToNodeContent("mention", {
       location: block.id,
-      id: item.id
+      item
     });
   }
 

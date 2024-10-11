@@ -6,24 +6,28 @@
   import view from "$lib/client/stores/view.store";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { InputStyle } from "$lib/client/types/input.type";
-  import type { INodeProperty } from "$lib/client/products/memotron/node/node.type";
   import { Size } from "$lib/client/types/size.enum";
   import { enumToString } from "$lib/shared/utils/text.utils";
   import { cn } from "$lib/client/utils/ui.utils";
   import MetaPropertyItem from "./MetaPropertyItem.svelte";
   import SingleSelectProperty from "./SingleSelectProperty.svelte";
-  import { type IProperty, PropertyType } from "./property.type";
-  export let property: INodeProperty;
-  export let config: IProperty;
-  export let nodeId: string | undefined = undefined;
+  import {
+    type IProperty,
+    type IPropertyValue,
+    PropertyType
+  } from "./property.type";
+  import type { IRecordId } from "$lib/client/types/data.type";
+  export let value: IPropertyValue | null = null;
+  export let property: IProperty;
+  export let nodeId: IRecordId | undefined = undefined;
   export let isPropertiesPaneContext: boolean = false;
   export let isReadMode: boolean = false;
   let style = InputStyle.FILLED;
-  if (config.type === PropertyType.DATE && typeof property.value === "string") {
-    property.value = new Date(property.value);
+  if (property.type === PropertyType.DATE && typeof value === "string") {
+    value = new Date(value);
   }
   let label = {
-    label: config.label ? config.label : enumToString(config.type),
+    label: property.label ? property.label : enumToString(property.type),
     orientation: Orientation.Vertical
   };
   // $: console.log({ property, details: config });
@@ -35,38 +39,43 @@
     "w-full": $view.isPortrait || isPropertiesPaneContext || isReadMode
   })}
 >
-  {#if config.type === PropertyType.TEXT}
+  {#if property.type === PropertyType.TEXT}
+    <TextInput {style} bind:value {label} placeholder="Enter text" on:change />
+  {:else if property.type === PropertyType.NUMBER || property.type === PropertyType.EMAIL || property.type === PropertyType.URL}
     <TextInput
       {style}
-      bind:value={property.value}
-      label={label.label}
-      placeholder="Enter text"
+      bind:value
+      {label}
+      placeholder={`Enter ${property.type}`}
       on:change
+      type={property.type}
     />
-  {:else if config.type === PropertyType.CHECKBOX && typeof property.value === "boolean"}
+  {:else if property.type === PropertyType.CHECKBOX && typeof value === "boolean"}
     <!-- <CheckboxInput bind:checked={property.value} label={details.label} /> -->
-    <SwitchInput bind:checked={property.value} {label} {style} on:change />
-  {:else if config.type === PropertyType.RATING && config.config?.ratingAvatar && typeof property.value === "number"}
+    <SwitchInput bind:checked={value} {label} {style} on:change />
+  {:else if property.type === PropertyType.RATING && property.config?.ratingAvatar && typeof value === "number"}
     <Rating
       {label}
       {style}
       size={Size.lg}
-      avatar={config.config.ratingAvatar}
-      bind:value={property.value}
+      avatar={property.config.ratingAvatar}
+      bind:value
       count={5}
       on:change
     />
-  {:else if config.type === PropertyType.SINGLE_SELECT && config.config?.options && typeof property.value === "string"}
+  {:else if property.type === PropertyType.SINGLE_SELECT && property.config?.options && typeof value === "string"}
     <SingleSelectProperty
       {style}
       {label}
-      property={config}
-      bind:value={property.value}
+      {property}
+      bind:value
       on:change
+      on:newOption
+      on:configChange
     />
-  {:else if config.type === PropertyType.DATE && property.value && property.value instanceof Date}
-    <DatePicker bind:date={property.value} {label} {style} on:change />
+  {:else if property.type === PropertyType.DATE && value && value instanceof Date}
+    <DatePicker bind:date={value} {label} {style} on:change />
   {:else if nodeId}
-    <MetaPropertyItem {config} {nodeId} />
+    <MetaPropertyItem {property} {nodeId} />
   {/if}
 </div>

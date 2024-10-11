@@ -8,25 +8,35 @@ import { Display, type View } from "../types/view.type";
  * @returns
  */
 function calculateScreen(width: number, height: number): Display {
+  let display: Display = Display.DP;
   if (width <= 600 && height <= 1000) {
-    return Display.MO;
-  } else if (width >= 600 && height >= 800) {
-    return Display.TP;
-  } else if (width >= 1024 && height >= 800) {
-    return Display.DP;
-  } else if (width >= 2000 && height >= 1000) {
-    return Display.TK;
-  } else if (width <= 600) {
-    return Display.CW;
-  } else if (width >= 4000) {
-    return Display.UW;
-  } else if (height <= 600) {
-    return Display.CH;
-  } else if (height >= 1500) {
-    return Display.VM;
-  } else {
-    return Display.DP;
+    display = Display.MO;
   }
+  if (width >= 600 && height >= 500) {
+    display = Display.TP;
+  }
+  if (width >= 1024 && height >= 700) {
+    display = Display.LP;
+  }
+  if (width >= 1500 && height >= 700) {
+    display = Display.DP;
+  }
+  if (width >= 2000 && height >= 1000) {
+    display = Display.TK;
+  }
+  if (width <= 600) {
+    display = Display.CW;
+  }
+  if (width >= 4000) {
+    display = Display.UW;
+  }
+  if (height <= 600) {
+    display = Display.CH;
+  }
+  if (height >= 1500) {
+    display = Display.VM;
+  }
+  return display;
 }
 
 const view = initViewStore({

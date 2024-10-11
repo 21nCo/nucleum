@@ -1,5 +1,9 @@
 export enum MemotronAction {
   CAPTURE = "capture",
+  /**
+   * Capture drag and drop listener of files from outside the app.
+   */
+  CAPTURE_DND = "capture-dnd",
   JOURNAL_MODAL_VIEWER = "journal-modal-viewer",
   SERENDIPITY = "serendipity",
   PUBLISH = "publish",
@@ -8,5 +12,7 @@ export enum MemotronAction {
   CREATE_TYPE = "create-type",
   LIBRARY = "library",
   SEARCH = "search",
-  PASTE_CONFIRMATION = "paste-confirmation"
+  PASTE_CONFIRMATION = "paste-confirmation",
+  ADD_NODE_TO_COLLECTION = "add-node-to-collection",
+  OPEN_CHAT = "open-chat"
 }

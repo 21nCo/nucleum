@@ -8,7 +8,7 @@
 
   onMount(() => {
     postMessageToParent(EmbedMessage.SHEET_MOUNTED);
-    if (!$manualLogStore.manualLogs) manualLogStore.reset();
+    manualLogStore.reset();
     if ($manualLogStore.manualLogs.length === 0) {
       manualLogStore.addNewManualLog();
     }

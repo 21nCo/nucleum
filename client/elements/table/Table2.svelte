@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { reorderList } from "$lib/client/actions/rearrange.action";
   import ComponentResolver from "$lib/client/layout/paint/ComponentResolver.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { InputStyle } from "$lib/client/types/input.type";
@@ -16,9 +17,10 @@
   const dispatch = createEventDispatcher();
   export let columns: TableColumn[] = [];
   export let data: any = [];
-  export let actions: { action: "remove" | "rearrange"; index: number }[] = [];
+  export let actions: { action: "remove" | "reorder"; index: number }[] = [];
   export let isStyled: boolean = false;
   export let addAction: string | undefined = undefined;
+  export let id: string = "table";
   $: if (actions.length > 0) {
     actions.forEach((action) => {
       columns = [
@@ -29,23 +31,16 @@
     });
   }
   function resolveDefaultAction(action: string) {
-    if (action === "rearrange") {
+    if (action === "reorder") {
       return {
-        key: "bars",
-        type: TableCellType.ACTION,
-        action: (row: any) => {
-          /**
-           * TODO - Rearrange action implementation
-           */
-          console.log("rearrange clicked", row);
-        }
+        key: "ph:dots-six-bold",
+        type: TableCellType.ACTION
       };
     } else if (action === "remove") {
       return {
         key: "cross",
         type: TableCellType.ACTION,
         action: (row: any) => {
-          console.log("remove clicked", row);
           data = data.filter((d) => d.id !== row.id);
         }
       };
@@ -70,25 +65,42 @@
   })}
 >
   <div
-    class="grid gap-8 text-fgs3 text-left text-b2 bg--bgs2 rounded-md p-3 bg-bgs2"
+    class={cn("grid gap-8 text-fgs3 text-left text-b2 rounded-md p-3 ", {
+      "bg-bgs2": isStyled
+    })}
     style="grid-template-columns: {columns
       .map((column) => `${resolveWidth(column)}fr`)
       .join(' ')}"
   >
     {#each columns as column (column.key)}
-      <div>{"label" in column ? column.label : ""}</div>
+      <div
+        class={cn({
+          "flex w-8": column.type === TableCellType.ACTION
+        })}
+      >
+        {"label" in column ? column.label : ""}
+      </div>
     {/each}
   </div>
   {#if isStyled}
     <Divider />
   {/if}
-  <div class="flex flex-col px-3">
+  <div
+    class="flex flex-col px-3"
+    use:reorderList={{
+      listId: id,
+      draggedOverClass: "!outline-aps1"
+    }}
+    on:reorder
+  >
     {#each data as row, i (row.id)}
       <div
-        class="grid gap-8 py-2 text-left"
+        class="grid gap-8 py-2 text-left outline outline-transparent"
         style="grid-template-columns: {columns
           .map((column) => `${resolveWidth(column)}fr`)
           .join(' ')}"
+        draggable="true"
+        data-index={i}
       >
         {#each columns as column}
           {#if column.type === TableCellType.TEXT_INPUT}

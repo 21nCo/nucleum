@@ -40,7 +40,7 @@ export class DexiePersistence implements IPersistence {
     this.instance = new LocalDexie(userId);
     this.userId = userId;
     const initLog = await this.select("kv:init");
-    logger.debug({ at: "DexiePersistence.initialize", initLog });
+    logger.log({ at: "DexiePersistence.initialize", initLog });
     if (initLog) {
       return 1;
     }
@@ -50,7 +50,7 @@ export class DexiePersistence implements IPersistence {
 
   private async addInitializationLog(params?: IPersistenceInitParams) {
     await this.instance?.table(Resource.kv).add({
-      id: "init",
+      id: "kv:init",
       createdAt: new Date().toISOString(),
       isLocalMode: params?.isLocalMode ?? false
     });
@@ -62,13 +62,11 @@ export class DexiePersistence implements IPersistence {
   ) {
     switch (params.action) {
       case PersistenceActionType.INSERT:
-        return this.instance?.table(resource).bulkAdd(params.records);
+        return this.instance?.table(resource).bulkPut(params.records);
       case PersistenceActionType.REPLACE:
         return this.instance?.table(resource).put(params.record);
       case PersistenceActionType.MERGE:
-        return this.instance
-          ?.table(resource)
-          .update(params.record.id, params.record);
+        return this.merge(resource,params.record.id, params.record);
       case PersistenceActionType.DELETE:
         return this.instance?.table(resource).delete(params.recordId);
       case PersistenceActionType.BULK_MERGE:
@@ -79,6 +77,20 @@ export class DexiePersistence implements IPersistence {
         return;
     }
   }
+
+  async merge(resource: Resource, id: IRecordId, data: any) {
+    try {
+      const result = await this.instance?.table(resource).update(id, data);
+      logger.log({ at: "DexiePersistence.merge", id, data, result, resource });
+      if(result === 0) {
+        return this.instance?.table(resource).put({...data, id});
+      }
+      return result;
+    } catch (e) {
+      logger.error({ at: "DexiePersistence.merge", id, data, e });
+    }
+  }
+
 
   private resolveResource(id: IRecordId | Resource) {
     return typeof id === "string" ? id.split(":")[0] : id?.tb;
@@ -102,61 +114,67 @@ export class DexiePersistence implements IPersistence {
     table: Table | undefined,
     params: IResourceSelectParams | undefined
   ): Collection | undefined {
-    if (!table) return undefined;
-    let query: QueryableType = table;
 
-    // Apply indexed filters first
-    if (params?.filters && !("condition" in params.filters)) {
-      query = this.applyIndexedFilters(
-        table,
-        params.filters as { [key: string]: any }
-      );
-    }
-
-    // Apply non-indexed filters and complex filter groups
-    if (params?.filters) {
-      if ("condition" in params.filters) {
-        query = this.applyFilterGroup(
-          query,
-          params.filters as IResourceFilterGroup
-        );
-      } else {
-        query = this.applyNonIndexedFilters(
-          query,
+    try {
+      if (!table) return undefined;
+      let query: QueryableType = table;
+  
+      // Apply indexed filters first
+      if (params?.filters && !("condition" in params.filters)) {
+        query = this.applyIndexedFilters(
+          table,
           params.filters as { [key: string]: any }
         );
       }
-    }
-
-    // // Convert to Collection if still a Table or WhereClause
-    // if (query instanceof Table || query instanceof WhereClause) {
-    //   query = query.toCollection();
-    // }
-
-    // Apply search
-    if (params?.search) {
-      query = this.applySearch(query as Collection, params.search);
-    }
-
-    // Apply orderBy
-    if (params?.orderBy) {
-      for (const [key, order] of Object.entries(params.orderBy)) {
-        query = (query as Collection).sortBy(key);
-        if (order === "desc") {
-          query = (query as Collection).reverse();
+  
+      // Apply non-indexed filters and complex filter groups
+      if (params?.filters) {
+        if ("condition" in params.filters) {
+          query = this.applyFilterGroup(
+            query,
+            params.filters as IResourceFilterGroup
+          );
+        } else {
+          query = this.applyNonIndexedFilters(
+            query,
+            params.filters as { [key: string]: any }
+          );
         }
       }
+  
+      // // Convert to Collection if still a Table or WhereClause
+      // if (query instanceof Table || query instanceof WhereClause) {
+      //   query = query.toCollection();
+      // }
+  
+      // Apply search
+      if (params?.search) {
+        query = this.applySearch(query as Collection, params.search);
+      }
+  
+      // Apply orderBy
+      if (params?.orderBy) {
+        for (const [key, order] of Object.entries(params.orderBy)) {
+          query = (query as Collection).sortBy(key);
+          if (order === "desc") {
+            query = (query as Collection).reverse();
+          }
+        }
+      }
+  
+      // Apply offset and limit
+      if (params?.offset !== undefined) {
+        query = (query as Collection).offset(params.offset);
+      }
+      if (params?.limit !== undefined) {
+        query = (query as Collection).limit(params.limit);
+      }
+  
+      return query as Collection;
+    } catch (e) {
+      logger.error({ at: "DexiePersistence.translateToDexieQuery", e });
     }
 
-    // Apply offset and limit
-    if (params?.offset !== undefined) {
-      query = (query as Collection).offset(params.offset);
-    }
-    if (params?.limit !== undefined) {
-      query = (query as Collection).limit(params.limit);
-    }
-
-    return query as Collection;
   }
 
   private applyIndexedFilters(
@@ -215,22 +233,32 @@ export class DexiePersistence implements IPersistence {
     query: QueryableType,
     filters: { [key: string]: any }
   ): Collection {
-    return (query as Collection).filter(
-      (item) => {
-        for (const [key, value] of Object.entries(filters)) {
-          if (Array.isArray(value)) {
-            if (!value.includes(item[key])) return false;
-          } else if (typeof value === "object" && value !== null) {
-            if ("from" in value && "to" in value) {
-              if (item[key] < value.from || item[key] > value.to) return false;
-            }
-          } else {
-            if (item[key] !== value) return false;
+    return (query as Collection).filter((item) => {
+      for (const [key, value] of Object.entries(filters)) {
+        if (Array.isArray(value)) {
+          if (!value.includes(item[key])) return false;
+        } else if (typeof value === "object" && value !== null) {
+          // if ("from" in value && "to" in value) {
+          //   if (item[key] < value.from || item[key] > value.to) return false;
+          // }
+          if ("greaterThan" in value) {
+            if (item[key] <= value.greaterThan) return false;
           }
+          if ("lessThan" in value) {
+            if (item[key] >= value.lessThan) return false;
+          }
+          if ("greaterThanOrEqual" in value) {
+            if (item[key] < value.greaterThanOrEqual) return false;
+          }
+          if ("lessThanOrEqual" in value) {
+            if (item[key] > value.lessThanOrEqual) return false;
+          }
+        } else {
+          if (item[key] !== value) return false;
         }
-        return true;
       }
-    );
+      return true;
+    });
   }
 
   private applyFilterGroup(
@@ -281,14 +309,21 @@ export class DexiePersistence implements IPersistence {
     });
   }
 
-  selectMany(
+  async selectMany(
     resource: Resource,
     params?: IResourceSelectParams
   ): Promise<any> | undefined {
-    return this.translateToDexieQuery(
+    const query = this.translateToDexieQuery(
       this.instance?.table(resource),
       params
-    )?.toArray();
+    );
+    if (!query) return;
+    const result = await query;
+    logger.log({ at: "DexiePersistence.selectMany", query, result });
+    if (Array.isArray(result)) {
+      return result;
+    }
+    return result.toArray();
   }
 
   select(
@@ -296,7 +331,9 @@ export class DexiePersistence implements IPersistence {
     properties?: string[]
   ): Promise<any> | undefined {
     const resource = this.resolveResource(resourceId);
-    const id = this.resolveId(resourceId);
+    // const id = this.resolveId(resourceId);
+    const id = resourceId.toString();
+    logger.log({ at: "DexiePersistence.select", resource, resourceId, id });
     if (!resource || !id) return;
     return this.instance?.table(resource).get(id);
   }

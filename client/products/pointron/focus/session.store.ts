@@ -1426,7 +1426,7 @@ class PointSessionStore extends ResourceStore<IPointSession> {
       const total = resolveTotalTaskTime([block]);
       const focus = resolveTaskFocus(session.blocks, [block]);
       const breakTime = Number((total - focus).toFixed(1));
-      logger.debug({
+      logger.log({
         focus,
         blocks: deepCopy(session.blocks),
         total,

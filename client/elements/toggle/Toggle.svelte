@@ -5,6 +5,7 @@
   import Icon from "../Icon.svelte";
   import { createEventDispatcher } from "svelte";
   import type { IToolTipOptions } from "../text/text.type";
+  import Badge from "../text/Badge.svelte";
   const dispatch = createEventDispatcher();
   export let icon: string;
   export let on: boolean = false;
@@ -12,13 +13,13 @@
   export let parentBgIndex: number = 1;
   export let tooltip: string | undefined = undefined;
   export let tooltipOptions: IToolTipOptions | undefined = undefined;
+  export let isPreventFillOnActive: boolean = false;
+  export let count: number | undefined = undefined;
   let isHovering: boolean = false;
   function onclick() {
     on = !on;
     dispatch("change", on);
   }
-  $: renderedIcon =
-    on && icon.includes(":") ? icon.replace("-thin", "-fill") : icon;
 </script>
 
 <HoverableElement
@@ -26,7 +27,7 @@
   bind:isHovering
   {tooltip}
   {tooltipOptions}
-  class={cn("flex items-center justify-center rounded-md", {
+  class={cn("flex relative items-center justify-center rounded-md", {
     "min-h-8 min-w-8": size === Size.sm,
     "min-h-10 min-w-10": size === Size.md,
     "min-h-12 min-w-12": size === Size.lg,
@@ -34,10 +35,17 @@
   })}
 >
   <Icon
-    icon={renderedIcon}
+    {icon}
+    {size}
+    isFilled={on && !isPreventFillOnActive}
     class={cn({
       "fill-aps1": on,
       "stroke-fgs1": !on
     })}
   />
+  {#if count}
+    <div class="absolute bottom-1 right-1">
+      <Badge text={count} size={Size.sm} />
+    </div>
+  {/if}
 </HoverableElement>

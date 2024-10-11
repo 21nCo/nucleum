@@ -16,14 +16,14 @@
       "overflow-x-auto": !isWrapItems
     })}
   >
-    {#each links as item}
+    {#each links as item (item.toString())}
       <LinkItem
         id={item}
         {parentBgIndex}
         on:click={(e) => {
           dispatch("click", {
             item,
-            event: e.detail
+            event: e
           });
         }}
         on:remove={() => {

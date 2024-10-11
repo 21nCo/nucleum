@@ -3,7 +3,7 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import Check from "$lib/client/icons/Check.svelte";
-  import { Position } from "$lib/client/types/direction.enum";
+  import { Placement } from "$lib/client/types/direction.enum";
   import { InputStyle } from "$lib/client/types/input.type";
   import { Size } from "$lib/client/types/size.enum";
   export let goalId: string;
@@ -53,7 +53,7 @@
           icon="cross"
           tooltip="Clear"
           tooltipOptions={{
-            placement: Position.Left
+            placement: Placement.Left
           }}
         />
       </div>

@@ -641,7 +641,7 @@
       const caretBottom = caretRect.bottom;
       const editableBottom = editableRect.bottom;
       let isLastLine = editableBottom - caretBottom < lineHeight;
-      // logger.debug({
+      // logger.log({
       //   lineHeight,
       //   caretBottom,
       //   editableBottom,

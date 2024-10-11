@@ -8,8 +8,10 @@
   import type { IResource } from "../flux/resourceStores/resource.type";
   import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";
   import { flux } from "$lib/client/components/flux/flux";
+  import GoalSearchThumbnail from "$lib/client/products/pointron/goals/thumbnails/GoalSearchThumbnail.svelte";
   const dispatch = createEventDispatcher();
   export let action: IAction;
+  export let componentParams: any = undefined;
   export let search: string = "";
   let selectedIndex: number = 0;
   let isSearchInProgress: boolean = false;
@@ -18,7 +20,7 @@
     results = [];
     selectedIndex = 0;
   }
-  $: if (search) searchResources();
+  $: if (search || search === "") searchResources();
   async function searchResources() {
     if (!action.searchActionParams?.searchStoreId) return;
     isSearchInProgress = true;
@@ -34,7 +36,8 @@
     if (!selectedItem.id) return;
     action.searchActionParams?.callback(
       selectedItem.id.toString(),
-      selectedItem.label
+      selectedItem.label,
+      componentParams
     );
     dispatch("close");
   }
@@ -64,9 +67,10 @@
         select();
       }}
     >
-      <span class="flex min-w-0 flex-1">
-        <TextWithHoverTooltip text={result.label} class="truncate" />
-      </span>
+      <GoalSearchThumbnail item={result} />
+      <!-- <span class="flex min-w-0 flex-1">
+      <TextWithHoverTooltip text={result.label} class="truncate" />
+    </span> -->
       <div class="bg-bgs2 rounded-md text-b3 text-fgs2 px-2 py-1">
         {action.searchActionParams?.itemLabel}
       </div>

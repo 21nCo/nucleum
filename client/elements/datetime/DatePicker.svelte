@@ -27,7 +27,7 @@
   function updateDate(e: any) {
     const newDate = new Date(e.target.value);
     date = newDate;
-    dispatch("change", { date });
+    dispatch("change", date);
   }
 </script>
 
@@ -54,7 +54,7 @@
         bind:selectedDate={date}
         on:change={() => {
           // popoverRef?.toggle();
-          dispatch("change", { date });
+          dispatch("change", date);
         }}
       />
     </slot:fragment>

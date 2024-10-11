@@ -18,8 +18,10 @@
   import context from "$lib/client/stores/context.store";
   import { Embed } from "$lib/client/types/context.type";
   import { keyboardShortcuts } from "../shortcuts/shortcuts.store";
+  import { renderMdAsHtml } from "../markdown/markdown.utils";
   export let command: string | undefined = undefined;
   export let commandType: ActionType | undefined = undefined;
+  export let componentParams: any = undefined;
   export let isFullPageContext: boolean = false;
   let value: string = "";
   let inputRef: HTMLInputElement;
@@ -96,7 +98,7 @@
       <div
         class="h-5/6 mo:w-full mo:ml-0 ml-2 bg-bgs3 flex items-center justify-center px-4 mo:rounded-b-md rounded-md"
       >
-        {searchAction.cmdLabel}
+        {@html renderMdAsHtml(componentParams?.label ?? searchAction.cmdLabel)}
       </div>
     {/if}
     <input
@@ -137,16 +139,17 @@
   </div>
   <div class="flex-grow">
     {#if isPerformingSearchAction}
-      {#if value}
-        <SearchActionResults
-          search={value}
-          bind:this={resultsRef}
-          action={searchAction}
-          on:close={close}
-        />
-      {:else}
+      <!-- {#if value && value !== ""} -->
+      <SearchActionResults
+        search={value}
+        {componentParams}
+        bind:this={resultsRef}
+        action={searchAction}
+        on:close={close}
+      />
+      <!-- {:else}
         <EmptyStatusView size={Size.sm} subText="start typing to search..." />
-      {/if}
+      {/if} -->
     {:else if !isFullPageContext || (isFullPageContext && isFocusing)}
       <CmdResults
         search={value}

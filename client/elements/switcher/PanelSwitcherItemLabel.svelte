@@ -24,26 +24,23 @@
   $: isAddNewItem = item.value === "$add";
   let labelEditPopoverRef: any;
   let inputRef: any;
-  $: if (triggerItemEdit && triggerItemEdit === item.value) {
-    console.log({ triggerItemEdit });
-    labelEditPopoverRef?.show();
-    inputRef?.focus();
-  } else if (triggerItemEdit && triggerItemEdit !== item.value) {
+  $: if (triggerItemEdit && triggerItemEdit === item.value.toString()) {
+    console.log({ triggerItemEdit, labelEditPopoverRef });
+    setTimeout(() => {
+      labelEditPopoverRef?.show();
+      inputRef?.focus();
+    }, 100);
+  } else if (triggerItemEdit && triggerItemEdit !== item.value.toString()) {
     labelEditPopoverRef?.hide();
   }
-
-  $: renderedIcon =
-    isActive && item.icon?.includes(":")
-      ? item.icon?.replace("-thin", "-fill")
-      : item.icon;
 </script>
 
-{#if isInEditMode && isAddNewItem}
+{#if isAddNewItem}
   <AddNewButton {size} />
 {:else if isInEditMode}
   <span class="flex gap-2 items-center">
     <!-- TODO - rearrange - disabling until this feature is complete -->
-    <!-- <Icon icon="grab" {size} /> -->
+    <Icon icon="ph:dots-six-vertical-bold" class="text-fgs2" {size} />
     <Popover
       bind:this={labelEditPopoverRef}
       isPreventDefault={!isActive}
@@ -89,8 +86,9 @@
   >
     {#if item.icon && typeof item.icon === "string"}
       <Icon
-        icon={renderedIcon}
+        icon={item.icon}
         {size}
+        isFilled={isActive}
         class={cn({
           "fill-aps1": isActive
         })}

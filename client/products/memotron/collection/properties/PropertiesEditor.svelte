@@ -10,14 +10,46 @@
   import { enumToString } from "$lib/shared/utils/text.utils";
   import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 
-  import { PropertyType } from "./property.type";
+  import { PropertyType, type IProperty } from "./property.type";
   import {
     autoPropertiesGroupLabel,
     metaPropertyOptions,
     propertyEditorStore,
-    propertyOptions
+    propertyOptions,
+    propertyStore
   } from "./property.store";
-
+  import {
+    ActiveCollectionStore,
+    collectionStore,
+    type IActiveCollectionStore
+  } from "../collection.store";
+  import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
+  import { MemotronAction } from "../../memotronAction.enum";
+  import {
+    ResourceAccessMode,
+    type OmitForCaptureWithId
+  } from "$lib/client/components/flux/resourceStores/resource.type";
+  import type { IRecordId } from "$lib/client/types/data.type";
+  import { onMount } from "svelte";
+  import Text from "$lib/client/elements/text/Text.svelte";
+  import { TextStyle } from "$lib/client/types/text.enum";
+  import { logger } from "$lib/client/components/debug/logger.client";
+  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
+  import { Orientation } from "$lib/client/types/direction.enum";
+  import SearchSingleSelect from "$lib/client/elements/select/SearchSingleSelect.svelte";
+  import { CollectionType } from "../collection.type";
+  import { confirmationNotification } from "$lib/client/stores/notification.store";
+  import { AlertType } from "$lib/client/types/notification.type";
+  import Button from "$lib/client/elements/button/Button.svelte";
+  import { ButtonStyle } from "$lib/client/types/button.type";
+  import { appStore } from "$lib/client/stores/app.store";
+  import modalEvent from "$lib/client/components/modal/modal.store";
+  export let id: IRecordId | undefined = undefined;
+  let collection: IActiveCollectionStore | undefined = id
+    ? ActiveCollectionStore.resolve(id)
+    : undefined;
+  let tableId = "properties-table";
   let columns: TableColumn[] = [
     {
       label: "Type",
@@ -54,15 +86,15 @@
       component: "propertyConfig"
     },
     {
-      label: "Show on Node",
+      label: "Always visible",
       key: "isShowOnNodePage",
-      width: 0.6,
+      width: 0.5,
       type: TableCellType.TOGGLE
     },
     {
-      label: "Show on Capture",
+      label: "Capture",
       key: "isShowOnCapture",
-      width: 0.6,
+      width: 0.4,
       type: TableCellType.TOGGLE,
       disabledCriteria: (row: any) =>
         row.type === PropertyType.CREATED_TIME ||
@@ -70,30 +102,186 @@
         row.type === PropertyType.LOCATION
     }
   ];
+  let isTypeExtension: boolean = $propertyEditorStore?.typeToExtend
+    ? true
+    : false;
+  async function onAdd() {
+    const newProperty: OmitForCaptureWithId<IProperty> = {
+      id: generateResourceId(Resource.property),
+      label: "",
+      isShowOnNodePage: false,
+      isShowOnCapture: false,
+      type: PropertyType.TEXT,
+      order: $propertyEditorStore.properties.length
+    };
+    $propertyEditorStore.properties = [
+      ...$propertyEditorStore.properties,
+      newProperty
+    ];
+    if (collection) {
+      await propertyStore.create([newProperty]);
+    }
+  }
+  onMount(async () => {
+    if (collection && (!$collection || $collection.label)) {
+      await collection.init();
+      isTypeExtension = $propertyEditorStore?.typeToExtend ? true : false;
+    }
+  });
+
+  function resolveTitle(collection: IActiveCollectionStore | undefined) {
+    return collection
+      ? ($collection?.label ?? "Untitled") + " - edit properties"
+      : "Edit properties";
+  }
+
+  function onReorder(
+    event: CustomEvent<{ from: number; to: number; listId: string }>
+  ) {
+    logger.log({ at: "PropertiesEditor.onReorder", event });
+    const { from, to, listId } = event.detail;
+    if (!listId || listId !== tableId) return;
+    const { properties } = $propertyEditorStore;
+    const [movedItem] = properties.splice(from, 1);
+    properties.splice(to, 0, movedItem);
+    $propertyEditorStore.properties = properties;
+    $propertyEditorStore = $propertyEditorStore;
+  }
+
+  async function onTypeExtensionChange(e: CustomEvent) {
+    if (e.detail && collection) {
+      const derivedCollections = await collectionStore.fetchDerivedCollections(
+        collection.id
+      );
+      if (derivedCollections.length > 0) {
+        confirmationNotification.notify({
+          message: `**${derivedCollections.length} collection(s)** are derived from this collection. This collection cannot extend another collection.`,
+          title: "Cannot extend collection",
+          type: AlertType.ERROR
+        });
+        isTypeExtension = false;
+      }
+    } else if (e.detail === false) {
+      $propertyEditorStore.typeToExtend = undefined;
+    }
+  }
+
+  function searchForTypeExtension(searchQuery: string) {
+    return collectionStore.selectMany({
+      filters: {
+        type: CollectionType.TYPED
+      },
+      search: {
+        query: searchQuery,
+        properties: ["label"]
+      }
+    });
+  }
+
+  function onGotoBase() {
+    if (!$propertyEditorStore.typeToExtend?.id) return;
+    confirmationNotification.notify({
+      message: `You are about to redirect to **${$propertyEditorStore.typeToExtend?.label}** collection. Please save your changes before proceeding.`,
+      title: "Save changes",
+      type: AlertType.WARNING,
+      confirmAction: {
+        label: "Save & proceed",
+        callback: async () => {
+          await onSave();
+          modalEvent.hide(MemotronAction.EDIT_COLLECTION_PROPERTIES);
+          appStore.openResource(
+            $propertyEditorStore.typeToExtend?.id!,
+            ResourceAccessMode.POP
+          );
+          return true;
+        }
+      }
+    });
+  }
+  async function onSave() {
+    return collection?.updateProperties();
+  }
 </script>
 
-<div class="flex flex-col gap-4 w-full text-b2">
-  <Table2
-    isStyled={true}
-    addAction="add property"
-    actions={[
-      { action: "remove", index: 0 },
-      { action: "rearrange", index: 1 }
-    ]}
-    {columns}
-    bind:data={$propertyEditorStore}
-    on:add={() => {
-      $propertyEditorStore = [
-        ...$propertyEditorStore,
-        {
-          id: generateResourceId(Resource.property),
-          label: "",
-          isShowOnNodePage: false,
-          isShowOnCapture: false,
-          type: PropertyType.TEXT,
-          order: $propertyEditorStore.length
+<div class="flex flex-col justify-between gap-4 w-full h-full text-b2">
+  <div class="flex flex-col gap-8 flex-grow">
+    <Text content={resolveTitle(collection)} style={TextStyle.PANEL_HEADING} />
+    <div class="flex flex-col items-start w-full flex-grow gap-6">
+      <div class="flex flex-col items-start w-full gap-3">
+        <SwitchInput
+          label={{
+            label: "Extend an existing Type collection",
+            orientation: Orientation.Horizontal,
+            tooltip: {
+              body: "You can extend an existing type by adding additional properties on top. Editing the properties on base type will reflect in all extended types.",
+              actionText: "Learn more about advanced filter query",
+              action: "/kb/advanced-filter-query"
+            }
+          }}
+          isExpanded={true}
+          bind:checked={isTypeExtension}
+          on:change={onTypeExtensionChange}
+        />
+        {#if isTypeExtension}
+          <div class="flex flex-col items-start w-full gap-2">
+            <SearchSingleSelect
+              bind:selected={$propertyEditorStore.typeToExtend}
+              searchCallback={searchForTypeExtension}
+              on:select={onTypeExtensionChange}
+              placeholder="Search for a collection to extend"
+            />
+            <div class="flex items-center gap-2">
+              <div class="text-b2 text-fgs3">
+                Inherited properties: {$propertyEditorStore.typeToExtend
+                  ?.properties?.length ?? 0}
+              </div>
+              {#if $propertyEditorStore.typeToExtend?.properties && $propertyEditorStore.typeToExtend?.properties?.length > 0}
+                <Button
+                  label={`Go to ${$propertyEditorStore.typeToExtend?.label}`}
+                  size={Size.xs}
+                  isUnderlined={true}
+                  style={ButtonStyle.PLAIN}
+                  on:click={onGotoBase}
+                />
+              {/if}
+            </div>
+          </div>
+        {/if}
+      </div>
+      <div class="flex flex-col items-start w-full gap-2 flex-grow">
+        <Text content="Properties" style={TextStyle.SECTION_HEADING} />
+        <Table2
+          id={tableId}
+          isStyled={true}
+          addAction="add property"
+          actions={[
+            { action: "remove", index: 0 },
+            { action: "reorder", index: 1 }
+          ]}
+          {columns}
+          bind:data={$propertyEditorStore.properties}
+          on:add={onAdd}
+          on:reorder={onReorder}
+        />
+      </div>
+    </div>
+  </div>
+  <ModalFooter
+    action={MemotronAction.EDIT_COLLECTION_PROPERTIES}
+    primaryAction={collection
+      ? {
+          label: "Save",
+          callback: onSave
         }
-      ];
-    }}
+      : {
+          label: "Done"
+        }}
+    secondaryAction={collection
+      ? {
+          label: "Cancel"
+        }
+      : undefined}
   />
 </div>
+
+<ComponentBaseLayer hasDragAndDrop={true} />

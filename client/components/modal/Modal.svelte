@@ -11,6 +11,8 @@
   import ColorLayer from "$lib/client/layout/layers/themeLayer/ColorLayer.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { logger } from "../debug/logger.client";
+  import { resolveModalOnFront } from "$lib/client/utils/browser.utils";
+  import { ResourceAccessMode } from "../flux/resourceStores/resource.type";
   export let index: number = 0;
   export let show = true;
   export let title: string = "";
@@ -45,7 +47,7 @@
    * @param event
    */
   const overlayClicked = (event: any) => {
-    logger.debug({
+    logger.log({
       at: "overlayClicked",
       id,
       classList: event.target?.classList,
@@ -69,11 +71,15 @@
   };
 
   function close() {
-    logger.debug({ at: "close", id });
+    const frontModal = resolveModalOnFront();
+    logger.log({ at: "Modal.svelte close", id, frontModal });
+    confirmationNotification.reset();
+    if (frontModal?.id?.includes("-resource")) {
+      appStore.closeResource({ accessMode: ResourceAccessMode.POP });
+    }
+    if (!frontModal || id != frontModal?.id) return;
     show = false;
     modalEvent.hide(id, "Modal.svelte");
-    confirmationNotification.reset();
-    appStore.closeResource({ isRestrictToModals: true });
   }
 
   /**
@@ -99,85 +105,106 @@
         orientation === Orientation.Vertical && size === Size.md,
       "w-[30rem] 2k:w-[35rem] h-[30rem] 2k:h-[40rem]":
         orientation === Orientation.Vertical && size === Size.sm,
-      "w-9/10 2k:w-[110rem] h-full vm:h-[80rem]":
+      "w-[80rem] max-w-9/10 2k:w-[110rem] h-[56rem] 2k:h-full vm:h-[80rem]":
         orientation === Orientation.Horizontal && size === Size.xxl,
-      "w-[70rem] 2k:w-[100rem] h-full 2k:h-[70rem] vm:h-[70rem]":
+      "w-[70rem] max-w-9/10 2k:w-[100rem] h-[56rem] 2k:h-[70rem] vm:h-[70rem]":
         orientation === Orientation.Horizontal && size === Size.xl,
-      "w-[60rem] 2k:w-[80rem] h-[50rem] 2k:h-[60rem]":
+      "w-[60rem] max-w-9/10 2k:w-[80rem] h-[50rem] 2k:h-[60rem]":
         orientation === Orientation.Horizontal && size === Size.lg,
-      "w-[50rem] 2k:w-[60rem] h-[40rem] 2k:h-[50rem]":
+      "w-[50rem] max-w-9/10 2k:w-[60rem] h-[40rem] 2k:h-[50rem]":
         orientation === Orientation.Horizontal && size === Size.md
     };
   }
 </script>
 
 {#if show}
-  <button
-    class={cn("pop-overlay fixed w-screen h-screen inset-0 z-50", {
-      "bg-opacity-0": !isShowOverlay,
-      "flex justify-center items-center mo:p-0 p-3":
-        !isUseDialog && size !== Size.full,
-      "backdrop-blur-xl backdrop-opacity--80 backdrop-brightness--50 backdrop-grayscale bg-fgs4 bg-opacity-50 backdrop-saturate--50":
-        isShowOverlay && !isUseDialog
-    })}
-    {id}
-    data-blank-modal={index}
-    transition:fade={{ duration: 100 }}
-    on:click={overlayClicked}
-  >
-    {#if isOnRight}
-      <div
-        class="popover-container fixed right-8 w-72 bg-bgs2 z-50 rounded-md overflow-y-auto"
-        style="height: 90%; top: 5%;"
-      >
-        {#if title}
-          <ModalHeader {title} />
+  {#if isOnRight}
+    <div
+      class="popover-container fixed right-8 bg-bgs2 z-50 rounded-md overflow-y-auto"
+      style="height:min-content;bottom: 5%;"
+    >
+      {#if title}
+        <ModalHeader
+          {title}
           on:click={() => {
             show = false;
           }}
-          />
-        {/if}
-        <div class="popover-body h-full w-full p-4 overflow-y-auto pb-40">
+        />
+      {/if}
+      <div class="popover-body w-full overflow-y-auto">
+        <ColorLayer>
+          <slot />
+        </ColorLayer>
+      </div>
+    </div>
+  {:else}
+    <button
+      class={cn("pop-overlay fixed w-screen h-screen inset-0 z-50", {
+        "bg-opacity-0": !isShowOverlay,
+        "flex justify-center items-center mo:p-0 p-3":
+          !isUseDialog && size !== Size.full,
+        "backdrop-blur-xl backdrop-opacity--80 backdrop-brightness--50 backdrop-grayscale bg-fgs4 bg-opacity-50 backdrop-saturate--50":
+          isShowOverlay && !isUseDialog
+      })}
+      {id}
+      data-blank-modal={index}
+      transition:fade={{ duration: 100 }}
+      on:click={overlayClicked}
+    >
+      <!-- {#if isOnRight}
+        <div
+          class="popover-container fixed right-8 w-72 bg-bgs2 z-50 rounded-md overflow-y-auto"
+          style="height: 90%; top: 5%;"
+        >
+          {#if title}
+            <ModalHeader {title} />
+            on:click={() => {
+              show = false;
+            }}
+            />
+          {/if}
+          <div class="popover-body h-full w-full p-4 overflow-y-auto pb-40">
+            <ColorLayer>
+              <slot />
+            </ColorLayer>
+          </div>
+        </div> -->
+      {#if isUseDialog}
+        <dialog
+          bind:this={dialog}
+          id={id + "-modal"}
+          on:close|preventDefault={handleClose}
+          class={cn(
+            "rounded-md flex flex-col p-0 text-fgs1 shadow--bgs4 shadow-xl cw:w-full ch:h-full  max-h-full",
+            {
+              "bg-bgs1 overlay": isShowOverlay,
+              "overlay-light": isShowOverlay && !$appearance.colorScheme.isDark,
+              "overlay-dark": isShowOverlay && $appearance.colorScheme.isDark,
+              "bg-none": !isShowOverlay,
+              ...resolveSizeClasses()
+            }
+          )}
+        >
+          <div bind:this={focusTrap} tabindex="-1" style="outline: none;"></div>
+          <ColorLayer>
+            <slot />
+          </ColorLayer>
+        </dialog>
+      {:else}
+        <div
+          id={id + "-modal"}
+          class={cn("bg-bgs1 mo:w-full mo:h-full  max-h-full", {
+            ...resolveSizeClasses(),
+            "mo:rounded-none rounded-md": size !== Size.full
+          })}
+        >
           <ColorLayer>
             <slot />
           </ColorLayer>
         </div>
-      </div>
-    {:else if isUseDialog}
-      <dialog
-        bind:this={dialog}
-        id={id + "-modal"}
-        on:close|preventDefault={handleClose}
-        class={cn(
-          "rounded-md flex flex-col p-0 text-fgs1 shadow--bgs4 shadow-xl cw:w-full ch:h-full",
-          {
-            "bg-bgs1 overlay": isShowOverlay,
-            "overlay-light": isShowOverlay && !$appearance.colorScheme.isDark,
-            "overlay-dark": isShowOverlay && $appearance.colorScheme.isDark,
-            "bg-none": !isShowOverlay,
-            ...resolveSizeClasses()
-          }
-        )}
-      >
-        <div bind:this={focusTrap} tabindex="-1" style="outline: none;"></div>
-        <ColorLayer>
-          <slot />
-        </ColorLayer>
-      </dialog>
-    {:else}
-      <div
-        id={id + "-modal"}
-        class={cn("bg-bgs1 mo:w-full mo:h-full", {
-          ...resolveSizeClasses(),
-          "mo:rounded-none rounded-md": size !== Size.full
-        })}
-      >
-        <ColorLayer>
-          <slot />
-        </ColorLayer>
-      </div>
-    {/if}
-  </button>
+      {/if}
+    </button>
+  {/if}
 {/if}
 
 <style>

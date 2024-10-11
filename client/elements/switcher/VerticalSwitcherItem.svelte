@@ -1,55 +1,58 @@
 <script lang="ts">
   import Icon from "$lib/client/elements/Icon.svelte";
-  import { Orientation, Position } from "$lib/client/types/direction.enum";
+  import { Orientation, Placement } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { VerticalSwitcherStyle } from "$lib/client/types/switcher.enum";
   import { properCase } from "$lib/shared/utils/text.utils";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { bg, cn } from "$lib/client/utils/ui.utils";
   import type { ISelectItem } from "$lib/client/types/select.type";
   import HoverableElement from "../HoverableElement.svelte";
   export let item: ISelectItem;
   export let style: VerticalSwitcherStyle = VerticalSwitcherStyle.BAR;
   export let labelOrientation: Orientation = Orientation.Vertical;
-  export let activeStatusPlacement: Position = Position.Left;
+  export let activeStatusPlacement: Placement = Placement.Left;
   export let isHideLabel: boolean = false;
   export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
   export let isActive: boolean = false;
   export let isHideBar: boolean = false;
+  export let parentBgIndex: number = 1;
+
   // $: console.log({ isActive, item });
   let activeClasses: string;
   let inactiveClasses: string;
   let sizeClasses: string;
+  let isHovered: boolean = false;
   $: commonVerticalLabelOptions = {
     tooltip: isHideLabel
       ? properCase(item.label ?? item.value?.toString())
       : undefined,
     tooltipOptions: {
-      placement: Position.Left
+      placement: Placement.Left
     }
   };
   $: if (
     style === VerticalSwitcherStyle.GRADIENT &&
-    activeStatusPlacement === Position.Left
+    activeStatusPlacement === Placement.Left
   ) {
     activeClasses =
       "border-l-2 border-l-bgs2 bg-gradient-to-l from-transparent to-bgs2";
     inactiveClasses = "border-l-2 border-l-bgs2 text-fgs3";
   } else if (
     style === VerticalSwitcherStyle.GRADIENT &&
-    activeStatusPlacement === Position.Right
+    activeStatusPlacement === Placement.Right
   ) {
     activeClasses =
       "border-r-2 border-r-bgs2 bg-gradient-to-r from-transparent to-bgs2";
     inactiveClasses = "border-r-2 border-r-bgs2 text-fgs3";
   } else if (
     style === VerticalSwitcherStyle.BAR_V2 &&
-    activeStatusPlacement === Position.Right
+    activeStatusPlacement === Placement.Right
   ) {
     activeClasses = "border-r-4 border-rounded-md";
     inactiveClasses = "border-r-4 border-r-bgs1 text-fgs3";
   } else if (
     style === VerticalSwitcherStyle.BAR_V2 &&
-    activeStatusPlacement === Position.Left
+    activeStatusPlacement === Placement.Left
   ) {
     activeClasses = "border-l-4 border-rounded-md";
     inactiveClasses = "border-l-4 border-l-bgs1 text-fgs3";
@@ -70,11 +73,6 @@
       sizeClasses = "text-base w-24 gap-2 px-4 py-6";
     }
   }
-
-  $: renderedIcon =
-    isActive && item.icon?.includes(":")
-      ? item.icon?.replace("-thin", "-fill")
-      : item.icon;
 </script>
 
 {#if style === VerticalSwitcherStyle.BAR && labelOrientation === Orientation.Vertical}
@@ -83,18 +81,19 @@
     class={cn("relative flex flex-col items-center", sizeClasses, {
       "border-ccs1 border-rounded-md": isActive,
       "text-fgs3": !isActive,
-      "border-l-bgs2": !isActive && activeStatusPlacement === Position.Left,
-      "border-r-bgs2": !isActive && activeStatusPlacement === Position.Right,
-      "border-l-4": !isHideBar && activeStatusPlacement === Position.Left,
-      "border-r-4": !isHideBar && activeStatusPlacement === Position.Right
+      "border-l-bgs2": !isActive && activeStatusPlacement === Placement.Left,
+      "border-r-bgs2": !isActive && activeStatusPlacement === Placement.Right,
+      "border-l-4": !isHideBar && activeStatusPlacement === Placement.Left,
+      "border-r-4": !isHideBar && activeStatusPlacement === Placement.Right
     })}
     {...commonVerticalLabelOptions}
     on:click
   >
     {#if item.icon && typeof item.icon === "string"}
       <Icon
-        icon={renderedIcon}
+        icon={item.icon}
         {size}
+        isFilled={isActive}
         class={cn({
           "fill-fgs1": isActive,
           "stroke-fgs3": !isActive
@@ -117,8 +116,9 @@
   >
     {#if item.icon && typeof item.icon === "string"}
       <Icon
-        icon={renderedIcon}
+        icon={item.icon}
         {size}
+        isFilled={isActive}
         class={cn({
           "fill-aps1": isActive,
           "stroke-fgs3": !isActive
@@ -144,10 +144,10 @@
     class={cn({
       "border-l-2 border-l-bgs3":
         style === VerticalSwitcherStyle.BAR_V2 &&
-        activeStatusPlacement === Position.Left,
+        activeStatusPlacement === Placement.Left,
       "border-r-2 border-r-bgs3":
         style === VerticalSwitcherStyle.BAR_V2 &&
-        activeStatusPlacement === Position.Right
+        activeStatusPlacement === Placement.Right
     })}
   >
     <HoverableElement
@@ -164,8 +164,9 @@
     >
       {#if item.icon && typeof item.icon === "string"}
         <Icon
-          icon={renderedIcon}
+          icon={item.icon}
           {size}
+          isFilled={isActive}
           class={cn({
             "fill-fgs1": isActive && style === VerticalSwitcherStyle.GRADIENT,
             "fill-aps1": isActive && style === VerticalSwitcherStyle.BG,
@@ -184,8 +185,9 @@
 {:else if style === VerticalSwitcherStyle.BG && labelOrientation === Orientation.Horizontal}
   <HoverableElement
     type="button"
+    bind:isHovering={isHovered}
     class={cn("relative flex gap-2 items-center rounded-md p-2 px-2 w-full", {
-      "bg-bgs3": isActive,
+      [bg(parentBgIndex)]: isActive || isHovered,
       "text-fgs3": !isActive
     })}
     {...commonVerticalLabelOptions}
@@ -193,8 +195,9 @@
   >
     {#if item.icon && typeof item.icon === "string"}
       <Icon
-        icon={renderedIcon}
-        size={Size.sm}
+        icon={item.icon}
+        {size}
+        isFilled={isActive}
         class={cn({
           "fill-fgs1": isActive,
           "stroke-fgs3": !isActive

@@ -25,7 +25,8 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import appearance from "$lib/client/stores/appearance.store";
   import MetadataLayer from "./MetadataLayer.svelte";
-  import { Persistence } from "$lib/client/persistence/persistence";
+  import EmbedTelemetry from "./analytics/EmbedTelemetry.svelte";
+  import productData from "$lib/product.json";
 
   let timer: any;
   pingParent();
@@ -34,7 +35,6 @@
   onMount(async () => {
     await bootup();
     view.update(window.innerWidth, window.innerHeight);
-    await refreshAppStaticData();
   });
   onDestroy(() => {
     clearInterval(timer);
@@ -89,6 +89,10 @@
           window.location.host
       );
       if (appDetails) appStore.initializeProductInformation(appDetails);
+      const cachedAppData = await clientStorage.get(ClientStorageKey.APP_DATA);
+      appStore.loadAppData(cachedAppData ?? productData, {
+        isDefaultData: true
+      });
       clientStorage.set(
         ClientStorageKey.PRODUCT,
         appDetails?.product ?? "tidigit"
@@ -122,6 +126,16 @@
       $context.os = detectSystemOS();
       $context.isTouchDevice = detectTouchDevice();
       $context.protocol = window.location.protocol;
+      const isInOfflineMode = await clientStorage.get(
+        ClientStorageKey.OFFLINE_MODE
+      );
+      if (isInOfflineMode)
+        $context.isInOfflineMode = isInOfflineMode === "true";
+      const isInLowDataMode = await clientStorage.get(
+        ClientStorageKey.LOW_DATA_MODE
+      );
+      if (isInLowDataMode)
+        $context.isInLowDataMode = isInLowDataMode === "true";
     } catch (e) {
       postToParent({ type: "ERROR", message: e });
     }
@@ -171,8 +185,10 @@
     if (
       event.detail.path &&
       ((event.detail.path.includes("http") &&
-        event.detail.path.includes(host)) ||
-        !event.detail.path.includes("http"))
+        event.detail.path.includes(host) &&
+        !event.detail.path.includes("/oauth/")) ||
+        !event.detail.path.includes("http")) &&
+      !event.detail.path.includes("mailto:")
     )
       goto(event.detail.path);
     else if (event.detail.path) window.location = event.detail.path;
@@ -206,6 +222,10 @@
     }
   }
 
+  function updateOnlineStatus() {
+    $context.isInOfflineMode = !navigator.onLine;
+  }
+
   function addWindowEventListeners() {
     window.addEventListener(
       GlobalEvent.CUSTOM_NAVIGATION,
@@ -215,6 +235,8 @@
     window.onpopstate = () => {
       appStore.setCurrentPath(document.location.pathname);
     };
+    window.addEventListener("online", updateOnlineStatus);
+    window.addEventListener("offline", updateOnlineStatus);
   }
   function removeWindowEventListeners() {
     window.removeEventListener(
@@ -223,29 +245,16 @@
     );
     window.removeEventListener(GlobalEvent.CUSTOM_ALERT, handleCustomAlert);
     window.onpopstate = null;
+    window.removeEventListener("online", updateOnlineStatus);
+    window.removeEventListener("offline", updateOnlineStatus);
   }
   onDestroy(() => {
     removeWindowEventListeners();
   });
-
-  /**
-   * Refreshes the app static data from the server.
-   */
-  async function refreshAppStaticData() {
-    try {
-      const appData = await new Persistence().fetchAppData();
-      if (!appData) {
-        throw new Error("App data not found");
-      }
-      appStore.loadAppData(appData);
-    } catch (e) {
-      logger.error(e);
-      appStore.gotoErrorPage(e);
-    }
-  }
 </script>
 
 <div
+  id="base"
   class={cn(
     "text-base text-fgs1 bg-bgs1 relative w-screen h-screen flex",
     $appearance.theme,
@@ -257,4 +266,7 @@
     <slot />
   </ThemeLayer>
 </div>
+{#if $context.isEmbed}
+  <EmbedTelemetry />
+{/if}
 <svelte:document on:visibilitychange={visibilityChangeListener} />

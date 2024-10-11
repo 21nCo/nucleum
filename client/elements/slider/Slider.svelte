@@ -1,16 +1,20 @@
 <script lang="ts">
   export let value: number;
+  export let min = 0;
+  export let max = 6;
+  export let step = 1;
 </script>
 
 <div class="flex items-center justify-center p-2">
   <input
     type="range"
-    min="0"
-    max="6"
+    {min}
+    {max}
+    {step}
     bind:value
     on:click|stopPropagation
     on:input
-    class="appearance-none w-20 h-1 rounded bg-aps2 text-aps1 focus:outline-none"
+    class="appearance-none w-full h-1 rounded bg-aps2 text-aps1 focus:outline-none"
   />
 </div>
 

@@ -7,7 +7,7 @@
   import type { IAction } from "$lib/client/types/action.type";
   import { Size } from "$lib/client/types/size.enum";
   import { postMessageToParent } from "$lib/client/utils/embed.utils";
-  import { Position } from "$lib/client/types/direction.enum";
+  import { Placement } from "$lib/client/types/direction.enum";
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   import { abg, cn } from "$lib/client/utils/ui.utils";
   import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
@@ -57,7 +57,7 @@
   <HoverableElement
     type="button"
     {tooltip}
-    tooltipOptions={{ placement: Position.Right }}
+    tooltipOptions={{ placement: Placement.Right }}
     class={cn(
       "flex items-center cursor-pointer",
       (layoutContext === LayoutContext.DEFAULT ||

@@ -31,20 +31,25 @@ export async function resolveToken(): Promise<string | null> {
 }
 
 export async function resolveCurrentUserId() {
-   if (isExtensionEnvironment()) {
+  if (isExtensionEnvironment()) {
     return new Promise((resolve, reject) => {
       chrome.storage.local.get(ClientStorageKey.USER_INFO, function (data) {
         if (chrome.runtime.lastError) {
           reject(chrome.runtime.lastError);
-        } else {
+        } else if (data.userInfo) {
           const id = JSON.parse(data.userInfo)?.id;
           resolve(id);
+        } else {
+          resolve(null);
         }
       });
     });
-   } else {
-    const userInfo = localStorage.getItem("userInfo");
-     if (userInfo) return JSON.parse(userInfo)?.id;
+  } else {
+    const userInfo =
+      typeof window !== "undefined"
+        ? localStorage.getItem("userInfo")
+        : undefined;
+    if (userInfo) return JSON.parse(userInfo)?.id;
   }
 }
 

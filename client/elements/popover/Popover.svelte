@@ -1,6 +1,6 @@
 <script lang="ts">
   import { logger } from "$lib/client/components/debug/logger.client";
-  import { Position } from "$lib/client/types/direction.enum";
+  import { Placement } from "$lib/client/types/direction.enum";
   import { GlobalEvent } from "$lib/client/types/event.enum";
   import {
     type IPopoverOptions,
@@ -19,7 +19,7 @@
    * @deprecated
    * Use options instead.
    */
-  export let placement: Position = Position.BottomCenter;
+  export let placement: Placement = Placement.BottomCenter;
   export let triggerClass: string = "";
   /**
    * @deprecated - use triggerMethod instead
@@ -34,7 +34,7 @@
     id: generateSimpleRandomId(),
     isPreventDefaultStyling: false,
     parentBgIndex: 0,
-    placement: Position.BottomCenter,
+    placement: Placement.BottomCenter,
     isSpanToTriggerWidth: false,
     offsetInPx: 2,
     isUseAbsolutePositioning: false,
@@ -85,9 +85,10 @@
       ...options,
       triggerRef: triggerRef,
       popRef: popOverRef,
-      placement: options.placement ?? placement ?? Position.BottomCenter
+      placement: options.placement ?? placement ?? Placement.BottomCenter
     };
     renderPopover(config);
+    if (!isPopoverVisible) isPopoverVisible = true;
   }
   export function hide() {
     // logger.log({ at: "Popover - hide", id: options.id });

@@ -6,7 +6,7 @@
     VerticalSwitcherStyle,
     type SwitchItem
   } from "$lib/client/types/switcher.enum";
-  import { Position } from "$lib/client/types/direction.enum";
+  import { Placement } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { captureStore } from "$lib/client/products/memotron/capture/capture.store";
   const captureTypes: SwitchItem[] = [
@@ -23,7 +23,7 @@
   {#each captureTypes as item}
     <VerticalSwitcherItem
       {item}
-      activeStatusPlacement={Position.Right}
+      activeStatusPlacement={Placement.Right}
       style={VerticalSwitcherStyle.BAR}
       isActive={$captureStore.captureType === item.label}
       size={Size.lg}

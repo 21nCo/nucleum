@@ -3,42 +3,104 @@
   import view from "$lib/client/stores/view.store";
   import { cn } from "$lib/client/utils/ui.utils";
   import PropertyItem from "./PropertyItem.svelte";
-  import type { INodeProperty } from "$lib/client/products/memotron/node/node.type";
-  import type { IProperty } from "./property.type";
+  import type { INodePropertyValue } from "$lib/client/products/memotron/node/node.type";
   import {
     resolvePropertiesForCapture,
-    resolvePropertiesForNodePage
+    resolvePropertiesForNodePage,
+    resolvePropertyDefaultValue
   } from "./property.utils";
   import { onMount } from "svelte";
-  export let propertyConfig: IProperty[] = [];
-  export let properties: INodeProperty[] = [];
-  export let nodeId: string | undefined = undefined;
-  export let context: "capture" | "nodepage" | "medianode" | "rightpanel" =
+  import { hoverable } from "$lib/client/actions/hover.action";
+  import { Size } from "$lib/client/types/size.enum";
+  import Badge from "$lib/client/elements/text/Badge.svelte";
+  import { ButtonStyle } from "$lib/client/types/button.type";
+  import { createEventDispatcher } from "svelte";
+  import type { ICollectionExpanded } from "../collection.type";
+  import type { IRecordId } from "$lib/client/types/data.type";
+  import type { IProperty, PropertyConfigOption } from "./property.type";
+  import {
+    removeDuplicatesFilter,
+    resourceInList
+  } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  import { propertyStore } from "./property.store";
+  const dispatch = createEventDispatcher();
+  export let types: ICollectionExpanded[] | undefined = undefined;
+  export let isIncludeExtendedProperties: boolean = true;
+  export let values: INodePropertyValue[] = [];
+  export let nodeId: IRecordId | undefined = undefined;
+  export let context: "capture" | "clip" | "mainpanel" | "rightpanel" =
     "capture";
   export let isReadMode: boolean = false;
   export let isCollapsed: boolean = false;
-  let isPropertiesPaneContext: boolean =
-    context === "rightpanel" || context === "medianode";
+  let properties: IProperty[] = [];
+  /**
+   * Renders properties as column
+   */
+  let isRenderAsColumn: boolean =
+    context === "rightpanel" || context === "clip";
   let isCollapserHovered: boolean = false;
 
   onMount(async () => {
-    //TODO - show properties grouped by type if context is right panel
-    if (propertyConfig) await refresh();
+    if (types) await refresh();
   });
 
   async function refresh() {
-    if (context === "capture")
+    if (!types) return;
+    let propertyConfig = types
+      .map((x) => x.properties)
+      .flat()
+      .filter((x) => x);
+    if (isIncludeExtendedProperties) {
+      const extendedProps = types
+        .map((x) => x.extendProperties)
+        .flat()
+        .filter((x) => x) as IProperty[];
+      propertyConfig = propertyConfig.concat(extendedProps);
+      propertyConfig = propertyConfig.filter(removeDuplicatesFilter);
+    }
+    if (propertyConfig.length === 0) return;
+    if (context === "capture" || context === "clip")
       properties = resolvePropertiesForCapture(propertyConfig);
-    else if (context === "nodepage")
+    else if (context === "mainpanel")
       properties = resolvePropertiesForNodePage(propertyConfig);
+    else if (context === "rightpanel") properties = propertyConfig;
+  }
+
+  async function onNewOption(e: CustomEvent) {
+    const property = properties.find(resourceInList(e.detail.id));
+    if (!property) return;
+    const newOption: PropertyConfigOption = {
+      id: generateSimpleRandomId(),
+      label: e.detail.label,
+      order: property.config?.options?.length ?? 0,
+      color: Math.random() * 360
+    };
+    property.config?.options?.push(newOption);
+    const result = await propertyStore.modify(property.id, {
+      config: property.config
+    });
+    dispatch("change", {
+      id: property.id,
+      value: newOption.id
+    });
+  }
+
+  async function onConfigChange(e: CustomEvent) {
+    const property = properties.find(resourceInList(e.detail.id));
+    if (!property) return;
+    const result = await propertyStore.modify(property.id, {
+      config: e.detail.config
+    });
+    property.config = e.detail.config;
   }
 </script>
 
 {#if properties && properties.length > 0}
   <div
     class={cn("w-full", {
-      "xl:px-6": !isPropertiesPaneContext && !isCollapsed,
-      "xl:px-10": !isPropertiesPaneContext && isCollapsed
+      "xl:px-6": !isRenderAsColumn && !isCollapsed,
+      "xl:px-10": !isRenderAsColumn && isCollapsed
     })}
   >
     <div
@@ -46,7 +108,7 @@
         "border-brs3": isCollapsed || isCollapserHovered
       })}
     >
-      {#if !isPropertiesPaneContext}
+      {#if !isRenderAsColumn}
         <button
           class={cn("flex justify-between items-center w-full rounded-md", {
             "px-4 py-2": isCollapsed,
@@ -55,48 +117,65 @@
           on:click={() => {
             isCollapsed = !isCollapsed;
           }}
-          on:mouseenter={() => {
-            isCollapserHovered = true;
-          }}
-          on:mouseleave={() => {
-            isCollapserHovered = false;
-          }}
+          use:hoverable
+          on:hover={(e) => (isCollapserHovered = e.detail)}
         >
-          <span>
-            <span class="text-base text-fgs3"> Properties </span>
+          <span class="flex items-center gap-2">
+            <!-- <Icon icon="widget" size={Size.sm} /> -->
+            <span class="text-b2 text-fgs3"> Properties </span>
             {#if isCollapsed}
-              <span class="bg-bgs2 text-b3 text-fgs2 rounded-md px-1 py-0.5"
-                >{properties.length}</span
-              >
+              <Badge text={values.length} />
             {/if}
           </span>
-          <Button
-            icon={isCollapsed ? "chevdown" : "chevup"}
-            tooltip={isCollapsed ? "Expand" : "Collapse"}
-          />
-        </button>
-      {/if}
-      {#if !isCollapsed || isPropertiesPaneContext}
-        <div
-          class={cn("flex w-full flex-wrap gap-8", {
-            "px-4 pb-4": !isPropertiesPaneContext,
-            "flex-col":
-              $view.isPortrait ||
-              (isPropertiesPaneContext && context === "rightpanel") ||
-              (isReadMode && context === "nodepage")
-          })}
-        >
-          {#each properties as property, index (property.id)}
-            {#if propertyConfig.some((x) => x.id === property.id)}
-              <PropertyItem
-                {property}
-                config={propertyConfig.find((x) => x.id === property.id)}
-                {nodeId}
-                {isPropertiesPaneContext}
-                {isReadMode}
-                on:change
+          <span class="h-3 flex gap-3 items-center">
+            {#if isCollapserHovered}
+              {#if context === "mainpanel"}
+                <Button
+                  label="See all"
+                  icon="ph:arrow-right-thin"
+                  size={Size.sm}
+                  style={ButtonStyle.PLAIN}
+                  on:click={(e) => {
+                    dispatch("showAll");
+                    if (e.detail) e.detail.stopPropagation();
+                  }}
+                />
+              {/if}
+              <Button
+                icon={isCollapsed ? "chevdown" : "chevup"}
+                tooltip={isCollapsed ? "Expand" : "Collapse"}
               />
             {/if}
+          </span>
+        </button>
+      {/if}
+      {#if !isCollapsed || isRenderAsColumn}
+        <div
+          class={cn("flex w-full flex-wrap gap-8", {
+            "px-4 pb-4": !isRenderAsColumn,
+            "flex-col":
+              $view.isPortrait ||
+              (isRenderAsColumn && context === "rightpanel") ||
+              (isReadMode && context === "mainpanel")
+          })}
+        >
+          {#each properties as property (property.id)}
+            <PropertyItem
+              value={values.find(resourceInList(property))?.value ??
+                resolvePropertyDefaultValue(property)}
+              {property}
+              {nodeId}
+              isPropertiesPaneContext={isRenderAsColumn}
+              {isReadMode}
+              on:change={(e) => {
+                dispatch("change", {
+                  id: property.id,
+                  value: e.detail
+                });
+              }}
+              on:newOption={onNewOption}
+              on:configChange={onConfigChange}
+            />
           {/each}
         </div>
       {/if}

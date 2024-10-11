@@ -15,12 +15,13 @@ export interface IResource extends IResourceBase {
    */
   modifiedAt: string;
   /**
+   * @deprecated - use accessLog instead
    * The last time user interacted with the resource
    *
    * This is almost same as modifiedAt but it is used to track the last time user interacted with the resource. For example, if user has opened a resource, interactedAt will be reset.
    *
    */
-  interactedAt: string;
+  interactedAt?: string;
   /**
    * Whether the resource is archived or not
    */
@@ -39,6 +40,12 @@ export interface IResource extends IResourceBase {
 export interface IMetaResource extends IResourceBase {
   modifiedAt?: string;
   [key: string]: unknown;
+}
+
+export interface IActiveResource extends IResource {
+  accessMode: ResourceAccessMode;
+  isInEditMode?: boolean;
+  isInReadMode?: boolean;
 }
 
 export type IUnlabeledResource = Omit<IResource, "label">;
@@ -71,7 +78,12 @@ export enum ResourceAccessMode {
    * Full screen mode
    */
   FULL = "full",
-  TOPBARFOCUS = "tbf"
+  TAB = "tab",
+  /**
+   * The resource is being accessed from the tabs.
+   */
+  TABS = "tabs",
+  SLIDESHOW = "slideshow"
 }
 
 export enum ResourceActionType {
@@ -103,7 +115,7 @@ export enum ResourceAccessPoint {
   /**
    * The resource is being accessed from the top bar by pinning it.
    */
-  TOP_BAR = "topbar",
+  TABS = "tabs",
   /**
    * The resource is being accessed from the resource page.
    */
@@ -114,9 +126,14 @@ export enum ResourceAccessPoint {
    */
   NODE_LINKS = "nodelinks",
   /**
-   * The resource is being accessed from the node default right pane
+   * The resource is being accessed from the node clips pane
    */
-  NODE_DEFAULT_RIGHT_PANE = "nodedefaultrightpane"
+  NODE_TRACES = "nodetraces",
+  /**
+   * The resource is being accessed from the node page
+   */
+  COLLECTION = "collection",
+  SEARCH_RESULT = "searchresult"
 }
 
 /**

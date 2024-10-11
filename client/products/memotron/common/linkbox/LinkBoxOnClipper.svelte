@@ -1,6 +1,6 @@
 <script lang="ts">
   import { toolbarState } from "$lib/client/extensions/clipper/contentScripts/store";
-  import { Position } from "$lib/client/types/direction.enum";
+  import { Placement } from "$lib/client/types/direction.enum";
   import { createEventDispatcher } from "svelte";
   import LinkSearch from "./LinkSearch.svelte";
   const dispatch = createEventDispatcher();
@@ -10,9 +10,9 @@
 <LinkSearch
   context="clipper"
   bind:searchQuery
-  resultsPlacement={$toolbarState.position === Position.Bottom
-    ? Position.TopCenter
-    : Position.BottomCenter}
+  resultsPlacement={$toolbarState.position === Placement.Bottom
+    ? Placement.TopCenter
+    : Placement.BottomCenter}
   on:select={(e) => {
     if (e.detail?.item?.id) dispatch("link", e.detail?.item?.id);
     searchQuery = "";

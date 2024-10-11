@@ -18,6 +18,7 @@
   import ShortcutText from "$lib/client/elements/text/ShortcutText.svelte";
   import account from "$lib/client/stores/account.store";
   import { UserDataMode } from "$lib/client/types/account.type";
+  import context from "$lib/client/stores/context.store";
   let isMinimized: boolean = false;
   let headerHeight: number = 150;
   let isHovered: boolean = false;
@@ -92,7 +93,7 @@
         "w-16 min-w-[4rem]": isInThinMode,
         "w-56 min-w-[14rem]": !isInThinMode,
         "ml-2": isRounded,
-        "border-r border-r-brs2": !isRounded
+        "border--r border-r-brs2": !isRounded
       })}
       on:mouseenter={() => (isHovered = true)}
       on:mouseleave={() => (isHovered = false)}
@@ -152,12 +153,19 @@
               parentBgIndex={2}
             />
           {/if}
-          {#if $account.dataMode === UserDataMode.LOCAL}
+          {#if $account.dataMode === UserDataMode.LOCAL || $context.isInOfflineMode}
             <button
               class={cn("text-fgs3 bg-bgs3 rounded-md px-2 py-1 my-1", {
                 "text-b4": isInThinMode,
                 "text-b3": !isInThinMode
-              })}>{isInThinMode ? "Offline" : "Offline mode"}</button
+              })}
+              on:click={() => {
+                if ($account.dataMode === UserDataMode.LOCAL) {
+                  appStore.runAction(Action.SETTINGS);
+                } else {
+                  appStore.runAction(Action.SYNC_SETTINGS);
+                }
+              }}>{isInThinMode ? "Offline" : "Offline mode"}</button
             >
           {/if}
           {#if $appStore?.appData?.isCmdBarEnabled === true}

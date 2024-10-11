@@ -16,14 +16,14 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { properCase } from "$lib/shared/utils/text.utils";
-  import AvatarView from "../avatarPicker/AvatarView.svelte";
+  import AvatarRenderer from "../avatarPicker/AvatarRenderer.svelte";
   const dispatch = createEventDispatcher();
   /**
    * items to be displayed in the dropdown
    */
   export let items: DropdownItem[];
   export let groups: DropdownGroup[] = [];
-  export let value: string | number;
+  export let value: string | number | boolean = items[0].value;
   export let parentBackgroundIndex: number = 1;
   export let label: InputLabel | undefined = undefined;
   export let style: InputStyle = InputStyle.BORDERED;
@@ -106,7 +106,7 @@
     {#if selected?.icon && typeof selected?.icon === "string"}
       <Icon icon={selected.icon} size={Size.sm} />
     {:else if selected?.icon && typeof selected?.icon === "object"}
-      <AvatarView avatar={selected.icon} size={Size.sm} />
+      <AvatarRenderer avatar={selected.icon} size={Size.sm} />
     {/if}
     <span class="min-w-fit">
       {selected?.label ?? properCase(selected?.value.toString())}

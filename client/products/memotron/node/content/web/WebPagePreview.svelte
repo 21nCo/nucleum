@@ -7,17 +7,19 @@
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   import type { IWebPage } from "../../node.type";
-  import { logger } from "$lib/client/components/debug/logger.client";
+  import { UserDataMode } from "$lib/client/types/account.type";
+  import account from "$lib/client/stores/account.store";
+
   export let node: IWebPage;
   let isLoading: boolean = true;
   let isIframeEnabled: boolean = false;
   let isIframable: boolean = false;
   let isHovering: boolean = false;
   onMount(async () => {
-    if (!node.body?.url) return;
-    isIframable = await resolveIframability(node.body.url);
+    if ($account.dataMode === UserDataMode.CLOUD) {
+      isIframable = await resolveIframability(node.url);
+    }
     isLoading = false;
-    logger.log({ isIframable });
   });
 </script>
 
@@ -29,7 +31,7 @@
     <div class="text-center text-b3 text-fgs3">Loading...</div>
   {:else if isIframable && isIframeEnabled}
     <iframe
-      src={node.body.url}
+      src={node.url}
       title="Web page preview"
       class="w-full h-full"
       frameborder="0"
@@ -46,8 +48,12 @@
     />
   {:else}
     <div class="text-center text-b3 text-fgs3">
-      No preview available for this page. Please use the link below to view the
-      page.
+      {#if isIframable}
+        Click to preview site.
+      {:else}
+        No preview available for this page. Please use the link below to view
+        the page.
+      {/if}
     </div>
   {/if}
   {#if isIframeEnabled}

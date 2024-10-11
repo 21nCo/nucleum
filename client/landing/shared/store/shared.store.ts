@@ -1,0 +1,65 @@
+import { readable, writable } from "svelte/store";
+import type { ITileItem } from "../Landing.types";
+
+export const currentProductsStore = readable<ITileItem[]>([
+  {
+    image: "pointron-product-image",
+    title: "Pointron",
+    label: "The one focus app that you will ever need",
+    href: "https://pointron.io"
+  },
+  {
+    image: "pointron-product-image",
+    title: "Memotron",
+    label: "Personal knowledge management redefined",
+    href: "https://memotron.io"
+  }
+]);
+
+export const upcomingProductsStore = writable<ITileItem[]>([
+  {
+    icon: "nucleus",
+    title: "Nucleus",
+    label: "The next generation of software",
+    description: ""
+  },
+  {
+    icon: "",
+    title: "Longpress",
+    label: "Next generation of search and discovery",
+    description:
+      "Longpress is a next-gen search and discovery platform powered by AI"
+  },
+  {
+    icon: "",
+    title: "Fyweb",
+    label: "Collective human intelligence for the 21st century",
+    description:
+      "In a world full of scattered information, harnessing collective intelligence is key. Fywed makes it effortless to connect and collaborate for smarter solutions"
+  },
+  {
+    icon: "",
+    title: "Dapien",
+    label: "Your new address on the internet",
+    description:
+      "Dapien offers a new way to showcase your identity and connect with others, giving you a unique address on the internet to share and discove"
+  },
+  {
+    icon: "",
+    title: "Selftron",
+    label: "The Ultimate partner for your body and mind",
+    description:
+      "Selftron offers top-notch tracking and analytics for your body and mind, making it easier to understand and improve your wellness"
+  },
+  {
+    icon: "",
+    title: "Gathery",
+    label: "Bringing People Together One Group at a Time",
+    description:
+      "Gathery redefines how you meet people and form groups, making connections simpler and more meaningful"
+  }
+]);
+
+export const isProductsPanelOpen = writable<Boolean>(false);
+
+export const isProductPage = writable<Boolean>(false);

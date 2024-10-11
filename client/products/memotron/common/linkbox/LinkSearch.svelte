@@ -2,17 +2,18 @@
   import TextSearchInput from "$lib/client/elements/input/TextSearchInput.svelte";
   import LinkSuggestionItem from "./LinkSuggestionItem.svelte";
   import type { IPopoverOptions } from "$lib/client/types/popover.type";
-  import { Position } from "$lib/client/types/direction.enum";
+  import { Placement } from "$lib/client/types/direction.enum";
   import { type InputLabel, InputStyle } from "$lib/client/types/input.type";
   import { SearchStore } from "../../memotron.store";
   import { onMount } from "svelte";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
   export let context:
     | "capture"
     | "nodelinkspane"
     | "clipper"
     | "nodepageCollectionsLane" = "capture";
-  export let resultsPlacement: Position = Position.BottomCenter;
+  export let resultsPlacement: Placement = Placement.BottomCenter;
   export let searchQuery: string;
   let popoverOptions: IPopoverOptions;
   let inputStyle: InputStyle = InputStyle.PLAIN;
@@ -41,7 +42,7 @@
       case "capture":
         popoverOptions = {
           offsetInPx: 12,
-          placement: Position.TopCenter
+          placement: Placement.TopCenter
         };
         placeholder = "Start typing to link to a node or add to a collection";
         inputStyle = InputStyle.PLAIN;
@@ -49,7 +50,7 @@
       case "nodelinkspane":
         popoverOptions = {
           offsetInPx: 12,
-          placement: Position.BottomCenter
+          placement: Placement.BottomCenter
         };
         placeholder = "Start searching to add a direct link";
         icon = "arrow-right-left";
@@ -58,7 +59,7 @@
       case "nodepageCollectionsLane":
         popoverOptions = {
           offsetInPx: 4,
-          placement: Position.TopCenter
+          placement: Placement.TopCenter
         };
         placeholder = "Start searching to add to a collection";
         // icon = "arrow-right-left";
@@ -84,6 +85,12 @@
         : context === "nodelinkspane"
           ? Resource.node
           : undefined;
+    if (isExtensionEnvironment()) {
+      return new SearchStore().searchForLinkingOnExtension(
+        searchQuery,
+        resource
+      );
+    }
     return new SearchStore().searchForLinking(searchQuery, resource);
   }
 </script>

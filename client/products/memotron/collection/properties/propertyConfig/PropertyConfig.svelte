@@ -5,7 +5,7 @@
   import RatingPropertyConfig from "./RatingPropertyConfig.svelte";
   import SelectPropertyConfig from "./selectProperty/SelectPropertyConfig.svelte";
   export let row: IProperty;
-  $: console.log({ row });
+
   let propertyTypesWithOptions = [
     PropertyType.SINGLE_SELECT,
     PropertyType.MULTI_SELECT,

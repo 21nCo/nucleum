@@ -17,3 +17,5 @@ graph*.png
 #Cdk specific
 **/cdk.**.json
 **/cdk.out
+
+product.json

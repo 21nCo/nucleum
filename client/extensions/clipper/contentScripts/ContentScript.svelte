@@ -15,7 +15,7 @@
   import { webpage, toolbarState, feedbackPane, syncStore } from "./store";
   import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
   import ExtensionBaseLayer from "$lib/client/extensions/ExtensionBaseLayer.svelte";
-  import { linker } from "$lib/client/products/memotron/memotron.store";
+  import { linker } from "$lib/client/products/memotron/linking/link.store";
   import ScreenShot from "./ScreenShot.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
   import { enumToString } from "$lib/shared/utils/text.utils";
@@ -23,9 +23,14 @@
   import { highlightStore } from "$lib/client/products/memotron/common/highlighters/highlight.store";
   import { AlertType } from "$lib/client/types/notification.type";
   import SyncPane from "../syncPane/SyncPane.svelte";
+  import LoginNotification from "../feedbackPane/LoginNotification.svelte";
+  import { relayToBackgroundScript } from "$lib/client/utils/extension.utils";
+  import { fileStore } from "$lib/client/components/files/file.store";
+  import { propertyStore } from "$lib/client/products/memotron/collection/properties/property.store";
   export let id: string;
   let textClipperRef: any;
   let isSnipActive: boolean = false;
+  let loginNotification: string | null = null;
   $: contentType = resolveContentTypeForUrl($webpage.url);
   function onActivateColor(e) {
     textClipperRef.onActivateColor(e);
@@ -82,6 +87,11 @@
             webpage.onContextChange(message.tab);
             return;
 
+          case ExtensionEvent.LOGOUT:
+            loginNotification = "Logged out. Please login again to continue";
+            webpage.reset();
+            return;
+
           case ExtensionEvent.PAGE_STATE:
             return $webpage;
 
@@ -123,8 +133,11 @@
     toolbarState,
     webpage,
     linker,
-    highlightStore
+    highlightStore,
+    fileStore,
+    propertyStore
   ]}
+  on:login={(e) => (loginNotification = e.detail.message)}
 >
   {#if !$toolbarState?.isOpen}
     <ToolbarOpener on:click={() => toolbarState.toggle(true)} />
@@ -142,7 +155,17 @@
       on:collapse={() => toolbarState.toggle(false)}
     />
     <!-- <div out:fade={{ duration: 150 }}> -->
-    {#if $feedbackPane.isShown}
+    {#if loginNotification}
+      <LoginNotification
+        message={loginNotification}
+        on:click={() => {
+          relayToBackgroundScript({
+            event: ExtensionEvent.LOGIN
+          });
+          loginNotification = null;
+        }}
+      />
+    {:else if $feedbackPane.isShown}
       <FeedbackPane />
     {:else if $syncStore.isShowSyncPane}
       <SyncPane />

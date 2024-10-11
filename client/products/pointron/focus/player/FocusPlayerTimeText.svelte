@@ -20,7 +20,7 @@
       <div class="animate-pulse">BREAK REMINDER</div>
     {:else if currentTask?.label && $sessionStore.state === SessionState.FOCUS_RUNNING}
       <div
-        class={cn("text-left truncate", {
+        class={cn("text-left truncate text-b2 dp:text-base", {
           "text-ccs1": context === SessionUIContext.PIP
         })}
       >

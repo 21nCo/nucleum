@@ -10,6 +10,7 @@
   import { resolveHoverState } from "$lib/client/utils/browser.utils";
   import { formatTime } from "$lib/client/utils/time.utils";
   import { onMount } from "svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
   export let label: "start" | "end" = "start";
   export let context: SessionUIContext = SessionUIContext.DEFAULT;
   let timeClassList = "";
@@ -29,10 +30,10 @@
     }
     labelClassList =
       context === SessionUIContext.ZEN_ON_DESKTOP
-        ? "text-b2 -top-2/3"
+        ? "text-b2"
         : $sessionStore.state === SessionState.NOT_STARTED
-          ? "text-b4 -top-2/3"
-          : "text-b3 -top-full";
+          ? "text-b4"
+          : "text-b3";
   });
   function toggleHoverState(event: MouseEvent | FocusEvent) {
     if (resolveHoverState(event)) {
@@ -57,7 +58,10 @@
 
 <div
   bind:this={labelRef}
-  class="relative flex flex-col items-center min-w-fit"
+  class={cn(
+    "flex flex-col items-center min-w-fit",
+    context !== SessionUIContext.PIP && "relative bottom-2.5"
+  )}
   on:mouseover={toggleHoverState}
   on:mouseout={toggleHoverState}
   on:focus={toggleHoverState}
@@ -65,7 +69,7 @@
 >
   {#if label === "start"}
     {#if context !== SessionUIContext.PIP}
-      <div class="absolute text-fgs3 left-0 {labelClassList}">
+      <div class={cn("text-fgs3", labelClassList)}>
         {$sessionStore.state === SessionState.NOT_STARTED
           ? "Now"
           : context != SessionUIContext.ZEN_ON_DESKTOP
@@ -82,7 +86,7 @@
     </div>
   {:else}
     {#if context !== SessionUIContext.PIP}
-      <div class="absolute text-fgs3 right-0 {labelClassList}">
+      <div class={cn("text-fgs3", labelClassList)}>
         {context != SessionUIContext.ZEN_ON_DESKTOP ? "End" : "End time"}
       </div>
     {/if}
@@ -113,9 +117,10 @@
         {#if $sessionStore.type === SessionType.COUNTUP && $sessionStore.state != SessionState.FINISHED}
           {$currentTime ? formatTime($userPreferences, $currentTime) : ""}
         {:else if $sessionStore.type === SessionType.COUNTUP && $sessionStore.state === SessionState.FINISHED}
-          {#if $sessionStore.end}
+          <!-- {#if $sessionStore.end}
             {formatTime($userPreferences, $sessionStore.end)}
-          {:else if $sessionStore.start}
+          {:else if $sessionStore.start} -->
+          {#if $sessionStore.start}
             {formatTime(
               $userPreferences,
               new Date(
@@ -124,6 +129,7 @@
               )
             )}
           {/if}
+          <!-- {/if} -->
           <!-- {:else if $sessionStore.composition?.type === SessionCompositionType.END_TIME_FIXED}
           {$sessionStore.end} -->
           <!-- {:else if $sessionStore.composition?.type === SessionCompositionType.TARGET_FOCUS && $sessionStore.end}

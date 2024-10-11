@@ -1,77 +1,38 @@
-import type {
-  IBlock,
-  IMarkdown
-} from "$lib/client/components/markdown/md.type";
-import {
-  enumToString,
-  properCase,
-  truncateString
-} from "$lib/shared/utils/text.utils";
+import type { IBlock } from "$lib/client/components/markdown/md.type";
+import { enumToString, properCase } from "$lib/shared/utils/text.utils";
 import {
   NodeType,
   type INodeMetadata,
   ListType,
-  type INodeBody
+  type INode
 } from "$lib/client/products/memotron/node/node.type";
 import { getGeoLocation } from "$lib/client/utils/browser.utils";
 import { logger } from "$lib/client/components/debug/logger.client";
-import { commonMetadata } from "../common/urlMap";
+import { urlMap } from "../common/urlMap";
 
-export function resolveContentPreview(
-  body: INodeBody,
-  contentType: NodeType,
-  metadata?: any
-) {
+export function resolveContentPreview(node: INode) {
+  const { body, contentType, metadata } = node;
   logger.log({ at: "contentPreview", body, contentType });
-  const truncateLength = 250;
+
   if (contentType === NodeType.TWEET && "content" in body) {
-    if (body.content) return truncateString(body.content, truncateLength);
-    else return metadata?.ogTitle ?? "";
+    if (body.content) return body.content;
+    else if (metadata && "ogTitle" in metadata) return metadata.ogTitle;
   } else if (contentType === NodeType.TWITTER_PROFILE) {
-    if (body.bio) return truncateString(body.bio, truncateLength);
-    if (!body.url) return "";
-    const hostPart = new URL(body.url).host;
-    const ogImageUrl = commonMetadata.find(
+    if ("bio" in body && body.bio) return body.bio;
+    if (!node.url) return "";
+    const hostPart = new URL(node.url).host;
+    const ogImageUrl = urlMap.find(
       (x) => hostPart === x.domain || hostPart.includes("." + x.domain)
     )?.ogImage;
     return ogImageUrl ?? "";
+  } else if (contentType === NodeType.TEXT_CLIP && "text" in body) {
+    return body.text;
+  } else if (node.mdText && typeof node.mdText === "string") {
+    return node.mdText;
+  } else if (contentType === NodeType.KINDLE_HIGHLIGHT && "text" in body) {
+    return body.text;
   }
-  if (body && typeof body === "object" && "blocks" in body) {
-    const block = body.blocks[0];
-    let strValue = "";
-    if ("body" in block && typeof block.body === "string") {
-      strValue = block.body;
-    } else if (
-      "body" in block &&
-      typeof block.body != "string" &&
-      block.body.contentType === NodeType.SIMPLE_TEXT &&
-      "body" in block.body
-    ) {
-      strValue = block.body.body;
-    }
-    return truncateString(strValue, 100);
-  } else if (
-    typeof body === "object" &&
-    "text" in body &&
-    typeof body.text === "string"
-  ) {
-    return truncateString(body.text, 100);
-  } else if (
-    typeof body === "object" &&
-    "comment" in body &&
-    typeof body.comment === "string"
-  ) {
-    return truncateString(body.comment, 100);
-  } else if (
-    typeof body === "object" &&
-    "selectedText" in body &&
-    typeof body.selectedText === "string"
-  ) {
-    return truncateString(body.selectedText, 100);
-  } else if (typeof body === "string") {
-    return truncateString(body, 100);
-  }
-  return "";
+  return undefined;
 }
 
 export async function resolveNodeCaptureMetadata() {
@@ -187,4 +148,38 @@ export function resolveNodeContentLabel(contentType: NodeType) {
     default:
       return properCase(enumToString(contentType));
   }
+}
+
+export function resolveFilePreview(node: INode) {
+  const { contentType, body, file } = node;
+  if (contentType === NodeType.IMAGE) {
+    return file;
+  } else if (contentType === NodeType.WEB_SCREENSHOT_CLIP) {
+    return body.file;
+  } else if (contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP) {
+    return body.thumbnail;
+  }
+  return undefined;
+}
+
+export function resolveUrlPreview(node: INode) {
+  const { contentType, body, metadata } = node;
+  if (
+    contentType === NodeType.WEB_PAGE ||
+    contentType === NodeType.YOUTUBE_VIDEO
+  ) {
+    return metadata?.ogImage ?? metadata?.screenshotUrl;
+  } else if (contentType === NodeType.TWITTER_PROFILE) {
+    return body?.profileImageUrl;
+  } else if (contentType === NodeType.KINDLE_BOOK) {
+    return body?.imageUrl;
+  }
+  return undefined;
+}
+
+/**
+ * If the image preview should contain instead of cover - cases like kindle books which are blurred if cover
+ */
+export function resolveIfImageShouldContain(contentType: NodeType) {
+  return contentType === NodeType.KINDLE_BOOK;
 }

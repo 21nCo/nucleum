@@ -97,52 +97,38 @@
       label="Storage used"
       value={storageUsage ? `${(storageUsage / 1000000).toFixed(2)} MB` : "NA"}
     />
-    <Button
-      isExpandToFullWidth={true}
-      type={ButtonVariant.PRIMARY}
-      on:click={() => {
-        isShowLogs = true;
-        isShowDebugOverlay = false;
-      }}
-      icon="list"
-      label="Show logs"
-    />
-    <Button
-      isExpandToFullWidth={true}
-      isLoading={isDboUpdateInProgress}
-      on:click={async () => {
-        isDboUpdateInProgress = true;
-        await dataManager.runDboUpdate();
-        isDboUpdateInProgress = false;
-      }}
-      icon="sync"
-      label="Rerun dbo update"
-    />
-    <Button
-      isExpandToFullWidth={true}
-      icon="play"
-      on:click={() => {
-        appStore.runAction(Action.MANUAL_RUN_DBO);
-      }}
-      label="Run manual dbo update"
-    />
-    <Button
-      isExpandToFullWidth={true}
-      icon="trash"
-      type={ButtonVariant.DANGER}
-      style={ButtonStyle.OUTLINED}
-      on:click={clearCache}
-      label="Clear cache and logout"
-    />
-    {#if !isShowAsPage}
+    <div class="flex flex-wrap gap-2 w-full justify-center items-center">
       <Button
-        isExpandToFullWidth={true}
+        type={ButtonVariant.PRIMARY}
         on:click={() => {
-          isShowDebugOverlay = false;
+          appStore.runAction("surreal-local");
         }}
-        label="Close"
+        icon="ph:terminal"
+        label="Surreal console"
       />
-    {/if}
+      <Button
+        icon="play"
+        on:click={() => {
+          appStore.runAction(Action.MANUAL_RUN_DBO);
+        }}
+        label="Run manual dbo update"
+      />
+      <Button
+        icon="trash"
+        type={ButtonVariant.DANGER}
+        style={ButtonStyle.OUTLINED}
+        on:click={clearCache}
+        label="Clear cache and logout"
+      />
+      {#if !isShowAsPage}
+        <Button
+          on:click={() => {
+            isShowDebugOverlay = false;
+          }}
+          label="Close"
+        />
+      {/if}
+    </div>
   </div>
 {:else}
   <button

@@ -12,19 +12,34 @@
   import view from "$lib/client/stores/view.store";
   import AppSplitView from "$lib/client/layout/AppSplitView.svelte";
   import MemotronNotifications from "./MemotronNotifications.svelte";
-  import PinnedTopBar from "$lib/client/layout/topNav/PinnedTopBar.svelte";
-  import { page } from "$app/stores";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
-  import ResourceResolver from "$lib/client/layout/paint/ResourceResolver.svelte";
+  import Tabs from "$lib/client/layout/tabs/Tabs.svelte";
   import UserBaseLayer from "$lib/client/layout/layers/UserBaseLayer.svelte";
   import { MemotronAction } from "../memotronAction.enum";
+  import modalEvent from "$lib/client/components/modal/modal.store";
+  import { captureStore } from "../capture/capture.store";
+  import { CaptureType } from "../capture/capture.type";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { InteractionMode } from "$lib/client/components/settings/interactionMode/interactionMode.type";
+  import { Embed } from "$lib/client/types/context.type";
+  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import { Action } from "$lib/client/types/action.enum";
+  import CommandModePage from "$lib/client/components/commandBar/CommandModePage.svelte";
   let isLiteMode = $context.isEmbed && $context.isSheet;
-  $: topBarResourceId = $page.url.searchParams.get(
-    ResourceAccessMode.TOPBARFOCUS
-  );
+  let interactionMode: InteractionMode;
+  let isHideLeftNavBar: boolean = refreshSidebarState();
+
   onMount(async () => {
+    initializeData();
+    const uiStateSub = uiState.subscribe(() => {
+      refreshInteractionModeState();
+      isHideLeftNavBar = refreshSidebarState();
+    });
     $appLoadingState.isLocalLoaded = true;
     postMessageToParent(EmbedMessage.MOUNT);
+    return () => {
+      uiStateSub();
+    };
   });
   async function handleVisibilityChange() {
     if (document?.hidden) {
@@ -46,51 +61,86 @@
       });
     }
   }
-
-  function handlePaste(event: ClipboardEvent) {
-    appStore.runAction(MemotronAction.PASTE_CONFIRMATION, {
-      componentParams: {
-        event
-      }
+  async function initializeData() {
+    if (isLiteMode) return;
+    refreshInteractionModeState();
+  }
+  function refreshSidebarState() {
+    return uiState.getState(UIState.isHideLeftNavBar);
+  }
+  function refreshInteractionModeState() {
+    interactionMode = uiState.getState(Action.MODE_OF_INTERACTION, {
+      isProductScoped: true
     });
-    event.preventDefault();
+  }
+  function handlePaste(event: ClipboardEvent) {
+    if (!$appStore.isDnDPageActive) {
+      appStore.runAction(MemotronAction.PASTE_CONFIRMATION, {
+        componentParams: {
+          event
+        }
+      });
+      event.preventDefault();
+    }
+  }
+
+  function handleDragEnter(event: DragEvent) {
+    if (!event.relatedTarget && !$appStore.isDnDPageActive) {
+      $captureStore.captureType = CaptureType.UPLOAD;
+      appStore.runAction(MemotronAction.CAPTURE_DND);
+    }
+  }
+
+  function handleDragLeave(event: DragEvent) {
+    if (
+      !event.relatedTarget &&
+      !$appStore.isDnDPageActive &&
+      !window.location.pathname.includes("/tab")
+    ) {
+      appStore.closeResource({
+        id: MemotronAction.CAPTURE_DND,
+        accessMode: ResourceAccessMode.POP
+      });
+    }
   }
 </script>
 
 <UserBaseLayer>
   {#if $appLoadingState.isBaseLoaded && $appLoadingState.isLocalLoaded}
-    <div class="flex flex-col w-full h-full">
-      <div class="flex w-full flex-grow">
-        <!-- {#if !topBarResourceId} -->
-        <MemotronLeftNav />
-        <!-- {/if} -->
-        <div
-          class="flex flex-col h-full {$view.isPortrait
-            ? 'w-full'
-            : 'flex-grow'}"
-        >
-          {#if !$view.isPortrait}
-            <PinnedTopBar />
+    {#if interactionMode === InteractionMode.COMMAND_ONLY && $context.embed !== Embed.HANDSET}
+      <CommandModePage />
+    {:else}
+      <div class="flex flex-col w-full h-full">
+        <div class="flex w-full flex-grow">
+          {#if !isHideLeftNavBar || interactionMode === InteractionMode.DEFAULT || $context.embed === Embed.HANDSET}
+            <MemotronLeftNav />
           {/if}
-          <div class="w-full flex-grow">
-            <AppSplitView>
-              <slot name="main" slot="main">
-                {#if topBarResourceId}
-                  {#key topBarResourceId}
-                    <ResourceResolver id={topBarResourceId} />
-                  {/key}
-                {:else}
+          <div
+            class="flex flex-col h-full {$view.isPortrait
+              ? 'w-full'
+              : 'flex-grow'}"
+          >
+            {#if !$view.isPortrait}
+              <Tabs />
+            {/if}
+            <div class="w-full flex-grow">
+              <AppSplitView>
+                <slot name="main" slot="main">
                   <slot />
-                {/if}
-              </slot>
-            </AppSplitView>
+                </slot>
+              </AppSplitView>
+            </div>
           </div>
+          <!-- <RightPanel /> -->
         </div>
-        <!-- <RightPanel /> -->
       </div>
-    </div>
+    {/if}
   {/if}
   <MemotronNotifications />
 </UserBaseLayer>
-<svelte:document on:visibilitychange={handleVisibilityChange} />
+<svelte:document
+  on:visibilitychange={handleVisibilityChange}
+  on:dragenter={handleDragEnter}
+  on:dragleave={handleDragLeave}
+/>
 <svelte:window on:paste={handlePaste} />

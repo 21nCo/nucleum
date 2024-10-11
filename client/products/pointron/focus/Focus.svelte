@@ -24,7 +24,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import { dataManager } from "$lib/client/persistence/dataManager";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import PageLayer from "$lib/client/layout/layers/PageLayer.svelte";
+  import PageLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { manualLogStore } from "../logs/log.store";
   import { appStore } from "$lib/client/stores/app.store";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
@@ -74,7 +74,6 @@
     }
   });
   async function onManualLogClicked() {
-    manualLogStore.reset();
     appStore.runAction(PointronAction.MANUAL_FOCUS_ENTRY_POP);
   }
   async function onStartSessionClicked() {

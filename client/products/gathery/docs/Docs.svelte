@@ -60,7 +60,7 @@
           <NodeThumbnail
             item={doc}
             on:click={() => {
-              appStore.toggleSearchParam("doc", doc.id);
+              appStore.toggleSearchParam({ doc: doc.id });
               appStore.runAction(GatheryEvent.OPEN_DOC, doc);
             }}
           />

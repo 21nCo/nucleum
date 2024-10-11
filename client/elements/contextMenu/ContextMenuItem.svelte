@@ -1,31 +1,49 @@
 <script lang="ts">
-  import { enumToString, properCase } from "$lib/shared/utils/text.utils";
   import { cn } from "$lib/client/utils/ui.utils";
-  import Icon from "../Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import type { IContextMenuItem } from "$lib/client/types/select.type";
+  import {
+    ContextMenuType,
+    type IContextMenuItem
+  } from "$lib/client/types/select.type";
+  import ContextMenuItemBase from "./ContextMenuItemBase.svelte";
+  import ContextMenuItemWithSecondary from "./ContextMenuItemWithSecondary.svelte";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
   export let item: IContextMenuItem;
-  function isRedAccent(item: IContextMenuItem) {
-    return item.value.toString().toLowerCase() === "delete";
-  }
+  export let size: Size.sm | Size.md | Size.lg = Size.md;
+  let contextMenuItemRef: any;
 </script>
 
-<span class="flex items-center gap-2.5 flex-1 min-w-0">
-  {#if item.icon && typeof item.icon === "string"}
-    <Icon
-      size={Size.sm}
-      icon={item.icon}
-      class={cn({
-        "stroke-ars1": isRedAccent(item)
-      })}
-    />
-  {/if}
-  <span
-    class={cn("min-w-fit whitespace-nowrap", {
-      "text-ars1": isRedAccent(item)
-    })}>{item.label ?? properCase(enumToString(item.value.toString()))}</span
+{#if item.secondStepComponent?.component}
+  <ContextMenuItemWithSecondary {item} {size} on:select on:action />
+{:else}
+  <button
+    class={cn(
+      "flex items-center gap-2.5 justify-between hover:bg-bgs3 rounded-md",
+      {
+        "p-1.5": size === Size.sm,
+        "p-2": size === Size.md,
+        "px-3 py-2": size === Size.lg
+      }
+    )}
+    on:click={(e) => {
+      if (item.type === ContextMenuType.SWITCH) {
+        if (contextMenuItemRef) contextMenuItemRef.toggle();
+        return;
+      }
+      if (item.callback) item.callback();
+      else if (item.action) appStore.runAction(item.action);
+      dispatch("select", item);
+      e.stopPropagation();
+    }}
   >
-</span>
-{#if item.secondStepComponent || item.action}
-  <Icon icon="chevright" size={Size.sm} />
+    <ContextMenuItemBase
+      {item}
+      bind:this={contextMenuItemRef}
+      on:change={(e) => {
+        if (item.callback) item.callback(e.detail);
+      }}
+    />
+  </button>
 {/if}

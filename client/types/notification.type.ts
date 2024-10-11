@@ -23,7 +23,8 @@ export type Toast = {
 export type ConfirmationNotification = {
   title: string;
   message: string;
-  confirmAction: IButtonParams;
+  type?: AlertType;
+  confirmAction?: IButtonParams;
   cancelAction?: IButtonParams;
 };
 

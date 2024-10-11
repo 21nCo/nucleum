@@ -45,6 +45,7 @@ module.exports = {
       xl: "1280px",
 
       portrait: { raw: "(orientation: portrait)" },
+      landscape: { raw: "(orientation: landscape)" },
       /**
        * Mobile devices
        */
@@ -52,11 +53,15 @@ module.exports = {
       /**
        * Tablet in portrait, or vertical splits on laptop/desktop/tablet in landscape
        */
-      tp: { raw: "(min-width: 600px) and (min-height: 800px)" },
+      tp: { raw: "(min-width: 600px) and (min-height: 500px)" },
       /**
-       * Tablet in landscape, desktop and laptop
+       * Bigger tablets in landscape, entry laptops
        */
-      dp: { raw: "(min-width: 1024px) and (min-height: 800px)" },
+      lp: { raw: "(min-width: 1024px) and (min-height: 700px)" },
+      /**
+       * Desktop and bigger laptops
+       */
+      dp: { raw: "(min-width: 1500px) and (min-height: 700px)" },
       /**
        * 2k : 2K monitors and above, TVs etc
        */
@@ -79,6 +84,10 @@ module.exports = {
       vm: { raw: "(min-height: 1500px)" }
     },
     extend: {
+      backgroundImage: {
+        dividerHorizontal:
+          "linear-gradient(90deg, rgba(209, 208, 208, 0.18) 0%, #D1D0D0 50.5%, rgba(209, 208, 208, 0.16) 100%)"
+      },
       fontSize: {
         title: "5rem",
         "2xl": "2.6rem",
@@ -120,13 +129,77 @@ module.exports = {
         "9/10": "90%"
       },
       animation: {
+        "bounce-r": "bounce-r 0.3s ease-in-out",
+        "bounce-l": "bounce-l 0.3s ease-in-out",
         "pulse-subtle":
-          "pulse-subtle 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite"
+          "pulse-subtle 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "slide-down": "slide-down 0.5s ease-in-out forwards",
+        "slide-up": "slide-up 0.5s ease-in-out forwards",
+        "open-left": "open-left 0.3s ease-in-out forwards",
+        "open-right": "open-right 0.3s ease-in-out forwards",
+        "close-right": "close-right 0.3s ease-in-out forwards",
+        rotate45: "rotate45 0.2s forwards",
+        fadeIn: "fadeIn 1s forwards",
+        fadeOut: "fadeOut 0.2s forwards"
       },
       keyframes: {
+        "bounce-r": {
+          "40%": { transform: "translateX(10px)" },
+          "60%": { transform: "translateX(5px)" },
+          "100%": { transform: "translateX(0px)" }
+        },
+        "bounce-l": {
+          "40%": { transform: "translateX(-10px)" },
+          "60%": { transform: "translateX(-5px)" },
+          "100%": { transform: "translateX(0px)" }
+        },
         "pulse-subtle": {
           "0%, 100%": { filter: "saturate(80%)" },
           "50%": { filter: "saturate(120%)" }
+        },
+        "slide-down": {
+          "0%": { height: "0", opacity: "0" },
+          "100%": { height: "100%", opacity: "1" }
+        },
+        "slide-up": {
+          "0%": { height: "100%", opacity: "1" },
+          "100%": { height: "0", opacity: "0" }
+        },
+        "open-left": {
+          "0%": { transform: "translateX(100%)", opacity: "0" },
+          "100%": { transform: "translateX(0%)", opacity: "1" }
+        },
+        "open-right": {
+          "0%": { transform: "translateX(-100%)", opacity: "0" },
+          "100%": { transform: "translateX(0%)", opacity: "1" }
+        },
+        "close-right": {
+          "0%": { transform: "translateX(0%)", opacity: "1" },
+          "100%": { transform: "translateX(100%)", opacity: "0" }
+        },
+        rotate45: {
+          "0%": {
+            transform: "rotate(0deg)"
+          },
+          "100%": {
+            transform: "rotate(45deg)"
+          }
+        },
+        fadeIn: {
+          "0%": {
+            opacity: 0
+          },
+          "100%": {
+            opacity: 1
+          }
+        },
+        fadeOut: {
+          "0%": {
+            opacity: 1
+          },
+          "100%": {
+            opacity: 0
+          }
         }
       }
     }
@@ -165,10 +238,18 @@ module.exports = {
         "bg-ccs4",
         "bg-ccs5",
         "styledscroll",
-        /^theme_/,
-        /^cs_.*$/,
-        /^bg-/,
-        /^text-/
+        "cursor-col-resize",
+        "cursor-row-resize",
+        {
+          pattern: /(from|via|to)-(.+)/
+        }
+        // {
+        //   pattern: /ph--.*/
+        // },
+        // /^theme_/,
+        // /^cs_.*$/,
+        // /^bg-/,
+        // /^text-/
       ]
     }
   },
@@ -194,5 +275,9 @@ module.exports = {
         ...colorSchemesBranding
       ]
     })
+    // require("@iconify/tailwind").addIconSelectors({
+    //   prefixes: ["ph"]
+    // }
+    // )
   ]
 };

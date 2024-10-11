@@ -1,12 +1,20 @@
 <svelte:options accessors={true} />
 
 <script lang="ts">
+  import type { IMediaGridItem } from "$lib/client/products/memotron/node/node.type";
   import { dragAndDropStore } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
   import { DragStatus } from "$lib/client/types/dragstatus.enum";
+  import { onMount } from "svelte";
+  import type { IFile } from "../../files/file.type";
+  import type { IRecordId } from "$lib/client/types/data.type";
+  import { fileStore } from "../../files/file.store";
+  import FileView from "../../files/FileView.svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
 
   export let isGridItem: boolean = true;
-  export let item: any;
+  export let item: IMediaGridItem;
+  export let file: IFile | null = null;
   export let isDraggable: boolean = false;
   export let isDragging: boolean = false;
   export let id: any;
@@ -19,6 +27,8 @@
     param3: any,
     param4: any
   ) => void;
+  let _file: IFile | null = null;
+
   let classList: string = `{isDraggable
       ? 'cursor-move'
       : ''}  box-border inline-block border-[2.5px] border-transparent`;
@@ -34,6 +44,17 @@ cursor: pointer;${sizeProperty == "height" ? `margin:${gap / 2}px;` : ""}`;
   let dragEnterId: any;
   let dropId: any;
   $: dragId = dragEnterId = dropId = id;
+
+  onMount(async () => {
+    if (!_file && file) _file = file;
+    else if (item.file) await resolveFile(item.file);
+  });
+
+  async function resolveFile(fileId: IRecordId) {
+    const response = await fileStore.select(fileId);
+    if (response?.url) _file = response;
+  }
+
   function removeBorders(element: HTMLElement) {
     element.classList.remove(`${highlightBorder}Throbbing`);
   }
@@ -169,19 +190,48 @@ cursor: pointer;${sizeProperty == "height" ? `margin:${gap / 2}px;` : ""}`;
   }
 </script>
 
-<!-- TODO - use File component -->
-{#if item.type.startsWith("image/")}
+{#if _file}
+  <FileView
+    file={_file}
+    class={classList}
+    {style}
+    {isDraggable}
+    on:load
+    on:dragstart={handleDragStart}
+    on:dragend={handleDragEnd}
+    on:dragover={onDragOver}
+    on:dragenter={handleDragEnter}
+    on:dragleave={handleDragLeave}
+    on:drop={handleDrop}
+    bind:ref
+  />
+{:else if id.includes("DropArea")}
+  <div
+    draggable={false}
+    use:draggable
+    class={cn(
+      "absolute w-full h-full bg-opacity-50 rounded-md flex items-center justify-center text-b2 text-fgs2",
+      {
+        "bg-bgs3": isDragOver,
+        "bg-bgs2": !isDragOver
+      }
+    )}
+  >
+    Column: {item.position.columns.columnNo + 1}
+  </div>
+{/if}
+<!-- {#if file?.type.startsWith("image/")}
   <img
     alt="..."
     class={classList}
     on:load
-    src={item.URL}
+    src={file.url}
     {style}
     draggable={isDraggable}
     use:draggable
     bind:this={ref}
   />
-{:else if item.type.startsWith("video/")}
+{:else if file?.type.startsWith("video/")}
   <video
     controls
     class={classList}
@@ -190,10 +240,10 @@ cursor: pointer;${sizeProperty == "height" ? `margin:${gap / 2}px;` : ""}`;
     use:draggable
     bind:this={ref}
   >
-    <source src={item.URL} />
+    <source src={file.url} />
     <track kind="captions" />
   </video>
-{:else if item.type.startsWith("audio/")}
+{:else if file?.type.startsWith("audio/")}
   <audio
     controls
     class={classList}
@@ -202,9 +252,10 @@ cursor: pointer;${sizeProperty == "height" ? `margin:${gap / 2}px;` : ""}`;
     use:draggable
     bind:this={ref}
   >
-    <source src={item.URL} />
-  </audio>
-{:else if item.type.startsWith("application/pdf")}
+    <source src={file.url} />
+  </audio> -->
+<!-- TODO - FileView component for pdf -->
+{#if file?.type.startsWith("application/pdf")}
   <div
     class="{classList} min-w-[100px] h-full overflow-hidden"
     {style}
@@ -213,80 +264,10 @@ cursor: pointer;${sizeProperty == "height" ? `margin:${gap / 2}px;` : ""}`;
     bind:this={ref}
   >
     <embed
-      src={item.URL}
+      src={file.url}
       width="110%"
       height="110%"
       style="pointer-events: none;"
     />
   </div>
-{:else}
-  <div
-    draggable={false}
-    use:draggable
-    class="absolute w-full h-full bg-transparent bg-opacity-50 bg-bgs2 flex items-center justify-center"
-    style="font-size: 1em;"
-  >
-    {#if isDragOver}
-      Drop @Col:{item.position.columns.columnNo + 1}
-    {/if}
-  </div>
 {/if}
-
-<style>
-  .leftThrobbing {
-    animation: leftThrobbing 1s infinite;
-  }
-  .rightThrobbing {
-    animation: rightThrobbing 1s infinite;
-  }
-  .topThrobbing {
-    animation: topThrobbing 1s infinite;
-  }
-  .bottomThrobbing {
-    animation: bottomThrobbing 1s infinite;
-  }
-  @keyframes leftThrobbing {
-    0% {
-      border-left-color: green;
-    }
-    50% {
-      border-left-color: rgb(14, 153, 247);
-    }
-    100% {
-      border-left-color: green;
-    }
-  }
-  @keyframes rightThrobbing {
-    0% {
-      border-right-color: green;
-    }
-    50% {
-      border-right-color: rgb(14, 153, 247);
-    }
-    100% {
-      border-right-color: green;
-    }
-  }
-  @keyframes topThrobbing {
-    0% {
-      border-top-color: green;
-    }
-    50% {
-      border-top-color: rgb(14, 153, 247);
-    }
-    100% {
-      border-top-color: green;
-    }
-  }
-  @keyframes bottomThrobbing {
-    0% {
-      border-bottom-color: green;
-    }
-    50% {
-      border-bottom-color: rgb(14, 153, 247);
-    }
-    100% {
-      border-bottom-color: green;
-    }
-  }
-</style>

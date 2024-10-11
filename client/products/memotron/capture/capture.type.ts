@@ -6,17 +6,19 @@ import type {
 } from "$lib/client/types/data.type";
 import type { IMarkdown } from "$lib/client/components/markdown/md.type";
 import type {
-  INodeProperty,
+  INodePropertyValue,
   INodeStructure,
-  LinkType
+  LinkType,
+  NodeType
 } from "$lib/client/products/memotron/node/node.type";
-import { MemotronResourceType } from "../memotron.type";
+import type { CollectionType } from "../collection/collection.type";
+import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 
 export enum CaptureType {
-  ANY = "Any",
   MARKDOWN = "MARKDOWN",
   AUDIO = "AUDIO",
   CAMERA = "CAMERA",
+  SKETCH = "SKETCH",
   UPLOAD = "UPLOAD"
 }
 
@@ -26,16 +28,15 @@ export type ICaptureStore = IObservableStoreSubject & {
    * @deprecated
    * There will no avatar for non type based entries. Use type.avatar instead
    */
-  avatar?: IAvatar;
+  avatar?: IAvatar | null;
   captureType: CaptureType | string;
   body?: IMarkdown;
   file?: IRecordId;
   childrenWithStructure: INodeStructure[];
   rootStructure: string[];
-  fileDetails?: FileDetails;
-  links?: ILink[];
+  links?: ICaptureLink[];
   propertyConfig?: IProperty[];
-  properties?: INodeProperty[];
+  properties?: INodePropertyValue[];
   /**
    * To trigger refresh of capture page when on appear or reset etc...
    * as change of body object in markdown is not detected by svelte
@@ -43,20 +44,10 @@ export type ICaptureStore = IObservableStoreSubject & {
   refreshId: number;
 };
 
-export type FileDetails = {
-  name: string;
-  data: Blob;
-  url: any;
-  type: string;
-  duration?: number;
-  transcription?: string;
-  initTranscription?: boolean;
-  pdfAnnotations?: any[];
-};
-
-export type ILink = {
-  from: string;
-  to: string;
+type ICaptureLink = {
+  from: IRecordId | "root";
+  to: IRecordId;
   linkType: LinkType;
-  toType: MemotronResourceType;
+  toType: Resource.node | Resource.collection;
+  toSubType?: CollectionType | NodeType;
 };

@@ -9,12 +9,17 @@
   import type { IResourceSwitchItem } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
   import { createEventDispatcher } from "svelte";
+  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
+  import { Orientation } from "$lib/client/types/direction.enum";
+  import { SearchType } from "$lib/client/types/data.type";
+  import { InputStyle } from "$lib/client/types/input.type";
   const dispatch = createEventDispatcher();
   export let selectedResource: Resource;
   export let resources: IResourceSwitchItem[];
   export let variant: "v1" | "v2" | "v3";
   export let searchQuery: string = "";
   export let isStickied: boolean = false;
+  export let searchStore;
   let isFiltersVisible: boolean = false;
   let isSearchFocused: boolean = false;
   function onKeydown(event: any) {}
@@ -46,6 +51,13 @@
           on:select={refresh}
         />
       {/if}
+      <SwitchInput
+        label={{ label: "Semantic", orientation: Orientation.Horizontal }}
+        size={Size.sm}
+        style={InputStyle.PLAIN}
+        on:change={(e) => dispatch("semanticSearch", e.detail)}
+        checked={searchStore.searchType === SearchType.SEMANTIC}
+      />
       {#if isFiltersVisible}
         <Button
           icon="funnel"
@@ -60,9 +72,9 @@
           label="Sort"
         />
       {/if}
-      {#if variant === "v1" || variant === "v3"}
+      <!-- {#if variant === "v1" || variant === "v3"}
         <Toggle icon="ph:faders" bind:on={isFiltersVisible} />
-      {/if}
+      {/if} -->
     </div>
   </div>
   <Divider

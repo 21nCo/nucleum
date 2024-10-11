@@ -214,7 +214,7 @@ export function extractMinimalTabData(): OmitForCapture<IWebPage> {
   const { ogTitle, ogImage, ogDescription, ogUrl } = resolveOgData();
   const url = resolveUrl();
   const contentType = resolveContentTypeForUrl(url);
-  logger.debug({ at: "extractMinimalTabData", url, contentType });
+  logger.log({ at: "extractMinimalTabData", url, contentType });
   return {
     metadata: { ogTitle, ogImage, ogDescription, ogUrl },
     label: title,
@@ -329,7 +329,6 @@ function parseTweetContent(
     let authorName = "";
     let tweetId = "";
     const currentUrl = window.location.pathname;
-
     const urlMatch = currentUrl.match(/\/(\w+)\/status\/(\d+)/);
     if (urlMatch) {
       username = urlMatch[1];

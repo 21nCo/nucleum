@@ -96,7 +96,7 @@ class FullScreenStore extends ObservableStore<
     logger.log({ at: "fullscreen.show", path });
     this.set({ path });
     appStore.runAction(path);
-    appStore.toggleSearchParam("fsp", path);
+    appStore.toggleSearchParam({ fsp: path });
   }
 
   hide(isShowMiniIfNoPip: boolean = true) {
@@ -112,7 +112,7 @@ class FullScreenStore extends ObservableStore<
     }
     this.set({ path: undefined });
     modalEvent.hide(fullScreenAction ?? "", "app.store");
-    appStore.toggleSearchParam("fsp");
+    appStore.toggleSearchParam(["fsp"]);
   }
 
   restore() {

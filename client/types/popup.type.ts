@@ -22,6 +22,7 @@ export type ModalParams = {
   title?: string;
   componentParams?: any;
   layout?: ModalLayoutParams;
+  isOnRight?: boolean;
 };
 
 export type ModalLayoutParams = {
@@ -32,6 +33,7 @@ export type ModalLayoutParams = {
   ignoreSafeArea?: boolean;
   isShowClose?: boolean;
   isShowCantileverClose?: boolean;
+  isShowBackButton?: boolean;
 };
 
 export type IPlayer = IObservableStoreSubject & {

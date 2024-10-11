@@ -12,6 +12,7 @@
   import { InteractionMode } from "../settings/interactionMode/interactionMode.type";
 
   function handleSystemShortcuts(event: KeyboardEvent) {
+    logger.log({ at: "handleSystemShortcuts", key: event.key });
     if (event.key === KeyboardKey.ESCAPE || event.key === KeyboardKey.ENTER) {
       appEvents.publish(event.key.toString() as GlobalEvent);
       return true;

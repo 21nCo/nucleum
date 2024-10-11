@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
   import { renderPopover, resolveHoverState } from "../utils/browser.utils";
-  import { Position } from "../types/direction.enum";
+  import { Placement } from "../types/direction.enum";
   import Tooltip from "./text/Tooltip.svelte";
   import type { IToolTipOptions } from "./text/text.type";
   export let type: string = "div";
@@ -9,7 +9,7 @@
   export let isDisabled: boolean = false;
   export let tooltip: string | undefined = undefined;
   export let tooltipOptions: IToolTipOptions = {
-    placement: Position.BottomCenter,
+    placement: Placement.BottomCenter,
     offsetInPx: 4,
     isSpanToTriggerWidth: false,
     isUseAbsolutePositioning: false,
@@ -43,7 +43,7 @@
           renderPopover({
             triggerRef,
             popRef: toolTipRef,
-            placement: tooltipOptions.placement ?? Position.BottomCenter,
+            placement: tooltipOptions.placement ?? Placement.BottomCenter,
             offsetInPx: tooltipOptions.offsetInPx ?? 4,
             isUseAbsolutePositioning:
               tooltipOptions.isUseAbsolutePositioning ?? false

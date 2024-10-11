@@ -1,4 +1,5 @@
 <script lang="ts">
+  import FloatingButton from "$lib/client/elements/button/FloatingButton.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
   import Resources from "../common/Resources.svelte";
@@ -31,7 +32,7 @@
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import Divider from "$lib/client/elements/Divider.svelte";
   import { MemotronAction } from "../memotronAction.enum";
-  import PageLayer from "$lib/client/layout/layers/PageLayer.svelte";
+  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { CollectionType } from "../collection/collection.type";
   import { NodeType } from "../node/node.type";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
@@ -42,6 +43,13 @@
     resolveCollectionTypeIcon,
     resolveCollectionTypeLabel
   } from "../collection/collection.utils";
+  import { debouncer } from "$lib/client/utils/utils";
+  import {
+    SearchType,
+    type IResourceSelectOrderBy
+  } from "$lib/client/types/data.type";
+  import { page } from "$app/stores";
+
   let searchQuery: string = "";
   let selectedResource: Resource = Resource.node;
   let isStickied: boolean = false;
@@ -49,7 +57,10 @@
   let isArchivedFilterSelected: boolean = false;
   let data: any[] = [];
   let searchStore = new SearchStore();
-  let selectedSubType: "all" | "recents" | NodeType | CollectionType = "all";
+  let QAsearchStore = new SearchStore();
+  QAsearchStore.searchType = SearchType.SEMANTIC;
+  type SubType = "all" | "recents" | NodeType | CollectionType;
+  let selectedSubType: SubType = "all";
   export let variant: "v1" | "v2" | "v3" = "v3";
   let availableResources: Resource[] = [
     Resource.node,
@@ -85,12 +96,12 @@
       value: Resource.combination,
       icon: "ph:bounding-box-light"
     },
-    {
-      ...commonResourceProps,
-      label: "Files",
-      value: Resource.file,
-      icon: "ph:file"
-    },
+    // {
+    //   ...commonResourceProps,
+    //   label: "Files",
+    //   value: Resource.file,
+    //   icon: "ph:file"
+    // },
     {
       ...commonResourceProps,
       label: "Tasks",
@@ -102,9 +113,26 @@
   $: multiSelectContext = selectedResource + "-" + ResourceAccessPoint.LIBRARY;
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
 
-  onMount(async () => {
-    await refresh();
+  onMount(() => {
+    const pageSub = page.subscribe(async (p) => {
+      const resourceParam = p.url.searchParams.get("resource");
+      const subResourceParam = p.url.searchParams.get("type");
+      if (
+        (resourceParam && resourceParam !== selectedResource) ||
+        (subResourceParam && subResourceParam !== selectedSubType)
+      ) {
+        selectedResource =
+          (resourceParam as Resource) ?? selectedResource ?? Resource.node;
+        selectedSubType = (subResourceParam as SubType) ?? "all";
+        await refresh();
+      }
+    });
+    refresh();
+    return () => {
+      pageSub();
+    };
   });
+
   async function refresh() {
     if (
       !availableResources.includes(selectedResource) &&
@@ -113,6 +141,15 @@
       data = [];
       return;
     }
+    let orderBy: IResourceSelectOrderBy | undefined;
+    let semanticSearchTopK: number | undefined;
+    if (searchStore.searchType == SearchType.SEMANTIC) {
+      orderBy = {
+        dist: "desc",
+        createdAt: "desc"
+      };
+    }
+
     let filters: any = {
       isStarred: isStarFilterSelected ? true : undefined,
       isArchived: isArchivedFilterSelected ? true : undefined
@@ -128,9 +165,13 @@
     data = await searchStore.select({
       resource: selectedResource,
       searchQuery,
-      filters
+      filters,
+      orderBy,
+      semanticSearchTopK
+      // limit: 100
     });
   }
+  const debouncedSearch = debouncer(refresh, 500);
 
   function onScroll() {
     var elementTarget = document.querySelector(".resource-switcher");
@@ -241,7 +282,7 @@
       ].map((x) => {
         return {
           label: resolveNodeContentLabel(x),
-          value: x,
+          value: x.toLowerCase(),
           icon: resolveNodeIcon(x)
         };
       });
@@ -254,7 +295,7 @@
       ].map((x) => {
         return {
           label: resolveCollectionTypeLabel(x),
-          value: x,
+          value: x.toLowerCase(),
           icon: resolveCollectionTypeIcon(x)
         };
       });
@@ -269,6 +310,16 @@
     class={cn("relative w-full h-full flex flex-col overflow-auto", {})}
     on:scroll={onScroll}
   >
+    <FloatingButton
+      class="justify-end"
+      params={{
+        callback: () => {
+          appStore.runAction(MemotronAction.OPEN_CHAT);
+        },
+        icon: "ph:chat",
+        variant: ButtonVariant.PRIMARY
+      }}
+    />
     {#if variant === "v1" || variant === "v3"}
       <LibrarySearchBox
         {variant}
@@ -276,7 +327,16 @@
         {isStickied}
         bind:selectedResource
         bind:searchQuery
-        on:refresh={refresh}
+        on:refresh={debouncedSearch}
+        {searchStore}
+        on:semanticSearch={(e) => {
+          if (e.detail) {
+            searchStore.searchType = SearchType.SEMANTIC;
+          } else {
+            searchStore.searchType = SearchType.FULL_TEXT;
+          }
+          refresh();
+        }}
       />
     {/if}
     <div
@@ -290,8 +350,13 @@
       >
         <ResourceSwitcher
           options={resources}
-          bind:selected={selectedResource}
-          on:select={refresh}
+          selected={selectedResource}
+          on:select={(e) => {
+            appStore.toggleSearchParam({
+              resource: e.detail,
+              type: "all"
+            });
+          }}
           size={variant === "v2" ? Size.md : Size.sm}
         />
       </span>
@@ -341,14 +406,19 @@
     >
       {#if (variant === "v2" || variant === "v3") && availableResources.includes(selectedResource)}
         <div class="flex flex-col w-60 border-r border-r-brs2 mb-1">
-          <span class="w-full flex items-start flex-1 pr-2">
+          <span class="w-full flex items-start flex-1 pr-2 overflow-y-auto">
             <VerticalSwitcher
               labelOrientation={Orientation.Horizontal}
               style={VerticalSwitcherStyle.BG}
-              itemProps={{ isHideLabel: false }}
+              itemProps={{ isHideLabel: false, size: Size.sm }}
               items={resolveSubItems(selectedResource)}
-              bind:selected={selectedSubType}
-              on:switch={refresh}
+              selected={selectedSubType}
+              on:switch={(e) => {
+                if (!e?.detail) return;
+                appStore.toggleSearchParam({
+                  type: e.detail.toLowerCase()
+                });
+              }}
             />
           </span>
           <span class="px-2">
@@ -384,8 +454,8 @@
             {resources}
             bind:selectedResource
             bind:searchQuery
-            bind:isStarFilterSelected
             on:keydown={refresh}
+            {searchStore}
           />
         {/if}
         {#if data && data.length > 0}
@@ -394,8 +464,9 @@
               "px--5": variant === "v2"
             })}
           >
+            <!-- TODO - pagination -->
             <Resources
-              {data}
+              data={data.slice(0, 50)}
               accessPoint={ResourceAccessPoint.LIBRARY}
               resource={selectedResource}
               arrangement={Arrangement.GRID}
@@ -437,7 +508,12 @@
   {/if}
 </div>
 
-<PageLayer on:syncDown={refresh} />
+<ComponentBaseLayer
+  syncDownOnMount={true}
+  subscribeTo={availableResources}
+  on:syncDown={refresh}
+  on:change={refresh}
+/>
 
 <style>
   input::placeholder {

@@ -1,6 +1,4 @@
 <script lang="ts">
-  import view from "$lib/client/stores/view.store";
-  import { cn } from "$lib/client/utils/ui.utils";
   import type {
     AnalyticsCard,
     AnalyticsDataRecord
@@ -25,13 +23,7 @@
 </script>
 
 <div
-  class={cn(
-    "w-full h-full flex flex-wrap justify-start items-start content-start",
-    {
-      "gap-3": $view.isPortrait,
-      "gap-4": !$view.isPortrait
-    }
-  )}
+  class="w-full h-full flex flex-wrap justify-start items-start content-start dp:gap-4 gap-3"
 >
   <MetricItem type="total" value={total} previousValue={previousTotal} />
   <MetricItem type="focus" value={totalFocus} previousValue={previousFocus} />

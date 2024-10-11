@@ -86,7 +86,7 @@
             variant="wide-center"
             bind:date
             on:change={(e) => {
-              date = e.detail.date;
+              date = e.detail;
               refresh();
             }}
           />

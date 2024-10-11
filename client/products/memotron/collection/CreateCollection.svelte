@@ -9,20 +9,15 @@
   import { collectionLayoutOptions, collectionStore } from "./collection.store";
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
   import { OptionSelectorStyle } from "$lib/client/types/select.type";
-  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   import FormControlLabel from "$lib/client/elements/text/formLabel/FormControlLabel.svelte";
   import {
     CollectionLayout,
-    CollectionType,
-    type ICollection
+    CollectionType
   } from "$lib/client/products/memotron/collection/collection.type";
-  import SearchSingleSelect from "$lib/client/elements/select/SearchSingleSelect.svelte";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import type { IProperty } from "$lib/client/products/memotron/collection/properties/property.type";
-  import Memocon from "../common/Memocon.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
+  import Avatar from "$lib/client/elements/avatarPicker/Avatar.svelte";
   import { propertyEditorStore } from "./properties/property.store";
   import { onMount } from "svelte";
   import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
@@ -35,20 +30,15 @@
     resolveCollectionTypeIcon,
     resolveCollectionTypeLabel
   } from "./collection.utils";
-  import Icon from "$lib/client/elements/Icon.svelte";
   import CoverPicker from "$lib/client/elements/coverPicker/CoverPicker.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { gradientsList } from "$lib/client/elements/colorPicker/gradients/gradients";
-  import FileView from "$lib/client/components/files/FileView.svelte";
-  import { FileType } from "$lib/client/components/files/file.type";
   import { hoverable } from "$lib/client/actions/hover.action";
+  import CoverRenderer from "$lib/client/elements/coverPicker/CoverRenderer.svelte";
+  import TypeExtensionAndPropertiesEditor from "./TypeExtensionAndPropertiesEditor.svelte";
 
   let title: string;
   let isStarred: boolean = false;
   let selectedType: CollectionType = CollectionType.UNTYPED;
   let selectedView: CollectionLayout;
-  let typeToExtend: ICollection | undefined = undefined;
-  let isTypeExtension: boolean = false;
   let isCaptureShortcutEnabled: boolean = true;
   let properties: IProperty[] = [];
   let avatar: any;
@@ -99,9 +89,10 @@
 <div class="flex w-full h-full items-start">
   <button
     class="relative flex flex-col items-center justify-center w-48 h-full"
-    use:hoverable
-    on:hover={(e) => {
-      isCoverPickerHovered = e.detail;
+    use:hoverable={{
+      onHover: (e) => {
+        isCoverPickerHovered = e;
+      }
     }}
     on:click={() => {
       isShowCoverPicker = true;
@@ -109,28 +100,7 @@
   >
     {#if coverPhoto}
       {#key coverPhoto}
-        {#if typeof coverPhoto === "string" && coverPhoto.includes("hex_")}
-          <div
-            class="w-full h-full rounded-l-md"
-            style="background-color: {coverPhoto.replace('hex_', '')};"
-          ></div>
-        {:else if typeof coverPhoto === "string" && coverPhoto.includes("gradient_")}
-          <div
-            class={cn(
-              "w-full h-full rounded-l-md",
-              gradientsList.find(
-                (gradient) => gradient.id == coverPhoto.replace("gradient_", "")
-              )?.gradient
-            )}
-          ></div>
-        {:else}
-          <FileView
-            id={coverPhoto}
-            isLazyLoad={false}
-            type={FileType.IMAGE}
-            class={cn("h-full w-full rounded-l-md object-cover", {})}
-          />
-        {/if}
+        <CoverRenderer cover={coverPhoto} class="rounded-l-md" />
         {#if isCoverPickerHovered && !isShowCoverPicker}
           <div
             class="absolute top-0 left-0 w-full h-full flex flex-col gap-6 items-center justify-center bg-bgs2 bg-opacity-70 rounded-l-md"
@@ -168,7 +138,9 @@
       />
     </div>
   {:else}
-    <div class="flex flex-col h-full gap-4 flex-1 items-center overflow-auto">
+    <div
+      class="flex flex-col h-full gap-4 flex-1 items-center justify-between overflow-auto"
+    >
       <div class="flex flex-col gap-11 p-10 w-full overflow-auto">
         <div class="flex items-center justify-between w-full gap-2">
           <Text content="Create collection" style={TextStyle.PANEL_HEADING} />
@@ -183,7 +155,8 @@
             ].map((type) => ({
               label: resolveCollectionTypeLabel(type),
               value: type,
-              icon: resolveCollectionTypeIcon(type)
+              icon: resolveCollectionTypeIcon(type),
+              isDisabled: type === CollectionType.QUERY
             }))}
             style={OptionSelectorStyle.TRAIN}
             labelProps={{
@@ -208,76 +181,14 @@
           <div class="flex gap-2">
             {#if selectedType === CollectionType.TYPED}
               <span class="w-12 h-full">
-                <Memocon bind:avatar />
+                <Avatar bind:avatar isInEditMode={true} />
               </span>
             {/if}
             <TextInput bind:value={title} width="grow" />
           </div>
         </div>
         {#if selectedType === CollectionType.TYPED}
-          <div class="flex flex-col items-start w-full gap-2">
-            <FormControlLabel props={{ label: "Properties" }} />
-            <button
-              class="flex justify-center items-center w-full border border-brs3 rounded-md h-11 text-base"
-              on:click={() => {
-                appStore.runAction(MemotronAction.EDIT_COLLECTION_PROPERTIES);
-              }}
-            >
-              <span class="flex gap-2 text-fgs2 text-b2">
-                <Icon
-                  icon={$propertyEditorStore.length > 0
-                    ? "ph:pencil-simple-line-light"
-                    : "ph:plus-light"}
-                  size={Size.sm}
-                />
-                {$propertyEditorStore.length > 0
-                  ? `Edit properties (${$propertyEditorStore.length})`
-                  : "Add properties"}
-              </span>
-            </button>
-          </div>
-          <div class="flex flex-col items-start w-full gap-3">
-            <SwitchInput
-              label={{
-                ...formLabelConfig,
-                label: "Extend an existing Type collection",
-                orientation: Orientation.Horizontal,
-                tooltip: {
-                  body: "You can extend an existing type by adding additional properties on top. Editing the properties on base type will reflect in all extended types.",
-                  actionText: "Learn more about advanced filter query",
-                  action: "/kb/advanced-filter-query"
-                }
-              }}
-              isExpanded={true}
-              bind:checked={isTypeExtension}
-            />
-            {#if isTypeExtension}
-              <div class="flex flex-col items-start w-full gap-2">
-                <SearchSingleSelect
-                  bind:selected={typeToExtend}
-                  searchStoreId={Resource.collection}
-                  placeholder="Search for a collection to extend"
-                />
-                <div class="text-b2 text-fgs3">
-                  Inherited properties: {typeToExtend?.properties?.length ?? 0}
-                </div>
-              </div>
-            {/if}
-          </div>
-          <SwitchInput
-            label={{
-              ...formLabelConfig,
-              label: "Create a capture shortcut",
-              orientation: Orientation.Horizontal,
-              tooltip: {
-                body: "Enabling this will create a shortcut on capture page to seamlessly capture a new node entry and add it to the collection.",
-                actionText: "Learn more",
-                action: "/kb/type-collections"
-              }
-            }}
-            bind:checked={isCaptureShortcutEnabled}
-            isExpanded={true}
-          />
+          <TypeExtensionAndPropertiesEditor bind:isCaptureShortcutEnabled />
         {/if}
         <OptionSelector
           options={collectionLayoutOptions}
@@ -304,15 +215,13 @@
             logger.log({
               at: "create collection",
               title,
-              selectedType,
-              typeToExtend
+              selectedType
             });
-            const result = await collectionStore.create({
+            const result = await collectionStore.save({
               label: title,
               type: selectedType,
               defaultLayout: selectedView,
               isStarred,
-              typeToExtend: typeToExtend?.id ?? undefined,
               cover: coverPhoto,
               isCaptureShortcutEnabled:
                 selectedType === CollectionType.TYPED

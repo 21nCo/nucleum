@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { dataManager } from "$lib/client/persistence/dataManager";
   import LinkThumbnailItems from "./LinkThumbnailItems.svelte";
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import { Size } from "$lib/client/types/size.enum";
@@ -21,10 +20,10 @@
   } from "$lib/client/products/memotron/node/node.store";
   import {
     type INode,
-    type INodeLink,
+    type INodeLinkThumb,
     LinkType
   } from "$lib/client/products/memotron/node/node.type";
-  import { linker } from "$lib/client/products/memotron/memotron.store";
+  import { linker } from "$lib/client/products/memotron/linking/link.store";
   import LinkSearch from "$lib/client/products/memotron/common/linkbox/LinkSearch.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { appStore } from "$lib/client/stores/app.store";
@@ -32,13 +31,22 @@
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { logger } from "$lib/client/components/debug/logger.client";
   import type { IRecordId } from "$lib/client/types/data.type";
+  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
+  import LinkTagFilter from "./LinkTagFilter.svelte";
+  import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
+  import {
+    resourceInList,
+    isSameResource
+  } from "$lib/client/components/flux/resourceStores/resource.utils";
   export let node: IActiveNodeStore;
   $: multiSelectContext = $node.id + "-" + ResourceAccessPoint.NODE_LINKS;
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
-  let links: INodeLink[] = [];
-  let filtered: INode[] = [];
+  let _links: INodeLinkThumb[] = [];
+  let all: { link: INodeLinkThumb; node: INode }[] = [];
+  let filtered: { link: INodeLinkThumb; node: INode }[] = [];
+
   let selectedLinkType: LinkType = LinkType.DIRECT;
-  let selectedLinkTags: string[] = [];
+  let selectedLinkTags: IRecordId[] = [];
   let fetchError: string | undefined = undefined;
   let linkStatus: { message: string; type: AlertType } = {
     message: "",
@@ -46,6 +54,10 @@
   };
   let previousFocus: string;
   let searchQuery: string = "";
+  let isShowLinkTagFilters = false;
+  let isShowLinkSuggestions = false;
+  let dev_linkTagFilter: "and" | "or" = "and";
+
   onMount(async () => {
     //TODO - refresh on focus
     await refresh();
@@ -66,67 +78,105 @@
       message: "Linking...",
       type: AlertType.INFO
     };
-    if (!e.detail.item.id) {
+    if (!e.detail?.item?.id) {
       linkStatus.message = "Something went wrong. Please try again later.";
       linkStatus.type = AlertType.ERROR;
       return;
     }
-    if (filtered.some((x) => x.id == e.detail.item.id)) {
+    if (filtered.some((x) => isSameResource(x.node, e.detail.item))) {
       linkStatus.message = "Link already exists.";
       linkStatus.type = AlertType.ERROR;
       return;
     }
-    linker.link($node.focusedBlock ?? node.id, e.detail.item.id);
+    const result = await linker.link(
+      $node.focusedBlock ?? node.id,
+      e.detail.item.id
+    );
+
     const addedLink = await flux.select(e.detail.item.id);
-    if (!addedLink) {
+    if (!result || !addedLink) {
       linkStatus.message = "Something went wrong. Please try again later.";
       linkStatus.type = AlertType.ERROR;
       return;
     }
     linkStatus.message = "Link added successfully.";
     linkStatus.type = AlertType.SUCCESS;
-    filtered = [...filtered, addedLink];
+    const link: INodeLinkThumb = {
+      linkedTo: e.detail.item.id,
+      linkType: LinkType.DIRECT,
+      id: result[0]?.id ?? ""
+    };
+    _links.push(link);
+    filtered = [
+      ...(filtered ?? []),
+      {
+        node: addedLink,
+        link
+      }
+    ];
     searchQuery = "";
   }
   async function refresh() {
-    links = $node.links ?? [];
-    if (!links) {
-      links = [];
+    if (!$node.links) {
+      _links = [];
       filtered = [];
       fetchError = "Error fetching links.";
       return;
     }
+    _links = $node.links;
+    const result = await nodeStore.selectMany({
+      filters: {
+        id: _links.map((x) => x.linkedTo.toString())
+      }
+    });
+    if (!result || result.length == 0) {
+      all = [];
+      return;
+    }
+    all = result.map((x: INode) => ({
+      link: _links.find((y) => y.linkedTo.toString() == x.id.toString()),
+      node: x
+    }));
     applyFilters();
   }
   async function applyFilters() {
-    let linkIds = links
-      .filter((x) => x.linkType === selectedLinkType)
-      .map((x) => x.id);
-    filtered = await nodeStore.selectMany({
-      filters: {
-        id: linkIds.map((x) => x.toString())
+    filtered = all.filter((x) => x.link.linkType === selectedLinkType);
+    if (selectedLinkTags.length > 0) {
+      if (dev_linkTagFilter === "or") {
+        filtered = filtered.filter((x) =>
+          x.link.tags?.some((y) => selectedLinkTags.some(resourceInList(y)))
+        );
+      } else {
+        filtered = filtered.filter((x) =>
+          selectedLinkTags.every((y) => x.link.tags?.some(resourceInList(y)))
+        );
       }
-    });
+    }
   }
   function onClick(e: CustomEvent) {
     const result = multiSelectStore.clickHandler(e.detail.id);
-    if (!result)
-      appStore.resourceClickHandler(
-        e.detail.event,
-        e.detail.id,
-        ResourceAccessMode.POP
-      );
+    if (!result) appStore.resourceClickHandler(e.detail.event, e.detail.id);
   }
   function onSelectAll() {
-    $multiSelectStore = filtered?.map((x) => x.id.toString()) ?? [];
+    $multiSelectStore = filtered?.map((x) => x.node.id.toString()) ?? [];
   }
 
   function onAction(e: CustomEvent) {
     console.log("onAction", e);
     if (e.detail.action === "unlink") {
-      filtered = filtered.filter((x) => x.id != e.detail.id);
+      filtered = filtered.filter((x) => x.node.id != e.detail.id);
     }
   }
+
+  function onTagClick(e: CustomEvent) {
+    if (!e.detail) return;
+    if (selectedLinkTags.some(resourceInList(e.detail))) return;
+    selectedLinkTags = [...selectedLinkTags, e.detail];
+    isShowLinkTagFilters = true;
+    applyFilters();
+  }
+
+  $: console.log({ all, _links, filtered });
 </script>
 
 <div class="relative flex flex-col gap-3 pt-1 h-full w-full">
@@ -151,36 +201,53 @@
     </div> -->
   </div>
   <div class="flex flex-col gap-4 w-full flex-grow">
-    <OptionSelector
-      size={Size.sm}
-      bind:selected={selectedLinkType}
-      on:select={applyFilters}
-      options={[
-        {
-          value: LinkType.DIRECT,
-          label: "Direct",
-          icon: "arrow-right-left"
-        },
-        {
-          label: "Mentions",
-          value: LinkType.MENTION,
-          icon: "at-symbol"
-        },
-        {
-          label: "Suggestions",
-          value: LinkType.SUGGESTION,
-          icon: "light-bulb"
-        }
-      ]}
-    />
+    <div class="flex gap-4 items-center justify-between">
+      <OptionSelector
+        size={Size.sm}
+        bind:selected={selectedLinkType}
+        on:select={applyFilters}
+        options={[
+          {
+            value: LinkType.DIRECT,
+            label: "Direct",
+            icon: "arrow-right-left"
+          },
+          {
+            label: "Mentions",
+            value: LinkType.MENTION,
+            icon: "at-symbol"
+          }
+        ]}
+      />
+      <div class="flex items-center">
+        <Toggle icon="ph:lightbulb-thin" bind:on={isShowLinkSuggestions} />
+        <Toggle
+          icon="ph:tag-thin"
+          bind:on={isShowLinkTagFilters}
+          count={selectedLinkTags.length > 0
+            ? selectedLinkTags.length
+            : undefined}
+        />
+      </div>
+    </div>
+    {#if isShowLinkTagFilters}
+      <LinkTagFilter
+        links={_links}
+        bind:selected={selectedLinkTags}
+        on:change={applyFilters}
+      />
+    {/if}
     {#if fetchError}
       <ErrorStatusPane error={fetchError} />
+    {:else if isShowLinkSuggestions}
+      <ComingSoonView mainText="Link suggestions" subText="Coming soon..." />
     {:else if filtered.length > 0}
       <LinkThumbnailItems
         links={filtered}
         accessPointId={node.id}
         on:click={onClick}
         on:action={onAction}
+        on:tagClick={onTagClick}
       />
       <ScrollViewBottomSpacer />
     {:else}

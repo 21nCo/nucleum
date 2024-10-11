@@ -14,6 +14,7 @@ import { Orientation } from "../types/direction.enum";
 import { Action } from "../types/action.enum";
 import InteractionModeSettings from "../components/settings/interactionMode/InteractionModeSettings.svelte";
 import { Embed } from "../types/context.type";
+import SyncSettings from "../components/settings/sync/SyncSettings.svelte";
 
 const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
   {
@@ -100,6 +101,16 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
     path: "cp/about",
     icon: "info",
     component: AboutSettings
+  },
+  {
+    action: "sync",
+    label: "Sync",
+    path: "cp/sync",
+    icon: "sync",
+    component: SyncSettings,
+    modalParams: {
+      title: "Sync Settings"
+    }
   }
 ];
 

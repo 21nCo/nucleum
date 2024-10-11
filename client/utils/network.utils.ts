@@ -80,6 +80,8 @@ export async function performApiCall(
 }
 
 export async function performStaticDataOperation(path: string) {
+  const isOffline = await determineIfOffline();
+  if (isOffline) return;
   return fetch(
     import.meta.env?.VITE_STATIC_URL + "/" + path + "?v=" + Date.now()
   );
@@ -92,6 +94,8 @@ export async function performHttpNetworkOperation(params: {
   body: any;
 }) {
   try {
+    const isOffline = await determineIfOffline();
+    if (isOffline) return;
     let token = await resolveToken();
     const headers = params.headers ?? {};
     const body = params.body ?? "";
@@ -136,4 +140,12 @@ export async function performHttpNetworkOperation(params: {
       throw new Error("An unknown error occurred");
     }
   }
+}
+
+export async function determineIfOffline() {
+  const isOfflineMode = await clientStorage.get(ClientStorageKey.OFFLINE_MODE);
+  const isNetworkInducedOfflineMode = !navigator.onLine;
+  return (
+    (isOfflineMode && isOfflineMode === "true") || isNetworkInducedOfflineMode
+  );
 }

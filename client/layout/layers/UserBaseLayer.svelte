@@ -7,7 +7,10 @@
   import account from "$lib/client/stores/account.store";
   import { appLoadingState, appStore } from "$lib/client/stores/app.store";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import { toasts } from "$lib/client/stores/notification.store";
+  import {
+    confirmationNotification,
+    toasts
+  } from "$lib/client/stores/notification.store";
   import context from "$lib/client/stores/context.store";
   import DebugLayer from "./debug/DebugLayer.svelte";
   import ModalLayer from "./ModalLayer.svelte";
@@ -21,7 +24,6 @@
   import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
   import { getSettingsAsModal, getSettingsAsPages } from "../settingsActionMap";
   import { appMenuStore } from "../../stores/appMenu/appMenu.store";
-  import { defaultAppMenu } from "$local/local";
   import { AlertType } from "$lib/client/types/notification.type";
   import { cacheableStores } from "$lib/client/stores/globalStoresMap";
   import AppLoadingView from "../paint/AppLoadingView.svelte";
@@ -50,6 +52,7 @@
 
   let loadingMessage: string = "";
   let error: string | null = null;
+  let dev_isDisableSyncOnAppear = false;
 
   onMount(async () => {
     if ((<any>window).Intercom)
@@ -87,12 +90,12 @@
   async function onAppear() {
     refreshTimeZone();
     const isCloudUser = $account.dataMode === UserDataMode.CLOUD;
-    if (isCloudUser) {
-      toasts.sync();
+    if (isCloudUser && !dev_isDisableSyncOnAppear) {
+      // toasts.sync();
       await flux.syncDown();
       account.ping();
     }
-    if (isExtensionEnvironment()) return;
+    if (isExtensionEnvironment() || import.meta.env?.DEV) return;
     performAppUpdateCheck();
   }
 
@@ -152,7 +155,7 @@
         isLiteMode,
         account: $account
       });
-      if (!isLiteMode) {
+      if (!isLiteMode && !import.meta.env?.DEV) {
         await refreshAppStaticData();
       }
       initActions(isLiteMode);
@@ -167,6 +170,7 @@
           initState
         });
         if (initState === 0) await flux.kvSeed();
+        else await flux.loadInMemoryStores();
       } else if ($account.dataMode === UserDataMode.CLOUD) {
         if (!$account.userId) {
           error = "User id not found. Please try again later.";
@@ -187,26 +191,22 @@
           }
         } else if ($account.sessionType === UserSessionType.RETURNING) {
           loadingMessage = loadingMessages.cloneOrSyncDown;
-          if (initState === 1) {
-            await flux.syncDown();
-            await flux.loadKvStores();
-          } else if (initState === 0) {
+          if (initState === 0) {
             await flux.cloneDown();
+          } else {
+            await flux.syncDown();
+            await flux.loadInMemoryStores();
           }
         }
       }
-      appMenuStore.setDefaults(defaultAppMenu);
+      const defaultAppMenu = $appStore.appData?.appMenu ?? [];
       if ($account.dataMode === UserDataMode.CLOUD && !isLiteMode) {
-        // await initializeFlux($account.userId ?? $account.userInfo?.id ?? "");
-
-        // await dataManager.refreshClientCache();
-        // const isDev = import.meta.env.DEV;
-        // if (!isDev) await dataManager.runDboUpdate();
-        // await account.seed();
         refreshTimeZone();
         appMenuStore.setDefaults(defaultAppMenu, true);
         account.setAnalyticsUserIdentity();
         await account.ping();
+      } else {
+        appMenuStore.setDefaults(defaultAppMenu);
       }
     } catch (e) {
       logger.error(e);
@@ -233,7 +233,7 @@
       PersistenceProvider.SURREAL_SURREAL,
       new SurrealPersistence(),
       userId,
-      { isLocalMode }
+      { isLocalMode, appVersion: $appStore.appData?.version }
     );
   }
 
@@ -250,7 +250,6 @@
       appStore.loadAppData(appData);
     } catch (e) {
       logger.error(e);
-      appStore.gotoErrorPage(e);
     }
   }
 
@@ -270,12 +269,30 @@
       handlePersistAppearance
     );
   }
+  function handleBeforeUnload(event: any) {
+    if ($context.isInOfflineMode || $account.dataMode === UserDataMode.LOCAL) {
+      event.preventDefault();
+      event.returnValue = "";
+      // confirmationNotification.notify({
+      //   title: "You are offline.",
+      //   message:
+      //     "Reloading the page may not load the app again if you are not connected to the internet",
+      //   type: AlertType.WARNING,
+      //   confirmAction: {
+      //     label: "Reload",
+      //     callback: async () => {
+      //       window.location.reload();
+      //     }
+      //   }
+      // });
+    }
+  }
   onDestroy(() => {
     removeWindowEventListeners();
   });
 </script>
 
-{#if $appStore?.appData?.isAnalyticsEnabled}
+{#if $appStore?.appData?.isAnalyticsEnabled && $account?.dataMode === UserDataMode.CLOUD && !$context.isInOfflineMode}
   <AnalyticsLayer />
 {/if}
 <div class="flex h-screen w-screen">
@@ -302,6 +319,8 @@
   on:resize={windowResizeListener}
   on:message={messageReceivedListener}
   on:focus={onAppear}
+  on:beforeunload={handleBeforeUnload}
+  on:unload={handleBeforeUnload}
 />
 
 <svelte:document on:visibilitychange={visibilityChangeListener} />

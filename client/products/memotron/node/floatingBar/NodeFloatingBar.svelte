@@ -10,14 +10,14 @@
   import EditToggleButton from "$lib/client/elements/toggle/EditModeToggle.svelte";
   import { appStore, isInEditMode } from "$lib/client/stores/app.store";
   import { ColorStrength } from "$lib/client/types/appearance.type";
-  import { Orientation, Position } from "$lib/client/types/direction.enum";
+  import { Orientation, Placement } from "$lib/client/types/direction.enum";
   import {
     BarStyle,
     PanelSwitcherStyle
   } from "$lib/client/types/switcher.enum";
   import { createEventDispatcher } from "svelte";
-  import { MemotronAction } from "../../memotronAction.enum";
   import {
+    nodeStore,
     resolveNodeContextMenu,
     resolveVisibleActions,
     type IActiveNodeStore
@@ -27,27 +27,33 @@
   import { Size } from "$lib/client/types/size.enum";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import ToggleGroup from "$lib/client/elements/toggle/ToggleGroup.svelte";
+  import { NodeRightPaneType } from "../node.type";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
-  export let accessMode: ResourceAccessMode;
   export let selectedView: string = "Content";
   export let isWidened: boolean = false;
   let bgIndex = 1;
+  let toggleGroupRef: ToggleGroup;
+  let selectedToggleAction: string | undefined = undefined;
   let buttonCommonProps = {
     parentBgIndex: bgIndex,
     tooltipOptions: {
-      placement: Position.TopCenter,
+      placement: Placement.TopCenter,
       offsetInPx: 6
     }
   };
   let contextMenu = [];
   $: contextMenu = resolveNodeContextMenu($node, ResourceAccessPoint.SELF);
   $: currentMode = appStore.determineCurrentResourceAccessMode($node.id);
+
+  export function resetToggle() {
+    toggleGroupRef?.reset();
+  }
 </script>
 
 <div
   class={cn(
-    "flex justify-between items-center mo:w-full tp:w-4/5 dp:w-[48rem] h-14 shadow-md border border-brs2 rounded-md px-4",
+    "flex justify-between items-center mo:w-full tp:w-4/5 lp:w-[40rem] dp:w-[48rem] h-14 shadow-md border border-brs2 rounded-md px-4",
     bg(bgIndex - 1)
   )}
 >
@@ -63,20 +69,27 @@
   </span>
   <span class="flex items-center gap-3 h-full">
     <ToggleGroup
+      bind:this={toggleGroupRef}
+      selected={selectedToggleAction}
       items={resolveVisibleActions($node.contentType)}
       class="gap-5"
       on:change={(e) => {
-        // onPanelAction(e.detail);
+        if (e.detail === NodeRightPaneType.SIDENOTES) {
+          dispatch("panel", e.detail);
+        } else if (e.detail === "readMode") {
+          nodeStore.toggleReadMode($node.id, true);
+        }
       }}
-      on:none={() => {
-        // rightPane = undefined;
-      }}
+      on:none
     />
     <ContextMenuAction
       tooltipOptions={buttonCommonProps.tooltipOptions}
       {contextMenu}
+      size={Size.lg}
       id="nodeContextMenu"
       tooltip="More actions"
+      position={Placement.TopCenter}
+      on:action
     />
     <Divider
       orientation={Orientation.Vertical}
@@ -113,15 +126,17 @@
     {/if}
     <Button
       {...buttonCommonProps}
-      icon={accessMode === ResourceAccessMode.FULL ? "collapse" : "full-screen"}
-      tooltip={accessMode === ResourceAccessMode.FULL
+      icon={$node.accessMode === ResourceAccessMode.FULL
+        ? "collapse"
+        : "full-screen"}
+      tooltip={$node.accessMode === ResourceAccessMode.FULL
         ? "Minimize"
         : "Full screen"}
       on:click={() => {
-        appStore.toggleFocusAccessMode(accessMode, $node.id);
+        appStore.toggleFocusAccessMode($node.accessMode, $node.id);
       }}
     />
-    {#if accessMode != ResourceAccessMode.INLINE}
+    {#if $node.accessMode != ResourceAccessMode.INLINE}
       <!-- <Button
         {...buttonCommonProps}
         label="Close node"

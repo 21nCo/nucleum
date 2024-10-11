@@ -5,6 +5,7 @@ export type ISelectItem = {
   label?: string;
   icon?: string | IAvatar;
   isDisabled?: boolean;
+  badge?: string;
 };
 
 export enum OptionSelectorStyle {
@@ -18,6 +19,8 @@ export type IContextMenu = { group: string; items: IContextMenuItem[] }[];
 export type IContextMenuItem = ISelectItem & {
   callback?: (props?: any) => Promise<void>;
   action?: string;
+  type?: ContextMenuType;
+  initialValue?: boolean;
   secondStepComponent?: {
     component: any;
     props?: any;
@@ -30,3 +33,8 @@ export type IResourceSwitchItem = ISelectItem & {
   isHidePinAction?: boolean;
   isPinned?: boolean;
 };
+
+export enum ContextMenuType {
+  DEFAULT,
+  SWITCH
+}

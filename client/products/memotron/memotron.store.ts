@@ -1,28 +1,24 @@
-// import { dataManager } from "$lib/client/persistence/dataManager";
 import {
   headingNodeTypes,
-  LinkType,
-  NodeType,
   rootNodeTypeList
 } from "$lib/client/products/memotron/node/node.type";
 import { activeResourceFilterV2 } from "$lib/client/utils/utils";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { isValidString } from "$lib/shared/utils/text.utils";
 import {
+  SearchType,
   type IRecordId,
   type IResourceSelectFilters,
-  type IResourceSelectOrderBy,
-  type IStore,
-  PersistenceActionType,
-  StoreDataType
+  type IResourceSelectOrderBy
 } from "$lib/client/types/data.type";
 import { flux } from "$lib/client/components/flux/flux";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { isValidArray } from "$lib/shared/utils/obj.utils";
 import { toasts } from "$lib/client/stores/notification.store";
-import { replaceParams } from "$lib/client/persistence/surreal/surreal.utils";
+import { extensionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
+import { FluxMethod } from "$lib/client/components/flux/flux.type";
 
-export function resolveResource(id: string) {
+export function resolveResource(id: IRecordId) {
   return flux.select(id);
 }
 
@@ -33,7 +29,8 @@ export class SearchStore {
   offset: number | undefined = undefined;
   orderBy: IResourceSelectOrderBy | undefined = undefined;
   filters: IResourceSelectFilters = {};
-
+  searchType: SearchType = SearchType.FULL_TEXT;
+  semanticSearchTopK: number | undefined;
   constructor(resource: Resource = Resource.everything) {
     this.resource = resource;
   }
@@ -70,43 +67,77 @@ export class SearchStore {
    * @returns
    */
   async nodes() {
-    const result = await flux.selectMany(Resource.node, {
-      properties: [
-        "*",
-        "parent.* as parent",
-        "file.* as file",
-        "search::highlight('**', '**', 1, false) AS bodySearch",
-        "search::highlight('**', '**', 2, false) AS labelSearch",
-        "(fn::memotron::node::parent($parent.id)) as mdParent"
-      ],
-      filters: {
-        trashInformation: false,
-        creationContext: isValidString(this.searchQuery) ? undefined : false,
-        ...this.filters,
-        contentType:
-          "contentType" in this.filters
-            ? this.filters.contentType
-            : this.searchQuery
-              ? undefined
-              : rootNodeTypeList
-      },
-      search: isValidString(this.searchQuery)
-        ? {
-            query: this.searchQuery,
-            properties: ["body", "label"]
-          }
-        : undefined,
-      orderBy: this.orderBy ?? {
-        createdAt: "desc"
-      },
-      limit: this.limit,
-      offset: this.offset
-    });
+    const result = await flux.selectMany(
+      this.searchType == SearchType.SEMANTIC && this.searchQuery
+        ? Resource.vector
+        : Resource.node,
+      {
+        semanticSearchTopK: this.semanticSearchTopK,
+        searchType: this.searchType,
+        properties:
+          this.searchType === SearchType.SEMANTIC && this.searchQuery
+            ? [
+                "node.body as body",
+                "node.children as children",
+                "node.contentType as contenType",
+                "node.createdAt as createdAt",
+                "node.createdBy as createdBy",
+                "node.id as id",
+                "node.isArchived as isArchived",
+                "node.isStarred as isStarred",
+                "node.label as label",
+                "node.mdText as mdText",
+                "node.metadata as metadata",
+                "node.modifiedAt as modifiedAt",
+                "node.modifiedBy as modifiedBy",
+                "node.properties as properties",
+                "node.parent.* as parent",
+                "node.file.* as file"
+              ]
+            : [
+                "*",
+                "parent.* as parent",
+                "file.* as file",
+                "search::highlight('**', '**', 1, false) AS bodySearch",
+                "search::highlight('**', '**', 2, false) AS labelSearch"
+                //TODO - this is causing extreme slowness for select query if there are 1000s of records on the table
+                // "(fn::memotron::node::parent($parent.id)) as mdParent"
+              ],
+        filters:
+          this.searchType == SearchType.SEMANTIC && this.searchQuery
+            ? {}
+            : {
+                trashInformation: false,
+                creationContext:
+                  isValidString(this.searchQuery) || this.filters.contentType
+                    ? undefined
+                    : false,
+                ...this.filters,
+                contentType:
+                  "contentType" in this.filters
+                    ? this.filters.contentType?.toUpperCase()
+                    : this.searchQuery
+                      ? undefined
+                      : rootNodeTypeList
+              },
+        search: isValidString(this.searchQuery)
+          ? {
+              query: this.searchQuery,
+              properties: ["body", "label"]
+            }
+          : undefined,
+        orderBy: this.orderBy ?? {
+          createdAt: "desc"
+        },
+        limit: this.limit,
+        offset: this.offset
+      }
+    );
 
-    logger.debug({ at: "refreshNodes", result });
+    logger.log({ at: "refreshNodes", result });
 
     // const result2 = await flux.selectByQuery("select * from node;");
-    // logger.debug({ at: "all nodes: ", result2 });
+    // logger.log({ at: "all nodes: ", result2 });
     return result;
   }
 
@@ -114,11 +145,16 @@ export class SearchStore {
     const result = await flux.selectMany(Resource.collection, {
       properties: [
         "search::highlight('**', '**', 1, false) AS labelSearch",
-        "*"
+        "*",
+        "typeToExtend.* as typeToExtend"
       ],
       filters: {
         trashInformation: false,
-        ...this.filters
+        ...this.filters,
+        type:
+          "type" in this.filters && this.filters.type
+            ? this.filters.type?.toUpperCase()
+            : undefined
       },
       search: isValidString(this.searchQuery)
         ? {
@@ -132,17 +168,19 @@ export class SearchStore {
       limit: this.limit,
       offset: this.offset
     });
-    logger.debug({ at: "refreshCollections", result });
+    logger.log({ at: "refreshCollections", result });
     return result;
   }
 
   async select(params: {
     resource?: Resource;
     searchQuery?: string;
-    limit?: number;
+    limit?: number | undefined;
     offset?: number;
-    orderBy?: IResourceSelectOrderBy;
+    orderBy?: IResourceSelectOrderBy | undefined;
     filters?: IResourceSelectFilters;
+    searchType?: SearchType;
+    semanticSearchTopK?: number | undefined;
   }) {
     this.resource = params.resource ?? this.resource;
     this.searchQuery = params.searchQuery ?? this.searchQuery;
@@ -150,7 +188,10 @@ export class SearchStore {
     this.offset = params.offset ?? this.offset;
     this.orderBy = params.orderBy ?? this.orderBy;
     this.filters = params.filters ?? this.filters;
-    logger.debug({
+    this.searchType = params.searchType ?? this.searchType;
+    this.semanticSearchTopK =
+      params.semanticSearchTopK ?? this.semanticSearchTopK;
+    logger.log({
       at: "SearchStore.refresh",
       ...this
     });
@@ -228,6 +269,44 @@ export class SearchStore {
     return [...(nodes ?? []), ...(collections ?? [])];
   }
 
+  async searchForLinkingOnExtension(query: string, resource?: Resource) {
+    let nodes = [];
+    if (resource === Resource.node || !resource) {
+      nodes = await extensionFlux({
+        method: FluxMethod.SELECT_MANY,
+        args: {
+          resource: Resource.node,
+          params: {
+            search: isValidString(query)
+              ? {
+                  properties: ["body", "label"],
+                  query
+                }
+              : undefined
+          }
+        }
+      });
+    }
+    let collections = [];
+    if (resource === Resource.collection || !resource) {
+      collections = await extensionFlux({
+        method: FluxMethod.SELECT_MANY,
+        args: {
+          resource: Resource.collection,
+          params: {
+            search: isValidString(query)
+              ? {
+                  properties: ["label"],
+                  query
+                }
+              : undefined
+          }
+        }
+      });
+    }
+    return [...(nodes ?? []), ...(collections ?? [])];
+  }
+
   private async recentNodes() {
     const result = await flux.selectMany(Resource.node, {
       properties: ["*", "parent.* as parent"],
@@ -242,7 +321,7 @@ export class SearchStore {
       limit: this.limit,
       offset: this.offset
     });
-    logger.debug({ at: "recentNodes", result });
+    logger.log({ at: "recentNodes", result });
     return result;
   }
   private async recentCollections() {
@@ -256,11 +335,11 @@ export class SearchStore {
       limit: this.limit,
       offset: this.offset
     });
-    logger.debug({ at: "recentCollections", result });
+    logger.log({ at: "recentCollections", result });
     return result;
   }
 
-  async recents(resource: Resource) {
+  async recents(resource?: Resource) {
     this.resource = resource ?? this.resource;
     let data: any[] = [];
     if (this.resource === Resource.everything) {
@@ -275,62 +354,3 @@ export class SearchStore {
     return data;
   }
 }
-
-class Linker implements IStore {
-  id: string = Resource.link;
-  dataType: StoreDataType = StoreDataType.IFR;
-
-  async link(
-    from: IRecordId,
-    to: IRecordId,
-    linkType: LinkType = LinkType.DIRECT
-  ) {
-    const response = await flux.mutation(Resource.link, {
-      action: PersistenceActionType.CUSTOM,
-      query: this.generateLinkQuery(from, to, linkType)
-    });
-    logger.debug({ at: "link", response });
-    return response;
-  }
-
-  async unlink(from: IRecordId, to: IRecordId) {
-    let response = await flux.mutation(Resource.link, {
-      action: PersistenceActionType.CUSTOM,
-      query:
-        "DELETE $from->link where out=$to; DELETE $to->link where out=$from;",
-      data: {
-        from,
-        to
-      }
-    });
-    logger.debug({ at: "unlink", response });
-    return response;
-  }
-
-  async linkMany(links: any[]) {
-    const query = links
-      .map((link) => this.generateLinkQuery(link.from, link.to, link.linkType))
-      .join("; ");
-    let response = await flux.mutation(Resource.link, {
-      action: PersistenceActionType.CUSTOM,
-      query
-    });
-    logger.debug({ at: "linkMany", response });
-    return response;
-  }
-
-  private generateLinkQuery(from: IRecordId, to: IRecordId, linkType: string) {
-    return replaceParams(
-      `relate $from->link->$to content {toType: meta::tb($to), linkType: $linkType, createdAt: time::now()}`,
-      {
-        from,
-        to,
-        linkType
-      }
-    );
-  }
-
-  get() {}
-}
-
-export const linker = new Linker();

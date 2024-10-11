@@ -8,23 +8,22 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { toasts } from "$lib/client/stores/notification.store";
   import { ColorStrength } from "$lib/client/types/appearance.type";
-  import { Orientation } from "$lib/client/types/direction.enum";
+  import { Orientation, Placement } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
-  import { enumToString } from "$lib/shared/utils/text.utils";
   import LinkItems from "../../common/linkbox/LinkItems.svelte";
   import LinkSearch from "../../common/linkbox/LinkSearch.svelte";
-  import { linker } from "../../memotron.store";
   import type { IActiveNodeStore } from "../node.store";
-  import { resolveNodeIcon } from "../node.utils";
+  import { resolveNodeContentLabel, resolveNodeIcon } from "../node.utils";
+  import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { tooltip } from "$lib/client/actions/popover.action";
+  import { NodeType } from "../node.type";
+
   export let node: IActiveNodeStore;
   let searchQuery = "";
   let popoverRef: any;
   let searchInputRef: any;
   async function onUnlink(e: CustomEvent) {
-    await linker.unlink($node.id, e.detail);
-    $node.collections = $node.collections?.filter(
-      (x) => x.toString() !== e.detail.toString()
-    );
+    await node.unlinkCollection(e.detail);
   }
   async function onSelect(e: CustomEvent) {
     popoverRef.hide();
@@ -34,38 +33,40 @@
       toasts.error("Something went wrong. Please try again later.");
       return;
     }
-    if ($node.collections?.some((x) => x.toString() === id.toString())) {
+    if ($node.collections?.some(resourceInList(id))) {
       toasts.error("Collection already exists.");
       return;
     }
-    const result = await linker.link($node.id, id);
+    const result = await node.linkCollection(id);
     if (!result) {
       toasts.error("Something went wrong. Please try again later.");
       return;
     }
-    $node.collections = [...($node.collections ?? []), id];
   }
 
   function onClick(e: CustomEvent) {
-    appStore.resourceClickHandler(
-      e.detail.event,
-      e.detail.item,
-      ResourceAccessMode.POP
-    );
+    appStore.resourceClickHandler(e.detail.event, e.detail.item);
   }
 </script>
 
 <div class="flex gap-2 items-center justify-center h-full">
   <button
-    class="flex items-center gap-1 h-full border border-bgs4 hover:border-fgs3 rounded-full px-2 py-0.5 text-b2 whitespace-nowrap bg-bgs2 text-fgs1"
+    class="flex items-center gap-2 h-full border border-bgs4 hover:border-fgs3 rounded-full px-2 py-0.5 text-b2 whitespace-nowrap bg-bgs2 text-fgs1"
     on:click={() => {
       appStore.closeResource();
-      appStore.gotoPath("library", {
+      appStore.gotoPath("/library", {
         queryParams: {
           resource: Resource.node,
           type: $node.contentType.toLowerCase()
         }
       });
+    }}
+    use:tooltip={{
+      text: `See all ${resolveNodeContentLabel($node.contentType)} nodes`,
+      direction:
+        $node.contentType === NodeType.NODULAR_MARKDOWN
+          ? Placement.Bottom
+          : Placement.Top
     }}
   >
     <Icon
@@ -73,7 +74,7 @@
       size={Size.sm}
       class="fill-fgs1"
     />
-    {enumToString($node.contentType)}
+    {resolveNodeContentLabel($node.contentType)}
   </button>
   <span class="h-full flex items-center justify-center">
     <Divider

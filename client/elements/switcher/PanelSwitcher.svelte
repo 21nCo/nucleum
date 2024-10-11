@@ -13,7 +13,8 @@
   } from "$lib/client/types/select.type";
   import Text from "../text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
-  import { fade, fly, slide } from "svelte/transition";
+  import { fly } from "svelte/transition";
+  import { moveItemInArray } from "$lib/shared/utils/obj.utils";
   const dispatch = createEventDispatcher();
   export let items: ISelectItem[] | string[];
   export let value: ISelectValue | undefined = undefined;
@@ -39,29 +40,9 @@
   onMount(() => {
     if (value === undefined) value = _items[0]?.value;
   });
-  $: if (isInEditMode && _items[_items.length - 1]?.value !== "$add") {
-    _items.push({ label: "Add", value: "$add" });
-    setTimeout(() => {
-      // updateParentWidth();
-    }, 1000);
-    // updateParentWidth();
-  } else if (_items[_items.length - 1]?.value === "$add") {
-    _items.pop();
-    // updateParentWidth();
-  }
 
   let parent: any;
   let child: any;
-  // const updateParentWidth = () => {
-  //   console.log("updateParentWidth", {
-  //     parent,
-  //     child,
-  //     width: child.offsetWidth
-  //   });
-  //   if (parent && child) {
-  //     parent.style.width = `${child.offsetWidth}px`;
-  //   }
-  // };
   function conditionalTransition(node: any) {
     if (isEnableAnimationForTitle) {
       return fly(node, { y: -100, duration: 300 });
@@ -127,7 +108,7 @@
           {item}
           {size}
           {style}
-          {isInEditMode}
+          isInEditMode={_items.length > 1 && isInEditMode}
           {barStyle}
           {isInversePlacement}
           {parentBgIndex}
@@ -140,11 +121,34 @@
             value = item.value;
             dispatch("switch", item.value);
           }}
+          on:rearrange={(e) => {
+            _items = moveItemInArray(_items, index, e.detail > 0 ? 1 : -1);
+          }}
+          on:rearranged={(e) => {
+            dispatch(
+              "rearrange",
+              _items.map((x) => x.value)
+            );
+          }}
           on:change
-          on:add
           on:remove
         />
       {/each}
+      {#if isInEditMode}
+        <PanelSwitcherItem
+          item={{ label: "Add", value: "$add" }}
+          {size}
+          {style}
+          isInEditMode={true}
+          {barStyle}
+          {isInversePlacement}
+          {parentBgIndex}
+          {isShowNumberShortcut}
+          index={_items.length}
+          bind:triggerItemEdit
+          on:add
+        />
+      {/if}
     </div>
     {#if $$slots.right}
       <span class="ml-6">

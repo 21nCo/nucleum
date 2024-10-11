@@ -1,21 +1,22 @@
 <script lang="ts">
   import { Size } from "$lib/client/types/size.enum";
-  import { generateUID } from "$lib/client/utils/utils";
+  import { cn } from "$lib/client/utils/ui.utils";
+  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let on = false;
   // export let label = "";
-  export let id = "toggle-switch" + generateUID();
+  export let id = "toggle-switch" + generateSimpleRandomId();
   export let size: Size = Size.md;
   export let isDisabled = false;
 </script>
 
-<!-- svelte-ignore a11y-click-events-have-key-events -->
 <label
+  class={cn("flex items-center", {
+    "cursor-not-allowed opacity-40": isDisabled,
+    "cursor-pointer": !isDisabled
+  })}
   for={id}
-  class="flex items-center {isDisabled
-    ? 'cursor-not-allowed opacity-40'
-    : 'cursor-pointer'}"
   on:click|stopPropagation
 >
   <div class="relative">
@@ -35,10 +36,10 @@
         (size == Size.sm ? " w-7 h-4" : " w-[48px] h-6")}
     />
     <div
-      class={"dot absolute bg-bgs1 rounded-full transition" +
-        (size == Size.sm
-          ? " w-3 h-3 left-0.5 top-0.5"
-          : " w-[22px] h-5 left-0.5 top-0.5")}
+      class={cn("dot absolute bg-bgs1 rounded-full transition", {
+        "w-3 h-3 left-0.5 top-0.5": size == Size.sm,
+        "w-[22px] h-5 left-0.5 top-0.5": size != Size.sm
+      })}
     />
   </div>
 </label>

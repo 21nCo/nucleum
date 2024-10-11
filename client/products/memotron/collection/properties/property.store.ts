@@ -2,34 +2,31 @@ import { ResourceStore } from "$lib/client/components/flux/resourceStores/resour
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import {
   type IProperty,
+  type IPropertyEditorStore,
   PropertyType
 } from "$lib/client/products/memotron/collection/properties/property.type";
 import { ObservableStore } from "$lib/client/stores/client.store";
 import type { IObservableStoreSubject } from "$lib/client/types/data.type";
-import type { OmitForCapture } from "$lib/client/components/flux/resourceStores/resource.type";
+import type { OmitForCaptureWithId } from "$lib/client/components/flux/resourceStores/resource.type";
 
 class PropertyStore extends ResourceStore<IProperty> {
   constructor() {
-    super(Resource.property, {
-      refreshOnAppear: true
-    });
+    super(Resource.property);
   }
 }
 
 export const propertyStore = new PropertyStore();
 
-export class PropertyEditorStore extends ObservableStore<
-  OmitForCapture<IProperty>[] & IObservableStoreSubject
-> {
+export class PropertyEditorStore extends ObservableStore<IPropertyEditorStore> {
   constructor() {
     super("propertyEditor");
-    this.set([]);
+    this.set({ properties: [] });
   }
   load(data: IProperty[]) {
-    this.set(data);
+    this.set({ properties: data });
   }
   reset() {
-    this.set([]);
+    this.set({ properties: [] });
   }
 }
 
@@ -39,19 +36,19 @@ export const autoPropertiesGroupLabel = "Automatic";
 export const metaPropertyOptions = [
   {
     label: "Created time",
-    icon: "clock",
+    icon: "ph:clock-light",
     value: PropertyType.CREATED_TIME,
     groupId: autoPropertiesGroupLabel
   },
   {
     label: "Modified time",
-    icon: "clock",
+    icon: "ph:clock-light",
     value: PropertyType.MODIFIED_TIME,
     groupId: autoPropertiesGroupLabel
   },
   {
     label: "Location",
-    icon: "map",
+    icon: "ph:map-pin-light",
     value: PropertyType.LOCATION,
     groupId: autoPropertiesGroupLabel
   }
@@ -59,9 +56,15 @@ export const metaPropertyOptions = [
 export const propertyOptions = [
   {
     label: "Text",
-    icon: "bars",
+    icon: "ph:text-light",
     value: PropertyType.TEXT
   },
+  {
+    label: "Number",
+    icon: "ph:hash-light",
+    value: PropertyType.NUMBER
+  },
+
   {
     label: "Rating",
     icon: "star",
@@ -73,23 +76,44 @@ export const propertyOptions = [
     value: PropertyType.SINGLE_SELECT
   },
   {
-    label: "Multi select",
-    icon: "bars",
-    value: PropertyType.MULTI_SELECT
-  },
-  {
     label: "Date",
     icon: "calendar",
     value: PropertyType.DATE
   },
   {
     label: "Checkbox",
-    icon: "bolt",
+    icon: "ph:check-square-offset-light",
     value: PropertyType.CHECKBOX
+  },
+  {
+    label: "Email",
+    icon: "ph:envelope-light",
+    value: PropertyType.EMAIL
+  },
+  {
+    label: "Link",
+    icon: "ph:link-light",
+    value: PropertyType.URL
+  },
+  {
+    label: "Multi select",
+    icon: "ph:list-bullets-light",
+    value: PropertyType.MULTI_SELECT,
+    badge: "Planned",
+    isDisabled: true
+  },
+  {
+    label: "Link list",
+    icon: "ph:tree-view-light",
+    value: PropertyType.LINK_LIST,
+    badge: "Planned",
+    isDisabled: true
   },
   {
     label: "Attachement(s)",
     icon: "upload",
-    value: PropertyType.FILE
+    value: PropertyType.FILE,
+    badge: "Planned",
+    isDisabled: true
   }
 ];

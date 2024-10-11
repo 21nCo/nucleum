@@ -4,15 +4,15 @@ import type {
 } from "$lib/client/types/data.type";
 import type {
   IClip,
-  INodeProperty
+  INodePropertyValue
 } from "$lib/client/products/memotron/node/node.type";
 import type { AlertType } from "$lib/client/types/notification.type";
-export interface IWebpage extends IObservableStoreSubject {
+export interface IWebpageStore extends IObservableStoreSubject {
   url: string;
   id?: IRecordId;
   clips?: (IClip & { links: any[] })[];
   links?: string[];
-  properties?: INodeProperty[];
+  properties?: INodePropertyValue[];
   notes?: string;
   relationships?: { node: string; relation: string }[];
 }
@@ -40,6 +40,7 @@ export interface ISyncStore extends IObservableStoreSubject {
   status?: SyncStatus;
   isShowSyncPane?: boolean;
   lastSyncedAt?: string;
+  progress?: number;
 }
 
 export enum SyncStatus {

@@ -1,6 +1,5 @@
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-import { debouncer } from "$lib/client/utils/utils";
 import {
   activeResources,
   ActiveResourceStore,
@@ -11,42 +10,52 @@ import {
   type IActiveCollection,
   type ICollectionView,
   CollectionType,
-  type ICollection
+  type ICollection,
+  type ICollectionExpanded
 } from "$lib/client/products/memotron/collection/collection.type";
 import {
   propertyEditorStore,
   propertyStore
 } from "./properties/property.store";
 import { Arrangement } from "$lib/client/types/direction.enum";
-import { CombinationViewType } from "../curation/curation.type";
-import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+import {
+  ResourceAccessPoint,
+  type OmitForCapture,
+  type OmitForCaptureWithId
+} from "$lib/client/components/flux/resourceStores/resource.type";
 import { ResourceActions } from "../common/resource.actions";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { flux } from "$lib/client/components/flux/flux";
-import type { IProperty } from "./properties/property.type";
-import type { IAvatar } from "$lib/client/types/avatar.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
+import { assignDefaultLabelAsFallback } from "./properties/property.utils";
+import type { IProperty } from "./properties/property.type";
+import {
+  ContextMenuType,
+  type IContextMenu
+} from "$lib/client/types/select.type";
 
 class CollectionStore extends ResourceStore<ICollection> {
   constructor() {
-    super(Resource.collection, {
-      refreshOnAppear: true
-    });
+    super(Resource.collection);
   }
-  async create(
-    form: Partial<ICollection> & { defaultLayout: CollectionLayout }
-  ) {
+  async save(form: Partial<ICollection> & { defaultLayout: CollectionLayout }) {
     const id = generateResourceId(Resource.collection);
-    const properties = propertyEditorStore.get();
-    const resource: Partial<ICollection> = {
+    const propertyEditor = propertyEditorStore.get();
+    logger.log({ at: "CollectionStore.save", propertyEditor, form });
+    let properties: OmitForCaptureWithId<IProperty>[] =
+      propertyEditor.properties;
+    const resource: OmitForCapture<ICollection> = {
       ...form,
       id,
       views: [],
       properties: [],
-      defaultLayout: undefined
+      defaultLayout: undefined,
+      typeToExtend: propertyEditor.typeToExtend?.id ?? undefined,
+      type: form.type ?? CollectionType.UNTYPED
     };
     if (form.type === CollectionType.TYPED && properties?.length > 0) {
+      properties = properties.map(assignDefaultLabelAsFallback);
       await propertyStore.create(properties);
       resource.properties = properties.map((p) => p.id);
     }
@@ -54,7 +63,10 @@ class CollectionStore extends ResourceStore<ICollection> {
     await viewStore.create({
       id: viewId,
       layout: form.defaultLayout,
-      label: "Default"
+      label: "Default",
+      tabBy: "none",
+      groupBy: "none",
+      subGroupBy: "none"
     });
     resource.views = [viewId];
     return super.create(resource);
@@ -62,17 +74,35 @@ class CollectionStore extends ResourceStore<ICollection> {
 
   /**
    * TODO - testing extended properties
-   * @param types
+   * @param collections - ids of collections - can be any type of collection.
    * @returns
    */
   async resolveTypes(collections: IRecordId[]) {
-    let types: string[] = [];
-    let propertyConfig: IProperty[] = [];
-    let avatars: IAvatar[] = [];
-    if (!collections) return { types, propertyConfig, avatars };
-    const query = `return select properties.* as properties, typeToExtend.properties.* as extendProperties from collection where id in $types;`;
-    const result = await flux.selectByQuery(query, { types });
-    return { types, propertyConfig, avatars };
+    let types: ICollectionExpanded[] = [];
+    if (!collections) return types;
+    const result = await flux.selectMany(Resource.collection, {
+      properties: [
+        "*",
+        "typeToExtend.* as typeToExtend",
+        "(select * from $parent.properties) as properties",
+        "(select * from $parent.typeToExtend.properties) as extendProperties"
+      ],
+      filters: {
+        id: collections.map((x) => x.toString())
+      }
+    });
+    logger.log({ at: "resolveTypes", result });
+    if (!result || !Array.isArray(result)) return types;
+    types = result.filter((x) => x.type === CollectionType.TYPED);
+    return types;
+  }
+
+  async fetchDerivedCollections(collectionId: IRecordId) {
+    return this.selectMany({
+      filters: {
+        typeToExtend: collectionId.toString()
+      }
+    });
   }
 }
 
@@ -81,11 +111,9 @@ export const collectionStore = new CollectionStore();
 export type IActiveCollectionStore = InstanceType<typeof ActiveCollectionStore>;
 
 /**
- * Curation stores map for holding the state of active i.e. currently open curations in the UI
- */
-const activeCollectionStoreMap = new Map<string, IActiveCollectionStore>();
-
-/**
+ *
+ * @deprecated - use ActiveCollectionStore.resolve instead
+ *
  * Resolves the active curation store for the given id. If the store does not exist, it will be initialized.
  * @param id - The id of the curation
  * @param context - The context from which the store is being accessed. This is used for debugging purposes.
@@ -103,27 +131,10 @@ export function resolveActiveCollectionStore(
   return val!;
 }
 
-// export function determineCurationType(id: string) {
-//   let type;
-//   if (id.startsWith(Resource.nodelinks)) {
-//     type = CurationType.NODELINKS;
-//   } else if (id.startsWith(Resource.collection)) {
-//     type = CurationType.COLLECTION;
-//   } else {
-//     type = CurationType.COMBINATION;
-//   }
-//   return type;
-// }
-
-class ActiveCollectionStore extends ActiveResourceStore<
+export class ActiveCollectionStore extends ActiveResourceStore<
   IActiveCollection,
   CollectionStore
 > {
-  debouncedPersistView = debouncer((id: string, view: ICollectionView) => {
-    console.log("debouncedPersistView", { id, view });
-    viewStore.modify(id, view);
-  }, 2000);
-
   constructor(collectionId: IRecordId) {
     super(collectionId, collectionStore);
   }
@@ -132,11 +143,8 @@ class ActiveCollectionStore extends ActiveResourceStore<
    * Initialized the collection with local cached data
    */
   async init() {
-    logger.debug({ at: "ActiveCollectionStore.init", id: this.id });
+    logger.log({ at: "ActiveCollectionStore.init", id: this.id });
     try {
-      this.resourceStore.modify(this.id, {
-        interactedAt: new Date().toISOString()
-      });
       this.update((val: IActiveCollection) => {
         if (val) val.isPageLoading = true;
         else val = { isPageLoading: true };
@@ -145,9 +153,10 @@ class ActiveCollectionStore extends ActiveResourceStore<
       const result = await flux.select(this.id, [
         "*",
         "(select * from $parent.views) as views",
-        "(select * from $parent.properties) as properties"
+        "(select * from $parent.properties) as properties",
+        "typeToExtend.* as typeToExtend"
       ]);
-      logger.debug({ at: "ActiveCollectionStore.init - select", result });
+      logger.log({ at: "ActiveCollectionStore.init - select", result });
       let record = result;
       if (!record) return;
       this.set({
@@ -159,6 +168,10 @@ class ActiveCollectionStore extends ActiveResourceStore<
           return { ...x, data: [] };
         })
       });
+      propertyEditorStore.set({
+        properties: record.properties ?? [],
+        typeToExtend: record.typeToExtend
+      });
     } catch (e) {
       console.error("error in init collection store", {
         id: this.id,
@@ -167,25 +180,17 @@ class ActiveCollectionStore extends ActiveResourceStore<
     }
   }
 
-  async createView(viewToDuplicate?: string) {
+  async createView(viewToDuplicate?: IRecordId) {
     let viewToBeDuplicated: ICollectionView | undefined;
-    let partial: Omit<
-      ICollectionView,
-      | "id"
-      | "createdAt"
-      | "modifiedAt"
-      | "createdBy"
-      | "modifiedBy"
-      | "interactedAt"
-    >;
+    let view: OmitForCapture<ICollectionView> | undefined;
     if (viewToDuplicate) {
-      this.update((val: IActiveCollection) => {
-        viewToBeDuplicated = val.views.find((v) => v.id === viewToDuplicate);
-        return val;
-      });
-      partial = viewToBeDuplicated as ICollectionView;
+      const collection = this.get();
+      viewToBeDuplicated = collection.views.find(
+        (v) => v.id == viewToDuplicate
+      );
+      view = viewToBeDuplicated as ICollectionView;
     } else {
-      partial = {
+      view = {
         label: "New view",
         layout: CollectionLayout.BOARD,
         tabBy: "none",
@@ -194,8 +199,10 @@ class ActiveCollectionStore extends ActiveResourceStore<
         arrangement: Arrangement.LIST
       };
     }
-    const createdView = await viewStore.create(partial);
-    logger.debug({ at: "ActiveCollectionStore.createView", createdView });
+    const response = await viewStore.create(view);
+    logger.log({ at: "ActiveCollectionStore.createView", response });
+    if (!response || !Array.isArray(response)) return;
+    const createdView = response[0];
     if (!createdView || !createdView.id) return;
 
     this.update((val: IActiveCollection) => {
@@ -203,9 +210,15 @@ class ActiveCollectionStore extends ActiveResourceStore<
       return val;
     });
 
-    this.resourceStore.modify(this.id, {
-      views: [...(this.get().views.map((x) => x.id) ?? []), createdView.id]
-    });
+    this.resourceStore.modify(
+      this.id,
+      {
+        views: [...(this.get().views.map((x) => x.id) ?? [])]
+      },
+      {
+        isPreventBackPropagation: true
+      }
+    );
     return createdView.id;
   }
 
@@ -222,7 +235,7 @@ class ActiveCollectionStore extends ActiveResourceStore<
     return viewStore.trash(id);
   }
 
-  updateView(id: string, view: Partial<ICollectionView>) {
+  updateView(id: IRecordId, view: Partial<ICollectionView>, key?: string) {
     this.update((val: IActiveCollection) => {
       val.views = val.views.map((v) => {
         if (v.id == id) return { ...v, ...view };
@@ -230,7 +243,10 @@ class ActiveCollectionStore extends ActiveResourceStore<
       });
       return val;
     });
-    this.debouncedPersistView(id, view);
+    viewStore.modify(id, view, {
+      isDebounced: true,
+      debounceKey: key ?? id.toString()
+    });
   }
 
   /**
@@ -238,15 +254,15 @@ class ActiveCollectionStore extends ActiveResourceStore<
    * @param viewId
    * @returns
    */
-  async loadViewData(viewId: string) {
-    logger.debug({ at: "ActiveCollectionStore.loadViewData", viewId });
+  async loadViewData(viewId: IRecordId) {
+    logger.log({ at: "ActiveCollectionStore.loadViewData", viewId });
     if (!viewId) return;
     this.update((val: IActiveCollection) => {
       val.isViewDataLoading = true;
       return val;
     });
     const response = await viewStore.fetchViewData(viewId, this.get().id);
-    logger.debug({
+    logger.log({
       at: "ActiveCollectionStore.loadViewData - response",
       response
     });
@@ -270,7 +286,7 @@ class ActiveCollectionStore extends ActiveResourceStore<
    * @param viewId
    * @returns
    */
-  async refreshViewData(viewId: string) {
+  async refreshViewData(viewId: IRecordId) {
     console.log({ context: "refreshViewData", viewId });
     this.update((val: IActiveCollection) => {
       val.isViewDataRefreshing = true;
@@ -292,12 +308,31 @@ class ActiveCollectionStore extends ActiveResourceStore<
     });
     return true;
   }
+
+  async updateProperties() {
+    const propertiesEditor = propertyEditorStore.get();
+    let properties = propertiesEditor.properties;
+    properties = properties.map(assignDefaultLabelAsFallback);
+    if (!properties) return;
+    for (const property of properties) {
+      await propertyStore.modify(property.id, property);
+    }
+    return this.resourceStore.modify(
+      this.id,
+      {
+        properties: properties.map((p) => p.id),
+        typeToExtend: propertiesEditor.typeToExtend?.id ?? undefined
+      },
+      {
+        isPreventBackPropagation: true
+      }
+    );
+  }
 }
 
 class CollectionViewStore extends ResourceStore<ICollectionView> {
   constructor() {
     super(Resource.view, {
-      refreshOnAppear: true,
       dboDependencies: ["fn::memotron::collection::fetchData"]
     });
   }
@@ -319,23 +354,28 @@ export const collectionLayoutOptions = [
   },
   {
     value: CollectionLayout.TABLE,
-    icon: "ph:table-light"
+    icon: "ph:table-light",
+    badge: "Planned",
+    isDisabled: true
   },
-  { value: CollectionLayout.CALENDAR, icon: "ph:calendar-dots-light" },
-  { value: CollectionLayout.GEOMAP, icon: "ph:map-trifold-light" }
-];
-
-export const combinationLayoutOptions = [
-  { value: CombinationViewType.TREE, icon: "rectangle-stack" },
-  { value: CombinationViewType.GRAPH, icon: "graph" },
-  { value: CombinationViewType.WHITEBOARD, icon: "whiteboard" },
-  { value: CombinationViewType.INFIGRID, icon: "infigrid" }
+  {
+    value: CollectionLayout.CALENDAR,
+    icon: "ph:calendar-dots-light",
+    badge: "Planned",
+    isDisabled: true
+  },
+  {
+    value: CollectionLayout.MAP,
+    icon: "ph:map-trifold-light",
+    badge: "Planned",
+    isDisabled: true
+  }
 ];
 
 export function resolveCollectionContextMenu(
   collection: ICollection,
   accessPoint: ResourceAccessPoint
-) {
+): IContextMenu {
   const resourceActions = new ResourceActions(collection, collectionStore);
   if (accessPoint != ResourceAccessPoint.SELF) {
     return [
@@ -344,8 +384,8 @@ export function resolveCollectionContextMenu(
         items: [
           resourceActions.star(),
           resourceActions.edit(accessPoint),
-          resourceActions.pinToTopBar(),
-          resourceActions.select(accessPoint),
+          resourceActions.openAsTab(),
+          // resourceActions.select(accessPoint),
           resourceActions.copyLink()
         ]
       },
@@ -361,7 +401,28 @@ export function resolveCollectionContextMenu(
       items: [
         resourceActions.star(),
         resourceActions.edit(accessPoint),
-        resourceActions.copyLink()
+        resourceActions.openAsTab(),
+        resourceActions.openAsSplit(),
+        {
+          value: "share",
+          icon: "ph:share-light",
+          label: "Share",
+          callback: async () => {}
+        },
+        resourceActions.copyLink(),
+        {
+          value: "captureshortcut",
+          icon: "ph:arrow-up-right-light",
+          label: "Capture shortcut",
+          type: ContextMenuType.SWITCH,
+          initialValue: collection.isCaptureShortcutEnabled,
+          callback: async (checked) => {
+            console.log({ checked });
+            return collectionStore.modify(collection.id, {
+              isCaptureShortcutEnabled: checked
+            });
+          }
+        }
       ]
     },
     {

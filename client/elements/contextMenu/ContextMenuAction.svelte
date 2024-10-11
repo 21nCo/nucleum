@@ -1,25 +1,29 @@
 <script lang="ts">
+  import { popover } from "$lib/client/actions/popover.action";
   import { logger } from "$lib/client/components/debug/logger.client";
   import { createEventPropagator } from "$lib/client/components/events/event.utils";
-  import { ButtonStyle } from "$lib/client/types/button.type";
-  import { Position } from "$lib/client/types/direction.enum";
+  import { Placement } from "$lib/client/types/direction.enum";
   import {
     type IPopoverRenderBaseParams,
     PopoverTriggerMethod
   } from "$lib/client/types/popover.type";
-  import type { IContextMenu } from "$lib/client/types/select.type";
+  import type {
+    IContextMenu,
+    IContextMenuItem
+  } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
-  import Button from "../button/Button.svelte";
   import Popover from "../popover/Popover.svelte";
+  import Toggle from "../toggle/Toggle.svelte";
   import ContextMenu from "./ContextMenu.svelte";
-
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
   export let id: string;
   export let contextMenu: IContextMenu = [];
   export let size: Size.sm | Size.md | Size.lg = Size.md;
   export let tooltip: string | undefined = undefined;
   export let tooltipOptions: IPopoverRenderBaseParams | undefined = undefined;
   export let triggerMethod: PopoverTriggerMethod | undefined = undefined;
-  export let position: Position | undefined = undefined;
+  export let position: Placement | undefined = undefined;
   export let offsetInPx: number | undefined = undefined;
   export let heading: string | undefined = undefined;
   /**
@@ -32,7 +36,8 @@
 
   export function hide() {
     logger.log({ at: "ContextMenuAction - hide" });
-    contextMenuPopoverRef.hide();
+    // contextMenuPopoverRef.hide();
+    contextMenuPopoverRef.dispatchEvent(new CustomEvent("hide"));
     triggerEventDown("hideSecondaryMenu", {});
   }
 
@@ -45,9 +50,14 @@
   function triggerEventDown(event: string, detail: any) {
     dispatchEvent(event, detail);
   }
+
+  function onSelect(item: IContextMenuItem) {
+    dispatch("action", item.value);
+    hide();
+  }
 </script>
 
-<Popover
+<!-- <Popover
   bind:this={contextMenuPopoverRef}
   bind:isPopoverVisible
   triggerMethod={triggerMethod ??
@@ -57,7 +67,7 @@
   options={{
     placement:
       position ??
-      ($$slots.default ? Position.BottomCenter : Position.BottomRight),
+      ($$slots.default ? Placement.BottomCenter : Placement.BottomRight),
     offsetInPx,
     groupId: "contextMenuPopover-" + id,
     isOnlyOneVisiblePerGroup: true
@@ -65,11 +75,11 @@
   triggerClass={classList}
 >
   <slot>
-    <Button
-      icon="ellipsis-vertical"
+    <Toggle
+      icon="ph:dots-three-vertical"
       {tooltip}
-      {tooltipOptions}
-      style={ButtonStyle.PLAIN}
+      isPreventFillOnActive={true}
+      on={isPopoverVisible}
     />
   </slot>
   <slot name="popover" slot="popover">
@@ -83,4 +93,31 @@
       }}
     />
   </slot>
-</Popover>
+</Popover> -->
+
+<button
+  use:popover={{
+    placement: position,
+    isSpanToTriggerWidth: false,
+    offsetInPx,
+    content: ContextMenu,
+    triggerMethod: triggerMethod ?? PopoverTriggerMethod.CLICK,
+    componentProps: { size, heading, menu: contextMenu, onSelect },
+    groupId: "contextMenuPopover-" + id,
+    id
+  }}
+  class={classList}
+  on:change={(e) => {
+    isPopoverVisible = e.detail?.open;
+  }}
+  bind:this={contextMenuPopoverRef}
+>
+  <slot>
+    <Toggle
+      icon="ph:dots-three-vertical"
+      {tooltip}
+      isPreventFillOnActive={true}
+      bind:on={isPopoverVisible}
+    />
+  </slot>
+</button>

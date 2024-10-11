@@ -23,7 +23,10 @@ const months = [
   "Dec"
 ];
 
-const locale = navigator.language || navigator.languages[0];
+const locale =
+  typeof window !== "undefined"
+    ? navigator.language || navigator.languages[0]
+    : "";
 export function formatTime(
   userPreferences: IUserGlobalPreferences,
   date: Date,

@@ -7,6 +7,7 @@ export type AppStore = {
   appData: any;
   isDebugMode: boolean;
   isExperimentalMode: boolean;
+  isDnDPageActive?: boolean;
   pageMenu?: string[];
   /**
    * @deprecated - use player store instead

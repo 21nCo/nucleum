@@ -1,3 +1,4 @@
+import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import {
   PersistenceActionType,
   StoreDataType,
@@ -93,12 +94,83 @@ export function replaceParams(query: string, params: any) {
   return query;
 }
 
-export function resolveInsertQuery(resource: string, records: any[]) {
-  return `INSERT INTO ${resource} ${JSON.stringify(records)};`;
+export function resolveInsertQuery(
+  resource: string,
+  records: any[],
+  params?: { isUpsert?: boolean; isRelation?: boolean }
+) {
+  records = records.map((x) => {
+    if (!x.id?.id) return x;
+    return {
+      ...x,
+      id: x.id.id
+    };
+  });
+  // const firstRecord = records[0];
+  // records = [...records.slice(1), firstRecord];
+  if (params?.isUpsert) {
+    const query = generateUpsertQuery();
+    return query;
+  } else if (params?.isRelation) {
+    const query = `INSERT RELATION INTO ${resource} ${JSON.stringify(records)};`;
+    return commonQueryReplacements(query);
+  }
+  const query = `INSERT INTO ${resource} ${JSON.stringify(records)};`;
+  return commonQueryReplacements(query);
+
+  function generateUpsertQuery() {
+    let fullQuery = "";
+    records.forEach((record) => {
+      const { query, id } = resolveUpsertQuery(resource, record);
+      fullQuery += query;
+    });
+    console.log({ fullQuery });
+    return fullQuery;
+  }
 }
 
+export function resolveUpsertQuery(resource: string, record: any) {
+  let copy = { ...record };
+  let id = copy.id;
+  if (id && typeof id === "string" && !id.includes(":")) {
+    id = `${resource}:${id}`;
+  } else if (typeof id === "object" && id.id) {
+    id = id.toString();
+  } else if (!id) {
+    id = generateResourceId(resource as any);
+  }
+  delete copy.id;
+  const query = `UPSERT ${id} CONTENT ${JSON.stringify(copy)};`;
+  return { query: commonQueryReplacements(query), id };
+}
+
+/**
+ * Removing the id from the record before merging as it is throwing an exception when using Surreal local sdk
+ * @param record
+ * @returns
+ */
 export function resolveMergeQuery(record: any) {
-  return `UPDATE ${record.id} MERGE ${JSON.stringify(record)};`;
+  const recordCopy = { ...record };
+  const recordId = recordCopy.id;
+  delete recordCopy.id;
+  const query = `UPDATE ${recordId} MERGE ${JSON.stringify(
+    recordCopy,
+    (key, value) => (value === undefined || value === null ? `$NONE` : value)
+  )};`.replaceAll(`"$NONE"`, `NONE`);
+  return commonQueryReplacements(query);
+}
+
+/**
+ * Newer versions of Surreal SDK doesn't automatically convert the date to the surreal date format and record links. There d'format' is used for dates and removing quotes around record links to be detected as record links.
+ */
+export function commonQueryReplacements(query: string) {
+  const dateRegex = /"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)"/g;
+  const recordLinkRegex = /"([\w-]+:[\w-]+)"/g;
+  const recordLinkRegexSingleQuotes = /'([\w-]+:[\w-]+)'/g;
+  return query
+    .replace(dateRegex, (match, p1) => `d'${p1}'`)
+    .replace(recordLinkRegex, (match, p1) => p1)
+    .replace(recordLinkRegexSingleQuotes, (match, p1) => p1);
 }
 
 export function resolveMutationQueryV2(mutation: IMutation) {

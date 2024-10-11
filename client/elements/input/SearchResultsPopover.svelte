@@ -3,11 +3,11 @@
   import { createEventDispatcher } from "svelte";
   import SearchResultItem from "./SearchResultItem.svelte";
   import Button from "../button/Button.svelte";
-  import { dataManager } from "$lib/client/persistence/dataManager";
   import { debouncer } from "$lib/client/utils/utils";
   import { cn } from "$lib/client/utils/ui.utils";
   import type { IResource } from "$lib/client/components/flux/resourceStores/resource.type";
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
+  import { flux } from "$lib/client/components/flux/flux";
   export let searchStoreId: string | undefined = undefined;
   export let searchCallback: Function | undefined = undefined;
   export let searchResultComponent: any = undefined;
@@ -43,7 +43,6 @@
       (event.target as HTMLElement).innerText;
     if (shortcutTrigger && value?.includes(shortcutTrigger)) {
       value = value.split(shortcutTrigger)[1].split(" ")[0];
-      console.log("shortcutTrigger", { value });
     }
     // console.log("keyup - search results popover", { event, value });
     if (event.key === "Escape") {
@@ -70,9 +69,11 @@
         }
       }
       debouncedSearch();
-    } else if (event.key === "Enter" && value) {
-      if (results && results.length > 0) {
+    } else if (event.key === "Enter") {
+      if (value && results && results.length > 0) {
         onSearchResultSelection(results[selectedIndex]);
+      } else if (results?.length > 0) {
+        onSearchResultSelection(results[0]);
       } else {
         //save();
         dispatch("empty-enter", value);
@@ -102,9 +103,9 @@
       }
       return;
     }
-    if (searchStoreId) results = await dataManager.search(searchStoreId, value);
+    if (searchStoreId) results = await flux.search(searchStoreId, value);
     isSearchInProgress = false;
-    if (results.length > 0) {
+    if (results?.length > 0) {
       show();
     }
   }
@@ -145,7 +146,7 @@
       <div class="flex w-full justify-center p-2 text-b3 text-fgs3">
         {#if isSearchInProgress}
           Searching...
-        {:else if results.length === 0}
+        {:else if results?.length === 0}
           <span>
             {@html renderMdAsHtml(emptyStateLabel)}
           </span>

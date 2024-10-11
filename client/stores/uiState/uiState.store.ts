@@ -12,6 +12,10 @@ import context from "../context.store";
 import { Embed } from "$lib/client/types/context.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 import { toasts } from "../notification.store";
+import {
+  resourceInList,
+  isSameResource
+} from "$lib/client/components/flux/resourceStores/resource.utils";
 
 class UiStateStore extends KeyValueStore<IUIStateStore> {
   constructor() {
@@ -82,8 +86,8 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
     logger.log({ context: "uiState.store - setResourceState", key, value });
   }
 
-  addResourceToTopBar(id: IRecordId) {
-    const current = this.getState(ResourceAccessPoint.TOP_BAR, {
+  addResourceToTabs(id: IRecordId) {
+    const current = this.getState(ResourceAccessPoint.TABS, {
       isProductScoped: true
     });
     if (current?.includes(id.toString())) {
@@ -91,7 +95,7 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
       return;
     }
     this.setState(
-      ResourceAccessPoint.TOP_BAR,
+      ResourceAccessPoint.TABS,
       [...(current ?? []), id.toString()],
       {
         isProductScoped: true
@@ -99,14 +103,15 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
     );
   }
 
-  removeResourceFromTopBar(id: IRecordId) {
-    const current = this.getState(ResourceAccessPoint.TOP_BAR, {
+  removeResourceFromTabs(id: IRecordId) {
+    const current = this.getState(ResourceAccessPoint.TABS, {
       isProductScoped: true
     });
-    if (!current?.includes(id.toString())) return;
+    console.log({ at: "removeResourceFromTopBar", current, id });
+    if (!current?.some(resourceInList(id))) return;
     this.setState(
-      ResourceAccessPoint.TOP_BAR,
-      current.filter((x) => x != id.toString()),
+      ResourceAccessPoint.TABS,
+      current.filter((x: IRecordId) => !isSameResource(x, id)),
       {
         isProductScoped: true
       }
