@@ -339,19 +339,24 @@ export function isExtensionEnvironment() {
   }
 
   if (
-    typeof (window as any).browser !== "undefined" &&
+    typeof window !== "undefined" &&
+    typeof (window as any)?.browser !== "undefined" &&
     (window as any).browser.runtime?.id
   ) {
     return true;
   }
 
-  if (typeof (window as any).__plasmo !== "undefined") {
+  if (
+    typeof window !== "undefined" &&
+    typeof (window as any)?.__plasmo !== "undefined"
+  ) {
     return true;
   }
 
   if (
-    window.location.protocol === "chrome-extension:" ||
-    window.location.protocol === "moz-extension:"
+    typeof window !== "undefined" &&
+    (window.location.protocol === "chrome-extension:" ||
+      window.location.protocol === "moz-extension:")
   ) {
     return true;
   }
