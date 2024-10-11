@@ -15,7 +15,7 @@ console.log("FrontendStack", {
 
 const app = new cdk.App();
 
-new ClientStack(app, `${appName}FrontendStack`, {
+new ClientStack(app, `client${appName}FrontendStack`, {
   domain,
   subdomain,
   isUseParentZone,
