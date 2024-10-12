@@ -1,7 +1,7 @@
 <script lang="ts">
   import ProgressBar from "$lib/client/elements/ProgressBar.svelte";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
-  import { tacoWorker } from "$lib/client/stores/app.store";
+  import { tacoWorker } from "$lib/client/products/memotron/memotron.store";
   import { Action } from "$lib/client/types/action.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { TacoActions } from "$lib/client/types/taco.types";
@@ -13,23 +13,19 @@
   let progress = 0;
   let label: string;
   let isDisabled: boolean = false;
+
   async function deleteItemsFromCache(
-    modelData: string[],
+    modelMatch: string,
     cacheName: string = "transformers-cache"
   ) {
     let transformersCache = await caches.open(cacheName);
-    // let urls = [];
-    // await transformersCache.keys().then((keys) => {
-    //   for (let key of keys) {
-    //     urls.push(key.url);
-    //     console.log(key.url);
-    //     // transformersCache.delete(key);
-    //   }
-    // });
-    // console.log(urls);
+    let all = await transformersCache.keys();
+    let filteredUrls = all
+      .filter((key) => key.url.includes(modelMatch))
+      .map((key) => key.url);
     if (!transformersCache) return;
-    for (let data of modelData) {
-      await transformersCache.delete(data);
+    for (let url of filteredUrls) {
+      await transformersCache.delete(url);
     }
   }
 
@@ -41,12 +37,6 @@
     }
   }
   async function onSemanticSearchToggle(e: any) {
-    const modelData = [
-      "https://huggingface.co/Fuzail22/onnx-msmarco-distilbert-cos-v5/resolve/main/config.json",
-      "https://huggingface.co/Fuzail22/onnx-msmarco-distilbert-cos-v5/resolve/main/onnx/model.onnx",
-      "https://huggingface.co/Fuzail22/onnx-msmarco-distilbert-cos-v5/resolve/main/tokenizer.json",
-      "https://huggingface.co/Fuzail22/onnx-msmarco-distilbert-cos-v5/resolve/main/tokenizer_config.json"
-    ];
     if (e.detail) {
       isDisabled = true;
       tacoWorker.postMessage({
@@ -56,7 +46,7 @@
         progressUpdate(e);
       };
     } else {
-      await deleteItemsFromCache(modelData);
+      await deleteItemsFromCache("onnx-msmarco");
       tacoWorker.postMessage({
         action: TacoActions.RESET_FEATURE_EXTRACTOR
       });
@@ -64,37 +54,6 @@
   }
 
   async function onAudioTranscriptionToggle(e: any) {
-    const modelData = [
-      "https://huggingface.co/Xenova/whisper-tiny.en/resolve/main/config.json",
-      "https://huggingface.co/Xenova/whisper-tiny.en/resolve/main/tokenizer_config.json",
-      "https://huggingface.co/Xenova/whisper-tiny.en/resolve/main/preprocessor_config.json",
-      "https://huggingface.co/Xenova/whisper-tiny.en/resolve/main/generation_config.json",
-      "https://huggingface.co/Xenova/whisper-tiny.en/resolve/main/tokenizer.json",
-      "https://huggingface.co/Xenova/whisper-tiny.en/resolve/main/onnx/encoder_model_quantized.onnx",
-      "https://huggingface.co/Xenova/whisper-tiny.en/resolve/main/onnx/decoder_model_merged_quantized.onnx",
-      "https://huggingface.co/Xenova/whisper-medium.en/resolve/main/tokenizer_config.json",
-      "https://huggingface.co/Xenova/whisper-base.en/resolve/main/tokenizer_config.json",
-      "https://huggingface.co/Xenova/whisper-base.en/resolve/main/config.json",
-      "https://huggingface.co/Xenova/whisper-base.en/resolve/main/preprocessor_config.json",
-      "https://huggingface.co/Xenova/whisper-small.en/resolve/main/preprocessor_config.json",
-      "https://huggingface.co/Xenova/whisper-small.en/resolve/main/tokenizer_config.json",
-      "https://huggingface.co/Xenova/whisper-small.en/resolve/main/config.json",
-      "https://huggingface.co/Xenova/whisper-medium.en/resolve/main/preprocessor_config.json",
-      "https://huggingface.co/Xenova/whisper-medium.en/resolve/main/config.json",
-      "https://huggingface.co/Xenova/whisper-base.en/resolve/main/generation_config.json",
-      "https://huggingface.co/Xenova/whisper-medium.en/resolve/main/generation_config.json",
-      "https://huggingface.co/Xenova/whisper-small.en/resolve/main/generation_config.json",
-      "https://huggingface.co/Xenova/whisper-medium.en/resolve/main/tokenizer.json",
-      "https://huggingface.co/Xenova/whisper-base.en/resolve/main/tokenizer.json",
-      "https://huggingface.co/Xenova/whisper-small.en/resolve/main/tokenizer.json",
-      "https://huggingface.co/Xenova/whisper-base.en/resolve/main/onnx/encoder_model_quantized.onnx",
-      "https://huggingface.co/Xenova/whisper-base.en/resolve/main/onnx/decoder_model_merged_quantized.onnx",
-      "https://huggingface.co/Xenova/whisper-small.en/resolve/main/onnx/encoder_model_quantized.onnx",
-      "https://huggingface.co/Xenova/whisper-small.en/resolve/main/onnx/decoder_model_merged_quantized.onnx",
-      "https://huggingface.co/Xenova/whisper-medium.en/resolve/main/onnx/encoder_model_quantized.onnx",
-      "https://huggingface.co/Xenova/whisper-medium.en/resolve/main/onnx/decoder_model_merged_quantized.onnx"
-    ];
-
     if (e.detail) {
       isDisabled = true;
       tacoWorker.postMessage({
@@ -104,7 +63,7 @@
         progressUpdate(e);
       };
     } else {
-      await deleteItemsFromCache(modelData);
+      await deleteItemsFromCache("whisper");
       tacoWorker.postMessage({
         action: TacoActions.RESET_TRANSCRIBER
       });
@@ -112,13 +71,6 @@
   }
 
   async function onQuestionAnsweringToggle(e: any) {
-    const modelData = [
-      "https://huggingface.co/Fuzail22/onnx-roberta-base-squad2/resolve/main/config.json",
-      "https://huggingface.co/Fuzail22/onnx-roberta-base-squad2/resolve/main/tokenizer_config.json",
-      "https://huggingface.co/Fuzail22/onnx-roberta-base-squad2/resolve/main/tokenizer.json",
-      "https://huggingface.co/Fuzail22/onnx-roberta-base-squad2/resolve/main/onnx/model.onnx"
-    ];
-
     if (e.detail) {
       isDisabled = true;
       tacoWorker.postMessage({
@@ -128,7 +80,7 @@
         progressUpdate(e);
       };
     } else {
-      await deleteItemsFromCache(modelData);
+      await deleteItemsFromCache("onnx-roberta-");
       tacoWorker.postMessage({
         action: TacoActions.RESET_QUESTION_ANSWERER
       });
@@ -173,7 +125,7 @@
   on:change={onQuestionAnsweringToggle}
   isExpanded={true}
   label={{
-    label: "Markdown QA Chat - 500MB",
+    label: "Markdown QA Chat (Requires Semantic Search)  - 500MB",
     tooltip: {
       body: "Enable this to use AI to answer questions pertaining to markdown."
     }

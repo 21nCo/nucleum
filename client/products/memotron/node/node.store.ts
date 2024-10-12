@@ -24,7 +24,8 @@ import {
 import { ResourceActions } from "../common/resource.actions";
 import { MemotronAction } from "../memotronAction.enum";
 import { appStore } from "$lib/client/stores/app.store";
-import { writable } from "svelte/store";
+import { tacoWorker } from "$lib/client/products/memotron/memotron.store";
+import { get, writable } from "svelte/store";
 import { SearchStore } from "../memotron.store";
 import { linker } from "$lib/client/products/memotron/linking/link.store";
 import type { IContextMenu } from "$lib/client/types/select.type";
@@ -39,7 +40,8 @@ import {
   resourceInList,
   isSameResource
 } from "$lib/client/components/flux/resourceStores/resource.utils";
-import { FeatureExtractor } from "$lib/client/utils/taco.utils";
+import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
+import { TacoActions } from "$lib/client/types/taco.types";
 
 export const hierarchyFactorLimit = 5;
 
@@ -138,7 +140,7 @@ export class ActiveNodeStore extends ActiveResourceStore<
       );
       const mdText = generateMarkdownText(childrenNodes);
       // const embedding = await FeatureExtractor.generateVectorEmbeddings(mdText);
-      let params = { filters: { node: node.id.toString() } };
+      // let params = { filters: { node: node.id.toString() } };
       // {
       //   whereClause: `node.id=${node.id}`
       // };
@@ -149,6 +151,27 @@ export class ActiveNodeStore extends ActiveResourceStore<
       //     embedding: embedding
       //   }
       // );
+      if (get(userPreferences).LocalAI.semanticSearch) {
+        tacoWorker.postMessage({
+          action: TacoActions.GET_EMBEDDINGS,
+          params: {
+            text: mdText
+          }
+        });
+        const embedding = await new Promise((resolve, reject) => {
+          tacoWorker.onmessage = (e) => {
+            resolve(e.data);
+          };
+        });
+        let params = { filters: { node: node.id.toString() } };
+        let vectorResult = await vectorResourceStore.selectMany(params);
+        const vectorUpdateresult = await vectorResourceStore.modify(
+          vectorResult?.[0].id,
+          {
+            embedding: embedding
+          }
+        );
+      }
       return this.resourceStore.modify(id, { ...changedProps, mdText });
     }
     this.resourceStore.modify(id, changedProps);

@@ -42,6 +42,9 @@ import {
 import { resolveResource } from "../memotron.store";
 import { FeatureExtractor } from "$lib/client/utils/taco.utils";
 import { fileStore } from "$lib/client/components/files/file.store";
+import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
+import { tacoWorker } from "$lib/client/products/memotron/memotron.store";
+import { TacoActions } from "$lib/client/types/taco.types";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
@@ -301,6 +304,24 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
           val.rootStructure.includes(b.id)
         );
         mdText = generateMarkdownText(rootBlocks);
+        if (get(userPreferences).LocalAI.semanticSearch) {
+          tacoWorker.postMessage({
+            action: TacoActions.GET_EMBEDDINGS,
+            params: {
+              text: mdText
+            }
+          });
+          const embedding = await new Promise((resolve, reject) => {
+            tacoWorker.onmessage = (e) => {
+              resolve(e.data);
+            };
+          });
+          vectorInsertionresult = await vectorResourceStore.create({
+            id: generateResourceId(Resource.vector),
+            embedding: embedding,
+            node: id
+          });
+        }
         //TODO - AI enabling setting - local AI
         // const embedding =
         //   await FeatureExtractor.generateVectorEmbeddings(mdText);

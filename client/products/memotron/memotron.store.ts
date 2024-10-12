@@ -18,6 +18,11 @@ import { toasts } from "$lib/client/stores/notification.store";
 import { extensionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
 import { FluxMethod } from "$lib/client/components/flux/flux.type";
 
+export const tacoWorker = new Worker(
+  new URL("$lib/client/products/memotron/taco/taco.worker.ts", import.meta.url),
+  { type: "module" }
+);
+
 export function resolveResource(id: IRecordId) {
   return flux.select(id);
 }

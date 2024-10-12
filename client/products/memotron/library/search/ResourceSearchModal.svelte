@@ -21,6 +21,7 @@
   import { ButtonStyle } from "$lib/client/types/button.type";
   import { debouncer } from "$lib/client/utils/utils";
   import { logger } from "$lib/client/components/debug/logger.client";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
 
   let resource: Resource = Resource.everything;
   let isFiltersVisible: boolean = false;
@@ -100,20 +101,21 @@
       </span>
       <div class="flex gap-2 ml-auto">
         {#if isFiltersVisible}
-          <SwitchInput
-            label={{ label: "Semantic", orientation: Orientation.Horizontal }}
-            size={Size.sm}
-            on:change={(e) => {
-              if (e.detail) {
-                searchStore.searchType = SearchType.SEMANTIC;
-              } else {
-                searchStore.searchType = SearchType.FULL_TEXT;
-              }
-              refresh();
-            }}
-            checked={searchStore.searchType === SearchType.SEMANTIC}
-          />
-
+          {#if $userPreferences.LocalAI.semanticSearch}
+            <SwitchInput
+              label={{ label: "Semantic", orientation: Orientation.Horizontal }}
+              size={Size.sm}
+              on:change={(e) => {
+                if (e.detail) {
+                  searchStore.searchType = SearchType.SEMANTIC;
+                } else {
+                  searchStore.searchType = SearchType.FULL_TEXT;
+                }
+                refresh();
+              }}
+              checked={searchStore.searchType === SearchType.SEMANTIC}
+            />
+          {/if}
           <Button
             icon="funnel"
             style={ButtonStyle.OUTLINED}

@@ -49,6 +49,7 @@
     type IResourceSelectOrderBy
   } from "$lib/client/types/data.type";
   import { page } from "$app/stores";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
 
   let searchQuery: string = "";
   let selectedResource: Resource = Resource.node;
@@ -310,16 +311,18 @@
     class={cn("relative w-full h-full flex flex-col overflow-auto", {})}
     on:scroll={onScroll}
   >
-    <FloatingButton
-      class="justify-end"
-      params={{
-        callback: () => {
-          appStore.runAction(MemotronAction.OPEN_CHAT);
-        },
-        icon: "ph:chat",
-        variant: ButtonVariant.PRIMARY
-      }}
-    />
+    {#if $userPreferences.LocalAI.semanticSearch && $userPreferences.LocalAI.markdownQAChat}
+      <FloatingButton
+        class="justify-end"
+        params={{
+          callback: () => {
+            appStore.runAction(MemotronAction.OPEN_CHAT);
+          },
+          icon: "ph:chat",
+          variant: ButtonVariant.PRIMARY
+        }}
+      />
+    {/if}
     {#if variant === "v1" || variant === "v3"}
       <LibrarySearchBox
         {variant}
@@ -463,7 +466,7 @@
               "px--5": variant === "v2"
             })}
           >
-          <!-- TODO - pagination -->
+            <!-- TODO - pagination -->
             <Resources
               data={data.slice(0, 50)}
               accessPoint={ResourceAccessPoint.LIBRARY}

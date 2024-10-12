@@ -1,12 +1,13 @@
 import { AutoTokenizer, env, pipeline } from "@xenova/transformers";
-import type { TranscriptionModel } from "../types/taco.types";
-import { TacoActions } from "../types/taco.types";
+import type { TranscriptionModel } from "../../../types/taco.types";
+import { TacoActions } from "../../../types/taco.types";
+import { json } from "@sveltejs/kit";
 
 env.allowLocalModels = false;
-let call = 0;
+// let call = 0;
 onmessage = (e: any) => {
-  call++;
-  console.log("ts worker file", call, e.data);
+  // call++;
+  // console.log("ts worker file", call, e.data);
   // postMessage(e.data);
   let action: TacoActions = e.data.action;
 
@@ -21,7 +22,9 @@ onmessage = (e: any) => {
       Transcriber.transcribe(e.data.params.audioUrl, e.data.params.model);
       break;
     case TacoActions.INITIAlIZE_FEATURE_EXTRACTOR:
-      FeatureExtractor.init();
+      FeatureExtractor.init((progress: any) => {
+        postMessage(progress);
+      });
       break;
     case TacoActions.RESET_FEATURE_EXTRACTOR:
       FeatureExtractor.built = false;
@@ -30,7 +33,9 @@ onmessage = (e: any) => {
       FeatureExtractor.generateVectorEmbeddings(e.data.params.text);
       break;
     case TacoActions.INITIALIZE_QUESTION_ANSWERER:
-      QuestionAnswerer.init();
+      QuestionAnswerer.init((progress: any) => {
+        postMessage(progress);
+      });
       break;
     case TacoActions.RESET_QUESTION_ANSWERER:
       QuestionAnswerer.built = false;
@@ -39,14 +44,18 @@ onmessage = (e: any) => {
       QuestionAnswerer.getAnswer(e.data.params.question, e.data.params.context);
       break;
     case TacoActions.INITIALIZE_TEXT2TEXT_GENERATOR:
-      Text2textGenerator.init();
+      Text2textGenerator.init((progress: any) => {
+        postMessage(progress);
+      });
       break;
-
     case TacoActions.RESET_TEXT2TEXT_GENERATOR:
       Text2textGenerator.built = false;
       break;
     case TacoActions.GENERATE_TEXT:
-      Text2textGenerator.generateText(e.data.params.text);
+      Text2textGenerator.generateText(
+        e.data.params.context,
+        e.data.params.question
+      );
       break;
   }
 };
@@ -65,7 +74,7 @@ env.allowLocalModels = false;
 class FeatureExtractor {
   static built = false;
   static extractor: any;
-  static async init() {
+  static async init(progress_callback?: (progress: any) => void) {
     if (!FeatureExtractor.built) {
       // postMessage("initializing feature extractor");
       FeatureExtractor.extractor = await pipeline(
@@ -73,9 +82,7 @@ class FeatureExtractor {
         "Fuzail22/onnx-msmarco-distilbert-cos-v5",
         {
           quantized: false,
-          progress_callback: (progress: any) => {
-            postMessage(progress);
-          }
+          progress_callback
         }
       );
       FeatureExtractor.built = true;
@@ -84,8 +91,13 @@ class FeatureExtractor {
 
   static async generateVectorEmbeddings(text: string) {
     try {
-      // postMessage("extracting text:", text.split(" ").length, text);
-      // let startTime = Date.now();
+      // console.log(
+      //   "extracting text:",
+      //   text.split(" ").length,
+      //   text,
+      //   FeatureExtractor.built
+      // );
+      let startTime = Date.now();
       if (!FeatureExtractor.built) await FeatureExtractor.init();
       const output = await FeatureExtractor.extractor(text, {
         pooling: "mean",
@@ -95,8 +107,8 @@ class FeatureExtractor {
       arr = arr[0].map((value: string) => {
         return value;
       });
-      // let endTime = Date.now();
-      // postMessage("extraction time in seconds:", (endTime - startTime) / 1000);
+      let endTime = Date.now();
+      // console.log("extraction time in seconds:", (endTime - startTime) / 1000);
       postMessage(arr);
       // return arr;
     } catch (error) {
@@ -109,16 +121,14 @@ class FeatureExtractor {
 class QuestionAnswerer {
   static built = false;
   static qa: any;
-  static async init() {
+  static async init(progress_callback?: (progress: any) => void) {
     if (!QuestionAnswerer.built) {
       QuestionAnswerer.qa = await pipeline(
         "question-answering",
         "Fuzail22/onnx-roberta-base-squad2",
         {
           quantized: false,
-          progress_callback: (progress: any) => {
-            postMessage(progress);
-          }
+          progress_callback
         }
       );
       QuestionAnswerer.built = true;
@@ -153,30 +163,45 @@ class QuestionAnswerer {
 class Text2textGenerator {
   static built = false;
   static generator: any;
-  static async init() {
+  static async init(progress_callback?: (progress: any) => void) {
     if (!Text2textGenerator.built) {
       Text2textGenerator.generator = await pipeline(
         "text2text-generation",
         "Xenova/LaMini-Flan-T5-783M",
         {
-          quantized: true
+          quantized: true,
+          progress_callback
         }
       );
       Text2textGenerator.built = true;
     }
   }
-  static async generateText(text: string) {
+  static async generateText(context: string, question: string) {
     try {
+      // console.log(
+      //   "extracting text:",
+      //   context.split(" ").length,
+      //   context,
+      //   question
+      // );
       if (!Text2textGenerator.built) await Text2textGenerator.init();
-      const output = await Text2textGenerator.generator(text, {
-        max_length: 100,
+      let prompt = JSON.stringify({
+        instruction: "Please answer only based on the context given",
+        context: context,
+        question: question
+      });
+      // console.log("prompt", prompt);
+      const startTime = Date.now();
+      const output = await Text2textGenerator.generator(prompt, {
+        max_length: 512,
         temperature: 0.5,
         do_sample: true,
         num_return_sequences: 1,
         return_full_text: true
       });
-      postMessage("output FOR T2T", output.generated_text);
-      postMessage(output.generated_text);
+      const endTime = Date.now();
+      // console.log("output FOR T2T", endTime - startTime/1000, "secs ", output);
+      postMessage(output[0].generated_text);
       // return output.generated_text;
     } catch (error) {
       console.error("Error during extraction:", error);
@@ -199,18 +224,18 @@ class Transcriber {
     for (let model of this.models) {
       Transcriber.built = false;
       this.model = model;
-      this.init();
+      this.init((progress: any) => {
+        postMessage(progress);
+      });
     }
   }
-  static async init() {
+  static async init(progress_callback?: (progress: any) => void) {
     if (!Transcriber.built) {
       Transcriber.transcriber = await pipeline(
         "automatic-speech-recognition",
         this.model,
         {
-          progress_callback: (progress: any) => {
-            postMessage(progress);
-          }
+          progress_callback
         }
       );
       Transcriber.built = true;
@@ -228,11 +253,13 @@ class Transcriber {
         }
       }
       if (!Transcriber.built) await Transcriber.init();
+      const startTime = Date.now();
       const output = await Transcriber.transcriber(
         audioUrl
         // {return_timestamps: true }
       );
-      // postMessage("output FOR transcriber", output);
+      const endTime = Date.now();
+      // console.log("Transcriber time", endTime - startTime/1000,"secs ", output);
       postMessage(output.text);
       // return output.text;
     } catch (error) {

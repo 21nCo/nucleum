@@ -30,7 +30,7 @@ import { linker } from "./linking/link.store";
 import { toasts } from "$lib/client/stores/notification.store";
 import { logger } from "$lib/client/components/debug/logger.client";
 import LinkTagsControlPanel from "./linking/LinkTagsControlPanel.svelte";
-import Chat from "$lib/client/components/chat/Chat.svelte";
+import Chat from "$lib/client/products/memotron/taco/Chat.svelte";
 import CaptureDnD from "./capture/CaptureDnD.svelte";
 import MemotronHome from "./home/MemotronHome.svelte";
 export const memotronActions: IAction[] = [
