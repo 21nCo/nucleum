@@ -146,7 +146,7 @@ export class ActiveNodeStore extends ActiveResourceStore<
       //     embedding: embedding
       //   }
       // );
-      if (get(userPreferences).LocalAI.semanticSearch) {
+      if (get(userPreferences).localAI.semanticSearch) {
         tacoWorker.postMessage({
           action: TacoActions.GET_EMBEDDINGS,
           params: {

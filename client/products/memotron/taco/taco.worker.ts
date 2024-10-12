@@ -1,7 +1,6 @@
-import { AutoTokenizer, env, pipeline } from "@xenova/transformers";
+import { AutoTokenizer, env, pipeline, read_audio } from "@xenova/transformers";
 import type { TranscriptionModel } from "../../../types/taco.types";
 import { TacoActions } from "../../../types/taco.types";
-import { json } from "@sveltejs/kit";
 
 env.allowLocalModels = false;
 // let call = 0;
@@ -19,7 +18,7 @@ onmessage = (e: any) => {
       Transcriber.built = false;
       break;
     case TacoActions.GET_TRANSCRIPTION:
-      Transcriber.transcribe(e.data.params.audioUrl, e.data.params.model);
+      Transcriber.transcribe(e.data.params.audioData, e.data.params.model);
       break;
     case TacoActions.INITIAlIZE_FEATURE_EXTRACTOR:
       FeatureExtractor.init((progress: any) => {
@@ -242,8 +241,9 @@ class Transcriber {
     }
   }
 
-  static async transcribe(audioUrl: string, model: TranscriptionModel) {
+  static async transcribe(audioData: any, model: TranscriptionModel) {
     try {
+      // console.log("Transcriber.transcribe", audioData, model);
       if (this.model != model && this.built) {
         const index = this.models.findIndex((model) => model.includes(model));
         if (index >= 0) {
@@ -253,13 +253,18 @@ class Transcriber {
         }
       }
       if (!Transcriber.built) await Transcriber.init();
-      const startTime = Date.now();
+      // const startTime = Date.now();
       const output = await Transcriber.transcriber(
-        audioUrl
+        audioData
         // {return_timestamps: true }
       );
-      const endTime = Date.now();
-      // console.log("Transcriber time", endTime - startTime/1000,"secs ", output);
+      // const endTime = Date.now();
+      // console.log(
+      //   "Transcriber time",
+      //   (endTime - startTime) / 1000,
+      //   "secs ",
+      //   output
+      // );
       postMessage(output.text);
       // return output.text;
     } catch (error) {

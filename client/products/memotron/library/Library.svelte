@@ -320,7 +320,7 @@
     class={cn("relative w-full h-full flex flex-col overflow-auto", {})}
     on:scroll={onScroll}
   >
-    {#if $userPreferences.LocalAI.semanticSearch && $userPreferences.LocalAI.markdownQAChat}
+    {#if $userPreferences.localAI.semanticSearch && $userPreferences.localAI.markdownQAChat}
       <FloatingButton
         class="justify-end"
         params={{

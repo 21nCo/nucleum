@@ -95,7 +95,7 @@
 <SwitchInput
   size={Size.sm}
   {isDisabled}
-  bind:checked={$userPreferences.LocalAI.semanticSearch}
+  bind:checked={$userPreferences.localAI.semanticSearch}
   on:change={onSemanticSearchToggle}
   isExpanded={true}
   label={{
@@ -108,7 +108,7 @@
 <SwitchInput
   size={Size.sm}
   {isDisabled}
-  bind:checked={$userPreferences.LocalAI.audioTranscription}
+  bind:checked={$userPreferences.localAI.audioTranscription}
   on:change={onAudioTranscriptionToggle}
   isExpanded={true}
   label={{
@@ -121,7 +121,7 @@
 <SwitchInput
   size={Size.sm}
   {isDisabled}
-  bind:checked={$userPreferences.LocalAI.markdownQAChat}
+  bind:checked={$userPreferences.localAI.markdownQAChat}
   on:change={onQuestionAnsweringToggle}
   isExpanded={true}
   label={{

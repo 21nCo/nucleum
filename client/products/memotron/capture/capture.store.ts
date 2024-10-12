@@ -405,7 +405,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
           val.rootStructure.includes(b.id)
         );
         mdText = generateMarkdownText(rootBlocks);
-        if (get(userPreferences).LocalAI.semanticSearch) {
+        if (get(userPreferences).localAI.semanticSearch) {
           tacoWorker.postMessage({
             action: TacoActions.GET_EMBEDDINGS,
             params: {

@@ -101,7 +101,7 @@
       </span>
       <div class="flex gap-2 ml-auto">
         {#if isFiltersVisible}
-          {#if $userPreferences.LocalAI.semanticSearch}
+          {#if $userPreferences.localAI.semanticSearch}
             <SwitchInput
               label={{ label: "Semantic", orientation: Orientation.Horizontal }}
               size={Size.sm}

@@ -52,7 +52,7 @@
           on:select={refresh}
         />
       {/if}
-      {#if $userPreferences.LocalAI.semanticSearch}
+      {#if $userPreferences.localAI.semanticSearch}
         <SwitchInput
           label={{ label: "Semantic", orientation: Orientation.Horizontal }}
           size={Size.sm}

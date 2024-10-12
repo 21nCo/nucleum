@@ -51,7 +51,7 @@ export const seedUserPreferences: IUserGlobalPreferences = {
     isGridCreated: false,
     grid: []
   },
-  LocalAI: {
+  localAI: {
     semanticSearch: false,
     audioTranscription: false,
     markdownQAChat: false
