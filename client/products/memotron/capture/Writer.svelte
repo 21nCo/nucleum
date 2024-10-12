@@ -22,11 +22,12 @@
   }
 
   const contentContext = {
-    resolveDynamicParams: () => {
+    resolveDynamicParams: (isFirstAndEmpty?: boolean) => {
       return {
-        placeholder: isEmptyState
-          ? "Start typing or paste from clipboard..."
-          : undefined
+        placeholder:
+          isFirstAndEmpty || isEmptyState
+            ? "Start typing or paste from clipboard..."
+            : undefined
       };
     },
     publish: handleEvent

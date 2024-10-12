@@ -1,28 +1,15 @@
 <script lang="ts">
   import { logger } from "$lib/client/components/debug/logger.client";
   import FileView from "$lib/client/components/files/FileView.svelte";
-  import {
-    ResourceAccessMode,
-    type OmitForCapture
-  } from "$lib/client/components/flux/resourceStores/resource.type";
   import modalEvent from "$lib/client/components/modal/modal.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import CheckboxInput from "$lib/client/elements/toggle/CheckboxInput.svelte";
-  import {
-    extractFullTabData,
-    resolveContentTypeForUrl
-  } from "$lib/client/extensions/clipper/clipper.utils";
-  import account from "$lib/client/stores/account.store";
+  import { resolveContentTypeForUrl } from "$lib/client/extensions/clipper/clipper.utils";
   import { appStore } from "$lib/client/stores/app.store";
-  import { toasts } from "$lib/client/stores/notification.store";
-  import { UserDataMode } from "$lib/client/types/account.type";
   import { ButtonVariant } from "$lib/client/types/button.type";
-  import { performApiCall } from "$lib/client/utils/network.utils";
-  import { retrieveUrlData } from "$lib/client/utils/utils";
   import { MemotronAction } from "../memotronAction.enum";
-  import { nodeStore } from "../node/node.store";
-  import { NodeType, type IMediaNode, type IWebPage } from "../node/node.type";
+  import { NodeType } from "../node/node.type";
   import { resolveNodeContentLabel, resolveNodeIcon } from "../node/node.utils";
   import { captureStore } from "./capture.store";
   import {
@@ -216,6 +203,9 @@
       {/if}
       <Button
         label={resolveInsertIntoMdLabel()}
+        badge="soon"
+        tooltip="Coming soon"
+        isDisabled={true}
         icon="ph:markdown-logo-light"
         on:click={onInsertIntoMarkdown}
         isExpandToFullWidth={true}

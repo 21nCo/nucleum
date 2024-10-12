@@ -21,12 +21,14 @@
   import { toasts } from "$lib/client/stores/notification.store";
   import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
   import { MemotronEvent } from "$lib/client/products/memotron/memotron.type";
+  import { hoverable } from "$lib/client/actions/hover.action";
 
   export let block: IBlock;
   export let mdStore: MdStoreType;
   let isHovering: boolean = false;
   let isFocusing: boolean = false;
   let isReRendering: boolean = false;
+  let dev_isShowFocusHintOnRight: boolean = false;
   $: isFocusable =
     $mdStore.params?.isNodular && headingNodeTypes.includes(block.contentType);
 
@@ -132,12 +134,13 @@
   draggable="true"
   data-content={block.contentType}
   data-node={block.id}
-  on:pointerenter={() => {
-    isHovering = true;
-    dispatchCustomEvent(MemotronEvent.BLOCK_HOVER, { id: block.id });
-  }}
-  on:pointerleave={() => {
-    isHovering = false;
+  use:hoverable={{
+    onHover: (e) => {
+      isHovering = e;
+      if (isHovering) {
+        dispatchCustomEvent(MemotronEvent.BLOCK_HOVER, { id: block.id });
+      }
+    }
   }}
 >
   {#if $mdStore.params?.isNodular && !$mdStore.params?.isReadOnly}
@@ -160,7 +163,7 @@
         isHovering = false;
       }}
     />
-    {#if isHovering && isFocusable && !isFocusing}
+    {#if isHovering && isFocusable && !isFocusing && dev_isShowFocusHintOnRight}
       <div
         class="absolute top-0 right-0 flex h-full items-center justify-center bg-gradient-to-r from-bgs2/40 via-bgs2 to-bgs2 pl-32"
       >

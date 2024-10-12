@@ -15,6 +15,9 @@
   import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
   import { setContext } from "svelte";
   import { generateMarkdownText } from "$lib/client/products/memotron/node/node.utils";
+  import { logger } from "../debug/logger.client";
+  import { get } from "svelte/store";
+  import { KeyboardKey } from "$lib/client/types/keyboard.type";
 
   /**
    * Propagates the event to the parent component.
@@ -56,11 +59,25 @@
       mdChangeSub();
     };
   });
+
+  function onKeyDown(event: KeyboardEvent) {
+    const focus = get(mdStore.focus);
+    logger.log({
+      key: event.key,
+      focusedBlock: focus,
+      at: "Markdown.svelte"
+    });
+    if (event.key === KeyboardKey.ESCAPE && focus) {
+      mdStore.focus.set(undefined);
+      event.stopPropagation();
+    }
+  }
 </script>
 
-<div
+<button
   id="markDown-{mdId}"
   class="relative flex flex-col justify-start items-start text-start w-full h-full"
+  on:keydown={onKeyDown}
 >
   <div class="flex justify-between">
     <div>
@@ -118,4 +135,4 @@
       />
     {/if}
   </div>
-</div>
+</button>

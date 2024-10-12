@@ -8,18 +8,16 @@
   } from "$lib/client/products/memotron/node/node.type";
   import { Size } from "$lib/client/types/size.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
-  import {
-    compareObjects,
-    isValidArrayWithData
-  } from "$lib/shared/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { properCase } from "$lib/shared/utils/text.utils";
   import BlockItem from "./BlockItem.svelte";
   import { createEventDispatcher } from "svelte";
   import { cn } from "$lib/client/utils/ui.utils";
+  import Badge from "$lib/client/elements/text/Badge.svelte";
   const dispatch = createEventDispatcher();
   export let variant: "v1" | "v2" = "v2";
   export let isSingleColumnMode: boolean = false;
-  export let selectCallback: (e: any) => void = () => {};
+  export let onSelect: (e: any) => void = () => {};
 
   let selectedSection = "";
   let focusedItem: any;
@@ -76,25 +74,32 @@
           label: "Quote",
           description: "Quote block",
           type: NodeType.QUOTE,
-          icon: "hugeicons:quote-up"
+          icon: "hugeicons:quote-up",
+          badge: "new"
         },
         {
           label: "Code",
           description: "Code block",
           type: NodeType.CODE,
-          icon: "code"
-        },
-        {
-          label: "Math",
-          description: "Math block",
-          type: NodeType.MATH,
-          icon: "hugeicons:summation-01"
+          icon: "code",
+          badge: "planned",
+          isDisabled: true
         },
         {
           label: "Callout",
           description: "Callout block",
           type: NodeType.CALLOUT,
-          icon: "bookmark"
+          icon: "bookmark",
+          badge: "planned",
+          isDisabled: true
+        },
+        {
+          label: "Math",
+          description: "Math block",
+          type: NodeType.MATH,
+          icon: "hugeicons:summation-01",
+          badge: "planned",
+          isDisabled: true
         }
       ]
     },
@@ -111,14 +116,16 @@
           label: "Date",
           description: "Mention a date",
           type: InlineType.DATE,
-          icon: "calendar-days"
-        },
-        {
-          label: "Inline code",
-          description: "Write inline code",
-          type: InlineType.CODE,
-          icon: "code"
+          icon: "calendar-days",
+          badge: "planned",
+          isDisabled: true
         }
+        // {
+        //   label: "Inline code",
+        //   description: "Write inline code",
+        //   type: InlineType.CODE,
+        //   icon: "code"
+        // }
       ]
     },
     {
@@ -138,7 +145,9 @@
           type: NodeType.LIST,
           sub: ListType.ORDERED,
           // icon: "lucide:list-ordered"
-          icon: "hugeicons:left-to-right-list-number"
+          icon: "hugeicons:left-to-right-list-number",
+          badge: "planned",
+          isDisabled: true
         },
         {
           label: "Checklist",
@@ -146,48 +155,58 @@
           type: NodeType.LIST,
           sub: ListType.CHECKLIST,
           // icon: "lucide:list-todo"
-          icon: "hugeicons:check-list"
+          icon: "hugeicons:check-list",
+          badge: "planned",
+          isDisabled: true
         }
       ]
     },
     {
       section: "media",
+      isDisabled: true,
+      badge: "planned",
       children: [
         {
           label: "Image",
           description: "Image block",
           type: NodeType.IMAGE,
-          icon: "image"
+          icon: "image",
+          isDisabled: true
         },
         {
           label: "Video",
           description: "Video block",
           type: NodeType.VIDEO,
-          icon: "video-camera"
+          icon: "video-camera",
+          isDisabled: true
         },
         {
           label: "Audio",
           description: "Audio block",
           type: NodeType.AUDIO,
-          icon: "music"
+          icon: "music",
+          isDisabled: true
         },
         {
           label: "PDF",
           description: "Pdf block",
           type: NodeType.PDF,
-          icon: "ph:file-pdf-light"
+          icon: "ph:file-pdf-light",
+          isDisabled: true
         },
         {
           label: "Link",
           description: "Link block",
           type: NodeType.LINK,
-          icon: "hugeicons:link-05"
+          icon: "hugeicons:link-05",
+          isDisabled: true
         },
         {
           label: "File",
           description: "File block",
           type: NodeType.FILE,
-          icon: "ph:file-light"
+          icon: "ph:file-light",
+          isDisabled: true
         }
       ]
     },
@@ -207,108 +226,133 @@
           icon: "hugeicons:equal-sign"
         },
         {
-          label: "Table",
-          description: "Table block",
-          type: NodeType.TABLE,
-          icon: "hugeicons:layout-table-02"
-        },
-        {
-          label: "Grid",
-          description: "Grid block",
-          type: NodeType.GRID,
-          icon: "squares-2x2"
-        },
-        {
-          label: "Accordion",
-          description: "Accordion block",
-          type: NodeType.ACCORDION,
-          icon: "queue-list"
-        },
-        {
-          label: "Tabs",
-          description: "Tabs block",
-          type: NodeType.TABS,
-          icon: "ph:tabs-light"
-        },
-        {
           label: "Media grid",
           description: "Media grid block",
           type: NodeType.MEDIA_GRID,
-          icon: "rectangle-group"
+          icon: "rectangle-group",
+          badge: "new"
         },
         {
           label: "Media stack",
           description: "Media stack block",
           type: NodeType.MEDIA_STACK,
-          icon: "rectangle-stack"
+          icon: "rectangle-stack",
+          badge: "planned",
+          isDisabled: true
+        },
+        {
+          label: "Table",
+          description: "Table block",
+          type: NodeType.TABLE,
+          icon: "hugeicons:layout-table-02",
+          badge: "planned",
+          isDisabled: true
+        },
+        {
+          label: "Grid",
+          description: "Grid block",
+          type: NodeType.GRID,
+          icon: "squares-2x2",
+          badge: "planned",
+          isDisabled: true
+        },
+        {
+          label: "Accordion",
+          description: "Accordion block",
+          type: NodeType.ACCORDION,
+          icon: "queue-list",
+          badge: "planned",
+          isDisabled: true
+        },
+        {
+          label: "Tabs",
+          description: "Tabs block",
+          type: NodeType.TABS,
+          icon: "ph:tabs-light",
+          badge: "planned",
+          isDisabled: true
         }
       ]
     },
     {
       section: "embed",
+      isDisabled: true,
+      badge: "planned",
       children: [
         {
           label: "Embed",
           description: "Embed block",
           type: NodeType.EMBED,
-          icon: "code"
+          icon: "code",
+          isDisabled: true
         },
         {
           label: "Embed node",
           description: "Embed node block",
           type: NodeType.NODE_AS_EMBED,
-          icon: "ph:circle-light"
+          icon: "ph:circle-light",
+          isDisabled: true
         },
         {
           label: "Embed collection",
           description: "Embed Collection block",
           type: NodeType.COLLECTION_AS_EMBED,
-          icon: "hugeicons:code"
+          icon: "hugeicons:code",
+          isDisabled: true
         },
         {
           label: "Table of contents",
           description: "Embed table of contents block",
           type: NodeType.TOC,
-          icon: "list"
+          icon: "list",
+          isDisabled: true
         },
         {
           label: "Youtube video",
           description: "Embed youtube video block",
           type: NodeType.YOUTUBE_VIDEO,
-          icon: "ph:youtube-logo-thin"
+          icon: "ph:youtube-logo-thin",
+          isDisabled: true
         },
         {
           label: "Tweet",
           description: "Embed tweet block",
           type: NodeType.TWEET,
-          icon: "ph:x-logo-thin"
+          icon: "ph:x-logo-thin",
+          isDisabled: true
         },
         {
           label: "Kindle book",
           description: "Embed kindle book block",
           type: NodeType.KINDLE_BOOK,
-          icon: "ph:amazon-logo-thin"
+          icon: "ph:amazon-logo-thin",
+          isDisabled: true
         },
         {
           label: "Kindle highlight",
           description: "Embed kindle highlight block",
           type: NodeType.KINDLE_HIGHLIGHT,
-          icon: "ph:bookmark-simple-thin"
+          icon: "ph:bookmark-simple-thin",
+          isDisabled: true
         }
       ]
     }
   ];
-  let filteredResults: any[] = config.map((section) => {
-    return {
-      section: section.section,
-      children: section.children.map((c) => {
-        return {
-          ...c,
-          section: section.section
-        };
-      })
-    };
-  });
+  let filteredResults: any[] = config
+    .map((section) => {
+      return {
+        section: section.section,
+        children: section.children
+          .filter((c) => !c.isDisabled)
+          .map((c) => {
+            return {
+              ...c,
+              section: section.section
+            };
+          })
+      };
+    })
+    .filter((section) => section.children.length > 0);
   selectedSection = filteredResults[0].section;
   focusedItem = filteredResults[0].children[0];
   /**
@@ -323,21 +367,29 @@
     };
   }
   function allFilteredBlocks() {
-    return filteredResults
-      .map((section) =>
-        section.children.map((c: any) =>
-          mapSectionNameToBlock(c, section.section)
+    if (searchQueryString) {
+      return filteredResults
+        .map((section) =>
+          section.children.map((c: any) =>
+            mapSectionNameToBlock(c, section.section)
+          )
         )
-      )
-      .flat();
+        .flat();
+    } else {
+      return config
+        .map((section) =>
+          section.children.map((c: any) =>
+            mapSectionNameToBlock(c, section.section)
+          )
+        )
+        .flat();
+    }
   }
   export function key(key: "ArrowUp" | "ArrowDown" | "Enter") {
-    // console.log({ key });
     let blocks = allFilteredBlocks();
     let index = blocks.indexOf(
-      blocks.find((k: any) => compareObjects(k, focusedItem))
+      blocks.find((k: any) => compareBlock(k, focusedItem))
     );
-    // console.log({ blocks, index });
     if (key === "ArrowUp") {
       if (index > 0) {
         focusedItem = blocks[index - 1];
@@ -347,7 +399,7 @@
         focusedItem = blocks[index + 1];
       }
     } else if (key === "Enter") {
-      onSelect();
+      onSelection();
     }
     if (selectedSection != focusedItem.section) {
       selectedSection = focusedItem.section;
@@ -359,18 +411,21 @@
       return;
     }
     searchQueryString = newQueryString;
-    filteredResults = config.map((section) => {
-      return {
-        section: section.section,
-        children: section.children
-          .map((c) => mapSectionNameToBlock(c, section.section))
-          .filter((block) => {
-            return block.label
-              .toLowerCase()
-              .includes(searchQueryString.toLowerCase());
-          })
-      };
-    });
+    filteredResults = config
+      .filter((section) => !section.isDisabled)
+      .map((section) => {
+        return {
+          section: section.section,
+          children: section.children
+            .map((c) => mapSectionNameToBlock(c, section.section))
+            .filter((block) => !block.isDisabled)
+            .filter((block) => {
+              return block.label
+                .toLowerCase()
+                .includes(searchQueryString.toLowerCase());
+            })
+        };
+      });
     filteredResults = filteredResults.filter((section) => {
       return section.children.length > 0;
     });
@@ -379,10 +434,15 @@
     } else {
     }
   }
-  function onSelect(e?: CustomEvent) {
+  function onSelection(e?: CustomEvent) {
     const item = e?.detail || focusedItem;
+    if (item.isDisabled) return;
     dispatch("select", item);
-    selectCallback(item);
+    onSelect(item);
+  }
+
+  function compareBlock(a: any, b: any) {
+    return a.type + a.sub === b.type + b.sub;
   }
 </script>
 
@@ -405,8 +465,8 @@
             {#each section.children as block}
               <BlockItem
                 {block}
-                on:select={onSelect}
-                isFocused={compareObjects(focusedItem, block)}
+                on:select={onSelection}
+                isFocused={compareBlock(focusedItem, block)}
                 width={searchQueryString || isSingleColumnMode
                   ? "w-full min-w-full"
                   : "w-52"}
@@ -428,15 +488,22 @@
       >
         <Text content="Block type" style={TextStyle.SECTION_HEADING_SMALL} />
         <div class="flex flex-col gap-1 w-full overflow-auto">
-          {#each filteredResults as section}
+          {#each config as section}
             <button
-              class="flex items-center gap-3 hover:bg-bgs3 py-2 px-2 rounded-md text-h5 {selectedSection ===
-              section.section
-                ? 'bg-bgs3 font-medium'
-                : 'font-light'}"
+              class={cn(
+                "flex items-center gap-3 hover:bg-bgs3 py-2 px-2 rounded-md text-h5",
+                {
+                  "bg-bgs3 font-medium": selectedSection === section.section,
+                  "font-light": selectedSection !== section.section,
+                  "opacity-70": section.isDisabled
+                }
+              )}
               on:click={() => (selectedSection = section.section)}
             >
               <div>{properCase(section.section)}</div>
+              {#if section.badge}
+                <Badge text={section.badge} />
+              {/if}
             </button>
           {/each}
         </div>
@@ -444,13 +511,13 @@
       <div
         class="flex flex-col gap-2 py-4 px-2 w-72 overflow-auto styledscroll pb-20"
       >
-        {#each filteredResults as section}
+        {#each config as section}
           {#if section.section === selectedSection}
             {#each section.children as block}
               <BlockItem
                 {block}
-                on:select={onSelect}
-                isFocused={compareObjects(focusedItem, block)}
+                on:select={onSelection}
+                isFocused={compareBlock(focusedItem, block)}
               />
             {/each}
           {/if}

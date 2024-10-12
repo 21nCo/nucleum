@@ -31,6 +31,7 @@
   import { popover, tooltip } from "$lib/client/actions/popover.action";
   import ContextMenu from "$lib/client/elements/contextMenu/ContextMenu.svelte";
   import { hoverable } from "$lib/client/actions/hover.action";
+  import { isSameResource } from "../../flux/resourceStores/resource.utils";
   const dispatch = createEventDispatcher();
   export let block: IBlock;
   export let mdStore: MdStoreType;
@@ -39,39 +40,14 @@
   let isHovering: boolean = false;
   let isPopoverVisible: boolean = false;
   let contextMenuRef: any;
-  $: contextMenu = resolveContextMenu(block);
+  $: contextMenu = resolveContextMenu(block, isSoleBlock);
 
   $: isNodularizable = headingNodeTypes.includes(block.contentType);
 
   $: isDebugLeftControls = false;
-  // block.contentType === NodeType.QUOTE;
-  //  headingNodeTypes.includes(block.contentType);
 
-  function createDelayedFocusStore(delay = 300) {
-    const { subscribe, set } = writable(false);
-    let timeoutId: any;
-
-    return {
-      subscribe,
-      setFocus: (value) => {
-        if (value) {
-          clearTimeout(timeoutId);
-          set(true);
-        } else {
-          timeoutId = setTimeout(() => set(false), delay);
-        }
-      }
-    };
-  }
-
-  /**
-   *
-   * Note: delayedFocus is used as immediate propagation of isFocusing state is resulting in the active grab icon being removed and click event not being registered and thus context menu not being opened.
-   *
-   */
-  export const delayedFocus = createDelayedFocusStore();
-
-  $: delayedFocus.setFocus(isFocusing);
+  $: isSoleBlock =
+    isSameResource($mdStore.blocks[0], block) && $mdStore.blocks.length === 1;
 
   const actions: Record<string, IContextMenuItem> = {
     [BlockAction.CONVERT]: {
@@ -82,13 +58,14 @@
         component: BlockBrowser,
         props: {
           isSingleColumnMode: true,
-          selectCallback: async (props?: any) => {
+          onSelect: async (props?: any) => {
             dispatch("action", {
               action: BlockAction.CONVERT,
               data: {
                 toType: props?.type
               }
             });
+            hideContextMenu();
           }
         }
       }
@@ -120,7 +97,7 @@
         component: BlockBrowser,
         props: {
           isSingleColumnMode: true,
-          selectCallback: async (props?: any) => {
+          onSelect: async (props?: any) => {
             console.log("insert", props);
             dispatch("action", {
               action: BlockAction.INSERT,
@@ -128,6 +105,7 @@
                 blockType: props?.type
               }
             });
+            hideContextMenu();
           }
         }
       }
@@ -217,12 +195,15 @@
    *
    * @param block
    */
-  function resolveContextMenu(block: IBlock): IContextMenu {
+  function resolveContextMenu(
+    block: IBlock,
+    isSoleBlock?: boolean
+  ): IContextMenu {
     const isStructuralBlock = structuralNodeTypes.includes(block.contentType);
     const isHeadingBlock = headingNodeTypes.includes(block.contentType);
-
+    let items = [];
     if (isHeadingBlock) {
-      return [
+      items = [
         {
           group: "base",
           items: [
@@ -241,13 +222,12 @@
             // actions[BlockAction.OPEN_AS_SPLIT],
             actions[BlockAction.OPEN_IN_FULL_SCREEN],
             actions[BlockAction.OPEN_AS_TAB],
-            actions[BlockAction.SHORTCUTS],
-            actions[BlockAction.DELETE]
+            actions[BlockAction.SHORTCUTS]
           ]
         }
       ];
     } else if (isStructuralBlock) {
-      return [
+      items = [
         {
           group: "base",
           items: [
@@ -258,11 +238,11 @@
         },
         {
           group: "more",
-          items: [actions[BlockAction.SHORTCUTS], actions[BlockAction.DELETE]]
+          items: [actions[BlockAction.SHORTCUTS]]
         }
       ];
     } else {
-      return [
+      items = [
         {
           group: "base",
           items: [
@@ -280,12 +260,20 @@
           items: [
             // actions[BlockAction.COPY_LINK],
             actions[BlockAction.COPY_BLOCK_TEXT],
-            actions[BlockAction.SHORTCUTS],
-            actions[BlockAction.DELETE]
+            actions[BlockAction.SHORTCUTS]
           ]
         }
       ];
     }
+
+    if (!isSoleBlock) {
+      items.forEach((group) => {
+        if (group.group === "more") {
+          group.items.push(actions[BlockAction.DELETE]);
+        }
+      });
+    }
+    return items;
   }
 
   function onNodularize(e?: MouseEvent) {
@@ -306,11 +294,19 @@
     };
   });
 
+  /**
+   * Disabling this for time being as it is resulting in premature closing of popover when the width of the screen is less and the popover is opening over blocks and when secondary popover is opened on the right, the gap between popovers is getting tiggered as hover event on other blocks.
+   * @param e
+   */
   function onOtherBlocksHoverListener(e: any) {
     if (!e.detail || e.detail.id === block.id) return;
+    return;
     if (isPopoverVisible) {
-      contextMenuRef.dispatchEvent(new CustomEvent("hide"));
+      hideContextMenu();
     }
+  }
+  function hideContextMenu() {
+    contextMenuRef.dispatchEvent(new CustomEvent("hide"));
   }
 </script>
 
@@ -318,6 +314,26 @@
   class={cn(
     "h-full w-full flex justify-center rounded-l-md border border-transparent hover:bg-bgs2 hover:border-brs2"
   )}
+  use:popover={{
+    placement: Placement.Left,
+    content: ContextMenu,
+    triggerMethod: PopoverTriggerMethod.CLICK,
+    componentProps: {
+      menu: contextMenu,
+      size: Size.lg,
+      heading: "Options",
+      onSelect: (e) => {
+        hideContextMenu();
+      }
+    },
+    id: "leftControls",
+    groupId: "leftControlsGroup",
+    offsetInPx: 8
+  }}
+  on:change={(e) => {
+    isPopoverVisible = e?.detail?.open;
+  }}
+  bind:this={contextMenuRef}
   use:hoverable={{
     onHover: (e) => {
       isHovering = e;
@@ -329,50 +345,35 @@
 >
   <button
     class="flex w-full h-full items-center justify-center"
-    use:popover={{
-      placement: Placement.Left,
-      content: ContextMenu,
-      triggerMethod: PopoverTriggerMethod.CLICK,
-      componentProps: {
-        menu: contextMenu,
-        size: Size.lg,
-        heading: "Options",
-        onSelect: (e) => {
-          contextMenuRef.dispatchEvent(new CustomEvent("hide"));
-        }
-      },
-      id: "leftControls",
-      groupId: "leftControlsGroup",
-      offsetInPx: 8
-    }}
-    on:change={(e) => {
-      isPopoverVisible = e?.detail?.open;
-    }}
     use:tooltip={{
       text: isNodularizable ? "Click ring to focus" : "More actions",
       direction: Placement.Bottom,
       delay: 500
     }}
-    bind:this={contextMenuRef}
   >
-    <!-- Note: Directly using isFocusing is working -->
     {#if isNodularizable && !isFocusing}
       <FocusRing isFocusing={false} on:click={onNodularize} />
     {:else if isNodularizable && isFocusing}
       <FocusRing isFocusing={true} on:click={onNodularize} />
-    {:else if $delayedFocus}
-      <Icon icon="grab" size={Size.lg} class="fill-aps1" />
     {:else}
       <span
         class={cn("flex w-full h-full justify-center items-center", {
-          "opacity-0":
-            !isBlockHovering &&
-            !isDebugLeftControls &&
-            !isPopoverVisible &&
-            !isHovering
+          "opacity-100":
+            isBlockHovering ||
+            isDebugLeftControls ||
+            isPopoverVisible ||
+            isHovering ||
+            isFocusing,
+          "opacity-0": !(
+            isBlockHovering ||
+            isDebugLeftControls ||
+            isPopoverVisible ||
+            isHovering ||
+            isFocusing
+          )
         })}
       >
-        <Icon icon="grab" size={Size.lg} class="fill-fgs3" />
+        <Icon icon="ph:dots-six-vertical" size={Size.lg} class="fill-fgs3" />
       </span>
     {/if}
   </button>

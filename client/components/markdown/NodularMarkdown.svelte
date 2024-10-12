@@ -101,6 +101,7 @@
     // dispatch("ready");
   } else {
     _md = md;
+    reCalculateStructure(_md, true);
     dispatch("ready");
   }
   /**

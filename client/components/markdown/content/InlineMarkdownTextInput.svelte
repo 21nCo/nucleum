@@ -102,6 +102,7 @@
     );
   }
   export function focus(offset: number = 0) {
+    logger.log({ at: "focus", offset });
     const element = blockRef;
     if (!element) return;
     // element?.focus();
@@ -190,6 +191,11 @@
   }
   export function removeSlashText() {
     innerHTML = innerHTML.split("/")[0];
+    content = blockRef.textContent;
+    dispatch("change", content);
+  }
+  export function addCharacter(character: string) {
+    innerHTML = innerHTML + character;
     content = blockRef.textContent;
     dispatch("change", content);
   }

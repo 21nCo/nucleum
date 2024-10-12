@@ -151,6 +151,9 @@
             />
             <Button
               label="Insert into markdown"
+              isDisabled={true}
+              badge="soon"
+              tooltip="Coming soon"
               icon="ph:markdown-logo-light"
               parentBgIndex={2}
             />

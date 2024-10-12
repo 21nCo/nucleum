@@ -4,10 +4,13 @@
   import type { NodeType } from "$lib/client/products/memotron/node/node.type";
   import { createEventDispatcher } from "svelte";
   import { cn } from "$lib/client/utils/ui.utils";
+  import Badge from "$lib/client/elements/text/Badge.svelte";
   export let block: {
     label: string;
     type: NodeType | InlineType;
     icon: string;
+    badge?: string;
+    isDisabled?: boolean;
   };
   export let width: string = "w-full";
   export let isFocused: boolean = false;
@@ -24,10 +27,13 @@
     "flex items-center gap-3 text-b2 hover:bg-bgs2 py-1 px-2 rounded-md",
     width,
     {
-      "bg-bgs2": isFocused
+      "bg-bgs2": isFocused,
+      "opacity-70 cursor-not-allowed": block.isDisabled
     }
   )}
-  on:click={() => dispatch("select", block)}
+  on:click={() => {
+    if (!block.isDisabled) dispatch("select", block);
+  }}
 >
   <div
     class="bg-bgs2 rounded-md p-1 border border-brs3 flex justify-center items-center"
@@ -35,4 +41,9 @@
     <Icon icon={block.icon} />
   </div>
   <div>{block.label}</div>
+  {#if block.badge}
+    <span class="ml-auto">
+      <Badge text={block.badge} />
+    </span>
+  {/if}
 </button>

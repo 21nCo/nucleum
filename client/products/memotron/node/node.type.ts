@@ -425,7 +425,6 @@ export const webNodeTypeList = [
   NodeType.IMAGE_CLIP,
   NodeType.AUDIO_CLIP,
   NodeType.VIDEO_CLIP,
-  NodeType.PDF_CLIP,
   NodeType.WEB_SCREENSHOT_CLIP,
 
   NodeType.YOUTUBE_VIDEO,

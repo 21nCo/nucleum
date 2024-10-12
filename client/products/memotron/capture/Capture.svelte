@@ -154,7 +154,7 @@
   {#key $captureStore.refreshId}
     <div class="w-full h-full flex justify-center">
       <div class="w-full max-w-5xl h-full flex flex-col p-4 bg-bgs1">
-        {#if $captureStore.captureType === CaptureType.MARKDOWN}
+        {#if $captureStore.captureType !== CaptureType.AUDIO}
           <header
             class="flex justify-between gap-4 items-center w-full lp:px-12"
           >

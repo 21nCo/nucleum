@@ -172,13 +172,17 @@ export function tooltip(
   }
 
   function onMouseLeave(): void {
-    hideTooltip();
-    setTimeout(() => {
-      if (tooltipElement && tooltipElement.parentNode) {
-        tooltipElement.parentNode.removeChild(tooltipElement);
-        tooltipElement = null;
-      }
-    }, 200);
+    if (tooltipElement && tooltipElement.parentNode) {
+      tooltipElement.parentNode.removeChild(tooltipElement);
+      tooltipElement = null;
+    }
+    removeAllTraces();
+  }
+
+  function removeAllTraces(): void {
+    node.querySelectorAll(".tooltip").forEach((el) => {
+      el?.parentNode?.removeChild(el);
+    });
   }
 
   node.addEventListener("mouseenter", onMouseEnter);
@@ -203,7 +207,8 @@ export function tooltip(
       node.removeEventListener("mouseenter", onMouseEnter);
       node.removeEventListener("mouseleave", onMouseLeave);
       if (tooltipElement && tooltipElement.parentNode) {
-        tooltipElement.parentNode.removeChild(tooltipElement);
+        tooltipElement?.parentNode?.removeChild(tooltipElement);
+        removeAllTraces();
       }
     }
   };

@@ -69,7 +69,15 @@
     placement: Placement.Right,
     offsetInPx: 12,
     content: item.secondStepComponent?.component,
-    componentProps: { ...item.secondStepComponent?.props },
+    componentProps: {
+      onSelect: (e) => {
+        dispatch("select", e);
+      },
+      onAction: (e) => {
+        dispatch("action", e);
+      },
+      ...item.secondStepComponent?.props
+    },
     groupId: "contextMenuPopoverSecondaryScreen",
     id: "contextMenuPopoverSecondaryScreen" + Math.random()
   }}

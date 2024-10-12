@@ -11,6 +11,7 @@
   // import ShortcutText from "../text/ShortcutText.svelte";
   import context from "$lib/client/stores/context.store";
   import { Embed } from "$lib/client/types/context.type";
+  import Badge from "../text/Badge.svelte";
   export let parentBgIndex: number = 1;
   export let label: string | undefined = undefined;
   export let className: string = "";
@@ -40,6 +41,7 @@
   let buttonRef: any;
   export let isHovering: boolean = false;
   export let shortcut: string | undefined = undefined;
+  export let badge: string | undefined = undefined;
   $: isIconOnlyButton = !label && !$$slots.default;
 </script>
 
@@ -152,6 +154,9 @@
               : undefined}
         />
       {/if} -->
+      {#if badge}
+        <Badge text={badge} />
+      {/if}
     {:else}
       <slot />
     {/if}

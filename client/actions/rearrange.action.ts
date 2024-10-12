@@ -162,7 +162,19 @@ export const reorderList: Action<HTMLElement, DragDropOptions> = (
   );
   let listId = options?.listId || "default-list";
 
+  function isTextElementFocused() {
+    const activeElement = document.activeElement;
+    return (
+      activeElement instanceof HTMLInputElement ||
+      activeElement instanceof HTMLTextAreaElement
+    );
+  }
+
   function handleDragStart(e: DragEvent) {
+    if (isTextElementFocused()) {
+      e.preventDefault();
+      return;
+    }
     if (!(e.target instanceof HTMLElement) || !e.dataTransfer) return;
     e.dataTransfer.setData("text/plain", e.target.dataset.index || "");
     e.dataTransfer.effectAllowed = "move";

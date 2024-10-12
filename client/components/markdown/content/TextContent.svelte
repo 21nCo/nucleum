@@ -2,7 +2,8 @@
   import { createEventDispatcher, onMount } from "svelte";
   import {
     type IBlock,
-    BlockAction
+    BlockAction,
+    InlineType
   } from "$lib/client/components/markdown/md.type";
   import { mdContentChangeEvent, type MdStoreType } from "../markdown.store";
   import BlockBrowser from "../blockBrowser/BlockBrowser.svelte";
@@ -63,11 +64,10 @@
   // export let context: BlockContext = BlockContext.DEFAULT;
   export let isHovering: boolean = false;
   export let isFocusing: boolean = false;
-  $: {
-    if (isHovering) assignPlaceholder();
-    else if (!isFocusing && !isFirstBlockAndIsEmpty) placeholder = "";
-  }
-  const isFirstBlockAndIsEmpty = mdStore.isFirstBlockAndIsEmpty(block.id);
+
+  $: refreshPlaceholder(isHovering);
+
+  let isFirstBlockAndIsEmpty = mdStore.isFirstBlockAndIsEmpty(block.id);
   let textRef: any;
   let sizing = "";
   let blockSpecificPlaceholder: string | undefined = undefined;
@@ -127,7 +127,6 @@
         blockSpecificPlaceholder = undefined;
         break;
     }
-    if (isFocusing) assignPlaceholder();
   }
 
   /**
@@ -138,7 +137,7 @@
     hidePopover();
     const focusBlockSub = mdStore.focus.subscribe((x) => {
       if (x?.id === block.id) {
-        // logger.log({ at: "focus.subscribe", x, block });
+        logger.log({ at: "focus.subscribe", x, block });
         setTimeout(() => {
           textRef?.focus();
         }, 10);
@@ -149,21 +148,6 @@
       focusBlockSub();
     };
   });
-
-  function resolveDefaultPlaceholder() {
-    let dynamicPlaceholder = undefined;
-    if (nodeContentContext.resolveDynamicParams) {
-      const params = nodeContentContext.resolveDynamicParams();
-      dynamicPlaceholder = params?.placeholder;
-    }
-    return (
-      dynamicPlaceholder ??
-      $mdStore.params?.placeholder ??
-      ($mdStore.params?.isNodular
-        ? "Start typing or type / to browse..."
-        : "Start typing... ")
-    );
-  }
 
   /**
    * Relays the convert event to the parent.
@@ -210,6 +194,7 @@
     else isRenderMentionSearch = true;
     setTimeout(() => {
       popoverRef.show();
+      if (isRenderMentionSearch) mentionSearchRef.search();
     }, 10);
   }
   /**
@@ -257,7 +242,6 @@
       shiftKeyPressed = false;
     }
     if (type === "keyup" && event.key === "2" && shiftKeyPressed) {
-      console.log("mention shortcut");
       showPopover("mentionSearch");
       return true;
     } else if (!isRenderMentionSearch) {
@@ -514,6 +498,7 @@
       caretPosition: any;
     }>
   ) {
+    isFirstBlockAndIsEmpty = mdStore.isFirstBlockAndIsEmpty(block.id);
     const event = e.detail.event;
     const caretPosition = e.detail.caretPosition;
     logger.log({
@@ -574,7 +559,7 @@
     }
     if (!block.body) {
       if (block.contentType === NodeType.SIMPLE_TEXT) {
-        performDelete();
+        if (!isFirstBlockAndIsEmpty) performDelete();
       } else {
         convert(NodeType.SIMPLE_TEXT);
       }
@@ -639,9 +624,44 @@
   }
   function assignPlaceholder() {
     placeholder = blockSpecificPlaceholder ?? resolveDefaultPlaceholder();
+
+    function resolveDefaultPlaceholder() {
+      let dynamicPlaceholder = undefined;
+      if (nodeContentContext.resolveDynamicParams) {
+        const params = nodeContentContext.resolveDynamicParams(
+          isFirstBlockAndIsEmpty
+        );
+        dynamicPlaceholder = params?.placeholder;
+      }
+      return (
+        dynamicPlaceholder ??
+        $mdStore.params?.placeholder ??
+        ($mdStore.params?.isNodular
+          ? "Start typing or type / to browse..."
+          : "Start typing... ")
+      );
+    }
+  }
+  function refreshPlaceholder(isHoveringParam?: boolean) {
+    if (isHoveringParam === undefined) isHoveringParam = isHovering;
+    isFirstBlockAndIsEmpty = mdStore.isFirstBlockAndIsEmpty(block.id);
+    if (isHoveringParam || isFirstBlockAndIsEmpty || isFocusing) {
+      assignPlaceholder();
+    } else if (placeholder) placeholder = "";
   }
 
   function onBlockSelect(event: CustomEvent) {
+    if (event.detail.type === InlineType.MENTION) {
+      return;
+      //TODO - this is placing the caret at the start of block causing unintended behaviour
+      textRef.removeSlashText();
+      hidePopover();
+      setTimeout(() => {
+        textRef.addCharacter("@");
+        showPopover("mentionSearch");
+      }, 1000);
+      return;
+    }
     const parts = block.body.split("/");
     if (parts[0]) {
       block.body = parts[0];
@@ -683,12 +703,13 @@
         break;
       }
     }
+    refreshPlaceholder();
   }
 
   function onBlur() {
-    if (!isFirstBlockAndIsEmpty) placeholder = "";
     dispatch("blur");
     isFocusing = false;
+    refreshPlaceholder();
   }
 </script>
 
