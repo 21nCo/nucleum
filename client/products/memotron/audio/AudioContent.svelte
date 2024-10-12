@@ -16,7 +16,6 @@
   import TextArea from "$lib/client/elements/input/TextArea.svelte";
   import { generateUID } from "$lib/client/utils/utils";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import { Transcriber } from "$lib/client/utils/taco.utils";
   import {
     TacoActions,
     TranscriptionModel
@@ -29,7 +28,7 @@
   import { logger } from "$lib/client/components/debug/logger.client";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
-  import { tacoWorker } from "../memotron.store";
+  import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
   import { read_audio } from "@xenova/transformers";
 
   export let body: any = {};

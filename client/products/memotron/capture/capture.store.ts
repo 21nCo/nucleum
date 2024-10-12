@@ -43,7 +43,6 @@ import {
   resourceInList
 } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { resolveResource } from "../memotron.store";
-import { FeatureExtractor } from "$lib/client/utils/taco.utils";
 import { fileStore } from "$lib/client/components/files/file.store";
 import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 import { appStore } from "$lib/client/stores/app.store";
@@ -51,7 +50,7 @@ import { UserDataMode } from "$lib/client/types/account.type";
 import { MemotronAction } from "../memotronAction.enum";
 import { retrieveUrlData } from "$lib/client/utils/utils";
 import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-import { tacoWorker } from "$lib/client/products/memotron/memotron.store";
+import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
 import { TacoActions } from "$lib/client/types/taco.types";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";

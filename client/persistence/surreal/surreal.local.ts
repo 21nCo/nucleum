@@ -28,8 +28,7 @@ import {
 import { LogType } from "$lib/client/components/debug/debug.type";
 import { compareVersions } from "$lib/shared/utils/utils";
 import { TacoActions } from "$lib/client/types/taco.types";
-import { tacoWorker } from "$lib/client/products/memotron/memotron.store";
-
+import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
 export class SurrealPersistence implements IPersistence {
   instance: Surreal | undefined = undefined;
   userId: string = "";

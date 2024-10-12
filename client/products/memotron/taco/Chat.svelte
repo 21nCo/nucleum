@@ -3,7 +3,7 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import { SearchStore } from "$lib/client/products/memotron/memotron.store";
-  import { tacoWorker } from "$lib/client/products/memotron/memotron.store";
+  import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
   import { SearchType } from "$lib/client/types/data.type";
   import { TacoActions } from "$lib/client/types/taco.types";
 
@@ -46,7 +46,6 @@
         resolve(e.data);
       };
     });
-    console.log("answer", answer);
     isLoading = false;
     index = 0;
   }

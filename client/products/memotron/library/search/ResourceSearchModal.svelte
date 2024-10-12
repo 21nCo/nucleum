@@ -100,22 +100,22 @@
         />
       </span>
       <div class="flex gap-2 ml-auto">
+        {#if $userPreferences.localAI.semanticSearch}
+          <SwitchInput
+            label={{ label: "Semantic", orientation: Orientation.Horizontal }}
+            size={Size.sm}
+            on:change={(e) => {
+              if (e.detail) {
+                searchStore.searchType = SearchType.SEMANTIC;
+              } else {
+                searchStore.searchType = SearchType.FULL_TEXT;
+              }
+              refresh();
+            }}
+            checked={searchStore.searchType === SearchType.SEMANTIC}
+          />
+        {/if}
         {#if isFiltersVisible}
-          {#if $userPreferences.localAI.semanticSearch}
-            <SwitchInput
-              label={{ label: "Semantic", orientation: Orientation.Horizontal }}
-              size={Size.sm}
-              on:change={(e) => {
-                if (e.detail) {
-                  searchStore.searchType = SearchType.SEMANTIC;
-                } else {
-                  searchStore.searchType = SearchType.FULL_TEXT;
-                }
-                refresh();
-              }}
-              checked={searchStore.searchType === SearchType.SEMANTIC}
-            />
-          {/if}
           <Button
             icon="funnel"
             style={ButtonStyle.OUTLINED}
@@ -128,14 +128,14 @@
             size={Size.sm}
             label="Sort"
           />
+          <span class="flex gap-2 items-center">
+            <Toggle
+              icon="adjustments-vertical"
+              size={Size.sm}
+              bind:on={isFiltersVisible}
+            />
+          </span>
         {/if}
-        <span class="flex gap-2 items-center">
-          <Toggle
-            icon="adjustments-vertical"
-            size={Size.sm}
-            bind:on={isFiltersVisible}
-          />
-        </span>
       </div>
     </div>
     <PanelSwitcher

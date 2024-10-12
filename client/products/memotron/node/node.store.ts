@@ -24,7 +24,7 @@ import {
 import { ResourceActions } from "../common/resource.actions";
 import { MemotronAction } from "../memotronAction.enum";
 import { appStore } from "$lib/client/stores/app.store";
-import { tacoWorker } from "$lib/client/products/memotron/memotron.store";
+import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
 import { get, writable } from "svelte/store";
 import { SearchStore } from "../memotron.store";
 import { linker } from "$lib/client/products/memotron/linking/link.store";

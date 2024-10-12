@@ -1,7 +1,7 @@
 <script lang="ts">
   import ProgressBar from "$lib/client/elements/ProgressBar.svelte";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
-  import { tacoWorker } from "$lib/client/products/memotron/memotron.store";
+  import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
   import { Action } from "$lib/client/types/action.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { TacoActions } from "$lib/client/types/taco.types";
@@ -140,11 +140,6 @@
   type={ButtonVariant.PRIMARY}
   {isDisabled}
   on:click={() => {
-    // modalEvent.set({
-    //   isDismissable: true,
-    //   path: Action.LOCAL_AI_SETTINGS,
-    //   isShow: true
-    // });
     modalEvent.hide(Action.LOCAL_AI_SETTINGS);
   }}
 />
