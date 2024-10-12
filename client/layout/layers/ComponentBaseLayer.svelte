@@ -45,8 +45,10 @@
    * TODO - detect resources that have been mutated and dispatch a change event if subscribed to
    * @param e
    */
-  function onMutation(e: CustomEvent) {
-    console.log("mutation", e);
+  function onMutation(e: CustomEvent<{ resource: Resource }>) {
+    if (e.detail && subscribeTo.includes(e.detail.resource)) {
+      dispatch("change");
+    }
   }
 </script>
 

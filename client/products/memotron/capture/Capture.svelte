@@ -156,7 +156,7 @@
       <div class="w-full max-w-5xl h-full flex flex-col p-4 bg-bgs1">
         {#if $captureStore.captureType === CaptureType.MARKDOWN}
           <header
-            class="flex justify-between gap-4 items-center w-full dp:px-12"
+            class="flex justify-between gap-4 items-center w-full lp:px-12"
           >
             <div class="flex gap--4 grow">
               <!-- TODO - if nodularized and type is added to a heading node, then replace "root" with the heading node id -->

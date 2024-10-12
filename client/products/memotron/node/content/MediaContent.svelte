@@ -84,6 +84,7 @@
       <PdfAnnotator
         bind:this={pdfContent}
         url={_url}
+        {node}
         bind:annots={$node.pdfAnnotations}
       />
     {/if}

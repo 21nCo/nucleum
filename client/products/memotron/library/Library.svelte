@@ -49,6 +49,7 @@
     type IResourceSelectOrderBy
   } from "$lib/client/types/data.type";
   import { page } from "$app/stores";
+  import LibraryLoadingPulse from "./LibraryLoadingPulse.svelte";
 
   let searchQuery: string = "";
   let selectedResource: Resource = Resource.node;
@@ -62,6 +63,7 @@
   type SubType = "all" | "recents" | NodeType | CollectionType;
   let selectedSubType: SubType = "all";
   export let variant: "v1" | "v2" | "v3" = "v3";
+  let isRefreshing: boolean = false;
   let availableResources: Resource[] = [
     Resource.node,
     Resource.collection
@@ -134,42 +136,49 @@
   });
 
   async function refresh() {
-    if (
-      !availableResources.includes(selectedResource) &&
-      selectedResource != Resource.everything
-    ) {
-      data = [];
-      return;
-    }
-    let orderBy: IResourceSelectOrderBy | undefined;
-    let semanticSearchTopK: number | undefined;
-    if (searchStore.searchType == SearchType.SEMANTIC) {
-      orderBy = {
-        dist: "desc",
-        createdAt: "desc"
-      };
-    }
-
-    let filters: any = {
-      isStarred: isStarFilterSelected ? true : undefined,
-      isArchived: isArchivedFilterSelected ? true : undefined
-    };
-    if (selectedSubType !== "all" && selectedSubType !== "recents") {
-      if (selectedResource === Resource.node) {
-        filters = { ...filters, contentType: selectedSubType };
-      } else if (selectedResource === Resource.collection) {
-        filters = { ...filters, type: selectedSubType };
+    isRefreshing = true;
+    try {
+      if (
+        !availableResources.includes(selectedResource) &&
+        selectedResource != Resource.everything
+      ) {
+        data = [];
+        return;
       }
-    }
+      let orderBy: IResourceSelectOrderBy | undefined;
+      let semanticSearchTopK: number | undefined;
+      if (searchStore.searchType == SearchType.SEMANTIC) {
+        orderBy = {
+          dist: "desc",
+          createdAt: "desc"
+        };
+      }
 
-    data = await searchStore.select({
-      resource: selectedResource,
-      searchQuery,
-      filters,
-      orderBy,
-      semanticSearchTopK
-      // limit: 100
-    });
+      let filters: any = {
+        isStarred: isStarFilterSelected ? true : undefined,
+        isArchived: isArchivedFilterSelected ? true : undefined
+      };
+      if (selectedSubType !== "all" && selectedSubType !== "recents") {
+        if (selectedResource === Resource.node) {
+          filters = { ...filters, contentType: selectedSubType };
+        } else if (selectedResource === Resource.collection) {
+          filters = { ...filters, type: selectedSubType };
+        }
+      }
+
+      data = await searchStore.select({
+        resource: selectedResource,
+        searchQuery,
+        filters,
+        orderBy,
+        semanticSearchTopK
+        // limit: 100
+      });
+    } finally {
+      setTimeout(() => {
+        isRefreshing = false;
+      }, 1);
+    }
   }
   const debouncedSearch = debouncer(refresh, 500);
 
@@ -458,7 +467,9 @@
             {searchStore}
           />
         {/if}
-        {#if data && data.length > 0}
+        {#if isRefreshing}
+          <LibraryLoadingPulse />
+        {:else if data && data.length > 0}
           <div
             class={cn("flex flex-col grow", {
               "px--5": variant === "v2"

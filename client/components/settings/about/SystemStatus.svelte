@@ -9,7 +9,6 @@
     const data = await fetch($appStore.appData?.urls?.systemStatusJson);
     if (!data || !data.ok) return;
     const json = await data.json();
-    console.log({ json });
     status = json.page?.status;
     url = json.page?.url;
   });

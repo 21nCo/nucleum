@@ -8,8 +8,8 @@
 
 <LeftNav>
   <slot name="top" slot="top">
-    <div class="text-b4 text-fgs3">
-      {"[Preview release]"}
+    <div class="text-b3 text-fgs3">
+      {"[Memotron Preview]"}
     </div>
   </slot>
   <slot name="header" slot="header">

@@ -326,12 +326,22 @@ export class SurrealPersistence implements IPersistence {
   }
 
   /**
-   * TODO - delegateSync
    * @param resourceId
    * @returns
+   *
+   * Notes:
+   * SDK method .delete() is not functioning.
+   * "surrealdb": "^1.0.6"
+   *  "@surrealdb/wasm": "^1.0.1"
+   *
    */
-  delete(resourceId: string): Promise<any> | undefined {
-    return this.instance?.delete(resourceId);
+  async delete(resourceId: IRecordId): Promise<any> {
+    await this.awaiter();
+    // const result = await this.instance?.delete(resourceId.toString());
+    const result = await this.instance?.query(`DELETE ${resourceId};`);
+    logger.log({ at: "SurrealPersistence.delete", resourceId, result });
+    this.isProcessingOperation = false;
+    return result;
   }
 
   /**

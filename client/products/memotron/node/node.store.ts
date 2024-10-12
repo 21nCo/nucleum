@@ -47,12 +47,7 @@ class NodeStore extends ResourceStore<INode> {
   searchStore: SearchStore;
   constructor() {
     super(Resource.node, {
-      dboDependencies: [
-        "fn::memotron::node::fetch",
-        "fn::memotron::timeline",
-        "fn::memotron::pdfAnnotator::getAllClips",
-        "fn::memotron::pdfAnnotator::saveClip"
-      ]
+      dboDependencies: ["fn::memotron::node::fetch", "fn::memotron::timeline"]
     });
     this.searchStore = new SearchStore(Resource.node);
   }

@@ -27,12 +27,12 @@
     }
   }
   onMount(async () => {
-    const token = await clientStorage.get(ClientStorageKey.STOKEN);
-    if (!token) return;
     const isLoginFromExtensionParam = $page.url.searchParams.get("ext");
     if (isLoginFromExtensionParam) {
       clientStorage.setForSession(ClientStorageKey.IS_EXTENSION_LOGIN, true);
     }
+    const token = await clientStorage.get(ClientStorageKey.STOKEN);
+    if (!token) return;
     if (isLoginFromExtensionParam && isLoginFromExtensionParam === "true") {
       const userInfo = await clientStorage.get(ClientStorageKey.USER_INFO);
       postTokenToExtension({ token, userInfo });
