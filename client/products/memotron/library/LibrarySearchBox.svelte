@@ -12,6 +12,7 @@
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { SearchType } from "$lib/client/types/data.type";
+  import { InputStyle } from "$lib/client/types/input.type";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   const dispatch = createEventDispatcher();
   export let selectedResource: Resource;
@@ -51,15 +52,16 @@
           on:select={refresh}
         />
       {/if}
+      {#if $userPreferences.LocalAI.semanticSearch}
+        <SwitchInput
+          label={{ label: "Semantic", orientation: Orientation.Horizontal }}
+          size={Size.sm}
+          style={InputStyle.PLAIN}
+          on:change={(e) => dispatch("semanticSearch", e.detail)}
+          checked={searchStore.searchType === SearchType.SEMANTIC}
+        />
+      {/if}
       {#if isFiltersVisible}
-        {#if $userPreferences.LocalAI.semanticSearch}
-          <SwitchInput
-            label={{ label: "Semantic", orientation: Orientation.Horizontal }}
-            size={Size.sm}
-            on:change={(e) => dispatch("semanticSearch", e.detail)}
-            checked={searchStore.searchType === SearchType.SEMANTIC}
-          />
-        {/if}
         <Button
           icon="funnel"
           style={ButtonStyle.OUTLINED}
@@ -73,9 +75,9 @@
           label="Sort"
         />
       {/if}
-      {#if variant === "v1" || variant === "v3"}
+      <!-- {#if variant === "v1" || variant === "v3"}
         <Toggle icon="ph:faders" bind:on={isFiltersVisible} />
-      {/if}
+      {/if} -->
     </div>
   </div>
   <Divider

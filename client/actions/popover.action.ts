@@ -41,11 +41,12 @@ export function tooltip(
     delay = 300
   } = params;
   const baseClassList =
-    "fixed z-100 px-3 bg-fgs2 text-bgs1 py-1 text-b3 shadow-md rounded-md pointer-events-none opacity-0 transition-opacity duration-200";
+    "fixed z-50 px-3 bg-fgs2 text-bgs1 py-1 text-b3 shadow-md rounded-md pointer-events-none opacity-0 transition-opacity duration-200 tooltip";
   function createTooltip(): void {
     tooltipElement = document.createElement("div");
     tooltipElement.textContent = text;
     tooltipElement.className = `${baseClassList} ${classList}`;
+    const baseBodyElement = document.getElementById("base");
     node.appendChild(tooltipElement);
   }
 
@@ -262,7 +263,8 @@ export function popover(node: HTMLElement, params: PopoverParams) {
 
   async function createPopover(): Promise<void> {
     popoverElement = document.createElement("div");
-    popoverElement.className = "fixed shadow-lg rounded-md overflow-hidden";
+    popoverElement.className =
+      "fixed shadow-lg rounded-md overflow-hidden popover";
     popoverElement.style.zIndex = "50";
     popoverElement.id = id;
     popoverElement.setAttribute("data-group-id", groupId);

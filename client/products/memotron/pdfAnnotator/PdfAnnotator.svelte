@@ -16,10 +16,10 @@
     getClientRects,
     getPagesFromRange,
     isHTMLElement,
-    surrealPDF,
+    PdfHandler,
     viewportToScaled
   } from "$lib/client/products/memotron/pdfAnnotator/pdfAnnotator.utils";
-  import { debouncer, generateUID } from "$lib/client/utils/utils";
+  import { debouncer } from "$lib/client/utils/utils";
   import { onMount } from "svelte";
   import TextHiglighter from "./TextHiglighter.svelte";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
@@ -27,11 +27,9 @@
   import Comment from "./comment/Comment.svelte";
   import InlineEditToolBar from "./toolbar/InlineEditToolBar.svelte";
   import CommentEditor from "./comment/CommentEditor.svelte";
-  import TracesPanel from "./TracesPanel.svelte";
   import ToolBar from "./toolbar/ToolBar.svelte";
   import { FindState } from "pdfjs-dist/web/pdf_viewer.mjs";
   import { Size } from "$lib/client/types/size.enum";
-  import { captureStore } from "../capture/capture.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
@@ -39,8 +37,9 @@
   import { highlightStore } from "../common/highlighters/highlight.store";
 
   export let url: string;
-  export let isReplaceable: boolean = false;
+  export let node: any;
   export let annots: any[];
+  const pdfPersistence = new PdfHandler(node.id);
   /**
    * varibales for drawing shapes adding shapes or click annotations
    */
@@ -218,19 +217,9 @@
       annotation.comment = editorValues.comment;
       if (event.detail.DueDate) annotation.DueDate = editorValues.DueDate;
     }
-    if (isReplaceable) annotation.id = "annot" + generateUID();
     annotation.color = selectedColor;
     annotation.date = new Date().toLocaleDateString("en-CA");
-    if (isReplaceable && $captureStore.fileDetails)
-      $captureStore.fileDetails.pdfAnnotations = [
-        annotation,
-        ...($captureStore?.fileDetails?.pdfAnnotations || [])
-      ];
-    else
-      console.log(
-        "pdf clip save response",
-        await surrealPDF.saveClip(url, annotation)
-      );
+    await pdfPersistence.saveClip(annotation);
     renderHighlightLayers();
     if (removeAllRanges) removeAllRanges();
     annotation = {};
@@ -278,9 +267,7 @@
     if (!textLayer) {
       return "LayerCannotBeCreated";
     }
-    if (isReplaceable && $captureStore.fileDetails)
-      annots = $captureStore.fileDetails.pdfAnnotations!;
-    else annots = await surrealPDF.fetchAllClips(url);
+    annots = await pdfPersistence.fetchAllClips(url);
 
     mainRects = annots?.filter(
       (highlight) =>
@@ -433,12 +420,7 @@
     let deleteAnnot;
     if (id) deleteAnnot = id;
     else deleteAnnot = annotClickedId;
-    if (isReplaceable && $captureStore.fileDetails)
-      $captureStore.fileDetails.pdfAnnotations =
-        $captureStore?.fileDetails?.pdfAnnotations?.filter(
-          (highlight) => highlight.id !== deleteAnnot
-        );
-    else await surrealPDF.deleteClip(deleteAnnot);
+    await pdfPersistence.deleteClip(deleteAnnot);
     annotClickedComment = "";
     renderHighlightLayers();
     isInlineEditBarVisible = false;
@@ -449,15 +431,7 @@
    * @param highlighter
    */
   async function handleColorChange(highlighter: IHighlighter) {
-    if (isReplaceable && $captureStore.fileDetails)
-      $captureStore.fileDetails.pdfAnnotations =
-        $captureStore?.fileDetails?.pdfAnnotations?.map((highlight) => {
-          if (highlight.id === annotClickedId) {
-            highlight.color = highlighter.id;
-          }
-          return highlight;
-        });
-    else await surrealPDF.updateClip(annotClickedId, { color: highlighter.id });
+    await pdfPersistence.updateClip(annotClickedId, { color: highlighter.id });
     selectedColor = highlighter.id;
     renderHighlightLayers();
     isInlineEditBarVisible = false;
@@ -468,16 +442,7 @@
    * @param comment
    */
   async function handleUpdateComment(comment: string) {
-    if (isReplaceable && $captureStore.fileDetails)
-      $captureStore.fileDetails.pdfAnnotations =
-        $captureStore?.fileDetails?.pdfAnnotations?.map((highlight) => {
-          if (highlight.id === annotClickedId) {
-            highlight.comment = comment;
-            // console.log("comment changed", highlight.comment);
-          }
-          return highlight;
-        });
-    else await surrealPDF.updateClip(annotClickedId, { comment: comment });
+    await pdfPersistence.updateClip(annotClickedId, { comment: comment });
     annotClickedComment = "";
     renderHighlightLayers();
   }
@@ -821,9 +786,7 @@
    * mousedown for on spot annotations(Task and Comment)
    */
   onMount(async () => {
-    if (isReplaceable && $captureStore?.fileDetails?.pdfAnnotations)
-      annots = $captureStore?.fileDetails?.pdfAnnotations;
-    else annots = await surrealPDF.fetchAllClips(url);
+    annots = await pdfPersistence.fetchAllClips();
     viewerContainerElement = document.getElementById("viewerContainer")!;
     document.addEventListener("selectionchange", debouncedSelectionHandler);
     document.addEventListener("keydown", handleKeyDown);
@@ -845,7 +808,7 @@
   });
 </script>
 
-<div class="relative h-full w-full">
+<div class="relative flex flex-col h-full w-full">
   <div
     class="flex items-center justify-between w-full h-14 px-4 gap-8 border-b border-b-brs2"
   >
@@ -915,60 +878,62 @@
     > -->
     </div>
   </div>
-  <PdfViewer bind:pdfViewer bind:pdfDocument bind:scale {url}
-    >{#if shapeVisible}
-      <div
-        style="position:absolute;top: {clickBoundingRect?.top}px; left: {clickBoundingRect?.left}px; width: {clickBoundingRect?.width}px; height: {clickBoundingRect?.height}px; border: 2px solid red;z-index:1000;pointer-events:none;"
-      ></div>{/if}
-    {#if inlineToolBarVisible}
-      <InlineToolBar
-        style={popupStyle}
-        bind:selectedColor
-        on:annotate={(event) => {
-          if (event.detail == AnnotationType.COMMENT)
+  <div class="w-full flex-1">
+    <PdfViewer bind:pdfViewer bind:pdfDocument bind:scale {url}
+      >{#if shapeVisible}
+        <div
+          style="position:absolute;top: {clickBoundingRect?.top}px; left: {clickBoundingRect?.left}px; width: {clickBoundingRect?.width}px; height: {clickBoundingRect?.height}px; border: 2px solid red;z-index:1000;pointer-events:none;"
+        ></div>{/if}
+      {#if inlineToolBarVisible}
+        <InlineToolBar
+          style={popupStyle}
+          bind:selectedColor
+          on:annotate={(event) => {
+            if (event.detail == AnnotationType.COMMENT)
+              commentEditorVisible = true;
+            else annotate(event);
+            inlineToolBarVisible = false;
+          }}
+        />
+      {/if}
+      {#if commentEditorVisible}
+        <CommentEditor
+          bind:annotationMode
+          style={popupStyle}
+          on:save={(event) => {
+            commentEditorVisible = false;
+            let detail = event.detail.dueDate
+              ? AnnotationType.TASK
+              : AnnotationType.COMMENT;
+            annotate({ detail }, event.detail);
+          }}
+          on:update={(event) => {
+            commentEditorVisible = false;
+            handleUpdateComment(event.detail);
+          }}
+          on:cancel={() => {
+            commentEditorVisible = false;
+          }}
+          comment={annotClickedComment}
+          editingItemType={annotCickedType}
+        />
+      {/if}
+      {#if isInlineEditBarVisible}
+        <InlineEditToolBar
+          style={popupStyle}
+          bind:selectedColor={annotClickedColor}
+          on:delete={handleAnnotDelete}
+          on:color={(event) => handleColorChange(event.detail)}
+          on:edit={() => {
             commentEditorVisible = true;
-          else annotate(event);
-          inlineToolBarVisible = false;
-        }}
-      />
-    {/if}
-    {#if commentEditorVisible}
-      <CommentEditor
-        bind:annotationMode
-        style={popupStyle}
-        on:save={(event) => {
-          commentEditorVisible = false;
-          let detail = event.detail.dueDate
-            ? AnnotationType.TASK
-            : AnnotationType.COMMENT;
-          annotate({ detail }, event.detail);
-        }}
-        on:update={(event) => {
-          commentEditorVisible = false;
-          handleUpdateComment(event.detail);
-        }}
-        on:cancel={() => {
-          commentEditorVisible = false;
-        }}
-        comment={annotClickedComment}
-        editingItemType={annotCickedType}
-      />
-    {/if}
-    {#if isInlineEditBarVisible}
-      <InlineEditToolBar
-        style={popupStyle}
-        bind:selectedColor={annotClickedColor}
-        on:delete={handleAnnotDelete}
-        on:color={(event) => handleColorChange(event.detail)}
-        on:edit={() => {
-          commentEditorVisible = true;
-          isInlineEditBarVisible = false;
-        }}
-        editable={annotCickedType == AnnotationType.COMMENT ||
-          annotCickedType == AnnotationType.TASK}
-      />
-    {/if}
-  </PdfViewer>
+            isInlineEditBarVisible = false;
+          }}
+          editable={annotCickedType == AnnotationType.COMMENT ||
+            annotCickedType == AnnotationType.TASK}
+        />
+      {/if}
+    </PdfViewer>
+  </div>
   <!-- <TracesPanel
     {annots}
     {handleAnnotDelete}

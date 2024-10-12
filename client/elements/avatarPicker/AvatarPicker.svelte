@@ -31,6 +31,11 @@
 
   export let mode: AvatarType.EMOJI | AvatarType.ICON = AvatarType.ICON;
   export let context: AvatarPickerContext = AvatarPickerContext.DEFAULT;
+  export let avatarClickCallback: (
+    avatar: IAvatar | CustomUploadedAvatar
+  ) => void;
+  export let deleteCallback: () => void;
+  export let closeCallback: () => void;
   let activeCategory: string = "";
   type StoreAvatars = {
     "Frequently Used": IAvatar[][];
@@ -173,16 +178,16 @@
    * @summary To pick a random emoji or icon.
    */
   function ShufflePick() {
-    eventDispatcher(
-      "avatarClicked",
+    const avatar =
       mode == AvatarType.ICON
         ? $userPreferences.avatarPicker.usedIcons[
             Math.floor(
               Math.random() * $userPreferences.avatarPicker.usedIcons.length
             )
           ][0]
-        : shuffleEmojis[Math.floor(Math.random() * shuffleEmojis.length)][0]
-    );
+        : shuffleEmojis[Math.floor(Math.random() * shuffleEmojis.length)][0];
+    eventDispatcher("avatarClicked", avatar);
+    avatarClickCallback(avatar);
     eventDispatcher("close");
   }
 
@@ -322,6 +327,7 @@
       );
     }
     eventDispatcher("avatarClicked", tempEmote);
+    avatarClickCallback(tempEmote);
   }
   /**
    * When an emoji or icon is clicked this function is invoked. if the avatar is an emoji, checks, it's a normal emoji or emoji with skins and invokes the addToFrequntlyUsed method with corresponding skin.If avatar is an icon,the color and fill is handled in addToUsedList method thus this function just invokes with the icon clicked.Finally Closes the avatar picker.
@@ -336,6 +342,7 @@
     if (emote.length == 1) addToUsedList(emote[0]);
     else addToUsedList(emote[skinIndex]);
     eventDispatcher("close");
+    closeCallback();
   }
   /**
    * Invoked when the custom upload button is clicked. It triggers the file input element to open the file picker.
@@ -415,7 +422,7 @@
 </script>
 
 <div
-  class="h-[30.5rem] {context === AvatarPickerContext.DEFAULT
+  class="bg-bgs1 h-[30.5rem] {context === AvatarPickerContext.DEFAULT
     ? 'w-[35rem]'
     : 'w-[24rem]'}"
 >
@@ -453,7 +460,7 @@
         tooltip="Delete"
         on:click={() => {
           eventDispatcher("delete");
-          eventDispatcher("close");
+          deleteCallback();
         }}
       />
     </div>

@@ -254,6 +254,7 @@
 </script>
 
 <div
+  id="base"
   class={cn(
     "text-base text-fgs1 bg-bgs1 relative w-screen h-screen flex",
     $appearance.theme,

@@ -220,6 +220,9 @@ class Flux {
           }, 100);
         }
       }
+      if (!this.isExtensionEnvironment) {
+        dispatchCustomEvent(GlobalEvent.MUTATION, { resource });
+      }
       const correspondingStore = this.stores.find((x) => x.id === resource);
       if (correspondingStore?.isInMemory) {
         await this.loadInMemoryResourceStore(resource);

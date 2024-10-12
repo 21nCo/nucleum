@@ -385,7 +385,7 @@ export function resolveCollectionContextMenu(
           resourceActions.star(),
           resourceActions.edit(accessPoint),
           resourceActions.openAsTab(),
-          resourceActions.select(accessPoint),
+          // resourceActions.select(accessPoint),
           resourceActions.copyLink()
         ]
       },

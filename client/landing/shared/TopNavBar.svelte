@@ -7,7 +7,7 @@
   import { onMount } from "svelte";
   import type { ITopNavBar } from "./Landing.types";
   import Button from "./elements/Button.svelte";
-  import { isProductsPage, isProductsPanelOpen } from "./store/shared.store";
+  import { isProductPage, isProductsPanelOpen } from "./store/shared.store";
   import DayAndNightToggle from "./DayAndNightToggle.svelte";
   import ButtonAsLink from "./ButtonAsLink.svelte";
 
@@ -35,23 +35,29 @@
 </script>
 
 <div
-  class="flex w-full items-center justify-center sticky top-0 z-50 pb-4 box-content bg-bgs1 tp:pt-[11px]"
+  class={cn(
+    "flex w-full items-center justify-center sticky top-0 z-50 box-content bg-bgs1 mo:pt-3 mo:pb-2",
+    {
+      "pt-7 pb-4": $isProductPage,
+      "py-4": !$isProductPage
+    }
+  )}
 >
   <div class="w-[1440px] mo:w-full">
-    <div class="w-full flex pt-7 pr-5 pl-5 mo:px-5 h-16 mo:h-20">
+    <div class="w-full flex items-center px-5 h-12">
       <div class="flex flex-col justify-end">
-        <div class="flex items-end gap-2">
+        <div class="flex items-center gap-2">
           {#if topNavBarValues.icon}
             {@const icon = topNavBarValues.icon}
             {@const size = $view.isPortrait
-              ? $isProductsPage
+              ? $isProductPage
                 ? Size.lg
                 : Size.xxl
-              : $isProductsPage
+              : $isProductPage
                 ? Size.xxl
                 : "5xl"}
             {@const className =
-              "mr-2 border " + $isProductsPage
+              "mr-2 border " + $isProductPage
                 ? ""
                 : $view.isPortrait
                   ? "relative top-5"
@@ -59,27 +65,27 @@
             <SvgIcon {icon} {size} class={className} />
           {/if}
           <div class="flex flex-col">
-            {#if $view.isPortrait}
+            <!-- {#if $view.isPortrait}
               <button
                 class={cn(
                   "text-[11px] font-medium leading-none text-fgs3 w-[54px]",
-                  $isProductsPage && "visible",
-                  !$isProductsPage && "invisible"
+                  $isProductPage && "visible",
+                  !$isProductPage && "invisible"
                 )}
                 on:click={() =>
                   (window.location.href = "https://blanklabs.org")}
               >
-                Blank.coop
+                21n
                 <div class="h-px bg-dividerHorizontal mt-[2px]" />
               </button>
-            {/if}
+            {/if} -->
             {#if topNavBarValues.title}
               {@const title = topNavBarValues.title}
               <p
                 class={cn(
                   "font-extrabold leading-10",
-                  $isProductsPage && "text-h2 mo:text-h4 mt-2 mo:leading-6",
-                  !$isProductsPage && "text-h1 mo:text-h3 mo:leading-10"
+                  $isProductPage && "text-h2 mo:text-h4 mo:leading-6",
+                  !$isProductPage && "text-h1 mo:text-h3 mo:leading-10"
                 )}
               >
                 {title}
@@ -88,20 +94,20 @@
           </div>
         </div>
       </div>
-      <div class="ml-auto inline-flex dp:gap-8 tp:gap-4 mo:gap-6">
-        {#if !$view.isPortrait}
+      <div class="ml-auto flex items-center dp:gap-8 tp:gap-4 mo:gap-6">
+        {#if !$view.isPortrait && $isProductPage}
           <DayAndNightToggle />
         {/if}
         <SvgIcon
           {icon}
           size={Size.lg}
-          class="hidden mo:block mt-5"
+          class="hidden mo:block"
           on:click={onHam}
         />
         <div
           {id}
           class={cn(
-            "flex dp:gap-8 tp:gap-2",
+            "flex items-center tp:gap-4 lp:gap-6 dp:gap-8",
             !isExpandHamMenu && "mo:hidden",
             isExpandHamMenu &&
               "animate-slide-down mo:flex mo:flex-col mo:fixed mo:w-screen mo:h-full bg-bgs1 left-0 top-20 mo:items-center mo:py-14 mo:gap-7 flex-shrink mo:flex-grow"
@@ -109,15 +115,12 @@
         >
           {#each topNavBarValues.items as item}
             <a
-              class={cn(
-                "block text-fgs1 text-[20px] font-medium leading-[28px] hover:text-aps1",
-                $isProductsPage && "text-[18px]"
-              )}
+              class="block text-fgs1 text-[18px] leading-[28px] hover:text-aps1"
               href={item.href}>{item.label}</a
             >
           {/each}
           {#if topNavBarValues.cta}
-            {@const className = "-mt-3 mo:text-[18px] tp:text-[18px] w-fit"}
+            {@const className = "mo:text-[18px] tp:text-[18px] w-fit"}
             <Button
               label={topNavBarValues.cta.label}
               isShort={true}
@@ -127,7 +130,7 @@
           {/if}
           <ButtonAsLink
             class="hidden mo:block"
-            label="Explore more Blank.coop products"
+            label="Explore more 21n products"
             on:click={() => ($isProductsPanelOpen = true)}
           />
           {#if $view.isPortrait}

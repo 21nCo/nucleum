@@ -32,6 +32,7 @@
   import { wordCounter } from "$lib/client/actions/counter.action";
   import { generateResourceId } from "$lib/client/components/flux/flux.utils";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { Size } from "$lib/client/types/size.enum";
 
   function handleEvent(event: string, data: any) {
     logger.log({ at: "node context", event, data });
@@ -218,7 +219,9 @@
           on:ready={refreshCounts}
           on:action={onBlockAction}
         />
-        <div class="flex w-full justify-center items-center mt--20 mt-4">
+        <div
+          class="flex w-full justify-center items-center mt-8 exclude-from-count"
+        >
           <div class="flex flex-col gap-2 ml-12 w-full mo:w--9/10 w--4/5">
             <Divider colorStrength={ColorStrength.Strong} />
             <div class="flex w-full justify-between text-b3 text-fgs3">
@@ -235,9 +238,7 @@
             </div>
           </div>
         </div>
-        <ScrollViewBottomSpacer />
-        <ScrollViewBottomSpacer />
-        <ScrollViewBottomSpacer />
+        <ScrollViewBottomSpacer size={Size.xl} />
       {:else if $node?.contentType === NodeType.WEB_PAGE && $node.children && $node.children.length > 0}
         <div class="flex flex-col items-start gap-4">
           <Text content="Clips" style={TextStyle.SECTION_HEADING} />

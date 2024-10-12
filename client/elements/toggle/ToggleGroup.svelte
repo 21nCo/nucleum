@@ -10,9 +10,13 @@
   export let items: IToggleItem[] = [];
   export let size: Size.sm | Size.md | Size.lg = Size.md;
   export let parentBgIndex: number = 1;
-  export let selected: string = "";
+  export let selected: string | undefined = undefined;
   let classList: string = "";
   export { classList as class };
+
+  export function reset() {
+    selected = undefined;
+  }
 </script>
 
 <div class={cn("flex items-center justify-center w-full h-full", classList)}>
@@ -26,6 +30,7 @@
       on:change={(e) => {
         if (e.detail === false) {
           dispatch("none", item.value);
+          selected = undefined;
           return;
         }
         selected = item.value;

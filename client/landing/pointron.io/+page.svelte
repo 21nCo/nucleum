@@ -1,4 +1,5 @@
 <script lang="ts">
+  import HeroVideo from "../shared/elements/HeroVideo.svelte";
   import HeroSection from "../shared/HeroSection.svelte";
   import type { IHeroInputs, ITileItem } from "../shared/Landing.types";
   import IrregularTileItemsSection from "../shared/tile/IrregularTileItemsSection.svelte";
@@ -59,13 +60,14 @@
   ];
 </script>
 
-<HeroSection {heroInputs} class="min-h-[70vh]" />
+<HeroSection {heroInputs} />
+<HeroVideo />
 <IrregularTileItemsSection
   items={features}
   title="Navigating your productivity"
 />
-<span
+<!-- <span
   class="flex text-h3 text-aps1 w-full h-full bg-bgs1 justify-center items-center"
 >
   Pointron
-</span>
+</span> -->

@@ -5,6 +5,7 @@
   import NodularMarkdown from "$lib/client/components/markdown/NodularMarkdown.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
   export let isEmptyState: boolean = true;
+  export let isSaveInProgress: boolean = false;
   import { setContext } from "svelte";
 
   function handleEvent(message: any) {
@@ -34,16 +35,12 @@
   setContext("content", contentContext);
 
   let isShowTOC: boolean = false;
-
-  function onFileChanges(event: any) {
-    captureStore.setFile(event.detail);
-  }
 </script>
 
 <div class="flex w-full h-full max-h-full justify-between">
   {#if $captureStore.captureType === CaptureType.AUDIO}
     <div class="w-full h-full flex items-center justify-center">
-      <AudioCapture on:change={onFileChanges} />
+      <AudioCapture bind:isSaveInProgress />
     </div>
   {:else if $captureStore.captureType === CaptureType.CAMERA}
     <div class="w-full h-full flex items-center justify-center text-fgs4">

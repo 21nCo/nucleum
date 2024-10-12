@@ -257,7 +257,6 @@ export class SurrealPersistence implements IPersistence {
    * @returns
    */
   async upsertRecordsFallback(resource: string, records: any[]) {
-    let result;
     try {
       for (const record of records) {
         let recordId;
@@ -265,7 +264,7 @@ export class SurrealPersistence implements IPersistence {
           this.isProcessingOperation = true;
           const { query, id } = resolveUpsertQuery(resource, record);
           recordId = id;
-          result = await this.instance?.query(query);
+          await this.instance?.query(query);
         } catch (e) {
           logger.log({
             at: `SurrealPersistence.upsertRecordsFallback - failed upsert for record`,
@@ -275,16 +274,16 @@ export class SurrealPersistence implements IPersistence {
           });
           if (e instanceof ResponseError) {
             this.isProcessingOperation = false;
-            result = await this.merge({ ...record, id: recordId });
+            await this.merge({ ...record, id: recordId });
           }
         }
       }
+      return [records];
     } catch (e) {
       logger.error({ at: "SurrealPersistence.upsertRecordsFallback", e });
     } finally {
       this.isProcessingOperation = false;
     }
-    return result;
   }
 
   async bulkInsert(
@@ -328,12 +327,22 @@ export class SurrealPersistence implements IPersistence {
   }
 
   /**
-   * TODO - delegateSync
    * @param resourceId
    * @returns
+   *
+   * Notes:
+   * SDK method .delete() is not functioning.
+   * "surrealdb": "^1.0.6"
+   *  "@surrealdb/wasm": "^1.0.1"
+   *
    */
-  delete(resourceId: string): Promise<any> | undefined {
-    return this.instance?.delete(resourceId);
+  async delete(resourceId: IRecordId): Promise<any> {
+    await this.awaiter();
+    // const result = await this.instance?.delete(resourceId.toString());
+    const result = await this.instance?.query(`DELETE ${resourceId};`);
+    logger.log({ at: "SurrealPersistence.delete", resourceId, result });
+    this.isProcessingOperation = false;
+    return result;
   }
 
   /**

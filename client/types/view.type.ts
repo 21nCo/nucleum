@@ -40,7 +40,11 @@ export enum Display {
    */
   TP = "tp",
   /**
-   * Tablet in landscape, desktop and laptop
+   * Tablet in landscape, laptops
+   */
+  LP = "lp",
+  /**
+   * Desktop and larger laptops
    */
   DP = "dp",
   /**

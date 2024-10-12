@@ -70,10 +70,9 @@
       })}
     >
       {#if isInEditMode}
-        <!-- TODO - setting isInEditMode to false as AvatarPicker is causing freezing issue -->
         <Avatar
           bind:avatar={$collection.avatar}
-          isInEditMode={false}
+          isInEditMode={true}
           on:change={onAvatarChange}
           size={Size.lg}
         />

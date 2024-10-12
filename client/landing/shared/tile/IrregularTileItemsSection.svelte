@@ -32,9 +32,9 @@
       {/each}
     </div>
   </div>
-  <Button
+  <!-- <Button
     label="More Products"
     icon="long-arrow-right"
     on:click={() => ($isProductsPanelOpen = true)}
-  />
+  /> -->
 </Section>

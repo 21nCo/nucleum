@@ -4,7 +4,10 @@ class Logger {
   level: LogType;
   constructor() {
     try {
-      if (window?.location?.search?.includes("log=")) {
+      if (
+        typeof window !== "undefined" &&
+        window?.location?.search?.includes("log=")
+      ) {
         const logQueryParam = window?.location?.search
           .split("?")[1]
           ?.split("&")

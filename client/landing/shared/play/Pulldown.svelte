@@ -1,11 +1,7 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
-
-  let className: string = "";
-  export { className as class };
 </script>
 
-<div class={cn("w-[26px] h-[48px] border border-fgs1 rounded-2xl", className)}>
+<div class="w-[26px] h-[48px] border border-fgs1 rounded-2xl relative">
   <div
     class="moveMe absolute top-[9px] left-[9px] w-[8px] h-[8px] bg-fgs1 rounded-full"
   ></div>

@@ -1,6 +1,4 @@
 import { globalDbo } from "$lib/shared/dbo/global.dbo";
-import { memotronDboDefinitions } from "$lib/shared/dbo/memotron.dbo";
-import { memotronTables } from "$lib/shared/dbo/memotron.tables";
 import { pointronDboDefinitions } from "$lib/shared/dbo/pointron.dbo";
 import { pointronTables } from "$lib/shared/dbo/pointron.tables";
 import { extractProduct } from "$lib/shared/utils/utils";
@@ -128,11 +126,10 @@ export async function updateDb(body: any, agent: Agent) {
 export async function updateDbV2(body: any, agent: Agent) {
   const dependencies = body.dbo;
   if (!dependencies) return { error: "dbo is required" };
-  const tables = [...pointronTables, ...memotronTables];
+  const tables = [...pointronTables];
   const functions = {
     ...globalDbo,
-    ...pointronDboDefinitions,
-    ...memotronDboDefinitions
+    ...pointronDboDefinitions
   };
   let updates: any[] = [];
   dependencies.forEach((dependency) => {
@@ -140,11 +137,9 @@ export async function updateDbV2(body: any, agent: Agent) {
     if (!definition) return;
     updates.push(...definition);
   });
-  console.log("dbo updates", { tables, updates });
   let updateQuery = tables.join("; ") + ";" + updates.join("; ");
   updateQuery = updateQuery.replace(/\n/g, "");
   updateQuery = updateQuery.replace(/\t/g, "");
-  console.log("updateQuery", updateQuery);
   return performAgentProxyQuery(updateQuery, agent);
 }
 
@@ -171,13 +166,11 @@ export async function initializeDatabase(
   id: string,
   params: { scope: CONTEXT; host: string; region?: string }
 ) {
-  console.log("initializing database ", { id });
   const ns =
     params.scope === CONTEXT.USER
       ? process.env.USER_NS ?? "USER"
       : process.env.SPACE_NS ?? "SPACE";
   let query = `USE NAMESPACE ${ns}; DEFINE DATABASE ${id}; USE DATABASE ${id}; DEFINE TOKEN ${process.env.TOKEN_NAME} ON DB TYPE RS384 VALUE "${process.env.TOKEN_PUBLIC_KEY}";`;
-  console.log("db init query", { query });
   const dbCreationResponse = await performQueryOnRegionalDb(query, {
     region: params.region,
     db: id,

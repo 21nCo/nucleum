@@ -49,6 +49,7 @@
     type IResourceSelectOrderBy
   } from "$lib/client/types/data.type";
   import { page } from "$app/stores";
+  import LibraryLoadingPulse from "./LibraryLoadingPulse.svelte";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
 
   let searchQuery: string = "";
@@ -63,6 +64,7 @@
   type SubType = "all" | "recents" | NodeType | CollectionType;
   let selectedSubType: SubType = "all";
   export let variant: "v1" | "v2" | "v3" = "v3";
+  let isRefreshing: boolean = false;
   let availableResources: Resource[] = [
     Resource.node,
     Resource.collection
@@ -97,12 +99,12 @@
       value: Resource.combination,
       icon: "ph:bounding-box-light"
     },
-    {
-      ...commonResourceProps,
-      label: "Files",
-      value: Resource.file,
-      icon: "ph:file"
-    },
+    // {
+    //   ...commonResourceProps,
+    //   label: "Files",
+    //   value: Resource.file,
+    //   icon: "ph:file"
+    // },
     {
       ...commonResourceProps,
       label: "Tasks",
@@ -135,42 +137,49 @@
   });
 
   async function refresh() {
-    if (
-      !availableResources.includes(selectedResource) &&
-      selectedResource != Resource.everything
-    ) {
-      data = [];
-      return;
-    }
-    let orderBy: IResourceSelectOrderBy | undefined;
-    let semanticSearchTopK: number | undefined;
-    if (searchStore.searchType == SearchType.SEMANTIC) {
-      orderBy = {
-        dist: "desc",
-        createdAt: "desc"
-      };
-    }
-
-    let filters: any = {
-      isStarred: isStarFilterSelected ? true : undefined,
-      isArchived: isArchivedFilterSelected ? true : undefined
-    };
-    if (selectedSubType !== "all" && selectedSubType !== "recents") {
-      if (selectedResource === Resource.node) {
-        filters = { ...filters, contentType: selectedSubType };
-      } else if (selectedResource === Resource.collection) {
-        filters = { ...filters, type: selectedSubType };
+    isRefreshing = true;
+    try {
+      if (
+        !availableResources.includes(selectedResource) &&
+        selectedResource != Resource.everything
+      ) {
+        data = [];
+        return;
       }
-    }
+      let orderBy: IResourceSelectOrderBy | undefined;
+      let semanticSearchTopK: number | undefined;
+      if (searchStore.searchType == SearchType.SEMANTIC) {
+        orderBy = {
+          dist: "desc",
+          createdAt: "desc"
+        };
+      }
 
-    data = await searchStore.select({
-      resource: selectedResource,
-      searchQuery,
-      filters,
-      orderBy,
-      semanticSearchTopK
-      // limit: 100
-    });
+      let filters: any = {
+        isStarred: isStarFilterSelected ? true : undefined,
+        isArchived: isArchivedFilterSelected ? true : undefined
+      };
+      if (selectedSubType !== "all" && selectedSubType !== "recents") {
+        if (selectedResource === Resource.node) {
+          filters = { ...filters, contentType: selectedSubType };
+        } else if (selectedResource === Resource.collection) {
+          filters = { ...filters, type: selectedSubType };
+        }
+      }
+
+      data = await searchStore.select({
+        resource: selectedResource,
+        searchQuery,
+        filters,
+        orderBy,
+        semanticSearchTopK
+        // limit: 100
+      });
+    } finally {
+      setTimeout(() => {
+        isRefreshing = false;
+      }, 1);
+    }
   }
   const debouncedSearch = debouncer(refresh, 500);
 
@@ -409,7 +418,7 @@
     >
       {#if (variant === "v2" || variant === "v3") && availableResources.includes(selectedResource)}
         <div class="flex flex-col w-60 border-r border-r-brs2 mb-1">
-          <span class="w-full flex items-start flex-1 pr-2">
+          <span class="w-full flex items-start flex-1 pr-2 overflow-y-auto">
             <VerticalSwitcher
               labelOrientation={Orientation.Horizontal}
               style={VerticalSwitcherStyle.BG}
@@ -458,9 +467,12 @@
             bind:selectedResource
             bind:searchQuery
             on:keydown={refresh}
+            {searchStore}
           />
         {/if}
-        {#if data && data.length > 0}
+        {#if isRefreshing}
+          <LibraryLoadingPulse />
+        {:else if data && data.length > 0}
           <div
             class={cn("flex flex-col grow", {
               "px--5": variant === "v2"

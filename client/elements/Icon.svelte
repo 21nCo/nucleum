@@ -129,7 +129,8 @@
   import PhArrowElbow from "../icons/PhArrowElbow.svelte";
 
   export let icon: string | undefined = undefined;
-  export let size: Size.xs | Size.sm | Size.md | Size.lg | Size.xl = Size.md;
+  export let size: Size.xs | Size.sm | Size.md | Size.lg | Size.xl | Size.xxl =
+    Size.md;
   /**
    * When an icon context switches between normal and accent bg as its parent.
    * If undefined, the icon will not change its appearance based on the context.
@@ -273,8 +274,19 @@
   {#if icon?.includes(":") && renderedIconifyIcon && !isExtensionEnvironment()}
     {#if !dev_useIconifyTailwind}
       <!-- TODO - fix import issue on plasmo - disabling for now -->
+      {@const sizePx =
+        size === Size.xxl
+          ? "3rem"
+          : size === Size.xl
+            ? "1.75rem"
+            : size === Size.lg
+              ? "1.5rem"
+              : size === Size.md
+                ? "1.25rem"
+                : "1rem"}
       <div
         class={cn(renderedIconifyIcon, {
+          "w-14 h-14": size === Size.xxl,
           "w-8 h-8": size === Size.xl,
           "w-6 h-6": size === Size.lg,
           "w-[1.25rem] h-[1.25rem]": size === Size.md,
@@ -284,16 +296,8 @@
       >
         <IconifyIcon
           icon={renderedIconifyIcon}
-          width={size === Size.lg
-            ? "1.5rem"
-            : size === Size.md
-              ? "1.25rem"
-              : "1rem"}
-          height={size === Size.lg
-            ? "1.5rem"
-            : size === Size.md
-              ? "1.25rem"
-              : "1rem"}
+          width={sizePx}
+          height={sizePx}
           class={_classList + " iconifysvg "}
         />
       </div>

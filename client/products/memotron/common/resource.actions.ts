@@ -116,7 +116,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
               : ResourceAccessMode.POP
           );
         }
-        isInEditMode.toggle(true);
+        this.store.toggleEditMode(this.resource.id, true);
       }
     };
   }

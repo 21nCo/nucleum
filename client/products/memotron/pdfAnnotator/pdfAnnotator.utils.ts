@@ -1,5 +1,4 @@
 import type { IToggleItem } from "$lib/client/elements/toggle/toggle.type";
-import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import { NodeType } from "$lib/client/products/memotron/node/node.type";
 import {
   AnnotationType,
@@ -10,73 +9,64 @@ import {
   type Scaled,
   type WIDTH_HEIGHT
 } from "$lib/client/products/memotron/pdfAnnotator/pdfAnnotator.type";
-import { interceptSurrealResponse } from "$lib/client/utils/utils";
 import { PDFDocument, rgb } from "pdf-lib";
+import { nodeStore } from "../node/node.store";
+import type { IRecordId } from "$lib/client/types/data.type";
+import { logger } from "$lib/client/components/debug/logger.client";
+import { flux } from "$lib/client/components/flux/flux";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 
-class PdfSurrealHandler {
-  surrealDb = new SurrealDatabase();
-  async saveClip(url: string, content: any) {
-    content = { body: { ...content } };
-    content.contentType = NodeType.PDF_CLIP;
-    let response = await this.surrealDb.query(
-      "return fn::memotron::pdfAnnotator::saveClip($url,$content);",
-      {
-        url,
-        content
-      }
-    );
-    return interceptSurrealResponse(response);
+export class PdfHandler {
+  id: IRecordId;
+  constructor(id: IRecordId) {
+    this.id = id;
   }
-  async saveAllClips(clips: any[]) {
-    try {
-      const query = "INSERT INTO node $clips";
-      const params = { clips };
-      const response = await this.surrealDb.query(query, params);
-      return response;
-    } catch (e) {
-      console.error("Error saving clips:", e);
-    }
+
+  async saveClip(content: any) {
+    let node = {
+      body: { ...content },
+      contentType: NodeType.PDF_CLIP,
+      parent: this.id
+    };
+    logger.log({ at: "PdfHandler.saveClip", node });
+    let response = await nodeStore.create(node);
+    return response;
   }
-  async fetchAllClips(url: string) {
-    let response = await this.surrealDb.query(
-      "return fn::memotron::pdfAnnotator::getAllClips($url);",
-      {
-        url
+
+  /**
+   * TODO - this is being called too many times when scrolling the PDF
+   * @returns
+   */
+  async fetchAllClips() {
+    let response = await flux.selectMany(Resource.node, {
+      filters: {
+        parent: this.id.toString()
       }
-    );
-    let rawAnnots = interceptSurrealResponse(response);
-    let annots = rawAnnots[0]?.clips?.map((annot: any) => {
-      return { ...annot.body, id: "annot" + annot.id.split(":")[1] };
+    });
+    logger.log({ at: "PdfHandler.fetchAllClips", response });
+    if (!response || !response.length) return [];
+    let annots = response.map((annot: any) => {
+      return { ...annot.body, id: "annot" + annot.id.id };
     });
     return annots;
   }
 
   async deleteClip(id: string) {
     let nodeId = "node:" + id.split("annot")[1];
-    let response = await this.surrealDb.query("return DELETE $nodeId;", {
-      nodeId
-    });
-    return interceptSurrealResponse(response);
+    logger.debug({ at: "PdfHandler.deleteClip", nodeId });
+    let response = await nodeStore.delete(nodeId);
+    logger.debug({ at: "PdfHandler.deleteClip", response });
+    return response;
   }
   async updateClip(id: string, content: any) {
     let nodeId = "node:" + id.split("annot")[1];
     let contentToUpdate: any = {
-      body: { ...content },
-      modifiedAt: new Date().toISOString()
+      body: { ...content }
     };
-    console.log({ nodeId, contentToUpdate });
-    let response = await this.surrealDb.query(
-      "return UPDATE $nodeId MERGE $contentToUpdate;",
-      {
-        nodeId,
-        contentToUpdate
-      }
-    );
-    return interceptSurrealResponse(response);
+    let response = await nodeStore.modify(nodeId, contentToUpdate);
+    return response;
   }
 }
-
-export const surrealPDF = new PdfSurrealHandler();
 
 export const asElement = (x: any): HTMLElement => x;
 

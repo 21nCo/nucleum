@@ -8,9 +8,10 @@
   import ContextMenuItemBase from "./ContextMenuItemBase.svelte";
   import ContextMenuItemWithSecondary from "./ContextMenuItemWithSecondary.svelte";
   import { appStore } from "$lib/client/stores/app.store";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
   export let item: IContextMenuItem;
   export let size: Size.sm | Size.md | Size.lg = Size.md;
-  export let onSelect: (item: IContextMenuItem) => void = () => {};
   let contextMenuItemRef: any;
 </script>
 
@@ -33,7 +34,7 @@
       }
       if (item.callback) item.callback();
       else if (item.action) appStore.runAction(item.action);
-      onSelect(item);
+      dispatch("select", item);
       e.stopPropagation();
     }}
   >

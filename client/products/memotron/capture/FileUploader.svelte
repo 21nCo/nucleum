@@ -43,7 +43,6 @@
         isSaveInProgress = true;
         let file = all[0];
         const result = await captureStore.saveFile(file);
-        postSave(result);
       } else if (all.length > 1) {
         multipleFilesData = resolveMultipleFilesData(all, MAX_FILE_SIZE_MB);
         if (
@@ -69,38 +68,8 @@
     if (e.detail) e.detail.stopPropagation();
     if (!multipleFilesData) return;
     isSaveInProgress = true;
-    const result = await captureStore.saveMultipleFiles(
-      multipleFilesData.files
-    );
-    postSave(result);
-  }
-
-  function postSave(result: any) {
+    await captureStore.saveMultipleFiles(multipleFilesData.files);
     isSaveInProgress = false;
-    if (!result || result.error) {
-      logger.error(result);
-      error = result?.error ?? "Something went wrong";
-      return;
-    }
-    if (multipleFilesData?.files && multipleFilesData.files.length > 1) {
-      toasts.success(
-        `${multipleFilesData.files.length} nodes saved successfully!`
-      );
-    } else {
-      toasts.success("Node saved successfully!");
-    }
-    if (result.id) {
-      appStore.openResource(result.id, ResourceAccessMode.POP);
-    }
-    captureStore.reset();
-    appStore.closeResource({
-      id: MemotronAction.CAPTURE,
-      accessMode: ResourceAccessMode.POP
-    });
-    appStore.closeResource({
-      id: MemotronAction.CAPTURE_DND,
-      accessMode: ResourceAccessMode.POP
-    });
   }
 
   function onInvalid(errors: { file: File; type: string }[]) {
@@ -162,7 +131,7 @@
             <div class="flex gap-3 items-center">
               <Icon icon="ph:image" class="stroke-fgs3" />
               <Icon icon="ph:music-note" class="stroke-fgs3" />
-              <Icon icon="ph:video" class="stroke-fgs3" />
+              <!-- <Icon icon="ph:video" class="stroke-fgs3" /> -->
               <Icon icon="ph:file-pdf" class="stroke-fgs3" />
             </div>
           {/if}
@@ -197,11 +166,10 @@
           <InlineErrorMessage {error} isDissappear={false} />
         {/if}
       </div>
-      <div class="flex gap-3 p-3">
-        <!-- <span class="text-fgs3 text-b3"
-      >Accepted formats: .jpg, .png, .pdf, .mp3, .mp4</span
-    > -->
-        <span class="text-fgs3 text-b3">Max size per file: 15MB</span>
+      <div class="flex text-fgs3 text-b3 gap-3 p-3">
+        <span>Currently accepted file types: <b> image, audio, pdf </b> </span>
+        |
+        <span>Max size per file: 15MB</span>
       </div>
     </div>
   {/if}

@@ -20,7 +20,6 @@ export async function performQuery(body: any) {
       DB: process.env.SURREAL_USER_DB ?? ""
     }
   });
-  console.log({ body, response });
   return await response.json();
 }
 export async function performQueryOnMasterDb(query: any) {
@@ -81,15 +80,7 @@ async function performRootQuery(params: DatabaseQueryParams) {
       : params.db ?? ""
   );
   const body = params.query;
-  console.log("performing root query:", {
-    body,
-    headers:
-      headers instanceof Headers
-        ? Object.fromEntries(headers.entries())
-        : headers
-  });
   let endPoint = "https://" + params.instance + "/sql";
-  // console.log({ endPoint });
   const response = await fetch(endPoint, {
     method: "POST",
     body,

@@ -8,7 +8,7 @@ import {
   ListKeys,
   type A2MDBlock,
   BlockKeys
-} from "./AudioToMarkdown.type";
+} from "../audio/AudioToMarkdown.type";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 class AudioToMarkdown {
   words: string[] | undefined;

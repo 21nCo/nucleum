@@ -59,6 +59,9 @@
   }
 
   onMount(async () => {
+    if ($captureStore.captureType !== CaptureType.MARKDOWN && !isWindowDnD) {
+      reset();
+    }
     linkQueryParam = $page.url.searchParams.get("link");
     bulkQueryParam = $page.url.searchParams.get("bulk");
     const clipBoardQueryParam = $page.url.searchParams.get("clipboard");
@@ -97,7 +100,10 @@
   }
 
   function refreshEmptyState(e?: CustomEvent) {
-    if (isValidString($captureStore.label)) {
+    if (
+      isValidString($captureStore.label) ||
+      $captureStore.captureType === CaptureType.AUDIO
+    ) {
       isEmptyState = false;
       return;
     }
@@ -130,7 +136,7 @@
 </script>
 
 {#if isSaving}
-  <EmptyStatusView isLoadingState={true} />
+  <EmptyStatusView isLoadingState={true} loadingText="Saving..." />
   <!-- {:else if $view.isPortrait}
   <div class="w-full h-full flex flex-col">
     <div
@@ -148,64 +154,68 @@
   {#key $captureStore.refreshId}
     <div class="w-full h-full flex justify-center">
       <div class="w-full max-w-5xl h-full flex flex-col p-4 bg-bgs1">
-        <header class="flex justify-between gap-4 items-center w-full dp:px-12">
-          <div class="flex gap--4 grow">
-            <!-- TODO - if nodularized and type is added to a heading node, then replace "root" with the heading node id -->
-            <!-- <NodeAvatar {types} /> -->
-            <div class="text-h3 font-medium w-full">
-              <TextInput
-                bind:value={$captureStore.label}
-                style={InputStyle.PLAIN}
-                isExperimentalMdInput={true}
-                placeholder="Untitled"
-                on:change={refreshEmptyState}
-                on:keyup={refreshEmptyState}
-              />
-            </div>
-          </div>
-          <div class="flex gap-3 items-center">
-            {#if !isEmptyState}
-              <div class="flex items-center gap-1">
-                <Icon
-                  icon={$captureStore.isRefreshing
-                    ? "svg-spinners:90-ring-with-bg"
-                    : "ph:check-circle-fill"}
-                  size={Size.sm}
-                  class="stroke-fgs3"
+        {#if $captureStore.captureType === CaptureType.MARKDOWN}
+          <header
+            class="flex justify-between gap-4 items-center w-full lp:px-12"
+          >
+            <div class="flex gap--4 grow">
+              <!-- TODO - if nodularized and type is added to a heading node, then replace "root" with the heading node id -->
+              <!-- <NodeAvatar {types} /> -->
+              <div class="text-h3 font-medium w-full">
+                <TextInput
+                  bind:value={$captureStore.label}
+                  style={InputStyle.PLAIN}
+                  isExperimentalMdInput={true}
+                  placeholder="Untitled"
+                  on:change={refreshEmptyState}
+                  on:keyup={refreshEmptyState}
                 />
-                <span class="text-fgs3 whitespace-nowrap text-b3">
-                  {$captureStore.isRefreshing ? "saving..." : "draft saved"}
-                </span>
               </div>
-              <Button
-                label="save"
-                type={ButtonVariant.PRIMARY}
-                size={Size.sm}
-                isPreventMinWidth={true}
-                icon="ph:floppy-disk"
-                on:click={async () => {
-                  isSaving = true;
-                  const result = await captureStore.save();
-                  if (bulkQueryParam === "true" && linkQueryParam) {
-                    await setTypeFromLinkParam(linkQueryParam);
-                  } else {
-                    types = [];
-                    isEmptyState = true;
-                  }
-                  isSaving = false;
-                }}
-              />
-              <Button
-                label="clear"
-                style={ButtonStyle.OUTLINED}
-                isPreventMinWidth={true}
-                size={Size.sm}
-                icon="ph:x-light"
-                on:click={reset}
-              />
-            {/if}
-          </div>
-        </header>
+            </div>
+            <div class="flex gap-3 items-center">
+              {#if !isEmptyState}
+                <div class="flex items-center gap-1">
+                  <Icon
+                    icon={$captureStore.isRefreshing
+                      ? "svg-spinners:90-ring-with-bg"
+                      : "ph:check-circle-fill"}
+                    size={Size.sm}
+                    class="stroke-fgs3"
+                  />
+                  <span class="text-fgs3 whitespace-nowrap text-b3">
+                    {$captureStore.isRefreshing ? "saving..." : "draft saved"}
+                  </span>
+                </div>
+                <Button
+                  label="save"
+                  type={ButtonVariant.PRIMARY}
+                  size={Size.sm}
+                  isPreventMinWidth={true}
+                  icon="ph:floppy-disk"
+                  on:click={async () => {
+                    isSaving = true;
+                    const result = await captureStore.saveMarkdownCapture();
+                    if (bulkQueryParam === "true" && linkQueryParam) {
+                      await setTypeFromLinkParam(linkQueryParam);
+                    } else {
+                      types = [];
+                      isEmptyState = true;
+                    }
+                    isSaving = false;
+                  }}
+                />
+                <Button
+                  label="clear"
+                  style={ButtonStyle.OUTLINED}
+                  isPreventMinWidth={true}
+                  size={Size.sm}
+                  icon="ph:x-light"
+                  on:click={reset}
+                />
+              {/if}
+            </div>
+          </header>
+        {/if}
         <main class="flex flex-col gap-6 w-full flex-grow">
           {#if types && types.length > 0}
             <!-- TODO - send only selected type if properties are to be shown upon link click -->
@@ -225,7 +235,11 @@
               "h-full": !isEmptyState
             })}
           >
-            <Writer bind:isEmptyState on:change={refreshEmptyState} />
+            <Writer
+              bind:isEmptyState
+              bind:isSaveInProgress={isSaving}
+              on:change={refreshEmptyState}
+            />
           </div>
           {#if isEmptyState}
             <div class="w-full dp:px-10 dp:my-10">

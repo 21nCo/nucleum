@@ -19,3 +19,4 @@ graph*.png
 **/cdk.out
 
 product.json
+product.updated.json

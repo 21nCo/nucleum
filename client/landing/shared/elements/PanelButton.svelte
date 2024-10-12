@@ -5,13 +5,16 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { onMount } from "svelte";
   import { PanelName } from "../Landing.types";
+  import DayAndNightToggle from "../DayAndNightToggle.svelte";
   export let label: string;
   export let icon: string;
   let className: string = "";
   export { className as class };
   export let id: string = "";
+  export let isProduct: boolean = false;
+  export let isRightPanel: boolean = false;
   let disableBG: boolean = false;
-
+  $: isInteractive = isProduct || isRightPanel;
   // function onScroll(e) {
   //   const viewportHeight = window.innerHeight;
   //   const scrollDistance = e.target.scrollTop;
@@ -42,16 +45,22 @@
   <button
     {id}
     class={cn(
-      "w-[115px] h-full hover:text-aps1 flex flex-col items-center justify-center p-4 text-center text-fgs3 text-base leading-5 ml-[1px]",
+      "w-[115px] h-full flex flex-col items-center justify-center p-4 text-center text-fgs3 text-base leading-5 ml-[1px]",
       label == PanelName.PRODUCTS && "border-l border-brs3 hover:border-brs4",
       label == PanelName.BUILT_AT_BLANK_COOP &&
         "border-r border-brs3 hover:border-brs4",
-      className
+      className,
+      {
+        "hover:text-aps1": isInteractive
+      }
     )}
     on:click
   >
-    <SvgIcon {icon} size={Size.lg} class="mb-2" />
-
-    {label}
+    {#if isInteractive}
+      <SvgIcon {icon} size={Size.lg} class="mb-2" />
+      {label}
+    {:else}
+      <DayAndNightToggle />
+    {/if}
   </button>
 {/if}

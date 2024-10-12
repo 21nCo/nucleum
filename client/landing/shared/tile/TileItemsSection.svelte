@@ -45,7 +45,7 @@
   <Title {title} />
   <div
     bind:this={container}
-    class="no-scrollbar flex gap-3 tp:grid tp:gap-6 tp:grid-cols-2 overflow-x-scroll tp:px-12 w-full snap-mandatory snap-x -mt-6"
+    class="no-scrollbar flex gap-3 tp:gap-6 landscape:grid grid-cols-[repeat(auto-fill,minmax(400px,1fr))] 2k:grid-cols-[repeat(auto-fill,minmax(500px,1fr))] overflow-x-scroll tp:px--12 w-full snap-mandatory snap-x -mt-6"
   >
     {#each items as item}
       <TileItem {item} class="snap-always snap-start" />

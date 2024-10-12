@@ -5,8 +5,6 @@ import { userDatev4 } from "./global.dbo";
  */
 export const memotronDboDefinitions = {
   "fn::memotron::node::fetch": nodeFetch(),
-  "fn::memotron::pdfAnnotator::getAllClips": pdfAnnotatorGetAllClips(),
-  "fn::memotron::pdfAnnotator::saveClip": pdfAnnotatorSaveClip(),
   "fn::memotron::collection::fetchData": collectionFetchData(),
   "fn::memotron::timeline": timeline()
 };
@@ -44,6 +42,10 @@ function nodeParent() {
   return [def];
 }
 
+/**
+ * @deprecated - direct querying
+ * @returns
+ */
 function pdfAnnotatorGetAllClips() {
   const def = `DEFINE FUNCTION OVERWRITE fn::memotron::pdfAnnotator::getAllClips($url: string) {
       RETURN (SELECT clips, fn::memotron::fetchClips(id) AS clips FROM node WHERE url = $url);
@@ -58,6 +60,10 @@ function fetchClips() {
   return [def];
 }
 
+/**
+ * @deprecated - direct querying
+ * @returns
+ */
 function pdfAnnotatorSaveClip() {
   const def = `DEFINE FUNCTION OVERWRITE fn::memotron::pdfAnnotator::saveClip($url: string, $content: any) {
       LET $parentNode = (RETURN array::first((SELECT VALUE id FROM node WHERE url = $url)));
