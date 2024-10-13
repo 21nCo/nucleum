@@ -2,20 +2,20 @@
   import { createEventDispatcher, onMount } from "svelte";
   import * as pdfjs from "pdfjs-dist";
   // import pdfjsWorker from "pdfjs-dist/build/pdf.worker.min.js?url";
-  import * as pdfjsWorker from "pdfjs-dist/legacy/build/pdf.worker.min.mjs";
-  import downloadsvg from "./images/toolbarDownload.svg?url";
-  import printsvg from "./images/toolbarPrint.svg?url";
-  import zoominsvg from "./images/toolbarZoomIn.svg?url";
-  import zoomoutsvg from "./images/toolbarZoomOut.svg?url";
-  import spreadsvg from "./images/toolbarPageView.svg?url";
-  import gapsvg from "./images/toolbarPageGap.svg?url";
+  // import * as pdfjsWorker from "pdfjs-dist/legacy/build/pdf.worker.min.mjs";
+  // import downloadsvg from "./images/toolbarDownload.svg?url";
+  // import printsvg from "./images/toolbarPrint.svg?url";
+  // import zoominsvg from "./images/toolbarZoomIn.svg?url";
+  // import zoomoutsvg from "./images/toolbarZoomOut.svg?url";
+  // import spreadsvg from "./images/toolbarPageView.svg?url";
+  // import gapsvg from "./images/toolbarPageGap.svg?url";
   import "./pdfviewer.css";
 
   // pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
   // pdfjs.GlobalWorkerOptions.workerSrc =
   //   "../../../../node_modules/pdfjs-dist/build/pdf.worker.mjs";
   pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-    "../../../../node_modules/pdfjs-dist/build/pdf.worker.mjs",
+    "pdfjs-dist/build/pdf.worker.mjs",
     import.meta.url
   ).toString();
   const eventDispatcher = createEventDispatcher();
