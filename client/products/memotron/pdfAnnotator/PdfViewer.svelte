@@ -12,8 +12,12 @@
   import "./pdfviewer.css";
 
   // pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
-  pdfjs.GlobalWorkerOptions.workerSrc =
-    "../../../../node_modules/pdfjs-dist/build/pdf.worker.mjs";
+  // pdfjs.GlobalWorkerOptions.workerSrc =
+  //   "../../../../node_modules/pdfjs-dist/build/pdf.worker.mjs";
+  pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+    "../../../../node_modules/pdfjs-dist/build/pdf.worker.mjs",
+    import.meta.url
+  ).toString();
   const eventDispatcher = createEventDispatcher();
   //variables for Annotation
   export let pdfViewer: any;
