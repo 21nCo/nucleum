@@ -21,6 +21,7 @@
   import { ButtonStyle } from "$lib/client/types/button.type";
   import { debouncer } from "$lib/client/utils/utils";
   import { logger } from "$lib/client/components/debug/logger.client";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
 
   let resource: Resource = Resource.everything;
   let isFiltersVisible: boolean = false;
@@ -99,7 +100,7 @@
         />
       </span>
       <div class="flex gap-2 ml-auto">
-        {#if isFiltersVisible}
+        {#if $userPreferences.localAI.semanticSearch}
           <SwitchInput
             label={{ label: "Semantic", orientation: Orientation.Horizontal }}
             size={Size.sm}
@@ -113,7 +114,8 @@
             }}
             checked={searchStore.searchType === SearchType.SEMANTIC}
           />
-
+        {/if}
+        {#if isFiltersVisible}
           <Button
             icon="funnel"
             style={ButtonStyle.OUTLINED}
@@ -126,14 +128,14 @@
             size={Size.sm}
             label="Sort"
           />
+          <span class="flex gap-2 items-center">
+            <Toggle
+              icon="adjustments-vertical"
+              size={Size.sm}
+              bind:on={isFiltersVisible}
+            />
+          </span>
         {/if}
-        <span class="flex gap-2 items-center">
-          <Toggle
-            icon="adjustments-vertical"
-            size={Size.sm}
-            bind:on={isFiltersVisible}
-          />
-        </span>
       </div>
     </div>
     <PanelSwitcher

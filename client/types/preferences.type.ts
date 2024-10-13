@@ -32,6 +32,12 @@ export type IUserGlobalPreferences = IObservableStoreSubject & {
   annotations: any[];
   lastUsedTranscriptionModel: TranscriptionModel;
 
+  localAI: {
+    semanticSearch: boolean;
+    audioTranscription: boolean;
+    markdownQAChat: boolean;
+  };
+
   /**
    * @deprecated
    * Temporary

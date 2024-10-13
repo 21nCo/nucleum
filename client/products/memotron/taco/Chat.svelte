@@ -1,11 +1,12 @@
 <script lang="ts">
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import Icon from "$lib/client/elements/Icon.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import { SearchStore } from "$lib/client/products/memotron/memotron.store";
+  import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
   import { SearchType } from "$lib/client/types/data.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { QuestionAnswerer } from "$lib/client/utils/taco.utils";
-  import { Resource } from "../flux/resourceStores/resource.enum";
+  import { TacoActions } from "$lib/client/types/taco.types";
+
   import { onMount, onDestroy } from "svelte";
 
   const QAsearchStore = new SearchStore();
@@ -13,7 +14,6 @@
   let isLoading: boolean = false;
   let type = "";
   let index = 0;
-  let timerId: any;
   let question: string = "";
   let answer: string = "";
   async function onQuestion() {
@@ -25,20 +25,37 @@
       searchQuery: question,
       semanticSearchTopK: 1
     });
-    console.log("QA store result", node[0].mdText);
-    answer = await QuestionAnswerer.getAnswer(question, node[0].mdText);
+    // answer = await QuestionAnswerer.getAnswer(question, node[0].mdText);
+    //TODO- implement actual chat using text generator rather than using just QA
+    // tacoWorker.postMessage({
+    //   action: TacoActions.GENERATE_TEXT,
+    //   params: {
+    //     context: node[0].mdText,
+    //     question: question
+    //   }
+    // });
+    tacoWorker.postMessage({
+      action: TacoActions.GET_ANSWER,
+      params: {
+        question: question,
+        context: node[0].mdText
+      }
+    });
+    answer = await new Promise((resolve, reject) => {
+      tacoWorker.onmessage = (e) => {
+        resolve(e.data);
+      };
+    });
     isLoading = false;
     index = 0;
-    // answer = await Text2textGenerator.generateText(question);
   }
 
   function typeWriter() {
-    console.log(index, isLoading);
     if (index < 3) {
       type += " .";
     } else {
       type = "";
-      index = 0;
+      index = -1;
     }
     setTimeout(() => {
       index++;
@@ -49,7 +66,7 @@
   onDestroy(() => {
     isLoading = false;
   });
-  //   onMount(() => typeWriter());
+  onMount(() => typeWriter());
 </script>
 
 <div class="w-[393px] h-[500px] bg-bgs2 flex flex-col justify-end gap-4 p-4">

@@ -43,6 +43,7 @@ import type { IRecordId } from "../types/data.type";
 //   env: "dev"
 // });
 // export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
+
 export const currentTime = writable<Date>(new Date());
 export const appLoadingState = writable<{
   isBaseLoaded: boolean;

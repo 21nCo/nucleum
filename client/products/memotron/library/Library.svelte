@@ -50,6 +50,7 @@
   } from "$lib/client/types/data.type";
   import { page } from "$app/stores";
   import LibraryLoadingPulse from "./LibraryLoadingPulse.svelte";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
 
   let searchQuery: string = "";
   let selectedResource: Resource = Resource.node;
@@ -319,16 +320,18 @@
     class={cn("relative w-full h-full flex flex-col overflow-auto", {})}
     on:scroll={onScroll}
   >
-    <FloatingButton
-      class="justify-end"
-      params={{
-        callback: () => {
-          appStore.runAction(MemotronAction.OPEN_CHAT);
-        },
-        icon: "ph:chat",
-        variant: ButtonVariant.PRIMARY
-      }}
-    />
+    {#if $userPreferences.localAI.semanticSearch && $userPreferences.localAI.markdownQAChat}
+      <FloatingButton
+        class="justify-end"
+        params={{
+          callback: () => {
+            appStore.runAction(MemotronAction.OPEN_CHAT);
+          },
+          icon: "ph:chat",
+          variant: ButtonVariant.PRIMARY
+        }}
+      />
+    {/if}
     {#if variant === "v1" || variant === "v3"}
       <LibrarySearchBox
         {variant}

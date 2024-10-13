@@ -16,8 +16,10 @@
   import TextArea from "$lib/client/elements/input/TextArea.svelte";
   import { generateUID } from "$lib/client/utils/utils";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import { Transcriber } from "$lib/client/utils/taco.utils";
-  import { TranscriptionModel } from "$lib/client/types/taco.types";
+  import {
+    TacoActions,
+    TranscriptionModel
+  } from "$lib/client/types/taco.types";
   import { currentUserId } from "../capture/capture.store";
   import { nodeStore } from "../node/node.store";
   import { Audio2MD } from "./AudioToMarkdown.utils";
@@ -26,6 +28,8 @@
   import { logger } from "$lib/client/components/debug/logger.client";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
+  import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
+  import { read_audio } from "@xenova/transformers";
 
   export let body: any = {};
   export let url: string;
@@ -46,14 +50,14 @@
   let isError: boolean = false;
 
   let isConvertToMarkdown: boolean = false;
-  let modelOptions: string[] = [
-    "tiny",
-    "tiny.en",
-    "base",
-    "base.en",
-    "small",
-    "small.en"
-  ];
+  // let modelOptions: string[] = [
+  //   "tiny",
+  //   "tiny.en",
+  //   "base",
+  //   "base.en",
+  //   "small",
+  //   "small.en"
+  // ];
   let accuracy: DropdownItem[] = [
     {
       value: TranscriptionModel.TINy_EN,
@@ -80,7 +84,6 @@
    * Auto Refreshes the page the dispplay the content once transcription is completed
    * TODO - move to store, lambda url - env
    */
-
   async function onTranscribe(): Promise<string | null> {
     isDisabled = true;
     let result: string | null = null;
@@ -90,7 +93,20 @@
         url,
         model
       });
-      const result = await Transcriber.transcribe(url, model);
+      // const result = await Transcriber.transcribe(url, model);
+      const audioData = await read_audio(url, 16000);
+      tacoWorker.postMessage({
+        action: TacoActions.GET_TRANSCRIPTION,
+        params: {
+          audioData: audioData,
+          model: model
+        }
+      });
+      const result = await new Promise((resolve, reject) => {
+        tacoWorker.onmessage = (e) => {
+          resolve(e.data);
+        };
+      });
       logger.debug({
         at: "AudioContent.svelte - onTranscribe",
         result
@@ -234,12 +250,14 @@
           />
         {/if}
       {/if}
-      <Button
-        on:click={convertToMarkdown}
-        {isDisabled}
-        icon="document-text"
-        {label}
-      />
+      {#if $userPreferences.localAI.audioTranscription}
+        <Button
+          on:click={convertToMarkdown}
+          {isDisabled}
+          icon="document-text"
+          {label}
+        />
+      {/if}
     </div>
   </div>
   <div

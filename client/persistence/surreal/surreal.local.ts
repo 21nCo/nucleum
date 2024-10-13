@@ -26,9 +26,9 @@ import {
   resolveUpsertQuery
 } from "./surreal.utils";
 import { LogType } from "$lib/client/components/debug/debug.type";
-import { FeatureExtractor } from "$lib/client/utils/taco.utils";
 import { compareVersions } from "$lib/shared/utils/utils";
-
+import { TacoActions } from "$lib/client/types/taco.types";
+import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
 export class SurrealPersistence implements IPersistence {
   instance: Surreal | undefined = undefined;
   userId: string = "";
@@ -416,9 +416,20 @@ export class SurrealPersistence implements IPersistence {
     await this.awaiter();
     const properties = params?.properties ?? [];
     if (params?.searchType === SearchType.SEMANTIC && params?.search?.query) {
-      this.queryEmbedding = await FeatureExtractor.generateVectorEmbeddings(
-        params.search.query
-      );
+      // this.queryEmbedding = await FeatureExtractor.generateVectorEmbeddings(
+      //   params.search.query
+      // );
+      tacoWorker.postMessage({
+        action: TacoActions.GET_EMBEDDINGS,
+        params: {
+          text: params.search.query
+        }
+      });
+      this.queryEmbedding = await new Promise((resolve, reject) => {
+        tacoWorker.onmessage = (e) => {
+          resolve(e.data);
+        };
+      });
       properties.push(
         `vector::similarity::cosine(embedding,[${this.queryEmbedding}]) AS dist`
       );

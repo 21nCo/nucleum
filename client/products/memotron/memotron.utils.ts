@@ -32,3 +32,11 @@ export function generateSyncedResourceId(externalId: string, type: NodeType) {
     id: externalId
   });
 }
+
+/**
+ * Creates a seprate thread for taco functions to avoid blocking the main thread.
+ */
+export const tacoWorker = new Worker(
+  new URL("$lib/client/products/memotron/taco/taco.worker.ts", import.meta.url),
+  { type: "module" }
+);

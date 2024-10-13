@@ -13,6 +13,7 @@
   import { Orientation } from "$lib/client/types/direction.enum";
   import { SearchType } from "$lib/client/types/data.type";
   import { InputStyle } from "$lib/client/types/input.type";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   const dispatch = createEventDispatcher();
   export let selectedResource: Resource;
   export let resources: IResourceSwitchItem[];
@@ -51,13 +52,15 @@
           on:select={refresh}
         />
       {/if}
-      <SwitchInput
-        label={{ label: "Semantic", orientation: Orientation.Horizontal }}
-        size={Size.sm}
-        style={InputStyle.PLAIN}
-        on:change={(e) => dispatch("semanticSearch", e.detail)}
-        checked={searchStore.searchType === SearchType.SEMANTIC}
-      />
+      {#if $userPreferences.localAI.semanticSearch}
+        <SwitchInput
+          label={{ label: "Semantic", orientation: Orientation.Horizontal }}
+          size={Size.sm}
+          style={InputStyle.PLAIN}
+          on:change={(e) => dispatch("semanticSearch", e.detail)}
+          checked={searchStore.searchType === SearchType.SEMANTIC}
+        />
+      {/if}
       {#if isFiltersVisible}
         <Button
           icon="funnel"
