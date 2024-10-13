@@ -61,6 +61,7 @@
     resourceInList,
     stringToRecordId
   } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 
   export let id: string = "";
   let collection: IActiveCollectionStore = resolveActiveCollectionStore(
@@ -631,4 +632,9 @@
     {/if}
   </div>
 {/if}
-<ComponentBaseLayer hasDragAndDrop={true} on:syncDown={() => refresh()} />
+<ComponentBaseLayer
+  hasDragAndDrop={true}
+  on:syncDown={() => refresh()}
+  subscribeTo={[Resource.link]}
+  on:change={() => refresh()}
+/>

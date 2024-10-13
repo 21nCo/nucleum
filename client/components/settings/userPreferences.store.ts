@@ -41,7 +41,7 @@ export const seedUserPreferences: IUserGlobalPreferences = {
   avatarPicker: {
     skinIndex: 0,
     usedEmojis: [],
-    iconColor: "#C14D8A",
+    iconColor: "bw",
     filled: false,
     usedIcons: []
   },

@@ -156,7 +156,8 @@
               label: resolveCollectionTypeLabel(type),
               value: type,
               icon: resolveCollectionTypeIcon(type),
-              isDisabled: type === CollectionType.QUERY
+              isDisabled: type === CollectionType.QUERY,
+              badge: type === CollectionType.QUERY ? "planned" : undefined
             }))}
             style={OptionSelectorStyle.TRAIN}
             labelProps={{

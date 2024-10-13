@@ -199,9 +199,9 @@
           console.log(e);
         }}
       >
-        <div slot="right">
+        <!-- <div slot="right">
           <Button icon="ph:dice-three" tooltip="Randomize" />
-        </div>
+        </div> -->
       </PanelSwitcher>
       {#if selectedMethod === Method.COLOR}
         <div class="flex-1 flex items-center justify-center">

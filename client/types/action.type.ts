@@ -1,4 +1,5 @@
 import type { ResourceAccessMode } from "../components/flux/resourceStores/resource.type";
+import type { UserDataMode } from "./account.type";
 import { Embed, OperatingSystem } from "./context.type";
 import type { ConfirmationNotification } from "./notification.type";
 import type { ModalParams } from "./popup.type";
@@ -88,9 +89,9 @@ export type IAction = {
   /**
    * Contexts in which the action will be hidden.
    *
-   * Ex: Useful to hide certain settings on mobile devices.
+   * Ex: Useful to hide certain settings on mobile devices or for certain users.
    */
-  hideContext?: (Embed | OperatingSystem)[];
+  hideContext?: (Embed | OperatingSystem | UserDataMode)[];
 
   /**
    * Used in conjunction with {@link ActionType.RESOURCE} to specify the access mode of the resource.

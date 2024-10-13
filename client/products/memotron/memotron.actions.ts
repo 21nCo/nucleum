@@ -33,6 +33,7 @@ import LinkTagsControlPanel from "./linking/LinkTagsControlPanel.svelte";
 import Chat from "$lib/client/products/memotron/taco/Chat.svelte";
 import CaptureDnD from "./capture/CaptureDnD.svelte";
 import MemotronHome from "./home/MemotronHome.svelte";
+import MemotronOnboarding from "./base/MemotronOnboarding.svelte";
 export const memotronActions: IAction[] = [
   {
     action: MemotronAction.OPEN_CHAT,
@@ -329,5 +330,13 @@ export const memotronActions: IAction[] = [
     label: "Graph",
     icon: "ph:graph",
     component: ComingSoonView
+  },
+  {
+    action: "onboarding",
+    type: ActionType.PAGE,
+    isMeta: true,
+    label: "Onboarding",
+    icon: "ph:rocket",
+    component: MemotronOnboarding
   }
 ];

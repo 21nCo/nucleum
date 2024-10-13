@@ -37,6 +37,7 @@ import { clientStorage } from "../persistence/persistence.utils";
 import { ClientStorageKey } from "../persistence/persistence.type";
 import { Size } from "../types/size.enum";
 import type { IRecordId } from "../types/data.type";
+import account from "./account.store";
 
 // export const app = writable<{ product: string; env: string }>({
 //   product: "tidy",
@@ -259,7 +260,10 @@ function initAppStore(seed: AppStore) {
       (x) => x.action?.toLowerCase() == slug.toLowerCase()
     );
     const contextData = get(context);
+    const accountData = get(account);
     if (action && action.hideContext?.includes(contextData.embed)) return null;
+    if (action && action.hideContext?.includes(accountData.dataMode))
+      return null;
     if (action) return action;
     return null;
   };

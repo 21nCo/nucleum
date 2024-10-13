@@ -204,6 +204,7 @@ class AccountStore extends ObservableStore<
   async bootstrap(region: string) {
     await this.bootstrapRemote(region);
     clientStorage.set(ClientStorageKey.LAST_SYNC_UP, new Date().getTime());
+    return true;
   }
 
   async bootstrapRemote(region: string) {

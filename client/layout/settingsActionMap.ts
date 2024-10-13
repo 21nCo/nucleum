@@ -16,6 +16,7 @@ import InteractionModeSettings from "../components/settings/interactionMode/Inte
 import { Embed } from "../types/context.type";
 import SyncSettings from "../components/settings/sync/SyncSettings.svelte";
 import TacoSettings from "../components/settings/taco/TacoSettings.svelte";
+import { UserDataMode } from "../types/account.type";
 
 const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
   {
@@ -131,7 +132,8 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
     component: SyncSettings,
     modalParams: {
       title: "Sync Settings"
-    }
+    },
+    hideContext: [UserDataMode.LOCAL]
   }
 ];
 

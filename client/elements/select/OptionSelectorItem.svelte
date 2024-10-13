@@ -13,6 +13,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import AvatarRenderer from "../avatarPicker/AvatarRenderer.svelte";
   import TextWithHoverTooltip from "../text/TextWithHoverTooltip.svelte";
+  import Badge from "../text/Badge.svelte";
   export let item: ISelectItem;
   export let size: Size.lg | Size.md | Size.sm = Size.md;
   export let isActive: boolean = false;
@@ -75,6 +76,9 @@
         text={properCase(item.label ?? item.value.toString())}
         truncateLength={20}
       />
+      {#if item.badge}
+        <Badge text={item.badge} />
+      {/if}
     </div>
   </button>
 {:else if style === OptionSelectorStyle.CHECK_CIRCLE}

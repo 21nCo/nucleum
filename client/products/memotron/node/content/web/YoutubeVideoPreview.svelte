@@ -4,7 +4,7 @@
   export let node: IYoutubeVideo | IVideoTimestampClip;
   let videoId: string | null = null;
   let timestamp: number | null =
-    "timestamp" in node.body ? node.body.timestamp : null;
+    node.body && "timestamp" in node.body ? node.body.timestamp : null;
 
   let player: any;
   let playerReady = false;

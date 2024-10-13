@@ -355,19 +355,19 @@ export const collectionLayoutOptions = [
   {
     value: CollectionLayout.TABLE,
     icon: "ph:table-light",
-    badge: "Planned",
+    // badge: "Planned",
     isDisabled: true
   },
   {
     value: CollectionLayout.CALENDAR,
     icon: "ph:calendar-dots-light",
-    badge: "Planned",
+    // badge: "Planned",
     isDisabled: true
   },
   {
     value: CollectionLayout.MAP,
     icon: "ph:map-trifold-light",
-    badge: "Planned",
+    // badge: "Planned",
     isDisabled: true
   }
 ];
