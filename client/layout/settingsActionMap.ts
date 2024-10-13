@@ -33,12 +33,13 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
       "Enable Audio Transcription",
       "Enable Markdown QA Chat"
     ],
-    label: "Local AI Settings",
+    label: "AI Settings",
+    icon: "ph:brain-light",
     component: TacoSettings,
     modalParams: {
-      title: "Local AI Settings",
+      title: "AI Settings",
       layout: {
-        size: Size.md
+        size: Size.lg
       },
       isDismissable: false
     }

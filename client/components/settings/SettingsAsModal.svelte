@@ -97,6 +97,7 @@
         <Text
           content={pageAction.label ?? ""}
           style={TextStyle.PANEL_HEADING}
+          isPreventProperCasing={true}
         />
       </div>
       <div class="flex w-full justify-start items-start flex-grow">

@@ -8,6 +8,7 @@
   export let style: TextStyle;
   export let customStyle: string = "";
   export let width: string = "";
+  export let isPreventProperCasing: boolean = false;
   let classList: string = "";
   onMount(() => {
     switch (style) {
@@ -46,6 +47,10 @@
 </script>
 
 <div style={customStyle} class={`${classList}`}>
-  {properCase(content)}
+  {#if !isPreventProperCasing}
+    {properCase(content)}
+  {:else}
+    {content}
+  {/if}
   <!-- <slot /> -->
 </div>

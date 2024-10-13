@@ -9,7 +9,12 @@
   import { userPreferences } from "../userPreferences.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonVariant } from "$lib/client/types/button.type";
-  const mainLabel = `We will download AI models to your device so that you can use AI for free and offline. No privacy compromise. No data leaving your device`;
+  import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
+  import { InfoTextType } from "$lib/client/types/text.type";
+
+  export let isCmdBarLaunch: boolean = false;
+
+  const mainLabel = `We will download AI models to your device so that you can use AI for free and offline. No privacy compromise. No data leaving your device.`;
   let progress = 0;
   let label: string;
   let isDisabled: boolean = false;
@@ -88,62 +93,77 @@
   }
 </script>
 
-<div class="text-fgs2 text-b2 min-w-fit text-left">
-  {mainLabel}
-</div>
+<div class="flex flex-col justify-between h-full gap-8">
+  <div class="flex flex-col gap-4">
+    <div class="text-fgs2 text-b2 min-w-fit text-left">
+      {mainLabel}
+    </div>
 
-<SwitchInput
-  size={Size.sm}
-  {isDisabled}
-  bind:checked={$userPreferences.localAI.semanticSearch}
-  on:change={onSemanticSearchToggle}
-  isExpanded={true}
-  label={{
-    label: "Semantic Search - 250MB",
-    tooltip: {
-      body: "Enable this to search for semantically relevant content in the search bar."
-    }
-  }}
-/>
-<SwitchInput
-  size={Size.sm}
-  {isDisabled}
-  bind:checked={$userPreferences.localAI.audioTranscription}
-  on:change={onAudioTranscriptionToggle}
-  isExpanded={true}
-  label={{
-    label: "Audio Transcription - 380MB",
-    tooltip: {
-      body: "Enable this to transcribe audio files and convert them to text and to enable to Audio to Markdown"
-    }
-  }}
-/>
-<SwitchInput
-  size={Size.sm}
-  {isDisabled}
-  bind:checked={$userPreferences.localAI.markdownQAChat}
-  on:change={onQuestionAnsweringToggle}
-  isExpanded={true}
-  label={{
-    label: "Markdown QA Chat (Requires Semantic Search)  - 500MB",
-    tooltip: {
-      body: "Enable this to use AI to answer questions pertaining to markdown."
-    }
-  }}
-/>
-{#if isDisabled}
-  <ProgressBar {progress} size={Size.lg} {label} />
-{/if}
-<Button
-  size={Size.md}
-  label="Dismiss"
-  type={ButtonVariant.PRIMARY}
-  {isDisabled}
-  on:click={() => {
-    modalEvent.hide(Action.LOCAL_AI_SETTINGS);
-  }}
-/>
-<p>
-  Note: You won't be able to Dismiss or perform any other action while the model
-  download is in progress.
-</p>
+    <SwitchInput
+      size={Size.sm}
+      {isDisabled}
+      bind:checked={$userPreferences.localAI.semanticSearch}
+      on:change={onSemanticSearchToggle}
+      isExpanded={true}
+      label={{
+        label: "Semantic Search - 250MB",
+        tooltip: {
+          body: "Enable this to search for semantically relevant content in the search bar."
+        }
+      }}
+    />
+    <SwitchInput
+      size={Size.sm}
+      {isDisabled}
+      bind:checked={$userPreferences.localAI.audioTranscription}
+      on:change={onAudioTranscriptionToggle}
+      isExpanded={true}
+      label={{
+        label: "Audio Transcription - 380MB",
+        tooltip: {
+          body: "Enable this to transcribe audio files and convert them to text and to enable to Audio to Markdown"
+        }
+      }}
+    />
+    <SwitchInput
+      size={Size.sm}
+      {isDisabled}
+      bind:checked={$userPreferences.localAI.markdownQAChat}
+      on:change={onQuestionAnsweringToggle}
+      isExpanded={true}
+      label={{
+        label: "Markdown Q & A Chat (Requires Semantic Search)  - 500MB",
+        tooltip: {
+          body: "Enable this to use AI to answer questions pertaining to markdown."
+        }
+      }}
+    />
+    {#if isDisabled}
+      <ProgressBar {progress} size={Size.lg} {label} />
+    {/if}
+  </div>
+  <footer class="flex flex-col items-center gap-4 pb-8">
+    {#if isCmdBarLaunch}
+      <p class="text-fgs2 text-b2 text-left">
+        Note: You won't be able to Dismiss or perform any other action while the
+        model download is in progress.
+      </p>
+      <div>
+        <Button
+          size={Size.md}
+          label="Dismiss"
+          type={ButtonVariant.PRIMARY}
+          {isDisabled}
+          on:click={() => {
+            modalEvent.hide(Action.LOCAL_AI_SETTINGS);
+          }}
+        />
+      </div>
+    {:else}
+      <InlineInfoBanner
+        content="Please do not close this popup while the model is in progress."
+        type={InfoTextType.WARNING}
+      />
+    {/if}
+  </footer>
+</div>

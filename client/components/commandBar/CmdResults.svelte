@@ -49,7 +49,11 @@
         dispatch("searchAction", action);
       } else {
         dispatch("close");
-        appStore.runAction(selectedAction);
+        appStore.runAction(selectedAction, {
+          componentParams: {
+            isCmdBarLaunch: true
+          }
+        });
       }
       let recentCommands = isValidArrayWithData(
         $userPreferences.recentCommands
