@@ -9,6 +9,7 @@ import type { IStore } from "$lib/client/types/data.type";
 import { ExtensionEvent } from "$lib/client/types/extension.type";
 import { relayToBackgroundScript } from "$lib/client/utils/extension.utils";
 import { FluxMethod, type IFluxMethod } from "./flux.type";
+// import { getPort } from "@plasmohq/messaging/port"
 
 export async function delegateToFlux(method: IFluxMethod) {
   try {

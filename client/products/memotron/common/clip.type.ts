@@ -19,7 +19,7 @@ export enum ClipperExtensionEvent {
   /**
    * Event to communicate about taking a screenshot between content script and background script.
    */
-  SCREENSHOT = "SCREENSHOT",
+  SCREENSHOT = "screenshot",
   /**
    * Event to relay saving web page from side panel or background script -> to content script to parse web page content and save it.
    */

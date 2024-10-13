@@ -1,6 +1,6 @@
 import type { ClipperExtensionEvent } from "../products/memotron/common/clip.type";
 import type { ExtensionEvent } from "../types/extension.type";
-
+import { sendToBackground } from "@plasmohq/messaging"
 
 //TODO - Temp - use utils.ts after lib refactoring
 export function interceptSurrealResponse(response: any, context: string = "") {
@@ -58,15 +58,28 @@ export async function relayToSidePanel(  message: {event: ExtensionEvent | Clipp
 }
 
 export async function relayToBackgroundScript(message: {event: ExtensionEvent | ClipperExtensionEvent, data?: any}) { 
-  return new Promise((resolve, reject) => {
-    chrome.runtime.sendMessage(message, (response) => {
-      if (chrome.runtime.lastError) {
-        reject(chrome.runtime.lastError);
-      } else {
-        resolve(response);
-      }
-    });
-  });
+  // return new Promise((resolve, reject) => {
+  //   chrome.runtime.sendMessage(message, (response) => {
+  //     if (chrome.runtime.lastError) {
+  //       reject(chrome.runtime.lastError);
+  //     } else {
+  //       resolve(response);
+  //     }
+  //   });
+  // });
+  try {
+    console.log({ at: "relayToBackgroundScript", message, chromeRuntimeId: chrome.runtime.id });
+    const response = await sendToBackground(
+      {
+        name: message.event,
+        body: message.data,
+        extensionId: chrome.runtime.id
+      })
+    return response
+  } catch (error) {
+    console.error("Error sending message to background:", error)
+    throw error
+  }
 }
 
 

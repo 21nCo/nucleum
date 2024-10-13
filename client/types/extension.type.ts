@@ -26,10 +26,11 @@ export enum ExtensionEvent {
     /**
      * An event to delegate flux to the background script.
      */
-    FLUX_DELEGATION = "FLUX_DELEGATION",
-    LOGIN = "LOGIN",
-    LOGOUT = "LOGOUT",
-    UPLOAD_FILE = "UPLOAD_FILE"
+    FLUX_DELEGATION = "flux",
+    LOGIN = "login",
+    LOGOUT = "logout",
+    UPLOAD_FILE = "upload",
+    RUN = "run"
 }
 
 

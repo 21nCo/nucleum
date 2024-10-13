@@ -114,11 +114,14 @@
       at: "onMessage - Youtube content script",
       event: message.event
     });
-    if (message.event === ExtensionEvent.CLICK_FROM_SIDEPANEL && message.clip) {
+    if (
+      message.event === ExtensionEvent.CLICK_FROM_SIDEPANEL &&
+      message.data?.clip
+    ) {
       const player = document.querySelector("video");
-      if (player && message.clip?.body?.timestamp) {
-        console.log("Seeking to timestamp: ", message.clip.body.timestamp);
-        player.currentTime = message.clip.body.timestamp;
+      if (player && message.data.clip?.body?.timestamp) {
+        console.log("Seeking to timestamp: ", message.data.clip.body.timestamp);
+        player.currentTime = message.data.clip.body.timestamp;
       }
     }
   });
@@ -170,7 +173,10 @@
   <button
     class="flex items-center justify-center rounded-md bg-bgs1 h-8"
     on:click={() => {
-      relayToBackgroundScript({ event: ExtensionEvent.TOGGLE_SIDEPANEL });
+      relayToBackgroundScript({
+        event: ExtensionEvent.RUN,
+        data: { action: ExtensionEvent.TOGGLE_SIDEPANEL }
+      });
       refreshTimestamps();
     }}
   >

@@ -177,6 +177,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       creationContext
     };
     const response = await nodeStore.create([node]);
+    logger.log({ at: "savePage", response });
     this.update((n) => {
       n.id = id;
       return n;
@@ -202,13 +203,19 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       return tab;
 
       async function screenshotWebpage() {
-        const result = await relayToBackgroundScript({
-          event: ClipperExtensionEvent.SCREENSHOT,
-          data: {
-            isUpload: true,
-            isReturnUrl: true
-          }
+        const ss = await relayToBackgroundScript({
+          event: ClipperExtensionEvent.SCREENSHOT
         });
+        const result = await relayToBackgroundScript({
+          event: ExtensionEvent.UPLOAD_FILE,
+          data: {
+            dataUrl: ss,
+            contentType: "image/png",
+            params: {
+              isReturnUrl: true
+            }
+          }
+          })
         console.log({ at: "screenshotWebpage", result });
         return result;
       }
