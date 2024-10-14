@@ -12,8 +12,11 @@ import type {
   IdentityProvider,
   OAuthProviderConfig
 } from "../types/oauth.type";
-
-import { persistLocally } from "$lib/client/persistence/persistence.utils";
+import { goto } from "../utils/browser.utils";
+import {
+  persistLocally,
+  clientStorage
+} from "../persistence/persistence.utils";
 import { postToParent } from "$lib/client/utils/embed.utils";
 import modalEvent from "../components/modal/modal.store";
 import view from "$lib/client/stores/view.store";
@@ -23,7 +26,6 @@ import {
   confirmationNotification
 } from "$lib/client/stores/notification.store";
 import { Embed, OperatingSystem } from "../types/context.type";
-import { goto } from "../utils/browser.utils";
 import { accessLogStore } from "../components/accessLogging/accesslog.store";
 import {
   ResourceAccessMode,
@@ -33,7 +35,6 @@ import { InteractionMode } from "../components/settings/interactionMode/interact
 import { Action } from "../types/action.enum";
 import type { Event } from "../types/event.enum";
 import { logger } from "../components/debug/logger.client";
-import { clientStorage } from "../persistence/persistence.utils";
 import { ClientStorageKey } from "../persistence/persistence.type";
 import { Size } from "../types/size.enum";
 import type { IRecordId } from "../types/data.type";

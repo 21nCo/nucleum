@@ -5,8 +5,10 @@
   import Title from "../Title.svelte";
   import Button from "../elements/Button.svelte";
   import { goto } from "$app/navigation";
+  import { appStore } from "$lib/client/stores/app.store";
   export let title: string;
   export let items: IGridItem[];
+  export let whitePaperUrl: string;
 </script>
 
 <Section>
@@ -19,6 +21,6 @@
   <Button
     label="White paper"
     icon="long-arrow-right"
-    on:click={() => (window.location.href = "https://docs.blanklabs.org/soft")}
+    on:click={() => appStore.openLink(whitePaperUrl)}
   />
 </Section>

@@ -20,6 +20,7 @@ import type {
   IResourceBase
 } from "../components/flux/resourceStores/resource.type";
 import { ClientStorageKey } from "./persistence.type";
+import { extractFullTabData } from "../extensions/clipper/clipper.utils";
 
 export const cloudProvider = writable(Cloud.surreal);
 
@@ -383,6 +384,29 @@ export class Persistence {
       return uploadUrl;
     } else {
       return null;
+    }
+  }
+
+  async retrieveUrlData(url: string) {
+    const response = await performApiCall("utils/n/run", "POST", {
+      url,
+      action: "get-webpage"
+    });
+    if (!response?.ok) return;
+    const data = await response.json();
+    let parsedData = null;
+    if (data?.text) {
+      parsedData = await parseHtml(data.text);
+      console.log("parsed html", parsedData);
+    }
+    return { ...data, parsedData };
+    function parseHtml(html: string) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, "text/html");
+      return extractFullTabData(doc, {
+        docText: html,
+        url
+      });
     }
   }
 }

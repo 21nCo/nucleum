@@ -1,6 +1,5 @@
 import { logger } from "../components/debug/logger.client";
 import { ClientStorageKey } from "../persistence/persistence.type";
-import { clientStorage } from "../persistence/persistence.utils";
 import { GlobalEvent } from "../types/event.enum";
 import { resolveToken, signout } from "./account.utils";
 import {
@@ -8,6 +7,7 @@ import {
   generateFingerprint,
   isExtensionEnvironment
 } from "./browser.utils";
+import { clientStorage } from "../persistence/persistence.utils";
 import { detectTimeZone } from "./time.utils";
 
 export function resolveRegionalApiUrl() {

@@ -24,15 +24,16 @@ import {
   type ISyncHandler,
   PersistenceProvider
 } from "$lib/client/persistence/persistence.type";
+import {
+  dispatchCustomEvent,
+  isExtensionEnvironment
+} from "$lib/client/utils/browser.utils";
 import { clientStorage } from "$lib/client/persistence/persistence.utils";
 import { SurrealSync } from "$lib/client/persistence/surreal/surreal.sync";
 import { generateRandomId } from "$lib/shared/utils/crypto.utils";
 import type { ISurrealDatabase } from "$lib/client/types/db.type";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
-import {
-  dispatchCustomEvent,
-  isExtensionEnvironment
-} from "$lib/client/utils/browser.utils";
+
 import { resolveCurrentUserId } from "$lib/client/utils/account.utils";
 import { GlobalEvent } from "$lib/client/types/event.enum";
 import { determineIfOffline } from "$lib/client/utils/network.utils";

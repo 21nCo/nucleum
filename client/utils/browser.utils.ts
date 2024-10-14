@@ -4,7 +4,6 @@ import { GlobalEvent, type Event } from "../types/event.enum";
 import type { IPopoverRenderParams } from "../types/popover.type";
 import { deepCopy } from "../../shared/utils/obj.utils";
 import { logger } from "../components/debug/logger.client";
-import { retrieveUrlData } from "./utils";
 import { urlMap } from "../products/memotron/common/urlMap";
 
 function documentDimensions() {
@@ -333,6 +332,7 @@ export function isExtensionEnvironment() {
   //   typeofbrowser: typeof (window as any).browser,
   //   typeofplasmo: typeof (window as any).__plasmo
   // });
+
   if (typeof chrome !== "undefined" && chrome?.runtime?.id) {
     // console.log("chrome", chrome.runtime.id);
     return true;
@@ -432,9 +432,7 @@ export async function resolveIframability(url: string): Promise<boolean> {
         resolve(true);
         return;
       }
-      const urlData = await retrieveUrlData(url);
-      console.log({ at: "resolveIframability", urlData });
-      resolve(urlData?.parsedData?.isIframeable ?? false);
+      resolve(false);
     });
   } catch (e) {
     return Promise.resolve(false);

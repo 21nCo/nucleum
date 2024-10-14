@@ -38,8 +38,9 @@ export function retrieveLocally(itemType: Resource) {
 
 class ClientKeyValueStorage {
   isExtensionEnvironment = isExtensionEnvironment();
+
   get(key: ClientStorageKey): Promise<string | null> {
-    if (this.isExtensionEnvironment) { 
+    if (this.isExtensionEnvironment) {
       return new Promise((resolve, reject) => {
         chrome.storage.local.get(key, function (data) {
           if (chrome.runtime.lastError) {
@@ -58,9 +59,9 @@ class ClientKeyValueStorage {
     if (typeof value === "object") {
       value = JSON.stringify(value);
     }
-    if (this.isExtensionEnvironment) { 
+    if (this.isExtensionEnvironment) {
       return new Promise((resolve, reject) => {
-        chrome.storage.local.set({[key]: value}, function () {
+        chrome.storage.local.set({ [key]: value }, function () {
           if (chrome.runtime.lastError) {
             reject(chrome.runtime.lastError);
           } else {
@@ -75,7 +76,7 @@ class ClientKeyValueStorage {
   }
 
   remove(key: ClientStorageKey) {
-    if (this.isExtensionEnvironment) { 
+    if (this.isExtensionEnvironment) {
       return new Promise((resolve, reject) => {
         chrome.storage.local.remove(key, function () {
           if (chrome.runtime.lastError) {
@@ -91,7 +92,7 @@ class ClientKeyValueStorage {
     }
   }
   getForSession(key: ClientStorageKey) {
-    if (this.isExtensionEnvironment) { 
+    if (this.isExtensionEnvironment) {
       return new Promise((resolve, reject) => {
         chrome.storage.local.get(key, function (data) {
           if (chrome.runtime.lastError) {
@@ -107,9 +108,9 @@ class ClientKeyValueStorage {
   }
 
   setForSession(key: ClientStorageKey, value: any) {
-      if (this.isExtensionEnvironment) { 
+    if (this.isExtensionEnvironment) {
       return new Promise((resolve, reject) => {
-        chrome.storage.local.set({[key]: value}, function () {
+        chrome.storage.local.set({ [key]: value }, function () {
           if (chrome.runtime.lastError) {
             reject(chrome.runtime.lastError);
           } else {
@@ -124,7 +125,7 @@ class ClientKeyValueStorage {
   }
 
   removeForSession(key: ClientStorageKey) {
-    if (this.isExtensionEnvironment) { 
+    if (this.isExtensionEnvironment) {
       return new Promise((resolve, reject) => {
         chrome.storage.local.remove(key, function () {
           if (chrome.runtime.lastError) {
@@ -140,7 +141,7 @@ class ClientKeyValueStorage {
     }
   }
   clearAll() {
-    if (this.isExtensionEnvironment) { 
+    if (this.isExtensionEnvironment) {
       return new Promise((resolve, reject) => {
         chrome.storage.local.clear(function () {
           if (chrome.runtime.lastError) {

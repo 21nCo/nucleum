@@ -4,8 +4,8 @@
   const topNavBarValues = {
     icon: "21n-temp",
     items: [
-      { label: "Discord", href: "https://discord.gg/kBdqn5hD" },
-      { label: "White paper", href: "https://docs.blanklabs.org/soft" }
+      { label: "Discord", href: "https://discord.com/invite/9HJqKYTZKg" },
+      { label: "White paper", href: "https://papers.21n.io/soft" }
     ]
   };
 </script>

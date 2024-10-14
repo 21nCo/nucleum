@@ -1,11 +1,11 @@
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { logger } from "../components/debug/logger.client";
 import { ClientStorageKey } from "../persistence/persistence.type";
+import { goto, isExtensionEnvironment } from "./browser.utils";
 import {
   clientStorage,
   retrieveLocally
 } from "../persistence/persistence.utils";
-import { goto, isExtensionEnvironment } from "./browser.utils";
 import { postToParent } from "./embed.utils";
 
 export async function resolveToken(): Promise<string | null> {

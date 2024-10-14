@@ -29,7 +29,8 @@
   onMount(async () => {
     isProductPage.set(isProduct);
     view.update(window.innerWidth, window.innerHeight);
-    addEntryAnimation(id);
+    if (window.location.pathname === "/" || window.location.pathname === "")
+      addEntryAnimation(id);
   });
   const windowResizeListener = (event: Event) => {
     view.update(window.innerWidth, window.innerHeight);
