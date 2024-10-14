@@ -1,3 +1,4 @@
+import { logger } from "../components/debug/logger.client";
 import type { ClipperExtensionEvent } from "../products/memotron/common/clip.type";
 import type { ExtensionEvent } from "../types/extension.type";
 import { sendToBackground } from "@plasmohq/messaging"
@@ -68,7 +69,7 @@ export async function relayToBackgroundScript(message: {event: ExtensionEvent | 
   //   });
   // });
   try {
-    console.log({ at: "relayToBackgroundScript", message, chromeRuntimeId: chrome.runtime.id });
+    logger.log({ at: "relayToBackgroundScript", message, chromeRuntimeId: chrome.runtime.id });
     const response = await sendToBackground(
       {
         name: message.event,

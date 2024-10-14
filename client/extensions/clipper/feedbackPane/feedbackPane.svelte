@@ -16,7 +16,7 @@
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   import NodeThumbnailTweetPreview from "$lib/client/products/memotron/node/thumbnail/NodeThumbnailTweetPreview.svelte";
   let notes: string = "";
-  let autoCloseDuration = 30;
+  let autoCloseDuration = 4;
   let closeTimer: any;
   let closeActionTimestamp: number;
   let isHovering = false;
