@@ -36,7 +36,8 @@
     if (isLoginFromExtensionParam && isLoginFromExtensionParam === "true") {
       const userInfo = await clientStorage.get(ClientStorageKey.USER_INFO);
       postTokenToExtension({ token, userInfo });
-      appStore.runAction(Action.EXTENSTION_LOGIN);
+      // appStore.runAction(Action.EXTENSTION_LOGIN);
+      appStore.gotoPath("/ext/login");
     } else appStore.gotoPath("/");
   });
 </script>

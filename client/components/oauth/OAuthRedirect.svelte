@@ -63,7 +63,8 @@
     if (isExtensionLogin) {
       clientStorage.removeForSession(ClientStorageKey.IS_EXTENSION_LOGIN);
       postTokenToExtension(data);
-      appStore.runAction(Action.EXTENSTION_LOGIN);
+      // appStore.runAction(Action.EXTENSTION_LOGIN);
+      appStore.gotoPath("/ext/login");
     } else if (
       ($context.os == OperatingSystem.MACOS ||
         ($context.os == OperatingSystem.IOS &&

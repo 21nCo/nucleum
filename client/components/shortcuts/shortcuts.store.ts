@@ -8,6 +8,8 @@ import type {
 } from "./shortcut.type";
 import { logger } from "../debug/logger.client";
 import { resolveModifiers } from "./shortcut.utils";
+import context from "$lib/client/stores/context.store";
+import { OperatingSystem } from "$lib/client/types/context.type";
 
 export type KeyboardShortcutsStoreType = InstanceType<typeof KeyboardShortcuts>;
 
@@ -19,7 +21,7 @@ class KeyboardShortcuts extends KeyValueStore<IKeyboardShortcutsStore> {
     return this.modify({ [action]: shortcut });
   }
   fecthKeyMap(): (IKeyboardShortcut & { action: string })[] {
-    const defaultKeyMap = get(appStore)?.appData?.shortcuts;
+    let defaultKeyMap = get(appStore)?.appData?.shortcuts;
     // const tempKeyMap = {
     //   TOGGLE_SIDEBAR: {
     //     key: "q"
@@ -45,6 +47,12 @@ class KeyboardShortcuts extends KeyValueStore<IKeyboardShortcutsStore> {
     //     modifiers: ["Shift"]
     //   }
     // };
+    const ctx = get(context);
+    if (ctx.os === OperatingSystem.WINDOWS) {
+      defaultKeyMap = JSON.parse(
+        JSON.stringify(defaultKeyMap).replaceAll("Meta", "Control")
+      );
+    }
     return Object.entries({ ...defaultKeyMap, ...this.get() })
       .map(([action, shortcut]) => ({
         action,
