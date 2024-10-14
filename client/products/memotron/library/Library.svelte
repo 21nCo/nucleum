@@ -496,7 +496,7 @@
           >
             <!-- TODO - pagination -->
             <Resources
-              data={data.slice(0, 50)}
+              data={data.slice(0, 500)}
               accessPoint={ResourceAccessPoint.LIBRARY}
               resource={selectedResource}
               arrangement={Arrangement.GRID}
