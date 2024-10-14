@@ -35,6 +35,7 @@
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import type { IHighlighter } from "../common/highlighters/highlight.type";
   import { highlightStore } from "../common/highlighters/highlight.store";
+  import { appStore } from "$lib/client/stores/app.store";
 
   export let url: string;
   export let node: any;
@@ -58,6 +59,7 @@
    * render variables
    */
   let DPR = window.devicePixelRatio;
+  let ranOnce: boolean = false;
   let scale: number = 1;
   const MIN_SCALE = 0.5;
   const MAX_SCALE = 2.3;
@@ -268,7 +270,7 @@
     if (!textLayer) {
       return "LayerCannotBeCreated";
     }
-    annots = await pdfPersistence.fetchAllClips(url);
+    // annots = await pdfPersistence.fetchAllClips(url);
 
     mainRects = annots?.filter(
       (highlight) =>
@@ -380,32 +382,35 @@
     //     console.log("checking pdfjs ", annotations);
     //   });
     // });
-    let viewport = pdfViewer?.getPageView(pageNumber - 1)?.viewport;
-    // pdfViewer.getPageView(pageNumber - 1).viewport = {
-    //   ...viewport,
-    //   scale: viewport.scale * DPR
-    // };
-    console.log(
-      "b4 viewportPositionToScaled",
-      viewport,
-      "updatedVP ",
-      "DPR ",
-      DPR,
-      "Window viewport ",
-      window.visualViewport
-    );
-    pdfViewer.getPageView(pageNumber - 1).viewport.scale = viewport.scale * DPR;
-    // let updatedViewport = pdfViewer.getPageView(pageNumber - 1).viewport;
-    //disable afterbug fix
-    console.log(
-      "render viewportPositionToScaled",
-      viewport,
-      "updatedVP ",
-      "DPR ",
-      DPR,
-      "Window viewport ",
-      window.visualViewport
-    );
+
+    if (!ranOnce) {
+      const scaleFactor =
+        pdfViewer.viewer?.style?.getPropertyValue("--scale-factor");
+      console.log(
+        "RH",
+        pdfViewer.viewer,
+        "prev valu of sf",
+        scaleFactor,
+        "scale",
+        scale,
+        "pdfViewer.currentScale",
+        pdfViewer.currentScale,
+        "viweport scale",
+        pdfViewer?.getPageView(pageNumber - 1)?.viewport.scale,
+        pdfViewer
+      );
+      if (pdfViewer.viewer)
+        pdfViewer.viewer.style.setProperty("--scale-factor", scaleFactor * DPR);
+      console.log(
+        "Rh adfter",
+        pdfViewer.viewer,
+        "prev valu of sf",
+        pdfViewer.viewer?.style?.getPropertyValue("--scale-factor"),
+        "scale",
+        scale
+      );
+      ranOnce = true;
+    }
     scale = pdfViewer.currentScale;
     totalPages = pdfViewer.pagesCount;
     for (let pageNumber = 1; pageNumber <= pdfDocument.numPages; pageNumber++) {
@@ -609,13 +614,31 @@
       if (scale <= MAX_SCALE) {
         scale = scale + 0.1;
         pdfViewer.currentScale = scale;
-        console.log("pdfViewer scale", pdfViewer.currentScale, scale);
+        const scaleFactor =
+          pdfViewer.viewer.style.getPropertyValue("--scale-factor");
+        pdfViewer.viewer.style.setProperty("--scale-factor", scaleFactor * DPR);
+        console.log(
+          "pdfViewer scale",
+          pdfViewer.currentScale,
+          scale,
+          scaleFactor,
+          DPR
+        );
       }
     } else if (option === "ZOOMOUT") {
       if (scale >= MIN_SCALE) {
         scale = scale - 0.1;
         pdfViewer.currentScale = scale;
-        console.log("pdfViewer scale", pdfViewer.currentScale, scale);
+        const scaleFactor =
+          pdfViewer.viewer.style.getPropertyValue("--scale-factor");
+        pdfViewer.viewer.style.setProperty("--scale-factor", scaleFactor * DPR);
+        console.log(
+          "pdfViewer scale",
+          pdfViewer.currentScale,
+          scale,
+          scaleFactor,
+          DPR
+        );
       }
     }
   }
@@ -815,6 +838,14 @@
    * mousedown for on spot annotations(Task and Comment)
    */
   onMount(async () => {
+    console.log(
+      "onMount",
+      pdfViewer?.viewer,
+      "prev valu of sf",
+      pdfViewer?.viewer?.style?.getPropertyValue("--scale-factor"),
+      "scale",
+      scale
+    );
     annots = await pdfPersistence.fetchAllClips();
     viewerContainerElement = document.getElementById("viewerContainer")!;
     document.addEventListener("selectionchange", debouncedSelectionHandler);
@@ -844,6 +875,9 @@
     <div class="flex gap-6 items-center search-bar flex-1">
       <div class="w-6/10 flex gap-4 items-center">
         <div class="flex items-center w-9/10">
+          {#if $appStore.env == "dev"}
+            <TextInput placeholder="enter DPR" bind:value={DPR} />
+          {/if}
           <TextInput
             placeholder="Search"
             bind:value={searchText}

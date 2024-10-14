@@ -9,6 +9,7 @@
   import type { IWebPage } from "../../node.type";
   import { UserDataMode } from "$lib/client/types/account.type";
   import account from "$lib/client/stores/account.store";
+  import { Persistence } from "$lib/client/persistence/persistence";
 
   export let node: IWebPage;
   let isLoading: boolean = true;
@@ -18,6 +19,9 @@
   onMount(async () => {
     if ($account.dataMode === UserDataMode.CLOUD) {
       isIframable = await resolveIframability(node.url);
+      //TODO - send from server if iframeable - inspecting headers
+      // const urlData = await new Persistence().retrieveUrlData(node.url);
+      // console.log({ at: "resolveIframability", urlData });
     }
     isLoading = false;
   });

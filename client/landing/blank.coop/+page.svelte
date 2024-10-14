@@ -15,6 +15,8 @@
   } from "../shared/store/shared.store";
   import TileItemsSection from "../shared/tile/TileItemsSection.svelte";
 
+  const whitePaperUrl = "https://papers.21n.io/soft";
+
   let heroInputs: IHeroInputs = {
     title: "21st century native company",
     label: "Pioneering sustainable technology for the modern era"
@@ -26,21 +28,21 @@
       title: "Truly 21st century native",
       description:
         "We named our company '21n' to remind us about how a company should be running in this century every single step of the way, and that's what we are striving to be.",
-      href: "https://docs.blanklabs.org/soft"
+      href: whitePaperUrl
     },
     {
       icon: "fluent-emoji:globe-showing-europe-africa",
       title: "Triple bottom line",
       description:
         "As a conscious company, we harness the power of business to improve lives and drive progress, all while keeping people and the planet at the forefront of our mission.",
-      href: "https://docs.blanklabs.org/soft"
+      href: whitePaperUrl
     },
     {
       icon: "fluent-emoji:glowing-star",
       title: "Cooperative",
       description:
         "We are a worker-consumer cooperative where previously uncommon practices, such as users owning the products they use and voting to end a product, are the norm.",
-      href: "https://docs.blanklabs.org/soft"
+      href: whitePaperUrl
     },
     {
       icon: "fluent-emoji:rocket",
@@ -48,7 +50,7 @@
       title: "Incubator",
       description:
         "Unlike traditional companies, each member has the opportunity to incubate their own projects and even self-disrupt our existing products.",
-      href: "https://docs.blanklabs.org/soft"
+      href: whitePaperUrl
     }
     // {
     //   icon: "fluent-emoji:world-map",
@@ -89,6 +91,10 @@
 
 <HeroSection {heroInputs} />
 
-<GridItemsSection items={corePrinciples} title="Our Core principles" />
+<GridItemsSection
+  items={corePrinciples}
+  title="Our Core principles"
+  {whitePaperUrl}
+/>
 
 <TileItemsSection items={products} title="Our products" />
