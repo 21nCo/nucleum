@@ -122,7 +122,19 @@
     boundingRect,
     rects
   }: any): ScaledPosition {
-    const viewport = pdfViewer?.getPageView(pageNumber - 1)?.viewport;
+    let viewport = pdfViewer?.getPageView(pageNumber - 1)?.viewport;
+    //disable afterbug fix
+    let DPR = window.devicePixelRatio;
+    console.log(
+      "viewportPositionToScaled",
+      viewport,
+      "DPR ",
+      DPR,
+      "Window viewport ",
+      window.visualViewport
+    );
+    // viewport *= DPR;
+    // console.log("viewportPositionToScaled after dpr *", viewport);
 
     return {
       boundingRect: viewportToScaled(boundingRect, viewport),

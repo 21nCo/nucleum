@@ -18,6 +18,7 @@
     "pdfjs-dist/build/pdf.worker.mjs",
     import.meta.url
   ).toString();
+  console.log("workersrc", pdfjs.GlobalWorkerOptions.workerSrc);
   const eventDispatcher = createEventDispatcher();
   //variables for Annotation
   export let pdfViewer: any;
@@ -132,7 +133,17 @@
         .then((pdf_document) => {
           pdf_viewer.setDocument(pdf_document);
           pdf_link_service.setDocument(pdf_document, null);
+          console.log(
+            "pdf_viewer.currentScale",
+            pdf_viewer.currentScale,
+            scale
+          );
           pdf_viewer.currentScale = scale;
+          console.log(
+            "pdf_viewer.currentScale after",
+            pdf_viewer.currentScale,
+            scale
+          );
           pdf_viewer.spreadMode = _spread_mode;
           pdfDocument = pdf_document;
           pdfViewer.eventBus.on("pagechanging", (eventt: any) => {
