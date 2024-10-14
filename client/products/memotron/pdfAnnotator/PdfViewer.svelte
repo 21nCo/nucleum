@@ -32,7 +32,7 @@
   let styles = ""; //allows component to recieve classes
   export { styles as style };
 
-  export let scale = 1.2;
+  export let scale = 1;
   const MIN_SCALE = 0.5;
   const MAX_SCALE = 2.3;
 
@@ -287,7 +287,7 @@
 
 <!-- </div> -->
 
-<!-- <style>
+<style>
   .spdfbanner {
     position: absolute;
     z-index: 10;
@@ -317,4 +317,4 @@
     border-radius: 2px;
     padding: 4px;
   }
-</style> -->
+</style>
