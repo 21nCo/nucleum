@@ -58,7 +58,8 @@
    * render variables
    */
   let DPR = window.devicePixelRatio;
-  let scale: number = 1 * DPR;
+  let scale: number = 1;
+  let ranOnce: boolean = false;
   const MIN_SCALE = 0.5;
   const MAX_SCALE = 2.3;
   let scrollTop = 0;
@@ -593,15 +594,15 @@
   function handleRenderOptions(option: string) {
     if (option === "ZOOMIN") {
       if (scale <= MAX_SCALE) {
+        if (!ranOnce) scale = scale / DPR;
+        ranOnce = true;
         scale = scale + 0.1;
-        scale *= DPR;
         pdfViewer.currentScale = scale;
         console.log("pdfViewer scale", pdfViewer.currentScale, scale);
       }
     } else if (option === "ZOOMOUT") {
       if (scale >= MIN_SCALE) {
         scale = scale - 0.1;
-        scale *= DPR;
         pdfViewer.currentScale = scale;
         console.log("pdfViewer scale", pdfViewer.currentScale, scale);
       }
