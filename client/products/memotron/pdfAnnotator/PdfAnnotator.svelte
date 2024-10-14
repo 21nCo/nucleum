@@ -59,7 +59,6 @@
    */
   let DPR = window.devicePixelRatio;
   let scale: number = 1;
-  let ranOnce: boolean = false;
   const MIN_SCALE = 0.5;
   const MAX_SCALE = 2.3;
   let scrollTop = 0;
@@ -125,18 +124,6 @@
     rects
   }: any): ScaledPosition {
     let viewport = pdfViewer?.getPageView(pageNumber - 1)?.viewport;
-    //disable afterbug fix
-    let DPR = window.devicePixelRatio;
-    console.log(
-      "viewportPositionToScaled",
-      viewport,
-      "DPR ",
-      DPR,
-      "Window viewport ",
-      window.visualViewport
-    );
-    // viewport *= DPR;
-    // console.log("viewportPositionToScaled after dpr *", viewport);
 
     return {
       boundingRect: viewportToScaled(boundingRect, viewport),
@@ -393,6 +380,32 @@
     //     console.log("checking pdfjs ", annotations);
     //   });
     // });
+    let viewport = pdfViewer?.getPageView(pageNumber - 1)?.viewport;
+    // pdfViewer.getPageView(pageNumber - 1).viewport = {
+    //   ...viewport,
+    //   scale: viewport.scale * DPR
+    // };
+    console.log(
+      "b4 viewportPositionToScaled",
+      viewport,
+      "updatedVP ",
+      "DPR ",
+      DPR,
+      "Window viewport ",
+      window.visualViewport
+    );
+    pdfViewer.getPageView(pageNumber - 1).viewport.scale = viewport.scale * DPR;
+    // let updatedViewport = pdfViewer.getPageView(pageNumber - 1).viewport;
+    //disable afterbug fix
+    console.log(
+      "render viewportPositionToScaled",
+      viewport,
+      "updatedVP ",
+      "DPR ",
+      DPR,
+      "Window viewport ",
+      window.visualViewport
+    );
     scale = pdfViewer.currentScale;
     totalPages = pdfViewer.pagesCount;
     for (let pageNumber = 1; pageNumber <= pdfDocument.numPages; pageNumber++) {
@@ -412,12 +425,12 @@
    * To scale the values of the annotation based on the current scale of the pdf viewer since the scale when annotation was created might be different from the current scale.
    */
   function scaleValues({ x1, y1, x2, y2, height, width }: any) {
-    x1 *= scale;
-    y1 *= scale;
-    x2 *= scale;
-    y2 *= scale;
-    height *= scale;
-    width *= scale;
+    x1 *= scale * DPR;
+    y1 *= scale * DPR;
+    x2 *= scale * DPR;
+    y2 *= scale * DPR;
+    height *= scale * DPR;
+    width *= scale * DPR;
     return {
       x1: x1,
       y1: y1,
@@ -594,8 +607,6 @@
   function handleRenderOptions(option: string) {
     if (option === "ZOOMIN") {
       if (scale <= MAX_SCALE) {
-        if (!ranOnce) scale = scale / DPR;
-        ranOnce = true;
         scale = scale + 0.1;
         pdfViewer.currentScale = scale;
         console.log("pdfViewer scale", pdfViewer.currentScale, scale);
