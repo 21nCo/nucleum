@@ -368,7 +368,11 @@ video {
   /* --page-border: 9px solid transparent; */
   /* --page-border: 9px solid red; */
   --spreadHorizontalWrapped-margin-LR: -3.5px;
-  --scale-factor: 1;
+  --scale-factor: 1.5;
+}
+
+:root{
+  --scale-factor: 1.5;
 }
 /**
 * To enable text selection which has been disable in the memotron app
@@ -416,8 +420,8 @@ video {
 
 .pdfViewer .page {
   direction: ltr;
-  width: 816px;
-  height: 1056px;
+  /* width: 816px;
+  height: 1056px; */
   margin: var(--page-margin);
   position: relative;
   overflow: visible;
@@ -533,20 +537,20 @@ video {
   display: none !important;
 }
 
-#outerContainer {
+/* #outerContainer {
   width: 100%;
   height: 100%;
   position: relative;
-}
+} */
 
-#mainContainer {
+/* #mainContainer {
   position: absolute;
   top: 0;
   right: 0;
   bottom: 0;
   left: 0;
   min-width: 350px;
-}
+} */
 
 #viewerContainer {
   overflow: auto;
@@ -557,7 +561,7 @@ video {
   bottom: 0;
   left: 0;
   outline: none;
-  width: 100%;
+  /* width: 100%; */
   background-color: rgba(255, 255, 255, 1);
 }
 

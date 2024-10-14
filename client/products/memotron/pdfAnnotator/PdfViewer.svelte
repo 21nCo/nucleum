@@ -133,17 +133,7 @@
         .then((pdf_document) => {
           pdf_viewer.setDocument(pdf_document);
           pdf_link_service.setDocument(pdf_document, null);
-          console.log(
-            "pdf_viewer.currentScale",
-            pdf_viewer.currentScale,
-            scale
-          );
           pdf_viewer.currentScale = scale;
-          console.log(
-            "pdf_viewer.currentScale after",
-            pdf_viewer.currentScale,
-            scale
-          );
           pdf_viewer.spreadMode = _spread_mode;
           pdfDocument = pdf_document;
           pdfViewer.eventBus.on("pagechanging", (eventt: any) => {
@@ -274,20 +264,20 @@
           />
         </span>
       </div> -->
-      <div class="spdfinner">
-        <div id="viewerContainer" bind:this={container}>
-          <div id="viewer" class="pdfViewer" />
-          <!-- <slot /> -->
-          <slot />
-        </div>
+      <!-- <div class="spdfinner"> -->
+      <div id="viewerContainer" bind:this={container}>
+        <div id="viewer" class="pdfViewer" />
+        <!-- <slot /> -->
+        <!-- <slot /> -->
       </div>
+      <!-- </div> -->
     {/if}
   </div>
 </div>
 
 <!-- </div> -->
 
-<style>
+<!-- <style>
   .spdfbanner {
     position: absolute;
     z-index: 10;
@@ -317,4 +307,4 @@
     border-radius: 2px;
     padding: 4px;
   }
-</style>
+</style> -->
