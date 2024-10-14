@@ -50,13 +50,13 @@
   let startPageNumber: number | undefined;
   let currentPageNumber: number | undefined;
   let viewerContainerElement: HTMLElement;
-  let i = 0;
   const mouseUpHandler = (event: any) =>
     handleMouseUp(event, viewerContainerElement);
   let shapeVisible = false;
 
   /**
    * render variables
+   * DPR-Device Pixel Ratio
    */
   let DPR = window.devicePixelRatio;
   let ranOnce: boolean = false;
@@ -148,21 +148,14 @@
   /**
    * To get the rect of the user selected text and display the corresponding popup next to selection and finally have the required values to add the annotation to the store.
    */
-  function selectionChangeHandler() {
-    const selection = window.getSelection();
-    if (!selection) {
-      return;
-    }
-
+  function selectionChangeHandler(selection: any) {
     const range: Range | null =
       selection?.rangeCount || 0 > 0 ? selection?.getRangeAt(0) : null;
     if (selection.isCollapsed) {
       return;
     }
     if (!range) return;
-    // console.log("selectionChangeHandler");
     const pages = getPagesFromRange(range);
-    // console.log("pages", pages);
     if (!pages || pages.length === 0) {
       return;
     }
@@ -223,6 +216,7 @@
     annotation.color = selectedColor;
     annotation.date = new Date().toLocaleDateString("en-CA");
     await pdfPersistence.saveClip(annotation);
+    annots = await pdfPersistence.fetchAllClips();
     renderHighlightLayers();
     if (removeAllRanges) removeAllRanges();
     annotation = {};
@@ -270,7 +264,6 @@
     if (!textLayer) {
       return "LayerCannotBeCreated";
     }
-    // annots = await pdfPersistence.fetchAllClips(url);
 
     mainRects = annots?.filter(
       (highlight) =>
@@ -386,29 +379,8 @@
     if (!ranOnce) {
       const scaleFactor =
         pdfViewer.viewer?.style?.getPropertyValue("--scale-factor");
-      console.log(
-        "RH",
-        pdfViewer.viewer,
-        "prev valu of sf",
-        scaleFactor,
-        "scale",
-        scale,
-        "pdfViewer.currentScale",
-        pdfViewer.currentScale,
-        "viweport scale",
-        pdfViewer?.getPageView(pageNumber - 1)?.viewport.scale,
-        pdfViewer
-      );
       if (pdfViewer.viewer)
         pdfViewer.viewer.style.setProperty("--scale-factor", scaleFactor * DPR);
-      console.log(
-        "Rh adfter",
-        pdfViewer.viewer,
-        "prev valu of sf",
-        pdfViewer.viewer?.style?.getPropertyValue("--scale-factor"),
-        "scale",
-        scale
-      );
       ranOnce = true;
     }
     scale = pdfViewer.currentScale;
@@ -427,7 +399,7 @@
   }
 
   /**
-   * To scale the values of the annotation based on the current scale of the pdf viewer since the scale when annotation was created might be different from the current scale.
+   * To scale the values of the annotation based on the current scale & current DPR of the pdf viewer since the scale & DPR when annotation was created might be different from the current scale.
    */
   function scaleValues({ x1, y1, x2, y2, height, width }: any) {
     x1 *= scale * DPR;
@@ -454,6 +426,7 @@
     else deleteAnnot = annotClickedId;
     await pdfPersistence.deleteClip(deleteAnnot);
     annotClickedComment = "";
+    annots = await pdfPersistence.fetchAllClips();
     renderHighlightLayers();
     isInlineEditBarVisible = false;
   }
@@ -465,6 +438,7 @@
   async function handleColorChange(highlighter: IHighlighter) {
     await pdfPersistence.updateClip(annotClickedId, { color: highlighter.id });
     selectedColor = highlighter.id;
+    annots = await pdfPersistence.fetchAllClips();
     renderHighlightLayers();
     isInlineEditBarVisible = false;
   }
@@ -476,6 +450,7 @@
   async function handleUpdateComment(comment: string) {
     await pdfPersistence.updateClip(annotClickedId, { comment: comment });
     annotClickedComment = "";
+    annots = await pdfPersistence.fetchAllClips();
     renderHighlightLayers();
   }
 
@@ -606,6 +581,14 @@
   }
 
   /**
+   * Fix for PDF getting cropped/skewed in larger screens for deployed version.
+   */
+  function updateScaleFactor() {
+    const scaleFactor =
+      pdfViewer.viewer.style.getPropertyValue("--scale-factor");
+    pdfViewer.viewer.style.setProperty("--scale-factor", scaleFactor * DPR);
+  }
+  /**
    * To handle events provided by pdfjs library itself, for now used for zooming later rotation can also be added here.
    * @param option
    */
@@ -614,31 +597,13 @@
       if (scale <= MAX_SCALE) {
         scale = scale + 0.1;
         pdfViewer.currentScale = scale;
-        const scaleFactor =
-          pdfViewer.viewer.style.getPropertyValue("--scale-factor");
-        pdfViewer.viewer.style.setProperty("--scale-factor", scaleFactor * DPR);
-        console.log(
-          "pdfViewer scale",
-          pdfViewer.currentScale,
-          scale,
-          scaleFactor,
-          DPR
-        );
+        updateScaleFactor();
       }
     } else if (option === "ZOOMOUT") {
       if (scale >= MIN_SCALE) {
         scale = scale - 0.1;
         pdfViewer.currentScale = scale;
-        const scaleFactor =
-          pdfViewer.viewer.style.getPropertyValue("--scale-factor");
-        pdfViewer.viewer.style.setProperty("--scale-factor", scaleFactor * DPR);
-        console.log(
-          "pdfViewer scale",
-          pdfViewer.currentScale,
-          scale,
-          scaleFactor,
-          DPR
-        );
+        updateScaleFactor();
       }
     }
   }
@@ -701,10 +666,9 @@
     event: MouseEvent,
     viewerContainerElement: HTMLElement
   ) {
-    i++;
+    viewerContainerElement?.addEventListener("mouseup", mouseUpHandler);
     falseAll();
     annotClickedComment = "";
-    console.log("handleMouseDown", i);
     if (
       event.button == 2 ||
       (annotationMode !== AnnotationType.COMMENT &&
@@ -714,7 +678,6 @@
       return;
 
     viewerContainerElement?.addEventListener("mousemove", handleMouseMove);
-    viewerContainerElement?.addEventListener("mouseup", mouseUpHandler);
     let target = event.target as HTMLElement;
     while (target && !target.classList.contains("page")) {
       target = target.parentElement as HTMLElement;
@@ -754,10 +717,13 @@
     event: MouseEvent,
     viewerContainerElement: HTMLElement
   ) {
-    console.log("handleMouseup", i);
     viewerContainerElement.removeEventListener("mousemove", handleMouseMove);
     viewerContainerElement?.removeEventListener("mouseup", mouseUpHandler);
-
+    const selection = window.getSelection();
+    if (selection) {
+      selectionChangeHandler(selection);
+      return;
+    }
     let target = event.target as HTMLElement;
     const node = asElement(target.closest(".page"));
     const endPageNumber = Number(asElement(node)?.dataset?.pageNumber);
@@ -791,7 +757,6 @@
     let height = highlightedRect.height;
     const viewport = pdfViewer?.getPageView(pageNumber - 1)?.viewport;
     let convertedRect: any = viewportToScaled(highlightedRect, viewport);
-    console.log("convertedRect", convertedRect);
     convertedRect.pageRectTop = pageRect.top / scale;
     start = null;
     end = null;
@@ -812,7 +777,6 @@
     annotCickedType = "";
     annotation.rect = boundingRect;
     annotation.pageNumber = pageNumber;
-    // console.log("handleMouseUp annotation", i, annotation);
     // popupStyle = `position: absolute; top: ${boundingRect.y1 + scrollTop + pageRectTop}px; left: ${boundingRect.x1}px;z-index: 1000;`;
     popupStyle = `position: fixed; top: ${boundingRect.y1 + pageRectTop}px; left: ${boundingRect.x1}px;z-index: 1000;`;
     if (
@@ -838,27 +802,19 @@
    * mousedown for on spot annotations(Task and Comment)
    */
   onMount(async () => {
-    console.log(
-      "onMount",
-      pdfViewer?.viewer,
-      "prev valu of sf",
-      pdfViewer?.viewer?.style?.getPropertyValue("--scale-factor"),
-      "scale",
-      scale
-    );
     annots = await pdfPersistence.fetchAllClips();
     viewerContainerElement = document.getElementById("viewerContainer")!;
-    document.addEventListener("selectionchange", debouncedSelectionHandler);
+    // document.addEventListener("selectionchange", debouncedSelectionHandler);
     document.addEventListener("keydown", handleKeyDown);
     viewerContainerElement?.addEventListener("mousedown", (event) =>
       handleMouseDown(event, viewerContainerElement)
     );
     viewerContainerElement?.addEventListener("scroll", handleScroll);
     return () => {
-      document.removeEventListener(
-        "selectionchange",
-        debouncedSelectionHandler
-      );
+      // document.removeEventListener(
+      //   "selectionchange",
+      //   debouncedSelectionHandler
+      // );
       document.removeEventListener("keydown", handleKeyDown);
       viewerContainerElement?.addEventListener("mousedown", (event) =>
         handleMouseDown(event, viewerContainerElement)
@@ -875,9 +831,6 @@
     <div class="flex gap-6 items-center search-bar flex-1">
       <div class="w-6/10 flex gap-4 items-center">
         <div class="flex items-center w-9/10">
-          {#if $appStore.env == "dev"}
-            <TextInput placeholder="enter DPR" bind:value={DPR} />
-          {/if}
           <TextInput
             placeholder="Search"
             bind:value={searchText}
