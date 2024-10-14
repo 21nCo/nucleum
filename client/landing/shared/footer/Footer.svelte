@@ -16,8 +16,10 @@
   import QrElement from "../elements/QRElement.svelte";
   import { isProductPage, isProductsPanelOpen } from "../store/shared.store";
   import ButtonAsLink from "../ButtonAsLink.svelte";
+  import { appStore } from "$lib/client/stores/app.store";
   export let products: IListItem[];
-  export let url: string = "https://blanklabs.org";
+  export let appStoreUrl: string =
+    "https://apps.apple.com/in/developer/blank-labs-private-limited/id1621745929";
 
   let isHovering = false;
   let canvas: HTMLCanvasElement;
@@ -36,25 +38,25 @@
   }
   let socials = [
     {
-      href: "https://twitter.com/blanklabs",
+      href: "https://twitter.com/21nCompany",
       icon: "x",
       primary: "hsla(0, 0%, 0%, 1)",
       isHovered: false
     },
     {
-      href: "https://discord.gg/blanklabs",
+      href: "https://discord.com/invite/9HJqKYTZKg",
       icon: "discord",
       primary: "hsla(235, 86%, 65%, 1)",
       isHovered: false
     },
     {
-      href: "https://github.com/blanklabs",
+      href: "https://www.youtube.com/@blankfellow",
       icon: "youtube",
       primary: "hsla(0, 100%, 50%, 1)",
       isHovered: false
     },
     {
-      href: "https://www.linkedin.com/company/blanklabs",
+      href: "https://www.linkedin.com/company/21n",
       icon: "linkedin",
       primary: "hsla(200, 100%, 35%, 1)",
       isHovered: false
@@ -64,27 +66,27 @@
     title: "Join us",
     href: "https://tally.so/r/wLzN8j",
     description:
-      "Become a part of Blank and join us in shaping a more sustainable and connected future through innovation and collaboration, making a difference by empowering people and preserving our planet."
+      "Become a part of 21n and join us in shaping a more sustainable and connected future through innovation and collaboration, making a difference by empowering people and preserving our planet."
   };
 
   let ourStory = {
     title: "Our Story",
-    href: "https://tally.so/r/wLzN8j"
+    href: "/about"
   };
   let information = [
     { title: "Information" },
     {
       title: "Help center",
-      href: "https://docs.blanklabs.org/soft"
+      href: "https://21native.hashnode.space"
     },
     {
       title: "Privacy policy",
-      href: "https://docs.blanklabs.org/soft"
-    },
-    {
-      title: "Terms and conditions",
-      href: "https://docs.blanklabs.org/soft"
+      href: "/privacy"
     }
+    // {
+    //   title: "Terms and conditions",
+    //   href: "/tos"
+    // }
   ];
   const combinedLI = [
     { title: "Infomration" },
@@ -110,7 +112,7 @@
       <div class="w-full flex gap-6 justify-between">
         <Box>
           <div class="flex h-full flex-col items-center justify-center gap-9">
-            <QrElement {url} enableHover={false} />
+            <QrElement url={appStoreUrl} enableHover={false} />
             <p class="text-[24px] font-medium leading-[33px]">
               Scan & Download
             </p>
@@ -137,7 +139,7 @@
               class=""
               isShort={true}
               on:click={() => {
-                window.location.href = "https://docs.blanklabs.org/soft";
+                window.location.href = "/about";
               }}
             />
           </div>
@@ -154,7 +156,7 @@
             label={joinUs.title}
             isShort={true}
             class="text-[20px]"
-            on:click={() => (window.location.href = joinUs.href)}
+            on:click={() => appStore.openLink(joinUs.href)}
           />
         </div>
       </div>
@@ -172,7 +174,7 @@
       {/if}
       <div class="mx-auto flex gap-5 mo:gap-3">
         {#each socials as social, index}
-          <div
+          <button
             style="--bg-color:{social.isHovered
               ? social.primary
               : $appearance.theme == Theme.DARK
@@ -185,11 +187,11 @@
                 height:32px;width:32px;"
             on:mouseenter={() => handleHover(index)}
             on:mouseleave={() => handleLeave(index)}
-            role="button"
             tabindex="0"
+            on:click={() => appStore.openLink(social.href)}
           >
             <SvgIcon icon={social.icon} size={Size.lg} />
-          </div>
+          </button>
         {/each}
       </div>
       <p>HQ Hyderabad</p>

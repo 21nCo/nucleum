@@ -45,7 +45,10 @@
 >
   <div class="w-[1440px] mo:w-full">
     <div class="w-full flex items-center px-5 h-12">
-      <div class="flex flex-col justify-end">
+      <button
+        class="flex flex-col justify-end"
+        on:click={() => (window.location.href = "/")}
+      >
         <div class="flex items-center gap-2">
           {#if topNavBarValues.icon}
             {@const icon = topNavBarValues.icon}
@@ -93,7 +96,7 @@
             {/if}
           </div>
         </div>
-      </div>
+      </button>
       <div class="ml-auto flex items-center dp:gap-8 tp:gap-4 mo:gap-6">
         {#if !$view.isPortrait && $isProductPage}
           <DayAndNightToggle />
@@ -116,6 +119,7 @@
           {#each topNavBarValues.items as item}
             <a
               class="block text-fgs1 text-[18px] leading-[28px] hover:text-aps1"
+              target="_blank"
               href={item.href}>{item.label}</a
             >
           {/each}

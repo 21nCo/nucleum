@@ -29,7 +29,7 @@
     | "one-center"
     | "two-center-sides"
     | "two-corners"
-    | "none" = "two-center-sides";
+    | "none" = "one-center";
 </script>
 
 <div
@@ -49,7 +49,13 @@
 
     {#if dev_gradientBgVariant === "one-center" || $view.isPortrait}
       <div
-        class="absolute mo:w-[600px] mo:h-[600px] w-[1000px] h-[1000px] rounded-full opacity-60"
+        class={cn(
+          "absolute mo:w-[600px] mo:h-[600px] rounded-full opacity-60",
+          {
+            "w-[1100px] h-[1100px]": $appearance.theme === Theme.DARK,
+            "w-[1000px] h-[1000px]": $appearance.theme !== Theme.DARK
+          }
+        )}
         style="
 background: radial-gradient(circle, {mainGradient} 0%, transparent 70%);
 top: 50%;
@@ -60,7 +66,7 @@ transform: translate(-50%, -50%);
     {:else if dev_gradientBgVariant === "two-center-sides"}
       <div
         class={cn("absolute rounded-full opacity-60", {
-          "w-[1300px] h-[1300px]": $appearance.theme === Theme.DARK,
+          "w-[1100px] h-[1100px]": $appearance.theme === Theme.DARK,
           "w-[1000px] h-[1000px]": $appearance.theme !== Theme.DARK
         })}
         style="
@@ -73,7 +79,7 @@ transform: translate(-50%, -50%);
 
       <div
         class={cn("absolute rounded-full opacity-60", {
-          "w-[1100px] h-[1100px]": $appearance.theme === Theme.DARK,
+          "w-[900px] h-[900px]": $appearance.theme === Theme.DARK,
           "w-[800px] h-[800px]": $appearance.theme !== Theme.DARK
         })}
         style="

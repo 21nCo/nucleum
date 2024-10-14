@@ -1,6 +1,7 @@
 <script lang="ts">
   import Icon from "$lib/client/elements/Icon.svelte";
   import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
+  import { appStore } from "$lib/client/stores/app.store";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import type { IGridItem } from "../Landing.types";
@@ -16,7 +17,7 @@
   }
   function onClick() {
     if (item.href) {
-      window.open(item.href, "_self");
+      appStore.openLink(item.href);
     }
   }
 </script>

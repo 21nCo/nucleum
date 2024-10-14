@@ -2,7 +2,7 @@
   import { paintQRCode } from "$lib/client/utils/ui.utils";
   import { onMount } from "svelte";
 
-  export let url: string = "https://blanklabs.org";
+  export let url: string = "https://21n.io";
   export let enableHover: boolean = true;
   export let width: number = 122;
 
