@@ -8,12 +8,12 @@ import {
 } from "../types/appearance.type";
 import colorSchemes from "$lib/client/theme/colorschemes.json";
 import { StoreDataType } from "../types/data.type";
+import { dispatchCustomEvent } from "../utils/browser.utils";
 import {
   persistLocally,
   retrieveLocally
 } from "$lib/client/persistence/persistence.utils";
 import type { UserAppearanceSettings } from "../types/preferences.type";
-import { dispatchCustomEvent } from "../utils/browser.utils";
 import { GlobalEvent } from "../types/event.enum";
 
 const defaultLightColorSchemeId = "colorscheme:clean_tidyblue_light";

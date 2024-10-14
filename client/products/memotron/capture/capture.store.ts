@@ -48,10 +48,10 @@ import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 import { appStore } from "$lib/client/stores/app.store";
 import { UserDataMode } from "$lib/client/types/account.type";
 import { MemotronAction } from "../memotronAction.enum";
-import { retrieveUrlData } from "$lib/client/utils/utils";
 import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
 import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
 import { TacoActions } from "$lib/client/types/taco.types";
+import { Persistence } from "$lib/client/persistence/persistence";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
@@ -283,7 +283,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     };
     const accountVal = account.get();
     if (accountVal?.dataMode === UserDataMode.CLOUD) {
-      const data = await retrieveUrlData(text);
+      const data = await new Persistence().retrieveUrlData(text);
       if (data?.parsedData) {
         const parsedData = data.parsedData;
         console.log("parsed html", parsedData);

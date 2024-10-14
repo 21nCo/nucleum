@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Modal from "$lib/client/components/modal/Modal.svelte";
+  // import Modal from "$lib/client/components/modal/Modal.svelte";
   import appearance from "$lib/client/stores/appearance.store";
   import view from "$lib/client/stores/view.store";
   import { addAnimateClass, bounce, cn } from "$lib/client/utils/ui.utils";
