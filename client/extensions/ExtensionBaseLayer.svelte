@@ -19,15 +19,18 @@
   import { FluxMethod } from "../components/flux/flux.type";
   import { createEventDispatcher } from "svelte";
   import { Resource } from "../components/flux/resourceStores/resource.enum";
+  import { extractProduct } from "$lib/shared/utils/utils";
   const dispatch = createEventDispatcher();
   export let id: string;
   export let stores: IStore[] = [];
-  let isMounted: boolean = false;
+  $: product = extractProduct(window.location.hostname);
+  $: isSelfPage = product.product === "memotron";
+
   onMount(async () => {
     window.addEventListener(
       "message",
       async function (event) {
-        if (event.source != window) return;
+        if (event.source != window || !isSelfPage) return;
         if (event.data.type && event.data.type == "signin") {
           await clientStorage.set(
             ClientStorageKey.STOKEN,
@@ -37,18 +40,10 @@
             ClientStorageKey.USER_INFO,
             event.data.token.userInfo
           );
-          await account.init();
-          // chrome.storage.sync.set(
-          //   {
-          //     stoken: event.data.token.token,
-          //     userInfo: event.data.token.userInfo
-          //   },
-          //   function () {
-          //     console.log("Token is stored to be used later.");
-          //     dataManager.runDboUpdate();
-          //     $account.dataMode = UserDataMode.CLOUD;
-          //   }
-          // );
+          dispatch("login", {
+            code: 1
+          });
+          await bootup();
         }
       },
       false
@@ -61,39 +56,47 @@
     const token = await resolveToken();
     if (!token) {
       dispatch("login", {
-        message: "No Login found."
+        code: -1
       });
       return;
     }
-
-    logger.log({
-      at: "ExtensionBaseLayer.svelte",
-      token,
-      account: $account
-    });
-    await account.init();
-
-    const currentUserId = await resolveCurrentUserId();
-    // const initResult = await initFlux(
-    //   stores,
-    //   PersistenceProvider.DEXIE_SURREAL,
-    //   new DexiePersistence(RemotePersistenceProvider.SURREAL),
-    //   currentUserId
-    // );
-    const initResult = await initExtensionFlux(
-      stores,
-      PersistenceProvider.DEXIE_SURREAL,
-      currentUserId
-    );
-    logger.log({ at: "initFlux", initResult });
-    if (initResult === 0) {
-      await extensionFlux({ method: FluxMethod.CLONE_DOWN });
-    } else {
-      await extensionFlux({ method: FluxMethod.SYNC_DOWN });
-      await loadInMemoryStores();
-    }
-    isMounted = true;
+    await bootup();
   });
+
+  async function bootup() {
+    try {
+      await account.init();
+      logger.log({
+        at: "ExtensionBaseLayer.svelte bootup",
+        account: $account
+      });
+
+      const currentUserId = await resolveCurrentUserId();
+      // const initResult = await initFlux(
+      //   stores,
+      //   PersistenceProvider.DEXIE_SURREAL,
+      //   new DexiePersistence(RemotePersistenceProvider.SURREAL),
+      //   currentUserId
+      // );
+      const initResult = await initExtensionFlux(
+        stores,
+        PersistenceProvider.DEXIE_SURREAL,
+        currentUserId
+      );
+      logger.log({ at: "initFlux", initResult });
+      if (initResult === 0) {
+        await extensionFlux({ method: FluxMethod.CLONE_DOWN });
+      } else {
+        await extensionFlux({ method: FluxMethod.SYNC_DOWN });
+        await loadInMemoryStores();
+      }
+    } catch (e) {
+      logger.error({
+        at: "ExtensionBaseLayer.bootup",
+        error: e
+      });
+    }
+  }
 
   async function loadInMemoryStores() {
     try {
@@ -165,7 +168,4 @@
 </div> -->
 <ExtensionThemeBase {id}>
   <slot />
-  {#if isMounted}
-    <CacheLayer />
-  {/if}
 </ExtensionThemeBase>

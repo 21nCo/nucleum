@@ -30,7 +30,7 @@
   export let id: string;
   let textClipperRef: any;
   let isSnipActive: boolean = false;
-  let loginNotification: string | null = null;
+  let loginNotification: number | null = null;
   $: contentType = resolveContentTypeForUrl($webpage.url);
   function onActivateColor(e) {
     textClipperRef.onActivateColor(e);
@@ -137,7 +137,7 @@
     fileStore,
     propertyStore
   ]}
-  on:login={(e) => (loginNotification = e.detail.message)}
+  on:login={(e) => (loginNotification = e.detail.code)}
 >
   {#if !$toolbarState?.isOpen}
     <ToolbarOpener on:click={() => toolbarState.toggle(true)} />
@@ -155,9 +155,9 @@
       on:collapse={() => toolbarState.toggle(false)}
     />
     <!-- <div out:fade={{ duration: 150 }}> -->
-    {#if loginNotification}
+    {#if loginNotification !== null}
       <LoginNotification
-        message={loginNotification}
+        bind:code={loginNotification}
         on:click={() => {
           relayToBackgroundScript({
             event: ExtensionEvent.LOGIN

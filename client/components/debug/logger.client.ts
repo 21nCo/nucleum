@@ -41,6 +41,7 @@ class Logger {
     message: any,
     type: LogType.INFO | LogType.TRACE | LogType.DEBUG = LogType.TRACE
   ) {
+    // console.log({ ...message, type: LogType[type] });
     this._log(message, type);
   }
   error(message: any) {

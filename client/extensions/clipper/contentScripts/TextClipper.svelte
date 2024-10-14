@@ -177,14 +177,15 @@
     const clips: ITextClip[] = $webpage.clips?.filter(
       (clip) => clip.contentType === NodeType.TEXT_CLIP
     ) as ITextClip[];
+    logger.log({ at: "refreshPageClips", clips });
     for (const record of clips) {
       const selection = {
-        anchorNode: elementFromQuery(record.metadata.anchorNode),
-        anchorOffset: record.metadata.anchorOffset,
-        focusNode: elementFromQuery(record.metadata.focusNode),
-        focusOffset: record.metadata.focusOffset
+        anchorNode: elementFromQuery(record.metadata?.anchorNode),
+        anchorOffset: record.metadata?.anchorOffset,
+        focusNode: elementFromQuery(record.metadata?.focusNode),
+        focusOffset: record.metadata?.focusOffset
       };
-      const container = elementFromQuery(record.metadata.container);
+      const container = elementFromQuery(record.metadata?.container);
 
       let textColor = "white";
       const highlighter = $highlightStore.highlighters.find(
@@ -212,7 +213,7 @@
       sender
     });
     if (message.event === ExtensionEvent.CLICK_FROM_SIDEPANEL) {
-      if (message.clip.id) scrollToHighlight(message.clip.id);
+      if (message.data?.clip?.id) scrollToHighlight(message.data.clip.id);
     } else if (
       message.event === ClipperExtensionEvent.RESOLVE_TEXT_HIGHLIGHTS_ORDER
     ) {

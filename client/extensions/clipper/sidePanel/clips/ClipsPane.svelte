@@ -3,7 +3,9 @@
   import { ExtensionEvent } from "$lib/client/types/extension.type";
   import {
     NodeType,
-    type IClip
+    type IClip,
+    ITextClip,
+    IVideoTimestampClip
   } from "$lib/client/products/memotron/node/node.type";
   import { relayToContentScript } from "$lib/client/utils/extension.utils";
   import TextClip from "./TextClip.svelte";
@@ -13,6 +15,7 @@
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
+  import type { IRecordId } from "$lib/client/types/data.type";
 
   export let clips: IClip[] = [];
   let transformedClips: IClip[] = [];
@@ -32,8 +35,8 @@
   async function refresh(rawClips: IClip[]) {
     if (!rawClips || rawClips.length === 0) return [];
     logger.log({ at: "refresh - ClipsPane", rawClips });
-    let textClips = [];
-    let videoTimestampClips = [];
+    let textClips: ITextClip[] = [];
+    let videoTimestampClips: IVideoTimestampClip[] = [];
     textClips = rawClips.filter(
       (clip) => clip.contentType === NodeType.TEXT_CLIP
     );
@@ -47,21 +50,28 @@
       const order = await relayToContentScript({
         event: ClipperExtensionEvent.RESOLVE_TEXT_HIGHLIGHTS_ORDER
       });
-      if (order) {
-        textClips = order.map((x) =>
-          textClips.find((clip) => clip.id === x.id)
-        );
+      logger.debug({ at: "resolveOrderAndRenderClips", order });
+      if (textClips.length > 0 && Array.isArray(order) && order.length > 0) {
+        textClips = order
+          .map((x) => textClips.find((clip) => clip.id === x.id))
+          .filter((x): x is ITextClip => x !== undefined);
       }
       return [...videoTimestampClips, ...textClips];
     }
   }
 
-  function onThumbnailClick(clipId) {
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-      chrome.tabs.sendMessage(tabs[0].id, {
-        event: ExtensionEvent.CLICK_FROM_SIDEPANEL,
+  function onThumbnailClick(clipId: IRecordId) {
+    // chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+    //   chrome.tabs.sendMessage(tabs[0].id, {
+    //     event: ExtensionEvent.CLICK_FROM_SIDEPANEL,
+    //     clip: transformedClips.find((clip) => clip.id === clipId)
+    //   });
+    // });
+    relayToContentScript({
+      event: ExtensionEvent.CLICK_FROM_SIDEPANEL,
+      data: {
         clip: transformedClips.find((clip) => clip.id === clipId)
-      });
+      }
     });
   }
 

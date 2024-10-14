@@ -187,7 +187,10 @@
     tooltip="Open Side panel"
     {...buttonParams}
     on:click={() =>
-      relayToBackgroundScript({ event: ExtensionEvent.TOGGLE_SIDEPANEL })}
+      relayToBackgroundScript({
+        event: ExtensionEvent.RUN,
+        data: { action: ExtensionEvent.TOGGLE_SIDEPANEL }
+      })}
   />
   <Button
     icon={$toolbarState.position === Placement.Right
