@@ -140,7 +140,7 @@ export function resolveUpsertQuery(resource: string, record: any) {
     id = generateResourceId(resource as any);
   }
   delete copy.id;
-  const query = `UPSERT ${id} CONTENT ${JSON.stringify(copy)};`;
+  const query = `UPSERT ${id} CONTENT ${JSON.stringify(copy, noneReplacerFn)};`;
   return { query: commonQueryReplacements(query), id };
 }
 
@@ -155,10 +155,13 @@ export function resolveMergeQuery(record: any) {
   delete recordCopy.id;
   const query = `UPDATE ${recordId} MERGE ${JSON.stringify(
     recordCopy,
-    (key, value) => (value === undefined || value === null ? `$NONE` : value)
-  )};`.replaceAll(`"$NONE"`, `NONE`);
+    noneReplacerFn
+  )};`;
   return commonQueryReplacements(query);
 }
+
+const noneReplacerFn = (key: string, value: any) =>
+  value === undefined || value === null ? `$NONE` : value;
 
 /**
  * Newer versions of Surreal SDK doesn't automatically convert the date to the surreal date format and record links. There d'format' is used for dates and removing quotes around record links to be detected as record links.
@@ -170,7 +173,8 @@ export function commonQueryReplacements(query: string) {
   return query
     .replace(dateRegex, (match, p1) => `d'${p1}'`)
     .replace(recordLinkRegex, (match, p1) => p1)
-    .replace(recordLinkRegexSingleQuotes, (match, p1) => p1);
+    .replace(recordLinkRegexSingleQuotes, (match, p1) => p1)
+    .replaceAll(`"$NONE"`, `NONE`);
 }
 
 export function resolveMutationQueryV2(mutation: IMutation) {

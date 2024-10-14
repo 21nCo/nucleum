@@ -35,7 +35,7 @@
     {@html renderMdAsHtml(
       message ??
         (is404
-          ? `Oops! The page **${erroredPath ?? ""}** you're looking for doesn't exist.`
+          ? `Oops! The page **${erroredPath ?? " "}** you're looking for doesn't exist.`
           : "We would never want you to see this page. Please chat with us or try again.")
     )}
   </span>
