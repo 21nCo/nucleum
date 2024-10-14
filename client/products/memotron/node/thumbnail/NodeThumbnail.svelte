@@ -118,9 +118,12 @@
             </span>
           {:else}
             <div
-              class={cn("h-full text-wrap text-left overflow-clip", {
-                "p-2": accessPoint !== ResourceAccessPoint.NODE_LINKS
-              })}
+              class={cn(
+                "h-full text-wrap text-left text-fgs3 text-b2 overflow-clip",
+                {
+                  "p-2": accessPoint !== ResourceAccessPoint.NODE_LINKS
+                }
+              )}
             >
               {#if item.contentType === NodeType.TWEET && contentPreview}
                 <NodeThumbnailTweetPreview text={contentPreview} />
@@ -179,7 +182,7 @@
         {:else if item.contentType === NodeType.PDF}
           <NodeThumbnailPdfPreview url={_url} />
         {:else}
-          <div class="h-full overflow-clip">
+          <div class="h-full overflow-clip text-fgs3 text-b2">
             {#if isClip && contentPreview}
               <TextClipPreview node={item} {contentPreview} />
             {:else if item.contentType === NodeType.AUDIO}

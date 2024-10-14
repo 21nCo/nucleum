@@ -351,10 +351,10 @@
       delay: 500
     }}
   >
-    {#if isNodularizable && !isFocusing}
-      <FocusRing isFocusing={false} on:click={onNodularize} />
-    {:else if isNodularizable && isFocusing}
-      <FocusRing isFocusing={true} on:click={onNodularize} />
+    {#if isNodularizable && (isBlockHovering || isDebugLeftControls || isPopoverVisible || isHovering || isFocusing)}
+      <FocusRing on:click={onNodularize} />
+      <!-- {:else if isNodularizable && isFocusing}
+      <FocusRing isFocusing={true} on:click={onNodularize} /> -->
     {:else}
       <span
         class={cn("flex w-full h-full justify-center items-center", {

@@ -82,8 +82,8 @@
           })}
         >
           {#if $node.mdParent && $node.mdParent.length > 0}
-            <header class="flex w-full px-12 py-4">
-              {#key $node.mdParent}
+            {#key $node.mdParent.map((x) => x.toString()).join(".")}
+              <header class="flex w-full px-12 py-4">
                 <NodeTitleBreadcrumbs
                   node={$node}
                   on:click={(e) => {
@@ -93,15 +93,15 @@
                     });
                   }}
                 />
-              {/key}
-            </header>
+              </header>
+            {/key}
           {/if}
           <main
             class="relative flex flex-col gap-6 pr-6 h-full w-full overflow-auto"
             on:scroll={onScroll}
           >
-            <div class="min-h-20" />
             {#if !$node.focusedBlock}
+              <div class="min-h-20" />
               {#if $node.types}
                 <span class="flex mx-12 -mb-8">
                   <NodeAvatar types={$node.types} size={40} />
@@ -132,10 +132,10 @@
                   {$node.label ?? $node.body ?? ""}
                 {/if}
               </span>
+              <div class="w-full flex px-12 -mt-4">
+                <CollectionsLane {node} />
+              </div>
             {/if}
-            <div class="w-full flex px-12 -mt-4">
-              <CollectionsLane {node} />
-            </div>
             <ResourceStatusBanner resource={node} />
             {#if $node.types && $node.types.length > 0 && !$node.focusedBlock}
               <!-- TODO - later - show properties of focused node if the focused blocks is associated with a type collection -->

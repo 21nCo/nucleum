@@ -293,7 +293,10 @@ export class ActiveNodeStore extends ActiveResourceStore<
   }
 
   async linkCollection(id: IRecordId) {
-    const result = await linker.link(this.id, id);
+    const node = this.get();
+    let src = node.id;
+    if (node.focusedBlock) src = node.focusedBlock;
+    const result = await linker.link(src, id);
     if (result) {
       this.update((n) => ({
         ...n,
@@ -306,7 +309,9 @@ export class ActiveNodeStore extends ActiveResourceStore<
 
   async unlinkCollection(id: IRecordId) {
     const node = this.get();
-    await linker.unlink(node.id, id);
+    let src = node.id;
+    if (node.focusedBlock) src = node.focusedBlock;
+    await linker.unlink(src, id);
     this.update((n) => ({
       ...n,
       collections: n.collections?.filter((x) => !isSameResource(x, id))
@@ -322,17 +327,20 @@ export class ActiveNodeStore extends ActiveResourceStore<
    * @param id
    * @param parent
    */
-  onFocus(id: string, parent: string[]) {
+  onFocus(id: IRecordId, parent: IRecordId[]) {
+    logger.debug({ at: "ActiveNodeStore.onFocus", id, parent });
+    //TODO - refresh collections, links, types
     this.update((n) => {
       n.focusedBlock = id;
-      n.parent = [...parent, id];
+      n.mdParent = [...parent, id];
       return n;
     });
   }
   unFocus() {
+    //TODO - refresh collections, links, types
     this.update((n) => {
       n.focusedBlock = undefined;
-      n.parent = [];
+      n.mdParent = [];
       return n;
     });
   }

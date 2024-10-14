@@ -33,6 +33,8 @@
   import { generateResourceId } from "$lib/client/components/flux/flux.utils";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { Size } from "$lib/client/types/size.enum";
+  import type { IRecordId } from "$lib/client/types/data.type";
+  import type { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
 
   function handleEvent(event: string, data: any) {
     logger.log({ at: "node context", event, data });
@@ -69,7 +71,11 @@
       }
     }
     focusEventSub = node.eventStore.subscribe((x) => {
-      logger.log({ at: "Node content - nodeFocusEvent", x, id: $node.id });
+      logger.debug({
+        at: "Node content - nodeFocusEvent listener",
+        x,
+        id: $node.id
+      });
       if (!x) return;
       const currentAccessMode = appStore.determineCurrentResourceAccessMode(
         $node.id
@@ -77,16 +83,21 @@
       const clickedAccessMode = appStore.determineClickAccessMode(x.event);
       console.log({ currentAccessMode, clickedAccessMode });
       if (clickedAccessMode && clickedAccessMode !== currentAccessMode) {
-        appStore.openResource(x.id, currentAccessMode);
+        appStore.openResource(x.id, clickedAccessMode);
         node.eventStore.set(undefined);
         return;
       }
+      //TODO - temp direct reload instead of within focus
+      temp_Focus(x.id, currentAccessMode);
+      node.eventStore.set(undefined);
+      return;
       const result = markdownRef?.focus(x.id);
-      if (result.status === 1) {
+      console.log({ result, id: x.id });
+      if (result?.status === 1) {
         node.onFocus(x.id, result.parent);
-      } else if (result.status === 0) {
+      } else if (result?.status === 0) {
         node.unFocus();
-      } else if (result.status === -1) {
+      } else if (result?.status === -1) {
         appStore.openResource(x.id, currentAccessMode);
       }
       node.eventStore.set(undefined);
@@ -94,6 +105,10 @@
 
     refreshId = Date.now();
   });
+
+  function temp_Focus(id: IRecordId, accessMode: ResourceAccessMode) {
+    appStore.openResource(id, accessMode);
+  }
 
   onDestroy(() => {
     focusEventSub();
@@ -129,10 +144,17 @@
       });
   }
 
+  /**
+   * TODO - disabling direct focus on blocks until all edge cases are handled for node page.
+   */
   function onFocus(e: CustomEvent) {
-    logger.log({ at: "NodeContent - onFocus", ...e.detail });
+    logger.debug({ at: "NodeContent - onFocus", ...e.detail });
     if (e.detail.id && e.detail.parent) {
-      node.onFocus(e.detail.id, e.detail.parent);
+      temp_Focus(
+        e.detail.id,
+        appStore.determineCurrentResourceAccessMode($node.id)
+      );
+      // node.onFocus(e.detail.id, e.detail.parent);
     }
   }
 
