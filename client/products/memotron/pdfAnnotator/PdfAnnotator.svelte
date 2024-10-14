@@ -57,7 +57,9 @@
   /**
    * render variables
    */
+  let DPR = window.devicePixelRatio;
   let scale: number = 1;
+  let ranOnce: boolean = false;
   const MIN_SCALE = 0.5;
   const MAX_SCALE = 2.3;
   let scrollTop = 0;
@@ -122,7 +124,19 @@
     boundingRect,
     rects
   }: any): ScaledPosition {
-    const viewport = pdfViewer?.getPageView(pageNumber - 1)?.viewport;
+    let viewport = pdfViewer?.getPageView(pageNumber - 1)?.viewport;
+    //disable afterbug fix
+    let DPR = window.devicePixelRatio;
+    console.log(
+      "viewportPositionToScaled",
+      viewport,
+      "DPR ",
+      DPR,
+      "Window viewport ",
+      window.visualViewport
+    );
+    // viewport *= DPR;
+    // console.log("viewportPositionToScaled after dpr *", viewport);
 
     return {
       boundingRect: viewportToScaled(boundingRect, viewport),
@@ -580,13 +594,17 @@
   function handleRenderOptions(option: string) {
     if (option === "ZOOMIN") {
       if (scale <= MAX_SCALE) {
+        if (!ranOnce) scale = scale / DPR;
+        ranOnce = true;
         scale = scale + 0.1;
         pdfViewer.currentScale = scale;
+        console.log("pdfViewer scale", pdfViewer.currentScale, scale);
       }
     } else if (option === "ZOOMOUT") {
       if (scale >= MIN_SCALE) {
         scale = scale - 0.1;
         pdfViewer.currentScale = scale;
+        console.log("pdfViewer scale", pdfViewer.currentScale, scale);
       }
     }
   }

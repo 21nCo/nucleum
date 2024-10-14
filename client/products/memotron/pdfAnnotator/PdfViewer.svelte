@@ -18,6 +18,7 @@
     "pdfjs-dist/build/pdf.worker.mjs",
     import.meta.url
   ).toString();
+  console.log("workersrc", pdfjs.GlobalWorkerOptions.workerSrc);
   const eventDispatcher = createEventDispatcher();
   //variables for Annotation
   export let pdfViewer: any;
@@ -31,7 +32,7 @@
   let styles = ""; //allows component to recieve classes
   export { styles as style };
 
-  export let scale = 1.2;
+  export let scale = 1;
   const MIN_SCALE = 0.5;
   const MAX_SCALE = 2.3;
 
@@ -132,7 +133,17 @@
         .then((pdf_document) => {
           pdf_viewer.setDocument(pdf_document);
           pdf_link_service.setDocument(pdf_document, null);
+          console.log(
+            "pdf_viewer.currentScale",
+            pdf_viewer.currentScale,
+            scale
+          );
           pdf_viewer.currentScale = scale;
+          console.log(
+            "pdf_viewer.currentScale after",
+            pdf_viewer.currentScale,
+            scale
+          );
           pdf_viewer.spreadMode = _spread_mode;
           pdfDocument = pdf_document;
           pdfViewer.eventBus.on("pagechanging", (eventt: any) => {
@@ -276,7 +287,7 @@
 
 <!-- </div> -->
 
-<!-- <style>
+<style>
   .spdfbanner {
     position: absolute;
     z-index: 10;
@@ -306,4 +317,4 @@
     border-radius: 2px;
     padding: 4px;
   }
-</style> -->
+</style>
