@@ -45,6 +45,7 @@
   } from "../collection/collection.utils";
   import { debouncer } from "$lib/client/utils/utils";
   import {
+    PersistenceActionType,
     SearchType,
     type IResourceSelectOrderBy
   } from "$lib/client/types/data.type";
@@ -313,6 +314,21 @@
     }
     return items;
   }
+  /**
+   * Disabling refresh on node merge mutations to avoid flickering effect in the background for repeated refreshes when editing a markdown node
+   * @param e
+   */
+  function onResourceMutation(
+    e: CustomEvent<{ resource: Resource; params: any }>
+  ) {
+    if (
+      e.detail.resource === Resource.node &&
+      e.detail.params.action === PersistenceActionType.MERGE
+    ) {
+      return;
+    }
+    refresh();
+  }
 </script>
 
 <div class="relative w-full h-full">
@@ -526,7 +542,7 @@
   syncDownOnMount={true}
   subscribeTo={availableResources}
   on:syncDown={refresh}
-  on:change={refresh}
+  on:change={onResourceMutation}
 />
 
 <style>
