@@ -335,7 +335,13 @@ export const viewportToScaled = (
   rect: LTWHP,
   { width, height }: WIDTH_HEIGHT
 ): Scaled => {
-  console.log("toscaled", width, height);
+  const DPR = window.devicePixelRatio;
+  rect.width /= DPR;
+  rect.height /= DPR;
+  rect.left /= DPR;
+  rect.top /= DPR;
+  width /= DPR;
+  height /= DPR;
   return {
     x1: rect.left,
     y1: rect.top,

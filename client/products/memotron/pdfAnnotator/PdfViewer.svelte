@@ -268,7 +268,7 @@
       <div id="viewerContainer" bind:this={container}>
         <div id="viewer" class="pdfViewer" />
         <!-- <slot /> -->
-        <!-- <slot /> -->
+        <slot />
       </div>
       <!-- </div> -->
     {/if}
