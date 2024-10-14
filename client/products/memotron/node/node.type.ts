@@ -701,7 +701,7 @@ export type IActiveNode = INode &
     file?: IFile;
     mdParent?: IRecordId[];
     accessMode: ResourceAccessMode;
-    focusedBlock?: string;
+    focusedBlock?: IRecordId;
     collections?: IRecordId[];
     types?: ICollectionExpanded[];
     wordCount?: number;

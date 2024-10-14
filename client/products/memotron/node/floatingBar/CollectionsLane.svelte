@@ -16,12 +16,13 @@
   import { resolveNodeContentLabel, resolveNodeIcon } from "../node.utils";
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { tooltip } from "$lib/client/actions/popover.action";
-  import { NodeType } from "../node.type";
+  import { headingNodeTypes, NodeType } from "../node.type";
 
   export let node: IActiveNodeStore;
   let searchQuery = "";
   let popoverRef: any;
   let searchInputRef: any;
+  $: isPreventContentTypeRender = headingNodeTypes.includes($node.contentType);
   async function onUnlink(e: CustomEvent) {
     await node.unlinkCollection(e.detail);
   }
@@ -50,38 +51,41 @@
 </script>
 
 <div class="flex gap-2 items-center justify-center h-full">
-  <button
-    class="flex items-center gap-2 h-full border border-bgs4 hover:border-fgs3 rounded-full px-2 py-0.5 text-b2 whitespace-nowrap bg-bgs2 text-fgs1"
-    on:click={() => {
-      appStore.closeResource();
-      appStore.gotoPath("/library", {
-        queryParams: {
-          resource: Resource.node,
-          type: $node.contentType.toLowerCase()
-        }
-      });
-    }}
-    use:tooltip={{
-      text: `See all ${resolveNodeContentLabel($node.contentType)} nodes`,
-      direction:
-        $node.contentType === NodeType.NODULAR_MARKDOWN
-          ? Placement.Bottom
-          : Placement.Top
-    }}
-  >
-    <Icon
-      icon={resolveNodeIcon($node.contentType)}
-      size={Size.sm}
-      class="fill-fgs1"
-    />
-    {resolveNodeContentLabel($node.contentType)}
-  </button>
-  <span class="h-full flex items-center justify-center">
-    <Divider
-      orientation={Orientation.Vertical}
-      colorStrength={ColorStrength.Strong}
-    />
-  </span>
+  {#if !isPreventContentTypeRender}
+    <button
+      class="flex items-center gap-2 h-full border border-bgs4 hover:border-fgs3 rounded-full px-2 py-0.5 text-b2 whitespace-nowrap bg-bgs2 text-fgs1"
+      on:click={() => {
+        appStore.closeResource();
+        appStore.gotoPath("/library", {
+          queryParams: {
+            resource: Resource.node,
+            type: $node.contentType.toLowerCase()
+          }
+        });
+      }}
+      use:tooltip={{
+        text: `See all ${resolveNodeContentLabel($node.contentType)} nodes`,
+        direction:
+          $node.contentType === NodeType.NODULAR_MARKDOWN
+            ? Placement.Bottom
+            : Placement.Top
+      }}
+    >
+      <Icon
+        icon={resolveNodeIcon($node.contentType)}
+        size={Size.sm}
+        class="fill-fgs1"
+      />
+      {resolveNodeContentLabel($node.contentType)}
+    </button>
+    <span class="h-full flex items-center justify-center">
+      <Divider
+        orientation={Orientation.Vertical}
+        colorStrength={ColorStrength.Strong}
+      />
+    </span>
+  {/if}
+
   {#if $node.collections && $node.collections.length > 0}
     <span>
       <LinkItems

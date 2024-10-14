@@ -18,6 +18,12 @@
   import { isReplaceableMd } from "./markdown.store";
   import { logger } from "../debug/logger.client";
   import type { IRecordId } from "$lib/client/types/data.type";
+  import {
+    isSameResource,
+    resourceInList
+  } from "../flux/resourceStores/resource.utils";
+  import Button from "$lib/client/elements/button/Button.svelte";
+  import { ButtonStyle } from "$lib/client/types/button.type";
   const dispatch = createEventDispatcher();
 
   /**
@@ -81,7 +87,7 @@
   /**
    * The heading block which is focused when nodularity is enabled via {@link isNodular}
    */
-  let focusedBlock: string | undefined = undefined;
+  let focusedBlock: IRecordId | undefined = undefined;
 
   /**
    * The block in main root markdown until which the blocks are clipped starting from focused heading block when a heading is focused.
@@ -223,11 +229,11 @@
       // });
       // childrenWithStructure = [...remaining, ...result];
       const focusedBlockIndex = childrenWithStructure.findIndex(
-        (x) => x.id === focusedBlock
+        resourceInList(focusedBlock)
       );
-      const anchorBlockIndex = childrenWithStructure.findIndex(
-        (x) => x.id === anchorBlock
-      );
+      const anchorBlockIndex = anchorBlock
+        ? childrenWithStructure.findIndex(resourceInList(anchorBlock))
+        : -1;
       let succeedingBlocks: INodeStructure[] = [];
       const preBlocks = childrenWithStructure.slice(0, focusedBlockIndex);
       if (anchorBlockIndex > 0)
@@ -267,8 +273,12 @@
    * @returns - the merged markdown
    */
   function mergeFocusedMd(focusedMd: IMarkdown) {
-    const focusedBlockIndex = md.blocks.findIndex((x) => x.id === focusedBlock);
-    const anchorBlockIndex = md.blocks.findIndex((x) => x.id === anchorBlock);
+    const focusedBlockIndex = focusedBlock
+      ? md.blocks.findIndex(resourceInList(focusedBlock))
+      : -1;
+    const anchorBlockIndex = anchorBlock
+      ? md.blocks.findIndex(resourceInList(anchorBlock))
+      : -1;
     let succeedingBlocks: IBlock[] = [];
     const preBlocks = md.blocks.slice(0, focusedBlockIndex);
     if (anchorBlockIndex > 0)
@@ -301,15 +311,15 @@
    * @param focusedBlock - the focused block id
    * @returns - the anchor block id and the index of the anchor block in the root markdown and the index of the focused block in the root markdown
    */
-  function resolveAnchorBlock(focusedBlock: string) {
+  function resolveAnchorBlock(focusedBlock: IRecordId) {
     let focusBlockIndex = -1;
     let anchorBlockIndex = undefined;
     let anchorBlock;
     focusBlockIndex =
-      childrenWithStructure.findIndex((x) => x.id === focusedBlock) ??
+      childrenWithStructure.findIndex(resourceInList(focusedBlock)) ??
       focusBlockIndex;
     const factor = childrenWithStructure.find(
-      (x) => x.id === focusedBlock
+      resourceInList(focusedBlock)
     )?.factor;
     logger.log({ focusBlockIndex, factor });
     if (!factor) return { focusBlockIndex, anchorBlockIndex };
@@ -317,7 +327,7 @@
     anchorBlock = succeedingBlocks.find((b) => b.factor <= factor);
     if (anchorBlock)
       anchorBlockIndex = childrenWithStructure.findIndex(
-        (x) => x.id === anchorBlock?.id
+        resourceInList(anchorBlock?.id)
       );
     return {
       id: anchorBlock?.id,
@@ -326,19 +336,28 @@
     };
   }
   function extractParent(id: IRecordId): IRecordId[] {
-    const parent = childrenWithStructure.find((x) => x.children?.includes(id));
+    const parent = childrenWithStructure.find((x) =>
+      x.children?.some(resourceInList(id))
+    );
     if (parent) return [...extractParent(parent.id), parent.id];
     else return node?.id ? [node?.id] : [];
   }
 
-  export function focus(blockToFocus: string) {
+  export function focus(blockToFocus: IRecordId) {
     if (!blockToFocus) return;
-    if (blockToFocus === focusedBlock) return;
-    if (blockToFocus === node?.id) {
+    logger.log({
+      at: "NodularMarkdown - focus",
+      blockToFocus,
+      focusedBlock,
+      node,
+      childrenWithStructure
+    });
+    if (focusedBlock && isSameResource(blockToFocus, focusedBlock)) return;
+    if (node && isSameResource(node, blockToFocus)) {
       unFocus();
       return { status: 0, parent: [] };
     }
-    if (childrenWithStructure.findIndex((x) => x.id === blockToFocus) == -1)
+    if (childrenWithStructure.findIndex(resourceInList(blockToFocus)) == -1)
       return { status: -1 };
     focusedBlock = blockToFocus;
     const { id, anchorBlockIndex, focusBlockIndex } =
@@ -358,13 +377,25 @@
     const parent = extractParent(blockToFocus);
     return { status: 1, parent };
   }
+  /**
+   * TODO - disabling direct focus on blocks until all edge cases are handled for node page. direct focus on capture still works.
+   * @param event
+   */
   function onBlockFocus(event: any) {
     propagateChanges(event.detail.md);
     if (!event.detail.id) return;
-    focus(event.detail.id);
-    const parent = extractParent(event.detail.id);
-    dispatch("focus", { id: event.detail.id, parent });
-    logger.log({ at: "onBlockFocus", event, parent, md });
+    if (!node) {
+      console.log({ focusedBlock, event });
+      if (focusedBlock && isSameResource(event.detail.id, focusedBlock)) {
+        unFocus();
+        return;
+      }
+      focus(event.detail.id);
+    } else {
+      const parent = extractParent(event.detail.id);
+      dispatch("focus", { id: event.detail.id, parent });
+      logger.log({ at: "onBlockFocus", event, parent, md });
+    }
   }
   export function unFocus() {
     focusedBlock = undefined;
@@ -380,6 +411,16 @@
 </script>
 
 {#key refreshId}
+  {#if focusedBlock && !node}
+    <Button
+      icon="arrow-left"
+      label="Back"
+      style={ButtonStyle.PLAIN}
+      on:click={() => {
+        unFocus();
+      }}
+    />
+  {/if}
   <Markdown
     bind:md={_md}
     id={mdId}

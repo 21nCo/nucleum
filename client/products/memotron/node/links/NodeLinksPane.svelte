@@ -52,20 +52,22 @@
     message: "",
     type: AlertType.INFO
   };
-  let previousFocus: string;
+  let previousFocus: IRecordId;
   let searchQuery: string = "";
   let isShowLinkTagFilters = false;
   let isShowLinkSuggestions = false;
   let dev_linkTagFilter: "and" | "or" = "and";
 
   onMount(async () => {
-    //TODO - refresh on focus
     await refresh();
     node.subscribe(async (x) => {
       let currentFocus = previousFocus;
-      if (!x.focusedBlock) currentFocus = x.id.toString();
+      if (!x.focusedBlock) currentFocus = x.id;
       else currentFocus = x.focusedBlock;
-      if (previousFocus != currentFocus) {
+      if (
+        !previousFocus ||
+        (previousFocus && !isSameResource(previousFocus, currentFocus))
+      ) {
         await refresh();
         previousFocus = currentFocus;
       }
