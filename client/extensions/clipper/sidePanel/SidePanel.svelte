@@ -36,19 +36,16 @@
     });
   }
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (
-      message.event === ExtensionEvent.TAB_CHANGE ||
-      message.event === ExtensionEvent.TAB_UPDATE
-    ) {
-      title = message.tab?.title;
-      isPageSaved = false;
-    } else if (message.event === ExtensionEvent.PAGE_STATE) {
+    if (message.event === ExtensionEvent.PAGE_STATE) {
       refreshState(message.data);
+      sendResponse({ status: "success", message: "State refreshed" });
     } else if (message.event === ClipperExtensionEvent.CLIPS_CHANGED) {
       //TODO testing
       logger.debug({ at: "onMessage - Clips changed", message });
       clips = message.data;
+      sendResponse({ status: "success", message: "Clips updated" });
     }
+    return true;
   });
 
   function onChannelMessage(msg: any) {
@@ -72,9 +69,11 @@
 
   //TODO - maintain a store with the data.
   async function refreshState(data: any) {
-    logger.log({ at: "refreshState", data });
+    logger.debug({ at: "SidePanel - refreshState", data });
     if (data.id) isPageSaved = true;
+    else isPageSaved = false;
     if (data.clips) clips = data.clips;
+    if (data.title) title = data.title;
     const token = await resolveToken();
     if (token && !$account) {
       account.init();

@@ -15,10 +15,12 @@
 
 <FeedbackPaneBase>
   <div class="flex flex-col gap-3 h-40 justify-between">
-    {#if code === 1 || isLoginInProgress}
+    {#if code === 1 || code === -2 || isLoginInProgress}
       <div class="flex w-full h-full justify-center items-center text-center">
         {#if code === 1}
           Login successful. Please close this page.
+        {:else if code === -2}
+          Logged out. Please login again to continue
         {:else if isLoginInProgress}
           Logging in...
         {/if}

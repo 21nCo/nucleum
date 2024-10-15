@@ -82,46 +82,33 @@
     const handleMessage = async () => {
       try {
         switch (message.event) {
-          case ExtensionEvent.TAB_CHANGE:
           case ExtensionEvent.TAB_UPDATE:
             webpage.onContextChange(message.tab);
-            return;
+            return { status: "success", message: "context changed" };
 
           case ExtensionEvent.LOGOUT:
-            loginNotification = "Logged out. Please login again to continue";
+            loginNotification = -2;
             webpage.reset();
-            return;
+            return { status: "success", message: "Logged out" };
 
           case ExtensionEvent.PAGE_STATE:
+            await webpage.refresh();
             return $webpage;
 
           case ClipperExtensionEvent.SAVE_WEBPAGE:
             await onSaveClick();
-            return { success: true };
+            return { status: "success", message: "Page saved" };
 
           case ClipperExtensionEvent.CLIP_MUTATION:
             const result = await onClipMutationFromSidePanel(message.data);
-            return result;
-
-          case ClipperExtensionEvent.PAGE_SAVING_STATUS:
-            if (message.node) {
-              webpage.propagatePageStatusFromSidebar({ id: message.node });
-              return { success: true };
-            }
-            return { success: false, error: "No node provided" };
-
-          default:
-            return { success: false, error: "Unknown event" };
+            return { status: "success", message: "Clip mutation", result };
         }
       } catch (error) {
         console.error("Error handling message:", error);
-        return { success: false, error: error.message };
       }
     };
-
-    // This keeps the message channel open for asynchronous processing
     handleMessage().then(sendResponse);
-    return true; // Indicates that the response will be sent asynchronously
+    return true;
   });
 </script>
 

@@ -113,44 +113,6 @@ export function createClipPointer() {
   return pointer;
 }
 
-export async function resolveCurrentTabData(
-  isParseDOM: boolean = false
-): Promise<TabData> {
-  const tabData = await chrome.storage.local.get("tab");
-  console.log({ tabData });
-  const tab = tabData?.tab;
-  if (!tab) return;
-  let hash = "";
-  if (!isParseDOM) {
-    return {
-      url: tab.url,
-      label: tab.title,
-      metadata: {
-        favicon: tab.favIconUrl,
-        hostname: new URL(tab.url).hostname
-      }
-    };
-  }
-  try {
-    const data = await relayToContentScript(
-      { event: ExtensionEvent.PAGE_STATE },
-      tab.id
-    );
-    return {
-      url: tab.url,
-      label: tab.title,
-      description: data.description,
-      hash,
-      metadata: {
-        favicon: tab.favIconUrl,
-        hostname: new URL(tab.url).hostname,
-        ...data.metadata
-      }
-    };
-  } catch (e) {
-    console.error("ERROR", e);
-  }
-}
 
 /**
  * Extracts full tab data from the current tab.

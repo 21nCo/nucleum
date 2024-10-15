@@ -9,6 +9,7 @@ import type {
 import type { AlertType } from "$lib/client/types/notification.type";
 export interface IWebpageStore extends IObservableStoreSubject {
   url: string;
+  title: string;
   id?: IRecordId;
   clips?: (IClip & { links: any[] })[];
   links?: string[];

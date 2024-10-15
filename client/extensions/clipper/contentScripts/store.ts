@@ -63,15 +63,15 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
   previousValue: string = "";
   constructor() {
     super("clipperContentScriptStore");
-    this.set({ url: "", clips: [] });
+    this.set({ url: "", clips: [], title: "" });
   }
 
   reset() {
-    this.set({ url: "", clips: [] });
+    this.set({ url: "", clips: [], title: "" });
   }
 
   async loader(data: any) {
-    logger.log({ at: "webpage loader", data });
+    logger.debug({ at: "webpage loader", data });
     const page = data.page;
     this.update((n) => {
       n.id = page?.id;
@@ -79,6 +79,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
         page?.clips?.length > 0 ? page.clips.filter(activeResourceFilter) : [];
       n.links = page?.links ?? [];
       n.notes = page?.notes ?? "";
+      n.title = page?.label ?? window.document.title;
       return n;
     });
     appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
@@ -101,13 +102,13 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
         }
       }
     });
-    logger.log({ at: "refresh", result });
+    logger.debug({ at: "refresh", result });
     const page =
       result && Array.isArray(result) && result.length > 0
         ? result.find((r: IWebPage) => r.url === this.get().url)
         : null;
 
-    logger.log({ at: "refresh", url: this.get().url, page, result });
+    logger.debug({ at: "refresh", url: this.get().url, page, result });
     if (!page) {
       this.loader({ page: { url: this.get().url, clips: [] } });
       return;
@@ -149,17 +150,19 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
 
   /**
   * when a tab is changed, this method is called to update the store with the new tab data.
-
-  TODO - whether to refresh or not - when a tab is changed, the content script is reinjected, and therefore the store is refreshed from dataManager refreshApp.
+  * 
   * @param tab
   * @returns
   */
   onContextChange(tab: chrome.tabs.Tab) {
     const url = resolveUrl(tab.url);
     const webpage = this.get();
-    logger.log({ at: "onContextChange", url, webpage });
-    if (url === webpage.url) return;
-    this.set({ url, clips: [] });
+    logger.debug({ at: "onContextChange", tab, url, webpage });
+    if (url === webpage.url) {
+      relayToSidePanel({ event: ExtensionEvent.PAGE_STATE, data: this.get() });
+      return;
+    }
+    this.set({ url, clips: [], title: tab.title ?? window.document.title });
     feedbackPane.reset();
     this.refresh();
   }

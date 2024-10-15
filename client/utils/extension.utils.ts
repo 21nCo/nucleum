@@ -78,7 +78,7 @@ export async function relayToBackgroundScript(message: {event: ExtensionEvent | 
       })
     return response
   } catch (error) {
-    console.error("Error sending message to background:", error)
+    console.log("Error sending message to background:", error)
     throw error
   }
 }

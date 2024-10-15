@@ -1,5 +1,6 @@
 export enum ExtensionEvent {
     /**
+     * @deprecated - use TAB_UPDATE instead
      * A tab change event - sent from background script.
      */
     TAB_CHANGE = "TAB_CHANGE",

@@ -1,7 +1,6 @@
 <!-- @deprecated - using MultimediaClipperContentScript instead -->
 <script lang="ts">
   import { onMount } from "svelte";
-  import { ClipperPersistence } from "$lib/client/extensions/clipper/clipper.persistence";
   export let colors: string[];
   function isMultimedia(element) {
     return (
@@ -32,11 +31,11 @@
       positionButtonOverElement(clipButton, target);
       document.body.appendChild(clipButton);
       clipButton.addEventListener("click", function (e) {
-        new ClipperPersistence().saveMultimedia(target, "");
-        clipButton.remove();
-        e.stopPropagation();
-        e.preventDefault();
-      });
+      //   new ClipperPersistence().saveMultimedia(target, "");
+      //   clipButton.remove();
+      //   e.stopPropagation();
+      //   e.preventDefault();
+      // });
     }
   }
 
