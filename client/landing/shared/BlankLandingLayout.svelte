@@ -40,7 +40,9 @@
 
   afterNavigate(() => {
     if (centralContainerRef) {
-      centralContainerRef.scrollTo(0, 0);
+      setTimeout(() => {
+        centralContainerRef.scrollTo(0, 0);
+      }, 10);
     }
   });
 </script>
