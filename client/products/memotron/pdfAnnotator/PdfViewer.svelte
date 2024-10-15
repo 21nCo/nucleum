@@ -18,7 +18,6 @@
     "pdfjs-dist/build/pdf.worker.mjs",
     import.meta.url
   ).toString();
-  console.log("workersrc", pdfjs.GlobalWorkerOptions.workerSrc);
   const eventDispatcher = createEventDispatcher();
   //variables for Annotation
   export let pdfViewer: any;
