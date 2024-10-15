@@ -86,11 +86,10 @@ async function performRootQuery(params: DatabaseQueryParams) {
     body,
     headers
   });
-  console.log({ endPoint, response });
   // const json = await response.text();
   // console.log({ json });
   const json = await response.json();
-  // console.log({ json });
+  console.log({ endPoint, body, json });
   return json;
 
   function resolveNamespace(dbType: CONTEXT) {
