@@ -12,6 +12,7 @@
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
+  import { convertDateStringToArray } from "$lib/client/utils/utils";
   const contentContext = getContext<any>("content");
 
   export let node: IActiveNodeStore | null = null;
@@ -118,6 +119,21 @@
             });
           }}
         >
+          <div class="flex justify-between">
+            {#if trace.date}
+              {@const [day, month, year] = convertDateStringToArray(trace.date)}
+              <p class="text-b2 font-semibold">
+                <span>{day}</span>
+                <span>{month}</span>
+                <span class="font-medium">{year}</span>
+              </p>
+            {/if}
+            {#if trace.startPageNumber}
+              <p class="text-b3 text-fgs3">
+                Page {trace.startPageNumber}
+              </p>
+            {/if}
+          </div>
           <!-- TODO - delete, link, edit actions within traces panel -->
           <!-- <button
           on:click|stopPropagation={() => handleAnnotDelete(null, trace.id)}
@@ -156,6 +172,17 @@
                 {trace.selectedText.slice(0, 100)}</span
               >
             </div>
+          {/if}
+          {#if trace.due}
+            <p class="font-medium trace.due.date">
+              <span class="font-normal">Due:</span>
+              {trace.due.date}
+            </p>
+            <!-- <CheckboxInput
+              checked={trace.due.completed}
+              label={trace.due.date}
+              class="font-medium "
+            /> -->
           {/if}
         </button>
       {/if}

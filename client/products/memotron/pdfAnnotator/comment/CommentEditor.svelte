@@ -26,7 +26,7 @@
     bind:value={comment}
     placeholder="Enter your comment"
   ></textarea>
-  {#if annotationMode === AnnotationType.TASK || editingItemType === AnnotationType.TASK}
+  {#if (annotationMode === AnnotationType.TASK && editingItemType != AnnotationType.TASK) || editingItemType === AnnotationType.TASK}
     <DatePicker date={dueDate} />
   {/if}
   <div class="flex justify-end gap-1 items-center">
@@ -43,7 +43,10 @@
         type={ButtonVariant.PRIMARY}
         label="Save"
         on:click={() => {
-          if (annotationMode === AnnotationType.TASK)
+          if (
+            editingItemType == AnnotationType.TASK ||
+            annotationMode === AnnotationType.TASK
+          )
             dispatchEvent("save", { comment, dueDate });
           else dispatchEvent("save", { comment });
         }}

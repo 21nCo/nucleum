@@ -47,6 +47,7 @@
   let container: HTMLElement;
   let start: Coords | null, locked: boolean, end: Coords | null;
   let startPageNumber: number | undefined;
+  let endPageNumber: number | undefined;
   let currentPageNumber: number | undefined;
   let viewerContainerElement: HTMLElement;
   const mouseUpHandler = (event: any) =>
@@ -163,7 +164,6 @@
       return;
     }
     const selectedText = selection.toString();
-    // console.log("Selected text range:", range);
     const rect = range.getBoundingClientRect();
     const top = rect.bottom; //+ scrollTop - 200;
     // const left = rect.right - 80;
@@ -202,17 +202,24 @@
    * @param editorValues
    */
   async function annotate(event: any, editorValues: any = {}) {
-    // console.log("annotating as", event.detail, comment);
     annotation.annotType = event.detail;
     if (
       event.detail === AnnotationType.COMMENT ||
       event.detail === AnnotationType.TASK
     ) {
       annotation.comment = editorValues.comment;
-      if (event.detail.DueDate) annotation.DueDate = editorValues.DueDate;
+      if (editorValues.dueDate) {
+        annotation.due = {};
+        annotation.due.date = new Date(editorValues.dueDate).toLocaleDateString(
+          "en-CA"
+        );
+        annotation.due.completed = false;
+      }
     }
     annotation.color = selectedColor;
     annotation.date = new Date().toLocaleDateString("en-CA");
+    annotation.startPageNumber = startPageNumber;
+    annotation.endPageNumber = endPageNumber;
     await pdfPersistence.saveClip(annotation);
     annots = await pdfPersistence.fetchAllClips();
     renderHighlightLayers();
@@ -668,6 +675,18 @@
     viewerContainerElement?.addEventListener("mouseup", mouseUpHandler);
     falseAll();
     annotClickedComment = "";
+    let target = event.target as HTMLElement;
+    // while (target && !target.classList.contains("page")) {
+    //   target = target.parentElement as HTMLElement;
+    // }
+    const node = asElement(target.closest(".page"));
+    startPageNumber = Number(node.dataset.pageNumber);
+    // if (node) {
+    //   startPageNumber = Number(node.dataset.pageNumber);
+    //   // console.log("Found ancestor with class 'page':", target.dataset.pageNumber);
+    // } else {
+    //   // console.log("No ancestor with class 'page' found");
+    // }
     if (
       event.button == 2 ||
       (annotationMode !== AnnotationType.COMMENT &&
@@ -675,16 +694,6 @@
         annotationMode !== AnnotationType.SHAPE)
     )
       return;
-    let target = event.target as HTMLElement;
-    while (target && !target.classList.contains("page")) {
-      target = target.parentElement as HTMLElement;
-    }
-    if (target) {
-      startPageNumber = Number(target.dataset.pageNumber);
-      // console.log("Found ancestor with class 'page':", target.dataset.pageNumber);
-    } else {
-      // console.log("No ancestor with class 'page' found");
-    }
     container = viewerContainerElement;
     const startTarget = asElement(event.target);
 
@@ -715,14 +724,14 @@
     viewerContainerElement: HTMLElement
   ) {
     viewerContainerElement?.removeEventListener("mouseup", mouseUpHandler);
+    let target = event.target as HTMLElement;
+    const node = asElement(target.closest(".page"));
+    endPageNumber = Number(asElement(node)?.dataset?.pageNumber);
     const selection = window.getSelection();
     if (!selection?.isCollapsed) {
       selectionChangeHandler(selection);
       return;
     }
-    let target = event.target as HTMLElement;
-    const node = asElement(target.closest(".page"));
-    const endPageNumber = Number(asElement(node)?.dataset?.pageNumber);
     if (!node || !isHTMLElement(node)) {
       return null;
     }
@@ -902,9 +911,13 @@
           style={popupStyle}
           bind:selectedColor
           on:annotate={(event) => {
-            if (event.detail == AnnotationType.COMMENT)
+            if (
+              event.detail == AnnotationType.COMMENT ||
+              event.detail == AnnotationType.TASK
+            ) {
+              annotCickedType = event.detail;
               commentEditorVisible = true;
-            else annotate(event);
+            } else annotate(event);
             inlineToolBarVisible = false;
           }}
         />
