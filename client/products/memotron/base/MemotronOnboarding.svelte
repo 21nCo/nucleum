@@ -1,5 +1,7 @@
 <script>
+  import Button from "$lib/client/elements/button/Button.svelte";
   import { appStore } from "$lib/client/stores/app.store";
+  import { ButtonVariant } from "$lib/client/types/button.type";
   import YoutubeVideoPreview from "../node/content/web/YoutubeVideoPreview.svelte";
 </script>
 
@@ -14,6 +16,20 @@
       <div class="mt-8">
         <YoutubeVideoPreview
           node={{ url: $appStore?.appData?.urls?.onboardingVideo }}
+        />
+      </div>
+    {:else}
+      <div class="flex gap-4">
+        <Button
+          label="Read the guide"
+          icon="ph:book-open-text"
+          type={ButtonVariant.PRIMARY}
+          on:click={() => appStore.openLink($appStore.appData?.urls?.guides)}
+        />
+        <Button
+          label="Join us on Discord"
+          icon="ph:discord-logo-light"
+          on:click={() => appStore.openLink($appStore.appData?.urls?.discord)}
         />
       </div>
     {/if}

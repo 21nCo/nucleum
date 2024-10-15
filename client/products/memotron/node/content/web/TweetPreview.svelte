@@ -5,6 +5,7 @@
   import { getContext, onMount } from "svelte";
   import { resolveContentPreview } from "../../node.utils";
   import type { ITweet } from "../../node.type";
+  import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   export let node: ITweet;
   const nodeContext = getContext<any>("node");
 
@@ -24,7 +25,7 @@
   }
 </script>
 
-<div class="w-full h-full flex justify-center items-center">
+<div class="w-full h-full flex flex-col gap-6 justify-center items-center">
   <button
     class="flex flex-col gap-5 p-4 hover:bg-bgs2 border border-fgs4 rounded-md w-3/4"
     on:click={() => {
@@ -58,4 +59,9 @@
       {formatDatetime($userPreferences, node.body.postedAt)}
     </div>
   </button>
+  <div class="w-3/4">
+    <InlineInfoBanner
+      content="Note: Tweets that contain images are not supported yet."
+    />
+  </div>
 </div>

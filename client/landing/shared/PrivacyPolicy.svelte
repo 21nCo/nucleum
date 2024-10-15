@@ -79,7 +79,7 @@
             style="max-width: 100%; width: 100%;  word-break: break-word;"
           >
             <b
-              ><u>Information We Collect About You and How We Collect It</u
+              ><u>Information we collect about you and how we collect it</u
               ><span id="lqtjd1qwspqrc">​</span></b
             ><span id="lqtjcy6bc67m3">​</span>
           </div>
@@ -113,9 +113,9 @@
                 class="w-full h-full outline-none text-base p-1"
                 style="max-width: 100%; width: 100%;  word-break: break-word;"
               >
-                by which you may be personally identified, such as name, e-mail
-                address and your time tracking data which you may disclose
-                either voluntarily or involuntarily (“personal information”);
+                By which you may be personally identified, such as name and
+                e-mail address which you may disclose either voluntarily or
+                involuntarily (“personal information”);
               </div>
             </div>
           </div>
@@ -135,7 +135,7 @@
                 class="w-full h-full outline-none text-base p-1"
                 style="max-width: 100%; width: 100%;  word-break: break-word;"
               >
-                that is about you but individually does not identify you, such
+                That is about you but individually does not identify you, such
                 as app usage behavior, diagnostics and crash reports.
               </div>
             </div>
@@ -163,7 +163,7 @@
             style="max-width: 100%; width: 100%;  word-break: break-word;"
           >
             <span style="font-size: 16.5727px;"
-              ><b><u>How We Use Your Information</u></b></span
+              ><b><u>How we use your information</u></b></span
             ><b
               style="caret-color: rgba(var(--colors-fgs2), 1); background-color: rgba(var(--colors-bgs2), var(--tw-bg-opacity)); font-family: var(--fontFamily-sans-0), var(--fontFamily-sans-1);"
               ><span id="lqtkegthqj68a">​</span></b
@@ -184,7 +184,7 @@
             class="w-full h-full outline-none text-base p-1"
             style="max-width: 100%; width: 100%;  word-break: break-word;"
           >
-            We use information that We collect about you or that you provide to
+            We use information that we collect about you or that you provide to
             us, including any personal information:
           </div>
         </div>
@@ -203,9 +203,8 @@
                 class="w-full h-full outline-none text-base p-1"
                 style="max-width: 100%; width: 100%;  word-break: break-word;"
               >
-                to enable cloud sync and it is completely optional to create a
-                cloud sync account or not.to present our Website and its
-                contents to you;
+                To enable cloud sync and to present our website and its contents
+                to you; (Cloud sync is optional)
               </div>
             </div>
           </div>
@@ -225,7 +224,7 @@
                 class="w-full h-full outline-none text-base p-1"
                 style="max-width: 100%; width: 100%;  word-break: break-word;"
               >
-                to fulfill any other purpose for which you provide it;
+                To fulfill any other purpose for which you provide it;
               </div>
             </div>
           </div>
@@ -245,8 +244,8 @@
                 class="w-full h-full outline-none text-base p-1"
                 style="max-width: 100%; width: 100%;  word-break: break-word;"
               >
-                to notify you about changes to our App or any products or
-                services we offer or provide though it;
+                To notify you about changes to our Apps or any products or
+                services we offer or provide through it;
               </div>
             </div>
           </div>
@@ -266,7 +265,7 @@
                 class="w-full h-full outline-none text-base p-1"
                 style="max-width: 100%; width: 100%;  word-break: break-word;"
               >
-                to allow you to participate in interactive features on our App;
+                To allow you to participate in interactive features on our Apps;
               </div>
             </div>
           </div>
@@ -286,7 +285,7 @@
                 class="w-full h-full outline-none text-base p-1"
                 style="max-width: 100%; width: 100%;  word-break: break-word;"
               >
-                in any other way we may describe when you provide the
+                In any other way we may describe when you provide the
                 information;
               </div>
             </div>
@@ -307,7 +306,7 @@
                 class="w-full h-full outline-none text-base p-1"
                 style="max-width: 100%; width: 100%;  word-break: break-word;"
               >
-                for any other purpose with your consent.
+                For any other purpose with your consent.
               </div>
             </div>
           </div>
@@ -352,7 +351,7 @@
             style="max-width: 100%; width: 100%;  word-break: break-word;"
           >
             <span style="font-size: 16.5727px;"
-              >If you signed up for cloud sync, your focus tracking and contact
+              >If you signed up for cloud sync, your app data and contact
               information will stay on our server until you request to delete
               your account or upon intimation if you are a dormant user for more
               than 365 days.</span
@@ -383,7 +382,7 @@
           >
             <span style="font-size: 16.5727px;"
               ><b
-                ><u>Disclosure of Your Information</u><span id="lqtkfn0w7hh5s"
+                ><u>Disclosure of your information</u><span id="lqtkfn0w7hh5s"
                   >​</span
                 ></b
               ><span id="lqtkfjoyjogic">​</span></span
@@ -430,7 +429,7 @@
             style="max-width: 100%; width: 100%;  word-break: break-word;"
           >
             <span style="font-size: 16.5727px;"
-              ><b><u>Accessing and Correcting Your Information</u></b></span
+              ><b><u>Accessing and correcting your information</u></b></span
             >
           </div>
         </div>
@@ -447,13 +446,15 @@
             <span style="font-size: 16.5727px;"
               >You can review and change your personal information by logging
               into your account and visiting your account profile page on our
-              apps. You may also send us an email at <i>contact@21n.io</i><span
-                id="lqtkgpfuworgd">​</span
-              > to request access to, correct or delete any personal information
-              that you have provided to us. We cannot delete your personal information
-              except by also deleting your user account. We may not accommodate a
-              request to change information if We believe the change would violate
-              any law or legal requirement or cause the information to be incorrect.</span
+              apps. You may also send us an email at <a
+                href="mailto:contact@21n.io"
+                class="text-aps1">contact@21n.io</a
+              ><span id="lqtkgpfuworgd">​</span> to request access to, correct or
+              delete any personal information that you have provided to us. We cannot
+              delete your personal information except by also deleting your user
+              account. We may not accommodate a request to change information if
+              we believe the change would violate any law or legal requirement or
+              cause the information to be incorrect.</span
             >
           </div>
         </div>
@@ -548,7 +549,11 @@
               To ask questions or comment about this privacy policy and our
               privacy practices, contact us at:
             </p>
-            <p><a href="mailto:contact@21n.io">contact@21n.io</a>.</p>
+            <p>
+              <a href="mailto:contact@21n.io" class="text-aps1"
+                >contact@21n.io</a
+              >.
+            </p>
           </div>
         </div>
       </div>

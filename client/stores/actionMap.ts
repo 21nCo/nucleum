@@ -27,6 +27,8 @@ import SupahubEmbed from "../components/cx/supahub/SupahubEmbed.svelte";
 import MdShortcuts from "../components/markdown/shortcuts/MdShortcuts.svelte";
 import CoverPicker from "../elements/coverPicker/CoverPicker.svelte";
 import SurrealLocalViewer from "../components/debug/SurrealLocalViewer.svelte";
+import PrivacyPolicy from "../landing/shared/PrivacyPolicy.svelte";
+import HashnodeEmbed from "../components/cx/hashnode/HashnodeEmbed.svelte";
 
 export const globalActions: IAction[] = [
   {
@@ -78,22 +80,41 @@ export const globalActions: IAction[] = [
     type: ActionType.LINK
   },
   {
-    action: "productguide",
-    label: "Product guide",
-    icon: "academic-cap",
-    type: ActionType.LINK
+    action: Action.GUIDES,
+    label: "Guides and docs",
+    icon: "ph:book-open-text-light",
+    isMeta: true,
+    // type: ActionType.LINK
+    type: ActionType.FUNCTION,
+    fn: async () => {
+      appStore.runAction(Action.GUIDES + "hashnode");
+    }
   },
   {
-    action: "tutorial",
-    label: "Start tutorial",
-    icon: "play",
-    isInactive: true,
+    action: Action.GUIDES + "hashnode",
+    label: "Guides and docs",
+    icon: "ph:book-open-text-light",
+    cmdLabel: ["Documentation", "Guides"],
+    type: ActionType.MODAL,
+    component: HashnodeEmbed,
+    modalParams: {
+      layout: {
+        size: Size.xxl,
+        orientation: Orientation.Horizontal,
+        ignoreSafeArea: true
+      }
+    }
+  },
+  {
+    action: "tutorials",
+    label: "Tutorials",
+    icon: "ph:youtube-logo-light",
     type: ActionType.LINK
   },
   {
     action: "downloads",
     label: "Downloads",
-    icon: "download",
+    icon: "ph:download-simple-light",
     type: ActionType.LINK
   },
   {
@@ -132,7 +153,7 @@ export const globalActions: IAction[] = [
   {
     action: "discord",
     label: "Join us on discord",
-    icon: "users",
+    icon: "ph:discord-logo-light",
     type: ActionType.LINK
   },
   {
@@ -178,7 +199,8 @@ export const globalActions: IAction[] = [
     },
     icon: "lock-closed",
     type: ActionType.MODAL,
-    contentType: ContentType.SPACE_DOC,
+    // contentType: ContentType.SPACE_DOC,
+    component: PrivacyPolicy,
     modalParams: {
       title: "Privacy policy",
       layout: {

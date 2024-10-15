@@ -24,7 +24,7 @@
 <button
   bind:this={ref}
   class={cn(
-    "flex items-center gap-3 text-b2 hover:bg-bgs2 py-1 px-2 rounded-md",
+    "flex items-center gap-3 text-b2 hover:bg-bgs2 p-2 rounded-md",
     width,
     {
       "bg-bgs2": isFocused,

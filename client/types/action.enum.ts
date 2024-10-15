@@ -21,5 +21,6 @@ export enum Action {
   MARKDOWN_SHORTCUTS = "MARKDOWN_SHORTCUTS",
   COVER_PICKER = "COVER_PICKER",
   SYNC_SETTINGS = "sync",
-  LOCAL_AI_SETTINGS = "ai"
+  LOCAL_AI_SETTINGS = "ai",
+  GUIDES = "guides"
 }

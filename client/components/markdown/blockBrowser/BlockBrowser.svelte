@@ -448,7 +448,7 @@
 
 <div
   class={cn(
-    "blockbrowser bg-bgs1 border border-brs2 backdrop-blur h-[30rem] rounded-md flex flex-col gap-12 overflow-auto styledscroll",
+    "blockbrowser bg-bgs1 border border-brs2 backdrop-blur h-[30rem] rounded-md flex flex-col gap-6 overflow-auto styledscroll",
     {
       "w-72": searchQueryString || isSingleColumnMode,
       "w-[30rem]": !searchQueryString && !isSingleColumnMode,
@@ -459,9 +459,11 @@
   {#if variant === "v1" || searchQueryString || isSingleColumnMode}
     {#if isValidArrayWithData(filteredResults)}
       {#each filteredResults as section}
-        <div class="flex flex-col items-start gap-4">
-          <Text content={section.section} style={TextStyle.SECTION_HEADING} />
-          <div class="flex flex-wrap gap-2 w-full">
+        <div class="flex flex-col items-start gap-2">
+          <div class="flex px-2">
+            <Text content={section.section} style={TextStyle.SECTION_HEADING} />
+          </div>
+          <div class="flex flex-wrap w-full">
             {#each section.children as block}
               <BlockItem
                 {block}
@@ -498,7 +500,8 @@
                   "opacity-70": section.isDisabled
                 }
               )}
-              on:click={() => (selectedSection = section.section)}
+              on:click|stopPropagation={() =>
+                (selectedSection = section.section)}
             >
               <div>{properCase(section.section)}</div>
               {#if section.badge}
@@ -509,7 +512,7 @@
         </div>
       </aside>
       <div
-        class="flex flex-col gap-2 py-4 px-2 w-72 overflow-auto styledscroll pb-20"
+        class="flex flex-col py-4 px-2 w-72 overflow-auto styledscroll pb-20"
       >
         {#each config as section}
           {#if section.section === selectedSection}
