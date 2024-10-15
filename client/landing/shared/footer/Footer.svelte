@@ -21,6 +21,9 @@
   export let appStoreUrl: string =
     "https://apps.apple.com/in/developer/blank-labs-private-limited/id1621745929";
 
+  const ourStoryBgImage =
+    import.meta.env.VITE_STATIC_URL + "/images/our-story.png";
+
   let isHovering = false;
   let canvas: HTMLCanvasElement;
   let iconColors = {
@@ -131,7 +134,7 @@
         </Box>
       </div>
       <div class="w-full flex gap-x-7">
-        <Box backgroundImage="our-story">
+        <Box backgroundImage={ourStoryBgImage}>
           <div class="w-full h-full flex items-center justify-center">
             <Button
               type="secondary"

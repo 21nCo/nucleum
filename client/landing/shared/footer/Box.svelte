@@ -11,7 +11,7 @@
     "flex flex-col w-full max-w-[390px] min-h-[356px] 2k:max-w-[450px] rounded-[20px] p-7 bg-bgs2",
     className
   )}
-  style="background-image: url('/backgroundMedia/{backgroundImage}.jpg');background-size:cover;"
+  style="background-image: url('{backgroundImage}');background-size:cover;"
 >
   <slot />
 </div>

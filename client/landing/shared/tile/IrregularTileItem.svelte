@@ -60,11 +60,7 @@
   {#if item?.image}
     {@const image = item.image}
     <div class="flex justify-center h-45% mt-9 mo:mt-4">
-      <img
-        src={`/gifs/${image}.gif`}
-        alt={item.title}
-        class={cn("object-contain")}
-      />
+      <img src={image} alt={item.title} class={cn("object-contain")} />
     </div>
   {/if}
 </button>

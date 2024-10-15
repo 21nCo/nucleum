@@ -105,7 +105,7 @@
   {#if item?.image}
     {@const image = item.image}
     <img
-      src={`/images/${image}.png`}
+      src={image}
       alt={item.title}
       class={cn(
         "absolute mo:h-[35%] object-contain bottom-1 right-1",

@@ -9,8 +9,10 @@
   import view from "$lib/client/stores/view.store";
   import { currentProductsStore, isProductPage } from "./store/shared.store";
   import Footer from "./footer/Footer.svelte";
+  import { afterNavigate } from "$app/navigation";
 
   let id: string = "centre-panel";
+  let centralContainerRef: HTMLDivElement;
   export let topNavBarValues: ITopNavBar;
   export let isComingSoon: boolean = false;
   export let isProduct: boolean = false;
@@ -35,11 +37,17 @@
   const windowResizeListener = (event: Event) => {
     view.update(window.innerWidth, window.innerHeight);
   };
+
+  afterNavigate(() => {
+    if (centralContainerRef) {
+      centralContainerRef.scrollTo(0, 0);
+    }
+  });
 </script>
 
 <LandingBaseLayer>
   <LeftPanel {isProduct} />
-  <div {id} class="w-full overflow-y-auto">
+  <div {id} class="w-full overflow-y-auto" bind:this={centralContainerRef}>
     <TopNavBar {topNavBarValues} />
     <slot />
     {#if !isComingSoon}

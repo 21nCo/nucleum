@@ -1,4 +1,4 @@
-<div class="flex flex-col gap-8 items-center h-screen">
+<div class="flex flex-col gap-8 items-center h-screen m-4">
   <div class="text-h1">Our story</div>
   <div class="flex flex-col gap-7 w-full max-w-3xl">
     <div class="bg-bgs2 rounded-[20px] p-7 flex flex-col gap-4 w-full">

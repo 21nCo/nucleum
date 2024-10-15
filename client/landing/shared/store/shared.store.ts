@@ -1,15 +1,17 @@
 import { readable, writable } from "svelte/store";
 import type { ITileItem } from "../Landing.types";
 
+const staticUrl = import.meta.env.VITE_STATIC_URL;
+
 export const currentProductsStore = readable<ITileItem[]>([
   {
-    image: "pointron-product-image",
+    image: staticUrl + "/images/product/pointron-product-image.png",
     title: "Pointron",
     label: "The one focus app that you will ever need",
     href: "https://pointron.io"
   },
   {
-    image: "memotron-product-image",
+    image: staticUrl + "/images/product/memotron-product-image.png",
     title: "Memotron",
     label: "Personal knowledge management redefined",
     href: "https://memotron.io"

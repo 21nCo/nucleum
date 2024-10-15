@@ -20,42 +20,44 @@
     }
   };
 
+  const staticUrl = import.meta.env.VITE_STATIC_URL;
+
   let features: ITileItem[] = [
     {
       title: "Powerful ways to focus",
       description:
         "Create a focus session in ways more effective than one can imagine",
 
-      image: "focusitems"
+      image: staticUrl + "/pointron/landing/focusitems.gif"
     },
     {
       title: "infinitely nested goals",
       description:
         "In a more granular manner, you can create goals and infinitely nest sub goals, attach tags to goals to track your progress.",
-      image: "goals"
+      image: staticUrl + "/pointron/landing/goals.gif"
     },
     {
       title: "Jounrnal",
       description: "",
-      image: "quickfocus"
+      image: staticUrl + "/pointron/landing/quickfocus.gif"
     },
     {
       title: "Focus goals and tasks",
       description:
         "You can work on single or multiple goals in a focus session. What's more? You can also work on tasks and add task estimations.",
-      image: "custom"
+      image: staticUrl + "/pointron/landing/custom.gif"
     },
     {
       title: "Advanced analytics",
       description:
         "When its time, make thoughtful decisions or track the progress of your goals and sub goals using powerful analytics.",
-      image: "analytics"
+      image: staticUrl + "/pointron/landing/analytics.gif"
     },
     {
       title: "Perosnalize it your way",
       description:
         "Pointron doesn’t just help you manage time it adapts to you. Personalize your productivity experience with a variety of color schemes that cater to your taste.",
-      image: "personalization"
+      image: staticUrl + "/pointron/landing/personalization.gif"
     }
   ];
 </script>

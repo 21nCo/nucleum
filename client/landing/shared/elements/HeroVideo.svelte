@@ -6,9 +6,9 @@
   }
 </script>
 
-<div class="flex w-full justify-center -mt-[80px] dp:-mt-[100px]">
+<div class="flex w-full justify-center -mt-[80px] dp:-mt-[100px] max-w-full">
   <div
-    class="relative w-[1046px] mo:w-[343px] h-[590px] mo:h-[194px] rounded-xl"
+    class="relative w-[1046px] mo:w-[343px] h-[590px] mo:h-[194px] rounded-xl max-w-full m-4"
   >
     {#if !isVideoPlaying}
       <img
