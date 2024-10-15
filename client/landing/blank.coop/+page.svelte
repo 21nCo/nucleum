@@ -18,8 +18,8 @@
   const whitePaperUrl = "https://papers.21n.io/soft";
 
   let heroInputs: IHeroInputs = {
-    title: "21st century native company",
-    label: "Pioneering sustainable technology for the modern era"
+    tagline: "21st century native company",
+    description: "Pioneering sustainable technology for the modern era"
   };
 
   let corePrinciples: IGridItem[] = [

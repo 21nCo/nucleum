@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
+  import EarlyAccess from "$lib/client/components/EarlyAccess.svelte";
   import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
   import appearance from "$lib/client/stores/appearance.store";
   import view from "$lib/client/stores/view.store";
@@ -12,7 +13,7 @@
   import Button from "./elements/Button.svelte";
   import Pulldown from "./play/Pulldown.svelte";
   import { isProductPage, isProductsPanelOpen } from "./store/shared.store";
-
+  export let isComingSoon = false;
   export let heroInputs: IHeroInputs;
   export { className as class };
   $: mainGradient =
@@ -117,8 +118,8 @@ transform: translate(-50%, -50%);
     <div
       class="flex flex-col w-full gap-6 dp:gap-8 2k:gap-12 items-center text-center relative z-10"
     >
-      {#if heroInputs.title}
-        {@const title = heroInputs.title}
+      {#if heroInputs.tagline}
+        {@const title = heroInputs.tagline}
         <div
           class={cn(
             " tp:text-[60px] lp:text-[72px] dp:text-[78px] 2k:text-[96px] lp:leading-[78px] dp:leading-[98px] font-black max-w-9/10",
@@ -133,8 +134,8 @@ transform: translate(-50%, -50%);
           {title}
         </div>
       {/if}
-      {#if heroInputs.label}
-        {@const label = heroInputs.label}
+      {#if heroInputs.description}
+        {@const label = heroInputs.description}
         <p
           class={cn(
             "mo:text-base tp:text-h3 text-h2 leading-9 mo:leading-5 h-[72px] mo:h-[66px] mo:w-[303px] max-w-8/10",
@@ -188,6 +189,8 @@ transform: translate(-50%, -50%);
           />
         {/if}
       </div>
+    {:else if isComingSoon}
+      <EarlyAccess version="V3" />
     {:else}
       <div class="absolute bottom-12 flex w-full justify-center">
         <Pulldown />

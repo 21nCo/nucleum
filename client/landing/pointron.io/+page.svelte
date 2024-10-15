@@ -4,8 +4,8 @@
   import type { IHeroInputs, ITileItem } from "../shared/Landing.types";
   import IrregularTileItemsSection from "../shared/tile/IrregularTileItemsSection.svelte";
   let heroInputs: IHeroInputs = {
-    title: "The one focus time tracker that you will ever need",
-    label:
+    tagline: "The one focus time tracker that you will ever need",
+    description:
       "In a world that constantly distracts, being time-aware is vital for productivity and personal wellbeing. Pointron simplifies this for you.",
     btn1: {
       label: "Download mobile app",

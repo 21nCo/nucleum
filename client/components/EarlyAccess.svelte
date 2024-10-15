@@ -5,8 +5,10 @@
   import { isValidEmail } from "$lib/shared/utils/text.utils";
   import { performApiCall } from "$lib/client/utils/network.utils";
   import GetEarlyAccess from "../landing/shared/GetEarlyAccess.svelte";
+  import LandingButton from "../landing/shared/elements/Button.svelte";
+  import { goto } from "$app/navigation";
 
-  export let version: "V1" | "V2" = "V1";
+  export let version: "V1" | "V2" | "V3" = "V1";
   let email = "";
   let message = "";
   let error: string | null = null;
@@ -61,6 +63,19 @@
     </div>
   {:else if version === "V2"}
     <GetEarlyAccess bind:email {onSubscribe} />
+  {:else if version === "V3"}
+    <div class="flex mo:flex-col gap-6 items-center justify-center">
+      <LandingButton
+        type="secondary"
+        label="Read our mission"
+        on:click={() => goto("/mission")}
+      />
+      <LandingButton
+        type="primary"
+        label="Get early access"
+        on:click={() => goto("/earlyaccess")}
+      />
+    </div>
   {/if}
   <div class="absolute text-b2 top-full">
     {#if message}

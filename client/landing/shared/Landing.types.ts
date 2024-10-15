@@ -18,8 +18,8 @@ export type IHeroBtn2 = {
   icon: string;
 };
 export type IHeroInputs = {
-  title: string;
-  label?: string;
+  tagline: string;
+  description?: string;
   btn1?: IHeroBtn1;
   btn2?: IHeroBtn2;
 };

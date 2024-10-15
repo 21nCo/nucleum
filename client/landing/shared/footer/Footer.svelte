@@ -155,7 +155,6 @@
           <Button
             label={joinUs.title}
             isShort={true}
-            class="text-[20px]"
             on:click={() => appStore.openLink(joinUs.href)}
           />
         </div>

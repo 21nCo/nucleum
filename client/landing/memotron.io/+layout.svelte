@@ -7,6 +7,6 @@
   };
 </script>
 
-<BlankLandingLayout {topNavBarValues}>
+<BlankLandingLayout {topNavBarValues} isComingSoon={true} isProduct={true}>
   <slot />
 </BlankLandingLayout>

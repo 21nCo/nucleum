@@ -7,10 +7,8 @@
   let email: string = "";
 </script>
 
-<Section>
-  <div
-    class={"flex flex-col items-center text-center mt-[75px] -mb-12 mo:-mb-10"}
-  >
+<div>
+  <div class="flex flex-col items-center justify-center text-center">
     {#if commingSoonSectionInputs.label}
       {@const label = commingSoonSectionInputs.label}
       <div
@@ -29,4 +27,4 @@
     {/if}
   </div>
   <EarlyAccess version="V2" />
-</Section>
+</div>
