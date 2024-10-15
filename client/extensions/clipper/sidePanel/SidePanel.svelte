@@ -3,7 +3,7 @@
   import ClipsPane from "$lib/client/extensions/clipper/sidePanel/clips/ClipsPane.svelte";
   import { ExtensionEvent } from "$lib/client/types/extension.type";
   import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
   import {
     openAppPath,
@@ -22,10 +22,14 @@
   import { linker } from "$lib/client/products/memotron/linking/link.store";
   import account from "$lib/client/stores/account.store";
   import { resolveToken } from "$lib/client/utils/account.utils";
+  import { getPort } from "@plasmohq/messaging/port";
   let mode: "clips" | "capture" = "clips";
   let title = "";
   let isPageSaved = false;
   let clips: IClip[] = [];
+
+  const channel = getPort("channel");
+
   async function onSavePageClick() {
     const page = await relayToContentScript({
       event: ClipperExtensionEvent.SAVE_WEBPAGE
@@ -42,11 +46,17 @@
       refreshState(message.data);
     } else if (message.event === ClipperExtensionEvent.CLIPS_CHANGED) {
       //TODO testing
-      logger.log({ at: "onMessage - Clips changed", message });
+      logger.debug({ at: "onMessage - Clips changed", message });
       clips = message.data;
     }
   });
+
+  function onChannelMessage(msg: any) {
+    logger.log({ at: "SidePanel - channel listener", msg });
+  }
+
   onMount(async () => {
+    channel.onMessage.addListener(onChannelMessage);
     logger.log({ at: "onMount - SidePanel" });
     const tab = await chrome.storage.local.get("tab");
     title = tab.tab.title;
@@ -56,13 +66,17 @@
     refreshState(page);
   });
 
+  onDestroy(() => {
+    channel.onMessage.removeListener(onChannelMessage);
+  });
+
   //TODO - maintain a store with the data.
   async function refreshState(data: any) {
     logger.log({ at: "refreshState", data });
     if (data.id) isPageSaved = true;
     if (data.clips) clips = data.clips;
     const token = await resolveToken();
-    if (token) {
+    if (token && !$account) {
       account.init();
     }
   }

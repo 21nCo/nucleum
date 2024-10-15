@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import { createClipPointer } from "$lib/client/extensions/clipper/clipper.utils";
   import { ExtensionEvent } from "$lib/client/types/extension.type";
   import {
@@ -10,10 +10,15 @@
   import { webpage } from "./store";
   import { appEvents } from "$lib/client/stores/notification.store";
   import { logger } from "$lib/client/components/debug/logger.client";
-  import { relayToBackgroundScript } from "$lib/client/utils/extension.utils";
+  import {
+    relayToBackgroundScript,
+    relayToSidePanel
+  } from "$lib/client/utils/extension.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
-
+  import { getPort } from "@plasmohq/messaging/port";
   let clipCount = 0;
+
+  const channel = getPort("channel");
 
   function refreshTimestamps() {
     removeAllPointers();
@@ -126,8 +131,13 @@
     }
   });
 
+  function onChannelMessage(msg: any) {
+    logger.debug({ at: "YoutubeContentScript - channel listener", msg });
+  }
+
   onMount(() => {
     clipCount = 0;
+    channel.onMessage.addListener(onChannelMessage);
     const sub = appEvents.subscribe(async (x) => {
       if (x.event === ClipperExtensionEvent.REFRESH_CLIPS_RENDERING) {
         logger.log({
@@ -142,6 +152,9 @@
     return () => {
       sub();
     };
+  });
+  onDestroy(() => {
+    channel.onMessage.removeListener(onChannelMessage);
   });
 
   async function onClick() {
@@ -159,9 +172,9 @@
     await webpage.saveClip(clipItem);
     clipCount++;
     //TODO - show feedback
-    chrome.runtime.sendMessage({
+    relayToSidePanel({
       event: ClipperExtensionEvent.CLIPS_CHANGED,
-      clips: $webpage.clips
+      data: $webpage.clips
     });
   }
   function resizeEventListener() {
