@@ -89,7 +89,9 @@
 
 <style>
   input::placeholder {
-    font-weight: lighter;
+    font-weight: 300;
+    /* Avenir needs to be lighter */
+    /* font-weight: lighter; */
     /* font-style: italic; */
     color: rgba(var(--colors-fgs2), 0.4);
   }
