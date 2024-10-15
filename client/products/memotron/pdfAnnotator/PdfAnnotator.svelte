@@ -35,7 +35,6 @@
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import type { IHighlighter } from "../common/highlighters/highlight.type";
   import { highlightStore } from "../common/highlighters/highlight.store";
-  import { appStore } from "$lib/client/stores/app.store";
 
   export let url: string;
   export let node: any;
@@ -117,7 +116,7 @@
   let mainRects: any = [];
 
   /**
-   * To convert top left height widht to coordinates and height & width of the page.
+   * To convert top left height width to coordinates and height & width of the page.
    * No actual scalling happens here.
    */
   function viewportPositionToScaled({
@@ -886,7 +885,11 @@
         size={Size.sm}
         label="Download"
         on:click={() =>
-          embedAnnotationsandDownload(url, $userPreferences.annotations)}
+          embedAnnotationsandDownload(
+            url,
+            annots,
+            $highlightStore.highlighters
+          )}
       />
       <!-- <button
     on:click={deleleAllAnnotations}

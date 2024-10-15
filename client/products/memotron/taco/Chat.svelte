@@ -16,6 +16,11 @@
   let index = 0;
   let question: string = "";
   let answer: string = "";
+
+  function resetLoadingState() {
+    isLoading = false;
+    index = 0;
+  }
   async function onQuestion() {
     isLoading = true;
     typeWriter();
@@ -34,6 +39,11 @@
     //     question: question
     //   }
     // });
+    if (node.length == 0) {
+      answer = "No relevant information found";
+      resetLoadingState();
+      return;
+    }
     tacoWorker.postMessage({
       action: TacoActions.GET_ANSWER,
       params: {
@@ -46,8 +56,7 @@
         resolve(e.data);
       };
     });
-    isLoading = false;
-    index = 0;
+    resetLoadingState();
   }
 
   function typeWriter() {
