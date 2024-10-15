@@ -30,7 +30,30 @@ export function generateUID() {
 export function padToTwo(x: number) {
   return x.toString().padStart(2, "0");
 }
-
+/**
+ * Converts Date String from YYYY-MM-DD format to [DD,Month,YYYY] array
+ * @param dateString
+ * @returns
+ */
+export function convertDateStringToArray(dateString: string) {
+  const [year, month, day] = dateString.split("-");
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December"
+  ];
+  const monthName = monthNames[parseInt(month, 10) - 1];
+  return [parseInt(day, 10), monthName, parseInt(year, 10)];
+}
 export function getUserDate(timestamp: number, dayStart: string = "00:00") {
   let dayStartTimeParts = dayStart.split(":");
   let startHours = +dayStartTimeParts[0];

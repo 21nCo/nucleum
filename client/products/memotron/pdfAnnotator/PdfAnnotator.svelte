@@ -35,7 +35,6 @@
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import type { IHighlighter } from "../common/highlighters/highlight.type";
   import { highlightStore } from "../common/highlighters/highlight.store";
-  import { appStore } from "$lib/client/stores/app.store";
 
   export let url: string;
   export let node: any;
@@ -48,6 +47,7 @@
   let container: HTMLElement;
   let start: Coords | null, locked: boolean, end: Coords | null;
   let startPageNumber: number | undefined;
+  let endPageNumber: number | undefined;
   let currentPageNumber: number | undefined;
   let viewerContainerElement: HTMLElement;
   const mouseUpHandler = (event: any) =>
@@ -117,7 +117,7 @@
   let mainRects: any = [];
 
   /**
-   * To convert top left height widht to coordinates and height & width of the page.
+   * To convert top left height width to coordinates and height & width of the page.
    * No actual scalling happens here.
    */
   function viewportPositionToScaled({
@@ -164,7 +164,6 @@
       return;
     }
     const selectedText = selection.toString();
-    // console.log("Selected text range:", range);
     const rect = range.getBoundingClientRect();
     const top = rect.bottom; //+ scrollTop - 200;
     // const left = rect.right - 80;
@@ -183,7 +182,8 @@
     };
     falseAll();
     annotClickedComment = "";
-    popupStyle = `position: fixed; top: ${top}px; left: ${left}px;z-index: 2000;`;
+    // popupStyle = `position: fixed; top: ${top}px; left: ${left}px;z-index: 2000;`;
+    popupStyle = `position: fixed; top: ${end?.y}px; left: ${end?.x}px;z-index: 2000;`;
     if (annotationMode !== AnnotationType.NONE) {
       if (
         annotationMode === AnnotationType.COMMENT ||
@@ -196,25 +196,30 @@
     } else inlineToolBarVisible = true;
   }
 
-  const debouncedSelectionHandler = debouncer(selectionChangeHandler, 500);
-
   /**
    * To add the annotation to the store and eventually persisting.
    * @param event
    * @param editorValues
    */
   async function annotate(event: any, editorValues: any = {}) {
-    // console.log("annotating as", event.detail, comment);
     annotation.annotType = event.detail;
     if (
       event.detail === AnnotationType.COMMENT ||
       event.detail === AnnotationType.TASK
     ) {
       annotation.comment = editorValues.comment;
-      if (event.detail.DueDate) annotation.DueDate = editorValues.DueDate;
+      if (editorValues.dueDate) {
+        annotation.due = {};
+        annotation.due.date = new Date(editorValues.dueDate).toLocaleDateString(
+          "en-CA"
+        );
+        annotation.due.completed = false;
+      }
     }
     annotation.color = selectedColor;
     annotation.date = new Date().toLocaleDateString("en-CA");
+    annotation.startPageNumber = startPageNumber;
+    annotation.endPageNumber = endPageNumber;
     await pdfPersistence.saveClip(annotation);
     annots = await pdfPersistence.fetchAllClips();
     renderHighlightLayers();
@@ -250,7 +255,8 @@
     commentEditorVisible = false;
     inlineToolBarVisible = false;
     isInlineEditBarVisible = false;
-    popupStyle = `position: fixed; top: ${top}px; left: ${left}px;z-index: 1000;`;
+    // popupStyle = `position: fixed; top: ${top}px; left: ${left}px;z-index: 1000;`;
+    popupStyle = `position: fixed; top: ${end?.y}px; left: ${end?.x}px;z-index: 1000;`;
     isInlineEditBarVisible = true;
   }
 
@@ -634,26 +640,26 @@
   };
 
   /**
-   * The function is used to draw the shape, the box which you see responsively getting expanded or reduced based on mouse movement for area selection is based on this mousemove event listener's callback function.
+   * Temporary Use: to position all popups in page
+   * Actual Use: The function is used to draw the shape, the box which you see responsively getting expanded or reduced based on mouse movement for area selection is based on this mousemove event listener's callback function.
    */
   function handleMouseMove(event: MouseEvent) {
-    // console.log("mousemove in MouseSelection.tsx");
-    let target = event.target as HTMLElement;
-    while (target && !target.classList.contains("page")) {
-      target = target.parentElement as HTMLElement;
-    }
-    if (target) {
-      currentPageNumber = Number(target.dataset.pageNumber);
-    }
-    if (!start || locked || currentPageNumber !== startPageNumber) {
-      return;
-    }
-
-    // end = containerCoords(event.pageX, event.pageY);
-    // console.log("mouse move", end);
     end = { x: event.pageX, y: event.pageY };
-    clickBoundingRect = getBoundingRectSE(start, end);
-    if (annotationMode === AnnotationType.SHAPE) shapeVisible = true;
+    // let target = event.target as HTMLElement;
+    // while (target && !target.classList.contains("page")) {
+    //   target = target.parentElement as HTMLElement;
+    // }
+    // if (target) {
+    //   currentPageNumber = Number(target.dataset.pageNumber);
+    // }
+    // if (!start || locked || currentPageNumber !== startPageNumber) {
+    //   return;
+    // }
+
+    // // end = containerCoords(event.pageX, event.pageY);
+    // // console.log("mouse move", end);
+    // clickBoundingRect = getBoundingRectSE(start, end);
+    // if (annotationMode === AnnotationType.SHAPE) shapeVisible = true;
   }
 
   /**
@@ -669,6 +675,18 @@
     viewerContainerElement?.addEventListener("mouseup", mouseUpHandler);
     falseAll();
     annotClickedComment = "";
+    let target = event.target as HTMLElement;
+    // while (target && !target.classList.contains("page")) {
+    //   target = target.parentElement as HTMLElement;
+    // }
+    const node = asElement(target.closest(".page"));
+    startPageNumber = Number(node.dataset.pageNumber);
+    // if (node) {
+    //   startPageNumber = Number(node.dataset.pageNumber);
+    //   // console.log("Found ancestor with class 'page':", target.dataset.pageNumber);
+    // } else {
+    //   // console.log("No ancestor with class 'page' found");
+    // }
     if (
       event.button == 2 ||
       (annotationMode !== AnnotationType.COMMENT &&
@@ -676,18 +694,6 @@
         annotationMode !== AnnotationType.SHAPE)
     )
       return;
-
-    viewerContainerElement?.addEventListener("mousemove", handleMouseMove);
-    let target = event.target as HTMLElement;
-    while (target && !target.classList.contains("page")) {
-      target = target.parentElement as HTMLElement;
-    }
-    if (target) {
-      startPageNumber = Number(target.dataset.pageNumber);
-      // console.log("Found ancestor with class 'page':", target.dataset.pageNumber);
-    } else {
-      // console.log("No ancestor with class 'page' found");
-    }
     container = viewerContainerElement;
     const startTarget = asElement(event.target);
 
@@ -717,16 +723,15 @@
     event: MouseEvent,
     viewerContainerElement: HTMLElement
   ) {
-    viewerContainerElement.removeEventListener("mousemove", handleMouseMove);
     viewerContainerElement?.removeEventListener("mouseup", mouseUpHandler);
+    let target = event.target as HTMLElement;
+    const node = asElement(target.closest(".page"));
+    endPageNumber = Number(asElement(node)?.dataset?.pageNumber);
     const selection = window.getSelection();
-    if (selection) {
+    if (!selection?.isCollapsed) {
       selectionChangeHandler(selection);
       return;
     }
-    let target = event.target as HTMLElement;
-    const node = asElement(target.closest(".page"));
-    const endPageNumber = Number(asElement(node)?.dataset?.pageNumber);
     if (!node || !isHTMLElement(node)) {
       return null;
     }
@@ -735,7 +740,6 @@
     if (!start || startPageNumber !== endPageNumber) {
       return;
     }
-    // console.log("mouseup in MouseSelection.tsx", event.pageX, event.pageY);
     // end = containerCoords(event.pageX, event.pageY);
     end = { x: event.pageX, y: event.pageY };
     if (annotationMode === AnnotationType.SHAPE) {
@@ -759,10 +763,10 @@
     let convertedRect: any = viewportToScaled(highlightedRect, viewport);
     convertedRect.pageRectTop = pageRect.top / scale;
     start = null;
-    end = null;
     locked = true;
     if (height == 0 && width == 0)
       handleMouseEvent(convertedRect, endPageNumber!, pageRect.top / scale);
+    end = null;
     clickBoundingRect = null;
   }
 
@@ -777,8 +781,8 @@
     annotCickedType = "";
     annotation.rect = boundingRect;
     annotation.pageNumber = pageNumber;
-    // popupStyle = `position: absolute; top: ${boundingRect.y1 + scrollTop + pageRectTop}px; left: ${boundingRect.x1}px;z-index: 1000;`;
-    popupStyle = `position: fixed; top: ${boundingRect.y1 + pageRectTop}px; left: ${boundingRect.x1}px;z-index: 1000;`;
+    // popupStyle = `position: fixed; top: ${boundingRect.y1 + pageRectTop}px; left: ${boundingRect.x1}px;z-index: 1000;`;
+    popupStyle = `position: fixed; top: ${end?.y}px; left: ${end?.x}px;z-index: 1000;`;
     if (
       annotationMode === AnnotationType.COMMENT ||
       annotationMode === AnnotationType.TASK
@@ -804,22 +808,20 @@
   onMount(async () => {
     annots = await pdfPersistence.fetchAllClips();
     viewerContainerElement = document.getElementById("viewerContainer")!;
-    // document.addEventListener("selectionchange", debouncedSelectionHandler);
     document.addEventListener("keydown", handleKeyDown);
     viewerContainerElement?.addEventListener("mousedown", (event) =>
       handleMouseDown(event, viewerContainerElement)
     );
     viewerContainerElement?.addEventListener("scroll", handleScroll);
+    viewerContainerElement?.addEventListener("mousemove", handleMouseMove);
     return () => {
-      // document.removeEventListener(
-      //   "selectionchange",
-      //   debouncedSelectionHandler
-      // );
       document.removeEventListener("keydown", handleKeyDown);
       viewerContainerElement?.addEventListener("mousedown", (event) =>
         handleMouseDown(event, viewerContainerElement)
       );
       viewerContainerElement?.removeEventListener("scroll", handleScroll);
+
+      viewerContainerElement.removeEventListener("mousemove", handleMouseMove);
     };
   });
 </script>
@@ -886,7 +888,11 @@
         size={Size.sm}
         label="Download"
         on:click={() =>
-          embedAnnotationsandDownload(url, $userPreferences.annotations)}
+          embedAnnotationsandDownload(
+            url,
+            annots,
+            $highlightStore.highlighters
+          )}
       />
       <!-- <button
     on:click={deleleAllAnnotations}
@@ -905,9 +911,13 @@
           style={popupStyle}
           bind:selectedColor
           on:annotate={(event) => {
-            if (event.detail == AnnotationType.COMMENT)
+            if (
+              event.detail == AnnotationType.COMMENT ||
+              event.detail == AnnotationType.TASK
+            ) {
+              annotCickedType = event.detail;
               commentEditorVisible = true;
-            else annotate(event);
+            } else annotate(event);
             inlineToolBarVisible = false;
           }}
         />

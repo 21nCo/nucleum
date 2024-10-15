@@ -15,6 +15,7 @@ import type { IRecordId } from "$lib/client/types/data.type";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { flux } from "$lib/client/components/flux/flux";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import type { IHighlighter } from "../common/highlighters/highlight.type";
 
 export class PdfHandler {
   id: IRecordId;
@@ -340,8 +341,8 @@ export const viewportToScaled = (
   rect.height /= DPR;
   rect.left /= DPR;
   rect.top /= DPR;
-  width /= DPR;
-  height /= DPR;
+  // width /= DPR;
+  // height /= DPR;
   return {
     x1: rect.left,
     y1: rect.top,
@@ -382,13 +383,14 @@ export function hexToRGBA(hex: string, opacity: number | null = null) {
 function embedRectangleUsingPDFLib(rect: any, color: string, page: any) {
   const { width, height } = page.getSize();
   let scalePercentage = height / rect.height;
+  console.log(scalePercentage);
   let { x1, y1, x2, y2 } = rect;
   y1 = rect.height - y1;
   y2 = rect.height - y2;
   x1 = x1 * scalePercentage;
   x2 = x2 * scalePercentage;
-  y1 = y1 * (scalePercentage + 0.08);
-  y2 = y2 * (scalePercentage + 0.08);
+  y1 = y1 * (scalePercentage + 0.084);
+  y2 = y2 * (scalePercentage + 0.084);
   let highlightColor: any = hexToRGBA(color)
     .split(",")
     .map((x) => parseInt(x));
@@ -424,11 +426,11 @@ function embedLineUsingPDFLib(
   let start;
   let end;
   if (annotType === "UNDERLINE") {
-    start = { x: x1, y: y2 * 0.9 };
-    end = { x: x2, y: y2 * 0.9 };
+    start = { x: x1, y: y2 * 0.902 };
+    end = { x: x2, y: y2 * 0.902 };
   } else {
-    start = { x: x1, y: y2 * 0.912 };
-    end = { x: x2, y: y2 * 0.912 };
+    start = { x: x1, y: y2 * 0.914 };
+    end = { x: x2, y: y2 * 0.914 };
   }
   let highlightColor: any = hexToRGBA(color)
     .split(",")
@@ -448,7 +450,8 @@ function embedLineUsingPDFLib(
 }
 export async function embedAnnotationsandDownload(
   originalPdfUrl: any,
-  annotations: any
+  annotations: any,
+  highlighters: IHighlighter[]
 ) {
   const existingPdfBytes = await fetch(originalPdfUrl).then((res) =>
     res.arrayBuffer()
@@ -456,7 +459,6 @@ export async function embedAnnotationsandDownload(
   const pdfDoc = await PDFDocument.load(existingPdfBytes);
 
   annotations.forEach((annotation: any) => {
-    // console.log({ annotation });
     const page = pdfDoc.getPage(annotation.pageNumber - 1);
 
     if (
@@ -464,37 +466,44 @@ export async function embedAnnotationsandDownload(
       annotation.annotType !== "UNDERLINE"
     ) {
       if (annotation.rects) {
-        annotation.rects.forEach((rPage) => {
+        annotation.rects.forEach((rPage: any) => {
           if (!rPage) {
             return;
           }
-          rPage.forEach((rect) => {
-            embedRectangleUsingPDFLib(rect, annotation.color, page);
+          const color =
+            highlighters.find((x) => x.id === annotation.color)?.color ??
+            "#88c0d0";
+          rPage.forEach((rect: any) => {
+            embedRectangleUsingPDFLib(rect, color, page);
           });
         });
       } else {
-        embedRectangleUsingPDFLib(annotation.rect, annotation.color, page);
+        const color =
+          highlighters.find((x) => x.id === annotation.color)?.color ??
+          "#88c0d0";
+        embedRectangleUsingPDFLib(annotation.rect, color, page);
       }
     } else {
       console.log("annotation otherwise", annotation);
       if (annotation.rects) {
-        annotation.rects.forEach((rPage) => {
+        annotation.rects.forEach((rPage: any) => {
           if (!rPage) {
             return;
           }
-          rPage.forEach((rect) => {
-            embedLineUsingPDFLib(
-              rect,
-              annotation.color,
-              page,
-              annotation.annotType
-            );
+          const color =
+            highlighters.find((x) => x.id === annotation.color)?.color ??
+            "#88c0d0";
+          rPage.forEach((rect: any) => {
+            embedLineUsingPDFLib(rect, color, page, annotation.annotType);
           });
         });
       } else {
+        const color =
+          highlighters.find((x) => x.id === annotation.color)?.color ??
+          "#88c0d0";
         embedLineUsingPDFLib(
           annotation.rect,
-          annotation.color,
+          color,
           page,
           annotation.annotType
         );
