@@ -62,7 +62,7 @@ sudo npm install pm2 -g || log_error "Failed to install PM2"
 
 # Start SurrealDB with PM2
 echo "Starting SurrealDB with PM2..."
-sudo pm2 start --name "db" "sudo surreal start --auth --user system --pass DB_PASS --bind 0.0.0.0:8080 file://data/surrealpvc" || log_error "Failed to start SurrealDB"
+sudo pm2 start --name "db" "sudo surreal start --user system --pass DB_PASS --bind 0.0.0.0:8080 file://data/surrealpvc" || log_error "Failed to start SurrealDB"
 sudo pm2 startup || log_error "Failed to setup PM2 startup"
 sudo pm2 save || log_error "Failed to save PM2 startup"
 
