@@ -221,7 +221,9 @@
     annotation.startPageNumber = startPageNumber;
     annotation.endPageNumber = endPageNumber;
     await pdfPersistence.saveClip(annotation);
-    annots = await pdfPersistence.fetchAllClips();
+    annots = (await pdfPersistence.fetchAllClips()).sort(
+      (a: any, b: any) => a.startPageNumber - b.startPageNumber
+    );
     renderHighlightLayers();
     if (removeAllRanges) removeAllRanges();
     annotation = {};
@@ -432,7 +434,9 @@
     else deleteAnnot = annotClickedId;
     await pdfPersistence.deleteClip(deleteAnnot);
     annotClickedComment = "";
-    annots = await pdfPersistence.fetchAllClips();
+    annots = (await pdfPersistence.fetchAllClips()).sort(
+      (a: any, b: any) => a.startPageNumber - b.startPageNumber
+    );
     renderHighlightLayers();
     isInlineEditBarVisible = false;
   }
@@ -444,7 +448,9 @@
   async function handleColorChange(highlighter: IHighlighter) {
     await pdfPersistence.updateClip(annotClickedId, { color: highlighter.id });
     selectedColor = highlighter.id;
-    annots = await pdfPersistence.fetchAllClips();
+    annots = (await pdfPersistence.fetchAllClips()).sort(
+      (a: any, b: any) => a.startPageNumber - b.startPageNumber
+    );
     renderHighlightLayers();
     isInlineEditBarVisible = false;
   }
@@ -456,7 +462,9 @@
   async function handleUpdateComment(comment: string) {
     await pdfPersistence.updateClip(annotClickedId, { comment: comment });
     annotClickedComment = "";
-    annots = await pdfPersistence.fetchAllClips();
+    annots = (await pdfPersistence.fetchAllClips()).sort(
+      (a: any, b: any) => a.startPageNumber - b.startPageNumber
+    );
     renderHighlightLayers();
   }
 
@@ -806,7 +814,9 @@
    * mousedown for on spot annotations(Task and Comment)
    */
   onMount(async () => {
-    annots = await pdfPersistence.fetchAllClips();
+    annots = (await pdfPersistence.fetchAllClips()).sort(
+      (a: any, b: any) => a.startPageNumber - b.startPageNumber
+    );
     viewerContainerElement = document.getElementById("viewerContainer")!;
     document.addEventListener("keydown", handleKeyDown);
     viewerContainerElement?.addEventListener("mousedown", (event) =>

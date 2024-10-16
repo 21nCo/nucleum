@@ -422,15 +422,6 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
             node: id
           });
         }
-        //TODO - AI enabling setting - local AI
-        // const embedding =
-        //   await FeatureExtractor.generateVectorEmbeddings(mdText);
-        // vectorInsertionresult = await vectorResourceStore.create({
-        //   id: generateResourceId(Resource.vector),
-        //   embedding: embedding,
-        //   node: id
-        // });
-        // console.log("vector result", vectorInsertionresult);
       }
       root = {
         ...root,
@@ -451,14 +442,24 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
             block.children?.includes(b.id)
           );
           mdText = generateMarkdownText(childrenNodes);
-          const embedding =
-            await FeatureExtractor.generateVectorEmbeddings(mdText);
-          vectorInsertionresult = await vectorResourceStore.create({
-            id: generateResourceId(Resource.vector),
-            embedding: embedding,
-            node: block.id
-          });
-          // console.log("vector2", vector);
+          if (get(userPreferences).localAI.semanticSearch) {
+            tacoWorker.postMessage({
+              action: TacoActions.GET_EMBEDDINGS,
+              params: {
+                text: mdText
+              }
+            });
+            const embedding = await new Promise((resolve, reject) => {
+              tacoWorker.onmessage = (e) => {
+                resolve(e.data);
+              };
+            });
+            vectorInsertionresult = await vectorResourceStore.create({
+              id: generateResourceId(Resource.vector),
+              embedding: embedding,
+              node: block.id
+            });
+          }
         }
         remainingResources.push({
           id: block.id,
