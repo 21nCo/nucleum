@@ -21,6 +21,7 @@
   export let searchQuery: string = "";
   export let isStickied: boolean = false;
   export let searchStore;
+  export let selectedSubType: any;
   let isFiltersVisible: boolean = false;
   let isSearchFocused: boolean = false;
   function onKeydown(event: any) {}
@@ -52,7 +53,7 @@
           on:select={refresh}
         />
       {/if}
-      {#if $userPreferences.localAI.semanticSearch}
+      {#if $userPreferences.localAI.semanticSearch && selectedSubType === "nodular_markdown"}
         <SwitchInput
           label={{ label: "Semantic", orientation: Orientation.Horizontal }}
           size={Size.sm}
