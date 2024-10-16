@@ -217,11 +217,18 @@
         mainText: `No ${label} found.`,
         subText: `Please try a different search.`
       };
-    else
+    else {
+      if (selectedResource === Resource.node) {
+        return {
+          mainText: `Looks like you don't have any ${label} yet.`,
+          subText: `Please create nodes using capture or install our chrome extension to clip from web.`
+        };
+      }
       return {
         mainText: `Looks like you don't have any ${label} yet.`,
         subText: `Please create one.`
       };
+    }
   }
   function onSelectAll() {
     $multiSelectStore = data.map((x) => x.id);
@@ -512,6 +519,15 @@
             size={Size.lg}
             {...resolveEmptyStateMessage()}
             isSearchContext={true}
+            actionText={selectedResource === Resource.node
+              ? "Install chrome extension"
+              : undefined}
+            on:click={() => {
+              appStore.openLink(
+                $appStore.appData?.urls?.chromeExtension ??
+                  "https://memotron.io"
+              );
+            }}
           />
         {:else}
           <!-- <EmptyStatusView

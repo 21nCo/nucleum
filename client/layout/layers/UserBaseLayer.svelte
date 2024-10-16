@@ -91,7 +91,7 @@
     refreshTimeZone();
     const isCloudUser = $account.dataMode === UserDataMode.CLOUD;
     if (isCloudUser && !dev_isDisableSyncOnAppear) {
-      // toasts.sync();
+      toasts.sync();
       await flux.syncDown();
       account.ping();
     }

@@ -1,7 +1,7 @@
 <script lang="ts">
   import Button from "$lib/client/elements/button/Button.svelte";
   import appearance from "$lib/client/stores/appearance.store";
-  import { ButtonVariant } from "$lib/client/types/button.type";
+  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { PlayActionState } from "$lib/client/types/event.enum";
   import { TimeFormat } from "$lib/client/types/time.type";
   import { retrieveCurrentColors } from "$lib/client/utils/theme.utils";
@@ -30,6 +30,8 @@
   import { TextStyle } from "$lib/client/types/text.enum";
   import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
   import { read_audio } from "@xenova/transformers";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { Action } from "$lib/client/types/action.enum";
 
   export let body: any = {};
   export let url: string;
@@ -300,9 +302,32 @@
         <TextArea bind:value={body.transcription} />
         <!-- <p class="p-2">{body.transcription}</p> -->
       {:else}
-        <span class="w-full h-full flex justify-center items-center text-fgs3">
-          Not transcribed yet. Please transcribe to view.</span
+        <span
+          class="w-full h-full flex flex-col gap-2 justify-center items-center text-fgs3"
         >
+          <span> Not transcribed yet. Please transcribe to view. </span>
+          {#if !$userPreferences.localAI.audioTranscription}
+            <div class="flex flex-col gap-2 text-b2">
+              Please make sure to enable Audio transcription from AI settings to
+              transcribe your audio.
+              <div class="flex justify-center">
+                <Button
+                  label="Open AI settings"
+                  size={Size.sm}
+                  type={ButtonVariant.PRIMARY}
+                  style={ButtonStyle.OUTLINED}
+                  on:click={() => {
+                    appStore.runAction(Action.LOCAL_AI_SETTINGS, {
+                      componentParams: {
+                        isCmdBarLaunch: true
+                      }
+                    });
+                  }}
+                />
+              </div>
+            </div>
+          {/if}
+        </span>
       {/if}
     </div>
   </div>

@@ -28,7 +28,7 @@
       }}
     />
     <Button
-      label="Read more about Blank"
+      label="Read more about 21n"
       {size}
       icon="link"
       on:click={() => {
