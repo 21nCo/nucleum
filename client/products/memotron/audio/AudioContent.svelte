@@ -102,7 +102,7 @@
           model: model
         }
       });
-      const result = await new Promise((resolve, reject) => {
+      result = await new Promise((resolve, reject) => {
         tacoWorker.onmessage = (e) => {
           resolve(e.data);
         };
@@ -131,12 +131,16 @@
   async function convertToMarkdown() {
     let transcript: string | null;
     if (
-      body?.transcription &&
+      (body?.transcription || body?.mdBlocks) &&
       $userPreferences.lastUsedTranscriptionModel === model
-    )
+    ) {
+      alert(
+        "Retranscription runs only when model is changed, using retranscipt button on same model has no effect"
+      );
       transcript = body.transcription;
-    else transcript = await onTranscribe();
+    } else transcript = await onTranscribe();
     if (!transcript || typeof transcript !== "string") return;
+    label = body?.initTranscription == false ? "Retranscribe" : "Transcribe";
     $userPreferences.lastUsedTranscriptionModel = model;
     const mdBlocks = Audio2MD.convertAudioToMarkdown(transcript);
     const resp = await nodeStore.modify(nodeId, {

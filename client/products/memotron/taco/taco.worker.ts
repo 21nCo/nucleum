@@ -1,4 +1,4 @@
-import { AutoTokenizer, env, pipeline, read_audio } from "@xenova/transformers";
+import { env, pipeline } from "@xenova/transformers";
 import type { TranscriptionModel } from "../../../types/taco.types";
 import { TacoActions } from "../../../types/taco.types";
 
@@ -215,8 +215,8 @@ class Transcriber {
   static models = [
     "Xenova/whisper-tiny.en",
     "Xenova/whisper-small.en",
-    "Xenova/whisper-base.en"
-    // "Xenova/whisper-medium.en"
+    "Xenova/whisper-base.en",
+    "Xenova/whisper-medium.en"
   ];
   static model = this.models[0];
   static async initAll() {
@@ -237,7 +237,6 @@ class Transcriber {
           progress_callback
         }
       );
-      Transcriber.built = true;
     }
   }
 
@@ -255,7 +254,8 @@ class Transcriber {
       if (!Transcriber.built) await Transcriber.init();
       // const startTime = Date.now();
       const output = await Transcriber.transcriber(
-        audioData
+        audioData,
+        { chunk_length_s: 30, stride_length_s: 5 }
         // {return_timestamps: true }
       );
       // const endTime = Date.now();
