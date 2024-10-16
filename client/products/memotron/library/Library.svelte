@@ -350,13 +350,14 @@
     {/if}
     {#if variant === "v1" || variant === "v3"}
       <LibrarySearchBox
+        {selectedSubType}
         {variant}
         {resources}
         {isStickied}
+        {searchStore}
         bind:selectedResource
         bind:searchQuery
         on:refresh={debouncedSearch}
-        {searchStore}
         on:semanticSearch={(e) => {
           if (e.detail) {
             searchStore.searchType = SearchType.SEMANTIC;
