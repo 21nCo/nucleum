@@ -67,13 +67,20 @@
         select();
       }}
     >
-      <GoalSearchThumbnail item={result} />
-      <!-- <span class="flex min-w-0 flex-1">
+      {#if action.searchActionParams?.searchResultComponent}
+        <svelte:component
+          this={action.searchActionParams.searchResultComponent}
+          item={result}
+        />
+      {:else}
+        <GoalSearchThumbnail item={result} />
+        <!-- <span class="flex min-w-0 flex-1">
       <TextWithHoverTooltip text={result.label} class="truncate" />
     </span> -->
-      <div class="bg-bgs2 rounded-md text-b3 text-fgs2 px-2 py-1">
-        {action.searchActionParams?.itemLabel}
-      </div>
+        <div class="bg-bgs2 rounded-md text-b3 text-fgs2 px-2 py-1">
+          {action.searchActionParams?.itemLabel}
+        </div>
+      {/if}
     </ResultItem>
   {/each}
 {:else}

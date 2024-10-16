@@ -84,6 +84,7 @@ export type IAction = {
   searchActionParams?: {
     searchStoreId: string;
     itemLabel: string;
+    searchResultComponent?: any;
     callback: (id: string, label?: string, componentParams?: any) => void;
   };
   /**

@@ -69,21 +69,24 @@
         if (!parent?.label) return defaultLabels[node.contentType];
         return {
           label: "Clipped from:",
-          parent
+          parent,
+          text: node.body?.text ?? "Unknown clip"
         };
       case NodeType.YOUTUBE_TIMESTAMP_CLIP:
         const timestamp = formatSeconds(node.body.timestamp, TimeFormat.CLOCK);
         if (!parent?.label) return `At - ${timestamp}`;
         return {
           label: `${timestamp} - `,
-          parent
+          parent,
+          text: timestamp
         };
       case NodeType.TWEET:
         parent = parent as ITwitterProfile;
         if (!parent?.body?.name) return defaultLabels[NodeType.TWEET];
         return {
           label: "Tweet by ",
-          parent: { id: parent.id, label: parent.body.name }
+          parent: { id: parent.id, label: parent.body.name },
+          text: node.body?.content
         };
       case NodeType.TWITTER_PROFILE:
         node = node as ITwitterProfile;
@@ -110,11 +113,15 @@
   {@html renderMdAsHtml(node.labelSearch ?? node.label)}
 {:else if dynamicLabelNodeTypes.includes(node.contentType) && dynamicLabel}
   {#if typeof dynamicLabel === "string"}
-    {dynamicLabel}
+    {dynamicLabel ?? "Unknown"}
   {:else if typeof dynamicLabel === "object" && "parent" in dynamicLabel}
     <span class="flex w-full gap-1 items-center">
       <span>
-        {dynamicLabel?.label}
+        {#if accessPoint === ResourceAccessPoint.SEARCH_RESULT}
+          {dynamicLabel?.text ?? dynamicLabel?.label}
+        {:else}
+          {dynamicLabel?.label}
+        {/if}
       </span>
       <button
         class={cn("truncate flex-1 min-w-0 text-left", {

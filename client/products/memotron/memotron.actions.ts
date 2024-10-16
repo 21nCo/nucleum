@@ -34,6 +34,7 @@ import Chat from "$lib/client/products/memotron/taco/Chat.svelte";
 import CaptureDnD from "./capture/CaptureDnD.svelte";
 import MemotronHome from "./home/MemotronHome.svelte";
 import MemotronOnboarding from "./base/MemotronOnboarding.svelte";
+import LinkSuggestionItem from "./common/linkbox/LinkSuggestionItem.svelte";
 export const memotronActions: IAction[] = [
   {
     action: MemotronAction.OPEN_CHAT,
@@ -282,6 +283,7 @@ export const memotronActions: IAction[] = [
     searchActionParams: {
       searchStoreId: Resource.node,
       itemLabel: "node",
+      searchResultComponent: LinkSuggestionItem,
       callback: async (id: string, label?: string, componentParams?: any) => {
         if (!componentParams?.id) {
           toasts.error("Something went wrong. Please try again later.");
