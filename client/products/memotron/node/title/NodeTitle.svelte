@@ -38,7 +38,7 @@
     {:else}
       <span class={cn("text-h4 font-medium text-start truncate")}>
         <!-- {$node.label ?? $node.body ?? ""} -->
-        <NodeTitleLabelPart node={$node} isNodePageContext={true} />
+        <NodeTitleLabelPart item={$node} isNodePageContext={true} />
       </span>
     {/if}
     {#if $node.isStarred}

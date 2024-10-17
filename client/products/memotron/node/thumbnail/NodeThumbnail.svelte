@@ -25,10 +25,12 @@
   import NodeThumbnailAudioPreview from "./NodeThumbnailAudioPreview.svelte";
   import NodeThumbnailPdfPreview from "./NodeThumbnailPdfPreview.svelte";
   import { TimeFormat } from "$lib/client/types/time.type";
+  import type { IRecordId } from "$lib/client/types/data.type";
   export let item: INodeThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let size: Size.sm | Size.md = Size.md;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
+  export let accessPointId: IRecordId;
   export let collectionContext: "board" | "default" | undefined = undefined;
   export let isApplyCustomColor: boolean = false;
   export let parentBgIndex = 1;
@@ -58,6 +60,7 @@
 <ResourceThumbnailBase
   {item}
   {accessPoint}
+  {accessPointId}
   {isDraggable}
   {isApplyCustomColor}
   {arrangement}

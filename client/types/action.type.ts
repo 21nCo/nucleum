@@ -98,6 +98,12 @@ export type IAction = {
    * Used in conjunction with {@link ActionType.RESOURCE} to specify the access mode of the resource.
    */
   accessMode?: ResourceAccessMode;
+
+  /**
+   * Svelte component to render the label of the resource.
+   * Used in contexts like Top bar tabs, search etc
+   */
+  resourceLabelRenderer?: any;
 };
 
 export enum ActionType {

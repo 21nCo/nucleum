@@ -74,7 +74,9 @@
       <ContextMenuAction
         id="open-link-context-menu"
         triggerMethod={PopoverTriggerMethod.RIGHT_CLICK}
-        contextMenu={linkContextMenu}
+        menuResolver={() => {
+          return linkContextMenu;
+        }}
       >
         <Button
           icon="arrow-up-right"

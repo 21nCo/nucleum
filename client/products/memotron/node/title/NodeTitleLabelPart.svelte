@@ -14,7 +14,7 @@
   import { formatSeconds } from "$lib/client/utils/time.utils";
   import { TimeFormat } from "$lib/client/types/time.type";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  export let node: INode;
+  export let item: INode;
   export let isNodePageContext: boolean = false;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
   let dynamicLabel:
@@ -40,40 +40,40 @@
     return "Untitled";
   }
   onMount(async () => {
-    if (dynamicLabelNodeTypes.includes(node.contentType)) {
+    if (dynamicLabelNodeTypes.includes(item.contentType)) {
       dynamicLabel = await resolveLabel();
     }
   });
 
   async function resolveLabel() {
-    if (!node) return "";
+    if (!item) return "";
 
     let parent;
-    if (node.parent && node.parent.id) parent = await node.parent;
+    if (item.parent && item.parent.id) parent = await item.parent;
 
     const defaultLabels = {
       [NodeType.TEXT_CLIP]:
-        "Clipped Text - " + (node.body as ITextClipBody).text,
+        "Clipped Text - " + (item.body as ITextClipBody).text,
       [NodeType.YOUTUBE_TIMESTAMP_CLIP]:
         "Video timestamp - " +
-        resolveVideoTimeStampStr(node.body as IVideoTimestampClipBody),
+        resolveVideoTimeStampStr(item.body as IVideoTimestampClipBody),
       [NodeType.WEB_SCREENSHOT_CLIP]: "Web screenshot",
       [NodeType.TWEET]: "Unknown tweet",
       [NodeType.KINDLE_HIGHLIGHT]: "Kindle highlight"
     };
 
-    switch (node.contentType) {
+    switch (item.contentType) {
       case NodeType.TEXT_CLIP:
       case NodeType.WEB_SCREENSHOT_CLIP:
       case NodeType.KINDLE_HIGHLIGHT:
-        if (!parent?.label) return defaultLabels[node.contentType];
+        if (!parent?.label) return defaultLabels[item.contentType];
         return {
           label: "Clipped from:",
           parent,
-          text: node.body?.text ?? "Unknown clip"
+          text: item.body?.text ?? "Unknown clip"
         };
       case NodeType.YOUTUBE_TIMESTAMP_CLIP:
-        const timestamp = formatSeconds(node.body.timestamp, TimeFormat.CLOCK);
+        const timestamp = formatSeconds(item.body.timestamp, TimeFormat.CLOCK);
         if (!parent?.label) return `At - ${timestamp}`;
         return {
           label: `${timestamp} - `,
@@ -86,14 +86,14 @@
         return {
           label: "Tweet by ",
           parent: { id: parent.id, label: parent.body.name },
-          text: node.body?.content
+          text: item.body?.content
         };
       case NodeType.TWITTER_PROFILE:
-        node = node as ITwitterProfile;
+        item = item as ITwitterProfile;
         return (
-          node.metadata?.ogTitle ||
-          ((node.body as ITwitterProfileBody).name
-            ? node.body.name + " X profile"
+          item.metadata?.ogTitle ||
+          ((item.body as ITwitterProfileBody).name
+            ? item.body.name + " X profile"
             : "Unknown X profile")
         );
       default:
@@ -107,11 +107,11 @@
 </script>
 
 <!-- TODO - if node and has parent, show breadcrumbs -->
-{#if node.label && node.label.includes(".")}
-  {node.label}
-{:else if node.label}
-  {@html renderMdAsHtml(node.labelSearch ?? node.label)}
-{:else if dynamicLabelNodeTypes.includes(node.contentType) && dynamicLabel}
+{#if item.label && item.label.includes(".")}
+  {item.label}
+{:else if item.label}
+  {@html renderMdAsHtml(item.labelSearch ?? item.label)}
+{:else if dynamicLabelNodeTypes.includes(item.contentType) && dynamicLabel}
   {#if typeof dynamicLabel === "string"}
     {dynamicLabel ?? "Unknown"}
   {:else if typeof dynamicLabel === "object" && "parent" in dynamicLabel}
@@ -130,7 +130,7 @@
         })}
         on:click={(e) => {
           appStore.resourceClickHandler(e, dynamicLabel?.parent.id, {
-            replaceId: node.id
+            replaceId: item.id
           });
         }}
       >
@@ -138,10 +138,10 @@
       </button>
     </span>
   {/if}
-{:else if node.body && typeof node.body === "string"}
-  {@html renderMdAsHtml(node.bodySearch ?? node.body)}
-{:else if node.body && node.body.text && typeof node.body.text === "string"}
-  {node.body.text}
+{:else if item.body && typeof item.body === "string"}
+  {@html renderMdAsHtml(item.bodySearch ?? item.body)}
+{:else if item.body && item.body.text && typeof item.body.text === "string"}
+  {item.body.text}
 {:else}
   {resolveEmptyLabel()}
 {/if}

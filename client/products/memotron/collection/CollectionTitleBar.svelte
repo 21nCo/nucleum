@@ -27,14 +27,10 @@
   export let isShowMetaViews: boolean = false;
   export let isSingleViewMode: boolean = false;
 
-  let contextMenu = [];
   let isSearchFocused: boolean = false;
   let searchBoxRef: TextInput;
   let rightPartWidth = 0;
-  $: contextMenu = resolveCollectionContextMenu(
-    $collection,
-    ResourceAccessPoint.SELF
-  );
+
   function onLabelChange(e: any) {
     if ($collection.label)
       collection.debouncedModify({ label: $collection.label });
@@ -226,7 +222,8 @@
         bind:on={isInEditMode}
       />
       <ContextMenuAction
-        {contextMenu}
+        menuResolver={() =>
+          resolveCollectionContextMenu($collection, ResourceAccessPoint.SELF)}
         position={Placement.Left}
         id="collectionContextMenu"
         size={Size.lg}

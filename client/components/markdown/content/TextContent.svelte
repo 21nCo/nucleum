@@ -400,11 +400,12 @@
       { shortcut: "---", type: NodeType.DIVIDER },
       { shortcut: "===", type: NodeType.DOUBLE_DIVIDER }
     ];
+    //TODO - disabling until implemented with stability
     const listEscapeShortcuts = [
-      { shortcut: "* ", listType: ListType.UNORDERED },
-      { shortcut: "- ", listType: ListType.UNORDERED },
-      { shortcut: "+ ", listType: ListType.UNORDERED },
-      { shortcut: "1. ", listType: ListType.ORDERED }
+      { shortcut: "*... ", listType: ListType.UNORDERED }
+      // { shortcut: "- ", listType: ListType.UNORDERED },
+      // { shortcut: "+ ", listType: ListType.UNORDERED },
+      // { shortcut: "1. ", listType: ListType.ORDERED }
     ];
     const isTextShortcutPresent = textEscapeShortcuts.some(
       ({ shortcut, type }) => {

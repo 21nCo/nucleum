@@ -30,17 +30,12 @@
   export let isHovering: boolean = false;
   export let rightPane: NodeRightPaneType | undefined = undefined;
   let dev_isShowMainProperties: boolean = false;
-  let contextMenu = [];
   let buttonCommonProps = {
     tooltipOptions: {
       placement: Placement.TopCenter,
       offsetInPx: 6
     }
   };
-
-  $: contextMenu = resolveNodeContextMenu($node, ResourceAccessPoint.SELF, {
-    isMediaNode: true
-  });
 
   function onPanelAction(param: NodeRightPaneType) {
     if (rightPane === param) {
@@ -113,7 +108,10 @@
             }}
           />
           <ContextMenuAction
-            {contextMenu}
+            menuResolver={() =>
+              resolveNodeContextMenu($node, ResourceAccessPoint.SELF, {
+                isMediaNode: true
+              })}
             id="mediaNodeContextMenu"
             position={Placement.TopCenter}
             on:action={(e) => {

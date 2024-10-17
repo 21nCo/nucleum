@@ -12,7 +12,8 @@ import {
   type IObservableStore,
   type IResourceSelectParams,
   type IRecordId,
-  type IMutation
+  type IMutation,
+  type IInsertMutation
 } from "$lib/client/types/data.type";
 import {
   detectTimeZone,
@@ -157,7 +158,7 @@ class Flux {
    * This will persist all kv seed data on cloud.
    */
   async kvSeed() {
-    logger.log({ at: "flux.seed" });
+    logger.debug({ at: "flux.kvSeed" });
     try {
       let data = this.stores
         .filter((x) => x.dataType === StoreDataType.KVO)
@@ -167,12 +168,17 @@ class Flux {
         });
       data = [...data, { id: "mutationMap" }];
       await this.seed();
-      return this.persistence.mutation(Resource.kv, {
+      const params: IInsertMutation<any> = {
         records: data,
         action: PersistenceActionType.INSERT
-      });
+      };
+      const result = await this.persistence.mutation(Resource.kv, params);
+      if (!this.isLocalMode) {
+        await this.insertMutation(Resource.kv, params);
+      }
+      return result;
     } catch (e) {
-      logger.error({ at: "flux.seed", error: e });
+      logger.error({ at: "flux.kvSeed", error: e });
     }
   }
 
@@ -183,26 +189,35 @@ class Flux {
    * @returns
    */
   async seed() {
-    let offset = 0;
-    let label: string | undefined;
-    const timeZone = detectTimeZone();
-    if (!timeZone) {
-      const val = detectTimeZoneFallback();
-      offset = val.offset;
-      label = val.label;
+    logger.debug({ at: "flux.seed" });
+    try {
+      let offset = 0;
+      let label: string | undefined;
+      const timeZone = detectTimeZone();
+      if (!timeZone) {
+        const val = detectTimeZoneFallback();
+        offset = val.offset;
+        label = val.label;
+      }
+      const params: IInsertMutation<any> = {
+        records: [
+          {
+            offset,
+            date: new Date(Date.UTC(1970, 0, 1)).toISOString(),
+            createdAt: new Date().toISOString(),
+            label: label ?? "",
+            id: generateRandomId()
+          }
+        ],
+        action: PersistenceActionType.INSERT
+      };
+      await this.persistence.mutation(Resource.tz, params);
+      if (!this.isLocalMode) {
+        await this.insertMutation(Resource.tz, params);
+      }
+    } catch (e) {
+      logger.error({ at: "flux.seed", error: e });
     }
-    await this.persistence.mutation(Resource.tz, {
-      records: [
-        {
-          offset,
-          date: new Date(Date.UTC(1970, 0, 1)).toISOString(),
-          createdAt: new Date().toISOString(),
-          label: label ?? "",
-          id: generateRandomId()
-        }
-      ],
-      action: PersistenceActionType.INSERT
-    });
   }
 
   async mutation<T extends IResource>(

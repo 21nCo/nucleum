@@ -22,60 +22,68 @@
   export let isActive: boolean = false;
   export let iconOrientation: Orientation = Orientation.Horizontal;
   let isHovering: boolean = false;
-  $: isCurrentResourcePinned = $appMenuStore[$appStore.product]?.user?.includes(
-    resourceAction(item.value as Resource, ResourceActionType.BROWSE)
-  );
-  $: contextMenu = [
-    {
-      group: "all",
-      items: [
-        {
-          label: isCurrentResourcePinned
-            ? "Unpin from App menu"
-            : "Pin to App menu",
-          value: "pin",
-          icon: isCurrentResourcePinned ? "unpin" : "pin",
-          callback: async () => {
-            if (!isCurrentResourcePinned)
-              appMenuStore.addUserMenuItem(
+
+  function resolveContextMenu() {
+    const isCurrentResourcePinned = $appMenuStore[
+      $appStore.product
+    ]?.user?.includes(
+      resourceAction(item.value as Resource, ResourceActionType.BROWSE)
+    );
+    return [
+      {
+        group: "all",
+        items: [
+          {
+            label: isCurrentResourcePinned
+              ? "Unpin from App menu"
+              : "Pin to App menu",
+            value: "pin",
+            icon: isCurrentResourcePinned ? "unpin" : "pin",
+            callback: async () => {
+              if (!isCurrentResourcePinned)
+                appMenuStore.addUserMenuItem(
+                  resourceAction(
+                    item.value as Resource,
+                    ResourceActionType.BROWSE
+                  )
+                );
+              else
+                appMenuStore.removeUserMenuItem(
+                  resourceAction(
+                    item.value as Resource,
+                    ResourceActionType.BROWSE
+                  )
+                );
+            }
+          },
+          {
+            label: "Create new",
+            value: "create",
+            icon: "plus",
+            callback: async () => {
+              appStore.runAction(
                 resourceAction(
                   item.value as Resource,
-                  ResourceActionType.BROWSE
+                  ResourceActionType.CREATE
                 )
               );
-            else
-              appMenuStore.removeUserMenuItem(
-                resourceAction(
-                  item.value as Resource,
-                  ResourceActionType.BROWSE
-                )
-              );
+            }
           }
-        },
-        {
-          label: "Create new",
-          value: "create",
-          icon: "plus",
-          callback: async () => {
-            appStore.runAction(
-              resourceAction(item.value as Resource, ResourceActionType.CREATE)
-            );
+        ]
+      },
+      {
+        group: "more",
+        items: [
+          {
+            label: "Show archived",
+            value: "archived",
+            icon: "archive",
+            callback: async () => {}
           }
-        }
-      ]
-    },
-    {
-      group: "more",
-      items: [
-        {
-          label: "Show archived",
-          value: "archived",
-          icon: "archive",
-          callback: async () => {}
-        }
-      ]
-    }
-  ];
+        ]
+      }
+    ];
+  }
 </script>
 
 <button
@@ -86,7 +94,7 @@
     placement: Placement.BottomCenter,
     content: ContextMenu,
     triggerMethod: PopoverTriggerMethod.RIGHT_CLICK,
-    componentProps: { menu: contextMenu },
+    componentProps: { menuResolver: resolveContextMenu },
     id: "resourceSwitcherContextMenu",
     groupId: "resourceSwitcherContextMenuGroup"
   }}
