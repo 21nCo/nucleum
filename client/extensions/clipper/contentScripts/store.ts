@@ -389,7 +389,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     if (!response)
       return { message: "Unlinking failed", type: AlertType.ERROR };
     this.update((n) => {
-      n.links = n.links?.filter((l) => l !== to);
+      n.links = n.links?.filter((l) => l.toString() !== to.toString());
       return n;
     });
     return { message: "Unlinked!", type: AlertType.SUCCESS };
@@ -406,7 +406,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     if (!response) return { message: "Linking failed", type: AlertType.ERROR };
     this.update((n) => {
       n.clips = n.clips?.map((c) => {
-        if (c.id === from) {
+        if (c.id.toString() === from.toString()) {
           c.links = [...(c.links ?? []), to];
         }
         return c;
@@ -423,8 +423,8 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       return { message: "Unlinking failed", type: AlertType.ERROR };
     this.update((n) => {
       n.clips = n.clips?.map((c) => {
-        if (c.id === from) {
-          c.links = c.links?.filter((l) => l !== to);
+        if (c.id.toString() === from.toString()) {
+          c.links = c.links?.filter((l) => l.toString() !== to.toString());
         }
         return c;
       });
@@ -440,7 +440,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     if (!response)
       return { message: "Clip removal failed", type: AlertType.ERROR };
     this.update((n) => {
-      n.clips = n.clips?.filter((c) => c.id !== id);
+      n.clips = n.clips?.filter((c) => c.id.toString() !== id.toString());
       return n;
     });
     removeHighlight(id);

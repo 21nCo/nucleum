@@ -7,7 +7,7 @@
 
 <div
   {id}
-  class="bg-bgs2 rounded-md p-2 text-b2"
+  class="bg-bgs2 rounded-md p-2 text-b2 hover:bg-bgs3"
   role="button"
   tabindex="0"
   on:click
