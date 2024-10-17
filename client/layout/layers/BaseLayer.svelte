@@ -90,9 +90,15 @@
       );
       if (appDetails) appStore.initializeProductInformation(appDetails);
       const cachedAppData = await clientStorage.get(ClientStorageKey.APP_DATA);
-      appStore.loadAppData(cachedAppData ?? productData, {
-        isDefaultData: true
-      });
+      if (cachedAppData) {
+        appStore.loadAppData(JSON.parse(cachedAppData), {
+          isDefaultData: true
+        });
+      } else {
+        appStore.loadAppData(productData, {
+          isDefaultData: true
+        });
+      }
       clientStorage.set(
         ClientStorageKey.PRODUCT,
         appDetails?.product ?? "tidigit"

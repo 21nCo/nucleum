@@ -158,7 +158,7 @@ class Flux {
    * This will persist all kv seed data on cloud.
    */
   async kvSeed() {
-    logger.debug({ at: "flux.kvSeed" });
+    logger.log({ at: "flux.kvSeed" });
     try {
       let data = this.stores
         .filter((x) => x.dataType === StoreDataType.KVO)
@@ -189,7 +189,7 @@ class Flux {
    * @returns
    */
   async seed() {
-    logger.debug({ at: "flux.seed" });
+    logger.log({ at: "flux.seed" });
     try {
       let offset = 0;
       let label: string | undefined;
