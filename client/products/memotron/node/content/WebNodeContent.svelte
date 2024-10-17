@@ -57,7 +57,7 @@
   {#if node.contentType === NodeType.WEB_PAGE}
     <WebPagePreview {node} />
   {:else if node.contentType === NodeType.TEXT_CLIP || node.contentType === NodeType.WEB_SCREENSHOT_CLIP || node.contentType === NodeType.KINDLE_HIGHLIGHT}
-    <WebClipPreview {node} />
+    <WebClipPreview {node} isNodePageContext={true} />
   {:else if node.contentType === NodeType.TWEET}
     <TweetPreview {node} />
   {:else if node.contentType === NodeType.TWITTER_PROFILE}
