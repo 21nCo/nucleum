@@ -6,11 +6,18 @@
   import Text from "../text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
   import ContextMenuItem from "./ContextMenuItem.svelte";
-
-  export let menu: { group: string; items: IContextMenuItem[] }[];
+  import { onMount } from "svelte";
+  export let menuResolver: () => { group: string; items: IContextMenuItem[] }[];
   export let size: Size.sm | Size.md | Size.lg = Size.md;
   export let heading: string | undefined = undefined;
   export let onSelect: (item: IContextMenuItem) => void = () => {};
+  let menu: { group: string; items: IContextMenuItem[] }[] = [];
+
+  onMount(() => {
+    if (!menuResolver) return;
+    const resolution = menuResolver();
+    menu = resolution;
+  });
 </script>
 
 <div

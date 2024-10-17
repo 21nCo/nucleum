@@ -403,12 +403,26 @@ export function resolveNodeContextMenu(
   }
 ): IContextMenu {
   const resourceActions = new ResourceActions(node, nodeStore);
+  const commonGroups = [
+    {
+      group: "open",
+      items: [
+        resourceActions.openAsTab(),
+        // resourceActions.openAsSplit(),
+        resourceActions.openAsFull()
+      ]
+    },
+    {
+      group: "more",
+      items: [resourceActions.archive(), resourceActions.trash()]
+    }
+  ];
   if (accessPoint === ResourceAccessPoint.NODE_LINKS && params?.accessPointId) {
-    let baseItems = [resourceActions.openAsTab(), resourceActions.copyLink()];
+    let baseItems = [resourceActions.copyLink()];
     if (accessPoint === ResourceAccessPoint.NODE_LINKS) {
-      baseItems.unshift(
-        resourceActions.select(accessPoint, params?.accessPointId)
-      );
+      // baseItems.unshift(
+      //   resourceActions.select(accessPoint, params?.accessPointId)
+      // );
       baseItems.unshift(resourceActions.unlink(params?.accessPointId));
     }
     return [
@@ -416,10 +430,7 @@ export function resolveNodeContextMenu(
         group: "all",
         items: [...baseItems]
       },
-      {
-        group: "more",
-        items: [resourceActions.trash()]
-      }
+      ...commonGroups
     ];
   } else if (accessPoint != ResourceAccessPoint.SELF) {
     return [
@@ -429,14 +440,10 @@ export function resolveNodeContextMenu(
           resourceActions.star(),
           resourceActions.edit(accessPoint),
           // resourceActions.select(accessPoint),
-          resourceActions.openAsTab(),
           resourceActions.copyLink()
         ]
       },
-      {
-        group: "more",
-        items: [resourceActions.archive(), resourceActions.trash()]
-      }
+      ...commonGroups
     ];
   } else if (params?.isMediaNode) {
     return [
@@ -445,7 +452,6 @@ export function resolveNodeContextMenu(
         items: [
           resourceActions.star(),
           resourceActions.edit(accessPoint),
-          resourceActions.openAsTab(),
           {
             value: NodeRightPaneType.METADATA,
             icon: "ph:file-thin"
@@ -463,10 +469,7 @@ export function resolveNodeContextMenu(
           // }
         ]
       },
-      {
-        group: "more",
-        items: [resourceActions.archive(), resourceActions.trash()]
-      }
+      ...commonGroups
     ];
   }
   return [
@@ -475,7 +478,6 @@ export function resolveNodeContextMenu(
       items: [
         resourceActions.star(),
         // resourceActions.edit(accessPoint),
-        resourceActions.openAsTab(),
         {
           value: NodeRightPaneType.METADATA,
           icon: "ph:file-thin"
@@ -507,10 +509,7 @@ export function resolveNodeContextMenu(
         // }
       ]
     },
-    {
-      group: "more",
-      items: [resourceActions.archive(), resourceActions.trash()]
-    }
+    ...commonGroups
   ];
 }
 

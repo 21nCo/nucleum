@@ -78,8 +78,13 @@
     }
   });
 
+  /**
+   * Note: a timeout is added to remove query params - since without timeout, it is interfering with removal of pop query param for capture thus the capture modal keeps opening
+   */
   onDestroy(() => {
-    appStore.toggleSearchParam(["link", "bulk", "clipboard"]);
+    setTimeout(() => {
+      appStore.toggleSearchParam(["link", "bulk", "clipboard"]);
+    }, 100);
   });
 
   async function onTypeSelect(e: CustomEvent) {

@@ -10,7 +10,7 @@ stages:
 .base_build_job:
   <<: *submodule_auth
   stage: build
-  image: node:latest
+  image: node:20
   variables:
     NODE_OPTIONS: --max_old_space_size=4096
   script:
@@ -27,7 +27,7 @@ stages:
 .base_cdk_deploy_job:
   <<: *submodule_auth
   stage: deploy
-  image: node:latest
+  image: node:20
   script:
     - npm install -g aws-cdk
     - apt-get update && apt-get install -y awscli

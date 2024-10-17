@@ -34,6 +34,7 @@
   import { hoverable } from "$lib/client/actions/hover.action";
   import CoverRenderer from "$lib/client/elements/coverPicker/CoverRenderer.svelte";
   import TypeExtensionAndPropertiesEditor from "./TypeExtensionAndPropertiesEditor.svelte";
+  import { appStore } from "$lib/client/stores/app.store";
 
   let title: string;
   let isStarred: boolean = false;
@@ -62,7 +63,7 @@
             "Use typed collections to store **structured data**. You can define the properties of the data you want to store and customize avatar, content templates etc.",
           action: {
             label: "Learn more",
-            action: "/kb/typed-collections"
+            action: $appStore?.appData?.urls?.kbTypedCollections
           }
         };
       case CollectionType.QUERY:
@@ -71,7 +72,7 @@
             "Use query collections to store data based on a **filter/search query**. You can define the filters to filter the data you want to store. New items will be automatically added based on the filter criteria.",
           action: {
             label: "Learn more",
-            action: "/kb/query-collections"
+            action: $appStore?.appData?.urls?.kbQueryCollections
           }
         };
       default:
@@ -79,7 +80,7 @@
           content: "Use simple collections to store any **unstructured data.**",
           action: {
             label: "Learn more",
-            action: "/kb/simple-collections"
+            action: $appStore?.appData?.urls?.kbSimpleCollections
           }
         };
     }

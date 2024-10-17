@@ -13,7 +13,6 @@
   export let item: any;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
   export let accessPointId: IRecordId | undefined = undefined;
-  $: contextMenu = resolveContextMenu(item, accessPoint);
   function onAction(e: CustomEvent<string>) {
     if (e.detail === "star") item.isStarred = !item.isStarred;
     dispatch("action", { action: e.detail, id: item.id });
@@ -34,7 +33,7 @@
 
 <ContextMenuAction
   id="resourceThumbnailContextMenu"
-  {contextMenu}
+  menuResolver={() => resolveContextMenu(item, accessPoint)}
   size={Size.lg}
   on:action={onAction}
 />

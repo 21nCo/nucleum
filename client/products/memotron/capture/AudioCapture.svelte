@@ -138,6 +138,13 @@
         type={ButtonVariant.PRIMARY}
         label="Start recording"
       />
+      <Button
+        on:click={() => {
+          captureStore.reset();
+        }}
+        icon="ph:x-thin"
+        label="Cancel"
+      />
     {:else if recordingState === PlayActionState.RUNNING}
       <Button
         on:click={startRecording}

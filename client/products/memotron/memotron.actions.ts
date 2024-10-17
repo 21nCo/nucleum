@@ -35,6 +35,7 @@ import CaptureDnD from "./capture/CaptureDnD.svelte";
 import MemotronHome from "./home/MemotronHome.svelte";
 import MemotronOnboarding from "./base/MemotronOnboarding.svelte";
 import LinkSuggestionItem from "./common/linkbox/LinkSuggestionItem.svelte";
+import NodeTitleLabelPart from "./node/title/NodeTitleLabelPart.svelte";
 export const memotronActions: IAction[] = [
   {
     action: MemotronAction.OPEN_CHAT,
@@ -163,6 +164,7 @@ export const memotronActions: IAction[] = [
     isMeta: true,
     type: ActionType.MODAL,
     loadingComponent: NodeLoadingPulse,
+    resourceLabelRenderer: NodeTitleLabelPart,
     modalParams: {
       layout: {
         size: Size.xxl,

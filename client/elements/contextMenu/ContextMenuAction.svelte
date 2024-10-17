@@ -18,7 +18,7 @@
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let id: string;
-  export let contextMenu: IContextMenu = [];
+  export let menuResolver: () => { group: string; items: IContextMenuItem[] }[];
   export let size: Size.sm | Size.md | Size.lg = Size.md;
   export let tooltip: string | undefined = undefined;
   export let tooltipOptions: IPopoverRenderBaseParams | undefined = undefined;
@@ -102,7 +102,7 @@
     offsetInPx,
     content: ContextMenu,
     triggerMethod: triggerMethod ?? PopoverTriggerMethod.CLICK,
-    componentProps: { size, heading, menu: contextMenu, onSelect },
+    componentProps: { size, heading, menuResolver, onSelect },
     groupId: "contextMenuPopover-" + id,
     id
   }}

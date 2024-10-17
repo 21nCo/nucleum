@@ -42,8 +42,6 @@
       offsetInPx: 6
     }
   };
-  let contextMenu = [];
-  $: contextMenu = resolveNodeContextMenu($node, ResourceAccessPoint.SELF);
   $: currentMode = appStore.determineCurrentResourceAccessMode($node.id);
 
   export function resetToggle() {
@@ -84,7 +82,8 @@
     />
     <ContextMenuAction
       tooltipOptions={buttonCommonProps.tooltipOptions}
-      {contextMenu}
+      menuResolver={() =>
+        resolveNodeContextMenu($node, ResourceAccessPoint.SELF)}
       size={Size.lg}
       id="nodeContextMenu"
       tooltip="More actions"
