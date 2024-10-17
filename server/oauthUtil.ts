@@ -75,6 +75,7 @@ export async function fetchOAuthUserData(
   }
   let response = await retrieveAccessToken(config, code, redirectUri);
   let accessToken;
+  console.log({ accessTokenResponse: response, config, code, redirectUri });
   let parsedAccessToken = await response.json();
   try {
     //let parsedJson = await JSON.parse(parsedAccessToken);
@@ -104,7 +105,7 @@ export async function fetchOAuthUserData(
       }
     });
     // const responseForUserDetails = await userDetailsResponse.text();
-    // console.log({ responseForUserDetails });
+    console.log({ userDetailsResponse });
     userDetails = await userDetailsResponse.json();
   }
   return userDetails;
