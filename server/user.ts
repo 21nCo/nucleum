@@ -363,7 +363,7 @@ export async function deleteUserAccount(body: any, agent: Agent) {
   const { context } = body;
   if (!agent.id) return { error: "userId is required" };
   await log(agent.id, { ...context, activity: "deleteAccount" });
-  const query = `DELETE user WHERE id = "user:${agent.id}";`;
+  const query = `DELETE user WHERE meta::id(id) = "${agent.id}";`;
   const response = await performQueryOnMasterDb(query);
   const dbRemovalQuery = `USE NAMESPACE ${process.env.USER_NS}; REMOVE DATABASE ${agent.id};`;
   await performQueryOnRegionalDb(dbRemovalQuery, {
