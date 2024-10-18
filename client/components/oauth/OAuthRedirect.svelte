@@ -17,7 +17,7 @@
   let debugMessage = "debug";
   $: {
     if (debugMessage) {
-      logger.log(debugMessage);
+      console.log({ debugMessage });
     }
   }
   onMount(async () => {
@@ -50,7 +50,7 @@
     refreshToken?: string;
     userInfo?: any;
   }) {
-    logger.log({
+    console.log({
       ctx: "handleOAuthCompletion",
       os: $context.os,
       isEmbed: $context.isEmbed,
@@ -86,12 +86,12 @@
   async function handleiOSEmbedRedirection(token: string) {
     try {
       debugMessage = "ios - embed redirection";
-      logger.log({
+      console.log({
         ctx: "handleiOSEmbedRedirection"
       });
       goto($appStore.product + "://oauthsignin" + "?token=" + token);
     } catch (err) {
-      logger.error({ err, ctx: "handleiOSEmbedRedirection" });
+      console.error({ err, ctx: "handleiOSEmbedRedirection" });
       appStore.gotoErrorPage(debugMessage);
     }
   }
