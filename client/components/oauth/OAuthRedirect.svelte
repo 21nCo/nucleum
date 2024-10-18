@@ -99,6 +99,7 @@
         $appStore.product + "://oauthsignin" + "?token=" + token
       );
     } catch (err) {
+      debugMessage = "ios - embed redirection error" + err;
       console.error({ err, ctx: "handleiOSEmbedRedirection" });
       appStore.gotoErrorPage(debugMessage);
     }

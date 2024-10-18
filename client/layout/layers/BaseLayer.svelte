@@ -201,7 +201,8 @@
         event.detail.path.includes(host) &&
         !event.detail.path.includes("/oauth/")) ||
         !event.detail.path.includes("http")) &&
-      !event.detail.path.includes("mailto:")
+      !event.detail.path.includes("mailto:") &&
+      !event.detail.path.includes("//oauthsignin")
     )
       goto(event.detail.path);
     else if (event.detail.path) window.location = event.detail.path;

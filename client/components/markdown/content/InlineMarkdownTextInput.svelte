@@ -23,6 +23,7 @@
   export let content: string | undefined = "";
   export let placeholder: string | undefined = "";
   export let isMarkdown: boolean = false;
+  export let isPreventDefaultOnEnter: boolean = false;
   let classList: string = "";
   export { classList as class };
   let blockRef: any;
@@ -609,6 +610,9 @@
         position
         // position2
       });
+    } else if (isPreventDefaultOnEnter && event.key === "Enter") {
+      event.preventDefault();
+      dispatch("enter", { event });
     } else {
       //TODO - test functioning of enter, backspace etc
     }

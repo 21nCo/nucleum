@@ -97,6 +97,7 @@
    * {@link md} and {@link childrenWithStructure} maintains the root blocks and structure of the markdown. Using this anchorBlock, {@link _md} and {@link focusedBlockChildrenWithStructure} - changes are propagated back to {@link md} and {@link childrenWithStructure}.
    */
   let anchorBlock: IRecordId | undefined = undefined;
+  let mdRef: Markdown | undefined = undefined;
   export let params: IMarkdownParams | undefined = undefined;
   if (node) {
     _md = { blocks: recursivelyExtractAllChildrenIntoArray(node) };
@@ -408,6 +409,10 @@
     dispatch("action", event.detail);
     onBlockStructuralChanges(event);
   }
+
+  export function focusBlock(id?: IRecordId) {
+    mdRef?.focus(id);
+  }
 </script>
 
 {#key refreshId}
@@ -429,6 +434,7 @@
       canUseSlashShortcut: true,
       ...params
     }}
+    bind:this={mdRef}
     on:change={onBlockContentChange}
     on:focus={onBlockFocus}
     on:action={onBlockAction}

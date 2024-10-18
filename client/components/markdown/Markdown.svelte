@@ -18,6 +18,7 @@
   import { logger } from "../debug/logger.client";
   import { get } from "svelte/store";
   import { KeyboardKey } from "$lib/client/types/keyboard.type";
+  import type { IRecordId } from "$lib/client/types/data.type";
 
   /**
    * Propagates the event to the parent component.
@@ -70,6 +71,14 @@
     if (event.key === KeyboardKey.ESCAPE && focus) {
       mdStore.focus.set(undefined);
       event.stopPropagation();
+    }
+  }
+
+  export function focus(blockId?: IRecordId) {
+    if (blockId) {
+      mdStore.focus.set({ id: blockId });
+    } else {
+      mdStore.focus.set({ id: md.blocks[0].id });
     }
   }
 </script>

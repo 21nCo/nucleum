@@ -37,6 +37,7 @@
   let isEmptyState: boolean = true;
   isInEditMode.set(true);
   let isPropertiesCollapsed: boolean = false;
+  let writerRef: Writer | undefined = undefined;
   let types: ICollectionExpanded[] = [];
 
   // $: console.log({ types, $captureStore, propertyConfig });
@@ -138,6 +139,11 @@
     await refreshTypeData();
     isEmptyState = false;
   }
+
+  function onTitleEnter(e: any) {
+    writerRef?.focus();
+    refreshEmptyState();
+  }
 </script>
 
 {#if isSaving}
@@ -172,8 +178,9 @@
                   style={InputStyle.PLAIN}
                   isExperimentalMdInput={true}
                   placeholder="Untitled"
+                  isPreventDefaultOnEnter={true}
                   on:change={refreshEmptyState}
-                  on:keyup={refreshEmptyState}
+                  on:enter={onTitleEnter}
                 />
               </div>
             </div>
@@ -242,6 +249,7 @@
           >
             <Writer
               bind:isEmptyState
+              bind:this={writerRef}
               bind:isSaveInProgress={isSaving}
               on:change={refreshEmptyState}
             />
