@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
+  // import { goto } from "$app/navigation";
   import { page } from "$app/stores";
   import AppLoadingView from "$lib/client/layout/paint/AppLoadingView.svelte";
   import { appStore } from "$lib/client/stores/app.store";
@@ -95,7 +95,9 @@
         ctx: "handleiOSEmbedRedirection",
         product: $appStore.product
       });
-      goto($appStore.product + "://oauthsignin" + "?token=" + token);
+      appStore.gotoPath(
+        $appStore.product + "://oauthsignin" + "?token=" + token
+      );
     } catch (err) {
       console.error({ err, ctx: "handleiOSEmbedRedirection" });
       appStore.gotoErrorPage(debugMessage);
@@ -107,7 +109,7 @@
       logger.log({
         ctx: "handleMacOSEmbedRedirection"
       });
-      await goto(
+      appStore.gotoPath(
         (import.meta.env?.VITE_CUSTOM_PROTOCOL ?? "blanklabs") +
           "://localhost/index.html" +
           "?token=" +
