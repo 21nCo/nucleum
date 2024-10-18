@@ -21,27 +21,32 @@
     }
   }
   onMount(async () => {
-    let codeQueryParam = $page.url.searchParams.get("code");
-    let token = $page.url.searchParams.get("token");
-    if (token) {
-      debugMessage = "token present";
-      handleOAuthCompletion({ token });
-    } else if (!codeQueryParam) {
-      appStore.gotoPath("/signup?msg=invalidoauth");
-      return;
-    } else {
-      debugMessage = "code present. processing oauth";
-      let response = await handleOAuthRedirection(
-        $page.params.slug,
-        codeQueryParam
-      );
-      if (!response) {
-        appStore.gotoErrorPage("OAuth failure");
+    try {
+      let codeQueryParam = $page.url.searchParams.get("code");
+      let token = $page.url.searchParams.get("token");
+      if (token) {
+        debugMessage = "token present";
+        handleOAuthCompletion({ token });
+      } else if (!codeQueryParam) {
+        appStore.gotoPath("/signup?msg=invalidoauth");
         return;
+      } else {
+        debugMessage = "code present. processing oauth";
+        let response = await handleOAuthRedirection(
+          $page.params.slug,
+          codeQueryParam
+        );
+        if (!response) {
+          appStore.gotoErrorPage("OAuth failure");
+          return;
+        }
+        const json = await response.json();
+        debugMessage = `isEmbed: ${$context.isEmbed} and os: ${$context.os}`;
+        handleOAuthCompletion(json);
       }
-      const json = await response.json();
-      debugMessage = `isEmbed: ${$context.isEmbed} and os: ${$context.os}`;
-      handleOAuthCompletion(json);
+    } catch (e) {
+      console.error({ at: "OAuthRedirect.onMount", error: e });
+      appStore.gotoErrorPage("OAuth failure");
     }
   });
 
@@ -116,5 +121,5 @@
   }
 </script>
 
-<AppLoadingView message="Signing you in" />
-<!-- <AppLoadingView message={debugMessage} /> -->
+<!-- <AppLoadingView message="Signing you in" /> -->
+<AppLoadingView message={debugMessage} />
