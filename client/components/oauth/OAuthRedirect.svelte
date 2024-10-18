@@ -87,7 +87,8 @@
     try {
       debugMessage = "ios - embed redirection";
       console.log({
-        ctx: "handleiOSEmbedRedirection"
+        ctx: "handleiOSEmbedRedirection",
+        product: $appStore.product
       });
       goto($appStore.product + "://oauthsignin" + "?token=" + token);
     } catch (err) {

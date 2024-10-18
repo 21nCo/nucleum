@@ -281,7 +281,5 @@
     {/if}
   </ThemeLayer>
 </div>
-{#if $context.isEmbed}
-  <EmbedTelemetry />
-{/if}
+<EmbedTelemetry />
 <svelte:document on:visibilitychange={visibilityChangeListener} />
