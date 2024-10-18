@@ -180,7 +180,11 @@
         await flux.seed();
         logger.log({
           at: "UserBaseLayer.initializeData - cloud",
-          initState
+          initState,
+          os: $context.os,
+          isEmbed: $context.isEmbed,
+          embed: $context.embed,
+          userAgent: navigator.userAgent
         });
         if ($account.sessionType === UserSessionType.NEW) {
           if (initState === 2) {
