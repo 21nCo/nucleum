@@ -18,7 +18,11 @@
     )
       appStore.runAction(item, { isReturnIfComponent: true });
     else if (component?.path) appStore.gotoPath(component.path);
-    else appStore.gotoPath("/cp/" + item);
+    // else appStore.gotoPath("/cp/" + item);
+    else
+      appStore.toggleSearchParam({
+        setting: item
+      });
   }
 </script>
 

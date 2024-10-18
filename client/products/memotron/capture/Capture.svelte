@@ -29,6 +29,7 @@
   import { isValidString } from "$lib/shared/utils/text.utils";
   import { isEmptyMd } from "$lib/client/components/markdown/markdown.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
+  import view from "$lib/client/stores/view.store";
   export let isWindowDnD = false;
   let bulkQueryParam: string | null = null;
   let linkQueryParam: string | null = null;
@@ -194,14 +195,17 @@
                     size={Size.sm}
                     class="stroke-fgs3"
                   />
-                  <span class="text-fgs3 whitespace-nowrap text-b3">
-                    {$captureStore.isRefreshing ? "saving..." : "draft saved"}
-                  </span>
+                  {#if !$view.isConstrainedWidth}
+                    <span class="text-fgs3 whitespace-nowrap text-b3">
+                      {$captureStore.isRefreshing ? "saving..." : "draft saved"}
+                    </span>
+                  {/if}
                 </div>
                 <Button
-                  label="save"
+                  label={$view.isConstrainedWidth ? undefined : "Save"}
                   type={ButtonVariant.PRIMARY}
                   size={Size.sm}
+                  style={ButtonStyle.OUTLINED}
                   isPreventMinWidth={true}
                   icon="ph:floppy-disk"
                   on:click={async () => {
@@ -217,7 +221,7 @@
                   }}
                 />
                 <Button
-                  label="clear"
+                  label={$view.isConstrainedWidth ? undefined : "Clear"}
                   style={ButtonStyle.OUTLINED}
                   isPreventMinWidth={true}
                   size={Size.sm}

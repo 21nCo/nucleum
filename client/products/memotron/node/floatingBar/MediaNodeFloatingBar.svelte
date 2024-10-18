@@ -25,6 +25,7 @@
   import CollectionsLane from "./CollectionsLane.svelte";
   import NodePropertiesPane from "../rightPanel/NodePropertiesPane.svelte";
   import { hoverable } from "$lib/client/actions/hover.action";
+  import view from "$lib/client/stores/view.store";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let isHovering: boolean = false;
@@ -91,22 +92,26 @@
       <div class="flex gap-3 justify-between items-center w-full">
         <span class="flex items-center gap-4 flex-1 min-w-0">
           <NodeTitle {node} />
-          <div class="text-b3 text-fgs3 whitespace-nowrap">
-            {formatDatetime($userPreferences, $node.createdAt)}
-          </div>
+          {#if !$view.isConstrainedWidth}
+            <div class="text-b3 text-fgs3 whitespace-nowrap">
+              {formatDatetime($userPreferences, $node.createdAt)}
+            </div>
+          {/if}
         </span>
         <span class="flex gap-5">
-          <ToggleGroup
-            selected={rightPane}
-            items={resolveVisibleActions($node.contentType)}
-            class="gap-5"
-            on:change={(e) => {
-              onPanelAction(e.detail);
-            }}
-            on:none={() => {
-              rightPane = undefined;
-            }}
-          />
+          {#if !$view.isConstrainedWidth}
+            <ToggleGroup
+              selected={rightPane}
+              items={resolveVisibleActions($node.contentType)}
+              class="gap-5"
+              on:change={(e) => {
+                onPanelAction(e.detail);
+              }}
+              on:none={() => {
+                rightPane = undefined;
+              }}
+            />
+          {/if}
           <ContextMenuAction
             menuResolver={() =>
               resolveNodeContextMenu($node, ResourceAccessPoint.SELF, {
@@ -120,13 +125,15 @@
               }
             }}
           />
-          <div class="h-8">
-            <Divider
-              orientation={Orientation.Vertical}
-              colorStrength={ColorStrength.Strong}
-            />
-          </div>
-          {#if $node.contentType != NodeType.VIDEO}
+          {#if !$view.isConstrainedWidth}
+            <div class="h-8">
+              <Divider
+                orientation={Orientation.Vertical}
+                colorStrength={ColorStrength.Strong}
+              />
+            </div>
+          {/if}
+          {#if $node.contentType != NodeType.VIDEO && !$view.isConstrainedWidth}
             <Button
               {...buttonCommonProps}
               icon="full-screen"

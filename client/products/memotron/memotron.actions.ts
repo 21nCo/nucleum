@@ -59,6 +59,7 @@ export const memotronActions: IAction[] = [
     icon: "capture",
     type: ActionType.RESOURCE,
     accessMode: ResourceAccessMode.POP,
+    isRenderAsPageInPortrait: true,
     modalParams: {
       layout: {
         size: Size.xxl,

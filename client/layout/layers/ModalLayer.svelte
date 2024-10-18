@@ -248,6 +248,8 @@
       size={pop.modalParams?.layout?.size ?? Size.md}
       orientation={pop.modalParams?.layout?.orientation ??
         Orientation.Horizontal}
+      hasCantileverButtons={pop.modalParams?.layout?.isShowCantileverClose ||
+        pop.modalParams?.layout?.isShowBackButton}
     >
       <ModalLayout
         path={pop.path + "-resource"}

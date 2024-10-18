@@ -16,7 +16,7 @@
   import NavigationHeader from "$lib/client/elements/NavigationHeader.svelte";
   import SettingsFooter from "../SettingsFooter.svelte";
 
-  $: isCpHome = $page?.url.pathname === "/cp" || $page?.url.pathname === "/cp/";
+  $: isCpHome = $page.url.searchParams.get("setting") === null;
   let cpConfiguration: any;
   let color = retrieveCurrentColors($appearance)?.aps1;
   onMount(() => {
@@ -35,7 +35,7 @@
     <NavigationHeader
       label={$appStore.currentComponent?.label ?? ""}
       backCallback={() => {
-        appStore.gotoPath("/cp");
+        appStore.toggleSearchParam(["setting"]);
       }}
     />
     <div class="flex flex-col flex-grow">
@@ -47,11 +47,14 @@
     <Panel title="Settings">
       <div
         slot="nonpadded"
-        class="flex flex-col gap-8 grow overflow-auto {$view.isPortrait
-          ? 'pb-40'
-          : 'pb-20'}"
+        class="flex flex-col gap-8 grow overflow-auto portrait:pb-40 pb-20"
       >
-        <ProfileCpSection on:click={() => appStore.gotoPath("/cp/account")} />
+        <ProfileCpSection
+          on:click={() =>
+            appStore.toggleSearchParam({
+              setting: "account"
+            })}
+        />
         {#if cpConfiguration}
           {#each cpConfiguration as item}
             <CpThumbnailList

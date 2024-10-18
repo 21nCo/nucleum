@@ -20,6 +20,7 @@
   import CollectionsLane from "../floatingBar/CollectionsLane.svelte";
   import { NodeRightPaneType } from "../node.type";
   import NodePropertiesPane from "../rightPanel/NodePropertiesPane.svelte";
+  import view from "$lib/client/stores/view.store";
 
   export let node: IActiveNodeStore;
   export let selectedView: string = "Content";
@@ -68,7 +69,7 @@
   {#if $node}
     {#if selectedView === "Content"}
       <div
-        class={cn("h-full w-full gap-4", {
+        class={cn("h-full w-full mo:gap-0 cw:gap-0 gap-4", {
           "flex px-4 justify-center dp:grid dp:grid-cols-[1fr_auto_1fr] dp:gap-2":
             !isWidened,
           "flex px-4": isWidened
@@ -97,7 +98,7 @@
             {/key}
           {/if}
           <main
-            class="relative flex flex-col gap-6 pr-6 h-full w-full overflow-auto"
+            class="relative flex flex-col gap-6 mo:pr-0 pr-6 h-full w-full overflow-auto"
             on:scroll={onScroll}
           >
             {#if !$node.focusedBlock}
@@ -109,7 +110,7 @@
               {/if}
               <span
                 class={cn(
-                  "node-title flex gap-3 font-medium text-start sticky top-0 z-10 ml-12 py-3",
+                  "node-title flex gap-3 font-medium text-start sticky top-0 z-10 mo:ml-0 cw:ml-0 ml-12 py-3",
                   {
                     "text-h4 bg-bgs1": isStickied,
                     "text-h2 bg-bgs1": !isStickied
@@ -132,7 +133,7 @@
                   {$node.label ?? $node.body ?? ""}
                 {/if}
               </span>
-              <div class="w-full flex px-12 -mt-4">
+              <div class="w-full flex mo:px-0 cw:px-0 px-12 -mt-4">
                 <CollectionsLane {node} />
               </div>
             {/if}
@@ -169,21 +170,22 @@
             <NodeContent {node} {mdId} />
           </main>
         </div>
-
-        <NodeRightPane
-          {node}
-          {mdId}
-          bind:isRightPanelCollapsed
-          bind:pane={rightPane}
-          on:close={closeRightPane}
-        />
+        {#if !$view.isConstrainedWidth}
+          <NodeRightPane
+            {node}
+            {mdId}
+            bind:isRightPanelCollapsed
+            bind:pane={rightPane}
+            on:close={closeRightPane}
+          />
+        {/if}
       </div>
     {:else}
       <ComingSoonView />
     {/if}
     {#if isShowFloatingBar}
       <div transition:fade={{ duration: 200 }}>
-        <BottomFloat>
+        <BottomFloat marginBottom={$view.isConstrainedWidth ? "mb-2" : "mb-6"}>
           <NodeFloatingBar
             {node}
             bind:selectedView

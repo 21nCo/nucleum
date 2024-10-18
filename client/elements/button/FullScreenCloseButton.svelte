@@ -6,6 +6,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import Icon from "../Icon.svelte";
   export let path: string | undefined = undefined;
+  export let accessMode: ResourceAccessMode = ResourceAccessMode.FULL;
 </script>
 
 <div
@@ -16,7 +17,7 @@
     icon="ph:x-light"
     class="stroke-bgs1"
     on:click={() => {
-      appStore.closeResource({ accessMode: ResourceAccessMode.FULL });
+      appStore.closeResource({ accessMode });
       if (path) modalEvent.hide(path, "ModalCloseButton.svelte");
     }}
   />

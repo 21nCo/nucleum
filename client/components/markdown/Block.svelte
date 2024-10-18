@@ -22,6 +22,7 @@
   import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
   import { MemotronEvent } from "$lib/client/products/memotron/memotron.type";
   import { hoverable } from "$lib/client/actions/hover.action";
+  import view from "$lib/client/stores/view.store";
 
   export let block: IBlock;
   export let mdStore: MdStoreType;
@@ -31,6 +32,11 @@
   let dev_isShowFocusHintOnRight: boolean = false;
   $: isFocusable =
     $mdStore.params?.isNodular && headingNodeTypes.includes(block.contentType);
+
+  $: isShowLeftControls =
+    $mdStore.params?.isNodular &&
+    !$mdStore.params?.isReadOnly &&
+    !$view.isConstrainedWidth;
 
   const markdownContext = getContext<any>("markdown");
 
@@ -124,7 +130,10 @@
 
 <div
   class={cn(
-    "grid grid-cols-[2.5rem_1fr] w-full min-h-fit items-center gap-2 rounded-md border border-transparent",
+    "w-full min-h-fit items-center gap-2 rounded-md border border-transparent",
+    {
+      "grid grid-cols-[2.5rem_1fr]": isShowLeftControls
+    },
     $mdStore.params?.isNodular &&
       !$mdStore.params?.isReadOnly && {
         "bg-bgs2 bg-opacity-50 !border-brs1": isHovering && !isFocusing
@@ -143,7 +152,7 @@
     }
   }}
 >
-  {#if $mdStore.params?.isNodular && !$mdStore.params?.isReadOnly}
+  {#if isShowLeftControls}
     <LeftControls
       {mdStore}
       {block}

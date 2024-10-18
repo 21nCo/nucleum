@@ -281,6 +281,10 @@ function initAppStore(seed: AppStore) {
       return;
     }
     const store = get(appStore);
+    const ctx = get(context);
+    const viewData = get(view);
+    const isRenderAsPage =
+      action.isRenderAsPageInPortrait && viewData.isPortrait;
     if (action.type === ActionType.LINK) {
       const url = store.appData.urls[action.action];
       if (!url) return;
@@ -302,12 +306,13 @@ function initAppStore(seed: AppStore) {
       confirmationNotification.notify(action.confirmation);
     } else if (params.isReturnIfComponent) {
       return action;
-    } else if (action.type === ActionType.RESOURCE) {
+    } else if (action.type === ActionType.RESOURCE && !isRenderAsPage) {
       openResource(action.action, action.accessMode ?? ResourceAccessMode.POP);
     } else if (
-      action.type === ActionType.MODAL ||
-      (store.interactionMode === InteractionMode.COMMAND_ONLY &&
-        get(context).embed !== Embed.HANDSET)
+      (action.type === ActionType.MODAL ||
+        (store.interactionMode === InteractionMode.COMMAND_ONLY &&
+          ctx.embed !== Embed.HANDSET)) &&
+      !isRenderAsPage
     ) {
       if (action.type === ActionType.PAGE) {
         action.modalParams = {

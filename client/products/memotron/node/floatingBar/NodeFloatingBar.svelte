@@ -28,6 +28,7 @@
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import ToggleGroup from "$lib/client/elements/toggle/ToggleGroup.svelte";
   import { NodeRightPaneType } from "../node.type";
+  import view from "$lib/client/stores/view.store";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let selectedView: string = "Content";
@@ -52,6 +53,7 @@
 <div
   class={cn(
     "flex justify-between items-center mo:w-full tp:w-4/5 lp:w-[40rem] dp:w-[48rem] h-14 shadow-md border border-brs2 rounded-md px-4",
+    $view.isConstrainedWidth && "h-16 w-full",
     bg(bgIndex - 1)
   )}
 >
@@ -66,20 +68,22 @@
     />
   </span>
   <span class="flex items-center gap-3 h-full">
-    <ToggleGroup
-      bind:this={toggleGroupRef}
-      selected={selectedToggleAction}
-      items={resolveVisibleActions($node.contentType)}
-      class="gap-5"
-      on:change={(e) => {
-        if (e.detail === NodeRightPaneType.SIDENOTES) {
-          dispatch("panel", e.detail);
-        } else if (e.detail === "readMode") {
-          nodeStore.toggleReadMode($node.id, true);
-        }
-      }}
-      on:none
-    />
+    {#if !$view.isConstrainedWidth}
+      <ToggleGroup
+        bind:this={toggleGroupRef}
+        selected={selectedToggleAction}
+        items={resolveVisibleActions($node.contentType)}
+        class="gap-5"
+        on:change={(e) => {
+          if (e.detail === NodeRightPaneType.SIDENOTES) {
+            dispatch("panel", e.detail);
+          } else if (e.detail === "readMode") {
+            nodeStore.toggleReadMode($node.id, true);
+          }
+        }}
+        on:none
+      />
+    {/if}
     <ContextMenuAction
       tooltipOptions={buttonCommonProps.tooltipOptions}
       menuResolver={() =>
@@ -90,51 +94,54 @@
       position={Placement.TopCenter}
       on:action
     />
-    <Divider
-      orientation={Orientation.Vertical}
-      colorStrength={ColorStrength.Strong}
-    />
-    {#if currentMode === ResourceAccessMode.SPLIT || currentMode === ResourceAccessMode.FSPLIT}
-      <Button
-        {...buttonCommonProps}
-        icon="cross-circled"
-        tooltip="Close split view"
-        on:click={() => {
-          appStore.closeResource({ accessMode: currentMode });
-        }}
+    {#if !$view.isConstrainedWidth}
+      <Divider
+        orientation={Orientation.Vertical}
+        colorStrength={ColorStrength.Strong}
       />
-    {:else}
-      <Button
-        {...buttonCommonProps}
-        icon={isWidened ? "unwiden" : "widen"}
-        tooltip={isWidened ? "Collapse" : "Expand"}
-        on:click={() => {
-          isWidened = !isWidened;
-        }}
-      />
-      {#if currentMode !== ResourceAccessMode.FULL}
+      {#if currentMode === ResourceAccessMode.SPLIT || currentMode === ResourceAccessMode.FSPLIT}
         <Button
           {...buttonCommonProps}
-          icon="split"
-          tooltip="Open in split view"
+          icon="cross-circled"
+          tooltip="Close split view"
           on:click={() => {
-            dispatch("split");
+            appStore.closeResource({ accessMode: currentMode });
           }}
         />
+      {:else}
+        <Button
+          {...buttonCommonProps}
+          icon={isWidened ? "unwiden" : "widen"}
+          tooltip={isWidened ? "Collapse" : "Expand"}
+          on:click={() => {
+            isWidened = !isWidened;
+          }}
+        />
+        {#if currentMode !== ResourceAccessMode.FULL}
+          <Button
+            {...buttonCommonProps}
+            icon="split"
+            tooltip="Open in split view"
+            on:click={() => {
+              dispatch("split");
+            }}
+          />
+        {/if}
       {/if}
+      <Button
+        {...buttonCommonProps}
+        icon={$node.accessMode === ResourceAccessMode.FULL
+          ? "collapse"
+          : "full-screen"}
+        tooltip={$node.accessMode === ResourceAccessMode.FULL
+          ? "Minimize"
+          : "Full screen"}
+        on:click={() => {
+          appStore.toggleFocusAccessMode($node.accessMode, $node.id);
+        }}
+      />
     {/if}
-    <Button
-      {...buttonCommonProps}
-      icon={$node.accessMode === ResourceAccessMode.FULL
-        ? "collapse"
-        : "full-screen"}
-      tooltip={$node.accessMode === ResourceAccessMode.FULL
-        ? "Minimize"
-        : "Full screen"}
-      on:click={() => {
-        appStore.toggleFocusAccessMode($node.accessMode, $node.id);
-      }}
-    />
+
     {#if $node.accessMode != ResourceAccessMode.INLINE}
       <!-- <Button
         {...buttonCommonProps}

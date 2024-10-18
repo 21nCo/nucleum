@@ -104,6 +104,11 @@ export type IAction = {
    * Used in contexts like Top bar tabs, search etc
    */
   resourceLabelRenderer?: any;
+
+  /**
+   * If true, the action will be rendered as a page in portrait mode irrespective of the action type like Modal or Resource.
+   */
+  isRenderAsPageInPortrait?: boolean;
 };
 
 export enum ActionType {
