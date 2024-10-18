@@ -363,6 +363,12 @@ export class ActiveNodeStore extends ActiveResourceStore<
     logger.log({ at: "ActiveNodeStore.resolveLinks", response });
     return response;
   }
+
+  resolveExportContent(): string {
+    const node = this.get();
+    if (!node || node?.contentType !== NodeType.NODULAR_MARKDOWN) return "";
+    return node.md?.blocks ? generateMarkdownText(node.md.blocks) : "";
+  }
 }
 
 const activeNodeEventStores = new Map<string, any>();
@@ -492,12 +498,13 @@ export function resolveNodeContextMenu(
     {
       group: "shareAndExport",
       items: [
-        resourceActions.copyLink()
+        resourceActions.copyLink(),
+        resourceActions.copyContents()
         // {
         //   value: "export",
         //   icon: "share",
         //   callback: async () => {}
-        // },
+        // }
         // {
         //   value: "share",
         //   icon: "share",

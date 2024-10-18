@@ -36,6 +36,14 @@ export class ResourceActions<T extends IMemotronItemBase> {
       callback: async () => copyResourceLinkToClipboard(this.resource.id)
     };
   }
+  copyContents(): IContextMenuItem {
+    return {
+      label: "Copy contents",
+      value: "copy-contents",
+      icon: "copy",
+      callback: async () => this.store.copyContents(this.resource.id)
+    };
+  }
   star(): IContextMenuItem {
     return {
       label: this.resource.isStarred ? "Unstar" : "Star this resource",

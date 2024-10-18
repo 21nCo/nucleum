@@ -55,7 +55,7 @@
   }
 
   function blockContextEventListener(action: BlockAction, data: any) {
-    logger.log({ at: "blockContextEventListener", event: action, data });
+    logger.log({ at: "blockContextEventListener", action, data, block });
     if (!action) return;
     if (action === BlockAction.CONVERT) {
       const fromType = block.contentType;

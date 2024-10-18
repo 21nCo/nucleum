@@ -124,5 +124,5 @@
   }
 </script>
 
-<!-- <AppLoadingView message="Signing you in" /> -->
-<AppLoadingView message={debugMessage} />
+<AppLoadingView message="Signing you in" />
+<!-- <AppLoadingView message={debugMessage} /> -->
