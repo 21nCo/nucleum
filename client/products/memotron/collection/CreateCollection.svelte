@@ -35,6 +35,7 @@
   import CoverRenderer from "$lib/client/elements/coverPicker/CoverRenderer.svelte";
   import TypeExtensionAndPropertiesEditor from "./TypeExtensionAndPropertiesEditor.svelte";
   import { appStore } from "$lib/client/stores/app.store";
+  import view from "$lib/client/stores/view.store";
 
   let title: string;
   let isStarred: boolean = false;
@@ -88,43 +89,45 @@
 </script>
 
 <div class="flex w-full h-full items-start">
-  <button
-    class="relative flex flex-col items-center justify-center w-48 h-full"
-    use:hoverable={{
-      onHover: (e) => {
-        isCoverPickerHovered = e;
-      }
-    }}
-    on:click={() => {
-      isShowCoverPicker = true;
-    }}
-  >
-    {#if coverPhoto}
-      {#key coverPhoto}
-        <CoverRenderer cover={coverPhoto} class="rounded-l-md" />
-        {#if isCoverPickerHovered && !isShowCoverPicker}
-          <div
-            class="absolute top-0 left-0 w-full h-full flex flex-col gap-6 items-center justify-center bg-bgs2 bg-opacity-70 rounded-l-md"
-          >
-            <span class="text-fgs1">Click to replace</span>
-            <Button
-              icon="trash"
-              label="Remove"
-              type={ButtonVariant.DANGER}
-              size={Size.sm}
-              on:click={(e) => {
-                coverPhoto = undefined;
-                e?.detail?.stopPropagation();
-              }}
-            />
-          </div>
-        {/if}
-      {/key}
-    {:else}
-      <span class="text-fgs3 text-b2"> + add cover photo </span>
-    {/if}
-  </button>
-  <Divider orientation={Orientation.Vertical} />
+  {#if !$view.isConstrainedWidth}
+    <button
+      class="relative flex flex-col items-center justify-center w-48 h-full"
+      use:hoverable={{
+        onHover: (e) => {
+          isCoverPickerHovered = e;
+        }
+      }}
+      on:click={() => {
+        isShowCoverPicker = true;
+      }}
+    >
+      {#if coverPhoto}
+        {#key coverPhoto}
+          <CoverRenderer cover={coverPhoto} class="rounded-l-md" />
+          {#if isCoverPickerHovered && !isShowCoverPicker}
+            <div
+              class="absolute top-0 left-0 w-full h-full flex flex-col gap-6 items-center justify-center bg-bgs2 bg-opacity-70 rounded-l-md"
+            >
+              <span class="text-fgs1">Click to replace</span>
+              <Button
+                icon="trash"
+                label="Remove"
+                type={ButtonVariant.DANGER}
+                size={Size.sm}
+                on:click={(e) => {
+                  coverPhoto = undefined;
+                  e?.detail?.stopPropagation();
+                }}
+              />
+            </div>
+          {/if}
+        {/key}
+      {:else}
+        <span class="text-fgs3 text-b2"> + add cover photo </span>
+      {/if}
+    </button>
+    <Divider orientation={Orientation.Vertical} />
+  {/if}
   {#if isShowCoverPicker}
     <div class="h-full flex-1">
       <CoverPicker
@@ -142,7 +145,7 @@
     <div
       class="flex flex-col h-full gap-4 flex-1 items-center justify-between overflow-auto"
     >
-      <div class="flex flex-col gap-11 p-10 w-full overflow-auto">
+      <div class="flex flex-col gap-11 mo:p-4 p-10 w-full overflow-auto">
         <div class="flex items-center justify-between w-full gap-2">
           <Text content="Create collection" style={TextStyle.PANEL_HEADING} />
           <Toggle icon="star" bind:on={isStarred} />
@@ -160,13 +163,16 @@
               isDisabled: type === CollectionType.QUERY,
               badge: type === CollectionType.QUERY ? "planned" : undefined
             }))}
-            style={OptionSelectorStyle.TRAIN}
+            style={$view.isConstrainedWidth
+              ? OptionSelectorStyle.OUTLINE
+              : OptionSelectorStyle.TRAIN}
             labelProps={{
               ...formLabelConfig,
               label: "Type of collection"
             }}
             bind:selected={selectedType}
-            size={Size.md}
+            size={$view.isConstrainedWidth ? Size.sm : Size.md}
+            isPreventWrap={$view.isConstrainedWidth}
           />
           <InlineInfoBanner {...generateInfo(selectedType)} />
         </div>
@@ -195,7 +201,7 @@
         <OptionSelector
           options={collectionLayoutOptions}
           iconOrientation={Orientation.Vertical}
-          size={Size.md}
+          size={$view.isConstrainedWidth ? Size.sm : Size.md}
           labelProps={{
             ...formLabelConfig,
             label: "Default view",

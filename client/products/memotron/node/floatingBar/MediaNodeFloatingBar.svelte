@@ -25,6 +25,7 @@
   import CollectionsLane from "./CollectionsLane.svelte";
   import NodePropertiesPane from "../rightPanel/NodePropertiesPane.svelte";
   import { hoverable } from "$lib/client/actions/hover.action";
+  import view from "$lib/client/stores/view.store";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let isHovering: boolean = false;
@@ -51,7 +52,8 @@
   class={cn("flex flex-col w-full justify-center items-center", {
     "mb-6 absolute z-10 bottom-0":
       $node.accessMode === ResourceAccessMode.SLIDESHOW,
-    relative: $node.accessMode !== ResourceAccessMode.SLIDESHOW
+    "relative mo:mb-8 cw:mb-8":
+      $node.accessMode !== ResourceAccessMode.SLIDESHOW
   })}
 >
   <div
@@ -80,33 +82,40 @@
     {/if}
     <div
       class={cn(
-        "flex flex-col gap-2 w-full justify-center items-center bg-bgs1 shadow-md border border-brs2 p-3",
+        "flex flex-col gap-2 w-full justify-center items-center bg-bgs1 mo:p-2 p-3",
         {
+          "border-t border-t-brs2": $view.isConstrainedWidth,
+          "border border-brs2": !$view.isConstrainedWidth,
           "rounded-b-md": $node.accessMode === ResourceAccessMode.POP,
           "w-full": $node.accessMode !== ResourceAccessMode.SLIDESHOW,
-          "rounded-md": $node.accessMode === ResourceAccessMode.SLIDESHOW
+          "rounded-md shadow-md":
+            $node.accessMode === ResourceAccessMode.SLIDESHOW
         }
       )}
     >
       <div class="flex gap-3 justify-between items-center w-full">
         <span class="flex items-center gap-4 flex-1 min-w-0">
           <NodeTitle {node} />
-          <div class="text-b3 text-fgs3 whitespace-nowrap">
-            {formatDatetime($userPreferences, $node.createdAt)}
-          </div>
+          {#if !$view.isConstrainedWidth}
+            <div class="text-b3 text-fgs3 whitespace-nowrap">
+              {formatDatetime($userPreferences, $node.createdAt)}
+            </div>
+          {/if}
         </span>
         <span class="flex gap-5">
-          <ToggleGroup
-            selected={rightPane}
-            items={resolveVisibleActions($node.contentType)}
-            class="gap-5"
-            on:change={(e) => {
-              onPanelAction(e.detail);
-            }}
-            on:none={() => {
-              rightPane = undefined;
-            }}
-          />
+          {#if !$view.isConstrainedWidth}
+            <ToggleGroup
+              selected={rightPane}
+              items={resolveVisibleActions($node.contentType)}
+              class="gap-5"
+              on:change={(e) => {
+                onPanelAction(e.detail);
+              }}
+              on:none={() => {
+                rightPane = undefined;
+              }}
+            />
+          {/if}
           <ContextMenuAction
             menuResolver={() =>
               resolveNodeContextMenu($node, ResourceAccessPoint.SELF, {
@@ -115,18 +124,25 @@
             id="mediaNodeContextMenu"
             position={Placement.TopCenter}
             on:action={(e) => {
-              if (e.detail === NodeRightPaneType.METADATA) {
+              if (
+                e.detail === NodeRightPaneType.METADATA ||
+                e.detail === NodeRightPaneType.PROPERTIES ||
+                e.detail === NodeRightPaneType.SIDENOTES ||
+                e.detail === NodeRightPaneType.LINKS
+              ) {
                 rightPane = e.detail;
               }
             }}
           />
-          <div class="h-8">
-            <Divider
-              orientation={Orientation.Vertical}
-              colorStrength={ColorStrength.Strong}
-            />
-          </div>
-          {#if $node.contentType != NodeType.VIDEO}
+          {#if !$view.isConstrainedWidth}
+            <div class="h-8">
+              <Divider
+                orientation={Orientation.Vertical}
+                colorStrength={ColorStrength.Strong}
+              />
+            </div>
+          {/if}
+          {#if $node.contentType != NodeType.VIDEO && !$view.isConstrainedWidth}
             <Button
               {...buttonCommonProps}
               icon="full-screen"

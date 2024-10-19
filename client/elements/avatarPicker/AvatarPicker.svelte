@@ -28,6 +28,7 @@
   import account from "$lib/client/stores/account.store";
   import UploadButton from "$lib/client/elements/button/UploadButton.svelte";
   import { abg, cn } from "$lib/client/utils/ui.utils";
+  import view from "$lib/client/stores/view.store";
 
   export let mode: AvatarType.EMOJI | AvatarType.ICON = AvatarType.ICON;
   export let context: AvatarPickerContext = AvatarPickerContext.DEFAULT;
@@ -422,13 +423,17 @@
 </script>
 
 <div
-  class="bg-bgs1 h-[30.5rem] {context === AvatarPickerContext.DEFAULT
-    ? 'w-[35rem]'
-    : 'w-[24rem]'}"
+  class={cn(
+    "bg-bgs1 mo:h-96 h-[30.5rem] mo:border mo:border-brs2 rounded-md max-w-full",
+    {
+      "w-[35rem]": context === AvatarPickerContext.DEFAULT,
+      "w-[24rem]": context !== AvatarPickerContext.DEFAULT
+    }
+  )}
 >
   <div class="flex h-12 border-b border-b-brs2 p-2">
     {#if context === AvatarPickerContext.DEFAULT}
-      <div class="flex w-3/10 h-full px-2">
+      <div class="flex mo:flex-1 w-3/10 h-full px-2">
         <PanelSwitcher
           items={["Icon", "Emoji"]}
           size={Size.xs}
@@ -438,18 +443,20 @@
         />
       </div>
     {/if}
-    <div class="flex h-full justify-around grow">
-      <div class="flex rounded-md w-8/10 px-1 border border-brs2">
-        <Icon size={Size.xs} />
-        <input
-          type="search"
-          placeholder="Search"
-          bind:this={searchRef}
-          on:input={debouncedSearch}
-          id="iconPickerSearch"
-          class="w-full h-full p-0.5 pl-2 bg-transparent text-fgs1 text-b2 truncate outline-none rounded-md"
-        />
-      </div>
+    <div class="flex h-full mo:justify-end justify-around mo:flex-none grow">
+      {#if !$view.isConstrainedWidth}
+        <div class="flex rounded-md w-8/10 px-1 border border-brs2">
+          <Icon size={Size.xs} />
+          <input
+            type="search"
+            placeholder="Search"
+            bind:this={searchRef}
+            on:input={debouncedSearch}
+            id="iconPickerSearch"
+            class="w-full h-full p-0.5 pl-2 bg-transparent text-fgs1 text-b2 truncate outline-none rounded-md"
+          />
+        </div>
+      {/if}
       <Button
         icon="ph:dice-three-light"
         tooltip="Randomize"
@@ -463,10 +470,29 @@
           deleteCallback();
         }}
       />
+      {#if $view.isConstrainedWidth}
+        <Button
+          icon="ph:x"
+          on:click={() => {
+            eventDispatcher("close");
+            closeCallback();
+          }}
+        />
+      {/if}
     </div>
   </div>
+  {#if $view.isConstrainedWidth}
+    <input
+      type="search"
+      placeholder="Search"
+      bind:this={searchRef}
+      on:input={debouncedSearch}
+      id="iconPickerSearch"
+      class="w-full h-10 p-0.5 pl-2 bg-transparent text-fgs1 text-b2 truncate outline-none rounded-md"
+    />
+  {/if}
   <div class="flex h-9/10">
-    {#if context === AvatarPickerContext.DEFAULT}
+    {#if context === AvatarPickerContext.DEFAULT && !$view.isConstrainedWidth}
       <div
         class="relative w-3/10 min-w-[30%] h-full flex flex-col gap-2 px-2 py-2 border-r border-r-brs2"
       >

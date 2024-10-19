@@ -32,8 +32,11 @@ import { assignDefaultLabelAsFallback } from "./properties/property.utils";
 import type { IProperty } from "./properties/property.type";
 import {
   ContextMenuType,
-  type IContextMenu
+  type IContextMenu,
+  type IContextMenuItem
 } from "$lib/client/types/select.type";
+import context from "$lib/client/stores/context.store";
+import { get } from "svelte/store";
 
 class CollectionStore extends ResourceStore<ICollection> {
   constructor() {
@@ -377,20 +380,31 @@ export function resolveCollectionContextMenu(
   accessPoint: ResourceAccessPoint
 ): IContextMenu {
   const resourceActions = new ResourceActions(collection, collectionStore);
-  const commonGroups = [
-    {
-      group: "open",
-      items: [
-        resourceActions.openAsTab(),
-        // resourceActions.openAsSplit(),
-        resourceActions.openAsFull()
-      ]
-    },
-    {
-      group: "more",
-      items: [resourceActions.archive(), resourceActions.trash()]
-    }
-  ];
+  const ctx = get(context);
+  let commonGroups: { group: string; items: IContextMenuItem[] }[] = [];
+  if (ctx.isEmbed) {
+    commonGroups = [
+      {
+        group: "more",
+        items: [resourceActions.archive(), resourceActions.trash()]
+      }
+    ];
+  } else {
+    commonGroups = [
+      {
+        group: "open",
+        items: [
+          resourceActions.openAsTab(),
+          // resourceActions.openAsSplit(),
+          resourceActions.openAsFull()
+        ]
+      },
+      {
+        group: "more",
+        items: [resourceActions.archive(), resourceActions.trash()]
+      }
+    ];
+  }
   if (accessPoint != ResourceAccessPoint.SELF) {
     return [
       {

@@ -12,24 +12,24 @@
       We're working on improving the product and making it more useful for you.
       Please report any feedback using chat feature from settings.
     </span>
+
+    <div class="flex gap-4">
+      <Button
+        label="Read the guide"
+        icon="ph:book-open-text"
+        type={ButtonVariant.PRIMARY}
+        on:click={() => appStore.openLink($appStore.appData?.urls?.guides)}
+      />
+      <Button
+        label="Join us on Discord"
+        icon="ph:discord-logo-light"
+        on:click={() => appStore.openLink($appStore.appData?.urls?.discord)}
+      />
+    </div>
     {#if $appStore?.appData?.urls?.onboardingVideo}
       <div class="mt-8">
         <YoutubeVideoPreview
           node={{ url: $appStore?.appData?.urls?.onboardingVideo }}
-        />
-      </div>
-    {:else}
-      <div class="flex gap-4">
-        <Button
-          label="Read the guide"
-          icon="ph:book-open-text"
-          type={ButtonVariant.PRIMARY}
-          on:click={() => appStore.openLink($appStore.appData?.urls?.guides)}
-        />
-        <Button
-          label="Join us on Discord"
-          icon="ph:discord-logo-light"
-          on:click={() => appStore.openLink($appStore.appData?.urls?.discord)}
         />
       </div>
     {/if}

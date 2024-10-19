@@ -28,7 +28,10 @@ import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
 import { get, writable } from "svelte/store";
 import { SearchStore } from "../memotron.store";
 import { linker } from "$lib/client/products/memotron/linking/link.store";
-import type { IContextMenu } from "$lib/client/types/select.type";
+import type {
+  IContextMenu,
+  IContextMenuItem
+} from "$lib/client/types/select.type";
 import { flux } from "$lib/client/components/flux/flux";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { collectionStore } from "../collection/collection.store";
@@ -40,8 +43,11 @@ import {
   resourceInList,
   isSameResource
 } from "$lib/client/components/flux/resourceStores/resource.utils";
+import view from "$lib/client/stores/view.store";
 import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
 import { TacoActions } from "$lib/client/types/taco.types";
+
+import context from "$lib/client/stores/context.store";
 
 export const hierarchyFactorLimit = 5;
 
@@ -363,6 +369,12 @@ export class ActiveNodeStore extends ActiveResourceStore<
     logger.log({ at: "ActiveNodeStore.resolveLinks", response });
     return response;
   }
+
+  resolveExportContent(): string {
+    const node = this.get();
+    if (!node || node?.contentType !== NodeType.NODULAR_MARKDOWN) return "";
+    return node.md?.blocks ? generateMarkdownText(node.md.blocks) : "";
+  }
 }
 
 const activeNodeEventStores = new Map<string, any>();
@@ -403,20 +415,62 @@ export function resolveNodeContextMenu(
   }
 ): IContextMenu {
   const resourceActions = new ResourceActions(node, nodeStore);
-  const commonGroups = [
-    {
-      group: "open",
+  const ctx = get(context);
+  let commonGroups: { group: string; items: IContextMenuItem[] }[] = [];
+  if (ctx.isEmbed) {
+    commonGroups = [
+      {
+        group: "more",
+        items: [resourceActions.archive(), resourceActions.trash()]
+      }
+    ];
+  } else {
+    commonGroups = [
+      {
+        group: "open",
+        items: [
+          resourceActions.openAsTab(),
+          // resourceActions.openAsSplit(),
+          resourceActions.openAsFull()
+        ]
+      },
+      {
+        group: "more",
+        items: [resourceActions.archive(), resourceActions.trash()]
+      }
+    ];
+  }
+  const viewStore = get(view);
+  if (viewStore.isConstrainedWidth && params?.isMediaNode) {
+    commonGroups.unshift({
+      group: "essentials",
       items: [
-        resourceActions.openAsTab(),
-        // resourceActions.openAsSplit(),
-        resourceActions.openAsFull()
+        {
+          value: NodeRightPaneType.SIDENOTES,
+          icon: "ph:note-thin",
+          label: "Side notes"
+        },
+        {
+          value: NodeRightPaneType.LINKS,
+          icon: "ph:arrows-left-right-thin",
+          label: "Show links"
+        },
+        {
+          value: NodeRightPaneType.PROPERTIES,
+          icon: "widget",
+          label: "Show properties"
+        }
       ]
-    },
-    {
-      group: "more",
-      items: [resourceActions.archive(), resourceActions.trash()]
-    }
-  ];
+    });
+  } else if (viewStore.isConstrainedWidth) {
+    commonGroups.unshift({
+      group: "essentials",
+      items: [
+        resourceActions.toggleReadMode()
+        // Forks
+      ]
+    });
+  }
   if (accessPoint === ResourceAccessPoint.NODE_LINKS && params?.accessPointId) {
     let baseItems = [resourceActions.copyLink()];
     if (accessPoint === ResourceAccessPoint.NODE_LINKS) {
@@ -492,12 +546,13 @@ export function resolveNodeContextMenu(
     {
       group: "shareAndExport",
       items: [
-        resourceActions.copyLink()
+        resourceActions.copyLink(),
+        resourceActions.copyContents()
         // {
         //   value: "export",
         //   icon: "share",
         //   callback: async () => {}
-        // },
+        // }
         // {
         //   value: "share",
         //   icon: "share",
@@ -514,7 +569,11 @@ export function resolveNodeContextMenu(
 }
 
 export function resolveVisibleActions(contentType: NodeType): IToggleItem[] {
-  if (contentType === NodeType.NODULAR_MARKDOWN) {
+  const viewStore = get(view);
+  if (
+    contentType === NodeType.NODULAR_MARKDOWN &&
+    !viewStore.isConstrainedWidth
+  ) {
     return [
       {
         value: NodeRightPaneType.SIDENOTES,
@@ -555,7 +614,7 @@ export function resolveVisibleActions(contentType: NodeType): IToggleItem[] {
     //   tooltip: "Bird view"
     // }
   ];
-  if (canHaveTraces.includes(contentType)) {
+  if (canHaveTraces.includes(contentType) && !viewStore.isConstrainedWidth) {
     baseActions.unshift({
       value: NodeRightPaneType.TRACES,
       icon: "bookmark",

@@ -280,7 +280,10 @@
     const functions = [
       () => handleBlockBrowser(event),
       () => handleMentionShortcut(event),
-      () => handleBackspace(event),
+      () =>
+        handleBackspace(event, {
+          inBlockPosition: e.detail.position
+        }),
       () => handleArrowKeys(e)
     ];
 
@@ -497,6 +500,7 @@
     e: CustomEvent<{
       event: KeyboardEvent;
       caretPosition: any;
+      position: any;
     }>
   ) {
     isFirstBlockAndIsEmpty = mdStore.isFirstBlockAndIsEmpty(block.id);
@@ -511,8 +515,12 @@
     const steps = [
       () => handleBlockBrowser(event, "keyup"),
       () => handleMentionShortcut(event, "keyup"),
-      performEscapeShortcutsT2,
-      () => handleBackspace(event, { caretPosition, type: "keyup" })
+      performEscapeShortcutsT2
+      // () =>
+      //   handleBackspace(event, {
+      //     caretPosition,
+      //     type: "keyup"
+      //   })
     ];
     for (const func of steps) {
       if (func()) break;
@@ -542,30 +550,56 @@
     event: KeyboardEvent,
     params?: {
       caretPosition?: number;
+      inBlockPosition?: any;
       type?: "keyup" | "keydown";
     }
   ) {
     if (event.key !== "Backspace") return false;
+    logger.log({
+      at: "handleBackspace",
+      ...params?.inBlockPosition,
+      body: block.body
+    });
     if (params?.type === "keyup") {
-      if (!(params?.caretPosition === 0)) return false;
+      return false;
+      if (
+        !(params?.caretPosition === 0 && params?.inBlockPosition?.isFirstLine)
+      )
+        return false;
       if (block.body !== "" && block.contentType === NodeType.SIMPLE_TEXT) {
         mdStore.backspaceWithContent(block);
         event.preventDefault();
       } else if (block.body !== "") {
         //TODO - event.preventDefault() is not preventing from the backspace event to happen - but moving this to keydown event is not reliable as caretPosition is not reliable in keydown event - This unintended case only happens when backspaced from one charater offset in the front.
-        convert(NodeType.SIMPLE_TEXT);
-        event.preventDefault();
+        // convert(NodeType.SIMPLE_TEXT);
+        // event.preventDefault();
       }
       return true;
     }
-    if (!block.body) {
-      if (block.contentType === NodeType.SIMPLE_TEXT) {
-        if (!isFirstBlockAndIsEmpty) performDelete();
-      } else {
-        convert(NodeType.SIMPLE_TEXT);
-      }
+    if (
+      !block.body &&
+      block.contentType === NodeType.SIMPLE_TEXT &&
+      !isFirstBlockAndIsEmpty
+    ) {
+      performDelete();
       event.preventDefault();
       return true;
+    } else if (
+      block.contentType !== NodeType.SIMPLE_TEXT &&
+      (params?.inBlockPosition?.caretOffset === 0 || !block.body)
+    ) {
+      convert(NodeType.SIMPLE_TEXT);
+      event.preventDefault();
+      return true;
+    } else if (
+      block.contentType === NodeType.SIMPLE_TEXT &&
+      block.body &&
+      params?.inBlockPosition?.caretOffset === 0
+    ) {
+      //TODO - move the content to the previous block and delete the current block
+      // mdStore.backspaceWithContent(block);
+      // event.preventDefault();
+      // return true;
     }
 
     function performDelete() {

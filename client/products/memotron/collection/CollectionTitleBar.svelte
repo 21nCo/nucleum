@@ -20,10 +20,10 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { MemotronAction } from "../memotronAction.enum";
   import { tooltip } from "$lib/client/actions/popover.action";
+  import view from "$lib/client/stores/view.store";
   const dispatch = createEventDispatcher();
   export let searchQuery: string = "";
   export let collection: IActiveCollectionStore;
-  export let isInEditMode: boolean = false;
   export let isShowMetaViews: boolean = false;
   export let isSingleViewMode: boolean = false;
 
@@ -58,14 +58,24 @@
 >
   <!-- TODO breadcrumbs - if launched as child from a combination i.e. if parent present -->
   <!-- TODO - back button to previous resource - if launched from a mention or links -->
+  {#if $view.isConstrainedWidth}
+    <Icon
+      icon="ph:caret-left-light"
+      on:click={() => {
+        appStore.closeResource({
+          id: collection.id
+        });
+      }}
+    />
+  {/if}
   {#if $collection.type === CollectionType.TYPED}
     <span
       class={cn("flex h-12 items-center justify-center", {
-        "w-12": isInEditMode,
-        "w-8": $collection.avatar && !isInEditMode
+        "w-12": $collection.isInEditMode,
+        "w-8": $collection.avatar && !$collection.isInEditMode
       })}
     >
-      {#if isInEditMode}
+      {#if $collection.isInEditMode}
         <Avatar
           bind:avatar={$collection.avatar}
           isInEditMode={true}
@@ -85,17 +95,17 @@
   {/if}
   <span
     class={cn(
-      "flex items-center gap-4 font-medium text-h1 whitespace-nowrap flex-1 min-w-0 border rounded-md text-left mr-6",
+      "flex items-center gap-4 font-medium mo:text-h4 text-h1 whitespace-nowrap flex-1 min-w-0 border rounded-md text-left mr-6",
       {
-        "border-transparent": !isInEditMode,
-        "border-brs3 px-2": isInEditMode
+        "border-transparent": !$collection.isInEditMode,
+        "border-brs3 px-2": $collection.isInEditMode
       }
     )}
   >
     <!-- {#if $collection.avatar}
       <AvatarView avatar={$collection.avatar} size={Size.lg} />
     {/if} -->
-    {#if isInEditMode}
+    {#if $collection.isInEditMode}
       <TextInput
         size={Size.lg}
         bind:value={$collection.label}
@@ -124,7 +134,7 @@
         />
       </button>
     {/if}
-    {#if !isInEditMode && $collection.type === CollectionType.TYPED}
+    {#if !$collection.isInEditMode && $collection.type === CollectionType.TYPED}
       <button
         class="flex text-b3 text-fgs3 rounded-md border border-brs3"
         on:click={openPropertiesEditor}
@@ -135,7 +145,9 @@
         <span class="flex gap-2 items-center px-2 py-0.5">
           <Icon icon="ph:cube-light" size={Size.sm} class="stroke-fgs3" />
           {$collection.properties.length}
-          {$collection.properties.length === 1 ? "property" : "properties"}
+          {#if !$view.isConstrainedWidth}
+            {$collection.properties.length === 1 ? "property" : "properties"}
+          {/if}
         </span>
         {#if $collection.typeToExtend}
           <span class="flex rounded-r-md bg-bgs2 px-2 py-0.5">
@@ -143,7 +155,7 @@
           </span>
         {/if}
       </button>
-    {:else if isInEditMode && $collection.type === CollectionType.TYPED}
+    {:else if $collection.isInEditMode && $collection.type === CollectionType.TYPED && !$view.isConstrainedWidth}
       <button
         class="flex text-b3 text-fgs3 rounded-md border border-brs3 px-2 py-0.5 items-center gap-1 hover:bg-bgs2"
         on:click={openPropertiesEditor}
@@ -154,83 +166,100 @@
     {/if}
   </span>
 
-  <span
-    class={cn("flex gap-3 justify-end items-center", {
-      "w-1/2": !isInEditMode,
-      "w-1/3": isInEditMode
-    })}
-    use:resizeListener={(e) => {
-      rightPartWidth = e.width;
-    }}
-  >
-    <!-- {#if $collection.isViewDataRefreshing}
+  {#if $view.isConstrainedWidth}
+    {#if !$collection.isInEditMode}
+      <AddResourceAction on:add variant="minimal" />
+    {/if}
+    <ContextMenuAction
+      menuResolver={() =>
+        resolveCollectionContextMenu($collection, ResourceAccessPoint.SELF)}
+      position={Placement.Left}
+      id="collectionContextMenu"
+      size={Size.lg}
+    />
+  {:else}
+    <span
+      class={cn("flex gap-3 justify-end items-center", {
+        "w-1/2": !$collection.isInEditMode,
+        "w-1/3": $collection.isInEditMode
+      })}
+      use:resizeListener={(e) => {
+        rightPartWidth = e.width;
+      }}
+    >
+      <!-- {#if $collection.isViewDataRefreshing}
       <div>
         <Icon icon="svg-spinners:90-ring-with-bg" class="stroke-fgs1" />
       </div>
     {/if} -->
-    {#if !isInEditMode}
-      {@const isMiniSearch = rightPartWidth < 530}
-      <div
-        class={cn("flex rounded-full", {
-          "border-aps1": isSearchFocused,
-          "border-brs3": !isSearchFocused,
-          // "ml-2": isSingleViewMode && !isMiniSearch,
-          "flex-1 border px-3 py-2": !isMiniSearch || isSearchFocused
-        })}
-      >
-        {#if isMiniSearch && !isSearchFocused}
-          <Button
-            icon="ph:magnifying-glass"
-            tooltip="Search this collection"
-            on:click={() => {
-              isSearchFocused = true;
-              setTimeout(() => {
-                searchBoxRef?.focus();
-              }, 10);
-            }}
-          />
-        {:else}
-          <TextInput
-            style={InputStyle.PLAIN}
-            bind:value={searchQuery}
-            bind:this={searchBoxRef}
-            icon="ph:magnifying-glass"
-            placeholder="Search this collection"
-            on:focus={() => (isSearchFocused = true)}
-            on:blur={() => (isSearchFocused = false)}
-            on:input={onSearchQueryChange}
+      {#if !$collection.isInEditMode}
+        {@const isMiniSearch = rightPartWidth < 530}
+        <div
+          class={cn("flex rounded-full", {
+            "border-aps1": isSearchFocused,
+            "border-brs3": !isSearchFocused,
+            // "ml-2": isSingleViewMode && !isMiniSearch,
+            "flex-1 border px-3 py-2": !isMiniSearch || isSearchFocused
+          })}
+        >
+          {#if isMiniSearch && !isSearchFocused}
+            <Button
+              icon="ph:magnifying-glass"
+              tooltip="Search this collection"
+              on:click={() => {
+                isSearchFocused = true;
+                setTimeout(() => {
+                  searchBoxRef?.focus();
+                }, 10);
+              }}
+            />
+          {:else}
+            <TextInput
+              style={InputStyle.PLAIN}
+              bind:value={searchQuery}
+              bind:this={searchBoxRef}
+              icon="ph:magnifying-glass"
+              placeholder="Search this collection"
+              on:focus={() => (isSearchFocused = true)}
+              on:blur={() => (isSearchFocused = false)}
+              on:input={onSearchQueryChange}
+            />
+          {/if}
+        </div>
+      {:else if rightPartWidth > 300}
+        <span class="text-fgs3 text-b3 whitespace-nowrap">
+          Edit mode is on
+        </span>
+      {/if}
+      {#if !isSearchFocused}
+        <slot name="additional"></slot>
+        {#if !$collection.isInEditMode}
+          <Toggle
+            icon="ph:monitor-play-thin"
+            tooltip="More actions"
+            bind:on={isShowMetaViews}
           />
         {/if}
-      </div>
-    {:else if rightPartWidth > 300}
-      <span class="text-fgs3 text-b3 whitespace-nowrap"> Edit mode is on </span>
-    {/if}
-    {#if !isSearchFocused}
-      <slot name="additional"></slot>
-      {#if !isInEditMode}
         <Toggle
-          icon="ph:monitor-play-thin"
-          tooltip="More actions"
-          bind:on={isShowMetaViews}
+          icon={$collection.isInEditMode
+            ? "ph:pencil-simple-slash-light"
+            : "ph:pencil-simple-line-thin"}
+          tooltip={$collection.isInEditMode
+            ? "Exit edit mode"
+            : "Enter edit mode"}
+          bind:on={$collection.isInEditMode}
         />
+        <ContextMenuAction
+          menuResolver={() =>
+            resolveCollectionContextMenu($collection, ResourceAccessPoint.SELF)}
+          position={Placement.Left}
+          id="collectionContextMenu"
+          size={Size.lg}
+        />
+        {#if isSingleViewMode}
+          <AddResourceAction on:add variant="default" />
+        {/if}
       {/if}
-      <Toggle
-        icon={isInEditMode
-          ? "ph:pencil-simple-slash-light"
-          : "ph:pencil-simple-line-thin"}
-        tooltip={isInEditMode ? "Exit edit mode" : "Enter edit mode"}
-        bind:on={isInEditMode}
-      />
-      <ContextMenuAction
-        menuResolver={() =>
-          resolveCollectionContextMenu($collection, ResourceAccessPoint.SELF)}
-        position={Placement.Left}
-        id="collectionContextMenu"
-        size={Size.lg}
-      />
-      {#if isSingleViewMode}
-        <AddResourceAction on:add isMinimalVariant={true} />
-      {/if}
-    {/if}
-  </span>
+    </span>
+  {/if}
 </div>

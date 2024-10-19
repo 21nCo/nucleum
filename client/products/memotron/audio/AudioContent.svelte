@@ -32,6 +32,8 @@
   import { read_audio } from "@xenova/transformers";
   import { appStore } from "$lib/client/stores/app.store";
   import { Action } from "$lib/client/types/action.enum";
+  import view from "$lib/client/stores/view.store";
+  import { cn } from "$lib/client/utils/ui.utils";
 
   export let body: any = {};
   export let url: string;
@@ -269,23 +271,29 @@
   <div
     class="flex flex-col w-full flex-1 items-center gap-6 border border-brs2 rounded-md bg-bgs2 bg-opacity-30 py-4"
   >
-    <div class="flex w-full justify-between gap-3 px-10">
+    <div class="flex w-full justify-between gap-3 mo:px-2 px-10">
       <Text content="Transcription" style={TextStyle.PANEL_HEADING} />
-      <DropDown
-        items={accuracy}
-        isDisableSearch={true}
-        size={Size.sm}
-        style={InputStyle.PLAIN}
-        label={{
-          label: "Accuracy",
-          orientation: Orientation.Vertical,
-          isShrink: true
-        }}
-        value={model}
-        on:select={(e) => (model = e.detail)}
-      />
+      {#if !$view.isConstrainedWidth}
+        <DropDown
+          items={accuracy}
+          isDisableSearch={true}
+          size={Size.sm}
+          style={InputStyle.PLAIN}
+          label={{
+            label: "Accuracy",
+            orientation: Orientation.Vertical,
+            isShrink: true
+          }}
+          value={model}
+          on:select={(e) => (model = e.detail)}
+        />
+      {/if}
     </div>
-    <div class="flex w-full flex-1 pr-10 overflow-y-auto">
+    <div
+      class={cn("flex w-full flex-1 overflow-y-auto", {
+        "pr-10": !$view.isConstrainedWidth && body?.mdBlocks
+      })}
+    >
       <p class="p-2 text-center text-rose-700" class:hidden={!isError}>
         Transcription Error.
       </p>

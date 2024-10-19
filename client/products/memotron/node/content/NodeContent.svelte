@@ -35,6 +35,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import type { IRecordId } from "$lib/client/types/data.type";
   import type { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
+  import view from "$lib/client/stores/view.store";
 
   function handleEvent(event: string, data: any) {
     logger.log({ at: "node context", event, data });
@@ -241,25 +242,27 @@
           on:ready={refreshCounts}
           on:action={onBlockAction}
         />
-        <div
-          class="flex w-full justify-center items-center mt-8 exclude-from-count"
-        >
-          <div class="flex flex-col gap-2 ml-12 w-full mo:w--9/10 w--4/5">
-            <Divider colorStrength={ColorStrength.Strong} />
-            <div class="flex w-full justify-between text-b3 text-fgs3">
-              <!-- <div class="text-b3 text-fgs3">End of content.</div> -->
-              <div>
-                {$node.wordCount} words
-              </div>
-              <div class="min-w-fit whitespace-nowrap">
-                Modified: {formatDatetime(
-                  $userPreferences,
-                  new Date($node.modifiedAt)
-                )}
+        {#if !$view.isConstrainedWidth}
+          <div
+            class="flex w-full justify-center items-center mt-8 exclude-from-count"
+          >
+            <div class="flex flex-col gap-2 ml-12 w-full mo:w--9/10 w--4/5">
+              <Divider colorStrength={ColorStrength.Strong} />
+              <div class="flex w-full justify-between text-b3 text-fgs3">
+                <!-- <div class="text-b3 text-fgs3">End of content.</div> -->
+                <div>
+                  {$node.wordCount} words
+                </div>
+                <div class="min-w-fit whitespace-nowrap">
+                  Modified: {formatDatetime(
+                    $userPreferences,
+                    new Date($node.modifiedAt)
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        {/if}
         <ScrollViewBottomSpacer size={Size.xl} />
       {:else if $node?.contentType === NodeType.WEB_PAGE && $node.children && $node.children.length > 0}
         <div class="flex flex-col items-start gap-4">

@@ -36,6 +36,14 @@ export class ResourceActions<T extends IMemotronItemBase> {
       callback: async () => copyResourceLinkToClipboard(this.resource.id)
     };
   }
+  copyContents(): IContextMenuItem {
+    return {
+      label: "Copy contents",
+      value: "copy-contents",
+      icon: "copy",
+      callback: async () => this.store.copyContents(this.resource.id)
+    };
+  }
   star(): IContextMenuItem {
     return {
       label: this.resource.isStarred ? "Unstar" : "Star this resource",
@@ -107,9 +115,11 @@ export class ResourceActions<T extends IMemotronItemBase> {
   }
   edit(context: ResourceAccessPoint): IContextMenuItem {
     return {
-      label: "Edit",
+      label: this.resource.isInEditMode ? "Exit edit mode" : "Edit",
       value: "edit",
-      icon: "ph:pencil-simple-line-light",
+      icon: this.resource.isInEditMode
+        ? "ph:pencil-simple-slash-light"
+        : "ph:pencil-simple-line-thin",
       callback: async () => {
         if (context != ResourceAccessPoint.SELF) {
           appStore.openResource(
@@ -119,7 +129,25 @@ export class ResourceActions<T extends IMemotronItemBase> {
               : ResourceAccessMode.POP
           );
         }
-        this.store.toggleEditMode(this.resource.id, true);
+        this.store.toggleEditMode(
+          this.resource.id,
+          !this.resource.isInEditMode
+        );
+      }
+    };
+  }
+  toggleReadMode(): IContextMenuItem {
+    return {
+      label: this.resource.isInReadMode ? "Exit read mode" : "Read mode",
+      value: "readMode",
+      icon: this.resource.isInReadMode
+        ? "ph:book-open-thin"
+        : "ph:book-open-thin",
+      callback: async () => {
+        this.store.toggleReadMode(
+          this.resource.id,
+          !this.resource.isInReadMode
+        );
       }
     };
   }

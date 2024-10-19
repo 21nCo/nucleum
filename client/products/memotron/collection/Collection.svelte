@@ -17,7 +17,7 @@
     PanelSwitcherStyle
   } from "$lib/client/types/switcher.enum";
   import { Size } from "$lib/client/types/size.enum";
-  import { ButtonStyle } from "$lib/client/types/button.type";
+  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import type { INodeThumb } from "$lib/client/products/memotron/node/node.type";
   import type { IProperty } from "$lib/client/products/memotron/collection/properties/property.type";
   import { activeResourceFilter } from "$lib/client/utils/utils";
@@ -62,6 +62,7 @@
     stringToRecordId
   } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import view from "$lib/client/stores/view.store";
 
   export let id: string = "";
   let collection: IActiveCollectionStore = resolveActiveCollectionStore(
@@ -90,11 +91,17 @@
   let isNotInlineAccess: boolean = false;
   let selectedArrangement: Arrangement = Arrangement.LIST;
   let isCoverPickerOpen = false;
-  let isInEditMode = false;
   let isShowMetaViews = false;
   let isSingleViewMode = true;
   let arrangementDensity = 1;
   let searchQuery: string = "";
+
+  $: coverPlacement =
+    $collection?.coverLayout?.placement === Placement.Top ||
+    !$collection?.coverLayout?.placement ||
+    $view.isConstrainedWidth
+      ? Placement.Top
+      : $collection?.coverLayout?.placement;
 
   $: isBoardContext =
     activeView?.layout === CollectionLayout.BOARD &&
@@ -320,16 +327,14 @@
   }
   function onCoverReposition(e: CustomEvent) {
     logger.log({ at: "onCoverReposition", e });
-    const isY =
-      $collection.coverLayout?.placement === Placement.Top ||
-      !$collection.coverLayout?.placement;
     collection.debouncedModify(
       {
         coverLayout: {
           ...$collection.coverLayout,
-          position: isY
-            ? { y: e.detail, x: $collection.coverLayout?.position?.x }
-            : { x: e.detail, y: $collection.coverLayout?.position?.y }
+          position:
+            coverPlacement === Placement.Top
+              ? { y: e.detail, x: $collection.coverLayout?.position?.x }
+              : { x: e.detail, y: $collection.coverLayout?.position?.y }
         }
       },
       "coverPosition"
@@ -338,22 +343,20 @@
 
   function onCoverResize(e: CustomEvent) {
     logger.log({ at: "onCoverResize", e });
-    const isY =
-      $collection.coverLayout?.placement === Placement.Top ||
-      !$collection.coverLayout?.placement;
     collection.debouncedModify(
       {
         coverLayout: {
           ...$collection.coverLayout,
-          size: isY
-            ? {
-                height: e.detail.height,
-                width: $collection.coverLayout?.size?.width
-              }
-            : {
-                width: e.detail.width,
-                height: $collection.coverLayout?.size?.height
-              }
+          size:
+            coverPlacement === Placement.Top
+              ? {
+                  height: e.detail.height,
+                  width: $collection.coverLayout?.size?.width
+                }
+              : {
+                  width: e.detail.width,
+                  height: $collection.coverLayout?.size?.height
+                }
         }
       },
       "coverSize"
@@ -406,17 +409,15 @@
 {:else if $collection}
   <div
     class={cn("relative flex w-full h-full", {
-      "flex-col overflow-auto":
-        $collection.coverLayout?.placement === Placement.Top ||
-        !$collection.coverLayout?.placement
+      "flex-col overflow-auto": coverPlacement === Placement.Top
     })}
     on:scroll={onScroll}
   >
-    {#if $collection.coverLayout?.placement !== Placement.Right}
+    {#if coverPlacement !== Placement.Right}
       <Cover
         cover={$collection.cover}
-        {isInEditMode}
-        placement={$collection.coverLayout?.placement}
+        isInEditMode={$collection.isInEditMode}
+        placement={coverPlacement}
         position={$collection.coverLayout?.position}
         size={$collection.coverLayout?.size}
         {dev_isRoundedCover}
@@ -430,17 +431,14 @@
     {#if isCoverPickerOpen}
       <div
         class={cn("flex-1 overflow-auto", {
-          "w-full":
-            $collection.coverLayout?.placement === Placement.Top ||
-            !$collection.coverLayout?.placement,
-          "h-full": $collection.coverLayout?.placement === Placement.Right
+          "w-full": coverPlacement === Placement.Top,
+          "h-full": coverPlacement === Placement.Right
         })}
       >
         <CoverPicker
           value={$collection.cover}
           on:select={onCoverChange}
-          orientation={$collection.coverLayout?.placement === Placement.Top ||
-          !$collection.coverLayout?.placement
+          orientation={coverPlacement === Placement.Top
             ? Orientation.Horizontal
             : Orientation.Vertical}
           on:close={() => (isCoverPickerOpen = false)}
@@ -450,17 +448,18 @@
       <div
         class={cn("flex flex-col flex-1", {
           "gap-8": !isSingleViewMode || isShowMetaViews,
-          "h-full overflow-auto":
-            $collection.coverLayout?.placement === Placement.Left ||
-            $collection.coverLayout?.placement === Placement.Right,
-          "w-full": $collection.coverLayout?.placement === Placement.Top
+          "h-full overflow-auto": coverPlacement !== Placement.Top,
+          "w-full": coverPlacement === Placement.Top
         })}
         on:scroll={onScroll}
       >
         <div
-          class={cn("px-4 pt-6 stickyheader", {
+          class={cn("px-4 stickyheader", {
             "sticky top-0 z-20 bg-bgs1": isSingleViewMode,
-            "pb-8": isSingleViewMode && !isShowMetaViews
+            "pb-8":
+              isSingleViewMode && !isShowMetaViews && !$view.isConstrainedWidth,
+            "pt-6": !$view.isConstrainedWidth,
+            "p-2": $view.isConstrainedWidth
           })}
         >
           <CollectionTitleBar
@@ -468,13 +467,12 @@
             {collection}
             {isSingleViewMode}
             bind:searchQuery
-            bind:isInEditMode
             bind:isShowMetaViews
             on:search={onSearch}
             on:add={onAddResource}
           >
             <span slot="additional" class="flex items-center gap-2">
-              {#if isSingleViewMode && !isInEditMode}
+              {#if isSingleViewMode && !$collection.isInEditMode}
                 <ArrangementSelector
                   {isBoardContext}
                   bind:arrangement={selectedArrangement}
@@ -516,13 +514,13 @@
             />
           </div>
         {/if}
-        {#if (activeView && isValidString(activeView.tabBy)) || isInEditMode || !isSingleViewMode}
+        {#if (activeView && isValidString(activeView.tabBy)) || $collection.isInEditMode || !isSingleViewMode}
           <header
             class={cn("sticky top-0 z-10 flex flex-col gap-6 bg-bgs1 w-full", {
               "pt-4": isStickied
             })}
           >
-            {#if !isSingleViewMode || isInEditMode}
+            {#if !isSingleViewMode || $collection.isInEditMode}
               <PanelSwitcher
                 items={viewsForSwitcher}
                 isEnableAnimationForTitle={true}
@@ -530,7 +528,7 @@
                 title={isStickied ? $collection.label : ""}
                 isExpandToFullWidth={true}
                 barStyle={BarStyle.EXACT}
-                {isInEditMode}
+                isInEditMode={$collection.isInEditMode}
                 bind:triggerItemEdit
                 on:remove={onViewRemove}
                 on:add={onViewAdd}
@@ -560,15 +558,18 @@
                     on:switch={onArrangementChange}
                     on:densityChange={onDensityChange}
                   />
-                  {#if !isInEditMode}
-                    <AddResourceAction on:add={onAddResource} />
+                  {#if !$collection.isInEditMode}
+                    <AddResourceAction
+                      on:add={onAddResource}
+                      variant="strong"
+                    />
                   {/if}
                 </span>
               </PanelSwitcher>
             {/if}
-            {#if activeView && (isInEditMode || !isNoneResource(activeView.tabBy))}
+            {#if activeView && ($collection.isInEditMode || !isNoneResource(activeView.tabBy))}
               <div class="px-4 pb-4 flex flex-col gap-6">
-                {#if isInEditMode}
+                {#if $collection.isInEditMode}
                   <ViewSettingsBar
                     bind:view={activeView}
                     {properties}
@@ -601,7 +602,7 @@
           {:else if !$collection.isViewDataLoading && activeView}
             <View
               view={activeView}
-              {isInEditMode}
+              isInEditMode={$collection.isInEditMode}
               data={_filtered}
               isBoardOverflow={isStickied}
               properties={$collection?.properties}
@@ -612,11 +613,11 @@
         </main>
       </div>
     {/if}
-    {#if $collection.coverLayout?.placement === Placement.Right}
+    {#if coverPlacement === Placement.Right}
       <Cover
         cover={$collection.cover}
-        {isInEditMode}
-        placement={$collection.coverLayout?.placement}
+        isInEditMode={$collection.isInEditMode}
+        placement={coverPlacement}
         position={$collection.coverLayout?.position}
         size={$collection.coverLayout?.size}
         {dev_isRoundedCover}
@@ -628,7 +629,7 @@
       />
     {/if}
     {#if isNotInlineAccess}
-      <FullScreenCloseButton />
+      <FullScreenCloseButton style={ButtonVariant.DANGER} />
     {/if}
   </div>
 {/if}

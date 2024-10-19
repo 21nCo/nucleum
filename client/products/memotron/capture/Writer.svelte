@@ -7,6 +7,9 @@
   export let isEmptyState: boolean = true;
   export let isSaveInProgress: boolean = false;
   import { setContext } from "svelte";
+  import type { IRecordId } from "$lib/client/types/data.type";
+
+  let mdRef: NodularMarkdown | undefined = undefined;
 
   function handleEvent(message: any) {
     logger.log({ at: "capture handleEvent", message });
@@ -35,6 +38,10 @@
 
   setContext("content", contentContext);
 
+  export function focus(id?: IRecordId) {
+    mdRef?.focusBlock(id);
+  }
+
   let isShowTOC: boolean = false;
 </script>
 
@@ -56,6 +63,7 @@
         bind:md={$captureStore.body}
         bind:childrenWithStructure={$captureStore.childrenWithStructure}
         bind:rootStructure={$captureStore.rootStructure}
+        bind:this={mdRef}
         on:change
       />
     </div>

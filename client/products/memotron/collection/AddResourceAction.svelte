@@ -6,8 +6,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import { createEventDispatcher } from "svelte";
 
-  export let isMinimalVariant = false;
-  let dev_isIconOnly = false;
+  export let variant: "minimal" | "default" | "strong" = "default";
 
   const dispatch = createEventDispatcher();
   const options = [
@@ -30,7 +29,7 @@
 </script>
 
 <Popover>
-  {#if isMinimalVariant && dev_isIconOnly}
+  {#if variant === "minimal"}
     <button
       class="flex rounded-full p-1 hover:bg-aps2 hover:border-aps1 bg-aps3 text-aps1 border border-aps2"
     >
@@ -42,7 +41,7 @@
       label="Add"
       size={Size.sm}
       type={ButtonVariant.PRIMARY}
-      style={isMinimalVariant ? ButtonStyle.OUTLINED : ButtonStyle.DEFAULT}
+      style={variant === "default" ? ButtonStyle.OUTLINED : ButtonStyle.DEFAULT}
       isPreventMinWidth={true}
     />
   {/if}

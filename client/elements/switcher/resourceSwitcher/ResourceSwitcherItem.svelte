@@ -17,6 +17,7 @@
   import { hoverable } from "$lib/client/actions/hover.action";
   import { popover } from "$lib/client/actions/popover.action";
   import ContextMenu from "../../contextMenu/ContextMenu.svelte";
+  import view from "$lib/client/stores/view.store";
   export let item: IResourceSwitchItem;
   export let size: Size.lg | Size.md | Size.sm = Size.md;
   export let isActive: boolean = false;
@@ -101,12 +102,6 @@
   class={cn(
     "relative flex justify-center items-center whitespace-nowrap border  hover:text-fgs1",
     {
-      "min-w-56 h-20":
-        iconOrientation === Orientation.Horizontal && size === Size.lg,
-      "min-w-48 h-14":
-        iconOrientation === Orientation.Horizontal && size === Size.md,
-      "min-w-40 h-10":
-        iconOrientation === Orientation.Horizontal && size === Size.sm,
       "px-8 py-6": iconOrientation === Orientation.Vertical && size === Size.lg,
       "px-6 py-4": iconOrientation === Orientation.Vertical && size === Size.md,
       "px-3 py-1": iconOrientation === Orientation.Vertical && size === Size.sm,
@@ -114,8 +109,16 @@
       "text-b2 rounded-full": size === Size.sm,
       "border border-aps1 bg-aps3 hover:bg--aps2": isActive,
       "outline-transparent border-brs3 text-fgs3 hover:bg-bgs2": !isActive,
-      "opacity-80 cursor-not-allowed": item.isDisabled
-    }
+      "opacity-80 cursor-not-allowed": item.isDisabled,
+      "px-4 py-1":
+        iconOrientation === Orientation.Horizontal && $view.isConstrainedWidth
+    },
+    !$view.isConstrainedWidth &&
+      iconOrientation === Orientation.Horizontal && {
+        "min-w-56 h-20": size === Size.lg,
+        "min-w-48 h-14": size === Size.md,
+        "min-w-40 h-10": size === Size.sm
+      }
   )}
   on:click
 >

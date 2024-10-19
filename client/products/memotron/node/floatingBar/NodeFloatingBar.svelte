@@ -28,6 +28,7 @@
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import ToggleGroup from "$lib/client/elements/toggle/ToggleGroup.svelte";
   import { NodeRightPaneType } from "../node.type";
+  import view from "$lib/client/stores/view.store";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let selectedView: string = "Content";
@@ -42,7 +43,6 @@
       offsetInPx: 6
     }
   };
-  $: currentMode = appStore.determineCurrentResourceAccessMode($node.id);
 
   export function resetToggle() {
     toggleGroupRef?.reset();
@@ -51,20 +51,37 @@
 
 <div
   class={cn(
-    "flex justify-between items-center mo:w-full tp:w-4/5 lp:w-[40rem] dp:w-[48rem] h-14 shadow-md border border-brs2 rounded-md px-4",
-    bg(bgIndex - 1)
+    "flex justify-between items-center shadow-md border border-brs2 px-4",
+    bg(bgIndex - 1),
+    {
+      "h-14 w-9/10 rounded-full": $view.isConstrainedWidth,
+      "tp:w-4/5 lp:w-[40rem] dp:w-[48rem] h-14 rounded-md":
+        !$view.isConstrainedWidth
+    }
   )}
 >
-  <span>
-    <!-- <Button label="Content" style={ButtonStyle.PLAIN} /> -->
-    <PanelSwitcher
-      bind:value={selectedView}
-      parentBgIndex={bgIndex}
-      items={["Content", "Bird view"]}
-      style={PanelSwitcherStyle.BAR}
-      barStyle={BarStyle.DOT}
+  {#if $view.isConstrainedWidth}
+    <Button
+      label="back"
+      icon="ph:arrow-left-light"
+      size={Size.sm}
+      style={ButtonStyle.PLAIN}
+      on:click={() => {
+        appStore.closeResource({ id: $node.id, accessMode: $node.accessMode });
+      }}
     />
-  </span>
+  {:else}
+    <span>
+      <!-- <Button label="Content" style={ButtonStyle.PLAIN} /> -->
+      <PanelSwitcher
+        bind:value={selectedView}
+        parentBgIndex={bgIndex}
+        items={["Content", "Bird view"]}
+        style={PanelSwitcherStyle.BAR}
+        barStyle={BarStyle.DOT}
+      />
+    </span>
+  {/if}
   <span class="flex items-center gap-3 h-full">
     <ToggleGroup
       bind:this={toggleGroupRef}
@@ -72,7 +89,11 @@
       items={resolveVisibleActions($node.contentType)}
       class="gap-5"
       on:change={(e) => {
-        if (e.detail === NodeRightPaneType.SIDENOTES) {
+        if (
+          e.detail === NodeRightPaneType.SIDENOTES ||
+          e.detail === NodeRightPaneType.LINKS ||
+          e.detail === NodeRightPaneType.PROPERTIES
+        ) {
           dispatch("panel", e.detail);
         } else if (e.detail === "readMode") {
           nodeStore.toggleReadMode($node.id, true);
@@ -90,51 +111,54 @@
       position={Placement.TopCenter}
       on:action
     />
-    <Divider
-      orientation={Orientation.Vertical}
-      colorStrength={ColorStrength.Strong}
-    />
-    {#if currentMode === ResourceAccessMode.SPLIT || currentMode === ResourceAccessMode.FSPLIT}
-      <Button
-        {...buttonCommonProps}
-        icon="cross-circled"
-        tooltip="Close split view"
-        on:click={() => {
-          appStore.closeResource({ accessMode: currentMode });
-        }}
+    {#if !$view.isConstrainedWidth}
+      <Divider
+        orientation={Orientation.Vertical}
+        colorStrength={ColorStrength.Strong}
       />
-    {:else}
-      <Button
-        {...buttonCommonProps}
-        icon={isWidened ? "unwiden" : "widen"}
-        tooltip={isWidened ? "Collapse" : "Expand"}
-        on:click={() => {
-          isWidened = !isWidened;
-        }}
-      />
-      {#if currentMode !== ResourceAccessMode.FULL}
+      {#if $node.accessMode === ResourceAccessMode.SPLIT || $node.accessMode === ResourceAccessMode.FSPLIT}
         <Button
           {...buttonCommonProps}
-          icon="split"
-          tooltip="Open in split view"
+          icon="cross-circled"
+          tooltip="Close split view"
           on:click={() => {
-            dispatch("split");
+            appStore.closeResource({ accessMode: $node.accessMode });
           }}
         />
+      {:else}
+        <Button
+          {...buttonCommonProps}
+          icon={isWidened ? "unwiden" : "widen"}
+          tooltip={isWidened ? "Collapse" : "Expand"}
+          on:click={() => {
+            isWidened = !isWidened;
+          }}
+        />
+        {#if $node.accessMode !== ResourceAccessMode.FULL}
+          <Button
+            {...buttonCommonProps}
+            icon="split"
+            tooltip="Open in split view"
+            on:click={() => {
+              dispatch("split");
+            }}
+          />
+        {/if}
       {/if}
+      <Button
+        {...buttonCommonProps}
+        icon={$node.accessMode === ResourceAccessMode.FULL
+          ? "collapse"
+          : "full-screen"}
+        tooltip={$node.accessMode === ResourceAccessMode.FULL
+          ? "Minimize"
+          : "Full screen"}
+        on:click={() => {
+          appStore.toggleFocusAccessMode($node.accessMode, $node.id);
+        }}
+      />
     {/if}
-    <Button
-      {...buttonCommonProps}
-      icon={$node.accessMode === ResourceAccessMode.FULL
-        ? "collapse"
-        : "full-screen"}
-      tooltip={$node.accessMode === ResourceAccessMode.FULL
-        ? "Minimize"
-        : "Full screen"}
-      on:click={() => {
-        appStore.toggleFocusAccessMode($node.accessMode, $node.id);
-      }}
-    />
+
     {#if $node.accessMode != ResourceAccessMode.INLINE}
       <!-- <Button
         {...buttonCommonProps}
