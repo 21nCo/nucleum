@@ -131,50 +131,50 @@ echo "User data script execution completed at $(date)"
       })
     );
 
-    // Configure instance ports (disable SSH, IPv6, and allow only HTTP/HTTPS)
-    const configureInstancePorts = new AwsCustomResource(
-      this,
-      "ConfigureInstancePorts",
-      {
-        onCreate: {
-          service: "Lightsail",
-          action: "putInstancePublicPorts",
-          parameters: {
-            instanceName: this.instanceName,
-            portInfos: [
-              {
-                fromPort: 80,
-                toPort: 80,
-                protocol: "tcp",
-                cidrs: ["0.0.0.0/0"],
-                cidrListAliases: [],
-                ipv6Cidrs: []
-              },
-              {
-                fromPort: 443,
-                toPort: 443,
-                protocol: "tcp",
-                cidrs: ["0.0.0.0/0"],
-                cidrListAliases: [],
-                ipv6Cidrs: []
-              }
-            ]
-          },
-          physicalResourceId: PhysicalResourceId.of(
-            `${this.instanceName}-configure-ports`
-          )
-        },
-        policy: AwsCustomResourcePolicy.fromStatements([
-          new PolicyStatement({
-            actions: ["lightsail:PutInstancePublicPorts"],
-            resources: ["*"]
-          })
-        ])
-      }
-    );
+    // // Configure instance ports (disable SSH, IPv6, and allow only HTTP/HTTPS)
+    // const configureInstancePorts = new AwsCustomResource(
+    //   this,
+    //   "ConfigureInstancePorts",
+    //   {
+    //     onCreate: {
+    //       service: "Lightsail",
+    //       action: "putInstancePublicPorts",
+    //       parameters: {
+    //         instanceName: this.instanceName,
+    //         portInfos: [
+    //           {
+    //             fromPort: 80,
+    //             toPort: 80,
+    //             protocol: "tcp",
+    //             cidrs: ["0.0.0.0/0"],
+    //             cidrListAliases: [],
+    //             ipv6Cidrs: []
+    //           },
+    //           {
+    //             fromPort: 443,
+    //             toPort: 443,
+    //             protocol: "tcp",
+    //             cidrs: ["0.0.0.0/0"],
+    //             cidrListAliases: [],
+    //             ipv6Cidrs: []
+    //           }
+    //         ]
+    //       },
+    //       physicalResourceId: PhysicalResourceId.of(
+    //         `${this.instanceName}-configure-ports`
+    //       )
+    //     },
+    //     policy: AwsCustomResourcePolicy.fromStatements([
+    //       new PolicyStatement({
+    //         actions: ["lightsail:PutInstancePublicPorts"],
+    //         resources: ["*"]
+    //       })
+    //     ])
+    //   }
+    // );
 
-    // Ensure the custom resource runs after the instance is created
-    configureInstancePorts.node.addDependency(instance);
+    // // Ensure the custom resource runs after the instance is created
+    // configureInstancePorts.node.addDependency(instance);
 
     new CfnOutput(this, "NetworkingStatus", {
       value:

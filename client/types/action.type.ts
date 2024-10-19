@@ -84,6 +84,7 @@ export type IAction = {
   searchActionParams?: {
     searchStoreId: string;
     itemLabel: string;
+    searchResultComponent?: any;
     callback: (id: string, label?: string, componentParams?: any) => void;
   };
   /**
@@ -97,6 +98,17 @@ export type IAction = {
    * Used in conjunction with {@link ActionType.RESOURCE} to specify the access mode of the resource.
    */
   accessMode?: ResourceAccessMode;
+
+  /**
+   * Svelte component to render the label of the resource.
+   * Used in contexts like Top bar tabs, search etc
+   */
+  resourceLabelRenderer?: any;
+
+  /**
+   * If true, the action will be rendered as a page in portrait mode irrespective of the action type like Modal or Resource.
+   */
+  isRenderAsPageInPortrait?: boolean;
 };
 
 export enum ActionType {

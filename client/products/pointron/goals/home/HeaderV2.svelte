@@ -58,11 +58,8 @@
     return true;
   }
 
-  let contextMenu: IContextMenu = [];
-  refreshContextMenu();
-
   function refreshContextMenu() {
-    contextMenu = [
+    return [
       {
         group: "all",
         items: [
@@ -187,6 +184,9 @@
     </span>
   </div>
   <div class="flex items-center gap-8 min-w-fit shrink-0">
-    <ContextMenuAction {contextMenu} id="currentGoalContextMenu" />
+    <ContextMenuAction
+      id="currentGoalContextMenu"
+      menuResolver={() => refreshContextMenu()}
+    />
   </div>
 </div>

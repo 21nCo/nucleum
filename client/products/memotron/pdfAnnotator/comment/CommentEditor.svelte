@@ -27,7 +27,7 @@
     placeholder="Enter your comment"
   ></textarea>
   {#if (annotationMode === AnnotationType.TASK && editingItemType != AnnotationType.TASK) || editingItemType === AnnotationType.TASK}
-    <DatePicker date={dueDate} />
+    <DatePicker bind:date={dueDate} />
   {/if}
   <div class="flex justify-end gap-1 items-center">
     {#if editingMode}

@@ -9,7 +9,7 @@
   export let prefix: string | undefined = undefined;
   let action: IAction | null = null;
   let pageSub: any;
-  const fileBasedRoutes = ["cp"];
+  const fileBasedRoutes = ["cparchived"];
   function resolvePath() {
     if ($context.isSheet) {
       return $appStore.sheetPath;
@@ -44,6 +44,7 @@
     }
 
     action = appStore.resolveComponentFromPath(path);
+
     if (!action) {
       if (path === "index.html") appStore.gotoPath("/");
       else appStore.gotoPath("/404", { queryParams: { path } });

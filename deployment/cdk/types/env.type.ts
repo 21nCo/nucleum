@@ -35,4 +35,5 @@ export type ILambdaEnvironmentVariables = {
   TEMP_BUCKET_PREFIX: string;
   USE_THIRDPARTY_AUTH_METHOD?: string;
   URL_EXPIRATION_TIME?: string;
+  URL_EXPIRATION_TIME_GET?: string;
 };

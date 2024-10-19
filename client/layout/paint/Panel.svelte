@@ -29,7 +29,7 @@
 
   let isCollapsed = false;
 
-  $: isShowCollapseButton = $view.display !== Display.TK;
+  $: isShowCollapseButton = $view.display !== Display.TK && !$view.isPortrait;
 </script>
 
 <div class="flex w-full h-full">
@@ -46,7 +46,7 @@
       {#if title || isShowCollapseButton}
         <div
           class={cn(
-            "flex justify-between w-full portrait:px-4 portrait:py-2 px-3 pt-2 overflow-auto"
+            "flex justify-between w-full portrait:px-4 portrait:py-2 px-3 pt-2 overflow-auto min-h-fit"
           )}
         >
           <Text style={titleStyle} content={title || ""} />

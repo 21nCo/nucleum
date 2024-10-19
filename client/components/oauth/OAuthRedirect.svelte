@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
+  // import { goto } from "$app/navigation";
   import { page } from "$app/stores";
   import AppLoadingView from "$lib/client/layout/paint/AppLoadingView.svelte";
   import { appStore } from "$lib/client/stores/app.store";
@@ -17,31 +17,36 @@
   let debugMessage = "debug";
   $: {
     if (debugMessage) {
-      logger.log(debugMessage);
+      console.log({ debugMessage });
     }
   }
   onMount(async () => {
-    let codeQueryParam = $page.url.searchParams.get("code");
-    let token = $page.url.searchParams.get("token");
-    if (token) {
-      debugMessage = "token present";
-      handleOAuthCompletion({ token });
-    } else if (!codeQueryParam) {
-      appStore.gotoPath("/signup?msg=invalidoauth");
-      return;
-    } else {
-      debugMessage = "code present. processing oauth";
-      let response = await handleOAuthRedirection(
-        $page.params.slug,
-        codeQueryParam
-      );
-      if (!response) {
-        appStore.gotoErrorPage("OAuth failure");
+    try {
+      let codeQueryParam = $page.url.searchParams.get("code");
+      let token = $page.url.searchParams.get("token");
+      if (token) {
+        debugMessage = "token present";
+        handleOAuthCompletion({ token });
+      } else if (!codeQueryParam) {
+        appStore.gotoPath("/signup?msg=invalidoauth");
         return;
+      } else {
+        debugMessage = "code present. processing oauth";
+        let response = await handleOAuthRedirection(
+          $page.params.slug,
+          codeQueryParam
+        );
+        if (!response) {
+          appStore.gotoErrorPage("OAuth failure");
+          return;
+        }
+        const json = await response.json();
+        debugMessage = `isEmbed: ${$context.isEmbed} and os: ${$context.os}`;
+        handleOAuthCompletion(json);
       }
-      const json = await response.json();
-      debugMessage = `isEmbed: ${$context.isEmbed} and os: ${$context.os}`;
-      handleOAuthCompletion(json);
+    } catch (e) {
+      console.error({ at: "OAuthRedirect.onMount", error: e });
+      appStore.gotoErrorPage("OAuth failure");
     }
   });
 
@@ -50,7 +55,7 @@
     refreshToken?: string;
     userInfo?: any;
   }) {
-    logger.log({
+    console.log({
       ctx: "handleOAuthCompletion",
       os: $context.os,
       isEmbed: $context.isEmbed,
@@ -86,12 +91,16 @@
   async function handleiOSEmbedRedirection(token: string) {
     try {
       debugMessage = "ios - embed redirection";
-      logger.log({
-        ctx: "handleiOSEmbedRedirection"
+      console.log({
+        ctx: "handleiOSEmbedRedirection",
+        product: $appStore.product
       });
-      goto($appStore.product + "://oauthsignin" + "?token=" + token);
+      appStore.gotoPath(
+        $appStore.product + "://oauthsignin" + "?token=" + token
+      );
     } catch (err) {
-      logger.error({ err, ctx: "handleiOSEmbedRedirection" });
+      debugMessage = "ios - embed redirection error" + err;
+      console.error({ err, ctx: "handleiOSEmbedRedirection" });
       appStore.gotoErrorPage(debugMessage);
     }
   }
@@ -101,7 +110,7 @@
       logger.log({
         ctx: "handleMacOSEmbedRedirection"
       });
-      await goto(
+      appStore.gotoPath(
         (import.meta.env?.VITE_CUSTOM_PROTOCOL ?? "blanklabs") +
           "://localhost/index.html" +
           "?token=" +

@@ -48,7 +48,8 @@ const view = initViewStore({
   firstLoad: new Date().getTime(),
   currentPath: "",
   isMenuHidden: false,
-  display: Display.DP
+  display: Display.DP,
+  isConstrainedWidth: false
 });
 
 function initViewStore(settings: View) {
@@ -67,7 +68,8 @@ function initViewStore(settings: View) {
           width: width,
           landscapiness: width / height,
           scale: (width / 1000 + height / 1000) / 2,
-          isPortrait: false
+          isPortrait: false,
+          isConstrainedWidth: width <= 700
         };
         n.display = calculateScreen(width, height);
         n.isPortrait = n.landscapiness < 1;

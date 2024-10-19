@@ -52,6 +52,7 @@
   import { page } from "$app/stores";
   import LibraryLoadingPulse from "./LibraryLoadingPulse.svelte";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
+  import view from "$lib/client/stores/view.store";
 
   let searchQuery: string = "";
   let selectedResource: Resource = Resource.node;
@@ -217,11 +218,18 @@
         mainText: `No ${label} found.`,
         subText: `Please try a different search.`
       };
-    else
+    else {
+      if (selectedResource === Resource.node) {
+        return {
+          mainText: `Looks like you don't have any ${label} yet.`,
+          subText: `Please create nodes using capture or install our chrome extension to clip from web.`
+        };
+      }
       return {
         mainText: `Looks like you don't have any ${label} yet.`,
         subText: `Please create one.`
       };
+    }
   }
   function onSelectAll() {
     $multiSelectStore = data.map((x) => x.id);
@@ -350,13 +358,14 @@
     {/if}
     {#if variant === "v1" || variant === "v3"}
       <LibrarySearchBox
+        {selectedSubType}
         {variant}
         {resources}
         {isStickied}
+        {searchStore}
         bind:selectedResource
         bind:searchQuery
         on:refresh={debouncedSearch}
-        {searchStore}
         on:semanticSearch={(e) => {
           if (e.detail) {
             searchStore.searchType = SearchType.SEMANTIC;
@@ -368,7 +377,7 @@
       />
     {/if}
     <div
-      class="flex w-full gap-2 justify-between items-center px-5 resource-switcher sticky-disabled bg-bgs1 py-5 top-0 z-10"
+      class="flex w-full gap-2 justify-between items-center mo:px-2 px-5 resource-switcher sticky-disabled bg-bgs1 py-5 top-0 z-10"
     >
       <span
         class={cn("flex overflow-auto", {
@@ -388,7 +397,7 @@
           size={variant === "v2" ? Size.md : Size.sm}
         />
       </span>
-      {#if selectedResource != Resource.everything}
+      {#if selectedResource != Resource.everything && !($view.isPortrait && selectedResource === Resource.node)}
         <span>
           <span class="flex gap-2 items-center">
             {#if availableResources.includes(selectedResource)}
@@ -403,7 +412,7 @@
                 size={Size.sm}
                 type={ButtonVariant.PRIMARY}
                 style={ButtonStyle.OUTLINED}
-                label={selectedResource}
+                label={$view.isConstrainedWidth ? undefined : selectedResource}
                 isPreventMinWidth={true}
                 on:click={() => {
                   if (selectedResource === Resource.node) {
@@ -432,7 +441,7 @@
         "flex-grow px-5 gap-5": variant === "v2" || variant === "v3"
       })}
     >
-      {#if (variant === "v2" || variant === "v3") && availableResources.includes(selectedResource)}
+      {#if (variant === "v2" || variant === "v3") && availableResources.includes(selectedResource) && !$view.isConstrainedWidth}
         <div class="flex flex-col w-60 border-r border-r-brs2 mb-1">
           <span class="w-full flex items-start flex-1 pr-2 overflow-y-auto">
             <VerticalSwitcher
@@ -499,7 +508,9 @@
               data={data.slice(0, 500)}
               accessPoint={ResourceAccessPoint.LIBRARY}
               resource={selectedResource}
-              arrangement={Arrangement.GRID}
+              arrangement={!$view.isConstrainedWidth
+                ? Arrangement.GRID
+                : Arrangement.LIST}
             />
           </div>
           <div class="flex w-full justify-center text-b2 text-fgs3">
@@ -511,6 +522,15 @@
             size={Size.lg}
             {...resolveEmptyStateMessage()}
             isSearchContext={true}
+            actionText={selectedResource === Resource.node
+              ? "Install chrome extension"
+              : undefined}
+            on:click={() => {
+              appStore.openLink(
+                $appStore.appData?.urls?.chromeExtension ??
+                  "https://memotron.io"
+              );
+            }}
           />
         {:else}
           <!-- <EmptyStatusView

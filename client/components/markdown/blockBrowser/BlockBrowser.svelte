@@ -130,6 +130,8 @@
     },
     {
       section: "lists",
+      isDisabled: true,
+      badge: "planned",
       children: [
         {
           label: "Unordered List",
@@ -137,7 +139,8 @@
           type: NodeType.LIST,
           sub: ListType.UNORDERED,
           // icon: "lucide:list"
-          icon: "hugeicons:left-to-right-list-bullet"
+          icon: "hugeicons:left-to-right-list-bullet",
+          isDisabled: true
         },
         {
           label: "Ordered List",
@@ -146,7 +149,6 @@
           sub: ListType.ORDERED,
           // icon: "lucide:list-ordered"
           icon: "hugeicons:left-to-right-list-number",
-          badge: "planned",
           isDisabled: true
         },
         {
@@ -156,7 +158,6 @@
           sub: ListType.CHECKLIST,
           // icon: "lucide:list-todo"
           icon: "hugeicons:check-list",
-          badge: "planned",
           isDisabled: true
         }
       ]

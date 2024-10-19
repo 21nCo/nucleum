@@ -29,6 +29,9 @@
   import { isValidString } from "$lib/shared/utils/text.utils";
   import { isEmptyMd } from "$lib/client/components/markdown/markdown.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
+  import view from "$lib/client/stores/view.store";
+  import CameraCapture from "./CameraCapture.svelte";
+  import CameraCapturev2 from "./CameraCapturev2.svelte";
   export let isWindowDnD = false;
   let bulkQueryParam: string | null = null;
   let linkQueryParam: string | null = null;
@@ -37,6 +40,7 @@
   let isEmptyState: boolean = true;
   isInEditMode.set(true);
   let isPropertiesCollapsed: boolean = false;
+  let writerRef: Writer | undefined = undefined;
   let types: ICollectionExpanded[] = [];
 
   // $: console.log({ types, $captureStore, propertyConfig });
@@ -78,8 +82,13 @@
     }
   });
 
+  /**
+   * Note: a timeout is added to remove query params - since without timeout, it is interfering with removal of pop query param for capture thus the capture modal keeps opening
+   */
   onDestroy(() => {
-    appStore.toggleSearchParam(["link", "bulk", "clipboard"]);
+    setTimeout(() => {
+      appStore.toggleSearchParam(["link", "bulk", "clipboard"]);
+    }, 100);
   });
 
   async function onTypeSelect(e: CustomEvent) {
@@ -133,6 +142,11 @@
     await refreshTypeData();
     isEmptyState = false;
   }
+
+  function onTitleEnter(e: any) {
+    writerRef?.focus();
+    refreshEmptyState();
+  }
 </script>
 
 {#if isSaving}
@@ -150,6 +164,10 @@
   </div> -->
 {:else if $captureStore.captureType === CaptureType.UPLOAD}
   <FileUploader />
+{:else if $captureStore.captureType === CaptureType.CAMERA}
+  <CameraCapture />
+{:else if $captureStore.captureType === CaptureType.CAMERA_V2}
+  <CameraCapturev2 />
 {:else}
   {#key $captureStore.refreshId}
     <div class="w-full h-full flex justify-center">
@@ -167,8 +185,9 @@
                   style={InputStyle.PLAIN}
                   isExperimentalMdInput={true}
                   placeholder="Untitled"
+                  isPreventDefaultOnEnter={true}
                   on:change={refreshEmptyState}
-                  on:keyup={refreshEmptyState}
+                  on:enter={onTitleEnter}
                 />
               </div>
             </div>
@@ -182,14 +201,17 @@
                     size={Size.sm}
                     class="stroke-fgs3"
                   />
-                  <span class="text-fgs3 whitespace-nowrap text-b3">
-                    {$captureStore.isRefreshing ? "saving..." : "draft saved"}
-                  </span>
+                  {#if !$view.isConstrainedWidth}
+                    <span class="text-fgs3 whitespace-nowrap text-b3">
+                      {$captureStore.isRefreshing ? "saving..." : "draft saved"}
+                    </span>
+                  {/if}
                 </div>
                 <Button
-                  label="save"
+                  label={$view.isConstrainedWidth ? undefined : "Save"}
                   type={ButtonVariant.PRIMARY}
                   size={Size.sm}
+                  style={ButtonStyle.OUTLINED}
                   isPreventMinWidth={true}
                   icon="ph:floppy-disk"
                   on:click={async () => {
@@ -205,7 +227,7 @@
                   }}
                 />
                 <Button
-                  label="clear"
+                  label={$view.isConstrainedWidth ? undefined : "Clear"}
                   style={ButtonStyle.OUTLINED}
                   isPreventMinWidth={true}
                   size={Size.sm}
@@ -237,6 +259,7 @@
           >
             <Writer
               bind:isEmptyState
+              bind:this={writerRef}
               bind:isSaveInProgress={isSaving}
               on:change={refreshEmptyState}
             />

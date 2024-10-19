@@ -11,6 +11,7 @@
   import LinkActionOnClipper from "$lib/client/products/memotron/common/linkbox/LinkActionOnClipper.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
   import HighlightColors from "$lib/client/products/memotron/common/highlighters/HighlightColors.svelte";
+
   export let id: string | null = null;
   export let selectedHighlighterId: string | null = null;
   export let feedback: { message: string; type: AlertType } | string = "";
@@ -19,8 +20,11 @@
   let clip: any;
   let notes: string = "";
   $: if (id) refreshClip(id, $webpage.clips);
-  function refreshClip(id: string, clips: any[]) {
-    clip = clips?.find((x) => x.id == id);
+  function refreshClip(id: string, clips: any[] | undefined = undefined) {
+    if (!clips) {
+      clips = $webpage.clips;
+    }
+    clip = clips?.find((c) => c.id.toString() === id.toString());
     notes = clip?.notes ?? "";
   }
 
@@ -35,6 +39,7 @@
   }
   onMount(() => {
     feedback = "";
+    if (id) refreshClip(id, $webpage.clips);
   });
 </script>
 

@@ -132,7 +132,7 @@
       on:change={onQuestionAnsweringToggle}
       isExpanded={true}
       label={{
-        label: "Markdown Q & A Chat (Requires Semantic Search)  - 500MB",
+        label: "Markdown Q & A  - 500MB",
         tooltip: {
           body: "Enable this to use AI to answer questions pertaining to markdown."
         }

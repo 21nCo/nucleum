@@ -190,7 +190,7 @@ transform: translate(-50%, -50%);
         {/if}
       </div>
     {:else if isComingSoon}
-      <EarlyAccess version="V3" />
+      <EarlyAccess version="V3" url={heroInputs.earlyAccessUrl} />
     {:else}
       <div class="absolute bottom-12 flex w-full justify-center">
         <Pulldown />

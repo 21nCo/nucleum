@@ -32,8 +32,11 @@ import { assignDefaultLabelAsFallback } from "./properties/property.utils";
 import type { IProperty } from "./properties/property.type";
 import {
   ContextMenuType,
-  type IContextMenu
+  type IContextMenu,
+  type IContextMenuItem
 } from "$lib/client/types/select.type";
+import context from "$lib/client/stores/context.store";
+import { get } from "svelte/store";
 
 class CollectionStore extends ResourceStore<ICollection> {
   constructor() {
@@ -377,16 +380,23 @@ export function resolveCollectionContextMenu(
   accessPoint: ResourceAccessPoint
 ): IContextMenu {
   const resourceActions = new ResourceActions(collection, collectionStore);
-  if (accessPoint != ResourceAccessPoint.SELF) {
-    return [
+  const ctx = get(context);
+  let commonGroups: { group: string; items: IContextMenuItem[] }[] = [];
+  if (ctx.isEmbed) {
+    commonGroups = [
       {
-        group: "all",
+        group: "more",
+        items: [resourceActions.archive(), resourceActions.trash()]
+      }
+    ];
+  } else {
+    commonGroups = [
+      {
+        group: "open",
         items: [
-          resourceActions.star(),
-          resourceActions.edit(accessPoint),
           resourceActions.openAsTab(),
-          // resourceActions.select(accessPoint),
-          resourceActions.copyLink()
+          // resourceActions.openAsSplit(),
+          resourceActions.openAsFull()
         ]
       },
       {
@@ -395,39 +405,60 @@ export function resolveCollectionContextMenu(
       }
     ];
   }
+  if (accessPoint != ResourceAccessPoint.SELF) {
+    return [
+      {
+        group: "all",
+        items: [
+          resourceActions.star(),
+          resourceActions.edit(accessPoint),
+          // resourceActions.select(accessPoint),
+          resourceActions.copyLink()
+        ]
+      },
+      ...commonGroups
+    ];
+  } else if (collection.type === CollectionType.TYPED) {
+    return [
+      {
+        group: "all",
+        items: [
+          resourceActions.star(),
+          resourceActions.edit(accessPoint),
+          // {
+          //   value: "share",
+          //   icon: "ph:share-light",
+          //   label: "Share",
+          //   callback: async () => {}
+          // },
+          resourceActions.copyLink(),
+          {
+            value: "captureshortcut",
+            icon: "ph:arrow-up-right-light",
+            label: "Capture shortcut",
+            type: ContextMenuType.SWITCH,
+            initialValue: collection.isCaptureShortcutEnabled,
+            callback: async (checked) => {
+              console.log({ checked });
+              return collectionStore.modify(collection.id, {
+                isCaptureShortcutEnabled: checked
+              });
+            }
+          }
+        ]
+      },
+      ...commonGroups
+    ];
+  }
   return [
     {
       group: "all",
       items: [
         resourceActions.star(),
         resourceActions.edit(accessPoint),
-        resourceActions.openAsTab(),
-        resourceActions.openAsSplit(),
-        {
-          value: "share",
-          icon: "ph:share-light",
-          label: "Share",
-          callback: async () => {}
-        },
-        resourceActions.copyLink(),
-        {
-          value: "captureshortcut",
-          icon: "ph:arrow-up-right-light",
-          label: "Capture shortcut",
-          type: ContextMenuType.SWITCH,
-          initialValue: collection.isCaptureShortcutEnabled,
-          callback: async (checked) => {
-            console.log({ checked });
-            return collectionStore.modify(collection.id, {
-              isCaptureShortcutEnabled: checked
-            });
-          }
-        }
+        resourceActions.copyLink()
       ]
     },
-    {
-      group: "more",
-      items: [resourceActions.archive(), resourceActions.trash()]
-    }
+    ...commonGroups
   ];
 }

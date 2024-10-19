@@ -5,7 +5,8 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import type { NodeRightPaneType } from "../node.type";
-
+  import view from "$lib/client/stores/view.store";
+  import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
   export let node: IActiveNodeStore;
 
   let isShowFloatingBar: boolean = true;
@@ -40,3 +41,6 @@
   </div>
 {/if}
 <svelte:document on:mousemove={onInteraction} on:touchmove={onInteraction} />
+{#if $view.isConstrainedWidth && !rightPane}
+  <FullScreenCloseButton accessMode={$node.accessMode} isFloat={true} />
+{/if}

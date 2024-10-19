@@ -29,12 +29,19 @@
   import productData from "$lib/product.json";
 
   let timer: any;
+  let isMounted = false;
   pingParent();
   addWindowEventListeners();
 
   onMount(async () => {
-    await bootup();
-    view.update(window.innerWidth, window.innerHeight);
+    try {
+      await bootup();
+      view.update(window.innerWidth, window.innerHeight);
+    } catch (e) {
+      logger.error({ at: "BaseLayer.onMount", error: e });
+    } finally {
+      isMounted = true;
+    }
   });
   onDestroy(() => {
     clearInterval(timer);
@@ -90,9 +97,15 @@
       );
       if (appDetails) appStore.initializeProductInformation(appDetails);
       const cachedAppData = await clientStorage.get(ClientStorageKey.APP_DATA);
-      appStore.loadAppData(cachedAppData ?? productData, {
-        isDefaultData: true
-      });
+      if (cachedAppData) {
+        appStore.loadAppData(JSON.parse(cachedAppData), {
+          isDefaultData: true
+        });
+      } else {
+        appStore.loadAppData(productData, {
+          isDefaultData: true
+        });
+      }
       clientStorage.set(
         ClientStorageKey.PRODUCT,
         appDetails?.product ?? "tidigit"
@@ -188,7 +201,8 @@
         event.detail.path.includes(host) &&
         !event.detail.path.includes("/oauth/")) ||
         !event.detail.path.includes("http")) &&
-      !event.detail.path.includes("mailto:")
+      !event.detail.path.includes("mailto:") &&
+      !event.detail.path.includes("//oauthsignin")
     )
       goto(event.detail.path);
     else if (event.detail.path) window.location = event.detail.path;
@@ -263,10 +277,10 @@
 >
   <MetadataLayer />
   <ThemeLayer>
-    <slot />
+    {#if isMounted}
+      <slot />
+    {/if}
   </ThemeLayer>
 </div>
-{#if $context.isEmbed}
-  <EmbedTelemetry />
-{/if}
+<EmbedTelemetry />
 <svelte:document on:visibilitychange={visibilityChangeListener} />

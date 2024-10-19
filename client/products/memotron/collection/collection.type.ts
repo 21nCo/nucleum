@@ -1,4 +1,5 @@
 import type { IFile } from "$lib/client/components/files/file.type";
+import type { IActiveResource } from "$lib/client/components/flux/resourceStores/resource.type";
 import type { IAvatar } from "$lib/client/types/avatar.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 import type { Arrangement, Placement } from "$lib/client/types/direction.enum";
@@ -30,13 +31,14 @@ interface ICollectionBase extends IMemotronItemBase {
   avatar?: IAvatar;
 }
 
-export interface IActiveCollection extends ICollectionExpanded {
-  refreshError?: string;
-  isViewDataLoading: boolean;
-  isViewDataRefreshing: boolean;
-  isPageLoading: boolean;
-  views: ICollectionViewWithData[];
-}
+export type IActiveCollection = IActiveResource &
+  ICollectionExpanded & {
+    refreshError?: string;
+    isViewDataLoading: boolean;
+    isViewDataRefreshing: boolean;
+    isPageLoading: boolean;
+    views: ICollectionViewWithData[];
+  };
 
 export interface ICollectionExpanded extends ICollectionBase {
   properties: IProperty[];

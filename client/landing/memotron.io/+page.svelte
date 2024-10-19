@@ -13,7 +13,8 @@
     tagline: "Personal knowledge management redefined",
     description:
       "Memotron is a digital memory and thinking aid that is unbelievably powerful, insanely reliable, and surprisingly intuitive that transforms how you learn, think and create.",
-    href: "https://memotron.io"
+    href: "https://memotron.io",
+    earlyAccessUrl: "https://tally.so/r/3qB0x9"
   };
 </script>
 

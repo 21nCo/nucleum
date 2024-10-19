@@ -20,8 +20,8 @@
   onMount(async () => {
     if (
       !$context.isSheet &&
-      $context.isEmbed &&
-      $context.protocol.includes(import.meta.env?.VITE_CUSTOM_PROTOCOL)
+      $context.isEmbed
+      // && $context.protocol.includes(import.meta.env?.VITE_CUSTOM_PROTOCOL)
     ) {
       await parseEmbedToken();
     }

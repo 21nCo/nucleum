@@ -72,37 +72,39 @@ async function performRootQuery(params: DatabaseQueryParams) {
     "Basic " + btoa(process.env.DB_USER + ":" + process.env.DB_PASS)
   );
   headers.append("Accept", "application/json");
-  headers.append("NS", resolveNamespace(params.dbType));
-  headers.append(
-    "DB",
+  const namespace = resolveNamespace(params.dbType);
+  const db =
     params.dbType === CONTEXT.ADMIN
       ? process.env.ADMIN_DB_NAME ?? "ADMIN"
-      : params.db ?? ""
-  );
-  const body = params.query;
+      : params.db ?? "";
+  headers.append("NS", namespace);
+  headers.append("DB", db);
+  const body = `USE NAMESPACE ${namespace}; USE DATABASE ${db}; ${params.query}`;
   let endPoint = "https://" + params.instance + "/sql";
   const response = await fetch(endPoint, {
     method: "POST",
     body,
     headers
   });
-  console.log({ endPoint, response });
   // const json = await response.text();
   // console.log({ json });
   const json = await response.json();
-  // console.log({ json });
+  console.log({ endPoint, body, json, namespace, db });
+  if (json && Array.isArray(json)) {
+    return json.slice(2);
+  }
   return json;
 
   function resolveNamespace(dbType: CONTEXT) {
     switch (dbType) {
       case CONTEXT.ADMIN:
-        return process.env.ADMIN_NS ?? "ADMIN";
+        return process.env.ADMIN_NS ?? "admin";
       case CONTEXT.USER:
-        return process.env.USER_NS ?? "USER";
+        return process.env.USER_NS ?? "user";
       case CONTEXT.SPACE:
-        return process.env.SPACE_NS ?? "SPACE";
+        return process.env.SPACE_NS ?? "space";
       default:
-        return process.env.USER_NS ?? "USER";
+        return process.env.USER_NS ?? "user";
     }
   }
 }

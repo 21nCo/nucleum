@@ -11,7 +11,6 @@
   export let id: string;
   export let accessMode: ResourceAccessMode;
 
-  console.log({ id, accessMode });
   export let isFromSplitView: boolean = false;
   let isRenderSplitView = false;
   // $: isRenderSplitView =

@@ -266,6 +266,28 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     this.postSave(result2, { isOpenUponSuccess: true });
   }
 
+  async saveCameraCapture(data: Blob) {
+    const contentType = "image/jpeg";
+    const id = generateResourceId(Resource.node);
+    const fileName = generateSimpleRandomId();
+    const result = await account.uploadFileV2(
+      contentType,
+      `${fileName}.jpeg`,
+      data
+    );
+    if (!result) return;
+    const fileId = result[0].id;
+    const node: OmitForCapture<IMediaNode> = {
+      contentType: NodeType.IMAGE,
+      file: fileId,
+      label: `Image Capture - ${new Date().toLocaleString()}`,
+      body: {}
+    };
+    const result2 = await nodeStore.create(node);
+    await this.saveLinks(id);
+    this.postSave(result2, { isOpenUponSuccess: true });
+  }
+
   async saveWebpage(
     text: string,
     params?: {
@@ -422,15 +444,6 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
             node: id
           });
         }
-        //TODO - AI enabling setting - local AI
-        // const embedding =
-        //   await FeatureExtractor.generateVectorEmbeddings(mdText);
-        // vectorInsertionresult = await vectorResourceStore.create({
-        //   id: generateResourceId(Resource.vector),
-        //   embedding: embedding,
-        //   node: id
-        // });
-        // console.log("vector result", vectorInsertionresult);
       }
       root = {
         ...root,
@@ -451,14 +464,24 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
             block.children?.includes(b.id)
           );
           mdText = generateMarkdownText(childrenNodes);
-          const embedding =
-            await FeatureExtractor.generateVectorEmbeddings(mdText);
-          vectorInsertionresult = await vectorResourceStore.create({
-            id: generateResourceId(Resource.vector),
-            embedding: embedding,
-            node: block.id
-          });
-          // console.log("vector2", vector);
+          if (get(userPreferences).localAI.semanticSearch) {
+            tacoWorker.postMessage({
+              action: TacoActions.GET_EMBEDDINGS,
+              params: {
+                text: mdText
+              }
+            });
+            const embedding = await new Promise((resolve, reject) => {
+              tacoWorker.onmessage = (e) => {
+                resolve(e.data);
+              };
+            });
+            vectorInsertionresult = await vectorResourceStore.create({
+              id: generateResourceId(Resource.vector),
+              embedding: embedding,
+              node: block.id
+            });
+          }
         }
         remainingResources.push({
           id: block.id,

@@ -10,6 +10,10 @@ export type View = {
   isMinimalTopBar?: boolean;
   firstLoad: number;
   /**
+   * Used in cases like not rendering resources with cantilever buttons on small screens and other places throughout the app to check if the screen width is constrained. This is a proxy for Display.CW or Display.MO
+   */
+  isConstrainedWidth: boolean;
+  /**
    * @deprecated - use appStore.currentPath
    */
   currentPath: string;

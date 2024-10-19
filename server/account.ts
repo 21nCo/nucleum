@@ -168,9 +168,10 @@ export async function initializeDatabase(
 ) {
   const ns =
     params.scope === CONTEXT.USER
-      ? process.env.USER_NS ?? "USER"
-      : process.env.SPACE_NS ?? "SPACE";
-  let query = `USE NAMESPACE ${ns}; DEFINE DATABASE ${id}; USE DATABASE ${id}; DEFINE TOKEN ${process.env.TOKEN_NAME} ON DB TYPE RS384 VALUE "${process.env.TOKEN_PUBLIC_KEY}";`;
+      ? process.env.USER_NS ?? "user"
+      : process.env.SPACE_NS ?? "space";
+  // let query = `USE NAMESPACE ${ns}; DEFINE DATABASE ${id}; USE DATABASE ${id}; DEFINE TOKEN ${process.env.TOKEN_NAME} ON DB TYPE RS384 VALUE "${process.env.TOKEN_PUBLIC_KEY}";`;
+  let query = `USE NAMESPACE ${ns}; DEFINE DATABASE ${id};`;
   const dbCreationResponse = await performQueryOnRegionalDb(query, {
     region: params.region,
     db: id,

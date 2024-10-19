@@ -60,7 +60,7 @@
 </script>
 
 <div
-  class={cn("flex flex-col w-full", {
+  class={cn("flex flex-col w-full min-w-[60rem] overflow-x-auto", {
     "rounded-md border border-brs2": isStyled
   })}
 >

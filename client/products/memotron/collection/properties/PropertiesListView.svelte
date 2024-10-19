@@ -112,7 +112,7 @@
         <button
           class={cn("flex justify-between items-center w-full rounded-md", {
             "px-4 py-2": isCollapsed,
-            "p-4": !isCollapsed
+            "mo:px-0 p-4": !isCollapsed
           })}
           on:click={() => {
             isCollapsed = !isCollapsed;
@@ -152,7 +152,7 @@
       {#if !isCollapsed || isRenderAsColumn}
         <div
           class={cn("flex w-full flex-wrap gap-8", {
-            "px-4 pb-4": !isRenderAsColumn,
+            "mo:px-0 px-4 pb-4": !isRenderAsColumn,
             "flex-col":
               $view.isPortrait ||
               (isRenderAsColumn && context === "rightpanel") ||

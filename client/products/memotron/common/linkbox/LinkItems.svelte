@@ -8,7 +8,7 @@
   export let links: IRecordId[];
   export let isWrapItems: boolean = false;
   export let parentBgIndex: number = 1;
-  $: _links = links.filter(removeDuplicatesFilter);
+  $: _links = links?.filter(removeDuplicatesFilter) ?? [];
 </script>
 
 {#if _links?.length > 0}
