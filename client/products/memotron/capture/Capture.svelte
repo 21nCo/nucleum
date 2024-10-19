@@ -31,6 +31,7 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import view from "$lib/client/stores/view.store";
   import CameraCapture from "./CameraCapture.svelte";
+  import CameraCapturev2 from "./CameraCapturev2.svelte";
   export let isWindowDnD = false;
   let bulkQueryParam: string | null = null;
   let linkQueryParam: string | null = null;
@@ -164,7 +165,7 @@
 {:else if $captureStore.captureType === CaptureType.UPLOAD}
   <FileUploader />
 {:else if $captureStore.captureType === CaptureType.CAMERA}
-  <CameraCapture />
+  <CameraCapturev2 />
 {:else}
   {#key $captureStore.refreshId}
     <div class="w-full h-full flex justify-center">
