@@ -12,7 +12,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
  * @param user
  * @returns
  */
-export async function resolveSignedUrlForPut(body: any, user: any) {
+async function resolveSignedUrlForPut(body: any, user: any) {
   try {
     let region = "us-east-1";
     if (user?.region) {
@@ -59,7 +59,7 @@ export async function resolveSignedUrlForPut(body: any, user: any) {
   }
 }
 
-async function generateSignedUrlV2(body: any, user: any) {
+export function generateSignedUrlV2(body: any, user: any) {
   if (body?.method === "GET") return resolveSignedUrlForGet(body, user);
   if (body?.method === "PUT") return resolveSignedUrlForPut(body, user);
 }
@@ -70,7 +70,7 @@ async function generateSignedUrlV2(body: any, user: any) {
  * @param user
  * @returns
  */
-export async function resolveSignedUrlForGet(body: any, user: any) {
+async function resolveSignedUrlForGet(body: any, user: any) {
   try {
     if (!body?.key)
       return { statusCode: 400, body: { error: "Key is required" } };
