@@ -1,5 +1,9 @@
 import { resolveProviderRegionCode } from "$lib/deployment/deploy.utils";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 /**
@@ -8,9 +12,8 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
  * @param user
  * @returns
  */
-export async function generateSignedUrlV2(body: any, user: any) {
+export async function resolveSignedUrlForPut(body: any, user: any) {
   try {
-    console.log({ body, user });
     let region = "us-east-1";
     if (user?.region) {
       region = resolveProviderRegionCode(user.region, "aws");
@@ -44,6 +47,61 @@ export async function generateSignedUrlV2(body: any, user: any) {
       body: {
         uploadURL: uploadURL,
         key: filePath
+      }
+    };
+  } catch (err) {
+    return {
+      statusCode: 500,
+      body: {
+        error: err.message
+      }
+    };
+  }
+}
+
+async function generateSignedUrlV2(body: any, user: any) {
+  if (body?.method === "GET") return resolveSignedUrlForGet(body, user);
+  if (body?.method === "PUT") return resolveSignedUrlForPut(body, user);
+}
+
+/**
+ *
+ * @param body
+ * @param user
+ * @returns
+ */
+export async function resolveSignedUrlForGet(body: any, user: any) {
+  try {
+    if (!body?.key)
+      return { statusCode: 400, body: { error: "Key is required" } };
+    let region = "us-east-1";
+    if (user?.region) {
+      region = resolveProviderRegionCode(user.region, "aws");
+      console.log("resolved region:", { region });
+    }
+    const s3Client = new S3Client({ region });
+    if (!user?.id)
+      return { statusCode: 500, body: { error: "User not found" } };
+    const userIdOnKey = body.key.split("/")[1];
+    if (userIdOnKey !== user.id)
+      return { statusCode: 403, body: { error: "Forbidden" } };
+    const bucketName = body.key.split("/")[0];
+    const command = new GetObjectCommand({
+      Bucket: bucketName,
+      Key: body.key.split("/").slice(1).join("/"),
+      ACL: "public-read"
+    });
+    const expirationTime = process.env.URL_EXPIRATION_TIME_GET
+      ? +process.env.URL_EXPIRATION_TIME_GET
+      : 300;
+    const getUrl = await getSignedUrl(s3Client, command, {
+      expiresIn: expirationTime
+    });
+    return {
+      statusCode: 200,
+      body: {
+        getUrl,
+        key: body.key
       }
     };
   } catch (err) {
