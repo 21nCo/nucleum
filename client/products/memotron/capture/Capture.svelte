@@ -165,6 +165,8 @@
 {:else if $captureStore.captureType === CaptureType.UPLOAD}
   <FileUploader />
 {:else if $captureStore.captureType === CaptureType.CAMERA}
+  <CameraCapture />
+{:else if $captureStore.captureType === CaptureType.CAMERA_V2}
   <CameraCapturev2 />
 {:else}
   {#key $captureStore.refreshId}

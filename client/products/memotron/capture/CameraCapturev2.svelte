@@ -8,6 +8,7 @@
   let photoTaken = false;
   let imagePreview: string | null = null;
   const dispatch = createEventDispatcher();
+  let fileInputRef: HTMLInputElement;
 
   function handleCapture(event: Event) {
     const input = event.target as HTMLInputElement;
@@ -52,20 +53,23 @@
       />
     {:else}
       <div class="text-center">
-        <input
-          type="file"
-          accept="image/*"
-          capture="environment"
-          on:change={handleCapture}
-          class="hidden"
-          id="cameraInput"
-        />
         <label for="cameraInput" class="cursor-pointer">
+          <input
+            bind:this={fileInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            on:change={handleCapture}
+            id="cameraInput"
+          />
           <Button
             icon="ph:camera"
             label="Take Photo"
             type={ButtonVariant.PRIMARY}
             size={Size.lg}
+            on:click={() => {
+              fileInputRef.click();
+            }}
           />
         </label>
       </div>
