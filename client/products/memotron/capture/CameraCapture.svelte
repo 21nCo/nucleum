@@ -90,6 +90,9 @@
       class:hidden={photoTaken}
       autoplay
       playsinline
+      muted
+      disablePictureInPicture
+      controlsList="nodownload nofullscreen noremoteplayback"
     ></video>
     <canvas
       bind:this={canvasElement}
