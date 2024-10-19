@@ -30,6 +30,7 @@
   import { isEmptyMd } from "$lib/client/components/markdown/markdown.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
   import view from "$lib/client/stores/view.store";
+  import CameraCapture from "./CameraCapture.svelte";
   export let isWindowDnD = false;
   let bulkQueryParam: string | null = null;
   let linkQueryParam: string | null = null;
@@ -162,6 +163,8 @@
   </div> -->
 {:else if $captureStore.captureType === CaptureType.UPLOAD}
   <FileUploader />
+{:else if $captureStore.captureType === CaptureType.CAMERA}
+  <CameraCapture />
 {:else}
   {#key $captureStore.refreshId}
     <div class="w-full h-full flex justify-center">

@@ -266,6 +266,28 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     this.postSave(result2, { isOpenUponSuccess: true });
   }
 
+  async saveCameraCapture(data: Blob) {
+    const contentType = "image/jpeg";
+    const id = generateResourceId(Resource.node);
+    const fileName = generateSimpleRandomId();
+    const result = await account.uploadFileV2(
+      contentType,
+      `${fileName}.jpeg`,
+      data
+    );
+    if (!result) return;
+    const fileId = result[0].id;
+    const node: OmitForCapture<IMediaNode> = {
+      contentType: NodeType.IMAGE,
+      file: fileId,
+      label: `Image Capture - ${new Date().toLocaleString()}`,
+      body: {}
+    };
+    const result2 = await nodeStore.create(node);
+    await this.saveLinks(id);
+    this.postSave(result2, { isOpenUponSuccess: true });
+  }
+
   async saveWebpage(
     text: string,
     params?: {
