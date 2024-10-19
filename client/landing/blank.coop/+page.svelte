@@ -11,7 +11,8 @@
   } from "../shared/Landing.types";
   import {
     currentProductsStore,
-    upcomingProductsStore
+    upcomingProductsStore,
+    utilityProductsStore
   } from "../shared/store/shared.store";
   import TileItemsSection from "../shared/tile/TileItemsSection.svelte";
 
@@ -79,7 +80,7 @@
         href: x?.href
       };
     }),
-    ...$upcomingProductsStore.slice(0, 2).map((x) => {
+    ...$utilityProductsStore.slice(0, 2).map((x) => {
       return {
         title: x.title,
         description: x.label,

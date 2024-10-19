@@ -9,6 +9,7 @@
   import { addAnimateClass } from "$lib/client/utils/ui.utils";
 
   export let currentProducts: ITileItem[];
+  export let utilityProducts: ITileItem[];
   export let upcomingProducts: ITileItem[];
 
   const id: string = "products-panel";
@@ -43,7 +44,7 @@
       {/if}
     </div>
     <!-- {/if} -->
-    <div class="flex flex-col gap-6 overflow-y-scroll">
+    <div class="flex flex-col gap-6 pb-10 overflow-y-scroll">
       <p
         class="text-fgs2 text-[21px] mo:text-[15px] leading-[28px] mo:leading-5 font-medium"
       >
@@ -51,6 +52,20 @@
       </p>
       <div class="grid grid-cols-2 gap-6">
         {#each currentProducts as product}
+          <TileItem
+            item={product}
+            isPanelView={true}
+            isEnableBackground={true}
+          />
+        {/each}
+      </div>
+      <p
+        class="text-fgs2 text-[21px] mo:text-[15px] leading-[28px] mo:leading-5 font-medium"
+      >
+        Utilities
+      </p>
+      <div class="grid grid-cols-2 gap-6">
+        {#each utilityProducts as product}
           <TileItem
             item={product}
             isPanelView={true}

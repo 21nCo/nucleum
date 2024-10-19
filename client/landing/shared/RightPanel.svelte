@@ -8,12 +8,21 @@
   import {
     currentProductsStore,
     isProductsPanelOpen,
-    upcomingProductsStore
+    upcomingProductsStore,
+    utilityProductsStore
   } from "./store/shared.store";
   import TileItemsPanel from "./tile/TileItemsPanel.svelte";
 
   const id: string = "right-panel";
   const currentProducts: ITileItem[] = $currentProductsStore.map((x) => {
+    return {
+      title: x.title,
+      image: x.image,
+      description: x.label,
+      href: x?.href
+    };
+  });
+  const utilityProducts: ITileItem[] = $utilityProductsStore.map((x) => {
     return {
       title: x.title,
       image: x.image,
@@ -49,7 +58,7 @@
     role="button"
     tabindex="0"
   >
-    <TileItemsPanel {currentProducts} {upcomingProducts} />
+    <TileItemsPanel {currentProducts} {utilityProducts} {upcomingProducts} />
   </div>
 {/if}
 <PanelButton
