@@ -127,6 +127,10 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
   }
 ];
 
+/**
+ * @deprecated - directly rendering as Modal vs as Page in SettingsAsPage.svelte
+ * @returns
+ */
 export function getSettingsAsPages(): IAction[] {
   return settings
     .map((setting) => {
@@ -162,7 +166,7 @@ export function getSettingsAsModal(): IAction[] {
       label: "Settings",
       icon: "settings",
       isRenderAsPageInPortrait: true,
-      component: SettingsAsModal,
+      component: SettingsAsPage,
       modalParams: {
         layout: {
           size: Size.xl,

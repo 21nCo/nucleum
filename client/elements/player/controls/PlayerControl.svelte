@@ -21,7 +21,15 @@
     })}
     on:click
   >
-    <Icon {icon} {size} />
+    <Icon
+      {icon}
+      {size}
+      class={cn({
+        "stroke-abg":
+          type === ButtonVariant.PRIMARY || type === ButtonVariant.DANGER,
+        "stroke-fgs1": type === ButtonVariant.SECONDARY
+      })}
+    />
   </button>
   {#if label}
     <p class="text-b3 text-fgs2">{label}</p>

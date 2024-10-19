@@ -137,7 +137,7 @@
       {#if recordingState === PlayActionState.NOT_STARTED}
         <PlayerControl
           on:click={startRecording}
-          icon="ph:microphone-thin"
+          icon="ph:microphone-light"
           type={ButtonVariant.PRIMARY}
           label="Start"
         />
@@ -145,37 +145,37 @@
           on:click={() => {
             captureStore.reset();
           }}
-          icon="ph:x-thin"
+          icon="ph:x-light"
           label="Cancel"
         />
       {:else if recordingState === PlayActionState.RUNNING}
         <PlayerControl
           on:click={startRecording}
-          icon="ph:arrow-clockwise-thin"
+          icon="ph:arrow-clockwise-light"
           type={ButtonVariant.DANGER}
           label="Restart"
         />
         <PlayerControl
           on:click={toggleRecording}
-          icon="ph:pause-thin"
+          icon="ph:pause-light"
           label="Pause"
         />
         <PlayerControl
           on:click={stopRecording}
           type={ButtonVariant.PRIMARY}
-          icon="ph:stop-thin"
+          icon="ph:stop-light"
           label="Finish"
         />
       {:else if recordingState === PlayActionState.PAUSED}
         <PlayerControl
           on:click={toggleRecording}
-          icon="ph:play-thin"
+          icon="ph:play-light"
           label="Resume"
         />
         <PlayerControl
           on:click={stopRecording}
           type={ButtonVariant.PRIMARY}
-          icon="ph:stop-thin"
+          icon="ph:stop-light"
           label="Finish"
         />
       {/if}

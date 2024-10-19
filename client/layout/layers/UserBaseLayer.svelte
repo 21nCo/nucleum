@@ -42,6 +42,7 @@
   import { clientStorage } from "$lib/client/persistence/persistence.utils";
   import PageError from "$lib/client/components/error/PageError.svelte";
   import { SurrealPersistence } from "$lib/client/persistence/surreal/surreal.local";
+  import { Embed } from "$lib/client/types/context.type";
 
   const loadingMessages = {
     cloneUp:
@@ -91,7 +92,9 @@
     refreshTimeZone();
     const isCloudUser = $account.dataMode === UserDataMode.CLOUD;
     if (isCloudUser && !dev_isDisableSyncOnAppear) {
-      toasts.sync();
+      if ($context.embed !== Embed.HANDSET) {
+        toasts.sync();
+      }
       await flux.syncDown();
       account.ping();
     }

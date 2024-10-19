@@ -124,7 +124,12 @@
             id="mediaNodeContextMenu"
             position={Placement.TopCenter}
             on:action={(e) => {
-              if (e.detail === NodeRightPaneType.METADATA) {
+              if (
+                e.detail === NodeRightPaneType.METADATA ||
+                e.detail === NodeRightPaneType.PROPERTIES ||
+                e.detail === NodeRightPaneType.SIDENOTES ||
+                e.detail === NodeRightPaneType.LINKS
+              ) {
                 rightPane = e.detail;
               }
             }}

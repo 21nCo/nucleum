@@ -129,11 +129,25 @@ export class ResourceActions<T extends IMemotronItemBase> {
               : ResourceAccessMode.POP
           );
         }
-        if (this.resource.isInEditMode) {
-          this.store.toggleEditMode(this.resource.id, false);
-        } else {
-          this.store.toggleEditMode(this.resource.id, true);
-        }
+        this.store.toggleEditMode(
+          this.resource.id,
+          !this.resource.isInEditMode
+        );
+      }
+    };
+  }
+  toggleReadMode(): IContextMenuItem {
+    return {
+      label: this.resource.isInReadMode ? "Exit read mode" : "Read mode",
+      value: "readMode",
+      icon: this.resource.isInReadMode
+        ? "ph:book-open-thin"
+        : "ph:book-open-thin",
+      callback: async () => {
+        this.store.toggleReadMode(
+          this.resource.id,
+          !this.resource.isInReadMode
+        );
       }
     };
   }

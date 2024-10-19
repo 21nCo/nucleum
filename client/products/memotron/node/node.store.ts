@@ -43,6 +43,7 @@ import {
   resourceInList,
   isSameResource
 } from "$lib/client/components/flux/resourceStores/resource.utils";
+import view from "$lib/client/stores/view.store";
 import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
 import { TacoActions } from "$lib/client/types/taco.types";
 
@@ -439,6 +440,37 @@ export function resolveNodeContextMenu(
       }
     ];
   }
+  const viewStore = get(view);
+  if (viewStore.isConstrainedWidth && params?.isMediaNode) {
+    commonGroups.unshift({
+      group: "essentials",
+      items: [
+        {
+          value: NodeRightPaneType.SIDENOTES,
+          icon: "ph:note-thin",
+          label: "Side notes"
+        },
+        {
+          value: NodeRightPaneType.LINKS,
+          icon: "ph:arrows-left-right-thin",
+          label: "Show links"
+        },
+        {
+          value: NodeRightPaneType.PROPERTIES,
+          icon: "widget",
+          label: "Show properties"
+        }
+      ]
+    });
+  } else if (viewStore.isConstrainedWidth) {
+    commonGroups.unshift({
+      group: "essentials",
+      items: [
+        resourceActions.toggleReadMode()
+        // Forks
+      ]
+    });
+  }
   if (accessPoint === ResourceAccessPoint.NODE_LINKS && params?.accessPointId) {
     let baseItems = [resourceActions.copyLink()];
     if (accessPoint === ResourceAccessPoint.NODE_LINKS) {
@@ -537,7 +569,11 @@ export function resolveNodeContextMenu(
 }
 
 export function resolveVisibleActions(contentType: NodeType): IToggleItem[] {
-  if (contentType === NodeType.NODULAR_MARKDOWN) {
+  const viewStore = get(view);
+  if (
+    contentType === NodeType.NODULAR_MARKDOWN &&
+    !viewStore.isConstrainedWidth
+  ) {
     return [
       {
         value: NodeRightPaneType.SIDENOTES,
@@ -578,7 +614,7 @@ export function resolveVisibleActions(contentType: NodeType): IToggleItem[] {
     //   tooltip: "Bird view"
     // }
   ];
-  if (canHaveTraces.includes(contentType)) {
+  if (canHaveTraces.includes(contentType) && !viewStore.isConstrainedWidth) {
     baseActions.unshift({
       value: NodeRightPaneType.TRACES,
       icon: "bookmark",

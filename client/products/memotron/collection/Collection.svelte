@@ -454,9 +454,12 @@
         on:scroll={onScroll}
       >
         <div
-          class={cn("px-4 pt-6 stickyheader", {
+          class={cn("px-4 stickyheader", {
             "sticky top-0 z-20 bg-bgs1": isSingleViewMode,
-            "pb-8": isSingleViewMode && !isShowMetaViews
+            "pb-8":
+              isSingleViewMode && !isShowMetaViews && !$view.isConstrainedWidth,
+            "pt-6": !$view.isConstrainedWidth,
+            "p-2": $view.isConstrainedWidth
           })}
         >
           <CollectionTitleBar

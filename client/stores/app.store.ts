@@ -814,9 +814,10 @@ function initAppStore(seed: AppStore) {
       update((n: AppStore) => {
         if (!n.actions) n.actions = [];
         const isSettingsAsModal = n.appData?.isSettingsAsModal;
-        if (isInPortraitMode || !isSettingsAsModal)
-          n.actions = [...actions, ...settingsAsPages];
-        else n.actions = [...actions, ...settingsAsModal];
+        // if (isInPortraitMode || !isSettingsAsModal)
+        //   n.actions = [...actions, ...settingsAsPages];
+        // else n.actions = [...actions, ...settingsAsModal];
+        n.actions = [...actions, ...settingsAsModal];
         return n;
       });
     },

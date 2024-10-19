@@ -21,6 +21,7 @@
   import { NodeRightPaneType } from "../node.type";
   import NodePropertiesPane from "../rightPanel/NodePropertiesPane.svelte";
   import view from "$lib/client/stores/view.store";
+  import NodeRightPaneContent from "../rightPanel/NodeRightPaneContent.svelte";
 
   export let node: IActiveNodeStore;
   export let selectedView: string = "Content";
@@ -31,7 +32,7 @@
   let isShowFloatingBar = true;
   let isWidened = false;
   let isRightPanelCollapsed: boolean = true;
-  let rightPane = NodeRightPaneType.OUTLINE;
+  let rightPane = NodeRightPaneType.NONE;
   let floatingBarRef: NodeFloatingBar | undefined = undefined;
   function onScroll(e: any) {
     // console.log("onScroll", e);
@@ -72,104 +73,117 @@
         class={cn("h-full w-full mo:gap-0 cw:gap-0 gap-4", {
           "flex px-4 justify-center dp:grid dp:grid-cols-[1fr_auto_1fr] dp:gap-2":
             !isWidened,
-          "flex px-4": isWidened
+          "flex px-4": isWidened,
+          "px-0":
+            $view.isConstrainedWidth && rightPane !== NodeRightPaneType.NONE
         })}
       >
-        <div class="min-w-0" />
-        <div
-          class={cn("flex flex-col justify-center items-center h-full", {
-            "flex-grow": isWidened,
-            "flex-grow max-w-[50rem] dp:min-w-[50rem] overflow-auto": !isWidened
-          })}
-        >
-          {#if $node.mdParent && $node.mdParent.length > 0}
-            {#key $node.mdParent.map((x) => x.toString()).join(".")}
-              <header class="flex w-full px-12 py-4">
-                <NodeTitleBreadcrumbs
-                  node={$node}
-                  on:click={(e) => {
-                    node.eventStore.set({
-                      event: e.detail.event,
-                      id: e.detail.item.resourceId
-                    });
-                  }}
-                />
-              </header>
-            {/key}
-          {/if}
-          <main
-            class="relative flex flex-col gap-6 mo:pr-0 pr-6 h-full w-full overflow-auto"
-            on:scroll={onScroll}
+        {#if !$view.isConstrainedWidth || ($view.isConstrainedWidth && rightPane === NodeRightPaneType.NONE)}
+          <div class="min-w-0" />
+          <div
+            class={cn("flex flex-col justify-center items-center h-full", {
+              "flex-grow": isWidened,
+              "flex-grow max-w-[50rem] dp:min-w-[50rem] overflow-auto":
+                !isWidened
+            })}
           >
-            {#if !$node.focusedBlock}
-              <div class="min-h-20" />
-              {#if $node.types}
-                <span class="flex mx-12 -mb-8">
-                  <NodeAvatar types={$node.types} size={40} />
-                </span>
-              {/if}
-              <span
-                class={cn(
-                  "node-title flex gap-3 font-medium text-start sticky top-0 z-10 mo:ml-0 cw:ml-0 ml-12 py-3",
-                  {
-                    "text-h4 bg-bgs1": isStickied,
-                    "text-h2 bg-bgs1": !isStickied
-                  }
-                )}
-              >
-                {#if isStickied && $node.types}
-                  <NodeAvatar types={$node.types} size={Size.sm} />
-                {/if}
-                {#if $isInEditMode}
-                  <TextInput
-                    size={Size.xl}
-                    bind:value={$node.label}
-                    style={InputStyle.PLAIN}
-                    placeholder="Node title"
-                    width="w-full"
-                    on:input={onLabelChange}
+            {#if $node.mdParent && $node.mdParent.length > 0}
+              {#key $node.mdParent.map((x) => x.toString()).join(".")}
+                <header class="flex w-full px-12 py-4">
+                  <NodeTitleBreadcrumbs
+                    node={$node}
+                    on:click={(e) => {
+                      node.eventStore.set({
+                        event: e.detail.event,
+                        id: e.detail.item.resourceId
+                      });
+                    }}
                   />
-                {:else}
-                  {$node.label ?? $node.body ?? ""}
+                </header>
+              {/key}
+            {/if}
+            <main
+              class="relative flex flex-col gap-6 mo:pr-0 pr-6 h-full w-full overflow-auto"
+              on:scroll={onScroll}
+            >
+              {#if !$node.focusedBlock}
+                <div class="min-h-20" />
+                {#if $node.types}
+                  <span class="flex mo:mx-0 mx-12 -mb-8">
+                    <NodeAvatar types={$node.types} size={40} />
+                  </span>
                 {/if}
-              </span>
-              <div class="w-full flex mo:px-0 cw:px-0 px-12 -mt-4">
-                <CollectionsLane {node} />
-              </div>
-            {/if}
-            <ResourceStatusBanner resource={node} />
-            {#if $node.types && $node.types.length > 0 && !$node.focusedBlock}
-              <!-- TODO - later - show properties of focused node if the focused blocks is associated with a type collection -->
-              <div class="px-2">
-                <NodePropertiesPane
-                  {node}
-                  isVisibleProps={true}
-                  on:showAll={() => {
-                    console.log("showAll");
-                    rightPane = NodeRightPaneType.PROPERTIES;
-                    isRightPanelCollapsed = false;
-                  }}
-                />
-              </div>
-            {/if}
-            {#if $node.isInReadMode}
-              <div
-                class="flex justify-center gap-2 bg-bgs2 border-2 border-dotted border-brs3 rounded-md p-2 text-b2 mx-12"
-              >
-                <Icon icon="book-open" size={Size.sm} />
-                <span>Read mode</span>
-                <button
-                  class="text-b4 font-medium underline"
-                  on:click={() => {
-                    nodeStore.toggleReadMode($node.id, false);
-                    floatingBarRef?.resetToggle();
-                  }}>turn off</button
+                <span
+                  class={cn(
+                    "node-title flex gap-3 font-medium text-start sticky top-0 z-10 mo:ml-0 cw:ml-0 ml-12 py-3",
+                    {
+                      "text-h4 bg-bgs1": isStickied,
+                      "text-h2 bg-bgs1": !isStickied
+                    }
+                  )}
                 >
-              </div>
-            {/if}
-            <NodeContent {node} {mdId} />
-          </main>
-        </div>
+                  {#if isStickied && $node.types}
+                    <NodeAvatar types={$node.types} size={Size.sm} />
+                  {/if}
+                  {#if $isInEditMode}
+                    <TextInput
+                      size={Size.xl}
+                      bind:value={$node.label}
+                      style={InputStyle.PLAIN}
+                      placeholder="Node title"
+                      width="w-full"
+                      on:input={onLabelChange}
+                    />
+                  {:else}
+                    {$node.label ?? $node.body ?? ""}
+                  {/if}
+                </span>
+                <div class="w-full flex mo:px-0 cw:px-0 px-12 -mt-4">
+                  <CollectionsLane {node} />
+                </div>
+              {/if}
+              <ResourceStatusBanner resource={node} />
+              {#if $node.types && $node.types.length > 0 && !$node.focusedBlock}
+                <!-- TODO - later - show properties of focused node if the focused blocks is associated with a type collection -->
+                <div class="mo:px-0 px-2">
+                  <NodePropertiesPane
+                    {node}
+                    isVisibleProps={true}
+                    on:showAll={() => {
+                      console.log("showAll");
+                      rightPane = NodeRightPaneType.PROPERTIES;
+                      isRightPanelCollapsed = false;
+                    }}
+                  />
+                </div>
+              {/if}
+              {#if $node.isInReadMode}
+                <div
+                  class="flex justify-center gap-2 bg-bgs2 border-2 border-dotted border-brs3 rounded-md p-2 text-b2 mx-12"
+                >
+                  <Icon icon="book-open" size={Size.sm} />
+                  <span>Read mode</span>
+                  <button
+                    class="text-b4 font-medium underline"
+                    on:click={() => {
+                      nodeStore.toggleReadMode($node.id, false);
+                      floatingBarRef?.resetToggle();
+                    }}>turn off</button
+                  >
+                </div>
+              {/if}
+              <NodeContent {node} {mdId} />
+            </main>
+          </div>
+        {:else if $view.isConstrainedWidth && rightPane !== NodeRightPaneType.NONE}
+          <NodeRightPaneContent
+            {node}
+            {mdId}
+            pane={rightPane}
+            on:close={closeRightPane}
+          />
+        {/if}
+
         {#if !$view.isConstrainedWidth}
           <NodeRightPane
             {node}

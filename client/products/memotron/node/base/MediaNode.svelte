@@ -41,6 +41,6 @@
   </div>
 {/if}
 <svelte:document on:mousemove={onInteraction} on:touchmove={onInteraction} />
-{#if $view.isConstrainedWidth}
+{#if $view.isConstrainedWidth && !rightPane}
   <FullScreenCloseButton accessMode={$node.accessMode} isFloat={true} />
 {/if}

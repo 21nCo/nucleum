@@ -89,7 +89,11 @@
       items={resolveVisibleActions($node.contentType)}
       class="gap-5"
       on:change={(e) => {
-        if (e.detail === NodeRightPaneType.SIDENOTES) {
+        if (
+          e.detail === NodeRightPaneType.SIDENOTES ||
+          e.detail === NodeRightPaneType.LINKS ||
+          e.detail === NodeRightPaneType.PROPERTIES
+        ) {
           dispatch("panel", e.detail);
         } else if (e.detail === "readMode") {
           nodeStore.toggleReadMode($node.id, true);
