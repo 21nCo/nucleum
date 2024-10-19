@@ -234,6 +234,14 @@ class AccountStore extends ObservableStore<
     return this.persistence.getSignedUrl(userId, contentType, fileName, isTemp);
   }
 
+  /**
+   * @deprecated - use uploadFileV2 instead
+   * @param contentType
+   * @param fileName
+   * @param blob
+   * @param isTemp
+   * @returns
+   */
   async uploadFile(
     contentType: string,
     fileName: string,
