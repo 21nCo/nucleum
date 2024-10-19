@@ -7,13 +7,10 @@
   import NonMediaNode from "./base/NonMediaNode.svelte";
   import { onDestroy, setContext } from "svelte";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import view from "$lib/client/stores/view.store";
-  import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
 
   export let id: string;
   export let accessMode: ResourceAccessMode;
 
-  console.log({ id, accessMode });
   export let isFromSplitView: boolean = false;
   let isRenderSplitView = false;
   // $: isRenderSplitView =
@@ -58,6 +55,3 @@
   </div>
 {/if}
 <ComponentBaseLayer hasDragAndDrop={true} />
-{#if $view.isConstrainedWidth}
-  <FullScreenCloseButton {accessMode} />
-{/if}

@@ -12,6 +12,7 @@
   import { hoverable } from "$lib/client/actions/hover.action";
   import type { IImageRepositionerOptions } from "$lib/client/components/files/file.type";
   import { resizable } from "$lib/client/actions/resize.action";
+  import view from "$lib/client/stores/view.store";
 
   const dispatch = createEventDispatcher();
   export let cover: string | undefined = undefined;
@@ -24,6 +25,8 @@
   export let isHovered = false;
 
   $: isPositionable = cover?.toString().includes("file:") && isInEditMode;
+
+  $: height = $view.isConstrainedWidth ? 100 : (size?.height ?? 300);
 
   function onReplace(e: CustomEvent) {
     isCoverPickerOpen = true;
@@ -117,7 +120,7 @@
       "cursor-move": isPositionable
     })}
     style={placement === Placement.Top || !placement
-      ? `min-height: ${size?.height ?? 300}px; max-height: ${size?.height ?? 300}px;`
+      ? `min-height: ${height}px; max-height: ${height}px;`
       : `min-width: ${size?.width ?? 300}px; max-width: ${size?.width ?? 300}px;`}
     on:click={onClick}
     use:hoverable
@@ -137,7 +140,7 @@
       + Add cover photo
     {/if}
     {#if isInEditMode && cover}
-      {#if isPositionable}
+      {#if isPositionable && !$view.isConstrainedWidth}
         <span
           class="absolute flex gap-1 items-center text-fgs1 bg-bgs2 bg-opacity-60 dark:bg-opacity-50 py-1 px-2 rounded-md backdrop-blur-sm dark:backdrop-blur-none"
         >
@@ -164,29 +167,31 @@
               placement === Placement.Left || placement === Placement.Right
           })}
         >
-          <span class="flex gap-3 items-center bg-bgs2 rounded-full px-4">
-            <span> Layout </span>
-            <ToggleGroup
-              size={Size.sm}
-              selected={placement}
-              on:change={onPlacementChange}
-              parentBgIndex={2}
-              items={[
-                {
-                  value: Placement.Left,
-                  icon: "ph:align-left-simple-light"
-                },
-                {
-                  value: Placement.Top,
-                  icon: "ph:align-top-simple-light"
-                },
-                {
-                  value: Placement.Right,
-                  icon: "ph:align-right-simple-light"
-                }
-              ]}
-            />
-          </span>
+          {#if !$view.isConstrainedWidth}
+            <span class="flex gap-3 items-center bg-bgs2 rounded-full px-4">
+              <span> Layout </span>
+              <ToggleGroup
+                size={Size.sm}
+                selected={placement}
+                on:change={onPlacementChange}
+                parentBgIndex={2}
+                items={[
+                  {
+                    value: Placement.Left,
+                    icon: "ph:align-left-simple-light"
+                  },
+                  {
+                    value: Placement.Top,
+                    icon: "ph:align-top-simple-light"
+                  },
+                  {
+                    value: Placement.Right,
+                    icon: "ph:align-right-simple-light"
+                  }
+                ]}
+              />
+            </span>
+          {/if}
           <Button
             label={isCoverPickerOpen ? "Close" : "Replace"}
             icon={isCoverPickerOpen

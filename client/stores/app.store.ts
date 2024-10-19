@@ -604,6 +604,12 @@ function initAppStore(seed: AppStore) {
     if (props?.accessMode) {
       toggleSearchParam([props.accessMode]);
       return;
+    } else if (props?.id) {
+      const accessMode = determineCurrentResourceAccessMode(props.id);
+      if (accessMode) {
+        toggleSearchParam([accessMode]);
+        return;
+      }
     }
     if (props?.isRestrictToModals) {
       toggleSearchParam([ResourceAccessMode.FSPLIT, ResourceAccessMode.POP]);

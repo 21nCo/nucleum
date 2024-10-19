@@ -115,9 +115,11 @@ export class ResourceActions<T extends IMemotronItemBase> {
   }
   edit(context: ResourceAccessPoint): IContextMenuItem {
     return {
-      label: "Edit",
+      label: this.resource.isInEditMode ? "Exit edit mode" : "Edit",
       value: "edit",
-      icon: "ph:pencil-simple-line-light",
+      icon: this.resource.isInEditMode
+        ? "ph:pencil-simple-slash-light"
+        : "ph:pencil-simple-line-thin",
       callback: async () => {
         if (context != ResourceAccessPoint.SELF) {
           appStore.openResource(
@@ -127,7 +129,11 @@ export class ResourceActions<T extends IMemotronItemBase> {
               : ResourceAccessMode.POP
           );
         }
-        this.store.toggleEditMode(this.resource.id, true);
+        if (this.resource.isInEditMode) {
+          this.store.toggleEditMode(this.resource.id, false);
+        } else {
+          this.store.toggleEditMode(this.resource.id, true);
+        }
       }
     };
   }

@@ -43,7 +43,6 @@
       offsetInPx: 6
     }
   };
-  $: currentMode = appStore.determineCurrentResourceAccessMode($node.id);
 
   export function resetToggle() {
     toggleGroupRef?.reset();
@@ -52,38 +51,52 @@
 
 <div
   class={cn(
-    "flex justify-between items-center mo:w-full tp:w-4/5 lp:w-[40rem] dp:w-[48rem] h-14 shadow-md border border-brs2 rounded-md px-4",
-    $view.isConstrainedWidth && "h-16 w-full",
-    bg(bgIndex - 1)
+    "flex justify-between items-center shadow-md border border-brs2 px-4",
+    bg(bgIndex - 1),
+    {
+      "h-14 w-9/10 rounded-full": $view.isConstrainedWidth,
+      "tp:w-4/5 lp:w-[40rem] dp:w-[48rem] h-14 rounded-md":
+        !$view.isConstrainedWidth
+    }
   )}
 >
-  <span>
-    <!-- <Button label="Content" style={ButtonStyle.PLAIN} /> -->
-    <PanelSwitcher
-      bind:value={selectedView}
-      parentBgIndex={bgIndex}
-      items={["Content", "Bird view"]}
-      style={PanelSwitcherStyle.BAR}
-      barStyle={BarStyle.DOT}
+  {#if $view.isConstrainedWidth}
+    <Button
+      label="back"
+      icon="ph:arrow-left-light"
+      size={Size.sm}
+      style={ButtonStyle.PLAIN}
+      on:click={() => {
+        appStore.closeResource({ id: $node.id, accessMode: $node.accessMode });
+      }}
     />
-  </span>
-  <span class="flex items-center gap-3 h-full">
-    {#if !$view.isConstrainedWidth}
-      <ToggleGroup
-        bind:this={toggleGroupRef}
-        selected={selectedToggleAction}
-        items={resolveVisibleActions($node.contentType)}
-        class="gap-5"
-        on:change={(e) => {
-          if (e.detail === NodeRightPaneType.SIDENOTES) {
-            dispatch("panel", e.detail);
-          } else if (e.detail === "readMode") {
-            nodeStore.toggleReadMode($node.id, true);
-          }
-        }}
-        on:none
+  {:else}
+    <span>
+      <!-- <Button label="Content" style={ButtonStyle.PLAIN} /> -->
+      <PanelSwitcher
+        bind:value={selectedView}
+        parentBgIndex={bgIndex}
+        items={["Content", "Bird view"]}
+        style={PanelSwitcherStyle.BAR}
+        barStyle={BarStyle.DOT}
       />
-    {/if}
+    </span>
+  {/if}
+  <span class="flex items-center gap-3 h-full">
+    <ToggleGroup
+      bind:this={toggleGroupRef}
+      selected={selectedToggleAction}
+      items={resolveVisibleActions($node.contentType)}
+      class="gap-5"
+      on:change={(e) => {
+        if (e.detail === NodeRightPaneType.SIDENOTES) {
+          dispatch("panel", e.detail);
+        } else if (e.detail === "readMode") {
+          nodeStore.toggleReadMode($node.id, true);
+        }
+      }}
+      on:none
+    />
     <ContextMenuAction
       tooltipOptions={buttonCommonProps.tooltipOptions}
       menuResolver={() =>
@@ -99,13 +112,13 @@
         orientation={Orientation.Vertical}
         colorStrength={ColorStrength.Strong}
       />
-      {#if currentMode === ResourceAccessMode.SPLIT || currentMode === ResourceAccessMode.FSPLIT}
+      {#if $node.accessMode === ResourceAccessMode.SPLIT || $node.accessMode === ResourceAccessMode.FSPLIT}
         <Button
           {...buttonCommonProps}
           icon="cross-circled"
           tooltip="Close split view"
           on:click={() => {
-            appStore.closeResource({ accessMode: currentMode });
+            appStore.closeResource({ accessMode: $node.accessMode });
           }}
         />
       {:else}
@@ -117,7 +130,7 @@
             isWidened = !isWidened;
           }}
         />
-        {#if currentMode !== ResourceAccessMode.FULL}
+        {#if $node.accessMode !== ResourceAccessMode.FULL}
           <Button
             {...buttonCommonProps}
             icon="split"

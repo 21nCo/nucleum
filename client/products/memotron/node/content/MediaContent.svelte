@@ -77,7 +77,7 @@
         nodeId={$node.id.toString()}
       />
     {:else if ($node?.contentType === NodeType.IMAGE || $node?.contentType === NodeType.VIDEO) && $node.file}
-      <FileView file={$node.file} />
+      <FileView file={$node.file} class="!object-contain" />
     {:else if webNodeTypeList.includes($node?.contentType)}
       <WebNodeContent node={$node} bind:this={webContentRef} />
     {:else if $node?.contentType === NodeType.PDF && _url}

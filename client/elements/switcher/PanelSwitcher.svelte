@@ -54,7 +54,7 @@
 {#key isInEditMode}
   <div
     bind:this={parent}
-    class={cn("relative panel-switcher flex items-center", {
+    class={cn("relative panel-switcher flex items-center overflow-x-auto", {
       "w-full justify-between px-2":
         (style === PanelSwitcherStyle.BAR ||
           style === PanelSwitcherStyle.SNAKE) &&

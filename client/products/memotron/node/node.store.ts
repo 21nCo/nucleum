@@ -28,7 +28,10 @@ import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
 import { get, writable } from "svelte/store";
 import { SearchStore } from "../memotron.store";
 import { linker } from "$lib/client/products/memotron/linking/link.store";
-import type { IContextMenu } from "$lib/client/types/select.type";
+import type {
+  IContextMenu,
+  IContextMenuItem
+} from "$lib/client/types/select.type";
 import { flux } from "$lib/client/components/flux/flux";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { collectionStore } from "../collection/collection.store";
@@ -42,6 +45,8 @@ import {
 } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
 import { TacoActions } from "$lib/client/types/taco.types";
+
+import context from "$lib/client/stores/context.store";
 
 export const hierarchyFactorLimit = 5;
 
@@ -409,20 +414,31 @@ export function resolveNodeContextMenu(
   }
 ): IContextMenu {
   const resourceActions = new ResourceActions(node, nodeStore);
-  const commonGroups = [
-    {
-      group: "open",
-      items: [
-        resourceActions.openAsTab(),
-        // resourceActions.openAsSplit(),
-        resourceActions.openAsFull()
-      ]
-    },
-    {
-      group: "more",
-      items: [resourceActions.archive(), resourceActions.trash()]
-    }
-  ];
+  const ctx = get(context);
+  let commonGroups: { group: string; items: IContextMenuItem[] }[] = [];
+  if (ctx.isEmbed) {
+    commonGroups = [
+      {
+        group: "more",
+        items: [resourceActions.archive(), resourceActions.trash()]
+      }
+    ];
+  } else {
+    commonGroups = [
+      {
+        group: "open",
+        items: [
+          resourceActions.openAsTab(),
+          // resourceActions.openAsSplit(),
+          resourceActions.openAsFull()
+        ]
+      },
+      {
+        group: "more",
+        items: [resourceActions.archive(), resourceActions.trash()]
+      }
+    ];
+  }
   if (accessPoint === ResourceAccessPoint.NODE_LINKS && params?.accessPointId) {
     let baseItems = [resourceActions.copyLink()];
     if (accessPoint === ResourceAccessPoint.NODE_LINKS) {

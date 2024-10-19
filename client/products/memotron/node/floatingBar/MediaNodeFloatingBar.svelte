@@ -52,7 +52,8 @@
   class={cn("flex flex-col w-full justify-center items-center", {
     "mb-6 absolute z-10 bottom-0":
       $node.accessMode === ResourceAccessMode.SLIDESHOW,
-    relative: $node.accessMode !== ResourceAccessMode.SLIDESHOW
+    "relative mo:mb-8 cw:mb-8":
+      $node.accessMode !== ResourceAccessMode.SLIDESHOW
   })}
 >
   <div
@@ -81,11 +82,14 @@
     {/if}
     <div
       class={cn(
-        "flex flex-col gap-2 w-full justify-center items-center bg-bgs1 shadow-md border border-brs2 p-3",
+        "flex flex-col gap-2 w-full justify-center items-center bg-bgs1 mo:p-2 p-3",
         {
+          "border-t border-t-brs2": $view.isConstrainedWidth,
+          "border border-brs2": !$view.isConstrainedWidth,
           "rounded-b-md": $node.accessMode === ResourceAccessMode.POP,
           "w-full": $node.accessMode !== ResourceAccessMode.SLIDESHOW,
-          "rounded-md": $node.accessMode === ResourceAccessMode.SLIDESHOW
+          "rounded-md shadow-md":
+            $node.accessMode === ResourceAccessMode.SLIDESHOW
         }
       )}
     >

@@ -3,7 +3,7 @@
   import SettingsAsPageLayout from "./SettingsAsPageLayout.svelte";
   import ComponentResolver from "$lib/client/layout/paint/ComponentResolver.svelte";
   import { page } from "$app/stores";
-  const route = $page.url.searchParams.get("setting");
+  $: route = $page.url.searchParams.get("setting");
 </script>
 
 <SettingsAsPageLayout>

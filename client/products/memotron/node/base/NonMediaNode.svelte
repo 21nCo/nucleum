@@ -185,7 +185,7 @@
     {/if}
     {#if isShowFloatingBar}
       <div transition:fade={{ duration: 200 }}>
-        <BottomFloat marginBottom={$view.isConstrainedWidth ? "mb-2" : "mb-6"}>
+        <BottomFloat margin={$view.isConstrainedWidth ? "mb-8" : "mb-6"}>
           <NodeFloatingBar
             {node}
             bind:selectedView
