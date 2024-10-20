@@ -9,7 +9,8 @@
   import { addAnimateClass } from "$lib/client/utils/ui.utils";
 
   export let currentProducts: ITileItem[];
-  export let utilityProducts: ITileItem[];
+  export let microTools: ITileItem[];
+  export let portals: ITileItem[];
   export let upcomingProducts: ITileItem[];
 
   const id: string = "products-panel";
@@ -44,44 +45,58 @@
       {/if}
     </div>
     <!-- {/if} -->
-    <div class="flex flex-col gap-6 pb-10 overflow-y-scroll">
-      <p
-        class="text-fgs2 text-[21px] mo:text-[15px] leading-[28px] mo:leading-5 font-medium"
-      >
-        Apps
-      </p>
-      <div class="grid grid-cols-2 gap-6">
-        {#each currentProducts as product}
-          <TileItem
-            item={product}
-            isPanelView={true}
-            isEnableBackground={true}
-          />
-        {/each}
+    <div class="flex flex-col gap-20 pb-10 overflow-y-scroll">
+      <div class="flex flex-col gap-3">
+        <p
+          class="text-fgs2 text-[21px] mo:text-[15px] leading-[28px] mo:leading-5 font-medium"
+        >
+          Apps
+        </p>
+        <div class="grid grid-cols-2 gap-6">
+          {#each currentProducts as product}
+            <TileItem
+              item={product}
+              isPanelView={true}
+              isEnableBackground={true}
+            />
+          {/each}
+        </div>
       </div>
-      <p
-        class="text-fgs2 text-[21px] mo:text-[15px] leading-[28px] mo:leading-5 font-medium"
-      >
-        Utilities
-      </p>
-      <div class="grid grid-cols-2 gap-6">
-        {#each utilityProducts as product}
-          <TileItem
-            item={product}
-            isPanelView={true}
-            isEnableBackground={true}
-          />
-        {/each}
+      <div class="flex flex-col gap-3">
+        <p
+          class="text-fgs2 text-[21px] mo:text-[15px] leading-[28px] mo:leading-5 font-medium"
+        >
+          Community tools
+        </p>
+        <div class="grid grid-cols-2 gap-6">
+          {#each portals as product}
+            <TileItem item={product} isPanelView={true} />
+          {/each}
+        </div>
       </div>
-      <p
-        class="text-fgs2 text-[21px] mo:text-[15px] leading-[28px] mo:leading-5 font-medium mt-3"
-      >
-        Upcoming
-      </p>
-      <div class="grid grid-cols-2 gap-3">
-        {#each upcomingProducts as product}
-          <TileItem item={product} isPanelView={true} />
-        {/each}
+      <div class="flex flex-col gap-3">
+        <p
+          class="text-fgs2 text-[21px] mo:text-[15px] leading-[28px] mo:leading-5 font-medium"
+        >
+          Micro tools
+        </p>
+        <div class="grid grid-cols-2 gap-6">
+          {#each microTools as product}
+            <TileItem item={product} isPanelView={true} />
+          {/each}
+        </div>
+      </div>
+      <div class="flex flex-col gap-3">
+        <p
+          class="text-fgs2 text-[21px] mo:text-[15px] leading-[28px] mo:leading-5 font-medium"
+        >
+          Upcoming
+        </p>
+        <div class="grid grid-cols-2 gap-3">
+          {#each upcomingProducts as product}
+            <TileItem item={product} isPanelView={true} />
+          {/each}
+        </div>
       </div>
     </div>
   </div>
