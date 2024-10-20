@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
+  import { createEventDispatcher, onMount } from "svelte";
   import { captureStore } from "./capture.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { Size } from "$lib/client/types/size.enum";
@@ -17,7 +17,8 @@
       const reader = new FileReader();
       reader.onload = (e) => {
         imagePreview = e.target?.result as string;
-        photoTaken = true;
+        // photoTaken = true;
+        savePhoto();
       };
       reader.readAsDataURL(file);
     }
@@ -37,6 +38,10 @@
     photoTaken = false;
     imagePreview = null;
   }
+
+  onMount(() => {
+    fileInputRef?.click();
+  });
 </script>
 
 <div
@@ -61,8 +66,9 @@
             capture="environment"
             on:change={handleCapture}
             id="cameraInput"
+            class="hidden"
           />
-          <Button
+          <!-- <Button
             icon="ph:camera"
             label="Take Photo"
             type={ButtonVariant.PRIMARY}
@@ -70,7 +76,8 @@
             on:click={() => {
               fileInputRef.click();
             }}
-          />
+          /> -->
+          Capturing...
         </label>
       </div>
     {/if}

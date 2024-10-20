@@ -30,8 +30,11 @@
   import { isEmptyMd } from "$lib/client/components/markdown/markdown.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
   import view from "$lib/client/stores/view.store";
+  import CameraCaptureUsingInput from "./CameraCaptureUsingInput.svelte";
   import CameraCapture from "./CameraCapture.svelte";
-  import CameraCapturev2 from "./CameraCapturev2.svelte";
+  import context from "$lib/client/stores/context.store";
+  import { OperatingSystem } from "$lib/client/types/context.type";
+
   export let isWindowDnD = false;
   let bulkQueryParam: string | null = null;
   let linkQueryParam: string | null = null;
@@ -165,9 +168,11 @@
 {:else if $captureStore.captureType === CaptureType.UPLOAD}
   <FileUploader />
 {:else if $captureStore.captureType === CaptureType.CAMERA}
-  <CameraCapture />
-{:else if $captureStore.captureType === CaptureType.CAMERA_V2}
-  <CameraCapturev2 />
+  {#if $context.isEmbed && $context.os === OperatingSystem.IOS}
+    <CameraCaptureUsingInput />
+  {:else}
+    <CameraCapture />
+  {/if}
 {:else}
   {#key $captureStore.refreshId}
     <div class="w-full h-full flex justify-center">
