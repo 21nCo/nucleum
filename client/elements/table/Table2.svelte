@@ -12,6 +12,7 @@
   import Divider from "../Divider.svelte";
   import DropDown from "../dropdown/DropDown.svelte";
   import TextInput from "../input/TextInput.svelte";
+  import FormLabelTooltip from "../text/formLabel/FormLabelTooltip.svelte";
   import Switch from "../toggle/Switch.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
@@ -74,11 +75,14 @@
   >
     {#each columns as column (column.key)}
       <div
-        class={cn({
-          "flex w-8": column.type === TableCellType.ACTION
+        class={cn("flex items-center gap-1", {
+          "w-8": column.type === TableCellType.ACTION
         })}
       >
         {"label" in column ? column.label : ""}
+        {#if column.tooltip}
+          <FormLabelTooltip info={column.tooltip} />
+        {/if}
       </div>
     {/each}
   </div>

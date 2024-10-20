@@ -58,7 +58,7 @@
 </script>
 
 <ResourceThumbnailBase
-  {item}
+  bind:item
   {accessPoint}
   {accessPointId}
   {isDraggable}

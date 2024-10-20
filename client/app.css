@@ -103,7 +103,9 @@ body {
   }
 
   textarea::placeholder {
-    font-weight: lighter;
+    font-weight: 350;
+    /* Use lighter if Avenir typeface */
+    /* font-weight: lighter; */
     color: rgba(var(--colors-fgs2), 0.5);
   }
 

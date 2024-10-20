@@ -244,7 +244,7 @@ interface PopoverParams {
   isSpanToTriggerWidth?: boolean;
   offsetInPx?: number;
   content: Content;
-  triggerMethod?: PopoverTriggerMethod;
+  triggerMethod?: PopoverTriggerMethod[];
   componentProps?: Record<string, any>;
   groupId?: string;
   id?: string;
@@ -258,13 +258,14 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     isSpanToTriggerWidth = false,
     offsetInPx = 4,
     content,
-    triggerMethod = PopoverTriggerMethod.CLICK,
+    triggerMethod = [PopoverTriggerMethod.CLICK],
     componentProps = {},
     groupId = "popover",
     id = "popover"
   } = params;
 
   let isShown = false;
+  let lastTriggeredBy: PopoverTriggerMethod | null = null;
 
   async function createPopover(): Promise<void> {
     popoverElement = document.createElement("div");
@@ -449,27 +450,58 @@ export function popover(node: HTMLElement, params: PopoverParams) {
 
   function handleTrigger(event: MouseEvent | TouchEvent): void {
     if (
-      triggerMethod === PopoverTriggerMethod.CLICK &&
+      triggerMethod.includes(PopoverTriggerMethod.CLICK) &&
       event.type === "click"
     ) {
       event.preventDefault();
-      isShown ? hidePopover("click") : showPopover();
+      if (isShown && lastTriggeredBy === PopoverTriggerMethod.CLICK) {
+        hidePopover("click");
+        lastTriggeredBy = null;
+        return;
+      } else if (isShown) {
+        lastTriggeredBy = PopoverTriggerMethod.CLICK;
+      } else if (!isShown) {
+        showPopover();
+        lastTriggeredBy = PopoverTriggerMethod.CLICK;
+      }
     } else if (
-      triggerMethod === PopoverTriggerMethod.RIGHT_CLICK &&
+      triggerMethod.includes(PopoverTriggerMethod.RIGHT_CLICK) &&
       event.type === "contextmenu"
     ) {
       event.preventDefault();
+      lastTriggeredBy = PopoverTriggerMethod.RIGHT_CLICK;
       isShown ? hidePopover("right click") : showPopover();
+    } else if (
+      triggerMethod.includes(PopoverTriggerMethod.HOVER) &&
+      event.type === "mouseenter"
+    ) {
+      // triggeredBy = PopoverTriggerMethod.HOVER;
+      showPopover();
+    } else if (
+      triggerMethod.includes(PopoverTriggerMethod.HOVER) &&
+      event.type === "mouseleave"
+    ) {
+      console.log("mouseleave", lastTriggeredBy, triggerMethod);
+      if (
+        isShown &&
+        !(
+          triggerMethod.includes(PopoverTriggerMethod.CLICK) &&
+          lastTriggeredBy === PopoverTriggerMethod.CLICK
+        )
+      )
+        hidePopover();
     }
   }
 
   function setupEventListeners(): void {
-    if (triggerMethod === PopoverTriggerMethod.HOVER) {
-      node.addEventListener("mouseenter", showPopover);
-      node.addEventListener("mouseleave", hidePopover);
-    } else if (triggerMethod === PopoverTriggerMethod.CLICK) {
+    if (triggerMethod.includes(PopoverTriggerMethod.HOVER)) {
+      node.addEventListener("mouseenter", handleTrigger);
+      node.addEventListener("mouseleave", handleTrigger);
+    }
+    if (triggerMethod.includes(PopoverTriggerMethod.CLICK)) {
       node.addEventListener("click", handleTrigger);
-    } else if (triggerMethod === PopoverTriggerMethod.RIGHT_CLICK) {
+    }
+    if (triggerMethod.includes(PopoverTriggerMethod.RIGHT_CLICK)) {
       node.addEventListener("contextmenu", handleTrigger);
     }
     node.addEventListener("hide", hidePopover);
@@ -477,12 +509,14 @@ export function popover(node: HTMLElement, params: PopoverParams) {
   }
 
   function removeEventListeners(): void {
-    if (triggerMethod === PopoverTriggerMethod.HOVER) {
-      node.removeEventListener("mouseenter", showPopover);
-      node.removeEventListener("mouseleave", hidePopover);
-    } else if (triggerMethod === PopoverTriggerMethod.CLICK) {
+    if (triggerMethod.includes(PopoverTriggerMethod.HOVER)) {
+      node.removeEventListener("mouseenter", handleTrigger);
+      node.removeEventListener("mouseleave", handleTrigger);
+    }
+    if (triggerMethod.includes(PopoverTriggerMethod.CLICK)) {
       node.removeEventListener("click", handleTrigger);
-    } else if (triggerMethod === PopoverTriggerMethod.RIGHT_CLICK) {
+    }
+    if (triggerMethod.includes(PopoverTriggerMethod.RIGHT_CLICK)) {
       node.removeEventListener("contextmenu", handleTrigger);
     }
     node.removeEventListener("hide", hidePopover);
@@ -500,7 +534,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
         isSpanToTriggerWidth = false,
         offsetInPx = 4,
         content,
-        triggerMethod = PopoverTriggerMethod.CLICK,
+        triggerMethod = [PopoverTriggerMethod.CLICK],
         componentProps = {},
         groupId = "popover",
         id = "popover"

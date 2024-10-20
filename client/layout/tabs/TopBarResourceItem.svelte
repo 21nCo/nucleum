@@ -45,7 +45,7 @@
   use:popover={{
     placement: Placement.BottomCenter,
     content: ContextMenu,
-    triggerMethod: PopoverTriggerMethod.RIGHT_CLICK,
+    triggerMethod: [PopoverTriggerMethod.RIGHT_CLICK],
     componentProps: { menuResolver: resolveContextMenu },
     id: "topBarContextMenu",
     groupId: "topBarContextMenuGroup"

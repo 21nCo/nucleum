@@ -1,5 +1,5 @@
 import type { DropdownGroup, DropdownItem } from "./dropdownItem.type";
-import type { InputStyle } from "./input.type";
+import type { InputLabelInfoToolTip, InputStyle } from "./input.type";
 
 export type TableColumn = {
   /**
@@ -7,6 +7,7 @@ export type TableColumn = {
    * For ActionColumm: icon to be used for the action - passed as key.
    */
   key: string;
+  tooltip?: InputLabelInfoToolTip;
   disabledCriteria?: (row: any) => boolean;
 } & (
   | IconActionColumn

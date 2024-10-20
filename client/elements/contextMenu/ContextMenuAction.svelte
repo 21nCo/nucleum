@@ -101,7 +101,9 @@
     isSpanToTriggerWidth: false,
     offsetInPx,
     content: ContextMenu,
-    triggerMethod: triggerMethod ?? PopoverTriggerMethod.CLICK,
+    triggerMethod: triggerMethod
+      ? [triggerMethod]
+      : [PopoverTriggerMethod.CLICK],
     componentProps: { size, heading, menuResolver, onSelect },
     groupId: "contextMenuPopover-" + id,
     id
