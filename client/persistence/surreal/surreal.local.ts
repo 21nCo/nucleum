@@ -29,6 +29,12 @@ import { LogType } from "$lib/client/components/debug/debug.type";
 import { compareVersions } from "$lib/shared/utils/utils";
 import { TacoActions } from "$lib/client/types/taco.types";
 import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
+
+const loadSurrealDB = async () => {
+  const Surreal = await import("@surrealdb/wasm");
+  return Surreal.surrealdbWasmEngines;
+};
+
 export class SurrealPersistence implements IPersistence {
   instance: Surreal | undefined = undefined;
   userId: string = "";
@@ -39,6 +45,22 @@ export class SurrealPersistence implements IPersistence {
 
   async initialize(userId: string, params?: IPersistenceInitParams) {
     if (this.userId === userId && this.instance) return -1;
+    let engines;
+    try {
+      // engines = await loadSurrealDB();
+      // engines = await loadSurrealDBFromRemotev5(
+      //   import.meta.env.VITE_STATIC_URL + "/surreal.zip"
+      // );
+      logger.debug({ at: "surreal.persistence.initialize - wasm loaded" });
+    } catch (e) {
+      logger.error({
+        at: "surreal.persistence.initialize - wasm load error",
+        error: e,
+        location: window.location.toString(),
+        protocol: window.location.protocol
+      });
+    }
+    // if (!engines) return -1;
     this.instance = new Surreal({
       engines: surrealdbWasmEngines({
         strict: false,
