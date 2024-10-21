@@ -224,6 +224,9 @@
         </span>
       </div>
     </div>
+    <!-- <audio controls>
+      <source src={url} type="audio/webm" />
+    </audio> -->
     <div class="flex w-full justify-center gap-6">
       {#if recordingState === PlayActionState.STOPPED}
         <Button

@@ -11,6 +11,7 @@
   let containerHeight: number;
   let containerWidth: number;
   const dispatch = createEventDispatcher();
+  let error: string | null = null;
 
   onMount(() => {
     containerHeight = window.innerHeight;
@@ -29,8 +30,9 @@
       videoElement.onloadedmetadata = () => {
         adjustVideoSize();
       };
-    } catch (error) {
-      console.error("Error accessing the camera: ", error);
+    } catch (e) {
+      console.error("Error accessing the camera: ", e);
+      error = "No Camera found.";
     }
   }
 
@@ -81,6 +83,11 @@
   class="relative flex flex-col items-center justify-between w-full h-full overflow-hidden"
   style="height: {containerHeight}px; width: {containerWidth}px;"
 >
+  {#if error}
+    <span class="absolute inset-0 flex items-center justify-center text-ars1">
+      {error}
+    </span>
+  {/if}
   <div
     class="relative w-full h-full overflow-hidden flex items-center justify-center"
   >
@@ -138,7 +145,7 @@
           class="self-center w-16 h-16 rounded-full bg-aps1 border-none outline-none cursor-pointer relative"
           on:click={capturePhoto}
         >
-          <div class="absolute inset-1 rounded-full border-4 border-brs3"></div>
+          <div class="absolute inset-1 rounded-full border-4 border-bgs1"></div>
         </button>
       </div>
       <div class="col-span-1 flex justify-center">

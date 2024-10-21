@@ -92,7 +92,7 @@
       {/if}
     </main>
   {/if}
-  {#if rightPane || webNodeTypeList.includes($node?.contentType)}
+  {#if rightPane || (webNodeTypeList.includes($node?.contentType) && !$view.isConstrainedWidth)}
     <MediaNodeRightPane {node} bind:pane={rightPane} {renderingDetails} />
   {/if}
 </div>

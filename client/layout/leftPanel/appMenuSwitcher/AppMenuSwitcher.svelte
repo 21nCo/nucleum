@@ -68,7 +68,7 @@
       toasts.reset();
     }
     isInEditMode.set(false);
-    console.log({ item, selected: current });
+    // console.log({ item, selected: current });
     if (
       current !== item.action ||
       window.location.pathname.includes("/tab") ||

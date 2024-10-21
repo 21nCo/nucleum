@@ -243,12 +243,12 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
   };
 
   async saveAudioRecording(data: Blob, duration: number) {
-    const contentType = "audio/webm";
+    const contentType = "audio/mp3";
     const id = generateResourceId(Resource.node);
     const fileName = generateSimpleRandomId();
     const result = await account.uploadFileV2(
       contentType,
-      `${fileName}.webm`,
+      `${fileName}.mp3`,
       data
     );
     if (!result) return;
@@ -267,6 +267,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
   }
 
   async saveCameraCapture(data: Blob) {
+    logger.log({ at: "CaptureStore.saveCameraCapture", length: data.size });
     const contentType = "image/jpeg";
     const id = generateResourceId(Resource.node);
     const fileName = generateSimpleRandomId();

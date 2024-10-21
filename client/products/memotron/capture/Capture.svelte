@@ -45,7 +45,7 @@
   let isPropertiesCollapsed: boolean = false;
   let writerRef: Writer | undefined = undefined;
   let types: ICollectionExpanded[] = [];
-
+  let cameraCaptureRef: HTMLInputElement;
   // $: console.log({ types, $captureStore, propertyConfig });
 
   async function refreshTypeData() {
@@ -95,6 +95,16 @@
   });
 
   async function onTypeSelect(e: CustomEvent) {
+    if (
+      e.detail === CaptureType.CAMERA &&
+      $context.isEmbed &&
+      $context.os === OperatingSystem.IOS
+    ) {
+      setTimeout(() => {
+        cameraCaptureRef?.click();
+      }, 100);
+      return;
+    }
     isEmptyState = false;
     await captureStore.onTypeSelect(e.detail);
     await refreshTypeData();
@@ -150,6 +160,32 @@
     writerRef?.focus();
     refreshEmptyState();
   }
+
+  function handleCapture(event: Event) {
+    try {
+      isSaving = true;
+      const input = event.target as HTMLInputElement;
+      if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const result = e.target?.result;
+          if (typeof result === "string") {
+            fetch(result)
+              .then((res) => res.blob())
+              .then(async (blob) => {
+                await captureStore.saveCameraCapture(blob);
+                isSaving = false;
+              });
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch (e) {
+      logger.error({ at: "Capture.svelte - handleCapture", error: e });
+      isSaving = false;
+    }
+  }
 </script>
 
 {#if isSaving}
@@ -169,7 +205,16 @@
   <FileUploader />
 {:else if $captureStore.captureType === CaptureType.CAMERA}
   {#if $context.isEmbed && $context.os === OperatingSystem.IOS}
-    <CameraCaptureUsingInput />
+    <!-- <CameraCaptureUsingInput /> -->
+    <input
+      bind:this={cameraCaptureRef}
+      type="file"
+      accept="image/*"
+      capture="environment"
+      on:change={handleCapture}
+      id="cameraInput"
+      class="hidden"
+    />
   {:else}
     <CameraCapture />
   {/if}
