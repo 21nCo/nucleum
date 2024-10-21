@@ -50,7 +50,7 @@
     <NonMediaNode {node} />
   {/if}
 {:else}
-  <div class="w-full h-full pt-4 px-20">
+  <div class="w-full h-full pt-4 mo:px-4 px-20">
     <NodeLoadingPulse />
   </div>
 {/if}

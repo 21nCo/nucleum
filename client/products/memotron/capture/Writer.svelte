@@ -8,6 +8,7 @@
   export let isSaveInProgress: boolean = false;
   import { setContext } from "svelte";
   import type { IRecordId } from "$lib/client/types/data.type";
+  import CameraCapture from "./CameraCapture.svelte";
 
   let mdRef: NodularMarkdown | undefined = undefined;
 
@@ -48,11 +49,11 @@
 <div class="flex w-full h-full max-h-full justify-between">
   {#if $captureStore.captureType === CaptureType.AUDIO}
     <div class="w-full h-full flex items-center justify-center">
-      <AudioCapture bind:isSaveInProgress />
+      <AudioCapture bind:isSaveInProgress on:cancel />
     </div>
   {:else if $captureStore.captureType === CaptureType.CAMERA}
     <div class="w-full h-full flex items-center justify-center text-fgs4">
-      Camera opens here if supported or browse files
+      <CameraCapture on:cancel />
     </div>
   {:else if "blocks" in $captureStore.body}
     <div class="overflow-auto h-full w-full dp:px--10">

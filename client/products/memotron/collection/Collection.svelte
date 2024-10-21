@@ -63,6 +63,7 @@
   } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import view from "$lib/client/stores/view.store";
+  import Button from "$lib/client/elements/button/Button.svelte";
 
   export let id: string = "";
   let collection: IActiveCollectionStore = resolveActiveCollectionStore(
@@ -484,6 +485,18 @@
             </span>
           </CollectionTitleBar>
         </div>
+        {#if $collection.isInEditMode && $view.isConstrainedWidth}
+          <div class="px-4 flex justify-center items-center w-full h-12">
+            <Button
+              label="Close edit mode"
+              icon="ph:x-thin"
+              on:click={() => {
+                $collection.isInEditMode = false;
+              }}
+              style={ButtonStyle.PLAIN}
+            />
+          </div>
+        {/if}
         {#if isShowMetaViews}
           <div class="px-4">
             <OptionSelector

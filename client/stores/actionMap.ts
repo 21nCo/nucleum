@@ -1,5 +1,6 @@
 import {
   type IAction,
+  type IActionFnParams,
   ActionType,
   ContentType
 } from "$lib/client/types/action.type";
@@ -29,6 +30,7 @@ import CoverPicker from "../elements/coverPicker/CoverPicker.svelte";
 import SurrealLocalViewer from "../components/debug/SurrealLocalViewer.svelte";
 import PrivacyPolicy from "../landing/shared/PrivacyPolicy.svelte";
 import HashnodeEmbed from "../components/cx/hashnode/HashnodeEmbed.svelte";
+import { Embed } from "../types/context.type";
 
 export const globalActions: IAction[] = [
   {
@@ -86,9 +88,20 @@ export const globalActions: IAction[] = [
     isMeta: true,
     // type: ActionType.LINK
     type: ActionType.FUNCTION,
-    fn: async () => {
-      appStore.runAction(Action.GUIDES + "hashnode");
+    fn: async (params?: IActionFnParams) => {
+      if (params?.context?.embed === Embed.HANDSET) {
+        appStore.runAction(Action.GUIDES + "mobile");
+      } else {
+        appStore.runAction(Action.GUIDES + "hashnode");
+      }
     }
+  },
+  {
+    action: Action.GUIDES + "mobile",
+    label: "Guides and docs",
+    icon: "ph:book-open-text-light",
+    isMeta: true,
+    type: ActionType.LINK
   },
   {
     action: Action.GUIDES + "hashnode",

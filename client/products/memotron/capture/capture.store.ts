@@ -98,6 +98,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     }, 1500);
   }
   reset() {
+    logger.log({ at: "CaptureStore.reset" });
     const seedStore = generateSeedStore();
     this.modify({
       ...seedStore,

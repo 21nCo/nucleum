@@ -13,6 +13,7 @@
   export let parentBackgroundIndex: number = 1;
   export let isActive: boolean = false;
   export let setActiveByPath: boolean = false;
+  export let isShowDivider: boolean = false;
   let isOutlineStyle: boolean = false;
   let component = appStore.resolveAction(action);
   $: if (setActiveByPath)
@@ -68,7 +69,7 @@
       </div>
     {/if}
   </button>
-  {#if orientation === Orientation.Horizontal}
+  {#if orientation === Orientation.Horizontal && isShowDivider}
     <Divider colorStrength={ColorStrength.Subtle} />
   {/if}
 {/if}

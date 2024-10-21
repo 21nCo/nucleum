@@ -41,6 +41,7 @@
           {orientation}
           action={item}
           setActiveByPath={true}
+          isShowDivider={true}
           on:click={() => {
             onClick(item);
           }}
