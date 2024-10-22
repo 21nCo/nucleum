@@ -4,27 +4,49 @@ import { nodeStore, vectorResourceStore } from "../node/node.store";
 import { NodeType } from "../node/node.type";
 import { TacoActions } from "./taco.types";
 
-export async function verifyVectorGenerationTransactionNUpdate() {
+export async function verifyVectorGenerationTransactionNUpdate(
+  isRegenerateForAll: boolean = false
+) {
   if (
     !get(userPreferences).localAI.semanticSearch ||
     !get(userPreferences).localAI.vectorGenerationInProgress
   )
     return;
-  let nullvectors = await nodeStore.selectMany({
-    filters: {
-      contentType: [
-        NodeType.NODULAR_MARKDOWN,
-        NodeType.HEADING1,
-        NodeType.HEADING2,
-        NodeType.HEADING3,
-        NodeType.HEADING4,
-        NodeType.HEADING5
-      ],
-      vector: false
-    }
-  });
 
-  if (nullvectors.length > 0) {
+  let nodes;
+  if (isRegenerateForAll) {
+    nodes = await nodeStore.selectMany({
+      filters: {
+        contentType: [
+          NodeType.NODULAR_MARKDOWN,
+          NodeType.HEADING1,
+          NodeType.HEADING2,
+          NodeType.HEADING3,
+          NodeType.HEADING4,
+          NodeType.HEADING5
+        ]
+      }
+    });
+    const vectors = await vectorResourceStore.selectMany();
+    for (let vector of vectors) {
+      await vectorResourceStore.delete(vector.id);
+    }
+  } else
+    nodes = await nodeStore.selectMany({
+      filters: {
+        contentType: [
+          NodeType.NODULAR_MARKDOWN,
+          NodeType.HEADING1,
+          NodeType.HEADING2,
+          NodeType.HEADING3,
+          NodeType.HEADING4,
+          NodeType.HEADING5
+        ],
+        vector: false
+      }
+    });
+
+  if (nodes.length > 0) {
     userPreferences.modify({
       localAI: {
         ...get(userPreferences).localAI,
@@ -40,7 +62,7 @@ export async function verifyVectorGenerationTransactionNUpdate() {
     );
     semanticSearchWorker.postMessage({
       action: TacoActions.GEN_EMBEDDINGS_AND_RETURN_PROCESSED_DATA,
-      params: { nodes: nullvectors }
+      params: { nodes: nodes }
     });
     semanticSearchWorker.onmessage = async (e) => {
       if (e.data.params) {
@@ -51,7 +73,7 @@ export async function verifyVectorGenerationTransactionNUpdate() {
         //   records: updatedNodes
         // });
         /**
-         * the current bulkmodify applies the same value to all nodes, another requirement for bulk is different values for different nodes. until that store modifcation is done using this temporarily.
+         * the current bulkmodify applies the same value to all nodes, here the requirement for bulkmodify is different values for different nodes. until that store modifcation is done utilizing this temporarily.
          */
         for (let node of updatedNodes) {
           const noderesp = await nodeStore.modify(node.id, {

@@ -15,6 +15,7 @@
     TacoLocalAIOptions
   } from "$lib/client/products/memotron/taco/taco.types";
   import { verifyVectorGenerationTransactionNUpdate } from "$lib/client/products/memotron/taco/taco.store";
+  import { appStore } from "$lib/client/stores/app.store";
 
   export let isCmdBarLaunch: boolean = false;
 
@@ -151,6 +152,15 @@
     {/if}
   </div>
   <footer class="flex flex-col items-center gap-4 pb-8 mo:pb-20">
+    {#if $appStore.env == "dev" && $userPreferences.localAI.semanticSearch}
+      <Button
+        label="Regenerate-Vectors-For-All-MDs"
+        on:click={() => {
+          $userPreferences.localAI.vectorGenerationInProgress = true;
+          verifyVectorGenerationTransactionNUpdate(true);
+        }}
+      />
+    {/if}
     {#if isCmdBarLaunch}
       <p class="text-fgs2 text-b2 text-left">
         Note: You won't be able to Dismiss or perform any other action while the
