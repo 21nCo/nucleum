@@ -39,6 +39,7 @@ import { ClientStorageKey } from "../persistence/persistence.type";
 import { Size } from "../types/size.enum";
 import type { IRecordId } from "../types/data.type";
 import account from "./account.store";
+import { tabs } from "../layout/tabs/tabs.store";
 
 // export const app = writable<{ product: string; env: string }>({
 //   product: "tidy",
@@ -513,13 +514,15 @@ function initAppStore(seed: AppStore) {
 
   const determineClickAccessMode = (event: MouseEvent) => {
     //TODO - shortcuts from user settings
-    if (event.shiftKey) return ResourceAccessMode.FULL;
+    if (event.altKey && event.metaKey) {
+      return ResourceAccessMode.TAB_IN_BACKGROUND;
+    } else if (event.shiftKey) return ResourceAccessMode.FULL;
     else if (event.altKey) {
       const isFromFocusOrPop = isFSplit();
       if (isFromFocusOrPop) return ResourceAccessMode.FSPLIT;
       else return ResourceAccessMode.SPLIT;
     } else if (event.metaKey) {
-      // TODO - open in new tab?
+      return ResourceAccessMode.TAB;
     }
   };
 
@@ -542,6 +545,14 @@ function initAppStore(seed: AppStore) {
       resourceId: id,
       timestamp: timestamp.toISOString()
     });
+
+    if (accessMode === ResourceAccessMode.TAB) {
+      tabs.open(id);
+      return;
+    } else if (accessMode === ResourceAccessMode.TAB_IN_BACKGROUND) {
+      tabs.addInBackground(id);
+      return;
+    }
 
     toggleSearchParam(
       {

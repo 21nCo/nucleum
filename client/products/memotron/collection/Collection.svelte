@@ -100,7 +100,8 @@
   $: coverPlacement =
     $collection?.coverLayout?.placement === Placement.Top ||
     !$collection?.coverLayout?.placement ||
-    $view.isConstrainedWidth
+    $view.isConstrainedWidth ||
+    $view.isPortrait
       ? Placement.Top
       : $collection?.coverLayout?.placement;
 

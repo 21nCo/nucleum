@@ -26,7 +26,9 @@
 
   $: isPositionable = cover?.toString().includes("file:") && isInEditMode;
 
-  $: height = $view.isConstrainedWidth ? 100 : (size?.height ?? 300);
+  $: height = $view.isConstrainedWidth
+    ? 100
+    : (size?.height ?? $view.height / 5);
 
   function onReplace(e: CustomEvent) {
     isCoverPickerOpen = true;

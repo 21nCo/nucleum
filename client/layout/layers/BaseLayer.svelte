@@ -218,21 +218,25 @@
    * @param event
    */
   function handleCustomAlert(event: any) {
-    if (event.detail) console.log("custom alert:", event.detail);
-    if (event.detail?.error === "networkerror") {
-      if (
-        $context.isEmbed &&
-        event.detail.message.tolowerCase().includes("load failed")
-      ) {
-        return;
+    try {
+      if (event.detail) console.log("custom alert:", event.detail);
+      if (event.detail?.error === "networkerror") {
+        if (
+          $context.isEmbed &&
+          event.detail.message?.toLowerCase()?.includes("load failed")
+        ) {
+          return;
+        }
+        toasts.trigger({
+          title: "Network Error",
+          message: event.detail.message ?? "Something went wrong.",
+          type: AlertType.ERROR,
+          id: "networkerror",
+          isNonDismissable: true
+        });
       }
-      toasts.trigger({
-        title: "Network Error",
-        message: event.detail.message ?? "Something went wrong.",
-        type: AlertType.ERROR,
-        id: "networkerror",
-        isNonDismissable: true
-      });
+    } catch (e) {
+      logger.error({ at: "handleCustomAlert", error: e });
     }
   }
 
