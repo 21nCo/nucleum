@@ -207,13 +207,18 @@
         }
       }
       const defaultAppMenu = $appStore.appData?.appMenu ?? [];
+      const defaultAppMenuMobile = $appStore.appData?.appMenuMobile ?? [];
+      const appMenuDefaults = {
+        all: defaultAppMenu,
+        mobile: defaultAppMenuMobile
+      };
       if ($account.dataMode === UserDataMode.CLOUD && !isLiteMode) {
         refreshTimeZone();
-        appMenuStore.setDefaults(defaultAppMenu, true);
+        appMenuStore.setDefaults(appMenuDefaults, true);
         account.setAnalyticsUserIdentity();
         await account.ping();
       } else {
-        appMenuStore.setDefaults(defaultAppMenu);
+        appMenuStore.setDefaults(appMenuDefaults);
       }
     } catch (e) {
       logger.error(e);

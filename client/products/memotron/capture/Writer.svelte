@@ -4,6 +4,7 @@
   import AudioCapture from "./AudioCapture.svelte";
   import NodularMarkdown from "$lib/client/components/markdown/NodularMarkdown.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
+  export let captureType: CaptureType = CaptureType.MARKDOWN;
   export let isEmptyState: boolean = true;
   export let isSaveInProgress: boolean = false;
   import { setContext } from "svelte";
@@ -47,11 +48,11 @@
 </script>
 
 <div class="flex w-full h-full max-h-full justify-between">
-  {#if $captureStore.captureType === CaptureType.AUDIO}
+  {#if captureType === CaptureType.AUDIO}
     <div class="w-full h-full flex items-center justify-center">
       <AudioCapture bind:isSaveInProgress on:cancel />
     </div>
-  {:else if $captureStore.captureType === CaptureType.CAMERA}
+  {:else if captureType === CaptureType.CAMERA}
     <div class="w-full h-full flex items-center justify-center text-fgs4">
       <CameraCapture on:cancel />
     </div>

@@ -42,6 +42,7 @@
       "fill-aps1": on,
       "stroke-fgs1": !on
     })}
+    on:click
   />
   {#if count}
     <div class="absolute bottom-1 right-1">

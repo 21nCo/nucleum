@@ -46,7 +46,7 @@
       {#if title || isShowCollapseButton}
         <div
           class={cn(
-            "flex justify-between w-full portrait:px-4 portrait:py-2 px-3 pt-2 overflow-auto min-h-fit"
+            "flex justify-between w-full portrait:px-4 portrait:py-2 px-3 pt-2 overflow-auto min-h-fit mo:min-h-14"
           )}
         >
           <Text style={titleStyle} content={title || ""} />

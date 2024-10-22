@@ -48,7 +48,7 @@
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import ArrangementSelector from "./ArrangementSelector.svelte";
+  import ArrangementSelector from "./arrangementSelector/ArrangementSelector.svelte";
   import ToggleGroup from "$lib/client/elements/toggle/ToggleGroup.svelte";
   import AddResourceAction from "./AddResourceAction.svelte";
   import { MemotronAction } from "../memotronAction.enum";
@@ -193,6 +193,7 @@
 
   function onArrangementChange(e: CustomEvent) {
     if (!activeView) return;
+    selectedArrangement = e.detail;
     activeView.arrangement = e.detail;
     activeView.density = activeView.density ? activeView.density : 1;
     collection.updateView(
@@ -448,7 +449,7 @@
     {:else}
       <div
         class={cn("flex flex-col flex-1", {
-          "gap-8": !isSingleViewMode || isShowMetaViews,
+          "mo:gap-4 gap-8": !isSingleViewMode || isShowMetaViews,
           "h-full overflow-auto": coverPlacement !== Placement.Top,
           "w-full": coverPlacement === Placement.Top
         })}
@@ -476,9 +477,9 @@
               {#if isSingleViewMode && !$collection.isInEditMode}
                 <ArrangementSelector
                   {isBoardContext}
-                  bind:arrangement={selectedArrangement}
-                  bind:density={arrangementDensity}
-                  on:switch={onArrangementChange}
+                  arrangement={selectedArrangement}
+                  density={arrangementDensity}
+                  on:arrangementChange={onArrangementChange}
                   on:densityChange={onDensityChange}
                 />
               {/if}
@@ -550,8 +551,8 @@
                 on:change={onViewLabelChange}
                 on:rearrange={onViewRearrange}
               >
-                <span class="flex items-center gap-4 pr-4" slot="right">
-                  <ToggleGroup
+                <span class="flex items-center gap-4 mo:pr-0 pr-4" slot="right">
+                  <!-- <ToggleGroup
                     class="gap-3"
                     items={[
                       {
@@ -563,18 +564,18 @@
                         icon: "ph:arrows-down-up-thin"
                       }
                     ]}
-                  />
+                  /> -->
                   <ArrangementSelector
                     {isBoardContext}
-                    bind:arrangement={selectedArrangement}
-                    bind:density={arrangementDensity}
-                    on:switch={onArrangementChange}
+                    arrangement={selectedArrangement}
+                    density={arrangementDensity}
+                    on:arrangementChange={onArrangementChange}
                     on:densityChange={onDensityChange}
                   />
-                  {#if !$collection.isInEditMode}
+                  {#if !$collection.isInEditMode && !$view.isConstrainedWidth}
                     <AddResourceAction
-                      on:add={onAddResource}
                       variant="strong"
+                      on:add={onAddResource}
                     />
                   {/if}
                 </span>
@@ -583,11 +584,18 @@
             {#if activeView && ($collection.isInEditMode || !isNoneResource(activeView.tabBy))}
               <div class="px-4 pb-4 flex flex-col gap-6">
                 {#if $collection.isInEditMode}
-                  <ViewSettingsBar
-                    bind:view={activeView}
-                    {properties}
-                    on:change={onViewSettingsChange}
-                  />
+                  {#if $view.isConstrainedWidth}
+                    <span class="text-fgs3 text-b3">
+                      Currently, advanced view editing is only available on
+                      Desktop. Sorry for the inconvenience.
+                    </span>
+                  {:else}
+                    <ViewSettingsBar
+                      bind:view={activeView}
+                      {properties}
+                      on:change={onViewSettingsChange}
+                    />
+                  {/if}
                 {/if}
                 {#if activeView.tabBy}
                   <ViewTabSwitcher

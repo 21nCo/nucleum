@@ -45,6 +45,9 @@
   let writerRef: Writer | undefined = undefined;
   let types: ICollectionExpanded[] = [];
   let cameraCaptureRef: HTMLInputElement;
+  let captureType: CaptureType = isWindowDnD
+    ? CaptureType.UPLOAD
+    : CaptureType.MARKDOWN;
   // $: console.log({ types, $captureStore, propertyConfig });
 
   async function refreshTypeData() {
@@ -65,7 +68,7 @@
   }
 
   onMount(async () => {
-    if ($captureStore.captureType !== CaptureType.MARKDOWN && !isWindowDnD) {
+    if (captureType !== CaptureType.MARKDOWN && !isWindowDnD) {
       reset();
     }
     linkQueryParam = $page.url.searchParams.get("link");
@@ -123,7 +126,7 @@
   function refreshEmptyState(e?: CustomEvent) {
     if (
       isValidString($captureStore.label) ||
-      $captureStore.captureType === CaptureType.AUDIO
+      captureType === CaptureType.AUDIO
     ) {
       isEmptyState = false;
       return;
@@ -164,6 +167,7 @@
   }
 
   function handleCapture(event: Event) {
+    logger.log({ at: "Capture.svelte - handleCapture" });
     try {
       isSaving = true;
       const input = event.target as HTMLInputElement;
@@ -183,7 +187,9 @@
         };
         reader.readAsDataURL(file);
       } else {
-        logger.log({ at: "Capture.svelte - handleCapture - no file present" });
+        logger.log({
+          at: "Capture.svelte - handleCapture - no file present"
+        });
         reset();
       }
     } catch (e) {
@@ -213,9 +219,9 @@
       <Writer />
     </div>
   </div> -->
-{:else if $captureStore.captureType === CaptureType.UPLOAD}
+{:else if captureType === CaptureType.UPLOAD}
   <FileUploader on:cancel={reset} />
-{:else if $captureStore.captureType === CaptureType.CAMERA && $context.isEmbed && $context.os === OperatingSystem.IOS}
+{:else if captureType === CaptureType.CAMERA && $context.isEmbed && $context.os === OperatingSystem.IOS}
   <!-- <CameraCaptureUsingInput /> -->
   <input
     bind:this={cameraCaptureRef}
@@ -231,7 +237,7 @@
   {#key $captureStore.refreshId}
     <div class="w-full h-full flex justify-center">
       <div class="w-full max-w-5xl h-full flex flex-col p-4 bg-bgs1">
-        {#if $captureStore.captureType !== CaptureType.AUDIO && $captureStore.captureType !== CaptureType.CAMERA}
+        {#if captureType !== CaptureType.AUDIO && captureType !== CaptureType.CAMERA}
           <header
             class="flex justify-between gap-4 items-center w-full lp:px-12"
           >
@@ -317,6 +323,7 @@
             })}
           >
             <Writer
+              {captureType}
               bind:isEmptyState
               bind:this={writerRef}
               bind:isSaveInProgress={isSaving}
@@ -327,7 +334,7 @@
           {#if isEmptyState}
             <div class="w-full dp:px-10 dp:my-10">
               <TypeSelector
-                bind:selected={$captureStore.captureType}
+                bind:selected={captureType}
                 label={{ label: "Select a type" }}
                 isCapturePage={true}
                 on:select={onTypeSelect}

@@ -337,6 +337,16 @@
     }
     refresh();
   }
+
+  function onCreateResource() {
+    if (selectedResource === Resource.node) {
+      appStore.runAction(MemotronAction.CAPTURE);
+    } else {
+      appStore.runAction(
+        resourceAction(selectedResource, ResourceActionType.CREATE)
+      );
+    }
+  }
 </script>
 
 <div class="relative w-full h-full">
@@ -366,6 +376,7 @@
         bind:selectedResource
         bind:searchQuery
         on:refresh={debouncedSearch}
+        on:create={onCreateResource}
         on:semanticSearch={(e) => {
           if (e.detail) {
             searchStore.searchType = SearchType.SEMANTIC;
@@ -377,7 +388,7 @@
       />
     {/if}
     <div
-      class="flex w-full gap-2 justify-between items-center mo:px-2 px-5 resource-switcher sticky-disabled bg-bgs1 py-5 top-0 z-10"
+      class="resource-switcher flex w-full gap-2 justify-between items-center mo:px-4 px-5 mo:py-3 py-5 sticky-disabled bg-bgs1 top-0 z-10"
     >
       <span
         class={cn("flex overflow-auto", {
@@ -397,7 +408,7 @@
           size={variant === "v2" ? Size.md : Size.sm}
         />
       </span>
-      {#if selectedResource != Resource.everything && !($view.isPortrait && selectedResource === Resource.node)}
+      {#if selectedResource != Resource.everything && !$view.isConstrainedWidth}
         <span>
           <span class="flex gap-2 items-center">
             {#if availableResources.includes(selectedResource)}
@@ -412,20 +423,9 @@
                 size={Size.sm}
                 type={ButtonVariant.PRIMARY}
                 style={ButtonStyle.OUTLINED}
-                label={$view.isConstrainedWidth ? undefined : selectedResource}
+                label={selectedResource}
                 isPreventMinWidth={true}
-                on:click={() => {
-                  if (selectedResource === Resource.node) {
-                    appStore.runAction(MemotronAction.CAPTURE);
-                  } else {
-                    appStore.runAction(
-                      resourceAction(
-                        selectedResource,
-                        ResourceActionType.CREATE
-                      )
-                    );
-                  }
-                }}
+                on:click={onCreateResource}
               />
             {/if}
           </span>

@@ -32,7 +32,10 @@
     allPages = [];
     let items = [];
     const app = $appStore.product;
-    const defaultMenu = x[app]?.default ?? [];
+    let defaultMenu = x[app]?.default ?? [];
+    if ($view.isConstrainedWidth) {
+      defaultMenu = x[app]?.mobile ?? [];
+    }
     let userPinnedMenu: string[] = [];
     if (!$view.isConstrainedWidth) userPinnedMenu = x[app]?.user ?? [];
     const contextualMenu = [...defaultMenu, ...userPinnedMenu];
