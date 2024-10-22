@@ -50,8 +50,8 @@ import { UserDataMode } from "$lib/client/types/account.type";
 import { MemotronAction } from "../memotronAction.enum";
 import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
 import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
-import { TacoActions } from "$lib/client/types/taco.types";
 import { Persistence } from "$lib/client/persistence/persistence";
+import { TacoActions } from "../taco/taco.types";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 

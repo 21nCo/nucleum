@@ -16,10 +16,6 @@
   import TextArea from "$lib/client/elements/input/TextArea.svelte";
   import { generateUID } from "$lib/client/utils/utils";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import {
-    TacoActions,
-    TranscriptionModel
-  } from "$lib/client/types/taco.types";
   import { currentUserId } from "../capture/capture.store";
   import { nodeStore } from "../node/node.store";
   import { Audio2MD } from "./AudioToMarkdown.utils";
@@ -34,6 +30,7 @@
   import { Action } from "$lib/client/types/action.enum";
   import view from "$lib/client/stores/view.store";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { TacoActions, TranscriptionModel } from "../taco/taco.types";
 
   export let body: any = {};
   export let url: string;

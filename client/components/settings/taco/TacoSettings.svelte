@@ -4,13 +4,17 @@
   import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
   import { Action } from "$lib/client/types/action.enum";
   import { Size } from "$lib/client/types/size.enum";
-  import { TacoActions } from "$lib/client/types/taco.types";
   import modalEvent from "../../modal/modal.store";
   import { userPreferences } from "../userPreferences.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   import { InfoTextType } from "$lib/client/types/text.type";
+  import {
+    TacoActions,
+    TacoLocalAIOptions
+  } from "$lib/client/products/memotron/taco/taco.types";
+  import { verifyVectorGenerationTransactionNUpdate } from "$lib/client/products/memotron/taco/taco.store";
 
   export let isCmdBarLaunch: boolean = false;
 
@@ -34,11 +38,15 @@
     }
   }
 
-  function progressUpdate(e: any) {
+  function progressUpdate(e: any, currentToggle: TacoLocalAIOptions) {
     if (e.data.progress) progress = e.data.progress;
     if (e.data.file) label = e.data.file;
     if (e.data.status == "ready") {
       isDisabled = false;
+      if (currentToggle == TacoLocalAIOptions.SEMANTIC_SEARCH) {
+        $userPreferences.localAI.vectorGenerationInProgress = true;
+        verifyVectorGenerationTransactionNUpdate();
+      }
     }
   }
   async function onSemanticSearchToggle(e: any) {
@@ -48,7 +56,7 @@
         action: TacoActions.INITIAlIZE_FEATURE_EXTRACTOR
       });
       tacoWorker.onmessage = (e) => {
-        progressUpdate(e);
+        progressUpdate(e, TacoLocalAIOptions.SEMANTIC_SEARCH);
       };
     } else {
       await deleteItemsFromCache("onnx-msmarco");
@@ -65,7 +73,7 @@
         action: TacoActions.INITIALIZE_TRANSCRIBER
       });
       tacoWorker.onmessage = (e) => {
-        progressUpdate(e);
+        progressUpdate(e, TacoLocalAIOptions.AUDIO_TRANSCRIPTION);
       };
     } else {
       await deleteItemsFromCache("whisper");
@@ -82,7 +90,7 @@
         action: TacoActions.INITIALIZE_QUESTION_ANSWERER
       });
       tacoWorker.onmessage = (e) => {
-        progressUpdate(e);
+        progressUpdate(e, TacoLocalAIOptions.MARKDOWN_QA);
       };
     } else {
       await deleteItemsFromCache("onnx-roberta-");

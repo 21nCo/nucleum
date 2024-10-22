@@ -17,5 +17,12 @@ export enum TacoActions {
   GET_ANSWER,
   INITIALIZE_TEXT2TEXT_GENERATOR,
   RESET_TEXT2TEXT_GENERATOR,
-  GENERATE_TEXT
+  GENERATE_TEXT,
+  GEN_EMBEDDINGS_AND_RETURN_PROCESSED_DATA
+}
+
+export enum TacoLocalAIOptions {
+  SEMANTIC_SEARCH = "semanticSearch",
+  AUDIO_TRANSCRIPTION = "audioTranscription",
+  MARKDOWN_QA = "markdownQA"
 }

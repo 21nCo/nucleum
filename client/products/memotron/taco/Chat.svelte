@@ -5,9 +5,9 @@
   import { SearchStore } from "$lib/client/products/memotron/memotron.store";
   import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
   import { SearchType } from "$lib/client/types/data.type";
-  import { TacoActions } from "$lib/client/types/taco.types";
 
   import { onMount, onDestroy } from "svelte";
+  import { TacoActions } from "./taco.types";
 
   const QAsearchStore = new SearchStore();
   QAsearchStore.searchType = SearchType.SEMANTIC;

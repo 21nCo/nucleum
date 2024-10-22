@@ -27,8 +27,8 @@ import {
 } from "./surreal.utils";
 import { LogType } from "$lib/client/components/debug/debug.type";
 import { compareVersions } from "$lib/shared/utils/utils";
-import { TacoActions } from "$lib/client/types/taco.types";
 import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
+import { TacoActions } from "$lib/client/products/memotron/taco/taco.types";
 export class SurrealPersistence implements IPersistence {
   instance: Surreal | undefined = undefined;
   userId: string = "";

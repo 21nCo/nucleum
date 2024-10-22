@@ -43,6 +43,7 @@
   import PageError from "$lib/client/components/error/PageError.svelte";
   import { SurrealPersistence } from "$lib/client/persistence/surreal/surreal.local";
   import { Embed } from "$lib/client/types/context.type";
+  import { verifyVectorGenerationTransactionNUpdate } from "$lib/client/products/memotron/taco/taco.store";
 
   const loadingMessages = {
     cloneUp:
@@ -62,6 +63,7 @@
       });
     addWindowEventListeners();
     await initializeUser();
+    verifyVectorGenerationTransactionNUpdate();
     $appLoadingState.isBaseLoaded = true;
   });
   /**

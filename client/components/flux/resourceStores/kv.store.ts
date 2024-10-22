@@ -115,7 +115,7 @@ export class KeyValueStore<T extends IObservableStoreSubject>
    * @param n
    * @returns
    */
-  protected async modify(
+  async modify(
     n: Partial<T>,
     params: {
       isPersist?: boolean;

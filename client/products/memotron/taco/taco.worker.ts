@@ -1,6 +1,9 @@
 import { env, pipeline } from "@xenova/transformers";
-import type { TranscriptionModel } from "../../../types/taco.types";
-import { TacoActions } from "../../../types/taco.types";
+import type { INodeItemCaptured } from "../node/node.type";
+import { generateResourceId } from "$lib/client/components/flux/flux.utils";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { resolveCurrentUserId } from "$lib/client/utils/account.utils";
+import { TacoActions, TranscriptionModel } from "./taco.types";
 
 env.allowLocalModels = false;
 // let call = 0;
@@ -30,6 +33,11 @@ onmessage = (e: any) => {
       break;
     case TacoActions.GET_EMBEDDINGS:
       FeatureExtractor.generateVectorEmbeddings(e.data.params.text);
+      break;
+    case TacoActions.GEN_EMBEDDINGS_AND_RETURN_PROCESSED_DATA:
+      FeatureExtractor.generateVectorEmbeddingsAndReturnProcessedData(
+        e.data.params.nodes
+      );
       break;
     case TacoActions.INITIALIZE_QUESTION_ANSWERER:
       QuestionAnswerer.init((progress: any) => {
@@ -73,6 +81,7 @@ env.allowLocalModels = false;
 class FeatureExtractor {
   static built = false;
   static extractor: any;
+  static isInternalCall: boolean = false;
   static async init(progress_callback?: (progress: any) => void) {
     if (!FeatureExtractor.built) {
       // postMessage("initializing feature extractor");
@@ -87,16 +96,59 @@ class FeatureExtractor {
       FeatureExtractor.built = true;
     }
   }
-
+  static async generateVectorEmbeddingsAndReturnProcessedData(
+    nodes: INodeItemCaptured[]
+  ) {
+    try {
+      FeatureExtractor.isInternalCall = true;
+      let vectorRecords: any[] = [];
+      let updatedNodes = [];
+      const userId = await resolveCurrentUserId();
+      for (let node of nodes) {
+        const data =
+          node?.body +
+          (node.label ? " " + node.label : "") +
+          " " +
+          node?.mdText;
+        let vector = await FeatureExtractor.generateVectorEmbeddings(data);
+        const commonProps = {
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          createdBy: userId,
+          modifiedBy: userId
+        };
+        const vecotrId = generateResourceId(Resource.vector, {
+          isAsString: true
+        });
+        vectorRecords.push({
+          embedding: vector,
+          node: `${node.id.tb}:${node.id.id}`,
+          id: vecotrId,
+          ...commonProps
+        });
+        updatedNodes.push({
+          id: node.id,
+          vector: vecotrId,
+          modifiedBy: userId,
+          modifiedAt: new Date()
+        });
+      }
+      postMessage({
+        params: {
+          vectorRecords,
+          updatedNodes
+        }
+      });
+    } catch (error) {
+      console.error("Error during vector embedding generation:", error);
+      throw error;
+    } finally {
+      FeatureExtractor.isInternalCall = false;
+    }
+  }
   static async generateVectorEmbeddings(text: string) {
     try {
-      // console.log(
-      //   "extracting text:",
-      //   text.split(" ").length,
-      //   text,
-      //   FeatureExtractor.built
-      // );
-      let startTime = Date.now();
+      // let startTime = Date.now();
       if (!FeatureExtractor.built) await FeatureExtractor.init();
       const output = await FeatureExtractor.extractor(text, {
         pooling: "mean",
@@ -106,9 +158,10 @@ class FeatureExtractor {
       arr = arr[0].map((value: string) => {
         return value;
       });
-      let endTime = Date.now();
+      // let endTime = Date.now();
       // console.log("extraction time in seconds:", (endTime - startTime) / 1000);
-      postMessage(arr);
+      if (FeatureExtractor.isInternalCall) return arr;
+      else postMessage(arr);
       // return arr;
     } catch (error) {
       console.error("Error during extraction:", error);

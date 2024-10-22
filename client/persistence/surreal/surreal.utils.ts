@@ -135,7 +135,8 @@ export function resolveUpsertQuery(resource: string, record: any) {
   if (id && typeof id === "string" && !id.includes(":")) {
     id = `${resource}:${id}`;
   } else if (typeof id === "object" && id.id) {
-    id = id.toString();
+    // id = id.toString();
+    id = `${resource}:${id.id}`;
   } else if (!id) {
     id = generateResourceId(resource as any);
   }
@@ -151,7 +152,9 @@ export function resolveUpsertQuery(resource: string, record: any) {
  */
 export function resolveMergeQuery(record: any) {
   const recordCopy = { ...record };
-  const recordId = recordCopy.id;
+  let recordId = recordCopy.id;
+  if (typeof recordId === "object" && recordId.id)
+    recordId = `${recordId.tb}:${recordId.id}`;
   delete recordCopy.id;
   const query = `UPDATE ${recordId} MERGE ${JSON.stringify(
     recordCopy,
