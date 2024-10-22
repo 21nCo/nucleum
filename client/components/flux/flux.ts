@@ -119,6 +119,7 @@ class Flux {
         (x) => x.dataType === StoreDataType.KVO
       );
       const data = await this.persistence.selectMany(Resource.kv);
+      if (!data) return;
       data.forEach((record: any) => {
         const store = kvStores.find(
           (x) => "kv:" + x.id === record.id.toString()

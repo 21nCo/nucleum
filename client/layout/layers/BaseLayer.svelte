@@ -188,7 +188,7 @@
       if (!$context.isEmbed) window.location.reload();
       else {
         goto(
-          (import.meta.env?.VITE_CUSTOM_PROTOCOL ?? "blanklabs") +
+          (import.meta.env?.VITE_CUSTOM_PROTOCOL ?? "tauri") +
             "://localhost/index.html"
         );
         // postToParent({ reload: true });

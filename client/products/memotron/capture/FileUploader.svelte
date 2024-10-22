@@ -1,20 +1,20 @@
 <script lang="ts">
   import { fileDrop } from "$lib/client/actions/fileDrop.action";
   import { logger } from "$lib/client/components/debug/logger.client";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
-  import modalEvent from "$lib/client/components/modal/modal.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import Divider from "$lib/client/elements/Divider.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { toasts } from "$lib/client/stores/notification.store";
+  import context from "$lib/client/stores/context.store";
+  import view from "$lib/client/stores/view.store";
   import { ButtonVariant } from "$lib/client/types/button.type";
-  import { MemotronAction } from "../memotronAction.enum";
+  import { Embed } from "$lib/client/types/context.type";
   import type { NodeType } from "../node/node.type";
   import { captureStore } from "./capture.store";
   import { resolveMultipleFilesData } from "./capture.utils";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
 
   let multipleFilesData:
     | {
@@ -99,7 +99,7 @@
     />
   {:else}
     <div
-      class="flex flex-col gap-6 w-4/5 h-4/5 justify-between items-center border border-dashed border-brs3 bg-bgs2 bg-opacity-60 rounded-md"
+      class="flex flex-col gap-6 mo:w-9/10 w-4/5 mo:h-9/10 h-4/5 justify-between items-center border border-dashed border-brs3 bg-bgs2 bg-opacity-60 rounded-md"
       use:fileDrop={{
         accept: ".jpg,.png,.jpeg,.pdf,.wav,.mp3",
         multiple: true,
@@ -114,9 +114,7 @@
             icon="cross"
             tooltip="Cancel"
             parentBgIndex={2}
-            on:click={() => {
-              captureStore.reset();
-            }}
+            on:click={() => dispatch("cancel")}
           />
         </div>
       </div>
@@ -127,7 +125,13 @@
               {multipleFilesData.files.length} files selected
             </div>
           {:else}
-            <div class="text-fgs1">Drag and drop your files here</div>
+            <div class="text-fgs1">
+              {#if $context.embed === Embed.HANDSET}
+                Browse files
+              {:else}
+                Drag and drop your files here
+              {/if}
+            </div>
             <div class="flex gap-3 items-center">
               <Icon icon="ph:image" class="stroke-fgs3" />
               <Icon icon="ph:music-note" class="stroke-fgs3" />
@@ -139,7 +143,7 @@
         <div class="w-1/2">
           <Divider />
         </div>
-        <div class="flex gap-3">
+        <div class="flex mo:flex-col gap-3">
           {#if isValidMultipleFiles}
             <Button
               label="Save all"
@@ -169,9 +173,11 @@
           <InlineErrorMessage {error} isDissappear={false} />
         {/if}
       </div>
-      <div class="flex text-fgs3 text-b3 gap-3 p-3">
+      <div class="flex mo:flex-col text-fgs3 text-b3 gap-3 p-3">
         <span>Currently accepted file types: <b> image, audio, pdf </b> </span>
-        |
+        {#if !$view.isConstrainedWidth}
+          |
+        {/if}
         <span>Max size per file: 15MB</span>
       </div>
     </div>

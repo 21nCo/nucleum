@@ -111,7 +111,7 @@
         ctx: "handleMacOSEmbedRedirection"
       });
       appStore.gotoPath(
-        (import.meta.env?.VITE_CUSTOM_PROTOCOL ?? "blanklabs") +
+        (import.meta.env?.VITE_CUSTOM_PROTOCOL ?? "tauri") +
           "://localhost/index.html" +
           "?token=" +
           token

@@ -363,14 +363,18 @@ export class Persistence {
     fileName: string,
     isTemp: boolean
   ) {
-    const response = await performApiCall("utils/n/getsignedurl", "POST", {
-      method: "PUT",
-      contentType,
-      fileName,
-      userId,
-      isTemp
-    });
-    return await response?.json();
+    try {
+      const response = await performApiCall("utils/n/getsignedurl", "POST", {
+        method: "PUT",
+        contentType,
+        fileName,
+        userId,
+        isTemp
+      });
+      return await response?.json();
+    } catch (e) {
+      logger.error(e);
+    }
   }
   /**
    *

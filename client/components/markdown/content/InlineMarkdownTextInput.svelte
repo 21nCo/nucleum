@@ -166,19 +166,18 @@
   export function replace(target: string, replacement: string) {
     innerHTML = innerHTML.replace(target, replacement);
   }
-  export function addMention(item: any) {
+  export function addMention(item: any, searchQuery: string) {
     console.log("addMention - start", { item, content, innerHTML });
-    const query = content?.split("@")[1];
     content = content?.replace(
-      "@" + query,
+      "@" + searchQuery,
       `[${item.label}](resource=${item.id})`
     );
     innerHTML = innerHTML.replace(
-      "@" + query,
+      "@" + searchQuery,
       `<mention data-id='${item.id}'></mention>`
     );
     console.log("addMention - after adding placeholder", {
-      query,
+      searchQuery,
       content,
       innerHTML
     });

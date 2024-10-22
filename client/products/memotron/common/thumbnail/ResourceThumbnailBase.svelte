@@ -83,7 +83,11 @@
               arrangement === Arrangement.LIST && !isApplyCustomColor
           })}
         >
-          <ResourceThumbnailContextMenu {item} {accessPoint} {accessPointId} />
+          <ResourceThumbnailContextMenu
+            bind:item
+            {accessPoint}
+            {accessPointId}
+          />
         </div>
       </div>
     </button>

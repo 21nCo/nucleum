@@ -10,9 +10,9 @@
     (x) => x.title.toLocaleLowerCase() === product
   );
   heroData = {
-    tagline: "Personal knowledge management redefined",
+    tagline: "Your memory atlas.",
     description:
-      "Memotron is a digital memory and thinking aid that is unbelievably powerful, insanely reliable, and surprisingly intuitive that transforms how you learn, think and create.",
+      "Memotron is a digital memory and thinking tool that is unbelievably powerful, insanely reliable, and surprisingly intuitive. Transform the way you learn, think and create.",
     href: "https://memotron.io",
     earlyAccessUrl: "https://tally.so/r/3qB0x9"
   };

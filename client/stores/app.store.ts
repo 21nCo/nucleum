@@ -291,7 +291,11 @@ function initAppStore(seed: AppStore) {
       if (url) return openLink(url);
     } else if (action.type === ActionType.FUNCTION) {
       if (!action.fn) return;
-      return action.fn(params?.componentParams);
+      return action.fn({
+        componentParams: params?.componentParams,
+        view: viewData,
+        context: ctx
+      });
     } else if (action.type === ActionType.SEARCH_CMD) {
       appStore.runAction(Action.CMD, {
         componentParams: {

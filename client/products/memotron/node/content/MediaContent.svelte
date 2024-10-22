@@ -17,7 +17,9 @@
 
   export let node: IActiveNodeStore;
   export let rightPane: NodeRightPaneType | undefined =
-    $node?.contentType === NodeType.PDF ? NodeRightPaneType.TRACES : undefined;
+    $node?.contentType === NodeType.PDF && !$view.isConstrainedWidth
+      ? NodeRightPaneType.TRACES
+      : undefined;
   let pdfContent: any;
   let renderingDetails: any;
   let imgRef: HTMLImageElement;
@@ -92,7 +94,7 @@
       {/if}
     </main>
   {/if}
-  {#if rightPane || webNodeTypeList.includes($node?.contentType)}
+  {#if rightPane || (webNodeTypeList.includes($node?.contentType) && !$view.isConstrainedWidth)}
     <MediaNodeRightPane {node} bind:pane={rightPane} {renderingDetails} />
   {/if}
 </div>

@@ -19,8 +19,13 @@
   import { Placement } from "$lib/client/types/direction.enum";
   import { appStore } from "$lib/client/stores/app.store";
   import { MemotronAction } from "../memotronAction.enum";
-  import { tooltip } from "$lib/client/actions/popover.action";
+  import { popover, tooltip } from "$lib/client/actions/popover.action";
   import view from "$lib/client/stores/view.store";
+  import Tooltip from "$lib/client/elements/text/Tooltip.svelte";
+  import TextArea from "$lib/client/elements/input/TextArea.svelte";
+  import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
+  import FormLabelTooltip from "$lib/client/elements/text/formLabel/FormLabelTooltip.svelte";
+
   const dispatch = createEventDispatcher();
   export let searchQuery: string = "";
   export let collection: IActiveCollectionStore;
@@ -50,6 +55,10 @@
         id: collection?.id
       }
     });
+  }
+
+  function onDescriptionChange(value: string) {
+    collection.debouncedModify({ description: value });
   }
 </script>
 
@@ -118,6 +127,29 @@
       <div class="truncate">
         {$collection.label}
       </div>
+    {/if}
+    {#if $collection.description || $collection.isInEditMode}
+      <span
+        class="flex justify-center items-center"
+        use:popover={{
+          triggerMethod: $collection.isInEditMode
+            ? [PopoverTriggerMethod.CLICK]
+            : [PopoverTriggerMethod.HOVER, PopoverTriggerMethod.CLICK],
+          content: $collection.isInEditMode ? TextArea : Tooltip,
+          componentProps: {
+            info: {
+              body: $collection.description,
+              size: Size.sm
+            },
+            value: $collection.description,
+            style: InputStyle.FILLED,
+            width: "w-96 max-w-full",
+            changeCallback: onDescriptionChange
+          }
+        }}
+      >
+        <Icon icon="ph:info-light" size={Size.sm} />
+      </span>
     {/if}
     {#if $collection.isStarred}
       <button

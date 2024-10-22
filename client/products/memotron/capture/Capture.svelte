@@ -30,8 +30,10 @@
   import { isEmptyMd } from "$lib/client/components/markdown/markdown.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
   import view from "$lib/client/stores/view.store";
-  import CameraCapture from "./CameraCapture.svelte";
-  import CameraCapturev2 from "./CameraCapturev2.svelte";
+  import context from "$lib/client/stores/context.store";
+  import { OperatingSystem } from "$lib/client/types/context.type";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
+
   export let isWindowDnD = false;
   let bulkQueryParam: string | null = null;
   let linkQueryParam: string | null = null;
@@ -42,7 +44,7 @@
   let isPropertiesCollapsed: boolean = false;
   let writerRef: Writer | undefined = undefined;
   let types: ICollectionExpanded[] = [];
-
+  let cameraCaptureRef: HTMLInputElement;
   // $: console.log({ types, $captureStore, propertyConfig });
 
   async function refreshTypeData() {
@@ -70,7 +72,7 @@
     bulkQueryParam = $page.url.searchParams.get("bulk");
     const clipBoardQueryParam = $page.url.searchParams.get("clipboard");
     logger.log({
-      at: "Capture.svelte",
+      at: "Capture.svelte - mount",
       linkQueryParam,
       bulkQueryParam,
       clipBoardQueryParam
@@ -92,6 +94,16 @@
   });
 
   async function onTypeSelect(e: CustomEvent) {
+    if (
+      e.detail === CaptureType.CAMERA &&
+      $context.isEmbed &&
+      $context.os === OperatingSystem.IOS
+    ) {
+      setTimeout(() => {
+        cameraCaptureRef?.click();
+      }, 10);
+      return;
+    }
     isEmptyState = false;
     await captureStore.onTypeSelect(e.detail);
     await refreshTypeData();
@@ -135,6 +147,9 @@
     captureStore.reset();
     isEmptyState = true;
     types = [];
+    if ($view.isConstrainedWidth) {
+      appStore.closeResource({ accessMode: ResourceAccessMode.POP });
+    }
   }
 
   async function setTypeFromLinkParam(linkQueryParam: string) {
@@ -146,6 +161,42 @@
   function onTitleEnter(e: any) {
     writerRef?.focus();
     refreshEmptyState();
+  }
+
+  function handleCapture(event: Event) {
+    try {
+      isSaving = true;
+      const input = event.target as HTMLInputElement;
+      if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const result = e.target?.result;
+          if (typeof result === "string") {
+            fetch(result)
+              .then((res) => res.blob())
+              .then(async (blob) => {
+                await captureStore.saveCameraCapture(blob);
+                isSaving = false;
+              });
+          }
+        };
+        reader.readAsDataURL(file);
+      } else {
+        logger.log({ at: "Capture.svelte - handleCapture - no file present" });
+        reset();
+      }
+    } catch (e) {
+      logger.error({ at: "Capture.svelte - handleCapture", error: e });
+      isSaving = false;
+    }
+  }
+
+  function onCameraCancel(e: Event) {
+    logger.log({ at: "Capture.svelte - onCameraCancel", e });
+    if (e.type === "cancel") {
+      reset();
+    }
   }
 </script>
 
@@ -163,16 +214,24 @@
     </div>
   </div> -->
 {:else if $captureStore.captureType === CaptureType.UPLOAD}
-  <FileUploader />
-{:else if $captureStore.captureType === CaptureType.CAMERA}
-  <CameraCapture />
-{:else if $captureStore.captureType === CaptureType.CAMERA_V2}
-  <CameraCapturev2 />
+  <FileUploader on:cancel={reset} />
+{:else if $captureStore.captureType === CaptureType.CAMERA && $context.isEmbed && $context.os === OperatingSystem.IOS}
+  <!-- <CameraCaptureUsingInput /> -->
+  <input
+    bind:this={cameraCaptureRef}
+    type="file"
+    accept="image/*"
+    capture="environment"
+    on:change={handleCapture}
+    on:cancel={onCameraCancel}
+    id="cameraInput"
+    class="hidden"
+  />
 {:else}
   {#key $captureStore.refreshId}
     <div class="w-full h-full flex justify-center">
       <div class="w-full max-w-5xl h-full flex flex-col p-4 bg-bgs1">
-        {#if $captureStore.captureType !== CaptureType.AUDIO}
+        {#if $captureStore.captureType !== CaptureType.AUDIO && $captureStore.captureType !== CaptureType.CAMERA}
           <header
             class="flex justify-between gap-4 items-center w-full lp:px-12"
           >
@@ -262,6 +321,7 @@
               bind:this={writerRef}
               bind:isSaveInProgress={isSaving}
               on:change={refreshEmptyState}
+              on:cancel={reset}
             />
           </div>
           {#if isEmptyState}
@@ -276,9 +336,14 @@
           {/if}
         </main>
         {#if !isEmptyState}
-          <footer class="w-full dp:px-10 min-h-[10rem]">
+          <footer class="w-full dp:px-10 mo:min-h-[8rem] min-h-[10rem]">
             <LinkboxOnCapture on:linked={onLink} on:unlinked={onUnlink} />
           </footer>
+        {/if}
+        {#if isEmptyState && $view.isConstrainedWidth}
+          <div class="w-full flex justify-center mb-10">
+            <Button icon="ph:x-light" label="Cancel" on:click={reset} />
+          </div>
         {/if}
       </div>
     </div>

@@ -14,6 +14,7 @@
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
   export let accessPointId: IRecordId | undefined = undefined;
   function onAction(e: CustomEvent<string>) {
+    console.log("onAction", { e });
     if (e.detail === "star") item.isStarred = !item.isStarred;
     dispatch("action", { action: e.detail, id: item.id });
   }

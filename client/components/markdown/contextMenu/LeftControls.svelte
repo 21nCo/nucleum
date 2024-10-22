@@ -316,7 +316,7 @@
   use:popover={{
     placement: Placement.Left,
     content: ContextMenu,
-    triggerMethod: PopoverTriggerMethod.CLICK,
+    triggerMethod: [PopoverTriggerMethod.CLICK],
     componentProps: {
       menuResolver: () => resolveContextMenu(block, isSoleBlock),
       size: Size.lg,

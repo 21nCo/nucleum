@@ -68,7 +68,7 @@
   $: refreshPlaceholder(isHovering);
 
   let isFirstBlockAndIsEmpty = mdStore.isFirstBlockAndIsEmpty(block.id);
-  let textRef: any;
+  let textRef: InlineMarkdownTextInput;
   let sizing = "";
   let blockSpecificPlaceholder: string | undefined = undefined;
   let placeholder: string;
@@ -78,6 +78,7 @@
   let isBlockBrowserRendered: boolean = false;
   let isRenderMentionSearch: boolean = false;
   let blockSearchQuery = "";
+  let mentionSearchQuery = "";
   let shiftKeyPressed: boolean = false;
   let previousVal = deepCopy(block.body);
   let caretPositionT2:
@@ -714,13 +715,15 @@
     hidePopover();
   }
   function onMentionSearch(searchQuery: string) {
+    mentionSearchQuery = searchQuery;
     return new SearchStore().searchForLinking(searchQuery);
   }
 
   function onMentionSelect(event: CustomEvent) {
     const item = event.detail.item;
-    textRef.addMention(item);
+    textRef.addMention(item, mentionSearchQuery);
     hidePopover("mentionSearch");
+    mentionSearchQuery = "";
     propagateToNodeContent("mention", {
       location: block.id,
       item

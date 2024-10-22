@@ -11,6 +11,8 @@
   import { captureStore } from "./capture.store";
   import view from "$lib/client/stores/view.store";
   import PlayerControl from "$lib/client/elements/player/controls/PlayerControl.svelte";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
   export let isSaveInProgress: boolean = false;
 
   let recordingState: PlayActionState = PlayActionState.NOT_STARTED;
@@ -141,20 +143,13 @@
           type={ButtonVariant.PRIMARY}
           label="Start"
         />
-        <PlayerControl
-          on:click={() => {
-            captureStore.reset();
-          }}
-          icon="ph:x-light"
-          label="Cancel"
-        />
       {:else if recordingState === PlayActionState.RUNNING}
-        <PlayerControl
+        <!-- <PlayerControl
           on:click={startRecording}
           icon="ph:arrow-clockwise-light"
           type={ButtonVariant.DANGER}
           label="Restart"
-        />
+        /> -->
         <PlayerControl
           on:click={toggleRecording}
           icon="ph:pause-light"
@@ -179,6 +174,12 @@
           label="Finish"
         />
       {/if}
+      <PlayerControl
+        on:click={() => dispatch("cancel")}
+        icon="ph:x-light"
+        type={ButtonVariant.DANGER}
+        label="Cancel"
+      />
     </div>
   {:else}
     <div class="flex w-full justify-center gap-6">
@@ -189,20 +190,13 @@
           type={ButtonVariant.PRIMARY}
           label="Start recording"
         />
-        <Button
-          on:click={() => {
-            captureStore.reset();
-          }}
-          icon="ph:x-thin"
-          label="Cancel"
-        />
       {:else if recordingState === PlayActionState.RUNNING}
-        <Button
+        <!-- <Button
           on:click={startRecording}
           icon="ph:arrow-clockwise-thin"
           type={ButtonVariant.DANGER}
           label="Restart"
-        />
+        /> -->
         <Button on:click={toggleRecording} icon="ph:pause-thin" label="Pause" />
         <Button
           on:click={stopRecording}
@@ -219,6 +213,12 @@
           label="Finish"
         />
       {/if}
+      <Button
+        on:click={() => dispatch("cancel")}
+        icon="ph:x-thin"
+        type={ButtonVariant.DANGER}
+        label="Cancel"
+      />
     </div>
   {/if}
 </div>

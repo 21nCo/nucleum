@@ -36,8 +36,10 @@
   import TypeExtensionAndPropertiesEditor from "./TypeExtensionAndPropertiesEditor.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
+  import TextArea from "$lib/client/elements/input/TextArea.svelte";
 
   let title: string;
+  let description: string;
   let isStarred: boolean = false;
   let selectedType: CollectionType = CollectionType.UNTYPED;
   let selectedView: CollectionLayout;
@@ -192,9 +194,18 @@
                 <Avatar bind:avatar isInEditMode={true} />
               </span>
             {/if}
-            <TextInput bind:value={title} width="grow" />
+            <TextInput
+              bind:value={title}
+              width="grow"
+              placeholder="Name of the collection"
+            />
           </div>
         </div>
+        <TextArea
+          bind:value={description}
+          placeholder="Description (Optional)"
+          label={{ label: "Description", orientation: Orientation.Vertical }}
+        />
         {#if selectedType === CollectionType.TYPED}
           <TypeExtensionAndPropertiesEditor bind:isCaptureShortcutEnabled />
         {/if}
@@ -227,6 +238,7 @@
             });
             const result = await collectionStore.save({
               label: title,
+              description,
               type: selectedType,
               defaultLayout: selectedView,
               isStarred,

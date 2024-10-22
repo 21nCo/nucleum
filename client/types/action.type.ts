@@ -1,8 +1,9 @@
 import type { ResourceAccessMode } from "../components/flux/resourceStores/resource.type";
 import type { UserDataMode } from "./account.type";
-import { Embed, OperatingSystem } from "./context.type";
+import { Embed, OperatingSystem, type IAppContext } from "./context.type";
 import type { ConfirmationNotification } from "./notification.type";
 import type { ModalParams } from "./popup.type";
+import type { View } from "./view.type";
 
 export type IAction = {
   action: string;
@@ -17,7 +18,7 @@ export type IAction = {
    * @param params
    * @returns
    */
-  fn?: (params?: any) => Promise<any>;
+  fn?: (params?: IActionFnParams) => Promise<any>;
   /**
    * The pre condition to be met in order for the action to be shown in command bar.
    * @returns true if the action is shown in command bar, false otherwise.
@@ -109,6 +110,12 @@ export type IAction = {
    * If true, the action will be rendered as a page in portrait mode irrespective of the action type like Modal or Resource.
    */
   isRenderAsPageInPortrait?: boolean;
+};
+
+export type IActionFnParams = {
+  componentParams?: any;
+  view?: View;
+  context?: IAppContext;
 };
 
 export enum ActionType {

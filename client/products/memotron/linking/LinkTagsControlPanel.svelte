@@ -2,6 +2,7 @@
   import { logger } from "$lib/client/components/debug/logger.client";
   import Button from "$lib/client/elements/button/Button.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
+  import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { toasts } from "$lib/client/stores/notification.store";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
@@ -10,8 +11,12 @@
   import type { ILinkTag } from "./link.type";
   import LinkTagsGroup from "./LinkTagsGroup.svelte";
   let inputValue: string = "";
-
+  let errorMessage: string | null = null;
   async function save(params?: { group: string; label: string }) {
+    if (!inputValue && !params?.label) {
+      errorMessage = "Tag cannot be empty";
+      return;
+    }
     let result;
     if (params) {
       result = await linkTagStore.save(params.label, params.group);
@@ -74,6 +79,9 @@
       on:click={() => save()}
     />
   </div>
+  {#if errorMessage}
+    <InlineErrorMessage bind:error={errorMessage} />
+  {/if}
   <div class="flex flex-col gap-6 overflow-auto">
     {#each groups as group}
       {#if group?.items && group.items.length > 0}

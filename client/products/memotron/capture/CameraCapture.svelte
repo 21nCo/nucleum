@@ -4,6 +4,7 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { ButtonVariant } from "$lib/client/types/button.type";
+  import view from "$lib/client/stores/view.store";
 
   let videoElement: HTMLVideoElement;
   let canvasElement: HTMLCanvasElement;
@@ -11,6 +12,7 @@
   let containerHeight: number;
   let containerWidth: number;
   const dispatch = createEventDispatcher();
+  let error: string | null = null;
 
   onMount(() => {
     containerHeight = window.innerHeight;
@@ -29,8 +31,9 @@
       videoElement.onloadedmetadata = () => {
         adjustVideoSize();
       };
-    } catch (error) {
-      console.error("Error accessing the camera: ", error);
+    } catch (e) {
+      console.error("Error accessing the camera: ", e);
+      error = "No Camera found.";
     }
   }
 
@@ -79,8 +82,15 @@
 
 <div
   class="relative flex flex-col items-center justify-between w-full h-full overflow-hidden"
-  style="height: {containerHeight}px; width: {containerWidth}px;"
+  style={$view.isConstrainedWidth
+    ? `height: ${containerHeight}px; width: ${containerWidth}px;`
+    : ""}
 >
+  {#if error}
+    <span class="absolute inset-0 flex items-center justify-center text-ars1">
+      {error}
+    </span>
+  {/if}
   <div
     class="relative w-full h-full overflow-hidden flex items-center justify-center"
   >
@@ -102,7 +112,7 @@
   </div>
 
   <div
-    class="absolute bottom-20 left-0 right-0 h-24 grid grid-cols-3 gap-4 items-center bg-bgs1 px-4"
+    class="absolute mo:bottom-20 bottom-0 left-0 right-0 h-24 grid grid-cols-3 gap-4 items-center bg-bgs1 px-4"
   >
     {#if photoTaken}
       <Button
@@ -126,10 +136,7 @@
         label="Cancel"
         size={Size.sm}
         isPreventMinWidth={true}
-        on:click={() => {
-          captureStore.reset();
-          dispatch("close");
-        }}
+        on:click={() => dispatch("cancel")}
       />
     {:else}
       <div class="col-span-1"></div>
@@ -138,7 +145,7 @@
           class="self-center w-16 h-16 rounded-full bg-aps1 border-none outline-none cursor-pointer relative"
           on:click={capturePhoto}
         >
-          <div class="absolute inset-1 rounded-full border-4 border-brs3"></div>
+          <div class="absolute inset-1 rounded-full border-4 border-bgs1"></div>
         </button>
       </div>
       <div class="col-span-1 flex justify-center">
@@ -147,10 +154,7 @@
           label="Cancel"
           size={Size.sm}
           isPreventMinWidth={true}
-          on:click={() => {
-            captureStore.reset();
-            dispatch("close");
-          }}
+          on:click={() => dispatch("cancel")}
         />
       </div>
     {/if}

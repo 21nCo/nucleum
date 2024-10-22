@@ -266,7 +266,7 @@ export async function oauthRedirect(
   const domainPart = body.state.split(":")[1];
   if (domainPart) {
     if (domainPart.includes("localredirect.")) {
-      domain = "blanklabs://localhost/index.html";
+      domain = "tauri://localhost/index.html";
     } else {
       domain = "https://" + domainPart + "/oauth";
     }

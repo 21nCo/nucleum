@@ -5,7 +5,11 @@ import TrackingSettings from "$lib/client/products/pointron/settings/targets/Tra
 import Focus from "$lib/client/products/pointron/focus/Focus.svelte";
 import Zen from "$lib/client/products/pointron/focus/zen/Zen.svelte";
 import FocusPlayer from "$lib/client/products/pointron/focus/player/FocusPlayer.svelte";
-import { ActionType, type IAction } from "$lib/client/types/action.type";
+import {
+  ActionType,
+  type IAction,
+  type IActionFnParams
+} from "$lib/client/types/action.type";
 import Journal from "$lib/client/products/pointron/journal/Journal.svelte";
 import AddTagModal from "$lib/client/products/pointron/tag/AddTagModal.svelte";
 import ImportAppData from "$lib/client/products/pointron/settings/ImportAppData/ImportAppData.svelte";
@@ -563,7 +567,9 @@ export const pointronActions: IAction[] = [
   {
     action: PointronAction.FINISH_FOCUS_SESSION,
     label: "Finish the current session",
-    fn: sessionStore.finishSession,
+    fn: async (params?: IActionFnParams) => {
+      sessionStore.finishSession(params?.componentParams);
+    },
     type: ActionType.CONFIRMATION,
     preCondition: isSessionRunningPreCondition,
     confirmation: {
@@ -629,7 +635,7 @@ export const pointronActions: IAction[] = [
   {
     action: PointronAction.DELETE_SESSION,
     type: ActionType.FUNCTION,
-    fn: async (params: any) => {
+    fn: async (params?: IActionFnParams) => {
       confirmationNotification.notify({
         title: "Delete session",
         message: "Are you sure you want to delete this session log?",
@@ -638,7 +644,9 @@ export const pointronActions: IAction[] = [
           icon: "trash",
           variant: ButtonVariant.DANGER,
           callback: async () => {
-            const response = await pointSessionStore.delete(params.id);
+            const response = await pointSessionStore.delete(
+              params?.componentParams?.id
+            );
             if (response) {
               toasts.success("Session log deleted successfully");
               appEvents.publish(PointronEvent.REFRESH_LOGS);

@@ -40,6 +40,7 @@
     isPanelView &&
       !isEnableBackground &&
       "border-2 border-brs3 hover:border-brs4 h-[190px] mo:h-[161px]",
+    isPanelView && !isEnableBackground && item.href && "hover:bg-bgs2",
     className
   )}
   on:mouseenter={onMouseEnter}

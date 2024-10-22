@@ -18,7 +18,6 @@ export enum CaptureType {
   MARKDOWN = "MARKDOWN",
   AUDIO = "AUDIO",
   CAMERA = "CAMERA",
-  CAMERA_V2 = "CAMERA_V2",
   SKETCH = "SKETCH",
   UPLOAD = "UPLOAD"
 }

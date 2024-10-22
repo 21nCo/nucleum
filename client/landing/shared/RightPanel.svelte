@@ -9,7 +9,8 @@
     currentProductsStore,
     isProductsPanelOpen,
     upcomingProductsStore,
-    utilityProductsStore
+    microToolsStore,
+    portalsStore
   } from "./store/shared.store";
   import TileItemsPanel from "./tile/TileItemsPanel.svelte";
 
@@ -22,10 +23,17 @@
       href: x?.href
     };
   });
-  const utilityProducts: ITileItem[] = $utilityProductsStore.map((x) => {
+  const utilityProducts: ITileItem[] = $microToolsStore.map((x) => {
     return {
       title: x.title,
       image: x.image,
+      description: x.label,
+      href: x?.href
+    };
+  });
+  const portals: ITileItem[] = $portalsStore.map((x) => {
+    return {
+      title: x.title,
       description: x.label,
       href: x?.href
     };
@@ -58,7 +66,12 @@
     role="button"
     tabindex="0"
   >
-    <TileItemsPanel {currentProducts} {utilityProducts} {upcomingProducts} />
+    <TileItemsPanel
+      {currentProducts}
+      microTools={utilityProducts}
+      {upcomingProducts}
+      {portals}
+    />
   </div>
 {/if}
 <PanelButton
