@@ -210,6 +210,7 @@
   function onDensityChange(e: CustomEvent) {
     if (!activeView) return;
     activeView.density = e.detail;
+    arrangementDensity = e.detail;
     collection.updateView(
       activeView.id,
       {
@@ -458,7 +459,9 @@
       >
         <div
           class={cn("px-4 stickyheader", {
-            "sticky top-0 z-20 bg-bgs1": isSingleViewMode,
+            "sticky top-0 bg-bgs1": isSingleViewMode,
+            // When in edit mode, interfering with view settings dropdown when the dropdown opens on top if z-20 is set
+            "z-20": isSingleViewMode && !$collection.isInEditMode,
             "pb-8":
               isSingleViewMode && !isShowMetaViews && !$view.isConstrainedWidth,
             "pt-6": !$view.isConstrainedWidth,
