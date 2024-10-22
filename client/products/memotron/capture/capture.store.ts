@@ -19,6 +19,7 @@ import { toasts } from "$lib/client/stores/notification.store";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import {
   generateMarkdownText,
+  getMarkdownSymbolPrepended,
   resolveNodeCaptureMetadata
 } from "$lib/client/products/memotron/node/node.utils";
 import { nodeStore, vectorResourceStore } from "../node/node.store";
@@ -427,7 +428,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
         const rootBlocks = val.body.blocks.filter((b) =>
           val.rootStructure.includes(b.id)
         );
-        mdText = generateMarkdownText(rootBlocks);
+        mdText = val.label + " \n" + generateMarkdownText(rootBlocks);
         if (get(userPreferences).localAI.semanticSearch) {
           tacoWorker.postMessage({
             action: TacoActions.GET_EMBEDDINGS,
@@ -465,7 +466,10 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
           const childrenNodes = val.body.blocks.filter((b) =>
             block.children?.includes(b.id)
           );
-          mdText = generateMarkdownText(childrenNodes);
+          mdText =
+            getMarkdownSymbolPrepended(correspondingContent!) +
+            " \n" +
+            generateMarkdownText(childrenNodes);
           if (get(userPreferences).localAI.semanticSearch) {
             tacoWorker.postMessage({
               action: TacoActions.GET_EMBEDDINGS,

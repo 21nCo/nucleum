@@ -53,7 +53,7 @@
           on:select={refresh}
         />
       {/if}
-      {#if $userPreferences.localAI.semanticSearch && selectedSubType === "nodular_markdown"}
+      {#if $userPreferences.localAI.semanticSearch && (selectedSubType === "nodular_markdown" || selectedSubType === "all")}
         <SwitchInput
           label={{ label: "Semantic", orientation: Orientation.Horizontal }}
           size={Size.sm}
