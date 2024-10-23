@@ -14,6 +14,7 @@
     bind:value
     on:click|stopPropagation
     on:input
+    on:change
     class="appearance-none w-full h-1 rounded bg-aps2 text-aps1 focus:outline-none"
   />
 </div>

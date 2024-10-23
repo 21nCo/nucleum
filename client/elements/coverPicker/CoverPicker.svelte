@@ -25,6 +25,7 @@
   import { fileStore } from "$lib/client/components/files/file.store";
   import EmptyStatusView from "../feedback/EmptyStatusView.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
+  import view from "$lib/client/stores/view.store";
   export let orientation: Orientation = Orientation.Vertical;
   const dispatch = createEventDispatcher();
 
@@ -45,6 +46,9 @@
   let imageFilesFromLibrary: IFile[] = [];
 
   onMount(async () => {
+    if ($view.isConstrainedWidth) {
+      orientation = Orientation.Vertical;
+    }
     imageFilesFromLibrary = await fetchImageFilesFromLibrary();
   });
 

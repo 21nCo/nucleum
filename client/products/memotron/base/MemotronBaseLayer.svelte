@@ -86,7 +86,6 @@
 
   function handleDragEnter(event: DragEvent) {
     if (!event.relatedTarget && !$appStore.isDnDPageActive) {
-      $captureStore.captureType = CaptureType.UPLOAD;
       appStore.runAction(MemotronAction.CAPTURE_DND);
     }
   }

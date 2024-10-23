@@ -11,7 +11,6 @@
   } from "$lib/client/utils/embed.utils";
   import { isValidEmail } from "$lib/shared/utils/text.utils";
   import { onMount } from "svelte";
-  import { fade } from "svelte/transition";
   import OAuthButtons from "../../../oauth/OAuthButtons.svelte";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import account from "$lib/client/stores/account.store";

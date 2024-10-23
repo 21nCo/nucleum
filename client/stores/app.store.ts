@@ -39,6 +39,7 @@ import { ClientStorageKey } from "../persistence/persistence.type";
 import { Size } from "../types/size.enum";
 import type { IRecordId } from "../types/data.type";
 import account from "./account.store";
+import { tabs } from "../layout/tabs/tabs.store";
 
 // export const app = writable<{ product: string; env: string }>({
 //   product: "tidy",
@@ -276,18 +277,27 @@ function initAppStore(seed: AppStore) {
     }
   ) => {
     let action = resolveAction(slug);
+    logger.log({ at: "runAction", action, slug });
     if (!action) {
       gotoPath("404");
       return;
     }
     const store = get(appStore);
+    const ctx = get(context);
+    const viewData = get(view);
+    const isRenderAsPage =
+      action.isRenderAsPageInPortrait && viewData.isPortrait;
     if (action.type === ActionType.LINK) {
       const url = store.appData.urls[action.action];
       if (!url) return;
       if (url) return openLink(url);
     } else if (action.type === ActionType.FUNCTION) {
       if (!action.fn) return;
-      return action.fn(params?.componentParams);
+      return action.fn({
+        componentParams: params?.componentParams,
+        view: viewData,
+        context: ctx
+      });
     } else if (action.type === ActionType.SEARCH_CMD) {
       appStore.runAction(Action.CMD, {
         componentParams: {
@@ -302,12 +312,13 @@ function initAppStore(seed: AppStore) {
       confirmationNotification.notify(action.confirmation);
     } else if (params.isReturnIfComponent) {
       return action;
-    } else if (action.type === ActionType.RESOURCE) {
+    } else if (action.type === ActionType.RESOURCE && !isRenderAsPage) {
       openResource(action.action, action.accessMode ?? ResourceAccessMode.POP);
     } else if (
-      action.type === ActionType.MODAL ||
-      (store.interactionMode === InteractionMode.COMMAND_ONLY &&
-        get(context).embed !== Embed.HANDSET)
+      (action.type === ActionType.MODAL ||
+        (store.interactionMode === InteractionMode.COMMAND_ONLY &&
+          ctx.embed !== Embed.HANDSET)) &&
+      !isRenderAsPage
     ) {
       if (action.type === ActionType.PAGE) {
         action.modalParams = {
@@ -504,13 +515,15 @@ function initAppStore(seed: AppStore) {
 
   const determineClickAccessMode = (event: MouseEvent) => {
     //TODO - shortcuts from user settings
-    if (event.shiftKey) return ResourceAccessMode.FULL;
+    if (event.altKey && event.metaKey) {
+      return ResourceAccessMode.TAB_IN_BACKGROUND;
+    } else if (event.shiftKey) return ResourceAccessMode.FULL;
     else if (event.altKey) {
       const isFromFocusOrPop = isFSplit();
       if (isFromFocusOrPop) return ResourceAccessMode.FSPLIT;
       else return ResourceAccessMode.SPLIT;
     } else if (event.metaKey) {
-      // TODO - open in new tab?
+      return ResourceAccessMode.TAB;
     }
   };
 
@@ -533,6 +546,14 @@ function initAppStore(seed: AppStore) {
       resourceId: id,
       timestamp: timestamp.toISOString()
     });
+
+    if (accessMode === ResourceAccessMode.TAB) {
+      tabs.open(id);
+      return;
+    } else if (accessMode === ResourceAccessMode.TAB_IN_BACKGROUND) {
+      tabs.addInBackground(id);
+      return;
+    }
 
     toggleSearchParam(
       {
@@ -599,6 +620,12 @@ function initAppStore(seed: AppStore) {
     if (props?.accessMode) {
       toggleSearchParam([props.accessMode]);
       return;
+    } else if (props?.id) {
+      const accessMode = determineCurrentResourceAccessMode(props.id);
+      if (accessMode) {
+        toggleSearchParam([accessMode]);
+        return;
+      }
     }
     if (props?.isRestrictToModals) {
       toggleSearchParam([ResourceAccessMode.FSPLIT, ResourceAccessMode.POP]);
@@ -794,18 +821,10 @@ function initAppStore(seed: AppStore) {
         return n;
       });
     },
-    initActions: (
-      actions: IAction[],
-      settingsAsModal: IAction[],
-      settingsAsPages: IAction[]
-    ) => {
-      const isInPortraitMode = get(view).isPortrait;
+    initActions: (actions: IAction[], settings: IAction[]) => {
       update((n: AppStore) => {
         if (!n.actions) n.actions = [];
-        const isSettingsAsModal = n.appData?.isSettingsAsModal;
-        if (isInPortraitMode || !isSettingsAsModal)
-          n.actions = [...actions, ...settingsAsPages];
-        else n.actions = [...actions, ...settingsAsModal];
+        n.actions = [...actions, ...settings];
         return n;
       });
     },

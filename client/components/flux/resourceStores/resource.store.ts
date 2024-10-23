@@ -32,6 +32,8 @@ import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
 import { extensionFlux } from "../fluxExtentionMediator";
 import { FluxMethod } from "../flux.type";
 import { generateResourceId } from "../flux.utils";
+import { toasts } from "$lib/client/stores/notification.store";
+import { logger } from "../../debug/logger.client";
 // import { appStore } from "$lib/client/stores/app.store";
 
 export const activeResources = new Map<string, ActiveResourceStore<any, any>>();
@@ -110,6 +112,10 @@ export class ActiveResourceStore<
   }
   get() {
     return get(this.subject);
+  }
+
+  resolveExportContent(): string {
+    return (this.get().content as string) ?? "";
   }
 
   static resolve<T extends ActiveResourceStore<any, any>>(
@@ -438,6 +444,7 @@ export class ResourceStore<T extends IResource> implements IStore {
       isInEditMode
     }));
   }
+
   toggleReadMode(id: IRecordId, isInReadMode: boolean) {
     const activeResource = activeResources.get(id.toString());
     if (!activeResource) return;
@@ -445,6 +452,18 @@ export class ResourceStore<T extends IResource> implements IStore {
       ...prev,
       isInReadMode
     }));
+  }
+
+  copyContents(id: IRecordId) {
+    const activeResource = activeResources.get(id.toString());
+    if (!activeResource) return;
+    const content = activeResource.resolveExportContent();
+    logger.log({ at: "ResourceStore.copyContents", content, activeResource });
+    if (content) {
+      navigator.clipboard.writeText(content);
+    } else {
+      toasts.error("Something went wrong. Please try again.");
+    }
   }
 }
 

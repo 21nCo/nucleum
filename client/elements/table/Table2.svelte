@@ -12,6 +12,7 @@
   import Divider from "../Divider.svelte";
   import DropDown from "../dropdown/DropDown.svelte";
   import TextInput from "../input/TextInput.svelte";
+  import FormLabelTooltip from "../text/formLabel/FormLabelTooltip.svelte";
   import Switch from "../toggle/Switch.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
@@ -21,6 +22,7 @@
   export let isStyled: boolean = false;
   export let addAction: string | undefined = undefined;
   export let id: string = "table";
+  export let width: string = "";
   $: if (actions.length > 0) {
     actions.forEach((action) => {
       columns = [
@@ -60,7 +62,7 @@
 </script>
 
 <div
-  class={cn("flex flex-col w-full", {
+  class={cn("flex flex-col w-full overflow-x-auto", width, {
     "rounded-md border border-brs2": isStyled
   })}
 >
@@ -74,11 +76,14 @@
   >
     {#each columns as column (column.key)}
       <div
-        class={cn({
-          "flex w-8": column.type === TableCellType.ACTION
+        class={cn("flex items-center gap-1", {
+          "w-8": column.type === TableCellType.ACTION
         })}
       >
         {"label" in column ? column.label : ""}
+        {#if column.tooltip}
+          <FormLabelTooltip info={column.tooltip} />
+        {/if}
       </div>
     {/each}
   </div>

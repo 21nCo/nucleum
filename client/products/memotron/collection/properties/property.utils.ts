@@ -6,6 +6,7 @@ import type { ISelectItem } from "$lib/client/types/select.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 import { enumToString, isValidString } from "$lib/shared/utils/text.utils";
 import type { OmitForCaptureWithId } from "$lib/client/components/flux/resourceStores/resource.type";
+import { propertyOptions } from "./property.store";
 
 export function resolvePropertyDefaultValue(property: IProperty) {
   let fallback;
@@ -78,6 +79,13 @@ export function resolvePropertiesForNodePage(properties: IProperty[]) {
   });
 }
 
+export const tabAndGroupableProperties = [
+  PropertyType.SINGLE_SELECT,
+  PropertyType.MULTI_SELECT,
+  PropertyType.CHECKBOX,
+  PropertyType.RATING
+];
+
 export function resolvePropertyOptions(
   id: IRecordId,
   properties: IProperty[] | null,
@@ -87,7 +95,8 @@ export function resolvePropertyOptions(
 ): ISelectItem[] {
   if (!id || !properties) return [];
   const property = properties.find(resourceInList(id));
-  if (!property) return [];
+  if (!property || !tabAndGroupableProperties.includes(property.type))
+    return [];
   if (
     property.type === PropertyType.SINGLE_SELECT ||
     property.type === PropertyType.MULTI_SELECT
@@ -130,3 +139,10 @@ export const assignDefaultLabelAsFallback = (
       : enumToString(property.type)
   };
 };
+
+export function resolvePropertyIcon(property: IProperty) {
+  return (
+    propertyOptions.find((x) => x.value === property.type)?.icon ??
+    "ph:circle-dashed-light"
+  );
+}

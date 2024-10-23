@@ -35,12 +35,12 @@
       // icon: "lucide:mic",
       value: CaptureType.AUDIO
     },
-    // {
-    //   label: CaptureType.CAMERA,
-    //   // icon: "lucide:camera",
-    //   icon: "ph:camera-light",
-    //   value: CaptureType.CAMERA
-    // },
+    {
+      label: CaptureType.CAMERA,
+      // icon: "lucide:camera",
+      icon: "ph:camera-light",
+      value: CaptureType.CAMERA
+    },
     {
       label: CaptureType.UPLOAD,
       // icon: "lucide:upload",

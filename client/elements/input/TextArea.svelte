@@ -14,6 +14,8 @@
   export let isEnableSaveFeedback: boolean = false;
   export let rows: number = 5;
   export let resizable: boolean = true;
+  export let changeCallback: (value: string) => void = () => {};
+  export let width: string = "w-full";
   let isShowSaveFeedback: boolean = false;
   let searchResults: IResource[] = [];
   let selectedIndex: number = 0;
@@ -31,12 +33,13 @@
   let inputRef: any;
   export let isDisabled = false;
   let inputClasses: string =
-    "text-input w-full bg-transparent focus:outline-none focus:border-none";
+    "text-input bg-transparent focus:outline-none focus:border-none";
   let changeTimer: any;
   let changeElaspsedTime: number = 0;
   const dispatch = createEventDispatcher();
   function onChange() {
     dispatch("input", { value });
+    changeCallback(value);
     isShowSaveFeedback = false;
     resetChangeTimer();
   }
@@ -67,7 +70,7 @@
 <InputBaseElement {style} {label} {isFocused}>
   <textarea
     style="max-width:unset;"
-    class={cn("text-b2", inputClasses, {
+    class={cn(width, "text-b2", inputClasses, {
       "resize-none": !resizable,
       "max-w-[unset]": $view.isPortrait
     })}

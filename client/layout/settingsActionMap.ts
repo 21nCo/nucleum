@@ -22,7 +22,6 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
   {
     action: Action.ACCOUNT,
     label: "Account Settings",
-    path: "cp/account",
     component: AccountSettings
   },
   {
@@ -48,7 +47,6 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
   {
     action: Action.MODE_OF_INTERACTION,
     label: "Mode of interaction",
-    path: "cp/interaction-mode",
     icon: "cursor-arrow-rays",
     component: InteractionModeSettings,
     modalParams: {
@@ -63,8 +61,7 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
     action: "theme",
     label: "Appearance",
     cmdLabel: ["Appearance Settings", "Switch Theme", "Toggle Dark Mode"],
-    path: "cp/theme",
-    icon: "palette",
+    icon: "ph:palette-light",
     component: ThemeSettingView,
     modalParams: {
       title: "Appearance Settings",
@@ -76,16 +73,14 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
   {
     action: "appMenu",
     label: "App Menu",
-    path: "cp/appMenu",
     icon: "list",
     isInactive: true,
     component: AppMenuSettings
   },
   {
     action: "shortcuts",
-    label: "Shortcuts",
-    path: "cp/shortcuts",
-    icon: "command",
+    label: "Keyboard shortcuts",
+    icon: "ph:keyboard-light",
     component: ShortcutSettings,
     hideContext: [Embed.HANDSET]
   },
@@ -93,8 +88,7 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
     action: "datetime-settings",
     cmdLabel: "Date & Time Settings",
     label: "Date & Time",
-    path: "cp/datetime-settings",
-    icon: "sun",
+    icon: "ph:calendar-light",
     component: DateTimeSettings
   },
   {
@@ -102,9 +96,8 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
     get cmdLabel() {
       return this.modalParams?.title;
     },
-    path: "cp/accessibility",
     label: "Accessibility",
-    icon: "cube",
+    icon: "ph:person-simple-light",
     component: AccessibilitySettings,
     modalParams: {
       title: "Accessibility Settings"
@@ -112,22 +105,19 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
   },
   {
     action: "share",
-    path: "cp/share",
     label: "Refer a friend",
-    icon: "share",
+    icon: "ph:share-light",
     component: ShareToFriends
   },
   {
     action: "about",
     label: "About us",
-    path: "cp/about",
-    icon: "info",
+    icon: "ph:info-light",
     component: AboutSettings
   },
   {
     action: "sync",
     label: "Sync",
-    path: "cp/sync",
     icon: "sync",
     component: SyncSettings,
     modalParams: {
@@ -137,6 +127,10 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
   }
 ];
 
+/**
+ * @deprecated - directly rendering as Modal vs as Page in SettingsAsPage.svelte
+ * @returns
+ */
 export function getSettingsAsPages(): IAction[] {
   return settings
     .map((setting) => {
@@ -171,7 +165,8 @@ export function getSettingsAsModal(): IAction[] {
       type: ActionType.MODAL,
       label: "Settings",
       icon: "settings",
-      component: SettingsAsModal,
+      isRenderAsPageInPortrait: true,
+      component: SettingsAsPage,
       modalParams: {
         layout: {
           size: Size.xl,

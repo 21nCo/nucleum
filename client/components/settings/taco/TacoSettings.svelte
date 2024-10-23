@@ -132,7 +132,7 @@
       on:change={onQuestionAnsweringToggle}
       isExpanded={true}
       label={{
-        label: "Markdown Q & A Chat (Requires Semantic Search)  - 500MB",
+        label: "Markdown Q & A  - 500MB",
         tooltip: {
           body: "Enable this to use AI to answer questions pertaining to markdown."
         }
@@ -142,7 +142,7 @@
       <ProgressBar {progress} size={Size.lg} {label} />
     {/if}
   </div>
-  <footer class="flex flex-col items-center gap-4 pb-8">
+  <footer class="flex flex-col items-center gap-4 pb-8 mo:pb-20">
     {#if isCmdBarLaunch}
       <p class="text-fgs2 text-b2 text-left">
         Note: You won't be able to Dismiss or perform any other action while the

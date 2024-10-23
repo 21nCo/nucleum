@@ -15,6 +15,7 @@
   import type { IRecordId } from "$lib/client/types/data.type";
   import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { hoverable } from "$lib/client/actions/hover.action";
+  import type { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
 
   export let nodes: INodeThumb[] = [];
   export let arrangement: Arrangement = Arrangement.LIST;
@@ -22,6 +23,8 @@
   export let parentBgIndex = 1;
   export let isApplyCustomColor: boolean = false;
   export let isDraggable: boolean = false;
+  export let accessPointId: IRecordId | undefined = undefined;
+  export let accessPoint: ResourceAccessPoint | undefined = undefined;
 
   $: columns = Math.floor(($view.width / 500) * density);
 
@@ -119,6 +122,8 @@
             {item}
             {parentBgIndex}
             {arrangement}
+            {accessPoint}
+            {accessPointId}
             on:load={() =>
               resizeMasonryItem(
                 gridRef.querySelector(`[data-id="${item.id}"]`)
@@ -155,6 +160,8 @@
           {parentBgIndex}
           {arrangement}
           {isDraggable}
+          {accessPoint}
+          {accessPointId}
           collectionContext={"board"}
           {isApplyCustomColor}
           on:click={(e) => appStore.resourceClickHandler(e, item.id)}

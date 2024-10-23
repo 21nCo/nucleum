@@ -7,10 +7,7 @@
     type IPopoverRenderBaseParams,
     PopoverTriggerMethod
   } from "$lib/client/types/popover.type";
-  import type {
-    IContextMenu,
-    IContextMenuItem
-  } from "$lib/client/types/select.type";
+  import type { IContextMenuItem } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
   import Popover from "../popover/Popover.svelte";
   import Toggle from "../toggle/Toggle.svelte";
@@ -18,7 +15,7 @@
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let id: string;
-  export let contextMenu: IContextMenu = [];
+  export let menuResolver: () => { group: string; items: IContextMenuItem[] }[];
   export let size: Size.sm | Size.md | Size.lg = Size.md;
   export let tooltip: string | undefined = undefined;
   export let tooltipOptions: IPopoverRenderBaseParams | undefined = undefined;
@@ -30,6 +27,10 @@
    * Export only for read-only purpose to check if the context menu is visible.
    */
   export let isPopoverVisible = false;
+  /**
+   * If set to true, the context menu will be rendered as a sibling of the trigger button. By default, popovers are rendered in popovers container to avoid z-index issues with other elements in the DOM.
+   */
+  export let isRenderAsSibling = false;
   let classList: string = "";
   export { classList as class };
   let contextMenuPopoverRef: any;
@@ -101,10 +102,13 @@
     isSpanToTriggerWidth: false,
     offsetInPx,
     content: ContextMenu,
-    triggerMethod: triggerMethod ?? PopoverTriggerMethod.CLICK,
-    componentProps: { size, heading, menu: contextMenu, onSelect },
+    triggerMethod: triggerMethod
+      ? [triggerMethod]
+      : [PopoverTriggerMethod.CLICK],
+    componentProps: { size, heading, menuResolver, onSelect },
     groupId: "contextMenuPopover-" + id,
-    id
+    id,
+    isRenderAsSibling
   }}
   class={classList}
   on:change={(e) => {

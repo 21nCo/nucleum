@@ -33,7 +33,7 @@
         <Counts {item} />
       </div>
     </button>
-  {:else if arrangement === Arrangement.GRID}
+  {:else if arrangement === Arrangement.GRID || arrangement === Arrangement.MASONRY}
     <ResourceGridThumbnail {item} {size} on:click>
       <!-- {#if item.type === CollectionType.TYPED || item.type === CollectionType.QUERY}
         <div

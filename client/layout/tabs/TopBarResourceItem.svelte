@@ -3,8 +3,10 @@
   import { hoverable } from "$lib/client/actions/hover.action";
   import { Placement, popover } from "$lib/client/actions/popover.action";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
   import ContextMenu from "$lib/client/elements/contextMenu/ContextMenu.svelte";
   import { resolveResource } from "$lib/client/products/memotron/memotron.store";
+  import { appStore } from "$lib/client/stores/app.store";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import type { IRecordId } from "$lib/client/types/data.type";
   import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
@@ -12,6 +14,7 @@
   import { onMount } from "svelte";
   export let item: IRecordId;
   let resource: any;
+  let action: any;
   let isHovering: boolean = false;
   let contextMenu = [
     {
@@ -28,16 +31,22 @@
   $: isActive =
     item.toString() === $page.url.searchParams.get(ResourceAccessMode.TAB);
   onMount(async () => {
+    const resourceType = determineResourceType(item);
+    action = appStore.resolveAction(resourceType);
     resource = await resolveResource(item);
   });
+
+  function resolveContextMenu() {
+    return contextMenu;
+  }
 </script>
 
 <button
   use:popover={{
     placement: Placement.BottomCenter,
     content: ContextMenu,
-    triggerMethod: PopoverTriggerMethod.RIGHT_CLICK,
-    componentProps: { menu: contextMenu },
+    triggerMethod: [PopoverTriggerMethod.RIGHT_CLICK],
+    componentProps: { menuResolver: resolveContextMenu },
     id: "topBarContextMenu",
     groupId: "topBarContextMenuGroup"
   }}
@@ -55,7 +64,11 @@
   on:click
 >
   <div class="truncate text-b3">
-    {resource?.label}
+    {#if action?.resourceLabelRenderer && resource}
+      <svelte:component this={action.resourceLabelRenderer} item={resource} />
+    {:else}
+      {resource?.label ?? "Untitled"}
+    {/if}
   </div>
   <!--TODO: Show remove option on right click instead -->
   <!-- {#if isHovering}

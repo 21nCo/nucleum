@@ -89,13 +89,21 @@
       label: "Always visible",
       key: "isShowOnNodePage",
       width: 0.5,
-      type: TableCellType.TOGGLE
+      type: TableCellType.TOGGLE,
+      tooltip: {
+        body: "Selecting this will make the property always visible on the node page. Otherwise, it will be present in properties panel.",
+        size: Size.xs
+      }
     },
     {
       label: "Capture",
       key: "isShowOnCapture",
       width: 0.4,
       type: TableCellType.TOGGLE,
+      tooltip: {
+        body: "Selecting this will show the property during capture or clipping if an item is added to this typed collection. Using this will make capturing essential properties easier at source.",
+        size: Size.xs
+      },
       disabledCriteria: (row: any) =>
         row.type === PropertyType.CREATED_TIME ||
         row.type === PropertyType.MODIFIED_TIME ||
@@ -123,7 +131,7 @@
     }
   }
   onMount(async () => {
-    if (collection && (!$collection || $collection.label)) {
+    if (collection && (!$collection || !$collection.label)) {
       await collection.init();
       isTypeExtension = $propertyEditorStore?.typeToExtend ? true : false;
     }
@@ -253,6 +261,7 @@
         <Table2
           id={tableId}
           isStyled={true}
+          width="min-w-[60rem]"
           addAction="add property"
           actions={[
             { action: "remove", index: 0 },

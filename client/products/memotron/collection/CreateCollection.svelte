@@ -34,8 +34,12 @@
   import { hoverable } from "$lib/client/actions/hover.action";
   import CoverRenderer from "$lib/client/elements/coverPicker/CoverRenderer.svelte";
   import TypeExtensionAndPropertiesEditor from "./TypeExtensionAndPropertiesEditor.svelte";
+  import { appStore } from "$lib/client/stores/app.store";
+  import view from "$lib/client/stores/view.store";
+  import TextArea from "$lib/client/elements/input/TextArea.svelte";
 
   let title: string;
+  let description: string;
   let isStarred: boolean = false;
   let selectedType: CollectionType = CollectionType.UNTYPED;
   let selectedView: CollectionLayout;
@@ -62,7 +66,7 @@
             "Use typed collections to store **structured data**. You can define the properties of the data you want to store and customize avatar, content templates etc.",
           action: {
             label: "Learn more",
-            action: "/kb/typed-collections"
+            action: $appStore?.appData?.urls?.kbTypedCollections
           }
         };
       case CollectionType.QUERY:
@@ -71,7 +75,7 @@
             "Use query collections to store data based on a **filter/search query**. You can define the filters to filter the data you want to store. New items will be automatically added based on the filter criteria.",
           action: {
             label: "Learn more",
-            action: "/kb/query-collections"
+            action: $appStore?.appData?.urls?.kbQueryCollections
           }
         };
       default:
@@ -79,7 +83,7 @@
           content: "Use simple collections to store any **unstructured data.**",
           action: {
             label: "Learn more",
-            action: "/kb/simple-collections"
+            action: $appStore?.appData?.urls?.kbSimpleCollections
           }
         };
     }
@@ -87,43 +91,45 @@
 </script>
 
 <div class="flex w-full h-full items-start">
-  <button
-    class="relative flex flex-col items-center justify-center w-48 h-full"
-    use:hoverable={{
-      onHover: (e) => {
-        isCoverPickerHovered = e;
-      }
-    }}
-    on:click={() => {
-      isShowCoverPicker = true;
-    }}
-  >
-    {#if coverPhoto}
-      {#key coverPhoto}
-        <CoverRenderer cover={coverPhoto} class="rounded-l-md" />
-        {#if isCoverPickerHovered && !isShowCoverPicker}
-          <div
-            class="absolute top-0 left-0 w-full h-full flex flex-col gap-6 items-center justify-center bg-bgs2 bg-opacity-70 rounded-l-md"
-          >
-            <span class="text-fgs1">Click to replace</span>
-            <Button
-              icon="trash"
-              label="Remove"
-              type={ButtonVariant.DANGER}
-              size={Size.sm}
-              on:click={(e) => {
-                coverPhoto = undefined;
-                e?.detail?.stopPropagation();
-              }}
-            />
-          </div>
-        {/if}
-      {/key}
-    {:else}
-      <span class="text-fgs3 text-b2"> + add cover photo </span>
-    {/if}
-  </button>
-  <Divider orientation={Orientation.Vertical} />
+  {#if !$view.isConstrainedWidth}
+    <button
+      class="relative flex flex-col items-center justify-center w-48 h-full"
+      use:hoverable={{
+        onHover: (e) => {
+          isCoverPickerHovered = e;
+        }
+      }}
+      on:click={() => {
+        isShowCoverPicker = true;
+      }}
+    >
+      {#if coverPhoto}
+        {#key coverPhoto}
+          <CoverRenderer cover={coverPhoto} class="rounded-l-md" />
+          {#if isCoverPickerHovered && !isShowCoverPicker}
+            <div
+              class="absolute top-0 left-0 w-full h-full flex flex-col gap-6 items-center justify-center bg-bgs2 bg-opacity-70 rounded-l-md"
+            >
+              <span class="text-fgs1">Click to replace</span>
+              <Button
+                icon="trash"
+                label="Remove"
+                type={ButtonVariant.DANGER}
+                size={Size.sm}
+                on:click={(e) => {
+                  coverPhoto = undefined;
+                  e?.detail?.stopPropagation();
+                }}
+              />
+            </div>
+          {/if}
+        {/key}
+      {:else}
+        <span class="text-fgs3 text-b2"> + add cover photo </span>
+      {/if}
+    </button>
+    <Divider orientation={Orientation.Vertical} />
+  {/if}
   {#if isShowCoverPicker}
     <div class="h-full flex-1">
       <CoverPicker
@@ -141,7 +147,7 @@
     <div
       class="flex flex-col h-full gap-4 flex-1 items-center justify-between overflow-auto"
     >
-      <div class="flex flex-col gap-11 p-10 w-full overflow-auto">
+      <div class="flex flex-col gap-11 mo:p-4 p-10 w-full overflow-auto">
         <div class="flex items-center justify-between w-full gap-2">
           <Text content="Create collection" style={TextStyle.PANEL_HEADING} />
           <Toggle icon="star" bind:on={isStarred} />
@@ -159,13 +165,16 @@
               isDisabled: type === CollectionType.QUERY,
               badge: type === CollectionType.QUERY ? "planned" : undefined
             }))}
-            style={OptionSelectorStyle.TRAIN}
+            style={$view.isConstrainedWidth
+              ? OptionSelectorStyle.OUTLINE
+              : OptionSelectorStyle.TRAIN}
             labelProps={{
               ...formLabelConfig,
               label: "Type of collection"
             }}
             bind:selected={selectedType}
-            size={Size.md}
+            size={$view.isConstrainedWidth ? Size.sm : Size.md}
+            isPreventWrap={$view.isConstrainedWidth}
           />
           <InlineInfoBanner {...generateInfo(selectedType)} />
         </div>
@@ -185,16 +194,25 @@
                 <Avatar bind:avatar isInEditMode={true} />
               </span>
             {/if}
-            <TextInput bind:value={title} width="grow" />
+            <TextInput
+              bind:value={title}
+              width="grow"
+              placeholder="Name of the collection"
+            />
           </div>
         </div>
+        <TextArea
+          bind:value={description}
+          placeholder="Description (Optional)"
+          label={{ label: "Description", orientation: Orientation.Vertical }}
+        />
         {#if selectedType === CollectionType.TYPED}
           <TypeExtensionAndPropertiesEditor bind:isCaptureShortcutEnabled />
         {/if}
         <OptionSelector
           options={collectionLayoutOptions}
           iconOrientation={Orientation.Vertical}
-          size={Size.md}
+          size={$view.isConstrainedWidth ? Size.sm : Size.md}
           labelProps={{
             ...formLabelConfig,
             label: "Default view",
@@ -220,6 +238,7 @@
             });
             const result = await collectionStore.save({
               label: title,
+              description,
               type: selectedType,
               defaultLayout: selectedView,
               isStarred,

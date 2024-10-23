@@ -4,9 +4,14 @@
   import AudioCapture from "./AudioCapture.svelte";
   import NodularMarkdown from "$lib/client/components/markdown/NodularMarkdown.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
+  export let captureType: CaptureType = CaptureType.MARKDOWN;
   export let isEmptyState: boolean = true;
   export let isSaveInProgress: boolean = false;
   import { setContext } from "svelte";
+  import type { IRecordId } from "$lib/client/types/data.type";
+  import CameraCapture from "./CameraCapture.svelte";
+
+  let mdRef: NodularMarkdown | undefined = undefined;
 
   function handleEvent(message: any) {
     logger.log({ at: "capture handleEvent", message });
@@ -35,17 +40,21 @@
 
   setContext("content", contentContext);
 
+  export function focus(id?: IRecordId) {
+    mdRef?.focusBlock(id);
+  }
+
   let isShowTOC: boolean = false;
 </script>
 
 <div class="flex w-full h-full max-h-full justify-between">
-  {#if $captureStore.captureType === CaptureType.AUDIO}
+  {#if captureType === CaptureType.AUDIO}
     <div class="w-full h-full flex items-center justify-center">
-      <AudioCapture bind:isSaveInProgress />
+      <AudioCapture bind:isSaveInProgress on:cancel />
     </div>
-  {:else if $captureStore.captureType === CaptureType.CAMERA}
+  {:else if captureType === CaptureType.CAMERA}
     <div class="w-full h-full flex items-center justify-center text-fgs4">
-      Camera opens here if supported or browse files
+      <CameraCapture on:cancel />
     </div>
   {:else if "blocks" in $captureStore.body}
     <div class="overflow-auto h-full w-full dp:px--10">
@@ -56,6 +65,7 @@
         bind:md={$captureStore.body}
         bind:childrenWithStructure={$captureStore.childrenWithStructure}
         bind:rootStructure={$captureStore.rootStructure}
+        bind:this={mdRef}
         on:change
       />
     </div>

@@ -29,6 +29,11 @@
   import { isValidString } from "$lib/shared/utils/text.utils";
   import { isEmptyMd } from "$lib/client/components/markdown/markdown.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
+  import view from "$lib/client/stores/view.store";
+  import context from "$lib/client/stores/context.store";
+  import { OperatingSystem } from "$lib/client/types/context.type";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
+
   export let isWindowDnD = false;
   let bulkQueryParam: string | null = null;
   let linkQueryParam: string | null = null;
@@ -37,8 +42,12 @@
   let isEmptyState: boolean = true;
   isInEditMode.set(true);
   let isPropertiesCollapsed: boolean = false;
+  let writerRef: Writer | undefined = undefined;
   let types: ICollectionExpanded[] = [];
-
+  let cameraCaptureRef: HTMLInputElement;
+  let captureType: CaptureType = isWindowDnD
+    ? CaptureType.UPLOAD
+    : CaptureType.MARKDOWN;
   // $: console.log({ types, $captureStore, propertyConfig });
 
   async function refreshTypeData() {
@@ -59,14 +68,14 @@
   }
 
   onMount(async () => {
-    if ($captureStore.captureType !== CaptureType.MARKDOWN && !isWindowDnD) {
+    if (captureType !== CaptureType.MARKDOWN && !isWindowDnD) {
       reset();
     }
     linkQueryParam = $page.url.searchParams.get("link");
     bulkQueryParam = $page.url.searchParams.get("bulk");
     const clipBoardQueryParam = $page.url.searchParams.get("clipboard");
     logger.log({
-      at: "Capture.svelte",
+      at: "Capture.svelte - mount",
       linkQueryParam,
       bulkQueryParam,
       clipBoardQueryParam
@@ -78,11 +87,26 @@
     }
   });
 
+  /**
+   * Note: a timeout is added to remove query params - since without timeout, it is interfering with removal of pop query param for capture thus the capture modal keeps opening
+   */
   onDestroy(() => {
-    appStore.toggleSearchParam(["link", "bulk", "clipboard"]);
+    setTimeout(() => {
+      appStore.toggleSearchParam(["link", "bulk", "clipboard"]);
+    }, 100);
   });
 
   async function onTypeSelect(e: CustomEvent) {
+    if (
+      e.detail === CaptureType.CAMERA &&
+      $context.isEmbed &&
+      $context.os === OperatingSystem.IOS
+    ) {
+      setTimeout(() => {
+        cameraCaptureRef?.click();
+      }, 10);
+      return;
+    }
     isEmptyState = false;
     await captureStore.onTypeSelect(e.detail);
     await refreshTypeData();
@@ -102,7 +126,7 @@
   function refreshEmptyState(e?: CustomEvent) {
     if (
       isValidString($captureStore.label) ||
-      $captureStore.captureType === CaptureType.AUDIO
+      captureType === CaptureType.AUDIO
     ) {
       isEmptyState = false;
       return;
@@ -125,13 +149,61 @@
   function reset() {
     captureStore.reset();
     isEmptyState = true;
+    captureType = CaptureType.MARKDOWN;
     types = [];
+    if ($view.isConstrainedWidth) {
+      appStore.closeResource({ accessMode: ResourceAccessMode.POP });
+    }
   }
 
   async function setTypeFromLinkParam(linkQueryParam: string) {
     await captureStore.directLink(linkQueryParam);
     await refreshTypeData();
     isEmptyState = false;
+  }
+
+  function onTitleEnter(e: any) {
+    writerRef?.focus();
+    refreshEmptyState();
+  }
+
+  function handleCapture(event: Event) {
+    logger.log({ at: "Capture.svelte - handleCapture" });
+    try {
+      isSaving = true;
+      const input = event.target as HTMLInputElement;
+      if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const result = e.target?.result;
+          if (typeof result === "string") {
+            fetch(result)
+              .then((res) => res.blob())
+              .then(async (blob) => {
+                await captureStore.saveCameraCapture(blob);
+                isSaving = false;
+              });
+          }
+        };
+        reader.readAsDataURL(file);
+      } else {
+        logger.log({
+          at: "Capture.svelte - handleCapture - no file present"
+        });
+        reset();
+      }
+    } catch (e) {
+      logger.error({ at: "Capture.svelte - handleCapture", error: e });
+      isSaving = false;
+    }
+  }
+
+  function onCameraCancel(e: Event) {
+    logger.log({ at: "Capture.svelte - onCameraCancel", e });
+    if (e.type === "cancel") {
+      reset();
+    }
   }
 </script>
 
@@ -148,13 +220,25 @@
       <Writer />
     </div>
   </div> -->
-{:else if $captureStore.captureType === CaptureType.UPLOAD}
-  <FileUploader />
+{:else if captureType === CaptureType.UPLOAD}
+  <FileUploader on:cancel={reset} />
+{:else if captureType === CaptureType.CAMERA && $context.isEmbed && $context.os === OperatingSystem.IOS}
+  <!-- <CameraCaptureUsingInput /> -->
+  <input
+    bind:this={cameraCaptureRef}
+    type="file"
+    accept="image/*"
+    capture="environment"
+    on:change={handleCapture}
+    on:cancel={onCameraCancel}
+    id="cameraInput"
+    class="hidden"
+  />
 {:else}
   {#key $captureStore.refreshId}
     <div class="w-full h-full flex justify-center">
       <div class="w-full max-w-5xl h-full flex flex-col p-4 bg-bgs1">
-        {#if $captureStore.captureType !== CaptureType.AUDIO}
+        {#if captureType !== CaptureType.AUDIO && captureType !== CaptureType.CAMERA}
           <header
             class="flex justify-between gap-4 items-center w-full lp:px-12"
           >
@@ -167,8 +251,9 @@
                   style={InputStyle.PLAIN}
                   isExperimentalMdInput={true}
                   placeholder="Untitled"
+                  isPreventDefaultOnEnter={true}
                   on:change={refreshEmptyState}
-                  on:keyup={refreshEmptyState}
+                  on:enter={onTitleEnter}
                 />
               </div>
             </div>
@@ -182,14 +267,17 @@
                     size={Size.sm}
                     class="stroke-fgs3"
                   />
-                  <span class="text-fgs3 whitespace-nowrap text-b3">
-                    {$captureStore.isRefreshing ? "saving..." : "draft saved"}
-                  </span>
+                  {#if !$view.isConstrainedWidth}
+                    <span class="text-fgs3 whitespace-nowrap text-b3">
+                      {$captureStore.isRefreshing ? "saving..." : "draft saved"}
+                    </span>
+                  {/if}
                 </div>
                 <Button
-                  label="save"
+                  label={$view.isConstrainedWidth ? undefined : "Save"}
                   type={ButtonVariant.PRIMARY}
                   size={Size.sm}
+                  style={ButtonStyle.OUTLINED}
                   isPreventMinWidth={true}
                   icon="ph:floppy-disk"
                   on:click={async () => {
@@ -205,7 +293,7 @@
                   }}
                 />
                 <Button
-                  label="clear"
+                  label={$view.isConstrainedWidth ? undefined : "Clear"}
                   style={ButtonStyle.OUTLINED}
                   isPreventMinWidth={true}
                   size={Size.sm}
@@ -236,15 +324,18 @@
             })}
           >
             <Writer
+              {captureType}
               bind:isEmptyState
+              bind:this={writerRef}
               bind:isSaveInProgress={isSaving}
               on:change={refreshEmptyState}
+              on:cancel={reset}
             />
           </div>
           {#if isEmptyState}
             <div class="w-full dp:px-10 dp:my-10">
               <TypeSelector
-                bind:selected={$captureStore.captureType}
+                bind:selected={captureType}
                 label={{ label: "Select a type" }}
                 isCapturePage={true}
                 on:select={onTypeSelect}
@@ -253,9 +344,14 @@
           {/if}
         </main>
         {#if !isEmptyState}
-          <footer class="w-full dp:px-10 min-h-[10rem]">
+          <footer class="w-full dp:px-10 mo:min-h-[8rem] min-h-[10rem]">
             <LinkboxOnCapture on:linked={onLink} on:unlinked={onUnlink} />
           </footer>
+        {/if}
+        {#if isEmptyState && $view.isConstrainedWidth}
+          <div class="w-full flex justify-center mb-10">
+            <Button icon="ph:x-light" label="Cancel" on:click={reset} />
+          </div>
         {/if}
       </div>
     </div>

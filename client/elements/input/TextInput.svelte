@@ -23,6 +23,7 @@
   export let isExperimentalMdInput: boolean = false;
   export let icon: string | undefined = undefined;
   export let isShowRightControls: boolean = false;
+  export let isPreventDefaultOnEnter: boolean = false;
   let isShowSaveFeedback: boolean = false;
   let isFocused: boolean = false;
   export function focus() {
@@ -107,12 +108,14 @@
   <div class={inputClasses}>
     <InlineMarkdownTextInput
       bind:content={value}
+      {isPreventDefaultOnEnter}
       {placeholder}
       on:keydown
       on:keyup
       on:focus
       on:blur
       on:change
+      on:enter
     />
   </div>
 {:else}

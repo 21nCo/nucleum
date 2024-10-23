@@ -22,6 +22,7 @@ export type IHeroInputs = {
   description?: string;
   btn1?: IHeroBtn1;
   btn2?: IHeroBtn2;
+  earlyAccessUrl?: string;
 };
 
 export type IGridItem = {

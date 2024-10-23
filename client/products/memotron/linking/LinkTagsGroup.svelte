@@ -4,9 +4,12 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import Popover from "$lib/client/elements/popover/Popover.svelte";
+  import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
   import Tag from "$lib/client/elements/text/Tag.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
+  import context from "$lib/client/stores/context.store";
   import { confirmationNotification } from "$lib/client/stores/notification.store";
+  import view from "$lib/client/stores/view.store";
   import {
     ButtonStyle,
     ButtonVariant,
@@ -26,6 +29,7 @@
   let addTagPopover: Popover;
   let editTagPopover: Popover;
   let isEditingGroupName = false;
+  let errorMessage = "";
 
   const buttonProps: IButtonParams = {
     size: Size.xs,
@@ -34,12 +38,17 @@
   };
 
   function save(groupSelected?: string) {
+    if (!inputValueWithinGroup) {
+      errorMessage = "Tag cannot be empty";
+      addTagPopover?.hide();
+      return;
+    }
     dispatch("save", {
       group: groupSelected ?? "",
       label: inputValueWithinGroup
     });
     inputValueWithinGroup = "";
-    addTagPopover.hide();
+    addTagPopover?.hide();
   }
 
   function onUpdateGroupName() {
@@ -61,8 +70,9 @@
     "border-brs2": !isHovered || isWithoutGroup,
     "border-brs3": isHovered && !isWithoutGroup
   })}
-  use:hoverable
-  on:hover={(e) => (isHovered = e.detail)}
+  use:hoverable={{
+    onHover: (e) => (isHovered = e)
+  }}
 >
   <div class="flex gap-6 w-full h-8 justify-between items-center">
     {#if isEditingGroupName}
@@ -80,12 +90,12 @@
         style={TextStyle.SECTION_HEADING}
       />
     {/if}
-    {#if isHovered && !isWithoutGroup}
+    {#if (isHovered || $context.isTouchDevice) && !isWithoutGroup}
       <div class="flex gap-2 items-center">
         {#if !isEditingGroupName}
           <Button
             icon="ph:pencil-simple-line-light"
-            label="Edit group name"
+            label={$view.isConstrainedWidth ? undefined : "Edit group name"}
             {...buttonProps}
             on:click={() => {
               isEditingGroupName = true;
@@ -96,7 +106,7 @@
         <Popover bind:this={addTagPopover}>
           <Button
             icon="ph:plus"
-            label="Add tag"
+            label={$view.isConstrainedWidth ? undefined : "Add tag"}
             {...buttonProps}
             on:click={() => {}}
           />
@@ -116,7 +126,7 @@
         </Popover>
         <Button
           icon="ph:trash-light"
-          label="Delete all"
+          label={$view.isConstrainedWidth ? undefined : "Delete all"}
           {...buttonProps}
           type={ButtonVariant.DANGER}
           on:click={() => {
@@ -184,4 +194,7 @@
       {/if}
     {/each}
   </div>
+  {#if errorMessage}
+    <InlineErrorMessage bind:error={errorMessage} />
+  {/if}
 </div>

@@ -12,7 +12,8 @@ import {
   type IObservableStore,
   type IResourceSelectParams,
   type IRecordId,
-  type IMutation
+  type IMutation,
+  type IInsertMutation
 } from "$lib/client/types/data.type";
 import {
   detectTimeZone,
@@ -20,6 +21,7 @@ import {
 } from "$lib/client/utils/time.utils";
 import {
   ClientStorageKey,
+  type ILocal,
   type IPersistence,
   type ISyncHandler,
   PersistenceProvider
@@ -56,34 +58,29 @@ class Flux {
     stores: IStore[],
     provider: PersistenceProvider,
     persistence: IPersistence,
-    userId: string,
-    params?: {
-      isLocalMode?: boolean;
+    params: {
+      dapId: string;
+      userId?: string;
       appVersion?: string;
     }
   ): Promise<number> {
-    logger.log({ at: "flux.initialize", stores, userId, params });
+    logger.log({ at: "flux.initialize", stores, params });
     Flux._instance = new Flux();
     Flux._instance.provider = provider;
-    Flux._instance.isLocalMode = params?.isLocalMode ?? false;
+    Flux._instance.isLocalMode = !params.userId;
     Flux._instance.persistence = persistence;
     Flux._instance.stores = stores;
-    const resources = Flux._instance.resolveSyncResources();
     switch (provider) {
       case PersistenceProvider.SURREAL_SURREAL:
       case PersistenceProvider.DEXIE_SURREAL:
         Flux._instance.remote = new SurrealDatabase();
-        Flux._instance.syncer = new SurrealSync(
-          Flux._instance.persistence,
-          Flux._instance.remote,
-          resources
-        );
+        Flux._instance.syncer = new SurrealSync(Flux._instance.remote);
         break;
       default:
         break;
     }
     logger.log({ at: "flux.initialized", instance: Flux._instance });
-    return Flux._instance.initializePersistence(userId, params);
+    return Flux._instance.initializePersistence(params);
   }
 
   /**
@@ -91,13 +88,12 @@ class Flux {
    * @param userId
    * @param params
    */
-  private initializePersistence(
-    userId: string,
-    params?: {
-      isLocalMode?: boolean;
-    }
-  ) {
-    logger.log({ at: "flux.initializePersistence", userId, params });
+  private initializePersistence(params: {
+    dapId: string;
+    userId?: string;
+    appVersion?: string;
+  }) {
+    logger.log({ at: "flux.initializePersistence", params });
     const dboDependencies = new Set(
       this.stores
         .map((x) => x.dboDependencies)
@@ -105,7 +101,7 @@ class Flux {
         .flat()
     );
     const dbo = [...dboDependencies];
-    return this.persistence.initialize(userId, {
+    return this.persistence.initialize({
       ...params,
       dbo
     });
@@ -118,6 +114,7 @@ class Flux {
         (x) => x.dataType === StoreDataType.KVO
       );
       const data = await this.persistence.selectMany(Resource.kv);
+      if (!data) return;
       data.forEach((record: any) => {
         const store = kvStores.find(
           (x) => "kv:" + x.id === record.id.toString()
@@ -157,7 +154,7 @@ class Flux {
    * This will persist all kv seed data on cloud.
    */
   async kvSeed() {
-    logger.log({ at: "flux.seed" });
+    logger.log({ at: "flux.kvSeed" });
     try {
       let data = this.stores
         .filter((x) => x.dataType === StoreDataType.KVO)
@@ -167,12 +164,17 @@ class Flux {
         });
       data = [...data, { id: "mutationMap" }];
       await this.seed();
-      return this.persistence.mutation(Resource.kv, {
+      const params: IInsertMutation<any> = {
         records: data,
         action: PersistenceActionType.INSERT
-      });
+      };
+      const result = await this.persistence.mutation(Resource.kv, params);
+      if (!this.isLocalMode) {
+        await this.insertMutation(Resource.kv, params);
+      }
+      return result;
     } catch (e) {
-      logger.error({ at: "flux.seed", error: e });
+      logger.error({ at: "flux.kvSeed", error: e });
     }
   }
 
@@ -183,26 +185,35 @@ class Flux {
    * @returns
    */
   async seed() {
-    let offset = 0;
-    let label: string | undefined;
-    const timeZone = detectTimeZone();
-    if (!timeZone) {
-      const val = detectTimeZoneFallback();
-      offset = val.offset;
-      label = val.label;
+    logger.log({ at: "flux.seed" });
+    try {
+      let offset = 0;
+      let label: string | undefined;
+      const timeZone = detectTimeZone();
+      if (!timeZone) {
+        const val = detectTimeZoneFallback();
+        offset = val.offset;
+        label = val.label;
+      }
+      const params: IInsertMutation<any> = {
+        records: [
+          {
+            offset,
+            date: new Date(Date.UTC(1970, 0, 1)).toISOString(),
+            createdAt: new Date().toISOString(),
+            label: label ?? "",
+            id: generateRandomId()
+          }
+        ],
+        action: PersistenceActionType.INSERT
+      };
+      await this.persistence.mutation(Resource.tz, params);
+      if (!this.isLocalMode) {
+        await this.insertMutation(Resource.tz, params);
+      }
+    } catch (e) {
+      logger.error({ at: "flux.seed", error: e });
     }
-    await this.persistence.mutation(Resource.tz, {
-      records: [
-        {
-          offset,
-          date: new Date(Date.UTC(1970, 0, 1)).toISOString(),
-          createdAt: new Date().toISOString(),
-          label: label ?? "",
-          id: generateRandomId()
-        }
-      ],
-      action: PersistenceActionType.INSERT
-    });
   }
 
   async mutation<T extends IResource>(
@@ -264,14 +275,12 @@ class Flux {
   ) {
     logger.log({ at: "flux.insertMutation", resource, params });
     const mutationId = generateRandomId();
-    const dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
     const userId = await resolveCurrentUserId();
     const mutation: IMutation = {
       id: mutationId,
       createdAt: new Date().toISOString(),
       modifiedAt: new Date().toISOString(),
       timestamp: new Date().getTime(),
-      dapId: dapId ?? "",
       userId,
       resource,
       params,
@@ -402,32 +411,64 @@ class Flux {
   async sync() {
     const isOffline = await determineIfOffline();
     if (isOffline) return;
-    const { mutations, lastSyncedAt } = await this.resolveItemsForSyncUp();
-    logger.log({ at: "flux.sync", mutations, lastSyncedAt });
+    const { mutations, lastSyncUp } = await this.resolveItemsForSyncUp();
+    logger.log({ at: "flux.sync", mutations, lastSyncUp });
     if (!mutations || mutations.length === 0) return;
-    await this.syncer.sync(mutations);
-    clientStorage.set(
-      ClientStorageKey.LAST_SYNC_UP,
-      mutations[mutations.length - 1].timestamp
+    const local = await this.resolveLocal();
+    const lastSyncDown =
+      local?.lastSyncDown ?? new Date().getTime() - 1000 * 60 * 60 * 24;
+    const resources = this.resolveSyncResources();
+    const syncDownData = await this.syncer.sync(
+      mutations,
+      lastSyncDown,
+      resources,
+      local?.dapId
     );
+    if (syncDownData) {
+      await this.processSyncDown(syncDownData);
+    }
+    // clientStorage.set(
+    //   ClientStorageKey.LAST_SYNC_UP,
+    //   mutations[mutations.length - 1].timestamp
+    // );
+    await this.persistence.mutation(Resource.kv, {
+      record: {
+        id: "kv:local",
+        lastSyncUp: mutations[mutations.length - 1].timestamp
+      },
+      action: PersistenceActionType.MERGE
+    });
   }
 
   async resolveItemsForSyncUp() {
-    const lastSyncedAt = await clientStorage.get(ClientStorageKey.LAST_SYNC_UP);
-    logger.log({ at: "flux.resolveItemsForSyncUp", lastSyncedAt });
-    if (!lastSyncedAt) return { mutations: [], lastSyncedAt };
-    const mutations = await this.persistence.selectMany(Resource.mutation, {
-      filters: {
-        timestamp: {
-          greaterThan: +lastSyncedAt
-        }
-      },
-      orderBy: {
-        timestamp: "asc"
-      }
+    // const lastSyncedAt = await clientStorage.get(ClientStorageKey.LAST_SYNC_UP);
+    const local = await this.resolveLocal();
+    if (!local) return { mutations: [], lastSyncUp: 0 };
+    const lastSyncUp =
+      local?.lastSyncUp ?? new Date().getTime() - 1000 * 60 * 60 * 24;
+    const dapId = await this.resolveDapId(local);
+    logger.log({
+      at: "flux.resolveItemsForSyncUp",
+      lastSyncUp,
+      local,
+      dapId
     });
-    logger.log({ at: "flux.resolveItemsForSyncUp", lastSyncedAt, mutations });
-    return { mutations, lastSyncedAt };
+    let mutations: IMutation[] = await this.persistence.selectMany(
+      Resource.mutation,
+      {
+        filters: {
+          timestamp: {
+            greaterThan: +lastSyncUp
+          }
+        },
+        orderBy: {
+          timestamp: "asc"
+        }
+      }
+    );
+    mutations = mutations.map((x) => ({ ...x, dapId }));
+    logger.log({ at: "flux.resolveItemsForSyncUp", lastSyncUp, mutations });
+    return { mutations, lastSyncUp };
   }
 
   async search(storeId: string, query: string) {
@@ -436,6 +477,29 @@ class Flux {
       return store?.search?.(query);
     }
   }
+
+  private resolveLocal() {
+    return this.persistence.select("kv:local");
+  }
+
+  private async resolveDapId(local: ILocal) {
+    if (!local.dapId || local.dapId === "" || typeof local.dapId !== "string") {
+      const dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
+      if (!dapId) {
+        throw new Error("DAP ID not found");
+      }
+      await this.persistence.mutation(Resource.kv, {
+        record: {
+          id: "kv:local",
+          dapId
+        },
+        action: PersistenceActionType.MERGE
+      });
+      return dapId;
+    }
+    return local.dapId;
+  }
+
   /**
    * Syncs down from cloud to local.
    */
@@ -445,27 +509,56 @@ class Flux {
       if (await determineIfOffline()) return;
       if (this.isSyncDownPending) return;
       this.isSyncDownPending = true;
-      const result = await this.syncer.syncDown();
+      const local = await this.resolveLocal();
+      const lastSyncDown =
+        local?.lastSyncDown ?? new Date().getTime() - 1000 * 60 * 60 * 24;
+      const dapId = await this.resolveDapId(local);
+      const resources = this.resolveSyncResources();
+      const result = await this.syncer.syncDown(lastSyncDown, resources, dapId);
       this.isSyncDownPending = false;
       if (result) {
-        logger.log({
-          at: "flux.syncDown - loading in memory stores",
-          result
-        });
-        await this.loadInMemoryStores();
-        await clientStorage.set(
-          ClientStorageKey.LAST_SYNC_DOWN,
-          result[result.length - 1].timestamp
-        );
-      }
-      if (!this.isExtensionEnvironment) {
-        dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
+        await this.processSyncDown(result);
       }
     } catch (e) {
       logger.error({ at: "flux.syncDown", error: e });
     } finally {
       this.isSyncDownPending = false;
     }
+  }
+
+  private async processSyncDown(response: any) {
+    if (!response || !Array.isArray(response) || response.length === 0) {
+      return;
+    }
+    const mutations: IMutation[] = response;
+    logger.log({ at: "processSyncDown", mutations });
+    if (!mutations || mutations.length === 0) return;
+    for (let mutation of mutations) {
+      await this.persistence.mutation(
+        mutation.resource as Resource,
+        mutation.params
+      );
+    }
+    logger.log({
+      at: "flux.syncDown - loading in memory stores",
+      mutations
+    });
+    await this.loadInMemoryStores();
+    // await clientStorage.set(
+    //   ClientStorageKey.LAST_SYNC_DOWN,
+    //   mutations[mutations.length - 1].timestamp
+    // );
+    await this.persistence.mutation(Resource.kv, {
+      record: {
+        id: "kv:local",
+        lastSyncDown: mutations[mutations.length - 1].timestamp
+      },
+      action: PersistenceActionType.MERGE
+    });
+    if (!this.isExtensionEnvironment) {
+      dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
+    }
+    return mutations;
   }
 
   /**
@@ -475,16 +568,37 @@ class Flux {
     logger.log({ at: "flux.cloneDown", stores: this.stores });
     if (await determineIfOffline()) return;
     const resources = this.resolveSyncResources();
-    await this.syncer.cloneCloudToLocal();
+    const result = await this.syncer.cloneCloudToLocal({
+      resources,
+      isExtension: this.isExtensionEnvironment
+    });
+    for (let i = 0; i < result.length; i++) {
+      const resource = resources[i];
+      const resourceResponse = result[i];
+      if (resourceResponse.result && resourceResponse.result.length > 0) {
+        await this.persistence.mutation(resource as Resource, {
+          records: resourceResponse.result,
+          action: PersistenceActionType.INSERT
+        });
+      }
+    }
     await this.loadInMemoryStores();
-    await clientStorage.set(
-      ClientStorageKey.LAST_SYNC_DOWN,
-      new Date().getTime()
-    );
-    await clientStorage.set(
-      ClientStorageKey.LAST_SYNC_UP,
-      new Date().getTime()
-    );
+    // await clientStorage.set(
+    //   ClientStorageKey.LAST_SYNC_DOWN,
+    //   new Date().getTime()
+    // );
+    // await clientStorage.set(
+    //   ClientStorageKey.LAST_SYNC_UP,
+    //   new Date().getTime()
+    // );
+    await this.persistence.mutation(Resource.kv, {
+      record: {
+        id: "kv:local",
+        lastSyncDown: new Date().getTime(),
+        lastSyncUp: new Date().getTime()
+      },
+      action: PersistenceActionType.MERGE
+    });
   }
 
   /**
@@ -495,7 +609,10 @@ class Flux {
     logger.log({ at: "flux.cloneUp" });
     if (await determineIfOffline()) return;
     const resources = this.resolveSyncResources();
-    await this.syncer.cloneLocalToCloud();
+    for (let resource of resources) {
+      const records = await this.persistence.selectMany(resource as Resource);
+      await this.syncer.cloneLocalToCloud(resource, records);
+    }
   }
 
   private resolveSyncResources(): Resource[] {
@@ -529,20 +646,14 @@ export async function initFlux(
   stores: IStore[],
   provider: PersistenceProvider,
   persistence: IPersistence,
-  userId: string,
-  params?: {
-    isLocalMode?: boolean;
+  params: {
+    dapId: string;
+    userId?: string;
     appVersion?: string;
   }
 ) {
-  logger.log({ at: "initFlux", stores, provider, persistence, userId, params });
-  const result = await Flux.initialize(
-    stores,
-    provider,
-    persistence,
-    userId,
-    params
-  );
+  logger.log({ at: "initFlux", stores, provider, persistence, params });
+  const result = await Flux.initialize(stores, provider, persistence, params);
   flux = Flux._instance as any as Flux;
   return result;
 }

@@ -1,5 +1,6 @@
 import {
   type IAction,
+  type IActionFnParams,
   ActionType,
   ContentType
 } from "$lib/client/types/action.type";
@@ -29,6 +30,7 @@ import CoverPicker from "../elements/coverPicker/CoverPicker.svelte";
 import SurrealLocalViewer from "../components/debug/SurrealLocalViewer.svelte";
 import PrivacyPolicy from "../landing/shared/PrivacyPolicy.svelte";
 import HashnodeEmbed from "../components/cx/hashnode/HashnodeEmbed.svelte";
+import { Embed } from "../types/context.type";
 
 export const globalActions: IAction[] = [
   {
@@ -86,9 +88,20 @@ export const globalActions: IAction[] = [
     isMeta: true,
     // type: ActionType.LINK
     type: ActionType.FUNCTION,
-    fn: async () => {
-      appStore.runAction(Action.GUIDES + "hashnode");
+    fn: async (params?: IActionFnParams) => {
+      if (params?.context?.embed === Embed.HANDSET) {
+        appStore.runAction(Action.GUIDES + "mobile");
+      } else {
+        appStore.runAction(Action.GUIDES + "hashnode");
+      }
     }
+  },
+  {
+    action: Action.GUIDES + "mobile",
+    label: "Guides and docs",
+    icon: "ph:book-open-text-light",
+    isMeta: true,
+    type: ActionType.LINK
   },
   {
     action: Action.GUIDES + "hashnode",
@@ -197,8 +210,8 @@ export const globalActions: IAction[] = [
     get label() {
       return this.modalParams?.title;
     },
-    icon: "lock-closed",
-    type: ActionType.MODAL,
+    icon: "ph:lock-simple-light",
+    type: ActionType.LINK,
     // contentType: ContentType.SPACE_DOC,
     component: PrivacyPolicy,
     modalParams: {
@@ -214,7 +227,7 @@ export const globalActions: IAction[] = [
       return this.modalParams?.title;
     },
     icon: "lock-closed",
-    type: ActionType.MODAL,
+    type: ActionType.LINK,
     contentType: ContentType.SPACE_DOC,
     modalParams: {
       title: "Terms of service",
@@ -224,13 +237,24 @@ export const globalActions: IAction[] = [
     }
   },
   {
+    action: Action.CHANGELOG + "mobile",
+    label: "What's new",
+    icon: "sparkles",
+    isMeta: true,
+    type: ActionType.LINK
+  },
+  {
     action: Action.CHANGELOG,
     label: "What's new",
     icon: "sparkles",
     isMeta: true,
     type: ActionType.FUNCTION,
-    fn: async () => {
-      appStore.runAction(Action.CHANGELOG + "supahub");
+    fn: async (params?: IActionFnParams) => {
+      if (params?.context?.embed === Embed.HANDSET) {
+        appStore.runAction(Action.CHANGELOG + "mobile");
+      } else {
+        appStore.runAction(Action.CHANGELOG + "supahub");
+      }
     }
   },
   {
@@ -250,6 +274,13 @@ export const globalActions: IAction[] = [
         context: "Changelog"
       }
     }
+  },
+  {
+    action: Action.ROADMAP + "mobile",
+    label: "Roadmap",
+    icon: "map",
+    isMeta: true,
+    type: ActionType.LINK
   },
   {
     action: Action.ROADMAP + "inactive",
@@ -273,8 +304,12 @@ export const globalActions: IAction[] = [
     icon: "map",
     isMeta: true,
     type: ActionType.FUNCTION,
-    fn: async () => {
-      appStore.runAction(Action.ROADMAP + "supahub");
+    fn: async (params?: IActionFnParams) => {
+      if (params?.context?.embed === Embed.HANDSET) {
+        appStore.runAction(Action.ROADMAP + "mobile");
+      } else {
+        appStore.runAction(Action.ROADMAP + "supahub");
+      }
     }
   },
   {

@@ -105,7 +105,7 @@
     controls
     class={classList}
     draggable={isDraggable}
-    use:fileLoader={{ source: resolveSrc, isLazyLoad }}
+    use:fileLoaderv2={{ source: resolveSrc, isLazyLoad, id: _id?.toString() }}
     {style}
     bind:this={ref}
     on:dragstart
@@ -122,7 +122,7 @@
     controls
     class={classList}
     draggable={isDraggable}
-    use:fileLoader={{ source: resolveSrc, isLazyLoad }}
+    use:fileLoaderv2={{ source: resolveSrc, isLazyLoad, id: _id?.toString() }}
     {style}
     bind:this={ref}
     on:dragstart

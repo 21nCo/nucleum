@@ -5,7 +5,6 @@ import {
   type IMutation
 } from "$lib/client/types/data.type";
 import type { ISurrealDatabase } from "$lib/client/types/db.type";
-import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
 import {
   ClientStorageKey,
   type IPersistence,
@@ -16,29 +15,34 @@ import { resolveMutationQueryV2 } from "./surreal.utils";
 
 export class SurrealSync implements ISyncHandler {
   remote: ISurrealDatabase;
-  local: IPersistence;
-  resources: Resource[];
-  constructor(
-    local: IPersistence,
-    remote: ISurrealDatabase,
-    resources: Resource[]
-  ) {
+  constructor(remote: ISurrealDatabase) {
     this.remote = remote;
-    this.local = local;
-    this.resources = resources;
   }
 
   /**
    * TODO: Checking the mutation run status on cloud - and updating on local record status.
    * @param mutations
    */
-  async sync(mutations: IMutation[]) {
-    logger.log({ at: "SurrealSync.sync", mutations });
+  async sync(
+    mutations: IMutation[],
+    lastSyncDown: number,
+    resources: Resource[],
+    dapId: string
+  ) {
+    logger.log({
+      at: "SurrealSync.sync",
+      mutations,
+      lastSyncDown
+    });
     const insertMutationsQuery = `INSERT INTO mutation ${JSON.stringify(mutations)};`;
     const individualMutationsQuery = mutations
       .map((mutation: any) => resolveMutationQueryV2(mutation))
       .join("; ");
-    const fetchMutationsQuery = await this.resolveSyncDownQuery();
+    const fetchMutationsQuery = await this.resolveSyncDownQuery(
+      lastSyncDown,
+      resources,
+      dapId
+    );
     const masterQuery = `${insertMutationsQuery}; ${individualMutationsQuery}; ${fetchMutationsQuery};`;
     let response = await this.remote.query(masterQuery, {});
     logger.log({ at: "SurrealSync.sync", response, masterQuery });
@@ -49,89 +53,75 @@ export class SurrealSync implements ISyncHandler {
         syncDownData
       });
       if (syncDownData?.result && syncDownData.result.length > 0) {
-        await this.processSyncDown(syncDownData.result);
+        return syncDownData.result;
       }
     }
+    return [];
   }
 
-  async processSyncDown(mutations: IMutation[]) {
-    logger.log({ at: "processSyncDown", mutations });
-    if (!mutations || mutations.length === 0) return;
-    for (let mutation of mutations) {
-      await this.local.mutation(mutation.resource as Resource, mutation.params);
-    }
-    return mutations;
+  private async resolveSyncDownQuery(
+    lastSyncDown: number,
+    resources: Resource[],
+    dapId: string
+  ) {
+    logger.log({ at: "resolveSyncDownQuery", lastSyncDown, resources });
+    return `SELECT * FROM mutation WHERE timestamp > ${lastSyncDown} AND dapId IS NOT '${dapId}' AND resource IN [${resources.map((x) => `'${x}'`).join(",")}] ORDER BY timestamp ASC;`;
   }
 
-  private async resolveSyncDownQuery() {
-    const dapIdVal = await clientStorage.get(ClientStorageKey.DAP_ID);
-    if (!dapIdVal) return;
-    const lastSyncDown = await clientStorage.get(
-      ClientStorageKey.LAST_SYNC_DOWN
+  async syncDown(lastSyncDown: number, resources: Resource[], dapId: string) {
+    const fetchMutationsQuery = await this.resolveSyncDownQuery(
+      lastSyncDown,
+      resources,
+      dapId
     );
-    logger.log({ at: "resolveSyncDownQuery", lastSyncDown });
-    let timestamp = lastSyncDown ?? 0;
-    return `SELECT * FROM mutation WHERE timestamp > ${timestamp} AND dapId IS NOT '${dapIdVal}' AND resource IN [${this.resources.map((x) => `'${x}'`).join(",")}] ORDER BY timestamp ASC;`;
-  }
-
-  async syncDown() {
-    const fetchMutationsQuery = await this.resolveSyncDownQuery();
     if (!fetchMutationsQuery) return;
     let response = await this.remote.query(fetchMutationsQuery, {});
     logger.log({ at: "SurrealSync.syncDown", response });
     if (
       response &&
+      Array.isArray(response) &&
       response.length > 0 &&
-      response[0].result &&
-      response[0].result.length > 0
+      response[0].result
     ) {
-      return this.processSyncDown(response[0].result);
+      return response[0].result;
     }
+    return [];
   }
 
   /**
    * TODO - high volume data scenario, graph links scenario
    * @param resources
    */
-  async cloneCloudToLocal() {
-    logger.log({ at: "cloneCloudToLocal", resources: this.resources });
+  async cloneCloudToLocal(params: {
+    resources: Resource[];
+    isExtension?: boolean;
+  }) {
+    logger.log({ at: "cloneCloudToLocal", resources: params.resources });
     let query = "";
     // resources = ["collection", "node", "file", "property", "view", "kv"];
 
-    if (this.resources?.length > 0) {
-      if (!isExtensionEnvironment()) {
-        this.resources.forEach((resource) => {
+    if (params?.resources?.length > 0) {
+      if (!params?.isExtension) {
+        params.resources.forEach((resource) => {
           query += `select *, meta::id(id) as id from ${resource};`;
         });
       } else {
-        this.resources.forEach((resource) => {
+        params.resources.forEach((resource) => {
           query += `select * from ${resource};`;
         });
       }
     }
     const result = await this.remote.query(query, {});
     logger.log({ at: "cloneCloudToLocal", result });
-    for (let i = 0; i < result.length; i++) {
-      const resource = this.resources[i];
-      const resourceResponse = result[i];
-      if (resourceResponse.result && resourceResponse.result.length > 0) {
-        await this.local.mutation(resource as Resource, {
-          records: resourceResponse.result,
-          action: PersistenceActionType.INSERT
-        });
-      }
-    }
+    return result;
   }
 
   /**
    * TODO - high volume data scenario
    * @param resources
    */
-  async cloneLocalToCloud() {
-    logger.log({ at: "cloneLocalToCloud", resources: this.resources });
-    for (let resource of this.resources) {
-      const records = await this.local.selectMany(resource as Resource);
-      await this.remote.insert(resource, records);
-    }
+  async cloneLocalToCloud(resource: Resource, records: any[]) {
+    logger.log({ at: "cloneLocalToCloud", resource, records });
+    return this.remote.insert(resource, records);
   }
 }

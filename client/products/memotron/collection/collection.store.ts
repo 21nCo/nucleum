@@ -32,8 +32,12 @@ import { assignDefaultLabelAsFallback } from "./properties/property.utils";
 import type { IProperty } from "./properties/property.type";
 import {
   ContextMenuType,
-  type IContextMenu
+  type IContextMenu,
+  type IContextMenuItem
 } from "$lib/client/types/select.type";
+import context from "$lib/client/stores/context.store";
+import { get } from "svelte/store";
+import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
 
 class CollectionStore extends ResourceStore<ICollection> {
   constructor() {
@@ -274,8 +278,12 @@ export class ActiveCollectionStore extends ActiveResourceStore<
       return;
     }
     this.update((val: IActiveCollection) => {
-      val.views.find((v) => v.id === viewId)!.data = [...response];
+      const view = val.views.find(resourceInList(viewId));
       val.isViewDataLoading = false;
+      if (!view) {
+        return val;
+      }
+      view.data = [...response];
       return val;
     });
     return true;
@@ -287,7 +295,7 @@ export class ActiveCollectionStore extends ActiveResourceStore<
    * @returns
    */
   async refreshViewData(viewId: IRecordId) {
-    console.log({ context: "refreshViewData", viewId });
+    logger.log({ at: "ActiveCollectionStore.refreshViewData", viewId });
     this.update((val: IActiveCollection) => {
       val.isViewDataRefreshing = true;
       return val;
@@ -302,7 +310,12 @@ export class ActiveCollectionStore extends ActiveResourceStore<
       return;
     }
     this.update((val: IActiveCollection) => {
-      val.views.find((v) => v.id === viewId)!.data = [...response];
+      const view = val.views.find(resourceInList(viewId));
+      if (!view) {
+        val.isViewDataRefreshing = false;
+        return val;
+      }
+      view.data = [...response];
       val.isViewDataRefreshing = false;
       return val;
     });
@@ -377,16 +390,23 @@ export function resolveCollectionContextMenu(
   accessPoint: ResourceAccessPoint
 ): IContextMenu {
   const resourceActions = new ResourceActions(collection, collectionStore);
-  if (accessPoint != ResourceAccessPoint.SELF) {
-    return [
+  const ctx = get(context);
+  let commonGroups: { group: string; items: IContextMenuItem[] }[] = [];
+  if (ctx.isEmbed) {
+    commonGroups = [
       {
-        group: "all",
+        group: "more",
+        items: [resourceActions.archive(), resourceActions.trash()]
+      }
+    ];
+  } else {
+    commonGroups = [
+      {
+        group: "open",
         items: [
-          resourceActions.star(),
-          resourceActions.edit(accessPoint),
           resourceActions.openAsTab(),
-          // resourceActions.select(accessPoint),
-          resourceActions.copyLink()
+          // resourceActions.openAsSplit(),
+          resourceActions.openAsFull()
         ]
       },
       {
@@ -395,39 +415,60 @@ export function resolveCollectionContextMenu(
       }
     ];
   }
+  if (accessPoint != ResourceAccessPoint.SELF) {
+    return [
+      {
+        group: "all",
+        items: [
+          resourceActions.star(),
+          resourceActions.edit(accessPoint),
+          // resourceActions.select(accessPoint),
+          resourceActions.copyLink()
+        ]
+      },
+      ...commonGroups
+    ];
+  } else if (collection.type === CollectionType.TYPED) {
+    return [
+      {
+        group: "all",
+        items: [
+          resourceActions.star(),
+          resourceActions.edit(accessPoint),
+          // {
+          //   value: "share",
+          //   icon: "ph:share-light",
+          //   label: "Share",
+          //   callback: async () => {}
+          // },
+          resourceActions.copyLink(),
+          {
+            value: "captureshortcut",
+            icon: "ph:arrow-up-right-light",
+            label: "Capture shortcut",
+            type: ContextMenuType.SWITCH,
+            initialValue: collection.isCaptureShortcutEnabled,
+            callback: async (checked) => {
+              console.log({ checked });
+              return collectionStore.modify(collection.id, {
+                isCaptureShortcutEnabled: checked
+              });
+            }
+          }
+        ]
+      },
+      ...commonGroups
+    ];
+  }
   return [
     {
       group: "all",
       items: [
         resourceActions.star(),
         resourceActions.edit(accessPoint),
-        resourceActions.openAsTab(),
-        resourceActions.openAsSplit(),
-        {
-          value: "share",
-          icon: "ph:share-light",
-          label: "Share",
-          callback: async () => {}
-        },
-        resourceActions.copyLink(),
-        {
-          value: "captureshortcut",
-          icon: "ph:arrow-up-right-light",
-          label: "Capture shortcut",
-          type: ContextMenuType.SWITCH,
-          initialValue: collection.isCaptureShortcutEnabled,
-          callback: async (checked) => {
-            console.log({ checked });
-            return collectionStore.modify(collection.id, {
-              isCaptureShortcutEnabled: checked
-            });
-          }
-        }
+        resourceActions.copyLink()
       ]
     },
-    {
-      group: "more",
-      items: [resourceActions.archive(), resourceActions.trash()]
-    }
+    ...commonGroups
   ];
 }

@@ -5,5 +5,6 @@ export type IAppMenuStore = IObservableStoreSubject & {
 };
 type Menu = {
   default: string[];
+  mobile: string[];
   user: string[];
 };

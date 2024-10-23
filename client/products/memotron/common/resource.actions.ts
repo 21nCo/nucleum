@@ -11,11 +11,15 @@ import {
 } from "$lib/client/components/flux/resourceStores/resource.type";
 import { uiState } from "$lib/client/stores/uiState/uiState.store";
 import { get } from "svelte/store";
-import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
+import {
+  determineResourceType,
+  resourceInList
+} from "$lib/client/components/flux/resourceStores/resource.utils";
 import { linker } from "$lib/client/products/memotron/linking/link.store";
 import type { IContextMenuItem } from "$lib/client/types/select.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 import { tabs } from "$lib/client/layout/tabs/tabs.store";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 
 export class ResourceActions<T extends IMemotronItemBase> {
   constructor(
@@ -31,6 +35,14 @@ export class ResourceActions<T extends IMemotronItemBase> {
       value: "link",
       icon: "copy",
       callback: async () => copyResourceLinkToClipboard(this.resource.id)
+    };
+  }
+  copyContents(): IContextMenuItem {
+    return {
+      label: "Copy contents",
+      value: "copy-contents",
+      icon: "copy",
+      callback: async () => this.store.copyContents(this.resource.id)
     };
   }
   star(): IContextMenuItem {
@@ -104,9 +116,11 @@ export class ResourceActions<T extends IMemotronItemBase> {
   }
   edit(context: ResourceAccessPoint): IContextMenuItem {
     return {
-      label: "Edit",
+      label: this.resource.isInEditMode ? "Exit edit mode" : "Edit",
       value: "edit",
-      icon: "ph:pencil-simple-line-light",
+      icon: this.resource.isInEditMode
+        ? "ph:pencil-simple-slash-light"
+        : "ph:pencil-simple-line-thin",
       callback: async () => {
         if (context != ResourceAccessPoint.SELF) {
           appStore.openResource(
@@ -116,20 +130,37 @@ export class ResourceActions<T extends IMemotronItemBase> {
               : ResourceAccessMode.POP
           );
         }
-        this.store.toggleEditMode(this.resource.id, true);
+        this.store.toggleEditMode(
+          this.resource.id,
+          !this.resource.isInEditMode
+        );
+      }
+    };
+  }
+  toggleReadMode(): IContextMenuItem {
+    return {
+      label: this.resource.isInReadMode ? "Exit read mode" : "Read mode",
+      value: "readMode",
+      icon: this.resource.isInReadMode
+        ? "ph:book-open-thin"
+        : "ph:book-open-thin",
+      callback: async () => {
+        this.store.toggleReadMode(
+          this.resource.id,
+          !this.resource.isInReadMode
+        );
       }
     };
   }
   openAsTab(): IContextMenuItem {
-    const isAlreadyPinned = uiState
-      .getState(ResourceAccessPoint.TABS, {
-        isProductScoped: true
-      })
-      ?.includes(this.resource.id);
+    const tabData = uiState.getState(ResourceAccessPoint.TABS, {
+      isProductScoped: true
+    });
+    const isAlreadyPinned = tabData?.some(resourceInList(this.resource.id));
     return {
       value: isAlreadyPinned ? "Remove from tabs" : "Open as tab",
-      icon: "ph:tabs-light",
-      badge: "New",
+      icon: isAlreadyPinned ? "ph:x-light" : "ph:tabs-light",
+      badge: !isAlreadyPinned ? "New" : undefined,
       callback: async () => {
         if (isAlreadyPinned) {
           tabs.remove(this.resource.id);
@@ -143,16 +174,45 @@ export class ResourceActions<T extends IMemotronItemBase> {
     return {
       value: "open-as-split",
       icon: "ph:square-split-horizontal-light",
-      callback: async () => {}
+      callback: async () => {
+        appStore.openResource(this.resource.id, ResourceAccessMode.SPLIT);
+      }
+    };
+  }
+  openAsFull(): IContextMenuItem {
+    const currentMode = appStore.determineCurrentResourceAccessMode(
+      this.resource.id
+    );
+    return {
+      value: "open-in-full-screen",
+      label:
+        currentMode === ResourceAccessMode.FULL
+          ? "Close full screen"
+          : "Open in full screen",
+      icon:
+        currentMode === ResourceAccessMode.FULL
+          ? "ph:x-light"
+          : "ph:arrows-out-light",
+      callback: async () => {
+        if (currentMode === ResourceAccessMode.FULL) {
+          appStore.closeResource({
+            id: this.resource.id,
+            accessMode: ResourceAccessMode.FULL
+          });
+        } else {
+          appStore.openResource(this.resource.id, ResourceAccessMode.FULL);
+        }
+      }
     };
   }
   unlink(contextId: IRecordId): IContextMenuItem {
+    const isCollection =
+      determineResourceType(contextId) === Resource.collection;
     return {
-      label: "Unlink",
+      label: isCollection ? "Remove from collection" : "Unlink",
       value: "unlink",
-      icon: "arrow-uturn-left",
+      icon: "ph:link-break-light",
       callback: async () => {
-        console.log("unlinking", { contextId, id: this.resource.id });
         await linker.unlink(this.resource.id, contextId);
       }
     };

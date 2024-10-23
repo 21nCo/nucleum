@@ -27,14 +27,24 @@
   import MetadataLayer from "./MetadataLayer.svelte";
   import EmbedTelemetry from "./analytics/EmbedTelemetry.svelte";
   import productData from "$lib/product.json";
+  import { getSettingsAsModal } from "../settingsActionMap";
+  import { globalActions } from "$lib/client/stores/actionMap";
+  import { localActions } from "$local/localActionMap";
 
   let timer: any;
+  let isMounted = false;
   pingParent();
   addWindowEventListeners();
 
   onMount(async () => {
-    await bootup();
-    view.update(window.innerWidth, window.innerHeight);
+    try {
+      await bootup();
+      view.update(window.innerWidth, window.innerHeight);
+    } catch (e) {
+      logger.error({ at: "BaseLayer.onMount", error: e });
+    } finally {
+      isMounted = true;
+    }
   });
   onDestroy(() => {
     clearInterval(timer);
@@ -52,6 +62,7 @@
   async function bootup() {
     await account.init();
     await setLaunchContext();
+    initActions();
     runCurrentTime();
     appStore.setCurrentPath(window.location.pathname);
     initializeServiceWorker();
@@ -72,6 +83,16 @@
     }
   }
 
+  function initActions() {
+    const isSheet = $context.isSheet;
+    const modifiedGlobalActions = globalActions.filter(
+      (x) => !localActions.some((y) => y.action === x.action)
+    );
+    let actions = [...modifiedGlobalActions, ...localActions];
+    if (isSheet) appStore.initActionsForSheet(actions);
+    else appStore.initActions(actions, getSettingsAsModal());
+  }
+
   /**
    * Sets the launch context of the app. This includes the product, debug mode, embed mode, touch device, protocol, and OS.
    */
@@ -90,9 +111,15 @@
       );
       if (appDetails) appStore.initializeProductInformation(appDetails);
       const cachedAppData = await clientStorage.get(ClientStorageKey.APP_DATA);
-      appStore.loadAppData(cachedAppData ?? productData, {
-        isDefaultData: true
-      });
+      if (cachedAppData) {
+        appStore.loadAppData(JSON.parse(cachedAppData), {
+          isDefaultData: true
+        });
+      } else {
+        appStore.loadAppData(productData, {
+          isDefaultData: true
+        });
+      }
       clientStorage.set(
         ClientStorageKey.PRODUCT,
         appDetails?.product ?? "tidigit"
@@ -175,7 +202,7 @@
       if (!$context.isEmbed) window.location.reload();
       else {
         goto(
-          (import.meta.env?.VITE_CUSTOM_PROTOCOL ?? "blanklabs") +
+          (import.meta.env?.VITE_CUSTOM_PROTOCOL ?? "tauri") +
             "://localhost/index.html"
         );
         // postToParent({ reload: true });
@@ -188,7 +215,8 @@
         event.detail.path.includes(host) &&
         !event.detail.path.includes("/oauth/")) ||
         !event.detail.path.includes("http")) &&
-      !event.detail.path.includes("mailto:")
+      !event.detail.path.includes("mailto:") &&
+      !event.detail.path.includes("//oauthsignin")
     )
       goto(event.detail.path);
     else if (event.detail.path) window.location = event.detail.path;
@@ -204,21 +232,25 @@
    * @param event
    */
   function handleCustomAlert(event: any) {
-    if (event.detail) console.log("custom alert:", event.detail);
-    if (event.detail?.error === "networkerror") {
-      if (
-        $context.isEmbed &&
-        event.detail.message.tolowerCase().includes("load failed")
-      ) {
-        return;
+    try {
+      if (event.detail) console.log("custom alert:", event.detail);
+      if (event.detail?.error === "networkerror") {
+        if (
+          $context.isEmbed &&
+          event.detail.message?.toLowerCase()?.includes("load failed")
+        ) {
+          return;
+        }
+        toasts.trigger({
+          title: "Network Error",
+          message: event.detail.message ?? "Something went wrong.",
+          type: AlertType.ERROR,
+          id: "networkerror",
+          isNonDismissable: true
+        });
       }
-      toasts.trigger({
-        title: "Network Error",
-        message: event.detail.message ?? "Something went wrong.",
-        type: AlertType.ERROR,
-        id: "networkerror",
-        isNonDismissable: true
-      });
+    } catch (e) {
+      logger.error({ at: "handleCustomAlert", error: e });
     }
   }
 
@@ -263,10 +295,11 @@
 >
   <MetadataLayer />
   <ThemeLayer>
-    <slot />
+    {#if isMounted}
+      <slot />
+    {/if}
   </ThemeLayer>
+  <div id="popovers"></div>
 </div>
-{#if $context.isEmbed}
-  <EmbedTelemetry />
-{/if}
+<EmbedTelemetry />
 <svelte:document on:visibilitychange={visibilityChangeListener} />

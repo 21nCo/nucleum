@@ -415,7 +415,10 @@ export type IMutation = {
   createdAt: string;
   modifiedAt: string;
   timestamp: number;
-  dapId: string;
+  /**
+   * @deprecated - storing dapId on kv:local
+   */
+  dapId?: string;
   userId: string;
   resource: string;
   resourceId?: IRecordId | IRecordId[];

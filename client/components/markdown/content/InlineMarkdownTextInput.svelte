@@ -23,6 +23,7 @@
   export let content: string | undefined = "";
   export let placeholder: string | undefined = "";
   export let isMarkdown: boolean = false;
+  export let isPreventDefaultOnEnter: boolean = false;
   let classList: string = "";
   export { classList as class };
   let blockRef: any;
@@ -165,19 +166,18 @@
   export function replace(target: string, replacement: string) {
     innerHTML = innerHTML.replace(target, replacement);
   }
-  export function addMention(item: any) {
+  export function addMention(item: any, searchQuery: string) {
     console.log("addMention - start", { item, content, innerHTML });
-    const query = content?.split("@")[1];
     content = content?.replace(
-      "@" + query,
+      "@" + searchQuery,
       `[${item.label}](resource=${item.id})`
     );
     innerHTML = innerHTML.replace(
-      "@" + query,
+      "@" + searchQuery,
       `<mention data-id='${item.id}'></mention>`
     );
     console.log("addMention - after adding placeholder", {
-      query,
+      searchQuery,
       content,
       innerHTML
     });
@@ -602,159 +602,165 @@
     clearTimeout(typingTimeout);
     typing = true;
     if (isMarkdown) {
-      const position = checkCaretPosition();
+      const position = resolveCaretPosition();
       // const position2 = checkCaretPositionv2();
       dispatch("keydown", {
         event,
         position
         // position2
       });
+    } else if (isPreventDefaultOnEnter && event.key === "Enter") {
+      event.preventDefault();
+      dispatch("enter", { event });
     } else {
       //TODO - test functioning of enter, backspace etc
     }
+  }
 
-    function isFirstLine() {
-      const selection = window.getSelection();
-      if (selection?.rangeCount === 0 || !selection) return;
+  function isFirstLine() {
+    const selection = window.getSelection();
+    if (selection?.rangeCount === 0 || !selection) return;
 
-      const range = selection.getRangeAt(0);
-      const preCaretRange = range.cloneRange();
-      preCaretRange.selectNodeContents(blockRef);
-      preCaretRange.setEnd(range.endContainer, range.endOffset);
+    const range = selection.getRangeAt(0);
+    const preCaretRange = range.cloneRange();
+    preCaretRange.selectNodeContents(blockRef);
+    preCaretRange.setEnd(range.endContainer, range.endOffset);
 
-      const caretRect = range.getBoundingClientRect();
-      const editableRect = blockRef.getBoundingClientRect();
+    const caretRect = range.getBoundingClientRect();
+    const editableRect = blockRef.getBoundingClientRect();
 
-      const lineHeight = parseInt(window.getComputedStyle(blockRef).lineHeight);
-      return caretRect.top - editableRect.top < lineHeight;
+    const lineHeight = parseInt(window.getComputedStyle(blockRef).lineHeight);
+    return caretRect.top - editableRect.top < lineHeight;
+  }
+
+  /**
+   * Resolves the caret position within a block of text.
+   */
+  function resolveCaretPosition() {
+    const selection = window.getSelection();
+    if (selection?.rangeCount === 0 || !selection) return;
+
+    const range = selection.getRangeAt(0);
+    const preCaretRange = range.cloneRange();
+    preCaretRange.selectNodeContents(blockRef);
+    preCaretRange.setEnd(range.endContainer, range.endOffset);
+
+    const caretRect = range.getBoundingClientRect();
+    const editableRect = blockRef.getBoundingClientRect();
+
+    const lineHeight = parseInt(window.getComputedStyle(blockRef).lineHeight);
+    let isFirstLine = caretRect.top - editableRect.top < lineHeight;
+
+    const caretBottom = caretRect.bottom;
+    const editableBottom = editableRect.bottom;
+    let isLastLine = editableBottom - caretBottom < lineHeight;
+    // logger.log({
+    //   lineHeight,
+    //   caretBottom,
+    //   editableBottom,
+    //   caretRect,
+    //   editableRect,
+    //   isFirstLine,
+    //   isLastLine
+    // });
+    if (caretRect.top === 0 && caretRect.bottom === 0) {
+      isFirstLine = true;
+      isLastLine = true;
     }
 
-    function checkCaretPosition() {
-      const selection = window.getSelection();
-      if (selection?.rangeCount === 0 || !selection) return;
+    const totalOffset = getCaretCharacterOffsetWithin(blockRef);
+    let caretOffset = getLineStartOffset(blockRef, totalOffset);
 
-      const range = selection.getRangeAt(0);
-      const preCaretRange = range.cloneRange();
-      preCaretRange.selectNodeContents(blockRef);
-      preCaretRange.setEnd(range.endContainer, range.endOffset);
+    return { isFirstLine, isLastLine, caretOffset };
 
-      const caretRect = range.getBoundingClientRect();
-      const editableRect = blockRef.getBoundingClientRect();
-
-      const lineHeight = parseInt(window.getComputedStyle(blockRef).lineHeight);
-      let isFirstLine = caretRect.top - editableRect.top < lineHeight;
-
-      const caretBottom = caretRect.bottom;
-      const editableBottom = editableRect.bottom;
-      let isLastLine = editableBottom - caretBottom < lineHeight;
-      // logger.log({
-      //   lineHeight,
-      //   caretBottom,
-      //   editableBottom,
-      //   caretRect,
-      //   editableRect,
-      //   isFirstLine,
-      //   isLastLine
-      // });
-      if (caretRect.top === 0 && caretRect.bottom === 0) {
-        isFirstLine = true;
-        isLastLine = true;
-      }
-
-      const totalOffset = getCaretCharacterOffsetWithin(blockRef);
-      let caretOffset = getLineStartOffset(blockRef, totalOffset);
-
-      return { isFirstLine, isLastLine, caretOffset };
-
-      function getCaretCharacterOffsetWithin(element) {
-        let caretOffset = 0;
-        const doc = element.ownerDocument || element.document;
-        const win = doc.defaultView || doc.parentWindow;
-        let sel;
-        if (typeof win.getSelection != "undefined") {
-          sel = win.getSelection();
-          if (sel.rangeCount > 0) {
-            let range = win.getSelection().getRangeAt(0);
-            let preCaretRange = range.cloneRange();
-            preCaretRange.selectNodeContents(element);
-            preCaretRange.setEnd(range.endContainer, range.endOffset);
-            caretOffset = preCaretRange.toString().length;
-          }
-        } else if ((sel = doc.selection) && sel.type != "Control") {
-          let textRange = sel.createRange();
-          let preCaretTextRange = doc.body.createTextRange();
-          preCaretTextRange.moveToElementText(element);
-          preCaretTextRange.setEndPoint("EndToEnd", textRange);
-          caretOffset = preCaretTextRange.text.length;
+    function getCaretCharacterOffsetWithin(element) {
+      let caretOffset = 0;
+      const doc = element.ownerDocument || element.document;
+      const win = doc.defaultView || doc.parentWindow;
+      let sel;
+      if (typeof win.getSelection != "undefined") {
+        sel = win.getSelection();
+        if (sel.rangeCount > 0) {
+          let range = win.getSelection().getRangeAt(0);
+          let preCaretRange = range.cloneRange();
+          preCaretRange.selectNodeContents(element);
+          preCaretRange.setEnd(range.endContainer, range.endOffset);
+          caretOffset = preCaretRange.toString().length;
         }
-        return caretOffset;
+      } else if ((sel = doc.selection) && sel.type != "Control") {
+        let textRange = sel.createRange();
+        let preCaretTextRange = doc.body.createTextRange();
+        preCaretTextRange.moveToElementText(element);
+        preCaretTextRange.setEndPoint("EndToEnd", textRange);
+        caretOffset = preCaretTextRange.text.length;
       }
-
-      function getLineStartOffset(element, caretOffset) {
-        const text = element.textContent;
-        let lineStart = caretOffset;
-        while (lineStart > 0 && text[lineStart - 1] !== "\n") {
-          lineStart--;
-        }
-        return caretOffset - lineStart;
-      }
+      return caretOffset;
     }
 
-    function checkCaretPositionv2() {
-      const selection = window.getSelection();
-      if (selection?.rangeCount === 0 || !selection) return;
+    function getLineStartOffset(element, caretOffset) {
+      const text = element.textContent;
+      let lineStart = caretOffset;
+      while (lineStart > 0 && text[lineStart - 1] !== "\n") {
+        lineStart--;
+      }
+      return caretOffset - lineStart;
+    }
+  }
 
-      const range = selection.getRangeAt(0);
-      const caretRect = range.getBoundingClientRect();
-      const editableRect = blockRef.getBoundingClientRect();
+  function checkCaretPositionv2() {
+    const selection = window.getSelection();
+    if (selection?.rangeCount === 0 || !selection) return;
 
-      const lines = getLines(blockRef);
-      const currentLineIndex = lines.findIndex(
-        (line) => line.top <= caretRect.top && line.bottom >= caretRect.top
-      );
+    const range = selection.getRangeAt(0);
+    const caretRect = range.getBoundingClientRect();
+    const editableRect = blockRef.getBoundingClientRect();
 
-      const isFirstLine = currentLineIndex === 0;
-      const isLastLine = currentLineIndex === lines.length - 1;
+    const lines = getLines(blockRef);
+    const currentLineIndex = lines.findIndex(
+      (line) => line.top <= caretRect.top && line.bottom >= caretRect.top
+    );
 
-      const currentLine = lines[currentLineIndex];
-      const caretOffset = caretRect?.left - currentLine?.left;
+    const isFirstLine = currentLineIndex === 0;
+    const isLastLine = currentLineIndex === lines.length - 1;
 
-      return { isFirstLine, isLastLine, caretOffset };
+    const currentLine = lines[currentLineIndex];
+    const caretOffset = caretRect?.left - currentLine?.left;
 
-      function getLines(element) {
-        const lines = [];
-        const traverse = (node) => {
-          if (node.nodeType === Node.TEXT_NODE) {
-            const range = document.createRange();
-            range.selectNodeContents(node);
-            const rects = range.getClientRects();
-            for (let i = 0; i < rects.length; i++) {
-              lines.push({
-                top: rects[i].top,
-                bottom: rects[i].bottom,
-                left: rects[i].left,
-                right: rects[i].right
-              });
-            }
-          } else if (node.nodeType === Node.ELEMENT_NODE) {
-            if (node.tagName === "DIV" && node !== element) {
-              const rect = node.getBoundingClientRect();
-              lines.push({
-                top: rect.top,
-                bottom: rect.bottom,
-                left: rect.left,
-                right: rect.right
-              });
-            } else {
-              for (let child of node.childNodes) {
-                traverse(child);
-              }
+    return { isFirstLine, isLastLine, caretOffset };
+
+    function getLines(element) {
+      const lines = [];
+      const traverse = (node) => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          const range = document.createRange();
+          range.selectNodeContents(node);
+          const rects = range.getClientRects();
+          for (let i = 0; i < rects.length; i++) {
+            lines.push({
+              top: rects[i].top,
+              bottom: rects[i].bottom,
+              left: rects[i].left,
+              right: rects[i].right
+            });
+          }
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+          if (node.tagName === "DIV" && node !== element) {
+            const rect = node.getBoundingClientRect();
+            lines.push({
+              top: rect.top,
+              bottom: rect.bottom,
+              left: rect.left,
+              right: rect.right
+            });
+          } else {
+            for (let child of node.childNodes) {
+              traverse(child);
             }
           }
-        };
-        traverse(element);
-        return lines.sort((a, b) => a.top - b.top);
-      }
+        }
+      };
+      traverse(element);
+      return lines.sort((a, b) => a.top - b.top);
     }
   }
 
@@ -783,9 +789,11 @@
       if (func()) return;
     }
     if (isMarkdown) {
+      const position = resolveCaretPosition();
       dispatch("keyup", {
         event,
-        caretPosition: caretPositionT2?.index
+        caretPosition: caretPositionT2?.index,
+        position
       });
     }
     clearTimeout(typingTimeout);
@@ -960,7 +968,13 @@
       bind:innerHTML
       contenteditable
       {placeholder}
-      use:scrollIntoViewOnFocus={{ behavior: "auto", block: "center" }}
+      use:scrollIntoViewOnFocus={{
+        behavior: "auto",
+        block: "center",
+        eager: {
+          bottom: 60
+        }
+      }}
     ></div>
     {#if isCustomCaret}
       <div

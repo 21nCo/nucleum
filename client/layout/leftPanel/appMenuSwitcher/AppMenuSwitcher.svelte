@@ -13,6 +13,7 @@
   import Divider from "$lib/client/elements/Divider.svelte";
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import { GlobalEvent } from "$lib/client/types/event.enum";
+  import view from "$lib/client/stores/view.store";
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
   export let parentBackgroundIndex: number;
   export let isHovered: boolean = false;
@@ -31,8 +32,12 @@
     allPages = [];
     let items = [];
     const app = $appStore.product;
-    const defaultMenu = x[app]?.default ?? [];
-    const userPinnedMenu = x[app]?.user ?? [];
+    let defaultMenu = x[app]?.default ?? [];
+    if ($view.isConstrainedWidth) {
+      defaultMenu = x[app]?.mobile ?? [];
+    }
+    let userPinnedMenu: string[] = [];
+    if (!$view.isConstrainedWidth) userPinnedMenu = x[app]?.user ?? [];
     const contextualMenu = [...defaultMenu, ...userPinnedMenu];
     // console.log({ contextualMenu });
     if (layoutContext === LayoutContext.PORTRAIT) {
@@ -66,7 +71,7 @@
       toasts.reset();
     }
     isInEditMode.set(false);
-    console.log({ item, selected: current });
+    // console.log({ item, selected: current });
     if (
       current !== item.action ||
       window.location.pathname.includes("/tab") ||

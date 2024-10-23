@@ -52,13 +52,13 @@ import { userPreferences } from "$lib/client/components/settings/userPreferences
 import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
 import { TacoActions } from "$lib/client/types/taco.types";
 import { Persistence } from "$lib/client/persistence/persistence";
+import view from "$lib/client/stores/view.store";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
 function generateSeedStore(): ICaptureStore {
   const blockId = generateResourceId(Resource.node);
   return {
-    captureType: CaptureType.MARKDOWN,
     refreshId: new Date().getTime(),
     label: "",
     properties: [],
@@ -98,6 +98,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     }, 1500);
   }
   reset() {
+    logger.log({ at: "CaptureStore.reset" });
     const seedStore = generateSeedStore();
     this.modify({
       ...seedStore,
@@ -243,12 +244,12 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
   };
 
   async saveAudioRecording(data: Blob, duration: number) {
-    const contentType = "audio/webm";
+    const contentType = "audio/mp3";
     const id = generateResourceId(Resource.node);
     const fileName = generateSimpleRandomId();
     const result = await account.uploadFileV2(
       contentType,
-      `${fileName}.webm`,
+      `${fileName}.mp3`,
       data
     );
     if (!result) return;
@@ -260,6 +261,29 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       body: {
         duration
       }
+    };
+    const result2 = await nodeStore.create(node);
+    await this.saveLinks(id);
+    this.postSave(result2, { isOpenUponSuccess: true });
+  }
+
+  async saveCameraCapture(data: Blob) {
+    logger.debug({ at: "CaptureStore.saveCameraCapture", length: data.size });
+    const contentType = "image/jpeg";
+    const id = generateResourceId(Resource.node);
+    const fileName = generateSimpleRandomId();
+    const result = await account.uploadFileV2(
+      contentType,
+      `${fileName}.jpeg`,
+      data
+    );
+    if (!result) return;
+    const fileId = result[0].id;
+    const node: OmitForCapture<IMediaNode> = {
+      contentType: NodeType.IMAGE,
+      file: fileId,
+      label: `Image Capture - ${new Date().toLocaleString()}`,
+      body: {}
     };
     const result2 = await nodeStore.create(node);
     await this.saveLinks(id);
@@ -316,11 +340,13 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       toasts.error("Something went wrong. Please try again later.");
       return;
     }
+    const viewStore = get(view);
     if (result.length === 1 || node.contentType === NodeType.NODULAR_MARKDOWN) {
-      toasts.success("Node saved successfully!");
+      if (!viewStore.isConstrainedWidth)
+        toasts.success("Node saved successfully!");
       if (params?.isOpenUponSuccess)
         appStore.openResource(node.id, ResourceAccessMode.POP);
-    } else {
+    } else if (!viewStore.isConstrainedWidth) {
       toasts.success(`${result.length} nodes saved successfully!`);
     }
     if (!params?.isOpenUponSuccess) {

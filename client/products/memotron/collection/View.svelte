@@ -9,12 +9,11 @@
   import { Arrangement } from "$lib/client/types/direction.enum";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import BoardView from "./boardView/BoardView.svelte";
-  import type { IProperty } from "./properties/property.type";
+  import type { IActiveCollectionStore } from "./collection.store";
+  export let collection: IActiveCollectionStore;
   export let view: ICollectionView;
   export let data: INodeThumb[] = [];
-  export let properties: IProperty[] = [];
   export let isBoardOverflow = false;
-  export let isInEditMode = false;
 
   $: if (!view.arrangement) {
     view.arrangement = Arrangement.LIST;
@@ -23,7 +22,7 @@
 
 {#if isValidArrayWithData(data)}
   {#if view.layout === CollectionLayout.BOARD}
-    <BoardView {view} {data} {isInEditMode} {properties} {isBoardOverflow} />
+    <BoardView {view} {data} {isBoardOverflow} {collection} />
   {:else}
     <!-- TODO -->
     <ComingSoonView subText="View not built yet. Stay tuned." />

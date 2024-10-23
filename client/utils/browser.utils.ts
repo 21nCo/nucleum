@@ -507,3 +507,16 @@ export async function generateFingerprint() {
     logger.error({ at: "generateFingerprint", error: e });
   }
 }
+
+export function getEventPath(event: Event): EventTarget[] {
+  let path = [];
+  let currentTarget = event.target as Node | null;
+  while (currentTarget) {
+    path.push(currentTarget);
+    currentTarget = currentTarget.parentNode;
+  }
+  if (path.indexOf(window) === -1 && path.indexOf(document) === -1)
+    path.push(document);
+  if (path.indexOf(window) === -1) path.push(window);
+  return path;
+}

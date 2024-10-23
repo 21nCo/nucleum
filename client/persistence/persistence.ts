@@ -363,11 +363,35 @@ export class Persistence {
     fileName: string,
     isTemp: boolean
   ) {
+    try {
+      const response = await performApiCall("utils/n/getsignedurl", "POST", {
+        method: "PUT",
+        contentType,
+        fileName,
+        userId,
+        isTemp
+      });
+      return await response?.json();
+    } catch (e) {
+      logger.error(e);
+    }
+  }
+  /**
+   *
+   * @param key key of the file including the bucket name and content type.
+   * {bucket}/{userId}/{contentType}/{fileName}
+   *
+   * Examples:
+   * tidyfilesdevsix.ap-south-1/m2d1y865ab801iq3fm4o9e2g/image/6fe1e59f-0554-4234-b7b6-366125ca0870_Chromewebstore.png
+   *
+   * @returns response {error?: string, url?: string}
+   * If the authenticated user id does not match the userId in the key, the request will fail.
+   *
+   */
+  async fetchSignedUrlForGet(key: string) {
     const response = await performApiCall("utils/n/getsignedurl", "POST", {
-      contentType,
-      fileName,
-      userId,
-      isTemp
+      method: "GET",
+      key
     });
     return await response?.json();
   }

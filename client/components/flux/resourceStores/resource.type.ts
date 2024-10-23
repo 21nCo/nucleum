@@ -79,6 +79,7 @@ export enum ResourceAccessMode {
    */
   FULL = "full",
   TAB = "tab",
+  TAB_IN_BACKGROUND = "tab-in-background",
   /**
    * The resource is being accessed from the tabs.
    */

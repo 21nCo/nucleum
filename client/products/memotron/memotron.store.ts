@@ -113,6 +113,7 @@ export class SearchStore {
                     ? undefined
                     : false,
                 ...this.filters,
+                isArchived: this.filters.isArchived ?? false,
                 contentType:
                   "contentType" in this.filters
                     ? this.filters.contentType?.toUpperCase()

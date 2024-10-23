@@ -7,7 +7,7 @@
   import GetEarlyAccess from "../landing/shared/GetEarlyAccess.svelte";
   import LandingButton from "../landing/shared/elements/Button.svelte";
   import { goto } from "$app/navigation";
-
+  export let url: string | undefined = undefined;
   export let version: "V1" | "V2" | "V3" = "V1";
   let email = "";
   let message = "";
@@ -73,7 +73,13 @@
       <LandingButton
         type="primary"
         label="Get early access"
-        on:click={() => goto("/earlyaccess")}
+        on:click={() => {
+          if (url) {
+            window.location.href = url;
+          } else {
+            goto("/earlyaccess");
+          }
+        }}
       />
     </div>
   {/if}

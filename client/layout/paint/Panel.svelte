@@ -29,24 +29,30 @@
 
   let isCollapsed = false;
 
-  $: isShowCollapseButton = $view.display !== Display.TK;
+  $: isShowCollapseButton =
+    $view.display !== Display.TK && !$view.isConstrainedWidth;
 </script>
 
 <div class="flex w-full h-full">
   {#if !isCollapsed}
     <div
-      class={cn("relative flex flex-col h-full", {
-        "w-full": $view.isPortrait,
-        "w-[20rem] min-w-[20rem]": !$view.isPortrait && panelSize === Size.sm,
-        "w-[24rem] min-w-[24rem] 2k:w-[28rem] 2k:min-w-[28rem]":
-          !$view.isPortrait && panelSize === Size.md,
-        "w-[28rem] min-w-[28rem]": !$view.isPortrait && panelSize === Size.lg
-      })}
+      class={cn(
+        "relative flex flex-col h-full",
+        {
+          "w-full": $view.isConstrainedWidth
+        },
+        !$view.isConstrainedWidth && {
+          "w-[20rem] min-w-[20rem]": panelSize === Size.sm,
+          "w-[24rem] min-w-[24rem] 2k:w-[28rem] 2k:min-w-[28rem]":
+            panelSize === Size.md,
+          "w-[28rem] min-w-[28rem]": panelSize === Size.lg
+        }
+      )}
     >
       {#if title || isShowCollapseButton}
         <div
           class={cn(
-            "flex justify-between w-full portrait:px-4 portrait:py-2 px-3 pt-2 overflow-auto"
+            "flex justify-between w-full portrait:px-4 portrait:py-2 px-3 pt-2 overflow-auto min-h-fit mo:min-h-14"
           )}
         >
           <Text style={titleStyle} content={title || ""} />
@@ -69,7 +75,7 @@
       {/if}
     </div>
   {/if}
-  {#if !$view.isPortrait}
+  {#if !$view.isConstrainedWidth}
     <!-- Right split -->
     <Divider
       orientation={Orientation.Vertical}

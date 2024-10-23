@@ -40,7 +40,6 @@
   let isHovering: boolean = false;
   let isPopoverVisible: boolean = false;
   let contextMenuRef: any;
-  $: contextMenu = resolveContextMenu(block, isSoleBlock);
 
   $: isNodularizable = headingNodeTypes.includes(block.contentType);
 
@@ -150,9 +149,9 @@
     },
     [BlockAction.OPEN_IN_FULL_SCREEN]: {
       value: BlockAction.OPEN_IN_FULL_SCREEN,
-      icon: "full-screen",
+      icon: "ph:arrows-out-light",
       callback: async () => {
-        appStore.closeResource({ isRestrictToModals: true });
+        // appStore.closeResource({ isRestrictToModals: true });
         appStore.openResource(block.id, ResourceAccessMode.FULL);
       }
     },
@@ -317,9 +316,9 @@
   use:popover={{
     placement: Placement.Left,
     content: ContextMenu,
-    triggerMethod: PopoverTriggerMethod.CLICK,
+    triggerMethod: [PopoverTriggerMethod.CLICK],
     componentProps: {
-      menu: contextMenu,
+      menuResolver: () => resolveContextMenu(block, isSoleBlock),
       size: Size.lg,
       heading: "Options",
       onSelect: (e) => {

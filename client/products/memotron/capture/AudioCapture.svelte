@@ -9,6 +9,10 @@
   import { retrieveCurrentColors } from "$lib/client/utils/theme.utils";
   import appearance from "$lib/client/stores/appearance.store";
   import { captureStore } from "./capture.store";
+  import view from "$lib/client/stores/view.store";
+  import PlayerControl from "$lib/client/elements/player/controls/PlayerControl.svelte";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
   export let isSaveInProgress: boolean = false;
 
   let recordingState: PlayActionState = PlayActionState.NOT_STARTED;
@@ -130,36 +134,91 @@
       </p>
     </div>
   {/if}
-  <div class="flex w-full justify-center gap-6">
-    {#if recordingState === PlayActionState.NOT_STARTED}
-      <Button
-        on:click={startRecording}
-        icon="ph:microphone-thin"
-        type={ButtonVariant.PRIMARY}
-        label="Start recording"
-      />
-    {:else if recordingState === PlayActionState.RUNNING}
-      <Button
-        on:click={startRecording}
-        icon="ph:arrow-clockwise-thin"
+  {#if $view.isConstrainedWidth}
+    <div class="flex w-full justify-center gap-6">
+      {#if recordingState === PlayActionState.NOT_STARTED}
+        <PlayerControl
+          on:click={startRecording}
+          icon="ph:microphone-light"
+          type={ButtonVariant.PRIMARY}
+          label="Start"
+        />
+      {:else if recordingState === PlayActionState.RUNNING}
+        <!-- <PlayerControl
+          on:click={startRecording}
+          icon="ph:arrow-clockwise-light"
+          type={ButtonVariant.DANGER}
+          label="Restart"
+        /> -->
+        <PlayerControl
+          on:click={toggleRecording}
+          icon="ph:pause-light"
+          label="Pause"
+        />
+        <PlayerControl
+          on:click={stopRecording}
+          type={ButtonVariant.PRIMARY}
+          icon="ph:stop-light"
+          label="Finish"
+        />
+      {:else if recordingState === PlayActionState.PAUSED}
+        <PlayerControl
+          on:click={toggleRecording}
+          icon="ph:play-light"
+          label="Resume"
+        />
+        <PlayerControl
+          on:click={stopRecording}
+          type={ButtonVariant.PRIMARY}
+          icon="ph:stop-light"
+          label="Finish"
+        />
+      {/if}
+      <PlayerControl
+        on:click={() => dispatch("cancel")}
+        icon="ph:x-light"
         type={ButtonVariant.DANGER}
-        label="Restart"
+        label="Cancel"
       />
-      <Button on:click={toggleRecording} icon="ph:pause-thin" label="Pause" />
+    </div>
+  {:else}
+    <div class="flex w-full justify-center gap-6">
+      {#if recordingState === PlayActionState.NOT_STARTED}
+        <Button
+          on:click={startRecording}
+          icon="ph:microphone-thin"
+          type={ButtonVariant.PRIMARY}
+          label="Start recording"
+        />
+      {:else if recordingState === PlayActionState.RUNNING}
+        <!-- <Button
+          on:click={startRecording}
+          icon="ph:arrow-clockwise-thin"
+          type={ButtonVariant.DANGER}
+          label="Restart"
+        /> -->
+        <Button on:click={toggleRecording} icon="ph:pause-thin" label="Pause" />
+        <Button
+          on:click={stopRecording}
+          type={ButtonVariant.PRIMARY}
+          icon="ph:stop-thin"
+          label="Finish"
+        />
+      {:else if recordingState === PlayActionState.PAUSED}
+        <Button on:click={toggleRecording} icon="ph:play-thin" label="Resume" />
+        <Button
+          on:click={stopRecording}
+          type={ButtonVariant.PRIMARY}
+          icon="ph:stop-thin"
+          label="Finish"
+        />
+      {/if}
       <Button
-        on:click={stopRecording}
-        type={ButtonVariant.PRIMARY}
-        icon="ph:stop-thin"
-        label="Finish"
+        on:click={() => dispatch("cancel")}
+        icon="ph:x-thin"
+        type={ButtonVariant.DANGER}
+        label="Cancel"
       />
-    {:else if recordingState === PlayActionState.PAUSED}
-      <Button on:click={toggleRecording} icon="ph:play-thin" label="Resume" />
-      <Button
-        on:click={stopRecording}
-        type={ButtonVariant.PRIMARY}
-        icon="ph:stop-thin"
-        label="Finish"
-      />
-    {/if}
-  </div>
+    </div>
+  {/if}
 </div>

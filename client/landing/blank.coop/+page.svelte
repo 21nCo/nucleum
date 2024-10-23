@@ -11,7 +11,9 @@
   } from "../shared/Landing.types";
   import {
     currentProductsStore,
-    upcomingProductsStore
+    upcomingProductsStore,
+    microToolsStore,
+    portalsStore
   } from "../shared/store/shared.store";
   import TileItemsSection from "../shared/tile/TileItemsSection.svelte";
 
@@ -79,7 +81,14 @@
         href: x?.href
       };
     }),
-    ...$upcomingProductsStore.slice(0, 2).map((x) => {
+    ...$portalsStore.slice(0, 1).map((x) => {
+      return {
+        title: x.title,
+        description: x.label,
+        href: x?.href
+      };
+    }),
+    ...$microToolsStore.slice(0, 1).map((x) => {
       return {
         title: x.title,
         description: x.label,

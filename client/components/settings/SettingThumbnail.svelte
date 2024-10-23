@@ -1,8 +1,10 @@
 <script lang="ts">
+  import Divider from "$lib/client/elements/Divider.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
   import { ActionType } from "$lib/client/types/action.type";
+  import { ColorStrength } from "$lib/client/types/appearance.type";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { abg, bg, cn } from "$lib/client/utils/ui.utils";
   export let action: string;
@@ -11,6 +13,7 @@
   export let parentBackgroundIndex: number = 1;
   export let isActive: boolean = false;
   export let setActiveByPath: boolean = false;
+  export let isShowDivider: boolean = false;
   let isOutlineStyle: boolean = false;
   let component = appStore.resolveAction(action);
   $: if (setActiveByPath)
@@ -66,4 +69,7 @@
       </div>
     {/if}
   </button>
+  {#if orientation === Orientation.Horizontal && isShowDivider}
+    <Divider colorStrength={ColorStrength.Subtle} />
+  {/if}
 {/if}

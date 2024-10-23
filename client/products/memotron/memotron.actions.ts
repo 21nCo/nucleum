@@ -35,6 +35,8 @@ import CaptureDnD from "./capture/CaptureDnD.svelte";
 import MemotronHome from "./home/MemotronHome.svelte";
 import MemotronOnboarding from "./base/MemotronOnboarding.svelte";
 import LinkSuggestionItem from "./common/linkbox/LinkSuggestionItem.svelte";
+import NodeTitleLabelPart from "./node/title/NodeTitleLabelPart.svelte";
+import MemotronGreenUse from "./base/MemotronGreenUse.svelte";
 export const memotronActions: IAction[] = [
   {
     action: MemotronAction.OPEN_CHAT,
@@ -58,6 +60,7 @@ export const memotronActions: IAction[] = [
     icon: "capture",
     type: ActionType.RESOURCE,
     accessMode: ResourceAccessMode.POP,
+    // isRenderAsPageInPortrait: true,
     modalParams: {
       layout: {
         size: Size.xxl,
@@ -163,6 +166,7 @@ export const memotronActions: IAction[] = [
     isMeta: true,
     type: ActionType.MODAL,
     loadingComponent: NodeLoadingPulse,
+    resourceLabelRenderer: NodeTitleLabelPart,
     modalParams: {
       layout: {
         size: Size.xxl,
@@ -340,5 +344,13 @@ export const memotronActions: IAction[] = [
     label: "Onboarding",
     icon: "ph:rocket",
     component: MemotronOnboarding
+  },
+  {
+    action: "green",
+    type: ActionType.PAGE,
+    isMeta: true,
+    label: "Green usage",
+    icon: "ph:leaf-light",
+    component: MemotronGreenUse
   }
 ];

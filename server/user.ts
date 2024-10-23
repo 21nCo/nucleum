@@ -266,7 +266,7 @@ export async function oauthRedirect(
   const domainPart = body.state.split(":")[1];
   if (domainPart) {
     if (domainPart.includes("localredirect.")) {
-      domain = "blanklabs://localhost/index.html";
+      domain = "tauri://localhost/index.html";
     } else {
       domain = "https://" + domainPart + "/oauth";
     }
@@ -363,7 +363,7 @@ export async function deleteUserAccount(body: any, agent: Agent) {
   const { context } = body;
   if (!agent.id) return { error: "userId is required" };
   await log(agent.id, { ...context, activity: "deleteAccount" });
-  const query = `DELETE user WHERE id = "user:${agent.id}";`;
+  const query = `DELETE user WHERE meta::id(id) = "${agent.id}";`;
   const response = await performQueryOnMasterDb(query);
   const dbRemovalQuery = `USE NAMESPACE ${process.env.USER_NS}; REMOVE DATABASE ${agent.id};`;
   await performQueryOnRegionalDb(dbRemovalQuery, {

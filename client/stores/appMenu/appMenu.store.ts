@@ -9,7 +9,13 @@ class AppMenuStore extends KeyValueStore<IAppMenuStore> {
   constructor() {
     super(Resource.appMenu, {});
   }
-  setDefaults(data: string[], isPersist: boolean = false) {
+  setDefaults(
+    data: {
+      all: string[];
+      mobile: string[];
+    },
+    isPersist: boolean = false
+  ) {
     const current = this.get();
     const context = get(appStore).product;
     logger.log({
@@ -22,7 +28,8 @@ class AppMenuStore extends KeyValueStore<IAppMenuStore> {
       {
         ...current,
         [context]: {
-          default: data,
+          default: data.all,
+          mobile: data.mobile,
           user: current[context]?.user ?? []
         }
       },

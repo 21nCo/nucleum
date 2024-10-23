@@ -5,7 +5,6 @@
   import Text from "$lib/client/elements/text/Text.svelte";
   import type { ICollectionView } from "$lib/client/products/memotron/collection/collection.type";
   import type { INodeThumb } from "$lib/client/products/memotron/node/node.type";
-  import type { IProperty } from "$lib/client/products/memotron/collection/properties/property.type";
   import type { ISelectValue } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
@@ -23,14 +22,15 @@
   import { logger } from "$lib/client/components/debug/logger.client";
   import { createEventDispatcher } from "svelte";
   import { dropzone } from "$lib/client/actions/dragAndDrop.action";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import type { IActiveCollectionStore } from "../collection.store";
   const dispatch = createEventDispatcher();
 
+  export let collection: IActiveCollectionStore;
   export let view: ICollectionView;
   export let group: any;
   export let data: any;
-  export let properties: IProperty[] | null = null;
   export let isBoardOverflow = false;
-  export let isInEditMode = false;
   let dev_isRenderColors = true;
   $: subGroups = resolveBoards(view.subGroupBy);
   $: _groupData = filterGroupData(group.value, data);
@@ -52,13 +52,16 @@
 
   function resolveBoards(id: IRecordId) {
     // if (view.subGroups) return view.subGroups;
-    if (isNoneResource(id) || !properties?.find(resourceInList(id))) return [];
+    if (isNoneResource(id) || !$collection.properties?.find(resourceInList(id)))
+      return [];
     return [
       {
         label: "Unassigned",
         value: "unassigned"
       },
-      ...resolvePropertyOptions(id, properties, { isBoardView: true })
+      ...resolvePropertyOptions(id, $collection.properties, {
+        isBoardView: true
+      })
     ];
   }
 
@@ -114,7 +117,6 @@
         {#each subGroups as subGroup}
           <SubGroup
             {subGroup}
-            {isInEditMode}
             {view}
             data={_groupData}
             arrangement={view.arrangement}
@@ -129,6 +131,8 @@
           arrangement={view.arrangement}
           density={1}
           isDraggable={true}
+          accessPoint={ResourceAccessPoint.COLLECTION}
+          accessPointId={collection.id}
           isApplyCustomColor={dev_isRenderColors && group.color}
         />
       {:else}

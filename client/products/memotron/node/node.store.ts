@@ -28,7 +28,10 @@ import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
 import { get, writable } from "svelte/store";
 import { SearchStore } from "../memotron.store";
 import { linker } from "$lib/client/products/memotron/linking/link.store";
-import type { IContextMenu } from "$lib/client/types/select.type";
+import type {
+  IContextMenu,
+  IContextMenuItem
+} from "$lib/client/types/select.type";
 import { flux } from "$lib/client/components/flux/flux";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { collectionStore } from "../collection/collection.store";
@@ -40,8 +43,11 @@ import {
   resourceInList,
   isSameResource
 } from "$lib/client/components/flux/resourceStores/resource.utils";
+import view from "$lib/client/stores/view.store";
 import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
 import { TacoActions } from "$lib/client/types/taco.types";
+
+import context from "$lib/client/stores/context.store";
 
 export const hierarchyFactorLimit = 5;
 
@@ -126,10 +132,8 @@ export class ActiveNodeStore extends ActiveResourceStore<
     mutationId: string,
     changedProps: { body?: string; children?: string[] }
   ) => {
-    console.log("updateBlockPropagator", id, changedProps);
     if (changedProps.children) {
       const node = this.get();
-      console.log("updateBlockPropagator node", id, node, node.id);
       const childrenNodes = node.md.blocks.filter(
         (x) => x.id && changedProps.children?.some(resourceInList(x.id))
       );
@@ -179,6 +183,7 @@ export class ActiveNodeStore extends ActiveResourceStore<
     return val!;
   }
   init = async (accessMode: ResourceAccessMode) => {
+    logger.log({ at: "ActiveNodeStore.init", id: this.id });
     const node = await this.resourceStore.fetch(this.id);
     if (node) {
       if (
@@ -363,6 +368,17 @@ export class ActiveNodeStore extends ActiveResourceStore<
     logger.log({ at: "ActiveNodeStore.resolveLinks", response });
     return response;
   }
+
+  /**
+   *
+   * Note: The md needs to be loaded from NodularMarkdown on init.
+   */
+  resolveExportContent(): string {
+    const node = this.get();
+    logger.log({ at: "ActiveNodeStore.resolveExportContent", node });
+    if (!node || node?.contentType !== NodeType.NODULAR_MARKDOWN) return "";
+    return node.md?.blocks ? generateMarkdownText(node.md.blocks) : "";
+  }
 }
 
 const activeNodeEventStores = new Map<string, any>();
@@ -403,12 +419,68 @@ export function resolveNodeContextMenu(
   }
 ): IContextMenu {
   const resourceActions = new ResourceActions(node, nodeStore);
+  const ctx = get(context);
+  let commonGroups: { group: string; items: IContextMenuItem[] }[] = [];
+  if (ctx.isEmbed) {
+    commonGroups = [
+      {
+        group: "more",
+        items: [resourceActions.archive(), resourceActions.trash()]
+      }
+    ];
+  } else {
+    commonGroups = [
+      {
+        group: "open",
+        items: [
+          resourceActions.openAsTab(),
+          // resourceActions.openAsSplit(),
+          resourceActions.openAsFull()
+        ]
+      },
+      {
+        group: "more",
+        items: [resourceActions.archive(), resourceActions.trash()]
+      }
+    ];
+  }
+  const viewStore = get(view);
+  if (viewStore.isConstrainedWidth && params?.isMediaNode) {
+    commonGroups.unshift({
+      group: "essentials",
+      items: [
+        {
+          value: NodeRightPaneType.SIDENOTES,
+          icon: "ph:note-thin",
+          label: "Side notes"
+        },
+        {
+          value: NodeRightPaneType.LINKS,
+          icon: "ph:arrows-left-right-thin",
+          label: "Show links"
+        },
+        {
+          value: NodeRightPaneType.PROPERTIES,
+          icon: "widget",
+          label: "Show properties"
+        }
+      ]
+    });
+  } else if (viewStore.isConstrainedWidth) {
+    commonGroups.unshift({
+      group: "essentials",
+      items: [
+        resourceActions.toggleReadMode()
+        // Forks
+      ]
+    });
+  }
   if (accessPoint === ResourceAccessPoint.NODE_LINKS && params?.accessPointId) {
-    let baseItems = [resourceActions.openAsTab(), resourceActions.copyLink()];
+    let baseItems = [resourceActions.copyLink()];
     if (accessPoint === ResourceAccessPoint.NODE_LINKS) {
-      baseItems.unshift(
-        resourceActions.select(accessPoint, params?.accessPointId)
-      );
+      // baseItems.unshift(
+      //   resourceActions.select(accessPoint, params?.accessPointId)
+      // );
       baseItems.unshift(resourceActions.unlink(params?.accessPointId));
     }
     return [
@@ -416,27 +488,26 @@ export function resolveNodeContextMenu(
         group: "all",
         items: [...baseItems]
       },
-      {
-        group: "more",
-        items: [resourceActions.trash()]
-      }
+      ...commonGroups
     ];
   } else if (accessPoint != ResourceAccessPoint.SELF) {
+    const primaryItems = [
+      resourceActions.star(),
+      resourceActions.edit(accessPoint),
+      resourceActions.copyLink()
+    ];
+    if (
+      accessPoint === ResourceAccessPoint.COLLECTION &&
+      params?.accessPointId
+    ) {
+      primaryItems.unshift(resourceActions.unlink(params?.accessPointId));
+    }
     return [
       {
         group: "all",
-        items: [
-          resourceActions.star(),
-          resourceActions.edit(accessPoint),
-          // resourceActions.select(accessPoint),
-          resourceActions.openAsTab(),
-          resourceActions.copyLink()
-        ]
+        items: [...primaryItems]
       },
-      {
-        group: "more",
-        items: [resourceActions.archive(), resourceActions.trash()]
-      }
+      ...commonGroups
     ];
   } else if (params?.isMediaNode) {
     return [
@@ -445,7 +516,6 @@ export function resolveNodeContextMenu(
         items: [
           resourceActions.star(),
           resourceActions.edit(accessPoint),
-          resourceActions.openAsTab(),
           {
             value: NodeRightPaneType.METADATA,
             icon: "ph:file-thin"
@@ -463,10 +533,7 @@ export function resolveNodeContextMenu(
           // }
         ]
       },
-      {
-        group: "more",
-        items: [resourceActions.archive(), resourceActions.trash()]
-      }
+      ...commonGroups
     ];
   }
   return [
@@ -475,7 +542,6 @@ export function resolveNodeContextMenu(
       items: [
         resourceActions.star(),
         // resourceActions.edit(accessPoint),
-        resourceActions.openAsTab(),
         {
           value: NodeRightPaneType.METADATA,
           icon: "ph:file-thin"
@@ -490,12 +556,13 @@ export function resolveNodeContextMenu(
     {
       group: "shareAndExport",
       items: [
-        resourceActions.copyLink()
+        resourceActions.copyLink(),
+        resourceActions.copyContents()
         // {
         //   value: "export",
         //   icon: "share",
         //   callback: async () => {}
-        // },
+        // }
         // {
         //   value: "share",
         //   icon: "share",
@@ -507,15 +574,16 @@ export function resolveNodeContextMenu(
         // }
       ]
     },
-    {
-      group: "more",
-      items: [resourceActions.archive(), resourceActions.trash()]
-    }
+    ...commonGroups
   ];
 }
 
 export function resolveVisibleActions(contentType: NodeType): IToggleItem[] {
-  if (contentType === NodeType.NODULAR_MARKDOWN) {
+  const viewStore = get(view);
+  if (
+    contentType === NodeType.NODULAR_MARKDOWN &&
+    !viewStore.isConstrainedWidth
+  ) {
     return [
       {
         value: NodeRightPaneType.SIDENOTES,
@@ -556,7 +624,7 @@ export function resolveVisibleActions(contentType: NodeType): IToggleItem[] {
     //   tooltip: "Bird view"
     // }
   ];
-  if (canHaveTraces.includes(contentType)) {
+  if (canHaveTraces.includes(contentType) && !viewStore.isConstrainedWidth) {
     baseActions.unshift({
       value: NodeRightPaneType.TRACES,
       icon: "bookmark",

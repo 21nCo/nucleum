@@ -25,10 +25,12 @@
   import NodeThumbnailAudioPreview from "./NodeThumbnailAudioPreview.svelte";
   import NodeThumbnailPdfPreview from "./NodeThumbnailPdfPreview.svelte";
   import { TimeFormat } from "$lib/client/types/time.type";
+  import type { IRecordId } from "$lib/client/types/data.type";
   export let item: INodeThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let size: Size.sm | Size.md = Size.md;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
+  export let accessPointId: IRecordId;
   export let collectionContext: "board" | "default" | undefined = undefined;
   export let isApplyCustomColor: boolean = false;
   export let parentBgIndex = 1;
@@ -56,8 +58,9 @@
 </script>
 
 <ResourceThumbnailBase
-  {item}
+  bind:item
   {accessPoint}
+  {accessPointId}
   {isDraggable}
   {isApplyCustomColor}
   {arrangement}
@@ -67,7 +70,8 @@
     <div
       class={cn("relative flex flex-col w-full border rounded-md truncate", {
         "bg-ccs5 hover:bg-ccs4 border-ccs2": isApplyCustomColor,
-        "bg-bgs2 border-brs3 hover:border-fgs4": !isApplyCustomColor,
+        "bg-bgs2 border-transparent hover:border hover:border-fgs4":
+          !isApplyCustomColor,
         "p-2": accessPoint === ResourceAccessPoint.NODE_LINKS
       })}
     >
@@ -138,7 +142,7 @@
         {#if !isFullExpand}
           <div class="flex flex-col gap-0.5 items-start p-2">
             <NodeThumbnailTitle node={item} isUrlOnIcon={true} {accessPoint} />
-            <div class="text-b4 text-fgs3">
+            <div class="text-b3 text-fgs3">
               {formatDatetime($userPreferences, item.createdAt)}
             </div>
           </div>

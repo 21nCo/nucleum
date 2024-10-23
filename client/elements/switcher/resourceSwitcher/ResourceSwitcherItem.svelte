@@ -17,65 +17,74 @@
   import { hoverable } from "$lib/client/actions/hover.action";
   import { popover } from "$lib/client/actions/popover.action";
   import ContextMenu from "../../contextMenu/ContextMenu.svelte";
+  import view from "$lib/client/stores/view.store";
   export let item: IResourceSwitchItem;
   export let size: Size.lg | Size.md | Size.sm = Size.md;
   export let isActive: boolean = false;
   export let iconOrientation: Orientation = Orientation.Horizontal;
   let isHovering: boolean = false;
-  $: isCurrentResourcePinned = $appMenuStore[$appStore.product]?.user?.includes(
-    resourceAction(item.value as Resource, ResourceActionType.BROWSE)
-  );
-  $: contextMenu = [
-    {
-      group: "all",
-      items: [
-        {
-          label: isCurrentResourcePinned
-            ? "Unpin from App menu"
-            : "Pin to App menu",
-          value: "pin",
-          icon: isCurrentResourcePinned ? "unpin" : "pin",
-          callback: async () => {
-            if (!isCurrentResourcePinned)
-              appMenuStore.addUserMenuItem(
+
+  function resolveContextMenu() {
+    const isCurrentResourcePinned = $appMenuStore[
+      $appStore.product
+    ]?.user?.includes(
+      resourceAction(item.value as Resource, ResourceActionType.BROWSE)
+    );
+    return [
+      {
+        group: "all",
+        items: [
+          {
+            label: isCurrentResourcePinned
+              ? "Unpin from App menu"
+              : "Pin to App menu",
+            value: "pin",
+            icon: isCurrentResourcePinned ? "unpin" : "pin",
+            callback: async () => {
+              if (!isCurrentResourcePinned)
+                appMenuStore.addUserMenuItem(
+                  resourceAction(
+                    item.value as Resource,
+                    ResourceActionType.BROWSE
+                  )
+                );
+              else
+                appMenuStore.removeUserMenuItem(
+                  resourceAction(
+                    item.value as Resource,
+                    ResourceActionType.BROWSE
+                  )
+                );
+            }
+          },
+          {
+            label: "Create new",
+            value: "create",
+            icon: "plus",
+            callback: async () => {
+              appStore.runAction(
                 resourceAction(
                   item.value as Resource,
-                  ResourceActionType.BROWSE
+                  ResourceActionType.CREATE
                 )
               );
-            else
-              appMenuStore.removeUserMenuItem(
-                resourceAction(
-                  item.value as Resource,
-                  ResourceActionType.BROWSE
-                )
-              );
+            }
           }
-        },
-        {
-          label: "Create new",
-          value: "create",
-          icon: "plus",
-          callback: async () => {
-            appStore.runAction(
-              resourceAction(item.value as Resource, ResourceActionType.CREATE)
-            );
+        ]
+      },
+      {
+        group: "more",
+        items: [
+          {
+            label: "Show archived",
+            value: "archived",
+            icon: "archive",
+            callback: async () => {}
           }
-        }
-      ]
-    },
-    {
-      group: "more",
-      items: [
-        {
-          label: "Show archived",
-          value: "archived",
-          icon: "archive",
-          callback: async () => {}
-        }
-      ]
-    }
-  ];
+        ]
+      }
+    ];
+  }
 </script>
 
 <button
@@ -85,20 +94,14 @@
   use:popover={{
     placement: Placement.BottomCenter,
     content: ContextMenu,
-    triggerMethod: PopoverTriggerMethod.RIGHT_CLICK,
-    componentProps: { menu: contextMenu },
+    triggerMethod: [PopoverTriggerMethod.RIGHT_CLICK],
+    componentProps: { menuResolver: resolveContextMenu },
     id: "resourceSwitcherContextMenu",
     groupId: "resourceSwitcherContextMenuGroup"
   }}
   class={cn(
     "relative flex justify-center items-center whitespace-nowrap border  hover:text-fgs1",
     {
-      "min-w-56 h-20":
-        iconOrientation === Orientation.Horizontal && size === Size.lg,
-      "min-w-48 h-14":
-        iconOrientation === Orientation.Horizontal && size === Size.md,
-      "min-w-40 h-10":
-        iconOrientation === Orientation.Horizontal && size === Size.sm,
       "px-8 py-6": iconOrientation === Orientation.Vertical && size === Size.lg,
       "px-6 py-4": iconOrientation === Orientation.Vertical && size === Size.md,
       "px-3 py-1": iconOrientation === Orientation.Vertical && size === Size.sm,
@@ -106,8 +109,16 @@
       "text-b2 rounded-full": size === Size.sm,
       "border border-aps1 bg-aps3 hover:bg--aps2": isActive,
       "outline-transparent border-brs3 text-fgs3 hover:bg-bgs2": !isActive,
-      "opacity-80 cursor-not-allowed": item.isDisabled
-    }
+      "opacity-80 cursor-not-allowed": item.isDisabled,
+      "px-4 py-1":
+        iconOrientation === Orientation.Horizontal && $view.isConstrainedWidth
+    },
+    !$view.isConstrainedWidth &&
+      iconOrientation === Orientation.Horizontal && {
+        "min-w-56 h-20": size === Size.lg,
+        "min-w-48 h-14": size === Size.md,
+        "min-w-40 h-10": size === Size.sm
+      }
   )}
   on:click
 >

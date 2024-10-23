@@ -52,6 +52,7 @@
   import { page } from "$app/stores";
   import LibraryLoadingPulse from "./LibraryLoadingPulse.svelte";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
+  import view from "$lib/client/stores/view.store";
 
   let searchQuery: string = "";
   let selectedResource: Resource = Resource.node;
@@ -328,13 +329,25 @@
   function onResourceMutation(
     e: CustomEvent<{ resource: Resource; params: any }>
   ) {
+    const watchProperties = ["isArchived", "trashInformation"];
     if (
       e.detail.resource === Resource.node &&
-      e.detail.params.action === PersistenceActionType.MERGE
+      e.detail.params.action === PersistenceActionType.MERGE &&
+      !watchProperties.some((x) => e.detail.params.record[x] !== undefined)
     ) {
       return;
     }
     refresh();
+  }
+
+  function onCreateResource() {
+    if (selectedResource === Resource.node) {
+      appStore.runAction(MemotronAction.CAPTURE);
+    } else {
+      appStore.runAction(
+        resourceAction(selectedResource, ResourceActionType.CREATE)
+      );
+    }
   }
 </script>
 
@@ -365,6 +378,7 @@
         bind:selectedResource
         bind:searchQuery
         on:refresh={debouncedSearch}
+        on:create={onCreateResource}
         on:semanticSearch={(e) => {
           if (e.detail) {
             searchStore.searchType = SearchType.SEMANTIC;
@@ -376,7 +390,7 @@
       />
     {/if}
     <div
-      class="flex w-full gap-2 justify-between items-center px-5 resource-switcher sticky-disabled bg-bgs1 py-5 top-0 z-10"
+      class="resource-switcher flex w-full gap-2 justify-between items-center mo:px-4 px-5 mo:py-3 py-5 sticky-disabled bg-bgs1 top-0 z-10"
     >
       <span
         class={cn("flex overflow-auto", {
@@ -396,7 +410,7 @@
           size={variant === "v2" ? Size.md : Size.sm}
         />
       </span>
-      {#if selectedResource != Resource.everything}
+      {#if selectedResource != Resource.everything && !$view.isConstrainedWidth}
         <span>
           <span class="flex gap-2 items-center">
             {#if availableResources.includes(selectedResource)}
@@ -413,18 +427,7 @@
                 style={ButtonStyle.OUTLINED}
                 label={selectedResource}
                 isPreventMinWidth={true}
-                on:click={() => {
-                  if (selectedResource === Resource.node) {
-                    appStore.runAction(MemotronAction.CAPTURE);
-                  } else {
-                    appStore.runAction(
-                      resourceAction(
-                        selectedResource,
-                        ResourceActionType.CREATE
-                      )
-                    );
-                  }
-                }}
+                on:click={onCreateResource}
               />
             {/if}
           </span>
@@ -440,7 +443,7 @@
         "flex-grow px-5 gap-5": variant === "v2" || variant === "v3"
       })}
     >
-      {#if (variant === "v2" || variant === "v3") && availableResources.includes(selectedResource)}
+      {#if (variant === "v2" || variant === "v3") && availableResources.includes(selectedResource) && !$view.isConstrainedWidth}
         <div class="flex flex-col w-60 border-r border-r-brs2 mb-1">
           <span class="w-full flex items-start flex-1 pr-2 overflow-y-auto">
             <VerticalSwitcher
@@ -507,7 +510,10 @@
               data={data.slice(0, 500)}
               accessPoint={ResourceAccessPoint.LIBRARY}
               resource={selectedResource}
-              arrangement={Arrangement.GRID}
+              size={$view.isConstrainedWidth ? Size.sm : Size.md}
+              arrangement={$view.isConstrainedWidth
+                ? Arrangement.MASONRY
+                : Arrangement.GRID}
             />
           </div>
           <div class="flex w-full justify-center text-b2 text-fgs3">

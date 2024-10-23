@@ -52,7 +52,7 @@
     <NodeAvatar {node} size={Size.sm} />
     <div class="flex-1 min-w-0">
       <div class="flex text-left truncate w-full text-b2 font--medium">
-        <NodeTitleLabelPart {node} {accessPoint} />
+        <NodeTitleLabelPart item={node} {accessPoint} />
       </div>
     </div>
     <span
