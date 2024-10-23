@@ -430,12 +430,12 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
         const rootBlocks = val.body.blocks.filter((b) =>
           val.rootStructure.includes(b.id)
         );
-        mdText = val.label + " \n" + generateMarkdownText(rootBlocks);
+        mdText = generateMarkdownText(rootBlocks);
         if (get(userPreferences).localAI.semanticSearch) {
           tacoWorker.postMessage({
             action: TacoActions.GET_EMBEDDINGS,
             params: {
-              text: mdText
+              text: val.label + " \n" + mdText
             }
           });
           const embedding = await new Promise((resolve, reject) => {

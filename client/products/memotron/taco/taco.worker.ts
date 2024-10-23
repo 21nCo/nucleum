@@ -117,11 +117,7 @@ class FeatureExtractor {
       let updatedNodes = [];
       const userId = await resolveCurrentUserId();
       for (let node of nodes) {
-        const data =
-          node?.body +
-          (node.label ? " " + node.label : "") +
-          " " +
-          node?.mdText;
+        const data = (node?.label ? node.label + " " : "") + node?.mdText;
         let vector = await FeatureExtractor.generateVectorEmbeddings(data);
         const commonProps = {
           createdAt: new Date(),
