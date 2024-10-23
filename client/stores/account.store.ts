@@ -136,10 +136,10 @@ class AccountStore extends ObservableStore<
     }
   }
 
-  async signOut() {
+  async signOut(params?: { isPreventDapIdClear?: boolean }) {
     await this.expire();
     signout("signOut account.store");
-    await this.clearAllCache();
+    await this.clearAllCache(params);
   }
   async embedOAuthSignin(token: string) {
     clientStorage.set(ClientStorageKey.STOKEN, token);
@@ -203,7 +203,6 @@ class AccountStore extends ObservableStore<
 
   async bootstrap(region: string) {
     await this.bootstrapRemote(region);
-    clientStorage.set(ClientStorageKey.LAST_SYNC_UP, new Date().getTime());
     return true;
   }
 
@@ -393,11 +392,13 @@ class AccountStore extends ObservableStore<
       return true;
     }
   }
-  async clearAllCache() {
+  async clearAllCache(params?: { isPreventDapIdClear?: boolean }) {
     const env = await clientStorage.get(ClientStorageKey.ENV);
     const appData = await clientStorage.get(ClientStorageKey.APP_DATA);
     const product = await clientStorage.get(ClientStorageKey.PRODUCT);
-    const dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
+    const dapId = params?.isPreventDapIdClear
+      ? await clientStorage.get(ClientStorageKey.DAP_ID)
+      : undefined;
     await clientStorage.clearAll();
     if (env) await clientStorage.set(ClientStorageKey.ENV, env);
     if (product) await clientStorage.set(ClientStorageKey.PRODUCT, product);

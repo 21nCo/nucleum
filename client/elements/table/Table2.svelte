@@ -22,6 +22,7 @@
   export let isStyled: boolean = false;
   export let addAction: string | undefined = undefined;
   export let id: string = "table";
+  export let width: string = "";
   $: if (actions.length > 0) {
     actions.forEach((action) => {
       columns = [
@@ -61,7 +62,7 @@
 </script>
 
 <div
-  class={cn("flex flex-col w-full min-w-[60rem] overflow-x-auto", {
+  class={cn("flex flex-col w-full overflow-x-auto", width, {
     "rounded-md border border-brs2": isStyled
   })}
 >

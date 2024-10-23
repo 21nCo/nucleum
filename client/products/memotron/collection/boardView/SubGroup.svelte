@@ -12,13 +12,15 @@
   import type { ISelectValue } from "$lib/client/types/select.type";
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   import type { ICollectionView } from "../collection.type";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import type { IActiveCollectionStore } from "../collection.store";
   const dispatch = createEventDispatcher();
+  export let collection: IActiveCollectionStore;
   export let view: ICollectionView;
   export let subGroup: any;
   export let data: any;
   export let arrangement: NodeThumbnailVariant | undefined;
   export let density: number | undefined;
-  export let isInEditMode = false;
   export let isApplyCustomColor = false;
   let isCollapsed = true;
   $: _data = filterSubGroupData(subGroup.value, data);
@@ -75,7 +77,14 @@
   </button>
   {#if !isCollapsed}
     <div class="w-full flex flex-col gap-4">
-      <NodeItems nodes={_data} {arrangement} {density} isDraggable={true} />
+      <NodeItems
+        nodes={_data}
+        {arrangement}
+        {density}
+        isDraggable={true}
+        accessPoint={ResourceAccessPoint.COLLECTION}
+        accessPointId={collection.id}
+      />
     </div>
   {/if}
 </div>

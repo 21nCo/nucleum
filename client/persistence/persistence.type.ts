@@ -25,7 +25,13 @@ export enum ClientStorageKey {
   GUEST = "guest",
   SPACE_IN_CONTEXT = "spaceInContext",
   OFFLINE_SESSION_ID = "offlineSessionId",
+  /**
+   * @deprecated - moved to storing on db.
+   */
   LAST_SYNC_UP = "lastSyncUp",
+  /**
+   * @deprecated - moved to storing on db.
+   */
   LAST_SYNC_DOWN = "lastSyncDown",
   /**
    * Device access point id. This id will be unique for each access point on a given device. Ex: different broswer logins, macOS app login etc.
@@ -47,7 +53,7 @@ export interface IPersistence {
    * @param params
    * @returns 0 if no database is present locally for the given userId, 1 if a database is present for the given id but is not an offline session earlier, 2 if the database is present and was used as offline session earlier. Returns -1 for any errors
    */
-  initialize(userId: string, params?: IPersistenceInitParams): Promise<number>;
+  initialize(params: IPersistenceInitParams): Promise<number>;
 
   mutation<T extends IResource | IMetaResource>(
     resource: Resource,
@@ -92,14 +98,37 @@ export enum RemotePersistenceProvider {
 }
 
 export interface IPersistenceInitParams {
-  isLocalMode?: boolean;
+  dapId: string;
+  userId?: string;
   dbo?: string[];
   appVersion?: string;
 }
 
+export type ILocal = {
+  id: string;
+  dapId: string;
+  createdAt: string;
+  version?: string;
+  isLocalMode?: boolean;
+  lastSyncDown?: number;
+  lastSyncUp?: number;
+};
+
 export interface ISyncHandler {
-  sync(mutations: any[]): Promise<void>;
-  syncDown(): Promise<any>;
-  cloneCloudToLocal(): Promise<any>;
-  cloneLocalToCloud(): Promise<any>;
+  sync(
+    mutations: any[],
+    lastSyncedAt: number,
+    resources: Resource[],
+    dapId: string
+  ): Promise<any[]>;
+  syncDown(
+    lastSyncDown: number,
+    resources: Resource[],
+    dapId: string
+  ): Promise<any>;
+  cloneCloudToLocal(params: {
+    resources: Resource[];
+    isExtension?: boolean;
+  }): Promise<any>;
+  cloneLocalToCloud(resource: Resource, records: any[]): Promise<any>;
 }

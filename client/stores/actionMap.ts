@@ -211,7 +211,7 @@ export const globalActions: IAction[] = [
       return this.modalParams?.title;
     },
     icon: "ph:lock-simple-light",
-    type: ActionType.MODAL,
+    type: ActionType.LINK,
     // contentType: ContentType.SPACE_DOC,
     component: PrivacyPolicy,
     modalParams: {
@@ -227,7 +227,7 @@ export const globalActions: IAction[] = [
       return this.modalParams?.title;
     },
     icon: "lock-closed",
-    type: ActionType.MODAL,
+    type: ActionType.LINK,
     contentType: ContentType.SPACE_DOC,
     modalParams: {
       title: "Terms of service",

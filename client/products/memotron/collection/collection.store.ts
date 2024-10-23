@@ -37,6 +37,7 @@ import {
 } from "$lib/client/types/select.type";
 import context from "$lib/client/stores/context.store";
 import { get } from "svelte/store";
+import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
 
 class CollectionStore extends ResourceStore<ICollection> {
   constructor() {
@@ -277,8 +278,12 @@ export class ActiveCollectionStore extends ActiveResourceStore<
       return;
     }
     this.update((val: IActiveCollection) => {
-      val.views.find((v) => v.id === viewId)!.data = [...response];
+      const view = val.views.find(resourceInList(viewId));
       val.isViewDataLoading = false;
+      if (!view) {
+        return val;
+      }
+      view.data = [...response];
       return val;
     });
     return true;
@@ -290,7 +295,7 @@ export class ActiveCollectionStore extends ActiveResourceStore<
    * @returns
    */
   async refreshViewData(viewId: IRecordId) {
-    console.log({ context: "refreshViewData", viewId });
+    logger.log({ at: "ActiveCollectionStore.refreshViewData", viewId });
     this.update((val: IActiveCollection) => {
       val.isViewDataRefreshing = true;
       return val;
@@ -305,7 +310,12 @@ export class ActiveCollectionStore extends ActiveResourceStore<
       return;
     }
     this.update((val: IActiveCollection) => {
-      val.views.find((v) => v.id === viewId)!.data = [...response];
+      const view = val.views.find(resourceInList(viewId));
+      if (!view) {
+        val.isViewDataRefreshing = false;
+        return val;
+      }
+      view.data = [...response];
       val.isViewDataRefreshing = false;
       return val;
     });

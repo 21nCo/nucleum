@@ -149,6 +149,7 @@
   function reset() {
     captureStore.reset();
     isEmptyState = true;
+    captureType = CaptureType.MARKDOWN;
     types = [];
     if ($view.isConstrainedWidth) {
       appStore.closeResource({ accessMode: ResourceAccessMode.POP });

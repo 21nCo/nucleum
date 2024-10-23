@@ -42,31 +42,31 @@
       />
     {:else if subatom === "memotron"}
       <rect
-        x="89.1001"
-        y="235.199"
-        width="9.00001"
-        height="148"
-        rx="3.67484"
-        transform="rotate(-90 89.1001 235.199)"
+        x="192.756"
+        y="280.025"
+        width="12.3829"
+        height="123.417"
+        rx="6.19147"
+        transform="rotate(-135 192.756 280.025)"
         class="fill-logo-dark dark:fill-logo-light"
       />
       <path
-        d="M128.124 231.488C128.124 174.456 174.357 128.223 231.389 128.223"
+        d="M231.711 334.977C174.679 334.977 128.445 288.743 128.445 231.711"
         class="stroke-logo-dark dark:stroke-logo-light"
         stroke-width="27.5374"
       />
       <path
-        d="M231.389 334.754C174.357 334.754 128.124 288.52 128.124 231.489"
+        d="M334.977 231.711C334.977 288.743 288.743 334.977 231.711 334.977"
         class="stroke-logo-dark dark:stroke-logo-light"
         stroke-width="27.5374"
       />
       <path
-        d="M334.655 231.485C334.655 288.517 288.421 334.75 231.389 334.75"
+        d="M231.707 128.445C288.739 128.445 334.973 174.679 334.973 231.71"
         class="stroke-logo-dark dark:stroke-logo-light"
         stroke-width="27.5374"
       />
       <path
-        d="M231.39 128.223C288.421 128.223 334.655 174.456 334.655 231.488"
+        d="M128.445 231.71C128.445 174.679 174.679 128.445 231.711 128.445"
         class="stroke-logo-dark dark:stroke-logo-light"
         stroke-width="27.5374"
       />

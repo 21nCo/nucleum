@@ -19,6 +19,7 @@ import { linker } from "$lib/client/products/memotron/linking/link.store";
 import type { IContextMenuItem } from "$lib/client/types/select.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 import { tabs } from "$lib/client/layout/tabs/tabs.store";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 
 export class ResourceActions<T extends IMemotronItemBase> {
   constructor(
@@ -205,12 +206,13 @@ export class ResourceActions<T extends IMemotronItemBase> {
     };
   }
   unlink(contextId: IRecordId): IContextMenuItem {
+    const isCollection =
+      determineResourceType(contextId) === Resource.collection;
     return {
-      label: "Unlink",
+      label: isCollection ? "Remove from collection" : "Unlink",
       value: "unlink",
-      icon: "arrow-uturn-left",
+      icon: "ph:link-break-light",
       callback: async () => {
-        console.log("unlinking", { contextId, id: this.resource.id });
         await linker.unlink(this.resource.id, contextId);
       }
     };

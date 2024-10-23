@@ -65,7 +65,7 @@
   export let isHovering: boolean = false;
   export let isFocusing: boolean = false;
 
-  $: refreshPlaceholder(isHovering);
+  $: refreshPlaceholder(isHovering, blockSpecificPlaceholder);
 
   let isFirstBlockAndIsEmpty = mdStore.isFirstBlockAndIsEmpty(block.id);
   let textRef: InlineMarkdownTextInput;
@@ -678,10 +678,20 @@
       );
     }
   }
-  function refreshPlaceholder(isHoveringParam?: boolean) {
+  function refreshPlaceholder(
+    isHoveringParam?: boolean,
+    blockSpecificPlaceholderParam?: string
+  ) {
     if (isHoveringParam === undefined) isHoveringParam = isHovering;
+    if (blockSpecificPlaceholderParam === undefined)
+      blockSpecificPlaceholderParam = blockSpecificPlaceholder;
     isFirstBlockAndIsEmpty = mdStore.isFirstBlockAndIsEmpty(block.id);
-    if (isHoveringParam || isFirstBlockAndIsEmpty || isFocusing) {
+    if (
+      isHoveringParam ||
+      isFirstBlockAndIsEmpty ||
+      isFocusing ||
+      blockSpecificPlaceholderParam
+    ) {
       assignPlaceholder();
     } else if (placeholder) placeholder = "";
   }

@@ -18,14 +18,15 @@
   } from "$lib/client/components/flux/resourceStores/resource.utils";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { nodeStore } from "../../node/node.store";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import type { IActiveCollectionStore } from "../collection.store";
 
+  export let collection: IActiveCollectionStore;
   export let view: ICollectionView;
   export let data: INodeThumb[] = [];
-  export let properties: IProperty[] = [];
   export let isBoardOverflow = false;
-  export let isInEditMode = false;
 
-  $: groups = resolveBoards(view.groupBy, properties);
+  $: groups = resolveBoards(view.groupBy, $collection.properties);
 
   function resolveBoards(id: IRecordId, properties: IProperty[]) {
     // if (view.groups) return view.groups;
@@ -97,11 +98,10 @@
   <div class="w-full h-full flex overflow-x-auto overflow-y-hidden gap-4">
     {#each groups as group}
       <BoardPane
+        {collection}
         {view}
-        {isInEditMode}
         {group}
         {isBoardOverflow}
-        {properties}
         {data}
         on:dropItem={handleDropItem}
       />
@@ -112,7 +112,9 @@
     nodes={data}
     arrangement={view.arrangement}
     density={view.density}
-    isDraggable={true}
+    isDraggable={false}
+    accessPoint={ResourceAccessPoint.COLLECTION}
+    accessPointId={collection.id}
   />
   <ScrollViewBottomSpacer />
 {/if}

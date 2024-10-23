@@ -18,11 +18,8 @@
   import ShortcutRunner from "../../components/shortcuts/ShortcutRunner.svelte";
   import Intercom from "./Intercom.svelte";
   import CacheLayer from "./CacheLayer.svelte";
-  import { globalActions } from "$lib/client/stores/actionMap";
-  import { localActions } from "$local/localActionMap";
   import { localCacheableStores } from "$local/localStoresMap";
   import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
-  import { getSettingsAsModal, getSettingsAsPages } from "../settingsActionMap";
   import { appMenuStore } from "../../stores/appMenu/appMenu.store";
   import { AlertType } from "$lib/client/types/notification.type";
   import { cacheableStores } from "$lib/client/stores/globalStoresMap";
@@ -161,13 +158,14 @@
       if (!isLiteMode && !import.meta.env?.DEV) {
         await refreshAppStaticData();
       }
-      initActions(isLiteMode);
       const dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
 
       if ($account.dataMode === UserDataMode.LOCAL) {
         // loadingMessage = "Initializing...";
         await account.logGuest(dapId!);
-        const initState = await initializeFlux(dapId!, true);
+        const initState = await initializeFlux({
+          dapId: dapId!
+        });
         logger.log({
           at: "UserBaseLayer.initializeData - local",
           initState
@@ -179,7 +177,10 @@
           error = "User id not found. Please try again later.";
           return;
         }
-        let initState = await initializeFlux($account.userId);
+        let initState = await initializeFlux({
+          userId: $account.userId,
+          dapId: dapId!
+        });
         await flux.seed();
         logger.log({
           at: "UserBaseLayer.initializeData - cloud",
@@ -223,29 +224,17 @@
     } catch (e) {
       logger.error(e);
     }
-
-    function initActions(isSheet?: boolean) {
-      const modifiedGlobalActions = globalActions.filter(
-        (x) => !localActions.some((y) => y.action === x.action)
-      );
-      let actions = [...modifiedGlobalActions, ...localActions];
-      if (isSheet) appStore.initActionsForSheet(actions);
-      else
-        appStore.initActions(
-          actions,
-          getSettingsAsModal(),
-          getSettingsAsPages()
-        );
-    }
   }
 
-  async function initializeFlux(userId: string, isLocalMode: boolean = false) {
+  async function initializeFlux(params: { dapId: string; userId?: string }) {
     return initFlux(
       [...cacheableStores, ...localCacheableStores],
       PersistenceProvider.SURREAL_SURREAL,
       new SurrealPersistence(),
-      userId,
-      { isLocalMode, appVersion: $appStore.appData?.version }
+      {
+        ...params,
+        appVersion: $appStore.appData?.version
+      }
     );
   }
 

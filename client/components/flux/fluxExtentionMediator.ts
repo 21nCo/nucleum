@@ -30,7 +30,6 @@ export async function delegateToFlux(method: IFluxMethod) {
           method.args.stores,
           method.args.provider,
           new DexiePersistence(RemotePersistenceProvider.SURREAL),
-          method.args.userId,
           method.args.params
         );
       case FluxMethod.SELECT_MANY:
@@ -53,9 +52,9 @@ export async function delegateToFlux(method: IFluxMethod) {
 export function initExtensionFlux(
   stores: IStore[],
   provider: PersistenceProvider,
-  userId: string,
-  params?: {
-    isLocalMode?: boolean;
+  params: {
+    dapId: string;
+    userId?: string;
   }
 ) {
   return relayToBackgroundScript({
@@ -66,7 +65,6 @@ export function initExtensionFlux(
         args: {
           stores,
           provider,
-          userId,
           params
         }
       }

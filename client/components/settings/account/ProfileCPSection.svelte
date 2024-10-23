@@ -102,6 +102,7 @@
           parentBgIndex={3}
           size={Size.sm}
           on:click={() => {
+            // account.signOut({ isPreventDapIdClear: true });
             signout();
             modalEvent.hide(Action.SETTINGS);
           }}

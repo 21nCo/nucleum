@@ -277,6 +277,7 @@ function initAppStore(seed: AppStore) {
     }
   ) => {
     let action = resolveAction(slug);
+    logger.log({ at: "runAction", action, slug });
     if (!action) {
       gotoPath("404");
       return;
@@ -820,19 +821,10 @@ function initAppStore(seed: AppStore) {
         return n;
       });
     },
-    initActions: (
-      actions: IAction[],
-      settingsAsModal: IAction[],
-      settingsAsPages: IAction[]
-    ) => {
-      const isInPortraitMode = get(view).isPortrait;
+    initActions: (actions: IAction[], settings: IAction[]) => {
       update((n: AppStore) => {
         if (!n.actions) n.actions = [];
-        const isSettingsAsModal = n.appData?.isSettingsAsModal;
-        // if (isInPortraitMode || !isSettingsAsModal)
-        //   n.actions = [...actions, ...settingsAsPages];
-        // else n.actions = [...actions, ...settingsAsModal];
-        n.actions = [...actions, ...settingsAsModal];
+        n.actions = [...actions, ...settings];
         return n;
       });
     },

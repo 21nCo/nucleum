@@ -249,6 +249,10 @@ interface PopoverParams {
   componentProps?: Record<string, any>;
   groupId?: string;
   id?: string;
+  /**
+   * If set to true, the popover will be rendered as a sibling of the trigger element. By default, popovers are rendered in popovers container to avoid z-index issues with other elements in the DOM.
+   */
+  isRenderAsSibling?: boolean;
 }
 
 export function popover(node: HTMLElement, params: PopoverParams) {
@@ -262,11 +266,13 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     triggerMethod = [PopoverTriggerMethod.CLICK],
     componentProps = {},
     groupId = "popover",
-    id = "popover"
+    id = "popover",
+    isRenderAsSibling = false
   } = params;
 
   let isShown = false;
   let lastTriggeredBy: PopoverTriggerMethod | null = null;
+  let popoverContainer = document.getElementById("popovers");
 
   async function createPopover(): Promise<void> {
     popoverElement = document.createElement("div");
@@ -278,11 +284,10 @@ export function popover(node: HTMLElement, params: PopoverParams) {
 
     // node.appendChild(popoverElement);
 
-    if (node.parentNode) {
+    if (isRenderAsSibling && node.parentNode) {
       node.parentNode.insertBefore(popoverElement, node.nextSibling);
     } else {
-      console.error("Node has no parent, cannot append popover as sibling");
-      return;
+      popoverContainer?.appendChild(popoverElement);
     }
 
     if (typeof content === "string") {
@@ -420,7 +425,11 @@ export function popover(node: HTMLElement, params: PopoverParams) {
   function hidePopover(e?: any): void {
     // console.log("hidePopover", e);
     if (popoverElement) {
-      node.parentNode?.removeChild(popoverElement);
+      if (isRenderAsSibling && node.parentNode) {
+        node.parentNode.removeChild(popoverElement);
+      } else {
+        popoverContainer?.removeChild(popoverElement);
+      }
       popoverElement = null;
       if (component) {
         component.$destroy();
@@ -570,7 +579,8 @@ export function popover(node: HTMLElement, params: PopoverParams) {
         triggerMethod = [PopoverTriggerMethod.CLICK],
         componentProps = {},
         groupId = "popover",
-        id = "popover"
+        id = "popover",
+        isRenderAsSibling = false
       } = newParams);
       if (popoverElement) {
         positionPopover();

@@ -329,9 +329,11 @@
   function onResourceMutation(
     e: CustomEvent<{ resource: Resource; params: any }>
   ) {
+    const watchProperties = ["isArchived", "trashInformation"];
     if (
       e.detail.resource === Resource.node &&
-      e.detail.params.action === PersistenceActionType.MERGE
+      e.detail.params.action === PersistenceActionType.MERGE &&
+      !watchProperties.some((x) => e.detail.params.record[x] !== undefined)
     ) {
       return;
     }
@@ -508,9 +510,10 @@
               data={data.slice(0, 500)}
               accessPoint={ResourceAccessPoint.LIBRARY}
               resource={selectedResource}
-              arrangement={!$view.isConstrainedWidth
-                ? Arrangement.GRID
-                : Arrangement.LIST}
+              size={$view.isConstrainedWidth ? Size.sm : Size.md}
+              arrangement={$view.isConstrainedWidth
+                ? Arrangement.MASONRY
+                : Arrangement.GRID}
             />
           </div>
           <div class="flex w-full justify-center text-b2 text-fgs3">

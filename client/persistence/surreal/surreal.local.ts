@@ -1,4 +1,8 @@
-import type { IPersistence, IPersistenceInitParams } from "../persistence.type";
+import type {
+  ILocal,
+  IPersistence,
+  IPersistenceInitParams
+} from "../persistence.type";
 import { ResponseError, Surreal } from "surrealdb";
 // import { surrealdbWasmEngines } from "@surrealdb/wasm";
 // import { Surreal } from "surrealdb.js";
@@ -50,8 +54,9 @@ export class SurrealPersistence implements IPersistence {
    * @param params
    * @returns
    */
-  async initialize(userId: string, params?: IPersistenceInitParams) {
-    if (this.userId === userId && this.instance) return -1;
+  async initialize(params: IPersistenceInitParams) {
+    const user = params.userId ?? params.dapId;
+    if (this.userId === user && this.instance) return -1;
     let engines;
     try {
       engines = await loadSurrealDB();
@@ -78,15 +83,15 @@ export class SurrealPersistence implements IPersistence {
         }
       })
     });
-    this.userId = userId;
+    this.userId = user;
     try {
-      logger.log({ at: "surreal.persistence.initialize", userId });
+      logger.log({ at: "surreal.persistence.initialize", user });
       await this.instance.connect("indxdb://blank");
       await this.instance.use({ namespace: "user", database: this.userId });
 
       // await this.logInfo();
       // await this.testQuery();
-      const localLog = await this.select("kv:local");
+      const localLog: ILocal = await this.select("kv:local");
       logger.log({
         at: "surreal.persistence.initialize - localLog",
         localLog
@@ -116,7 +121,7 @@ export class SurrealPersistence implements IPersistence {
   private async addLocalLog(params?: IPersistenceInitParams) {
     await this.awaiter();
     const result = await this.instance?.query(
-      `INSERT INTO kv { id: 'local', createdAt: time::now(), version: "${params?.appVersion}", isLocalMode: ${params?.isLocalMode ?? false} };`
+      `INSERT INTO kv { id: 'local', createdAt: time::now(), version: "${params?.appVersion}", isLocalMode: ${!params?.userId}, dapId: "${params?.dapId}" };`
     );
     this.isProcessingOperation = false;
   }
@@ -535,16 +540,16 @@ export class SurrealPersistence implements IPersistence {
       if (params?.offset) query += ` START ${params.offset}`;
       if (resource !== Resource.mutation) {
         logger.log({
-          at: "SurrealPersistence.selectMany",
+          at: "SurrealPersistence.selectMany - query",
           resource,
           query,
           params
         });
-        console.time("SurrealPersistence.selectMany");
+        // console.time("SurrealPersistence.selectMany");
       }
       const result = await this.instance?.query_raw(query, params);
       if (resource !== Resource.mutation) {
-        console.timeEnd("SurrealPersistence.selectMany");
+        // console.timeEnd("SurrealPersistence.selectMany");
         logger.log({
           at: "SurrealPersistence.selectMany - result",
           result,

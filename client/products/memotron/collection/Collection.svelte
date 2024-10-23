@@ -1,6 +1,6 @@
 <script lang="ts">
   import {
-    resolveActiveCollectionStore,
+    ActiveCollectionStore,
     type IActiveCollectionStore
   } from "./collection.store";
   import Cover from "./Cover.svelte";
@@ -19,7 +19,10 @@
   import { Size } from "$lib/client/types/size.enum";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import type { INodeThumb } from "$lib/client/products/memotron/node/node.type";
-  import type { IProperty } from "$lib/client/products/memotron/collection/properties/property.type";
+  import {
+    PropertyType,
+    type IProperty
+  } from "$lib/client/products/memotron/collection/properties/property.type";
   import { activeResourceFilter } from "$lib/client/utils/utils";
   import { onMount } from "svelte";
   import type { DropdownItem } from "$lib/client/types/dropdownItem.type";
@@ -64,11 +67,13 @@
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import view from "$lib/client/stores/view.store";
   import Button from "$lib/client/elements/button/Button.svelte";
+  import {
+    resolvePropertyIcon,
+    tabAndGroupableProperties
+  } from "./properties/property.utils";
 
   export let id: string = "";
-  let collection: IActiveCollectionStore = resolveActiveCollectionStore(
-    id
-  ) as IActiveCollectionStore;
+  let collection: IActiveCollectionStore = ActiveCollectionStore.resolve(id);
   let activeView: ICollectionViewWithData | null = null;
   let viewData: INodeThumb[] = [];
   let _filtered: INodeThumb[] = [];
@@ -140,23 +145,32 @@
   });
 
   async function resolvePropertyList() {
-    //TODO -  map type.properties to dropdown items - mapping corresponding icons from propertyOptions
     const noneOption = {
       label: "None",
       value: "property:none",
-      icon: "none"
+      icon: "ph:circle-dashed-light"
     };
     return $collection?.properties
       ? [
           noneOption,
           ...($collection?.properties
-            ? $collection?.properties.map((x: IProperty) => {
-                return { label: x.label, value: x.id?.toString() };
-              })
-            : []),
-          ...metaPropertyOptions
+            ? $collection?.properties
+                .filter(activeResourceFilter)
+                .filter((x) => tabAndGroupableProperties.includes(x.type))
+                .map((x: IProperty) => {
+                  return {
+                    label: x.label,
+                    value: x.id?.toString(),
+                    icon: resolvePropertyIcon(x)
+                  };
+                })
+            : [])
+          // ...metaPropertyOptions
         ]
-      : [noneOption, ...metaPropertyOptions];
+      : [
+          noneOption
+          // ...metaPropertyOptions
+        ];
   }
 
   function onViewRemove(e: CustomEvent) {
@@ -626,11 +640,10 @@
             <PageLoadingPulse />
           {:else if !$collection.isViewDataLoading && activeView}
             <View
+              {collection}
               view={activeView}
-              isInEditMode={$collection.isInEditMode}
               data={_filtered}
               isBoardOverflow={isStickied}
-              properties={$collection?.properties}
             />
           {:else}
             content

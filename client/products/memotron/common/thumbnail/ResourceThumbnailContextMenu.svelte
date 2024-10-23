@@ -37,4 +37,5 @@
   menuResolver={() => resolveContextMenu(item, accessPoint)}
   size={Size.lg}
   on:action={onAction}
+  isRenderAsSibling={true}
 />
