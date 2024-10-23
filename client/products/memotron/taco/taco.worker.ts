@@ -58,11 +58,23 @@ onmessage = (e: any) => {
     case TacoActions.RESET_TEXT2TEXT_GENERATOR:
       Text2textGenerator.built = false;
       break;
-    case TacoActions.GENERATE_TEXT:
-      Text2textGenerator.generateText(
+    case TacoActions.T2TGENERATE_TEXT:
+      Text2textGenerator.t2TgenerateText(
         e.data.params.context,
         e.data.params.question
       );
+      break;
+    case TacoActions.INITIALIZE_TEXT_GENERATOR:
+      // TextGenerator.initAll();
+      TextGenerator.init((progress: any) => {
+        postMessage(progress);
+      });
+      break;
+    case TacoActions.RESET_TEXT_GENERATOR:
+      TextGenerator.built = false;
+      break;
+    case TacoActions.GENERATE_TEXT:
+      TextGenerator.generateText(e.data.params.context, e.data.params.question);
       break;
   }
 };
@@ -173,11 +185,15 @@ class FeatureExtractor {
 class QuestionAnswerer {
   static built = false;
   static qa: any;
+  static models = [
+    "Fuzail22/onnx-roberta-base-squad2",
+    "Xenova/distilbert-base-cased-distilled-squad"
+  ];
   static async init(progress_callback?: (progress: any) => void) {
     if (!QuestionAnswerer.built) {
       QuestionAnswerer.qa = await pipeline(
         "question-answering",
-        "Fuzail22/onnx-roberta-base-squad2",
+        QuestionAnswerer.models[1],
         {
           quantized: false,
           progress_callback
@@ -212,6 +228,90 @@ class QuestionAnswerer {
   }
 }
 
+class TextGenerator {
+  static built = false;
+  static generator: any;
+  static models = [
+    "Xenova/tiny-random-PhiForCausalLM",
+    "Xenova/Qwen1.5-0.5B-Chat"
+    // "Xenova/TinyLlama-1.1B-Chat-v1.0"
+    // "Xenova/tiny-random-Phi3ForCausalLM",
+    // "Xenova/tiny-random-Phi3ForCausalLM-optimized",
+    // "Xenova/Phi-3-mini-4k-instruct",
+    // "Xenova/Phi-3-mini-4k-instruct-hf",
+    // "Xenova/Phi-3-mini-4k-instruct_fp16",
+    //"Xenova/gpt2-large-conversational", no chat template and hallucinates
+    //"Xenova/TinyLLama-v0",no chat template and hallucinates
+  ];
+  static model = TextGenerator.models[1];
+  static async initAll() {
+    for (let model of TextGenerator.models) {
+      TextGenerator.built = false;
+      TextGenerator.model = model;
+      TextGenerator.init((progress: any) => {
+        console.log(progress);
+      });
+    }
+  }
+  static async init(progress_callback?: (progress: any) => void) {
+    if (!TextGenerator.built) {
+      TextGenerator.generator = await pipeline(
+        "text-generation",
+        TextGenerator.model,
+        {
+          quantized: true,
+          progress_callback: progress_callback
+        }
+      );
+      TextGenerator.built = true;
+    }
+  }
+
+  static async generateText(context: string, question: string) {
+    try {
+      console.log("generateText", context, question);
+      const messages = [
+        {
+          role: "system",
+          content:
+            "You are a friendly answering assitant, answering question based on the user given context alone. If context is not relevant or sufficient, respond I didn't find enough context. Don't answer or respond anything outside of given context"
+        },
+        {
+          role: "user",
+          content: `/context-start/ ${context} /context-end/ /question-start/ ${question} /question-end/`
+        }
+      ];
+      if (!TextGenerator.built) await TextGenerator.init();
+      console.log(
+        "chat template",
+        TextGenerator.generator.tokenizer.chat_template
+      );
+      const prompt = TextGenerator.generator.tokenizer.apply_chat_template(
+        messages,
+        {
+          tokenize: false,
+          add_generation_prompt: true
+        }
+      );
+      console.log("prompt", prompt);
+      const startTime = Date.now();
+      const output = await TextGenerator.generator(prompt, {
+        max_new_tokens: 128,
+        do_sample: false,
+        return_full_text: false
+      });
+      const endTime = Date.now();
+      console.log("time taken", (endTime - startTime) / 1000, "seconds");
+      console.log("output", output[0].generated_text);
+      postMessage(output[0].generated_text);
+      // return output.answer;
+    } catch (error) {
+      console.error("Error during extraction:", error);
+      throw error;
+    }
+  }
+}
+
 class Text2textGenerator {
   static built = false;
   static generator: any;
@@ -228,21 +328,22 @@ class Text2textGenerator {
       Text2textGenerator.built = true;
     }
   }
-  static async generateText(context: string, question: string) {
+  static async t2TgenerateText(context: string, question: string) {
     try {
-      // console.log(
-      //   "extracting text:",
-      //   context.split(" ").length,
-      //   context,
-      //   question
-      // );
+      console.log(
+        "extracting text:",
+        context.split(" ").length,
+        context,
+        question
+      );
       if (!Text2textGenerator.built) await Text2textGenerator.init();
       let prompt = JSON.stringify({
-        instruction: "Please answer only based on the context given",
         context: context,
-        question: question
+        question: question,
+        instruction:
+          "Please answer only based on the given context and question. Respond Sorry I don't have enought context for it if in case the provided context is not related or not sufficient."
       });
-      // console.log("prompt", prompt);
+      console.log("prompt", prompt);
       const startTime = Date.now();
       const output = await Text2textGenerator.generator(prompt, {
         max_length: 512,
@@ -252,7 +353,12 @@ class Text2textGenerator {
         return_full_text: true
       });
       const endTime = Date.now();
-      // console.log("output FOR T2T", endTime - startTime/1000, "secs ", output);
+      console.log(
+        "output FOR T2T",
+        (endTime - startTime) / 1000,
+        "secs ",
+        output
+      );
       postMessage(output[0].generated_text);
       // return output.generated_text;
     } catch (error) {
@@ -271,12 +377,12 @@ class Transcriber {
     "Xenova/whisper-base.en",
     "Xenova/whisper-medium.en"
   ];
-  static model = this.models[0];
+  static model = Transcriber.models[0];
   static async initAll() {
-    for (let model of this.models) {
+    for (let model of Transcriber.models) {
       Transcriber.built = false;
-      this.model = model;
-      this.init((progress: any) => {
+      Transcriber.model = model;
+      Transcriber.init((progress: any) => {
         postMessage(progress);
       });
     }
@@ -285,7 +391,7 @@ class Transcriber {
     if (!Transcriber.built) {
       Transcriber.transcriber = await pipeline(
         "automatic-speech-recognition",
-        this.model,
+        Transcriber.model,
         {
           progress_callback
         }
@@ -296,11 +402,13 @@ class Transcriber {
   static async transcribe(audioData: any, model: TranscriptionModel) {
     try {
       // console.log("Transcriber.transcribe", audioData, model);
-      if (this.model != model && this.built) {
-        const index = this.models.findIndex((model) => model.includes(model));
+      if (Transcriber.model != model && Transcriber.built) {
+        const index = Transcriber.models.findIndex((model) =>
+          model.includes(model)
+        );
         if (index >= 0) {
-          this.model = this.models[index];
-          this.built = false;
+          Transcriber.model = Transcriber.models[index];
+          Transcriber.built = false;
           delete Transcriber.transcriber;
         }
       }

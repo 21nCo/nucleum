@@ -95,6 +95,7 @@
       };
     } else {
       await deleteItemsFromCache("onnx-roberta-");
+      await deleteItemsFromCache("Xenova/distilbert-base");
       tacoWorker.postMessage({
         action: TacoActions.RESET_QUESTION_ANSWERER
       });
@@ -141,7 +142,7 @@
       on:change={onQuestionAnsweringToggle}
       isExpanded={true}
       label={{
-        label: "Markdown Q & A  - 500MB",
+        label: "Markdown Q & A  - 250MB",
         tooltip: {
           body: "Enable this to use AI to answer questions pertaining to markdown."
         }

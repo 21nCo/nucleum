@@ -30,7 +30,11 @@
       searchQuery: question,
       semanticSearchTopK: 1
     });
-    // answer = await QuestionAnswerer.getAnswer(question, node[0].mdText);
+    if (node.length == 0) {
+      answer = "No relevant information found";
+      resetLoadingState();
+      return;
+    }
     //TODO- implement actual chat using text generator rather than using just QA
     // tacoWorker.postMessage({
     //   action: TacoActions.GENERATE_TEXT,
@@ -39,11 +43,6 @@
     //     question: question
     //   }
     // });
-    if (node.length == 0) {
-      answer = "No relevant information found";
-      resetLoadingState();
-      return;
-    }
     tacoWorker.postMessage({
       action: TacoActions.GET_ANSWER,
       params: {
