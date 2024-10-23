@@ -21,7 +21,7 @@
 
 <div class="flex flex-col gap-2 p-2 py-4 w-56 bg-bgs1">
   <div class="px-2 text-left">
-    <Text content="Arrangement new" style={TextStyle.SECTION_HEADING_SMALL} />
+    <Text content="Arrangement" style={TextStyle.SECTION_HEADING_SMALL} />
   </div>
   <VerticalSwitcher
     labelOrientation={Orientation.Horizontal}

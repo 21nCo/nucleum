@@ -12,14 +12,18 @@
     <CoverRenderer
       cover={item.cover}
       class={cn("absolute inset-0 h-full w-full object-cover", {
-        "rounded-t-md": arrangement === Arrangement.GRID,
+        "rounded-t-md":
+          arrangement === Arrangement.GRID ||
+          arrangement === Arrangement.MASONRY,
         "rounded-md": arrangement === Arrangement.LIST
       })}
     />
   {:else}
     <div
       class={cn("flex w-full h-full justify-center items-center bg-bgs3", {
-        "rounded-t-md": arrangement === Arrangement.GRID,
+        "rounded-t-md":
+          arrangement === Arrangement.GRID ||
+          arrangement === Arrangement.MASONRY,
         "rounded-md": arrangement === Arrangement.LIST
       })}
     >
