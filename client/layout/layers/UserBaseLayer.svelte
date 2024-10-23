@@ -42,6 +42,7 @@
   import { clientStorage } from "$lib/client/persistence/persistence.utils";
   import PageError from "$lib/client/components/error/PageError.svelte";
   import { SurrealPersistence } from "$lib/client/persistence/surreal/surreal.local";
+  import posthog from "posthog-js";
 
   const loadingMessages = {
     cloneUp:
@@ -203,13 +204,20 @@
       if ($account.dataMode === UserDataMode.CLOUD && !isLiteMode) {
         refreshTimeZone();
         appMenuStore.setDefaults(defaultAppMenu, true);
-        account.setAnalyticsUserIdentity();
+        setAnalyticsUserIdentity();
         await account.ping();
       } else {
         appMenuStore.setDefaults(defaultAppMenu);
       }
     } catch (e) {
       logger.error(e);
+    }
+
+    function setAnalyticsUserIdentity() {
+      if (!$account.userInfo) return;
+      posthog.identify($account.userInfo.id, {
+        region: $account.userInfo.region
+      });
     }
 
     function initActions(isSheet?: boolean) {

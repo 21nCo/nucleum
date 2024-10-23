@@ -18,7 +18,6 @@ import {
   StoreDataType,
   type IObservableStoreSubject
 } from "$lib/client/types/data.type";
-import posthog from "posthog-js";
 import { clientStorage } from "../persistence/persistence.utils";
 import { ClientStorageKey } from "../persistence/persistence.type";
 import { logger } from "../components/debug/logger.client";
@@ -224,7 +223,6 @@ class AccountStore extends ObservableStore<
         isNewUser: true
       }
     );
-    this.setAnalyticsUserIdentity();
     return true;
   }
 
@@ -395,14 +393,6 @@ class AccountStore extends ObservableStore<
     if (product) await clientStorage.set(ClientStorageKey.PRODUCT, product);
     if (appData) await clientStorage.set(ClientStorageKey.APP_DATA, appData);
     if (dapId) await clientStorage.set(ClientStorageKey.DAP_ID, dapId);
-  }
-
-  setAnalyticsUserIdentity() {
-    const account = this.get();
-    if (!account.userInfo) return;
-    posthog.identify(account.userInfo.id, {
-      region: account.userInfo.region
-    });
   }
 }
 
