@@ -222,9 +222,14 @@
         ]}
       />
       <div class="flex items-center">
-        <Toggle icon="ph:lightbulb-thin" bind:on={isShowLinkSuggestions} />
+        <Toggle
+          icon="ph:lightbulb-thin"
+          tooltip="Link suggestions"
+          bind:on={isShowLinkSuggestions}
+        />
         <Toggle
           icon="ph:tag-thin"
+          tooltip="Link tags"
           bind:on={isShowLinkTagFilters}
           count={selectedLinkTags.length > 0
             ? selectedLinkTags.length

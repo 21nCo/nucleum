@@ -1,6 +1,6 @@
 <script lang="ts">
   import {
-    resolveActiveCollectionStore,
+    ActiveCollectionStore,
     type IActiveCollectionStore
   } from "./collection.store";
   import Cover from "./Cover.svelte";
@@ -19,7 +19,10 @@
   import { Size } from "$lib/client/types/size.enum";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import type { INodeThumb } from "$lib/client/products/memotron/node/node.type";
-  import type { IProperty } from "$lib/client/products/memotron/collection/properties/property.type";
+  import {
+    PropertyType,
+    type IProperty
+  } from "$lib/client/products/memotron/collection/properties/property.type";
   import { activeResourceFilter } from "$lib/client/utils/utils";
   import { onMount } from "svelte";
   import type { DropdownItem } from "$lib/client/types/dropdownItem.type";
@@ -48,7 +51,7 @@
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import ArrangementSelector from "./ArrangementSelector.svelte";
+  import ArrangementSelector from "./arrangementSelector/ArrangementSelector.svelte";
   import ToggleGroup from "$lib/client/elements/toggle/ToggleGroup.svelte";
   import AddResourceAction from "./AddResourceAction.svelte";
   import { MemotronAction } from "../memotronAction.enum";
@@ -64,11 +67,13 @@
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import view from "$lib/client/stores/view.store";
   import Button from "$lib/client/elements/button/Button.svelte";
+  import {
+    resolvePropertyIcon,
+    tabAndGroupableProperties
+  } from "./properties/property.utils";
 
   export let id: string = "";
-  let collection: IActiveCollectionStore = resolveActiveCollectionStore(
-    id
-  ) as IActiveCollectionStore;
+  let collection: IActiveCollectionStore = ActiveCollectionStore.resolve(id);
   let activeView: ICollectionViewWithData | null = null;
   let viewData: INodeThumb[] = [];
   let _filtered: INodeThumb[] = [];
@@ -100,7 +105,8 @@
   $: coverPlacement =
     $collection?.coverLayout?.placement === Placement.Top ||
     !$collection?.coverLayout?.placement ||
-    $view.isConstrainedWidth
+    $view.isConstrainedWidth ||
+    $view.isPortrait
       ? Placement.Top
       : $collection?.coverLayout?.placement;
 
@@ -139,23 +145,32 @@
   });
 
   async function resolvePropertyList() {
-    //TODO -  map type.properties to dropdown items - mapping corresponding icons from propertyOptions
     const noneOption = {
       label: "None",
       value: "property:none",
-      icon: "none"
+      icon: "ph:circle-dashed-light"
     };
     return $collection?.properties
       ? [
           noneOption,
           ...($collection?.properties
-            ? $collection?.properties.map((x: IProperty) => {
-                return { label: x.label, value: x.id?.toString() };
-              })
-            : []),
-          ...metaPropertyOptions
+            ? $collection?.properties
+                .filter(activeResourceFilter)
+                .filter((x) => tabAndGroupableProperties.includes(x.type))
+                .map((x: IProperty) => {
+                  return {
+                    label: x.label,
+                    value: x.id?.toString(),
+                    icon: resolvePropertyIcon(x)
+                  };
+                })
+            : [])
+          // ...metaPropertyOptions
         ]
-      : [noneOption, ...metaPropertyOptions];
+      : [
+          noneOption
+          // ...metaPropertyOptions
+        ];
   }
 
   function onViewRemove(e: CustomEvent) {
@@ -193,6 +208,7 @@
 
   function onArrangementChange(e: CustomEvent) {
     if (!activeView) return;
+    selectedArrangement = e.detail;
     activeView.arrangement = e.detail;
     activeView.density = activeView.density ? activeView.density : 1;
     collection.updateView(
@@ -208,6 +224,7 @@
   function onDensityChange(e: CustomEvent) {
     if (!activeView) return;
     activeView.density = e.detail;
+    arrangementDensity = e.detail;
     collection.updateView(
       activeView.id,
       {
@@ -448,7 +465,7 @@
     {:else}
       <div
         class={cn("flex flex-col flex-1", {
-          "gap-8": !isSingleViewMode || isShowMetaViews,
+          "mo:gap-4 gap-8": !isSingleViewMode || isShowMetaViews,
           "h-full overflow-auto": coverPlacement !== Placement.Top,
           "w-full": coverPlacement === Placement.Top
         })}
@@ -456,7 +473,9 @@
       >
         <div
           class={cn("px-4 stickyheader", {
-            "sticky top-0 z-20 bg-bgs1": isSingleViewMode,
+            "sticky top-0 bg-bgs1": isSingleViewMode,
+            // When in edit mode, interfering with view settings dropdown when the dropdown opens on top if z-20 is set
+            "z-20": isSingleViewMode && !$collection.isInEditMode,
             "pb-8":
               isSingleViewMode && !isShowMetaViews && !$view.isConstrainedWidth,
             "pt-6": !$view.isConstrainedWidth,
@@ -476,9 +495,9 @@
               {#if isSingleViewMode && !$collection.isInEditMode}
                 <ArrangementSelector
                   {isBoardContext}
-                  bind:arrangement={selectedArrangement}
-                  bind:density={arrangementDensity}
-                  on:switch={onArrangementChange}
+                  arrangement={selectedArrangement}
+                  density={arrangementDensity}
+                  on:arrangementChange={onArrangementChange}
                   on:densityChange={onDensityChange}
                 />
               {/if}
@@ -550,8 +569,8 @@
                 on:change={onViewLabelChange}
                 on:rearrange={onViewRearrange}
               >
-                <span class="flex items-center gap-4 pr-4" slot="right">
-                  <ToggleGroup
+                <span class="flex items-center gap-4 mo:pr-0 pr-4" slot="right">
+                  <!-- <ToggleGroup
                     class="gap-3"
                     items={[
                       {
@@ -563,18 +582,18 @@
                         icon: "ph:arrows-down-up-thin"
                       }
                     ]}
-                  />
+                  /> -->
                   <ArrangementSelector
                     {isBoardContext}
-                    bind:arrangement={selectedArrangement}
-                    bind:density={arrangementDensity}
-                    on:switch={onArrangementChange}
+                    arrangement={selectedArrangement}
+                    density={arrangementDensity}
+                    on:arrangementChange={onArrangementChange}
                     on:densityChange={onDensityChange}
                   />
-                  {#if !$collection.isInEditMode}
+                  {#if !$collection.isInEditMode && !$view.isConstrainedWidth}
                     <AddResourceAction
-                      on:add={onAddResource}
                       variant="strong"
+                      on:add={onAddResource}
                     />
                   {/if}
                 </span>
@@ -583,11 +602,18 @@
             {#if activeView && ($collection.isInEditMode || !isNoneResource(activeView.tabBy))}
               <div class="px-4 pb-4 flex flex-col gap-6">
                 {#if $collection.isInEditMode}
-                  <ViewSettingsBar
-                    bind:view={activeView}
-                    {properties}
-                    on:change={onViewSettingsChange}
-                  />
+                  {#if $view.isConstrainedWidth}
+                    <span class="text-fgs3 text-b3">
+                      Currently, advanced view editing is only available on
+                      Desktop. Sorry for the inconvenience.
+                    </span>
+                  {:else}
+                    <ViewSettingsBar
+                      bind:view={activeView}
+                      {properties}
+                      on:change={onViewSettingsChange}
+                    />
+                  {/if}
                 {/if}
                 {#if activeView.tabBy}
                   <ViewTabSwitcher
@@ -614,11 +640,10 @@
             <PageLoadingPulse />
           {:else if !$collection.isViewDataLoading && activeView}
             <View
+              {collection}
               view={activeView}
-              isInEditMode={$collection.isInEditMode}
               data={_filtered}
               isBoardOverflow={isStickied}
-              properties={$collection?.properties}
             />
           {:else}
             content

@@ -40,21 +40,21 @@
   class="flex flex-col gap-8 bg--bgs2 bg-opacity-50 border border-dashed border-fgs4 rounded-md px-4 py-6 text-left"
 >
   <div class="flex flex-wrap gap-6 w-full">
-    <DropDown
+    <!-- <DropDown
       label={{ ...dropdownLabelConfig, label: "Layout" }}
       {...dropdownSettings}
       items={collectionLayoutOptions}
       bind:value={view.layout}
       on:select={(e) => onSelect("layout", e)}
-    />
+    /> -->
     <!-- TODO - properties selector - multi select -->
-    <DropDown
+    <!-- <DropDown
       label={{ ...dropdownLabelConfig, label: "Properties shown" }}
       {...dropdownSettings}
       items={properties}
       bind:value={view.layout}
       on:select={(e) => onSelect("properties", e)}
-    />
+    /> -->
     <DropDown
       label={{ ...dropdownLabelConfig, label: "Tabs" }}
       {...dropdownSettings}

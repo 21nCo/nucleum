@@ -131,7 +131,7 @@
     }
   }
   onMount(async () => {
-    if (collection && (!$collection || $collection.label)) {
+    if (collection && (!$collection || !$collection.label)) {
       await collection.init();
       isTypeExtension = $propertyEditorStore?.typeToExtend ? true : false;
     }
@@ -261,6 +261,7 @@
         <Table2
           id={tableId}
           isStyled={true}
+          width="min-w-[60rem]"
           addAction="add property"
           actions={[
             { action: "remove", index: 0 },

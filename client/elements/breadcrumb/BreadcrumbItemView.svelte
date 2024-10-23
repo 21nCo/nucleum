@@ -19,11 +19,11 @@
   class="flex items-center justify-center w-fit whitespace-nowrap text-fgs2 hover:text-fgs1"
 >
   <!-- <div class="triangle bg-fgs2 w-[8px] h-[7px] mr-1" /> -->
-  <p
+  <button
     on:click
     on:keydown={handleKeyDown}
     id="breadcrumb-item-label"
-    class={cn("text-b2 font-thin cursor-pointer", {
+    class={cn("text-b2 cursor-pointer", {
       "opacity-50 cursor-not-allowed": isDisabled,
       "text-ccs1": isLast,
       "hover:underline": !isLast
@@ -34,7 +34,7 @@
       text={isCollapse ? "・・" : label}
       tooltip={label}
     />
-  </p>
+  </button>
   {#if !isLast}
     <div class="px-2 opacity-50">/</div>
   {/if}

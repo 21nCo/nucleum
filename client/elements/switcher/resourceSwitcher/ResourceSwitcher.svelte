@@ -19,7 +19,7 @@
 </script>
 
 <div
-  class={cn(classList, {
+  class={cn(classList, "mo:mb-1", {
     "gap-5": size === Size.lg,
     "mo:gap-3 gap-4": size === Size.md || size === Size.sm
   })}

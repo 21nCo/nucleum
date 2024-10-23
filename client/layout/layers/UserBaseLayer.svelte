@@ -18,11 +18,8 @@
   import ShortcutRunner from "../../components/shortcuts/ShortcutRunner.svelte";
   import Intercom from "./Intercom.svelte";
   import CacheLayer from "./CacheLayer.svelte";
-  import { globalActions } from "$lib/client/stores/actionMap";
-  import { localActions } from "$local/localActionMap";
   import { localCacheableStores } from "$local/localStoresMap";
   import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
-  import { getSettingsAsModal, getSettingsAsPages } from "../settingsActionMap";
   import { appMenuStore } from "../../stores/appMenu/appMenu.store";
   import { AlertType } from "$lib/client/types/notification.type";
   import { cacheableStores } from "$lib/client/stores/globalStoresMap";
@@ -43,6 +40,7 @@
   import PageError from "$lib/client/components/error/PageError.svelte";
   import { SurrealPersistence } from "$lib/client/persistence/surreal/surreal.local";
   import { Embed } from "$lib/client/types/context.type";
+  import posthog from "posthog-js";
   import { verifyVectorGenerationTransactionNUpdate } from "$lib/client/products/memotron/taco/taco.store";
 
   const loadingMessages = {
@@ -163,13 +161,14 @@
       if (!isLiteMode && !import.meta.env?.DEV) {
         await refreshAppStaticData();
       }
-      initActions(isLiteMode);
       const dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
 
       if ($account.dataMode === UserDataMode.LOCAL) {
         // loadingMessage = "Initializing...";
         await account.logGuest(dapId!);
-        const initState = await initializeFlux(dapId!, true);
+        const initState = await initializeFlux({
+          dapId: dapId!
+        });
         logger.log({
           at: "UserBaseLayer.initializeData - local",
           initState
@@ -181,7 +180,10 @@
           error = "User id not found. Please try again later.";
           return;
         }
-        let initState = await initializeFlux($account.userId);
+        let initState = await initializeFlux({
+          userId: $account.userId,
+          dapId: dapId!
+        });
         await flux.seed();
         logger.log({
           at: "UserBaseLayer.initializeData - cloud",
@@ -209,40 +211,40 @@
         }
       }
       const defaultAppMenu = $appStore.appData?.appMenu ?? [];
+      const defaultAppMenuMobile = $appStore.appData?.appMenuMobile ?? [];
+      const appMenuDefaults = {
+        all: defaultAppMenu,
+        mobile: defaultAppMenuMobile
+      };
       if ($account.dataMode === UserDataMode.CLOUD && !isLiteMode) {
         refreshTimeZone();
-        appMenuStore.setDefaults(defaultAppMenu, true);
-        account.setAnalyticsUserIdentity();
+        appMenuStore.setDefaults(appMenuDefaults, true);
+        setAnalyticsUserIdentity();
         await account.ping();
       } else {
-        appMenuStore.setDefaults(defaultAppMenu);
+        appMenuStore.setDefaults(appMenuDefaults);
       }
     } catch (e) {
       logger.error(e);
     }
 
-    function initActions(isSheet?: boolean) {
-      const modifiedGlobalActions = globalActions.filter(
-        (x) => !localActions.some((y) => y.action === x.action)
-      );
-      let actions = [...modifiedGlobalActions, ...localActions];
-      if (isSheet) appStore.initActionsForSheet(actions);
-      else
-        appStore.initActions(
-          actions,
-          getSettingsAsModal(),
-          getSettingsAsPages()
-        );
+    function setAnalyticsUserIdentity() {
+      if (!$account.userInfo) return;
+      posthog.identify($account.userInfo.id, {
+        region: $account.userInfo.region
+      });
     }
   }
 
-  async function initializeFlux(userId: string, isLocalMode: boolean = false) {
+  async function initializeFlux(params: { dapId: string; userId?: string }) {
     return initFlux(
       [...cacheableStores, ...localCacheableStores],
       PersistenceProvider.SURREAL_SURREAL,
       new SurrealPersistence(),
-      userId,
-      { isLocalMode, appVersion: $appStore.appData?.version }
+      {
+        ...params,
+        appVersion: $appStore.appData?.version
+      }
     );
   }
 

@@ -30,6 +30,7 @@
   export let isDisableSearch: boolean = false;
   export let size: Size.md | Size.sm = Size.md;
   export let width: string = "w-80";
+  export let isEnforceWidth: boolean = false;
   let isGrouped: boolean = groups.length > 0;
   let baseRef: any;
   let search: string = "";
@@ -93,14 +94,19 @@
   bind:isActive
   bind:this={baseRef}
   {popoverOptions}
-  class={cn("flex justify-between gap-4 items-center", {
-    "w-full": !label?.label && style != InputStyle.PLAIN,
-    [width]:
-      label?.label &&
-      (label?.orientation === Orientation.Horizontal ||
-        !label?.orientation ||
-        (label?.orientation === Orientation.Vertical && label?.isShrink))
-  })}
+  class={cn(
+    "flex justify-between gap-4 items-center",
+    isEnforceWidth && width,
+    {
+      "w-full": !label?.label && style != InputStyle.PLAIN,
+      [width]:
+        isEnforceWidth ||
+        (label?.label &&
+          (label?.orientation === Orientation.Horizontal ||
+            !label?.orientation ||
+            (label?.orientation === Orientation.Vertical && label?.isShrink)))
+    }
+  )}
 >
   <div class="flex items-center gap-2">
     {#if selected?.icon && typeof selected?.icon === "string"}

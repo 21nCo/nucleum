@@ -15,6 +15,9 @@
   import { TextStyle } from "$lib/client/types/text.enum";
   import { fly } from "svelte/transition";
   import { moveItemInArray } from "$lib/shared/utils/obj.utils";
+  import view from "$lib/client/stores/view.store";
+  import DropDown from "../dropdown/DropDown.svelte";
+  import { InputStyle } from "$lib/client/types/input.type";
   const dispatch = createEventDispatcher();
   export let items: ISelectItem[] | string[];
   export let value: ISelectValue | undefined = undefined;
@@ -54,7 +57,8 @@
 {#key isInEditMode}
   <div
     bind:this={parent}
-    class={cn("relative panel-switcher flex items-center overflow-x-auto", {
+    class={cn("relative panel-switcher flex items-center", {
+      "overflow-x-auto": !$view.isConstrainedWidth,
       "w-full justify-between px-2":
         (style === PanelSwitcherStyle.BAR ||
           style === PanelSwitcherStyle.SNAKE) &&
@@ -97,44 +101,61 @@
       )}
     >
       {#if title || $$slots.left}
-        <span class="mr-6" transition:conditionalTransition>
+        <span class="mo:mr-3 mr-6" transition:conditionalTransition>
           <slot name="left">
             <Text content={title} style={TextStyle.PANEL_HEADING_SMALL} />
           </slot>
         </span>
       {/if}
-      {#each _items as item, index (item.value)}
-        <PanelSwitcherItem
-          {item}
-          {size}
-          {style}
-          isInEditMode={_items.length > 1 && isInEditMode}
-          {barStyle}
-          {isInversePlacement}
-          {parentBgIndex}
-          {isShowNumberShortcut}
-          {index}
-          bind:triggerItemEdit
-          isActive={value === item.value}
-          isDisabled={isDisableEnabled && value !== item.value}
-          on:click={() => {
-            value = item.value;
-            dispatch("switch", item.value);
-          }}
-          on:rearrange={(e) => {
-            _items = moveItemInArray(_items, index, e.detail > 0 ? 1 : -1);
-          }}
-          on:rearranged={(e) => {
-            dispatch(
-              "rearrange",
-              _items.map((x) => x.value)
-            );
-          }}
-          on:change
-          on:remove
-        />
-      {/each}
-      {#if isInEditMode}
+      {#if $view.isConstrainedWidth}
+        <div class="flex pl-2">
+          <DropDown
+            items={_items}
+            style={InputStyle.PLAIN}
+            width="min-w-32"
+            isDisableSearch={true}
+            isEnforceWidth={true}
+            on:select={(e) => {
+              value = e.detail;
+              dispatch("switch", e.detail);
+            }}
+          />
+        </div>
+      {:else}
+        {#each _items as item, index (item.value)}
+          <PanelSwitcherItem
+            {item}
+            {size}
+            {style}
+            isInEditMode={_items.length > 1 && isInEditMode}
+            {barStyle}
+            {isInversePlacement}
+            {parentBgIndex}
+            {isShowNumberShortcut}
+            {index}
+            bind:triggerItemEdit
+            isActive={value === item.value}
+            isDisabled={isDisableEnabled && value !== item.value}
+            on:click={() => {
+              value = item.value;
+              dispatch("switch", item.value);
+            }}
+            on:rearrange={(e) => {
+              _items = moveItemInArray(_items, index, e.detail > 0 ? 1 : -1);
+            }}
+            on:rearranged={(e) => {
+              dispatch(
+                "rearrange",
+                _items.map((x) => x.value)
+              );
+            }}
+            on:change
+            on:remove
+          />
+        {/each}
+      {/if}
+
+      {#if isInEditMode && !$view.isConstrainedWidth}
         <PanelSwitcherItem
           item={{ label: "Add", value: "$add" }}
           {size}

@@ -210,8 +210,8 @@ export const globalActions: IAction[] = [
     get label() {
       return this.modalParams?.title;
     },
-    icon: "lock-closed",
-    type: ActionType.MODAL,
+    icon: "ph:lock-simple-light",
+    type: ActionType.LINK,
     // contentType: ContentType.SPACE_DOC,
     component: PrivacyPolicy,
     modalParams: {
@@ -227,7 +227,7 @@ export const globalActions: IAction[] = [
       return this.modalParams?.title;
     },
     icon: "lock-closed",
-    type: ActionType.MODAL,
+    type: ActionType.LINK,
     contentType: ContentType.SPACE_DOC,
     modalParams: {
       title: "Terms of service",
@@ -237,13 +237,24 @@ export const globalActions: IAction[] = [
     }
   },
   {
+    action: Action.CHANGELOG + "mobile",
+    label: "What's new",
+    icon: "sparkles",
+    isMeta: true,
+    type: ActionType.LINK
+  },
+  {
     action: Action.CHANGELOG,
     label: "What's new",
     icon: "sparkles",
     isMeta: true,
     type: ActionType.FUNCTION,
-    fn: async () => {
-      appStore.runAction(Action.CHANGELOG + "supahub");
+    fn: async (params?: IActionFnParams) => {
+      if (params?.context?.embed === Embed.HANDSET) {
+        appStore.runAction(Action.CHANGELOG + "mobile");
+      } else {
+        appStore.runAction(Action.CHANGELOG + "supahub");
+      }
     }
   },
   {
@@ -263,6 +274,13 @@ export const globalActions: IAction[] = [
         context: "Changelog"
       }
     }
+  },
+  {
+    action: Action.ROADMAP + "mobile",
+    label: "Roadmap",
+    icon: "map",
+    isMeta: true,
+    type: ActionType.LINK
   },
   {
     action: Action.ROADMAP + "inactive",
@@ -286,8 +304,12 @@ export const globalActions: IAction[] = [
     icon: "map",
     isMeta: true,
     type: ActionType.FUNCTION,
-    fn: async () => {
-      appStore.runAction(Action.ROADMAP + "supahub");
+    fn: async (params?: IActionFnParams) => {
+      if (params?.context?.embed === Embed.HANDSET) {
+        appStore.runAction(Action.ROADMAP + "mobile");
+      } else {
+        appStore.runAction(Action.ROADMAP + "supahub");
+      }
     }
   },
   {

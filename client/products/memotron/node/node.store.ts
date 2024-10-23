@@ -132,10 +132,8 @@ export class ActiveNodeStore extends ActiveResourceStore<
     mutationId: string,
     changedProps: { body?: string; children?: string[] }
   ) => {
-    console.log("updateBlockPropagator", id, changedProps);
     if (changedProps.children) {
       const node = this.get();
-      console.log("updateBlockPropagator node", id, node, node.id);
       const childrenNodes = node.md.blocks.filter(
         (x) => x.id && changedProps.children?.some(resourceInList(x.id))
       );
@@ -185,6 +183,7 @@ export class ActiveNodeStore extends ActiveResourceStore<
     return val!;
   }
   init = async (accessMode: ResourceAccessMode) => {
+    logger.log({ at: "ActiveNodeStore.init", id: this.id });
     const node = await this.resourceStore.fetch(this.id);
     if (node) {
       if (
@@ -370,8 +369,13 @@ export class ActiveNodeStore extends ActiveResourceStore<
     return response;
   }
 
+  /**
+   *
+   * Note: The md needs to be loaded from NodularMarkdown on init.
+   */
   resolveExportContent(): string {
     const node = this.get();
+    logger.log({ at: "ActiveNodeStore.resolveExportContent", node });
     if (!node || node?.contentType !== NodeType.NODULAR_MARKDOWN) return "";
     return node.md?.blocks ? generateMarkdownText(node.md.blocks) : "";
   }
@@ -487,15 +491,21 @@ export function resolveNodeContextMenu(
       ...commonGroups
     ];
   } else if (accessPoint != ResourceAccessPoint.SELF) {
+    const primaryItems = [
+      resourceActions.star(),
+      resourceActions.edit(accessPoint),
+      resourceActions.copyLink()
+    ];
+    if (
+      accessPoint === ResourceAccessPoint.COLLECTION &&
+      params?.accessPointId
+    ) {
+      primaryItems.unshift(resourceActions.unlink(params?.accessPointId));
+    }
     return [
       {
         group: "all",
-        items: [
-          resourceActions.star(),
-          resourceActions.edit(accessPoint),
-          // resourceActions.select(accessPoint),
-          resourceActions.copyLink()
-        ]
+        items: [...primaryItems]
       },
       ...commonGroups
     ];

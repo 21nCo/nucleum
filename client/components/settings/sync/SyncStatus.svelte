@@ -8,9 +8,9 @@
   let itemsPendingForSync: any[] = [];
   let lastSyncedAt: string | null = null;
   onMount(async () => {
-    const { mutations, lastSyncedAt: _lastSyncedAt } =
+    const { mutations, lastSyncUp: _lastSyncedAt } =
       await flux.resolveItemsForSyncUp();
-    console.log({ mutations, lastSyncedAt: _lastSyncedAt });
+    // console.log({ mutations, lastSyncUp: _lastSyncedAt });
     if (mutations && mutations.length > 0) {
       status = "PENDING";
       itemsPendingForSync = mutations;

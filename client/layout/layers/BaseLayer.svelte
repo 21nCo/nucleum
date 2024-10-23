@@ -27,6 +27,9 @@
   import MetadataLayer from "./MetadataLayer.svelte";
   import EmbedTelemetry from "./analytics/EmbedTelemetry.svelte";
   import productData from "$lib/product.json";
+  import { getSettingsAsModal } from "../settingsActionMap";
+  import { globalActions } from "$lib/client/stores/actionMap";
+  import { localActions } from "$local/localActionMap";
 
   let timer: any;
   let isMounted = false;
@@ -59,6 +62,7 @@
   async function bootup() {
     await account.init();
     await setLaunchContext();
+    initActions();
     runCurrentTime();
     appStore.setCurrentPath(window.location.pathname);
     initializeServiceWorker();
@@ -77,6 +81,16 @@
         }
       }
     }
+  }
+
+  function initActions() {
+    const isSheet = $context.isSheet;
+    const modifiedGlobalActions = globalActions.filter(
+      (x) => !localActions.some((y) => y.action === x.action)
+    );
+    let actions = [...modifiedGlobalActions, ...localActions];
+    if (isSheet) appStore.initActionsForSheet(actions);
+    else appStore.initActions(actions, getSettingsAsModal());
   }
 
   /**
@@ -218,21 +232,25 @@
    * @param event
    */
   function handleCustomAlert(event: any) {
-    if (event.detail) console.log("custom alert:", event.detail);
-    if (event.detail?.error === "networkerror") {
-      if (
-        $context.isEmbed &&
-        event.detail.message.tolowerCase().includes("load failed")
-      ) {
-        return;
+    try {
+      if (event.detail) console.log("custom alert:", event.detail);
+      if (event.detail?.error === "networkerror") {
+        if (
+          $context.isEmbed &&
+          event.detail.message?.toLowerCase()?.includes("load failed")
+        ) {
+          return;
+        }
+        toasts.trigger({
+          title: "Network Error",
+          message: event.detail.message ?? "Something went wrong.",
+          type: AlertType.ERROR,
+          id: "networkerror",
+          isNonDismissable: true
+        });
       }
-      toasts.trigger({
-        title: "Network Error",
-        message: event.detail.message ?? "Something went wrong.",
-        type: AlertType.ERROR,
-        id: "networkerror",
-        isNonDismissable: true
-      });
+    } catch (e) {
+      logger.error({ at: "handleCustomAlert", error: e });
     }
   }
 
@@ -281,6 +299,7 @@
       <slot />
     {/if}
   </ThemeLayer>
+  <div id="popovers"></div>
 </div>
 <EmbedTelemetry />
 <svelte:document on:visibilitychange={visibilityChangeListener} />

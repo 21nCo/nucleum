@@ -69,7 +69,7 @@ function initViewStore(settings: View) {
           landscapiness: width / height,
           scale: (width / 1000 + height / 1000) / 2,
           isPortrait: false,
-          isConstrainedWidth: width <= 700
+          isConstrainedWidth: width <= 800
         };
         n.display = calculateScreen(width, height);
         n.isPortrait = n.landscapiness < 1;

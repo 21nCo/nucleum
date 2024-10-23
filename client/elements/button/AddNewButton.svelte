@@ -2,9 +2,10 @@
   import Icon from "../Icon.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import { Size } from "$lib/client/types/size.enum";
+  import view from "$lib/client/stores/view.store";
   let isHoveringOnAddNewItem = false;
   export let size = Size.md;
-  export let addText: string = "Add new";
+  export let addText: string = $view.isConstrainedWidth ? "" : "Add new";
   export let className: string = "";
   export { className as class };
 </script>

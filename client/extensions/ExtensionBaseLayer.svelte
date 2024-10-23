@@ -78,10 +78,14 @@
       //   new DexiePersistence(RemotePersistenceProvider.SURREAL),
       //   currentUserId
       // );
+      let dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
       const initResult = await initExtensionFlux(
         stores,
         PersistenceProvider.DEXIE_SURREAL,
-        currentUserId
+        {
+          dapId,
+          userId: currentUserId
+        }
       );
       logger.log({ at: "initFlux", initResult });
       if (initResult === 0) {

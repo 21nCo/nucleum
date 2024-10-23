@@ -128,6 +128,7 @@
   }
 </script>
 
+<!--TODO -  Note - when reenabling drag and drag to rearrange - make sure it is not interfering with text selection or media grid space slider -->
 <div
   class={cn(
     "w-full min-h-fit items-center gap-2 rounded-md border border-transparent",
@@ -140,7 +141,7 @@
         // "!border-brs1": isHovering && isFocusing
       }
   )}
-  draggable="true"
+  draggable="false"
   data-content={block.contentType}
   data-node={block.id}
   use:hoverable={{

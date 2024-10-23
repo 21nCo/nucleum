@@ -18,7 +18,6 @@ import {
   StoreDataType,
   type IObservableStoreSubject
 } from "$lib/client/types/data.type";
-import posthog from "posthog-js";
 import { clientStorage } from "../persistence/persistence.utils";
 import { ClientStorageKey } from "../persistence/persistence.type";
 import { logger } from "../components/debug/logger.client";
@@ -136,10 +135,10 @@ class AccountStore extends ObservableStore<
     }
   }
 
-  async signOut() {
+  async signOut(params?: { isPreventDapIdClear?: boolean }) {
     await this.expire();
     signout("signOut account.store");
-    await this.clearAllCache();
+    await this.clearAllCache(params);
   }
   async embedOAuthSignin(token: string) {
     clientStorage.set(ClientStorageKey.STOKEN, token);
@@ -203,7 +202,6 @@ class AccountStore extends ObservableStore<
 
   async bootstrap(region: string) {
     await this.bootstrapRemote(region);
-    clientStorage.set(ClientStorageKey.LAST_SYNC_UP, new Date().getTime());
     return true;
   }
 
@@ -224,7 +222,6 @@ class AccountStore extends ObservableStore<
         isNewUser: true
       }
     );
-    this.setAnalyticsUserIdentity();
     return true;
   }
 
@@ -393,24 +390,18 @@ class AccountStore extends ObservableStore<
       return true;
     }
   }
-  async clearAllCache() {
+  async clearAllCache(params?: { isPreventDapIdClear?: boolean }) {
     const env = await clientStorage.get(ClientStorageKey.ENV);
     const appData = await clientStorage.get(ClientStorageKey.APP_DATA);
     const product = await clientStorage.get(ClientStorageKey.PRODUCT);
-    const dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
+    const dapId = params?.isPreventDapIdClear
+      ? await clientStorage.get(ClientStorageKey.DAP_ID)
+      : undefined;
     await clientStorage.clearAll();
     if (env) await clientStorage.set(ClientStorageKey.ENV, env);
     if (product) await clientStorage.set(ClientStorageKey.PRODUCT, product);
     if (appData) await clientStorage.set(ClientStorageKey.APP_DATA, appData);
     if (dapId) await clientStorage.set(ClientStorageKey.DAP_ID, dapId);
-  }
-
-  setAnalyticsUserIdentity() {
-    const account = this.get();
-    if (!account.userInfo) return;
-    posthog.identify(account.userInfo.id, {
-      region: account.userInfo.region
-    });
   }
 }
 

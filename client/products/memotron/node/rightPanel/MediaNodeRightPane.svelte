@@ -9,7 +9,7 @@
 </script>
 
 <aside
-  class="flex flex-col h-full gap-4 justify-center items-center mo:w-full w-3/10 w--80 2k:w--96"
+  class="flex flex-col h-full gap-4 justify-center items-center mo:w-full min-w-96 w-3/10 w--80 2k:w--96"
 >
   {#if pane}
     <NodeRightPaneContent

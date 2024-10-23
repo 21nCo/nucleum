@@ -33,6 +33,7 @@ import { extensionFlux } from "../fluxExtentionMediator";
 import { FluxMethod } from "../flux.type";
 import { generateResourceId } from "../flux.utils";
 import { toasts } from "$lib/client/stores/notification.store";
+import { logger } from "../../debug/logger.client";
 // import { appStore } from "$lib/client/stores/app.store";
 
 export const activeResources = new Map<string, ActiveResourceStore<any, any>>();
@@ -457,6 +458,7 @@ export class ResourceStore<T extends IResource> implements IStore {
     const activeResource = activeResources.get(id.toString());
     if (!activeResource) return;
     const content = activeResource.resolveExportContent();
+    logger.log({ at: "ResourceStore.copyContents", content, activeResource });
     if (content) {
       navigator.clipboard.writeText(content);
     } else {

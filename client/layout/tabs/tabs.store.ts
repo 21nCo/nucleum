@@ -9,6 +9,11 @@ class TabStore {
     this.activate(id);
   }
 
+  addInBackground(id: IRecordId) {
+    if (!id) return;
+    uiState.addResourceToTabs(id);
+  }
+
   activate(id: IRecordId) {
     appStore.closeResource({ isRestrictToModals: true });
     const resource = typeof id === "string" ? id.split(":")[0] : id.tb;

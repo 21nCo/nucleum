@@ -32,13 +32,11 @@ export class DexiePersistence implements IPersistence {
     this.remote = remote;
   }
 
-  async initialize(
-    userId: string,
-    params?: IPersistenceInitParams
-  ): Promise<number> {
-    if (this.userId === userId && this.instance) return -1;
-    this.instance = new LocalDexie(userId);
-    this.userId = userId;
+  async initialize(params: IPersistenceInitParams): Promise<number> {
+    const user = params.userId ?? params.dapId;
+    if (this.userId === user && this.instance) return -1;
+    this.instance = new LocalDexie(user);
+    this.userId = user;
     const initLog = await this.select("kv:init");
     logger.log({ at: "DexiePersistence.initialize", initLog });
     if (initLog) {
@@ -52,7 +50,8 @@ export class DexiePersistence implements IPersistence {
     await this.instance?.table(Resource.kv).add({
       id: "kv:init",
       createdAt: new Date().toISOString(),
-      isLocalMode: params?.isLocalMode ?? false
+      isLocalMode: !params?.userId,
+      dapId: params?.dapId
     });
   }
 
@@ -66,7 +65,7 @@ export class DexiePersistence implements IPersistence {
       case PersistenceActionType.REPLACE:
         return this.instance?.table(resource).put(params.record);
       case PersistenceActionType.MERGE:
-        return this.merge(resource,params.record.id, params.record);
+        return this.merge(resource, params.record.id, params.record);
       case PersistenceActionType.DELETE:
         logger.log({ at: "DexiePersistence.mutation delete", params });
         return this.instance?.table(resource).delete(params.recordId);
@@ -83,15 +82,14 @@ export class DexiePersistence implements IPersistence {
     try {
       const result = await this.instance?.table(resource).update(id, data);
       logger.log({ at: "DexiePersistence.merge", id, data, result, resource });
-      if(result === 0) {
-        return this.instance?.table(resource).put({...data, id});
+      if (result === 0) {
+        return this.instance?.table(resource).put({ ...data, id });
       }
       return result;
     } catch (e) {
       logger.error({ at: "DexiePersistence.merge", id, data, e });
     }
   }
-
 
   private resolveResource(id: IRecordId | Resource) {
     return typeof id === "string" ? id.split(":")[0] : id?.tb;
@@ -115,11 +113,10 @@ export class DexiePersistence implements IPersistence {
     table: Table | undefined,
     params: IResourceSelectParams | undefined
   ): Collection | undefined {
-
     try {
       if (!table) return undefined;
       let query: QueryableType = table;
-  
+
       // Apply indexed filters first
       if (params?.filters && !("condition" in params.filters)) {
         query = this.applyIndexedFilters(
@@ -127,7 +124,7 @@ export class DexiePersistence implements IPersistence {
           params.filters as { [key: string]: any }
         );
       }
-  
+
       // Apply non-indexed filters and complex filter groups
       if (params?.filters) {
         if ("condition" in params.filters) {
@@ -142,17 +139,17 @@ export class DexiePersistence implements IPersistence {
           );
         }
       }
-  
+
       // // Convert to Collection if still a Table or WhereClause
       // if (query instanceof Table || query instanceof WhereClause) {
       //   query = query.toCollection();
       // }
-  
+
       // Apply search
       if (params?.search) {
         query = this.applySearch(query as Collection, params.search);
       }
-  
+
       // Apply orderBy
       if (params?.orderBy) {
         for (const [key, order] of Object.entries(params.orderBy)) {
@@ -162,7 +159,7 @@ export class DexiePersistence implements IPersistence {
           }
         }
       }
-  
+
       // Apply offset and limit
       if (params?.offset !== undefined) {
         query = (query as Collection).offset(params.offset);
@@ -170,12 +167,11 @@ export class DexiePersistence implements IPersistence {
       if (params?.limit !== undefined) {
         query = (query as Collection).limit(params.limit);
       }
-  
+
       return query as Collection;
     } catch (e) {
       logger.error({ at: "DexiePersistence.translateToDexieQuery", e });
     }
-
   }
 
   private applyIndexedFilters(

@@ -7,6 +7,9 @@
   import NonMediaNode from "./base/NonMediaNode.svelte";
   import { onDestroy, setContext } from "svelte";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { debouncer } from "$lib/client/utils/utils";
+  import { logger } from "$lib/client/components/debug/logger.client";
 
   export let id: string;
   export let accessMode: ResourceAccessMode;
@@ -23,10 +26,11 @@
     initialize();
   }
 
-  async function initialize() {
+  async function initialize(ctx?: string) {
+    logger.log({ at: "Node.initialize", id, ctx });
     isLoading = true;
     await node.init(accessMode);
-    nodeContext.parent = $node.parent;
+    nodeContext.parent = $node?.parent;
     isLoading = false;
   }
 
@@ -41,6 +45,7 @@
   onDestroy(() => {
     ActiveNodeStore.destroy(id);
   });
+  const debouncedInitialize = debouncer(initialize, 1500);
 </script>
 
 {#if $node && !isLoading}
@@ -54,4 +59,8 @@
     <NodeLoadingPulse />
   </div>
 {/if}
-<ComponentBaseLayer hasDragAndDrop={true} />
+<ComponentBaseLayer
+  hasDragAndDrop={true}
+  subscribeTo={[Resource.property]}
+  on:change={debouncedInitialize}
+/>

@@ -70,7 +70,8 @@
     <div
       class={cn("relative flex flex-col w-full border rounded-md truncate", {
         "bg-ccs5 hover:bg-ccs4 border-ccs2": isApplyCustomColor,
-        "bg-bgs2 border-brs3 hover:border-fgs4": !isApplyCustomColor,
+        "bg-bgs2 border-transparent hover:border hover:border-fgs4":
+          !isApplyCustomColor,
         "p-2": accessPoint === ResourceAccessPoint.NODE_LINKS
       })}
     >
@@ -141,7 +142,7 @@
         {#if !isFullExpand}
           <div class="flex flex-col gap-0.5 items-start p-2">
             <NodeThumbnailTitle node={item} isUrlOnIcon={true} {accessPoint} />
-            <div class="text-b4 text-fgs3">
+            <div class="text-b3 text-fgs3">
               {formatDatetime($userPreferences, item.createdAt)}
             </div>
           </div>

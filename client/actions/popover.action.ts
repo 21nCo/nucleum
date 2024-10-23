@@ -2,6 +2,7 @@ import { tick } from "svelte";
 import { Placement } from "../types/direction.enum";
 import { PopoverTriggerMethod } from "../types/popover.type";
 import { deepCopy } from "$lib/shared/utils/obj.utils";
+import { getEventPath } from "../utils/browser.utils";
 
 interface TooltipParams {
   text: string;
@@ -248,6 +249,10 @@ interface PopoverParams {
   componentProps?: Record<string, any>;
   groupId?: string;
   id?: string;
+  /**
+   * If set to true, the popover will be rendered as a sibling of the trigger element. By default, popovers are rendered in popovers container to avoid z-index issues with other elements in the DOM.
+   */
+  isRenderAsSibling?: boolean;
 }
 
 export function popover(node: HTMLElement, params: PopoverParams) {
@@ -261,11 +266,13 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     triggerMethod = [PopoverTriggerMethod.CLICK],
     componentProps = {},
     groupId = "popover",
-    id = "popover"
+    id = "popover",
+    isRenderAsSibling = false
   } = params;
 
   let isShown = false;
   let lastTriggeredBy: PopoverTriggerMethod | null = null;
+  let popoverContainer = document.getElementById("popovers");
 
   async function createPopover(): Promise<void> {
     popoverElement = document.createElement("div");
@@ -277,11 +284,10 @@ export function popover(node: HTMLElement, params: PopoverParams) {
 
     // node.appendChild(popoverElement);
 
-    if (node.parentNode) {
+    if (isRenderAsSibling && node.parentNode) {
       node.parentNode.insertBefore(popoverElement, node.nextSibling);
     } else {
-      console.error("Node has no parent, cannot append popover as sibling");
-      return;
+      popoverContainer?.appendChild(popoverElement);
     }
 
     if (typeof content === "string") {
@@ -408,18 +414,22 @@ export function popover(node: HTMLElement, params: PopoverParams) {
   }
 
   async function showPopover(e?: any): Promise<void> {
-    console.log("showPopover", e);
+    // console.log("showPopover", e, popoverElement);
     if (!popoverElement) await createPopover();
     positionPopover();
     isShown = true;
     triggerChangeEvent();
-    document.addEventListener("click", handleOutsideClick);
+    document.addEventListener("click", handleOutsideClickv2);
   }
 
   function hidePopover(e?: any): void {
     // console.log("hidePopover", e);
     if (popoverElement) {
-      node.parentNode?.removeChild(popoverElement);
+      if (isRenderAsSibling && node.parentNode) {
+        node.parentNode.removeChild(popoverElement);
+      } else {
+        popoverContainer?.removeChild(popoverElement);
+      }
       popoverElement = null;
       if (component) {
         component.$destroy();
@@ -428,7 +438,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     }
     isShown = false;
     triggerChangeEvent();
-    document.removeEventListener("click", handleOutsideClick);
+    document.removeEventListener("click", handleOutsideClickv2);
   }
 
   function triggerChangeEvent(): void {
@@ -447,6 +457,38 @@ export function popover(node: HTMLElement, params: PopoverParams) {
       hidePopover("outside click");
     }
   }
+  function handleOutsideClickv2(event: MouseEvent): void {
+    if (popoverElement && node) {
+      const target = event.target as Element;
+      const path =
+        (event.composedPath && event.composedPath()) ||
+        event.path ||
+        (event.target && getEventPath(event));
+      if (target.tagName.toLowerCase() === "path") {
+        const svgParent = target.closest("svg");
+        // console.log("svgParent", path, svgParent);
+        if (svgParent) {
+          if (node.contains(svgParent) || popoverElement.contains(svgParent)) {
+            return;
+          }
+        } else if (path) {
+          const isInsideNodeOrPopover = path.some(
+            (element) =>
+              element instanceof SVGElement ||
+              node.contains(element as Node) ||
+              popoverElement?.contains(element as Node)
+          );
+          if (isInsideNodeOrPopover) {
+            return;
+          }
+        }
+      }
+
+      if (!popoverElement.contains(target) && !node.contains(target)) {
+        hidePopover("outside click");
+      }
+    }
+  }
 
   function handleTrigger(event: MouseEvent | TouchEvent): void {
     if (
@@ -461,7 +503,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
       } else if (isShown) {
         lastTriggeredBy = PopoverTriggerMethod.CLICK;
       } else if (!isShown) {
-        showPopover();
+        showPopover(event);
         lastTriggeredBy = PopoverTriggerMethod.CLICK;
       }
     } else if (
@@ -537,7 +579,8 @@ export function popover(node: HTMLElement, params: PopoverParams) {
         triggerMethod = [PopoverTriggerMethod.CLICK],
         componentProps = {},
         groupId = "popover",
-        id = "popover"
+        id = "popover",
+        isRenderAsSibling = false
       } = newParams);
       if (popoverElement) {
         positionPopover();

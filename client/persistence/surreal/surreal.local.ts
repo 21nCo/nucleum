@@ -1,6 +1,10 @@
-import type { IPersistence, IPersistenceInitParams } from "../persistence.type";
+import type {
+  ILocal,
+  IPersistence,
+  IPersistenceInitParams
+} from "../persistence.type";
 import { ResponseError, Surreal } from "surrealdb";
-import { surrealdbWasmEngines } from "@surrealdb/wasm";
+// import { surrealdbWasmEngines } from "@surrealdb/wasm";
 // import { Surreal } from "surrealdb.js";
 // import { surrealdbWasmEngines } from "surrealdb.wasm";
 import { logger } from "../../components/debug/logger.client";
@@ -41,13 +45,21 @@ export class SurrealPersistence implements IPersistence {
   queryEmbedding: Float32Array[] | null = null;
   private isProcessingOperation: boolean = false;
   private processId: string = "";
+  private waitingTimeElapsed: number = 0;
   constructor() {}
 
-  async initialize(userId: string, params?: IPersistenceInitParams) {
-    if (this.userId === userId && this.instance) return -1;
+  /**
+   * Asynchronously importing the wasm because of an issue that's being caused when running the app on Safari browser.
+   * @param userId
+   * @param params
+   * @returns
+   */
+  async initialize(params: IPersistenceInitParams) {
+    const user = params.userId ?? params.dapId;
+    if (this.userId === user && this.instance) return -1;
     let engines;
     try {
-      // engines = await loadSurrealDB();
+      engines = await loadSurrealDB();
       // engines = await loadSurrealDBFromRemotev5(
       //   import.meta.env.VITE_STATIC_URL + "/surreal.zip"
       // );
@@ -60,9 +72,9 @@ export class SurrealPersistence implements IPersistence {
         protocol: window.location.protocol
       });
     }
-    // if (!engines) return -1;
+    if (!engines) return -1;
     this.instance = new Surreal({
-      engines: surrealdbWasmEngines({
+      engines: engines({
         strict: false,
         capabilities: {
           guest_access: true,
@@ -71,15 +83,15 @@ export class SurrealPersistence implements IPersistence {
         }
       })
     });
-    this.userId = userId;
+    this.userId = user;
     try {
-      logger.log({ at: "surreal.persistence.initialize", userId });
+      logger.log({ at: "surreal.persistence.initialize", user });
       await this.instance.connect("indxdb://blank");
       await this.instance.use({ namespace: "user", database: this.userId });
 
       // await this.logInfo();
       // await this.testQuery();
-      const localLog = await this.select("kv:local");
+      const localLog: ILocal = await this.select("kv:local");
       logger.log({
         at: "surreal.persistence.initialize - localLog",
         localLog
@@ -109,7 +121,7 @@ export class SurrealPersistence implements IPersistence {
   private async addLocalLog(params?: IPersistenceInitParams) {
     await this.awaiter();
     const result = await this.instance?.query(
-      `INSERT INTO kv { id: 'local', createdAt: time::now(), version: "${params?.appVersion}", isLocalMode: ${params?.isLocalMode ?? false} };`
+      `INSERT INTO kv { id: 'local', createdAt: time::now(), version: "${params?.appVersion}", isLocalMode: ${!params?.userId}, dapId: "${params?.dapId}" };`
     );
     this.isProcessingOperation = false;
   }
@@ -200,11 +212,17 @@ export class SurrealPersistence implements IPersistence {
   private awaiter(processId?: string) {
     return new Promise((resolve, reject) => {
       const interval = setInterval(() => {
-        if (!this.isProcessingOperation) {
+        this.waitingTimeElapsed += 100;
+        if (!this.isProcessingOperation || this.waitingTimeElapsed > 4000) {
           clearInterval(interval);
           this.isProcessingOperation = true;
           this.processId = processId ?? "unknown";
-          // console.log("awaiter - starting process - processId", this.processId);
+          logger.log({
+            at: "awaiter - starting process",
+            processId: this.processId,
+            waitingTimeElapsed: this.waitingTimeElapsed
+          });
+          this.waitingTimeElapsed = 0;
           resolve(true);
         }
       }, 100);
@@ -350,9 +368,9 @@ export class SurrealPersistence implements IPersistence {
     });
     if (!record.id) return;
     try {
-      await this.awaiter("merge" + record.id);
+      await this.awaiter("merge_" + record.id);
       const query = resolveMergeQuery(record);
-      logger.log({ at: "SurrealPersistence.merge", record, query });
+      logger.log({ at: "SurrealPersistence.merge - query", record, query });
       const result = await this.instance?.query(query);
       logger.log({
         at: "SurrealPersistence.merge - result",
@@ -365,6 +383,10 @@ export class SurrealPersistence implements IPersistence {
       logger.error({ at: "SurrealPersistence.merge", e });
     } finally {
       this.isProcessingOperation = false;
+      logger.log({
+        at: "SurrealPersistence.merge - finally",
+        isProcessingOperation: this.isProcessingOperation
+      });
     }
     return null;
   }
@@ -381,7 +403,7 @@ export class SurrealPersistence implements IPersistence {
    */
   async delete(resourceId: IRecordId): Promise<any> {
     try {
-      await this.awaiter();
+      await this.awaiter("delete_" + resourceId);
       // const result = await this.instance?.delete(resourceId.toString());
       const result = await this.instance?.query(`DELETE ${resourceId};`);
       logger.log({ at: "SurrealPersistence.delete", resourceId, result });
@@ -408,31 +430,39 @@ export class SurrealPersistence implements IPersistence {
     });
   }
 
-  bulkEditTemp<T extends IResource | IMetaResource>(
+  async bulkEditTemp<T extends IResource | IMetaResource>(
     resource: Resource,
     records: T[]
   ): Promise<any> | undefined {
-    const changedProperties = { ...records[0] };
-    delete changedProperties.id;
-    logger.log({
-      at: "SurrealPersistence.bulkEditTemp",
-      resource,
-      changedProperties,
-      records
-    });
-    return this.instance?.query(
-      `UPDATE ${resource} MERGE $properties where id in $ids;`,
-      {
-        properties: changedProperties,
-        ids: records.map((x) => x.id)
-      }
-    );
+    try {
+      await this.awaiter("bulkEditTemp_" + resource);
+      const changedProperties = { ...records[0] };
+      delete changedProperties.id;
+      logger.log({
+        at: "SurrealPersistence.bulkEditTemp",
+        resource,
+        changedProperties,
+        records
+      });
+      return this.instance?.query(
+        `UPDATE ${resource} MERGE $properties where id in $ids;`,
+        {
+          properties: changedProperties,
+          ids: records.map((x) => x.id)
+        }
+      );
+    } catch (e) {
+      logger.error({ at: "SurrealPersistence.bulkEditTemp", e });
+    } finally {
+      this.isProcessingOperation = false;
+    }
+    return undefined;
   }
 
   async query(query: string, params: any): Promise<any> {
     // return this.instance?.query(query, params);
     try {
-      await this.awaiter();
+      await this.awaiter("query_" + query);
       query = commonQueryReplacements(query);
       const result = await this.instance?.query_raw(query, params);
       logger.log({ at: "SurrealPersistence.query", query, params, result });
@@ -455,7 +485,7 @@ export class SurrealPersistence implements IPersistence {
    */
   async select(resourceId: IRecordId, properties?: string[]): Promise<any> {
     try {
-      await this.awaiter("select" + resourceId);
+      await this.awaiter("select_" + resourceId);
       const props = properties ?? [];
       const selectClause =
         props.length > 0 ? `SELECT ${props.join(", ")}` : "SELECT *";
@@ -476,7 +506,7 @@ export class SurrealPersistence implements IPersistence {
     params?: IResourceSelectParams
   ): Promise<any> {
     try {
-      await this.awaiter("selectMany" + resource);
+      await this.awaiter("selectMany_" + resource);
       const properties = params?.properties ?? [];
       if (params?.searchType === SearchType.SEMANTIC && params?.search?.query) {
         // this.queryEmbedding = await FeatureExtractor.generateVectorEmbeddings(
@@ -510,16 +540,16 @@ export class SurrealPersistence implements IPersistence {
       if (params?.offset) query += ` START ${params.offset}`;
       if (resource !== Resource.mutation) {
         logger.log({
-          at: "SurrealPersistence.selectMany",
+          at: "SurrealPersistence.selectMany - query",
           resource,
           query,
           params
         });
-        console.time("SurrealPersistence.selectMany");
+        // console.time("SurrealPersistence.selectMany");
       }
       const result = await this.instance?.query_raw(query, params);
       if (resource !== Resource.mutation) {
-        console.timeEnd("SurrealPersistence.selectMany");
+        // console.timeEnd("SurrealPersistence.selectMany");
         logger.log({
           at: "SurrealPersistence.selectMany - result",
           result,

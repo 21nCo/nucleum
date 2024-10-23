@@ -103,6 +103,7 @@
     _md = { blocks: recursivelyExtractAllChildrenIntoArray(node) };
     reCalculateStructure(_md, true);
     setTimeout(() => {
+      md = _md;
       dispatch("ready");
     }, 1000);
     // dispatch("ready");

@@ -57,7 +57,7 @@ export const rearrangeOnAxis: Action<HTMLElement, RearrangeParams> = (
   }
 
   function handleMouseMove(event: MouseEvent) {
-    if (!params.enabled) return;
+    if (!params.enabled || isTextElementFocused()) return;
     lastMouseX = event.clientX;
     if (!isDragging && Math.abs(lastMouseX - (startX ?? 0)) > moveThreshold) {
       isDragging = true;
@@ -130,6 +130,14 @@ export const rearrangeOnAxis: Action<HTMLElement, RearrangeParams> = (
   };
 };
 
+function isTextElementFocused() {
+  const activeElement = document.activeElement;
+  return (
+    activeElement instanceof HTMLInputElement ||
+    activeElement instanceof HTMLTextAreaElement
+  );
+}
+
 interface DragDropOptions {
   listId: string;
   draggedOverClass: string;
@@ -161,14 +169,6 @@ export const reorderList: Action<HTMLElement, DragDropOptions> = (
     " "
   );
   let listId = options?.listId || "default-list";
-
-  function isTextElementFocused() {
-    const activeElement = document.activeElement;
-    return (
-      activeElement instanceof HTMLInputElement ||
-      activeElement instanceof HTMLTextAreaElement
-    );
-  }
 
   function handleDragStart(e: DragEvent) {
     if (isTextElementFocused()) {
