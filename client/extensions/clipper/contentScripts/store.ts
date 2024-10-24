@@ -35,7 +35,8 @@ import {
   type IKindleBook,
   type IKindleHighlight,
   type ITextClip,
-  type IVideoTimestampClip
+  type IVideoTimestampClip,
+  type INodePropertyValue
 } from "$lib/client/products/memotron/node/node.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import {
@@ -497,6 +498,51 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       resolve(result);
     });
   }
+
+  async updatePageProperty(property: INodePropertyValue) {
+    const webpage = this.get();
+    if (!webpage.id) return;
+    const properties = webpage.properties?.filter((x) => !isSameResource(x, property));
+    const newProperties = [...(properties ?? []), property];
+    await this.updateProperties(webpage.id, newProperties);
+    this.update((n) => {
+      n.properties = [...newProperties];
+      return n;
+    });
+  }
+
+  async updateClipProperty(id: IRecordId, property: INodePropertyValue) {
+    logger.debug({ at: "updateClipProperty", id, property });
+    const webpage = this.get();
+    if (!webpage.id) return;
+    const clip = webpage.clips?.find(resourceInList(id));
+    if (!clip) return;
+    const properties = clip.properties?.filter((x) => !isSameResource(x, property));
+    const newProperties = [...(properties ?? []), property];
+    await this.updateProperties(id, newProperties);
+    this.update((n) => {
+      n.clips = n.clips?.map((c) => {
+        if (isSameResource(c, id)) {
+          c.properties = [...newProperties];
+        }
+        return c;
+      });
+      return n;
+    });
+  }
+
+  private async updateProperties(id: IRecordId, properties: INodePropertyValue[]) {
+    return nodeStore.modify(
+      id,
+      {
+        properties: [...properties]
+      },
+      {
+        isDebounced: true,
+        debounceKey: "propertyUpdate" + id.toString()
+      }
+    );
+  };
 }
 export const webpage = new WebpageStore();
 

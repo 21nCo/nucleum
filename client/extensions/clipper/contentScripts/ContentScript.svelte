@@ -15,7 +15,10 @@
   import { webpage, toolbarState, feedbackPane, syncStore } from "./store";
   import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
   import ExtensionBaseLayer from "$lib/client/extensions/ExtensionBaseLayer.svelte";
-  import { linker } from "$lib/client/products/memotron/linking/link.store";
+  import {
+    linker,
+    linkTagStore
+  } from "$lib/client/products/memotron/linking/link.store";
   import ScreenShot from "./ScreenShot.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
   import { enumToString } from "$lib/shared/utils/text.utils";
@@ -58,6 +61,7 @@
   }
 
   async function onMutationRelayFromSidePanel(data: any) {
+    logger.debug({ at: "onMutationRelayFromSidePanel", data });
     let result;
     if (data.action === "link") {
       result = await webpage.linkClip(data.clipId, data.linkTo);
@@ -72,6 +76,9 @@
       result = { type: AlertType.SUCCESS };
     } else if (data.action === "delete") {
       await webpage.removeClip(data.clipId);
+      result = { type: AlertType.SUCCESS };
+    } else if (data.action === "property") {
+      await webpage.updateClipProperty(data.clipId, data.property);
       result = { type: AlertType.SUCCESS };
     }
     if (result?.type === AlertType.SUCCESS && data.clipId)
@@ -124,12 +131,13 @@
   stores={[
     nodeStore,
     collectionStore,
+    propertyStore,
+    linkTagStore,
     toolbarState,
     webpage,
     linker,
     highlightStore,
-    fileStore,
-    propertyStore
+    fileStore
   ]}
   on:login={(e) => (loginNotification = e.detail.code)}
 >

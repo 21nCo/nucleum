@@ -37,7 +37,8 @@
     element: "div",
     class: "max-h-96 h-96",
     parentBgIndex: parentBackgroundIndex,
-    isSpanToTriggerWidth: true
+    isSpanToTriggerWidth: true,
+    isUseAbsolutePositioning: true
   };
   $: options =
     property.config?.options?.filter((x) =>

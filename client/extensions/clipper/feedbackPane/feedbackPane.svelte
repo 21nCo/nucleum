@@ -28,7 +28,14 @@
 
   $: linkItems = resolveLinkItems($webpage.links, $feedbackPane.focusedClip);
 
+  $: propertyValues = resolvePropertyValues($feedbackPane.focusedClip?.id);
+
   let notesTimeout: any;
+
+  function resolvePropertyValues(clip: IRecordId | undefined) {
+    if (!clip) return $webpage.properties;
+    const clipProperties = $feedbackPane.focusedClip?.properties;
+  }
 
   function resolveLinkItems(links: IRecordId[], focusedClip: IRecordId) {
     if (!focusedClip) return links;
@@ -108,6 +115,20 @@
   function onLinkClick(e: CustomEvent) {
     console.log("link click", e.detail);
   }
+
+  function onPropertyUpdate(e: CustomEvent) {
+    if (!e.detail || !e.detail?.id || e.detail?.value === undefined) return;
+    if ($feedbackPane.focusedClip)
+      webpage.updateClipProperty($feedbackPane.focusedClip.id, {
+        id: e.detail.id,
+        value: e.detail.value
+      });
+    else
+      webpage.updatePageProperty({
+        id: e.detail.id,
+        value: e.detail.value
+      });
+  }
 </script>
 
 <FeedbackPaneBase bind:isHovering on:hover={onHover}>
@@ -140,6 +161,9 @@
     <LinkBoxOnClipper on:link={onLink} />
     <LinkItems
       links={linkItems}
+      {propertyValues}
+      isExpandable={true}
+      on:propertyChange={onPropertyUpdate}
       on:click={onLinkClick}
       on:unlink={onUnlink}
       isWrapItems={true}

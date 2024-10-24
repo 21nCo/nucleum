@@ -81,10 +81,38 @@ class CollectionStore extends ResourceStore<ICollection> {
    * @param collections - ids of collections - can be any type of collection.
    * @returns
    */
-  async resolveTypes(collections: IRecordId[]) {
+  async resolveTypes(collections: IRecordId[], isFromExtension: boolean = false) {
     let types: ICollectionExpanded[] = [];
     if (!collections) return types;
-    const result = await flux.selectMany(Resource.collection, {
+
+    if (isFromExtension) {
+      const result = await this.select(collections[0]);
+      if (!result) return types;
+      console.log({ at: "resolveTypes - isFromExtension", result });
+      if (!result || result.type !== CollectionType.TYPED) return [];
+      if (!result.properties && !result.typeToExtend) return [result];
+      let typeToExtend: ICollection | undefined;
+      if (result.typeToExtend) {
+        typeToExtend = await this.select(result.typeToExtend);
+      }
+      const properties = await propertyStore.selectMany({
+        filters: {
+          id: [...(result.properties ?? []), ...(typeToExtend?.properties ?? [])]
+        }
+      });
+      console.log({ at: "resolveTypes - isFromExtension", typeToExtend, properties });
+      if (!typeToExtend) return [{ ...result, properties }];
+      const mainProps = result.properties?.map((x) => {
+        const property = properties.find(resourceInList(x));
+        return { ...property };
+      });
+      const extendedProps = typeToExtend.properties?.map((x) => {
+        const property = properties.find(resourceInList(x));
+        return { ...property };
+      });
+      return [{ ...result, properties: mainProps, typeToExtend, extendProperties: extendedProps }];
+    }
+    const result = await this.selectMany({
       properties: [
         "*",
         "typeToExtend.* as typeToExtend",

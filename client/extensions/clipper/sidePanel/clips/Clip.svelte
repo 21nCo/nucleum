@@ -6,7 +6,7 @@
     type IWebScreenshotClip
   } from "$lib/client/products/memotron/node/node.type";
   import { TimeFormat } from "$lib/client/types/time.type";
-  import { formatSeconds } from "$lib/client/utils/time.utils";
+  import { formatDatetime, formatSeconds } from "$lib/client/utils/time.utils";
   import InlineMarkdownTextInput from "$lib/client/components/markdown/content/InlineMarkdownTextInput.svelte";
   import { AlertType } from "$lib/client/types/notification.type";
   import LinkBoxOnClipper from "$lib/client/products/memotron/common/linkbox/LinkBoxOnClipper.svelte";
@@ -20,6 +20,7 @@
   import FileView from "$lib/client/components/files/FileView.svelte";
   import TextClip from "./TextClip.svelte";
   import { hoverable } from "$lib/client/actions/hover.action";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
 
   const dispatch = createEventDispatcher();
 
@@ -29,8 +30,10 @@
   let feedback: string | { message: string; type: AlertType } = "";
   let notes: string = "";
   let isHovered: boolean = false;
+  let notesSavingFeedbackTimeout: any;
   refreshDerivedData();
   async function onNotesChange(e: CustomEvent) {
+    if (notesSavingFeedbackTimeout) clearTimeout(notesSavingFeedbackTimeout);
     feedback = "Saving...";
     const result = await relayToContentScript({
       event: ClipperExtensionEvent.MUTATION_RELAY,
@@ -40,7 +43,8 @@
         notes
       }
     });
-    setTimeout(() => {
+    clip.notes = notes;
+    notesSavingFeedbackTimeout = setTimeout(() => {
       feedback = "Notes saved!";
     }, 1000);
   }
@@ -106,11 +110,23 @@
     });
     dispatch("delete");
   }
+
+  async function onPropertyChanges(e: CustomEvent) {
+    if (!e.detail || !e.detail?.id || e.detail?.value === undefined) return;
+    const result = await relayToContentScript({
+      event: ClipperExtensionEvent.MUTATION_RELAY,
+      data: {
+        action: "property",
+        clipId: clip.id,
+        property: e.detail
+      }
+    });
+  }
 </script>
 
 <button
   on:click={onClick}
-  class="relative flex flex-col gap-2 border border-brs3 rounded-md p-2 hover:border-aps1"
+  class="relative flex flex-col gap-2 border border-brs3 rounded-md p-3 hover:border-aps1"
   use:hoverable={{
     onHover: (e) => {
       isHovered = e;
@@ -118,24 +134,35 @@
   }}
 >
   {#if clip.contentType === NodeType.TEXT_CLIP || clip.contentType === NodeType.WEB_SCREENSHOT_CLIP}
-    <div class="flex flex-col gap-2">
+    <div class="flex flex-col gap-2 text-left">
       <TextClip {clip} on:click on:keydown />
-      {#if isHovered}
-        <div
-          class="absolute top-0 right-0 m-1 flex gap-1 bg-bgs1 rounded-md px-1 border border-brs3 items-center"
-        >
-          <LinkActionOnClipper links={clip?.links} bind:isLinkboxOpened />
-          <Button
-            icon={clip?.notes ? "document-text" : "document"}
-            tooltip={clip?.notes ? "View notes" : "Add notes"}
-            on:click={(e) => {
-              isNotesOpened = !isNotesOpened;
-              e.stopPropagation();
-            }}
-          />
-          <Button icon="trash" tooltip="Delete clip" on:click={onDelete} />
-        </div>
-      {/if}
+      <div
+        class="flex gap-1 justify-between bg-bgs1 rounded-md px-1 h-8 items-center"
+      >
+        <span class="text-b4 text-fgs2">
+          {formatDatetime($userPreferences, clip.createdAt)}
+        </span>
+        {#if isHovered || clip?.notes || clip?.links.length}
+          <span class="flex gap-1 items-center">
+            {#if isHovered || clip?.links.length}
+              <LinkActionOnClipper links={clip?.links} bind:isLinkboxOpened />
+            {/if}
+            {#if isHovered || clip?.notes}
+              <Button
+                icon={clip?.notes ? "document-text" : "document"}
+                tooltip={clip?.notes ? "View notes" : "Add notes"}
+                on:click={(e) => {
+                  isNotesOpened = !isNotesOpened;
+                  e.stopPropagation();
+                }}
+              />
+            {/if}
+            {#if isHovered}
+              <Button icon="trash" tooltip="Delete clip" on:click={onDelete} />
+            {/if}
+          </span>
+        {/if}
+      </div>
     </div>
   {:else if clip.contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP && "timestamp" in clip.body}
     <span class="flex gap-4 justify-center items-center">
@@ -169,9 +196,12 @@
       <LinkBoxOnClipper on:link={onLinkAction} />
       <LinkItems
         links={clip?.links}
+        propertyValues={clip?.properties}
         isWrapItems={true}
+        isExpandable={true}
         on:click
         on:unlink={(e) => onLinkAction(e, "unlink")}
+        on:propertyChange={onPropertyChanges}
       />
     {/key}
   {/if}
