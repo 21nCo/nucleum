@@ -16,8 +16,9 @@
   } from "$lib/client/utils/extension.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { getPort } from "@plasmohq/messaging/port";
+  import { cn } from "$lib/client/utils/ui.utils";
   let clipCount = 0;
-
+  export let isRenderedAsOverlay: boolean = false;
   const channel = getPort("channel");
 
   function refreshTimestamps() {
@@ -172,17 +173,17 @@
     await webpage.saveClip(clipItem);
     clipCount++;
     //TODO - show feedback
-    relayToSidePanel({
-      event: ClipperExtensionEvent.CLIPS_CHANGED,
-      data: $webpage.clips
-    });
   }
   function resizeEventListener() {
     refreshTimestamps();
   }
 </script>
 
-<div class="flex w-full h-full justify-center items-center px-4 py-2">
+<div
+  class={cn("flex w-full h-full justify-center items-center px-4 py-2", {
+    "ml-24": isRenderedAsOverlay
+  })}
+>
   <button
     class="flex items-center justify-center rounded-md bg-bgs1 h-8"
     on:click={() => {

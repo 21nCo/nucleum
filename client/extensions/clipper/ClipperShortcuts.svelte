@@ -3,11 +3,11 @@
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   let defaultKeyMap: KeyboardShortcut[] = [
-    {
-      key: "s",
-      modifiers: ["ctrl"],
-      action: "save"
-    },
+    // {
+    //   key: "j",
+    //   modifiers: ["ctrl"],
+    //   action: "save"
+    // },
     {
       key: "m",
       modifiers: ["ctrl"],

@@ -7,12 +7,12 @@
 
 <div
   {id}
-  class="bg-bgs2 rounded-md p-2 text-b2 hover:bg-bgs3"
+  class="rounded-md text-b2"
   role="button"
   tabindex="0"
   on:click
   on:keydown
   style="cursor: pointer;"
 >
-  <WebClipPreview node={clip} />
+  <WebClipPreview node={clip} truncateLength={200} />
 </div>

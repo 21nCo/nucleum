@@ -1,15 +1,32 @@
 <script lang="ts">
   import { toolbarState } from "../contentScripts/store";
-  import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   import { Placement } from "$lib/client/types/direction.enum";
   import { cn } from "$lib/client/utils/ui.utils";
-
+  import { hoverable } from "$lib/client/actions/hover.action";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
   export let isHovering = false;
+
+  /**
+   * To prevent default shortcuts interfering with the feedback pane linking or notes.
+   *
+   * Ex: Pressing I on Youtube minimizes the player and closes the feedback pane.
+   * @param e
+   */
+  function onKey(e: KeyboardEvent) {
+    e.stopPropagation();
+  }
 </script>
 
-<HoverableElement
-  bind:isHovering
-  on:hover
+<button
+  use:hoverable={{
+    onHover: (e) => {
+      isHovering = e;
+      dispatch("hover", e);
+    }
+  }}
+  on:keydown={onKey}
+  on:keyup={onKey}
   class={cn(
     "fixed w-96 flex flex-col gap-4 p-4 bg-bgs1 shadow-md rounded-md border border-brs2",
     {
@@ -20,4 +37,4 @@
   )}
 >
   <slot />
-</HoverableElement>
+</button>

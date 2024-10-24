@@ -7,6 +7,8 @@
   import ColorLayer from "./ColorLayer.svelte";
   import GlassSkin from "./GlassSkin.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
+  // Do not remove this import as it is required for the global css propagation in case of custom colors are absent - ex: PanelSwitcher
+  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   export let extensionContext: string | undefined = undefined;
   let fontFamily: string = "Avenir";
   let defaultRootFontSize: number = 16;

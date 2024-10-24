@@ -6,10 +6,14 @@
   export let code: number;
   $: product = extractProduct(window.location.hostname);
   $: isSelfPage = product.product === "memotron";
+  $: isOAuthPage =
+    window.location.hostname.includes("accounts.google.com") ||
+    window.location.hostname.includes("appleid.apple.com");
   $: isLoginInProgress =
-    isSelfPage &&
-    (window.location.pathname.includes("signup") ||
-      window.location.pathname.includes("oauth"));
+    (isSelfPage &&
+      (window.location.pathname.includes("signup") ||
+        window.location.pathname.includes("oauth"))) ||
+    isOAuthPage;
   $: console.log({ product, isSelfPage, isLoginInProgress, code });
 </script>
 
@@ -22,7 +26,7 @@
         {:else if code === -2}
           Logged out. Please login again to continue
         {:else if isLoginInProgress}
-          Logging in...
+          Logging in progress...
         {/if}
       </div>
     {:else}

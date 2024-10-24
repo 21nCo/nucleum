@@ -10,12 +10,18 @@
   import TextClipPreview from "./TextClipPreview.svelte";
   export let node: ITextClip | IWebScreenshotClip | IKindleHighlight;
   export let isNodePageContext: boolean = false;
+  export let truncateLength: number | undefined = undefined;
   const contentPreview = resolveContentPreview(node);
 </script>
 
 <div class="w-full h-full flex justify-center items-center">
   {#if node.contentType === NodeType.TEXT_CLIP || node.contentType === NodeType.KINDLE_HIGHLIGHT}
-    <TextClipPreview {node} {contentPreview} {isNodePageContext} />
+    <TextClipPreview
+      {node}
+      {contentPreview}
+      {isNodePageContext}
+      {truncateLength}
+    />
   {:else if node.contentType === NodeType.WEB_SCREENSHOT_CLIP && node.body.file}
     <!-- <img
       alt="..."

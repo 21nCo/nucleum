@@ -27,6 +27,7 @@
   import { relayToBackgroundScript } from "$lib/client/utils/extension.utils";
   import { fileStore } from "$lib/client/components/files/file.store";
   import { propertyStore } from "$lib/client/products/memotron/collection/properties/property.store";
+  import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   export let id: string;
   let textClipperRef: any;
   let isSnipActive: boolean = false;
@@ -56,7 +57,7 @@
     };
   }
 
-  async function onClipMutationFromSidePanel(data: any) {
+  async function onMutationRelayFromSidePanel(data: any) {
     let result;
     if (data.action === "link") {
       result = await webpage.linkClip(data.clipId, data.linkTo);
@@ -66,9 +67,15 @@
       //TODO - result
       await webpage.persistClipNotes(data.clipId, data.notes);
       result = { id: data.clipId, type: AlertType.SUCCESS };
+    } else if (data.action === "webpageNotes") {
+      $webpage.notes = data.notes;
+      result = { type: AlertType.SUCCESS };
+    } else if (data.action === "delete") {
+      await webpage.removeClip(data.clipId);
+      result = { type: AlertType.SUCCESS };
     }
-    if (result?.type === AlertType.SUCCESS)
-      return $webpage.clips?.find((clip) => clip.id === data.clipId);
+    if (result?.type === AlertType.SUCCESS && data.clipId)
+      return $webpage.clips?.find(resourceInList(data.clipId));
     else return result;
   }
 
@@ -99,8 +106,8 @@
             await onSaveClick();
             return { status: "success", message: "Page saved" };
 
-          case ClipperExtensionEvent.CLIP_MUTATION:
-            const result = await onClipMutationFromSidePanel(message.data);
+          case ClipperExtensionEvent.MUTATION_RELAY:
+            const result = await onMutationRelayFromSidePanel(message.data);
             return { status: "success", message: "Clip mutation", result };
         }
       } catch (error) {

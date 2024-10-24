@@ -103,3 +103,22 @@ export async function paintQRCode(
     }
   });
 }
+
+
+export function convertToRGBA(color: string, opacity: number) {
+  if (color.startsWith('rgba')) {
+      return color.replace(/[\d.]+\)$/g, `${opacity})`);
+  }
+  if (color.startsWith('#')) {
+      const r = parseInt(color.slice(1, 3), 16);
+      const g = parseInt(color.slice(3, 5), 16);
+      const b = parseInt(color.slice(5, 7), 16);
+      return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+  }
+  const tempElem = document.createElement('div');
+  tempElem.style.color = color;
+  document.body.appendChild(tempElem);
+  const rgbColor = getComputedStyle(tempElem).color;
+  document.body.removeChild(tempElem);
+  return rgbColor.replace('rgb', 'rgba').replace(')', `, ${opacity})`);
+}

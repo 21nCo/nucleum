@@ -4,10 +4,12 @@
     type INode,
     NodeType
   } from "$lib/client/products/memotron/node/node.type";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { cn, convertToRGBA } from "$lib/client/utils/ui.utils";
+  import { truncateString } from "$lib/shared/utils/text.utils";
   export let node: INode;
   export let contentPreview: string;
   export let isNodePageContext: boolean = false;
+  export let truncateLength: number | undefined = undefined;
   let textHightlightColor = resolveTextHighlightColor(node);
 
   function getKindleHighlightRGBA(color: string, opacity: number) {
@@ -23,9 +25,10 @@
 
   function resolveTextHighlightColor(item: any) {
     if (item.contentType === NodeType.TEXT_CLIP && item.body.highlighterId) {
-      return $highlightStore?.highlighters?.find(
+      const color = $highlightStore?.highlighters?.find(
         (x) => x.id === item.body.highlighterId
       )?.color;
+      return color ? convertToRGBA(color, 0.4) : undefined;
     } else if (
       item.contentType === NodeType.KINDLE_HIGHLIGHT &&
       item.body.color
@@ -43,11 +46,11 @@
   })}
 >
   <span
-    class="relative text-left text-b2 text-white"
+    class="relative text-left text-b2"
     style="background-color: {textHightlightColor
       ? textHightlightColor
       : 'transparent'};"
   >
-    {contentPreview}
+    {truncateString(contentPreview, truncateLength)}
   </span>
 </div>

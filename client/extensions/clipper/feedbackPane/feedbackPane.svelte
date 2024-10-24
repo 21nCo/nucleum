@@ -15,7 +15,8 @@
   import type { IRecordId } from "$lib/client/types/data.type";
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   import NodeThumbnailTweetPreview from "$lib/client/products/memotron/node/thumbnail/NodeThumbnailTweetPreview.svelte";
-  let notes: string = "";
+  import { Placement } from "$lib/client/types/direction.enum";
+  let notes: string = $feedbackPane.focusedClip?.notes || $webpage?.notes || "";
   let autoCloseDuration = 4;
   let closeTimer: any;
   let closeActionTimestamp: number;
@@ -117,7 +118,9 @@
         props={{
           label: `Link this ${contentTypeStr}`,
           tooltip: {
-            body: `Link this ${contentTypeStr} to a node or add it to a collection by searching and clicking`
+            body: `Link this ${contentTypeStr} to a node or add it to a collection by searching and clicking`,
+            isUseAbsolutePositioning: true,
+            placement: Placement.TopCenter
           }
         }}
       />

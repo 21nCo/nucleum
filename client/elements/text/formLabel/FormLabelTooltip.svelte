@@ -1,6 +1,5 @@
 <script lang="ts">
   import { Size } from "$lib/client/types/size.enum";
-  import type { FormLabelInfoTooltip } from "$lib/client/types/text.type";
   import {
     renderPopover,
     trackPosition
@@ -9,7 +8,8 @@
   import Icon from "../../Icon.svelte";
   import { Placement } from "$lib/client/types/direction.enum";
   import Tooltip from "../Tooltip.svelte";
-  export let info: FormLabelInfoTooltip;
+  import type { InputLabelInfoToolTip } from "$lib/client/types/input.type";
+  export let info: InputLabelInfoToolTip;
   let isHovered: boolean = false;
   let isClicked: boolean = false;
   let toolTipRef: any;
@@ -27,7 +27,8 @@
     renderPopover({
       triggerRef: buttonRef,
       popRef: toolTipRef,
-      placement: Placement.Right
+      placement: info?.placement ?? Placement.Right,
+      isUseAbsolutePositioning: info?.isUseAbsolutePositioning
     });
   }
   function handlePositionChange(event: CustomEvent) {

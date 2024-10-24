@@ -24,7 +24,9 @@ export function isSameResource(
   item1: IRecordId | { id: IRecordId },
   item2: IRecordId | { id: IRecordId }
 ) {
-  if (typeof item1 !== "string" && typeof item2 !== "string") {
+  if (typeof item1 === "string" && typeof item2 === "string") {
+    return item1 === item2;
+  } else if (typeof item1 !== "string" && typeof item2 !== "string") {
     if ("tb" in item1 && "tb" in item2) {
       return item1.tb === item2.tb && item1.id === item2.id;
     } else if ("tb" in item1) {
@@ -34,8 +36,14 @@ export function isSameResource(
     } else {
       return item1.id.toString() === item2.id.toString();
     }
+  } else if (typeof item1 === "string" && typeof item2 !== "string") {
+    if ("tb" in item2) return item2.toString() === item1;
+    return item2.id.toString() === item1;
+  } else if (typeof item2 === "string" && typeof item1 !== "string") {
+    if ("tb" in item1) return item1.toString() === item2;
+    return item1.id.toString() === item2;
   }
-  return item1.toString() === item2.toString();
+  return false;
 }
 
 /**
@@ -44,6 +52,7 @@ export function isSameResource(
  * @returns A function that takes an item and returns true if it is the same resource as the given id.
  */
 export function resourceInList(toCheck: IRecordId | { id: IRecordId }) {
+  if (!toCheck) return () => false;
   return (item: { id: IRecordId } | IRecordId) => {
     return isSameResource(item, toCheck);
   };

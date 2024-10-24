@@ -58,6 +58,7 @@ import {
 import { urlMap } from "$lib/client/products/memotron/common/urlMap";
 import { extensionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
 import { FluxMethod } from "$lib/client/components/flux/flux.type";
+import { isSameResource, resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
 
 class WebpageStore extends ObservableStore<IWebpageStore> {
   previousValue: string = "";
@@ -261,9 +262,15 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     logger.log({ at: "saveClip", response });
     const clipNode = response[0] as IWebScreenshotClip;
     if (!clipNode) return;
+    const clips = [...(this.get().clips ?? []), { ...clipNode, links: [] }];
     this.update((n) => {
-      n.clips = [...(n.clips ?? []), { ...clipNode, links: [] }];
+      n.clips = clips;
       return n;
+    });
+    appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
+    relayToSidePanel({
+      event: ClipperExtensionEvent.CLIPS_CHANGED,
+      data: clips
     });
     if (clip.contentType === NodeType.WEB_SCREENSHOT_CLIP) {
       feedbackPane.focus(clipNode, {
@@ -397,16 +404,16 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
 
   async linkClip(from: IRecordId, to: IRecordId) {
     const webpage = this.get();
-    const clip = webpage?.clips?.find((c) => c.id === from);
+    const clip = webpage?.clips?.find(resourceInList(from));
     if (!clip) return;
-    const isAlreadyLinked = clip.links?.some((l) => l === to);
+    const isAlreadyLinked = clip.links?.some(resourceInList(to));
     if (isAlreadyLinked)
       return { message: "Already linked", type: AlertType.ERROR };
     const response = await linker.link(from, to);
     if (!response) return { message: "Linking failed", type: AlertType.ERROR };
     this.update((n) => {
       n.clips = n.clips?.map((c) => {
-        if (c.id.toString() === from.toString()) {
+        if (isSameResource(c, from)) {
           c.links = [...(c.links ?? []), to];
         }
         return c;
@@ -444,6 +451,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       return n;
     });
     removeHighlight(id);
+    appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
     return { message: "Clip removed!", type: AlertType.SUCCESS };
   }
   /**

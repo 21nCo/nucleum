@@ -69,7 +69,7 @@
     "fixed bg-bgs1 border border-brs3 rounded-full min-h-fit flex gap-3  justify-center items-center shadow-md",
     {
       "right-0 top-1/2 flex-col w-11 2k:w-12 mr-4 2k:mr-6 py-3 transform -translate-y-1/2 space-y-1.5":
-        $toolbarState.position === Placement.Right,
+        $toolbarState.position === Placement.Right || !$toolbarState.position,
       "bottom-0 right-1/2 transform translate-x-1/2 flex-row py-2 mb-4 px-6":
         $toolbarState.position === Placement.Bottom
     }
@@ -204,7 +204,10 @@
       let val;
       if ($toolbarState.position === Placement.Right) {
         val = Placement.Bottom;
-      } else if ($toolbarState.position === Placement.Bottom) {
+      } else if (
+        $toolbarState.position === Placement.Bottom ||
+        !$toolbarState.position
+      ) {
         val = Placement.Right;
       }
       toolbarState.changePosition(val);
