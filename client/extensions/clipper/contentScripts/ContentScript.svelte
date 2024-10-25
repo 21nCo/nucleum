@@ -33,6 +33,7 @@
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   export let id: string;
   let textClipperRef: any;
+  let extensionBaseRef: ExtensionBaseLayer;
   let isSnipActive: boolean = false;
   let loginNotification: number | null = null;
   $: contentType = resolveContentTypeForUrl($webpage.url);
@@ -116,6 +117,9 @@
           case ClipperExtensionEvent.MUTATION_RELAY:
             const result = await onMutationRelayFromSidePanel(message.data);
             return { status: "success", message: "Clip mutation", result };
+          case ExtensionEvent.MUTATION:
+            await extensionBaseRef.loadInMemoryStore(message.data?.resource);
+            return { status: "success", message: "In memory store reloaded" };
         }
       } catch (error) {
         console.error("Error handling message:", error);
@@ -127,6 +131,7 @@
 </script>
 
 <ExtensionBaseLayer
+  bind:this={extensionBaseRef}
   {id}
   stores={[
     nodeStore,

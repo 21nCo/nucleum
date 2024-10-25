@@ -11,20 +11,27 @@
   import { collectionStore } from "../../collection/collection.store";
   import PropertiesListView from "../../collection/properties/PropertiesListView.svelte";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+  import LinkTagger from "../../linking/LinkTagger.svelte";
+  import type { INodeLinkThumb } from "../../node/node.type";
+  import { linker } from "../../linking/link.store";
+  import LinkTags from "../../linking/LinkTags.svelte";
   const dispatch = createEventDispatcher();
   export let links: IRecordId[];
   export let propertyValues: INodePropertyValue[] = [];
   export let isWrapItems: boolean = false;
   export let parentBgIndex: number = 1;
   export let isExpandable: boolean = false;
+  export let nodeId: IRecordId | undefined = undefined;
   let expand: IRecordId | null = null;
   let expansionState:
     | "not-type"
     | "node"
     | "no-props"
     | "has-props"
-    | "loading" = "loading";
+    | "loading"
+    | "error" = "loading";
   let types: any[] = [];
+  let link: INodeLinkThumb;
   $: _links = links?.filter(removeDuplicatesFilter) ?? [];
 
   async function refreshExpansion(item: IRecordId) {
@@ -38,6 +45,23 @@
         expansionState = "has-props";
       } else {
         expansionState = "not-type";
+      }
+    } else if (type === Resource.node) {
+      if (!nodeId) {
+        expansionState = "error";
+        return;
+      }
+      const linkResult = await linker.selectMany({
+        filters: {
+          in: nodeId.toString(),
+          out: item.toString()
+        }
+      });
+      if (linkResult && isValidArrayWithData(linkResult)) {
+        link = linkResult[0];
+        expansionState = "node";
+      } else {
+        expansionState = "error";
       }
     }
   }
@@ -59,6 +83,7 @@
           if (isExpandable) {
             expand = expand === item ? null : item;
             if (expand) refreshExpansion(item);
+            e.stopPropagation();
           } else {
             dispatch("click", {
               item,
@@ -73,20 +98,27 @@
     {/each}
   </div>
   {#if isExpandable && expand}
-    {#if expansionState === "loading"}
-      <div class="flex justify-center items-center w-full h-full">
-        loading...
-      </div>
-    {:else if expansionState === "not-type"}
-      <div class="flex justify-center items-center w-full h-full">
-        Not a typed collection.
+    {#if expansionState === "loading" || expansionState === "not-type" || expansionState === "no-props" || expansionState === "error"}
+      <div
+        class={cn("flex justify-center items-center w-full h-full", {
+          "text-ars1": expansionState === "error"
+        })}
+      >
+        {#if expansionState === "loading"}
+          loading...
+        {:else if expansionState === "not-type"}
+          Not a typed collection.
+        {:else if expansionState === "no-props"}
+          No properties found.
+        {:else if expansionState === "error"}
+          Something went wrong.
+        {/if}
       </div>
     {:else if expansionState === "node"}
-      <div class="flex justify-center items-center w-full h-full">node</div>
-    {:else if expansionState === "no-props"}
-      <div class="flex justify-center items-center w-full h-full">
-        No properties found.
-      </div>
+      <LinkTagger bind:link />
+      {#if link?.tags && link.tags.length > 0}
+        <LinkTags bind:link />
+      {/if}
     {:else if expansionState === "has-props"}
       <PropertiesListView
         {types}

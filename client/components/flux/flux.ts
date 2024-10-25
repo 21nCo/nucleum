@@ -39,6 +39,8 @@ import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import { resolveCurrentUserId } from "$lib/client/utils/account.utils";
 import { GlobalEvent } from "$lib/client/types/event.enum";
 import { determineIfOffline } from "$lib/client/utils/network.utils";
+import { ExtensionEvent } from "$lib/client/types/extension.type";
+import { relayToContentScript, relayToSidePanel } from "$lib/client/utils/extension.utils";
 
 class Flux {
   static _instance: Flux | null = null;
@@ -232,8 +234,16 @@ class Flux {
           }, 100);
         }
       }
-      if (!this.isExtensionEnvironment) {
+      if (this.isExtensionEnvironment) {
+          const message = {
+            event: ExtensionEvent.MUTATION,
+          data: { resource, params }
+        };
+        relayToSidePanel(message);
+        relayToContentScript(message);
+      } else {
         dispatchCustomEvent(GlobalEvent.MUTATION, { resource, params });
+
       }
       const correspondingStore = this.stores.find((x) => x.id === resource);
       if (correspondingStore?.isInMemory) {
@@ -341,7 +351,7 @@ class Flux {
     try {
       logger.log({ at: "flux.selectMany", resource, params });
       const result = await this.persistence.selectMany(resource, params);
-      logger.log({ at: "flux.selectMany - result", result });
+      logger.log({ at: "flux.selectMany - result", resource, params, result });
       return result;
     } catch (e) {
       logger.error({

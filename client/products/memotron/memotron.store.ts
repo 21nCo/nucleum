@@ -278,6 +278,9 @@ export class SearchStore {
         args: {
           resource: Resource.node,
           params: {
+            filters: {
+              contentType: [...rootNodeTypeList, ...headingNodeTypes],
+            },
             search: isValidString(query)
               ? {
                   properties: ["body", "label"],

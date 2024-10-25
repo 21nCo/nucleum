@@ -14,7 +14,8 @@ export enum FluxMethod {
   SELECT_MANY = "selectMany",
   SELECT = "select",
   MUTATION = "mutation",
-  KV_MERGE = "kvMerge"
+  KV_MERGE = "kvMerge",
+  SEARCH = "search"
 }
 
 export type IFluxMethod =
@@ -40,6 +41,10 @@ export type IFluxMethod =
     }
   | {
       method: FluxMethod.CLONE_DOWN | FluxMethod.SYNC_DOWN;
+    }
+  | {
+      method: FluxMethod.SEARCH;
+      args: IFluxSearchArgs;
     };
 
 interface IFluxSelectManyArgs {
@@ -70,4 +75,9 @@ interface IFluxInitArgs {
 interface IFluxKVMergeArgs {
   storeId: string;
   data: any;
+}
+
+interface IFluxSearchArgs {
+  storeId: string;
+  query: string;
 }

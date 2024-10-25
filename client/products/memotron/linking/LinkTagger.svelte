@@ -34,6 +34,15 @@
     searchQuery = "";
     searchInputRef?.reset();
   }
+
+  /**
+   *
+   * Note: using searchCallback instead of searchStoreId as linkTagStore is in memory store and it fails in extension environment as background script is ephemeral.
+   * @param query
+   */
+  async function searchCallback(query: string) {
+    return linkTagStore.search(query);
+  }
 </script>
 
 <button on:click|stopPropagation class="w-full">
@@ -41,7 +50,7 @@
     bind:this={searchInputRef}
     bind:value={searchQuery}
     style={InputStyle.PLAIN}
-    searchStoreId={Resource.linkTag}
+    {searchCallback}
     on:select={onselect}
     on:empty-enter={onEmptyEnter}
     emptyStateLabel="No tags found. Press enter to create a new tag"

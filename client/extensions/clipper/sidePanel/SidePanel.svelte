@@ -17,13 +17,21 @@
   import { nodeStore } from "$lib/client/products/memotron/node/node.store";
   import { collectionStore } from "$lib/client/products/memotron/collection/collection.store";
   import { webpage } from "../contentScripts/store";
-  import { linker } from "$lib/client/products/memotron/linking/link.store";
+  import {
+    linker,
+    linkTagStore
+  } from "$lib/client/products/memotron/linking/link.store";
   import account from "$lib/client/stores/account.store";
   import { resolveToken } from "$lib/client/utils/account.utils";
   import { getPort } from "@plasmohq/messaging/port";
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
   import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
   import InlineMarkdownTextInput from "$lib/client/components/markdown/content/InlineMarkdownTextInput.svelte";
+  import {
+    loadInMemoryResourceStore,
+    loadInMemoryStores
+  } from "$lib/client/components/flux/fluxExtentionMediator";
+  import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   let mode: "Clips" | "Capture" | "Notes" = "Clips";
   let title = "";
   let isPageSaved = false;
@@ -34,7 +42,7 @@
   let refreshId: number = new Date().getTime();
 
   const channel = getPort("channel");
-
+  const stores = [linkTagStore];
   async function onSavePageClick() {
     const page = await relayToContentScript({
       event: ClipperExtensionEvent.SAVE_WEBPAGE
@@ -49,6 +57,11 @@
       logger.debug({ at: "onMessage - Clips changed", message });
       clips = message.data;
       sendResponse({ status: "success", message: "Clips updated" });
+    } else if (message.event === ExtensionEvent.BOOTUP) {
+      onBootup();
+    } else if (message.event === ExtensionEvent.MUTATION) {
+      console.log({ at: "SidePanel - RELOAD_INMEMORY_STORE", message });
+      loadInMemoryStore(message.data?.resource);
     }
     return true;
   });
@@ -66,6 +79,7 @@
       event: ExtensionEvent.PAGE_STATE
     });
     refreshState(page);
+    await onBootup();
   });
 
   onDestroy(() => {
@@ -75,6 +89,7 @@
   //TODO - maintain a store with the data.
   async function refreshState(data: any) {
     logger.debug({ at: "SidePanel - refreshState", data });
+    if (!data) return;
     if (data.id) isPageSaved = true;
     else isPageSaved = false;
     if (data.clips) clips = data.clips;
@@ -103,6 +118,22 @@
     setTimeout(() => {
       feedback = "Notes saved!";
     }, 1000);
+  }
+
+  async function loadInMemoryStore(resource: Resource) {
+    logger.log({
+      at: "SidePanel.loadInMemoryStore",
+      resource
+    });
+    if (!resource) return;
+    const store = stores.find((x) => x.id === resource);
+    if (!store || !store.isInMemory || !store.loader) return;
+    await loadInMemoryResourceStore(store);
+  }
+
+  async function onBootup() {
+    logger.log({ at: "SidePanel - onBootup" });
+    await loadInMemoryStores(stores);
   }
 </script>
 

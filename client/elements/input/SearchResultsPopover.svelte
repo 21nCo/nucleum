@@ -8,6 +8,9 @@
   import type { IResource } from "$lib/client/components/flux/resourceStores/resource.type";
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
   import { flux } from "$lib/client/components/flux/flux";
+  import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
+  import { FluxMethod } from "$lib/client/components/flux/flux.type";
+  import { extensionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
   export let searchStoreId: string | undefined = undefined;
   export let searchCallback: Function | undefined = undefined;
   export let searchResultComponent: any = undefined;
@@ -103,7 +106,17 @@
       }
       return;
     }
-    if (searchStoreId) results = await flux.search(searchStoreId, value);
+    if (searchStoreId) {
+      if (isExtensionEnvironment()) {
+        results = await extensionFlux({
+          method: FluxMethod.SEARCH,
+          args: { storeId: searchStoreId, query: value }
+        });
+      } else {
+        results = await flux.search(searchStoreId, value);
+      }
+    }
+
     isSearchInProgress = false;
     if (results?.length > 0) {
       show();

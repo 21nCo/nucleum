@@ -196,6 +196,7 @@
       <LinkBoxOnClipper on:link={onLinkAction} />
       <LinkItems
         links={clip?.links}
+        nodeId={clip.id}
         propertyValues={clip?.properties}
         isWrapItems={true}
         isExpandable={true}
