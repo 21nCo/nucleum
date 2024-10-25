@@ -13,6 +13,7 @@
   import { mount } from "$lib/client/actions/mount.action";
   import Tag from "../text/Tag.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
   const dispatch = createEventDispatcher();
   export let id: string = "";
   export let placeholder: string | undefined = undefined;
@@ -87,7 +88,7 @@
     isSpanToTriggerWidth: true,
     isPreventDefault: true,
     placement: Placement.BottomCenter,
-    isUseAbsolutePositioning: false,
+    isUseAbsolutePositioning: isExtensionEnvironment(),
     ...popoverOptions
   }}
   {label}

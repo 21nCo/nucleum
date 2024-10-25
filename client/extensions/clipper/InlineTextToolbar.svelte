@@ -101,6 +101,7 @@
     <LinkItems
       links={clip?.links}
       isWrapItems={true}
+      nodeId={id}
       propertyValues={clip?.properties}
       on:propertyChange={onPropertyUpdate}
       isExpandable={true}

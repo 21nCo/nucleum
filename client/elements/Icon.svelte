@@ -359,7 +359,7 @@
         <Link />
       {:else if icon === "link-mini"}
         <Link variant={IconVariant.Mini} />
-      {:else if icon === "tag"}
+      {:else if icon === "tag" || icon === "ph:tag-thin"}
         <Tag {variant} />
       {:else if icon === "share"}
         <Share {variant} />

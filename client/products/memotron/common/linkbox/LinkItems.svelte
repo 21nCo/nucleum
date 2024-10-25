@@ -42,7 +42,12 @@
       console.log({ at: "refreshExpansion", result });
       if (result && isValidArrayWithData(result)) {
         types = result;
-        expansionState = "has-props";
+        if (
+          types[0]?.properties?.length > 0 ||
+          types[0]?.extendProperties?.length > 0
+        )
+          expansionState = "has-props";
+        else expansionState = "no-props";
       } else {
         expansionState = "not-type";
       }

@@ -16,7 +16,11 @@
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   import NodeThumbnailTweetPreview from "$lib/client/products/memotron/node/thumbnail/NodeThumbnailTweetPreview.svelte";
   import { Placement } from "$lib/client/types/direction.enum";
-  let notes: string = $feedbackPane.focusedClip?.notes || $webpage?.notes || "";
+  import type { IWebpageStore } from "../contentScripts/types";
+  let notes: string =
+    ($feedbackPane.focusedClip
+      ? $feedbackPane.focusedClip.notes
+      : $webpage?.notes) ?? "";
   let autoCloseDuration = 4;
   let closeTimer: any;
   let closeActionTimestamp: number;
@@ -28,13 +32,20 @@
 
   $: linkItems = resolveLinkItems($webpage.links, $feedbackPane.focusedClip);
 
-  $: propertyValues = resolvePropertyValues($feedbackPane.focusedClip?.id);
+  $: propertyValues = resolvePropertyValues(
+    $webpage,
+    $feedbackPane.focusedClip?.id
+  );
 
   let notesTimeout: any;
 
-  function resolvePropertyValues(clip: IRecordId | undefined) {
-    if (!clip) return $webpage.properties;
+  function resolvePropertyValues(
+    page: IWebpageStore,
+    clip: IRecordId | undefined
+  ) {
+    if (!clip) return page.properties;
     const clipProperties = $feedbackPane.focusedClip?.properties;
+    return clipProperties;
   }
 
   function resolveLinkItems(links: IRecordId[], focusedClip: IRecordId) {
@@ -162,6 +173,7 @@
     <LinkItems
       links={linkItems}
       {propertyValues}
+      nodeId={$feedbackPane.focusedClip?.id ?? $webpage.id}
       isExpandable={true}
       on:propertyChange={onPropertyUpdate}
       on:click={onLinkClick}
