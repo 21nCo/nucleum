@@ -93,7 +93,7 @@
           icon: "check-circle"
         },
         {
-          label: "Outgoing mentions",
+          label: "Mentions",
           value: "outgoing-mentions",
           icon: "at-symbol"
         }

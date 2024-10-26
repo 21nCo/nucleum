@@ -32,6 +32,8 @@ export type IBlock<T = NodeContent> = T & {
 export enum InlineType {
   MENTION = "MENTION",
   DATE = "DATE",
+  LINK = "LINK",
+  LINK_MENTION = "LINK_MENTION",
   CODE = "CODE",
   BOLD = "BOLD",
   ITALIC = "ITALIC",

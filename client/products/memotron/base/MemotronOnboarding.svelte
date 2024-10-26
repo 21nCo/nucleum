@@ -28,9 +28,7 @@
     </div>
     {#if $appStore?.appData?.urls?.onboardingVideo}
       <div class="mt-8">
-        <YoutubeVideoPreview
-          node={{ url: $appStore?.appData?.urls?.onboardingVideo }}
-        />
+        <YoutubeVideoPreview url={$appStore?.appData?.urls?.onboardingVideo} />
       </div>
     {/if}
   </div>

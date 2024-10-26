@@ -35,10 +35,13 @@
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import type { IHighlighter } from "../common/highlighters/highlight.type";
   import { highlightStore } from "../common/highlighters/highlight.store";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
 
   export let url: string;
   export let node: any;
   export let annots: any[];
+  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
+
   const pdfPersistence = new PdfHandler(node.id);
   /**
    * varibales for drawing shapes adding shapes or click annotations
@@ -977,13 +980,14 @@
       scrollToAnnot(event.detail.id, event.detail.pageNumber)}
   /> -->
   <div
-    class="absolute bottom-0 left-[18%] w--full m-2 flex gap-2 items-center justify-center"
+    class={"absolute bottom-0 inset-x-0 m-2 flex gap-2 items-center justify-center"}
   >
     <ToolBar
       bind:selectedAnnotationMode={annotationMode}
       bind:selectedColor
       {pageNumber}
       {totalPages}
+      {accessPoint}
       on:pageRerender={(event) => handleRenderOptions(event.detail)}
     />
   </div>

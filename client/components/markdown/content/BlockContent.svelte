@@ -7,6 +7,7 @@
     NodeType,
     TextNodeTypeList
   } from "$lib/client/products/memotron/node/node.type";
+  import EmbedContent from "../embed/EmbedContent.svelte";
   import type { MdStoreType } from "../markdown.store";
   import MediaGrid from "../mediaGrid/MediaGrid.svelte";
   import ListContent from "./ListContent.svelte";
@@ -22,13 +23,15 @@
 <div class="relative flex-grow w-full">
   {#if block.contentType === NodeType.DIVIDER}
     <div class="h-px bg-brs3 my-4"></div>
-  {:else if block.contentType === NodeType.MEDIA_GRID}
-    <MediaGrid {block} {mdStore} on:delete />
   {:else if block.contentType === NodeType.DOUBLE_DIVIDER}
     <div class="flex flex-col my-1 gap-0.5">
       <div class="h-px bg-bgs4"></div>
       <div class="h-px bg-bgs4"></div>
     </div>
+  {:else if block.contentType === NodeType.MEDIA_GRID}
+    <MediaGrid {block} {mdStore} on:delete />
+  {:else if block.contentType === NodeType.EMBED}
+    <EmbedContent {block} {mdStore} />
   {:else if block.contentType === NodeType.LIST}
     <ListContent
       {block}

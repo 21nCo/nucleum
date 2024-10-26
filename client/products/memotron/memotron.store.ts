@@ -1,5 +1,6 @@
 import {
   headingNodeTypes,
+  NodeType,
   rootNodeTypeList
 } from "$lib/client/products/memotron/node/node.type";
 import { activeResourceFilterV2 } from "$lib/client/utils/utils";
@@ -17,6 +18,9 @@ import { isValidArray } from "$lib/shared/utils/obj.utils";
 import { toasts } from "$lib/client/stores/notification.store";
 import { extensionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
 import { FluxMethod } from "$lib/client/components/flux/flux.type";
+import type { CollectionType } from "./collection/collection.type";
+
+export const MAX_FILE_SIZE_MB = 15;
 
 export function resolveResource(id: IRecordId) {
   return flux.select(id);
@@ -232,17 +236,23 @@ export class SearchStore {
    * @param query
    * @returns
    */
-  async searchForLinking(query: string, resource?: Resource) {
+  async searchForLinking(
+    query: string,
+    params?: { resource?: Resource; subType?: NodeType | CollectionType }
+  ) {
     let nodes = [];
-    if (resource === Resource.node || !resource) {
+    if (params?.resource === Resource.node || !params?.resource) {
       nodes = await flux.selectMany(Resource.node, {
         properties: [
           "*",
-          "parent.* as parent",
-          "(fn::memotron::node::parent($parent.id)) as mdParent"
+          "parent.* as parent"
+          //TODO - disabling temp - to reduce query time
+          // "(fn::memotron::node::parent($parent.id)) as mdParent"
         ],
         filters: {
-          contentType: [...rootNodeTypeList, ...headingNodeTypes],
+          contentType: params?.subType
+            ? [params.subType]
+            : [...rootNodeTypeList, ...headingNodeTypes],
           ...activeResourceFilterV2
         },
         search: isValidString(query)
@@ -254,7 +264,7 @@ export class SearchStore {
       });
     }
     let collections = [];
-    if (resource === Resource.collection || !resource) {
+    if (params?.resource === Resource.collection || !params?.resource) {
       collections = await flux.selectMany(Resource.collection, {
         filters: {
           ...activeResourceFilterV2
@@ -279,7 +289,7 @@ export class SearchStore {
           resource: Resource.node,
           params: {
             filters: {
-              contentType: [...rootNodeTypeList, ...headingNodeTypes],
+              contentType: [...rootNodeTypeList, ...headingNodeTypes]
             },
             search: isValidString(query)
               ? {

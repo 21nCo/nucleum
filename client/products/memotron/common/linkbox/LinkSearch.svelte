@@ -91,7 +91,7 @@
         resource
       );
     }
-    return new SearchStore().searchForLinking(searchQuery, resource);
+    return new SearchStore().searchForLinking(searchQuery, { resource });
   }
 </script>
 

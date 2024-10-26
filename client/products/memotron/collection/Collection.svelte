@@ -31,7 +31,10 @@
     ISelectValue
   } from "$lib/client/types/select.type";
   import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
+  import {
+    ResourceAccessMode,
+    ResourceAccessPoint
+  } from "$lib/client/components/flux/resourceStores/resource.type";
   import { isValidString } from "$lib/shared/utils/text.utils";
 
   import { metaPropertyOptions } from "./properties/property.store";
@@ -73,6 +76,7 @@
   } from "./properties/property.utils";
 
   export let id: string = "";
+  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   let collection: IActiveCollectionStore = ActiveCollectionStore.resolve(id);
   let activeView: ICollectionViewWithData | null = null;
   let viewData: INodeThumb[] = [];
@@ -431,7 +435,7 @@
     })}
     on:scroll={onScroll}
   >
-    {#if coverPlacement !== Placement.Right}
+    {#if accessPoint === ResourceAccessPoint.SELF && coverPlacement !== Placement.Right}
       <Cover
         cover={$collection.cover}
         isInEditMode={$collection.isInEditMode}
@@ -651,7 +655,7 @@
         </main>
       </div>
     {/if}
-    {#if coverPlacement === Placement.Right}
+    {#if accessPoint === ResourceAccessPoint.SELF && coverPlacement === Placement.Right}
       <Cover
         cover={$collection.cover}
         isInEditMode={$collection.isInEditMode}

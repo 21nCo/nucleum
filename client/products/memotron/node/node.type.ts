@@ -179,12 +179,14 @@ export enum NodeType {
   VIDEO = "VIDEO",
   PDF = "PDF",
   FILE = "FILE",
-
+  SKETCH = "SKETCH",
   //EMBED
   EMBED = "EMBED",
   TOC = "TOC",
   NODE_AS_EMBED = "NODE_AS_EMBED",
   COLLECTION_AS_EMBED = "COLLECTION_AS_EMBED",
+  GRAPH_AS_EMBED = "GRAPH_AS_EMBED",
+  CALENDAR_AS_EMBED = "CALENDAR_AS_EMBED",
 
   //LAYOUT
   DIVIDER = "DIVIDER",
@@ -263,6 +265,14 @@ export const internalUrlNodeTypeList = [
   NodeType.VIDEO,
   NodeType.AUDIO,
   NodeType.PDF
+];
+
+export const embedNodeTypeList = [
+  NodeType.NODE_AS_EMBED,
+  NodeType.COLLECTION_AS_EMBED,
+  NodeType.GRAPH_AS_EMBED,
+  NodeType.CALENDAR_AS_EMBED,
+  NodeType.TOC
 ];
 
 export type TextNodeType =
@@ -367,14 +377,16 @@ export const mediaNodeTypeList = [
   NodeType.IMAGE,
   NodeType.VIDEO,
   NodeType.AUDIO,
-  NodeType.PDF
+  NodeType.PDF,
+  NodeType.FILE
 ];
 
 type MediaNodeType =
   | NodeType.IMAGE
   | NodeType.VIDEO
   | NodeType.AUDIO
-  | NodeType.PDF;
+  | NodeType.PDF
+  | NodeType.FILE;
 
 export type IMediaNode = INodeInterface<MediaNodeType, any, INodeMetadata> & {
   file: IRecordId;

@@ -10,6 +10,8 @@
   import view from "$lib/client/stores/view.store";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import { Embed } from "$lib/client/types/context.type";
+  import { MAX_FILE_SIZE_MB } from "../memotron.store";
+  import { resolveFileUploadErrorMessage } from "../memotron.utils";
   import type { NodeType } from "../node/node.type";
   import { captureStore } from "./capture.store";
   import { resolveMultipleFilesData } from "./capture.utils";
@@ -25,7 +27,7 @@
     | undefined = undefined;
   let isSaveInProgress: boolean = false;
   let error: string | undefined = undefined;
-  const MAX_FILE_SIZE_MB = 15;
+
   let isValidMultipleFiles = false;
 
   async function handleDrop(
@@ -36,7 +38,9 @@
     try {
       error = undefined;
       if (errors && errors.length > 0) {
-        onInvalid(errors);
+        error = resolveFileUploadErrorMessage(errors, {
+          maxFileSizeMB: MAX_FILE_SIZE_MB
+        });
         return;
       }
       if (all.length === 1) {
@@ -70,24 +74,6 @@
     isSaveInProgress = true;
     await captureStore.saveMultipleFiles(multipleFilesData.files);
     isSaveInProgress = false;
-  }
-
-  function onInvalid(errors: { file: File; type: string }[]) {
-    errors.forEach((err) => {
-      error =
-        (error ? error + ", " : "") + resolveErroLabel(err.file, err.type);
-    });
-
-    function resolveErroLabel(file: File, type: string) {
-      let error = "";
-      if (type === "type") {
-        const extension = file.name.split(".").pop();
-        error = `File type .${extension} not supported`;
-      } else if (type === "size") {
-        error = `File size exceeds the maximum limit of ${MAX_FILE_SIZE_MB}MB`;
-      }
-      return error;
-    }
   }
 </script>
 

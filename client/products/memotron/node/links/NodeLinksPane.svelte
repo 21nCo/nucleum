@@ -215,7 +215,7 @@
             icon: "arrow-right-left"
           },
           {
-            label: "Mentions",
+            label: "Mentioned",
             value: LinkType.MENTION,
             icon: "at-symbol"
           }

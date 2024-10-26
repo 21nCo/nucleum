@@ -58,7 +58,9 @@ export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
 function generateSeedStore(): ICaptureStore {
   const blockId = generateResourceId(Resource.node);
+  const nodeId = generateResourceId(Resource.node);
   return {
+    nodeId,
     refreshId: new Date().getTime(),
     label: "",
     properties: [],
@@ -191,6 +193,8 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     contentType?: NodeType,
     params?: {
       isPreventOpenOnSave?: boolean;
+      isEmbedContext?: boolean;
+      creationContext?: IRecordId;
     }
   ) {
     const response = await account.uploadFileV2(
@@ -206,10 +210,16 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     const node = {
       contentType,
       file: fileId,
-      label: file.name
+      label: file.name,
+      creationContext: params?.isEmbedContext
+        ? (params?.creationContext ?? this.get().nodeId)
+        : undefined
     } as IMediaNode;
     const result = await nodeStore.create([node]);
-    this.postSave(result, { isOpenUponSuccess: !params?.isPreventOpenOnSave });
+    this.postSave(result, {
+      isOpenUponSuccess: !params?.isPreventOpenOnSave,
+      isEmbedContext: params?.isEmbedContext
+    });
     return result?.[0];
   }
 
@@ -294,12 +304,17 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     text: string,
     params?: {
       isPreventOpenOnSave?: boolean;
+      isEmbedContext?: boolean;
+      creationContext?: IRecordId;
     }
   ) {
     let node: OmitForCapture<IWebPage> = {
       contentType: NodeType.WEB_PAGE,
       label: text.split("://").pop(),
       url: text,
+      creationContext: params?.isEmbedContext
+        ? (params?.creationContext ?? this.get().nodeId)
+        : undefined,
       body: {
         hash: "",
         description: ""
@@ -323,7 +338,10 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       }
     }
     const result = await nodeStore.create(node);
-    this.postSave(result, { isOpenUponSuccess: !params?.isPreventOpenOnSave });
+    this.postSave(result, {
+      isOpenUponSuccess: !params?.isPreventOpenOnSave,
+      isEmbedContext: params?.isEmbedContext
+    });
     return result;
   }
 
@@ -331,6 +349,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     result: any,
     params?: {
       isOpenUponSuccess?: boolean;
+      isEmbedContext?: boolean;
     }
   ) {
     logger.debug({ at: "CaptureStore.postSave", result });
@@ -342,13 +361,14 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     }
     const viewStore = get(view);
     if (result.length === 1 || node.contentType === NodeType.NODULAR_MARKDOWN) {
-      if (!viewStore.isConstrainedWidth)
+      if (!viewStore.isConstrainedWidth && !params?.isEmbedContext)
         toasts.success("Node saved successfully!");
-      if (params?.isOpenUponSuccess)
+      if (params?.isOpenUponSuccess && !params?.isEmbedContext)
         appStore.openResource(node.id, ResourceAccessMode.POP);
-    } else if (!viewStore.isConstrainedWidth) {
+    } else if (!viewStore.isConstrainedWidth && !params?.isEmbedContext) {
       toasts.success(`${result.length} nodes saved successfully!`);
     }
+    if (params?.isEmbedContext) return;
     if (!params?.isOpenUponSuccess) {
       appStore.closeResource({
         id: MemotronAction.CAPTURE,
@@ -390,7 +410,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     const metadata = await resolveNodeCaptureMetadata();
     logger.log({ at: "CaptureStore.saveMarkdownCapture", val, metadata });
     // const id = prefixTable(generateRandomId(), Resource.node);
-    const id = generateResourceId(Resource.node);
+    const id = val.nodeId ?? generateResourceId(Resource.node);
     let root: INodeItemCaptured = {
       id,
       label: val.label ?? "",

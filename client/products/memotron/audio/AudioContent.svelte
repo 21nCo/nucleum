@@ -34,10 +34,12 @@
   import { Action } from "$lib/client/types/action.enum";
   import view from "$lib/client/stores/view.store";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 
   export let body: any = {};
   export let url: string;
   export let nodeId: string = "dummy";
+  const _previewId = generateSimpleRandomId();
   let isDisabled: boolean = body?.initTranscription == true ? true : false;
   let label: string =
     body?.initTranscription == false ? "Re-Transcribe" : "Text";
@@ -161,7 +163,7 @@
     }
 
     wavesurferPreview = WaveSurfer.create({
-      container: "#audioCapturePreview",
+      container: `#${_previewId}`,
       waveColor: currentColors["aps2"],
       progressColor: currentColors["aps1"],
       barWidth: 2,
@@ -214,7 +216,7 @@
     class="flex flex-col gap-2 w-full text-justify border- border-brs3 rounded-md py-2"
   >
     <div class="flex flex-col gap-2 w-full">
-      <div id="audioCapturePreview" class="w-full" />
+      <div id={_previewId} class="audio-preview-container w-full" />
       <div class="flex justify-between px-0.5 text-fgs2">
         <span>
           {formatSeconds(previewCountDown, TimeFormat.CLOCK)}

@@ -95,7 +95,15 @@
     >
       <div class="flex gap-3 justify-between items-center w-full">
         <span class="flex items-center gap-4 flex-1 min-w-0">
-          <NodeTitle {node} />
+          <NodeTitle
+            node={$node}
+            on:labelChange={(e) => {
+              if ($node.label) node.debouncedModify({ label: $node.label });
+            }}
+            on:editModeChange={(e) => {
+              $node.isInEditMode = e.detail;
+            }}
+          />
           {#if !$view.isConstrainedWidth}
             <div class="text-b3 text-fgs3 whitespace-nowrap">
               {formatDatetime($userPreferences, $node.createdAt)}

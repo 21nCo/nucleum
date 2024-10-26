@@ -9,9 +9,13 @@
   import LeftControls from "./contextMenu/LeftControls.svelte";
   import type { MdStoreType } from "./markdown.store";
   import {
+    embedNodeTypeList,
     headingNodeTypes,
+    mediaNodeTypeList,
+    NodeType,
     type StructuralNodeType,
-    structuralNodeTypes
+    structuralNodeTypes,
+    webNodeTypeList
   } from "$lib/client/products/memotron/node/node.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import { setContext } from "svelte";
@@ -65,7 +69,18 @@
     if (!action) return;
     if (action === BlockAction.CONVERT) {
       const fromType = block.contentType;
-      block.contentType = data.toType;
+      if (
+        mediaNodeTypeList.includes(data.toType) ||
+        webNodeTypeList.includes(data.toType) ||
+        embedNodeTypeList.includes(data.toType)
+      ) {
+        block.contentType = NodeType.EMBED;
+        block.body = {
+          subType: data.toType
+        };
+      } else {
+        block.contentType = data.toType;
+      }
       if (data.params?.listType) block.listType = data.params?.listType;
       propagateAsAction(action, { ...data, fromType });
     } else if (action === BlockAction.DELETE) {
