@@ -29,8 +29,9 @@
   import type { MdStoreType } from "../markdown.store";
   import type { IBlock } from "../md.type";
   import EmbedLibrarySearch from "./EmbedLibrarySearch.svelte";
-  import { createEventDispatcher } from "svelte";
+  import { createEventDispatcher, getContext } from "svelte";
   const dispatch = createEventDispatcher();
+  const nodeContext = getContext<any>("node");
 
   export let block: IBlock;
   export let mdStore: MdStoreType;
@@ -79,7 +80,8 @@
         isSaveInProgress = true;
         let file = all[0];
         const result = await captureStore.saveFile(file, undefined, {
-          isEmbedContext: true
+          isEmbedContext: true,
+          creationContext: nodeContext?.id ?? undefined
         });
         if (result) dispatch("select", result);
       } else if (all.length > 1) {
@@ -112,7 +114,7 @@
 
 <div
   class={cn(
-    "flex flex-col items-center justify-center w-full bg-bgs2 bg-opacity-50 rounded-md border border-dashed border-brs3",
+    "flex flex-col items-center justify-center w-full bg-bgs2 bg-opacity-50 rounded-md border border-dashed border-brs3 placeholder",
     {
       "mo:h-40 h-52": subType,
       "mo:h-60 h-72": !subType

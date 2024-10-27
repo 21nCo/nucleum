@@ -97,7 +97,6 @@
         props: {
           isSingleColumnMode: true,
           onSelect: async (props?: any) => {
-            console.log("insert", props);
             dispatch("action", {
               action: BlockAction.INSERT,
               data: {

@@ -19,7 +19,8 @@ export function wordCounter(
           style.display !== "none" &&
           !el.classList.contains("popover") &&
           !el.classList.contains("exclude-from-count") &&
-          !el.classList.contains("tooltip")
+          !el.classList.contains("tooltip") &&
+          !el.classList.contains("placeholder")
         ) {
           content += getVisibleContent(el);
         }

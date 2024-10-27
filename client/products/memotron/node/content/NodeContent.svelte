@@ -132,7 +132,7 @@
   function onReStructure(e: CustomEvent) {
     logger.log({ at: "NodeContent - onReStructure", ...e.detail });
     const differences = shallowDiff(previousRootStructure, e.detail.root);
-    console.log("Differences", differences);
+    // console.log("Differences", differences);
     if (isValidArrayWithData(differences)) {
       node.updateBlock($node.id, { children: e.detail.root });
     }
@@ -185,7 +185,7 @@
       if (!detail?.id) return;
       const blockType = detail.blockType ?? NodeType.SIMPLE_TEXT;
       const result = await node.createBlock(detail.id, blockType, {
-        body: blockType === NodeType.SIMPLE_TEXT ? "" : null
+        body: detail.body ?? (blockType === NodeType.SIMPLE_TEXT ? "" : null)
       });
     }
 
@@ -197,7 +197,10 @@
             contentType: e.detail.toType,
             children: []
           });
-        } else if (e.detail.toType === NodeType.MEDIA_GRID) {
+        } else if (
+          e.detail.toType === NodeType.MEDIA_GRID ||
+          e.detail.toType === NodeType.EMBED
+        ) {
           node.updateBlock(e.detail.source, {
             contentType: e.detail.toType,
             body: null

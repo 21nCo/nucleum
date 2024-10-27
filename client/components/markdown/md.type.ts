@@ -94,6 +94,7 @@ export type IBlockOperationContext = {
   source: string;
   blockType?: NodeType;
   listType?: ListType;
+  body?: any;
 };
 
 export enum BlockAction {

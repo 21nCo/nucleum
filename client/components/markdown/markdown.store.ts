@@ -32,6 +32,7 @@ import { ObservableStore } from "$lib/client/stores/client.store";
 import type { IRecordId } from "$lib/client/types/data.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import { isSameResource } from "../flux/resourceStores/resource.utils";
+import { logger } from "../debug/logger.client";
 
 /**
  * Used to identify if temporary s3 storage should be used or not, If true, temporary s3 storage is used
@@ -94,9 +95,10 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
    * @param params block type to insert, defaults to simple text
    */
   insert(params: IBlockOperationContext) {
+    logger.log({ at: "MarkdownStore - insert", params });
     let newBlock: Partial<IBlock<NodeContent>> = {
       id: generateResourceId(Resource.node),
-      body: ""
+      body: params.body ?? ""
     };
     if (
       params.blockType &&

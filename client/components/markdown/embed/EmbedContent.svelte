@@ -20,6 +20,7 @@
   import { Resource } from "../../flux/resourceStores/resource.enum";
   import Collection from "$lib/client/products/memotron/collection/Collection.svelte";
   import { determineResourceType } from "../../flux/resourceStores/resource.utils";
+  const nodeContext = getContext<any>("node");
   const blockContext = getContext<any>("block");
   export let block: IBlock;
   export let mdStore: MdStoreType;
@@ -94,7 +95,8 @@
       console.log({ at: "EmbedContent onLinkInput", nodeType });
       if (nodeType === NodeType.WEB_PAGE) {
         const result = await captureStore.saveWebpage(linkInputValue, {
-          isEmbedContext: true
+          isEmbedContext: true,
+          creationContext: nodeContext?.id ?? undefined
         });
         if (!result) return;
         assignBody({ id: result[0].id, subType: nodeType });

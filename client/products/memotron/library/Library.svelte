@@ -33,8 +33,11 @@
   import Divider from "$lib/client/elements/Divider.svelte";
   import { MemotronAction } from "../memotronAction.enum";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import { CollectionType } from "../collection/collection.type";
-  import { NodeType } from "../node/node.type";
+  import {
+    CollectionType,
+    type ICollection
+  } from "../collection/collection.type";
+  import { NodeType, rootNodeTypeList, type INode } from "../node/node.type";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import VerticalSwitcher from "$lib/client/elements/switcher/VerticalSwitcher.svelte";
   import { VerticalSwitcherStyle } from "$lib/client/types/switcher.enum";
@@ -47,12 +50,14 @@
   import {
     PersistenceActionType,
     SearchType,
+    type IMutationParamsv2,
     type IResourceSelectOrderBy
   } from "$lib/client/types/data.type";
   import { page } from "$app/stores";
   import LibraryLoadingPulse from "./LibraryLoadingPulse.svelte";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import view from "$lib/client/stores/view.store";
+  import { logger } from "$lib/client/components/debug/logger.client";
 
   let searchQuery: string = "";
   let selectedResource: Resource = Resource.node;
@@ -327,13 +332,27 @@
    * @param e
    */
   function onResourceMutation(
-    e: CustomEvent<{ resource: Resource; params: any }>
+    e: CustomEvent<{
+      resource: Resource;
+      params: IMutationParamsv2<INode | ICollection>;
+    }>
   ) {
     const watchProperties = ["isArchived", "trashInformation"];
+    const resource = e.detail.resource;
+    const mutation = e.detail.params;
+    logger.log({ at: "Library - onResourceMutation", resource, ...mutation });
     if (
-      e.detail.resource === Resource.node &&
-      e.detail.params.action === PersistenceActionType.MERGE &&
-      !watchProperties.some((x) => e.detail.params.record[x] !== undefined)
+      resource === Resource.node &&
+      mutation.action === PersistenceActionType.MERGE &&
+      !watchProperties.some((x) => mutation.record[x] !== undefined)
+    ) {
+      return;
+    }
+    if (
+      resource === Resource.node &&
+      mutation.action === PersistenceActionType.INSERT &&
+      mutation.records.length === 1 &&
+      !rootNodeTypeList.includes(mutation.records[0].contentType as NodeType)
     ) {
       return;
     }

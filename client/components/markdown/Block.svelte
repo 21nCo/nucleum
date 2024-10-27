@@ -75,19 +75,39 @@
         embedNodeTypeList.includes(data.toType)
       ) {
         block.contentType = NodeType.EMBED;
+        const subType = data.toType;
         block.body = {
-          subType: data.toType
+          subType
+        };
+        data.toType = NodeType.EMBED;
+        data.body = {
+          subType
         };
       } else {
         block.contentType = data.toType;
       }
       if (data.params?.listType) block.listType = data.params?.listType;
       propagateAsAction(action, { ...data, fromType });
+      if (data.body) {
+        propagate(BlockAction.CHANGE, { body: data.body });
+      }
     } else if (action === BlockAction.DELETE) {
       mdStore.deleteBlock(block.id);
       propagateAsAction(action, {});
     } else if (action === BlockAction.INSERT) {
       let newBlockId;
+      if (
+        data?.blockType &&
+        (mediaNodeTypeList.includes(data.blockType) ||
+          webNodeTypeList.includes(data.blockType) ||
+          embedNodeTypeList.includes(data.blockType))
+      ) {
+        const subType = data.blockType;
+        data.blockType = NodeType.EMBED;
+        data.body = {
+          subType
+        };
+      }
       if (data?.blockType && structuralNodeTypes.includes(data.blockType)) {
         newBlockId = mdStore.insertStructualBlock(
           block.id,
