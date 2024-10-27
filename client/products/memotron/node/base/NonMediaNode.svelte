@@ -22,7 +22,7 @@
   import NodePropertiesPane from "../rightPanel/NodePropertiesPane.svelte";
   import view from "$lib/client/stores/view.store";
   import NodeRightPaneContent from "../rightPanel/NodeRightPaneContent.svelte";
-  import GraphG6 from "../../graph/GraphG6.svelte";
+  import NodeGraph from "../../graph/NodeGraph.svelte";
 
   export let node: IActiveNodeStore;
   export let selectedView: string = "Content";
@@ -197,7 +197,7 @@
       </div>
     {:else}
       <!-- <ComingSoonView /> -->
-      <GraphG6 />
+      <NodeGraph nodeId={$node.id.toString()} />
     {/if}
     {#if isShowFloatingBar}
       <div transition:fade={{ duration: 200 }}>

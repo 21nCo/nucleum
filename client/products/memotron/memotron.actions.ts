@@ -37,6 +37,7 @@ import MemotronOnboarding from "./base/MemotronOnboarding.svelte";
 import LinkSuggestionItem from "./common/linkbox/LinkSuggestionItem.svelte";
 import NodeTitleLabelPart from "./node/title/NodeTitleLabelPart.svelte";
 import MemotronGreenUse from "./base/MemotronGreenUse.svelte";
+import GlobalGraph from "./graph/GlobalGraph.svelte";
 export const memotronActions: IAction[] = [
   {
     action: MemotronAction.OPEN_CHAT,
@@ -335,7 +336,7 @@ export const memotronActions: IAction[] = [
     type: ActionType.PAGE,
     label: "Graph",
     icon: "ph:graph",
-    component: ComingSoonView
+    component: GlobalGraph
   },
   {
     action: "onboarding",
