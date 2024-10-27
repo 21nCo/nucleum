@@ -20,6 +20,7 @@
 
   export let node: INode;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
+  export let isHidePreview: boolean = false;
   let pdfContent: any;
   let webContentRef: any;
   let _file: IFile;
@@ -84,7 +85,24 @@
   }
 </script>
 
-{#if node.contentType === NodeType.AUDIO && _url}
+{#if _file && (node.contentType === NodeType.FILE || isHidePreview)}
+  <button class="flex w-full h-full items-center justify-between p-3">
+    <span class="flex items-center gap-2">
+      <Icon icon={resolveFileIcon()} size={Size.xl} />
+      <span class="text-sm">{_file.name ?? _file.label}</span>
+      <span class="text-xs text-fgs4">
+        {_file.size ? formatBytes(_file.size) : "Unknown size"}
+      </span>
+    </span>
+    <Button
+      icon="ph:download-simple-light"
+      tooltip="Download file"
+      on:click={() => {
+        fileStore.download(_file);
+      }}
+    />
+  </button>
+{:else if node.contentType === NodeType.AUDIO && _url}
   <!-- <audio controls src={$node.body?.url} /> -->
   <!-- TODO - relay refresh event to top instead of refreshing here -->
   <AudioContent
@@ -92,6 +110,7 @@
     body={node?.body}
     url={_url}
     nodeId={node.id.toString()}
+    {accessPoint}
   />
 {:else if (node.contentType === NodeType.IMAGE || node.contentType === NodeType.VIDEO) && _file}
   <FileView file={_file} class="!object-contain" />
@@ -105,21 +124,4 @@
     {accessPoint}
     bind:annots={node.pdfAnnotations}
   />
-{:else if node.contentType === NodeType.FILE && _file}
-  <button class="flex w-full h-full items-center justify-between p-3">
-    <span class="flex items-center gap-2">
-      <Icon icon={resolveFileIcon()} size={Size.xl} />
-      <span class="text-sm">{_file.name ?? _file.label}</span>
-      <span class="text-xs text-fgs4">
-        {_file.size ? formatBytes(_file.size) : "Unknown size"}
-      </span>
-    </span>
-    <Button
-      icon="ph:download-light"
-      tooltip="Download file"
-      on:click={() => {
-        //TODO - download from url
-      }}
-    />
-  </button>
 {/if}

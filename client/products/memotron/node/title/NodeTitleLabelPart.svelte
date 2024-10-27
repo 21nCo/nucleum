@@ -13,7 +13,10 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { formatSeconds } from "$lib/client/utils/time.utils";
   import { TimeFormat } from "$lib/client/types/time.type";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import {
+    ResourceAccessMode,
+    ResourceAccessPoint
+  } from "$lib/client/components/flux/resourceStores/resource.type";
   export let item: INode;
   export let isNodePageContext: boolean = false;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
@@ -130,7 +133,9 @@
         })}
         on:click={(e) => {
           appStore.resourceClickHandler(e, dynamicLabel?.parent.id, {
-            replaceId: item.id
+            replaceId:
+              accessPoint === ResourceAccessPoint.SELF ? item.id : undefined,
+            defaultTo: ResourceAccessMode.POP
           });
         }}
       >

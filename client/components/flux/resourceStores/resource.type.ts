@@ -142,7 +142,8 @@ export enum ResourceAccessPoint {
   /**
    * The resource is being accessed from the combination
    */
-  COMBINATION = "combination"
+  COMBINATION = "combination",
+  CAPTURE = "capture"
 }
 
 /**

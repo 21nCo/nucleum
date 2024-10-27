@@ -253,7 +253,15 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     this.update((prev) => ({ ...prev, properties: [...properties, property] }));
   };
 
-  async saveAudioRecording(data: Blob, duration: number) {
+  async saveAudioRecording(
+    data: Blob,
+    duration: number,
+    params?: {
+      isPreventOpenOnSave?: boolean;
+      isEmbedContext?: boolean;
+      creationContext?: IRecordId;
+    }
+  ) {
     const contentType = "audio/mp3";
     const id = generateResourceId(Resource.node);
     const fileName = generateSimpleRandomId();
@@ -267,6 +275,9 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     const node: OmitForCapture<IMediaNode> = {
       contentType: NodeType.AUDIO,
       file: fileId,
+      creationContext: params?.isEmbedContext
+        ? (params?.creationContext ?? this.get().nodeId)
+        : undefined,
       label: `Audio Recording - ${new Date().toLocaleString()}`,
       body: {
         duration
@@ -274,7 +285,11 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     };
     const result2 = await nodeStore.create(node);
     await this.saveLinks(id);
-    this.postSave(result2, { isOpenUponSuccess: true });
+    this.postSave(result2, {
+      isOpenUponSuccess: !params?.isPreventOpenOnSave,
+      isEmbedContext: params?.isEmbedContext
+    });
+    return result2?.[0];
   }
 
   async saveCameraCapture(data: Blob) {

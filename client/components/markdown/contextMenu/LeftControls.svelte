@@ -6,15 +6,18 @@
   } from "$lib/client/components/markdown/md.type";
   import {
     headingNodeTypes,
+    mediaNodeTypeList,
+    NodeType,
     structuralNodeTypes
   } from "$lib/client/products/memotron/node/node.type";
   import { createEventDispatcher, onMount } from "svelte";
   import type { MdStoreType } from "../markdown.store";
   import { Size } from "$lib/client/types/size.enum";
   import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
-  import type {
-    IContextMenu,
-    IContextMenuItem
+  import {
+    ContextMenuType,
+    type IContextMenu,
+    type IContextMenuItem
   } from "$lib/client/types/select.type";
   import { Placement } from "$lib/client/types/direction.enum";
   import { cn } from "$lib/client/utils/ui.utils";
@@ -32,6 +35,7 @@
   import ContextMenu from "$lib/client/elements/contextMenu/ContextMenu.svelte";
   import { hoverable } from "$lib/client/actions/hover.action";
   import { isSameResource } from "../../flux/resourceStores/resource.utils";
+  import { fileStore } from "../../files/file.store";
   const dispatch = createEventDispatcher();
   export let block: IBlock;
   export let mdStore: MdStoreType;
@@ -91,7 +95,7 @@
     },
     [BlockAction.INSERT]: {
       value: BlockAction.INSERT,
-      icon: "arrow-down",
+      icon: "ph:arrow-elbow-down-right-light",
       secondStepComponent: {
         component: BlockBrowser,
         props: {
@@ -181,8 +185,34 @@
       value: BlockAction.SHORTCUTS,
       icon: "command",
       action: Action.MARKDOWN_SHORTCUTS
+    },
+    [BlockAction.DOWNLOAD]: {
+      value: BlockAction.DOWNLOAD,
+      icon: "ph:download-simple-light",
+      callback: async () => {
+        fileStore.download(block.body.id);
+      }
     }
   };
+
+  function resolveEmbedPreviewToggleAction() {
+    return {
+      value: BlockAction.EMBED_PREVIEW_TOGGLE,
+      icon: "ph:eye-slash-light",
+      label: "Hide preview",
+      type: ContextMenuType.SWITCH,
+      initialValue: block.body?.isHidePreview ?? false,
+      callback: async (checked) => {
+        dispatch("action", {
+          action: BlockAction.EMBED_PREVIEW_TOGGLE,
+          data: {
+            isHidePreview: checked
+          }
+        });
+        hideContextMenu();
+      }
+    };
+  }
 
   /**
    *
@@ -270,6 +300,25 @@
           group.items.push(actions[BlockAction.DELETE]);
         }
       });
+    }
+    if ("body" in block && block.body && block.contentType === NodeType.EMBED) {
+      if (block.body.id && mediaNodeTypeList.includes(block.body.subType)) {
+        items.forEach((group) => {
+          if (group.group === "base") {
+            group.items.push(actions[BlockAction.DOWNLOAD]);
+          }
+        });
+      }
+      if (
+        block.body.subType === NodeType.WEB_PAGE ||
+        block.body.subType === NodeType.PDF
+      ) {
+        items.forEach((group) => {
+          if (group.group === "base") {
+            group.items.push(resolveEmbedPreviewToggleAction());
+          }
+        });
+      }
     }
     return items;
   }

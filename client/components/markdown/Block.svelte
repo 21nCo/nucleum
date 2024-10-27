@@ -127,6 +127,13 @@
     } else if (action === BlockAction.COPY_BLOCK_TEXT) {
       copyToClipboard(block.body);
       toasts.success("Block copied to clipboard");
+    } else if (action === BlockAction.EMBED_PREVIEW_TOGGLE) {
+      block.body.isHidePreview = data.isHidePreview;
+      propagate(BlockAction.CHANGE, {
+        body: {
+          isHidePreview: data.isHidePreview
+        }
+      });
     } else {
       propagate(action, data);
     }

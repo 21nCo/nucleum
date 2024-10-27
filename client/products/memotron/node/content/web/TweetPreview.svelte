@@ -30,7 +30,7 @@
 <div class="w-full h-full flex flex-col gap-6 justify-center items-center">
   <button
     class="flex flex-col gap-5 p-4 hover:bg-bgs2 border border-fgs4 rounded-md w-3/4"
-    on:click={() => {
+    on:click|stopPropagation={() => {
       appStore.openLink(node.url);
     }}
   >

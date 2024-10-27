@@ -49,7 +49,11 @@
         })}
       >
         <!-- {$node.label ?? $node.body ?? ""} -->
-        <NodeTitleLabelPart item={node} isNodePageContext={true} />
+        <NodeTitleLabelPart
+          item={node}
+          isNodePageContext={true}
+          {accessPoint}
+        />
       </span>
     {/if}
     {#if node.isStarred}

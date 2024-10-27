@@ -201,7 +201,12 @@ export function generateCmdType(actionType: ActionType) {
   }
 }
 
-export function download(data: string, label: string | null = null) {
+/**
+ * Downloads a json file
+ * @param data stringified json
+ * @param label
+ */
+export function downloadJson(data: string, label: string | null = null) {
   const blob = new Blob([data], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");

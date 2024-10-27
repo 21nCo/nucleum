@@ -117,6 +117,11 @@ export enum BlockAction {
   COLOR = "COLOR",
   CALLOUT_SETTINGS = "CALLOUT_SETTINGS",
   SHORTCUTS = "SHORTCUTS",
+  DOWNLOAD = "DOWNLOAD",
+  /**
+   * Toggles whether to show preview or not for specific embed blocks like pdf, web page etc.
+   */
+  EMBED_PREVIEW_TOGGLE = "EMBED_PREVIEW_TOGGLE",
 
   /**
    * Content change event

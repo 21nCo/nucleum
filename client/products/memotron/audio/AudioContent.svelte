@@ -35,10 +35,12 @@
   import view from "$lib/client/stores/view.store";
   import { cn } from "$lib/client/utils/ui.utils";
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
 
   export let body: any = {};
   export let url: string;
   export let nodeId: string = "dummy";
+  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   const _previewId = generateSimpleRandomId();
   let isDisabled: boolean = body?.initTranscription == true ? true : false;
   let label: string =
@@ -263,7 +265,7 @@
           />
         {/if}
       {/if}
-      {#if $userPreferences.localAI.audioTranscription}
+      {#if $userPreferences.localAI.audioTranscription && accessPoint === ResourceAccessPoint.SELF}
         <Button
           on:click={convertToMarkdown}
           {isDisabled}
@@ -273,75 +275,77 @@
       {/if}
     </div>
   </div>
-  <div
-    class="flex flex-col w-full flex-1 items-center gap-6 border border-brs2 rounded-md bg-bgs2 bg-opacity-30 py-4"
-  >
-    <div class="flex w-full justify-between gap-3 mo:px-2 px-10">
-      <Text content="Transcription" style={TextStyle.PANEL_HEADING} />
-      {#if !$view.isConstrainedWidth}
-        <DropDown
-          items={accuracy}
-          isDisableSearch={true}
-          size={Size.sm}
-          style={InputStyle.PLAIN}
-          label={{
-            label: "Accuracy",
-            orientation: Orientation.Vertical,
-            isShrink: true
-          }}
-          value={model}
-          on:select={(e) => (model = e.detail)}
-        />
-      {/if}
-    </div>
+  {#if accessPoint === ResourceAccessPoint.SELF}
     <div
-      class={cn("flex w-full flex-1 overflow-y-auto", {
-        "pr-10": !$view.isConstrainedWidth && body?.mdBlocks
-      })}
+      class="flex flex-col w-full flex-1 items-center gap-6 border border-brs2 rounded-md bg-bgs2 bg-opacity-30 py-4"
     >
-      <p class="p-2 text-center text-rose-700" class:hidden={!isError}>
-        Transcription Error.
-      </p>
-      {#if body?.initTranscription == true || isDisabled}
-        <p class="p-2">Transcribing...</p>
-      {:else if body?.mdBlocks !== undefined}
-        <NodularMarkdown
-          mdId={generateUID()}
-          isNodular={true}
-          md={{ blocks: body?.mdBlocks }}
-          on:change={onMarkdownChange}
-        />
-      {:else if body?.transcription !== undefined}
-        <TextArea bind:value={body.transcription} />
-        <!-- <p class="p-2">{body.transcription}</p> -->
-      {:else}
-        <span
-          class="w-full h-full flex flex-col gap-2 justify-center items-center text-fgs3"
-        >
-          <span> Not transcribed yet. Please transcribe to view. </span>
-          {#if !$userPreferences.localAI.audioTranscription}
-            <div class="flex flex-col gap-2 text-b2">
-              Please make sure to enable Audio transcription from AI settings to
-              transcribe your audio.
-              <div class="flex justify-center">
-                <Button
-                  label="Open AI settings"
-                  size={Size.sm}
-                  type={ButtonVariant.PRIMARY}
-                  style={ButtonStyle.OUTLINED}
-                  on:click={() => {
-                    appStore.runAction(Action.LOCAL_AI_SETTINGS, {
-                      componentParams: {
-                        isCmdBarLaunch: true
-                      }
-                    });
-                  }}
-                />
+      <div class="flex w-full justify-between gap-3 mo:px-2 px-10">
+        <Text content="Transcription" style={TextStyle.PANEL_HEADING} />
+        {#if !$view.isConstrainedWidth}
+          <DropDown
+            items={accuracy}
+            isDisableSearch={true}
+            size={Size.sm}
+            style={InputStyle.PLAIN}
+            label={{
+              label: "Accuracy",
+              orientation: Orientation.Vertical,
+              isShrink: true
+            }}
+            value={model}
+            on:select={(e) => (model = e.detail)}
+          />
+        {/if}
+      </div>
+      <div
+        class={cn("flex w-full flex-1 overflow-y-auto", {
+          "pr-10": !$view.isConstrainedWidth && body?.mdBlocks
+        })}
+      >
+        <p class="p-2 text-center text-rose-700" class:hidden={!isError}>
+          Transcription Error.
+        </p>
+        {#if body?.initTranscription == true || isDisabled}
+          <p class="p-2">Transcribing...</p>
+        {:else if body?.mdBlocks !== undefined}
+          <NodularMarkdown
+            mdId={generateUID()}
+            isNodular={true}
+            md={{ blocks: body?.mdBlocks }}
+            on:change={onMarkdownChange}
+          />
+        {:else if body?.transcription !== undefined}
+          <TextArea bind:value={body.transcription} />
+          <!-- <p class="p-2">{body.transcription}</p> -->
+        {:else}
+          <span
+            class="w-full h-full flex flex-col gap-2 justify-center items-center text-fgs3"
+          >
+            <span> Not transcribed yet. Please transcribe to view. </span>
+            {#if !$userPreferences.localAI.audioTranscription}
+              <div class="flex flex-col gap-2 text-b2">
+                Please make sure to enable Audio transcription from AI settings
+                to transcribe your audio.
+                <div class="flex justify-center">
+                  <Button
+                    label="Open AI settings"
+                    size={Size.sm}
+                    type={ButtonVariant.PRIMARY}
+                    style={ButtonStyle.OUTLINED}
+                    on:click={() => {
+                      appStore.runAction(Action.LOCAL_AI_SETTINGS, {
+                        componentParams: {
+                          isCmdBarLaunch: true
+                        }
+                      });
+                    }}
+                  />
+                </div>
               </div>
-            </div>
-          {/if}
-        </span>
-      {/if}
+            {/if}
+          </span>
+        {/if}
+      </div>
     </div>
-  </div>
+  {/if}
 </div>
