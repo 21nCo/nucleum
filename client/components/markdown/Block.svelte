@@ -168,6 +168,10 @@
   ) {
     blockContextEventListener(e.detail.action, e.detail.data);
   }
+
+  function onBlockUpdate(e: CustomEvent<any>) {
+    propagate(BlockAction.CHANGE, e.detail);
+  }
 </script>
 
 <!--TODO -  Note - when reenabling drag and drag to rearrange - make sure it is not interfering with text selection or media grid space slider -->
@@ -214,6 +218,7 @@
       on:blur={() => {
         isHovering = false;
       }}
+      on:update={onBlockUpdate}
     />
     {#if isHovering && isFocusable && !isFocusing && dev_isShowFocusHintOnRight}
       <div

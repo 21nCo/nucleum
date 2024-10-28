@@ -13,6 +13,7 @@
   import Callout from "../callout/Callout.svelte";
   import ListContent from "./ListContent.svelte";
   import TextContent from "./TextContent.svelte";
+  import CodeContent from "./CodeContent.svelte";
   export let mdStore: MdStoreType;
   export let block: IBlock;
   export let parentHierarchy: string[] = [];
@@ -32,9 +33,11 @@
   {:else if block.contentType === NodeType.MEDIA_GRID}
     <MediaGrid {block} {mdStore} on:delete />
   {:else if block.contentType === NodeType.EMBED}
-    <EmbedContent {block} {mdStore} />
+    <EmbedContent {block} {mdStore} on:update />
   {:else if block.contentType === NodeType.CALLOUT}
-    <Callout {block} {mdStore} {isHovering} />
+    <Callout {block} {mdStore} {isHovering} on:update />
+  {:else if block.contentType === NodeType.CODE}
+    <CodeContent {block} on:update />
   {:else if block.contentType === NodeType.LIST}
     <ListContent
       {block}
@@ -53,5 +56,10 @@
       bind:isFocusing
       on:blur
     />
+  {:else}
+    <span class="flex text-fgs3 text-b2"
+      >This block is not available yet. Kindly refer the documentation or
+      contact us.</span
+    >
   {/if}
 </div>

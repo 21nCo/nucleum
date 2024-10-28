@@ -191,6 +191,10 @@
       });
     }
 
+    /**
+     * TODO - copying text - if converting to and from code - text etc
+     * @param e
+     */
     function onConvert(e: CustomEvent) {
       logger.log({ at: "NodeContent - onConvert", ...e.detail });
       if (e.detail.source && e.detail.toType) {
@@ -201,7 +205,8 @@
           });
         } else if (
           e.detail.toType === NodeType.MEDIA_GRID ||
-          e.detail.toType === NodeType.EMBED
+          e.detail.toType === NodeType.EMBED ||
+          e.detail.toType === NodeType.CODE
         ) {
           node.updateBlock(e.detail.source, {
             contentType: e.detail.toType,

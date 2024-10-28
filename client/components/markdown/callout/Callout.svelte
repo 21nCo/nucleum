@@ -10,9 +10,9 @@
   import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
   import { appStore } from "$lib/client/stores/app.store";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { getContext } from "svelte";
   import { logger } from "../../debug/logger.client";
-  const blockContext = getContext<any>("block");
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
 
   export let mdStore: MdStoreType;
   export let block: IBlock;
@@ -31,25 +31,8 @@
     }
   }
 
-  /**
-   * Relays an event to the block context.
-   * @param event event name
-   * @param data event data
-   */
-  function relay(event: BlockAction, data?: any) {
-    if (!blockContext.publish) {
-      logger.error({
-        at: "Callout relay",
-        error: "No block context found",
-        data
-      });
-      return;
-    }
-    blockContext.publish(event, data);
-  }
-
   function assignCallout(callout: any) {
-    relay(BlockAction.CHANGE, {
+    dispatch("update", {
       metadata: {
         callout
       }

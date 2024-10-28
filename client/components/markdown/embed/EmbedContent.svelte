@@ -4,7 +4,7 @@
     NodeType,
     type INode
   } from "$lib/client/products/memotron/node/node.type";
-  import { getContext, onMount } from "svelte";
+  import { getContext, onMount, createEventDispatcher } from "svelte";
   import type { MdStoreType } from "../markdown.store";
   import { BlockAction, type IBlock } from "../md.type";
   import EmbedContentPlaceholder from "./EmbedContentPlaceholder.svelte";
@@ -25,8 +25,8 @@
   import { determineResourceType } from "../../flux/resourceStores/resource.utils";
   import { resizable } from "$lib/client/actions/resize.action";
   import { appStore } from "$lib/client/stores/app.store";
+  const dispatch = createEventDispatcher();
   const nodeContext = getContext<any>("node");
-  const blockContext = getContext<any>("block");
   export let block: IBlock;
   export let mdStore: MdStoreType;
   let linkInputValue = "";
@@ -46,22 +46,6 @@
     _mediaBlock?.contentType &&
     !titleNotRequiredTypes.includes(_mediaBlock?.contentType) &&
     !block?.body?.isHidePreview;
-  /**
-   * Relays an event to the block context.
-   * @param event event name
-   * @param data event data
-   */
-  function relay(event: BlockAction, data?: any) {
-    if (!blockContext.publish) {
-      logger.error({
-        at: "EmbedContent relay",
-        error: "No block context found",
-        data
-      });
-      return;
-    }
-    blockContext.publish(event, data);
-  }
 
   function onSelectFromLibrary(event: CustomEvent) {
     logger.debug({ at: "EmbedContent onSelectFromLibrary", event });
@@ -78,7 +62,7 @@
     }
   }
   function assignBody(body: any) {
-    relay(BlockAction.CHANGE, {
+    dispatch("update", {
       body
     });
     if (typeof block.body === "object") {
