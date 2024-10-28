@@ -58,6 +58,7 @@ export enum Resource {
   highlight = "highlight",
   link = "link",
   linkTag = "linkTag",
+  markdownSettings = "markdownSettings",
 
   //Memotron clipper
   clipperToolbarState = "clipperToolbarState",

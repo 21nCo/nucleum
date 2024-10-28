@@ -37,6 +37,14 @@
   ) => void;
   export let deleteCallback: () => void;
   export let closeCallback: () => void;
+
+  $: isExpanded =
+    (context === AvatarPickerContext.DEFAULT ||
+      context === AvatarPickerContext.CALLOUT_AVATAR) &&
+    $view.isConstrainedWidth;
+
+  const isColorNotApplicable = context === AvatarPickerContext.CALLOUT_AVATAR;
+
   let activeCategory: string = "";
   type StoreAvatars = {
     "Frequently Used": IAvatar[][];
@@ -426,14 +434,21 @@
   class={cn(
     "bg-bgs1 mo:h-96 h-[30.5rem] mo:border mo:border-brs2 rounded-md max-w-full",
     {
-      "w-[35rem]": context === AvatarPickerContext.DEFAULT,
-      "w-[24rem]": context !== AvatarPickerContext.DEFAULT
+      "w-[35rem]": isExpanded,
+      "w-[24rem]": !isExpanded
     }
   )}
 >
   <div class="flex h-12 border-b border-b-brs2 p-2">
-    {#if context === AvatarPickerContext.DEFAULT}
-      <div class="flex mo:flex-1 w-3/10 h-full px-2">
+    <div
+      class={cn("flex h-full px-2", {
+        "flex-1": !isExpanded,
+        "w-3/10": isExpanded
+      })}
+    >
+      {#if context === AvatarPickerContext.RATING_AVATAR}
+        Pick an icon
+      {:else}
         <PanelSwitcher
           items={["Icon", "Emoji"]}
           size={Size.xs}
@@ -441,10 +456,15 @@
           value={mode == AvatarType.ICON ? "Icon" : "Emoji"}
           on:switch={handleModeSwitch}
         />
-      </div>
-    {/if}
-    <div class="flex h-full mo:justify-end justify-around mo:flex-none grow">
-      {#if !$view.isConstrainedWidth}
+      {/if}
+    </div>
+    <div
+      class={cn("flex h-full", {
+        "justify-end flex-none": !isExpanded,
+        "justify-around grow": isExpanded
+      })}
+    >
+      {#if isExpanded}
         <div class="flex rounded-md w-8/10 px-1 border border-brs2">
           <Icon size={Size.xs} />
           <input
@@ -481,7 +501,7 @@
       {/if}
     </div>
   </div>
-  {#if $view.isConstrainedWidth}
+  {#if !isExpanded}
     <input
       type="search"
       placeholder="Search"
@@ -492,7 +512,7 @@
     />
   {/if}
   <div class="flex h-9/10">
-    {#if context === AvatarPickerContext.DEFAULT && !$view.isConstrainedWidth}
+    {#if isExpanded}
       <div
         class="relative w-3/10 min-w-[30%] h-full flex flex-col gap-2 px-2 py-2 border-r border-r-brs2"
       >
@@ -528,56 +548,58 @@
       </div>
     {/if}
     <div class="flex flex-col grow h-full">
-      <div
-        class="w-full h-1/10 flex items-center gap-3 px-4 border-b border-b-brs2 bg-bgs2"
-      >
-        {#if mode == AvatarType.ICON}
-          {#each colorPalate as color}
-            <span
-              id={"colPalate" + color}
-              class={cn(
-                "inline-flex justify-center items-center rounded-full w-7 h-7",
-                {
-                  border: iconColor == color,
-                  "border-fgs2": color === "bw"
-                }
-              )}
-              style={`padding: 0rem; border-color: ${color !== "bw" ? color : ""}`}
-            >
-              <button
-                id={"colPalateButton" + color}
-                on:click={() => (iconColor = color)}
-                class={cn("rounded-full w-5 h-5", {
-                  "bg-fgs2": color === "bw"
-                })}
-                style="background-color:{color !== 'bw' ? color : ''}"
+      {#if (!isColorNotApplicable && mode === AvatarType.ICON) || mode === AvatarType.EMOJI}
+        <div
+          class="w-full h-1/10 flex items-center gap-3 px-4 border-b border-b-brs2 bg-bgs2"
+        >
+          {#if mode === AvatarType.ICON}
+            {#each colorPalate as color}
+              <span
+                id={"colPalate" + color}
+                class={cn(
+                  "inline-flex justify-center items-center rounded-full w-7 h-7",
+                  {
+                    border: iconColor == color,
+                    "border-fgs2": color === "bw"
+                  }
+                )}
+                style={`padding: 0rem; border-color: ${color !== "bw" ? color : ""}`}
               >
-                {#if color === "bw"}
-                  <svg viewBox="0 0 100 100" class="w-full h-full">
-                    <circle cx="50" cy="50" r="50" class="fill-bgs1" />
-                    <path d="M50 0A50 50 0 0 1 50 100V0Z" class="fill-fgs1" />
-                  </svg>
-                {/if}
-              </button></span
-            >
-          {/each}
-        {:else}
-          {#each skinTones as skin, index}
-            <span
-              class="inline-flex justify-center items-center rounded-full w-7 h-7"
-              style="padding: 0rem;{skinIndex == index
-                ? `border:1px solid ${skin}`
-                : ''}"
-            >
-              <button
-                on:click={() => (skinIndex = index)}
-                class="rounded-full w-5 h-5"
-                style="background-color:{skin}"
-              ></button></span
-            >
-          {/each}
-        {/if}
-      </div>
+                <button
+                  id={"colPalateButton" + color}
+                  on:click={() => (iconColor = color)}
+                  class={cn("rounded-full w-5 h-5", {
+                    "bg-fgs2": color === "bw"
+                  })}
+                  style="background-color:{color !== 'bw' ? color : ''}"
+                >
+                  {#if color === "bw"}
+                    <svg viewBox="0 0 100 100" class="w-full h-full">
+                      <circle cx="50" cy="50" r="50" class="fill-bgs1" />
+                      <path d="M50 0A50 50 0 0 1 50 100V0Z" class="fill-fgs1" />
+                    </svg>
+                  {/if}
+                </button></span
+              >
+            {/each}
+          {:else if mode === AvatarType.EMOJI}
+            {#each skinTones as skin, index}
+              <span
+                class="inline-flex justify-center items-center rounded-full w-7 h-7"
+                style="padding: 0rem;{skinIndex == index
+                  ? `border:1px solid ${skin}`
+                  : ''}"
+              >
+                <button
+                  on:click={() => (skinIndex = index)}
+                  class="rounded-full w-5 h-5"
+                  style="background-color:{skin}"
+                ></button></span
+              >
+            {/each}
+          {/if}
+        </div>
+      {/if}
       <div
         bind:this={avatarsParentContainer}
         on:scroll={handleScroll}

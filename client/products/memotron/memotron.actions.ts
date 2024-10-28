@@ -38,6 +38,7 @@ import LinkSuggestionItem from "./common/linkbox/LinkSuggestionItem.svelte";
 import NodeTitleLabelPart from "./node/title/NodeTitleLabelPart.svelte";
 import MemotronGreenUse from "./base/MemotronGreenUse.svelte";
 import GlobalGraph from "./graph/GlobalGraph.svelte";
+import CalloutSettings from "$lib/client/components/markdown/calloutSettings/CalloutSettings.svelte";
 export const memotronActions: IAction[] = [
   {
     action: MemotronAction.OPEN_CHAT,
@@ -353,5 +354,16 @@ export const memotronActions: IAction[] = [
     label: "Green usage",
     icon: "ph:leaf-light",
     component: MemotronGreenUse
+  },
+  {
+    action: "calloutSettings",
+    type: ActionType.MODAL,
+    label: "Callout Settings",
+    component: CalloutSettings,
+    modalParams: {
+      layout: {
+        orientation: Orientation.Horizontal
+      }
+    }
   }
 ];

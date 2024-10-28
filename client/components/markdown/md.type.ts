@@ -1,3 +1,4 @@
+import type { IAvatar } from "$lib/client/types/avatar.type";
 import type {
   IObservableStoreSubject,
   IRecordId
@@ -128,3 +129,12 @@ export enum BlockAction {
    */
   CHANGE = "change"
 }
+
+export type IMarkdownSettings = IObservableStoreSubject & {
+  callout: ICalloutSetting[];
+};
+export type ICalloutSetting = {
+  avatar: IAvatar;
+  color: number;
+  label: string;
+};

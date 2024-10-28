@@ -13,12 +13,12 @@ export type EmojiAvatar = {
 export type IconAvatar = {
   type: AvatarType.ICON;
   isFilled: boolean;
-  color: string;
+  color?: string;
 };
 
 export type AvatarWithCode<T = EmojiAvatar | IconAvatar> = {
-  name: string;
-  frequency: number;
+  name?: string;
+  frequency?: number;
   code: string;
 } & T;
 
@@ -34,5 +34,6 @@ export enum AvatarType {
 
 export enum AvatarPickerContext {
   DEFAULT = "DEFAULT",
-  RATING_AVATAR = "RATING_AVATAR"
+  RATING_AVATAR = "RATING_AVATAR",
+  CALLOUT_AVATAR = "CALLOUT_AVATAR"
 }

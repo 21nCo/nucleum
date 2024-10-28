@@ -81,17 +81,13 @@
           label: "Code",
           description: "Code block",
           type: NodeType.CODE,
-          icon: "code",
-          badge: "planned",
-          isDisabled: true
+          icon: "code"
         },
         {
           label: "Callout",
           description: "Callout block",
           type: NodeType.CALLOUT,
-          icon: "bookmark",
-          badge: "planned",
-          isDisabled: true
+          icon: "bookmark"
         },
         {
           label: "Math",
