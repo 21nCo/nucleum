@@ -46,10 +46,12 @@ export type CustomColumn = BaseColumn & {
    * The component to be rendered in the cell. Uses ComponentResolver to resolve the component. List the component in actionMap to resolve it.
    */
   component: string | ConstructorOfATypedSvelteComponent;
+  componentProps?: Record<string, any> | ((row: any) => Record<string, any>);
 };
 
 export type IconActionColumn = {
   type: TableCellType.ACTION;
+  actionTooltip?: InputLabelInfoToolTip;
   action: (row: any) => void;
 };
 
@@ -61,4 +63,11 @@ export enum TableCellType {
   TOGGLE = "TOGGLE",
   ACTION = "ACTION",
   CUSTOM = "CUSTOM"
+}
+
+export enum TableCellDefaultAction {
+  REORDER = "REORDER",
+  REMOVE = "REMOVE",
+  SELECT_ROW = "SELECT_ROW",
+  MULTI_SELECT_ROW = "MULTI_SELECT_ROW"
 }

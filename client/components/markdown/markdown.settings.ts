@@ -5,19 +5,27 @@ import type { IMarkdownSettings } from "./md.type";
 
 class MarkdownSettingsStore extends KeyValueStore<IMarkdownSettings> {
   constructor() {
-    super(Resource.markdownSettings, {
-      callout: [
-        {
-          avatar: {
-            type: AvatarType.ICON,
-            isFilled: true,
-            code: "&#XE88E"
-          },
-          color: 0,
-          label: "Info"
-        }
-      ]
-    });
+    super(
+      Resource.markdownSettings,
+      {
+        callout: [
+          {
+            id: "info",
+            avatar: {
+              type: AvatarType.ICON,
+              isFilled: true,
+              code: "&#XE88E"
+            },
+            color: 217,
+            label: "Info"
+          }
+        ]
+      },
+      { isPreventAutoPersist: true }
+    );
+  }
+  save() {
+    return this.modify(this.get());
   }
 }
 

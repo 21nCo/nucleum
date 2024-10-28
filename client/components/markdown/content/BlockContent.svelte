@@ -10,7 +10,7 @@
   import EmbedContent from "../embed/EmbedContent.svelte";
   import type { MdStoreType } from "../markdown.store";
   import MediaGrid from "../mediaGrid/MediaGrid.svelte";
-  import Callout from "./Callout.svelte";
+  import Callout from "../callout/Callout.svelte";
   import ListContent from "./ListContent.svelte";
   import TextContent from "./TextContent.svelte";
   export let mdStore: MdStoreType;
@@ -34,7 +34,7 @@
   {:else if block.contentType === NodeType.EMBED}
     <EmbedContent {block} {mdStore} />
   {:else if block.contentType === NodeType.CALLOUT}
-    <Callout {block} {mdStore} />
+    <Callout {block} {mdStore} {isHovering} />
   {:else if block.contentType === NodeType.LIST}
     <ListContent
       {block}

@@ -378,6 +378,27 @@ export class SurrealPersistence implements IPersistence {
         query,
         result
       });
+      if (
+        result &&
+        Array.isArray(result) &&
+        (!result[0] || (Array.isArray(result[0]) && result[0].length === 0))
+      ) {
+        const { query: upsertQuery, id } = resolveUpsertQuery(
+          record.id.toString(),
+          record
+        );
+        logger.log({
+          at: "SurrealPersistence.merge - record not present, fallback to upsert",
+          record,
+          upsertQuery
+        });
+        const upsertResult = await this.instance?.query(upsertQuery);
+        logger.log({
+          at: "SurrealPersistence.merge - upsert result",
+          upsertResult
+        });
+        return upsertResult;
+      }
       return result;
     } catch (e) {
       logger.error({ at: "SurrealPersistence.merge", e });

@@ -134,6 +134,7 @@ export type IMarkdownSettings = IObservableStoreSubject & {
   callout: ICalloutSetting[];
 };
 export type ICalloutSetting = {
+  id: string;
   avatar: IAvatar;
   color: number;
   label: string;

@@ -524,14 +524,14 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
         }
         remainingResources.push({
           id: block.id,
-          contentType: correspondingContent.contentType,
-          body: correspondingContent.body,
+          contentType: correspondingContent?.contentType,
+          body: correspondingContent?.body,
           mdText,
           vector:
             vectorInsertionresult?.length > 0
               ? vectorInsertionresult[0]?.id
               : null,
-          metadata: root.metadata,
+          metadata: correspondingContent?.metadata,
           creationContext: id,
           children: block.children
         });

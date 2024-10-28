@@ -73,7 +73,7 @@
       {:else}
         <div class="w-full flex flex-col justify-center items-center h-40">
           <SubAtomLogo />
-          <div>
+          <div class="font-medium">
             {properCase($appStore.product)}
           </div>
         </div>

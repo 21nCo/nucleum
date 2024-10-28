@@ -15,6 +15,7 @@
   export let size: Size = Size.md;
   export let isInEditMode = false;
   export let context: AvatarPickerContext = AvatarPickerContext.DEFAULT;
+  export let changeCallback: (avatar: IAvatar) => void = () => {};
   let ref: any;
   function handleAvatarEmitted(avatarVal: any) {
     if (!avatarVal) return;
@@ -26,6 +27,7 @@
     }
     avatar = avatarVal;
     dispatch("change", avatarVal);
+    changeCallback?.(avatarVal);
     closePopover();
   }
   function handleDeleteEmitted() {

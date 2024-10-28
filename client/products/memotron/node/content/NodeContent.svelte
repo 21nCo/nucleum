@@ -126,6 +126,8 @@
     const block = e.detail.block;
     if (block.source && "body" in block) {
       node.updateBlock(block.source, { body: block.body });
+    } else if (block.source && "metadata" in block) {
+      node.updateBlock(block.source, { metadata: block.metadata });
     }
   }
 

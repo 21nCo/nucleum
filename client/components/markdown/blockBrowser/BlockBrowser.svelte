@@ -74,8 +74,7 @@
           label: "Quote",
           description: "Quote block",
           type: NodeType.QUOTE,
-          icon: "hugeicons:quote-up",
-          badge: "new"
+          icon: "hugeicons:quote-up"
         },
         {
           label: "Code",
@@ -87,7 +86,8 @@
           label: "Callout",
           description: "Callout block",
           type: NodeType.CALLOUT,
-          icon: "bookmark"
+          icon: "bookmark",
+          badge: "new"
         },
         {
           label: "Math",
@@ -162,6 +162,7 @@
     },
     {
       section: "media",
+      badge: "new",
       children: [
         {
           label: "Image",

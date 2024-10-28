@@ -130,7 +130,7 @@
 <!--Note: The font weight and tracking correction is for H Grotesk typeface -->
 <div
   bind:this={ref}
-  class={cn("flex h-full w-full font-[350] tracking-[0.01em]", {
+  class={cn("flex h-full w-full font--[350] tracking-[0.01em]", {
     glassy: $appearance?.skin == AppSkin.Glassy,
     dark: $appearance?.colorScheme?.isDark
   })}
