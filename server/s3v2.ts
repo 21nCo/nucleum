@@ -33,8 +33,7 @@ async function resolveSignedUrlForPut(body: any, user: any) {
     const command = new PutObjectCommand({
       Bucket: bucketName,
       Key: filePath,
-      ACL: "public-read",
-      contentType: body.contentType
+      ContentType: body.contentType
     });
     const expirationTime = process.env.URL_EXPIRATION_TIME
       ? +process.env.URL_EXPIRATION_TIME
@@ -88,8 +87,7 @@ async function resolveSignedUrlForGet(body: any, user: any) {
     const bucketName = body.key.split("/")[0];
     const command = new GetObjectCommand({
       Bucket: bucketName,
-      Key: body.key.split("/").slice(1).join("/"),
-      ACL: "public-read"
+      Key: body.key.split("/").slice(1).join("/")
     });
     const expirationTime = process.env.URL_EXPIRATION_TIME_GET
       ? +process.env.URL_EXPIRATION_TIME_GET
