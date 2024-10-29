@@ -1,7 +1,7 @@
-import fletcher16 from "fletcher";
+// import fletcher16 from "fletcher";
 
 export function generateHash(str: string) {
-  return fletcher16(Buffer.from(str.toLowerCase())).toString();
+  // return fletcher16(Buffer.from(str.toLowerCase())).toString();
 }
 
 export async function generateSHA256Hash(message: string) {
