@@ -367,5 +367,26 @@ export class AccountLambdaFunctions extends cdk.NestedStack {
       new gateway.MockIntegration(defaults.mockIntegration),
       defaults.mockIntegrationOptions
     );
+
+    const syncEndpoint = props.api.root.addResource("sync");
+    const syncResource = syncEndpoint.addResource("{method}");
+    const syncFunctionNode = new lambda.Function(this, "SyncFunctionNode", {
+      handler: "sync.handler",
+      functionName: generateFunctionName("syncFunctionNode", props.environment),
+      ...nodeRuntimeFunctionProps
+    });
+    syncResource.addMethod(
+      "POST",
+      new gateway.LambdaIntegration(syncFunctionNode)
+    );
+    syncResource.addMethod(
+      "GET",
+      new gateway.LambdaIntegration(syncFunctionNode)
+    );
+    syncResource.addMethod(
+      "OPTIONS",
+      new gateway.MockIntegration(defaults.mockIntegration),
+      defaults.mockIntegrationOptions
+    );
   }
 }

@@ -4,7 +4,7 @@ import { memotronTables } from "$lib/shared/dbo/memotron.tables";
 import { pointronDboDefinitions } from "$lib/shared/dbo/pointron.dbo";
 import { pointronTables } from "$lib/shared/dbo/pointron.tables";
 import { globalTables } from "../dbo/global.tables";
-import { generateResourceId } from "$lib/client/components/flux/flux.utils";
+// import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import {
   PersistenceActionType,
   StoreDataType,
@@ -154,7 +154,9 @@ export function resolveInsertQuery(
     const query = generateUpsertQuery();
     return query;
   } else if (params?.isRelation) {
-    const query = `INSERT RELATION INTO ${resource} ${JSON.stringify(records)};`;
+    const query = `INSERT RELATION INTO ${resource} ${JSON.stringify(
+      records
+    )};`;
     return commonQueryReplacements(query);
   }
   const query = `INSERT INTO ${resource} ${JSON.stringify(records)};`;
@@ -226,7 +228,9 @@ export function resolveMutationQueryV2(mutation: IMutation) {
     case PersistenceActionType.DELETE:
       return `DELETE ${mutation.resource} WHERE id = ${mutation.params.recordId}`;
     case PersistenceActionType.REPLACE:
-      return `UPDATE ${mutation.resource} SET ${JSON.stringify(mutation.params)} WHERE id = ${mutation.id}`;
+      return `UPDATE ${mutation.resource} SET ${JSON.stringify(
+        mutation.params
+      )} WHERE id = ${mutation.id}`;
     case PersistenceActionType.MERGE:
       return resolveMergeQuery(mutation.params.record);
     case PersistenceActionType.CUSTOM:
