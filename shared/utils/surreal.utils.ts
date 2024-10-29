@@ -80,6 +80,13 @@ function mutationMapEntry(recordId: string) {
   ).toFixed()};`;
 }
 
+/**
+ * @deprecated - used with old dataManager
+ * @param type
+ * @param record
+ * @param params
+ * @returns
+ */
 export function resolveMutationQuery(
   type: PersistenceActionType,
   record: string,
@@ -150,11 +157,12 @@ export function resolveInsertQuery(
       id: x.id.id
     };
   });
-  // const firstRecord = records[0];
-  // records = [...records.slice(1), firstRecord];
   if (params?.isUpsert) {
-    const query = generateUpsertQuery();
-    return query;
+    const query = `UPSERT ${resource} CONTENT ${JSON.stringify(
+      records,
+      noneReplacerFn
+    )};`;
+    return commonQueryReplacements(query);
   } else if (params?.isRelation) {
     const query = `INSERT RELATION INTO ${resource} ${JSON.stringify(
       records
@@ -163,16 +171,6 @@ export function resolveInsertQuery(
   }
   const query = `INSERT INTO ${resource} ${JSON.stringify(records)};`;
   return commonQueryReplacements(query);
-
-  function generateUpsertQuery() {
-    let fullQuery = "";
-    records.forEach((record) => {
-      const { query, id } = resolveUpsertQuery(resource, record);
-      fullQuery += query;
-    });
-    console.log({ fullQuery });
-    return fullQuery;
-  }
 }
 
 export function generateResourceId(itemType: Resource): IRecordId {
@@ -200,14 +198,48 @@ export function resolveUpsertQuery(resource: string, record: any) {
  * @param record
  * @returns
  */
-export function resolveMergeQuery(record: any) {
+export function resolveMergeQuery(
+  record: any,
+  params?: { isUpsert?: boolean }
+) {
   const recordCopy = { ...record };
   const recordId = recordCopy.id;
   delete recordCopy.id;
-  const query = `UPDATE ${recordId} MERGE ${JSON.stringify(
-    recordCopy,
-    noneReplacerFn
-  )};`;
+  let query;
+  if (params?.isUpsert) {
+    query = `UPSERT ${recordId} MERGE ${JSON.stringify(
+      recordCopy,
+      noneReplacerFn
+    )};`;
+  } else {
+    query = `UPDATE ${recordId} MERGE ${JSON.stringify(
+      recordCopy,
+      noneReplacerFn
+    )};`;
+  }
+  return commonQueryReplacements(query);
+}
+
+export function resolveBulkMergeQuery(
+  resource: string,
+  records: any[],
+  params?: { isUpsert?: boolean }
+) {
+  const changedProperties = { ...records[0] };
+  delete changedProperties.id;
+  let query;
+  const ids = records.map((x) => x.id);
+  if (params?.isUpsert) {
+    query = `UPSERT ${resource} MERGE ${JSON.stringify(
+      changedProperties,
+      noneReplacerFn
+    )} where id in ${JSON.stringify(ids)};`;
+  } else {
+    query = `UPDATE ${resource} MERGE ${JSON.stringify(
+      changedProperties,
+      noneReplacerFn
+    )} where id in ${JSON.stringify(ids)};`;
+  }
   return commonQueryReplacements(query);
 }
 
@@ -228,10 +260,17 @@ export function commonQueryReplacements(query: string) {
     .replaceAll(`"$NONE"`, `NONE`);
 }
 
+/**
+ * Used on the server side to resolve the mutation query when running mutations on the remote database.
+ * @param mutation
+ * @returns
+ */
 export function resolveMutationQueryV2(mutation: IMutation) {
   switch (mutation.params.action) {
     case PersistenceActionType.INSERT:
-      return resolveInsertQuery(mutation.resource, mutation.params.records);
+      return resolveInsertQuery(mutation.resource, mutation.params.records, {
+        isUpsert: true
+      });
     case PersistenceActionType.DELETE:
       return `DELETE ${mutation.resource} WHERE id = ${mutation.params.recordId}`;
     case PersistenceActionType.REPLACE:
@@ -239,7 +278,11 @@ export function resolveMutationQueryV2(mutation: IMutation) {
         mutation.params
       )} WHERE id = ${mutation.id}`;
     case PersistenceActionType.MERGE:
-      return resolveMergeQuery(mutation.params.record);
+      return resolveMergeQuery(mutation.params.record, { isUpsert: true });
+    case PersistenceActionType.BULK_MERGE:
+      return resolveBulkMergeQuery(mutation.resource, mutation.params.records, {
+        isUpsert: true
+      });
     case PersistenceActionType.CUSTOM:
       return replaceParams(mutation.params.query, mutation.params.data);
   }
