@@ -145,6 +145,15 @@ export function replaceParams(query: string, params: any) {
   return query;
 }
 
+/**
+ *
+ * UPSERT resource content [] - this doesn't work. So, no way to bulk insert using upsert. Upsert comes in handy to bulk update with same data for many records though. Not for different data for many records.
+ *
+ * @param resource
+ * @param records
+ * @param params
+ * @returns
+ */
 export function resolveInsertQuery(
   resource: string,
   records: any[],
@@ -268,9 +277,7 @@ export function commonQueryReplacements(query: string) {
 export function resolveMutationQueryV2(mutation: IMutation) {
   switch (mutation.params.action) {
     case PersistenceActionType.INSERT:
-      return resolveInsertQuery(mutation.resource, mutation.params.records, {
-        isUpsert: true
-      });
+      return resolveInsertQuery(mutation.resource, mutation.params.records);
     case PersistenceActionType.DELETE:
       return `DELETE ${mutation.resource} WHERE id = ${mutation.params.recordId}`;
     case PersistenceActionType.REPLACE:
