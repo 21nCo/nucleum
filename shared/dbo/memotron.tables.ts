@@ -61,10 +61,10 @@ DEFINE INDEX IF NOT EXISTS nodeSemanticSearchIndex ON TABLE vector FIELDS embedd
  * @returns 
  */
 function nodeIndices() {
-  const def = `DEFINE INDEX IF NOT EXISTS nodetextSearchIndex ON TABLE node COLUMNS body SEARCH ANALYZER ascii HIGHLIGHTS;`;
+  const body = `DEFINE INDEX IF NOT EXISTS nodetextSearchIndex ON TABLE node COLUMNS mdText SEARCH ANALYZER ascii HIGHLIGHTS;`;
   const label = `DEFINE INDEX IF NOT EXISTS nodetextSearchIndexLabel ON TABLE node COLUMNS label SEARCH ANALYZER ascii HIGHLIGHTS;`;
   // const def2 = `DEFINE INDEX nodeSemanticSearchIndex ON TABLE vector FIELDS vector MTREE DIMENSION 768 DIST COSINE TYPE F32;`;
-  return [def, label]; //, def2];
+  return [body, label]; //, def2];
 }
 
 function nodesByTime() {

@@ -4,12 +4,14 @@ import { memotronTables } from "$lib/shared/dbo/memotron.tables";
 import { pointronDboDefinitions } from "$lib/shared/dbo/pointron.dbo";
 import { pointronTables } from "$lib/shared/dbo/pointron.tables";
 import { globalTables } from "../dbo/global.tables";
-// import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import {
   PersistenceActionType,
   StoreDataType,
-  type IMutation
+  type IMutation,
+  type IRecordId
 } from "$lib/client/types/data.type";
+import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { generateRandomId } from "./crypto.utils";
 
 /**
  * Resolves a dbo update query based on the provided dependencies from the database operations.
@@ -173,6 +175,11 @@ export function resolveInsertQuery(
   }
 }
 
+export function generateResourceId(itemType: Resource): IRecordId {
+  const id = generateRandomId();
+  return `${itemType}:${id}`;
+}
+
 export function resolveUpsertQuery(resource: string, record: any) {
   let copy = { ...record };
   let id = copy.id;
@@ -211,7 +218,7 @@ const noneReplacerFn = (key: string, value: any) =>
  * Newer versions of Surreal SDK doesn't automatically convert the date to the surreal date format and record links. There d'format' is used for dates and removing quotes around record links to be detected as record links.
  */
 export function commonQueryReplacements(query: string) {
-  const dateRegex = /"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)"/g;
+  const dateRegex = /"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z)"/g;
   const recordLinkRegex = /"([\w-]+:[\w-]+)"/g;
   const recordLinkRegexSingleQuotes = /'([\w-]+:[\w-]+)'/g;
   return query

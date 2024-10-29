@@ -421,8 +421,42 @@ class Flux {
   ) {}
 
   async performSync(method: SyncMethod, data: any) {
-    const result = await performApiCall(`sync/${method}`, "POST", data);
-    return result;
+    try {
+      const result = await performApiCall(`sync/${method}`, "POST", data);
+      let response;
+      if (result?.ok) {
+        response = await result.json();
+      }
+      logger.debug({
+        at: "flux.performSync",
+        method,
+        data,
+        response,
+        result
+      });
+      if (method === SyncMethod.SYNC_UP) {
+        if (response && response.length > 0) {
+          const syncDownData = response[response.length - 1];
+          if (syncDownData?.result && syncDownData.result.length > 0) {
+            return syncDownData.result;
+          }
+        }
+        return [];
+      } else if (method === SyncMethod.SYNC_DOWN) {
+        if (
+          response &&
+          Array.isArray(response) &&
+          response.length > 0 &&
+          response[0].result
+        ) {
+          return response[0].result;
+        }
+        return [];
+      }
+      return response;
+    } catch (e) {
+      logger.error({ at: "flux.performSync", method, data, error: e });
+    }
   }
 
   /**
@@ -544,9 +578,15 @@ class Flux {
       if (result) {
         await this.processSyncDown(result);
       }
+      return result;
     } catch (e) {
       logger.error({ at: "flux.syncDown", error: e });
     } finally {
+      if (!this.isExtensionEnvironment) {
+        dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
+          message: `Sync completed.`
+        });
+      }
       this.isSyncDownPending = false;
     }
   }
@@ -601,10 +641,17 @@ class Flux {
       const resource = resources[i];
       const resourceResponse = result[i];
       if (resourceResponse.result && resourceResponse.result.length > 0) {
+        console.time(`cloneDown - ${resource}`);
+        if (resource !== Resource.kv) {
+          dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
+            subMessage: `Syncing ${resource}s...`
+          });
+        }
         await this.persistence.mutation(resource as Resource, {
           records: resourceResponse.result,
-          action: PersistenceActionType.INSERT
+          action: PersistenceActionType.BULK_INSERT
         });
+        console.timeEnd(`cloneDown - ${resource}`);
       }
     }
     await this.loadInMemoryStores();

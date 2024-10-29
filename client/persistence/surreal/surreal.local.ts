@@ -173,6 +173,11 @@ export class SurrealPersistence implements IPersistence {
       case PersistenceActionType.INSERT:
         response = await this.insert<T>(params.records, resource);
         break;
+      case PersistenceActionType.BULK_INSERT:
+        response = await this.bulkInsert(resource, params.records, {
+          isUpsert: false
+        });
+        break;
       case PersistenceActionType.MERGE:
         response = await this.merge<T>(params.record);
         break;
