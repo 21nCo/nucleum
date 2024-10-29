@@ -13,7 +13,6 @@ import { Resource } from "$lib/client/components/flux/resourceStores/resource.en
 import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
 import { AlertType } from "$lib/client/types/notification.type";
 import { objIsEmpty, shallowDiff } from "$lib/shared/utils/obj.utils";
-import { replaceParams } from "$lib/client/persistence/surreal/surreal.utils";
 import { activeResourceFilter, debouncer } from "$lib/client/utils/utils";
 import { removeHighlight } from "./highlightV4";
 import {
@@ -59,7 +58,10 @@ import {
 import { urlMap } from "$lib/client/products/memotron/common/urlMap";
 import { extensionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
 import { FluxMethod } from "$lib/client/components/flux/flux.type";
-import { isSameResource, resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
+import {
+  isSameResource,
+  resourceInList
+} from "$lib/client/components/flux/resourceStores/resource.utils";
 
 class WebpageStore extends ObservableStore<IWebpageStore> {
   previousValue: string = "";
@@ -152,11 +154,11 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
   }
 
   /**
-  * when a tab is changed, this method is called to update the store with the new tab data.
-  * 
-  * @param tab
-  * @returns
-  */
+   * when a tab is changed, this method is called to update the store with the new tab data.
+   *
+   * @param tab
+   * @returns
+   */
   onContextChange(tab: chrome.tabs.Tab) {
     const url = resolveUrl(tab.url);
     const webpage = this.get();
@@ -221,7 +223,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
               isReturnUrl: true
             }
           }
-          })
+        });
         console.log({ at: "screenshotWebpage", result });
         return result;
       }
@@ -503,7 +505,9 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
   async updatePageProperty(property: INodePropertyValue) {
     const webpage = this.get();
     if (!webpage.id) return;
-    const properties = webpage.properties?.filter((x) => !isSameResource(x, property));
+    const properties = webpage.properties?.filter(
+      (x) => !isSameResource(x, property)
+    );
     const newProperties = [...(properties ?? []), property];
     await this.updateProperties(webpage.id, newProperties);
     this.update((n) => {
@@ -518,7 +522,9 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     if (!webpage.id) return;
     const clip = webpage.clips?.find(resourceInList(id));
     if (!clip) return;
-    const properties = clip.properties?.filter((x) => !isSameResource(x, property));
+    const properties = clip.properties?.filter(
+      (x) => !isSameResource(x, property)
+    );
     const newProperties = [...(properties ?? []), property];
     await this.updateProperties(id, newProperties);
     this.update((n) => {
@@ -532,7 +538,10 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     });
   }
 
-  private async updateProperties(id: IRecordId, properties: INodePropertyValue[]) {
+  private async updateProperties(
+    id: IRecordId,
+    properties: INodePropertyValue[]
+  ) {
     return nodeStore.modify(
       id,
       {
@@ -543,7 +552,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
         debounceKey: "propertyUpdate" + id.toString()
       }
     );
-  };
+  }
 }
 export const webpage = new WebpageStore();
 

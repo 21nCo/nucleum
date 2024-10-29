@@ -9,7 +9,7 @@ import {
 import {
   replaceParams,
   resolveMutationQuery
-} from "$lib/client/persistence/surreal/surreal.utils";
+} from "$lib/shared/utils/surreal.utils";
 import { PersistenceActionType } from "../types/data.type";
 import type { ISurrealDatabase } from "../types/db.type";
 import type { IResourceBase } from "../components/flux/resourceStores/resource.type";

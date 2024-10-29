@@ -31,23 +31,30 @@ import {
   isExtensionEnvironment
 } from "$lib/client/utils/browser.utils";
 import { clientStorage } from "$lib/client/persistence/persistence.utils";
-import { SurrealSync } from "$lib/client/persistence/surreal/surreal.sync";
+// import { SurrealSync } from "$lib/client/persistence/surreal/surreal.sync";
 import { generateRandomId } from "$lib/shared/utils/crypto.utils";
 import type { ISurrealDatabase } from "$lib/client/types/db.type";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 
 import { resolveCurrentUserId } from "$lib/client/utils/account.utils";
 import { GlobalEvent } from "$lib/client/types/event.enum";
-import { determineIfOffline } from "$lib/client/utils/network.utils";
+import {
+  determineIfOffline,
+  performApiCall
+} from "$lib/client/utils/network.utils";
 import { ExtensionEvent } from "$lib/client/types/extension.type";
-import { relayToContentScript, relayToSidePanel } from "$lib/client/utils/extension.utils";
+import {
+  relayToContentScript,
+  relayToSidePanel
+} from "$lib/client/utils/extension.utils";
+import { SyncMethod } from "$lib/shared/types/sync.type";
 
 class Flux {
   static _instance: Flux | null = null;
   stores: IStore[] = [];
   provider!: PersistenceProvider;
   persistence!: IPersistence;
-  syncer!: ISyncHandler;
+  // syncer!: ISyncHandler;
   remote!: ISurrealDatabase;
   private isLocalMode: boolean = false;
   private isExtensionEnvironment: boolean = false;
@@ -76,7 +83,7 @@ class Flux {
       case PersistenceProvider.SURREAL_SURREAL:
       case PersistenceProvider.DEXIE_SURREAL:
         Flux._instance.remote = new SurrealDatabase();
-        Flux._instance.syncer = new SurrealSync(Flux._instance.remote);
+        // Flux._instance.syncer = new SurrealSync(Flux._instance.remote);
         break;
       default:
         break;
@@ -235,15 +242,14 @@ class Flux {
         }
       }
       if (this.isExtensionEnvironment) {
-          const message = {
-            event: ExtensionEvent.MUTATION,
+        const message = {
+          event: ExtensionEvent.MUTATION,
           data: { resource, params }
         };
         relayToSidePanel(message);
         relayToContentScript(message);
       } else {
         dispatchCustomEvent(GlobalEvent.MUTATION, { resource, params });
-
       }
       const correspondingStore = this.stores.find((x) => x.id === resource);
       if (correspondingStore?.isInMemory) {
@@ -414,6 +420,11 @@ class Flux {
     isShowRefreshingState: boolean = false
   ) {}
 
+  async performSync(method: SyncMethod, data: any) {
+    const result = await performApiCall(`sync/${method}`, "POST", data);
+    return result;
+  }
+
   /**
    * Sync up the local changes and from response - syncs down the changes from cloud.
    * @returns
@@ -428,12 +439,12 @@ class Flux {
     const lastSyncDown =
       local?.lastSyncDown ?? new Date().getTime() - 1000 * 60 * 60 * 24;
     const resources = this.resolveSyncResources();
-    const syncDownData = await this.syncer.sync(
+    const syncDownData = await this.performSync(SyncMethod.SYNC_UP, {
       mutations,
       lastSyncDown,
       resources,
-      local?.dapId
-    );
+      dapId: local?.dapId
+    });
     if (syncDownData) {
       await this.processSyncDown(syncDownData);
     }
@@ -524,7 +535,11 @@ class Flux {
         local?.lastSyncDown ?? new Date().getTime() - 1000 * 60 * 60 * 24;
       const dapId = await this.resolveDapId(local);
       const resources = this.resolveSyncResources();
-      const result = await this.syncer.syncDown(lastSyncDown, resources, dapId);
+      const result = await this.performSync(SyncMethod.SYNC_DOWN, {
+        lastSyncDown,
+        resources,
+        dapId
+      });
       this.isSyncDownPending = false;
       if (result) {
         await this.processSyncDown(result);
@@ -578,7 +593,7 @@ class Flux {
     logger.log({ at: "flux.cloneDown", stores: this.stores });
     if (await determineIfOffline()) return;
     const resources = this.resolveSyncResources();
-    const result = await this.syncer.cloneCloudToLocal({
+    const result = await this.performSync(SyncMethod.CLONE_DOWN, {
       resources,
       isExtension: this.isExtensionEnvironment
     });
@@ -621,7 +636,10 @@ class Flux {
     const resources = this.resolveSyncResources();
     for (let resource of resources) {
       const records = await this.persistence.selectMany(resource as Resource);
-      await this.syncer.cloneLocalToCloud(resource, records);
+      await this.performSync(SyncMethod.CLONE_UP, {
+        resource,
+        records
+      });
     }
   }
 

@@ -8,7 +8,13 @@ import { ResponseError, Surreal } from "surrealdb";
 // import { Surreal } from "surrealdb.js";
 // import { surrealdbWasmEngines } from "surrealdb.wasm";
 import { logger } from "../../components/debug/logger.client";
-import { resolveDboUpdateQuery } from "$lib/shared/utils/surreal.utils";
+import {
+  resolveDboUpdateQuery,
+  commonQueryReplacements,
+  resolveInsertQuery,
+  resolveMergeQuery,
+  resolveUpsertQuery
+} from "$lib/shared/utils/surreal.utils";
 import { Resource } from "../../components/flux/resourceStores/resource.enum";
 import type {
   IMetaResource,
@@ -23,12 +29,6 @@ import {
   type IResourceSelectParams
 } from "../../types/data.type";
 import { interceptSurrealResponse } from "../../utils/utils";
-import {
-  commonQueryReplacements,
-  resolveInsertQuery,
-  resolveMergeQuery,
-  resolveUpsertQuery
-} from "./surreal.utils";
 import { LogType } from "$lib/client/components/debug/debug.type";
 import { compareVersions } from "$lib/shared/utils/utils";
 import { TacoActions } from "$lib/client/types/taco.types";
