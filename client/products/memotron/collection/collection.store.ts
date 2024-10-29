@@ -81,7 +81,10 @@ class CollectionStore extends ResourceStore<ICollection> {
    * @param collections - ids of collections - can be any type of collection.
    * @returns
    */
-  async resolveTypes(collections: IRecordId[], isFromExtension: boolean = false) {
+  async resolveTypes(
+    collections: IRecordId[],
+    isFromExtension: boolean = false
+  ) {
     let types: ICollectionExpanded[] = [];
     if (!collections) return types;
 
@@ -97,10 +100,17 @@ class CollectionStore extends ResourceStore<ICollection> {
       }
       const properties = await propertyStore.selectMany({
         filters: {
-          id: [...(result.properties ?? []), ...(typeToExtend?.properties ?? [])]
+          id: [
+            ...(result.properties ?? []),
+            ...(typeToExtend?.properties ?? [])
+          ]
         }
       });
-      console.log({ at: "resolveTypes - isFromExtension", typeToExtend, properties });
+      console.log({
+        at: "resolveTypes - isFromExtension",
+        typeToExtend,
+        properties
+      });
       if (!typeToExtend) return [{ ...result, properties }];
       const mainProps = result.properties?.map((x) => {
         const property = properties.find(resourceInList(x));
@@ -110,7 +120,14 @@ class CollectionStore extends ResourceStore<ICollection> {
         const property = properties.find(resourceInList(x));
         return { ...property };
       });
-      return [{ ...result, properties: mainProps, typeToExtend, extendProperties: extendedProps }];
+      return [
+        {
+          ...result,
+          properties: mainProps,
+          typeToExtend,
+          extendProperties: extendedProps
+        }
+      ];
     }
     const result = await this.selectMany({
       properties: [
@@ -449,8 +466,8 @@ export function resolveCollectionContextMenu(
         group: "all",
         items: [
           resourceActions.star(),
+          resourceActions.select(accessPoint),
           resourceActions.edit(accessPoint),
-          // resourceActions.select(accessPoint),
           resourceActions.copyLink()
         ]
       },

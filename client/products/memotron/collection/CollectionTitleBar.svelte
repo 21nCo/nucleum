@@ -268,7 +268,7 @@
         {#if !$collection.isInEditMode}
           <Toggle
             icon="ph:monitor-play-thin"
-            tooltip="More actions"
+            tooltip="Play actions"
             bind:on={isShowMetaViews}
           />
         {/if}

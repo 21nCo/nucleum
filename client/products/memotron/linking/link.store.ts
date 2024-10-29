@@ -2,7 +2,7 @@ import { Resource } from "$lib/client/components/flux/resourceStores/resource.en
 import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
 import type { ILinkTag } from "./link.type";
 import { type IRecordId } from "$lib/client/types/data.type";
-import { replaceParams } from "$lib/client/persistence/surreal/surreal.utils";
+import { replaceParams } from "$lib/shared/utils/surreal.utils";
 import {
   LinkType,
   type INodeLink

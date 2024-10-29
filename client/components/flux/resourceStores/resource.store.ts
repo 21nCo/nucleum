@@ -34,6 +34,7 @@ import { FluxMethod } from "../flux.type";
 import { generateResourceId } from "../flux.utils";
 import { toasts } from "$lib/client/stores/notification.store";
 import { logger } from "../../debug/logger.client";
+import { isSameResource, resourceInList } from "./resource.utils";
 // import { appStore } from "$lib/client/stores/app.store";
 
 export const activeResources = new Map<string, ActiveResourceStore<any, any>>();
@@ -46,17 +47,17 @@ export function resolveMultiSelectStore(context: string) {
   return multiSelectStores.get(context)!;
 }
 
-class MultiSelectStore extends ObservableStore<string[]> {
+class MultiSelectStore extends ObservableStore<IRecordId[]> {
   constructor(context: string) {
     super(context, StoreDataType.NA);
     this.set([]);
   }
-  clickHandler(id: string) {
+  clickHandler(id: IRecordId) {
     let current = this.get();
     if (current.length > 0) {
-      const isSelected = current.includes(id);
+      const isSelected = current.some(resourceInList(id));
       if (isSelected) {
-        current = current.filter((x) => x != id);
+        current = current.filter((x) => !isSameResource(x, id));
         this.set(current);
         return true;
       }

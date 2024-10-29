@@ -8,7 +8,14 @@ import { ResponseError, Surreal } from "surrealdb";
 // import { Surreal } from "surrealdb.js";
 // import { surrealdbWasmEngines } from "surrealdb.wasm";
 import { logger } from "../../components/debug/logger.client";
-import { resolveDboUpdateQuery } from "$lib/shared/utils/surreal.utils";
+import {
+  resolveDboUpdateQuery,
+  commonQueryReplacements,
+  resolveInsertQuery,
+  resolveMergeQuery,
+  resolveUpsertQuery,
+  resolveBulkMergeQuery
+} from "$lib/shared/utils/surreal.utils";
 import { Resource } from "../../components/flux/resourceStores/resource.enum";
 import type {
   IMetaResource,
@@ -23,12 +30,6 @@ import {
   type IResourceSelectParams
 } from "../../types/data.type";
 import { interceptSurrealResponse } from "../../utils/utils";
-import {
-  commonQueryReplacements,
-  resolveInsertQuery,
-  resolveMergeQuery,
-  resolveUpsertQuery
-} from "./surreal.utils";
 import { LogType } from "$lib/client/components/debug/debug.type";
 import { compareVersions } from "$lib/shared/utils/utils";
 import { TacoActions } from "$lib/client/types/taco.types";
@@ -173,6 +174,9 @@ export class SurrealPersistence implements IPersistence {
       case PersistenceActionType.INSERT:
         response = await this.insert<T>(params.records, resource);
         break;
+      case PersistenceActionType.BULK_INSERT:
+        response = await this._insert(resource, params.records);
+        break;
       case PersistenceActionType.MERGE:
         response = await this.merge<T>(params.record);
         break;
@@ -232,7 +236,7 @@ export class SurrealPersistence implements IPersistence {
   /**
    *
    *
-   * Note: Using `.insert` method surreal.js directly would result in surreal-wasm not recognizing record links. Also, using quert would remove the need for generating query anyways for `delegateSync`.
+   * Note: Using `.insert` method surreal.js directly would result in surreal-wasm not recognizing record links.
    *
    * Workaround to use .insert would be to use type::thing() transform for record links
    *
@@ -264,10 +268,10 @@ export class SurrealPersistence implements IPersistence {
         this.isProcessingOperation = false;
         return result ?? null;
       } else if (resource === Resource.link) {
-        result = await this.bulkInsert(resource, records, { isRelation: true });
+        result = await this._insert(resource, records, { isRelation: true });
       } else {
-        // result = await this.bulkInsert(resource, records);
-        result = await this.upsertRecordsFallback(resource, records);
+        // result = await this._insert(resource, records);
+        result = await this.upsert(resource, records);
       }
       logger.log({
         at: "SurrealPersistence.insert - result",
@@ -285,18 +289,18 @@ export class SurrealPersistence implements IPersistence {
   }
 
   /**
-   * Using UPSERT is still throwing error for Surreal wasm engine. hence this fallback.
+   * Upserts one by one and updates if record already exists.
+   *
+   * UPSERT throws ResponseError if the record already exists.
    *
    * "@surrealdb/wasm": "^1.0.1"
    * "surrealdb": "^1.0.6"
-   *
-   * TODO - watch - unexpected cases because of use of this.isProcessingOperation inside this operation.
    *
    * @param resource
    * @param records
    * @returns
    */
-  async upsertRecordsFallback(resource: string, records: any[]) {
+  async upsert(resource: string, records: any[]) {
     logger.log({
       at: "SurrealPersistence.upsertRecordsFallback",
       resource,
@@ -311,7 +315,7 @@ export class SurrealPersistence implements IPersistence {
           await this.instance?.query(query);
         } catch (e) {
           logger.log({
-            at: `SurrealPersistence.upsertRecordsFallback - failed upsert for record`,
+            at: `SurrealPersistence.upsert - ${recordId} - record already exists. Updating instead.`,
             record,
             e,
             recordId
@@ -324,16 +328,16 @@ export class SurrealPersistence implements IPersistence {
       }
       return [records];
     } catch (e) {
-      logger.error({ at: "SurrealPersistence.upsertRecordsFallback", e });
+      logger.error({ at: "SurrealPersistence.upsert", e });
     } finally {
       this.isProcessingOperation = false;
     }
   }
 
-  async bulkInsert(
+  async _insert(
     resource: string,
     records: any[],
-    params: { isUpsert?: boolean; isRelation?: boolean }
+    params?: { isUpsert?: boolean; isRelation?: boolean }
   ) {
     try {
       const query = resolveInsertQuery(resource, records, params);
@@ -354,11 +358,25 @@ export class SurrealPersistence implements IPersistence {
   }
 
   /**
+   *
+   *
+   * surreal-wasm: "^1.0.1"
+   * Using upsert is failing with error: There was a problem with a datastore transaction: An IndexedDB error occured: failed to execute indexed db request: ConstraintError: Key already exists in the object store
+   *
+   * Example: UPSERT kv:local MERGE {"lastSyncUp":1730197613587};
+   *
+   * Using where clause like UPSERT kv MERGE {"lastSyncUp":1730197613587} where id = "kv:local"; works fine but doesn't do the job of upsert i.e. insert record if not present.
+   *
+   * Using simple update instead of upsert and a insert fallback.
+   * On remote - using UPSERT directly.
+   *
+   *
    * @param record
    * @returns
    */
   async merge<T extends IResource | IMetaResource>(
-    record: Partial<T>
+    record: Partial<T>,
+    params?: { isUpsert?: boolean }
   ): Promise<any> {
     logger.log({
       at: "SurrealPersistence.merge",
@@ -369,7 +387,7 @@ export class SurrealPersistence implements IPersistence {
     if (!record.id) return;
     try {
       await this.awaiter("merge_" + record.id);
-      const query = resolveMergeQuery(record);
+      const query = resolveMergeQuery(record, params);
       logger.log({ at: "SurrealPersistence.merge - query", record, query });
       const result = await this.instance?.query(query);
       logger.log({
@@ -383,21 +401,19 @@ export class SurrealPersistence implements IPersistence {
         Array.isArray(result) &&
         (!result[0] || (Array.isArray(result[0]) && result[0].length === 0))
       ) {
-        const { query: upsertQuery, id } = resolveUpsertQuery(
-          record.id.toString(),
-          record
-        );
+        const resource = record.id.toString().split(":")[0];
+        const insertQuery = resolveInsertQuery(resource, [record]);
         logger.log({
-          at: "SurrealPersistence.merge - record not present, fallback to upsert",
+          at: "SurrealPersistence.merge - record not present, fallback to insert",
           record,
-          upsertQuery
+          insertQuery
         });
-        const upsertResult = await this.instance?.query(upsertQuery);
+        const insertResult = await this.instance?.query(insertQuery);
         logger.log({
-          at: "SurrealPersistence.merge - upsert result",
-          upsertResult
+          at: "SurrealPersistence.merge - insert fallback result",
+          insertResult
         });
-        return upsertResult;
+        return insertResult;
       }
       return result;
     } catch (e) {
@@ -457,21 +473,20 @@ export class SurrealPersistence implements IPersistence {
   ): Promise<any> | undefined {
     try {
       await this.awaiter("bulkEditTemp_" + resource);
-      const changedProperties = { ...records[0] };
-      delete changedProperties.id;
+      const query = resolveBulkMergeQuery(resource, records);
       logger.log({
         at: "SurrealPersistence.bulkEditTemp",
         resource,
-        changedProperties,
-        records
+        query
       });
-      return this.instance?.query(
-        `UPDATE ${resource} MERGE $properties where id in $ids;`,
-        {
-          properties: changedProperties,
-          ids: records.map((x) => x.id)
-        }
-      );
+      const result = await this.instance?.query(query);
+      logger.log({
+        at: "SurrealPersistence.bulkEditTemp - result",
+        resource,
+        query,
+        result
+      });
+      return result;
     } catch (e) {
       logger.error({ at: "SurrealPersistence.bulkEditTemp", e });
     } finally {

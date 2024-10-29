@@ -43,13 +43,25 @@
   import posthog from "posthog-js";
 
   const loadingMessages = {
-    cloneUp:
-      "We are syncing your local data with the cloud. This might take a while.",
-    cloneOrSyncDown:
-      "We are syncing your data from cloud. This might take a while."
+    cloneUp: {
+      message: "Syncing your local data with the cloud...",
+      subMessage: "This might take a while."
+    },
+    syncDown: {
+      message: "Syncing your data from cloud..."
+    },
+    cloneDown: {
+      message: "First login detected. Syncing your data from cloud...",
+      subMessage: "Initializing the sync..."
+    }
   };
 
-  let loadingMessage: string = "";
+  let loadingMessage: {
+    message: string;
+    subMessage?: string;
+  } = {
+    message: ""
+  };
   let error: string | null = null;
   let dev_isDisableSyncOnAppear = false;
 
@@ -199,10 +211,11 @@
             await flux.kvSeed();
           }
         } else if ($account.sessionType === UserSessionType.RETURNING) {
-          loadingMessage = loadingMessages.cloneOrSyncDown;
           if (initState === 0) {
+            loadingMessage = loadingMessages.cloneDown;
             await flux.cloneDown();
           } else {
+            loadingMessage = loadingMessages.syncDown;
             await flux.syncDown();
             await flux.loadInMemoryStores();
           }
@@ -306,7 +319,10 @@
 {/if}
 <div class="flex h-screen w-screen">
   {#if !$appLoadingState.isBaseLoaded || !$appLoadingState.isLocalLoaded}
-    <AppLoadingView message={loadingMessage} />
+    <AppLoadingView
+      message={loadingMessage.message}
+      subMessage={loadingMessage.subMessage}
+    />
   {:else if error}
     <PageError />
   {:else}

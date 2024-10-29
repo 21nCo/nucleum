@@ -16,7 +16,7 @@ import {
   replaceParams,
   resolveMutationQuery,
   resolveRefreshQuery
-} from "$lib/client/persistence/surreal/surreal.utils";
+} from "$lib/shared/utils/surreal.utils";
 import {
   checkSurrealResponse,
   generateUID,

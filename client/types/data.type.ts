@@ -206,6 +206,9 @@ export type ResourceDependency = {
 
 export enum PersistenceActionType {
   CREATE = "CREATE",
+  /**
+   * Inserts the new record(s) using upsert strategy.
+   */
   INSERT = "INSERT",
   /**
    * Replaces the existing record with the new data
@@ -222,6 +225,10 @@ export enum PersistenceActionType {
    */
   DELETE = "DELETE",
   BULK_MERGE = "BULK_MERGE",
+  /**
+   * Inserts the new records without upsert.
+   */
+  BULK_INSERT = "BULK_INSERT",
   CUSTOM = "CUSTOM"
 }
 
@@ -242,7 +249,7 @@ export interface IMutationQueueParams {
 }
 
 export type IInsertMutation<T> = {
-  action: PersistenceActionType.INSERT;
+  action: PersistenceActionType.INSERT | PersistenceActionType.BULK_INSERT;
   records: T[];
 };
 

@@ -39,6 +39,7 @@ import NodeTitleLabelPart from "./node/title/NodeTitleLabelPart.svelte";
 import MemotronGreenUse from "./base/MemotronGreenUse.svelte";
 import GlobalGraph from "./graph/GlobalGraph.svelte";
 import CalloutSettings from "$lib/client/components/markdown/callout/CalloutSettings.svelte";
+import CreateCombination from "./combination/CreateCombination.svelte";
 export const memotronActions: IAction[] = [
   {
     action: MemotronAction.OPEN_CHAT,
@@ -124,6 +125,19 @@ export const memotronActions: IAction[] = [
       layout: {
         size: Size.xxl,
         orientation: Orientation.Horizontal
+      }
+    }
+  },
+  {
+    action: resourceAction(Resource.combination, ResourceActionType.CREATE),
+    component: CreateCombination,
+    label: "Create a new combination",
+    type: ActionType.MODAL,
+    modalParams: {
+      title: "Create a new combination",
+      layout: {
+        size: Size.sm,
+        orientation: Orientation.Vertical
       }
     }
   },

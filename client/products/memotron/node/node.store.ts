@@ -478,9 +478,9 @@ export function resolveNodeContextMenu(
   if (accessPoint === ResourceAccessPoint.NODE_LINKS && params?.accessPointId) {
     let baseItems = [resourceActions.copyLink()];
     if (accessPoint === ResourceAccessPoint.NODE_LINKS) {
-      // baseItems.unshift(
-      //   resourceActions.select(accessPoint, params?.accessPointId)
-      // );
+      baseItems.unshift(
+        resourceActions.select(accessPoint, params?.accessPointId)
+      );
       baseItems.unshift(resourceActions.unlink(params?.accessPointId));
     }
     return [
@@ -493,6 +493,7 @@ export function resolveNodeContextMenu(
   } else if (accessPoint != ResourceAccessPoint.SELF) {
     const primaryItems = [
       resourceActions.star(),
+      resourceActions.select(accessPoint, params?.accessPointId),
       resourceActions.edit(accessPoint),
       resourceActions.copyLink()
     ];
