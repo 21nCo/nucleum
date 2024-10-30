@@ -128,35 +128,28 @@
     },
     {
       section: "lists",
-      isDisabled: true,
-      badge: "planned",
       children: [
         {
           label: "Unordered List",
           description: "Unordered List block",
           type: NodeType.LIST,
-          sub: ListType.UNORDERED,
           // icon: "lucide:list"
-          icon: "hugeicons:left-to-right-list-bullet",
-          isDisabled: true
+          icon: "hugeicons:left-to-right-list-bullet"
         },
         {
           label: "Ordered List",
           description: "Ordered List block",
-          type: NodeType.LIST,
-          sub: ListType.ORDERED,
+          type: NodeType.ORDERED_LIST,
           // icon: "lucide:list-ordered"
           icon: "hugeicons:left-to-right-list-number",
-          isDisabled: true
+          badge: "beta"
         },
         {
           label: "Checklist",
           description: "Checklist block",
-          type: NodeType.LIST,
-          sub: ListType.CHECKLIST,
+          type: NodeType.CHECKLIST,
           // icon: "lucide:list-todo"
-          icon: "hugeicons:check-list",
-          isDisabled: true
+          icon: "hugeicons:check-list"
         }
       ]
     },

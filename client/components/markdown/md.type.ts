@@ -4,12 +4,13 @@ import type {
   IRecordId
 } from "$lib/client/types/data.type";
 import type {
-  NodeContent,
   ListChild,
   ListContent,
   TextContent,
   NodeType,
-  ListType
+  ListType,
+  SimpleTextNodeType,
+  ListNodeType
 } from "../../products/memotron/node/node.type";
 import type { IResourceBase } from "../flux/resourceStores/resource.type";
 
@@ -24,12 +25,15 @@ export type IMarkdownStore = IMarkdown &
     activeHeading: string;
   };
 export type IMarkdown = { blocks: IBlock[] };
-export type DbBlock = IResourceBase & IBlock;
+export type DbBlock = IResourceBase & IBlockInterface;
 
-export type IBlock<T = NodeContent> = T & {
+export type IBlockInterface<TType = NodeType, TBody = IBlockBody> = {
   id: IRecordId;
+  body: TBody;
+  contentType: TType;
   childrenHierarchy?: IRecordId[];
 };
+
 export enum InlineType {
   MENTION = "MENTION",
   DATE = "DATE",
@@ -53,15 +57,24 @@ export type IMarkdownParams = {
   canUseSlashShortcut?: boolean;
 };
 
+/**
+ * @deprecated
+ */
 export enum BlockContext {
   DEFAULT = "DEFAULT",
   LIST_CHILD = "LIST_CHILD"
 }
 
+/**
+ * @deprecated - use {@link IBlockInterface} instead
+ */
 export type ListBlockWithChildren =
   | ListChild<Required<Pick<ListContent, "children">>>
-  | IBlock<Required<Pick<ListContent, "children">>>;
+  | IBlockInterface<Required<Pick<ListContent, "children">>>;
 
+/**
+ * @deprecated - use {@link TextContent} instead
+ */
 export type SpanContent = {
   type: SpanType;
   content: TextContent;
@@ -94,6 +107,9 @@ export type IListOperation = {
 export type IBlockOperationContext = {
   source: string;
   blockType?: NodeType;
+  /**
+   * @deprecated - use {@link IListBlockBody} instead
+   */
   listType?: ListType;
   body?: any;
 };
@@ -127,7 +143,9 @@ export enum BlockAction {
   /**
    * Content change event
    */
-  CHANGE = "change"
+  CHANGE = "change",
+  TAB = "tab",
+  SHIFT_TAB = "shifttab"
 }
 
 export type IMarkdownSettings = IObservableStoreSubject & {
@@ -139,3 +157,60 @@ export type ICalloutSetting = {
   color: number;
   label: string;
 };
+
+export type IEmbedBlockBody = {
+  /**
+   * Id of the media node that is embedded.
+   */
+  id?: IRecordId;
+  subType?: NodeType;
+  isHidePreview?: boolean;
+  height?: number;
+  /**
+   * If direct url embed
+   */
+  url?: string;
+};
+
+export type ICalloutBody = {
+  text: string;
+  callout?: ICalloutSetting;
+};
+
+export type ICodeBlockBody = {
+  text: string;
+  language?: string;
+};
+
+export type IListBlockBody = {
+  text: string;
+  indent: number;
+  checked?: boolean;
+  order?: number;
+};
+
+export type INonSimpleTextBlockBody =
+  | ICodeBlockBody
+  | IListBlockBody
+  | ICalloutBody;
+
+export type IBlockBody = INonSimpleTextBlockBody | IEmbedBlockBody | string;
+
+export type ISimpleTextBlock = IBlockInterface<SimpleTextNodeType, string>;
+export type IDividerBlock = IBlockInterface<NodeType.DIVIDER>;
+export type IDoubleDividerBlock = IBlockInterface<NodeType.DOUBLE_DIVIDER>;
+export type IMediaGridBlock = IBlockInterface<NodeType.MEDIA_GRID>;
+export type IEmbedBlock = IBlockInterface<NodeType.EMBED, IEmbedBlockBody>;
+export type IListBlock = IBlockInterface<ListNodeType, IListBlockBody>;
+export type ICodeBlock = IBlockInterface<NodeType.CODE, ICodeBlockBody>;
+export type ICalloutBlock = IBlockInterface<NodeType.CALLOUT, ICalloutBody>;
+
+export type IBlock =
+  | IEmbedBlock
+  | IListBlock
+  | ICodeBlock
+  | ICalloutBlock
+  | IDividerBlock
+  | IDoubleDividerBlock
+  | IMediaGridBlock
+  | ISimpleTextBlock;

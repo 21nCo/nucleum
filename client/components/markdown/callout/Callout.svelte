@@ -4,7 +4,7 @@
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import { markdownSettings } from "../markdown.settings";
   import type { MdStoreType } from "../markdown.store";
-  import { BlockAction, type IBlock } from "../md.type";
+  import type { ICalloutBody, ICalloutSetting } from "../md.type";
   import TextContent from "../content/TextContent.svelte";
   import CalloutSelector from "./CalloutSelector.svelte";
   import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
@@ -12,32 +12,38 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { logger } from "../../debug/logger.client";
   import { createEventDispatcher } from "svelte";
+  import { NodeType } from "$lib/client/products/memotron/node/node.type";
+  import type { IRecordId } from "$lib/client/types/data.type";
   const dispatch = createEventDispatcher();
 
+  export let id: IRecordId;
+  export let body: ICalloutBody;
   export let mdStore: MdStoreType;
-  export let block: IBlock;
   export let isHovering: boolean = false;
-  let _callout = resolveCallout();
+  let _callout: ICalloutSetting = resolveCallout();
   let ref: HTMLElement;
 
-  function resolveCallout() {
-    if ("metadata" in block && block.metadata && "callout" in block.metadata) {
+  function resolveCallout(): ICalloutSetting {
+    if (body.callout) {
       const calloutFromSettings = $markdownSettings.callout.find(
-        (x) => x.id === block.metadata.callout.id
+        (x) => x.id === body.callout.id
       );
-      return calloutFromSettings ?? block.metadata.callout;
+      return calloutFromSettings ?? body.callout;
     } else {
       return $markdownSettings.callout[0];
     }
   }
 
-  function assignCallout(callout: any) {
+  function saveCalloutSetting(callout: ICalloutSetting) {
     dispatch("update", {
-      metadata: {
-        callout
-      }
+      callout
     });
-    block.metadata = { callout };
+  }
+
+  function handleUpdate(e: CustomEvent<string>) {
+    dispatch("update", {
+      text: e.detail
+    });
   }
 </script>
 
@@ -57,7 +63,7 @@
         selected: _callout,
         onSelect: (callout) => {
           _callout = callout;
-          assignCallout(callout);
+          saveCalloutSetting(callout);
           ref.dispatchEvent(new CustomEvent("hide"));
         },
         onEdit: () => {
@@ -70,6 +76,12 @@
     <Avatar avatar={_callout.avatar} />
   </div>
   <div class="w-full">
-    <TextContent {block} {mdStore} />
+    <TextContent
+      bind:text={body.text}
+      on:update={handleUpdate}
+      {id}
+      contentType={NodeType.CALLOUT}
+      {mdStore}
+    />
   </div>
 </CustomColorPropagator>

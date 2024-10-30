@@ -88,7 +88,12 @@ export function generateMarkdownText(blocks: IBlock[]) {
         case NodeType.QUOTE:
           return `> ${b.body}`;
         case NodeType.LIST:
-          return `${b.listType === ListType.ORDERED ? "1." : "-"} ${b.body}`;
+        case NodeType.ORDERED_LIST:
+        case NodeType.CHECKLIST:
+          return `- ${b.body.text}`;
+        case NodeType.CALLOUT:
+        case NodeType.CODE:
+          return b.body.text;
       }
     })
     .join("\n");

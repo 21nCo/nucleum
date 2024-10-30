@@ -5,8 +5,7 @@
     type INode
   } from "$lib/client/products/memotron/node/node.type";
   import { getContext, onMount, createEventDispatcher } from "svelte";
-  import type { MdStoreType } from "../markdown.store";
-  import { BlockAction, type IBlock } from "../md.type";
+  import type { IEmbedBlockBody } from "../md.type";
   import EmbedContentPlaceholder from "./EmbedContentPlaceholder.svelte";
   import { logger } from "../../debug/logger.client";
   import type { IRecordId } from "$lib/client/types/data.type";
@@ -27,11 +26,10 @@
   import { appStore } from "$lib/client/stores/app.store";
   const dispatch = createEventDispatcher();
   const nodeContext = getContext<any>("node");
-  export let block: IBlock;
-  export let mdStore: MdStoreType;
+  export let body: IEmbedBlockBody;
   let linkInputValue = "";
   let _mediaBlock: INode | undefined;
-  let height = block.body?.height ?? 300;
+  let height = body?.height ?? 300;
 
   const titleNotRequiredTypes = [NodeType.FILE, NodeType.KINDLE_BOOK];
   const resizableTypes = [NodeType.IMAGE, NodeType.PDF];
@@ -39,13 +37,13 @@
   $: isResizable =
     (_mediaBlock?.contentType &&
       resizableTypes.includes(_mediaBlock?.contentType) &&
-      !block?.body?.isHidePreview) ??
+      !body?.isHidePreview) ??
     false;
 
   $: isShowTitle =
     _mediaBlock?.contentType &&
     !titleNotRequiredTypes.includes(_mediaBlock?.contentType) &&
-    !block?.body?.isHidePreview;
+    !body?.isHidePreview;
 
   function onSelectFromLibrary(event: CustomEvent) {
     logger.debug({ at: "EmbedContent onSelectFromLibrary", event });
@@ -53,31 +51,21 @@
     const resource = determineResourceType(event.detail.id);
     if (resource === Resource.node) {
       _mediaBlock = event.detail;
-      assignBody({ id: event.detail.id, subType: event.detail.contentType });
+      mergeBody({ id: event.detail.id, subType: event.detail.contentType });
     } else if (resource === Resource.collection) {
-      assignBody({
+      mergeBody({
         id: event.detail.id,
         subType: NodeType.COLLECTION_AS_EMBED
       });
     }
   }
-  function assignBody(body: any) {
-    dispatch("update", {
-      body
-    });
-    if (typeof block.body === "object") {
-      block.body = {
-        ...block.body,
-        ...body
-      };
-    } else {
-      block.body = { ...body };
-    }
+  function mergeBody(body: Partial<IEmbedBlockBody>) {
+    dispatch("update", body);
   }
   onMount(() => {
-    if (!block.body?.id) return;
-    const resource = determineResourceType(block.body.id);
-    if (resource === Resource.node) assignNodeMediaContent(block.body.id);
+    if (!body?.id) return;
+    const resource = determineResourceType(body.id);
+    if (resource === Resource.node) assignNodeMediaContent(body.id);
   });
 
   async function assignNodeMediaContent(id: IRecordId) {
@@ -86,9 +74,9 @@
   }
 
   async function onLinkInput() {
-    if (block.body?.subType) {
+    if (body?.subType) {
       //TODO - validation of url for the subType
-      assignBody({ url: linkInputValue });
+      mergeBody({ url: linkInputValue });
     } else {
       const nodeType = resolveContentTypeForUrl(linkInputValue);
       if (nodeType === NodeType.WEB_PAGE) {
@@ -97,21 +85,21 @@
           creationContext: nodeContext?.id ?? undefined
         });
         if (!result) return;
-        assignBody({ id: result[0].id, subType: nodeType });
+        mergeBody({ id: result[0].id, subType: nodeType });
         _mediaBlock = result[0];
       } else {
-        assignBody({ subType: nodeType, url: linkInputValue });
+        mergeBody({ subType: nodeType, url: linkInputValue });
       }
     }
   }
 
   function onResize(e: any) {
     height = e.height;
-    assignBody({ height });
+    mergeBody({ height });
   }
 </script>
 
-{#if "body" in block && block.body && block.body.id && _mediaBlock}
+{#if body.id && _mediaBlock}
   <button
     class="flex flex-col gap-4 py-2 w-full"
     style={isResizable
@@ -128,7 +116,7 @@
       console.log({ e });
       if (e.target && e.target.classList.contains("resizer")) return;
       if (_mediaBlock?.contentType === NodeType.FILE) return;
-      appStore.openResource(block.body.id, ResourceAccessMode.POP);
+      appStore.openResource(body.id, ResourceAccessMode.POP);
     }}
   >
     <div
@@ -141,7 +129,7 @@
       <MediaContentResolver
         node={_mediaBlock}
         accessPoint={ResourceAccessPoint.MARKDOWN_EMBED}
-        isHidePreview={block.body?.isHidePreview}
+        isHidePreview={body?.isHidePreview}
       />
     </div>
     {#if isShowTitle}
@@ -153,19 +141,15 @@
       </button>
     {/if}
   </button>
-{:else if block?.body?.url && block?.body?.subType === NodeType.YOUTUBE_VIDEO}
-  <YoutubeVideoPreview url={block.body.url} />
-{:else if block?.body?.subType === NodeType.COLLECTION_AS_EMBED && block?.body?.id}
+{:else if body?.url && body?.subType === NodeType.YOUTUBE_VIDEO}
+  <YoutubeVideoPreview url={body.url} />
+{:else if body?.subType === NodeType.COLLECTION_AS_EMBED && body?.id}
   <div class="w-full h-96">
-    <Collection
-      id={block.body.id}
-      accessPoint={ResourceAccessPoint.MARKDOWN_EMBED}
-    />
+    <Collection id={body.id} accessPoint={ResourceAccessPoint.MARKDOWN_EMBED} />
   </div>
 {:else}
   <EmbedContentPlaceholder
-    {block}
-    {mdStore}
+    subType={body?.subType}
     bind:linkInputValue
     on:select={onSelectFromLibrary}
     on:linkInput={onLinkInput}

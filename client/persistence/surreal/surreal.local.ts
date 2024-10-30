@@ -243,6 +243,10 @@ export class SurrealPersistence implements IPersistence {
    * For files, insert is used as files contain bytes data type.
    *
    *
+   * "@surrealdb/wasm": "^1.0.1"
+   * Not using this._insert(resource, records, { isUpsert: true }) - as UPSERT is throwing error if record already present instead of directly updating if present (unlike Remote). Instead using upsertFallback to handle this.
+   *
+   *
    * @param records - records to be inserted
    * @param resource - resource i.e. table name
    * @returns
@@ -270,8 +274,8 @@ export class SurrealPersistence implements IPersistence {
       } else if (resource === Resource.link) {
         result = await this._insert(resource, records, { isRelation: true });
       } else {
-        // result = await this._insert(resource, records);
-        result = await this.upsert(resource, records);
+        // result = await this._insert(resource, records, { isUpsert: true });
+        result = await this.upsertFallback(resource, records);
       }
       logger.log({
         at: "SurrealPersistence.insert - result",
@@ -289,7 +293,7 @@ export class SurrealPersistence implements IPersistence {
   }
 
   /**
-   * Upserts one by one and updates if record already exists.
+   * Upserts one by one and updates on error if record already exists. Bulk upsert doesn't work either on surreal-wasm or on remote to bulk insert with update as fallback.
    *
    * UPSERT throws ResponseError if the record already exists.
    *
@@ -300,7 +304,7 @@ export class SurrealPersistence implements IPersistence {
    * @param records
    * @returns
    */
-  async upsert(resource: string, records: any[]) {
+  async upsertFallback(resource: string, records: any[]) {
     logger.log({
       at: "SurrealPersistence.upsertRecordsFallback",
       resource,
@@ -361,7 +365,7 @@ export class SurrealPersistence implements IPersistence {
    *
    *
    * surreal-wasm: "^1.0.1"
-   * Using upsert is failing with error: There was a problem with a datastore transaction: An IndexedDB error occured: failed to execute indexed db request: ConstraintError: Key already exists in the object store
+   * Using upsert (with MERGE) is failing with error: There was a problem with a datastore transaction: An IndexedDB error occured: failed to execute indexed db request: ConstraintError: Key already exists in the object store
    *
    * Example: UPSERT kv:local MERGE {"lastSyncUp":1730197613587};
    *

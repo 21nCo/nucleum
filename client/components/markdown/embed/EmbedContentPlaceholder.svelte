@@ -28,17 +28,12 @@
   import { enumToString } from "$lib/shared/utils/text.utils";
   import { logger } from "../../debug/logger.client";
   import { ResourceAccessPoint } from "../../flux/resourceStores/resource.type";
-  import type { MdStoreType } from "../markdown.store";
-  import type { IBlock } from "../md.type";
   import EmbedLibrarySearch from "./EmbedLibrarySearch.svelte";
   import { createEventDispatcher, getContext } from "svelte";
   const dispatch = createEventDispatcher();
   const nodeContext = getContext<any>("node");
-
-  export let block: IBlock;
-  export let mdStore: MdStoreType;
   export let linkInputValue = "";
-  const subType = block?.body?.subType;
+  export let subType: NodeType | undefined;
   const commonButtonParams: IButtonParams = {
     size: Size.sm,
     style: ButtonStyle.OUTLINED
@@ -181,7 +176,7 @@
             <span class="text-fgs2 text-b2">{label}</span>
           {/if}
         </span>
-        {#if mediaNodeTypeList.includes(subType)}
+        {#if subType && mediaNodeTypeList.includes(subType)}
           <span class="text-fgs2 text-b2">
             {#if $context.embed === Embed.HANDSET}
               Click to browse {label ?? "file"}s
@@ -190,7 +185,7 @@
             {/if}
           </span>
         {/if}
-        {#if (webNodeTypeList.includes(subType) && !onlyFromLibraryTypes.includes(subType)) || !subType}
+        {#if (subType && webNodeTypeList.includes(subType) && !onlyFromLibraryTypes.includes(subType)) || !subType}
           <button
             class="flex justify-center items-center gap-3 mo:w-full w-1/2"
             on:click|stopPropagation
@@ -202,13 +197,13 @@
             <Button label="Go" on:click={onLinkInput} />
           </button>
         {/if}
-        {#if !onlyFromLibraryTypes.includes(subType)}
+        {#if (subType && !onlyFromLibraryTypes.includes(subType)) || !subType}
           <div class="w-1/3">
             <Divider isShowOr={true} colorStrength={ColorStrength.Strong} />
           </div>
         {/if}
         <div class="flex items-center justify-center gap-3 w-full">
-          {#if mediaNodeTypeList.includes(subType) || !subType}
+          {#if (subType && mediaNodeTypeList.includes(subType)) || !subType}
             {#if subType === NodeType.IMAGE && $context.embed === Embed.HANDSET}
               <!-- <Button
                 label="Capture"
@@ -249,7 +244,7 @@
             />
           </button>
         </div>
-        {#if onlyFromLibraryTypes.includes(subType)}
+        {#if subType && onlyFromLibraryTypes.includes(subType)}
           <span class="text-fgs2 text-b2">
             Note: Only saved {label}s from library can be embedded at the
             moment.

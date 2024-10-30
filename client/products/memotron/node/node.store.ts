@@ -128,8 +128,7 @@ export class ActiveNodeStore extends ActiveResourceStore<
     this.eventStore = resolveActiveNodeEventStore(node.toString());
   }
   updateBlockPropagator = async (
-    id: string,
-    mutationId: string,
+    id: IRecordId,
     changedProps: { body?: string; children?: string[] }
   ) => {
     if (changedProps.children) {
@@ -251,18 +250,20 @@ export class ActiveNodeStore extends ActiveResourceStore<
     );
   };
 
-  updateBlock = (id: IRecordId, changedProps: any) => {
-    const mutationId =
-      `${id.toString()}-` +
-      ("children" in changedProps
-        ? "children"
-        : "contentType" in changedProps
-          ? "contentType"
-          : "body" in changedProps
-            ? "body"
-            : "block");
+  updateBlock = (
+    id: IRecordId,
+    changedProps: any,
+    params?: {
+      isDebounced?: boolean;
+      debounceKey?: string;
+    }
+  ) => {
+    if (!params?.isDebounced) {
+      return this.updateBlockPropagator(id, changedProps);
+    }
+    const mutationId = `${id.toString()}-${params.debounceKey ?? "block"}`;
     const debouncer = this.resolveDebouncerForBlockPersistance(mutationId);
-    debouncer(id, mutationId, changedProps);
+    debouncer(id, changedProps);
   };
 
   createBlock = async (

@@ -1,6 +1,9 @@
 import type { IMemotronItemBase } from "$lib/client/products/memotron/memotron.type";
 import type { IAvatar } from "../../../types/avatar.type";
-import type { IMarkdown } from "../../../components/markdown/md.type";
+import type {
+  IBlockBody,
+  IMarkdown
+} from "../../../components/markdown/md.type";
 import type { IRecordId, IStore } from "../../../types/data.type";
 import type {
   IProperty,
@@ -89,7 +92,7 @@ export type NodeContent =
   | OtherContent;
 
 export type TextContent = {
-  contentType: TextNodeType;
+  contentType: SimpleTextNodeType;
   body: string; //| SpanContent[];
 };
 
@@ -171,7 +174,11 @@ export enum NodeType {
   MATH = "MATH",
   CALLOUT = "CALLOUT",
   LINK = "LINK",
+
+  //List types
   LIST = "LIST",
+  ORDERED_LIST = "ORDERED_LIST",
+  CHECKLIST = "CHECKLIST",
 
   //MEDIA
   IMAGE = "IMAGE",
@@ -253,11 +260,22 @@ export const structuralNodeTypes = [
   NodeType.TOC
 ];
 
-export const TextNodeTypeList = [
+export const simpleTextNodeTypeList = [
   NodeType.SIMPLE_TEXT,
   NodeType.QUOTE,
-  NodeType.CODE,
   ...headingNodeTypes
+];
+
+export const listNodeTypes = [
+  NodeType.LIST,
+  NodeType.ORDERED_LIST,
+  NodeType.CHECKLIST
+];
+
+export const nonSimpleTextNodeTypeList = [
+  NodeType.CODE,
+  NodeType.CALLOUT,
+  ...listNodeTypes
 ];
 
 export const internalUrlNodeTypeList = [
@@ -275,15 +293,19 @@ export const embedNodeTypeList = [
   NodeType.TOC
 ];
 
-export type TextNodeType =
+export type SimpleTextNodeType =
   | NodeType.SIMPLE_TEXT
   | NodeType.QUOTE
-  | NodeType.CODE
   | NodeType.HEADING1
   | NodeType.HEADING2
   | NodeType.HEADING3
   | NodeType.HEADING4
   | NodeType.HEADING5;
+
+export type ListNodeType =
+  | NodeType.LIST
+  | NodeType.ORDERED_LIST
+  | NodeType.CHECKLIST;
 
 export enum NodeRightPaneType {
   NONE = "NONE",
@@ -659,6 +681,7 @@ export type IWebPage =
   | IKindleBook;
 
 export type INodeBody =
+  | IBlockBody
   | IMarkdown
   | ITweetBody
   | ITwitterProfileBody

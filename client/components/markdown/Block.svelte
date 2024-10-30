@@ -2,7 +2,10 @@
   import {
     BlockAction,
     type IBlock,
-    type IMarkdownStore
+    type IBlockBody,
+    type IListBlockBody,
+    type IMarkdownStore,
+    type INonSimpleTextBlockBody
   } from "$lib/client/components/markdown/md.type";
   import { getContext, onMount } from "svelte";
   import BlockContent from "./content/BlockContent.svelte";
@@ -15,7 +18,10 @@
     NodeType,
     type StructuralNodeType,
     structuralNodeTypes,
-    webNodeTypeList
+    simpleTextNodeTypeList,
+    webNodeTypeList,
+    nonSimpleTextNodeTypeList,
+    listNodeTypes
   } from "$lib/client/products/memotron/node/node.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import { setContext } from "svelte";
@@ -67,81 +73,252 @@
   function blockContextEventListener(action: BlockAction, data: any) {
     logger.log({ at: "blockContextEventListener", action, data, block });
     if (!action) return;
-    if (action === BlockAction.CONVERT) {
-      const fromType = block.contentType;
-      if (
-        mediaNodeTypeList.includes(data.toType) ||
-        webNodeTypeList.includes(data.toType) ||
-        embedNodeTypeList.includes(data.toType)
-      ) {
-        block.contentType = NodeType.EMBED;
-        const subType = data.toType;
-        block.body = {
-          subType
-        };
-        data.toType = NodeType.EMBED;
-        data.body = {
-          subType
-        };
-      } else {
-        block.contentType = data.toType;
-      }
-      if (data.params?.listType) block.listType = data.params?.listType;
-      propagateAsAction(action, { ...data, fromType });
-      if (data.body) {
-        propagate(BlockAction.CHANGE, { body: data.body });
-      }
-    } else if (action === BlockAction.DELETE) {
-      mdStore.deleteBlock(block.id);
-      propagateAsAction(action, {});
-    } else if (action === BlockAction.INSERT) {
-      let newBlockId;
-      if (
-        data?.blockType &&
-        (mediaNodeTypeList.includes(data.blockType) ||
-          webNodeTypeList.includes(data.blockType) ||
-          embedNodeTypeList.includes(data.blockType))
-      ) {
-        const subType = data.blockType;
-        data.blockType = NodeType.EMBED;
-        data.body = {
-          subType
-        };
-      }
-      if (data?.blockType && structuralNodeTypes.includes(data.blockType)) {
-        newBlockId = mdStore.insertStructualBlock(
-          block.id,
-          data.blockType as StructuralNodeType
-        );
-      } else newBlockId = mdStore.insert({ source: block.id, ...data });
-      propagateAsAction(action, { ...data, id: newBlockId });
-    } else if (
-      action === BlockAction.MOVEUP ||
-      action === BlockAction.MOVEDOWN
-    ) {
-      mdStore.move(block.id, action);
-      propagateAsAction(action, data);
-    } else if (action === BlockAction.DUPLICATE) {
-      const newBlock = mdStore.duplicate(block.id);
-      propagateAsAction(action, newBlock);
-    } else if (action === BlockAction.COPY_BLOCK_TEXT) {
-      copyToClipboard(block.body);
-      toasts.success("Block copied to clipboard");
-    } else if (action === BlockAction.EMBED_PREVIEW_TOGGLE) {
-      block.body.isHidePreview = data.isHidePreview;
-      propagate(BlockAction.CHANGE, {
-        body: {
-          isHidePreview: data.isHidePreview
+
+    switch (action) {
+      case BlockAction.CONVERT:
+        handleConvertAction(data);
+        break;
+
+      case BlockAction.DELETE:
+        mdStore.deleteBlock(block.id);
+        propagateAsAction(action, {});
+        break;
+
+      case BlockAction.INSERT:
+        handleInsertAction(data);
+        break;
+
+      case BlockAction.MOVEUP:
+      case BlockAction.MOVEDOWN:
+        const changedBlocks = mdStore.move(block.id, action);
+        if (changedBlocks && changedBlocks.length > 0) {
+          changedBlocks.forEach((b) => {
+            propagate(BlockAction.CHANGE, { id: b.id, body: b.body });
+          });
         }
-      });
-    } else {
-      propagate(action, data);
+        propagateAsAction(action, data);
+        break;
+
+      case BlockAction.DUPLICATE: {
+        const newBlock = mdStore.duplicate(block.id);
+        propagateAsAction(action, newBlock);
+        break;
+      }
+
+      case BlockAction.TAB:
+      case BlockAction.SHIFT_TAB:
+        handleTabAction(action);
+        break;
+
+      case BlockAction.COPY_BLOCK_TEXT:
+        if (
+          !simpleTextNodeTypeList.includes(block.contentType) ||
+          typeof block.body !== "string"
+        )
+          return;
+        copyToClipboard(block.body);
+        toasts.success("Block copied to clipboard");
+        break;
+
+      case BlockAction.EMBED_PREVIEW_TOGGLE:
+        if (block.contentType === NodeType.EMBED) {
+          block.body.isHidePreview = data.isHidePreview;
+          propagate(BlockAction.CHANGE, {
+            body: { isHidePreview: data.isHidePreview }
+          });
+        }
+        break;
+
+      default:
+        propagate(action, data);
+        break;
     }
   }
   const blockContext = {
     publish: blockContextEventListener
   };
   setContext("block", blockContext);
+
+  function handleConvertAction(data: any) {
+    const fromType = block.contentType;
+    if (
+      mediaNodeTypeList.includes(data.toType) ||
+      webNodeTypeList.includes(data.toType) ||
+      embedNodeTypeList.includes(data.toType)
+    ) {
+      block.contentType = NodeType.EMBED;
+      const subType = data.toType;
+      block.body = { subType };
+      data.toType = NodeType.EMBED;
+      data.body = { subType };
+    } else if (simpleTextNodeTypeList.includes(data.toType)) {
+      const text = resolveBodyText() ?? "";
+      block.body = text;
+      data.body = text;
+      block.contentType = data.toType;
+    } else if (nonSimpleTextNodeTypeList.includes(data.toType)) {
+      const text: string = resolveBodyText() ?? "";
+      const body = resolveDefaultBody(data.toType, text);
+      block.body = body;
+      data.body = body;
+      block.contentType = data.toType;
+    } else {
+      block.contentType = data.toType;
+    }
+    propagateAsAction(BlockAction.CONVERT, { ...data, fromType });
+    if (data.body !== undefined) {
+      propagate(BlockAction.CHANGE, { body: data.body });
+    }
+
+    /**
+     * Resolves body text for simple text and non simple text node types
+     */
+    function resolveBodyText(): string | undefined {
+      if (simpleTextNodeTypeList.includes(block.contentType))
+        return block.body as string;
+      else if (nonSimpleTextNodeTypeList.includes(block.contentType))
+        return (block.body as INonSimpleTextBlockBody).text;
+    }
+  }
+
+  /**
+   * @param data
+   */
+  function handleInsertAction(data: any) {
+    let newBlockId;
+    //TODO - case when enter pressed in the middle of the block with text on the right side of the caret
+    if (data?.blockType) {
+      if (
+        mediaNodeTypeList.includes(data.blockType) ||
+        webNodeTypeList.includes(data.blockType) ||
+        embedNodeTypeList.includes(data.blockType)
+      ) {
+        const subType = data.blockType;
+        data.blockType = NodeType.EMBED;
+        data.body = { subType };
+      } else if (nonSimpleTextNodeTypeList.includes(data.blockType)) {
+        data.body = resolveDefaultBody(data.blockType, "");
+      } else if (simpleTextNodeTypeList.includes(data.blockType)) {
+        data.body = "";
+      }
+    } else {
+      if (!data) data = {};
+      data.blockType = NodeType.SIMPLE_TEXT;
+      data.body = "";
+    }
+
+    if (
+      listNodeTypes.includes(block.contentType) &&
+      (data.blockType === NodeType.SIMPLE_TEXT ||
+        listNodeTypes.includes(data.blockType))
+    ) {
+      const currentBody = block.body as IListBlockBody;
+      if (data.blockType === NodeType.SIMPLE_TEXT)
+        data.blockType = block.contentType;
+      data.body = {
+        indent:
+          Number.isNaN(currentBody.indent) || !currentBody.indent
+            ? 0
+            : currentBody.indent,
+        text: "",
+        order: currentBody.order !== undefined ? currentBody.order + 1 : 1
+      };
+    }
+
+    if (structuralNodeTypes.includes(data.blockType))
+      newBlockId = mdStore.insertStructualBlock(
+        block.id,
+        data.blockType as StructuralNodeType
+      );
+    else newBlockId = mdStore.insert({ source: block.id, ...data });
+
+    propagateAsAction(BlockAction.INSERT, { ...data, id: newBlockId });
+  }
+
+  function handleTabAction(action: BlockAction.TAB | BlockAction.SHIFT_TAB) {
+    if (!listNodeTypes.includes(block.contentType)) return;
+
+    const currentBody = block.body as IListBlockBody;
+    const previousSibling = mdStore?.getPreviousSibling(block.id);
+    if (
+      !previousSibling ||
+      !listNodeTypes.includes(previousSibling.contentType)
+    )
+      return;
+    if (action === BlockAction.TAB) {
+      currentBody.indent += 1;
+    } else if (action === BlockAction.SHIFT_TAB) {
+      if (currentBody.indent === 0) return;
+      currentBody.indent -= 1;
+    }
+    let currentOrder = currentBody.order;
+    if (
+      block.contentType === NodeType.ORDERED_LIST &&
+      previousSibling &&
+      previousSibling.contentType === NodeType.ORDERED_LIST
+    ) {
+      const previousSiblingBody = previousSibling?.body as IListBlockBody;
+
+      if (previousSiblingBody.indent === currentBody.indent) {
+        currentBody.order = (previousSiblingBody.order ?? 0) + 1;
+      } else if (previousSiblingBody.indent > currentBody.indent) {
+        const previousListParent = mdStore?.getListParentOrdered(
+          previousSibling.id,
+          currentBody.indent
+        );
+        if (previousListParent) {
+          currentBody.order =
+            ((previousListParent.body as IListBlockBody)?.order ?? 0) + 1;
+        } else {
+          currentBody.order = 1;
+        }
+      } else {
+        currentBody.order = 1;
+      }
+    }
+    block.body = currentBody;
+    if (block.contentType === NodeType.ORDERED_LIST) {
+      const changedBlocks = mdStore.reconcileOrderedList(
+        block.id,
+        currentBody,
+        action,
+        currentOrder
+      );
+      if (changedBlocks && changedBlocks.length > 0) {
+        changedBlocks.forEach((b) => {
+          propagate(BlockAction.CHANGE, {
+            id: b.id,
+            body: b.body
+          });
+        });
+      }
+    }
+    propagate(BlockAction.CHANGE, {
+      body: {
+        indent: currentBody.indent,
+        order: currentBody.order
+      }
+    });
+  }
+
+  /**
+   * Resolves default body for non simple node types
+   * @param text
+   * @param toType
+   */
+  function resolveDefaultBody(toType: NodeType, text: string): IBlockBody {
+    switch (toType) {
+      case NodeType.LIST:
+      case NodeType.ORDERED_LIST:
+      case NodeType.CHECKLIST:
+        return { indent: 0, text, order: 1 };
+      case NodeType.CODE:
+      case NodeType.CALLOUT:
+        return { text };
+      default:
+        return { text };
+    }
+  }
 
   onMount(() => {
     //TODO - check the need for rerendering
@@ -170,7 +347,22 @@
   }
 
   function onBlockUpdate(e: CustomEvent<any>) {
-    propagate(BlockAction.CHANGE, e.detail);
+    const body: Partial<IBlockBody> = e?.detail;
+    if (!body) return;
+
+    if (block.body) {
+      if (typeof body === "object" && typeof block.body === "object") {
+        block.body = {
+          ...block.body,
+          ...body
+        };
+      } else if (typeof block.body === "string" && typeof body === "string") {
+        block.body = body;
+      }
+    } else {
+      block.body = body as IBlockBody;
+    }
+    propagate(BlockAction.CHANGE, { body });
   }
 </script>
 

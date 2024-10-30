@@ -147,7 +147,7 @@ export function replaceParams(query: string, params: any) {
 
 /**
  *
- * UPSERT resource content [] - this doesn't work. So, no way to bulk insert using upsert. Upsert comes in handy to bulk update with same data for many records though. Not for different data for many records.
+ * UPSERT resource content [] - this doesn't work. So, no way to bulk insert using upsert. Upsert also doesn't work for bulk merge or update. Upsert is only handy for single record upsert. In all other cases it is equivalent to UPDATE. See {@link resolveBulkMergeQuery} function for more notes.
  *
  * @param resource
  * @param records
@@ -167,10 +167,11 @@ export function resolveInsertQuery(
     };
   });
   if (params?.isUpsert) {
-    const query = `UPSERT ${resource} CONTENT ${JSON.stringify(
-      records,
-      noneReplacerFn
-    )};`;
+    // const query = `UPSERT ${resource} CONTENT ${JSON.stringify(
+    //   records,
+    //   noneReplacerFn
+    // )};`;
+    const query = generateUpsertQuery();
     return commonQueryReplacements(query);
   } else if (params?.isRelation) {
     const query = `INSERT RELATION INTO ${resource} ${JSON.stringify(
@@ -180,6 +181,16 @@ export function resolveInsertQuery(
   }
   const query = `INSERT INTO ${resource} ${JSON.stringify(records)};`;
   return commonQueryReplacements(query);
+
+  function generateUpsertQuery() {
+    let fullUpsertQuery = "";
+    records.forEach((record) => {
+      const { query, id } = resolveUpsertQuery(resource, record);
+      fullUpsertQuery += query;
+    });
+    console.log({ fullUpsertQuery });
+    return fullUpsertQuery;
+  }
 }
 
 export function generateResourceId(itemType: Resource): IRecordId {
@@ -229,6 +240,29 @@ export function resolveMergeQuery(
   return commonQueryReplacements(query);
 }
 
+/**
+ *
+ * UPSERT kv MERGE {"lastSyncUp":1} where id in [kv:testone, kv:testtwo, kv:testthree] - bulk upsert doesn't insert non existing records for example kv:textthree if not present using this syntax. It updates the existing records though - just like UPDATE.
+ * 
+ * 
+ * UPSERT kv MERGE [
+{
+    'lastSyncUp': 2,
+    id: kv:testone
+},
+{
+    'lastSyncUp': 2,
+    id: kv:testthree
+}
+]
+ * - this also doesn't work - 'Can not use [{ id: kv:testone, lastSyncUp: 2 }, { id: kv:testthree, lastSyncUp: 2 }] in a MERGE clause'
+ *
+ *
+ * @param resource
+ * @param records
+ * @param params
+ * @returns
+ */
 export function resolveBulkMergeQuery(
   resource: string,
   records: any[],
@@ -277,7 +311,9 @@ export function commonQueryReplacements(query: string) {
 export function resolveMutationQueryV2(mutation: IMutation) {
   switch (mutation.params.action) {
     case PersistenceActionType.INSERT:
-      return resolveInsertQuery(mutation.resource, mutation.params.records);
+      return resolveInsertQuery(mutation.resource, mutation.params.records, {
+        isUpsert: true
+      });
     case PersistenceActionType.DELETE:
       return `DELETE ${mutation.resource} WHERE id = ${mutation.params.recordId}`;
     case PersistenceActionType.REPLACE:
@@ -287,9 +323,7 @@ export function resolveMutationQueryV2(mutation: IMutation) {
     case PersistenceActionType.MERGE:
       return resolveMergeQuery(mutation.params.record, { isUpsert: true });
     case PersistenceActionType.BULK_MERGE:
-      return resolveBulkMergeQuery(mutation.resource, mutation.params.records, {
-        isUpsert: true
-      });
+      return resolveBulkMergeQuery(mutation.resource, mutation.params.records);
     case PersistenceActionType.CUSTOM:
       return replaceParams(mutation.params.query, mutation.params.data);
   }

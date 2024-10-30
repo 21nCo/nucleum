@@ -1,16 +1,18 @@
 <script lang="ts">
   import { onMount, createEventDispatcher } from "svelte";
-  import type { IBlock } from "../md.type";
+  import type { IBlockInterface, ICodeBlockBody } from "../md.type";
   import * as monaco from "monaco-editor";
   import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
   import { InputStyle } from "$lib/client/types/input.type";
   import { Size } from "$lib/client/types/size.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { copyToClipboard } from "$lib/client/utils/utils";
-  export let block: IBlock;
+
+  export let body: ICodeBlockBody;
   const dispatch = createEventDispatcher();
 
-  let language = block.body?.language ?? "javascript";
+  let language = body?.language ?? "javascript";
+  let code = body?.text ?? "";
   let element: HTMLElement;
   let editor: monaco.editor.IStandaloneCodeEditor | undefined;
 
@@ -123,7 +125,7 @@
     //   }
     // };
     editor = monaco.editor.create(element, {
-      value: block.body?.code ?? "",
+      value: code,
       language,
       theme: "vs-dark",
       automaticLayout: true,
@@ -141,16 +143,10 @@
     });
 
     editor.getModel()?.onDidChangeContent(() => {
-      const code = editor!.getValue();
+      code = editor!.getValue();
       dispatch("update", {
-        body: {
-          code
-        }
+        text: code
       });
-      block.body = {
-        ...(block.body ?? {}),
-        code
-      };
     });
 
     const darkModeMediaQuery = window.matchMedia(
@@ -171,18 +167,12 @@
       monaco.editor.setModelLanguage(editor.getModel()!, language);
     }
     dispatch("update", {
-      body: {
-        language
-      }
-    });
-    block.body = {
-      ...(block.body ?? {}),
       language
-    };
+    });
   }
 
   function handleCopyCode() {
-    copyToClipboard(block.body?.code ?? "");
+    copyToClipboard(code ?? "");
   }
 </script>
 

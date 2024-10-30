@@ -125,7 +125,15 @@
     logger.log({ at: "NodeContent - onMarkdownContentChange", ...e.detail });
     const block = e.detail.block;
     if (block.source && "body" in block) {
-      node.updateBlock(block.source, { body: block.body });
+      let params = {};
+      if (typeof block.body === "string" || "text" in block.body) {
+        params = {
+          isDebounced: true,
+          debounceKey: "text"
+        };
+      }
+      const id = block.id ?? block.source;
+      node.updateBlock(id, { body: block.body }, params);
     } else if (block.source && "metadata" in block) {
       node.updateBlock(block.source, { metadata: block.metadata });
     }
@@ -136,14 +144,28 @@
     const differences = shallowDiff(previousRootStructure, e.detail.root);
     // console.log("Differences", differences);
     if (isValidArrayWithData(differences)) {
-      node.updateBlock($node.id, { children: e.detail.root });
+      node.updateBlock(
+        $node.id,
+        { children: e.detail.root },
+        {
+          isDebounced: true,
+          debounceKey: "children"
+        }
+      );
     }
     previousRootStructure = deepCopy(e.detail.root);
     if (!e.detail.children) return;
     e.detail.children
       .filter((x: INodeStructure) => x.factor <= hierarchyFactorLimit)
       .forEach((child: INodeStructure) => {
-        node.updateBlock(child.id, { children: child.children });
+        node.updateBlock(
+          child.id,
+          { children: child.children },
+          {
+            isDebounced: true,
+            debounceKey: "children"
+          }
+        );
       });
   }
 
@@ -203,17 +225,11 @@
             contentType: e.detail.toType,
             children: []
           });
-        } else if (
-          e.detail.toType === NodeType.MEDIA_GRID ||
-          e.detail.toType === NodeType.EMBED ||
-          e.detail.toType === NodeType.CODE
-        ) {
+        } else {
           node.updateBlock(e.detail.source, {
             contentType: e.detail.toType,
             body: null
           });
-        } else {
-          node.updateBlock(e.detail.source, { contentType: e.detail.toType });
         }
       }
     }

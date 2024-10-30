@@ -2,7 +2,6 @@ import {
   NodeType,
   ListType,
   type ListChild,
-  type TextNodeType,
   type ListContent,
   type TextContent,
   type LayoutContent,
@@ -19,26 +18,32 @@ import {
 import { get, writable, type Updater } from "svelte/store";
 import { resolveImmediateParent } from "./markdown.utils";
 import {
-  type IBlock,
+  type IBlockInterface,
   type IMarkdownParams,
   type IMarkdownStore,
   type IMarkdown,
   type IListOperation,
   type IBlockOperationContext,
-  BlockAction
+  BlockAction,
+  type IListBlockBody,
+  type IListBlock,
+  type IBlock
 } from "$lib/client/components/markdown/md.type";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { ObservableStore } from "$lib/client/stores/client.store";
 import type { IRecordId } from "$lib/client/types/data.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
-import { isSameResource } from "../flux/resourceStores/resource.utils";
+import {
+  isSameResource,
+  resourceInList
+} from "../flux/resourceStores/resource.utils";
 import { logger } from "../debug/logger.client";
 
 /**
  * Used to identify if temporary s3 storage should be used or not, If true, temporary s3 storage is used
  */
 export const isReplaceableMd = writable<boolean>(false);
-export const emptyBlock: IBlock = {
+export const emptyBlock: IBlockInterface = {
   contentType: NodeType.SIMPLE_TEXT,
   body: "",
   id: generateResourceId(Resource.node)
@@ -96,25 +101,15 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
    */
   insert(params: IBlockOperationContext) {
     logger.log({ at: "MarkdownStore - insert", params });
-    let newBlock: Partial<IBlock<NodeContent>> = {
+    let newBlock: Partial<IBlock> = {
       id: generateResourceId(Resource.node),
       body: params.body ?? ""
     };
-    if (
-      params.blockType &&
-      params.blockType != NodeType.LIST &&
-      params.blockType != NodeType.NODULAR_MARKDOWN
-    ) {
+    if (params.blockType && params.blockType != NodeType.NODULAR_MARKDOWN) {
       newBlock = {
         ...newBlock,
         contentType: params.blockType ?? NodeType.SIMPLE_TEXT
-      } as IBlock<TextContent | LayoutContent | StructuralContent>;
-    } else if (params.blockType === NodeType.LIST) {
-      newBlock = {
-        ...newBlock,
-        contentType: NodeType.LIST,
-        listType: params.listType ?? ListType.UNORDERED
-      };
+      } as IBlock;
     } else {
       newBlock = {
         ...newBlock,
@@ -172,13 +167,16 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
    * @param contextBlockId block to insert the new block after
    * @param blockType type of structural block to insert
    */
-  insertStructualBlock(contextBlockId: string, blockType: StructuralNodeType) {
+  insertStructualBlock(
+    contextBlockId: IRecordId,
+    blockType: StructuralNodeType
+  ) {
     const newBlockId = generateResourceId(Resource.node);
     this.update((store) => {
       const contextBlockIndex = store.blocks.findIndex(
         (b) => b.id === contextBlockId
       );
-      const newBlock: IBlock<StructuralContent> = {
+      const newBlock: IBlockInterface<StructuralContent> = {
         id: newBlockId,
         contentType: blockType
       };
@@ -200,6 +198,7 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
   }
 
   /**
+   * @deprecated - used with ListContent v1
    * Handles insert operations for lists which are already present
    * @param contextId the id of the block to insert the new block after
    * @param parentHierarchy the hierarchy of the parents of the list item
@@ -226,11 +225,11 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
        * @returns the new blocks and the id of the new block
        */
       function handleInsertion(
-        blocks: IBlock<NodeContent>[] | ListChild<NodeContent>[]
+        blocks: IBlockInterface<NodeContent>[] | ListChild<NodeContent>[]
       ) {
         const contextBlockIndex = blocks.findIndex((b) => b.id === contextId);
         const currentBlock = blocks[contextBlockIndex];
-        let newBlock: IBlock<ListContent> = {
+        let newBlock: IBlockInterface<ListContent> = {
           id: generateResourceId(Resource.node),
           contentType: NodeType.LIST,
           listType: ListType.UNORDERED,
@@ -261,6 +260,11 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
     });
   }
 
+  /**
+   * @deprecated - used with ListContent v1
+   * @param params
+   * @returns
+   */
   listOperation(params: IListOperation) {
     const { operation, id, parentHierarchy } = params;
     const parentHierarchyCopy = deepCopy(parentHierarchy);
@@ -273,7 +277,7 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
         const currentBlock = { ...n.blocks[currentBlockIndex] };
         previousSibling = moveAsChild(
           currentBlock,
-          previousSibling as IBlock<ListContent>
+          previousSibling as IBlockInterface<ListContent>
         );
         n.blocks = n.blocks.filter((b) => b.id !== id);
         //n.reRenderBlock = previousSibling.id;
@@ -339,8 +343,8 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
      * @returns the parent block with the current block moved as a child
      */
     function moveAsChild(
-      blockToBeMoved: IBlock | ListChild,
-      parent: IBlock<ListContent> | ListChild<ListContent>
+      blockToBeMoved: IBlockInterface | ListChild,
+      parent: IBlockInterface<ListContent> | ListChild<ListContent>
     ) {
       if (!parent.children) parent.children = [];
       parent.children = [...parent.children, blockToBeMoved];
@@ -380,6 +384,7 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
   }
 
   move(id: IRecordId, direction: BlockAction.MOVEUP | BlockAction.MOVEDOWN) {
+    let changedBlocks: IListBlock[] = [];
     this.update((n) => {
       const contextIndex = n.blocks.findIndex((b) => b.id === id);
       if (contextIndex === -1) return n;
@@ -388,15 +393,27 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
       if (siblingIndex < 0 || siblingIndex > n.blocks.length - 1) return n;
       const currentBlock = n.blocks[contextIndex];
       const siblingBlock = n.blocks[siblingIndex];
+      if (currentBlock.contentType === NodeType.ORDERED_LIST) {
+        if (
+          siblingBlock.contentType !== NodeType.ORDERED_LIST ||
+          siblingBlock.body.indent !== currentBlock.body.indent
+        )
+          return n;
+        const currentOrder = currentBlock.body.order;
+        currentBlock.body.order = siblingBlock.body.order;
+        siblingBlock.body.order = currentOrder;
+        changedBlocks.push(currentBlock, siblingBlock);
+      }
       n.blocks[contextIndex] = siblingBlock;
       n.blocks[siblingIndex] = currentBlock;
       return n;
     });
     this.focus.set({ id });
+    return changedBlocks;
   }
 
   duplicate(id: IRecordId) {
-    let newBlock: IBlock;
+    let newBlock: IBlockInterface;
     const md = this.get();
     const contextIndex = md.blocks.findIndex((b) => b.id === id);
     if (contextIndex === -1) return;
@@ -424,7 +441,7 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
    *
    * @param block
    */
-  backspaceWithContent(block: IBlock) {
+  backspaceWithContent(block: IBlockInterface) {
     const { id, content } = block;
     this.update((n) => {
       const contextIndex = n.blocks.findIndex((b) => b.id === id);
@@ -454,5 +471,94 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
       }
     }
     return isFirstBlock && isEmpty;
+  }
+
+  getPreviousSibling(id: IRecordId) {
+    const md = this.get();
+    const contextIndex = md.blocks.findIndex(resourceInList(id));
+    return md.blocks[contextIndex - 1];
+  }
+
+  /**
+   * Returns the parent of the block with the given id and the parent's indent is equal to the given indent
+   * @param id id of the block to get the parent of
+   * @param indent the indent of the parent
+   * @returns the parent of the list block of type ordered list
+   */
+  getListParentOrdered(id: IRecordId, indent: number) {
+    const md = this.get();
+    let parent = getImmediateParent(id);
+    while (parent && parent.body.indent !== indent) {
+      parent = getImmediateParent(parent?.id);
+    }
+    return parent;
+
+    function getImmediateParent(id: IRecordId | undefined) {
+      if (!id) return undefined;
+      const contextIndex = md.blocks.findIndex(resourceInList(id));
+      const contextBlock = md.blocks[contextIndex];
+      if (contextBlock.contentType !== NodeType.ORDERED_LIST) return undefined;
+      for (let i = contextIndex; i >= 0; i--) {
+        const block = md.blocks[i];
+        if (
+          block.contentType === NodeType.ORDERED_LIST &&
+          block.body.indent < contextBlock.body.indent
+        )
+          return block;
+      }
+    }
+  }
+
+  reconcileOrderedList(
+    id: IRecordId,
+    body: IListBlockBody,
+    action: BlockAction.TAB | BlockAction.SHIFT_TAB,
+    replacedOrder: number
+  ) {
+    const md = this.get();
+    const contextIndex = md.blocks.findIndex(resourceInList(id));
+    const contextBlock = md.blocks[contextIndex];
+    if (contextBlock.contentType !== NodeType.ORDERED_LIST) return;
+    const succeedingBlock = md.blocks[contextIndex + 1];
+    if (
+      !succeedingBlock ||
+      succeedingBlock.contentType !== NodeType.ORDERED_LIST
+    )
+      return;
+    let changedBlocks: IListBlock[] = [];
+    orderAll((body.order ?? 0) + 1, body.indent);
+    if (succeedingBlock.body.indent > body.indent) {
+      orderAll(1, succeedingBlock.body.indent);
+    }
+    if (action === BlockAction.TAB) {
+      orderAll(replacedOrder, body.indent - 1);
+    }
+    this.update((n) => {
+      n.blocks = n.blocks.map((b) => {
+        if (changedBlocks.some(resourceInList(b.id)))
+          return {
+            ...b,
+            body: { ...changedBlocks.find(resourceInList(b.id))?.body }
+          };
+        return b;
+      });
+      return n;
+    });
+    return changedBlocks;
+
+    function orderAll(from: number, targetIndent: number) {
+      const index = contextIndex + 1;
+      for (let i = index; i < md.blocks.length; i++) {
+        const block = md.blocks[i];
+        if (
+          block.contentType !== NodeType.ORDERED_LIST ||
+          block.body.indent < targetIndent
+        )
+          break;
+        if (block.body.indent !== targetIndent) continue;
+        block.body.order = from++;
+        changedBlocks.push(block);
+      }
+    }
   }
 }
