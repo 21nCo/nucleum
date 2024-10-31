@@ -420,6 +420,7 @@
         <ResourceSwitcher
           options={resources}
           selected={selectedResource}
+          isShowCount={true}
           on:select={(e) => {
             appStore.toggleSearchParam({
               resource: e.detail,

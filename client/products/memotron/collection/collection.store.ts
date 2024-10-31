@@ -38,6 +38,7 @@ import {
 import context from "$lib/client/stores/context.store";
 import { get } from "svelte/store";
 import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
+import { linker } from "../linking/link.store";
 
 class CollectionStore extends ResourceStore<ICollection> {
   constructor() {
@@ -153,6 +154,17 @@ class CollectionStore extends ResourceStore<ICollection> {
       }
     });
   }
+
+  async resolveNodeCount(collectionId: IRecordId) {
+    const links = await linker.selectMany({
+      filters: {
+        out: collectionId.toString()
+      }
+    });
+    if (links && Array.isArray(links)) {
+      return links.length;
+    }
+  }
 }
 
 export const collectionStore = new CollectionStore();
@@ -203,7 +215,8 @@ export class ActiveCollectionStore extends ActiveResourceStore<
         "*",
         "(select * from $parent.views) as views",
         "(select * from $parent.properties) as properties",
-        "typeToExtend.* as typeToExtend"
+        "typeToExtend.* as typeToExtend",
+        "(array::first(select out, count() from link where out is $parent.id group by out)).count as totalNodeCount"
       ]);
       logger.log({ at: "ActiveCollectionStore.init - select", result });
       let record = result;

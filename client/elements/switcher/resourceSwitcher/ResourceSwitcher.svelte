@@ -11,9 +11,10 @@
   const dispatch = createEventDispatcher();
   export let options: IResourceSwitchItem[];
   export let selected: ISelectValue | undefined = undefined;
-  export let parentBackgroundIndex: number = 1;
+  export let parentBgIndex: number = 1;
   export let size: Size.lg | Size.md | Size.sm = Size.md;
   export let iconOrientation: Orientation = Orientation.Horizontal;
+  export let isShowCount: boolean = false;
   let classList: string = "flex w-full";
   if (selected === undefined) selected = options[0]?.value;
 </script>
@@ -29,6 +30,8 @@
       {item}
       {size}
       {iconOrientation}
+      {isShowCount}
+      {parentBgIndex}
       isActive={selected === item.value}
       on:click={() => {
         if (item.isDisabled) return;

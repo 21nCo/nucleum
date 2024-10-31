@@ -18,7 +18,7 @@
   import Popover from "$lib/client/elements/popover/Popover.svelte";
   import InlineMarkdownTextInput from "./InlineMarkdownTextInput.svelte";
   import SearchResultsPopover from "$lib/client/elements/input/SearchResultsPopover.svelte";
-  import LinkSuggestionItem from "$lib/client/products/memotron/common/linkbox/LinkSuggestionItem.svelte";
+  import LinkSearchResultItem from "$lib/client/products/memotron/common/linkbox/LinkSearchResultItem.svelte";
   import { deepCopy } from "$lib/shared/utils/obj.utils";
   import { getContext } from "svelte";
   import { logger } from "../../debug/logger.client";
@@ -785,7 +785,7 @@
     <!--  || !$isInEditMode -->
     {#if $mdStore.params?.isReadOnly}
       <div
-        {id}
+        id={id.toString()}
         style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word;"
         class="flex justify-start text-left w-full min-h-fit outline-none py-2 {sizing} {contentType ===
         NodeType.QUOTE
@@ -832,7 +832,7 @@
     {:else if isRenderMentionSearch}
       <SearchResultsPopover
         bind:this={mentionSearchRef}
-        searchResultComponent={LinkSuggestionItem}
+        searchResultComponent={LinkSearchResultItem}
         searchCallback={onMentionSearch}
         shortcutTrigger="@"
         on:select={onMentionSelect}

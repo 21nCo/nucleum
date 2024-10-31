@@ -103,7 +103,7 @@
   >
     <Button icon="plus" size={Size.sm} tooltip="Add to a collection" />
     <slot name="popover" slot="popover">
-      <div class="w-96 p-4">
+      <div class="w-96">
         <LinkSearch
           bind:this={searchInputRef}
           context="nodepageCollectionsLane"

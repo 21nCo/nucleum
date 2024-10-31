@@ -18,11 +18,22 @@
   import { popover } from "$lib/client/actions/popover.action";
   import ContextMenu from "../../contextMenu/ContextMenu.svelte";
   import view from "$lib/client/stores/view.store";
+  import Badge from "../../text/Badge.svelte";
+  import { onMount } from "svelte";
+  import { SearchStore } from "$lib/client/products/memotron/memotron.store";
   export let item: IResourceSwitchItem;
   export let size: Size.lg | Size.md | Size.sm = Size.md;
   export let isActive: boolean = false;
   export let iconOrientation: Orientation = Orientation.Horizontal;
+  export let parentBgIndex: number = 1;
+  export let isShowCount: boolean = false;
   let isHovering: boolean = false;
+  let count: number = 0;
+
+  onMount(async () => {
+    if (!isShowCount) return;
+    count = await new SearchStore().resolveCount(item.value as Resource);
+  });
 
   function resolveContextMenu() {
     const isCurrentResourcePinned = $appMenuStore[
@@ -100,7 +111,7 @@
     groupId: "resourceSwitcherContextMenuGroup"
   }}
   class={cn(
-    "relative flex justify-center items-center whitespace-nowrap border  hover:text-fgs1",
+    "relative flex gap-1 justify-center items-center whitespace-nowrap border  hover:text-fgs1",
     {
       "px-8 py-6": iconOrientation === Orientation.Vertical && size === Size.lg,
       "px-6 py-4": iconOrientation === Orientation.Vertical && size === Size.md,
@@ -158,5 +169,13 @@
     >
       <Icon icon={item.isPinned ? "unpin" : "pin"} size={Size.lg} />
     </div>
+  {/if}
+  {#if isShowCount}
+    <Badge
+      text={count}
+      {size}
+      parentBgIndex={parentBgIndex - 1}
+      isAccentColor={isActive}
+    />
   {/if}
 </button>

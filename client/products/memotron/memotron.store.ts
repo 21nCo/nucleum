@@ -367,4 +367,28 @@ export class SearchStore {
     }
     return data;
   }
+
+  async resolveCount(resource: Resource) {
+    if (resource === Resource.node) {
+      const result = await flux.selectMany(resource, {
+        filters: {
+          contentType: rootNodeTypeList,
+          creationContext: false,
+          ...activeResourceFilterV2
+        }
+      });
+      return result.length;
+    } else if (
+      resource === Resource.collection ||
+      resource === Resource.combination ||
+      resource === Resource.task
+    ) {
+      const result = await flux.selectMany(resource, {
+        filters: {
+          ...activeResourceFilterV2
+        }
+      });
+      return result.length;
+    }
+  }
 }

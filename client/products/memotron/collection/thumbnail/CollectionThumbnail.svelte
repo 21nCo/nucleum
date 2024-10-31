@@ -1,18 +1,15 @@
 <script lang="ts">
   import { Arrangement } from "$lib/client/types/direction.enum";
-  import {
-    CollectionType,
-    type ICollectionThumb
-  } from "$lib/client/products/memotron/collection/collection.type";
+  import { type ICollectionThumb } from "$lib/client/products/memotron/collection/collection.type";
   import ResourceGridThumbnail from "../../common/thumbnail/ResourceGridThumbnail.svelte";
-  import Counts from "./Counts.svelte";
   import Cover from "./Cover.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import ResourceThumbnailBase from "../../common/thumbnail/ResourceThumbnailBase.svelte";
-  import { properCase } from "$lib/shared/utils/text.utils";
   import CollectionThumbnailTitle from "./CollectionThumbnailTitle.svelte";
   import ResourceThumbnailContentTypeOverlay from "../../common/thumbnail/ResourceThumbnailContentTypeOverlay.svelte";
+  import CollectionPropertyCount from "../counts/CollectionPropertyCount.svelte";
+  import CollectionNodeCount from "../counts/CollectionNodeCount.svelte";
   export let item: ICollectionThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let size: Size.sm | Size.md = Size.md;
@@ -22,16 +19,10 @@
 <ResourceThumbnailBase bind:item {accessPoint} {arrangement}>
   {#if arrangement === Arrangement.LIST}
     <button
-      class="flex h-20 gap-4 w-full rounded-md bg-bgs2 border border-transparent hover:border-aps2 p-3"
+      class="flex h-12 gap-4 w-full rounded-md bg-bgs2 border border-transparent hover:border-aps2 p-3"
       on:click
     >
-      <div class="flex h-full w-14">
-        <Cover {item} {arrangement} />
-      </div>
-      <div class="flex flex-col gap-2 grow">
-        <CollectionThumbnailTitle {item} />
-        <Counts {item} />
-      </div>
+      <CollectionThumbnailTitle {item} {accessPoint} />
     </button>
   {:else if arrangement === Arrangement.GRID || arrangement === Arrangement.MASONRY}
     <ResourceGridThumbnail {item} {size} on:click>
@@ -45,8 +36,11 @@
       <ResourceThumbnailContentTypeOverlay contentType={item.type} />
       <Cover {item} {arrangement} />
       <slot slot="bottom" name="bottom">
-        <CollectionThumbnailTitle {item} />
-        <Counts {item} />
+        <CollectionThumbnailTitle {item} {arrangement} {accessPoint} />
+        <span class="flex gap-2">
+          <CollectionNodeCount {item} isShowLabel={true} />
+          <CollectionPropertyCount {item} />
+        </span>
       </slot>
     </ResourceGridThumbnail>
   {/if}

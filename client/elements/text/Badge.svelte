@@ -1,23 +1,26 @@
 <script lang="ts">
   import { Size } from "$lib/client/types/size.enum";
-  import { bg, cn } from "$lib/client/utils/ui.utils";
+  import { abg, bg, cn } from "$lib/client/utils/ui.utils";
   export let size: Size = Size.md;
   export let text: string | number;
   export let parentBgIndex: number = 1;
   export let isApplyCustomColor = false;
+  export let isAccentColor = false;
 </script>
 
 {#if typeof text === "number"}
   <div
-    class={cn(
-      "flex justify-center items-center rounded-full text-fgs2 border border-brs3",
-      isApplyCustomColor ? "bg-ccs2" : bg(parentBgIndex),
-      {
-        "w-5 h-5 text-b3": size === Size.md,
-        "w-4 h-4 text-b4": size === Size.sm,
-        "w-3 h-3 text-b5": size === Size.xs
-      }
-    )}
+    class={cn("flex justify-center items-center rounded-full min-w-fit", {
+      "px-1": text > 9,
+      "text-fgs2": !isAccentColor,
+      "bg-css2": isApplyCustomColor,
+      [abg()]: isAccentColor,
+      [bg(parentBgIndex)]: !isApplyCustomColor && !isAccentColor,
+      "border border-brs3": !isApplyCustomColor && !isAccentColor,
+      "w-5 h-5 text-b3": size === Size.md,
+      "w-4 h-4 text-b4": size === Size.sm,
+      "w-3 h-3 text-b5": size === Size.xs
+    })}
   >
     {text}
   </div>

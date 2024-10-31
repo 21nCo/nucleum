@@ -1,6 +1,6 @@
 <script lang="ts">
   import TextSearchInput from "$lib/client/elements/input/TextSearchInput.svelte";
-  import LinkSuggestionItem from "./LinkSuggestionItem.svelte";
+  import LinkSearchResultItem from "./LinkSearchResultItem.svelte";
   import type { IPopoverOptions } from "$lib/client/types/popover.type";
   import { Placement } from "$lib/client/types/direction.enum";
   import { type InputLabel, InputStyle } from "$lib/client/types/input.type";
@@ -98,12 +98,15 @@
 <TextSearchInput
   bind:this={searchInputRef}
   bind:value={searchQuery}
+  isInline={context === "nodepageCollectionsLane"}
   style={inputStyle}
   {icon}
   {label}
-  searchResultComponent={context === "nodepageCollectionsLane"
-    ? undefined
-    : LinkSuggestionItem}
+  searchResultComponent={LinkSearchResultItem}
+  searchResultComponentProps={{
+    isHideResourceType:
+      context === "nodepageCollectionsLane" || context === "nodelinkspane"
+  }}
   {popoverOptions}
   on:select
   searchCallback={onsearch}

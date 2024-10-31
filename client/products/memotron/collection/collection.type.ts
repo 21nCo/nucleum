@@ -37,6 +37,7 @@ export type IActiveCollection = IActiveResource &
     isViewDataLoading: boolean;
     isViewDataRefreshing: boolean;
     isPageLoading: boolean;
+    totalNodeCount: number;
     views: ICollectionViewWithData[];
   };
 

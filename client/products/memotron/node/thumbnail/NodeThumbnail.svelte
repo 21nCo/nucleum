@@ -76,69 +76,71 @@
       })}
     >
       <button
-        class={cn("flex w-full border- rounded--md truncate", {
+        class={cn("flex w-full border- rounded--md truncate h-20", {
           // "bg-ccs5 hover:bg-ccs4 border-ccs2": isApplyCustomColor,
           // "bg-bgs2 border-brs3 hover:border-fgs4": !isApplyCustomColor
         })}
         on:click
       >
-        <div
-          class={cn(
-            "h-20",
-            {
-              "w-full p-2 flex justify-start": isFullExpand
-            },
-            !isFullExpand && {
-              "min-w-12 w-1/10 max-w-1/10": true,
-              "border-r": accessPoint !== ResourceAccessPoint.NODE_LINKS,
-              "border-ccs2": isApplyCustomColor,
-              "border-brs3": !isApplyCustomColor
-            }
-          )}
-        >
-          {#if filePreview}
-            <FileView
-              file={hasFullFileDetails ? filePreview : undefined}
-              id={hasFullFileDetails ? undefined : filePreview}
-              class={cn("object-cover h-full w-full", {
-                "rounded-md": accessPoint === ResourceAccessPoint.NODE_LINKS
-              })}
-            />
-          {:else if urlPreview}
-            <img
-              alt="..."
-              class={cn("object-cover h-full w-full", {
-                "rounded-md": accessPoint === ResourceAccessPoint.NODE_LINKS
-              })}
-              use:lazyLoad={urlPreview}
-            />
-          {:else if item.contentType === NodeType.AUDIO}
-            <span class="w-full h-full overflow-clip">
-              <NodeThumbnailAudioPreview url={_url} />
-            </span>
-          {:else if item.contentType === NodeType.PDF}
-            <span class="w-full h-full overflow-clip relative z-0">
-              <NodeThumbnailPdfPreview url={_url} />
-            </span>
-          {:else}
-            <div
-              class={cn(
-                "h-full text-wrap text-left text-fgs3 text-b2 overflow-clip",
-                {
-                  "p-2": accessPoint !== ResourceAccessPoint.NODE_LINKS
-                }
-              )}
-            >
-              {#if item.contentType === NodeType.TWEET && contentPreview}
-                <NodeThumbnailTweetPreview text={contentPreview} />
-              {:else if isClip && contentPreview}
-                <TextClipPreview node={item} {contentPreview} />
-              {:else if contentPreview}
-                {contentPreview}
-              {/if}
-            </div>
-          {/if}
-        </div>
+        {#if item.contentType !== NodeType.NODULAR_MARKDOWN}
+          <div
+            class={cn(
+              "h-20",
+              {
+                "w-full p-2 flex justify-start": isFullExpand
+              },
+              !isFullExpand && {
+                "min-w-12 w-1/10 max-w-1/10": true,
+                "border-r": accessPoint !== ResourceAccessPoint.NODE_LINKS,
+                "border-ccs2": isApplyCustomColor,
+                "border-brs3": !isApplyCustomColor
+              }
+            )}
+          >
+            {#if filePreview}
+              <FileView
+                file={hasFullFileDetails ? filePreview : undefined}
+                id={hasFullFileDetails ? undefined : filePreview}
+                class={cn("object-cover h-full w-full", {
+                  "rounded-md": accessPoint === ResourceAccessPoint.NODE_LINKS
+                })}
+              />
+            {:else if urlPreview}
+              <img
+                alt="..."
+                class={cn("object-cover h-full w-full", {
+                  "rounded-md": accessPoint === ResourceAccessPoint.NODE_LINKS
+                })}
+                use:lazyLoad={urlPreview}
+              />
+            {:else if item.contentType === NodeType.AUDIO}
+              <span class="w-full h-full overflow-clip">
+                <NodeThumbnailAudioPreview url={_url} />
+              </span>
+            {:else if item.contentType === NodeType.PDF}
+              <span class="w-full h-full overflow-clip relative z-0">
+                <NodeThumbnailPdfPreview url={_url} />
+              </span>
+            {:else}
+              <div
+                class={cn(
+                  "h-full text-wrap text-left text-fgs3 text-b2 overflow-clip",
+                  {
+                    "p-2": accessPoint !== ResourceAccessPoint.NODE_LINKS
+                  }
+                )}
+              >
+                {#if item.contentType === NodeType.TWEET && contentPreview}
+                  <NodeThumbnailTweetPreview text={contentPreview} />
+                {:else if isClip && contentPreview}
+                  <TextClipPreview node={item} {contentPreview} />
+                {:else if contentPreview}
+                  {contentPreview}
+                {/if}
+              </div>
+            {/if}
+          </div>
+        {/if}
         {#if !isFullExpand}
           <div class="flex flex-col gap-0.5 items-start p-2">
             <NodeThumbnailTitle node={item} isUrlOnIcon={true} {accessPoint} />

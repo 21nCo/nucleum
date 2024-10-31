@@ -14,6 +14,7 @@
   export let searchStoreId: string | undefined = undefined;
   export let searchCallback: Function | undefined = undefined;
   export let searchResultComponent: any = undefined;
+  export let searchResultComponentProps: Record<string, unknown> = {};
   export let shortcutTrigger: string | undefined = undefined;
   export let emptyStateLabel: string = "No results found";
   export let isPreventDefaultResults: boolean = false;
@@ -146,6 +147,7 @@
             <svelte:component
               this={searchResultComponent}
               {item}
+              {...searchResultComponentProps}
               isActive={selectedIndex === index}
             />
           {:else}

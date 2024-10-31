@@ -34,13 +34,15 @@ import Chat from "$lib/client/products/memotron/taco/Chat.svelte";
 import CaptureDnD from "./capture/CaptureDnD.svelte";
 import MemotronHome from "./home/MemotronHome.svelte";
 import MemotronOnboarding from "./base/MemotronOnboarding.svelte";
-import LinkSuggestionItem from "./common/linkbox/LinkSuggestionItem.svelte";
+import LinkSearchResultItem from "./common/linkbox/LinkSearchResultItem.svelte";
 import NodeTitleLabelPart from "./node/title/NodeTitleLabelPart.svelte";
 import MemotronGreenUse from "./base/MemotronGreenUse.svelte";
 import GlobalGraph from "./graph/GlobalGraph.svelte";
 import CalloutSettings from "$lib/client/components/markdown/callout/CalloutSettings.svelte";
 import CreateCombination from "./combination/CreateCombination.svelte";
 import MemotronDataSettings from "./settings/MemotronDataSettings.svelte";
+import CollectionTitleLabelPart from "./collection/title/CollectionTitleLabelPart.svelte";
+
 export const memotronActions: IAction[] = [
   {
     action: MemotronAction.OPEN_CHAT,
@@ -214,6 +216,7 @@ export const memotronActions: IAction[] = [
     action: Resource.collection,
     type: ActionType.MODAL,
     component: Collection,
+    resourceLabelRenderer: CollectionTitleLabelPart,
     modalParams: {
       layout: {
         size: Size.xxl,
@@ -304,7 +307,7 @@ export const memotronActions: IAction[] = [
     searchActionParams: {
       searchStoreId: Resource.node,
       itemLabel: "node",
-      searchResultComponent: LinkSuggestionItem,
+      searchResultComponent: LinkSearchResultItem,
       callback: async (id: string, label?: string, componentParams?: any) => {
         if (!componentParams?.id) {
           toasts.error("Something went wrong. Please try again later.");
