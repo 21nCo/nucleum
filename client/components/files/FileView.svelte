@@ -14,6 +14,14 @@
   } from "$lib/client/actions/lazyload.action";
   import { imageRepositioner } from "$lib/client/actions/imageRepositioning.action";
   import { createEventDispatcher } from "svelte";
+  import { persistenceInstance } from "$lib/client/persistence/persistence";
+  import { nodeStore } from "$lib/client/products/memotron/node/node.store";
+  import {
+    getBucketNameandKey,
+    isUrlExpired
+  } from "$lib/client/utils/account.utils";
+  import NodeThumbnailAudioPreview from "$lib/client/products/memotron/node/thumbnail/NodeThumbnailAudioPreview.svelte";
+  import NodeThumbnailPdfPreview from "$lib/client/products/memotron/node/thumbnail/NodeThumbnailPdfPreview.svelte";
   const dispatch = createEventDispatcher();
 
   export let file: IFile | undefined = undefined;
@@ -50,8 +58,16 @@
   });
 
   async function resolveSrc(): Promise<string> {
-    if (file?.url && _id === file?.id) return file.url;
-    else if (file?.data && _id === file?.id)
+    if (file?.url && _id === file?.id) {
+      if (isUrlExpired(file.url)) {
+        let key = getBucketNameandKey(file.url);
+        let signedUrl = await persistenceInstance.fetchSignedUrlForGet(key);
+        const result = await nodeStore.modify(file.id, {
+          url: signedUrl?.getUrl
+        });
+        return signedUrl.getUrl;
+      } else return file.url;
+    } else if (file?.data && _id === file?.id)
       blob = new Blob([file.data], { type: file.type });
     if (blob) return URL.createObjectURL(blob);
     if (!id) return "";
@@ -118,11 +134,10 @@
     <track kind="captions" />
   </video>
 {:else if type === FileType.AUDIO}
-  <audio
-    controls
+  <!-- svelte-ignore a11y-no-static-element-interactions -->
+  <div
     class={classList}
     draggable={isDraggable}
-    use:fileLoaderv2={{ source: resolveSrc, isLazyLoad, id: _id?.toString() }}
     {style}
     bind:this={ref}
     on:dragstart
@@ -132,7 +147,24 @@
     on:dragleave
     on:drop
   >
-  </audio>
+    <NodeThumbnailAudioPreview resolveUrl={resolveSrc} />
+  </div>
+{:else if type === FileType.PDF}
+  <!-- svelte-ignore a11y-no-static-element-interactions -->
+  <div
+    class={classList}
+    draggable={isDraggable}
+    {style}
+    bind:this={ref}
+    on:dragstart
+    on:dragend
+    on:dragover
+    on:dragenter
+    on:dragleave
+    on:drop
+  >
+    <NodeThumbnailPdfPreview resolveUrl={resolveSrc} />
+  </div>
 {/if}
 
 <style>

@@ -434,3 +434,5 @@ export class Persistence {
     }
   }
 }
+
+export const persistenceInstance = new Persistence();

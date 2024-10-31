@@ -12,7 +12,7 @@ import { performApiCall } from "$lib/client/utils/network.utils";
 import { confirmationNotification } from "$lib/client/stores/notification.store";
 import { appStore } from "./app.store";
 import jwt_decode from "jwt-decode";
-import { signout } from "../utils/account.utils";
+import { getBucketNameandKey, signout } from "../utils/account.utils";
 import { ObservableStore } from "./client.store";
 import {
   StoreDataType,
@@ -302,7 +302,10 @@ class AccountStore extends ObservableStore<
           contentType,
           blob
         );
-        const url = signedUrlResponse.uploadURL.split("?")[0];
+        // const url = signedUrlResponse.uploadURL.split("?")[0];
+        const key = getBucketNameandKey(signedUrlResponse.uploadURL);
+        const signedGetUrl = await this.persistence.fetchSignedUrlForGet(key);
+        const url = signedGetUrl?.getUrl;
         const file = {
           id,
           label: fileName,

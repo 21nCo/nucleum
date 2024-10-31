@@ -1,16 +1,22 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import WaveSurfer from "wavesurfer.js";
   import { retrieveCurrentColors } from "$lib/client/utils/theme.utils";
   import appearance from "$lib/client/stores/appearance.store";
 
-  export let url: string;
+  export let resolveUrl: undefined | (() => Promise<string>) = undefined;
+  export let url: string = "";
+  if (resolveUrl) {
+    resolveUrl().then((u) => {
+      url = u;
+      renderAudioPreview();
+    });
+  } else if (url) {
+    renderAudioPreview();
+  }
+
   const currentColors: any = retrieveCurrentColors($appearance);
   const generator = randomLowercaseStringGenerator(15);
   const id = generator.next().value + "audioPreview";
-  onMount(() => {
-    renderAudioPreview();
-  });
 
   function renderAudioPreview() {
     if (!url) return;
