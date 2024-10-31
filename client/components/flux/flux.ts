@@ -683,10 +683,12 @@ class Flux {
     const resources = this.resolveSyncResources();
     for (let resource of resources) {
       const records = await this.persistence.selectMany(resource as Resource);
-      await this.performSync(SyncMethod.CLONE_UP, {
-        resource,
-        records
-      });
+      if (records.length > 0) {
+        await this.performSync(SyncMethod.CLONE_UP, {
+          resource,
+          records
+        });
+      }
     }
   }
 
@@ -703,16 +705,90 @@ class Flux {
   /**
    * Invalidates the stores and persistance connection - used during events like User logout or switching spaces.
    */
-  async terminate() {}
+  async terminate() {
+    await this.persistence.terminate();
+  }
 
   /**
-   * Exports the local database as a backup json or csv based on user selection.
+   * Clears the indexed db and terminates the persistence connection.
+   *
+   * Use with caution as this wipes out entire data and can be detrimental in cases like Offline user with local only data.
    */
-  async export(method: "json" | "csv") {}
+  async clear() {
+    await this.clearIndexedDb();
+    await this.persistence.terminate();
+  }
+
+  private async clearIndexedDb() {
+    logger.log({ at: "flux.clearIndexedDb" });
+    try {
+      const databases = await window.indexedDB.databases();
+      for (const db of databases) {
+        if (db.name) {
+          await window.indexedDB.deleteDatabase(db.name);
+        }
+      }
+
+      logger.log({ at: "flux.clearIndexedDb - completed" });
+    } catch (e) {
+      logger.error({ at: "flux.clearIndexedDb", error: e });
+    }
+  }
+
+  /**
+   * Exports the local database for backup.
+   */
+  async export() {
+    logger.log({ at: "flux.export" });
+    const resources = this.resolveSyncResources();
+    let data: any = {};
+    for (let resource of resources) {
+      const records = await this.persistence.selectMany(resource as Resource);
+      data[resource] = records;
+    }
+    return data;
+  }
   /**
    * Imports a backup json or csv file into the local database.
    */
-  async import() {}
+  async import(data: any) {
+    logger.debug({ at: "flux.import", data });
+    for (let resource of Object.keys(data)) {
+      try {
+        if (resource === Resource.kv) {
+          data[resource] = data[resource].filter(
+            (x: any) => x.id !== "kv:local"
+          );
+        }
+        logger.debug({
+          at: "flux.import - importing",
+          resource,
+          data: data[resource]
+        });
+        await this.persistence.mutation(resource as Resource, {
+          records: data[resource],
+          action:
+            resource === Resource.kv || resource === Resource.link
+              ? PersistenceActionType.INSERT
+              : PersistenceActionType.BULK_INSERT
+        });
+        if (!(await determineIfOffline()) && data[resource].length > 0) {
+          await this.performSync(SyncMethod.CLONE_UP, {
+            resource,
+            records: data[resource]
+          });
+        }
+      } catch (e) {
+        logger.error({
+          at: "flux.import - error",
+          resource,
+          error: e
+        });
+      }
+    }
+    await this.loadInMemoryStores();
+    return true;
+  }
 }
 
 export let flux = Flux._instance as any as Flux;

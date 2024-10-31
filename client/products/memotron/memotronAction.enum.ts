@@ -15,5 +15,6 @@ export enum MemotronAction {
   PASTE_CONFIRMATION = "paste-confirmation",
   ADD_NODE_TO_COLLECTION = "add-node-to-collection",
   OPEN_CHAT = "open-chat",
-  CALLOUT_SETTINGS = "edit-callout-settings"
+  CALLOUT_SETTINGS = "edit-callout-settings",
+  DATA_SETTINGS = "data-settings"
 }

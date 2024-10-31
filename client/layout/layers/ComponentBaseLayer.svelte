@@ -1,7 +1,10 @@
 <script lang="ts">
   import { flux } from "$lib/client/components/flux/flux";
   import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import account from "$lib/client/stores/account.store";
   import { appStore } from "$lib/client/stores/app.store";
+  import context from "$lib/client/stores/context.store";
+  import { UserDataMode } from "$lib/client/types/account.type";
   import { createEventDispatcher, onDestroy, onMount } from "svelte";
 
   const dispatch = createEventDispatcher();
@@ -30,6 +33,8 @@
       $appStore.isDnDPageActive = true;
     }
     if (syncDownOnMount) {
+      if ($account.dataMode !== UserDataMode.CLOUD || $context.isInOfflineMode)
+        return;
       //TODO avoid duplicate syncDown if already triggered by global syncDown on appear
       flux.syncDown();
     }

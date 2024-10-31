@@ -119,6 +119,10 @@ export class SurrealPersistence implements IPersistence {
     }
   }
 
+  terminate() {
+    return this.instance?.close() ?? Promise.resolve(true);
+  }
+
   private async addLocalLog(params?: IPersistenceInitParams) {
     await this.awaiter();
     const result = await this.instance?.query(

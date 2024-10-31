@@ -46,11 +46,11 @@
         style: {
           size: isCurrentNode ? 40 : 30,
           halo: isCurrentNode,
-          fill: isCurrentNode ? currentColors["aps1"] : currentColors["fgs2"],
+          fill: isCurrentNode ? currentColors["aps1"] : currentColors["fgs3"],
           labelText: truncateString(node.label ?? "", 20),
           labelFill: isCurrentNode
             ? currentColors["aps1"]
-            : currentColors["fgs3"]
+            : currentColors["fgs2"]
         }
       };
     });

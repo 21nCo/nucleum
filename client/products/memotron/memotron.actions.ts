@@ -40,6 +40,7 @@ import MemotronGreenUse from "./base/MemotronGreenUse.svelte";
 import GlobalGraph from "./graph/GlobalGraph.svelte";
 import CalloutSettings from "$lib/client/components/markdown/callout/CalloutSettings.svelte";
 import CreateCombination from "./combination/CreateCombination.svelte";
+import MemotronDataSettings from "./settings/MemotronDataSettings.svelte";
 export const memotronActions: IAction[] = [
   {
     action: MemotronAction.OPEN_CHAT,
@@ -377,6 +378,20 @@ export const memotronActions: IAction[] = [
     modalParams: {
       title: "Callout Settings",
       layout: {
+        orientation: Orientation.Horizontal
+      }
+    }
+  },
+  {
+    action: MemotronAction.DATA_SETTINGS,
+    type: ActionType.MODAL,
+    label: "Data Settings",
+    icon: "ph:database",
+    component: MemotronDataSettings,
+    modalParams: {
+      title: "Data Settings",
+      layout: {
+        size: Size.lg,
         orientation: Orientation.Horizontal
       }
     }

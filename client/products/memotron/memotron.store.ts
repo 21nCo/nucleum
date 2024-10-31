@@ -128,7 +128,7 @@ export class SearchStore {
         search: isValidString(this.searchQuery)
           ? {
               query: this.searchQuery,
-              properties: ["body", "label"]
+              properties: ["mdText", "label"]
             }
           : undefined,
         orderBy: this.orderBy ?? {
@@ -257,7 +257,7 @@ export class SearchStore {
         },
         search: isValidString(query)
           ? {
-              properties: ["body", "label"],
+              properties: ["mdText", "label"],
               query
             }
           : undefined

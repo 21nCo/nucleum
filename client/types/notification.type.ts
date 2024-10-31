@@ -1,4 +1,5 @@
 import type { IButtonParams } from "./button.type";
+import type { Size } from "./size.enum";
 
 export type ScheduledNotification = {
   inSeconds: number;
@@ -26,6 +27,11 @@ export type ConfirmationNotification = {
   type?: AlertType;
   confirmAction?: IButtonParams;
   cancelAction?: IButtonParams;
+  /**
+   * if enabled, will show an input field for the user to enter this value
+   */
+  askInputConfirmation?: string;
+  size?: Size;
 };
 
 export enum AlertType {
