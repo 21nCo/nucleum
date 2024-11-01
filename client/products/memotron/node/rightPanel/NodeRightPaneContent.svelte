@@ -24,7 +24,7 @@
 <div class="flex flex-col h-full w-full overflow-y-auto items-start gap-3 p-4">
   <div class="w-full flex items-center justify-between gap-2">
     <Text content={properCase(pane)} style={TextStyle.PANEL_HEADING_SMALL} />
-    {#if pane === NodeRightPaneType.METADATA || $view.isConstrainedWidth || ($node.contentType === NodeType.NODULAR_MARKDOWN && pane === NodeRightPaneType.HISTORY)}
+    {#if pane === NodeRightPaneType.METADATA || $view.isConstrainedWidth || ($node.contentType === NodeType.NODULAR_MARKDOWN && pane === NodeRightPaneType.HISTORY) || ($node.contentType !== NodeType.NODULAR_MARKDOWN && pane === NodeRightPaneType.LINKS)}
       <Button
         icon="ph:x-circle-thin"
         tooltip="Close"

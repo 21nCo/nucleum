@@ -15,10 +15,15 @@
     combos: any[];
   } = { nodes: [], edges: [], combos: [] };
   let isRendered = false;
+  let graphRef: NodeGraphUsingG6;
 
   onMount(async () => {
     // await refresh();
   });
+
+  export function rerender() {
+    graphRef?.rerender();
+  }
 
   /**
    * @deprecated - moved to NodeBirdView.svelte
@@ -131,6 +136,7 @@
   {/if}
   {#if data.nodes.length > 0}
     <NodeGraphUsingG6
+      bind:this={graphRef}
       {data}
       centerNodeId={nodeId}
       on:select={onNodeSelect}

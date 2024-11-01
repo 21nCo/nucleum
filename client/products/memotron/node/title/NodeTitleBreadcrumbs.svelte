@@ -10,9 +10,17 @@
   const dispatch = createEventDispatcher();
   export let mdParent: IRecordId[] | undefined = undefined;
   export let id: IRecordId | undefined = undefined;
+  export let currentLabel: string | undefined = undefined;
+  export let isSubtleContext: boolean = false;
   let breadcrumbs: BreadcrumbItem[] | undefined = undefined;
   onMount(async () => {
     breadcrumbs = await refreshBreadcrumbs();
+    if (breadcrumbs && breadcrumbs.length > 0 && currentLabel) {
+      breadcrumbs.push({
+        label: currentLabel,
+        resourceId: id?.toString()
+      });
+    }
   });
   async function refreshBreadcrumbs() {
     // "(fn::memotron::node::parent($parent.id)) as mdParent"
@@ -54,7 +62,7 @@
 {#if breadcrumbs && breadcrumbs.length > 0}
   <Breadcrumb
     items={breadcrumbs}
-    isSubtleContext={true}
+    {isSubtleContext}
     isPreventDefault={true}
     spaceAvailable={Size.lg}
     on:click={onBreadcrumbClick}

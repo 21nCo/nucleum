@@ -31,7 +31,7 @@
     {#if resourceType === Resource.node}
       <!-- TODO breadcrumbs - calling select for each result for parent resolution -->
       {#if headingNodeTypes.includes(item.contentType)}
-        <NodeTitleBreadcrumbs id={item.id} on:click />
+        <NodeTitleBreadcrumbs id={item.id} on:click isSubtleContext={true} />
       {/if}
       <div class="flex gap-2 w-full">
         <NodeThumbnailTitle

@@ -35,6 +35,7 @@
   export function rerender() {
     if (!graph) return;
     graph.destroy();
+    preProcessData();
     renderGraph();
   }
 
@@ -46,6 +47,11 @@
         style: {
           size: isCurrentNode ? 40 : 30,
           halo: isCurrentNode,
+          badge: isCurrentNode,
+          badges: [
+            { text: node.badge?.toString() ?? "", placement: "right-bottom" }
+          ],
+          // badgeFill: currentColors["fgs1"],
           fill: isCurrentNode ? currentColors["aps1"] : currentColors["fgs3"],
           labelText: truncateString(node.label ?? "", 20),
           labelFill: isCurrentNode
@@ -137,6 +143,8 @@
       animation: false,
       node: {
         style: {
+          badgeBackgroundFill: currentColors["fgs3"],
+          badgeFontSize: 12
           // size: 10
           // labelFill: "orange",
           // labelFill: "white"
@@ -154,9 +162,15 @@
       edge: {
         type: "line",
         style: {
-          // labelText: (d) => d.tags,
-          // labelBackground: true,
-          endArrow: true
+          labelText: (d) => d.linkType,
+          labelFill: currentColors["fgs3"],
+          labelFontSize: 11,
+          labelBackground: true,
+          labelBackgroundFill: currentColors["bgs1"],
+          labelBackgroundOpacity: 1,
+          labelBackgroundRadius: 6,
+          labelPadding: [2, 5, 2, 5]
+          // endArrow: true
           // badge: true,
           // badgeText: "\ue603",
           // badgeFontFamily: "iconfont",
@@ -172,6 +186,7 @@
           labelBackground: true,
           labelPadding: [4, 12, 4, 12],
           labelBackgroundOpacity: 1,
+          labelFill: currentColors["bgs1"],
           labelBackgroundFill: currentColors["ass1"],
           padding: [16, 16, 16, 16],
           labelBackgroundRadius: 6

@@ -7,12 +7,13 @@
   import type { NodeRightPaneType } from "../node.type";
   import view from "$lib/client/stores/view.store";
   import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
+  import NodeBirdView from "../birdView/NodeBirdView.svelte";
   export let node: IActiveNodeStore;
 
   let isShowFloatingBar: boolean = true;
   let isHoveringOnFloatingBar: boolean = false;
   let timeoutId: any;
-  let rightPane: NodeRightPaneType | undefined = undefined;
+  let panelAction: NodeRightPaneType | "birdView" | undefined = undefined;
 
   function onInteraction(event: MouseEvent | TouchEvent | CustomEvent) {
     if ($node.accessMode !== ResourceAccessMode.SLIDESHOW) return;
@@ -27,7 +28,11 @@
 
 {#if $node}
   <div class="relative flex flex-col w-full h-full">
-    <MediaContent {node} bind:rightPane />
+    {#if panelAction === "birdView"}
+      <NodeBirdView {node} isMediaNode={true} />
+    {:else}
+      <MediaContent {node} bind:rightPane={panelAction} />
+    {/if}
     {#if $node.accessMode !== ResourceAccessMode.SLIDESHOW || isShowFloatingBar}
       <MediaNodeFloatingBar
         bind:isHovering={isHoveringOnFloatingBar}
@@ -35,12 +40,12 @@
         on:fullscreen={() => {
           appStore.toggleFocusAccessMode($node.accessMode, $node.id);
         }}
-        bind:rightPane
+        bind:bottomAction={panelAction}
       />
     {/if}
   </div>
 {/if}
 <svelte:document on:mousemove={onInteraction} on:touchmove={onInteraction} />
-{#if $view.isConstrainedWidth && !rightPane}
+{#if $view.isConstrainedWidth && !panelAction}
   <FullScreenCloseButton accessMode={$node.accessMode} isFloat={true} />
 {/if}

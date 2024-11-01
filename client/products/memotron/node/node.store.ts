@@ -285,7 +285,7 @@ export class ActiveNodeStore extends ActiveResourceStore<
     return this.resourceStore.trash(id);
   };
   mention = async (location: string, id: string) => {
-    return linker.link(location, id, LinkType.MENTION);
+    return linker.link(this.id, id, LinkType.MENTION, { location });
   };
 
   private async refreshTypes() {
@@ -519,6 +519,10 @@ export function resolveNodeContextMenu(
           resourceActions.star(),
           resourceActions.edit(accessPoint),
           {
+            value: NodeRightPaneType.LINKS,
+            icon: "ph:arrows-left-right-thin"
+          },
+          {
             value: NodeRightPaneType.METADATA,
             icon: "ph:file-thin"
           },
@@ -606,15 +610,20 @@ export function resolveVisibleActions(contentType: NodeType): IToggleItem[] {
   }
   const baseActions: IToggleItem[] = [
     {
+      value: "birdView",
+      icon: "ph:bird-thin",
+      tooltip: "Bird view"
+    },
+    {
       value: NodeRightPaneType.SIDENOTES,
       icon: "ph:note-thin",
       tooltip: "Side notes"
     },
-    {
-      value: NodeRightPaneType.LINKS,
-      icon: "ph:arrows-left-right-thin",
-      tooltip: "Show links"
-    },
+    // {
+    //   value: NodeRightPaneType.LINKS,
+    //   icon: "ph:arrows-left-right-thin",
+    //   tooltip: "Show links"
+    // },
     {
       value: NodeRightPaneType.PROPERTIES,
       icon: "widget",

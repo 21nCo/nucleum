@@ -2,6 +2,7 @@
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import {
     isSameResource,
+    removeDuplicatesFilter,
     resourceInList
   } from "$lib/client/components/flux/resourceStores/resource.utils";
   import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
@@ -12,17 +13,20 @@
   import { Size } from "$lib/client/types/size.enum";
   import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
   import NodeGraph from "../../graph/NodeGraph.svelte";
-  import { linkTagStore } from "../../linking/link.store";
+  import { linker, linkTagStore } from "../../linking/link.store";
   import { linkTagLabelMapper } from "../../linking/link.utils";
   import { nodeStore, type IActiveNodeStore } from "../node.store";
-  import { NodeRightPaneType, type INode } from "../node.type";
+  import { LinkType, NodeRightPaneType, type INode } from "../node.type";
   import NodeRightPane from "../rightPanel/NodeRightPane.svelte";
   import type { DropdownItem } from "$lib/client/types/dropdownItem.type";
   import type { ILinkTag } from "../../linking/link.type";
   import { onMount } from "svelte";
   import Badge from "$lib/client/elements/text/Badge.svelte";
+  import { enumToString } from "$lib/shared/utils/text.utils";
+  import type { IRecordId } from "$lib/client/types/data.type";
   export let node: IActiveNodeStore;
-  export let mdId: string;
+  export let isMediaNode: boolean = false;
+  export let mdId: string | undefined = undefined;
   let linkedNodes: INode[];
   let isRightPanelCollapsed = true;
   let rightPane = NodeRightPaneType.LINKS;
@@ -43,15 +47,15 @@
     {
       label: "Depth: 2",
       value: 2
-    },
-    {
-      label: "Depth: 3",
-      value: 3
-    },
-    {
-      label: "Depth: 4",
-      value: 4
     }
+    // {
+    //   label: "Depth: 3",
+    //   value: 3
+    // },
+    // {
+    //   label: "Depth: 4",
+    //   value: 4
+    // }
   ];
   let groupOptions: DropdownItem[];
   let subgroupOptions: DropdownItem[];
@@ -104,7 +108,13 @@
   async function refreshGraphData() {
     if (isAutoGrouping) {
       let linkTagsInUse = new Set<string>();
-      const nodes = linkedNodes.map((node: INode) => {
+      let nodes: {
+        id: string;
+        label: string;
+        type?: string;
+        combo?: string;
+        badge?: string | number;
+      }[] = linkedNodes.map((node: INode) => {
         const link = $node.links?.find((l) => isSameResource(l.linkedTo, node));
         let combo = null;
         if (link?.tags?.length === 0) {
@@ -133,14 +143,19 @@
       });
       nodes.push({
         id: $node.id.toString(),
-        label: $node.label,
+        type: "hexagon",
+        badge: $node.links?.length,
+        label: $node.label ?? "",
         combo: undefined
       });
 
-      const edges = $node.links?.map((l) => ({
-        source: $node.id.toString(),
-        target: l.linkedTo.toString()
-      }));
+      let edges = $node.links?.map((l) => {
+        return {
+          source: $node.id.toString(),
+          target: l.linkedTo.toString(),
+          linkType: l.linkType
+        };
+      });
 
       const uniqueLinkTags = Array.from(linkTagsInUse);
 
@@ -159,13 +174,81 @@
       //     label: x
       //   }))
       // ];
-      console.log({ nodes, edges, combos });
+      if (depth > 1) {
+        const remainingNodes = nodes
+          .filter((x) => x.id !== $node.id.toString())
+          .map((x) => x.id);
+        const data = await fetchDepth(remainingNodes);
+        if (!data.edges || data.edges.length === 0) return;
+        edges?.push(...data.edges);
+        nodes.push(...data.nodes);
+        nodes = nodes.filter(removeDuplicatesFilter);
+      }
+      edges = edges
+        ?.map((x) => {
+          return {
+            ...x,
+            linkType:
+              x.linkType === LinkType.DIRECT
+                ? undefined
+                : enumToString(x.linkType)
+          };
+        })
+        .filter((x) => x);
       graphData = {
         nodes,
         edges,
         combos
       };
     }
+  }
+
+  export async function fetchDepth(nodes: IRecordId[]) {
+    const properties = ["id", "in", "out", "linkType", "tags"];
+    const inLinks = await linker.selectMany({
+      properties,
+      filters: {
+        in: nodes.map((x) => x.toString())
+      }
+    });
+    const outLinks = await linker.selectMany({
+      properties,
+      filters: {
+        out: nodes.map((x) => x.toString())
+      }
+    });
+    const edges = [...inLinks, ...outLinks]
+      .filter(
+        (link: any) =>
+          link.in &&
+          link.out &&
+          link.in.toString().includes("node") &&
+          link.out.toString().includes("node") &&
+          !isSameResource(link.in, $node) &&
+          !isSameResource(link.out, $node)
+      )
+      .map((link: any) => ({
+        source: link.in.toString(),
+        target: link.out.toString(),
+        linkType: link.linkType
+      }));
+    const allNodesList = Array.from(
+      new Set(edges.map((link: any) => [link.source, link.target]).flat())
+    );
+    let allNodes = await nodeStore.selectMany({
+      properties: ["label", "body", "id"],
+      filters: {
+        id: allNodesList
+      }
+    });
+
+    allNodes = allNodes.map((node: any) => {
+      return {
+        id: node.id.toString(),
+        label: resolveNodeLabel(node)
+      };
+    });
+    return { nodes: allNodes, edges };
   }
 
   /**
@@ -185,7 +268,7 @@
   function onNodeSelect(event: CustomEvent<string>) {
     appStore.openResource(event.detail, ResourceAccessMode.SPLIT);
   }
-  $: console.log({ links: $node.links, tags });
+  // $: console.log({ links: $node.links, tags });
 </script>
 
 <div class="flex flex-col gap-3 w-full h-full p-3">
@@ -252,7 +335,10 @@
           isDisableSearch={true}
           bind:value={depth}
           size={Size.sm}
-          on:select={() => graphRef?.refresh()}
+          on:select={async () => {
+            await refreshGraphData();
+            graphRef?.rerender();
+          }}
         />
       </div>
     </div>
@@ -270,14 +356,16 @@
         <ComingSoonView />
       {/if}
     </div>
-    <div class="flex gap-2 h-full overflow-auto">
-      <NodeRightPane
-        {node}
-        {mdId}
-        bind:isRightPanelCollapsed
-        bind:pane={rightPane}
-        on:close={closeRightPane}
-      />
-    </div>
+    {#if !isMediaNode && mdId}
+      <div class="flex gap-2 h-full overflow-auto">
+        <NodeRightPane
+          {node}
+          {mdId}
+          bind:isRightPanelCollapsed
+          bind:pane={rightPane}
+          on:close={closeRightPane}
+        />
+      </div>
+    {/if}
   </div>
 </div>

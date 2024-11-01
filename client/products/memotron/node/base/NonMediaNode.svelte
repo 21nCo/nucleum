@@ -94,6 +94,7 @@
                 <header class="flex w-full px-12 py-4">
                   <NodeTitleBreadcrumbs
                     mdParent={$node.mdParent}
+                    currentLabel={$node.label}
                     on:click={(e) => {
                       node.eventStore.set({
                         event: e.detail.event,

@@ -21,12 +21,14 @@ class Linker extends ResourceStore<INodeLink> {
   async link(
     from: IRecordId,
     to: IRecordId,
-    linkType: LinkType = LinkType.DIRECT
+    linkType: LinkType = LinkType.DIRECT,
+    content?: any
   ) {
     const response = await this.create({
       in: from,
       out: to,
-      linkType: linkType
+      linkType: linkType,
+      ...(content ?? {})
     });
     logger.log({ at: "link", response });
     return response;

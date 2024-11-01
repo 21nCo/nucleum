@@ -29,7 +29,8 @@
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let isHovering: boolean = false;
-  export let rightPane: NodeRightPaneType | undefined = undefined;
+  export let bottomAction: NodeRightPaneType | "birdView" | undefined =
+    undefined;
   let dev_isShowMainProperties: boolean = false;
   let buttonCommonProps = {
     tooltipOptions: {
@@ -39,11 +40,11 @@
   };
 
   function onPanelAction(param: NodeRightPaneType) {
-    if (rightPane === param) {
-      rightPane = undefined;
+    if (bottomAction === param) {
+      bottomAction = undefined;
       return;
     }
-    rightPane = param;
+    bottomAction = param;
   }
 </script>
 
@@ -113,14 +114,14 @@
         <span class="flex gap-5">
           {#if !$view.isConstrainedWidth}
             <ToggleGroup
-              selected={rightPane}
+              selected={bottomAction}
               items={resolveVisibleActions($node.contentType)}
               class="gap-5"
               on:change={(e) => {
                 onPanelAction(e.detail);
               }}
               on:none={() => {
-                rightPane = undefined;
+                bottomAction = undefined;
               }}
             />
           {/if}
@@ -138,7 +139,7 @@
                 e.detail === NodeRightPaneType.SIDENOTES ||
                 e.detail === NodeRightPaneType.LINKS
               ) {
-                rightPane = e.detail;
+                bottomAction = e.detail;
               }
             }}
           />
