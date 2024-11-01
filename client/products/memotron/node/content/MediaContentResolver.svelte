@@ -39,18 +39,11 @@
   }
 
   async function resolveData() {
-    if (
-      (typeof node.file === "object" && "tb" in node.file) ||
-      typeof node.file === "string"
-    ) {
-      _file = await fileStore.select(node.file);
-    } else if (typeof node.file === "object") {
-      _file = node.file;
-    }
-    if (!_file) return;
-    _url =
-      _file.url ??
-      URL.createObjectURL(new Blob([_file.data], { type: _file.type }));
+    if (!node.file) return;
+    const result = await fileStore.refresh(node.file);
+    if (!result) return;
+    _file = result;
+    _url = _file.url ?? "";
   }
 
   function resolveFileIcon() {

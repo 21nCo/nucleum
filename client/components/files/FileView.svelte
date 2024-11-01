@@ -14,14 +14,9 @@
   } from "$lib/client/actions/lazyload.action";
   import { imageRepositioner } from "$lib/client/actions/imageRepositioning.action";
   import { createEventDispatcher } from "svelte";
-  import { persistenceInstance } from "$lib/client/persistence/persistence";
-  import { nodeStore } from "$lib/client/products/memotron/node/node.store";
-  import {
-    getBucketNameandKey,
-    isUrlExpired
-  } from "$lib/client/utils/account.utils";
   import NodeThumbnailAudioPreview from "$lib/client/products/memotron/node/thumbnail/NodeThumbnailAudioPreview.svelte";
   import NodeThumbnailPdfPreview from "$lib/client/products/memotron/node/thumbnail/NodeThumbnailPdfPreview.svelte";
+
   const dispatch = createEventDispatcher();
 
   export let file: IFile | undefined = undefined;
@@ -58,35 +53,15 @@
   });
 
   async function resolveSrc(): Promise<string> {
-    if (file?.url && _id === file?.id) {
-      if (isUrlExpired(file.url)) {
-        let key = getBucketNameandKey(file.url);
-        let signedUrl = await persistenceInstance.fetchSignedUrlForGet(key);
-        const result = await nodeStore.modify(file.id, {
-          url: signedUrl?.getUrl
-        });
-        return signedUrl.getUrl;
-      } else return file.url;
-    } else if (file?.data && _id === file?.id)
-      blob = new Blob([file.data], { type: file.type });
     if (blob) return URL.createObjectURL(blob);
-    if (!id) return "";
-    const response = await fileStore.select(id);
-    if (!response) return "";
-    if (response.url) {
-      file = response;
-      return file?.url ?? "";
-    } else if (response.data) {
-      file = {
-        ...response,
-        url: URL.createObjectURL(
-          new Blob([response.data], { type: response.type })
-        )
-      };
-      return file?.url ?? "";
-    } else {
-      return "";
+    else if (id || (file && _id === file?.id)) {
+      const result = await fileStore.refresh(file ?? id);
+      if (result) {
+        file = result;
+        return file.url ?? "";
+      }
     }
+    return "";
   }
 
   function handlePositionChange(newPosition: number) {

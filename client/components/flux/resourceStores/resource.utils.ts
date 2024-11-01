@@ -75,3 +75,10 @@ export function isNoneResource(id: IRecordId | string | undefined) {
   if (!id) return false;
   return id.toString()?.split(":")?.pop() === "none";
 }
+
+export function isRecordId(id: any) {
+  return (
+    typeof (id === "string" && id.includes(":")) ||
+    (typeof id === "object" && "tb" in id)
+  );
+}
