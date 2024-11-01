@@ -124,7 +124,9 @@
   function onMarkdownContentChange(e: CustomEvent) {
     logger.log({ at: "NodeContent - onMarkdownContentChange", ...e.detail });
     const block = e.detail.block;
-    if (block.source && "body" in block) {
+    if (!block.source && !block.id) return;
+    const id = block.id ?? block.source;
+    if ("body" in block) {
       let params = {};
       if (typeof block.body === "string" || "text" in block.body) {
         params = {
@@ -132,10 +134,18 @@
           debounceKey: "text"
         };
       }
-      const id = block.id ?? block.source;
       node.updateBlock(id, { body: block.body }, params);
-    } else if (block.source && "metadata" in block) {
-      node.updateBlock(block.source, { metadata: block.metadata });
+    } else if ("label" in block) {
+      node.updateBlock(
+        id,
+        { label: block.label },
+        {
+          isDebounced: true,
+          debounceKey: "label"
+        }
+      );
+    } else if ("metadata" in block) {
+      node.updateBlock(id, { metadata: block.metadata });
     }
   }
 
@@ -223,7 +233,8 @@
         if (headingNodeTypes.includes(e.detail.fromType)) {
           node.updateBlock(e.detail.source, {
             contentType: e.detail.toType,
-            children: []
+            children: [],
+            body: null
           });
         } else {
           node.updateBlock(e.detail.source, {

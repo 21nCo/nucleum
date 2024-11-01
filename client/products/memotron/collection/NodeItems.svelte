@@ -20,6 +20,7 @@
   export let nodes: INodeThumb[] = [];
   export let arrangement: Arrangement = Arrangement.LIST;
   export let density = 1;
+  export let isHidePreview: boolean = false;
   export let parentBgIndex = 1;
   export let isApplyCustomColor: boolean = false;
   export let isDraggable: boolean = false;
@@ -124,6 +125,7 @@
             {arrangement}
             {accessPoint}
             {accessPointId}
+            {isHidePreview}
             on:load={() =>
               resizeMasonryItem(
                 gridRef.querySelector(`[data-id="${item.id}"]`)
@@ -162,6 +164,7 @@
           {isDraggable}
           {accessPoint}
           {accessPointId}
+          {isHidePreview}
           collectionContext={"board"}
           {isApplyCustomColor}
           on:click={(e) => appStore.resourceClickHandler(e, item.id)}

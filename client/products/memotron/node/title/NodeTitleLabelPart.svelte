@@ -112,8 +112,10 @@
 <!-- TODO - if node and has parent, show breadcrumbs -->
 {#if item.label && item.label.includes(".")}
   {item.label}
-{:else if item.label}
-  {@html renderMdAsHtml(item.labelSearch ?? item.label)}
+{:else if item.label || item.labelSearch}
+  {@html renderMdAsHtml(item.labelSearch ?? item.label, {
+    isIncludeSpaces: true
+  })}
 {:else if dynamicLabelNodeTypes.includes(item.contentType) && dynamicLabel}
   {#if typeof dynamicLabel === "string"}
     {dynamicLabel ?? "Unknown"}
@@ -144,7 +146,9 @@
     </span>
   {/if}
 {:else if item.body && typeof item.body === "string"}
-  {@html renderMdAsHtml(item.bodySearch ?? item.body)}
+  {@html renderMdAsHtml(item.bodySearch ?? item.body, {
+    isIncludeSpaces: true
+  })}
 {:else if item.body && item.body.text && typeof item.body.text === "string"}
   {item.body.text}
 {:else}

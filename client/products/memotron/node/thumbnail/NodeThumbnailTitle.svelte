@@ -51,7 +51,12 @@
   {:else}
     <NodeAvatar {node} size={Size.sm} />
     <div class="flex-1 min-w-0">
-      <div class="flex text-left truncate w-full text-b2 font--medium">
+      <div
+        class={cn("flex text-left truncate w-full text-b2 font--medium", {
+          "text-h5": accessPoint === ResourceAccessPoint.SEARCH_RESULT,
+          "text-b2": accessPoint !== ResourceAccessPoint.SEARCH_RESULT
+        })}
+      >
         <NodeTitleLabelPart item={node} {accessPoint} />
       </div>
     </div>
@@ -78,7 +83,7 @@
           </button>
         {/if}
       {/if}
-      {#if node.isStarred}
+      {#if node.isStarred && accessPoint !== ResourceAccessPoint.SEARCH_RESULT}
         <Icon icon="star" class="fill-yellow-400" />
       {/if}
     </span>

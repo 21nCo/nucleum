@@ -146,28 +146,30 @@
       webNodeTypeList.includes(data.toType) ||
       embedNodeTypeList.includes(data.toType)
     ) {
-      block.contentType = NodeType.EMBED;
       const subType = data.toType;
-      block.body = { subType };
       data.toType = NodeType.EMBED;
       data.body = { subType };
     } else if (simpleTextNodeTypeList.includes(data.toType)) {
       const text = resolveBodyText() ?? "";
-      block.body = text;
       data.body = text;
-      block.contentType = data.toType;
     } else if (nonSimpleTextNodeTypeList.includes(data.toType)) {
       const text: string = resolveBodyText() ?? "";
       const body = resolveDefaultBody(data.toType, text);
-      block.body = body;
       data.body = body;
-      block.contentType = data.toType;
-    } else {
-      block.contentType = data.toType;
+    } else if (headingNodeTypes.includes(data.toType)) {
+      const text: string = resolveBodyText() ?? "";
+      // block.body = null;
+      data.label = text;
+      block.label = text;
     }
+    block.contentType = data.toType;
+    if (data.body) block.body = data.body;
     propagateAsAction(BlockAction.CONVERT, { ...data, fromType });
     if (data.body !== undefined) {
       propagate(BlockAction.CHANGE, { body: data.body });
+    }
+    if (data.label !== undefined) {
+      propagate(BlockAction.CHANGE, { label: data.label });
     }
 
     /**
@@ -178,6 +180,9 @@
         return block.body as string;
       else if (nonSimpleTextNodeTypeList.includes(block.contentType))
         return (block.body as INonSimpleTextBlockBody).text;
+      else if (headingNodeTypes.includes(block.contentType)) {
+        return block.label ?? block.body;
+      }
     }
   }
 
@@ -200,6 +205,8 @@
         data.body = resolveDefaultBody(data.blockType, "");
       } else if (simpleTextNodeTypeList.includes(data.blockType)) {
         data.body = "";
+      } else if (headingNodeTypes.includes(data.blockType)) {
+        data.label = "";
       }
     } else {
       if (!data) data = {};
@@ -347,22 +354,30 @@
   }
 
   function onBlockUpdate(e: CustomEvent<any>) {
-    const body: Partial<IBlockBody> = e?.detail;
-    if (!body) return;
+    const detail: Partial<IBlockBody> = e?.detail;
+    logger.log({ at: "onBlockUpdate", detail, block });
+    if (!detail) return;
+    if (
+      headingNodeTypes.includes(block.contentType) &&
+      typeof detail === "string"
+    ) {
+      propagate(BlockAction.CHANGE, { label: detail });
+      return;
+    }
 
     if (block.body) {
-      if (typeof body === "object" && typeof block.body === "object") {
+      if (typeof detail === "object" && typeof block.body === "object") {
         block.body = {
           ...block.body,
-          ...body
+          ...detail
         };
-      } else if (typeof block.body === "string" && typeof body === "string") {
-        block.body = body;
+      } else if (typeof block.body === "string" && typeof detail === "string") {
+        block.body = detail;
       }
     } else {
-      block.body = body as IBlockBody;
+      block.body = detail as IBlockBody;
     }
-    propagate(BlockAction.CHANGE, { body });
+    propagate(BlockAction.CHANGE, { body: detail });
   }
 </script>
 

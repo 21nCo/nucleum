@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { IBlock } from "$lib/client/components/markdown/md.type";
   import {
+    headingNodeTypes,
     listNodeTypes,
     NodeType,
     simpleTextNodeTypeList
@@ -12,6 +13,7 @@
   import TextContent from "./TextContent.svelte";
   import CodeContent from "./CodeContent.svelte";
   import ListContent from "../lists/ListContent.svelte";
+  import HeadingContent from "./HeadingContent.svelte";
   export let mdStore: MdStoreType;
   export let block: IBlock;
   /**
@@ -38,6 +40,14 @@
     <Callout id={block.id} body={block.body} {mdStore} {isHovering} on:update />
   {:else if block.contentType === NodeType.CODE}
     <CodeContent body={block.body} on:update />
+  {:else if headingNodeTypes.includes(block.contentType)}
+    <HeadingContent
+      id={block.id}
+      text={block.label ?? block.body}
+      {mdStore}
+      contentType={block.contentType}
+      on:update
+    />
   {:else if listNodeTypes.includes(block.contentType) && typeof block.body === "object"}
     <ListContent
       body={block.body}

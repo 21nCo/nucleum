@@ -99,11 +99,9 @@
   let viewsForSwitcher: ISelectItem[];
   let isReady = false;
   let isNotInlineAccess: boolean = false;
-  let selectedArrangement: Arrangement = Arrangement.LIST;
   let isCoverPickerOpen = false;
   let isShowMetaViews = false;
   let isSingleViewMode = true;
-  let arrangementDensity = 1;
   let searchQuery: string = "";
 
   $: coverPlacement =
@@ -212,7 +210,6 @@
 
   function onArrangementChange(e: CustomEvent) {
     if (!activeView) return;
-    selectedArrangement = e.detail;
     activeView.arrangement = e.detail;
     activeView.density = activeView.density ? activeView.density : 1;
     collection.updateView(
@@ -228,13 +225,24 @@
   function onDensityChange(e: CustomEvent) {
     if (!activeView) return;
     activeView.density = e.detail;
-    arrangementDensity = e.detail;
     collection.updateView(
       activeView.id,
       {
         density: activeView.density
       },
       "density"
+    );
+  }
+
+  function onPreviewSettingChange(e: CustomEvent) {
+    if (!activeView) return;
+    activeView.isHideThumbnailPreview = e.detail;
+    collection.updateView(
+      activeView.id,
+      {
+        isHideThumbnailPreview: activeView.isHideThumbnailPreview
+      },
+      "isHideThumbnailPreview"
     );
   }
 
@@ -282,8 +290,6 @@
       $collection.views.find((x) => x.id.toString() === selectedViewId) ?? null;
     if (!view) return;
     activeView = view;
-    selectedArrangement = view.arrangement ?? selectedArrangement;
-    arrangementDensity = view.density ?? arrangementDensity;
     return view;
   }
 
@@ -499,10 +505,12 @@
               {#if isSingleViewMode && !$collection.isInEditMode}
                 <ArrangementSelector
                   {isBoardContext}
-                  arrangement={selectedArrangement}
-                  density={arrangementDensity}
+                  arrangement={activeView?.arrangement ?? Arrangement.LIST}
+                  density={activeView?.density}
+                  isHideThumbnailPreview={activeView?.isHideThumbnailPreview}
                   on:arrangementChange={onArrangementChange}
                   on:densityChange={onDensityChange}
+                  on:previewSettingChange={onPreviewSettingChange}
                 />
               {/if}
             </span>
@@ -589,10 +597,12 @@
                   /> -->
                   <ArrangementSelector
                     {isBoardContext}
-                    arrangement={selectedArrangement}
-                    density={arrangementDensity}
+                    arrangement={activeView?.arrangement ?? Arrangement.LIST}
+                    density={activeView?.density}
+                    isHideThumbnailPreview={activeView?.isHideThumbnailPreview}
                     on:arrangementChange={onArrangementChange}
                     on:densityChange={onDensityChange}
+                    on:previewSettingChange={onPreviewSettingChange}
                   />
                   {#if !$collection.isInEditMode && !$view.isConstrainedWidth}
                     <AddResourceAction

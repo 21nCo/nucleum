@@ -26,6 +26,9 @@ export function resolveResource(id: IRecordId) {
   return flux.select(id);
 }
 
+const labelSearchProp =
+  "search::highlight('**', '**', 1, false) AS labelSearch";
+
 export class SearchStore {
   resource: Resource = Resource.everything;
   searchQuery: string = "";
@@ -102,8 +105,8 @@ export class SearchStore {
                 "*",
                 "parent.* as parent",
                 "file.* as file",
-                "search::highlight('**', '**', 1, false) AS bodySearch",
-                "search::highlight('**', '**', 2, false) AS labelSearch"
+                labelSearchProp,
+                "search::highlight('**', '**', 2, false) AS bodySearch"
                 //TODO - this is causing extreme slowness for select query if there are 1000s of records on the table
                 // "(fn::memotron::node::parent($parent.id)) as mdParent"
               ],
@@ -128,7 +131,7 @@ export class SearchStore {
         search: isValidString(this.searchQuery)
           ? {
               query: this.searchQuery,
-              properties: ["mdText", "label"]
+              properties: ["label", "mdText"]
             }
           : undefined,
         orderBy: this.orderBy ?? {
@@ -148,11 +151,7 @@ export class SearchStore {
 
   async collections() {
     const result = await flux.selectMany(Resource.collection, {
-      properties: [
-        "search::highlight('**', '**', 1, false) AS labelSearch",
-        "*",
-        "typeToExtend.* as typeToExtend"
-      ],
+      properties: [labelSearchProp, "*", "typeToExtend.* as typeToExtend"],
       filters: {
         trashInformation: false,
         ...this.filters,
@@ -245,7 +244,8 @@ export class SearchStore {
       nodes = await flux.selectMany(Resource.node, {
         properties: [
           "*",
-          "parent.* as parent"
+          "parent.* as parent",
+          labelSearchProp
           //TODO - disabling temp - to reduce query time
           // "(fn::memotron::node::parent($parent.id)) as mdParent"
         ],
@@ -257,7 +257,7 @@ export class SearchStore {
         },
         search: isValidString(query)
           ? {
-              properties: ["mdText", "label"],
+              properties: ["label"],
               query
             }
           : undefined

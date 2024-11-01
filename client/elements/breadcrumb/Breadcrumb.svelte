@@ -13,6 +13,7 @@
   export let items: BreadcrumbItem[] = [];
   export let isPreventDefault: boolean = false;
   export let spaceAvailable: Size.sm | Size.md | Size.lg = Size.md;
+  export let isSubtleContext: boolean = false;
   $: slice = resolveSlice($view.display);
   $: truncateLength = determineTruncateLength($view.display, spaceAvailable);
   // let truncateLength = undefined;
@@ -68,6 +69,7 @@
     {#each _items as item, index (item)}
       <BreadcrumbItemView
         {truncateLength}
+        {isSubtleContext}
         {...item}
         isLast={index === _items.length - 1}
         on:click={(e) => {

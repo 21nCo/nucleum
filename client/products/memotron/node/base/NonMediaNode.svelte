@@ -93,7 +93,7 @@
               {#key $node.mdParent.map((x) => x.toString()).join(".")}
                 <header class="flex w-full px-12 py-4">
                   <NodeTitleBreadcrumbs
-                    node={$node}
+                    mdParent={$node.mdParent}
                     on:click={(e) => {
                       node.eventStore.set({
                         event: e.detail.event,

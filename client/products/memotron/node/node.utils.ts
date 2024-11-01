@@ -157,11 +157,7 @@ export function resolveNodeContentLabel(contentType: NodeType) {
 
 export function resolveFilePreview(node: INode) {
   const { contentType, body, file } = node;
-  if (
-    contentType === NodeType.IMAGE ||
-    contentType == NodeType.AUDIO ||
-    contentType === NodeType.PDF
-  ) {
+  if (contentType === NodeType.IMAGE) {
     return file;
   } else if (contentType === NodeType.WEB_SCREENSHOT_CLIP) {
     return body.file;

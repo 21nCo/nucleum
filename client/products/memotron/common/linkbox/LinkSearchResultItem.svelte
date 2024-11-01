@@ -4,11 +4,12 @@
   import { properCase } from "$lib/shared/utils/text.utils";
   import NodeThumbnailTitle from "../../node/thumbnail/NodeThumbnailTitle.svelte";
   import NodeTitleBreadcrumbs from "../../node/title/NodeTitleBreadcrumbs.svelte";
-  import type { INode } from "../../node/node.type";
+  import { headingNodeTypes, NodeType, type INode } from "../../node/node.type";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import CollectionTitleLabelPart from "../../collection/title/CollectionTitleLabelPart.svelte";
   import type { ICollectionThumb } from "../../collection/collection.type";
+  import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
   export let item: INode | ICollectionThumb;
   export let isHideResourceType: boolean = false;
 
@@ -29,13 +30,22 @@
   >
     {#if resourceType === Resource.node}
       <!-- TODO breadcrumbs - calling select for each result for parent resolution -->
-      <!-- <NodeTitleBreadcrumbs node={item} on:click /> -->
+      {#if headingNodeTypes.includes(item.contentType)}
+        <NodeTitleBreadcrumbs id={item.id} on:click />
+      {/if}
       <div class="flex gap-2 w-full">
         <NodeThumbnailTitle
           node={item}
           accessPoint={ResourceAccessPoint.SEARCH_RESULT}
         />
       </div>
+      {#if item.bodySearch}
+        <div class="text-left text-b2 text-fgs3">
+          {@html renderMdAsHtml(item.bodySearch, {
+            isIncludeSpaces: true
+          })}
+        </div>
+      {/if}
     {:else if resourceType === Resource.collection}
       <CollectionTitleLabelPart {item} isShowFallbackIcons={true} />
     {/if}

@@ -14,8 +14,6 @@
   } from "$lib/client/actions/lazyload.action";
   import { imageRepositioner } from "$lib/client/actions/imageRepositioning.action";
   import { createEventDispatcher } from "svelte";
-  import NodeThumbnailAudioPreview from "$lib/client/products/memotron/node/thumbnail/NodeThumbnailAudioPreview.svelte";
-  import NodeThumbnailPdfPreview from "$lib/client/products/memotron/node/thumbnail/NodeThumbnailPdfPreview.svelte";
 
   const dispatch = createEventDispatcher();
 
@@ -110,36 +108,9 @@
   </video>
 {:else if type === FileType.AUDIO}
   <!-- svelte-ignore a11y-no-static-element-interactions -->
-  <div
-    class={classList}
-    draggable={isDraggable}
-    {style}
-    bind:this={ref}
-    on:dragstart
-    on:dragend
-    on:dragover
-    on:dragenter
-    on:dragleave
-    on:drop
-  >
-    <NodeThumbnailAudioPreview resolveUrl={resolveSrc} />
-  </div>
+  <!--  -->
 {:else if type === FileType.PDF}
-  <!-- svelte-ignore a11y-no-static-element-interactions -->
-  <div
-    class={classList}
-    draggable={isDraggable}
-    {style}
-    bind:this={ref}
-    on:dragstart
-    on:dragend
-    on:dragover
-    on:dragenter
-    on:dragleave
-    on:drop
-  >
-    <NodeThumbnailPdfPreview resolveUrl={resolveSrc} />
-  </div>
+  <!--  -->
 {/if}
 
 <style>

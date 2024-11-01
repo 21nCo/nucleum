@@ -42,6 +42,11 @@
       bind:value={searchQuery}
       on:keydown={onKeydown}
       style={InputStyle.FILLED}
+      isShowClearControl={searchQuery ? true : false}
+      on:cancel={() => {
+        searchQuery = "";
+        dispatch("refresh");
+      }}
       on:keyup={onKeyup}
       placeholder={"Search " + selectedResource + "s"}
     />

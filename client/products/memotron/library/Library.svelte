@@ -532,7 +532,7 @@
               resource={selectedResource}
               size={$view.isConstrainedWidth ? Size.sm : Size.md}
               arrangement={$view.isConstrainedWidth
-                ? Arrangement.MASONRY
+                ? Arrangement.LIST
                 : Arrangement.GRID}
             />
           </div>

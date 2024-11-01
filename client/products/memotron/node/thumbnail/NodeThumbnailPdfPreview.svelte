@@ -1,11 +1,5 @@
 <script lang="ts">
-  export let resolveUrl: undefined | (() => Promise<string>) = undefined;
   export let url: string = "";
-  if (resolveUrl) {
-    resolveUrl().then((u) => {
-      url = u;
-    });
-  }
 </script>
 
 <button

@@ -31,6 +31,10 @@ export type IBlockInterface<TType = NodeType, TBody = IBlockBody> = {
   id: IRecordId;
   body: TBody;
   contentType: TType;
+  /**
+   * label will be present if heading nodes
+   */
+  label?: string;
   childrenHierarchy?: IRecordId[];
 };
 

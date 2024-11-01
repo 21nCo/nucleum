@@ -22,7 +22,8 @@
     | undefined = undefined;
   export let isExperimentalMdInput: boolean = false;
   export let icon: string | undefined = undefined;
-  export let isShowRightControls: boolean = false;
+  export let isShowSaveControl: boolean = false;
+  export let isShowClearControl: boolean = false;
   export let isPreventDefaultOnEnter: boolean = false;
   let isShowSaveFeedback: boolean = false;
   let isFocused: boolean = false;
@@ -225,22 +226,26 @@
           <Icon {icon} size={Size.sm} class="stroke-fgs3" />
         </div>
       {/if} -->
-      {#if isShowRightControls}
+      {#if isShowSaveControl || isShowClearControl}
         <div
           class="absolute right-0 top-0 bottom-0 flex gap-2 items-center px-3"
         >
-          <Icon
-            icon="ph:check"
-            size={Size.sm}
-            class="stroke-fgs3"
-            on:click={() => dispatch("save", { value })}
-          />
-          <Icon
-            icon="ph:x"
-            size={Size.sm}
-            class="stroke-fgs3"
-            on:click={() => dispatch("cancel")}
-          />
+          {#if isShowSaveControl}
+            <Icon
+              icon="ph:check"
+              size={Size.sm}
+              class="stroke-fgs3"
+              on:click={() => dispatch("save", { value })}
+            />
+          {/if}
+          {#if isShowSaveControl || isShowClearControl}
+            <Icon
+              icon="ph:x"
+              size={Size.sm}
+              class="stroke-fgs3"
+              on:click={() => dispatch("cancel")}
+            />
+          {/if}
         </div>
       {/if}
     {/if}

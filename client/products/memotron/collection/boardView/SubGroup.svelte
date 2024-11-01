@@ -80,6 +80,7 @@
       <NodeItems
         nodes={_data}
         {arrangement}
+        isHidePreview={view.isHideThumbnailPreview}
         {density}
         isDraggable={true}
         accessPoint={ResourceAccessPoint.COLLECTION}

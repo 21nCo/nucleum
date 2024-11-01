@@ -5,14 +5,18 @@
   import { VerticalSwitcherStyle } from "$lib/client/types/switcher.enum";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
+  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
+  import { Size } from "$lib/client/types/size.enum";
   export let density: number;
   export let arrangement: Arrangement;
+  export let isHideThumbnailPreview: boolean = false;
   export let allArrangements: {
     value: Arrangement;
     label: string;
     icon: string;
   }[];
   export let onDensityChange: (density: number) => void;
+  export let onPreviewSettingChange: (event: CustomEvent) => void;
   export let onArrangementChange: (event: CustomEvent) => void;
   function onDensityChanges(event: Event) {
     onDensityChange(density);
@@ -41,5 +45,15 @@
         on:change={onDensityChanges}
       />
     </div>
+  {:else}
+    <span class="px-2">
+      <SwitchInput
+        label={{ label: "Hide preview" }}
+        size={Size.sm}
+        isExpanded={true}
+        bind:checked={isHideThumbnailPreview}
+        on:change={onPreviewSettingChange}
+      />
+    </span>
   {/if}
 </div>

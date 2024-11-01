@@ -26,8 +26,12 @@
   import NodeThumbnailPdfPreview from "./NodeThumbnailPdfPreview.svelte";
   import { TimeFormat } from "$lib/client/types/time.type";
   import type { IRecordId } from "$lib/client/types/data.type";
+  import { fileStore } from "$lib/client/components/files/file.store";
+  import { onMount } from "svelte";
+  import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
   export let item: INodeThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
+  export let isHidePreview: boolean = false;
   export let size: Size.sm | Size.md = Size.md;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
   export let accessPointId: IRecordId;
@@ -50,10 +54,15 @@
     accessPoint === ResourceAccessPoint.NODE_TRACES;
   $: isShouldContainImage = resolveIfImageShouldContain(item.contentType);
 
-  $: if (item?.file) {
-    _url =
-      item.file.url ??
-      URL.createObjectURL(new Blob([item.file.data], { type: item.file.type }));
+  onMount(async () => {
+    await resolveUrl();
+  });
+
+  async function resolveUrl() {
+    if (item?.file) {
+      const result = await fileStore.refresh(item.file);
+      if (result) _url = result.url ?? "";
+    }
   }
 </script>
 
@@ -82,7 +91,7 @@
         })}
         on:click
       >
-        {#if item.contentType !== NodeType.NODULAR_MARKDOWN}
+        {#if item.contentType !== NodeType.NODULAR_MARKDOWN && !isHidePreview}
           <div
             class={cn(
               "h-20",
@@ -97,7 +106,9 @@
               }
             )}
           >
-            {#if filePreview}
+            {#if item.bodySearch}
+              {item.bodySearch}
+            {:else if filePreview}
               <FileView
                 file={hasFullFileDetails ? filePreview : undefined}
                 id={hasFullFileDetails ? undefined : filePreview}
@@ -113,11 +124,11 @@
                 })}
                 use:lazyLoad={urlPreview}
               />
-            {:else if item.contentType === NodeType.AUDIO}
+            {:else if item.contentType === NodeType.AUDIO && _url}
               <span class="w-full h-full overflow-clip">
                 <NodeThumbnailAudioPreview url={_url} />
               </span>
-            {:else if item.contentType === NodeType.PDF}
+            {:else if item.contentType === NodeType.PDF && _url}
               <span class="w-full h-full overflow-clip relative z-0">
                 <NodeThumbnailPdfPreview url={_url} />
               </span>
@@ -166,53 +177,59 @@
     <ResourceGridThumbnail
       {item}
       on:click
+      {isHidePreview}
       {isApplyCustomColor}
       size={accessPoint === ResourceAccessPoint.BROWSER ? Size.sm : Size.md}
     >
-      <div class="relative flex-1 min-h-0 w-full pt-3 px-3">
-        {#if filePreview}
-          <FileView
-            file={hasFullFileDetails ? filePreview : undefined}
-            id={hasFullFileDetails ? undefined : filePreview}
-            class="absolute inset-0 w-full rounded-t-md object-cover h-full"
-          />
-        {:else if urlPreview}
-          <img
-            alt="..."
-            class={cn("absolute inset-0 w-full  h-full", {
-              "object-contain": isShouldContainImage,
-              "rounded-t-md object-cover": !isShouldContainImage
-            })}
-            use:lazyLoad={urlPreview}
-          />
-        {:else if item.contentType === NodeType.PDF}
-          <NodeThumbnailPdfPreview url={_url} />
-        {:else}
-          <div class="h-full overflow-clip text-fgs3 text-b2">
-            {#if isClip && contentPreview}
-              <TextClipPreview node={item} {contentPreview} />
-            {:else if item.contentType === NodeType.AUDIO}
-              <NodeThumbnailAudioPreview url={_url} />
-            {:else if contentPreview}
-              {contentPreview}
-            {/if}
-          </div>
-        {/if}
-        {#if contentPreview}
-          <span
-            class={cn(
-              "absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent",
-              {
-                "via-bgs1/5 to-bgs1": !isApplyCustomColor,
-                "via-ccs5 to-ccs5": isApplyCustomColor
-              }
-            )}
-            style=""
-          >
-          </span>
-        {/if}
-      </div>
-
+      {#if !isHidePreview}
+        <div class="relative flex-1 min-h-0 w-full pt-3 px-3">
+          {#if item.bodySearch}
+            <span class="text-b2 text-fgs2">
+              {@html renderMdAsHtml(item.bodySearch)}
+            </span>
+          {:else if filePreview}
+            <FileView
+              file={hasFullFileDetails ? filePreview : undefined}
+              id={hasFullFileDetails ? undefined : filePreview}
+              class="absolute inset-0 w-full rounded-t-md object-cover h-full"
+            />
+          {:else if urlPreview}
+            <img
+              alt="..."
+              class={cn("absolute inset-0 w-full  h-full", {
+                "object-contain": isShouldContainImage,
+                "rounded-t-md object-cover": !isShouldContainImage
+              })}
+              use:lazyLoad={urlPreview}
+            />
+          {:else if item.contentType === NodeType.PDF && _url}
+            <NodeThumbnailPdfPreview url={_url} />
+          {:else}
+            <div class="h-full overflow-clip text-fgs3 text-b2">
+              {#if isClip && contentPreview}
+                <TextClipPreview node={item} {contentPreview} />
+              {:else if item.contentType === NodeType.AUDIO && _url}
+                <NodeThumbnailAudioPreview url={_url} />
+              {:else if contentPreview}
+                {contentPreview}
+              {/if}
+            </div>
+          {/if}
+          {#if contentPreview}
+            <span
+              class={cn(
+                "absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent",
+                {
+                  "via-bgs1/5 to-bgs1": !isApplyCustomColor,
+                  "via-ccs5 to-ccs5": isApplyCustomColor
+                }
+              )}
+              style=""
+            >
+            </span>
+          {/if}
+        </div>
+      {/if}
       <div slot="bottom" class="flex w-full h-5">
         <NodeThumbnailTitle node={item} />
       </div>
@@ -232,11 +249,11 @@
         on:load
         use:lazyLoad={urlPreview}
       />
-    {:else if item.contentType === NodeType.AUDIO}
+    {:else if item.contentType === NodeType.AUDIO && _url}
       <span class="w-full h-full overflow-clip relative z-0">
         <NodeThumbnailAudioPreview url={_url} />
       </span>
-    {:else if item.contentType === NodeType.PDF}
+    {:else if item.contentType === NodeType.PDF && _url}
       <span class="w-full h-80 overflow-clip relative z-0">
         <NodeThumbnailPdfPreview url={_url} />
       </span>

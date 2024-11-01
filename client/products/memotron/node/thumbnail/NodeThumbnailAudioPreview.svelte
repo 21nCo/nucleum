@@ -2,17 +2,13 @@
   import WaveSurfer from "wavesurfer.js";
   import { retrieveCurrentColors } from "$lib/client/utils/theme.utils";
   import appearance from "$lib/client/stores/appearance.store";
+  import { onMount } from "svelte";
 
-  export let resolveUrl: undefined | (() => Promise<string>) = undefined;
   export let url: string = "";
-  if (resolveUrl) {
-    resolveUrl().then((u) => {
-      url = u;
-      renderAudioPreview();
-    });
-  } else if (url) {
+
+  onMount(() => {
     renderAudioPreview();
-  }
+  });
 
   const currentColors: any = retrieveCurrentColors($appearance);
   const generator = randomLowercaseStringGenerator(15);

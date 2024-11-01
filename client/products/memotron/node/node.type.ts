@@ -260,11 +260,7 @@ export const structuralNodeTypes = [
   NodeType.TOC
 ];
 
-export const simpleTextNodeTypeList = [
-  NodeType.SIMPLE_TEXT,
-  NodeType.QUOTE,
-  ...headingNodeTypes
-];
+export const simpleTextNodeTypeList = [NodeType.SIMPLE_TEXT, NodeType.QUOTE];
 
 export const listNodeTypes = [
   NodeType.LIST,
