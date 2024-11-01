@@ -1,13 +1,15 @@
 <script lang="ts">
+  import { resizeListener } from "$lib/client/actions/resize.action";
   import appearance from "$lib/client/stores/appearance.store";
   import { retrieveCurrentColors } from "$lib/client/utils/theme.utils";
   import { truncateString } from "$lib/shared/utils/text.utils";
-  import { Graph, GraphEvent } from "@antv/g6";
+  import { Graph, GraphEvent, NodeEvent, CanvasEvent } from "@antv/g6";
   import { onMount, createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
 
   export let data: { nodes: any[]; edges: any[] } = { nodes: [], edges: [] };
   let _data: { nodes: any[]; edges: any[] } = { nodes: [], edges: [] };
+  let graph: Graph;
   const currentColors: any = retrieveCurrentColors($appearance);
 
   onMount(() => {
@@ -30,7 +32,7 @@
   }
 
   function renderGraph() {
-    const graph = new Graph({
+    graph = new Graph({
       container: "globalgraphcontainer",
       data: _data,
       autoFit: "view",
@@ -44,15 +46,13 @@
           size: 10,
           fill: currentColors["fgs2"],
           labelFill: currentColors["fgs3"],
-          haloFill: currentColors["aps1"],
-          haloStroke: currentColors["aps1"],
           stroke: currentColors["aps1"]
         },
         state: {
           selected: {
             fill: currentColors["aps1"],
-            stroke: currentColors["bgs1"],
-            haloFill: currentColors["bgs1"],
+            stroke: currentColors["aps1"],
+            haloFill: currentColors["aps1"],
             labelFill: currentColors["aps1"],
             haloStroke: currentColors["aps1"]
           }
@@ -79,12 +79,30 @@
     graph.render();
     // graph.draw();
     graph.on(GraphEvent.AFTER_RENDER, onAfterRender);
+    graph.on(CanvasEvent.CLICK, onCanvasClick);
+    graph.on(NodeEvent.CLICK, onNodeClick);
   }
 
+  function onCanvasClick(e: any) {
+    dispatch("canvasClick", e);
+  }
+
+  function onNodeClick(event: any) {
+    if (event.target.id) {
+      dispatch("select", event.target.id);
+    }
+  }
   function onAfterRender() {
-    console.log("onAfterRender");
     dispatch("render");
   }
 </script>
 
-<div id="globalgraphcontainer" class="w-full h-full w--[50rem] h--[50rem]" />
+<div
+  id="globalgraphcontainer"
+  use:resizeListener={(e) => {
+    if (graph) {
+      graph.resize();
+    }
+  }}
+  class="w-full h-full w--[50rem] h--[50rem]"
+/>

@@ -116,16 +116,8 @@
         orientation={Orientation.Vertical}
         colorStrength={ColorStrength.Strong}
       />
-      {#if $node.accessMode === ResourceAccessMode.SPLIT || $node.accessMode === ResourceAccessMode.FSPLIT}
-        <Button
-          {...buttonCommonProps}
-          icon="cross-circled"
-          tooltip="Close split view"
-          on:click={() => {
-            appStore.closeResource({ accessMode: $node.accessMode });
-          }}
-        />
-      {:else}
+
+      {#if $node.accessMode !== ResourceAccessMode.SPLIT && $node.accessMode !== ResourceAccessMode.FSPLIT}
         <Button
           {...buttonCommonProps}
           icon={isWidened ? "unwiden" : "widen"}
@@ -157,6 +149,16 @@
           appStore.toggleFocusAccessMode($node.accessMode, $node.id);
         }}
       />
+      {#if $node.accessMode === ResourceAccessMode.SPLIT || $node.accessMode === ResourceAccessMode.FSPLIT}
+        <Button
+          {...buttonCommonProps}
+          icon="cross-circled"
+          tooltip="Close split view"
+          on:click={() => {
+            appStore.closeResource({ accessMode: $node.accessMode });
+          }}
+        />
+      {/if}
     {/if}
 
     {#if $node.accessMode != ResourceAccessMode.INLINE}

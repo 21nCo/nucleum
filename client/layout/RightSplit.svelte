@@ -5,6 +5,7 @@
   import { Orientation } from "../types/direction.enum";
   import { ColorStrength } from "../types/appearance.type";
   import ResourceResolver from "./paint/ResourceResolver.svelte";
+  import { ResourceAccessMode } from "../components/flux/resourceStores/resource.type";
   export let split: string;
 </script>
 
@@ -18,6 +19,10 @@
     colorStrength={ColorStrength.Strong}
   />
   {#key split}
-    <ResourceResolver id={split} isFromSplitView={true} />
+    <ResourceResolver
+      id={split}
+      isFromSplitView={true}
+      accessMode={ResourceAccessMode.SPLIT}
+    />
   {/key}
 </div>
