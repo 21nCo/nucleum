@@ -23,7 +23,7 @@
     onHover: (e) => (isHovering = e)
   }}
 >
-  {#if !isUrlOnIcon && accessPoint !== ResourceAccessPoint.SEARCH_RESULT && isHovering && node.url}
+  {#if !isUrlOnIcon && isHovering && node.url}
     <a
       href={node.url}
       target="_blank"
@@ -49,14 +49,9 @@
       </span>
     </a>
   {:else}
-    <NodeAvatar {node} size={Size.sm} />
+    <!-- <NodeAvatar {node} size={Size.sm} /> -->
     <div class="flex-1 min-w-0">
-      <div
-        class={cn("flex text-left truncate w-full text-b2 font--medium", {
-          "text-h5": accessPoint === ResourceAccessPoint.SEARCH_RESULT,
-          "text-b2": accessPoint !== ResourceAccessPoint.SEARCH_RESULT
-        })}
-      >
+      <div class={cn("flex text-left truncate w-full text-b2 font--medium")}>
         <NodeTitleLabelPart item={node} {accessPoint} />
       </div>
     </div>
@@ -66,7 +61,7 @@
         onHover: (e) => (isHoveringUrlIcon = e)
       }}
     >
-      {#if node.url && accessPoint !== ResourceAccessPoint.SEARCH_RESULT}
+      {#if node.url}
         {#if !isUrlOnIcon || (isUrlOnIcon && !isHoveringUrlIcon)}
           <Icon icon="ph:arrow-up-right" class="fill-fgs3" size={Size.sm} />
         {:else if isUrlOnIcon && isHoveringUrlIcon}
@@ -83,7 +78,7 @@
           </button>
         {/if}
       {/if}
-      {#if node.isStarred && accessPoint !== ResourceAccessPoint.SEARCH_RESULT}
+      {#if node.isStarred}
         <Icon icon="star" class="fill-yellow-400" />
       {/if}
     </span>

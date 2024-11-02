@@ -34,6 +34,7 @@ DEFINE FIELD IF NOT EXISTS creationContext on TABLE node TYPE option<record<node
 DEFINE FIELD IF NOT EXISTS notes on TABLE node FLEXIBLE TYPE option<object | string>;
 DEFINE FIELD IF NOT EXISTS mdText on TABLE node FLEXIBLE TYPE option<string>;
 DEFINE FIELD IF NOT EXISTS vector on TABLE node TYPE option<record<vector> | null>;
+DEFINE FIELD OVERWRITE avatar on TABLE node FLEXIBLE TYPE option<array | object | string>;
 `;
   return [def];
 }

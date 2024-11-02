@@ -2,7 +2,6 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { properCase } from "$lib/shared/utils/text.utils";
-  import NodeThumbnailTitle from "../../node/thumbnail/NodeThumbnailTitle.svelte";
   import NodeTitleBreadcrumbs from "../../node/title/NodeTitleBreadcrumbs.svelte";
   import { headingNodeTypes, NodeType, type INode } from "../../node/node.type";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
@@ -10,6 +9,7 @@
   import CollectionTitleLabelPart from "../../collection/title/CollectionTitleLabelPart.svelte";
   import type { ICollectionThumb } from "../../collection/collection.type";
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
+  import NodeTitleLabelPart from "../../node/title/NodeTitleLabelPart.svelte";
   export let item: INode | ICollectionThumb;
   export let isHideResourceType: boolean = false;
 
@@ -34,8 +34,8 @@
         <NodeTitleBreadcrumbs id={item.id} on:click isSubtleContext={true} />
       {/if}
       <div class="flex gap-2 w-full">
-        <NodeThumbnailTitle
-          node={item}
+        <NodeTitleLabelPart
+          {item}
           accessPoint={ResourceAccessPoint.SEARCH_RESULT}
         />
       </div>

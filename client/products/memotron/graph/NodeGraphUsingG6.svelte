@@ -143,7 +143,7 @@
       animation: false,
       node: {
         style: {
-          badgeBackgroundFill: currentColors["fgs3"],
+          badgeBackgroundFill: currentColors["bgs4"],
           badgeFontSize: 12
           // size: 10
           // labelFill: "orange",

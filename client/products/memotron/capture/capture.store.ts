@@ -415,6 +415,13 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
         toType: x.toType
       };
     });
+    const typedCollections = val.links
+      ?.filter((x) => x.from === "root" && x.toSubType === CollectionType.TYPED)
+      .map((x) => x.to);
+    await nodeStore.refreshNodeAvatar(rootId, {
+      collections: typedCollections
+    });
+
     logger.log({ at: "CaptureStore.save", rootLinks, blockLinks, links });
     return linker.linkMany(links);
   }

@@ -170,12 +170,14 @@
       <Icon icon={item.isPinned ? "unpin" : "pin"} size={Size.lg} />
     </div>
   {/if}
-  {#if isShowCount}
-    <Badge
-      text={count}
-      {size}
-      parentBgIndex={parentBgIndex - 1}
-      isAccentColor={isActive}
-    />
+  {#if isShowCount && count > 0}
+    <span class="text-fgs3">
+      <Badge
+        text={count}
+        {size}
+        parentBgIndex={isHovering ? parentBgIndex : parentBgIndex - 1}
+        isAccentColor={isActive}
+      />
+    </span>
   {/if}
 </button>

@@ -134,7 +134,7 @@ export function resolveNodeIcon(contentType: NodeType) {
     case NodeType.KINDLE_HIGHLIGHT:
       return "ph:bookmark-simple-light";
     default:
-      return "ph:document-light";
+      return "ph:book-light";
   }
 }
 

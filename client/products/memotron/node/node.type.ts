@@ -71,6 +71,10 @@ type INodeInterface<
   notes?: string;
   url?: string;
   file?: IRecordId;
+  /**
+   * Calculated avatar from linked type collections
+   */
+  avatar?: IAvatar[];
 };
 
 export type ILink = IMemotronItemBase & {

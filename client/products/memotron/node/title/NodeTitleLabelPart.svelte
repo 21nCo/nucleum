@@ -17,6 +17,8 @@
     ResourceAccessMode,
     ResourceAccessPoint
   } from "$lib/client/components/flux/resourceStores/resource.type";
+  import NodeAvatar from "../avatar/NodeAvatar.svelte";
+  import { Size } from "$lib/client/types/size.enum";
   export let item: INode;
   export let isNodePageContext: boolean = false;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
@@ -109,49 +111,56 @@
   }
 </script>
 
-<!-- TODO - if node and has parent, show breadcrumbs -->
-{#if item.label && item.label.includes(".")}
-  {item.label}
-{:else if item.label || item.labelSearch}
-  {@html renderMdAsHtml(item.labelSearch ?? item.label, {
-    isIncludeSpaces: true
+<div
+  class={cn("flex gap-1 items-center", {
+    "text-h5": accessPoint === ResourceAccessPoint.SEARCH_RESULT,
+    "text-b2": accessPoint !== ResourceAccessPoint.SEARCH_RESULT
   })}
-{:else if dynamicLabelNodeTypes.includes(item.contentType) && dynamicLabel}
-  {#if typeof dynamicLabel === "string"}
-    {dynamicLabel ?? "Unknown"}
-  {:else if typeof dynamicLabel === "object" && "parent" in dynamicLabel}
-    <span class="flex w-full gap-1 items-center">
-      <span>
-        {#if accessPoint === ResourceAccessPoint.SEARCH_RESULT}
-          {dynamicLabel?.text ?? dynamicLabel?.label}
-        {:else}
-          {dynamicLabel?.label}
-        {/if}
+>
+  <NodeAvatar node={item} size={Size.sm} />
+  {#if item.label && item.label.includes(".")}
+    {item.label}
+  {:else if item.label || item.labelSearch}
+    {@html renderMdAsHtml(item.labelSearch ?? item.label, {
+      isIncludeSpaces: true
+    })}
+  {:else if dynamicLabelNodeTypes.includes(item.contentType) && dynamicLabel}
+    {#if typeof dynamicLabel === "string"}
+      {dynamicLabel ?? "Unknown"}
+    {:else if typeof dynamicLabel === "object" && "parent" in dynamicLabel}
+      <span class="flex w-full gap-1 items-center">
+        <span>
+          {#if accessPoint === ResourceAccessPoint.SEARCH_RESULT}
+            {dynamicLabel?.text ?? dynamicLabel?.label}
+          {:else}
+            {dynamicLabel?.label}
+          {/if}
+        </span>
+        <button
+          class={cn("truncate flex-1 min-w-0 text-left", {
+            "underline-dotted cursor-pointer hover:underline-dotted-primary":
+              isNodePageContext
+          })}
+          on:click={(e) => {
+            appStore.resourceClickHandler(e, dynamicLabel?.parent.id, {
+              replaceId:
+                accessPoint === ResourceAccessPoint.SELF ? item.id : undefined,
+              defaultTo: ResourceAccessMode.POP
+            });
+          }}
+        >
+          {dynamicLabel?.parent?.label}
+        </button>
       </span>
-      <button
-        class={cn("truncate flex-1 min-w-0 text-left", {
-          "underline-dotted cursor-pointer hover:underline-dotted-primary":
-            isNodePageContext
-        })}
-        on:click={(e) => {
-          appStore.resourceClickHandler(e, dynamicLabel?.parent.id, {
-            replaceId:
-              accessPoint === ResourceAccessPoint.SELF ? item.id : undefined,
-            defaultTo: ResourceAccessMode.POP
-          });
-        }}
-      >
-        {dynamicLabel?.parent?.label}
-      </button>
-    </span>
+    {/if}
+  {:else if item.body && typeof item.body === "string"}
+    {@html renderMdAsHtml(item.bodySearch ?? item.body, {
+      isIncludeSpaces: true
+    })}
+  {:else if item.body && item.body.text && typeof item.body.text === "string"}
+    {item.body.text}
+  {:else}
+    {resolveEmptyLabel()}
   {/if}
-{:else if item.body && typeof item.body === "string"}
-  {@html renderMdAsHtml(item.bodySearch ?? item.body, {
-    isIncludeSpaces: true
-  })}
-{:else if item.body && item.body.text && typeof item.body.text === "string"}
-  {item.body.text}
-{:else}
-  {resolveEmptyLabel()}
-{/if}
-<!-- {item.label ?? item.body ?? resolveEmptyLabel()} -->
+  <!-- {item.label ?? item.body ?? resolveEmptyLabel()} -->
+</div>

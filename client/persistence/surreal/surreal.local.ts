@@ -105,6 +105,11 @@ export class SurrealPersistence implements IPersistence {
       }
 
       if (localLog.version && params?.appVersion) {
+        logger.log({
+          at: "surreal.local - app version",
+          localVersion: localLog.version,
+          currentVersion: params?.appVersion
+        });
         const comparer = compareVersions(localLog.version, params?.appVersion);
         if (comparer !== 0) {
           await this.updateAppVersion(params?.appVersion);

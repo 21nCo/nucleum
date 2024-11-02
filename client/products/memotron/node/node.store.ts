@@ -48,6 +48,8 @@ import { userPreferences } from "$lib/client/components/settings/userPreferences
 import { TacoActions } from "$lib/client/types/taco.types";
 
 import context from "$lib/client/stores/context.store";
+import type { ICollectionExpanded } from "../collection/collection.type";
+import type { IAvatar } from "$lib/client/types/avatar.type";
 
 export const hierarchyFactorLimit = 5;
 
@@ -89,6 +91,39 @@ class NodeStore extends ResourceStore<INode> {
       return this.searchStore.nodes();
     } else {
       return this.searchStore.recents();
+    }
+  }
+
+  async refreshNodeAvatar(
+    id: IRecordId,
+    params: {
+      collections?: IRecordId[];
+      types?: ICollectionExpanded[];
+    }
+  ) {
+    let types = params?.types;
+    if (!types && params.collections) {
+      types = await collectionStore.resolveTypes(params.collections);
+    }
+    if (!types) return;
+    const avatar = this.resolveNodeAvatar(types);
+    this.modify(id, {
+      avatar
+    });
+    return avatar;
+  }
+
+  resolveNodeAvatar(types: ICollectionExpanded[]) {
+    const avatars = types
+      ?.flatMap((x) => [x.avatar])
+      .filter((a) => a) as IAvatar[];
+    const baseAvatars = types
+      ?.flatMap((x) => [x.typeToExtend?.avatar])
+      .filter((a) => a) as IAvatar[];
+    if (baseAvatars.length > 0) {
+      return baseAvatars;
+    } else {
+      return avatars;
     }
   }
 }
@@ -289,13 +324,17 @@ export class ActiveNodeStore extends ActiveResourceStore<
   };
 
   private async refreshTypes() {
-    const collections = this.get().collections;
+    const self = this.get();
+    const collections = self.collections;
     if (!collections || collections.length === 0) {
       this.update((n) => ({ ...n, types: [] }));
       return;
     }
     const types = await collectionStore.resolveTypes(collections);
-    this.update((n) => ({ ...n, types }));
+    const avatar = await this.resourceStore.refreshNodeAvatar(self.id, {
+      types
+    });
+    this.update((n) => ({ ...n, types, avatar }));
   }
 
   async linkCollection(id: IRecordId) {

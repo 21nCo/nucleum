@@ -12,7 +12,6 @@
   <div
     class={cn("flex justify-center items-center rounded-full min-w-fit", {
       "px-1": text > 9,
-      "text-fgs2": !isAccentColor,
       "bg-css2": isApplyCustomColor,
       [abg()]: isAccentColor,
       [bg(parentBgIndex)]: !isApplyCustomColor && !isAccentColor,

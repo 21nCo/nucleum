@@ -24,6 +24,8 @@
   import Badge from "$lib/client/elements/text/Badge.svelte";
   import { enumToString } from "$lib/shared/utils/text.utils";
   import type { IRecordId } from "$lib/client/types/data.type";
+  import view from "$lib/client/stores/view.store";
+  import { InputStyle } from "$lib/client/types/input.type";
   export let node: IActiveNodeStore;
   export let isMediaNode: boolean = false;
   export let mdId: string | undefined = undefined;
@@ -276,21 +278,42 @@
     class="flex w-full justify-between bg-bgs2 border border-brs3 rounded-md px-4 py-3"
   >
     <div class="flex items-center gap-4">
-      <PanelSwitcher
-        items={["Graph", "Fuzzy", "Serendipity"]}
-        size={Size.sm}
-        style={PanelSwitcherStyle.TRAIN}
-        bind:value={selectedView}
-      />
+      {#if $view.isConstrainedWidth}
+        <div class="w-32">
+          <DropDown
+            items={[
+              {
+                value: "Graph"
+              },
+              {
+                value: "Fuzzy"
+              },
+              {
+                value: "Serendipity"
+              }
+            ]}
+            bind:value={selectedView}
+            style={InputStyle.PLAIN}
+            isDisableSearch={true}
+          />
+        </div>
+      {:else}
+        <PanelSwitcher
+          items={["Graph", "Fuzzy", "Serendipity"]}
+          size={Size.sm}
+          style={PanelSwitcherStyle.TRAIN}
+          bind:value={selectedView}
+        />
+      {/if}
       <Badge text="beta" />
     </div>
     <div class="flex tp:gap-8 2k:gap-12 items-center">
       <div class="flex gap-4 items-center">
         {#if !isAutoGrouping}
-          <span class="text-b3 text-fgs3">
+          <!-- <span class="text-b3 text-fgs3">
             Manual grouping will be available soon.</span
-          >
-          <!-- <div class="w-52">
+          > -->
+          <!-- <div class="w-48">
             <DropDown
               items={groupOptions}
               isDisableSearch={true}
@@ -305,7 +328,7 @@
               ]}
             />
           </div>
-          <div class="w-52">
+          <div class="w-48">
             <DropDown
               items={subgroupOptions}
               isDisableSearch={true}
@@ -321,13 +344,13 @@
             />
           </div> -->
         {/if}
-        <div
+        <!-- <div
           class="flex gap-2 items-center text-fgs2 text-b2 whitespace-nowrap"
         >
           <span>Manual</span>
           <Switch size={Size.sm} bind:on={isAutoGrouping} />
           <span>Auto grouping</span>
-        </div>
+        </div> -->
       </div>
       <div class="w-32">
         <DropDown
