@@ -41,24 +41,34 @@
     textClipperRef.onActivateColor(e);
   }
   async function onSaveClick() {
-    const contentTypeStr = enumToString(contentType);
-    $feedbackPane.feedback = `Saving ${contentTypeStr}...`;
-    $feedbackPane.isShown = true;
-    if (contentType === NodeType.TWEET) {
-      const tweetNode = extractTweetFromTweeetPage();
-      if (!tweetNode) return;
-      await webpage.saveTweet(tweetNode, true);
-    } else if (contentType === NodeType.TWITTER_PROFILE) {
-      const data = extractTwitterProfile();
-      if (!data) return;
-      await webpage.saveTwitterProfile(data);
-    } else {
-      await webpage.savePage();
+    try {
+      const contentTypeStr = enumToString(contentType);
+      $feedbackPane.feedback = `Saving ${contentTypeStr}...`;
+      $feedbackPane.isShown = true;
+      $feedbackPane.isPreventAutoClose = true;
+      if (contentType === NodeType.TWEET) {
+        const tweetNode = extractTweetFromTweeetPage();
+        if (!tweetNode) return;
+        await webpage.saveTweet(tweetNode, true);
+      } else if (contentType === NodeType.TWITTER_PROFILE) {
+        const data = extractTwitterProfile();
+        if (!data) return;
+        await webpage.saveTwitterProfile(data);
+      } else {
+        await webpage.savePage();
+      }
+      $feedbackPane.feedback = {
+        message: `${contentTypeStr} saved!`,
+        type: AlertType.SUCCESS
+      };
+    } catch (error) {
+      $feedbackPane.feedback = {
+        message: "Something went wrong. Please try again.",
+        type: AlertType.ERROR
+      };
+    } finally {
+      $feedbackPane.isPreventAutoClose = false;
     }
-    $feedbackPane.feedback = {
-      message: `${contentTypeStr} saved!`,
-      type: AlertType.SUCCESS
-    };
   }
 
   async function onMutationRelayFromSidePanel(data: any) {

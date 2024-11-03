@@ -611,6 +611,7 @@ type ITweetMetadata = IWebPageMetadata & {
   tweetId?: string;
   media?: string[];
   externalLinks?: string[];
+  replyTo?: string;
 };
 export type ITweet = INodeInterface<
   NodeType.TWEET,
@@ -697,7 +698,8 @@ export type IClipCapture = OmitFields<
 >;
 
 export enum NodeIdPrefix {
-  TWITTER_PROFILE = "twitterProfile"
+  TWITTER_PROFILE = "twitterProfile",
+  TWEET = "tweet"
 }
 
 /**

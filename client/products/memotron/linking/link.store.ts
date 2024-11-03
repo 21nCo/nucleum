@@ -100,11 +100,18 @@ class LinkTagStore extends ResourceStore<ILinkTag> {
     });
   }
 
-  save(tag: string, group?: string) {
+  async save(tag: string, group?: string) {
     if (!group && tag.includes(":")) {
       group = tag.split(":")[0];
       tag = tag.split(":")[1];
     }
+    const linkTags = get(this.items);
+    const existingTag = linkTags.find(
+      (x) =>
+        x.label?.toLowerCase() === tag.toLowerCase() &&
+        x.group?.toLowerCase() === group?.toLowerCase()
+    );
+    if (existingTag) return existingTag;
     const result = this.create({
       label: tag,
       group: group?.toLowerCase() ?? ""

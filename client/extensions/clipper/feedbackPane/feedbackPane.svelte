@@ -83,7 +83,7 @@
   }
   function restartCloseTimer() {
     clearTimeout(closeTimer);
-    if (isHovering) {
+    if (isHovering || $feedbackPane.isPreventAutoClose) {
       return;
     }
     closeActionTimestamp = Date.now();
@@ -159,7 +159,7 @@
       <span class="h-6 w-6 flex justify-center items-center">
         {#if isHovering}
           <Button icon="cross-circled" on:click={closePane} />
-        {:else if $feedbackPane.isShown}
+        {:else if $feedbackPane.isShown && countdown > 0 && !Number.isNaN(countdown)}
           <!-- TODO closing animation circle -->
           <span
             class="border border-fgs2 rounded-full text-b4 text-fgs2 px-1 h-4 flex justify-center items-center"

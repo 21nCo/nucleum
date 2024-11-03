@@ -163,6 +163,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     const url = resolveUrl(tab.url);
     const webpage = this.get();
     logger.debug({ at: "onContextChange", tab, url, webpage });
+    toolbarState.refresh();
     if (url === webpage.url) {
       relayToSidePanel({ event: ExtensionEvent.PAGE_STATE, data: this.get() });
       return;
@@ -303,13 +304,17 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     isFromTweetPage: boolean = false
   ) {
     logger.debug({ at: "saveTweet", data });
-    const id = generateResourceId(Resource.node);
+    // const id = generateResourceId(Resource.node);
+    const tweetId = generateResourceId(Resource.node, {
+      prefix: NodeIdPrefix.TWEET,
+      id: data.username + "_" + data.metadata?.tweetId
+    });
     const twitterProfileId = generateResourceId(Resource.node, {
       prefix: NodeIdPrefix.TWITTER_PROFILE,
       id: data.username as string
     });
     const tweetNode: OmitForCaptureWithId<ITweet> = {
-      id,
+      id: tweetId,
       url: data.url,
       body: data.body,
       metadata: data.metadata,
@@ -331,7 +336,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
         ...twitterProfileNode,
         id: twitterProfileId,
         label: undefined,
-        creationContext: id
+        creationContext: tweetId
       }
     ]);
     if (!response || !Array.isArray(response)) return;
@@ -618,6 +623,22 @@ class ClipperToolbarState extends KeyValueStore<
     position: Placement.Right | Placement.Left | Placement.Bottom
   ) {
     this.modify({ position });
+  }
+
+  async refresh() {
+    const result = await extensionFlux({
+      method: FluxMethod.SELECT,
+      args: {
+        resourceId: "kv:" + Resource.clipperToolbarState
+      }
+    });
+    if (result && result.id) {
+      this.update((n) => {
+        n.isOpen = result.isOpen;
+        n.position = result.position;
+        return n;
+      });
+    }
   }
 }
 
