@@ -19,6 +19,7 @@ import {
 } from "./properties/property.store";
 import { Arrangement } from "$lib/client/types/direction.enum";
 import {
+  ResourceAccessMode,
   ResourceAccessPoint,
   type OmitForCapture,
   type OmitForCaptureWithId
@@ -203,12 +204,13 @@ export class ActiveCollectionStore extends ActiveResourceStore<
   /**
    * Initialized the collection with local cached data
    */
-  async init() {
+  async init(accessMode: ResourceAccessMode) {
     logger.log({ at: "ActiveCollectionStore.init", id: this.id });
     try {
       this.update((val: IActiveCollection) => {
         if (val) val.isPageLoading = true;
         else val = { isPageLoading: true };
+        val.accessMode = accessMode;
         return val;
       });
       const result = await flux.select(this.id, [
@@ -223,6 +225,7 @@ export class ActiveCollectionStore extends ActiveResourceStore<
       if (!record) return;
       this.set({
         ...record,
+        accessMode,
         isViewDataRefreshing: false,
         isViewDataLoading: true,
         isPageLoading: false,

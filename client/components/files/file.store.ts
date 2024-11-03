@@ -85,6 +85,7 @@ class FileStore extends ResourceStore<IFile> {
    * @returns a promise of file or undefined
    */
   async refresh(file: IFile | IRecordId): Promise<IFile | undefined> {
+    logger.log({ at: "fileStore - refresh", file });
     if (!file) return;
     if (typeof file === "object" && "data" in file && file.data) {
       return {

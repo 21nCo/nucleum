@@ -10,7 +10,6 @@
   import { logger } from "../../debug/logger.client";
   import type { IRecordId } from "$lib/client/types/data.type";
   import { nodeStore } from "$lib/client/products/memotron/node/node.store";
-  import NodeTitle from "$lib/client/products/memotron/node/title/NodeTitle.svelte";
   import {
     ResourceAccessMode,
     ResourceAccessPoint
@@ -24,6 +23,7 @@
   import { determineResourceType } from "../../flux/resourceStores/resource.utils";
   import { resizable } from "$lib/client/actions/resize.action";
   import { appStore } from "$lib/client/stores/app.store";
+  import NodeTitleLabelPart from "$lib/client/products/memotron/node/title/NodeTitleLabelPart.svelte";
   const dispatch = createEventDispatcher();
   const nodeContext = getContext<any>("node");
   export let body: IEmbedBlockBody;
@@ -134,8 +134,8 @@
     </div>
     {#if isShowTitle}
       <button class="w-full flex justify-center" on:click|stopPropagation>
-        <NodeTitle
-          node={_mediaBlock}
+        <NodeTitleLabelPart
+          item={_mediaBlock}
           accessPoint={ResourceAccessPoint.MARKDOWN_EMBED}
         />
       </button>

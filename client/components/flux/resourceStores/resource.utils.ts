@@ -78,7 +78,7 @@ export function isNoneResource(id: IRecordId | string | undefined) {
 
 export function isRecordId(id: any) {
   return (
-    typeof (id === "string" && id.includes(":")) ||
+    (typeof id === "string" && id.includes(":")) ||
     (typeof id === "object" && "tb" in id)
   );
 }

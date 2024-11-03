@@ -8,7 +8,8 @@ import {
   NodeRightPaneType,
   type INodeLinkThumb,
   type INodeLink,
-  canHaveTraces
+  canHaveTraces,
+  NodeView
 } from "$lib/client/products/memotron/node/node.type";
 import {
   activeResources,
@@ -450,12 +451,77 @@ function initActiveNodeEventStore(id: string) {
   };
 }
 
+export const nodeActions = {
+  linksPane: {
+    value: NodeRightPaneType.LINKS,
+    icon: "ph:arrows-left-right-thin",
+    label: "Show links",
+    tooltip: "Show links"
+  },
+  metadataPane: {
+    value: NodeRightPaneType.METADATA,
+    icon: "ph:file-thin",
+    label: "Show metadata",
+    tooltip: "Show metadata"
+  },
+  propertiesPane: {
+    value: NodeRightPaneType.PROPERTIES,
+    icon: "widget",
+    label: "Show properties",
+    tooltip: "Show properties"
+  },
+  sideNotesPane: {
+    value: NodeRightPaneType.SIDENOTES,
+    icon: "ph:note-thin",
+    label: "Side notes",
+    tooltip: "Side notes"
+  },
+  historyPane: {
+    value: NodeRightPaneType.HISTORY,
+    icon: "ph:clock-countdown-thin",
+    label: "Show history",
+    tooltip: "Show history"
+  },
+  tracesPane: {
+    value: NodeRightPaneType.TRACES,
+    icon: "bookmark",
+    tooltip: "Show traces"
+  },
+  download: {
+    value: "download",
+    icon: "download",
+    callback: async () => {}
+  },
+  share: {
+    value: "share",
+    icon: "share",
+    callback: async () => {}
+  },
+  export: {
+    value: "export",
+    icon: "share",
+    callback: async () => {}
+  },
+  toggleReadMode: {
+    value: "readMode",
+    icon: "ph:book-open-thin",
+    tooltip: "Toggle read mode"
+  },
+  showForks: {
+    value: "forks",
+    icon: "ph:git-fork-thin",
+    tooltip: "Show forks"
+  }
+};
+
 export function resolveNodeContextMenu(
   node: INode,
   accessPoint: ResourceAccessPoint,
   params?: {
     isMediaNode?: boolean;
     accessPointId?: IRecordId;
+    accessMode?: ResourceAccessMode;
+    nodeView?: NodeView;
   }
 ): IContextMenu {
   const resourceActions = new ResourceActions(node, nodeStore);
@@ -474,7 +540,7 @@ export function resolveNodeContextMenu(
         group: "open",
         items: [
           resourceActions.openAsTab(),
-          // resourceActions.openAsSplit(),
+          resourceActions.openAsSplit(),
           resourceActions.openAsFull()
         ]
       },
@@ -484,37 +550,15 @@ export function resolveNodeContextMenu(
       }
     ];
   }
+  const mediaShareAndExportGroup = {
+    group: "shareAndExport",
+    items: [resourceActions.copyLink()]
+  };
   const viewStore = get(view);
-  if (viewStore.isConstrainedWidth && params?.isMediaNode) {
-    commonGroups.unshift({
-      group: "essentials",
-      items: [
-        {
-          value: NodeRightPaneType.SIDENOTES,
-          icon: "ph:note-thin",
-          label: "Side notes"
-        },
-        {
-          value: NodeRightPaneType.LINKS,
-          icon: "ph:arrows-left-right-thin",
-          label: "Show links"
-        },
-        {
-          value: NodeRightPaneType.PROPERTIES,
-          icon: "widget",
-          label: "Show properties"
-        }
-      ]
-    });
-  } else if (viewStore.isConstrainedWidth) {
-    commonGroups.unshift({
-      group: "essentials",
-      items: [
-        resourceActions.toggleReadMode()
-        // Forks
-      ]
-    });
-  }
+  const isConstrainedWidth =
+    viewStore.isConstrainedWidth ||
+    params?.accessMode === ResourceAccessMode.SPLIT ||
+    params?.accessMode === ResourceAccessMode.FSPLIT;
   if (accessPoint === ResourceAccessPoint.NODE_LINKS && params?.accessPointId) {
     let baseItems = [resourceActions.copyLink()];
     if (accessPoint === ResourceAccessPoint.NODE_LINKS) {
@@ -550,6 +594,22 @@ export function resolveNodeContextMenu(
       },
       ...commonGroups
     ];
+  } else if (isConstrainedWidth && params?.isMediaNode) {
+    return [
+      {
+        group: "all",
+        items: [
+          resourceActions.star(),
+          resourceActions.edit(accessPoint),
+          nodeActions.linksPane,
+          nodeActions.sideNotesPane,
+          nodeActions.propertiesPane,
+          nodeActions.metadataPane
+        ]
+      },
+      mediaShareAndExportGroup,
+      ...commonGroups
+    ];
   } else if (params?.isMediaNode) {
     return [
       {
@@ -557,27 +617,26 @@ export function resolveNodeContextMenu(
         items: [
           resourceActions.star(),
           resourceActions.edit(accessPoint),
-          {
-            value: NodeRightPaneType.LINKS,
-            icon: "ph:arrows-left-right-thin"
-          },
-          {
-            value: NodeRightPaneType.METADATA,
-            icon: "ph:file-thin"
-          },
-          resourceActions.copyLink()
-          // {
-          //   value: "download",
-          //   icon: "download",
-          //   callback: async () => {}
-          // },
-          // {
-          //   value: "share",
-          //   icon: "share",
-          //   callback: async () => {}
-          // }
+          nodeActions.linksPane,
+          nodeActions.metadataPane
         ]
       },
+      mediaShareAndExportGroup,
+      ...commonGroups
+    ];
+  } else if (params?.nodeView === NodeView.BIRD_VIEW) {
+    return [
+      {
+        group: "all",
+        items: [
+          resourceActions.star(),
+          nodeActions.linksPane,
+          nodeActions.sideNotesPane,
+          nodeActions.propertiesPane,
+          nodeActions.metadataPane
+        ]
+      },
+      mediaShareAndExportGroup,
       ...commonGroups
     ];
   }
@@ -586,100 +645,49 @@ export function resolveNodeContextMenu(
       group: "all",
       items: [
         resourceActions.star(),
-        // resourceActions.edit(accessPoint),
-        {
-          value: NodeRightPaneType.METADATA,
-          icon: "ph:file-thin"
-        },
-        {
-          value: NodeRightPaneType.HISTORY,
-          icon: "ph:clock-countdown-thin",
-          label: "Show history"
-        }
+        resourceActions.toggleReadMode(),
+        nodeActions.metadataPane,
+        nodeActions.historyPane
       ]
     },
     {
       group: "shareAndExport",
-      items: [
-        resourceActions.copyLink(),
-        resourceActions.copyContents()
-        // {
-        //   value: "export",
-        //   icon: "share",
-        //   callback: async () => {}
-        // }
-        // {
-        //   value: "share",
-        //   icon: "share",
-        //   callback: async () => {
-        //     appStore.runAction(MemotronAction.PUBLISH, {
-        //       componentParams: { id: node.id }
-        //     });
-        //   }
-        // }
-      ]
+      items: [resourceActions.copyLink(), resourceActions.copyContents()]
     },
     ...commonGroups
   ];
 }
 
-export function resolveVisibleActions(contentType: NodeType): IToggleItem[] {
+export function resolveVisibleActions(
+  contentType: NodeType,
+  params?: {
+    accessMode?: ResourceAccessMode;
+  }
+): IToggleItem[] {
   const viewStore = get(view);
-  if (
-    contentType === NodeType.NODULAR_MARKDOWN &&
-    !viewStore.isConstrainedWidth
-  ) {
+  const isConstrainedWidth =
+    viewStore.isConstrainedWidth ||
+    params?.accessMode === ResourceAccessMode.SPLIT ||
+    params?.accessMode === ResourceAccessMode.FSPLIT;
+  if (contentType === NodeType.NODULAR_MARKDOWN && !isConstrainedWidth) {
     return [
-      {
-        value: NodeRightPaneType.SIDENOTES,
-        icon: "ph:note-thin",
-        tooltip: "Side notes"
-      },
-      {
-        value: "readMode",
-        icon: "ph:book-open-thin",
-        tooltip: "Toggle read mode"
-      },
-      {
-        value: "forks",
-        icon: "ph:git-fork-thin",
-        tooltip: "Show forks"
-      }
+      nodeActions.toggleReadMode,
+      nodeActions.sideNotesPane,
+      nodeActions.showForks
+    ];
+  } else if (contentType === NodeType.NODULAR_MARKDOWN && isConstrainedWidth) {
+    return [
+      nodeActions.linksPane,
+      nodeActions.sideNotesPane,
+      nodeActions.propertiesPane
     ];
   }
   const baseActions: IToggleItem[] = [
-    {
-      value: "birdView",
-      icon: "ph:bird-thin",
-      tooltip: "Bird view"
-    },
-    {
-      value: NodeRightPaneType.SIDENOTES,
-      icon: "ph:note-thin",
-      tooltip: "Side notes"
-    },
-    // {
-    //   value: NodeRightPaneType.LINKS,
-    //   icon: "ph:arrows-left-right-thin",
-    //   tooltip: "Show links"
-    // },
-    {
-      value: NodeRightPaneType.PROPERTIES,
-      icon: "widget",
-      tooltip: "Show properties"
-    }
-    // {
-    //   value: "bird",
-    //   icon: "ph:bird-thin",
-    //   tooltip: "Bird view"
-    // }
+    nodeActions.sideNotesPane,
+    nodeActions.propertiesPane
   ];
   if (canHaveTraces.includes(contentType) && !viewStore.isConstrainedWidth) {
-    baseActions.unshift({
-      value: NodeRightPaneType.TRACES,
-      icon: "bookmark",
-      tooltip: "Show traces"
-    });
+    baseActions.unshift(nodeActions.tracesPane);
   }
   return baseActions;
 }

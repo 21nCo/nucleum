@@ -10,9 +10,11 @@
   import { type INode, webNodeTypeList } from "../node.type";
   import { resolveNodeIcon } from "../node.utils";
   import NodeFavicon from "./NodeFavicon.svelte";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   export let types: ICollectionExpanded[] | undefined = undefined;
   export let node: INode | undefined = undefined;
   export let size: Size.sm | Size.md | Size.lg | number = Size.md;
+  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   let _avatars: IAvatar[] | undefined = undefined;
 
   $: if (types && types.length > 0) {
@@ -35,10 +37,10 @@
 </script>
 
 {#if _avatars && _avatars.length > 0}
-  <span class="flex items-center">
+  <span class="flex justify-center items-center">
     {#each _avatars as avatar, index (avatar)}
       <div
-        class={cn({
+        class={cn("flex justify-center items-center", {
           "-ml-1": index !== 0
         })}
       >

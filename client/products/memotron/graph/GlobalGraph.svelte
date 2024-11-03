@@ -9,6 +9,9 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import Badge from "$lib/client/elements/text/Badge.svelte";
+  import { resolveNodeLabel, resolveNodeLabelString } from "../node/node.utils";
+  import NodeAvatar from "../node/avatar/NodeAvatar.svelte";
+  import NodeTitleLabelPart from "../node/title/NodeTitleLabelPart.svelte";
 
   let data: { nodes: any[]; edges: any[] } = { nodes: [], edges: [] };
   let isRendered = false;
@@ -37,14 +40,26 @@
         new Set(edges.map((link: any) => [link.source, link.target]).flat())
       );
       const nodesWithLinks = await nodeStore.selectMany({
-        properties: ["id", "label"],
+        properties: [
+          "id",
+          "label",
+          "parent.* as parent",
+          "body",
+          "contentType"
+        ],
         filters: {
           // contentType: [...rootNodeTypeList, ...headingNodeTypes]
           id: allNodesList
         }
       });
       const allRootNodes = await nodeStore.selectMany({
-        properties: ["id", "label"],
+        properties: [
+          "id",
+          "label",
+          "parent.* as parent",
+          "body",
+          "contentType"
+        ],
         filters: {
           contentType: [...rootNodeTypeList, ...headingNodeTypes]
         }
@@ -55,7 +70,10 @@
         .map((node: any) => {
           return {
             id: node.id.toString(),
-            label: node.label
+            label: resolveNodeLabelString(node),
+            innerHTML: renderComponentToString(node),
+            innerHTMLTest: `<div>${node.label}</div>`,
+            type: "circle"
           };
         })
         .filter(removeDuplicatesFilter);
@@ -65,6 +83,19 @@
     } finally {
       isLoading = false;
     }
+  }
+
+  function renderComponentToString(node: any) {
+    const component = new NodeTitleLabelPart({
+      target: document.createElement("div"),
+      props: {
+        item: node
+      }
+    });
+
+    const html = component.$$.root.innerHTML;
+    component.$destroy();
+    return html;
   }
 
   function onRender() {

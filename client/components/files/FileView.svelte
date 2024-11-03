@@ -29,7 +29,6 @@
     undefined;
   let classList: string = "";
   export { classList as class };
-
   $: _id = id ?? file?.id;
 
   function resolveType() {

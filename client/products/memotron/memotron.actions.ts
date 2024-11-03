@@ -42,6 +42,7 @@ import CalloutSettings from "$lib/client/components/markdown/callout/CalloutSett
 import CreateCombination from "./combination/CreateCombination.svelte";
 import MemotronDataSettings from "./settings/MemotronDataSettings.svelte";
 import CollectionTitleLabelPart from "./collection/title/CollectionTitleLabelPart.svelte";
+import { Embed } from "$lib/client/types/context.type";
 
 export const memotronActions: IAction[] = [
   {
@@ -97,11 +98,13 @@ export const memotronActions: IAction[] = [
     action: Action.GLOBAL_SEARCH,
     component: ResourceSearchModal,
     label: "Search resources",
-    type: ActionType.MODAL,
+    // type: ActionType.MODAL,
+    type: ActionType.RESOURCE,
+    accessMode: ResourceAccessMode.POP,
     modalParams: {
       layout: {
         orientation: Orientation.Horizontal,
-        size: Size.lg,
+        size: Size.xl,
         ignoreSafeArea: true
       }
     }
@@ -139,8 +142,8 @@ export const memotronActions: IAction[] = [
     modalParams: {
       title: "Create a new combination",
       layout: {
-        size: Size.sm,
-        orientation: Orientation.Vertical
+        size: Size.md,
+        orientation: Orientation.Horizontal
       }
     }
   },
@@ -391,6 +394,7 @@ export const memotronActions: IAction[] = [
     label: "Data Settings",
     icon: "ph:database",
     component: MemotronDataSettings,
+    hideContext: [Embed.HANDSET],
     modalParams: {
       title: "Data Settings",
       layout: {

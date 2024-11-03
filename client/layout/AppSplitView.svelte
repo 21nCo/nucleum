@@ -15,10 +15,10 @@
 </script>
 
 <div class="flex w-full h-full">
-  <div class="flex h-full {split ? 'w-1/2' : 'w-full'}">
+  <div class="flex h-full {split ? 'min-w-1/2 w-1/2 shrink-0' : 'w-full'}">
     <slot name="main" />
   </div>
   {#if split}
-    <RightSplit {split} />
+    <RightSplit {split} accessMode={ResourceAccessMode.SPLIT} />
   {/if}
 </div>

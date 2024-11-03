@@ -5,7 +5,8 @@
     GraphEvent,
     type GraphData,
     type NodeData,
-    type EdgeData
+    type EdgeData,
+    CanvasEvent
   } from "@antv/g6";
   import { onMount, createEventDispatcher } from "svelte";
   import { truncateString } from "$lib/shared/utils/text.utils";
@@ -52,11 +53,16 @@
             { text: node.badge?.toString() ?? "", placement: "right-bottom" }
           ],
           // badgeFill: currentColors["fgs1"],
-          fill: isCurrentNode ? currentColors["aps1"] : currentColors["fgs3"],
+          fill:
+            node.fill ??
+            (isCurrentNode ? currentColors["aps1"] : currentColors["fgs3"]),
           labelText: truncateString(node.label ?? "", 20),
           labelFill: isCurrentNode
             ? currentColors["aps1"]
-            : currentColors["fgs2"]
+            : currentColors["fgs2"],
+          icon: node.icon ? true : false,
+          iconSrc: node.icon,
+          iconFill: currentColors["aps1"]
         }
       };
     });
@@ -208,6 +214,11 @@
     graph.render();
     graph.on(GraphEvent.AFTER_RENDER, onAfterRender);
     graph.on(NodeEvent.CLICK, onNodeClick);
+    graph.on(CanvasEvent.CLICK, onCanvasClick);
+  }
+
+  function onCanvasClick(event: any) {
+    dispatch("canvasClick");
   }
 
   function onAfterRender() {
@@ -215,9 +226,7 @@
   }
 
   function onNodeClick(event: any) {
-    if (event.target.id) {
-      dispatch("select", event.target.id);
-    }
+    dispatch("select", event);
   }
 </script>
 

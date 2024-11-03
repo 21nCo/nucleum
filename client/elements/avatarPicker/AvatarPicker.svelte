@@ -41,7 +41,7 @@
   $: isExpanded =
     (context === AvatarPickerContext.DEFAULT ||
       context === AvatarPickerContext.CALLOUT_AVATAR) &&
-    $view.isConstrainedWidth;
+    !$view.isConstrainedWidth;
 
   const isColorNotApplicable = context === AvatarPickerContext.CALLOUT_AVATAR;
 
@@ -131,7 +131,7 @@
       mode == AvatarType.ICON
         ? prefs.avatarPicker.usedIcons
         : prefs.avatarPicker.usedEmojis
-    )?.filter((emote: any) => "URL" in emote[0] && emote[0].URL);
+    )?.filter((emote: any) => "file" in emote[0] && emote[0].file);
     lazyLoadedAvatars["Frequently Used"] = storeAvatars["Frequently Used"];
     lazyLoadedAvatars["Custom"] = storeAvatars["Custom"];
     avatars = lazyLoadedAvatars;
@@ -286,7 +286,7 @@
       let index = $userPreferences.avatarPicker.usedIcons?.findIndex((el) => {
         return (
           el[0].name == emote.name &&
-          (("URL" in el[0] && el[0].URL !== undefined) ||
+          (("file" in el[0] && el[0].file !== undefined) ||
             ("color" in el[0] &&
               el[0].color == iconColor &&
               "isFilled" in el[0] &&
@@ -314,7 +314,7 @@
       let index = $userPreferences.avatarPicker.usedEmojis?.findIndex((el) => {
         return (
           el[0].name == emote.name &&
-          (("URL" in el[0] && el[0].URL !== undefined) ||
+          (("file" in el[0] && el[0].file !== undefined) ||
             ("code" in el[0] && el[0].code == emote.code))
         );
       });
@@ -365,15 +365,14 @@
   async function uploadedImageToEmote(input: any) {
     let imageLocalURL = new Blob([input], { type: input.type });
     let customName = input.name.split(".")[0].trim();
-    let s3Response = await account.uploadFile(
+    let fileSaveResponse = await account.uploadFileV2(
       input.type,
       customName,
       imageLocalURL
     );
-    let s3URL = s3Response?.uploadURL.split("?")[0];
     return {
       name: customName,
-      URL: s3URL,
+      file: fileSaveResponse?.[0]?.id,
       frequency: 0,
       type: AvatarType.CUSTOM_UPLOAD
     } as CustomUploadedAvatar;
@@ -647,10 +646,7 @@
                           typeof emote[0].frequency === "number"
                             ? emote[0].frequency
                             : 0,
-                        URL:
-                          "URL" in emote[0] && typeof emote[0].URL === "string"
-                            ? emote[0].URL
-                            : ""
+                        file: "file" in emote[0] ? emote[0].file : ""
                       }}
                       size={Size.lg}
                     />

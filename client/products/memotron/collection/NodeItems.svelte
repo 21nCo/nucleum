@@ -26,10 +26,10 @@
   export let isDraggable: boolean = false;
   export let accessPointId: IRecordId | undefined = undefined;
   export let accessPoint: ResourceAccessPoint | undefined = undefined;
-
   $: columns = Math.floor(($view.width / 500) * density);
 
-  export let gap = 12; // Gap size in pixels
+  export let gap = 12;
+  let rowHeight = 4;
   let gridRef: any;
   let hoveredMasonryItem: IRecordId | undefined = undefined;
 
@@ -56,12 +56,11 @@
   function resizeMasonryItem(item: HTMLElement) {
     if (!gridRef) return;
 
-    const rowHeight = gap;
     const contentHeight =
       item.querySelector(".item-content")?.getBoundingClientRect().height ?? 0;
     const rowSpan = Math.ceil((contentHeight + gap) / (rowHeight + gap));
     item.style.gridRowEnd = `span ${rowSpan}`;
-    item.style.height = `calc(${rowSpan} * (${rowHeight}px + ${gap}px) - ${gap}px)`;
+    // item.style.height = `calc(${rowSpan} * (${rowHeight}px + ${gap}px) - ${gap}px)`;
     if (
       ![
         NodeType.IMAGE,
@@ -76,7 +75,7 @@
       const child = item.querySelector(".item-content");
       if (child && child instanceof HTMLElement) {
         child.style.height = "100%";
-        child.style.minHeight = "100px";
+        // child.style.minHeight = "40px";
       }
     }
   }
@@ -94,7 +93,7 @@
   <div
     bind:this={gridRef}
     class="w-full h-full grid gap-4"
-    style="grid-template-columns: repeat({columns}, minmax(0, 1fr)); grid-auto-rows: {gap}px; gap: {gap}px;"
+    style="grid-template-columns: repeat({columns}, minmax(0, 1fr)); grid-auto-rows: {rowHeight}px; gap: {gap}px;"
   >
     {#each nodes as item (item.id)}
       <div
@@ -131,16 +130,6 @@
                 gridRef.querySelector(`[data-id="${item.id}"]`)
               )}
           />
-          {#if hoveredMasonryItem && isSameResource(hoveredMasonryItem, item.id)}
-            <div
-              class="absolute bottom-0 left-0 w-full bg-bgs3 rounded-b-md h-10 p-2 truncate text-b2 border-b border-x border-aps2"
-              transition:fade={{ duration: 200 }}
-            >
-              <!-- TODO - hover content -->
-              <!-- {item.label} -->
-              <NodeThumbnailTitle node={item} />
-            </div>
-          {/if}
         </button>
       </div>
     {/each}

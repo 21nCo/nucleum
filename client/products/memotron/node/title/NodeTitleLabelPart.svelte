@@ -1,28 +1,20 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import {
-    type INode,
-    type ITextClipBody,
-    NodeType,
-    type IVideoTimestampClipBody,
-    type ITwitterProfileBody,
-    type ITwitterProfile
-  } from "../node.type";
+  import { type INode, type INodeThumb, NodeType } from "../node.type";
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
   import { appStore } from "$lib/client/stores/app.store";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { formatSeconds } from "$lib/client/utils/time.utils";
-  import { TimeFormat } from "$lib/client/types/time.type";
   import {
     ResourceAccessMode,
     ResourceAccessPoint
   } from "$lib/client/components/flux/resourceStores/resource.type";
   import NodeAvatar from "../avatar/NodeAvatar.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  export let item: INode;
+  import { resolveNodeLabel } from "../node.utils";
+  export let item: INodeThumb;
   export let isNodePageContext: boolean = false;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
-  let dynamicLabel:
+  let _label:
     | string
     | {
         label: string;
@@ -45,95 +37,39 @@
     return "Untitled";
   }
   onMount(async () => {
-    if (dynamicLabelNodeTypes.includes(item.contentType)) {
-      dynamicLabel = await resolveLabel();
-    }
+    _label = await resolveNodeLabel(item);
   });
-
-  async function resolveLabel() {
-    if (!item) return "";
-
-    let parent;
-    if (item.parent && item.parent.id) parent = await item.parent;
-
-    const defaultLabels = {
-      [NodeType.TEXT_CLIP]:
-        "Clipped Text - " + (item.body as ITextClipBody).text,
-      [NodeType.YOUTUBE_TIMESTAMP_CLIP]:
-        "Video timestamp - " +
-        resolveVideoTimeStampStr(item.body as IVideoTimestampClipBody),
-      [NodeType.WEB_SCREENSHOT_CLIP]: "Web screenshot",
-      [NodeType.TWEET]: "Unknown tweet",
-      [NodeType.KINDLE_HIGHLIGHT]: "Kindle highlight"
-    };
-
-    switch (item.contentType) {
-      case NodeType.TEXT_CLIP:
-      case NodeType.WEB_SCREENSHOT_CLIP:
-      case NodeType.KINDLE_HIGHLIGHT:
-        if (!parent?.label) return defaultLabels[item.contentType];
-        return {
-          label: "Clipped from:",
-          parent,
-          text: item.body?.text ?? "Unknown clip"
-        };
-      case NodeType.YOUTUBE_TIMESTAMP_CLIP:
-        const timestamp = formatSeconds(item.body.timestamp, TimeFormat.CLOCK);
-        if (!parent?.label) return `At - ${timestamp}`;
-        return {
-          label: `${timestamp} - `,
-          parent,
-          text: timestamp
-        };
-      case NodeType.TWEET:
-        parent = parent as ITwitterProfile;
-        if (!parent?.body?.name) return defaultLabels[NodeType.TWEET];
-        return {
-          label: "Tweet by ",
-          parent: { id: parent.id, label: parent.body.name },
-          text: item.body?.content
-        };
-      case NodeType.TWITTER_PROFILE:
-        item = item as ITwitterProfile;
-        return (
-          item.metadata?.ogTitle ||
-          ((item.body as ITwitterProfileBody).name
-            ? item.body.name + " X profile"
-            : "Unknown X profile")
-        );
-      default:
-        return "";
-    }
-
-    function resolveVideoTimeStampStr(body: IVideoTimestampClipBody) {
-      return formatSeconds(body.timestamp, TimeFormat.CLOCK);
-    }
-  }
 </script>
 
 <div
-  class={cn("flex gap-1 items-center", {
+  class={cn("flex gap-1 items-center truncate", {
     "text-h5": accessPoint === ResourceAccessPoint.SEARCH_RESULT,
-    "text-b2": accessPoint !== ResourceAccessPoint.SEARCH_RESULT
+    "text-b2":
+      accessPoint !== ResourceAccessPoint.SEARCH_RESULT &&
+      accessPoint !== ResourceAccessPoint.SELF,
+    "text-fgs3": accessPoint === ResourceAccessPoint.MARKDOWN_EMBED,
+    "text-h4 font-medium": accessPoint === ResourceAccessPoint.SELF
   })}
 >
-  <NodeAvatar node={item} size={Size.sm} />
-  {#if item.label && item.label.includes(".")}
-    {item.label}
-  {:else if item.label || item.labelSearch}
-    {@html renderMdAsHtml(item.labelSearch ?? item.label, {
+  <NodeAvatar
+    node={item}
+    size={accessPoint === ResourceAccessPoint.SELF ? Size.md : Size.sm}
+    {accessPoint}
+  />
+  {#if item.labelSearch}
+    {@html renderMdAsHtml(item.labelSearch, {
       isIncludeSpaces: true
     })}
-  {:else if dynamicLabelNodeTypes.includes(item.contentType) && dynamicLabel}
-    {#if typeof dynamicLabel === "string"}
-      {dynamicLabel ?? "Unknown"}
-    {:else if typeof dynamicLabel === "object" && "parent" in dynamicLabel}
+  {:else if _label}
+    {#if typeof _label === "string"}
+      {_label ?? "Unknown"}
+    {:else if typeof _label === "object" && "parent" in _label}
       <span class="flex w-full gap-1 items-center">
         <span>
           {#if accessPoint === ResourceAccessPoint.SEARCH_RESULT}
-            {dynamicLabel?.text ?? dynamicLabel?.label}
+            {_label?.text ?? _label?.label}
           {:else}
-            {dynamicLabel?.label}
+            {_label?.label}
           {/if}
         </span>
         <button
@@ -142,23 +78,17 @@
               isNodePageContext
           })}
           on:click={(e) => {
-            appStore.resourceClickHandler(e, dynamicLabel?.parent.id, {
+            appStore.resourceClickHandler(e, _label?.parent.id, {
               replaceId:
                 accessPoint === ResourceAccessPoint.SELF ? item.id : undefined,
               defaultTo: ResourceAccessMode.POP
             });
           }}
         >
-          {dynamicLabel?.parent?.label}
+          {_label?.parent?.label}
         </button>
       </span>
     {/if}
-  {:else if item.body && typeof item.body === "string"}
-    {@html renderMdAsHtml(item.bodySearch ?? item.body, {
-      isIncludeSpaces: true
-    })}
-  {:else if item.body && item.body.text && typeof item.body.text === "string"}
-    {item.body.text}
   {:else}
     {resolveEmptyLabel()}
   {/if}

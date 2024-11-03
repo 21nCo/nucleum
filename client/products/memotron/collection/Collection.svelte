@@ -77,6 +77,7 @@
 
   export let id: string = "";
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
+  export let accessMode: ResourceAccessMode = ResourceAccessMode.POP;
   let collection: IActiveCollectionStore = ActiveCollectionStore.resolve(id);
   let activeView: ICollectionViewWithData | null = null;
   let viewData: INodeThumb[] = [];
@@ -98,7 +99,6 @@
   let properties: DropdownItem[];
   let viewsForSwitcher: ISelectItem[];
   let isReady = false;
-  let isNotInlineAccess: boolean = false;
   let isCoverPickerOpen = false;
   let isShowMetaViews = false;
   let isSingleViewMode = true;
@@ -119,20 +119,10 @@
   onMount(async () => {
     // console.log("onMount - collection", { id });
     const viewQueryParam = new URLSearchParams(location.search).get("view");
-    const focusParam = new URLSearchParams(location.search).get(
-      ResourceAccessMode.FULL
-    );
-    const splitParam = new URLSearchParams(location.search).get(
-      ResourceAccessMode.SPLIT
-    );
-    isNotInlineAccess =
-      focusParam === collection.id || splitParam === collection.id
-        ? true
-        : false;
     if (viewQueryParam) {
       selectedViewId = viewQueryParam;
     }
-    await collection.init();
+    await collection.init(accessMode);
     loadActiveView();
     if (!activeView) {
       activeView = $collection?.views
@@ -680,8 +670,11 @@
         on:resize={onCoverResize}
       />
     {/if}
-    {#if isNotInlineAccess}
-      <FullScreenCloseButton style={ButtonVariant.DANGER} />
+    {#if $collection?.accessMode === ResourceAccessMode.SPLIT || $collection?.accessMode === ResourceAccessMode.FULL || $collection?.accessMode === ResourceAccessMode.FSPLIT}
+      <FullScreenCloseButton
+        style={ButtonVariant.DANGER}
+        accessMode={$collection.accessMode}
+      />
     {/if}
   </div>
 {/if}

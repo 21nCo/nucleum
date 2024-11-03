@@ -114,13 +114,6 @@
     else return "Unknown";
   }
 
-  function onNodeSelect(event: CustomEvent<string>) {
-    console.log({ at: "onNodeSelect", event, id: event.detail });
-    if (event.detail) {
-      dispatch("select", event.detail);
-      // appStore.openResource(event.detail, ResourceAccessMode.POP);
-    }
-  }
   function onRender() {
     isRendered = true;
   }
@@ -139,8 +132,9 @@
       bind:this={graphRef}
       {data}
       centerNodeId={nodeId}
-      on:select={onNodeSelect}
+      on:select
       on:render={onRender}
+      on:canvasClick
     />
   {/if}
 </div>

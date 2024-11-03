@@ -649,7 +649,10 @@ class Flux {
         }
         await this.persistence.mutation(resource as Resource, {
           records: resourceResponse.result,
-          action: PersistenceActionType.BULK_INSERT
+          action:
+            resource === Resource.kv || resource === Resource.link
+              ? PersistenceActionType.INSERT
+              : PersistenceActionType.BULK_INSERT
         });
         console.timeEnd(`cloneDown - ${resource}`);
       }
@@ -706,7 +709,8 @@ class Flux {
    * Invalidates the stores and persistance connection - used during events like User logout or switching spaces.
    */
   async terminate() {
-    await this.persistence.terminate();
+    const terminationResult = await this.persistence.terminate();
+    logger.log({ at: "flux.terminate", terminationResult });
   }
 
   /**
@@ -715,8 +719,8 @@ class Flux {
    * Use with caution as this wipes out entire data and can be detrimental in cases like Offline user with local only data.
    */
   async clear() {
+    await this.terminate();
     await this.clearIndexedDb();
-    await this.persistence.terminate();
   }
 
   private async clearIndexedDb() {

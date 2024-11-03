@@ -298,8 +298,8 @@
     {#if isMounted}
       <slot />
     {/if}
+    <div id="popovers"></div>
   </ThemeLayer>
-  <div id="popovers"></div>
 </div>
 <EmbedTelemetry />
 <svelte:document on:visibilitychange={visibilityChangeListener} />

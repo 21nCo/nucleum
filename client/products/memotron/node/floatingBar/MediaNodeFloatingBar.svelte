@@ -18,7 +18,7 @@
     type IActiveNodeStore
   } from "../node.store";
   import NodeTitle from "../title/NodeTitle.svelte";
-  import { NodeRightPaneType, NodeType } from "../node.type";
+  import { NodeRightPaneType, NodeType, NodeView } from "../node.type";
   import ResourceStatusBanner from "../../common/ResourceStatusBanner.svelte";
   import { formatDatetime } from "$lib/client/utils/time.utils";
   import ToggleGroup from "$lib/client/elements/toggle/ToggleGroup.svelte";
@@ -26,11 +26,12 @@
   import NodePropertiesPane from "../rightPanel/NodePropertiesPane.svelte";
   import { hoverable } from "$lib/client/actions/hover.action";
   import view from "$lib/client/stores/view.store";
+  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let isHovering: boolean = false;
-  export let bottomAction: NodeRightPaneType | "birdView" | undefined =
-    undefined;
+  export let bottomAction: NodeRightPaneType | undefined = undefined;
+  export let nodeView: NodeView | undefined;
   let dev_isShowMainProperties: boolean = false;
   let buttonCommonProps = {
     tooltipOptions: {
@@ -38,6 +39,10 @@
       offsetInPx: 6
     }
   };
+  $: isConstrainedWidth =
+    $view.isConstrainedWidth ||
+    $node.accessMode === ResourceAccessMode.SPLIT ||
+    $node.accessMode === ResourceAccessMode.FSPLIT;
 
   function onPanelAction(param: NodeRightPaneType) {
     if (bottomAction === param) {
@@ -85,8 +90,8 @@
       class={cn(
         "flex flex-col gap-2 w-full justify-center items-center bg-bgs1 mo:p-2 p-3",
         {
-          "border-t border-t-brs2": $view.isConstrainedWidth,
-          "border border-brs2": !$view.isConstrainedWidth,
+          "border-t border-t-brs2": isConstrainedWidth,
+          "border border-brs2": !isConstrainedWidth,
           "rounded-b-md": $node.accessMode === ResourceAccessMode.POP,
           "w-full": $node.accessMode !== ResourceAccessMode.SLIDESHOW,
           "rounded-md shadow-md":
@@ -105,17 +110,27 @@
               $node.isInEditMode = e.detail;
             }}
           />
-          {#if !$view.isConstrainedWidth}
+          {#if !isConstrainedWidth}
             <div class="text-b3 text-fgs3 whitespace-nowrap">
               {formatDatetime($userPreferences, $node.createdAt)}
             </div>
           {/if}
         </span>
         <span class="flex gap-5">
-          {#if !$view.isConstrainedWidth}
+          {#if !isConstrainedWidth}
+            <Toggle
+              icon="ph:bird-thin"
+              tooltip="Bird view"
+              on={nodeView === NodeView.BIRD_VIEW}
+              on:change={(e) => {
+                dispatch(NodeView.BIRD_VIEW, e.detail);
+              }}
+            />
             <ToggleGroup
               selected={bottomAction}
-              items={resolveVisibleActions($node.contentType)}
+              items={resolveVisibleActions($node.contentType, {
+                accessMode: $node.accessMode
+              })}
               class="gap-5"
               on:change={(e) => {
                 onPanelAction(e.detail);
@@ -128,7 +143,8 @@
           <ContextMenuAction
             menuResolver={() =>
               resolveNodeContextMenu($node, ResourceAccessPoint.SELF, {
-                isMediaNode: true
+                isMediaNode: true,
+                accessMode: $node.accessMode
               })}
             id="mediaNodeContextMenu"
             position={Placement.TopCenter}
@@ -143,7 +159,7 @@
               }
             }}
           />
-          {#if !$view.isConstrainedWidth}
+          {#if !isConstrainedWidth}
             <div class="h-8">
               <Divider
                 orientation={Orientation.Vertical}
@@ -151,7 +167,7 @@
               />
             </div>
           {/if}
-          {#if $node.contentType != NodeType.VIDEO && !$view.isConstrainedWidth}
+          {#if $node.contentType != NodeType.VIDEO && !isConstrainedWidth}
             <Button
               {...buttonCommonProps}
               icon="full-screen"

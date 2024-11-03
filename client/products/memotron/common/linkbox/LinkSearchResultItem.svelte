@@ -33,7 +33,7 @@
       {#if headingNodeTypes.includes(item.contentType)}
         <NodeTitleBreadcrumbs id={item.id} on:click isSubtleContext={true} />
       {/if}
-      <div class="flex gap-2 w-full">
+      <div class="flex gap-2 w-full truncate">
         <NodeTitleLabelPart
           {item}
           accessPoint={ResourceAccessPoint.SEARCH_RESULT}

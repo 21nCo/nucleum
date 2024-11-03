@@ -20,12 +20,13 @@
 
 <div class="flex items-center flex-1 min-w-0 max-w-fit gap-2">
   {#if !node.focusedBlock}
-    {#if !isWebNode || node.contentType === NodeType.WEB_PAGE}
+    <!-- {#if !isWebNode || node.contentType === NodeType.WEB_PAGE}
       <NodeAvatar
         {node}
+        {accessPoint}
         size={accessPoint === ResourceAccessPoint.SELF ? Size.md : Size.sm}
       />
-    {/if}
+    {/if} -->
     {#if node.isInEditMode && !isWebNode}
       <TextInput
         size={Size.xl}
@@ -42,12 +43,7 @@
         }}
       />
     {:else}
-      <span
-        class={cn("text-start truncate", {
-          "text-h4 font-medium": accessPoint === ResourceAccessPoint.SELF,
-          "text-fgs3": accessPoint === ResourceAccessPoint.MARKDOWN_EMBED
-        })}
-      >
+      <span class="text-start truncate">
         <!-- {$node.label ?? $node.body ?? ""} -->
         <NodeTitleLabelPart
           item={node}

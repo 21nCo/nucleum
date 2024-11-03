@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import { highlightStore } from "$lib/client/products/memotron/common/highlighters/highlight.store";
   import {
     type INode,
@@ -10,6 +11,7 @@
   export let contentPreview: string;
   export let isNodePageContext: boolean = false;
   export let truncateLength: number | undefined = undefined;
+  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   let textHightlightColor = resolveTextHighlightColor(node);
 
   function getKindleHighlightRGBA(color: string, opacity: number) {
@@ -46,7 +48,9 @@
   })}
 >
   <span
-    class="relative text-left text-b2"
+    class={cn("relative text-left", {
+      "text-b2": accessPoint === ResourceAccessPoint.SELF
+    })}
     style="background-color: {textHightlightColor
       ? textHightlightColor
       : 'transparent'};"

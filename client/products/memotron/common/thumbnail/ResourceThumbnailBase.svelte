@@ -31,7 +31,7 @@
 <!-- TODO - position of right click context menu at cursor instead of bottom of the thumbnail -->
 <!-- <ContextMenuAction {contextMenu}> -->
 <div
-  class="relative flex w-full resource"
+  class="relative flex flex-col w-full h-full resource"
   id={item.id.toString()}
   draggable={isDraggable}
   use:hoverable={{

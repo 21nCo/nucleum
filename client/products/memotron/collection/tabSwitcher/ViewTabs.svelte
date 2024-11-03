@@ -13,12 +13,12 @@
   if (!selected) selected = tabs[0].value;
 </script>
 
-<div class="flex flex-wrap gap-3">
+<div class="flex flex-1 min-w-0 mo:w-full overflow-x-auto gap-3">
   {#each tabs as option (option.value)}
-    <CustomColorPropagator color={option.color} class="flex">
+    <CustomColorPropagator color={option.color} class="flex whitespace-nowrap">
       <button
         class={cn(
-          "flex gap-2 items-center justify-center border rounded-md px-3 py-1 min-w-16",
+          "flex gap-2 items-center justify-center border rounded-md px-3 py-1 min-w-16 text-b2",
           !option.color && {
             "border-brs3 hover:bg-bgs2": selected !== option.value,
             "border-aps1 bg-aps1 text-abg": selected === option.value

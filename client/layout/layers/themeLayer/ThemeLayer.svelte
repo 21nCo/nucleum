@@ -7,6 +7,8 @@
   import ColorLayer from "./ColorLayer.svelte";
   import GlassSkin from "./GlassSkin.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
+  import "@fontsource-variable/hanken-grotesk";
+  import "@fontsource/noto-color-emoji";
   // Do not remove this import as it is required for the global css propagation in case of custom colors are absent - ex: PanelSwitcher
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   export let extensionContext: string | undefined = undefined;
@@ -122,10 +124,10 @@
 <svelte:head>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
+  <!-- <link
     href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Teachers:ital,wght@0,400..800;1,400..800&display=swap"
     rel="stylesheet"
-  />
+  /> -->
 </svelte:head>
 <!--Note: The font weight and tracking correction is for H Grotesk typeface -->
 <div

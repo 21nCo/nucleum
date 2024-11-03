@@ -240,6 +240,7 @@ module.exports = {
         "styledscroll",
         "cursor-col-resize",
         "cursor-row-resize",
+        "text-abg",
         {
           pattern: /(from|via|to)-(.+)/
         }

@@ -9,6 +9,7 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { tooltip } from "$lib/client/actions/popover.action";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import view from "$lib/client/stores/view.store";
   export let node: INode;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
   export let isUrlOnIcon: boolean = false;
@@ -61,7 +62,7 @@
         onHover: (e) => (isHoveringUrlIcon = e)
       }}
     >
-      {#if node.url}
+      {#if node.url && !$view.isConstrainedWidth}
         {#if !isUrlOnIcon || (isUrlOnIcon && !isHoveringUrlIcon)}
           <Icon icon="ph:arrow-up-right" class="fill-fgs3" size={Size.sm} />
         {:else if isUrlOnIcon && isHoveringUrlIcon}

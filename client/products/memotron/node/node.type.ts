@@ -754,3 +754,8 @@ export type INodeThumb = INode & {
   bodySearch?: string;
   labelSearch?: string;
 };
+
+export enum NodeView {
+  CONTENT = "content",
+  BIRD_VIEW = "birdView"
+}

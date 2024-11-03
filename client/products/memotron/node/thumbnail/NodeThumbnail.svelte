@@ -239,13 +239,13 @@
       <FileView
         file={hasFullFileDetails ? filePreview : undefined}
         id={hasFullFileDetails ? undefined : filePreview}
-        class="w-full h-auto rounded-md"
+        class="w-full h-auto rounded-t-md"
         on:load
       />
     {:else if urlPreview}
       <img
         alt="..."
-        class="rounded-md w-full h-auto"
+        class="rounded-t-md w-full h-auto"
         on:load
         use:lazyLoad={urlPreview}
       />
@@ -257,17 +257,33 @@
       <span class="w-full h-80 overflow-clip relative z-0">
         <NodeThumbnailPdfPreview url={_url} />
       </span>
-    {:else}
-      <div class="h-auto p-2 overflow-clip text-wrap">
-        {#if isClip && contentPreview}
-          <TextClipPreview node={item} {contentPreview} />
-        {:else if item.contentType === NodeType.TWEET && contentPreview}
-          <NodeThumbnailTweetPreview text={contentPreview} />
-        {:else if contentPreview}
-          {contentPreview}
+    {:else if contentPreview}
+      <div
+        class="h-auto p-2 overflow-clip text-wrap max-h-48 text-left text-b3"
+      >
+        {#if isClip}
+          <TextClipPreview node={item} {contentPreview} {accessPoint} />
+        {:else if item.contentType === NodeType.TWEET}
+          <span class="text-fgs3">
+            <NodeThumbnailTweetPreview text={contentPreview} />
+          </span>
+        {:else}
+          <span class="text-fgs3">
+            {contentPreview}
+          </span>
         {/if}
       </div>
     {/if}
+    <div
+      class={cn(
+        "w-full bg-bgs2 rounded-b-md h-10 p-2 truncate text-b2 flex flex-1 items-center",
+        {
+          "rounded-md": !filePreview && !urlPreview && !_url && !contentPreview
+        }
+      )}
+    >
+      <NodeThumbnailTitle node={item} />
+    </div>
   {/if}
   <slot slot="right" name="right">
     <slot name="right" />

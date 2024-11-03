@@ -51,7 +51,7 @@
     )}
   >
     {#if resource === Resource.node && arrangement === Arrangement.MASONRY}
-      <NodeItems nodes={data} {arrangement} density={4} {accessPoint} />
+      <NodeItems nodes={data} {arrangement} density={3} {accessPoint} />
     {:else}
       {#each data as item (item)}
         {#if resource === Resource.everything}

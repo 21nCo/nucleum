@@ -28,6 +28,6 @@
     </slot>
   </div>
   {#if split}
-    <RightSplit {split} />
+    <RightSplit {split} accessMode={ResourceAccessMode.FSPLIT} />
   {/if}
 </div>

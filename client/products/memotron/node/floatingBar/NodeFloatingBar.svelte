@@ -27,15 +27,19 @@
   import { Size } from "$lib/client/types/size.enum";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import ToggleGroup from "$lib/client/elements/toggle/ToggleGroup.svelte";
-  import { NodeRightPaneType } from "../node.type";
+  import { NodeRightPaneType, NodeView } from "../node.type";
   import view from "$lib/client/stores/view.store";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
-  export let selectedView: string = "Content";
+  export let nodeView: NodeView = NodeView.CONTENT;
   export let isWidened: boolean = false;
   let bgIndex = 1;
   let toggleGroupRef: ToggleGroup;
   let selectedToggleAction: string | undefined = undefined;
+  $: isConstrainedWidth =
+    $view.isConstrainedWidth ||
+    $node.accessMode === ResourceAccessMode.SPLIT ||
+    $node.accessMode === ResourceAccessMode.FSPLIT;
   let buttonCommonProps = {
     parentBgIndex: bgIndex,
     tooltipOptions: {
@@ -54,16 +58,21 @@
     "flex justify-between items-center shadow-md border border-brs2 px-4",
     bg(bgIndex - 1),
     {
-      "h-14 w-9/10 rounded-full": $view.isConstrainedWidth,
-      "tp:w-4/5 lp:w-[40rem] dp:w-[48rem] h-14 rounded-md":
-        !$view.isConstrainedWidth
+      "h-14 w-9/10 rounded-full": isConstrainedWidth,
+      "tp:w-4/5 lp:w-[40rem] dp:w-[48rem] h-14 rounded-md": !isConstrainedWidth
     }
   )}
 >
-  {#if $view.isConstrainedWidth}
+  {#if isConstrainedWidth}
     <Button
-      label="back"
-      icon="ph:arrow-left-light"
+      label={$node.accessMode === ResourceAccessMode.SPLIT ||
+      $node.accessMode === ResourceAccessMode.FSPLIT
+        ? "Close split"
+        : "Back"}
+      icon={$node.accessMode === ResourceAccessMode.SPLIT ||
+      $node.accessMode === ResourceAccessMode.FSPLIT
+        ? "ph:x-light"
+        : "ph:arrow-left-light"}
       size={Size.sm}
       style={ButtonStyle.PLAIN}
       on:click={() => {
@@ -74,50 +83,66 @@
     <span>
       <!-- <Button label="Content" style={ButtonStyle.PLAIN} /> -->
       <PanelSwitcher
-        bind:value={selectedView}
+        bind:value={nodeView}
         parentBgIndex={bgIndex}
-        items={["Content", "Bird view"]}
+        items={[
+          {
+            label: "Content",
+            value: NodeView.CONTENT
+          },
+          {
+            label: "Bird view",
+            value: NodeView.BIRD_VIEW
+          }
+        ]}
         style={PanelSwitcherStyle.BAR}
         barStyle={BarStyle.DOT}
       />
     </span>
   {/if}
   <span class="flex items-center gap-3 h-full">
-    <ToggleGroup
-      bind:this={toggleGroupRef}
-      selected={selectedToggleAction}
-      items={resolveVisibleActions($node.contentType)}
-      class="gap-5"
-      on:change={(e) => {
-        if (
-          e.detail === NodeRightPaneType.SIDENOTES ||
-          e.detail === NodeRightPaneType.LINKS ||
-          e.detail === NodeRightPaneType.PROPERTIES
-        ) {
-          dispatch("panel", e.detail);
-        } else if (e.detail === "readMode") {
-          nodeStore.toggleReadMode($node.id, true);
-        }
-      }}
-      on:none
-    />
+    {#if nodeView === NodeView.CONTENT}
+      <ToggleGroup
+        bind:this={toggleGroupRef}
+        selected={selectedToggleAction}
+        items={resolveVisibleActions($node.contentType, {
+          accessMode: $node.accessMode
+        })}
+        class="gap-5"
+        on:change={(e) => {
+          if (
+            e.detail === NodeRightPaneType.SIDENOTES ||
+            e.detail === NodeRightPaneType.LINKS ||
+            e.detail === NodeRightPaneType.PROPERTIES
+          ) {
+            dispatch("panel", e.detail);
+          } else if (e.detail === "readMode") {
+            nodeStore.toggleReadMode($node.id, true);
+          }
+        }}
+        on:none
+      />
+    {/if}
     <ContextMenuAction
       tooltipOptions={buttonCommonProps.tooltipOptions}
       menuResolver={() =>
-        resolveNodeContextMenu($node, ResourceAccessPoint.SELF)}
+        resolveNodeContextMenu($node, ResourceAccessPoint.SELF, {
+          accessMode: $node.accessMode,
+          nodeView
+        })}
       size={Size.lg}
       id="nodeContextMenu"
       tooltip="More actions"
       position={Placement.TopCenter}
       on:action
     />
-    {#if !$view.isConstrainedWidth}
+    {#if !isConstrainedWidth}
       <Divider
         orientation={Orientation.Vertical}
         colorStrength={ColorStrength.Strong}
       />
 
-      {#if $node.accessMode !== ResourceAccessMode.SPLIT && $node.accessMode !== ResourceAccessMode.FSPLIT}
+      {#if $node.accessMode !== ResourceAccessMode.SPLIT && $node.accessMode !== ResourceAccessMode.FSPLIT && nodeView === NodeView.CONTENT}
         <Button
           {...buttonCommonProps}
           icon={isWidened ? "unwiden" : "widen"}
@@ -146,7 +171,7 @@
           ? "Minimize"
           : "Full screen"}
         on:click={() => {
-          appStore.toggleFocusAccessMode($node.accessMode, $node.id);
+          appStore.toggleFullScreen($node.accessMode, $node.id);
         }}
       />
       {#if $node.accessMode === ResourceAccessMode.SPLIT || $node.accessMode === ResourceAccessMode.FSPLIT}

@@ -22,20 +22,27 @@
       return {
         id: n.id,
         label: n.label,
+        type: n.type ?? "circle",
         style: {
-          labelText: truncateString(n.label ?? "", 20)
+          labelText: truncateString(n.label ?? "", 20),
+          innerHTML: n.innerHTML,
+          size: n.type === "html" ? [120, 40] : 20,
+          icon: n.icon ? true : false,
+          iconSrc: n.icon
+          // iconFill: currentColors["fgs1"]
+          // iconText: "👋"
         }
       };
     });
     _data.edges = [...data.edges];
-    console.log({ _data });
+    // console.log({ _data });
   }
 
   function renderGraph() {
     graph = new Graph({
       container: "globalgraphcontainer",
       data: _data,
-      autoFit: "view",
+      autoFit: "center",
       animation: false,
       node: {
         // palette: {
@@ -43,7 +50,7 @@
         //   field: "cluster"
         // }
         style: {
-          size: 10,
+          // size: 10,
           fill: currentColors["fgs2"],
           labelFill: currentColors["fgs3"],
           stroke: currentColors["aps1"]

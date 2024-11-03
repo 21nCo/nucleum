@@ -16,7 +16,13 @@
   import { linker, linkTagStore } from "../../linking/link.store";
   import { linkTagLabelMapper } from "../../linking/link.utils";
   import { nodeStore, type IActiveNodeStore } from "../node.store";
-  import { LinkType, NodeRightPaneType, type INode } from "../node.type";
+  import {
+    LinkType,
+    NodeRightPaneType,
+    NodeType,
+    webNodeTypeList,
+    type INode
+  } from "../node.type";
   import NodeRightPane from "../rightPanel/NodeRightPane.svelte";
   import type { DropdownItem } from "$lib/client/types/dropdownItem.type";
   import type { ILinkTag } from "../../linking/link.type";
@@ -26,12 +32,16 @@
   import type { IRecordId } from "$lib/client/types/data.type";
   import view from "$lib/client/stores/view.store";
   import { InputStyle } from "$lib/client/types/input.type";
+  import {
+    resolveNodeFavicon,
+    resolveNodeGraphFill,
+    resolveNodeLabelString
+  } from "../node.utils";
+  import { logger } from "$lib/client/components/debug/logger.client";
+  import NodeRightPaneContent from "../rightPanel/NodeRightPaneContent.svelte";
   export let node: IActiveNodeStore;
-  export let isMediaNode: boolean = false;
-  export let mdId: string | undefined = undefined;
+  export let rightPane: NodeRightPaneType | undefined = undefined;
   let linkedNodes: INode[];
-  let isRightPanelCollapsed = true;
-  let rightPane = NodeRightPaneType.LINKS;
   let selectedView = "Graph";
   let depth = 1;
   let graphRef: NodeGraph;
@@ -41,6 +51,7 @@
     edges: any[];
     combos: any[];
   };
+  let splitResource: IRecordId | undefined = undefined;
   const depthOptions = [
     {
       label: "Depth: 1",
@@ -98,6 +109,15 @@
 
   async function loadLinkedNodesData() {
     linkedNodes = await nodeStore.selectMany({
+      properties: [
+        "id",
+        "label",
+        "parent.* as parent",
+        "body",
+        "contentType",
+        "metadata",
+        "url"
+      ],
       filters: {
         id: $node.links?.map((x) => x.linkedTo.toString())
       }
@@ -139,7 +159,11 @@
         }
         return {
           id: node.id.toString(),
-          label: resolveNodeLabel(node),
+          label: resolveNodeLabelString(node),
+          icon: webNodeTypeList.includes(node.contentType)
+            ? resolveNodeFavicon(node)
+            : undefined,
+          fill: resolveNodeGraphFill(node),
           combo
         };
       });
@@ -206,15 +230,15 @@
   }
 
   export async function fetchDepth(nodes: IRecordId[]) {
-    const properties = ["id", "in", "out", "linkType", "tags"];
+    const linkProperties = ["id", "in", "out", "linkType", "tags"];
     const inLinks = await linker.selectMany({
-      properties,
+      properties: linkProperties,
       filters: {
         in: nodes.map((x) => x.toString())
       }
     });
     const outLinks = await linker.selectMany({
-      properties,
+      properties: linkProperties,
       filters: {
         out: nodes.map((x) => x.toString())
       }
@@ -238,7 +262,7 @@
       new Set(edges.map((link: any) => [link.source, link.target]).flat())
     );
     let allNodes = await nodeStore.selectMany({
-      properties: ["label", "body", "id"],
+      properties: ["id", "label", "parent.* as parent", "body", "contentType"],
       filters: {
         id: allNodesList
       }
@@ -247,30 +271,31 @@
     allNodes = allNodes.map((node: any) => {
       return {
         id: node.id.toString(),
-        label: resolveNodeLabel(node)
+        label: resolveNodeLabelString(node)
       };
     });
     return { nodes: allNodes, edges };
   }
 
-  /**
-   * TODO - reuse this logic - for GlobalGraph, NodeTitleLabelPart.svelte as well
-   * @param node
-   */
-  function resolveNodeLabel(node: any) {
-    if (node.label) return node.label;
-    else if (typeof node.body === "string") return node.body;
-    else return "Unknown";
+  function onNodeSelect(e: CustomEvent) {
+    const event = e.detail;
+    const newResource = event.target.id;
+    logger.log({ at: "onNodeSelect", event, newResource, splitResource });
+    if (!newResource) return;
+    if (splitResource === newResource) {
+      closeSplitResource();
+      return;
+    }
+    splitResource = newResource;
+    appStore.resourceClickHandler(event, splitResource!, {
+      defaultTo: ResourceAccessMode.SPLIT
+    });
   }
-
-  function closeRightPane() {
-    isRightPanelCollapsed = true;
-    rightPane = NodeRightPaneType.NONE;
+  function closeSplitResource() {
+    if (!splitResource) return;
+    appStore.closeResource({ id: splitResource });
+    splitResource = undefined;
   }
-  function onNodeSelect(event: CustomEvent<string>) {
-    appStore.openResource(event.detail, ResourceAccessMode.SPLIT);
-  }
-  // $: console.log({ links: $node.links, tags });
 </script>
 
 <div class="flex flex-col gap-3 w-full h-full p-3">
@@ -374,19 +399,23 @@
           data={graphData}
           nodeId={$node.id.toString()}
           on:select={onNodeSelect}
+          on:canvasClick={closeSplitResource}
         />
       {:else}
         <ComingSoonView />
       {/if}
     </div>
-    {#if !isMediaNode && mdId}
-      <div class="flex gap-2 h-full overflow-auto">
-        <NodeRightPane
+    {#if rightPane && rightPane !== NodeRightPaneType.NONE}
+      <div
+        class="flex gap-2 h-full overflow-auto min-w-96 border-l border-brs3"
+      >
+        <NodeRightPaneContent
           {node}
-          {mdId}
-          bind:isRightPanelCollapsed
-          bind:pane={rightPane}
-          on:close={closeRightPane}
+          pane={rightPane}
+          isShowClose={true}
+          on:close={() => {
+            rightPane = undefined;
+          }}
         />
       </div>
     {/if}

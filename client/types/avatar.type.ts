@@ -1,8 +1,10 @@
+import type { IRecordId } from "./data.type";
+
 export type CustomUploadedAvatar = {
   name: string;
   frequency: number;
   type: AvatarType.CUSTOM_UPLOAD;
-  URL: string;
+  file: IRecordId;
 };
 
 export type EmojiAvatar = {

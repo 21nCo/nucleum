@@ -86,7 +86,10 @@ export class SurrealPersistence implements IPersistence {
     });
     this.userId = user;
     try {
-      logger.log({ at: "surreal.persistence.initialize", user });
+      logger.log({
+        at: "surreal.persistence.initialize",
+        user
+      });
       await this.instance.connect("indxdb://blank");
       await this.instance.use({ namespace: "user", database: this.userId });
 
@@ -539,7 +542,7 @@ export class SurrealPersistence implements IPersistence {
       const selectClause =
         props.length > 0 ? `SELECT ${props.join(", ")}` : "SELECT *";
       const query = `${selectClause} FROM ONLY ${resourceId};`;
-      logger.log({ at: "SurrealPersistence.select", query });
+      logger.log({ at: "SurrealPersistence.select", query, resourceId });
       const result = await this.instance?.query_raw(query);
       return interceptSurrealResponse(result);
     } catch (e) {

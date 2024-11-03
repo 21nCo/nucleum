@@ -593,6 +593,11 @@ function initAppStore(seed: AppStore) {
     if (!id) return;
     toggleSearchParam(["view"]);
     let accessMode;
+    if (params?.defaultTo === ResourceAccessMode.SPLIT) {
+      const isFromFocusOrPop = isFSplit();
+      if (isFromFocusOrPop) params.defaultTo = ResourceAccessMode.FSPLIT;
+      else params.defaultTo = ResourceAccessMode.SPLIT;
+    }
     const defaultTo =
       params?.defaultTo ??
       (params?.replaceId
@@ -647,10 +652,11 @@ function initAppStore(seed: AppStore) {
     }
   };
 
-  const toggleFocusAccessMode = (
+  const toggleFullAccessMode = (
     currentMode: ResourceAccessMode,
     resourceId: IRecordId
   ) => {
+    logger.log({ at: "toggleFullAccessMode", currentMode, resourceId });
     const url = new URL(window.location.href);
     removeSearchParam(currentMode);
     if (currentMode === ResourceAccessMode.FULL) {
@@ -845,7 +851,7 @@ function initAppStore(seed: AppStore) {
     toggleSearchParam,
     resourceClickHandler,
     openResource,
-    toggleFocusAccessMode,
+    toggleFullScreen: toggleFullAccessMode,
     determineCurrentResourceAccessMode,
     determineClickAccessMode,
     isFSplit,
