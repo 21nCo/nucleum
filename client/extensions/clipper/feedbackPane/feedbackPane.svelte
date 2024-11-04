@@ -196,7 +196,10 @@
       alt="Screenshot"
       class="w-full"
     /> -->
-    <FileView id={$feedbackPane.focusedClip.body?.file} />
+    <FileView
+      id={$feedbackPane.focusedClip.body?.file}
+      class="h-full w-full max-h-40 object-cover"
+    />
   {:else if $feedbackPane.focusedClip?.contentType === NodeType.TWEET}
     <span class="text-b2 p-1 border border-brs2 rounded-md">
       <NodeThumbnailTweetPreview

@@ -32,6 +32,8 @@
     loadInMemoryStores
   } from "$lib/client/components/flux/fluxExtentionMediator";
   import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { screenShotOnlyPages } from "$lib/client/products/memotron/common/urlMap";
+  import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
   let mode: "Clips" | "Capture" | "Notes" = "Clips";
   let title = "";
   let isPageSaved = false;
@@ -40,6 +42,7 @@
   let feedback = "";
   let isLoggedIn = false;
   let refreshId: number = new Date().getTime();
+  let isNotAvailable = false;
 
   const channel = getPort("channel");
   const stores = [linkTagStore];
@@ -96,6 +99,14 @@
     if (data.title) title = data.title;
     if (data.notes) notes = data.notes;
     else notes = "";
+    if (data.url) {
+      const unavailableUrlsList = [
+        ...screenShotOnlyPages,
+        /^https:\/\/(?:www\.)?(twitter\.com|x\.com)\/([a-zA-Z0-9_]+)\/status\/(\d+)\/?$/,
+        /^https:\/\/(?:.*\.)?memotron\.io(?:\/.*)?$/
+      ];
+      isNotAvailable = unavailableUrlsList.some((x) => x.test(data.url));
+    }
     const token = await resolveToken();
     if (token) {
       if (!$account) account.init();
@@ -144,7 +155,7 @@
 >
   <div class="w-full h-screen">
     <div class="flex flex-col gap-4 w-full h-full bg-bgs1 text-b2 text-fgs1">
-      {#if isLoggedIn}
+      {#if isLoggedIn && !isNotAvailable}
         <header
           class="flex w-full justify-between items-center p-3 border-b border-brs3 shadow-sm"
         >
@@ -202,6 +213,15 @@
           {:else}
             <!-- TODO -->
           {/if}
+        </div>
+      {:else if isNotAvailable}
+        <div class="flex w-full flex-1">
+          <ComingSoonView
+            mainText="This page is not available on side panel yet"
+            subText="We are working on it!"
+            isHideRoadmap={true}
+            style={2}
+          />
         </div>
       {:else}
         <div class="flex w-full flex-1">

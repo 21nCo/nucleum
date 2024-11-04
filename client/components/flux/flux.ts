@@ -680,7 +680,7 @@ class Flux {
       const resourceResponse = result[i];
       if (resourceResponse.result && resourceResponse.result.length > 0) {
         console.time(`cloneDown - ${resource}`);
-        if (resource !== Resource.kv) {
+        if (!this.isExtensionEnvironment && resource !== Resource.kv) {
           dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
             subMessage: `Syncing ${resource}s...`
           });

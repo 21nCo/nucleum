@@ -14,7 +14,7 @@
   const contentPreview = resolveContentPreview(node);
 </script>
 
-<div class="w-full h-full flex justify-center items-center">
+<div class="w-full h-full max-h-32 flex justify-center items-center">
   {#if node.contentType === NodeType.TEXT_CLIP || node.contentType === NodeType.KINDLE_HIGHLIGHT}
     <TextClipPreview
       {node}
@@ -28,6 +28,6 @@
       class="absolute inset-0 w-full rounded-t-md object-contain h-full"
       src={node.body.s3Url}
     /> -->
-    <FileView id={node.body.file} />
+    <FileView id={node.body.file} class="h-full w-full object-cover" />
   {/if}
 </div>
