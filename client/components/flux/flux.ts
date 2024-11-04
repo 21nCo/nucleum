@@ -427,7 +427,7 @@ class Flux {
       if (result?.ok) {
         response = await result.json();
       }
-      logger.debug({
+      logger.log({
         at: "flux.performSync",
         method,
         data,
@@ -449,9 +449,15 @@ class Flux {
           response.length > 0 &&
           response[0].result
         ) {
-          return response[0].result;
+          const syncDownData = response[0].result;
+          const countsRawData = response.slice(1).map((x) => x.result);
+          let counts: { [key: string]: number } = {};
+          countsRawData.forEach((element) => {
+            counts = { ...counts, ...element };
+          });
+          return { syncDownData, counts };
         }
-        return [];
+        return { syncDownData: [], counts: {} };
       }
       return response;
     } catch (e) {
@@ -575,8 +581,37 @@ class Flux {
         dapId
       });
       this.isSyncDownPending = false;
-      if (result) {
-        await this.processSyncDown(result);
+      logger.debug({ at: "flux.syncDown - result", result });
+      if (result.syncDownData) {
+        await this.processSyncDown(result.syncDownData);
+      }
+      if (result.counts) {
+        let resourcesWithMissSync = [];
+        for (let resource of resources) {
+          const localCount = (
+            await this.persistence.selectMany(resource as Resource)
+          ).length;
+          const cloudCount = result.counts[resource];
+          if (localCount < cloudCount) {
+            resourcesWithMissSync.push(resource);
+            logger.debug({
+              at: "flux.syncDown - resource with miss sync",
+              resource,
+              localCount,
+              cloudCount
+            });
+          }
+        }
+        logger.debug({
+          at: "flux.syncDown - resourcesWithMissSync",
+          resourcesWithMissSync
+        });
+        if (resourcesWithMissSync.length > 0) {
+          await this.cloneDown({
+            resources: resourcesWithMissSync,
+            isReconciliation: true
+          });
+        }
       }
       return result;
     } catch (e) {
@@ -629,10 +664,13 @@ class Flux {
   /**
    * Clones down from cloud to local.
    */
-  async cloneDown() {
+  async cloneDown(params?: {
+    isReconciliation?: boolean;
+    resources?: Resource[];
+  }) {
     logger.log({ at: "flux.cloneDown", stores: this.stores });
     if (await determineIfOffline()) return;
-    const resources = this.resolveSyncResources();
+    const resources = params?.resources ?? this.resolveSyncResources();
     const result = await this.performSync(SyncMethod.CLONE_DOWN, {
       resources,
       isExtension: this.isExtensionEnvironment
@@ -647,25 +685,39 @@ class Flux {
             subMessage: `Syncing ${resource}s...`
           });
         }
-        await this.persistence.mutation(resource as Resource, {
+        const result = await this.persistence.mutation(resource as Resource, {
           records: resourceResponse.result,
           action:
-            resource === Resource.kv || resource === Resource.link
+            params?.isReconciliation ||
+            resource === Resource.kv ||
+            resource === Resource.link
               ? PersistenceActionType.INSERT
               : PersistenceActionType.BULK_INSERT
         });
+        logger.debug({
+          at: "flux.cloneDown - result",
+          resource,
+          result
+        });
+        if (!result) {
+          const fallbackResult = await this.persistence.mutation(
+            resource as Resource,
+            {
+              records: resourceResponse.result,
+              action: PersistenceActionType.INSERT
+            }
+          );
+          logger.debug({
+            at: "flux.cloneDown - fallbackResult",
+            resource,
+            fallbackResult
+          });
+        }
         console.timeEnd(`cloneDown - ${resource}`);
       }
     }
+    if (params?.isReconciliation) return true;
     await this.loadInMemoryStores();
-    // await clientStorage.set(
-    //   ClientStorageKey.LAST_SYNC_DOWN,
-    //   new Date().getTime()
-    // );
-    // await clientStorage.set(
-    //   ClientStorageKey.LAST_SYNC_UP,
-    //   new Date().getTime()
-    // );
     await this.persistence.mutation(Resource.kv, {
       record: {
         id: "kv:local",
@@ -674,6 +726,7 @@ class Flux {
       },
       action: PersistenceActionType.MERGE
     });
+    return true;
   }
 
   /**
