@@ -160,15 +160,17 @@
       const text: string = resolveBodyText() ?? "";
       // block.body = null;
       data.label = text;
-      block.label = text;
     }
     block.contentType = data.toType;
     if (data.body) block.body = data.body;
+    logger.log({ at: "handleConvertAction - data", data, fromType });
     propagateAsAction(BlockAction.CONVERT, { ...data, fromType });
     if (data.body !== undefined) {
+      block.body = data.body;
       propagate(BlockAction.CHANGE, { body: data.body });
     }
     if (data.label !== undefined) {
+      block.label = data.label;
       propagate(BlockAction.CHANGE, { label: data.label });
     }
 

@@ -1,5 +1,9 @@
 import type { IBlock } from "$lib/client/components/markdown/md.type";
-import { enumToString, properCase } from "$lib/shared/utils/text.utils";
+import {
+  enumToString,
+  isValidString,
+  properCase
+} from "$lib/shared/utils/text.utils";
 import {
   NodeType,
   type INodeMetadata,
@@ -213,7 +217,6 @@ export function resolveNodeLabel(item: INodeThumb) {
   let parent;
   if (item.parent && item.parent.id && !isRecordId(item.parent))
     parent = item.parent;
-
   const defaultLabels = {
     [NodeType.TEXT_CLIP]: "Clipped Text - " + (item.body as ITextClipBody).text,
     [NodeType.YOUTUBE_TIMESTAMP_CLIP]:
@@ -244,10 +247,12 @@ export function resolveNodeLabel(item: INodeThumb) {
       };
     case NodeType.TWEET:
       parent = parent as ITwitterProfile;
-      if (!parent?.body?.name) return defaultLabels[NodeType.TWEET];
+      const twitterProfileLabel = isValidString(parent.body.name)
+        ? parent.body.name
+        : "Unknown";
       return {
         label: "Tweet by ",
-        parent: { id: parent.id, label: parent.body.name },
+        parent: { id: parent.id, label: twitterProfileLabel },
         text: item.body?.content
       };
     case NodeType.TWITTER_PROFILE:
@@ -268,7 +273,6 @@ export function resolveNodeLabel(item: INodeThumb) {
 }
 
 export function resolveNodeFavicon(node: INode) {
-  console.log({ at: "resolveNodeFavicon", node });
   if (
     node.contentType === NodeType.TWITTER_PROFILE &&
     "profileImageUrl" in node.body &&
