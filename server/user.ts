@@ -485,8 +485,10 @@ async function _processSync(body: any, agent: Agent, method: string) {
   } else if (method === SyncMethod.SYNC_DOWN) {
     const { lastSyncDown, resources, dapId } = body;
     const fetchBackQuery = resolveSyncDownQuery(lastSyncDown, resources, dapId);
-    if (!fetchBackQuery) return { error: "transaction failed" };
-    const response = await performQueryOnBehalfOfUser(fetchBackQuery, agent);
+    const countQuery = resolveCountQuery(resources);
+    const fullQuery = `${fetchBackQuery}; ${countQuery};`;
+    if (!fullQuery) return { error: "transaction failed" };
+    const response = await performQueryOnBehalfOfUser(fullQuery, agent);
     return response;
   } else if (method === SyncMethod.CLONE_UP) {
     const { resource, records } = body;
@@ -521,5 +523,13 @@ async function _processSync(body: any, agent: Agent, method: string) {
     return `SELECT * FROM mutation WHERE timestamp > ${lastSyncDown} AND dapId IS NOT '${dapId}' AND resource IN [${resources
       .map((x) => `'${x}'`)
       .join(",")}] ORDER BY timestamp ASC;`;
+  }
+
+  function resolveCountQuery(resources: Resource[]) {
+    let query = "";
+    for (const resource of resources) {
+      query += `array::first(select count() as ${resource} from ${resource} group all);`;
+    }
+    return query;
   }
 }
