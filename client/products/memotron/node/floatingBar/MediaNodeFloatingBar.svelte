@@ -153,7 +153,8 @@
                 e.detail === NodeRightPaneType.METADATA ||
                 e.detail === NodeRightPaneType.PROPERTIES ||
                 e.detail === NodeRightPaneType.SIDENOTES ||
-                e.detail === NodeRightPaneType.LINKS
+                e.detail === NodeRightPaneType.LINKS ||
+                e.detail === NodeRightPaneType.TRACES
               ) {
                 bottomAction = e.detail;
               }

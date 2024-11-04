@@ -371,24 +371,28 @@ export class SearchStore {
   async resolveCount(resource: Resource) {
     if (resource === Resource.node) {
       const result = await flux.selectMany(resource, {
+        properties: ["count()"],
         filters: {
           contentType: rootNodeTypeList,
           creationContext: false,
           ...activeResourceFilterV2
-        }
+        },
+        groupBy: ["all"]
       });
-      return result.length;
+      return result?.[0].count;
     } else if (
       resource === Resource.collection ||
       resource === Resource.combination ||
       resource === Resource.task
     ) {
       const result = await flux.selectMany(resource, {
+        properties: ["count()"],
         filters: {
           ...activeResourceFilterV2
-        }
+        },
+        groupBy: ["all"]
       });
-      return result.length;
+      return result?.[0].count;
     }
   }
 }

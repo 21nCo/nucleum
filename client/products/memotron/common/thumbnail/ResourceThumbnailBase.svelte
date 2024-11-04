@@ -31,7 +31,9 @@
 <!-- TODO - position of right click context menu at cursor instead of bottom of the thumbnail -->
 <!-- <ContextMenuAction {contextMenu}> -->
 <div
-  class="relative flex flex-col w-full h-full resource"
+  class={cn("relative flex flex-col w-full resource", {
+    "h-full": arrangement === Arrangement.MASONRY
+  })}
   id={item.id.toString()}
   draggable={isDraggable}
   use:hoverable={{

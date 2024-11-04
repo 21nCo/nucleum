@@ -13,7 +13,7 @@
   if (!selected) selected = tabs[0].value;
 </script>
 
-<div class="flex flex-1 min-w-0 mo:w-full overflow-x-auto gap-3">
+<div class="flex flex-1 min-w-0 mo:w-full mo:pb-1 overflow-x-auto gap-3">
   {#each tabs as option (option.value)}
     <CustomColorPropagator color={option.color} class="flex whitespace-nowrap">
       <button

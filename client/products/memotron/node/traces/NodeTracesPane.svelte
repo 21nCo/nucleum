@@ -211,5 +211,5 @@
     />
   {/if}
 {:else}
-  <ComingSoonView size={Size.sm} />
+  <EmptyStatusView size={Size.sm} mainText="No traces found" />
 {/if}

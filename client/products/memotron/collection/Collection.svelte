@@ -74,6 +74,8 @@
     resolvePropertyIcon,
     tabAndGroupableProperties
   } from "./properties/property.utils";
+  import TextInput from "$lib/client/elements/input/TextInput.svelte";
+  import { InputStyle } from "$lib/client/types/input.type";
 
   export let id: string = "";
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -104,10 +106,15 @@
   let isSingleViewMode = true;
   let searchQuery: string = "";
 
+  $: isConstrainedWidth =
+    $view.isConstrainedWidth ||
+    $collection.accessMode === ResourceAccessMode.SPLIT ||
+    $collection.accessMode === ResourceAccessMode.FSPLIT;
+
   $: coverPlacement =
     $collection?.coverLayout?.placement === Placement.Top ||
     !$collection?.coverLayout?.placement ||
-    $view.isConstrainedWidth ||
+    isConstrainedWidth ||
     $view.isPortrait
       ? Placement.Top
       : $collection?.coverLayout?.placement;
@@ -476,10 +483,9 @@
             "sticky top-0 bg-bgs1": isSingleViewMode,
             // When in edit mode, interfering with view settings dropdown when the dropdown opens on top if z-20 is set
             "z-20": isSingleViewMode && !$collection.isInEditMode,
-            "pb-8":
-              isSingleViewMode && !isShowMetaViews && !$view.isConstrainedWidth,
-            "pt-6": !$view.isConstrainedWidth,
-            "p-2": $view.isConstrainedWidth
+            "pb-8": isSingleViewMode && !isShowMetaViews && !isConstrainedWidth,
+            "pt-6": !isConstrainedWidth,
+            "p-2": isConstrainedWidth
           })}
         >
           <CollectionTitleBar
@@ -506,7 +512,29 @@
             </span>
           </CollectionTitleBar>
         </div>
-        {#if $collection.isInEditMode && $view.isConstrainedWidth}
+        {#if isConstrainedWidth && !$collection.isInEditMode}
+          <div
+            class={cn("flex px-4", {
+              "pb-3": isSingleViewMode,
+              "-mt-3": !isSingleViewMode
+            })}
+          >
+            <TextInput
+              bind:value={searchQuery}
+              style={InputStyle.BORDERED}
+              size={Size.sm}
+              icon="ph:magnifying-glass"
+              placeholder={`Search this collection [Total items: ${$collection.totalNodeCount ?? 0}]`}
+              on:input={onSearch}
+              isShowClearControl={searchQuery.length > 0}
+              on:cancel={() => {
+                searchQuery = "";
+                refresh();
+              }}
+            />
+          </div>
+        {/if}
+        {#if $collection.isInEditMode && isConstrainedWidth}
           <div class="px-4 flex justify-center items-center w-full h-12">
             <Button
               label="Close edit mode"
@@ -594,7 +622,7 @@
                     on:densityChange={onDensityChange}
                     on:previewSettingChange={onPreviewSettingChange}
                   />
-                  {#if !$collection.isInEditMode && !$view.isConstrainedWidth}
+                  {#if !$collection.isInEditMode && !isConstrainedWidth}
                     <AddResourceAction
                       variant="strong"
                       on:add={onAddResource}
@@ -606,7 +634,7 @@
             {#if activeView && ($collection.isInEditMode || !isNoneResource(activeView.tabBy))}
               <div class="px-4 pb-4 flex flex-col gap-6">
                 {#if $collection.isInEditMode}
-                  {#if $view.isConstrainedWidth}
+                  {#if isConstrainedWidth}
                     <span class="text-fgs3 text-b3">
                       Currently, advanced view editing is only available on
                       Desktop. Sorry for the inconvenience.

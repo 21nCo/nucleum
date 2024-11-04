@@ -27,9 +27,11 @@
   }
 </script>
 
-<div class="w-full h-full flex flex-col gap-6 justify-center items-center">
+<div
+  class="w-full h-full mo:p-4 flex flex-col gap-6 justify-center items-center"
+>
   <button
-    class="flex flex-col gap-5 p-4 hover:bg-bgs2 border border-fgs4 rounded-md w-3/4"
+    class="flex flex-col gap-5 p-4 hover:bg-bgs2 border border-fgs4 rounded-md mo:w-full w-3/4"
     on:click|stopPropagation={() => {
       appStore.openLink(node.url);
     }}
@@ -62,7 +64,7 @@
     </div>
   </button>
   {#if accessPoint === ResourceAccessPoint.SELF}
-    <div class="w-3/4">
+    <div class="mo:w-full w-3/4">
       <InlineInfoBanner
         content="Note: Tweets that contain images are not supported yet."
       />

@@ -9,7 +9,8 @@ import {
   type INodeLinkThumb,
   type INodeLink,
   canHaveTraces,
-  NodeView
+  NodeView,
+  headingNodeTypes
 } from "$lib/client/products/memotron/node/node.type";
 import {
   activeResources,
@@ -485,6 +486,7 @@ export const nodeActions = {
   tracesPane: {
     value: NodeRightPaneType.TRACES,
     icon: "bookmark",
+    label: "Show traces",
     tooltip: "Show traces"
   },
   download: {
@@ -601,6 +603,7 @@ export function resolveNodeContextMenu(
         items: [
           resourceActions.star(),
           resourceActions.edit(accessPoint),
+          nodeActions.tracesPane,
           nodeActions.linksPane,
           nodeActions.sideNotesPane,
           nodeActions.propertiesPane,
@@ -669,13 +672,21 @@ export function resolveVisibleActions(
     viewStore.isConstrainedWidth ||
     params?.accessMode === ResourceAccessMode.SPLIT ||
     params?.accessMode === ResourceAccessMode.FSPLIT;
-  if (contentType === NodeType.NODULAR_MARKDOWN && !isConstrainedWidth) {
+  if (
+    (contentType === NodeType.NODULAR_MARKDOWN ||
+      headingNodeTypes.includes(contentType)) &&
+    !isConstrainedWidth
+  ) {
     return [
       nodeActions.toggleReadMode,
       nodeActions.sideNotesPane,
       nodeActions.showForks
     ];
-  } else if (contentType === NodeType.NODULAR_MARKDOWN && isConstrainedWidth) {
+  } else if (
+    (contentType === NodeType.NODULAR_MARKDOWN ||
+      headingNodeTypes.includes(contentType)) &&
+    isConstrainedWidth
+  ) {
     return [
       nodeActions.linksPane,
       nodeActions.sideNotesPane,

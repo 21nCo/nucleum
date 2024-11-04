@@ -58,6 +58,7 @@
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import view from "$lib/client/stores/view.store";
   import { logger } from "$lib/client/components/debug/logger.client";
+  import { intersection } from "$lib/client/actions/intersection.action";
 
   let searchQuery: string = "";
   let selectedResource: Resource = Resource.node;
@@ -72,6 +73,7 @@
   let selectedSubType: SubType = "all";
   export let variant: "v1" | "v2" | "v3" = "v3";
   let isRefreshing: boolean = false;
+  let totalCount: number = 0;
   let availableResources: Resource[] = [
     Resource.node,
     Resource.collection
@@ -143,8 +145,12 @@
     };
   });
 
-  async function refresh() {
-    isRefreshing = true;
+  async function refresh(isPagination?: boolean) {
+    console.log({ at: "Library - refresh", isPagination, selectedResource });
+    if (!isPagination) {
+      isRefreshing = true;
+      data = [];
+    }
     try {
       if (
         !availableResources.includes(selectedResource) &&
@@ -173,15 +179,18 @@
           filters = { ...filters, type: selectedSubType };
         }
       }
-
-      data = await searchStore.select({
+      totalCount = await new SearchStore().resolveCount(selectedResource);
+      const newData = await searchStore.select({
         resource: selectedResource,
         searchQuery,
         filters,
         orderBy,
-        semanticSearchTopK
-        // limit: 100
+        semanticSearchTopK,
+        limit: 50,
+        offset: isPagination ? data.length : 0
       });
+      console.log({ newData });
+      data = [...data, ...newData];
     } finally {
       setTimeout(() => {
         isRefreshing = false;
@@ -200,10 +209,10 @@
     if (!data || !data.length) return;
     let prefix = "Showing " + data.length + " ";
     const label = resolveResourceLabel();
-    if (isStarFilterSelected) return prefix + `⭐️ staaarrrrrrrrrred ` + label;
+    if (isStarFilterSelected) return `${prefix} ⭐️ staaarrrrrrrrrred ${label}`;
     else if (searchQuery)
-      return prefix + label + ` containing "${searchQuery}"`;
-    else return "Showing all " + data.length + " " + label;
+      return `${prefix} ${label} containing "${searchQuery}"`;
+    else return `Showing ${data.length} of ${totalCount} ${label}`;
   }
   function resolveResourceLabel(isPlural: boolean = false) {
     let label = "items";
@@ -368,6 +377,8 @@
       );
     }
   }
+
+  $: console.log({ data });
 </script>
 
 <div class="relative w-full h-full">
@@ -396,6 +407,7 @@
         {searchStore}
         bind:selectedResource
         bind:searchQuery
+        isShowAddButton={availableResources.includes(selectedResource)}
         on:refresh={debouncedSearch}
         on:create={onCreateResource}
         on:semanticSearch={(e) => {
@@ -489,14 +501,14 @@
               size={Size.sm}
               isExpanded={true}
               bind:checked={isStarFilterSelected}
-              on:change={refresh}
+              on:change={() => refresh()}
             />
             <SwitchInput
               label={{ label: "Archived", orientation: Orientation.Horizontal }}
               size={Size.sm}
               isExpanded={true}
               bind:checked={isArchivedFilterSelected}
-              on:change={refresh}
+              on:change={() => refresh()}
             />
           </div>
         </div>
@@ -513,24 +525,24 @@
             {resources}
             bind:selectedResource
             bind:searchQuery
-            on:keydown={refresh}
+            on:keydown={() => refresh()}
             {searchStore}
           />
         {/if}
         {#if isRefreshing}
-          <LibraryLoadingPulse />
+          <LibraryLoadingPulse resource={selectedResource} />
         {:else if data && data.length > 0}
           <div
             class={cn("flex flex-col grow", {
               "px--5": variant === "v2"
             })}
           >
-            <!-- TODO - pagination -->
             <Resources
-              data={data.slice(0, 500)}
+              {data}
               accessPoint={ResourceAccessPoint.LIBRARY}
               resource={selectedResource}
               size={$view.isConstrainedWidth ? Size.sm : Size.md}
+              isShowLoadingPulseAtTheEnd={data.length < totalCount}
               arrangement={$view.isConstrainedWidth
                 ? selectedResource === Resource.node
                   ? Arrangement.MASONRY
@@ -538,7 +550,15 @@
                 : Arrangement.GRID}
             />
           </div>
-          <div class="flex w-full justify-center text-b2 text-fgs3">
+          <div
+            class="flex w-full justify-center text-b2 text-fgs3"
+            use:intersection={{
+              rootMargin: "100px",
+              callback: () => {
+                refresh(true);
+              }
+            }}
+          >
             {resolveFooterMessage(data) ?? ""}
           </div>
           <ScrollViewBottomSpacer />
@@ -586,7 +606,7 @@
 <ComponentBaseLayer
   syncDownOnMount={true}
   subscribeTo={availableResources}
-  on:syncDown={refresh}
+  on:syncDown={() => refresh()}
   on:change={onResourceMutation}
 />
 

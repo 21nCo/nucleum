@@ -31,7 +31,7 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import view from "$lib/client/stores/view.store";
   import context from "$lib/client/stores/context.store";
-  import { OperatingSystem } from "$lib/client/types/context.type";
+  import { Embed, OperatingSystem } from "$lib/client/types/context.type";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
 
   export let isWindowDnD = false;
@@ -49,6 +49,7 @@
     ? CaptureType.UPLOAD
     : CaptureType.MARKDOWN;
   // $: console.log({ types, $captureStore, propertyConfig });
+  let dev_iosCameraCaptureMethod: "input" | "swift-relay" = "input";
 
   async function refreshTypeData() {
     const typeIds =
@@ -102,14 +103,29 @@
       $context.isEmbed &&
       $context.os === OperatingSystem.IOS
     ) {
-      setTimeout(() => {
-        cameraCaptureRef?.click();
-      }, 10);
+      if (dev_iosCameraCaptureMethod === "input") {
+        triggerNativeCameraCaptureUsingInputAPI();
+      } else {
+        //TODO
+      }
+      return;
+    }
+    if (
+      e.detail === CaptureType.UPLOAD &&
+      $context.isEmbed &&
+      $context.embed === Embed.HANDSET
+    ) {
       return;
     }
     isEmptyState = false;
     await captureStore.onTypeSelect(e.detail);
     await refreshTypeData();
+
+    function triggerNativeCameraCaptureUsingInputAPI() {
+      setTimeout(() => {
+        cameraCaptureRef?.click();
+      }, 10);
+    }
   }
 
   async function onLink(e: CustomEvent) {
@@ -167,13 +183,18 @@
     refreshEmptyState();
   }
 
-  function handleCapture(event: Event) {
-    logger.log({ at: "Capture.svelte - handleCapture" });
+  async function handleCapture(event: Event) {
+    logger.log({ at: "Capture.svelte - handleCapture", event });
     try {
       isSaving = true;
       const input = event.target as HTMLInputElement;
       if (input.files && input.files[0]) {
         const file = input.files[0];
+        if (captureType === CaptureType.UPLOAD) {
+          await captureStore.saveFile(file);
+          isSaving = false;
+          return;
+        }
         const reader = new FileReader();
         reader.onload = (e) => {
           const result = e.target?.result;
@@ -220,9 +241,9 @@
       <Writer />
     </div>
   </div> -->
-{:else if captureType === CaptureType.UPLOAD}
+{:else if captureType === CaptureType.UPLOAD && !$context.isEmbed}
   <FileUploader on:cancel={reset} />
-{:else if captureType === CaptureType.CAMERA && $context.isEmbed && $context.os === OperatingSystem.IOS}
+{:else if captureType === CaptureType.CAMERA && dev_iosCameraCaptureMethod === "input" && $context.isEmbed && $context.os === OperatingSystem.IOS}
   <!-- <CameraCaptureUsingInput /> -->
   <input
     bind:this={cameraCaptureRef}
@@ -336,9 +357,11 @@
             <div class="w-full dp:px-10 dp:my-10">
               <TypeSelector
                 bind:selected={captureType}
-                label={{ label: "Select a type" }}
                 isCapturePage={true}
                 on:select={onTypeSelect}
+                on:capture={(e) => {
+                  handleCapture(e.detail);
+                }}
               />
             </div>
           {/if}

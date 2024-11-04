@@ -268,6 +268,7 @@ class AccountStore extends ObservableStore<
       isTemp?: boolean;
       isReturnUrl?: boolean;
       isExtensionEnv?: boolean;
+      isPreventSync?: boolean;
     } = {}
   ) {
     try {
@@ -277,7 +278,7 @@ class AccountStore extends ObservableStore<
       });
       logger.log({ at: "uploadFileV2", id, contentType, fileName });
       fileName = fileName.replace(/\s+/g, "_");
-      if (account.dataMode === UserDataMode.LOCAL) {
+      if (account.dataMode === UserDataMode.LOCAL || params.isPreventSync) {
         const arrayBuffer = await blob.arrayBuffer();
         const uint8Array = new Uint8Array(arrayBuffer);
         const response = await fileStore.create([

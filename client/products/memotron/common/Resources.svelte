@@ -18,6 +18,7 @@
   import type { IFile } from "$lib/client/components/files/file.type";
   import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
   import NodeItems from "../collection/NodeItems.svelte";
+  import LibraryLoadingPulse from "../library/LibraryLoadingPulse.svelte";
   const dispatch = createEventDispatcher();
   export let data: (INodeThumb | ICollection | IFile)[] = [];
   export let resource: Resource = Resource.node;
@@ -27,6 +28,7 @@
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
   export let isPreventDefault = false;
   export let width: number = 290;
+  export let isShowLoadingPulseAtTheEnd: boolean = false;
   let parentBgIndex = 1;
   $: multiSelectContext = resource + "-" + accessPoint;
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
@@ -105,6 +107,9 @@
           </button>
         {/if}
       {/each}
+      {#if isShowLoadingPulseAtTheEnd}
+        <LibraryLoadingPulse {resource} isTail={true} />
+      {/if}
     {/if}
   </div>
 </div>

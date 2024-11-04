@@ -25,6 +25,7 @@
   export let isStickied: boolean = false;
   export let searchStore;
   export let selectedSubType: any;
+  export let isShowAddButton: boolean = false;
   let isFiltersVisible: boolean = false;
   let isSearchFocused: boolean = false;
   function onKeydown(event: any) {}
@@ -50,15 +51,16 @@
       on:keyup={onKeyup}
       placeholder={"Search " + selectedResource + "s"}
     />
-
-    <button
-      class="flex items-center justify-center bg-bgs2 rounded-md h-full min-w-11"
-      on:click={() => {
-        dispatch("create");
-      }}
-    >
-      <Icon icon="ph:plus" />
-    </button>
+    {#if isShowAddButton}
+      <button
+        class="flex items-center justify-center bg-bgs2 rounded-md h-full min-w-11"
+        on:click={() => {
+          dispatch("create");
+        }}
+      >
+        <Icon icon="ph:plus" />
+      </button>
+    {/if}
   </div>
 {:else}
   <div class="flex flex-col bg-bgs1 sticky top-0 z-20 shadow--sm">

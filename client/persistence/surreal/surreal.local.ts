@@ -585,7 +585,14 @@ export class SurrealPersistence implements IPersistence {
         properties.length > 0 ? `SELECT ${properties.join(", ")}` : "SELECT *";
 
       let query = `${selectClause} FROM ${resource} ${whereClause}`;
-      if (params?.groupBy) query += ` GROUP BY ${params.groupBy.join(", ")}`;
+      if (
+        params?.groupBy &&
+        params?.groupBy?.length === 1 &&
+        params?.groupBy[0] === "all"
+      )
+        query += ` GROUP ALL`;
+      else if (params?.groupBy)
+        query += ` GROUP BY ${params.groupBy.join(", ")}`;
       if (params?.orderBy)
         query += ` ORDER BY ${this.generateOrderByClause(params.orderBy)}`;
       if (params?.limit) query += ` LIMIT ${params.limit}`;
@@ -605,7 +612,8 @@ export class SurrealPersistence implements IPersistence {
         logger.log({
           at: "SurrealPersistence.selectMany - result",
           result,
-          resource
+          resource,
+          query
         });
       }
       return interceptSurrealResponse(result);
