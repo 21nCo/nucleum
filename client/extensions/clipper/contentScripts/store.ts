@@ -59,6 +59,7 @@ import { urlMap } from "$lib/client/products/memotron/common/urlMap";
 import { extensionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
 import { FluxMethod } from "$lib/client/components/flux/flux.type";
 import {
+  determineResourceType,
   isSameResource,
   resourceInList
 } from "$lib/client/components/flux/resourceStores/resource.utils";
@@ -430,6 +431,10 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       return n;
     });
     appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
+    const toType = determineResourceType(to);
+    if (toType === Resource.collection) {
+      return { message: "Added to collection!", type: AlertType.SUCCESS };
+    }
     return { message: "Linked!", type: AlertType.SUCCESS };
   }
 
@@ -675,7 +680,8 @@ class SyncStore extends ObservableStore<ISyncStore> {
   async save(items: OmitForCaptureWithId<IKindleBook | IKindleHighlight>[]) {
     logger.log({ at: "syncStore save", items });
     if (!items || items.length < 1) return;
-    const limitCount = 10;
+    // items = items.slice(0, 800);
+    const limitCount = 300;
     let response;
     this.update((n) => {
       n.progress = 0;
