@@ -85,7 +85,7 @@ export async function generateToken(
   }
 }
 
-const betaProducts = ["app.memotron.io", "pre.memotron.io", "tidigit.com"];
+const betaProducts = ["app.selftron.io", "pre.selftron.io", "tidigit.com"];
 
 export async function signup(data: any, isOAuth = false) {
   console.log("signup", { data, isOAuth });
