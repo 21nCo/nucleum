@@ -36,6 +36,8 @@
   import type { IHighlighter } from "../common/highlighters/highlight.type";
   import { highlightStore } from "../common/highlighters/highlight.store";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import context from "$lib/client/stores/context.store";
+  import { OperatingSystem } from "$lib/client/types/context.type";
 
   export let url: string;
   export let node: any;
@@ -63,9 +65,9 @@
    */
   let DPR = window.devicePixelRatio;
   let ranOnce: boolean = false;
-  let scale: number = 1;
-  const MIN_SCALE = 0.5;
-  const MAX_SCALE = 2.3;
+  let scale: number = $context.os == OperatingSystem.WINDOWS ? 1 : 0.5;
+  const MIN_SCALE = $context.os == OperatingSystem.WINDOWS ? 0.5 : 0.1;
+  const MAX_SCALE = $context.os == OperatingSystem.WINDOWS ? 2.3 : 1.8;
   let scrollTop = 0;
   let pageNumber = 1;
   let totalPages = 1;
