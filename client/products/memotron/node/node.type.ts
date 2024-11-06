@@ -345,6 +345,7 @@ export type INodeLink = IMemotronItemBase &
 export type INodeLinkThumb = INodeLinkBase & {
   id: IRecordId;
   linkedTo: IRecordId;
+  direction: "incoming" | "outgoing";
 };
 
 export type LinkThumbnail = INodeLink & {

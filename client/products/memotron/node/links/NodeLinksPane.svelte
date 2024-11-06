@@ -38,6 +38,8 @@
     resourceInList,
     isSameResource
   } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
+  import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
   export let node: IActiveNodeStore;
   $: multiSelectContext = $node.id + "-" + ResourceAccessPoint.NODE_LINKS;
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
@@ -57,6 +59,7 @@
   let isShowLinkTagFilters = false;
   let isShowLinkSuggestions = false;
   let dev_linkTagFilter: "and" | "or" = "and";
+  let selectedMentionDirection: "incoming" | "outgoing" = "incoming";
 
   onMount(async () => {
     await refresh();
@@ -143,6 +146,11 @@
   }
   async function applyFilters() {
     filtered = all.filter((x) => x.link.linkType === selectedLinkType);
+    if (selectedLinkType === LinkType.MENTION) {
+      filtered = filtered.filter(
+        (x) => x.link.direction === selectedMentionDirection
+      );
+    }
     if (selectedLinkTags.length > 0) {
       if (dev_linkTagFilter === "or") {
         filtered = filtered.filter((x) =>
@@ -204,7 +212,7 @@
   </div>
   <div class="flex flex-col gap-4 w-full flex-grow">
     <div class="flex gap-4 items-center justify-between">
-      <OptionSelector
+      <!-- <OptionSelector
         size={Size.sm}
         bind:selected={selectedLinkType}
         on:select={applyFilters}
@@ -220,28 +228,69 @@
             icon: "at-symbol"
           }
         ]}
-      />
-      <div class="flex items-center">
-        <Toggle
-          icon="ph:lightbulb-thin"
-          tooltip="Link suggestions"
-          bind:on={isShowLinkSuggestions}
-        />
-        <Toggle
-          icon="ph:tag-thin"
-          tooltip="Link tags"
-          bind:on={isShowLinkTagFilters}
-          count={selectedLinkTags.length > 0
-            ? selectedLinkTags.length
-            : undefined}
-        />
-      </div>
+      /> -->
+      <PanelSwitcher
+        items={[
+          {
+            value: LinkType.DIRECT,
+            label: "Direct",
+            icon: "arrow-right-left"
+          },
+          {
+            label: "Mentions",
+            value: LinkType.MENTION,
+            icon: "at-symbol"
+          }
+        ]}
+        size={Size.sm}
+        bind:value={selectedLinkType}
+        on:switch={applyFilters}
+        isExpandToFullWidth={true}
+        style={PanelSwitcherStyle.BAR}
+      >
+        <slot name="right" slot="right">
+          <div class="flex items-center">
+            <Toggle
+              icon="ph:lightbulb-thin"
+              tooltip="Link suggestions"
+              bind:on={isShowLinkSuggestions}
+            />
+            <Toggle
+              icon="ph:tag-thin"
+              tooltip="Link tags"
+              bind:on={isShowLinkTagFilters}
+              count={selectedLinkTags.length > 0
+                ? selectedLinkTags.length
+                : undefined}
+            />
+          </div>
+        </slot>
+      </PanelSwitcher>
     </div>
     {#if isShowLinkTagFilters}
       <LinkTagFilter
         links={_links}
         bind:selected={selectedLinkTags}
         on:change={applyFilters}
+      />
+    {/if}
+    {#if selectedLinkType === LinkType.MENTION}
+      <OptionSelector
+        size={Size.sm}
+        bind:selected={selectedMentionDirection}
+        on:select={applyFilters}
+        options={[
+          {
+            value: "incoming",
+            label: "Incoming",
+            icon: "ph:arrow-down-left"
+          },
+          {
+            label: "Outgoing",
+            value: "outgoing",
+            icon: "ph:arrow-up-right"
+          }
+        ]}
       />
     {/if}
     {#if fetchError}

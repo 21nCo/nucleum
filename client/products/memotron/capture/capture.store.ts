@@ -408,6 +408,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       return { ...x, from: rootId };
     });
     const blockLinks = val.links?.filter((x) => x.from !== "root");
+    logger.log({ at: "CaptureStore.saveLinks", rootLinks, blockLinks, val });
     if (!rootLinks && !blockLinks) return;
     const links = [...(rootLinks ?? []), ...(blockLinks ?? [])].map((x) => {
       return {
@@ -429,11 +430,14 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
   }
 
   async saveMarkdownCapture() {
+    console.time("saveMarkdownCapture");
     const val = this.get();
     //TODO - extract nodes from markdown blocks and save
     const ctx = get(context);
+    console.time("metadata");
     let metadata =
       ctx.embed === Embed.HANDSET ? {} : await resolveNodeCaptureMetadata();
+    console.timeEnd("metadata");
     logger.log({ at: "CaptureStore.saveMarkdownCapture", val, metadata });
     // const id = prefixTable(generateRandomId(), Resource.node);
     const id = val.nodeId ?? generateResourceId(Resource.node);
@@ -475,13 +479,17 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
         const rootBlocks = val.body.blocks.filter((b) =>
           val.rootStructure.includes(b.id)
         );
+        console.time("generateMarkdownText");
         mdText = generateMarkdownText(rootBlocks);
+        console.timeEnd("generateMarkdownText");
 
         if (
           get(userPreferences).localAI.semanticSearch &&
           ctx.embed !== Embed.HANDSET
         ) {
+          console.time("vector");
           try {
+            console.time("tacoWorker");
             tacoWorker.postMessage({
               action: TacoActions.GET_EMBEDDINGS,
               params: {
@@ -493,11 +501,13 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
                 resolve(e.data);
               };
             });
+            console.timeEnd("tacoWorker");
             vectorInsertionresult = await vectorResourceStore.create({
               id: generateResourceId(Resource.vector),
               embedding: embedding,
               node: id
             });
+            console.timeEnd("vector");
           } catch (e) {
             logger.error({
               at: "CaptureStore.saveMarkdownCapture - vector generation error",
@@ -513,6 +523,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
         vector: vectorInsertionresult?.[0]?.id
       };
 
+      console.time("children");
       for (let block of val.childrenWithStructure) {
         const correspondingContent = val.body.blocks.find(
           (b) => b.id === block.id
@@ -559,6 +570,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
           id: block.id,
           contentType: correspondingContent?.contentType,
           body: correspondingContent?.body,
+          label: correspondingContent?.label,
           text: mdText,
           vector:
             vectorInsertionresult?.length > 0
@@ -569,12 +581,14 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
           children: block.children
         });
       }
+      console.timeEnd("children");
     }
 
     let result: any = await nodeStore.create([root, ...remainingResources]);
     console.log("md save result", result);
     await this.saveLinks(id);
     this.postSave(result);
+    console.timeEnd("saveMarkdownCapture");
     return result;
   }
 }

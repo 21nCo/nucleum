@@ -676,64 +676,77 @@ class Flux {
     resources?: Resource[];
   }) {
     logger.log({ at: "flux.cloneDown", stores: this.stores });
-    if (await determineIfOffline()) return;
-    const resources = params?.resources ?? this.resolveSyncResources();
-    const result = await this.performSync(SyncMethod.CLONE_DOWN, {
-      resources,
-      isExtension: this.isExtensionEnvironment
-    });
-    for (let i = 0; i < result.length; i++) {
-      const resource = resources[i];
-      const resourceResponse = result[i];
-      if (resourceResponse.result && resourceResponse.result.length > 0) {
-        console.time(`cloneDown - ${resource}`);
-        if (!this.isExtensionEnvironment && resource !== Resource.kv) {
-          dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
-            subMessage: `Syncing ${resource}s...`
+    try {
+      if (await determineIfOffline()) return;
+      const resources = params?.resources ?? this.resolveSyncResources();
+      const result = await this.performSync(SyncMethod.CLONE_DOWN, {
+        resources,
+        isExtension: this.isExtensionEnvironment
+      });
+      for (let i = 0; i < result.length; i++) {
+        const resource = resources[i];
+        const resourceResponse = result[i];
+        if (resourceResponse.result && resourceResponse.result.length > 0) {
+          console.time(`cloneDown - ${resource}`);
+          if (!this.isExtensionEnvironment && resource !== Resource.kv) {
+            dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
+              subMessage: `Syncing ${resource}s...`
+            });
+          }
+          const result = await this.persistence.mutation(resource as Resource, {
+            records: resourceResponse.result,
+            action:
+              params?.isReconciliation ||
+              resource === Resource.kv ||
+              resource === Resource.link
+                ? PersistenceActionType.INSERT
+                : PersistenceActionType.BULK_INSERT
           });
-        }
-        const result = await this.persistence.mutation(resource as Resource, {
-          records: resourceResponse.result,
-          action:
-            params?.isReconciliation ||
-            resource === Resource.kv ||
-            resource === Resource.link
-              ? PersistenceActionType.INSERT
-              : PersistenceActionType.BULK_INSERT
-        });
-        logger.debug({
-          at: "flux.cloneDown - result",
-          resource,
-          result
-        });
-        if (!result) {
-          const fallbackResult = await this.persistence.mutation(
-            resource as Resource,
-            {
-              records: resourceResponse.result,
-              action: PersistenceActionType.INSERT
-            }
-          );
           logger.debug({
-            at: "flux.cloneDown - fallbackResult",
+            at: "flux.cloneDown - result",
             resource,
-            fallbackResult
+            result
           });
+          if (!result) {
+            const fallbackResult = await this.persistence.mutation(
+              resource as Resource,
+              {
+                records: resourceResponse.result,
+                action: PersistenceActionType.INSERT
+              }
+            );
+            logger.debug({
+              at: "flux.cloneDown - fallbackResult",
+              resource,
+              fallbackResult
+            });
+          }
+          console.timeEnd(`cloneDown - ${resource}`);
         }
-        console.timeEnd(`cloneDown - ${resource}`);
+      }
+      if (params?.isReconciliation) return true;
+      await this.loadInMemoryStores();
+      await this.persistence.mutation(Resource.kv, {
+        record: {
+          id: "kv:local",
+          lastSyncDown: new Date().getTime(),
+          lastSyncUp: new Date().getTime()
+        },
+        action: PersistenceActionType.MERGE
+      });
+      return true;
+    } catch (e) {
+      logger.error({ at: "flux.cloneDown", error: e });
+      return false;
+    } finally {
+      if (!this.isExtensionEnvironment && !params?.isReconciliation) {
+        dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
+          message: `Sync completed.`,
+          subMessage: "",
+          isFinished: true
+        });
       }
     }
-    if (params?.isReconciliation) return true;
-    await this.loadInMemoryStores();
-    await this.persistence.mutation(Resource.kv, {
-      record: {
-        id: "kv:local",
-        lastSyncDown: new Date().getTime(),
-        lastSyncUp: new Date().getTime()
-      },
-      action: PersistenceActionType.MERGE
-    });
-    return true;
   }
 
   /**

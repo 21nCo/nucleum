@@ -18,6 +18,8 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { logger } from "../../debug/logger.client";
   import { scrollIntoViewOnFocus } from "$lib/client/actions/scroll.action";
+  import { isValidString, truncateString } from "$lib/shared/utils/text.utils";
+  import { resolveNodeLabelString } from "$lib/client/products/memotron/node/node.utils";
   const dispatch = createEventDispatcher();
   //   export let block: Block<TextContent>;
   export let id: string = generateUID();
@@ -171,7 +173,10 @@
     console.log("addMention - start", { item, content, innerHTML });
     content = content?.replace(
       "@" + (searchQuery ?? ""),
-      `[${item.label ?? item.text ?? "Unknown"}](resource=${item.id})`
+      `[${
+        isValidString(truncateString(resolveNodeLabelString(item), 50)) ??
+        "Unknown"
+      }](resource=${item.id})`
     );
     innerHTML = innerHTML.replace(
       "@" + (searchQuery ?? ""),

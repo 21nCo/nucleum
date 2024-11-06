@@ -86,15 +86,15 @@ export function generateMarkdownText(blocks: IBlock[]) {
           //todo - add remaining inline style patterns
           return b.body;
         case NodeType.HEADING1:
-          return `# ${b.body}`;
+          return `# ${b.label ?? b.body}`;
         case NodeType.HEADING2:
-          return `## ${b.body}`;
+          return `## ${b.label ?? b.body}`;
         case NodeType.HEADING3:
-          return `### ${b.body}`;
+          return `### ${b.label ?? b.body}`;
         case NodeType.HEADING4:
-          return `#### ${b.body}`;
+          return `#### ${b.label ?? b.body}`;
         case NodeType.HEADING5:
-          return `##### ${b.body}`;
+          return `##### ${b.label ?? b.body}`;
         case NodeType.DOUBLE_DIVIDER:
           return `---`;
         case NodeType.DIVIDER:
