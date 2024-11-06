@@ -128,7 +128,7 @@ export function parseOAuthUserDataForApple(authResponse: {
       ...decoded.payload,
       firstName: user.name?.firstName,
       lastName: user.name?.lastName,
-      email: user.email
+      email: user.email ?? decoded.payload.email
     };
   } else if (id_token) {
     let decoded = jwt.decode(id_token, { complete: true });

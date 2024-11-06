@@ -124,7 +124,9 @@ export async function signup(data: any, isOAuth = false) {
   if (response?.[1]?.result && response[1].result.userCount === undefined) {
     console.log("new user created, logging in");
     const userInfo = response[1].result[0];
-    const userId = userInfo.id.split("user:")[1];
+    const userId = userInfo?.id?.split("user:")[1];
+    if (!userId)
+      return { error: "Something went wrong. Unable to signup user." };
     await log(userId, { ...context, activity: "signup" });
     return await generateToken(userId, userInfo, {
       isTrusted,
