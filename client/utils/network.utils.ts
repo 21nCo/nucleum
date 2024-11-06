@@ -112,7 +112,8 @@ export async function performHttpNetworkOperation(params: {
       const errorText = await response.text();
       logger.error({ at: "API call failed with status", response, errorText });
       if (response.status === 401 && !isExtensionEnvironment()) {
-        signout();
+        await signout();
+        window.location.reload();
       }
       throw new Error(`API call failed with status: ${response.status}`);
     }

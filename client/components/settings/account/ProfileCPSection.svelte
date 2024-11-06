@@ -11,7 +11,6 @@
   import { bg, cn } from "$lib/client/utils/ui.utils";
   import ProfilePicture from "./ProfilePicture.svelte";
   import { Modes } from "../../calendar/birdView/Birdview.type";
-  import { signout } from "$lib/client/utils/account.utils";
   import modalEvent from "../../modal/modal.store";
   import { Action } from "$lib/client/types/action.enum";
   export let context: "page" | "modal" = "page";
@@ -102,8 +101,7 @@
           parentBgIndex={3}
           size={Size.sm}
           on:click={() => {
-            // account.signOut({ isPreventDapIdClear: true });
-            signout();
+            account.signOut({ isPreventDapIdClear: true });
             modalEvent.hide(Action.SETTINGS);
           }}
         />

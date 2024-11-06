@@ -120,7 +120,7 @@ class LinkTagStore extends ResourceStore<ILinkTag> {
   }
 
   transform(data: ILinkTag[]) {
-    const groupsArray = data.reduce(
+    const groupsArray = data?.reduce(
       (acc, item) => {
         const group = item.group ?? "";
         if (!acc[group]) {
@@ -136,7 +136,9 @@ class LinkTagStore extends ResourceStore<ILinkTag> {
       items: items.filter(activeResourceFilter)
     }));
     const withoutGroup = groups.find((x) => x.group === "");
-    return [withoutGroup, ...groups.filter((x) => x.group !== "")];
+    return [withoutGroup, ...groups.filter((x) => x.group !== "")].filter(
+      (x) => x
+    );
   }
 
   search(query: string) {

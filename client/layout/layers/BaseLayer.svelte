@@ -19,7 +19,10 @@
   import { AlertType } from "$lib/client/types/notification.type";
   import { logger } from "$lib/client/components/debug/logger.client";
   import { LogType } from "$lib/client/components/debug/debug.type";
-  import { clientStorage } from "$lib/client/persistence/persistence.utils";
+  import {
+    clientStorage,
+    getDapId
+  } from "$lib/client/persistence/persistence.utils";
   import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   import { cn } from "$lib/client/utils/ui.utils";
@@ -98,11 +101,7 @@
    */
   async function setLaunchContext() {
     try {
-      let dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
-      if (!dapId) {
-        dapId = generateSimpleRandomId();
-        clientStorage.set(ClientStorageKey.DAP_ID, dapId);
-      }
+      const dapId = await getDapId();
       $context.dapId = dapId;
       const appDetails = extractProduct(
         import.meta.env?.VITE_HOST ??

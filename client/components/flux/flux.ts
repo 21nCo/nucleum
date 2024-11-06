@@ -20,18 +20,15 @@ import {
   detectTimeZoneFallback
 } from "$lib/client/utils/time.utils";
 import {
-  ClientStorageKey,
   type ILocal,
   type IPersistence,
-  type ISyncHandler,
   PersistenceProvider
 } from "$lib/client/persistence/persistence.type";
 import {
   dispatchCustomEvent,
   isExtensionEnvironment
 } from "$lib/client/utils/browser.utils";
-import { clientStorage } from "$lib/client/persistence/persistence.utils";
-// import { SurrealSync } from "$lib/client/persistence/surreal/surreal.sync";
+import { getDapId } from "$lib/client/persistence/persistence.utils";
 import { generateRandomId } from "$lib/shared/utils/crypto.utils";
 import type { ISurrealDatabase } from "$lib/client/types/db.type";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
@@ -550,10 +547,7 @@ class Flux {
 
   private async resolveDapId(local: ILocal) {
     if (!local.dapId || local.dapId === "" || typeof local.dapId !== "string") {
-      const dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
-      if (!dapId) {
-        throw new Error("DAP ID not found");
-      }
+      const dapId = await getDapId();
       await this.persistence.mutation(Resource.kv, {
         record: {
           id: "kv:local",

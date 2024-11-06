@@ -35,7 +35,6 @@
     }
   }
   function clearCache() {
-    account.clearAllCache();
     account.signOut();
   }
 </script>

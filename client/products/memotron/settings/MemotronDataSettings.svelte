@@ -65,10 +65,9 @@
         icon: "ph:trash-light",
         variant: ButtonVariant.DANGER,
         callback: async () => {
-          await account.signOut();
           await flux.clear();
           toasts.success("Data cleared successfully");
-          window.location.reload();
+          await account.signOut();
           return true;
         }
       }
