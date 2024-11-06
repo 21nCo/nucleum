@@ -108,7 +108,7 @@
 {/if}
 
 {#if pdfAnnotations.length > 0}
-  <div class="h-full w-full flex flex-col gap-2 mt-2 overflow-y-scroll">
+  <div class="w-full flex flex-col flex-grow gap-2 mt-2 overflow-y-scroll">
     {#each pdfAnnotations as trace, index}
       {#if (selectedType == "tasks" && trace.annotType === AnnotationType.TASK) || (selectedType != "tasks" && trace.annotType !== AnnotationType.TASK)}
         <button

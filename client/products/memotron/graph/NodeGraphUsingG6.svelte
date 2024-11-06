@@ -21,6 +21,7 @@
     combos: any[];
   } = { nodes: [], edges: [], combos: [] };
   export let centerNodeId: string;
+  export let layout: string;
   let graph: Graph;
   let _data: GraphData = {
     nodes: [],
@@ -68,7 +69,9 @@
     });
     _data.edges = data.edges.map((edge) => {
       return {
-        ...edge,
+        source: edge.source,
+        target: edge.target,
+        linkType: edge.linkType,
         // type: "cubic"
         type: "line"
       } as EdgeData;
@@ -137,6 +140,11 @@
           nodeSpacing: 40, // Minimum spacing between nodes
           maxIteration: 200 // More iterations for better layout
         };
+      case "d3-force":
+        return {
+          type: "d3-force",
+          linkDistance: 350
+        };
     }
   }
 
@@ -150,7 +158,8 @@
       node: {
         style: {
           badgeBackgroundFill: currentColors["bgs4"],
-          badgeFontSize: 12
+          badgeFontSize: 12,
+          badgeFill: currentColors["fgs1"]
           // size: 10
           // labelFill: "orange",
           // labelFill: "white"
@@ -208,7 +217,7 @@
           degree: 1
         }
       ],
-      layout: resolveLayout("dendrogram-1")
+      layout: resolveLayout(layout ?? "dendrogram-1")
     });
 
     graph.render();

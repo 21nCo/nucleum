@@ -39,6 +39,7 @@
   } from "../node.utils";
   import { logger } from "$lib/client/components/debug/logger.client";
   import NodeRightPaneContent from "../rightPanel/NodeRightPaneContent.svelte";
+  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
   export let node: IActiveNodeStore;
   export let rightPane: NodeRightPaneType | undefined = undefined;
   let linkedNodes: INode[];
@@ -171,7 +172,11 @@
         id: $node.id.toString(),
         type: "hexagon",
         badge: $node.links?.length,
-        label: $node.label ?? "",
+        label: resolveNodeLabelString($node),
+        icon: webNodeTypeList.includes($node.contentType)
+          ? resolveNodeFavicon($node)
+          : undefined,
+        fill: resolveNodeGraphFill($node),
         combo: undefined
       });
 
@@ -179,6 +184,7 @@
         return {
           source: $node.id.toString(),
           target: l.linkedTo.toString(),
+          id: l.id,
           linkType: l.linkType
         };
       });
@@ -208,7 +214,12 @@
         if (!data.edges || data.edges.length === 0) return;
         edges?.push(...data.edges);
         nodes.push(...data.nodes);
-        nodes = nodes.filter(removeDuplicatesFilter);
+        nodes = nodes.filter(removeDuplicatesFilter).map((x) => {
+          return {
+            ...x,
+            combo: depth === 1 ? x.combo : undefined
+          };
+        });
       }
       edges = edges
         ?.map((x) => {
@@ -220,12 +231,31 @@
                 : enumToString(x.linkType)
           };
         })
-        .filter((x) => x);
-      graphData = {
-        nodes,
-        edges,
-        combos
-      };
+        .filter((x) => x)
+        .filter(removeDuplicatesFilter)
+        .filter((x, index) => {
+          return (
+            x.source &&
+            x.target &&
+            nodes.some((y) => y.id === x.source) &&
+            nodes.some((y) => y.id === x.target) &&
+            edges?.findIndex(
+              (y) => y.source === x.source && y.target === x.target
+            ) === index
+          );
+        });
+      if (depth === 1) {
+        graphData = {
+          nodes,
+          edges,
+          combos
+        };
+      } else {
+        graphData = {
+          nodes,
+          edges
+        };
+      }
     }
   }
 
@@ -256,6 +286,7 @@
       .map((link: any) => ({
         source: link.in.toString(),
         target: link.out.toString(),
+        id: link.id,
         linkType: link.linkType
       }));
     const allNodesList = Array.from(
@@ -298,7 +329,7 @@
   }
 </script>
 
-<div class="flex flex-col gap-3 w-full h-full p-3">
+<div class="flex flex-col gap-3 w-full flex-grow p-3">
   <div
     class="flex w-full justify-between bg-bgs2 border border-brs3 rounded-md px-4 py-3"
   >
@@ -332,7 +363,7 @@
       {/if}
       <Badge text="beta" />
     </div>
-    <div class="flex tp:gap-8 2k:gap-12 items-center">
+    <div class="flex tp:gap-6 2k:gap-8 items-center">
       <div class="flex gap-4 items-center">
         {#if !isAutoGrouping}
           <!-- <span class="text-b3 text-fgs3">
@@ -377,6 +408,7 @@
           <span>Auto grouping</span>
         </div> -->
       </div>
+
       <div class="w-32">
         <DropDown
           items={depthOptions}
@@ -389,6 +421,18 @@
           }}
         />
       </div>
+      <Toggle
+        icon="ph:arrows-left-right-thin"
+        tooltip="See all links"
+        parentBgIndex={2}
+        on:change={(e) => {
+          if (e.detail) {
+            rightPane = NodeRightPaneType.LINKS;
+          } else if (rightPane === NodeRightPaneType.LINKS) {
+            rightPane = undefined;
+          }
+        }}
+      />
     </div>
   </div>
   <div class="flex w-full flex-1 min-h-0">
@@ -396,6 +440,7 @@
       {#if selectedView === "Graph"}
         <NodeGraph
           bind:this={graphRef}
+          layout={depth === 1 ? "dendrogram-1" : "radial-2"}
           data={graphData}
           nodeId={$node.id.toString()}
           on:select={onNodeSelect}
@@ -407,7 +452,7 @@
     </div>
     {#if rightPane && rightPane !== NodeRightPaneType.NONE}
       <div
-        class="flex gap-2 h-full overflow-auto min-w-96 border-l border-brs3"
+        class="flex gap-2 h-full overflow-auto min-w-96 max-w-96 border-l border-brs3"
       >
         <NodeRightPaneContent
           {node}

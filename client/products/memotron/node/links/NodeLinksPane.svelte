@@ -181,7 +181,7 @@
   $: console.log({ all, _links, filtered });
 </script>
 
-<div class="relative flex flex-col gap-3 pt-1 h-full w-full">
+<div class="relative flex flex-col gap-3 pt-1 flex-grow w-full">
   <div class="flex flex-col w-full">
     <LinkSearch context="nodelinkspane" on:select={onSelect} bind:searchQuery />
     {#if linkStatus.message}
@@ -249,14 +249,16 @@
     {:else if isShowLinkSuggestions}
       <ComingSoonView mainText="Link suggestions" subText="Coming soon..." />
     {:else if filtered.length > 0}
-      <LinkThumbnailItems
-        links={filtered}
-        accessPointId={node.id}
-        on:click={onClick}
-        on:action={onAction}
-        on:tagClick={onTagClick}
-      />
-      <ScrollViewBottomSpacer />
+      <div class="flex flex-col flex-grow w-full">
+        <LinkThumbnailItems
+          links={filtered}
+          accessPointId={node.id}
+          on:click={onClick}
+          on:action={onAction}
+          on:tagClick={onTagClick}
+        />
+        <ScrollViewBottomSpacer />
+      </div>
     {:else}
       <EmptyStatusView
         isSearchContext={true}
