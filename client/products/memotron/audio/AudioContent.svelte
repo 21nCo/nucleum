@@ -29,7 +29,7 @@
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
-  import { read_audio } from "@xenova/transformers";
+  // import { read_audio } from "@xenova/transformers";
   import { appStore } from "$lib/client/stores/app.store";
   import { Action } from "$lib/client/types/action.enum";
   import view from "$lib/client/stores/view.store";
@@ -38,6 +38,7 @@
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import context from "$lib/client/stores/context.store";
   import { Embed } from "$lib/client/types/context.type";
+  import { read_audio } from "@huggingface/transformers";
 
   export let body: any = {};
   export let url: string;
@@ -152,11 +153,10 @@
     if (!transcript || typeof transcript !== "string") return;
     label = body?.initTranscription == false ? "Retranscribe" : "Transcribe";
     $userPreferences.lastUsedTranscriptionModel = model;
-    //  TODO - re enable md transcription after fixing the audio to md to use new block schema
     const mdBlocks = Audio2MD.convertAudioToMarkdown(transcript);
-    // const resp = await nodeStore.modify(nodeId, {
-    //   body: { mdBlocks }
-    // });
+    const resp = await nodeStore.modify(nodeId, {
+      body: { mdBlocks }
+    });
     dispatch("refresh");
   }
   /**

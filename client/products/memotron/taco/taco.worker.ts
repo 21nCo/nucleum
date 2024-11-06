@@ -1,4 +1,5 @@
-import { env, pipeline } from "@xenova/transformers";
+// import { env, pipeline } from "@xenova/transformers";
+import { env, pipeline } from "@huggingface/transformers";
 import type { TranscriptionModel } from "../../../types/taco.types";
 import { TacoActions } from "../../../types/taco.types";
 
@@ -80,7 +81,8 @@ class FeatureExtractor {
         "feature-extraction",
         "Fuzail22/onnx-msmarco-distilbert-cos-v5",
         {
-          quantized: false,
+          // quantized: false,
+          dtype: "fp32",
           progress_callback
         }
       );
@@ -107,7 +109,11 @@ class FeatureExtractor {
         return value;
       });
       let endTime = Date.now();
-      // console.log("extraction time in seconds:", (endTime - startTime) / 1000);
+      // console.log(
+      //   "extraction time in seconds:",
+      //   (endTime - startTime) / 1000,
+      //   arr[0]
+      // );
       postMessage(arr);
       // return arr;
     } catch (error) {
@@ -126,7 +132,8 @@ class QuestionAnswerer {
         "question-answering",
         "Fuzail22/onnx-roberta-base-squad2",
         {
-          quantized: false,
+          // quantized: false,
+          dtype: "fp32",
           progress_callback
         }
       );
@@ -168,7 +175,7 @@ class Text2textGenerator {
         "text2text-generation",
         "Xenova/LaMini-Flan-T5-783M",
         {
-          quantized: true,
+          // quantized: true,
           progress_callback
         }
       );

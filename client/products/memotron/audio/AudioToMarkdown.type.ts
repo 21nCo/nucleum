@@ -1,7 +1,7 @@
 export interface A2MDBlock {
   id?: string;
   contentType?: string;
-  body?: string;
+  body?: string | { indent: number; text: string; order: number };
   listType?: string;
   children?: A2MDBlock[];
 }
