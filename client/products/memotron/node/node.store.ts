@@ -47,12 +47,12 @@ import {
 } from "$lib/client/components/flux/resourceStores/resource.utils";
 import view from "$lib/client/stores/view.store";
 import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-import { TacoActions } from "$lib/client/types/taco.types";
 
 import context from "$lib/client/stores/context.store";
 import type { ICollectionExpanded } from "../collection/collection.type";
 import type { IAvatar } from "$lib/client/types/avatar.type";
 import { Embed } from "$lib/client/types/context.type";
+import { TacoActions } from "../taco/taco.types";
 
 export const hierarchyFactorLimit = 5;
 

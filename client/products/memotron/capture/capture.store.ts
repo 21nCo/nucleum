@@ -19,6 +19,7 @@ import { toasts } from "$lib/client/stores/notification.store";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import {
   generateMarkdownText,
+  getMarkdownSymbolPrepended,
   resolveNodeCaptureMetadata
 } from "$lib/client/products/memotron/node/node.utils";
 import { nodeStore, vectorResourceStore } from "../node/node.store";
@@ -50,11 +51,11 @@ import { UserDataMode } from "$lib/client/types/account.type";
 import { MemotronAction } from "../memotronAction.enum";
 import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
 import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
-import { TacoActions } from "$lib/client/types/taco.types";
 import { Persistence } from "$lib/client/persistence/persistence";
 import view from "$lib/client/stores/view.store";
 import context from "$lib/client/stores/context.store";
 import { Embed } from "$lib/client/types/context.type";
+import { TacoActions } from "../taco/taco.types";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
@@ -493,7 +494,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
             tacoWorker.postMessage({
               action: TacoActions.GET_EMBEDDINGS,
               params: {
-                text: mdText
+                text: val.label + " \n" + mdText
               }
             });
             const embedding = await new Promise((resolve, reject) => {
@@ -535,7 +536,10 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
           const childrenNodes = val.body.blocks.filter((b) =>
             block.children?.includes(b.id)
           );
-          mdText = generateMarkdownText(childrenNodes);
+          mdText =
+            getMarkdownSymbolPrepended(correspondingContent!) +
+            " \n" +
+            generateMarkdownText(childrenNodes);
 
           if (
             get(userPreferences).localAI.semanticSearch &&

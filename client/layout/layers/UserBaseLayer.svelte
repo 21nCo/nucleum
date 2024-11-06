@@ -46,6 +46,7 @@
   import posthog from "posthog-js";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
+  import { verifyVectorGenerationTransactionNUpdate } from "$lib/client/products/memotron/taco/taco.store";
 
   const loadingMessages = {
     cloneUp: {
@@ -79,6 +80,7 @@
     addWindowEventListeners();
     await initializeUser();
     dispatch("ready");
+    verifyVectorGenerationTransactionNUpdate();
     $appLoadingState.isBaseLoaded = true;
   });
   /**
