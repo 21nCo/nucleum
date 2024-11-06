@@ -45,6 +45,10 @@ export type ICaptureStore = IObservableStoreSubject & {
    * as change of body object in markdown is not detected by svelte
    */
   refreshId: number;
+  /**
+   * Used in context of markdown capture - to save embeded content with a creation Context
+   */
+  nodeId?: IRecordId;
 };
 
 type ICaptureLink = {

@@ -56,7 +56,7 @@ export const resizable: Action<HTMLElement, ResizableOptions> = (
   }
 
   function getHandleClass(edge: Edge): string {
-    const baseClasses = "bg-aps1 opacity-50 z-10";
+    const baseClasses = "resizer bg-aps1 opacity-50 z-10";
     switch (edge) {
       case "left":
         return `${baseClasses} top-0 left-0 w-1.5 h-full cursor-col-resize`;

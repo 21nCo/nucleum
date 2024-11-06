@@ -12,8 +12,12 @@
   import view from "$lib/client/stores/view.store";
   import PlayerControl from "$lib/client/elements/player/controls/PlayerControl.svelte";
   import { createEventDispatcher } from "svelte";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import type { IRecordId } from "$lib/client/types/data.type";
   const dispatch = createEventDispatcher();
   export let isSaveInProgress: boolean = false;
+  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.CAPTURE;
+  export let creationContext: IRecordId | undefined = undefined;
 
   let recordingState: PlayActionState = PlayActionState.NOT_STARTED;
   let url: string;
@@ -106,9 +110,14 @@
     isSaveInProgress = true;
     const result = await captureStore.saveAudioRecording(
       blobRefernce,
-      recordingDuration
+      recordingDuration,
+      {
+        isEmbedContext: accessPoint === ResourceAccessPoint.MARKDOWN_EMBED,
+        creationContext
+      }
     );
     isSaveInProgress = false;
+    dispatch("save", result);
   }
 </script>
 

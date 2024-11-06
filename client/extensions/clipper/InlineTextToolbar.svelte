@@ -41,6 +41,15 @@
     feedback = "";
     if (id) refreshClip(id, $webpage.clips);
   });
+
+  async function onPropertyUpdate(e: CustomEvent) {
+    if (!e.detail || !e.detail?.id || e.detail?.value === undefined || !id)
+      return;
+    webpage.updateClipProperty(id, {
+      id: e.detail.id,
+      value: e.detail.value
+    });
+  }
 </script>
 
 <div
@@ -92,6 +101,10 @@
     <LinkItems
       links={clip?.links}
       isWrapItems={true}
+      nodeId={id}
+      propertyValues={clip?.properties}
+      on:propertyChange={onPropertyUpdate}
+      isExpandable={true}
       on:click
       on:unlink={async (e) => {
         feedback = "Removing link...";

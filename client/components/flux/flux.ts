@@ -20,32 +20,38 @@ import {
   detectTimeZoneFallback
 } from "$lib/client/utils/time.utils";
 import {
-  ClientStorageKey,
   type ILocal,
   type IPersistence,
-  type ISyncHandler,
   PersistenceProvider
 } from "$lib/client/persistence/persistence.type";
 import {
   dispatchCustomEvent,
   isExtensionEnvironment
 } from "$lib/client/utils/browser.utils";
-import { clientStorage } from "$lib/client/persistence/persistence.utils";
-import { SurrealSync } from "$lib/client/persistence/surreal/surreal.sync";
+import { getDapId } from "$lib/client/persistence/persistence.utils";
 import { generateRandomId } from "$lib/shared/utils/crypto.utils";
 import type { ISurrealDatabase } from "$lib/client/types/db.type";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 
 import { resolveCurrentUserId } from "$lib/client/utils/account.utils";
 import { GlobalEvent } from "$lib/client/types/event.enum";
-import { determineIfOffline } from "$lib/client/utils/network.utils";
+import {
+  determineIfOffline,
+  performApiCall
+} from "$lib/client/utils/network.utils";
+import { ExtensionEvent } from "$lib/client/types/extension.type";
+import {
+  relayToContentScript,
+  relayToSidePanel
+} from "$lib/client/utils/extension.utils";
+import { SyncMethod } from "$lib/shared/types/sync.type";
 
 class Flux {
   static _instance: Flux | null = null;
   stores: IStore[] = [];
   provider!: PersistenceProvider;
   persistence!: IPersistence;
-  syncer!: ISyncHandler;
+  // syncer!: ISyncHandler;
   remote!: ISurrealDatabase;
   private isLocalMode: boolean = false;
   private isExtensionEnvironment: boolean = false;
@@ -74,7 +80,7 @@ class Flux {
       case PersistenceProvider.SURREAL_SURREAL:
       case PersistenceProvider.DEXIE_SURREAL:
         Flux._instance.remote = new SurrealDatabase();
-        Flux._instance.syncer = new SurrealSync(Flux._instance.remote);
+        // Flux._instance.syncer = new SurrealSync(Flux._instance.remote);
         break;
       default:
         break;
@@ -218,7 +224,10 @@ class Flux {
 
   async mutation<T extends IResource>(
     resource: Resource,
-    params: IMutationParamsv2<T>
+    params: IMutationParamsv2<T>,
+    additionalParams: {
+      isPreventSubscriptions?: boolean;
+    } = {}
   ) {
     let response;
     logger.log({ at: "flux.mutation", resource, params });
@@ -232,12 +241,21 @@ class Flux {
           }, 100);
         }
       }
-      if (!this.isExtensionEnvironment) {
-        dispatchCustomEvent(GlobalEvent.MUTATION, { resource, params });
-      }
-      const correspondingStore = this.stores.find((x) => x.id === resource);
-      if (correspondingStore?.isInMemory) {
-        await this.loadInMemoryResourceStore(resource);
+      if (!additionalParams?.isPreventSubscriptions) {
+        if (this.isExtensionEnvironment) {
+          const message = {
+            event: ExtensionEvent.MUTATION,
+            data: { resource, params }
+          };
+          relayToSidePanel(message);
+          relayToContentScript(message);
+        } else {
+          dispatchCustomEvent(GlobalEvent.MUTATION, { resource, params });
+        }
+        const correspondingStore = this.stores.find((x) => x.id === resource);
+        if (correspondingStore?.isInMemory) {
+          await this.loadInMemoryResourceStore(resource);
+        }
       }
     } catch (e) {
       logger.error({
@@ -341,7 +359,7 @@ class Flux {
     try {
       logger.log({ at: "flux.selectMany", resource, params });
       const result = await this.persistence.selectMany(resource, params);
-      logger.log({ at: "flux.selectMany - result", result });
+      logger.log({ at: "flux.selectMany - result", resource, params, result });
       return result;
     } catch (e) {
       logger.error({
@@ -404,6 +422,51 @@ class Flux {
     isShowRefreshingState: boolean = false
   ) {}
 
+  async performSync(method: SyncMethod, data: any) {
+    try {
+      const result = await performApiCall(`sync/${method}`, "POST", data);
+      let response;
+      if (result?.ok) {
+        response = await result.json();
+      }
+      logger.log({
+        at: "flux.performSync",
+        method,
+        data,
+        response,
+        result
+      });
+      if (method === SyncMethod.SYNC_UP) {
+        if (response && response.length > 0) {
+          const syncDownData = response[response.length - 1];
+          if (syncDownData?.result && syncDownData.result.length > 0) {
+            return syncDownData.result;
+          }
+        }
+        return [];
+      } else if (method === SyncMethod.SYNC_DOWN) {
+        if (
+          response &&
+          Array.isArray(response) &&
+          response.length > 0 &&
+          response[0].result
+        ) {
+          const syncDownData = response[0].result;
+          const countsRawData = response.slice(1).map((x) => x.result);
+          let counts: { [key: string]: number } = {};
+          countsRawData.forEach((element) => {
+            counts = { ...counts, ...element };
+          });
+          return { syncDownData, counts };
+        }
+        return { syncDownData: [], counts: {} };
+      }
+      return response;
+    } catch (e) {
+      logger.error({ at: "flux.performSync", method, data, error: e });
+    }
+  }
+
   /**
    * Sync up the local changes and from response - syncs down the changes from cloud.
    * @returns
@@ -418,12 +481,12 @@ class Flux {
     const lastSyncDown =
       local?.lastSyncDown ?? new Date().getTime() - 1000 * 60 * 60 * 24;
     const resources = this.resolveSyncResources();
-    const syncDownData = await this.syncer.sync(
+    const syncDownData = await this.performSync(SyncMethod.SYNC_UP, {
       mutations,
       lastSyncDown,
       resources,
-      local?.dapId
-    );
+      dapId: local?.dapId
+    });
     if (syncDownData) {
       await this.processSyncDown(syncDownData);
     }
@@ -484,10 +547,7 @@ class Flux {
 
   private async resolveDapId(local: ILocal) {
     if (!local.dapId || local.dapId === "" || typeof local.dapId !== "string") {
-      const dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
-      if (!dapId) {
-        throw new Error("DAP ID not found");
-      }
+      const dapId = await getDapId();
       await this.persistence.mutation(Resource.kv, {
         record: {
           id: "kv:local",
@@ -503,8 +563,8 @@ class Flux {
   /**
    * Syncs down from cloud to local.
    */
-  async syncDown() {
-    logger.log({ at: "flux.syncDown" });
+  async syncDown(isFirstLoad: boolean = false) {
+    logger.log({ at: "flux.syncDown", isFirstLoad });
     try {
       if (await determineIfOffline()) return;
       if (this.isSyncDownPending) return;
@@ -514,14 +574,55 @@ class Flux {
         local?.lastSyncDown ?? new Date().getTime() - 1000 * 60 * 60 * 24;
       const dapId = await this.resolveDapId(local);
       const resources = this.resolveSyncResources();
-      const result = await this.syncer.syncDown(lastSyncDown, resources, dapId);
+      const result = await this.performSync(SyncMethod.SYNC_DOWN, {
+        lastSyncDown,
+        resources,
+        dapId
+      });
       this.isSyncDownPending = false;
-      if (result) {
-        await this.processSyncDown(result);
+      logger.debug({ at: "flux.syncDown - result", result });
+      if (result.syncDownData) {
+        await this.processSyncDown(result.syncDownData);
       }
+      if (isFirstLoad && result.counts) {
+        let resourcesWithMissSync = [];
+        for (let resource of resources) {
+          const localCount = (
+            await this.persistence.selectMany(resource as Resource)
+          ).length;
+          const cloudCount = result.counts[resource];
+          if (localCount < cloudCount) {
+            resourcesWithMissSync.push(resource);
+            logger.debug({
+              at: "flux.syncDown - resource with miss sync",
+              resource,
+              localCount,
+              cloudCount
+            });
+          }
+        }
+        logger.debug({
+          at: "flux.syncDown - resourcesWithMissSync",
+          resourcesWithMissSync
+        });
+        if (resourcesWithMissSync.length > 0) {
+          await this.cloneDown({
+            resources: resourcesWithMissSync,
+            isReconciliation: true
+          });
+        }
+      }
+      return result;
     } catch (e) {
       logger.error({ at: "flux.syncDown", error: e });
     } finally {
+      if (!this.isExtensionEnvironment && isFirstLoad) {
+        dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
+          message: `Sync completed.`,
+          subMessage: "",
+          isFinished: true
+        });
+      }
       this.isSyncDownPending = false;
     }
   }
@@ -564,41 +665,82 @@ class Flux {
   /**
    * Clones down from cloud to local.
    */
-  async cloneDown() {
+  async cloneDown(params?: {
+    isReconciliation?: boolean;
+    resources?: Resource[];
+  }) {
     logger.log({ at: "flux.cloneDown", stores: this.stores });
-    if (await determineIfOffline()) return;
-    const resources = this.resolveSyncResources();
-    const result = await this.syncer.cloneCloudToLocal({
-      resources,
-      isExtension: this.isExtensionEnvironment
-    });
-    for (let i = 0; i < result.length; i++) {
-      const resource = resources[i];
-      const resourceResponse = result[i];
-      if (resourceResponse.result && resourceResponse.result.length > 0) {
-        await this.persistence.mutation(resource as Resource, {
-          records: resourceResponse.result,
-          action: PersistenceActionType.INSERT
+    try {
+      if (await determineIfOffline()) return;
+      const resources = params?.resources ?? this.resolveSyncResources();
+      const result = await this.performSync(SyncMethod.CLONE_DOWN, {
+        resources,
+        isExtension: this.isExtensionEnvironment
+      });
+      for (let i = 0; i < result.length; i++) {
+        const resource = resources[i];
+        const resourceResponse = result[i];
+        if (resourceResponse.result && resourceResponse.result.length > 0) {
+          console.time(`cloneDown - ${resource}`);
+          if (!this.isExtensionEnvironment && resource !== Resource.kv) {
+            dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
+              subMessage: `Syncing ${resource}s...`
+            });
+          }
+          const result = await this.persistence.mutation(resource as Resource, {
+            records: resourceResponse.result,
+            action:
+              params?.isReconciliation ||
+              resource === Resource.kv ||
+              resource === Resource.link
+                ? PersistenceActionType.INSERT
+                : PersistenceActionType.BULK_INSERT
+          });
+          logger.debug({
+            at: "flux.cloneDown - result",
+            resource,
+            result
+          });
+          if (!result) {
+            const fallbackResult = await this.persistence.mutation(
+              resource as Resource,
+              {
+                records: resourceResponse.result,
+                action: PersistenceActionType.INSERT
+              }
+            );
+            logger.debug({
+              at: "flux.cloneDown - fallbackResult",
+              resource,
+              fallbackResult
+            });
+          }
+          console.timeEnd(`cloneDown - ${resource}`);
+        }
+      }
+      if (params?.isReconciliation) return true;
+      await this.loadInMemoryStores();
+      await this.persistence.mutation(Resource.kv, {
+        record: {
+          id: "kv:local",
+          lastSyncDown: new Date().getTime(),
+          lastSyncUp: new Date().getTime()
+        },
+        action: PersistenceActionType.MERGE
+      });
+      return true;
+    } catch (e) {
+      logger.error({ at: "flux.cloneDown", error: e });
+      return false;
+    } finally {
+      if (!this.isExtensionEnvironment && !params?.isReconciliation) {
+        dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
+          message: `Sync completed.`,
+          subMessage: "",
+          isFinished: true
         });
       }
     }
-    await this.loadInMemoryStores();
-    // await clientStorage.set(
-    //   ClientStorageKey.LAST_SYNC_DOWN,
-    //   new Date().getTime()
-    // );
-    // await clientStorage.set(
-    //   ClientStorageKey.LAST_SYNC_UP,
-    //   new Date().getTime()
-    // );
-    await this.persistence.mutation(Resource.kv, {
-      record: {
-        id: "kv:local",
-        lastSyncDown: new Date().getTime(),
-        lastSyncUp: new Date().getTime()
-      },
-      action: PersistenceActionType.MERGE
-    });
   }
 
   /**
@@ -611,7 +753,12 @@ class Flux {
     const resources = this.resolveSyncResources();
     for (let resource of resources) {
       const records = await this.persistence.selectMany(resource as Resource);
-      await this.syncer.cloneLocalToCloud(resource, records);
+      if (records.length > 0) {
+        await this.performSync(SyncMethod.CLONE_UP, {
+          resource,
+          records
+        });
+      }
     }
   }
 
@@ -628,16 +775,91 @@ class Flux {
   /**
    * Invalidates the stores and persistance connection - used during events like User logout or switching spaces.
    */
-  async terminate() {}
+  async terminate() {
+    const terminationResult = await this.persistence.terminate();
+    logger.log({ at: "flux.terminate", terminationResult });
+  }
 
   /**
-   * Exports the local database as a backup json or csv based on user selection.
+   * Clears the indexed db and terminates the persistence connection.
+   *
+   * Use with caution as this wipes out entire data and can be detrimental in cases like Offline user with local only data.
    */
-  async export(method: "json" | "csv") {}
+  async clear() {
+    await this.terminate();
+    await this.clearIndexedDb();
+  }
+
+  private async clearIndexedDb() {
+    logger.log({ at: "flux.clearIndexedDb" });
+    try {
+      const databases = await window.indexedDB.databases();
+      for (const db of databases) {
+        if (db.name) {
+          await window.indexedDB.deleteDatabase(db.name);
+        }
+      }
+
+      logger.log({ at: "flux.clearIndexedDb - completed" });
+    } catch (e) {
+      logger.error({ at: "flux.clearIndexedDb", error: e });
+    }
+  }
+
+  /**
+   * Exports the local database for backup.
+   */
+  async export() {
+    logger.log({ at: "flux.export" });
+    const resources = this.resolveSyncResources();
+    let data: any = {};
+    for (let resource of resources) {
+      const records = await this.persistence.selectMany(resource as Resource);
+      data[resource] = records;
+    }
+    return data;
+  }
   /**
    * Imports a backup json or csv file into the local database.
    */
-  async import() {}
+  async import(data: any) {
+    logger.debug({ at: "flux.import", data });
+    for (let resource of Object.keys(data)) {
+      try {
+        if (resource === Resource.kv) {
+          data[resource] = data[resource].filter(
+            (x: any) => x.id !== "kv:local"
+          );
+        }
+        logger.debug({
+          at: "flux.import - importing",
+          resource,
+          data: data[resource]
+        });
+        await this.persistence.mutation(resource as Resource, {
+          records: data[resource],
+          action:
+            resource === Resource.kv || resource === Resource.link
+              ? PersistenceActionType.INSERT
+              : PersistenceActionType.BULK_INSERT
+        });
+        if (!(await determineIfOffline()) && data[resource].length > 0) {
+          await this.performSync(SyncMethod.CLONE_UP, {
+            resource,
+            records: data[resource]
+          });
+        }
+      } catch (e) {
+        logger.error({
+          at: "flux.import - error",
+          resource,
+          error: e
+        });
+      }
+    }
+    await this.loadInMemoryStores();
+    return true;
+  }
 }
 
 export let flux = Flux._instance as any as Flux;

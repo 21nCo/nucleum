@@ -1,17 +1,19 @@
 <script lang="ts">
+  import { logger } from "$lib/client/components/debug/logger.client";
   import { onMount } from "svelte";
-  import type { IVideoTimestampClip, IYoutubeVideo } from "../../node.type";
-  export let node: IYoutubeVideo | IVideoTimestampClip;
+  export let url: string;
+  export let timestamp: number | null = null;
   let videoId: string | null = null;
-  let timestamp: number | null =
-    node.body && "timestamp" in node.body ? node.body.timestamp : null;
 
   let player: any;
   let playerReady = false;
   let errorMessage = "";
-
+  $: console.log({ url, videoId });
   onMount(() => {
-    if (node.url) videoId = new URL(node.url).searchParams.get("v") || "";
+    // if (url) videoId = new URL(url).searchParams.get("v") || "";
+    if (url) {
+      videoId = extractVideoId(url);
+    }
     if (!videoId) return;
     if (window.YT && window.YT.Player) {
       initializePlayer();
@@ -31,16 +33,33 @@
     };
   });
 
+  function extractVideoId(url: string): string | null {
+    let videoId = null;
+    const youtubeRegex =
+      /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(youtubeRegex);
+
+    if (match && match[2].length === 11) {
+      videoId = match[2];
+    }
+
+    return videoId;
+  }
+
   function initializePlayer() {
-    player = new window.YT.Player("player-container", {
-      height: "600",
-      width: "100%",
-      videoId: videoId,
-      events: {
-        onReady: onPlayerReady,
-        onError: onPlayerError
-      }
-    });
+    try {
+      player = new window.YT.Player("player-container", {
+        height: "600",
+        width: "100%",
+        videoId: videoId,
+        events: {
+          onReady: onPlayerReady,
+          onError: onPlayerError
+        }
+      });
+    } catch (e) {
+      logger.error({ at: "YoutubeVideoPreview initializePlayer", error: e });
+    }
   }
 
   export function onTrace(e: any) {

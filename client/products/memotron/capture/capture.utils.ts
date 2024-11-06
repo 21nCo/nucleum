@@ -10,6 +10,8 @@ export function resolveContentTypeForFile(file: File) {
     nodeType = NodeType.AUDIO;
   } else if (file.type.includes("application/pdf")) {
     nodeType = NodeType.PDF;
+  } else {
+    nodeType = NodeType.FILE;
   }
   return nodeType;
 }

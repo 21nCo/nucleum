@@ -30,11 +30,17 @@
   import { Action } from "$lib/client/types/action.enum";
   import view from "$lib/client/stores/view.store";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import context from "$lib/client/stores/context.store";
+  import { Embed } from "$lib/client/types/context.type";
   import { TacoActions, TranscriptionModel } from "../taco/taco.types";
 
   export let body: any = {};
   export let url: string;
   export let nodeId: string = "dummy";
+  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
+  const _previewId = generateSimpleRandomId();
   let isDisabled: boolean = body?.initTranscription == true ? true : false;
   let label: string =
     body?.initTranscription == false ? "Re-Transcribe" : "Text";
@@ -143,10 +149,11 @@
     if (!transcript || typeof transcript !== "string") return;
     label = body?.initTranscription == false ? "Retranscribe" : "Transcribe";
     $userPreferences.lastUsedTranscriptionModel = model;
+    //  TODO - re enable md transcription after fixing the audio to md to use new block schema
     const mdBlocks = Audio2MD.convertAudioToMarkdown(transcript);
-    const resp = await nodeStore.modify(nodeId, {
-      body: { mdBlocks }
-    });
+    // const resp = await nodeStore.modify(nodeId, {
+    //   body: { mdBlocks }
+    // });
     dispatch("refresh");
   }
   /**
@@ -158,7 +165,7 @@
     }
 
     wavesurferPreview = WaveSurfer.create({
-      container: "#audioCapturePreview",
+      container: `#${_previewId}`,
       waveColor: currentColors["aps2"],
       progressColor: currentColors["aps1"],
       barWidth: 2,
@@ -211,7 +218,7 @@
     class="flex flex-col gap-2 w-full text-justify border- border-brs3 rounded-md py-2"
   >
     <div class="flex flex-col gap-2 w-full">
-      <div id="audioCapturePreview" class="w-full" />
+      <div id={_previewId} class="audio-preview-container w-full" />
       <div class="flex justify-between px-0.5 text-fgs2">
         <span>
           {formatSeconds(previewCountDown, TimeFormat.CLOCK)}
@@ -258,7 +265,8 @@
           />
         {/if}
       {/if}
-      {#if $userPreferences.localAI.audioTranscription}
+      <!-- TODO - reenable transcription after iOS crash issue fix -->
+      {#if $userPreferences.localAI.audioTranscription && accessPoint === ResourceAccessPoint.SELF && $context.embed !== Embed.HANDSET}
         <Button
           on:click={convertToMarkdown}
           {isDisabled}
@@ -268,75 +276,77 @@
       {/if}
     </div>
   </div>
-  <div
-    class="flex flex-col w-full flex-1 items-center gap-6 border border-brs2 rounded-md bg-bgs2 bg-opacity-30 py-4"
-  >
-    <div class="flex w-full justify-between gap-3 mo:px-2 px-10">
-      <Text content="Transcription" style={TextStyle.PANEL_HEADING} />
-      {#if !$view.isConstrainedWidth}
-        <DropDown
-          items={accuracy}
-          isDisableSearch={true}
-          size={Size.sm}
-          style={InputStyle.PLAIN}
-          label={{
-            label: "Accuracy",
-            orientation: Orientation.Vertical,
-            isShrink: true
-          }}
-          value={model}
-          on:select={(e) => (model = e.detail)}
-        />
-      {/if}
-    </div>
+  {#if accessPoint === ResourceAccessPoint.SELF && $context.embed !== Embed.HANDSET}
     <div
-      class={cn("flex w-full flex-1 overflow-y-auto", {
-        "pr-10": !$view.isConstrainedWidth && body?.mdBlocks
-      })}
+      class="flex flex-col w-full flex-1 items-center gap-6 border border-brs2 rounded-md bg-bgs2 bg-opacity-30 py-4"
     >
-      <p class="p-2 text-center text-rose-700" class:hidden={!isError}>
-        Transcription Error.
-      </p>
-      {#if body?.initTranscription == true || isDisabled}
-        <p class="p-2">Transcribing...</p>
-      {:else if body?.mdBlocks !== undefined}
-        <NodularMarkdown
-          mdId={generateUID()}
-          isNodular={true}
-          md={{ blocks: body?.mdBlocks }}
-          on:change={onMarkdownChange}
-        />
-      {:else if body?.transcription !== undefined}
-        <TextArea bind:value={body.transcription} />
-        <!-- <p class="p-2">{body.transcription}</p> -->
-      {:else}
-        <span
-          class="w-full h-full flex flex-col gap-2 justify-center items-center text-fgs3"
-        >
-          <span> Not transcribed yet. Please transcribe to view. </span>
-          {#if !$userPreferences.localAI.audioTranscription}
-            <div class="flex flex-col gap-2 text-b2">
-              Please make sure to enable Audio transcription from AI settings to
-              transcribe your audio.
-              <div class="flex justify-center">
-                <Button
-                  label="Open AI settings"
-                  size={Size.sm}
-                  type={ButtonVariant.PRIMARY}
-                  style={ButtonStyle.OUTLINED}
-                  on:click={() => {
-                    appStore.runAction(Action.LOCAL_AI_SETTINGS, {
-                      componentParams: {
-                        isCmdBarLaunch: true
-                      }
-                    });
-                  }}
-                />
+      <div class="flex w-full justify-between gap-3 mo:px-2 px-10">
+        <Text content="Transcription" style={TextStyle.PANEL_HEADING} />
+        {#if !$view.isConstrainedWidth}
+          <DropDown
+            items={accuracy}
+            isDisableSearch={true}
+            size={Size.sm}
+            style={InputStyle.PLAIN}
+            label={{
+              label: "Accuracy",
+              orientation: Orientation.Vertical,
+              isShrink: true
+            }}
+            value={model}
+            on:select={(e) => (model = e.detail)}
+          />
+        {/if}
+      </div>
+      <div
+        class={cn("flex w-full flex-1 overflow-y-auto", {
+          "pr-10": !$view.isConstrainedWidth && body?.mdBlocks
+        })}
+      >
+        <p class="p-2 text-center text-rose-700" class:hidden={!isError}>
+          Transcription Error.
+        </p>
+        {#if body?.initTranscription == true || isDisabled}
+          <p class="p-2">Transcribing...</p>
+        {:else if body?.mdBlocks !== undefined}
+          <NodularMarkdown
+            mdId={generateUID()}
+            isNodular={true}
+            md={{ blocks: body?.mdBlocks }}
+            on:change={onMarkdownChange}
+          />
+        {:else if body?.transcription !== undefined}
+          <TextArea bind:value={body.transcription} />
+          <!-- <p class="p-2">{body.transcription}</p> -->
+        {:else}
+          <span
+            class="w-full h-full flex flex-col gap-2 justify-center items-center text-fgs3"
+          >
+            <span> Not transcribed yet. Please transcribe to view. </span>
+            {#if !$userPreferences.localAI.audioTranscription}
+              <div class="flex flex-col gap-2 text-b2">
+                Please make sure to enable Audio transcription from AI settings
+                to transcribe your audio.
+                <div class="flex justify-center">
+                  <Button
+                    label="Open AI settings"
+                    size={Size.sm}
+                    type={ButtonVariant.PRIMARY}
+                    style={ButtonStyle.OUTLINED}
+                    on:click={() => {
+                      appStore.runAction(Action.LOCAL_AI_SETTINGS, {
+                        componentParams: {
+                          isCmdBarLaunch: true
+                        }
+                      });
+                    }}
+                  />
+                </div>
               </div>
-            </div>
-          {/if}
-        </span>
-      {/if}
+            {/if}
+          </span>
+        {/if}
+      </div>
     </div>
-  </div>
+  {/if}
 </div>

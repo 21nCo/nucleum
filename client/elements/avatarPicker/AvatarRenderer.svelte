@@ -1,9 +1,11 @@
 <script lang="ts">
+  import FileView from "$lib/client/components/files/FileView.svelte";
   import context from "$lib/client/stores/context.store";
   import { AvatarType, type IAvatar } from "$lib/client/types/avatar.type";
   import { OperatingSystem } from "$lib/client/types/context.type";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
+  import "@fontsource/noto-color-emoji";
   export let avatar: IAvatar;
   export let isHoverDisabled = true;
   export let isHoverEnabled = false;
@@ -38,13 +40,21 @@
   }
 </script>
 
-{#if "URL" in avatar && avatar.URL}
-  <img
-    src={avatar.URL}
+{#if "file" in avatar && avatar.file}
+  <FileView
+    id={avatar.file}
+    class={cn(isHoverEnabled && "hover:scale-[1.2] transition-transform", {
+      "w-4 h-4": size === Size.sm,
+      "w-6 h-6": size === Size.md,
+      "w-8 h-8": size === Size.lg
+    })}
+  />
+  <!-- <img
+    src={avatar.file}
     alt={avatar.name}
     class={cn(isHoverEnabled && "hover:scale-[1.2] transition-transform")}
-  />
-{:else if "code" in avatar}
+  /> -->
+{:else if "code" in avatar && avatar.code}
   {#if avatar.type === AvatarType.ICON}
     <span
       class={cn(
@@ -59,7 +69,7 @@
     >
       {@html avatar.code}
     </span>
-  {:else if avatar.type === AvatarType.EMOJI}
+  {:else if avatar.type === AvatarType.EMOJI && avatar.code}
     <span
       class={cn(
         $context.os !== OperatingSystem.IOS &&
@@ -73,3 +83,13 @@
     </span>
   {/if}
 {/if}
+<svelte:head>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji+Compat&display=swap"
+    rel="stylesheet"
+  />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
+    rel="stylesheet"
+  />
+</svelte:head>

@@ -13,6 +13,7 @@
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { convertDateStringToArray } from "$lib/client/utils/utils";
+  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   const contentContext = getContext<any>("content");
 
   export let node: IActiveNodeStore | null = null;
@@ -93,7 +94,7 @@
           icon: "check-circle"
         },
         {
-          label: "Outgoing mentions",
+          label: "Mentions",
           value: "outgoing-mentions",
           icon: "at-symbol"
         }
@@ -107,7 +108,7 @@
 {/if}
 
 {#if pdfAnnotations.length > 0}
-  <div class="h-full w-full flex flex-col gap-2 mt-2 overflow-y-scroll">
+  <div class="w-full flex flex-col flex-grow gap-2 mt-2 overflow-y-scroll">
     {#each pdfAnnotations as trace, index}
       {#if (selectedType == "tasks" && trace.annotType === AnnotationType.TASK) || (selectedType != "tasks" && trace.annotType !== AnnotationType.TASK)}
         <button
@@ -190,20 +191,23 @@
   </div>
 {:else if canHaveTraces.includes($node?.contentType ?? NodeType.UNKNOWN) && selectedType === "clips"}
   {#if $node?.clips && $node?.clips?.length > 0}
-    <Resources
-      data={$node.clips}
-      accessPoint={ResourceAccessPoint.NODE_TRACES}
-      resource={Resource.node}
-      size={Size.sm}
-      isPreventDefault={$node.contentType === NodeType.YOUTUBE_VIDEO}
-      on:click={(e) => {
-        if (!e?.detail) return;
-        contentContext.publish("yt-trace-click", {
-          id: e.detail.id,
-          timestamp: e.detail.body.timestamp
-        });
-      }}
-    />
+    <div class="h-full w-full overflow-y-auto">
+      <Resources
+        data={$node.clips}
+        accessPoint={ResourceAccessPoint.NODE_TRACES}
+        resource={Resource.node}
+        size={Size.sm}
+        isPreventDefault={$node.contentType === NodeType.YOUTUBE_VIDEO}
+        on:click={(e) => {
+          if (!e?.detail) return;
+          contentContext.publish("yt-trace-click", {
+            id: e.detail.id,
+            timestamp: e.detail.body.timestamp
+          });
+        }}
+      />
+      <ScrollViewBottomSpacer size={Size.lg} />
+    </div>
   {:else}
     <EmptyStatusView
       mainText="No clips found"
@@ -211,5 +215,5 @@
     />
   {/if}
 {:else}
-  <ComingSoonView size={Size.sm} />
+  <EmptyStatusView size={Size.sm} mainText="No traces found" />
 {/if}

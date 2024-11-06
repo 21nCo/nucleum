@@ -53,13 +53,17 @@ import { userPreferences } from "$lib/client/components/settings/userPreferences
 import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
 import { Persistence } from "$lib/client/persistence/persistence";
 import view from "$lib/client/stores/view.store";
+import context from "$lib/client/stores/context.store";
+import { Embed } from "$lib/client/types/context.type";
 import { TacoActions } from "../taco/taco.types";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
 function generateSeedStore(): ICaptureStore {
   const blockId = generateResourceId(Resource.node);
+  const nodeId = generateResourceId(Resource.node);
   return {
+    nodeId,
     refreshId: new Date().getTime(),
     label: "",
     properties: [],
@@ -192,6 +196,8 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     contentType?: NodeType,
     params?: {
       isPreventOpenOnSave?: boolean;
+      isEmbedContext?: boolean;
+      creationContext?: IRecordId;
     }
   ) {
     const response = await account.uploadFileV2(
@@ -207,10 +213,16 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     const node = {
       contentType,
       file: fileId,
-      label: file.name
+      label: file.name,
+      creationContext: params?.isEmbedContext
+        ? (params?.creationContext ?? this.get().nodeId)
+        : undefined
     } as IMediaNode;
     const result = await nodeStore.create([node]);
-    this.postSave(result, { isOpenUponSuccess: !params?.isPreventOpenOnSave });
+    this.postSave(result, {
+      isOpenUponSuccess: !params?.isPreventOpenOnSave,
+      isEmbedContext: params?.isEmbedContext
+    });
     return result?.[0];
   }
 
@@ -244,7 +256,15 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     this.update((prev) => ({ ...prev, properties: [...properties, property] }));
   };
 
-  async saveAudioRecording(data: Blob, duration: number) {
+  async saveAudioRecording(
+    data: Blob,
+    duration: number,
+    params?: {
+      isPreventOpenOnSave?: boolean;
+      isEmbedContext?: boolean;
+      creationContext?: IRecordId;
+    }
+  ) {
     const contentType = "audio/mp3";
     const id = generateResourceId(Resource.node);
     const fileName = generateSimpleRandomId();
@@ -258,6 +278,9 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     const node: OmitForCapture<IMediaNode> = {
       contentType: NodeType.AUDIO,
       file: fileId,
+      creationContext: params?.isEmbedContext
+        ? (params?.creationContext ?? this.get().nodeId)
+        : undefined,
       label: `Audio Recording - ${new Date().toLocaleString()}`,
       body: {
         duration
@@ -265,7 +288,11 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     };
     const result2 = await nodeStore.create(node);
     await this.saveLinks(id);
-    this.postSave(result2, { isOpenUponSuccess: true });
+    this.postSave(result2, {
+      isOpenUponSuccess: !params?.isPreventOpenOnSave,
+      isEmbedContext: params?.isEmbedContext
+    });
+    return result2?.[0];
   }
 
   async saveCameraCapture(data: Blob) {
@@ -295,12 +322,17 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     text: string,
     params?: {
       isPreventOpenOnSave?: boolean;
+      isEmbedContext?: boolean;
+      creationContext?: IRecordId;
     }
   ) {
     let node: OmitForCapture<IWebPage> = {
       contentType: NodeType.WEB_PAGE,
       label: text.split("://").pop(),
       url: text,
+      creationContext: params?.isEmbedContext
+        ? (params?.creationContext ?? this.get().nodeId)
+        : undefined,
       body: {
         hash: "",
         description: ""
@@ -324,7 +356,10 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       }
     }
     const result = await nodeStore.create(node);
-    this.postSave(result, { isOpenUponSuccess: !params?.isPreventOpenOnSave });
+    this.postSave(result, {
+      isOpenUponSuccess: !params?.isPreventOpenOnSave,
+      isEmbedContext: params?.isEmbedContext
+    });
     return result;
   }
 
@@ -332,6 +367,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     result: any,
     params?: {
       isOpenUponSuccess?: boolean;
+      isEmbedContext?: boolean;
     }
   ) {
     logger.debug({ at: "CaptureStore.postSave", result });
@@ -343,13 +379,14 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     }
     const viewStore = get(view);
     if (result.length === 1 || node.contentType === NodeType.NODULAR_MARKDOWN) {
-      if (!viewStore.isConstrainedWidth)
+      if (!viewStore.isConstrainedWidth && !params?.isEmbedContext)
         toasts.success("Node saved successfully!");
-      if (params?.isOpenUponSuccess)
+      if (params?.isOpenUponSuccess && !params?.isEmbedContext)
         appStore.openResource(node.id, ResourceAccessMode.POP);
-    } else if (!viewStore.isConstrainedWidth) {
+    } else if (!viewStore.isConstrainedWidth && !params?.isEmbedContext) {
       toasts.success(`${result.length} nodes saved successfully!`);
     }
+    if (params?.isEmbedContext) return;
     if (!params?.isOpenUponSuccess) {
       appStore.closeResource({
         id: MemotronAction.CAPTURE,
@@ -372,6 +409,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       return { ...x, from: rootId };
     });
     const blockLinks = val.links?.filter((x) => x.from !== "root");
+    logger.log({ at: "CaptureStore.saveLinks", rootLinks, blockLinks, val });
     if (!rootLinks && !blockLinks) return;
     const links = [...(rootLinks ?? []), ...(blockLinks ?? [])].map((x) => {
       return {
@@ -381,17 +419,29 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
         toType: x.toType
       };
     });
+    const typedCollections = val.links
+      ?.filter((x) => x.from === "root" && x.toSubType === CollectionType.TYPED)
+      .map((x) => x.to);
+    await nodeStore.refreshNodeAvatar(rootId, {
+      collections: typedCollections
+    });
+
     logger.log({ at: "CaptureStore.save", rootLinks, blockLinks, links });
     return linker.linkMany(links);
   }
 
   async saveMarkdownCapture() {
+    console.time("saveMarkdownCapture");
     const val = this.get();
     //TODO - extract nodes from markdown blocks and save
-    const metadata = await resolveNodeCaptureMetadata();
+    const ctx = get(context);
+    console.time("metadata");
+    let metadata =
+      ctx.embed === Embed.HANDSET ? {} : await resolveNodeCaptureMetadata();
+    console.timeEnd("metadata");
     logger.log({ at: "CaptureStore.saveMarkdownCapture", val, metadata });
     // const id = prefixTable(generateRandomId(), Resource.node);
-    const id = generateResourceId(Resource.node);
+    const id = val.nodeId ?? generateResourceId(Resource.node);
     let root: INodeItemCaptured = {
       id,
       label: val.label ?? "",
@@ -430,33 +480,51 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
         const rootBlocks = val.body.blocks.filter((b) =>
           val.rootStructure.includes(b.id)
         );
+        console.time("generateMarkdownText");
         mdText = generateMarkdownText(rootBlocks);
-        if (get(userPreferences).localAI.semanticSearch) {
-          tacoWorker.postMessage({
-            action: TacoActions.GET_EMBEDDINGS,
-            params: {
-              text: val.label + " \n" + mdText
-            }
-          });
-          const embedding = await new Promise((resolve, reject) => {
-            tacoWorker.onmessage = (e) => {
-              resolve(e.data);
-            };
-          });
-          vectorInsertionresult = await vectorResourceStore.create({
-            id: generateResourceId(Resource.vector),
-            embedding: embedding,
-            node: id
-          });
+        console.timeEnd("generateMarkdownText");
+
+        if (
+          get(userPreferences).localAI.semanticSearch &&
+          ctx.embed !== Embed.HANDSET
+        ) {
+          console.time("vector");
+          try {
+            console.time("tacoWorker");
+            tacoWorker.postMessage({
+              action: TacoActions.GET_EMBEDDINGS,
+              params: {
+                text: val.label + " \n" + mdText
+              }
+            });
+            const embedding = await new Promise((resolve, reject) => {
+              tacoWorker.onmessage = (e) => {
+                resolve(e.data);
+              };
+            });
+            console.timeEnd("tacoWorker");
+            vectorInsertionresult = await vectorResourceStore.create({
+              id: generateResourceId(Resource.vector),
+              embedding: embedding,
+              node: id
+            });
+            console.timeEnd("vector");
+          } catch (e) {
+            logger.error({
+              at: "CaptureStore.saveMarkdownCapture - vector generation error",
+              error: e
+            });
+          }
         }
       }
       root = {
         ...root,
         children: val.rootStructure,
-        mdText,
+        text: mdText,
         vector: vectorInsertionresult?.[0]?.id
       };
 
+      console.time("children");
       for (let block of val.childrenWithStructure) {
         const correspondingContent = val.body.blocks.find(
           (b) => b.id === block.id
@@ -472,45 +540,59 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
             getMarkdownSymbolPrepended(correspondingContent!) +
             " \n" +
             generateMarkdownText(childrenNodes);
-          if (get(userPreferences).localAI.semanticSearch) {
-            tacoWorker.postMessage({
-              action: TacoActions.GET_EMBEDDINGS,
-              params: {
-                text: mdText
-              }
-            });
-            const embedding = await new Promise((resolve, reject) => {
-              tacoWorker.onmessage = (e) => {
-                resolve(e.data);
-              };
-            });
-            vectorInsertionresult = await vectorResourceStore.create({
-              id: generateResourceId(Resource.vector),
-              embedding: embedding,
-              node: block.id
-            });
+
+          if (
+            get(userPreferences).localAI.semanticSearch &&
+            ctx.embed !== Embed.HANDSET
+          ) {
+            try {
+              tacoWorker.postMessage({
+                action: TacoActions.GET_EMBEDDINGS,
+                params: {
+                  text: mdText
+                }
+              });
+              const embedding = await new Promise((resolve, reject) => {
+                tacoWorker.onmessage = (e) => {
+                  resolve(e.data);
+                };
+              });
+              vectorInsertionresult = await vectorResourceStore.create({
+                id: generateResourceId(Resource.vector),
+                embedding: embedding,
+                node: block.id
+              });
+            } catch (e) {
+              logger.error({
+                at: "CaptureStore.saveMarkdownCapture - vector generation error",
+                error: e
+              });
+            }
           }
         }
         remainingResources.push({
           id: block.id,
-          contentType: correspondingContent.contentType,
-          body: correspondingContent.body,
-          mdText,
+          contentType: correspondingContent?.contentType,
+          body: correspondingContent?.body,
+          label: correspondingContent?.label,
+          text: mdText,
           vector:
             vectorInsertionresult?.length > 0
               ? vectorInsertionresult[0]?.id
               : null,
-          metadata: root.metadata,
+          metadata: correspondingContent?.metadata,
           creationContext: id,
           children: block.children
         });
       }
+      console.timeEnd("children");
     }
 
     let result: any = await nodeStore.create([root, ...remainingResources]);
     console.log("md save result", result);
     await this.saveLinks(id);
     this.postSave(result);
+    console.timeEnd("saveMarkdownCapture");
     return result;
   }
 }

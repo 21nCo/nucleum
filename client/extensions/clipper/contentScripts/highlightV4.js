@@ -1,3 +1,4 @@
+import { convertToRGBA } from "$lib/client/utils/ui.utils";
 import $ from "jquery";
 
 1;
@@ -172,8 +173,9 @@ function _recursiveWrapper(
     highlightNode.classList.add(
       highlighter.id === "inherit" ? DELETED_CLASS : HIGHLIGHT_CLASS
     );
-    highlightNode.style.backgroundColor = highlighter.color;
-    highlightNode.style.color = textColor;
+    const rgbaColor = convertToRGBA(highlighter.color, 0.5);
+    highlightNode.style.backgroundColor = rgbaColor;
+    highlightNode.style.color = "inherit";
     highlightNode.dataset.highlightId = id;
     highlightNode.dataset.highlightColor = highlighter.color;
     highlightNode.dataset.highlighterId = highlighter.id;
@@ -185,12 +187,16 @@ function _recursiveWrapper(
   return [startFound, charsHighlighted];
 }
 
-
 export function removeHighlight(id) {
-  const existingHighlight = document.querySelector(`[data-highlight-id="${id}"]`);
-  if (existingHighlight) {
-    existingHighlight.remove();
-  }
+  const highlightSpans = document.querySelectorAll(`[data-highlight-id="${id}"]`);
+  highlightSpans.forEach((highlight) => {
+    highlight.style.backgroundColor = "transparent";
+    highlight.style.color = "inherit";
+    highlight.classList.remove(HIGHLIGHT_CLASS);
+    highlight.dataset.highlightId = "";
+    highlight.dataset.highlightColor = "";
+    highlight.dataset.highlighterId = "";
+  });
 }
 
 function removeAllHighlights() {

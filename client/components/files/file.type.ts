@@ -12,7 +12,7 @@ export enum FileType {
   IMAGE = "image",
   VIDEO = "video",
   AUDIO = "audio",
-  PDF = "pdf",
+  PDF = "application",
   UNKNOWN = "unknown"
 }
 

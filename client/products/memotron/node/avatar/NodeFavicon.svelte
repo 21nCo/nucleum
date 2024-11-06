@@ -6,45 +6,13 @@
   import { urlMap } from "../../common/urlMap";
   import { lazyLoad } from "$lib/client/actions/lazyload.action";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { resolveNodeFavicon } from "../node.utils";
   export let node: INode;
   export let size: Size.sm | Size.md | Size.lg = Size.md;
   let favicon: string | undefined = undefined;
-  onMount(async () => {
-    favicon = await resolveFavicon();
+  onMount(() => {
+    favicon = resolveNodeFavicon(node);
   });
-
-  async function resolveFavicon() {
-    if (
-      node.contentType === NodeType.TWITTER_PROFILE &&
-      "profileImageUrl" in node.body &&
-      node.body.profileImageUrl
-    ) {
-      return node.body.profileImageUrl;
-    } else if (
-      node.contentType === NodeType.KINDLE_BOOK &&
-      "imageUrl" in node.body &&
-      node.body.imageUrl
-    ) {
-      return node.body.imageUrl;
-    } else if (node.metadata?.faviconLink) {
-      return node.metadata.faviconLink;
-    } else if (node.parent) {
-      //TODO - resolve using context API
-      // const parent = await dexie.node.get(node.parent);
-      // if (parent && parent.metadata?.faviconLink)
-      //   return parent.metadata.faviconLink;
-    }
-
-    if (!("url" in node) || !node.url || !node.url.includes("https://")) return;
-    const hostPart = new URL(node.url).host;
-    let favicon = urlMap.find(
-      (x) => hostPart === x.domain || hostPart.includes("." + x.domain)
-    )?.faviconUrl;
-    if (favicon) return favicon;
-    //TODO - testing
-    favicon = `https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${hostPart}&size=128"`;
-    return favicon;
-  }
 </script>
 
 <span class="shrink-0 flex items-center justify-center">

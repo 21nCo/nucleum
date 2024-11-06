@@ -10,11 +10,13 @@
   import { resolveAnnotationModes } from "../pdfAnnotator.utils";
   import HighlightColors from "../../common/highlighters/HighlightColors.svelte";
   import type { IToggleItem } from "$lib/client/elements/toggle/toggle.type";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   export let selectedColor = "";
   export let style = "";
   export let pageNumber = 1;
   export let totalPages = 1;
   export let selectedAnnotationMode: AnnotationType;
+  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
 
   let dispatchEvent = createEventDispatcher();
   const annotationModes: IToggleItem[] = resolveAnnotationModes();
@@ -24,21 +26,23 @@
   class="flex min-w-fit min-h-fit h-12 justify-between items-center bg-bgs2 rounded-md border border-brs3 shadow-sm"
   {style}
 >
-  <ToggleGroup
-    items={annotationModes}
-    size={Size.lg}
-    parentBgIndex={2}
-    on:change={(e) => {
-      selectedAnnotationMode = e.detail;
-    }}
-    on:none={() => {
-      selectedAnnotationMode = AnnotationType.NONE;
-    }}
-  />
-  <Divider
-    orientation={Orientation.Vertical}
-    colorStrength={ColorStrength.Strong}
-  />
+  {#if accessPoint === ResourceAccessPoint.SELF}
+    <ToggleGroup
+      items={annotationModes}
+      size={Size.lg}
+      parentBgIndex={2}
+      on:change={(e) => {
+        selectedAnnotationMode = e.detail;
+      }}
+      on:none={() => {
+        selectedAnnotationMode = AnnotationType.NONE;
+      }}
+    />
+    <Divider
+      orientation={Orientation.Vertical}
+      colorStrength={ColorStrength.Strong}
+    />
+  {/if}
   <div class="flex justify-center items-center gap-2 px-4">
     <Button
       icon="magnifying-glass-plus"
@@ -58,11 +62,13 @@
       }}
     />
   </div>
-  <Divider
-    orientation={Orientation.Vertical}
-    colorStrength={ColorStrength.Strong}
-  />
-  <span class="flex items-center px-2">
-    <HighlightColors bind:selected={selectedColor} on:color />
-  </span>
+  {#if accessPoint === ResourceAccessPoint.SELF}
+    <Divider
+      orientation={Orientation.Vertical}
+      colorStrength={ColorStrength.Strong}
+    />
+    <span class="flex items-center px-2">
+      <HighlightColors bind:selected={selectedColor} on:color />
+    </span>
+  {/if}
 </div>

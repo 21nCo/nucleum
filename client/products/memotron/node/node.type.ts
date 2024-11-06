@@ -1,6 +1,9 @@
 import type { IMemotronItemBase } from "$lib/client/products/memotron/memotron.type";
 import type { IAvatar } from "../../../types/avatar.type";
-import type { IMarkdown } from "../../../components/markdown/md.type";
+import type {
+  IBlockBody,
+  IMarkdown
+} from "../../../components/markdown/md.type";
 import type { IRecordId, IStore } from "../../../types/data.type";
 import type {
   IProperty,
@@ -68,6 +71,15 @@ type INodeInterface<
   notes?: string;
   url?: string;
   file?: IRecordId;
+  /**
+   * Calculated avatar from linked type collections
+   */
+  avatar?: IAvatar[];
+  /**
+   * @deprecated - use {@link text} instead
+   */
+  mdText?: string;
+  text?: string;
 };
 
 export type ILink = IMemotronItemBase & {
@@ -89,7 +101,7 @@ export type NodeContent =
   | OtherContent;
 
 export type TextContent = {
-  contentType: TextNodeType;
+  contentType: SimpleTextNodeType;
   body: string; //| SpanContent[];
 };
 
@@ -171,7 +183,11 @@ export enum NodeType {
   MATH = "MATH",
   CALLOUT = "CALLOUT",
   LINK = "LINK",
+
+  //List types
   LIST = "LIST",
+  ORDERED_LIST = "ORDERED_LIST",
+  CHECKLIST = "CHECKLIST",
 
   //MEDIA
   IMAGE = "IMAGE",
@@ -179,12 +195,14 @@ export enum NodeType {
   VIDEO = "VIDEO",
   PDF = "PDF",
   FILE = "FILE",
-
+  SKETCH = "SKETCH",
   //EMBED
   EMBED = "EMBED",
   TOC = "TOC",
   NODE_AS_EMBED = "NODE_AS_EMBED",
   COLLECTION_AS_EMBED = "COLLECTION_AS_EMBED",
+  GRAPH_AS_EMBED = "GRAPH_AS_EMBED",
+  CALENDAR_AS_EMBED = "CALENDAR_AS_EMBED",
 
   //LAYOUT
   DIVIDER = "DIVIDER",
@@ -251,11 +269,18 @@ export const structuralNodeTypes = [
   NodeType.TOC
 ];
 
-export const TextNodeTypeList = [
-  NodeType.SIMPLE_TEXT,
-  NodeType.QUOTE,
+export const simpleTextNodeTypeList = [NodeType.SIMPLE_TEXT, NodeType.QUOTE];
+
+export const listNodeTypes = [
+  NodeType.LIST,
+  NodeType.ORDERED_LIST,
+  NodeType.CHECKLIST
+];
+
+export const nonSimpleTextNodeTypeList = [
   NodeType.CODE,
-  ...headingNodeTypes
+  NodeType.CALLOUT,
+  ...listNodeTypes
 ];
 
 export const internalUrlNodeTypeList = [
@@ -265,15 +290,27 @@ export const internalUrlNodeTypeList = [
   NodeType.PDF
 ];
 
-export type TextNodeType =
+export const embedNodeTypeList = [
+  NodeType.NODE_AS_EMBED,
+  NodeType.COLLECTION_AS_EMBED,
+  NodeType.GRAPH_AS_EMBED,
+  NodeType.CALENDAR_AS_EMBED,
+  NodeType.TOC
+];
+
+export type SimpleTextNodeType =
   | NodeType.SIMPLE_TEXT
   | NodeType.QUOTE
-  | NodeType.CODE
   | NodeType.HEADING1
   | NodeType.HEADING2
   | NodeType.HEADING3
   | NodeType.HEADING4
   | NodeType.HEADING5;
+
+export type ListNodeType =
+  | NodeType.LIST
+  | NodeType.ORDERED_LIST
+  | NodeType.CHECKLIST;
 
 export enum NodeRightPaneType {
   NONE = "NONE",
@@ -308,6 +345,7 @@ export type INodeLink = IMemotronItemBase &
 export type INodeLinkThumb = INodeLinkBase & {
   id: IRecordId;
   linkedTo: IRecordId;
+  direction: "incoming" | "outgoing";
 };
 
 export type LinkThumbnail = INodeLink & {
@@ -361,20 +399,26 @@ type INodeHasParent = {
   parent: IRecordId;
 };
 
+type INodeHasText = {
+  text: string;
+};
+
 // ===== Media node types =====
 
 export const mediaNodeTypeList = [
   NodeType.IMAGE,
   NodeType.VIDEO,
   NodeType.AUDIO,
-  NodeType.PDF
+  NodeType.PDF,
+  NodeType.FILE
 ];
 
 type MediaNodeType =
   | NodeType.IMAGE
   | NodeType.VIDEO
   | NodeType.AUDIO
-  | NodeType.PDF;
+  | NodeType.PDF
+  | NodeType.FILE;
 
 export type IMediaNode = INodeInterface<MediaNodeType, any, INodeMetadata> & {
   file: IRecordId;
@@ -577,6 +621,7 @@ type ITweetMetadata = IWebPageMetadata & {
   tweetId?: string;
   media?: string[];
   externalLinks?: string[];
+  replyTo?: string;
 };
 export type ITweet = INodeInterface<
   NodeType.TWEET,
@@ -584,7 +629,8 @@ export type ITweet = INodeInterface<
   ITweetMetadata
 > &
   INodeHasUrl &
-  INodeHasParent;
+  INodeHasParent &
+  INodeHasText;
 
 export type ITwitterProfileBody = {
   name: string;
@@ -629,7 +675,9 @@ export type IKindleHighlight = INodeInterface<
   NodeType.KINDLE_HIGHLIGHT,
   IKindleHighlightBody,
   IWebPageMetadata
->;
+> &
+  INodeHasParent &
+  INodeHasText;
 
 export type IClip =
   | ITweet
@@ -647,6 +695,7 @@ export type IWebPage =
   | IKindleBook;
 
 export type INodeBody =
+  | IBlockBody
   | IMarkdown
   | ITweetBody
   | ITwitterProfileBody
@@ -662,7 +711,8 @@ export type IClipCapture = OmitFields<
 >;
 
 export enum NodeIdPrefix {
-  TWITTER_PROFILE = "twitterProfile"
+  TWITTER_PROFILE = "twitterProfile",
+  TWEET = "tweet"
 }
 
 /**
@@ -719,3 +769,8 @@ export type INodeThumb = INode & {
   bodySearch?: string;
   labelSearch?: string;
 };
+
+export enum NodeView {
+  CONTENT = "content",
+  BIRD_VIEW = "birdView"
+}

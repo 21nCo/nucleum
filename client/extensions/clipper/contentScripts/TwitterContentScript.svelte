@@ -5,8 +5,13 @@
   import { Placement } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { webpage } from "./store";
-  import { extractTweet } from "../clipper.utils";
+  import { extractTweet, extractTweetFromTweeetPage } from "../clipper.utils";
   import { cn } from "$lib/client/utils/ui.utils";
+  import type { IRecordId } from "$lib/client/types/data.type";
+  import {
+    linker,
+    linkTagStore
+  } from "$lib/client/products/memotron/linking/link.store";
   let isSaved: boolean = false;
   let isHovering: boolean = false;
   async function onClick(event) {
@@ -15,7 +20,23 @@
       logger.error("Tweet node not found");
       return;
     }
-    await webpage.saveTweet(tweetNode);
+    let mainTweetId: IRecordId | undefined = undefined;
+    if (tweetNode.metadata?.replyTo) {
+      const mainTweetNode = extractTweetFromTweeetPage();
+      if (!mainTweetNode) return;
+      const mainTweetResult = await webpage.saveTweet(mainTweetNode, true);
+      mainTweetId = mainTweetResult?.id;
+    }
+    const tweetResult = await webpage.saveTweet(tweetNode);
+    if (mainTweetId && tweetResult) {
+      const tweetReplyLinkTagId = await linkTagStore.save("reply", "tweet");
+      await linker.link(tweetResult.id, mainTweetId, undefined, {
+        tags:
+          !Array.isArray(tweetReplyLinkTagId) && tweetReplyLinkTagId?.id
+            ? [tweetReplyLinkTagId?.id]
+            : []
+      });
+    }
     isSaved = true;
   }
 </script>

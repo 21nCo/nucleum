@@ -8,6 +8,6 @@
 
 {#if tab}
   {#key tab}
-    <ResourceResolver id={tab} />
+    <ResourceResolver id={tab} accessMode={ResourceAccessMode.TAB} />
   {/key}
 {/if}

@@ -2,7 +2,7 @@ import { Resource } from "$lib/client/components/flux/resourceStores/resource.en
 import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
 import type { ILinkTag } from "./link.type";
 import { type IRecordId } from "$lib/client/types/data.type";
-import { replaceParams } from "$lib/client/persistence/surreal/surreal.utils";
+import { replaceParams } from "$lib/shared/utils/surreal.utils";
 import {
   LinkType,
   type INodeLink
@@ -21,12 +21,14 @@ class Linker extends ResourceStore<INodeLink> {
   async link(
     from: IRecordId,
     to: IRecordId,
-    linkType: LinkType = LinkType.DIRECT
+    linkType: LinkType = LinkType.DIRECT,
+    content?: any
   ) {
     const response = await this.create({
       in: from,
       out: to,
-      linkType: linkType
+      linkType: linkType,
+      ...(content ?? {})
     });
     logger.log({ at: "link", response });
     return response;
@@ -98,11 +100,18 @@ class LinkTagStore extends ResourceStore<ILinkTag> {
     });
   }
 
-  save(tag: string, group?: string) {
+  async save(tag: string, group?: string) {
     if (!group && tag.includes(":")) {
       group = tag.split(":")[0];
       tag = tag.split(":")[1];
     }
+    const linkTags = get(this.items);
+    const existingTag = linkTags.find(
+      (x) =>
+        x.label?.toLowerCase() === tag.toLowerCase() &&
+        x.group?.toLowerCase() === group?.toLowerCase()
+    );
+    if (existingTag) return existingTag;
     const result = this.create({
       label: tag,
       group: group?.toLowerCase() ?? ""
@@ -111,7 +120,7 @@ class LinkTagStore extends ResourceStore<ILinkTag> {
   }
 
   transform(data: ILinkTag[]) {
-    const groupsArray = data.reduce(
+    const groupsArray = data?.reduce(
       (acc, item) => {
         const group = item.group ?? "";
         if (!acc[group]) {
@@ -127,7 +136,9 @@ class LinkTagStore extends ResourceStore<ILinkTag> {
       items: items.filter(activeResourceFilter)
     }));
     const withoutGroup = groups.find((x) => x.group === "");
-    return [withoutGroup, ...groups.filter((x) => x.group !== "")];
+    return [withoutGroup, ...groups.filter((x) => x.group !== "")].filter(
+      (x) => x
+    );
   }
 
   search(query: string) {

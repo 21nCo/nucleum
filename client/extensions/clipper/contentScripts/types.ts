@@ -34,6 +34,7 @@ export interface IFeedbackPaneStore extends IObservableStoreSubject {
    * The clip that is currently focused in the feedback pane.
    */
   focusedClip: IClip | null;
+  isPreventAutoClose?: boolean;
 }
 
 export interface ISyncStore extends IObservableStoreSubject {

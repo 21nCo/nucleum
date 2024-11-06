@@ -31,7 +31,15 @@ export enum ExtensionEvent {
     LOGIN = "login",
     LOGOUT = "logout",
     UPLOAD_FILE = "upload",
-    RUN = "run"
+    RUN = "run",
+    /**
+     * An event that is sent to Sidepanel when extension is booted up. To load in memory stores.
+     */
+    BOOTUP = "bootup",
+    /**
+     * Triggered by flux from background script to side panel and content script so that operations like reloading in memory stores can be performed.
+     */
+    MUTATION = "mutation"
 }
 
 

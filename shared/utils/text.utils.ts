@@ -75,7 +75,8 @@ export function isValidDataString(str: string) {
   return isValidString(str) && !isNaN(new Date(str).getTime());
 }
 
-export function truncateString(str: string, length: number) {
+export function truncateString(str: string, length: number | undefined) {
+  if (!length) return str;
   if (str.length > length) return str.slice(0, length) + "...";
   return str;
 }

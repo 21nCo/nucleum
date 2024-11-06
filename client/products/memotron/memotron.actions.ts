@@ -34,9 +34,16 @@ import Chat from "$lib/client/products/memotron/taco/Chat.svelte";
 import CaptureDnD from "./capture/CaptureDnD.svelte";
 import MemotronHome from "./home/MemotronHome.svelte";
 import MemotronOnboarding from "./base/MemotronOnboarding.svelte";
-import LinkSuggestionItem from "./common/linkbox/LinkSuggestionItem.svelte";
+import LinkSearchResultItem from "./common/linkbox/LinkSearchResultItem.svelte";
 import NodeTitleLabelPart from "./node/title/NodeTitleLabelPart.svelte";
 import MemotronGreenUse from "./base/MemotronGreenUse.svelte";
+import GlobalGraph from "./graph/GlobalGraph.svelte";
+import CalloutSettings from "$lib/client/components/markdown/callout/CalloutSettings.svelte";
+import CreateCombination from "./combination/CreateCombination.svelte";
+import MemotronDataSettings from "./settings/MemotronDataSettings.svelte";
+import CollectionTitleLabelPart from "./collection/title/CollectionTitleLabelPart.svelte";
+import { Embed } from "$lib/client/types/context.type";
+
 export const memotronActions: IAction[] = [
   {
     action: MemotronAction.OPEN_CHAT,
@@ -91,11 +98,13 @@ export const memotronActions: IAction[] = [
     action: Action.GLOBAL_SEARCH,
     component: ResourceSearchModal,
     label: "Search resources",
-    type: ActionType.MODAL,
+    // type: ActionType.MODAL,
+    type: ActionType.RESOURCE,
+    accessMode: ResourceAccessMode.POP,
     modalParams: {
       layout: {
         orientation: Orientation.Horizontal,
-        size: Size.lg,
+        size: Size.xl,
         ignoreSafeArea: true
       }
     }
@@ -121,6 +130,19 @@ export const memotronActions: IAction[] = [
     modalParams: {
       layout: {
         size: Size.xxl,
+        orientation: Orientation.Horizontal
+      }
+    }
+  },
+  {
+    action: resourceAction(Resource.combination, ResourceActionType.CREATE),
+    component: CreateCombination,
+    label: "Create a new combination",
+    type: ActionType.MODAL,
+    modalParams: {
+      title: "Create a new combination",
+      layout: {
+        size: Size.md,
         orientation: Orientation.Horizontal
       }
     }
@@ -197,6 +219,7 @@ export const memotronActions: IAction[] = [
     action: Resource.collection,
     type: ActionType.MODAL,
     component: Collection,
+    resourceLabelRenderer: CollectionTitleLabelPart,
     modalParams: {
       layout: {
         size: Size.xxl,
@@ -287,7 +310,7 @@ export const memotronActions: IAction[] = [
     searchActionParams: {
       searchStoreId: Resource.node,
       itemLabel: "node",
-      searchResultComponent: LinkSuggestionItem,
+      searchResultComponent: LinkSearchResultItem,
       callback: async (id: string, label?: string, componentParams?: any) => {
         if (!componentParams?.id) {
           toasts.error("Something went wrong. Please try again later.");
@@ -335,7 +358,7 @@ export const memotronActions: IAction[] = [
     type: ActionType.PAGE,
     label: "Graph",
     icon: "ph:graph",
-    component: ComingSoonView
+    component: GlobalGraph
   },
   {
     action: "onboarding",
@@ -352,5 +375,32 @@ export const memotronActions: IAction[] = [
     label: "Green usage",
     icon: "ph:leaf-light",
     component: MemotronGreenUse
+  },
+  {
+    action: MemotronAction.CALLOUT_SETTINGS,
+    type: ActionType.MODAL,
+    label: "Callout Settings",
+    component: CalloutSettings,
+    modalParams: {
+      title: "Callout Settings",
+      layout: {
+        orientation: Orientation.Horizontal
+      }
+    }
+  },
+  {
+    action: MemotronAction.DATA_SETTINGS,
+    type: ActionType.MODAL,
+    label: "Data Settings",
+    icon: "ph:database",
+    component: MemotronDataSettings,
+    hideContext: [Embed.HANDSET],
+    modalParams: {
+      title: "Data Settings",
+      layout: {
+        size: Size.lg,
+        orientation: Orientation.Horizontal
+      }
+    }
   }
 ];

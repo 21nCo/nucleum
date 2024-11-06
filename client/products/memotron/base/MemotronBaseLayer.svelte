@@ -25,6 +25,7 @@
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
   import { Action } from "$lib/client/types/action.enum";
   import CommandModePage from "$lib/client/components/commandBar/CommandModePage.svelte";
+  import { clipTextSearchFallback } from "./fallbacks";
   let isLiteMode = $context.isEmbed && $context.isSheet;
   let interactionMode: InteractionMode;
   let isHideLeftNavBar: boolean = refreshSidebarState();
@@ -102,9 +103,16 @@
       });
     }
   }
+  async function onUserBaseLayerReady() {
+    await runFallbacks();
+  }
+  async function runFallbacks() {
+    await clipTextSearchFallback();
+    // await migrateTo0_56_0();
+  }
 </script>
 
-<UserBaseLayer>
+<UserBaseLayer on:ready={onUserBaseLayerReady}>
   {#if $appLoadingState.isBaseLoaded && $appLoadingState.isLocalLoaded}
     {#if interactionMode === InteractionMode.COMMAND_ONLY && $context.embed !== Embed.HANDSET}
       <CommandModePage />

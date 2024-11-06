@@ -73,7 +73,7 @@
       {:else}
         <div class="w-full flex flex-col justify-center items-center h-40">
           <SubAtomLogo />
-          <div>
+          <div class="font-medium">
             {properCase($appStore.product)}
           </div>
         </div>
@@ -88,11 +88,12 @@
     {#if isSignup}
       <footer class="px-8">
         <div class="text-b3 text-fgs2 text-center">
-          By signing up, you agree to our <Link
+          By signing up, you agree to our
+          <!-- <Link
             href={Action.TERMS_OF_SERVICE}
             label="Terms of Service"
           />
-          and
+          and -->
           <Link href={Action.PRIVACY_POLICY} label="Privacy Policy" />.
         </div>
       </footer>

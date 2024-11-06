@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import { hoverable } from "$lib/client/actions/hover.action";
-  import { Placement, popover } from "$lib/client/actions/popover.action";
+  import { popover } from "$lib/client/actions/popover.action";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
   import ContextMenu from "$lib/client/elements/contextMenu/ContextMenu.svelte";
@@ -9,6 +9,7 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import type { IRecordId } from "$lib/client/types/data.type";
+  import { Placement } from "$lib/client/types/direction.enum";
   import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
   import { abg, cn } from "$lib/client/utils/ui.utils";
   import { onMount } from "svelte";

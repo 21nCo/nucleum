@@ -15,7 +15,12 @@
   import type { IRecordId } from "$lib/client/types/data.type";
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   import NodeThumbnailTweetPreview from "$lib/client/products/memotron/node/thumbnail/NodeThumbnailTweetPreview.svelte";
-  let notes: string = "";
+  import { Placement } from "$lib/client/types/direction.enum";
+  import type { IWebpageStore } from "../contentScripts/types";
+  let notes: string =
+    ($feedbackPane.focusedClip
+      ? $feedbackPane.focusedClip.notes
+      : $webpage?.notes) ?? "";
   let autoCloseDuration = 4;
   let closeTimer: any;
   let closeActionTimestamp: number;
@@ -27,7 +32,21 @@
 
   $: linkItems = resolveLinkItems($webpage.links, $feedbackPane.focusedClip);
 
+  $: propertyValues = resolvePropertyValues(
+    $webpage,
+    $feedbackPane.focusedClip?.id
+  );
+
   let notesTimeout: any;
+
+  function resolvePropertyValues(
+    page: IWebpageStore,
+    clip: IRecordId | undefined
+  ) {
+    if (!clip) return page.properties;
+    const clipProperties = $feedbackPane.focusedClip?.properties;
+    return clipProperties;
+  }
 
   function resolveLinkItems(links: IRecordId[], focusedClip: IRecordId) {
     if (!focusedClip) return links;
@@ -64,7 +83,7 @@
   }
   function restartCloseTimer() {
     clearTimeout(closeTimer);
-    if (isHovering) {
+    if (isHovering || $feedbackPane.isPreventAutoClose) {
       return;
     }
     closeActionTimestamp = Date.now();
@@ -107,6 +126,20 @@
   function onLinkClick(e: CustomEvent) {
     console.log("link click", e.detail);
   }
+
+  function onPropertyUpdate(e: CustomEvent) {
+    if (!e.detail || !e.detail?.id || e.detail?.value === undefined) return;
+    if ($feedbackPane.focusedClip)
+      webpage.updateClipProperty($feedbackPane.focusedClip.id, {
+        id: e.detail.id,
+        value: e.detail.value
+      });
+    else
+      webpage.updatePageProperty({
+        id: e.detail.id,
+        value: e.detail.value
+      });
+  }
 </script>
 
 <FeedbackPaneBase bind:isHovering on:hover={onHover}>
@@ -117,14 +150,16 @@
         props={{
           label: `Link this ${contentTypeStr}`,
           tooltip: {
-            body: `Link this ${contentTypeStr} to a node or add it to a collection by searching and clicking`
+            body: `Link this ${contentTypeStr} to a node or add it to a collection by searching and clicking`,
+            isUseAbsolutePositioning: true,
+            placement: Placement.TopCenter
           }
         }}
       />
       <span class="h-6 w-6 flex justify-center items-center">
         {#if isHovering}
           <Button icon="cross-circled" on:click={closePane} />
-        {:else if $feedbackPane.isShown}
+        {:else if $feedbackPane.isShown && countdown > 0 && !Number.isNaN(countdown)}
           <!-- TODO closing animation circle -->
           <span
             class="border border-fgs2 rounded-full text-b4 text-fgs2 px-1 h-4 flex justify-center items-center"
@@ -137,6 +172,10 @@
     <LinkBoxOnClipper on:link={onLink} />
     <LinkItems
       links={linkItems}
+      {propertyValues}
+      nodeId={$feedbackPane.focusedClip?.id ?? $webpage.id}
+      isExpandable={true}
+      on:propertyChange={onPropertyUpdate}
       on:click={onLinkClick}
       on:unlink={onUnlink}
       isWrapItems={true}
@@ -157,7 +196,10 @@
       alt="Screenshot"
       class="w-full"
     /> -->
-    <FileView id={$feedbackPane.focusedClip.body?.file} />
+    <FileView
+      id={$feedbackPane.focusedClip.body?.file}
+      class="h-full w-full max-h-40 object-cover"
+    />
   {:else if $feedbackPane.focusedClip?.contentType === NodeType.TWEET}
     <span class="text-b2 p-1 border border-brs2 rounded-md">
       <NodeThumbnailTweetPreview

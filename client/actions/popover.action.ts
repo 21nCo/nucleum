@@ -593,4 +593,4 @@ export function popover(node: HTMLElement, params: PopoverParams) {
   };
 }
 
-export { Placement, PopoverTriggerMethod as TriggerMethod };
+export { PopoverTriggerMethod as TriggerMethod };

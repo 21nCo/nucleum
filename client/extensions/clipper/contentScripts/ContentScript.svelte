@@ -15,7 +15,10 @@
   import { webpage, toolbarState, feedbackPane, syncStore } from "./store";
   import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
   import ExtensionBaseLayer from "$lib/client/extensions/ExtensionBaseLayer.svelte";
-  import { linker } from "$lib/client/products/memotron/linking/link.store";
+  import {
+    linker,
+    linkTagStore
+  } from "$lib/client/products/memotron/linking/link.store";
   import ScreenShot from "./ScreenShot.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
   import { enumToString } from "$lib/shared/utils/text.utils";
@@ -27,8 +30,10 @@
   import { relayToBackgroundScript } from "$lib/client/utils/extension.utils";
   import { fileStore } from "$lib/client/components/files/file.store";
   import { propertyStore } from "$lib/client/products/memotron/collection/properties/property.store";
+  import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   export let id: string;
   let textClipperRef: any;
+  let extensionBaseRef: ExtensionBaseLayer;
   let isSnipActive: boolean = false;
   let loginNotification: number | null = null;
   $: contentType = resolveContentTypeForUrl($webpage.url);
@@ -36,27 +41,38 @@
     textClipperRef.onActivateColor(e);
   }
   async function onSaveClick() {
-    const contentTypeStr = enumToString(contentType);
-    $feedbackPane.feedback = `Saving ${contentTypeStr}...`;
-    $feedbackPane.isShown = true;
-    if (contentType === NodeType.TWEET) {
-      const tweetNode = extractTweetFromTweeetPage();
-      if (!tweetNode) return;
-      await webpage.saveTweet(tweetNode, true);
-    } else if (contentType === NodeType.TWITTER_PROFILE) {
-      const data = extractTwitterProfile();
-      if (!data) return;
-      await webpage.saveTwitterProfile(data);
-    } else {
-      await webpage.savePage();
+    try {
+      const contentTypeStr = enumToString(contentType);
+      $feedbackPane.feedback = `Saving ${contentTypeStr}...`;
+      $feedbackPane.isShown = true;
+      $feedbackPane.isPreventAutoClose = true;
+      if (contentType === NodeType.TWEET) {
+        const tweetNode = extractTweetFromTweeetPage();
+        if (!tweetNode) return;
+        await webpage.saveTweet(tweetNode, true);
+      } else if (contentType === NodeType.TWITTER_PROFILE) {
+        const data = extractTwitterProfile();
+        if (!data) return;
+        await webpage.saveTwitterProfile(data);
+      } else {
+        await webpage.savePage();
+      }
+      $feedbackPane.feedback = {
+        message: `${contentTypeStr} saved!`,
+        type: AlertType.SUCCESS
+      };
+    } catch (error) {
+      $feedbackPane.feedback = {
+        message: "Something went wrong. Please try again.",
+        type: AlertType.ERROR
+      };
+    } finally {
+      $feedbackPane.isPreventAutoClose = false;
     }
-    $feedbackPane.feedback = {
-      message: `${contentTypeStr} saved!`,
-      type: AlertType.SUCCESS
-    };
   }
 
-  async function onClipMutationFromSidePanel(data: any) {
+  async function onMutationRelayFromSidePanel(data: any) {
+    logger.debug({ at: "onMutationRelayFromSidePanel", data });
     let result;
     if (data.action === "link") {
       result = await webpage.linkClip(data.clipId, data.linkTo);
@@ -66,9 +82,18 @@
       //TODO - result
       await webpage.persistClipNotes(data.clipId, data.notes);
       result = { id: data.clipId, type: AlertType.SUCCESS };
+    } else if (data.action === "webpageNotes") {
+      $webpage.notes = data.notes;
+      result = { type: AlertType.SUCCESS };
+    } else if (data.action === "delete") {
+      await webpage.removeClip(data.clipId);
+      result = { type: AlertType.SUCCESS };
+    } else if (data.action === "property") {
+      await webpage.updateClipProperty(data.clipId, data.property);
+      result = { type: AlertType.SUCCESS };
     }
-    if (result?.type === AlertType.SUCCESS)
-      return $webpage.clips?.find((clip) => clip.id === data.clipId);
+    if (result?.type === AlertType.SUCCESS && data.clipId)
+      return $webpage.clips?.find(resourceInList(data.clipId));
     else return result;
   }
 
@@ -99,9 +124,12 @@
             await onSaveClick();
             return { status: "success", message: "Page saved" };
 
-          case ClipperExtensionEvent.CLIP_MUTATION:
-            const result = await onClipMutationFromSidePanel(message.data);
+          case ClipperExtensionEvent.MUTATION_RELAY:
+            const result = await onMutationRelayFromSidePanel(message.data);
             return { status: "success", message: "Clip mutation", result };
+          case ExtensionEvent.MUTATION:
+            await extensionBaseRef.loadInMemoryStore(message.data?.resource);
+            return { status: "success", message: "In memory store reloaded" };
         }
       } catch (error) {
         console.error("Error handling message:", error);
@@ -113,16 +141,18 @@
 </script>
 
 <ExtensionBaseLayer
+  bind:this={extensionBaseRef}
   {id}
   stores={[
     nodeStore,
     collectionStore,
+    propertyStore,
+    linkTagStore,
     toolbarState,
     webpage,
     linker,
     highlightStore,
-    fileStore,
-    propertyStore
+    fileStore
   ]}
   on:login={(e) => (loginNotification = e.detail.code)}
 >

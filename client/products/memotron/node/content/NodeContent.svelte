@@ -124,25 +124,66 @@
   function onMarkdownContentChange(e: CustomEvent) {
     logger.log({ at: "NodeContent - onMarkdownContentChange", ...e.detail });
     const block = e.detail.block;
-    if (block.source && "body" in block) {
-      node.updateBlock(block.source, { body: block.body });
+    if (!block.source && !block.id) return;
+    const id = block.id ?? block.source;
+    if ("body" in block) {
+      let params = {};
+      if (typeof block.body === "string" || "text" in block.body) {
+        params = {
+          isDebounced: true,
+          debounceKey: "text"
+        };
+      }
+      node.updateBlock(id, { body: block.body }, params);
+    } else if ("label" in block) {
+      node.updateBlock(
+        id,
+        { label: block.label },
+        {
+          isDebounced: true,
+          debounceKey: "label"
+        }
+      );
+    } else if ("metadata" in block) {
+      node.updateBlock(id, { metadata: block.metadata });
     }
   }
 
   function onReStructure(e: CustomEvent) {
     logger.log({ at: "NodeContent - onReStructure", ...e.detail });
-    const differences = shallowDiff(previousRootStructure, e.detail.root);
-    console.log("Differences", differences);
-    if (isValidArrayWithData(differences)) {
-      node.updateBlock($node.id, { children: e.detail.root });
-    }
-    previousRootStructure = deepCopy(e.detail.root);
-    if (!e.detail.children) return;
-    e.detail.children
-      .filter((x: INodeStructure) => x.factor <= hierarchyFactorLimit)
-      .forEach((child: INodeStructure) => {
-        node.updateBlock(child.id, { children: child.children });
+    try {
+      const differences = shallowDiff(previousRootStructure, e.detail.root);
+      // console.log({ at: "NodeContent - onReStructure", differences });
+      if (isValidArrayWithData(differences)) {
+        node.updateBlock(
+          $node.id,
+          { children: e.detail.root },
+          {
+            isDebounced: true,
+            debounceKey: "children"
+          }
+        );
+      }
+      previousRootStructure = deepCopy(e.detail.root);
+      if (!e.detail.children) return;
+      e.detail.children
+        .filter((x: INodeStructure) => x.factor <= hierarchyFactorLimit)
+        .forEach((child: INodeStructure) => {
+          node.updateBlock(
+            child.id,
+            { children: child.children },
+            {
+              isDebounced: true,
+              debounceKey: "children"
+            }
+          );
+        });
+    } catch (e) {
+      logger.error({
+        at: "NodeContent - onReStructure - error",
+        error: e
       });
+    }
   }
 
   /**
@@ -185,25 +226,28 @@
       if (!detail?.id) return;
       const blockType = detail.blockType ?? NodeType.SIMPLE_TEXT;
       const result = await node.createBlock(detail.id, blockType, {
-        body: blockType === NodeType.SIMPLE_TEXT ? "" : null
+        body: detail.body ?? (blockType === NodeType.SIMPLE_TEXT ? "" : null)
       });
     }
 
+    /**
+     * TODO - copying text - if converting to and from code - text etc
+     * @param e
+     */
     function onConvert(e: CustomEvent) {
       logger.log({ at: "NodeContent - onConvert", ...e.detail });
       if (e.detail.source && e.detail.toType) {
         if (headingNodeTypes.includes(e.detail.fromType)) {
           node.updateBlock(e.detail.source, {
             contentType: e.detail.toType,
-            children: []
+            children: [],
+            body: null
           });
-        } else if (e.detail.toType === NodeType.MEDIA_GRID) {
+        } else {
           node.updateBlock(e.detail.source, {
             contentType: e.detail.toType,
             body: null
           });
-        } else {
-          node.updateBlock(e.detail.source, { contentType: e.detail.toType });
         }
       }
     }

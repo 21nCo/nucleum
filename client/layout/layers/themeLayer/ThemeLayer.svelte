@@ -7,6 +7,10 @@
   import ColorLayer from "./ColorLayer.svelte";
   import GlassSkin from "./GlassSkin.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
+  import "@fontsource-variable/hanken-grotesk";
+  import "@fontsource/noto-color-emoji";
+  // Do not remove this import as it is required for the global css propagation in case of custom colors are absent - ex: PanelSwitcher
+  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   export let extensionContext: string | undefined = undefined;
   let fontFamily: string = "Avenir";
   let defaultRootFontSize: number = 16;
@@ -128,7 +132,7 @@
 <!--Note: The font weight and tracking correction is for H Grotesk typeface -->
 <div
   bind:this={ref}
-  class={cn("flex h-full w-full font-[350] tracking-[0.01em]", {
+  class={cn("flex h-full w-full font--[350] tracking-[0.01em]", {
     glassy: $appearance?.skin == AppSkin.Glassy,
     dark: $appearance?.colorScheme?.isDark
   })}

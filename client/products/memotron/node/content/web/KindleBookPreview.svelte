@@ -3,8 +3,10 @@
   export let node: IKindleBook;
 </script>
 
-<div class="w-full h-full flex justify-center items-center">
-  <div class="flex flex-col gap-5 p-4 border border-brs3 rounded-md w-3/4">
+<div class="w-full h-full mo:p-4 flex justify-center items-center">
+  <div
+    class="flex flex-col gap-5 p-4 border border-brs3 rounded-md mo:w-full w-3/4"
+  >
     <div class="flex w-full gap-3">
       <img
         class="rounded-md border border-brs2"
@@ -13,7 +15,7 @@
       />
       <div class="flex flex-col gap-2 items-start justify-between">
         <div class="flex flex-col gap-2 items-start">
-          <div class="font-medium text-h3 text-left">
+          <div class="font-medium text-h3 mo:text-h5 text-left">
             {node.label}
           </div>
           <div class="text-b2 text-fgs2">
@@ -21,7 +23,7 @@
           </div>
         </div>
         <div>
-          <div class="text-b3 text-fgs3">
+          <div class="text-b3 text-fgs3 text-left">
             Last annotated: {node.body.lastAnnotatedDate}
           </div>
         </div>

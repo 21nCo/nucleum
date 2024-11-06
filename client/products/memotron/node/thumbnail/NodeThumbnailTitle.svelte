@@ -9,6 +9,7 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { tooltip } from "$lib/client/actions/popover.action";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import view from "$lib/client/stores/view.store";
   export let node: INode;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
   export let isUrlOnIcon: boolean = false;
@@ -23,7 +24,7 @@
     onHover: (e) => (isHovering = e)
   }}
 >
-  {#if !isUrlOnIcon && accessPoint !== ResourceAccessPoint.SEARCH_RESULT && isHovering && node.url}
+  {#if !isUrlOnIcon && isHovering && node.url}
     <a
       href={node.url}
       target="_blank"
@@ -49,9 +50,9 @@
       </span>
     </a>
   {:else}
-    <NodeAvatar {node} size={Size.sm} />
+    <!-- <NodeAvatar {node} size={Size.sm} /> -->
     <div class="flex-1 min-w-0">
-      <div class="flex text-left truncate w-full text-b2 font--medium">
+      <div class={cn("flex text-left truncate w-full text-b2 font--medium")}>
         <NodeTitleLabelPart item={node} {accessPoint} />
       </div>
     </div>
@@ -61,7 +62,7 @@
         onHover: (e) => (isHoveringUrlIcon = e)
       }}
     >
-      {#if node.url && accessPoint !== ResourceAccessPoint.SEARCH_RESULT}
+      {#if node.url && !$view.isConstrainedWidth}
         {#if !isUrlOnIcon || (isUrlOnIcon && !isHoveringUrlIcon)}
           <Icon icon="ph:arrow-up-right" class="fill-fgs3" size={Size.sm} />
         {:else if isUrlOnIcon && isHoveringUrlIcon}

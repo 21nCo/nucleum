@@ -20,7 +20,7 @@ interface TestDexieRecord {
 }
 
 export class AppDexie extends Dexie {
-  protected dbVersion: number = 24;
+  protected dbVersion: number = 26;
   test!: Table<TestDexieRecord>;
   mutationQueuev2!: Table<MutationQueue>;
   accessLog!: Table<IAccessLog>;

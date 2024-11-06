@@ -1,3 +1,4 @@
+import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
 import { appStore } from "$lib/client/stores/app.store";
 import { uiState } from "$lib/client/stores/uiState/uiState.store";
 import type { IRecordId } from "$lib/client/types/data.type";
@@ -26,6 +27,12 @@ class TabStore {
 
   remove(id: IRecordId) {
     uiState.removeResourceFromTabs(id);
+  }
+
+  get() {
+    return uiState.getState(ResourceAccessPoint.TABS, {
+      isProductScoped: true
+    });
   }
 }
 

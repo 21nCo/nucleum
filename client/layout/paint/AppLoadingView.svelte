@@ -5,6 +5,7 @@
   import PageLoadingAnimation from "$lib/client/elements/feedback/animations/PageLoadingAnimation.svelte";
   import context from "$lib/client/stores/context.store";
   export let message: string | undefined = undefined;
+  export let subMessage: string | undefined = undefined;
 </script>
 
 <div
@@ -19,11 +20,16 @@
         Loading...
       </div>
     {:else}
-      <div class="flex flex-col items-center">
+      <div class="flex flex-col gap-2 items-center">
         <SubAtomLogo />
         {#if message}
-          <div class="font-medium px-4 text-center text-fgs2 text-b3">
+          <div class="font-medium px-4 text-center text-fgs2 text-b2">
             {message}
+          </div>
+        {/if}
+        {#if subMessage}
+          <div class="px-4 text-center text-fgs3 text-b3">
+            {subMessage}
           </div>
         {/if}
       </div>

@@ -1,4 +1,4 @@
-import type { Orientation } from "./direction.enum";
+import type { Orientation, Placement } from "./direction.enum";
 import type { IPopoverOptions } from "./popover.type";
 import type { Size } from "./size.enum";
 
@@ -21,6 +21,8 @@ export type InputLabelInfoToolTip = {
   action?: string;
   actionText?: string;
   size?: Size;
+  isUseAbsolutePositioning?: boolean;
+  placement?: Placement;
 };
 
 export type PopoverInputOptions = IPopoverOptions & {

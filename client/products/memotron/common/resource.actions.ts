@@ -13,6 +13,7 @@ import { uiState } from "$lib/client/stores/uiState/uiState.store";
 import { get } from "svelte/store";
 import {
   determineResourceType,
+  isSameResource,
   resourceInList
 } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { linker } from "$lib/client/products/memotron/linking/link.store";
@@ -93,23 +94,19 @@ export class ResourceActions<T extends IMemotronItemBase> {
       multiSelectContext = accessPointId + "-" + accessPoint;
     }
     const multiSelectStore = resolveMultiSelectStore(multiSelectContext);
-    // console.log({
-    //   multiSelectContext,
-    //   multiSelectStoreValue: get(multiSelectStore)
-    // });
     return {
-      label: get(multiSelectStore)?.includes(this.resource.id.toString())
+      label: get(multiSelectStore)?.some(resourceInList(this.resource.id))
         ? "Unselect"
         : "Select",
       value: "select",
       icon: "check-circle",
       callback: async () => {
-        if (get(multiSelectStore)?.includes(this.resource.id.toString())) {
+        if (get(multiSelectStore)?.some(resourceInList(this.resource.id))) {
           multiSelectStore.update((x) =>
-            x.filter((y) => y != this.resource.id)
+            x.filter((y) => !isSameResource(y, this.resource.id))
           );
         } else {
-          multiSelectStore.update((x) => [...x, this.resource.id.toString()]);
+          multiSelectStore.update((x) => [...x, this.resource.id]);
         }
       }
     };

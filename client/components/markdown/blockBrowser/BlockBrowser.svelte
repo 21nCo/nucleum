@@ -23,6 +23,44 @@
   let focusedItem: any;
   let config = [
     {
+      section: "Text",
+      children: [
+        {
+          label: "Paragraph",
+          description: "Paragraph block",
+          type: NodeType.SIMPLE_TEXT,
+          icon: "hugeicons:paragraph"
+        },
+        {
+          label: "Quote",
+          description: "Quote block",
+          type: NodeType.QUOTE,
+          icon: "hugeicons:quote-up"
+        },
+        {
+          label: "Code",
+          description: "Code block",
+          type: NodeType.CODE,
+          icon: "code"
+        },
+        {
+          label: "Callout",
+          description: "Callout block",
+          type: NodeType.CALLOUT,
+          icon: "bookmark",
+          badge: "new"
+        },
+        {
+          label: "Math",
+          description: "Math block",
+          type: NodeType.MATH,
+          icon: "hugeicons:summation-01",
+          badge: "planned",
+          isDisabled: true
+        }
+      ]
+    },
+    {
       section: "headings",
       children: [
         {
@@ -62,48 +100,6 @@
       ]
     },
     {
-      section: "Text",
-      children: [
-        {
-          label: "Paragraph",
-          description: "Paragraph block",
-          type: NodeType.SIMPLE_TEXT,
-          icon: "hugeicons:paragraph"
-        },
-        {
-          label: "Quote",
-          description: "Quote block",
-          type: NodeType.QUOTE,
-          icon: "hugeicons:quote-up",
-          badge: "new"
-        },
-        {
-          label: "Code",
-          description: "Code block",
-          type: NodeType.CODE,
-          icon: "code",
-          badge: "planned",
-          isDisabled: true
-        },
-        {
-          label: "Callout",
-          description: "Callout block",
-          type: NodeType.CALLOUT,
-          icon: "bookmark",
-          badge: "planned",
-          isDisabled: true
-        },
-        {
-          label: "Math",
-          description: "Math block",
-          type: NodeType.MATH,
-          icon: "hugeicons:summation-01",
-          badge: "planned",
-          isDisabled: true
-        }
-      ]
-    },
-    {
       section: "inline",
       children: [
         {
@@ -119,94 +115,84 @@
           icon: "calendar-days",
           badge: "planned",
           isDisabled: true
+        },
+        {
+          label: "Mention link",
+          description: "Mention a link",
+          type: InlineType.LINK_MENTION,
+          icon: "ph:link",
+          badge: "planned",
+          isDisabled: true
         }
-        // {
-        //   label: "Inline code",
-        //   description: "Write inline code",
-        //   type: InlineType.CODE,
-        //   icon: "code"
-        // }
       ]
     },
     {
       section: "lists",
-      isDisabled: true,
-      badge: "planned",
       children: [
         {
           label: "Unordered List",
           description: "Unordered List block",
           type: NodeType.LIST,
-          sub: ListType.UNORDERED,
           // icon: "lucide:list"
-          icon: "hugeicons:left-to-right-list-bullet",
-          isDisabled: true
+          icon: "hugeicons:left-to-right-list-bullet"
         },
         {
           label: "Ordered List",
           description: "Ordered List block",
-          type: NodeType.LIST,
-          sub: ListType.ORDERED,
+          type: NodeType.ORDERED_LIST,
           // icon: "lucide:list-ordered"
           icon: "hugeicons:left-to-right-list-number",
-          isDisabled: true
+          badge: "beta"
         },
         {
           label: "Checklist",
           description: "Checklist block",
-          type: NodeType.LIST,
-          sub: ListType.CHECKLIST,
+          type: NodeType.CHECKLIST,
           // icon: "lucide:list-todo"
-          icon: "hugeicons:check-list",
-          isDisabled: true
+          icon: "hugeicons:check-list"
         }
       ]
     },
     {
       section: "media",
-      isDisabled: true,
-      badge: "planned",
+      badge: "new",
       children: [
         {
           label: "Image",
           description: "Image block",
           type: NodeType.IMAGE,
-          icon: "image",
-          isDisabled: true
-        },
-        {
-          label: "Video",
-          description: "Video block",
-          type: NodeType.VIDEO,
-          icon: "video-camera",
-          isDisabled: true
+          icon: "image"
         },
         {
           label: "Audio",
           description: "Audio block",
           type: NodeType.AUDIO,
-          icon: "music",
-          isDisabled: true
+          icon: "music"
+        },
+        {
+          label: "Video",
+          description: "Video block",
+          type: NodeType.VIDEO,
+          icon: "video-camera"
         },
         {
           label: "PDF",
           description: "Pdf block",
           type: NodeType.PDF,
-          icon: "ph:file-pdf-light",
-          isDisabled: true
-        },
-        {
-          label: "Link",
-          description: "Link block",
-          type: NodeType.LINK,
-          icon: "hugeicons:link-05",
-          isDisabled: true
+          icon: "ph:file-pdf-light"
         },
         {
           label: "File",
           description: "File block",
           type: NodeType.FILE,
-          icon: "ph:file-light",
+          icon: "ph:file-light"
+        },
+        {
+          label: "Sketch",
+          description: "Sketch block",
+          type: NodeType.SKETCH,
+          icon: "ri:sketching",
+          badge: "planned",
           isDisabled: true
         }
       ]
@@ -277,64 +263,79 @@
     },
     {
       section: "embed",
-      isDisabled: true,
-      badge: "planned",
       children: [
         {
-          label: "Embed",
+          label: "Embed anything",
           description: "Embed block",
           type: NodeType.EMBED,
-          icon: "code",
-          isDisabled: true
+          icon: "code"
         },
-        {
-          label: "Embed node",
-          description: "Embed node block",
-          type: NodeType.NODE_AS_EMBED,
-          icon: "ph:circle-light",
-          isDisabled: true
-        },
+        // {
+        //   label: "Embed node",
+        //   description: "Embed node block",
+        //   type: NodeType.NODE_AS_EMBED,
+        //   icon: "ph:circle-light",
+        //   isDisabled: true
+        // },
         {
           label: "Embed collection",
           description: "Embed Collection block",
           type: NodeType.COLLECTION_AS_EMBED,
-          icon: "hugeicons:code",
-          isDisabled: true
+          icon: "hugeicons:code"
+        },
+        {
+          label: "Web text clip",
+          description: "Embed web text clip",
+          type: NodeType.TEXT_CLIP,
+          icon: "ph:highlighter-circle-thin"
+        },
+        {
+          label: "Youtube video",
+          description: "Embed youtube video block",
+          type: NodeType.YOUTUBE_VIDEO,
+          icon: "ph:youtube-logo-thin"
+        },
+        {
+          label: "Tweet",
+          description: "Embed tweet block",
+          type: NodeType.TWEET,
+          icon: "ph:x-logo-thin"
+        },
+        {
+          label: "Kindle book",
+          description: "Embed kindle book block",
+          type: NodeType.KINDLE_BOOK,
+          icon: "ph:amazon-logo-thin"
+        },
+        {
+          label: "Kindle highlight",
+          description: "Embed kindle highlight block",
+          type: NodeType.KINDLE_HIGHLIGHT,
+          icon: "ph:bookmark-simple-thin"
+        },
+        {
+          label: "Graph",
+          description: "Embed node graph",
+          type: NodeType.GRAPH_AS_EMBED,
+          icon: "ph:graph-thin",
+          isDisabled: true,
+          badge: "planned"
+        },
+        {
+          label: "Calendar",
+          description: "Embed calendar",
+          type: NodeType.CALENDAR_AS_EMBED,
+          icon: "ph:calendar-thin",
+          isDisabled: true,
+          badge: "planned"
         },
         {
           label: "Table of contents",
           description: "Embed table of contents block",
           type: NodeType.TOC,
           icon: "list",
-          isDisabled: true
-        },
-        {
-          label: "Youtube video",
-          description: "Embed youtube video block",
-          type: NodeType.YOUTUBE_VIDEO,
-          icon: "ph:youtube-logo-thin",
-          isDisabled: true
-        },
-        {
-          label: "Tweet",
-          description: "Embed tweet block",
-          type: NodeType.TWEET,
-          icon: "ph:x-logo-thin",
-          isDisabled: true
-        },
-        {
-          label: "Kindle book",
-          description: "Embed kindle book block",
-          type: NodeType.KINDLE_BOOK,
-          icon: "ph:amazon-logo-thin",
-          isDisabled: true
-        },
-        {
-          label: "Kindle highlight",
-          description: "Embed kindle highlight block",
-          type: NodeType.KINDLE_HIGHLIGHT,
-          icon: "ph:bookmark-simple-thin",
-          isDisabled: true
+          isDisabled: true,
+          badge: "planned"
         }
       ]
     }

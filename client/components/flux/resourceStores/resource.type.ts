@@ -134,7 +134,16 @@ export enum ResourceAccessPoint {
    * The resource is being accessed from the node page
    */
   COLLECTION = "collection",
-  SEARCH_RESULT = "searchresult"
+  SEARCH_RESULT = "searchresult",
+  /**
+   * The resource is being accessed from the markdown embed
+   */
+  MARKDOWN_EMBED = "markdownembed",
+  /**
+   * The resource is being accessed from the combination
+   */
+  COMBINATION = "combination",
+  CAPTURE = "capture"
 }
 
 /**

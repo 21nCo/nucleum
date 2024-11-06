@@ -3,27 +3,49 @@
   import type { BreadcrumbItem } from "$lib/client/types/breadcrumbItem.type";
   import { onMount } from "svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import type { IActiveNode, INode } from "../node.type";
   import { createEventDispatcher } from "svelte";
   import type { IRecordId } from "$lib/client/types/data.type";
   import { nodeStore } from "../node.store";
+  import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
   const dispatch = createEventDispatcher();
-  export let node: IActiveNode;
-  export let breadcrumbs: BreadcrumbItem[] | undefined = undefined;
+  export let mdParent: IRecordId[] | undefined = undefined;
+  export let id: IRecordId | undefined = undefined;
+  export let currentLabel: string | undefined = undefined;
+  export let isSubtleContext: boolean = false;
+  let breadcrumbs: BreadcrumbItem[] | undefined = undefined;
   onMount(async () => {
-    breadcrumbs = await refreshBreadcrumbs(node.parent ?? node.mdParent);
+    breadcrumbs = await refreshBreadcrumbs();
+    if (breadcrumbs && breadcrumbs.length > 0 && currentLabel) {
+      breadcrumbs.push({
+        label: currentLabel,
+        resourceId: id?.toString()
+      });
+    }
   });
-  async function refreshBreadcrumbs(parent: IRecordId[] | INode | undefined) {
-    if (!parent || parent.length === 0) return;
-    // console.log({ parent });
-    const parentItems = await nodeStore.selectMany({
-      filters: {
-        id:
-          typeof parent === "object" && "id" in parent
-            ? parent.toString()
-            : parent?.map((x) => x.toString())
-      }
-    });
+  /**
+   * Note: Querying in this component instead of pre fetching for both thumbnails and node fetch due to latency for this query.
+   *
+   * "(fn::memotron::node::parent($parent.id)) as mdParent"
+   */
+  async function refreshBreadcrumbs() {
+    let parentItems = [];
+    if (mdParent) {
+      parentItems = await nodeStore.selectMany({
+        filters: {
+          id: mdParent?.map((x) => x.toString())
+        }
+      });
+    } else if (!isExtensionEnvironment()) {
+      const result = await nodeStore.selectMany({
+        properties: [
+          "(select * from (fn::memotron::node::parent($parent.id))) as mdParent"
+        ],
+        filters: {
+          id: id?.toString()
+        }
+      });
+      if (result) parentItems = result[0].mdParent;
+    }
     if (!parentItems || parentItems.length === 0) return [];
     return parentItems
       .map((x) => {
@@ -43,6 +65,7 @@
 {#if breadcrumbs && breadcrumbs.length > 0}
   <Breadcrumb
     items={breadcrumbs}
+    {isSubtleContext}
     isPreventDefault={true}
     spaceAvailable={Size.lg}
     on:click={onBreadcrumbClick}

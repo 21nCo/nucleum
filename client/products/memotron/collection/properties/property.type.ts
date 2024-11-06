@@ -49,12 +49,23 @@ export enum PropertyType {
   RANGE = "range",
   SINGLE_SELECT = "single-select",
   MULTI_SELECT = "multi-select",
+  TIME_TRACKING = "time-tracking",
   FILE = "file",
+  FORMULA = "formula",
+
+  // Meta properties
   CREATED_TIME = "created-time",
   MODIFIED_TIME = "modified-time",
   CREATED_BY = "created-by",
   MODIFIED_BY = "modified-by",
-  LOCATION = "location"
+  LOCATION = "location",
+
+  // Universal properties
+  COUNTRY = "country",
+  LANGUAGE = "language",
+  CURRENCY = "currency",
+  CONTINENT = "continent",
+  TIMEZONE = "timezone"
 }
 
 export type IPropertyValue =

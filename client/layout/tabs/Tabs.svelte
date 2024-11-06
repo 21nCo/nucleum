@@ -3,22 +3,16 @@
   import { onMount } from "svelte";
   import TopBarResourceItem from "./TopBarResourceItem.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import { Size } from "$lib/client/types/size.enum";
   import { Action } from "$lib/client/types/action.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { tabs } from "./tabs.store";
-  let pinnedItems = refreshPinnedItems();
+  let pinnedItems = tabs.get();
   onMount(() => {
     uiState.subscribe((x) => {
-      pinnedItems = refreshPinnedItems();
+      pinnedItems = tabs.get();
     });
   });
-  function refreshPinnedItems() {
-    return uiState.getState(ResourceAccessPoint.TABS, {
-      isProductScoped: true
-    });
-  }
 </script>
 
 {#if pinnedItems?.length > 0}

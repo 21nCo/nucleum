@@ -16,7 +16,9 @@
     metaPropertyOptions,
     propertyEditorStore,
     propertyOptions,
-    propertyStore
+    propertyStore,
+    universalPropertyGroupLabel,
+    universalPropertyOptions
   } from "./property.store";
   import {
     ActiveCollectionStore,
@@ -52,7 +54,7 @@
   let tableId = "properties-table";
   let columns: TableColumn[] = [
     {
-      label: "Type",
+      label: "Type of property",
       key: "type",
       type: TableCellType.DROPDOWN,
       style: InputStyle.BORDERED,
@@ -66,9 +68,22 @@
             size: Size.xs
           },
           order: 0
+        },
+        {
+          id: universalPropertyGroupLabel,
+          label: universalPropertyGroupLabel,
+          order: 1,
+          info: {
+            body: "The property options are predefined and cannot be changed.",
+            size: Size.xs
+          }
         }
       ],
-      options: [...propertyOptions, ...metaPropertyOptions]
+      options: [
+        ...propertyOptions,
+        ...metaPropertyOptions,
+        ...universalPropertyOptions
+      ]
     },
     {
       label: "Label",

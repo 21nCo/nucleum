@@ -31,7 +31,10 @@
     ISelectValue
   } from "$lib/client/types/select.type";
   import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
+  import {
+    ResourceAccessMode,
+    ResourceAccessPoint
+  } from "$lib/client/components/flux/resourceStores/resource.type";
   import { isValidString } from "$lib/shared/utils/text.utils";
 
   import { metaPropertyOptions } from "./properties/property.store";
@@ -71,8 +74,12 @@
     resolvePropertyIcon,
     tabAndGroupableProperties
   } from "./properties/property.utils";
+  import TextInput from "$lib/client/elements/input/TextInput.svelte";
+  import { InputStyle } from "$lib/client/types/input.type";
 
   export let id: string = "";
+  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
+  export let accessMode: ResourceAccessMode = ResourceAccessMode.POP;
   let collection: IActiveCollectionStore = ActiveCollectionStore.resolve(id);
   let activeView: ICollectionViewWithData | null = null;
   let viewData: INodeThumb[] = [];
@@ -94,18 +101,20 @@
   let properties: DropdownItem[];
   let viewsForSwitcher: ISelectItem[];
   let isReady = false;
-  let isNotInlineAccess: boolean = false;
-  let selectedArrangement: Arrangement = Arrangement.LIST;
   let isCoverPickerOpen = false;
   let isShowMetaViews = false;
   let isSingleViewMode = true;
-  let arrangementDensity = 1;
   let searchQuery: string = "";
+
+  $: isConstrainedWidth =
+    $view.isConstrainedWidth ||
+    $collection?.accessMode === ResourceAccessMode.SPLIT ||
+    $collection?.accessMode === ResourceAccessMode.FSPLIT;
 
   $: coverPlacement =
     $collection?.coverLayout?.placement === Placement.Top ||
     !$collection?.coverLayout?.placement ||
-    $view.isConstrainedWidth ||
+    isConstrainedWidth ||
     $view.isPortrait
       ? Placement.Top
       : $collection?.coverLayout?.placement;
@@ -117,20 +126,10 @@
   onMount(async () => {
     // console.log("onMount - collection", { id });
     const viewQueryParam = new URLSearchParams(location.search).get("view");
-    const focusParam = new URLSearchParams(location.search).get(
-      ResourceAccessMode.FULL
-    );
-    const splitParam = new URLSearchParams(location.search).get(
-      ResourceAccessMode.SPLIT
-    );
-    isNotInlineAccess =
-      focusParam === collection.id || splitParam === collection.id
-        ? true
-        : false;
     if (viewQueryParam) {
       selectedViewId = viewQueryParam;
     }
-    await collection.init();
+    await collection.init(accessMode);
     loadActiveView();
     if (!activeView) {
       activeView = $collection?.views
@@ -208,7 +207,6 @@
 
   function onArrangementChange(e: CustomEvent) {
     if (!activeView) return;
-    selectedArrangement = e.detail;
     activeView.arrangement = e.detail;
     activeView.density = activeView.density ? activeView.density : 1;
     collection.updateView(
@@ -224,13 +222,24 @@
   function onDensityChange(e: CustomEvent) {
     if (!activeView) return;
     activeView.density = e.detail;
-    arrangementDensity = e.detail;
     collection.updateView(
       activeView.id,
       {
         density: activeView.density
       },
       "density"
+    );
+  }
+
+  function onPreviewSettingChange(e: CustomEvent) {
+    if (!activeView) return;
+    activeView.isHideThumbnailPreview = e.detail;
+    collection.updateView(
+      activeView.id,
+      {
+        isHideThumbnailPreview: activeView.isHideThumbnailPreview
+      },
+      "isHideThumbnailPreview"
     );
   }
 
@@ -278,8 +287,6 @@
       $collection.views.find((x) => x.id.toString() === selectedViewId) ?? null;
     if (!view) return;
     activeView = view;
-    selectedArrangement = view.arrangement ?? selectedArrangement;
-    arrangementDensity = view.density ?? arrangementDensity;
     return view;
   }
 
@@ -431,7 +438,7 @@
     })}
     on:scroll={onScroll}
   >
-    {#if coverPlacement !== Placement.Right}
+    {#if accessPoint === ResourceAccessPoint.SELF && coverPlacement !== Placement.Right}
       <Cover
         cover={$collection.cover}
         isInEditMode={$collection.isInEditMode}
@@ -476,10 +483,9 @@
             "sticky top-0 bg-bgs1": isSingleViewMode,
             // When in edit mode, interfering with view settings dropdown when the dropdown opens on top if z-20 is set
             "z-20": isSingleViewMode && !$collection.isInEditMode,
-            "pb-8":
-              isSingleViewMode && !isShowMetaViews && !$view.isConstrainedWidth,
-            "pt-6": !$view.isConstrainedWidth,
-            "p-2": $view.isConstrainedWidth
+            "pb-8": isSingleViewMode && !isShowMetaViews && !isConstrainedWidth,
+            "pt-6": !isConstrainedWidth,
+            "p-2": isConstrainedWidth
           })}
         >
           <CollectionTitleBar
@@ -495,16 +501,39 @@
               {#if isSingleViewMode && !$collection.isInEditMode}
                 <ArrangementSelector
                   {isBoardContext}
-                  arrangement={selectedArrangement}
-                  density={arrangementDensity}
+                  arrangement={activeView?.arrangement ?? Arrangement.LIST}
+                  density={activeView?.density}
+                  isHideThumbnailPreview={activeView?.isHideThumbnailPreview}
                   on:arrangementChange={onArrangementChange}
                   on:densityChange={onDensityChange}
+                  on:previewSettingChange={onPreviewSettingChange}
                 />
               {/if}
             </span>
           </CollectionTitleBar>
         </div>
-        {#if $collection.isInEditMode && $view.isConstrainedWidth}
+        {#if isConstrainedWidth && !$collection.isInEditMode}
+          <div
+            class={cn("flex px-4", {
+              "pb-3": isSingleViewMode,
+              "-mt-3": !isSingleViewMode
+            })}
+          >
+            <TextInput
+              bind:value={searchQuery}
+              style={InputStyle.BORDERED}
+              size={Size.sm}
+              placeholder={`Search this collection (${$collection.totalNodeCount ?? 0} items)`}
+              on:input={onSearch}
+              isShowClearControl={searchQuery.length > 0}
+              on:cancel={() => {
+                searchQuery = "";
+                refresh();
+              }}
+            />
+          </div>
+        {/if}
+        {#if $collection.isInEditMode && isConstrainedWidth}
           <div class="px-4 flex justify-center items-center w-full h-12">
             <Button
               label="Close edit mode"
@@ -585,12 +614,14 @@
                   /> -->
                   <ArrangementSelector
                     {isBoardContext}
-                    arrangement={selectedArrangement}
-                    density={arrangementDensity}
+                    arrangement={activeView?.arrangement ?? Arrangement.LIST}
+                    density={activeView?.density}
+                    isHideThumbnailPreview={activeView?.isHideThumbnailPreview}
                     on:arrangementChange={onArrangementChange}
                     on:densityChange={onDensityChange}
+                    on:previewSettingChange={onPreviewSettingChange}
                   />
-                  {#if !$collection.isInEditMode && !$view.isConstrainedWidth}
+                  {#if !$collection.isInEditMode && !isConstrainedWidth}
                     <AddResourceAction
                       variant="strong"
                       on:add={onAddResource}
@@ -602,7 +633,7 @@
             {#if activeView && ($collection.isInEditMode || !isNoneResource(activeView.tabBy))}
               <div class="px-4 pb-4 flex flex-col gap-6">
                 {#if $collection.isInEditMode}
-                  {#if $view.isConstrainedWidth}
+                  {#if isConstrainedWidth}
                     <span class="text-fgs3 text-b3">
                       Currently, advanced view editing is only available on
                       Desktop. Sorry for the inconvenience.
@@ -651,7 +682,7 @@
         </main>
       </div>
     {/if}
-    {#if coverPlacement === Placement.Right}
+    {#if accessPoint === ResourceAccessPoint.SELF && coverPlacement === Placement.Right}
       <Cover
         cover={$collection.cover}
         isInEditMode={$collection.isInEditMode}
@@ -666,8 +697,11 @@
         on:resize={onCoverResize}
       />
     {/if}
-    {#if isNotInlineAccess}
-      <FullScreenCloseButton style={ButtonVariant.DANGER} />
+    {#if $collection?.accessMode === ResourceAccessMode.SPLIT || $collection?.accessMode === ResourceAccessMode.FULL || $collection?.accessMode === ResourceAccessMode.FSPLIT}
+      <FullScreenCloseButton
+        style={ButtonVariant.DANGER}
+        accessMode={$collection.accessMode}
+      />
     {/if}
   </div>
 {/if}

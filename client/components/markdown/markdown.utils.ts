@@ -1,5 +1,5 @@
 import type {
-  IBlock,
+  IBlockInterface,
   IMarkdownStore,
   ListBlockWithChildren,
   IMarkdown
@@ -18,7 +18,7 @@ import { deepCopy } from "$lib/shared/utils/obj.utils";
  * @returns children of the node and all its children
  */
 export function recursivelyExtractAllChildrenIntoArray(md: IActiveNode) {
-  let children: IBlock[] = [];
+  let children: IBlockInterface[] = [];
 
   if (md.children && md.children.length > 0) {
     md.children.forEach((child) => {
@@ -50,7 +50,7 @@ export function parseBlocksIntoNestedMd(mdStore: IMarkdownStore) {
  * @returns
  */
 export function recursivelyFormParentFromChildren(
-  blocks: IBlock[],
+  blocks: IBlockInterface[],
   childrenHierarchy: string[] | undefined
 ) {
   let children: INode[] = [];
@@ -82,7 +82,7 @@ export function recursivelyFormParentFromChildren(
 export function handleNodeMarkdownChildHierarchyChanges(
   store: IMarkdownStore,
   contextBlockId: string,
-  newBlock: IBlock,
+  newBlock: IBlockInterface,
   isStructuralBlock: boolean
 ) {
   if (!store.params?.isNodular) return store;
@@ -123,12 +123,12 @@ function getChild(block: ListBlockWithChildren, childId: string) {
 }
 
 export function resolveImmediateParent(
-  mdBlocks: IBlock[],
+  mdBlocks: IBlockInterface[],
   parentHierarchy: string[]
 ) {
   const topMostParentId = parentHierarchy.shift();
   const topMostParent = mdBlocks.find((b) => b.id === topMostParentId);
-  let iterParent: ListBlockWithChildren = topMostParent as IBlock<
+  let iterParent: ListBlockWithChildren = topMostParent as IBlockInterface<
     Required<Pick<ListContent, "children">>
   >;
   let parentOneAbove: ListBlockWithChildren | undefined;
@@ -159,8 +159,8 @@ export const inlineStylingPatterns = [
   },
   {
     // regex: /_((?:\s*\S)+?)_/g,
-    regex: /_(.*?)_/g,
-    replacement: encapsulateInlinePattern("_", "<u>$1</u>")
+    regex: /__(.*?)__/g,
+    replacement: encapsulateInlinePattern("__", "<u>$1</u>")
   },
   {
     regex: /~~((?:\S|\s\S)+?)~~/g,
@@ -279,7 +279,7 @@ export const htmlToMarkdownPatterns = [
   },
   {
     regex: /<u>(.*?)<\/u>/g,
-    replacement: "_$1_"
+    replacement: "__$1__"
   },
   {
     regex: /<s>(.*?)<\/s>/g,

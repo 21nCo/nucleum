@@ -10,8 +10,8 @@
   const dispatch = createEventDispatcher();
   export let link: INodeLinkThumb;
   $: _tags = $linkTagStore
-    .filter((x) => link.tags?.some(resourceInList(x)))
-    .map(linkTagLabelMapper);
+    ?.filter((x) => link.tags?.some(resourceInList(x)))
+    ?.map(linkTagLabelMapper);
 
   async function onRemove(tagId: IRecordId) {
     link.tags = link.tags?.filter((x) => x.toString() !== tagId.toString());

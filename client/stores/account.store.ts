@@ -12,7 +12,7 @@ import { performApiCall } from "$lib/client/utils/network.utils";
 import { confirmationNotification } from "$lib/client/stores/notification.store";
 import { appStore } from "./app.store";
 import jwt_decode from "jwt-decode";
-import { signout } from "../utils/account.utils";
+import { getBucketNameandKey, signout } from "../utils/account.utils";
 import { ObservableStore } from "./client.store";
 import {
   StoreDataType,
@@ -82,19 +82,6 @@ class AccountStore extends ObservableStore<
     });
   }
 
-  async expire() {
-    logger.log({ at: "account.store - Expiring account" });
-    await clientStorage.remove(ClientStorageKey.STOKEN);
-    this.update(() => {
-      const n = {
-        sessionType: UserSessionType.UNDETERMINED,
-        dataMode: UserDataMode.NONE
-      };
-      return n;
-    });
-    await flux.terminate();
-  }
-
   signIn(
     data: {
       userInfo: UserInformation;
@@ -135,10 +122,19 @@ class AccountStore extends ObservableStore<
     }
   }
 
-  async signOut(params?: { isPreventDapIdClear?: boolean }) {
-    await this.expire();
-    signout("signOut account.store");
-    await this.clearAllCache(params);
+  async signOut(params?: {
+    isPreventDapIdClear?: boolean;
+    isPreventRedirect?: boolean;
+  }) {
+    this.update(() => {
+      const n = {
+        sessionType: UserSessionType.UNDETERMINED,
+        dataMode: UserDataMode.NONE
+      };
+      return n;
+    });
+    await flux.terminate();
+    await signout(params, "signOut account.store");
   }
   async embedOAuthSignin(token: string) {
     clientStorage.set(ClientStorageKey.STOKEN, token);
@@ -172,7 +168,8 @@ class AccountStore extends ObservableStore<
     let acc = this.get();
     await performApiCall("account/n/deleteAccount", "POST", {});
     console.log("deleting account", { acc });
-    await this.signOut();
+    await this.signOut({ isPreventRedirect: true });
+    await flux.clear();
     appStore.gotoPath("/signup?msg=deleted");
     return true;
   }
@@ -268,6 +265,7 @@ class AccountStore extends ObservableStore<
       isTemp?: boolean;
       isReturnUrl?: boolean;
       isExtensionEnv?: boolean;
+      isPreventSync?: boolean;
     } = {}
   ) {
     try {
@@ -276,7 +274,8 @@ class AccountStore extends ObservableStore<
         id: contentType.split("/")[0] + "_" + generateSimpleRandomId()
       });
       logger.log({ at: "uploadFileV2", id, contentType, fileName });
-      if (account.dataMode === UserDataMode.LOCAL) {
+      fileName = fileName.replace(/\s+/g, "_");
+      if (account.dataMode === UserDataMode.LOCAL || params.isPreventSync) {
         const arrayBuffer = await blob.arrayBuffer();
         const uint8Array = new Uint8Array(arrayBuffer);
         const response = await fileStore.create([
@@ -302,7 +301,10 @@ class AccountStore extends ObservableStore<
           contentType,
           blob
         );
-        const url = signedUrlResponse.uploadURL.split("?")[0];
+        // const url = signedUrlResponse.uploadURL.split("?")[0];
+        const key = getBucketNameandKey(signedUrlResponse.uploadURL);
+        const signedGetUrl = await this.persistence.fetchSignedUrlForGet(key);
+        const url = signedGetUrl?.getUrl;
         const file = {
           id,
           label: fileName,
@@ -346,7 +348,6 @@ class AccountStore extends ObservableStore<
       ClientStorageKey.OFFLINE_SESSION_ID
     );
     if (!token && !offlineSessionId) {
-      this.expire();
       return true;
     }
     if (offlineSessionId) {
@@ -360,20 +361,16 @@ class AccountStore extends ObservableStore<
     if (currentTime < exp) {
       return false;
     }
-    console.log("token expired");
     const refreshToken = localStorage.getItem("refresh-token");
     if (!refreshToken) {
-      this.expire();
       return true;
     }
     let decodedRefreshToken: any = jwt_decode(refreshToken);
     let refreshExp = decodedRefreshToken?.exp ?? 0;
     if (currentTime > refreshExp) {
-      this.expire();
       return true;
     }
     if (!get(isRefreshingToken)) {
-      this.expire();
       return true;
       //TODO - not refreshing token as refresh token logic is not robust on the backend and also refreshToken - CORS config is not added on backend which is causing issues
       console.log("refreshing token");
@@ -389,19 +386,6 @@ class AccountStore extends ObservableStore<
     } else {
       return true;
     }
-  }
-  async clearAllCache(params?: { isPreventDapIdClear?: boolean }) {
-    const env = await clientStorage.get(ClientStorageKey.ENV);
-    const appData = await clientStorage.get(ClientStorageKey.APP_DATA);
-    const product = await clientStorage.get(ClientStorageKey.PRODUCT);
-    const dapId = params?.isPreventDapIdClear
-      ? await clientStorage.get(ClientStorageKey.DAP_ID)
-      : undefined;
-    await clientStorage.clearAll();
-    if (env) await clientStorage.set(ClientStorageKey.ENV, env);
-    if (product) await clientStorage.set(ClientStorageKey.PRODUCT, product);
-    if (appData) await clientStorage.set(ClientStorageKey.APP_DATA, appData);
-    if (dapId) await clientStorage.set(ClientStorageKey.DAP_ID, dapId);
   }
 }
 

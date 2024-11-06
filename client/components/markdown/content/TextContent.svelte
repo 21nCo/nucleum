@@ -1,7 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
   import {
-    type IBlock,
     BlockAction,
     InlineType
   } from "$lib/client/components/markdown/md.type";
@@ -12,19 +11,19 @@
     headingNodeTypes,
     ListType,
     NodeType,
-    type ListContent,
-    type TextContent,
-    type TextNodeType
+    type ListNodeType,
+    type SimpleTextNodeType
   } from "$lib/client/products/memotron/node/node.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import Popover from "$lib/client/elements/popover/Popover.svelte";
   import InlineMarkdownTextInput from "./InlineMarkdownTextInput.svelte";
   import SearchResultsPopover from "$lib/client/elements/input/SearchResultsPopover.svelte";
-  import LinkSuggestionItem from "$lib/client/products/memotron/common/linkbox/LinkSuggestionItem.svelte";
+  import LinkSearchResultItem from "$lib/client/products/memotron/common/linkbox/LinkSearchResultItem.svelte";
   import { deepCopy } from "$lib/shared/utils/obj.utils";
   import { getContext } from "svelte";
   import { logger } from "../../debug/logger.client";
   import { SearchStore } from "$lib/client/products/memotron/memotron.store";
+  import type { IRecordId } from "$lib/client/types/data.type";
 
   const nodeContentContext = getContext<any>("content");
   const blockContext = getContext<any>("block");
@@ -60,27 +59,28 @@
 
   const dispatch = createEventDispatcher();
   export let mdStore: MdStoreType;
-  export let block: IBlock<TextContent | ListContent>;
-  // export let context: BlockContext = BlockContext.DEFAULT;
+  export let id: IRecordId;
+  export let text: string;
+  export let contentType: NodeType;
   export let isHovering: boolean = false;
   export let isFocusing: boolean = false;
 
   $: refreshPlaceholder(isHovering, blockSpecificPlaceholder);
 
-  let isFirstBlockAndIsEmpty = mdStore.isFirstBlockAndIsEmpty(block.id);
+  let isFirstBlockAndIsEmpty = mdStore.isFirstBlockAndIsEmpty(id);
   let textRef: InlineMarkdownTextInput;
   let sizing = "";
   let blockSpecificPlaceholder: string | undefined = undefined;
   let placeholder: string;
   let popoverRef: any;
   let blockBrowserRef: any;
-  let mentionSearchRef: any;
+  let mentionSearchRef: SearchResultsPopover;
   let isBlockBrowserRendered: boolean = false;
   let isRenderMentionSearch: boolean = false;
   let blockSearchQuery = "";
   let mentionSearchQuery = "";
   let shiftKeyPressed: boolean = false;
-  let previousVal = deepCopy(block.body);
+  let previousVal = deepCopy(text);
   let caretPositionT2:
     | {
         element?: any;
@@ -96,9 +96,9 @@
    * Checks if the block is of type code or quote and prevents the insertion of a new block on pressing enter - inserts a new line instead
    */
   $: isPreventInsertOnEnter =
-    block.contentType === NodeType.CODE || block.contentType === NodeType.QUOTE;
+    contentType === NodeType.CODE || contentType === NodeType.QUOTE;
   $: {
-    switch (block.contentType) {
+    switch (contentType) {
       case NodeType.HEADING1:
         sizing = "text-h1 font-bold";
         blockSpecificPlaceholder = "Heading 1";
@@ -137,8 +137,8 @@
   onMount(() => {
     hidePopover();
     const focusBlockSub = mdStore.focus.subscribe((x) => {
-      if (x?.id === block.id) {
-        logger.log({ at: "focus.subscribe", x, block });
+      if (x?.id === id) {
+        logger.log({ at: "focus.subscribe", x });
         setTimeout(() => {
           textRef?.focus();
         }, 10);
@@ -157,12 +157,12 @@
    * @param params
    */
   function convert(
-    toType: TextNodeType | NodeType.LIST,
+    toType: SimpleTextNodeType | ListNodeType,
     params?: {
       listType?: ListType;
     }
   ) {
-    if (block.contentType === toType) return;
+    if (contentType === toType) return;
     relay(BlockAction.CONVERT, {
       toType,
       params
@@ -215,7 +215,7 @@
       return false;
     } else if (
       type === "keyup" &&
-      (event.key === "Escape" || !block.body.includes("/"))
+      (event.key === "Escape" || !text.includes("/"))
     ) {
       hidePopover("blockBrowser");
     } else if (
@@ -227,7 +227,7 @@
       blockBrowserRef.key(event.key);
       event.preventDefault();
     } else if (type === "keyup") {
-      blockBrowserRef.filter(block.body);
+      blockBrowserRef.filter(text);
     }
     return true;
   }
@@ -249,7 +249,7 @@
       return false;
     } else if (
       type === "keyup" &&
-      (event.key === "Escape" || !block.body.includes("@"))
+      (event.key === "Escape" || !text.includes("@"))
     ) {
       hidePopover("mentionSearch");
     } else if (type === "keyup") {
@@ -260,6 +260,7 @@
         event.key === "ArrowUp" ||
         event.key === "Enter")
     ) {
+      mentionSearchRef.keydown(event);
       event.preventDefault();
     }
     return true;
@@ -275,7 +276,7 @@
     const event = e.detail.event;
     logger.log({
       at: "handleKeyDown",
-      body: block.body,
+      text,
       event
     });
     const functions = [
@@ -291,26 +292,19 @@
     for (const func of functions) {
       if (func()) return;
     }
-    const isRelayOperations = block.contentType === NodeType.LIST;
 
     if (event.key === "Tab") {
-      if (isRelayOperations) {
-        if (event.shiftKey === true) {
-          dispatch("shifttab", block.id);
-        } else {
-          dispatch("tab", block.id);
-        }
+      if (event.shiftKey === true) {
+        relay(BlockAction.SHIFT_TAB);
+      } else {
+        relay(BlockAction.TAB);
       }
       event.preventDefault();
     } else if (
       (event.key === "Enter" && !isPreventInsertOnEnter && !event.shiftKey) ||
       (event.key === "Enter" && event.metaKey)
     ) {
-      if (block.id && !isRelayOperations) {
-        relay(BlockAction.INSERT);
-      } else if (block.body != "") {
-        dispatch("insertrelay", block.id);
-      }
+      relay(BlockAction.INSERT);
       event.preventDefault();
     }
   }
@@ -334,11 +328,11 @@
     // });
     if (!event.altKey) {
       if (event.key === "ArrowUp" && position.isFirstLine) {
-        mdStore.shiftFocus(block.id, "up", {
+        mdStore.shiftFocus(id, "up", {
           xOffset: position2?.caretOffset
         });
       } else if (event.key === "ArrowDown" && position.isLastLine) {
-        mdStore.shiftFocus(block.id, "down", {
+        mdStore.shiftFocus(id, "down", {
           xOffset: position2?.caretOffset
         });
       }
@@ -363,16 +357,16 @@
     listType?: ListType
   ) {
     if (
-      block.contentType === NodeType.SIMPLE_TEXT &&
+      contentType === NodeType.SIMPLE_TEXT &&
       caretPositionT2 &&
       caretPositionT2.endContainer.nodeType === 3 &&
       caretPositionT2.endContainer.nodeValue &&
       caretPositionT2.endContainer.nodeValue.startsWith(shortcut)
     ) {
       //delete the parent <div> of the text node and insert new block with the type
-      block.body = block.body.replace(shortcut, "");
+      text = text.replace(shortcut, "");
       textRef.replace(shortcut, "");
-      if (block.id) {
+      if (id) {
         relay(BlockAction.INSERT, {
           blockType: type,
           listType
@@ -380,7 +374,7 @@
       }
       setTimeout(() => {
         let parent = undefined;
-        if (block.id) parent = document.getElementById(block.id);
+        if (id) parent = document.getElementById(id.toString());
         // console.log("parent", parent, parent?.lastChild);
         if (parent && parent.lastChild) {
           parent.removeChild(parent.lastChild);
@@ -392,7 +386,10 @@
    * Handles escape shortcuts for text, structural and list nodes when entered at the start of the block
    */
   function performEscapeShortcutsT2() {
-    const textEscapeShortcuts: { shortcut: string; type: TextNodeType }[] = [
+    const textEscapeShortcuts: {
+      shortcut: string;
+      type: SimpleTextNodeType;
+    }[] = [
       { shortcut: "# ", type: NodeType.HEADING1 },
       { shortcut: "## ", type: NodeType.HEADING2 },
       { shortcut: "### ", type: NodeType.HEADING3 },
@@ -404,17 +401,16 @@
       { shortcut: "---", type: NodeType.DIVIDER },
       { shortcut: "===", type: NodeType.DOUBLE_DIVIDER }
     ];
-    //TODO - disabling until implemented with stability
     const listEscapeShortcuts = [
-      { shortcut: "*... ", listType: ListType.UNORDERED }
-      // { shortcut: "- ", listType: ListType.UNORDERED },
-      // { shortcut: "+ ", listType: ListType.UNORDERED },
-      // { shortcut: "1. ", listType: ListType.ORDERED }
+      { shortcut: "* ", type: NodeType.LIST },
+      { shortcut: "- ", type: NodeType.LIST },
+      { shortcut: "+ ", type: NodeType.CHECKLIST },
+      { shortcut: "1. ", type: NodeType.ORDERED_LIST }
     ];
     const isTextShortcutPresent = textEscapeShortcuts.some(
       ({ shortcut, type }) => {
-        if (block.body.startsWith(shortcut)) {
-          block.body = block.body.replace(shortcut, "");
+        if (text.startsWith(shortcut)) {
+          text = text.replace(shortcut, "");
           dispatchChangeEvent();
           textRef.replace(shortcut, "");
           convert(type);
@@ -427,12 +423,12 @@
 
     const isStructuralShortcutPresent = structuralEscapeShortcuts.some(
       ({ shortcut, type }) => {
-        if (block.body === shortcut) {
-          block.body = "";
+        if (text === shortcut) {
+          text = "";
           dispatchChangeEvent();
           textRef.set("");
           //TODO - handling structural block insertion for list
-          if (block.contentType === NodeType.LIST || !block.id) return false;
+          if (contentType === NodeType.LIST || !id) return false;
           relay(BlockAction.INSERT, { blockType: type });
           return true;
         }
@@ -441,19 +437,15 @@
     );
 
     const isListShortcutPresent = listEscapeShortcuts.some(
-      ({ shortcut, listType }) => {
-        if (block.body.startsWith(shortcut)) {
-          block.body = block.body.replace(shortcut, "");
+      ({ shortcut, type }) => {
+        if (text.startsWith(shortcut)) {
+          text = text.replace(shortcut, "");
           dispatchChangeEvent();
           textRef.replace(shortcut, "");
-          convert(NodeType.LIST, { listType });
+          convert(type as ListNodeType);
           return true;
         }
-        return handleEscShortcutForSecondaryLines(
-          shortcut,
-          NodeType.LIST,
-          listType
-        );
+        return handleEscShortcutForSecondaryLines(shortcut, type);
       }
     );
 
@@ -477,15 +469,17 @@
     return { added, removed };
   }
   function dispatchChangeEvent() {
-    const { added, removed } = diffStrings(previousVal, block.body);
+    const { added, removed } = diffStrings(previousVal, text);
     const mentionPattern = /\[.*?\]\(resource=(.*?)\)/g;
     let match;
     while ((match = mentionPattern.exec(removed)) !== null) {
       const id = match[1];
-      propagateToNodeContent("unmention", { location: block.id, id });
+      propagateToNodeContent("unmention", { location: id, id });
     }
-    previousVal = deepCopy(block.body);
-    relay(BlockAction.CHANGE, { body: block.body });
+    if (previousVal === text) return;
+    dispatch("update", text);
+    previousVal = deepCopy(text);
+    // relay(BlockAction.CHANGE, text);
   }
   /**
    * Handles keyup event to perform various actions like escape shortcuts, symbol and inline shortcut formatting, backspace event etc.
@@ -504,12 +498,12 @@
       position: any;
     }>
   ) {
-    isFirstBlockAndIsEmpty = mdStore.isFirstBlockAndIsEmpty(block.id);
+    isFirstBlockAndIsEmpty = mdStore.isFirstBlockAndIsEmpty(id);
     const event = e.detail.event;
     const caretPosition = e.detail.caretPosition;
     logger.log({
       at: "handleKeyUp",
-      body: block.body,
+      text,
       caretPosition,
       event
     });
@@ -559,7 +553,7 @@
     logger.log({
       at: "handleBackspace",
       ...params?.inBlockPosition,
-      body: block.body
+      text
     });
     if (params?.type === "keyup") {
       return false;
@@ -567,10 +561,10 @@
         !(params?.caretPosition === 0 && params?.inBlockPosition?.isFirstLine)
       )
         return false;
-      if (block.body !== "" && block.contentType === NodeType.SIMPLE_TEXT) {
-        mdStore.backspaceWithContent(block);
+      if (text !== "" && contentType === NodeType.SIMPLE_TEXT) {
+        mdStore.backspaceWithContent(id);
         event.preventDefault();
-      } else if (block.body !== "") {
+      } else if (text !== "") {
         //TODO - event.preventDefault() is not preventing from the backspace event to happen - but moving this to keydown event is not reliable as caretPosition is not reliable in keydown event - This unintended case only happens when backspaced from one charater offset in the front.
         // convert(NodeType.SIMPLE_TEXT);
         // event.preventDefault();
@@ -578,23 +572,23 @@
       return true;
     }
     if (
-      !block.body &&
-      block.contentType === NodeType.SIMPLE_TEXT &&
+      !text &&
+      contentType === NodeType.SIMPLE_TEXT &&
       !isFirstBlockAndIsEmpty
     ) {
       performDelete();
       event.preventDefault();
       return true;
     } else if (
-      block.contentType !== NodeType.SIMPLE_TEXT &&
-      (params?.inBlockPosition?.caretOffset === 0 || !block.body)
+      contentType !== NodeType.SIMPLE_TEXT &&
+      (params?.inBlockPosition?.caretOffset === 0 || !text)
     ) {
       convert(NodeType.SIMPLE_TEXT);
       event.preventDefault();
       return true;
     } else if (
-      block.contentType === NodeType.SIMPLE_TEXT &&
-      block.body &&
+      contentType === NodeType.SIMPLE_TEXT &&
+      text &&
       params?.inBlockPosition?.caretOffset === 0
     ) {
       //TODO - move the content to the previous block and delete the current block
@@ -655,7 +649,7 @@
       body: blobData
     });
     if (result.status === 200) {
-      block.body = block.body + `<img src="${signedUrl}"/>`;
+      text = text + `<img src="${signedUrl}"/>`;
     }
   }
   function assignPlaceholder() {
@@ -685,7 +679,7 @@
     if (isHoveringParam === undefined) isHoveringParam = isHovering;
     if (blockSpecificPlaceholderParam === undefined)
       blockSpecificPlaceholderParam = blockSpecificPlaceholder;
-    isFirstBlockAndIsEmpty = mdStore.isFirstBlockAndIsEmpty(block.id);
+    isFirstBlockAndIsEmpty = mdStore.isFirstBlockAndIsEmpty(id);
     if (
       isHoveringParam ||
       isFirstBlockAndIsEmpty ||
@@ -708,17 +702,17 @@
       }, 1000);
       return;
     }
-    const parts = block.body.split("/");
+    const parts = text.split("/");
     if (parts[0]) {
-      block.body = parts[0];
+      text = parts[0];
       textRef.removeSlashText();
       relay(BlockAction.INSERT, {
         blockType: event.detail.type
       });
     } else {
-      block.body = "";
+      text = "";
       textRef.set("");
-      if (block.id) {
+      if (id) {
         convert(event.detail.type);
       }
     }
@@ -735,16 +729,14 @@
     hidePopover("mentionSearch");
     mentionSearchQuery = "";
     propagateToNodeContent("mention", {
-      location: block.id,
+      location: id,
       item
     });
   }
 
   function onFocus() {
     isFocusing = true;
-    const currentBlockIndex = $mdStore.blocks.findIndex(
-      (x) => x.id == block.id
-    );
+    const currentBlockIndex = $mdStore.blocks.findIndex((x) => x.id == id);
     for (let i = currentBlockIndex; i >= 0; i--) {
       if (headingNodeTypes.includes($mdStore.blocks[i].contentType)) {
         $mdStore.activeHeading = $mdStore.blocks[i].id;
@@ -761,7 +753,7 @@
   }
 </script>
 
-{#if !block.body && !$mdStore.params?.isReadOnly}
+{#if !text && !$mdStore.params?.isReadOnly}
   <!-- <button
     on:click={() => {
       blockRef.focus();
@@ -794,27 +786,27 @@
     <!--  || !$isInEditMode -->
     {#if $mdStore.params?.isReadOnly}
       <div
-        id={block.id}
+        id={id.toString()}
         style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word;"
-        class="flex justify-start text-left w-full min-h-fit outline-none py-2 {sizing} {block.contentType ===
+        class="flex justify-start text-left w-full min-h-fit outline-none py-2 {sizing} {contentType ===
         NodeType.QUOTE
           ? 'px-2'
           : 'px-1'}"
       >
-        {@html block.body}
+        {@html text}
       </div>
     {:else}
       <div
         class={cn(
           sizing,
           "w-full flex justify-start",
-          block.contentType === NodeType.QUOTE ? "pl-4" : ""
+          contentType === NodeType.QUOTE ? "pl-4" : ""
         )}
       >
         <InlineMarkdownTextInput
           bind:this={textRef}
-          bind:content={block.body}
-          id={block.id}
+          bind:content={text}
+          id={id.toString()}
           isMarkdown={true}
           on:keydown={handleKeyDown}
           on:keyup={handleKeyUp}
@@ -825,7 +817,7 @@
         />
       </div>
     {/if}
-    {#if block.contentType === NodeType.QUOTE}
+    {#if contentType === NodeType.QUOTE}
       <div class="absolute top-0 left-0 h-full flex flex-col justify-center">
         <span class="w-1 bg-aps1 h-full my-2 rounded-md" />
       </div>
@@ -841,7 +833,7 @@
     {:else if isRenderMentionSearch}
       <SearchResultsPopover
         bind:this={mentionSearchRef}
-        searchResultComponent={LinkSuggestionItem}
+        searchResultComponent={LinkSearchResultItem}
         searchCallback={onMentionSearch}
         shortcutTrigger="@"
         on:select={onMentionSelect}

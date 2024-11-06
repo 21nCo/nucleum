@@ -2,7 +2,10 @@
   import { hoverable } from "$lib/client/actions/hover.action";
   import { resolveMultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import {
+    determineResourceType,
+    resourceInList
+  } from "$lib/client/components/flux/resourceStores/resource.utils";
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   import Check from "$lib/client/icons/Check.svelte";
   import type { IRecordId } from "$lib/client/types/data.type";
@@ -22,13 +25,15 @@
     : determineResourceType(item.id) + "-" + accessPoint;
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
 
-  $: isSelected = $multiSelectStore.includes(item.id);
+  $: isSelected = $multiSelectStore.some(resourceInList(item.id));
 </script>
 
 <!-- TODO - position of right click context menu at cursor instead of bottom of the thumbnail -->
 <!-- <ContextMenuAction {contextMenu}> -->
 <div
-  class="relative flex w-full resource"
+  class={cn("relative flex flex-col w-full resource", {
+    "h-full": arrangement === Arrangement.MASONRY
+  })}
   id={item.id.toString()}
   draggable={isDraggable}
   use:hoverable={{

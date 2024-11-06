@@ -19,6 +19,7 @@ import {
 } from "./properties/property.store";
 import { Arrangement } from "$lib/client/types/direction.enum";
 import {
+  ResourceAccessMode,
   ResourceAccessPoint,
   type OmitForCapture,
   type OmitForCaptureWithId
@@ -38,6 +39,7 @@ import {
 import context from "$lib/client/stores/context.store";
 import { get } from "svelte/store";
 import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
+import { linker } from "../linking/link.store";
 
 class CollectionStore extends ResourceStore<ICollection> {
   constructor() {
@@ -81,10 +83,55 @@ class CollectionStore extends ResourceStore<ICollection> {
    * @param collections - ids of collections - can be any type of collection.
    * @returns
    */
-  async resolveTypes(collections: IRecordId[]) {
+  async resolveTypes(
+    collections: IRecordId[],
+    isFromExtension: boolean = false
+  ) {
     let types: ICollectionExpanded[] = [];
     if (!collections) return types;
-    const result = await flux.selectMany(Resource.collection, {
+
+    if (isFromExtension) {
+      const result = await this.select(collections[0]);
+      if (!result) return types;
+      console.log({ at: "resolveTypes - isFromExtension", result });
+      if (!result || result.type !== CollectionType.TYPED) return [];
+      if (!result.properties && !result.typeToExtend) return [result];
+      let typeToExtend: ICollection | undefined;
+      if (result.typeToExtend) {
+        typeToExtend = await this.select(result.typeToExtend);
+      }
+      const properties = await propertyStore.selectMany({
+        filters: {
+          id: [
+            ...(result.properties ?? []),
+            ...(typeToExtend?.properties ?? [])
+          ]
+        }
+      });
+      console.log({
+        at: "resolveTypes - isFromExtension",
+        typeToExtend,
+        properties
+      });
+      if (!typeToExtend) return [{ ...result, properties }];
+      const mainProps = result.properties?.map((x) => {
+        const property = properties.find(resourceInList(x));
+        return { ...property };
+      });
+      const extendedProps = typeToExtend.properties?.map((x) => {
+        const property = properties.find(resourceInList(x));
+        return { ...property };
+      });
+      return [
+        {
+          ...result,
+          properties: mainProps,
+          typeToExtend,
+          extendProperties: extendedProps
+        }
+      ];
+    }
+    const result = await this.selectMany({
       properties: [
         "*",
         "typeToExtend.* as typeToExtend",
@@ -107,6 +154,17 @@ class CollectionStore extends ResourceStore<ICollection> {
         typeToExtend: collectionId.toString()
       }
     });
+  }
+
+  async resolveNodeCount(collectionId: IRecordId) {
+    const links = await linker.selectMany({
+      filters: {
+        out: collectionId.toString()
+      }
+    });
+    if (links && Array.isArray(links)) {
+      return links.length;
+    }
   }
 }
 
@@ -146,25 +204,28 @@ export class ActiveCollectionStore extends ActiveResourceStore<
   /**
    * Initialized the collection with local cached data
    */
-  async init() {
+  async init(accessMode: ResourceAccessMode) {
     logger.log({ at: "ActiveCollectionStore.init", id: this.id });
     try {
       this.update((val: IActiveCollection) => {
         if (val) val.isPageLoading = true;
         else val = { isPageLoading: true };
+        val.accessMode = accessMode;
         return val;
       });
       const result = await flux.select(this.id, [
         "*",
         "(select * from $parent.views) as views",
         "(select * from $parent.properties) as properties",
-        "typeToExtend.* as typeToExtend"
+        "typeToExtend.* as typeToExtend",
+        "(array::first(select out, count() from link where out is $parent.id group by out)).count as totalNodeCount"
       ]);
       logger.log({ at: "ActiveCollectionStore.init - select", result });
       let record = result;
       if (!record) return;
       this.set({
         ...record,
+        accessMode,
         isViewDataRefreshing: false,
         isViewDataLoading: true,
         isPageLoading: false,
@@ -421,8 +482,8 @@ export function resolveCollectionContextMenu(
         group: "all",
         items: [
           resourceActions.star(),
+          resourceActions.select(accessPoint),
           resourceActions.edit(accessPoint),
-          // resourceActions.select(accessPoint),
           resourceActions.copyLink()
         ]
       },

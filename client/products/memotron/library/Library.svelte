@@ -33,8 +33,11 @@
   import Divider from "$lib/client/elements/Divider.svelte";
   import { MemotronAction } from "../memotronAction.enum";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import { CollectionType } from "../collection/collection.type";
-  import { NodeType } from "../node/node.type";
+  import {
+    CollectionType,
+    type ICollection
+  } from "../collection/collection.type";
+  import { NodeType, rootNodeTypeList, type INode } from "../node/node.type";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import VerticalSwitcher from "$lib/client/elements/switcher/VerticalSwitcher.svelte";
   import { VerticalSwitcherStyle } from "$lib/client/types/switcher.enum";
@@ -47,12 +50,17 @@
   import {
     PersistenceActionType,
     SearchType,
+    type IMutationParamsv2,
     type IResourceSelectOrderBy
   } from "$lib/client/types/data.type";
   import { page } from "$app/stores";
   import LibraryLoadingPulse from "./LibraryLoadingPulse.svelte";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import view from "$lib/client/stores/view.store";
+  import { logger } from "$lib/client/components/debug/logger.client";
+  import { intersection } from "$lib/client/actions/intersection.action";
+  import context from "$lib/client/stores/context.store";
+  import { Embed } from "$lib/client/types/context.type";
 
   let searchQuery: string = "";
   let selectedResource: Resource = Resource.node;
@@ -67,6 +75,7 @@
   let selectedSubType: SubType = "all";
   export let variant: "v1" | "v2" | "v3" = "v3";
   let isRefreshing: boolean = false;
+  let totalCount: number = 0;
   let availableResources: Resource[] = [
     Resource.node,
     Resource.collection
@@ -138,8 +147,12 @@
     };
   });
 
-  async function refresh() {
-    isRefreshing = true;
+  async function refresh(isPagination?: boolean) {
+    logger.log({ at: "Library - refresh", isPagination, selectedResource });
+    if (isPagination !== true) {
+      isRefreshing = true;
+      data = [];
+    }
     try {
       if (
         !availableResources.includes(selectedResource) &&
@@ -168,15 +181,23 @@
           filters = { ...filters, type: selectedSubType };
         }
       }
-
-      data = await searchStore.select({
+      totalCount = await new SearchStore().resolveCount(
+        selectedResource,
+        selectedSubType !== "all" && selectedSubType !== "recents"
+          ? (selectedSubType.toUpperCase() as NodeType | CollectionType)
+          : undefined
+      );
+      const newData = await searchStore.select({
         resource: selectedResource,
         searchQuery,
         filters,
         orderBy,
-        semanticSearchTopK
-        // limit: 100
+        semanticSearchTopK,
+        limit: 50,
+        offset: isPagination ? data.length : 0
       });
+      data = [...data, ...newData];
+      // console.log({ newData, data });
     } finally {
       setTimeout(() => {
         isRefreshing = false;
@@ -195,10 +216,10 @@
     if (!data || !data.length) return;
     let prefix = "Showing " + data.length + " ";
     const label = resolveResourceLabel();
-    if (isStarFilterSelected) return prefix + `⭐️ staaarrrrrrrrrred ` + label;
+    if (isStarFilterSelected) return `${prefix} ⭐️ staaarrrrrrrrrred ${label}`;
     else if (searchQuery)
-      return prefix + label + ` containing "${searchQuery}"`;
-    else return "Showing all " + data.length + " " + label;
+      return `${prefix} ${label} containing "${searchQuery}"`;
+    else return `Showing ${data.length} of ${totalCount} ${label}`;
   }
   function resolveResourceLabel(isPlural: boolean = false) {
     let label = "items";
@@ -327,13 +348,27 @@
    * @param e
    */
   function onResourceMutation(
-    e: CustomEvent<{ resource: Resource; params: any }>
+    e: CustomEvent<{
+      resource: Resource;
+      params: IMutationParamsv2<INode | ICollection>;
+    }>
   ) {
     const watchProperties = ["isArchived", "trashInformation"];
+    const resource = e.detail.resource;
+    const mutation = e.detail.params;
+    logger.log({ at: "Library - onResourceMutation", resource, ...mutation });
     if (
-      e.detail.resource === Resource.node &&
-      e.detail.params.action === PersistenceActionType.MERGE &&
-      !watchProperties.some((x) => e.detail.params.record[x] !== undefined)
+      resource === Resource.node &&
+      mutation.action === PersistenceActionType.MERGE &&
+      !watchProperties.some((x) => mutation.record[x] !== undefined)
+    ) {
+      return;
+    }
+    if (
+      resource === Resource.node &&
+      mutation.action === PersistenceActionType.INSERT &&
+      mutation.records.length === 1 &&
+      !rootNodeTypeList.includes(mutation.records[0].contentType as NodeType)
     ) {
       return;
     }
@@ -377,6 +412,7 @@
         {searchStore}
         bind:selectedResource
         bind:searchQuery
+        isShowAddButton={availableResources.includes(selectedResource)}
         on:refresh={debouncedSearch}
         on:create={onCreateResource}
         on:semanticSearch={(e) => {
@@ -401,6 +437,7 @@
         <ResourceSwitcher
           options={resources}
           selected={selectedResource}
+          isShowCount={true}
           on:select={(e) => {
             appStore.toggleSearchParam({
               resource: e.detail,
@@ -469,14 +506,14 @@
               size={Size.sm}
               isExpanded={true}
               bind:checked={isStarFilterSelected}
-              on:change={refresh}
+              on:change={() => refresh()}
             />
             <SwitchInput
               label={{ label: "Archived", orientation: Orientation.Horizontal }}
               size={Size.sm}
               isExpanded={true}
               bind:checked={isArchivedFilterSelected}
-              on:change={refresh}
+              on:change={() => refresh()}
             />
           </div>
         </div>
@@ -493,30 +530,41 @@
             {resources}
             bind:selectedResource
             bind:searchQuery
-            on:keydown={refresh}
+            on:keydown={() => refresh()}
             {searchStore}
           />
         {/if}
         {#if isRefreshing}
-          <LibraryLoadingPulse />
+          <LibraryLoadingPulse resource={selectedResource} />
         {:else if data && data.length > 0}
           <div
             class={cn("flex flex-col grow", {
               "px--5": variant === "v2"
             })}
           >
-            <!-- TODO - pagination -->
             <Resources
-              data={data.slice(0, 500)}
+              {data}
               accessPoint={ResourceAccessPoint.LIBRARY}
               resource={selectedResource}
               size={$view.isConstrainedWidth ? Size.sm : Size.md}
+              isShowLoadingPulseAtTheEnd={data.length < totalCount &&
+                !searchQuery}
               arrangement={$view.isConstrainedWidth
-                ? Arrangement.MASONRY
+                ? selectedResource === Resource.node
+                  ? Arrangement.MASONRY
+                  : Arrangement.LIST
                 : Arrangement.GRID}
             />
           </div>
-          <div class="flex w-full justify-center text-b2 text-fgs3">
+          <div
+            class="flex w-full justify-center text-b2 text-fgs3"
+            use:intersection={{
+              rootMargin: "100px",
+              callback: () => {
+                refresh(true);
+              }
+            }}
+          >
             {resolveFooterMessage(data) ?? ""}
           </div>
           <ScrollViewBottomSpacer />
@@ -525,7 +573,8 @@
             size={Size.lg}
             {...resolveEmptyStateMessage()}
             isSearchContext={true}
-            actionText={selectedResource === Resource.node
+            actionText={selectedResource === Resource.node &&
+            $context.embed !== Embed.HANDSET
               ? "Install chrome extension"
               : undefined}
             on:click={() => {
@@ -564,7 +613,7 @@
 <ComponentBaseLayer
   syncDownOnMount={true}
   subscribeTo={availableResources}
-  on:syncDown={refresh}
+  on:syncDown={() => refresh()}
   on:change={onResourceMutation}
 />
 

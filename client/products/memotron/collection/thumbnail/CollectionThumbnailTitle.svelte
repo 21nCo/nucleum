@@ -1,35 +1,36 @@
 <script lang="ts">
-  import AvatarRenderer from "$lib/client/elements/avatarPicker/AvatarRenderer.svelte";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import Icon from "$lib/client/elements/Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { CollectionType, type ICollectionThumb } from "../collection.type";
+  import { Arrangement } from "$lib/client/types/direction.enum";
+  import { cn } from "$lib/client/utils/ui.utils";
+  import { type ICollectionThumb } from "../collection.type";
+  import CollectionTitleLabelPart from "../title/CollectionTitleLabelPart.svelte";
+  import CollectionNodeCount from "../counts/CollectionNodeCount.svelte";
   export let item: ICollectionThumb;
-
-  function resolveEmptyLabel() {
-    //TODO - based on resource type
-    return "Untitled";
-  }
+  export let arrangement: Arrangement = Arrangement.LIST;
+  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
 </script>
 
-<div class="flex justify-between w-full">
-  <span class="flex gap-2 grow items-center">
-    {#if item.type === CollectionType.TYPED && (item.avatar || item.typeToExtend?.avatar)}
-      <AvatarRenderer
-        avatar={item.avatar ?? item.typeToExtend?.avatar}
-        size={Size.sm}
-      />
-    {:else if item.type === CollectionType.QUERY}
-      <Icon icon="at-symbol" size={Size.sm} />
+<div
+  class={cn({
+    "grid grid-cols-[1fr_auto] flex-1 gap-1": arrangement === Arrangement.LIST,
+    "flex w-full":
+      arrangement === Arrangement.GRID || arrangement === Arrangement.MASONRY
+  })}
+>
+  <div
+    class={cn({
+      "flex items-center gap-3 min-w-0": arrangement === Arrangement.LIST,
+      "flex w-full justify-between":
+        arrangement === Arrangement.GRID || arrangement === Arrangement.MASONRY
+    })}
+  >
+    <CollectionTitleLabelPart {item} {accessPoint} />
+    {#if item.isStarred}
+      <Icon icon="star" class="fill-yellow-400" />
     {/if}
-    <span class="text-left w-5/6 truncate text-b2 font--medium">
-      {#if item.label}
-        {item.label}
-      {:else}
-        {resolveEmptyLabel()}
-      {/if}
-    </span>
-  </span>
-  {#if item.isStarred}
-    <Icon icon="star" class="fill-yellow-400" />
+  </div>
+  {#if arrangement === Arrangement.LIST && accessPoint === ResourceAccessPoint.BROWSER}
+    <CollectionNodeCount {item} />
   {/if}
 </div>

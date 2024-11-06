@@ -1,6 +1,10 @@
 <script lang="ts">
   import AvatarPicker from "$lib/client/elements/avatarPicker/AvatarPicker.svelte";
-  import { AvatarType, type IAvatar } from "$lib/client/types/avatar.type";
+  import {
+    AvatarPickerContext,
+    AvatarType,
+    type IAvatar
+  } from "$lib/client/types/avatar.type";
   import { Size } from "$lib/client/types/size.enum";
   import AvatarRenderer from "$lib/client/elements/avatarPicker/AvatarRenderer.svelte";
   import { createEventDispatcher } from "svelte";
@@ -10,6 +14,8 @@
   export let avatar: IAvatar | undefined = undefined;
   export let size: Size = Size.md;
   export let isInEditMode = false;
+  export let context: AvatarPickerContext = AvatarPickerContext.DEFAULT;
+  export let changeCallback: (avatar: IAvatar) => void = () => {};
   let ref: any;
   function handleAvatarEmitted(avatarVal: any) {
     if (!avatarVal) return;
@@ -21,6 +27,7 @@
     }
     avatar = avatarVal;
     dispatch("change", avatarVal);
+    changeCallback?.(avatarVal);
     closePopover();
   }
   function handleDeleteEmitted() {
@@ -44,7 +51,8 @@
       componentProps: {
         avatarClickCallback: handleAvatarEmitted,
         deleteCallback: handleDeleteEmitted,
-        closeCallback: closePopover
+        closeCallback: closePopover,
+        context
       }
     }}
     bind:this={ref}

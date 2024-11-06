@@ -112,6 +112,7 @@
     nodes={data}
     arrangement={view.arrangement}
     density={view.density}
+    isHidePreview={view.isHideThumbnailPreview}
     isDraggable={false}
     accessPoint={ResourceAccessPoint.COLLECTION}
     accessPointId={collection.id}

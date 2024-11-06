@@ -22,6 +22,9 @@
   import { debouncer } from "$lib/client/utils/utils";
   import { logger } from "$lib/client/components/debug/logger.client";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
+  import SearchResultsPopover from "$lib/client/elements/input/SearchResultsPopover.svelte";
+  import LinkSearchResultItem from "../../common/linkbox/LinkSearchResultItem.svelte";
+  import { appStore } from "$lib/client/stores/app.store";
 
   let resource: Resource = Resource.everything;
   let isFiltersVisible: boolean = false;
@@ -31,6 +34,7 @@
   let inputRef: HTMLInputElement;
   let searchStore = new SearchStore();
   let isRefreshing: boolean = false;
+  let searchResultsPopover: SearchResultsPopover;
   const switchItems = [
     {
       label: "All",
@@ -50,9 +54,10 @@
   ];
   onMount(async () => {
     inputRef?.focus();
-    await refresh();
+    searchResultsPopover?.search();
+    // await refresh();
   });
-  async function refresh() {
+  async function refresh(searchQuery?: string) {
     try {
       if (isValidString(searchQuery)) {
         isRefreshing = true;
@@ -68,12 +73,18 @@
           resource,
           searchQuery,
           orderBy,
-          semanticSearchTopK
+          semanticSearchTopK,
+          limit: 150
         });
       } else {
         data = [];
-        recents = await searchStore.recents(resource);
+        recents = await searchStore.recents(resource, {
+          limit: 30,
+          offset: 0
+        });
+        return recents;
       }
+      return data;
     } catch (e) {
       logger.error({ at: "ResourceSearchModal.refresh", error: e });
     } finally {
@@ -81,6 +92,10 @@
     }
   }
   const debouncedSearch = debouncer(refresh, 500);
+
+  function onSelect(e: CustomEvent) {
+    appStore.resourceClickHandler(e.detail.event, e.detail.item.id);
+  }
 </script>
 
 <div class="flex flex-col gap-4 w-full h-full">
@@ -90,9 +105,11 @@
         <input
           bind:this={inputRef}
           bind:value={searchQuery}
-          on:keyup={() => {
-            isRefreshing = true;
-            debouncedSearch();
+          on:keydown={(event) => {
+            searchResultsPopover?.keydown(event);
+          }}
+          on:keyup={(event) => {
+            searchResultsPopover?.keyup(event);
           }}
           type="text"
           placeholder="Search resources"
@@ -144,11 +161,13 @@
       style={PanelSwitcherStyle.BAR}
       isExpandToFullWidth={true}
       size={Size.sm}
-      on:switch={refresh}
+      on:switch={() => {
+        searchResultsPopover?.search();
+      }}
     />
   </header>
   <main class="flex overflow-auto flex-1 min-h-0">
-    {#if data.length > 0 || searchQuery}
+    <!-- {#if data.length > 0 || searchQuery}
       <div class="flex flex-col w-full h-full">
         {#if data.length > 0}
           <SearchResults items={data} />
@@ -168,6 +187,18 @@
         </span>
         <SearchResults items={recents} />
       </div>
-    {/if}
+    {/if} -->
+    <SearchResultsPopover
+      bind:this={searchResultsPopover}
+      searchCallback={refresh}
+      emptyStateLabel="No results found"
+      searchResultComponent={LinkSearchResultItem}
+      isInlineContext={true}
+      isAlwaysShowSearchFeedback={true}
+      on:select={onSelect}
+      on:empty-enter
+      on:reset
+      on:hide
+    />
   </main>
 </div>

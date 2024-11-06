@@ -210,7 +210,7 @@
       {#if selectedMethod === Method.COLOR}
         <div class="flex-1 flex items-center justify-center">
           <ColorPicker
-            isHexMode={false}
+            isHueMode={false}
             isShowPreview={false}
             on:change={handleColorChange}
             bind:hex={_value}

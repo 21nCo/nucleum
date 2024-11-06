@@ -8,7 +8,9 @@ import {
   NodeRightPaneType,
   type INodeLinkThumb,
   type INodeLink,
-  canHaveTraces
+  canHaveTraces,
+  NodeView,
+  headingNodeTypes
 } from "$lib/client/products/memotron/node/node.type";
 import {
   activeResources,
@@ -47,6 +49,9 @@ import view from "$lib/client/stores/view.store";
 import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
 
 import context from "$lib/client/stores/context.store";
+import type { ICollectionExpanded } from "../collection/collection.type";
+import type { IAvatar } from "$lib/client/types/avatar.type";
+import { Embed } from "$lib/client/types/context.type";
 import { TacoActions } from "../taco/taco.types";
 
 export const hierarchyFactorLimit = 5;
@@ -91,6 +96,39 @@ class NodeStore extends ResourceStore<INode> {
       return this.searchStore.recents();
     }
   }
+
+  async refreshNodeAvatar(
+    id: IRecordId,
+    params: {
+      collections?: IRecordId[];
+      types?: ICollectionExpanded[];
+    }
+  ) {
+    let types = params?.types;
+    if (!types && params.collections) {
+      types = await collectionStore.resolveTypes(params.collections);
+    }
+    if (!types) return;
+    const avatar = this.resolveNodeAvatar(types);
+    this.modify(id, {
+      avatar
+    });
+    return avatar;
+  }
+
+  resolveNodeAvatar(types: ICollectionExpanded[]) {
+    const avatars = types
+      ?.flatMap((x) => [x.avatar])
+      .filter((a) => a) as IAvatar[];
+    const baseAvatars = types
+      ?.flatMap((x) => [x.typeToExtend?.avatar])
+      .filter((a) => a) as IAvatar[];
+    if (baseAvatars.length > 0) {
+      return baseAvatars;
+    } else {
+      return avatars;
+    }
+  }
 }
 
 export const nodeStore = new NodeStore();
@@ -128,10 +166,14 @@ export class ActiveNodeStore extends ActiveResourceStore<
     this.eventStore = resolveActiveNodeEventStore(node.toString());
   }
   updateBlockPropagator = async (
-    id: string,
-    mutationId: string,
+    id: IRecordId,
     changedProps: { body?: string; children?: string[] }
   ) => {
+    logger.debug({
+      at: "ActiveNodeStore.updateBlockPropagator",
+      changedProps,
+      id: id.toString()
+    });
     if (changedProps.children) {
       const node = this.get();
       const childrenNodes = node.md.blocks.filter(
@@ -150,28 +192,46 @@ export class ActiveNodeStore extends ActiveResourceStore<
       //     embedding: embedding
       //   }
       // );
-      if (get(userPreferences).localAI.semanticSearch) {
-        tacoWorker.postMessage({
-          action: TacoActions.GET_EMBEDDINGS,
-          params: {
-            text: mdText
-          }
+      //TODO - reenable after fixing the new headings persistance issue
+      const dev_isTempDisabled = true;
+      try {
+        if (
+          !dev_isTempDisabled &&
+          get(userPreferences).localAI.semanticSearch &&
+          get(context).embed !== Embed.HANDSET
+        ) {
+          tacoWorker.postMessage({
+            action: TacoActions.GET_EMBEDDINGS,
+            params: {
+              text: mdText
+            }
+          });
+          const embedding = await new Promise((resolve, reject) => {
+            tacoWorker.onmessage = (e) => {
+              resolve(e.data);
+            };
+          });
+          let params = { filters: { node: node.id.toString() } };
+          let vectorResult = await vectorResourceStore.selectMany(params);
+          const vectorUpdateresult = await vectorResourceStore.modify(
+            vectorResult?.[0]?.id,
+            {
+              embedding: embedding
+            }
+          );
+        }
+      } catch (e) {
+        logger.error({
+          at: "ActiveNodeStore.updateBlockPropagator - vector generation error",
+          error: e
         });
-        const embedding = await new Promise((resolve, reject) => {
-          tacoWorker.onmessage = (e) => {
-            resolve(e.data);
-          };
-        });
-        let params = { filters: { node: node.id.toString() } };
-        let vectorResult = await vectorResourceStore.selectMany(params);
-        const vectorUpdateresult = await vectorResourceStore.modify(
-          vectorResult?.[0].id,
-          {
-            embedding: embedding
-          }
-        );
       }
-      return this.resourceStore.modify(id, { ...changedProps, mdText });
+      logger.debug({
+        at: "ActiveNodeStore.updateBlockPropagator - end",
+        changedProps,
+        id: id.toString()
+      });
+      return this.resourceStore.modify(id, { ...changedProps, text: mdText });
     }
     this.resourceStore.modify(id, changedProps);
   };
@@ -211,7 +271,8 @@ export class ActiveNodeStore extends ActiveResourceStore<
           linkedTo: id,
           linkType: x.linkType,
           id: x.id,
-          tags: x.tags
+          tags: x.tags,
+          direction: x.in.toString() === this.id ? "outgoing" : "incoming"
         } as INodeLinkThumb;
       });
     const collections: IRecordId[] = rawLinks
@@ -220,7 +281,7 @@ export class ActiveNodeStore extends ActiveResourceStore<
           x.out.tb === Resource.collection || x.in.tb === Resource.collection
       )
       .map((x: INodeLink) => (x.out.tb === Resource.collection ? x.out : x.in));
-    logger.log({
+    logger.debug({
       at: "ActiveNodeStore.fetch",
       node,
       rawLinks,
@@ -251,18 +312,20 @@ export class ActiveNodeStore extends ActiveResourceStore<
     );
   };
 
-  updateBlock = (id: IRecordId, changedProps: any) => {
-    const mutationId =
-      `${id.toString()}-` +
-      ("children" in changedProps
-        ? "children"
-        : "contentType" in changedProps
-          ? "contentType"
-          : "body" in changedProps
-            ? "body"
-            : "block");
+  updateBlock = (
+    id: IRecordId,
+    changedProps: any,
+    params?: {
+      isDebounced?: boolean;
+      debounceKey?: string;
+    }
+  ) => {
+    if (!params?.isDebounced) {
+      return this.updateBlockPropagator(id, changedProps);
+    }
+    const mutationId = `${id.toString()}-${params.debounceKey ?? "block"}`;
     const debouncer = this.resolveDebouncerForBlockPersistance(mutationId);
-    debouncer(id, mutationId, changedProps);
+    debouncer(id, changedProps);
   };
 
   createBlock = async (
@@ -284,17 +347,21 @@ export class ActiveNodeStore extends ActiveResourceStore<
     return this.resourceStore.trash(id);
   };
   mention = async (location: string, id: string) => {
-    return linker.link(location, id, LinkType.MENTION);
+    return linker.link(this.id, id, LinkType.MENTION, { location });
   };
 
   private async refreshTypes() {
-    const collections = this.get().collections;
+    const self = this.get();
+    const collections = self.collections;
     if (!collections || collections.length === 0) {
       this.update((n) => ({ ...n, types: [] }));
       return;
     }
     const types = await collectionStore.resolveTypes(collections);
-    this.update((n) => ({ ...n, types }));
+    const avatar = await this.resourceStore.refreshNodeAvatar(self.id, {
+      types
+    });
+    this.update((n) => ({ ...n, types, avatar }));
   }
 
   async linkCollection(id: IRecordId) {
@@ -410,12 +477,78 @@ function initActiveNodeEventStore(id: string) {
   };
 }
 
+export const nodeActions = {
+  linksPane: {
+    value: NodeRightPaneType.LINKS,
+    icon: "ph:arrows-left-right-thin",
+    label: "Show links",
+    tooltip: "Show links"
+  },
+  metadataPane: {
+    value: NodeRightPaneType.METADATA,
+    icon: "ph:file-thin",
+    label: "Show metadata",
+    tooltip: "Show metadata"
+  },
+  propertiesPane: {
+    value: NodeRightPaneType.PROPERTIES,
+    icon: "widget",
+    label: "Show properties",
+    tooltip: "Show properties"
+  },
+  sideNotesPane: {
+    value: NodeRightPaneType.SIDENOTES,
+    icon: "ph:note-thin",
+    label: "Side notes",
+    tooltip: "Side notes"
+  },
+  historyPane: {
+    value: NodeRightPaneType.HISTORY,
+    icon: "ph:clock-countdown-thin",
+    label: "Show history",
+    tooltip: "Show history"
+  },
+  tracesPane: {
+    value: NodeRightPaneType.TRACES,
+    icon: "bookmark",
+    label: "Show traces",
+    tooltip: "Show traces"
+  },
+  download: {
+    value: "download",
+    icon: "download",
+    callback: async () => {}
+  },
+  share: {
+    value: "share",
+    icon: "share",
+    callback: async () => {}
+  },
+  export: {
+    value: "export",
+    icon: "share",
+    callback: async () => {}
+  },
+  toggleReadMode: {
+    value: "readMode",
+    icon: "ph:book-open-thin",
+    tooltip: "Toggle read mode"
+  },
+  showForks: {
+    value: "forks",
+    icon: "ph:git-fork-thin",
+    tooltip: "Show forks"
+  }
+};
+
 export function resolveNodeContextMenu(
   node: INode,
   accessPoint: ResourceAccessPoint,
   params?: {
     isMediaNode?: boolean;
     accessPointId?: IRecordId;
+    accessMode?: ResourceAccessMode;
+    nodeView?: NodeView;
   }
 ): IContextMenu {
   const resourceActions = new ResourceActions(node, nodeStore);
@@ -434,7 +567,7 @@ export function resolveNodeContextMenu(
         group: "open",
         items: [
           resourceActions.openAsTab(),
-          // resourceActions.openAsSplit(),
+          resourceActions.openAsSplit(),
           resourceActions.openAsFull()
         ]
       },
@@ -444,43 +577,21 @@ export function resolveNodeContextMenu(
       }
     ];
   }
+  const mediaShareAndExportGroup = {
+    group: "shareAndExport",
+    items: [resourceActions.copyLink()]
+  };
   const viewStore = get(view);
-  if (viewStore.isConstrainedWidth && params?.isMediaNode) {
-    commonGroups.unshift({
-      group: "essentials",
-      items: [
-        {
-          value: NodeRightPaneType.SIDENOTES,
-          icon: "ph:note-thin",
-          label: "Side notes"
-        },
-        {
-          value: NodeRightPaneType.LINKS,
-          icon: "ph:arrows-left-right-thin",
-          label: "Show links"
-        },
-        {
-          value: NodeRightPaneType.PROPERTIES,
-          icon: "widget",
-          label: "Show properties"
-        }
-      ]
-    });
-  } else if (viewStore.isConstrainedWidth) {
-    commonGroups.unshift({
-      group: "essentials",
-      items: [
-        resourceActions.toggleReadMode()
-        // Forks
-      ]
-    });
-  }
+  const isConstrainedWidth =
+    viewStore.isConstrainedWidth ||
+    params?.accessMode === ResourceAccessMode.SPLIT ||
+    params?.accessMode === ResourceAccessMode.FSPLIT;
   if (accessPoint === ResourceAccessPoint.NODE_LINKS && params?.accessPointId) {
     let baseItems = [resourceActions.copyLink()];
     if (accessPoint === ResourceAccessPoint.NODE_LINKS) {
-      // baseItems.unshift(
-      //   resourceActions.select(accessPoint, params?.accessPointId)
-      // );
+      baseItems.unshift(
+        resourceActions.select(accessPoint, params?.accessPointId)
+      );
       baseItems.unshift(resourceActions.unlink(params?.accessPointId));
     }
     return [
@@ -493,6 +604,7 @@ export function resolveNodeContextMenu(
   } else if (accessPoint != ResourceAccessPoint.SELF) {
     const primaryItems = [
       resourceActions.star(),
+      resourceActions.select(accessPoint, params?.accessPointId),
       resourceActions.edit(accessPoint),
       resourceActions.copyLink()
     ];
@@ -509,6 +621,23 @@ export function resolveNodeContextMenu(
       },
       ...commonGroups
     ];
+  } else if (isConstrainedWidth && params?.isMediaNode) {
+    return [
+      {
+        group: "all",
+        items: [
+          resourceActions.star(),
+          resourceActions.edit(accessPoint),
+          nodeActions.tracesPane,
+          nodeActions.linksPane,
+          nodeActions.sideNotesPane,
+          nodeActions.propertiesPane,
+          nodeActions.metadataPane
+        ]
+      },
+      mediaShareAndExportGroup,
+      ...commonGroups
+    ];
   } else if (params?.isMediaNode) {
     return [
       {
@@ -516,23 +645,26 @@ export function resolveNodeContextMenu(
         items: [
           resourceActions.star(),
           resourceActions.edit(accessPoint),
-          {
-            value: NodeRightPaneType.METADATA,
-            icon: "ph:file-thin"
-          },
-          resourceActions.copyLink()
-          // {
-          //   value: "download",
-          //   icon: "download",
-          //   callback: async () => {}
-          // },
-          // {
-          //   value: "share",
-          //   icon: "share",
-          //   callback: async () => {}
-          // }
+          nodeActions.linksPane,
+          nodeActions.metadataPane
         ]
       },
+      mediaShareAndExportGroup,
+      ...commonGroups
+    ];
+  } else if (params?.nodeView === NodeView.BIRD_VIEW) {
+    return [
+      {
+        group: "all",
+        items: [
+          resourceActions.star(),
+          nodeActions.linksPane,
+          nodeActions.sideNotesPane,
+          nodeActions.propertiesPane,
+          nodeActions.metadataPane
+        ]
+      },
+      mediaShareAndExportGroup,
       ...commonGroups
     ];
   }
@@ -541,95 +673,57 @@ export function resolveNodeContextMenu(
       group: "all",
       items: [
         resourceActions.star(),
-        // resourceActions.edit(accessPoint),
-        {
-          value: NodeRightPaneType.METADATA,
-          icon: "ph:file-thin"
-        },
-        {
-          value: NodeRightPaneType.HISTORY,
-          icon: "ph:clock-countdown-thin",
-          label: "Show history"
-        }
+        resourceActions.toggleReadMode(),
+        nodeActions.metadataPane,
+        nodeActions.historyPane
       ]
     },
     {
       group: "shareAndExport",
-      items: [
-        resourceActions.copyLink(),
-        resourceActions.copyContents()
-        // {
-        //   value: "export",
-        //   icon: "share",
-        //   callback: async () => {}
-        // }
-        // {
-        //   value: "share",
-        //   icon: "share",
-        //   callback: async () => {
-        //     appStore.runAction(MemotronAction.PUBLISH, {
-        //       componentParams: { id: node.id }
-        //     });
-        //   }
-        // }
-      ]
+      items: [resourceActions.copyLink(), resourceActions.copyContents()]
     },
     ...commonGroups
   ];
 }
 
-export function resolveVisibleActions(contentType: NodeType): IToggleItem[] {
+export function resolveVisibleActions(
+  contentType: NodeType,
+  params?: {
+    accessMode?: ResourceAccessMode;
+  }
+): IToggleItem[] {
   const viewStore = get(view);
+  const isConstrainedWidth =
+    viewStore.isConstrainedWidth ||
+    params?.accessMode === ResourceAccessMode.SPLIT ||
+    params?.accessMode === ResourceAccessMode.FSPLIT;
   if (
-    contentType === NodeType.NODULAR_MARKDOWN &&
-    !viewStore.isConstrainedWidth
+    (contentType === NodeType.NODULAR_MARKDOWN ||
+      headingNodeTypes.includes(contentType)) &&
+    !isConstrainedWidth
   ) {
     return [
-      {
-        value: NodeRightPaneType.SIDENOTES,
-        icon: "ph:note-thin",
-        tooltip: "Side notes"
-      },
-      {
-        value: "readMode",
-        icon: "ph:book-open-thin",
-        tooltip: "Toggle read mode"
-      },
-      {
-        value: "forks",
-        icon: "ph:git-fork-thin",
-        tooltip: "Show forks"
-      }
+      nodeActions.toggleReadMode,
+      nodeActions.sideNotesPane,
+      nodeActions.showForks
+    ];
+  } else if (
+    (contentType === NodeType.NODULAR_MARKDOWN ||
+      headingNodeTypes.includes(contentType)) &&
+    isConstrainedWidth
+  ) {
+    return [
+      nodeActions.linksPane,
+      nodeActions.sideNotesPane,
+      nodeActions.propertiesPane
     ];
   }
   const baseActions: IToggleItem[] = [
-    {
-      value: NodeRightPaneType.SIDENOTES,
-      icon: "ph:note-thin",
-      tooltip: "Side notes"
-    },
-    {
-      value: NodeRightPaneType.LINKS,
-      icon: "ph:arrows-left-right-thin",
-      tooltip: "Show links"
-    },
-    {
-      value: NodeRightPaneType.PROPERTIES,
-      icon: "widget",
-      tooltip: "Show properties"
-    }
-    // {
-    //   value: "bird",
-    //   icon: "ph:bird-thin",
-    //   tooltip: "Bird view"
-    // }
+    nodeActions.sideNotesPane,
+    nodeActions.propertiesPane
   ];
   if (canHaveTraces.includes(contentType) && !viewStore.isConstrainedWidth) {
-    baseActions.unshift({
-      value: NodeRightPaneType.TRACES,
-      icon: "bookmark",
-      tooltip: "Show traces"
-    });
+    baseActions.unshift(nodeActions.tracesPane);
   }
   return baseActions;
 }

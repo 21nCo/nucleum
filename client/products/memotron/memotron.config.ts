@@ -13,6 +13,7 @@ import { linker } from "$lib/client/products/memotron/linking/link.store";
 import { fileStore } from "$lib/client/components/files/file.store";
 import { linkTagStore } from "$lib/client/products/memotron/linking/link.store";
 import { accessLogStore } from "$lib/client/components/accessLogging/accesslog.store";
+import { markdownSettings } from "$lib/client/components/markdown/markdown.settings";
 
 export const memotronCacheableStores: IStore[] = [
   vectorResourceStore,
@@ -24,5 +25,6 @@ export const memotronCacheableStores: IStore[] = [
   fileStore,
   linker,
   linkTagStore,
-  accessLogStore
+  accessLogStore,
+  markdownSettings
 ];

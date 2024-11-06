@@ -14,6 +14,7 @@
   } from "$lib/client/actions/lazyload.action";
   import { imageRepositioner } from "$lib/client/actions/imageRepositioning.action";
   import { createEventDispatcher } from "svelte";
+
   const dispatch = createEventDispatcher();
 
   export let file: IFile | undefined = undefined;
@@ -28,7 +29,6 @@
     undefined;
   let classList: string = "";
   export { classList as class };
-
   $: _id = id ?? file?.id;
 
   function resolveType() {
@@ -50,27 +50,15 @@
   });
 
   async function resolveSrc(): Promise<string> {
-    if (file?.url && _id === file?.id) return file.url;
-    else if (file?.data && _id === file?.id)
-      blob = new Blob([file.data], { type: file.type });
     if (blob) return URL.createObjectURL(blob);
-    if (!id) return "";
-    const response = await fileStore.select(id);
-    if (!response) return "";
-    if (response.url) {
-      file = response;
-      return file?.url ?? "";
-    } else if (response.data) {
-      file = {
-        ...response,
-        url: URL.createObjectURL(
-          new Blob([response.data], { type: response.type })
-        )
-      };
-      return file?.url ?? "";
-    } else {
-      return "";
+    else if (id || (file && _id === file?.id)) {
+      const result = await fileStore.refresh(file ?? id);
+      if (result) {
+        file = result;
+        return file.url ?? "";
+      }
     }
+    return "";
   }
 
   function handlePositionChange(newPosition: number) {
@@ -118,21 +106,10 @@
     <track kind="captions" />
   </video>
 {:else if type === FileType.AUDIO}
-  <audio
-    controls
-    class={classList}
-    draggable={isDraggable}
-    use:fileLoaderv2={{ source: resolveSrc, isLazyLoad, id: _id?.toString() }}
-    {style}
-    bind:this={ref}
-    on:dragstart
-    on:dragend
-    on:dragover
-    on:dragenter
-    on:dragleave
-    on:drop
-  >
-  </audio>
+  <!-- svelte-ignore a11y-no-static-element-interactions -->
+  <!--  -->
+{:else if type === FileType.PDF}
+  <!--  -->
 {/if}
 
 <style>

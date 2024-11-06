@@ -31,6 +31,7 @@
   export let size: Size.md | Size.sm = Size.md;
   export let width: string = "w-80";
   export let isEnforceWidth: boolean = false;
+  export let isShowDividerForGroup: boolean = false;
   let isGrouped: boolean = groups.length > 0;
   let baseRef: any;
   let search: string = "";
@@ -131,7 +132,10 @@
         />
       </div>
     {/if}
-    {#each filtered as group}
+    {#each filtered as group, index}
+      {#if isShowDividerForGroup && index > 0}
+        <div class="w-full h-px bg-brs3" />
+      {/if}
       <div class="flex flex-col w-full">
         {#if isGrouped && isValidArrayWithData(resolveItems(group.id, search))}
           <div class="flex gap-1 text-b3 text-fgs3 px-3 mb-1">

@@ -144,6 +144,7 @@
             value: $collection.description,
             style: InputStyle.FILLED,
             width: "w-96 max-w-full",
+            placeholder: "Add a description",
             changeCallback: onDescriptionChange
           }
         }}
@@ -237,7 +238,7 @@
           {#if isMiniSearch && !isSearchFocused}
             <Button
               icon="ph:magnifying-glass"
-              tooltip="Search this collection"
+              tooltip={`Search this collection [Total items: ${$collection.totalNodeCount ?? 0}]`}
               on:click={() => {
                 isSearchFocused = true;
                 setTimeout(() => {
@@ -251,7 +252,7 @@
               bind:value={searchQuery}
               bind:this={searchBoxRef}
               icon="ph:magnifying-glass"
-              placeholder="Search this collection"
+              placeholder={`Search this collection [Total items: ${$collection.totalNodeCount ?? 0}]`}
               on:focus={() => (isSearchFocused = true)}
               on:blur={() => (isSearchFocused = false)}
               on:input={onSearchQueryChange}
@@ -268,7 +269,7 @@
         {#if !$collection.isInEditMode}
           <Toggle
             icon="ph:monitor-play-thin"
-            tooltip="More actions"
+            tooltip="Play actions"
             bind:on={isShowMetaViews}
           />
         {/if}

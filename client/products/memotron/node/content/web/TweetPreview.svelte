@@ -6,7 +6,9 @@
   import { resolveContentPreview } from "../../node.utils";
   import type { ITweet } from "../../node.type";
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   export let node: ITweet;
+  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   const nodeContext = getContext<any>("node");
 
   let parent: any;
@@ -18,17 +20,19 @@
       parentUsername = node.parent?.url?.split("x.com/")[1] ?? "";
     }
     await resolveParent();
-    console.log({ parent });
+    // console.log({ parent });
   });
   async function resolveParent() {
-    if (nodeContext.parent) parent = nodeContext.parent;
+    if (nodeContext?.parent) parent = nodeContext.parent;
   }
 </script>
 
-<div class="w-full h-full flex flex-col gap-6 justify-center items-center">
+<div
+  class="w-full h-full mo:p-4 flex flex-col gap-6 justify-center items-center"
+>
   <button
-    class="flex flex-col gap-5 p-4 hover:bg-bgs2 border border-fgs4 rounded-md w-3/4"
-    on:click={() => {
+    class="flex flex-col gap-5 p-4 hover:bg-bgs2 border border-fgs4 rounded-md mo:w-full w-3/4"
+    on:click|stopPropagation={() => {
       appStore.openLink(node.url);
     }}
   >
@@ -59,9 +63,11 @@
       {formatDatetime($userPreferences, node.body.postedAt)}
     </div>
   </button>
-  <div class="w-3/4">
-    <InlineInfoBanner
-      content="Note: Tweets that contain images are not supported yet."
-    />
-  </div>
+  {#if accessPoint === ResourceAccessPoint.SELF}
+    <div class="mo:w-full w-3/4">
+      <InlineInfoBanner
+        content="Note: Tweets that contain images are not supported yet."
+      />
+    </div>
+  {/if}
 </div>

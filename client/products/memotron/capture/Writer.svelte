@@ -13,16 +13,16 @@
 
   let mdRef: NodularMarkdown | undefined = undefined;
 
-  function handleEvent(message: any) {
-    logger.log({ at: "capture handleEvent", message });
-    if (!message) return;
-    const data = message.data;
-    if (message.event === "mention") {
+  function handleEvent(event: string, data: any) {
+    logger.debug({ at: "capture handleEvent", event, data });
+    if (event === "mention") {
       if (!data?.item || !data?.location) return;
-      captureStore.addMentionLink(data.location, data.item);
-    } else if (message.event === "unmention") {
+      // captureStore.addMentionLink(data.location, data.item);
+      captureStore.addMentionLink("root", data.item);
+    } else if (event === "unmention") {
       if (!data?.id || !data?.location) return;
-      captureStore.removeMentionLink(data.location, data.id);
+      // captureStore.removeMentionLink(data.location, data.id);
+      captureStore.removeMentionLink("root", data.id);
     }
   }
 
@@ -30,9 +30,7 @@
     resolveDynamicParams: (isFirstAndEmpty?: boolean) => {
       return {
         placeholder:
-          isFirstAndEmpty || isEmptyState
-            ? "Start typing or paste from clipboard..."
-            : undefined
+          isFirstAndEmpty || isEmptyState ? "Start typing..." : undefined
       };
     },
     publish: handleEvent

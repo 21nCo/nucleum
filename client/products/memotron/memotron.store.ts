@@ -1,5 +1,6 @@
 import {
   headingNodeTypes,
+  NodeType,
   rootNodeTypeList
 } from "$lib/client/products/memotron/node/node.type";
 import { activeResourceFilterV2 } from "$lib/client/utils/utils";
@@ -17,10 +18,16 @@ import { isValidArray } from "$lib/shared/utils/obj.utils";
 import { toasts } from "$lib/client/stores/notification.store";
 import { extensionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
 import { FluxMethod } from "$lib/client/components/flux/flux.type";
+import type { CollectionType } from "./collection/collection.type";
+
+export const MAX_FILE_SIZE_MB = 15;
 
 export function resolveResource(id: IRecordId) {
   return flux.select(id);
 }
+
+const labelSearchProp =
+  "search::highlight('**', '**', 1, false) AS labelSearch";
 
 export class SearchStore {
   resource: Resource = Resource.everything;
@@ -86,7 +93,7 @@ export class SearchStore {
                 "node.isArchived as isArchived",
                 "node.isStarred as isStarred",
                 "node.label as label",
-                "node.mdText as mdText",
+                "node.text as text",
                 "node.metadata as metadata",
                 "node.modifiedAt as modifiedAt",
                 "node.modifiedBy as modifiedBy",
@@ -98,8 +105,8 @@ export class SearchStore {
                 "*",
                 "parent.* as parent",
                 "file.* as file",
-                "search::highlight('**', '**', 1, false) AS bodySearch",
-                "search::highlight('**', '**', 2, false) AS labelSearch"
+                labelSearchProp,
+                "search::highlight('**', '**', 2, false) AS bodySearch"
                 //TODO - this is causing extreme slowness for select query if there are 1000s of records on the table
                 // "(fn::memotron::node::parent($parent.id)) as mdParent"
               ],
@@ -124,7 +131,7 @@ export class SearchStore {
         search: isValidString(this.searchQuery)
           ? {
               query: this.searchQuery,
-              properties: ["body", "label"]
+              properties: ["label", "text"]
             }
           : undefined,
         orderBy: this.orderBy ?? {
@@ -144,11 +151,7 @@ export class SearchStore {
 
   async collections() {
     const result = await flux.selectMany(Resource.collection, {
-      properties: [
-        "search::highlight('**', '**', 1, false) AS labelSearch",
-        "*",
-        "typeToExtend.* as typeToExtend"
-      ],
+      properties: [labelSearchProp, "*", "typeToExtend.* as typeToExtend"],
       filters: {
         trashInformation: false,
         ...this.filters,
@@ -232,29 +235,37 @@ export class SearchStore {
    * @param query
    * @returns
    */
-  async searchForLinking(query: string, resource?: Resource) {
+  async searchForLinking(
+    query: string,
+    params?: { resource?: Resource; subType?: NodeType | CollectionType }
+  ) {
     let nodes = [];
-    if (resource === Resource.node || !resource) {
+    if (params?.resource === Resource.node || !params?.resource) {
       nodes = await flux.selectMany(Resource.node, {
         properties: [
           "*",
           "parent.* as parent",
-          "(fn::memotron::node::parent($parent.id)) as mdParent"
+          labelSearchProp
+          //TODO - disabling temp - to reduce query time
+          // "(fn::memotron::node::parent($parent.id)) as mdParent"
         ],
         filters: {
-          contentType: [...rootNodeTypeList, ...headingNodeTypes],
+          contentType: params?.subType
+            ? [params.subType]
+            : [...rootNodeTypeList, ...headingNodeTypes],
           ...activeResourceFilterV2
         },
         search: isValidString(query)
           ? {
-              properties: ["body", "label"],
+              properties: ["label", "text"],
               query
             }
-          : undefined
+          : undefined,
+        limit: isValidString(query) ? 200 : 50
       });
     }
     let collections = [];
-    if (resource === Resource.collection || !resource) {
+    if (params?.resource === Resource.collection || !params?.resource) {
       collections = await flux.selectMany(Resource.collection, {
         filters: {
           ...activeResourceFilterV2
@@ -278,6 +289,9 @@ export class SearchStore {
         args: {
           resource: Resource.node,
           params: {
+            filters: {
+              contentType: [...rootNodeTypeList, ...headingNodeTypes]
+            },
             search: isValidString(query)
               ? {
                   properties: ["body", "label"],
@@ -340,8 +354,13 @@ export class SearchStore {
     return result;
   }
 
-  async recents(resource?: Resource) {
+  async recents(
+    resource?: Resource,
+    params?: { limit?: number; offset?: number }
+  ) {
     this.resource = resource ?? this.resource;
+    this.limit = params?.limit ?? this.limit;
+    this.offset = params?.offset ?? this.offset;
     let data: any[] = [];
     if (this.resource === Resource.everything) {
       const nodes = await this.recentNodes();
@@ -353,5 +372,34 @@ export class SearchStore {
       data = (await this.recentCollections()) ?? [];
     }
     return data;
+  }
+
+  async resolveCount(resource: Resource, subType?: NodeType | CollectionType) {
+    if (resource === Resource.node) {
+      const result = await flux.selectMany(resource, {
+        properties: ["count()"],
+        filters: {
+          contentType: subType ? [subType] : [...rootNodeTypeList],
+          creationContext: false,
+          ...activeResourceFilterV2
+        },
+        groupBy: ["all"]
+      });
+      return result?.[0]?.count;
+    } else if (
+      resource === Resource.collection ||
+      resource === Resource.combination ||
+      resource === Resource.task
+    ) {
+      const result = await flux.selectMany(resource, {
+        properties: ["count()"],
+        filters: {
+          type: subType ? [subType] : undefined,
+          ...activeResourceFilterV2
+        },
+        groupBy: ["all"]
+      });
+      return result?.[0]?.count;
+    }
   }
 }

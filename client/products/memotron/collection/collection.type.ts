@@ -37,6 +37,7 @@ export type IActiveCollection = IActiveResource &
     isViewDataLoading: boolean;
     isViewDataRefreshing: boolean;
     isPageLoading: boolean;
+    totalNodeCount: number;
     views: ICollectionViewWithData[];
   };
 
@@ -75,29 +76,38 @@ export type ICollectionThumb = ICollectionBase & {
 export type ICollectionViewWithData = ICollectionView & {
   data: INodeThumb[];
 };
-export interface ICollectionView extends IMemotronItemBase {
-  layout: CollectionLayout;
+export type ICollectionView = IMemotronItemBase &
+  ICollectionViewArrangementConfig & {
+    layout: CollectionLayout;
+
+    /**
+     * Property id to show as tabs.
+     * "none" for no tabs.
+     */
+    tabBy: string;
+    /**
+     * Property id to group by.
+     * "none" for no grouping.
+     */
+    groupBy: string;
+    /**
+     * Property id to sub group by.
+     * "none" for no sub grouping.
+     */
+    subGroupBy: string;
+    /**
+     * Configured tabs for non select type property.
+     *
+     * Ex: datetime, location or text property with criteria etc
+     */
+    tabs?: any[];
+  };
+
+export interface ICollectionViewArrangementConfig {
   arrangement?: Arrangement;
+  /**
+   * Hides previews for thumbnails of nodes in a collection view if enabled.
+   */
+  isHideThumbnailPreview?: boolean;
   density?: number;
-  /**
-   * Property id to show as tabs.
-   * "none" for no tabs.
-   */
-  tabBy: string;
-  /**
-   * Property id to group by.
-   * "none" for no grouping.
-   */
-  groupBy: string;
-  /**
-   * Property id to sub group by.
-   * "none" for no sub grouping.
-   */
-  subGroupBy: string;
-  /**
-   * Configured tabs for non select type property.
-   *
-   * Ex: datetime, location or text property with criteria etc
-   */
-  tabs?: any[];
 }

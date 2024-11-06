@@ -14,17 +14,33 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import { createEventDispatcher } from "svelte";
   import view from "$lib/client/stores/view.store";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   const dispatch = createEventDispatcher();
   export let pane: NodeRightPaneType;
   export let node: IActiveNodeStore;
   export let mdId: string | undefined = undefined;
   export let renderingDetails: any = undefined;
+  export let isShowClose: boolean = false;
+
+  $: isConstrainedWidth =
+    $view.isConstrainedWidth ||
+    $node.accessMode === ResourceAccessMode.SPLIT ||
+    $node.accessMode === ResourceAccessMode.FSPLIT;
+
+  $: _isShowClose =
+    isShowClose ||
+    pane === NodeRightPaneType.METADATA ||
+    isConstrainedWidth ||
+    ($node.contentType === NodeType.NODULAR_MARKDOWN &&
+      pane === NodeRightPaneType.HISTORY) ||
+    ($node.contentType !== NodeType.NODULAR_MARKDOWN &&
+      pane === NodeRightPaneType.LINKS);
 </script>
 
 <div class="flex flex-col h-full w-full overflow-y-auto items-start gap-3 p-4">
   <div class="w-full flex items-center justify-between gap-2">
     <Text content={properCase(pane)} style={TextStyle.PANEL_HEADING_SMALL} />
-    {#if pane === NodeRightPaneType.METADATA || $view.isConstrainedWidth || ($node.contentType === NodeType.NODULAR_MARKDOWN && pane === NodeRightPaneType.HISTORY)}
+    {#if _isShowClose}
       <Button
         icon="ph:x-circle-thin"
         tooltip="Close"

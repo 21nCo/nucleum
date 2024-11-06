@@ -250,6 +250,7 @@
               avatar: {
                 code: avatar?.code,
                 color: avatar?.color,
+                file: avatar?.file,
                 isFilled: avatar?.isFilled,
                 type: avatar?.type
               }

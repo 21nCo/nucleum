@@ -36,6 +36,7 @@
 
   function contextEventListener(message: any) {}
   const nodeContext = {
+    id,
     parent: $node?.parent,
     publish: contextEventListener
   };

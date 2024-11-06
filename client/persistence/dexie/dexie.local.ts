@@ -37,7 +37,7 @@ export class DexiePersistence implements IPersistence {
     if (this.userId === user && this.instance) return -1;
     this.instance = new LocalDexie(user);
     this.userId = user;
-    const initLog = await this.select("kv:init");
+    const initLog = await this.select("kv:local");
     logger.log({ at: "DexiePersistence.initialize", initLog });
     if (initLog) {
       return 1;
@@ -48,7 +48,7 @@ export class DexiePersistence implements IPersistence {
 
   private async addInitializationLog(params?: IPersistenceInitParams) {
     await this.instance?.table(Resource.kv).add({
-      id: "kv:init",
+      id: "kv:local",
       createdAt: new Date().toISOString(),
       isLocalMode: !params?.userId,
       dapId: params?.dapId
@@ -316,7 +316,7 @@ export class DexiePersistence implements IPersistence {
     );
     if (!query) return;
     const result = await query;
-    logger.log({ at: "DexiePersistence.selectMany", query, result });
+    logger.log({ at: "DexiePersistence.selectMany", resource, params, query, result });
     if (Array.isArray(result)) {
       return result;
     }

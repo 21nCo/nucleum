@@ -9,6 +9,7 @@
 
   export let arrangement: Arrangement;
   export let density = 1;
+  export let isHideThumbnailPreview: boolean = false;
   export let isBoardContext = false;
 
   let isPopoverVisible = false;
@@ -49,9 +50,13 @@
   }
   function onArrangementChange(event: CustomEvent) {
     dispatch("arrangementChange", event.detail);
-    if (event.detail !== Arrangement.MASONRY) {
-      ref?.dispatchEvent(new CustomEvent("hide"));
-    }
+    // if (event.detail !== Arrangement.MASONRY) {
+    //   ref?.dispatchEvent(new CustomEvent("hide"));
+    // }
+  }
+
+  function onPreviewSettingChange(e: CustomEvent) {
+    dispatch("previewSettingChange", e.detail);
   }
 </script>
 
@@ -63,9 +68,11 @@
     componentProps: {
       density,
       arrangement,
+      isHideThumbnailPreview,
       allArrangements,
       onArrangementChange,
-      onDensityChange
+      onDensityChange,
+      onPreviewSettingChange
     }
   }}
   on:change={(e) => {

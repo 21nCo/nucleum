@@ -129,6 +129,7 @@
         <NodeItems
           nodes={_groupData}
           arrangement={view.arrangement}
+          isHidePreview={view.isHideThumbnailPreview}
           density={1}
           isDraggable={true}
           accessPoint={ResourceAccessPoint.COLLECTION}

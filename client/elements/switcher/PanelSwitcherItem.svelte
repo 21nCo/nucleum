@@ -53,7 +53,7 @@
         barStyle === BarStyle.OVERFLOW &&
         !item.icon,
       "px-3": size === Size.sm || (barStyle != BarStyle.OVERFLOW && !item.icon),
-      "px-5": item.icon,
+      "px-5": size !== Size.sm && item.icon,
       "px-2": size === Size.xs,
       "py-2": barStyle != BarStyle.EXACT,
       "border-b-2": barStyle === BarStyle.OVERFLOW,

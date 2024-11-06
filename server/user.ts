@@ -11,6 +11,11 @@ import { retrieveAppConfig } from "./utils";
 import { OAuthUserData } from "./types/oauth.type";
 import { authorize, initializeDatabase } from "./account";
 import { accessControlHeaders } from "./lambda";
+import {
+  resolveInsertQuery,
+  resolveMutationQueryV2
+} from "$lib/shared/utils/surreal.utils";
+import { SyncMethod } from "$lib/shared/types/sync.type";
 
 function frameNonSensitiveUserInfo(userInfo: {
   id: any;
@@ -80,7 +85,7 @@ export async function generateToken(
   }
 }
 
-const betaProducts = ["app.memotron.io", "pre.memotron.io", "tidigit.com"];
+const betaProducts = ["app.selftron.io", "pre.selftron.io", "tidigit.com"];
 
 export async function signup(data: any, isOAuth = false) {
   console.log("signup", { data, isOAuth });
@@ -119,7 +124,9 @@ export async function signup(data: any, isOAuth = false) {
   if (response?.[1]?.result && response[1].result.userCount === undefined) {
     console.log("new user created, logging in");
     const userInfo = response[1].result[0];
-    const userId = userInfo.id.split("user:")[1];
+    const userId = userInfo?.id?.split("user:")[1];
+    if (!userId)
+      return { error: "Something went wrong. Unable to signup user." };
     await log(userId, { ...context, activity: "signup" });
     return await generateToken(userId, userInfo, {
       isTrusted,
@@ -423,7 +430,7 @@ export async function performUserAccountAction(authHeader: any, body: any) {
         ).toISOString()}", offset = ${tzInfo.offset}, label = "${
           tzInfo.label
         }";`;
-        const tzResponse = await performAgentProxyQuery(tzQuery, {
+        const tzResponse = await performQueryOnBehalfOfUser(tzQuery, {
           db: id,
           context: CONTEXT.USER,
           id: id,
@@ -435,5 +442,96 @@ export async function performUserAccountAction(authHeader: any, body: any) {
       }
     }
     return await generateToken(id, userInfo, { isTrusted: true });
+  }
+}
+
+/**
+ * Syncs the user data from clients to the database
+ * @param body
+ * @param method
+ * @returns
+ */
+export async function sync(body: any, agent: Agent, method: string) {
+  console.log({ at: "sync", body, agent, method });
+  try {
+    const result = await _processSync(body, agent, method);
+    console.log({ at: "sync - result", result, body, method });
+    return result;
+  } catch (e) {
+    console.error({ at: "sync - error", error: e });
+    return { error: "Sync failed" };
+  }
+}
+
+/**
+ *
+ */
+async function _processSync(body: any, agent: Agent, method: string) {
+  if (method === SyncMethod.SYNC_UP) {
+    const { mutations, lastSyncDown, resources, dapId } = body;
+    if (!mutations || mutations.length < 1) {
+      return { error: "No mutations to sync" };
+    }
+    const insertMutationsQuery = `INSERT INTO mutation ${JSON.stringify(
+      mutations
+    )};`;
+    const individualMutationsQuery = mutations
+      .map((mutation: any) => resolveMutationQueryV2(mutation))
+      .join("; ");
+    const fetchBackQuery = resolveSyncDownQuery(lastSyncDown, resources, dapId);
+    const masterQuery = `${insertMutationsQuery}; ${individualMutationsQuery}; ${fetchBackQuery};`;
+    const response = await performQueryOnBehalfOfUser(masterQuery, agent);
+    console.log({ method, response });
+    if (response) return response;
+    else return { error: "transaction failed" };
+  } else if (method === SyncMethod.SYNC_DOWN) {
+    const { lastSyncDown, resources, dapId } = body;
+    const fetchBackQuery = resolveSyncDownQuery(lastSyncDown, resources, dapId);
+    const countQuery = resolveCountQuery(resources);
+    const fullQuery = `${fetchBackQuery}; ${countQuery};`;
+    if (!fullQuery) return { error: "transaction failed" };
+    const response = await performQueryOnBehalfOfUser(fullQuery, agent);
+    return response;
+  } else if (method === SyncMethod.CLONE_UP) {
+    const { resource, records } = body;
+    const query = resolveInsertQuery(resource, records);
+    const response = await performQueryOnBehalfOfUser(query, agent);
+    return response;
+  } else if (method === SyncMethod.CLONE_DOWN) {
+    const { resources, isExtension } = body;
+    let query = "";
+    if (resources?.length < 1) return { error: "No resources found" };
+    if (!isExtension) {
+      resources.forEach((resource) => {
+        query += `select *, meta::id(id) as id from ${resource};`;
+      });
+    } else {
+      resources.forEach((resource) => {
+        query += `select * from ${resource};`;
+      });
+    }
+    const response = await performQueryOnBehalfOfUser(query, agent);
+    return response;
+  } else {
+    return { error: "Unknown sync method" };
+  }
+
+  function resolveSyncDownQuery(
+    lastSyncDown: number,
+    resources: Resource[],
+    dapId: string
+  ) {
+    console.log({ at: "resolveSyncDownQuery", lastSyncDown, resources });
+    return `SELECT * FROM mutation WHERE timestamp > ${lastSyncDown} AND dapId IS NOT '${dapId}' AND resource IN [${resources
+      .map((x) => `'${x}'`)
+      .join(",")}] ORDER BY timestamp ASC;`;
+  }
+
+  function resolveCountQuery(resources: Resource[]) {
+    let query = "";
+    for (const resource of resources) {
+      query += `array::first(select count() as ${resource} from ${resource} group all);`;
+    }
+    return query;
   }
 }

@@ -53,6 +53,50 @@ export const metaPropertyOptions = [
     groupId: autoPropertiesGroupLabel
   }
 ];
+
+export const universalPropertyGroupLabel = "Universal";
+export const universalPropertyOptions = [
+  {
+    label: "Country",
+    icon: "ph:globe-light",
+    value: PropertyType.COUNTRY,
+    groupId: universalPropertyGroupLabel,
+    badge: "Planned",
+    isDisabled: true
+  },
+  {
+    label: "Language",
+    icon: "ph:translate-light",
+    value: PropertyType.LANGUAGE,
+    groupId: universalPropertyGroupLabel,
+    badge: "Planned",
+    isDisabled: true
+  },
+  {
+    label: "Currency",
+    icon: "ph:money-light",
+    value: PropertyType.CURRENCY,
+    groupId: universalPropertyGroupLabel,
+    badge: "Planned",
+    isDisabled: true
+  },
+  {
+    label: "Continent",
+    icon: "ph:map-trifold-light",
+    value: PropertyType.CONTINENT,
+    groupId: universalPropertyGroupLabel,
+    badge: "Planned",
+    isDisabled: true
+  },
+  {
+    label: "Timezone",
+    icon: "ph:clock-light",
+    value: PropertyType.TIMEZONE,
+    groupId: universalPropertyGroupLabel,
+    badge: "Planned",
+    isDisabled: true
+  }
+];
 export const propertyOptions = [
   {
     label: "Text",
@@ -103,6 +147,13 @@ export const propertyOptions = [
     isDisabled: true
   },
   {
+    label: "Time tracking",
+    icon: "ph:timer-light",
+    value: PropertyType.TIME_TRACKING,
+    badge: "Planned",
+    isDisabled: true
+  },
+  {
     label: "Link list",
     icon: "ph:tree-view-light",
     value: PropertyType.LINK_LIST,
@@ -113,6 +164,13 @@ export const propertyOptions = [
     label: "Attachement(s)",
     icon: "upload",
     value: PropertyType.FILE,
+    badge: "Planned",
+    isDisabled: true
+  },
+  {
+    label: "Formula",
+    icon: "ph:math-operations-light",
+    value: PropertyType.FORMULA,
     badge: "Planned",
     isDisabled: true
   }

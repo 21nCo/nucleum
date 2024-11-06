@@ -4,18 +4,18 @@
   import {
     NodeType,
     type IClip,
-    ITextClip,
-    IVideoTimestampClip
+    type ITextClip,
+    type IVideoTimestampClip
   } from "$lib/client/products/memotron/node/node.type";
   import { relayToContentScript } from "$lib/client/utils/extension.utils";
-  import TextClip from "./TextClip.svelte";
-  import VideoTimestampClip from "./VideoTimestampClip.svelte";
+  import Clip from "./Clip.svelte";
   import { wait } from "$lib/client/utils/time.utils";
   import { onMount } from "svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
   import type { IRecordId } from "$lib/client/types/data.type";
+  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
 
   export let clips: IClip[] = [];
   let transformedClips: IClip[] = [];
@@ -43,6 +43,9 @@
     videoTimestampClips = rawClips
       .filter((clip) => clip.contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP)
       ?.sort((a, b) => a.body.timestamp - b.body.timestamp);
+    let webScreenshotClips = rawClips.filter(
+      (clip) => clip.contentType === NodeType.WEB_SCREENSHOT_CLIP
+    );
     await wait(1000);
     return resolveOrderAndRenderClips();
 
@@ -56,7 +59,7 @@
           .map((x) => textClips.find((clip) => clip.id === x.id))
           .filter((x): x is ITextClip => x !== undefined);
       }
-      return [...videoTimestampClips, ...textClips];
+      return [...videoTimestampClips, ...textClips, ...webScreenshotClips];
     }
   }
 
@@ -81,25 +84,32 @@
       event.preventDefault();
     }
   }
+
+  function onClipDelete(clipId: IRecordId) {
+    transformedClips = transformedClips.filter(
+      (clip) => !isSameResource(clip, clipId)
+    );
+  }
 </script>
 
-<main class="grow">
+<main class="w-full h-full">
   {#if transformedClips?.length > 0}
-    <div class="flex flex-col grow w-full gap-3 overflow-auto">
+    <div class="flex flex-col h-full w-full gap-3 overflow-y-auto">
       {#each transformedClips as clip, index (clip.id)}
-        {#if clip.contentType === NodeType.TEXT_CLIP}
+        <!-- {#if clip.contentType === NodeType.TEXT_CLIP || clip.contentType === NodeType.WEB_SCREENSHOT_CLIP}
           <TextClip
             {clip}
             on:click={() => onThumbnailClick(clip.id)}
             on:keydown
           />
-        {:else if clip.contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP && "timestamp" in clip.body}
-          <VideoTimestampClip
-            {clip}
-            on:click={() => onThumbnailClick(clip.id)}
-            on:keydown
-          />
-        {/if}
+        {:else if clip.contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP && "timestamp" in clip.body} -->
+        <Clip
+          {clip}
+          on:click={() => onThumbnailClick(clip.id)}
+          on:keydown
+          on:delete={() => onClipDelete(clip.id)}
+        />
+        <!-- {/if} -->
       {/each}
       <ScrollViewBottomSpacer />
     </div>

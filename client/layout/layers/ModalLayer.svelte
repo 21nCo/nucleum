@@ -36,6 +36,9 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
   import { AlertType } from "$lib/client/types/notification.type";
+  import TextInput from "$lib/client/elements/input/TextInput.svelte";
+  import Code from "$lib/client/icons/Code.svelte";
+  import ConfirmationNotification from "$lib/client/components/notifications/ConfirmationNotification.svelte";
 
   let modals: ModalEvent[] = [];
   let dialogRef: HTMLDialogElement;
@@ -303,38 +306,20 @@
     show={true}
     id={Action.CONFIRMATION}
     isDismissable={true}
-    size={Size.xs}
+    size={$confirmationNotification.size ?? Size.xs}
+    orientation={Orientation.Horizontal}
   >
     <ModalLayout
       path={Action.CONFIRMATION}
       params={{
         title: $confirmationNotification.title,
         layout: {
-          size: Size.xs,
-          primaryAction:
-            $confirmationNotification.confirmAction ??
-            ($confirmationNotification.type === AlertType.ERROR
-              ? {
-                  label: "OK"
-                }
-              : undefined),
-          secondaryAction:
-            $confirmationNotification.cancelAction ??
-            ($confirmationNotification.type !== AlertType.ERROR
-              ? {
-                  label: "Cancel"
-                }
-              : undefined)
+          size: $confirmationNotification.size ?? Size.xs,
+          orientation: Orientation.Horizontal
         }
       }}
     >
-      <div class="flex flex-col gap-4">
-        <div class="flex flex-col gap-2">
-          <div class="text-b1">
-            {@html renderMdAsHtml($confirmationNotification?.message)}
-          </div>
-        </div>
-      </div>
+      <ConfirmationNotification />
     </ModalLayout>
   </Modal>
 {/if}

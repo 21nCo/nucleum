@@ -18,13 +18,19 @@
   import NodeAvatar from "../avatar/NodeAvatar.svelte";
   import { fade, slide } from "svelte/transition";
   import CollectionsLane from "../floatingBar/CollectionsLane.svelte";
-  import { NodeRightPaneType } from "../node.type";
+  import { headingNodeTypes, NodeRightPaneType, NodeView } from "../node.type";
   import NodePropertiesPane from "../rightPanel/NodePropertiesPane.svelte";
   import view from "$lib/client/stores/view.store";
   import NodeRightPaneContent from "../rightPanel/NodeRightPaneContent.svelte";
+  import NodeGraph from "../../graph/NodeGraph.svelte";
+  import NodeBirdView from "../birdView/NodeBirdView.svelte";
+  import {
+    ResourceAccessMode,
+    ResourceAccessPoint
+  } from "$lib/client/components/flux/resourceStores/resource.type";
 
   export let node: IActiveNodeStore;
-  export let selectedView: string = "Content";
+  export let selectedView: NodeView = NodeView.CONTENT;
   let lastScrollTop = 0;
   let scrollDirection = "none";
   let mdId = generateUID();
@@ -34,6 +40,12 @@
   let isRightPanelCollapsed: boolean = true;
   let rightPane = NodeRightPaneType.NONE;
   let floatingBarRef: NodeFloatingBar | undefined = undefined;
+
+  $: isConstrainedWidth =
+    $view.isConstrainedWidth ||
+    $node.accessMode === ResourceAccessMode.SPLIT ||
+    $node.accessMode === ResourceAccessMode.FSPLIT;
+
   function onScroll(e: any) {
     // console.log("onScroll", e);
     const st = event?.target?.scrollTop;
@@ -68,39 +80,43 @@
 
 <div class="relative w-full h-full flex flex-col bg-bgs1 rounded-md">
   {#if $node}
-    {#if selectedView === "Content"}
+    {#if selectedView === NodeView.CONTENT}
       <div
         class={cn("h-full w-full mo:gap-0 cw:gap-0 gap-4", {
-          "flex px-4 justify-center dp:grid dp:grid-cols-[1fr_auto_1fr] dp:gap-2":
-            !isWidened,
+          "flex px-4 justify-center": !isWidened,
+          "dp:grid dp:grid-cols-[1fr_auto_1fr] dp:gap-2":
+            !isWidened && !isConstrainedWidth,
           "flex px-4": isWidened,
-          "px-0":
-            $view.isConstrainedWidth && rightPane !== NodeRightPaneType.NONE
+          "px-0": isConstrainedWidth && rightPane !== NodeRightPaneType.NONE
         })}
       >
-        {#if !$view.isConstrainedWidth || ($view.isConstrainedWidth && rightPane === NodeRightPaneType.NONE)}
+        {#if !isConstrainedWidth || (isConstrainedWidth && rightPane === NodeRightPaneType.NONE)}
           <div class="min-w-0" />
           <div
             class={cn("flex flex-col justify-center items-center h-full", {
               "flex-grow": isWidened,
-              "flex-grow max-w-[50rem] dp:min-w-[50rem] overflow-auto":
-                !isWidened
+              "flex-grow max-w-[50rem] overflow-auto": !isWidened,
+              "dp:min-w-[50rem]":
+                !isWidened &&
+                $node.accessMode !== ResourceAccessMode.SPLIT &&
+                $node.accessMode !== ResourceAccessMode.FSPLIT
             })}
           >
-            {#if $node.mdParent && $node.mdParent.length > 0}
-              {#key $node.mdParent.map((x) => x.toString()).join(".")}
-                <header class="flex w-full px-12 py-4">
-                  <NodeTitleBreadcrumbs
-                    node={$node}
-                    on:click={(e) => {
-                      node.eventStore.set({
-                        event: e.detail.event,
-                        id: e.detail.item.resourceId
-                      });
-                    }}
-                  />
-                </header>
-              {/key}
+            {#if headingNodeTypes.includes($node.contentType)}
+              <!-- {#key $node.mdParent.map((x) => x.toString()).join(".")} -->
+              <header class="flex w-full px-12 py-4">
+                <NodeTitleBreadcrumbs
+                  id={$node.id}
+                  currentLabel={$node.label}
+                  on:click={(e) => {
+                    node.eventStore.set({
+                      event: e.detail.event,
+                      id: e.detail.item.resourceId
+                    });
+                  }}
+                />
+              </header>
+              <!-- {/key} -->
             {/if}
             <main
               class="relative flex flex-col gap-6 mo:pr-0 pr-6 h-full w-full overflow-auto"
@@ -109,8 +125,12 @@
               {#if !$node.focusedBlock}
                 <div class="min-h-20" />
                 {#if $node.types}
-                  <span class="flex mo:mx-0 mx-12 -mb-8">
-                    <NodeAvatar types={$node.types} size={40} />
+                  <span class="flex mo:mx-0 mx-12 -mb-6">
+                    <NodeAvatar
+                      types={$node.types}
+                      accessPoint={ResourceAccessPoint.SELF}
+                      size={40}
+                    />
                   </span>
                 {/if}
                 <span
@@ -123,7 +143,11 @@
                   )}
                 >
                   {#if isStickied && $node.types}
-                    <NodeAvatar types={$node.types} size={Size.sm} />
+                    <NodeAvatar
+                      types={$node.types}
+                      accessPoint={ResourceAccessPoint.SELF}
+                      size={Size.sm}
+                    />
                   {/if}
                   {#if $isInEditMode}
                     <TextInput
@@ -175,7 +199,7 @@
               <NodeContent {node} {mdId} />
             </main>
           </div>
-        {:else if $view.isConstrainedWidth && rightPane !== NodeRightPaneType.NONE}
+        {:else if isConstrainedWidth && rightPane !== NodeRightPaneType.NONE}
           <NodeRightPaneContent
             {node}
             {mdId}
@@ -184,7 +208,7 @@
           />
         {/if}
 
-        {#if !$view.isConstrainedWidth}
+        {#if !isConstrainedWidth}
           <NodeRightPane
             {node}
             {mdId}
@@ -195,20 +219,25 @@
         {/if}
       </div>
     {:else}
-      <ComingSoonView />
+      <NodeBirdView {node} bind:rightPane />
     {/if}
     {#if isShowFloatingBar}
       <div transition:fade={{ duration: 200 }}>
-        <BottomFloat margin={$view.isConstrainedWidth ? "mb-8" : "mb-6"}>
+        <BottomFloat margin={isConstrainedWidth ? "mb-8" : "mb-6"}>
           <NodeFloatingBar
             {node}
-            bind:selectedView
+            bind:nodeView={selectedView}
             bind:isWidened
             bind:this={floatingBarRef}
             on:action={(e) => {
               if (
-                e.detail === NodeRightPaneType.METADATA ||
-                e.detail === NodeRightPaneType.HISTORY
+                [
+                  NodeRightPaneType.METADATA,
+                  NodeRightPaneType.HISTORY,
+                  NodeRightPaneType.SIDENOTES,
+                  NodeRightPaneType.PROPERTIES,
+                  NodeRightPaneType.LINKS
+                ].includes(e.detail)
               ) {
                 openRightPane(e);
               }

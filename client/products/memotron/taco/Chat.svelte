@@ -47,7 +47,7 @@
       action: TacoActions.GET_ANSWER,
       params: {
         question: question,
-        context: node[0].mdText
+        context: node[0].text
       }
     });
     answer = await new Promise((resolve, reject) => {

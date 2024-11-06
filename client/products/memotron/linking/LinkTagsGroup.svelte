@@ -80,7 +80,7 @@
         bind:value={inputValueWithinGroup}
         placeholder="Edit group name"
         on:enter={onUpdateGroupName}
-        isShowRightControls={true}
+        isShowSaveControl={true}
         on:save={onUpdateGroupName}
         on:cancel={onGroupNameCancel}
       />

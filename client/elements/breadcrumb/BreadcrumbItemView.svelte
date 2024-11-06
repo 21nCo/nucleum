@@ -8,6 +8,8 @@
   export let isDisabled: boolean = false;
   export let isLast: boolean = false;
   export let truncateLength: number | undefined = undefined;
+  export let isSubtleContext: boolean = false;
+
   function handleKeyDown(e: KeyboardEvent) {
     if (e.key === "Enter") {
       dispatch("enter");
@@ -16,17 +18,24 @@
 </script>
 
 <button
-  class="flex items-center justify-center w-fit whitespace-nowrap text-fgs2 hover:text-fgs1"
+  class={cn(
+    "flex items-center justify-center w-fit whitespace-nowrap text-fgs2",
+    {
+      "hover:text-fgs1": !isSubtleContext
+    }
+  )}
 >
   <!-- <div class="triangle bg-fgs2 w-[8px] h-[7px] mr-1" /> -->
   <button
     on:click
     on:keydown={handleKeyDown}
     id="breadcrumb-item-label"
-    class={cn("text-b2 cursor-pointer", {
+    class={cn("cursor-pointer", {
       "opacity-50 cursor-not-allowed": isDisabled,
-      "text-ccs1": isLast,
-      "hover:underline": !isLast
+      "text-ccs1": isLast && !isSubtleContext,
+      "hover:underline": !isLast,
+      "text-b2 ": !isSubtleContext,
+      "text-b3": isSubtleContext
     })}
   >
     <TextWithHoverTooltip
@@ -36,7 +45,13 @@
     />
   </button>
   {#if !isLast}
-    <div class="px-2 opacity-50">/</div>
+    <div
+      class={cn("px-2 opacity-50", {
+        "text-b4": isSubtleContext
+      })}
+    >
+      /
+    </div>
   {/if}
 </button>
 

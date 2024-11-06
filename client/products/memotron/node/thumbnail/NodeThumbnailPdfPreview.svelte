@@ -1,5 +1,5 @@
 <script lang="ts">
-  export let url: string;
+  export let url: string = "";
 </script>
 
 <button

@@ -5,15 +5,17 @@ import {
   RemotePersistenceProvider,
   type PersistenceProvider
 } from "$lib/client/persistence/persistence.type";
-import type { IStore } from "$lib/client/types/data.type";
+// import { SurrealPersistence } from "$lib/client/persistence/surreal/surreal.local";
+import { StoreDataType, type IStore } from "$lib/client/types/data.type";
 import { ExtensionEvent } from "$lib/client/types/extension.type";
 import { relayToBackgroundScript } from "$lib/client/utils/extension.utils";
 import { FluxMethod, type IFluxMethod } from "./flux.type";
+import { Resource } from "./resourceStores/resource.enum";
 // import { getPort } from "@plasmohq/messaging/port"
 
 export async function delegateToFlux(method: IFluxMethod) {
   try {
-    logger.log({ at: "delegateToFlux", method });
+    logger.log({ at: "delegateToFlux", ...method });
     // return flux?.[method]?.(...args);
     if (method.method !== FluxMethod.INIT_FLUX && !flux) {
       while (!flux) {
@@ -30,6 +32,7 @@ export async function delegateToFlux(method: IFluxMethod) {
           method.args.stores,
           method.args.provider,
           new DexiePersistence(RemotePersistenceProvider.SURREAL),
+          // new SurrealPersistence(),
           method.args.params
         );
       case FluxMethod.SELECT_MANY:
@@ -40,6 +43,8 @@ export async function delegateToFlux(method: IFluxMethod) {
         return flux?.mutation(method.args.resource, method.args.params);
       case FluxMethod.KV_MERGE:
         return flux?.kvMerge(method.args.storeId, method.args.data);
+      case FluxMethod.SEARCH:
+        return flux?.search(method.args.storeId, method.args.query);
       default:
         return null;
     }
@@ -79,4 +84,76 @@ export function extensionFlux(method: IFluxMethod) {
       method
     }
   });
+}
+
+export async function loadInMemoryResourceStore(store: IStore) {
+  logger.log({
+    at: "fluxExtentionMediator.loadInMemoryResourceStore",
+    store
+  });
+  if (store?.loader) {
+    const data = await extensionFlux({
+      method: FluxMethod.SELECT_MANY,
+      args: { resource: store.id as Resource }
+    });
+    store.loader(data);
+  }
+}
+
+export async function loadInMemoryStores(stores: IStore[]) {
+  try {
+    let kvStores = stores.filter((x) => x.dataType === StoreDataType.KVO);
+    logger.log({
+      at: "fluxExtentionMediator.loadInMemoryStores",
+      kvStores
+    });
+    if (!kvStores) return stores;
+    const data = await extensionFlux({
+      method: FluxMethod.SELECT_MANY,
+      args: {
+        resource: Resource.kv
+      }
+    });
+    logger.log({
+      at: "fluxExtentionMediator.loadInMemoryStores",
+      data
+    });
+    if (!data || !Array.isArray(data)) return stores;
+    data.forEach((record: any) => {
+      const store = kvStores.find(
+        (x) => "kv:" + x.id === record.id.toString()
+      );
+      if (!store?.loader) return;
+      store.loader(record);
+    });
+    let inMemoryResouceStores = stores.filter((x) => x.isInMemory);
+    logger.debug({
+      at: "fluxExtentionMediator.loadInMemoryStores - resource stores",
+      inMemoryResouceStores
+    });
+    if (!inMemoryResouceStores) return stores;
+    for (const store of inMemoryResouceStores) {
+      const data = await extensionFlux({
+        method: FluxMethod.SELECT_MANY,
+        args: {
+          resource: store.id as Resource
+        }
+      });
+      if (data && Array.isArray(data) && store?.loader) {
+        logger.log({
+          at: "fluxExtentionMediator.loadInMemoryStores - loading resource store",
+          id: store.id,
+          data
+        });
+        store.loader(data);
+      }
+    }
+    return stores;
+  } catch (e) {
+    logger.error({
+      at: "fluxExtentionMediator.loadInMemoryStores",
+      error: e
+    });
+    return stores;
+  }
 }

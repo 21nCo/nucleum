@@ -4,6 +4,7 @@
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { InputStyle } from "$lib/client/types/input.type";
   import {
+    TableCellDefaultAction,
     TableCellType,
     type TableColumn
   } from "$lib/client/types/table.type";
@@ -18,7 +19,7 @@
   const dispatch = createEventDispatcher();
   export let columns: TableColumn[] = [];
   export let data: any = [];
-  export let actions: { action: "remove" | "reorder"; index: number }[] = [];
+  export let actions: { action: TableCellDefaultAction; index: number }[] = [];
   export let isStyled: boolean = false;
   export let addAction: string | undefined = undefined;
   export let id: string = "table";
@@ -33,19 +34,39 @@
     });
   }
   function resolveDefaultAction(action: string) {
-    if (action === "reorder") {
-      return {
-        key: "ph:dots-six-bold",
-        type: TableCellType.ACTION
-      };
-    } else if (action === "remove") {
-      return {
-        key: "cross",
-        type: TableCellType.ACTION,
-        action: (row: any) => {
-          data = data.filter((d) => d.id !== row.id);
-        }
-      };
+    switch (action) {
+      case TableCellDefaultAction.REORDER:
+        return {
+          key: "ph:dots-six-bold",
+          type: TableCellType.ACTION
+        };
+      case TableCellDefaultAction.REMOVE:
+        return {
+          key: "cross",
+          type: TableCellType.ACTION,
+          actionTooltip: {
+            body: "Remove"
+          },
+          action: (row: any) => {
+            data = data.filter((d) => d.id !== row.id);
+          }
+        };
+      case TableCellDefaultAction.SELECT_ROW:
+        return {
+          key: "ph:circle-light",
+          type: TableCellType.ACTION,
+          action: (row: any) => {
+            dispatch("select", row);
+          }
+        };
+      case TableCellDefaultAction.MULTI_SELECT_ROW:
+        return {
+          key: "check",
+          type: TableCellType.ACTION,
+          action: (row: any) => {
+            dispatch("multiSelect", row);
+          }
+        };
     }
   }
   function resolveWidth(column: TableColumn) {
@@ -135,13 +156,25 @@
           {:else if column.type === TableCellType.ACTION}
             <Button
               icon={column.key}
+              tooltip={column.actionTooltip?.body}
               on:click={() => resolveAction(column, row)}
             />
           {:else if column.type === TableCellType.CUSTOM && "component" in column}
+            {@const componentProps =
+              typeof column.componentProps === "function"
+                ? column.componentProps(row)
+                : column.componentProps}
             {#if typeof column.component === "string"}
-              <ComponentResolver path={column.component} params={{ row }} />
+              <ComponentResolver
+                path={column.component}
+                params={{ row, ...componentProps }}
+              />
             {:else}
-              <svelte:component this={column.component} {row} />
+              <svelte:component
+                this={column.component}
+                {row}
+                {...componentProps}
+              />
             {/if}
           {:else}
             <div>{row[column.key] ?? "NA"}</div>

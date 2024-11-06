@@ -13,7 +13,6 @@ import { Resource } from "$lib/client/components/flux/resourceStores/resource.en
 import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
 import { AlertType } from "$lib/client/types/notification.type";
 import { objIsEmpty, shallowDiff } from "$lib/shared/utils/obj.utils";
-import { replaceParams } from "$lib/client/persistence/surreal/surreal.utils";
 import { activeResourceFilter, debouncer } from "$lib/client/utils/utils";
 import { removeHighlight } from "./highlightV4";
 import {
@@ -35,7 +34,8 @@ import {
   type IKindleBook,
   type IKindleHighlight,
   type ITextClip,
-  type IVideoTimestampClip
+  type IVideoTimestampClip,
+  type INodePropertyValue
 } from "$lib/client/products/memotron/node/node.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import {
@@ -58,6 +58,11 @@ import {
 import { urlMap } from "$lib/client/products/memotron/common/urlMap";
 import { extensionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
 import { FluxMethod } from "$lib/client/components/flux/flux.type";
+import {
+  determineResourceType,
+  isSameResource,
+  resourceInList
+} from "$lib/client/components/flux/resourceStores/resource.utils";
 
 class WebpageStore extends ObservableStore<IWebpageStore> {
   previousValue: string = "";
@@ -80,6 +85,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       n.links = page?.links ?? [];
       n.notes = page?.notes ?? "";
       n.title = page?.label ?? window.document.title;
+      n.properties = page?.properties ?? [];
       return n;
     });
     appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
@@ -149,15 +155,16 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
   }
 
   /**
-  * when a tab is changed, this method is called to update the store with the new tab data.
-  * 
-  * @param tab
-  * @returns
-  */
+   * when a tab is changed, this method is called to update the store with the new tab data.
+   *
+   * @param tab
+   * @returns
+   */
   onContextChange(tab: chrome.tabs.Tab) {
     const url = resolveUrl(tab.url);
     const webpage = this.get();
     logger.debug({ at: "onContextChange", tab, url, webpage });
+    toolbarState.refresh();
     if (url === webpage.url) {
       relayToSidePanel({ event: ExtensionEvent.PAGE_STATE, data: this.get() });
       return;
@@ -218,7 +225,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
               isReturnUrl: true
             }
           }
-          })
+        });
         console.log({ at: "screenshotWebpage", result });
         return result;
       }
@@ -261,9 +268,15 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     logger.log({ at: "saveClip", response });
     const clipNode = response[0] as IWebScreenshotClip;
     if (!clipNode) return;
+    const clips = [...(this.get().clips ?? []), { ...clipNode, links: [] }];
     this.update((n) => {
-      n.clips = [...(n.clips ?? []), { ...clipNode, links: [] }];
+      n.clips = clips;
       return n;
+    });
+    appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
+    relayToSidePanel({
+      event: ClipperExtensionEvent.CLIPS_CHANGED,
+      data: clips
     });
     if (clip.contentType === NodeType.WEB_SCREENSHOT_CLIP) {
       feedbackPane.focus(clipNode, {
@@ -292,13 +305,17 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     isFromTweetPage: boolean = false
   ) {
     logger.debug({ at: "saveTweet", data });
-    const id = generateResourceId(Resource.node);
+    // const id = generateResourceId(Resource.node);
+    const tweetId = generateResourceId(Resource.node, {
+      prefix: NodeIdPrefix.TWEET,
+      id: data.username + "_" + data.metadata?.tweetId
+    });
     const twitterProfileId = generateResourceId(Resource.node, {
       prefix: NodeIdPrefix.TWITTER_PROFILE,
       id: data.username as string
     });
     const tweetNode: OmitForCaptureWithId<ITweet> = {
-      id,
+      id: tweetId,
       url: data.url,
       body: data.body,
       metadata: data.metadata,
@@ -320,7 +337,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
         ...twitterProfileNode,
         id: twitterProfileId,
         label: undefined,
-        creationContext: id
+        creationContext: tweetId
       }
     ]);
     if (!response || !Array.isArray(response)) return;
@@ -397,16 +414,16 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
 
   async linkClip(from: IRecordId, to: IRecordId) {
     const webpage = this.get();
-    const clip = webpage?.clips?.find((c) => c.id === from);
+    const clip = webpage?.clips?.find(resourceInList(from));
     if (!clip) return;
-    const isAlreadyLinked = clip.links?.some((l) => l === to);
+    const isAlreadyLinked = clip.links?.some(resourceInList(to));
     if (isAlreadyLinked)
       return { message: "Already linked", type: AlertType.ERROR };
     const response = await linker.link(from, to);
     if (!response) return { message: "Linking failed", type: AlertType.ERROR };
     this.update((n) => {
       n.clips = n.clips?.map((c) => {
-        if (c.id.toString() === from.toString()) {
+        if (isSameResource(c, from)) {
           c.links = [...(c.links ?? []), to];
         }
         return c;
@@ -414,6 +431,10 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       return n;
     });
     appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
+    const toType = determineResourceType(to);
+    if (toType === Resource.collection) {
+      return { message: "Added to collection!", type: AlertType.SUCCESS };
+    }
     return { message: "Linked!", type: AlertType.SUCCESS };
   }
 
@@ -444,6 +465,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       return n;
     });
     removeHighlight(id);
+    appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
     return { message: "Clip removed!", type: AlertType.SUCCESS };
   }
   /**
@@ -488,6 +510,58 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       const result = this._debouncedPersistNotes(id, notes);
       resolve(result);
     });
+  }
+
+  async updatePageProperty(property: INodePropertyValue) {
+    const webpage = this.get();
+    if (!webpage.id) return;
+    const properties = webpage.properties?.filter(
+      (x) => !isSameResource(x, property)
+    );
+    const newProperties = [...(properties ?? []), property];
+    await this.updateProperties(webpage.id, newProperties);
+    this.update((n) => {
+      n.properties = [...newProperties];
+      return n;
+    });
+  }
+
+  async updateClipProperty(id: IRecordId, property: INodePropertyValue) {
+    logger.debug({ at: "updateClipProperty", id, property });
+    const webpage = this.get();
+    if (!webpage.id) return;
+    const clip = webpage.clips?.find(resourceInList(id));
+    if (!clip) return;
+    const properties = clip.properties?.filter(
+      (x) => !isSameResource(x, property)
+    );
+    const newProperties = [...(properties ?? []), property];
+    await this.updateProperties(id, newProperties);
+    this.update((n) => {
+      n.clips = n.clips?.map((c) => {
+        if (isSameResource(c, id)) {
+          c.properties = [...newProperties];
+        }
+        return c;
+      });
+      return n;
+    });
+  }
+
+  private async updateProperties(
+    id: IRecordId,
+    properties: INodePropertyValue[]
+  ) {
+    return nodeStore.modify(
+      id,
+      {
+        properties: [...properties]
+      },
+      {
+        isDebounced: true,
+        debounceKey: "propertyUpdate" + id.toString()
+      }
+    );
   }
 }
 export const webpage = new WebpageStore();
@@ -555,6 +629,22 @@ class ClipperToolbarState extends KeyValueStore<
   ) {
     this.modify({ position });
   }
+
+  async refresh() {
+    const result = await extensionFlux({
+      method: FluxMethod.SELECT,
+      args: {
+        resourceId: "kv:" + Resource.clipperToolbarState
+      }
+    });
+    if (result && result.id) {
+      this.update((n) => {
+        n.isOpen = result.isOpen;
+        n.position = result.position;
+        return n;
+      });
+    }
+  }
 }
 
 export const toolbarState = new ClipperToolbarState();
@@ -590,7 +680,8 @@ class SyncStore extends ObservableStore<ISyncStore> {
   async save(items: OmitForCaptureWithId<IKindleBook | IKindleHighlight>[]) {
     logger.log({ at: "syncStore save", items });
     if (!items || items.length < 1) return;
-    const limitCount = 10;
+    // items = items.slice(0, 800);
+    const limitCount = 300;
     let response;
     this.update((n) => {
       n.progress = 0;

@@ -235,7 +235,8 @@ export function resolveContentTypeForUrl(url: string) {
  * @returns
  */
 function parseTweetContent(
-  tweetArticle: Element
+  tweetArticle: Element,
+  isMainTweetPost: boolean = false
 ): OmitFields<ITweet, "parent" | "label" | CaptureOmittedFields> | undefined {
   if (!tweetArticle) return;
   const tweetBody = tweetArticle.querySelector('[data-testid="tweetText"]');
@@ -266,8 +267,8 @@ function parseTweetContent(
   const domain = contentTypeMap.find(
     (item) => item.contentType === NodeType.TWEET
   )?.currentDomain;
-  const { username, authorName, tweetId, externalLinks, profileImageUrl } =
-    extractInfoFromLinks(tweetLinks);
+  const { username, authorName, tweetId, externalLinks, profileImageUrl, replyTo } =
+    extractInfoFromLinks(tweetLinks, isMainTweetPost);
   return {
     contentType: NodeType.TWEET,
     url: `https://${domain}/${username}/status/${tweetId}`,
@@ -278,7 +279,8 @@ function parseTweetContent(
     metadata: {
       tweetId,
       ogTitle,
-      externalLinks
+      externalLinks,
+      replyTo
     },
     username,
     profileUrl: `https://${domain}/${username}`,
@@ -286,16 +288,18 @@ function parseTweetContent(
     profileImageUrl
   };
 
-  function extractInfoFromLinks(data) {
+  function extractInfoFromLinks(data: any, isMainTweetPost: boolean = false) {
     let username = "";
     let authorName = "";
     let tweetId = "";
+    let replyTo = "";
     const currentUrl = window.location.pathname;
     const urlMatch = currentUrl.match(/\/(\w+)\/status\/(\d+)/);
-    if (urlMatch) {
+    if (urlMatch && isMainTweetPost) {
       username = urlMatch[1];
       tweetId = urlMatch[2];
     } else {
+      if (urlMatch) replyTo = window.location.href;
       const statusItem = data.find((item) => item.href.includes("/status/"));
       if (statusItem) {
         const match = statusItem.href.match(/\/(\w+)\/status\/(\d+)/);
@@ -334,18 +338,19 @@ function parseTweetContent(
       authorName,
       tweetId,
       externalLinks,
-      profileImageUrl
+      profileImageUrl,
+      replyTo
     };
   }
 }
 
-export function extractTweet(element) {
+export function extractTweet(element: Element, isMainTweetPost: boolean = false) {
   const tweetArticle = findAncestorOrSelf(
     element,
     'article[data-testid="tweet"]'
   );
   if (!tweetArticle) return;
-  return parseTweetContent(tweetArticle);
+  return parseTweetContent(tweetArticle, isMainTweetPost);
 
   function findAncestorOrSelf(element, selector) {
     if (element.matches(selector)) {
@@ -383,7 +388,7 @@ export function extractTweetFromTweeetPage() {
     regex.test(link.getAttribute("href"))
   );
   if (!tweetElement && !element) return;
-  return extractTweet(tweetElement ?? element);
+  return extractTweet(tweetElement ?? element, true);
 }
 
 /**

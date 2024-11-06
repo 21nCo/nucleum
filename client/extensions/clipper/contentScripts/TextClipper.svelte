@@ -162,10 +162,6 @@
       result.id,
       highlightClickCallback
     );
-    relayToSidePanel({
-      event: ClipperExtensionEvent.CLIPS_CHANGED,
-      data: $webpage.clips
-    });
     //selection.removeAllRanges();
 
     // Save the selected text and current URL to the database.

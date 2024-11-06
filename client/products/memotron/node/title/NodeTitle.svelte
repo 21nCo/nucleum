@@ -1,29 +1,36 @@
 <script lang="ts">
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import type { IActiveNodeStore } from "../node.store";
   import { cn } from "$lib/client/utils/ui.utils";
   import NodeAvatar from "../avatar/NodeAvatar.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import NodeTitleLabelPart from "./NodeTitleLabelPart.svelte";
-  import { NodeType, webNodeTypeList } from "../node.type";
+  import { NodeType, webNodeTypeList, type INode } from "../node.type";
   import Button from "$lib/client/elements/button/Button.svelte";
-  export let node: IActiveNodeStore;
+  import { createEventDispatcher } from "svelte";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  export let node: INode;
+  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
+  const dispatch = createEventDispatcher();
   function onLabelChange(e: any) {
-    if ($node.label) node.debouncedModify({ label: $node.label });
+    dispatch("labelChange", e.detail);
   }
-  $: isWebNode = webNodeTypeList.includes($node.contentType);
+  $: isWebNode = webNodeTypeList.includes(node.contentType);
 </script>
 
 <div class="flex items-center flex-1 min-w-0 max-w-fit gap-2">
-  {#if !$node.focusedBlock}
-    {#if !isWebNode || $node.contentType === NodeType.WEB_PAGE}
-      <NodeAvatar node={$node} size={Size.md} />
-    {/if}
-    {#if $node.isInEditMode && !isWebNode}
+  {#if !node.focusedBlock}
+    <!-- {#if !isWebNode || node.contentType === NodeType.WEB_PAGE}
+      <NodeAvatar
+        {node}
+        {accessPoint}
+        size={accessPoint === ResourceAccessPoint.SELF ? Size.md : Size.sm}
+      />
+    {/if} -->
+    {#if node.isInEditMode && !isWebNode}
       <TextInput
         size={Size.xl}
-        bind:value={$node.label}
+        bind:value={node.label}
         placeholder="Node title"
         width="w-full"
         on:input={onLabelChange}
@@ -32,16 +39,20 @@
         icon="ph:check-circle"
         size={Size.sm}
         on:click={() => {
-          $node.isInEditMode = false;
+          dispatch("editModeChange", false);
         }}
       />
     {:else}
-      <span class={cn("text-h4 font-medium text-start truncate")}>
+      <span class="text-start truncate">
         <!-- {$node.label ?? $node.body ?? ""} -->
-        <NodeTitleLabelPart item={$node} isNodePageContext={true} />
+        <NodeTitleLabelPart
+          item={node}
+          isNodePageContext={true}
+          {accessPoint}
+        />
       </span>
     {/if}
-    {#if $node.isStarred}
+    {#if node.isStarred}
       <Icon icon="star" class="fill-yellow-400" />
     {/if}
   {/if}

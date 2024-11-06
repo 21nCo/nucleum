@@ -50,9 +50,9 @@
       />
     </div>
     {#if $syncStore.status === SyncStatus.SYNCING}
-      <div class="w-full flex justify-center">
+      <div class="w-full flex justify-center text-fgs2 text-b3">
         {#if $syncStore.progress}
-          {$syncStore.progress}%
+          {Math.floor($syncStore.progress)}%
         {:else}
           Extracting...
         {/if}

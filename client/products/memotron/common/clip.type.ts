@@ -29,9 +29,9 @@ export enum ClipperExtensionEvent {
    */
   REFRESH_CLIPS_RENDERING = "REFRESH_CLIPS_RENDERING",
   /**
-   * Relayed from side panel to content script when any clip is mutated like editing notes, links or deleting etc.
+   * Relayed from side panel to content script when any clip is mutated like editing notes, links or deleting etc or webpage notes is mutated.
    */
-  CLIP_MUTATION = "CLIP_MUTATION",
+  MUTATION_RELAY = "MUTATION_RELAY",
   /**
    * Event to trigger syncing of highlights from sync pages.
    */

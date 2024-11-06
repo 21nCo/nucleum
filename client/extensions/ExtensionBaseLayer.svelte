@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import CacheLayer from "../layout/layers/CacheLayer.svelte";
   import { StoreDataType, type IStore } from "../types/data.type";
   import { resolveCurrentUserId, resolveToken } from "../utils/account.utils";
   import account from "../stores/account.store";
@@ -12,14 +11,17 @@
   import { logger } from "../components/debug/logger.client";
   import {
     extensionFlux,
-    initExtensionFlux
+    initExtensionFlux,
+    loadInMemoryResourceStore,
+    loadInMemoryStores
   } from "../components/flux/fluxExtentionMediator";
-  import { clientStorage } from "../persistence/persistence.utils";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  import { clientStorage, getDapId } from "../persistence/persistence.utils";
   import { FluxMethod } from "../components/flux/flux.type";
   import { createEventDispatcher } from "svelte";
   import { Resource } from "../components/flux/resourceStores/resource.enum";
   import { extractProduct } from "$lib/shared/utils/utils";
+  import { relayToSidePanel } from "../utils/extension.utils";
+  import { ExtensionEvent } from "../types/extension.type";
   const dispatch = createEventDispatcher();
   export let id: string;
   export let stores: IStore[] = [];
@@ -48,11 +50,7 @@
       },
       false
     );
-    let dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
-    if (!dapId) {
-      dapId = generateSimpleRandomId();
-      await clientStorage.set(ClientStorageKey.DAP_ID, dapId);
-    }
+    const dapId = await getDapId();
     const token = await resolveToken();
     if (!token) {
       dispatch("login", {
@@ -78,7 +76,7 @@
       //   new DexiePersistence(RemotePersistenceProvider.SURREAL),
       //   currentUserId
       // );
-      let dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
+      const dapId = await getDapId();
       const initResult = await initExtensionFlux(
         stores,
         PersistenceProvider.DEXIE_SURREAL,
@@ -92,8 +90,11 @@
         await extensionFlux({ method: FluxMethod.CLONE_DOWN });
       } else {
         await extensionFlux({ method: FluxMethod.SYNC_DOWN });
-        await loadInMemoryStores();
       }
+      await loadInMemoryStores(stores);
+      relayToSidePanel({
+        event: ExtensionEvent.BOOTUP
+      });
     } catch (e) {
       logger.error({
         at: "ExtensionBaseLayer.bootup",
@@ -102,7 +103,18 @@
     }
   }
 
-  async function loadInMemoryStores() {
+  export async function loadInMemoryStore(resource: Resource) {
+    logger.log({
+      at: "ExtensionBaseLayer.loadInMemoryResourceStore",
+      resource
+    });
+    if (!resource) return;
+    const store = stores.find((x) => x.id === resource);
+    if (!store || !store.isInMemory || !store.loader) return;
+    await loadInMemoryResourceStore(store);
+  }
+
+  async function loadInMemoryStoresv1() {
     try {
       let kvStores = stores.filter((x) => x.dataType === StoreDataType.KVO);
       logger.log({
@@ -129,6 +141,10 @@
         store.loader(record);
       });
       let inMemoryResouceStores = stores.filter((x) => x.isInMemory);
+      logger.log({
+        at: "loadInMemorystores - resource stores",
+        inMemoryResouceStores
+      });
       if (!inMemoryResouceStores) return;
       for (const store of inMemoryResouceStores) {
         const data = await extensionFlux({

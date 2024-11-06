@@ -28,7 +28,7 @@ const seedAppearance: AppearanceStore = {
   systemTheme: Theme.LIGHT,
   accessibilitySizingFactor: 1,
   typeface:
-    " Hanken Grotesk, Nunito, Avenir-, Teachers, Montserrat, Proxima Nova,  Poppins, Noto Sans ",
+    " Hanken Grotesk, Hanken Grotesk Variable, Nunito, Teachers, Montserrat, Proxima Nova,  Poppins, Noto Sans ",
   //BlinkMacSystemFont
   lightColorSchemeId: defaultLightColorSchemeId,
   darkColorSchemeId: defaultDarkColorSchemeId,
