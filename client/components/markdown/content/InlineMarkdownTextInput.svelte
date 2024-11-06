@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
   import {
+    type IBlock,
     type SpanContent,
     SpanType
   } from "$lib/client/components/markdown/md.type";
@@ -166,14 +167,14 @@
   export function replace(target: string, replacement: string) {
     innerHTML = innerHTML.replace(target, replacement);
   }
-  export function addMention(item: any, searchQuery: string) {
+  export function addMention(item: IBlock, searchQuery: string) {
     console.log("addMention - start", { item, content, innerHTML });
     content = content?.replace(
-      "@" + searchQuery,
-      `[${item.label}](resource=${item.id})`
+      "@" + (searchQuery ?? ""),
+      `[${item.label ?? item.text ?? "Unknown"}](resource=${item.id})`
     );
     innerHTML = innerHTML.replace(
-      "@" + searchQuery,
+      "@" + (searchQuery ?? ""),
       `<mention data-id='${item.id}'></mention>`
     );
     console.log("addMention - after adding placeholder", {

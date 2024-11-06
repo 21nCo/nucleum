@@ -18,7 +18,7 @@
   import NodeAvatar from "../avatar/NodeAvatar.svelte";
   import { fade, slide } from "svelte/transition";
   import CollectionsLane from "../floatingBar/CollectionsLane.svelte";
-  import { NodeRightPaneType, NodeView } from "../node.type";
+  import { headingNodeTypes, NodeRightPaneType, NodeView } from "../node.type";
   import NodePropertiesPane from "../rightPanel/NodePropertiesPane.svelte";
   import view from "$lib/client/stores/view.store";
   import NodeRightPaneContent from "../rightPanel/NodeRightPaneContent.svelte";
@@ -102,21 +102,21 @@
                 $node.accessMode !== ResourceAccessMode.FSPLIT
             })}
           >
-            {#if $node.mdParent && $node.mdParent.length > 0}
-              {#key $node.mdParent.map((x) => x.toString()).join(".")}
-                <header class="flex w-full px-12 py-4">
-                  <NodeTitleBreadcrumbs
-                    mdParent={$node.mdParent}
-                    currentLabel={$node.label}
-                    on:click={(e) => {
-                      node.eventStore.set({
-                        event: e.detail.event,
-                        id: e.detail.item.resourceId
-                      });
-                    }}
-                  />
-                </header>
-              {/key}
+            {#if headingNodeTypes.includes($node.contentType)}
+              <!-- {#key $node.mdParent.map((x) => x.toString()).join(".")} -->
+              <header class="flex w-full px-12 py-4">
+                <NodeTitleBreadcrumbs
+                  id={$node.id}
+                  currentLabel={$node.label}
+                  on:click={(e) => {
+                    node.eventStore.set({
+                      event: e.detail.event,
+                      id: e.detail.item.resourceId
+                    });
+                  }}
+                />
+              </header>
+              <!-- {/key} -->
             {/if}
             <main
               class="relative flex flex-col gap-6 mo:pr-0 pr-6 h-full w-full overflow-auto"

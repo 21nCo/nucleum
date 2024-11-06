@@ -62,7 +62,7 @@
   {:else if item.icon && typeof item.icon === "object"}
     <AvatarRenderer avatar={item.icon} {size} />
   {/if}
-  <div class="whitespace-nowrap">
+  <div class="whitespace-nowrap truncate">
     {item.label ?? enumToString(item.value)}
   </div>
 </button>

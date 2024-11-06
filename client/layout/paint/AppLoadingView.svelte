@@ -4,29 +4,8 @@
   import SubAtomLogo from "$lib/client/branding/SubAtomLogo.svelte";
   import PageLoadingAnimation from "$lib/client/elements/feedback/animations/PageLoadingAnimation.svelte";
   import context from "$lib/client/stores/context.store";
-  import { GlobalEvent } from "$lib/client/types/event.enum";
-  import { onMount } from "svelte";
   export let message: string | undefined = undefined;
   export let subMessage: string | undefined = undefined;
-
-  onMount(() => {
-    window.addEventListener(GlobalEvent.APP_LOADING_STATUS, handleStatusEvent);
-    return () => {
-      window.removeEventListener(
-        GlobalEvent.APP_LOADING_STATUS,
-        handleStatusEvent
-      );
-    };
-  });
-
-  function handleStatusEvent(event: any) {
-    if (event.detail.message) {
-      message = event.detail.message;
-    }
-    if (event.detail.subMessage) {
-      subMessage = event.detail.subMessage;
-    }
-  }
 </script>
 
 <div

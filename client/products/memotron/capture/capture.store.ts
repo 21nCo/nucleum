@@ -53,6 +53,8 @@ import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
 import { TacoActions } from "$lib/client/types/taco.types";
 import { Persistence } from "$lib/client/persistence/persistence";
 import view from "$lib/client/stores/view.store";
+import context from "$lib/client/stores/context.store";
+import { Embed } from "$lib/client/types/context.type";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
@@ -429,7 +431,9 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
   async saveMarkdownCapture() {
     const val = this.get();
     //TODO - extract nodes from markdown blocks and save
-    const metadata = await resolveNodeCaptureMetadata();
+    const ctx = get(context);
+    let metadata =
+      ctx.embed === Embed.HANDSET ? {} : await resolveNodeCaptureMetadata();
     logger.log({ at: "CaptureStore.saveMarkdownCapture", val, metadata });
     // const id = prefixTable(generateRandomId(), Resource.node);
     const id = val.nodeId ?? generateResourceId(Resource.node);
@@ -472,29 +476,40 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
           val.rootStructure.includes(b.id)
         );
         mdText = generateMarkdownText(rootBlocks);
-        if (get(userPreferences).localAI.semanticSearch) {
-          tacoWorker.postMessage({
-            action: TacoActions.GET_EMBEDDINGS,
-            params: {
-              text: mdText
-            }
-          });
-          const embedding = await new Promise((resolve, reject) => {
-            tacoWorker.onmessage = (e) => {
-              resolve(e.data);
-            };
-          });
-          vectorInsertionresult = await vectorResourceStore.create({
-            id: generateResourceId(Resource.vector),
-            embedding: embedding,
-            node: id
-          });
+
+        if (
+          get(userPreferences).localAI.semanticSearch &&
+          ctx.embed !== Embed.HANDSET
+        ) {
+          try {
+            tacoWorker.postMessage({
+              action: TacoActions.GET_EMBEDDINGS,
+              params: {
+                text: mdText
+              }
+            });
+            const embedding = await new Promise((resolve, reject) => {
+              tacoWorker.onmessage = (e) => {
+                resolve(e.data);
+              };
+            });
+            vectorInsertionresult = await vectorResourceStore.create({
+              id: generateResourceId(Resource.vector),
+              embedding: embedding,
+              node: id
+            });
+          } catch (e) {
+            logger.error({
+              at: "CaptureStore.saveMarkdownCapture - vector generation error",
+              error: e
+            });
+          }
         }
       }
       root = {
         ...root,
         children: val.rootStructure,
-        mdText,
+        text: mdText,
         vector: vectorInsertionresult?.[0]?.id
       };
 
@@ -510,30 +525,41 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
             block.children?.includes(b.id)
           );
           mdText = generateMarkdownText(childrenNodes);
-          if (get(userPreferences).localAI.semanticSearch) {
-            tacoWorker.postMessage({
-              action: TacoActions.GET_EMBEDDINGS,
-              params: {
-                text: mdText
-              }
-            });
-            const embedding = await new Promise((resolve, reject) => {
-              tacoWorker.onmessage = (e) => {
-                resolve(e.data);
-              };
-            });
-            vectorInsertionresult = await vectorResourceStore.create({
-              id: generateResourceId(Resource.vector),
-              embedding: embedding,
-              node: block.id
-            });
+
+          if (
+            get(userPreferences).localAI.semanticSearch &&
+            ctx.embed !== Embed.HANDSET
+          ) {
+            try {
+              tacoWorker.postMessage({
+                action: TacoActions.GET_EMBEDDINGS,
+                params: {
+                  text: mdText
+                }
+              });
+              const embedding = await new Promise((resolve, reject) => {
+                tacoWorker.onmessage = (e) => {
+                  resolve(e.data);
+                };
+              });
+              vectorInsertionresult = await vectorResourceStore.create({
+                id: generateResourceId(Resource.vector),
+                embedding: embedding,
+                node: block.id
+              });
+            } catch (e) {
+              logger.error({
+                at: "CaptureStore.saveMarkdownCapture - vector generation error",
+                error: e
+              });
+            }
           }
         }
         remainingResources.push({
           id: block.id,
           contentType: correspondingContent?.contentType,
           body: correspondingContent?.body,
-          mdText,
+          text: mdText,
           vector:
             vectorInsertionresult?.length > 0
               ? vectorInsertionresult[0]?.id

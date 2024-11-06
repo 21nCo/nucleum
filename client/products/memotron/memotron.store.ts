@@ -93,7 +93,7 @@ export class SearchStore {
                 "node.isArchived as isArchived",
                 "node.isStarred as isStarred",
                 "node.label as label",
-                "node.mdText as mdText",
+                "node.text as text",
                 "node.metadata as metadata",
                 "node.modifiedAt as modifiedAt",
                 "node.modifiedBy as modifiedBy",
@@ -131,7 +131,7 @@ export class SearchStore {
         search: isValidString(this.searchQuery)
           ? {
               query: this.searchQuery,
-              properties: ["label", "mdText"]
+              properties: ["label", "text"]
             }
           : undefined,
         orderBy: this.orderBy ?? {
@@ -257,10 +257,11 @@ export class SearchStore {
         },
         search: isValidString(query)
           ? {
-              properties: ["label"],
+              properties: ["label", "text"],
               query
             }
-          : undefined
+          : undefined,
+        limit: isValidString(query) ? 200 : 50
       });
     }
     let collections = [];
@@ -353,8 +354,13 @@ export class SearchStore {
     return result;
   }
 
-  async recents(resource?: Resource) {
+  async recents(
+    resource?: Resource,
+    params?: { limit?: number; offset?: number }
+  ) {
     this.resource = resource ?? this.resource;
+    this.limit = params?.limit ?? this.limit;
+    this.offset = params?.offset ?? this.offset;
     let data: any[] = [];
     if (this.resource === Resource.everything) {
       const nodes = await this.recentNodes();
@@ -368,18 +374,18 @@ export class SearchStore {
     return data;
   }
 
-  async resolveCount(resource: Resource) {
+  async resolveCount(resource: Resource, subType?: NodeType | CollectionType) {
     if (resource === Resource.node) {
       const result = await flux.selectMany(resource, {
         properties: ["count()"],
         filters: {
-          contentType: rootNodeTypeList,
+          contentType: subType ? [subType] : [...rootNodeTypeList],
           creationContext: false,
           ...activeResourceFilterV2
         },
         groupBy: ["all"]
       });
-      return result?.[0].count;
+      return result?.[0]?.count;
     } else if (
       resource === Resource.collection ||
       resource === Resource.combination ||
@@ -388,11 +394,12 @@ export class SearchStore {
       const result = await flux.selectMany(resource, {
         properties: ["count()"],
         filters: {
+          type: subType ? [subType] : undefined,
           ...activeResourceFilterV2
         },
         groupBy: ["all"]
       });
-      return result?.[0].count;
+      return result?.[0]?.count;
     }
   }
 }

@@ -34,6 +34,8 @@ import { LogType } from "$lib/client/components/debug/debug.type";
 import { compareVersions } from "$lib/shared/utils/utils";
 import { TacoActions } from "$lib/client/types/taco.types";
 import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
+import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
+import { GlobalEvent } from "$lib/client/types/event.enum";
 
 const loadSurrealDB = async () => {
   const Surreal = await import("@surrealdb/wasm");
@@ -210,15 +212,29 @@ export class SurrealPersistence implements IPersistence {
    * Updates the database with dbo definitions.
    */
   async updateDbo(params?: IPersistenceInitParams) {
-    logger.log({ at: "surreal.persistence.updateDbo" });
-    await this.awaiter();
-    const dependencies = params?.dbo;
-    if (!dependencies) return;
-    const query = resolveDboUpdateQuery(dependencies);
-    const result = await this.instance?.query(query);
-    logger.log({ at: "surreal.persistence.updateDbo", query, result });
-    this.isProcessingOperation = false;
-    return result;
+    logger.debug({ at: "surreal.persistence.updateDbo" });
+    try {
+      await this.awaiter();
+      dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
+        message: `Updating the app. This might take a while.`,
+        subMessage: ""
+      });
+      const dependencies = params?.dbo;
+      if (!dependencies) return;
+      const query = resolveDboUpdateQuery(dependencies);
+      const result = await this.instance?.query(query);
+      logger.debug({ at: "surreal.persistence.updateDbo", query, result });
+      return result;
+    } catch (e) {
+      logger.error({ at: "surreal.persistence.updateDbo", e });
+    } finally {
+      dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
+        message: "Update completed.",
+        subMessage: "",
+        isFinished: true
+      });
+      this.isProcessingOperation = false;
+    }
   }
 
   /**

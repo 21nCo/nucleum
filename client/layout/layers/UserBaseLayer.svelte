@@ -41,6 +41,8 @@
   import { SurrealPersistence } from "$lib/client/persistence/surreal/surreal.local";
   import { Embed } from "$lib/client/types/context.type";
   import posthog from "posthog-js";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
 
   const loadingMessages = {
     cloneUp: {
@@ -62,6 +64,7 @@
   } = {
     message: ""
   };
+  let isAppLoading = false;
   let error: string | null = null;
   let dev_isDisableSyncOnAppear = false;
 
@@ -72,6 +75,7 @@
       });
     addWindowEventListeners();
     await initializeUser();
+    dispatch("ready");
     $appLoadingState.isBaseLoaded = true;
   });
   /**
@@ -216,7 +220,7 @@
             await flux.cloneDown();
           } else {
             loadingMessage = loadingMessages.syncDown;
-            await flux.syncDown();
+            await flux.syncDown(true);
             await flux.loadInMemoryStores();
           }
         }
@@ -279,16 +283,43 @@
     userPreferences.setAppearance(event.detail);
   }
 
+  function handleAppLoadingStatus(event: any) {
+    logger.log({ at: "handleAppLoadingStatus", event });
+    const detail = event.detail;
+    if (detail.message || detail.subMessage) {
+      isAppLoading = true;
+    }
+    if (detail.isFinished) {
+      setTimeout(() => {
+        isAppLoading = false;
+      }, 500);
+    }
+    if (detail.message !== undefined) {
+      loadingMessage.message = detail.message;
+    }
+    if (detail.subMessage !== undefined) {
+      loadingMessage.subMessage = detail.subMessage;
+    }
+  }
+
   function addWindowEventListeners() {
     window.addEventListener(
       GlobalEvent.PERSIST_APPEARANCE_USER,
       handlePersistAppearance
+    );
+    window.addEventListener(
+      GlobalEvent.APP_LOADING_STATUS,
+      handleAppLoadingStatus
     );
   }
   function removeWindowEventListeners() {
     window.removeEventListener(
       GlobalEvent.PERSIST_APPEARANCE_USER,
       handlePersistAppearance
+    );
+    window.removeEventListener(
+      GlobalEvent.APP_LOADING_STATUS,
+      handleAppLoadingStatus
     );
   }
   function handleBeforeUnload(event: any) {
@@ -318,7 +349,7 @@
   <AnalyticsLayer />
 {/if}
 <div class="flex h-screen w-screen">
-  {#if !$appLoadingState.isBaseLoaded || !$appLoadingState.isLocalLoaded}
+  {#if !$appLoadingState.isBaseLoaded || !$appLoadingState.isLocalLoaded || isAppLoading}
     <AppLoadingView
       message={loadingMessage.message}
       subMessage={loadingMessage.subMessage}

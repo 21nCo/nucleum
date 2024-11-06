@@ -75,6 +75,11 @@ type INodeInterface<
    * Calculated avatar from linked type collections
    */
   avatar?: IAvatar[];
+  /**
+   * @deprecated - use {@link text} instead
+   */
+  mdText?: string;
+  text?: string;
 };
 
 export type ILink = IMemotronItemBase & {
@@ -393,6 +398,10 @@ type INodeHasParent = {
   parent: IRecordId;
 };
 
+type INodeHasText = {
+  text: string;
+};
+
 // ===== Media node types =====
 
 export const mediaNodeTypeList = [
@@ -619,7 +628,8 @@ export type ITweet = INodeInterface<
   ITweetMetadata
 > &
   INodeHasUrl &
-  INodeHasParent;
+  INodeHasParent &
+  INodeHasText;
 
 export type ITwitterProfileBody = {
   name: string;
@@ -664,7 +674,9 @@ export type IKindleHighlight = INodeInterface<
   NodeType.KINDLE_HIGHLIGHT,
   IKindleHighlightBody,
   IWebPageMetadata
->;
+> &
+  INodeHasParent &
+  INodeHasText;
 
 export type IClip =
   | ITweet

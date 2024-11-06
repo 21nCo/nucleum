@@ -19,14 +19,15 @@
   class={cn("flex w-full rounded-md gap-4 p-4 text-b2", {
     "bg-bgs2": type === InfoTextType.INFO,
     "bg-ars2 text-ars1": type === InfoTextType.ERROR,
-    "bg-ass2": type === InfoTextType.WARNING
+    "bg-ass1 dark:bg-ass2 text-bgs1": type === InfoTextType.WARNING
   })}
 >
   <Icon
     icon={type === InfoTextType.ERROR ? "help" : `ph:${type}-light`}
     class={cn({
       "stroke-ars1": type === InfoTextType.ERROR,
-      "stroke-fgs1": type === InfoTextType.INFO
+      "stroke-fgs1": type === InfoTextType.INFO,
+      "stroke-bgs1": type === InfoTextType.WARNING
     })}
   />
   <div class="flex flex-col items-start gap-2">

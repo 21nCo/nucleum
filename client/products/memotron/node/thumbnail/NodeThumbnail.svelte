@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Arrangement } from "$lib/client/types/direction.enum";
   import {
+    headingNodeTypes,
     type INodeThumb,
     NodeType
   } from "$lib/client/products/memotron/node/node.type";
@@ -91,7 +92,7 @@
         })}
         on:click
       >
-        {#if item.contentType !== NodeType.NODULAR_MARKDOWN && !isHidePreview}
+        {#if item.contentType !== NodeType.NODULAR_MARKDOWN && !headingNodeTypes.includes(item.contentType) && !isHidePreview}
           <div
             class={cn(
               "h-20",
@@ -134,19 +135,18 @@
               </span>
             {:else}
               <div
-                class={cn(
-                  "h-full text-wrap text-left text-fgs3 text-b2 overflow-clip",
-                  {
-                    "p-2": accessPoint !== ResourceAccessPoint.NODE_LINKS
-                  }
-                )}
+                class={cn("h-full text-wrap text-left text-b3 overflow-clip", {
+                  "p-2": accessPoint !== ResourceAccessPoint.NODE_LINKS
+                })}
               >
                 {#if item.contentType === NodeType.TWEET && contentPreview}
                   <NodeThumbnailTweetPreview text={contentPreview} />
                 {:else if isClip && contentPreview}
-                  <TextClipPreview node={item} {contentPreview} />
+                  <TextClipPreview node={item} {contentPreview} {accessPoint} />
                 {:else if contentPreview}
-                  {contentPreview}
+                  <span class="text-fgs3">
+                    {contentPreview}
+                  </span>
                 {/if}
               </div>
             {/if}
@@ -205,13 +205,15 @@
           {:else if item.contentType === NodeType.PDF && _url}
             <NodeThumbnailPdfPreview url={_url} />
           {:else}
-            <div class="h-full overflow-clip text-fgs3 text-b2">
+            <div class="h-full overflow-clip text-b2">
               {#if isClip && contentPreview}
-                <TextClipPreview node={item} {contentPreview} />
+                <TextClipPreview node={item} {contentPreview} {accessPoint} />
               {:else if item.contentType === NodeType.AUDIO && _url}
                 <NodeThumbnailAudioPreview url={_url} />
               {:else if contentPreview}
-                {contentPreview}
+                <span class="text-fgs3">
+                  {contentPreview}
+                </span>
               {/if}
             </div>
           {/if}

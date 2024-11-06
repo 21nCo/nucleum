@@ -34,9 +34,9 @@
   export let context: AvatarPickerContext = AvatarPickerContext.DEFAULT;
   export let avatarClickCallback: (
     avatar: IAvatar | CustomUploadedAvatar
-  ) => void;
-  export let deleteCallback: () => void;
-  export let closeCallback: () => void;
+  ) => void = () => {};
+  export let deleteCallback: () => void = () => {};
+  export let closeCallback: () => void = () => {};
 
   $: isExpanded =
     (context === AvatarPickerContext.DEFAULT ||

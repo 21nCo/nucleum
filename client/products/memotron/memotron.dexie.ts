@@ -1,5 +1,8 @@
 import type { Table } from "dexie";
-import type { INode, INodeLink } from "$lib/client/products/memotron/node/node.type";
+import type {
+  INode,
+  INodeLink
+} from "$lib/client/products/memotron/node/node.type";
 import { AppDexie } from "$lib/client/persistence/dexie";
 import type {
   ICollection,
@@ -22,7 +25,7 @@ export class MemotronDexie extends AppDexie {
     super(scope);
     this.version(this.dbVersion)
       .stores({
-        node: "id, title, children, contentType, createdAt, modifiedAt, interactedAt",
+        node: "id, title, children, contentType, createdAt, modifiedAt, interactedAt, text",
         collection:
           "id, type, label, isStarred, isCaptureShortcutEnabled, createdAt, modifiedAt, interactedAt",
         property: "id, label, createdAt, modifiedAt, interactedAt",

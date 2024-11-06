@@ -69,6 +69,17 @@
           <Text content="Clips" style={TextStyle.SECTION_HEADING} />
           <Badge text={$node.clips?.length || 0} />
         </span>
+        {#if $node.clips?.length > 3}
+          <span>
+            <Button
+              size={Size.sm}
+              label="View all clips"
+              isUnderlined={true}
+              style={ButtonStyle.PLAIN}
+              on:click={() => (pane = NodeRightPaneType.TRACES)}
+            />
+          </span>
+        {/if}
       </span>
       <div class="flex flex-col w-full gap-4 overflow-auto">
         <Resources
@@ -85,17 +96,6 @@
             });
           }}
         />
-        {#if $node.clips?.length > 3}
-          <span class="w-full flex justify-center">
-            <Button
-              size={Size.sm}
-              label={`View all (${$node.clips?.length})`}
-              isUnderlined={true}
-              style={ButtonStyle.PLAIN}
-              on:click={() => (pane = NodeRightPaneType.TRACES)}
-            />
-          </span>
-        {/if}
       </div>
     </div>
   {:else}
@@ -108,6 +108,15 @@
         <span class="flex flex-row gap-1 items-center">
           <Text content="Links" style={TextStyle.SECTION_HEADING} />
           <Badge text={$node.links?.length || 0} />
+        </span>
+        <span>
+          <Button
+            size={Size.sm}
+            label="See all links"
+            isUnderlined={true}
+            style={ButtonStyle.PLAIN}
+            on:click={() => (pane = NodeRightPaneType.LINKS)}
+          />
         </span>
       </span>
       <div class="w-full min-h-32 flex flex-col gap-3 overflow-auto">
@@ -125,15 +134,6 @@
             No links found
           </span>
         {/if}
-        <span class="w-full flex justify-center">
-          <Button
-            size={Size.sm}
-            label="Go to links"
-            isUnderlined={true}
-            style={ButtonStyle.PLAIN}
-            on:click={() => (pane = NodeRightPaneType.LINKS)}
-          />
-        </span>
       </div>
     </div>
   {/if}

@@ -41,6 +41,8 @@ export function resolveContentPreview(node: INode) {
     return body.text;
   } else if (node.mdText && typeof node.mdText === "string") {
     return node.mdText;
+  } else if (node.text && typeof node.text === "string") {
+    return node.text;
   } else if (contentType === NodeType.KINDLE_HIGHLIGHT && "text" in body) {
     return body.text;
   }
@@ -247,12 +249,12 @@ export function resolveNodeLabel(item: INodeThumb) {
       };
     case NodeType.TWEET:
       parent = parent as ITwitterProfile;
-      const twitterProfileLabel = isValidString(parent.body.name)
+      const twitterProfileLabel = isValidString(parent?.body?.name)
         ? parent.body.name
         : "Unknown";
       return {
         label: "Tweet by ",
-        parent: { id: parent.id, label: twitterProfileLabel },
+        parent: { id: parent?.id, label: twitterProfileLabel },
         text: item.body?.content
       };
     case NodeType.TWITTER_PROFILE:

@@ -108,8 +108,8 @@
 
   $: isConstrainedWidth =
     $view.isConstrainedWidth ||
-    $collection.accessMode === ResourceAccessMode.SPLIT ||
-    $collection.accessMode === ResourceAccessMode.FSPLIT;
+    $collection?.accessMode === ResourceAccessMode.SPLIT ||
+    $collection?.accessMode === ResourceAccessMode.FSPLIT;
 
   $: coverPlacement =
     $collection?.coverLayout?.placement === Placement.Top ||
@@ -523,8 +523,7 @@
               bind:value={searchQuery}
               style={InputStyle.BORDERED}
               size={Size.sm}
-              icon="ph:magnifying-glass"
-              placeholder={`Search this collection [Total items: ${$collection.totalNodeCount ?? 0}]`}
+              placeholder={`Search this collection (${$collection.totalNodeCount ?? 0} items)`}
               on:input={onSearch}
               isShowClearControl={searchQuery.length > 0}
               on:cancel={() => {

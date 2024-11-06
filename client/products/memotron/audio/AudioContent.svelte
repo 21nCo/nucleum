@@ -36,6 +36,8 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import context from "$lib/client/stores/context.store";
+  import { Embed } from "$lib/client/types/context.type";
 
   export let body: any = {};
   export let url: string;
@@ -150,10 +152,11 @@
     if (!transcript || typeof transcript !== "string") return;
     label = body?.initTranscription == false ? "Retranscribe" : "Transcribe";
     $userPreferences.lastUsedTranscriptionModel = model;
+    //  TODO - re enable md transcription after fixing the audio to md to use new block schema
     const mdBlocks = Audio2MD.convertAudioToMarkdown(transcript);
-    const resp = await nodeStore.modify(nodeId, {
-      body: { mdBlocks }
-    });
+    // const resp = await nodeStore.modify(nodeId, {
+    //   body: { mdBlocks }
+    // });
     dispatch("refresh");
   }
   /**
@@ -265,7 +268,8 @@
           />
         {/if}
       {/if}
-      {#if $userPreferences.localAI.audioTranscription && accessPoint === ResourceAccessPoint.SELF}
+      <!-- TODO - reenable transcription after iOS crash issue fix -->
+      {#if $userPreferences.localAI.audioTranscription && accessPoint === ResourceAccessPoint.SELF && $context.embed !== Embed.HANDSET}
         <Button
           on:click={convertToMarkdown}
           {isDisabled}
@@ -275,7 +279,7 @@
       {/if}
     </div>
   </div>
-  {#if accessPoint === ResourceAccessPoint.SELF}
+  {#if accessPoint === ResourceAccessPoint.SELF && $context.embed !== Embed.HANDSET}
     <div
       class="flex flex-col w-full flex-1 items-center gap-6 border border-brs2 rounded-md bg-bgs2 bg-opacity-30 py-4"
     >

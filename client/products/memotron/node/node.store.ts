@@ -52,6 +52,7 @@ import { TacoActions } from "$lib/client/types/taco.types";
 import context from "$lib/client/stores/context.store";
 import type { ICollectionExpanded } from "../collection/collection.type";
 import type { IAvatar } from "$lib/client/types/avatar.type";
+import { Embed } from "$lib/client/types/context.type";
 
 export const hierarchyFactorLimit = 5;
 
@@ -186,28 +187,38 @@ export class ActiveNodeStore extends ActiveResourceStore<
       //     embedding: embedding
       //   }
       // );
-      if (get(userPreferences).localAI.semanticSearch) {
-        tacoWorker.postMessage({
-          action: TacoActions.GET_EMBEDDINGS,
-          params: {
-            text: mdText
-          }
+      try {
+        if (
+          get(userPreferences).localAI.semanticSearch &&
+          get(context).embed !== Embed.HANDSET
+        ) {
+          tacoWorker.postMessage({
+            action: TacoActions.GET_EMBEDDINGS,
+            params: {
+              text: mdText
+            }
+          });
+          const embedding = await new Promise((resolve, reject) => {
+            tacoWorker.onmessage = (e) => {
+              resolve(e.data);
+            };
+          });
+          let params = { filters: { node: node.id.toString() } };
+          let vectorResult = await vectorResourceStore.selectMany(params);
+          const vectorUpdateresult = await vectorResourceStore.modify(
+            vectorResult?.[0]?.id,
+            {
+              embedding: embedding
+            }
+          );
+        }
+      } catch (e) {
+        logger.error({
+          at: "ActiveNodeStore.updateBlockPropagator - vector generation error",
+          error: e
         });
-        const embedding = await new Promise((resolve, reject) => {
-          tacoWorker.onmessage = (e) => {
-            resolve(e.data);
-          };
-        });
-        let params = { filters: { node: node.id.toString() } };
-        let vectorResult = await vectorResourceStore.selectMany(params);
-        const vectorUpdateresult = await vectorResourceStore.modify(
-          vectorResult?.[0].id,
-          {
-            embedding: embedding
-          }
-        );
       }
-      return this.resourceStore.modify(id, { ...changedProps, mdText });
+      return this.resourceStore.modify(id, { ...changedProps, text: mdText });
     }
     this.resourceStore.modify(id, changedProps);
   };

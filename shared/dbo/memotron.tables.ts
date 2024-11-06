@@ -35,6 +35,7 @@ DEFINE FIELD IF NOT EXISTS notes on TABLE node FLEXIBLE TYPE option<object | str
 DEFINE FIELD IF NOT EXISTS mdText on TABLE node FLEXIBLE TYPE option<string>;
 DEFINE FIELD IF NOT EXISTS vector on TABLE node TYPE option<record<vector> | null>;
 DEFINE FIELD OVERWRITE avatar on TABLE node FLEXIBLE TYPE option<array | object | string>;
+DEFINE FIELD IF NOT EXISTS text on TABLE node TYPE option<string>;
 `;
   return [def];
 }
@@ -64,8 +65,9 @@ DEFINE INDEX IF NOT EXISTS nodeSemanticSearchIndex ON TABLE vector FIELDS embedd
 function nodeIndices() {
   const body = `DEFINE INDEX IF NOT EXISTS nodetextSearchIndex ON TABLE node COLUMNS mdText SEARCH ANALYZER ascii HIGHLIGHTS;`;
   const label = `DEFINE INDEX IF NOT EXISTS nodetextSearchIndexLabel ON TABLE node COLUMNS label SEARCH ANALYZER ascii HIGHLIGHTS;`;
+  const text = `DEFINE INDEX IF NOT EXISTS nodetextSearchIndexTwo ON TABLE node COLUMNS text SEARCH ANALYZER ascii HIGHLIGHTS;`;
   // const def2 = `DEFINE INDEX nodeSemanticSearchIndex ON TABLE vector FIELDS vector MTREE DIMENSION 768 DIST COSINE TYPE F32;`;
-  return [body, label]; //, def2];
+  return [body, label, text]; //, def2];
 }
 
 function nodesByTime() {

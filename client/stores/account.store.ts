@@ -173,7 +173,9 @@ class AccountStore extends ObservableStore<
     await performApiCall("account/n/deleteAccount", "POST", {});
     console.log("deleting account", { acc });
     await this.signOut();
-    appStore.gotoPath("/signup?msg=deleted");
+    await flux.clear();
+    window.location.reload();
+    // appStore.gotoPath("/signup?msg=deleted");
     return true;
   }
 

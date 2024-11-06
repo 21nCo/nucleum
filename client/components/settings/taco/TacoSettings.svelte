@@ -139,7 +139,11 @@
       }}
     />
     {#if isDisabled}
-      <ProgressBar {progress} size={Size.lg} {label} />
+      <span class="text-fgs3 text-b2">
+        Please wait... Download in progress...
+      </span>
+      <!-- TODO - reenable after making it smooth with flickering effect -->
+      <!-- <ProgressBar {progress} size={Size.lg} {label} /> -->
     {/if}
   </div>
   <footer class="flex flex-col items-center gap-4 pb-8 mo:pb-20">
@@ -161,7 +165,7 @@
       </div>
     {:else}
       <InlineInfoBanner
-        content="Please do not close this popup while the model is in progress."
+        content="Please do not close this popup while the model download is in progress."
         type={InfoTextType.WARNING}
       />
     {/if}

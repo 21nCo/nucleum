@@ -30,9 +30,7 @@
     resolveDynamicParams: (isFirstAndEmpty?: boolean) => {
       return {
         placeholder:
-          isFirstAndEmpty || isEmptyState
-            ? "Start typing or paste from clipboard..."
-            : undefined
+          isFirstAndEmpty || isEmptyState ? "Start typing..." : undefined
       };
     },
     publish: handleEvent

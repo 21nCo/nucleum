@@ -9,7 +9,6 @@
   import { truncateString } from "$lib/shared/utils/text.utils";
   export let node: INode;
   export let contentPreview: string;
-  export let isNodePageContext: boolean = false;
   export let truncateLength: number | undefined = undefined;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   let textHightlightColor = resolveTextHighlightColor(node);
@@ -44,7 +43,7 @@
 
 <div
   class={cn("rounded-md text-wrap", {
-    "m-4 p-4 bg-bgs2": isNodePageContext
+    "m-4 p-4 bg-bgs2": accessPoint === ResourceAccessPoint.SELF
   })}
 >
   <span

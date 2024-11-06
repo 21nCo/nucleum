@@ -18,6 +18,8 @@
   export let shortcutTrigger: string | undefined = undefined;
   export let emptyStateLabel: string = "No results found";
   export let isPreventDefaultResults: boolean = false;
+  export let isInlineContext: boolean = false;
+  export let isAlwaysShowSearchFeedback: boolean = false;
   let value: string;
   type SearchItem = Partial<IResource & Record<string, unknown>>;
   let results: SearchItem[] = [];
@@ -32,8 +34,8 @@
   }
   const dispatch = createEventDispatcher();
 
-  function onSearchResultSelection(item: SearchItem) {
-    dispatch("select", { item });
+  function onSearchResultSelection(item: SearchItem, e?: MouseEvent) {
+    dispatch("select", { item, event: e });
     hide();
   }
   function resetSearch() {
@@ -41,6 +43,23 @@
     selectedIndex = 0;
     hide();
   }
+
+  export function keydown(event: any) {
+    if (event.key === "ArrowDown") {
+      selectedIndex = Math.min(selectedIndex + 1);
+      if (selectedIndex === results?.length) {
+        selectedIndex = 0;
+      }
+      event.preventDefault();
+    } else if (event.key === "ArrowUp") {
+      selectedIndex = Math.max(selectedIndex - 1, -1);
+      if (selectedIndex === -1) {
+        selectedIndex = results?.length;
+      }
+      event.preventDefault();
+    }
+  }
+
   export function keyup(event: any) {
     value =
       (event.target as HTMLInputElement).value ??
@@ -53,16 +72,6 @@
       resetSearch();
       // inputRef.blur();
       dispatch("blur");
-    } else if (event.key === "ArrowDown") {
-      selectedIndex = Math.min(selectedIndex + 1);
-      if (selectedIndex === results?.length) {
-        selectedIndex = 0;
-      }
-    } else if (event.key === "ArrowUp") {
-      selectedIndex = Math.max(selectedIndex - 1, -1);
-      if (selectedIndex === -1) {
-        selectedIndex = results?.length;
-      }
     } else if (event.key === "Backspace") {
       previousValue = currentValue;
       currentValue = value;
@@ -82,7 +91,7 @@
         //save();
         dispatch("empty-enter", value);
       }
-    } else {
+    } else if (event.key !== "ArrowDown" && event.key !== "ArrowUp") {
       currentValue = value;
       debouncedSearch();
     }
@@ -131,16 +140,23 @@
   }
 </script>
 
-<div class={cn("flex flex-col justify-between max-h-60 h-60 w-full")}>
+<div
+  class={cn("flex flex-col justify-between  w-full", {
+    "max-h-60 h-60": !isInlineContext,
+    "h-full": isInlineContext
+  })}
+>
   <div class="flex flex-col flex-grow items-center w-full">
-    {#if results && results.length > 0}
+    {#if isAlwaysShowSearchFeedback && isSearchInProgress}
+      Searching...
+    {:else if results && results.length > 0}
       {#each results as item, index ((item.id ?? "") + item.value)}
         <SearchResultItem
           label={item.label ??
             ("name" in item && typeof item.name == "string" ? item.name : "")}
           isActive={selectedIndex === index}
-          on:click={() => {
-            onSearchResultSelection(item);
+          on:click={(e) => {
+            onSearchResultSelection(item, e);
           }}
         >
           {#if searchResultComponent}
@@ -169,7 +185,9 @@
       </div>
     {/if}
   </div>
-  <div class="w-full flex justify-center">
-    <Button size={Size.sm} label="close" parentBgIndex={0} on:click={reset} />
-  </div>
+  {#if !isInlineContext}
+    <div class="w-full flex justify-center">
+      <Button size={Size.sm} label="close" parentBgIndex={0} on:click={reset} />
+    </div>
+  {/if}
 </div>

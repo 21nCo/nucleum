@@ -159,8 +159,8 @@ export const inlineStylingPatterns = [
   },
   {
     // regex: /_((?:\s*\S)+?)_/g,
-    regex: /_(.*?)_/g,
-    replacement: encapsulateInlinePattern("_", "<u>$1</u>")
+    regex: /__(.*?)__/g,
+    replacement: encapsulateInlinePattern("__", "<u>$1</u>")
   },
   {
     regex: /~~((?:\S|\s\S)+?)~~/g,
@@ -279,7 +279,7 @@ export const htmlToMarkdownPatterns = [
   },
   {
     regex: /<u>(.*?)<\/u>/g,
-    replacement: "_$1_"
+    replacement: "__$1__"
   },
   {
     regex: /<s>(.*?)<\/s>/g,

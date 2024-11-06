@@ -74,7 +74,7 @@
   let placeholder: string;
   let popoverRef: any;
   let blockBrowserRef: any;
-  let mentionSearchRef: any;
+  let mentionSearchRef: SearchResultsPopover;
   let isBlockBrowserRendered: boolean = false;
   let isRenderMentionSearch: boolean = false;
   let blockSearchQuery = "";
@@ -260,6 +260,7 @@
         event.key === "ArrowUp" ||
         event.key === "Enter")
     ) {
+      mentionSearchRef.keydown(event);
       event.preventDefault();
     }
     return true;

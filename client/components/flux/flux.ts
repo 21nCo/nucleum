@@ -227,7 +227,10 @@ class Flux {
 
   async mutation<T extends IResource>(
     resource: Resource,
-    params: IMutationParamsv2<T>
+    params: IMutationParamsv2<T>,
+    additionalParams: {
+      isPreventSubscriptions?: boolean;
+    } = {}
   ) {
     let response;
     logger.log({ at: "flux.mutation", resource, params });
@@ -241,19 +244,21 @@ class Flux {
           }, 100);
         }
       }
-      if (this.isExtensionEnvironment) {
-        const message = {
-          event: ExtensionEvent.MUTATION,
-          data: { resource, params }
-        };
-        relayToSidePanel(message);
-        relayToContentScript(message);
-      } else {
-        dispatchCustomEvent(GlobalEvent.MUTATION, { resource, params });
-      }
-      const correspondingStore = this.stores.find((x) => x.id === resource);
-      if (correspondingStore?.isInMemory) {
-        await this.loadInMemoryResourceStore(resource);
+      if (!additionalParams?.isPreventSubscriptions) {
+        if (this.isExtensionEnvironment) {
+          const message = {
+            event: ExtensionEvent.MUTATION,
+            data: { resource, params }
+          };
+          relayToSidePanel(message);
+          relayToContentScript(message);
+        } else {
+          dispatchCustomEvent(GlobalEvent.MUTATION, { resource, params });
+        }
+        const correspondingStore = this.stores.find((x) => x.id === resource);
+        if (correspondingStore?.isInMemory) {
+          await this.loadInMemoryResourceStore(resource);
+        }
       }
     } catch (e) {
       logger.error({
@@ -564,8 +569,8 @@ class Flux {
   /**
    * Syncs down from cloud to local.
    */
-  async syncDown() {
-    logger.log({ at: "flux.syncDown" });
+  async syncDown(isFirstLoad: boolean = false) {
+    logger.log({ at: "flux.syncDown", isFirstLoad });
     try {
       if (await determineIfOffline()) return;
       if (this.isSyncDownPending) return;
@@ -585,7 +590,7 @@ class Flux {
       if (result.syncDownData) {
         await this.processSyncDown(result.syncDownData);
       }
-      if (result.counts) {
+      if (isFirstLoad && result.counts) {
         let resourcesWithMissSync = [];
         for (let resource of resources) {
           const localCount = (
@@ -617,9 +622,11 @@ class Flux {
     } catch (e) {
       logger.error({ at: "flux.syncDown", error: e });
     } finally {
-      if (!this.isExtensionEnvironment) {
+      if (!this.isExtensionEnvironment && isFirstLoad) {
         dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
-          message: `Sync completed.`
+          message: `Sync completed.`,
+          subMessage: "",
+          isFinished: true
         });
       }
       this.isSyncDownPending = false;

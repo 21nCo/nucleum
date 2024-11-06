@@ -196,9 +196,7 @@
         </div>
       {/if}
       <div class="flex w-full justify-between">
-        <div>
-          <CollectionsLane {node} />
-        </div>
+        <CollectionsLane {node} />
       </div>
     </div>
   </div>
