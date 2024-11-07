@@ -73,7 +73,8 @@
           resource,
           searchQuery,
           orderBy,
-          semanticSearchTopK
+          semanticSearchTopK,
+          limit: 150
         });
       } else {
         data = [];

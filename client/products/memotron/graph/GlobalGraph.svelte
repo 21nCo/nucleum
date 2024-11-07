@@ -34,7 +34,8 @@
         )
         .map((link: any) => ({
           source: link.in.toString(),
-          target: link.out.toString()
+          target: link.out.toString(),
+          id: link.id.toString()
         }));
       const allNodesList = Array.from(
         new Set(edges.map((link: any) => [link.source, link.target]).flat())
@@ -64,7 +65,7 @@
           contentType: [...rootNodeTypeList, ...headingNodeTypes]
         }
       });
-      console.log({ nodesWithLinks, allRootNodes, links });
+      // console.log({ nodesWithLinks, allRootNodes, links });
       const nodes = [...nodesWithLinks, ...allRootNodes];
       data.nodes = nodes
         .map((node: any) => {
@@ -77,7 +78,16 @@
           };
         })
         .filter(removeDuplicatesFilter);
-      data.edges = edges;
+      data.edges = edges
+        .filter((x) => {
+          return (
+            x.source &&
+            x.target &&
+            data.nodes.some((y) => y.id === x.source) &&
+            data.nodes.some((y) => y.id === x.target)
+          );
+        })
+        .filter(removeDuplicatesFilter);
     } catch (e) {
       console.error(e);
     } finally {

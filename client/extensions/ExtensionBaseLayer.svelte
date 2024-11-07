@@ -15,8 +15,7 @@
     loadInMemoryResourceStore,
     loadInMemoryStores
   } from "../components/flux/fluxExtentionMediator";
-  import { clientStorage } from "../persistence/persistence.utils";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  import { clientStorage, getDapId } from "../persistence/persistence.utils";
   import { FluxMethod } from "../components/flux/flux.type";
   import { createEventDispatcher } from "svelte";
   import { Resource } from "../components/flux/resourceStores/resource.enum";
@@ -51,11 +50,7 @@
       },
       false
     );
-    let dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
-    if (!dapId) {
-      dapId = generateSimpleRandomId();
-      await clientStorage.set(ClientStorageKey.DAP_ID, dapId);
-    }
+    const dapId = await getDapId();
     const token = await resolveToken();
     if (!token) {
       dispatch("login", {
@@ -81,7 +76,7 @@
       //   new DexiePersistence(RemotePersistenceProvider.SURREAL),
       //   currentUserId
       // );
-      let dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
+      const dapId = await getDapId();
       const initResult = await initExtensionFlux(
         stores,
         PersistenceProvider.DEXIE_SURREAL,

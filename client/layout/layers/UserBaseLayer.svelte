@@ -36,13 +36,17 @@
     ClientStorageKey,
     PersistenceProvider
   } from "$lib/client/persistence/persistence.type";
-  import { clientStorage } from "$lib/client/persistence/persistence.utils";
+  import {
+    clientStorage,
+    getDapId
+  } from "$lib/client/persistence/persistence.utils";
   import PageError from "$lib/client/components/error/PageError.svelte";
   import { SurrealPersistence } from "$lib/client/persistence/surreal/surreal.local";
   import { Embed } from "$lib/client/types/context.type";
   import posthog from "posthog-js";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
+  import { verifyVectorGenerationTransactionNUpdate } from "$lib/client/products/memotron/taco/taco.store";
 
   const loadingMessages = {
     cloneUp: {
@@ -76,6 +80,7 @@
     addWindowEventListeners();
     await initializeUser();
     dispatch("ready");
+    verifyVectorGenerationTransactionNUpdate();
     $appLoadingState.isBaseLoaded = true;
   });
   /**
@@ -175,7 +180,7 @@
       if (!isLiteMode && !import.meta.env?.DEV) {
         await refreshAppStaticData();
       }
-      const dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
+      const dapId = await getDapId();
 
       if ($account.dataMode === UserDataMode.LOCAL) {
         // loadingMessage = "Initializing...";

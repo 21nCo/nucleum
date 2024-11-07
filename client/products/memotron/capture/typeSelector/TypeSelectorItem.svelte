@@ -22,7 +22,7 @@
 
 <button
   class={cn(
-    "flex gap-2 items-center justify-center px-8 py-4 rounded-md border",
+    "flex gap-2 items-center justify-center px-6 py-4 rounded-md border",
     {
       "bg-aps3 border-aps1 text-aps1": isActive,
       "border-brs3 hover:bg-bgs2": !isActive

@@ -363,6 +363,7 @@
       headingNodeTypes.includes(block.contentType) &&
       typeof detail === "string"
     ) {
+      block.label = detail;
       propagate(BlockAction.CHANGE, { label: detail });
       return;
     }

@@ -13,6 +13,7 @@ import { KeyValueStore } from "../flux/resourceStores/kv.store";
 import { Resource } from "../flux/resourceStores/resource.enum";
 import { flux } from "$lib/client/components/flux/flux";
 import { PersistenceActionType } from "$lib/client/types/data.type";
+import { TranscriptionModel } from "$lib/client/products/memotron/taco/taco.types";
 
 // const userPreferencesId = Item.globalPreferences;
 const defaultColorSchemeId = "colorscheme:cleantidylightblue";
@@ -30,7 +31,7 @@ export const seedUserPreferences: IUserGlobalPreferences = {
   timeZoneOffset: new Date().getTimezoneOffset() * 60,
   timeZoneLabel: detectTimeZone()?.label ?? "UTC",
   isAnonymousAnalyticsEnabled: true,
-  lastUsedTranscriptionModel: "tiny.en",
+  lastUsedTranscriptionModel: TranscriptionModel.TINy_EN,
   appearance: {
     skin: AppSkin.Clean,
     theme: Theme.LIGHT,
@@ -54,7 +55,8 @@ export const seedUserPreferences: IUserGlobalPreferences = {
   localAI: {
     semanticSearch: false,
     audioTranscription: false,
-    markdownQAChat: false
+    markdownQAChat: false,
+    vectorGenerationInProgress: false
   }
 };
 

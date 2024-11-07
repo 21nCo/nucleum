@@ -4,13 +4,18 @@
   import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
   import { Action } from "$lib/client/types/action.enum";
   import { Size } from "$lib/client/types/size.enum";
-  import { TacoActions } from "$lib/client/types/taco.types";
   import modalEvent from "../../modal/modal.store";
   import { userPreferences } from "../userPreferences.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   import { InfoTextType } from "$lib/client/types/text.type";
+  import {
+    TacoActions,
+    TacoLocalAIOptions
+  } from "$lib/client/products/memotron/taco/taco.types";
+  import { verifyVectorGenerationTransactionNUpdate } from "$lib/client/products/memotron/taco/taco.store";
+  import { appStore } from "$lib/client/stores/app.store";
 
   export let isCmdBarLaunch: boolean = false;
 
@@ -34,11 +39,15 @@
     }
   }
 
-  function progressUpdate(e: any) {
+  function progressUpdate(e: any, currentToggle: TacoLocalAIOptions) {
     if (e.data.progress) progress = e.data.progress;
     if (e.data.file) label = e.data.file;
     if (e.data.status == "ready") {
       isDisabled = false;
+      if (currentToggle == TacoLocalAIOptions.SEMANTIC_SEARCH) {
+        $userPreferences.localAI.vectorGenerationInProgress = true;
+        verifyVectorGenerationTransactionNUpdate();
+      }
     }
   }
   async function onSemanticSearchToggle(e: any) {
@@ -48,7 +57,7 @@
         action: TacoActions.INITIAlIZE_FEATURE_EXTRACTOR
       });
       tacoWorker.onmessage = (e) => {
-        progressUpdate(e);
+        progressUpdate(e, TacoLocalAIOptions.SEMANTIC_SEARCH);
       };
     } else {
       await deleteItemsFromCache("onnx-msmarco");
@@ -65,7 +74,7 @@
         action: TacoActions.INITIALIZE_TRANSCRIBER
       });
       tacoWorker.onmessage = (e) => {
-        progressUpdate(e);
+        progressUpdate(e, TacoLocalAIOptions.AUDIO_TRANSCRIPTION);
       };
     } else {
       await deleteItemsFromCache("whisper");
@@ -82,10 +91,11 @@
         action: TacoActions.INITIALIZE_QUESTION_ANSWERER
       });
       tacoWorker.onmessage = (e) => {
-        progressUpdate(e);
+        progressUpdate(e, TacoLocalAIOptions.MARKDOWN_QA);
       };
     } else {
       await deleteItemsFromCache("onnx-roberta-");
+      await deleteItemsFromCache("Xenova/distilbert-base");
       tacoWorker.postMessage({
         action: TacoActions.RESET_QUESTION_ANSWERER
       });
@@ -132,7 +142,7 @@
       on:change={onQuestionAnsweringToggle}
       isExpanded={true}
       label={{
-        label: "Markdown Q & A  - 500MB",
+        label: "Markdown Q & A  - 250MB",
         tooltip: {
           body: "Enable this to use AI to answer questions pertaining to markdown."
         }
@@ -147,6 +157,15 @@
     {/if}
   </div>
   <footer class="flex flex-col items-center gap-4 pb-8 mo:pb-20">
+    {#if $appStore.env == "dev" && $userPreferences.localAI.semanticSearch}
+      <Button
+        label="Regenerate-Vectors-For-All-MDs"
+        on:click={() => {
+          $userPreferences.localAI.vectorGenerationInProgress = true;
+          verifyVectorGenerationTransactionNUpdate(true);
+        }}
+      />
+    {/if}
     {#if isCmdBarLaunch}
       <p class="text-fgs2 text-b2 text-left">
         Note: You won't be able to Dismiss or perform any other action while the

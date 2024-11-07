@@ -47,12 +47,12 @@ import {
 } from "$lib/client/components/flux/resourceStores/resource.utils";
 import view from "$lib/client/stores/view.store";
 import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-import { TacoActions } from "$lib/client/types/taco.types";
 
 import context from "$lib/client/stores/context.store";
 import type { ICollectionExpanded } from "../collection/collection.type";
 import type { IAvatar } from "$lib/client/types/avatar.type";
 import { Embed } from "$lib/client/types/context.type";
+import { TacoActions } from "../taco/taco.types";
 
 export const hierarchyFactorLimit = 5;
 
@@ -169,6 +169,11 @@ export class ActiveNodeStore extends ActiveResourceStore<
     id: IRecordId,
     changedProps: { body?: string; children?: string[] }
   ) => {
+    logger.debug({
+      at: "ActiveNodeStore.updateBlockPropagator",
+      changedProps,
+      id: id.toString()
+    });
     if (changedProps.children) {
       const node = this.get();
       const childrenNodes = node.md.blocks.filter(
@@ -187,8 +192,11 @@ export class ActiveNodeStore extends ActiveResourceStore<
       //     embedding: embedding
       //   }
       // );
+      //TODO - reenable after fixing the new headings persistance issue
+      const dev_isTempDisabled = true;
       try {
         if (
+          !dev_isTempDisabled &&
           get(userPreferences).localAI.semanticSearch &&
           get(context).embed !== Embed.HANDSET
         ) {
@@ -218,6 +226,11 @@ export class ActiveNodeStore extends ActiveResourceStore<
           error: e
         });
       }
+      logger.debug({
+        at: "ActiveNodeStore.updateBlockPropagator - end",
+        changedProps,
+        id: id.toString()
+      });
       return this.resourceStore.modify(id, { ...changedProps, text: mdText });
     }
     this.resourceStore.modify(id, changedProps);
@@ -258,7 +271,8 @@ export class ActiveNodeStore extends ActiveResourceStore<
           linkedTo: id,
           linkType: x.linkType,
           id: x.id,
-          tags: x.tags
+          tags: x.tags,
+          direction: x.in.toString() === this.id ? "outgoing" : "incoming"
         } as INodeLinkThumb;
       });
     const collections: IRecordId[] = rawLinks

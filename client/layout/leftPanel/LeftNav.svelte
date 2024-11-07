@@ -129,7 +129,9 @@
               />
             {/if}
           </div>
-          {#if !isInThinMode}
+          {#if isInThinMode}
+            <slot name="header-thin" />
+          {:else}
             <slot name="header" />
           {/if}
           <div class="flex flex-col gap-8 items-center w-full p-2">
@@ -184,7 +186,7 @@
                   on:click={() => appStore.runAction(Action.CMD)}
                 >
                   <ShortcutText shortcut={Action.CMD} isPlainText={true} />
-                </button> for command bar
+                </button> for cmd bar
               </div>
             {/if}
           {/if}

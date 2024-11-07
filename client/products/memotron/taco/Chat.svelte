@@ -5,9 +5,9 @@
   import { SearchStore } from "$lib/client/products/memotron/memotron.store";
   import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
   import { SearchType } from "$lib/client/types/data.type";
-  import { TacoActions } from "$lib/client/types/taco.types";
 
   import { onMount, onDestroy } from "svelte";
+  import { TacoActions } from "./taco.types";
 
   const QAsearchStore = new SearchStore();
   QAsearchStore.searchType = SearchType.SEMANTIC;
@@ -30,7 +30,11 @@
       searchQuery: question,
       semanticSearchTopK: 1
     });
-    // answer = await QuestionAnswerer.getAnswer(question, node[0].mdText);
+    if (node.length == 0) {
+      answer = "No relevant information found";
+      resetLoadingState();
+      return;
+    }
     //TODO- implement actual chat using text generator rather than using just QA
     // tacoWorker.postMessage({
     //   action: TacoActions.GENERATE_TEXT,
@@ -39,11 +43,6 @@
     //     question: question
     //   }
     // });
-    if (node.length == 0) {
-      answer = "No relevant information found";
-      resetLoadingState();
-      return;
-    }
     tacoWorker.postMessage({
       action: TacoActions.GET_ANSWER,
       params: {

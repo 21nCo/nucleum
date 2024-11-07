@@ -13,10 +13,7 @@ import type {
   OAuthProviderConfig
 } from "../types/oauth.type";
 import { goto } from "../utils/browser.utils";
-import {
-  persistLocally,
-  clientStorage
-} from "../persistence/persistence.utils";
+import { persistLocally, getDapId } from "../persistence/persistence.utils";
 import { postToParent } from "$lib/client/utils/embed.utils";
 import modalEvent from "../components/modal/modal.store";
 import view from "$lib/client/stores/view.store";
@@ -35,7 +32,6 @@ import { InteractionMode } from "../components/settings/interactionMode/interact
 import { Action } from "../types/action.enum";
 import type { Event } from "../types/event.enum";
 import { logger } from "../components/debug/logger.client";
-import { ClientStorageKey } from "../persistence/persistence.type";
 import { Size } from "../types/size.enum";
 import type { IRecordId } from "../types/data.type";
 import account from "./account.store";
@@ -381,8 +377,7 @@ function initAppStore(seed: AppStore) {
       ? (import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host)
       : window.location.origin;
     // const origin = window.location.origin;
-    const guestPartForState =
-      (await clientStorage.get(ClientStorageKey.DAP_ID)) ?? "";
+    const guestPartForState = (await getDapId()) ?? "";
     const domainPartForState =
       (ctx.os === OperatingSystem.MACOS ||
         (ctx.os == OperatingSystem.IOS && ctx.embed === Embed.TABLET)) &&

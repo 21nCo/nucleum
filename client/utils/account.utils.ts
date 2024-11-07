@@ -89,15 +89,29 @@ export async function resolveCurrentUserId() {
   }
 }
 
-export function signout(ctx: string = "") {
-  logger.log({ at: "signout", context: ctx });
-  clientStorage.remove(ClientStorageKey.STOKEN);
-  clientStorage.remove(ClientStorageKey.USER_INFO);
-  clientStorage.remove(ClientStorageKey.OFFLINE_SESSION_ID);
+export async function signout(
+  params?: { isPreventDapIdClear?: boolean; isPreventRedirect?: boolean },
+  ctx?: string
+) {
+  logger.log({ at: "signout", context: ctx, params });
   postToParent({
     account: JSON.stringify({
       isLoggedIn: false
     })
   });
-  goto("/signup?msg=signedout");
+  await clearLocalStorage(params);
+  if (!params?.isPreventRedirect) goto("/signup?msg=signedout");
+  async function clearLocalStorage(params?: { isPreventDapIdClear?: boolean }) {
+    const env = await clientStorage.get(ClientStorageKey.ENV);
+    const appData = await clientStorage.get(ClientStorageKey.APP_DATA);
+    const product = await clientStorage.get(ClientStorageKey.PRODUCT);
+    const dapId = params?.isPreventDapIdClear
+      ? await clientStorage.get(ClientStorageKey.DAP_ID)
+      : undefined;
+    await clientStorage.clearAll();
+    if (env) await clientStorage.set(ClientStorageKey.ENV, env);
+    if (product) await clientStorage.set(ClientStorageKey.PRODUCT, product);
+    if (appData) await clientStorage.set(ClientStorageKey.APP_DATA, appData);
+    if (dapId) await clientStorage.set(ClientStorageKey.DAP_ID, dapId);
+  }
 }

@@ -2,6 +2,7 @@ import type { JsonValue } from "$lib/client/types/json.type";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { ClientStorageKey } from "./persistence.type";
 import { isExtensionEnvironment } from "../utils/browser.utils";
+import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 
 export function resetLocalStorage() {
   if (import.meta.env?.SSR || !import.meta.env || !window?.localStorage) {
@@ -160,3 +161,12 @@ class ClientKeyValueStorage {
 }
 
 export const clientStorage = new ClientKeyValueStorage();
+
+export async function getDapId() {
+  let dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
+  if (!dapId) {
+    dapId = generateSimpleRandomId();
+    clientStorage.set(ClientStorageKey.DAP_ID, dapId);
+  }
+  return dapId;
+}

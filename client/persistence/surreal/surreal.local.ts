@@ -32,10 +32,10 @@ import {
 import { interceptSurrealResponse } from "../../utils/utils";
 import { LogType } from "$lib/client/components/debug/debug.type";
 import { compareVersions } from "$lib/shared/utils/utils";
-import { TacoActions } from "$lib/client/types/taco.types";
 import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
 import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
 import { GlobalEvent } from "$lib/client/types/event.enum";
+import { TacoActions } from "$lib/client/products/memotron/taco/taco.types";
 
 const loadSurrealDB = async () => {
   const Surreal = await import("@surrealdb/wasm");
