@@ -589,7 +589,6 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     }
 
     let result: any = await nodeStore.create([root, ...remainingResources]);
-    console.log("md save result", result);
     await this.saveLinks(id);
     this.postSave(result);
     console.timeEnd("saveMarkdownCapture");

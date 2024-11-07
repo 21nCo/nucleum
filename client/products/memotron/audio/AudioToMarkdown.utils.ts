@@ -1,7 +1,7 @@
 import { prefixTable } from "$lib/shared/utils/text.utils";
 import { generateUID } from "$lib/client/utils/utils";
 
-import { ListType, NodeType } from "../node/node.type";
+import { NodeType } from "../node/node.type";
 import {
   HeadingKeys,
   InlineKeys,
@@ -110,6 +110,9 @@ class AudioToMarkdown {
     "heading6stop",
     "headingsixstop"
   ];
+  readonly todoCase = ["todo"];
+  readonly todoChildCase = ["todochild"];
+  readonly todoSubChildCase = ["todosubchild"];
   readonly olStopCase = ["olstop", "orderedliststop"];
   readonly ulStopCase = ["ulstop", "unorderedliststop", "bulletstop"];
   readonly olChildStopCase = ["olchildstop", "orderedlistchildstop"];
@@ -165,6 +168,9 @@ class AudioToMarkdown {
    */
   readonly keywords = [
     ...this.headingCase,
+    ...this.todoCase,
+    ...this.todoChildCase,
+    ...this.todoSubChildCase,
     ...this.olCase,
     ...this.ulCase,
     ...this.olChildCase,
@@ -203,19 +209,21 @@ class AudioToMarkdown {
     subChildOrder: 0
   };
   ULOrder: number = 0;
+  todoOrder: number = 0;
 
   reetOrders() {
-    // this.OLOrder.order = 0;
     this.resetOLOrders();
     this.ULOrder = 0;
+    this.todoOrder = 0;
   }
   resetOLOrders(
     neglectItem: "order" | "childOrder" | "subChildOrder" | "" = ""
   ) {
-    for (const key in this.OLOrder) {
+    const keys = Object.keys(this.OLOrder).reverse();
+    for (const key of keys) {
       if (this.OLOrder.hasOwnProperty(key) && key != neglectItem) {
         this.OLOrder[key] = 0;
-      }
+      } else break;
     }
   }
   resetInitialStates() {
@@ -235,7 +243,7 @@ class AudioToMarkdown {
    */
   initializeListBlock(
     indent: number,
-    type: NodeType.LIST | NodeType.ORDERED_LIST,
+    type: NodeType.LIST | NodeType.ORDERED_LIST | NodeType.CHECKLIST,
     level: 0 | 1 | 2 = 0
   ) {
     let orderValue;
@@ -256,11 +264,18 @@ class AudioToMarkdown {
           break;
       }
       this.ULOrder = 0;
+      this.todoOrder = 0;
       this.currentBlock.contentType = NodeType.ORDERED_LIST;
-    } else {
+    } else if (type == NodeType.LIST) {
       orderValue = ++this.ULOrder;
-      this.OLOrder.order = 0;
+      this.resetOLOrders();
+      this.todoOrder = 0;
       this.currentBlock.contentType = NodeType.LIST;
+    } else {
+      orderValue = ++this.todoOrder;
+      this.resetOLOrders();
+      this.ULOrder = 0;
+      this.currentBlock.contentType = NodeType.CHECKLIST;
     }
     this.currentBlock.id = prefixTable(generateUID(), Resource.node);
     this.currentBlock.body = {
@@ -544,6 +559,15 @@ class AudioToMarkdown {
         // this.lastCreatedListVariant = ListKeys.UL_SUB_SUB_CHILD;
         // break;
 
+        case this.todoCase.includes(currentWord):
+          this.initializeListBlock(0, NodeType.CHECKLIST);
+          break;
+        case this.todoChildCase.includes(currentWord):
+          this.initializeListBlock(1, NodeType.CHECKLIST);
+          break;
+        case this.todoSubChildCase.includes(currentWord):
+          this.initializeListBlock(2, NodeType.CHECKLIST);
+          break;
         case this.quoteCase.includes(currentWord):
           this.pushCurrentBlockToBlocks();
           this.reetOrders();
