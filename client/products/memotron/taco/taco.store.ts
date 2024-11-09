@@ -76,7 +76,8 @@ export async function verifyVectorGenerationTransactionNUpdate(
          * the current bulkmodify applies the same value to all nodes, here the requirement for bulkmodify is different values for different nodes. until that store modifcation is done utilizing this temporarily.
          */
         for (let node of updatedNodes) {
-          const noderesp = await nodeStore.modify(node.id, {
+          let id = `${node.id.tb}:${node.id.id}`;
+          const noderesp = await nodeStore.modify(id, {
             vector: node.vector
           });
         }

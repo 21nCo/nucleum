@@ -1,4 +1,5 @@
-import { env, pipeline } from "@xenova/transformers";
+// import { env, pipeline } from "@xenova/transformers";
+import { env, pipeline } from "@huggingface/transformers";
 import type { INodeItemCaptured } from "../node/node.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
@@ -101,7 +102,8 @@ class FeatureExtractor {
         "feature-extraction",
         "Fuzail22/onnx-msmarco-distilbert-cos-v5",
         {
-          quantized: false,
+          // quantized: false,
+          dtype: "fp32",
           progress_callback
         }
       );
@@ -167,7 +169,11 @@ class FeatureExtractor {
         return value;
       });
       // let endTime = Date.now();
-      // console.log("extraction time in seconds:", (endTime - startTime) / 1000);
+      // console.log(
+      //   "extraction time in seconds:",
+      //   (endTime - startTime) / 1000,
+      //   arr[0]
+      // );
       if (FeatureExtractor.isInternalCall) return arr;
       else postMessage(arr);
       // return arr;
@@ -191,7 +197,8 @@ class QuestionAnswerer {
         "question-answering",
         QuestionAnswerer.models[1],
         {
-          quantized: false,
+          // quantized: false,
+          dtype: "fp32",
           progress_callback
         }
       );
@@ -317,7 +324,7 @@ class Text2textGenerator {
         "text2text-generation",
         "Xenova/LaMini-Flan-T5-783M",
         {
-          quantized: true,
+          // quantized: true,
           progress_callback
         }
       );
