@@ -274,7 +274,7 @@ class AccountStore extends ObservableStore<
         id: contentType.split("/")[0] + "_" + generateSimpleRandomId()
       });
       logger.log({ at: "uploadFileV2", id, contentType, fileName });
-      fileName = fileName.replace(/\s+/g, "_");
+      fileName = fileName.replace(/\s+/g, "_").replace(/[\(\)]/g, "");
       if (account.dataMode === UserDataMode.LOCAL || params.isPreventSync) {
         const arrayBuffer = await blob.arrayBuffer();
         const uint8Array = new Uint8Array(arrayBuffer);

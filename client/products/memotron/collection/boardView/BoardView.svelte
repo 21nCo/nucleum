@@ -113,9 +113,13 @@
     arrangement={view.arrangement}
     density={view.density}
     isHidePreview={view.isHideThumbnailPreview}
+    isHideTitle={view.isHideThumbnailTitle}
     isDraggable={false}
     accessPoint={ResourceAccessPoint.COLLECTION}
     accessPointId={collection.id}
+    visibleProps={$collection.properties?.filter((x) =>
+      view.properties?.some(resourceInList(x))
+    )}
   />
   <ScrollViewBottomSpacer />
 {/if}

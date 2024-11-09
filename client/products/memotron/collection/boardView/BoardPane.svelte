@@ -130,11 +130,15 @@
           nodes={_groupData}
           arrangement={view.arrangement}
           isHidePreview={view.isHideThumbnailPreview}
+          isHideTitle={view.isHideThumbnailTitle}
           density={1}
           isDraggable={true}
           accessPoint={ResourceAccessPoint.COLLECTION}
           accessPointId={collection.id}
           isApplyCustomColor={dev_isRenderColors && group.color}
+          visibleProps={$collection.properties?.filter((x) =>
+            view.properties?.some(resourceInList(x))
+          )}
         />
       {:else}
         <EmptyStatusView size={Size.sm} subText="No items meet this criteria" />

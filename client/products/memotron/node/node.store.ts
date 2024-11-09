@@ -53,6 +53,7 @@ import type { ICollectionExpanded } from "../collection/collection.type";
 import type { IAvatar } from "$lib/client/types/avatar.type";
 import { Embed } from "$lib/client/types/context.type";
 import { TacoActions } from "../taco/taco.types";
+import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 
 export const hierarchyFactorLimit = 5;
 
@@ -104,11 +105,15 @@ class NodeStore extends ResourceStore<INode> {
       types?: ICollectionExpanded[];
     }
   ) {
+    logger.log({
+      at: "NodeStore.refreshNodeAvatar",
+      params
+    });
     let types = params?.types;
     if (!types && params.collections) {
       types = await collectionStore.resolveTypes(params.collections);
     }
-    if (!types) return;
+    if (!types || !isValidArrayWithData(types)) return;
     const avatar = this.resolveNodeAvatar(types);
     this.modify(id, {
       avatar

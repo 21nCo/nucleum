@@ -4,6 +4,7 @@
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { Size } from "$lib/client/types/size.enum";
   import {
+    TableCellDefaultAction,
     TableCellType,
     type TableColumn
   } from "$lib/client/types/table.type";
@@ -147,7 +148,7 @@
   }
   onMount(async () => {
     if (collection && (!$collection || !$collection.label)) {
-      await collection.init();
+      await collection.init(ResourceAccessMode.POP);
       isTypeExtension = $propertyEditorStore?.typeToExtend ? true : false;
     }
   });
@@ -279,8 +280,8 @@
           width="min-w-[60rem]"
           addAction="add property"
           actions={[
-            { action: "remove", index: 0 },
-            { action: "reorder", index: 1 }
+            { action: TableCellDefaultAction.REMOVE, index: 0 },
+            { action: TableCellDefaultAction.REORDER, index: 1 }
           ]}
           {columns}
           bind:data={$propertyEditorStore.properties}

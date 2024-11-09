@@ -20,7 +20,7 @@ import { extensionFlux } from "$lib/client/components/flux/fluxExtentionMediator
 import { FluxMethod } from "$lib/client/components/flux/flux.type";
 import type { CollectionType } from "./collection/collection.type";
 
-export const MAX_FILE_SIZE_MB = 15;
+export const MAX_FILE_SIZE_MB = 30;
 
 export function resolveResource(id: IRecordId) {
   return flux.select(id);
@@ -135,7 +135,7 @@ export class SearchStore {
             }
           : undefined,
         orderBy: this.orderBy ?? {
-          createdAt: "desc"
+          modifiedAt: "desc"
         },
         limit: this.limit,
         offset: this.offset
@@ -167,7 +167,7 @@ export class SearchStore {
           }
         : undefined,
       orderBy: this.orderBy ?? {
-        createdAt: "desc"
+        modifiedAt: "desc"
       },
       limit: this.limit,
       offset: this.offset

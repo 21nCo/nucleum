@@ -56,6 +56,7 @@ import view from "$lib/client/stores/view.store";
 import context from "$lib/client/stores/context.store";
 import { Embed } from "$lib/client/types/context.type";
 import { TacoActions } from "../taco/taco.types";
+import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
@@ -276,6 +277,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     if (!result) return;
     const fileId = result[0].id;
     const node: OmitForCapture<IMediaNode> = {
+      id,
       contentType: NodeType.AUDIO,
       file: fileId,
       creationContext: params?.isEmbedContext
@@ -308,6 +310,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     if (!result) return;
     const fileId = result[0].id;
     const node: OmitForCapture<IMediaNode> = {
+      id,
       contentType: NodeType.IMAGE,
       file: fileId,
       label: `Image Capture - ${new Date().toLocaleString()}`,
@@ -410,7 +413,8 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     });
     const blockLinks = val.links?.filter((x) => x.from !== "root");
     logger.log({ at: "CaptureStore.saveLinks", rootLinks, blockLinks, val });
-    if (!rootLinks && !blockLinks) return;
+    if (!isValidArrayWithData(rootLinks) && !isValidArrayWithData(blockLinks))
+      return;
     const links = [...(rootLinks ?? []), ...(blockLinks ?? [])].map((x) => {
       return {
         in: x.from,

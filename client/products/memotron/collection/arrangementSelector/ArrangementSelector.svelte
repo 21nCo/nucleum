@@ -10,6 +10,7 @@
   export let arrangement: Arrangement;
   export let density = 1;
   export let isHideThumbnailPreview: boolean = false;
+  export let isHideThumbnailTitle: boolean = false;
   export let isBoardContext = false;
 
   let isPopoverVisible = false;
@@ -58,6 +59,9 @@
   function onPreviewSettingChange(e: CustomEvent) {
     dispatch("previewSettingChange", e.detail);
   }
+  function onTitleSettingChange(e: CustomEvent) {
+    dispatch("titleSettingChange", e.detail);
+  }
 </script>
 
 <div
@@ -69,10 +73,12 @@
       density,
       arrangement,
       isHideThumbnailPreview,
+      isHideThumbnailTitle,
       allArrangements,
       onArrangementChange,
       onDensityChange,
-      onPreviewSettingChange
+      onPreviewSettingChange,
+      onTitleSettingChange
     }
   }}
   on:change={(e) => {

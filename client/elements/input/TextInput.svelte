@@ -129,6 +129,7 @@
         on:change|stopPropagation
         on:keydown|stopPropagation
         on:keyup|stopPropagation
+        on:paste|stopPropagation
         on:input|stopPropagation={onChange}
         type="password"
         on:blur={() => {
@@ -152,6 +153,7 @@
         on:change|stopPropagation
         on:keydown|stopPropagation
         on:keyup|stopPropagation
+        on:paste|stopPropagation
         on:blur
         on:focus
         on:input|stopPropagation={onChange}
@@ -204,6 +206,7 @@
           {id}
           class={inputClasses}
           bind:value
+          on:paste|stopPropagation
           on:change|stopPropagation
           on:keydown
           on:keyup|stopPropagation={handleKeyUp}

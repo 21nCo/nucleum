@@ -20,24 +20,45 @@
   export let value: IPropertyValue | null = null;
   export let property: IProperty;
   export let nodeId: IRecordId | undefined = undefined;
+  /**
+   * @deprecated - use context instead
+   */
   export let isPropertiesPaneContext: boolean = false;
+  export let context: "default" | "propertiesPane" | "collectionView" =
+    "default";
   export let isReadMode: boolean = false;
-  let style = InputStyle.FILLED;
+  let style =
+    context === "collectionView" ? InputStyle.PLAIN : InputStyle.FILLED;
+
   if (property.type === PropertyType.DATE && typeof value === "string") {
     value = new Date(value);
   }
-  let label = {
-    label: property.label ? property.label : enumToString(property.type),
-    orientation: Orientation.Vertical
-  };
+
+  let label =
+    context === "collectionView" && property.type !== PropertyType.CHECKBOX
+      ? undefined
+      : {
+          label: property.label ? property.label : enumToString(property.type),
+          orientation:
+            context === "collectionView"
+              ? Orientation.Horizontal
+              : Orientation.Vertical
+        };
   // $: console.log({ property, details: config });
 </script>
 
 <div
-  class={cn("flex", {
-    "w-60 max-w-md grow": !$view.isPortrait,
-    "w-full": $view.isPortrait || isPropertiesPaneContext || isReadMode
-  })}
+  class={cn(
+    "flex",
+    context !== "collectionView" && {
+      "w-60 max-w-md grow": !$view.isPortrait,
+      "w-full":
+        $view.isPortrait ||
+        isPropertiesPaneContext ||
+        context === "propertiesPane" ||
+        isReadMode
+    }
+  )}
 >
   {#if property.type === PropertyType.TEXT}
     <TextInput {style} bind:value {label} placeholder="Enter text" on:change />
@@ -57,7 +78,7 @@
     <Rating
       {label}
       {style}
-      size={Size.lg}
+      size={context === "collectionView" ? Size.md : Size.lg}
       avatar={property.config.ratingAvatar}
       bind:value
       count={5}
@@ -68,6 +89,7 @@
       {style}
       {label}
       {property}
+      dev_isHideEditOptions={context === "collectionView"}
       bind:value
       on:change
       on:newOption

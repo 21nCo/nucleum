@@ -101,6 +101,10 @@ export type ICollectionView = IMemotronItemBase &
      * Ex: datetime, location or text property with criteria etc
      */
     tabs?: any[];
+    /**
+     * Configured properties to show in the view.
+     */
+    properties?: IRecordId[];
   };
 
 export interface ICollectionViewArrangementConfig {
@@ -109,5 +113,9 @@ export interface ICollectionViewArrangementConfig {
    * Hides previews for thumbnails of nodes in a collection view if enabled.
    */
   isHideThumbnailPreview?: boolean;
+  /**
+   * Hides title for thumbnails of nodes in a collection view if enabled. Currently only used for Masonry arrangement.
+   */
+  isHideThumbnailTitle?: boolean;
   density?: number;
 }

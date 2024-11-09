@@ -88,6 +88,7 @@
       dispatch("focus");
     }}
     on:input|stopPropagation={onChange}
+    on:paste|stopPropagation
     {placeholder}
     disabled={isDisabled}
     bind:this={inputRef}

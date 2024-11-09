@@ -4,7 +4,10 @@
   import ResourceGridThumbnail from "../../common/thumbnail/ResourceGridThumbnail.svelte";
   import Cover from "./Cover.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import {
+    ResourceAccessPoint,
+    ResourceAccessPointState
+  } from "$lib/client/components/flux/resourceStores/resource.type";
   import ResourceThumbnailBase from "../../common/thumbnail/ResourceThumbnailBase.svelte";
   import CollectionThumbnailTitle from "./CollectionThumbnailTitle.svelte";
   import ResourceThumbnailContentTypeOverlay from "../../common/thumbnail/ResourceThumbnailContentTypeOverlay.svelte";
@@ -14,6 +17,8 @@
   export let arrangement: Arrangement = Arrangement.LIST;
   export let size: Size.sm | Size.md = Size.md;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
+  export let accessPointState: ResourceAccessPointState =
+    ResourceAccessPointState.DEFAULT;
 </script>
 
 <ResourceThumbnailBase bind:item {accessPoint} {arrangement}>
@@ -22,7 +27,7 @@
       class="flex h-12 gap-4 w-full rounded-md bg-bgs2 border border-transparent hover:border-aps2 p-3"
       on:click
     >
-      <CollectionThumbnailTitle {item} {accessPoint} />
+      <CollectionThumbnailTitle {item} {accessPoint} {accessPointState} />
     </button>
   {:else if arrangement === Arrangement.GRID || arrangement === Arrangement.MASONRY}
     <ResourceGridThumbnail {item} {size} on:click>
@@ -33,12 +38,14 @@
           {properCase(item.type)} collection
         </div>
       {/if} -->
-      <ResourceThumbnailContentTypeOverlay contentType={item.type} />
+      <!-- <ResourceThumbnailContentTypeOverlay contentType={item.type} /> -->
       <Cover {item} {arrangement} />
       <slot slot="bottom" name="bottom">
         <CollectionThumbnailTitle {item} {arrangement} {accessPoint} />
         <span class="flex gap-2">
-          <CollectionNodeCount {item} isShowLabel={true} />
+          {#if accessPointState === ResourceAccessPointState.DEFAULT}
+            <CollectionNodeCount {item} isShowLabel={true} />
+          {/if}
           <CollectionPropertyCount {item} />
         </span>
       </slot>

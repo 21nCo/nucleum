@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import {
+    ResourceAccessPoint,
+    ResourceAccessPointState
+  } from "$lib/client/components/flux/resourceStores/resource.type";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Arrangement } from "$lib/client/types/direction.enum";
   import { cn } from "$lib/client/utils/ui.utils";
@@ -9,6 +12,8 @@
   export let item: ICollectionThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
+  export let accessPointState: ResourceAccessPointState =
+    ResourceAccessPointState.DEFAULT;
 </script>
 
 <div
@@ -30,7 +35,7 @@
       <Icon icon="star" class="fill-yellow-400" />
     {/if}
   </div>
-  {#if arrangement === Arrangement.LIST && accessPoint === ResourceAccessPoint.BROWSER}
+  {#if arrangement === Arrangement.LIST && accessPoint === ResourceAccessPoint.BROWSER && accessPointState === ResourceAccessPointState.DEFAULT}
     <CollectionNodeCount {item} />
   {/if}
 </div>

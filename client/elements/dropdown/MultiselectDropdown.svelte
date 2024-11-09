@@ -50,15 +50,22 @@
 >
   <div class="flex gap-2">
     {#if selectedItems.length > 0}
-      {#each selectedItems as item, index}
+      {#each selectedItems.slice(0, 1) as item, index}
         {#if item.icon}
           <Icon icon={item.icon} size={Size.sm} />
         {/if}
-        {item?.label}
+        <span class="whitespace-nowrap">
+          {item?.label}
+        </span>
         {#if index != selectedItems.length - 1}
           ,
         {/if}
       {/each}
+      {#if selectedItems.length > 1}
+        <span class="text-fgs3">
+          +{selectedItems.length - 1}
+        </span>
+      {/if}
     {:else}
       <span class="text-fgs3">{placeholder}</span>
     {/if}

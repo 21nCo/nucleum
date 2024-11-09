@@ -146,6 +146,18 @@ export enum ResourceAccessPoint {
   CAPTURE = "capture"
 }
 
+export enum ResourceAccessPointState {
+  DEFAULT = "default",
+  /**
+   * During edit like single or bulk edit in access point like browser, library, etc.
+   */
+  EDIT = "edit",
+  /**
+   * During search in the access point like browser, library, etc.
+   */
+  SEARCH = "search"
+}
+
 /**
  * @deprecated - doesn't help with type inference if nested type intersections. Use {@link OmitForCapture} or {@link OmitFields} instead.
  */
