@@ -33,7 +33,10 @@ onmessage = (e: any) => {
       FeatureExtractor.built = false;
       break;
     case TacoActions.GET_EMBEDDINGS:
-      FeatureExtractor.generateVectorEmbeddings(e.data.params.text);
+      FeatureExtractor.generateVectorEmbeddings(
+        e.data.params.text,
+        e.data.params.eventId
+      );
       break;
     case TacoActions.GEN_EMBEDDINGS_AND_RETURN_PROCESSED_DATA:
       FeatureExtractor.generateVectorEmbeddingsAndReturnProcessedData(
@@ -156,7 +159,10 @@ class FeatureExtractor {
       FeatureExtractor.isInternalCall = false;
     }
   }
-  static async generateVectorEmbeddings(text: string) {
+  static async generateVectorEmbeddings(
+    text: string,
+    eventId: string = "message"
+  ) {
     try {
       // let startTime = Date.now();
       if (!FeatureExtractor.built) await FeatureExtractor.init();
@@ -175,8 +181,7 @@ class FeatureExtractor {
       //   arr[0]
       // );
       if (FeatureExtractor.isInternalCall) return arr;
-      else postMessage(arr);
-      // return arr;
+      else postMessage({ eventId, data: arr });
     } catch (error) {
       console.error("Error during extraction:", error);
       throw error;

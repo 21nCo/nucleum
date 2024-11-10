@@ -17,7 +17,7 @@ import {
   ActiveResourceStore,
   ResourceStore
 } from "$lib/client/components/flux/resourceStores/resource.store";
-import { debouncer } from "$lib/client/utils/utils";
+import { debouncer, generateUID } from "$lib/client/utils/utils";
 import { formatDate } from "$lib/client/utils/time.utils";
 import {
   ResourceAccessMode,
@@ -39,7 +39,7 @@ import { logger } from "$lib/client/components/debug/logger.client";
 import { collectionStore } from "../collection/collection.store";
 import type { IRecordId } from "$lib/client/types/data.type";
 import type { IToggleItem } from "$lib/client/elements/toggle/toggle.type";
-import { generateMarkdownText } from "./node.utils";
+import { generateMarkdownText, getMarkdownSymbolPrepended } from "./node.utils";
 import { isValidString } from "$lib/shared/utils/text.utils";
 import {
   resourceInList,
@@ -53,6 +53,7 @@ import type { ICollectionExpanded } from "../collection/collection.type";
 import type { IAvatar } from "$lib/client/types/avatar.type";
 import { Embed } from "$lib/client/types/context.type";
 import { TacoActions } from "../taco/taco.types";
+import { generateResourceId } from "$lib/shared/utils/surreal.utils";
 
 export const hierarchyFactorLimit = 5;
 
@@ -179,46 +180,53 @@ export class ActiveNodeStore extends ActiveResourceStore<
       const childrenNodes = node.md.blocks.filter(
         (x) => x.id && changedProps.children?.some(resourceInList(x.id))
       );
-      const mdText = generateMarkdownText(childrenNodes);
-      // const embedding = await FeatureExtractor.generateVectorEmbeddings(mdText);
-      // let params = { filters: { node: node.id.toString() } };
-      // {
-      //   whereClause: `node.id=${node.id}`
-      // };
-      // let vectorResult = await vectorResourceStore.selectMany(params);
-      // const vectorUpdateresult = await vectorResourceStore.modify(
-      //   vectorResult?.[0].id,
-      //   {
-      //     embedding: embedding
-      //   }
-      // );
-      //TODO - reenable after fixing the new headings persistance issue
-      const dev_isTempDisabled = true;
+
+      const currentNode = await nodeStore.select(id);
+      let parentValue;
+      if (currentNode.contentType == NodeType.NODULAR_MARKDOWN)
+        parentValue = currentNode.label ?? currentNode.body;
+      else parentValue = getMarkdownSymbolPrepended(currentNode);
+      const mdText = parentValue + " \n" + generateMarkdownText(childrenNodes);
       try {
         if (
-          !dev_isTempDisabled &&
           get(userPreferences).localAI.semanticSearch &&
           get(context).embed !== Embed.HANDSET
         ) {
+          const eventId = id.toString();
           tacoWorker.postMessage({
             action: TacoActions.GET_EMBEDDINGS,
             params: {
-              text: mdText
+              text: mdText,
+              eventId: eventId
             }
           });
           const embedding = await new Promise((resolve, reject) => {
-            tacoWorker.onmessage = (e) => {
-              resolve(e.data);
+            const handleMessage = (e) => {
+              const { eventId: recEventId, data } = e.data;
+              if (eventId == recEventId) {
+                tacoWorker.removeEventListener("message", handleMessage);
+                resolve(data);
+              }
             };
+            tacoWorker.addEventListener("message", handleMessage);
           });
-          let params = { filters: { node: node.id.toString() } };
-          let vectorResult = await vectorResourceStore.selectMany(params);
-          const vectorUpdateresult = await vectorResourceStore.modify(
-            vectorResult?.[0]?.id,
-            {
-              embedding: embedding
-            }
-          );
+          let vectorId;
+          if (currentNode.vector) {
+            vectorId = currentNode.vector;
+            const vectorUpdateresult = await vectorResourceStore.modify(
+              vectorId,
+              {
+                embedding: embedding
+              }
+            );
+          } else {
+            vectorId = generateResourceId(Resource.vector);
+            const vectorUpdateresult = await vectorResourceStore.create({
+              id: vectorId,
+              embedding: embedding,
+              currentNode: id
+            });
+          }
         }
       } catch (e) {
         logger.error({
