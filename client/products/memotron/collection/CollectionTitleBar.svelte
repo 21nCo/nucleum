@@ -31,6 +31,7 @@
   export let collection: IActiveCollectionStore;
   export let isShowMetaViews: boolean = false;
   export let isSingleViewMode: boolean = false;
+  export let isConstrainedWidth: boolean = false;
 
   let isSearchFocused: boolean = false;
   let searchBoxRef: TextInput;
@@ -60,6 +61,10 @@
   function onDescriptionChange(value: string) {
     collection.debouncedModify({ description: value });
   }
+
+  function resolveSearchPlaceholder(count: number) {
+    return `Search this collection ${count ? `(${count} items)` : ""}`;
+  }
 </script>
 
 <div
@@ -67,7 +72,7 @@
 >
   <!-- TODO breadcrumbs - if launched as child from a combination i.e. if parent present -->
   <!-- TODO - back button to previous resource - if launched from a mention or links -->
-  {#if $view.isConstrainedWidth}
+  {#if isConstrainedWidth}
     <Icon
       icon="ph:caret-left-light"
       on:click={() => {
@@ -178,7 +183,7 @@
         <span class="flex gap-2 items-center px-2 py-0.5">
           <Icon icon="ph:cube-light" size={Size.sm} class="stroke-fgs3" />
           {$collection.properties.length}
-          {#if !$view.isConstrainedWidth}
+          {#if !isConstrainedWidth}
             {$collection.properties.length === 1 ? "property" : "properties"}
           {/if}
         </span>
@@ -188,7 +193,7 @@
           </span>
         {/if}
       </button>
-    {:else if $collection.isInEditMode && $collection.type === CollectionType.TYPED && !$view.isConstrainedWidth}
+    {:else if $collection.isInEditMode && $collection.type === CollectionType.TYPED && !isConstrainedWidth}
       <button
         class="flex text-b3 text-fgs3 rounded-md border border-brs3 px-2 py-0.5 items-center gap-1 hover:bg-bgs2"
         on:click={openPropertiesEditor}
@@ -199,7 +204,7 @@
     {/if}
   </span>
 
-  {#if $view.isConstrainedWidth}
+  {#if isConstrainedWidth}
     {#if !$collection.isInEditMode}
       <AddResourceAction on:add variant="minimal" />
     {/if}
@@ -225,7 +230,7 @@
         <Icon icon="svg-spinners:90-ring-with-bg" class="stroke-fgs1" />
       </div>
     {/if} -->
-      {#if !$collection.isInEditMode}
+      {#if !$collection.isInEditMode && $collection.totalNodeCount}
         {@const isMiniSearch = rightPartWidth < 530}
         <div
           class={cn("flex rounded-full", {
@@ -238,7 +243,7 @@
           {#if isMiniSearch && !isSearchFocused}
             <Button
               icon="ph:magnifying-glass"
-              tooltip={`Search this collection [Total items: ${$collection.totalNodeCount ?? 0}]`}
+              tooltip={resolveSearchPlaceholder($collection.totalNodeCount)}
               on:click={() => {
                 isSearchFocused = true;
                 setTimeout(() => {
@@ -252,14 +257,14 @@
               bind:value={searchQuery}
               bind:this={searchBoxRef}
               icon="ph:magnifying-glass"
-              placeholder={`Search this collection [Total items: ${$collection.totalNodeCount ?? 0}]`}
+              placeholder={resolveSearchPlaceholder($collection.totalNodeCount)}
               on:focus={() => (isSearchFocused = true)}
               on:blur={() => (isSearchFocused = false)}
               on:input={onSearchQueryChange}
             />
           {/if}
         </div>
-      {:else if rightPartWidth > 300}
+      {:else if $collection.isInEditMode && rightPartWidth > 300}
         <span class="text-fgs3 text-b3 whitespace-nowrap">
           Edit mode is on
         </span>

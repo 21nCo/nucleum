@@ -109,6 +109,9 @@
           context="nodepageCollectionsLane"
           bind:searchQuery
           on:select={onSelect}
+          on:hide={() => {
+            popoverRef?.hide();
+          }}
         />
       </div>
     </slot>

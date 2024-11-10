@@ -138,7 +138,6 @@
           isShowCoverPicker = false;
         }}
         on:select={(e) => {
-          console.log("cover photo selected", e);
           coverPhoto = e.detail;
         }}
       />

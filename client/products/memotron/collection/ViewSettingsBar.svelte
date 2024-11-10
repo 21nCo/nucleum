@@ -10,6 +10,8 @@
   import { Size } from "$lib/client/types/size.enum";
   import { collectionLayoutOptions } from "./collection.store";
   import { createEventDispatcher } from "svelte";
+  import Badge from "$lib/client/elements/text/Badge.svelte";
+  import MultiselectDropdown from "$lib/client/elements/dropdown/MultiselectDropdown.svelte";
   const dispatch = createEventDispatcher();
 
   export let view: ICollectionView;
@@ -55,6 +57,18 @@
       bind:value={view.layout}
       on:select={(e) => onSelect("properties", e)}
     /> -->
+    <div class="w-60">
+      <MultiselectDropdown
+        options={properties}
+        selected={view.properties?.map((x) => x.toString()) ?? []}
+        label={{
+          ...dropdownLabelConfig,
+          label: "Properties shown",
+          badge: "beta"
+        }}
+        on:select={(e) => onSelect("properties", e)}
+      />
+    </div>
     <DropDown
       label={{ ...dropdownLabelConfig, label: "Tabs" }}
       {...dropdownSettings}
@@ -78,5 +92,11 @@
         on:select={(e) => onSelect("subGroupBy", e)}
       />
     {/if}
+  </div>
+  <div class="flex flex-row gap-2 items-center">
+    <Badge text="soon" />
+    <span class="text-fgs3 text-b3">
+      Filter and sorting options will be available soon.
+    </span>
   </div>
 </div>

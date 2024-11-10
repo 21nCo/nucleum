@@ -25,6 +25,7 @@
   export let label: InputLabel | undefined = undefined;
   export let value: string;
   export let parentBackgroundIndex: number = 0;
+  export let dev_isHideEditOptions: boolean = false;
   let search: string = "";
   let searchInputRef: any;
   let popoverRef: any;
@@ -176,7 +177,7 @@
             on:click={onSave}
           />
         </div>
-      {:else}
+      {:else if !dev_isHideEditOptions}
         <Button
           label="Edit options"
           isUnderlined={true}

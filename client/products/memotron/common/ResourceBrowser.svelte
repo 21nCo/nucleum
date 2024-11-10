@@ -19,7 +19,8 @@
   import {
     ResourceAccessPoint,
     ResourceActionType,
-    ResourceAccessMode
+    ResourceAccessMode,
+    ResourceAccessPointState
   } from "$lib/client/components/flux/resourceStores/resource.type";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import BulkEditBar from "./BulkEditBar.svelte";
@@ -58,6 +59,10 @@
           variant: ButtonVariant.PRIMARY
         };
 
+  $: state = isValidString(searchQuery)
+    ? ResourceAccessPointState.SEARCH
+    : ResourceAccessPointState.DEFAULT;
+
   let data: any[] = [];
   let starred: any[] = [];
   onMount(async () => {
@@ -82,7 +87,8 @@
   }
   async function refresh() {
     data = await searchStore.select({
-      searchQuery
+      searchQuery,
+      limit: 150
     });
     starred = await searchStore.starred();
   }
@@ -99,7 +105,7 @@
         bind:value={searchQuery}
         size={Size.lg}
         style={InputStyle.PLAIN}
-        on:keydown={refresh}
+        on:keyup={refresh}
         placeholder={"Search " + resource + "s"}
       />
       {#if searchQuery}
@@ -164,7 +170,7 @@
           />
         </div>
       {/if}
-      {#if !isValidString(searchQuery)}
+      {#if state === ResourceAccessPointState.DEFAULT && starred.length > 0}
         <div class="flex flex-col gap-4">
           <Text style={TextStyle.SECTION_HEADING} content="Starred" />
           <Resources
@@ -180,7 +186,9 @@
       <div class="flex flex-col gap-4">
         <Text
           style={TextStyle.SECTION_HEADING}
-          content={isValidString(searchQuery) ? "Search results" : "All"}
+          content={state === ResourceAccessPointState.SEARCH
+            ? "Search results"
+            : "All"}
         />
         <Resources
           {data}
@@ -189,6 +197,7 @@
           {arrangement}
           size={Size.sm}
           defaultAccessMode={ResourceAccessMode.INLINE}
+          accessPointState={state}
         />
       </div>
       <ScrollViewBottomSpacer />

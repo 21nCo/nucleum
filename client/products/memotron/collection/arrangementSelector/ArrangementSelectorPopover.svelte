@@ -10,6 +10,7 @@
   export let density: number;
   export let arrangement: Arrangement;
   export let isHideThumbnailPreview: boolean = false;
+  export let isHideThumbnailTitle: boolean = false;
   export let allArrangements: {
     value: Arrangement;
     label: string;
@@ -17,6 +18,7 @@
   }[];
   export let onDensityChange: (density: number) => void;
   export let onPreviewSettingChange: (event: CustomEvent) => void;
+  export let onTitleSettingChange: (event: CustomEvent) => void;
   export let onArrangementChange: (event: CustomEvent) => void;
   function onDensityChanges(event: Event) {
     onDensityChange(density);
@@ -35,15 +37,26 @@
     on:switch={onArrangementChange}
   />
   {#if arrangement === Arrangement.MASONRY}
-    <div class="flex flex-col gap-1 mt-4 px-2">
-      <span class="text-fgs3 text-b3">Density</span>
-      <Slider
-        bind:value={density}
-        min={1}
-        max={3}
-        step={0.5}
-        on:change={onDensityChanges}
-      />
+    <div class="flex flex-col w-full gap-4 mt-4">
+      <span class="px-2">
+        <SwitchInput
+          label={{ label: "Hide title" }}
+          size={Size.sm}
+          isExpanded={true}
+          bind:checked={isHideThumbnailTitle}
+          on:change={onTitleSettingChange}
+        />
+      </span>
+      <div class="flex flex-col gap-1 px-2">
+        <span class="text-fgs3 text-b3">Density</span>
+        <Slider
+          bind:value={density}
+          min={1}
+          max={3}
+          step={0.5}
+          on:change={onDensityChanges}
+        />
+      </div>
     </div>
   {:else}
     <span class="px-2">

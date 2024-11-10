@@ -5,12 +5,14 @@
   import { Size } from "$lib/client/types/size.enum";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import view from "$lib/client/stores/view.store";
+  import { logger } from "$lib/client/components/debug/logger.client";
 
   let videoElement: HTMLVideoElement;
   let canvasElement: HTMLCanvasElement;
   let photoTaken = false;
   let containerHeight: number;
   let containerWidth: number;
+  let isSaving = false;
   const dispatch = createEventDispatcher();
   let error: string | null = null;
 
@@ -27,6 +29,7 @@
           facingMode: "environment"
         }
       });
+      if (!videoElement) return;
       videoElement.srcObject = stream;
       videoElement.onloadedmetadata = () => {
         adjustVideoSize();
@@ -68,11 +71,23 @@
   }
 
   function savePhoto() {
-    canvasElement.toBlob((blob) => {
-      if (blob) {
-        captureStore.saveCameraCapture(blob);
-      }
-    }, "image/jpeg");
+    if (!canvasElement) {
+      error = "Something went wrong. Please try again.";
+      return;
+    }
+    try {
+      isSaving = true;
+      canvasElement.toBlob(async (blob) => {
+        if (blob) {
+          await captureStore.saveCameraCapture(blob);
+        }
+      }, "image/jpeg");
+    } catch (e) {
+      error = "Something went wrong. Please try again.";
+      logger.error({ at: "CameraCapture.savePhoto", error: e });
+    } finally {
+      isSaving = false;
+    }
   }
 
   function retakePhoto() {
@@ -128,6 +143,7 @@
         label="Save"
         type={ButtonVariant.PRIMARY}
         size={Size.sm}
+        isLoading={isSaving}
         isPreventMinWidth={true}
         on:click={savePhoto}
       />

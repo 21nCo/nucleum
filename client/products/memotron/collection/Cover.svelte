@@ -133,6 +133,7 @@
       <CoverRenderer
         repositionParams={resolveRespositionParams(placement, isPositionable)}
         {cover}
+        isLazyLoad={false}
         class={cn({
           "rounded-xl": dev_isRoundedCover
         })}

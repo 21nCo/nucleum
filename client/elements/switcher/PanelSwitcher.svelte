@@ -57,7 +57,7 @@
 {#key isInEditMode}
   <div
     bind:this={parent}
-    class={cn("relative panel-switcher flex items-center", {
+    class={cn("relative panel-switcher flex items-center shrink-0", {
       "overflow-x-auto": !$view.isConstrainedWidth,
       "w-full justify-between px-2":
         (style === PanelSwitcherStyle.BAR ||

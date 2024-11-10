@@ -14,6 +14,7 @@
   } from "$lib/client/actions/lazyload.action";
   import { imageRepositioner } from "$lib/client/actions/imageRepositioning.action";
   import { createEventDispatcher } from "svelte";
+  import { isSameResource } from "../flux/resourceStores/resource.utils";
 
   const dispatch = createEventDispatcher();
 
@@ -27,6 +28,7 @@
   export let ref: HTMLElement | undefined = undefined;
   export let repositionParams: IImageRepositionerOptions | undefined =
     undefined;
+  export let isHideControls: boolean = false;
   let classList: string = "";
   export { classList as class };
   $: _id = id ?? file?.id;
@@ -50,9 +52,10 @@
   });
 
   async function resolveSrc(): Promise<string> {
+    const isLatestFilePresent = file && _id && isSameResource(file, _id);
     if (blob) return URL.createObjectURL(blob);
-    else if (id || (file && _id === file?.id)) {
-      const result = await fileStore.refresh(file ?? id);
+    else if (id || isLatestFilePresent) {
+      const result = await fileStore.refresh(isLatestFilePresent ? file : id);
       if (result) {
         file = result;
         return file.url ?? "";
@@ -90,7 +93,7 @@
   />
 {:else if type === FileType.VIDEO}
   <video
-    controls
+    controls={!isHideControls}
     class={classList}
     draggable={isDraggable}
     use:fileLoaderv2={{ source: resolveSrc, isLazyLoad, id: _id?.toString() }}

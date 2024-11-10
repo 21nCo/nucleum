@@ -469,18 +469,57 @@ export async function sync(body: any, agent: Agent, method: string) {
 async function _processSync(body: any, agent: Agent, method: string) {
   if (method === SyncMethod.SYNC_UP) {
     const { mutations, lastSyncDown, resources, dapId } = body;
-    if (!mutations || mutations.length < 1) {
+    if (!mutations || !Array.isArray(mutations) || mutations.length < 1) {
       return { error: "No mutations to sync" };
     }
-    const insertMutationsQuery = `INSERT INTO mutation ${JSON.stringify(
-      mutations
-    )};`;
-    const individualMutationsQuery = mutations
-      .map((mutation: any) => resolveMutationQueryV2(mutation))
-      .join("; ");
     const fetchBackQuery = resolveSyncDownQuery(lastSyncDown, resources, dapId);
-    const masterQuery = `${insertMutationsQuery}; ${individualMutationsQuery}; ${fetchBackQuery};`;
-    const response = await performQueryOnBehalfOfUser(masterQuery, agent);
+    let response;
+    if (
+      mutations.every(
+        (mutation: any) =>
+          !mutation.resourceId ||
+          typeof mutation.resourceId === "string" ||
+          (Array.isArray(mutation.resourceId) &&
+            mutation.resourceId.length < 50)
+      )
+    ) {
+      const insertMutationsQuery = `INSERT INTO mutation ${JSON.stringify(
+        mutations
+      )};`;
+      const individualMutationsQuery = mutations
+        .map((mutation: any) => resolveMutationQueryV2(mutation))
+        .join("; ");
+      const masterQuery = `${insertMutationsQuery}; ${individualMutationsQuery}; ${fetchBackQuery};`;
+      response = await performQueryOnBehalfOfUser(masterQuery, agent);
+    } else {
+      console.log({ at: "sync - large mutations found" });
+      let mutationResponses = [];
+      for (const mutation of mutations) {
+        const insertMutationQuery = `INSERT INTO mutation [${JSON.stringify(
+          mutation
+        )}];`;
+        const mutationInsertResponse = await performQueryOnBehalfOfUser(
+          insertMutationQuery,
+          agent
+        );
+        const mutationQuery = resolveMutationQueryV2(mutation);
+        const individualMutationResponse = await performQueryOnBehalfOfUser(
+          mutationQuery,
+          agent
+        );
+        if (Array.isArray(individualMutationResponse)) {
+          mutationResponses.push(...individualMutationResponse);
+        } else {
+          mutationResponses.push(individualMutationResponse);
+        }
+      }
+      const fetchBackResponse = await performQueryOnBehalfOfUser(
+        fetchBackQuery,
+        agent
+      );
+      mutationResponses.push(...fetchBackResponse);
+      response = mutationResponses;
+    }
     console.log({ method, response });
     if (response) return response;
     else return { error: "transaction failed" };

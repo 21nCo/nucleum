@@ -196,7 +196,8 @@
         limit: 50,
         offset: isPagination ? data.length : 0
       });
-      data = [...data, ...newData];
+      if (isPagination) data = [...data, ...newData];
+      else data = [...newData];
       // console.log({ newData, data });
     } finally {
       setTimeout(() => {

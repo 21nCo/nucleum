@@ -65,35 +65,40 @@ export async function performAgentProxyQuery(query: any, agent: Agent) {
 
 async function performRootQuery(params: DatabaseQueryParams) {
   // console.log("env", process.env);
-  let headers = new Headers();
-  headers.append("Content-Type", "text/plain");
-  headers.append(
-    "Authorization",
-    "Basic " + btoa(process.env.DB_USER + ":" + process.env.DB_PASS)
-  );
-  headers.append("Accept", "application/json");
-  const namespace = resolveNamespace(params.dbType);
-  const db =
-    params.dbType === CONTEXT.ADMIN
-      ? process.env.ADMIN_DB_NAME ?? "ADMIN"
-      : params.db ?? "";
-  headers.append("NS", namespace);
-  headers.append("DB", db);
-  const body = `USE NAMESPACE ${namespace}; USE DATABASE ${db}; ${params.query}`;
-  let endPoint = "https://" + params.instance + "/sql";
-  const response = await fetch(endPoint, {
-    method: "POST",
-    body,
-    headers
-  });
-  // const json = await response.text();
-  // console.log({ json });
-  const json = await response.json();
-  console.log({ endPoint, body, json, namespace, db });
-  if (json && Array.isArray(json)) {
-    return json.slice(2);
+  try {
+    let headers = new Headers();
+    headers.append("Content-Type", "text/plain");
+    headers.append(
+      "Authorization",
+      "Basic " + btoa(process.env.DB_USER + ":" + process.env.DB_PASS)
+    );
+    headers.append("Accept", "application/json");
+    const namespace = resolveNamespace(params.dbType);
+    const db =
+      params.dbType === CONTEXT.ADMIN
+        ? process.env.ADMIN_DB_NAME ?? "ADMIN"
+        : params.db ?? "";
+    headers.append("NS", namespace);
+    headers.append("DB", db);
+    const body = `USE NAMESPACE ${namespace}; USE DATABASE ${db}; ${params.query}`;
+    let endPoint = "https://" + params.instance + "/sql";
+    const response = await fetch(endPoint, {
+      method: "POST",
+      body,
+      headers
+    });
+    // const json = await response.text();
+    // console.log({ json });
+    const json = await response.json();
+    console.log({ endPoint, body, json, namespace, db });
+    if (json && Array.isArray(json)) {
+      return json.slice(2);
+    }
+    return json;
+  } catch (e) {
+    console.error({ at: "performRootQuery - error", error: e });
+    return { error: "Query failed" };
   }
-  return json;
 
   function resolveNamespace(dbType: CONTEXT) {
     switch (dbType) {

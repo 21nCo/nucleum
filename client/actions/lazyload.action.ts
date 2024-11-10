@@ -1,3 +1,4 @@
+import { generateRandomId } from "$lib/shared/utils/crypto.utils";
 import { isValidString } from "$lib/shared/utils/text.utils";
 import { logger } from "../components/debug/logger.client";
 
@@ -123,6 +124,7 @@ export function fileLoaderv2(
   let currentId = params.id;
 
   async function loadSource() {
+    node.id = `${currentId?.toString() ?? ""}-${generateRandomId()}`;
     try {
       if (node instanceof HTMLImageElement) {
         node.src =

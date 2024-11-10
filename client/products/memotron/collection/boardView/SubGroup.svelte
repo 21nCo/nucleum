@@ -81,10 +81,14 @@
         nodes={_data}
         {arrangement}
         isHidePreview={view.isHideThumbnailPreview}
+        isHideTitle={view.isHideThumbnailTitle}
         {density}
         isDraggable={true}
         accessPoint={ResourceAccessPoint.COLLECTION}
         accessPointId={collection.id}
+        visibleProps={$collection.properties?.filter((x) =>
+          view.properties?.some(resourceInList(x))
+        )}
       />
     </div>
   {/if}

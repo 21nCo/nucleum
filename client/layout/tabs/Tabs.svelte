@@ -29,7 +29,7 @@
         />
       {/each}
     </span>
-    <span>
+    <!-- <span>
       <Button
         icon="search"
         size={Size.sm}
@@ -38,6 +38,6 @@
           appStore.runAction(Action.GLOBAL_SEARCH);
         }}
       />
-    </span>
+    </span> -->
   </div>
 {/if}

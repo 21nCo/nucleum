@@ -13,11 +13,11 @@
 </script>
 
 <LeftNav>
-  <slot name="top" slot="top">
+  <!-- <slot name="top" slot="top">
     <div class="text-b3 text-fgs3">
       {"[Memotron Preview]"}
     </div>
-  </slot>
+  </slot> -->
   <slot name="header" slot="header">
     <div class="flex flex-col w-full justify-center items-center gap-4">
       <ProfileLeftPanelSection />

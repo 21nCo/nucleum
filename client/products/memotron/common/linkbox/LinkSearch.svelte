@@ -21,7 +21,7 @@
     "Start typing to link to a node or add to a curation";
   let icon: string = "";
   let label: InputLabel | undefined = undefined;
-  let searchInputRef: any;
+  let searchInputRef: TextSearchInput;
   resolveOptions(context);
 
   export function focus() {
@@ -109,6 +109,7 @@
   }}
   {popoverOptions}
   on:select
+  on:hide
   searchCallback={onsearch}
   {placeholder}
 />

@@ -30,9 +30,14 @@
   import { fileStore } from "$lib/client/components/files/file.store";
   import { onMount } from "svelte";
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
+  import NodeThumbnailProperties from "./NodeThumbnailProperties.svelte";
+  import type { IProperty } from "../../collection/properties/property.type";
+  import { isValidString } from "$lib/shared/utils/text.utils";
   export let item: INodeThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let isHidePreview: boolean = false;
+  export let isHideTitle: boolean = false;
+  export let visibleProps: IProperty[] = [];
   export let size: Size.sm | Size.md = Size.md;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
   export let accessPointId: IRecordId;
@@ -86,7 +91,8 @@
       })}
     >
       <button
-        class={cn("flex w-full border- rounded--md truncate h-20", {
+        class={cn("flex w-full border- rounded--md truncate", {
+          "h-20": !visibleProps || visibleProps.length === 0
           // "bg-ccs5 hover:bg-ccs4 border-ccs2": isApplyCustomColor,
           // "bg-bgs2 border-brs3 hover:border-fgs4": !isApplyCustomColor
         })}
@@ -95,8 +101,8 @@
         {#if item.contentType !== NodeType.NODULAR_MARKDOWN && !headingNodeTypes.includes(item.contentType) && !isHidePreview}
           <div
             class={cn(
-              "h-20",
               {
+                "h-20": !visibleProps || visibleProps.length === 0,
                 "w-full p-2 flex justify-start": isFullExpand
               },
               !isFullExpand && {
@@ -113,6 +119,7 @@
               <FileView
                 file={hasFullFileDetails ? filePreview : undefined}
                 id={hasFullFileDetails ? undefined : filePreview}
+                isHideControls={true}
                 class={cn("object-cover h-full w-full", {
                   "rounded-md": accessPoint === ResourceAccessPoint.NODE_LINKS
                 })}
@@ -158,6 +165,16 @@
             <div class="text-b3 text-fgs3">
               {formatDatetime($userPreferences, item.createdAt)}
             </div>
+            {#if visibleProps.length > 0}
+              <div class="p-2">
+                <NodeThumbnailProperties
+                  values={item.properties}
+                  properties={visibleProps}
+                  nodeId={item.id}
+                  {accessPoint}
+                />
+              </div>
+            {/if}
           </div>
         {/if}
       </button>
@@ -191,6 +208,7 @@
             <FileView
               file={hasFullFileDetails ? filePreview : undefined}
               id={hasFullFileDetails ? undefined : filePreview}
+              isHideControls={true}
               class="absolute inset-0 w-full rounded-t-md object-cover h-full"
             />
           {:else if urlPreview}
@@ -232,8 +250,18 @@
           {/if}
         </div>
       {/if}
-      <div slot="bottom" class="flex w-full h-5">
+      <div slot="bottom" class="flex flex-col w-full h--5">
         <NodeThumbnailTitle node={item} />
+        {#if visibleProps.length > 0}
+          <div class="p-2">
+            <NodeThumbnailProperties
+              values={item.properties}
+              properties={visibleProps}
+              nodeId={item.id}
+              {accessPoint}
+            />
+          </div>
+        {/if}
       </div>
     </ResourceGridThumbnail>
   {:else if arrangement === Arrangement.MASONRY}
@@ -241,13 +269,20 @@
       <FileView
         file={hasFullFileDetails ? filePreview : undefined}
         id={hasFullFileDetails ? undefined : filePreview}
-        class="w-full h-auto rounded-t-md"
+        isHideControls={true}
+        class={cn("w-full h-auto", {
+          "rounded-md": isHideTitle,
+          "rounded-t-md": !isHideTitle
+        })}
         on:load
       />
     {:else if urlPreview}
       <img
         alt="..."
-        class="rounded-t-md w-full h-auto"
+        class={cn("w-full h-auto", {
+          "rounded-md": isHideTitle,
+          "rounded-t-md": !isHideTitle
+        })}
         on:load
         use:lazyLoad={urlPreview}
       />
@@ -276,16 +311,31 @@
         {/if}
       </div>
     {/if}
-    <div
-      class={cn(
-        "w-full bg-bgs2 rounded-b-md h-10 p-2 truncate text-b2 flex flex-1 items-center",
-        {
-          "rounded-md": !filePreview && !urlPreview && !_url && !contentPreview
-        }
-      )}
-    >
-      <NodeThumbnailTitle node={item} />
-    </div>
+    {#if !isHideTitle || (!filePreview && !urlPreview && !_url && !isValidString(contentPreview))}
+      <div class="flex flex-col flex-1 bg-bgs2">
+        <div
+          class={cn(
+            "w-full bg-bgs2 rounded-b-md h-10 p-2 truncate text-b2 flex flex-1 items-center",
+            {
+              "rounded-md":
+                !filePreview && !urlPreview && !_url && !contentPreview
+            }
+          )}
+        >
+          <NodeThumbnailTitle node={item} />
+        </div>
+        {#if visibleProps.length > 0}
+          <div class="p-2">
+            <NodeThumbnailProperties
+              values={item.properties}
+              properties={visibleProps}
+              nodeId={item.id}
+              {accessPoint}
+            />
+          </div>
+        {/if}
+      </div>
+    {/if}
   {/if}
   <slot slot="right" name="right">
     <slot name="right" />
