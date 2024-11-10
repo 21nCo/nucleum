@@ -178,6 +178,7 @@ class FeatureExtractor {
       // console.log(
       //   "extraction time in seconds:",
       //   (endTime - startTime) / 1000,
+      //   text,
       //   arr[0]
       // );
       if (FeatureExtractor.isInternalCall) return arr;
