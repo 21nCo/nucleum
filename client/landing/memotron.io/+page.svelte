@@ -40,7 +40,7 @@
   };
 
   const baseUrl = import.meta.env.VITE_STATIC_URL + "/images/memotron/";
-  const videoId = import.meta.env.VITE_YOUTUBE_VIDEO_ID ?? "CguXo8YQnm4";
+  const videoId = import.meta.env.VITE_YOUTUBE_VIDEO_ID ?? "SeWdndc7y4A";
 
   let features: ITileItem[] = [
     {

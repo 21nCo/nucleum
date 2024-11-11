@@ -18,7 +18,7 @@
       "https://apps.apple.com/in/app/memotron-your-memory-atlas/id6737236940",
     twitterUrl: "https://x.com/memotronIO",
     docsUrl: "https://docs.memotron.io",
-    youtubeUrl: "https://www.youtube.com/@memotronio",
+    youtubeUrl: "https://www.youtube.com/@21nCompany",
     roadmapUrl: "https://memotron.supahub.com/roadmap",
     changelogUrl: "https://memotron.supahub.com/changelog"
   };
