@@ -346,7 +346,6 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       const data = await new Persistence().retrieveUrlData(text);
       if (data?.parsedData) {
         const parsedData = data.parsedData;
-        console.log("parsed html", parsedData);
         node.label = parsedData.label ?? node.label;
         node.url = parsedData.url ?? node.url;
         node.contentType = parsedData.contentType ?? node.contentType;
@@ -485,7 +484,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
           val.rootStructure.includes(b.id)
         );
         console.time("generateMarkdownText");
-        mdText = generateMarkdownText(rootBlocks);
+        mdText = val.label + " \n" + generateMarkdownText(rootBlocks);
         console.timeEnd("generateMarkdownText");
 
         if (
@@ -495,16 +494,24 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
           console.time("vector");
           try {
             console.time("tacoWorker");
+
+            const eventId = val.id.toString();
             tacoWorker.postMessage({
               action: TacoActions.GET_EMBEDDINGS,
               params: {
-                text: val.label + " \n" + mdText
+                text: mdText,
+                eventId
               }
             });
-            const embedding = await new Promise((resolve, reject) => {
-              tacoWorker.onmessage = (e) => {
-                resolve(e.data);
+            const embedding: any = await new Promise((resolve, reject) => {
+              const handleMessage = (e) => {
+                const { eventId: recEventId, data } = e.data;
+                if (eventId == recEventId) {
+                  tacoWorker.removeEventListener("message", handleMessage);
+                  resolve(data);
+                }
               };
+              tacoWorker.addEventListener("message", handleMessage);
             });
             console.timeEnd("tacoWorker");
             vectorInsertionresult = await vectorResourceStore.create({
@@ -550,16 +557,23 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
             ctx.embed !== Embed.HANDSET
           ) {
             try {
+              const eventId = block.id.toString();
               tacoWorker.postMessage({
                 action: TacoActions.GET_EMBEDDINGS,
                 params: {
-                  text: mdText
+                  text: mdText,
+                  eventId
                 }
               });
-              const embedding = await new Promise((resolve, reject) => {
-                tacoWorker.onmessage = (e) => {
-                  resolve(e.data);
+              const embedding: any = await new Promise((resolve, reject) => {
+                const handleMessage = (e) => {
+                  const { eventId: recEventId, data } = e.data;
+                  if (eventId == recEventId) {
+                    tacoWorker.removeEventListener("message", handleMessage);
+                    resolve(data);
+                  }
                 };
+                tacoWorker.addEventListener("message", handleMessage);
               });
               vectorInsertionresult = await vectorResourceStore.create({
                 id: generateResourceId(Resource.vector),
