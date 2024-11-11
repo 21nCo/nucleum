@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Button from "./Button.svelte";
+  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
   let isVideoPlaying = false;
   export let videoUrl: string;
   export let thumbnailUrl: string;
@@ -18,13 +18,15 @@
         alt="Video Thumbnail"
         class="w-full h-full object-cover cursor-pointer rounded-md"
       />
-      <div class="absolute inset-0 flex items-center justify-center">
-        <Button
+      <div
+        class="absolute inset-0 bg-fgs2 bg-opacity-30 rounded-xl flex items-center justify-center"
+      >
+        <button
           on:click={playVideo}
-          icon="play"
-          class="pl-6 pr-8"
-          iconPosition="end"
-        />
+          class="w-[72px] h-[48px] bg-bgs1 flex items-center justify-center rounded-md"
+        >
+          <SvgIcon icon="play" />
+        </button>
       </div>
     {:else}
       <iframe
