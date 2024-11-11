@@ -46,6 +46,11 @@
     publish: contextEventListener
   };
   setContext("content", contentContext);
+
+  function onAnnotation(e: CustomEvent<any[]>) {
+    if ($node.contentType === NodeType.PDF && e.detail)
+      $node.pdfAnnotations = e.detail;
+  }
 </script>
 
 <div class="flex w-full flex-grow">
@@ -61,7 +66,12 @@
           $node.accessMode === ResourceAccessMode.INLINE
       })}
     >
-      <MediaContentResolver node={$node} on:refresh bind:this={contentRef} />
+      <MediaContentResolver
+        node={$node}
+        on:refresh
+        bind:this={contentRef}
+        on:annotation={onAnnotation}
+      />
     </main>
   {/if}
   {#if rightPane || (webNodeTypeList.includes($node?.contentType) && !isConstrainedWidth)}

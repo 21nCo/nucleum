@@ -20,7 +20,7 @@
     viewportToScaled
   } from "$lib/client/products/memotron/pdfAnnotator/pdfAnnotator.utils";
   import { debouncer } from "$lib/client/utils/utils";
-  import { onMount } from "svelte";
+  import { onMount, createEventDispatcher } from "svelte";
   import TextHiglighter from "./TextHiglighter.svelte";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import InlineToolBar from "./toolbar/InlineToolBar.svelte";
@@ -38,10 +38,10 @@
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import context from "$lib/client/stores/context.store";
   import { OperatingSystem } from "$lib/client/types/context.type";
-
+  const dispatch = createEventDispatcher();
   export let url: string;
   export let node: any;
-  export let annots: any[];
+  export let annots: any[] = [];
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
 
   const pdfPersistence = new PdfHandler(node.id);
@@ -229,6 +229,7 @@
     annots = (await pdfPersistence.fetchAllClips()).sort(
       (a: any, b: any) => a.startPageNumber - b.startPageNumber
     );
+    dispatch("annotation", annots);
     renderHighlightLayers();
     if (removeAllRanges) removeAllRanges();
     annotation = {};
@@ -442,6 +443,7 @@
     annots = (await pdfPersistence.fetchAllClips()).sort(
       (a: any, b: any) => a.startPageNumber - b.startPageNumber
     );
+    dispatch("annotation", annots);
     renderHighlightLayers();
     isInlineEditBarVisible = false;
   }
@@ -456,6 +458,7 @@
     annots = (await pdfPersistence.fetchAllClips()).sort(
       (a: any, b: any) => a.startPageNumber - b.startPageNumber
     );
+    dispatch("annotation", annots);
     renderHighlightLayers();
     isInlineEditBarVisible = false;
   }
@@ -470,6 +473,7 @@
     annots = (await pdfPersistence.fetchAllClips()).sort(
       (a: any, b: any) => a.startPageNumber - b.startPageNumber
     );
+    dispatch("annotation", annots);
     renderHighlightLayers();
   }
 
@@ -822,6 +826,7 @@
     annots = (await pdfPersistence.fetchAllClips()).sort(
       (a: any, b: any) => a.startPageNumber - b.startPageNumber
     );
+    dispatch("annotation", annots);
     viewerContainerElement = document.getElementById("viewerContainer")!;
     document.addEventListener("keydown", handleKeyDown);
     viewerContainerElement?.addEventListener("mousedown", (event) =>
