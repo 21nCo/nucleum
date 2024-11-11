@@ -34,7 +34,8 @@
     {
       "bg-fgs1 hover:bg-fgs2 text-bgs1": type === "primary",
       "bg-bgs3 hover:bg-bgs4 text-fgs1 leading-7": type === "secondary",
-      "text-[20px] h-[72px] px-[60px] mo:h-14 mo:px-[28px]": !isShort,
+      "text-[20px] h-[72px] px-[60px] tp:w-[360px] dp:w-[360px] mo:h-14 mo:px-[28px]":
+        !isShort,
       "text-[18px] h-11 px-6": isShort,
       "flex-row-reverse": iconPosition === "start"
     }
@@ -43,7 +44,7 @@
 >
   <span class="text-nowrap">{label}</span>
   {#if icon}
-    <SvgIcon {icon} size={Size.lg} />
+    <SvgIcon {icon} size={Size.md} />
   {:else if QRURL && !$view.isPortrait}
     <QrElement bind:isHovering bind:enableHover url={QRURL} width={48} />
   {/if}

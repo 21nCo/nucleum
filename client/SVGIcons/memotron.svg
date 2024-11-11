@@ -1,8 +1,10 @@
-<svg width="100%" height="100%" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
-<!-- <rect width="38" height="38" rx="0.351852" fill="white"/> -->
-<rect x="7" y="19.3442" width="0.823916" height="13.5491" rx="0.33642" transform="rotate(-90 7 19.3442)" fill="currentColor"/>
-<path d="M10.5771 18.9991C10.5771 13.7807 14.8076 9.55029 20.0261 9.55029" stroke="currentColor" stroke-width="2.51971"/>
-<path d="M20.0261 28.449C14.8076 28.449 10.5771 24.2186 10.5772 19.0002" stroke="currentColor" stroke-width="2.51971"/>
-<path d="M29.4766 18.9984C29.4766 24.2169 25.2461 28.4473 20.0276 28.4473" stroke="currentColor" stroke-width="2.51971"/>
-<path d="M20.0266 9.55053C25.2451 9.55054 29.4756 13.7809 29.4756 18.9994" stroke="currentColor" stroke-width="2.51971"/>
+<svg width="100%" height="100%" viewBox="0 0 462 462" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- <rect width="38" height="38" rx="0.351852" fill="white"/> -->
+    <!-- <rect x="7" y="19.3442" width="0.823916" height="13.5491" rx="0.33642"
+        transform="rotate(-90 7 19.3442)" fill="currentColor" /> -->
+    <path
+        d="M244.363 128.303L313.89 168.445C321.54 172.862 326.253 181.025 326.253 189.858V270.142C326.253 278.975 321.54 287.138 313.89 291.555L244.363 331.697C236.713 336.113 227.287 336.113 219.637 331.697L150.11 291.555C142.46 287.138 137.747 278.975 137.747 270.142V189.858C137.747 181.025 142.46 172.862 150.11 168.445L219.637 128.303C227.287 123.887 236.713 123.887 244.363 128.303Z"
+        stroke="currentColor"
+        stroke-width="28"
+    />
 </svg>
