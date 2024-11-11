@@ -4,7 +4,7 @@
   import LeftPanel from "./LeftPanel.svelte";
   import TopNavBar from "./TopNavBar.svelte";
   import { addAnimateClass, cn } from "$lib/client/utils/ui.utils";
-  import type { IListItem, ITopNavBar } from "./Landing.types";
+  import type { IFooter, IListItem, ITopNavBar } from "./Landing.types";
   import { onMount } from "svelte";
   import view from "$lib/client/stores/view.store";
   import { currentProductsStore, isProductPage } from "./store/shared.store";
@@ -16,6 +16,7 @@
   export let topNavBarValues: ITopNavBar;
   export let isComingSoon: boolean = false;
   export let isProduct: boolean = false;
+  export let footerValues: IFooter;
   let transformedProducts: IListItem[] = [
     { title: "Products" },
     ...$currentProductsStore?.map((product) => ({
@@ -53,7 +54,7 @@
     <TopNavBar {topNavBarValues} />
     <slot />
     {#if !isComingSoon}
-      <Footer products={transformedProducts} />
+      <Footer products={transformedProducts} {footerValues} />
     {/if}
   </div>
   <RightPanel />

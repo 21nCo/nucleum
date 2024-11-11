@@ -63,7 +63,10 @@
 </script>
 
 <HeroSection {heroInputs} />
-<HeroVideo />
+<HeroVideo
+  videoUrl="https://youtu.be/CguXo8YQnm4"
+  thumbnailUrl="https://img.youtube.com/vi/CguXo8YQnm4/maxresdefault.jpg"
+/>
 <IrregularTileItemsSection
   items={features}
   title="Navigating your productivity"
