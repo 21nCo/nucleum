@@ -10,7 +10,8 @@
   export let rect: any;
   export let id: string;
   export let highlighter: string = "";
-  export let annotType = AnnotationType.COMMENT;
+  export let annotType: AnnotationType.TASK | AnnotationType.COMMENT =
+    AnnotationType.COMMENT;
   export let comment = "";
   export let showIcon = true;
   export let pageRectTop = 0;
@@ -52,6 +53,7 @@
   on:keydown={() => {}}
   style="position: absolute; left: {left}px; top: {top}px; width: {width}px; height: {height}px; border: 3px solid {color};"
 > -->
+<!-- svelte-ignore a11y-no-static-element-interactions -->
 <div
   class={id}
   data-color={color}
@@ -74,7 +76,7 @@
   on:mousedown|stopPropagation
 >
   {#if showIcon && annotType === AnnotationType.COMMENT}
-    <!-- <svg
+    <svg
       xmlns="http://www.w3.org/2000/svg"
       height={svgheight}
       viewBox="0 -960 960 960"
@@ -82,8 +84,9 @@
       ><path
         d="M240-400h480v-80H240v80Zm0-120h480v-80H240v80Zm0-120h480v-80H240v80ZM880-80 720-240H160q-33 0-56.5-23.5T80-320v-480q0-33 23.5-56.5T160-880h640q33 0 56.5 23.5T880-800v720ZM160-320h594l46 45v-525H160v480Zm0 0v-480 480Z"
       /></svg
-    > -->
-    <Icon icon="chat-bubble-bottom-center" />
+    >
+    <!-- NOTE - switchcd back to old SVG since this icon is not visible in dark mode -->
+    <!-- <Icon icon="chat-bubble-bottom-center" /> -->
   {:else if annotType === AnnotationType.TASK}
     <svg
       xmlns="http://www.w3.org/2000/svg"
