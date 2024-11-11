@@ -10,7 +10,7 @@
     ],
     cta: {
       label: "Access Web",
-      href: "https://app.pointron.io"
+      href: "https://app.memotron.io"
     }
   };
   let footerValues: IFooter = {

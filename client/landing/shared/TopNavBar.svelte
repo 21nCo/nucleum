@@ -119,7 +119,7 @@
           {#each topNavBarValues.items as item}
             <a
               class="block text-fgs1 text-[18px] leading-[28px] hover:text-aps1"
-              target="_blank"
+              target={item.href.startsWith("http") ? "_blank" : "_self"}
               href={item.href}>{item.label}</a
             >
           {/each}
@@ -129,7 +129,9 @@
               label={topNavBarValues.cta.label}
               isShort={true}
               class={className}
-              on:click={() => goto(topNavBarValues?.cta?.href ?? "")}
+              on:click={() => {
+                window.location.href = topNavBarValues?.cta?.href ?? "";
+              }}
             />
           {/if}
           <ButtonAsLink
