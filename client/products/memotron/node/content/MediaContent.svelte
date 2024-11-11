@@ -61,7 +61,11 @@
           $node.accessMode === ResourceAccessMode.INLINE
       })}
     >
-      <MediaContentResolver node={$node} on:refresh bind:this={contentRef} />
+      <MediaContentResolver
+        bind:node={$node}
+        on:refresh
+        bind:this={contentRef}
+      />
     </main>
   {/if}
   {#if rightPane || (webNodeTypeList.includes($node?.contentType) && !isConstrainedWidth)}
