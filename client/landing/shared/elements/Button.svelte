@@ -43,7 +43,7 @@
 >
   <span class="text-nowrap">{label}</span>
   {#if icon}
-    <SvgIcon {icon} size={Size.lg} />
+    <SvgIcon {icon} size={Size.md} />
   {:else if QRURL && !$view.isPortrait}
     <QrElement bind:isHovering bind:enableHover url={QRURL} width={48} />
   {/if}
