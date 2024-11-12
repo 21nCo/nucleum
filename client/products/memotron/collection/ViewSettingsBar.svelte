@@ -96,7 +96,8 @@
   <div class="flex flex-row gap-2 items-center">
     <Badge text="soon" />
     <span class="text-fgs3 text-b3">
-      Filter and sorting options will be available soon.
+      More views like table view, filter and sorting options will be available
+      soon.
     </span>
   </div>
 </div>
