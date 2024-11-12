@@ -151,32 +151,39 @@
 
   function onReStructure(e: CustomEvent) {
     logger.log({ at: "NodeContent - onReStructure", ...e.detail });
-    const differences = shallowDiff(previousRootStructure, e.detail.root);
-    // console.log("Differences", differences);
-    if (isValidArrayWithData(differences)) {
-      node.updateBlock(
-        $node.id,
-        { children: e.detail.root },
-        {
-          isDebounced: true,
-          debounceKey: "children"
-        }
-      );
-    }
-    previousRootStructure = deepCopy(e.detail.root);
-    if (!e.detail.children) return;
-    e.detail.children
-      .filter((x: INodeStructure) => x.factor <= hierarchyFactorLimit)
-      .forEach((child: INodeStructure) => {
+    try {
+      const differences = shallowDiff(previousRootStructure, e.detail.root);
+      // console.log({ at: "NodeContent - onReStructure", differences });
+      if (isValidArrayWithData(differences)) {
         node.updateBlock(
-          child.id,
-          { children: child.children },
+          $node.id,
+          { children: e.detail.root },
           {
             isDebounced: true,
             debounceKey: "children"
           }
         );
+      }
+      previousRootStructure = deepCopy(e.detail.root);
+      if (!e.detail.children) return;
+      e.detail.children
+        .filter((x: INodeStructure) => x.factor <= hierarchyFactorLimit)
+        .forEach((child: INodeStructure) => {
+          node.updateBlock(
+            child.id,
+            { children: child.children },
+            {
+              isDebounced: true,
+              debounceKey: "children"
+            }
+          );
+        });
+    } catch (e) {
+      logger.error({
+        at: "NodeContent - onReStructure - error",
+        error: e
       });
+    }
   }
 
   /**

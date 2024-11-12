@@ -22,8 +22,12 @@
       });
     }
   });
+  /**
+   * Note: Querying in this component instead of pre fetching for both thumbnails and node fetch due to latency for this query.
+   *
+   * "(fn::memotron::node::parent($parent.id)) as mdParent"
+   */
   async function refreshBreadcrumbs() {
-    // "(fn::memotron::node::parent($parent.id)) as mdParent"
     let parentItems = [];
     if (mdParent) {
       parentItems = await nodeStore.selectMany({
@@ -41,7 +45,6 @@
         }
       });
       if (result) parentItems = result[0].mdParent;
-      console.log({ result, parentItems, id });
     }
     if (!parentItems || parentItems.length === 0) return [];
     return parentItems

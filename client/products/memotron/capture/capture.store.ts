@@ -19,6 +19,7 @@ import { toasts } from "$lib/client/stores/notification.store";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import {
   generateMarkdownText,
+  getMarkdownSymbolPrepended,
   resolveNodeCaptureMetadata
 } from "$lib/client/products/memotron/node/node.utils";
 import { nodeStore, vectorResourceStore } from "../node/node.store";
@@ -50,9 +51,12 @@ import { UserDataMode } from "$lib/client/types/account.type";
 import { MemotronAction } from "../memotronAction.enum";
 import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
 import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
-import { TacoActions } from "$lib/client/types/taco.types";
 import { Persistence } from "$lib/client/persistence/persistence";
 import view from "$lib/client/stores/view.store";
+import context from "$lib/client/stores/context.store";
+import { Embed } from "$lib/client/types/context.type";
+import { TacoActions } from "../taco/taco.types";
+import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
@@ -273,6 +277,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     if (!result) return;
     const fileId = result[0].id;
     const node: OmitForCapture<IMediaNode> = {
+      id,
       contentType: NodeType.AUDIO,
       file: fileId,
       creationContext: params?.isEmbedContext
@@ -305,6 +310,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     if (!result) return;
     const fileId = result[0].id;
     const node: OmitForCapture<IMediaNode> = {
+      id,
       contentType: NodeType.IMAGE,
       file: fileId,
       label: `Image Capture - ${new Date().toLocaleString()}`,
@@ -340,7 +346,6 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       const data = await new Persistence().retrieveUrlData(text);
       if (data?.parsedData) {
         const parsedData = data.parsedData;
-        console.log("parsed html", parsedData);
         node.label = parsedData.label ?? node.label;
         node.url = parsedData.url ?? node.url;
         node.contentType = parsedData.contentType ?? node.contentType;
@@ -406,7 +411,9 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       return { ...x, from: rootId };
     });
     const blockLinks = val.links?.filter((x) => x.from !== "root");
-    if (!rootLinks && !blockLinks) return;
+    logger.log({ at: "CaptureStore.saveLinks", rootLinks, blockLinks, val });
+    if (!isValidArrayWithData(rootLinks) && !isValidArrayWithData(blockLinks))
+      return;
     const links = [...(rootLinks ?? []), ...(blockLinks ?? [])].map((x) => {
       return {
         in: x.from,
@@ -427,9 +434,14 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
   }
 
   async saveMarkdownCapture() {
+    console.time("saveMarkdownCapture");
     const val = this.get();
     //TODO - extract nodes from markdown blocks and save
-    const metadata = await resolveNodeCaptureMetadata();
+    const ctx = get(context);
+    console.time("metadata");
+    let metadata =
+      ctx.embed === Embed.HANDSET ? {} : await resolveNodeCaptureMetadata();
+    console.timeEnd("metadata");
     logger.log({ at: "CaptureStore.saveMarkdownCapture", val, metadata });
     // const id = prefixTable(generateRandomId(), Resource.node);
     const id = val.nodeId ?? generateResourceId(Resource.node);
@@ -471,33 +483,59 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
         const rootBlocks = val.body.blocks.filter((b) =>
           val.rootStructure.includes(b.id)
         );
-        mdText = generateMarkdownText(rootBlocks);
-        if (get(userPreferences).localAI.semanticSearch) {
-          tacoWorker.postMessage({
-            action: TacoActions.GET_EMBEDDINGS,
-            params: {
-              text: mdText
-            }
-          });
-          const embedding = await new Promise((resolve, reject) => {
-            tacoWorker.onmessage = (e) => {
-              resolve(e.data);
-            };
-          });
-          vectorInsertionresult = await vectorResourceStore.create({
-            id: generateResourceId(Resource.vector),
-            embedding: embedding,
-            node: id
-          });
+        console.time("generateMarkdownText");
+        mdText = val.label + " \n" + generateMarkdownText(rootBlocks);
+        console.timeEnd("generateMarkdownText");
+
+        if (
+          get(userPreferences).localAI.semanticSearch &&
+          ctx.embed !== Embed.HANDSET
+        ) {
+          console.time("vector");
+          try {
+            console.time("tacoWorker");
+
+            const eventId = val.id.toString();
+            tacoWorker.postMessage({
+              action: TacoActions.GET_EMBEDDINGS,
+              params: {
+                text: mdText,
+                eventId
+              }
+            });
+            const embedding: any = await new Promise((resolve, reject) => {
+              const handleMessage = (e) => {
+                const { eventId: recEventId, data } = e.data;
+                if (eventId == recEventId) {
+                  tacoWorker.removeEventListener("message", handleMessage);
+                  resolve(data);
+                }
+              };
+              tacoWorker.addEventListener("message", handleMessage);
+            });
+            console.timeEnd("tacoWorker");
+            vectorInsertionresult = await vectorResourceStore.create({
+              id: generateResourceId(Resource.vector),
+              embedding: embedding,
+              node: id
+            });
+            console.timeEnd("vector");
+          } catch (e) {
+            logger.error({
+              at: "CaptureStore.saveMarkdownCapture - vector generation error",
+              error: e
+            });
+          }
         }
       }
       root = {
         ...root,
         children: val.rootStructure,
-        mdText,
+        text: mdText,
         vector: vectorInsertionresult?.[0]?.id
       };
 
+      console.time("children");
       for (let block of val.childrenWithStructure) {
         const correspondingContent = val.body.blocks.find(
           (b) => b.id === block.id
@@ -509,31 +547,53 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
           const childrenNodes = val.body.blocks.filter((b) =>
             block.children?.includes(b.id)
           );
-          mdText = generateMarkdownText(childrenNodes);
-          if (get(userPreferences).localAI.semanticSearch) {
-            tacoWorker.postMessage({
-              action: TacoActions.GET_EMBEDDINGS,
-              params: {
-                text: mdText
-              }
-            });
-            const embedding = await new Promise((resolve, reject) => {
-              tacoWorker.onmessage = (e) => {
-                resolve(e.data);
-              };
-            });
-            vectorInsertionresult = await vectorResourceStore.create({
-              id: generateResourceId(Resource.vector),
-              embedding: embedding,
-              node: block.id
-            });
+          mdText =
+            getMarkdownSymbolPrepended(correspondingContent!) +
+            " \n" +
+            generateMarkdownText(childrenNodes);
+
+          if (
+            get(userPreferences).localAI.semanticSearch &&
+            ctx.embed !== Embed.HANDSET
+          ) {
+            try {
+              const eventId = block.id.toString();
+              tacoWorker.postMessage({
+                action: TacoActions.GET_EMBEDDINGS,
+                params: {
+                  text: mdText,
+                  eventId
+                }
+              });
+              const embedding: any = await new Promise((resolve, reject) => {
+                const handleMessage = (e) => {
+                  const { eventId: recEventId, data } = e.data;
+                  if (eventId == recEventId) {
+                    tacoWorker.removeEventListener("message", handleMessage);
+                    resolve(data);
+                  }
+                };
+                tacoWorker.addEventListener("message", handleMessage);
+              });
+              vectorInsertionresult = await vectorResourceStore.create({
+                id: generateResourceId(Resource.vector),
+                embedding: embedding,
+                node: block.id
+              });
+            } catch (e) {
+              logger.error({
+                at: "CaptureStore.saveMarkdownCapture - vector generation error",
+                error: e
+              });
+            }
           }
         }
         remainingResources.push({
           id: block.id,
           contentType: correspondingContent?.contentType,
           body: correspondingContent?.body,
-          mdText,
+          label: correspondingContent?.label,
+          text: mdText,
           vector:
             vectorInsertionresult?.length > 0
               ? vectorInsertionresult[0]?.id
@@ -543,12 +603,13 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
           children: block.children
         });
       }
+      console.timeEnd("children");
     }
 
     let result: any = await nodeStore.create([root, ...remainingResources]);
-    console.log("md save result", result);
     await this.saveLinks(id);
     this.postSave(result);
+    console.timeEnd("saveMarkdownCapture");
     return result;
   }
 }

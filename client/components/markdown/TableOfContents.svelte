@@ -9,6 +9,8 @@
   import { TextStyle } from "$lib/client/types/text.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import { headingNodeTypes } from "$lib/client/products/memotron/node/node.type";
+  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
+  import { Size } from "$lib/client/types/size.enum";
   export let mdId: string;
   const mdStore = getMdStore(mdId);
   let mdcontainerID = "markDown-" + mdId;
@@ -27,19 +29,15 @@
   });
   function refresh(blocks: IBlock[]) {
     headingBlocks = blocks
-      .filter(
-        (block: IBlock) =>
-          headingNodeTypes.includes(block.contentType) && "body" in block
-      )
+      .filter((block: IBlock) => headingNodeTypes.includes(block.contentType))
       .map((block: IBlock) => ({
-        content: block.body,
+        content: block.label ?? block.body,
         id: block.id,
         HEADING: Number(block.contentType.slice(-1))
       }));
     if (!(headingBlocks.length > 0)) return;
     isHeadingAvailable = true;
   }
-  $: console.log({ activeHeading: $mdStore.activeHeading });
 </script>
 
 {#if isHeadingAvailable}
@@ -60,4 +58,6 @@
       {/each}
     </div>
   </div>
+{:else}
+  <EmptyStatusView mainText="No headings found" size={Size.sm} />
 {/if}

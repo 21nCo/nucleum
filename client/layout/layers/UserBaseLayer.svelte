@@ -36,11 +36,17 @@
     ClientStorageKey,
     PersistenceProvider
   } from "$lib/client/persistence/persistence.type";
-  import { clientStorage } from "$lib/client/persistence/persistence.utils";
+  import {
+    clientStorage,
+    getDapId
+  } from "$lib/client/persistence/persistence.utils";
   import PageError from "$lib/client/components/error/PageError.svelte";
   import { SurrealPersistence } from "$lib/client/persistence/surreal/surreal.local";
   import { Embed } from "$lib/client/types/context.type";
   import posthog from "posthog-js";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
+  import { verifyVectorGenerationTransactionNUpdate } from "$lib/client/products/memotron/taco/taco.store";
 
   const loadingMessages = {
     cloneUp: {
@@ -51,7 +57,7 @@
       message: "Syncing your data from cloud..."
     },
     cloneDown: {
-      message: "First login detected. Syncing your data from cloud...",
+      message: "First login detected on this device/browser. Syncing...",
       subMessage: "Initializing the sync..."
     }
   };
@@ -62,6 +68,7 @@
   } = {
     message: ""
   };
+  let isAppLoading = false;
   let error: string | null = null;
   let dev_isDisableSyncOnAppear = false;
 
@@ -72,6 +79,8 @@
       });
     addWindowEventListeners();
     await initializeUser();
+    dispatch("ready");
+    verifyVectorGenerationTransactionNUpdate();
     $appLoadingState.isBaseLoaded = true;
   });
   /**
@@ -171,7 +180,7 @@
       if (!isLiteMode && !import.meta.env?.DEV) {
         await refreshAppStaticData();
       }
-      const dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
+      const dapId = await getDapId();
 
       if ($account.dataMode === UserDataMode.LOCAL) {
         // loadingMessage = "Initializing...";
@@ -216,7 +225,7 @@
             await flux.cloneDown();
           } else {
             loadingMessage = loadingMessages.syncDown;
-            await flux.syncDown();
+            await flux.syncDown(true);
             await flux.loadInMemoryStores();
           }
         }
@@ -279,16 +288,43 @@
     userPreferences.setAppearance(event.detail);
   }
 
+  function handleAppLoadingStatus(event: any) {
+    logger.log({ at: "handleAppLoadingStatus", event });
+    const detail = event.detail;
+    if (detail.message || detail.subMessage) {
+      isAppLoading = true;
+    }
+    if (detail.isFinished) {
+      setTimeout(() => {
+        isAppLoading = false;
+      }, 500);
+    }
+    if (detail.message !== undefined) {
+      loadingMessage.message = detail.message;
+    }
+    if (detail.subMessage !== undefined) {
+      loadingMessage.subMessage = detail.subMessage;
+    }
+  }
+
   function addWindowEventListeners() {
     window.addEventListener(
       GlobalEvent.PERSIST_APPEARANCE_USER,
       handlePersistAppearance
+    );
+    window.addEventListener(
+      GlobalEvent.APP_LOADING_STATUS,
+      handleAppLoadingStatus
     );
   }
   function removeWindowEventListeners() {
     window.removeEventListener(
       GlobalEvent.PERSIST_APPEARANCE_USER,
       handlePersistAppearance
+    );
+    window.removeEventListener(
+      GlobalEvent.APP_LOADING_STATUS,
+      handleAppLoadingStatus
     );
   }
   function handleBeforeUnload(event: any) {
@@ -318,7 +354,7 @@
   <AnalyticsLayer />
 {/if}
 <div class="flex h-screen w-screen">
-  {#if !$appLoadingState.isBaseLoaded || !$appLoadingState.isLocalLoaded}
+  {#if !$appLoadingState.isBaseLoaded || !$appLoadingState.isLocalLoaded || isAppLoading}
     <AppLoadingView
       message={loadingMessage.message}
       subMessage={loadingMessage.subMessage}

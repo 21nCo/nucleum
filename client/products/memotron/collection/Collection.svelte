@@ -76,6 +76,7 @@
   } from "./properties/property.utils";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import { InputStyle } from "$lib/client/types/input.type";
+  import { resizeListener } from "$lib/client/actions/resize.action";
 
   export let id: string = "";
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -105,11 +106,15 @@
   let isShowMetaViews = false;
   let isSingleViewMode = true;
   let searchQuery: string = "";
+  let containerWidth = 0;
 
   $: isConstrainedWidth =
     $view.isConstrainedWidth ||
-    $collection.accessMode === ResourceAccessMode.SPLIT ||
-    $collection.accessMode === ResourceAccessMode.FSPLIT;
+    $collection?.accessMode === ResourceAccessMode.SPLIT ||
+    $collection?.accessMode === ResourceAccessMode.FSPLIT ||
+    (containerWidth < 1000 &&
+      ($collection?.coverLayout?.placement === Placement.Right ||
+        $collection?.coverLayout?.placement === Placement.Left));
 
   $: coverPlacement =
     $collection?.coverLayout?.placement === Placement.Top ||
@@ -194,6 +199,8 @@
     if (!key) return;
     if (key === "tabBy" || key === "groupBy" || key === "subGroupBy") {
       value = stringToRecordId(value);
+    } else if (key === "properties") {
+      value = value.map(stringToRecordId);
     }
     activeView[key] = value;
     collection.updateView(
@@ -240,6 +247,18 @@
         isHideThumbnailPreview: activeView.isHideThumbnailPreview
       },
       "isHideThumbnailPreview"
+    );
+  }
+
+  function onTitleSettingChange(e: CustomEvent) {
+    if (!activeView) return;
+    activeView.isHideThumbnailTitle = e.detail;
+    collection.updateView(
+      activeView.id,
+      {
+        isHideThumbnailTitle: activeView.isHideThumbnailTitle
+      },
+      "isHideThumbnailTitle"
     );
   }
 
@@ -352,6 +371,13 @@
   }
   function onCoverReposition(e: CustomEvent) {
     logger.log({ at: "onCoverReposition", e });
+    if (
+      (coverPlacement === Placement.Top &&
+        $collection.coverLayout?.position?.y === e.detail) ||
+      (coverPlacement !== Placement.Top &&
+        $collection.coverLayout?.position?.x === e.detail)
+    )
+      return;
     collection.debouncedModify(
       {
         coverLayout: {
@@ -437,6 +463,9 @@
       "flex-col overflow-auto": coverPlacement === Placement.Top
     })}
     on:scroll={onScroll}
+    use:resizeListener={(e) => {
+      containerWidth = e.width;
+    }}
   >
     {#if accessPoint === ResourceAccessPoint.SELF && coverPlacement !== Placement.Right}
       <Cover
@@ -446,6 +475,7 @@
         position={$collection.coverLayout?.position}
         size={$collection.coverLayout?.size}
         {dev_isRoundedCover}
+        {isConstrainedWidth}
         bind:isCoverPickerOpen
         on:change={onCoverChange}
         on:placement={onPlacementChange}
@@ -492,6 +522,7 @@
             on:back
             {collection}
             {isSingleViewMode}
+            {isConstrainedWidth}
             bind:searchQuery
             bind:isShowMetaViews
             on:search={onSearch}
@@ -504,9 +535,11 @@
                   arrangement={activeView?.arrangement ?? Arrangement.LIST}
                   density={activeView?.density}
                   isHideThumbnailPreview={activeView?.isHideThumbnailPreview}
+                  isHideThumbnailTitle={activeView?.isHideThumbnailTitle}
                   on:arrangementChange={onArrangementChange}
                   on:densityChange={onDensityChange}
                   on:previewSettingChange={onPreviewSettingChange}
+                  on:titleSettingChange={onTitleSettingChange}
                 />
               {/if}
             </span>
@@ -523,8 +556,7 @@
               bind:value={searchQuery}
               style={InputStyle.BORDERED}
               size={Size.sm}
-              icon="ph:magnifying-glass"
-              placeholder={`Search this collection [Total items: ${$collection.totalNodeCount ?? 0}]`}
+              placeholder={`Search this collection (${$collection.totalNodeCount ?? 0} items)`}
               on:input={onSearch}
               isShowClearControl={searchQuery.length > 0}
               on:cancel={() => {
@@ -618,9 +650,11 @@
                     arrangement={activeView?.arrangement ?? Arrangement.LIST}
                     density={activeView?.density}
                     isHideThumbnailPreview={activeView?.isHideThumbnailPreview}
+                    isHideThumbnailTitle={activeView?.isHideThumbnailTitle}
                     on:arrangementChange={onArrangementChange}
                     on:densityChange={onDensityChange}
                     on:previewSettingChange={onPreviewSettingChange}
+                    on:titleSettingChange={onTitleSettingChange}
                   />
                   {#if !$collection.isInEditMode && !isConstrainedWidth}
                     <AddResourceAction
@@ -660,12 +694,9 @@
           </header>
         {/if}
         <main
-          class={cn(
-            "w-full grow flex flex-col gap-2 justify-center items-center px-4",
-            {
-              "overflow-auto": isSingleViewMode
-            }
-          )}
+          class={cn("w-full grow flex flex-col gap-2 items-center px-4", {
+            "overflow-auto": isSingleViewMode
+          })}
         >
           <ResourceStatusBanner resource={collection} />
           {#if $collection.isViewDataLoading}
@@ -691,6 +722,7 @@
         position={$collection.coverLayout?.position}
         size={$collection.coverLayout?.size}
         {dev_isRoundedCover}
+        {isConstrainedWidth}
         bind:isCoverPickerOpen
         on:change={onCoverChange}
         on:placement={onPlacementChange}

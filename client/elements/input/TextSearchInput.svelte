@@ -48,6 +48,7 @@
   }
   function hide() {
     popoverRef?.hidePopover();
+    dispatch("hide");
   }
 
   export function showDefaultResults() {

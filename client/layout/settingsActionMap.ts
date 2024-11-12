@@ -36,6 +36,7 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
     label: "AI Settings",
     icon: "ph:brain-light",
     component: TacoSettings,
+    hideContext: [Embed.HANDSET],
     modalParams: {
       title: "AI Settings",
       layout: {

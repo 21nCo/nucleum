@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import type { IListItem, ITileItem } from "../Landing.types";
+  import type { IFooter, IListItem, ITileItem } from "../Landing.types";
   import Section from "../Section.svelte";
   import Button from "../elements/Button.svelte";
   import Box from "./Box.svelte";
@@ -18,11 +18,12 @@
   import ButtonAsLink from "../ButtonAsLink.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   export let products: IListItem[];
+  export let footerValues: IFooter;
   export let appStoreUrl: string =
     "https://apps.apple.com/in/developer/blank-labs-private-limited/id1621745929";
 
   const ourStoryBgImage =
-    import.meta.env.VITE_STATIC_URL + "/images/our-story.png";
+    import.meta.env.VITE_STATIC_URL + "/images/our-story2.png";
 
   let isHovering = false;
   let canvas: HTMLCanvasElement;
@@ -41,25 +42,25 @@
   }
   let socials = [
     {
-      href: "https://twitter.com/21nCompany",
+      href: footerValues.twitterUrl ?? "https://twitter.com/21nCompany",
       icon: "x",
       primary: "hsla(0, 0%, 0%, 1)",
       isHovered: false
     },
     {
-      href: "https://discord.com/invite/9HJqKYTZKg",
+      href: footerValues.discordUrl ?? "https://discord.com/invite/9HJqKYTZKg",
       icon: "discord",
       primary: "hsla(235, 86%, 65%, 1)",
       isHovered: false
     },
     {
-      href: "https://www.youtube.com/@blankfellow",
+      href: footerValues.youtubeUrl ?? "https://www.youtube.com/@blankfellow",
       icon: "youtube",
       primary: "hsla(0, 100%, 50%, 1)",
       isHovered: false
     },
     {
-      href: "https://www.linkedin.com/company/21n",
+      href: footerValues.linkedinUrl ?? "https://www.linkedin.com/company/21n",
       icon: "linkedin",
       primary: "hsla(200, 100%, 35%, 1)",
       isHovered: false
@@ -79,10 +80,6 @@
   let information = [
     { title: "Information" },
     {
-      title: "Help center",
-      href: "https://21native.hashnode.space"
-    },
-    {
       title: "Privacy policy",
       href: "/privacy"
     }
@@ -91,6 +88,30 @@
     //   href: "/tos"
     // }
   ];
+  if (footerValues.helpUrl) {
+    information.push({
+      title: "Help center",
+      href: footerValues.helpUrl
+    });
+  }
+  if (footerValues.docsUrl) {
+    information.push({
+      title: "Documentation",
+      href: footerValues.docsUrl
+    });
+  }
+  if (footerValues.roadmapUrl) {
+    information.push({
+      title: "Roadmap",
+      href: footerValues.roadmapUrl
+    });
+  }
+  if (footerValues.changelogUrl) {
+    information.push({
+      title: "Changelog",
+      href: footerValues.changelogUrl
+    });
+  }
   const combinedLI = [
     { title: "Infomration" },
     joinUs,
@@ -115,7 +136,10 @@
       <div class="w-full flex gap-6 justify-between">
         <Box>
           <div class="flex h-full flex-col items-center justify-center gap-9">
-            <QrElement url={appStoreUrl} enableHover={false} />
+            <QrElement
+              url={footerValues.appStoreUrl ?? appStoreUrl}
+              enableHover={false}
+            />
             <p class="text-[24px] font-medium leading-[33px]">
               Scan & Download
             </p>
@@ -135,7 +159,7 @@
       </div>
       <div class="w-full flex gap-x-7">
         <Box backgroundImage={ourStoryBgImage}>
-          <div class="w-full h-full flex items-center justify-center">
+          <div class="w-full h-full flex items-center justify-center z-20">
             <Button
               type="secondary"
               label="Our story"
@@ -173,6 +197,7 @@
           {/if}
           21n
         </p>
+        &nbsp;|&nbsp;HQ Hyderabad
       {/if}
       <div class="mx-auto flex gap-5 mo:gap-3">
         {#each socials as social, index}
@@ -196,7 +221,7 @@
           </button>
         {/each}
       </div>
-      <p>HQ Hyderabad</p>
+      <p class="mo:text-b3">Blank labs private limited</p>
     </div>
   </div>
 </Section>

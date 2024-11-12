@@ -18,6 +18,18 @@
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
 
+  const imageFileTypes = [".jpg", ".png", ".jpeg", ".webp", ".gif", ".svg"];
+  const videoFileTypes = [".mp4", ".mov"];
+  const audioFileTypes = [".wav", ".mp3"];
+  const pdfFileTypes = [".pdf"];
+
+  const supportedFileTypes = [
+    ...imageFileTypes,
+    ...videoFileTypes,
+    ...audioFileTypes,
+    ...pdfFileTypes
+  ].join(",");
+
   let multipleFilesData:
     | {
         files: { file: File; contentType: NodeType }[];
@@ -87,7 +99,7 @@
     <div
       class="flex flex-col gap-6 mo:w-9/10 w-4/5 mo:h-9/10 h-4/5 justify-between items-center border border-dashed border-brs3 bg-bgs2 bg-opacity-60 rounded-md"
       use:fileDrop={{
-        accept: ".jpg,.png,.jpeg,.pdf,.wav,.mp3",
+        accept: supportedFileTypes,
         multiple: true,
         maxSize: MAX_FILE_SIZE_MB * 1024 * 1024,
         onDrop: handleDrop,

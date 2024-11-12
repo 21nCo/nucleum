@@ -119,17 +119,20 @@
       {/if}
     </div>
     {#if isShowHotKeyHint}
-      <span
-        class={cn(
-          "flex justify-center items-center w-5 h-5 text-b4 rounded-md",
-          {
-            "bg-aps2 text-fgs1": isActive,
-            "bg-bgs3": !isActive
-          }
-        )}
-      >
-        {resolveHotKey()?.toUpperCase() ?? ""}
-      </span>
+      {@const hotKey = resolveHotKey()}
+      {#if hotKey}
+        <span
+          class={cn(
+            "flex justify-center items-center w-5 h-5 text-b4 rounded-md",
+            {
+              "bg-aps2 text-fgs1": isActive,
+              "bg-bgs3": !isActive
+            }
+          )}
+        >
+          {hotKey.toUpperCase()}
+        </span>
+      {/if}
     {/if}
   </HoverableElement>
 {/key}

@@ -7,7 +7,8 @@
   import { Size } from "$lib/client/types/size.enum";
   import {
     ResourceAccessPoint,
-    ResourceAccessMode
+    ResourceAccessMode,
+    ResourceAccessPointState
   } from "$lib/client/components/flux/resourceStores/resource.type";
   import { resolveMultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
   import { appStore } from "$lib/client/stores/app.store";
@@ -26,6 +27,8 @@
   export let defaultAccessMode: ResourceAccessMode = ResourceAccessMode.POP;
   export let size: Size.sm | Size.md = Size.md;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
+  export let accessPointState: ResourceAccessPointState =
+    ResourceAccessPointState.DEFAULT;
   export let isPreventDefault = false;
   export let width: number = 290;
   export let isShowLoadingPulseAtTheEnd: boolean = false;
@@ -71,6 +74,7 @@
               {item}
               {size}
               {accessPoint}
+              {accessPointState}
               {arrangement}
               on:click={(e) => onClick(e, item)}
             />
@@ -94,6 +98,7 @@
             {item}
             {size}
             {accessPoint}
+            {accessPointState}
             {arrangement}
             on:click={(e) => onClick(e, item)}
           />

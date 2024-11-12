@@ -11,11 +11,11 @@
   import { bg, cn } from "$lib/client/utils/ui.utils";
   import ProfilePicture from "./ProfilePicture.svelte";
   import { Modes } from "../../calendar/birdView/Birdview.type";
-  import { signout } from "$lib/client/utils/account.utils";
   import modalEvent from "../../modal/modal.store";
   import { Action } from "$lib/client/types/action.enum";
   export let context: "page" | "modal" = "page";
   export let parentBackgroundIndex: number = 1;
+
   function determineLicense() {
     if ($account.userInfo?.licenseType) {
       switch ($account.userInfo?.licenseType) {
@@ -29,10 +29,16 @@
     } else if ($account.userInfo?.joinDate) {
       const joinDate = new Date($account.userInfo?.joinDate);
       const joinDateIsBeforeJan012024 = joinDate < new Date(2024, 1, 1);
+      const joinDateIsBeforeNov122024 = joinDate < new Date(2024, 11, 12);
+      const joinDateIsBeforeDec012024 = joinDate < new Date(2024, 12, 1);
       if (joinDateIsBeforeJan012024) {
         return "Early Adopter - lifetime license";
+      } else if (joinDateIsBeforeNov122024) {
+        return "1y free cloud sync 🎉 (First 100 early adopters)";
+      } else if (joinDateIsBeforeDec012024) {
+        return "3 months free cloud sync 🎉 (First 1000 early users)";
       } else {
-        return "Early Adopter - 1 year extended trial";
+        return "Early Adopter - limited free cloud sync trial";
       }
     }
   }
@@ -49,7 +55,7 @@
       class="flex flex-col justify-between items-center w-full h-full"
       on:click
     >
-      <div class="flex w-full justify-end text-b5 text-fgs3 px-3 pt-2">
+      <div class="flex w-full justify-end text-b4 text-fgs3 px-3 pt-2">
         {$account.userInfo?.joinDate
           ? "Joined " + formatDate(new Date($account.userInfo?.joinDate))
           : ""}
@@ -102,8 +108,7 @@
           parentBgIndex={3}
           size={Size.sm}
           on:click={() => {
-            // account.signOut({ isPreventDapIdClear: true });
-            signout();
+            account.signOut({ isPreventDapIdClear: true });
             modalEvent.hide(Action.SETTINGS);
           }}
         />

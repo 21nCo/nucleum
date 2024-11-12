@@ -25,6 +25,7 @@
   export let label: InputLabel | undefined = undefined;
   export let value: string;
   export let parentBackgroundIndex: number = 0;
+  export let dev_isHideEditOptions: boolean = false;
   let search: string = "";
   let searchInputRef: any;
   let popoverRef: any;
@@ -103,7 +104,12 @@
     isActive={isOptionsVisible}
   >
     <SelectPropertyItem
-      item={property.config?.options?.find((x) => x.id === value)}
+      item={value === "none"
+        ? {
+            label: "None",
+            color: 50
+          }
+        : property.config?.options?.find((x) => x.id === value)}
       isSelectedContext={true}
     />
     <Icon icon={isOptionsVisible ? "chevup" : "chevdown"} size={Size.sm} />
@@ -176,7 +182,7 @@
             on:click={onSave}
           />
         </div>
-      {:else}
+      {:else if !dev_isHideEditOptions}
         <Button
           label="Edit options"
           isUnderlined={true}

@@ -59,6 +59,8 @@
   import view from "$lib/client/stores/view.store";
   import { logger } from "$lib/client/components/debug/logger.client";
   import { intersection } from "$lib/client/actions/intersection.action";
+  import context from "$lib/client/stores/context.store";
+  import { Embed } from "$lib/client/types/context.type";
 
   let searchQuery: string = "";
   let selectedResource: Resource = Resource.node;
@@ -107,19 +109,19 @@
       label: "Combinations",
       value: Resource.combination,
       icon: "ph:bounding-box-light"
-    },
+    }
     // {
     //   ...commonResourceProps,
     //   label: "Files",
     //   value: Resource.file,
     //   icon: "ph:file"
     // },
-    {
-      ...commonResourceProps,
-      label: "Tasks",
-      value: Resource.task,
-      icon: "ph:check-circle"
-    }
+    // {
+    //   ...commonResourceProps,
+    //   label: "Tasks",
+    //   value: Resource.task,
+    //   icon: "ph:check-circle"
+    // }
   ];
 
   $: multiSelectContext = selectedResource + "-" + ResourceAccessPoint.LIBRARY;
@@ -146,8 +148,8 @@
   });
 
   async function refresh(isPagination?: boolean) {
-    console.log({ at: "Library - refresh", isPagination, selectedResource });
-    if (!isPagination) {
+    logger.log({ at: "Library - refresh", isPagination, selectedResource });
+    if (isPagination !== true) {
       isRefreshing = true;
       data = [];
     }
@@ -179,7 +181,12 @@
           filters = { ...filters, type: selectedSubType };
         }
       }
-      totalCount = await new SearchStore().resolveCount(selectedResource);
+      totalCount = await new SearchStore().resolveCount(
+        selectedResource,
+        selectedSubType !== "all" && selectedSubType !== "recents"
+          ? (selectedSubType.toUpperCase() as NodeType | CollectionType)
+          : undefined
+      );
       const newData = await searchStore.select({
         resource: selectedResource,
         searchQuery,
@@ -189,8 +196,9 @@
         limit: 50,
         offset: isPagination ? data.length : 0
       });
-      console.log({ newData });
-      data = [...data, ...newData];
+      if (isPagination) data = [...data, ...newData];
+      else data = [...newData];
+      // console.log({ newData, data });
     } finally {
       setTimeout(() => {
         isRefreshing = false;
@@ -377,8 +385,6 @@
       );
     }
   }
-
-  $: console.log({ data });
 </script>
 
 <div class="relative w-full h-full">
@@ -542,7 +548,8 @@
               accessPoint={ResourceAccessPoint.LIBRARY}
               resource={selectedResource}
               size={$view.isConstrainedWidth ? Size.sm : Size.md}
-              isShowLoadingPulseAtTheEnd={data.length < totalCount}
+              isShowLoadingPulseAtTheEnd={data.length < totalCount &&
+                !searchQuery}
               arrangement={$view.isConstrainedWidth
                 ? selectedResource === Resource.node
                   ? Arrangement.MASONRY
@@ -567,7 +574,8 @@
             size={Size.lg}
             {...resolveEmptyStateMessage()}
             isSearchContext={true}
-            actionText={selectedResource === Resource.node
+            actionText={selectedResource === Resource.node &&
+            $context.embed !== Embed.HANDSET
               ? "Install chrome extension"
               : undefined}
             on:click={() => {

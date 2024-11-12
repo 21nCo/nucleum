@@ -115,6 +115,6 @@
     url={_url}
     {node}
     {accessPoint}
-    bind:annots={node.pdfAnnotations}
+    on:annotation
   />
 {/if}

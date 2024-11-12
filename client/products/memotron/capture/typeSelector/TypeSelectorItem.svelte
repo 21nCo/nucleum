@@ -22,7 +22,7 @@
 
 <button
   class={cn(
-    "flex gap-2 items-center justify-center px-8 py-4 rounded-md border",
+    "flex gap-2 items-center justify-center px-6 py-4 rounded-md border",
     {
       "bg-aps3 border-aps1 text-aps1": isActive,
       "border-brs3 hover:bg-bgs2": !isActive
@@ -62,7 +62,7 @@
   {:else if item.icon && typeof item.icon === "object"}
     <AvatarRenderer avatar={item.icon} {size} />
   {/if}
-  <div class="whitespace-nowrap">
+  <div class="whitespace-nowrap truncate">
     {item.label ?? enumToString(item.value)}
   </div>
 </button>

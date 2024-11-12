@@ -159,7 +159,7 @@
     "isDark": true,
     "isActiveFgFg": false,
     "isNeverFgFg": false,
-    "label": "Apple (exp.)",
+    "label": "Lime",
     "tailwindSelector": "cs_tidigit_dark_apple",
     "theme": "clean"
   },
@@ -191,7 +191,7 @@
     "isDark": true,
     "isActiveFgFg": false,
     "isNeverFgFg": false,
-    "label": "Oxide (exp.)",
+    "label": "Oxide",
     "tailwindSelector": "cs_tidigit_dark_oxide",
     "theme": "clean"
   },
@@ -199,7 +199,7 @@
     "colors": {
       "ags1": "hsl(151 45% 53%)",
       "ags2": "hsl(151 45% 85%)",
-      "aps1": "hsl(217 72% 52%)",
+      "aps1": "hsl(217 0% 23%)",
       "aps2": "hsl(217 0% 80%)",
       "aps3": "hsl(217 0% 90%)",
       "ars1": "hsl(0 89% 71%)",
@@ -219,9 +219,7 @@
       "fgs2": "hsl(0 0% 20%)",
       "fgs3": "hsl(0 0% 33%)",
       "fgs4": "hsl(0 0% 50%)",
-      "bgg1":"hsla(126, 100%, 69%,0.04)"
-
-
+      "bgg1": "hsla(126, 100%, 69%,0.04)"
     },
     "id": "colorscheme:clean_tidymono_light",
     "isDark": false,
@@ -236,7 +234,7 @@
     "colors": {
       "ags1": "hsl(151 45% 53%)",
       "ags2": "hsl(151 45% 85%)",
-      "aps1": "hsl(217 60% 54%)",
+      "aps1": "hsl(229 10% 75%)",
       "aps2": "hsl(229 10% 45%)",
       "aps3": "hsl(229 10% 25%)",
       "ars1": "hsl(0 89% 71%)",
@@ -255,8 +253,7 @@
       "fgs2": "hsl(0 0% 92%)",
       "fgs3": "hsl(0 0% 87%)",
       "fgs4": "hsl(0 0% 79%)",
-      "bgg1":"hsla(117, 23%, 19%, 1)"
-
+      "bgg1": "hsla(117, 23%, 19%, 1)"
     },
     "id": "colorscheme:clean_tidymono_dark",
     "isDark": true,

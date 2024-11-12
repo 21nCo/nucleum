@@ -16,10 +16,6 @@
   import TextArea from "$lib/client/elements/input/TextArea.svelte";
   import { generateUID } from "$lib/client/utils/utils";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import {
-    TacoActions,
-    TranscriptionModel
-  } from "$lib/client/types/taco.types";
   import { currentUserId } from "../capture/capture.store";
   import { nodeStore } from "../node/node.store";
   import { Audio2MD } from "./AudioToMarkdown.utils";
@@ -29,13 +25,17 @@
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
-  import { read_audio } from "@xenova/transformers";
+  // import { read_audio } from "@xenova/transformers";
   import { appStore } from "$lib/client/stores/app.store";
   import { Action } from "$lib/client/types/action.enum";
   import view from "$lib/client/stores/view.store";
   import { cn } from "$lib/client/utils/ui.utils";
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import context from "$lib/client/stores/context.store";
+  import { Embed } from "$lib/client/types/context.type";
+  import { read_audio } from "@huggingface/transformers";
+  import { TacoActions, TranscriptionModel } from "../taco/taco.types";
 
   export let body: any = {};
   export let url: string;
@@ -265,7 +265,8 @@
           />
         {/if}
       {/if}
-      {#if $userPreferences.localAI.audioTranscription && accessPoint === ResourceAccessPoint.SELF}
+      <!-- TODO - reenable transcription after iOS crash issue fix -->
+      {#if $userPreferences.localAI.audioTranscription && accessPoint === ResourceAccessPoint.SELF && $context.embed !== Embed.HANDSET}
         <Button
           on:click={convertToMarkdown}
           {isDisabled}
@@ -275,12 +276,12 @@
       {/if}
     </div>
   </div>
-  {#if accessPoint === ResourceAccessPoint.SELF}
+  {#if accessPoint === ResourceAccessPoint.SELF && $context.embed !== Embed.HANDSET}
     <div
       class="flex flex-col w-full flex-1 items-center gap-6 border border-brs2 rounded-md bg-bgs2 bg-opacity-30 py-4"
     >
       <div class="flex w-full justify-between gap-3 mo:px-2 px-10">
-        <Text content="Transcription" style={TextStyle.PANEL_HEADING} />
+        <Text content="Transcription" style={TextStyle.PANEL_HEADING_SMALL} />
         {#if !$view.isConstrainedWidth}
           <DropDown
             items={accuracy}
@@ -345,6 +346,10 @@
             {/if}
           </span>
         {/if}
+      </div>
+      <div class="text-b3 text-fgs3 px-2">
+        Note: Transcription is currently only available for English language. We
+        are working to expand this to other languages.
       </div>
     </div>
   {/if}

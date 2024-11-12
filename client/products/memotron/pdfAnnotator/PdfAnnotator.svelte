@@ -20,7 +20,7 @@
     viewportToScaled
   } from "$lib/client/products/memotron/pdfAnnotator/pdfAnnotator.utils";
   import { debouncer } from "$lib/client/utils/utils";
-  import { onMount } from "svelte";
+  import { onMount, createEventDispatcher } from "svelte";
   import TextHiglighter from "./TextHiglighter.svelte";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import InlineToolBar from "./toolbar/InlineToolBar.svelte";
@@ -36,10 +36,12 @@
   import type { IHighlighter } from "../common/highlighters/highlight.type";
   import { highlightStore } from "../common/highlighters/highlight.store";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-
+  import context from "$lib/client/stores/context.store";
+  import { OperatingSystem } from "$lib/client/types/context.type";
+  const dispatch = createEventDispatcher();
   export let url: string;
   export let node: any;
-  export let annots: any[];
+  export let annots: any[] = [];
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
 
   const pdfPersistence = new PdfHandler(node.id);
@@ -63,9 +65,9 @@
    */
   let DPR = window.devicePixelRatio;
   let ranOnce: boolean = false;
-  let scale: number = 1;
-  const MIN_SCALE = 0.5;
-  const MAX_SCALE = 2.3;
+  let scale: number = $context.os == OperatingSystem.WINDOWS ? 1 : 0.5;
+  const MIN_SCALE = $context.os == OperatingSystem.WINDOWS ? 0.5 : 0.1;
+  const MAX_SCALE = $context.os == OperatingSystem.WINDOWS ? 2.3 : 1.8;
   let scrollTop = 0;
   let pageNumber = 1;
   let totalPages = 1;
@@ -227,6 +229,7 @@
     annots = (await pdfPersistence.fetchAllClips()).sort(
       (a: any, b: any) => a.startPageNumber - b.startPageNumber
     );
+    dispatch("annotation", annots);
     renderHighlightLayers();
     if (removeAllRanges) removeAllRanges();
     annotation = {};
@@ -440,6 +443,7 @@
     annots = (await pdfPersistence.fetchAllClips()).sort(
       (a: any, b: any) => a.startPageNumber - b.startPageNumber
     );
+    dispatch("annotation", annots);
     renderHighlightLayers();
     isInlineEditBarVisible = false;
   }
@@ -454,6 +458,7 @@
     annots = (await pdfPersistence.fetchAllClips()).sort(
       (a: any, b: any) => a.startPageNumber - b.startPageNumber
     );
+    dispatch("annotation", annots);
     renderHighlightLayers();
     isInlineEditBarVisible = false;
   }
@@ -468,6 +473,7 @@
     annots = (await pdfPersistence.fetchAllClips()).sort(
       (a: any, b: any) => a.startPageNumber - b.startPageNumber
     );
+    dispatch("annotation", annots);
     renderHighlightLayers();
   }
 
@@ -820,6 +826,7 @@
     annots = (await pdfPersistence.fetchAllClips()).sort(
       (a: any, b: any) => a.startPageNumber - b.startPageNumber
     );
+    dispatch("annotation", annots);
     viewerContainerElement = document.getElementById("viewerContainer")!;
     document.addEventListener("keydown", handleKeyDown);
     viewerContainerElement?.addEventListener("mousedown", (event) =>

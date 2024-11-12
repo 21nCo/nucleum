@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
   import {
+    type IBlock,
     type SpanContent,
     SpanType
   } from "$lib/client/components/markdown/md.type";
@@ -17,6 +18,8 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { logger } from "../../debug/logger.client";
   import { scrollIntoViewOnFocus } from "$lib/client/actions/scroll.action";
+  import { isValidString, truncateString } from "$lib/shared/utils/text.utils";
+  import { resolveNodeLabelString } from "$lib/client/products/memotron/node/node.utils";
   const dispatch = createEventDispatcher();
   //   export let block: Block<TextContent>;
   export let id: string = generateUID();
@@ -166,14 +169,17 @@
   export function replace(target: string, replacement: string) {
     innerHTML = innerHTML.replace(target, replacement);
   }
-  export function addMention(item: any, searchQuery: string) {
+  export function addMention(item: IBlock, searchQuery: string) {
     console.log("addMention - start", { item, content, innerHTML });
     content = content?.replace(
-      "@" + searchQuery,
-      `[${item.label}](resource=${item.id})`
+      "@" + (searchQuery ?? ""),
+      `[${
+        isValidString(truncateString(resolveNodeLabelString(item), 50)) ??
+        "Unknown"
+      }](resource=${item.id})`
     );
     innerHTML = innerHTML.replace(
-      "@" + searchQuery,
+      "@" + (searchQuery ?? ""),
       `<mention data-id='${item.id}'></mention>`
     );
     console.log("addMention - after adding placeholder", {

@@ -27,11 +27,12 @@
   <div
     class={cn("flex justify-center items-center min-w-fit rounded-md", {
       "bg-aps3 text-aps1 border border-aps2": text.toLowerCase() === "new",
-      "bg-ass3 text-ass1 border border-ass1": [
-        "soon",
-        "planned",
-        "beta"
-      ].includes(text.toLowerCase()),
+      "bg-ass3 text-ass1 border border-ass1": ["beta"].includes(
+        text.toLowerCase()
+      ),
+      "bg-ags3 text-ags1 border border-ags1": ["soon", "planned"].includes(
+        text.toLowerCase()
+      ),
       "text-fgs2 border border-brs3": ![
         "new",
         "soon",

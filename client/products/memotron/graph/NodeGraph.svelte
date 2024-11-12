@@ -9,6 +9,7 @@
   const dispatch = createEventDispatcher();
 
   export let nodeId: string;
+  export let layout: string;
   export let data: {
     nodes: any[];
     edges: any[];
@@ -131,6 +132,7 @@
     <NodeGraphUsingG6
       bind:this={graphRef}
       {data}
+      {layout}
       centerNodeId={nodeId}
       on:select
       on:render={onRender}

@@ -12,12 +12,23 @@
   import { resolveNodeLabel, resolveNodeLabelString } from "../node/node.utils";
   import NodeAvatar from "../node/avatar/NodeAvatar.svelte";
   import NodeTitleLabelPart from "../node/title/NodeTitleLabelPart.svelte";
+  import { activeResourceFilterV2 } from "$lib/client/utils/utils";
+  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
+  import { Size } from "$lib/client/types/size.enum";
+  import Divider from "$lib/client/elements/Divider.svelte";
+  import { Orientation } from "$lib/client/types/direction.enum";
+  import { ColorStrength } from "$lib/client/types/appearance.type";
 
   let data: { nodes: any[]; edges: any[] } = { nodes: [], edges: [] };
   let isRendered = false;
   let isLoading = false;
+  let isHideOrphans = false;
+  let _nodes: any[] = [];
+  let _edges: any[] = [];
+  let graphRef: GlobalGraphUsingG6;
   onMount(async () => {
     await fetchData();
+    applyFilters();
   });
 
   async function fetchData() {
@@ -34,7 +45,8 @@
         )
         .map((link: any) => ({
           source: link.in.toString(),
-          target: link.out.toString()
+          target: link.out.toString(),
+          id: link.id.toString()
         }));
       const allNodesList = Array.from(
         new Set(edges.map((link: any) => [link.source, link.target]).flat())
@@ -49,7 +61,8 @@
         ],
         filters: {
           // contentType: [...rootNodeTypeList, ...headingNodeTypes]
-          id: allNodesList
+          id: allNodesList,
+          ...activeResourceFilterV2
         }
       });
       const allRootNodes = await nodeStore.selectMany({
@@ -61,12 +74,13 @@
           "contentType"
         ],
         filters: {
-          contentType: [...rootNodeTypeList, ...headingNodeTypes]
+          contentType: [...rootNodeTypeList, ...headingNodeTypes],
+          ...activeResourceFilterV2
         }
       });
-      console.log({ nodesWithLinks, allRootNodes, links });
+      // console.log({ nodesWithLinks, allRootNodes, links });
       const nodes = [...nodesWithLinks, ...allRootNodes];
-      data.nodes = nodes
+      _nodes = nodes
         .map((node: any) => {
           return {
             id: node.id.toString(),
@@ -77,12 +91,36 @@
           };
         })
         .filter(removeDuplicatesFilter);
-      data.edges = edges;
+      _edges = edges
+        .filter((x) => {
+          return (
+            x.source &&
+            x.target &&
+            _nodes.some((y) => y.id === x.source) &&
+            _nodes.some((y) => y.id === x.target)
+          );
+        })
+        .filter(removeDuplicatesFilter);
     } catch (e) {
       console.error(e);
     } finally {
       isLoading = false;
     }
+  }
+
+  function applyFilters() {
+    if (isHideOrphans) {
+      const nodes = _nodes.filter((node) => {
+        return _edges.some(
+          (edge) => edge.source === node.id || edge.target === node.id
+        );
+      });
+      data.nodes = nodes;
+      data.edges = _edges;
+      return;
+    }
+    data.nodes = _nodes;
+    data.edges = _edges;
   }
 
   function renderComponentToString(node: any) {
@@ -131,20 +169,35 @@
         Graph
         <Badge text="beta" />
       </span>
-      <span class="flex items-center gap-3 text-fgs3 text-b3">
+      <span class="flex items-center gap-3 text-fgs3 text-b3 h-full">
         <span>
           {data.nodes.length} nodes
         </span>
         <span>
           {data.edges.length} connections
         </span>
+        <Divider
+          orientation={Orientation.Vertical}
+          colorStrength={ColorStrength.Strong}
+        />
+        <SwitchInput
+          label={{ label: "Hide orphans" }}
+          size={Size.sm}
+          bind:checked={isHideOrphans}
+          on:change={() => {
+            applyFilters();
+            graphRef?.rerender();
+          }}
+        />
       </span>
     </div>
     <GlobalGraphUsingG6
+      bind:this={graphRef}
       {data}
       on:render={onRender}
       on:select={onNodeSelect}
       on:canvasClick={onCanvasClick}
+      layout={isHideOrphans ? "radial-2" : "d3-force"}
     />
   {/if}
 </div>

@@ -8,6 +8,7 @@
   const dispatch = createEventDispatcher();
 
   export let data: { nodes: any[]; edges: any[] } = { nodes: [], edges: [] };
+  export let layout: string = "force-1";
   let _data: { nodes: any[]; edges: any[] } = { nodes: [], edges: [] };
   let graph: Graph;
   const currentColors: any = retrieveCurrentColors($appearance);
@@ -16,6 +17,13 @@
     preProcessData();
     renderGraph();
   });
+
+  export function rerender() {
+    if (!graph) return;
+    graph.destroy();
+    preProcessData();
+    renderGraph();
+  }
 
   async function preProcessData() {
     _data.nodes = data.nodes.map((n) => {
@@ -36,6 +44,39 @@
     });
     _data.edges = [...data.edges];
     // console.log({ _data });
+  }
+
+  function resolveLayout(method: string) {
+    switch (method) {
+      case "force-1":
+        return {
+          type: "force",
+          linkDistance: 200,
+          preventOverlap: true
+        };
+      case "force-2":
+        return {
+          type: "force",
+          linkDistance: 450,
+          preventOverlap: true
+        };
+      case "radial-2":
+        return {
+          type: "radial",
+          linkDistance: 350,
+          maxIteration: 1000,
+          preventOverlap: true,
+          nodeSize: 40,
+          manyBody: {},
+          x: {},
+          y: {}
+        };
+      case "d3-force":
+        return {
+          type: "d3-force",
+          linkDistance: 350
+        };
+    }
   }
 
   function renderGraph() {
@@ -75,13 +116,7 @@
           degree: 1
         }
       ],
-      layout: {
-        type: "d3-force",
-        // manyBody: {
-        //   gravity: 100
-        // },
-        linkDistance: 350
-      }
+      layout: resolveLayout(layout)
     });
     graph.render();
     // graph.draw();

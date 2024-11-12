@@ -23,6 +23,44 @@
   let focusedItem: any;
   let config = [
     {
+      section: "Text",
+      children: [
+        {
+          label: "Paragraph",
+          description: "Paragraph block",
+          type: NodeType.SIMPLE_TEXT,
+          icon: "hugeicons:paragraph"
+        },
+        {
+          label: "Quote",
+          description: "Quote block",
+          type: NodeType.QUOTE,
+          icon: "hugeicons:quote-up"
+        },
+        {
+          label: "Code",
+          description: "Code block",
+          type: NodeType.CODE,
+          icon: "code"
+        },
+        {
+          label: "Callout",
+          description: "Callout block",
+          type: NodeType.CALLOUT,
+          icon: "bookmark",
+          badge: "new"
+        },
+        {
+          label: "Math",
+          description: "Math block",
+          type: NodeType.MATH,
+          icon: "hugeicons:summation-01",
+          badge: "planned",
+          isDisabled: true
+        }
+      ]
+    },
+    {
       section: "headings",
       children: [
         {
@@ -59,44 +97,6 @@
         //   type: NodeType.HEADING5,
         //   icon: "lucide:heading-5"
         // }
-      ]
-    },
-    {
-      section: "Text",
-      children: [
-        {
-          label: "Paragraph",
-          description: "Paragraph block",
-          type: NodeType.SIMPLE_TEXT,
-          icon: "hugeicons:paragraph"
-        },
-        {
-          label: "Quote",
-          description: "Quote block",
-          type: NodeType.QUOTE,
-          icon: "hugeicons:quote-up"
-        },
-        {
-          label: "Code",
-          description: "Code block",
-          type: NodeType.CODE,
-          icon: "code"
-        },
-        {
-          label: "Callout",
-          description: "Callout block",
-          type: NodeType.CALLOUT,
-          icon: "bookmark",
-          badge: "new"
-        },
-        {
-          label: "Math",
-          description: "Math block",
-          type: NodeType.MATH,
-          icon: "hugeicons:summation-01",
-          badge: "planned",
-          isDisabled: true
-        }
       ]
     },
     {

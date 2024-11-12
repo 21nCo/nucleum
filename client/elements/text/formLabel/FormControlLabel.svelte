@@ -1,6 +1,8 @@
 <script lang="ts">
   import type { InputLabel } from "$lib/client/types/input.type";
+  import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
+  import Badge from "../Badge.svelte";
   import FormLabelTooltip from "./FormLabelTooltip.svelte";
   export let props: InputLabel;
   export let forId: string = "";
@@ -21,5 +23,8 @@
   {/if}
   {#if props.isMarkRequired}
     <div class="text-ars1">*</div>
+  {/if}
+  {#if props.badge}
+    <Badge text={props.badge} size={Size.sm} />
   {/if}
 </label>

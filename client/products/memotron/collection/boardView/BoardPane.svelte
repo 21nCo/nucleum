@@ -110,7 +110,7 @@
       )}
     >
       <Text content={group.label} style={TextStyle.PANEL_HEADING_SMALL} />
-      <Button icon="ellipsis-vertical" />
+      <!-- <Button icon="ellipsis-vertical" /> -->
     </div>
     <div class="grow w-full flex flex-col gap-2">
       {#if isValidArrayWithData(subGroups)}
@@ -130,11 +130,15 @@
           nodes={_groupData}
           arrangement={view.arrangement}
           isHidePreview={view.isHideThumbnailPreview}
+          isHideTitle={view.isHideThumbnailTitle}
           density={1}
           isDraggable={true}
           accessPoint={ResourceAccessPoint.COLLECTION}
           accessPointId={collection.id}
           isApplyCustomColor={dev_isRenderColors && group.color}
+          visibleProps={$collection.properties?.filter((x) =>
+            view.properties?.some(resourceInList(x))
+          )}
         />
       {:else}
         <EmptyStatusView size={Size.sm} subText="No items meet this criteria" />

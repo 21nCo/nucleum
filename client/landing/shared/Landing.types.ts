@@ -50,3 +50,15 @@ export enum PanelName {
   PRODUCTS = "Products",
   BUILT_AT_BLANK_COOP = "Built at 21n"
 }
+
+export type IFooter = {
+  appStoreUrl?: string;
+  helpUrl?: string;
+  docsUrl?: string;
+  roadmapUrl?: string;
+  changelogUrl?: string;
+  twitterUrl?: string;
+  youtubeUrl?: string;
+  discordUrl?: string;
+  linkedinUrl?: string;
+};

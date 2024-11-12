@@ -37,6 +37,21 @@
       <div class="relative flex-grow w-full">
         <div class="relative">
           <div
+            id="lqtjbl61ulrwk"
+            class="w-full h-full outline-none font-medium p-2"
+            style="max-width: 100%; width: 100%;  word-break: break-word;"
+          >
+            "We", "Us" or "Our" in this Agreement refers to Blank labs Private
+            limited, registered H-no: 4-4/B, Kappapahad, Telangana, India.
+          </div>
+          <div class="absolute top-0 left-0 h-full w-0.5 bg-a1"></div>
+        </div>
+      </div>
+    </div>
+    <div class="flex items-center w-full">
+      <div class="relative flex-grow w-full">
+        <div class="relative">
+          <div
             id="lqtjc5quf8g5n"
             class="w-full h-full outline-none text-base p-1"
             style="max-width: 100%; width: 100%;  word-break: break-word;"

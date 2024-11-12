@@ -2,7 +2,7 @@ import type { AppSkin, Theme } from "$lib/client/types/appearance.type";
 import type { TimeScale } from "./time.type";
 import type { IAvatar } from "./avatar.type";
 import type { IObservableStoreSubject } from "./data.type";
-import type { TranscriptionModel } from "./taco.types";
+import type { TranscriptionModel } from "../products/memotron/taco/taco.types";
 export type IUserGlobalPreferences = IObservableStoreSubject & {
   nickName: string;
   // theme: AppSkin;
@@ -36,6 +36,7 @@ export type IUserGlobalPreferences = IObservableStoreSubject & {
     semanticSearch: boolean;
     audioTranscription: boolean;
     markdownQAChat: boolean;
+    vectorGenerationInProgress: boolean;
   };
 
   /**

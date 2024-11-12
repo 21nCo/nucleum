@@ -483,7 +483,8 @@ export function resolveCollectionContextMenu(
         items: [
           resourceActions.star(),
           resourceActions.select(accessPoint),
-          resourceActions.edit(accessPoint),
+          //TODO - clicking edit should open edit mode - not opening for Collection
+          // resourceActions.edit(accessPoint),
           resourceActions.copyLink()
         ]
       },
@@ -503,6 +504,16 @@ export function resolveCollectionContextMenu(
           //   callback: async () => {}
           // },
           resourceActions.copyLink(),
+          {
+            value: "convert",
+            icon: "ph:arrows-clockwise-light",
+            label: "Convert as Simple",
+            callback: async () => {
+              return collectionStore.modify(collection.id, {
+                type: CollectionType.UNTYPED
+              });
+            }
+          },
           {
             value: "captureshortcut",
             icon: "ph:arrow-up-right-light",
@@ -527,7 +538,18 @@ export function resolveCollectionContextMenu(
       items: [
         resourceActions.star(),
         resourceActions.edit(accessPoint),
-        resourceActions.copyLink()
+        resourceActions.copyLink(),
+        {
+          value: "convert",
+          icon: "ph:arrows-clockwise-light",
+          label: "Convert to Typed",
+          callback: async () => {
+            console.log({ at: "resolveCollectionContextMenu.convert" });
+            return collectionStore.modify(collection.id, {
+              type: CollectionType.TYPED
+            });
+          }
+        }
       ]
     },
     ...commonGroups

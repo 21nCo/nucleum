@@ -24,7 +24,7 @@
       $context.isInOfflineMode = isInOfflineMode;
     }}
   />
-  <SwitchInput
+  <!-- <SwitchInput
     label={{
       label: "Turn on low data mode",
       tooltip: {
@@ -38,7 +38,7 @@
       await clientStorage.set(ClientStorageKey.LOW_DATA_MODE, isInLowDataMode);
       $context.isInLowDataMode = isInLowDataMode;
     }}
-  />
+  /> -->
 
   <InlineInfoBanner
     content="Note: Offline mode will be automatically turned on when you are not connected to the internet."

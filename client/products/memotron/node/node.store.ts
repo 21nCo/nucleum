@@ -17,7 +17,7 @@ import {
   ActiveResourceStore,
   ResourceStore
 } from "$lib/client/components/flux/resourceStores/resource.store";
-import { debouncer } from "$lib/client/utils/utils";
+import { debouncer, generateUID } from "$lib/client/utils/utils";
 import { formatDate } from "$lib/client/utils/time.utils";
 import {
   ResourceAccessMode,
@@ -39,7 +39,7 @@ import { logger } from "$lib/client/components/debug/logger.client";
 import { collectionStore } from "../collection/collection.store";
 import type { IRecordId } from "$lib/client/types/data.type";
 import type { IToggleItem } from "$lib/client/elements/toggle/toggle.type";
-import { generateMarkdownText } from "./node.utils";
+import { generateMarkdownText, getMarkdownSymbolPrepended } from "./node.utils";
 import { isValidString } from "$lib/shared/utils/text.utils";
 import {
   resourceInList,
@@ -47,11 +47,14 @@ import {
 } from "$lib/client/components/flux/resourceStores/resource.utils";
 import view from "$lib/client/stores/view.store";
 import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-import { TacoActions } from "$lib/client/types/taco.types";
 
 import context from "$lib/client/stores/context.store";
 import type { ICollectionExpanded } from "../collection/collection.type";
 import type { IAvatar } from "$lib/client/types/avatar.type";
+import { Embed } from "$lib/client/types/context.type";
+import { TacoActions } from "../taco/taco.types";
+import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+import { generateResourceId } from "$lib/shared/utils/surreal.utils";
 
 export const hierarchyFactorLimit = 5;
 
@@ -103,11 +106,15 @@ class NodeStore extends ResourceStore<INode> {
       types?: ICollectionExpanded[];
     }
   ) {
+    logger.log({
+      at: "NodeStore.refreshNodeAvatar",
+      params
+    });
     let types = params?.types;
     if (!types && params.collections) {
       types = await collectionStore.resolveTypes(params.collections);
     }
-    if (!types) return;
+    if (!types || !isValidArrayWithData(types)) return;
     const avatar = this.resolveNodeAvatar(types);
     this.modify(id, {
       avatar
@@ -168,46 +175,76 @@ export class ActiveNodeStore extends ActiveResourceStore<
     id: IRecordId,
     changedProps: { body?: string; children?: string[] }
   ) => {
+    logger.debug({
+      at: "ActiveNodeStore.updateBlockPropagator",
+      changedProps,
+      id: id.toString()
+    });
     if (changedProps.children) {
       const node = this.get();
       const childrenNodes = node.md.blocks.filter(
         (x) => x.id && changedProps.children?.some(resourceInList(x.id))
       );
-      const mdText = generateMarkdownText(childrenNodes);
-      // const embedding = await FeatureExtractor.generateVectorEmbeddings(mdText);
-      // let params = { filters: { node: node.id.toString() } };
-      // {
-      //   whereClause: `node.id=${node.id}`
-      // };
-      // let vectorResult = await vectorResourceStore.selectMany(params);
-      // const vectorUpdateresult = await vectorResourceStore.modify(
-      //   vectorResult?.[0].id,
-      //   {
-      //     embedding: embedding
-      //   }
-      // );
-      if (get(userPreferences).localAI.semanticSearch) {
-        tacoWorker.postMessage({
-          action: TacoActions.GET_EMBEDDINGS,
-          params: {
-            text: mdText
+
+      const currentNode = await nodeStore.select(id);
+      let parentValue;
+      if (currentNode.contentType == NodeType.NODULAR_MARKDOWN)
+        parentValue = currentNode.label ?? currentNode.body;
+      else parentValue = getMarkdownSymbolPrepended(currentNode);
+      const mdText = parentValue + " \n" + generateMarkdownText(childrenNodes);
+      try {
+        if (
+          get(userPreferences).localAI.semanticSearch &&
+          get(context).embed !== Embed.HANDSET
+        ) {
+          const eventId = id.toString();
+          tacoWorker.postMessage({
+            action: TacoActions.GET_EMBEDDINGS,
+            params: {
+              text: mdText,
+              eventId: eventId
+            }
+          });
+          const embedding = await new Promise((resolve, reject) => {
+            const handleMessage = (e) => {
+              const { eventId: recEventId, data } = e.data;
+              if (eventId == recEventId) {
+                tacoWorker.removeEventListener("message", handleMessage);
+                resolve(data);
+              }
+            };
+            tacoWorker.addEventListener("message", handleMessage);
+          });
+          let vectorId;
+          if (currentNode.vector) {
+            vectorId = currentNode.vector;
+            const vectorUpdateresult = await vectorResourceStore.modify(
+              vectorId,
+              {
+                embedding: embedding
+              }
+            );
+          } else {
+            vectorId = generateResourceId(Resource.vector);
+            const vectorUpdateresult = await vectorResourceStore.create({
+              id: vectorId,
+              embedding: embedding,
+              currentNode: id
+            });
           }
+        }
+      } catch (e) {
+        logger.error({
+          at: "ActiveNodeStore.updateBlockPropagator - vector generation error",
+          error: e
         });
-        const embedding = await new Promise((resolve, reject) => {
-          tacoWorker.onmessage = (e) => {
-            resolve(e.data);
-          };
-        });
-        let params = { filters: { node: node.id.toString() } };
-        let vectorResult = await vectorResourceStore.selectMany(params);
-        const vectorUpdateresult = await vectorResourceStore.modify(
-          vectorResult?.[0].id,
-          {
-            embedding: embedding
-          }
-        );
       }
-      return this.resourceStore.modify(id, { ...changedProps, mdText });
+      logger.debug({
+        at: "ActiveNodeStore.updateBlockPropagator - end",
+        changedProps,
+        id: id.toString()
+      });
+      return this.resourceStore.modify(id, { ...changedProps, text: mdText });
     }
     this.resourceStore.modify(id, changedProps);
   };
@@ -247,7 +284,8 @@ export class ActiveNodeStore extends ActiveResourceStore<
           linkedTo: id,
           linkType: x.linkType,
           id: x.id,
-          tags: x.tags
+          tags: x.tags,
+          direction: x.in.toString() === this.id ? "outgoing" : "incoming"
         } as INodeLinkThumb;
       });
     const collections: IRecordId[] = rawLinks
@@ -648,7 +686,7 @@ export function resolveNodeContextMenu(
       group: "all",
       items: [
         resourceActions.star(),
-        resourceActions.toggleReadMode(),
+        // resourceActions.toggleReadMode(),
         nodeActions.metadataPane,
         nodeActions.historyPane
       ]
@@ -678,9 +716,9 @@ export function resolveVisibleActions(
     !isConstrainedWidth
   ) {
     return [
-      nodeActions.toggleReadMode,
-      nodeActions.sideNotesPane,
-      nodeActions.showForks
+      // nodeActions.toggleReadMode,
+      nodeActions.sideNotesPane
+      // nodeActions.showForks
     ];
   } else if (
     (contentType === NodeType.NODULAR_MARKDOWN ||

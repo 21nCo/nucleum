@@ -41,6 +41,8 @@ export function resolveContentPreview(node: INode) {
     return body.text;
   } else if (node.mdText && typeof node.mdText === "string") {
     return node.mdText;
+  } else if (node.text && typeof node.text === "string") {
+    return node.text;
   } else if (contentType === NodeType.KINDLE_HIGHLIGHT && "text" in body) {
     return body.text;
   }
@@ -64,51 +66,53 @@ export async function resolveNodeCaptureMetadata() {
   return metadata;
 }
 
+export function getMarkdownSymbolPrepended(block: IBlock) {
+  switch (block.contentType) {
+    case NodeType.SIMPLE_TEXT:
+      block.body = block.body.replaceAll(/\n/g, "  \n");
+      block.body = block.body.replaceAll("<div><br></div>", "  \n");
+      block.body = block.body.replaceAll(/<br>/g, "  \n");
+      block.body = block.body.replaceAll(
+        /<span class="bg-gray-200 px-1 font-mono">(.*?)<\/span>/g,
+        "`$1`"
+      );
+      block.body = block.body.replaceAll(/<i>(.*?)<\/i>/g, "*$1*");
+      block.body = block.body.replaceAll(/<b>(.*?)<\/b>/g, "**$1**");
+      block.body = block.body.replaceAll(
+        /<span id="[^"]*">(.*?)<\/span>/g,
+        "$1"
+      );
+      block.body = block.body.replaceAll(/<span>(.*?)<\/span>/g, "$1");
+      block.body = block.body.replaceAll(/<div>(.*?)<\/div>/g, "\n $1");
+      //todo - add remaining inline style patterns
+      return block.body;
+    case NodeType.HEADING1:
+      return `# ${block.label ?? block.body}`;
+    case NodeType.HEADING2:
+      return `## ${block.label ?? block.body}`;
+    case NodeType.HEADING3:
+      return `### ${block.label ?? block.body}`;
+    case NodeType.HEADING4:
+      return `#### ${block.label ?? block.body}`;
+    case NodeType.HEADING5:
+      return `##### ${block.label ?? block.body}`;
+    case NodeType.DOUBLE_DIVIDER:
+      return `---`;
+    case NodeType.DIVIDER:
+      return `===`;
+    case NodeType.QUOTE:
+      return `> ${block.body}`;
+    case NodeType.LIST:
+    case NodeType.ORDERED_LIST:
+    case NodeType.CHECKLIST:
+      return `- ${block.body.text}`;
+    case NodeType.CALLOUT:
+    case NodeType.CODE:
+      return block.body.text;
+  }
+}
 export function generateMarkdownText(blocks: IBlock[]) {
-  return blocks
-    .map((b) => {
-      switch (b.contentType) {
-        case NodeType.SIMPLE_TEXT:
-          b.body = b.body.replaceAll(/\n/g, "  \n");
-          b.body = b.body.replaceAll("<div><br></div>", "  \n");
-          b.body = b.body.replaceAll(/<br>/g, "  \n");
-          b.body = b.body.replaceAll(
-            /<span class="bg-gray-200 px-1 font-mono">(.*?)<\/span>/g,
-            "`$1`"
-          );
-          b.body = b.body.replaceAll(/<i>(.*?)<\/i>/g, "*$1*");
-          b.body = b.body.replaceAll(/<b>(.*?)<\/b>/g, "**$1**");
-          b.body = b.body.replaceAll(/<span id="[^"]*">(.*?)<\/span>/g, "$1");
-          b.body = b.body.replaceAll(/<span>(.*?)<\/span>/g, "$1");
-          b.body = b.body.replaceAll(/<div>(.*?)<\/div>/g, "\n $1");
-          //todo - add remaining inline style patterns
-          return b.body;
-        case NodeType.HEADING1:
-          return `# ${b.body}`;
-        case NodeType.HEADING2:
-          return `## ${b.body}`;
-        case NodeType.HEADING3:
-          return `### ${b.body}`;
-        case NodeType.HEADING4:
-          return `#### ${b.body}`;
-        case NodeType.HEADING5:
-          return `##### ${b.body}`;
-        case NodeType.DOUBLE_DIVIDER:
-          return `---`;
-        case NodeType.DIVIDER:
-          return `===`;
-        case NodeType.QUOTE:
-          return `> ${b.body}`;
-        case NodeType.LIST:
-        case NodeType.ORDERED_LIST:
-        case NodeType.CHECKLIST:
-          return `- ${b.body.text}`;
-        case NodeType.CALLOUT:
-        case NodeType.CODE:
-          return b.body.text;
-      }
-    })
-    .join("\n");
+  return blocks.map((b) => getMarkdownSymbolPrepended(b)).join("\n");
 }
 
 export function resolveNodeIcon(contentType: NodeType) {
@@ -169,7 +173,11 @@ export function resolveNodeContentLabel(contentType: NodeType) {
 
 export function resolveFilePreview(node: INode) {
   const { contentType, body, file } = node;
-  if (contentType === NodeType.IMAGE) {
+  if (
+    contentType === NodeType.IMAGE ||
+    contentType === NodeType.FILE ||
+    contentType === NodeType.VIDEO
+  ) {
     return file;
   } else if (contentType === NodeType.WEB_SCREENSHOT_CLIP) {
     return body.file;
@@ -247,12 +255,12 @@ export function resolveNodeLabel(item: INodeThumb) {
       };
     case NodeType.TWEET:
       parent = parent as ITwitterProfile;
-      const twitterProfileLabel = isValidString(parent.body.name)
+      const twitterProfileLabel = isValidString(parent?.body?.name)
         ? parent.body.name
         : "Unknown";
       return {
         label: "Tweet by ",
-        parent: { id: parent.id, label: twitterProfileLabel },
+        parent: { id: parent?.id, label: twitterProfileLabel },
         text: item.body?.content
       };
     case NodeType.TWITTER_PROFILE:

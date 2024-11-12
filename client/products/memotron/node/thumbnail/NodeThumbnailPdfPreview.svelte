@@ -16,6 +16,9 @@
   >
     <span class="text-fgs3 text-b2"> Preview not available </span>
   </object>
+  <div
+    class="absolute inset-0 w-full h-full bg-gradient-to-b from-transparent via-bgs1/5 to-bgs1"
+  ></div>
 </button>
 
 <style>

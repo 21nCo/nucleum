@@ -50,7 +50,7 @@
   }
 </script>
 
-<div class="flex gap-2 items-center justify-center h-full">
+<div class="flex gap-2 items-center h-full w-full overflow-x-auto mo:pr-4">
   {#if !isPreventContentTypeRender}
     <button
       class="flex items-center gap-2 h-full border border-bgs4 hover:border-fgs3 rounded-full px-2 py-0.5 text-b2 whitespace-nowrap bg-bgs2 text-fgs1"
@@ -109,6 +109,9 @@
           context="nodepageCollectionsLane"
           bind:searchQuery
           on:select={onSelect}
+          on:hide={() => {
+            popoverRef?.hide();
+          }}
         />
       </div>
     </slot>

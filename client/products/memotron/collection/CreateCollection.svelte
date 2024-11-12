@@ -37,12 +37,13 @@
   import { appStore } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
   import TextArea from "$lib/client/elements/input/TextArea.svelte";
+  import { toasts } from "$lib/client/stores/notification.store";
 
   let title: string;
   let description: string;
   let isStarred: boolean = false;
   let selectedType: CollectionType = CollectionType.UNTYPED;
-  let selectedView: CollectionLayout;
+  let selectedView: CollectionLayout = CollectionLayout.BOARD;
   let isCaptureShortcutEnabled: boolean = true;
   let properties: IProperty[] = [];
   let avatar: any;
@@ -138,7 +139,6 @@
           isShowCoverPicker = false;
         }}
         on:select={(e) => {
-          console.log("cover photo selected", e);
           coverPhoto = e.detail;
         }}
       />
@@ -209,7 +209,7 @@
         {#if selectedType === CollectionType.TYPED}
           <TypeExtensionAndPropertiesEditor bind:isCaptureShortcutEnabled />
         {/if}
-        <OptionSelector
+        <!-- <OptionSelector
           options={collectionLayoutOptions}
           iconOrientation={Orientation.Vertical}
           size={$view.isConstrainedWidth ? Size.sm : Size.md}
@@ -223,7 +223,7 @@
             }
           }}
           bind:selected={selectedView}
-        />
+        /> -->
       </div>
 
       <ModalFooter
@@ -231,35 +231,40 @@
         primaryAction={{
           label: "Save",
           callback: async () => {
-            logger.log({
-              at: "create collection",
-              title,
-              selectedType
-            });
-            const result = await collectionStore.save({
-              label: title,
-              description,
-              type: selectedType,
-              defaultLayout: selectedView,
-              isStarred,
-              cover: coverPhoto,
-              isCaptureShortcutEnabled:
-                selectedType === CollectionType.TYPED
-                  ? isCaptureShortcutEnabled
-                  : undefined,
-              avatar: {
-                code: avatar?.code,
-                color: avatar?.color,
-                file: avatar?.file,
-                isFilled: avatar?.isFilled,
-                type: avatar?.type
+            try {
+              logger.log({
+                at: "create collection",
+                title,
+                selectedType
+              });
+              const result = await collectionStore.save({
+                label: title,
+                description,
+                type: selectedType,
+                defaultLayout: selectedView,
+                isStarred,
+                cover: coverPhoto,
+                isCaptureShortcutEnabled:
+                  selectedType === CollectionType.TYPED
+                    ? isCaptureShortcutEnabled
+                    : undefined,
+                avatar: {
+                  code: avatar?.code,
+                  color: avatar?.color,
+                  file: avatar?.file,
+                  isFilled: avatar?.isFilled,
+                  type: avatar?.type
+                }
+              });
+              if (!result) {
+                toasts.error("Error creating collection. Please try again.");
+                return;
               }
-            });
-            if (!result)
-              return {
-                error: "Error creating collection. Please try again."
-              };
-            return true;
+              return true;
+            } catch (e) {
+              logger.error({ at: "create collection", error: e });
+              toasts.error("Error creating collection. Please try again.");
+            }
           }
         }}
         secondaryAction={{

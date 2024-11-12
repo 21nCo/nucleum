@@ -13,7 +13,7 @@ function nodeFetch() {
   const def = `DEFINE FUNCTION OVERWRITE fn::memotron::node::fetch($id: record){
     return array::first(select *, parent.* as parent, file.* as file, (select * from node where parent is $id) as clips,
     (fn::memotron::node::children($parent.children)) as children, 
-    (fn::memotron::node::parent($id)) as mdParent, ->link.* as outlinks, <-link.* as inlinks, array::concat(->link.*, <-link.*) as links from node where id is $id);
+     ->link.* as outlinks, <-link.* as inlinks, array::concat(->link.*, <-link.*) as links from node where id is $id);
 };`;
   return [...nodeChildren(), ...nodeParent(), def];
 }

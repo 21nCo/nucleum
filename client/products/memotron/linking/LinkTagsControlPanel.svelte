@@ -1,12 +1,16 @@
 <script lang="ts">
   import { logger } from "$lib/client/components/debug/logger.client";
   import Button from "$lib/client/elements/button/Button.svelte";
+  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
+  import Icon from "$lib/client/elements/Icon.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { toasts } from "$lib/client/stores/notification.store";
+  import view from "$lib/client/stores/view.store";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import type { IRecordId } from "$lib/client/types/data.type";
+  import { Size } from "$lib/client/types/size.enum";
   import { linkTagStore } from "./link.store";
   import type { ILinkTag } from "./link.type";
   import LinkTagsGroup from "./LinkTagsGroup.svelte";
@@ -60,41 +64,56 @@
     else toasts.error("No tags to delete");
   }
 
-  $: groups = linkTagStore.transform($linkTagStore);
-  $: console.log({ groups, linkTags: $linkTagStore });
+  $: groups = $linkTagStore ? linkTagStore.transform($linkTagStore) : [];
 </script>
 
-<div class="flex flex-col gap-12 w-full h-full">
+<div class="flex flex-col gap-12 mt-3 w-full h-full">
   <div class="w-full flex gap-6">
     <TextInput
       bind:value={inputValue}
       placeholder="Type tag or group:tag to add"
       on:enter={() => save()}
     />
-    <Button
-      icon="ph:plus"
-      label="Add"
-      type={ButtonVariant.PRIMARY}
-      style={ButtonStyle.OUTLINED}
-      on:click={() => save()}
-    />
+    {#if $view.isConstrainedWidth}
+      <button
+        class="w-14 h-full flex justify-center items-center bg-bgs2 rounded-md"
+        on:click={() => save()}
+      >
+        <Icon icon="ph:plus" />
+      </button>
+    {:else}
+      <Button
+        icon="ph:plus"
+        label="Add"
+        type={ButtonVariant.PRIMARY}
+        style={ButtonStyle.OUTLINED}
+        on:click={() => save()}
+      />
+    {/if}
   </div>
   {#if errorMessage}
     <InlineErrorMessage bind:error={errorMessage} />
   {/if}
-  <div class="flex flex-col gap-6 overflow-auto">
-    {#each groups as group}
-      {#if group?.items && group.items.length > 0}
-        <LinkTagsGroup
-          {group}
-          on:save={(e) => save(e.detail)}
-          on:updateGroupName={onUpdategroup}
-          on:bulkDelete={onBulkDelete}
-          on:remove={onRemove}
-          on:update={onUpdate}
-        />
-      {/if}
-    {/each}
-    <ScrollViewBottomSpacer />
+  <div class="flex flex-col flex-grow gap-6 overflow-auto">
+    {#if !groups || groups.length === 0}
+      <EmptyStatusView
+        mainText="No link tags found."
+        subText="Add some link tags to start using for link relationships."
+      />
+    {:else}
+      {#each groups as group}
+        {#if group?.items && group.items.length > 0}
+          <LinkTagsGroup
+            {group}
+            on:save={(e) => save(e.detail)}
+            on:updateGroupName={onUpdategroup}
+            on:bulkDelete={onBulkDelete}
+            on:remove={onRemove}
+            on:update={onUpdate}
+          />
+        {/if}
+      {/each}
+      <ScrollViewBottomSpacer />
+    {/if}
   </div>
 </div>

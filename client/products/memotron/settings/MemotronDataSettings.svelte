@@ -65,10 +65,9 @@
         icon: "ph:trash-light",
         variant: ButtonVariant.DANGER,
         callback: async () => {
-          await account.signOut();
           await flux.clear();
           toasts.success("Data cleared successfully");
-          window.location.reload();
+          await account.signOut();
           return true;
         }
       }
@@ -110,8 +109,13 @@
     </span>
   </section>
   <section class="flex flex-col gap-4">
-    <Text content="Clear data" style={TextStyle.SECTION_HEADING} />
+    <Text content="More" style={TextStyle.SECTION_HEADING} />
     <div class="flex items-center gap-4">
+      <Button
+        label="Reload"
+        icon="ph:arrow-counter-clockwise-light"
+        on:click={() => window.location.reload()}
+      />
       <Button
         label="Clear local cache"
         tooltip="This will clear all data from your local cache and log you out. You will have to re-sync the data from the cloud."

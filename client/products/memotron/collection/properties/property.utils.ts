@@ -21,7 +21,8 @@ export function resolvePropertyDefaultValue(property: IProperty) {
       fallback = 0;
       break;
     case PropertyType.SINGLE_SELECT:
-      fallback = property?.config?.options?.[0]?.id ?? "";
+      // fallback = property?.config?.options?.[0]?.id ?? "";
+      fallback = "none";
       break;
     case PropertyType.DATE:
       fallback = new Date();

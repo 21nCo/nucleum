@@ -59,7 +59,7 @@
   {#if node.contentType === NodeType.WEB_PAGE}
     <WebPagePreview {node} />
   {:else if node.contentType === NodeType.TEXT_CLIP || node.contentType === NodeType.WEB_SCREENSHOT_CLIP || node.contentType === NodeType.KINDLE_HIGHLIGHT}
-    <WebClipPreview {node} isNodePageContext={true} />
+    <WebClipPreview {node} {accessPoint} />
   {:else if node.contentType === NodeType.TWEET}
     <TweetPreview {node} {accessPoint} />
   {:else if node.contentType === NodeType.TWITTER_PROFILE}

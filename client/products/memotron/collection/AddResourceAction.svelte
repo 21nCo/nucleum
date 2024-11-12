@@ -19,12 +19,14 @@
       label: "Create new",
       icon: "ph:plus-thin",
       value: "createNew"
-    },
-    {
-      label: "Create multiple",
-      icon: "ph:rows-plus-bottom-thin",
-      value: "createMultiple"
     }
+    // {
+    //   label: "Create multiple",
+    //   icon: "ph:rows-plus-bottom-thin",
+    //   value: "createMultiple",
+    //   isDisabled: true,
+    //   badge: "soon"
+    // }
   ];
 </script>
 
