@@ -32,6 +32,7 @@
   export let isShowMetaViews: boolean = false;
   export let isSingleViewMode: boolean = false;
   export let isConstrainedWidth: boolean = false;
+  let dev_isEnableMetaViewsToggle: boolean = false;
 
   let isSearchFocused: boolean = false;
   let searchBoxRef: TextInput;
@@ -271,7 +272,7 @@
       {/if}
       {#if !isSearchFocused}
         <slot name="additional"></slot>
-        {#if !$collection.isInEditMode}
+        {#if !$collection.isInEditMode && dev_isEnableMetaViewsToggle}
           <Toggle
             icon="ph:monitor-play-thin"
             tooltip="Play actions"

@@ -104,7 +104,12 @@
     isActive={isOptionsVisible}
   >
     <SelectPropertyItem
-      item={property.config?.options?.find((x) => x.id === value)}
+      item={value === "none"
+        ? {
+            label: "None",
+            color: 50
+          }
+        : property.config?.options?.find((x) => x.id === value)}
       isSelectedContext={true}
     />
     <Icon icon={isOptionsVisible ? "chevup" : "chevdown"} size={Size.sm} />

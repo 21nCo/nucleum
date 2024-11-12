@@ -281,7 +281,7 @@
       class="flex flex-col w-full flex-1 items-center gap-6 border border-brs2 rounded-md bg-bgs2 bg-opacity-30 py-4"
     >
       <div class="flex w-full justify-between gap-3 mo:px-2 px-10">
-        <Text content="Transcription" style={TextStyle.PANEL_HEADING} />
+        <Text content="Transcription" style={TextStyle.PANEL_HEADING_SMALL} />
         {#if !$view.isConstrainedWidth}
           <DropDown
             items={accuracy}
@@ -346,6 +346,10 @@
             {/if}
           </span>
         {/if}
+      </div>
+      <div class="text-b3 text-fgs3 px-2">
+        Note: Transcription is currently only available for English language. We
+        are working to expand this to other languages.
       </div>
     </div>
   {/if}

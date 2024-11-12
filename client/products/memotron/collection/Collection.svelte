@@ -475,6 +475,7 @@
         position={$collection.coverLayout?.position}
         size={$collection.coverLayout?.size}
         {dev_isRoundedCover}
+        {isConstrainedWidth}
         bind:isCoverPickerOpen
         on:change={onCoverChange}
         on:placement={onPlacementChange}
@@ -721,6 +722,7 @@
         position={$collection.coverLayout?.position}
         size={$collection.coverLayout?.size}
         {dev_isRoundedCover}
+        {isConstrainedWidth}
         bind:isCoverPickerOpen
         on:change={onCoverChange}
         on:placement={onPlacementChange}

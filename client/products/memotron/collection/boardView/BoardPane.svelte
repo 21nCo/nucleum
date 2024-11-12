@@ -110,7 +110,7 @@
       )}
     >
       <Text content={group.label} style={TextStyle.PANEL_HEADING_SMALL} />
-      <Button icon="ellipsis-vertical" />
+      <!-- <Button icon="ellipsis-vertical" /> -->
     </div>
     <div class="grow w-full flex flex-col gap-2">
       {#if isValidArrayWithData(subGroups)}

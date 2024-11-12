@@ -686,7 +686,7 @@ export function resolveNodeContextMenu(
       group: "all",
       items: [
         resourceActions.star(),
-        resourceActions.toggleReadMode(),
+        // resourceActions.toggleReadMode(),
         nodeActions.metadataPane,
         nodeActions.historyPane
       ]
@@ -716,9 +716,9 @@ export function resolveVisibleActions(
     !isConstrainedWidth
   ) {
     return [
-      nodeActions.toggleReadMode,
-      nodeActions.sideNotesPane,
-      nodeActions.showForks
+      // nodeActions.toggleReadMode,
+      nodeActions.sideNotesPane
+      // nodeActions.showForks
     ];
   } else if (
     (contentType === NodeType.NODULAR_MARKDOWN ||

@@ -483,7 +483,8 @@ export function resolveCollectionContextMenu(
         items: [
           resourceActions.star(),
           resourceActions.select(accessPoint),
-          resourceActions.edit(accessPoint),
+          //TODO - clicking edit should open edit mode - not opening for Collection
+          // resourceActions.edit(accessPoint),
           resourceActions.copyLink()
         ]
       },

@@ -40,6 +40,7 @@
   import { logger } from "$lib/client/components/debug/logger.client";
   import NodeRightPaneContent from "../rightPanel/NodeRightPaneContent.svelte";
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
+  import { toasts } from "$lib/client/stores/notification.store";
   export let node: IActiveNodeStore;
   export let rightPane: NodeRightPaneType | undefined = undefined;
   let linkedNodes: INode[];
@@ -78,10 +79,14 @@
   initializeConfig();
 
   function initializeConfig() {
-    tags = $linkTagStore
-      .filter((x) => $node.links?.some((y) => y.tags?.some(resourceInList(x))))
-      .map(linkTagLabelMapper);
-    tagGroups = Array.from(new Set(tags.map((x) => x.group ?? "No group")));
+    if ($linkTagStore) {
+      tags = $linkTagStore
+        .filter((x) =>
+          $node.links?.some((y) => y.tags?.some(resourceInList(x)))
+        )
+        .map(linkTagLabelMapper);
+      tagGroups = Array.from(new Set(tags.map((x) => x.group ?? "No group")));
+    }
 
     let commonGroupOptions = [
       { label: "Link tags", value: "linktags" },
@@ -109,153 +114,164 @@
   });
 
   async function loadLinkedNodesData() {
-    linkedNodes = await nodeStore.selectMany({
-      properties: [
-        "id",
-        "label",
-        "parent.* as parent",
-        "body",
-        "contentType",
-        "metadata",
-        "url"
-      ],
-      filters: {
-        id: $node.links?.map((x) => x.linkedTo.toString())
-      }
-    });
+    try {
+      linkedNodes = await nodeStore.selectMany({
+        properties: [
+          "id",
+          "label",
+          "parent.* as parent",
+          "body",
+          "contentType",
+          "metadata",
+          "url"
+        ],
+        filters: {
+          id: $node.links?.map((x) => x.linkedTo.toString())
+        }
+      });
+    } catch (error) {
+      logger.error({ at: "loadLinkedNodesData", error });
+    }
   }
 
   /**
    * TODO - filters
    */
   async function refreshGraphData() {
-    if (isAutoGrouping) {
-      let linkTagsInUse = new Set<string>();
-      let nodes: {
-        id: string;
-        label: string;
-        type?: string;
-        combo?: string;
-        badge?: string | number;
-      }[] = linkedNodes.map((node: INode) => {
-        const link = $node.links?.find((l) => isSameResource(l.linkedTo, node));
-        let combo = null;
-        if (link?.tags?.length === 0) {
-          combo = "no tag";
-        } else {
-          const linkTags = tags.filter((x) =>
-            link?.tags?.some(resourceInList(x))
+    try {
+      if (isAutoGrouping) {
+        let linkTagsInUse = new Set<string>();
+        let nodes: {
+          id: string;
+          label: string;
+          type?: string;
+          combo?: string;
+          badge?: string | number;
+        }[] = linkedNodes.map((node: INode) => {
+          const link = $node.links?.find((l) =>
+            isSameResource(l.linkedTo, node)
           );
-          if (linkTags.length === 0) {
+          let combo = null;
+          if (link?.tags?.length === 0) {
             combo = "no tag";
-          } else if (linkTags.length === 1) {
-            combo = linkTags[0].label;
           } else {
-            // combo = linkTags[0].label;
-            combo = linkTags.map((x) => x.label).join(", ");
+            const linkTags = tags.filter((x) =>
+              link?.tags?.some(resourceInList(x))
+            );
+            if (linkTags.length === 0) {
+              combo = "no tag";
+            } else if (linkTags.length === 1) {
+              combo = linkTags[0].label;
+            } else {
+              // combo = linkTags[0].label;
+              combo = linkTags.map((x) => x.label).join(", ");
+            }
           }
-        }
-        if (combo) {
-          linkTagsInUse.add(combo);
-        }
-        return {
-          id: node.id.toString(),
-          label: resolveNodeLabelString(node),
-          icon: webNodeTypeList.includes(node.contentType)
-            ? resolveNodeFavicon(node)
+          if (combo) {
+            linkTagsInUse.add(combo);
+          }
+          return {
+            id: node.id.toString(),
+            label: resolveNodeLabelString(node),
+            icon: webNodeTypeList.includes(node.contentType)
+              ? resolveNodeFavicon(node)
+              : undefined,
+            fill: resolveNodeGraphFill(node),
+            combo
+          };
+        });
+        nodes.push({
+          id: $node.id.toString(),
+          type: "hexagon",
+          badge: $node.links?.length,
+          label: resolveNodeLabelString($node),
+          icon: webNodeTypeList.includes($node.contentType)
+            ? resolveNodeFavicon($node)
             : undefined,
-          fill: resolveNodeGraphFill(node),
-          combo
-        };
-      });
-      nodes.push({
-        id: $node.id.toString(),
-        type: "hexagon",
-        badge: $node.links?.length,
-        label: resolveNodeLabelString($node),
-        icon: webNodeTypeList.includes($node.contentType)
-          ? resolveNodeFavicon($node)
-          : undefined,
-        fill: resolveNodeGraphFill($node),
-        combo: undefined
-      });
+          fill: resolveNodeGraphFill($node),
+          combo: undefined
+        });
 
-      let edges = $node.links?.map((l) => {
-        return {
-          source: $node.id.toString(),
-          target: l.linkedTo.toString(),
-          id: l.id,
-          linkType: l.linkType
-        };
-      });
-
-      const uniqueLinkTags = Array.from(linkTagsInUse);
-
-      let combos = uniqueLinkTags
-        .map((x) => {
+        let edges = $node.links?.map((l) => {
           return {
-            id: x,
-            label: x
-          };
-        })
-        .filter(Boolean);
-      // combos = [
-      //   ...combos,
-      //   ...tagGroups.map((x) => ({
-      //     id: x,
-      //     label: x
-      //   }))
-      // ];
-      if (depth > 1) {
-        const remainingNodes = nodes
-          .filter((x) => x.id !== $node.id.toString())
-          .map((x) => x.id);
-        const data = await fetchDepth(remainingNodes);
-        if (!data.edges || data.edges.length === 0) return;
-        edges?.push(...data.edges);
-        nodes.push(...data.nodes);
-        nodes = nodes.filter(removeDuplicatesFilter).map((x) => {
-          return {
-            ...x,
-            combo: depth === 1 ? x.combo : undefined
+            source: $node.id.toString(),
+            target: l.linkedTo.toString(),
+            id: l.id,
+            linkType: l.linkType
           };
         });
-      }
-      edges = edges
-        ?.map((x) => {
-          return {
-            ...x,
-            linkType:
-              x.linkType === LinkType.DIRECT
-                ? undefined
-                : enumToString(x.linkType)
+
+        const uniqueLinkTags = Array.from(linkTagsInUse);
+
+        let combos = uniqueLinkTags
+          .map((x) => {
+            return {
+              id: x,
+              label: x
+            };
+          })
+          .filter(Boolean);
+        // combos = [
+        //   ...combos,
+        //   ...tagGroups.map((x) => ({
+        //     id: x,
+        //     label: x
+        //   }))
+        // ];
+        if (depth > 1) {
+          const remainingNodes = nodes
+            .filter((x) => x.id !== $node.id.toString())
+            .map((x) => x.id);
+          const data = await fetchDepth(remainingNodes);
+          if (!data.edges || data.edges.length === 0) return;
+          edges?.push(...data.edges);
+          nodes.push(...data.nodes);
+          nodes = nodes.filter(removeDuplicatesFilter).map((x) => {
+            return {
+              ...x,
+              combo: depth === 1 ? x.combo : undefined
+            };
+          });
+        }
+        edges = edges
+          ?.map((x) => {
+            return {
+              ...x,
+              linkType:
+                x.linkType === LinkType.DIRECT
+                  ? undefined
+                  : enumToString(x.linkType)
+            };
+          })
+          .filter((x) => x)
+          .filter(removeDuplicatesFilter)
+          .filter((x, index) => {
+            return (
+              x.source &&
+              x.target &&
+              nodes.some((y) => y.id === x.source) &&
+              nodes.some((y) => y.id === x.target) &&
+              edges?.findIndex(
+                (y) => y.source === x.source && y.target === x.target
+              ) === index
+            );
+          });
+        if (depth === 1) {
+          graphData = {
+            nodes,
+            edges,
+            combos
           };
-        })
-        .filter((x) => x)
-        .filter(removeDuplicatesFilter)
-        .filter((x, index) => {
-          return (
-            x.source &&
-            x.target &&
-            nodes.some((y) => y.id === x.source) &&
-            nodes.some((y) => y.id === x.target) &&
-            edges?.findIndex(
-              (y) => y.source === x.source && y.target === x.target
-            ) === index
-          );
-        });
-      if (depth === 1) {
-        graphData = {
-          nodes,
-          edges,
-          combos
-        };
-      } else {
-        graphData = {
-          nodes,
-          edges
-        };
+        } else {
+          graphData = {
+            nodes,
+            edges
+          };
+        }
       }
+    } catch (error) {
+      logger.error({ at: "refreshGraphData", error });
+      toasts.error("Something went wrong. Please try again later.");
     }
   }
 

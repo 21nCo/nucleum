@@ -109,19 +109,19 @@
       label: "Combinations",
       value: Resource.combination,
       icon: "ph:bounding-box-light"
-    },
+    }
     // {
     //   ...commonResourceProps,
     //   label: "Files",
     //   value: Resource.file,
     //   icon: "ph:file"
     // },
-    {
-      ...commonResourceProps,
-      label: "Tasks",
-      value: Resource.task,
-      icon: "ph:check-circle"
-    }
+    // {
+    //   ...commonResourceProps,
+    //   label: "Tasks",
+    //   value: Resource.task,
+    //   icon: "ph:check-circle"
+    // }
   ];
 
   $: multiSelectContext = selectedResource + "-" + ResourceAccessPoint.LIBRARY;

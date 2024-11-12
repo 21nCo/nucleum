@@ -184,6 +184,14 @@
       />
     </div>
   {/if}
+  {#if isLoginFromExtension}
+    <div class="flex flex-col gap-2 justify-center items-center">
+      <div class="text-fgs3 text-b3 text-center">
+        Thanks for installing our extension. Click continue to login to your
+        account.
+      </div>
+    </div>
+  {/if}
   {#if isValidArrayWithData($appStore?.appData?.oAuthConfig)}
     {#if $appStore.isDebugMode}
       <div
@@ -198,12 +206,14 @@
       <OAuthButtons />
     </div>
   {/if}
-  <Button
-    label="Continue offline"
-    style={ButtonStyle.OUTLINED}
-    on:click={async () => {
-      await account.startOfflineSession();
-      appStore.gotoPath("/");
-    }}
-  />
+  {#if !isLoginFromExtension}
+    <Button
+      label="Continue offline"
+      style={ButtonStyle.OUTLINED}
+      on:click={async () => {
+        await account.startOfflineSession();
+        appStore.gotoPath("/");
+      }}
+    />
+  {/if}
 </div>

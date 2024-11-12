@@ -7,6 +7,7 @@
   import { TextStyle } from "$lib/client/types/text.enum";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import { Size } from "$lib/client/types/size.enum";
+  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   export let density: number;
   export let arrangement: Arrangement;
   export let isHideThumbnailPreview: boolean = false;
@@ -48,13 +49,18 @@
         />
       </span>
       <div class="flex flex-col gap-1 px-2">
-        <span class="text-fgs3 text-b3">Density</span>
-        <Slider
-          bind:value={density}
-          min={1}
-          max={3}
-          step={0.5}
-          on:change={onDensityChanges}
+        <span class="text-fgs3 text-b3">Sizing</span>
+        <!-- TODO: Slider not supported on touch devices - hence using switcher -->
+        <OptionSelector
+          size={Size.sm}
+          options={[
+            { label: "s", value: 2.5 },
+            { label: "m", value: 2 },
+            { label: "l", value: 1.5 },
+            { label: "xl", value: 1 }
+          ]}
+          bind:selected={density}
+          on:select={onDensityChanges}
         />
       </div>
     </div>

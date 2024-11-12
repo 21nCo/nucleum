@@ -7,6 +7,11 @@
   $: baseUrl =
     $appStore?.appData?.urls?.supahub ??
     `https://${$appStore.product}.supahub.com`;
+
+  $: url =
+    context === "Roadmap" && $appStore?.appData?.urls?.roadmapEmbed
+      ? $appStore?.appData?.urls?.roadmapEmbed
+      : `${baseUrl}/${context.toLocaleLowerCase()}`;
 </script>
 
 <!-- <SupaHubEmbedCode {context} /> -->
@@ -14,7 +19,7 @@
   <iframe
     title="Supahub"
     class="rounded-md"
-    src="{baseUrl}/{context.toLocaleLowerCase()}"
+    src={url}
     width="100%"
     height="100%"
     frameBorder="0"

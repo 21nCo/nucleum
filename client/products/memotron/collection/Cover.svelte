@@ -23,12 +23,11 @@
   export let isInEditMode = false;
   export let isCoverPickerOpen = false;
   export let isHovered = false;
+  export let isConstrainedWidth: boolean = false;
 
   $: isPositionable = cover?.toString().includes("file:") && isInEditMode;
 
-  $: height = $view.isConstrainedWidth
-    ? 100
-    : (size?.height ?? $view.height / 5);
+  $: height = isConstrainedWidth ? 100 : (size?.height ?? $view.height / 5);
 
   function onReplace(e: CustomEvent) {
     isCoverPickerOpen = true;
@@ -143,7 +142,7 @@
       + Add cover photo
     {/if}
     {#if isInEditMode && cover}
-      {#if isPositionable && !$view.isConstrainedWidth}
+      {#if isPositionable && !isConstrainedWidth}
         <span
           class="absolute flex gap-1 items-center text-fgs1 bg-bgs2 bg-opacity-60 dark:bg-opacity-50 py-1 px-2 rounded-md backdrop-blur-sm dark:backdrop-blur-none"
         >
@@ -170,7 +169,7 @@
               placement === Placement.Left || placement === Placement.Right
           })}
         >
-          {#if !$view.isConstrainedWidth}
+          {#if !isConstrainedWidth}
             <span class="flex gap-3 items-center bg-bgs2 rounded-full px-4">
               <span> Layout </span>
               <ToggleGroup
