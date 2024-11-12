@@ -5,7 +5,7 @@
     icon: "memotron",
     title: "Memotron",
     items: [
-      { label: "Discord", href: "https://discord.gg/blanklabs" },
+      { label: "Discord", href: "https://discord.com/invite/9HJqKYTZKg" },
       { label: "Pricing", href: "/pricing" }
     ],
     cta: {
@@ -19,7 +19,7 @@
     twitterUrl: "https://x.com/memotronIO",
     docsUrl: "https://docs.memotron.io",
     youtubeUrl: "https://www.youtube.com/@21nCompany",
-    roadmapUrl: "https://memotron.supahub.com/roadmap",
+    roadmapUrl: "https://docs.memotron.io/docs/more/roadmap",
     changelogUrl: "https://memotron.supahub.com/changelog"
   };
 </script>
