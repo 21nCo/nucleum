@@ -276,6 +276,7 @@ function parseTweetContent(
       content: tweetContent ?? "",
       postedAt: tweetTime[0]?.datetime ?? ""
     },
+    text: tweetContent ?? "",
     metadata: {
       tweetId,
       ogTitle,

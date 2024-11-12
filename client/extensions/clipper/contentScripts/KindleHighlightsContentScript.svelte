@@ -187,6 +187,7 @@
             page: pageMatch ? pageMatch[0] : null,
             note
           },
+          text: text ?? "",
           label: "",
           id: nodeId,
           contentType: NodeType.KINDLE_HIGHLIGHT,

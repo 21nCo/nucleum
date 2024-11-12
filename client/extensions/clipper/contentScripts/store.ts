@@ -318,6 +318,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       id: tweetId,
       url: data.url,
       body: data.body,
+      text: data.text ?? data.body.content,
       metadata: data.metadata,
       parent: twitterProfileId,
       contentType: NodeType.TWEET
@@ -690,6 +691,7 @@ class SyncStore extends ObservableStore<ISyncStore> {
     if (items.length > limitCount) {
       // response = await Promise.all(resolveChunks());
       const chunks = resolveChunks();
+      logger.log({ at: "syncStore save", chunks });
       for (const chunk of chunks) {
         response = await chunk();
         this.update((n) => {

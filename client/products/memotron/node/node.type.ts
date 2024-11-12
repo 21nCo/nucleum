@@ -604,6 +604,9 @@ export type IMultimediaClip = INodeInterface<
 >;
 
 type ITweetBody = {
+  /**
+   * @deprecated - use text field of node instead
+   */
   content: string;
   postedAt: string;
 };
@@ -653,6 +656,9 @@ export type IKindleBook = INodeInterface<
 
 export type IKindleHighlightBody = {
   id: string;
+  /**
+   * @deprecated - use text field of node instead
+   */
   text: string;
   location?: string;
   page?: string;
