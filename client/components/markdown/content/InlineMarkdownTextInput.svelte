@@ -169,17 +169,23 @@
   export function replace(target: string, replacement: string) {
     innerHTML = innerHTML.replace(target, replacement);
   }
-  export function addMention(item: IBlock, searchQuery: string) {
-    console.log("addMention - start", { item, content, innerHTML });
+  export function addMention(
+    item: IBlock,
+    searchQuery: string,
+    triggerKey?: string
+  ) {
+    console.log("addMention - start", { item, content, innerHTML, triggerKey });
+    let replacer = "@";
+    if (triggerKey !== "2") replacer = triggerKey ?? replacer;
     content = content?.replace(
-      "@" + (searchQuery ?? ""),
+      replacer + (searchQuery ?? ""),
       `[${
         isValidString(truncateString(resolveNodeLabelString(item), 50)) ??
         "Unknown"
       }](resource=${item.id})`
     );
     innerHTML = innerHTML.replace(
-      "@" + (searchQuery ?? ""),
+      replacer + (searchQuery ?? ""),
       `<mention data-id='${item.id}'></mention>`
     );
     console.log("addMention - after adding placeholder", {

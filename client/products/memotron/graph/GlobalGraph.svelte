@@ -158,7 +158,7 @@
     <div
       class="absolute z-10 inset-0 w-full h-full flex justify-center items-center bg-bgs1"
     >
-      <EmptyStatusView isLoadingState={isLoading} />
+      <EmptyStatusView isLoadingState={isLoading} mainText="Not enough data." />
     </div>
   {/if}
   {#if data.nodes.length > 0}

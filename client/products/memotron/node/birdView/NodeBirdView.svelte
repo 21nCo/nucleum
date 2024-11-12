@@ -327,8 +327,13 @@
   function onNodeSelect(e: CustomEvent) {
     const event = e.detail;
     const newResource = event.target.id;
-    logger.log({ at: "onNodeSelect", event, newResource, splitResource });
+    logger.debug({ at: "onNodeSelect", event, newResource, splitResource });
     if (!newResource) return;
+    if (newResource === $node.id.toString()) {
+      if (rightPane === NodeRightPaneType.LINKS) rightPane = undefined;
+      else rightPane = NodeRightPaneType.LINKS;
+      return;
+    }
     if (splitResource === newResource) {
       closeSplitResource();
       return;
@@ -371,7 +376,7 @@
         </div>
       {:else}
         <PanelSwitcher
-          items={["Graph", "Fuzzy", "Serendipity"]}
+          items={["Graph", "Serendipity"]}
           size={Size.sm}
           style={PanelSwitcherStyle.TRAIN}
           bind:value={selectedView}

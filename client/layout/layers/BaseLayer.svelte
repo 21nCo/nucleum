@@ -91,7 +91,7 @@
     const modifiedGlobalActions = globalActions.filter(
       (x) => !localActions.some((y) => y.action === x.action)
     );
-    let actions = [...modifiedGlobalActions, ...localActions];
+    let actions = [...localActions, ...modifiedGlobalActions];
     if (isSheet) appStore.initActionsForSheet(actions);
     else appStore.initActions(actions, getSettingsAsModal());
   }
