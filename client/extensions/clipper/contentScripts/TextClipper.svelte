@@ -1,5 +1,9 @@
 <script lang="ts">
-  import { highlight } from "$lib/client/extensions/clipper/contentScripts/highlightV4";
+  import {
+    changeColor,
+    highlight,
+    removeHighlights
+  } from "$lib/client/extensions/clipper/contentScripts/highlightV4";
   import InlineTextToolbar from "$lib/client/extensions/clipper/InlineTextToolbar.svelte";
   import {
     elementFromQuery,
@@ -20,6 +24,9 @@
   import { logger } from "$lib/client/components/debug/logger.client";
   import { highlightStore } from "$lib/client/products/memotron/common/highlighters/highlight.store";
   import { relayToSidePanel } from "$lib/client/utils/extension.utils";
+  import { activeResourceFilter } from "$lib/client/utils/utils";
+  import { isRecordId } from "$lib/client/components/flux/resourceStores/resource.utils";
+
   let isShowInlineToolbar: boolean = false;
   let popoverPosition: { top: number; left: number } = { top: 0, left: 0 };
   let activeHighlighter: IHighlighter | null = null;
@@ -27,6 +34,7 @@
   let selectedClip: { highlighterId: string; id: string } | null = null;
   let selectedClipId: string = "";
   let inlineToolbarFeedback: { message: string; type: AlertType } | string = "";
+  let renderedHighlights: string[] = [];
   onMount(() => {
     const sub = appEvents.subscribe((x) => {
       if (x.event === ClipperExtensionEvent.REFRESH_CLIPS_RENDERING) {
@@ -41,7 +49,7 @@
   async function handleTextSelection() {
     const selection = window.getSelection();
     let rect: DOMRect;
-    if (selection.focusNode && selection.anchorNode) {
+    if (selection?.focusNode && selection.anchorNode) {
       const focusNodeHasClass =
         selection.focusNode?.classList?.contains("memotron-clipped");
       const anchorNodeHasClass =
@@ -55,7 +63,7 @@
           id: selection.focusNode?.dataset?.highlightId ?? ""
         };
         setTimeout(() => {
-          let highlightId = selectedClip.id;
+          let highlightId = selectedClip?.id;
           let focusElement = document.querySelector(
             `.memotron-clipped[data-highlight-id="${highlightId}"]`
           );
@@ -74,7 +82,7 @@
         selectedClip = null;
       }
     }
-    if (selection.focusNode && !selectedClip) {
+    if (selection?.focusNode && !selectedClip) {
       const range = document.createRange();
       range.setStart(selection.focusNode, selection.focusOffset);
       range.setEnd(selection.focusNode, selection.focusOffset);
@@ -96,7 +104,7 @@
       } else {
         isShowInlineToolbar = false;
       }
-    } else if (!selection.focusNode) {
+    } else if (!selection?.focusNode) {
       isShowInlineToolbar = false;
     }
   }
@@ -116,6 +124,7 @@
           text: selectedText,
           highlighterId
         },
+        text: selectedText,
         metadata: {
           container: getQuery(container),
           anchorNode: getQuery(selection.anchorNode),
@@ -169,37 +178,53 @@
     //     let link = tabs[0].url;
     // });
   }
-  export async function refreshPageClips() {
-    const clips: ITextClip[] = $webpage.clips?.filter(
-      (clip) => clip.contentType === NodeType.TEXT_CLIP
-    ) as ITextClip[];
-    logger.log({ at: "refreshPageClips", clips });
-    for (const record of clips) {
-      const selection = {
-        anchorNode: elementFromQuery(record.metadata?.anchorNode),
-        anchorOffset: record.metadata?.anchorOffset,
-        focusNode: elementFromQuery(record.metadata?.focusNode),
-        focusOffset: record.metadata?.focusOffset
-      };
-      const container = elementFromQuery(record.metadata?.container);
 
-      let textColor = "white";
-      const highlighter = $highlightStore.highlighters.find(
-        (x) => x.id === record.body.highlighterId
+  /**
+   * removeAllHighlights() is causing unexpected behaviour.
+   */
+  export async function refreshPageClips() {
+    try {
+      // removeAllHighlights();
+      const clips: ITextClip[] = $webpage.clips
+        ?.filter((clip) => clip.contentType === NodeType.TEXT_CLIP)
+        ?.filter(activeResourceFilter) as ITextClip[];
+      logger.debug({ at: "refreshPageClips", clips });
+      const removedHighlights = renderedHighlights.filter(
+        (x) => !clips.find((y) => y.id.toString() === x)
       );
-      if (selection.anchorNode && selection.focusNode && container) {
-        highlight(
-          record.body.text,
-          container,
-          selection,
-          highlighter,
-          textColor,
-          record.id,
-          highlightClickCallback
-        );
+      if (removedHighlights.length > 0) {
+        removeHighlights(removedHighlights);
       }
+      for (const record of clips) {
+        const selection = {
+          anchorNode: elementFromQuery(record.metadata?.anchorNode),
+          anchorOffset: record.metadata?.anchorOffset,
+          focusNode: elementFromQuery(record.metadata?.focusNode),
+          focusOffset: record.metadata?.focusOffset
+        };
+        const container = elementFromQuery(record.metadata?.container);
+
+        let textColor = "white";
+        const highlighter = $highlightStore.highlighters.find(
+          (x) => x.id === record.body.highlighterId
+        );
+        if (selection.anchorNode && selection.focusNode && container) {
+          highlight(
+            record.text ?? record.body.text,
+            container,
+            selection,
+            highlighter,
+            textColor,
+            record.id,
+            highlightClickCallback
+          );
+        }
+      }
+      renderedHighlights = clips.map((x) => x.id.toString());
+      return false;
+    } catch (e) {
+      logger.error({ at: "refreshPageClips", error: e });
     }
-    return false;
   }
 
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -241,22 +266,37 @@
       activeHighlighter = e.detail;
     }
   }
-  async function onInlineColorSelection(e: CustomEvent<IHighlighter>) {
-    console.log("onInlineColorSelection", e.detail);
-    const highlighter = e.detail;
-    const selection = window.getSelection();
-    if (selection?.toString().length > 0) {
-      console.log("Selected text: ", selection.toString());
-      inlineToolbarFeedback = "saving...";
-      await highlightSelectedText(selection, highlighter);
-      selectedClip = {
-        highlighterId: highlighter.id,
-        id: selectedClipId
-      };
+  async function onInlineColorSelection(
+    e: CustomEvent<IHighlighter>,
+    clip?: any
+  ) {
+    logger.log({ at: "onInlineColorSelection", detail: e.detail });
+    try {
+      const highlighter = e.detail;
+      const selection = window.getSelection();
+      console.log({ selection, clip, highlighter });
+      if (clip && isRecordId(clip.id)) {
+        webpage.updateTextClipColor(clip.id, highlighter.id);
+        changeColor(clip.id.toString(), highlighter);
+        return;
+      }
+      if (selection && selection.toString().length > 0) {
+        console.log("Selected text: ", selection.toString());
+        inlineToolbarFeedback = "saving...";
+        await highlightSelectedText(selection, highlighter);
+        selectedClip = {
+          highlighterId: highlighter.id,
+          id: selectedClipId
+        };
+      }
+    } catch (e) {
+      logger.error({ at: "color selection", e });
     }
   }
   function highlightClickCallback(e: any) {
-    console.log("highlightClickCallback", e);
+    logger.log({ at: "highlightClickCallback", e });
+    if (!e?.id) return;
+
     selectedClip = {
       id: e.id,
       highlighterId: e.highlighterId
@@ -290,7 +330,9 @@
     style="position:fixed; top:{popoverPosition.top}px; left:{popoverPosition.left}px"
   >
     <InlineTextToolbar
-      on:color={onInlineColorSelection}
+      on:color={(e) => {
+        onInlineColorSelection(e, selectedClip);
+      }}
       bind:feedback={inlineToolbarFeedback}
       selectedHighlighterId={selectedClip?.highlighterId ?? ""}
       id={selectedClip?.id}

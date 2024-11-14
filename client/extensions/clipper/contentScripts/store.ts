@@ -73,6 +73,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
 
   reset() {
     this.set({ url: "", clips: [], title: "" });
+    appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
   }
 
   async loader(data: any) {
@@ -165,10 +166,11 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     const webpage = this.get();
     logger.debug({ at: "onContextChange", tab, url, webpage });
     toolbarState.refresh();
-    if (url === webpage.url) {
-      relayToSidePanel({ event: ExtensionEvent.PAGE_STATE, data: this.get() });
-      return;
-    }
+    //TODO - check the need for this - causing refresh to not happen when tab switch - if coming back to same tab again
+    // if (url === webpage.url) {
+    //   relayToSidePanel({ event: ExtensionEvent.PAGE_STATE, data: this.get() });
+    //   return;
+    // }
     this.set({ url, clips: [], title: tab.title ?? window.document.title });
     feedbackPane.reset();
     this.refresh();
@@ -258,6 +260,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       body: {
         ...data.body
       },
+      text: data.text,
       metadata: data.metadata,
       parent: webpage.id,
       contentType: data.contentType,
@@ -469,6 +472,31 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
     return { message: "Clip removed!", type: AlertType.SUCCESS };
   }
+
+  async updateTextClipColor(id: IRecordId, highlighterId: string) {
+    const updateResult = await nodeStore.modify(id, {
+      body: { highlighterId }
+    });
+    if (!updateResult) return;
+    console.log({ updateResult });
+    this.update((n) => {
+      n.clips = n.clips?.map((x) => {
+        if (isSameResource(x.id,id)) {
+          x.body.highlighterId = highlighterId;
+          return x;
+        }
+        return x;
+      })
+      console.log({ clips: n.clips, id, highlighterId });
+      return n;
+    });
+    relayToSidePanel({
+      event: ClipperExtensionEvent.CLIPS_CHANGED,
+      data: this.get().clips
+    });
+    return { message: "Color updated!", type: AlertType.SUCCESS };
+  }
+
   /**
    *
    * @deprecated - using content script as main source of state. save page event from side panel is now relayed to content script.
@@ -592,6 +620,16 @@ class FeedbackPaneStore extends ObservableStore<IFeedbackPaneStore> {
       n.focusedClip = clip;
       n.feedback = message;
       n.isShown = true;
+      return n;
+    });
+  }
+
+  setSavingStatus(text: string, isShowStatusOnly: boolean = false) {
+    this.update((n) => {
+      n.feedback = text;
+      n.isShown = true;
+      n.isPreventAutoClose = true;
+      n.isShowStatusOnly = isShowStatusOnly;
       return n;
     });
   }
@@ -722,12 +760,19 @@ class SyncStore extends ObservableStore<ISyncStore> {
     }
   }
 
-  async updateSyncStatus(status: SyncStatus) {
+  async updateSyncStatus(status: SyncStatus, message?: string) {
     this.update((n) => {
       n.status = status;
+      n.message = message;
       return n;
     });
-    if (status == SyncStatus.SYNCED) await this.persistSyncStatus(status);
+    if (status == SyncStatus.SYNCED) {
+      this.update((n) => {
+        n.lastSyncedAt = new Date().toISOString();
+        return n;
+      });
+      await this.persistSyncStatus(status);
+    }
   }
 
   async refreshSyncState() {
@@ -760,20 +805,20 @@ class SyncStore extends ObservableStore<ISyncStore> {
       const id = this.get().id;
       if (!id) return;
       //TODO - test merge mutation
-      const query = `UPDATE kv:clipperSync SET ${id}={
-        status: "${status}",
-        updatedAt: time::now()
-      };`;
-      const result = await extensionFlux({
-        method: FluxMethod.MUTATION,
-        args: {
-          resource: Resource.clipperSync,
-          params: {
-            action: PersistenceActionType.CUSTOM,
-            query
-          }
-        }
-      });
+      // const query = `UPDATE kv:clipperSync SET ${id}={
+      //   status: "${status}",
+      //   updatedAt: time::now()
+      // };`;
+      // const result = await extensionFlux({
+      //   method: FluxMethod.MUTATION,
+      //   args: {
+      //     resource: Resource.clipperSync,
+      //     params: {
+      //       action: PersistenceActionType.CUSTOM,
+      //       query
+      //     }
+      //   }
+      // });
       const resultWithMerge = await extensionFlux({
         method: FluxMethod.MUTATION,
         args: {
@@ -790,7 +835,7 @@ class SyncStore extends ObservableStore<ISyncStore> {
           }
         }
       });
-      console.log({ result, resultWithMerge });
+      console.log({ resultWithMerge });
     } catch (e) {
       logger.error(e);
     }

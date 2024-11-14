@@ -12,6 +12,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import { formatDatetime } from "$lib/client/utils/time.utils";
+  import Icon from "$lib/client/elements/Icon.svelte";
 
   onMount(() => {
     logger.log({ at: "SyncPane onMount", syncStore: $syncStore });
@@ -36,6 +37,27 @@
 <FeedbackPaneBase>
   <div class="flex flex-col gap-3 h-40 justify-between">
     <div class="flex w-full justify-center items-center">{resolveLabel()}</div>
+    {#if $syncStore.status === SyncStatus.SYNCING}
+      <div class="w-full flex justify-center text-fgs2 text-b3">
+        {#if $syncStore.progress}
+          {Math.floor($syncStore.progress)}%
+        {:else}
+          {$syncStore.message}
+        {/if}
+      </div>
+    {/if}
+    {#if $syncStore.status === SyncStatus.SYNCED}
+      <div class="flex gap-2 items-center w-full justify-center">
+        <Icon icon="check-circle" />
+        <span>{$syncStore.message ?? "Sync completed."}</span>
+      </div>
+    {/if}
+    {#if $syncStore.status === SyncStatus.ERRORED}
+      <div class="flex gap-2 items-center w-full justify-center text-ars1">
+        <Icon icon="x-circle" />
+        <span>{$syncStore.message ?? "Sync failed."}</span>
+      </div>
+    {/if}
     <div class="flex w-full justify-center items-center">
       <Button
         icon="sync"
@@ -49,15 +71,6 @@
         }}
       />
     </div>
-    {#if $syncStore.status === SyncStatus.SYNCING}
-      <div class="w-full flex justify-center text-fgs2 text-b3">
-        {#if $syncStore.progress}
-          {Math.floor($syncStore.progress)}%
-        {:else}
-          Extracting...
-        {/if}
-      </div>
-    {/if}
     {#if $syncStore.lastSyncedAt}
       <span class="text-b3 text-fgs3 w-full flex justify-center">
         <span>

@@ -235,8 +235,18 @@
       if ($syncStore.status == SyncStatus.SYNCING) {
         return;
       }
-      syncStore.updateSyncStatus(SyncStatus.SYNCING);
+      syncStore.updateSyncStatus(SyncStatus.SYNCING, "Extracting...");
       const books = scrapBooks();
+      console.log({ at: "scrapBooks", books });
+      if (books.length === 0) {
+        syncStore.updateSyncStatus(SyncStatus.SYNCED, "No books found.");
+        return;
+      } else if (books.length > 10) {
+        syncStore.updateSyncStatus(
+          SyncStatus.SYNCING,
+          "Woah! That's a lot of books! This might take a while..."
+        );
+      }
       const bookHighlights = await Promise.all(
         books.map((book) => scrapeBookHighlights(book))
       );
@@ -245,10 +255,10 @@
         ...bookHighlights.flat()
       ]);
       logger.log({ at: "KindleSyncPage save", savedResponse });
-      syncStore.updateSyncStatus(SyncStatus.SYNCED);
+      syncStore.updateSyncStatus(SyncStatus.SYNCED, "Sync completed.");
     } catch (e) {
       logger.error(e);
-      syncStore.updateSyncStatus(SyncStatus.ERRORED);
+      syncStore.updateSyncStatus(SyncStatus.ERRORED, "Sync failed.");
     }
   }
   function matchCurrentUrlWithAmazonRegions(): AmazonAccount | null {

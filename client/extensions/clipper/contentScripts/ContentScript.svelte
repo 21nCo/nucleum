@@ -31,21 +31,37 @@
   import { fileStore } from "$lib/client/components/files/file.store";
   import { propertyStore } from "$lib/client/products/memotron/collection/properties/property.store";
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
+
   export let id: string;
   let textClipperRef: any;
   let extensionBaseRef: ExtensionBaseLayer;
   let isSnipActive: boolean = false;
   let loginNotification: number | null = null;
+  let isDisableClipper = true;
+  let isLoggedIn: boolean = false;
+  const unavailableUrlsList = [
+    /^https:\/\/(?:.*\.)?memotron\.io(?:\/.*)?$/,
+    /^https:\/\/memotron\.tidigit\.dev(?:\/.*)?$/,
+    /^https:\/\/(?:.*\.)?pointron\.io(?:\/.*)?$/,
+    /^https:\/\/pointron\.tidigit\.dev(?:\/.*)?$/,
+    /^https?:\/\/localhost(?::[0-9]+)?(?:\/.*)?$/,
+    /^https:\/\/accounts\.google\.com(?:\/.*)?$/,
+    /^https:\/\/appleid\.apple\.com(?:\/.*)?$/
+  ];
+
+  $: isDisableClipper = unavailableUrlsList.some((regex) => {
+    return regex.test(window.location.href);
+  });
+
   $: contentType = resolveContentTypeForUrl($webpage.url);
   function onActivateColor(e) {
     textClipperRef.onActivateColor(e);
   }
+
   async function onSaveClick() {
     try {
       const contentTypeStr = enumToString(contentType);
-      $feedbackPane.feedback = `Saving ${contentTypeStr}...`;
-      $feedbackPane.isShown = true;
-      $feedbackPane.isPreventAutoClose = true;
+      feedbackPane.setSavingStatus(`Saving ${contentTypeStr}...`);
       if (contentType === NodeType.TWEET) {
         const tweetNode = extractTweetFromTweeetPage();
         if (!tweetNode) return;
@@ -108,19 +124,52 @@
       try {
         switch (message.event) {
           case ExtensionEvent.TAB_UPDATE:
+            const token = await extensionBaseRef.onTabUpdate();
+            if (token) isLoggedIn = true;
+            if (!isLoggedIn) {
+              loginNotification = -3;
+              webpage.reset();
+              return {
+                status: "error",
+                message: "You are not logged in"
+              };
+            } else {
+              loginNotification = null;
+            }
             webpage.onContextChange(message.tab);
             return { status: "success", message: "context changed" };
 
           case ExtensionEvent.LOGOUT:
             loginNotification = -2;
+            isLoggedIn = false;
+            webpage.reset();
+            return { status: "success", message: "Logged out" };
+
+          case ExtensionEvent.TOKEN_NOT_FOUND:
+            loginNotification = -3;
+            isLoggedIn = false;
             webpage.reset();
             return { status: "success", message: "Logged out" };
 
           case ExtensionEvent.PAGE_STATE:
+            if (!isLoggedIn) {
+              loginNotification = -3;
+              return {
+                status: "error",
+                message: "You are not logged in"
+              };
+            }
             await webpage.refresh();
             return $webpage;
 
           case ClipperExtensionEvent.SAVE_WEBPAGE:
+            if (!isLoggedIn) {
+              loginNotification = -3;
+              return {
+                status: "error",
+                message: "You are not logged in"
+              };
+            }
             await onSaveClick();
             return { status: "success", message: "Page saved" };
 
@@ -142,6 +191,7 @@
 
 <ExtensionBaseLayer
   bind:this={extensionBaseRef}
+  bind:isLoggedIn
   {id}
   stores={[
     nodeStore,
@@ -156,50 +206,57 @@
   ]}
   on:login={(e) => (loginNotification = e.detail.code)}
 >
-  {#if !$toolbarState?.isOpen}
-    <ToolbarOpener on:click={() => toolbarState.toggle(true)} />
-  {:else}
-    <Toolbar
-      {contentType}
-      bind:isSnipActive
-      on:color={onActivateColor}
-      on:save={onSaveClick}
-      on:saved={() => {
-        $feedbackPane.feedback = "Page saved!";
-        feedbackPane.toggle();
-      }}
-      on:summarize
-      on:collapse={() => toolbarState.toggle(false)}
-    />
-    <!-- <div out:fade={{ duration: 150 }}> -->
-    {#if loginNotification !== null}
-      <LoginNotification
-        bind:code={loginNotification}
-        on:click={() => {
-          relayToBackgroundScript({
-            event: ExtensionEvent.LOGIN
-          });
-          loginNotification = null;
-        }}
-      />
-    {:else if $feedbackPane.isShown}
-      <FeedbackPane />
-    {:else if $syncStore.isShowSyncPane}
-      <SyncPane />
-    {/if}
-    <!-- </div> -->
-    <TextClipper bind:this={textClipperRef} />
-    {#if isSnipActive}
-      <ScreenShot
-        on:saved={() => {
-          isSnipActive = false;
-        }}
-        on:close={() => {
-          isSnipActive = false;
-        }}
-      />
+  {#if !isDisableClipper}
+    {#if !$toolbarState?.isOpen}
+      <ToolbarOpener on:click={() => toolbarState.toggle(true)} />
+    {:else}
+      {#if isLoggedIn}
+        <Toolbar
+          {contentType}
+          bind:isSnipActive
+          on:color={onActivateColor}
+          on:save={onSaveClick}
+          on:saved={() => {
+            $feedbackPane.feedback = "Page saved!";
+            feedbackPane.toggle();
+          }}
+          on:summarize
+          on:collapse={() => toolbarState.toggle(false)}
+        />
+      {/if}
+      <!-- <div out:fade={{ duration: 150 }}> -->
+      {#if loginNotification !== null}
+        <LoginNotification
+          isWithoutToolbarContext={!isLoggedIn}
+          bind:code={loginNotification}
+          on:click={() => {
+            relayToBackgroundScript({
+              event: ExtensionEvent.LOGIN
+            });
+            loginNotification = null;
+          }}
+        />
+      {:else if $feedbackPane.isShown}
+        <FeedbackPane />
+      {:else if $syncStore.isShowSyncPane}
+        <SyncPane />
+      {/if}
+      {#if isLoggedIn}
+        <TextClipper bind:this={textClipperRef} />
+      {/if}
+      {#if isSnipActive}
+        <ScreenShot
+          on:saved={() => {
+            isSnipActive = false;
+          }}
+          on:close={() => {
+            isSnipActive = false;
+          }}
+        />
+      {/if}
     {/if}
   {/if}
+
   <ClipperShortcuts
     on:save={onSaveClick}
     on:collapse={() => {

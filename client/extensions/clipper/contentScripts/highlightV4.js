@@ -27,6 +27,7 @@ export function highlight(
   try {
     recursiveWrapper($(container), highlightInfo);
   } catch (e) {
+    console.log("error highlighting", e)
     return false;
   }
 
@@ -199,9 +200,37 @@ export function removeHighlight(id) {
   });
 }
 
-function removeAllHighlights() {
+export function removeAllHighlights() {
   const existingHighlights = document.querySelectorAll('[data-highlight-id]');
   existingHighlights.forEach((highlight) => {
-    highlight.remove();
+    try {
+      const id = highlight.dataset.highlightId;
+      removeHighlight(id);
+    } catch(e){}
   });
+}
+
+export function removeHighlights(ids) {
+  try {
+    ids.forEach((id) => {
+      removeHighlight(id);
+    })
+  } catch (e) {
+    console.error({ at: "removeHighlights", ids, e})
+  }
+}
+
+export function changeColor(id, highlighter) {
+  try {
+
+    const highlightSpans = document.querySelectorAll(`[data-highlight-id="${id}"]`);
+    highlightSpans.forEach((highlight) => {
+      const rgbaColor = convertToRGBA(highlighter.color, 0.5);
+      highlight.style.backgroundColor = rgbaColor;
+      highlight.dataset.highlightColor = highlighter.color;
+      highlight.dataset.highlighterId = highlighter.id;
+    });
+  } catch (e) {
+    console.error({at: "changeColor", e})
+  }
 }

@@ -9,6 +9,9 @@ import {
 } from "./browser.utils";
 import { clientStorage } from "../persistence/persistence.utils";
 import { detectTimeZone } from "./time.utils";
+import { relayToContentScript } from "./extension.utils";
+import { ExtensionEvent } from "../types/extension.type";
+import { relayToSidePanel } from "./extension.utils";
 
 export function resolveRegionalApiUrl() {
   try {
@@ -97,6 +100,10 @@ export async function performHttpNetworkOperation(params: {
     const isOffline = await determineIfOffline();
     if (isOffline) return;
     let token = await resolveToken();
+    const isExtEnv = isExtensionEnvironment()
+    if (!token && isExtEnv) {
+      logoutOnExtention()
+    }
     const headers = params.headers ?? {};
     const body = params.body ?? "";
     const response = await fetch(params.url, {
@@ -111,9 +118,13 @@ export async function performHttpNetworkOperation(params: {
     if (!response.ok) {
       const errorText = await response.text();
       logger.error({ at: "API call failed with status", response, errorText });
-      if (response.status === 401 && !isExtensionEnvironment()) {
-        await signout();
-        window.location.reload();
+      if (response.status === 401) {
+        if (isExtEnv) {
+          logoutOnExtention();
+        } else {
+          await signout();
+          window.location.reload();
+        }
       }
       throw new Error(`API call failed with status: ${response.status}`);
     }
@@ -140,6 +151,15 @@ export async function performHttpNetworkOperation(params: {
       logger.error({ at: "Unknown error", error: error });
       throw new Error("An unknown error occurred");
     }
+  }
+
+  function logoutOnExtention() {
+    const message = {
+      event: ExtensionEvent.TOKEN_NOT_FOUND,
+      data: { }
+    };
+    relayToSidePanel(message);
+    relayToContentScript(message);
   }
 }
 

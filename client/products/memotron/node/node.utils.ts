@@ -37,7 +37,7 @@ export function resolveContentPreview(node: INode) {
       (x) => hostPart === x.domain || hostPart.includes("." + x.domain)
     )?.ogImage;
     return ogImageUrl ?? "";
-  } else if (contentType === NodeType.TEXT_CLIP && "text" in body) {
+  } else if (contentType === NodeType.TEXT_CLIP && "text" in body && body.text) {
     return body.text;
   } else if (node.mdText && typeof node.mdText === "string") {
     return node.mdText;

@@ -143,69 +143,71 @@
 </script>
 
 <FeedbackPaneBase bind:isHovering on:hover={onHover}>
-  <div class="flex flex-col w-full gap-2">
-    <div class="flex w-full justify-between items-center">
-      <!-- <span class="text-fgs3 text-b2"> Link this page </span> -->
-      <FormControlLabel
-        props={{
-          label: `Link this ${contentTypeStr}`,
-          tooltip: {
-            body: `Link this ${contentTypeStr} to a node or add it to a collection by searching and clicking`,
-            isUseAbsolutePositioning: true,
-            placement: Placement.TopCenter
-          }
-        }}
+  {#if !$feedbackPane.isShowStatusOnly}
+    <div class="flex flex-col w-full gap-2">
+      <div class="flex w-full justify-between items-center">
+        <!-- <span class="text-fgs3 text-b2"> Link this page </span> -->
+        <FormControlLabel
+          props={{
+            label: `Link this ${contentTypeStr}`,
+            tooltip: {
+              body: `Link this ${contentTypeStr} to a node or add it to a collection by searching and clicking`,
+              isUseAbsolutePositioning: true,
+              placement: Placement.TopCenter
+            }
+          }}
+        />
+        <span class="h-6 w-6 flex justify-center items-center">
+          {#if isHovering}
+            <Button icon="cross-circled" on:click={closePane} />
+          {:else if $feedbackPane.isShown && countdown > 0 && !Number.isNaN(countdown)}
+            <!-- TODO closing animation circle -->
+            <span
+              class="border border-fgs2 rounded-full text-b4 text-fgs2 px-1 h-4 flex justify-center items-center"
+            >
+              {countdown}
+            </span>
+          {/if}
+        </span>
+      </div>
+      <LinkBoxOnClipper on:link={onLink} />
+      <LinkItems
+        links={linkItems}
+        {propertyValues}
+        nodeId={$feedbackPane.focusedClip?.id ?? $webpage.id}
+        isExpandable={true}
+        on:propertyChange={onPropertyUpdate}
+        on:click={onLinkClick}
+        on:unlink={onUnlink}
+        isWrapItems={true}
       />
-      <span class="h-6 w-6 flex justify-center items-center">
-        {#if isHovering}
-          <Button icon="cross-circled" on:click={closePane} />
-        {:else if $feedbackPane.isShown && countdown > 0 && !Number.isNaN(countdown)}
-          <!-- TODO closing animation circle -->
-          <span
-            class="border border-fgs2 rounded-full text-b4 text-fgs2 px-1 h-4 flex justify-center items-center"
-          >
-            {countdown}
-          </span>
-        {/if}
-      </span>
     </div>
-    <LinkBoxOnClipper on:link={onLink} />
-    <LinkItems
-      links={linkItems}
-      {propertyValues}
-      nodeId={$feedbackPane.focusedClip?.id ?? $webpage.id}
-      isExpandable={true}
-      on:propertyChange={onPropertyUpdate}
-      on:click={onLinkClick}
-      on:unlink={onUnlink}
-      isWrapItems={true}
-    />
-  </div>
-  <div class="flex w-full justify-center bg-bgs2 rounded-md px-2 py-1">
-    <!-- Fix placeholder color issue -->
-    <InlineMarkdownTextInput
-      placeholder="Add notes"
-      bind:content={notes}
-      on:change={onNotesChange}
-      on:input={onNotesChange}
-    />
-  </div>
-  {#if $feedbackPane.focusedClip?.contentType === NodeType.WEB_SCREENSHOT_CLIP}
-    <!-- <img
+    <div class="flex w-full justify-center bg-bgs2 rounded-md px-2 py-1">
+      <!-- Fix placeholder color issue -->
+      <InlineMarkdownTextInput
+        placeholder="Add notes"
+        bind:content={notes}
+        on:change={onNotesChange}
+        on:input={onNotesChange}
+      />
+    </div>
+    {#if $feedbackPane.focusedClip?.contentType === NodeType.WEB_SCREENSHOT_CLIP}
+      <!-- <img
       src={$feedbackPane.focusedClip.body.s3Url}
       alt="Screenshot"
       class="w-full"
     /> -->
-    <FileView
-      id={$feedbackPane.focusedClip.body?.file}
-      class="h-full w-full max-h-40 object-cover"
-    />
-  {:else if $feedbackPane.focusedClip?.contentType === NodeType.TWEET}
-    <span class="text-b2 p-1 border border-brs2 rounded-md">
-      <NodeThumbnailTweetPreview
-        text={$feedbackPane.focusedClip.body.content}
+      <FileView
+        id={$feedbackPane.focusedClip.body?.file}
+        class="h-full w-full max-h-40 object-cover"
       />
-    </span>
+    {:else if $feedbackPane.focusedClip?.contentType === NodeType.TWEET}
+      <span class="text-b2 p-1 border border-brs2 rounded-md">
+        <NodeThumbnailTweetPreview
+          text={$feedbackPane.focusedClip.body.content}
+        />
+      </span>
+    {/if}
   {/if}
   <InlineFeedbackText bind:feedback={$feedbackPane.feedback} />
 </FeedbackPaneBase>

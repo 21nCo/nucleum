@@ -35,6 +35,7 @@ export interface IFeedbackPaneStore extends IObservableStoreSubject {
    */
   focusedClip: IClip | null;
   isPreventAutoClose?: boolean;
+  isShowStatusOnly?: boolean;
 }
 
 export interface ISyncStore extends IObservableStoreSubject {
@@ -43,6 +44,7 @@ export interface ISyncStore extends IObservableStoreSubject {
   isShowSyncPane?: boolean;
   lastSyncedAt?: string;
   progress?: number;
+  message?: string;
 }
 
 export enum SyncStatus {

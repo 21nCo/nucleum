@@ -233,13 +233,14 @@ class Flux {
     logger.log({ at: "flux.mutation", resource, params });
     try {
       response = await this.persistence.mutation(resource, params);
-      if (!this.isLocalMode) {
-        await this.insertMutation(resource, params);
-        if (this.isExtensionEnvironment) {
-          setTimeout(async () => {
-            await this.sync();
-          }, 100);
-        }
+      let mutation: IMutation;
+      if (!this.isLocalMode || this.isExtensionEnvironment) {
+        mutation = await this.insertMutation(resource, params);
+      }
+      if (this.isExtensionEnvironment) {
+        setTimeout(async () => {
+          await this.sync(mutation);
+        }, 100);
       }
       if (!additionalParams?.isPreventSubscriptions) {
         if (this.isExtensionEnvironment) {
@@ -305,10 +306,11 @@ class Flux {
       resourceId: this.resolveResourceId(params),
       action: this.resolveAction(params?.action)
     };
-    return this.persistence.mutation(Resource.mutation, {
+    await this.persistence.mutation(Resource.mutation, {
       records: [mutation],
       action: PersistenceActionType.INSERT
     });
+    return mutation;
   }
 
   private resolveResourceId<T extends IResource>(params: IMutationParamsv2<T>) {
@@ -440,10 +442,10 @@ class Flux {
         if (response && response.length > 0) {
           const syncDownData = response[response.length - 1];
           if (syncDownData?.result && syncDownData.result.length > 0) {
-            return syncDownData.result;
+            return { response, syncDownData: syncDownData.result };
           }
         }
-        return [];
+        return {response, syncDownData: []};
       } else if (method === SyncMethod.SYNC_DOWN) {
         if (
           response &&
@@ -471,36 +473,54 @@ class Flux {
    * Sync up the local changes and from response - syncs down the changes from cloud.
    * @returns
    */
-  async sync() {
-    const isOffline = await determineIfOffline();
-    if (isOffline) return;
-    const { mutations, lastSyncUp } = await this.resolveItemsForSyncUp();
-    logger.log({ at: "flux.sync", mutations, lastSyncUp });
-    if (!mutations || mutations.length === 0) return;
-    const local = await this.resolveLocal();
-    const lastSyncDown =
-      local?.lastSyncDown ?? new Date().getTime() - 1000 * 60 * 60 * 24;
-    const resources = this.resolveSyncResources();
-    const syncDownData = await this.performSync(SyncMethod.SYNC_UP, {
-      mutations,
-      lastSyncDown,
-      resources,
-      dapId: local?.dapId
-    });
-    if (syncDownData) {
-      await this.processSyncDown(syncDownData);
+  async sync(mutation?: IMutation) {
+    try {
+      const isOffline = await determineIfOffline();
+      if (isOffline && this.isExtensionEnvironment) {
+        //TODO - user feedback that internet connection is required for sync to work
+        console.log("offline detected - extension")
+        return;
+      } else if (isOffline) return;
+      logger.log({ at: "flux.sync", mutation, isExtensionEnvironment: this.isExtensionEnvironment })
+      const local = await this.resolveLocal();
+      const lastSyncDown =
+        local?.lastSyncDown ?? new Date().getTime() - 1000 * 60 * 60 * 24;
+      const dapId = await this.resolveDapId(local);
+      let response;
+      if (this.isExtensionEnvironment && mutation) {
+        response = await this.performSync(SyncMethod.SYNC_UP, {
+          mutations: [{...mutation, dapId}],
+          lastSyncDown,
+          resources: this.resolveSyncResources(),
+          dapId
+        });
+      } else {
+        const { mutations, lastSyncUp } = await this.resolveItemsForSyncUp();
+        logger.log({ at: "flux.sync", mutations, lastSyncUp });
+        if (!mutations || mutations.length === 0) return;
+        const resources = this.resolveSyncResources();
+        response = await this.performSync(SyncMethod.SYNC_UP, {
+          mutations,
+          lastSyncDown,
+          resources,
+          dapId
+        });
+        await this.persistence.mutation(Resource.kv, {
+          record: {
+            id: "kv:local",
+            lastSyncUp: mutations[mutations.length - 1].timestamp
+          },
+          action: PersistenceActionType.MERGE
+        });
+      }
+      logger.debug({ at: "flux.sync - response", mutation, response });
+      if (response?.syncDownData) {
+        await this.processSyncDown(response.syncDownData);
+      }
+      return response;
+    } catch (e) {
+      logger.error({ at: "flux.sync", error: e });
     }
-    // clientStorage.set(
-    //   ClientStorageKey.LAST_SYNC_UP,
-    //   mutations[mutations.length - 1].timestamp
-    // );
-    await this.persistence.mutation(Resource.kv, {
-      record: {
-        id: "kv:local",
-        lastSyncUp: mutations[mutations.length - 1].timestamp
-      },
-      action: PersistenceActionType.MERGE
-    });
   }
 
   async resolveItemsForSyncUp() {
@@ -687,6 +707,11 @@ class Flux {
               subMessage: `Syncing ${resource}s...`
             });
           }
+          if (resource === Resource.kv) {
+            resourceResponse.result = resourceResponse.result.filter(
+              (x: any) => !x.id.toString().includes("local")
+            );
+          }
           const result = await this.persistence.mutation(resource as Resource, {
             records: resourceResponse.result,
             action:
@@ -699,6 +724,7 @@ class Flux {
           logger.debug({
             at: "flux.cloneDown - result",
             resource,
+            records: resourceResponse.result,
             result
           });
           if (!result) {

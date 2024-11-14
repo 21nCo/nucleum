@@ -7,7 +7,9 @@
   export let size: Size.sm | Size.md = Size.md;
 
   onMount(async () => {
-    subatom = (await clientStorage.get(ClientStorageKey.PRODUCT)) ?? "tidigit";
+    if (!subatom)
+      subatom =
+        (await clientStorage.get(ClientStorageKey.PRODUCT)) ?? "tidigit";
   });
   $: height = size === Size.md ? 61 : size === Size.sm ? 40 : 61;
 </script>

@@ -25,13 +25,16 @@
   const dispatch = createEventDispatcher();
   export let id: string;
   export let stores: IStore[] = [];
+  export let isLoggedIn: boolean = false;
   $: product = extractProduct(window.location.hostname);
-  $: isSelfPage = product.product === "memotron";
+  $: isSelfPage =
+    product.product === "memotron" || process.env.NODE_ENV === "development";
 
   onMount(async () => {
     window.addEventListener(
       "message",
       async function (event) {
+        // console.log("message - extension", event);
         if (event.source != window || !isSelfPage) return;
         if (event.data.type && event.data.type == "signin") {
           await clientStorage.set(
@@ -50,6 +53,10 @@
       },
       false
     );
+    await refreshUserSession();
+  });
+
+  async function refreshUserSession() {
     const dapId = await getDapId();
     const token = await resolveToken();
     if (!token) {
@@ -59,11 +66,21 @@
       return;
     }
     await bootup();
-  });
+    return true;
+  }
+
+  export async function onTabUpdate() {
+    const token = await resolveToken();
+    if (token) {
+      await extensionFlux({ method: FluxMethod.SYNC_DOWN });
+    }
+    return token;
+  }
 
   async function bootup() {
     try {
       await account.init();
+      isLoggedIn = true;
       logger.log({
         at: "ExtensionBaseLayer.svelte bootup",
         account: $account

@@ -30,6 +30,7 @@ export enum ExtensionEvent {
     FLUX_DELEGATION = "flux",
     LOGIN = "login",
     LOGOUT = "logout",
+    TOKEN_NOT_FOUND = "token_not_found",
     UPLOAD_FILE = "upload",
     RUN = "run",
     /**

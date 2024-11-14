@@ -65,6 +65,8 @@
     } else if (message.event === ExtensionEvent.MUTATION) {
       console.log({ at: "SidePanel - RELOAD_INMEMORY_STORE", message });
       loadInMemoryStore(message.data?.resource);
+    } else if (message.event === ExtensionEvent.TOKEN_NOT_FOUND) {
+      isLoggedIn = false;
     }
     return true;
   });
@@ -103,7 +105,11 @@
       const unavailableUrlsList = [
         ...screenShotOnlyPages,
         /^https:\/\/(?:www\.)?(twitter\.com|x\.com)\/([a-zA-Z0-9_]+)\/status\/(\d+)\/?$/,
-        /^https:\/\/(?:.*\.)?memotron\.io(?:\/.*)?$/
+        /^https:\/\/(?:.*\.)?memotron\.io(?:\/.*)?$/,
+        /^https:\/\/(?:.*\.)?amazon\.[a-z]{2,3}(?:\/.*)?$/,
+        /^https:\/\/(?:.*\.)?twitter\.[a-z]{2,3}(?:\/.*)?$/,
+        /^https:\/\/(?:.*\.)?x\.[a-z]{2,3}(?:\/.*)?$/,
+        /^https:\/\/memotron\.tidigit\.dev(?:\/.*)?$/
       ];
       isNotAvailable = unavailableUrlsList.some((x) => x.test(data.url));
     }

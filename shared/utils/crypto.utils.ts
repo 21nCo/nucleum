@@ -1,7 +1,17 @@
 // import fletcher16 from "fletcher";
 
-export function generateHash(str: string) {
+export function generateHashV1(str: string) {
   // return fletcher16(Buffer.from(str.toLowerCase())).toString();
+}
+export function generateHash(str: string): string {
+  let hash = 0;
+  const input = str.toLowerCase();
+  for (let i = 0; i < input.length; i++) {
+    const char = input.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return Math.abs(hash).toString(36);
 }
 
 export async function generateSHA256Hash(message: string) {

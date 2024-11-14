@@ -3,7 +3,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { createEventDispatcher, onMount } from "svelte";
   import type { IArea } from "./types";
-  import { webpage } from "./store";
+  import { feedbackPane, webpage } from "./store";
   import {
     NodeType,
     type IWebScreenshotClip
@@ -41,18 +41,26 @@
   });
 
   async function saveSnip(uploadResponse: any) {
-    if (!uploadResponse || !uploadResponse.id) return;
-    const snip: OmitForCapture<IWebScreenshotClip> = {
-      contentType: NodeType.WEB_SCREENSHOT_CLIP,
-      body: {
-        file: uploadResponse.id
-      }
-    };
-    const response = await webpage.saveClip(snip);
-    dispatch("saved", { id: response?.id });
+    try {
+      if (!uploadResponse || !uploadResponse.id) return;
+      const snip: OmitForCapture<IWebScreenshotClip> = {
+        contentType: NodeType.WEB_SCREENSHOT_CLIP,
+        body: {
+          file: uploadResponse.id
+        }
+      };
+      const response = await webpage.saveClip(snip);
+      dispatch("saved", { id: response?.id });
+    } catch (e) {
+      logger.error({ at: "ScreenShot - saveSnip", error: e });
+    } finally {
+      $feedbackPane.isShowStatusOnly = false;
+      $feedbackPane.isPreventAutoClose = false;
+    }
   }
 
   function processScreenshot(data, area: IArea) {
+    feedbackPane.setSavingStatus("Processing screenshot", true);
     const img = new Image();
     img.crossOrigin = "Anonymous";
     img.src = data;
@@ -180,9 +188,21 @@
     }
   }
   function onMouseup(e: MouseEvent) {
-    if (!recordMousemove) return;
-    snip({ x: leftValue, y: topValue, width: widthValue, height: heightValue });
-    recordMousemove = false;
+    try {
+      if (!recordMousemove) return;
+      snip({
+        x: leftValue,
+        y: topValue,
+        width: widthValue,
+        height: heightValue
+      });
+      recordMousemove = false;
+    } catch (e) {
+      logger.error({ at: "ScreenShot - onMouseup", error: e });
+    } finally {
+      $feedbackPane.isShowStatusOnly = false;
+      $feedbackPane.isPreventAutoClose = false;
+    }
   }
   function handleKeyDown(e: KeyboardEvent) {
     if (e.key === "Escape") {
