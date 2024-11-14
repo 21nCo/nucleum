@@ -40,6 +40,9 @@ stages:
     - cd cdk/client
     - rm -rf node_modules package-lock.json
     - npm install && npm run build
+    - echo "AWS Access Key: $AWS_ACCESS_KEY_ID"
+    - echo "AWS Secret Key: $AWS_SECRET_ACCESS_KEY"
+    - aws configure list
     - cdk deploy --all --require-approval never
 
 #Dev
