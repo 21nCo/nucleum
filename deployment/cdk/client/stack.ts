@@ -10,7 +10,9 @@ console.log("FrontendStack", {
   appName,
   domain,
   subdomain,
-  isUseParentZone
+  isUseParentZone,
+  cdkDefaultAccount: process.env.CDK_DEFAULT_ACCOUNT,
+  account: process.env.account
 });
 
 const app = new cdk.App();
