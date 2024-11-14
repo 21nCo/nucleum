@@ -17,6 +17,7 @@
   import NodeThumbnailTweetPreview from "$lib/client/products/memotron/node/thumbnail/NodeThumbnailTweetPreview.svelte";
   import { Placement } from "$lib/client/types/direction.enum";
   import type { IWebpageStore } from "../contentScripts/types";
+  import { logger } from "$lib/client/components/debug/logger.client";
   let notes: string =
     ($feedbackPane.focusedClip
       ? $feedbackPane.focusedClip.notes
@@ -129,6 +130,11 @@
 
   function onPropertyUpdate(e: CustomEvent) {
     if (!e.detail || !e.detail?.id || e.detail?.value === undefined) return;
+    logger.log({
+      at: "onPropertyUpdate",
+      detail: e.detail,
+      fc: $feedbackPane.focusedClip
+    });
     if ($feedbackPane.focusedClip)
       webpage.updateClipProperty($feedbackPane.focusedClip.id, {
         id: e.detail.id,

@@ -16,6 +16,7 @@
   let isHovering: boolean = false;
   async function onClick(event) {
     const tweetNode = extractTweet(event.target);
+    logger.log({ at: "Tweet onClick", event, tweetNode });
     if (!tweetNode) {
       logger.error("Tweet node not found");
       return;
@@ -23,9 +24,10 @@
     let mainTweetId: IRecordId | undefined = undefined;
     if (tweetNode.metadata?.replyTo) {
       const mainTweetNode = extractTweetFromTweeetPage();
-      if (!mainTweetNode) return;
-      const mainTweetResult = await webpage.saveTweet(mainTweetNode, true);
-      mainTweetId = mainTweetResult?.id;
+      if (mainTweetNode) {
+        const mainTweetResult = await webpage.saveTweet(mainTweetNode, true);
+        mainTweetId = mainTweetResult?.id;
+      }
     }
     const tweetResult = await webpage.saveTweet(tweetNode);
     if (mainTweetId && tweetResult) {

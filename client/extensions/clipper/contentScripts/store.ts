@@ -556,9 +556,9 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
   }
 
   async updateClipProperty(id: IRecordId, property: INodePropertyValue) {
-    logger.debug({ at: "updateClipProperty", id, property });
+    logger.log({ at: "updateClipProperty", id, property, clips: this.get().clips });
     const webpage = this.get();
-    if (!webpage.id) return;
+    if (!webpage?.clips) return;
     const clip = webpage.clips?.find(resourceInList(id));
     if (!clip) return;
     const properties = clip.properties?.filter(
@@ -581,6 +581,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     id: IRecordId,
     properties: INodePropertyValue[]
   ) {
+    logger.log({ at: "updateProperties", id, properties });
     return nodeStore.modify(
       id,
       {
