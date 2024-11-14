@@ -40,6 +40,8 @@ import context from "$lib/client/stores/context.store";
 import { get } from "svelte/store";
 import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { linker } from "../linking/link.store";
+import { nodeStore } from "../node/node.store";
+import { activeResourceFilterV2 } from "$lib/client/utils/utils";
 
 class CollectionStore extends ResourceStore<ICollection> {
   constructor() {
@@ -162,8 +164,14 @@ class CollectionStore extends ResourceStore<ICollection> {
         out: collectionId.toString()
       }
     });
-    if (links && Array.isArray(links)) {
-      return links.length;
+    const nodes = await nodeStore.selectMany({
+      filters: {
+        id: links.map((x) => x.in),
+        ...activeResourceFilterV2
+      }
+    });
+    if (nodes && Array.isArray(nodes)) {
+      return nodes.length;
     }
   }
 }
@@ -217,18 +225,20 @@ export class ActiveCollectionStore extends ActiveResourceStore<
         "*",
         "(select * from $parent.views) as views",
         "(select * from $parent.properties) as properties",
-        "typeToExtend.* as typeToExtend",
-        "(array::first(select out, count() from link where out is $parent.id group by out)).count as totalNodeCount"
+        "typeToExtend.* as typeToExtend"
+        // "(array::first(select out, count() from link where out is $parent.id group by out)).count as totalNodeCount"
       ]);
       logger.log({ at: "ActiveCollectionStore.init - select", result });
       let record = result;
       if (!record) return;
+      const totalNodeCount = await collectionStore.resolveNodeCount(this.id);
       this.set({
         ...record,
         accessMode,
         isViewDataRefreshing: false,
         isViewDataLoading: true,
         isPageLoading: false,
+        totalNodeCount,
         views: record.views.map((x) => {
           return { ...x, data: [] };
         })

@@ -21,6 +21,7 @@
   import Badge from "../../text/Badge.svelte";
   import { onMount } from "svelte";
   import { SearchStore } from "$lib/client/products/memotron/memotron.store";
+  import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
   export let item: IResourceSwitchItem;
   export let size: Size.lg | Size.md | Size.sm = Size.md;
   export let isActive: boolean = false;
@@ -29,6 +30,7 @@
   export let isShowCount: boolean = false;
   let isHovering: boolean = false;
   let count: number = 0;
+  let popRef: HTMLButtonElement;
 
   onMount(async () => {
     if (!isShowCount) return;
@@ -41,6 +43,9 @@
     ]?.user?.includes(
       resourceAction(item.value as Resource, ResourceActionType.BROWSE)
     );
+    if (item.value === Resource.combination) {
+      return [];
+    }
     return [
       {
         group: "all",
@@ -66,6 +71,7 @@
                     ResourceActionType.BROWSE
                   )
                 );
+              popRef.dispatchEvent(new CustomEvent("hide"));
             }
           },
           {
@@ -73,32 +79,38 @@
             value: "create",
             icon: "plus",
             callback: async () => {
-              appStore.runAction(
-                resourceAction(
-                  item.value as Resource,
-                  ResourceActionType.CREATE
-                )
-              );
+              if (item.value === Resource.node) {
+                appStore.runAction(MemotronAction.CAPTURE);
+              } else {
+                appStore.runAction(
+                  resourceAction(
+                    item.value as Resource,
+                    ResourceActionType.CREATE
+                  )
+                );
+              }
+              popRef.dispatchEvent(new CustomEvent("hide"));
             }
           }
         ]
-      },
-      {
-        group: "more",
-        items: [
-          {
-            label: "Show archived",
-            value: "archived",
-            icon: "archive",
-            callback: async () => {}
-          }
-        ]
       }
+      // {
+      //   group: "more",
+      //   items: [
+      //     {
+      //       label: "Show archived",
+      //       value: "archived",
+      //       icon: "archive",
+      //       callback: async () => {}
+      //     }
+      //   ]
+      // }
     ];
   }
 </script>
 
 <button
+  bind:this={popRef}
   use:hoverable={{
     onHover: (e) => (isHovering = e)
   }}

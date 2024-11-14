@@ -17,7 +17,11 @@ import {
   ActiveResourceStore,
   ResourceStore
 } from "$lib/client/components/flux/resourceStores/resource.store";
-import { debouncer, generateUID } from "$lib/client/utils/utils";
+import {
+  activeResourceFilter,
+  debouncer,
+  generateUID
+} from "$lib/client/utils/utils";
 import { formatDate } from "$lib/client/utils/time.utils";
 import {
   ResourceAccessMode,
@@ -257,57 +261,67 @@ export class ActiveNodeStore extends ActiveResourceStore<
   }
   init = async (accessMode: ResourceAccessMode) => {
     logger.log({ at: "ActiveNodeStore.init", id: this.id });
-    const node = await this.resourceStore.fetch(this.id);
-    if (node) {
-      if (
-        node.contentType === NodeType.YOUTUBE_VIDEO &&
-        node.clips &&
-        Array.isArray(node.clips)
-      ) {
-        node.clips.sort((a, b) => a.body.timestamp - b.body.timestamp);
+    try {
+      const node = await this.resourceStore.fetch(this.id);
+      if (node) {
+        if (node.clips && isValidArrayWithData(node.clips)) {
+          node.clips = node.clips.filter(activeResourceFilter);
+        }
+        if (
+          node.contentType === NodeType.YOUTUBE_VIDEO &&
+          node.clips &&
+          Array.isArray(node.clips)
+        ) {
+          node.clips.sort((a, b) => a.body.timestamp - b.body.timestamp);
+        }
+        this.set({ ...node, accessMode });
       }
-      this.set({ ...node, accessMode });
-    }
-
-    const rawLinks =
-      node.links.length > 0 ? node.links : [...node.outlinks, ...node.inlinks];
-    const links: INodeLinkThumb[] = rawLinks
-      .filter((x: INodeLink) => {
-        return (
-          (x.in.toString() === this.id && x.out.tb === Resource.node) ||
-          (x.out.toString() === this.id && x.in.tb === Resource.node)
+      const rawLinks =
+        node.links.length > 0
+          ? node.links
+          : [...node.outlinks, ...node.inlinks];
+      const links: INodeLinkThumb[] = rawLinks
+        .filter((x: INodeLink) => {
+          return (
+            (x.in.toString() === this.id && x.out.tb === Resource.node) ||
+            (x.out.toString() === this.id && x.in.tb === Resource.node)
+          );
+        })
+        .map((x: INodeLink) => {
+          const id = x.in.toString() === this.id ? x.out : x.in;
+          return {
+            linkedTo: id,
+            linkType: x.linkType,
+            id: x.id,
+            tags: x.tags,
+            direction: x.in.toString() === this.id ? "outgoing" : "incoming"
+          } as INodeLinkThumb;
+        });
+      const collections: IRecordId[] = rawLinks
+        .filter(
+          (x: INodeLink) =>
+            x.out.tb === Resource.collection || x.in.tb === Resource.collection
+        )
+        .map((x: INodeLink) =>
+          x.out.tb === Resource.collection ? x.out : x.in
         );
-      })
-      .map((x: INodeLink) => {
-        const id = x.in.toString() === this.id ? x.out : x.in;
-        return {
-          linkedTo: id,
-          linkType: x.linkType,
-          id: x.id,
-          tags: x.tags,
-          direction: x.in.toString() === this.id ? "outgoing" : "incoming"
-        } as INodeLinkThumb;
+      logger.debug({
+        at: "ActiveNodeStore.fetch",
+        node,
+        rawLinks,
+        links,
+        collections
       });
-    const collections: IRecordId[] = rawLinks
-      .filter(
-        (x: INodeLink) =>
-          x.out.tb === Resource.collection || x.in.tb === Resource.collection
-      )
-      .map((x: INodeLink) => (x.out.tb === Resource.collection ? x.out : x.in));
-    logger.debug({
-      at: "ActiveNodeStore.fetch",
-      node,
-      rawLinks,
-      links,
-      collections
-    });
-    const types = await collectionStore.resolveTypes(collections);
-    this.update((n) => {
-      n.types = types;
-      n.links = links;
-      n.collections = collections;
-      return n;
-    });
+      const types = await collectionStore.resolveTypes(collections);
+      this.update((n) => {
+        n.types = types;
+        n.links = links;
+        n.collections = collections;
+        return n;
+      });
+    } catch (e) {
+      logger.error({ at: "node.store fetch", e });
+    }
   };
   updateProperty = async (property: INodePropertyValue) => {
     let properties = this.get().properties ?? [];

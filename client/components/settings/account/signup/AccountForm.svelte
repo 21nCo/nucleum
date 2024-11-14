@@ -122,7 +122,7 @@
 </script>
 
 <!-- transition:fade -->
-<div class="flex flex-col w-80 {$view.scale > 0.6 ? 'gap-10' : 'gap-6'}">
+<div class="flex flex-col w-96 {$view.scale > 0.6 ? 'gap-10' : 'gap-6'}">
   <!-- TODO - reenable email signin/signup upon completion of forgot password flow -->
   {#if $appStore.isDebugMode}
     <div class="flex flex-col gap-2 justify-center items-center">
@@ -185,35 +185,35 @@
     </div>
   {/if}
   {#if isLoginFromExtension}
-    <div class="flex flex-col gap-2 justify-center items-center">
-      <div class="text-fgs3 text-b3 text-center">
-        Thanks for installing our extension. Click continue to login to your
-        account.
+    <div class="flex flex-col gap-2 justify-center items-center w-full">
+      <div class="text-h4 text-center w-full">
+        Thanks for installing Memotron extension.
+      </div>
+      <div class="text-fgs3 text-b2 text-center">
+        Click continue to login to your account.
       </div>
     </div>
   {/if}
-  {#if isValidArrayWithData($appStore?.appData?.oAuthConfig)}
-    {#if $appStore.isDebugMode}
-      <div
-        class="w-full flex justify-center items-center text-fgs3 text-b3 px-4"
-      >
-        <hr class="grow border-t border-bgs4" />
-        <div class="px-2">or</div>
-        <hr class="grow border-t border-bgs4" />
-      </div>
-    {/if}
-    <div class="w-full flex justify-center">
+  {#if $appStore.isDebugMode}
+    <div class="w-full flex justify-center items-center text-fgs3 text-b3 px-4">
+      <hr class="grow border-t border-bgs4" />
+      <div class="px-2">or</div>
+      <hr class="grow border-t border-bgs4" />
+    </div>
+  {/if}
+  <div class="flex flex-col gap-8 justify-center self-center w-80">
+    {#if isValidArrayWithData($appStore?.appData?.oAuthConfig)}
       <OAuthButtons />
-    </div>
-  {/if}
-  {#if !isLoginFromExtension}
-    <Button
-      label="Continue offline"
-      style={ButtonStyle.OUTLINED}
-      on:click={async () => {
-        await account.startOfflineSession();
-        appStore.gotoPath("/");
-      }}
-    />
-  {/if}
+    {/if}
+    {#if !isLoginFromExtension}
+      <Button
+        label="Continue offline"
+        style={ButtonStyle.OUTLINED}
+        on:click={async () => {
+          await account.startOfflineSession();
+          appStore.gotoPath("/");
+        }}
+      />
+    {/if}
+  </div>
 </div>

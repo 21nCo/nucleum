@@ -40,6 +40,7 @@
   } from "$lib/client/components/flux/resourceStores/resource.utils";
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
   import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
+  import { activeResourceFilterV2 } from "$lib/client/utils/utils";
   export let node: IActiveNodeStore;
   $: multiSelectContext = $node.id + "-" + ResourceAccessPoint.NODE_LINKS;
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
@@ -131,7 +132,8 @@
     _links = $node.links;
     const result = await nodeStore.selectMany({
       filters: {
-        id: _links.map((x) => x.linkedTo.toString())
+        id: _links.map((x) => x.linkedTo.toString()),
+        ...activeResourceFilterV2
       }
     });
     if (!result || result.length == 0) {

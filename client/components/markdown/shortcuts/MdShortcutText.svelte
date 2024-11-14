@@ -14,7 +14,7 @@
     },
     {
       id: BlockAction.MENTION,
-      key: "@"
+      key: "@ or ["
     },
     {
       id: BlockAction.DUPLICATE,
@@ -42,6 +42,14 @@
     {
       id: NodeType.LIST,
       key: "*"
+    },
+    {
+      id: NodeType.ORDERED_LIST,
+      key: "1."
+    },
+    {
+      id: NodeType.CHECKLIST,
+      key: "+"
     },
     {
       id: NodeType.DIVIDER,

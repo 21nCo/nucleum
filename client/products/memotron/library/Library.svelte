@@ -185,7 +185,8 @@
         selectedResource,
         selectedSubType !== "all" && selectedSubType !== "recents"
           ? (selectedSubType.toUpperCase() as NodeType | CollectionType)
-          : undefined
+          : undefined,
+        filters
       );
       const newData = await searchStore.select({
         resource: selectedResource,
