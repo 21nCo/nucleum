@@ -29,6 +29,6 @@
       class="absolute inset-0 w-full rounded-t-md object-contain h-full"
       src={node.body.s3Url}
     /> -->
-    <FileView id={node.body.file} class="h-full w-full object-cover" />
+    <FileView id={node.body.file} class="h-full w-full !object-contain" />
   {/if}
 </div>

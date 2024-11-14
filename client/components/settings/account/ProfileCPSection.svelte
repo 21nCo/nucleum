@@ -29,14 +29,14 @@
     } else if ($account.userInfo?.joinDate) {
       const joinDate = new Date($account.userInfo?.joinDate);
       const joinDateIsBeforeJan012024 = joinDate < new Date(2024, 1, 1);
-      const joinDateIsBeforeNov122024 = joinDate < new Date(2024, 11, 12);
-      const joinDateIsBeforeDec012024 = joinDate < new Date(2024, 12, 1);
+      const joinDateIsBeforeNov132024 = joinDate < new Date(2024, 10, 13);
+      const joinDateIsBeforeDec012024 = joinDate < new Date(2024, 11, 1);
       if (joinDateIsBeforeJan012024) {
         return "Early Adopter - lifetime license";
-      } else if (joinDateIsBeforeNov122024) {
-        return "1y free cloud sync 🎉 (First 100 early adopters)";
+      } else if (joinDateIsBeforeNov132024) {
+        return "1 year free cloud sync 🎉 (First 500 early adopters)";
       } else if (joinDateIsBeforeDec012024) {
-        return "3 months free cloud sync 🎉 (First 1000 early users)";
+        return "3 months free cloud sync 🎉 (First 5000 early users)";
       } else {
         return "Early Adopter - limited free cloud sync trial";
       }

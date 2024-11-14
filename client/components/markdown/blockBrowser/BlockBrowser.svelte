@@ -47,8 +47,7 @@
           label: "Callout",
           description: "Callout block",
           type: NodeType.CALLOUT,
-          icon: "bookmark",
-          badge: "new"
+          icon: "bookmark"
         },
         {
           label: "Math",
@@ -99,33 +98,33 @@
         // }
       ]
     },
-    {
-      section: "inline",
-      children: [
-        {
-          label: "Mention",
-          description: "Mention a node or a collection",
-          type: InlineType.MENTION,
-          icon: "at-symbol"
-        },
-        {
-          label: "Date",
-          description: "Mention a date",
-          type: InlineType.DATE,
-          icon: "calendar-days",
-          badge: "planned",
-          isDisabled: true
-        },
-        {
-          label: "Mention link",
-          description: "Mention a link",
-          type: InlineType.LINK_MENTION,
-          icon: "ph:link",
-          badge: "planned",
-          isDisabled: true
-        }
-      ]
-    },
+    // {
+    //   section: "inline",
+    //   children: [
+    //     {
+    //       label: "Mention",
+    //       description: "Mention a node or a collection",
+    //       type: InlineType.MENTION,
+    //       icon: "at-symbol"
+    //     },
+    //     {
+    //       label: "Date",
+    //       description: "Mention a date",
+    //       type: InlineType.DATE,
+    //       icon: "calendar-days",
+    //       badge: "planned",
+    //       isDisabled: true
+    //     },
+    //     {
+    //       label: "Mention link",
+    //       description: "Mention a link",
+    //       type: InlineType.LINK_MENTION,
+    //       icon: "ph:link",
+    //       badge: "planned",
+    //       isDisabled: true
+    //     }
+    //   ]
+    // },
     {
       section: "lists",
       children: [
@@ -141,8 +140,7 @@
           description: "Ordered List block",
           type: NodeType.ORDERED_LIST,
           // icon: "lucide:list-ordered"
-          icon: "hugeicons:left-to-right-list-number",
-          badge: "beta"
+          icon: "hugeicons:left-to-right-list-number"
         },
         {
           label: "Checklist",
@@ -155,7 +153,6 @@
     },
     {
       section: "media",
-      badge: "new",
       children: [
         {
           label: "Image",
@@ -216,8 +213,7 @@
           label: "Media grid",
           description: "Media grid block",
           type: NodeType.MEDIA_GRID,
-          icon: "rectangle-group",
-          badge: "new"
+          icon: "rectangle-group"
         },
         {
           label: "Media stack",

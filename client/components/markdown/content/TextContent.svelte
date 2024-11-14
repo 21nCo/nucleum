@@ -81,6 +81,7 @@
   let mentionSearchQuery = "";
   let shiftKeyPressed: boolean = false;
   let previousVal = deepCopy(text);
+  let mentionTriggerKey: string;
   let caretPositionT2:
     | {
         element?: any;
@@ -242,14 +243,19 @@
     } else if (event.key != "2") {
       shiftKeyPressed = false;
     }
-    if (type === "keyup" && event.key === "2" && shiftKeyPressed) {
+    console.log({ shiftKeyPressed, event });
+    if (
+      type === "keyup" &&
+      ((event.key === "2" && shiftKeyPressed) || event.key === "[")
+    ) {
+      mentionTriggerKey = event.key;
       showPopover("mentionSearch");
       return true;
     } else if (!isRenderMentionSearch) {
       return false;
     } else if (
       type === "keyup" &&
-      (event.key === "Escape" || !text.includes("@"))
+      (event.key === "Escape" || (!text.includes("@") && !text.includes("[")))
     ) {
       hidePopover("mentionSearch");
     } else if (type === "keyup") {
@@ -725,7 +731,7 @@
 
   function onMentionSelect(event: CustomEvent) {
     const item = event.detail.item;
-    textRef.addMention(item, mentionSearchQuery);
+    textRef.addMention(item, mentionSearchQuery, mentionTriggerKey);
     hidePopover("mentionSearch");
     mentionSearchQuery = "";
     propagateToNodeContent("mention", {
@@ -835,7 +841,7 @@
         bind:this={mentionSearchRef}
         searchResultComponent={LinkSearchResultItem}
         searchCallback={onMentionSearch}
-        shortcutTrigger="@"
+        shortcutTriggers={["@", "["]}
         on:select={onMentionSelect}
         on:reset={() => {
           hidePopover("mentionSearch");

@@ -24,9 +24,11 @@
   } from "../node.type";
   import { appStore } from "$lib/client/stores/app.store";
   import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { activeResourceFilterV2 } from "$lib/client/utils/utils";
   export let node: IActiveNodeStore;
   export let pane: NodeRightPaneType | undefined = undefined;
   let links: { link: INodeLinkThumb; node: INode }[] = [];
+  let notesInputRef: InlineMarkdownTextInput;
   const contentContext = getContext<any>("content");
   function onChange(e: any) {
     if ($node.notes) node.debouncedModify({ notes: $node.notes });
@@ -40,7 +42,8 @@
     if (!$node.links) return;
     const result = await nodeStore.selectMany({
       filters: {
-        id: $node.links.map((x) => x.linkedTo.toString())
+        id: $node.links.map((x) => x.linkedTo.toString()),
+        ...activeResourceFilterV2
       }
     });
     if (!result || result.length == 0) {
@@ -107,7 +110,7 @@
       <span class="flex flex-row justify-between items-center w-full">
         <span class="flex flex-row gap-1 items-center">
           <Text content="Links" style={TextStyle.SECTION_HEADING} />
-          <Badge text={$node.links?.length || 0} />
+          <Badge text={links?.length || 0} />
         </span>
         <span>
           <Button
@@ -120,7 +123,7 @@
         </span>
       </span>
       <div class="w-full min-h-32 flex flex-col gap-3 overflow-auto">
-        {#if $node.links && $node.links.length > 0}
+        {#if links && links.length > 0}
           <LinkThumbnailItems
             {links}
             accessPointId={node.id}
@@ -150,12 +153,16 @@
         />
       </span>
     </span>
-    <div class="w-full flex-1 bg-bgs2 rounded-md p-4">
+    <button
+      class="flex w-full flex-1 bg-bgs2 rounded-md p-4"
+      on:click={() => notesInputRef?.focus()}
+    >
       <InlineMarkdownTextInput
+        bind:this={notesInputRef}
         placeholder="Add notes"
         bind:content={$node.notes}
         on:change={onChange}
       />
-    </div>
+    </button>
   </div>
 </div>

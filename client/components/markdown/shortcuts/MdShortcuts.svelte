@@ -11,7 +11,7 @@
     },
     {
       id: BlockAction.MENTION,
-      description: "Mention a node or a collection"
+      description: "Mention a node or a collection (Beta)"
     },
     {
       id: BlockAction.DUPLICATE,
@@ -35,7 +35,15 @@
     },
     {
       id: NodeType.LIST,
-      description: "List items"
+      description: "Unordered list"
+    },
+    {
+      id: NodeType.ORDERED_LIST,
+      description: "Ordered list"
+    },
+    {
+      id: NodeType.CHECKLIST,
+      description: "Check list"
     },
     {
       id: NodeType.DIVIDER,

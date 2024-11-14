@@ -374,14 +374,19 @@ export class SearchStore {
     return data;
   }
 
-  async resolveCount(resource: Resource, subType?: NodeType | CollectionType) {
+  async resolveCount(
+    resource: Resource,
+    subType?: NodeType | CollectionType,
+    additionalFilters?: any
+  ) {
     if (resource === Resource.node) {
       const result = await flux.selectMany(resource, {
         properties: ["count()"],
         filters: {
+          ...activeResourceFilterV2,
+          ...additionalFilters,
           contentType: subType ? [subType] : [...rootNodeTypeList],
-          creationContext: false,
-          ...activeResourceFilterV2
+          creationContext: false
         },
         groupBy: ["all"]
       });
@@ -394,8 +399,9 @@ export class SearchStore {
       const result = await flux.selectMany(resource, {
         properties: ["count()"],
         filters: {
-          type: subType ? [subType] : undefined,
-          ...activeResourceFilterV2
+          ...activeResourceFilterV2,
+          ...additionalFilters,
+          type: subType ? [subType] : undefined
         },
         groupBy: ["all"]
       });

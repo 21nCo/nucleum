@@ -15,7 +15,11 @@
   export let searchCallback: Function | undefined = undefined;
   export let searchResultComponent: any = undefined;
   export let searchResultComponentProps: Record<string, unknown> = {};
+  /**
+   * @deprecated use shortcutTriggers instead
+   */
   export let shortcutTrigger: string | undefined = undefined;
+  export let shortcutTriggers: string[] = [];
   export let emptyStateLabel: string = "No results found";
   export let isPreventDefaultResults: boolean = false;
   export let isInlineContext: boolean = false;
@@ -66,6 +70,16 @@
       (event.target as HTMLElement).innerText;
     if (shortcutTrigger && value?.includes(shortcutTrigger)) {
       value = value.split(shortcutTrigger)[1].split(" ")[0];
+    }
+    console.log({ shortcutTriggers, value });
+    if (
+      shortcutTriggers.length > 0 &&
+      shortcutTriggers.some((trigger) => value.includes(trigger))
+    ) {
+      let trigger = shortcutTriggers.find((trigger) => value.includes(trigger));
+      if (trigger) {
+        value = value.split(trigger)[1].split(" ")[0];
+      }
     }
     // console.log("keyup - search results popover", { event, value });
     if (event.key === "Escape") {
