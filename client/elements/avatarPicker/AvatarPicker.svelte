@@ -187,17 +187,21 @@
    * @summary To pick a random emoji or icon.
    */
   function ShufflePick() {
-    const avatar =
-      mode == AvatarType.ICON
-        ? $userPreferences.avatarPicker.usedIcons[
-            Math.floor(
-              Math.random() * $userPreferences.avatarPicker.usedIcons.length
-            )
-          ][0]
-        : shuffleEmojis[Math.floor(Math.random() * shuffleEmojis.length)][0];
-    eventDispatcher("avatarClicked", avatar);
-    avatarClickCallback(avatar);
-    eventDispatcher("close");
+    let avatar;
+    if (mode == AvatarType.ICON) {
+      avatar =
+        materialSymbols[Math.floor(Math.random() * materialSymbols.length)][0];
+    } else {
+      let emojiCategories = Object.keys(emojis);
+      let pickedCategory =
+        emojiCategories[Math.floor(Math.random() * emojiCategories.length)];
+      avatar =
+        emojis[pickedCategory][
+          Math.floor(Math.random() * emojis[pickedCategory].length)
+        ][0];
+    }
+    addToUsedList(avatar);
+    // eventDispatcher("close");
   }
 
   /**
