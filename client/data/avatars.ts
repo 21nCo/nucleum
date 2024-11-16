@@ -20875,7 +20875,7 @@ export const materialSymbols = [
   ]
 ];
 
-export const emojis = {
+export const emojis: any = {
   "Smileys & Emotion": [
     [{ name: "grinning face", code: "&#X1F600" }],
     [{ name: "grinning face with big eyes", code: "&#X1F603" }],
