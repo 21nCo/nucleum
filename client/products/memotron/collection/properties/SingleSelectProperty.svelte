@@ -65,15 +65,6 @@
     propagateConfigChange();
     isEditing = false;
   }
-  function onReorderOptions(
-    e: CustomEvent<{ from: number; to: number; listId: string }>
-  ) {
-    const { from, to, listId } = e.detail;
-    if (!listId || listId !== "options") return;
-    const [movedItem] = property.config?.options?.splice(from, 1) ?? [];
-    property.config?.options?.splice(to, 0, movedItem);
-    property.config = property.config;
-  }
 
   function propagateConfigChange() {
     logger.log({
@@ -82,7 +73,8 @@
     });
     dispatch("configChange", {
       id: property.id,
-      config: property.config
+      config: property.config,
+      default: property.default
     });
   }
 </script>
@@ -90,7 +82,7 @@
 <Popover
   bind:this={popoverRef}
   on:show={() => {
-    searchInputRef.focus();
+    searchInputRef?.focus();
   }}
   isPreventDefaultStyling={false}
   options={popoverOptions}
@@ -119,7 +111,7 @@
       <div class="flex w-full flex-grow">
         <SelectOptionsEditor
           bind:config={property.config}
-          on:reorder={onReorderOptions}
+          bind:defaultOptionId={property.default}
         />
       </div>
     {:else}

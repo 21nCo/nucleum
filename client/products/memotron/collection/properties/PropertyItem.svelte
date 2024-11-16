@@ -17,6 +17,7 @@
     PropertyType
   } from "./property.type";
   import type { IRecordId } from "$lib/client/types/data.type";
+  import SelectPropertyItem from "./SelectPropertyItem.svelte";
   export let value: IPropertyValue | null = null;
   export let property: IProperty;
   export let nodeId: IRecordId | undefined = undefined;
@@ -85,16 +86,24 @@
       on:change
     />
   {:else if property.type === PropertyType.SINGLE_SELECT && property.config?.options && typeof value === "string"}
-    <SingleSelectProperty
-      {style}
-      {label}
-      {property}
-      dev_isHideEditOptions={context === "collectionView"}
-      bind:value
-      on:change
-      on:newOption
-      on:configChange
-    />
+    {#if context === "collectionView"}
+      <SelectPropertyItem
+        item={property.config.options?.find(
+          (x) => x.id === value || (value === null && x.id === property.default)
+        )}
+        isSelectedContext={true}
+      />
+    {:else}
+      <SingleSelectProperty
+        {style}
+        {label}
+        {property}
+        bind:value
+        on:change
+        on:newOption
+        on:configChange
+      />
+    {/if}
   {:else if property.type === PropertyType.DATE && value && value instanceof Date}
     <DatePicker bind:date={value} {label} {style} on:change />
   {:else if nodeId}

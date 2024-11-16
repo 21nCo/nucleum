@@ -60,6 +60,7 @@ export type UserAppearanceSettings = {
   isSyncWithSystem: boolean;
   lightColorSchemeId: string;
   darkColorSchemeId: string;
+  isBlurredBgForPopups?: boolean;
 };
 
 export type TimeZoneRecord = {

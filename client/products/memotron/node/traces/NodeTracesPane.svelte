@@ -108,6 +108,13 @@
 {/if}
 
 {#if pdfAnnotations.length > 0}
+  {@const hasItems =
+    (selectedType === "tasks" &&
+      pdfAnnotations.some(
+        (trace) => trace.annotType === AnnotationType.TASK
+      )) ||
+    (selectedType !== "tasks" &&
+      pdfAnnotations.some((trace) => trace.annotType !== AnnotationType.TASK))}
   <div class="w-full flex flex-col flex-grow gap-2 mt-2 overflow-y-scroll">
     {#each pdfAnnotations as trace, index}
       {#if (selectedType == "tasks" && trace.annotType === AnnotationType.TASK) || (selectedType != "tasks" && trace.annotType !== AnnotationType.TASK)}
@@ -188,6 +195,16 @@
         </button>
       {/if}
     {/each}
+    {#if !hasItems}
+      <EmptyStatusView
+        mainText={selectedType === "tasks"
+          ? "No tasks found"
+          : "No traces found"}
+        subText={selectedType === "tasks"
+          ? "This page doesn't have any tasks yet"
+          : "This page doesn't have any traces yet"}
+      />
+    {/if}
   </div>
 {:else if canHaveTraces.includes($node?.contentType ?? NodeType.UNKNOWN) && selectedType === "clips"}
   {#if $node?.clips && $node?.clips?.length > 0}
@@ -214,6 +231,8 @@
       subText="This page doesn't have any clips yet"
     />
   {/if}
+{:else if selectedType === "tasks"}
+  <ComingSoonView />
 {:else}
   <EmptyStatusView size={Size.sm} mainText="No traces found" />
 {/if}

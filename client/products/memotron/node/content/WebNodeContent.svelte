@@ -18,7 +18,7 @@
   export let node: IClip | IWebPage;
   export let isLinkHovering: boolean = false;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
-  let youtubeVideoRef: any;
+  let youtubeVideoRef: YoutubeVideoPreview;
 
   export function onTrace(e: any) {
     youtubeVideoRef.onTrace(e);
@@ -33,7 +33,7 @@
           label: "Open link",
           icon: "arrow-up-right",
           callback: async () => {
-            appStore.openLink(node.body.url);
+            appStore.openLink(node.url ?? "");
           }
         },
         {
@@ -41,7 +41,7 @@
           label: "Copy link",
           icon: "copy",
           callback: async () => {
-            navigator.clipboard.writeText(node.body.url);
+            navigator.clipboard.writeText(node.url ?? "");
           }
         }
       ]

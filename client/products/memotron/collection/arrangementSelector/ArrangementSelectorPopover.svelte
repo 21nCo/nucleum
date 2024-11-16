@@ -64,7 +64,7 @@
         />
       </div>
     </div>
-  {:else}
+  {:else if arrangement === Arrangement.GRID}
     <span class="px-2">
       <SwitchInput
         label={{ label: "Hide preview" }}

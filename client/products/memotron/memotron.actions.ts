@@ -139,6 +139,7 @@ export const memotronActions: IAction[] = [
     component: CreateCombination,
     label: "Create a new combination",
     type: ActionType.MODAL,
+    isMeta: true,
     modalParams: {
       title: "Create a new combination",
       layout: {

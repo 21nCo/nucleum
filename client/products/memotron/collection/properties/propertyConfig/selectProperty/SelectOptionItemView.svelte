@@ -13,11 +13,13 @@
   import type { PropertyConfigOption } from "../../property.type";
   import { hoverable } from "$lib/client/actions/hover.action";
   import { ButtonStyle } from "$lib/client/types/button.type";
+  import Badge from "$lib/client/elements/text/Badge.svelte";
   const dispatch = createEventDispatcher();
   export let option: PropertyConfigOption;
   export let index: number;
   export let isFocusing: boolean = false;
   export let isHovering: boolean = false;
+  export let isDefault: boolean = false;
   let textInputRef: any;
   let isColorPickerOpen: boolean = false;
   let colorPickerPopoverRef: any;
@@ -65,6 +67,7 @@
     <div slot="popover" class="flex flex-col items-center justify-center gap-8">
       <ColorPicker
         bind:hue={option.color}
+        on:change
         isShowPreview={false}
         label={{ label: "Choose color", orientation: Orientation.Vertical }}
       />
@@ -83,9 +86,15 @@
     bind:value={option.label}
     style={InputStyle.PLAIN}
     placeholder="option..."
-    on:enter={() => {
-      textInputRef?.blur();
+    on:change
+    on:enter={(e) => {
       dispatch("enter", option.id);
+    }}
+    on:keydown={(e) => {
+      if (e.key === "Escape") {
+        textInputRef?.blur();
+        e.stopPropagation();
+      }
     }}
     on:focus={() => {
       isFocusing = true;
@@ -95,15 +104,19 @@
       isFocusing = false;
     }}
   />
-  {#if isHovering || isFocusing}
-    <div class="absolute flex items-center h-full right-0 mr-1">
+  <div class="absolute flex items-center h-full right-0 mr-1">
+    {#if isHovering || isFocusing}
       {#if !isFocusing}
         <Button
-          icon="plus"
+          icon={isDefault ? "ph:minus-circle-light" : "ph:circle-dashed-light"}
           size={Size.sm}
-          tooltip={"Set as default"}
+          tooltip={isDefault ? "Remove default" : "Set as default"}
           on:click={(e) => {
-            dispatch("default", option.id);
+            if (isDefault) {
+              dispatch("default", null);
+            } else {
+              dispatch("default", option.id);
+            }
             e.detail?.stopPropagation();
           }}
         />
@@ -117,6 +130,8 @@
           e.detail?.stopPropagation();
         }}
       />
-    </div>
-  {/if}
+    {:else if isDefault}
+      <Badge text="default" size={Size.md} />
+    {/if}
+  </div>
 </div>

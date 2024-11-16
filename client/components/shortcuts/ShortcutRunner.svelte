@@ -32,12 +32,12 @@
     const isTextInputSource = isTextElement(target);
     const { shortcut, modifiers } = keyboardShortcuts.resolveShortcut(event);
     logger.log({
+      at: "shortcutListener",
       event,
       isTextInputSource,
       target,
       shortcut,
-      modifiers,
-      at: "shortcutListener"
+      modifiers
     });
     if (
       isTextInputSource &&

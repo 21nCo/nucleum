@@ -98,7 +98,7 @@
         })}
         on:click
       >
-        {#if item.contentType !== NodeType.NODULAR_MARKDOWN && !headingNodeTypes.includes(item.contentType) && !isHidePreview}
+        {#if item.contentType !== NodeType.NODULAR_MARKDOWN && !headingNodeTypes.includes(item.contentType)}
           <div
             class={cn(
               {

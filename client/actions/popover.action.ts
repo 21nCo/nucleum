@@ -297,7 +297,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     } else if (typeof content === "function") {
       component = new content({
         target: popoverElement,
-        props: componentProps
+        props: { ...componentProps, isPopoverContext: true }
       });
     }
 

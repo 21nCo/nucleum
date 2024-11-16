@@ -90,9 +90,11 @@
     const property = properties.find(resourceInList(e.detail.id));
     if (!property) return;
     const result = await propertyStore.modify(property.id, {
-      config: e.detail.config
+      config: e.detail.config,
+      default: e.detail.default
     });
     property.config = e.detail.config;
+    property.default = e.detail.default;
   }
 </script>
 

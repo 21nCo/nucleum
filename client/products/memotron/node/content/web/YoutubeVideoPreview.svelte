@@ -52,6 +52,9 @@
         height: "600",
         width: "100%",
         videoId: videoId,
+        playerVars: {
+          autoplay: 0
+        },
         events: {
           onReady: onPlayerReady,
           onError: onPlayerError
@@ -65,6 +68,8 @@
   export function onTrace(e: any) {
     if (e.id && e.timestamp) {
       timestamp = e.timestamp;
+      player.seekTo(timestamp, true);
+      player.playVideo();
     }
   }
 
@@ -74,6 +79,7 @@
     if (timestamp) {
       player.seekTo(timestamp, true);
     }
+    cueVideo();
   }
 
   function onPlayerError(event: any) {
@@ -97,13 +103,12 @@
     }
   }
 
-  $: if (playerReady && timestamp) {
-    player.seekTo(timestamp, true);
-  }
-
-  $: if (playerReady && videoId) {
-    errorMessage = "";
-    player.loadVideoById(videoId, timestamp);
+  function cueVideo() {
+    if (playerReady && videoId) {
+      errorMessage = "";
+      // player.loadVideoById(videoId, timestamp);
+      player.cueVideoById(videoId, timestamp);
+    }
   }
 </script>
 

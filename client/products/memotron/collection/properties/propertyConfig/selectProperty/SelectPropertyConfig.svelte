@@ -4,10 +4,13 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import Popover from "$lib/client/elements/popover/Popover.svelte";
   import { ColorStrength } from "$lib/client/types/appearance.type";
-  import { Orientation } from "$lib/client/types/direction.enum";
+  import { Orientation, Placement } from "$lib/client/types/direction.enum";
   import type { IPopoverOptions } from "$lib/client/types/popover.type";
   import EndText from "../EndText.svelte";
   import SelectOptionsEditor from "./SelectOptionsEditor.svelte";
+  import { popover } from "$lib/client/actions/popover.action";
+  import SelectPropertyItem from "../../SelectPropertyItem.svelte";
+
   export let property: IProperty;
   let popoverOptions: IPopoverOptions = {
     id: "select-property-config-popover",
@@ -24,7 +27,7 @@
 </script>
 
 {#if property.config}
-  <Popover
+  <!-- <Popover
     bind:this={ref}
     options={popoverOptions}
     triggerClass="flex gap-2 w-full h-full items-center"
@@ -46,5 +49,49 @@
     <svelte:fragment slot="popover">
       <SelectOptionsEditor bind:config={property.config} />
     </svelte:fragment>
-  </Popover>
+  </Popover> -->
+
+  <div class="flex gap-2 w-full h-full items-center">
+    <span
+      class="flex items-center w-1/5 h-full gap-2"
+      use:popover={{
+        content: SelectOptionsEditor,
+        placement: Placement.BottomCenter,
+        componentProps: {
+          config: property.config,
+          defaultOptionId: property.default,
+          onChange: (e) => {
+            property.config = e;
+          },
+          onDefault: (e) => {
+            property.default = e;
+          }
+        }
+      }}
+    >
+      <Icon icon="list" />
+      <Icon icon="chevdown" />
+    </span>
+    <span class="flex gap-2 items-center w-4/5 h-full">
+      <Divider
+        orientation={Orientation.Vertical}
+        colorStrength={ColorStrength.Strong}
+      />
+      <span class="flex w-full justify-between items-center">
+        <span>
+          {#if property.default}
+            <SelectPropertyItem
+              item={property.config.options?.find(
+                (x) => x.id === property.default
+              )}
+              isSelectedContext={true}
+            />
+          {:else}
+            No default set
+          {/if}
+        </span>
+        <EndText text="Default" />
+      </span>
+    </span>
+  </div>
 {/if}

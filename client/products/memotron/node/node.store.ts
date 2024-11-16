@@ -588,6 +588,17 @@ export function resolveNodeContextMenu(
         items: [resourceActions.archive(), resourceActions.trash()]
       }
     ];
+  } else if (accessPoint === ResourceAccessPoint.SELF) {
+    commonGroups = [
+      {
+        group: "open",
+        items: [resourceActions.openAsTab(), resourceActions.openAsFull()]
+      },
+      {
+        group: "more",
+        items: [resourceActions.archive(), resourceActions.trash()]
+      }
+    ];
   } else {
     commonGroups = [
       {

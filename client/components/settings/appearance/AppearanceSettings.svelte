@@ -122,10 +122,21 @@
       />
     </div>
   {/if} -->
+
   {#if $appearance.isSyncWithSystem}
     <InlineInfoBanner
       content="Dark and light themes will be switched automatically according to the system
 setting on your device."
     />
   {/if}
+  <SwitchInput
+    bind:checked={$userPreferences.appearance.isBlurredBgForPopups}
+    isExpanded={true}
+    label={{
+      label: "Blurred background for popups",
+      tooltip: {
+        body: "Enable this to blur the background of popups."
+      }
+    }}
+  />
 </ScrollView>

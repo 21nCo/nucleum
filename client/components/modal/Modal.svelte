@@ -14,6 +14,7 @@
   import { resolveModalOnFront } from "$lib/client/utils/browser.utils";
   import { ResourceAccessMode } from "../flux/resourceStores/resource.type";
   import view from "$lib/client/stores/view.store";
+  import { userPreferences } from "../settings/userPreferences.store";
   export let index: number = 0;
   export let show = true;
   export let title: string = "";
@@ -142,13 +143,21 @@
     </div>
   {:else}
     <button
-      class={cn("pop-overlay fixed w-screen h-screen inset-0 z-50", {
-        "bg-opacity-0": !isShowOverlay,
-        "flex justify-center items-center mo:p-0 p-3":
-          !isUseDialog && size !== Size.full,
-        "backdrop-blur-xl backdrop-opacity--80 backdrop-brightness--50 backdrop-grayscale bg-fgs4 bg-opacity-50 backdrop-saturate--50":
-          isShowOverlay && !isUseDialog
-      })}
+      class={cn(
+        "pop-overlay fixed w-screen h-screen inset-0 z-50",
+        {
+          "bg-opacity-0": !isShowOverlay,
+          "flex justify-center items-center mo:p-0 p-3":
+            !isUseDialog && size !== Size.full
+        },
+        isShowOverlay &&
+          !isUseDialog && {
+            "bg-black bg-opacity-60":
+              !$userPreferences.appearance.isBlurredBgForPopups,
+            "backdrop-blur-2xl backdrop-opacity--80 backdrop-brightness--50 backdrop-grayscale bg-fgs4 bg-opacity-50 backdrop-saturate--50":
+              $userPreferences.appearance.isBlurredBgForPopups
+          }
+      )}
       {id}
       data-blank-modal={index}
       transition:fade={{ duration: 100 }}
