@@ -13,8 +13,8 @@
   export let item: any;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
   export let accessPointId: IRecordId | undefined = undefined;
+  export let accessPointContext: string | undefined = undefined;
   function onAction(e: CustomEvent<string>) {
-    console.log("onAction", { e });
     if (e.detail === "star") item.isStarred = !item.isStarred;
     dispatch("action", { action: e.detail, id: item.id });
   }
@@ -22,7 +22,8 @@
     const resourceType = determineResourceType(item.id);
     if (resourceType === Resource.node) {
       return resolveNodeContextMenu(item, accessPoint, {
-        accessPointId
+        accessPointId,
+        accessPointContext
       });
     } else if (resourceType === Resource.collection) {
       return resolveCollectionContextMenu(item, accessPoint);

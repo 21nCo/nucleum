@@ -40,6 +40,7 @@
   export let visibleProps: IProperty[] = [];
   export let size: Size.sm | Size.md = Size.md;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
+  export let accessPointContext: string | undefined = undefined;
   export let accessPointId: IRecordId;
   export let collectionContext: "board" | "default" | undefined = undefined;
   export let isApplyCustomColor: boolean = false;
@@ -76,6 +77,7 @@
   bind:item
   {accessPoint}
   {accessPointId}
+  {accessPointContext}
   {isDraggable}
   {isApplyCustomColor}
   {arrangement}

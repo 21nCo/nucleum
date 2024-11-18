@@ -62,7 +62,10 @@
     value = "";
     isPerformingSearchAction = true;
     searchAction = event.detail;
-    placeholder = "select a " + searchAction.searchActionParams?.itemLabel;
+    placeholder =
+      typeof searchAction.searchActionParams?.placeholder === "function"
+        ? searchAction.searchActionParams.placeholder(componentParams)
+        : (searchAction.searchActionParams?.placeholder ?? "select an item");
   }
   function close() {
     modalEvent.hide(Action.CMD);

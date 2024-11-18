@@ -535,7 +535,7 @@ export const pointronActions: IAction[] = [
     type: ActionType.SEARCH_CMD,
     searchActionParams: {
       searchStoreId: Resource.PointGoal,
-      itemLabel: "goal",
+      placeholder: "Select a goal to pin",
       callback: async (id: string, label?: string) => {
         const result = await quickFocusItemStore.pinGoal(id);
         if (result === -1) toasts.error("Goal already pinned");
@@ -549,7 +549,7 @@ export const pointronActions: IAction[] = [
     type: ActionType.SEARCH_CMD,
     searchActionParams: {
       searchStoreId: Resource.PointGoal,
-      itemLabel: "goal",
+      placeholder: "Select a goal to focus",
       callback: (id: string, label?: string) => {
         console.log("search action selected id:", { id });
         sessionStore.quickStart(id);

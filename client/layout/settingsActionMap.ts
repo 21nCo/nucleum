@@ -172,7 +172,8 @@ export function getSettingsAsModal(): IAction[] {
         layout: {
           size: Size.xl,
           orientation: Orientation.Horizontal,
-          ignoreSafeArea: true
+          ignoreSafeArea: true,
+          isShowCantileverClose: true
         }
       }
     });

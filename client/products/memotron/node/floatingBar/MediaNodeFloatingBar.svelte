@@ -30,6 +30,7 @@
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let isHovering: boolean = false;
+  export let isConstrainedWidth: boolean = false;
   export let bottomAction: NodeRightPaneType | undefined = undefined;
   export let nodeView: NodeView | undefined;
   let dev_isShowMainProperties: boolean = false;
@@ -39,10 +40,6 @@
       offsetInPx: 6
     }
   };
-  $: isConstrainedWidth =
-    $view.isConstrainedWidth ||
-    $node.accessMode === ResourceAccessMode.SPLIT ||
-    $node.accessMode === ResourceAccessMode.FSPLIT;
 
   function onPanelAction(param: NodeRightPaneType) {
     if (bottomAction === param) {
@@ -129,7 +126,8 @@
             <ToggleGroup
               selected={bottomAction}
               items={resolveVisibleActions($node.contentType, {
-                accessMode: $node.accessMode
+                accessMode: $node.accessMode,
+                isConstrainedWidth
               })}
               class="gap-5"
               on:change={(e) => {
@@ -144,7 +142,8 @@
             menuResolver={() =>
               resolveNodeContextMenu($node, ResourceAccessPoint.SELF, {
                 isMediaNode: true,
-                accessMode: $node.accessMode
+                accessMode: $node.accessMode,
+                isConstrainedWidth
               })}
             id="mediaNodeContextMenu"
             position={Placement.TopCenter}

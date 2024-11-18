@@ -22,6 +22,7 @@ import { dataManager } from "$lib/client/persistence/dataManager";
 import { ObservableStore } from "../../../stores/client.store";
 import { resolveCurrentUserId } from "../../../utils/account.utils";
 import type {
+  IMultiSelectContext,
   IResource,
   ITrashInformation,
   OmitForCapture,
@@ -41,17 +42,23 @@ export const activeResources = new Map<string, ActiveResourceStore<any, any>>();
 
 const multiSelectStores = new Map<string, MultiSelectStore>();
 
-export function resolveMultiSelectStore(context: string) {
-  if (!multiSelectStores.has(context))
-    multiSelectStores.set(context, new MultiSelectStore(context));
-  return multiSelectStores.get(context)!;
+export function resolveMultiSelectStore(context: IMultiSelectContext) {
+  const contextStr = JSON.stringify(context);
+  if (!multiSelectStores.has(contextStr))
+    multiSelectStores.set(contextStr, new MultiSelectStore(contextStr));
+  return multiSelectStores.get(contextStr)!;
 }
 
-class MultiSelectStore extends ObservableStore<IRecordId[]> {
+export class MultiSelectStore extends ObservableStore<IRecordId[]> {
   constructor(context: string) {
     super(context, StoreDataType.NA);
     this.set([]);
   }
+
+  reset() {
+    this.set([]);
+  }
+
   clickHandler(id: IRecordId) {
     let current = this.get();
     if (current.length > 0) {
@@ -396,6 +403,22 @@ export class ResourceStore<T extends IResource> implements IStore {
     return flux.mutation(this.id, {
       action: PersistenceActionType.DELETE,
       recordId: id
+    });
+  }
+
+  deleteMany(ids: IRecordId[]) {
+    if (this.isExtensionEnvironment) {
+      return extensionFlux({
+        method: FluxMethod.MUTATION,
+        args: {
+          resource: this.id,
+          params: { action: PersistenceActionType.BULK_DELETE, recordIds: ids }
+        }
+      });
+    }
+    return flux.mutation(this.id, {
+      action: PersistenceActionType.BULK_DELETE,
+      recordIds: ids
     });
   }
 

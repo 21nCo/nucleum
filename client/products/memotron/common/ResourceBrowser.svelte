@@ -25,13 +25,14 @@
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import BulkEditBar from "./BulkEditBar.svelte";
   import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
-  import { SearchStore } from "../memotron.store";
+  import { BulkEditor, SearchStore } from "../memotron.store";
   import { onMount } from "svelte";
   import { isValidString } from "$lib/shared/utils/text.utils";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { resolveMultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  import { toasts } from "$lib/client/stores/notification.store";
   export let resource: Resource;
 
   let searchQuery: string = "";
@@ -44,7 +45,10 @@
     UIState.arrangement
   );
   $: id = $page.url.searchParams.get(ResourceAccessMode.INLINE);
-  $: multiSelectContext = resource + "-" + ResourceAccessPoint.BROWSER;
+  $: multiSelectContext = {
+    resource,
+    accessPoint: ResourceAccessPoint.BROWSER
+  };
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
   $: floatingButton =
     $multiSelectStore.length > 0
@@ -71,19 +75,16 @@
   function onSelectAll() {
     $multiSelectStore = data.map((x) => x.id);
   }
-  async function onBulkAction(action: string) {
-    if (action === "archive") {
-      await collectionStore.bulkModify($multiSelectStore, {
-        isArchived: true
-      });
-    } else if (action === "delete") {
-      await collectionStore.bulkTrash($multiSelectStore);
-    } else if (action === "star") {
-      await collectionStore.bulkModify($multiSelectStore, {
-        isStarred: true
-      });
+  async function onBulkAction(e: CustomEvent<string>) {
+    try {
+      const editor = new BulkEditor(resource, multiSelectStore);
+      const result = await editor.run(e.detail);
+      if (result) {
+        await refresh();
+      }
+    } catch (e) {
+      toasts.error("Failed to perform bulk action");
     }
-    $multiSelectStore = [];
   }
   async function refresh() {
     data = await searchStore.select({
@@ -203,14 +204,12 @@
       <ScrollViewBottomSpacer />
     </main>
     {#if $multiSelectStore.length > 0}
-      <BottomFloat>
+      <BottomFloat zIndex="z-30">
         <BulkEditBar
-          size={Size.sm}
+          isConstrainedWidth={true}
           context={multiSelectContext}
           on:selectAll={onSelectAll}
-          on:archive={() => onBulkAction("archive")}
-          on:delete={() => onBulkAction("delete")}
-          on:star={() => onBulkAction("star")}
+          on:action={onBulkAction}
         />
       </BottomFloat>
     {/if}

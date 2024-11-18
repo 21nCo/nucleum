@@ -53,7 +53,7 @@
           placement: Placement.BottomCenter
         };
         placeholder = "Start searching to add a direct link";
-        icon = "arrow-right-left";
+        icon = "ph:link-light";
         inputStyle = InputStyle.BORDERED;
         break;
       case "nodepageCollectionsLane":

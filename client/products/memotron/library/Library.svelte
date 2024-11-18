@@ -24,7 +24,7 @@
   } from "$lib/client/components/flux/resourceStores/resource.type";
   import BulkEditBar from "../common/BulkEditBar.svelte";
   import { collectionStore } from "../collection/collection.store";
-  import { SearchStore } from "../memotron.store";
+  import { BulkEditor, SearchStore } from "../memotron.store";
   import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
   import { resolveMultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
   import { nodeStore } from "../node/node.store";
@@ -61,6 +61,7 @@
   import { intersection } from "$lib/client/actions/intersection.action";
   import context from "$lib/client/stores/context.store";
   import { Embed } from "$lib/client/types/context.type";
+  import { toasts } from "$lib/client/stores/notification.store";
 
   let searchQuery: string = "";
   let selectedResource: Resource = Resource.node;
@@ -75,6 +76,7 @@
   let selectedSubType: SubType = "all";
   export let variant: "v1" | "v2" | "v3" = "v3";
   let isRefreshing: boolean = false;
+  let resourceSwitcherRef: ResourceSwitcher;
   let totalCount: number = 0;
   let availableResources: Resource[] = [
     Resource.node,
@@ -124,8 +126,12 @@
     // }
   ];
 
-  $: multiSelectContext = selectedResource + "-" + ResourceAccessPoint.LIBRARY;
+  $: multiSelectContext = {
+    resource: selectedResource,
+    accessPoint: ResourceAccessPoint.LIBRARY
+  };
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
+  $: isConstrainedWidth = $view.isConstrainedWidth;
 
   onMount(() => {
     const pageSub = page.subscribe(async (p) => {
@@ -181,7 +187,7 @@
           filters = { ...filters, type: selectedSubType };
         }
       }
-      totalCount = await new SearchStore().resolveCount(
+      totalCount = await searchStore.resolveCount(
         selectedResource,
         selectedSubType !== "all" && selectedSubType !== "recents"
           ? (selectedSubType.toUpperCase() as NodeType | CollectionType)
@@ -197,6 +203,7 @@
         limit: 50,
         offset: isPagination ? data.length : 0
       });
+      await resourceSwitcherRef?.refresh(selectedResource);
       if (isPagination) data = [...data, ...newData];
       else data = [...newData];
       // console.log({ newData, data });
@@ -257,37 +264,16 @@
   function onSelectAll() {
     $multiSelectStore = data.map((x) => x.id);
   }
-  async function onBulkAction(action: string) {
-    if (selectedResource === Resource.everything) return;
-    if (selectedResource === Resource.node) {
-      if (action === "archive") {
-        await nodeStore.bulkModify($multiSelectStore, {
-          isArchived: true
-        });
-      } else if (action === "delete") {
-        await nodeStore.bulkTrash($multiSelectStore);
-      } else if (action === "star") {
-        await nodeStore.bulkModify($multiSelectStore, {
-          isStarred: true
-        });
+  async function onBulkAction(e: CustomEvent<string>) {
+    try {
+      const editor = new BulkEditor(selectedResource, multiSelectStore);
+      const result = await editor.run(e.detail);
+      if (result) {
+        await refresh();
       }
-      return;
+    } catch (e) {
+      toasts.error("Failed to perform bulk action");
     }
-    if (selectedResource === Resource.collection) {
-      if (action === "archive") {
-        await collectionStore.bulkModify($multiSelectStore, {
-          isArchived: true
-        });
-      } else if (action === "delete") {
-        await collectionStore.bulkTrash($multiSelectStore);
-      } else if (action === "star") {
-        await collectionStore.bulkModify($multiSelectStore, {
-          isStarred: true
-        });
-      }
-    }
-    $multiSelectStore = [];
-    await refresh();
   }
 
   function resolveSubItems(resource: Resource) {
@@ -440,6 +426,7 @@
           options={resources}
           selected={selectedResource}
           isShowCount={true}
+          bind:this={resourceSwitcherRef}
           on:select={(e) => {
             appStore.toggleSearchParam({
               resource: e.detail,
@@ -600,13 +587,13 @@
     </main>
   </div>
   {#if $multiSelectStore.length > 0}
-    <BottomFloat>
+    <BottomFloat zIndex="z-30">
       <BulkEditBar
+        {isConstrainedWidth}
         context={multiSelectContext}
+        subContext={selectedSubType}
         on:selectAll={onSelectAll}
-        on:archive={() => onBulkAction("archive")}
-        on:delete={() => onBulkAction("delete")}
-        on:star={() => onBulkAction("star")}
+        on:action={onBulkAction}
       />
     </BottomFloat>
   {/if}

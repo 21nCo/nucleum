@@ -30,13 +30,16 @@
       const joinDate = new Date($account.userInfo?.joinDate);
       const joinDateIsBeforeJan012024 = joinDate < new Date(2024, 1, 1);
       const joinDateIsBeforeNov132024 = joinDate < new Date(2024, 10, 13);
+      const joinDateIsBeforeNov182024 = joinDate < new Date(2024, 10, 18);
       const joinDateIsBeforeDec012024 = joinDate < new Date(2024, 11, 1);
       if (joinDateIsBeforeJan012024) {
         return "Early Adopter - lifetime license";
       } else if (joinDateIsBeforeNov132024) {
         return "1 year free cloud sync 🎉 (First 500 early adopters)";
+      } else if (joinDateIsBeforeNov182024) {
+        return "4 months free cloud sync 🎉 (First 1000 early adopters)";
       } else if (joinDateIsBeforeDec012024) {
-        return "3 months free cloud sync 🎉 (First 5000 early users)";
+        return "2 months free cloud sync 🎉 (First 5000 users)";
       } else {
         return "Early Adopter - limited free cloud sync trial";
       }

@@ -11,6 +11,7 @@
   export let links: { link: INodeLinkThumb; node: INode }[];
   export let accessPointId: IRecordId;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.NODE_LINKS;
+  export let accessPointContext: string | undefined = undefined;
 </script>
 
 <div class="flex flex-col gap-3 w-full">
@@ -20,6 +21,7 @@
       item={item.node}
       {accessPointId}
       {accessPoint}
+      {accessPointContext}
       on:click={(e) => {
         dispatch("click", { event: e, id: item.node.id });
       }}

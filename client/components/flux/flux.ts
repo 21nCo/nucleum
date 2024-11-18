@@ -445,7 +445,7 @@ class Flux {
             return { response, syncDownData: syncDownData.result };
           }
         }
-        return {response, syncDownData: []};
+        return { response, syncDownData: [] };
       } else if (method === SyncMethod.SYNC_DOWN) {
         if (
           response &&
@@ -478,10 +478,14 @@ class Flux {
       const isOffline = await determineIfOffline();
       if (isOffline && this.isExtensionEnvironment) {
         //TODO - user feedback that internet connection is required for sync to work
-        console.log("offline detected - extension")
+        console.log("offline detected - extension");
         return;
       } else if (isOffline) return;
-      logger.log({ at: "flux.sync", mutation, isExtensionEnvironment: this.isExtensionEnvironment })
+      logger.log({
+        at: "flux.sync",
+        mutation,
+        isExtensionEnvironment: this.isExtensionEnvironment
+      });
       const local = await this.resolveLocal();
       const lastSyncDown =
         local?.lastSyncDown ?? new Date().getTime() - 1000 * 60 * 60 * 24;
@@ -489,7 +493,7 @@ class Flux {
       let response;
       if (this.isExtensionEnvironment && mutation) {
         response = await this.performSync(SyncMethod.SYNC_UP, {
-          mutations: [{...mutation, dapId}],
+          mutations: [{ ...mutation, dapId }],
           lastSyncDown,
           resources: this.resolveSyncResources(),
           dapId
@@ -513,7 +517,7 @@ class Flux {
           action: PersistenceActionType.MERGE
         });
       }
-      logger.debug({ at: "flux.sync - response", mutation, response });
+      logger.log({ at: "flux.sync - response", mutation, response });
       if (response?.syncDownData) {
         await this.processSyncDown(response.syncDownData);
       }

@@ -23,23 +23,18 @@
     type IActiveNodeStore
   } from "../node.store";
   import { bg, cn } from "$lib/client/utils/ui.utils";
-  import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import ToggleGroup from "$lib/client/elements/toggle/ToggleGroup.svelte";
   import { NodeRightPaneType, NodeView } from "../node.type";
-  import view from "$lib/client/stores/view.store";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let nodeView: NodeView = NodeView.CONTENT;
   export let isWidened: boolean = false;
+  export let isConstrainedWidth: boolean = false;
   let bgIndex = 1;
   let toggleGroupRef: ToggleGroup;
   let selectedToggleAction: string | undefined = undefined;
-  $: isConstrainedWidth =
-    $view.isConstrainedWidth ||
-    $node.accessMode === ResourceAccessMode.SPLIT ||
-    $node.accessMode === ResourceAccessMode.FSPLIT;
   let buttonCommonProps = {
     parentBgIndex: bgIndex,
     tooltipOptions: {
@@ -106,7 +101,8 @@
         bind:this={toggleGroupRef}
         selected={selectedToggleAction}
         items={resolveVisibleActions($node.contentType, {
-          accessMode: $node.accessMode
+          accessMode: $node.accessMode,
+          isConstrainedWidth
         })}
         class="gap-5"
         on:change={(e) => {
@@ -128,6 +124,7 @@
       menuResolver={() =>
         resolveNodeContextMenu($node, ResourceAccessPoint.SELF, {
           accessMode: $node.accessMode,
+          isConstrainedWidth,
           nodeView
         })}
       size={Size.lg}
@@ -151,16 +148,6 @@
             isWidened = !isWidened;
           }}
         />
-        {#if $node.accessMode !== ResourceAccessMode.FULL}
-          <Button
-            {...buttonCommonProps}
-            icon="split"
-            tooltip="Open in split view"
-            on:click={() => {
-              dispatch("split");
-            }}
-          />
-        {/if}
       {/if}
       <Button
         {...buttonCommonProps}

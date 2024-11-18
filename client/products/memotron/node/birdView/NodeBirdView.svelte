@@ -79,33 +79,40 @@
   initializeConfig();
 
   function initializeConfig() {
-    if ($linkTagStore) {
-      tags = $linkTagStore
-        .filter((x) =>
-          $node.links?.some((y) => y.tags?.some(resourceInList(x)))
-        )
-        .map(linkTagLabelMapper);
-      tagGroups = Array.from(new Set(tags.map((x) => x.group ?? "No group")));
+    try {
+      if ($linkTagStore) {
+        tags =
+          $linkTagStore
+            .filter((x) =>
+              $node.links?.some((y) => y.tags?.some(resourceInList(x)))
+            )
+            ?.map(linkTagLabelMapper) ?? [];
+        tagGroups = Array.from(
+          new Set(tags?.map((x) => x.group ?? "No group"))
+        );
+      }
+
+      let commonGroupOptions = [
+        { label: "Link tags", value: "linktags" },
+        { label: "Link types", value: "linktypes" },
+        ...(tagGroups?.map((x) => ({
+          label: x,
+          value: x,
+          groupId: "Link tag groups"
+        })) ?? [])
+      ];
+
+      groupOptions = [
+        { label: "Group by: None", value: "none" },
+        ...commonGroupOptions
+      ];
+      subgroupOptions = [
+        { label: "Subgroup by: None", value: "none" },
+        ...commonGroupOptions
+      ];
+    } catch (error) {
+      logger.error({ at: "initializeConfig", error });
     }
-
-    let commonGroupOptions = [
-      { label: "Link tags", value: "linktags" },
-      { label: "Link types", value: "linktypes" },
-      ...tagGroups.map((x) => ({
-        label: x,
-        value: x,
-        groupId: "Link tag groups"
-      }))
-    ];
-
-    groupOptions = [
-      { label: "Group by: None", value: "none" },
-      ...commonGroupOptions
-    ];
-    subgroupOptions = [
-      { label: "Subgroup by: None", value: "none" },
-      ...commonGroupOptions
-    ];
   }
 
   onMount(async () => {
@@ -443,7 +450,7 @@
         />
       </div>
       <Toggle
-        icon="ph:arrows-left-right-thin"
+        icon="ph:link-light"
         tooltip="See all links"
         parentBgIndex={2}
         on:change={(e) => {
@@ -457,7 +464,7 @@
     </div>
   </div>
   <div class="flex w-full flex-1 min-h-0">
-    <div class="flex-1 h-full">
+    <div class="flex-1 h-full min-w-0">
       {#if selectedView === "Graph"}
         <NodeGraph
           bind:this={graphRef}
@@ -468,7 +475,10 @@
           on:canvasClick={closeSplitResource}
         />
       {:else}
-        <ComingSoonView />
+        <ComingSoonView
+          mainText="Coming soon"
+          subText="Serendipity shows unlinked nodes relevant to the current node."
+        />
       {/if}
     </div>
     {#if rightPane && rightPane !== NodeRightPaneType.NONE}

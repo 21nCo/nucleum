@@ -18,6 +18,8 @@
   import Divider from "$lib/client/elements/Divider.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { ColorStrength } from "$lib/client/types/appearance.type";
+  import view from "$lib/client/stores/view.store";
+  import { resizeListener } from "$lib/client/actions/resize.action";
 
   let data: { nodes: any[]; edges: any[] } = { nodes: [], edges: [] };
   let isRendered = false;
@@ -26,6 +28,9 @@
   let _nodes: any[] = [];
   let _edges: any[] = [];
   let graphRef: GlobalGraphUsingG6;
+  let containerWidth = 0;
+  $: isConstrainedWidth = containerWidth < 1000 || $view.isConstrainedWidth;
+
   onMount(async () => {
     await fetchData();
     applyFilters();
@@ -164,22 +169,27 @@
   {#if data.nodes.length > 0}
     <div
       class="flex justify-between items-center gap-4 bg-bgs2 rounded-md h-12 w-full px-6"
+      use:resizeListener={(e) => {
+        containerWidth = e.width;
+      }}
     >
       <span class="flex gap-3 items-center whitespace-nowrap">
         Graph
         <Badge text="beta" />
       </span>
       <span class="flex items-center gap-3 text-fgs3 text-b3 h-full">
-        <span>
-          {data.nodes.length} nodes
-        </span>
-        <span>
-          {data.edges.length} connections
-        </span>
-        <Divider
-          orientation={Orientation.Vertical}
-          colorStrength={ColorStrength.Strong}
-        />
+        {#if !isConstrainedWidth}
+          <span>
+            {data.nodes.length} nodes
+          </span>
+          <span>
+            {data.edges.length} connections
+          </span>
+          <Divider
+            orientation={Orientation.Vertical}
+            colorStrength={ColorStrength.Strong}
+          />
+        {/if}
         <SwitchInput
           label={{ label: "Hide orphans" }}
           size={Size.sm}

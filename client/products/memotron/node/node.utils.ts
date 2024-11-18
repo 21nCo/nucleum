@@ -37,7 +37,11 @@ export function resolveContentPreview(node: INode) {
       (x) => hostPart === x.domain || hostPart.includes("." + x.domain)
     )?.ogImage;
     return ogImageUrl ?? "";
-  } else if (contentType === NodeType.TEXT_CLIP && "text" in body && body.text) {
+  } else if (
+    contentType === NodeType.TEXT_CLIP &&
+    "text" in body &&
+    body.text
+  ) {
     return body.text;
   } else if (node.mdText && typeof node.mdText === "string") {
     return node.mdText;
@@ -240,10 +244,11 @@ export function resolveNodeLabel(item: INodeThumb) {
     case NodeType.WEB_SCREENSHOT_CLIP:
     case NodeType.KINDLE_HIGHLIGHT:
       if (!parent?.label) return defaultLabels[item.contentType];
+      const weburl = item.url?.split("://").pop()?.split("/")[0];
       return {
         label: "Clipped from:",
         parent,
-        text: item.body?.text ?? "Unknown clip"
+        text: item.body?.text ?? item.text ?? `Clip: ${parent?.label ?? weburl}`
       };
     case NodeType.YOUTUBE_TIMESTAMP_CLIP:
       const timestamp = formatSeconds(item.body.timestamp, TimeFormat.CLOCK);
@@ -261,7 +266,7 @@ export function resolveNodeLabel(item: INodeThumb) {
       return {
         label: "Tweet by ",
         parent: { id: parent?.id, label: twitterProfileLabel },
-        text: item.body?.content
+        text: item.body?.content ?? item.text ?? `Tweet: ${twitterProfileLabel}`
       };
     case NodeType.TWITTER_PROFILE:
       item = item as ITwitterProfile;

@@ -224,6 +224,10 @@ export enum PersistenceActionType {
    * Note: Use this to completely delete the record. To move to trash, use MERGE with trashInformation property.
    */
   DELETE = "DELETE",
+  /**
+   * Deletes the records.
+   */
+  BULK_DELETE = "BULK_DELETE",
   BULK_MERGE = "BULK_MERGE",
   /**
    * Inserts the new records without upsert.
@@ -273,6 +277,11 @@ export type IBulkEditMutation<T> = {
   records: T[];
 };
 
+export type IBulkDeleteMutation = {
+  action: PersistenceActionType.BULK_DELETE;
+  recordIds: IRecordId[];
+};
+
 export type ICustomMutationParams = {
   action: PersistenceActionType.CUSTOM;
   query: string;
@@ -285,6 +294,7 @@ export type IMutationParamsv2<T> =
   | IMergeMutation<T>
   | IDeleteMutation
   | IBulkEditMutation<T>
+  | IBulkDeleteMutation
   | ICustomMutationParams;
 
 export type IPrimitiveDbDataType = string | number | boolean;

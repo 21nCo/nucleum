@@ -77,6 +77,11 @@
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import { InputStyle } from "$lib/client/types/input.type";
   import { resizeListener } from "$lib/client/actions/resize.action";
+  import { resolveMultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
+  import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
+  import BulkEditBar from "../common/BulkEditBar.svelte";
+  import { BulkEditor } from "../memotron.store";
+  import { toasts } from "$lib/client/stores/notification.store";
 
   export let id: string = "";
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -127,6 +132,13 @@
   $: isBoardContext =
     activeView?.layout === CollectionLayout.BOARD &&
     !isNoneResource(activeView?.groupBy);
+
+  $: multiSelectContext = {
+    resource: Resource.node,
+    accessPoint: ResourceAccessPoint.COLLECTION,
+    accessPointId: id
+  };
+  $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
 
   onMount(async () => {
     // console.log("onMount - collection", { id });
@@ -451,6 +463,24 @@
       collection.modify({ typeToExtend: undefined });
     }
   }
+
+  async function onBulkAction(e: CustomEvent<string>) {
+    try {
+      const editor = new BulkEditor(Resource.node, multiSelectStore, {
+        accessPointId: id
+      });
+      const result = await editor.run(e.detail);
+      if (result) {
+        await refresh();
+      }
+    } catch (e) {
+      toasts.error("Failed to perform bulk action");
+    }
+  }
+
+  function onSelectAll(e: CustomEvent) {
+    logger.log({ at: "onSelectAll", e });
+  }
 </script>
 
 {#if !$collection || $collection.isPageLoading || !isReady}
@@ -735,6 +765,16 @@
         style={ButtonVariant.DANGER}
         accessMode={$collection.accessMode}
       />
+    {/if}
+    {#if $multiSelectStore.length > 0}
+      <BottomFloat zIndex="z-30">
+        <BulkEditBar
+          {isConstrainedWidth}
+          context={multiSelectContext}
+          on:selectAll={onSelectAll}
+          on:action={onBulkAction}
+        />
+      </BottomFloat>
     {/if}
   </div>
 {/if}

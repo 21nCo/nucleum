@@ -14,13 +14,14 @@
   export let link: INodeLinkThumb;
   export let item: INode;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.NODE_LINKS;
+  export let accessPointContext: string | undefined = undefined;
   let isShowLinkTagger = false;
 </script>
 
 <!-- TODO - add parent breadcrumbs  and avatar in below component - moving from LinkSuggestionItem.svelte -->
 
 <button on:click>
-  <NodeThumbnail {item} {accessPoint} {accessPointId}>
+  <NodeThumbnail {item} {accessPoint} {accessPointId} {accessPointContext}>
     <span slot="right" class="flex bg-bgs2 rounded-md border border-brs3">
       <Toggle icon="ph:tag-thin" bind:on={isShowLinkTagger} />
     </span>

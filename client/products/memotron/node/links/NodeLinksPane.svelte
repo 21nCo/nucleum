@@ -41,8 +41,14 @@
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
   import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
   import { activeResourceFilterV2 } from "$lib/client/utils/utils";
+  import { BulkEditor } from "../../memotron.store";
+  import { toasts } from "$lib/client/stores/notification.store";
   export let node: IActiveNodeStore;
-  $: multiSelectContext = $node.id + "-" + ResourceAccessPoint.NODE_LINKS;
+  $: multiSelectContext = {
+    resource: Resource.node,
+    accessPoint: ResourceAccessPoint.NODE_LINKS,
+    accessPointId: node.id
+  };
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
   let _links: INodeLinkThumb[] = [];
   let all: { link: INodeLinkThumb; node: INode }[] = [];
@@ -188,7 +194,21 @@
     applyFilters();
   }
 
-  $: console.log({ all, _links, filtered });
+  async function onBulkAction(e: CustomEvent<string>) {
+    try {
+      const editor = new BulkEditor(Resource.node, multiSelectStore, {
+        accessPointId: node.id
+      });
+      const result = await editor.run(e.detail);
+      if (result) {
+        await refresh();
+      }
+    } catch (e) {
+      toasts.error("Failed to perform bulk action");
+    }
+  }
+
+  // $: console.log({ all, _links, filtered });
 </script>
 
 <div class="relative flex flex-col gap-3 pt-1 flex-grow w-full">
@@ -236,12 +256,12 @@
           {
             value: LinkType.DIRECT,
             label: "Direct",
-            icon: "arrow-right-left"
+            icon: "ph:arrows-left-right-light"
           },
           {
             label: "Mentions",
             value: LinkType.MENTION,
-            icon: "at-symbol"
+            icon: "ph:at-light"
           }
         ]}
         size={Size.sm}
@@ -252,11 +272,11 @@
       >
         <slot name="right" slot="right">
           <div class="flex items-center">
-            <Toggle
+            <!-- <Toggle
               icon="ph:lightbulb-thin"
               tooltip="Link suggestions"
               bind:on={isShowLinkSuggestions}
-            />
+            /> -->
             <Toggle
               icon="ph:tag-thin"
               tooltip="Link tags"
@@ -269,13 +289,6 @@
         </slot>
       </PanelSwitcher>
     </div>
-    {#if isShowLinkTagFilters}
-      <LinkTagFilter
-        links={_links}
-        bind:selected={selectedLinkTags}
-        on:change={applyFilters}
-      />
-    {/if}
     {#if selectedLinkType === LinkType.MENTION}
       <OptionSelector
         size={Size.sm}
@@ -295,6 +308,13 @@
         ]}
       />
     {/if}
+    {#if isShowLinkTagFilters}
+      <LinkTagFilter
+        links={filtered.map((x) => x.link)}
+        bind:selected={selectedLinkTags}
+        on:change={applyFilters}
+      />
+    {/if}
     {#if fetchError}
       <ErrorStatusPane error={fetchError} />
     {:else if isShowLinkSuggestions}
@@ -304,6 +324,7 @@
         <LinkThumbnailItems
           links={filtered}
           accessPointId={node.id}
+          accessPointContext={selectedLinkType}
           on:click={onClick}
           on:action={onAction}
           on:tagClick={onTagClick}
@@ -323,11 +344,13 @@
     {/if}
   </div>
   {#if $multiSelectStore.length > 0}
-    <BottomFloat class="mb-20 w-full">
+    <BottomFloat class="!mb-3" zIndex="z-30">
       <BulkEditBar
-        size={Size.sm}
+        isConstrainedWidth={true}
         context={multiSelectContext}
+        subContext={selectedLinkType}
         on:selectAll={onSelectAll}
+        on:action={onBulkAction}
       />
     </BottomFloat>
   {/if}

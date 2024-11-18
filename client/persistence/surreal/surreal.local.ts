@@ -200,6 +200,9 @@ export class SurrealPersistence implements IPersistence {
       case PersistenceActionType.DELETE:
         response = await this.delete(params.recordId);
         break;
+      case PersistenceActionType.BULK_DELETE:
+        response = await this.deleteMany(params.recordIds);
+        break;
       case PersistenceActionType.BULK_MERGE:
         // response = await this.bulkEdit<T>(resource, params.records);
         response = await this.bulkEditTemp<T>(resource, params.records);
@@ -485,6 +488,24 @@ export class SurrealPersistence implements IPersistence {
     return null;
   }
 
+  async deleteMany(recordIds: IRecordId[]) {
+    try {
+      const resource = recordIds[0].toString().split(":")[0];
+      await this.awaiter("deleteMany_" + resource);
+      // const result = await this.instance?.delete(resourceId.toString());
+      const result = await this.instance?.query(
+        `DELETE ${resource} WHERE id in [${recordIds.map((x) => `${x}`).join(",")}];`
+      );
+      logger.log({ at: "SurrealPersistence.deleteMany", resource, result });
+      return result;
+    } catch (e) {
+      logger.error({ at: "SurrealPersistence.delete", e });
+    } finally {
+      this.isProcessingOperation = false;
+    }
+    return null;
+  }
+
   /**
    * Bulk merge or update is only available since Surreal 2.0.0.
    *
@@ -596,7 +617,7 @@ export class SurrealPersistence implements IPersistence {
         );
       }
       const filters = params?.filters ?? {};
-      const whereClause = this.generateWhereClause(params);
+      const whereClause = this.generateWhereClause(resource, params);
       const selectClause =
         properties.length > 0 ? `SELECT ${properties.join(", ")}` : "SELECT *";
 
@@ -627,9 +648,10 @@ export class SurrealPersistence implements IPersistence {
         // console.timeEnd("SurrealPersistence.selectMany");
         logger.log({
           at: "SurrealPersistence.selectMany - result",
-          result,
           resource,
-          query
+          result,
+          query,
+          params
         });
       }
       return interceptSurrealResponse(result);
@@ -674,7 +696,10 @@ export class SurrealPersistence implements IPersistence {
   private generateSemanticSearchClause(k: number = 3) {
     return `embedding <|${k}|> [${this.queryEmbedding}]`;
   }
-  private generateWhereClause(params?: IResourceSelectParams): string {
+  private generateWhereClause(
+    resource: Resource,
+    params?: IResourceSelectParams
+  ): string {
     const conditions: string[] = [];
 
     const whereClause = params?.whereClause;
@@ -729,7 +754,7 @@ export class SurrealPersistence implements IPersistence {
     // return conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
     const clause =
       conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-    return commonQueryReplacements(clause);
+    return commonQueryReplacements(clause, resource);
 
     function formatValue(value: IPrimitiveDbDataType): string {
       if (typeof value === "string") {

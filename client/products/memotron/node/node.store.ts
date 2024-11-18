@@ -49,7 +49,6 @@ import {
   resourceInList,
   isSameResource
 } from "$lib/client/components/flux/resourceStores/resource.utils";
-import view from "$lib/client/stores/view.store";
 import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
 
 import context from "$lib/client/stores/context.store";
@@ -179,7 +178,7 @@ export class ActiveNodeStore extends ActiveResourceStore<
     id: IRecordId,
     changedProps: { body?: string; children?: string[] }
   ) => {
-    logger.debug({
+    logger.log({
       at: "ActiveNodeStore.updateBlockPropagator",
       changedProps,
       id: id.toString()
@@ -243,7 +242,7 @@ export class ActiveNodeStore extends ActiveResourceStore<
           error: e
         });
       }
-      logger.debug({
+      logger.log({
         at: "ActiveNodeStore.updateBlockPropagator - end",
         changedProps,
         id: id.toString()
@@ -374,7 +373,38 @@ export class ActiveNodeStore extends ActiveResourceStore<
     return this.resourceStore.trash(id);
   };
   mention = async (location: string, id: string) => {
-    return linker.link(this.id, id, LinkType.MENTION, { location });
+    const result = await linker.link(this.id, id, LinkType.MENTION, {
+      location
+    });
+    if (!result) return;
+    this.update((n) => ({
+      ...n,
+      links: [
+        ...(n.links ?? []),
+        {
+          linkedTo: id,
+          linkType: LinkType.MENTION,
+          direction: "outgoing",
+          id: result?.[0]?.id
+        }
+      ]
+    }));
+  };
+  unmention = async (location: string, id: string) => {
+    const result = await linker.unlink(this.id, id, {
+      linkType: LinkType.MENTION
+    });
+    this.update((n) => ({
+      ...n,
+      links: n.links?.filter(
+        (x) =>
+          !(
+            isSameResource(x.linkedTo, id) &&
+            x.direction === "outgoing" &&
+            x.linkType === LinkType.MENTION
+          )
+      )
+    }));
   };
 
   private async refreshTypes() {
@@ -507,7 +537,7 @@ function initActiveNodeEventStore(id: string) {
 export const nodeActions = {
   linksPane: {
     value: NodeRightPaneType.LINKS,
-    icon: "ph:arrows-left-right-thin",
+    icon: "ph:link-light",
     label: "Show links",
     tooltip: "Show links"
   },
@@ -575,7 +605,9 @@ export function resolveNodeContextMenu(
     isMediaNode?: boolean;
     accessPointId?: IRecordId;
     accessMode?: ResourceAccessMode;
+    accessPointContext?: string;
     nodeView?: NodeView;
+    isConstrainedWidth?: boolean;
   }
 ): IContextMenu {
   const resourceActions = new ResourceActions(node, nodeStore);
@@ -588,7 +620,10 @@ export function resolveNodeContextMenu(
         items: [resourceActions.archive(), resourceActions.trash()]
       }
     ];
-  } else if (accessPoint === ResourceAccessPoint.SELF) {
+  } else if (
+    accessPoint === ResourceAccessPoint.SELF &&
+    params?.accessMode !== ResourceAccessMode.SPLIT
+  ) {
     commonGroups = [
       {
         group: "open",
@@ -619,18 +654,15 @@ export function resolveNodeContextMenu(
     group: "shareAndExport",
     items: [resourceActions.copyLink()]
   };
-  const viewStore = get(view);
-  const isConstrainedWidth =
-    viewStore.isConstrainedWidth ||
-    params?.accessMode === ResourceAccessMode.SPLIT ||
-    params?.accessMode === ResourceAccessMode.FSPLIT;
   if (accessPoint === ResourceAccessPoint.NODE_LINKS && params?.accessPointId) {
     let baseItems = [resourceActions.copyLink()];
     if (accessPoint === ResourceAccessPoint.NODE_LINKS) {
       baseItems.unshift(
         resourceActions.select(accessPoint, params?.accessPointId)
       );
-      baseItems.unshift(resourceActions.unlink(params?.accessPointId));
+      if (params?.accessPointContext === LinkType.DIRECT) {
+        baseItems.unshift(resourceActions.unlink(params?.accessPointId));
+      }
     }
     return [
       {
@@ -640,9 +672,10 @@ export function resolveNodeContextMenu(
       ...commonGroups
     ];
   } else if (accessPoint != ResourceAccessPoint.SELF) {
-    const primaryItems = [
-      resourceActions.star(),
+    let primaryItems = [
       resourceActions.select(accessPoint, params?.accessPointId),
+      resourceActions.star(),
+      resourceActions.link(),
       resourceActions.edit(accessPoint),
       resourceActions.copyLink()
     ];
@@ -650,7 +683,13 @@ export function resolveNodeContextMenu(
       accessPoint === ResourceAccessPoint.COLLECTION &&
       params?.accessPointId
     ) {
-      primaryItems.unshift(resourceActions.unlink(params?.accessPointId));
+      primaryItems = [
+        resourceActions.unlink(params?.accessPointId),
+        resourceActions.select(accessPoint, params?.accessPointId),
+        resourceActions.star(),
+        resourceActions.edit(accessPoint),
+        resourceActions.copyLink()
+      ];
     }
     return [
       {
@@ -659,7 +698,7 @@ export function resolveNodeContextMenu(
       },
       ...commonGroups
     ];
-  } else if (isConstrainedWidth && params?.isMediaNode) {
+  } else if (params?.isConstrainedWidth && params?.isMediaNode) {
     return [
       {
         group: "all",
@@ -728,17 +767,13 @@ export function resolveVisibleActions(
   contentType: NodeType,
   params?: {
     accessMode?: ResourceAccessMode;
+    isConstrainedWidth?: boolean;
   }
 ): IToggleItem[] {
-  const viewStore = get(view);
-  const isConstrainedWidth =
-    viewStore.isConstrainedWidth ||
-    params?.accessMode === ResourceAccessMode.SPLIT ||
-    params?.accessMode === ResourceAccessMode.FSPLIT;
   if (
     (contentType === NodeType.NODULAR_MARKDOWN ||
       headingNodeTypes.includes(contentType)) &&
-    !isConstrainedWidth
+    !params?.isConstrainedWidth
   ) {
     return [
       // nodeActions.toggleReadMode,
@@ -748,20 +783,21 @@ export function resolveVisibleActions(
   } else if (
     (contentType === NodeType.NODULAR_MARKDOWN ||
       headingNodeTypes.includes(contentType)) &&
-    isConstrainedWidth
+    params?.isConstrainedWidth
   ) {
     return [
       nodeActions.linksPane,
-      nodeActions.sideNotesPane,
-      nodeActions.propertiesPane
+      nodeActions.propertiesPane,
+      nodeActions.sideNotesPane
     ];
   }
   const baseActions: IToggleItem[] = [
-    nodeActions.sideNotesPane,
-    nodeActions.propertiesPane
+    nodeActions.linksPane,
+    nodeActions.propertiesPane,
+    nodeActions.sideNotesPane
   ];
-  if (canHaveTraces.includes(contentType) && !viewStore.isConstrainedWidth) {
-    baseActions.unshift(nodeActions.tracesPane);
+  if (canHaveTraces.includes(contentType) && !params?.isConstrainedWidth) {
+    baseActions.push(nodeActions.tracesPane);
   }
   return baseActions;
 }

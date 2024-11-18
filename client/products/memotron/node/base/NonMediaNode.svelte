@@ -28,6 +28,7 @@
     ResourceAccessMode,
     ResourceAccessPoint
   } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { resizeListener } from "$lib/client/actions/resize.action";
 
   export let node: IActiveNodeStore;
   export let selectedView: NodeView = NodeView.CONTENT;
@@ -40,9 +41,11 @@
   let isRightPanelCollapsed: boolean = true;
   let rightPane = NodeRightPaneType.NONE;
   let floatingBarRef: NodeFloatingBar | undefined = undefined;
+  let containerWidth = 0;
 
   $: isConstrainedWidth =
     $view.isConstrainedWidth ||
+    containerWidth < 1000 ||
     $node.accessMode === ResourceAccessMode.SPLIT ||
     $node.accessMode === ResourceAccessMode.FSPLIT;
 
@@ -78,7 +81,13 @@
   }
 </script>
 
-<div class="relative w-full h-full flex flex-col bg-bgs1 rounded-md">
+<div
+  class="relative w-full h-full flex flex-col bg-bgs1 rounded-md"
+  use:resizeListener={(e) => {
+    containerWidth = e.width;
+    console.log({ containerWidth });
+  }}
+>
   {#if $node}
     {#if selectedView === NodeView.CONTENT}
       <div
@@ -226,6 +235,7 @@
         <BottomFloat margin={isConstrainedWidth ? "mb-8" : "mb-6"}>
           <NodeFloatingBar
             {node}
+            {isConstrainedWidth}
             bind:nodeView={selectedView}
             bind:isWidened
             bind:this={floatingBarRef}

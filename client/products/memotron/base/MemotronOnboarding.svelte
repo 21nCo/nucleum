@@ -7,7 +7,7 @@
 
 <div class="flex w-full h-full justify-center items-center mo:p-4 p-8">
   <div class="flex flex-col gap-4 h-full max-h-full overflow-auto w-full">
-    <span> Thanks for taking your time to try Memotron alpha. 🎉 🚀 </span>
+    <span> Thanks for taking your time to try Memotron beta. 🎉 🚀 </span>
     <span class="text-fgs3 text-b2">
       We're working on improving the product and making it more useful for you.
       Please report any feedback using chat feature from settings.

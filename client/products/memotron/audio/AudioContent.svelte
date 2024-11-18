@@ -234,7 +234,8 @@
     <div class="flex w-full justify-center gap-6">
       {#if recordingState === PlayActionState.STOPPED}
         <Button
-          on:click={() => {
+          on:click={(e) => {
+            e.detail?.stopPropagation();
             recordingState = PlayActionState.PREVIEWING;
             wavesurferPreview.play();
           }}
@@ -245,7 +246,8 @@
       {:else if recordingState === PlayActionState.PREVIEWING}
         {#if previewingState === PlayActionState.RESUMEPREVIEWING}
           <Button
-            on:click={() => {
+            on:click={(e) => {
+              e.detail?.stopPropagation();
               wavesurferPreview.pause();
               previewingState = PlayActionState.PAUSEPREVIEWING;
             }}
@@ -255,7 +257,8 @@
           />
         {:else}
           <Button
-            on:click={() => {
+            on:click={(e) => {
+              e.detail?.stopPropagation();
               wavesurferPreview.play();
               previewingState = PlayActionState.RESUMEPREVIEWING;
             }}

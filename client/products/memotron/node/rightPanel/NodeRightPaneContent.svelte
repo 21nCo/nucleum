@@ -13,19 +13,13 @@
   import NodeMetadataPane from "../metadata/NodeMetadataPane.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { createEventDispatcher } from "svelte";
-  import view from "$lib/client/stores/view.store";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   const dispatch = createEventDispatcher();
   export let pane: NodeRightPaneType;
   export let node: IActiveNodeStore;
   export let mdId: string | undefined = undefined;
   export let renderingDetails: any = undefined;
   export let isShowClose: boolean = false;
-
-  $: isConstrainedWidth =
-    $view.isConstrainedWidth ||
-    $node.accessMode === ResourceAccessMode.SPLIT ||
-    $node.accessMode === ResourceAccessMode.FSPLIT;
+  export let isConstrainedWidth: boolean = false;
 
   $: _isShowClose =
     isShowClose ||
@@ -59,7 +53,7 @@
   {:else if pane === NodeRightPaneType.TRACES}
     <NodeTracesPane {node} />
   {:else if pane === NodeRightPaneType.HISTORY}
-    <NodeHistoryPane />
+    <NodeHistoryPane {node} />
   {:else if pane === NodeRightPaneType.SIDENOTES}
     <NodeSidenotesPane {node} />
   {:else if pane === NodeRightPaneType.METADATA}

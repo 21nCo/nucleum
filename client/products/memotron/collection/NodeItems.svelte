@@ -15,8 +15,11 @@
   import type { IRecordId } from "$lib/client/types/data.type";
   import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { hoverable } from "$lib/client/actions/hover.action";
-  import type { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import type { IProperty } from "./properties/property.type";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { resolveMultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
+  import { logger } from "$lib/client/components/debug/logger.client";
 
   export let nodes: INodeThumb[] = [];
   export let arrangement: Arrangement = Arrangement.LIST;
@@ -40,6 +43,12 @@
   $: if (arrangement === Arrangement.MASONRY && gridRef) {
     resizeAllMasonryItems();
   }
+  $: multiSelectContext = {
+    resource: Resource.node,
+    accessPoint: accessPoint ?? ResourceAccessPoint.BROWSER,
+    accessPointId
+  };
+  $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
 
   afterUpdate(() => {
     if (arrangement === Arrangement.MASONRY) {
@@ -91,6 +100,16 @@
       resizeMasonryItem(item as HTMLElement);
     }
   }
+  function onClick(e: MouseEvent, item: any) {
+    logger.log({
+      at: "NodeItems onClick",
+      item,
+      multiSelectContext,
+      multiSelectStore: $multiSelectStore
+    });
+    const result = multiSelectStore.clickHandler(item.id);
+    if (!result) appStore.resourceClickHandler(e, item.id);
+  }
 </script>
 
 {#if arrangement === Arrangement.MASONRY}
@@ -120,7 +139,7 @@
                 hoveredMasonryItem = undefined;
             }
           }}
-          on:click={(e) => appStore.resourceClickHandler(e, item.id)}
+          on:click={(e) => onClick(e, item)}
         >
           <NodeThumbnail
             {item}
@@ -162,7 +181,7 @@
           {visibleProps}
           collectionContext={"board"}
           {isApplyCustomColor}
-          on:click={(e) => appStore.resourceClickHandler(e, item.id)}
+          on:click={(e) => onClick(e, item)}
         />
       {/each}
     </div>

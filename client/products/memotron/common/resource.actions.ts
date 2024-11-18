@@ -21,6 +21,8 @@ import type { IContextMenuItem } from "$lib/client/types/select.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 import { tabs } from "$lib/client/layout/tabs/tabs.store";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { LinkType } from "../node/node.type";
+import { MemotronAction } from "../memotronAction.enum";
 
 export class ResourceActions<T extends IMemotronItemBase> {
   constructor(
@@ -88,11 +90,11 @@ export class ResourceActions<T extends IMemotronItemBase> {
     accessPoint: ResourceAccessPoint,
     accessPointId?: IRecordId
   ): IContextMenuItem {
-    let multiSelectContext =
-      determineResourceType(this.resource.id) + "-" + accessPoint;
-    if (accessPointId) {
-      multiSelectContext = accessPointId + "-" + accessPoint;
-    }
+    let multiSelectContext = {
+      resource: determineResourceType(this.resource.id),
+      accessPoint,
+      accessPointId
+    };
     const multiSelectStore = resolveMultiSelectStore(multiSelectContext);
     return {
       label: get(multiSelectStore)?.some(resourceInList(this.resource.id))
@@ -157,7 +159,6 @@ export class ResourceActions<T extends IMemotronItemBase> {
     return {
       value: isAlreadyPinned ? "Remove from tabs" : "Open as tab",
       icon: isAlreadyPinned ? "ph:x-light" : "ph:tabs-light",
-      badge: !isAlreadyPinned ? "New" : undefined,
       callback: async () => {
         if (isAlreadyPinned) {
           tabs.remove(this.resource.id);
@@ -167,12 +168,41 @@ export class ResourceActions<T extends IMemotronItemBase> {
       }
     };
   }
-  openAsSplit(): IContextMenuItem {
+  /**
+   * @deprecated - use openAsSplit instead
+   */
+  openAsSplitv1(): IContextMenuItem {
     return {
       value: "open-as-split",
       icon: "ph:square-split-horizontal-light",
       callback: async () => {
         appStore.openResource(this.resource.id, ResourceAccessMode.SPLIT);
+      }
+    };
+  }
+  openAsSplit(): IContextMenuItem {
+    const currentMode = appStore.determineCurrentResourceAccessMode(
+      this.resource.id
+    );
+    return {
+      value: "open-as-split",
+      label:
+        currentMode === ResourceAccessMode.SPLIT
+          ? "Close split screen"
+          : "Open in split screen",
+      icon:
+        currentMode === ResourceAccessMode.SPLIT
+          ? "ph:x-light"
+          : "ph:square-split-horizontal-light",
+      callback: async () => {
+        if (currentMode === ResourceAccessMode.SPLIT) {
+          appStore.closeResource({
+            id: this.resource.id,
+            accessMode: ResourceAccessMode.SPLIT
+          });
+        } else {
+          appStore.openResource(this.resource.id, ResourceAccessMode.SPLIT);
+        }
       }
     };
   }
@@ -210,7 +240,24 @@ export class ResourceActions<T extends IMemotronItemBase> {
       value: "unlink",
       icon: "ph:link-break-light",
       callback: async () => {
-        await linker.unlink(this.resource.id, contextId);
+        await linker.unlink(this.resource.id, contextId, {
+          linkType: LinkType.DIRECT,
+          isIncludeReverseDirection: !isCollection
+        });
+      }
+    };
+  }
+  link(): IContextMenuItem {
+    return {
+      label: "Link or Add to collection",
+      value: "link",
+      icon: "ph:link-light",
+      callback: async () => {
+        appStore.runAction(MemotronAction.BULK_LINK, {
+          componentParams: {
+            items: [this.resource.id]
+          }
+        });
       }
     };
   }

@@ -12,6 +12,8 @@ import { logger } from "$lib/client/components/debug/logger.client";
 import { activeResourceFilter } from "$lib/client/utils/utils";
 import { get } from "svelte/store";
 import { linkTagLabelMapper } from "./link.utils";
+import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
+import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 
 class Linker extends ResourceStore<INodeLink> {
   constructor() {
@@ -34,24 +36,104 @@ class Linker extends ResourceStore<INodeLink> {
     return response;
   }
 
-  async unlink(from: IRecordId, to: IRecordId) {
+  async unlink(
+    from: IRecordId,
+    to: IRecordId,
+    params?: {
+      linkType?: LinkType;
+      isIncludeReverseDirection?: boolean;
+    }
+  ) {
     logger.log({ at: "unlink", from, to });
     const links = await this.selectMany({
       filters: {
         in: from.toString(),
-        out: to.toString()
+        out: to.toString(),
+        ...(params?.linkType ? { linkType: params.linkType } : {})
       }
     });
-    const linkId = links[0].id as IRecordId;
-    if (!linkId) return;
-    const response = await this.delete(linkId);
-    logger.log({ at: "unlink", response });
+    let reverseDirectionLinks: INodeLink[] = [];
+    if (params?.isIncludeReverseDirection) {
+      reverseDirectionLinks = await this.selectMany({
+        filters: {
+          out: from.toString(),
+          in: to.toString(),
+          ...(params?.linkType ? { linkType: params.linkType } : {})
+        }
+      });
+    }
+    const allIds = [...(links ?? []), ...(reverseDirectionLinks ?? [])].map(
+      (x) => x.id
+    );
+    const response = await this.deleteMany(allIds);
+    logger.log({ at: "unlink", allIds, response });
     return !response?.error;
+  }
+
+  /**
+   * Deletes links of direct linking type.
+   *
+   * Used for bulk unlinking in nodes page - direct links
+   * and removing many nodes from a collection.
+   *
+   * @param items
+   * @param accessPointId
+   * @returns
+   */
+  async bulkUnlinkForDirect(items: IRecordId[], accessPointId: IRecordId) {
+    const links = await this.selectMany({
+      filters: {
+        in: items.map((x) => x.toString()),
+        out: accessPointId.toString(),
+        linkType: LinkType.DIRECT
+      }
+    });
+    const resourceType = determineResourceType(accessPointId);
+    let reverseDirectionLinks: INodeLink[] = [];
+    if (resourceType === Resource.node) {
+      reverseDirectionLinks = await this.selectMany({
+        filters: {
+          out: items.map((x) => x.toString()),
+          in: accessPointId.toString(),
+          linkType: LinkType.DIRECT
+        }
+      });
+    }
+    logger.log({
+      at: "bulkUnlinkForDirect",
+      links,
+      reverseDirectionLinks
+    });
+    if (
+      isValidArrayWithData(links) ||
+      isValidArrayWithData(reverseDirectionLinks)
+    ) {
+      const allIds = [...(links ?? []), ...(reverseDirectionLinks ?? [])].map(
+        (x) => x.id
+      );
+      logger.log({ at: "bulkUnlinkForDirect", allIds });
+      return this.deleteMany(allIds);
+    }
+    return true;
   }
 
   async linkMany(links: any[]) {
     const response = await this.create(links);
     logger.log({ at: "linkMany", links, response });
+    return response;
+  }
+
+  async bulkLink(items: IRecordId[], to: IRecordId, toType: Resource) {
+    const links = items.map((item) => {
+      return {
+        in: item,
+        out: to,
+        toType,
+        linkType: LinkType.DIRECT
+      };
+    });
+    const response = await this.linkMany(links);
+    logger.log({ at: "bulkLink", items, to, response });
     return response;
   }
 

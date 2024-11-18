@@ -11,6 +11,7 @@
   import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
   import { FluxMethod } from "$lib/client/components/flux/flux.type";
   import { extensionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
+  import { logger } from "$lib/client/components/debug/logger.client";
   export let searchStoreId: string | undefined = undefined;
   export let searchCallback: Function | undefined = undefined;
   export let searchResultComponent: any = undefined;
@@ -49,6 +50,7 @@
   }
 
   export function keydown(event: any) {
+    logger.log({ at: "SearchResultsPopover - keydown", event });
     if (event.key === "ArrowDown") {
       selectedIndex = Math.min(selectedIndex + 1);
       if (selectedIndex === results?.length) {
@@ -71,7 +73,7 @@
     if (shortcutTrigger && value?.includes(shortcutTrigger)) {
       value = value.split(shortcutTrigger)[1].split(" ")[0];
     }
-    console.log({ shortcutTriggers, value });
+    // console.log({ shortcutTriggers, value });
     if (
       shortcutTriggers.length > 0 &&
       shortcutTriggers.some((trigger) => value.includes(trigger))
@@ -97,10 +99,8 @@
       }
       debouncedSearch();
     } else if (event.key === "Enter") {
-      if (value && results && results.length > 0) {
+      if (results && results.length > 0) {
         onSearchResultSelection(results[selectedIndex]);
-      } else if (results?.length > 0) {
-        onSearchResultSelection(results[0]);
       } else {
         //save();
         dispatch("empty-enter", value);
@@ -111,7 +111,7 @@
     }
     // dispatch("keyup", { value, event });
   }
-  let debouncedSearch = debouncer(search, 100);
+  let debouncedSearch = debouncer(search, 500);
   export async function search() {
     isSearchInProgress = true;
     selectedIndex = 0;

@@ -9,10 +9,7 @@
   export let node: IActiveNodeStore;
   export let pane: NodeRightPaneType | undefined = undefined;
   export let renderingDetails: any = undefined;
-  $: isConstrainedWidth =
-    $view.isConstrainedWidth ||
-    $node.accessMode === ResourceAccessMode.SPLIT ||
-    $node.accessMode === ResourceAccessMode.FSPLIT;
+  export let isConstrainedWidth: boolean = false;
 </script>
 
 <aside
@@ -28,6 +25,7 @@
       {node}
       {pane}
       {renderingDetails}
+      {isConstrainedWidth}
       on:close={() => {
         pane = undefined;
       }}

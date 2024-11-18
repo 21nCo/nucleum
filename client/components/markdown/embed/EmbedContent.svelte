@@ -24,12 +24,15 @@
   import { resizable } from "$lib/client/actions/resize.action";
   import { appStore } from "$lib/client/stores/app.store";
   import NodeTitleLabelPart from "$lib/client/products/memotron/node/title/NodeTitleLabelPart.svelte";
+  import Icon from "$lib/client/elements/Icon.svelte";
+  import { Size } from "$lib/client/types/size.enum";
   const dispatch = createEventDispatcher();
   const nodeContext = getContext<any>("node");
   export let body: IEmbedBlockBody;
   let linkInputValue = "";
   let _mediaBlock: INode | undefined;
   let height = body?.height ?? 300;
+  let isLoading = true;
 
   const titleNotRequiredTypes = [NodeType.FILE, NodeType.KINDLE_BOOK];
   const resizableTypes = [NodeType.IMAGE, NodeType.PDF];
@@ -62,10 +65,17 @@
   function mergeBody(body: Partial<IEmbedBlockBody>) {
     dispatch("update", body);
   }
-  onMount(() => {
-    if (!body?.id) return;
-    const resource = determineResourceType(body.id);
-    if (resource === Resource.node) assignNodeMediaContent(body.id);
+  onMount(async () => {
+    try {
+      isLoading = true;
+      if (!body?.id) return;
+      const resource = determineResourceType(body.id);
+      if (resource === Resource.node) await assignNodeMediaContent(body.id);
+    } catch (e) {
+      logger.error({ at: "EmbedContent onMount", e });
+    } finally {
+      isLoading = false;
+    }
   });
 
   async function assignNodeMediaContent(id: IRecordId) {
@@ -99,7 +109,7 @@
   }
 </script>
 
-{#if body.id && _mediaBlock}
+{#if body.id && _mediaBlock && !isLoading}
   <button
     class="flex flex-col gap-4 py-2 w-full"
     style={isResizable
@@ -146,6 +156,12 @@
 {:else if body?.subType === NodeType.COLLECTION_AS_EMBED && body?.id}
   <div class="w-full h-96">
     <Collection id={body.id} accessPoint={ResourceAccessPoint.MARKDOWN_EMBED} />
+  </div>
+{:else if isLoading}
+  <div
+    class="flex items-center justify-center w-full h-80 bg-bgs2 bg-opacity-50"
+  >
+    <Icon icon="svg-spinners:3-dots-fade" size={Size.xl} />
   </div>
 {:else}
   <EmbedContentPlaceholder

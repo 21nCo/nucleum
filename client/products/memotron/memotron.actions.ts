@@ -19,7 +19,10 @@ import {
   ResourceAccessMode,
   ResourceActionType
 } from "$lib/client/components/flux/resourceStores/resource.type";
-import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
+import {
+  determineResourceType,
+  resourceAction
+} from "$lib/client/components/flux/resourceStores/resource.utils";
 import CollectionBrowser from "$lib/client/products/memotron/collection/CollectionBrowser.svelte";
 import NodeBrowser from "$lib/client/products/memotron/node/NodeBrowser.svelte";
 import ResourceSearchModal from "./library/search/ResourceSearchModal.svelte";
@@ -43,6 +46,7 @@ import CreateCombination from "./combination/CreateCombination.svelte";
 import MemotronDataSettings from "./settings/MemotronDataSettings.svelte";
 import CollectionTitleLabelPart from "./collection/title/CollectionTitleLabelPart.svelte";
 import { Embed } from "$lib/client/types/context.type";
+import { SearchStore } from "./memotron.store";
 
 export const memotronActions: IAction[] = [
   {
@@ -105,7 +109,8 @@ export const memotronActions: IAction[] = [
       layout: {
         orientation: Orientation.Horizontal,
         size: Size.xl,
-        ignoreSafeArea: true
+        ignoreSafeArea: true,
+        isShowCantileverClose: true
       }
     }
   },
@@ -310,7 +315,7 @@ export const memotronActions: IAction[] = [
     isMeta: true,
     searchActionParams: {
       searchStoreId: Resource.node,
-      itemLabel: "node",
+      placeholder: "select a node",
       searchResultComponent: LinkSearchResultItem,
       callback: async (id: string, label?: string, componentParams?: any) => {
         if (!componentParams?.id) {
@@ -330,6 +335,64 @@ export const memotronActions: IAction[] = [
           return;
         }
         toasts.success(`**${label}** added to collection`);
+      }
+    }
+  },
+  {
+    action: MemotronAction.BULK_LINK,
+    type: ActionType.SEARCH_CMD,
+    cmdLabel: "Link to a node or add to a collection",
+    isMeta: true,
+    searchActionParams: {
+      searchCallback: async (search: string, componentParams?: any) => {
+        const result = await new SearchStore().searchForLinking(search, {
+          resource: componentParams?.resource
+        });
+        return result;
+      },
+      placeholder: (componentParams?: any) => {
+        return componentParams?.resource === Resource.collection
+          ? "select a collection"
+          : componentParams?.resource === Resource.node
+            ? "select a node"
+            : "select a node or a collection";
+      },
+      searchResultComponent: LinkSearchResultItem,
+      callback: async (id: string, label?: string, componentParams?: any) => {
+        const items =
+          componentParams?.multiSelectStore?.get() ?? componentParams?.items;
+        if (!items) {
+          toasts.error("Something went wrong. Please try again later.");
+          return;
+        }
+        const resourceType = determineResourceType(id);
+        const result = await linker.bulkLink(items, id, resourceType);
+        logger.log({
+          at: "bulkLink",
+          id,
+          resourceType,
+          label,
+          items,
+          result
+        });
+        if (!result) {
+          toasts.error("Something went wrong. Please try again later.");
+          return;
+        }
+        componentParams?.multiSelectStore?.reset();
+        if (resourceType === Resource.collection) {
+          toasts.success(
+            `**${items.length}** ${
+              items.length > 1 ? "items" : "item"
+            } added to collection **${label}**`
+          );
+        } else {
+          toasts.success(
+            `**${items.length}** ${
+              items.length > 1 ? "items" : "item"
+            } linked to node **${label}**`
+          );
+        }
       }
     }
   },

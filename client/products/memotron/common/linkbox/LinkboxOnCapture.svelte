@@ -27,7 +27,7 @@
   <Divider />
   <div class={cn("flex", "gap-2")}>
     <div class="flex gap-1">
-      <Icon icon="arrow-up-right" size={Size.sm} />
+      <Icon icon="ph:link-light" size={Size.sm} />
     </div>
     <LinkSearch
       context="capture"

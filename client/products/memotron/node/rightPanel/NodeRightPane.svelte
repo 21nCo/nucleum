@@ -14,7 +14,7 @@
   export let pane = NodeRightPaneType.OUTLINE;
   let verticalSwitcherItems: ISelectItem[] = [
     { value: NodeRightPaneType.OUTLINE, icon: "bars-center-left" },
-    { value: NodeRightPaneType.LINKS, icon: "ph:arrows-left-right-thin" },
+    { value: NodeRightPaneType.LINKS, icon: "ph:link-light" },
     { value: NodeRightPaneType.PROPERTIES, icon: "widget" },
     { value: NodeRightPaneType.TRACES, icon: "bookmark" }
     // { value: NodeRightPaneType.HISTORY, icon: "ph:clock-countdown-thin" }

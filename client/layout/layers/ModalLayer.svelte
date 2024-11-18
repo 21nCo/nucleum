@@ -291,6 +291,8 @@
     size={modal.layout?.size ?? Size.md}
     orientation={modal.layout?.orientation ?? Orientation.Vertical}
     isOnRight={modal?.isOnRight}
+    hasCantileverButtons={modal.layout?.isShowCantileverClose ||
+      modal.layout?.isShowBackButton}
   >
     <ModalLayout path={modal.path} bind:params={modal}>
       <ComponentResolver

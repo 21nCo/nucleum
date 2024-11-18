@@ -79,7 +79,6 @@
   let isRenderMentionSearch: boolean = false;
   let blockSearchQuery = "";
   let mentionSearchQuery = "";
-  let shiftKeyPressed: boolean = false;
   let previousVal = deepCopy(text);
   let mentionTriggerKey: string;
   let caretPositionT2:
@@ -96,8 +95,7 @@
   /**
    * Checks if the block is of type code or quote and prevents the insertion of a new block on pressing enter - inserts a new line instead
    */
-  $: isPreventInsertOnEnter =
-    contentType === NodeType.CODE || contentType === NodeType.QUOTE;
+  $: isPreventInsertOnEnter = contentType === NodeType.CODE;
   $: {
     switch (contentType) {
       case NodeType.HEADING1:
@@ -238,16 +236,11 @@
     type: "keyup" | "keydown" = "keydown"
   ) {
     if (!$mdStore.params?.canUseSlashShortcut) return false;
-    if (event.key === "Shift") {
-      shiftKeyPressed = true;
-    } else if (event.key != "2") {
-      shiftKeyPressed = false;
-    }
-    console.log({ shiftKeyPressed, event });
-    if (
-      type === "keyup" &&
-      ((event.key === "2" && shiftKeyPressed) || event.key === "[")
-    ) {
+    if (type === "keydown" && (event.key === "@" || event.key === "[")) {
+      logger.log({
+        at: "handleMentionShortcut - triggered",
+        key: event.key
+      });
       mentionTriggerKey = event.key;
       showPopover("mentionSearch");
       return true;
@@ -731,6 +724,7 @@
 
   function onMentionSelect(event: CustomEvent) {
     const item = event.detail.item;
+    logger.log({ at: "onMentionSelect", item });
     textRef.addMention(item, mentionSearchQuery, mentionTriggerKey);
     hidePopover("mentionSearch");
     mentionSearchQuery = "";

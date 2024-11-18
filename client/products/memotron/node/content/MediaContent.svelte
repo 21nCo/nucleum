@@ -13,18 +13,15 @@
   import MediaContentResolver from "./MediaContentResolver.svelte";
 
   export let node: IActiveNodeStore;
+  export let isConstrainedWidth: boolean = false;
   export let rightPane: NodeRightPaneType | undefined =
-    $node?.contentType === NodeType.PDF && !$view.isConstrainedWidth
+    $node?.contentType === NodeType.PDF && !isConstrainedWidth
       ? NodeRightPaneType.TRACES
       : undefined;
   let renderingDetails: any;
   let imgRef: HTMLImageElement;
   let contentRef: MediaContentResolver;
   let isPortrait = true;
-  $: isConstrainedWidth =
-    $view.isConstrainedWidth ||
-    $node.accessMode === ResourceAccessMode.SPLIT ||
-    $node.accessMode === ResourceAccessMode.FSPLIT;
 
   //TODO - renderingDetails realying to wherever necessary
   $: if (imgRef) {
@@ -75,6 +72,11 @@
     </main>
   {/if}
   {#if rightPane || (webNodeTypeList.includes($node?.contentType) && !isConstrainedWidth)}
-    <MediaNodeRightPane {node} bind:pane={rightPane} {renderingDetails} />
+    <MediaNodeRightPane
+      {node}
+      bind:pane={rightPane}
+      {renderingDetails}
+      {isConstrainedWidth}
+    />
   {/if}
 </div>

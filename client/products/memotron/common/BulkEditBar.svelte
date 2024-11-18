@@ -1,20 +1,31 @@
 <script lang="ts">
   import { resolveMultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import {
+    ResourceAccessPoint,
+    type IMultiSelectContext
+  } from "$lib/client/components/flux/resourceStores/resource.type";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import { createEventDispatcher } from "svelte";
+  import { LinkType } from "../node/node.type";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   const dispatch = createEventDispatcher();
-  export let size: Size.sm | Size.md | Size.lg = Size.md;
-  export let context: string = "";
+  export let context: IMultiSelectContext;
+  export let subContext: string = "";
+  export let isConstrainedWidth: boolean = false;
   $: multiSelectStore = resolveMultiSelectStore(context);
-  const commonButtonProps: {} = {
-    size: size === Size.sm ? Size.lg : Size.sm,
-    style: size === Size.sm ? ButtonStyle.DEFAULT : ButtonStyle.OUTLINED,
+  const miniButtonProps: {} = {
+    size: Size.md,
+    style: ButtonStyle.OUTLINED,
     isPreventMinWidth: true
   };
+  const expandedButtonProps: {} = {
+    size: Size.sm,
+    style: ButtonStyle.OUTLINED
+  };
+  $: buttonProps = isConstrainedWidth ? miniButtonProps : expandedButtonProps;
 </script>
 
 <!-- TODO - invert color layer with corresponding opposite light/dark color scheme -->
@@ -22,9 +33,8 @@
   class={cn(
     "flex gap-3 justify-between items-center cs_tidigit_dark_blue bg-bgs1 text-fgs1 border border-brs3 shadow-md rounded-md overflow-auto",
     {
-      "w-full mx-2 px-4 py-2 text-b2": size === Size.sm,
-      "w-2/3 px-6 py-4": size === Size.md,
-      "w-1/2 px-8 py-4": size === Size.lg
+      "w-full mx-2 px-4 py-2 text-b2": isConstrainedWidth,
+      "w-full mx-8 px-6 py-3": !isConstrainedWidth
     }
   )}
 >
@@ -32,63 +42,103 @@
     Selected: {$multiSelectStore.length}
   </span>
   <span class="flex gap-2">
-    <Button
-      {...commonButtonProps}
-      label={size === Size.sm ? undefined : "select all"}
-      tooltip={size === Size.sm ? "Select all" : undefined}
-      icon="check-circle"
-      on:click={() => {
-        dispatch("selectAll");
-      }}
-    />
-    {#if context.includes(ResourceAccessPoint.NODE_LINKS)}
+    {#if context.accessPoint === ResourceAccessPoint.NODE_LINKS && subContext === LinkType.DIRECT}
       <Button
-        label={size === Size.sm ? undefined : "Unlink"}
         tooltip="Unlink"
-        icon="arrow-uturn-left"
-        {...commonButtonProps}
+        icon="ph:link-break-light"
+        {...buttonProps}
         on:click={() => {
-          dispatch("star");
+          dispatch("action", "unlink");
         }}
       />
-    {:else}
+    {:else if context.accessPoint === ResourceAccessPoint.COLLECTION}
       <Button
-        label={size === Size.sm ? undefined : "star"}
-        tooltip={size === Size.sm ? "Star" : undefined}
-        icon="star"
-        {...commonButtonProps}
+        label={isConstrainedWidth ? undefined : "Remove from collection"}
+        tooltip={isConstrainedWidth ? "Remove from collection" : undefined}
+        icon="ph:minus-circle-light"
+        {...buttonProps}
         on:click={() => {
-          dispatch("star");
+          dispatch("action", "unlink");
+        }}
+      />
+    {:else if context.accessPoint === ResourceAccessPoint.BROWSER || context.accessPoint === ResourceAccessPoint.LIBRARY}
+      {#if context.resource === Resource.node}
+        {#if isConstrainedWidth}
+          <Button
+            tooltip="Link to node or Add to collection"
+            icon="ph:link-light"
+            {...miniButtonProps}
+            on:click={() => {
+              dispatch("action", "linkbox");
+            }}
+          />
+        {:else}
+          <Button
+            label="Link to node"
+            icon="ph:link-light"
+            {...expandedButtonProps}
+            on:click={() => {
+              dispatch("action", "link");
+            }}
+          />
+          <Button
+            label="Add to collection"
+            icon="ph:plus-light"
+            {...expandedButtonProps}
+            on:click={() => {
+              dispatch("action", "collect");
+            }}
+          />
+        {/if}
+      {/if}
+      <Button
+        label={isConstrainedWidth ? undefined : "Star"}
+        tooltip={isConstrainedWidth ? "Star" : undefined}
+        icon="star"
+        {...buttonProps}
+        on:click={() => {
+          dispatch("action", "star");
         }}
       />
     {/if}
 
     <Button
-      label={size === Size.sm ? undefined : "archive"}
-      tooltip={size === Size.sm ? "Archive" : undefined}
+      label={isConstrainedWidth ? undefined : "Archive"}
+      tooltip={isConstrainedWidth ? "Archive" : undefined}
       icon="archive"
-      {...commonButtonProps}
+      {...buttonProps}
       on:click={() => {
-        dispatch("archive");
+        dispatch("action", "archive");
       }}
     />
     <Button
-      label={size === Size.sm ? undefined : "delete"}
-      tooltip={size === Size.sm ? "Delete" : undefined}
+      label={isConstrainedWidth ? undefined : "Delete"}
+      tooltip={isConstrainedWidth ? "Delete" : undefined}
       icon="trash"
-      {...commonButtonProps}
+      {...buttonProps}
       type={ButtonVariant.DANGER}
       on:click={() => {
-        dispatch("delete");
+        dispatch("action", "delete");
       }}
     />
   </span>
-  <span>
+  <span class="flex gap-2 items-center">
     <Button
-      label={size === Size.sm ? undefined : "clear"}
-      tooltip={size === Size.sm ? "Clear" : undefined}
-      icon={size === Size.sm ? "cross" : "cross-circled"}
-      {...commonButtonProps}
+      label={isConstrainedWidth ? undefined : "Select all"}
+      tooltip={isConstrainedWidth ? "Select all" : undefined}
+      {...buttonProps}
+      style={ButtonStyle.DEFAULT}
+      icon="check-circle"
+      on:click={() => {
+        dispatch("selectAll");
+      }}
+    />
+    <Button
+      label={isConstrainedWidth ? undefined : "Clear selection"}
+      tooltip={isConstrainedWidth ? "Clear selection" : undefined}
+      icon={isConstrainedWidth ? "cross" : "cross-circled"}
+      {...buttonProps}
+      style={ButtonStyle.DEFAULT}
       on:click={() => {
         $multiSelectStore = [];
       }}

@@ -19,6 +19,12 @@ import { toasts } from "$lib/client/stores/notification.store";
 import { extensionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
 import { FluxMethod } from "$lib/client/components/flux/flux.type";
 import type { CollectionType } from "./collection/collection.type";
+import { collectionStore } from "./collection/collection.store";
+import { nodeStore } from "./node/node.store";
+import type { MultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
+import { appStore } from "$lib/client/stores/app.store";
+import { MemotronAction } from "./memotronAction.enum";
+import { linker } from "./linking/link.store";
 
 export const MAX_FILE_SIZE_MB = 30;
 
@@ -155,6 +161,7 @@ export class SearchStore {
       filters: {
         trashInformation: false,
         ...this.filters,
+        isArchived: this.filters.isArchived ?? false,
         type:
           "type" in this.filters && this.filters.type
             ? this.filters.type?.toUpperCase()
@@ -242,13 +249,7 @@ export class SearchStore {
     let nodes = [];
     if (params?.resource === Resource.node || !params?.resource) {
       nodes = await flux.selectMany(Resource.node, {
-        properties: [
-          "*",
-          "parent.* as parent",
-          labelSearchProp
-          //TODO - disabling temp - to reduce query time
-          // "(fn::memotron::node::parent($parent.id)) as mdParent"
-        ],
+        properties: ["*", "parent.* as parent", labelSearchProp],
         filters: {
           contentType: params?.subType
             ? [params.subType]
@@ -261,7 +262,12 @@ export class SearchStore {
               query
             }
           : undefined,
-        limit: isValidString(query) ? 200 : 50
+        limit: isValidString(query) ? 200 : 50,
+        orderBy: !isValidString(query)
+          ? {
+              modifiedAt: "desc"
+            }
+          : undefined
       });
     }
     let collections = [];
@@ -379,33 +385,185 @@ export class SearchStore {
     subType?: NodeType | CollectionType,
     additionalFilters?: any
   ) {
-    if (resource === Resource.node) {
-      const result = await flux.selectMany(resource, {
-        properties: ["count()"],
-        filters: {
-          ...activeResourceFilterV2,
-          ...additionalFilters,
-          contentType: subType ? [subType] : [...rootNodeTypeList],
-          creationContext: false
-        },
-        groupBy: ["all"]
+    try {
+      logger.log({
+        at: "resolveCount",
+        resource,
+        subType,
+        additionalFilters
       });
-      return result?.[0]?.count;
-    } else if (
-      resource === Resource.collection ||
-      resource === Resource.combination ||
-      resource === Resource.task
-    ) {
-      const result = await flux.selectMany(resource, {
-        properties: ["count()"],
-        filters: {
-          ...activeResourceFilterV2,
-          ...additionalFilters,
-          type: subType ? [subType] : undefined
-        },
-        groupBy: ["all"]
+      if (resource === Resource.node) {
+        const result = await flux.selectMany(resource, {
+          properties: ["count()"],
+          filters: {
+            ...activeResourceFilterV2,
+            ...additionalFilters,
+            isArchived: this.filters.isArchived ?? false,
+            contentType: subType ? [subType] : [...rootNodeTypeList],
+            creationContext: false
+          },
+          groupBy: ["all"]
+        });
+        return result?.[0]?.count;
+      } else if (
+        resource === Resource.collection ||
+        resource === Resource.combination ||
+        resource === Resource.task
+      ) {
+        const result = await flux.selectMany(resource, {
+          properties: ["count()"],
+          filters: {
+            ...activeResourceFilterV2,
+            ...additionalFilters,
+            isArchived: this.filters.isArchived ?? false,
+            type: subType ? [subType] : undefined
+          },
+          groupBy: ["all"]
+        });
+        return result?.[0]?.count;
+      }
+    } catch (e) {
+      logger.error({ at: "resolveCount", error: e });
+      return 0;
+    }
+  }
+}
+
+export class BulkEditor {
+  resource: Resource = Resource.node;
+  multiSelectStore: MultiSelectStore;
+  accessPointId?: IRecordId;
+  constructor(
+    resource: Resource = Resource.node,
+    multiSelectStore: MultiSelectStore,
+    params?: {
+      accessPointId?: IRecordId;
+    }
+  ) {
+    this.resource = resource;
+    this.multiSelectStore = multiSelectStore;
+    this.accessPointId = params?.accessPointId;
+  }
+
+  async run(action: string) {
+    let isResetItems = false;
+    try {
+      if (this.resource === Resource.everything) return;
+      const items = this.multiSelectStore.get();
+      logger.debug({
+        at: "BulkEditor.run",
+        action,
+        items,
+        accessPointId: this.accessPointId
       });
-      return result?.[0]?.count;
+      if (this.resource === Resource.node) {
+        switch (action) {
+          case "unlink":
+            if (!this.accessPointId) {
+              toasts.error("Something went wrong. Please try again later.");
+              return;
+            }
+            const result = await linker.bulkUnlinkForDirect(
+              items,
+              this.accessPointId
+            );
+            logger.debug({ at: "BulkEditor.run unlink", result });
+            onSuccess(action, items.length, Resource.node);
+            break;
+          case "link":
+            appStore.runAction(MemotronAction.BULK_LINK, {
+              componentParams: {
+                label: "Link to a node",
+                resource: Resource.node,
+                multiSelectStore: this.multiSelectStore
+              }
+            });
+            break;
+          case "linkbox":
+            appStore.runAction(MemotronAction.BULK_LINK, {
+              componentParams: {
+                label: "Link to a node or add to a collection",
+                multiSelectStore: this.multiSelectStore
+              }
+            });
+            break;
+          case "collect":
+            appStore.runAction(MemotronAction.BULK_LINK, {
+              componentParams: {
+                label: "Add to collection",
+                resource: Resource.collection,
+                multiSelectStore: this.multiSelectStore
+              }
+            });
+            break;
+          case "star":
+            await nodeStore.bulkModify(items, {
+              isStarred: true
+            });
+            onSuccess(action, items.length, Resource.node);
+            break;
+          case "archive":
+            await nodeStore.bulkModify(items, {
+              isArchived: true
+            });
+            onSuccess(action, items.length, Resource.node);
+            break;
+          case "delete":
+            await nodeStore.bulkTrash(items);
+            onSuccess(action, items.length, Resource.node);
+            break;
+        }
+      } else if (this.resource === Resource.collection) {
+        switch (action) {
+          case "star":
+            await collectionStore.bulkModify(items, {
+              isStarred: true
+            });
+            onSuccess(action, items.length, Resource.collection);
+            break;
+          case "archive":
+            await collectionStore.bulkModify(items, {
+              isArchived: true
+            });
+            onSuccess(action, items.length, Resource.collection);
+            break;
+          case "delete":
+            await collectionStore.bulkTrash(items);
+            onSuccess(action, items.length, Resource.collection);
+            break;
+        }
+      }
+      if (isResetItems) {
+        this.multiSelectStore.reset();
+        return true;
+      }
+    } catch (e) {
+      toasts.error("Failed to perform bulk action");
+      return false;
+    }
+
+    function onSuccess(action: string, count: number, resource: Resource) {
+      toasts.success(resolveMessage(action, count, resource));
+      isResetItems = true;
+    }
+
+    function resolveMessage(action: string, count: number, resource: Resource) {
+      let prefix = "";
+      switch (action) {
+        case "star":
+          prefix = "Starred";
+          break;
+        case "archive":
+          prefix = "Archived";
+          break;
+        case "delete":
+          prefix = "Deleted";
+          break;
+        case "unlink":
+          prefix = "Unlinked";
+          break;
+      }
+      return `${prefix} ${count} ${resource}${count > 1 ? "s" : ""} successfully`;
     }
   }
 }

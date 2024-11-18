@@ -13,6 +13,9 @@
   import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
   import { abg, cn } from "$lib/client/utils/ui.utils";
   import { onMount } from "svelte";
+  import { tabs } from "./tabs.store";
+  import Icon from "$lib/client/elements/Icon.svelte";
+  import { Size } from "$lib/client/types/size.enum";
   export let item: IRecordId;
   let resource: any;
   let action: any;
@@ -55,7 +58,7 @@
     onHover: (e) => (isHovering = e)
   }}
   class={cn(
-    "relative flex items-center rounded--full border-x border-r-brs3 border-l-transparent text-b2 gap-2 px-4 py-2 max-w-48 min-w-20",
+    "relative flex items-center rounded--full border-x border-r-brs3 border-l-transparent text-b2 gap-2 px-6 py-2 max-w-48 min-w-20",
     // abg(isActive, 1),
     {
       "hover:bg-aps3 hover:text-aps1 hover:border--aps1": !isActive,
@@ -71,21 +74,26 @@
       {resource?.label ?? "Untitled"}
     {/if}
   </div>
-  <!--TODO: Show remove option on right click instead -->
-  <!-- {#if isHovering}
+  {#if isHovering}
     <button
       class={cn(
-        "absolute right-0 h-full rounded-full bg-gradient-to-l  to-transparent pr-2 pl-10",
+        "absolute right-0 h-full rounded--full bg-gradient-to-l  to-transparent pl-10",
         {
-          "from-bgs2 via-bgs2": !isActive,
-          "from-aps1 via-aps1": isActive
+          "from-aps3 via-aps3": !isActive,
+          "from-bgs2 via-bgs2": isActive
         }
       )}
     >
-      <Button
-        icon="cross"
-        on:click={() => uiState.removeResourceFromTopBar(item)}
-      />
+      <button
+        on:click={() => tabs.remove(item)}
+        class="h-full flex justify-center items-center pr-2"
+      >
+        {#if isActive}
+          <Icon icon="ph:x" size={Size.sm} class="stroke-fgs1" />
+        {:else}
+          <Icon icon="ph:x" size={Size.sm} class="stroke-aps1" />
+        {/if}
+      </button>
     </button>
-  {/if} -->
+  {/if}
 </button>

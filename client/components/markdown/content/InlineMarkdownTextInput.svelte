@@ -20,6 +20,7 @@
   import { scrollIntoViewOnFocus } from "$lib/client/actions/scroll.action";
   import { isValidString, truncateString } from "$lib/shared/utils/text.utils";
   import { resolveNodeLabelString } from "$lib/client/products/memotron/node/node.utils";
+  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   const dispatch = createEventDispatcher();
   //   export let block: Block<TextContent>;
   export let id: string = generateUID();
@@ -102,7 +103,7 @@
     const regex = /\[(.*?)\]\(resource=(.*?)\)/g;
     innerHTML = innerHTML.replace(
       regex,
-      (match, p1, p2) => `<mention data-id='${p2}'></mention>`
+      (match, p1, p2) => `<button data-mention-id='${p2}'></button>`
     );
   }
   export function focus(offset: number = 0) {
@@ -174,25 +175,18 @@
     searchQuery: string,
     triggerKey?: string
   ) {
-    console.log("addMention - start", { item, content, innerHTML, triggerKey });
-    let replacer = "@";
-    if (triggerKey !== "2") replacer = triggerKey ?? replacer;
+    const label = isValidString(
+      truncateString(resolveNodeLabelString(item), 50)
+    );
     content = content?.replace(
-      replacer + (searchQuery ?? ""),
-      `[${
-        isValidString(truncateString(resolveNodeLabelString(item), 50)) ??
-        "Unknown"
-      }](resource=${item.id})`
+      triggerKey + (searchQuery ?? ""),
+      `[${label ?? "Unknown"}](resource=${item.id})`
     );
     innerHTML = innerHTML.replace(
-      replacer + (searchQuery ?? ""),
-      `<mention data-id='${item.id}'></mention>`
+      triggerKey + (searchQuery ?? ""),
+      `<button data-mention-id='${item.id}' data-label='${label}'>
+      </button>`
     );
-    console.log("addMention - after adding placeholder", {
-      searchQuery,
-      content,
-      innerHTML
-    });
     setTimeout(() => {
       renderMentions();
     }, 10);
@@ -231,33 +225,40 @@
     });
   }
   export function renderMentions(isInitialRender: boolean = false) {
-    const container = document.getElementById(id);
-    if (!container) return;
-    const mentions = container.querySelectorAll("mention");
-    mentions.forEach((el) => {
-      const id = el.getAttribute("data-id") ? el.getAttribute("data-id") : "";
-      const placeholder = document.createElement("div");
-      const inlineMention = new InlineMention({
-        target: placeholder,
-        props: { id: id ?? "" }
-      });
-      if (isInitialRender) {
+    try {
+      const container = document.getElementById(id);
+      if (!container) return;
+      const mentions = container.querySelectorAll("button[data-mention-id]");
+      mentions.forEach((el) => {
+        const id = el.getAttribute("data-mention-id")
+          ? el.getAttribute("data-mention-id")
+          : "";
+        const label = el.getAttribute("data-label");
+        const placeholder = document.createElement("div");
+        const inlineMention = new InlineMention({
+          target: placeholder,
+          props: { id: id ?? "", label }
+        });
+        if (isInitialRender) {
+          el.replaceWith(...placeholder.childNodes);
+          return;
+        }
+        newInlineSpanId = generateSimpleRandomId();
+        caretPositionT2 = {
+          ...caretPositionT2,
+          index: caretPositionT2?.index ?? 0,
+          elementId: newInlineSpanId
+        };
+        let newSpan = document.createElement("span");
+        newSpan.id = newInlineSpanId;
+        newSpan.innerHTML = "&#8203;";
+        placeholder.appendChild(newSpan);
         el.replaceWith(...placeholder.childNodes);
-        return;
-      }
-      newInlineSpanId = generateUID();
-      caretPositionT2 = {
-        ...caretPositionT2,
-        index: caretPositionT2?.index ?? 0,
-        elementId: newInlineSpanId
-      };
-      let newSpan = document.createElement("span");
-      newSpan.id = newInlineSpanId;
-      newSpan.innerHTML = "&#8203;";
-      placeholder.appendChild(newSpan);
-      el.replaceWith(...placeholder.childNodes);
-      restoreCaretPosition();
-    });
+        restoreCaretPosition();
+      });
+    } catch (error) {
+      logger.error({ at: "renderMentions", error });
+    }
   }
 
   /**

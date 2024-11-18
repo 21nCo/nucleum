@@ -109,7 +109,7 @@ export type IListOperation = {
 };
 
 export type IBlockOperationContext = {
-  source: string;
+  source: IRecordId;
   blockType?: NodeType;
   /**
    * @deprecated - use {@link IListBlockBody} instead

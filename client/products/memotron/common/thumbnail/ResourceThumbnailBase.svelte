@@ -17,12 +17,15 @@
   export let item: any;
   export let isDraggable: boolean = false;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
+  export let accessPointContext: string | undefined = undefined;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let isApplyCustomColor: boolean = false;
   export let accessPointId: IRecordId | undefined = undefined;
-  $: multiSelectContext = accessPointId
-    ? accessPointId + "-" + accessPoint
-    : determineResourceType(item.id) + "-" + accessPoint;
+  $: multiSelectContext = {
+    resource: determineResourceType(item.id),
+    accessPoint,
+    accessPointId
+  };
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
 
   $: isSelected = $multiSelectStore.some(resourceInList(item.id));
@@ -92,6 +95,7 @@
             bind:item
             {accessPoint}
             {accessPointId}
+            {accessPointContext}
           />
         </div>
       </div>

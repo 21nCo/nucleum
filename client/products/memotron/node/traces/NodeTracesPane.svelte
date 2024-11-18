@@ -85,18 +85,13 @@
     } else if (contentType === NodeType.NODULAR_MARKDOWN) {
       return [
         {
-          value: "clips",
+          value: "comments",
           label: "Comments",
           icon: "ph:chat-teardrop-text"
         },
         {
           value: "tasks",
           icon: "check-circle"
-        },
-        {
-          label: "Mentions",
-          value: "outgoing-mentions",
-          icon: "at-symbol"
         }
       ];
     }
@@ -231,8 +226,11 @@
       subText="This page doesn't have any clips yet"
     />
   {/if}
-{:else if selectedType === "tasks"}
-  <ComingSoonView />
+{:else if selectedType === "tasks" || selectedType === "comments"}
+  <ComingSoonView
+    mainText="Coming soon"
+    subText="Tasks and comments will be available soon"
+  />
 {:else}
   <EmptyStatusView size={Size.sm} mainText="No traces found" />
 {/if}

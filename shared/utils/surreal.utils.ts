@@ -10,7 +10,7 @@ import {
   type IMutation,
   type IRecordId
 } from "$lib/client/types/data.type";
-import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { generateRandomId } from "./crypto.utils";
 
 /**
@@ -155,7 +155,7 @@ export function replaceParams(query: string, params: any) {
  * @returns
  */
 export function resolveInsertQuery(
-  resource: string,
+  resource: Resource,
   records: any[],
   params?: { isUpsert?: boolean; isRelation?: boolean }
 ) {
@@ -172,15 +172,15 @@ export function resolveInsertQuery(
     //   noneReplacerFn
     // )};`;
     const query = generateUpsertQuery();
-    return commonQueryReplacements(query);
+    return commonQueryReplacements(query, resource);
   } else if (params?.isRelation) {
     const query = `INSERT RELATION INTO ${resource} ${JSON.stringify(
       records
     )};`;
-    return commonQueryReplacements(query);
+    return commonQueryReplacements(query, resource);
   }
   const query = `INSERT INTO ${resource} ${JSON.stringify(records)};`;
-  return commonQueryReplacements(query);
+  return commonQueryReplacements(query, resource);
 
   function generateUpsertQuery() {
     let fullUpsertQuery = "";
@@ -198,7 +198,7 @@ export function generateResourceId(itemType: Resource): IRecordId {
   return `${itemType}:${id}`;
 }
 
-export function resolveUpsertQuery(resource: string, record: any) {
+export function resolveUpsertQuery(resource: Resource, record: any) {
   let copy = { ...record };
   let id = copy.id;
   if (id && typeof id === "string" && !id.includes(":")) {
@@ -206,11 +206,11 @@ export function resolveUpsertQuery(resource: string, record: any) {
   } else if (typeof id === "object" && id.id) {
     id = id.toString();
   } else if (!id) {
-    id = generateResourceId(resource as any);
+    id = generateResourceId(resource);
   }
   delete copy.id;
   const query = `UPSERT ${id} CONTENT ${JSON.stringify(copy, noneReplacerFn)};`;
-  return { query: commonQueryReplacements(query), id };
+  return { query: commonQueryReplacements(query, resource), id };
 }
 
 /**
@@ -224,6 +224,7 @@ export function resolveMergeQuery(
 ) {
   const recordCopy = { ...record };
   const recordId = recordCopy.id;
+  const resource = recordId.toString()?.split(":")?.[0];
   delete recordCopy.id;
   let query;
   if (params?.isUpsert) {
@@ -237,7 +238,7 @@ export function resolveMergeQuery(
       noneReplacerFn
     )};`;
   }
-  return commonQueryReplacements(query);
+  return commonQueryReplacements(query, resource);
 }
 
 /**
@@ -264,7 +265,7 @@ export function resolveMergeQuery(
  * @returns
  */
 export function resolveBulkMergeQuery(
-  resource: string,
+  resource: Resource,
   records: any[],
   params?: { isUpsert?: boolean }
 ) {
@@ -283,7 +284,7 @@ export function resolveBulkMergeQuery(
       noneReplacerFn
     )} where id in ${JSON.stringify(ids)};`;
   }
-  return commonQueryReplacements(query);
+  return commonQueryReplacements(query, resource);
 }
 
 const noneReplacerFn = (key: string, value: any) =>
@@ -292,7 +293,8 @@ const noneReplacerFn = (key: string, value: any) =>
 /**
  * Newer versions of Surreal SDK doesn't automatically convert the date to the surreal date format and record links. There d'format' is used for dates and removing quotes around record links to be detected as record links.
  */
-export function commonQueryReplacements(query: string) {
+export function commonQueryReplacements(query: string, resource?: Resource) {
+  if (resource === Resource.mutation) return query;
   const dateRegex = /"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z)"/g;
   const recordLinkRegex = /"([\w-]+:[\w-]+)"/g;
   const recordLinkRegexSingleQuotes = /'([\w-]+:[\w-]+)'/g;
@@ -311,11 +313,17 @@ export function commonQueryReplacements(query: string) {
 export function resolveMutationQueryV2(mutation: IMutation) {
   switch (mutation.params.action) {
     case PersistenceActionType.INSERT:
-      return resolveInsertQuery(mutation.resource, mutation.params.records, {
-        isUpsert: true
-      });
+      return resolveInsertQuery(
+        mutation.resource as Resource,
+        mutation.params.records,
+        {
+          isUpsert: true
+        }
+      );
     case PersistenceActionType.DELETE:
       return `DELETE ${mutation.resource} WHERE id = ${mutation.params.recordId}`;
+    case PersistenceActionType.BULK_DELETE:
+      return `DELETE ${mutation.resource} WHERE id in [${mutation.params.recordIds.map((x) => `${x}`).join(",")}];`;
     case PersistenceActionType.REPLACE:
       return `UPDATE ${mutation.resource} SET ${JSON.stringify(
         mutation.params
@@ -323,7 +331,10 @@ export function resolveMutationQueryV2(mutation: IMutation) {
     case PersistenceActionType.MERGE:
       return resolveMergeQuery(mutation.params.record, { isUpsert: true });
     case PersistenceActionType.BULK_MERGE:
-      return resolveBulkMergeQuery(mutation.resource, mutation.params.records);
+      return resolveBulkMergeQuery(
+        mutation.resource as Resource,
+        mutation.params.records
+      );
     case PersistenceActionType.CUSTOM:
       return replaceParams(mutation.params.query, mutation.params.data);
   }

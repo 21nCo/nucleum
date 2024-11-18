@@ -377,7 +377,8 @@ export const globalActions: IAction[] = [
       layout: {
         size: Size.lg,
         orientation: Orientation.Horizontal,
-        ignoreSafeArea: true
+        ignoreSafeArea: true,
+        isShowCantileverClose: true
       }
     }
   },

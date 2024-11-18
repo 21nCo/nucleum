@@ -33,9 +33,17 @@
   let popRef: HTMLButtonElement;
 
   onMount(async () => {
+    await refresh();
+  });
+
+  export async function refresh() {
+    await refreshCount();
+  }
+
+  async function refreshCount() {
     if (!isShowCount) return;
     count = await new SearchStore().resolveCount(item.value as Resource);
-  });
+  }
 
   function resolveContextMenu() {
     const isCurrentResourcePinned = $appMenuStore[

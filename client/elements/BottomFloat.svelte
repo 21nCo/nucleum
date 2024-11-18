@@ -5,6 +5,7 @@
   import { cn } from "../utils/ui.utils";
   export let isAppMenuHidden: boolean = false;
   export let margin: string = "mb-8";
+  export let zIndex: string = "z-20";
   let classList: string = "";
   export { classList as class };
   onMount(() => {
@@ -16,7 +17,8 @@
 
 <div
   class={cn(
-    "bottomfloat absolute bottom-0 flex w-full z-20",
+    "bottomfloat absolute bottom-0 flex inset-x-0",
+    zIndex && zIndex,
     margin && margin,
     !margin && {
       "mb-8": $view.isPortrait && isAppMenuHidden,

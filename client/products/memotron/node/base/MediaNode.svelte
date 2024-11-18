@@ -8,6 +8,7 @@
   import view from "$lib/client/stores/view.store";
   import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
   import NodeBirdView from "../birdView/NodeBirdView.svelte";
+  import { resizeListener } from "$lib/client/actions/resize.action";
   export let node: IActiveNodeStore;
 
   let isShowFloatingBar: boolean = true;
@@ -15,6 +16,13 @@
   let timeoutId: any;
   let panelAction: NodeRightPaneType | undefined = undefined;
   let nodeView: NodeView = NodeView.CONTENT;
+  let containerWidth = 0;
+  $: isConstrainedWidth =
+    containerWidth < 1000 ||
+    $view.isConstrainedWidth ||
+    $node.accessMode === ResourceAccessMode.SPLIT ||
+    $node.accessMode === ResourceAccessMode.FSPLIT;
+
   function onInteraction(event: MouseEvent | TouchEvent | CustomEvent) {
     if ($node.accessMode !== ResourceAccessMode.SLIDESHOW) return;
     isShowFloatingBar = true;
@@ -30,16 +38,22 @@
 </script>
 
 {#if $node}
-  <div class="relative flex flex-col w-full h-full">
+  <div
+    class="relative flex flex-col w-full h-full"
+    use:resizeListener={(e) => {
+      containerWidth = e.width;
+    }}
+  >
     {#if nodeView === NodeView.BIRD_VIEW}
       <NodeBirdView {node} bind:rightPane={panelAction} />
     {:else}
-      <MediaContent {node} bind:rightPane={panelAction} />
+      <MediaContent {node} bind:rightPane={panelAction} {isConstrainedWidth} />
     {/if}
     {#if $node.accessMode !== ResourceAccessMode.SLIDESHOW || isShowFloatingBar}
       <MediaNodeFloatingBar
         bind:isHovering={isHoveringOnFloatingBar}
         {node}
+        {isConstrainedWidth}
         bind:nodeView
         on:fullscreen={() => {
           appStore.toggleFullScreen($node.accessMode, $node.id);

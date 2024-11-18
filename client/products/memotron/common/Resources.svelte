@@ -33,7 +33,10 @@
   export let width: number = 290;
   export let isShowLoadingPulseAtTheEnd: boolean = false;
   let parentBgIndex = 1;
-  $: multiSelectContext = resource + "-" + accessPoint;
+  $: multiSelectContext = {
+    resource,
+    accessPoint
+  };
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
   function onClick(e: MouseEvent, item: any) {
     if (isPreventDefault) {

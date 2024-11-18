@@ -6,10 +6,7 @@
 
 <div class="w-full h-full flex justify-center">
   <div class="flex flex-col gap-4 bg-bgs2 rounded-md p-6 w-[27rem] h-40">
-    <div>
-      Refer your friends to Pointron to help them focus on their work and
-      studies.
-    </div>
+    <div>Copy the URL to share with your friends</div>
     <div>
       <CopyableText
         parentBackgroundIndex={2}
@@ -17,7 +14,7 @@
           "?referral=" +
           ($account.userId
             ? $account.userId
-            : $account.userInfo?.id ?? "appuser")}
+            : ($account.userInfo?.id ?? "appuser"))}
       />
     </div>
   </div>

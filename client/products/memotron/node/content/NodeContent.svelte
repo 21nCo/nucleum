@@ -37,12 +37,15 @@
   import type { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import view from "$lib/client/stores/view.store";
 
-  function handleEvent(event: string, data: any) {
+  async function handleEvent(event: string, data: any) {
     logger.log({ at: "node context", event, data });
     if (!event) return;
     if (event === "mention") {
       if (!data.item || !data.location) return;
-      node.mention(data.location, data.item.id);
+      await node.mention(data.location, data.item.id);
+    } else if (event === "unmention") {
+      if (!data.location || !data.id) return;
+      await node.unmention(data.location, data.id);
     }
   }
   const contentContext = {
@@ -127,14 +130,22 @@
     if (!block.source && !block.id) return;
     const id = block.id ?? block.source;
     if ("body" in block) {
-      let params = {};
-      if (typeof block.body === "string" || "text" in block.body) {
-        params = {
+      //TODO - watch if this is needed - causing unexpected behavior for embed blocks body not updating as /image string is updated after body is converted to null.
+      // let params = {};
+      // if (typeof block.body === "string" || "text" in block.body) {
+      //   params = {
+      //     isDebounced: true,
+      //     debounceKey: "text"
+      //   };
+      // }
+      node.updateBlock(
+        id,
+        { body: block.body },
+        {
           isDebounced: true,
-          debounceKey: "text"
-        };
-      }
-      node.updateBlock(id, { body: block.body }, params);
+          debounceKey: "body"
+        }
+      );
     } else if ("label" in block) {
       node.updateBlock(
         id,
@@ -241,12 +252,12 @@
           node.updateBlock(e.detail.source, {
             contentType: e.detail.toType,
             children: [],
-            body: null
+            body: "$NONE"
           });
         } else {
           node.updateBlock(e.detail.source, {
             contentType: e.detail.toType,
-            body: null
+            body: "$NONE"
           });
         }
       }

@@ -1,4 +1,5 @@
 import type { IRecordId } from "$lib/client/types/data.type";
+import type { Resource } from "./resource.enum";
 
 export interface IResourceBase {
   id: IRecordId;
@@ -204,3 +205,9 @@ export type OmitFields<T, K extends keyof T> = {
 } & {
   [P in K]?: T[P];
 };
+
+export interface IMultiSelectContext {
+  resource: Resource;
+  accessPoint: ResourceAccessPoint;
+  accessPointId?: IRecordId;
+}

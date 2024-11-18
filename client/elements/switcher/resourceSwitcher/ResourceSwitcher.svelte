@@ -8,6 +8,7 @@
   } from "$lib/client/types/select.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import ResourceSwitcherItem from "./ResourceSwitcherItem.svelte";
+  import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   const dispatch = createEventDispatcher();
   export let options: IResourceSwitchItem[];
   export let selected: ISelectValue | undefined = undefined;
@@ -16,7 +17,11 @@
   export let iconOrientation: Orientation = Orientation.Horizontal;
   export let isShowCount: boolean = false;
   let classList: string = "flex w-full";
+  let refs: Record<Resource, ResourceSwitcherItem> = {};
   if (selected === undefined) selected = options[0]?.value;
+  export async function refresh(resource: Resource) {
+    await refs[resource]?.refresh();
+  }
 </script>
 
 <div
@@ -27,6 +32,7 @@
 >
   {#each options as item, index}
     <ResourceSwitcherItem
+      bind:this={refs[item.value]}
       {item}
       {size}
       {iconOrientation}

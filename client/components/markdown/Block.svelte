@@ -33,6 +33,7 @@
   import { MemotronEvent } from "$lib/client/products/memotron/memotron.type";
   import { hoverable } from "$lib/client/actions/hover.action";
   import view from "$lib/client/stores/view.store";
+  import type { IRecordId } from "$lib/client/types/data.type";
 
   export let block: IBlock;
   export let mdStore: MdStoreType;
@@ -174,6 +175,15 @@
       propagate(BlockAction.CHANGE, { label: data.label });
     }
 
+    const isCurrentIsLastBlock = mdStore.isLastBlock(block.id);
+    if (
+      (data.toType === NodeType.EMBED ||
+        structuralNodeTypes.includes(data.toType)) &&
+      isCurrentIsLastBlock
+    ) {
+      insertBufferBlock(block.id);
+    }
+
     /**
      * Resolves body text for simple text and non simple text node types
      */
@@ -242,6 +252,30 @@
     else newBlockId = mdStore.insert({ source: block.id, ...data });
 
     propagateAsAction(BlockAction.INSERT, { ...data, id: newBlockId });
+    const isCurrentIsLastBlock = mdStore.isLastBlock(block.id);
+    if (
+      (data.blockType === NodeType.EMBED ||
+        structuralNodeTypes.includes(data.blockType)) &&
+      newBlockId &&
+      isCurrentIsLastBlock
+    ) {
+      insertBufferBlock(newBlockId);
+    }
+  }
+
+  function insertBufferBlock(newBlockId: IRecordId) {
+    const bufferBlock = {
+      blockType: NodeType.SIMPLE_TEXT,
+      body: ""
+    };
+    const bufferBlockId = mdStore.insert({
+      source: newBlockId,
+      ...bufferBlock
+    });
+    propagateAsAction(BlockAction.INSERT, {
+      ...bufferBlock,
+      id: bufferBlockId
+    });
   }
 
   function handleTabAction(action: BlockAction.TAB | BlockAction.SHIFT_TAB) {

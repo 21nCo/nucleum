@@ -22,13 +22,24 @@
   }
   $: if (search || search === "") searchResources();
   async function searchResources() {
-    if (!action.searchActionParams?.searchStoreId) return;
+    if (
+      !action.searchActionParams?.searchStoreId &&
+      !action.searchActionParams?.searchCallback
+    )
+      return;
     isSearchInProgress = true;
     selectedIndex = 0;
-    results = await flux.search(
-      action.searchActionParams.searchStoreId,
-      search
-    );
+    if (action.searchActionParams?.searchStoreId) {
+      results = await flux.search(
+        action.searchActionParams.searchStoreId,
+        search
+      );
+    } else if (action.searchActionParams?.searchCallback) {
+      results = await action.searchActionParams.searchCallback(
+        search,
+        componentParams
+      );
+    }
     isSearchInProgress = false;
   }
   export function select() {

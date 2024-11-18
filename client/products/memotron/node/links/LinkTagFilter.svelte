@@ -20,24 +20,30 @@
   }
 </script>
 
-<div class="flex flex-wrap gap-2">
-  {#each tags as tag}
-    <div class="flex gap-2">
-      <Tag
-        label={tag.label}
-        count={resolveCount(tag.id)}
-        size={Size.md}
-        isActive={selected.some(resourceInList(tag.id))}
-        isRemovable={false}
-        on:click={(e) => {
-          if (selected.some(resourceInList(tag.id))) {
-            selected = selected.filter((x) => !resourceInList(tag.id)(x));
-          } else {
-            selected = [...selected, tag.id];
-          }
-          dispatch("change");
-        }}
-      />
-    </div>
-  {/each}
-</div>
+{#if tags.length > 0}
+  <div class="flex flex-wrap gap-2">
+    {#each tags as tag}
+      <div class="flex gap-2">
+        <Tag
+          label={tag.label}
+          count={resolveCount(tag.id)}
+          size={Size.md}
+          isActive={selected.some(resourceInList(tag.id))}
+          isRemovable={false}
+          on:click={(e) => {
+            if (selected.some(resourceInList(tag.id))) {
+              selected = selected.filter((x) => !resourceInList(tag.id)(x));
+            } else {
+              selected = [...selected, tag.id];
+            }
+            dispatch("change");
+          }}
+        />
+      </div>
+    {/each}
+  </div>
+{:else}
+  <span class="w-full text-center text-b2 text-fgs3">
+    No link tags present.
+  </span>
+{/if}
