@@ -40,13 +40,13 @@ export class DatabaseLightsailRegionalStack extends NestedStack {
     this.zone = zone;
     this.domainName = props.isMasterDb
       ? "db." + environment.domain
-      : props.environment.tidyregion + ".db." + environment.domain;
+      : environment.tidyregion + ".db." + environment.domain;
     this.certificate = resolveAcmCertificate(this, zone, this.domainName);
     this.staticIpName = this.domainName + "-static-ip";
     this.diskName =
       this.env.region + (props.isMasterDb ? "-master-db-disk" : "-db-disk");
     this.availabilityZone = this.env.region + "a";
-    this.instanceName = `${this.domainName}-instance-live`;
+    this.instanceName = `${this.domainName}-instance-nov24`;
     console.log(`Creating Lightsail instance: ${this.instanceName}`);
 
     const userDataScript = readFileSync(path.join(__dirname, "init.sh"), "utf8")
@@ -100,7 +100,7 @@ ${userDataScript}
 echo "User data script execution completed at $(date)"
 `;
 
-    const bundleId = this.resolveBundleId();
+    const bundleId = this.resolveBundleId(props.isMasterDb);
 
     /**
      *
@@ -252,23 +252,67 @@ echo "User data script execution completed at $(date)"
       `Completed construction of DatabaseLightsailRegionalStack for region: ${props.environment.region}`
     );
   }
-  resolveBundleId() {
+  /**
+   *
+   *    aws lightsail get-bundles --region <region>
+   *
+   * aws lightsail get-bundles --region <region> --query 'bundles[*].bundleId' --output text
+   *
+   * nano - 0.5 GB 2 vCPUs - 5% burst
+   * micro - 1 GB 2 vCPUs - 10% burst
+   * small - 2 GB 2 vCPUs - 15% burst
+   * medium - 4 GB 2 vCPUs - 20% burst
+   * large - 8 GB 2 vCPUs - 30% burst
+   * xlarge - 16 GB 4 vCPUs - 40% burst
+   * 2xlarge - 32 GB 8 vCPUs - 50% burst
+   * 4xlarge - 64 GB 16 vCPUs - 60% burst
+   *
+   * @returns
+   */
+  resolveBundleId(isMasterDb: boolean) {
     let suffix = this.env.region === "ap-south-1" ? "_3_1" : "_3_0";
-    let bundleSize = "small";
+    if (isMasterDb) {
+      const bundleSize = resolveForMasterDb();
+      return bundleSize + suffix;
+    }
+    let bundleSize = "micro";
     switch (this.env.environment) {
       case "dev":
-        bundleSize = "small";
+        bundleSize = "nano";
         break;
       case "pre":
-        bundleSize = "small";
+        bundleSize = "micro";
         break;
       case "live":
-        bundleSize = "medium";
+        if (this.env.region === "ap-south-1") {
+          bundleSize = "xlarge";
+        } else {
+          bundleSize = "large";
+        }
         break;
       default:
-        bundleSize = "small";
+        bundleSize = "micro";
         break;
     }
     return bundleSize + suffix;
+
+    function resolveForMasterDb() {
+      let bundleSize = "nano";
+      switch (this.env.environment) {
+        case "dev":
+          bundleSize = "nano";
+          break;
+        case "pre":
+          bundleSize = "nano";
+          break;
+        case "live":
+          bundleSize = "medium";
+          break;
+        default:
+          bundleSize = "nano";
+          break;
+      }
+      return bundleSize;
+    }
   }
 }
