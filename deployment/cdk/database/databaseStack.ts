@@ -100,7 +100,11 @@ ${userDataScript}
 echo "User data script execution completed at $(date)"
 `;
 
-    const bundleId = this.resolveBundleId(props.isMasterDb);
+    const bundleId = this.resolveBundleId(
+      this.env.environment,
+      this.env.region,
+      props.isMasterDb
+    );
 
     /**
      *
@@ -269,14 +273,14 @@ echo "User data script execution completed at $(date)"
    *
    * @returns
    */
-  resolveBundleId(isMasterDb: boolean) {
-    let suffix = this.env.region === "ap-south-1" ? "_3_1" : "_3_0";
+  resolveBundleId(env: string, region: string, isMasterDb: boolean = false) {
+    let suffix = region === "ap-south-1" ? "_3_1" : "_3_0";
     if (isMasterDb) {
       const bundleSize = resolveForMasterDb();
       return bundleSize + suffix;
     }
     let bundleSize = "micro";
-    switch (this.env.environment) {
+    switch (env) {
       case "dev":
         bundleSize = "nano";
         break;
@@ -298,7 +302,7 @@ echo "User data script execution completed at $(date)"
 
     function resolveForMasterDb() {
       let bundleSize = "nano";
-      switch (this.env.environment) {
+      switch (env) {
         case "dev":
           bundleSize = "nano";
           break;
