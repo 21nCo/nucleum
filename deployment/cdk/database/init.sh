@@ -57,14 +57,48 @@ echo "Installing SurrealDB..."
 curl -sSf https://install.surrealdb.com | sh || log_error "Failed to install SurrealDB"
 
 # Install PM2
-echo "Installing PM2..."
-sudo npm install pm2 -g || log_error "Failed to install PM2"
+# echo "Installing PM2..."
+# sudo npm install pm2 -g || log_error "Failed to install PM2"
 
 # Start SurrealDB with PM2
-echo "Starting SurrealDB with PM2..."
-sudo pm2 start --name "db" "sudo surreal start --user system --pass DB_PASS --bind 0.0.0.0:8080 file://data/surrealpvc" || log_error "Failed to start SurrealDB"
-sudo pm2 startup || log_error "Failed to setup PM2 startup"
-sudo pm2 save || log_error "Failed to save PM2 startup"
+# echo "Starting SurrealDB with PM2..."
+# sudo pm2 start --name "db" "sudo surreal start --user system --pass DB_PASS --bind 0.0.0.0:8080 file://data/surrealpvc" || log_error "Failed to start SurrealDB"
+# sudo pm2 startup || log_error "Failed to setup PM2 startup"
+# sudo pm2 save || log_error "Failed to save PM2 startup"
+
+
+# Grant permissions to ec2-user for /data/surrealpvc
+echo "Setting permissions for /data/surrealpvc..."
+sudo chown -R ec2-user:ec2-user /data/surrealpvc || log_error "Failed to change ownership of /data/surrealpvc"
+sudo chmod -R 755 /data/surrealpvc || log_error "Failed to set permissions for /data/surrealpvc"
+
+# Create a systemd service file for SurrealDB
+echo "Creating systemd service for SurrealDB..."
+sudo tee /etc/systemd/system/surrealdb.service > /dev/null <<EOL || log_error "Failed to create systemd service file"
+[Unit]
+Description=SurrealDB Service
+After=network.target
+
+[Service]
+Type=simple
+User=ec2-user
+ExecStart=/usr/local/bin/surreal start --user system --pass DB_PASS --bind 0.0.0.0:8080 file://data/surrealpvc
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOL
+
+# Reload systemd to recognize the new service
+echo "Reloading systemd daemon..."
+sudo systemctl daemon-reload || log_error "Failed to reload systemd daemon"
+
+# Start and enable the SurrealDB service
+echo "Starting and enabling SurrealDB service..."
+sudo systemctl start surrealdb || log_error "Failed to start SurrealDB service"
+sudo systemctl enable surrealdb || log_error "Failed to enable SurrealDB service"
+
+
 
 # Configure Nginx
 sudo tee /etc/nginx/conf.d/reverse-proxy.conf > /dev/null <<EOL || log_error "Failed to create Nginx config"
