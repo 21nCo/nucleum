@@ -32,7 +32,7 @@
           <div class="text-bgs1 px-2 py-1 rounded-sm bg-ccs1">
             {isValidString(label)
               ? truncateString(label, 8)
-              : $appStore.product ?? "Preview"}
+              : ($appStore.product ?? "Preview")}
           </div>
         </CustomColorPropagator>
       </div>

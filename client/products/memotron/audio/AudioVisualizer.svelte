@@ -1,8 +1,6 @@
 <script lang="ts">
   import appearance from "$lib/client/stores/appearance.store";
-  import {
-    retrieveCurrentColors
-  } from "$lib/client/utils/theme.utils";
+  import { retrieveCurrentColors } from "$lib/client/utils/theme.utils";
   import { onMount, onDestroy } from "svelte";
   let canvasElement: HTMLCanvasElement;
   let canvasContext: CanvasRenderingContext2D;

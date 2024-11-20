@@ -1,6 +1,6 @@
 export enum DragStatus {
-    NONE,
-    STARTED,
-    DRAGGING,
-    DROPPED
+  NONE,
+  STARTED,
+  DRAGGING,
+  DROPPED
 }

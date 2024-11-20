@@ -29,7 +29,7 @@
 
 <FormControlLabelWrapper props={{ label, orientation: Orientation.Vertical }}>
   {#if filteredColorSchemes && filteredColorSchemes.length > 0}
-    <div class="flex flex-wrap gap-6 text-b2 max-w-md">
+    <div class="flex flex-wrap gap-6 text-b2 mt-2">
       {#each filteredColorSchemes as colorScheme (colorScheme.id)}
         <ColorSchemeSelectorItem
           {colorScheme}

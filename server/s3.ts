@@ -7,7 +7,7 @@ export async function generateSignedUrl(body: any, user: any) {
     // const s3 = new AWS.S3();
     const s3 = new AWS.S3({
       apiVersion: "2006-03-01",
-      signatureVersion: "v4",
+      signatureVersion: "v4"
     });
     const bucketName =
       (process.env.FILE_BUCKET_PREFIX ?? "tidyfiles") +
@@ -25,7 +25,7 @@ export async function generateSignedUrl(body: any, user: any) {
         ? +process.env.URL_EXPIRATION_TIME
         : 300,
       ContentType: body.contentType,
-      ACL: "public-read",
+      ACL: "public-read"
     };
     console.log("Params: ", s3Params);
     const uploadURL = await s3.getSignedUrlPromise("putObject", s3Params);
@@ -33,15 +33,15 @@ export async function generateSignedUrl(body: any, user: any) {
       statusCode: 201,
       body: {
         uploadURL: uploadURL,
-        key: filePath,
-      },
+        key: filePath
+      }
     };
   } catch (err) {
     return {
       statusCode: 500,
       body: {
-        error: err.message,
-      },
+        error: err.message
+      }
     };
   }
 }

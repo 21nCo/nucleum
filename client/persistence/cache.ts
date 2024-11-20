@@ -15,7 +15,7 @@ export class CacheManager implements CacheSource {
   dexie: LocalDexie = new LocalDexie("d:guest");
   async initialize() {
     let userId = await resolveCurrentUserId();
-    if(!userId) userId = "guest";
+    if (!userId) userId = "guest";
     this.indxDb = localForage.createInstance({
       name: userId
     });

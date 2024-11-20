@@ -144,7 +144,7 @@
                 {/if}
                 <span
                   class={cn(
-                    "node-title flex gap-3 font-medium text-start sticky top-0 z-10 mo:ml-0 cw:ml-0 ml-12 py-3",
+                    "node-title flex gap-3 font-medium text-start sticky top-0 z-10 mo:ml-0 cw:ml-0 ml-12 py-3 userdata",
                     {
                       "text-h4 bg-bgs1": isStickied,
                       "text-h2 bg-bgs1": !isStickied

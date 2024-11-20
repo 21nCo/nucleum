@@ -17,11 +17,11 @@
       ? activeColor
         ? activeColor
         : color
-        ? color
-        : `rgba(var(--colors-bgs1),${opacity})`
+          ? color
+          : `rgba(var(--colors-bgs1),${opacity})`
       : color
-      ? color
-      : `rgba(var(--colors-fgs1),${opacity})`;
+        ? color
+        : `rgba(var(--colors-fgs1),${opacity})`;
   }
   afterUpdate(() => {
     setColor();

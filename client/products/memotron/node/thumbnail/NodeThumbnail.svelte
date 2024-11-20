@@ -122,6 +122,7 @@
                 file={hasFullFileDetails ? filePreview : undefined}
                 id={hasFullFileDetails ? undefined : filePreview}
                 isHideControls={true}
+                isLazyLoad={true}
                 class={cn("object-cover h-full w-full", {
                   "rounded-md": accessPoint === ResourceAccessPoint.NODE_LINKS
                 })}
@@ -153,7 +154,7 @@
                 {:else if isClip && contentPreview}
                   <TextClipPreview node={item} {contentPreview} {accessPoint} />
                 {:else if contentPreview}
-                  <span class="text-fgs3">
+                  <span class="text-fgs3 userdata">
                     {contentPreview}
                   </span>
                 {/if}
@@ -210,6 +211,7 @@
             <FileView
               file={hasFullFileDetails ? filePreview : undefined}
               id={hasFullFileDetails ? undefined : filePreview}
+              isLazyLoad={true}
               isHideControls={true}
               class="absolute inset-0 w-full rounded-t-md object-cover h-full"
             />
@@ -231,7 +233,7 @@
               {:else if item.contentType === NodeType.AUDIO && _url}
                 <NodeThumbnailAudioPreview url={_url} />
               {:else if contentPreview}
-                <span class="text-fgs3">
+                <span class="text-fgs3 userdata">
                   {contentPreview}
                 </span>
               {/if}
@@ -272,6 +274,7 @@
         file={hasFullFileDetails ? filePreview : undefined}
         id={hasFullFileDetails ? undefined : filePreview}
         isHideControls={true}
+        isLazyLoad={true}
         class={cn("w-full h-auto", {
           "rounded-md": isHideTitle,
           "rounded-t-md": !isHideTitle
@@ -307,7 +310,7 @@
             <NodeThumbnailTweetPreview text={contentPreview} />
           </span>
         {:else}
-          <span class="text-fgs3">
+          <span class="text-fgs3 userdata">
             {contentPreview}
           </span>
         {/if}

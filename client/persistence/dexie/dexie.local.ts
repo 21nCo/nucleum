@@ -316,7 +316,13 @@ export class DexiePersistence implements IPersistence {
     );
     if (!query) return;
     const result = await query;
-    logger.log({ at: "DexiePersistence.selectMany", resource, params, query, result });
+    logger.log({
+      at: "DexiePersistence.selectMany",
+      resource,
+      params,
+      query,
+      result
+    });
     if (Array.isArray(result)) {
       return result;
     }

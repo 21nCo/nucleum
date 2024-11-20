@@ -1,1 +1,1 @@
-<div> Team </div>
+<div>Team</div>

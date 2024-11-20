@@ -73,7 +73,7 @@
   <img
     alt="file"
     on:load
-    class={classList}
+    class={classList + " ph-no-capture userdata"}
     draggable={isDraggable}
     use:fileLoaderv2={{ source: resolveSrc, isLazyLoad, id: _id?.toString() }}
     use:imageRepositioner={{
@@ -94,7 +94,7 @@
 {:else if type === FileType.VIDEO}
   <video
     controls={!isHideControls}
-    class={classList}
+    class={classList + " ph-no-capture userdata"}
     draggable={isDraggable}
     use:fileLoaderv2={{ source: resolveSrc, isLazyLoad, id: _id?.toString() }}
     {style}

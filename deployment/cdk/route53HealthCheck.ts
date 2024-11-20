@@ -16,7 +16,7 @@ export class Route53HealthCheck {
       ".execute-api.",
       region,
       ".",
-      Fn.ref("AWS::URLSuffix"),
+      Fn.ref("AWS::URLSuffix")
     ]);
     let healthCheckIdentifier = region + "-apihealthcheck";
     console.log("restApiUrl", restApi.url);
@@ -24,8 +24,8 @@ export class Route53HealthCheck {
       healthCheckTags: [
         {
           key: "Name",
-          value: healthCheckIdentifier,
-        },
+          value: healthCheckIdentifier
+        }
       ],
       healthCheckConfig: {
         // type: "HTTPS_STR_MATCH",
@@ -36,9 +36,9 @@ export class Route53HealthCheck {
         resourcePath: Fn.join("", [
           "/",
           restApi.deploymentStage.stageName,
-          "/ping",
-        ]),
-      },
+          "/ping"
+        ])
+      }
     });
 
     // const healthCheck = new route53.CfnHealthCheck(stack, "HealthCheck", {

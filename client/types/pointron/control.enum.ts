@@ -5,5 +5,5 @@ export enum Control {
   RESUME,
   SKIPBREAK,
   EXTEND,
-  ABANDON,
+  ABANDON
 }

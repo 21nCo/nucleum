@@ -76,8 +76,8 @@ async function performRootQuery(params: DatabaseQueryParams) {
     const namespace = resolveNamespace(params.dbType);
     const db =
       params.dbType === CONTEXT.ADMIN
-        ? process.env.ADMIN_DB_NAME ?? "ADMIN"
-        : params.db ?? "";
+        ? (process.env.ADMIN_DB_NAME ?? "ADMIN")
+        : (params.db ?? "");
     headers.append("NS", namespace);
     headers.append("DB", db);
     const body = `USE NAMESPACE ${namespace}; USE DATABASE ${db}; ${params.query}`;

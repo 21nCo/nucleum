@@ -144,7 +144,7 @@ export const memotronActions: IAction[] = [
     component: CreateCombination,
     label: "Create a new combination",
     type: ActionType.MODAL,
-    isMeta: true,
+    isInactive: true,
     modalParams: {
       title: "Create a new combination",
       layout: {
@@ -157,6 +157,7 @@ export const memotronActions: IAction[] = [
     action: MemotronAction.JOURNAL_MODAL_VIEWER,
     component: JournalModalViewer,
     type: ActionType.MODAL,
+    isInactive: true,
     modalParams: {
       layout: {
         size: Size.full,
@@ -245,6 +246,7 @@ export const memotronActions: IAction[] = [
     action: "journal",
     type: ActionType.PAGE,
     label: "Journal",
+    isInactive: true,
     icon: "calendar-days",
     component: Journal
   },
@@ -414,6 +416,7 @@ export const memotronActions: IAction[] = [
     action: "home",
     type: ActionType.PAGE,
     label: "Home",
+    isInactive: true,
     icon: "ph:house",
     component: MemotronHome
   },

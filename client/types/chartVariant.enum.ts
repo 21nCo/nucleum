@@ -1,4 +1,4 @@
 export enum ChartVariant {
   CARBON = "CARBON",
-  CUSTOM = "CUSTOM",
+  CUSTOM = "CUSTOM"
 }

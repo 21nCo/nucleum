@@ -8,5 +8,5 @@ export enum StatusMessageType {
   ERROR = "error",
   WARNING = "warning",
   INFO = "info",
-  DEFAULT = "default",
+  DEFAULT = "default"
 }

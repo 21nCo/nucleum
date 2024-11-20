@@ -1,4 +1,4 @@
 export enum TimerMode {
-    MINIMAL,
-    JOURNAL
+  MINIMAL,
+  JOURNAL
 }

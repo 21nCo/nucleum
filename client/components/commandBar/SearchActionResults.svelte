@@ -9,6 +9,7 @@
   import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";
   import { flux } from "$lib/client/components/flux/flux";
   import GoalSearchThumbnail from "$lib/client/products/pointron/goals/thumbnails/GoalSearchThumbnail.svelte";
+  import { debouncer } from "$lib/client/utils/utils";
   const dispatch = createEventDispatcher();
   export let action: IAction;
   export let componentParams: any = undefined;
@@ -20,7 +21,8 @@
     results = [];
     selectedIndex = 0;
   }
-  $: if (search || search === "") searchResources();
+  $: if (search || search === "") debouncedSearch();
+  const debouncedSearch = debouncer(searchResources, 500);
   async function searchResources() {
     if (
       !action.searchActionParams?.searchStoreId &&

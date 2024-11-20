@@ -5,7 +5,7 @@ import Focus from "./Focus.svelte";
  * some description
  */
 const meta = {
-  component: Focus,
+  component: Focus
 } satisfies Meta<Focus>;
 
 export default meta;

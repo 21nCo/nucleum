@@ -21,14 +21,14 @@ export const defaults = {
             "'Content-Type,Authorization'",
           "method.response.header.Access-Control-Allow-Origin": "'*'",
           "method.response.header.Access-Control-Allow-Methods":
-            "'OPTIONS,GET,POST'",
-        },
-      },
+            "'OPTIONS,GET,POST'"
+        }
+      }
     ],
     passthroughBehavior: gateway.PassthroughBehavior.NEVER,
     requestTemplates: {
-      "application/json": '{"statusCode": 200}',
-    },
+      "application/json": '{"statusCode": 200}'
+    }
   },
   mockIntegrationOptions: {
     methodResponses: [
@@ -37,9 +37,9 @@ export const defaults = {
         responseParameters: {
           "method.response.header.Access-Control-Allow-Headers": true,
           "method.response.header.Access-Control-Allow-Origin": true,
-          "method.response.header.Access-Control-Allow-Methods": true,
-        },
-      },
-    ],
-  },
+          "method.response.header.Access-Control-Allow-Methods": true
+        }
+      }
+    ]
+  }
 };

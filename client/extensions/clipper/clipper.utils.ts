@@ -113,7 +113,6 @@ export function createClipPointer() {
   return pointer;
 }
 
-
 /**
  * Extracts full tab data from the current tab.
  * Note: This function should be called only from the content script.
@@ -267,8 +266,14 @@ function parseTweetContent(
   const domain = contentTypeMap.find(
     (item) => item.contentType === NodeType.TWEET
   )?.currentDomain;
-  const { username, authorName, tweetId, externalLinks, profileImageUrl, replyTo } =
-    extractInfoFromLinks(tweetLinks, isMainTweetPost);
+  const {
+    username,
+    authorName,
+    tweetId,
+    externalLinks,
+    profileImageUrl,
+    replyTo
+  } = extractInfoFromLinks(tweetLinks, isMainTweetPost);
   return {
     contentType: NodeType.TWEET,
     url: `https://${domain}/${username}/status/${tweetId}`,
@@ -345,7 +350,10 @@ function parseTweetContent(
   }
 }
 
-export function extractTweet(element: Element, isMainTweetPost: boolean = false) {
+export function extractTweet(
+  element: Element,
+  isMainTweetPost: boolean = false
+) {
   const tweetArticle = findAncestorOrSelf(
     element,
     'article[data-testid="tweet"]'

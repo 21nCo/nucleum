@@ -1,14 +1,12 @@
-
-
 export enum ClipperExtensionEvent {
   /**
    * Event to communicate to side panel from content script when clips are altered.
    */
   CLIPS_CHANGED = "CLIPS_CHANGED",
   /**
-   * 
+   *
    * @deprecated - use ExtensionEvent.PAGE_STATE instead for exchanging page state between content script and side panel.
-   * 
+   *
    * Event to communicate about the status of saving a page between content script and side panel.
    */
   PAGE_SAVING_STATUS = "PAGE_SAVING_STATUS",
@@ -35,9 +33,8 @@ export enum ClipperExtensionEvent {
   /**
    * Event to trigger syncing of highlights from sync pages.
    */
-  START_SYNC = "START_SYNC",
+  START_SYNC = "START_SYNC"
 }
-
 
 export enum ClipperElementIdentifier {
   MAIN_TWEET_POST = "memotron-clipper-main-tweet-post"

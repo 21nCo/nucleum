@@ -33,6 +33,8 @@
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { toasts } from "$lib/client/stores/notification.store";
+  import Badge from "$lib/client/elements/text/Badge.svelte";
+  import { MemotronAction } from "../memotronAction.enum";
   export let resource: Resource;
 
   let searchQuery: string = "";
@@ -55,10 +57,14 @@
       ? undefined
       : {
           label: "Create " + resource,
-          callback: async () =>
-            appStore.runAction(
-              resourceAction(resource, ResourceActionType.CREATE)
-            ),
+          callback: async () => {
+            if (resource === Resource.node) {
+              appStore.runAction(MemotronAction.CAPTURE);
+            } else
+              appStore.runAction(
+                resourceAction(resource, ResourceActionType.CREATE)
+              );
+          },
           icon: "plus",
           variant: ButtonVariant.PRIMARY
         };
@@ -135,7 +141,7 @@
     <main class="flex flex-col gap-8 mx-5 overflow-auto">
       {#if isRefineShown}
         <div class="flex gap-4 items-center">
-          <Button
+          <!-- <Button
             icon="funnel"
             style={ButtonStyle.OUTLINED}
             size={Size.sm}
@@ -148,7 +154,7 @@
             size={Size.sm}
             label="Sort"
             isPreventMinWidth={true}
-          />
+          /> -->
           <Button
             icon={arrangement === Arrangement.LIST ? "list" : "rectangle-group"}
             style={ButtonStyle.OUTLINED}
@@ -169,6 +175,12 @@
               arrangement = newArrangement;
             }}
           />
+        </div>
+        <div class="flex gap-2 items-center w-full justify-center">
+          <Badge text="soon" />
+          <span class="text-b3 text-fgs3">
+            Filters & sorting will be available soon
+          </span>
         </div>
       {/if}
       {#if state === ResourceAccessPointState.DEFAULT && starred.length > 0}

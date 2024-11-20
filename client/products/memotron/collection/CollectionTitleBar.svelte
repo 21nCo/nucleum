@@ -130,7 +130,7 @@
         on:input={onLabelChange}
       />
     {:else}
-      <div class="truncate">
+      <div class="truncate userdata">
         {$collection.label}
       </div>
     {/if}

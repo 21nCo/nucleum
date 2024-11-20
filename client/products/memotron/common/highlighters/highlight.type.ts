@@ -8,5 +8,5 @@ export type IHighlighter = {
 };
 
 export type IHighlightStore = IObservableStoreSubject & {
-    highlighters: IHighlighter[];
-}
+  highlighters: IHighlighter[];
+};

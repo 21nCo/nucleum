@@ -20,5 +20,5 @@ async function runTokenDefinition(userId) {
 }
 
 module.exports = {
-  run: run,
+  run: run
 };

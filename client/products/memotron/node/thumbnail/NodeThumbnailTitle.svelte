@@ -19,7 +19,7 @@
 </script>
 
 <div
-  class="flex gap-1 items-center w-full h-6"
+  class="flex gap-1 items-center w-full h-6 userdata"
   use:hoverable={{
     onHover: (e) => (isHovering = e)
   }}

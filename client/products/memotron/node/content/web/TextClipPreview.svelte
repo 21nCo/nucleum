@@ -42,7 +42,7 @@
 </script>
 
 <div
-  class={cn("rounded-md text-wrap", {
+  class={cn("rounded-md text-wrap userdata", {
     "m-4 p-4 bg-bgs2": accessPoint === ResourceAccessPoint.SELF
   })}
 >

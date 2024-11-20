@@ -379,7 +379,8 @@
     class={cn("relative w-full h-full flex flex-col overflow-auto", {})}
     on:scroll={onScroll}
   >
-    {#if $userPreferences.localAI.semanticSearch && $userPreferences.localAI.markdownQAChat}
+    <!-- TODO - reenable after QA feature improvement -->
+    <!-- {#if $userPreferences.localAI.semanticSearch && $userPreferences.localAI.markdownQAChat}
       <FloatingButton
         class="justify-end"
         params={{
@@ -390,7 +391,7 @@
           variant: ButtonVariant.PRIMARY
         }}
       />
-    {/if}
+    {/if} -->
     {#if variant === "v1" || variant === "v3"}
       <LibrarySearchBox
         {selectedSubType}

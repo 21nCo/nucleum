@@ -9,5 +9,5 @@ export enum GeneralVariants {
   INFO = "INFO",
   LIGHT = "LIGHT",
   DARK = "DARK",
-  ADD = "ADD",
+  ADD = "ADD"
 }

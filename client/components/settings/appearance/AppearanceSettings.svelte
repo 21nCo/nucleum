@@ -50,7 +50,7 @@
   $: appearance.modifySyncWithSystem($appearance.isSyncWithSystem);
 </script>
 
-<ScrollView class="flex flex-col gap-8 dp:max-w-md" bottomSpacerSize={Size.sm}>
+<ScrollView class="flex flex-col gap-8" bottomSpacerSize={Size.sm}>
   <!-- <Switcher
     label="Theme"
     {parentBackgroundIndex}
@@ -91,7 +91,7 @@
       on:select={saveColorScheme}
     />
   {:else}
-    <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-8">
       <div>
         <ColorSchemeSelector
           label="Light color scheme"

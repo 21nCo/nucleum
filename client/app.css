@@ -93,7 +93,6 @@ body {
     font-size: 1.5rem;
   }
 
-
   input::placeholder {
     font-weight: 350;
     /* Use lighter if Avenir typeface */
@@ -120,7 +119,9 @@ body {
     overflow: auto !important;
   }
 
-  path.arc-background, .cds--cc--gauge path.arc-background, .arc-background {
+  path.arc-background,
+  .cds--cc--gauge path.arc-background,
+  .arc-background {
     fill: rgba(var(--colors-aps2), 1) !important;
   }
 
@@ -151,11 +152,11 @@ body {
   .stroke-logo-light {
     stroke: #ffffff;
   }
-
 }
 
 @layer utilities {
-  .underline-dotted, .underline-dotted-primary {
+  .underline-dotted,
+  .underline-dotted-primary {
     position: relative;
     /* text-decoration: underline;
     text-decoration-style: dotted;

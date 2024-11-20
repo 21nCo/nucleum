@@ -14,7 +14,7 @@
   }
 </script>
 
-<span class="flex gap-2 items-center min-w-0">
+<span class="flex gap-2 items-center min-w-0 userdata">
   {#if item.type === CollectionType.TYPED && (item.avatar || item.typeToExtend?.avatar)}
     <AvatarRenderer
       avatar={item.avatar ?? item.typeToExtend?.avatar}
@@ -25,7 +25,7 @@
   {:else if isShowFallbackIcons}
     <Icon icon="ph:circles-four" size={Size.sm} />
   {/if}
-  <span class="text-left truncate font--medium">
+  <span class="text-left truncate font--medium userdata">
     {#if item.label}
       {item.label}
     {:else}

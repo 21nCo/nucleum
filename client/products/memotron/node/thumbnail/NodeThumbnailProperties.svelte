@@ -27,7 +27,10 @@
   }
 </script>
 
-<button class="flex gap-3 flex-wrap items-center" on:click|stopPropagation>
+<button
+  class="flex gap-3 flex-wrap items-center userdata"
+  on:click|stopPropagation
+>
   {#each properties as property (property.id)}
     <PropertyItem
       value={values?.find(resourceInList(property))?.value ??

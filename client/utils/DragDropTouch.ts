@@ -14,7 +14,7 @@ export function DND(DragDropTouch_1: any, ref: any) {
         this._dropEffect = value;
       },
       enumerable: true,
-      configurable: true,
+      configurable: true
     });
     Object.defineProperty(DataTransfer.prototype, "effectAllowed", {
       get: function () {
@@ -24,14 +24,14 @@ export function DND(DragDropTouch_1: any, ref: any) {
         this._effectAllowed = value;
       },
       enumerable: true,
-      configurable: true,
+      configurable: true
     });
     Object.defineProperty(DataTransfer.prototype, "types", {
       get: function () {
         return Object.keys(this._data);
       },
       enumerable: true,
-      configurable: true,
+      configurable: true
     });
     DataTransfer.prototype.clearData = function (type: any) {
       if (type != null) {
@@ -70,7 +70,7 @@ export function DND(DragDropTouch_1: any, ref: any) {
         get passive() {
           supportsPassive = true;
           return true;
-        },
+        }
       });
       if ("ontouchstart" in document) {
         var d = ref,

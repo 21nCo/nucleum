@@ -1,4 +1,4 @@
 export enum CellVariant {
   ROW = "ROW",
-  COLUMN = "COLUMN",
+  COLUMN = "COLUMN"
 }

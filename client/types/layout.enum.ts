@@ -1,4 +1,4 @@
 export enum LayoutType {
-    ONEPANEL,
-    TWOPANEL
+  ONEPANEL,
+  TWOPANEL
 }

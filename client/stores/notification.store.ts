@@ -98,7 +98,7 @@ function initToastStore() {
           return n;
         });
       },
-      event.type === AlertType.SYNC ? 1000 : toastDefaultDuration
+      event.type === AlertType.SYNC ? 2000 : toastDefaultDuration
     );
     // }
   };

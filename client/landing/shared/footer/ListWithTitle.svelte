@@ -3,7 +3,7 @@
   import type { IListItem } from "../Landing.types";
 
   export let items: IListItem[];
-  const currentPath = typeof window !== 'undefined' ? window.location.href : "";
+  const currentPath = typeof window !== "undefined" ? window.location.href : "";
   console.log(
     currentPath,
     items[0].title,

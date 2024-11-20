@@ -8,8 +8,11 @@
   function initializePosthog(projectKey: string) {
     if (!projectKey) return;
     posthog.init(projectKey, {
-      api_host: "https://us.i.posthog.com"
+      api_host: "https://us.i.posthog.com",
       // person_profiles: "identified_only"
+      session_recording: {
+        maskTextSelector: ".email, .sensitive, .userdata"
+      }
     });
   }
 </script>

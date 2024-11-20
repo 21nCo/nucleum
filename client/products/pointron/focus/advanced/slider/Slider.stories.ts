@@ -5,7 +5,7 @@ import Slider from "./Slider.svelte";
  * some description
  */
 const meta = {
-  component: Slider,
+  component: Slider
 } satisfies Meta<Slider>;
 
 export default meta;

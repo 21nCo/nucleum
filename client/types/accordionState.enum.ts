@@ -1,4 +1,4 @@
 export enum AccordionState {
   collapsed = "collapsed",
-  expanded = "expanded",
+  expanded = "expanded"
 }

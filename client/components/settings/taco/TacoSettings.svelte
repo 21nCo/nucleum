@@ -135,7 +135,7 @@
         }
       }}
     />
-    <SwitchInput
+    <!-- <SwitchInput
       size={Size.sm}
       {isDisabled}
       bind:checked={$userPreferences.localAI.markdownQAChat}
@@ -147,7 +147,7 @@
           body: "Enable this to use AI to answer questions pertaining to markdown."
         }
       }}
-    />
+    /> -->
     {#if isDisabled}
       <span class="text-fgs3 text-b2">
         Please wait... Download in progress...

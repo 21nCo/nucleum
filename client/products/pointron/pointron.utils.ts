@@ -29,12 +29,12 @@ export function getTotalsFromComposition(
   let duration = intervals.reduce((sum, item) => sum + (item.duration ?? 0), 0);
   let focus = intervals.reduce(
     (sum, item) =>
-      sum + (item.type === BlockType.FOCUS ? item.duration ?? 0 : 0),
+      sum + (item.type === BlockType.FOCUS ? (item.duration ?? 0) : 0),
     0
   );
   let brek = intervals.reduce(
     (sum, item) =>
-      sum + (item.type === BlockType.BREAK ? item.duration ?? 0 : 0),
+      sum + (item.type === BlockType.BREAK ? (item.duration ?? 0) : 0),
     0
   );
   return { duration, focus, brek };

@@ -22,12 +22,12 @@ export function highlight(
     anchor: $(selection.anchorNode),
     anchorOffset: selection.anchorOffset,
     focus: $(selection.focusNode),
-    focusOffset: selection.focusOffset,
+    focusOffset: selection.focusOffset
   };
   try {
     recursiveWrapper($(container), highlightInfo);
   } catch (e) {
-    console.log("error highlighting", e)
+    console.log("error highlighting", e);
     return false;
   }
 
@@ -54,7 +54,7 @@ export function initializeHighlightEventListeners(el, callback) {
     selection.addRange(range);
     const id = this.getAttribute("data-highlight-id");
     const highlighterId = this.getAttribute("data-highlighter-id");
-    if (callback) callback({id, highlighterId});
+    if (callback) callback({ id, highlighterId });
   };
 }
 
@@ -76,7 +76,7 @@ function _recursiveWrapper(
     highlighter,
     textColor,
     id,
-    selectionString,
+    selectionString
   } = highlightInfo;
   const selectionLength = selectionString.length;
 
@@ -108,7 +108,7 @@ function _recursiveWrapper(
       startIndex = Math.min(
         ...[
           ...(anchor.is(element) ? [anchorOffset] : []),
-          ...(focus.is(element) ? [focusOffset] : []),
+          ...(focus.is(element) ? [focusOffset] : [])
         ]
       );
     }
@@ -189,7 +189,9 @@ function _recursiveWrapper(
 }
 
 export function removeHighlight(id) {
-  const highlightSpans = document.querySelectorAll(`[data-highlight-id="${id}"]`);
+  const highlightSpans = document.querySelectorAll(
+    `[data-highlight-id="${id}"]`
+  );
   highlightSpans.forEach((highlight) => {
     highlight.style.backgroundColor = "transparent";
     highlight.style.color = "inherit";
@@ -201,12 +203,12 @@ export function removeHighlight(id) {
 }
 
 export function removeAllHighlights() {
-  const existingHighlights = document.querySelectorAll('[data-highlight-id]');
+  const existingHighlights = document.querySelectorAll("[data-highlight-id]");
   existingHighlights.forEach((highlight) => {
     try {
       const id = highlight.dataset.highlightId;
       removeHighlight(id);
-    } catch(e){}
+    } catch (e) {}
   });
 }
 
@@ -214,16 +216,17 @@ export function removeHighlights(ids) {
   try {
     ids.forEach((id) => {
       removeHighlight(id);
-    })
+    });
   } catch (e) {
-    console.error({ at: "removeHighlights", ids, e})
+    console.error({ at: "removeHighlights", ids, e });
   }
 }
 
 export function changeColor(id, highlighter) {
   try {
-
-    const highlightSpans = document.querySelectorAll(`[data-highlight-id="${id}"]`);
+    const highlightSpans = document.querySelectorAll(
+      `[data-highlight-id="${id}"]`
+    );
     highlightSpans.forEach((highlight) => {
       const rgbaColor = convertToRGBA(highlighter.color, 0.5);
       highlight.style.backgroundColor = rgbaColor;
@@ -231,6 +234,6 @@ export function changeColor(id, highlighter) {
       highlight.dataset.highlighterId = highlighter.id;
     });
   } catch (e) {
-    console.error({at: "changeColor", e})
+    console.error({ at: "changeColor", e });
   }
 }

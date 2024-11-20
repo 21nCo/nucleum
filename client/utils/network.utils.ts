@@ -100,9 +100,9 @@ export async function performHttpNetworkOperation(params: {
     const isOffline = await determineIfOffline();
     if (isOffline) return;
     let token = await resolveToken();
-    const isExtEnv = isExtensionEnvironment()
+    const isExtEnv = isExtensionEnvironment();
     if (!token && isExtEnv) {
-      logoutOnExtention()
+      logoutOnExtention();
     }
     const headers = params.headers ?? {};
     const body = params.body ?? "";
@@ -156,7 +156,7 @@ export async function performHttpNetworkOperation(params: {
   function logoutOnExtention() {
     const message = {
       event: ExtensionEvent.TOKEN_NOT_FOUND,
-      data: { }
+      data: {}
     };
     relayToSidePanel(message);
     relayToContentScript(message);

@@ -3,7 +3,7 @@
 </script>
 
 <button
-  class="pdf-thumbnail absolute inset-0 w-full h-full overflow-clip rounded-t-md"
+  class="pdf-thumbnail userdata absolute inset-0 w-full h-full overflow-clip rounded-t-md"
   on:click
 >
   <object

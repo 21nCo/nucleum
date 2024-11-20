@@ -952,7 +952,7 @@
 </script>
 
 {#if typeof content === "string"}
-  <div class="relative w-full">
+  <div class="relative w-full userdata">
     <div
       bind:this={blockRef}
       {id}

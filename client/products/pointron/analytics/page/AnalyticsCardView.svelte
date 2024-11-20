@@ -152,7 +152,7 @@
         <span class="font-medium">
           {card.type === AnalyticsCardType.TARGETS
             ? "Targets"
-            : card.label ?? timePeriod}
+            : (card.label ?? timePeriod)}
         </span>
         {#if card.type != AnalyticsCardType.TARGETS && card.label}
           <span class="text-fgs2 text-b2">

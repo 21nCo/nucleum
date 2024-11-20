@@ -481,12 +481,12 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     console.log({ updateResult });
     this.update((n) => {
       n.clips = n.clips?.map((x) => {
-        if (isSameResource(x.id,id)) {
+        if (isSameResource(x.id, id)) {
           x.body.highlighterId = highlighterId;
           return x;
         }
         return x;
-      })
+      });
       console.log({ clips: n.clips, id, highlighterId });
       return n;
     });
@@ -556,7 +556,12 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
   }
 
   async updateClipProperty(id: IRecordId, property: INodePropertyValue) {
-    logger.log({ at: "updateClipProperty", id, property, clips: this.get().clips });
+    logger.log({
+      at: "updateClipProperty",
+      id,
+      property,
+      clips: this.get().clips
+    });
     const webpage = this.get();
     if (!webpage?.clips) return;
     const clip = webpage.clips?.find(resourceInList(id));

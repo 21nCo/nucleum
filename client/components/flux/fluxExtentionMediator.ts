@@ -120,9 +120,7 @@ export async function loadInMemoryStores(stores: IStore[]) {
     });
     if (!data || !Array.isArray(data)) return stores;
     data.forEach((record: any) => {
-      const store = kvStores.find(
-        (x) => "kv:" + x.id === record.id.toString()
-      );
+      const store = kvStores.find((x) => "kv:" + x.id === record.id.toString());
       if (!store?.loader) return;
       store.loader(record);
     });

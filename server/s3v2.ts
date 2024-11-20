@@ -22,8 +22,8 @@ async function resolveSignedUrlForPut(body: any, user: any) {
     const s3Client = new S3Client({ region });
     const bucketName =
       (body.isTemp
-        ? process.env.TEMP_BUCKET_PREFIX ?? "tidytemp"
-        : process.env.FILE_BUCKET_PREFIX ?? "tidyfiles") + `.${region}`;
+        ? (process.env.TEMP_BUCKET_PREFIX ?? "tidytemp")
+        : (process.env.FILE_BUCKET_PREFIX ?? "tidyfiles")) + `.${region}`;
     let guid = crypto.randomUUID();
     let documentType = body.contentType.split("/")[0];
     if (!user?.id)

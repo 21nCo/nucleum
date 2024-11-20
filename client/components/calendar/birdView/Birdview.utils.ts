@@ -29,16 +29,16 @@ export let currentMonthIndex = currentDate.getMonth();
 export let currentMonth = monthNames[currentMonthIndex];
 export let currentYear = currentDate.getFullYear();
 export let currentMonthEndDate = getDaysInMonth(
-    monthNames.indexOf(currentMonth),
-    currentYear
-  );
+  monthNames.indexOf(currentMonth),
+  currentYear
+);
 export function getDaysInMonth(month: number, year: number) {
   return new Date(year, month + 1, 0).getDate();
 }
 
 export function waitForTimeout(func: () => void) {
   return new Promise<void>((resolve) => {
-    setTimeout(async() => {
+    setTimeout(async () => {
       await func();
       resolve();
     }, 10);
@@ -56,38 +56,38 @@ export function getLastAlphabetPosition(str: string) {
 }
 
 export function getISOfromDateString(dateString: string) {
-  const firstAlphPos=getFirstAlphabetPosition(dateString);
-  const lastAlphPos=getLastAlphabetPosition(dateString);
-  const year = Number(dateString.slice(0, firstAlphPos))
-  const month = monthNames.indexOf(dateString.slice(firstAlphPos,lastAlphPos + 1));
-  const day = Number(dateString.slice(lastAlphPos + 1))
+  const firstAlphPos = getFirstAlphabetPosition(dateString);
+  const lastAlphPos = getLastAlphabetPosition(dateString);
+  const year = Number(dateString.slice(0, firstAlphPos));
+  const month = monthNames.indexOf(
+    dateString.slice(firstAlphPos, lastAlphPos + 1)
+  );
+  const day = Number(dateString.slice(lastAlphPos + 1));
   const date = new Date(Date.UTC(year, month, day));
   return date.toISOString();
 }
 
 export async function scrollDateSlotIntoView(dateSlot: string) {
-  const parentElement:any=document.querySelector('#birdViewPanelsContainer')
-  const element:any = document.querySelector(`[data-date="${dateSlot}"]`);
+  const parentElement: any = document.querySelector("#birdViewPanelsContainer");
+  const element: any = document.querySelector(`[data-date="${dateSlot}"]`);
   // const elementWidth=element.offsetWidth;
-  const parentElementWidth=parentElement.offsetWidth;
-  let exisitingBG=''
-  if(!element||!parentElement) return;
-  const scrollLeft=element.offsetLeft-parentElementWidth/2;
+  const parentElementWidth = parentElement.offsetWidth;
+  let exisitingBG = "";
+  if (!element || !parentElement) return;
+  const scrollLeft = element.offsetLeft - parentElementWidth / 2;
   parentElement.scrollTo({
-    left:scrollLeft,
-    behavior:"smooth"
-  })
+    left: scrollLeft,
+    behavior: "smooth"
+  });
   element.classList.forEach((className: string) => {
-    if (className.startsWith('bg-')) {
-      exisitingBG=className;
+    if (className.startsWith("bg-")) {
+      exisitingBG = className;
     }
   });
-  if(exisitingBG!='')
-  element.classList.remove(exisitingBG);
-  element.classList.add('bg-aps2');
-  setTimeout(()=>
-    {element.classList.remove('bg-aps2')
-      if(exisitingBG!='')
-      element.classList.add(exisitingBG)
-    },2000)
+  if (exisitingBG != "") element.classList.remove(exisitingBG);
+  element.classList.add("bg-aps2");
+  setTimeout(() => {
+    element.classList.remove("bg-aps2");
+    if (exisitingBG != "") element.classList.add(exisitingBG);
+  }, 2000);
 }
