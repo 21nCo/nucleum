@@ -82,6 +82,7 @@
   {isApplyCustomColor}
   {arrangement}
   bind:isHovering
+  on:action
 >
   {#if arrangement === Arrangement.LIST}
     <div

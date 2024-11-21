@@ -21,7 +21,13 @@
 <!-- TODO - add parent breadcrumbs  and avatar in below component - moving from LinkSuggestionItem.svelte -->
 
 <button on:click>
-  <NodeThumbnail {item} {accessPoint} {accessPointId} {accessPointContext}>
+  <NodeThumbnail
+    {item}
+    {accessPoint}
+    {accessPointId}
+    {accessPointContext}
+    on:action
+  >
     <span slot="right" class="flex bg-bgs2 rounded-md border border-brs3">
       <Toggle icon="ph:tag-thin" bind:on={isShowLinkTagger} />
     </span>

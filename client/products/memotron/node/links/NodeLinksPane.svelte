@@ -43,6 +43,7 @@
   import { activeResourceFilterV2 } from "$lib/client/utils/utils";
   import { BulkEditor } from "../../memotron.store";
   import { toasts } from "$lib/client/stores/notification.store";
+  import { deepCopy } from "$lib/shared/utils/obj.utils";
   export let node: IActiveNodeStore;
   $: multiSelectContext = {
     resource: Resource.node,
@@ -119,6 +120,14 @@
       id: result[0]?.id ?? ""
     };
     _links.push(link);
+    $node.links = [...($node.links ?? []), link];
+    all = [
+      ...(all ?? []),
+      {
+        node: addedLink,
+        link
+      }
+    ];
     filtered = [
       ...(filtered ?? []),
       {
@@ -182,7 +191,13 @@
   function onAction(e: CustomEvent) {
     console.log("onAction", e);
     if (e.detail.action === "unlink") {
-      filtered = filtered.filter((x) => x.node.id != e.detail.id);
+      filtered = filtered.filter(
+        (x) => !isSameResource(x.node.id, e.detail.id)
+      );
+      all = all.filter((x) => !isSameResource(x.node.id, e.detail.id));
+      $node.links = $node.links?.filter(
+        (x) => !isSameResource(x.linkedTo, e.detail.id)
+      );
     }
   }
 
@@ -196,11 +211,18 @@
 
   async function onBulkAction(e: CustomEvent<string>) {
     try {
+      logger.log({ at: "onBulkAction", e });
+      const items = deepCopy($multiSelectStore);
       const editor = new BulkEditor(Resource.node, multiSelectStore, {
         accessPointId: node.id
       });
       const result = await editor.run(e.detail);
       if (result) {
+        if (e.detail === "unlink") {
+          $node.links = $node.links?.filter(
+            (x) => !items.some(resourceInList(x.linkedTo))
+          );
+        }
         await refresh();
       }
     } catch (e) {
@@ -208,7 +230,7 @@
     }
   }
 
-  // $: console.log({ all, _links, filtered });
+  // $: console.log({ all, _links, filtered, nodeLinks: $node.links });
 </script>
 
 <div class="relative flex flex-col gap-3 pt-1 flex-grow w-full">

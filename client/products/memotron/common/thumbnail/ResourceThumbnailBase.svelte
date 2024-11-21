@@ -96,6 +96,7 @@
             {accessPoint}
             {accessPointId}
             {accessPointContext}
+            on:action
           />
         </div>
       </div>

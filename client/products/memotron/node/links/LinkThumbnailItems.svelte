@@ -15,7 +15,7 @@
 </script>
 
 <div class="flex flex-col gap-3 w-full">
-  {#each links as item}
+  {#each links as item (item.link.id)}
     <LinkItem
       link={item.link}
       item={item.node}
