@@ -55,7 +55,7 @@
         </div>
       </div>
     {/if}
-    <div class="text-left">
+    <div class="text-left overflow-y-auto max-h-80">
       {contentPreview}
     </div>
     <div class="text-b3 text-fgs3 text-right">

@@ -834,6 +834,7 @@
       <SearchResultsPopover
         bind:this={mentionSearchRef}
         searchResultComponent={LinkSearchResultItem}
+        isAlwaysShowSearchFeedback={true}
         searchCallback={onMentionSearch}
         shortcutTriggers={["@", "["]}
         on:select={onMentionSelect}

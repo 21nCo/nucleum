@@ -61,7 +61,7 @@
     "relative flex items-center rounded--full border-x border-r-brs3 border-l-transparent text-b2 gap-2 px-6 py-2 max-w-48 min-w-20",
     // abg(isActive, 1),
     {
-      "hover:bg-aps3 hover:text-aps1 hover:border--aps1": !isActive,
+      "hover:bg-bgs3": !isActive,
       "bg-bgs1": isActive
     }
   )}
@@ -79,8 +79,8 @@
       class={cn(
         "absolute right-0 h-full rounded--full bg-gradient-to-l  to-transparent pl-10",
         {
-          "from-aps3 via-aps3": !isActive,
-          "from-bgs2 via-bgs2": isActive
+          "from-bgs3 via-bgs3": !isActive,
+          "from-bgs1 via-bgs1": isActive
         }
       )}
     >
@@ -88,11 +88,7 @@
         on:click={() => tabs.remove(item)}
         class="h-full flex justify-center items-center pr-2"
       >
-        {#if isActive}
-          <Icon icon="ph:x" size={Size.sm} class="stroke-fgs1" />
-        {:else}
-          <Icon icon="ph:x" size={Size.sm} class="stroke-aps1" />
-        {/if}
+        <Icon icon="ph:x" size={Size.sm} class="stroke-fgs2" />
       </button>
     </button>
   {/if}

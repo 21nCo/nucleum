@@ -37,9 +37,9 @@
       } else if (joinDateIsBeforeNov132024) {
         return "1 year free cloud sync 🎉 (First 500 early adopters)";
       } else if (joinDateIsBeforeNov182024) {
-        return "4 months free cloud sync 🎉 (First 1000 early adopters)";
+        return "4 mo free cloud sync 🎉 (First 1000 early adopters)";
       } else if (joinDateIsBeforeDec012024) {
-        return "2 months free cloud sync 🎉 (First 5000 users)";
+        return "2 mo free cloud sync 🎉 (First 5000 users)";
       } else {
         return "Early Adopter - limited free cloud sync trial";
       }

@@ -12,6 +12,7 @@ export type FormLabelInfoTooltip = {
 
 export enum InfoTextType {
   INFO = "info",
+  TIP = "lightbulb",
   WARNING = "warning",
   ERROR = "error"
 }

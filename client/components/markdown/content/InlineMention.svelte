@@ -27,10 +27,12 @@
   class="mention inline-block hover:bg-aps3 px-1 rounded-md text-aps1"
   on:click|stopPropagation={(e) => appStore.resourceClickHandler(e, id)}
 >
-  {#if isLoading}
-    {label ?? "Adding..."}
-  {:else}
-    {isValidString(truncateString(resolveNodeLabelString(resource), 50)) ??
-      "Unknown"}
-  {/if}
+  <span class="underline-dotted-primary">
+    {#if isLoading}
+      {label ?? "Adding..."}
+    {:else}
+      {isValidString(truncateString(resolveNodeLabelString(resource), 50)) ??
+        "Unknown"}
+    {/if}
+  </span>
 </button>

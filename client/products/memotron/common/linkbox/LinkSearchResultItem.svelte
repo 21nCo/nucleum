@@ -40,7 +40,7 @@
         />
       </div>
       {#if item.bodySearch}
-        <div class="text-left text-b2 text-fgs3">
+        <div class="text-left text-b2 text-fgs3 max-h-12 overflow-hidden">
           {@html renderMdAsHtml(item.bodySearch, {
             isIncludeSpaces: true
           })}

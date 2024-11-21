@@ -53,6 +53,7 @@ export const memotronActions: IAction[] = [
     action: MemotronAction.OPEN_CHAT,
     component: Chat,
     type: ActionType.MODAL,
+    isInactive: true,
     modalParams: {
       layout: {
         size: Size.xxl,
@@ -170,6 +171,7 @@ export const memotronActions: IAction[] = [
     action: MemotronAction.SERENDIPITY,
     component: ComingSoonView,
     type: ActionType.MODAL,
+    isInactive: true,
     modalParams: {
       layout: {
         size: Size.xl,
@@ -268,6 +270,7 @@ export const memotronActions: IAction[] = [
     action: "rewind",
     type: ActionType.MODAL,
     label: "Rewind",
+    isInactive: true,
     icon: "sync",
     component: TestHome
   },
@@ -275,6 +278,7 @@ export const memotronActions: IAction[] = [
     action: "serendipity",
     type: ActionType.MODAL,
     label: "Serendipity",
+    isInactive: true,
     icon: "light-bulb",
     component: TestHome
   },
@@ -361,39 +365,62 @@ export const memotronActions: IAction[] = [
       },
       searchResultComponent: LinkSearchResultItem,
       callback: async (id: string, label?: string, componentParams?: any) => {
-        const items =
-          componentParams?.multiSelectStore?.get() ?? componentParams?.items;
-        if (!items) {
-          toasts.error("Something went wrong. Please try again later.");
-          return;
-        }
-        const resourceType = determineResourceType(id);
-        const result = await linker.bulkLink(items, id, resourceType);
-        logger.log({
-          at: "bulkLink",
-          id,
-          resourceType,
-          label,
-          items,
-          result
-        });
-        if (!result) {
-          toasts.error("Something went wrong. Please try again later.");
-          return;
-        }
-        componentParams?.multiSelectStore?.reset();
-        if (resourceType === Resource.collection) {
-          toasts.success(
-            `**${items.length}** ${
-              items.length > 1 ? "items" : "item"
-            } added to collection **${label}**`
+        try {
+          const items =
+            componentParams?.multiSelectStore?.get() ?? componentParams?.items;
+          if (!items) {
+            toasts.error("Something went wrong. Please try again later.", {
+              closeProgressId: "bulklink"
+            });
+            return;
+          }
+          const resourceType = determineResourceType(id);
+          toasts.showProgress(
+            "bulklink",
+            resourceType === Resource.collection
+              ? "Adding to collection"
+              : "Linking to node"
           );
-        } else {
-          toasts.success(
-            `**${items.length}** ${
-              items.length > 1 ? "items" : "item"
-            } linked to node **${label}**`
-          );
+          const result = await linker.bulkLink(items, id, resourceType);
+          logger.log({
+            at: "bulkLink",
+            id,
+            resourceType,
+            label,
+            items,
+            result
+          });
+          if (!result) {
+            toasts.error("Something went wrong. Please try again later.", {
+              closeProgressId: "bulklink"
+            });
+            return;
+          }
+          componentParams?.multiSelectStore?.reset();
+          if (resourceType === Resource.collection) {
+            toasts.success(
+              `**${items.length}** ${
+                items.length > 1 ? "items" : "item"
+              } added to collection ${label ? `**${label}**` : ""}`,
+              {
+                closeProgressId: "bulklink"
+              }
+            );
+          } else {
+            toasts.success(
+              `**${items.length}** ${
+                items.length > 1 ? "items" : "item"
+              } linked to node ${label ? `**${label}**` : ""}`,
+              {
+                closeProgressId: "bulklink"
+              }
+            );
+          }
+        } catch (e) {
+          logger.error(e);
+          toasts.error("Something went wrong. Please try again later.", {
+            closeProgressId: "bulklink"
+          });
         }
       }
     }

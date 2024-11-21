@@ -26,13 +26,7 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
   },
   {
     action: Action.LOCAL_AI_SETTINGS,
-    cmdLabel: [
-      "Local AI Settings",
-      "Enable Local AI",
-      "Enable Semantic Search",
-      "Enable Audio Transcription",
-      "Enable Markdown QA Chat"
-    ],
+    cmdLabel: ["AI Settings"],
     label: "AI Settings",
     icon: "ph:brain-light",
     component: TacoSettings,

@@ -23,7 +23,8 @@
   };
   const expandedButtonProps: {} = {
     size: Size.sm,
-    style: ButtonStyle.OUTLINED
+    style: ButtonStyle.OUTLINED,
+    isPreventMinWidth: true
   };
   $: buttonProps = isConstrainedWidth ? miniButtonProps : expandedButtonProps;
 </script>
@@ -91,26 +92,50 @@
           />
         {/if}
       {/if}
+      {#if subContext.includes("starred")}
+        <Button
+          label={isConstrainedWidth ? undefined : "Unstar"}
+          tooltip={isConstrainedWidth ? "Unstar" : undefined}
+          icon="star"
+          {...buttonProps}
+          on:click={() => {
+            dispatch("action", "unstar");
+          }}
+        />
+      {:else}
+        <Button
+          label={isConstrainedWidth ? undefined : "Star"}
+          tooltip={isConstrainedWidth ? "Star" : undefined}
+          icon="star"
+          {...buttonProps}
+          on:click={() => {
+            dispatch("action", "star");
+          }}
+        />
+      {/if}
+    {/if}
+
+    {#if subContext.includes("archived")}
       <Button
-        label={isConstrainedWidth ? undefined : "Star"}
-        tooltip={isConstrainedWidth ? "Star" : undefined}
-        icon="star"
+        label={isConstrainedWidth ? undefined : "Unarchive"}
+        tooltip={isConstrainedWidth ? "Unarchive" : undefined}
+        icon="archive"
         {...buttonProps}
         on:click={() => {
-          dispatch("action", "star");
+          dispatch("action", "unarchive");
+        }}
+      />
+    {:else}
+      <Button
+        label={isConstrainedWidth ? undefined : "Archive"}
+        tooltip={isConstrainedWidth ? "Archive" : undefined}
+        icon="archive"
+        {...buttonProps}
+        on:click={() => {
+          dispatch("action", "archive");
         }}
       />
     {/if}
-
-    <Button
-      label={isConstrainedWidth ? undefined : "Archive"}
-      tooltip={isConstrainedWidth ? "Archive" : undefined}
-      icon="archive"
-      {...buttonProps}
-      on:click={() => {
-        dispatch("action", "archive");
-      }}
-    />
     <Button
       label={isConstrainedWidth ? undefined : "Delete"}
       tooltip={isConstrainedWidth ? "Delete" : undefined}

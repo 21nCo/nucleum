@@ -227,6 +227,7 @@ export const globalActions: IAction[] = [
       return this.modalParams?.title;
     },
     icon: "lock-closed",
+    isMeta: true,
     type: ActionType.LINK,
     contentType: ContentType.SPACE_DOC,
     modalParams: {
@@ -434,6 +435,7 @@ export const globalActions: IAction[] = [
     label: "Calendar",
     // icon: "calendar-days",
     icon: "ph:calendar-dots-light",
+    isInactive: true,
     type: ActionType.PAGE,
     component: Calendar
   },

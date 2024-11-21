@@ -29,7 +29,7 @@
 <ResultItem {isActive} {index} on:click>
   <div class="flex min-w-0 flex-1">
     {#if action.type === ActionType.PAGE}
-      Go to&nbsp;
+      Go to{#if search}&nbsp;{/if}
     {/if}
     <!-- {@html label} -->
     {@html renderMdAsHtml(label, {

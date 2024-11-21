@@ -501,7 +501,9 @@ function initCurrentGoalStore(initialValue: IGoal) {
       if (!response) return;
       goal.pendingChanges = false;
       set(goal);
-      toasts.success("Updated successfully", "Goal: " + goal.label);
+      toasts.success("Updated successfully", {
+        title: "Goal: " + goal.label
+      });
       propagateChangesTemp();
       isInEditMode.set(false);
       return goal;

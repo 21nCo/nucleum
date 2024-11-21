@@ -115,6 +115,7 @@
   export async function search() {
     isSearchInProgress = true;
     selectedIndex = 0;
+    results = [];
     if (!value && isPreventDefaultResults) {
       results = [];
       hide();

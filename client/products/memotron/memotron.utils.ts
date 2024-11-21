@@ -66,3 +66,26 @@ export function resolveFileUploadErrorMessage(
     return error;
   }
 }
+
+export const searchSort = (a: any, b: any) => {
+  const aLabel = a.labelSearch ?? "";
+  const bLabel = b.labelSearch ?? "";
+
+  const aContainsHighlight = aLabel.includes("**");
+  const bContainsHighlight = bLabel.includes("**");
+
+  if (aContainsHighlight && !bContainsHighlight) {
+    return -1;
+  }
+  if (!aContainsHighlight && bContainsHighlight) {
+    return 1;
+  }
+
+  if (aLabel === "" && bLabel !== "") {
+    return 1;
+  }
+  if (aLabel !== "" && bLabel === "") {
+    return -1;
+  }
+  return aLabel.localeCompare(bLabel);
+};

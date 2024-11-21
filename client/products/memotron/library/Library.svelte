@@ -592,7 +592,9 @@
       <BulkEditBar
         {isConstrainedWidth}
         context={multiSelectContext}
-        subContext={selectedSubType}
+        subContext={selectedSubType +
+          (isStarFilterSelected ? "starred" : "") +
+          (isArchivedFilterSelected ? "archived" : "")}
         on:selectAll={onSelectAll}
         on:action={onBulkAction}
       />

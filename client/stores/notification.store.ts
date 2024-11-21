@@ -85,23 +85,36 @@ function initToastStore() {
       n.push(event);
       return n;
     });
-    if (isAlreadyPresent) return;
+    if (isAlreadyPresent || event.type === AlertType.PROGRESS) return;
     // if (get(view).isPortrait) {
     //   appStore.runAction(Action.MOBILE_TOAST, {
     //     componentParams: { id: event.id }
     //   });
     // } else {
-    timer = setTimeout(
-      () => {
-        update((n: Toast[]) => {
-          n.shift();
-          return n;
-        });
-      },
-      event.type === AlertType.SYNC ? 2000 : toastDefaultDuration
-    );
+    timer = setTimeout(() => {
+      update((n: Toast[]) => {
+        n.shift();
+        return n;
+      });
+    }, toastDefaultDuration);
     // }
   };
+  const setProgress = (progress: number) => {
+    update((n: Toast[]) => {
+      const toast = n.find((x) => x.type === AlertType.PROGRESS);
+      if (toast) {
+        toast.progress = progress;
+      }
+      return n;
+    });
+  };
+
+  const closeProgress = (id: string) => {
+    update((n: Toast[]) => {
+      return n.filter((x) => x.id !== id);
+    });
+  };
+
   return {
     subscribe,
     set: (m: Toast[]) => {
@@ -113,21 +126,45 @@ function initToastStore() {
         return [];
       });
     },
-    success: (message: string, title?: string) => {
+    success: (
+      message: string,
+      params?: {
+        title?: string;
+        closeProgressId?: string;
+      }
+    ) => {
+      if (params?.closeProgressId) {
+        closeProgress(params.closeProgressId);
+      }
       const id = generateSimpleRandomId();
-      trigger({ title, message, type: AlertType.SUCCESS, id });
+      trigger({
+        title: params?.title,
+        message,
+        type: AlertType.SUCCESS,
+        id
+      });
       return id;
     },
-    error: (message: string, title?: string) => {
+    error: (
+      message: string,
+      params?: {
+        title?: string;
+        closeProgressId?: string;
+      }
+    ) => {
+      if (params?.closeProgressId) {
+        closeProgress(params.closeProgressId);
+      }
       const id = generateSimpleRandomId();
-      trigger({ title, message, type: AlertType.ERROR, id });
+      trigger({ title: params?.title, message, type: AlertType.ERROR, id });
       return id;
     },
-    sync: (message?: string) => {
-      const id = generateSimpleRandomId();
-      trigger({ message: message ?? "Syncing...", type: AlertType.SYNC, id });
+    showProgress: (id: string, message: string) => {
+      trigger({ message, type: AlertType.PROGRESS, id });
       return id;
     },
+    closeProgress,
+    setProgress,
     trigger: trigger
   };
 }

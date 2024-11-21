@@ -108,17 +108,23 @@
   };
 
   async function onAppear() {
-    refreshTimeZone();
-    const isCloudUser = $account.dataMode === UserDataMode.CLOUD;
-    if (isCloudUser && !dev_isDisableSyncOnAppear) {
-      if ($context.embed !== Embed.HANDSET) {
-        toasts.sync();
+    try {
+      refreshTimeZone();
+      const isCloudUser = $account.dataMode === UserDataMode.CLOUD;
+      if (isCloudUser && !dev_isDisableSyncOnAppear) {
+        if ($context.embed !== Embed.HANDSET) {
+          toasts.showProgress("sync", "Syncing...");
+        }
+        await flux.syncDown();
+        account.ping();
       }
-      await flux.syncDown();
-      account.ping();
+      if (isExtensionEnvironment() || import.meta.env?.DEV) return;
+      performAppUpdateCheck();
+    } catch (e) {
+      logger.error(e);
+    } finally {
+      toasts.closeProgress("sync");
     }
-    if (isExtensionEnvironment() || import.meta.env?.DEV) return;
-    performAppUpdateCheck();
   }
 
   /**

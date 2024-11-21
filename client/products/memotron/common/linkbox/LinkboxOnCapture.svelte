@@ -8,15 +8,19 @@
   import LinkItems from "./LinkItems.svelte";
   import LinkSearch from "./LinkSearch.svelte";
   import { createEventDispatcher } from "svelte";
+  import { LinkType } from "../../node/node.type";
   const dispatch = createEventDispatcher();
   let link: string;
+  $: console.log({ at: "linkbox", links: $captureStore.links });
 </script>
 
 <section class="flex flex-col gap-2 w-full">
   <div class="h-8">
     {#if isValidArrayWithData($captureStore.links)}
       <LinkItems
-        links={$captureStore.links?.map((x) => x.to) ?? []}
+        links={$captureStore.links
+          ?.filter((x) => x.linkType !== LinkType.MENTION)
+          ?.map((x) => x.to) ?? []}
         on:unlink={(e) => {
           captureStore.removeDLink(e.detail);
           dispatch("unlinked", e.detail);

@@ -5,12 +5,15 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
+  import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { appStore } from "$lib/client/stores/app.store";
   import { toasts } from "$lib/client/stores/notification.store";
   import view from "$lib/client/stores/view.store";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import type { IRecordId } from "$lib/client/types/data.type";
   import { Size } from "$lib/client/types/size.enum";
+  import { InfoTextType } from "$lib/client/types/text.type";
   import { linkTagStore } from "./link.store";
   import type { ILinkTag } from "./link.type";
   import LinkTagsGroup from "./LinkTagsGroup.svelte";
@@ -67,7 +70,7 @@
   $: groups = $linkTagStore ? linkTagStore.transform($linkTagStore) : [];
 </script>
 
-<div class="flex flex-col gap-12 mt-3 w-full h-full">
+<div class="flex flex-col gap-12 pt-3 w-full h-full">
   <div class="w-full flex gap-6">
     <TextInput
       bind:value={inputValue}
@@ -116,4 +119,14 @@
       <ScrollViewBottomSpacer />
     {/if}
   </div>
+  <InlineInfoBanner
+    type={InfoTextType.TIP}
+    content="Tip: Use link tags to maintain relationship information between nodes."
+    action={{
+      label: "Learn more",
+      action:
+        $appStore?.appData?.urls?.kbLinkTags ??
+        "https://docs.memotron.io/page/faqs"
+    }}
+  />
 </div>

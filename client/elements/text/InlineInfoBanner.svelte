@@ -1,6 +1,7 @@
 <script lang="ts">
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
   import {
+    ButtonStyle,
     ButtonVariant,
     type IButtonParams
   } from "$lib/client/types/button.type";
@@ -17,7 +18,7 @@
 
 <div
   class={cn("flex w-full rounded-md gap-4 p-4 text-b2", {
-    "bg-bgs2": type === InfoTextType.INFO,
+    "bg-bgs2": type === InfoTextType.INFO || type === InfoTextType.TIP,
     "bg-ars2 text-ars1": type === InfoTextType.ERROR,
     "bg-ass1 dark:bg-ass2 text-bgs1": type === InfoTextType.WARNING
   })}
@@ -26,7 +27,7 @@
     icon={type === InfoTextType.ERROR ? "help" : `ph:${type}-light`}
     class={cn({
       "stroke-ars1": type === InfoTextType.ERROR,
-      "stroke-fgs1": type === InfoTextType.INFO,
+      "stroke-fgs1": type === InfoTextType.INFO || type === InfoTextType.TIP,
       "stroke-bgs1": type === InfoTextType.WARNING
     })}
   />
@@ -49,6 +50,7 @@
             type={type === InfoTextType.ERROR
               ? ButtonVariant.DANGER
               : ButtonVariant.PRIMARY}
+            style={ButtonStyle.OUTLINED}
             on:click={() => {
               if (action.callback) action.callback();
             }}

@@ -25,6 +25,7 @@ import type { MultiSelectStore } from "$lib/client/components/flux/resourceStore
 import { appStore } from "$lib/client/stores/app.store";
 import { MemotronAction } from "./memotronAction.enum";
 import { linker } from "./linking/link.store";
+import { searchSort } from "./memotron.utils";
 
 export const MAX_FILE_SIZE_MB = 30;
 
@@ -217,6 +218,7 @@ export class SearchStore {
       data = (await this.collections()) ?? [];
     }
     if (isValidArray(data)) {
+      if (isValidString(this.searchQuery)) return data.sort(searchSort);
       return data;
     } else {
       toasts.error("Something went wrong. Please try again later.");
@@ -284,7 +286,7 @@ export class SearchStore {
           : undefined
       });
     }
-    return [...(nodes ?? []), ...(collections ?? [])];
+    return [...(nodes ?? []), ...(collections ?? [])].sort(searchSort);
   }
 
   async searchForLinkingOnExtension(query: string, resource?: Resource) {
@@ -502,9 +504,21 @@ export class BulkEditor {
             });
             onSuccess(action, items.length, Resource.node);
             break;
+          case "unstar":
+            await nodeStore.bulkModify(items, {
+              isStarred: false
+            });
+            onSuccess(action, items.length, Resource.node);
+            break;
           case "archive":
             await nodeStore.bulkModify(items, {
               isArchived: true
+            });
+            onSuccess(action, items.length, Resource.node);
+            break;
+          case "unarchive":
+            await nodeStore.bulkModify(items, {
+              isArchived: false
             });
             onSuccess(action, items.length, Resource.node);
             break;
@@ -521,9 +535,21 @@ export class BulkEditor {
             });
             onSuccess(action, items.length, Resource.collection);
             break;
+          case "unstar":
+            await collectionStore.bulkModify(items, {
+              isStarred: false
+            });
+            onSuccess(action, items.length, Resource.collection);
+            break;
           case "archive":
             await collectionStore.bulkModify(items, {
               isArchived: true
+            });
+            onSuccess(action, items.length, Resource.collection);
+            break;
+          case "unarchive":
+            await collectionStore.bulkModify(items, {
+              isArchived: false
             });
             onSuccess(action, items.length, Resource.collection);
             break;
@@ -553,8 +579,14 @@ export class BulkEditor {
         case "star":
           prefix = "Starred";
           break;
+        case "unstar":
+          prefix = "Unstarred";
+          break;
         case "archive":
           prefix = "Archived";
+          break;
+        case "unarchive":
+          prefix = "Unarchived";
           break;
         case "delete":
           prefix = "Deleted";

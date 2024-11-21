@@ -48,8 +48,8 @@
       {
         "min-h-20 h-20": notification.message && notification.title,
         "min-h-12 h-12": !notification.message || !notification.title,
-        "w-96": notification.type !== AlertType.SYNC,
-        "w-32": notification.type === AlertType.SYNC
+        "w-96": notification.type !== AlertType.PROGRESS,
+        "w-fit": notification.type === AlertType.PROGRESS
       }
     )}
     on:click|stopPropagation
@@ -63,12 +63,12 @@
     />
     <div
       class={cn("flex h-full items-center min-w-0 flex-1", {
-        "gap-4": notification.type !== AlertType.SYNC,
-        "gap-1 justify-center": notification.type === AlertType.SYNC
+        "gap-4": notification.type !== AlertType.PROGRESS,
+        "gap-1 justify-center": notification.type === AlertType.PROGRESS
       })}
     >
       <span class="flex items-center justify-center">
-        {#if notification.type === AlertType.SYNC}
+        {#if notification.type === AlertType.PROGRESS}
           <Icon icon="svg-spinners:90-ring-with-bg" class="stroke-bgs1" />
         {/if}
       </span>
@@ -104,13 +104,13 @@
           {notification.actionText}
         </button>
       {/if}
-      {#if !notification.isNonDismissable && notification.type !== AlertType.SYNC}
+      {#if !notification.isNonDismissable && notification.type !== AlertType.PROGRESS}
         <div class="flex items-center justify-center hover:bg-fgs3 rounded-md">
           <Icon icon="cross" on:click={close} class="stroke-bgs1" />
         </div>
       {/if}
     </div>
-    {#if !notification.isNonDismissable && notification.type !== AlertType.SYNC}
+    {#if !notification.isNonDismissable && notification.type !== AlertType.PROGRESS}
       <div
         class="absolute bottom-0 left-0 w-full portrait:mx-4 portrait:w-4/5 h-1 bg-fgs1 rounded-b-md"
       >
