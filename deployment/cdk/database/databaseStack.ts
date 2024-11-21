@@ -46,7 +46,7 @@ export class DatabaseLightsailRegionalStack extends NestedStack {
     this.diskName =
       this.env.region + (props.isMasterDb ? "-master-db-disk" : "-db-disk");
     this.availabilityZone = this.env.region + "a";
-    this.instanceName = `${this.domainName}-instance-nov24ix`;
+    this.instanceName = `${this.domainName}-instance-nov24x`;
     console.log(`Creating Lightsail instance: ${this.instanceName}`);
 
     const userDataScript = readFileSync(path.join(__dirname, "init.sh"), "utf8")
@@ -282,7 +282,7 @@ echo "User data script execution completed at $(date)"
     let bundleSize = "micro";
     switch (env) {
       case "dev":
-        bundleSize = "micro";
+        bundleSize = "small";
         break;
       case "pre":
         bundleSize = "small";
@@ -291,7 +291,7 @@ echo "User data script execution completed at $(date)"
         if (this.env.region === "ap-south-1") {
           bundleSize = "xlarge";
         } else {
-          bundleSize = "large";
+          bundleSize = "xlarge";
         }
         break;
       default:
