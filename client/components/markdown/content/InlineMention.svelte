@@ -24,7 +24,7 @@
 <button
   {id}
   contenteditable="false"
-  class="mention inline-block hover:bg-aps3 px-1 rounded-md text-aps1"
+  class="mention inline-block hover:bg-aps3 px-0.5 rounded-md text-aps1"
   on:click|stopPropagation={(e) => appStore.resourceClickHandler(e, id)}
 >
   <span class="underline-dotted-primary">

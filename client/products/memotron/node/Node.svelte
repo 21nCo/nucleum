@@ -62,6 +62,6 @@
 {/if}
 <ComponentBaseLayer
   hasDragAndDrop={true}
-  subscribeTo={[Resource.property]}
+  subscribeTo={new Set([Resource.property])}
   on:change={debouncedInitialize}
 />

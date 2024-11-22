@@ -77,7 +77,7 @@ export function getMarkdownSymbolPrepended(block: IBlock) {
       block.body = block.body.replaceAll("<div><br></div>", "  \n");
       block.body = block.body.replaceAll(/<br>/g, "  \n");
       block.body = block.body.replaceAll(
-        /<span class="bg-gray-200 px-1 font-mono">(.*?)<\/span>/g,
+        /<span class="bg-aps2 px-0.5 text-b2 font-mono">(.*?)<\/span>/g,
         "`$1`"
       );
       block.body = block.body.replaceAll(/<i>(.*?)<\/i>/g, "*$1*");

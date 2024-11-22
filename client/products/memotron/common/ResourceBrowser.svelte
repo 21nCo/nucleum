@@ -242,7 +242,7 @@
 </Panel>
 
 <ComponentBaseLayer
-  subscribeTo={[resource]}
+  subscribeTo={new Set([resource])}
   syncDownOnMount={true}
   on:syncDown={refresh}
   on:change={refresh}

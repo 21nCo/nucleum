@@ -57,9 +57,7 @@
     {accessPoint}
   />
   {#if item.labelSearch}
-    {@html renderMdAsHtml(item.labelSearch, {
-      isIncludeSpaces: true
-    })}
+    {@html renderMdAsHtml(item.labelSearch)}
   {:else if _label}
     {#if typeof _label === "string"}
       {_label ?? "Unknown"}

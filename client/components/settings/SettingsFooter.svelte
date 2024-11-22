@@ -9,9 +9,8 @@
 
 <div class="flex w-full justify-center">
   {#if $account.dataMode === UserDataMode.CLOUD}
-    <span class="w-3/5">
+    <span class="flex justify-center w-3/5">
       <Button
-        isExpandToFullWidth={true}
         icon="logout"
         label="Sign out"
         style={ButtonStyle.OUTLINED}

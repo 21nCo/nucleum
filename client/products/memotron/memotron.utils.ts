@@ -67,6 +67,12 @@ export function resolveFileUploadErrorMessage(
   }
 }
 
+/**
+ * Sort the search results proritizing label search results over body search results.
+ * @param a
+ * @param b
+ * @returns
+ */
 export const searchSort = (a: any, b: any) => {
   const aLabel = a.labelSearch ?? "";
   const bLabel = b.labelSearch ?? "";
@@ -88,4 +94,36 @@ export const searchSort = (a: any, b: any) => {
     return -1;
   }
   return aLabel.localeCompare(bLabel);
+};
+
+export const highlightSearchQuery = (items: any[], searchQuery: string) => {
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+
+  return items.map((item) => {
+    const aLabel = (item.label ?? "").toLowerCase();
+    const aText = (item.text ?? "").toLowerCase();
+
+    let labelSearch = undefined;
+    let bodySearch = undefined;
+
+    if (aLabel.includes(normalizedQuery)) {
+      labelSearch = item.label.replace(
+        new RegExp(`(${searchQuery})`, "gi"),
+        "**$1**"
+      );
+    }
+
+    if (aText.includes(normalizedQuery)) {
+      bodySearch = item.text.replace(
+        new RegExp(`(${searchQuery})`, "gi"),
+        "`$1`"
+      );
+    }
+
+    return {
+      ...item,
+      labelSearch,
+      bodySearch
+    };
+  });
 };

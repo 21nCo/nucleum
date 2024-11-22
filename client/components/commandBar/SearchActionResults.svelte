@@ -10,6 +10,7 @@
   import { flux } from "$lib/client/components/flux/flux";
   import GoalSearchThumbnail from "$lib/client/products/pointron/goals/thumbnails/GoalSearchThumbnail.svelte";
   import { debouncer } from "$lib/client/utils/utils";
+  import { logger } from "../debug/logger.client";
   const dispatch = createEventDispatcher();
   export let action: IAction;
   export let componentParams: any = undefined;
@@ -24,25 +25,30 @@
   $: if (search || search === "") debouncedSearch();
   const debouncedSearch = debouncer(searchResources, 500);
   async function searchResources() {
-    if (
-      !action.searchActionParams?.searchStoreId &&
-      !action.searchActionParams?.searchCallback
-    )
-      return;
-    isSearchInProgress = true;
-    selectedIndex = 0;
-    if (action.searchActionParams?.searchStoreId) {
-      results = await flux.search(
-        action.searchActionParams.searchStoreId,
-        search
-      );
-    } else if (action.searchActionParams?.searchCallback) {
-      results = await action.searchActionParams.searchCallback(
-        search,
-        componentParams
-      );
+    try {
+      resetSearch();
+      if (
+        !action.searchActionParams?.searchStoreId &&
+        !action.searchActionParams?.searchCallback
+      )
+        return;
+      isSearchInProgress = true;
+      selectedIndex = 0;
+      if (action.searchActionParams?.searchStoreId) {
+        results = await flux.search(
+          action.searchActionParams.searchStoreId,
+          search
+        );
+      } else if (action.searchActionParams?.searchCallback) {
+        results = await action.searchActionParams.searchCallback(
+          search,
+          componentParams
+        );
+      }
+      isSearchInProgress = false;
+    } catch (e) {
+      logger.error({ at: "Cmd bar - SearchActionResults", error: e });
     }
-    isSearchInProgress = false;
   }
   export function select() {
     const selectedItem = results[selectedIndex];

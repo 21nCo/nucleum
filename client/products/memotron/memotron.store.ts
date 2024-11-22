@@ -25,7 +25,7 @@ import type { MultiSelectStore } from "$lib/client/components/flux/resourceStore
 import { appStore } from "$lib/client/stores/app.store";
 import { MemotronAction } from "./memotronAction.enum";
 import { linker } from "./linking/link.store";
-import { searchSort } from "./memotron.utils";
+import { highlightSearchQuery, searchSort } from "./memotron.utils";
 
 export const MAX_FILE_SIZE_MB = 30;
 
@@ -45,6 +45,7 @@ export class SearchStore {
   filters: IResourceSelectFilters = {};
   searchType: SearchType = SearchType.FULL_TEXT;
   semanticSearchTopK: number | undefined;
+  dev_isUseIndexSearch: boolean = false;
   constructor(resource: Resource = Resource.everything) {
     this.resource = resource;
   }
@@ -218,7 +219,11 @@ export class SearchStore {
       data = (await this.collections()) ?? [];
     }
     if (isValidArray(data)) {
-      if (isValidString(this.searchQuery)) return data.sort(searchSort);
+      if (isValidString(this.searchQuery)) {
+        if (!this.dev_isUseIndexSearch)
+          data = highlightSearchQuery(data, this.searchQuery);
+        data = data.sort(searchSort);
+      }
       return data;
     } else {
       toasts.error("Something went wrong. Please try again later.");
@@ -286,7 +291,12 @@ export class SearchStore {
           : undefined
       });
     }
-    return [...(nodes ?? []), ...(collections ?? [])].sort(searchSort);
+    let data = [...(nodes ?? []), ...(collections ?? [])];
+    if (isValidString(query) && isValidArray(data)) {
+      if (!this.dev_isUseIndexSearch) data = highlightSearchQuery(data, query);
+      data = data.sort(searchSort);
+    }
+    return data;
   }
 
   async searchForLinkingOnExtension(query: string, resource?: Resource) {

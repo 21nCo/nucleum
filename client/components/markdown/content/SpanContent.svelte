@@ -20,7 +20,7 @@
       style = "line-through";
       break;
     case SpanType.CODE:
-      style = "font-mono bg-gray-100 rounded px-1";
+      style = "font-mono bg-aps2 rounded px-1";
       break;
     default:
       style = "";

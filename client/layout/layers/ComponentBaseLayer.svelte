@@ -17,7 +17,7 @@
   /**
    * Resources to subscribe to - a change event will be dispatched if any mutation happens to these resources from anywhere else in the app so that derived or dependant stores can be reloaded or pages/components can be refreshed
    */
-  export let subscribeTo: Resource[] = [];
+  export let subscribeTo: Set<Resource> = new Set();
 
   /**
    * Performs sync down action on mount if the user is a cloud user and if this flag is set to true
@@ -51,7 +51,7 @@
    * @param e
    */
   function onMutation(e: CustomEvent<{ resource: Resource; params: any }>) {
-    if (e.detail && subscribeTo.includes(e.detail.resource)) {
+    if (e.detail && subscribeTo.has(e.detail.resource)) {
       dispatch("change", e.detail);
     }
   }

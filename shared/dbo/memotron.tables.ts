@@ -66,8 +66,11 @@ function nodeIndices() {
   const body = `DEFINE INDEX IF NOT EXISTS nodetextSearchIndex ON TABLE node COLUMNS mdText SEARCH ANALYZER ascii HIGHLIGHTS;`;
   const label = `DEFINE INDEX IF NOT EXISTS nodetextSearchIndexLabel ON TABLE node COLUMNS label SEARCH ANALYZER ascii HIGHLIGHTS;`;
   const text = `DEFINE INDEX IF NOT EXISTS nodetextSearchIndexTwo ON TABLE node COLUMNS text SEARCH ANALYZER ascii HIGHLIGHTS;`;
+  const deleteTextIndex = `REMOVE INDEX IF EXISTS nodetextSearchIndexTwo ON TABLE node;`;
+  const deleteBodyIndex = `REMOVE INDEX IF EXISTS nodetextSearchIndex ON TABLE node;`;
+  const deleteLabelIndex = `REMOVE INDEX IF EXISTS nodetextSearchIndexLabel ON TABLE node;`;
   // const def2 = `DEFINE INDEX nodeSemanticSearchIndex ON TABLE vector FIELDS vector MTREE DIMENSION 768 DIST COSINE TYPE F32;`;
-  return [body, label, text]; //, def2];
+  return [deleteTextIndex, deleteBodyIndex, deleteLabelIndex]; //, def2];
 }
 
 function nodesByTime() {

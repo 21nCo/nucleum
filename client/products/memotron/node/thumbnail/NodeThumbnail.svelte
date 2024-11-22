@@ -117,7 +117,7 @@
             )}
           >
             {#if item.bodySearch}
-              {item.bodySearch}
+              {@html renderMdAsHtml(item.bodySearch)}
             {:else if filePreview}
               <FileView
                 file={hasFullFileDetails ? filePreview : undefined}

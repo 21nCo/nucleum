@@ -641,11 +641,11 @@ export class SurrealPersistence implements IPersistence {
           query,
           params
         });
-        // console.time("SurrealPersistence.selectMany");
+        // console.time(`SurrealPersistence.selectMany - ${resource}`);
       }
       const result = await this.instance?.query_raw(query, params);
       if (resource !== Resource.mutation) {
-        // console.timeEnd("SurrealPersistence.selectMany");
+        // console.timeEnd(`SurrealPersistence.selectMany - ${resource}`);
         logger.log({
           at: "SurrealPersistence.selectMany - result",
           resource,
@@ -675,6 +675,11 @@ export class SurrealPersistence implements IPersistence {
    * Note: using `string::lowercase()` on property field is resulting in no results at times.
    *
    * Ex: when searching for nodes and if property is `label`. Working fine for other properties like `body` or `contentType` or for Collection search with label property.
+   *
+   *
+   * Not using `@@` index search - as defining index is increasing initial sync time (insert time for nodes) significantly.
+   *
+   *
    * @param search
    * @returns
    */
@@ -682,11 +687,23 @@ export class SurrealPersistence implements IPersistence {
     if (!search) return "";
     const conditions: string[] = [];
     search.properties?.forEach((property, index) => {
-      // conditions.push(`string::lowercase('${search.query}') IN string::lowercase(${property})`);
-      // conditions.push(`'${search.query}' IN ${property}`);
-      conditions.push(`${property} @${index + 1}@ '${search.query}'`);
+      conditions.push(useSimpleSearch(search.query, property));
     });
     return `(${conditions.join(" OR ")})`;
+
+    function useSimpleSearch(searchQuery: string, property: string) {
+      return `(type::is::string(${property}) AND string::lowercase('${searchQuery}') IN string::lowercase(${property}))`;
+
+      // return `string::lowercase('${search.query}') IN string::lowercase(${property})`
+    }
+
+    function useIndexSearch(
+      searchQuery: string,
+      property: string,
+      index: number
+    ) {
+      return `${property} @${index + 1}@ '${searchQuery}'`;
+    }
   }
   /**
    * USe <|10|,COSINE> for brute force search where you don't want keep rerunning indexes on every new item addition

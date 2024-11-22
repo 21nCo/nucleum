@@ -172,7 +172,7 @@ export const inlineStylingPatterns = [
     // replacement: encapsulateInlinePattern("`", "<code>$1</code>")
     replacement: encapsulateInlinePattern(
       "`",
-      "<span class='bg-aps2 px-1 font-mono'>$1</span>"
+      "<span class='bg-aps2 px-0.5 text-b2 font-mono'>$1</span>"
     )
   }
   // {
@@ -286,7 +286,8 @@ export const htmlToMarkdownPatterns = [
     replacement: "~~$1~~"
   },
   {
-    regex: /<span class=["']bg-aps2 px-1 font-mono["']>(.*?)<\/span>/g,
+    regex:
+      /<span class=["']bg-aps2 px-0.5 text-b2 font-mono["']>(.*?)<\/span>/g,
     replacement: "`$1`"
   },
   {

@@ -169,7 +169,7 @@
           arrangement === Arrangement.GRID
       })}
     >
-      {#each nodes as item}
+      {#each nodes as item (item.id)}
         <NodeThumbnail
           {item}
           {parentBgIndex}

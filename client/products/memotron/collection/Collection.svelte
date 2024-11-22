@@ -781,6 +781,6 @@
 <ComponentBaseLayer
   hasDragAndDrop={true}
   on:syncDown={() => refresh()}
-  subscribeTo={[Resource.link]}
+  subscribeTo={new Set([Resource.link])}
   on:change={() => refresh()}
 />

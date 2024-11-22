@@ -10,7 +10,7 @@
     <span> Thanks for taking your time to try Memotron beta. 🎉 🚀 </span>
     <span class="text-fgs3 text-b2">
       We're working on improving the product and making it more useful for you.
-      Please report any feedback using chat feature from settings.
+      Please report any feedback via our Discord server.
     </span>
 
     <div class="flex gap-4">

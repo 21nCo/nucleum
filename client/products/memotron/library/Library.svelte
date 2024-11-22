@@ -78,12 +78,10 @@
   let isRefreshing: boolean = false;
   let resourceSwitcherRef: ResourceSwitcher;
   let totalCount: number = 0;
-  let availableResources: Resource[] = [
+  let availableResources: Set<Resource> = new Set([
     Resource.node,
     Resource.collection
-    // Resource.file,
-    // Resource.task
-  ];
+  ]);
   const commonResourceProps = {
     isHidePinAction: true
   };
@@ -160,10 +158,7 @@
       data = [];
     }
     try {
-      if (
-        !availableResources.includes(selectedResource) &&
-        selectedResource != Resource.everything
-      ) {
+      if (!availableResources.has(selectedResource)) {
         data = [];
         return;
       }
@@ -187,13 +182,6 @@
           filters = { ...filters, type: selectedSubType };
         }
       }
-      totalCount = await searchStore.resolveCount(
-        selectedResource,
-        selectedSubType !== "all" && selectedSubType !== "recents"
-          ? (selectedSubType.toUpperCase() as NodeType | CollectionType)
-          : undefined,
-        filters
-      );
       const newData = await searchStore.select({
         resource: selectedResource,
         searchQuery,
@@ -203,16 +191,28 @@
         limit: 50,
         offset: isPagination ? data.length : 0
       });
-      await resourceSwitcherRef?.refresh(selectedResource);
       if (isPagination) data = [...data, ...newData];
       else data = [...newData];
-      // console.log({ newData, data });
-    } finally {
       setTimeout(() => {
         isRefreshing = false;
       }, 1);
+      await refreshTotalCounts(filters);
+    } finally {
+      isRefreshing = false;
     }
   }
+
+  async function refreshTotalCounts(filters: any) {
+    await resourceSwitcherRef?.refresh(selectedResource);
+    totalCount = await searchStore.resolveCount(
+      selectedResource,
+      selectedSubType !== "all" && selectedSubType !== "recents"
+        ? (selectedSubType.toUpperCase() as NodeType | CollectionType)
+        : undefined,
+      filters
+    );
+  }
+
   const debouncedSearch = debouncer(refresh, 500);
 
   function onScroll() {
@@ -401,7 +401,7 @@
         {searchStore}
         bind:selectedResource
         bind:searchQuery
-        isShowAddButton={availableResources.includes(selectedResource)}
+        isShowAddButton={availableResources.has(selectedResource)}
         on:refresh={debouncedSearch}
         on:create={onCreateResource}
         on:semanticSearch={(e) => {
@@ -440,7 +440,7 @@
       {#if selectedResource != Resource.everything && !$view.isConstrainedWidth}
         <span>
           <span class="flex gap-2 items-center">
-            {#if availableResources.includes(selectedResource)}
+            {#if availableResources.has(selectedResource)}
               <!-- <Button icon={resolveIfPinned() ? "unpin" : "pin"} size={Size.lg} /> -->
               <!-- <Toggle
           icon={resolveIfPinned() ? "unpin" : "pin"}
@@ -470,7 +470,7 @@
         "flex-grow px-5 gap-5": variant === "v2" || variant === "v3"
       })}
     >
-      {#if (variant === "v2" || variant === "v3") && availableResources.includes(selectedResource) && !$view.isConstrainedWidth}
+      {#if (variant === "v2" || variant === "v3") && availableResources.has(selectedResource) && !$view.isConstrainedWidth}
         <div class="flex flex-col w-60 border-r border-r-brs2 mb-1">
           <span class="w-full flex items-start flex-1 pr-2 overflow-y-auto">
             <VerticalSwitcher
@@ -558,7 +558,7 @@
             {resolveFooterMessage(data) ?? ""}
           </div>
           <ScrollViewBottomSpacer />
-        {:else if availableResources.includes(selectedResource)}
+        {:else if availableResources.has(selectedResource)}
           <EmptyStatusView
             size={Size.lg}
             {...resolveEmptyStateMessage()}

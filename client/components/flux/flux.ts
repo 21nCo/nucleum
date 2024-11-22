@@ -604,7 +604,7 @@ class Flux {
         dapId
       });
       this.isSyncDownPending = false;
-      logger.debug({ at: "flux.syncDown - result", result });
+      logger.log({ at: "flux.syncDown - result", result });
       if (result.syncDownData) {
         await this.processSyncDown(result.syncDownData);
       }
@@ -617,7 +617,7 @@ class Flux {
           const cloudCount = result.counts[resource];
           if (localCount < cloudCount) {
             resourcesWithMissSync.push(resource);
-            logger.debug({
+            logger.log({
               at: "flux.syncDown - resource with miss sync",
               resource,
               localCount,
@@ -625,7 +625,7 @@ class Flux {
             });
           }
         }
-        logger.debug({
+        logger.log({
           at: "flux.syncDown - resourcesWithMissSync",
           resourcesWithMissSync
         });
@@ -725,7 +725,7 @@ class Flux {
                 ? PersistenceActionType.INSERT
                 : PersistenceActionType.BULK_INSERT
           });
-          logger.debug({
+          logger.log({
             at: "flux.cloneDown - result",
             resource,
             records: resourceResponse.result,
@@ -739,7 +739,7 @@ class Flux {
                 action: PersistenceActionType.INSERT
               }
             );
-            logger.debug({
+            logger.log({
               at: "flux.cloneDown - fallbackResult",
               resource,
               fallbackResult
@@ -853,7 +853,7 @@ class Flux {
    * Imports a backup json or csv file into the local database.
    */
   async import(data: any) {
-    logger.debug({ at: "flux.import", data });
+    logger.log({ at: "flux.import", data });
     for (let resource of Object.keys(data)) {
       try {
         if (resource === Resource.kv) {
@@ -861,7 +861,7 @@ class Flux {
             (x: any) => x.id !== "kv:local"
           );
         }
-        logger.debug({
+        logger.log({
           at: "flux.import - importing",
           resource,
           data: data[resource]

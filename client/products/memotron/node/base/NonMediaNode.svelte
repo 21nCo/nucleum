@@ -158,18 +158,19 @@
                       size={Size.sm}
                     />
                   {/if}
-                  {#if $isInEditMode}
-                    <TextInput
-                      size={Size.xl}
-                      bind:value={$node.label}
-                      style={InputStyle.PLAIN}
-                      placeholder="Node title"
-                      width="w-full"
-                      on:input={onLabelChange}
-                    />
-                  {:else}
+                  <!-- {#if $isInEditMode} -->
+                  <TextInput
+                    size={Size.xl}
+                    bind:value={$node.label}
+                    isExperimentalMdInput={true}
+                    style={InputStyle.PLAIN}
+                    placeholder="Node title"
+                    width="w-full"
+                    on:input={onLabelChange}
+                  />
+                  <!-- {:else}
                     {$node.label ?? $node.body ?? ""}
-                  {/if}
+                  {/if} -->
                 </span>
                 <div class="w-full flex mo:px-0 cw:px-0 px-12 -mt-4">
                   <CollectionsLane {node} />
