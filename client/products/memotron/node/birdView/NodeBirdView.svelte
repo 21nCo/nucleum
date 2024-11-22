@@ -437,7 +437,7 @@
         </div> -->
       </div>
 
-      <div class="w-32">
+      <div class="min-w-fit">
         <DropDown
           items={depthOptions}
           isDisableSearch={true}

@@ -40,7 +40,7 @@
   >
     <Icon icon={block.icon} />
   </div>
-  <div>{block.label}</div>
+  <div class="text-left">{block.label}</div>
   {#if block.badge}
     <span class="ml-auto">
       <Badge text={block.badge} />

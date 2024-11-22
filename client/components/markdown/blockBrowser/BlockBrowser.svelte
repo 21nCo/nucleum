@@ -517,7 +517,7 @@
               on:click|stopPropagation={() =>
                 (selectedSection = section.section)}
             >
-              <div>{properCase(section.section)}</div>
+              <div class="text-left">{properCase(section.section)}</div>
               {#if section.badge}
                 <Badge text={section.badge} />
               {/if}

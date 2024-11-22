@@ -12,15 +12,15 @@
   export let selected: IRecordId[] = [];
 
   $: tags = $linkTagStore
-    .filter((x) => links.some((y) => y.tags?.some(resourceInList(x))))
-    .map(linkTagLabelMapper);
+    ?.filter((x) => links.some((y) => y.tags?.some(resourceInList(x))))
+    ?.map(linkTagLabelMapper);
 
   function resolveCount(tagId: IRecordId) {
     return links.filter((x) => x.tags?.some(resourceInList(tagId))).length;
   }
 </script>
 
-{#if tags.length > 0}
+{#if tags && tags.length > 0}
   <div class="flex flex-wrap gap-2">
     {#each tags as tag}
       <div class="flex gap-2">

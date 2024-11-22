@@ -19,7 +19,7 @@
       {#if item.icon && typeof item.icon === "string"}
         <Icon icon={item.icon} size={Size.sm} />
       {/if}
-      <span>
+      <span class="whitespace-nowrap">
         {item.label ?? properCase(item.value)}
       </span>
     </span>
