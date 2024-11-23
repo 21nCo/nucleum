@@ -379,9 +379,7 @@ function initAppStore(seed: AppStore) {
     // const origin = window.location.origin;
     const guestPartForState = (await getDapId()) ?? "";
     const domainPartForState =
-      (ctx.os === OperatingSystem.MACOS ||
-        (ctx.os == OperatingSystem.IOS && ctx.embed === Embed.TABLET)) &&
-      ctx.isEmbed
+      ctx.os === OperatingSystem.MACOS && ctx.isEmbed
         ? "localredirect." + host
         : host;
     let url =
@@ -416,7 +414,7 @@ function initAppStore(seed: AppStore) {
     if (!redirectUri) return;
     url += "&redirect_uri=" + redirectUri;
     // url += "&redirect_uri=" + encodeURIComponent(redirectUri);
-    if (ctx.isEmbed && ctx.embed === Embed.HANDSET) {
+    if (ctx.isEmbed && ctx.os === OperatingSystem.IOS) {
       openLink(url, true);
     } else {
       goto(url);

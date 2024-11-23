@@ -11,13 +11,18 @@
   import HighlightColors from "../../common/highlighters/HighlightColors.svelte";
   import type { IToggleItem } from "$lib/client/elements/toggle/toggle.type";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import context from "$lib/client/stores/context.store";
+  import { Embed, OperatingSystem } from "$lib/client/types/context.type";
   export let selectedColor = "";
   export let style = "";
   export let pageNumber = 1;
   export let totalPages = 1;
   export let selectedAnnotationMode: AnnotationType;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
-
+  $: isExpanded =
+    accessPoint === ResourceAccessPoint.SELF &&
+    $context.embed !== Embed.HANDSET &&
+    $context.os !== OperatingSystem.IOS;
   let dispatchEvent = createEventDispatcher();
   const annotationModes: IToggleItem[] = resolveAnnotationModes();
 </script>
@@ -26,7 +31,7 @@
   class="flex min-w-fit min-h-fit h-12 justify-between items-center bg-bgs2 rounded-md border border-brs3 shadow-sm"
   {style}
 >
-  {#if accessPoint === ResourceAccessPoint.SELF}
+  {#if isExpanded}
     <ToggleGroup
       items={annotationModes}
       size={Size.lg}
@@ -62,7 +67,7 @@
       }}
     />
   </div>
-  {#if accessPoint === ResourceAccessPoint.SELF}
+  {#if isExpanded}
     <Divider
       orientation={Orientation.Vertical}
       colorStrength={ColorStrength.Strong}

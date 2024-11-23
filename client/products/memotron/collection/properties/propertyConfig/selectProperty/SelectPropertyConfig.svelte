@@ -78,19 +78,19 @@
         colorStrength={ColorStrength.Strong}
       />
       <span class="flex w-full justify-between items-center">
-        <span>
-          {#if property.default}
+        {#if property.default}
+          <span>
             <SelectPropertyItem
               item={property.config.options?.find(
                 (x) => x.id === property.default
               )}
               isSelectedContext={true}
             />
-          {:else}
-            No default set
-          {/if}
-        </span>
-        <EndText text="Default" />
+          </span>
+          <EndText text="Default" />
+        {:else}
+          <span class="text-b3 text-fgs2"> No default set </span>
+        {/if}
       </span>
     </span>
   </div>

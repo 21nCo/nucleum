@@ -53,14 +53,14 @@
 
 <div class="flex flex-col w-full h-full">
   <!-- <div class={cn("flex h-full w-full gap-4 flex-row flex-wrap content-start")}> -->
-  <div
-    class={cn(
-      `h-full w-full gap-4 grid grid-cols-[repeat(auto-fill,minmax(${width}px,1fr))] content-start`
-    )}
-  >
-    {#if resource === Resource.node && arrangement === Arrangement.MASONRY}
-      <NodeItems nodes={data} {arrangement} density={3} {accessPoint} />
-    {:else}
+  {#if resource === Resource.node && arrangement === Arrangement.MASONRY}
+    <NodeItems nodes={data} {arrangement} density={3} {accessPoint} />
+  {:else}
+    <div
+      class={cn(
+        `h-full w-full gap-4 grid grid-cols-[repeat(auto-fill,minmax(${width}px,1fr))] content-start`
+      )}
+    >
       {#each data as item (item)}
         {#if resource === Resource.everything}
           {@const resourceType = determineResourceType(item.id)}
@@ -118,6 +118,6 @@
       {#if isShowLoadingPulseAtTheEnd}
         <LibraryLoadingPulse {resource} isTail={true} />
       {/if}
-    {/if}
-  </div>
+    </div>
+  {/if}
 </div>

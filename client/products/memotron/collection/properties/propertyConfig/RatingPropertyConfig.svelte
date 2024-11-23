@@ -13,6 +13,8 @@
   import { Orientation } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import RatingPropertyPreview from "./RatingPropertyPreview.svelte";
+  import { OperatingSystem } from "$lib/client/types/context.type";
+  import context from "$lib/client/stores/context.store";
   export let property: IProperty;
   let ref: any;
   let popoverOptions = {};
@@ -38,11 +40,13 @@
   <div class="flex gap-2 w-full h-full items-center">
     <Popover
       bind:this={ref}
-      triggerClass="flex items-center w-1/5 h-full gap-2"
+      triggerClass={`flex items-center h-full gap-2 ${$context.os !== OperatingSystem.IOS ? "w-1/5" : ""}`}
       options={popoverOptions}
     >
-      <AvatarRenderer avatar={property.config?.ratingAvatar} size={Size.md} />
-      <Icon icon="chevdown" />
+      {#if $context.os !== OperatingSystem.IOS}
+        <AvatarRenderer avatar={property.config?.ratingAvatar} size={Size.md} />
+        <Icon icon="chevdown" />
+      {/if}
       <svelte:fragment slot="popover">
         <!-- TODO - only show icons that can be fillable -->
         <AvatarPicker

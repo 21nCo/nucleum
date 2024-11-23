@@ -42,12 +42,12 @@
 </script>
 
 <div
-  class={cn("rounded-md text-wrap userdata", {
-    "m-4 p-4 bg-bgs2": accessPoint === ResourceAccessPoint.SELF
+  class={cn("rounded-md text-wrap text-left userdata", {
+    "m-4 p-4 bg--bgs2": accessPoint === ResourceAccessPoint.SELF
   })}
 >
   <span
-    class={cn("relative text-left", {
+    class={cn("relative", {
       "text-b2": accessPoint === ResourceAccessPoint.SELF
     })}
     style="background-color: {textHightlightColor

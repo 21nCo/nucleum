@@ -12,7 +12,7 @@ export function resolveShortcutText(
   if (modifiers.length > 0) {
     modifierLabels = modifiers.map((x) => {
       if (x === ModifierKey.META) {
-        if (os === OperatingSystem.MACOS) {
+        if (os === OperatingSystem.MACOS || os === OperatingSystem.IOS) {
           return "⌘";
         } else {
           return "Win";

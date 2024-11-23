@@ -14,6 +14,8 @@
   import { hoverable } from "$lib/client/actions/hover.action";
   import { ButtonStyle } from "$lib/client/types/button.type";
   import Badge from "$lib/client/elements/text/Badge.svelte";
+  import context from "$lib/client/stores/context.store";
+  import { OperatingSystem } from "$lib/client/types/context.type";
   const dispatch = createEventDispatcher();
   export let option: PropertyConfigOption;
   export let index: number;
@@ -105,7 +107,7 @@
     }}
   />
   <div class="absolute flex items-center h-full right-0 mr-1">
-    {#if isHovering || isFocusing}
+    {#if isHovering || isFocusing || $context.os === OperatingSystem.IOS}
       {#if !isFocusing}
         <Button
           icon={isDefault ? "ph:minus-circle-light" : "ph:circle-dashed-light"}

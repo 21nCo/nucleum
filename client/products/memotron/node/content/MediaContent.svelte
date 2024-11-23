@@ -11,6 +11,8 @@
   import { setContext } from "svelte";
   import view from "$lib/client/stores/view.store";
   import MediaContentResolver from "./MediaContentResolver.svelte";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { isRecordId } from "$lib/client/components/flux/resourceStores/resource.utils";
 
   export let node: IActiveNodeStore;
   export let isConstrainedWidth: boolean = false;
@@ -35,8 +37,13 @@
   }
 
   function contextEventListener(event: string, data: any) {
+    console.log({ event, data });
     if (event === "pdf-trace-click" || event === "yt-trace-click") {
-      contentRef.onTraceClick(data);
+      if ($view.isPortrait && isRecordId(data.id)) {
+        appStore.openResource(data.id, ResourceAccessMode.POP);
+      } else {
+        contentRef.onTraceClick(data);
+      }
     }
   }
   const contentContext = {

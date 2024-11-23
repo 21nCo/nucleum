@@ -37,7 +37,8 @@
   import { highlightStore } from "../common/highlighters/highlight.store";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import context from "$lib/client/stores/context.store";
-  import { OperatingSystem } from "$lib/client/types/context.type";
+  import { Embed, OperatingSystem } from "$lib/client/types/context.type";
+  import view from "$lib/client/stores/view.store";
   const dispatch = createEventDispatcher();
   export let url: string;
   export let node: any;
@@ -65,7 +66,14 @@
    */
   let DPR = window.devicePixelRatio;
   let ranOnce: boolean = false;
-  let scale: number = $context.os == OperatingSystem.WINDOWS ? 1 : 0.5;
+  let scale: number =
+    $context.os == OperatingSystem.WINDOWS
+      ? 1
+      : $context.os == OperatingSystem.IOS && $context.embed === Embed.HANDSET
+        ? 0.15
+        : $context.os == OperatingSystem.IOS && $context.embed === Embed.TABLET
+          ? 0.3
+          : 0.5;
   const MIN_SCALE = $context.os == OperatingSystem.WINDOWS ? 0.5 : 0.1;
   const MAX_SCALE = $context.os == OperatingSystem.WINDOWS ? 2.3 : 1.8;
   let scrollTop = 0;
@@ -847,22 +855,23 @@
 </script>
 
 <div class="relative flex flex-col h-full w-full">
-  <div
-    class="flex items-center justify-between w-full h-14 px-4 gap-8 border-b border-b-brs2"
-  >
-    <div class="flex gap-6 items-center search-bar flex-1">
-      <div class="w-6/10 flex gap-4 items-center">
-        <div class="flex items-center w-9/10">
-          <TextInput
-            placeholder="Search"
-            bind:value={searchText}
-            on:keydown={(e) => {
-              if (e.key === "Enter") onSearch();
-            }}
-            size={Size.sm}
-            icon="search"
-          />
-          <!-- <input
+  {#if $context.embed !== Embed.HANDSET && $context.os !== OperatingSystem.IOS}
+    <div
+      class="flex items-center justify-between w-full h-14 px-4 gap-8 border-b border-b-brs2"
+    >
+      <div class="flex gap-6 items-center search-bar flex-1">
+        <div class="w-6/10 flex gap-4 items-center">
+          <div class="flex items-center w-9/10">
+            <TextInput
+              placeholder="Search"
+              bind:value={searchText}
+              on:keydown={(e) => {
+                if (e.key === "Enter") onSearch();
+              }}
+              size={Size.sm}
+              icon="search"
+            />
+            <!-- <input
             type="search"
             placeholder="Search"
             bind:value={searchText}
@@ -871,55 +880,56 @@
             }}
             class="w-full h-full p-0.5 pl-2 bg-bgs2 text-fgs1 text-sm truncate outline-none"
           /> -->
+          </div>
+          <!-- <button on:click={onSearch}>Search</button> -->
+          <div class="flex gap-2 items-center">
+            <Button icon="chevdown" on:click={findNext} />
+            <Button icon="chevup" on:click={findPrevious} />
+          </div>
         </div>
-        <!-- <button on:click={onSearch}>Search</button> -->
-        <div class="flex gap-2 items-center">
-          <Button icon="chevdown" on:click={findNext} />
-          <Button icon="chevup" on:click={findPrevious} />
-        </div>
-      </div>
-      <!-- <input type="text" bind:value={searchText} placeholder="Search text" /> -->
-      <!-- <label class="text-xs mt-2">
+        <!-- <input type="text" bind:value={searchText} placeholder="Search text" /> -->
+        <!-- <label class="text-xs mt-2">
         <input type="checkbox" bind:checked={searchCaseSensitive} /> Case sensitive</label
       >
       <label class="text-xs mt-2"
         ><input type="checkbox" bind:checked={searchHighlightAll} /> Highlight all</label
       > -->
-      <div class="flex gap-4 items-center justify-start">
-        <SwitchInput
-          size={Size.sm}
-          label={{
-            label: "Case sensitive"
-          }}
-          bind:checked={searchCaseSensitive}
-        />
-        <SwitchInput
-          size={Size.sm}
-          label={{
-            label: "Highlight all"
-          }}
-          bind:checked={searchHighlightAll}
-        />
+        <div class="flex gap-4 items-center justify-start">
+          <SwitchInput
+            size={Size.sm}
+            label={{
+              label: "Case sensitive"
+            }}
+            bind:checked={searchCaseSensitive}
+          />
+          <SwitchInput
+            size={Size.sm}
+            label={{
+              label: "Highlight all"
+            }}
+            bind:checked={searchHighlightAll}
+          />
+        </div>
       </div>
-    </div>
-    <div>
-      <Button
-        icon="download"
-        size={Size.sm}
-        label="Download"
-        on:click={() =>
-          embedAnnotationsandDownload(
-            url,
-            annots,
-            $highlightStore.highlighters
-          )}
-      />
-      <!-- <button
+      <div>
+        <Button
+          icon="download"
+          size={Size.sm}
+          label="Download"
+          on:click={() =>
+            embedAnnotationsandDownload(
+              url,
+              annots,
+              $highlightStore.highlighters
+            )}
+        />
+        <!-- <button
     on:click={deleleAllAnnotations}
     class="material-symbols-rounded mx-2">{@html "&#Xe16c"}</button
     > -->
+      </div>
     </div>
-  </div>
+  {/if}
   <div class="w-full flex-1">
     <PdfViewer bind:pdfViewer bind:pdfDocument bind:scale {url}
       >{#if shapeVisible}

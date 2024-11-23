@@ -251,7 +251,10 @@ export const globalActions: IAction[] = [
     isMeta: true,
     type: ActionType.FUNCTION,
     fn: async (params?: IActionFnParams) => {
-      if (params?.context?.embed === Embed.HANDSET) {
+      if (
+        params?.context?.embed === Embed.HANDSET ||
+        params?.context?.embed === Embed.TABLET
+      ) {
         appStore.runAction(Action.CHANGELOG + "mobile");
       } else {
         appStore.runAction(Action.CHANGELOG + "supahub");
@@ -306,7 +309,10 @@ export const globalActions: IAction[] = [
     isMeta: true,
     type: ActionType.FUNCTION,
     fn: async (params?: IActionFnParams) => {
-      if (params?.context?.embed === Embed.HANDSET) {
+      if (
+        params?.context?.embed === Embed.HANDSET ||
+        params?.context?.embed === Embed.TABLET
+      ) {
         appStore.runAction(Action.ROADMAP + "mobile");
       } else {
         appStore.runAction(Action.ROADMAP + "supahub");

@@ -15,7 +15,7 @@
 >
   <CustomColorPropagator
     color={item?.color}
-    class={cn("px-4 py-0.5 rounded-md w-fit bg-ccs3")}
+    class={cn("px-4 py-0.5 rounded-md w-fit bg-ccs3 whitespace-nowrap")}
   >
     {item ? (isValidString(item?.label) ? item?.label : "Untitled") : "None"}
   </CustomColorPropagator>

@@ -14,6 +14,8 @@
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import { GlobalEvent } from "$lib/client/types/event.enum";
   import view from "$lib/client/stores/view.store";
+  import context from "$lib/client/stores/context.store";
+  import { OperatingSystem } from "$lib/client/types/context.type";
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
   export let parentBackgroundIndex: number;
   export let isHovered: boolean = false;
@@ -33,7 +35,7 @@
     let items = [];
     const app = $appStore.product;
     let defaultMenu = x[app]?.default ?? [];
-    if ($view.isConstrainedWidth) {
+    if ($view.isConstrainedWidth || $context.os === OperatingSystem.IOS) {
       defaultMenu = x[app]?.mobile ?? [];
     }
     let userPinnedMenu: string[] = [];

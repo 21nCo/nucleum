@@ -9,6 +9,8 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import InputBaseElement from "../InputBaseElement.svelte";
   import { createEventDispatcher } from "svelte";
+  import context from "$lib/client/stores/context.store";
+  import { OperatingSystem } from "$lib/client/types/context.type";
   const dispatch = createEventDispatcher();
   export let avatar: AvatarWithCode<IconAvatar>;
   export let count: number;
@@ -29,6 +31,7 @@
         class="flex items-center h-full"
       >
         <AvatarRenderer
+          dev_iOSTempRatingFallback={$context.os === OperatingSystem.IOS}
           avatar={{ ...avatar, isFilled: +item + 1 <= value }}
           {size}
         />

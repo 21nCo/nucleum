@@ -6,10 +6,12 @@
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import "@fontsource/noto-color-emoji";
+  import Icon from "../Icon.svelte";
   export let avatar: IAvatar;
   export let isHoverDisabled = true;
   export let isHoverEnabled = false;
   export let size: Size | number;
+  export let dev_iOSTempRatingFallback = false;
   $: fontSize =
     typeof size === "number"
       ? `${size}px`
@@ -56,19 +58,25 @@
   /> -->
 {:else if "code" in avatar && avatar.code}
   {#if avatar.type === AvatarType.ICON}
-    <span
-      class={cn(
-        "material-symbols-rounded",
-        isHoverEnabled && "hover:scale-[1.2] transition-transform",
-        avatar.color === "bw" && "text-fgs2"
-      )}
-      style="font-variation-settings: 'FILL' {avatar?.isFilled ? 1 : 0}, 'wght'
+    {#if dev_iOSTempRatingFallback}
+      <Icon icon={avatar.isFilled ? "ph:star-fill" : "ph:star"} />
+    {:else}
+      <span
+        class={cn(
+          "material-symbols-rounded",
+          isHoverEnabled && "hover:scale-[1.2] transition-transform",
+          avatar.color === "bw" && "text-fgs2"
+        )}
+        style="font-variation-settings: 'FILL' {avatar?.isFilled
+          ? 1
+          : 0}, 'wght'
       700, 'GRAD' 0, 'opsz' 48; color:{avatar?.color !== 'bw'
-        ? avatar?.color
-        : ''}; font-size: {fontSize};"
-    >
-      {@html avatar.code}
-    </span>
+          ? avatar?.color
+          : ''}; font-size: {fontSize};"
+      >
+        {@html avatar.code}
+      </span>
+    {/if}
   {:else if avatar.type === AvatarType.EMOJI && avatar.code}
     <span
       class={cn(

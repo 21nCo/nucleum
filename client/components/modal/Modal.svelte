@@ -15,6 +15,8 @@
   import { ResourceAccessMode } from "../flux/resourceStores/resource.type";
   import view from "$lib/client/stores/view.store";
   import { userPreferences } from "../settings/userPreferences.store";
+  import context from "$lib/client/stores/context.store";
+  import { OperatingSystem } from "$lib/client/types/context.type";
   export let index: number = 0;
   export let show = true;
   export let title: string = "";
@@ -66,7 +68,10 @@
         event.target?.classList?.contains("popover") ||
         event.target?.id === id) &&
         event.pointerType === "mouse") ||
-        event.target.nodeName === "DIALOG") &&
+        event.target.nodeName === "DIALOG" ||
+        ((event.pointerType === "touch" ||
+          $context.os === OperatingSystem.IOS) &&
+          event.target?.id === id)) &&
       isDismissable
     ) {
       close();

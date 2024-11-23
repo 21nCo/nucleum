@@ -41,7 +41,6 @@ export enum Embed {
 export enum OperatingSystem {
   UNDETERMINED = "UNDETERMINED",
   IOS = "IOS",
-  IPADOS = "IPADOS",
   MACOS = "MACOS",
   TVOS = "TVOS",
   ANDROID = "ANDROID",

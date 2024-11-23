@@ -70,12 +70,7 @@
       postTokenToExtension(data);
       // appStore.runAction(Action.EXTENSTION_LOGIN);
       appStore.gotoPath("/ext/login");
-    } else if (
-      ($context.os == OperatingSystem.MACOS ||
-        ($context.os == OperatingSystem.IOS &&
-          $context.embed === Embed.TABLET)) &&
-      $context.isEmbed
-    ) {
+    } else if ($context.os == OperatingSystem.MACOS && $context.isEmbed) {
       handleMacOSEmbedRedirection(data.token);
     } else if ($context.os == OperatingSystem.IOS) {
       handleiOSEmbedRedirection(data.token);
