@@ -10,6 +10,8 @@
   import { UserDataMode } from "$lib/client/types/account.type";
   import account from "$lib/client/stores/account.store";
   import { Persistence } from "$lib/client/persistence/persistence";
+  import FileView from "$lib/client/components/files/FileView.svelte";
+  import ImagePreview from "../ImagePreview.svelte";
 
   export let node: IWebPage;
   let isLoading: boolean = true;
@@ -42,14 +44,13 @@
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
       allowfullscreen
     />
-  {:else if node.metadata?.ogImage || node.metadata?.screenshotUrl}
-    <img
-      src={isValidString(node.metadata.ogImage)
-        ? node.metadata.ogImage
-        : node.metadata.screenshotUrl}
-      alt="Preview not available"
+  {:else if isValidString(node.metadata?.ogImage)}
+    <ImagePreview
+      src={node.metadata?.ogImage}
       class="w-full h-full object-contain rounded--md"
     />
+  {:else if node.metadata?.screenshotFile}
+    <FileView id={node.metadata.screenshotFile} />
   {:else}
     <div class="text-center text-b3 text-fgs3">
       {#if isIframable}

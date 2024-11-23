@@ -40,6 +40,29 @@ export async function clipTextSearchFallback() {
 
       await Promise.all(promises);
     }
+    const twitterProfiles = await flux.selectMany(Resource.node, {
+      filters: {
+        contentType: NodeType.TWITTER_PROFILE,
+        label: false
+      }
+    });
+    logger.log({ at: "twitterProfiles", twitterProfiles });
+    if (twitterProfiles && isValidArrayWithData(twitterProfiles)) {
+      const promises = twitterProfiles.map(async (profile: any) => {
+        profile.label = profile.body.name;
+        return flux.mutation(
+          Resource.node,
+          {
+            action: PersistenceActionType.MERGE,
+            record: profile
+          },
+          {
+            isPreventSubscriptions: true
+          }
+        );
+      });
+      await Promise.all(promises);
+    }
   } catch (error) {
     logger.error({ at: "clipTextSearchFallback", error });
   }

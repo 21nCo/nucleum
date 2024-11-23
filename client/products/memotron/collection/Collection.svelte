@@ -350,15 +350,25 @@
   }
 
   async function onSearch() {
-    if (searchQuery) {
-      _filtered = viewData.filter((x) => {
-        return (
-          x.label?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          x.body?.toString().toLowerCase().includes(searchQuery.toLowerCase())
-        );
-      });
-    } else {
-      _filtered = viewData;
+    try {
+      logger.log({ at: "onSearch", searchQuery, viewData });
+      if (searchQuery) {
+        _filtered = viewData.filter((x) => {
+          return (
+            x.label?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            x.body
+              ?.toString()
+              .toLowerCase()
+              .includes(searchQuery.toLowerCase()) ||
+            x.text?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            x.parent?.label?.toLowerCase()?.includes(searchQuery.toLowerCase())
+          );
+        });
+      } else {
+        _filtered = viewData;
+      }
+    } catch (e) {
+      logger.error({ at: "onSearch", error: e });
     }
   }
 
@@ -466,9 +476,7 @@
 
   async function onBulkAction(e: CustomEvent<string>) {
     try {
-      const editor = new BulkEditor(Resource.node, multiSelectStore, {
-        accessPointId: id
-      });
+      const editor = new BulkEditor(Resource.node, multiSelectStore);
       const result = await editor.run(e.detail);
       if (result) {
         await refresh();

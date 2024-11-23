@@ -47,7 +47,7 @@
         </div>
         <div class="flex flex-col items-start">
           <div class="text-b2">
-            {parent.body?.name}
+            {parent.label ?? parent.body?.name}
           </div>
           <div class="text-b4 text-fgs3">
             @{parentUsername}

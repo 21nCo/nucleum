@@ -114,10 +114,33 @@ export const highlightSearchQuery = (items: any[], searchQuery: string) => {
     }
 
     if (aText.includes(normalizedQuery)) {
-      bodySearch = item.text.replace(
-        new RegExp(`(${searchQuery})`, "gi"),
-        "`$1`"
-      );
+      const matchIndex = aText.indexOf(normalizedQuery);
+      const contextLength = 100;
+      if (item.text.length <= contextLength * 2 + searchQuery.length) {
+        bodySearch = item.text
+          .replace(/[\r\n\s]+/g, " ")
+          .trim()
+          .replace(new RegExp(`(${searchQuery})`, "gi"), "`$1`");
+      } else {
+        const startIndex = Math.max(0, matchIndex - contextLength);
+        const endIndex = Math.min(
+          item.text.length,
+          matchIndex + searchQuery.length + contextLength
+        );
+
+        let truncatedText = item.text
+          .slice(startIndex, endIndex)
+          .replace(/[\r\n\s]+/g, " ")
+          .trim();
+
+        if (startIndex > 0) truncatedText = "..." + truncatedText;
+        if (endIndex < item.text.length) truncatedText = truncatedText + "...";
+
+        bodySearch = truncatedText.replace(
+          new RegExp(`(${searchQuery})`, "gi"),
+          "`$1`"
+        );
+      }
     }
 
     return {

@@ -19,6 +19,8 @@
    */
   export let subscribeTo: Set<Resource> = new Set();
 
+  export let subscribeToContext: Set<string> = new Set();
+
   /**
    * Performs sync down action on mount if the user is a cloud user and if this flag is set to true
    */
@@ -50,8 +52,14 @@
    * TODO - detect resources that have been mutated and dispatch a change event if subscribed to
    * @param e
    */
-  function onMutation(e: CustomEvent<{ resource: Resource; params: any }>) {
-    if (e.detail && subscribeTo.has(e.detail.resource)) {
+  function onMutation(
+    e: CustomEvent<{ resource: Resource; params: any; context: string }>
+  ) {
+    if (
+      e.detail &&
+      subscribeTo.has(e.detail.resource) &&
+      subscribeToContext.has(e.detail.context)
+    ) {
       dispatch("change", e.detail);
     }
   }

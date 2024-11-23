@@ -17,7 +17,8 @@ import PropertiesEditor from "$lib/client/products/memotron/collection/propertie
 import { MemotronAction } from "./memotronAction.enum";
 import {
   ResourceAccessMode,
-  ResourceActionType
+  ResourceActionType,
+  type IMultiSelectStore
 } from "$lib/client/components/flux/resourceStores/resource.type";
 import {
   determineResourceType,
@@ -47,6 +48,7 @@ import MemotronDataSettings from "./settings/MemotronDataSettings.svelte";
 import CollectionTitleLabelPart from "./collection/title/CollectionTitleLabelPart.svelte";
 import { Embed } from "$lib/client/types/context.type";
 import { SearchStore } from "./memotron.store";
+import type { IRecordId } from "$lib/client/types/data.type";
 
 export const memotronActions: IAction[] = [
   {
@@ -364,10 +366,18 @@ export const memotronActions: IAction[] = [
             : "select a node or a collection";
       },
       searchResultComponent: LinkSearchResultItem,
-      callback: async (id: string, label?: string, componentParams?: any) => {
+      callback: async (
+        id: string,
+        label?: string,
+        componentParams?: {
+          multiSelectStore?: IMultiSelectStore;
+          items?: IRecordId[];
+        }
+      ) => {
         try {
           const items =
             componentParams?.multiSelectStore?.get() ?? componentParams?.items;
+          const context = componentParams?.multiSelectStore?.context;
           if (!items) {
             toasts.error("Something went wrong. Please try again later.", {
               closeProgressId: "bulklink"
@@ -381,7 +391,12 @@ export const memotronActions: IAction[] = [
               ? "Adding to collection"
               : "Linking to node"
           );
-          const result = await linker.bulkLink(items, id, resourceType);
+          const result = await linker.bulkLink(
+            items,
+            id,
+            resourceType,
+            context?.accessPoint
+          );
           logger.log({
             at: "bulkLink",
             id,

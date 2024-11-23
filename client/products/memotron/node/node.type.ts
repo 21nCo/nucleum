@@ -403,6 +403,10 @@ type INodeHasText = {
   text: string;
 };
 
+type INodeHasLabel = {
+  label: string;
+};
+
 // ===== Media node types =====
 
 export const mediaNodeTypeList = [
@@ -489,7 +493,9 @@ export type IGenericWebPage = INodeInterface<
   IGenericWebPageBody,
   IWebPageMetadata
 > &
-  INodeHasUrl;
+  INodeHasUrl &
+  INodeHasLabel;
+
 type IWebPageMetadata = {
   favicon?: string;
   faviconLink?: string;
@@ -501,10 +507,13 @@ type IWebPageMetadata = {
   ogImage?: string;
   ogUrl?: string;
   twitterCard?: string;
-  screenshotUrl?: string;
+  screenshotFile?: IRecordId;
 };
 
 export type ITextClipBody = {
+  /**
+   * @deprecated - use text field of node instead
+   */
   text: string;
   highlighterId: string;
   pre?: string;
@@ -523,6 +532,7 @@ export type ITextClip = INodeInterface<
   ITextClipMetadata
 > &
   INodeHasUrl &
+  INodeHasText &
   INodeHasParent;
 
 export type IVideoTimestampClipBody = {
@@ -544,6 +554,9 @@ export type IVideoTimestampClip = INodeInterface<
   INodeHasParent;
 
 export type IYoutubeChannelBody = {
+  /**
+   * @deprecated - use label field of node instead
+   */
   title: string;
   description?: string;
   channelImageUrl?: string;
@@ -556,7 +569,8 @@ export type IYoutubeChannel = INodeInterface<
   IYoutubeChannelBody,
   IYoutubeChannelMetadata
 > &
-  INodeHasUrl;
+  INodeHasUrl &
+  INodeHasLabel;
 
 type IYoutubeVideoBody = {
   title: string;
@@ -578,7 +592,8 @@ export type IYoutubeVideo = INodeInterface<
   IYoutubeVideoBody,
   IYoutubeVideoMetadata
 > &
-  INodeHasUrl;
+  INodeHasUrl &
+  INodeHasLabel;
 
 type IWebScreenshotClipBody = {
   /**
@@ -636,6 +651,9 @@ export type ITweet = INodeInterface<
   INodeHasText;
 
 export type ITwitterProfileBody = {
+  /**
+   * @deprecated - use label field of node instead
+   */
   name: string;
   bio?: string;
   profileImageUrl: string;
@@ -649,7 +667,8 @@ export type ITwitterProfile = INodeInterface<
   ITwitterProfileBody,
   ITwitterProfileMetadata
 > &
-  INodeHasUrl;
+  INodeHasUrl &
+  INodeHasLabel;
 
 export type IKindleBookBody = {
   id: string;
@@ -663,7 +682,8 @@ export type IKindleBook = INodeInterface<
   IKindleBookBody,
   IWebPageMetadata
 > &
-  INodeHasUrl;
+  INodeHasUrl &
+  INodeHasLabel;
 
 export type IKindleHighlightBody = {
   id: string;

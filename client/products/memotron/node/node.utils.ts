@@ -260,8 +260,10 @@ export function resolveNodeLabel(item: INodeThumb) {
       };
     case NodeType.TWEET:
       parent = parent as ITwitterProfile;
-      const twitterProfileLabel = isValidString(parent?.body?.name)
-        ? parent.body.name
+      const twitterProfileLabel = isValidString(
+        parent?.label ?? parent?.body?.name
+      )
+        ? (parent.label ?? parent.body.name)
         : "Unknown";
       return {
         label: "Tweet by ",
@@ -272,6 +274,7 @@ export function resolveNodeLabel(item: INodeThumb) {
       item = item as ITwitterProfile;
       return (
         item.metadata?.ogTitle ||
+        item.label ||
         ((item.body as ITwitterProfileBody).name
           ? item.body.name + " X profile"
           : "Unknown X profile")

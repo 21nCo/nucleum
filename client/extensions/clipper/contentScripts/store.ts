@@ -209,9 +209,9 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
         });
         return extractMinimalTabData();
       }
-      const s3Url = await screenshotWebpage();
+      const ssFile = await screenshotWebpage();
       const tab = await extractFullTabData();
-      tab.metadata = { ...tab.metadata, screenshotUrl: s3Url };
+      tab.metadata = { ...tab.metadata, screenshotFile: ssFile };
       return tab;
 
       async function screenshotWebpage() {
@@ -224,7 +224,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
             dataUrl: ss,
             contentType: "image/png",
             params: {
-              isReturnUrl: true
+              isMeta: true
             }
           }
         });
@@ -328,6 +328,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     };
     const twitterProfileNode: OmitForCapture<ITwitterProfile> = {
       url: data.profileUrl,
+      label: data.authorName,
       body: {
         name: data.authorName,
         profileImageUrl: data.profileImageUrl
@@ -340,7 +341,6 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       {
         ...twitterProfileNode,
         id: twitterProfileId,
-        label: undefined,
         creationContext: tweetId
       }
     ]);
@@ -372,7 +372,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     });
     logger.log({ at: "saveTwitterProfile", data, twitterProfileId });
     const response = await nodeStore.create([
-      { ...data, id: twitterProfileId, label: undefined }
+      { ...data, id: twitterProfileId }
     ]);
     if (!response || !Array.isArray(response)) return;
     const node = response[0] as ITwitterProfile;

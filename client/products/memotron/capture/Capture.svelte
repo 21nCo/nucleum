@@ -280,20 +280,20 @@
             </div>
             <div class="flex gap-3 items-center">
               {#if !isEmptyState}
-                <div class="flex items-center gap-1">
-                  <Icon
-                    icon={$captureStore.isRefreshing
-                      ? "svg-spinners:90-ring-with-bg"
-                      : "ph:check-circle-fill"}
-                    size={Size.sm}
-                    class="stroke-fgs3"
-                  />
-                  {#if !$view.isConstrainedWidth}
+                {#if !$view.isConstrainedWidth}
+                  <div class="flex items-center gap-1">
+                    <Icon
+                      icon={$captureStore.isRefreshing
+                        ? "svg-spinners:90-ring-with-bg"
+                        : "ph:check-circle-fill"}
+                      size={Size.sm}
+                      class="stroke-fgs3"
+                    />
                     <span class="text-fgs3 whitespace-nowrap text-b3">
                       {$captureStore.isRefreshing ? "saving..." : "draft saved"}
                     </span>
-                  {/if}
-                </div>
+                  </div>
+                {/if}
                 <Button
                   label={$view.isConstrainedWidth ? undefined : "Save"}
                   type={ButtonVariant.PRIMARY}

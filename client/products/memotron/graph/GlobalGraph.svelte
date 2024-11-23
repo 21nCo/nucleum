@@ -207,7 +207,7 @@
       on:render={onRender}
       on:select={onNodeSelect}
       on:canvasClick={onCanvasClick}
-      layout={isHideOrphans ? "radial-2" : "d3-force"}
+      layout="d3-force"
     />
   {/if}
 </div>

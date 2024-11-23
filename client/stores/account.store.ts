@@ -266,6 +266,7 @@ class AccountStore extends ObservableStore<
       isReturnUrl?: boolean;
       isExtensionEnv?: boolean;
       isPreventSync?: boolean;
+      isMeta?: boolean;
     } = {}
   ) {
     try {
@@ -284,7 +285,8 @@ class AccountStore extends ObservableStore<
             label: fileName,
             type: contentType,
             data: uint8Array,
-            size: uint8Array.length
+            size: uint8Array.length,
+            isMeta: params.isMeta
           }
         ]);
         return response;
@@ -310,7 +312,8 @@ class AccountStore extends ObservableStore<
           label: fileName,
           type: contentType,
           url,
-          size: blob.size
+          size: blob.size,
+          isMeta: params.isMeta
         };
         if (params.isReturnUrl) {
           return url;

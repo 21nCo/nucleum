@@ -227,6 +227,7 @@ class Flux {
     params: IMutationParamsv2<T>,
     additionalParams: {
       isPreventSubscriptions?: boolean;
+      context?: string;
     } = {}
   ) {
     let response;
@@ -251,7 +252,11 @@ class Flux {
           relayToSidePanel(message);
           relayToContentScript(message);
         } else {
-          dispatchCustomEvent(GlobalEvent.MUTATION, { resource, params });
+          dispatchCustomEvent(GlobalEvent.MUTATION, {
+            resource,
+            params,
+            context: additionalParams?.context
+          });
         }
         const correspondingStore = this.stores.find((x) => x.id === resource);
         if (correspondingStore?.isInMemory) {

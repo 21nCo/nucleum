@@ -426,6 +426,7 @@ export function extractTwitterProfile(): OmitForCapture<
   const bioLinkText = linkElement?.textContent;
   return {
     url,
+    label: name ?? "",
     body: {
       name: name ?? "",
       bio: bio ?? "",

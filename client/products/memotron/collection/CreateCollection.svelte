@@ -237,25 +237,33 @@
                 title,
                 selectedType
               });
-              const result = await collectionStore.save({
-                label: title,
-                description,
-                type: selectedType,
-                defaultLayout: selectedView,
-                isStarred,
-                cover: coverPhoto,
-                isCaptureShortcutEnabled:
-                  selectedType === CollectionType.TYPED
-                    ? isCaptureShortcutEnabled
-                    : undefined,
-                avatar: {
-                  code: avatar?.code,
-                  color: avatar?.color,
-                  file: avatar?.file,
-                  isFilled: avatar?.isFilled,
-                  type: avatar?.type
+              const result = await collectionStore.save(
+                {
+                  label: title,
+                  description,
+                  type: selectedType,
+                  defaultLayout: selectedView,
+                  isStarred,
+                  cover: coverPhoto,
+                  isCaptureShortcutEnabled:
+                    selectedType === CollectionType.TYPED
+                      ? isCaptureShortcutEnabled
+                      : undefined,
+                  avatar: {
+                    code: avatar?.code,
+                    color: avatar?.color,
+                    file: avatar?.file,
+                    isFilled: avatar?.isFilled,
+                    type: avatar?.type
+                  }
+                },
+                {
+                  context: resourceAction(
+                    Resource.collection,
+                    ResourceActionType.CREATE
+                  )
                 }
-              });
+              );
               if (!result) {
                 toasts.error("Error creating collection. Please try again.");
                 return;

@@ -444,17 +444,12 @@ export class SearchStore {
 export class BulkEditor {
   resource: Resource = Resource.node;
   multiSelectStore: MultiSelectStore;
-  accessPointId?: IRecordId;
   constructor(
     resource: Resource = Resource.node,
-    multiSelectStore: MultiSelectStore,
-    params?: {
-      accessPointId?: IRecordId;
-    }
+    multiSelectStore: MultiSelectStore
   ) {
     this.resource = resource;
     this.multiSelectStore = multiSelectStore;
-    this.accessPointId = params?.accessPointId;
   }
 
   async run(action: string) {
@@ -462,22 +457,28 @@ export class BulkEditor {
     try {
       if (this.resource === Resource.everything) return;
       const items = this.multiSelectStore.get();
+      const accessPointId = this.multiSelectStore.context.accessPointId;
+      const accessPoint = this.multiSelectStore.context.accessPoint;
       logger.debug({
         at: "BulkEditor.run",
         action,
         items,
-        accessPointId: this.accessPointId
+        accessPointId,
+        accessPoint
       });
+      const additionalParams = {
+        context: accessPoint
+      };
       if (this.resource === Resource.node) {
         switch (action) {
           case "unlink":
-            if (!this.accessPointId) {
+            if (!accessPointId) {
               toasts.error("Something went wrong. Please try again later.");
               return;
             }
             const result = await linker.bulkUnlinkForDirect(
               items,
-              this.accessPointId
+              accessPointId
             );
             logger.debug({ at: "BulkEditor.run unlink", result });
             onSuccess(action, items.length, Resource.node);
@@ -509,62 +510,94 @@ export class BulkEditor {
             });
             break;
           case "star":
-            await nodeStore.bulkModify(items, {
-              isStarred: true
-            });
+            await nodeStore.bulkModify(
+              items,
+              {
+                isStarred: true
+              },
+              additionalParams
+            );
             onSuccess(action, items.length, Resource.node);
             break;
           case "unstar":
-            await nodeStore.bulkModify(items, {
-              isStarred: false
-            });
+            await nodeStore.bulkModify(
+              items,
+              {
+                isStarred: false
+              },
+              additionalParams
+            );
             onSuccess(action, items.length, Resource.node);
             break;
           case "archive":
-            await nodeStore.bulkModify(items, {
-              isArchived: true
-            });
+            await nodeStore.bulkModify(
+              items,
+              {
+                isArchived: true
+              },
+              additionalParams
+            );
             onSuccess(action, items.length, Resource.node);
             break;
           case "unarchive":
-            await nodeStore.bulkModify(items, {
-              isArchived: false
-            });
+            await nodeStore.bulkModify(
+              items,
+              {
+                isArchived: false
+              },
+              additionalParams
+            );
             onSuccess(action, items.length, Resource.node);
             break;
           case "delete":
-            await nodeStore.bulkTrash(items);
+            await nodeStore.bulkTrash(items, additionalParams);
             onSuccess(action, items.length, Resource.node);
             break;
         }
       } else if (this.resource === Resource.collection) {
         switch (action) {
           case "star":
-            await collectionStore.bulkModify(items, {
-              isStarred: true
-            });
+            await collectionStore.bulkModify(
+              items,
+              {
+                isStarred: true
+              },
+              additionalParams
+            );
             onSuccess(action, items.length, Resource.collection);
             break;
           case "unstar":
-            await collectionStore.bulkModify(items, {
-              isStarred: false
-            });
+            await collectionStore.bulkModify(
+              items,
+              {
+                isStarred: false
+              },
+              additionalParams
+            );
             onSuccess(action, items.length, Resource.collection);
             break;
           case "archive":
-            await collectionStore.bulkModify(items, {
-              isArchived: true
-            });
+            await collectionStore.bulkModify(
+              items,
+              {
+                isArchived: true
+              },
+              additionalParams
+            );
             onSuccess(action, items.length, Resource.collection);
             break;
           case "unarchive":
-            await collectionStore.bulkModify(items, {
-              isArchived: false
-            });
+            await collectionStore.bulkModify(
+              items,
+              {
+                isArchived: false
+              },
+              additionalParams
+            );
             onSuccess(action, items.length, Resource.collection);
             break;
           case "delete":
-            await collectionStore.bulkTrash(items);
+            await collectionStore.bulkTrash(items, additionalParams);
             onSuccess(action, items.length, Resource.collection);
             break;
         }

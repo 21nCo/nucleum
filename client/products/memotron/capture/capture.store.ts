@@ -219,7 +219,9 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
         ? (params?.creationContext ?? this.get().nodeId)
         : undefined
     } as IMediaNode;
-    const result = await nodeStore.create([node]);
+    const result = await nodeStore.create([node], {
+      context: MemotronAction.CAPTURE
+    });
     this.postSave(result, {
       isOpenUponSuccess: !params?.isPreventOpenOnSave,
       isEmbedContext: params?.isEmbedContext
@@ -246,7 +248,9 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       } as IMediaNode;
       nodes.push(node);
     }
-    const result = await nodeStore.create(nodes);
+    const result = await nodeStore.create(nodes, {
+      context: MemotronAction.CAPTURE
+    });
     this.postSave(result);
     return result;
   }
@@ -288,7 +292,9 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
         duration
       }
     };
-    const result2 = await nodeStore.create(node);
+    const result2 = await nodeStore.create(node, {
+      context: MemotronAction.CAPTURE
+    });
     await this.saveLinks(id);
     this.postSave(result2, {
       isOpenUponSuccess: !params?.isPreventOpenOnSave,
@@ -316,7 +322,9 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       label: `Image Capture - ${new Date().toLocaleString()}`,
       body: {}
     };
-    const result2 = await nodeStore.create(node);
+    const result2 = await nodeStore.create(node, {
+      context: MemotronAction.CAPTURE
+    });
     await this.saveLinks(id);
     this.postSave(result2, { isOpenUponSuccess: true });
   }
@@ -357,7 +365,9 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
         };
       }
     }
-    const result = await nodeStore.create(node);
+    const result = await nodeStore.create(node, {
+      context: MemotronAction.CAPTURE
+    });
     this.postSave(result, {
       isOpenUponSuccess: !params?.isPreventOpenOnSave,
       isEmbedContext: params?.isEmbedContext
@@ -606,7 +616,9 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       console.timeEnd("children");
     }
 
-    let result: any = await nodeStore.create([root, ...remainingResources]);
+    let result: any = await nodeStore.create([root, ...remainingResources], {
+      context: MemotronAction.CAPTURE
+    });
     await this.saveLinks(id);
     this.postSave(result);
     console.timeEnd("saveMarkdownCapture");

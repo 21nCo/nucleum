@@ -213,9 +213,7 @@
     try {
       logger.log({ at: "onBulkAction", e });
       const items = deepCopy($multiSelectStore);
-      const editor = new BulkEditor(Resource.node, multiSelectStore, {
-        accessPointId: node.id
-      });
+      const editor = new BulkEditor(Resource.node, multiSelectStore);
       const result = await editor.run(e.detail);
       if (result) {
         if (e.detail === "unlink") {

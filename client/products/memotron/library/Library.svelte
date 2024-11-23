@@ -267,10 +267,7 @@
   async function onBulkAction(e: CustomEvent<string>) {
     try {
       const editor = new BulkEditor(selectedResource, multiSelectStore);
-      const result = await editor.run(e.detail);
-      if (result) {
-        await refresh();
-      }
+      await editor.run(e.detail);
     } catch (e) {
       toasts.error("Failed to perform bulk action");
     }
@@ -346,7 +343,6 @@
     const mutation = e.detail.params;
     logger.log({ at: "Library - onResourceMutation", resource, ...mutation });
     if (
-      resource === Resource.node &&
       mutation.action === PersistenceActionType.MERGE &&
       !watchProperties.some((x) => mutation.record[x] !== undefined)
     ) {
@@ -605,6 +601,11 @@
 <ComponentBaseLayer
   syncDownOnMount={true}
   subscribeTo={availableResources}
+  subscribeToContext={new Set([
+    ResourceAccessPoint.LIBRARY,
+    MemotronAction.CAPTURE,
+    resourceAction(Resource.collection, ResourceActionType.CREATE)
+  ])}
   on:syncDown={() => refresh()}
   on:change={onResourceMutation}
 />

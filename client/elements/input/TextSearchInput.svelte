@@ -32,6 +32,7 @@
   export let isPreventDefaultResults: boolean = false;
   export let isChipsMode: boolean = false;
   export let isInline: boolean = false;
+  export let width: string | undefined = undefined;
   let isFocused: boolean = false;
   let chips: any[] = [];
   let inputRef: any;
@@ -87,7 +88,9 @@
 
 {#if isInline}
   <div
-    class="flex flex-col gap-1 bg-bgs1 p-2 rounded-md mo:w-full w-[30rem] max-w-full"
+    class={cn("flex flex-col gap-1 bg-bgs1 p-2 rounded-md", width && width, {
+      "mo:w-full w-[30rem] max-w-full": !width
+    })}
   >
     <TextInput
       bind:value

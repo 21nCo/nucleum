@@ -23,6 +23,7 @@ import { ObservableStore } from "../../../stores/client.store";
 import { resolveCurrentUserId } from "../../../utils/account.utils";
 import type {
   IMultiSelectContext,
+  IMultiSelectStore,
   IResource,
   ITrashInformation,
   OmitForCapture,
@@ -45,13 +46,18 @@ const multiSelectStores = new Map<string, MultiSelectStore>();
 export function resolveMultiSelectStore(context: IMultiSelectContext) {
   const contextStr = JSON.stringify(context);
   if (!multiSelectStores.has(contextStr))
-    multiSelectStores.set(contextStr, new MultiSelectStore(contextStr));
+    multiSelectStores.set(contextStr, new MultiSelectStore(context));
   return multiSelectStores.get(contextStr)!;
 }
 
-export class MultiSelectStore extends ObservableStore<IRecordId[]> {
-  constructor(context: string) {
-    super(context, StoreDataType.NA);
+export class MultiSelectStore
+  extends ObservableStore<IRecordId[]>
+  implements IMultiSelectStore
+{
+  context: IMultiSelectContext;
+  constructor(context: IMultiSelectContext) {
+    super(JSON.stringify(context), StoreDataType.NA);
+    this.context = context;
     this.set([]);
   }
 
@@ -191,6 +197,7 @@ export class ResourceStore<T extends IResource> implements IStore {
       customQuery?: string;
       queueParams?: IMutationQueueParams;
       customQueryAdditionalParams?: { [key: string]: any };
+      context?: string;
     }
   ): Promise<T[] | undefined> {
     let commonProps = {
@@ -243,10 +250,17 @@ export class ResourceStore<T extends IResource> implements IStore {
       if (result) return resources;
       return result;
     }
-    return flux.mutation<T>(this.id, data);
+    return flux.mutation<T>(this.id, data, {
+      context: params?.context
+    });
   }
 
-  private persistModification(data: Partial<T>) {
+  private persistModification(
+    data: Partial<T>,
+    additionalParams?: {
+      context?: string;
+    }
+  ) {
     if (this.isExtensionEnvironment) {
       return extensionFlux({
         method: FluxMethod.MUTATION,
@@ -259,10 +273,16 @@ export class ResourceStore<T extends IResource> implements IStore {
         }
       });
     }
-    return flux.mutation<T>(this.id, {
-      action: PersistenceActionType.MERGE,
-      record: data
-    });
+    return flux.mutation<T>(
+      this.id,
+      {
+        action: PersistenceActionType.MERGE,
+        record: data
+      },
+      {
+        context: additionalParams?.context
+      }
+    );
   }
 
   private resolveDebouncerForPersist(id: string) {
@@ -290,6 +310,7 @@ export class ResourceStore<T extends IResource> implements IStore {
       isPreventBackPropagation?: boolean;
       isDebounced?: boolean;
       debounceKey?: string;
+      context?: string;
     }
   ) {
     if (!this.currentUserId || typeof this.currentUserId != "string") {
@@ -318,19 +339,34 @@ export class ResourceStore<T extends IResource> implements IStore {
         additionalParams.debounceKey ?? id.toString()
       )(data);
     }
-    return this.persistModification(data);
+    return this.persistModification(data, additionalParams);
   }
 
-  async trash(id: IRecordId) {
-    return this.modify(id, {
-      trashInformation: {
-        deletedBy: this.currentUserId,
-        deletedAt: new Date().toISOString()
-      }
-    } as Partial<T>);
+  async trash(
+    id: IRecordId,
+    additionalParams?: {
+      context?: string;
+    }
+  ) {
+    return this.modify(
+      id,
+      {
+        trashInformation: {
+          deletedBy: this.currentUserId,
+          deletedAt: new Date().toISOString()
+        }
+      } as Partial<T>,
+      additionalParams
+    );
   }
 
-  async bulkModify(ids: IRecordId[], data: Partial<T>) {
+  async bulkModify(
+    ids: IRecordId[],
+    data: Partial<T>,
+    additionalParams?: {
+      context?: string;
+    }
+  ) {
     if (this.isExtensionEnvironment) {
       return extensionFlux({
         method: FluxMethod.MUTATION,
@@ -348,38 +384,80 @@ export class ResourceStore<T extends IResource> implements IStore {
         }
       });
     }
-    return flux.mutation<T>(this.id, {
-      action: PersistenceActionType.BULK_MERGE,
-      records: ids.map((id) => ({
-        id,
-        ...data,
-        modifiedBy: this.currentUserId,
-        modifiedAt: new Date().toISOString()
-      }))
-    });
-  }
-  async bulkTrash(ids: IRecordId[]) {
-    return this.bulkModify(ids, {
-      trashInformation: {
-        deletedBy: this.currentUserId,
-        deletedAt: new Date().toISOString()
+    return flux.mutation<T>(
+      this.id,
+      {
+        action: PersistenceActionType.BULK_MERGE,
+        records: ids.map((id) => ({
+          id,
+          ...data,
+          modifiedBy: this.currentUserId,
+          modifiedAt: new Date().toISOString()
+        }))
+      },
+      {
+        context: additionalParams?.context
       }
-    } as Partial<T>);
+    );
   }
-  archive(id: IRecordId) {
-    return this.modify(id, {
-      isArchived: true
-    } as Partial<T>);
+  async bulkTrash(
+    ids: IRecordId[],
+    additionalParams?: {
+      context?: string;
+    }
+  ) {
+    return this.bulkModify(
+      ids,
+      {
+        trashInformation: {
+          deletedBy: this.currentUserId,
+          deletedAt: new Date().toISOString()
+        }
+      } as Partial<T>,
+      additionalParams
+    );
   }
-  unarchive(id: IRecordId) {
-    return this.modify(id, {
-      isArchived: false
-    } as Partial<T>);
+  archive(
+    id: IRecordId,
+    additionalParams?: {
+      context?: string;
+    }
+  ) {
+    return this.modify(
+      id,
+      {
+        isArchived: true
+      } as Partial<T>,
+      additionalParams
+    );
   }
-  restore(id: IRecordId) {
-    return this.modify(id, {
-      trashInformation: undefined
-    } as Partial<T>);
+  unarchive(
+    id: IRecordId,
+    additionalParams?: {
+      context?: string;
+    }
+  ) {
+    return this.modify(
+      id,
+      {
+        isArchived: false
+      } as Partial<T>,
+      additionalParams
+    );
+  }
+  restore(
+    id: IRecordId,
+    additionalParams?: {
+      context?: string;
+    }
+  ) {
+    return this.modify(
+      id,
+      {
+        trashInformation: undefined
+      } as Partial<T>,
+      additionalParams
+    );
   }
 
   /**

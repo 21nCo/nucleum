@@ -74,7 +74,20 @@
       case "d3-force":
         return {
           type: "d3-force",
-          linkDistance: 350
+          link: {
+            distance: 100
+          },
+          manyBody: {
+            strength: -300,
+            distanceMax: 500
+          },
+          collide: {
+            radius: 40,
+            strength: 0.8
+          },
+          center: {
+            strength: 0.05
+          }
         };
     }
   }
@@ -83,7 +96,7 @@
     graph = new Graph({
       container: "globalgraphcontainer",
       data: _data,
-      autoFit: "center",
+      autoFit: "view",
       animation: false,
       node: {
         // palette: {

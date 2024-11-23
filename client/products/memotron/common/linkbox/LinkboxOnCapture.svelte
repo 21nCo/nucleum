@@ -11,7 +11,6 @@
   import { LinkType } from "../../node/node.type";
   const dispatch = createEventDispatcher();
   let link: string;
-  $: console.log({ at: "linkbox", links: $captureStore.links });
 </script>
 
 <section class="flex flex-col gap-2 w-full">

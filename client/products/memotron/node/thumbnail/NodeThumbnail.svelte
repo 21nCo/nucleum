@@ -33,6 +33,7 @@
   import NodeThumbnailProperties from "./NodeThumbnailProperties.svelte";
   import type { IProperty } from "../../collection/properties/property.type";
   import { isValidString } from "$lib/shared/utils/text.utils";
+  import ImagePreview from "../content/ImagePreview.svelte";
   export let item: INodeThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let isHidePreview: boolean = false;
@@ -129,12 +130,12 @@
                 })}
               />
             {:else if urlPreview}
-              <img
-                alt="..."
+              <ImagePreview
+                src={urlPreview}
+                {arrangement}
                 class={cn("object-cover h-full w-full", {
                   "rounded-md": accessPoint === ResourceAccessPoint.NODE_LINKS
                 })}
-                use:lazyLoad={urlPreview}
               />
             {:else if item.contentType === NodeType.AUDIO && _url}
               <span class="w-full h-full overflow-clip">
@@ -217,13 +218,13 @@
               class="absolute inset-0 w-full rounded-t-md object-cover h-full"
             />
           {:else if urlPreview}
-            <img
-              alt="..."
+            <ImagePreview
+              src={urlPreview}
+              {arrangement}
               class={cn("absolute inset-0 w-full  h-full", {
                 "object-contain": isShouldContainImage,
                 "rounded-t-md object-cover": !isShouldContainImage
               })}
-              use:lazyLoad={urlPreview}
             />
           {:else if item.contentType === NodeType.PDF && _url}
             <NodeThumbnailPdfPreview url={_url} />
@@ -283,14 +284,14 @@
         on:load
       />
     {:else if urlPreview}
-      <img
-        alt="..."
+      <ImagePreview
+        src={urlPreview}
+        {arrangement}
+        on:load
         class={cn("w-full h-auto", {
           "rounded-md": isHideTitle,
           "rounded-t-md": !isHideTitle
         })}
-        on:load
-        use:lazyLoad={urlPreview}
       />
     {:else if item.contentType === NodeType.AUDIO && _url}
       <span class="w-full h-full overflow-clip relative z-0">

@@ -610,7 +610,7 @@ export function resolveNodeContextMenu(
     isConstrainedWidth?: boolean;
   }
 ): IContextMenu {
-  const resourceActions = new ResourceActions(node, nodeStore);
+  const resourceActions = new ResourceActions(node, nodeStore, accessPoint);
   const ctx = get(context);
   let commonGroups: { group: string; items: IContextMenuItem[] }[] = [];
   if (ctx.isEmbed) {

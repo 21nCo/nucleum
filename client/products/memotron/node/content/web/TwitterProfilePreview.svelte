@@ -24,7 +24,7 @@
       />
     </div>
     <div class="flex flex-col gap-1">
-      <div>{node.body.name}</div>
+      <div>{node.label ?? node.body.name}</div>
       <div class="text-b3 text-fgs3">@{resolveUsername()}</div>
     </div>
     {#if node.body.bio}

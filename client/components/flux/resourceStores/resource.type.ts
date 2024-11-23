@@ -1,3 +1,4 @@
+import type { ObservableStore } from "$lib/client/stores/client.store";
 import type { IRecordId } from "$lib/client/types/data.type";
 import type { Resource } from "./resource.enum";
 
@@ -210,4 +211,8 @@ export interface IMultiSelectContext {
   resource: Resource;
   accessPoint: ResourceAccessPoint;
   accessPointId?: IRecordId;
+}
+
+export interface IMultiSelectStore extends ObservableStore<IRecordId[]> {
+  context: IMultiSelectContext;
 }

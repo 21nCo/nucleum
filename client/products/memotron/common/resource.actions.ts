@@ -27,10 +27,12 @@ import { MemotronAction } from "../memotronAction.enum";
 export class ResourceActions<T extends IMemotronItemBase> {
   constructor(
     private resource: T,
-    private store: ResourceStore<T>
+    private store: ResourceStore<T>,
+    private accessPoint: ResourceAccessPoint
   ) {
     this.resource = resource;
     this.store = store;
+    this.accessPoint = accessPoint;
   }
   copyLink(): IContextMenuItem {
     return {
@@ -54,9 +56,15 @@ export class ResourceActions<T extends IMemotronItemBase> {
       value: "star",
       icon: "star",
       callback: async () => {
-        this.store.modify(this.resource.id, {
-          isStarred: !this.resource.isStarred
-        } as T);
+        this.store.modify(
+          this.resource.id,
+          {
+            isStarred: !this.resource.isStarred
+          } as T,
+          {
+            context: this.accessPoint
+          }
+        );
       }
     };
   }
@@ -66,8 +74,12 @@ export class ResourceActions<T extends IMemotronItemBase> {
       icon: "ph:archive-light",
       callback: async () => {
         this.resource.isArchived
-          ? this.store.unarchive(this.resource.id)
-          : this.store.archive(this.resource.id);
+          ? this.store.unarchive(this.resource.id, {
+              context: this.accessPoint
+            })
+          : this.store.archive(this.resource.id, {
+              context: this.accessPoint
+            });
       }
     };
   }
@@ -77,8 +89,12 @@ export class ResourceActions<T extends IMemotronItemBase> {
       icon: "ph:trash-light",
       callback: async () => {
         this.resource.trashInformation
-          ? this.store.restore(this.resource.id)
-          : this.store.trash(this.resource.id);
+          ? this.store.restore(this.resource.id, {
+              context: this.accessPoint
+            })
+          : this.store.trash(this.resource.id, {
+              context: this.accessPoint
+            });
       }
     };
   }

@@ -1,10 +1,8 @@
 <script lang="ts">
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import Button from "$lib/client/elements/button/Button.svelte";
   import Divider from "$lib/client/elements/Divider.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
-  import Popover from "$lib/client/elements/popover/Popover.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { toasts } from "$lib/client/stores/notification.store";
   import { ColorStrength } from "$lib/client/types/appearance.type";
@@ -15,21 +13,18 @@
   import type { IActiveNodeStore } from "../node.store";
   import { resolveNodeContentLabel, resolveNodeIcon } from "../node.utils";
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { tooltip } from "$lib/client/actions/popover.action";
+  import { popover, tooltip } from "$lib/client/actions/popover.action";
   import { headingNodeTypes, NodeType } from "../node.type";
 
   export let node: IActiveNodeStore;
-  let searchQuery = "";
   let popoverRef: any;
-  let searchInputRef: any;
   $: isPreventContentTypeRender = headingNodeTypes.includes($node.contentType);
   async function onUnlink(e: CustomEvent) {
     await node.unlinkCollection(e.detail);
   }
-  async function onSelect(e: CustomEvent) {
-    popoverRef.hide();
-    searchQuery = "";
-    const id = e.detail.item.id;
+  async function onSelect(item: any) {
+    hidePopover();
+    const id = item.id;
     if (!id) {
       toasts.error("Something went wrong. Please try again later.");
       return;
@@ -47,6 +42,9 @@
 
   function onClick(e: CustomEvent) {
     appStore.resourceClickHandler(e.detail.event, e.detail.item);
+  }
+  function hidePopover() {
+    popoverRef?.dispatchEvent(new CustomEvent("hide"));
   }
 </script>
 
@@ -95,25 +93,20 @@
       />
     </span>
   {/if}
-  <Popover
+  <div
     bind:this={popoverRef}
-    on:show={() => {
-      searchInputRef?.focus();
+    use:popover={{
+      content: LinkSearch,
+      componentProps: {
+        onSelectCallback: onSelect,
+        searchQuery: "",
+        onHideCallback: () => {
+          hidePopover();
+        },
+        context: "nodepageCollectionsLane"
+      }
     }}
   >
     <Button icon="plus" size={Size.sm} tooltip="Add to a collection" />
-    <slot name="popover" slot="popover">
-      <div class="w-96">
-        <LinkSearch
-          bind:this={searchInputRef}
-          context="nodepageCollectionsLane"
-          bind:searchQuery
-          on:select={onSelect}
-          on:hide={() => {
-            popoverRef?.hide();
-          }}
-        />
-      </div>
-    </slot>
-  </Popover>
+  </div>
 </div>

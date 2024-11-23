@@ -8,6 +8,9 @@
   import { onMount } from "svelte";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
+  import { createEventDispatcher } from "svelte";
+  import view from "$lib/client/stores/view.store";
+  const dispatch = createEventDispatcher();
   export let context:
     | "capture"
     | "nodelinkspane"
@@ -15,6 +18,8 @@
     | "nodepageCollectionsLane" = "capture";
   export let resultsPlacement: Placement = Placement.BottomCenter;
   export let searchQuery: string;
+  export let onSelectCallback: ((item: any) => void) | undefined = undefined;
+  export let onHideCallback: (() => void) | undefined = undefined;
   let popoverOptions: IPopoverOptions;
   let inputStyle: InputStyle = InputStyle.PLAIN;
   let placeholder: string =
@@ -31,7 +36,7 @@
 
   onMount(() => {
     if (context === "nodepageCollectionsLane") {
-      searchInputRef?.focus();
+      focus();
     }
   });
 
@@ -93,12 +98,25 @@
     }
     return new SearchStore().searchForLinking(searchQuery, { resource });
   }
+
+  function onSelect(e: CustomEvent) {
+    onSelectCallback?.(e.detail.item);
+    dispatch("select", e.detail);
+  }
+
+  function onHide() {
+    onHideCallback?.();
+    dispatch("hide");
+  }
 </script>
 
 <TextSearchInput
   bind:this={searchInputRef}
   bind:value={searchQuery}
   isInline={context === "nodepageCollectionsLane"}
+  width={context === "nodepageCollectionsLane" && $view.isPortrait
+    ? "w-80"
+    : undefined}
   style={inputStyle}
   {icon}
   {label}
@@ -108,8 +126,8 @@
       context === "nodepageCollectionsLane" || context === "nodelinkspane"
   }}
   {popoverOptions}
-  on:select
-  on:hide
+  on:select={onSelect}
+  on:hide={onHide}
   searchCallback={onsearch}
   {placeholder}
 />

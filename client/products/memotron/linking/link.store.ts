@@ -14,6 +14,7 @@ import { get } from "svelte/store";
 import { linkTagLabelMapper } from "./link.utils";
 import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+import type { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
 
 class Linker extends ResourceStore<INodeLink> {
   constructor() {
@@ -117,13 +118,20 @@ class Linker extends ResourceStore<INodeLink> {
     return true;
   }
 
-  async linkMany(links: any[]) {
-    const response = await this.create(links);
+  async linkMany(links: any[], context?: ResourceAccessPoint) {
+    const response = await this.create(links, {
+      context
+    });
     logger.log({ at: "linkMany", links, response });
     return response;
   }
 
-  async bulkLink(items: IRecordId[], to: IRecordId, toType: Resource) {
+  async bulkLink(
+    items: IRecordId[],
+    to: IRecordId,
+    toType: Resource,
+    context?: ResourceAccessPoint
+  ) {
     const links = items.map((item) => {
       return {
         in: item,
@@ -132,7 +140,7 @@ class Linker extends ResourceStore<INodeLink> {
         linkType: LinkType.DIRECT
       };
     });
-    const response = await this.linkMany(links);
+    const response = await this.linkMany(links, context);
     logger.log({ at: "bulkLink", items, to, response });
     return response;
   }

@@ -47,7 +47,12 @@ class CollectionStore extends ResourceStore<ICollection> {
   constructor() {
     super(Resource.collection);
   }
-  async save(form: Partial<ICollection> & { defaultLayout: CollectionLayout }) {
+  async save(
+    form: Partial<ICollection> & { defaultLayout: CollectionLayout },
+    additionalParams?: {
+      context?: string;
+    }
+  ) {
     const id = generateResourceId(Resource.collection);
     const propertyEditor = propertyEditorStore.get();
     logger.log({ at: "CollectionStore.save", propertyEditor, form });
@@ -77,7 +82,7 @@ class CollectionStore extends ResourceStore<ICollection> {
       subGroupBy: "none"
     });
     resource.views = [viewId];
-    return super.create(resource);
+    return super.create(resource, additionalParams);
   }
 
   /**
@@ -460,7 +465,11 @@ export function resolveCollectionContextMenu(
   collection: ICollection,
   accessPoint: ResourceAccessPoint
 ): IContextMenu {
-  const resourceActions = new ResourceActions(collection, collectionStore);
+  const resourceActions = new ResourceActions(
+    collection,
+    collectionStore,
+    accessPoint
+  );
   const ctx = get(context);
   let commonGroups: { group: string; items: IContextMenuItem[] }[] = [];
   if (ctx.isEmbed) {
