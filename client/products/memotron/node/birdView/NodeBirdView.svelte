@@ -27,7 +27,6 @@
   import type { DropdownItem } from "$lib/client/types/dropdownItem.type";
   import type { ILinkTag } from "../../linking/link.type";
   import { onMount } from "svelte";
-  import Badge from "$lib/client/elements/text/Badge.svelte";
   import { enumToString } from "$lib/shared/utils/text.utils";
   import type { IRecordId } from "$lib/client/types/data.type";
   import view from "$lib/client/stores/view.store";
@@ -389,7 +388,6 @@
           bind:value={selectedView}
         />
       {/if}
-      <Badge text="beta" />
     </div>
     <div class="flex tp:gap-6 2k:gap-8 items-center">
       <div class="flex gap-4 items-center">

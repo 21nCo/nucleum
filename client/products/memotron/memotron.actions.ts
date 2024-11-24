@@ -258,7 +258,7 @@ export const memotronActions: IAction[] = [
     action: MemotronAction.LIBRARY,
     label: "Library",
     // icon: "globe-alt",
-    icon: "ph:globe",
+    icon: "ph:globe-light",
     component: Library,
     type: ActionType.PAGE,
     modalParams: {
@@ -466,7 +466,7 @@ export const memotronActions: IAction[] = [
     action: "graph",
     type: ActionType.PAGE,
     label: "Graph",
-    icon: "ph:graph",
+    icon: "ph:graph-light",
     component: GlobalGraph
   },
   {

@@ -2,7 +2,7 @@
   import AvatarRenderer from "$lib/client/elements/avatarPicker/AvatarRenderer.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import context from "$lib/client/stores/context.store";
-  import { Embed } from "$lib/client/types/context.type";
+  import { OperatingSystem } from "$lib/client/types/context.type";
   import type { ISelectItem } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
@@ -32,14 +32,14 @@
     if (
       item.value === CaptureType.UPLOAD &&
       $context.isEmbed &&
-      $context.embed === Embed.HANDSET
+      $context.os === OperatingSystem.IOS
     ) {
       inputRef?.click();
     }
     dispatch("click", item.value);
   }}
 >
-  {#if item.value === CaptureType.UPLOAD && $context.isEmbed && $context.embed === Embed.HANDSET}
+  {#if item.value === CaptureType.UPLOAD && $context.isEmbed && $context.os === OperatingSystem.IOS}
     <input
       bind:this={inputRef}
       type="file"

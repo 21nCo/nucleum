@@ -1,5 +1,6 @@
 <script lang="ts">
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
   import AvatarRenderer from "$lib/client/elements/avatarPicker/AvatarRenderer.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
@@ -26,7 +27,9 @@
     <Icon icon="ph:circles-four" size={Size.sm} />
   {/if}
   <span class="text-left truncate font--medium userdata">
-    {#if item.label}
+    {#if item.labelSearch}
+      {@html renderMdAsHtml(item.labelSearch)}
+    {:else if item.label}
       {item.label}
     {:else}
       {resolveEmptyLabel()}

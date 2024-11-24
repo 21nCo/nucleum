@@ -21,6 +21,7 @@
   export let node: INode;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   export let isHidePreview: boolean = false;
+  export let renderingDetails: any = undefined;
   let pdfContent: any;
   let webContentRef: any;
   let _file: IFile;
@@ -106,7 +107,7 @@
     {accessPoint}
   />
 {:else if (node.contentType === NodeType.IMAGE || node.contentType === NodeType.VIDEO) && _file}
-  <FileView file={_file} class="!object-contain" />
+  <FileView file={_file} bind:renderingDetails class="!object-contain" />
 {:else if webNodeTypeList.includes(node.contentType)}
   <WebNodeContent {node} bind:this={webContentRef} {accessPoint} />
 {:else if node.contentType === NodeType.PDF && _url}

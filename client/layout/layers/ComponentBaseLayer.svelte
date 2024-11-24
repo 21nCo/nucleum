@@ -1,10 +1,15 @@
 <script lang="ts">
   import { flux } from "$lib/client/components/flux/flux";
   import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
   import account from "$lib/client/stores/account.store";
   import { appStore } from "$lib/client/stores/app.store";
   import context from "$lib/client/stores/context.store";
   import { UserDataMode } from "$lib/client/types/account.type";
+  import {
+    PersistenceActionType,
+    type IRecordId
+  } from "$lib/client/types/data.type";
   import { createEventDispatcher, onDestroy, onMount } from "svelte";
 
   const dispatch = createEventDispatcher();
@@ -19,7 +24,12 @@
    */
   export let subscribeTo: Set<Resource> = new Set();
 
-  export let subscribeToContext: Set<string> = new Set();
+  export let subscribeToContext: Set<string> | undefined = undefined;
+
+  /**
+   * change event will only trigger if the specified resource is mutated. If undefined, change event will trigger as per {@link subscribeTo} and {@link subscribeToContext}
+   */
+  export let subscribeToResource: IRecordId | undefined = undefined;
 
   /**
    * Performs sync down action on mount if the user is a cloud user and if this flag is set to true
@@ -55,12 +65,18 @@
   function onMutation(
     e: CustomEvent<{ resource: Resource; params: any; context: string }>
   ) {
+    const data = e.detail;
     if (
-      e.detail &&
-      subscribeTo.has(e.detail.resource) &&
-      subscribeToContext.has(e.detail.context)
+      data &&
+      subscribeTo.has(data.resource) &&
+      ((subscribeToContext && subscribeToContext.has(data.context)) ||
+        !subscribeToContext) &&
+      ((subscribeToResource &&
+        data.params?.action === PersistenceActionType.MERGE &&
+        isSameResource(data.params?.record?.id, subscribeToResource)) ||
+        !subscribeToResource)
     ) {
-      dispatch("change", e.detail);
+      dispatch("change", data);
     }
   }
 </script>

@@ -62,8 +62,8 @@
     {#if typeof _label === "string"}
       {_label ?? "Unknown"}
     {:else if typeof _label === "object" && "parent" in _label}
-      <span class="flex w-full gap-1 items-center">
-        <span>
+      <span class="flex w-full gap-1 items-center truncate">
+        <span class="truncate">
           {#if accessPoint === ResourceAccessPoint.SEARCH_RESULT}
             {_label?.text ?? _label?.label}
           {:else}

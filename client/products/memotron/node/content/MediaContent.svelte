@@ -21,20 +21,7 @@
       ? NodeRightPaneType.TRACES
       : undefined;
   let renderingDetails: any;
-  let imgRef: HTMLImageElement;
   let contentRef: MediaContentResolver;
-  let isPortrait = true;
-
-  //TODO - renderingDetails realying to wherever necessary
-  $: if (imgRef) {
-    isPortrait = imgRef.naturalHeight > imgRef.naturalWidth;
-    renderingDetails = {
-      originalHeight: imgRef.naturalHeight,
-      originalWidth: imgRef.naturalWidth,
-      renderedHeight: imgRef.clientHeight,
-      renderedWidth: imgRef.clientWidth
-    };
-  }
 
   function contextEventListener(event: string, data: any) {
     console.log({ event, data });
@@ -74,6 +61,7 @@
         node={$node}
         on:refresh
         bind:this={contentRef}
+        bind:renderingDetails
         on:annotation={onAnnotation}
       />
     </main>

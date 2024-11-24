@@ -18,13 +18,15 @@
 
 <!-- TODO - improve search results - to show image preview, tweet preview, etc -->
 <button
-  class={cn("flex w-full justify-between items-center py-2 px-1 min-h-fit")}
+  class={cn(
+    "flex w-full gap-6 justify-between items-center px-1 py-2 min-h-fit"
+  )}
   on:click
 >
   <span
     class={cn("flex flex-col h-full", {
       "w-full": isHideResourceType,
-      "mo:w-4/5 w-3/4": !isHideResourceType,
+      "mo:w--4/5 w--3/4 min-w-0 flex-1": !isHideResourceType,
       italic: !isHideResourceType && resourceType === Resource.collection
     })}
   >
@@ -40,7 +42,9 @@
         />
       </div>
       {#if item.bodySearch}
-        <div class="text-left text-b2 text-fgs3 max-h-12 overflow-hidden">
+        <div
+          class="text-left text-b2 text-fgs3 text-opacity-80 max-h-12 overflow-hidden"
+        >
           {@html renderMdAsHtml(item.bodySearch)}
         </div>
       {/if}
@@ -49,6 +53,8 @@
     {/if}
   </span>
   {#if !isHideResourceType}
-    <span class="text-b3 text-fgs3">{properCase(resourceType)}</span>
+    <span class="text-b3 text-fgs3 border border-brs2 rounded-md px-2 py-0.5"
+      >{properCase(resourceType)}</span
+    >
   {/if}
 </button>

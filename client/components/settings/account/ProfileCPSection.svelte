@@ -13,37 +13,12 @@
   import { Modes } from "../../calendar/birdView/Birdview.type";
   import modalEvent from "../../modal/modal.store";
   import { Action } from "$lib/client/types/action.enum";
+  import { resolveLicenseString } from "$lib/client/utils/account.utils";
   export let context: "page" | "modal" = "page";
   export let parentBackgroundIndex: number = 1;
 
   function determineLicense() {
-    if ($account.userInfo?.licenseType) {
-      switch ($account.userInfo?.licenseType) {
-        case LicenseType.EA_LIFETIME:
-          return "Early Adopter - lifetime license";
-        case LicenseType.EA_EXTENDED:
-          return "Early Adopter - 2 years extended trial";
-        case LicenseType.FREE:
-          return "Free plan";
-      }
-    } else if ($account.userInfo?.joinDate) {
-      const joinDate = new Date($account.userInfo?.joinDate);
-      const joinDateIsBeforeJan012024 = joinDate < new Date(2024, 1, 1);
-      const joinDateIsBeforeNov132024 = joinDate < new Date(2024, 10, 13);
-      const joinDateIsBeforeNov182024 = joinDate < new Date(2024, 10, 18);
-      const joinDateIsBeforeDec012024 = joinDate < new Date(2024, 11, 1);
-      if (joinDateIsBeforeJan012024) {
-        return "Early Adopter - lifetime license";
-      } else if (joinDateIsBeforeNov132024) {
-        return "1 year free cloud sync 🎉 (First 500 early adopters)";
-      } else if (joinDateIsBeforeNov182024) {
-        return "4 mo free cloud sync 🎉 (First 1000 early adopters)";
-      } else if (joinDateIsBeforeDec012024) {
-        return "2 mo free cloud sync 🎉 (First 5000 users)";
-      } else {
-        return "Early Adopter - limited free cloud sync trial";
-      }
-    }
+    return resolveLicenseString($account.userInfo);
   }
 </script>
 

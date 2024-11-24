@@ -112,12 +112,9 @@
         break;
 
       case BlockAction.COPY_BLOCK_TEXT:
-        if (
-          !simpleTextNodeTypeList.includes(block.contentType) ||
-          typeof block.body !== "string"
-        )
-          return;
-        copyToClipboard(block.body);
+        const text = resolveBodyText();
+        if (!text) return;
+        copyToClipboard(text);
         toasts.success("Block copied to clipboard");
         break;
 
@@ -183,18 +180,18 @@
     ) {
       insertBufferBlock(block.id);
     }
+  }
 
-    /**
-     * Resolves body text for simple text and non simple text node types
-     */
-    function resolveBodyText(): string | undefined {
-      if (simpleTextNodeTypeList.includes(block.contentType))
-        return block.body as string;
-      else if (nonSimpleTextNodeTypeList.includes(block.contentType))
-        return (block.body as INonSimpleTextBlockBody).text;
-      else if (headingNodeTypes.includes(block.contentType)) {
-        return block.label ?? block.body;
-      }
+  /**
+   * Resolves body text for simple text and non simple text node types
+   */
+  function resolveBodyText(): string | undefined {
+    if (simpleTextNodeTypeList.includes(block.contentType))
+      return block.body as string;
+    else if (nonSimpleTextNodeTypeList.includes(block.contentType))
+      return (block.body as INonSimpleTextBlockBody).text;
+    else if (headingNodeTypes.includes(block.contentType)) {
+      return block.label ?? block.body;
     }
   }
 

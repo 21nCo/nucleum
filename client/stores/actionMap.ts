@@ -89,7 +89,10 @@ export const globalActions: IAction[] = [
     // type: ActionType.LINK
     type: ActionType.FUNCTION,
     fn: async (params?: IActionFnParams) => {
-      if (params?.context?.embed === Embed.HANDSET) {
+      if (
+        params?.context?.embed === Embed.HANDSET ||
+        params?.context?.embed === Embed.TABLET
+      ) {
         appStore.runAction(Action.GUIDES + "mobile");
       } else {
         appStore.runAction(Action.GUIDES + "hashnode");

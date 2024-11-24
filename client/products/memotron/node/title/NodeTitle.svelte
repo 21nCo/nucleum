@@ -18,7 +18,11 @@
   $: isWebNode = webNodeTypeList.includes(node.contentType);
 </script>
 
-<div class="flex items-center flex-1 min-w-0 max-w-fit gap-2">
+<div
+  class={cn("flex items-center flex-1 min-w-0 gap-2", {
+    "max-w-fit": !node.isInEditMode
+  })}
+>
   {#if !node.focusedBlock}
     <!-- {#if !isWebNode || node.contentType === NodeType.WEB_PAGE}
       <NodeAvatar

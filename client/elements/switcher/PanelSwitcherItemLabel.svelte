@@ -25,7 +25,7 @@
   let labelEditPopoverRef: any;
   let inputRef: any;
   $: if (triggerItemEdit && triggerItemEdit === item.value.toString()) {
-    console.log({ triggerItemEdit, labelEditPopoverRef });
+    // console.log({ triggerItemEdit, labelEditPopoverRef });
     setTimeout(() => {
       labelEditPopoverRef?.show();
       inputRef?.focus();

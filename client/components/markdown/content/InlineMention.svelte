@@ -29,7 +29,7 @@
 >
   <span class="underline-dotted-primary">
     {#if isLoading}
-      {label ?? "Adding..."}
+      {label ?? "Loading..."}
     {:else}
       {isValidString(truncateString(resolveNodeLabelString(resource), 50)) ??
         "Unknown"}

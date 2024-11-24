@@ -85,6 +85,7 @@
         selectedIndex = index;
         select();
       }}
+      isSearchAction={true}
     >
       {#if action.searchActionParams?.searchResultComponent}
         <svelte:component

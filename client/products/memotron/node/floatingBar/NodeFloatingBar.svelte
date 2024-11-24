@@ -92,6 +92,9 @@
         ]}
         style={PanelSwitcherStyle.BAR}
         barStyle={BarStyle.DOT}
+        on:switch={(e) => {
+          dispatch("view", e.detail);
+        }}
       />
     </span>
   {/if}

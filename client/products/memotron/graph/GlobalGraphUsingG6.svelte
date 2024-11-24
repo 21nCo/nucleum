@@ -32,7 +32,7 @@
         label: n.label,
         type: n.type ?? "circle",
         style: {
-          labelText: truncateString(n.label ?? "", 20),
+          labelText: truncateString(n.label ?? "", 30),
           innerHTML: n.innerHTML,
           size: n.type === "html" ? [120, 40] : 20,
           icon: n.icon ? true : false,

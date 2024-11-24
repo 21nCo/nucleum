@@ -170,6 +170,10 @@ export function resolveNodeContentLabel(contentType: NodeType) {
       return "Web Screenshot";
     case NodeType.YOUTUBE_TIMESTAMP_CLIP:
       return "Youtube Clip";
+    case NodeType.TWEET:
+      return "X Post";
+    case NodeType.TWITTER_PROFILE:
+      return "X Profile";
     default:
       return properCase(enumToString(contentType));
   }

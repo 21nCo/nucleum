@@ -31,7 +31,7 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import view from "$lib/client/stores/view.store";
   import context from "$lib/client/stores/context.store";
-  import { Embed, OperatingSystem } from "$lib/client/types/context.type";
+  import { OperatingSystem } from "$lib/client/types/context.type";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
 
   export let isWindowDnD = false;
@@ -113,7 +113,7 @@
     if (
       e.detail === CaptureType.UPLOAD &&
       $context.isEmbed &&
-      $context.embed === Embed.HANDSET
+      $context.os === OperatingSystem.IOS
     ) {
       return;
     }

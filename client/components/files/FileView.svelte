@@ -29,6 +29,7 @@
   export let repositionParams: IImageRepositionerOptions | undefined =
     undefined;
   export let isHideControls: boolean = false;
+  export let renderingDetails: any = undefined;
   let classList: string = "";
   export { classList as class };
   $: _id = id ?? file?.id;
@@ -67,12 +68,24 @@
   function handlePositionChange(newPosition: number) {
     dispatch("reposition", newPosition);
   }
+
+  function onImageLoad(e: Event) {
+    if (ref && ref instanceof HTMLImageElement) {
+      renderingDetails = {
+        originalHeight: ref.naturalHeight,
+        originalWidth: ref.naturalWidth,
+        renderedHeight: ref.clientHeight,
+        renderedWidth: ref.clientWidth
+      };
+    }
+    dispatch("load", e);
+  }
 </script>
 
 {#if type === FileType.IMAGE}
   <img
     alt="file"
-    on:load
+    on:load={onImageLoad}
     class={classList + " ph-no-capture userdata"}
     draggable={isDraggable}
     use:fileLoaderv2={{ source: resolveSrc, isLazyLoad, id: _id?.toString() }}

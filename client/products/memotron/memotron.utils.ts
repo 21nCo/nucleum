@@ -109,23 +109,24 @@ export const highlightSearchQuery = (items: any[], searchQuery: string) => {
     if (aLabel.includes(normalizedQuery)) {
       labelSearch = item.label.replace(
         new RegExp(`(${searchQuery})`, "gi"),
-        "**$1**"
+        "`$1`"
       );
     }
 
     if (aText.includes(normalizedQuery)) {
       const matchIndex = aText.indexOf(normalizedQuery);
-      const contextLength = 100;
-      if (item.text.length <= contextLength * 2 + searchQuery.length) {
+      const preContextLength = 50;
+      const postContextLength = 100;
+      if (item.text.length <= preContextLength * 2 + searchQuery.length) {
         bodySearch = item.text
           .replace(/[\r\n\s]+/g, " ")
           .trim()
           .replace(new RegExp(`(${searchQuery})`, "gi"), "`$1`");
       } else {
-        const startIndex = Math.max(0, matchIndex - contextLength);
+        const startIndex = Math.max(0, matchIndex - preContextLength);
         const endIndex = Math.min(
           item.text.length,
-          matchIndex + searchQuery.length + contextLength
+          matchIndex + searchQuery.length + postContextLength
         );
 
         let truncatedText = item.text

@@ -37,12 +37,12 @@
 <aside
   class={cn("flex justify--end gap-2 h-full overflow-auto", {
     "mr-2 mb-2 bg-bgs2 rounded-md": nodePageVariant === "v1",
-    "max-w-[28rem] w-[28rem] min-w-[28rem]": !isRightPanelCollapsed
+    "max-w-[28rem] w-[28rem] min-w-[28rem]": !isRightPanelCollapsed && pane
   })}
 >
   <div
     class={cn("flex flex-col justify-between items-center", {
-      " border-r border-r-brs2": !isRightPanelCollapsed
+      " border-r border-r-brs2": !isRightPanelCollapsed && pane
     })}
   >
     <VerticalSwitcher
@@ -57,7 +57,7 @@
       on:switch={onRightPanelSwitch}
     />
   </div>
-  {#if !isRightPanelCollapsed}
+  {#if !isRightPanelCollapsed && pane && pane !== NodeRightPaneType.NONE}
     <NodeRightPanelContent {node} {mdId} {pane} on:close />
   {/if}
 </aside>

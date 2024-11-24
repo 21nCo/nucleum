@@ -8,7 +8,6 @@
   import { removeDuplicatesFilter } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { appStore } from "$lib/client/stores/app.store";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
-  import Badge from "$lib/client/elements/text/Badge.svelte";
   import { resolveNodeLabel, resolveNodeLabelString } from "../node/node.utils";
   import NodeAvatar from "../node/avatar/NodeAvatar.svelte";
   import NodeTitleLabelPart from "../node/title/NodeTitleLabelPart.svelte";
@@ -173,10 +172,7 @@
         containerWidth = e.width;
       }}
     >
-      <span class="flex gap-3 items-center whitespace-nowrap">
-        Graph
-        <Badge text="beta" />
-      </span>
+      <span class="flex gap-3 items-center whitespace-nowrap"> Graph </span>
       <span class="flex items-center gap-3 text-fgs3 text-b3 h-full">
         {#if !isConstrainedWidth}
           <span>

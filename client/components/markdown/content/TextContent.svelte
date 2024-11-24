@@ -194,7 +194,6 @@
     else isRenderMentionSearch = true;
     setTimeout(() => {
       popoverRef.show();
-      if (isRenderMentionSearch) mentionSearchRef.search();
     }, 10);
   }
   /**

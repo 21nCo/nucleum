@@ -247,7 +247,13 @@ export class ActiveNodeStore extends ActiveResourceStore<
         changedProps,
         id: id.toString()
       });
-      return this.resourceStore.modify(id, { ...changedProps, text: mdText });
+      return this.resourceStore.modify(
+        id,
+        { ...changedProps, text: mdText },
+        {
+          isPreventBackPropagation: true
+        }
+      );
     }
     this.resourceStore.modify(id, changedProps);
   };

@@ -34,6 +34,9 @@
   import type { IProperty } from "../../collection/properties/property.type";
   import { isValidString } from "$lib/shared/utils/text.utils";
   import ImagePreview from "../content/ImagePreview.svelte";
+  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import NodeThumbnailTwitterProfilePreview from "./NodeThumbnailTwitterProfilePreview.svelte";
   export let item: INodeThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let isHidePreview: boolean = false;
@@ -47,6 +50,7 @@
   export let isApplyCustomColor: boolean = false;
   export let parentBgIndex = 1;
   export let isDraggable: boolean = false;
+  export let refreshId: number = new Date().getTime();
   let isHovering: boolean = false;
   let _url: string;
   $: filePreview = resolveFilePreview(item);
@@ -70,6 +74,14 @@
     if (item?.file) {
       const result = await fileStore.refresh(item.file);
       if (result) _url = result.url ?? "";
+    }
+  }
+
+  function onNodeChange(e: any) {
+    const data = e.detail?.params?.record;
+    if (data) {
+      item = { ...item, ...data };
+      refreshId = new Date().getTime();
     }
   }
 </script>
@@ -166,7 +178,13 @@
         {/if}
         {#if !isFullExpand}
           <div class="flex flex-col gap-0.5 items-start p-2">
-            <NodeThumbnailTitle node={item} isUrlOnIcon={true} {accessPoint} />
+            {#key refreshId}
+              <NodeThumbnailTitle
+                node={item}
+                isUrlOnIcon={true}
+                {accessPoint}
+              />
+            {/key}
             <div class="text-b3 text-fgs3">
               {formatDatetime($userPreferences, item.createdAt)}
             </div>
@@ -217,11 +235,13 @@
               isHideControls={true}
               class="absolute inset-0 w-full rounded-t-md object-cover h-full"
             />
+          {:else if urlPreview && item.contentType === NodeType.TWITTER_PROFILE}
+            <NodeThumbnailTwitterProfilePreview src={urlPreview} />
           {:else if urlPreview}
             <ImagePreview
               src={urlPreview}
               {arrangement}
-              class={cn("absolute inset-0 w-full  h-full", {
+              class={cn("absolute inset-0 w-full h-full", {
                 "object-contain": isShouldContainImage,
                 "rounded-t-md object-cover": !isShouldContainImage
               })}
@@ -257,7 +277,9 @@
         </div>
       {/if}
       <div slot="bottom" class="flex flex-col w-full h--5">
-        <NodeThumbnailTitle node={item} />
+        {#key refreshId}
+          <NodeThumbnailTitle node={item} />
+        {/key}
         {#if visibleProps.length > 0}
           <div class="p-2">
             <NodeThumbnailProperties
@@ -329,7 +351,9 @@
             }
           )}
         >
-          <NodeThumbnailTitle node={item} />
+          {#key refreshId}
+            <NodeThumbnailTitle node={item} />
+          {/key}
         </div>
         {#if visibleProps.length > 0}
           <div class="p-2">
@@ -348,3 +372,9 @@
     <slot name="right" />
   </slot>
 </ResourceThumbnailBase>
+
+<ComponentBaseLayer
+  subscribeTo={new Set([Resource.node])}
+  subscribeToResource={item.id}
+  on:change={onNodeChange}
+/>

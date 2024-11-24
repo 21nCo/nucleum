@@ -62,6 +62,7 @@
     else if (fileType.includes("video/x-ms-wmv")) return "wmv";
     else if (fileType.includes("video/x-flv")) return "flv";
     else if (fileType.includes("audio/mpeg")) return "mp3";
+    else if (fileType.includes("audio/mp3")) return "mp3";
     else if (fileType.includes("audio/x-wav")) return "wav";
     else if (fileType.includes("audio/x-ms-wma")) return "wma";
     else if (fileType.includes("audio/webm")) return "webm";
@@ -106,20 +107,20 @@
   <div class={cn("flex w-full flex-col gap-3")}>
     <div class={cn("flex flex-col gap-3 rounded-md mo:p-2 p-4 w-full bg-bgs2")}>
       <BasicInfoItem label="Kind" value={kind} />
-      {#if isMediaNode && !isWebNode && "body" in $node}
+      {#if isMediaNode && !isWebNode && "file" in $node}
         <BasicInfoItem
           label="File format"
-          value={resolveFileFormat($node.body.type)}
+          value={$node.file?.type ? resolveFileFormat($node.file.type) : "NA"}
         />
         <BasicInfoItem
           label="Storage size"
-          value={$node.body.size ? formatBytes($node.body.size) : "NA"}
+          value={$node.file?.size ? formatBytes($node.file.size) : "NA"}
         />
-        {#if $node.contentType === NodeType.AUDIO || ($node.contentType === NodeType.VIDEO && $node.body.duration)}
+        {#if $node.contentType === NodeType.AUDIO || ($node.contentType === NodeType.VIDEO && $node.file?.duration)}
           <BasicInfoItem
             label="Duration"
-            value={$node.body.duration
-              ? formatSeconds($node.body.duration)
+            value={$node.file?.duration
+              ? (formatSeconds($node.file.duration) ?? "NA")
               : "NA"}
           />
         {/if}

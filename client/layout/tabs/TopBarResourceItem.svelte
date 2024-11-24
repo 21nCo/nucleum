@@ -16,10 +16,13 @@
   import { tabs } from "./tabs.store";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import ComponentBaseLayer from "../layers/ComponentBaseLayer.svelte";
   export let item: IRecordId;
   let resource: any;
   let action: any;
   let isHovering: boolean = false;
+  let resourceType: Resource = Resource.unknown;
   let contextMenu = [
     {
       group: "all",
@@ -35,7 +38,7 @@
   $: isActive =
     item.toString() === $page.url.searchParams.get(ResourceAccessMode.TAB);
   onMount(async () => {
-    const resourceType = determineResourceType(item);
+    resourceType = determineResourceType(item);
     action = appStore.resolveAction(resourceType);
     resource = await resolveResource(item);
   });
@@ -93,3 +96,14 @@
     </button>
   {/if}
 </button>
+
+<ComponentBaseLayer
+  subscribeTo={new Set([resourceType])}
+  subscribeToResource={item}
+  on:change={(e) => {
+    const record = e?.detail?.params?.record;
+    if (record) {
+      resource = { ...resource, ...record };
+    }
+  }}
+/>

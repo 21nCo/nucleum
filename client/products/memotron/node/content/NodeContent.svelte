@@ -22,11 +22,6 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import { logger } from "$lib/client/components/debug/logger.client";
-  export let node: IActiveNodeStore;
-  export let mdId: string;
-  let previousRootStructure: string[] = [];
-  let refreshId: number | undefined = undefined;
-  let markdownRef: any;
   import { setContext } from "svelte";
   import { BlockAction } from "$lib/client/components/markdown/md.type";
   import { wordCounter } from "$lib/client/actions/counter.action";
@@ -36,6 +31,13 @@
   import type { IRecordId } from "$lib/client/types/data.type";
   import type { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import view from "$lib/client/stores/view.store";
+
+  export let node: IActiveNodeStore;
+  export let mdId: string;
+  let previousRootStructure: string[] = [];
+  let refreshId: number | undefined = undefined;
+  let markdownRef: any;
+  let dev_isEnableBottomDivider: boolean = true;
 
   async function handleEvent(event: string, data: any) {
     logger.log({ at: "node context", event, data });
@@ -297,14 +299,13 @@
           on:ready={refreshCounts}
           on:action={onBlockAction}
         />
-        {#if !$view.isConstrainedWidth}
+        {#if !$view.isConstrainedWidth && dev_isEnableBottomDivider}
           <div
-            class="flex w-full justify-center items-center mt-8 exclude-from-count"
+            class="flex w-full justify-center items-center mt-32 exclude-from-count"
           >
             <div class="flex flex-col gap-2 ml-12 w-full mo:w--9/10 w--4/5">
               <Divider colorStrength={ColorStrength.Strong} />
               <div class="flex w-full justify-between text-b3 text-fgs3">
-                <!-- <div class="text-b3 text-fgs3">End of content.</div> -->
                 <div>
                   {$node.wordCount} words
                 </div>

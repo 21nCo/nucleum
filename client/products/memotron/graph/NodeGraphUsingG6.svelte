@@ -57,7 +57,7 @@
           fill:
             node.fill ??
             (isCurrentNode ? currentColors["aps1"] : currentColors["fgs3"]),
-          labelText: truncateString(node.label ?? "", 20),
+          labelText: truncateString(node.label ?? "", 40),
           labelFill: isCurrentNode
             ? currentColors["aps1"]
             : currentColors["fgs2"],

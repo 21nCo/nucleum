@@ -75,7 +75,7 @@
       {
         "text-b2 gap-2 rounded-lg p-2 h-9":
           isShowLabel && layoutContext != LayoutContext.PORTRAIT,
-        "p-4 rounded-full": !isShowLabel,
+        "px-4 py-3 rounded-full": !isShowLabel,
         "justify-between": isShowHotKeyHint
       }
     )}
@@ -89,7 +89,10 @@
     >
       {#if item.icon && item.icon != "initials"}
         <!-- <RiveAnimatedIcon icon={item.icon ?? ""} bind:this={rive} /> -->
-        <div class="w-6 flex justify-center" bind:this={buttonRef}>
+        <div
+          class="w-6 flex flex-col gap-1 items-center justify-center"
+          bind:this={buttonRef}
+        >
           <Icon
             icon={item.icon}
             size={layoutContext === LayoutContext.THIN ||
@@ -107,7 +110,16 @@
                 "fill-aps1": isActive
               }
             )}
+            isFilled={isActive}
           />
+          {#if layoutContext === LayoutContext.THIN}
+            <div
+              class={cn("w-1.5 h-1.5 bg-aps1 rounded-full", {
+                "bg-aps1": isActive,
+                "bg-transparent": !isActive
+              })}
+            />
+          {/if}
         </div>
       {:else if item.icon == "initials"}
         <div class=" w-6 flex justify-center {isActive ? 'font-medium' : ''}">
