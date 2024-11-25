@@ -118,6 +118,7 @@
           <SubGroup
             {subGroup}
             {view}
+            {collection}
             data={_groupData}
             arrangement={view.arrangement}
             density={1}

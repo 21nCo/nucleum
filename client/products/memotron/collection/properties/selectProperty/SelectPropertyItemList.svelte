@@ -1,6 +1,6 @@
 <script lang="ts">
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import type { PropertyConfigOption } from "./property.type";
+  import type { PropertyConfigOption } from "../property.type";
   import SelectPropertyItem from "./SelectPropertyItem.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();

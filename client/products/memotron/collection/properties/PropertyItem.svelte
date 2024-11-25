@@ -10,14 +10,14 @@
   import { enumToString } from "$lib/shared/utils/text.utils";
   import { cn } from "$lib/client/utils/ui.utils";
   import MetaPropertyItem from "./MetaPropertyItem.svelte";
-  import SingleSelectProperty from "./SingleSelectProperty.svelte";
+  import SingleSelectProperty from "./selectProperty/SingleSelectProperty.svelte";
   import {
     type IProperty,
     type IPropertyValue,
     PropertyType
   } from "./property.type";
   import type { IRecordId } from "$lib/client/types/data.type";
-  import SelectPropertyItem from "./SelectPropertyItem.svelte";
+  import SelectPropertyItem from "./selectProperty/SelectPropertyItem.svelte";
   export let value: IPropertyValue | null = null;
   export let property: IProperty;
   export let nodeId: IRecordId | undefined = undefined;

@@ -611,7 +611,7 @@ class Flux {
       this.isSyncDownPending = false;
       logger.log({ at: "flux.syncDown - result", result });
       if (result.syncDownData) {
-        await this.processSyncDown(result.syncDownData);
+        await this.processSyncDown(result.syncDownData, isFirstLoad);
       }
       if (isFirstLoad && result.counts) {
         let resourcesWithMissSync = [];
@@ -656,12 +656,17 @@ class Flux {
     }
   }
 
-  private async processSyncDown(response: any) {
+  private async processSyncDown(response: any, isFirstLoad: boolean = false) {
     if (!response || !Array.isArray(response) || response.length === 0) {
       return;
     }
     const mutations: IMutation[] = response;
-    logger.log({ at: "processSyncDown", mutations });
+    if (mutations.length > 100 && isFirstLoad) {
+      await this.clear();
+      window.location.reload();
+      return;
+    }
+    logger.log({ at: "processSyncDown", mutations, isFirstLoad });
     if (!mutations || mutations.length === 0) return;
     for (let mutation of mutations) {
       await this.persistence.mutation(

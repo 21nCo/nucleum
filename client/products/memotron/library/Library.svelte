@@ -62,6 +62,7 @@
   import context from "$lib/client/stores/context.store";
   import { Embed } from "$lib/client/types/context.type";
   import { toasts } from "$lib/client/stores/notification.store";
+  import Icon from "$lib/client/elements/Icon.svelte";
 
   let searchQuery: string = "";
   let selectedResource: Resource = Resource.node;
@@ -78,6 +79,7 @@
   let isRefreshing: boolean = false;
   let resourceSwitcherRef: ResourceSwitcher;
   let totalCount: number = 0;
+  let isRefreshingTotalCount: boolean = false;
   let availableResources: Set<Resource> = new Set([
     Resource.node,
     Resource.collection
@@ -203,14 +205,21 @@
   }
 
   async function refreshTotalCounts(filters: any) {
-    await resourceSwitcherRef?.refresh(selectedResource);
-    totalCount = await searchStore.resolveCount(
-      selectedResource,
-      selectedSubType !== "all" && selectedSubType !== "recents"
-        ? (selectedSubType.toUpperCase() as NodeType | CollectionType)
-        : undefined,
-      filters
-    );
+    try {
+      isRefreshingTotalCount = true;
+      await resourceSwitcherRef?.refresh(selectedResource);
+      totalCount = await searchStore.resolveCount(
+        selectedResource,
+        selectedSubType !== "all" && selectedSubType !== "recents"
+          ? (selectedSubType.toUpperCase() as NodeType | CollectionType)
+          : undefined,
+        filters
+      );
+    } catch (e) {
+      logger.error({ at: "Library - refreshTotalCounts", e });
+    } finally {
+      isRefreshingTotalCount = false;
+    }
   }
 
   const debouncedSearch = debouncer(refresh, 500);
@@ -221,14 +230,14 @@
     // console.log({ elementTarget, positionFromTop });
     isStickied = positionFromTop ? positionFromTop <= 0 : false;
   }
-  function resolveFooterMessage(data: any[]) {
+  function resolveFooterMessage(data: any[], totalCount: number) {
     if (!data || !data.length) return;
     let prefix = "Showing " + data.length + " ";
     const label = resolveResourceLabel();
     if (isStarFilterSelected) return `${prefix} ⭐️ staaarrrrrrrrrred ${label}`;
     else if (searchQuery)
       return `${prefix} ${label} containing "${searchQuery}"`;
-    else return `Showing ${data.length} of ${totalCount} ${label}`;
+    else return `Showing ${data.length} of ${totalCount ?? "Unknown"} ${label}`;
   }
   function resolveResourceLabel(isPlural: boolean = false) {
     let label = "items";
@@ -551,7 +560,11 @@
               }
             }}
           >
-            {resolveFooterMessage(data) ?? ""}
+            {#if isRefreshingTotalCount}
+              <Icon icon="svg-spinners:3-dots-fade" />
+            {:else}
+              {resolveFooterMessage(data, totalCount) ?? ""}
+            {/if}
           </div>
           <ScrollViewBottomSpacer />
         {:else if availableResources.has(selectedResource)}

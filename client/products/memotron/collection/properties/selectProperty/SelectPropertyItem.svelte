@@ -1,7 +1,7 @@
 <script lang="ts">
   import { cn } from "$lib/client/utils/ui.utils";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
-  import type { PropertyConfigOption } from "./property.type";
+  import type { PropertyConfigOption } from "../property.type";
   import { isValidString } from "$lib/shared/utils/text.utils";
   export let item: PropertyConfigOption;
   export let isSelectedContext: boolean = false;

@@ -107,7 +107,7 @@ class UserPreferencesStore extends KeyValueStore<IUserGlobalPreferences> {
       label = val.label;
     }
     //TODO - use flux instead of persistence
-    await flux.mutation(Resource.tz, {
+    await flux?.mutation(Resource.tz, {
       action: PersistenceActionType.INSERT,
       records: [
         {

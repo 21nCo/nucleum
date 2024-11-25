@@ -9,7 +9,7 @@
   import EndText from "../EndText.svelte";
   import SelectOptionsEditor from "./SelectOptionsEditor.svelte";
   import { popover } from "$lib/client/actions/popover.action";
-  import SelectPropertyItem from "../../SelectPropertyItem.svelte";
+  import SelectPropertyItem from "../../selectProperty/SelectPropertyItem.svelte";
 
   export let property: IProperty;
   let popoverOptions: IPopoverOptions = {
@@ -27,30 +27,6 @@
 </script>
 
 {#if property.config}
-  <!-- <Popover
-    bind:this={ref}
-    options={popoverOptions}
-    triggerClass="flex gap-2 w-full h-full items-center"
-  >
-    <span class="flex items-center w-1/5 h-full gap-2">
-      <Icon icon="list" />
-      <Icon icon="chevdown" />
-    </span>
-    <span class="flex gap-2 items-center w-4/5 h-full">
-      <Divider
-        orientation={Orientation.Vertical}
-        colorStrength={ColorStrength.Strong}
-      />
-      <span class="flex w-full justify-between items-center">
-        <span>-</span>
-        <EndText text="Default" />
-      </span>
-    </span>
-    <svelte:fragment slot="popover">
-      <SelectOptionsEditor bind:config={property.config} />
-    </svelte:fragment>
-  </Popover> -->
-
   <div class="flex gap-2 w-full h-full items-center">
     <span
       class="flex items-center w-1/5 h-full gap-2"

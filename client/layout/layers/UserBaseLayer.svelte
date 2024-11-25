@@ -57,7 +57,7 @@
       message: "Syncing your data from cloud..."
     },
     cloneDown: {
-      message: "First login detected on this device/browser. Syncing...",
+      message: "Syncing...",
       subMessage: "Initializing the sync..."
     }
   };

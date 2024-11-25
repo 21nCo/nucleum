@@ -261,7 +261,7 @@
               {/if}
             </div>
           {/if}
-          {#if contentPreview}
+          {#if contentPreview && ![NodeType.TWITTER_PROFILE].includes(item.contentType)}
             <span
               class={cn(
                 "absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent",
@@ -305,6 +305,10 @@
         })}
         on:load
       />
+    {:else if urlPreview && item.contentType === NodeType.TWITTER_PROFILE}
+      <div class="relative h-20">
+        <NodeThumbnailTwitterProfilePreview src={urlPreview} />
+      </div>
     {:else if urlPreview}
       <ImagePreview
         src={urlPreview}

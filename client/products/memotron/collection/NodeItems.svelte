@@ -145,6 +145,7 @@
             {item}
             {parentBgIndex}
             {arrangement}
+            {isApplyCustomColor}
             {accessPoint}
             {accessPointId}
             {isHideTitle}

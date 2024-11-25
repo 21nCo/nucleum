@@ -412,7 +412,7 @@ export class SearchStore {
             ...additionalFilters,
             isArchived: this.filters.isArchived ?? false,
             contentType: subType ? [subType] : [...rootNodeTypeList],
-            creationContext: false
+            creationContext: subType ? undefined : false
           },
           groupBy: ["all"]
         });
