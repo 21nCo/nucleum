@@ -66,6 +66,7 @@
   <div class="flex flex-col bg-bgs1 sticky top-0 z-20 shadow--sm">
     <div class="flex w-full justify-between p-5 py-4 pt-5 leading-none">
       <input
+        id="librarysearchbox"
         class="text-h2 w-full bg-transparent focus:outline-none focus:border-none"
         type="text"
         bind:value={searchQuery}

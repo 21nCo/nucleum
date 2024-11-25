@@ -67,7 +67,7 @@
     </div>
   {:else if isMinimized}
     <button
-      class="flex flex-col items-center gap-4 absolute rounded-md left-1 z-30 {isHovered
+      class="leftnav flex flex-col items-center gap-4 absolute rounded-md left-1 z-30 {isHovered
         ? 'bg-bgs3 p-4 w-48'
         : 'bg-aps1 opacity-50'}"
       style="top: {headerHeight}px"
@@ -89,7 +89,7 @@
     </button>
   {:else}
     <button
-      class={cn("flex justify-center items-center h-full", {
+      class={cn("leftnav flex justify-center items-center h-full", {
         "w-16 min-w-[4rem]": isInThinMode,
         "w-56 min-w-[14rem]": !isInThinMode,
         "ml-2": isRounded,

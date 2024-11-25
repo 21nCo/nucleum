@@ -59,7 +59,7 @@
     {tooltip}
     tooltipOptions={{ placement: Placement.Right }}
     class={cn(
-      "flex items-center cursor-pointer",
+      "appmenuitem flex items-center cursor-pointer",
       (layoutContext === LayoutContext.DEFAULT ||
         layoutContext === LayoutContext.MINIMIZED) && {
         "bg-aps3 border-aps2 border text-aps1 hover:bg-aps2 hover:bg-opacity-70":

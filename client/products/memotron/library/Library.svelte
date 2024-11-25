@@ -454,6 +454,7 @@
         /> -->
               <Button
                 icon="plus"
+                id="library-add-button"
                 size={Size.sm}
                 type={ButtonVariant.PRIMARY}
                 style={ButtonStyle.OUTLINED}
