@@ -13,12 +13,21 @@
   import ResourceThumbnailContentTypeOverlay from "../../common/thumbnail/ResourceThumbnailContentTypeOverlay.svelte";
   import CollectionPropertyCount from "../counts/CollectionPropertyCount.svelte";
   import CollectionNodeCount from "../counts/CollectionNodeCount.svelte";
+  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   export let item: ICollectionThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let size: Size.sm | Size.md = Size.md;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
   export let accessPointState: ResourceAccessPointState =
     ResourceAccessPointState.DEFAULT;
+
+  function onCollectionChange(e: any) {
+    const data = e.detail?.params?.record;
+    if (data) {
+      item = { ...item, ...data };
+    }
+  }
 </script>
 
 <ResourceThumbnailBase bind:item {accessPoint} {arrangement}>
@@ -52,3 +61,9 @@
     </ResourceGridThumbnail>
   {/if}
 </ResourceThumbnailBase>
+
+<ComponentBaseLayer
+  subscribeTo={new Set([Resource.collection])}
+  subscribeToResource={item.id}
+  on:change={onCollectionChange}
+/>

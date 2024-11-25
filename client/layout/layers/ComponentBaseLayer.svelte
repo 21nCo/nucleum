@@ -59,23 +59,33 @@
   });
 
   /**
-   * TODO - detect resources that have been mutated and dispatch a change event if subscribed to
+   *
    * @param e
    */
   function onMutation(
     e: CustomEvent<{ resource: Resource; params: any; context: string }>
   ) {
     const data = e.detail;
+    const mutation = data.params;
+    if (!data || !mutation || !subscribeTo.has(data.resource)) return;
     if (
-      data &&
-      subscribeTo.has(data.resource) &&
-      ((subscribeToContext && subscribeToContext.has(data.context)) ||
-        !subscribeToContext) &&
-      ((subscribeToResource &&
-        data.params?.action === PersistenceActionType.MERGE &&
-        isSameResource(data.params?.record?.id, subscribeToResource)) ||
-        !subscribeToResource)
+      subscribeToResource &&
+      mutation?.action === PersistenceActionType.MERGE &&
+      isSameResource(mutation?.record?.id, subscribeToResource)
     ) {
+      dispatch("change", data);
+      return;
+    }
+    const excludeProperties = ["isArchived", "trashInformation"];
+    const isExcludedPropertyCase =
+      !subscribeToResource &&
+      mutation?.action === PersistenceActionType.MERGE &&
+      excludeProperties.some((x) => mutation?.record[x] !== undefined);
+    if (isExcludedPropertyCase) {
+      dispatch("change", data);
+      return;
+    }
+    if (subscribeToContext && subscribeToContext.has(data.context)) {
       dispatch("change", data);
     }
   }

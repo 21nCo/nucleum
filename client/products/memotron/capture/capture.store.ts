@@ -494,7 +494,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
           val.rootStructure.includes(b.id)
         );
         console.time("generateMarkdownText");
-        mdText = val.label + " \n" + generateMarkdownText(rootBlocks);
+        mdText = generateMarkdownText(rootBlocks);
         console.timeEnd("generateMarkdownText");
 
         if (
@@ -509,7 +509,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
             tacoWorker.postMessage({
               action: TacoActions.GET_EMBEDDINGS,
               params: {
-                text: mdText,
+                text: val.label + " \n" + mdText,
                 eventId
               }
             });
@@ -557,10 +557,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
           const childrenNodes = val.body.blocks.filter((b) =>
             block.children?.includes(b.id)
           );
-          mdText =
-            getMarkdownSymbolPrepended(correspondingContent!) +
-            " \n" +
-            generateMarkdownText(childrenNodes);
+          mdText = generateMarkdownText(childrenNodes);
 
           if (
             get(userPreferences).localAI.semanticSearch &&
@@ -571,7 +568,10 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
               tacoWorker.postMessage({
                 action: TacoActions.GET_EMBEDDINGS,
                 params: {
-                  text: mdText,
+                  text:
+                    getMarkdownSymbolPrepended(correspondingContent!) +
+                    " \n" +
+                    mdText,
                   eventId
                 }
               });

@@ -119,6 +119,7 @@ export const highlightSearchQuery = (items: any[], searchQuery: string) => {
       const postContextLength = 100;
       if (item.text.length <= preContextLength * 2 + searchQuery.length) {
         bodySearch = item.text
+          .replace(/\(resource=[^)]+\)/g, "")
           .replace(/[\r\n\s]+/g, " ")
           .trim()
           .replace(new RegExp(`(${searchQuery})`, "gi"), "`$1`");
@@ -131,6 +132,7 @@ export const highlightSearchQuery = (items: any[], searchQuery: string) => {
 
         let truncatedText = item.text
           .slice(startIndex, endIndex)
+          .replace(/\(resource=[^)]+\)/g, "")
           .replace(/[\r\n\s]+/g, " ")
           .trim();
 

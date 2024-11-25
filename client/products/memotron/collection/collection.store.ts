@@ -42,6 +42,7 @@ import { resourceInList } from "$lib/client/components/flux/resourceStores/resou
 import { linker } from "../linking/link.store";
 import { nodeStore } from "../node/node.store";
 import { activeResourceFilterV2 } from "$lib/client/utils/utils";
+import { toasts } from "$lib/client/stores/notification.store";
 
 class CollectionStore extends ResourceStore<ICollection> {
   constructor() {
@@ -528,9 +529,13 @@ export function resolveCollectionContextMenu(
             icon: "ph:arrows-clockwise-light",
             label: "Convert as Simple",
             callback: async () => {
-              return collectionStore.modify(collection.id, {
+              const result = await collectionStore.modify(collection.id, {
                 type: CollectionType.UNTYPED
               });
+              if (result) {
+                toasts.success("Collection converted to simple");
+              }
+              return result;
             }
           },
           {
@@ -541,9 +546,13 @@ export function resolveCollectionContextMenu(
             initialValue: collection.isCaptureShortcutEnabled,
             callback: async (checked) => {
               console.log({ checked });
-              return collectionStore.modify(collection.id, {
+              const result = await collectionStore.modify(collection.id, {
                 isCaptureShortcutEnabled: checked
               });
+              if (result) {
+                toasts.success("Capture shortcut updated");
+              }
+              return result;
             }
           }
         ]
@@ -564,9 +573,13 @@ export function resolveCollectionContextMenu(
           label: "Convert to Typed",
           callback: async () => {
             console.log({ at: "resolveCollectionContextMenu.convert" });
-            return collectionStore.modify(collection.id, {
+            const result = await collectionStore.modify(collection.id, {
               type: CollectionType.TYPED
             });
+            if (result) {
+              toasts.success("Collection converted to typed");
+            }
+            return result;
           }
         }
       ]

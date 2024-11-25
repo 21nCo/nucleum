@@ -194,7 +194,7 @@ export class ActiveNodeStore extends ActiveResourceStore<
       if (currentNode.contentType == NodeType.NODULAR_MARKDOWN)
         parentValue = currentNode.label ?? currentNode.body;
       else parentValue = getMarkdownSymbolPrepended(currentNode);
-      const mdText = parentValue + " \n" + generateMarkdownText(childrenNodes);
+      const mdText = generateMarkdownText(childrenNodes);
       try {
         if (
           get(userPreferences).localAI.semanticSearch &&
@@ -204,7 +204,7 @@ export class ActiveNodeStore extends ActiveResourceStore<
           tacoWorker.postMessage({
             action: TacoActions.GET_EMBEDDINGS,
             params: {
-              text: mdText,
+              text: parentValue + " \n" + mdText,
               eventId: eventId
             }
           });
@@ -245,6 +245,7 @@ export class ActiveNodeStore extends ActiveResourceStore<
       logger.log({
         at: "ActiveNodeStore.updateBlockPropagator - end",
         changedProps,
+        mdText,
         id: id.toString()
       });
       return this.resourceStore.modify(
