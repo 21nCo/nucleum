@@ -79,6 +79,11 @@ export class SearchStore {
 
   /**
    * TODO - group by mdParent if searching
+   *
+   *
+   * this is causing extreme slowness for select query if there are 1000s of records on the table if used in select query prop
+   * "(fn::memotron::node::parent($parent.id)) as mdParent"
+   *
    * @returns
    */
   async nodes() {
@@ -115,8 +120,6 @@ export class SearchStore {
                 "file.* as file",
                 labelSearchProp,
                 "search::highlight('**', '**', 2, false) AS bodySearch"
-                //TODO - this is causing extreme slowness for select query if there are 1000s of records on the table
-                // "(fn::memotron::node::parent($parent.id)) as mdParent"
               ],
         filters:
           this.searchType == SearchType.SEMANTIC && this.searchQuery

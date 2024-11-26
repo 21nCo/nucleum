@@ -43,6 +43,8 @@ import { linker } from "../linking/link.store";
 import { nodeStore } from "../node/node.store";
 import { activeResourceFilterV2 } from "$lib/client/utils/utils";
 import { toasts } from "$lib/client/stores/notification.store";
+import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
+import { GlobalEvent } from "$lib/client/types/event.enum";
 
 class CollectionStore extends ResourceStore<ICollection> {
   constructor() {
@@ -241,7 +243,6 @@ export class ActiveCollectionStore extends ActiveResourceStore<
       this.set({
         ...record,
         accessMode,
-        isViewDataRefreshing: false,
         isViewDataLoading: true,
         isPageLoading: false,
         totalNodeCount,
@@ -331,72 +332,47 @@ export class ActiveCollectionStore extends ActiveResourceStore<
   }
 
   /**
-   * Fetches the view data from the server and updates the store with the new data. Sets the isViewDataLoading flag to true unlike {@link refreshViewData} which sets isViewDataRefreshing to true and refreshError if any error occurs.
-   * @param viewId
-   * @returns
-   */
-  async loadViewData(viewId: IRecordId) {
-    logger.log({ at: "ActiveCollectionStore.loadViewData", viewId });
-    if (!viewId) return;
-    this.update((val: IActiveCollection) => {
-      val.isViewDataLoading = true;
-      return val;
-    });
-    const response = await viewStore.fetchViewData(viewId, this.get().id);
-    logger.log({
-      at: "ActiveCollectionStore.loadViewData - response",
-      response
-    });
-    if (!response || !isValidArrayWithData(response)) {
-      this.update((val: IActiveCollection) => {
-        val.isViewDataLoading = false;
-        return val;
-      });
-      return;
-    }
-    this.update((val: IActiveCollection) => {
-      const view = val.views.find(resourceInList(viewId));
-      val.isViewDataLoading = false;
-      if (!view) {
-        return val;
-      }
-      view.data = [...response];
-      return val;
-    });
-    return true;
-  }
-
-  /**
    * Fetches the view data from the server and updates the store with the new data.
    * @param viewId
    * @returns
    */
-  async refreshViewData(viewId: IRecordId) {
-    logger.log({ at: "ActiveCollectionStore.refreshViewData", viewId });
-    this.update((val: IActiveCollection) => {
-      val.isViewDataRefreshing = true;
-      return val;
-    });
-    const response = await viewStore.fetchViewData(viewId, this.get().id);
-    if (!response || !isValidArrayWithData(response)) {
+  async loadViewData(viewId: IRecordId, isFirstLoad: boolean = false) {
+    try {
+      logger.log({ at: "ActiveCollectionStore.loadViewData", viewId });
+      if (!viewId) return;
+      const collection = this.get();
+      let view = collection.views.find(resourceInList(viewId));
+      if (!view) return;
       this.update((val: IActiveCollection) => {
-        val.refreshError = "Error refreshing data.";
-        val.isViewDataRefreshing = false;
+        val.isViewDataLoading = true;
         return val;
       });
-      return;
-    }
-    this.update((val: IActiveCollection) => {
-      const view = val.views.find(resourceInList(viewId));
-      if (!view) {
-        val.isViewDataRefreshing = false;
-        return val;
+      const response = await viewStore.fetchViewData(collection.id, view);
+      logger.log({
+        at: "ActiveCollectionStore.loadViewData - response",
+        view,
+        response
+      });
+      if (!response || !isValidArrayWithData(response)) {
+        this.update((val: IActiveCollection) => {
+          val.isViewDataLoading = false;
+          return val;
+        });
+        return;
       }
-      view.data = [...response];
-      val.isViewDataRefreshing = false;
-      return val;
-    });
-    return true;
+      this.update((val: IActiveCollection) => {
+        val.isViewDataLoading = false;
+        view.data = [...response];
+        return val;
+      });
+      return true;
+    } catch (e) {
+      logger.error({
+        at: "ActiveCollectionStore.loadViewData - error",
+        error: e
+      });
+      return false;
+    }
   }
 
   async updateProperties() {
@@ -407,7 +383,7 @@ export class ActiveCollectionStore extends ActiveResourceStore<
     for (const property of properties) {
       await propertyStore.modify(property.id, property);
     }
-    return this.resourceStore.modify(
+    const result = await this.resourceStore.modify(
       this.id,
       {
         properties: properties.map((p) => p.id),
@@ -417,21 +393,45 @@ export class ActiveCollectionStore extends ActiveResourceStore<
         isPreventBackPropagation: true
       }
     );
+    dispatchCustomEvent(GlobalEvent.RELOAD_RESOURCE, {
+      id: this.id
+    });
+    return result;
   }
 }
 
 class CollectionViewStore extends ResourceStore<ICollectionView> {
   constructor() {
-    super(Resource.view, {
-      dboDependencies: ["fn::memotron::collection::fetchData"]
-    });
+    super(Resource.view);
   }
-  fetchViewData(viewId: IRecordId, collectionId: IRecordId) {
-    const query = `fn::memotron::collection::fetchData($viewId, $collectionId)`;
-    return flux.selectByQuery(query, {
-      viewId,
-      collectionId
+  /**
+   * fetch node ids from link table where out is collection id for simple and typed collections
+   *
+   * for query collection direct querying node table based on filters
+   *
+   * use view filters and node ids to fetch nodes
+   * @param viewId
+   * @param collectionId
+   * @returns
+   */
+  async fetchViewData(collectionId: IRecordId, view: ICollectionView) {
+    const allNodes = await linker.selectMany({
+      filters: {
+        out: collectionId.toString()
+      }
     });
+    const nodeIds = allNodes.map((x) => x.in);
+    const nodes = await nodeStore.selectMany({
+      properties: ["*", "parent.* as parent", "file.* as file"],
+      filters: {
+        id: nodeIds,
+        ...activeResourceFilterV2
+      },
+      orderBy: {
+        modifiedAt: "desc"
+      }
+    });
+    return nodes;
   }
 }
 

@@ -333,7 +333,7 @@
   function onNodeSelect(e: CustomEvent) {
     const event = e.detail;
     const newResource = event.target.id;
-    logger.debug({ at: "onNodeSelect", event, newResource, splitResource });
+    logger.log({ at: "onNodeSelect", event, newResource, splitResource });
     if (!newResource) return;
     if (newResource === $node.id.toString()) {
       if (rightPane === NodeRightPaneType.LINKS) rightPane = undefined;
@@ -345,8 +345,8 @@
       return;
     }
     splitResource = newResource;
-    appStore.resourceClickHandler(event, splitResource!, {
-      defaultTo: ResourceAccessMode.SPLIT
+    appStore.resourceClickHandlerForGraph(newResource, event, {
+      replaceId: $node.id
     });
   }
   function closeSplitResource() {

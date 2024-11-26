@@ -94,6 +94,7 @@
   {isDraggable}
   {isApplyCustomColor}
   {arrangement}
+  {isHidePreview}
   bind:isHovering
   on:action
 >

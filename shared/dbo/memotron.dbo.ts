@@ -5,7 +5,6 @@ import { userDatev4 } from "./global.dbo";
  */
 export const memotronDboDefinitions = {
   "fn::memotron::node::fetch": nodeFetch(),
-  "fn::memotron::collection::fetchData": collectionFetchData(),
   "fn::memotron::timeline": timeline()
 };
 
@@ -85,6 +84,10 @@ function timeline() {
   return [...userDatev4(), ...nodeFetch(), def];
 }
 
+/**
+ * @deprecated - using direct querying
+ * @returns
+ */
 function collectionFetchData() {
   const def = `DEFINE FUNCTION OVERWRITE fn::memotron::collection::fetchData($viewId: record, $collectionId: record){
       let $view = select * from $viewId;

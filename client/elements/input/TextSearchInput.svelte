@@ -37,7 +37,7 @@
   let chips: any[] = [];
   let inputRef: any;
   let popoverRef: any;
-  let searchResultsPopover: any;
+  let searchResultsPopover: SearchResultsPopover;
   export function focus() {
     if (inputRef) inputRef.focus();
   }
@@ -99,6 +99,9 @@
       on:keyup={(event) => {
         searchResultsPopover.keyup(event.detail.event);
       }}
+      on:keydown={(event) => {
+        searchResultsPopover.keydown(event);
+      }}
     />
     <SearchResultsPopover
       bind:this={searchResultsPopover}
@@ -159,7 +162,10 @@
       )}
       bind:value
       on:change|stopPropagation
-      on:keydown
+      on:keydown={(event) => {
+        searchResultsPopover.keydown(event);
+        dispatch("keydown", event);
+      }}
       on:keyup|stopPropagation={onKeyup}
       on:blur
       on:click|stopPropagation

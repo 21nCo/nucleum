@@ -35,7 +35,11 @@ export enum GlobalEvent {
   SYNC_DOWN = "syncDown",
   APP_MENU_SWITCHED = "APP_MENU_SWITCHED",
   MUTATION = "mutation",
-  APP_LOADING_STATUS = "appLoadingStatus"
+  APP_LOADING_STATUS = "appLoadingStatus",
+  /**
+   * Listened to in ResourceResolver - to reload entire loaded resource
+   */
+  RELOAD_RESOURCE = "reloadResource"
 }
 
 export enum PlayActionState {

@@ -107,7 +107,7 @@
     );
   }
   export function focus(offset: number = 0) {
-    logger.log({ at: "focus", offset });
+    logger.log({ at: "InlineMarkdownTextInput - focus", offset });
     const element = blockRef;
     if (!element) return;
     // element?.focus();

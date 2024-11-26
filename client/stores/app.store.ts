@@ -457,7 +457,18 @@ function initAppStore(seed: AppStore) {
     if (!additional?.isPreventRefresh) appStore.gotoPath(url.href);
     return url;
   };
-  const isFSplit = () => {
+  /**
+   * Determines if the current view is a full view or a pop view
+   * @returns
+   */
+  const isOverlay = (recordId?: IRecordId) => {
+    if (recordId) {
+      const accessMode = determineResourceAccessMode(recordId);
+      return (
+        accessMode === ResourceAccessMode.POP ||
+        accessMode === ResourceAccessMode.FULL
+      );
+    }
     return (
       new URLSearchParams(window.location.search).get(
         ResourceAccessMode.FULL
@@ -493,28 +504,28 @@ function initAppStore(seed: AppStore) {
     else return ResourceAccessMode.INLINE;
   };
 
-  const determineCurrentResourceAccessMode = (
-    id: IRecordId
-  ): ResourceAccessMode => {
+  const determineResourceAccessMode = (id: IRecordId): ResourceAccessMode => {
     const searchParams = new URLSearchParams(window.location.search);
-
     const mode = (Object.values(ResourceAccessMode) as string[]).find(
       (m) =>
         m !== ResourceAccessMode.INLINE && searchParams.get(m) === id.toString()
     );
-
     return (mode as ResourceAccessMode) || ResourceAccessMode.INLINE;
   };
 
+  /**
+   *
+   * TODO - shortcuts from user settings
+   *
+   * @param event
+   * @returns
+   */
   const determineClickAccessMode = (event: MouseEvent) => {
-    //TODO - shortcuts from user settings
     if (event.altKey && event.metaKey) {
       return ResourceAccessMode.TAB_IN_BACKGROUND;
     } else if (event.shiftKey) return ResourceAccessMode.FULL;
     else if (event.altKey) {
-      const isFromFocusOrPop = isFSplit();
-      if (isFromFocusOrPop) return ResourceAccessMode.FSPLIT;
-      else return ResourceAccessMode.SPLIT;
+      return ResourceAccessMode.SPLIT;
     } else if (event.metaKey) {
       return ResourceAccessMode.TAB;
     }
@@ -522,7 +533,10 @@ function initAppStore(seed: AppStore) {
 
   const openResource = (
     id: IRecordId,
-    accessMode: ResourceAccessMode = ResourceAccessMode.INLINE
+    accessMode: ResourceAccessMode = ResourceAccessMode.INLINE,
+    params?: {
+      replaceId?: IRecordId;
+    }
   ) => {
     if (!id) return;
     let url = new URL(window.location.href);
@@ -539,7 +553,6 @@ function initAppStore(seed: AppStore) {
       resourceId: id,
       timestamp: timestamp.toISOString()
     });
-
     if (accessMode === ResourceAccessMode.TAB) {
       tabs.open(id);
       return;
@@ -547,7 +560,11 @@ function initAppStore(seed: AppStore) {
       tabs.addInBackground(id);
       return;
     }
-
+    if (accessMode === ResourceAccessMode.SPLIT) {
+      const isFullOrPop = isOverlay(params?.replaceId);
+      if (isFullOrPop) accessMode = ResourceAccessMode.FSPLIT;
+      else accessMode = ResourceAccessMode.SPLIT;
+    }
     toggleSearchParam(
       {
         [accessMode]: id.toString(),
@@ -557,6 +574,25 @@ function initAppStore(seed: AppStore) {
         url: url
       }
     );
+  };
+
+  const resourceClickHandlerForGraph = (
+    id: IRecordId,
+    event: MouseEvent,
+    params?: {
+      replaceId?: IRecordId;
+    }
+  ) => {
+    const clickAccessMode = appStore.determineClickAccessMode(event);
+    let accessMode = ResourceAccessMode.SPLIT;
+    if (clickAccessMode === ResourceAccessMode.SPLIT) {
+      accessMode = ResourceAccessMode.POP;
+    } else if (clickAccessMode) {
+      accessMode = clickAccessMode;
+    }
+    appStore.openResource(id, accessMode, {
+      replaceId: params?.replaceId
+    });
   };
 
   const goBack = (resource?: IRecordId) => {
@@ -570,7 +606,7 @@ function initAppStore(seed: AppStore) {
    * Sending replaceId will use current access mode of the replaceId resource as defaultTo.
    *
    * @param event - mouse event
-   * @param id - resource id
+   * @param id - resource id to be opened
    * @param defaultTo - default access mode
    * @param params - additional params
    * @returns
@@ -586,20 +622,17 @@ function initAppStore(seed: AppStore) {
     if (!id) return;
     toggleSearchParam(["view"]);
     let accessMode;
-    if (params?.defaultTo === ResourceAccessMode.SPLIT) {
-      const isFromFocusOrPop = isFSplit();
-      if (isFromFocusOrPop) params.defaultTo = ResourceAccessMode.FSPLIT;
-      else params.defaultTo = ResourceAccessMode.SPLIT;
-    }
     const defaultTo =
       params?.defaultTo ??
       (params?.replaceId
-        ? determineCurrentResourceAccessMode(params.replaceId)
+        ? determineResourceAccessMode(params.replaceId)
         : ResourceAccessMode.POP);
     if (event) accessMode = determineClickAccessMode(event);
+    if (!accessMode) accessMode = defaultTo;
     logger.log({ at: "resourceClickHandler", accessMode, defaultTo });
-    if (accessMode) openResource(id, accessMode);
-    else openResource(id, defaultTo);
+    openResource(id, accessMode, {
+      replaceId: params?.replaceId
+    });
     logger.log({
       at: "resourceClickHandler",
       id,
@@ -619,7 +652,7 @@ function initAppStore(seed: AppStore) {
       toggleSearchParam([props.accessMode]);
       return;
     } else if (props?.id) {
-      const accessMode = determineCurrentResourceAccessMode(props.id);
+      const accessMode = determineResourceAccessMode(props.id);
       if (accessMode) {
         toggleSearchParam([accessMode]);
         return;
@@ -843,11 +876,12 @@ function initAppStore(seed: AppStore) {
     initiateOAuth2Flow,
     toggleSearchParam,
     resourceClickHandler,
+    resourceClickHandlerForGraph,
     openResource,
     toggleFullScreen: toggleFullAccessMode,
-    determineCurrentResourceAccessMode,
+    determineResourceAccessMode,
     determineClickAccessMode,
-    isFSplit,
+    isOverlay,
     closeResource,
     goBack
   };

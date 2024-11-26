@@ -1,5 +1,8 @@
 import type { ObservableStore } from "$lib/client/stores/client.store";
-import type { IRecordId } from "$lib/client/types/data.type";
+import type {
+  IMutationAdditionalParams,
+  IRecordId
+} from "$lib/client/types/data.type";
 import type { Resource } from "./resource.enum";
 
 export interface IResourceBase {
@@ -216,3 +219,18 @@ export interface IMultiSelectContext {
 export interface IMultiSelectStore extends ObservableStore<IRecordId[]> {
   context: IMultiSelectContext;
 }
+
+export type IResourceMutationParams = IMutationAdditionalParams & {
+  /**
+   * Whether the mutation should prevent back propagated to active resource stores
+   */
+  isPreventBackPropagation?: boolean;
+  /**
+   * Whether the mutation persistance should be debounced
+   */
+  isDebounced?: boolean;
+  /**
+   * The key to be used for debouncing the mutation
+   */
+  debounceKey?: string;
+};

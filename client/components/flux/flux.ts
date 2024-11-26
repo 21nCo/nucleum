@@ -13,7 +13,8 @@ import {
   type IResourceSelectParams,
   type IRecordId,
   type IMutation,
-  type IInsertMutation
+  type IInsertMutation,
+  type IMutationAdditionalParams
 } from "$lib/client/types/data.type";
 import {
   detectTimeZone,
@@ -225,17 +226,17 @@ class Flux {
   async mutation<T extends IResource>(
     resource: Resource,
     params: IMutationParamsv2<T>,
-    additionalParams: {
-      isPreventSubscriptions?: boolean;
-      context?: string;
-    } = {}
+    additionalParams: IMutationAdditionalParams = {}
   ) {
     let response;
     logger.log({ at: "flux.mutation", resource, params });
     try {
       response = await this.persistence.mutation(resource, params);
       let mutation: IMutation;
-      if (!this.isLocalMode || this.isExtensionEnvironment) {
+      if (
+        !additionalParams?.isPreventCloudPersistence &&
+        (!this.isLocalMode || this.isExtensionEnvironment)
+      ) {
         mutation = await this.insertMutation(resource, params);
       }
       if (this.isExtensionEnvironment) {

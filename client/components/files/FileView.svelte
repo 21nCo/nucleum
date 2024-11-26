@@ -84,7 +84,7 @@
 
 {#if type === FileType.IMAGE}
   <img
-    alt="file"
+    alt="..."
     on:load={onImageLoad}
     class={classList + " ph-no-capture userdata"}
     draggable={isDraggable}

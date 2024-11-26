@@ -137,7 +137,7 @@
     hidePopover();
     const focusBlockSub = mdStore.focus.subscribe((x) => {
       if (x?.id === id) {
-        logger.log({ at: "focus.subscribe", x });
+        logger.log({ at: "TextContent focus", x });
         setTimeout(() => {
           textRef?.focus();
         }, 10);

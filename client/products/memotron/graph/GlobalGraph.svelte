@@ -19,6 +19,8 @@
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import view from "$lib/client/stores/view.store";
   import { resizeListener } from "$lib/client/actions/resize.action";
+  import { logger } from "$lib/client/components/debug/logger.client";
+  import type { IRecordId } from "$lib/client/types/data.type";
 
   let data: { nodes: any[]; edges: any[] } = { nodes: [], edges: [] };
   let isRendered = false;
@@ -27,6 +29,7 @@
   let _nodes: any[] = [];
   let _edges: any[] = [];
   let graphRef: GlobalGraphUsingG6;
+  let splitResource: IRecordId | undefined = undefined;
   let containerWidth = 0;
   $: isConstrainedWidth = containerWidth < 1000 || $view.isConstrainedWidth;
 
@@ -144,10 +147,27 @@
     isRendered = true;
   }
 
-  function onNodeSelect(event: CustomEvent) {
-    if (event.detail) {
-      appStore.openResource(event.detail, ResourceAccessMode.SPLIT);
+  function onNodeSelect(e: CustomEvent) {
+    const event = e.detail;
+    const newResource = event.target.id;
+    logger.log({
+      at: "globalGraph - onNodeSelect",
+      event,
+      newResource,
+      splitResource
+    });
+    if (!newResource) return;
+    if (splitResource === newResource) {
+      closeSplitResource();
+      return;
     }
+    splitResource = newResource;
+    appStore.resourceClickHandlerForGraph(newResource, event);
+  }
+  function closeSplitResource() {
+    if (!splitResource) return;
+    appStore.closeResource({ id: splitResource });
+    splitResource = undefined;
   }
 
   function onCanvasClick(event: CustomEvent) {

@@ -50,6 +50,7 @@
     : CaptureType.MARKDOWN;
   // $: console.log({ types, $captureStore, propertyConfig });
   let dev_iosCameraCaptureMethod: "input" | "swift-relay" = "input";
+  let dev_isShowDraftSaveFeedback: boolean = false;
 
   async function refreshTypeData() {
     const typeIds =
@@ -280,7 +281,7 @@
             </div>
             <div class="flex gap-3 items-center">
               {#if !isEmptyState}
-                {#if !$view.isConstrainedWidth}
+                {#if !$view.isConstrainedWidth && dev_isShowDraftSaveFeedback}
                   <div class="flex items-center gap-1">
                     <Icon
                       icon={$captureStore.isRefreshing

@@ -226,11 +226,6 @@
         rightPartWidth = e.width;
       }}
     >
-      <!-- {#if $collection.isViewDataRefreshing}
-      <div>
-        <Icon icon="svg-spinners:90-ring-with-bg" class="stroke-fgs1" />
-      </div>
-    {/if} -->
       {#if !$collection.isInEditMode && $collection.totalNodeCount}
         {@const isMiniSearch = rightPartWidth < 530}
         <div

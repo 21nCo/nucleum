@@ -4,10 +4,9 @@
     type IBlock,
     type IBlockBody,
     type IListBlockBody,
-    type IMarkdownStore,
     type INonSimpleTextBlockBody
   } from "$lib/client/components/markdown/md.type";
-  import { getContext, onMount } from "svelte";
+  import { getContext } from "svelte";
   import BlockContent from "./content/BlockContent.svelte";
   import LeftControls from "./contextMenu/LeftControls.svelte";
   import type { MdStoreType } from "./markdown.store";
@@ -39,7 +38,6 @@
   export let mdStore: MdStoreType;
   let isHovering: boolean = false;
   let isFocusing: boolean = false;
-  let isReRendering: boolean = false;
   let dev_isShowFocusHintOnRight: boolean = false;
   $: isFocusable =
     $mdStore.params?.isNodular && headingNodeTypes.includes(block.contentType);
@@ -359,23 +357,6 @@
         return { text };
     }
   }
-
-  onMount(() => {
-    //TODO - check the need for rerendering
-    const mdStoreSub = mdStore.subscribe((md: IMarkdownStore) => {
-      // console.log("re-render block", md.reRenderBlock);
-      if (md.reRenderBlock === block.id) {
-        // console.log("re-rendering block", block.id);
-        isReRendering = true;
-        setTimeout(() => {
-          isReRendering = false;
-        }, 0.1);
-      }
-    });
-    return () => {
-      mdStoreSub();
-    };
-  });
 
   function onContextMenuAction(
     e: CustomEvent<{

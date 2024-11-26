@@ -43,7 +43,7 @@
   {:else if headingNodeTypes.includes(block.contentType)}
     <HeadingContent
       id={block.id}
-      text={block.label ?? block.body}
+      bind:text={block.label}
       {mdStore}
       contentType={block.contentType}
       on:update

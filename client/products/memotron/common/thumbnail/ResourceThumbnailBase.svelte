@@ -19,6 +19,7 @@
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
   export let accessPointContext: string | undefined = undefined;
   export let arrangement: Arrangement = Arrangement.LIST;
+  export let isHidePreview: boolean = false;
   export let isApplyCustomColor: boolean = false;
   export let accessPointId: IRecordId | undefined = undefined;
   $: multiSelectContext = {
@@ -71,7 +72,9 @@
   {#if isHovering}
     <button
       class={cn("absolute top-0 right-0 flex gap-2 p--1", {
-        "m-3 border rounded-md": arrangement !== Arrangement.LIST,
+        "border rounded-md": arrangement !== Arrangement.LIST,
+        "m-3": arrangement !== Arrangement.LIST && !isHidePreview,
+        "m-1": arrangement !== Arrangement.LIST && isHidePreview,
         "bg-ccs4 border-ccs2":
           arrangement != Arrangement.LIST && isApplyCustomColor,
         "bg-bgs2 border-brs3":

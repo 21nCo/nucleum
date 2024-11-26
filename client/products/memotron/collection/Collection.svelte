@@ -141,7 +141,6 @@
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
 
   onMount(async () => {
-    // console.log("onMount - collection", { id });
     const viewQueryParam = new URLSearchParams(location.search).get("view");
     if (viewQueryParam) {
       selectedViewId = viewQueryParam;
@@ -328,8 +327,7 @@
   ) {
     if (!activeView) return;
     const tabBy = activeView.tabBy;
-    if (props.isNewView) await collection.loadViewData(activeView.id);
-    else await collection.refreshViewData(activeView.id);
+    await collection.loadViewData(activeView.id, props.isNewView);
     loadActiveView();
     if (!activeView) return;
     logger.log({ at: "refresh", activeView, searchQuery });

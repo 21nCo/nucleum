@@ -3,11 +3,9 @@
   import { Size } from "$lib/client/types/size.enum";
   import { properCase } from "$lib/shared/utils/text.utils";
   import type { IResourceSwitchItem } from "$lib/client/types/select.type";
-  import { abg, cn } from "$lib/client/utils/ui.utils";
+  import { cn } from "$lib/client/utils/ui.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
   import AvatarRenderer from "$lib/client/elements/avatarPicker/AvatarRenderer.svelte";
-  import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";
-  import ContextMenuAction from "../../contextMenu/ContextMenuAction.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
@@ -176,10 +174,9 @@
     {:else if item.icon && typeof item.icon === "object"}
       <AvatarRenderer avatar={item.icon} {size} />
     {/if}
-    <TextWithHoverTooltip
-      text={properCase(item.label ?? item.value.toString())}
-      truncateLength={20}
-    />
+    <span>
+      {properCase(item.label ?? item.value.toString())}
+    </span>
   </div>
   {#if isHovering && !item.isHidePinAction}
     <div

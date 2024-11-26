@@ -40,7 +40,11 @@ export async function delegateToFlux(method: IFluxMethod) {
       case FluxMethod.SELECT:
         return flux?.select(method.args.resourceId, method.args.properties);
       case FluxMethod.MUTATION:
-        return flux?.mutation(method.args.resource, method.args.params);
+        return flux?.mutation(
+          method.args.resource,
+          method.args.params,
+          method.args.additionalParams
+        );
       case FluxMethod.KV_MERGE:
         return flux?.kvMerge(method.args.storeId, method.args.data);
       case FluxMethod.SEARCH:

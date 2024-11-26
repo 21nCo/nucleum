@@ -72,9 +72,15 @@ class FileStore extends ResourceStore<IFile> {
     if (isUrlExpired(file.url)) {
       let key = getBucketNameandKey(file.url);
       let signedUrl = await persistenceInstance.fetchSignedUrlForGet(key);
-      const result = await this.modify(file.id, {
-        url: signedUrl?.getUrl
-      });
+      const result = await this.modify(
+        file.id,
+        {
+          url: signedUrl?.getUrl
+        },
+        {
+          isPreventCloudPersistence: true
+        }
+      );
       return { ...file, url: signedUrl?.getUrl };
     } else return file;
   }

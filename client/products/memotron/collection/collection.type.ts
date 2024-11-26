@@ -33,9 +33,7 @@ interface ICollectionBase extends IMemotronItemBase {
 
 export type IActiveCollection = IActiveResource &
   ICollectionExpanded & {
-    refreshError?: string;
     isViewDataLoading: boolean;
-    isViewDataRefreshing: boolean;
     isPageLoading: boolean;
     totalNodeCount: number;
     views: ICollectionViewWithData[];

@@ -60,6 +60,10 @@ interface IFluxSelectArgs {
 interface IFluxMutationArgs<T> {
   resource: Resource;
   params: IMutationParamsv2<T>;
+  additionalParams?: {
+    isPreventCloudPersistence?: boolean;
+    context?: string;
+  };
 }
 
 interface IFluxInitArgs {

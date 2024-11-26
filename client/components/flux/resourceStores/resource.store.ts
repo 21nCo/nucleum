@@ -25,6 +25,7 @@ import type {
   IMultiSelectContext,
   IMultiSelectStore,
   IResource,
+  IResourceMutationParams,
   ITrashInformation,
   OmitForCapture,
   OmitForCaptureWithId
@@ -257,9 +258,7 @@ export class ResourceStore<T extends IResource> implements IStore {
 
   private persistModification(
     data: Partial<T>,
-    additionalParams?: {
-      context?: string;
-    }
+    additionalParams?: IResourceMutationParams
   ) {
     if (this.isExtensionEnvironment) {
       return extensionFlux({
@@ -269,7 +268,8 @@ export class ResourceStore<T extends IResource> implements IStore {
           params: {
             action: PersistenceActionType.MERGE,
             record: data
-          }
+          },
+          additionalParams
         }
       });
     }
@@ -280,7 +280,7 @@ export class ResourceStore<T extends IResource> implements IStore {
         record: data
       },
       {
-        context: additionalParams?.context
+        ...additionalParams
       }
     );
   }
@@ -306,12 +306,7 @@ export class ResourceStore<T extends IResource> implements IStore {
   async modify(
     id: IRecordId,
     properties: Partial<T>,
-    additionalParams?: {
-      isPreventBackPropagation?: boolean;
-      isDebounced?: boolean;
-      debounceKey?: string;
-      context?: string;
-    }
+    additionalParams?: IResourceMutationParams
   ) {
     if (!this.currentUserId || typeof this.currentUserId != "string") {
       this.currentUserId = await resolveCurrentUserId();
@@ -342,12 +337,7 @@ export class ResourceStore<T extends IResource> implements IStore {
     return this.persistModification(data, additionalParams);
   }
 
-  async trash(
-    id: IRecordId,
-    additionalParams?: {
-      context?: string;
-    }
-  ) {
+  async trash(id: IRecordId, additionalParams?: IResourceMutationParams) {
     return this.modify(
       id,
       {
@@ -363,9 +353,7 @@ export class ResourceStore<T extends IResource> implements IStore {
   async bulkModify(
     ids: IRecordId[],
     data: Partial<T>,
-    additionalParams?: {
-      context?: string;
-    }
+    additionalParams?: IResourceMutationParams
   ) {
     if (this.isExtensionEnvironment) {
       return extensionFlux({
@@ -396,15 +384,13 @@ export class ResourceStore<T extends IResource> implements IStore {
         }))
       },
       {
-        context: additionalParams?.context
+        ...additionalParams
       }
     );
   }
   async bulkTrash(
     ids: IRecordId[],
-    additionalParams?: {
-      context?: string;
-    }
+    additionalParams?: IResourceMutationParams
   ) {
     return this.bulkModify(
       ids,
@@ -417,12 +403,7 @@ export class ResourceStore<T extends IResource> implements IStore {
       additionalParams
     );
   }
-  archive(
-    id: IRecordId,
-    additionalParams?: {
-      context?: string;
-    }
-  ) {
+  archive(id: IRecordId, additionalParams?: IResourceMutationParams) {
     return this.modify(
       id,
       {
@@ -431,12 +412,7 @@ export class ResourceStore<T extends IResource> implements IStore {
       additionalParams
     );
   }
-  unarchive(
-    id: IRecordId,
-    additionalParams?: {
-      context?: string;
-    }
-  ) {
+  unarchive(id: IRecordId, additionalParams?: IResourceMutationParams) {
     return this.modify(
       id,
       {
@@ -445,12 +421,7 @@ export class ResourceStore<T extends IResource> implements IStore {
       additionalParams
     );
   }
-  restore(
-    id: IRecordId,
-    additionalParams?: {
-      context?: string;
-    }
-  ) {
+  restore(id: IRecordId, additionalParams?: IResourceMutationParams) {
     return this.modify(
       id,
       {

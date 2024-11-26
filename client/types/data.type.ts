@@ -442,3 +442,18 @@ export type IMutation = {
   action: ResourceActionType;
   params: IMutationParamsv2<any>;
 };
+
+export type IMutationAdditionalParams = {
+  /**
+   * Whether the mutation should prevent subscriptions via ComponentBaseLayer
+   */
+  isPreventSubscriptions?: boolean;
+  /**
+   * The context of the mutation like accessPoint etc.
+   */
+  context?: string;
+  /**
+   * Whether the mutation should prevent cloud persistence - will be saved locally if true.
+   */
+  isPreventCloudPersistence?: boolean;
+};

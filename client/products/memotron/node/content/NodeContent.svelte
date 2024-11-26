@@ -83,9 +83,7 @@
         id: $node.id
       });
       if (!x) return;
-      const currentAccessMode = appStore.determineCurrentResourceAccessMode(
-        $node.id
-      );
+      const currentAccessMode = appStore.determineResourceAccessMode($node.id);
       const clickedAccessMode = appStore.determineClickAccessMode(x.event);
       console.log({ currentAccessMode, clickedAccessMode });
       if (clickedAccessMode && clickedAccessMode !== currentAccessMode) {
@@ -205,10 +203,7 @@
   function onFocus(e: CustomEvent) {
     logger.debug({ at: "NodeContent - onFocus", ...e.detail });
     if (e.detail.id && e.detail.parent) {
-      temp_Focus(
-        e.detail.id,
-        appStore.determineCurrentResourceAccessMode($node.id)
-      );
+      temp_Focus(e.detail.id, appStore.determineResourceAccessMode($node.id));
       // node.onFocus(e.detail.id, e.detail.parent);
     }
   }

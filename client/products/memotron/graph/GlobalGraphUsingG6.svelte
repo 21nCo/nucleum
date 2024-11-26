@@ -143,9 +143,7 @@
   }
 
   function onNodeClick(event: any) {
-    if (event.target.id) {
-      dispatch("select", event.target.id);
-    }
+    dispatch("select", event);
   }
   function onAfterRender() {
     dispatch("render");

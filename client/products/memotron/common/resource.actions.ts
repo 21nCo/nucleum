@@ -197,9 +197,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
     };
   }
   openAsSplit(): IContextMenuItem {
-    const currentMode = appStore.determineCurrentResourceAccessMode(
-      this.resource.id
-    );
+    const currentMode = appStore.determineResourceAccessMode(this.resource.id);
     return {
       value: "open-as-split",
       label:
@@ -223,9 +221,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
     };
   }
   openAsFull(): IContextMenuItem {
-    const currentMode = appStore.determineCurrentResourceAccessMode(
-      this.resource.id
-    );
+    const currentMode = appStore.determineResourceAccessMode(this.resource.id);
     return {
       value: "open-in-full-screen",
       label:

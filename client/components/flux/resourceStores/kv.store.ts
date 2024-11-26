@@ -65,7 +65,7 @@ export class KeyValueStore<T extends IObservableStoreSubject>
         }
       });
     }
-    return flux.kvMerge(this.id, n);
+    return flux?.kvMerge(this.id, n);
   }
   /**
    * This function gets triggered from dataManager when the data is fetched from the server.

@@ -195,8 +195,10 @@
     {:else}
       <div class="flex w-full justify-center p-2 text-b3 text-fgs3">
         {#if isSearchInProgress}
-          <Icon icon="svg-spinners:3-dots-fade" />
-          Searching...
+          <span class="flex items-center gap-2 p-2">
+            <Icon icon="svg-spinners:3-dots-fade" />
+            <span class="text-b3 text-fgs3">Searching...</span>
+          </span>
         {:else if results?.length === 0}
           <span>
             {@html renderMdAsHtml(emptyStateLabel)}

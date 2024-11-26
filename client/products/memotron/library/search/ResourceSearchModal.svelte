@@ -101,7 +101,7 @@
 <div class="flex flex-col gap-4 w-full h-full">
   <header class="flex flex-col w-full">
     <div class="flex p-4">
-      <span>
+      <span class="min-w-0 flex-1">
         <input
           bind:this={inputRef}
           bind:value={searchQuery}
@@ -116,7 +116,7 @@
           class="text-h3 w-full bg-transparent focus:outline-none focus:border-none"
         />
       </span>
-      <div class="flex gap-2 ml-auto">
+      <div class="flex gap-2">
         {#if $userPreferences.localAI.semanticSearch}
           <SwitchInput
             label={{ label: "Semantic", orientation: Orientation.Horizontal }}
