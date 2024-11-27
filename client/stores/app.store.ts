@@ -8,9 +8,9 @@ import colorSchemes from "$lib/client/theme/colorschemes.json";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { shuffleEmojis } from "../data/avatars";
 import { ActionType, type IAction } from "../types/action.type";
-import type {
+import {
   IdentityProvider,
-  OAuthProviderConfig
+  type OAuthProviderConfig
 } from "../types/oauth.type";
 import { goto } from "../utils/browser.utils";
 import { persistLocally, getDapId } from "../persistence/persistence.utils";
@@ -361,10 +361,13 @@ function initAppStore(seed: AppStore) {
     }
   };
 
-  const initiateOAuth2Flow = async (provider: IdentityProvider) => {
+  const initiateOAuth2Flow = async (
+    provider: IdentityProvider,
+    guest?: string
+  ) => {
     const ctx = get(context);
-    const oAuthConfig: OAuthProviderConfig[] =
-      get(appStore).appData?.oAuthConfig;
+    const app = get(appStore);
+    const oAuthConfig: OAuthProviderConfig[] = app.appData?.oAuthConfig;
     if (!oAuthConfig || oAuthConfig.length < 1) return;
     const config = oAuthConfig.find((c) => c.provider === provider);
     if (!config) return;
@@ -377,9 +380,11 @@ function initAppStore(seed: AppStore) {
       ? (import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host)
       : window.location.origin;
     // const origin = window.location.origin;
-    const guestPartForState = (await getDapId()) ?? "";
+    const guestPartForState = guest ?? (await getDapId()) ?? "";
     const domainPartForState =
-      ctx.os === OperatingSystem.MACOS && ctx.isEmbed
+      ctx.os === OperatingSystem.MACOS &&
+      ctx.isEmbed &&
+      provider === IdentityProvider.Apple
         ? "localredirect." + host
         : host;
     let url =
@@ -414,8 +419,20 @@ function initAppStore(seed: AppStore) {
     if (!redirectUri) return;
     url += "&redirect_uri=" + redirectUri;
     // url += "&redirect_uri=" + encodeURIComponent(redirectUri);
-    if (ctx.isEmbed && ctx.os === OperatingSystem.IOS) {
-      openLink(url, true);
+    if (
+      ctx.isEmbed &&
+      (ctx.os === OperatingSystem.IOS ||
+        (ctx.os === OperatingSystem.MACOS &&
+          provider !== IdentityProvider.Apple))
+    ) {
+      if (ctx.os === OperatingSystem.MACOS) {
+        const host =
+          dev || app.isDebugMode
+            ? "http://localhost:5002"
+            : `https://${import.meta.env?.VITE_HOST}`;
+        url = `${host}/embed?provider=${config.oauth_slug}&guest=${guestPartForState}`;
+      }
+      openLink(url, ctx.os === OperatingSystem.IOS);
     } else {
       goto(url);
     }

@@ -23,7 +23,7 @@ export function postMessageToParent(message: EmbedMessage) {
   });
 }
 export function postToParent(message: any) {
-  logger.log({
+  logger.debug({
     at: "posting message to parent",
     message: JSON.stringify(message)
   });

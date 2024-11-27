@@ -55,16 +55,21 @@
     refreshToken?: string;
     userInfo?: any;
   }) {
+    const isExtensionLogin = await clientStorage.getForSession(
+      ClientStorageKey.IS_EXTENSION_LOGIN
+    );
+    const isEmbedRedirection = await clientStorage.getForSession(
+      ClientStorageKey.EMBED_OAUTH
+    );
     console.log({
       ctx: "handleOAuthCompletion",
       os: $context.os,
       isEmbed: $context.isEmbed,
       embed: $context.embed,
-      userAgent: navigator.userAgent
+      userAgent: navigator.userAgent,
+      isExtensionLogin,
+      isEmbedRedirection
     });
-    const isExtensionLogin = await clientStorage.getForSession(
-      ClientStorageKey.IS_EXTENSION_LOGIN
-    );
     if (isExtensionLogin) {
       clientStorage.removeForSession(ClientStorageKey.IS_EXTENSION_LOGIN);
       postTokenToExtension(data);
@@ -72,8 +77,11 @@
       appStore.gotoPath("/ext/login");
     } else if ($context.os == OperatingSystem.MACOS && $context.isEmbed) {
       handleMacOSEmbedRedirection(data.token);
-    } else if ($context.os == OperatingSystem.IOS) {
-      handleiOSEmbedRedirection(data.token);
+    } else if (
+      $context.os == OperatingSystem.IOS ||
+      (isEmbedRedirection && $context.os === OperatingSystem.MACOS)
+    ) {
+      handleAppleUrlSchemeRedirection(data.token);
     } else if (data.userInfo) {
       debugMessage = "signing in with oauth";
       account.signIn({ ...data, userInfo: data.userInfo });
@@ -83,19 +91,19 @@
     }
   }
 
-  async function handleiOSEmbedRedirection(token: string) {
+  async function handleAppleUrlSchemeRedirection(token: string) {
     try {
-      debugMessage = "ios - embed redirection";
+      debugMessage = "ios - apple url scheme redirection";
       console.log({
-        ctx: "handleiOSEmbedRedirection",
+        ctx: "handleAppleUrlSchemeRedirection",
         product: $appStore.product
       });
       appStore.gotoPath(
         $appStore.product + "://oauthsignin" + "?token=" + token
       );
     } catch (err) {
-      debugMessage = "ios - embed redirection error" + err;
-      console.error({ err, ctx: "handleiOSEmbedRedirection" });
+      debugMessage = "ios - apple url scheme redirection error" + err;
+      console.error({ err, ctx: "handleAppleUrlSchemeRedirection" });
       appStore.gotoErrorPage(debugMessage);
     }
   }

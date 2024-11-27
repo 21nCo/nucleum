@@ -13,6 +13,7 @@ export enum ClientStorageKey {
   ENV = "env",
   PRODUCT = "product",
   IS_EXTENSION_LOGIN = "isExtensionLogin",
+  EMBED_OAUTH = "embedOAuth",
   APP_DATA = "appData",
   /**
    * Surreal token
