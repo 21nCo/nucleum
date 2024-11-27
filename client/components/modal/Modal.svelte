@@ -44,34 +44,14 @@
   /**
    * This is triggered when the overlay is clicked.
    *
-   *
-   * Note: PointerId check is added since space key input in <InlineMarkdownTextInput> is emitting a PointerEvent and closing the modal which is not intented. However, the pointerId is reliable on macOS and the modal is not getting closed when clicking from macOS app.
-   *
-   * TODO - test resolution for pointerId - macOS scenario
-   *
    * @param event
    */
   const overlayClicked = (event: any) => {
-    logger.log({
-      at: "overlayClicked",
-      id,
-      classList: event.target?.classList,
-      eventTargetId: event.target?.id,
-      pointerId: event.pointerId,
-      pointerType: event.pointerType,
-      detail: event.detail,
-      eventNodeName: event.target?.nodeName,
-      event: event
-    });
     if (
-      (((event.target?.classList?.contains("pop-overlay") ||
+      (event.target.nodeName === "DIALOG" ||
+        event.target?.classList?.contains("pop-overlay") ||
         event.target?.classList?.contains("popover") ||
         event.target?.id === id) &&
-        event.pointerType === "mouse") ||
-        event.target.nodeName === "DIALOG" ||
-        ((event.pointerType === "touch" ||
-          $context.os === OperatingSystem.IOS) &&
-          event.target?.id === id)) &&
       isDismissable
     ) {
       close();
@@ -147,7 +127,7 @@
       </div>
     </div>
   {:else}
-    <button
+    <div
       class={cn(
         "pop-overlay fixed w-screen h-screen inset-0 z-50",
         {
@@ -167,6 +147,9 @@
       data-blank-modal={index}
       transition:fade={{ duration: 100 }}
       on:click={overlayClicked}
+      role="button"
+      on:keydown
+      tabindex="0"
     >
       <!-- {#if isOnRight}
         <div
@@ -220,7 +203,7 @@
           </ColorLayer>
         </div>
       {/if}
-    </button>
+    </div>
   {/if}
 {/if}
 

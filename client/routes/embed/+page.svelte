@@ -5,6 +5,7 @@
   import { page } from "$app/stores";
   import { appStore } from "$lib/client/stores/app.store";
   import type { OAuthProviderConfig } from "$lib/client/types/oauth.type";
+  import SubAtomLogo from "$lib/client/branding/SubAtomLogo.svelte";
   onMount(async () => {
     clientStorage.setForSession(ClientStorageKey.EMBED_OAUTH, true);
     await triggerOAuth();
@@ -21,3 +22,7 @@
     await appStore.initiateOAuth2Flow(provider.provider, guest);
   }
 </script>
+
+<div class="flex flex-col items-center justify-center h-full w-full">
+  <SubAtomLogo />
+</div>

@@ -4,20 +4,13 @@ import { PopoverTriggerMethod } from "../types/popover.type";
 import { deepCopy } from "$lib/shared/utils/obj.utils";
 import { getEventPath } from "../utils/browser.utils";
 
-interface TooltipParams {
-  text: string;
-  classList?: string;
-  direction?: Placement;
-  offsetInPx?: number;
-}
-
 interface TooltipReturn {
   update: (newParams: TooltipParams) => void;
   destroy: () => void;
 }
 
 interface TooltipParams {
-  text: string;
+  text?: string;
   classList?: string;
   direction?: Placement;
   offsetInPx?: number;
@@ -44,6 +37,7 @@ export function tooltip(
   const baseClassList =
     "fixed z-50 px-3 bg-fgs2 text-bgs1 py-1 text-b3 shadow-md rounded-md pointer-events-none opacity-0 transition-opacity duration-200 tooltip";
   function createTooltip(): void {
+    if (!text) return;
     tooltipElement = document.createElement("div");
     tooltipElement.textContent = text;
     tooltipElement.className = `${baseClassList} ${classList}`;
@@ -199,7 +193,7 @@ export function tooltip(
         delay = 300
       } = newParams);
       if (tooltipElement) {
-        tooltipElement.textContent = text;
+        tooltipElement.textContent = text ?? null;
         tooltipElement.className = `${baseClassList} ${classList}`;
         positionTooltip();
       }
