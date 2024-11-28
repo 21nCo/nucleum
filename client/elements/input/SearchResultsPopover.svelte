@@ -104,7 +104,7 @@
         onSearchResultSelection(results[selectedIndex]);
       } else {
         //save();
-        dispatch("empty-enter", value);
+        dispatch("empty-enter", { event, value });
       }
     } else if (event.key !== "ArrowDown" && event.key !== "ArrowUp") {
       currentValue = value;

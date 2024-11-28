@@ -10,6 +10,15 @@
   import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
   import { createEventDispatcher } from "svelte";
   import view from "$lib/client/stores/view.store";
+  import { nodeStore } from "../../node/node.store";
+  import { NodeType } from "../../node/node.type";
+  import { collectionStore } from "../../collection/collection.store";
+  import {
+    CollectionLayout,
+    CollectionType
+  } from "../../collection/collection.type";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+  import { toasts } from "$lib/client/stores/notification.store";
   const dispatch = createEventDispatcher();
   export let context:
     | "capture"
@@ -84,19 +93,21 @@
   }
 
   function onsearch(searchQuery: string) {
-    const resource =
+    let query = searchQuery;
+    let resource =
       context === "nodepageCollectionsLane"
         ? Resource.collection
         : context === "nodelinkspane"
           ? Resource.node
           : undefined;
-    if (isExtensionEnvironment()) {
-      return new SearchStore().searchForLinkingOnExtension(
-        searchQuery,
-        resource
-      );
+    if (searchQuery?.startsWith("@")) {
+      resource = Resource.collection;
+      query = searchQuery.slice(1);
     }
-    return new SearchStore().searchForLinking(searchQuery, { resource });
+    if (isExtensionEnvironment()) {
+      return new SearchStore().searchForLinkingOnExtension(query, resource);
+    }
+    return new SearchStore().searchForLinking(query, { resource });
   }
 
   function onSelect(e: CustomEvent) {
@@ -107,6 +118,50 @@
   function onHide() {
     onHideCallback?.();
     dispatch("hide");
+  }
+
+  async function onEmptyEnter(
+    e: CustomEvent<{ event: KeyboardEvent; value: string }>
+  ) {
+    if (!e.detail.event || !e.detail.value) return;
+    let result: any;
+    if (
+      context === "nodepageCollectionsLane" ||
+      ((context === "capture" || context === "clipper") &&
+        (e.detail.event.shiftKey || e.detail.value.startsWith("@")))
+    ) {
+      let val = e.detail.value;
+      if (val.startsWith("@")) {
+        val = val.slice(1);
+      }
+      result = await collectionStore.save({
+        label: val,
+        type: CollectionType.UNTYPED,
+        defaultLayout: CollectionLayout.BOARD
+      });
+    } else {
+      result = await nodeStore.create({
+        label: e.detail.value,
+        contentType: NodeType.NODULAR_MARKDOWN,
+        body: ""
+      });
+    }
+    if (result && isValidArrayWithData(result)) {
+      onSelect({ detail: { item: result[0] } } as CustomEvent);
+      searchInputRef?.reset();
+    } else {
+      toasts.error("Something went wrong. Please try again later.");
+    }
+  }
+  function resolveEmptyStateLabel(context: string) {
+    switch (context) {
+      case "nodepageCollectionsLane":
+        return `No results found. Press \`**Enter**\` to create a new collection`;
+      case "nodelinkspane":
+        return `No results found. Press \`**Enter**\` to create a new node`;
+      default:
+        return `No results found. Press \`**Enter**\` to create a new node or \`**Shift + Enter**\` to create a new collection`;
+    }
   }
 </script>
 
@@ -126,8 +181,10 @@
       context === "nodepageCollectionsLane" || context === "nodelinkspane"
   }}
   {popoverOptions}
+  emptyStateLabel={resolveEmptyStateLabel(context)}
   on:select={onSelect}
   on:hide={onHide}
+  on:empty-enter={onEmptyEnter}
   searchCallback={onsearch}
   {placeholder}
 />

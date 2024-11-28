@@ -24,9 +24,10 @@
   function reset() {
     inputRef.reset();
   }
-  async function handleEmptyEnter(e: CustomEvent<string>) {
-    console.log({ e });
-    const goal = await newGoal.saveGoalWithLabel(e.detail);
+  async function handleEmptyEnter(
+    e: CustomEvent<{ event: KeyboardEvent; value: string }>
+  ) {
+    const goal = await newGoal.saveGoalWithLabel(e.detail.value);
     if (!goal) {
       toasts.error("Something went wrong. Please try again later.");
       return;
