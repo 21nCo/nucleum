@@ -17,7 +17,10 @@ import {
   resourceInList
 } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { linker } from "$lib/client/products/memotron/linking/link.store";
-import type { IContextMenuItem } from "$lib/client/types/select.type";
+import {
+  ContextMenuType,
+  type IContextMenuItem
+} from "$lib/client/types/select.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 import { tabs } from "$lib/client/layout/tabs/tabs.store";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
@@ -154,16 +157,25 @@ export class ResourceActions<T extends IMemotronItemBase> {
   }
   toggleReadMode(): IContextMenuItem {
     return {
-      label: this.resource.isInReadMode ? "Exit read mode" : "Read mode",
       value: "readMode",
-      icon: this.resource.isInReadMode
-        ? "ph:book-open-thin"
-        : "ph:book-open-thin",
-      callback: async () => {
-        this.store.toggleReadMode(
-          this.resource.id,
-          !this.resource.isInReadMode
-        );
+      label: "Read mode",
+      type: ContextMenuType.SWITCH,
+      initialValue: this.resource.isInReadOnlyMode,
+      callback: async (checked) => {
+        console.log({ checked });
+        this.store.toggleReadMode(this.resource.id, checked);
+      }
+    };
+  }
+  toggleFocusMode(): IContextMenuItem {
+    return {
+      value: "focusMode",
+      label: "Focus mode",
+      type: ContextMenuType.SWITCH,
+      initialValue: this.resource.isInFocusMode,
+      callback: async (checked) => {
+        console.log({ checked });
+        this.store.toggleFocusMode(this.resource.id, checked);
       }
     };
   }

@@ -213,21 +213,6 @@
                     />
                   </div>
                 {/if}
-                {#if $node.isInReadMode}
-                  <div
-                    class="flex justify-center gap-2 bg-bgs2 border-2 border-dotted border-brs3 rounded-md p-2 text-b2 mx-12"
-                  >
-                    <Icon icon="book-open" size={Size.sm} />
-                    <span>Read mode</span>
-                    <button
-                      class="text-b4 font-medium underline"
-                      on:click={() => {
-                        nodeStore.toggleReadMode($node.id, false);
-                        floatingBarRef?.resetToggle();
-                      }}>turn off</button
-                    >
-                  </div>
-                {/if}
                 <NodeContent {node} {mdId} />
               </main>
             </div>

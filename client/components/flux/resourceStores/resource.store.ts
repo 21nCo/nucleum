@@ -125,6 +125,12 @@ export class ActiveResourceStore<
   restore() {
     return this.resourceStore.restore(this.id);
   }
+  toggleReadMode(val: boolean) {
+    return this.update((prev) => ({ ...prev, isInReadOnlyMode: val }));
+  }
+  toggleLock(val: boolean) {
+    return this.resourceStore.toggleLock(this.id, val);
+  }
   get() {
     return get(this.subject);
   }
@@ -430,6 +436,13 @@ export class ResourceStore<T extends IResource> implements IStore {
       additionalParams
     );
   }
+  toggleLock(
+    id: IRecordId,
+    isLocked: boolean,
+    additionalParams?: IResourceMutationParams
+  ) {
+    return this.modify(id, { isLocked } as Partial<T>, additionalParams);
+  }
 
   /**
    * Delete the resource permanently.
@@ -518,12 +531,21 @@ export class ResourceStore<T extends IResource> implements IStore {
     }));
   }
 
-  toggleReadMode(id: IRecordId, isInReadMode: boolean) {
+  toggleReadMode(id: IRecordId, isInReadOnlyMode: boolean) {
     const activeResource = activeResources.get(id.toString());
     if (!activeResource) return;
     activeResource.update((prev: T) => ({
       ...prev,
-      isInReadMode
+      isInReadOnlyMode
+    }));
+  }
+
+  toggleFocusMode(id: IRecordId, isInFocusMode: boolean) {
+    const activeResource = activeResources.get(id.toString());
+    if (!activeResource) return;
+    activeResource.update((prev: T) => ({
+      ...prev,
+      isInFocusMode
     }));
   }
 

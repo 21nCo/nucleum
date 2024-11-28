@@ -35,6 +35,10 @@ export interface IResource extends IResourceBase {
    * Trash information of the resource
    */
   trashInformation?: ITrashInformation;
+  /**
+   * Whether the resource is locked for editing or not
+   */
+  isLocked?: boolean;
 
   [key: string]: unknown;
 }
@@ -49,8 +53,21 @@ export interface IMetaResource extends IResourceBase {
 
 export interface IActiveResource extends IResource {
   accessMode: ResourceAccessMode;
+  /**
+   * All editing features will be turned on if this is true.
+   * Example: collection, combination, media node, etc.
+   */
   isInEditMode?: boolean;
-  isInReadMode?: boolean;
+  /**
+   * Editing will be temporarily disabled for the resource if this is true.
+   * Example: markdown node.
+   */
+  isInReadOnlyMode?: boolean;
+  /**
+   * Additional UI elements will be hidden if this is true to improve the focus on the resource editing or writing.
+   * Example: markdown node.
+   */
+  isInFocusMode?: boolean;
 }
 
 export type IUnlabeledResource = Omit<IResource, "label">;

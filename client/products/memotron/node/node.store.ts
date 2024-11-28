@@ -34,9 +34,10 @@ import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
 import { get, writable } from "svelte/store";
 import { SearchStore } from "../memotron.store";
 import { linker } from "$lib/client/products/memotron/linking/link.store";
-import type {
-  IContextMenu,
-  IContextMenuItem
+import {
+  ContextMenuType,
+  type IContextMenu,
+  type IContextMenuItem
 } from "$lib/client/types/select.type";
 import { flux } from "$lib/client/components/flux/flux";
 import { logger } from "$lib/client/components/debug/logger.client";
@@ -58,6 +59,7 @@ import { Embed } from "$lib/client/types/context.type";
 import { TacoActions } from "../taco/taco.types";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { generateResourceId } from "$lib/shared/utils/surreal.utils";
+import { toasts } from "$lib/client/stores/notification.store";
 
 export const hierarchyFactorLimit = 5;
 
@@ -540,8 +542,7 @@ function initActiveNodeEventStore(id: string) {
     }
   };
 }
-
-export const nodeActions = {
+const nodeStaticActions = {
   linksPane: {
     value: NodeRightPaneType.LINKS,
     icon: "ph:link-light",
@@ -578,32 +579,57 @@ export const nodeActions = {
     label: "Show traces",
     tooltip: "Show traces"
   },
-  download: {
-    value: "download",
-    icon: "download",
-    callback: async () => {}
-  },
-  share: {
-    value: "share",
-    icon: "share",
-    callback: async () => {}
-  },
-  export: {
-    value: "export",
-    icon: "share",
-    callback: async () => {}
-  },
-  toggleReadMode: {
-    value: "readMode",
-    icon: "ph:book-open-thin",
-    tooltip: "Toggle read mode"
-  },
   showForks: {
     value: "forks",
     icon: "ph:git-fork-thin",
     tooltip: "Show forks"
   }
 };
+class NodeActions {
+  constructor(
+    private node: INode,
+    private store: NodeStore,
+    private accessPoint: ResourceAccessPoint
+  ) {
+    this.node = node;
+    this.store = store;
+    this.accessPoint = accessPoint;
+  }
+
+  download = {
+    value: "download",
+    icon: "download",
+    callback: async () => {}
+  };
+  share = {
+    value: "share",
+    icon: "share",
+    callback: async () => {}
+  };
+  export = {
+    value: "export",
+    icon: "share",
+    callback: async () => {}
+  };
+  toggleLock(): IContextMenuItem {
+    return {
+      value: "lock",
+      label: "Lock for editing",
+      type: ContextMenuType.SWITCH,
+      initialValue: this.node.isLocked,
+      callback: async (checked) => {
+        console.log({ checked });
+        const result = await this.store.modify(this.node.id, {
+          isLocked: checked
+        });
+        if (result) {
+          toasts.success("Node lock updated");
+        }
+        return result;
+      }
+    };
+  }
+}
 
 export function resolveNodeContextMenu(
   node: INode,
@@ -618,6 +644,7 @@ export function resolveNodeContextMenu(
   }
 ): IContextMenu {
   const resourceActions = new ResourceActions(node, nodeStore, accessPoint);
+  const nodeActions = new NodeActions(node, nodeStore, accessPoint);
   const ctx = get(context);
   let commonGroups: { group: string; items: IContextMenuItem[] }[] = [];
   if (ctx.isEmbed) {
@@ -712,11 +739,11 @@ export function resolveNodeContextMenu(
         items: [
           resourceActions.star(),
           resourceActions.edit(accessPoint),
-          nodeActions.tracesPane,
-          nodeActions.linksPane,
-          nodeActions.sideNotesPane,
-          nodeActions.propertiesPane,
-          nodeActions.metadataPane
+          nodeStaticActions.tracesPane,
+          nodeStaticActions.linksPane,
+          nodeStaticActions.sideNotesPane,
+          nodeStaticActions.propertiesPane,
+          nodeStaticActions.metadataPane
         ]
       },
       mediaShareAndExportGroup,
@@ -729,8 +756,8 @@ export function resolveNodeContextMenu(
         items: [
           resourceActions.star(),
           resourceActions.edit(accessPoint),
-          nodeActions.linksPane,
-          nodeActions.metadataPane
+          nodeStaticActions.linksPane,
+          nodeStaticActions.metadataPane
         ]
       },
       mediaShareAndExportGroup,
@@ -742,10 +769,10 @@ export function resolveNodeContextMenu(
         group: "all",
         items: [
           resourceActions.star(),
-          nodeActions.linksPane,
-          nodeActions.sideNotesPane,
-          nodeActions.propertiesPane,
-          nodeActions.metadataPane
+          nodeStaticActions.linksPane,
+          nodeStaticActions.sideNotesPane,
+          nodeStaticActions.propertiesPane,
+          nodeStaticActions.metadataPane
         ]
       },
       mediaShareAndExportGroup,
@@ -757,14 +784,21 @@ export function resolveNodeContextMenu(
       group: "all",
       items: [
         resourceActions.star(),
-        // resourceActions.toggleReadMode(),
-        nodeActions.metadataPane,
-        nodeActions.historyPane
+        nodeStaticActions.metadataPane,
+        nodeStaticActions.historyPane
       ]
     },
     {
       group: "shareAndExport",
       items: [resourceActions.copyLink(), resourceActions.copyContents()]
+    },
+    {
+      group: "editModes",
+      items: [
+        resourceActions.toggleReadMode(),
+        resourceActions.toggleFocusMode(),
+        nodeActions.toggleLock()
+      ]
     },
     ...commonGroups
   ];
@@ -783,8 +817,7 @@ export function resolveVisibleActions(
     !params?.isConstrainedWidth
   ) {
     return [
-      // nodeActions.toggleReadMode,
-      nodeActions.sideNotesPane
+      nodeStaticActions.sideNotesPane
       // nodeActions.showForks
     ];
   } else if (
@@ -793,18 +826,18 @@ export function resolveVisibleActions(
     params?.isConstrainedWidth
   ) {
     return [
-      nodeActions.linksPane,
-      nodeActions.propertiesPane,
-      nodeActions.sideNotesPane
+      nodeStaticActions.linksPane,
+      nodeStaticActions.propertiesPane,
+      nodeStaticActions.sideNotesPane
     ];
   }
   const baseActions: IToggleItem[] = [
-    nodeActions.linksPane,
-    nodeActions.propertiesPane,
-    nodeActions.sideNotesPane
+    nodeStaticActions.linksPane,
+    nodeStaticActions.propertiesPane,
+    nodeStaticActions.sideNotesPane
   ];
   if (canHaveTraces.includes(contentType) && !params?.isConstrainedWidth) {
-    baseActions.push(nodeActions.tracesPane);
+    baseActions.push(nodeStaticActions.tracesPane);
   }
   return baseActions;
 }
