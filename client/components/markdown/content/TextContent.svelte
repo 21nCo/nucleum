@@ -24,6 +24,7 @@
   import { logger } from "../../debug/logger.client";
   import { SearchStore } from "$lib/client/products/memotron/memotron.store";
   import type { IRecordId } from "$lib/client/types/data.type";
+  import { renderMdAsHtml } from "../markdown.utils";
 
   const nodeContentContext = getContext<any>("content");
   const blockContext = getContext<any>("block");
@@ -782,7 +783,6 @@
   isPreventDefault={true}
 >
   <div class="relative w-full flex justify-start">
-    <!--  || !$isInEditMode -->
     {#if $mdStore.params?.isReadOnly}
       <div
         id={id.toString()}
@@ -792,7 +792,7 @@
           ? 'px-2'
           : 'px-1'}"
       >
-        {@html text}
+        {@html renderMdAsHtml(text)}
       </div>
     {:else}
       <div

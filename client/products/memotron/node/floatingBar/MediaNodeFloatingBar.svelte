@@ -27,6 +27,7 @@
   import { hoverable } from "$lib/client/actions/hover.action";
   import view from "$lib/client/stores/view.store";
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
+  import { Size } from "$lib/client/types/size.enum";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let isHovering: boolean = false;
@@ -146,6 +147,7 @@
                 isConstrainedWidth
               })}
             id="mediaNodeContextMenu"
+            size={Size.lg}
             position={Placement.TopCenter}
             on:action={(e) => {
               if (

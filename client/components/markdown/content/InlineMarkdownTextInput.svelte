@@ -967,6 +967,8 @@
           nontyping: !typing
         }
       )}
+      role="textbox"
+      tabindex="0"
       on:keyup={handleKeyUp}
       on:keydown={handleKeyDown}
       on:keypress={handleKeyPress}

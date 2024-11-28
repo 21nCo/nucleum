@@ -37,6 +37,7 @@ DEFINE FIELD IF NOT EXISTS vector on TABLE node TYPE option<record<vector> | nul
 DEFINE FIELD OVERWRITE avatar on TABLE node FLEXIBLE TYPE option<array | object | string>;
 DEFINE FIELD IF NOT EXISTS text on TABLE node TYPE option<string>;
 DEFINE FIELD IF NOT EXISTS isLocked on TABLE node DEFAULT false;
+DEFINE FIELD IF NOT EXISTS config on TABLE node FLEXIBLE TYPE option<object>;
 `;
   return [def];
 }

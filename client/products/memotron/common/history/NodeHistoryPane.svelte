@@ -87,6 +87,9 @@
           ? "⌫ Deleted"
           : "↵ Restored";
       }
+      if ("isLocked" in mutationChangedProperties) {
+        return mutationChangedProperties.isLocked ? "🔒 Locked" : "🔑 Unlocked";
+      }
     }
     return "📝 Edited";
   }

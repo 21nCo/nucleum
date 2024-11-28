@@ -9,13 +9,25 @@
   import ContextMenuItemWithSecondary from "./ContextMenuItemWithSecondary.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { createEventDispatcher } from "svelte";
+  import ContextMenuToggleItem from "./ContextMenuToggleItem.svelte";
   const dispatch = createEventDispatcher();
   export let item: IContextMenuItem;
+  export let isToggleGroup = false;
+  export let parentBgIndex = 1;
   export let size: Size.sm | Size.md | Size.lg = Size.md;
   let contextMenuItemRef: any;
 </script>
 
-{#if item.secondStepComponent?.component}
+{#if isToggleGroup}
+  <ContextMenuToggleItem
+    {item}
+    {size}
+    {parentBgIndex}
+    on:change={(e) => {
+      if (item.callback) item.callback(e.detail);
+    }}
+  />
+{:else if item.secondStepComponent?.component}
   <ContextMenuItemWithSecondary {item} {size} on:select on:action />
 {:else}
   <button

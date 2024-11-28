@@ -131,8 +131,10 @@
           nodeView
         })}
       size={Size.lg}
+      parentBgIndex={1}
       id="nodeContextMenu"
       tooltip="More actions"
+      heading="Node actions"
       position={Placement.TopCenter}
       on:action
     />
@@ -145,10 +147,16 @@
       {#if $node.accessMode !== ResourceAccessMode.SPLIT && $node.accessMode !== ResourceAccessMode.FSPLIT && nodeView === NodeView.CONTENT}
         <Button
           {...buttonCommonProps}
-          icon={isWidened ? "unwiden" : "widen"}
-          tooltip={isWidened ? "Collapse" : "Expand"}
+          icon={isWidened
+            ? "ph:arrows-in-line-horizontal-light"
+            : "ph:arrows-out-line-horizontal-light"}
+          tooltip={isWidened ? "Collapse" : "Expand to full width"}
           on:click={() => {
-            isWidened = !isWidened;
+            nodeStore.modify($node.id, {
+              config: {
+                isWidened: !isWidened
+              }
+            });
           }}
         />
       {/if}

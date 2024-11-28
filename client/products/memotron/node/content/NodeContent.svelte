@@ -286,6 +286,13 @@
         <NodularMarkdown
           node={$node}
           {mdId}
+          params={{
+            isReadOnly:
+              $node.isInReadOnlyMode ||
+              $node.isLocked ||
+              $node.isArchived ||
+              $node.trashInformation !== undefined
+          }}
           bind:md={$node.md}
           bind:this={markdownRef}
           on:change={onMarkdownContentChange}

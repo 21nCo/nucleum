@@ -12,6 +12,7 @@
   import Button from "../button/Button.svelte";
   import Link from "./Link.svelte";
   export let content: string | undefined = undefined;
+  export let icon: string | undefined = undefined;
   export let type: InfoTextType = InfoTextType.INFO;
   export let action: IButtonParams | undefined = undefined;
 </script>
@@ -24,7 +25,7 @@
   })}
 >
   <Icon
-    icon={type === InfoTextType.ERROR ? "help" : `ph:${type}-light`}
+    icon={icon ?? (type === InfoTextType.ERROR ? "help" : `ph:${type}-light`)}
     class={cn({
       "stroke-ars1": type === InfoTextType.ERROR,
       "stroke-fgs1": type === InfoTextType.INFO || type === InfoTextType.TIP,

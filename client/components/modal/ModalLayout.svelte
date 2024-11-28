@@ -27,6 +27,7 @@
   export let path: string;
   export let resource: string | undefined = undefined;
   export let params: ModalParams;
+  export let isInFocusMode = false;
   let size: Size = Size.md;
   if (params.layout?.size) size = params.layout.size;
   let footerRef: any;
@@ -140,7 +141,7 @@
         isShowClose={params.layout?.isShowClose}
       />
     {/if}
-    {#if params.layout?.isShowCantileverClose}
+    {#if params.layout?.isShowCantileverClose && !isInFocusMode}
       <button
         class="absolute top-2 -right-10 bg-ars1 w-10 h-12 rounded-r-md flex justify-center items-center hover:bg-opacity-80"
         on:click={() => handleClose(ResourceAccessMode.POP)}
@@ -149,7 +150,7 @@
         <Icon icon="ph:x-light" size={Size.lg} class="stroke-abg" />
       </button>
     {/if}
-    {#if params.layout?.isShowBackButton}
+    {#if params.layout?.isShowBackButton && !isInFocusMode}
       <button
         class="absolute top-16 -right-10 bg-bgs4 w-10 h-12 rounded-r-md flex justify-center items-center hover:bg-opacity-80"
         on:click={() => appStore.goBack(resource)}

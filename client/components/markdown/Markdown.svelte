@@ -10,7 +10,6 @@
   import { TextStyle } from "$lib/client/types/text.enum";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import { generateUID } from "$lib/client/utils/utils";
   import { isValidAndUniqueArray } from "$lib/shared/utils/obj.utils";
   import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
   import { setContext } from "svelte";
@@ -19,6 +18,7 @@
   import { get } from "svelte/store";
   import { KeyboardKey } from "$lib/client/types/keyboard.type";
   import type { IRecordId } from "$lib/client/types/data.type";
+  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 
   /**
    * Propagates the event to the parent component.
@@ -46,9 +46,10 @@
   export let parentBackgroundIndex: number | undefined = undefined;
   const dispatch = createEventDispatcher();
   export let id: string | undefined = undefined;
-  let mdId: string = id ?? generateUID();
+  let mdId: string = id ?? generateSimpleRandomId();
   const mdStore = getMdStore(mdId);
-  mdStore.load(md, params);
+  mdStore.load(md);
+  $: if (params) mdStore?.setParams(params);
   // $: console.log("blocks", $mdStore.blocks);
   onMount(() => {
     const mdChangeSub = mdContentChangeEvent.subscribe((val) => {

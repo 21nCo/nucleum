@@ -37,7 +37,6 @@
   let mdId = generateUID();
   let isStickied = false;
   let isShowFloatingBar = true;
-  let isWidened = false;
   let isRightPanelCollapsed: boolean = true;
   let rightPane = NodeRightPaneType.NONE;
   let floatingBarRef: NodeFloatingBar | undefined = undefined;
@@ -45,6 +44,7 @@
   let refreshId: number = new Date().getTime();
   let scrollTimeout: NodeJS.Timeout;
 
+  $: isWidened = $node.config?.isWidened ?? false;
   $: isConstrainedWidth =
     $view.isConstrainedWidth ||
     containerWidth < 1000 ||
@@ -198,7 +198,9 @@
                     <CollectionsLane {node} />
                   </div>
                 {/if}
-                <ResourceStatusBanner resource={node} />
+                <div class="pl-12">
+                  <ResourceStatusBanner resource={node} />
+                </div>
                 {#if $node.types && $node.types.length > 0 && !$node.focusedBlock}
                   <!-- TODO - later - show properties of focused node if the focused blocks is associated with a type collection -->
                   <div class="mo:px-0 px-2">
@@ -225,7 +227,7 @@
             />
           {/if}
 
-          {#if !isConstrainedWidth}
+          {#if !isConstrainedWidth && !$node.isInFocusMode}
             <NodeRightPane
               {node}
               {mdId}
@@ -239,7 +241,7 @@
     {:else}
       <NodeBirdView {node} bind:rightPane />
     {/if}
-    {#if isShowFloatingBar}
+    {#if isShowFloatingBar && !$node.isInFocusMode}
       <div transition:fade={{ duration: 200 }}>
         <BottomFloat margin={isConstrainedWidth ? "mb-8" : "mb-6"}>
           <NodeFloatingBar
@@ -273,6 +275,19 @@
           />
         </BottomFloat>
       </div>
+    {/if}
+    {#if $node.isInFocusMode}
+      <BottomFloat margin={isConstrainedWidth ? "mb-8" : "mb-6"}>
+        <button
+          class="flex justify-center items-center gap-2 bg-bgs2 rounded-md px-4 py-2 shadow-sm"
+          on:click={() => {
+            nodeStore.toggleFocusMode($node.id, false);
+          }}
+        >
+          <Icon icon="ph:x" />
+          <span class="text-b2"> Close focus mode </span>
+        </button>
+      </BottomFloat>
     {/if}
   {:else}
     <div class="w-full h-full pt-4 px-20">

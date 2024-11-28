@@ -53,6 +53,7 @@
 
   let isWindowVisible: boolean = true;
   let isDialogEnabled: boolean = false;
+  let isInFocusMode = false;
 
   onMount(() => {
     const appEventSub = appEvents.subscribe((x: IEvent) => {
@@ -141,6 +142,12 @@
   const visibilityChangeListener = () => {
     isWindowVisible = !document.hidden;
   };
+
+  function handleFocusMode(e: CustomEvent<boolean>) {
+    if (typeof e.detail === "boolean") {
+      isInFocusMode = e.detail;
+    }
+  }
 </script>
 
 <!-- {#if $appStore.fullScreenComponentPath}
@@ -243,6 +250,7 @@
     <Modal
       show={pop != undefined}
       id={pop.path + "-resource"}
+      {isInFocusMode}
       isDismissable={pop.modalParams?.isDismissable ?? true}
       isShowOverlay={pop.modalParams?.isShowOverlay ?? true}
       isUseDialog={pop.modalParams?.layout?.size != Size.full &&
@@ -257,6 +265,7 @@
       <ModalLayout
         path={pop.path + "-resource"}
         resource={pop.resource}
+        {isInFocusMode}
         params={{
           ...pop?.modalParams,
           layout: {
@@ -283,6 +292,7 @@
     show={modal.isShow}
     id={modal.path}
     {index}
+    {isInFocusMode}
     isDismissable={modal.isDismissable ?? true}
     isShowOverlay={modal.isShowOverlay ?? true}
     isUseDialog={modal.layout?.size != Size.full &&
@@ -294,7 +304,7 @@
     hasCantileverButtons={modal.layout?.isShowCantileverClose ||
       modal.layout?.isShowBackButton}
   >
-    <ModalLayout path={modal.path} bind:params={modal}>
+    <ModalLayout path={modal.path} {isInFocusMode} bind:params={modal}>
       <ComponentResolver
         path={modal.path}
         params={{ ...modal.componentParams, isModal: true }}
@@ -327,3 +337,4 @@
 {/if}
 
 <svelte:document on:visibilitychange={visibilityChangeListener} />
+<svelte:window on:focusMode={handleFocusMode} />

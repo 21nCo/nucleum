@@ -27,6 +27,7 @@
   export let size: Size = Size.md;
   export let orientation: Orientation = Orientation.Vertical;
   export let hasCantileverButtons: boolean = false;
+  export let isInFocusMode = false;
   let dialog: HTMLDialogElement;
   /**
    * Safari focuses the dialog element or a button present on the dialog when the dilaog is shown. This focusTrap is used to remove the focus from the dialog element or the button.
@@ -52,7 +53,8 @@
         event.target?.classList?.contains("pop-overlay") ||
         event.target?.classList?.contains("popover") ||
         event.target?.id === id) &&
-      isDismissable
+      isDismissable &&
+      !isInFocusMode
     ) {
       close();
     }
@@ -132,11 +134,13 @@
         "pop-overlay fixed w-screen h-screen inset-0 z-50",
         {
           "bg-opacity-0": !isShowOverlay,
+          "bg-bgs1": isInFocusMode,
           "flex justify-center items-center mo:p-0 p-3":
             !isUseDialog && size !== Size.full
         },
         isShowOverlay &&
-          !isUseDialog && {
+          !isUseDialog &&
+          !isInFocusMode && {
             "bg-black bg-opacity-60":
               !$userPreferences.appearance.isBlurredBgForPopups,
             "backdrop-blur-2xl backdrop-opacity--80 backdrop-brightness--50 backdrop-grayscale bg-fgs4 bg-opacity-50 backdrop-saturate--50":

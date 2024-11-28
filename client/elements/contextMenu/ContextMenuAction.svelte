@@ -19,6 +19,7 @@
   export let size: Size.sm | Size.md | Size.lg = Size.md;
   export let tooltip: string | undefined = undefined;
   export let tooltipOptions: IPopoverRenderBaseParams | undefined = undefined;
+  export let parentBgIndex: number = 1;
   export let triggerMethod: PopoverTriggerMethod | undefined = undefined;
   export let position: Placement | undefined = undefined;
   export let offsetInPx: number | undefined = undefined;
@@ -105,7 +106,7 @@
     triggerMethod: triggerMethod
       ? [triggerMethod]
       : [PopoverTriggerMethod.CLICK],
-    componentProps: { size, heading, menuResolver, onSelect },
+    componentProps: { size, heading, menuResolver, onSelect, parentBgIndex },
     groupId: "contextMenuPopover-" + id,
     id,
     isRenderAsSibling

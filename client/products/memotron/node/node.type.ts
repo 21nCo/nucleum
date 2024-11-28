@@ -80,6 +80,7 @@ type INodeInterface<
    */
   mdText?: string;
   text?: string;
+  config?: any;
 };
 
 export type ILink = IMemotronItemBase & {

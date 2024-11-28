@@ -551,7 +551,7 @@ const nodeStaticActions = {
   },
   metadataPane: {
     value: NodeRightPaneType.METADATA,
-    icon: "ph:file-thin",
+    icon: "ph:file-light",
     label: "Show metadata",
     tooltip: "Show metadata"
   },
@@ -569,7 +569,7 @@ const nodeStaticActions = {
   },
   historyPane: {
     value: NodeRightPaneType.HISTORY,
-    icon: "ph:clock-countdown-thin",
+    icon: "ph:clock-countdown-light",
     label: "Show history",
     tooltip: "Show history"
   },
@@ -611,21 +611,20 @@ class NodeActions {
     icon: "share",
     callback: async () => {}
   };
-  toggleLock(): IContextMenuItem {
+  toggleFullWidth() {
     return {
-      value: "lock",
-      label: "Lock for editing",
+      value: "toggleFullWidth",
+      label: "Expand to full width",
+      icon: "ph:arrows-out-line-horizontal-light",
       type: ContextMenuType.SWITCH,
-      initialValue: this.node.isLocked,
+      initialValue: this.node.config?.isWidened,
       callback: async (checked) => {
         console.log({ checked });
-        const result = await this.store.modify(this.node.id, {
-          isLocked: checked
+        return this.store.modify(this.node.id, {
+          config: {
+            isWidened: checked
+          }
         });
-        if (result) {
-          toasts.success("Node lock updated");
-        }
-        return result;
       }
     };
   }
@@ -781,9 +780,19 @@ export function resolveNodeContextMenu(
   }
   return [
     {
+      group: "editModes",
+      isToggleGroup: true,
+      items: [
+        resourceActions.starAsToggle(),
+        resourceActions.toggleLock(),
+        resourceActions.toggleFocusMode()
+      ]
+    },
+    {
       group: "all",
       items: [
-        resourceActions.star(),
+        resourceActions.toggleReadMode(),
+        nodeActions.toggleFullWidth(),
         nodeStaticActions.metadataPane,
         nodeStaticActions.historyPane
       ]
@@ -791,14 +800,6 @@ export function resolveNodeContextMenu(
     {
       group: "shareAndExport",
       items: [resourceActions.copyLink(), resourceActions.copyContents()]
-    },
-    {
-      group: "editModes",
-      items: [
-        resourceActions.toggleReadMode(),
-        resourceActions.toggleFocusMode(),
-        nodeActions.toggleLock()
-      ]
     },
     ...commonGroups
   ];

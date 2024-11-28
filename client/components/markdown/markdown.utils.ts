@@ -209,6 +209,10 @@ export function renderMdAsHtml(
   parsedText = replaceSymbolPatterns(parsedText);
   parsedText = replaceInlineStylePatterns(parsedText);
   parsedText = parsedText.replace(/\n/g, "<br>");
+  parsedText = parsedText.replace(
+    /\[(.*?)\]\(resource=(.*?)\)/g,
+    '<a class="mention text-aps1 underline-dotted-primary" id="$2" href="?pop=$2">$1</a>'
+  );
   if (params?.isIncludeSpaces) parsedText = parsedText.replace(/ /g, "&nbsp;");
   return parsedText;
 }

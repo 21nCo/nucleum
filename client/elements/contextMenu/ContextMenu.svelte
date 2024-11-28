@@ -1,5 +1,8 @@
 <script lang="ts">
-  import type { IContextMenuItem } from "$lib/client/types/select.type";
+  import type {
+    IContextMenuGroup,
+    IContextMenuItem
+  } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
   import { bg, cn } from "$lib/client/utils/ui.utils";
   import Divider from "../Divider.svelte";
@@ -13,7 +16,7 @@
   export let heading: string | undefined = undefined;
   export let onSelect: (item: IContextMenuItem) => void = () => {};
   export let parentBgIndex: number = 1;
-  let menu: { group: string; items: IContextMenuItem[] }[] = [];
+  let menu: IContextMenuGroup[] = [];
 
   onMount(() => {
     if (!menuResolver) return;
@@ -26,7 +29,7 @@
   class={cn("flex flex-col gap-1 p-1", bg(parentBgIndex), {
     "w-36 text-b3": size === Size.sm,
     "w-48 text-b2": size === Size.md,
-    "w-56 text-b2": size === Size.lg
+    "w-60 text-b2": size === Size.lg
   })}
 >
   {#if heading}
@@ -41,9 +44,20 @@
     </span>
   {/if}
   {#each menu as group, index}
-    <div class="flex flex-col">
+    <div
+      class={cn("flex", {
+        "flex-col": !group.isToggleGroup,
+        "flex-row justify-around py-2": group.isToggleGroup
+      })}
+    >
       {#each group.items as item}
-        <ContextMenuItem {item} {size} on:select={() => onSelect(item)} />
+        <ContextMenuItem
+          {item}
+          {size}
+          isToggleGroup={group.isToggleGroup}
+          {parentBgIndex}
+          on:select={() => onSelect(item)}
+        />
       {/each}
     </div>
     {#if index !== menu.length - 1}

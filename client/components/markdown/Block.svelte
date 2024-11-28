@@ -42,10 +42,8 @@
   $: isFocusable =
     $mdStore.params?.isNodular && headingNodeTypes.includes(block.contentType);
 
-  $: isShowLeftControls =
-    $mdStore.params?.isNodular &&
-    !$mdStore.params?.isReadOnly &&
-    !$view.isConstrainedWidth;
+  $: isLeftControlsEnabled =
+    $mdStore.params?.isNodular && !$view.isConstrainedWidth;
 
   const markdownContext = getContext<any>("markdown");
 
@@ -401,7 +399,7 @@
   class={cn(
     "w-full min-h-fit items-center gap-2 rounded-md border border-transparent",
     {
-      "grid grid-cols-[2.5rem_1fr]": isShowLeftControls
+      "grid grid-cols-[2.5rem_1fr]": isLeftControlsEnabled
     },
     $mdStore.params?.isNodular &&
       !$mdStore.params?.isReadOnly && {
@@ -421,15 +419,19 @@
     }
   }}
 >
-  {#if isShowLeftControls}
-    <LeftControls
-      {mdStore}
-      {block}
-      {isFocusing}
-      isBlockHovering={isHovering}
-      on:nodularize
-      on:action={onContextMenuAction}
-    />
+  {#if isLeftControlsEnabled}
+    {#if $mdStore.params?.isReadOnly}
+      <span />
+    {:else}
+      <LeftControls
+        {mdStore}
+        {block}
+        {isFocusing}
+        isBlockHovering={isHovering}
+        on:nodularize
+        on:action={onContextMenuAction}
+      />
+    {/if}
   {/if}
   <div class="relative flex-1">
     <BlockContent

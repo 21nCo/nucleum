@@ -57,7 +57,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
     return {
       label: this.resource.isStarred ? "Unstar" : "Star this resource",
       value: "star",
-      icon: "star",
+      icon: "ph:star-light",
       callback: async () => {
         this.store.modify(
           this.resource.id,
@@ -68,6 +68,22 @@ export class ResourceActions<T extends IMemotronItemBase> {
             context: this.accessPoint
           }
         );
+      }
+    };
+  }
+  starAsToggle(): IContextMenuItem {
+    return {
+      value: "star",
+      label: "Star",
+      activeLabel: "Starred",
+      icon: "ph:star-light",
+      activeIcon: "ph:star-fill",
+      type: ContextMenuType.SWITCH,
+      initialValue: this.resource.isStarred,
+      callback: async (checked) => {
+        this.store.modify(this.resource.id, { isStarred: checked } as T, {
+          context: this.accessPoint
+        });
       }
     };
   }
@@ -159,6 +175,8 @@ export class ResourceActions<T extends IMemotronItemBase> {
     return {
       value: "readMode",
       label: "Read mode",
+      icon: "ph:book-open-light",
+      activeIcon: "ph:eye-light",
       type: ContextMenuType.SWITCH,
       initialValue: this.resource.isInReadOnlyMode,
       callback: async (checked) => {
@@ -170,12 +188,31 @@ export class ResourceActions<T extends IMemotronItemBase> {
   toggleFocusMode(): IContextMenuItem {
     return {
       value: "focusMode",
-      label: "Focus mode",
+      label: "Focus",
+      activeLabel: "Focused",
+      icon: "ph:circle-light",
+      activeIcon: "ph:circle-fill",
       type: ContextMenuType.SWITCH,
       initialValue: this.resource.isInFocusMode,
       callback: async (checked) => {
         console.log({ checked });
         this.store.toggleFocusMode(this.resource.id, checked);
+      }
+    };
+  }
+  toggleLock(): IContextMenuItem {
+    return {
+      value: "lock",
+      label: "Lock",
+      activeLabel: "Locked",
+      icon: "ph:lock-open-light",
+      activeIcon: "ph:lock-light",
+      type: ContextMenuType.SWITCH,
+      initialValue: this.resource.isLocked,
+      callback: async (checked) => {
+        return this.store.modify(this.resource.id, {
+          isLocked: checked
+        } as T);
       }
     };
   }
@@ -186,7 +223,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
     const isAlreadyPinned = tabData?.some(resourceInList(this.resource.id));
     return {
       value: isAlreadyPinned ? "Remove from tabs" : "Open as tab",
-      icon: isAlreadyPinned ? "ph:x-light" : "ph:tabs-light",
+      icon: isAlreadyPinned ? "ph:minus-circle-light" : "ph:tabs-light",
       callback: async () => {
         if (isAlreadyPinned) {
           tabs.remove(this.resource.id);
@@ -218,7 +255,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
           : "Open in split screen",
       icon:
         currentMode === ResourceAccessMode.SPLIT
-          ? "ph:x-light"
+          ? "ph:minus-circle-light"
           : "ph:square-split-horizontal-light",
       callback: async () => {
         if (currentMode === ResourceAccessMode.SPLIT) {
@@ -242,7 +279,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
           : "Open in full screen",
       icon:
         currentMode === ResourceAccessMode.FULL
-          ? "ph:x-light"
+          ? "ph:minus-circle-light"
           : "ph:arrows-out-light",
       callback: async () => {
         if (currentMode === ResourceAccessMode.FULL) {

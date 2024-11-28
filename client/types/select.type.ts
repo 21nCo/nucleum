@@ -4,6 +4,8 @@ export type ISelectItem = {
   value: ISelectValue;
   label?: string;
   icon?: string | IAvatar;
+  activeIcon?: string | IAvatar;
+  activeLabel?: string;
   isDisabled?: boolean;
   badge?: string;
 };
@@ -14,7 +16,13 @@ export enum OptionSelectorStyle {
   CHECK_CIRCLE
 }
 
-export type IContextMenu = { group: string; items: IContextMenuItem[] }[];
+export type IContextMenu = IContextMenuGroup[];
+
+export type IContextMenuGroup = {
+  group: string;
+  items: IContextMenuItem[];
+  isToggleGroup?: boolean;
+};
 
 export type IContextMenuItem = ISelectItem & {
   callback?: (props?: any) => Promise<void>;
