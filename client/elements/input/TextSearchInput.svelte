@@ -31,8 +31,19 @@
   export let emptyStateLabel: string | undefined = undefined;
   export let isPreventDefaultResults: boolean = false;
   export let isChipsMode: boolean = false;
+  /**
+   * If true, the search results popover will be shown inline with the input element instead as a popover.
+   */
   export let isInline: boolean = false;
   export let width: string | undefined = undefined;
+  /**
+   * Message to be shown at the bottom of the search results popover - will be shown at the bottom left corner
+   */
+  export let bottomMessage: string | undefined = undefined;
+  /**
+   * If true, the search results popover will be shown when the input is focused and hidden when the input is blurred.
+   */
+  export let isShowPopoverOnFocus: boolean = false;
   let isFocused: boolean = false;
   let chips: any[] = [];
   let inputRef: any;
@@ -94,6 +105,7 @@
   >
     <TextInput
       bind:value
+      bind:this={inputRef}
       {placeholder}
       {style}
       on:keyup={(event) => {
@@ -110,6 +122,7 @@
       {emptyStateLabel}
       {searchResultComponent}
       {searchResultComponentProps}
+      {bottomMessage}
       on:select={onSelect}
       on:empty-enter
       on:reset
@@ -170,13 +183,22 @@
       on:blur
       on:click|stopPropagation
       on:mouseup|stopPropagation
-      on:blur={() => {
+      on:blur={(e) => {
         isFocused = false;
         dispatch("blur");
+        if (isShowPopoverOnFocus) {
+          if (!e.target?.classList?.contains("text-input")) {
+            hide();
+          }
+        }
       }}
       on:focus={() => {
         isFocused = true;
         dispatch("focus");
+        if (isShowPopoverOnFocus) {
+          show();
+          showDefaultResults();
+        }
       }}
       type="text"
       {placeholder}
@@ -193,6 +215,7 @@
         {emptyStateLabel}
         {searchResultComponent}
         {searchResultComponentProps}
+        {bottomMessage}
         on:select={onSelect}
         on:empty-enter
         on:reset={onReset}

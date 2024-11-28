@@ -163,6 +163,15 @@
         return `No results found. Press \`**Enter**\` to create a new node or \`**Shift + Enter**\` to create a new collection`;
     }
   }
+  function resolveBottomMessage(context: string) {
+    switch (context) {
+      case "capture":
+      case "clipper":
+        return "Use **@** prefix to search for collections";
+      default:
+        return undefined;
+    }
+  }
 </script>
 
 <TextSearchInput
@@ -187,4 +196,6 @@
   on:empty-enter={onEmptyEnter}
   searchCallback={onsearch}
   {placeholder}
+  isShowPopoverOnFocus={true}
+  bottomMessage={resolveBottomMessage(context)}
 />

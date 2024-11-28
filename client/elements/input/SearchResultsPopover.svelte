@@ -26,13 +26,14 @@
   export let isPreventDefaultResults: boolean = false;
   export let isInlineContext: boolean = false;
   export let isAlwaysShowSearchFeedback: boolean = false;
+  export let bottomMessage: string | undefined = undefined;
   let value: string;
   type SearchItem = Partial<IResource & Record<string, unknown>>;
   let results: SearchItem[] = [];
   let selectedIndex: number = 0;
   let previousValue: string = "";
   let currentValue: string;
-  let isSearchInProgress: boolean = false;
+  let isSearchInProgress: boolean = !isPreventDefaultResults;
   export function reset() {
     resetSearch();
     value = "";
@@ -158,7 +159,7 @@
 
 <div
   class={cn("flex flex-col justify-between  w-full", {
-    "max-h-60 h-60": !isInlineContext,
+    "max-h-72 h-72": !isInlineContext,
     "h-full": isInlineContext
   })}
 >
@@ -208,8 +209,23 @@
     {/if}
   </div>
   {#if !isInlineContext}
-    <div class="w-full flex justify-center">
-      <Button size={Size.sm} label="close" parentBgIndex={0} on:click={reset} />
+    <div
+      class={cn("w-full flex items-center px-4 py-1", {
+        "justify-between bg-bgs2": bottomMessage,
+        "justify-center": !bottomMessage
+      })}
+    >
+      {#if bottomMessage}
+        <span class="text-b3 text-fgs3">
+          {@html renderMdAsHtml(bottomMessage)}
+        </span>
+      {/if}
+      <Button
+        size={Size.xs}
+        label="close"
+        parentBgIndex={bottomMessage ? 1 : 0}
+        on:click={reset}
+      />
     </div>
   {/if}
 </div>
