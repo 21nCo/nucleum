@@ -7,19 +7,26 @@
   export let options: PropertyConfigOption[];
   export let groupId: string | undefined = undefined;
   export let groupLabel: string | undefined = undefined;
+  export let isPreventDefaultGroupLabel = false;
   $: filtered = resolveItems(groupId);
   function resolveItems(groupId: string | undefined) {
-    return options.filter((x) => x.groupId === groupId);
+    if (groupId) {
+      return options.filter((x) => x.groupId === groupId);
+    } else {
+      groupLabel = "Ungrouped";
+      return options.filter((x) => !x.groupId);
+    }
   }
 </script>
 
 {#if isValidArrayWithData(filtered)}
   <div class="flex flex-col w-full">
-    {#if groupId && groupLabel}
+    {#if !isPreventDefaultGroupLabel}
       <div class="flex gap-1 text-b3 text-fgs3 px-3 mb-1">
         {groupLabel}
       </div>
     {/if}
+
     {#each filtered as item (item.id)}
       <SelectPropertyItem
         {item}

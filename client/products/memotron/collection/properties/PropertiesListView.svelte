@@ -73,7 +73,6 @@
     const newOption: PropertyConfigOption = {
       id: generateSimpleRandomId(),
       label: e.detail.label,
-      order: property.config?.options?.length ?? 0,
       color: Math.random() * 360
     };
     property.config?.options?.push(newOption);

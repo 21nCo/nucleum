@@ -8,8 +8,8 @@
 </script>
 
 <button
-  class={cn("w-full text-left px-3", {
-    "py-2 hover:bg-bgs2": !isSelectedContext
+  class={cn("w-full text-left px-3 text-b2", {
+    "py-2 hover:bg-bgs3": !isSelectedContext
   })}
   on:click
 >

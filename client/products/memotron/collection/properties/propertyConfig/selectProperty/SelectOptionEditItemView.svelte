@@ -34,10 +34,10 @@
 
 <div
   class={cn(
-    "flex relative items-center gap-2 w-full rounded-md px-2 py-1.5 border",
+    "flex relative items-center gap-2 w-full rounded-md px-1 py-1.5 border",
     {
-      "border-aps1": isFocusing,
-      "border-brs3": !isFocusing
+      "border-brs3": isFocusing,
+      "border-transparent": !isFocusing
     }
   )}
   data-index={index}

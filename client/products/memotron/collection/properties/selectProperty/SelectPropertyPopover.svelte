@@ -25,7 +25,7 @@
 
   $: options =
     property.config?.options?.filter((x) =>
-      x.label.toLowerCase().includes(search.toLowerCase())
+      x.label?.toLowerCase()?.includes(search.toLowerCase())
     ) ?? [];
 
   function onselect(e: CustomEvent<string>) {
@@ -61,7 +61,7 @@
   }
 </script>
 
-<div class="flex flex-col h-full w-full max-h-96 h-96 bg-bgs1">
+<div class="flex flex-col h--full w-full max-h-96 h-96 bg-bgs2">
   {#if isEditing && property.config}
     <div class="flex w-full flex-grow">
       <SelectOptionsEditor
@@ -80,7 +80,7 @@
       />
       <!-- TODO - render config settings in popover -->
     </div>
-    <div class="flex w-full flex-grow styledscroll">
+    <div class="flex flex-col gap-6 w-full flex-grow styledscroll">
       {#key search}
         {#if property.config?.groups && isValidArrayWithData(property.config?.groups)}
           {#each property.config?.groups as group}
@@ -91,9 +91,13 @@
               on:select={onselect}
             />
           {/each}
-        {:else}
-          <SelectPropertyItemList {options} on:select={onselect} />
         {/if}
+        <SelectPropertyItemList
+          {options}
+          isPreventDefaultGroupLabel={!property.config?.groups ||
+            property.config?.groups.length === 0}
+          on:select={onselect}
+        />
         {#if search && !options.length}
           <div class="text-b2 text-fgs3 px-3 py-2">
             No results found. Press Enter to create new

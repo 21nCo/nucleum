@@ -307,84 +307,99 @@ export function popover(node: HTMLElement, params: PopoverParams) {
 
     let popRect = popoverElement.getBoundingClientRect();
     const { documentWidth, documentHeight } = documentDimensions();
-    if (triggerRect.top < popRect.height) {
-      if (placement === Placement.TopLeft) placement = Placement.BottomLeft;
-      else if (placement === Placement.TopRight)
-        placement = Placement.BottomRight;
-      else if (placement === Placement.TopCenter)
-        placement = Placement.BottomCenter;
-    }
-    if (triggerRect.top < popRect.height / 2) {
-      if (placement === Placement.Left) placement = Placement.BottomRight;
-      else if (placement === Placement.Right) placement = Placement.BottomLeft;
-    }
-    if (documentHeight - triggerRect.bottom < popRect.height) {
-      if (placement === Placement.BottomCenter) placement = Placement.TopCenter;
-      else if (placement === Placement.BottomLeft)
-        placement = Placement.TopLeft;
-      else if (placement === Placement.BottomRight)
-        placement = Placement.TopRight;
-    }
-    if (documentHeight - triggerRect.bottom < popRect.height / 2) {
-      if (placement === Placement.Left) placement = Placement.TopRight;
-      else if (placement === Placement.Right) placement = Placement.TopLeft;
-    }
-    if (
-      triggerRect.top < popRect.height &&
-      documentHeight - triggerRect.bottom < popRect.height
-    ) {
-      placement = Placement.Left;
-    }
+    let adjustedPlacement = placement;
+    resetPosition();
+    adjustIfNotEnoughTop();
+    adjustIfNotEnoughBottom();
+    adjustIfVerticalSpaceNotEnough();
+
     if (!isSpanToTriggerWidth) {
-      if (documentWidth - triggerRect.right < popRect.width) {
-        if (placement === Placement.Right) placement = Placement.Left;
-        if (placement === Placement.BottomCenter)
-          placement = Placement.BottomRight;
-        if (placement === Placement.TopCenter) placement = Placement.TopRight;
+      if (
+        adjustedPlacement === Placement.Right &&
+        documentWidth - triggerRect.right < popRect.width
+      ) {
+        adjustedPlacement = Placement.Left;
+      } else if (
+        adjustedPlacement === Placement.Left &&
+        triggerRect.left < popRect.width
+      ) {
+        adjustedPlacement = Placement.Right;
       }
-      if (triggerRect.left < popRect.width) {
-        if (placement === Placement.Left) placement = Placement.Right;
-        if (placement === Placement.BottomCenter)
-          placement = Placement.BottomLeft;
-        if (placement === Placement.TopCenter) placement = Placement.TopLeft;
+
+      if (
+        adjustedPlacement === Placement.Left ||
+        adjustedPlacement === Placement.Right
+      ) {
+        if (triggerRect.top < popRect.height / 2) {
+          if (adjustedPlacement === Placement.Left)
+            adjustedPlacement = Placement.BottomRight;
+          else if (adjustedPlacement === Placement.Right)
+            adjustedPlacement = Placement.BottomLeft;
+        }
+
+        if (documentHeight - triggerRect.bottom < popRect.height / 2) {
+          if (adjustedPlacement === Placement.Left)
+            adjustedPlacement = Placement.TopRight;
+          else if (adjustedPlacement === Placement.Right)
+            adjustedPlacement = Placement.TopLeft;
+        }
+      } else if (
+        adjustedPlacement === Placement.BottomCenter ||
+        adjustedPlacement === Placement.TopCenter
+      ) {
+        if (documentWidth - triggerRect.right < popRect.width / 2) {
+          if (adjustedPlacement === Placement.BottomCenter)
+            adjustedPlacement = Placement.BottomRight;
+          if (adjustedPlacement === Placement.TopCenter)
+            adjustedPlacement = Placement.TopRight;
+        }
+        if (triggerRect.left < popRect.width / 2) {
+          if (adjustedPlacement === Placement.BottomCenter)
+            adjustedPlacement = Placement.BottomLeft;
+          if (adjustedPlacement === Placement.TopCenter)
+            adjustedPlacement = Placement.TopLeft;
+        }
       }
     }
 
-    if (placement === Placement.BottomLeft || placement === Placement.TopLeft) {
+    if (
+      adjustedPlacement === Placement.BottomLeft ||
+      adjustedPlacement === Placement.TopLeft
+    ) {
       popoverElement.style.left = `${triggerRect.left}px`;
-      popoverElement.style.right = "";
+      // popoverElement.style.right = "";
     } else if (
-      placement === Placement.BottomRight ||
-      placement === Placement.TopRight
+      adjustedPlacement === Placement.BottomRight ||
+      adjustedPlacement === Placement.TopRight
     ) {
       popoverElement.style.right = `${documentWidth - triggerRect.right}px`;
-      popoverElement.style.left = "";
+      // popoverElement.style.left = "";
     }
     if (
-      placement === Placement.TopLeft ||
-      placement === Placement.TopRight ||
-      placement === Placement.TopCenter
+      adjustedPlacement === Placement.TopLeft ||
+      adjustedPlacement === Placement.TopRight ||
+      adjustedPlacement === Placement.TopCenter
     ) {
       popoverElement.style.bottom = `${documentHeight - triggerRect.top + offsetInPx}px`;
-      popoverElement.style.top = "";
+      // popoverElement.style.top = "";
     } else if (
-      placement === Placement.BottomLeft ||
-      placement === Placement.BottomRight ||
-      placement === Placement.BottomCenter
+      adjustedPlacement === Placement.BottomLeft ||
+      adjustedPlacement === Placement.BottomRight ||
+      adjustedPlacement === Placement.BottomCenter
     ) {
       popoverElement.style.top = `${triggerRect.bottom + offsetInPx}px`;
-      popoverElement.style.bottom = "";
+      // popoverElement.style.bottom = "";
     }
 
-    if (placement === Placement.Right) {
+    if (adjustedPlacement === Placement.Right) {
       popoverElement.style.left = `${triggerRect.right + offsetInPx}px`;
       popoverElement.style.top = `${triggerRect.top + triggerRect.height / 2 - popRect.height / 2}px`;
-    } else if (placement === Placement.Left) {
+    } else if (adjustedPlacement === Placement.Left) {
       popoverElement.style.right = `${documentWidth - triggerRect.left + offsetInPx}px`;
       popoverElement.style.top = `${triggerRect.top + triggerRect.height / 2 - popRect.height / 2}px`;
     } else if (
-      placement === Placement.TopCenter ||
-      placement === Placement.BottomCenter
+      adjustedPlacement === Placement.TopCenter ||
+      adjustedPlacement === Placement.BottomCenter
     ) {
       if (isSpanToTriggerWidth) {
         popoverElement.style.left = `${triggerRect.left}px`;
@@ -403,8 +418,109 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     }
     if (isSpanToTriggerWidth)
       popoverElement.style.width = `${triggerRect.width}px`;
-
+    // console.log({
+    //   at: "positionPopover",
+    //   popRect,
+    //   placement,
+    //   adjustedPlacement
+    // });
     popoverElement.style.opacity = "1";
+
+    function resetPosition(): void {
+      if (!popoverElement) return;
+      popoverElement.style.left = "";
+      popoverElement.style.top = "";
+      popoverElement.style.right = "";
+      popoverElement.style.bottom = "";
+    }
+
+    /**
+     * Adjusts the placement if the top space is not enough
+     */
+    function adjustIfNotEnoughTop(): void {
+      if (
+        !(
+          [Placement.TopLeft, Placement.TopRight, Placement.TopCenter].includes(
+            placement
+          ) &&
+          triggerRect.top < popRect.height &&
+          documentHeight - triggerRect.bottom >= popRect.height
+        )
+      ) {
+        return;
+      }
+      switch (placement) {
+        case Placement.TopLeft:
+          adjustedPlacement = Placement.BottomLeft;
+          break;
+        case Placement.TopRight:
+          adjustedPlacement = Placement.BottomRight;
+          break;
+        case Placement.TopCenter:
+          adjustedPlacement = Placement.BottomCenter;
+          break;
+      }
+    }
+
+    /**
+     * Adjusts the placement if the bottom space is not enough
+     */
+    function adjustIfNotEnoughBottom(): void {
+      if (
+        !(
+          [
+            Placement.BottomLeft,
+            Placement.BottomRight,
+            Placement.BottomCenter
+          ].includes(placement) &&
+          documentHeight - triggerRect.bottom < popRect.height &&
+          triggerRect.top >= popRect.height
+        )
+      ) {
+        return;
+      }
+      switch (placement) {
+        case Placement.BottomCenter:
+          adjustedPlacement = Placement.TopCenter;
+          break;
+        case Placement.BottomLeft:
+          adjustedPlacement = Placement.TopLeft;
+          break;
+        case Placement.BottomRight:
+          adjustedPlacement = Placement.TopRight;
+          break;
+      }
+    }
+
+    /**
+     * Adjusts the placement if the vertical space is not enough
+     *
+     * Ignores if `isSpanToTriggerWidth` is true as this should render either on top or bottom of the trigger element and spanning to the width of the trigger element
+     */
+    function adjustIfVerticalSpaceNotEnough(): void {
+      if (
+        ![
+          Placement.TopLeft,
+          Placement.TopRight,
+          Placement.TopCenter,
+          Placement.BottomCenter,
+          Placement.BottomLeft,
+          Placement.BottomRight
+        ].includes(placement) ||
+        isSpanToTriggerWidth
+      ) {
+        return;
+      }
+      if (
+        triggerRect.top < popRect.height &&
+        documentHeight - triggerRect.bottom < popRect.height
+      ) {
+        if (documentWidth - triggerRect.right < popRect.width)
+          adjustedPlacement = Placement.Left;
+        else if (triggerRect.left < popRect.width)
+          adjustedPlacement = Placement.Right;
+      }
+    }
   }
 
   async function showPopover(e?: any): Promise<void> {
@@ -451,36 +567,53 @@ export function popover(node: HTMLElement, params: PopoverParams) {
       hidePopover("outside click");
     }
   }
+
+  /**
+   *
+   *
+   * Temp disabling svg and path click handling - unable to reliably detect for svg elements
+   *
+   * @param event
+   * @returns
+   */
   function handleOutsideClickv2(event: MouseEvent): void {
-    if (popoverElement && node) {
-      const target = event.target as Element;
-      const path =
-        (event.composedPath && event.composedPath()) ||
-        event.path ||
-        (event.target && getEventPath(event));
-      if (target.tagName.toLowerCase() === "path") {
-        const svgParent = target.closest("svg");
-        // console.log("svgParent", path, svgParent);
-        if (svgParent) {
-          if (node.contains(svgParent) || popoverElement.contains(svgParent)) {
-            return;
-          }
-        } else if (path) {
-          const isInsideNodeOrPopover = path.some(
-            (element) =>
-              element instanceof SVGElement ||
-              node.contains(element as Node) ||
-              popoverElement?.contains(element as Node)
-          );
-          if (isInsideNodeOrPopover) {
-            return;
-          }
+    // console.log("handleOutsideClickv2", event);
+    if (!popoverElement || !node) return;
+
+    const target = event.target as Element;
+    const path =
+      (event.composedPath && event.composedPath()) ||
+      event.path ||
+      (event.target && getEventPath(event));
+    if (target.tagName.toLowerCase() === "path") {
+      const svgParent = target.closest("svg");
+      // console.log("svgParent", path, svgParent);
+      if (svgParent) {
+        if (node.contains(svgParent) || popoverElement.contains(svgParent)) {
+          return;
+        }
+      } else if (path) {
+        const isInsideNodeOrPopover = path.some(
+          (element) =>
+            element instanceof SVGElement ||
+            node.contains(element as Node) ||
+            popoverElement?.contains(element as Node)
+        );
+        if (isInsideNodeOrPopover) {
+          return;
         }
       }
+    }
 
-      if (!popoverElement.contains(target) && !node.contains(target)) {
-        hidePopover("outside click");
-      }
+    if (
+      !popoverElement.contains(target) &&
+      !node.contains(target) &&
+      !target.dataset.popoverId &&
+      target.tagName.toLowerCase() !== "path" &&
+      target.tagName.toLowerCase() !== "svg"
+    ) {
+      // console.log("hidePopover - outside click", target);
+      hidePopover("outside click");
     }
   }
 

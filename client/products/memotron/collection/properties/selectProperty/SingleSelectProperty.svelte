@@ -42,6 +42,7 @@
   bind:this={ref}
   use:popover={{
     content: SelectPropertyPopover,
+    id: "select-options-popover",
     isSpanToTriggerWidth: true,
     componentProps: {
       property,

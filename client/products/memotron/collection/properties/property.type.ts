@@ -27,14 +27,11 @@ export type PropertyConfigOption = {
   label: string;
   color?: number;
   groupId?: string;
-  order: number;
 };
 
 export type PropertyConfigOptionGroup = {
   id: string;
   label: string;
-  color: string;
-  order: number;
 };
 
 export enum PropertyType {
