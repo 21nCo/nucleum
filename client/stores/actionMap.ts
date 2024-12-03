@@ -181,8 +181,26 @@ export const globalActions: IAction[] = [
   },
   {
     action: "twitter",
-    label: "Share on socials",
-    icon: "megaphone",
+    label: "Twitter",
+    icon: "ph:x-logo-light",
+    type: ActionType.LINK
+  },
+  {
+    action: "reddit",
+    label: "Reddit",
+    icon: "ph:reddit-logo-light",
+    type: ActionType.LINK
+  },
+  {
+    action: "bluesky",
+    label: "Bluesky",
+    icon: "ph:butterfly-light",
+    type: ActionType.LINK
+  },
+  {
+    action: "instagram",
+    label: "Instagram",
+    icon: "ph:instagram-logo-light",
     type: ActionType.LINK
   },
   {

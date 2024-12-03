@@ -154,7 +154,7 @@
       </span>
     </span>
     <button
-      class="flex w-full flex-1 bg-bgs2 rounded-md p-4"
+      class="flex w-full flex-1 bg-bgs2 bg-opacity-60 rounded-md p-4"
       on:click={() => notesInputRef?.focus()}
     >
       <InlineMarkdownTextInput

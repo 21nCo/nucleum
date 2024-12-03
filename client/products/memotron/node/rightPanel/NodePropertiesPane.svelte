@@ -12,6 +12,7 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import { MemotronAction } from "../../memotronAction.enum";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
+  import ResourceStatusBanner from "../../common/ResourceStatusBanner.svelte";
   export let node: IActiveNodeStore;
   export let isVisibleProps: boolean = false;
   let _types: ICollectionExpanded[] | null = null;
@@ -105,7 +106,7 @@
   }
 </script>
 
-<div class="flex flex-col gap-12 w-full h-full">
+<div class="flex flex-col gap-12 w-full flex-grow">
   {#if !isVisibleProps && multipleTypesList.length > 0}
     <OptionSelector
       options={multipleTypesList.map((x) => ({
@@ -119,6 +120,11 @@
     />
   {/if}
   <div class="w-full h-full overflow-auto">
+    {#if !isVisibleProps}
+      <div class="mb-4">
+        <ResourceStatusBanner resource={node} />
+      </div>
+    {/if}
     {#if _types && _types.length > 0}
       {#key refreshId}
         <PropertiesListView
@@ -126,7 +132,10 @@
           types={_types}
           context={isVisibleProps ? "mainpanel" : "rightpanel"}
           isIncludeExtendedProperties={isVisibleProps}
-          isReadMode={!$isInEditMode}
+          isReadOnlyMode={$node.isInReadOnlyMode ||
+            $node.isLocked ||
+            $node.isArchived ||
+            $node.trashInformation !== undefined}
           nodeId={$node.id}
           on:change={propagateChanges}
           on:showAll

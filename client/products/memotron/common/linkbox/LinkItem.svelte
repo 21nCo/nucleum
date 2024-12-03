@@ -11,6 +11,7 @@
   export let id: IRecordId;
   export let parentBgIndex: number = 1;
   export let isActive: boolean = false;
+  export let isRemovable: boolean = true;
   let item: any;
 
   function resolveItem() {
@@ -45,6 +46,7 @@
     {parentBgIndex}
     {isActive}
     icon={resovleIcon()}
+    {isRemovable}
     on:click
     on:remove
   />

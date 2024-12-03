@@ -34,6 +34,7 @@
 
   export let node: IActiveNodeStore;
   export let mdId: string;
+  export let isReadOnlyMode: boolean = false;
   let previousRootStructure: string[] = [];
   let refreshId: number | undefined = undefined;
   let markdownRef: any;
@@ -287,11 +288,7 @@
           node={$node}
           {mdId}
           params={{
-            isReadOnly:
-              $node.isInReadOnlyMode ||
-              $node.isLocked ||
-              $node.isArchived ||
-              $node.trashInformation !== undefined
+            isReadOnly: isReadOnlyMode
           }}
           bind:md={$node.md}
           bind:this={markdownRef}

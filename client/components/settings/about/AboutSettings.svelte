@@ -25,7 +25,7 @@
             <div
               class="flex items-center gap-1 text-fgs2 text-b3 w-full justify-start"
             >
-              <span class="-mb-0.5"> - Team </span>
+              <span class="-mb-[1.5px]"> - Team </span>
               <A21nLogo size={Size.xs} fill="fgs2" />
             </div>
           </div>

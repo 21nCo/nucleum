@@ -31,7 +31,7 @@
   export let nodeId: IRecordId | undefined = undefined;
   export let context: "capture" | "clip" | "mainpanel" | "rightpanel" =
     "capture";
-  export let isReadMode: boolean = false;
+  export let isReadOnlyMode: boolean = false;
   export let isCollapsed: boolean = false;
   let properties: IProperty[] = [];
   /**
@@ -157,7 +157,7 @@
             "flex-col":
               $view.isPortrait ||
               (isRenderAsColumn && context === "rightpanel") ||
-              (isReadMode && context === "mainpanel")
+              (isReadOnlyMode && context === "mainpanel")
           })}
         >
           {#each properties as property (property.id)}
@@ -167,7 +167,7 @@
               {property}
               {nodeId}
               isPropertiesPaneContext={isRenderAsColumn}
-              {isReadMode}
+              {isReadOnlyMode}
               on:change={(e) => {
                 dispatch("change", {
                   id: property.id,

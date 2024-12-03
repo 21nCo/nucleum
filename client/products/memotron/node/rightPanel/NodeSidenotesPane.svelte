@@ -11,7 +11,7 @@
 
 <div class="h-full w-full flex items-center justify-center">
   <button
-    class="bg-bgs2 rounded-md p-2 w-full h-full flex"
+    class="bg-bgs2 bg-opacity-60 rounded-md p-2 w-full h-full flex"
     on:click={() => inputRef?.focus()}
   >
     <InlineMarkdownTextInput

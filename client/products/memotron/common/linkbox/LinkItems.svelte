@@ -22,6 +22,7 @@
   export let parentBgIndex: number = 1;
   export let isExpandable: boolean = false;
   export let nodeId: IRecordId | undefined = undefined;
+  export let isReadOnlyMode: boolean = false;
   let expand: IRecordId | null = null;
   let expansionState:
     | "not-type"
@@ -83,6 +84,7 @@
       <LinkItem
         id={item}
         {parentBgIndex}
+        isRemovable={!isReadOnlyMode}
         isActive={expand === item}
         on:click={(e) => {
           if (isExpandable) {

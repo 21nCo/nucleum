@@ -5,11 +5,13 @@
   import { isValidString } from "$lib/shared/utils/text.utils";
   export let item: PropertyConfigOption;
   export let isSelectedContext: boolean = false;
+  export let isPlain: boolean = false;
 </script>
 
 <button
-  class={cn("w-full text-left px-3 text-b2", {
-    "py-2 hover:bg-bgs3": !isSelectedContext
+  class={cn("w-full text-left text-b2", {
+    "py-2 hover:bg-bgs3": !isSelectedContext,
+    "px-3": !isPlain
   })}
   on:click
 >

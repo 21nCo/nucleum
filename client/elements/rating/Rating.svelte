@@ -18,24 +18,37 @@
   export let size: Size = Size.md;
   export let style: InputStyle = InputStyle.BORDERED;
   export let label: InputLabel | undefined = undefined;
+  export let isReadOnlyMode: boolean = false;
 </script>
 
-<InputBaseElement {style} {label}>
+{#if isReadOnlyMode}
   <div class={cn("flex gap-1")}>
     {#each Array(count) as _, item}
-      <button
-        on:click={() => {
-          value = +item + 1;
-          dispatch("change", value);
-        }}
-        class="flex items-center h-full"
-      >
-        <AvatarRenderer
-          dev_iOSTempRatingFallback={$context.os === OperatingSystem.IOS}
-          avatar={{ ...avatar, isFilled: +item + 1 <= value }}
-          {size}
-        />
-      </button>
+      <AvatarRenderer
+        dev_iOSTempRatingFallback={$context.os === OperatingSystem.IOS}
+        avatar={{ ...avatar, isFilled: +item + 1 <= value }}
+        {size}
+      />
     {/each}
   </div>
-</InputBaseElement>
+{:else}
+  <InputBaseElement {style} {label}>
+    <div class={cn("flex gap-1")}>
+      {#each Array(count) as _, item}
+        <button
+          on:click={() => {
+            value = +item + 1;
+            dispatch("change", value);
+          }}
+          class="flex items-center h-full"
+        >
+          <AvatarRenderer
+            dev_iOSTempRatingFallback={$context.os === OperatingSystem.IOS}
+            avatar={{ ...avatar, isFilled: +item + 1 <= value }}
+            {size}
+          />
+        </button>
+      {/each}
+    </div>
+  </InputBaseElement>
+{/if}

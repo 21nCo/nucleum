@@ -37,19 +37,19 @@
   let searchResultsPopover: SearchResultsPopover;
   const switchItems = [
     {
-      label: "All",
+      label: "Everything",
       value: Resource.everything,
-      icon: "tag"
+      icon: "ph:asterisk"
     },
     {
       label: "Nodes",
       value: Resource.node,
-      icon: "node"
+      icon: "ph:circle"
     },
     {
       label: "Collections",
       value: Resource.collection,
-      icon: "curation"
+      icon: "ph:circles-four"
     }
   ];
   onMount(async () => {

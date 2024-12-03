@@ -595,6 +595,7 @@ class Flux {
    */
   async syncDown(isFirstLoad: boolean = false) {
     logger.log({ at: "flux.syncDown", isFirstLoad });
+    let isShowCompletedStatus: boolean = true;
     try {
       if (await determineIfOffline()) return;
       if (this.isSyncDownPending) return;
@@ -612,7 +613,13 @@ class Flux {
       this.isSyncDownPending = false;
       logger.log({ at: "flux.syncDown - result", result });
       if (result.syncDownData) {
-        await this.processSyncDown(result.syncDownData, isFirstLoad);
+        const status = await this.processSyncDown(
+          result.syncDownData,
+          isFirstLoad
+        );
+        if (status === -1) {
+          isShowCompletedStatus = false;
+        }
       }
       if (isFirstLoad && result.counts) {
         let resourcesWithMissSync = [];
@@ -646,7 +653,11 @@ class Flux {
     } catch (e) {
       logger.error({ at: "flux.syncDown", error: e });
     } finally {
-      if (!this.isExtensionEnvironment && isFirstLoad) {
+      if (
+        !this.isExtensionEnvironment &&
+        isFirstLoad &&
+        isShowCompletedStatus
+      ) {
         dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
           message: `Sync completed.`,
           subMessage: "",
@@ -662,10 +673,10 @@ class Flux {
       return;
     }
     const mutations: IMutation[] = response;
-    if (mutations.length > 100 && isFirstLoad) {
+    if (mutations.length > 50 && isFirstLoad) {
       await this.clear();
       window.location.reload();
-      return;
+      return -1;
     }
     logger.log({ at: "processSyncDown", mutations, isFirstLoad });
     if (!mutations || mutations.length === 0) return;

@@ -17,6 +17,7 @@
   import { headingNodeTypes, NodeType } from "../node.type";
 
   export let node: IActiveNodeStore;
+  export let isReadOnlyMode: boolean = false;
   let popoverRef: any;
   $: isPreventContentTypeRender = headingNodeTypes.includes($node.contentType);
   async function onUnlink(e: CustomEvent) {
@@ -88,25 +89,28 @@
     <span>
       <LinkItems
         links={$node.collections}
+        {isReadOnlyMode}
         on:unlink={onUnlink}
         on:click={onClick}
       />
     </span>
   {/if}
-  <div
-    bind:this={popoverRef}
-    use:popover={{
-      content: LinkSearch,
-      componentProps: {
-        onSelectCallback: onSelect,
-        searchQuery: "",
-        onHideCallback: () => {
-          hidePopover();
-        },
-        context: "nodepageCollectionsLane"
-      }
-    }}
-  >
-    <Button icon="plus" size={Size.sm} tooltip="Add to a collection" />
-  </div>
+  {#if !isReadOnlyMode}
+    <div
+      bind:this={popoverRef}
+      use:popover={{
+        content: LinkSearch,
+        componentProps: {
+          onSelectCallback: onSelect,
+          searchQuery: "",
+          onHideCallback: () => {
+            hidePopover();
+          },
+          context: "nodepageCollectionsLane"
+        }
+      }}
+    >
+      <Button icon="plus" size={Size.sm} tooltip="Add to a collection" />
+    </div>
+  {/if}
 </div>

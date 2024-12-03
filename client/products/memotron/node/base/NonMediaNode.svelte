@@ -51,6 +51,12 @@
     $node.accessMode === ResourceAccessMode.SPLIT ||
     $node.accessMode === ResourceAccessMode.FSPLIT;
 
+  $: isReadOnlyMode =
+    $node.isInReadOnlyMode ||
+    $node.isLocked ||
+    $node.isArchived ||
+    $node.trashInformation !== undefined;
+
   function onScroll(e: any) {
     const st = event?.target?.scrollTop;
     if (st > lastScrollTop) {
@@ -180,22 +186,22 @@
                         size={Size.sm}
                       />
                     {/if}
-                    <!-- {#if $isInEditMode} -->
-                    <TextInput
-                      size={Size.xl}
-                      bind:value={$node.label}
-                      isExperimentalMdInput={true}
-                      style={InputStyle.PLAIN}
-                      placeholder="Node title"
-                      width="w-full"
-                      on:change={onLabelChange}
-                    />
-                    <!-- {:else}
-                    {$node.label ?? $node.body ?? ""}
-                  {/if} -->
+                    {#if !isReadOnlyMode}
+                      <TextInput
+                        size={Size.xl}
+                        bind:value={$node.label}
+                        isExperimentalMdInput={true}
+                        style={InputStyle.PLAIN}
+                        placeholder="Node title"
+                        width="w-full"
+                        on:change={onLabelChange}
+                      />
+                    {:else}
+                      {$node.label ?? $node.body ?? ""}
+                    {/if}
                   </span>
                   <div class="w-full flex mo:px-0 cw:px-0 px-12 -mt-4">
-                    <CollectionsLane {node} />
+                    <CollectionsLane {node} {isReadOnlyMode} />
                   </div>
                 {/if}
                 <div class="pl-12">
@@ -215,7 +221,7 @@
                     />
                   </div>
                 {/if}
-                <NodeContent {node} {mdId} />
+                <NodeContent {node} {mdId} {isReadOnlyMode} />
               </main>
             </div>
           {:else if isConstrainedWidth && rightPane !== NodeRightPaneType.NONE}
