@@ -10,7 +10,8 @@ import {
   type INodeLink,
   canHaveTraces,
   NodeView,
-  headingNodeTypes
+  headingNodeTypes,
+  mediaNodeTypeList
 } from "$lib/client/products/memotron/node/node.type";
 import {
   activeResources,
@@ -48,7 +49,8 @@ import { generateMarkdownText, getMarkdownSymbolPrepended } from "./node.utils";
 import { isValidString } from "$lib/shared/utils/text.utils";
 import {
   resourceInList,
-  isSameResource
+  isSameResource,
+  isRecordId
 } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
 
@@ -60,6 +62,7 @@ import { TacoActions } from "../taco/taco.types";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { generateResourceId } from "$lib/shared/utils/surreal.utils";
 import { toasts } from "$lib/client/stores/notification.store";
+import { fileStore } from "$lib/client/components/files/file.store";
 
 export const hierarchyFactorLimit = 5;
 
@@ -598,8 +601,16 @@ class NodeActions {
 
   download = {
     value: "download",
-    icon: "download",
-    callback: async () => {}
+    icon: "ph:download-simple-light",
+    callback: async () => {
+      const file = this.node.file ?? this.node.body?.file;
+      if (
+        isRecordId(file) ||
+        (typeof file === "object" && isRecordId(file.id))
+      ) {
+        await fileStore.download(file);
+      }
+    }
   };
   share = {
     value: "share",
@@ -683,10 +694,16 @@ export function resolveNodeContextMenu(
       }
     ];
   }
-  const mediaShareAndExportGroup = {
+  let mediaShareAndExportGroup = {
     group: "shareAndExport",
     items: [resourceActions.copyLink()]
   };
+  if (
+    mediaNodeTypeList.includes(node.contentType) &&
+    !params?.isConstrainedWidth
+  ) {
+    mediaShareAndExportGroup.items.unshift(nodeActions.download);
+  }
   if (accessPoint === ResourceAccessPoint.NODE_LINKS && params?.accessPointId) {
     let baseItems = [resourceActions.copyLink()];
     if (accessPoint === ResourceAccessPoint.NODE_LINKS) {
