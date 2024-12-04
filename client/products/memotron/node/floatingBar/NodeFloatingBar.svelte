@@ -27,6 +27,8 @@
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import ToggleGroup from "$lib/client/elements/toggle/ToggleGroup.svelte";
   import { NodeRightPaneType, NodeView } from "../node.type";
+  import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
+  import { InputStyle } from "$lib/client/types/input.type";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let nodeView: NodeView = NodeView.CONTENT;
@@ -59,21 +61,40 @@
   )}
 >
   {#if isConstrainedWidth}
-    <Button
-      label={$node.accessMode === ResourceAccessMode.SPLIT ||
-      $node.accessMode === ResourceAccessMode.FSPLIT
-        ? "Close split"
-        : "Back"}
-      icon={$node.accessMode === ResourceAccessMode.SPLIT ||
-      $node.accessMode === ResourceAccessMode.FSPLIT
-        ? "ph:x-light"
-        : "ph:arrow-left-light"}
-      size={Size.sm}
-      style={ButtonStyle.PLAIN}
-      on:click={() => {
-        appStore.closeResource({ id: $node.id, accessMode: $node.accessMode });
-      }}
-    />
+    {#if $node.accessMode === ResourceAccessMode.SPLIT || $node.accessMode === ResourceAccessMode.FSPLIT}
+      <div class="flex w-24">
+        <DropDown
+          items={[
+            {
+              label: "Content",
+              value: NodeView.CONTENT
+            },
+            {
+              label: "Bird view",
+              value: NodeView.BIRD_VIEW
+            }
+          ]}
+          style={InputStyle.PLAIN}
+          isDisableSearch={true}
+          on:select={(e) => {
+            dispatch("view", e.detail);
+          }}
+        />
+      </div>
+    {:else}
+      <Button
+        label="Back"
+        icon="ph:arrow-left-light"
+        size={Size.sm}
+        style={ButtonStyle.PLAIN}
+        on:click={() => {
+          appStore.closeResource({
+            id: $node.id,
+            accessMode: $node.accessMode
+          });
+        }}
+      />
+    {/if}
   {:else}
     <span>
       <!-- <Button label="Content" style={ButtonStyle.PLAIN} /> -->

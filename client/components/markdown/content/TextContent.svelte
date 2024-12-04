@@ -803,7 +803,7 @@
       <div
         id={id.toString()}
         style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word;"
-        class="flex justify-start text-left w-full min-h-fit outline-none py-2 {sizing} {contentType ===
+        class="justify-start text-left w-full min-h-fit outline-none py-2 {sizing} {contentType ===
         NodeType.QUOTE
           ? 'px-2'
           : 'px-1'}"

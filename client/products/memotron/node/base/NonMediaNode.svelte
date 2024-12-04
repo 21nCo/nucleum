@@ -29,6 +29,7 @@
     ResourceAccessPoint
   } from "$lib/client/components/flux/resourceStores/resource.type";
   import { resizeListener } from "$lib/client/actions/resize.action";
+  import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
 
   export let node: IActiveNodeStore;
   export let selectedView: NodeView = NodeView.CONTENT;
@@ -299,5 +300,8 @@
     <div class="w-full h-full pt-4 px-20">
       <NodeLoadingPulse />
     </div>
+  {/if}
+  {#if ($view.isConstrainedWidth || $node.accessMode === ResourceAccessMode.SPLIT || $node.accessMode === ResourceAccessMode.FSPLIT) && (!rightPane || rightPane === NodeRightPaneType.NONE)}
+    <FullScreenCloseButton accessMode={$node.accessMode} isFloat={true} />
   {/if}
 </div>
