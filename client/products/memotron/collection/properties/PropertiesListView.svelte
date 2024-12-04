@@ -100,8 +100,8 @@
 {#if properties && properties.length > 0}
   <div
     class={cn("w-full", {
-      "xl:px-6": !isRenderAsColumn && !isCollapsed,
-      "xl:px-10": !isRenderAsColumn && isCollapsed
+      "xl:pl-6": !isRenderAsColumn && !isCollapsed,
+      "xl:pl-10": !isRenderAsColumn && isCollapsed
     })}
   >
     <div

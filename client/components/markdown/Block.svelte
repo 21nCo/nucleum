@@ -6,7 +6,7 @@
     type IListBlockBody,
     type INonSimpleTextBlockBody
   } from "$lib/client/components/markdown/md.type";
-  import { getContext } from "svelte";
+  import { getContext, onMount } from "svelte";
   import BlockContent from "./content/BlockContent.svelte";
   import LeftControls from "./contextMenu/LeftControls.svelte";
   import type { MdStoreType } from "./markdown.store";
@@ -33,12 +33,14 @@
   import { hoverable } from "$lib/client/actions/hover.action";
   import view from "$lib/client/stores/view.store";
   import type { IRecordId } from "$lib/client/types/data.type";
+  import { isSameResource } from "../flux/resourceStores/resource.utils";
 
   export let block: IBlock;
   export let mdStore: MdStoreType;
   let isHovering: boolean = false;
   let isFocusing: boolean = false;
   let dev_isShowFocusHintOnRight: boolean = false;
+  let contentRefreshId: number = new Date().getTime();
   $: isFocusable =
     $mdStore.params?.isNodular && headingNodeTypes.includes(block.contentType);
 
@@ -66,6 +68,20 @@
       }
     });
   }
+
+  onMount(() => {
+    mdStore?.alter?.subscribe((b) => {
+      if (b && isSameResource(b, block.id)) {
+        block = b;
+        if (headingNodeTypes.includes(b.contentType)) {
+          propagate(BlockAction.CHANGE, { label: b.label });
+        } else {
+          propagate(BlockAction.CHANGE, { body: b.body });
+        }
+        contentRefreshId = new Date().getTime();
+      }
+    });
+  });
 
   function blockContextEventListener(action: BlockAction, data: any) {
     logger.log({ at: "blockContextEventListener", action, data, block });
@@ -123,6 +139,10 @@
         }
         break;
 
+      case BlockAction.BACKSPACE_WITH_CONTENT:
+        handleBackspaceWithContent();
+        break;
+
       default:
         propagate(action, data);
         break;
@@ -132,6 +152,38 @@
     publish: blockContextEventListener
   };
   setContext("block", blockContext);
+
+  function handleBackspaceWithContent() {
+    const currentBlockText = resolveBodyText();
+    const previousBlock = mdStore.getPreviousSibling(block.id);
+    const previousBlockText = resolveBodyText(previousBlock);
+    const offset = previousBlockText?.length ?? 0;
+    if (
+      !currentBlockText ||
+      !previousBlock ||
+      ![
+        ...simpleTextNodeTypeList,
+        ...nonSimpleTextNodeTypeList,
+        ...headingNodeTypes
+      ].includes(previousBlock.contentType)
+    ) {
+      return;
+    }
+    const modifiedPreviousBlockText = editBlockText(
+      previousBlock,
+      currentBlockText,
+      { isAppend: true }
+    );
+    if (headingNodeTypes.includes(previousBlock.contentType)) {
+      previousBlock.label = modifiedPreviousBlockText as string;
+    } else {
+      previousBlock.body = modifiedPreviousBlockText;
+    }
+    mdStore.alterBlock(previousBlock);
+    mdStore.focusBlock(previousBlock.id, { xOffset: offset });
+    mdStore.deleteBlock(block.id, { isPreventFocus: true });
+    propagateAsAction(BlockAction.DELETE, {});
+  }
 
   function handleConvertAction(data: any) {
     const fromType = block.contentType;
@@ -176,18 +228,20 @@
     ) {
       insertBufferBlock(block.id);
     }
+    mdStore.focusBlock(block.id, { xOffset: 0 });
   }
 
   /**
    * Resolves body text for simple text and non simple text node types
    */
-  function resolveBodyText(): string | undefined {
-    if (simpleTextNodeTypeList.includes(block.contentType))
-      return block.body as string;
-    else if (nonSimpleTextNodeTypeList.includes(block.contentType))
-      return (block.body as INonSimpleTextBlockBody).text;
-    else if (headingNodeTypes.includes(block.contentType)) {
-      return block.label ?? block.body;
+  function resolveBodyText(blockParam?: IBlock): string | undefined {
+    const blockObj = blockParam ?? block;
+    if (simpleTextNodeTypeList.includes(blockObj.contentType))
+      return blockObj.body as string;
+    else if (nonSimpleTextNodeTypeList.includes(blockObj.contentType))
+      return (blockObj.body as INonSimpleTextBlockBody).text;
+    else if (headingNodeTypes.includes(blockObj.contentType)) {
+      return blockObj.label ?? blockObj.body;
     }
   }
 
@@ -196,7 +250,7 @@
    */
   function handleInsertAction(data: any) {
     let newBlockId;
-    //TODO - case when enter pressed in the middle of the block with text on the right side of the caret
+    let newText = "";
     if (data?.blockType) {
       if (
         mediaNodeTypeList.includes(data.blockType) ||
@@ -216,7 +270,32 @@
     } else {
       if (!data) data = {};
       data.blockType = NodeType.SIMPLE_TEXT;
-      data.body = "";
+      const currentBlockText = resolveBodyText();
+      if (
+        currentBlockText &&
+        data?.caretPosition &&
+        data?.caretPosition.caretOffset < currentBlockText.length
+      ) {
+        newText = currentBlockText.slice(data.caretPosition.caretOffset);
+        const preText = currentBlockText.slice(
+          0,
+          data.caretPosition.caretOffset
+        );
+        const modifiedBody = editBlockText(block, preText);
+        if (headingNodeTypes.includes(block.contentType)) {
+          block.label = modifiedBody as string;
+          propagate(BlockAction.CHANGE, {
+            label: modifiedBody as string
+          });
+        } else {
+          block.body = modifiedBody;
+          propagate(BlockAction.CHANGE, {
+            body: modifiedBody
+          });
+        }
+        contentRefreshId = new Date().getTime();
+      }
+      data.body = newText;
     }
 
     if (
@@ -232,7 +311,7 @@
           Number.isNaN(currentBody.indent) || !currentBody.indent
             ? 0
             : currentBody.indent,
-        text: "",
+        text: newText,
         order: currentBody.order !== undefined ? currentBody.order + 1 : 1
       };
     }
@@ -356,6 +435,44 @@
     }
   }
 
+  function editBlockText(
+    block: IBlock,
+    newText: string,
+    params?: { isAppend?: boolean }
+  ) {
+    switch (block.contentType) {
+      case NodeType.LIST:
+      case NodeType.ORDERED_LIST:
+      case NodeType.CHECKLIST:
+        return {
+          ...(block.body as IListBlockBody),
+          text: appendIfRequired(block.body.text, newText)
+        };
+      case NodeType.CODE:
+      case NodeType.CALLOUT:
+        return {
+          ...(block.body as INonSimpleTextBlockBody),
+          text: appendIfRequired(block.body.text, newText)
+        };
+      case NodeType.SIMPLE_TEXT:
+      case NodeType.QUOTE:
+        return appendIfRequired(block.body, newText);
+      case NodeType.HEADING1:
+      case NodeType.HEADING2:
+      case NodeType.HEADING3:
+      case NodeType.HEADING4:
+      case NodeType.HEADING5:
+        return appendIfRequired(block.label ?? "", newText);
+      default:
+        return newText;
+    }
+
+    function appendIfRequired(text: string, newText: string) {
+      if (params?.isAppend) return text + newText;
+      return newText;
+    }
+  }
+
   function onContextMenuAction(
     e: CustomEvent<{
       action: BlockAction;
@@ -434,16 +551,18 @@
     {/if}
   {/if}
   <div class="relative flex-1">
-    <BlockContent
-      {block}
-      {mdStore}
-      {isHovering}
-      bind:isFocusing
-      on:blur={() => {
-        isHovering = false;
-      }}
-      on:update={onBlockUpdate}
-    />
+    {#key contentRefreshId}
+      <BlockContent
+        {block}
+        {mdStore}
+        {isHovering}
+        bind:isFocusing
+        on:blur={() => {
+          isHovering = false;
+        }}
+        on:update={onBlockUpdate}
+      />
+    {/key}
     {#if isHovering && isFocusable && !isFocusing && dev_isShowFocusHintOnRight}
       <div
         class="absolute top-0 right-0 flex h-full items-center justify-center bg-gradient-to-r from-bgs2/40 via-bgs2 to-bgs2 pl-32"

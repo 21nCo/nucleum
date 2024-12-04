@@ -149,7 +149,11 @@ export enum BlockAction {
    */
   CHANGE = "change",
   TAB = "tab",
-  SHIFT_TAB = "shifttab"
+  SHIFT_TAB = "shifttab",
+  /**
+   * Triggered when backspace is pressed with content in the block and at the start of the block
+   */
+  BACKSPACE_WITH_CONTENT = "BACKSPACE_WITH_CONTENT"
 }
 
 export type IMarkdownSettings = IObservableStoreSubject & {

@@ -140,7 +140,7 @@
       if (x?.id === id) {
         logger.log({ at: "TextContent focus", x });
         setTimeout(() => {
-          textRef?.focus();
+          textRef?.focus(x.params);
         }, 10);
         assignPlaceholder();
       }
@@ -303,7 +303,9 @@
       (event.key === "Enter" && !isPreventInsertOnEnter && !event.shiftKey) ||
       (event.key === "Enter" && event.metaKey)
     ) {
-      relay(BlockAction.INSERT);
+      relay(BlockAction.INSERT, {
+        caretPosition: e.detail.position
+      });
       event.preventDefault();
     }
   }
@@ -326,17 +328,32 @@
     //   event
     // });
     if (!event.altKey) {
-      if (event.key === "ArrowUp" && position.isFirstLine) {
+      const textLength = text.length;
+      console.log({
+        at: "handleArrowKeys",
+        position,
+        caretOffset: position?.caretOffset,
+        textLength
+      });
+      let isHandled = false;
+      if (event.key === "ArrowUp" && position?.caretOffset === 0) {
         mdStore.shiftFocus(id, "up", {
           xOffset: position2?.caretOffset
         });
-      } else if (event.key === "ArrowDown" && position.isLastLine) {
+        isHandled = true;
+      } else if (
+        event.key === "ArrowDown" &&
+        position?.caretOffset === textLength
+      ) {
         mdStore.shiftFocus(id, "down", {
           xOffset: position2?.caretOffset
         });
+        isHandled = true;
       }
-      event.preventDefault();
-      return true;
+      if (isHandled) {
+        event.preventDefault();
+        return true;
+      }
     } else if (event.altKey) {
       if (event.key === "ArrowUp") {
         relay(BlockAction.MOVEUP);
@@ -590,10 +607,10 @@
       text &&
       params?.inBlockPosition?.caretOffset === 0
     ) {
-      //TODO - move the content to the previous block and delete the current block
-      // mdStore.backspaceWithContent(block);
-      // event.preventDefault();
-      // return true;
+      console.log({ at: "handleBackspace - backspace with content" });
+      relay(BlockAction.BACKSPACE_WITH_CONTENT);
+      event.preventDefault();
+      return true;
     }
 
     function performDelete() {

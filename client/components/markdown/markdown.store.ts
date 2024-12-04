@@ -76,6 +76,7 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
     | { id?: IRecordId; params?: { xOffset?: number; isBottom?: boolean } }
     | undefined
   >(undefined);
+  alter = writable<IBlock | undefined>(undefined);
   constructor() {
     super("markdownStore");
     this.set(seedMdStore);
@@ -129,7 +130,7 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
         newBlock,
         ...store.blocks.slice(contextBlockIndex + 1)
       ];
-      this.focus.set({ id: newBlock.id });
+      this.focus.set({ id: newBlock.id, params: { xOffset: 0 } });
       // store = handleNodeMarkdownChildHierarchyChanges(store, id, newBlock, true);
       return store;
     });
@@ -355,11 +356,17 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
     }
   }
 
-  deleteBlock(id: IRecordId) {
+  deleteBlock(id: IRecordId, params?: { isPreventFocus?: boolean }) {
     this.update((n) => {
       const deleteIndex = n.blocks.findIndex((b) => b.id === id);
       n.blocks = n.blocks.filter((b) => b.id !== id);
-      if (deleteIndex) this.focus.set({ id: n.blocks[deleteIndex - 1].id });
+      if (deleteIndex && !params?.isPreventFocus)
+        this.focus.set({
+          id: n.blocks[deleteIndex - 1].id,
+          params: {
+            isBottom: true
+          }
+        });
       return n;
     });
   }
@@ -454,8 +461,12 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
     });
   }
 
-  focusBlock(id: string) {
-    this.focus.set({ id });
+  focusBlock(id: IRecordId, params?: { xOffset?: number; isBottom?: boolean }) {
+    this.focus.set({ id, params });
+  }
+
+  alterBlock(block: IBlock) {
+    this.alter.set(block);
   }
 
   isFirstBlockAndIsEmpty(id: IRecordId) {

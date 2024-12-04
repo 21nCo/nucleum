@@ -106,65 +106,57 @@
       (match, p1, p2) => `<button data-mention-id='${p2}'></button>`
     );
   }
-  export function focus(offset: number = 0) {
-    logger.log({ at: "InlineMarkdownTextInput - focus", offset });
+  export function focus(params?: { xOffset?: number; isBottom?: boolean }) {
+    logger.log({ at: "InlineMarkdownTextInput - focus", params, id });
     const element = blockRef;
     if (!element) return;
-    // element?.focus();
-    const range = document.createRange();
-    range.selectNodeContents(element);
-    range.collapse(false);
-    const selection = window.getSelection();
-    selection?.removeAllRanges();
-    selection?.addRange(range);
+
+    if (
+      params?.xOffset &&
+      typeof params?.xOffset === "number" &&
+      params?.xOffset !== 0
+    ) {
+      setCaretPosition(element, params.xOffset);
+    } else {
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      const isAtStart = params?.xOffset === 0 || !params?.isBottom;
+      range.collapse(isAtStart);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+    }
   }
 
-  function focusv2(params?: { xOffset?: number; isBottom?: boolean }) {
-    const newPosition = getClosestPosition(
-      blockRef,
-      params?.xOffset,
-      params?.isBottom
-    );
+  function setCaretPosition(element: HTMLElement, offset: number) {
+    const range = document.createRange();
     const selection = window.getSelection();
+    let charCount = 0;
+    let nodeFound = false;
 
-    const newRange = document.createRange();
-    newRange.setStart(newPosition.node, newPosition.offset);
-    newRange.collapse(true);
-    selection?.removeAllRanges();
-    selection?.addRange(newRange);
-
-    function getClosestPosition(element, targetX, isTop) {
-      const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
-      let node = walker.nextNode();
-      let closestNode = null;
-      let closestOffset = 0;
-      let minDiff = Infinity;
-
-      while (node) {
-        const range = document.createRange();
-        for (let i = 0; i <= node.length; i++) {
-          range.setStart(node, i);
-          range.setEnd(node, i);
-          const rect = range.getBoundingClientRect();
-
-          // Check if this position is in the first (for ArrowUp) or last (for ArrowDown) line
-          if (
-            (isTop && rect.top === element.getBoundingClientRect().top) ||
-            (!isTop && rect.bottom === element.getBoundingClientRect().bottom)
-          ) {
-            const diff = Math.abs(rect.left - targetX);
-            if (diff < minDiff) {
-              minDiff = diff;
-              closestNode = node;
-              closestOffset = i;
-            }
+    function traverseNodes(node: Node) {
+      if (node.nodeType === Node.TEXT_NODE && !nodeFound) {
+        const text = node.textContent || "";
+        const nextCharCount = charCount + text.length;
+        if (offset >= charCount && offset <= nextCharCount) {
+          range.setStart(node, offset - charCount);
+          range.collapse(true);
+          nodeFound = true;
+          selection?.removeAllRanges();
+          selection?.addRange(range);
+        }
+        charCount = nextCharCount;
+      } else if (!nodeFound) {
+        for (let i = 0; i < node.childNodes.length; i++) {
+          traverseNodes(node.childNodes[i]);
+          if (nodeFound) {
+            break;
           }
         }
-        node = walker.nextNode();
       }
-
-      return { node: closestNode, offset: closestOffset };
     }
+
+    traverseNodes(element);
   }
 
   export function replace(target: string, replacement: string) {
