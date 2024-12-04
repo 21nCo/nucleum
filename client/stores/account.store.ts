@@ -26,6 +26,8 @@ import { fileStore } from "../components/files/file.store";
 import { flux } from "../components/flux/flux";
 import { generateResourceId } from "../components/flux/flux.utils";
 import { Resource } from "../components/flux/resourceStores/resource.enum";
+import { dispatchCustomEvent } from "../utils/browser.utils";
+import { GlobalEvent } from "../types/event.enum";
 
 export const isRefreshingToken = writable(false);
 
@@ -165,18 +167,41 @@ class AccountStore extends ObservableStore<
   }
 
   async confirmDelete() {
-    let acc = this.get();
-    await performApiCall("account/n/deleteAccount", "POST", {});
-    console.log("deleting account", { acc });
-    await this.signOut({ isPreventRedirect: true });
-    await flux.clear();
-    appStore.gotoPath("/signup?msg=deleted");
-    return true;
+    try {
+      dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
+        message: `Deleting account...`
+      });
+      let acc = this.get();
+      await performApiCall("account/n/deleteAccount", "POST", {});
+      console.log("deleting account", { acc });
+      await this.signOut({ isPreventRedirect: true });
+      await flux.clear();
+      appStore.gotoPath("/signup?msg=deleted");
+      return true;
+    } catch (e) {
+      logger.error({ at: "confirmDelete", error: e });
+      return false;
+    } finally {
+      dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
+        message: `Account deleted.`,
+        subMessage: "",
+        isFinished: true
+      });
+    }
   }
 
-  ping() {
+  async ping() {
     this.postToEmbed();
-    return this.persistence.ping();
+    const response = await this.persistence.ping();
+    console.log("ping response", { response });
+    const user = response?.[0]?.result?.[0];
+    console.log({ user });
+    if (!response || !user) {
+      await this.signOut({ isPreventRedirect: true });
+      await flux.clear();
+      appStore.gotoPath("/signup?msg=notfound");
+    }
+    return response;
   }
   async logGuest(id: string) {
     try {

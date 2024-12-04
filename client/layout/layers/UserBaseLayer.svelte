@@ -116,7 +116,7 @@
           toasts.showProgress("sync", "Syncing...");
         }
         await flux.syncDown();
-        account.ping();
+        await account.ping();
       }
       if (isExtensionEnvironment() || import.meta.env?.DEV) return;
       performAppUpdateCheck();

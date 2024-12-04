@@ -24,6 +24,8 @@
       message = "You have been signed out.";
     } else if (messageParam === "expired") {
       message = "Your session has expired. Please login again.";
+    } else if (messageParam === "notfound") {
+      message = "User not found. Please login again.";
     }
   }
   onMount(async () => {
