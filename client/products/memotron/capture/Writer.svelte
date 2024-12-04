@@ -14,14 +14,18 @@
   let mdRef: NodularMarkdown | undefined = undefined;
 
   function handleEvent(event: string, data: any) {
-    logger.debug({ at: "capture handleEvent", event, data });
+    logger.log({
+      at: "capture handleEvent",
+      event,
+      data
+    });
     if (event === "mention") {
       if (!data?.item || !data?.location) return;
-      // captureStore.addMentionLink(data.location, data.item);
-      captureStore.addMentionLink("root", data.item);
+      captureStore.addMentionLink("root", data.item, {
+        location: data.location
+      });
     } else if (event === "unmention") {
       if (!data?.id || !data?.location) return;
-      // captureStore.removeMentionLink(data.location, data.id);
       captureStore.removeMentionLink("root", data.id);
     }
   }

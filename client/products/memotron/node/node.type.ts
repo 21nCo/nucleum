@@ -334,6 +334,9 @@ export enum NodeRightPaneType {
 
 type INodeLinkBase = {
   linkType: LinkType;
+  /**
+   * Link tags
+   */
   tags?: IRecordId[];
 };
 
@@ -786,6 +789,7 @@ export type IActiveNode = INode &
     links?: INodeLinkThumb[];
     children?: IActiveNode[];
     childrenHierarchy?: IRecordId[];
+    blocks?: INode[];
     forelinks?: LinkThumbnail[];
   };
 

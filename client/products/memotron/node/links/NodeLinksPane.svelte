@@ -43,7 +43,7 @@
   import { activeResourceFilterV2 } from "$lib/client/utils/utils";
   import { BulkEditor } from "../../memotron.store";
   import { toasts } from "$lib/client/stores/notification.store";
-  import { deepCopy } from "$lib/shared/utils/obj.utils";
+  import { deepCopy, isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   export let node: IActiveNodeStore;
   $: multiSelectContext = {
     resource: Resource.node,
@@ -53,6 +53,7 @@
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
   let _links: INodeLinkThumb[] = [];
   let all: { link: INodeLinkThumb; node: INode }[] = [];
+  let outgoingMentions: { link: INodeLinkThumb; node: INode }[] = [];
   let filtered: { link: INodeLinkThumb; node: INode }[] = [];
 
   let selectedLinkType: LinkType = LinkType.DIRECT;
@@ -137,6 +138,7 @@
     ];
     searchQuery = "";
   }
+
   async function refresh() {
     if (!$node.links) {
       _links = [];
@@ -161,12 +163,51 @@
     }));
     applyFilters();
   }
+
+  async function refreshOutgoingMentions() {
+    try {
+      const result = await linker.selectMany({
+        filters: {
+          linkType: LinkType.MENTION,
+          location: $node.blocks?.map((x) => x.id.toString()) ?? []
+        }
+      });
+      if (!isValidArrayWithData(result)) return [];
+      const nodes = await nodeStore.selectMany({
+        filters: {
+          id: result.map((x: any) => x.out.toString())
+        }
+      });
+      if (!isValidArrayWithData(nodes)) return [];
+      outgoingMentions = result.map((x: any) => ({
+        link: {
+          linkedTo: x.out,
+          linkType: LinkType.MENTION,
+          id: x.id,
+          direction: "outgoing"
+        },
+        node: nodes.find((y: any) => isSameResource(y.id, x.out))
+      }));
+      return [...outgoingMentions];
+    } catch (e) {
+      logger.error({ at: "refreshOutgoingMentions", error: e });
+      return [];
+    }
+  }
+
   async function applyFilters() {
-    filtered = all.filter((x) => x.link.linkType === selectedLinkType);
-    if (selectedLinkType === LinkType.MENTION) {
-      filtered = filtered.filter(
-        (x) => x.link.direction === selectedMentionDirection
-      );
+    if (
+      selectedLinkType === LinkType.MENTION &&
+      selectedMentionDirection === "outgoing"
+    ) {
+      filtered = await refreshOutgoingMentions();
+    } else {
+      filtered = all.filter((x) => x.link.linkType === selectedLinkType);
+      if (selectedLinkType === LinkType.MENTION) {
+        filtered = filtered.filter(
+          (x) => x.link.direction === selectedMentionDirection
+        );
+      }
     }
     if (selectedLinkTags.length > 0) {
       if (dev_linkTagFilter === "or") {
@@ -180,10 +221,12 @@
       }
     }
   }
+
   function onClick(e: CustomEvent) {
     const result = multiSelectStore.clickHandler(e.detail.id);
     if (!result) appStore.resourceClickHandler(e.detail.event, e.detail.id);
   }
+
   function onSelectAll() {
     $multiSelectStore = filtered?.map((x) => x.node.id.toString()) ?? [];
   }

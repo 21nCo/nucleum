@@ -41,7 +41,11 @@
   let dev_isEnableBottomDivider: boolean = true;
 
   async function handleEvent(event: string, data: any) {
-    logger.log({ at: "node context", event, data });
+    logger.log({
+      at: "node content context",
+      event,
+      data
+    });
     if (!event) return;
     if (event === "mention") {
       if (!data.item || !data.location) return;

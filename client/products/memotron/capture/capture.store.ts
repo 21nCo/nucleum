@@ -139,8 +139,15 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       return store;
     });
   }
-  addMentionLink(from: IRecordId, to: INodeThumb | ICollectionThumb) {
-    return this._addLink(from, to, LinkType.MENTION);
+  addMentionLink(
+    from: IRecordId,
+    to: INodeThumb | ICollectionThumb,
+    params?: {
+      location?: IRecordId;
+      linkTags?: IRecordId[];
+    }
+  ) {
+    return this._addLink(from, to, LinkType.MENTION, params);
   }
   removeMentionLink(from: IRecordId, to: IRecordId) {
     this.update((val) => {
@@ -163,7 +170,11 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
   private _addLink(
     from: IRecordId | "root",
     to: INodeThumb | ICollectionThumb,
-    linkType: LinkType
+    linkType: LinkType,
+    params?: {
+      location?: IRecordId;
+      linkTags?: IRecordId[];
+    }
   ) {
     const store = this.get();
     if (store.links?.some((link) => isSameResource(link.to, to.id))) return;
@@ -178,7 +189,9 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
           toType: toType as Resource.node | Resource.collection,
           toSubType: ("contentType" in to ? to.contentType : to.type) as
             | NodeType
-            | CollectionType
+            | CollectionType,
+          location: params?.location,
+          tags: params?.linkTags
         }
       ];
       return val;
@@ -429,7 +442,9 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
         in: x.from,
         out: x.to,
         linkType: x.linkType,
-        toType: x.toType
+        toType: x.toType,
+        location: x.location,
+        tags: x.tags
       };
     });
     const typedCollections = val.links

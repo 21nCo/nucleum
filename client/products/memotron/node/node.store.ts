@@ -63,6 +63,7 @@ import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { generateResourceId } from "$lib/shared/utils/surreal.utils";
 import { toasts } from "$lib/client/stores/notification.store";
 import { fileStore } from "$lib/client/components/files/file.store";
+import { recursivelyExtractAllChildrenIntoArray } from "$lib/client/components/markdown/markdown.utils";
 
 export const hierarchyFactorLimit = 5;
 
@@ -324,10 +325,18 @@ export class ActiveNodeStore extends ActiveResourceStore<
         collections
       });
       const types = await collectionStore.resolveTypes(collections);
+      let blocks: INode[] = [];
+      if (
+        node.contentType === NodeType.NODULAR_MARKDOWN ||
+        headingNodeTypes.includes(node.contentType)
+      ) {
+        blocks = recursivelyExtractAllChildrenIntoArray(node) as INode[];
+      }
       this.update((n) => {
         n.types = types;
         n.links = links;
         n.collections = collections;
+        n.blocks = blocks;
         return n;
       });
     } catch (e) {
@@ -384,9 +393,14 @@ export class ActiveNodeStore extends ActiveResourceStore<
   deleteBlock = async (id: string) => {
     return this.resourceStore.trash(id);
   };
-  mention = async (location: string, id: string) => {
+  mention = async (
+    location: string,
+    id: string,
+    params?: { tags?: IRecordId[] }
+  ) => {
     const result = await linker.link(this.id, id, LinkType.MENTION, {
-      location
+      location,
+      tags: params?.tags
     });
     if (!result) return;
     this.update((n) => ({

@@ -57,4 +57,6 @@ type ICaptureLink = {
   linkType: LinkType;
   toType: Resource.node | Resource.collection;
   toSubType?: CollectionType | NodeType;
+  location?: IRecordId;
+  tags?: IRecordId[];
 };

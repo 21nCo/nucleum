@@ -18,15 +18,19 @@ import { deepCopy } from "$lib/shared/utils/obj.utils";
  * @returns children of the node and all its children
  */
 export function recursivelyExtractAllChildrenIntoArray(md: IActiveNode) {
-  let children: IBlockInterface[] = [];
+  try {
+    let children: IBlockInterface[] = [];
 
-  if (md.children && md.children.length > 0) {
-    md.children.forEach((child) => {
-      children.push(child);
-      children.push(...recursivelyExtractAllChildrenIntoArray(child));
-    });
+    if (md.children && md.children.length > 0) {
+      md.children.forEach((child) => {
+        children.push(child);
+        children.push(...recursivelyExtractAllChildrenIntoArray(child));
+      });
+    }
+    return children;
+  } catch (e) {
+    return [];
   }
-  return children;
 }
 
 /**
