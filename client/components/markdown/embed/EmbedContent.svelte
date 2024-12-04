@@ -28,6 +28,8 @@
   import { Size } from "$lib/client/types/size.enum";
   const dispatch = createEventDispatcher();
   const nodeContext = getContext<any>("node");
+  const contentContext = getContext<any>("content");
+  export let id: IRecordId;
   export let body: IEmbedBlockBody;
   let linkInputValue = "";
   let _mediaBlock: INode | undefined;
@@ -55,6 +57,10 @@
     if (resource === Resource.node) {
       _mediaBlock = event.detail;
       mergeBody({ id: event.detail.id, subType: event.detail.contentType });
+      contentContext.publish("mention", {
+        location: id,
+        item: event.detail
+      });
     } else if (resource === Resource.collection) {
       mergeBody({
         id: event.detail.id,
