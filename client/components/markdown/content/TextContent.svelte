@@ -607,7 +607,6 @@
       text &&
       params?.inBlockPosition?.caretOffset === 0
     ) {
-      console.log({ at: "handleBackspace - backspace with content" });
       relay(BlockAction.BACKSPACE_WITH_CONTENT);
       event.preventDefault();
       return true;

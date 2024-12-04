@@ -168,7 +168,7 @@ export const inlineStylingPatterns = [
   },
   {
     regex: /~~((?:\S|\s\S)+?)~~/g,
-    replacement: encapsulateInlinePattern("~~", "<s>$1</s>")
+    replacement: encapsulateInlinePattern("~~", "$1")
     // '<span class="line-through">$1</span>'
   },
   {
@@ -350,4 +350,218 @@ export function extractInlineMarkdownFromHtml(html: any) {
   markdown = removeHtmlComments(markdown);
   markdown = removeTooltipElements(markdown);
   return markdown;
+}
+
+export function resolvePlainText(mdString: string) {
+  return mdString
+    .replace(/!\[[^\]]*\]\([^\)]+\)/g, "")
+    .replace(/\[([^\]]+)\]\([^\)]+\)/g, "$1")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/(\*\*|__)(.*?)\1/g, "$2")
+    .replace(/(\*|_)(.*?)\1/g, "$2")
+    .replace(/~~(.*?)~~/g, "$1")
+    .replace(/#+\s*(.*)/g, "$1")
+    .replace(/^>\s*(.*)/gm, "$1")
+    .replace(/^[\-\*\+]\s+(.*)/gm, "$1")
+    .replace(/^\d+\.\s+(.*)/gm, "$1")
+    .replace(/^(-{3,}|\*{3,}|_{3,})$/gm, "")
+    .replace(/([#>*_~`]+)/g, "")
+    .trim();
+}
+
+function createPositionMapping(markdown: string): {
+  plainText: string;
+  mapping: number[];
+} {
+  let plainText = "";
+  let mapping: number[] = []; // mapping[plainIndex] = markdownIndex
+  let markdownIndex = 0;
+  let plainIndex = 0;
+
+  const length = markdown.length;
+  while (markdownIndex < length) {
+    const patterns = [
+      { type: "formatting", regex: /^(?:\*\*|__)/, length: 2 },
+      {
+        type: "formatting",
+        regex: /^(?:\*|_|~~)/,
+        length: (match: string) => match.length
+      },
+      { type: "formatting", regex: /^`/, length: 1 },
+      {
+        type: "link",
+        regex: /^\[([^\]]+)\]\([^\)]+\)/,
+        length: (match: string) => match.length
+      },
+      {
+        type: "image",
+        regex: /^!\[([^\]]*)\]\([^\)]+\)/,
+        length: (match: string) => match.length
+      },
+      {
+        type: "heading",
+        regex: /^(#+\s+)/,
+        length: (match: string) => match.length
+      },
+      {
+        type: "blockquote",
+        regex: /^(>\s+)/,
+        length: (match: string) => match.length
+      },
+      {
+        type: "unordered-list",
+        regex: /^([\-\*\+]\s+)/,
+        length: (match: string) => match.length
+      },
+      {
+        type: "ordered-list",
+        regex: /^(\d+\.\s+)/,
+        length: (match: string) => match.length
+      },
+      {
+        type: "horizontal-rule",
+        regex: /^((?:-){3,}|(?:\*){3,}|(?:_){3,})(\n|$)/,
+        length: (match: string) => match.length
+      },
+      { type: "newline", regex: /^\n/, length: 1 },
+      { type: "any-other", regex: /^./, length: 1 }
+    ];
+
+    let matched = false;
+
+    for (const pattern of patterns) {
+      const match = markdown.substring(markdownIndex).match(pattern.regex);
+      if (match) {
+        const matchLength =
+          typeof pattern.length === "function"
+            ? pattern.length(match[0])
+            : pattern.length;
+
+        if (pattern.type === "link") {
+          const linkText = match[1];
+          for (let i = 0; i < linkText.length; i++) {
+            plainText += linkText[i];
+            mapping[plainIndex++] = markdownIndex + 1 + i;
+          }
+        } else if (pattern.type === "image") {
+          // Image syntax, skip
+        } else if (pattern.type === "formatting") {
+          // Formatting syntax, skip the syntax characters
+        } else if (
+          pattern.type === "heading" ||
+          pattern.type === "blockquote" ||
+          pattern.type === "unordered-list" ||
+          pattern.type === "ordered-list" ||
+          pattern.type === "horizontal-rule"
+        ) {
+        } else if (pattern.type === "newline") {
+          plainText += "\n";
+          mapping[plainIndex++] = markdownIndex;
+        } else if (pattern.type === "any-other") {
+          plainText += match[0];
+          mapping[plainIndex++] = markdownIndex;
+        }
+
+        markdownIndex += matchLength;
+        matched = true;
+        break;
+      }
+    }
+
+    if (!matched) {
+      markdownIndex++;
+    }
+  }
+
+  return { plainText, mapping };
+}
+
+function createPositionMappingv2(markdown: string): {
+  plainText: string;
+  mapping: number[];
+} {
+  let plainText = "";
+  let mapping: number[] = []; // mapping[plainIndex] = markdownIndex
+  let markdownIndex = 0;
+  let plainIndex = 0;
+
+  const length = markdown.length;
+  while (markdownIndex < length) {
+    const char = markdown[markdownIndex];
+
+    // Handling formatting characters
+    if (
+      (char === "*" && markdown[markdownIndex + 1] === "*") ||
+      (char === "_" && markdown[markdownIndex + 1] === "_")
+    ) {
+      // Skip the double formatting characters (bold or underline)
+      markdownIndex += 2;
+      continue;
+    } else if (char === "*" || char === "_" || char === "~" || char === "`") {
+      // Skip single formatting characters (italic, strikethrough, code)
+      markdownIndex += 1;
+      continue;
+    }
+
+    // Handle links
+    if (char === "[") {
+      const linkMatch = markdown
+        .substring(markdownIndex)
+        .match(/^\[([^\]]+)\]\([^\)]+\)/);
+      if (linkMatch) {
+        const linkText = linkMatch[1];
+        for (let i = 0; i < linkText.length; i++) {
+          plainText += linkText[i];
+          mapping[plainIndex++] = markdownIndex + 1 + i;
+        }
+        markdownIndex += linkMatch[0].length;
+        continue;
+      }
+    }
+
+    // Handle images
+    if (char === "!" && markdown[markdownIndex + 1] === "[") {
+      const imageMatch = markdown
+        .substring(markdownIndex)
+        .match(/^!\[[^\]]*\]\([^\)]+\)/);
+      if (imageMatch) {
+        // Skip the entire image syntax
+        markdownIndex += imageMatch[0].length;
+        continue;
+      }
+    }
+
+    // Add character to plain text and update mapping
+    plainText += char;
+    mapping[plainIndex++] = markdownIndex++;
+  }
+
+  return { plainText, mapping };
+}
+
+function resolveMarkdownOffset(plainOffset: number, mapping: number[]): number {
+  if (plainOffset < 0 || plainOffset >= mapping.length) {
+    throw new Error("Plain text offset is out of bounds");
+  }
+  return mapping[plainOffset];
+}
+
+export function resolvePlainOffsetForMdEnd(markdown: string) {
+  const plainText = resolvePlainText(markdown);
+  return plainText.length;
+}
+
+export function splitMarkdownAtPlainOffset(
+  markdown: string,
+  plainOffset: number
+): { before: string; after: string } {
+  const { plainText, mapping } = createPositionMapping(markdown);
+  const markdownOffset = resolveMarkdownOffset(plainOffset, mapping);
+  console.log({ plainText, mapping, markdownOffset });
+
+  const before = markdown.substring(0, markdownOffset);
+  const after = markdown.substring(markdownOffset);
+
+  return { before, after };
 }

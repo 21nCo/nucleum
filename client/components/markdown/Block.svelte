@@ -34,6 +34,11 @@
   import view from "$lib/client/stores/view.store";
   import type { IRecordId } from "$lib/client/types/data.type";
   import { isSameResource } from "../flux/resourceStores/resource.utils";
+  import {
+    resolvePlainOffsetForMdEnd,
+    resolvePlainText,
+    splitMarkdownAtPlainOffset
+  } from "./markdown.utils";
 
   export let block: IBlock;
   export let mdStore: MdStoreType;
@@ -157,7 +162,7 @@
     const currentBlockText = resolveBodyText();
     const previousBlock = mdStore.getPreviousSibling(block.id);
     const previousBlockText = resolveBodyText(previousBlock);
-    const offset = previousBlockText?.length ?? 0;
+    const offset = resolvePlainOffsetForMdEnd(previousBlockText ?? "");
     if (
       !currentBlockText ||
       !previousBlock ||
@@ -271,16 +276,19 @@
       if (!data) data = {};
       data.blockType = NodeType.SIMPLE_TEXT;
       const currentBlockText = resolveBodyText();
+      const plainText = resolvePlainText(currentBlockText ?? "");
       if (
         currentBlockText &&
+        plainText &&
         data?.caretPosition &&
-        data?.caretPosition.caretOffset < currentBlockText.length
+        data?.caretPosition.caretOffset < plainText.length
       ) {
-        newText = currentBlockText.slice(data.caretPosition.caretOffset);
-        const preText = currentBlockText.slice(
-          0,
-          data.caretPosition.caretOffset
+        const { before, after } = splitMarkdownAtPlainOffset(
+          currentBlockText,
+          data?.caretPosition.caretOffset
         );
+        newText = after;
+        const preText = before;
         const modifiedBody = editBlockText(block, preText);
         if (headingNodeTypes.includes(block.contentType)) {
           block.label = modifiedBody as string;
