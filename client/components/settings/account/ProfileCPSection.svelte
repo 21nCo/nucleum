@@ -14,6 +14,7 @@
   import modalEvent from "../../modal/modal.store";
   import { Action } from "$lib/client/types/action.enum";
   import { resolveLicenseString } from "$lib/client/utils/account.utils";
+  import { userPreferences } from "../userPreferences.store";
   export let context: "page" | "modal" = "page";
   export let parentBackgroundIndex: number = 1;
 
@@ -43,7 +44,9 @@
           <ProfilePicture />
           <div class="flex flex-col justify-center items-start">
             <div class="text-h5">
-              {isValidString($account.userInfo?.nickName) || "App user"}
+              {isValidString($userPreferences.name) ||
+                isValidString($account.userInfo?.nickName) ||
+                "App user"}
             </div>
             <div class="text-b3 text-fgs3">
               {$account.userInfo?.emailParts

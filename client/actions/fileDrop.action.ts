@@ -10,6 +10,7 @@
 export function fileDrop(node: HTMLElement, options = {}) {
   let input: HTMLInputElement;
   const defaultOptions = {
+    disabled: false,
     accept: "*",
     multiple: false,
     maxSize: Infinity, // in bytes
@@ -91,6 +92,7 @@ export function fileDrop(node: HTMLElement, options = {}) {
   }
 
   function handleClick() {
+    if (settings.disabled) return;
     input.click();
   }
 

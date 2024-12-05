@@ -4,7 +4,7 @@ import type { IAvatar } from "./avatar.type";
 import type { IObservableStoreSubject } from "./data.type";
 import type { TranscriptionModel } from "../products/memotron/taco/taco.types";
 export type IUserGlobalPreferences = IObservableStoreSubject & {
-  nickName: string;
+  name: string;
   // theme: AppSkin;
   // colorScheme: ColorScheme;
   appearance: UserAppearanceSettings;

@@ -20,7 +20,7 @@ const defaultColorSchemeId = "colorscheme:cleantidylightblue";
 const defaultDarkColorSchemeId = "colorscheme:cleantidydarkblue";
 
 export const seedUserPreferences: IUserGlobalPreferences = {
-  nickName: "",
+  name: "",
   dayStartHour: 0,
   dayStartMinute: 0,
   birthday: new Date(),
@@ -122,6 +122,10 @@ class UserPreferencesStore extends KeyValueStore<IUserGlobalPreferences> {
     //     Resource.tz
     //   );
     return this._setTimezone(offset, label);
+  }
+
+  updateUserProfile(x: Partial<IUserGlobalPreferences>) {
+    this.modify({ ...x });
   }
 }
 

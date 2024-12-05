@@ -4,7 +4,9 @@
   import { onMount } from "svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
   import { cn } from "$lib/client/utils/ui.utils";
-  export let context: "cmd-page" | "cp-profile" = "cp-profile";
+  export let context: "cmd-page" | "cp-profile" | "account-settings" =
+    "cp-profile";
+  export let isEditing = false;
   let initials: string | undefined = undefined;
   let profilePictureUrl: string | undefined = undefined;
   const Emojis: string[] = ["🚀", "😁", "✌️", "👓", "⭐️", "🔥", "⚽️", "🛵"];
@@ -44,10 +46,14 @@
   }
 </script>
 
-<div
+<button
   class={cn(" flex justify-center items-center bg-bgs3", {
     "rounded-full w-16 h-16": context === "cp-profile",
-    "rounded-md w-20 h-20": context === "cmd-page"
+    "rounded-md w-20 h-20": context === "cmd-page",
+    "rounded-full w-24 h-24 border-2": context === "account-settings",
+    "border-transparent": context === "account-settings" && !isEditing,
+    "outline-dashed outline-brs3 border-bgs1":
+      context === "account-settings" && isEditing
   })}
 >
   {#if initials}
@@ -62,4 +68,4 @@
       alt="Profile picture"
     />
   {/if}
-</div>
+</button>
