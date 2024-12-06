@@ -310,7 +310,7 @@ echo "User data script execution completed at $(date)"
           bundleSize = "micro";
           break;
         case "live":
-          bundleSize = "medium";
+          bundleSize = "xlarge";
           break;
         default:
           bundleSize = "micro";
