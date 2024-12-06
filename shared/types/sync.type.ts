@@ -34,6 +34,7 @@ export type ICloneDownBody = {
 
 export type ICloneDownPaginateBody = {
   resource: Resource;
+  isExtension: boolean;
   offset: number;
   limit: number;
 };

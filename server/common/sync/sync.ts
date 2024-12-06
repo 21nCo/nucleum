@@ -15,7 +15,8 @@ import { performQueryOnBehalfOfUser } from "../user/user";
 import {
   resolveCountQuery,
   resolveSyncDownQuery,
-  resolveCloneDownQuery
+  resolveCloneDownQuery,
+  resolveCloneDownPaginateQuery
 } from "./sync.utils";
 
 /**
@@ -181,8 +182,12 @@ export async function cloneDownPaginate(
   agent: Agent
 ) {
   try {
-    const { resource, offset, limit } = body;
-    const query = `select * from ${resource} LIMIT ${limit} OFFSET ${offset};`;
+    const { resource, offset, limit, isExtension } = body;
+    const query = resolveCloneDownPaginateQuery(resource, {
+      offset,
+      limit,
+      isExtension
+    });
     const response = await performQueryOnBehalfOfUser(query, agent);
     return response;
   } catch (e) {

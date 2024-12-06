@@ -39,3 +39,18 @@ export function resolveCloneDownQuery(
   }
   return query;
 }
+
+export function resolveCloneDownPaginateQuery(
+  resource: Resource,
+  params: {
+    offset: number;
+    limit: number;
+    isExtension: boolean;
+  }
+) {
+  const { offset, limit, isExtension } = params;
+  if (!isExtension) {
+    return `select *, meta::id(id) as id from ${resource} LIMIT ${limit} START ${offset};`;
+  }
+  return `select * from ${resource} LIMIT ${limit} START ${offset};`;
+}

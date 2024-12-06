@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { performQueryOnBehalfOfUser } from "./user";
 import {
+  resolveCloneDownPaginateQuery,
   resolveCloneDownQuery,
   resolveSyncDownQuery
 } from "../sync/sync.utils";
@@ -48,6 +49,21 @@ describe("performQueryOnBehalfOfUser", () => {
       expect(Array.isArray(item.result)).toBe(true);
       expect(item.result.length).toBeLessThanOrEqual(limit);
     });
+  });
+
+  it("clone down paginate query", async () => {
+    const limit = 10;
+    const cloneDownQuery = resolveCloneDownPaginateQuery(Resource.node, {
+      isExtension: false,
+      limit,
+      offset: 10
+    });
+    const result = await performQueryOnBehalfOfUser(
+      cloneDownQuery,
+      global.testEnv.agent
+    );
+    expect(result).toBeDefined();
+    expect(result.length).toBeGreaterThan(0);
   });
 
   it("sync down query", async () => {
