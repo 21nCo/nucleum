@@ -1,5 +1,5 @@
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { IMutation } from "$lib/client/types/data.type";
+import type { IMutation } from "$lib/client/types/data.type";
 
 export enum SyncMethod {
   SYNC_UP = "up",

@@ -4,9 +4,15 @@
   import { onMount } from "svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
   import { cn } from "$lib/client/utils/ui.utils";
+  import Icon from "$lib/client/elements/Icon.svelte";
+  import FileView from "../../files/FileView.svelte";
+  import type { IRecordId } from "$lib/client/types/data.type";
+  import { userPreferences } from "../userPreferences.store";
   export let context: "cmd-page" | "cp-profile" | "account-settings" =
     "cp-profile";
+  export let fileId: IRecordId | undefined = undefined;
   export let isEditing = false;
+  export let isLoading = false;
   let initials: string | undefined = undefined;
   let profilePictureUrl: string | undefined = undefined;
   const Emojis: string[] = ["🚀", "😁", "✌️", "👓", "⭐️", "🔥", "⚽️", "🛵"];
@@ -18,8 +24,12 @@
     account.subscribe(async (x) => {
       await refresh(x);
     });
+    userPreferences.subscribe((x) => {
+      if (x.profilePicture) fileId = x.profilePicture ?? fileId;
+    });
   });
   async function refresh(x: any) {
+    if (fileId) return;
     if (isValidString(x.userInfo?.profilePictureUrl)) {
       try {
         let response = await fetch(x.userInfo?.profilePictureUrl!, {
@@ -50,22 +60,35 @@
   class={cn(" flex justify-center items-center bg-bgs3", {
     "rounded-full w-16 h-16": context === "cp-profile",
     "rounded-md w-20 h-20": context === "cmd-page",
-    "rounded-full w-24 h-24 border-2": context === "account-settings",
+    "rounded-full w-24 h-24 border-4": context === "account-settings",
     "border-transparent": context === "account-settings" && !isEditing,
-    "outline-dashed outline-brs3 border-bgs1":
+    "outline-2 outline-dashed outline-brs3 border-bgs1":
       context === "account-settings" && isEditing
   })}
 >
-  {#if initials}
+  {#if isLoading}
+    <Icon icon="svg-spinners:90-ring-with-bg" />
+  {:else if fileId}
+    <FileView
+      id={fileId}
+      isLazyLoad={false}
+      class={cn("object-cover w-full h-full", {
+        "rounded-md": context === "cmd-page",
+        "rounded-full":
+          context === "cp-profile" || context === "account-settings"
+      })}
+    />
+  {:else if initials}
     <div class="text-h3 text-fgs3">{initials}</div>
   {:else if profilePictureUrl}
     <img
       class={cn("w-full h-full", {
         "rounded-md": context === "cmd-page",
-        "rounded-full": context === "cp-profile"
+        "rounded-full":
+          context === "cp-profile" || context === "account-settings"
       })}
       src={$account.userInfo?.profilePictureUrl}
-      alt="Profile picture"
+      alt="Profile"
     />
   {/if}
 </button>

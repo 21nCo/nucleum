@@ -19,12 +19,18 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import { userPreferences } from "../userPreferences.store";
-  import ExternalLogo from "$lib/client/branding/external/ExternalLogo.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { fileDrop } from "$lib/client/actions/fileDrop.action";
+  import { toasts } from "$lib/client/stores/notification.store";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+  import { isRecordId } from "../../flux/resourceStores/resource.utils";
+  import { Resource } from "../../flux/resourceStores/resource.enum";
+  import type { IRecordId } from "$lib/client/types/data.type";
   let name = "";
   let emailParts: EmailParts | undefined = undefined;
   let isEditing = false;
+  let isSaveInProgress = false;
+  let profilePicture: IRecordId | undefined = $userPreferences.profilePicture;
   onMount(() => {
     account.subscribe((value) => {
       if (value.dataMode === UserDataMode.CLOUD) {
@@ -37,9 +43,42 @@
     });
   });
   function onSave() {
-    //TODO: update user info
-    userPreferences.updateUserProfile({ name });
+    userPreferences.updateUserProfile({ name, profilePicture });
     isEditing = false;
+  }
+
+  async function handleDrop(
+    all: File[],
+    valid: File[],
+    errors: { file: File; type: string }[]
+  ) {
+    try {
+      if (errors && errors.length > 0) {
+        toasts.error("Something went wrong");
+        return;
+      }
+      if (all.length === 1) {
+        isSaveInProgress = true;
+        let file = all[0];
+        const response = await account.uploadFileV2(
+          file.type,
+          file.name,
+          new Blob([file], { type: file.type })
+        );
+        if (
+          isValidArrayWithData(response) &&
+          isRecordId(response[0].id, Resource.file)
+        ) {
+          profilePicture = response[0].id;
+        }
+      } else if (all.length > 1) {
+        toasts.error("Multiple files are not supported");
+      }
+    } catch (e) {
+      toasts.error("Something went wrong");
+    } finally {
+      isSaveInProgress = false;
+    }
   }
 </script>
 
@@ -47,7 +86,7 @@
   <div
     class="flex flex-col gap-1 w-full justify-center rounded-md bg-bgs2 p-4 text-left"
   >
-    <div>Hi {name ?? ""}!</div>
+    <div>Hi {$userPreferences.name ?? $account.userInfo?.nickName ?? ""}!</div>
     <div class="flex flex-col gap-2 text-fgs3 text-b2">
       Thanks for being one of the early users of our app! 🥳
       <div>
@@ -72,10 +111,18 @@
       <div
         class={cn("flex w-full justify-center items-center")}
         use:fileDrop={{
-          disabled: !isEditing
+          accept: ".jpg,.png,.jpeg,.svg",
+          multiple: false,
+          disabled: !isEditing,
+          onDrop: handleDrop
         }}
       >
-        <ProfilePicture context="account-settings" {isEditing} />
+        <ProfilePicture
+          context="account-settings"
+          {isEditing}
+          isLoading={isSaveInProgress}
+          fileId={profilePicture}
+        />
       </div>
       <div class="flex flex-col min-h-12 items-center gap-1 w-full">
         {#if isEditing}
@@ -113,17 +160,19 @@
             tooltip="Cancel"
             on:click={() => {
               isEditing = false;
+              profilePicture = $userPreferences.profilePicture;
+              name = $userPreferences.name;
             }}
           />
         {/if}
       </div>
     </div>
     <div class="flex flex-col items-start gap-4 flex-grow py-4">
-      <Text content="Account Details" style={TextStyle.SECTION_HEADING} />
+      <Text content="Account Details" style={TextStyle.PANEL_HEADING} />
       <div class="flex flex-col gap-4 w-full items-start">
         <div class="flex flex-col gap-1 w-full items-start">
-          <div>Sign in method</div>
-          <div class="flex items-center gap-2 text-b2 text-fgs3">
+          <div class="text-b2 text-fgs3">Sign in method</div>
+          <div class="flex items-center gap-2">
             {#if emailParts && emailParts.emailDomain.includes("gmail.com")}
               <Icon icon="google" />
               Google
@@ -139,8 +188,8 @@
           </div>
         </div>
         <div class="flex flex-col gap-1 w-full items-start">
-          <div>Plan</div>
-          <div class="text-b2 text-fgs3">Complimentary Cloud sync trial 🎉</div>
+          <div class="text-b2 text-fgs3">Plan</div>
+          <div class="">Complimentary cloud sync trial 🎉</div>
         </div>
       </div>
     </div>
