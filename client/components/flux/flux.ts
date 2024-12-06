@@ -46,6 +46,7 @@ import {
   relayToSidePanel
 } from "$lib/client/utils/extension.utils";
 import { SyncMethod } from "$lib/shared/types/sync.type";
+import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 
 class Flux {
   static _instance: Flux | null = null;
@@ -60,6 +61,7 @@ class Flux {
   private constructor() {
     this.isExtensionEnvironment = isExtensionEnvironment();
   }
+  private readonly cloneDownLimit = 1000;
 
   static initialize(
     stores: IStore[],
@@ -432,7 +434,7 @@ class Flux {
 
   async performSync(method: SyncMethod, data: any) {
     try {
-      const result = await performApiCall(`sync/${method}`, "POST", data);
+      const result = await performApiCall(`syncV2/${method}`, "POST", data);
       let response;
       if (result?.ok) {
         response = await result.json();
@@ -447,7 +449,7 @@ class Flux {
       if (method === SyncMethod.SYNC_UP) {
         if (response && response.length > 0) {
           const syncDownData = response[response.length - 1];
-          if (syncDownData?.result && syncDownData.result.length > 0) {
+          if (syncDownData?.result) {
             return { response, syncDownData: syncDownData.result };
           }
         }
@@ -658,17 +660,18 @@ class Flux {
   }
 
   private async processSyncDown(response: any, isFirstLoad: boolean = false) {
-    if (!response || !Array.isArray(response) || response.length === 0) {
+    if (!response) {
       return;
     }
-    const mutations: IMutation[] = response;
-    if (mutations.length > 100 && isFirstLoad) {
+    if (typeof response === "number") {
+      console.log("large sync down detected: ", response);
       await this.clear();
       window.location.reload();
       return;
     }
+    const mutations: IMutation[] = response;
     logger.log({ at: "processSyncDown", mutations, isFirstLoad });
-    if (!mutations || mutations.length === 0) return;
+    if (!Array.isArray(mutations) || mutations.length === 0) return;
     for (let mutation of mutations) {
       await this.persistence.mutation(
         mutation.resource as Resource,
@@ -712,52 +715,67 @@ class Flux {
         resources,
         isExtension: this.isExtensionEnvironment
       });
+      let needsPagination: Resource[] = [];
       for (let i = 0; i < result.length; i++) {
         const resource = resources[i];
         const resourceResponse = result[i];
-        if (resourceResponse.result && resourceResponse.result.length > 0) {
-          console.time(`cloneDown - ${resource}`);
-          if (!this.isExtensionEnvironment && resource !== Resource.kv) {
-            dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
-              subMessage: `Syncing ${resource}s...`
-            });
-          }
-          if (resource === Resource.kv) {
-            resourceResponse.result = resourceResponse.result.filter(
-              (x: any) => !x.id.toString().includes("local")
-            );
-          }
-          const result = await this.persistence.mutation(resource as Resource, {
-            records: resourceResponse.result,
+        if (
+          !resourceResponse?.result ||
+          !isValidArrayWithData(resourceResponse.result)
+        )
+          continue;
+        let records = resourceResponse.result;
+        if (records.length === this.cloneDownLimit) {
+          needsPagination.push(resource);
+        }
+        console.time(`cloneDown - ${resource}`);
+        if (!this.isExtensionEnvironment && resource !== Resource.kv) {
+          dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
+            subMessage: `Syncing ${resource}s...`
+          });
+        }
+        if (resource === Resource.kv) {
+          records = records.filter(
+            (x: any) => !x.id.toString().includes("local")
+          );
+        }
+        const mutationResult = await this.persistence.mutation(
+          resource as Resource,
+          {
+            records,
             action:
               params?.isReconciliation ||
               resource === Resource.kv ||
               resource === Resource.link
                 ? PersistenceActionType.INSERT
                 : PersistenceActionType.BULK_INSERT
-          });
-          logger.log({
-            at: "flux.cloneDown - result",
-            resource,
-            records: resourceResponse.result,
-            result
-          });
-          if (!result) {
-            const fallbackResult = await this.persistence.mutation(
-              resource as Resource,
-              {
-                records: resourceResponse.result,
-                action: PersistenceActionType.INSERT
-              }
-            );
-            logger.log({
-              at: "flux.cloneDown - fallbackResult",
-              resource,
-              fallbackResult
-            });
           }
-          console.timeEnd(`cloneDown - ${resource}`);
+        );
+        logger.log({
+          at: "flux.cloneDown - result",
+          resource,
+          records,
+          mutationResult
+        });
+        if (!mutationResult) {
+          const fallbackResult = await this.persistence.mutation(
+            resource as Resource,
+            {
+              records,
+              action: PersistenceActionType.INSERT
+            }
+          );
+          logger.log({
+            at: "flux.cloneDown - fallbackResult",
+            resource,
+            fallbackResult
+          });
         }
+        console.timeEnd(`cloneDown - ${resource}`);
+      }
+      console.log("needsPagination", needsPagination);
+      if (needsPagination.length > 0) {
+        await this.paginateResources(needsPagination);
       }
       if (params?.isReconciliation) return true;
       await this.loadInMemoryStores();
@@ -780,6 +798,50 @@ class Flux {
           subMessage: "",
           isFinished: true
         });
+      }
+    }
+  }
+
+  async paginateResources(resources: Resource[]) {
+    for (let resource of resources) {
+      await this.paginateResource(
+        resource,
+        this.cloneDownLimit,
+        this.cloneDownLimit
+      );
+    }
+  }
+  async paginateResource(resource: Resource, offset: number, limit: number) {
+    const result = await this.performSync(SyncMethod.CLONE_DOWN_PAGINATE, {
+      resource,
+      isExtension: this.isExtensionEnvironment,
+      offset,
+      limit
+    });
+    console.log("paginateResource - result", resource, offset);
+    if (
+      isValidArrayWithData(result) &&
+      isValidArrayWithData(result[0].result)
+    ) {
+      const records = result[0].result;
+      const mutationResult = await this.persistence.mutation(
+        resource as Resource,
+        {
+          records,
+          action:
+            resource === Resource.kv || resource === Resource.link
+              ? PersistenceActionType.INSERT
+              : PersistenceActionType.BULK_INSERT
+        }
+      );
+      if (!mutationResult) {
+        await this.persistence.mutation(resource as Resource, {
+          records,
+          action: PersistenceActionType.INSERT
+        });
+      }
+      if (records.length === limit) {
+        await this.paginateResource(resource, offset + limit, limit);
       }
     }
   }
