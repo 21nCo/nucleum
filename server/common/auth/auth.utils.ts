@@ -1,4 +1,4 @@
-import { MemberRole } from "./types/account.type";
+import { MemberRole } from "../account/account.type";
 
 const jwt = require("jsonwebtoken");
 

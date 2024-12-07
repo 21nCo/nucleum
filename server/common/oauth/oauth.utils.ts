@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
-import { OAuthUserData } from "./types/oauth.type";
+import { OAuthUserData } from "./oauth.type";
+
 async function retrieveAccessToken(config, code, redirectUri) {
   // console.log("retrieveAccessToken", { config, code });
   if (config.method_for_token === "GET") {
@@ -111,6 +112,14 @@ export async function fetchOAuthUserData(
   return userDetails;
 }
 
+/**
+ * Parse the OAuth user data for Apple
+ *
+ * Note: For Apple private relay users, email will not be present in user object - used parsed email from id_token.
+ *
+ * @param authResponse - The response from the OAuth provider
+ * @returns The parsed user data
+ */
 export function parseOAuthUserDataForApple(authResponse: {
   user?: {
     email: string;

@@ -1,23 +1,11 @@
-import { Agent } from "../account/account.type";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { Agent } from "$lib/server/common/account/account.type";
+import { SyncMethod } from "$lib/shared/types/sync.type";
 import {
   resolveInsertQuery,
   resolveMutationQueryV2
 } from "$lib/shared/utils/surreal.utils";
-import {
-  ICloneDownBody,
-  ICloneDownPaginateBody,
-  ICloneUpBody,
-  ISyncDownBody,
-  ISyncUpBody,
-  SyncMethod
-} from "$lib/shared/types/sync.type";
 import { performQueryOnBehalfOfUser } from "../user/user";
-import {
-  resolveCountQuery,
-  resolveSyncDownQuery,
-  resolveCloneDownQuery,
-  resolveCloneDownPaginateQuery
-} from "./sync.utils";
 
 /**
  * Syncs the user data from clients to the database
@@ -25,48 +13,23 @@ import {
  * @param method
  * @returns
  */
-export async function syncV2(
-  body:
-    | ISyncUpBody
-    | ISyncDownBody
-    | ICloneUpBody
-    | ICloneDownBody
-    | ICloneDownPaginateBody,
-  agent: Agent,
-  method: SyncMethod
-) {
-  console.log({ at: "syncV2", body, agent, method });
+export async function handleSyncV1(body: any, agent: Agent, method: string) {
+  console.log({ at: "sync", body, agent, method });
   try {
-    let result;
-    switch (method) {
-      case SyncMethod.SYNC_UP:
-        result = await syncUp(body as ISyncUpBody, agent);
-        break;
-      case SyncMethod.SYNC_DOWN:
-        result = await syncDown(body as ISyncDownBody, agent);
-        break;
-      case SyncMethod.CLONE_UP:
-        result = await cloneUp(body as ICloneUpBody, agent);
-        break;
-      case SyncMethod.CLONE_DOWN:
-        result = await cloneDown(body as ICloneDownBody, agent);
-        break;
-      case SyncMethod.CLONE_DOWN_PAGINATE:
-        result = await cloneDownPaginate(body as ICloneDownPaginateBody, agent);
-        break;
-      default:
-        return { error: "Invalid sync method" };
-    }
-    console.log({ at: "syncV2 - result", result, body, method });
+    const result = await _processSync(body, agent, method);
+    console.log({ at: "sync - result", result, body, method });
     return result;
   } catch (e) {
-    console.error({ at: "syncV2 - error", error: e });
+    console.error({ at: "sync - error", error: e });
     return { error: "Sync failed" };
   }
 }
 
-export async function syncUp(body: ISyncUpBody, agent: Agent) {
-  try {
+/**
+ *
+ */
+async function _processSync(body: any, agent: Agent, method: string) {
+  if (method === SyncMethod.SYNC_UP) {
     const { mutations, lastSyncDown, resources, dapId } = body;
     if (!mutations || !Array.isArray(mutations) || mutations.length < 1) {
       return { error: "No mutations to sync" };
@@ -119,16 +82,10 @@ export async function syncUp(body: ISyncUpBody, agent: Agent) {
       mutationResponses.push(...fetchBackResponse);
       response = mutationResponses;
     }
+    console.log({ method, response });
     if (response) return response;
     else return { error: "transaction failed" };
-  } catch (e) {
-    console.error({ at: "syncUp - error", error: e });
-    return { error: "Sync failed" };
-  }
-}
-
-export async function syncDown(body: ISyncDownBody, agent: Agent) {
-  try {
+  } else if (method === SyncMethod.SYNC_DOWN) {
     const { lastSyncDown, resources, dapId } = body;
     const fetchBackQuery = resolveSyncDownQuery(lastSyncDown, resources, dapId);
     const countQuery = resolveCountQuery(resources);
@@ -136,62 +93,46 @@ export async function syncDown(body: ISyncDownBody, agent: Agent) {
     if (!fullQuery) return { error: "transaction failed" };
     const response = await performQueryOnBehalfOfUser(fullQuery, agent);
     return response;
-  } catch (e) {
-    console.error({ at: "syncDown - error", error: e });
-    return { error: "Sync failed" };
-  }
-}
-
-export async function cloneUp(body: ICloneUpBody, agent: Agent) {
-  try {
+  } else if (method === SyncMethod.CLONE_UP) {
     const { resource, records } = body;
     const query = resolveInsertQuery(resource, records);
     const response = await performQueryOnBehalfOfUser(query, agent);
     return response;
-  } catch (e) {
-    console.error({ at: "cloneUp - error", error: e });
-    return { error: "Sync failed" };
-  }
-}
-
-export async function cloneDown(body: ICloneDownBody, agent: Agent) {
-  try {
+  } else if (method === SyncMethod.CLONE_DOWN) {
     const { resources, isExtension } = body;
+    let query = "";
     if (resources?.length < 1) return { error: "No resources found" };
-    const limit = body.limit || 500;
-    const query = resolveCloneDownQuery(resources, {
-      isExtension,
-      limit
-    });
+    if (!isExtension) {
+      resources.forEach((resource) => {
+        query += `select *, meta::id(id) as id from ${resource};`;
+      });
+    } else {
+      resources.forEach((resource) => {
+        query += `select * from ${resource};`;
+      });
+    }
     const response = await performQueryOnBehalfOfUser(query, agent);
     return response;
-  } catch (e) {
-    console.error({ at: "cloneDown - error", error: e });
-    return { error: "Sync failed" };
+  } else {
+    return { error: "Unknown sync method" };
   }
-}
 
-/**
- * TODO - Implement streaming or download via S3 if too many records - as AWS Lambda has a limit of 6MB for response size
- * @param body
- * @param agent
- * @returns
- */
-export async function cloneDownPaginate(
-  body: ICloneDownPaginateBody,
-  agent: Agent
-) {
-  try {
-    const { resource, offset, limit, isExtension } = body;
-    const query = resolveCloneDownPaginateQuery(resource, {
-      offset,
-      limit,
-      isExtension
-    });
-    const response = await performQueryOnBehalfOfUser(query, agent);
-    return response;
-  } catch (e) {
-    console.error({ at: "cloneDownPaginate - error", error: e });
-    return { error: "Sync failed" };
+  function resolveSyncDownQuery(
+    lastSyncDown: number,
+    resources: Resource[],
+    dapId: string
+  ) {
+    console.log({ at: "resolveSyncDownQuery", lastSyncDown, resources });
+    return `SELECT * FROM mutation WHERE timestamp > ${lastSyncDown} AND dapId IS NOT '${dapId}' AND resource IN [${resources
+      .map((x) => `'${x}'`)
+      .join(",")}] ORDER BY timestamp ASC;`;
+  }
+
+  function resolveCountQuery(resources: Resource[]) {
+    let query = "";
+    for (const resource of resources) {
+      query += `array::first(select count() as ${resource} from ${resource} group all);`;
+    }
+    return query;
   }
 }

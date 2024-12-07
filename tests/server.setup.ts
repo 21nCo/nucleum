@@ -1,6 +1,6 @@
 import { afterAll, beforeAll } from "vitest";
 import { setupTestEnvironment } from "./server.env";
-import { Agent } from "$lib/server/types/account.type";
+import { Agent } from "$lib/server/common/account/account.type";
 
 declare global {
   var testEnv: {

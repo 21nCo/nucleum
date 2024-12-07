@@ -3,8 +3,13 @@ import {
   APIGatewayProxyEventV2,
   APIGatewayProxyResultV2
 } from "aws-lambda";
-import { authorize } from "./account";
+import { authorize } from "./common/auth";
 import { parse } from "querystring";
+import {
+  AuthenticationError,
+  AuthorizationError,
+  ValidationError
+} from "./common/errors";
 
 export const accessControlHeaders = {
   "Access-Control-Allow-Origin": "*", //TODO - dynamic origin
@@ -71,8 +76,17 @@ export async function lambdaUsingNode(
     }
   } catch (e) {
     console.error(e);
-    statusCode = 500;
-    responseBody = JSON.stringify(e);
+    if (
+      e instanceof ValidationError ||
+      e instanceof AuthenticationError ||
+      e instanceof AuthorizationError
+    ) {
+      statusCode = e.statusCode;
+      responseBody = JSON.stringify({ error: e.message });
+    } else {
+      statusCode = 500;
+      responseBody = JSON.stringify(e);
+    }
   }
   return {
     statusCode: statusCode,

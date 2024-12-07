@@ -1,5 +1,5 @@
 import { performAgentProxyQuery } from "../surrealHelpers";
-import { Agent, CONTEXT } from "../types/account.type";
+import { Agent, CONTEXT } from "../common/account/account.type";
 
 export async function retrieveDoc(body: any, agent: Agent) {
   //TODO - check region resolution in this case
