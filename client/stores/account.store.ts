@@ -9,7 +9,10 @@ import { postToParent } from "$lib/client/utils/embed.utils";
 import { Persistence } from "../persistence/persistence";
 import { ButtonVariant } from "../types/button.type";
 import { performApiCall } from "$lib/client/utils/network.utils";
-import { confirmationNotification } from "$lib/client/stores/notification.store";
+import {
+  confirmationNotification,
+  toasts
+} from "$lib/client/stores/notification.store";
 import { appStore } from "./app.store";
 import jwt_decode from "jwt-decode";
 import { getBucketNameandKey, signout } from "../utils/account.utils";
@@ -167,23 +170,37 @@ class AccountStore extends ObservableStore<
   }
 
   async confirmDelete() {
+    let isDeleted = false;
     try {
       dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
         message: `Deleting account...`
       });
-      let acc = this.get();
-      await performApiCall("account/n/deleteAccount", "POST", {});
-      console.log("deleting account", { acc });
+      const result = await performApiCall(
+        "account/n/deleteAccount",
+        "POST",
+        {}
+      );
+      if (!result?.ok) {
+        toasts.error("Failed to delete account. Please try again later.");
+        return false;
+      }
+      const data = await result.json();
+      if (data?.error) {
+        toasts.error(data.error);
+        return false;
+      }
       await this.signOut({ isPreventRedirect: true });
       await flux.clear();
       appStore.gotoPath("/signup?msg=deleted");
+      isDeleted = true;
       return true;
     } catch (e) {
       logger.error({ at: "confirmDelete", error: e });
+      toasts.error("Failed to delete account. Please try again later.");
       return false;
     } finally {
       dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
-        message: `Account deleted.`,
+        message: isDeleted ? `Account deleted.` : "Account deletion failed.",
         subMessage: "",
         isFinished: true
       });
@@ -194,7 +211,10 @@ class AccountStore extends ObservableStore<
     this.postToEmbed();
     const response = await this.persistence.ping();
     const user = response?.[0]?.result?.[0];
-    if (!response || !user) {
+    if (!response) {
+      appStore.gotoErrorPage("Something went wrong.");
+    }
+    if (response && !user) {
       await this.signOut({ isPreventRedirect: true });
       await flux.clear();
       appStore.gotoPath("/signup?msg=notfound");
@@ -221,8 +241,7 @@ class AccountStore extends ObservableStore<
   }
 
   async bootstrap(region: string) {
-    await this.bootstrapRemote(region);
-    return true;
+    return this.bootstrapRemote(region);
   }
 
   async bootstrapRemote(region: string) {
@@ -232,7 +251,9 @@ class AccountStore extends ObservableStore<
       id,
       region
     });
-    if (!response || response.error || !response.userInfo) return;
+    if (!response || response.error || !response.userInfo) {
+      return false;
+    }
     this.signIn(
       {
         userInfo: response.userInfo,

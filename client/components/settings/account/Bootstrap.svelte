@@ -73,13 +73,16 @@
           type={ButtonVariant.PRIMARY}
           icon="rocket"
           on:click={async () => {
-            isBootstrapInProgress = true;
-            const result = await account.bootstrap(region);
-            if (!result) {
-              error = "Something went wrong. Please try again later.";
-              return;
+            try {
+              isBootstrapInProgress = true;
+              const result = await account.bootstrap(region);
+              if (!result) {
+                error = "Something went wrong. Please try again later.";
+                return;
+              }
+            } finally {
+              isBootstrapInProgress = false;
             }
-            isBootstrapInProgress = false;
           }}
         />
       {/if}
