@@ -35,7 +35,7 @@ export type IAction = {
   /**
    * Additional labels for the same action - to improve findability in command bar.
    */
-  cmdLabel?: string | string[];
+  cmdLabel?: string | { variant: string; label: string }[];
   /**
    * Icon associated with the action.
    */

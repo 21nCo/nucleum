@@ -19,10 +19,7 @@ export type IUserGlobalPreferences = IObservableStoreSubject & {
   timeZoneOffset: number;
   timeZoneLabel: string;
   timeScales?: TimeScale[];
-  /**
-   * @deprecated - use keyboardShortcuts store instead
-   */
-  recentCommands?: string[];
+  recentCommands?: { action: string; variant?: string }[];
   avatarPicker: {
     skinIndex: number;
     usedEmojis: [IAvatar][];

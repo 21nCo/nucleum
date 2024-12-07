@@ -2,9 +2,10 @@
   import { ActionType } from "$lib/client/types/action.type";
   import { generateCmdType } from "$lib/client/utils/utils";
   import { renderMdAsHtml } from "../markdown/markdown.utils";
+  import type { ICommandAction } from "./cmd.type";
   import ResultItem from "./ResultItem.svelte";
   export let search: string = "";
-  export let action: any;
+  export let action: ICommandAction;
   export let isActive: boolean = false;
   export let index: number;
 
