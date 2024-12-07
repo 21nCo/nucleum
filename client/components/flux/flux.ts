@@ -27,7 +27,8 @@ import {
 } from "$lib/client/persistence/persistence.type";
 import {
   dispatchCustomEvent,
-  isExtensionEnvironment
+  isExtensionEnvironment,
+  getEnvVal
 } from "$lib/client/utils/browser.utils";
 import { getDapId } from "$lib/client/persistence/persistence.utils";
 import { generateRandomId } from "$lib/shared/utils/crypto.utils";
@@ -61,7 +62,8 @@ class Flux {
   private constructor() {
     this.isExtensionEnvironment = isExtensionEnvironment();
   }
-  private readonly cloneDownLimit = 1000;
+  private readonly cloneDownLimit =
+    getEnvVal("CLONE_DOWN_LIMIT", "number") ?? 500;
 
   static initialize(
     stores: IStore[],
@@ -724,6 +726,7 @@ class Flux {
       const resources = params?.resources ?? this.resolveSyncResources();
       const result = await this.performSync(SyncMethod.CLONE_DOWN, {
         resources,
+        limit: this.cloneDownLimit,
         isExtension: this.isExtensionEnvironment
       });
       let needsPagination: Resource[] = [];

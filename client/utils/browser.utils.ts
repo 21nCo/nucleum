@@ -364,6 +364,30 @@ export function isExtensionEnvironment() {
   return false;
 }
 
+export function getEnvVal(
+  key: string,
+  dataType: "string" | "number" = "string"
+) {
+  try {
+    const isExtension = isExtensionEnvironment();
+    if (isExtension) {
+      key = "PLASMO_PUBLIC_" + key;
+      if (dataType === "string") return process?.env[key];
+      else if (dataType === "number" && process?.env[key])
+        return Number(process.env[key]);
+      else return null;
+    }
+    key = "VITE_" + key;
+    if (dataType === "string") return import.meta.env[key];
+    else if (dataType === "number" && import.meta.env[key])
+      return Number(import.meta.env[key]);
+    else return null;
+  } catch (e) {
+    logger.error({ at: "getEnvVal", error: e, key });
+    return null;
+  }
+}
+
 export function resolveDialogOnFront() {
   const dialogs = Array.from(document.querySelectorAll("dialog[open]"));
   if (dialogs.length === 0) {
