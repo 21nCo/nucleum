@@ -20,13 +20,16 @@ describe("cloneDown", () => {
   it("should construct correct query for non-extension resources", async () => {
     const resources = [Resource.node, Resource.collection];
     const expectedQuery =
-      "select *, meta::id(id) as id from node LIMIT 1000;select *, meta::id(id) as id from collection LIMIT 1000;";
+      "select *, meta::id(id) as id from node LIMIT 400;select *, meta::id(id) as id from collection LIMIT 400;";
 
     vi.mocked(performQueryOnBehalfOfUser).mockResolvedValueOnce([
       { success: true }
     ]);
 
-    await cloneDown({ resources, isExtension: false }, global.testEnv.agent);
+    await cloneDown(
+      { resources, isExtension: false, limit: 400 },
+      global.testEnv.agent
+    );
 
     expect(performQueryOnBehalfOfUser).toHaveBeenCalledWith(
       expectedQuery,
@@ -37,13 +40,16 @@ describe("cloneDown", () => {
   it("should construct correct query with limits for extension resources", async () => {
     const resources = [Resource.node, Resource.collection];
     const expectedQuery =
-      "select * from node LIMIT 1000;select * from collection LIMIT 1000;";
+      "select * from node LIMIT 400;select * from collection LIMIT 400;";
 
     vi.mocked(performQueryOnBehalfOfUser).mockResolvedValueOnce([
       { success: true }
     ]);
 
-    await cloneDown({ resources, isExtension: true }, global.testEnv.agent);
+    await cloneDown(
+      { resources, isExtension: true, limit: 400 },
+      global.testEnv.agent
+    );
 
     expect(performQueryOnBehalfOfUser).toHaveBeenCalledWith(
       expectedQuery,

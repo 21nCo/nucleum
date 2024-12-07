@@ -29,6 +29,7 @@ export type ICloneUpBody = {
 
 export type ICloneDownBody = {
   resources: Resource[];
+  limit?: number;
   isExtension: boolean;
 };
 

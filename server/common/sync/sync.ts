@@ -158,7 +158,7 @@ export async function cloneDown(body: ICloneDownBody, agent: Agent) {
   try {
     const { resources, isExtension } = body;
     if (resources?.length < 1) return { error: "No resources found" };
-    const limit = 1000;
+    const limit = body.limit || 500;
     const query = resolveCloneDownQuery(resources, {
       isExtension,
       limit

@@ -26,7 +26,7 @@ export function resolveCloneDownQuery(
     limit?: number;
   }
 ) {
-  const cloneDownLimit = params?.limit || 1000;
+  const cloneDownLimit = params?.limit || 500;
   let query = "";
   if (!params?.isExtension) {
     resources.forEach((resource) => {
