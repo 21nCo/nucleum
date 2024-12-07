@@ -1,7 +1,12 @@
-import { initializeDatabase } from "../account";
+import { initializeDatabase } from "../common/account";
 import { performQueryOnMasterDb } from "../surrealHelpers";
-import { generateSpaceToken } from "../token";
-import { Agent, CONTEXT, MemberRole, SpaceAction } from "../types/account.type";
+import { generateSpaceToken } from "../common/auth/auth.utils";
+import {
+  Agent,
+  CONTEXT,
+  MemberRole,
+  SpaceAction
+} from "../common/account/account.type";
 
 export function runSpaceAction(body: any, agent: Agent) {
   if (body.action === SpaceAction.CREATE) {

@@ -4,11 +4,9 @@ import { pointronTables } from "$lib/shared/dbo/pointron.tables";
 import { extractProduct } from "$lib/shared/utils/utils";
 import {
   performQueryOnMasterDb,
-  performQueryOnRegionalDb,
   performAgentProxyQuery
 } from "./surrealHelpers";
-import { validateToken } from "./token";
-import { type Agent, CONTEXT } from "./types/account.type";
+import type { Agent } from "./common/account/account.type";
 
 /**
  * @deprecated use updateDbV2 instead
@@ -141,41 +139,4 @@ export async function updateDbV2(body: any, agent: Agent) {
   updateQuery = updateQuery.replace(/\n/g, "");
   updateQuery = updateQuery.replace(/\t/g, "");
   return performAgentProxyQuery(updateQuery, agent);
-}
-
-export function authorize(props: { token: string; host?: string }) {
-  try {
-    //TODO - additional security checks
-    const key = process.env.TOKEN_PRIVATE_KEY;
-    if (!props.token || !key) return false;
-    const decoded = validateToken(props);
-    return decoded;
-  } catch (err) {
-    console.log(err);
-    return false;
-  }
-}
-
-/**
- * Initializes the database and definitions for a user account
- * @param id id of the resource that needs to be initialized - can be a user database or space database requested by the user
- * @param host
- * @returns
- */
-export async function initializeDatabase(
-  id: string,
-  params: { scope: CONTEXT; host: string; region?: string }
-) {
-  const ns =
-    params.scope === CONTEXT.USER
-      ? (process.env.USER_NS ?? "user")
-      : (process.env.SPACE_NS ?? "space");
-  // let query = `USE NAMESPACE ${ns}; DEFINE DATABASE ${id}; USE DATABASE ${id}; DEFINE TOKEN ${process.env.TOKEN_NAME} ON DB TYPE RS384 VALUE "${process.env.TOKEN_PUBLIC_KEY}";`;
-  let query = `USE NAMESPACE ${ns}; DEFINE DATABASE ${id};`;
-  const dbCreationResponse = await performQueryOnRegionalDb(query, {
-    region: params.region,
-    db: id,
-    context: params.scope
-  });
-  return dbCreationResponse;
 }

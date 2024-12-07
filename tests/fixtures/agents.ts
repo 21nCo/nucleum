@@ -1,4 +1,4 @@
-import { CONTEXT } from "$lib/server/types/account.type";
+import { CONTEXT } from "$lib/server/common/account/account.type";
 
 export const mockAgents = {
   dev: {

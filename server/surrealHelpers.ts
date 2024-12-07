@@ -5,7 +5,12 @@
 //   return fetch.default(url, options);
 
 import { isValidString } from "$lib/shared/utils/text.utils";
-import { Agent, DatabaseQueryParams, CONTEXT } from "./types/account.type";
+import { DatabaseError } from "./common/errors";
+import {
+  Agent,
+  DatabaseQueryParams,
+  CONTEXT
+} from "./common/account/account.type";
 
 // }
 export async function performQuery(body: any) {
@@ -89,14 +94,13 @@ async function performRootQuery(params: DatabaseQueryParams) {
     // const json = await response.text();
     // console.log({ json });
     const json = await response.json();
-    console.log({ endPoint, body, json, namespace, db });
     if (json && Array.isArray(json)) {
       return json.slice(2);
     }
     return json;
   } catch (e) {
     console.error({ at: "performRootQuery - error", error: e });
-    return { error: "Query failed" };
+    throw new DatabaseError("Database query failed");
   }
 
   function resolveNamespace(dbType: CONTEXT) {
