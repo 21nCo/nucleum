@@ -193,9 +193,7 @@ class AccountStore extends ObservableStore<
   async ping() {
     this.postToEmbed();
     const response = await this.persistence.ping();
-    console.log("ping response", { response });
     const user = response?.[0]?.result?.[0];
-    console.log({ user });
     if (!response || !user) {
       await this.signOut({ isPreventRedirect: true });
       await flux.clear();
