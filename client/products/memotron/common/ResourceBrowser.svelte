@@ -35,12 +35,20 @@
   import { toasts } from "$lib/client/stores/notification.store";
   import Badge from "$lib/client/elements/text/Badge.svelte";
   import { MemotronAction } from "../memotronAction.enum";
+  import Icon from "$lib/client/elements/Icon.svelte";
+  import { intersection } from "$lib/client/actions/intersection.action";
+  import { debouncer } from "$lib/client/utils/utils";
+  import { logger } from "$lib/client/components/debug/logger.client";
   export let resource: Resource;
 
   let searchQuery: string = "";
   let isRefineShown = false;
   let id: string | null = null;
   let searchStore = new SearchStore(resource);
+  let isRefreshing = false;
+  let isRefreshingTotalCount = false;
+  let totalCount = 0;
+  let isStarFilterSelected = false;
   let arrangement: Arrangement = uiState.getResourceState(
     resource,
     ResourceAccessPoint.BROWSER,
@@ -92,12 +100,52 @@
       toasts.error("Failed to perform bulk action");
     }
   }
-  async function refresh() {
-    data = await searchStore.select({
-      searchQuery,
-      limit: 150
-    });
-    starred = await searchStore.starred();
+  async function refresh(isPagination?: boolean) {
+    logger.log({ at: "ResourceBrowser - refresh", isPagination });
+    try {
+      if (isPagination !== true) {
+        isRefreshing = true;
+        data = [];
+      }
+      const dataLength = data.length;
+      const newData = await searchStore.select({
+        searchQuery,
+        limit: 50,
+        offset: isPagination ? dataLength : 0
+      });
+      if (isPagination && dataLength > 0) data = [...data, ...newData];
+      else {
+        data = [...newData];
+        starred = await searchStore.starred();
+      }
+      await refreshTotalCounts();
+    } finally {
+      isRefreshing = false;
+    }
+  }
+
+  async function refreshTotalCounts() {
+    try {
+      isRefreshingTotalCount = true;
+      totalCount = await searchStore.resolveCount(resource);
+    } finally {
+      isRefreshingTotalCount = false;
+    }
+  }
+
+  const debouncedSearch = debouncer(refresh, 500);
+
+  function resolveFooterMessage(data: any[], totalCount: number) {
+    if (!data || !data.length) return;
+    let prefix = "Showing " + data.length + " ";
+    const label = resolveResourceLabel();
+    if (isStarFilterSelected) return `${prefix} ⭐️ staaarrrrrrrrrred ${label}`;
+    else if (searchQuery)
+      return `${prefix} ${label} containing "${searchQuery}"`;
+    else return `Showing ${data.length} of ${totalCount ?? "Unknown"} ${label}`;
+  }
+  function resolveResourceLabel(isPlural: boolean = false) {
+    return resource + ((data && data.length > 1) || isPlural ? "s" : "");
   }
 </script>
 
@@ -112,7 +160,7 @@
         bind:value={searchQuery}
         size={Size.lg}
         style={InputStyle.PLAIN}
-        on:keyup={refresh}
+        on:keyup={debouncedSearch}
         placeholder={"Search " + resource + "s"}
       />
       {#if searchQuery}
@@ -213,6 +261,21 @@
           accessPointState={state}
         />
       </div>
+      <div
+        class="flex w-full justify-center text-b2 text-fgs3"
+        use:intersection={{
+          rootMargin: "100px",
+          callback: () => {
+            refresh(true);
+          }
+        }}
+      >
+        {#if isRefreshingTotalCount}
+          <Icon icon="svg-spinners:3-dots-fade" />
+        {:else}
+          {resolveFooterMessage(data, totalCount) ?? ""}
+        {/if}
+      </div>
       <ScrollViewBottomSpacer />
     </main>
     {#if $multiSelectStore.length > 0}
@@ -244,6 +307,6 @@
 <ComponentBaseLayer
   subscribeTo={new Set([resource])}
   syncDownOnMount={true}
-  on:syncDown={refresh}
-  on:change={refresh}
+  on:syncDown={() => refresh()}
+  on:change={() => refresh()}
 />
