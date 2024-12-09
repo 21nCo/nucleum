@@ -6,7 +6,6 @@
   } from "$lib/client/components/flux/resourceStores/resource.utils";
   import type { IRecordId } from "$lib/client/types/data.type";
   import type { IProperty } from "../../collection/properties/property.type";
-  import { resolvePropertyDefaultValue } from "../../collection/properties/property.utils";
   import PropertyItem from "../../collection/properties/PropertyItem.svelte";
   import { nodeStore } from "../node.store";
   import type { INodePropertyValue } from "../node.type";
@@ -33,8 +32,7 @@
 >
   {#each properties as property (property.id)}
     <PropertyItem
-      value={values?.find(resourceInList(property))?.value ??
-        resolvePropertyDefaultValue(property)}
+      value={values?.find(resourceInList(property))?.value}
       {property}
       {nodeId}
       on:change={(e) => {

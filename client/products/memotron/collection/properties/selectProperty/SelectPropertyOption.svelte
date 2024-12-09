@@ -1,17 +1,20 @@
 <script lang="ts">
   import { cn } from "$lib/client/utils/ui.utils";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
-  import type { PropertyConfigOption } from "../property.type";
+  import type { IPropertyConfigOption } from "../property.type";
   import { isValidString } from "$lib/shared/utils/text.utils";
-  export let item: PropertyConfigOption;
+  import Icon from "$lib/client/elements/Icon.svelte";
+  export let item: IPropertyConfigOption;
   export let isSelectedContext: boolean = false;
   export let isPlain: boolean = false;
+  export let isSelected: boolean = false;
 </script>
 
 <button
-  class={cn("w-full text-left text-b2", {
-    "py-2 hover:bg-bgs3": !isSelectedContext,
-    "px-3": !isPlain
+  class={cn("text-left text-b2 flex justify-between", {
+    "py-1.5 hover:bg-bgs3": !isSelectedContext,
+    "px-3 w-full": !isPlain,
+    "bg-bgs3": isSelected && !isSelectedContext
   })}
   on:click
 >
@@ -21,4 +24,7 @@
   >
     {item ? (isValidString(item?.label) ? item?.label : "Untitled") : "None"}
   </CustomColorPropagator>
+  {#if isSelected}
+    <Icon icon="ph:check" class="text-fgs3" />
+  {/if}
 </button>

@@ -1,25 +1,26 @@
 <script lang="ts">
-  import type { PropertyConfigOption } from "../../property.type";
+  import type { IPropertyConfigOption } from "../../property.type";
   import SelectOptionEditItemView from "./SelectOptionEditItemView.svelte";
-  import type { PropertyConfigOptionGroup } from "../../property.type";
+  import type { IPropertyConfigOptionGroup } from "../../property.type";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
-  export let options: PropertyConfigOption[];
-  export let group: PropertyConfigOptionGroup | undefined = undefined;
+  export let options: IPropertyConfigOption[];
+  export let group: IPropertyConfigOptionGroup | undefined = undefined;
   export let focusedOptionId: string | null = null;
   export let defaultOptionId: string | null = null;
   export let isPreventDefaultGroupLabel = false;
+  export let parentBgIndex: number = 1;
   let isEditingGroupLabel = false;
   let groupLabelInput = "";
   $: _options = filterOptions(options, group);
 
   function filterOptions(
-    options: PropertyConfigOption[],
-    group: PropertyConfigOptionGroup | undefined
+    options: IPropertyConfigOption[],
+    group: IPropertyConfigOptionGroup | undefined
   ) {
     if (group) {
       return options.filter((x) => x.groupId === group.id);
@@ -118,6 +119,8 @@
     <SelectOptionEditItemView
       {option}
       {index}
+      {parentBgIndex}
+      groupId={group?.id ?? "ungrouped"}
       isFocusing={option.id === focusedOptionId}
       isDefault={option.id === defaultOptionId}
       on:remove
@@ -128,10 +131,10 @@
   {/each}
   <div class="flex justify-center mt-1">
     <Button
-      icon="ph:plus"
-      label="Add new option"
+      label="+ Add new option"
       style={ButtonStyle.PLAIN}
       size={Size.sm}
+      isUnderlined={true}
       on:click={() => addOption()}
     />
   </div>

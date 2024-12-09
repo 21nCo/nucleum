@@ -3,25 +3,30 @@
   import { deepCopy, isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
-  import type {
-    IProperty,
-    PropertyConfig,
-    PropertyConfigOption
+  import {
+    PropertyType,
+    type ISelectProperty,
+    type ISelectPropertyConfig,
+    type IPropertyConfigOption
   } from "../property.type";
   import SelectOptionsEditor from "../propertyConfig/selectProperty/SelectOptionsEditor.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { logger } from "$lib/client/components/debug/logger.client";
-  import SelectPropertyItemList from "./SelectPropertyItemList.svelte";
-  export let property: IProperty;
-  export let onSelect: (value: string) => void;
-  export let onNewOption: (option: PropertyConfigOption) => void;
+  import SelectPropertyOptionList from "./SelectPropertyOptionList.svelte";
+  import type { IRecordId } from "$lib/client/types/data.type";
+  export let property: ISelectProperty;
+  export let value: string | string[];
+  export let onSelect: (value: string | string[]) => void;
+  export let onNewOption: (option: { id: IRecordId; label: string }) => void;
   export let onConfigChange: (config: any) => void;
   export let dev_isHideEditOptions: boolean = false;
   let searchInputRef: any;
   let search: string = "";
-  let originalConfig: PropertyConfig | undefined;
-  let options: PropertyConfigOption[] = property.config?.options ?? [];
+  let originalConfig: ISelectPropertyConfig | undefined;
+  let options: IPropertyConfigOption[] = property.config?.options ?? [];
   let isEditing: boolean = false;
+
+  $: isMultiSelect = property.type === PropertyType.MULTI_SELECT;
 
   $: options =
     property.config?.options?.filter((x) =>
@@ -29,7 +34,23 @@
     ) ?? [];
 
   function onselect(e: CustomEvent<string>) {
-    const value = e.detail;
+    const val = e.detail;
+    if (isMultiSelect) {
+      if (typeof value === "string") {
+        if (value === "none" || value === val) value = [val];
+        else value = [value, val];
+      } else if (Array.isArray(value)) {
+        value = value.filter((x) => x !== "none");
+        if (value.includes(val)) {
+          value = value.filter((x) => x !== val);
+        } else {
+          value.push(val);
+        }
+      }
+      value = value;
+    } else {
+      value = val;
+    }
     onSelect(value);
   }
   function onenter(e: any) {
@@ -66,6 +87,7 @@
     <div class="flex w-full flex-grow">
       <SelectOptionsEditor
         bind:config={property.config}
+        parentBgIndex={2}
         bind:defaultOptionId={property.default}
       />
     </div>
@@ -84,16 +106,20 @@
       {#key search}
         {#if property.config?.groups && isValidArrayWithData(property.config?.groups)}
           {#each property.config?.groups as group}
-            <SelectPropertyItemList
+            <SelectPropertyOptionList
               groupId={group.id}
               groupLabel={group.label}
+              {value}
               {options}
+              {isMultiSelect}
               on:select={onselect}
             />
           {/each}
         {/if}
-        <SelectPropertyItemList
+        <SelectPropertyOptionList
           {options}
+          {value}
+          {isMultiSelect}
           isPreventDefaultGroupLabel={!property.config?.groups ||
             property.config?.groups.length === 0}
           on:select={onselect}

@@ -6,8 +6,7 @@
   import type { INodePropertyValue } from "$lib/client/products/memotron/node/node.type";
   import {
     resolvePropertiesForCapture,
-    resolvePropertiesForNodePage,
-    resolvePropertyDefaultValue
+    resolvePropertiesForNodePage
   } from "./property.utils";
   import { onMount } from "svelte";
   import { hoverable } from "$lib/client/actions/hover.action";
@@ -17,7 +16,7 @@
   import { createEventDispatcher } from "svelte";
   import type { ICollectionExpanded } from "../collection.type";
   import type { IRecordId } from "$lib/client/types/data.type";
-  import type { IProperty, PropertyConfigOption } from "./property.type";
+  import type { IProperty, IPropertyConfigOption } from "./property.type";
   import {
     removeDuplicatesFilter,
     resourceInList
@@ -70,7 +69,7 @@
   async function onNewOption(e: CustomEvent) {
     const property = properties.find(resourceInList(e.detail.id));
     if (!property) return;
-    const newOption: PropertyConfigOption = {
+    const newOption: IPropertyConfigOption = {
       id: generateSimpleRandomId(),
       label: e.detail.label,
       color: Math.random() * 360
@@ -162,8 +161,7 @@
         >
           {#each properties as property (property.id)}
             <PropertyItem
-              value={values.find(resourceInList(property))?.value ??
-                resolvePropertyDefaultValue(property)}
+              value={values.find(resourceInList(property))?.value}
               {property}
               {nodeId}
               isPropertiesPaneContext={isRenderAsColumn}

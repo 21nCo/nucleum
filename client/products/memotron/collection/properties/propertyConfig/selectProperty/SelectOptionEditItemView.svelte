@@ -10,21 +10,24 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { createEventDispatcher, onMount } from "svelte";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
-  import type { PropertyConfigOption } from "../../property.type";
+  import type { IPropertyConfigOption } from "../../property.type";
   import { hoverable } from "$lib/client/actions/hover.action";
   import { ButtonStyle } from "$lib/client/types/button.type";
   import Badge from "$lib/client/elements/text/Badge.svelte";
   import context from "$lib/client/stores/context.store";
   import { OperatingSystem } from "$lib/client/types/context.type";
   const dispatch = createEventDispatcher();
-  export let option: PropertyConfigOption;
+  export let option: IPropertyConfigOption;
   export let index: number;
   export let isFocusing: boolean = false;
   export let isHovering: boolean = false;
   export let isDefault: boolean = false;
+  export let groupId: string = "ungrouped";
+  export let parentBgIndex: number = 1;
   let textInputRef: any;
   let isColorPickerOpen: boolean = false;
   let colorPickerPopoverRef: any;
+  let dev_isEnableDefaultSelection: boolean = false;
   if (isFocusing) textInputRef?.focus();
   onMount(() => {
     if (isFocusing) textInputRef?.focus();
@@ -34,13 +37,15 @@
 
 <div
   class={cn(
-    "flex relative items-center gap-2 w-full rounded-md px-1 py-1.5 border",
+    "flex relative items-center gap-2 w-full rounded-md px-1 h-10 border",
     {
       "border-brs3": isFocusing,
       "border-transparent": !isFocusing
     }
   )}
   data-index={index}
+  data-id={option.id}
+  data-group-id={groupId}
   draggable={!isColorPickerOpen}
   use:hoverable={{
     onHover: (e) => (isHovering = e)
@@ -106,9 +111,15 @@
       isFocusing = false;
     }}
   />
-  <div class="absolute flex items-center h-full right-0 mr-1">
+  <div
+    class={cn("flex items-center h-full right-0 pr-1 rounded-r-md", {
+      "absolute pl-4": !isFocusing,
+      "bg-gradient-to-l to-bgs1/80 from-bgs1 via-bgs1": parentBgIndex === 1,
+      "bg-gradient-to-l to-bgs2/80 from-bgs2 via-bgs2": parentBgIndex === 2
+    })}
+  >
     {#if isHovering || isFocusing || $context.os === OperatingSystem.IOS}
-      {#if !isFocusing}
+      {#if !isFocusing && dev_isEnableDefaultSelection}
         <Button
           icon={isDefault ? "ph:minus-circle-light" : "ph:circle-dashed-light"}
           size={Size.sm}
@@ -132,7 +143,7 @@
           e.detail?.stopPropagation();
         }}
       />
-    {:else if isDefault}
+    {:else if isDefault && dev_isEnableDefaultSelection}
       <Badge text="default" size={Size.md} />
     {/if}
   </div>

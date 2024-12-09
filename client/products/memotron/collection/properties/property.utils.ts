@@ -1,39 +1,42 @@
 import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
 import type { INodePropertyValue } from "$lib/client/products/memotron/node/node.type";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-import { type IProperty, PropertyType } from "./property.type";
+import {
+  type IProperty,
+  type IPropertyConfig,
+  PropertyType
+} from "./property.type";
 import type { ISelectItem } from "$lib/client/types/select.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 import { enumToString, isValidString } from "$lib/shared/utils/text.utils";
 import type { OmitForCaptureWithId } from "$lib/client/components/flux/resourceStores/resource.type";
 import { propertyOptions } from "./property.store";
+import { AvatarType } from "$lib/client/types/avatar.type";
 
-export function resolvePropertyDefaultValue(property: IProperty) {
-  let fallback;
-  switch (property.type) {
+export function resolvePropertyDefaultValue(type: PropertyType) {
+  switch (type) {
     case PropertyType.TEXT:
-      fallback = "";
-      break;
+      return "";
     case PropertyType.CHECKBOX:
-      fallback = false;
-      break;
+      return false;
     case PropertyType.RATING:
-      fallback = 0;
-      break;
+      return 0;
     case PropertyType.SINGLE_SELECT:
-      // fallback = property?.config?.options?.[0]?.id ?? "";
-      fallback = "none";
-      break;
+    case PropertyType.MULTI_SELECT:
+      return "none";
     case PropertyType.DATE:
-      fallback = new Date();
-      break;
+      return new Date();
     default:
-      fallback = "";
-      break;
+      return "";
   }
-  return property.default ?? fallback;
 }
 
+/**
+ * @deprecated
+ * @param properties
+ * @param nodeProperties
+ * @returns
+ */
 export function mapPropertyValues(
   properties: IProperty[] | undefined,
   nodeProperties: INodePropertyValue[] | undefined
@@ -146,4 +149,30 @@ export function resolvePropertyIcon(property: IProperty) {
     propertyOptions.find((x) => x.value === property.type)?.icon ??
     "ph:circle-dashed-light"
   );
+}
+
+export function resolvePropertyDefaultConfig(
+  type: PropertyType
+): IPropertyConfig {
+  if (type === PropertyType.RATING) {
+    return {
+      ratingAvatar: {
+        type: AvatarType.ICON,
+        code: "&#XF09A",
+        name: "star_outline",
+        frequency: 0,
+        isFilled: false,
+        color: "bg"
+      }
+    };
+  } else if (
+    type === PropertyType.SINGLE_SELECT ||
+    type === PropertyType.MULTI_SELECT
+  ) {
+    return {
+      options: [],
+      groups: []
+    };
+  }
+  return {};
 }

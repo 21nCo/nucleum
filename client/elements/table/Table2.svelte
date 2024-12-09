@@ -37,7 +37,7 @@
     switch (action) {
       case TableCellDefaultAction.REORDER:
         return {
-          key: "ph:dots-six-bold",
+          key: "ph:dots-six",
           type: TableCellType.ACTION
         };
       case TableCellDefaultAction.REMOVE:
@@ -121,7 +121,7 @@
   >
     {#each data as row, i (row.id)}
       <div
-        class="grid gap-8 py-2 text-left outline outline-transparent"
+        class="grid gap-8 py-2 text-left outline outline-transparent rounded-md"
         style="grid-template-columns: {columns
           .map((column) => `${resolveWidth(column)}fr`)
           .join(' ')}"

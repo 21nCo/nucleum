@@ -7,6 +7,7 @@
   import InputBaseElement from "../InputBaseElement.svelte";
   import { isValidHyperlink } from "$lib/shared/utils/utils";
   import Link from "../text/Link.svelte";
+  import Button from "../button/Button.svelte";
   export let value: any;
   export let placeholder: string | undefined = undefined;
   export let label: InputLabel | undefined = undefined;
@@ -230,22 +231,18 @@
         </div>
       {/if} -->
       {#if isShowSaveControl || isShowClearControl}
-        <div
-          class="absolute right-0 top-0 bottom-0 flex gap-2 items-center px-3"
-        >
+        <div class="flex items-center">
           {#if isShowSaveControl}
-            <Icon
+            <Button
               icon="ph:check"
               size={Size.sm}
-              class="stroke-fgs3"
               on:click={() => dispatch("save", { value })}
             />
           {/if}
           {#if isShowSaveControl || isShowClearControl}
-            <Icon
+            <Button
               icon="ph:x"
               size={Size.sm}
-              class="stroke-fgs3"
               on:click={() => dispatch("cancel")}
             />
           {/if}

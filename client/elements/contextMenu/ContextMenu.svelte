@@ -27,8 +27,8 @@
 
 <div
   class={cn("flex flex-col gap-1 p-1", bg(parentBgIndex), {
-    "w-36 text-b3": size === Size.sm,
-    "w-48 text-b2": size === Size.md,
+    "w-48 text-b3": size === Size.sm,
+    "w-52 text-b2": size === Size.md,
     "w-60 text-b2": size === Size.lg
   })}
 >

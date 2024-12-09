@@ -8,6 +8,7 @@
   import type { IRecordId } from "$lib/client/types/data.type";
   import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { Placement } from "$lib/client/types/direction.enum";
 
   const dispatch = createEventDispatcher();
   export let item: any;
@@ -38,5 +39,6 @@
   menuResolver={() => resolveContextMenu(item, accessPoint)}
   size={Size.lg}
   on:action={onAction}
+  position={Placement.BottomCenter}
   isRenderAsSibling={true}
 />

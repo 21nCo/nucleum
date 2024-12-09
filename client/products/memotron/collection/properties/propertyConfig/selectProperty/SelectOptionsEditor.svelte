@@ -1,5 +1,9 @@
 <script lang="ts">
-  import { reorderList } from "$lib/client/actions/rearrange.action";
+  import {
+    reorderList,
+    type DragDropEvent
+  } from "$lib/client/actions/rearrange.action";
+  import { logger } from "$lib/client/components/debug/logger.client";
   import Icon from "$lib/client/elements/Icon.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import Badge from "$lib/client/elements/text/Badge.svelte";
@@ -13,16 +17,17 @@
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import type {
-    PropertyConfig,
-    PropertyConfigOption,
-    PropertyConfigOptionGroup
+    ISelectPropertyConfig,
+    IPropertyConfigOption,
+    IPropertyConfigOptionGroup
   } from "../../property.type";
   import SelectOptionEditListView from "./SelectOptionEditListView.svelte";
   import { createEventDispatcher, onMount } from "svelte";
   const dispatch = createEventDispatcher();
-  export let config: PropertyConfig;
+  export let config: ISelectPropertyConfig;
   export let defaultOptionId: string | null = null;
-  export let onChange: ((config: PropertyConfig) => void) | undefined =
+  export let parentBgIndex: number = 1;
+  export let onChange: ((config: ISelectPropertyConfig) => void) | undefined =
     undefined;
   export let onDefault: ((defaultOptionId: string) => void) | undefined =
     undefined;
@@ -48,22 +53,32 @@
   function onenter(e: CustomEvent<string>) {
     if (!e.detail) return;
     const option = config.options?.find((option) => option.id === e.detail);
+    const index = config.options?.findIndex((option) => option.id === e.detail);
     if (!option) return;
-    if (!option.label && isCreatedUsingGlobalEnterKey) return;
-    error = null;
-    addOption();
+    addGroupOption(option.groupId, index);
   }
   function propagateChange() {
     dispatch("change", config);
     onChange?.(config);
   }
-  function onReorderOptions(
-    e: CustomEvent<{ from: number; to: number; listId: string }>
-  ) {
-    const { from, to, listId } = e.detail;
+  function onReorderOptions(e: DragDropEvent) {
+    const { listId, toGroupId, fromId, toId } = e;
     if (!listId || listId !== "options") return;
-    const [movedItem] = config.options?.splice(from, 1) ?? [];
-    config.options?.splice(to, 0, movedItem);
+    const fromIndex = config.options?.findIndex((o) => o.id === fromId) ?? -1;
+    const toIndex = config.options?.findIndex((o) => o.id === toId) ?? -1;
+    if (fromIndex !== -1 && toIndex !== -1) {
+      const [movedItem] = config.options?.splice(fromIndex, 1) ?? [];
+      if (
+        toGroupId &&
+        toGroupId !== "ungrouped" &&
+        movedItem.groupId !== toGroupId
+      ) {
+        movedItem.groupId = toGroupId;
+      } else if (toGroupId === "ungrouped") {
+        movedItem.groupId = undefined;
+      }
+      config.options?.splice(toIndex, 0, movedItem);
+    }
     config = config;
     propagateChange();
   }
@@ -108,7 +123,7 @@
         groupId = existingGroup.id;
       }
     }
-    const newOption: PropertyConfigOption = {
+    const newOption: IPropertyConfigOption = {
       label: label,
       id: generateSimpleRandomId(),
       groupId
@@ -118,17 +133,27 @@
     newLabel = "";
   }
 
-  function addOptionFromGroup(e: CustomEvent<string>) {
-    let group: PropertyConfigOptionGroup | undefined = undefined;
+  function handleAddOptionFromGroup(e: CustomEvent<string>) {
+    let group: IPropertyConfigOptionGroup | undefined = undefined;
     if (e.detail) {
       group = config.groups?.find((g) => g.id === e.detail);
     }
-    const newOption: PropertyConfigOption = {
+    addGroupOption(group?.id);
+  }
+
+  function addGroupOption(groupId: string | undefined, atIndex?: number) {
+    logger.debug({ at: "addGroupOption", groupId, atIndex });
+    const newOption: IPropertyConfigOption = {
       label: "",
       id: generateSimpleRandomId(),
-      groupId: group?.id
+      groupId
     };
-    config.options = [...(config.options ?? []), newOption];
+    if (atIndex !== undefined) {
+      config.options?.splice(atIndex + 1, 0, newOption);
+    } else {
+      config.options = [...(config.options ?? []), newOption];
+    }
+    config = config;
     focusedOptionId = newOption.id;
     propagateChange();
   }
@@ -197,9 +222,9 @@
     class="flex flex-col gap-6 flex-grow p-3"
     use:reorderList={{
       listId: "options",
-      draggedOverClass: "outline outline-aps1"
+      draggedOverClass: "outline outline-aps1",
+      onDrop: onReorderOptions
     }}
-    on:reorder={onReorderOptions}
   >
     {#key refreshGroupsId}
       {#if config.groups && isValidArrayWithData(config.groups)}
@@ -209,10 +234,11 @@
             {group}
             {focusedOptionId}
             {defaultOptionId}
+            {parentBgIndex}
             on:enter={onenter}
             on:default={ondefault}
             on:remove={onremove}
-            on:add={addOptionFromGroup}
+            on:add={handleAddOptionFromGroup}
             on:group={onGroupAction}
             on:change={() => {
               propagateChange();
@@ -225,11 +251,12 @@
       bind:options={config.options}
       {focusedOptionId}
       {defaultOptionId}
+      {parentBgIndex}
       isPreventDefaultGroupLabel={!config.groups || config.groups.length === 0}
       on:enter={onenter}
       on:default={ondefault}
       on:remove={onremove}
-      on:add={addOptionFromGroup}
+      on:add={handleAddOptionFromGroup}
       on:change={() => {
         propagateChange();
       }}

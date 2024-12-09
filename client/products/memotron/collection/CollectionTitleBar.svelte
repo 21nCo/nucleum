@@ -286,7 +286,7 @@
         <ContextMenuAction
           menuResolver={() =>
             resolveCollectionContextMenu($collection, ResourceAccessPoint.SELF)}
-          position={Placement.Left}
+          position={Placement.BottomCenter}
           id="collectionContextMenu"
           size={Size.lg}
         />
