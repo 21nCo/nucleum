@@ -119,6 +119,7 @@ export enum PropertyType {
 }
 
 export enum UniversalPropertyType {
+  NONE = "none",
   COUNTRY = "country",
   LANGUAGE = "language",
   CURRENCY = "currency",

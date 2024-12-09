@@ -29,7 +29,7 @@
 </script>
 
 {#if property.config?.ratingAvatar}
-  <div class="flex gap-2 w-full h-full items-center">
+  <div class="flex gap-2 px-3 w-full h-full items-center">
     <Popover
       bind:this={ref}
       triggerClass={`flex items-center h-full gap-2 ${$context.os !== OperatingSystem.IOS ? "w-1/5" : ""}`}

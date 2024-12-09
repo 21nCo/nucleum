@@ -444,7 +444,7 @@
 >
   <div class="flex h-12 border-b border-b-brs2 p-2">
     <div
-      class={cn("flex h-full px-2", {
+      class={cn("flex items-center h-full px-2", {
         "flex-1": !isExpanded,
         "w-3/10": isExpanded
       })}

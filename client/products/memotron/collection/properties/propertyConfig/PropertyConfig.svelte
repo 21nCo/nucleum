@@ -5,25 +5,29 @@
   import EndText from "./EndText.svelte";
   import RatingPropertyConfig from "./RatingPropertyConfig.svelte";
   import SelectPropertyConfig from "./selectProperty/SelectPropertyConfig.svelte";
+  import UniversalPropertyConfig from "./universalProperty/UniversalPropertyConfig.svelte";
   export let row: IProperty;
   let dev_isEnableDefaultSelection: boolean = false;
   let isPopoverOpen: boolean = false;
-  let propertyTypesWithOptions = [
+  let propertyTypesWithConfiguration = [
     PropertyType.SINGLE_SELECT,
     PropertyType.MULTI_SELECT,
-    PropertyType.RATING
+    PropertyType.RATING,
+    PropertyType.UNIVERSAL
   ];
 </script>
 
-{#if propertyTypesWithOptions.includes(row.type)}
+{#if propertyTypesWithConfiguration.includes(row.type)}
   <div
-    class={cn("rounded-md w-full border flex items-center px-2", {
+    class={cn("rounded-md w-full border flex items-center", {
       "border-aps1": isPopoverOpen,
       "border-brs3": !isPopoverOpen
     })}
   >
     {#if row.type === PropertyType.SINGLE_SELECT || row.type === PropertyType.MULTI_SELECT}
       <SelectPropertyConfig property={row} bind:isPopoverOpen />
+    {:else if row.type === PropertyType.UNIVERSAL}
+      <UniversalPropertyConfig property={row} bind:isPopoverOpen />
     {:else if row.type === PropertyType.RATING}
       <RatingPropertyConfig property={row} />
     {:else if row.type === PropertyType.CHECKBOX && dev_isEnableDefaultSelection && (typeof row.default === "boolean" || row.default === null || row.default === undefined)}

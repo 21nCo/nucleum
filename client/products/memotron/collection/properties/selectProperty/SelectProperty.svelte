@@ -14,13 +14,13 @@
   import SelectPropertyOptionsPopover from "./SelectPropertyOptionsPopover.svelte";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import type { IRecordId } from "$lib/client/types/data.type";
+  import { resolveUniversalPropertyOptions } from "../property.utils";
   const dispatch = createEventDispatcher();
   export let property: ISelectProperty | IUniversalProperty;
   export let style: InputStyle = InputStyle.FILLED;
   export let label: InputLabel | undefined = undefined;
   export let value: string | string[];
   export let parentBackgroundIndex: number = 0;
-  export let dev_isHideEditOptions: boolean = false;
   let isOptionsVisible: boolean = false;
   let classList = "relative flex flex-col items-start gap-1 w-full";
   let ref: HTMLElement;
@@ -51,8 +51,8 @@
 
   function resolveOptions(property: ISelectProperty | IUniversalProperty) {
     if (property.type === PropertyType.UNIVERSAL) {
-      //TODO: resolve options for universal property
-      return [];
+      if (!property.config) return [];
+      return resolveUniversalPropertyOptions(property.config.type);
     }
     return property.config?.options ?? [];
   }
@@ -95,9 +95,19 @@
     id: "select-options-popover",
     isSpanToTriggerWidth: true,
     componentProps: {
-      property,
+      property: {
+        id: property.id,
+        type: property.type,
+        config:
+          property.type === PropertyType.UNIVERSAL
+            ? {
+                options
+              }
+            : property.config,
+        default: property.default
+      },
+      isMultiSelect,
       value,
-      dev_isHideEditOptions,
       onNewOption,
       onConfigChange,
       onSelect

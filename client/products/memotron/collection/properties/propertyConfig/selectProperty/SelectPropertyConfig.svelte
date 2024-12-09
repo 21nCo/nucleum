@@ -31,7 +31,7 @@
 </script>
 
 {#if property.config}
-  <div class="flex gap-2 w-full h-full items-center">
+  <div class="flex gap-2 px-3 w-full h-full items-center">
     <span
       class={cn("flex items-center h-full gap-2", {
         "w-full justify-between": !dev_isEnableDefaultSelection,

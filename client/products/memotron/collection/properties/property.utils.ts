@@ -4,7 +4,9 @@ import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import {
   type IProperty,
   type IPropertyConfig,
-  PropertyType
+  type IPropertyConfigOption,
+  PropertyType,
+  UniversalPropertyType
 } from "./property.type";
 import type { ISelectItem } from "$lib/client/types/select.type";
 import type { IRecordId } from "$lib/client/types/data.type";
@@ -173,6 +175,92 @@ export function resolvePropertyDefaultConfig(
       options: [],
       groups: []
     };
+  } else if (type === PropertyType.UNIVERSAL) {
+    return {
+      type: UniversalPropertyType.NONE,
+      isMultiSelect: false
+    };
   }
   return {};
+}
+
+export function resolveUniversalPropertyOptions(
+  type: UniversalPropertyType
+): IPropertyConfigOption[] {
+  switch (type) {
+    case UniversalPropertyType.COUNTRY:
+      return resolveCountryOptions();
+    case UniversalPropertyType.LANGUAGE:
+      return resolveLanguageOptions();
+    case UniversalPropertyType.CURRENCY:
+      return resolveCurrencyOptions();
+    case UniversalPropertyType.CONTINENT:
+      return resolveContinentOptions();
+    case UniversalPropertyType.TIMEZONE:
+      return resolveTimezoneOptions();
+    default:
+      return [];
+  }
+
+  function resolveContinentOptions(): IPropertyConfigOption[] {
+    return [
+      {
+        id: "africa",
+        label: "Africa"
+      },
+      {
+        id: "asia",
+        label: "Asia"
+      },
+      {
+        id: "europe",
+        label: "Europe"
+      },
+      {
+        id: "northamerica",
+        label: "North America"
+      },
+      {
+        id: "southamerica",
+        label: "South America"
+      },
+      {
+        id: "oceania",
+        label: "Oceania"
+      }
+    ];
+  }
+
+  function resolveCountryOptions(): IPropertyConfigOption[] {
+    return Object.entries(
+      new Intl.DisplayNames(["en"], { type: "region" }).of
+    ).map(([code, name]) => ({
+      id: code.toLowerCase(),
+      label: name
+    }));
+  }
+
+  function resolveLanguageOptions(): IPropertyConfigOption[] {
+    return Object.entries(
+      new Intl.DisplayNames(["en"], { type: "language" }).of
+    ).map(([code, name]) => ({
+      id: code.toLowerCase(),
+      label: name
+    }));
+  }
+
+  function resolveCurrencyOptions(): IPropertyConfigOption[] {
+    return Intl.supportedValuesOf("currency").map((code) => ({
+      id: code.toLowerCase(),
+      label:
+        new Intl.DisplayNames(["en"], { type: "currency" }).of(code) || code
+    }));
+  }
+
+  function resolveTimezoneOptions(): IPropertyConfigOption[] {
+    return Intl.supportedValuesOf("timeZone").map((zone) => ({
+      id: zone.toLowerCase(),
+      label: zone.replace(/_/g, " ")
+    }));
+  }
 }

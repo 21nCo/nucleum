@@ -170,7 +170,7 @@
       count={5}
       on:change
     />
-  {:else if (property.type === PropertyType.SINGLE_SELECT || property.type === PropertyType.MULTI_SELECT) && property.config?.options}
+  {:else if property.type === PropertyType.SINGLE_SELECT || property.type === PropertyType.MULTI_SELECT || property.type === PropertyType.UNIVERSAL}
     {#if context === "collectionView"}
       <SelectPropertyOption
         item={property.config.options?.find(

@@ -4,29 +4,34 @@
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import {
-    PropertyType,
-    type ISelectProperty,
     type ISelectPropertyConfig,
-    type IPropertyConfigOption
+    type IPropertyConfigOption,
+    PropertyType
   } from "../property.type";
   import SelectOptionsEditor from "../propertyConfig/selectProperty/SelectOptionsEditor.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { logger } from "$lib/client/components/debug/logger.client";
   import SelectPropertyOptionList from "./SelectPropertyOptionList.svelte";
   import type { IRecordId } from "$lib/client/types/data.type";
-  export let property: ISelectProperty;
+  export let property: {
+    id: IRecordId;
+    type:
+      | PropertyType.SINGLE_SELECT
+      | PropertyType.MULTI_SELECT
+      | PropertyType.UNIVERSAL;
+    config: ISelectPropertyConfig;
+    default: any;
+  };
+  export let isMultiSelect: boolean;
   export let value: string | string[];
   export let onSelect: (value: string | string[]) => void;
   export let onNewOption: (option: { id: IRecordId; label: string }) => void;
   export let onConfigChange: (config: any) => void;
-  export let dev_isHideEditOptions: boolean = false;
   let searchInputRef: any;
   let search: string = "";
   let originalConfig: ISelectPropertyConfig | undefined;
   let options: IPropertyConfigOption[] = property.config?.options ?? [];
   let isEditing: boolean = false;
-
-  $: isMultiSelect = property.type === PropertyType.MULTI_SELECT;
 
   $: options =
     property.config?.options?.filter((x) =>
@@ -54,14 +59,19 @@
     onSelect(value);
   }
   function onenter(e: any) {
-    if (options.length === 0 && e.detail) {
-      const newOption = {
-        id: property.id,
-        label: e.detail.value
-      };
-      onNewOption(newOption);
-      search = "";
+    if (
+      property.type === PropertyType.UNIVERSAL ||
+      options.length > 0 ||
+      !e.detail
+    ) {
+      return;
     }
+    const newOption = {
+      id: property.id,
+      label: e.detail.value
+    };
+    onNewOption(newOption);
+    search = "";
   }
   function onSave() {
     propagateConfigChange();
@@ -98,7 +108,9 @@
         bind:value={search}
         on:enter={onenter}
         icon="ph:magnifying-glass"
-        placeholder="Search or type to create new"
+        placeholder={property.type === PropertyType.UNIVERSAL
+          ? "Search options"
+          : "Search or type to create new"}
       />
       <!-- TODO - render config settings in popover -->
     </div>
@@ -132,44 +144,46 @@
       {/key}
     </div>
   {/if}
-  <button
-    class="flex justify-center items-center h-12 min-h-12 bg--bgs2 w-full"
-    on:click={(e) => {
-      e.stopPropagation();
-    }}
-  >
-    {#if isEditing}
-      <div class="flex gap-3 items-center justify-between w-full px-4">
+  {#if property.type !== PropertyType.UNIVERSAL}
+    <button
+      class="flex justify-center items-center h-12 min-h-12 bg--bgs2 w-full"
+      on:click={(e) => {
+        e.stopPropagation();
+      }}
+    >
+      {#if isEditing}
+        <div class="flex gap-3 items-center justify-between w-full px-4">
+          <Button
+            label="Cancel"
+            icon="ph:x"
+            style={ButtonStyle.PLAIN}
+            size={Size.xs}
+            on:click={() => {
+              property.config = originalConfig;
+              isEditing = false;
+            }}
+          />
+          <Button
+            label="Save"
+            icon="ph:check"
+            type={ButtonVariant.PRIMARY}
+            style={ButtonStyle.DEFAULT}
+            size={Size.xs}
+            on:click={onSave}
+          />
+        </div>
+      {:else}
         <Button
-          label="Cancel"
-          icon="ph:x"
+          label="Edit options"
+          isUnderlined={true}
           style={ButtonStyle.PLAIN}
           size={Size.xs}
           on:click={() => {
-            property.config = originalConfig;
-            isEditing = false;
+            originalConfig = deepCopy(property.config);
+            isEditing = true;
           }}
         />
-        <Button
-          label="Save"
-          icon="ph:check"
-          type={ButtonVariant.PRIMARY}
-          style={ButtonStyle.DEFAULT}
-          size={Size.xs}
-          on:click={onSave}
-        />
-      </div>
-    {:else if !dev_isHideEditOptions}
-      <Button
-        label="Edit options"
-        isUnderlined={true}
-        style={ButtonStyle.PLAIN}
-        size={Size.xs}
-        on:click={() => {
-          originalConfig = deepCopy(property.config);
-          isEditing = true;
-        }}
-      />
-    {/if}
-  </button>
+      {/if}
+    </button>
+  {/if}
 </div>
