@@ -8,6 +8,7 @@
   export let isSelectedContext: boolean = false;
   export let isPlain: boolean = false;
   export let isSelected: boolean = false;
+  export let isPreventTagStyle: boolean = false;
 </script>
 
 <button
@@ -18,12 +19,16 @@
   })}
   on:click
 >
-  <CustomColorPropagator
-    color={item?.color}
-    class={cn("px-4 py-0.5 rounded-md w-fit bg-ccs3 whitespace-nowrap")}
-  >
+  {#if isPreventTagStyle}
     {item ? (isValidString(item?.label) ? item?.label : "Untitled") : "None"}
-  </CustomColorPropagator>
+  {:else}
+    <CustomColorPropagator
+      color={item?.color}
+      class={cn("px-4 py-0.5 rounded-md w-fit bg-ccs3 whitespace-nowrap")}
+    >
+      {item ? (isValidString(item?.label) ? item?.label : "Untitled") : "None"}
+    </CustomColorPropagator>
+  {/if}
   {#if isSelected}
     <Icon icon="ph:check" class="text-fgs3" />
   {/if}

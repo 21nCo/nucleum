@@ -121,6 +121,7 @@
             <SelectPropertyOptionList
               groupId={group.id}
               groupLabel={group.label}
+              isPreventTagStyle={property.type === PropertyType.UNIVERSAL}
               {value}
               {options}
               {isMultiSelect}
@@ -132,6 +133,7 @@
           {options}
           {value}
           {isMultiSelect}
+          isPreventTagStyle={property.type === PropertyType.UNIVERSAL}
           isPreventDefaultGroupLabel={!property.config?.groups ||
             property.config?.groups.length === 0}
           on:select={onselect}

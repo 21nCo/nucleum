@@ -131,7 +131,12 @@
           {@const item = options?.find((x) => x.id === option)}
           {#if item}
             <SelectPropertyOption
-              {item}
+              item={property.type === PropertyType.UNIVERSAL
+                ? {
+                    ...item,
+                    color: 50
+                  }
+                : item}
               isSelectedContext={true}
               isPlain={true}
             />
@@ -141,7 +146,15 @@
     {:else if typeof value === "string"}
       {@const item = options?.find((x) => x.id === value)}
       {#if item}
-        <SelectPropertyOption {item} isSelectedContext={true} />
+        <SelectPropertyOption
+          item={property.type === PropertyType.UNIVERSAL
+            ? {
+                ...item,
+                color: 50
+              }
+            : item}
+          isSelectedContext={true}
+        />
       {/if}
     {/if}
     <Icon icon={isOptionsVisible ? "chevup" : "chevdown"} size={Size.sm} />

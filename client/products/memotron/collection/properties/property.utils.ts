@@ -14,6 +14,8 @@ import { enumToString, isValidString } from "$lib/shared/utils/text.utils";
 import type { OmitForCaptureWithId } from "$lib/client/components/flux/resourceStores/resource.type";
 import { propertyOptions } from "./property.store";
 import { AvatarType } from "$lib/client/types/avatar.type";
+import { iso31661CountryCodes } from "./countries";
+import { languages } from "./languages";
 
 export function resolvePropertyDefaultValue(type: PropertyType) {
   switch (type) {
@@ -213,6 +215,14 @@ export function resolveUniversalPropertyOptions(
         label: "Asia"
       },
       {
+        id: "antarctica",
+        label: "Antarctica"
+      },
+      {
+        id: "australia",
+        label: "Australia"
+      },
+      {
         id: "europe",
         label: "Europe"
       },
@@ -223,44 +233,73 @@ export function resolveUniversalPropertyOptions(
       {
         id: "southamerica",
         label: "South America"
-      },
-      {
-        id: "oceania",
-        label: "Oceania"
       }
     ];
   }
 
   function resolveCountryOptions(): IPropertyConfigOption[] {
-    return Object.entries(
-      new Intl.DisplayNames(["en"], { type: "region" }).of
-    ).map(([code, name]) => ({
-      id: code.toLowerCase(),
-      label: name
-    }));
+    const displayNames = new Intl.DisplayNames(["en"], { type: "region" });
+    const countries = iso31661CountryCodes.map((code) => {
+      const flag = code
+        .toUpperCase()
+        .replace(/./g, (char) =>
+          String.fromCodePoint(char.charCodeAt(0) + 127397)
+        );
+      return {
+        id: code.toLowerCase(),
+        label: `${flag} ${displayNames.of(code) || code}`
+      };
+    });
+    return countries;
   }
 
   function resolveLanguageOptions(): IPropertyConfigOption[] {
-    return Object.entries(
-      new Intl.DisplayNames(["en"], { type: "language" }).of
-    ).map(([code, name]) => ({
-      id: code.toLowerCase(),
-      label: name
+    return languages.map((language) => ({
+      id: language.code,
+      label: language.name
     }));
   }
 
   function resolveCurrencyOptions(): IPropertyConfigOption[] {
-    return Intl.supportedValuesOf("currency").map((code) => ({
-      id: code.toLowerCase(),
-      label:
-        new Intl.DisplayNames(["en"], { type: "currency" }).of(code) || code
-    }));
+    return Intl.supportedValuesOf("currency").map((code) => {
+      const symbol = new Intl.NumberFormat("en", {
+        style: "currency",
+        currency: code,
+        currencyDisplay: "symbol"
+      })
+        .format(0)
+        .replace(/[0-9.,]/g, "")
+        .trim();
+
+      return {
+        id: code.toLowerCase(),
+        label: `${symbol} ${new Intl.DisplayNames(["en"], { type: "currency" }).of(code) || code}`
+      };
+    });
   }
 
   function resolveTimezoneOptions(): IPropertyConfigOption[] {
-    return Intl.supportedValuesOf("timeZone").map((zone) => ({
-      id: zone.toLowerCase(),
-      label: zone.replace(/_/g, " ")
-    }));
+    return Intl.supportedValuesOf("timeZone").map((zone) => {
+      const date = new Date();
+
+      const localDate = new Date(
+        date.toLocaleString("en-US", { timeZone: zone })
+      );
+      const utcDate = new Date(
+        date.toLocaleString("en-US", { timeZone: "UTC" })
+      );
+      const diffMinutes =
+        (localDate.getTime() - utcDate.getTime()) / (1000 * 60);
+
+      const hours = Math.floor(Math.abs(diffMinutes) / 60);
+      const minutes = Math.abs(diffMinutes) % 60;
+      const sign = diffMinutes >= 0 ? "+" : "-";
+      const offset = `UTC${sign}${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
+
+      return {
+        id: zone.toLowerCase(),
+        label: `${zone.replace(/_/g, " ")} (${offset})`
+      };
+    });
   }
 }

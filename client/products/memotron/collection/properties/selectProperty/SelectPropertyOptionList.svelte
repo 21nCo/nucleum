@@ -10,6 +10,8 @@
   export let groupId: string | undefined = undefined;
   export let groupLabel: string | undefined = undefined;
   export let isPreventDefaultGroupLabel = false;
+  export let isPreventTagStyle: boolean = false;
+
   $: filtered = resolveItems(groupId);
   function resolveItems(groupId: string | undefined) {
     if (groupId) {
@@ -32,6 +34,7 @@
     {#each filtered as item (item.id)}
       <SelectPropertyOption
         {item}
+        {isPreventTagStyle}
         isSelected={isMultiSelect &&
           isValidArrayWithData(value) &&
           value.includes(item.id)}
