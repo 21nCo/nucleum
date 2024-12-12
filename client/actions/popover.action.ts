@@ -10,6 +10,7 @@ interface TooltipReturn {
 }
 
 interface TooltipParams {
+  disabled?: boolean;
   text?: string;
   classList?: string;
   direction?: Placement;
@@ -32,12 +33,13 @@ export function tooltip(
     classList = "",
     direction = Placement.Bottom,
     offsetInPx = 10,
-    delay = 300
+    delay = 300,
+    disabled = false
   } = params;
   const baseClassList =
     "fixed z-50 px-3 bg-fgs2 text-bgs1 py-1 text-b3 shadow-md rounded-md pointer-events-none opacity-0 transition-opacity duration-200 tooltip";
   function createTooltip(): void {
-    if (!text) return;
+    if (!text || disabled) return;
     tooltipElement = document.createElement("div");
     tooltipElement.textContent = text;
     tooltipElement.className = `${baseClassList} ${classList}`;
@@ -190,8 +192,13 @@ export function tooltip(
         classList = "",
         direction = "top",
         offsetInPx = 10,
-        delay = 300
+        delay = 300,
+        disabled = false
       } = newParams);
+      if (disabled) {
+        removeAllTraces();
+        return;
+      }
       if (tooltipElement) {
         tooltipElement.textContent = text ?? null;
         tooltipElement.className = `${baseClassList} ${classList}`;

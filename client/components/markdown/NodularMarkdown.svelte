@@ -414,6 +414,10 @@
   export function focusBlock(id?: IRecordId) {
     mdRef?.focus(id);
   }
+
+  function onRearrange(event: any) {
+    logger.debug({ at: "onRearrange", event });
+  }
 </script>
 
 {#key refreshId}
@@ -439,5 +443,6 @@
     on:change={onBlockContentChange}
     on:focus={onBlockFocus}
     on:action={onBlockAction}
+    on:rearrange={onRearrange}
   />
 {/key}

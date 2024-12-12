@@ -46,6 +46,7 @@
   let isFocusing: boolean = false;
   let dev_isShowFocusHintOnRight: boolean = false;
   let contentRefreshId: number = new Date().getTime();
+  let isDragging: boolean = false;
   $: isFocusable =
     $mdStore.params?.isNodular && headingNodeTypes.includes(block.contentType);
 
@@ -532,9 +533,14 @@
         // "!border-brs1": isHovering && isFocusing
       }
   )}
-  draggable="false"
+  draggable={!$mdStore.params?.isReadOnly && !isFocusing}
+  data-index={block.id}
+  data-id={block.id}
   data-content={block.contentType}
   data-node={block.id}
+  on:dragstart={() => (isDragging = true)}
+  on:dragend={() => (isDragging = false)}
+  role="listitem"
   use:hoverable={{
     onHover: (e) => {
       isHovering = e;
@@ -552,6 +558,7 @@
         {mdStore}
         {block}
         {isFocusing}
+        isDisableTooltip={isDragging}
         isBlockHovering={isHovering}
         on:nodularize
         on:action={onContextMenuAction}

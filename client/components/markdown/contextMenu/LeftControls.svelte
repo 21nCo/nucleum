@@ -41,6 +41,7 @@
   export let mdStore: MdStoreType;
   export let isFocusing: boolean = false;
   export let isBlockHovering: boolean = false;
+  export let isDisableTooltip: boolean = false;
   let isHovering: boolean = false;
   let isPopoverVisible: boolean = false;
   let contextMenuRef: any;
@@ -393,6 +394,7 @@
   <button
     class="flex w-full h-full items-center justify-center"
     use:tooltip={{
+      disabled: isDisableTooltip,
       text: isNodularizable ? "Click ring to focus" : "More actions",
       direction: Placement.Bottom,
       delay: 500

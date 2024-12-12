@@ -19,6 +19,10 @@
   import { KeyboardKey } from "$lib/client/types/keyboard.type";
   import type { IRecordId } from "$lib/client/types/data.type";
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  import {
+    reorderList,
+    type DragDropEvent
+  } from "$lib/client/actions/rearrange.action";
 
   /**
    * Propagates the event to the parent component.
@@ -82,6 +86,19 @@
       mdStore.focus.set({ id: md.blocks[0].id });
     }
   }
+
+  function onReorderBlocks(event: DragDropEvent) {
+    console.log("onReorderBlocks", event);
+    if (
+      !event ||
+      event.listId !== "markdown" ||
+      !event.fromId ||
+      !event.toId ||
+      event.fromId === event.toId
+    )
+      return;
+    dispatch("rearrange", { fromId: event.fromId, toId: event.toId });
+  }
 </script>
 
 <button
@@ -127,7 +144,15 @@
       {/if}
     </div>
   </div>
-  <div id="mdContent" class="grow w-full">
+  <div
+    id="mdContent"
+    class="grow w-full"
+    use:reorderList={{
+      listId: "markdown",
+      draggedOverClass: "!border-aps1",
+      onDrop: onReorderBlocks
+    }}
+  >
     {#if isValidAndUniqueArray($mdStore.blocks)}
       {#each $mdStore.blocks as block (block.id)}
         <Block
