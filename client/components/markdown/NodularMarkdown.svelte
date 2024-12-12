@@ -416,7 +416,8 @@
   }
 
   function onRearrange(event: any) {
-    logger.debug({ at: "onRearrange", event });
+    if (!event.detail.md) return;
+    onBlockStructuralChanges(event);
   }
 </script>
 

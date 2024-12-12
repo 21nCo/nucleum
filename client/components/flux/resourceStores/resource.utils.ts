@@ -94,3 +94,16 @@ export function isRecordId(id: any, resource?: Resource) {
     (typeof id === "object" && "tb" in id)
   );
 }
+
+export function shiftResourceInArray(
+  array: any[],
+  fromId: string,
+  toId: string
+) {
+  const fromIndex = array.findIndex(resourceInList(fromId));
+  const toIndex = array.findIndex(resourceInList(toId));
+  if (fromIndex === -1 || toIndex === -1) return array;
+  const newArray = [...array];
+  newArray.splice(toIndex, 0, newArray.splice(fromIndex, 1)[0]);
+  return newArray;
+}

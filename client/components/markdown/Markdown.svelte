@@ -23,6 +23,7 @@
     reorderList,
     type DragDropEvent
   } from "$lib/client/actions/rearrange.action";
+  import { shiftResourceInArray } from "../flux/resourceStores/resource.utils";
 
   /**
    * Propagates the event to the parent component.
@@ -88,7 +89,6 @@
   }
 
   function onReorderBlocks(event: DragDropEvent) {
-    console.log("onReorderBlocks", event);
     if (
       !event ||
       event.listId !== "markdown" ||
@@ -97,7 +97,16 @@
       event.fromId === event.toId
     )
       return;
-    dispatch("rearrange", { fromId: event.fromId, toId: event.toId });
+
+    $mdStore.blocks = shiftResourceInArray(
+      $mdStore.blocks,
+      event.fromId,
+      event.toId
+    );
+
+    dispatch("rearrange", {
+      md: { ...md, blocks: $mdStore.blocks }
+    });
   }
 </script>
 
