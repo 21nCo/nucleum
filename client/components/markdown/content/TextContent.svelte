@@ -28,6 +28,7 @@
 
   const nodeContentContext = getContext<any>("content");
   const blockContext = getContext<any>("block");
+  const nodeContext = getContext<any>("node");
 
   function propagateToNodeContent(event: string, data: any) {
     if (!nodeContentContext) {
@@ -685,7 +686,9 @@
   }
   function onMentionSearch(searchQuery: string) {
     mentionSearchQuery = searchQuery;
-    return new SearchStore().searchForLinking(searchQuery);
+    return new SearchStore().searchForLinking(searchQuery, {
+      exclude: [nodeContext?.id]
+    });
   }
 
   function onMentionSelect(event: CustomEvent) {

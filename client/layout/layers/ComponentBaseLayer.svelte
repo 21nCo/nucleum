@@ -68,6 +68,7 @@
     const data = e.detail;
     const mutation = data.params;
     if (!data || !mutation || !subscribeTo.has(data.resource)) return;
+    // console.log({ at: "onMutation", data, mutation });
     if (
       subscribeToResource &&
       mutation?.action === PersistenceActionType.MERGE &&

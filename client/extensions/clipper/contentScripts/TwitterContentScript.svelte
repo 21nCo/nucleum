@@ -32,11 +32,13 @@
     const tweetResult = await webpage.saveTweet(tweetNode);
     if (mainTweetId && tweetResult) {
       const tweetReplyLinkTagId = await linkTagStore.save("reply", "tweet");
-      await linker.link(tweetResult.id, mainTweetId, undefined, {
-        tags:
-          !Array.isArray(tweetReplyLinkTagId) && tweetReplyLinkTagId?.id
-            ? [tweetReplyLinkTagId?.id]
-            : []
+      await linker.link(tweetResult.id, mainTweetId, {
+        content: {
+          tags:
+            !Array.isArray(tweetReplyLinkTagId) && tweetReplyLinkTagId?.id
+              ? [tweetReplyLinkTagId?.id]
+              : []
+        }
       });
     }
     isSaved = true;

@@ -15,6 +15,8 @@ import { linkTagLabelMapper } from "./link.utils";
 import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import type { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+import { ResourceError } from "$lib/client/components/error/errors";
+import { ResourceErrorCode } from "$lib/client/components/error/error.type";
 
 class Linker extends ResourceStore<INodeLink> {
   constructor() {
@@ -24,15 +26,38 @@ class Linker extends ResourceStore<INodeLink> {
   async link(
     from: IRecordId,
     to: IRecordId,
-    linkType: LinkType = LinkType.DIRECT,
-    content?: any
+    params?: {
+      linkType?: LinkType;
+      content?: any;
+      context?: string;
+    }
   ) {
-    const response = await this.create({
-      in: from,
-      out: to,
-      linkType: linkType,
-      ...(content ?? {})
-    });
+    if (params?.linkType !== LinkType.MENTION) {
+      const existing = await this.selectMany({
+        filters: {
+          in: from.toString(),
+          out: to.toString(),
+          linkType: params?.linkType ?? LinkType.DIRECT
+        }
+      });
+      if (isValidArrayWithData(existing)) {
+        throw new ResourceError(
+          "Link already exists",
+          ResourceErrorCode.ALREADY_EXISTS
+        );
+      }
+    }
+    const response = await this.create(
+      {
+        in: from,
+        out: to,
+        linkType: params?.linkType ?? LinkType.DIRECT,
+        ...(params?.content ?? {})
+      },
+      {
+        context: params?.context
+      }
+    );
     logger.log({ at: "link", response });
     return response;
   }
@@ -43,6 +68,7 @@ class Linker extends ResourceStore<INodeLink> {
     params?: {
       linkType?: LinkType;
       isIncludeReverseDirection?: boolean;
+      context?: string;
     }
   ) {
     logger.log({ at: "unlink", from, to });
@@ -66,7 +92,9 @@ class Linker extends ResourceStore<INodeLink> {
     const allIds = [...(links ?? []), ...(reverseDirectionLinks ?? [])].map(
       (x) => x.id
     );
-    const response = await this.deleteMany(allIds);
+    const response = await this.deleteMany(allIds, {
+      context: params?.context
+    });
     logger.log({ at: "unlink", allIds, response });
     return !response?.error;
   }

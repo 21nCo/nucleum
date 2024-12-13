@@ -63,6 +63,8 @@ import {
   isSameResource,
   resourceInList
 } from "$lib/client/components/flux/resourceStores/resource.utils";
+import { ResourceError } from "$lib/client/components/error/errors";
+import { ResourceErrorCode } from "$lib/client/components/error/error.type";
 
 class WebpageStore extends ObservableStore<IWebpageStore> {
   previousValue: string = "";
@@ -389,18 +391,29 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
   }
 
   async linkPage(to: string) {
-    const webpage = this.get();
-    const isAlreadyLinked = webpage.links?.some((l) => l === to);
-    if (isAlreadyLinked)
-      return { message: "Already linked", type: AlertType.ERROR };
-    if (!webpage.id) return;
-    const response = await linker.link(webpage.id, to);
-    if (!response) return { message: "Linking failed", type: AlertType.ERROR };
-    this.update((n) => {
-      n.links = [...(n.links ?? []), to];
-      return n;
-    });
-    return { message: "Linked!", type: AlertType.SUCCESS };
+    try {
+      const webpage = this.get();
+      const isAlreadyLinked = webpage.links?.some((l) => l === to);
+      if (isAlreadyLinked)
+        return { message: "Already linked", type: AlertType.ERROR };
+      if (!webpage.id) return;
+      const response = await linker.link(webpage.id, to);
+      if (!response)
+        return { message: "Linking failed", type: AlertType.ERROR };
+      this.update((n) => {
+        n.links = [...(n.links ?? []), to];
+        return n;
+      });
+      return { message: "Linked!", type: AlertType.SUCCESS };
+    } catch (e) {
+      logger.error(e);
+      if (e instanceof ResourceError) {
+        if (e.code === ResourceErrorCode.ALREADY_EXISTS) {
+          return { message: "Already linked", type: AlertType.ERROR };
+        }
+      }
+      return { message: "Linking failed", type: AlertType.ERROR };
+    }
   }
 
   async removeLinkForPage(to: string) {

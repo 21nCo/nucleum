@@ -49,6 +49,8 @@ import CollectionTitleLabelPart from "./collection/title/CollectionTitleLabelPar
 import { Embed } from "$lib/client/types/context.type";
 import { SearchStore } from "./memotron.store";
 import type { IRecordId } from "$lib/client/types/data.type";
+import { ResourceError } from "$lib/client/components/error/errors";
+import { ResourceErrorCode } from "$lib/client/components/error/error.type";
 
 export const memotronActions: IAction[] = [
   {
@@ -342,23 +344,38 @@ export const memotronActions: IAction[] = [
       placeholder: "select a node",
       searchResultComponent: LinkSearchResultItem,
       callback: async (id: string, label?: string, componentParams?: any) => {
-        if (!componentParams?.id) {
-          toasts.error("Something went wrong. Please try again later.");
-          return;
+        try {
+          if (!componentParams?.id) {
+            toasts.error();
+            return;
+          }
+          const result = await linker.link(id, componentParams.id, {
+            context: componentParams.id.toString()
+          });
+          logger.log({
+            at: "addNodeToCollection",
+            id,
+            label,
+            componentParams,
+            result
+          });
+          if (!result) {
+            toasts.error();
+            return;
+          }
+          toasts.success(`**${label}** added to collection`);
+        } catch (e) {
+          logger.error(e);
+          if (e instanceof ResourceError) {
+            if (e.code === ResourceErrorCode.ALREADY_EXISTS) {
+              toasts.error("Already added to collection");
+            } else {
+              toasts.error();
+            }
+          } else {
+            toasts.error();
+          }
         }
-        const result = await linker.link(id, componentParams.id);
-        logger.log({
-          at: "addNodeToCollection",
-          id,
-          label,
-          componentParams,
-          result
-        });
-        if (!result) {
-          toasts.error("Something went wrong. Please try again later.");
-          return;
-        }
-        toasts.success(`**${label}** added to collection`);
       }
     }
   },

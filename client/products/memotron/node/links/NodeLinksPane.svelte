@@ -44,6 +44,11 @@
   import { BulkEditor } from "../../memotron.store";
   import { toasts } from "$lib/client/stores/notification.store";
   import { deepCopy, isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+  import {
+    ErrorMessage,
+    ResourceErrorCode
+  } from "$lib/client/components/error/error.type";
+  import { ResourceError } from "$lib/client/components/error/errors";
   export let node: IActiveNodeStore;
   $: multiSelectContext = {
     resource: Resource.node,
@@ -87,56 +92,68 @@
   });
 
   async function onSelect(e: CustomEvent<any>) {
-    console.log("onselect", e.detail);
-    linkStatus = {
-      message: "Linking...",
-      type: AlertType.INFO
-    };
-    if (!e.detail?.item?.id) {
-      linkStatus.message = "Something went wrong. Please try again later.";
-      linkStatus.type = AlertType.ERROR;
-      return;
-    }
-    if (filtered.some((x) => isSameResource(x.node, e.detail.item))) {
-      linkStatus.message = "Link already exists.";
-      linkStatus.type = AlertType.ERROR;
-      return;
-    }
-    const result = await linker.link(
-      $node.focusedBlock ?? node.id,
-      e.detail.item.id
-    );
+    try {
+      linkStatus = {
+        message: "Linking...",
+        type: AlertType.INFO
+      };
+      if (!e.detail?.item?.id) {
+        linkStatus.message = ErrorMessage.DEFAULT;
+        linkStatus.type = AlertType.ERROR;
+        return;
+      }
+      if (filtered.some((x) => isSameResource(x.node, e.detail.item))) {
+        linkStatus.message = "Link already exists.";
+        linkStatus.type = AlertType.ERROR;
+        return;
+      }
+      const result = await linker.link(
+        $node.focusedBlock ?? node.id,
+        e.detail.item.id
+      );
 
-    const addedLink = await flux.select(e.detail.item.id);
-    if (!result || !addedLink) {
-      linkStatus.message = "Something went wrong. Please try again later.";
-      linkStatus.type = AlertType.ERROR;
-      return;
+      const addedLink = await flux.select(e.detail.item.id);
+      if (!result || !addedLink) {
+        linkStatus.message = ErrorMessage.DEFAULT;
+        linkStatus.type = AlertType.ERROR;
+        return;
+      }
+      linkStatus.message = "Link added successfully.";
+      linkStatus.type = AlertType.SUCCESS;
+      const link: INodeLinkThumb = {
+        linkedTo: e.detail.item.id,
+        linkType: LinkType.DIRECT,
+        id: result[0]?.id ?? ""
+      };
+      _links = [...(_links ?? []), link];
+      $node.links = [...($node.links ?? []), link];
+      all = [
+        ...(all ?? []),
+        {
+          node: addedLink,
+          link
+        }
+      ];
+      filtered = [
+        ...(filtered ?? []),
+        {
+          node: addedLink,
+          link
+        }
+      ];
+      searchQuery = "";
+    } catch (e) {
+      logger.error(e);
+      if (e instanceof ResourceError) {
+        if (e.code === ResourceErrorCode.ALREADY_EXISTS) {
+          toasts.error("Link already exists");
+        } else {
+          toasts.error();
+        }
+      } else {
+        toasts.error();
+      }
     }
-    linkStatus.message = "Link added successfully.";
-    linkStatus.type = AlertType.SUCCESS;
-    const link: INodeLinkThumb = {
-      linkedTo: e.detail.item.id,
-      linkType: LinkType.DIRECT,
-      id: result[0]?.id ?? ""
-    };
-    _links.push(link);
-    $node.links = [...($node.links ?? []), link];
-    all = [
-      ...(all ?? []),
-      {
-        node: addedLink,
-        link
-      }
-    ];
-    filtered = [
-      ...(filtered ?? []),
-      {
-        node: addedLink,
-        link
-      }
-    ];
-    searchQuery = "";
   }
 
   async function refresh() {
@@ -241,6 +258,7 @@
       $node.links = $node.links?.filter(
         (x) => !isSameResource(x.linkedTo, e.detail.id)
       );
+      _links = _links.filter((x) => !isSameResource(x.linkedTo, e.detail.id));
     }
   }
 
@@ -276,7 +294,12 @@
 
 <div class="relative flex flex-col gap-3 pt-1 flex-grow w-full">
   <div class="flex flex-col w-full">
-    <LinkSearch context="nodelinkspane" on:select={onSelect} bind:searchQuery />
+    <LinkSearch
+      context="nodelinkspane"
+      on:select={onSelect}
+      bind:searchQuery
+      excludeFromSearch={_links.map((x) => x.linkedTo).concat(node.id)}
+    />
     {#if linkStatus.message}
       <div>
         <InlineTimeoutMessage

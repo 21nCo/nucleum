@@ -418,9 +418,12 @@ export class ActiveNodeStore extends ActiveResourceStore<
     id: string,
     params?: { tags?: IRecordId[] }
   ) => {
-    const result = await linker.link(this.id, id, LinkType.MENTION, {
-      location,
-      tags: params?.tags
+    const result = await linker.link(this.id, id, {
+      linkType: LinkType.MENTION,
+      content: {
+        location,
+        tags: params?.tags
+      }
     });
     if (!result) return;
     this.update((n) => ({

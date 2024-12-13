@@ -788,5 +788,6 @@
   hasDragAndDrop={true}
   on:syncDown={() => refresh()}
   subscribeTo={new Set([Resource.link])}
+  subscribeToContext={new Set([id.toString()])}
   on:change={() => refresh()}
 />

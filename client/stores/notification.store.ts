@@ -16,6 +16,7 @@ import { ObservableStore } from "./client.store";
 import { Action } from "../types/action.enum";
 import { logger } from "../components/debug/logger.client";
 import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+import { ErrorMessage } from "../components/error/error.type";
 
 export const toastDefaultDuration = 3500;
 class AppEventStore extends ObservableStore<IEvent> {
@@ -146,7 +147,7 @@ function initToastStore() {
       return id;
     },
     error: (
-      message: string,
+      message?: string | ErrorMessage,
       params?: {
         title?: string;
         closeProgressId?: string;
@@ -154,6 +155,9 @@ function initToastStore() {
     ) => {
       if (params?.closeProgressId) {
         closeProgress(params.closeProgressId);
+      }
+      if (!message) {
+        message = ErrorMessage.DEFAULT;
       }
       const id = generateSimpleRandomId();
       trigger({ title: params?.title, message, type: AlertType.ERROR, id });

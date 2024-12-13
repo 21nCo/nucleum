@@ -26,6 +26,7 @@ import { appStore } from "$lib/client/stores/app.store";
 import { MemotronAction } from "./memotronAction.enum";
 import { linker } from "./linking/link.store";
 import { highlightSearchQuery, searchSort } from "./memotron.utils";
+import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
 
 export const MAX_FILE_SIZE_MB = 30;
 
@@ -254,7 +255,11 @@ export class SearchStore {
    */
   async searchForLinking(
     query: string,
-    params?: { resource?: Resource; subType?: NodeType | CollectionType }
+    params?: {
+      resource?: Resource;
+      subType?: NodeType | CollectionType;
+      exclude?: IRecordId[];
+    }
   ) {
     let nodes = [];
     if (params?.resource === Resource.node || !params?.resource) {
@@ -298,6 +303,9 @@ export class SearchStore {
     if (isValidString(query) && isValidArray(data)) {
       if (!this.dev_isUseIndexSearch) data = highlightSearchQuery(data, query);
       data = data.sort(searchSort);
+    }
+    if (params?.exclude) {
+      data = data.filter((x) => !params.exclude.some(resourceInList(x.id)));
     }
     return data;
   }

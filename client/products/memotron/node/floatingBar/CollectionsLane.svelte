@@ -15,6 +15,9 @@
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { popover, tooltip } from "$lib/client/actions/popover.action";
   import { headingNodeTypes, NodeType } from "../node.type";
+  import { logger } from "$lib/client/components/debug/logger.client";
+  import { ResourceError } from "$lib/client/components/error/errors";
+  import { ResourceErrorCode } from "$lib/client/components/error/error.type";
 
   export let node: IActiveNodeStore;
   export let isReadOnlyMode: boolean = false;
@@ -24,20 +27,33 @@
     await node.unlinkCollection(e.detail);
   }
   async function onSelect(item: any) {
-    hidePopover();
-    const id = item.id;
-    if (!id) {
-      toasts.error("Something went wrong. Please try again later.");
-      return;
-    }
-    if ($node.collections?.some(resourceInList(id))) {
-      toasts.error("Collection already exists.");
-      return;
-    }
-    const result = await node.linkCollection(id);
-    if (!result) {
-      toasts.error("Something went wrong. Please try again later.");
-      return;
+    try {
+      hidePopover();
+      const id = item.id;
+      if (!id) {
+        toasts.error();
+        return;
+      }
+      if ($node.collections?.some(resourceInList(id))) {
+        toasts.error("Collection already exists.");
+        return;
+      }
+      const result = await node.linkCollection(id);
+      if (!result) {
+        toasts.error();
+        return;
+      }
+    } catch (e) {
+      logger.error(e);
+      if (e instanceof ResourceError) {
+        if (e.code === ResourceErrorCode.ALREADY_EXISTS) {
+          toasts.error("Collection already exists.");
+        } else {
+          toasts.error();
+        }
+      } else {
+        toasts.error();
+      }
     }
   }
 

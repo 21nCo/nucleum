@@ -453,7 +453,7 @@ export class ResourceStore<T extends IResource> implements IStore {
    * @param id
    * @returns
    */
-  delete(id: IRecordId) {
+  delete(id: IRecordId, additionalParams?: IResourceMutationParams) {
     if (this.isExtensionEnvironment) {
       return extensionFlux({
         method: FluxMethod.MUTATION,
@@ -466,13 +466,19 @@ export class ResourceStore<T extends IResource> implements IStore {
         }
       });
     }
-    return flux.mutation(this.id, {
-      action: PersistenceActionType.DELETE,
-      recordId: id
-    });
+    return flux.mutation(
+      this.id,
+      {
+        action: PersistenceActionType.DELETE,
+        recordId: id
+      },
+      {
+        ...additionalParams
+      }
+    );
   }
 
-  deleteMany(ids: IRecordId[]) {
+  deleteMany(ids: IRecordId[], additionalParams?: IResourceMutationParams) {
     if (this.isExtensionEnvironment) {
       return extensionFlux({
         method: FluxMethod.MUTATION,
@@ -482,10 +488,16 @@ export class ResourceStore<T extends IResource> implements IStore {
         }
       });
     }
-    return flux.mutation(this.id, {
-      action: PersistenceActionType.BULK_DELETE,
-      recordIds: ids
-    });
+    return flux.mutation(
+      this.id,
+      {
+        action: PersistenceActionType.BULK_DELETE,
+        recordIds: ids
+      },
+      {
+        ...additionalParams
+      }
+    );
   }
 
   get() {}

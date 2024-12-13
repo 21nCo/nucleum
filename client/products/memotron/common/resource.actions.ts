@@ -303,7 +303,8 @@ export class ResourceActions<T extends IMemotronItemBase> {
       callback: async () => {
         await linker.unlink(this.resource.id, contextId, {
           linkType: LinkType.DIRECT,
-          isIncludeReverseDirection: !isCollection
+          isIncludeReverseDirection: !isCollection,
+          context: contextId.toString()
         });
       }
     };

@@ -19,6 +19,7 @@
   } from "../../collection/collection.type";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { toasts } from "$lib/client/stores/notification.store";
+  import type { IRecordId } from "$lib/client/types/data.type";
   const dispatch = createEventDispatcher();
   export let context:
     | "capture"
@@ -29,6 +30,7 @@
   export let searchQuery: string;
   export let onSelectCallback: ((item: any) => void) | undefined = undefined;
   export let onHideCallback: (() => void) | undefined = undefined;
+  export let excludeFromSearch: IRecordId[] = [];
   let popoverOptions: IPopoverOptions;
   let inputStyle: InputStyle = InputStyle.PLAIN;
   let placeholder: string =
@@ -107,7 +109,10 @@
     if (isExtensionEnvironment()) {
       return new SearchStore().searchForLinkingOnExtension(query, resource);
     }
-    return new SearchStore().searchForLinking(query, { resource });
+    return new SearchStore().searchForLinking(query, {
+      resource,
+      exclude: excludeFromSearch
+    });
   }
 
   function onSelect(e: CustomEvent) {
