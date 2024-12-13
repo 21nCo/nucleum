@@ -89,6 +89,7 @@
   }
 
   function onReorderBlocks(event: DragDropEvent) {
+    logger.log({ event, at: "Markdown.svelte onReorderBlocks" });
     if (
       !event ||
       event.listId !== "markdown" ||
@@ -101,7 +102,8 @@
     $mdStore.blocks = shiftResourceInArray(
       $mdStore.blocks,
       event.fromId,
-      event.toId
+      event.toId,
+      true
     );
 
     dispatch("rearrange", {
@@ -158,7 +160,7 @@
     class="grow w-full"
     use:reorderList={{
       listId: "markdown",
-      draggedOverClass: "!border-aps1",
+      draggedOverClass: "!border-b-aps1 !rounded-none",
       onDrop: onReorderBlocks
     }}
   >

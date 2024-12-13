@@ -121,6 +121,7 @@ export type IBlockOperationContext = {
 export enum BlockAction {
   CONVERT = "convert",
   INSERT = "insert",
+  INSERT_MANY = "insert_many",
   MENTION = "mention",
   DELETE = "delete",
   MOVEUP = "moveup",
@@ -153,7 +154,8 @@ export enum BlockAction {
   /**
    * Triggered when backspace is pressed with content in the block and at the start of the block
    */
-  BACKSPACE_WITH_CONTENT = "BACKSPACE_WITH_CONTENT"
+  BACKSPACE_WITH_CONTENT = "BACKSPACE_WITH_CONTENT",
+  PASTE = "paste"
 }
 
 export type IMarkdownSettings = IObservableStoreSubject & {

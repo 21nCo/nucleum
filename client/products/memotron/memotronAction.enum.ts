@@ -4,6 +4,7 @@ export enum MemotronAction {
    * Capture drag and drop listener of files from outside the app.
    */
   CAPTURE_DND = "capture-dnd",
+  CAPTURE_SECONDARY = "capture2",
   JOURNAL_MODAL_VIEWER = "journal-modal-viewer",
   SERENDIPITY = "serendipity",
   PUBLISH = "publish",

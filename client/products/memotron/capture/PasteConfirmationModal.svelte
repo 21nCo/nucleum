@@ -122,9 +122,30 @@
   }
 
   function onInsertIntoMarkdown() {
+    let data: any = {};
+    if (text) {
+      data = {
+        text
+      };
+    } else if (file) {
+      data = {
+        file
+      };
+    } else if (multipleFilesData) {
+      data = {
+        files: multipleFilesData.files
+      };
+    }
+    $captureStore.clipboard = {
+      ...data,
+      contentType: nodeType
+    };
     modalEvent.hide(MemotronAction.PASTE_CONFIRMATION);
-    appStore.toggleSearchParam({ clipboard: true });
-    appStore.runAction(MemotronAction.CAPTURE);
+    appStore.runAction(MemotronAction.CAPTURE, {
+      searchParams: {
+        clipboard: true
+      }
+    });
   }
 
   function resolveInsertIntoMdLabel() {
@@ -203,9 +224,6 @@
       {/if}
       <Button
         label={resolveInsertIntoMdLabel()}
-        badge="soon"
-        tooltip="Coming soon"
-        isDisabled={true}
         icon="ph:markdown-logo-light"
         on:click={onInsertIntoMarkdown}
         isExpandToFullWidth={true}

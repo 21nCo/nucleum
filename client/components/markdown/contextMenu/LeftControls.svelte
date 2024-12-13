@@ -394,8 +394,10 @@
   <button
     class="flex w-full h-full items-center justify-center"
     use:tooltip={{
-      disabled: isDisableTooltip,
-      text: isNodularizable ? "Click ring to focus" : "More actions",
+      disabled: isDisableTooltip || isPopoverVisible,
+      text: isNodularizable
+        ? "Click ring to focus"
+        : "Drag to rearrange / Click for options",
       direction: Placement.Bottom,
       delay: 500
     }}

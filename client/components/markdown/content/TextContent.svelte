@@ -617,56 +617,6 @@
     }
   }
 
-  async function handlePaste(event: ClipboardEvent) {
-    const items = event?.clipboardData?.items;
-    if (!items) return;
-    for (let i = 0; i < items.length; i++) {
-      if (items[i].type.indexOf("text") === 0) {
-        //TODO - Handle text paste
-      } else if (items[i].type.indexOf("image") === 0) {
-        const blob = items[i].getAsFile();
-        if (!blob) return;
-        let image;
-        let reader = new FileReader();
-        reader.onload = async (e) => {
-          // console.log(
-          //   "length: ",
-          //   e.target?.result?.includes("data:image/jpeg")
-          // );
-          // if (!e.target.result.includes("data:image/jpeg")) {
-          //   return alert("Wrong file type - JPG only.");
-          // }
-          // if (e.target.result.length > MAX_IMAGE_SIZE) {
-          //   return alert("Image is loo large.");
-          // }
-          image = e.target?.result;
-          await uploadImage(image);
-        };
-        reader.readAsDataURL(blob);
-        event.preventDefault();
-      }
-    }
-  }
-  async function uploadImage(image: any) {
-    const signedUrl =
-      "https://testtidyuserbucketthree.s3.ap-south-2.amazonaws.com/xyz/image/3ce5fefd-81a9-4238-9560-83755202c0e7_sample.jpeg?Content-Type=image%2Fjpeg&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAXLCVEUWSBWDSDV6G%2F20240116%2Fap-south-2%2Fs3%2Faws4_request&X-Amz-Date=20240116T160522Z&X-Amz-Expires=3000&X-Amz-Signature=ba01b9a17f36c821cf15a18034d554528245c1158ca4b1a9064c5129ef97f8f4&X-Amz-SignedHeaders=host%3Bx-amz-acl&x-amz-acl=public-read";
-    if (!image) return;
-    let binary = atob(image.split(",")[1]);
-    let array = [];
-    for (var j = 0; j < binary.length; j++) {
-      array.push(binary.charCodeAt(j));
-    }
-    let blobData = new Blob([new Uint8Array(array)], {
-      type: "image/jpeg"
-    });
-    const result = await fetch(signedUrl, {
-      method: "PUT",
-      body: blobData
-    });
-    if (result.status === 200) {
-      text = text + `<img src="${signedUrl}"/>`;
-    }
-  }
   function assignPlaceholder() {
     placeholder = blockSpecificPlaceholder ?? resolveDefaultPlaceholder();
 
@@ -767,6 +717,10 @@
     isFocusing = false;
     refreshPlaceholder();
   }
+
+  function handlePaste(event: ClipboardEvent) {
+    relay(BlockAction.PASTE, event);
+  }
 </script>
 
 {#if !text && !$mdStore.params?.isReadOnly}
@@ -828,6 +782,7 @@
           on:change={dispatchChangeEvent}
           on:focus={onFocus}
           on:blur={onBlur}
+          on:paste={handlePaste}
           bind:placeholder
         />
       </div>

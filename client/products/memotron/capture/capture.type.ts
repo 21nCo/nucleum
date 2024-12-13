@@ -49,6 +49,10 @@ export type ICaptureStore = IObservableStoreSubject & {
    * Used in context of markdown capture - to save embeded content with a creation Context
    */
   nodeId?: IRecordId;
+  /**
+   * Used in context of `Insert into markdown` from global paste and global drag and drop upload
+   */
+  clipboard?: any;
 };
 
 type ICaptureLink = {
