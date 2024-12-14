@@ -74,12 +74,13 @@ export async function syncUp(body: ISyncUpBody, agent: Agent) {
     const fetchBackQuery = resolveSyncDownQuery(lastSyncDown, resources, dapId);
     let response;
     if (
+      mutations.length < 20 &&
       mutations.every(
         (mutation: any) =>
           !mutation.resourceId ||
           typeof mutation.resourceId === "string" ||
           (Array.isArray(mutation.resourceId) &&
-            mutation.resourceId.length < 50)
+            mutation.resourceId.length < 20)
       )
     ) {
       const insertMutationsQuery = `INSERT INTO mutation ${JSON.stringify(
@@ -94,22 +95,27 @@ export async function syncUp(body: ISyncUpBody, agent: Agent) {
       console.log({ at: "sync - large mutations found" });
       let mutationResponses = [];
       for (const mutation of mutations) {
-        const insertMutationQuery = `INSERT INTO mutation [${JSON.stringify(
-          mutation
-        )}];`;
-        const mutationInsertResponse = await performQueryOnBehalfOfUser(
-          insertMutationQuery,
-          agent
-        );
-        const mutationQuery = resolveMutationQueryV2(mutation);
-        const individualMutationResponse = await performQueryOnBehalfOfUser(
-          mutationQuery,
-          agent
-        );
-        if (Array.isArray(individualMutationResponse)) {
-          mutationResponses.push(...individualMutationResponse);
-        } else {
-          mutationResponses.push(individualMutationResponse);
+        try {
+          const insertMutationQuery = `INSERT INTO mutation [${JSON.stringify(
+            mutation
+          )}];`;
+          const mutationInsertResponse = await performQueryOnBehalfOfUser(
+            insertMutationQuery,
+            agent
+          );
+          const mutationQuery = resolveMutationQueryV2(mutation);
+          const individualMutationResponse = await performQueryOnBehalfOfUser(
+            mutationQuery,
+            agent
+          );
+          if (Array.isArray(individualMutationResponse)) {
+            mutationResponses.push(...individualMutationResponse);
+          } else {
+            mutationResponses.push(individualMutationResponse);
+          }
+        } catch (e) {
+          console.error({ at: "syncUp - error", error: e });
+          mutationResponses.push({ error: "Sync failed" });
         }
       }
       const fetchBackResponse = await performQueryOnBehalfOfUser(

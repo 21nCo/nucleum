@@ -93,7 +93,15 @@ async function performRootQuery(params: DatabaseQueryParams) {
     });
     // const json = await response.text();
     // console.log({ json });
-    const json = await response.json();
+    const contentType = response.headers.get("Content-Type");
+    let json;
+    if (contentType && contentType.includes("text/html")) {
+      const text = await response.text();
+      console.error("Received HTML instead of JSON:", text);
+      throw new DatabaseError("Received HTML response instead of JSON");
+    } else {
+      json = await response.json();
+    }
     if (json && Array.isArray(json)) {
       return json.slice(2);
     }
