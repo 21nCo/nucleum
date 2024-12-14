@@ -39,6 +39,15 @@
     resolvePlainText,
     splitMarkdownAtPlainOffset
   } from "./markdown.utils";
+  import { captureStore } from "$lib/client/products/memotron/capture/capture.store";
+  import { isValidString } from "$lib/shared/utils/text.utils";
+  import Icon from "$lib/client/elements/Icon.svelte";
+  import { fileDrop } from "$lib/client/actions/fileDrop.action";
+  import { MAX_FILE_SIZE_MB } from "$lib/client/products/memotron/memotron.store";
+  import { resolveFileUploadErrorMessage } from "$lib/client/products/memotron/memotron.utils";
+  import { generateResourceId } from "../flux/flux.utils";
+  import { Resource } from "../flux/resourceStores/resource.enum";
+  import { resolveMultipleFilesData } from "$lib/client/products/memotron/capture/capture.utils";
 
   export let block: IBlock;
   export let mdStore: MdStoreType;
@@ -46,6 +55,8 @@
   let isFocusing: boolean = false;
   let dev_isShowFocusHintOnRight: boolean = false;
   let contentRefreshId: number = new Date().getTime();
+  let isDragging: boolean = false;
+  let progressState: string | undefined = undefined;
   $: isFocusable =
     $mdStore.params?.isNodular && headingNodeTypes.includes(block.contentType);
 
@@ -53,6 +64,8 @@
     $mdStore.params?.isNodular && !$view.isConstrainedWidth;
 
   const markdownContext = getContext<any>("markdown");
+  const nodeContext = getContext<any>("node");
+  const contentContext = getContext<any>("content");
 
   function propagate(event: string, data: any) {
     markdownContext({
@@ -104,6 +117,10 @@
 
       case BlockAction.INSERT:
         handleInsertAction(data);
+        break;
+
+      case BlockAction.PASTE:
+        handlePaste(data);
         break;
 
       case BlockAction.MOVEUP:
@@ -224,14 +241,11 @@
       block.label = data.label;
       propagate(BlockAction.CHANGE, { label: data.label });
     }
-
-    const isCurrentIsLastBlock = mdStore.isLastBlock(block.id);
     if (
-      (data.toType === NodeType.EMBED ||
-        structuralNodeTypes.includes(data.toType)) &&
-      isCurrentIsLastBlock
+      data.toType === NodeType.EMBED ||
+      structuralNodeTypes.includes(data.toType)
     ) {
-      insertBufferBlock(block.id);
+      insertBufferBlockIfRequired(block.id);
     }
     mdStore.focusBlock(block.id, { xOffset: 0 });
   }
@@ -251,6 +265,9 @@
   }
 
   /**
+   * Handles insert action for block
+   *
+   * If data.blockType is not present, checks whether the caret position is in the middle of text and moves the text after the caret to the newly inserted block.
    * @param data
    */
   function handleInsertAction(data: any) {
@@ -332,18 +349,19 @@
     else newBlockId = mdStore.insert({ source: block.id, ...data });
 
     propagateAsAction(BlockAction.INSERT, { ...data, id: newBlockId });
-    const isCurrentIsLastBlock = mdStore.isLastBlock(block.id);
+
     if (
       (data.blockType === NodeType.EMBED ||
         structuralNodeTypes.includes(data.blockType)) &&
-      newBlockId &&
-      isCurrentIsLastBlock
+      newBlockId
     ) {
-      insertBufferBlock(newBlockId);
+      insertBufferBlockIfRequired(newBlockId);
     }
   }
 
-  function insertBufferBlock(newBlockId: IRecordId) {
+  function insertBufferBlockIfRequired(newBlockId: IRecordId) {
+    const isCurrentIsLastBlock = mdStore.isLastBlock(block.id);
+    if (!isCurrentIsLastBlock) return;
     const bufferBlock = {
       blockType: NodeType.SIMPLE_TEXT,
       body: ""
@@ -517,6 +535,254 @@
     }
     propagate(BlockAction.CHANGE, { body: detail });
   }
+
+  /**
+   * Handles paste event.
+   * @param event
+   */
+  async function handlePaste(event: ClipboardEvent) {
+    event.preventDefault();
+    progressState = "Pasting";
+    try {
+      const items = event?.clipboardData?.items;
+      if (!items) return;
+      const itemArray = Array.from(items);
+      const isCodeText = itemArray.some((i) => i.type === "vscode-editor-data");
+      if (!isCodeText && items.length > 1) {
+        await handlePasteForMultipleItems(event);
+        return;
+      }
+      const item = items[0];
+      let newBlock: Pick<IBlock, "contentType" | "body"> | undefined;
+      let fileEmbed: any;
+      if (isCodeText) {
+        const [text, metadataString] = await Promise.all([
+          getAsStringPromise(itemArray.find((i) => i.type === "text/plain")),
+          getAsStringPromise(
+            itemArray.find((i) => i.type === "vscode-editor-data")
+          )
+        ]);
+        let metadata;
+        try {
+          metadata = metadataString ? JSON.parse(metadataString) : null;
+        } catch (e) {
+          metadata = null;
+        }
+
+        newBlock = {
+          contentType: NodeType.CODE,
+          body: {
+            text,
+            language: metadata?.mode
+          }
+        };
+      } else if (item?.type === "text/plain") {
+        handlePasteForSimpleText(item);
+        return;
+      } else {
+        const blob = items[0].getAsFile();
+        if (!blob) {
+          throw new Error("blob not found");
+        }
+        fileEmbed = await captureStore.saveFile(blob, undefined, {
+          isEmbedContext: true,
+          creationContext: nodeContext?.id ?? undefined
+        });
+        if (!fileEmbed || fileEmbed.error || !("id" in fileEmbed)) {
+          throw new Error("captureStore.saveFile failed");
+        }
+        newBlock = {
+          contentType: NodeType.EMBED,
+          body: {
+            id: fileEmbed.id,
+            subType: fileEmbed.contentType
+          }
+        };
+      }
+      processPasteOrDrop(newBlock, fileEmbed);
+    } catch (e) {
+      logger.error({ at: "handlePaste", error: e });
+      toasts.error("Failed to paste. Please try again.");
+    } finally {
+      progressState = undefined;
+      event.preventDefault();
+    }
+
+    async function handlePasteForSimpleText(item: DataTransferItem) {
+      //TODO - code text detection, if current is not text block case
+      item.getAsString((text) => {
+        const modifiedBlockText = editBlockText(block, text, {
+          isAppend: true
+        });
+        console.log("modifiedBlockText", modifiedBlockText);
+        block.body = modifiedBlockText;
+        propagate(BlockAction.CHANGE, { body: modifiedBlockText });
+        contentRefreshId = new Date().getTime();
+        mdStore.focusBlock(block.id, { isBottom: true });
+      });
+    }
+
+    function getAsStringPromise(item?: DataTransferItem): Promise<string> {
+      return new Promise((resolve) => {
+        if (!item) {
+          resolve("");
+          return;
+        }
+        item.getAsString((value) => resolve(value));
+      });
+    }
+
+    function handlePasteForMultipleItems(event: ClipboardEvent) {
+      const filesData = event?.clipboardData?.files;
+      if (!filesData) return;
+      let allFiles = Array.from(filesData);
+      return insertMultipleFiles(allFiles);
+    }
+  }
+
+  /**
+   * Processes paste or drop event - inserts new block if the current block is not empty or converts to new block type
+   * @param newBlock
+   * @param fileEmbed
+   */
+  function processPasteOrDrop(
+    newBlock: Pick<IBlock, "contentType" | "body">,
+    fileEmbed?: any
+  ) {
+    if (!newBlock) return;
+    if (
+      block.contentType === NodeType.SIMPLE_TEXT &&
+      !isValidString(block.body)
+    ) {
+      convert(newBlock, fileEmbed);
+      return;
+    }
+    insert(newBlock, fileEmbed);
+
+    function convert(
+      newBlock: Pick<IBlock, "contentType" | "body">,
+      fileEmbed?: any
+    ) {
+      block.contentType = newBlock.contentType;
+      propagateAsAction(BlockAction.CONVERT, {
+        fromType: block.contentType,
+        toType: newBlock.contentType
+      });
+      block.body = newBlock.body;
+      propagate(BlockAction.CHANGE, {
+        body: newBlock.body
+      });
+      insertBufferBlockIfRequired(block.id);
+      if (fileEmbed) {
+        addMention(fileEmbed, block.id);
+      }
+    }
+
+    function insert(
+      newBlock: Pick<IBlock, "contentType" | "body">,
+      fileEmbed?: any
+    ) {
+      //TODO - case of pasting link for inline links
+      let data = {
+        blockType: newBlock?.contentType,
+        body: newBlock?.body
+      };
+      const newBlockId = mdStore.insert({ source: block.id, ...data });
+      if (!newBlockId) {
+        throw new Error("mdStore.insert failed");
+      }
+      propagateAsAction(BlockAction.INSERT, { ...data, id: newBlockId });
+      insertBufferBlockIfRequired(newBlockId);
+      if (fileEmbed) {
+        addMention(fileEmbed, newBlockId);
+      }
+    }
+  }
+
+  function addMention(fileEmbed: any, location: IRecordId) {
+    contentContext.publish("mention", {
+      location,
+      item: fileEmbed
+    });
+  }
+
+  async function handleFileDrop(
+    all: File[],
+    valid: File[],
+    errors: { file: File; type: string }[]
+  ) {
+    try {
+      if (errors && errors.length > 0) {
+        let error = resolveFileUploadErrorMessage(errors, {
+          maxFileSizeMB: MAX_FILE_SIZE_MB
+        });
+        toasts.error(error);
+        return;
+      }
+      if (all.length === 0) return;
+      progressState = "Uploading";
+      if (all.length !== 1) {
+        await insertMultipleFiles(all);
+        return;
+      }
+      let file = all[0];
+      const fileEmbed = await captureStore.saveFile(file, undefined, {
+        isEmbedContext: true,
+        creationContext: nodeContext?.id ?? undefined
+      });
+      if (!fileEmbed || fileEmbed.error || !("id" in fileEmbed)) {
+        throw new Error("captureStore.saveFile failed");
+      }
+      let newBlock: Pick<IBlock, "contentType" | "body"> = {
+        contentType: NodeType.EMBED,
+        body: {
+          id: fileEmbed.id,
+          subType: fileEmbed.contentType
+        }
+      };
+      processPasteOrDrop(newBlock, fileEmbed);
+    } catch (e) {
+      logger.error({ at: "handleFileDrop", error: e });
+      toasts.error("Failed to upload. Please try again.");
+    } finally {
+      progressState = undefined;
+    }
+  }
+
+  async function insertMultipleFiles(files: File[]) {
+    logger.log({ at: "insertMultipleFiles", files });
+    if (!files || files.length === 0) return;
+    const multipleFilesData = resolveMultipleFilesData(files, MAX_FILE_SIZE_MB);
+    if (multipleFilesData && multipleFilesData.sizeExceededCount > 0) {
+      const error = `${multipleFilesData.sizeExceededCount} files exceed the maximum size of ${MAX_FILE_SIZE_MB} MB.`;
+      toasts.error(error);
+      return;
+    }
+    const result = await captureStore.saveMultipleFiles(
+      multipleFilesData.files,
+      {
+        isEmbedContext: true,
+        creationContext: nodeContext?.id
+      }
+    );
+    if (!result) {
+      throw new Error("captureStore.saveMultipleFiles failed");
+    }
+    const blocks: IBlock[] = result.map((x) => ({
+      id: generateResourceId(Resource.node),
+      contentType: NodeType.EMBED,
+      body: {
+        id: x.id,
+        subType: x.contentType
+      }
+    }));
+    mdStore.insertMany(block.id, blocks);
+    propagateAsAction(BlockAction.INSERT_MANY, { blocks });
+    insertBufferBlockIfRequired(blocks[blocks.length - 1].id);
+    result.forEach((x, index) => {
+      addMention(x, blocks[index].id);
+    });
+  }
 </script>
 
 <!--TODO -  Note - when reenabling drag and drag to rearrange - make sure it is not interfering with text selection or media grid space slider -->
@@ -524,7 +790,8 @@
   class={cn(
     "w-full min-h-fit items-center gap-2 rounded-md border border-transparent",
     {
-      "grid grid-cols-[2.5rem_1fr]": isLeftControlsEnabled
+      "grid grid-cols-[2.5rem_1fr]": isLeftControlsEnabled,
+      "opacity-50": isDragging
     },
     $mdStore.params?.isNodular &&
       !$mdStore.params?.isReadOnly && {
@@ -532,9 +799,14 @@
         // "!border-brs1": isHovering && isFocusing
       }
   )}
-  draggable="false"
+  draggable={!$mdStore.params?.isReadOnly && !isFocusing}
+  data-index={block.id}
+  data-id={block.id}
   data-content={block.contentType}
   data-node={block.id}
+  on:dragstart={() => (isDragging = true)}
+  on:dragend={() => (isDragging = false)}
+  role="listitem"
   use:hoverable={{
     onHover: (e) => {
       isHovering = e;
@@ -542,6 +814,12 @@
         dispatchCustomEvent(MemotronEvent.BLOCK_HOVER, { id: block.id });
       }
     }
+  }}
+  use:fileDrop={{
+    multiple: false,
+    maxSize: MAX_FILE_SIZE_MB * 1024 * 1024,
+    onDrop: handleFileDrop,
+    isPreventClickToBrowse: true
   }}
 >
   {#if isLeftControlsEnabled}
@@ -552,12 +830,14 @@
         {mdStore}
         {block}
         {isFocusing}
+        isDisableTooltip={isDragging}
         isBlockHovering={isHovering}
         on:nodularize
         on:action={onContextMenuAction}
       />
     {/if}
   {/if}
+
   <div class="relative flex-1">
     {#key contentRefreshId}
       <BlockContent
@@ -571,6 +851,14 @@
         on:update={onBlockUpdate}
       />
     {/key}
+    {#if progressState}
+      <div
+        class="absolute inset-0 pr-3 bg-gradient-to-r from-transparent via-bgs2 to-transparent rounded-md flex gap-2 items-center justify-center"
+      >
+        <Icon icon="svg-spinners:3-dots-fade" />
+        <span class="text-fgs3 text-b2">{progressState}</span>
+      </div>
+    {/if}
     {#if isHovering && isFocusable && !isFocusing && dev_isShowFocusHintOnRight}
       <div
         class="absolute top-0 right-0 flex h-full items-center justify-center bg-gradient-to-r from-bgs2/40 via-bgs2 to-bgs2 pl-32"

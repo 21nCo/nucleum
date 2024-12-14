@@ -414,6 +414,11 @@
   export function focusBlock(id?: IRecordId) {
     mdRef?.focus(id);
   }
+
+  function onRearrange(event: any) {
+    if (!event.detail.md) return;
+    onBlockStructuralChanges(event);
+  }
 </script>
 
 {#key refreshId}
@@ -439,5 +444,6 @@
     on:change={onBlockContentChange}
     on:focus={onBlockFocus}
     on:action={onBlockAction}
+    on:rearrange={onRearrange}
   />
 {/key}

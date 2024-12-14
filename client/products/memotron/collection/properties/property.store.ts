@@ -3,7 +3,8 @@ import { Resource } from "$lib/client/components/flux/resourceStores/resource.en
 import {
   type IProperty,
   type IPropertyEditorStore,
-  PropertyType
+  PropertyType,
+  UniversalPropertyType
 } from "$lib/client/products/memotron/collection/properties/property.type";
 import { ObservableStore } from "$lib/client/stores/client.store";
 import type { IObservableStoreSubject } from "$lib/client/types/data.type";
@@ -54,124 +55,127 @@ export const metaPropertyOptions = [
   }
 ];
 
-export const universalPropertyGroupLabel = "Universal";
 export const universalPropertyOptions = [
   {
     label: "Country",
     icon: "ph:globe-light",
-    value: PropertyType.COUNTRY,
-    groupId: universalPropertyGroupLabel,
-    badge: "Planned",
-    isDisabled: true
+    value: UniversalPropertyType.COUNTRY
   },
   {
     label: "Language",
     icon: "ph:translate-light",
-    value: PropertyType.LANGUAGE,
-    groupId: universalPropertyGroupLabel,
-    badge: "Planned",
-    isDisabled: true
+    value: UniversalPropertyType.LANGUAGE
   },
   {
     label: "Currency",
     icon: "ph:money-light",
-    value: PropertyType.CURRENCY,
-    groupId: universalPropertyGroupLabel,
-    badge: "Planned",
-    isDisabled: true
+    value: UniversalPropertyType.CURRENCY
   },
   {
     label: "Continent",
     icon: "ph:map-trifold-light",
-    value: PropertyType.CONTINENT,
-    groupId: universalPropertyGroupLabel,
-    badge: "Planned",
-    isDisabled: true
+    value: UniversalPropertyType.CONTINENT
   },
   {
     label: "Timezone",
     icon: "ph:clock-light",
-    value: PropertyType.TIMEZONE,
-    groupId: universalPropertyGroupLabel,
-    badge: "Planned",
-    isDisabled: true
+    value: UniversalPropertyType.TIMEZONE
   }
 ];
+
 export const propertyOptions = [
   {
-    label: "Text",
+    label: "Simple text",
     icon: "ph:text-light",
-    value: PropertyType.TEXT
+    value: PropertyType.TEXT,
+    groupId: "text"
   },
   {
     label: "Number",
     icon: "ph:hash-light",
-    value: PropertyType.NUMBER
-  },
-
-  {
-    label: "Rating",
-    icon: "star",
-    value: PropertyType.RATING
-  },
-  {
-    label: "Single select",
-    icon: "chevdown",
-    value: PropertyType.SINGLE_SELECT
-  },
-  {
-    label: "Date",
-    icon: "calendar",
-    value: PropertyType.DATE
-  },
-  {
-    label: "Checkbox",
-    icon: "ph:check-square-offset-light",
-    value: PropertyType.CHECKBOX
+    value: PropertyType.NUMBER,
+    groupId: "text"
   },
   {
     label: "Email",
     icon: "ph:envelope-light",
-    value: PropertyType.EMAIL
+    value: PropertyType.EMAIL,
+    groupId: "text"
   },
   {
     label: "Link",
     icon: "ph:link-light",
-    value: PropertyType.URL
+    value: PropertyType.URL,
+    groupId: "text"
+  },
+  {
+    label: "Single select",
+    icon: "ph:caret-circle-down-light",
+    value: PropertyType.SINGLE_SELECT,
+    groupId: "options"
   },
   {
     label: "Multi select",
     icon: "ph:list-bullets-light",
     value: PropertyType.MULTI_SELECT,
-    badge: "Planned",
-    isDisabled: true
+    groupId: "options",
+    badge: "New"
+  },
+  {
+    label: "Universal select",
+    icon: "ph:globe-light",
+    value: PropertyType.UNIVERSAL,
+    groupId: "options",
+    badge: "New"
+  },
+  {
+    label: "Rating",
+    icon: "star",
+    value: PropertyType.RATING,
+    groupId: "wizard"
+  },
+  {
+    label: "Date",
+    icon: "calendar",
+    value: PropertyType.DATE,
+    groupId: "wizard"
+  },
+  {
+    label: "Checkbox",
+    icon: "ph:check-square-offset-light",
+    value: PropertyType.CHECKBOX,
+    groupId: "wizard"
   },
   {
     label: "Time tracking",
     icon: "ph:timer-light",
     value: PropertyType.TIME_TRACKING,
     badge: "Planned",
-    isDisabled: true
+    isDisabled: true,
+    groupId: "wizard"
   },
   {
     label: "Link list",
     icon: "ph:tree-view-light",
     value: PropertyType.LINK_LIST,
     badge: "Planned",
-    isDisabled: true
+    isDisabled: true,
+    groupId: "wizard"
   },
   {
     label: "Attachement(s)",
     icon: "upload",
     value: PropertyType.FILE,
     badge: "Planned",
-    isDisabled: true
+    isDisabled: true,
+    groupId: "wizard"
   },
   {
     label: "Formula",
     icon: "ph:math-operations-light",
     value: PropertyType.FORMULA,
     badge: "Planned",
-    isDisabled: true
+    isDisabled: true,
+    groupId: "wizard"
   }
 ];

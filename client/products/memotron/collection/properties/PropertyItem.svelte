@@ -10,16 +10,18 @@
   import { enumToString, isValidString } from "$lib/shared/utils/text.utils";
   import { cn } from "$lib/client/utils/ui.utils";
   import MetaPropertyItem from "./MetaPropertyItem.svelte";
-  import SingleSelectProperty from "./selectProperty/SingleSelectProperty.svelte";
+  import SelectProperty from "./selectProperty/SelectProperty.svelte";
   import {
     type IProperty,
     type IPropertyValue,
-    PropertyType
+    PropertyType,
+    textPropertyTypes
   } from "./property.type";
   import type { IRecordId } from "$lib/client/types/data.type";
-  import SelectPropertyItem from "./selectProperty/SelectPropertyItem.svelte";
+  import SelectPropertyOption from "./selectProperty/SelectPropertyOption.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
+  import { resolvePropertyDefaultValue } from "./property.utils";
   export let value: IPropertyValue | null = null;
   export let property: IProperty;
   export let nodeId: IRecordId | undefined = undefined;
@@ -30,12 +32,11 @@
   export let context: "default" | "propertiesPane" | "collectionView" =
     "default";
   export let isReadOnlyMode: boolean = false;
+  let _value: IPropertyValue;
+  $: _value = assignDefaultValue(value);
+
   let style =
     context === "collectionView" ? InputStyle.PLAIN : InputStyle.FILLED;
-
-  if (property.type === PropertyType.DATE && typeof value === "string") {
-    value = new Date(value);
-  }
 
   let label =
     context === "collectionView" && property.type !== PropertyType.CHECKBOX
@@ -47,7 +48,33 @@
               ? Orientation.Horizontal
               : Orientation.Vertical
         };
-  // $: console.log({ property, details: config });
+
+  function assignDefaultValue(value: IPropertyValue | null) {
+    if (property.type === PropertyType.DATE && typeof value === "string") {
+      const dateObj = new Date(value);
+      value = !isNaN(dateObj.getTime()) ? dateObj : null;
+    } else if (
+      property.type === PropertyType.NUMBER &&
+      typeof value === "string"
+    ) {
+      value = parseFloat(value);
+    } else if (
+      textPropertyTypes.includes(property.type) &&
+      Array.isArray(value)
+    ) {
+      value = "";
+    }
+    if (
+      !value ||
+      (Array.isArray(value) && value.length === 0) ||
+      (property.type === PropertyType.SINGLE_SELECT &&
+        typeof value !== "string") ||
+      (property.type === PropertyType.NUMBER && typeof value !== "number")
+    ) {
+      value = resolvePropertyDefaultValue(property.type);
+    }
+    return value;
+  }
 
   function formatValue(value: any) {
     if (value instanceof Date) {
@@ -81,19 +108,20 @@
         })}
         on:click={() => {
           if (property.type === PropertyType.URL) {
-            const url = value?.includes("http") ? value : `https://${value}`;
+            const url = _value?.includes("http") ? _value : `https://${_value}`;
             window.open(url, "_blank");
           } else if (property.type === PropertyType.EMAIL) {
-            window.open(`mailto:${value}`, "_blank");
+            window.open(`mailto:${_value}`, "_blank");
           }
         }}
       >
         {#if property.type === PropertyType.SINGLE_SELECT}
-          <SelectPropertyItem
+          <SelectPropertyOption
             isPlain={true}
             item={property.config?.options?.find(
               (x) =>
-                x.id === value || (value === null && x.id === property.default)
+                x.id === _value ||
+                (_value === null && x.id === property.default)
             )}
             isSelectedContext={true}
           />
@@ -102,61 +130,68 @@
             isReadOnlyMode={true}
             size={context === "collectionView" ? Size.md : Size.lg}
             avatar={property.config?.ratingAvatar}
-            {value}
+            value={_value}
             count={5}
           />
         {:else}
-          {value && isValidString(value.toString())
-            ? formatValue(value)
+          {_value && isValidString(_value.toString())
+            ? formatValue(_value)
             : "N/A"}
         {/if}
       </button>
     </div>
   {:else if property.type === PropertyType.TEXT}
-    <TextInput {style} bind:value {label} placeholder="Enter text" on:change />
+    <TextInput
+      {style}
+      bind:value={_value}
+      {label}
+      placeholder="Enter text"
+      on:change
+    />
   {:else if property.type === PropertyType.NUMBER || property.type === PropertyType.EMAIL || property.type === PropertyType.URL}
     <TextInput
       {style}
-      bind:value
+      bind:value={_value}
       {label}
       placeholder={`Enter ${property.type}`}
       on:change
       type={property.type}
     />
-  {:else if property.type === PropertyType.CHECKBOX && typeof value === "boolean"}
+  {:else if property.type === PropertyType.CHECKBOX && typeof _value === "boolean"}
     <!-- <CheckboxInput bind:checked={property.value} label={details.label} /> -->
-    <SwitchInput bind:checked={value} {label} {style} on:change />
-  {:else if property.type === PropertyType.RATING && property.config?.ratingAvatar && typeof value === "number"}
+    <SwitchInput bind:checked={_value} {label} {style} on:change />
+  {:else if property.type === PropertyType.RATING && property.config?.ratingAvatar && typeof _value === "number"}
     <Rating
       {label}
       {style}
       size={context === "collectionView" ? Size.md : Size.lg}
       avatar={property.config.ratingAvatar}
-      bind:value
+      bind:value={_value}
       count={5}
       on:change
     />
-  {:else if property.type === PropertyType.SINGLE_SELECT && property.config?.options && typeof value === "string"}
+  {:else if property.type === PropertyType.SINGLE_SELECT || property.type === PropertyType.MULTI_SELECT || property.type === PropertyType.UNIVERSAL}
     {#if context === "collectionView"}
-      <SelectPropertyItem
+      <SelectPropertyOption
         item={property.config.options?.find(
-          (x) => x.id === value || (value === null && x.id === property.default)
+          (x) =>
+            x.id === _value || (_value === null && x.id === property.default)
         )}
         isSelectedContext={true}
       />
     {:else}
-      <SingleSelectProperty
+      <SelectProperty
         {style}
         {label}
         {property}
-        bind:value
+        bind:value={_value}
         on:change
         on:newOption
         on:configChange
       />
     {/if}
-  {:else if property.type === PropertyType.DATE && value && value instanceof Date}
-    <DatePicker bind:date={value} {label} {style} on:change />
+  {:else if property.type === PropertyType.DATE && _value && _value instanceof Date}
+    <DatePicker bind:date={_value} {label} {style} on:change />
   {:else if nodeId}
     <MetaPropertyItem {property} {nodeId} />
   {/if}

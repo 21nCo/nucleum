@@ -1,13 +1,17 @@
 <script lang="ts">
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import type { PropertyConfigOption } from "../property.type";
-  import SelectPropertyItem from "./SelectPropertyItem.svelte";
+  import type { IPropertyConfigOption } from "../property.type";
+  import SelectPropertyOption from "./SelectPropertyOption.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
-  export let options: PropertyConfigOption[];
+  export let options: IPropertyConfigOption[];
+  export let value: string | string[];
+  export let isMultiSelect: boolean = false;
   export let groupId: string | undefined = undefined;
   export let groupLabel: string | undefined = undefined;
   export let isPreventDefaultGroupLabel = false;
+  export let isPreventTagStyle: boolean = false;
+
   $: filtered = resolveItems(groupId);
   function resolveItems(groupId: string | undefined) {
     if (groupId) {
@@ -28,8 +32,12 @@
     {/if}
 
     {#each filtered as item (item.id)}
-      <SelectPropertyItem
+      <SelectPropertyOption
         {item}
+        {isPreventTagStyle}
+        isSelected={isMultiSelect &&
+          isValidArrayWithData(value) &&
+          value.includes(item.id)}
         on:click={() => {
           dispatch("select", item.id);
         }}

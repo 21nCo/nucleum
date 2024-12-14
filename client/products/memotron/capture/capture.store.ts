@@ -242,7 +242,13 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     return result?.[0];
   }
 
-  async saveMultipleFiles(files: { file: File; contentType: NodeType }[]) {
+  async saveMultipleFiles(
+    files: { file: File; contentType: NodeType }[],
+    params?: {
+      isEmbedContext?: boolean;
+      creationContext?: IRecordId;
+    }
+  ) {
     let nodes: OmitForCapture<IMediaNode>[] = [];
     for (const item of files) {
       if (!item.contentType) continue;
@@ -257,14 +263,19 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       const node = {
         contentType: item.contentType,
         file: fileId,
-        label: item.file.name
+        label: item.file.name,
+        creationContext: params?.isEmbedContext
+          ? (params?.creationContext ?? this.get().nodeId)
+          : undefined
       } as IMediaNode;
       nodes.push(node);
     }
     const result = await nodeStore.create(nodes, {
       context: MemotronAction.CAPTURE
     });
-    this.postSave(result);
+    this.postSave(result, {
+      isEmbedContext: params?.isEmbedContext
+    });
     return result;
   }
 
@@ -419,6 +430,10 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       });
       appStore.closeResource({
         id: MemotronAction.CAPTURE_DND,
+        accessMode: ResourceAccessMode.POP
+      });
+      appStore.closeResource({
+        id: MemotronAction.CAPTURE_SECONDARY,
         accessMode: ResourceAccessMode.POP
       });
     }

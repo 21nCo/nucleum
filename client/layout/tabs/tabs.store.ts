@@ -34,6 +34,11 @@ class TabStore {
       isProductScoped: true
     });
   }
+  rearrange(ids: IRecordId[]) {
+    return uiState.setState(ResourceAccessPoint.TABS, ids, {
+      isProductScoped: true
+    });
+  }
 }
 
 export const tabs = new TabStore();

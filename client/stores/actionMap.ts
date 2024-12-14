@@ -110,7 +110,10 @@ export const globalActions: IAction[] = [
     action: Action.GUIDES + "hashnode",
     label: "Guides and docs",
     icon: "ph:book-open-text-light",
-    cmdLabel: ["Documentation", "Guides"],
+    cmdLabel: [
+      { variant: "documentation", label: "Documentation" },
+      { variant: "guides", label: "Guides" }
+    ],
     type: ActionType.MODAL,
     component: HashnodeEmbed,
     modalParams: {
@@ -286,7 +289,10 @@ export const globalActions: IAction[] = [
     action: Action.CHANGELOG + "supahub",
     label: "What's new",
     icon: "sparkles",
-    cmdLabel: ["What's new", "Changelog"],
+    cmdLabel: [
+      { variant: "whatsNew", label: "What's new" },
+      { variant: "changelog", label: "Changelog" }
+    ],
     type: ActionType.MODAL,
     component: SupahubEmbed,
     modalParams: {

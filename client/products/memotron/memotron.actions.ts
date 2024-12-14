@@ -102,6 +102,22 @@ export const memotronActions: IAction[] = [
     }
   },
   {
+    action: MemotronAction.CAPTURE_SECONDARY,
+    component: Capture,
+    isMeta: true,
+    type: ActionType.RESOURCE,
+    accessMode: ResourceAccessMode.POP,
+    modalParams: {
+      layout: {
+        size: Size.xxl,
+        orientation: Orientation.Horizontal,
+        ignoreSafeArea: true,
+        isShowCantileverClose: true,
+        isShowBackButton: false
+      }
+    }
+  },
+  {
     action: Action.GLOBAL_SEARCH,
     component: ResourceSearchModal,
     label: "Search resources",

@@ -122,7 +122,7 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
     }
     this.update((store) => {
       const contextBlockIndex = store.blocks.findIndex(
-        (b) => b.id === params.source
+        resourceInList(params.source)
       );
       if (!newBlock) return store;
       store.blocks = [
@@ -135,6 +135,18 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
       return store;
     });
     return newBlock.id;
+  }
+
+  insertMany(src: IRecordId, blocks: IBlock[]) {
+    this.update((store) => {
+      const contextBlockIndex = store.blocks.findIndex(resourceInList(src));
+      store.blocks = [
+        ...store.blocks.slice(0, contextBlockIndex + 1),
+        ...blocks,
+        ...store.blocks.slice(contextBlockIndex + 1)
+      ];
+      return store;
+    });
   }
 
   /**

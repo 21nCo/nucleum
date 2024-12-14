@@ -7,63 +7,143 @@ import type { AvatarWithCode, IconAvatar } from "$lib/client/types/avatar.type";
 import type { IObservableStoreSubject } from "$lib/client/types/data.type";
 import type { ICollection } from "../collection.type";
 
-export interface IProperty extends IResource, IResourseShareable {
+/**
+ * @deprecated Use IProperty instead
+ */
+export interface IPropertyv1 extends IResource, IResourseShareable {
   label: string;
   type: PropertyType;
   default?: boolean | string | number | string[];
-  config?: PropertyConfig;
+  config?: IPropertyConfig;
   order: number;
   isShowOnNodePage?: boolean;
   isShowOnCapture?: boolean;
 }
 
-export type PropertyConfig = {
-  options?: PropertyConfigOption[];
-  groups?: PropertyConfigOptionGroup[];
-  ratingAvatar?: AvatarWithCode<IconAvatar>;
+export type IProperty =
+  | ISelectProperty
+  | IUniversalProperty
+  | IRatingProperty
+  | IPropertyInterface<
+      Exclude<
+        PropertyType,
+        | PropertyType.SINGLE_SELECT
+        | PropertyType.MULTI_SELECT
+        | PropertyType.UNIVERSAL
+        | PropertyType.RATING
+      >,
+      IPropertyConfig
+    >;
+
+interface IPropertyInterface<TType = PropertyType, TConfig = IPropertyConfig>
+  extends IResource,
+    IResourseShareable {
+  label: string;
+  type: TType;
+  config?: TConfig;
+  default?: boolean | string | number | string[];
+  isShowOnNodePage?: boolean;
+  isShowOnCapture?: boolean;
+}
+
+export type ISelectPropertyConfig = {
+  options?: IPropertyConfigOption[];
+  groups?: IPropertyConfigOptionGroup[];
 };
-export type PropertyConfigOption = {
+export type ISelectProperty = IPropertyInterface<
+  PropertyType.SINGLE_SELECT | PropertyType.MULTI_SELECT,
+  ISelectPropertyConfig
+>;
+
+export type IUniversalPropertyConfig = {
+  type: UniversalPropertyType;
+  isMultiSelect?: boolean;
+};
+export type IUniversalProperty = IPropertyInterface<
+  PropertyType.UNIVERSAL,
+  IUniversalPropertyConfig
+>;
+
+export type IRatingPropertyConfig = {
+  ratingAvatar: AvatarWithCode<IconAvatar>;
+};
+export type IRatingProperty = IPropertyInterface<
+  PropertyType.RATING,
+  IRatingPropertyConfig
+>;
+
+export type IPropertyConfigOption = {
   id: string;
   label: string;
   color?: number;
   groupId?: string;
 };
 
-export type PropertyConfigOptionGroup = {
+export type IPropertyConfigOptionGroup = {
   id: string;
   label: string;
 };
 
+export type IPropertyConfig =
+  | ISelectPropertyConfig
+  | IRatingPropertyConfig
+  | IUniversalPropertyConfig;
+
 export enum PropertyType {
+  //Text
   TEXT = "text",
   NUMBER = "number",
   EMAIL = "email",
   URL = "url",
-  LINK_LIST = "link-list",
+
+  //Select options
+  SINGLE_SELECT = "single-select",
+  MULTI_SELECT = "multi-select",
+  UNIVERSAL = "universal",
+
   CHECKBOX = "checkbox",
   RATING = "rating",
   DATE = "date",
   RANGE = "range",
-  SINGLE_SELECT = "single-select",
-  MULTI_SELECT = "multi-select",
   TIME_TRACKING = "time-tracking",
+  LINK_LIST = "link-list",
   FILE = "file",
   FORMULA = "formula",
 
-  // Meta properties
+  // Auto properties
   CREATED_TIME = "created-time",
   MODIFIED_TIME = "modified-time",
   CREATED_BY = "created-by",
   MODIFIED_BY = "modified-by",
-  LOCATION = "location",
+  LOCATION = "location"
+}
 
-  // Universal properties
+export enum UniversalPropertyType {
+  NONE = "none",
   COUNTRY = "country",
   LANGUAGE = "language",
   CURRENCY = "currency",
   CONTINENT = "continent",
   TIMEZONE = "timezone"
 }
+
+export const textPropertyTypes = [
+  PropertyType.TEXT,
+  PropertyType.NUMBER,
+  PropertyType.EMAIL,
+  PropertyType.URL
+];
+export const selectOptionsPropertyTypes = [
+  PropertyType.SINGLE_SELECT,
+  PropertyType.MULTI_SELECT,
+  PropertyType.UNIVERSAL
+];
+
+export const propertyTypesWithUserConfiguration = [
+  PropertyType.SINGLE_SELECT,
+  PropertyType.MULTI_SELECT,
+  PropertyType.RATING
+];
 
 export type IPropertyValue =
   | string

@@ -94,3 +94,29 @@ export function isRecordId(id: any, resource?: Resource) {
     (typeof id === "object" && "tb" in id)
   );
 }
+
+/**
+ * Shifts a resource in an array to a new position.
+ * @param array - The array to shift the resource in.
+ * @param fromId - The id of the resource to shift.
+ * @param toId - The id of the resource to shift to.
+ * @param isPlaceAfter - Whether to place the resource after the target resource.
+ * @returns The new array with the resource shifted.
+ */
+export function shiftResourceInArray(
+  array: any[],
+  fromId: string,
+  toId: string,
+  isPlaceAfter: boolean = false
+) {
+  const fromIndex = array.findIndex(resourceInList(fromId));
+  const toIndex = array.findIndex(resourceInList(toId));
+  if (fromIndex === -1 || toIndex === -1) return array;
+  const newArray = [...array];
+  if (isPlaceAfter) {
+    newArray.splice(toIndex + 1, 0, newArray.splice(fromIndex, 1)[0]);
+  } else {
+    newArray.splice(toIndex, 0, newArray.splice(fromIndex, 1)[0]);
+  }
+  return newArray;
+}

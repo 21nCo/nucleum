@@ -267,9 +267,14 @@ function initAppStore(seed: AppStore) {
   };
   const runAction = (
     slug: string,
-    params: { componentParams?: any; isReturnIfComponent?: boolean } = {
+    params: {
+      componentParams?: any;
+      isReturnIfComponent?: boolean;
+      searchParams?: Record<string, string | boolean | number>;
+    } = {
       componentParams: undefined,
-      isReturnIfComponent: false
+      isReturnIfComponent: false,
+      searchParams: undefined
     }
   ) => {
     let action = resolveAction(slug);
@@ -309,7 +314,9 @@ function initAppStore(seed: AppStore) {
     } else if (params.isReturnIfComponent) {
       return action;
     } else if (action.type === ActionType.RESOURCE && !isRenderAsPage) {
-      openResource(action.action, action.accessMode ?? ResourceAccessMode.POP);
+      openResource(action.action, action.accessMode ?? ResourceAccessMode.POP, {
+        searchParams: params?.searchParams
+      });
     } else if (
       (action.type === ActionType.MODAL ||
         (store.interactionMode === InteractionMode.COMMAND_ONLY &&
@@ -553,6 +560,7 @@ function initAppStore(seed: AppStore) {
     accessMode: ResourceAccessMode = ResourceAccessMode.INLINE,
     params?: {
       replaceId?: IRecordId;
+      searchParams?: Record<string, string | boolean | number>;
     }
   ) => {
     if (!id) return;
@@ -585,7 +593,8 @@ function initAppStore(seed: AppStore) {
     toggleSearchParam(
       {
         [accessMode]: id.toString(),
-        [accessMode + "At"]: timestamp.getTime()
+        [accessMode + "At"]: timestamp.getTime(),
+        ...params?.searchParams
       },
       {
         url: url
@@ -672,8 +681,8 @@ function initAppStore(seed: AppStore) {
       const accessMode = determineResourceAccessMode(props.id);
       if (accessMode) {
         toggleSearchParam([accessMode]);
-        return;
       }
+      return;
     }
     if (props?.isRestrictToModals) {
       toggleSearchParam([ResourceAccessMode.FSPLIT, ResourceAccessMode.POP]);

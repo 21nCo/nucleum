@@ -26,7 +26,7 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
   },
   {
     action: Action.LOCAL_AI_SETTINGS,
-    cmdLabel: ["AI Settings"],
+    cmdLabel: [{ variant: "aiSettings", label: "AI Settings" }],
     label: "AI Settings",
     icon: "ph:brain-light",
     component: TacoSettings,
@@ -55,7 +55,12 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
   {
     action: "theme",
     label: "Appearance",
-    cmdLabel: ["Appearance Settings", "Switch Theme", "Toggle Dark Mode"],
+    cmdLabel: [
+      { variant: "appearanceSettings", label: "Appearance Settings" },
+      { variant: "switchTheme", label: "Switch Theme" },
+      { variant: "toggleDarkMode", label: "Toggle Dark Mode" },
+      { variant: "toggleLightMode", label: "Toggle Light Mode" }
+    ],
     icon: "ph:palette-light",
     component: ThemeSettingView,
     modalParams: {

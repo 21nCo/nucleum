@@ -12,7 +12,11 @@
   import { InputStyle } from "$lib/client/types/input.type";
   import PropertiesListView from "../collection/properties/PropertiesListView.svelte";
   import NodeAvatar from "../node/avatar/NodeAvatar.svelte";
-  import { LinkType } from "$lib/client/products/memotron/node/node.type";
+  import {
+    LinkType,
+    NodeType,
+    type INodeThumb
+  } from "$lib/client/products/memotron/node/node.type";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { collectionStore } from "../collection/collection.store";
   import { CaptureType } from "./capture.type";
@@ -33,6 +37,9 @@
   import context from "$lib/client/stores/context.store";
   import { OperatingSystem } from "$lib/client/types/context.type";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
+  import type { IBlock } from "$lib/client/components/markdown/md.type";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 
   export let isWindowDnD = false;
   let bulkQueryParam: string | null = null;
@@ -51,6 +58,7 @@
   // $: console.log({ types, $captureStore, propertyConfig });
   let dev_iosCameraCaptureMethod: "input" | "swift-relay" = "input";
   let dev_isShowDraftSaveFeedback: boolean = false;
+  let isProcessingClipboard: boolean = false;
 
   async function refreshTypeData() {
     const typeIds =
@@ -87,6 +95,9 @@
     } else {
       refreshEmptyState();
     }
+    if (clipBoardQueryParam === "true") {
+      onClipboard();
+    }
   });
 
   /**
@@ -97,6 +108,89 @@
       appStore.toggleSearchParam(["link", "bulk", "clipboard"]);
     }, 100);
   });
+
+  /**
+   * Handles clipboard event - insert into markdown option via global paste or file uploader
+   */
+  async function onClipboard() {
+    try {
+      isProcessingClipboard = true;
+      const ogEmptyState = isEmptyState;
+      isEmptyState = false;
+      if (!$captureStore.clipboard || !$captureStore.body) return;
+      let newBlock: IBlock[] | undefined = undefined;
+      if (
+        $captureStore.clipboard.text &&
+        (!$captureStore.clipboard.contentType ||
+          $captureStore.clipboard.contentType === NodeType.SIMPLE_TEXT)
+      ) {
+        newBlock = [
+          {
+            id: generateResourceId(Resource.node),
+            contentType: NodeType.SIMPLE_TEXT,
+            body: $captureStore.clipboard.text
+          }
+        ];
+      } else if ($captureStore.clipboard.file) {
+        const result = await captureStore.saveFile(
+          $captureStore.clipboard.file,
+          $captureStore.clipboard.contentType,
+          {
+            isEmbedContext: true
+          }
+        );
+        if (!result || "error" in result) return;
+        newBlock = [
+          {
+            id: generateResourceId(Resource.node),
+            contentType: NodeType.EMBED,
+            body: {
+              id: result.id,
+              subType: result.contentType
+            }
+          }
+        ];
+        captureStore.addMentionLink("root", result as INodeThumb, {
+          location: newBlock[0].id
+        });
+      } else if ($captureStore.clipboard.files) {
+        const result = await captureStore.saveMultipleFiles(
+          $captureStore.clipboard.files,
+          {
+            isEmbedContext: true
+          }
+        );
+        if (!result || "error" in result) return;
+        result.forEach((x) => {
+          const block: IBlock = {
+            id: generateResourceId(Resource.node),
+            contentType: NodeType.EMBED,
+            body: {
+              id: x.id,
+              subType: x.contentType
+            }
+          };
+          newBlock = [...(newBlock ?? []), block];
+          captureStore.addMentionLink("root", x as INodeThumb, {
+            location: block.id
+          });
+        });
+      }
+      if (!newBlock) return;
+      if (ogEmptyState) {
+        $captureStore.body.blocks.unshift(...newBlock);
+      } else {
+        $captureStore.body.blocks.push(...newBlock);
+      }
+      $captureStore.refreshId = new Date().getTime();
+    } catch (e) {
+      logger.error({ at: "Capture.svelte - onClipboard", error: e });
+    } finally {
+      isEmptyState = false;
+      isProcessingClipboard = false;
+      $captureStore.clipboard = null;
+    }
+  }
 
   async function onTypeSelect(e: CustomEvent) {
     if (
@@ -325,6 +419,18 @@
               {/if}
             </div>
           </header>
+        {/if}
+        {#if isProcessingClipboard}
+          <div
+            class="flex w-full items-center justify-center gap-2 bg-gradient-to-r from-transparent via-bgs2 to-transparent p-2"
+          >
+            <Icon
+              icon="svg-spinners:3-dots-fade"
+              size={Size.sm}
+              class="stroke-fgs3"
+            />
+            <span class="text-fgs3"> Processing... </span>
+          </div>
         {/if}
         <main class="flex flex-col gap-6 w-full flex-grow">
           {#if types && types.length > 0}

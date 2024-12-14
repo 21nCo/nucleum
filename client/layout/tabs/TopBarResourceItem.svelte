@@ -18,6 +18,9 @@
   import { Size } from "$lib/client/types/size.enum";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import ComponentBaseLayer from "../layers/ComponentBaseLayer.svelte";
+  import { rearrangeOnAxis } from "$lib/client/actions/rearrange.action";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
   export let item: IRecordId;
   let resource: any;
   let action: any;
@@ -46,6 +49,14 @@
   function resolveContextMenu() {
     return contextMenu;
   }
+
+  function handleRearrange(displacement: number) {
+    dispatch("rearrange", displacement);
+  }
+
+  function handleRearranged(displacement: number) {
+    dispatch("rearranged", displacement);
+  }
 </script>
 
 <button
@@ -59,6 +70,12 @@
   }}
   use:hoverable={{
     onHover: (e) => (isHovering = e)
+  }}
+  use:rearrangeOnAxis={{
+    enabled: true,
+    onRearrange: handleRearrange,
+    onRearranged: handleRearranged,
+    threshold: 30
   }}
   class={cn(
     "relative flex items-center rounded--full border-x border-r-brs3 border-l-transparent text-b2 gap-2 px-6 py-2 max-w-48 min-w-20",

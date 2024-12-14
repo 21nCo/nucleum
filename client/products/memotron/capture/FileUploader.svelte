@@ -6,12 +6,14 @@
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
+  import { appStore } from "$lib/client/stores/app.store";
   import context from "$lib/client/stores/context.store";
   import view from "$lib/client/stores/view.store";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import { Embed } from "$lib/client/types/context.type";
   import { MAX_FILE_SIZE_MB } from "../memotron.store";
   import { resolveFileUploadErrorMessage } from "../memotron.utils";
+  import { MemotronAction } from "../memotronAction.enum";
   import type { NodeType } from "../node/node.type";
   import { captureStore } from "./capture.store";
   import { resolveMultipleFilesData } from "./capture.utils";
@@ -87,6 +89,24 @@
     await captureStore.saveMultipleFiles(multipleFilesData.files);
     isSaveInProgress = false;
   }
+
+  /**
+   * Handles insert into markdown option
+   *
+   * Note: MemotronAction.CAPTURE_SECONDARY is used as fileUploader can be triggered either via global drag and drop (MemotronAction.CAPTURE_DND) or regular capture (MemotronAction.CAPTURE). Using .CAPTURE will not reload the capture as search param remains the same.
+   */
+  async function handleInsertIntoMd(e: CustomEvent) {
+    if (e.detail) e.detail.stopPropagation();
+    if (!multipleFilesData) return;
+    $captureStore.clipboard = {
+      files: multipleFilesData.files
+    };
+    appStore.runAction(MemotronAction.CAPTURE_SECONDARY, {
+      searchParams: {
+        clipboard: true
+      }
+    });
+  }
 </script>
 
 <div class="w-full h-full flex flex-col items-center justify-center">
@@ -153,11 +173,9 @@
             />
             <Button
               label="Insert into markdown"
-              isDisabled={true}
-              badge="soon"
-              tooltip="Coming soon"
               icon="ph:markdown-logo-light"
               parentBgIndex={2}
+              on:click={handleInsertIntoMd}
             />
           {:else}
             <Button

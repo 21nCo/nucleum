@@ -3,14 +3,14 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { onMount } from "svelte";
   let status: "UP" | "HASISSUES" | "UNDERMAINTENANCE" | undefined = undefined;
-  let url: string | undefined = undefined;
+  let statusPageUrl: string | undefined = $appStore.appData?.urls?.statusPage;
   onMount(async () => {
     if (!$appStore.appData?.urls?.systemStatusJson) return;
     const data = await fetch($appStore.appData?.urls?.systemStatusJson);
     if (!data || !data.ok) return;
     const json = await data.json();
     status = json.page?.status;
-    url = json.page?.url;
+    if (!statusPageUrl) statusPageUrl = json.page?.url;
   });
   function resolveStatusLabel(status: string) {
     switch (status) {
@@ -30,7 +30,7 @@
   {#if status}
     <a
       class="flex items-center gap-2 border- border-brs3 px-4 py-1 rounded-md"
-      href={url}
+      href={statusPageUrl}
       target="_blank"
       rel="noopener noreferrer"
     >

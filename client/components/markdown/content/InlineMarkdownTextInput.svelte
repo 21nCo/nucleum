@@ -972,6 +972,7 @@
       on:focus
       on:pointerenter
       on:pointerleave
+      on:paste
       bind:innerHTML
       contenteditable
       {placeholder}

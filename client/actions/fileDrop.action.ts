@@ -19,7 +19,8 @@ export function fileDrop(node: HTMLElement, options = {}) {
       valid: File[],
       errors: { file: File; type: string }[]
     ) => {},
-    dragOverClass: ["border-fgs3"]
+    dragOverClass: ["border-fgs3"],
+    isPreventClickToBrowse: false
   };
   let settings = { ...defaultOptions, ...options };
 
@@ -92,7 +93,7 @@ export function fileDrop(node: HTMLElement, options = {}) {
   }
 
   function handleClick() {
-    if (settings.disabled) return;
+    if (settings.disabled || settings.isPreventClickToBrowse) return;
     input.click();
   }
 

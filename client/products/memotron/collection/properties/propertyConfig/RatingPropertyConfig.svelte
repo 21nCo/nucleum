@@ -15,20 +15,12 @@
   import RatingPropertyPreview from "./RatingPropertyPreview.svelte";
   import { OperatingSystem } from "$lib/client/types/context.type";
   import context from "$lib/client/stores/context.store";
+  import { resolvePropertyDefaultConfig } from "../property.utils";
   export let property: IProperty;
   let ref: any;
   let popoverOptions = {};
   if (!property.config || !property.config?.ratingAvatar) {
-    property.config = {
-      ratingAvatar: {
-        type: AvatarType.ICON,
-        code: "&#XF09A",
-        name: "star_outline",
-        frequency: 0,
-        isFilled: false,
-        color: "bg"
-      }
-    };
+    property.config = resolvePropertyDefaultConfig(property.type);
   }
   function onavatarclick(e: CustomEvent) {
     console.log("onavatarclick", e.detail);
@@ -37,7 +29,7 @@
 </script>
 
 {#if property.config?.ratingAvatar}
-  <div class="flex gap-2 w-full h-full items-center">
+  <div class="flex gap-2 px-3 w-full h-full items-center">
     <Popover
       bind:this={ref}
       triggerClass={`flex items-center h-full gap-2 ${$context.os !== OperatingSystem.IOS ? "w-1/5" : ""}`}
@@ -45,7 +37,7 @@
     >
       {#if $context.os !== OperatingSystem.IOS}
         <AvatarRenderer avatar={property.config?.ratingAvatar} size={Size.md} />
-        <Icon icon="chevdown" />
+        <Icon icon="ph:caret-down-light" size={Size.sm} />
       {/if}
       <svelte:fragment slot="popover">
         <!-- TODO - only show icons that can be fillable -->

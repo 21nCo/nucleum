@@ -64,6 +64,7 @@ import { generateResourceId } from "$lib/shared/utils/surreal.utils";
 import { toasts } from "$lib/client/stores/notification.store";
 import { fileStore } from "$lib/client/components/files/file.store";
 import { recursivelyExtractAllChildrenIntoArray } from "$lib/client/components/markdown/markdown.utils";
+import type { IBlock } from "$lib/client/components/markdown/md.type";
 
 export const hierarchyFactorLimit = 5;
 
@@ -390,9 +391,28 @@ export class ActiveNodeStore extends ActiveResourceStore<
       }
     ]);
   };
+
+  createBlocks = async (
+    blocks: {
+      id: IRecordId;
+      contentType: NodeType;
+      body: any;
+    }[]
+  ) => {
+    return this.resourceStore.create(
+      blocks.map((x) => ({
+        id: x.id,
+        contentType: x.contentType,
+        creationContext: this.id,
+        body: x.body
+      }))
+    );
+  };
+
   deleteBlock = async (id: string) => {
     return this.resourceStore.trash(id);
   };
+
   mention = async (
     location: string,
     id: string,

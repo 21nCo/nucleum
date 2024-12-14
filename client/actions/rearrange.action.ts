@@ -141,11 +141,16 @@ function isTextElementFocused() {
 interface DragDropOptions {
   listId: string;
   draggedOverClass: string;
+  onDrop?: (e: DragDropEvent) => void;
 }
 
-interface DragDropEvent {
+export interface DragDropEvent {
   from: number;
   to: number;
+  fromId?: string;
+  toId?: string;
+  fromGroupId?: string;
+  toGroupId?: string;
   listId: string;
 }
 
@@ -177,6 +182,8 @@ export const reorderList: Action<HTMLElement, DragDropOptions> = (
     }
     if (!(e.target instanceof HTMLElement) || !e.dataTransfer) return;
     e.dataTransfer.setData("text/plain", e.target.dataset.index || "");
+    e.dataTransfer.setData("text/group-id", e.target.dataset.groupId || "");
+    e.dataTransfer.setData("text/id", e.target.dataset.id || "");
     e.dataTransfer.effectAllowed = "move";
   }
 
@@ -205,12 +212,33 @@ export const reorderList: Action<HTMLElement, DragDropOptions> = (
     target.classList.remove(...draggedOverClasses);
 
     const fromIndex = parseInt(e.dataTransfer.getData("text/plain") || "-1");
+    const fromGroupId = e.dataTransfer.getData("text/group-id");
+    const fromId = e.dataTransfer.getData("text/id");
     const toIndex = parseInt(target.dataset.index || "-1");
+    const toGroupId = target.dataset.groupId;
+    const toId = target.dataset.id;
 
     if (fromIndex !== -1 && toIndex !== -1 && fromIndex !== toIndex) {
+      options.onDrop?.({
+        from: fromIndex,
+        to: toIndex,
+        fromGroupId,
+        toGroupId,
+        fromId,
+        toId,
+        listId
+      });
       node.dispatchEvent(
         new CustomEvent<DragDropEvent>("reorder", {
-          detail: { from: fromIndex, to: toIndex, listId },
+          detail: {
+            from: fromIndex,
+            to: toIndex,
+            fromGroupId,
+            toGroupId,
+            fromId,
+            toId,
+            listId
+          },
           bubbles: true
         })
       );

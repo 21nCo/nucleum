@@ -223,6 +223,9 @@
       case BlockAction.INSERT:
         onInsert(e);
         break;
+      case BlockAction.INSERT_MANY:
+        onInsertMany(e);
+        break;
       case BlockAction.CONVERT:
         onConvert(e);
         break;
@@ -241,6 +244,13 @@
       const result = await node.createBlock(detail.id, blockType, {
         body: detail.body ?? (blockType === NodeType.SIMPLE_TEXT ? "" : null)
       });
+    }
+
+    async function onInsertMany(e: CustomEvent) {
+      logger.log({ at: "NodeContent - onInsertMany", ...e.detail });
+      const detail = e.detail;
+      if (!detail?.blocks) return;
+      const result = await node.createBlocks(detail.blocks);
     }
 
     /**

@@ -19,6 +19,11 @@
   import { KeyboardKey } from "$lib/client/types/keyboard.type";
   import type { IRecordId } from "$lib/client/types/data.type";
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  import {
+    reorderList,
+    type DragDropEvent
+  } from "$lib/client/actions/rearrange.action";
+  import { shiftResourceInArray } from "../flux/resourceStores/resource.utils";
 
   /**
    * Propagates the event to the parent component.
@@ -82,6 +87,29 @@
       mdStore.focus.set({ id: md.blocks[0].id });
     }
   }
+
+  function onReorderBlocks(event: DragDropEvent) {
+    logger.log({ event, at: "Markdown.svelte onReorderBlocks" });
+    if (
+      !event ||
+      event.listId !== "markdown" ||
+      !event.fromId ||
+      !event.toId ||
+      event.fromId === event.toId
+    )
+      return;
+
+    $mdStore.blocks = shiftResourceInArray(
+      $mdStore.blocks,
+      event.fromId,
+      event.toId,
+      true
+    );
+
+    dispatch("rearrange", {
+      md: { ...md, blocks: $mdStore.blocks }
+    });
+  }
 </script>
 
 <button
@@ -127,7 +155,15 @@
       {/if}
     </div>
   </div>
-  <div id="mdContent" class="grow w-full">
+  <div
+    id="mdContent"
+    class="grow w-full"
+    use:reorderList={{
+      listId: "markdown",
+      draggedOverClass: "!border-b-aps1 !rounded-none",
+      onDrop: onReorderBlocks
+    }}
+  >
     {#if isValidAndUniqueArray($mdStore.blocks)}
       {#each $mdStore.blocks as block (block.id)}
         <Block

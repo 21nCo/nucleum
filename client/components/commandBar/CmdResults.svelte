@@ -6,11 +6,12 @@
   import { createEventDispatcher } from "svelte";
   import CmdResultItem from "./CmdResultItem.svelte";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
+  import type { ICommandAction } from "./cmd.type";
   const dispatch = createEventDispatcher();
   export let search: string = "";
-  let allActions: any[] = [];
-  let filteredActions: any[] = [];
-  let selectedAction: string = "";
+  let allActions: ICommandAction[] = [];
+  let filteredActions: ICommandAction[] = [];
+  let selectedAction: ICommandAction | null = null;
   loadAllActions();
   loadDefaultFilteredActions();
   $: if (search) {
@@ -19,15 +20,13 @@
           x.cmdLabel.toLowerCase().includes(search.toLowerCase())
         )
       : allActions;
-    selectedAction = filteredActions?.[0]?.action;
+    selectedAction = filteredActions?.[0];
   } else {
     loadDefaultFilteredActions();
-    selectedAction = filteredActions?.[0]?.action;
+    selectedAction = filteredActions?.[0];
   }
   export function moveSelection(direction: "up" | "down") {
-    const currentIndex = filteredActions?.findIndex(
-      (x) => x.action === selectedAction
-    );
+    const currentIndex = filteredActions?.findIndex(findInList(selectedAction));
     let nextIndex = currentIndex;
     if (direction === "down") {
       nextIndex = Math.min(currentIndex + 1);
@@ -40,16 +39,16 @@
         nextIndex = filteredActions?.length - 1;
       }
     }
-    selectedAction = filteredActions?.[nextIndex]?.action;
+    selectedAction = filteredActions?.[nextIndex];
   }
   export function select() {
     if (selectedAction) {
-      const action = filteredActions.find((x) => x.action === selectedAction);
+      const action = filteredActions.find(findInList(selectedAction));
       if (action && action.type === ActionType.SEARCH_CMD) {
         dispatch("searchAction", action);
       } else {
         dispatch("close");
-        appStore.runAction(selectedAction, {
+        appStore.runAction(selectedAction.action, {
           componentParams: {
             isCmdBarLaunch: true
           }
@@ -59,13 +58,23 @@
         $userPreferences.recentCommands
       );
       if (recentCommands) {
-        if (recentCommands.includes(selectedAction)) {
-          recentCommands = recentCommands.filter((x) => x !== selectedAction);
+        if (recentCommands.some(findInList(selectedAction))) {
+          recentCommands = recentCommands.filter(
+            (x) => !findInList(selectedAction)(x)
+          );
         }
-        recentCommands.unshift(selectedAction);
+        recentCommands.unshift({
+          action: selectedAction.action,
+          variant: selectedAction.variant
+        });
         recentCommands = recentCommands.slice(0, 5);
       } else {
-        recentCommands = [selectedAction];
+        recentCommands = [
+          {
+            action: selectedAction.action,
+            variant: selectedAction.variant
+          }
+        ];
       }
       $userPreferences.recentCommands = recentCommands;
     }
@@ -85,7 +94,10 @@
         action.cmdLabel = action.label;
       }
       if (action.cmdLabel && typeof action.cmdLabel === "string") {
-        allActions.push(action);
+        allActions.push({
+          ...action,
+          cmdLabel: action.cmdLabel
+        });
       } else if (
         action.cmdLabel &&
         typeof action.cmdLabel != "string" &&
@@ -95,7 +107,8 @@
           ...action.cmdLabel.map((x) => {
             return {
               ...action,
-              cmdLabel: x
+              variant: x.variant,
+              cmdLabel: x.label
             };
           })
         );
@@ -108,15 +121,36 @@
     );
     if (recentCommands) {
       filteredActions = allActions.filter(
-        (x) => !recentCommands.includes(x.action)
+        (x) => !recentCommands.some(findInList(x))
       );
       const recentActions = recentCommands
-        .map((x) => allActions.find((y) => y.action === x))
+        .map((x) => allActions.find(findInList(x)))
         .filter((x) => x);
       filteredActions = [...recentActions, ...filteredActions];
     } else {
       filteredActions = allActions;
     }
+  }
+
+  function isSameAction(toCheck: ICommandAction | null, item: ICommandAction) {
+    if (
+      !toCheck ||
+      typeof toCheck !== "object" ||
+      !item ||
+      typeof item !== "object"
+    )
+      return false;
+    if (toCheck.variant) {
+      return item.action === toCheck.action && item.variant === toCheck.variant;
+    }
+    return item.action === toCheck.action;
+  }
+
+  function findInList(toCheck: ICommandAction | null) {
+    if (!toCheck) return () => false;
+    return (item: ICommandAction) => {
+      return isSameAction(toCheck, item);
+    };
   }
 </script>
 
@@ -125,9 +159,9 @@
     {search}
     {action}
     {index}
-    isActive={selectedAction === action.action}
+    isActive={isSameAction(selectedAction, action)}
     on:click={() => {
-      selectedAction = action.action;
+      selectedAction = action;
       select();
     }}
   />

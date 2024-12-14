@@ -47,7 +47,6 @@
     let result;
     if (primaryAction?.callback) result = await primaryAction?.callback();
     isPrimaryActionInProgress = false;
-    console.log({ result });
     if (result && result.error) {
       error = result.error;
       return;

@@ -59,6 +59,7 @@ class Flux {
   private isLocalMode: boolean = false;
   private isExtensionEnvironment: boolean = false;
   private isSyncDownPending: boolean = false;
+  private isSyncUpPending: boolean = false;
   private constructor() {
     this.isExtensionEnvironment = isExtensionEnvironment();
   }
@@ -449,7 +450,7 @@ class Flux {
         result
       });
       if (method === SyncMethod.SYNC_UP) {
-        if (response && response.length > 0) {
+        if (response && response?.length > 0) {
           const syncDownData = response[response.length - 1];
           if (syncDownData?.result) {
             return { response, syncDownData: syncDownData.result };
@@ -491,6 +492,8 @@ class Flux {
         console.log("offline detected - extension");
         return;
       } else if (isOffline) return;
+      if (this.isSyncUpPending) return;
+      this.isSyncUpPending = true;
       logger.log({
         at: "flux.sync",
         mutation,
@@ -519,13 +522,15 @@ class Flux {
           resources,
           dapId
         });
-        await this.persistence.mutation(Resource.kv, {
-          record: {
-            id: "kv:local",
-            lastSyncUp: mutations[mutations.length - 1].timestamp
-          },
-          action: PersistenceActionType.MERGE
-        });
+        if (response && !response.response?.error) {
+          await this.persistence.mutation(Resource.kv, {
+            record: {
+              id: "kv:local",
+              lastSyncUp: mutations[mutations.length - 1].timestamp
+            },
+            action: PersistenceActionType.MERGE
+          });
+        }
       }
       logger.log({ at: "flux.sync - response", mutation, response });
       if (response?.syncDownData) {
@@ -534,6 +539,8 @@ class Flux {
       return response;
     } catch (e) {
       logger.error({ at: "flux.sync", error: e });
+    } finally {
+      this.isSyncUpPending = false;
     }
   }
 
