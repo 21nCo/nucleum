@@ -3,50 +3,76 @@ import { get } from "svelte/store";
 import { nodeStore, vectorResourceStore } from "../node/node.store";
 import { NodeType } from "../node/node.type";
 import { TacoActions } from "./taco.types";
+import { tacoWorker } from "../memotron.utils";
 
-export async function verifyVectorGenerationTransactionNUpdate(
-  isRegenerateForAll: boolean = false
-) {
-  if (
-    !get(userPreferences).localAI.semanticSearch ||
-    !get(userPreferences).localAI.vectorGenerationInProgress
-  )
-    return;
-
-  let nodes;
-  if (isRegenerateForAll) {
-    nodes = await nodeStore.selectMany({
-      filters: {
-        contentType: [
-          NodeType.NODULAR_MARKDOWN,
-          NodeType.HEADING1,
-          NodeType.HEADING2,
-          NodeType.HEADING3,
-          NodeType.HEADING4,
-          NodeType.HEADING5
-        ]
-      }
-    });
-    const vectors = await vectorResourceStore.selectMany();
-    for (let vector of vectors) {
-      await vectorResourceStore.delete(vector.id);
+export async function initializeTaco() {
+  try {
+    const userPref = get(userPreferences);
+    if (userPref.localAI.semanticSearch) {
+      tacoWorker.postMessage({
+        action: TacoActions.INITIALIZE_FEATURE_EXTRACTOR
+      });
+      tacoWorker.onmessage = (e) => {
+        if (e.data.status == "ready") {
+          console.log("semantic model initialized");
+          runVectorGeneration();
+        }
+      };
     }
-  } else
-    nodes = await nodeStore.selectMany({
-      filters: {
-        contentType: [
-          NodeType.NODULAR_MARKDOWN,
-          NodeType.HEADING1,
-          NodeType.HEADING2,
-          NodeType.HEADING3,
-          NodeType.HEADING4,
-          NodeType.HEADING5
-        ],
-        vector: false
-      }
-    });
+    if (userPref.localAI.audioTranscription) {
+      tacoWorker.postMessage({
+        action: TacoActions.INITIALIZE_TRANSCRIBER
+      });
+    }
+  } catch (error) {
+    console.error("initializeTaco", error);
+  }
+}
 
-  if (nodes.length > 0) {
+export async function runVectorGeneration(isRegenerateForAll: boolean = false) {
+  try {
+    const userPref = get(userPreferences);
+    if (
+      !userPref.localAI.semanticSearch ||
+      userPref.localAI.vectorGenerationInProgress === true
+    )
+      return;
+
+    let nodes;
+    if (isRegenerateForAll) {
+      nodes = await nodeStore.selectMany({
+        filters: {
+          contentType: [
+            NodeType.NODULAR_MARKDOWN,
+            NodeType.HEADING1,
+            NodeType.HEADING2,
+            NodeType.HEADING3,
+            NodeType.HEADING4,
+            NodeType.HEADING5
+          ]
+        }
+      });
+      const vectors = await vectorResourceStore.selectMany();
+      for (let vector of vectors) {
+        await vectorResourceStore.delete(vector.id);
+      }
+    } else
+      nodes = await nodeStore.selectMany({
+        filters: {
+          contentType: [
+            NodeType.NODULAR_MARKDOWN,
+            NodeType.HEADING1,
+            NodeType.HEADING2,
+            NodeType.HEADING3,
+            NodeType.HEADING4,
+            NodeType.HEADING5
+          ],
+          vector: false
+        }
+      });
+
+    console.log("nodes without vector: ", nodes.length);
+    if (nodes.length === 0) return;
     userPreferences.modify({
       localAI: {
         ...get(userPreferences).localAI,
@@ -68,10 +94,6 @@ export async function verifyVectorGenerationTransactionNUpdate(
       if (e.data.params) {
         const { vectorRecords, updatedNodes } = e.data.params;
         const resp = await vectorResourceStore.create(vectorRecords);
-        // const noderesp = await flux.mutation<T>(Resource.node, {
-        //   action: PersistenceActionType.BULK_MERGE,
-        //   records: updatedNodes
-        // });
         /**
          * the current bulkmodify applies the same value to all nodes, here the requirement for bulkmodify is different values for different nodes. until that store modifcation is done utilizing this temporarily.
          */
@@ -82,15 +104,11 @@ export async function verifyVectorGenerationTransactionNUpdate(
           });
         }
       }
-      userPreferences.modify({
-        localAI: {
-          ...get(userPreferences).localAI,
-          vectorGenerationInProgress: false
-        }
-      });
       semanticSearchWorker.terminate();
     };
-  } else {
+  } catch (error) {
+    console.error("verifyVectorGenerationTransactionNUpdate", error);
+  } finally {
     userPreferences.modify({
       localAI: {
         ...get(userPreferences).localAI,

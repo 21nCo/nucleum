@@ -10,6 +10,7 @@
   import DashboardLoadingPulse from "./animations/DashboardPulse/DashboardLoadingPulse.svelte";
   import NoResultsIllustration from "$lib/client/illustrations/NoResultsIllustration.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
+  import Icon from "../Icon.svelte";
   export let mainText: string | undefined = undefined;
   export let subText: string | undefined = undefined;
   export let size: Size.sm | Size.md | Size.lg = Size.md;
@@ -27,7 +28,8 @@
   {#if isLoadingState && loadingAnimation === LoadingAnimationType.SPINNER}
     <div class="text-fgs3 text-b3 flex flex-col gap-4 items-center">
       <!-- <InlineLoadingAnimation /> -->
-      <PageLoadingAnimation variant="panel-refresh" />
+      <!-- <PageLoadingAnimation variant="panel-refresh" /> -->
+      <Icon icon="svg-spinners:180-ring-with-bg" size={Size.lg} />
       {#if loadingText}
         <div>{loadingText}</div>
       {/if}

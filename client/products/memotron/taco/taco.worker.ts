@@ -16,7 +16,13 @@ onmessage = (e: any) => {
 
   switch (action) {
     case TacoActions.INITIALIZE_TRANSCRIBER:
-      Transcriber.initAll();
+      if (!Transcriber.built) {
+        Transcriber.initAll();
+      } else {
+        postMessage({
+          status: "ready"
+        });
+      }
       break;
     case TacoActions.RESET_TRANSCRIBER:
       Transcriber.built = false;
@@ -24,10 +30,16 @@ onmessage = (e: any) => {
     case TacoActions.GET_TRANSCRIPTION:
       Transcriber.transcribe(e.data.params.audioData, e.data.params.model);
       break;
-    case TacoActions.INITIAlIZE_FEATURE_EXTRACTOR:
-      FeatureExtractor.init((progress: any) => {
-        postMessage(progress);
-      });
+    case TacoActions.INITIALIZE_FEATURE_EXTRACTOR:
+      if (!FeatureExtractor.built) {
+        FeatureExtractor.init((progress: any) => {
+          postMessage(progress);
+        });
+      } else {
+        postMessage({
+          status: "ready"
+        });
+      }
       break;
     case TacoActions.RESET_FEATURE_EXTRACTOR:
       FeatureExtractor.built = false;

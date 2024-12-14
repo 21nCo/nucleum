@@ -565,6 +565,7 @@ class Flux {
             greaterThan: +lastSyncUp
           }
         },
+        limit: 100,
         orderBy: {
           timestamp: "asc"
         }

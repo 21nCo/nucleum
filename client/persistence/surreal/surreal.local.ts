@@ -607,11 +607,12 @@ export class SurrealPersistence implements IPersistence {
             text: params.search.query
           }
         });
-        this.queryEmbedding = await new Promise((resolve, reject) => {
+        const result: any = await new Promise((resolve, reject) => {
           tacoWorker.onmessage = (e) => {
             resolve(e.data);
           };
         });
+        this.queryEmbedding = result?.data;
         properties.push(
           `vector::similarity::cosine(embedding,[${this.queryEmbedding}]) AS dist`
         );

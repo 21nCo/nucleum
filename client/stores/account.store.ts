@@ -8,7 +8,10 @@ import {
 import { postToParent } from "$lib/client/utils/embed.utils";
 import { Persistence } from "../persistence/persistence";
 import { ButtonVariant } from "../types/button.type";
-import { performApiCall } from "$lib/client/utils/network.utils";
+import {
+  determineIfOffline,
+  performApiCall
+} from "$lib/client/utils/network.utils";
 import {
   confirmationNotification,
   toasts
@@ -209,6 +212,8 @@ class AccountStore extends ObservableStore<
 
   async ping() {
     this.postToEmbed();
+    const isOffline = await determineIfOffline();
+    if (isOffline) return;
     const response = await this.persistence.ping();
     const user = response?.[0]?.result?.[0];
     if (!response) {

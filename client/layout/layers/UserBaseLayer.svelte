@@ -32,21 +32,15 @@
     UserDataMode,
     UserSessionType
   } from "$lib/client/types/account.type";
-  import {
-    ClientStorageKey,
-    PersistenceProvider
-  } from "$lib/client/persistence/persistence.type";
-  import {
-    clientStorage,
-    getDapId
-  } from "$lib/client/persistence/persistence.utils";
+  import { PersistenceProvider } from "$lib/client/persistence/persistence.type";
+  import { getDapId } from "$lib/client/persistence/persistence.utils";
   import PageError from "$lib/client/components/error/PageError.svelte";
   import { SurrealPersistence } from "$lib/client/persistence/surreal/surreal.local";
   import { Embed } from "$lib/client/types/context.type";
   import posthog from "posthog-js";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
-  import { verifyVectorGenerationTransactionNUpdate } from "$lib/client/products/memotron/taco/taco.store";
+  import { initializeTaco } from "$lib/client/products/memotron/taco/taco.store";
 
   const loadingMessages = {
     cloneUp: {
@@ -80,8 +74,8 @@
     addWindowEventListeners();
     await initializeUser();
     dispatch("ready");
-    verifyVectorGenerationTransactionNUpdate();
     $appLoadingState.isBaseLoaded = true;
+    initializeTaco();
   });
   /**
    * Refreshes the timezone of the user. If the user is signing up, it will set & persist the timezone to the detected timezone. If the user is logged in, it will set the timezone to the detected timezone only if the timezone is different from the saved timezone.

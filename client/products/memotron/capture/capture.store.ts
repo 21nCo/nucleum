@@ -57,6 +57,7 @@ import context from "$lib/client/stores/context.store";
 import { Embed } from "$lib/client/types/context.type";
 import { TacoActions } from "../taco/taco.types";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+import { runVectorGeneration } from "../taco/taco.store";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
@@ -86,6 +87,10 @@ function generateSeedStore(): ICaptureStore {
 
 class CaptureStore extends KeyValueStore<ICaptureStore> {
   private saveFeedbackTimeout: NodeJS.Timeout | null = null;
+  /**
+   * Disabling vector generation on save for now - as it is delaying the save process significantly sometimes.
+   */
+  private dev_isEnableVectorGenOnSave = false;
   constructor() {
     super(Resource.capture, { ...generateSeedStore() });
   }
@@ -529,7 +534,8 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
 
         if (
           get(userPreferences).localAI.semanticSearch &&
-          ctx.embed !== Embed.HANDSET
+          ctx.embed !== Embed.HANDSET &&
+          this.dev_isEnableVectorGenOnSave
         ) {
           console.time("vector");
           try {
@@ -591,7 +597,8 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
 
           if (
             get(userPreferences).localAI.semanticSearch &&
-            ctx.embed !== Embed.HANDSET
+            ctx.embed !== Embed.HANDSET &&
+            this.dev_isEnableVectorGenOnSave
           ) {
             try {
               const eventId = block.id.toString();
@@ -651,6 +658,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     });
     await this.saveLinks(id);
     this.postSave(result);
+    runVectorGeneration();
     console.timeEnd("saveMarkdownCapture");
     return result;
   }

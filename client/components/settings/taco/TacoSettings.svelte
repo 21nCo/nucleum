@@ -14,7 +14,7 @@
     TacoActions,
     TacoLocalAIOptions
   } from "$lib/client/products/memotron/taco/taco.types";
-  import { verifyVectorGenerationTransactionNUpdate } from "$lib/client/products/memotron/taco/taco.store";
+  import { runVectorGeneration } from "$lib/client/products/memotron/taco/taco.store";
   import { appStore } from "$lib/client/stores/app.store";
 
   export let isCmdBarLaunch: boolean = false;
@@ -46,7 +46,7 @@
       isDisabled = false;
       if (currentToggle == TacoLocalAIOptions.SEMANTIC_SEARCH) {
         $userPreferences.localAI.vectorGenerationInProgress = true;
-        verifyVectorGenerationTransactionNUpdate();
+        runVectorGeneration();
       }
     }
   }
@@ -54,7 +54,7 @@
     if (e.detail) {
       isDisabled = true;
       tacoWorker.postMessage({
-        action: TacoActions.INITIAlIZE_FEATURE_EXTRACTOR
+        action: TacoActions.INITIALIZE_FEATURE_EXTRACTOR
       });
       tacoWorker.onmessage = (e) => {
         progressUpdate(e, TacoLocalAIOptions.SEMANTIC_SEARCH);
@@ -162,7 +162,7 @@
         label="Regenerate-Vectors-For-All-MDs"
         on:click={() => {
           $userPreferences.localAI.vectorGenerationInProgress = true;
-          verifyVectorGenerationTransactionNUpdate(true);
+          runVectorGeneration(true);
         }}
       />
     {/if}
