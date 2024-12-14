@@ -85,7 +85,6 @@
     event.preventDefault();
   }
   function isValidConfiguration() {
-    console.log({ key, modifiers });
     if (!key || !modifiers) {
       dispatch("error", "Invalid shortcut");
       return false;

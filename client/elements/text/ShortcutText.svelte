@@ -5,6 +5,7 @@
   import { GlobalEvent } from "$lib/client/types/event.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { bg, cn } from "$lib/client/utils/ui.utils";
+  import { onMount } from "svelte";
   import Icon from "../Icon.svelte";
   export let shortcut: string;
   export let parentBgIndex: number | undefined = undefined;
@@ -24,6 +25,15 @@
     );
     return text;
   }
+  onMount(() => {
+    const unsubscribe = keyboardShortcuts.subscribe((x) => {
+      text = resolveText(shortcut);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  });
 </script>
 
 <span
