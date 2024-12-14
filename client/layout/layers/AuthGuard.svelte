@@ -59,12 +59,12 @@
       return false;
     }
     let isSessionExpiredOrRefreshing = await account.checkIfSessionExpired();
-    if (isSessionExpiredOrRefreshing && $isRefreshingToken) {
-      while ($isRefreshingToken) {
-        await wait(1000);
-      }
-    }
-    isSessionExpiredOrRefreshing = await account.checkIfSessionExpired();
+    // if (isSessionExpiredOrRefreshing && $isRefreshingToken) {
+    //   while ($isRefreshingToken) {
+    //     await wait(1000);
+    //   }
+    // }
+    // isSessionExpiredOrRefreshing = await account.checkIfSessionExpired();
     if (isSessionExpiredOrRefreshing) {
       appStore.gotoPath("/signup?msg=expired");
       return false;

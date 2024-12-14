@@ -413,6 +413,7 @@ class AccountStore extends ObservableStore<
     if (currentTime < exp) {
       return false;
     }
+    clientStorage.remove(ClientStorageKey.STOKEN);
     const refreshToken = localStorage.getItem("refresh-token");
     if (!refreshToken) {
       return true;

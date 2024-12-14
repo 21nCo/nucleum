@@ -29,7 +29,8 @@
       "bg-aps3 border-y border-aps2 hover:bg-aps2 hover:bg-opacity-50 text-aps1":
         isActive && isOutlineStyle,
       [abg()]: !isOutlineStyle && isActive,
-      "px-2 py-3 rounded-md": orientation === Orientation.Vertical,
+      "px-2 py-3 rounded-md hover:bg-bgs3":
+        orientation === Orientation.Vertical,
       [bg(
         orientation === Orientation.Vertical
           ? parentBackgroundIndex

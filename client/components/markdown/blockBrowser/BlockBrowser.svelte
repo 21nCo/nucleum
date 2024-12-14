@@ -102,6 +102,14 @@
         icon: "list",
         isDisabled: true,
         badge: "planned"
+      },
+      {
+        label: "Tree of links",
+        description: "Embed tree of links",
+        type: NodeType.TREE_OF_LINKS,
+        icon: "ph:tree-view-thin",
+        isDisabled: true,
+        badge: "planned"
       }
     ]
   };
