@@ -403,27 +403,59 @@
    * Handles escape shortcuts for text, structural and list nodes when entered at the start of the block
    */
   function performEscapeShortcutsT2() {
+    const nodeContentType = nodeContext?.contentType;
     const textEscapeShortcuts: {
       shortcut: string;
       type: SimpleTextNodeType;
-    }[] = [
-      { shortcut: "# ", type: NodeType.HEADING1 },
-      { shortcut: "## ", type: NodeType.HEADING2 },
-      { shortcut: "### ", type: NodeType.HEADING3 },
-      { shortcut: "#### ", type: NodeType.HEADING4 },
-      { shortcut: "##### ", type: NodeType.HEADING5 },
-      { shortcut: '" ', type: NodeType.QUOTE }
-    ];
+    }[] = [{ shortcut: '" ', type: NodeType.QUOTE }];
+    if (nodeContentType !== NodeType.HEADING4) {
+      textEscapeShortcuts.unshift({
+        shortcut: "#### ",
+        type: NodeType.HEADING4
+      });
+    }
+    if (![NodeType.HEADING3, NodeType.HEADING4].includes(nodeContentType)) {
+      textEscapeShortcuts.unshift({
+        shortcut: "### ",
+        type: NodeType.HEADING3
+      });
+    }
+    if (
+      ![NodeType.HEADING2, NodeType.HEADING3, NodeType.HEADING4].includes(
+        nodeContentType
+      )
+    ) {
+      textEscapeShortcuts.unshift({
+        shortcut: "## ",
+        type: NodeType.HEADING2
+      });
+    }
+    if (
+      ![
+        NodeType.HEADING1,
+        NodeType.HEADING2,
+        NodeType.HEADING3,
+        NodeType.HEADING4
+      ].includes(nodeContentType)
+    ) {
+      textEscapeShortcuts.unshift({
+        shortcut: "# ",
+        type: NodeType.HEADING1
+      });
+    }
+
     const structuralEscapeShortcuts = [
       { shortcut: "---", type: NodeType.DIVIDER },
       { shortcut: "===", type: NodeType.DOUBLE_DIVIDER }
     ];
+
     const listEscapeShortcuts = [
       { shortcut: "* ", type: NodeType.LIST },
       { shortcut: "- ", type: NodeType.LIST },
       { shortcut: "+ ", type: NodeType.CHECKLIST },
       { shortcut: "1. ", type: NodeType.ORDERED_LIST }
     ];
+
     const isTextShortcutPresent = textEscapeShortcuts.some(
       ({ shortcut, type }) => {
         if (text.startsWith(shortcut)) {

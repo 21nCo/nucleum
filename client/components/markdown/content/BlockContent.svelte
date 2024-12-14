@@ -44,6 +44,7 @@
     <HeadingContent
       id={block.id}
       bind:text={block.label}
+      bind:isFocusing
       {mdStore}
       contentType={block.contentType}
       on:update

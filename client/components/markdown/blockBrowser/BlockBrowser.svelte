@@ -11,12 +11,15 @@
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { properCase } from "$lib/shared/utils/text.utils";
   import BlockItem from "./BlockItem.svelte";
-  import { createEventDispatcher } from "svelte";
+  import { createEventDispatcher, getContext } from "svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import Badge from "$lib/client/elements/text/Badge.svelte";
   import context from "$lib/client/stores/context.store";
   import { Embed } from "$lib/client/types/context.type";
+  import type { IBlockBrowserSection } from "./blockBrowser.type";
   const dispatch = createEventDispatcher();
+  const nodeContext = getContext<any>("node");
+
   export let variant: "v1" | "v2" = "v2";
   export let isSingleColumnMode: boolean = false;
   export let onSelect: (e: any) => void = () => {};
@@ -24,7 +27,7 @@
   let selectedSection = "";
   let focusedItem: any;
 
-  let embedSection = {
+  let embedSection: IBlockBrowserSection = {
     section: "embed",
     children: [
       {
@@ -103,7 +106,7 @@
     ]
   };
 
-  let layoutSection = {
+  let layoutSection: IBlockBrowserSection = {
     section: "layout",
     children: [
       {
@@ -166,7 +169,7 @@
       }
     ]
   };
-  let mediaSection = {
+  let mediaSection: IBlockBrowserSection = {
     section: "media",
     children: [
       {
@@ -210,7 +213,7 @@
     ]
   };
 
-  let listsSection = {
+  let listsSection: IBlockBrowserSection = {
     section: "lists",
     children: [
       {
@@ -237,7 +240,7 @@
     ]
   };
 
-  let inlineSection = {
+  let inlineSection: IBlockBrowserSection = {
     section: "inline",
     children: [
       {
@@ -264,46 +267,8 @@
       }
     ]
   };
-  let headingsSection = {
-    section: "headings",
-    children: [
-      {
-        label: "Heading 1",
-        description: "Heading 1 block",
-        type: NodeType.HEADING1,
-        // icon: "lucide:heading-1"
-        icon: "hugeicons:heading-01"
-      },
-      {
-        label: "Heading 2",
-        description: "Heading 2 block",
-        type: NodeType.HEADING2,
-        // icon: "lucide:heading-2"
-        icon: "hugeicons:heading-02"
-      },
-      {
-        label: "Heading 3",
-        description: "Heading 3 block",
-        type: NodeType.HEADING3,
-        // icon: "lucide:heading-3"
-        icon: "hugeicons:heading-03"
-      },
-      {
-        label: "Heading 4",
-        description: "Heading 4 block",
-        type: NodeType.HEADING4,
-        // icon: "lucide:heading-4"
-        icon: "hugeicons:heading-04"
-      }
-      // {
-      //   label: "Heading 5",
-      //   description: "Heading 5 block",
-      //   type: NodeType.HEADING5,
-      //   icon: "lucide:heading-5"
-      // }
-    ]
-  };
-  let textSection = {
+  let headingsSection = resolveHeadingSection();
+  let textSection: IBlockBrowserSection = {
     section: "Text",
     children: [
       {
@@ -341,7 +306,7 @@
     ]
   };
 
-  let config =
+  let config: IBlockBrowserSection[] =
     $context.embed === Embed.HANDSET
       ? [textSection, headingsSection, listsSection]
       : [
@@ -352,6 +317,7 @@
           layoutSection,
           embedSection
         ];
+
   let filteredResults: any[] = config
     .map((section) => {
       return {
@@ -380,6 +346,7 @@
       section: sectionName
     };
   }
+
   function allFilteredBlocks() {
     if (searchQueryString) {
       return filteredResults
@@ -399,6 +366,7 @@
         .flat();
     }
   }
+
   export function key(key: "ArrowUp" | "ArrowDown" | "Enter") {
     let blocks = allFilteredBlocks();
     let index = blocks.indexOf(
@@ -419,6 +387,7 @@
       selectedSection = focusedItem.section;
     }
   }
+
   export function filter(query: string) {
     const newQueryString = query.split("/")[1];
     if (searchQueryString === newQueryString) {
@@ -448,6 +417,7 @@
     } else {
     }
   }
+
   function onSelection(e?: CustomEvent) {
     const item = e?.detail || focusedItem;
     if (item.isDisabled) return;
@@ -457,6 +427,75 @@
 
   function compareBlock(a: any, b: any) {
     return a.type + a.sub === b.type + b.sub;
+  }
+
+  function resolveHeadingSection(): IBlockBrowserSection {
+    const contentType = nodeContext?.contentType;
+    const isHeading1Disabled =
+      contentType === NodeType.HEADING1 ||
+      contentType === NodeType.HEADING2 ||
+      contentType === NodeType.HEADING3 ||
+      contentType === NodeType.HEADING4;
+    const isHeading2Disabled =
+      contentType === NodeType.HEADING2 ||
+      contentType === NodeType.HEADING3 ||
+      contentType === NodeType.HEADING4;
+    const isHeading3Disabled =
+      contentType === NodeType.HEADING3 || contentType === NodeType.HEADING4;
+    const isHeading4Disabled = contentType === NodeType.HEADING4;
+    const tooltip =
+      "Some headings are not available when a heading is zoomed in";
+    return {
+      section: "headings",
+      children: [
+        {
+          label: "Heading 1",
+          description: "Heading 1 block",
+          type: NodeType.HEADING1,
+          // icon: "lucide:heading-1"
+          icon: "hugeicons:heading-01",
+          isDisabled: isHeading1Disabled,
+          badge: isHeading1Disabled ? "NA" : undefined,
+          tooltip: isHeading1Disabled ? tooltip : undefined
+        },
+        {
+          label: "Heading 2",
+          description: "Heading 2 block",
+          type: NodeType.HEADING2,
+          // icon: "lucide:heading-2"
+          icon: "hugeicons:heading-02",
+          isDisabled: isHeading2Disabled,
+          badge: isHeading2Disabled ? "NA" : undefined,
+          tooltip: isHeading2Disabled ? tooltip : undefined
+        },
+        {
+          label: "Heading 3",
+          description: "Heading 3 block",
+          type: NodeType.HEADING3,
+          // icon: "lucide:heading-3"
+          icon: "hugeicons:heading-03",
+          isDisabled: isHeading3Disabled,
+          badge: isHeading3Disabled ? "NA" : undefined,
+          tooltip: isHeading3Disabled ? tooltip : undefined
+        },
+        {
+          label: "Heading 4",
+          description: "Heading 4 block",
+          type: NodeType.HEADING4,
+          // icon: "lucide:heading-4"
+          icon: "hugeicons:heading-04",
+          isDisabled: isHeading4Disabled,
+          badge: isHeading4Disabled ? "NA" : undefined,
+          tooltip: isHeading4Disabled ? tooltip : undefined
+        }
+        // {
+        //   label: "Heading 5",
+        //   description: "Heading 5 block",
+        //   type: NodeType.HEADING5,
+        //   icon: "lucide:heading-5"
+        // }
+      ]
+    };
   }
 </script>
 

@@ -31,12 +31,14 @@
     isLoading = true;
     await node.init(accessMode);
     nodeContext.parent = $node?.parent;
+    nodeContext.contentType = $node?.contentType;
     isLoading = false;
   }
 
   function contextEventListener(message: any) {}
   const nodeContext = {
     id,
+    contentType: $node?.contentType,
     parent: $node?.parent,
     publish: contextEventListener
   };

@@ -396,7 +396,7 @@
     use:tooltip={{
       disabled: isDisableTooltip || isPopoverVisible,
       text: isNodularizable
-        ? "Click ring to focus"
+        ? "Click ring to zoom in"
         : "Drag to rearrange / Click for options",
       direction: Placement.Bottom,
       delay: 500

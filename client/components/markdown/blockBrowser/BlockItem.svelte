@@ -1,17 +1,13 @@
 <script lang="ts">
   import Icon from "$lib/client/elements/Icon.svelte";
-  import type { InlineType } from "$lib/client/components/markdown/md.type";
-  import type { NodeType } from "$lib/client/products/memotron/node/node.type";
   import { createEventDispatcher } from "svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import Badge from "$lib/client/elements/text/Badge.svelte";
-  export let block: {
-    label: string;
-    type: NodeType | InlineType;
-    icon: string;
-    badge?: string;
-    isDisabled?: boolean;
-  };
+  import type { IBlockBrowserItem } from "./blockBrowser.type";
+  import { tooltip } from "$lib/client/actions/popover.action";
+  import { Placement } from "$lib/client/types/direction.enum";
+
+  export let block: IBlockBrowserItem;
   export let width: string = "w-full";
   export let isFocused: boolean = false;
   const dispatch = createEventDispatcher();
@@ -33,6 +29,11 @@
   )}
   on:click={() => {
     if (!block.isDisabled) dispatch("select", block);
+  }}
+  use:tooltip={{
+    disabled: !block.tooltip,
+    text: block.tooltip,
+    direction: Placement.Bottom
   }}
 >
   <div

@@ -286,7 +286,7 @@
     {#if $node.isInFocusMode}
       <BottomFloat margin={isConstrainedWidth ? "mb-8" : "mb-6"}>
         <button
-          class="flex justify-center items-center gap-2 bg-bgs2 rounded-md px-4 py-2 shadow-sm"
+          class="flex justify-center items-center gap-2 bg-bgs2 rounded-md px-4 py-2 shadow-sm hover:bg-bgs3"
           on:click={() => {
             nodeStore.toggleFocusMode($node.id, false);
           }}

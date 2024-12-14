@@ -38,13 +38,18 @@ export function tooltip(
   } = params;
   const baseClassList =
     "fixed z-50 px-3 bg-fgs2 text-bgs1 py-1 text-b3 shadow-md rounded-md pointer-events-none opacity-0 transition-opacity duration-200 tooltip";
+  let tooltipsContainer = document.getElementById("tooltips");
+
   function createTooltip(): void {
     if (!text || disabled) return;
     tooltipElement = document.createElement("div");
     tooltipElement.textContent = text;
     tooltipElement.className = `${baseClassList} ${classList}`;
-    const baseBodyElement = document.getElementById("base");
-    node.appendChild(tooltipElement);
+    if (tooltipsContainer) {
+      tooltipsContainer.appendChild(tooltipElement);
+    } else {
+      node.appendChild(tooltipElement);
+    }
   }
 
   function positionTooltip(): void {

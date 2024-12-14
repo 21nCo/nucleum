@@ -7,6 +7,7 @@
   export let text: string = "";
   export let contentType: NodeType;
   export let mdStore: MdStoreType;
+  export let isFocusing: boolean = false;
 </script>
 
-<TextContent bind:text on:update {id} {contentType} {mdStore} />
+<TextContent bind:text bind:isFocusing on:update {id} {contentType} {mdStore} />

@@ -53,7 +53,6 @@
   export let mdStore: MdStoreType;
   let isHovering: boolean = false;
   let isFocusing: boolean = false;
-  let dev_isShowFocusHintOnRight: boolean = false;
   let contentRefreshId: number = new Date().getTime();
   let isDragging: boolean = false;
   let progressState: string | undefined = undefined;
@@ -783,6 +782,23 @@
       addMention(x, blocks[index].id);
     });
   }
+
+  function resolveHeadingText(contentType: NodeType) {
+    switch (contentType) {
+      case NodeType.HEADING1:
+        return "H1";
+      case NodeType.HEADING2:
+        return "H2";
+      case NodeType.HEADING3:
+        return "H3";
+      case NodeType.HEADING4:
+        return "H4";
+      case NodeType.HEADING5:
+        return "H5";
+      default:
+        return "";
+    }
+  }
 </script>
 
 <!--TODO -  Note - when reenabling drag and drag to rearrange - make sure it is not interfering with text selection or media grid space slider -->
@@ -859,14 +875,12 @@
         <span class="text-fgs3 text-b2">{progressState}</span>
       </div>
     {/if}
-    {#if isHovering && isFocusable && !isFocusing && dev_isShowFocusHintOnRight}
+    {#if isHovering && isFocusable && !isFocusing}
       <div
-        class="absolute top-0 right-0 flex h-full items-center justify-center bg-gradient-to-r from-bgs2/40 via-bgs2 to-bgs2 pl-32"
+        class="absolute inset-y-0 right-0 flex items-center justify-center bg-gradient-to-r from-bgs2/40 via-bgs2 to-bgs2 pl-32 pr-2"
       >
-        <span class="text-b3 text-fgs1 rounded-md px-2 py-1">
-          Click
-          <FocusRing isHint={true} />
-          to focus
+        <span class="text-b3 text-fgs1 rounded-md px-2 py-1 bg-bgs3">
+          {resolveHeadingText(block.contentType)}
         </span>
       </div>
     {/if}

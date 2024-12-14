@@ -298,6 +298,7 @@
       <slot />
     {/if}
     <div id="popovers"></div>
+    <div id="tooltips"></div>
   </ThemeLayer>
 </div>
 <EmbedTelemetry />
