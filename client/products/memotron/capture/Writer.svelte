@@ -10,6 +10,8 @@
   import { setContext } from "svelte";
   import type { IRecordId } from "$lib/client/types/data.type";
   import CameraCapture from "./CameraCapture.svelte";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
 
   let mdRef: NodularMarkdown | undefined = undefined;
 
@@ -69,6 +71,9 @@
         bind:rootStructure={$captureStore.rootStructure}
         bind:this={mdRef}
         on:change
+        on:action={(e) => {
+          dispatch("change", e.detail);
+        }}
       />
     </div>
     <!-- TODO - add condition for if headings present or if mentions present -->

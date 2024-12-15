@@ -39,7 +39,7 @@
   {:else if block.contentType === NodeType.CALLOUT}
     <Callout id={block.id} body={block.body} {mdStore} {isHovering} on:update />
   {:else if block.contentType === NodeType.CODE}
-    <CodeContent body={block.body} on:update />
+    <CodeContent body={block.body} {mdStore} on:update on:delete />
   {:else if headingNodeTypes.includes(block.contentType)}
     <HeadingContent
       id={block.id}

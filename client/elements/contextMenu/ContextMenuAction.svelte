@@ -121,6 +121,7 @@
     <Toggle
       icon="ph:dots-three-vertical"
       {tooltip}
+      parentBgIndex={parentBgIndex + 1}
       isPreventFillOnActive={true}
       bind:on={isPopoverVisible}
     />

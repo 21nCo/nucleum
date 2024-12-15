@@ -77,7 +77,7 @@
 
   onMount(async () => {
     await refresh();
-    node.subscribe(async (x) => {
+    const unsubscribe = node.subscribe(async (x) => {
       let currentFocus = previousFocus;
       if (!x.focusedBlock) currentFocus = x.id;
       else currentFocus = x.focusedBlock;
@@ -89,6 +89,9 @@
         previousFocus = currentFocus;
       }
     });
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   });
 
   async function onSelect(e: CustomEvent<any>) {

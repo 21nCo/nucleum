@@ -20,11 +20,14 @@
   export let panelSize: Size.sm | Size.md | Size.lg = Size.md;
 
   onMount(() => {
-    appEvents.subscribe((e) => {
+    const unsubscribe = appEvents.subscribe((e) => {
       if (e.event === GlobalEvent.APP_MENU_SWITCHED) {
         isCollapsed = false;
       }
     });
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   });
 
   let isCollapsed = false;

@@ -2,13 +2,17 @@ import type {
   IBlockInterface,
   IMarkdownStore,
   ListBlockWithChildren,
-  IMarkdown
+  IMarkdown,
+  IBlock,
+  IEscapeShortcut
 } from "$lib/client/components/markdown/md.type";
-import type {
-  ListChild,
-  ListContent,
-  INode,
-  IActiveNode
+import {
+  type ListChild,
+  type ListContent,
+  type INode,
+  type IActiveNode,
+  type SimpleTextNodeType,
+  NodeType
 } from "$lib/client/products/memotron/node/node.type";
 import { deepCopy } from "$lib/shared/utils/obj.utils";
 
@@ -172,7 +176,7 @@ export const inlineStylingPatterns = [
     // '<span class="line-through">$1</span>'
   },
   {
-    regex: /`((?:\S|\s\S)+?)`/g,
+    regex: /`([^`]+)`(?!`)/g,
     // replacement: encapsulateInlinePattern("`", "<code>$1</code>")
     replacement: encapsulateInlinePattern(
       "`",
@@ -267,12 +271,10 @@ export function replaceSymbolPatterns(text: string) {
   return html;
 }
 
-export function isEmptyMd(md: IMarkdown) {
+export function isEmptyMd(md: IBlock[]) {
   return (
-    md?.blocks?.length === 0 ||
-    (md?.blocks?.length === 1 &&
-      "body" in md.blocks[0] &&
-      md.blocks[0].body === "")
+    md?.length === 0 ||
+    (md?.length === 1 && "body" in md[0] && md[0].body === "")
   );
 }
 
@@ -564,4 +566,123 @@ export function splitMarkdownAtPlainOffset(
   const after = markdown.substring(markdownOffset);
 
   return { before, after };
+}
+
+function getEscapeShortcuts(nodeContentType: NodeType) {
+  const textEscapeShortcuts: IEscapeShortcut[] = [
+    { shortcut: '" ', type: NodeType.QUOTE },
+    { shortcut: "> ", type: NodeType.QUOTE },
+    { shortcut: "&gt; ", type: NodeType.QUOTE },
+    { shortcut: "! ", type: NodeType.CALLOUT },
+    { shortcut: "```", type: NodeType.CODE }
+  ];
+  if (nodeContentType !== NodeType.HEADING4) {
+    textEscapeShortcuts.unshift({
+      shortcut: "#### ",
+      type: NodeType.HEADING4
+    });
+  }
+  if (![NodeType.HEADING3, NodeType.HEADING4].includes(nodeContentType)) {
+    textEscapeShortcuts.unshift({
+      shortcut: "### ",
+      type: NodeType.HEADING3
+    });
+  }
+  if (
+    ![NodeType.HEADING2, NodeType.HEADING3, NodeType.HEADING4].includes(
+      nodeContentType
+    )
+  ) {
+    textEscapeShortcuts.unshift({
+      shortcut: "## ",
+      type: NodeType.HEADING2
+    });
+  }
+  if (
+    ![
+      NodeType.HEADING1,
+      NodeType.HEADING2,
+      NodeType.HEADING3,
+      NodeType.HEADING4
+    ].includes(nodeContentType)
+  ) {
+    textEscapeShortcuts.unshift({
+      shortcut: "# ",
+      type: NodeType.HEADING1
+    });
+  }
+
+  const structuralEscapeShortcuts: IEscapeShortcut[] = [
+    { shortcut: "---", type: NodeType.DIVIDER },
+    { shortcut: "===", type: NodeType.DOUBLE_DIVIDER }
+  ];
+
+  const listEscapeShortcuts: IEscapeShortcut[] = [
+    { shortcut: "* ", type: NodeType.LIST, indentable: true },
+    { shortcut: "- ", type: NodeType.LIST, indentable: true },
+    { shortcut: "+ ", type: NodeType.CHECKLIST, indentable: true },
+    { shortcut: "1. ", type: NodeType.ORDERED_LIST, indentable: true }
+  ];
+
+  return {
+    textEscapeShortcuts,
+    structuralEscapeShortcuts,
+    listEscapeShortcuts
+  };
+}
+
+export function performEscShortcuts(
+  nodeContentType: NodeType,
+  text: string
+): {
+  shortcut: string;
+  type: NodeType;
+  indentLevel?: number;
+  isFullReplace?: boolean;
+} | null {
+  const {
+    textEscapeShortcuts,
+    structuralEscapeShortcuts,
+    listEscapeShortcuts
+  } = getEscapeShortcuts(nodeContentType);
+
+  let shortcut: string | undefined = undefined;
+  let type: NodeType | undefined = undefined;
+  let indentLevel: number | undefined = undefined;
+
+  [...textEscapeShortcuts, ...listEscapeShortcuts].forEach(
+    ({ shortcut: short, type: t, indentable }) => {
+      indentLevel = getIndentationLevel(text);
+      const trimmedText = text.trimStart();
+      const _text = indentable ? trimmedText : text;
+
+      if (_text.startsWith(short)) {
+        shortcut = short;
+        type = t;
+      }
+    }
+  );
+  if (shortcut && type) {
+    return { shortcut, type, indentLevel };
+  }
+
+  structuralEscapeShortcuts.forEach(({ shortcut: short, type: t }) => {
+    if (text === short) {
+      shortcut = short;
+      type = t;
+    }
+  });
+  if (shortcut && type) {
+    return { shortcut, type, isFullReplace: true };
+  }
+
+  return null;
+
+  function getIndentationLevel(text: string): number {
+    const leadingWhitespace = text.match(/^(\s*)/)?.[1] || "";
+    const tabCount = (leadingWhitespace.match(/\t/g) || []).length;
+    const spaceCount = leadingWhitespace.replace(/\t/g, "").length;
+    const spaceIndents = Math.floor(spaceCount / 4);
+    return tabCount + spaceIndents;
+  }
 }

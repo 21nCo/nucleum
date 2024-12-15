@@ -30,6 +30,7 @@
   } from "$lib/client/components/flux/resourceStores/resource.type";
   import { resizeListener } from "$lib/client/actions/resize.action";
   import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
+  import { getMdStore } from "$lib/client/components/markdown/markdown.store";
 
   export let node: IActiveNodeStore;
   export let selectedView: NodeView = NodeView.CONTENT;
@@ -44,7 +45,7 @@
   let containerWidth = 0;
   let refreshId: number = new Date().getTime();
   let scrollTimeout: NodeJS.Timeout;
-
+  $: mdStore = getMdStore(mdId);
   $: isWidened = $node.config?.isWidened ?? false;
   $: isConstrainedWidth =
     $view.isConstrainedWidth ||
@@ -81,6 +82,20 @@
         isStickied = shouldBeStickied;
       }
     }, 10);
+
+    const headingElements = document.querySelectorAll("[data-type*='HEADING']");
+    const visibleHeadings = Array.from(headingElements).filter((element) => {
+      const rect = element.getBoundingClientRect();
+      return (
+        rect.top >= 0 &&
+        rect.left >= 0 &&
+        rect.bottom <=
+          (window.innerHeight || document.documentElement.clientHeight) &&
+        rect.right <=
+          (window.innerWidth || document.documentElement.clientWidth)
+      );
+    });
+    $mdStore.headingsInView = visibleHeadings.map((x) => x.id);
   }
   function onLabelChange(e: any) {
     // console.log("onLabelChange", e);
@@ -152,7 +167,7 @@
                 <!-- {/key} -->
               {/if}
               <main
-                class="relative flex flex-col gap-6 mo:pr-0 pr-6 h-full w-full overflow-auto"
+                class="relative flex flex-col gap-6 mo:pr-0 h-full w-full overflow-auto"
                 on:scroll={onScroll}
               >
                 {#if !$node.focusedBlock}
@@ -248,9 +263,9 @@
     {:else}
       <NodeBirdView {node} bind:rightPane />
     {/if}
-    {#if isShowFloatingBar && !$node.isInFocusMode}
+    {#if (isShowFloatingBar || isConstrainedWidth) && !$node.isInFocusMode}
       <div transition:fade={{ duration: 200 }}>
-        <BottomFloat margin={isConstrainedWidth ? "mb-8" : "mb-6"}>
+        <BottomFloat margin={isConstrainedWidth ? "mb-8" : "mb-0"}>
           <NodeFloatingBar
             {node}
             {isConstrainedWidth}

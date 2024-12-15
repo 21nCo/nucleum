@@ -34,7 +34,7 @@
   export let nodeView: NodeView = NodeView.CONTENT;
   export let isWidened: boolean = false;
   export let isConstrainedWidth: boolean = false;
-  let bgIndex = 1;
+  let bgIndex = 2;
   let toggleGroupRef: ToggleGroup;
   let selectedToggleAction: string | undefined = undefined;
   let buttonCommonProps = {
@@ -52,11 +52,12 @@
 
 <div
   class={cn(
-    "flex justify-between items-center shadow-md border border-brs2 px-4",
+    "flex justify-between items-center border-t border-x border-brs3 px-4",
     bg(bgIndex - 1),
     {
-      "h-14 w-9/10 rounded-full": isConstrainedWidth,
-      "tp:w-4/5 lp:w-[40rem] dp:w-[48rem] h-14 rounded-md": !isConstrainedWidth
+      "h-14 w-9/10 rounded-full shadow-md": isConstrainedWidth,
+      "tp:w-4/5 lp:w-[40rem] dp:w-[48rem] h-16 rounded-t-md":
+        !isConstrainedWidth
     }
   )}
 >
@@ -103,7 +104,7 @@
         parentBgIndex={bgIndex}
         items={[
           {
-            label: "Content",
+            label: "Markdown",
             value: NodeView.CONTENT
           },
           {
@@ -124,6 +125,7 @@
       <ToggleGroup
         bind:this={toggleGroupRef}
         selected={selectedToggleAction}
+        parentBgIndex={bgIndex}
         items={resolveVisibleActions($node.contentType, {
           accessMode: $node.accessMode,
           isConstrainedWidth
@@ -152,7 +154,7 @@
           nodeView
         })}
       size={Size.lg}
-      parentBgIndex={1}
+      parentBgIndex={bgIndex - 1}
       id="nodeContextMenu"
       tooltip="More actions"
       heading="Node actions"

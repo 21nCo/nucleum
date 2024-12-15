@@ -22,7 +22,6 @@
   import { Placement } from "$lib/client/types/direction.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import FocusRing from "./FocusRing.svelte";
-  import { writable } from "svelte/store";
   import BlockBrowser from "../blockBrowser/BlockBrowser.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { ResourceAccessMode } from "../../flux/resourceStores/resource.type";
@@ -34,14 +33,13 @@
   import { popover, tooltip } from "$lib/client/actions/popover.action";
   import ContextMenu from "$lib/client/elements/contextMenu/ContextMenu.svelte";
   import { hoverable } from "$lib/client/actions/hover.action";
-  import { isSameResource } from "../../flux/resourceStores/resource.utils";
   import { fileStore } from "../../files/file.store";
   const dispatch = createEventDispatcher();
   export let block: IBlock;
-  export let mdStore: MdStoreType;
   export let isFocusing: boolean = false;
   export let isBlockHovering: boolean = false;
   export let isDisableTooltip: boolean = false;
+  export let isSoleBlock: boolean = false;
   let isHovering: boolean = false;
   let isPopoverVisible: boolean = false;
   let contextMenuRef: any;
@@ -49,9 +47,6 @@
   $: isNodularizable = headingNodeTypes.includes(block.contentType);
 
   $: isDebugLeftControls = false;
-
-  $: isSoleBlock =
-    isSameResource($mdStore.blocks[0], block) && $mdStore.blocks.length === 1;
 
   const actions: Record<string, IContextMenuItem> = {
     [BlockAction.CONVERT]: {

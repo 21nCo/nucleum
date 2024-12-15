@@ -7,9 +7,12 @@
   import type { IRecordId } from "$lib/client/types/data.type";
   let pinnedItems: IRecordId[] = tabs.get();
   onMount(() => {
-    uiState.subscribe((x) => {
+    const unsubscribe = uiState.subscribe((x) => {
       pinnedItems = tabs.get();
     });
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   });
 </script>
 

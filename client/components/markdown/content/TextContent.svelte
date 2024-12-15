@@ -24,7 +24,7 @@
   import { logger } from "../../debug/logger.client";
   import { SearchStore } from "$lib/client/products/memotron/memotron.store";
   import type { IRecordId } from "$lib/client/types/data.type";
-  import { renderMdAsHtml } from "../markdown.utils";
+  import { performEscShortcuts, renderMdAsHtml } from "../markdown.utils";
 
   const nodeContentContext = getContext<any>("content");
   const blockContext = getContext<any>("block");
@@ -368,6 +368,12 @@
     return false;
   }
 
+  /**
+   * @deprecated - no longer used as `Enter` key creates a new block instead of inserting a new line in the same block
+   * @param shortcut
+   * @param type
+   * @param listType
+   */
   function handleEscShortcutForSecondaryLines(
     shortcut: string,
     type: NodeType,
@@ -403,107 +409,26 @@
    * Handles escape shortcuts for text, structural and list nodes when entered at the start of the block
    */
   function performEscapeShortcutsT2() {
-    const nodeContentType = nodeContext?.contentType;
-    const textEscapeShortcuts: {
-      shortcut: string;
-      type: SimpleTextNodeType;
-    }[] = [{ shortcut: '" ', type: NodeType.QUOTE }];
-    if (nodeContentType !== NodeType.HEADING4) {
-      textEscapeShortcuts.unshift({
-        shortcut: "#### ",
-        type: NodeType.HEADING4
-      });
+    const nodeContentType =
+      nodeContext?.contentType ?? NodeType.NODULAR_MARKDOWN;
+
+    const result = performEscShortcuts(nodeContentType, text);
+    if (!result) return false;
+    const { shortcut, type, isFullReplace } = result;
+    if (isFullReplace) {
+      text = "";
+      dispatchChangeEvent();
+      textRef.set("");
+      relay(BlockAction.INSERT, { blockType: type });
+      return true;
     }
-    if (![NodeType.HEADING3, NodeType.HEADING4].includes(nodeContentType)) {
-      textEscapeShortcuts.unshift({
-        shortcut: "### ",
-        type: NodeType.HEADING3
-      });
-    }
-    if (
-      ![NodeType.HEADING2, NodeType.HEADING3, NodeType.HEADING4].includes(
-        nodeContentType
-      )
-    ) {
-      textEscapeShortcuts.unshift({
-        shortcut: "## ",
-        type: NodeType.HEADING2
-      });
-    }
-    if (
-      ![
-        NodeType.HEADING1,
-        NodeType.HEADING2,
-        NodeType.HEADING3,
-        NodeType.HEADING4
-      ].includes(nodeContentType)
-    ) {
-      textEscapeShortcuts.unshift({
-        shortcut: "# ",
-        type: NodeType.HEADING1
-      });
-    }
-
-    const structuralEscapeShortcuts = [
-      { shortcut: "---", type: NodeType.DIVIDER },
-      { shortcut: "===", type: NodeType.DOUBLE_DIVIDER }
-    ];
-
-    const listEscapeShortcuts = [
-      { shortcut: "* ", type: NodeType.LIST },
-      { shortcut: "- ", type: NodeType.LIST },
-      { shortcut: "+ ", type: NodeType.CHECKLIST },
-      { shortcut: "1. ", type: NodeType.ORDERED_LIST }
-    ];
-
-    const isTextShortcutPresent = textEscapeShortcuts.some(
-      ({ shortcut, type }) => {
-        if (text.startsWith(shortcut)) {
-          text = text.replace(shortcut, "");
-          dispatchChangeEvent();
-          textRef.replace(shortcut, "");
-          convert(type);
-          return true;
-        } else {
-          return handleEscShortcutForSecondaryLines(shortcut, type);
-        }
-      }
-    );
-
-    const isStructuralShortcutPresent = structuralEscapeShortcuts.some(
-      ({ shortcut, type }) => {
-        if (text === shortcut) {
-          text = "";
-          dispatchChangeEvent();
-          textRef.set("");
-          //TODO - handling structural block insertion for list
-          if (contentType === NodeType.LIST || !id) return false;
-          relay(BlockAction.INSERT, { blockType: type });
-          return true;
-        }
-        return false;
-      }
-    );
-
-    const isListShortcutPresent = listEscapeShortcuts.some(
-      ({ shortcut, type }) => {
-        if (text.startsWith(shortcut)) {
-          text = text.replace(shortcut, "");
-          dispatchChangeEvent();
-          textRef.replace(shortcut, "");
-          convert(type as ListNodeType);
-          return true;
-        }
-        return handleEscShortcutForSecondaryLines(shortcut, type);
-      }
-    );
-
-    return (
-      isTextShortcutPresent ||
-      isStructuralShortcutPresent ||
-      isListShortcutPresent
-    );
+    text = text.replace(shortcut, "");
+    dispatchChangeEvent();
+    textRef.replace(shortcut, "");
+    convert(type as SimpleTextNodeType | ListNodeType);
+    return true;
   }
+
   function diffStrings(oldStr: string, newStr: string) {
     let added = "";
     let removed = "";
@@ -737,14 +662,8 @@
 
   function onFocus() {
     isFocusing = true;
-    const currentBlockIndex = $mdStore.blocks.findIndex((x) => x.id == id);
-    for (let i = currentBlockIndex; i >= 0; i--) {
-      if (headingNodeTypes.includes($mdStore.blocks[i].contentType)) {
-        $mdStore.activeHeading = $mdStore.blocks[i].id;
-        break;
-      }
-    }
     refreshPlaceholder();
+    mdStore.setActiveHeading(id);
   }
 
   function onBlur() {
@@ -811,6 +730,7 @@
           bind:this={textRef}
           bind:content={text}
           id={id.toString()}
+          dataType={contentType}
           isMarkdown={true}
           on:keydown={handleKeyDown}
           on:keyup={handleKeyUp}

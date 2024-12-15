@@ -146,12 +146,12 @@ export enum ListType {
 }
 
 export type LayoutNodeType =
-  | NodeType.GRID
+  | NodeType.CARDS
   | NodeType.COLUMNS
   | NodeType.TABS
   | NodeType.ACCORDION
   | NodeType.MEDIA_GRID
-  | NodeType.MEDIA_STACK;
+  | NodeType.STACK;
 
 export type StructuralNodeType =
   | NodeType.DIVIDER
@@ -210,11 +210,11 @@ export enum NodeType {
   DIVIDER = "DIVIDER",
   DOUBLE_DIVIDER = "DOUBLE_DIVIDER",
   TABLE = "TABLE",
-  MEDIA_STACK = "MEDIA_STACK",
+  STACK = "STACK",
   MEDIA_GRID = "MEDIA_GRID",
   COLUMNS = "COLUMNS",
   TABS = "TABS",
-  GRID = "GRID",
+  CARDS = "CARDS",
   ACCORDION = "ACCORDION",
 
   //CLIPS
@@ -803,6 +803,6 @@ export type INodeThumb = INode & {
 };
 
 export enum NodeView {
-  CONTENT = "content",
+  CONTENT = "write",
   BIRD_VIEW = "birdView"
 }

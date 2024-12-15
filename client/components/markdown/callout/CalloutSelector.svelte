@@ -19,9 +19,9 @@
       color={callout.color}
       type="button"
       class={cn(
-        "flex items-center gap-2 border p-2 rounded-md text-ccs1",
-        selected?.id === callout.id && "bg-ccs4 border-ccs1",
-        selected?.id !== callout.id && "hover:bg-ccs4 border-transparent"
+        "flex items-center gap-2 p-2 rounded-md text-ccs1 h-11",
+        selected?.id === callout.id && "bg-ccs4",
+        selected?.id !== callout.id && "hover:bg-ccs4"
       )}
       on:click={() => {
         selected = callout;
@@ -32,10 +32,11 @@
       <span>{callout.label}</span>
     </CustomColorPropagator>
   {/each}
-  <div class="flex justify-center">
+  <div class="flex justify-center mt-8">
     <Button
+      icon="ph:pencil-simple-light"
       label="Edit"
-      size={Size.sm}
+      size={Size.xs}
       isPreventMinWidth={true}
       on:click={() => {
         onEdit?.();

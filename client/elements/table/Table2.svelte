@@ -42,7 +42,7 @@
         };
       case TableCellDefaultAction.REMOVE:
         return {
-          key: "cross",
+          key: "ph:x-light",
           type: TableCellType.ACTION,
           actionTooltip: {
             body: "Remove"

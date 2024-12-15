@@ -24,6 +24,7 @@
   const dispatch = createEventDispatcher();
   //   export let block: Block<TextContent>;
   export let id: string = generateUID();
+  export let dataType: string = "";
   export let content: string | undefined = "";
   export let placeholder: string | undefined = "";
   export let isMarkdown: boolean = false;
@@ -948,6 +949,7 @@
     <div
       bind:this={blockRef}
       {id}
+      data-type={dataType}
       style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word;"
       class={cn(
         "inline-markdown relative w-full h-full text-left outline-none py-2",
@@ -1000,7 +1002,7 @@
 
 <style>
   div[contenteditable].noncustomcaret {
-    caret-color: rgba(var(--colors-aps1), 1) !important;
+    caret-color: var(--customcolor, rgb(var(--colors-aps1))) !important;
     caret-shape: block;
   }
   div[contenteditable].customcaret {

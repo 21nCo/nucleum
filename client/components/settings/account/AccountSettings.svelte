@@ -32,15 +32,19 @@
   let isSaveInProgress = false;
   let profilePicture: IRecordId | undefined = $userPreferences.profilePicture;
   onMount(() => {
-    account.subscribe((value) => {
+    const unsubscribeAccount = account.subscribe((value) => {
       if (value.dataMode === UserDataMode.CLOUD) {
         name = $userPreferences.name || value.userInfo?.nickName || "";
         emailParts = value.userInfo?.emailParts || undefined;
       }
     });
-    userPreferences.subscribe((value) => {
+    const unsubscribeUserPreferences = userPreferences.subscribe((value) => {
       name = value.name || $account.userInfo?.nickName || "";
     });
+    return () => {
+      unsubscribeAccount();
+      unsubscribeUserPreferences();
+    };
   });
   function onSave() {
     userPreferences.updateUserProfile({ name, profilePicture });

@@ -38,7 +38,7 @@
   let previousRootStructure: string[] = [];
   let refreshId: number | undefined = undefined;
   let markdownRef: any;
-  let dev_isEnableBottomDivider: boolean = true;
+  let dev_isEnableBottomDivider: boolean = false;
 
   async function handleEvent(event: string, data: any) {
     logger.log({

@@ -9,6 +9,7 @@ export type IBlockBrowserItem = {
   badge?: string;
   isDisabled?: boolean;
   tooltip?: string;
+  isShowShortcut?: boolean;
 };
 
 export type IBlockBrowserSection = {

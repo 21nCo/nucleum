@@ -1,13 +1,16 @@
 <script lang="ts">
   import { onMount, createEventDispatcher } from "svelte";
-  import type { IBlockInterface, ICodeBlockBody } from "../md.type";
+  import type { ICodeBlockBody } from "../md.type";
   import * as monaco from "monaco-editor";
   import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
   import { InputStyle } from "$lib/client/types/input.type";
   import { Size } from "$lib/client/types/size.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { copyToClipboard } from "$lib/client/utils/utils";
-
+  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
+  import type { MdStoreType } from "../markdown.store";
+  import { hoverable } from "$lib/client/actions/hover.action";
+  export let mdStore: MdStoreType;
   export let body: ICodeBlockBody;
   const dispatch = createEventDispatcher();
 
@@ -15,7 +18,7 @@
   let code = body?.text ?? "";
   let element: HTMLElement;
   let editor: monaco.editor.IStandaloneCodeEditor | undefined;
-
+  let isHovering: boolean = false;
   const languages = [
     { label: "ABAP", value: "abap" },
     { label: "Apex", value: "apex" },
@@ -105,25 +108,6 @@
   };
 
   onMount(() => {
-    // window.MonacoEnvironment = {
-    //   getWorkerUrl: function (_moduleId: string, label: string) {
-    //     const workerPath = "/monaco-editor/esm/vs/editor/editor.worker.js";
-
-    //     switch (label) {
-    //       case "typescript":
-    //       case "javascript":
-    //         return "/monaco-editor/esm/vs/language/typescript/ts.worker.js";
-    //       case "json":
-    //         return "/monaco-editor/esm/vs/language/json/json.worker.js";
-    //       case "css":
-    //         return "/monaco-editor/esm/vs/language/css/css.worker.js";
-    //       case "html":
-    //         return "/monaco-editor/esm/vs/language/html/html.worker.js";
-    //       default:
-    //         return workerPath;
-    //     }
-    //   }
-    // };
     editor = monaco.editor.create(element, {
       value: code,
       language,
@@ -133,13 +117,13 @@
       scrollBeyondLastLine: false,
       quickSuggestions: false,
       suggestOnTriggerCharacters: false,
-      //   validateOnModelChange: false,
       parameterHints: { enabled: false },
       formatOnType: false,
       formatOnPaste: false,
       codeLens: false,
       folding: false,
-      links: false
+      links: false,
+      readOnly: $mdStore.params?.isReadOnly
     });
 
     editor.getModel()?.onDidChangeContent(() => {
@@ -174,31 +158,64 @@
   function handleCopyCode() {
     copyToClipboard(code ?? "");
   }
+
+  function handleDeleteCode() {
+    dispatch("delete");
+  }
+
+  $: if (editor && $mdStore.params?.isReadOnly !== undefined) {
+    editor.updateOptions({ readOnly: $mdStore.params.isReadOnly });
+  }
 </script>
 
-<div class="flex flex-col gap-3 w-full p-2">
-  <div class="flex items-center gap-3 justify-end w-full">
-    <div class="w-52 text-fgs3">
-      <DropDown
-        items={languages}
-        style={InputStyle.PLAIN}
-        size={Size.sm}
-        bind:value={language}
-        on:select={handleLanguageChange}
-      />
+<div
+  class="flex flex-col gap-3 w-full p-2 border border-brs3 rounded-md bg-[#1e1e1e]"
+  use:hoverable={{
+    onHover: (e) => {
+      isHovering = e;
+    }
+  }}
+>
+  {#if $mdStore.params?.isReadOnly}
+    <span class="text-fgs3 text-b3 px-3">
+      {languages.find((l) => l.value === language)?.label ?? "Code"}
+    </span>
+  {:else}
+    <div class="flex items-center gap-3 justify-between w-full h-8">
+      <div class="w-32 text-fgs3 px-3">
+        <DropDown
+          items={languages}
+          style={InputStyle.PLAIN}
+          size={Size.sm}
+          popoverWidth="w-60"
+          bind:value={language}
+          on:select={handleLanguageChange}
+        />
+      </div>
+      {#if isHovering}
+        <div class="flex gap-2 items-center text-fgs3">
+          <Button
+            icon="copy"
+            size={Size.sm}
+            tooltip="Copy code"
+            style={ButtonStyle.OUTLINED}
+            on:click={handleCopyCode}
+          />
+          <Button
+            icon="ph:trash"
+            size={Size.sm}
+            type={ButtonVariant.DANGER}
+            style={ButtonStyle.OUTLINED}
+            tooltip="Delete block"
+            on:click={handleDeleteCode}
+          />
+        </div>
+      {/if}
     </div>
-    <div class="text-fgs3">
-      <Button
-        icon="ph:copy-simple"
-        size={Size.sm}
-        tooltip="Copy code"
-        on:click={handleCopyCode}
-      />
-    </div>
-  </div>
+  {/if}
   <div
     bind:this={element}
     style="height: 300px"
-    class="rounded-md border border-brs3 overflow-hidden"
+    class="rounded-md overflow-hidden"
   />
 </div>

@@ -21,12 +21,16 @@
   }
   onMount(async () => {
     await refresh($account);
-    account.subscribe(async (x) => {
+    const unsubscribeAccount = account.subscribe(async (x) => {
       await refresh(x);
     });
-    userPreferences.subscribe((x) => {
+    const unsubscribeUserPreferences = userPreferences.subscribe((x) => {
       if (x.profilePicture) fileId = x.profilePicture ?? fileId;
     });
+    return () => {
+      if (unsubscribeAccount) unsubscribeAccount();
+      if (unsubscribeUserPreferences) unsubscribeUserPreferences();
+    };
   });
   async function refresh(x: any) {
     if (fileId) return;

@@ -22,7 +22,14 @@ export type IMarkdownStore = IMarkdown &
     blockToFocus?: string;
     reRenderBlock?: string;
     params?: IMarkdownParams;
-    activeHeading: string;
+    /**
+     * Id of the heading that is currently focused - focus can be on any block under the heading
+     */
+    activeHeading?: IRecordId;
+    /**
+     * Headings that are visible in the viewport
+     */
+    headingsInView: IRecordId[];
   };
 export type IMarkdown = { blocks: IBlock[] };
 export type DbBlock = IResourceBase & IBlockInterface;
@@ -224,3 +231,9 @@ export type IBlock =
   | IDoubleDividerBlock
   | IMediaGridBlock
   | ISimpleTextBlock;
+
+export type IEscapeShortcut = {
+  shortcut: string;
+  type: NodeType;
+  indentable?: boolean;
+};

@@ -20,13 +20,16 @@
   let cpConfiguration: any;
   let color = retrieveCurrentColors($appearance)?.aps1;
   onMount(() => {
-    appStore.subscribe((x: AppStore) => {
+    const unsubscribe = appStore.subscribe((x: AppStore) => {
       if (x?.appData?.cp) {
         let cp = x.appData.cp;
         console.log({ cp });
         if (isValidArray(cp)) cpConfiguration = sortArrayByOrder(cp);
       }
     });
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   });
 </script>
 

@@ -2,10 +2,7 @@
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { InlineType } from "$lib/client/components/markdown/md.type";
-  import {
-    NodeType,
-    ListType
-  } from "$lib/client/products/memotron/node/node.type";
+  import { NodeType } from "$lib/client/products/memotron/node/node.type";
   import { Size } from "$lib/client/types/size.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
@@ -88,6 +85,14 @@
         badge: "planned"
       },
       {
+        label: "Tree of links",
+        description: "Embed tree of links",
+        type: NodeType.TREE_OF_LINKS,
+        icon: "ph:tree-view-thin",
+        isDisabled: true,
+        badge: "planned"
+      },
+      {
         label: "Calendar",
         description: "Embed calendar",
         type: NodeType.CALENDAR_AS_EMBED,
@@ -102,14 +107,6 @@
         icon: "list",
         isDisabled: true,
         badge: "planned"
-      },
-      {
-        label: "Tree of links",
-        description: "Embed tree of links",
-        type: NodeType.TREE_OF_LINKS,
-        icon: "ph:tree-view-thin",
-        isDisabled: true,
-        badge: "planned"
       }
     ]
   };
@@ -121,13 +118,15 @@
         label: "Divider",
         description: "Divider block",
         type: NodeType.DIVIDER,
-        icon: "hugeicons:solid-line-01"
+        icon: "hugeicons:solid-line-01",
+        isShowShortcut: true
       },
       {
         label: "Double Divider",
         description: "Divider block",
         type: NodeType.DOUBLE_DIVIDER,
-        icon: "hugeicons:equal-sign"
+        icon: "hugeicons:equal-sign",
+        isShowShortcut: true
       },
       {
         label: "Media grid",
@@ -136,26 +135,18 @@
         icon: "rectangle-group"
       },
       {
-        label: "Media stack",
-        description: "Media stack block",
-        type: NodeType.MEDIA_STACK,
-        icon: "rectangle-stack",
-        badge: "planned",
-        isDisabled: true
-      },
-      {
-        label: "Table",
-        description: "Table block",
-        type: NodeType.TABLE,
-        icon: "hugeicons:layout-table-02",
-        badge: "planned",
-        isDisabled: true
-      },
-      {
-        label: "Grid",
-        description: "Grid block",
-        type: NodeType.GRID,
+        label: "Cards",
+        description: "Cards block",
+        type: NodeType.CARDS,
         icon: "squares-2x2",
+        badge: "planned",
+        isDisabled: true
+      },
+      {
+        label: "Tabs",
+        description: "Tabs block",
+        type: NodeType.TABS,
+        icon: "ph:tabs-light",
         badge: "planned",
         isDisabled: true
       },
@@ -168,10 +159,18 @@
         isDisabled: true
       },
       {
-        label: "Tabs",
-        description: "Tabs block",
-        type: NodeType.TABS,
-        icon: "ph:tabs-light",
+        label: "Table",
+        description: "Table block",
+        type: NodeType.TABLE,
+        icon: "hugeicons:layout-table-02",
+        badge: "planned",
+        isDisabled: true
+      },
+      {
+        label: "Stack",
+        description: "Stack block",
+        type: NodeType.STACK,
+        icon: "rectangle-stack",
         badge: "planned",
         isDisabled: true
       }
@@ -229,21 +228,24 @@
         description: "Unordered List block",
         type: NodeType.LIST,
         // icon: "lucide:list"
-        icon: "hugeicons:left-to-right-list-bullet"
+        icon: "hugeicons:left-to-right-list-bullet",
+        isShowShortcut: true
       },
       {
         label: "Ordered List",
         description: "Ordered List block",
         type: NodeType.ORDERED_LIST,
         // icon: "lucide:list-ordered"
-        icon: "hugeicons:left-to-right-list-number"
+        icon: "hugeicons:left-to-right-list-number",
+        isShowShortcut: true
       },
       {
         label: "Checklist",
         description: "Checklist block",
         type: NodeType.CHECKLIST,
         // icon: "lucide:list-todo"
-        icon: "hugeicons:check-list"
+        icon: "hugeicons:check-list",
+        isShowShortcut: true
       }
     ]
   };
@@ -255,7 +257,8 @@
         label: "Mention",
         description: "Mention a node or a collection",
         type: InlineType.MENTION,
-        icon: "at-symbol"
+        icon: "at-symbol",
+        isShowShortcut: true
       },
       {
         label: "Date",
@@ -289,19 +292,22 @@
         label: "Quote",
         description: "Quote block",
         type: NodeType.QUOTE,
-        icon: "hugeicons:quote-up"
-      },
-      {
-        label: "Code",
-        description: "Code block",
-        type: NodeType.CODE,
-        icon: "code"
+        icon: "hugeicons:quote-up",
+        isShowShortcut: true
       },
       {
         label: "Callout",
         description: "Callout block",
         type: NodeType.CALLOUT,
-        icon: "bookmark"
+        icon: "bookmark",
+        isShowShortcut: true
+      },
+      {
+        label: "Code",
+        description: "Code block",
+        type: NodeType.CODE,
+        icon: "code",
+        isShowShortcut: true
       },
       {
         label: "Math",
@@ -462,6 +468,7 @@
           type: NodeType.HEADING1,
           // icon: "lucide:heading-1"
           icon: "hugeicons:heading-01",
+          isShowShortcut: true,
           isDisabled: isHeading1Disabled,
           badge: isHeading1Disabled ? "NA" : undefined,
           tooltip: isHeading1Disabled ? tooltip : undefined
@@ -472,6 +479,7 @@
           type: NodeType.HEADING2,
           // icon: "lucide:heading-2"
           icon: "hugeicons:heading-02",
+          isShowShortcut: true,
           isDisabled: isHeading2Disabled,
           badge: isHeading2Disabled ? "NA" : undefined,
           tooltip: isHeading2Disabled ? tooltip : undefined
@@ -482,6 +490,7 @@
           type: NodeType.HEADING3,
           // icon: "lucide:heading-3"
           icon: "hugeicons:heading-03",
+          isShowShortcut: true,
           isDisabled: isHeading3Disabled,
           badge: isHeading3Disabled ? "NA" : undefined,
           tooltip: isHeading3Disabled ? tooltip : undefined
@@ -492,6 +501,7 @@
           type: NodeType.HEADING4,
           // icon: "lucide:heading-4"
           icon: "hugeicons:heading-04",
+          isShowShortcut: true,
           isDisabled: isHeading4Disabled,
           badge: isHeading4Disabled ? "NA" : undefined,
           tooltip: isHeading4Disabled ? tooltip : undefined

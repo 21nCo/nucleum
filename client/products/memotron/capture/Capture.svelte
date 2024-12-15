@@ -235,6 +235,7 @@
   }
 
   function refreshEmptyState(e?: CustomEvent) {
+    logger.log({ at: "Capture.svelte - refreshEmptyState", e });
     if (
       isValidString($captureStore.label) ||
       captureType === CaptureType.AUDIO
@@ -242,7 +243,11 @@
       isEmptyState = false;
       return;
     }
-    if ("blocks" in $captureStore.body && !isEmptyMd($captureStore.body)) {
+    if (
+      $captureStore.body &&
+      "blocks" in $captureStore.body &&
+      !isEmptyMd(e?.detail?.md?.blocks ?? $captureStore.body.blocks)
+    ) {
       isEmptyState = false;
       return;
     }

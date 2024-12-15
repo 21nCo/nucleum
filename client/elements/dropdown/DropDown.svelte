@@ -14,7 +14,7 @@
   import DropDownItemView from "./DropDownItemView.svelte";
   import InputBaseElement from "../InputBaseElement.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { Orientation } from "$lib/client/types/direction.enum";
+  import { Orientation, Placement } from "$lib/client/types/direction.enum";
   import { properCase } from "$lib/shared/utils/text.utils";
   import AvatarRenderer from "../avatarPicker/AvatarRenderer.svelte";
   const dispatch = createEventDispatcher();
@@ -30,6 +30,7 @@
   export let isDisableSearch: boolean = false;
   export let size: Size.md | Size.sm = Size.md;
   export let width: string = "w-80";
+  export let popoverWidth: string | undefined = undefined;
   export let isEnforceWidth: boolean = false;
   export let isShowDividerForGroup: boolean = false;
   let isGrouped: boolean = groups.length > 0;
@@ -41,7 +42,8 @@
     element: "div",
     class: "max-h-80 overflow-y-auto py-4",
     parentBgIndex: parentBackgroundIndex,
-    isSpanToTriggerWidth: true
+    isSpanToTriggerWidth: popoverWidth ? false : true,
+    placement: Placement.BottomCenter
   };
   if (isGrouped) {
     items = items.map((x) => {
@@ -120,7 +122,7 @@
     </span>
   </div>
   <Icon icon={isActive ? "chevup" : "chevdown"} size={Size.sm} />
-  <div class="flex flex-col gap-2" slot="popover">
+  <div class={cn("flex flex-col gap-2", popoverWidth)} slot="popover">
     {#if !isDisableSearch}
       <div class="px-3 w-full">
         <TextInput

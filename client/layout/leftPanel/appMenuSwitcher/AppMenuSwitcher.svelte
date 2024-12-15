@@ -25,9 +25,12 @@
   let current: string;
   refresh(appMenuStore.get());
   onMount(() => {
-    appMenuStore.subscribe((x: IAppMenuStore) => {
+    const unsubscribe = appMenuStore.subscribe((x: IAppMenuStore) => {
       refresh(x);
     });
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   });
 
   function refresh(x: IAppMenuStore) {

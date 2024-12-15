@@ -49,13 +49,16 @@
 
 <CustomColorPropagator
   color={_callout.color}
-  class="flex gap-3 items-start bg-ccs4 border border-ccs2 rounded-md px-2 py-1 text-ccs1"
+  class="flex gap-3 items-start bg-ccs5 border border-ccs4 rounded-md px-2 py-1 text-ccs1"
 >
   <div
-    class={cn("flex flex-col justify-start p-2 border rounded-md", {
-      "border-ccs1": isHovering,
-      "border-transparent": !isHovering
-    })}
+    class={cn(
+      "flex flex-col justify-center items-center px-2 border rounded-md h-10",
+      {
+        "border-ccs3": isHovering,
+        "border-transparent": !isHovering
+      }
+    )}
     bind:this={ref}
     use:popover={{
       content: CalloutSelector,

@@ -3,9 +3,12 @@
   import context from "$lib/client/stores/context.store";
   import { ModifierKey } from "$lib/client/types/keyboard.type";
   import { resolveShortcutText } from "../../shortcuts/shortcut.utils";
-  import { BlockAction } from "../md.type";
+  import { BlockAction, InlineType } from "../md.type";
 
-  export let row: any;
+  export let row: any | undefined = undefined;
+  export let type: NodeType | InlineType | BlockAction | undefined = undefined;
+
+  $: _id = type ?? row.id;
 
   const mdShortcutMap = [
     {
@@ -14,7 +17,7 @@
     },
     {
       id: BlockAction.MENTION,
-      key: "@ or ["
+      key: "@ or [ ]"
     },
     {
       id: BlockAction.DUPLICATE,
@@ -33,15 +36,35 @@
     },
     {
       id: NodeType.HEADING1,
-      key: "# x n"
+      key: "#"
+    },
+    {
+      id: NodeType.HEADING2,
+      key: "##"
+    },
+    {
+      id: NodeType.HEADING3,
+      key: "###"
+    },
+    {
+      id: NodeType.HEADING4,
+      key: "####"
     },
     {
       id: NodeType.QUOTE,
-      key: '"'
+      key: '" or >'
+    },
+    {
+      id: NodeType.CALLOUT,
+      key: "!"
+    },
+    {
+      id: NodeType.CODE,
+      key: "```"
     },
     {
       id: NodeType.LIST,
-      key: "*"
+      key: "* or -"
     },
     {
       id: NodeType.ORDERED_LIST,
@@ -62,8 +85,11 @@
   ];
 
   function resolveShortcut() {
-    const shortcut = mdShortcutMap.find((x) => x.id === row.id);
-    if (!shortcut) return row.id;
+    const shortcut = mdShortcutMap.find((x) => x.id === _id);
+    if (!shortcut) return _id;
+    if (!shortcut.modifiers) {
+      return shortcut.key;
+    }
     return resolveShortcutText(
       shortcut.key,
       shortcut.modifiers ?? [],
@@ -72,6 +98,6 @@
   }
 </script>
 
-<span class="text-b2 text-fgs3 rounded-md px-2 py-1 flex">
+<span class="rounded-md px-2 py-1 flex">
   {resolveShortcut()}
 </span>

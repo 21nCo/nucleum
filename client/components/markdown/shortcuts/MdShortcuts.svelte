@@ -11,7 +11,7 @@
     },
     {
       id: BlockAction.MENTION,
-      description: "Mention a node or a collection (Beta)"
+      description: "Mention a node or a collection"
     },
     {
       id: BlockAction.DUPLICATE,
@@ -32,6 +32,14 @@
     {
       id: NodeType.QUOTE,
       description: "Quote"
+    },
+    {
+      id: NodeType.CALLOUT,
+      description: "Callout"
+    },
+    {
+      id: NodeType.CODE,
+      description: "Code"
     },
     {
       id: NodeType.LIST,

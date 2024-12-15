@@ -234,7 +234,8 @@ export function resolveNodeLabel(item: INodeThumb) {
   if (item.parent && item.parent.id && !isRecordId(item.parent))
     parent = item.parent;
   const defaultLabels = {
-    [NodeType.TEXT_CLIP]: "Clipped Text - " + (item.body as ITextClipBody).text,
+    [NodeType.TEXT_CLIP]:
+      "Clipped Text - " + (item.body as ITextClipBody)?.text,
     [NodeType.YOUTUBE_TIMESTAMP_CLIP]:
       "Video timestamp - " +
       resolveVideoTimeStampStr(item.body as IVideoTimestampClipBody),
@@ -288,6 +289,7 @@ export function resolveNodeLabel(item: INodeThumb) {
   }
 
   function resolveVideoTimeStampStr(body: IVideoTimestampClipBody) {
+    if (!body) return;
     return formatSeconds(body.timestamp, TimeFormat.CLOCK);
   }
 }

@@ -57,7 +57,12 @@ export const rearrangeOnAxis: Action<HTMLElement, RearrangeParams> = (
   }
 
   function handleMouseMove(event: MouseEvent) {
-    if (!params.enabled || isTextElementFocused()) return;
+    if (
+      !params.enabled ||
+      isTextElementFocused() ||
+      isResizeHandle(event.target as HTMLElement)
+    )
+      return;
     lastMouseX = event.clientX;
     if (!isDragging && Math.abs(lastMouseX - (startX ?? 0)) > moveThreshold) {
       isDragging = true;
@@ -138,6 +143,13 @@ function isTextElementFocused() {
   );
 }
 
+function isResizeHandle(element: HTMLElement): boolean {
+  return (
+    element.classList.contains("cursor-row-resize") ||
+    element.classList.contains("cursor-col-resize")
+  );
+}
+
 interface DragDropOptions {
   listId: string;
   draggedOverClass: string;
@@ -176,7 +188,7 @@ export const reorderList: Action<HTMLElement, DragDropOptions> = (
   let listId = options?.listId || "default-list";
 
   function handleDragStart(e: DragEvent) {
-    if (isTextElementFocused()) {
+    if (isTextElementFocused() || isResizeHandle(e.target as HTMLElement)) {
       e.preventDefault();
       return;
     }

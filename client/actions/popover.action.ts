@@ -16,6 +16,10 @@ interface TooltipParams {
   direction?: Placement;
   offsetInPx?: number;
   delay?: number;
+  /**
+   * If set to true, the tooltip will be enabled only when the text is truncated
+   */
+  isEnableOnlyOnTruncate?: boolean;
 }
 
 interface TooltipReturn {
@@ -34,7 +38,8 @@ export function tooltip(
     direction = Placement.Bottom,
     offsetInPx = 10,
     delay = 300,
-    disabled = false
+    disabled = false,
+    isEnableOnlyOnTruncate = false
   } = params;
   const baseClassList =
     "fixed z-50 px-3 bg-fgs2 text-bgs1 py-1 text-b3 shadow-md rounded-md pointer-events-none opacity-0 transition-opacity duration-200 tooltip";
@@ -42,6 +47,7 @@ export function tooltip(
 
   function createTooltip(): void {
     if (!text || disabled) return;
+    if (isEnableOnlyOnTruncate && node.scrollWidth <= node.clientWidth) return;
     tooltipElement = document.createElement("div");
     tooltipElement.textContent = text;
     tooltipElement.className = `${baseClassList} ${classList}`;
@@ -185,6 +191,8 @@ export function tooltip(
     node.querySelectorAll(".tooltip").forEach((el) => {
       el?.parentNode?.removeChild(el);
     });
+    if (!tooltipsContainer) return;
+    tooltipsContainer.innerHTML = "";
   }
 
   node.addEventListener("mouseenter", onMouseEnter);

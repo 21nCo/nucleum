@@ -50,7 +50,7 @@ export const emptyBlock: IBlockInterface = {
 };
 const seedMdStore: IMarkdownStore = {
   blocks: [],
-  activeHeading: ""
+  headingsInView: []
 };
 
 export const mdContentChangeEvent = initMdContentChangeEvent();
@@ -89,7 +89,7 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
   load(md: IMarkdown) {
     this.set({
       blocks: md.blocks,
-      activeHeading: ""
+      headingsInView: []
     });
     this.focus.set({ id: md.blocks?.[0]?.id });
   }
@@ -190,7 +190,7 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
     const newBlockId = generateResourceId(Resource.node);
     this.update((store) => {
       const contextBlockIndex = store.blocks.findIndex(
-        (b) => b.id === contextBlockId
+        resourceInList(contextBlockId)
       );
       const newBlock: IBlockInterface<StructuralContent> = {
         id: newBlockId,
@@ -202,12 +202,6 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
         ...store.blocks.slice(contextBlockIndex)
       ];
       this.focus.set({ id: newBlock.id });
-      // store = handleNodeMarkdownChildHierarchyChanges(
-      //   store,
-      //   contextBlockId,
-      //   newBlock,
-      //   true
-      // );
       return store;
     });
     return newBlockId;
@@ -508,6 +502,27 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
     const md = this.get();
     const contextIndex = md.blocks.findIndex(resourceInList(id));
     return md.blocks[contextIndex - 1];
+  }
+
+  setActiveHeading(id: IRecordId) {
+    this.update((n) => {
+      const closestHeading = findNearestHeading(n.blocks, id);
+      n.activeHeading = closestHeading?.id;
+      return n;
+    });
+
+    function findNearestHeading(blocks: IBlock[], id: IRecordId) {
+      let contextIndex = blocks.findIndex(resourceInList(id));
+      let contextBlock = blocks[contextIndex];
+      while (
+        !contextBlock?.contentType?.includes("HEADING") &&
+        contextIndex >= 0
+      ) {
+        contextBlock = blocks[contextIndex - 1];
+        contextIndex--;
+      }
+      return contextBlock;
+    }
   }
 
   /**

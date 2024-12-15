@@ -51,7 +51,6 @@
   export let block: IMediaGridNode;
   export let mdStore: MdStoreType;
   export let files: IFile[] = [];
-  export let isReadMode: boolean = false;
 
   if (block.body == "") {
     block.body = {};
@@ -815,7 +814,7 @@
       {#if items.length == 0}
         <button
           on:drop={handleFileUpload}
-          class="absolute text-fgs3 w-full h-full bg-opacity-50 bg-bgs2 border border-dashed flex items-center justify-center rounded-md"
+          class="absolute text-fgs3 w-full h-full bg-opacity-50 bg-bgs2 border border-brs3 border-dashed flex items-center justify-center rounded-md"
         >
           <span>Drop and drop media files here</span>
         </button>
@@ -880,7 +879,7 @@
       {/each}
     </div>
   {/if}
-  {#if !isReadMode}
+  {#if !$mdStore.params?.isReadOnly}
     <MediaGridOptions
       {chevDown}
       {chevUp}

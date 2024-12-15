@@ -357,6 +357,15 @@
     ) {
       return;
     }
+
+    if (
+      resource === Resource.node &&
+      mutation.action === PersistenceActionType.MERGE &&
+      !rootNodeTypeList.includes(mutation.record.contentType as NodeType)
+    ) {
+      return;
+    }
+
     if (
       resource === Resource.node &&
       mutation.action === PersistenceActionType.INSERT &&

@@ -6,6 +6,7 @@
   import type { IBlockBrowserItem } from "./blockBrowser.type";
   import { tooltip } from "$lib/client/actions/popover.action";
   import { Placement } from "$lib/client/types/direction.enum";
+  import MdShortcutText from "../shortcuts/MdShortcutText.svelte";
 
   export let block: IBlockBrowserItem;
   export let width: string = "w-full";
@@ -42,9 +43,13 @@
     <Icon icon={block.icon} />
   </div>
   <div class="text-left">{block.label}</div>
-  {#if block.badge}
-    <span class="ml-auto">
+  <span class="ml-auto">
+    {#if block.badge}
       <Badge text={block.badge} />
-    </span>
-  {/if}
+    {:else if block.isShowShortcut}
+      <span class="text-b3 text-fgs3">
+        <MdShortcutText type={block.type} />
+      </span>
+    {/if}
+  </span>
 </button>

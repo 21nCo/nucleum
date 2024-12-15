@@ -275,11 +275,14 @@
   onMount(async () => {
     await syncStore.init(NodeType.KINDLE_BOOK);
     region = matchCurrentUrlWithAmazonRegions();
-    appEvents.subscribe(async (x) => {
+    const appEventSub = appEvents.subscribe(async (x) => {
       logger.debug({ at: "appEvent - Kindle Content Script", event: x.event });
       if (x.event === ClipperExtensionEvent.START_SYNC) {
         sync();
       }
     });
+    return () => {
+      if (appEventSub) appEventSub();
+    };
   });
 </script>

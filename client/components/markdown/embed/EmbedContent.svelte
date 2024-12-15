@@ -129,7 +129,6 @@
       onResize: onResize
     }}
     on:click={(e) => {
-      console.log({ e });
       if (e.target && e.target.classList.contains("resizer")) return;
       if (_mediaBlock?.contentType === NodeType.FILE) return;
       appStore.openResource(body.id, ResourceAccessMode.POP);

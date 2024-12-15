@@ -61,11 +61,7 @@
       {/each}
     </div>
     {#if index !== menu.length - 1}
-      <Divider
-        colorStrength={parentBgIndex === 1
-          ? ColorStrength.Strong
-          : ColorStrength.ExtraStrong}
-      />
+      <Divider colorStrength={ColorStrength.Strong} />
     {/if}
   {/each}
 </div>

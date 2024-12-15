@@ -7,7 +7,7 @@
   import Slider from "$lib/client/elements/slider/Slider.svelte";
   import { createEventDispatcher } from "svelte";
   import { MediaGridType } from "$lib/client/products/memotron/node/node.type";
-  import { ButtonVariant } from "$lib/client/types/button.type";
+  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import Button from "$lib/client/elements/button/Button.svelte";
 
   export let config: any;
@@ -31,7 +31,7 @@
   }
 </script>
 
-<div class="h-auto w-full bg-bgs1 flex items-center gap-4 px-4 py-1">
+<div class="h-10 w-full bg-bgs1 flex items-center gap-4 px-4 py-1">
   <PanelSwitcher
     parentBgIndex={2}
     items={[
@@ -46,20 +46,21 @@
     ]}
     value={config.type}
     style={PanelSwitcherStyle.TRAIN}
-    size={Size.sm}
+    size={Size.xs}
     on:switch={(e) => {
       sortItems(e.detail);
       config.type = e.detail;
     }}
   />
-  <UploadButton
-    on:input={handleFileUpload}
-    type={ButtonVariant.SECONDARY}
-    size={Size.sm}
-    accept="image/*,audio/*,video/*,application/pdf"
-  />
+  {#if config.isHovered}
+    <UploadButton
+      on:input={handleFileUpload}
+      type={ButtonVariant.SECONDARY}
+      size={Size.sm}
+      accept="image/*,audio/*,video/*,application/pdf"
+    />
 
-  <!-- <input
+    <!-- <input
             type="text"
             placeholder="Type URL"
             on:focus={() => (typeURLFocused = true)}
@@ -70,30 +71,31 @@
               : 'w-24'}  border border-fgs1 rounded-full bg-aps1 text-bgs1 text-b2 placeholder-bgs1 p-2 z-10"
           /> -->
 
-  {#if config.type === MediaGridType.COLUMNS}
-    <div
-      class="inline-flex gap-1 w-20 h-7 px-2 bg-bgs2 rounded-full text-b3 text-fgs2"
-    >
-      <div class="flex items-center justify-center px-1">
-        {config.noOfColumns}
+    {#if config.type === MediaGridType.COLUMNS}
+      <div
+        class="inline-flex gap-1 w-20 h-7 px-2 bg-bgs2 rounded-full text-b3 text-fgs2"
+      >
+        <div class="flex items-center justify-center px-1">
+          {config.noOfColumns}
+        </div>
+        <div class="inline-flex flex-col">
+          <Icon icon="chevup" size={Size.xs} on:click={chevUp} />
+          <Icon icon="chevdown" size={Size.xs} on:click={chevDown} />
+        </div>
+        <div class="h-full border border-r-brs3"></div>
+        <Icon
+          icon="ph:plus-light"
+          on:click={() => {
+            if (columnArray.length == config.noOfColumns)
+              config.noOfColumns += 1;
+            else alert("Not more than one empty column can be added");
+          }}
+        />
       </div>
-      <div class="inline-flex flex-col">
-        <Icon icon="chevup" size={Size.xs} on:click={chevUp} />
-        <Icon icon="chevdown" size={Size.xs} on:click={chevDown} />
-      </div>
-      <div class="h-full border border-r-brs3"></div>
-      <Icon
-        icon="ph:plus-light"
-        on:click={() => {
-          if (columnArray.length == config.noOfColumns) config.noOfColumns += 1;
-          else alert("Not more than one empty column can be added");
-        }}
-      />
-    </div>
-  {/if}
+    {/if}
 
-  <div class="relative ml-auto flex items-center gap-3">
-    <!-- <button
+    <div class="relative ml-auto flex items-center gap-3">
+      <!-- <button
       class="material-symbols-rounded"
       on:click={() => {
         config.gridWidth = config.isWideLayout
@@ -114,7 +116,7 @@
       {/if}</button
     > -->
 
-    <!-- <Button
+      <!-- <Button
       icon="ph:text"
       on:click={() => (isAltTextEnabled = !isAltTextEnabled)}
     />
@@ -135,35 +137,39 @@
         </div>
       </div>
     {/if} -->
-    <button
-      class="relative flex items-center"
-      on:click={() => (isGapSliderEnabled = !isGapSliderEnabled)}
-    >
-      {#if isGapSliderEnabled}
-        <div
-          class="absolute bottom-[150%] -left-[3rem] w-32 h-12 bg-bgs1 rounded-lg border border-bgs4 shadow-lg pt-1"
-        >
-          <div class="font-sans text-sm w-full">
-            <!--The +4px accounts to the invisible border added to draggable elements for feedback animation -->
-            {config.gap + 4}px
+      <button
+        class="relative flex items-center"
+        on:click={() => (isGapSliderEnabled = !isGapSliderEnabled)}
+      >
+        {#if isGapSliderEnabled}
+          <div
+            class="absolute bottom-[150%] -left-[3rem] w-32 h-12 bg-bgs1 rounded-lg border border-bgs4 shadow-lg pt-1"
+          >
+            <div class="font-sans text-sm w-full">
+              <!--The +4px accounts to the invisible border added to draggable elements for feedback animation -->
+              {config.gap + 4}px
+            </div>
+            <Slider
+              bind:value={config.gap}
+              on:input={() => {
+                if (config.type == "AUTO") {
+                  handleNewImageLoad();
+                }
+                //   else ResizeImageForAllColumns();
+              }}
+            />
           </div>
-          <Slider
-            bind:value={config.gap}
-            on:input={() => {
-              if (config.type == "AUTO") {
-                handleNewImageLoad();
-              }
-              //   else ResizeImageForAllColumns();
-            }}
-          />
-        </div>
-      {/if}
-      <Icon icon="ph:sliders-horizontal" />
-    </button>
-    <Button
-      icon="ph:trash"
-      tooltip="Delete"
-      on:click={() => dispatch("delete")}
-    />
-  </div>
+        {/if}
+        <Icon icon="ph:sliders-horizontal" />
+      </button>
+      <Button
+        icon="ph:trash"
+        tooltip="Delete"
+        type={ButtonVariant.DANGER}
+        style={ButtonStyle.OUTLINED}
+        size={Size.sm}
+        on:click={() => dispatch("delete")}
+      />
+    </div>
+  {/if}
 </div>

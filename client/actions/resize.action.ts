@@ -33,6 +33,7 @@ export const resizable: Action<HTMLElement, ResizableOptions> = (
   let startWidth: number;
   let startHeight: number;
   let handles: HTMLDivElement[] = [];
+  let overlay: HTMLDivElement | null = null;
 
   function createHandle(edge: Edge) {
     const handle = document.createElement("div");
@@ -47,10 +48,23 @@ export const resizable: Action<HTMLElement, ResizableOptions> = (
     handle.addEventListener("mouseleave", () => {
       if (!resizing && enabled) handle.style.display = "none";
     });
-    handle.addEventListener(
-      "mousedown",
-      (e) => enabled && startResize(e, edge)
-    );
+
+    handle.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      enabled && startResize(e, edge);
+    });
+
+    handle.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+
+    handle.addEventListener("dragstart", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+    handle.draggable = false;
 
     return handle;
   }
@@ -68,6 +82,26 @@ export const resizable: Action<HTMLElement, ResizableOptions> = (
         return `${baseClasses} bottom-0 left-0 w-full h-1.5 cursor-row-resize`;
     }
   }
+  /**
+   * To prevents click events on the node which is being resized at the end of the resizing process
+   */
+  function createOverlay() {
+    overlay = document.createElement("div");
+    overlay.style.position = "fixed";
+    overlay.style.top = "0";
+    overlay.style.left = "0";
+    overlay.style.width = "100%";
+    overlay.style.height = "100%";
+    overlay.style.zIndex = "9999";
+    document.body.appendChild(overlay);
+  }
+
+  function removeOverlay() {
+    if (overlay) {
+      overlay.remove();
+      overlay = null;
+    }
+  }
 
   function startResize(e: MouseEvent, edge: Edge) {
     if (!enabled) return;
@@ -78,6 +112,7 @@ export const resizable: Action<HTMLElement, ResizableOptions> = (
     startWidth = node.offsetWidth;
     startHeight = node.offsetHeight;
 
+    createOverlay();
     document.addEventListener("mousemove", resize);
     document.addEventListener("mouseup", stopResize);
   }
@@ -125,6 +160,7 @@ export const resizable: Action<HTMLElement, ResizableOptions> = (
         handle.style.display = "none";
       }
     });
+    removeOverlay();
   }
 
   function setupHandles() {
@@ -181,6 +217,7 @@ export const resizable: Action<HTMLElement, ResizableOptions> = (
     },
     destroy() {
       removeHandles();
+      removeOverlay();
     }
   };
 };

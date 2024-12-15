@@ -25,7 +25,6 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { setContext } from "svelte";
   import { logger } from "../debug/logger.client";
-  import FocusRing from "./contextMenu/FocusRing.svelte";
   import { copyToClipboard } from "$lib/client/utils/utils";
   import { toasts } from "$lib/client/stores/notification.store";
   import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
@@ -35,6 +34,7 @@
   import type { IRecordId } from "$lib/client/types/data.type";
   import { isSameResource } from "../flux/resourceStores/resource.utils";
   import {
+    performEscShortcuts,
     resolvePlainOffsetForMdEnd,
     resolvePlainText,
     splitMarkdownAtPlainOffset
@@ -48,6 +48,8 @@
   import { generateResourceId } from "../flux/flux.utils";
   import { Resource } from "../flux/resourceStores/resource.enum";
   import { resolveMultipleFilesData } from "$lib/client/products/memotron/capture/capture.utils";
+  import Button from "$lib/client/elements/button/Button.svelte";
+  import { Size } from "$lib/client/types/size.enum";
 
   export let block: IBlock;
   export let mdStore: MdStoreType;
@@ -62,9 +64,17 @@
   $: isLeftControlsEnabled =
     $mdStore.params?.isNodular && !$view.isConstrainedWidth;
 
+  $: isSoleBlock =
+    isSameResource($mdStore.blocks[0], block) && $mdStore.blocks.length === 1;
+
   const markdownContext = getContext<any>("markdown");
   const nodeContext = getContext<any>("node");
   const contentContext = getContext<any>("content");
+
+  const blockContext = {
+    publish: blockContextEventListener
+  };
+  setContext("block", blockContext);
 
   function propagate(event: string, data: any) {
     markdownContext({
@@ -87,7 +97,7 @@
   }
 
   onMount(() => {
-    mdStore?.alter?.subscribe((b) => {
+    const unsubscribe = mdStore?.alter?.subscribe((b) => {
       if (b && isSameResource(b, block.id)) {
         block = b;
         if (headingNodeTypes.includes(b.contentType)) {
@@ -98,6 +108,9 @@
         contentRefreshId = new Date().getTime();
       }
     });
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   });
 
   function blockContextEventListener(action: BlockAction, data: any) {
@@ -110,8 +123,7 @@
         break;
 
       case BlockAction.DELETE:
-        mdStore.deleteBlock(block.id);
-        propagateAsAction(action, {});
+        deleteBlock();
         break;
 
       case BlockAction.INSERT:
@@ -169,10 +181,11 @@
         break;
     }
   }
-  const blockContext = {
-    publish: blockContextEventListener
-  };
-  setContext("block", blockContext);
+
+  function deleteBlock() {
+    mdStore.deleteBlock(block.id);
+    propagateAsAction(BlockAction.DELETE, {});
+  }
 
   function handleBackspaceWithContent() {
     const currentBlockText = resolveBodyText();
@@ -240,12 +253,7 @@
       block.label = data.label;
       propagate(BlockAction.CHANGE, { label: data.label });
     }
-    if (
-      data.toType === NodeType.EMBED ||
-      structuralNodeTypes.includes(data.toType)
-    ) {
-      insertBufferBlockIfRequired(block.id);
-    }
+    insertBufferBlockIfRequired(block.id, data.toType);
     mdStore.focusBlock(block.id, { xOffset: 0 });
   }
 
@@ -340,26 +348,32 @@
       };
     }
 
-    if (structuralNodeTypes.includes(data.blockType))
+    if (structuralNodeTypes.includes(data.blockType)) {
       newBlockId = mdStore.insertStructualBlock(
         block.id,
         data.blockType as StructuralNodeType
       );
-    else newBlockId = mdStore.insert({ source: block.id, ...data });
+    } else newBlockId = mdStore.insert({ source: block.id, ...data });
 
+    if (!newBlockId) return;
     propagateAsAction(BlockAction.INSERT, { ...data, id: newBlockId });
-
-    if (
-      (data.blockType === NodeType.EMBED ||
-        structuralNodeTypes.includes(data.blockType)) &&
-      newBlockId
-    ) {
-      insertBufferBlockIfRequired(newBlockId);
-    }
+    insertBufferBlockIfRequired(newBlockId, data.blockType);
   }
 
-  function insertBufferBlockIfRequired(newBlockId: IRecordId) {
-    const isCurrentIsLastBlock = mdStore.isLastBlock(block.id);
+  function insertBufferBlockIfRequired(
+    newBlockId: IRecordId,
+    newBlockType: NodeType
+  ) {
+    if (
+      ![
+        ...mediaNodeTypeList,
+        ...structuralNodeTypes,
+        NodeType.CODE,
+        NodeType.EMBED
+      ].includes(newBlockType)
+    )
+      return;
+    const isCurrentIsLastBlock = mdStore.isLastBlock(newBlockId);
     if (!isCurrentIsLastBlock) return;
     const bufferBlock = {
       blockType: NodeType.SIMPLE_TEXT,
@@ -546,12 +560,46 @@
       const items = event?.clipboardData?.items;
       if (!items) return;
       const itemArray = Array.from(items);
-      const isCodeText = itemArray.some((i) => i.type === "vscode-editor-data");
-      if (!isCodeText && items.length > 1) {
-        await handlePasteForMultipleItems(event);
+      logger.log({
+        at: "handlePaste",
+        items,
+        length: items?.length,
+        types: itemArray.map((i) => i.type)
+      });
+      // const allTexts = await Promise.all(
+      //   itemArray.map((i) => getAsStringPromise(i))
+      // );
+      // console.log("allTexts", allTexts);
+
+      const isMultipleFiles =
+        items.length > 1 && itemArray.every((i) => !i.type.includes("text"));
+      if (isMultipleFiles) {
+        await handlePasteForMultipleFiles(event);
         return;
       }
-      const item = items[0];
+
+      const isSimpleText =
+        (items.length === 1 && items[0].type === "text/plain") ||
+        itemArray.every((i) => i.type.includes("text"));
+      if (isSimpleText) {
+        const simpleTextItem =
+          items.length === 1
+            ? items[0]
+            : itemArray.find((i) => i.type === "text/plain");
+        await handlePasteForText(simpleTextItem);
+        return;
+      }
+
+      const isMdText = itemArray.some(
+        (i) => i.type === "text/markdown" || i.type.includes("notion")
+      );
+      if (isMdText) {
+        const mdTextItem = itemArray.find((i) => i.type === "text/plain");
+        await handlePasteForText(mdTextItem);
+        return;
+      }
+
+      const isCodeText = itemArray.some((i) => i.type === "vscode-editor-data");
       let newBlock: Pick<IBlock, "contentType" | "body"> | undefined;
       let fileEmbed: any;
       if (isCodeText) {
@@ -575,9 +623,6 @@
             language: metadata?.mode
           }
         };
-      } else if (item?.type === "text/plain") {
-        handlePasteForSimpleText(item);
-        return;
       } else {
         const blob = items[0].getAsFile();
         if (!blob) {
@@ -607,18 +652,76 @@
       event.preventDefault();
     }
 
-    async function handlePasteForSimpleText(item: DataTransferItem) {
-      //TODO - code text detection, if current is not text block case
-      item.getAsString((text) => {
+    async function handlePasteForText(item: DataTransferItem | undefined) {
+      if (!item) {
+        throw new Error("No text item found");
+      }
+      const text = await getAsStringPromise(item);
+      const spans = text.split("\n");
+
+      if (spans.length === 1) {
         const modifiedBlockText = editBlockText(block, text, {
           isAppend: true
         });
-        console.log("modifiedBlockText", modifiedBlockText);
         block.body = modifiedBlockText;
         propagate(BlockAction.CHANGE, { body: modifiedBlockText });
         contentRefreshId = new Date().getTime();
         mdStore.focusBlock(block.id, { isBottom: true });
+        return;
+      }
+
+      const nodeContentType =
+        nodeContext?.contentType ?? NodeType.NODULAR_MARKDOWN;
+
+      const blocks: IBlock[] = spans.map((x) => {
+        const escResult = performEscShortcuts(nodeContentType, x);
+        const id = generateResourceId(Resource.node);
+        if (!escResult) {
+          return {
+            id,
+            contentType: NodeType.SIMPLE_TEXT,
+            body: x
+          };
+        }
+        const { shortcut, type, isFullReplace, indentLevel } = escResult;
+        if (isFullReplace) {
+          return {
+            id,
+            contentType: type
+          };
+        }
+        x = x.replace(shortcut, "");
+        if (headingNodeTypes.includes(type)) {
+          return {
+            id,
+            contentType: type,
+            label: x
+          };
+        } else if (simpleTextNodeTypeList.includes(type)) {
+          return {
+            id,
+            contentType: type,
+            body: x
+          };
+        }
+        if (indentLevel) {
+          return {
+            id,
+            contentType: type,
+            body: {
+              ...(resolveDefaultBody(type, x.trimStart()) as IListBlockBody),
+              indent: indentLevel
+            }
+          };
+        }
+        return {
+          id,
+          contentType: type,
+          body: resolveDefaultBody(type, x)
+        };
       });
+      mdStore.insertMany(block.id, blocks);
+      propagateAsAction(BlockAction.INSERT_MANY, { blocks });
     }
 
     function getAsStringPromise(item?: DataTransferItem): Promise<string> {
@@ -631,7 +734,7 @@
       });
     }
 
-    function handlePasteForMultipleItems(event: ClipboardEvent) {
+    function handlePasteForMultipleFiles(event: ClipboardEvent) {
       const filesData = event?.clipboardData?.files;
       if (!filesData) return;
       let allFiles = Array.from(filesData);
@@ -671,7 +774,7 @@
       propagate(BlockAction.CHANGE, {
         body: newBlock.body
       });
-      insertBufferBlockIfRequired(block.id);
+      insertBufferBlockIfRequired(block.id, newBlock.contentType);
       if (fileEmbed) {
         addMention(fileEmbed, block.id);
       }
@@ -691,7 +794,7 @@
         throw new Error("mdStore.insert failed");
       }
       propagateAsAction(BlockAction.INSERT, { ...data, id: newBlockId });
-      insertBufferBlockIfRequired(newBlockId);
+      insertBufferBlockIfRequired(newBlockId, data.blockType);
       if (fileEmbed) {
         addMention(fileEmbed, newBlockId);
       }
@@ -777,7 +880,10 @@
     }));
     mdStore.insertMany(block.id, blocks);
     propagateAsAction(BlockAction.INSERT_MANY, { blocks });
-    insertBufferBlockIfRequired(blocks[blocks.length - 1].id);
+    insertBufferBlockIfRequired(
+      blocks[blocks.length - 1].id,
+      blocks[blocks.length - 1].contentType
+    );
     result.forEach((x, index) => {
       addMention(x, blocks[index].id);
     });
@@ -804,9 +910,9 @@
 <!--TODO -  Note - when reenabling drag and drag to rearrange - make sure it is not interfering with text selection or media grid space slider -->
 <div
   class={cn(
-    "w-full min-h-fit items-center gap-2 rounded-md border border-transparent",
+    "relative w-full min-h-fit items-center gap-2 rounded-md border border-transparent",
     {
-      "grid grid-cols-[2.5rem_1fr]": isLeftControlsEnabled,
+      "grid grid-cols-[2.5rem_1fr_2.5rem]": isLeftControlsEnabled,
       "opacity-50": isDragging
     },
     $mdStore.params?.isNodular &&
@@ -843,7 +949,7 @@
       <span />
     {:else}
       <LeftControls
-        {mdStore}
+        {isSoleBlock}
         {block}
         {isFocusing}
         isDisableTooltip={isDragging}
@@ -865,24 +971,45 @@
           isHovering = false;
         }}
         on:update={onBlockUpdate}
+        on:delete={deleteBlock}
       />
     {/key}
     {#if progressState}
       <div
-        class="absolute inset-0 pr-3 bg-gradient-to-r from-transparent via-bgs2 to-transparent rounded-md flex gap-2 items-center justify-center"
+        class="absolute inset-0 bg-gradient-to-r from-transparent via-bgs2 to-transparent rounded-md flex gap-2 items-center justify-center"
       >
         <Icon icon="svg-spinners:3-dots-fade" />
         <span class="text-fgs3 text-b2">{progressState}</span>
       </div>
     {/if}
-    {#if isHovering && isFocusable && !isFocusing}
-      <div
-        class="absolute inset-y-0 right-0 flex items-center justify-center bg-gradient-to-r from-bgs2/40 via-bgs2 to-bgs2 pl-32 pr-2"
-      >
+  </div>
+  {#if !$mdStore.params?.isReadOnly}
+    <div class="flex items-center justify-center">
+      {#if isHovering && !isFocusing && !isSoleBlock && [...simpleTextNodeTypeList, ...listNodeTypes, NodeType.DIVIDER, NodeType.DOUBLE_DIVIDER].includes(block.contentType)}
+        <Button
+          icon="ph:trash"
+          size={Size.sm}
+          tooltip="Delete block"
+          on:click={deleteBlock}
+        />
+      {/if}
+    </div>
+  {/if}
+  {#if isHovering && !isFocusing && !$mdStore.params?.isReadOnly}
+    <div
+      class={cn(
+        "absolute inset-y-0 right-0 flex items-center justify-center pr-2",
+        {
+          "bg-gradient-to-r from-bgs2/40 via-bgs2 to-bgs2 pl-32 rounded-r-md":
+            isFocusable
+        }
+      )}
+    >
+      {#if isFocusable}
         <span class="text-b3 text-fgs1 rounded-md px-2 py-1 bg-bgs3">
           {resolveHeadingText(block.contentType)}
         </span>
-      </div>
-    {/if}
-  </div>
+      {/if}
+    </div>
+  {/if}
 </div>

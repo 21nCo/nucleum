@@ -11,6 +11,11 @@
   import { headingNodeTypes } from "$lib/client/products/memotron/node/node.type";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "$lib/client/types/size.enum";
+  import { tooltip } from "$lib/client/actions/popover.action";
+  import {
+    isSameResource,
+    resourceInList
+  } from "../flux/resourceStores/resource.utils";
   export let mdId: string;
   const mdStore = getMdStore(mdId);
   let mdcontainerID = "markDown-" + mdId;
@@ -33,10 +38,18 @@
       .map((block: IBlock) => ({
         content: block.label ?? block.body,
         id: block.id,
-        HEADING: Number(block.contentType.slice(-1))
+        HEADING: Number(block.contentType.slice(-1)) - 1
       }));
     if (!(headingBlocks.length > 0)) return;
     isHeadingAvailable = true;
+  }
+
+  function scrollToHeading(e: MouseEvent, id: string) {
+    e.preventDefault();
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
   }
 </script>
 
@@ -44,17 +57,57 @@
   <div class="w-full text-left">
     <div class="sticky top-10">
       {#each headingBlocks as block}
+        {@const isInView = $mdStore?.headingsInView?.some(
+          resourceInList(block)
+        )}
+        {@const isFirstInView =
+          $mdStore?.headingsInView?.[0] &&
+          isSameResource($mdStore.headingsInView[0], block)}
+        {@const isLastInView =
+          $mdStore?.headingsInView?.[$mdStore?.headingsInView?.length - 1] &&
+          isSameResource(
+            $mdStore.headingsInView[$mdStore.headingsInView.length - 1],
+            block
+          )}
+        {@const isActive =
+          $mdStore.activeHeading &&
+          isSameResource($mdStore.activeHeading, block)}
         <a
           href="#{block.id}"
+          on:click={(e) => scrollToHeading(e, block.id)}
           class={cn(
-            "block text-base hover:bg-bgs2 truncate py-1.5 rounded-md",
+            "flex items-center gap-1.5 text-b2 truncate py-1.5",
             {
-              "text-fgs3": block.id != $mdStore.activeHeading,
-              "text-aps1": block.id == $mdStore.activeHeading
+              "hover:bg-bgs2 rounded-md": !isInView,
+              "bg-bgs2": isInView,
+              "rounded-t-md": isFirstInView,
+              "rounded-b-md": isLastInView,
+              "text-aps1": isActive
+            },
+            !isActive && {
+              "text-fgs1": isInView,
+              "text-fgs3": !isInView
             }
           )}
-          style="padding-left: {block.HEADING * 15}px;">{block.content}</a
+          style="padding-left: {block.HEADING * 20}px;"
+          use:tooltip={{
+            isEnableOnlyOnTruncate: true,
+            text: block.content
+          }}
         >
+          <span
+            class={cn(
+              "bg-aps1 min-w-1.5 h-1.5 flex justify-center items-center rounded-full",
+              {
+                "opacity-0": !isActive
+              }
+            )}
+          >
+          </span>
+          <span>
+            {block.content}
+          </span>
+        </a>
       {/each}
     </div>
   </div>

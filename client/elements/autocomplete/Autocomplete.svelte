@@ -56,6 +56,9 @@
         focus();
       }
     });
+    return () => {
+      if (appEventSub) appEventSub();
+    };
   });
 
   function hideOptions() {

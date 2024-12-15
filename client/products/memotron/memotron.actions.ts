@@ -526,7 +526,8 @@ export const memotronActions: IAction[] = [
     modalParams: {
       title: "Callout Settings",
       layout: {
-        orientation: Orientation.Horizontal
+        orientation: Orientation.Vertical,
+        size: Size.lg
       }
     }
   },

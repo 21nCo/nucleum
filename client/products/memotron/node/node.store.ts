@@ -667,7 +667,6 @@ class NodeActions {
       type: ContextMenuType.SWITCH,
       initialValue: this.node.config?.isWidened,
       callback: async (checked) => {
-        console.log({ checked });
         return this.store.modify(this.node.id, {
           config: {
             isWidened: checked
