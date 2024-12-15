@@ -67,10 +67,19 @@
           label: "Create " + resource,
           callback: async () => {
             if (resource === Resource.node) {
-              appStore.runAction(MemotronAction.CAPTURE);
+              appStore.runAction(MemotronAction.CAPTURE, {
+                componentParams: {
+                  context: ResourceAccessPoint.BROWSER
+                }
+              });
             } else
               appStore.runAction(
-                resourceAction(resource, ResourceActionType.CREATE)
+                resourceAction(resource, ResourceActionType.CREATE),
+                {
+                  componentParams: {
+                    context: ResourceAccessPoint.BROWSER
+                  }
+                }
               );
           },
           icon: "plus",
@@ -306,6 +315,11 @@
 
 <ComponentBaseLayer
   subscribeTo={new Set([resource])}
+  subscribeToContext={new Set([
+    ResourceAccessPoint.BROWSER,
+    MemotronAction.CAPTURE,
+    resourceAction(Resource.collection, ResourceActionType.CREATE)
+  ])}
   syncDownOnMount={true}
   on:syncDown={() => refresh()}
   on:change={() => refresh()}
