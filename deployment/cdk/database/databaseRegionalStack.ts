@@ -1,10 +1,11 @@
 import { App, Stack, StackProps } from "aws-cdk-lib";
-import { IDatabaseEnvironmentVariables } from "../types/env.type";
-import { resolveCommonResources } from "../cdk.utils";
-import { CustomDatabaseNestedStackProps } from "../types/customNestedStackProps.type";
+import { IDatabaseEnvironmentVariables } from "./../types/env.type";
 import { DatabaseLightsailRegionalStack } from "./databaseStack";
 
-export class MasterDatabaseStack extends Stack {
+import { resolveCommonResources } from "./../cdk.utils";
+import { CustomDatabaseNestedStackProps } from "./../types/customNestedStackProps.type";
+
+export class DatabaseRegionalStack extends Stack {
   constructor(
     scope: App,
     id: string,
@@ -17,11 +18,10 @@ export class MasterDatabaseStack extends Stack {
     const nestedStackProps: CustomDatabaseNestedStackProps = {
       zone,
       environment,
-      isMasterDb: true,
     };
     new DatabaseLightsailRegionalStack(
       this,
-      `masterDatabaseNestedStack-${environment.region}`,
+      `databaseStack-${environment.region}`,
       nestedStackProps
     );
   }
