@@ -49,6 +49,7 @@ export type IFilesEnvironmentVariables = IBaseEnvironmentVariables & {
   fileBucketPrefix: string;
   tempBucketPrefix: string;
   urlExpirationTime: string;
+  urlExpirationTimeGet: string;
   allRegionList: string[];
   tokenPrivateKey: string;
 };
