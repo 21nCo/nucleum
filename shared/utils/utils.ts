@@ -44,7 +44,7 @@ export function extractProduct(host: string) {
   }
 
   const blankFormatMatch = host.match(
-    /^([^.]+)\.(tidigit|blank)\.(dev|xyz|run|live)$/
+    /^([^.]+)\.(tidigit|blank|21n)\.(dev|xyz|run|live)$/
   );
   if (blankFormatMatch) {
     return {

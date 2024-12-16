@@ -1,18 +1,5 @@
-export type IEnvironment = {
-  /**
-   * Name of the environment ex: dev, pre, live
-   */
-  environment: string;
-  domain: string;
-  subdomain?: string;
+export type IEnvironment = IBaseEnvironmentVariables & {
   allRegionList: string[];
-  region: string;
-  tidyregion: string;
-  isUseParentZone?: boolean;
-  /**
-   * Email address to use for Let's Encrypt certificate generation and similar services
-   */
-  email: string;
   lambdaEnv: ILambdaEnvironmentVariables;
 };
 
@@ -36,4 +23,24 @@ export type ILambdaEnvironmentVariables = {
   USE_THIRDPARTY_AUTH_METHOD?: string;
   URL_EXPIRATION_TIME?: string;
   URL_EXPIRATION_TIME_GET?: string;
+};
+
+export type IDatabaseEnvironmentVariables = IBaseEnvironmentVariables & {
+  dbPass: string;
+};
+
+export type IBaseEnvironmentVariables = {
+  /**
+   * Name of the environment ex: dev, pre, live
+   */
+  environment: string;
+  domain: string;
+  subdomain?: string;
+  region: string;
+  tidyregion: string;
+  isUseParentZone?: boolean;
+  /**
+   * Email address to use for Let's Encrypt certificate generation and similar services
+   */
+  email: string;
 };

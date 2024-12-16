@@ -4,47 +4,49 @@ import { ARecord, RecordTarget, IHostedZone } from "aws-cdk-lib/aws-route53";
 import {
   AwsCustomResource,
   AwsCustomResourcePolicy,
-  PhysicalResourceId
+  PhysicalResourceId,
 } from "aws-cdk-lib/custom-resources";
 import {
   Effect,
   ManagedPolicy,
   PolicyStatement,
   Role,
-  ServicePrincipal
+  ServicePrincipal,
 } from "aws-cdk-lib/aws-iam";
 import { Construct } from "constructs";
 import { readFileSync } from "fs";
-import { CustomNestedStackProps } from "../types/customNestedStackProps.type";
+import { CustomDatabaseNestedStackProps } from "../types/customNestedStackProps.type";
 import { ICertificate } from "aws-cdk-lib/aws-certificatemanager";
-import { IEnvironment } from "../types/env.type";
+import { IDatabaseEnvironmentVariables } from "../types/env.type";
 import { resolveAcmCertificate } from "../cdk.utils";
 import * as path from "path";
 
 export class DatabaseLightsailRegionalStack extends NestedStack {
-  env: IEnvironment;
-  zone: IHostedZone;
+  env: IDatabaseEnvironmentVariables;
   certificate: ICertificate;
   domainName: string;
   instanceName: string;
   diskName: string;
   staticIpName: string;
   availabilityZone: string;
-  constructor(scope: Construct, id: string, props: CustomNestedStackProps) {
+  constructor(
+    scope: Construct,
+    id: string,
+    props: CustomDatabaseNestedStackProps
+  ) {
     super(scope, id, props);
     console.log(
       `Constructing DatabaseLightsailRegionalStack for region: ${props.environment.region}`
     );
-    const { zone, environment } = props;
-    this.env = environment;
-    this.zone = zone;
-    this.domainName = props.isMasterDb
-      ? "db." + environment.domain
-      : environment.tidyregion + ".db." + environment.domain;
+    const { zone, isMasterDb } = props;
+    this.env = props.environment;
+    this.domainName = isMasterDb
+      ? "db." + this.env.domain
+      : this.env.tidyregion + ".db." + this.env.domain;
     this.certificate = resolveAcmCertificate(this, zone, this.domainName);
     this.staticIpName = this.domainName + "-static-ip";
     this.diskName =
-      this.env.region + (props.isMasterDb ? "-master-db-disk" : "-db-disk");
+      this.env.region + (isMasterDb ? "-master-db-disk" : "-db-disk");
     this.availabilityZone = this.env.region + "a";
     this.instanceName = `${this.domainName}-instance-nov24x`;
     console.log(`Creating Lightsail instance: ${this.instanceName}`);
@@ -53,14 +55,14 @@ export class DatabaseLightsailRegionalStack extends NestedStack {
       .replace(/DOMAIN_NAME/g, this.domainName)
       .replace(/CERTIFICATE_ARN/g, this.certificate.certificateArn)
       .replace(/CERTIFICATE_REGION/g, this.env.region)
-      .replace(/DB_PASS/g, this.env.lambdaEnv.DB_PASS)
+      .replace(/DB_PASS/g, this.env.dbPass)
       .replace(/CERT_EMAIL/g, this.env.email);
 
     const lightsailAssumableRole = new Role(this, "LightsailAssumableRole", {
       assumedBy: new ServicePrincipal("lightsail.amazonaws.com"),
       managedPolicies: [
-        ManagedPolicy.fromAwsManagedPolicyName("AmazonSSMManagedInstanceCore")
-      ]
+        ManagedPolicy.fromAwsManagedPolicyName("AmazonSSMManagedInstanceCore"),
+      ],
     });
 
     // Add permissions to access ACM certificate
@@ -68,7 +70,7 @@ export class DatabaseLightsailRegionalStack extends NestedStack {
       new PolicyStatement({
         actions: ["acm:GetCertificate"],
         resources: [this.certificate.certificateArn],
-        effect: Effect.ALLOW
+        effect: Effect.ALLOW,
       })
     );
 
@@ -103,7 +105,7 @@ echo "User data script execution completed at $(date)"
     const bundleId = this.resolveBundleId(
       this.env.environment,
       this.env.region,
-      props.isMasterDb
+      isMasterDb
     );
 
     /**
@@ -121,17 +123,17 @@ echo "User data script execution completed at $(date)"
         disks: [
           {
             diskName: this.diskName,
-            path: "/dev/xvdf"
-          }
-        ]
-      }
+            path: "/dev/xvdf",
+          },
+        ],
+      },
     });
 
     lightsailAssumableRole.assumeRolePolicy?.addStatements(
       new PolicyStatement({
         actions: ["sts:AssumeRole"],
         effect: Effect.ALLOW,
-        principals: [new ServicePrincipal("lightsail.amazonaws.com")]
+        principals: [new ServicePrincipal("lightsail.amazonaws.com")],
       })
     );
 
@@ -183,18 +185,18 @@ echo "User data script execution completed at $(date)"
     new CfnOutput(this, "NetworkingStatus", {
       value:
         "SSH (22) disabled, IPv6 disabled, HTTP (80) and HTTPS (443) enabled",
-      description: "Instance Networking Configuration"
+      description: "Instance Networking Configuration",
     });
 
     const staticIp = new CfnStaticIp(this, "LightsailStaticIp", {
       staticIpName: this.staticIpName,
-      attachedTo: instance.ref
+      attachedTo: instance.ref,
     });
 
     new ARecord(this, "DNSRecord", {
       zone: zone,
       recordName: this.domainName,
-      target: RecordTarget.fromIpAddresses(staticIp.attrIpAddress)
+      target: RecordTarget.fromIpAddresses(staticIp.attrIpAddress),
     });
 
     new AwsCustomResource(this, "OpenPorts", {
@@ -206,12 +208,12 @@ echo "User data script execution completed at $(date)"
           portInfo: {
             fromPort: 80,
             toPort: 80,
-            protocol: "tcp"
-          }
+            protocol: "tcp",
+          },
         },
         physicalResourceId: PhysicalResourceId.of(
           `${instance.instanceName}-ports`
-        )
+        ),
       },
       onUpdate: {
         service: "Lightsail",
@@ -221,19 +223,19 @@ echo "User data script execution completed at $(date)"
           portInfo: {
             fromPort: 443,
             toPort: 443,
-            protocol: "tcp"
-          }
+            protocol: "tcp",
+          },
         },
         physicalResourceId: PhysicalResourceId.of(
           `${instance.instanceName}-ports`
-        )
+        ),
       },
       policy: AwsCustomResourcePolicy.fromStatements([
         new PolicyStatement({
           actions: ["lightsail:OpenInstancePublicPorts"],
-          resources: ["*"]
-        })
-      ])
+          resources: ["*"],
+        }),
+      ]),
     });
 
     // const userDataScript = readFileSync(path.join(__dirname, "init.sh"), "utf8")
@@ -245,15 +247,15 @@ echo "User data script execution completed at $(date)"
 
     new CfnOutput(this, "InstancePublicIp", {
       value: staticIp.ref,
-      description: "Public IP address of the Lightsail instance"
+      description: "Public IP address of the Lightsail instance",
     });
     new CfnOutput(this, "CertificateArn", {
       value: this.certificate.certificateArn,
-      description: "ARN of the ACM certificate"
+      description: "ARN of the ACM certificate",
     });
 
     console.log(
-      `Completed construction of DatabaseLightsailRegionalStack for region: ${props.environment.region}`
+      `Completed construction of DatabaseLightsailRegionalStack for region: ${this.env.region}`
     );
   }
   /**
