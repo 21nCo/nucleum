@@ -39,8 +39,11 @@ export class FilesLambdaFunctions extends NestedStack {
 
     const utils = props.api.root.addResource("utils");
     const utilsNodeResource = utils.addResource("n");
-    let getSignedUrlNodeFunction = new Function(this, "getsignedurl", {
-      functionName: generateFunctionName("getsignedurl", props.environment),
+    let getSignedUrlNodeFunction = new Function(this, "getsignedurlFiles", {
+      functionName: generateFunctionName(
+        "getsignedurlFiles",
+        props.environment
+      ),
       handler: "getSignedUrl.handler",
       ...nodeRuntimeFunctionProps,
     });
