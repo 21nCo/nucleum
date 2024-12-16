@@ -31,6 +31,7 @@ export class FilesLambdaFunctions extends NestedStack {
         FILE_BUCKET_PREFIX: props.environment.fileBucketPrefix,
         TEMP_BUCKET_PREFIX: props.environment.tempBucketPrefix,
         URL_EXPIRATION_TIME: props.environment.urlExpirationTime ?? "300",
+        TOKEN_PRIVATE_KEY: props.environment.tokenPrivateKey,
       },
     };
 
