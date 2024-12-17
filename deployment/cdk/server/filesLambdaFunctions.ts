@@ -47,7 +47,13 @@ export class FilesLambdaFunctions extends NestedStack {
       handler: "getSignedUrl.handler",
       ...nodeRuntimeFunctionProps,
     });
-
+    console.log(
+      "Granting permissions to buckets:",
+      fileBuckets.map((bucket) => ({
+        bucketName: bucket.bucketName,
+        bucketArn: bucket.bucketArn,
+      }))
+    );
     fileBuckets.forEach((x) => x.grantReadWrite(getSignedUrlNodeFunction));
     fileBuckets.forEach((x) => x.grantPutAcl(getSignedUrlNodeFunction));
 
