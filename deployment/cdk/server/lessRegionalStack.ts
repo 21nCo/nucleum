@@ -67,7 +67,7 @@ export class ServerlessRegionalStack extends NestedStack {
       api: this.api,
       lambdaEnvVars
     };
-    new UtilsLambdaFunctions(this, "UtilsStack", lambaProps, fileBuckets);
+    new UtilsLambdaFunctions(this, "UtilsStack", lambaProps);
     new PointronLambdaFunctions(this, "PointronStack", lambaProps, fileBuckets);
     new AccountLambdaFunctions(this, "AccountStack", lambaProps);
     new SpacesLambdaFunctions(this, "SpacesStack", lambaProps);
