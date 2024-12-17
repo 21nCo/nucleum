@@ -3,6 +3,7 @@ import * as route53 from "aws-cdk-lib/aws-route53";
 import {
   IDatabaseEnvironmentVariables,
   IEnvironment,
+  IFilesEnvironmentVariables,
   ILambdaEnvironmentVariables,
 } from "./env.type";
 import * as lambda from "aws-cdk-lib/aws-lambda";
@@ -27,4 +28,16 @@ export interface CustomDatabaseNestedStackProps extends cdk.NestedStackProps {
   zone: route53.IHostedZone;
   environment: IDatabaseEnvironmentVariables;
   isMasterDb?: boolean;
+}
+
+export interface CustomFilesNestedStackProps extends cdk.NestedStackProps {
+  zone: route53.IHostedZone;
+  environment: IFilesEnvironmentVariables;
+}
+
+export interface CustomFilesLambdaNestedStackProps
+  extends cdk.NestedStackProps {
+  zone: route53.IHostedZone;
+  environment: IFilesEnvironmentVariables;
+  api: gateway.RestApi;
 }

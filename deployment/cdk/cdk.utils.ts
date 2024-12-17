@@ -1,14 +1,14 @@
 import { HostedZone, IHostedZone } from "aws-cdk-lib/aws-route53";
 import * as acm from "aws-cdk-lib/aws-certificatemanager";
 import { Stack } from "aws-cdk-lib";
-import { IEnvironment } from "./types/env.type";
+import { IBaseEnvironmentVariables } from "./types/env.type";
 import { Construct } from "constructs";
 import { LayerVersion } from "aws-cdk-lib/aws-lambda";
 import { resolveDomainName } from "../deploy.utils";
 
 export function generateFunctionName(
   prefix: string,
-  env: IEnvironment,
+  env: IBaseEnvironmentVariables,
   x?: Stack
 ) {
   if (env.subdomain) return `${prefix}_${env.subdomain}_${env.region}`;
@@ -23,7 +23,7 @@ export function resolveAcmCertificate(
   return new acm.Certificate(scope, `${domain}-certificate`, {
     domainName: domain,
     subjectAlternativeNames: [`*.${domain}`],
-    validation: acm.CertificateValidation.fromDns(zone)
+    validation: acm.CertificateValidation.fromDns(zone),
   });
 }
 
@@ -39,7 +39,7 @@ export function resolveCommonResources(
     domainName:
       props.isUseParentZone || !props.subdomain
         ? props.domain
-        : resolveDomainName(props)
+        : resolveDomainName(props),
   });
   const bunRuntimeLayer = LayerVersion.fromLayerVersionArn(
     scope,

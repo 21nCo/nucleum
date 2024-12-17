@@ -23,7 +23,10 @@
   import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
+  import {
+    ResourceAccessPoint,
+    ResourceActionType
+  } from "$lib/client/components/flux/resourceStores/resource.type";
   import { logger } from "$lib/client/components/debug/logger.client";
   import Divider from "$lib/client/elements/Divider.svelte";
   import {
@@ -38,7 +41,7 @@
   import view from "$lib/client/stores/view.store";
   import TextArea from "$lib/client/elements/input/TextArea.svelte";
   import { toasts } from "$lib/client/stores/notification.store";
-
+  export let context: ResourceAccessPoint | undefined = undefined;
   let title: string;
   let description: string;
   let isStarred: boolean = false;
@@ -258,10 +261,12 @@
                   }
                 },
                 {
-                  context: resourceAction(
-                    Resource.collection,
-                    ResourceActionType.CREATE
-                  )
+                  context:
+                    context ??
+                    resourceAction(
+                      Resource.collection,
+                      ResourceActionType.CREATE
+                    )
                 }
               );
               if (!result) {
