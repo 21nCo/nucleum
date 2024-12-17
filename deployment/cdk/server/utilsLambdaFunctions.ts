@@ -17,8 +17,7 @@ export class UtilsLambdaFunctions extends NestedStack {
   constructor(
     scope: Construct,
     id: string,
-    props: CustomLambdaNestedStackProps,
-    fileBuckets: aws_s3.IBucket[]
+    props: CustomLambdaNestedStackProps
   ) {
     super(scope, id, props);
     const dependencyLayer = new LayerVersion(this, "MyLayer", {
@@ -60,26 +59,6 @@ export class UtilsLambdaFunctions extends NestedStack {
 
     const utils = props.api.root.addResource("utils");
     const utilsNodeResource = utils.addResource("n");
-    let getSignedUrlNodeFunction = new Function(this, "getsignedurl", {
-      functionName: generateFunctionName("getsignedurl", props.environment),
-      handler: "getSignedUrl.handler",
-      ...nodeRuntimeFunctionProps
-    });
-
-    fileBuckets.forEach((x) => x.grantReadWrite(getSignedUrlNodeFunction));
-    fileBuckets.forEach((x) => x.grantPutAcl(getSignedUrlNodeFunction));
-
-    const getSignedUrlNodeResource =
-      utilsNodeResource.addResource("getsignedurl");
-    getSignedUrlNodeResource.addMethod(
-      "POST",
-      new LambdaIntegration(getSignedUrlNodeFunction)
-    );
-    getSignedUrlNodeResource.addMethod(
-      "OPTIONS",
-      new MockIntegration(defaults.mockIntegration),
-      defaults.mockIntegrationOptions
-    );
 
     const runNodeFunction = new Function(this, "runUtilsFunction", {
       functionName: generateFunctionName("runUtilsFunction", props.environment),
@@ -130,25 +109,6 @@ export class UtilsLambdaFunctions extends NestedStack {
       new LambdaIntegration(urlShortenerNodeFunction)
     );
     urlShortenerResource.addMethod(
-      "OPTIONS",
-      new MockIntegration(defaults.mockIntegration),
-      defaults.mockIntegrationOptions
-    );
-
-    const getSignedUsingBun = new Function(this, "getsignedurlusingbun", {
-      functionName: generateFunctionName(
-        "getsignedurlusingbun",
-        props.environment
-      ),
-      handler: "getSignedUrl.handler",
-      ...functionProps
-    });
-    const getSignedUrlResource = utils.addResource("getsignedurl");
-    getSignedUrlResource.addMethod(
-      "POST",
-      new LambdaIntegration(getSignedUsingBun)
-    );
-    getSignedUrlResource.addMethod(
       "OPTIONS",
       new MockIntegration(defaults.mockIntegration),
       defaults.mockIntegrationOptions
