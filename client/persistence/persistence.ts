@@ -109,6 +109,21 @@ export class Persistence {
       logger.error(err);
     }
   }
+  async runGeoAction(method: string, params: any) {
+    try {
+      const response = await performApiCall("utils/n/geo", "POST", {
+        method,
+        ...params
+      });
+      if (!response?.ok) {
+        return;
+      }
+      const data = await response.json();
+      return data;
+    } catch (err) {
+      logger.error(err);
+    }
+  }
   getLatestAppVersion = async () => {
     try {
       let appData = await this.fetchAppData();
@@ -364,13 +379,18 @@ export class Persistence {
     isTemp: boolean
   ) {
     try {
-      const response = await performApiCall("utils/n/getsignedurl", "POST", {
-        method: "PUT",
-        contentType,
-        fileName,
-        userId,
-        isTemp
-      });
+      const response = await performApiCall(
+        "utils/n/getsignedurl",
+        "POST",
+        {
+          method: "PUT",
+          contentType,
+          fileName,
+          userId,
+          isTemp
+        },
+        { isFileApi: true }
+      );
       return await response?.json();
     } catch (e) {
       logger.error(e);
@@ -389,10 +409,15 @@ export class Persistence {
    *
    */
   async fetchSignedUrlForGet(key: string) {
-    const response = await performApiCall("utils/n/getsignedurl", "POST", {
-      method: "GET",
-      key
-    });
+    const response = await performApiCall(
+      "utils/n/getsignedurl",
+      "POST",
+      {
+        method: "GET",
+        key
+      },
+      { isFileApi: true }
+    );
     return await response?.json();
   }
   async uploadFile(uploadUrl: string, contentType: string, blob: any) {

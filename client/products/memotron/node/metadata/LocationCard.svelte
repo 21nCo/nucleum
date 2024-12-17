@@ -1,26 +1,28 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { lookupAddressFromLatLong } from "../../collection/properties/property.utils";
   import type { INodeMetadata } from "../node.type";
   import maplibregl from "maplibre-gl";
   import "maplibre-gl/dist/maplibre-gl.css";
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  import { Persistence } from "$lib/client/persistence/persistence";
   export let metadata: INodeMetadata;
   let address: string;
   let mapContainerId: string = generateSimpleRandomId();
 
-  onMount(() => {
+  onMount(async () => {
     if (!metadata?.location?.latitude || !metadata?.location?.longitude) return;
-    lookupAddressFromLatLong(
-      metadata.location.latitude,
-      metadata.location.longitude
-    ).then((res) => {
-      if (res?.results?.length > 0) {
-        address = res.results.find((x: any) =>
-          x.types.includes("locality")
-        )?.formatted_address;
+    const res = await new Persistence().runGeoAction(
+      "lookupAddressFromLatLong",
+      {
+        lat: metadata.location.latitude,
+        long: metadata.location.longitude
       }
-    });
+    );
+    if (res?.results?.length > 0) {
+      address = res.results.find((x: any) =>
+        x.types.includes("locality")
+      )?.formatted_address;
+    }
     new maplibregl.Map({
       container: mapContainerId,
       style: "https://demotiles.maplibre.org/style.json",

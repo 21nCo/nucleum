@@ -37,14 +37,21 @@ export function resolveRegionalApiUrl() {
 export async function performApiCall(
   endpoint: string,
   method: "POST" | "GET" | "PUT" | "DELETE",
-  body: any = {}
+  body: any = {},
+  params?: {
+    isFileApi?: boolean;
+  }
 ) {
   // console.log("Performing API call:", { endpoint, method, body });
+  let baseUrl =
+    import.meta.env?.VITE_API_URL ?? process.env.PLASMO_PUBLIC_API_URL;
+  if (params?.isFileApi) {
+    baseUrl =
+      import.meta.env?.VITE_FILE_API_URL ??
+      process.env.PLASMO_PUBLIC_FILE_API_URL;
+  }
   return performHttpNetworkOperation({
-    url:
-      (import.meta.env?.VITE_API_URL ?? process.env.PLASMO_PUBLIC_API_URL) +
-      "/" +
-      endpoint,
+    url: baseUrl + "/" + endpoint,
     method,
     headers: {},
     body: JSON.stringify({ ...body, context: await getAppLoadContext() })

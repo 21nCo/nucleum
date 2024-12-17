@@ -55,14 +55,6 @@ export function mapPropertyValues(
   });
 }
 
-export function lookupAddressFromLatLong(lat: number, long: number) {
-  //TODO - move this to backend
-  const googleApiKey = import.meta.env?.VITE_GOOGLE_API_KEY;
-  return fetch(
-    `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${long}&key=${googleApiKey}`
-  ).then((response) => response.json());
-}
-
 /**
  * Filters properties that are marked for capture
  * @param properties
