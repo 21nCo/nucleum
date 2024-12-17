@@ -17,6 +17,7 @@ export type ILambdaEnvironmentVariables = {
 
   OAUTH_GOOGLE_SECRET: string;
   OAUTH_APPLE_SECRET: string;
+  GOOGLE_GEO_API_KEY: string;
 
   FILE_BUCKET_PREFIX: string;
   TEMP_BUCKET_PREFIX: string;

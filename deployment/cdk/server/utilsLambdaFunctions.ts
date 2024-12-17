@@ -73,6 +73,19 @@ export class UtilsLambdaFunctions extends NestedStack {
       defaults.mockIntegrationOptions
     );
 
+    const geoNodeFunction = new Function(this, "geoNodeFunction", {
+      functionName: generateFunctionName("geoNodeFunction", props.environment),
+      handler: "geo.handler",
+      ...nodeRuntimeFunctionProps
+    });
+    const geoNodeResource = utilsNodeResource.addResource("geo");
+    geoNodeResource.addMethod("POST", new LambdaIntegration(geoNodeFunction));
+    geoNodeResource.addMethod(
+      "OPTIONS",
+      new MockIntegration(defaults.mockIntegration),
+      defaults.mockIntegrationOptions
+    );
+
     const saveSubscriptionNodeFunction = new Function(
       this,
       "saveSubscription",
