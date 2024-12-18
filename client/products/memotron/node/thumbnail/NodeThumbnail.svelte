@@ -102,8 +102,7 @@
     <div
       class={cn("relative flex flex-col w-full border rounded-md truncate", {
         "bg-ccs5 hover:bg-ccs4 border-ccs2": isApplyCustomColor,
-        "bg-bgs2 border-transparent hover:border hover:border-fgs4":
-          !isApplyCustomColor,
+        "bg-bgs2 border-transparent hover:border-brs3": !isApplyCustomColor,
         "p-2": accessPoint === ResourceAccessPoint.NODE_LINKS
       })}
     >

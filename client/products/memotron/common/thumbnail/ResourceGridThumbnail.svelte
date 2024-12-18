@@ -15,7 +15,7 @@
     "h-44": size === Size.sm,
     "h-[15.2rem] w--[17.5rem]": size === Size.md && !isHidePreview,
     "border-ccs4 hover:border-ccs1": isApplyCustomColor,
-    "border-brs3 hover:border-aps2": !isApplyCustomColor && !isHidePreview
+    "border-brs2 hover:border-brs4": !isApplyCustomColor && !isHidePreview
   })}
   on:click
 >
@@ -26,7 +26,7 @@
         "border-t rounded-b-md": !isHidePreview,
         "border rounded-md": isHidePreview,
         "bg-ccs4 border-ccs2": isApplyCustomColor,
-        "bg-bgs2 border-brs3": !isApplyCustomColor
+        "bg-bgs2 border-brs2": !isApplyCustomColor
       })}
     >
       <slot name="bottom" />

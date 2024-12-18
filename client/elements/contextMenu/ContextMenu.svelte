@@ -12,7 +12,7 @@
   import { onMount } from "svelte";
   import { ColorStrength } from "$lib/client/types/appearance.type";
   export let menuResolver: () => { group: string; items: IContextMenuItem[] }[];
-  export let size: Size.sm | Size.md | Size.lg = Size.md;
+  export let size: Size.sm | Size.md | Size.lg | Size.xl = Size.md;
   export let heading: string | undefined = undefined;
   export let onSelect: (item: IContextMenuItem) => void = () => {};
   export let parentBgIndex: number = 1;
@@ -26,11 +26,16 @@
 </script>
 
 <div
-  class={cn("flex flex-col gap-1 p-1", bg(parentBgIndex), {
-    "w-48 text-b3": size === Size.sm,
-    "w-52 text-b2": size === Size.md,
-    "w-60 text-b2": size === Size.lg
-  })}
+  class={cn(
+    "flex flex-col gap-1 p-1 border border-brs2 rounded-md",
+    bg(parentBgIndex),
+    {
+      "w-48 text-b3": size === Size.sm,
+      "w-52 text-b2": size === Size.md,
+      "w-64 text-b2": size === Size.lg,
+      "w-72 text-b2": size === Size.xl
+    }
+  )}
 >
   {#if heading}
     <span
