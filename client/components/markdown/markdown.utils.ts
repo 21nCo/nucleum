@@ -560,10 +560,31 @@ export function splitMarkdownAtPlainOffset(
 ): { before: string; after: string } {
   const { plainText, mapping } = createPositionMapping(markdown);
   const markdownOffset = resolveMarkdownOffset(plainOffset, mapping);
-  console.log({ plainText, mapping, markdownOffset });
-
   const before = markdown.substring(0, markdownOffset);
   const after = markdown.substring(markdownOffset);
+
+  if (before.endsWith("**")) {
+    return { before: before.slice(0, -2), after: "**" + after };
+  }
+  if (before.endsWith("__")) {
+    return { before: before.slice(0, -2), after: "__" + after };
+  }
+  if (before.endsWith("[[")) {
+    return { before: before.slice(0, -2), after: "[[" + after };
+  }
+  if (
+    before[before.length - 1] === "*" ||
+    before[before.length - 1] === "_" ||
+    before[before.length - 1] === "~" ||
+    before[before.length - 1] === "`" ||
+    before[before.length - 1] === "["
+  ) {
+    const lastChar = before[before.length - 1];
+    return {
+      before: before.slice(0, -1),
+      after: lastChar + after
+    };
+  }
 
   return { before, after };
 }

@@ -63,7 +63,7 @@
 </script>
 
 <div
-  class="flex gap-2"
+  class="flex gap-2 items-center"
   style={`padding-left: ${body.indent ? body.indent * 1.5 : 0}rem`}
 >
   {#if contentType === NodeType.ORDERED_LIST}

@@ -910,7 +910,7 @@
 <!--TODO -  Note - when reenabling drag and drag to rearrange - make sure it is not interfering with text selection or media grid space slider -->
 <div
   class={cn(
-    "relative w-full min-h-fit h-12 items-center gap-2 rounded-md border border-transparent",
+    "relative flex w-full min-h-fit h-10 items-center gap-2 rounded-md border border-transparent",
     {
       "grid grid-cols-[2.5rem_1fr_2.5rem]": isLeftControlsEnabled,
       dragging: isDragging
