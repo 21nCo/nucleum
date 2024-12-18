@@ -83,7 +83,8 @@ export const tabAndGroupableProperties = [
   PropertyType.SINGLE_SELECT,
   PropertyType.MULTI_SELECT,
   PropertyType.CHECKBOX,
-  PropertyType.RATING
+  PropertyType.RATING,
+  PropertyType.UNIVERSAL
 ];
 
 export function resolvePropertyOptions(

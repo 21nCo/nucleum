@@ -6,6 +6,7 @@
   import SelectPropertyOption from "./SelectPropertyOption.svelte";
   import {
     PropertyType,
+    type IPropertyConfigOption,
     type ISelectProperty,
     type IUniversalProperty
   } from "../property.type";
@@ -13,10 +14,10 @@
   import SelectPropertyOptionsPopover from "./SelectPropertyOptionsPopover.svelte";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import type { IRecordId } from "$lib/client/types/data.type";
-  import { resolveUniversalPropertyOptions } from "../property.utils";
   import FormElement from "$lib/client/elements/FormElement.svelte";
   const dispatch = createEventDispatcher();
   export let property: ISelectProperty | IUniversalProperty;
+  export let options: IPropertyConfigOption[];
   export let style: InputStyle = InputStyle.FILLED;
   export let label: InputLabel | undefined = undefined;
   export let value: string | string[];
@@ -28,7 +29,6 @@
     property.type === PropertyType.MULTI_SELECT ||
     (property.type === PropertyType.UNIVERSAL &&
       property.config?.isMultiSelect);
-  $: options = resolveOptions(property);
 
   function onSelect(val: string | string[]) {
     value = val;
@@ -47,14 +47,6 @@
 
   function hidePopover() {
     ref?.dispatchEvent(new CustomEvent("hide"));
-  }
-
-  function resolveOptions(property: ISelectProperty | IUniversalProperty) {
-    if (property.type === PropertyType.UNIVERSAL) {
-      if (!property.config) return [];
-      return resolveUniversalPropertyOptions(property.config.type);
-    }
-    return property.config?.options ?? [];
   }
 
   function shouldShowPlaceholder(val: string | string[]) {

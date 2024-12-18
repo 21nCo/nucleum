@@ -14,6 +14,8 @@
   import {
     type IProperty,
     type IPropertyValue,
+    type ISelectProperty,
+    type IUniversalProperty,
     PropertyType,
     textPropertyTypes
   } from "./property.type";
@@ -21,7 +23,11 @@
   import SelectPropertyOption from "./selectProperty/SelectPropertyOption.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
-  import { resolvePropertyDefaultValue } from "./property.utils";
+  import {
+    resolvePropertyDefaultValue,
+    resolveUniversalPropertyOptions
+  } from "./property.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   export let value: IPropertyValue | null = null;
   export let property: IProperty;
   export let nodeId: IRecordId | undefined = undefined;
@@ -34,6 +40,12 @@
   export let isReadOnlyMode: boolean = false;
   let _value: IPropertyValue;
   $: _value = assignDefaultValue(value);
+  $: options =
+    property.type === PropertyType.SINGLE_SELECT ||
+    property.type === PropertyType.MULTI_SELECT ||
+    property.type === PropertyType.UNIVERSAL
+      ? resolveOptionsForSelect(property)
+      : [];
 
   let style =
     context === "collectionView" ? InputStyle.PLAIN : InputStyle.FILLED;
@@ -81,6 +93,16 @@
       return value.toLocaleString();
     }
     return value;
+  }
+
+  function resolveOptionsForSelect(
+    property: ISelectProperty | IUniversalProperty
+  ) {
+    if (property.type === PropertyType.UNIVERSAL) {
+      if (!property.config) return [];
+      return resolveUniversalPropertyOptions(property.config.type);
+    }
+    return property.config?.options ?? [];
   }
 </script>
 
@@ -172,18 +194,32 @@
     />
   {:else if property.type === PropertyType.SINGLE_SELECT || property.type === PropertyType.MULTI_SELECT || property.type === PropertyType.UNIVERSAL}
     {#if context === "collectionView"}
-      <SelectPropertyOption
-        item={property.config.options?.find(
-          (x) =>
-            x.id === _value || (_value === null && x.id === property.default)
-        )}
-        isSelectedContext={true}
-      />
+      {#if isValidArrayWithData(_value)}
+        <div class="flex gap-2 flex-wrap w-full">
+          {#each _value as value}
+            <SelectPropertyOption
+              item={options?.find((x) => x.id === value)}
+              isSelectedContext={true}
+              isPlain={true}
+            />
+          {/each}
+        </div>
+      {:else if _value && _value !== "none"}
+        <SelectPropertyOption
+          item={options?.find(
+            (x) =>
+              x.id === _value || (_value === null && x.id === property.default)
+          )}
+          isSelectedContext={true}
+          isPlain={true}
+        />
+      {/if}
     {:else}
       <SelectProperty
         {style}
         {label}
         {property}
+        {options}
         bind:value={_value}
         on:change
         on:newOption

@@ -337,9 +337,10 @@
     } else if (tabBy && selectedTab !== undefined) {
       viewData =
         activeView.data?.filter((x) => {
-          return (
-            x.properties?.find(resourceInList(tabBy))?.value === selectedTab
-          );
+          const prop = x.properties?.find(resourceInList(tabBy))?.value;
+          return Array.isArray(prop)
+            ? prop.includes(selectedTab)
+            : prop === selectedTab;
         }) ?? [];
     } else {
       viewData = activeView.data ?? [];

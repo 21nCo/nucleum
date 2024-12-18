@@ -190,7 +190,7 @@
               {formatDatetime($userPreferences, item.createdAt)}
             </div>
             {#if visibleProps.length > 0}
-              <div class="p-2">
+              <div class="py-1">
                 <NodeThumbnailProperties
                   values={item.properties}
                   properties={visibleProps}
@@ -282,7 +282,7 @@
           <NodeThumbnailTitle node={item} />
         {/key}
         {#if visibleProps.length > 0}
-          <div class="p-2">
+          <div class="py-1">
             <NodeThumbnailProperties
               values={item.properties}
               properties={visibleProps}
@@ -361,7 +361,7 @@
           {/key}
         </div>
         {#if visibleProps.length > 0}
-          <div class="p-2">
+          <div class="py-1">
             <NodeThumbnailProperties
               values={item.properties}
               properties={visibleProps}

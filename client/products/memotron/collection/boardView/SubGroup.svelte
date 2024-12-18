@@ -14,7 +14,9 @@
   import type { ICollectionView } from "../collection.type";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import type { IActiveCollectionStore } from "../collection.store";
+  import { filterNodesByPropertyValue } from "../collection.utils";
   const dispatch = createEventDispatcher();
+
   export let collection: IActiveCollectionStore;
   export let view: ICollectionView;
   export let subGroup: any;
@@ -23,26 +25,9 @@
   export let density: number | undefined;
   export let isApplyCustomColor = false;
   let isCollapsed = true;
-  $: _data = filterSubGroupData(subGroup.value, data);
 
-  function filterSubGroupData(val: ISelectValue, data: INodeThumb[]) {
-    if (val === "unassigned") {
-      return data?.filter((node: INodeThumb) => {
-        return (
-          !node.properties?.find(resourceInList(view.subGroupBy)) ||
-          node.properties?.find(resourceInList(view.subGroupBy))?.value ===
-            "unassigned"
-        );
-      });
-    }
-    const filteredData = data?.filter((node: INodeThumb) => {
-      return (
-        node.properties?.find(resourceInList(view.subGroupBy))?.value === val
-      );
-    });
-    isCollapsed = filteredData?.length > 0 ? false : true;
-    return filteredData;
-  }
+  $: _data = filterNodesByPropertyValue(data, view.subGroupBy, subGroup.value);
+  $: isCollapsed = _data?.length > 0 ? false : true;
 
   function handleDrop(e: any) {
     dispatch("dropItem", {
@@ -68,9 +53,6 @@
   >
     <span class="flex gap-2 items-center">
       {subGroup.label}
-      <!-- <span class="badge text-b3 text-fgs2 bg-ccs2 px-2 rounded-md"
-        >{data.length}</span
-      > -->
       <Badge text={_data.length} {isApplyCustomColor} />
     </span>
     <Button icon={!isCollapsed ? "chevdown" : "chevup"} size={Size.sm} />

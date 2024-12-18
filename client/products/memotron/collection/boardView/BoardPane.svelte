@@ -4,21 +4,19 @@
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import type { ICollectionView } from "$lib/client/products/memotron/collection/collection.type";
-  import type { INodeThumb } from "$lib/client/products/memotron/node/node.type";
-  import type { ISelectValue } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { cn } from "$lib/client/utils/ui.utils";
-
   import SubGroup from "./SubGroup.svelte";
-  import { resolvePropertyOptions } from "../properties/property.utils";
-  import NodeItems from "../NodeItems.svelte";
   import {
-    isNoneResource,
-    resourceInList
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import type { IRecordId } from "$lib/client/types/data.type";
+    calculateGroupingCounts,
+    filterNodesByPropertyValue,
+    resolveOptionsForGrouping
+  } from "../collection.utils";
+  import NodeItems from "../NodeItems.svelte";
+  import TabCountBadge from "../counts/TabCountBadge.svelte";
+  import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { logger } from "$lib/client/components/debug/logger.client";
   import { createEventDispatcher } from "svelte";
   import { dropzone } from "$lib/client/actions/dragAndDrop.action";
@@ -32,38 +30,15 @@
   export let data: any;
   export let isBoardOverflow = false;
   let dev_isRenderColors = true;
-  $: subGroups = resolveBoards(view.subGroupBy);
-  $: _groupData = filterGroupData(group.value, data);
 
-  function filterGroupData(val: ISelectValue, data: INodeThumb[]) {
-    if (val === "unassigned") {
-      return data?.filter((node: INodeThumb) => {
-        return (
-          !node.properties?.find(resourceInList(view.groupBy)) ||
-          node.properties?.find(resourceInList(view.groupBy))?.value ===
-            "unassigned"
-        );
-      });
-    }
-    return data?.filter((node: INodeThumb) => {
-      return node.properties?.find(resourceInList(view.groupBy))?.value === val;
-    });
-  }
-
-  function resolveBoards(id: IRecordId) {
-    // if (view.subGroups) return view.subGroups;
-    if (isNoneResource(id) || !$collection.properties?.find(resourceInList(id)))
-      return [];
-    return [
-      {
-        label: "Unassigned",
-        value: "unassigned"
-      },
-      ...resolvePropertyOptions(id, $collection.properties, {
-        isBoardView: true
-      })
-    ];
-  }
+  $: boardCounts = calculateGroupingCounts(data, view.subGroupBy);
+  $: subGroups = resolveOptionsForGrouping(
+    view.subGroupBy,
+    $collection.properties,
+    boardCounts,
+    { isBoardView: true }
+  );
+  $: _groupData = filterNodesByPropertyValue(data, view.groupBy, group.value);
 
   function handleDropForSubGroup(e: any) {
     dispatch("dropItem", {
@@ -109,8 +84,14 @@
         }
       )}
     >
-      <Text content={group.label} style={TextStyle.PANEL_HEADING_SMALL} />
-      <!-- <Button icon="ellipsis-vertical" /> -->
+      <div class="flex items-center gap-2">
+        <Text content={group.label} style={TextStyle.PANEL_HEADING_SMALL} />
+        <TabCountBadge
+          count={_groupData?.length || 0}
+          isActive={false}
+          hasCustomColor={!!group.color && dev_isRenderColors}
+        />
+      </div>
     </div>
     <div class="grow w-full flex flex-col gap-2">
       {#if isValidArrayWithData(subGroups)}

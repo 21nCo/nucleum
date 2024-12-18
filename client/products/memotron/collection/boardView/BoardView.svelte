@@ -4,15 +4,16 @@
     INodePropertyValue,
     INodeThumb
   } from "$lib/client/products/memotron/node/node.type";
-  import type { ISelectValue } from "$lib/client/types/select.type";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import BoardPane from "./BoardPane.svelte";
   import NodeItems from "../NodeItems.svelte";
-  import type { IProperty } from "../properties/property.type";
-  import { resolvePropertyOptions } from "../properties/property.utils";
-  import type { IRecordId } from "$lib/client/types/data.type";
   import {
-    isNoneResource,
+    calculateGroupingCounts,
+    resolveOptionsForGrouping,
+    UNASSIGNED_VALUE
+  } from "../collection.utils";
+  import {
+    extractResourceIdFromElementId,
     isSameResource,
     resourceInList
   } from "$lib/client/components/flux/resourceStores/resource.utils";
@@ -20,34 +21,34 @@
   import { nodeStore } from "../../node/node.store";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import type { IActiveCollectionStore } from "../collection.store";
+  import type { IRecordId } from "$lib/client/types/data.type";
+  import {
+    type IPropertyValue,
+    PropertyType
+  } from "../properties/property.type";
 
   export let collection: IActiveCollectionStore;
   export let view: ICollectionView;
   export let data: INodeThumb[] = [];
   export let isBoardOverflow = false;
 
-  $: groups = resolveBoards(view.groupBy, $collection.properties);
-
-  function resolveBoards(id: IRecordId, properties: IProperty[]) {
-    // if (view.groups) return view.groups;
-    if (isNoneResource(id) || !properties?.find(resourceInList(id))) return [];
-    return [
-      {
-        label: "Unassigned",
-        value: "unassigned"
-      },
-      ...resolvePropertyOptions(id, properties, { isBoardView: true })
-    ];
-  }
+  $: boardCounts = calculateGroupingCounts(data, view.groupBy);
+  $: groups = resolveOptionsForGrouping(
+    view.groupBy,
+    $collection.properties,
+    boardCounts,
+    { isBoardView: true }
+  );
 
   async function handleDropItem(e: any) {
-    const nodeId = e.detail.item;
+    const item = e.detail.item;
+    if (!item) return;
+    const nodeId = extractResourceIdFromElementId(item);
     if (!nodeId) return;
     const node = await nodeStore.select(nodeId);
     if (!node) return;
     let nodePropertyValues: INodePropertyValue[] = [...(node.properties || [])];
-    let isGroupChanged = false;
-    let isSubGroupChanged = false;
+    let isChangesPresent = false;
     const currentGroupValue = nodePropertyValues.find(
       (property: INodePropertyValue) =>
         isSameResource(property.id, view.groupBy)
@@ -56,29 +57,29 @@
       (property: INodePropertyValue) =>
         isSameResource(property.id, view.subGroupBy)
     )?.value;
-    if (e.detail.group && currentGroupValue !== e.detail.group) {
-      isGroupChanged = true;
-      nodePropertyValues = nodePropertyValues.filter(
-        (property: INodePropertyValue) =>
-          !isSameResource(property.id, view.groupBy)
-      );
-      nodePropertyValues.push({
-        id: view.groupBy,
-        value: e.detail.group
-      });
+
+    const groupValueChange = assignValueIfApplicable(
+      currentGroupValue,
+      e.detail.group,
+      nodePropertyValues,
+      view.groupBy
+    );
+    if (groupValueChange) {
+      nodePropertyValues = groupValueChange;
+      isChangesPresent = true;
     }
-    if (e.detail.subGroup && currentSubGroupValue !== e.detail.subGroup) {
-      isSubGroupChanged = true;
-      nodePropertyValues = nodePropertyValues.filter(
-        (property: INodePropertyValue) =>
-          !isSameResource(property.id, view.subGroupBy)
-      );
-      nodePropertyValues.push({
-        id: view.subGroupBy,
-        value: e.detail.subGroup
-      });
+    const subGroupValueChange = assignValueIfApplicable(
+      currentSubGroupValue,
+      e.detail.subGroup,
+      nodePropertyValues,
+      view.subGroupBy
+    );
+    if (subGroupValueChange) {
+      nodePropertyValues = subGroupValueChange;
+      isChangesPresent = true;
     }
-    if (!isGroupChanged && !isSubGroupChanged) return;
+
+    if (!isChangesPresent) return;
     const result = await nodeStore.modify(nodeId, {
       properties: nodePropertyValues
     });
@@ -91,6 +92,53 @@
       }
       return node;
     });
+
+    function assignValueIfApplicable(
+      currentValue: IPropertyValue | null | undefined,
+      newValue: string,
+      nodePropValues: INodePropertyValue[],
+      propertyId: IRecordId
+    ) {
+      if (!propertyId || !newValue) return;
+
+      const propertyConfig = $collection.properties?.find(
+        resourceInList(propertyId)
+      );
+      if (!currentValue || typeof currentValue === "string") {
+        if (newValue && currentValue !== newValue) {
+          nodePropValues = nodePropValues.filter(
+            (property: INodePropertyValue) =>
+              !isSameResource(property.id, propertyId)
+          );
+          nodePropValues.push({
+            id: propertyId,
+            value:
+              propertyConfig?.type === PropertyType.MULTI_SELECT
+                ? [newValue]
+                : newValue
+          });
+          return nodePropValues;
+        }
+      } else if (Array.isArray(currentValue)) {
+        if (newValue && !currentValue.includes(newValue)) {
+          nodePropValues = nodePropValues.filter(
+            (property: INodePropertyValue) =>
+              !isSameResource(property.id, propertyId)
+          );
+          const newValToBeAssigned =
+            newValue === UNASSIGNED_VALUE
+              ? []
+              : propertyConfig?.type === PropertyType.MULTI_SELECT
+                ? [...currentValue, newValue]
+                : newValue;
+          nodePropValues.push({
+            id: propertyId,
+            value: newValToBeAssigned
+          });
+          return nodePropValues;
+        }
+      }
+    }
   }
 </script>
 

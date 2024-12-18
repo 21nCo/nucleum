@@ -1,5 +1,5 @@
 import { Resource } from "./resource.enum";
-import type { ResourceActionType } from "./resource.type";
+import type { ResourceAccessPoint, ResourceActionType } from "./resource.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 import { RecordId } from "surrealdb";
 import { logger } from "../../debug/logger.client";
@@ -120,4 +120,26 @@ export function shiftResourceInArray(
     newArray.splice(toIndex, 0, newArray.splice(fromIndex, 1)[0]);
   }
   return newArray;
+}
+
+/**
+ * Extracts the resource id from an HTML element id. Typically of the format
+ * `elementType-resourceId-accessPoint-accessPointId`.
+ * Example: "thumbnail-node:a3828733ae7b24e43483eb0d154cbccd-collection-collection:fef39f69d2f29949e93897a37e024f09"
+ * @param id - The element id to extract the resource id from.
+ * @returns The resource id or null if it cannot be extracted.
+ */
+export function extractResourceIdFromElementId(id: string) {
+  const parts = id.split("-");
+  if (parts.length > 1) return parts[1];
+  return null;
+}
+
+export function resourceIdToElementId(
+  elementType: string,
+  resourceId: IRecordId,
+  accessPoint: ResourceAccessPoint | undefined = undefined,
+  accessPointId: IRecordId | undefined = undefined
+) {
+  return `${elementType}-${resourceId}-${accessPoint ?? "none"}-${accessPointId ?? "none"}`;
 }

@@ -4,6 +4,7 @@
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import {
     determineResourceType,
+    resourceIdToElementId,
     resourceInList
   } from "$lib/client/components/flux/resourceStores/resource.utils";
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
@@ -38,7 +39,7 @@
   class={cn("relative flex flex-col w-full resource", {
     "h-full": arrangement === Arrangement.MASONRY
   })}
-  id={`thumbnail-${item.id.toString()}-${accessPoint}-${accessPointId ?? "none"}`}
+  id={resourceIdToElementId("thumbnail", item.id, accessPoint, accessPointId)}
   draggable={isDraggable}
   use:hoverable={{
     onHover: (e) => (isHovering = e)

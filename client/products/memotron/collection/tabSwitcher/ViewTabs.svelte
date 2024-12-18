@@ -5,11 +5,14 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import type { IViewTab } from "./viewTab.type";
   import { createEventDispatcher } from "svelte";
+  import TabCountBadge from "../counts/TabCountBadge.svelte";
+
   const dispatch = createEventDispatcher();
 
   export let tabs: IViewTab[];
   export let selected: ISelectValue | undefined = undefined;
   export let hoveredItem: ISelectValue | undefined = undefined;
+  export let tabCounts: Map<string, number> = new Map();
   if (!selected) selected = tabs[0].value;
 </script>
 
@@ -44,7 +47,16 @@
           dispatch("select", option.value);
         }}
       >
-        {option.label}
+        <span class="flex items-center gap-2">
+          {option.label}
+          {#if tabCounts.has(option.value)}
+            <TabCountBadge
+              count={tabCounts.get(option.value)}
+              isActive={selected === option.value}
+              hasCustomColor={!!option.color}
+            />
+          {/if}
+        </span>
       </button>
     </CustomColorPropagator>
   {/each}
