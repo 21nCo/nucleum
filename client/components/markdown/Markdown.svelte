@@ -161,7 +161,8 @@
     use:reorderList={{
       listId: "markdown",
       draggedOverClass: "!border-b-aps1 !rounded-none",
-      onDrop: onReorderBlocks
+      onDrop: onReorderBlocks,
+      dragImage: "dragimage"
     }}
   >
     {#if isValidAndUniqueArray($mdStore.blocks)}

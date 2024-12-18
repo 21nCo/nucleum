@@ -96,8 +96,9 @@
         border: true,
         "border-aps2 bg-aps3 text-aps1 hover:bg-aps2 hover:border-aps1":
           type === ButtonVariant.PRIMARY,
-        "border-brs3 text-fgs2 hover:text-fgs1 hover:bg-bgs2":
+        "border-brs3 text-fgs2 hover:text-fgs1":
           type === ButtonVariant.SECONDARY,
+        [bg(parentBgIndex)]: type === ButtonVariant.SECONDARY && isHovering,
         "border-ars1 text-ars1": type === ButtonVariant.DANGER
       }
     ],

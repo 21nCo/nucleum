@@ -132,11 +132,21 @@ export function resolvePropertyOptions(
 export const assignDefaultLabelAsFallback = (
   property: OmitForCaptureWithId<IProperty>
 ) => {
+  let label = property.label;
+  if (!isValidString(label)) {
+    if (
+      property.type === PropertyType.UNIVERSAL &&
+      property.config?.type &&
+      property.config.type !== UniversalPropertyType.NONE
+    ) {
+      label = enumToString(property.config.type);
+    } else {
+      label = enumToString(property.type);
+    }
+  }
   return {
     ...property,
-    label: isValidString(property.label)
-      ? property.label
-      : enumToString(property.type)
+    label
   };
 };
 

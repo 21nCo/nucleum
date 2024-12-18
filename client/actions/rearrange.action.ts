@@ -153,6 +153,7 @@ function isResizeHandle(element: HTMLElement): boolean {
 interface DragDropOptions {
   listId: string;
   draggedOverClass: string;
+  dragImage?: string;
   onDrop?: (e: DragDropEvent) => void;
 }
 
@@ -193,10 +194,29 @@ export const reorderList: Action<HTMLElement, DragDropOptions> = (
       return;
     }
     if (!(e.target instanceof HTMLElement) || !e.dataTransfer) return;
+
+    let dragImage: HTMLElement | null = null;
+    if (options.dragImage) {
+      dragImage = document.createElement("div");
+      dragImage.style.width = "80px";
+      dragImage.style.height = "30px";
+      dragImage.style.borderRadius = "4px";
+      dragImage.classList.add("drag-image");
+      dragImage.style.backgroundColor = "grey";
+      document.body.appendChild(dragImage);
+      e.dataTransfer.setDragImage(dragImage, 0, 0);
+    }
+
     e.dataTransfer.setData("text/plain", e.target.dataset.index || "");
     e.dataTransfer.setData("text/group-id", e.target.dataset.groupId || "");
     e.dataTransfer.setData("text/id", e.target.dataset.id || "");
     e.dataTransfer.effectAllowed = "move";
+
+    requestAnimationFrame(() => {
+      if (dragImage) {
+        document.body.removeChild(dragImage);
+      }
+    });
   }
 
   function handleDragOver(e: DragEvent) {

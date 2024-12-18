@@ -42,21 +42,19 @@
   }}
 >
   <span class="flex items-center gap-2">
-    <Icon
-      icon={property.config?.isMultiSelect
-        ? "ph:list-bullets-light"
-        : property.config?.type &&
-            property.config.type !== UniversalPropertyType.NONE
-          ? resolvePropertyIcon(property.config.type)
-          : "ph:caret-circle-down-light"}
-      size={Size.sm}
-    />
-    <span class="text-b2"
-      >{property.config?.type &&
-      property.config?.type !== UniversalPropertyType.NONE
-        ? enumToString(property.config?.type)
-        : "Please select"}</span
-    >
+    {#if property.config?.type && property.config?.type !== UniversalPropertyType.NONE}
+      <Icon
+        icon={property.config?.isMultiSelect
+          ? "ph:list-bullets-light"
+          : resolvePropertyIcon(property.config.type)}
+        size={Size.sm}
+      />
+      <span>
+        {enumToString(property.config?.type)}
+      </span>
+    {:else}
+      <span class="text-b2 placeholder"> Please select sub type </span>
+    {/if}
   </span>
   <Icon
     icon={isPopoverOpen ? "ph:caret-up-light" : "ph:caret-down-light"}

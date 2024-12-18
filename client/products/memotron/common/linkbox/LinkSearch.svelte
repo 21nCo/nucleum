@@ -161,11 +161,11 @@
   function resolveEmptyStateLabel(context: string) {
     switch (context) {
       case "nodepageCollectionsLane":
-        return `No results found. Press \`**Enter**\` to create a new collection`;
+        return `No results found. Press **Enter** to create a new collection`;
       case "nodelinkspane":
-        return `No results found. Press \`**Enter**\` to create a new node`;
+        return `No results found. Press **Enter** to create a new node`;
       default:
-        return `No results found. Press \`**Enter**\` to create a new node or \`**Shift + Enter**\` to create a new collection`;
+        return `No results found. Press **Enter** to create a new node or **Shift + Enter** to create a new collection`;
     }
   }
   function resolveBottomMessage(context: string) {

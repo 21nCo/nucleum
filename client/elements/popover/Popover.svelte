@@ -162,12 +162,11 @@
     if (isPopoverVisible) e.stopPropagation();
   }}
   on:contextmenu={(e) => {
-    // console.log("contextmenu", e);
     if (triggerMethod === PopoverTriggerMethod.RIGHT_CLICK) {
       toggle();
+      e.stopPropagation();
+      e.preventDefault();
     }
-    e.stopPropagation();
-    e.preventDefault();
   }}
   class={triggerClass}
 >

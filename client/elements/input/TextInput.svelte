@@ -155,8 +155,14 @@
         on:keydown|stopPropagation
         on:keyup|stopPropagation
         on:paste|stopPropagation
-        on:blur
-        on:focus
+        on:blur={() => {
+          isFocused = false;
+          dispatch("blur");
+        }}
+        on:focus={() => {
+          isFocused = true;
+          dispatch("focus");
+        }}
         on:input|stopPropagation={onChange}
         type="number"
         min={numberInputParams?.min}

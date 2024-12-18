@@ -910,15 +910,14 @@
 <!--TODO -  Note - when reenabling drag and drag to rearrange - make sure it is not interfering with text selection or media grid space slider -->
 <div
   class={cn(
-    "relative w-full min-h-fit items-center gap-2 rounded-md border border-transparent",
+    "relative w-full min-h-fit h-12 items-center gap-2 rounded-md border border-transparent",
     {
       "grid grid-cols-[2.5rem_1fr_2.5rem]": isLeftControlsEnabled,
-      "opacity-50": isDragging
+      dragging: isDragging
     },
     $mdStore.params?.isNodular &&
       !$mdStore.params?.isReadOnly && {
         "bg-bgs2 bg-opacity-50 !border-brs1": isHovering && !isFocusing
-        // "!border-brs1": isHovering && isFocusing
       }
   )}
   draggable={!$mdStore.params?.isReadOnly && !isFocusing}

@@ -25,6 +25,7 @@
   import TextArea from "$lib/client/elements/input/TextArea.svelte";
   import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
   import FormLabelTooltip from "$lib/client/elements/text/formLabel/FormLabelTooltip.svelte";
+  import { isValidAvatar } from "$lib/client/elements/avatarPicker/avatar.utils";
 
   const dispatch = createEventDispatcher();
   export let searchQuery: string = "";
@@ -84,10 +85,15 @@
     />
   {/if}
   {#if $collection.type === CollectionType.TYPED}
+    {@const avatar =
+      !$collection.avatar || objIsEmpty($collection.avatar)
+        ? $collection.typeToExtend?.avatar
+        : $collection.avatar}
+    {@const isAvatarPresent = isValidAvatar(avatar)}
     <span
       class={cn("flex h-12 items-center justify-center", {
         "w-12": $collection.isInEditMode,
-        "w-8": $collection.avatar && !$collection.isInEditMode
+        "w-8": isAvatarPresent && !$collection.isInEditMode
       })}
     >
       {#if $collection.isInEditMode}
@@ -97,14 +103,8 @@
           on:change={onAvatarChange}
           size={Size.lg}
         />
-      {:else}
-        <Avatar
-          avatar={!$collection.avatar || objIsEmpty($collection.avatar)
-            ? $collection.typeToExtend?.avatar
-            : $collection.avatar}
-          isInEditMode={false}
-          size={Size.lg}
-        />
+      {:else if isAvatarPresent}
+        <Avatar {avatar} isInEditMode={false} size={Size.lg} />
       {/if}
     </span>
   {/if}

@@ -93,6 +93,11 @@ body {
     font-size: 1.5rem;
   }
 
+  .placeholder {
+    font-weight: 350;
+    color: rgba(var(--colors-fgs2), 0.5);
+  }
+
   input::placeholder {
     font-weight: 350;
     /* Use lighter if Avenir typeface */

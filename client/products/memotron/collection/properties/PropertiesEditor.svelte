@@ -15,6 +15,7 @@
     PropertyType,
     propertyTypesWithUserConfiguration,
     selectOptionsPropertyTypes,
+    UniversalPropertyType,
     type IProperty
   } from "./property.type";
   import { propertyEditorStore, propertyStore } from "./property.store";
@@ -249,6 +250,17 @@
     });
   }
   async function onSave() {
+    if (
+      $propertyEditorStore.properties.some(
+        (p) =>
+          p.type === PropertyType.UNIVERSAL &&
+          (!p.config?.type || p.config?.type === UniversalPropertyType.NONE)
+      )
+    ) {
+      return {
+        error: `Please select a sub type for all Universal properties`
+      };
+    }
     return collection?.updateProperties();
   }
 </script>

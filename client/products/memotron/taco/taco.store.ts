@@ -4,10 +4,13 @@ import { nodeStore, vectorResourceStore } from "../node/node.store";
 import { NodeType } from "../node/node.type";
 import { TacoActions } from "./taco.types";
 import { tacoWorker } from "../memotron.utils";
+import { Embed } from "$lib/client/types/context.type";
+import context from "$lib/client/stores/context.store";
 
 export async function initializeTaco() {
   try {
     const userPref = get(userPreferences);
+    if (get(context).embed === Embed.HANDSET) return;
     if (userPref.localAI.semanticSearch) {
       tacoWorker.postMessage({
         action: TacoActions.INITIALIZE_FEATURE_EXTRACTOR
@@ -34,6 +37,7 @@ export async function runVectorGeneration(isRegenerateForAll: boolean = false) {
     const userPref = get(userPreferences);
     if (
       !userPref.localAI.semanticSearch ||
+      get(context).embed === Embed.HANDSET ||
       userPref.localAI.vectorGenerationInProgress === true
     )
       return;

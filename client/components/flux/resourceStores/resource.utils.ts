@@ -90,8 +90,9 @@ export function isRecordId(id: any, resource?: Resource) {
     return tb === resource;
   }
   return (
-    (typeof id === "string" && id.includes(":")) ||
-    (typeof id === "object" && "tb" in id)
+    id &&
+    ((typeof id === "string" && id.includes(":")) ||
+      (typeof id === "object" && "tb" in id))
   );
 }
 

@@ -397,6 +397,7 @@ export class ActiveNodeStore extends ActiveResourceStore<
       id: IRecordId;
       contentType: NodeType;
       body: any;
+      label?: string;
     }[]
   ) => {
     return this.resourceStore.create(
@@ -404,7 +405,8 @@ export class ActiveNodeStore extends ActiveResourceStore<
         id: x.id,
         contentType: x.contentType,
         creationContext: this.id,
-        body: x.body
+        body: x.body,
+        label: x.label
       }))
     );
   };

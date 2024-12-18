@@ -48,7 +48,8 @@
     class={cn(isHoverEnabled && "hover:scale-[1.2] transition-transform", {
       "w-4 h-4": size === Size.sm,
       "w-6 h-6": size === Size.md,
-      "w-8 h-8": size === Size.lg
+      "w-8 h-8": size === Size.lg,
+      [`w-[${size}px] h-[${size}px]`]: typeof size === "number"
     })}
   />
   <!-- <img

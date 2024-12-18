@@ -590,7 +590,7 @@
         dynamicPlaceholder ??
         $mdStore.params?.placeholder ??
         ($mdStore.params?.isNodular
-          ? "Start typing or type / to browse..."
+          ? "Start typing or use / to browse..."
           : "Start typing... ")
       );
     }

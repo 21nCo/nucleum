@@ -341,7 +341,7 @@
       <Writer />
     </div>
   </div> -->
-{:else if captureType === CaptureType.UPLOAD && !$context.isEmbed}
+{:else if captureType === CaptureType.UPLOAD && !($context.isEmbed && $context.os === OperatingSystem.IOS)}
   <FileUploader on:cancel={reset} />
 {:else if captureType === CaptureType.CAMERA && dev_iosCameraCaptureMethod === "input" && $context.isEmbed && $context.os === OperatingSystem.IOS}
   <!-- <CameraCaptureUsingInput /> -->
