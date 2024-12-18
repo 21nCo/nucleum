@@ -370,11 +370,19 @@
                 <TextInput
                   bind:value={$captureStore.label}
                   style={InputStyle.PLAIN}
+                  id="capture-title"
                   isExperimentalMdInput={true}
                   placeholder="Untitled"
                   isPreventDefaultOnEnter={true}
                   on:change={refreshEmptyState}
                   on:enter={onTitleEnter}
+                  on:keydown={(e) => {
+                    const event = e.detail;
+                    if (event.key === "ArrowDown") {
+                      event.preventDefault();
+                      writerRef?.focus();
+                    }
+                  }}
                 />
               </div>
             </div>

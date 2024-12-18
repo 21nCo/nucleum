@@ -109,10 +109,18 @@
 {#if isExperimentalMdInput}
   <div class={inputClasses}>
     <InlineMarkdownTextInput
+      {id}
       bind:content={value}
-      {isPreventDefaultOnEnter}
       {placeholder}
-      on:keydown
+      on:keydown={(e) => {
+        const event = e.detail;
+        if (isPreventDefaultOnEnter && event.key === "Enter") {
+          event.preventDefault();
+          dispatch("enter", { event });
+        } else {
+          dispatch("keydown", event);
+        }
+      }}
       on:keyup
       on:focus
       on:blur

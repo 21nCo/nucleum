@@ -38,7 +38,7 @@
   class={cn("relative flex flex-col w-full resource", {
     "h-full": arrangement === Arrangement.MASONRY
   })}
-  id={item.id.toString()}
+  id={`thumbnail-${item.id.toString()}-${accessPoint}-${accessPointId ?? "none"}`}
   draggable={isDraggable}
   use:hoverable={{
     onHover: (e) => (isHovering = e)

@@ -322,22 +322,26 @@
     if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return false;
     const position = e.detail.position;
     const position2 = e.detail.position2;
-    // logger.log({
-    //   at: "handleArrowKeys",
-    //   position,
-    //   position2,
-    //   event
-    // });
     if (!event.altKey) {
       const textLength = text.length;
-      console.log({
-        at: "handleArrowKeys",
-        position,
-        caretOffset: position?.caretOffset,
-        textLength
-      });
       let isHandled = false;
       if (event.key === "ArrowUp" && position?.caretOffset === 0) {
+        if (mdStore.isFirstBlock(id)) {
+          const captureTitle = document.getElementById("capture-title");
+          let nodeTitle = undefined;
+          if (nodeContext?.id) {
+            nodeTitle = document.getElementById(`title-${nodeContext.id}`);
+          }
+          if (captureTitle) {
+            (captureTitle as HTMLElement).focus();
+            event.preventDefault();
+            return true;
+          } else if (nodeTitle) {
+            (nodeTitle as HTMLElement).focus();
+            event.preventDefault();
+            return true;
+          }
+        }
         mdStore.shiftFocus(id, "up", {
           xOffset: position2?.caretOffset
         });

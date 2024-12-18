@@ -204,6 +204,7 @@
                     {/if}
                     {#if !isReadOnlyMode}
                       <TextInput
+                        id={`title-${$node.id}`}
                         size={Size.xl}
                         bind:value={$node.label}
                         isExperimentalMdInput={true}
@@ -211,6 +212,16 @@
                         placeholder="Node title"
                         width="w-full"
                         on:change={onLabelChange}
+                        on:keydown={(e) => {
+                          const event = e.detail;
+                          if (event.key === "ArrowDown") {
+                            event.preventDefault();
+                            if ($mdStore.blocks[0].id)
+                              mdStore.focus.set({
+                                id: $mdStore.blocks[0].id
+                              });
+                          }
+                        }}
                       />
                     {:else}
                       {$node.label ?? $node.body ?? ""}

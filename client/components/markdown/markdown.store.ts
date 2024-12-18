@@ -493,6 +493,11 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
     return isFirstBlock && isEmpty;
   }
 
+  isFirstBlock(id: IRecordId) {
+    const md = this.get();
+    return isSameResource(md.blocks[0], id);
+  }
+
   isLastBlock(id: IRecordId) {
     const md = this.get();
     return isSameResource(md.blocks[md.blocks.length - 1], id);
