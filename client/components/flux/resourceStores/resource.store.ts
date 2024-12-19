@@ -169,6 +169,7 @@ export class ResourceStore<T extends IResource> implements IStore {
   currentUserId?: string;
   dboDependencies?: string[];
   isInMemory?: boolean = false;
+  isCloudOnlyResource?: boolean = false;
   /**
    * Can be subscribed only if the store is inMemory. Otherwise, data will be always empty.
    */
@@ -181,7 +182,11 @@ export class ResourceStore<T extends IResource> implements IStore {
 
   constructor(
     resourceType: Resource,
-    params?: Pick<IStore, "dboDependencies" | "isInMemory">
+    params?: Pick<
+      IStore,
+      "dboDependencies" | "isInMemory" | "isCloudOnlyResource"
+    > &
+      Partial<Pick<IStore, "dataType">>
   ) {
     this.id = resourceType;
     resolveCurrentUserId().then((x) => {
@@ -189,6 +194,8 @@ export class ResourceStore<T extends IResource> implements IStore {
     });
     this.dboDependencies = params?.dboDependencies;
     this.isInMemory = params?.isInMemory;
+    this.isCloudOnlyResource = params?.isCloudOnlyResource;
+    this.dataType = params?.dataType ?? StoreDataType.IFR;
     this.isExtensionEnvironment = isExtensionEnvironment();
   }
 
@@ -255,13 +262,17 @@ export class ResourceStore<T extends IResource> implements IStore {
         method: FluxMethod.MUTATION,
         args: {
           resource: this.id,
-          params: data
+          params: data,
+          additionalParams: {
+            isCloudOnlyResource: this.isCloudOnlyResource
+          }
         }
       });
       if (result) return resources;
       return result;
     }
     return flux.mutation<T>(this.id, data, {
+      isCloudOnlyResource: this.isCloudOnlyResource,
       context: params?.context
     });
   }
@@ -279,7 +290,10 @@ export class ResourceStore<T extends IResource> implements IStore {
             action: PersistenceActionType.MERGE,
             record: data
           },
-          additionalParams
+          additionalParams: {
+            ...additionalParams,
+            isCloudOnlyResource: this.isCloudOnlyResource
+          }
         }
       });
     }
@@ -290,7 +304,8 @@ export class ResourceStore<T extends IResource> implements IStore {
         record: data
       },
       {
-        ...additionalParams
+        ...additionalParams,
+        isCloudOnlyResource: this.isCloudOnlyResource
       }
     );
   }
@@ -378,6 +393,9 @@ export class ResourceStore<T extends IResource> implements IStore {
               modifiedBy: this.currentUserId,
               modifiedAt: new Date().toISOString()
             }))
+          },
+          additionalParams: {
+            isCloudOnlyResource: this.isCloudOnlyResource
           }
         }
       });
@@ -394,7 +412,8 @@ export class ResourceStore<T extends IResource> implements IStore {
         }))
       },
       {
-        ...additionalParams
+        ...additionalParams,
+        isCloudOnlyResource: this.isCloudOnlyResource
       }
     );
   }
@@ -462,6 +481,9 @@ export class ResourceStore<T extends IResource> implements IStore {
           params: {
             action: PersistenceActionType.DELETE,
             recordId: id
+          },
+          additionalParams: {
+            isCloudOnlyResource: this.isCloudOnlyResource
           }
         }
       });
@@ -473,7 +495,8 @@ export class ResourceStore<T extends IResource> implements IStore {
         recordId: id
       },
       {
-        ...additionalParams
+        ...additionalParams,
+        isCloudOnlyResource: this.isCloudOnlyResource
       }
     );
   }
@@ -484,7 +507,10 @@ export class ResourceStore<T extends IResource> implements IStore {
         method: FluxMethod.MUTATION,
         args: {
           resource: this.id,
-          params: { action: PersistenceActionType.BULK_DELETE, recordIds: ids }
+          params: { action: PersistenceActionType.BULK_DELETE, recordIds: ids },
+          additionalParams: {
+            isCloudOnlyResource: this.isCloudOnlyResource
+          }
         }
       });
     }
@@ -495,7 +521,8 @@ export class ResourceStore<T extends IResource> implements IStore {
         recordIds: ids
       },
       {
-        ...additionalParams
+        ...additionalParams,
+        isCloudOnlyResource: this.isCloudOnlyResource
       }
     );
   }
@@ -512,7 +539,9 @@ export class ResourceStore<T extends IResource> implements IStore {
         }
       });
     }
-    return flux.selectMany(this.id, params);
+    return flux.selectMany(this.id, params, {
+      isCloudOnlyResource: this.isCloudOnlyResource
+    });
   }
 
   select(resourceId: IRecordId, properties?: string[]) {
@@ -525,7 +554,9 @@ export class ResourceStore<T extends IResource> implements IStore {
         }
       });
     }
-    return flux.select(resourceId, properties);
+    return flux.select(resourceId, properties, {
+      isCloudOnlyResource: this.isCloudOnlyResource
+    });
   }
 
   /**

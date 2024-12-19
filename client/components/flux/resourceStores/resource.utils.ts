@@ -26,6 +26,7 @@ export function isSameResource(
   item2: IRecordId | { id: IRecordId }
 ) {
   try {
+    if (!item1 || !item2) return false;
     if (typeof item1 === "string" && typeof item2 === "string") {
       return item1 === item2;
     } else if (typeof item1 !== "string" && typeof item2 !== "string") {

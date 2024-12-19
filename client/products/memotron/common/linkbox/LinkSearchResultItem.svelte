@@ -31,10 +31,10 @@
     })}
   >
     {#if resourceType === Resource.node}
-      <!-- TODO breadcrumbs - calling select for each result for parent resolution -->
-      {#if headingNodeTypes.includes(item.contentType)}
+      <!-- TODO need for breadcrumbs - Notes: Not required - as search results has heading as label directly for heading nodes & also below query is casuing heavy latency due to sub queries involved in breadcrumbs -->
+      <!-- {#if headingNodeTypes.includes(item.contentType)}
         <NodeTitleBreadcrumbs id={item.id} on:click isSubtleContext={true} />
-      {/if}
+      {/if} -->
       <div class="flex gap-2 w-full truncate">
         <NodeTitleLabelPart
           {item}

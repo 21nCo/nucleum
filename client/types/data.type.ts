@@ -38,6 +38,11 @@ export interface IStore {
   isInMemory?: boolean;
 
   /**
+   * Whether the resource is cloud only. If true, mutations or select queries will be directly relayed to the cloud and not saved locally
+   */
+  isCloudOnlyResource?: boolean;
+
+  /**
    * The data in the store
    * @returns the data in the store
    */
@@ -117,7 +122,6 @@ export interface IStore {
  */
 export enum StoreDataType {
   /**
-   * @deprecated - use ResourceStore with inMemory: true
    * Finite and infrequently mutated Records
    */
   FIR = "FIR",
@@ -456,4 +460,9 @@ export type IMutationAdditionalParams = {
    * Whether the mutation should prevent cloud persistence - will be saved locally if true.
    */
   isPreventCloudPersistence?: boolean;
+
+  /**
+   * Whether the resource is cloud only. If true, the mutation will be directly relayed to the cloud and not saved locally.
+   */
+  isCloudOnlyResource?: boolean;
 };

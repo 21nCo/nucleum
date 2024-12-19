@@ -20,7 +20,7 @@
     />
   {:else}
     <div
-      class={cn("flex w-full h-full justify-center items-center bg-bgs2/50", {
+      class={cn("flex w-full h-full justify-center items-center bg-bgs4", {
         "rounded-t-md":
           arrangement === Arrangement.GRID ||
           arrangement === Arrangement.MASONRY,

@@ -27,7 +27,7 @@ import {
 import { ResourceActions } from "../common/resource.actions";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { flux } from "$lib/client/components/flux/flux";
-import type { IRecordId } from "$lib/client/types/data.type";
+import { StoreDataType, type IRecordId } from "$lib/client/types/data.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import { assignDefaultLabelAsFallback } from "./properties/property.utils";
 import type { IProperty } from "./properties/property.type";
@@ -48,7 +48,9 @@ import { GlobalEvent } from "$lib/client/types/event.enum";
 
 class CollectionStore extends ResourceStore<ICollection> {
   constructor() {
-    super(Resource.collection);
+    super(Resource.collection, {
+      dataType: StoreDataType.FIR
+    });
   }
   async save(
     form: Partial<ICollection> & { defaultLayout: CollectionLayout },
@@ -402,7 +404,9 @@ export class ActiveCollectionStore extends ActiveResourceStore<
 
 class CollectionViewStore extends ResourceStore<ICollectionView> {
   constructor() {
-    super(Resource.view);
+    super(Resource.view, {
+      dataType: StoreDataType.FIR
+    });
   }
   /**
    * fetch node ids from link table where out is collection id for simple and typed collections

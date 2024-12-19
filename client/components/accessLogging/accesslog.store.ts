@@ -5,7 +5,9 @@ import type { IAccessLog } from "./accessLog.type";
 
 class AccessLogStore extends ResourceStore<IAccessLog> {
   constructor() {
-    super(Resource.accessLog);
+    super(Resource.accessLog, {
+      isCloudOnlyResource: true
+    });
   }
 
   async fetch(resourceId: IRecordId): Promise<IAccessLog[]> {

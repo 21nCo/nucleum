@@ -51,8 +51,7 @@
       message: "Syncing your data from cloud..."
     },
     cloneDown: {
-      message: "Syncing...",
-      subMessage: "Initializing the sync..."
+      message: "Copying data from cloud..."
     }
   };
 
@@ -72,9 +71,18 @@
         hide_default_launcher: true
       });
     addWindowEventListeners();
-    await initializeUser();
+    console.time("init");
+    const initState = await initializeDatabase();
+    let paginateResult;
+    if (initState !== undefined)
+      paginateResult = await initializeEssentialUserData(initState);
+    await initializeUserConfig();
     dispatch("ready");
+    console.timeEnd("init");
     $appLoadingState.isBaseLoaded = true;
+    if (paginateResult?.paginateResources) {
+      await flux.paginateResources(paginateResult.paginateResources, 100);
+    }
     initializeTaco();
   });
   /**
@@ -169,7 +177,7 @@
    * Note: The order of operations is important as later operations rely on earlier ones.
    * @param isLiteMode
    */
-  async function initializeUser() {
+  async function initializeDatabase(): Promise<number | undefined> {
     try {
       const isLiteMode = $context.isSheet;
       logger.log({
@@ -194,65 +202,29 @@
         });
         if (initState === 0) await flux.kvSeed();
         else await flux.loadInMemoryStores();
-      } else if ($account.dataMode === UserDataMode.CLOUD) {
-        if (!$account.userId) {
-          error = "User id not found. Please try again later.";
-          return;
-        }
-        let initState = await initializeFlux({
-          userId: $account.userId,
-          dapId: dapId!
-        });
-        await flux.seed();
-        logger.log({
-          at: "UserBaseLayer.initializeData - cloud",
-          initState,
-          os: $context.os,
-          isEmbed: $context.isEmbed,
-          embed: $context.embed,
-          userAgent: navigator.userAgent
-        });
-        if ($account.sessionType === UserSessionType.NEW) {
-          if (initState === 2) {
-            loadingMessage = loadingMessages.cloneUp;
-            await flux.cloneUp();
-          } else {
-            await flux.kvSeed();
-          }
-        } else if ($account.sessionType === UserSessionType.RETURNING) {
-          if (initState === 0) {
-            loadingMessage = loadingMessages.cloneDown;
-            await flux.cloneDown();
-          } else {
-            loadingMessage = loadingMessages.syncDown;
-            await flux.syncDown(true);
-            await flux.loadInMemoryStores();
-          }
-        }
+        return initState;
       }
-      const defaultAppMenu = $appStore.appData?.appMenu ?? [];
-      const defaultAppMenuMobile = $appStore.appData?.appMenuMobile ?? [];
-      const appMenuDefaults = {
-        all: defaultAppMenu,
-        mobile: defaultAppMenuMobile
-      };
-      if ($account.dataMode === UserDataMode.CLOUD && !isLiteMode) {
-        refreshTimeZone();
-        appMenuStore.setDefaults(appMenuDefaults, true);
-        setAnalyticsUserIdentity();
-        await account.ping();
-      } else {
-        appMenuStore.setDefaults(appMenuDefaults);
+      if (!$account.userId) {
+        error = "User id not found. Please try again later.";
+        return;
       }
+      let initState = await initializeFlux({
+        userId: $account.userId,
+        dapId: dapId!
+      });
+      //TODO - check for placement of this and duplicate check with refreshTimeZone
+      await flux.seed();
+      logger.log({
+        at: "UserBaseLayer.initializeData - cloud",
+        initState,
+        os: $context.os,
+        isEmbed: $context.isEmbed,
+        embed: $context.embed,
+        userAgent: navigator.userAgent
+      });
+      return initState;
     } catch (e) {
       logger.error(e);
-    }
-
-    function setAnalyticsUserIdentity() {
-      if (!$account.userInfo) return;
-      posthog.identify($account.userInfo.id, {
-        region: $account.userInfo.region
-      });
     }
   }
 
@@ -266,6 +238,57 @@
         appVersion: $appStore.appData?.version
       }
     );
+  }
+
+  async function initializeEssentialUserData(initState: number) {
+    if ($account.dataMode === UserDataMode.LOCAL) {
+      return;
+    }
+    if ($account.sessionType === UserSessionType.NEW) {
+      if (initState === 2) {
+        loadingMessage = loadingMessages.cloneUp;
+        await flux.cloneUp();
+      } else {
+        await flux.kvSeed();
+      }
+    } else if ($account.sessionType === UserSessionType.RETURNING) {
+      if (initState === 0) {
+        loadingMessage = loadingMessages.cloneDown;
+        const result = await flux.initializeEssentialDataForCloudUser();
+        if (typeof result === "object" && result?.ifrCloneResult) {
+          return result.ifrCloneResult;
+        }
+      } else {
+        loadingMessage = loadingMessages.syncDown;
+        await flux.syncDown(true);
+        await flux.loadInMemoryStores();
+      }
+    }
+  }
+
+  async function initializeUserConfig() {
+    const isLiteMode = $context.isSheet;
+    const defaultAppMenu = $appStore.appData?.appMenu ?? [];
+    const defaultAppMenuMobile = $appStore.appData?.appMenuMobile ?? [];
+    const appMenuDefaults = {
+      all: defaultAppMenu,
+      mobile: defaultAppMenuMobile
+    };
+    if ($account.dataMode === UserDataMode.CLOUD && !isLiteMode) {
+      refreshTimeZone();
+      appMenuStore.setDefaults(appMenuDefaults, true);
+      setAnalyticsUserIdentity();
+      await account.ping();
+    } else {
+      appMenuStore.setDefaults(appMenuDefaults);
+    }
+
+    function setAnalyticsUserIdentity() {
+      if (!$account.userInfo) return;
+      posthog.identify($account.userInfo.id, {
+        region: $account.userInfo.region
+      });
+    }
   }
 
   /**

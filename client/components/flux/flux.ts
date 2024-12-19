@@ -48,6 +48,7 @@ import {
 } from "$lib/client/utils/extension.utils";
 import { SyncMethod } from "$lib/shared/types/sync.type";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+import { FluxMethod, type IFluxMethod } from "./flux.type";
 
 class Flux {
   static _instance: Flux | null = null;
@@ -236,7 +237,9 @@ class Flux {
     let response;
     logger.log({ at: "flux.mutation", resource, params });
     try {
-      response = await this.persistence.mutation(resource, params);
+      if (!additionalParams?.isCloudOnlyResource) {
+        response = await this.persistence.mutation(resource, params);
+      }
       let mutation: IMutation;
       if (
         !additionalParams?.isPreventCloudPersistence &&
@@ -353,9 +356,19 @@ class Flux {
     }
   }
 
-  async select(resourceId: IRecordId, properties?: string[]) {
+  async select(
+    resourceId: IRecordId,
+    properties?: string[],
+    additionalParams?: { isCloudOnlyResource?: boolean }
+  ) {
     try {
       logger.log({ at: "flux.select", resourceId });
+      if (additionalParams?.isCloudOnlyResource) {
+        return this.remoteRelay({
+          method: FluxMethod.SELECT,
+          args: { resourceId, properties }
+        });
+      }
       const result = await this.persistence.select(resourceId, properties);
       logger.log({ at: "flux.select - result", result });
       return result;
@@ -368,9 +381,19 @@ class Flux {
     }
   }
 
-  async selectMany(resource: Resource, params?: IResourceSelectParams) {
+  async selectMany(
+    resource: Resource,
+    params?: IResourceSelectParams,
+    additionalParams?: { isCloudOnlyResource?: boolean }
+  ) {
     try {
       logger.log({ at: "flux.selectMany", resource, params });
+      if (additionalParams?.isCloudOnlyResource) {
+        return this.remoteRelay({
+          method: FluxMethod.SELECT_MANY,
+          args: { resource, params }
+        });
+      }
       const result = await this.persistence.selectMany(resource, params);
       logger.log({ at: "flux.selectMany - result", resource, params, result });
       return result;
@@ -477,6 +500,19 @@ class Flux {
       return response;
     } catch (e) {
       logger.error({ at: "flux.performSync", method, data, error: e });
+    }
+  }
+
+  async remoteRelay(body: IFluxMethod) {
+    try {
+      const result = await performApiCall(`relay`, "POST", body);
+      if (result?.ok) {
+        const response = await result.json();
+        logger.debug({ at: "flux.remoteRelay", body, response });
+        return response;
+      }
+    } catch (e) {
+      logger.error({ at: "flux.remoteRelay", body, error: e });
     }
   }
 
@@ -655,10 +691,12 @@ class Flux {
           resourcesWithMissSync
         });
         if (resourcesWithMissSync.length > 0) {
-          await this.cloneDown({
-            resources: resourcesWithMissSync,
+          const result = await this.cloneDown(resourcesWithMissSync, {
             isReconciliation: true
           });
+          if (result?.paginateResources) {
+            await this.paginateResources(result.paginateResources);
+          }
         }
       }
       return result;
@@ -670,11 +708,11 @@ class Flux {
         isFirstLoad &&
         isShowCompletedStatus
       ) {
-        dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
-          message: `Sync completed.`,
-          subMessage: "",
-          isFinished: true
-        });
+        // dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
+        //   message: `Sync completed.`,
+        //   subMessage: "",
+        //   isFinished: true
+        // });
       }
       this.isSyncDownPending = false;
     }
@@ -686,8 +724,8 @@ class Flux {
     }
     if (typeof response === "number") {
       console.log("large sync down detected: ", response);
-      await this.clear();
-      window.location.reload();
+      // await this.clear();
+      // window.location.reload();
       return -1;
     }
     const mutations: IMutation[] = response;
@@ -724,17 +762,21 @@ class Flux {
   /**
    * Clones down from cloud to local.
    */
-  async cloneDown(params?: {
-    isReconciliation?: boolean;
-    resources?: Resource[];
-  }) {
-    logger.log({ at: "flux.cloneDown", stores: this.stores });
+  async cloneDown(
+    resources: Resource[],
+    params?: {
+      isReconciliation?: boolean;
+      limit?: number;
+    }
+  ): Promise<{ paginateResources?: Resource[] } | undefined> {
+    logger.log({ at: "flux.cloneDown", resources });
     try {
-      if (await determineIfOffline()) return;
-      const resources = params?.resources ?? this.resolveSyncResources();
+      if (!resources || resources.length === 0 || (await determineIfOffline()))
+        return;
+      const _limit = params?.limit ?? this.cloneDownLimit;
       const result = await this.performSync(SyncMethod.CLONE_DOWN, {
         resources,
-        limit: this.cloneDownLimit,
+        limit: _limit,
         isExtension: this.isExtensionEnvironment
       });
       let needsPagination: Resource[] = [];
@@ -747,14 +789,14 @@ class Flux {
         )
           continue;
         let records = resourceResponse.result;
-        if (records.length === this.cloneDownLimit) {
+        if (records.length === _limit) {
           needsPagination.push(resource);
         }
         console.time(`cloneDown - ${resource}`);
         if (!this.isExtensionEnvironment && resource !== Resource.kv) {
-          dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
-            subMessage: `Syncing ${resource}s...`
-          });
+          // dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
+          //   subMessage: `Syncing ${resource}s...`
+          // });
         }
         if (resource === Resource.kv) {
           records = records.filter(
@@ -796,10 +838,39 @@ class Flux {
         console.timeEnd(`cloneDown - ${resource}`);
       }
       console.log("needsPagination", needsPagination);
-      if (needsPagination.length > 0) {
-        await this.paginateResources(needsPagination);
+      return { paginateResources: needsPagination };
+    } catch (e) {
+      logger.error({ at: "flux.cloneDown", error: e });
+    } finally {
+      if (!this.isExtensionEnvironment && !params?.isReconciliation) {
+        // dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
+        //   message: `Sync completed.`,
+        //   subMessage: "",
+        //   isFinished: true
+        // });
       }
-      if (params?.isReconciliation) return true;
+    }
+  }
+
+  /**
+   * Initializes essential data for cloud user. This is called for a fresh login of a returning cloud user.
+   * 1. Clones down all finite resources
+   * 2. Clones down most recent non finite resources so that paginate will carry out rest of the clone.
+   */
+  async initializeEssentialDataForCloudUser() {
+    try {
+      const resources = this.resolveFIRResources();
+      const result = await this.cloneDown(resources, {
+        limit: 1000
+      });
+      if (!result) return false;
+      if (result.paginateResources) {
+        await this.paginateResources(result.paginateResources);
+      }
+      const ifrResources = this.resolveIFRBootResources();
+      const ifrResult = await this.cloneDown(ifrResources, {
+        limit: 100
+      });
       await this.loadInMemoryStores();
       await this.persistence.mutation(Resource.kv, {
         record: {
@@ -809,26 +880,20 @@ class Flux {
         },
         action: PersistenceActionType.MERGE
       });
-      return true;
+      return {
+        finiteCloneResult: result,
+        ifrCloneResult: ifrResult
+      };
     } catch (e) {
-      logger.error({ at: "flux.cloneDown", error: e });
-      return false;
-    } finally {
-      if (!this.isExtensionEnvironment && !params?.isReconciliation) {
-        dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
-          message: `Sync completed.`,
-          subMessage: "",
-          isFinished: true
-        });
-      }
+      logger.error({ at: "flux.cloneDownEssentials", error: e });
     }
   }
 
-  async paginateResources(resources: Resource[]) {
+  async paginateResources(resources: Resource[], offset?: number) {
     for (let resource of resources) {
       await this.paginateResource(
         resource,
-        this.cloneDownLimit,
+        offset !== undefined ? offset : this.cloneDownLimit,
         this.cloneDownLimit
       );
     }
@@ -890,6 +955,27 @@ class Flux {
   private resolveSyncResources(): Resource[] {
     const resources = [
       Resource.kv,
+      ...(this.stores
+        .filter(
+          (x) =>
+            x.dataType === StoreDataType.IFR || x.dataType === StoreDataType.FIR
+        )
+        .map((x) => x.id) ?? [])
+    ] as Resource[];
+    return resources;
+  }
+
+  private resolveFIRResources(): Resource[] {
+    const resources = [
+      Resource.kv,
+      ...(this.stores
+        .filter((x) => x.dataType === StoreDataType.FIR)
+        .map((x) => x.id) ?? [])
+    ] as Resource[];
+    return resources;
+  }
+  private resolveIFRBootResources(): Resource[] {
+    const resources = [
       ...(this.stores
         .filter((x) => x.dataType === StoreDataType.IFR)
         .map((x) => x.id) ?? [])

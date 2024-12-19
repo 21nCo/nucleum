@@ -1,7 +1,7 @@
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
 import type { ILinkTag } from "./link.type";
-import { type IRecordId } from "$lib/client/types/data.type";
+import { StoreDataType, type IRecordId } from "$lib/client/types/data.type";
 import { replaceParams } from "$lib/shared/utils/surreal.utils";
 import {
   LinkType,
@@ -214,7 +214,8 @@ export const linker = new Linker();
 class LinkTagStore extends ResourceStore<ILinkTag> {
   constructor() {
     super(Resource.linkTag, {
-      isInMemory: true
+      isInMemory: true,
+      dataType: StoreDataType.FIR
     });
   }
 

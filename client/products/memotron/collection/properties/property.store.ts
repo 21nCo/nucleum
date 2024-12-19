@@ -7,12 +7,17 @@ import {
   UniversalPropertyType
 } from "$lib/client/products/memotron/collection/properties/property.type";
 import { ObservableStore } from "$lib/client/stores/client.store";
-import type { IObservableStoreSubject } from "$lib/client/types/data.type";
+import {
+  StoreDataType,
+  type IObservableStoreSubject
+} from "$lib/client/types/data.type";
 import type { OmitForCaptureWithId } from "$lib/client/components/flux/resourceStores/resource.type";
 
 class PropertyStore extends ResourceStore<IProperty> {
   constructor() {
-    super(Resource.property);
+    super(Resource.property, {
+      dataType: StoreDataType.FIR
+    });
   }
 }
 

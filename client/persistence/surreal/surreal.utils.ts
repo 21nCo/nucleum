@@ -14,6 +14,9 @@ export function surrealUnixTimestamp(date?: string | Date) {
   return +(new Date(date).getTime() / 1000).toFixed();
 }
 
+/**
+ * @deprecated
+ */
 export function resolveRefreshQuery(
   id: string,
   dataType: StoreDataType,

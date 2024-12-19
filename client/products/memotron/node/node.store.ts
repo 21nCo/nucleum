@@ -149,7 +149,9 @@ class NodeStore extends ResourceStore<INode> {
 
 export const nodeStore = new NodeStore();
 
-export const vectorResourceStore = new ResourceStore(Resource.vector);
+export const vectorResourceStore = new ResourceStore(Resource.vector, {
+  isCloudOnlyResource: true
+});
 
 export type IActiveNodeStore = InstanceType<typeof ActiveNodeStore>;
 

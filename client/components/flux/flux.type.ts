@@ -62,6 +62,7 @@ interface IFluxMutationArgs<T> {
   params: IMutationParamsv2<T>;
   additionalParams?: {
     isPreventCloudPersistence?: boolean;
+    isCloudOnlyResource?: boolean;
     context?: string;
   };
 }

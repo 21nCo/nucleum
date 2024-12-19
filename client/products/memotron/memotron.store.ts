@@ -28,7 +28,7 @@ import { linker } from "./linking/link.store";
 import { highlightSearchQuery, searchSort } from "./memotron.utils";
 import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
 
-export const MAX_FILE_SIZE_MB = 30;
+export const MAX_FILE_SIZE_MB = 100;
 
 export function resolveResource(id: IRecordId) {
   return flux.select(id);
