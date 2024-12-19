@@ -948,7 +948,7 @@
       data-type={dataType}
       style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word;"
       class={cn(
-        "inline-markdown relative w-full h-full text-left outline-none py-0.5",
+        "inline-markdown relative w-full h-full text-left outline-none py-1.5",
         classList,
         {
           customcaret: isCustomCaret,

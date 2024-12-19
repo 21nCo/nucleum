@@ -36,6 +36,7 @@
   export let isInversePlacement: boolean = false;
   export let triggerItemEdit: string | null = null;
   export let isShowNumberShortcut: boolean = false;
+  export let addText: string | undefined = undefined;
   let _items: ISelectItem[];
   $: _items = items.every((x) => typeof x === "string")
     ? items.map((x) => ({ label: x, value: x }))
@@ -157,7 +158,7 @@
 
       {#if isInEditMode && !$view.isConstrainedWidth}
         <PanelSwitcherItem
-          item={{ label: "Add", value: "$add" }}
+          item={{ label: addText ?? "Add", value: "$add" }}
           {size}
           {style}
           isInEditMode={true}

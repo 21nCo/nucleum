@@ -648,7 +648,12 @@ function getEscapeShortcuts(nodeContentType: NodeType) {
     { shortcut: "* ", type: NodeType.LIST, indentable: true },
     { shortcut: "- ", type: NodeType.LIST, indentable: true },
     { shortcut: "+ ", type: NodeType.CHECKLIST, indentable: true },
-    { shortcut: "1. ", type: NodeType.ORDERED_LIST, indentable: true }
+    {
+      shortcut: /^\d+\.\s.*/,
+      type: NodeType.ORDERED_LIST,
+      indentable: true,
+      isRegex: true
+    }
   ];
 
   return {
@@ -666,6 +671,7 @@ export function performEscShortcuts(
   type: NodeType;
   indentLevel?: number;
   isFullReplace?: boolean;
+  listOrder?: number;
 } | null {
   const {
     textEscapeShortcuts,
@@ -676,21 +682,28 @@ export function performEscShortcuts(
   let shortcut: string | undefined = undefined;
   let type: NodeType | undefined = undefined;
   let indentLevel: number | undefined = undefined;
+  let listOrder: number | undefined = undefined;
 
   [...textEscapeShortcuts, ...listEscapeShortcuts].forEach(
-    ({ shortcut: short, type: t, indentable }) => {
+    ({ shortcut: short, type: t, indentable, isRegex }) => {
       indentLevel = getIndentationLevel(text);
       const trimmedText = text.trimStart();
       const _text = indentable ? trimmedText : text;
 
-      if (_text.startsWith(short)) {
+      if (isRegex) {
+        if (trimmedText.match(short)) {
+          shortcut = trimmedText.match(/^\d+\.\s/)?.[0] || "";
+          listOrder = parseInt(shortcut.match(/^\d+/)?.[0] || "1", 10);
+          type = t;
+        }
+      } else if (typeof short === "string" && _text.startsWith(short)) {
         shortcut = short;
         type = t;
       }
     }
   );
   if (shortcut && type) {
-    return { shortcut, type, indentLevel };
+    return { shortcut, type, indentLevel, listOrder };
   }
 
   structuralEscapeShortcuts.forEach(({ shortcut: short, type: t }) => {
@@ -733,7 +746,7 @@ export function textToMdBlocks(
         body: x
       };
     }
-    const { shortcut, type, isFullReplace, indentLevel } = escResult;
+    const { shortcut, type, isFullReplace, indentLevel, listOrder } = escResult;
     if (isFullReplace) {
       return {
         id,
@@ -754,7 +767,7 @@ export function textToMdBlocks(
         body: x
       };
     }
-    if (indentLevel) {
+    if (indentLevel || listOrder) {
       return {
         id,
         contentType: type,
@@ -763,7 +776,8 @@ export function textToMdBlocks(
             type,
             x.trimStart()
           ) as IListBlockBody),
-          indent: indentLevel
+          indent: indentLevel,
+          order: listOrder
         }
       };
     }

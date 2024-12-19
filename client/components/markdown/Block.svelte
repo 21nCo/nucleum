@@ -842,7 +842,7 @@
 <!--TODO -  Note - when reenabling drag and drag to rearrange - make sure it is not interfering with text selection or media grid space slider -->
 <div
   class={cn(
-    "relative flex w-full min-h-fit h-10 items-center gap-2 rounded-md border border-transparent",
+    "relative flex w-full min-h-fit h-11 items-center gap-2 rounded-md border border-transparent",
     {
       "grid grid-cols-[2.5rem_1fr_2.5rem]": isLeftControlsEnabled,
       dragging: isDragging
@@ -916,30 +916,13 @@
   </div>
   {#if !$mdStore.params?.isReadOnly}
     <div class="flex items-center justify-center">
-      {#if isHovering && !isFocusing && !isSoleBlock && [...simpleTextNodeTypeList, ...listNodeTypes, NodeType.DIVIDER, NodeType.DOUBLE_DIVIDER].includes(block.contentType)}
+      {#if isHovering && !isFocusing && !isSoleBlock && [...simpleTextNodeTypeList, ...headingNodeTypes, ...listNodeTypes, NodeType.DIVIDER, NodeType.DOUBLE_DIVIDER].includes(block.contentType)}
         <Button
           icon="ph:trash"
           size={Size.sm}
           tooltip="Delete block"
           on:click={deleteBlock}
         />
-      {/if}
-    </div>
-  {/if}
-  {#if isHovering && !isFocusing && !$mdStore.params?.isReadOnly}
-    <div
-      class={cn(
-        "absolute inset-y-0 right-0 flex items-center justify-center pr-2",
-        {
-          "bg-gradient-to-r from-bgs2/40 via-bgs2 to-bgs2 pl-32 rounded-r-md":
-            isFocusable
-        }
-      )}
-    >
-      {#if isFocusable}
-        <span class="text-b3 text-fgs1 rounded-md px-2 py-1 bg-bgs3">
-          {resolveHeadingText(block.contentType)}
-        </span>
       {/if}
     </div>
   {/if}

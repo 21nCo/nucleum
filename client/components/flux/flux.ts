@@ -254,7 +254,7 @@ class Flux {
     let response;
     logger.log({ at: "flux.mutation", resource, params });
     try {
-      if (!additionalParams?.isCloudOnlyResource) {
+      if (!additionalParams?.isCloudOnlyResource || this.isLocalMode) {
         response = await this.persistence.mutation(resource, params);
       }
       let mutation: IMutation;
@@ -380,7 +380,12 @@ class Flux {
   ) {
     try {
       logger.log({ at: "flux.select", resourceId });
-      if (additionalParams?.isCloudOnlyResource) {
+      const isOffline = await determineIfOffline();
+      if (
+        !this.isLocalMode &&
+        additionalParams?.isCloudOnlyResource &&
+        !isOffline
+      ) {
         return this.remoteRelay({
           method: FluxMethod.SELECT,
           args: { resourceId, properties }
@@ -410,7 +415,12 @@ class Flux {
         params,
         additionalParams
       });
-      if (additionalParams?.isCloudOnlyResource) {
+      const isOffline = await determineIfOffline();
+      if (
+        !this.isLocalMode &&
+        additionalParams?.isCloudOnlyResource &&
+        !isOffline
+      ) {
         if (
           params?.searchType === SearchType.SEMANTIC &&
           params?.search?.query
@@ -723,7 +733,6 @@ class Flux {
     response: any,
     params?: { isPreventInMemoryStoreLoad?: boolean }
   ) {
-    console.log("processSyncDown - response", response);
     if (!response) {
       return;
     }

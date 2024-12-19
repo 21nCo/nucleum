@@ -36,7 +36,7 @@
 </script>
 
 {#if isAddNewItem}
-  <AddNewButton {size} />
+  <AddNewButton {size} text={item.label} />
 {:else if isInEditMode}
   <span class="flex gap-2 items-center">
     <!-- TODO - rearrange - disabling until this feature is complete -->

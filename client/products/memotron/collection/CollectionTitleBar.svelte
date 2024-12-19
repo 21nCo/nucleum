@@ -124,14 +124,14 @@
       <TextInput
         size={Size.lg}
         bind:value={$collection.label}
-        placeholder="Node title"
+        placeholder="Collection title"
         style={InputStyle.PLAIN}
         width="w-full"
         on:input={onLabelChange}
       />
     {:else}
       <div class="truncate userdata">
-        {$collection.label}
+        {$collection.label ?? "Untitled collection"}
       </div>
     {/if}
     {#if $collection.description || $collection.isInEditMode}
@@ -153,6 +153,9 @@
             placeholder: "Add a description",
             changeCallback: onDescriptionChange
           }
+        }}
+        use:tooltip={{
+          text: "Collection description"
         }}
       >
         <Icon icon="ph:info-light" size={Size.sm} />

@@ -6,6 +6,7 @@
   import { ButtonVariant } from "$lib/client/types/button.type";
   import view from "$lib/client/stores/view.store";
   import { logger } from "$lib/client/components/debug/logger.client";
+  import { cn } from "$lib/client/utils/ui.utils";
 
   let videoElement: HTMLVideoElement;
   let canvasElement: HTMLCanvasElement;
@@ -55,6 +56,7 @@
   }
 
   function capturePhoto() {
+    if (error) return;
     if (canvasElement && videoElement) {
       const { videoWidth, videoHeight } = videoElement;
       const { width: containerWidth, height: containerHeight } =
@@ -127,14 +129,20 @@
   </div>
 
   <div
-    class="absolute mo:bottom-20 bottom-0 left-0 right-0 h-24 grid grid-cols-3 gap-4 items-center bg-bgs1 px-4"
+    class={cn(
+      "absolute mo:bottom-20 bottom-0 left-0 right-0 h-24  flex  gap-4 items-center bg-bgs1 px-4",
+      {
+        "grid grid-cols-3": $view.isConstrainedWidth || !photoTaken,
+        "flex justify-center": !$view.isConstrainedWidth
+      }
+    )}
   >
     {#if photoTaken}
       <Button
         icon="ph:arrow-clockwise-light"
         label="Retake"
         type={ButtonVariant.DANGER}
-        size={Size.sm}
+        size={$view.isConstrainedWidth ? Size.sm : Size.md}
         isPreventMinWidth={true}
         on:click={retakePhoto}
       />
@@ -142,7 +150,7 @@
         icon="ph:floppy-disk"
         label="Save"
         type={ButtonVariant.PRIMARY}
-        size={Size.sm}
+        size={$view.isConstrainedWidth ? Size.sm : Size.md}
         isLoading={isSaving}
         isPreventMinWidth={true}
         on:click={savePhoto}
@@ -150,7 +158,7 @@
       <Button
         icon="ph:x"
         label="Cancel"
-        size={Size.sm}
+        size={$view.isConstrainedWidth ? Size.sm : Size.md}
         isPreventMinWidth={true}
         on:click={() => dispatch("cancel")}
       />
@@ -168,7 +176,7 @@
         <Button
           icon="ph:x"
           label="Cancel"
-          size={Size.sm}
+          size={$view.isConstrainedWidth ? Size.sm : Size.md}
           isPreventMinWidth={true}
           on:click={() => dispatch("cancel")}
         />

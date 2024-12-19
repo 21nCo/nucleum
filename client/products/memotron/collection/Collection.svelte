@@ -653,6 +653,7 @@
           >
             {#if !isSingleViewMode || $collection.isInEditMode}
               <PanelSwitcher
+                addText={"Add view"}
                 items={viewsForSwitcher}
                 isEnableAnimationForTitle={true}
                 style={PanelSwitcherStyle.BAR}
@@ -773,17 +774,17 @@
         accessMode={$collection.accessMode}
       />
     {/if}
-    {#if $multiSelectStore.length > 0}
-      <BottomFloat zIndex="z-30">
-        <BulkEditBar
-          {isConstrainedWidth}
-          context={multiSelectContext}
-          on:selectAll={onSelectAll}
-          on:action={onBulkAction}
-        />
-      </BottomFloat>
-    {/if}
   </div>
+  {#if $multiSelectStore.length > 0}
+    <BottomFloat zIndex="z-30">
+      <BulkEditBar
+        {isConstrainedWidth}
+        context={multiSelectContext}
+        on:selectAll={onSelectAll}
+        on:action={onBulkAction}
+      />
+    </BottomFloat>
+  {/if}
 {/if}
 <ComponentBaseLayer
   hasDragAndDrop={true}

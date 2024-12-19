@@ -35,7 +35,7 @@
   {:else if block.contentType === NodeType.MEDIA_GRID}
     <MediaGrid {block} {mdStore} on:delete />
   {:else if block.contentType === NodeType.EMBED}
-    <EmbedContent id={block.id} body={block.body} on:update />
+    <EmbedContent id={block.id} body={block.body} on:update on:delete />
   {:else if block.contentType === NodeType.CALLOUT}
     <Callout id={block.id} body={block.body} {mdStore} {isHovering} on:update />
   {:else if block.contentType === NodeType.CODE}

@@ -233,7 +233,8 @@ export type IBlock =
   | ISimpleTextBlock;
 
 export type IEscapeShortcut = {
-  shortcut: string;
+  shortcut: string | RegExp;
   type: NodeType;
   indentable?: boolean;
+  isRegex?: boolean;
 };

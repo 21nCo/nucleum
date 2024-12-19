@@ -145,6 +145,7 @@
         node={_mediaBlock}
         accessPoint={ResourceAccessPoint.MARKDOWN_EMBED}
         isHidePreview={body?.isHidePreview}
+        on:delete
       />
     </div>
     {#if isShowTitle}

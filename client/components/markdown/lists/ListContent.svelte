@@ -67,7 +67,7 @@
   style={`padding-left: ${body.indent ? body.indent * 1.5 : 0}rem`}
 >
   {#if contentType === NodeType.ORDERED_LIST}
-    <div class="flex justify-center items-center text-fgs1">
+    <div class="flex justify-center items-center self-start text-fgs1 py-2">
       {#if !body.indent || body.indent % 3 === 0}
         {body.order ?? 1}.
       {:else if body.indent % 3 === 1}
@@ -80,13 +80,15 @@
     <Check isChecked={body.checked} on:click={onCheckClicked} size={Size.sm} />
   {:else if !body.indent || body.indent % 3 === 0}
     <div
-      class="w-1.5 h-1.5 min-w-[0.375rem] rounded-full bg-fgs1 my-4 mx-2"
+      class="w-1.5 h-1.5 min-w-[0.375rem] rounded-full self-start bg-fgs1 my-4 mx-2"
     ></div>
   {:else if body.indent % 3 === 1}
-    <div class="w-1.5 h-1.5 min-w-[0.375rem] bg-fgs1 my-4 mx-2"></div>
+    <div
+      class="w-1.5 h-1.5 min-w-[0.375rem] bg-fgs1 self-start my-4 mx-2"
+    ></div>
   {:else}
     <div
-      class="w-1.5 h-1.5 min-w-[0.375rem] rounded-full border border-fgs1 my-4 mx-2"
+      class="w-1.5 h-1.5 min-w-[0.375rem] self-start rounded-full border border-fgs1 my-4 mx-2"
     ></div>
   {/if}
 

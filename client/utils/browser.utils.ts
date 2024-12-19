@@ -278,11 +278,23 @@ export function detectSystemOS() {
   return os;
 }
 
+let cachedPosition: GeolocationPosition | null = null;
+let cacheTimestamp: number = 0;
+const CACHE_DURATION = 2 * 60 * 60 * 1000;
+
 export function getGeoLocation() {
   return new Promise<GeolocationPosition>((resolve, reject) => {
+    const now = Date.now();
+    if (cachedPosition && now - cacheTimestamp < CACHE_DURATION) {
+      resolve(cachedPosition);
+      return;
+    }
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          cachedPosition = position;
+          cacheTimestamp = now;
           resolve(position);
         },
         (error) => {
@@ -409,8 +421,8 @@ export function resolveModalOnFront() {
  * @param options
  * @returns
  */
-export function trackPosition(node, options = {}) {
-  let frame;
+export function trackPosition(node: HTMLElement) {
+  let frame: number;
   let lastX = 0;
   let lastY = 0;
 
@@ -492,16 +504,18 @@ export async function generateFingerprint() {
     if (window.CanvasRenderingContext2D) {
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
-      ctx.textBaseline = "top";
-      ctx.font = "14px Arial";
-      ctx.textBaseline = "alphabetic";
-      ctx.fillStyle = "#f60";
-      ctx.fillRect(125, 1, 62, 20);
-      ctx.fillStyle = "#069";
-      ctx.fillText("Hello, world!", 2, 15);
-      ctx.fillStyle = "rgba(102, 204, 0, 0.7)";
-      ctx.fillText("Hello, world!", 4, 17);
-      components.push(canvas.toDataURL());
+      if (ctx) {
+        ctx.textBaseline = "top";
+        ctx.font = "14px Arial";
+        ctx.textBaseline = "alphabetic";
+        ctx.fillStyle = "#f60";
+        ctx.fillRect(125, 1, 62, 20);
+        ctx.fillStyle = "#069";
+        ctx.fillText("Hello, world!", 2, 15);
+        ctx.fillStyle = "rgba(102, 204, 0, 0.7)";
+        ctx.fillText("Hello, world!", 4, 17);
+        components.push(canvas.toDataURL());
+      }
     }
 
     if (window.AudioContext) {
@@ -533,14 +547,17 @@ export async function generateFingerprint() {
 }
 
 export function getEventPath(event: Event): EventTarget[] {
-  let path = [];
+  let path: EventTarget[] = [];
   let currentTarget = event.target as Node | null;
   while (currentTarget) {
     path.push(currentTarget);
     currentTarget = currentTarget.parentNode;
   }
-  if (path.indexOf(window) === -1 && path.indexOf(document) === -1)
+  if (path.indexOf(document) === -1) {
     path.push(document);
-  if (path.indexOf(window) === -1) path.push(window);
+  }
+  if (path.indexOf(window) === -1) {
+    path.push(window);
+  }
   return path;
 }
