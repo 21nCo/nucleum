@@ -53,7 +53,6 @@
           resourceId: node.id.toString()
         }
       });
-      console.log({ mutations });
       if (isValidArrayWithData(mutations)) {
         accessLogs = accessLogs.concat(
           mutations.map((mutation: IMutation) => ({
