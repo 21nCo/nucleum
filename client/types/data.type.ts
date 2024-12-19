@@ -396,6 +396,7 @@ export type IResourceSelectParams = {
    */
   search?: {
     query: string;
+    queryEmbedding?: Float32Array[];
     properties?: string[];
     isCaseSensitive?: boolean;
   };

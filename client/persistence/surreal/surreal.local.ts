@@ -14,7 +14,9 @@ import {
   resolveInsertQuery,
   resolveMergeQuery,
   resolveUpsertQuery,
-  resolveBulkMergeQuery
+  resolveBulkMergeQuery,
+  resolveSelectQuery,
+  resolveSelectManyQuery
 } from "$lib/shared/utils/surreal.utils";
 import { Resource } from "../../components/flux/resourceStores/resource.enum";
 import type {
@@ -32,10 +34,8 @@ import {
 import { interceptSurrealResponse } from "../../utils/utils";
 import { LogType } from "$lib/client/components/debug/debug.type";
 import { compareVersions } from "$lib/shared/utils/utils";
-import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
 import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
 import { GlobalEvent } from "$lib/client/types/event.enum";
-import { TacoActions } from "$lib/client/products/memotron/taco/taco.types";
 
 const loadSurrealDB = async () => {
   const Surreal = await import("@surrealdb/wasm");
@@ -45,7 +45,6 @@ const loadSurrealDB = async () => {
 export class SurrealPersistence implements IPersistence {
   instance: Surreal | undefined = undefined;
   userId: string = "";
-  queryEmbedding: Float32Array[] | null = null;
   private isProcessingOperation: boolean = false;
   private processId: string = "";
   private waitingTimeElapsed: number = 0;
@@ -136,7 +135,9 @@ export class SurrealPersistence implements IPersistence {
   private async addLocalLog(params?: IPersistenceInitParams) {
     await this.awaiter();
     const result = await this.instance?.query(
-      `INSERT INTO kv { id: 'local', createdAt: time::now(), version: "${params?.appVersion}", isLocalMode: ${!params?.userId}, dapId: "${params?.dapId}" };`
+      `INSERT INTO kv { id: 'local', createdAt: time::now(), version: "${
+        params?.appVersion
+      }", isLocalMode: ${!params?.userId}, dapId: "${params?.dapId}" };`
     );
     this.isProcessingOperation = false;
   }
@@ -494,7 +495,9 @@ export class SurrealPersistence implements IPersistence {
       await this.awaiter("deleteMany_" + resource);
       // const result = await this.instance?.delete(resourceId.toString());
       const result = await this.instance?.query(
-        `DELETE ${resource} WHERE id in [${recordIds.map((x) => `${x}`).join(",")}];`
+        `DELETE ${resource} WHERE id in [${recordIds
+          .map((x) => `${x}`)
+          .join(",")}];`
       );
       logger.log({ at: "SurrealPersistence.deleteMany", resource, result });
       return result;
@@ -575,10 +578,7 @@ export class SurrealPersistence implements IPersistence {
   async select(resourceId: IRecordId, properties?: string[]): Promise<any> {
     try {
       await this.awaiter("select_" + resourceId);
-      const props = properties ?? [];
-      const selectClause =
-        props.length > 0 ? `SELECT ${props.join(", ")}` : "SELECT *";
-      const query = `${selectClause} FROM ONLY ${resourceId};`;
+      const query = resolveSelectQuery(resourceId, properties);
       logger.log({ at: "SurrealPersistence.select", query, resourceId });
       const result = await this.instance?.query_raw(query);
       return interceptSurrealResponse(result);
@@ -596,45 +596,7 @@ export class SurrealPersistence implements IPersistence {
   ): Promise<any> {
     try {
       await this.awaiter("selectMany_" + resource);
-      const properties = params?.properties ?? [];
-      if (params?.searchType === SearchType.SEMANTIC && params?.search?.query) {
-        // this.queryEmbedding = await FeatureExtractor.generateVectorEmbeddings(
-        //   params.search.query
-        // );
-        tacoWorker.postMessage({
-          action: TacoActions.GET_EMBEDDINGS,
-          params: {
-            text: params.search.query
-          }
-        });
-        const result: any = await new Promise((resolve, reject) => {
-          tacoWorker.onmessage = (e) => {
-            resolve(e.data);
-          };
-        });
-        this.queryEmbedding = result?.data;
-        properties.push(
-          `vector::similarity::cosine(embedding,[${this.queryEmbedding}]) AS dist`
-        );
-      }
-      const filters = params?.filters ?? {};
-      const whereClause = this.generateWhereClause(resource, params);
-      const selectClause =
-        properties.length > 0 ? `SELECT ${properties.join(", ")}` : "SELECT *";
-
-      let query = `${selectClause} FROM ${resource} ${whereClause}`;
-      if (
-        params?.groupBy &&
-        params?.groupBy?.length === 1 &&
-        params?.groupBy[0] === "all"
-      )
-        query += ` GROUP ALL`;
-      else if (params?.groupBy)
-        query += ` GROUP BY ${params.groupBy.join(", ")}`;
-      if (params?.orderBy)
-        query += ` ORDER BY ${this.generateOrderByClause(params.orderBy)}`;
-      if (params?.limit) query += ` LIMIT ${params.limit}`;
-      if (params?.offset) query += ` START ${params.offset}`;
+      const query = resolveSelectManyQuery(resource, params);
       if (resource !== Resource.mutation) {
         logger.log({
           at: "SurrealPersistence.selectMany - query",
@@ -662,126 +624,5 @@ export class SurrealPersistence implements IPersistence {
       this.isProcessingOperation = false;
     }
     return null;
-  }
-
-  private generateOrderByClause(orderBy: IResourceSelectParams["orderBy"]) {
-    if (!orderBy) return "";
-    return Object.keys(orderBy)
-      .map((key) => `${key} ${orderBy[key]}`)
-      .join(", ");
-  }
-
-  /**
-   *
-   * Note: using `string::lowercase()` on property field is resulting in no results at times.
-   *
-   * Ex: when searching for nodes and if property is `label`. Working fine for other properties like `body` or `contentType` or for Collection search with label property.
-   *
-   *
-   * Not using `@@` index search - as defining index is increasing initial sync time (insert time for nodes) significantly.
-   *
-   *
-   * @param search
-   * @returns
-   */
-  private generateSearchClause(search: IResourceSelectParams["search"]) {
-    if (!search) return "";
-    const conditions: string[] = [];
-    search.properties?.forEach((property, index) => {
-      conditions.push(useSimpleSearch(search.query, property));
-    });
-    return `(${conditions.join(" OR ")})`;
-
-    function useSimpleSearch(searchQuery: string, property: string) {
-      return `(type::is::string(${property}) AND string::lowercase('${searchQuery}') IN string::lowercase(${property}))`;
-
-      // return `string::lowercase('${search.query}') IN string::lowercase(${property})`
-    }
-
-    function useIndexSearch(
-      searchQuery: string,
-      property: string,
-      index: number
-    ) {
-      return `${property} @${index + 1}@ '${searchQuery}'`;
-    }
-  }
-  /**
-   * USe <|10|,COSINE> for brute force search where you don't want keep rerunning indexes on every new item addition
-   * @param searchQuery
-   * @returns
-   */
-  private generateSemanticSearchClause(k: number = 3) {
-    return `embedding <|${k}|> [${this.queryEmbedding}]`;
-  }
-  private generateWhereClause(
-    resource: Resource,
-    params?: IResourceSelectParams
-  ): string {
-    const conditions: string[] = [];
-
-    const whereClause = params?.whereClause;
-    if (whereClause && typeof whereClause === "string") {
-      conditions.push(whereClause);
-    } else if (whereClause && typeof whereClause === "object") {
-      conditions.push(whereClause.join(" AND "));
-    }
-
-    if (params?.searchType === SearchType.SEMANTIC && params?.search) {
-      conditions.push(
-        this.generateSemanticSearchClause(params.semanticSearchTopK)
-      );
-    } else if (params?.search) {
-      conditions.push(this.generateSearchClause(params.search));
-    }
-
-    for (const [key, value] of Object.entries(params?.filters ?? {})) {
-      if (Array.isArray(value)) {
-        conditions.push(`${key} IN [${value.map(formatValue).join(", ")}]`);
-      } else if (typeof value === "object") {
-        if ("greaterThan" in value) {
-          conditions.push(`${key} > ${formatValue(value.greaterThan)}`);
-        }
-        if ("lessThan" in value) {
-          conditions.push(`${key} < ${formatValue(value.lessThan)}`);
-        }
-        if ("greaterThanOrEqual" in value) {
-          conditions.push(`${key} >= ${formatValue(value.greaterThanOrEqual)}`);
-        }
-        if ("lessThanOrEqual" in value) {
-          conditions.push(`${key} <= ${formatValue(value.lessThanOrEqual)}`);
-        }
-        if ("notIn" in value) {
-          conditions.push(
-            `${key} NOT IN [${value.notIn.map(formatValue).join(", ")}]`
-          );
-        }
-      } else if (typeof value === "boolean") {
-        if (value === true) {
-          conditions.push(`${key} IS true`);
-        } else if (value === false) {
-          conditions.push(
-            `(${key} IS NULL OR ${key} IS false OR ${key} IS NONE OR ${key} IS 0)`
-          );
-        }
-      } else if (value !== undefined) {
-        conditions.push(`${key} = ${formatValue(value)}`);
-      }
-    }
-
-    // return conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-    const clause =
-      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-    return commonQueryReplacements(clause, resource);
-
-    function formatValue(value: IPrimitiveDbDataType): string {
-      if (typeof value === "string") {
-        return `'${value.replace(/'/g, "''")}'`; // Escape single quotes
-      }
-      if (typeof value === "boolean") {
-        return value ? "true" : "false"; // Use 'true' and 'false' for boolean literals
-      }
-      return String(value);
-    }
   }
 }

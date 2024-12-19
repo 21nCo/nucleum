@@ -14,7 +14,8 @@ import {
   type IRecordId,
   type IMutation,
   type IInsertMutation,
-  type IMutationAdditionalParams
+  type IMutationAdditionalParams,
+  SearchType
 } from "$lib/client/types/data.type";
 import {
   detectTimeZone,
@@ -49,6 +50,8 @@ import {
 import { SyncMethod } from "$lib/shared/types/sync.type";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { FluxMethod, type IFluxMethod } from "./flux.type";
+import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
+import { TacoActions } from "$lib/client/products/memotron/taco/taco.types";
 
 class Flux {
   static _instance: Flux | null = null;
@@ -389,6 +392,31 @@ class Flux {
     try {
       logger.log({ at: "flux.selectMany", resource, params });
       if (additionalParams?.isCloudOnlyResource) {
+        if (
+          params?.searchType === SearchType.SEMANTIC &&
+          params?.search?.query
+        ) {
+          let queryEmbedding: Float32Array[] | null = null;
+          // queryEmbedding = await FeatureExtractor.generateVectorEmbeddings(
+          //   params.search.query
+          // );
+          tacoWorker.postMessage({
+            action: TacoActions.GET_EMBEDDINGS,
+            params: {
+              text: params.search.query
+            }
+          });
+          const result: any = await new Promise((resolve, reject) => {
+            tacoWorker.onmessage = (e) => {
+              resolve(e.data);
+            };
+          });
+          queryEmbedding = result?.data;
+          params.properties.push(
+            `vector::similarity::cosine(embedding,[${queryEmbedding}]) AS dist`
+          );
+          params.search.queryEmbedding = queryEmbedding;
+        }
         return this.remoteRelay({
           method: FluxMethod.SELECT_MANY,
           args: { resource, params }

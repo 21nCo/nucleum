@@ -412,5 +412,28 @@ export class AccountLambdaFunctions extends cdk.NestedStack {
       new gateway.MockIntegration(defaults.mockIntegration),
       defaults.mockIntegrationOptions
     );
+
+    const relayResource = props.api.root.addResource("relay");
+    const relayFunctionNode = new lambda.Function(this, "RelayFunctionNode", {
+      handler: "relay.handler",
+      functionName: generateFunctionName(
+        "relayFunctionNode",
+        props.environment
+      ),
+      ...nodeRuntimeFunctionProps
+    });
+    relayResource.addMethod(
+      "POST",
+      new gateway.LambdaIntegration(relayFunctionNode)
+    );
+    relayResource.addMethod(
+      "GET",
+      new gateway.LambdaIntegration(relayFunctionNode)
+    );
+    relayResource.addMethod(
+      "OPTIONS",
+      new gateway.MockIntegration(defaults.mockIntegration),
+      defaults.mockIntegrationOptions
+    );
   }
 }

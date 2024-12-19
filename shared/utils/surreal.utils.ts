@@ -5,7 +5,10 @@ import { pointronDboDefinitions } from "$lib/shared/dbo/pointron.dbo";
 import { pointronTables } from "$lib/shared/dbo/pointron.tables";
 import { globalTables } from "../dbo/global.tables";
 import {
+  IPrimitiveDbDataType,
+  IResourceSelectParams,
   PersistenceActionType,
+  SearchType,
   StoreDataType,
   type IMutation,
   type IRecordId
@@ -323,7 +326,11 @@ export function resolveMutationQueryV2(mutation: IMutation) {
     case PersistenceActionType.DELETE:
       return `DELETE ${mutation.resource} WHERE id = ${mutation.params.recordId}`;
     case PersistenceActionType.BULK_DELETE:
-      return `DELETE ${mutation.resource} WHERE id in [${mutation.params.recordIds.map((x) => `${x}`).join(",")}];`;
+      return `DELETE ${
+        mutation.resource
+      } WHERE id in [${mutation.params.recordIds
+        .map((x) => `${x}`)
+        .join(",")}];`;
     case PersistenceActionType.REPLACE:
       return `UPDATE ${mutation.resource} SET ${JSON.stringify(
         mutation.params
@@ -337,5 +344,168 @@ export function resolveMutationQueryV2(mutation: IMutation) {
       );
     case PersistenceActionType.CUSTOM:
       return replaceParams(mutation.params.query, mutation.params.data);
+  }
+}
+
+export function resolveSelectQuery(
+  resourceId: IRecordId,
+  properties?: string[]
+) {
+  const props = properties ?? [];
+  const selectClause =
+    props.length > 0 ? `SELECT ${props.join(", ")}` : "SELECT *";
+  return `${selectClause} FROM ONLY ${resourceId};`;
+}
+
+export function resolveSelectManyQuery(
+  resource: Resource,
+  params?: IResourceSelectParams
+) {
+  const properties = params?.properties ?? [];
+  const whereClause = generateWhereClause(resource, params);
+  const selectClause =
+    properties.length > 0 ? `SELECT ${properties.join(", ")}` : "SELECT *";
+
+  let query = `${selectClause} FROM ${resource} ${whereClause}`;
+  if (
+    params?.groupBy &&
+    params?.groupBy?.length === 1 &&
+    params?.groupBy[0] === "all"
+  )
+    query += ` GROUP ALL`;
+  else if (params?.groupBy) query += ` GROUP BY ${params.groupBy.join(", ")}`;
+  if (params?.orderBy)
+    query += ` ORDER BY ${generateOrderByClause(params.orderBy)}`;
+  if (params?.limit) query += ` LIMIT ${params.limit}`;
+  if (params?.offset) query += ` START ${params.offset}`;
+
+  return query;
+
+  function generateOrderByClause(orderBy: IResourceSelectParams["orderBy"]) {
+    if (!orderBy) return "";
+    return Object.keys(orderBy)
+      .map((key) => `${key} ${orderBy[key]}`)
+      .join(", ");
+  }
+}
+
+/**
+ *
+ * Note: using `string::lowercase()` on property field is resulting in no results at times.
+ *
+ * Ex: when searching for nodes and if property is `label`. Working fine for other properties like `body` or `contentType` or for Collection search with label property.
+ *
+ *
+ * Not using `@@` index search - as defining index is increasing initial sync time (insert time for nodes) significantly.
+ *
+ *
+ * @param search
+ * @returns
+ */
+function generateSearchClause(search: IResourceSelectParams["search"]) {
+  if (!search) return "";
+  const conditions: string[] = [];
+  search.properties?.forEach((property, index) => {
+    conditions.push(useSimpleSearch(search.query, property));
+  });
+  return `(${conditions.join(" OR ")})`;
+
+  function useSimpleSearch(searchQuery: string, property: string) {
+    return `(type::is::string(${property}) AND string::lowercase('${searchQuery}') IN string::lowercase(${property}))`;
+
+    // return `string::lowercase('${search.query}') IN string::lowercase(${property})`
+  }
+
+  function useIndexSearch(
+    searchQuery: string,
+    property: string,
+    index: number
+  ) {
+    return `${property} @${index + 1}@ '${searchQuery}'`;
+  }
+}
+/**
+ * USe <|10|,COSINE> for brute force search where you don't want keep rerunning indexes on every new item addition
+ * @param searchQuery
+ * @returns
+ */
+function generateSemanticSearchClause(
+  queryEmbedding: Float32Array[],
+  k: number = 3
+) {
+  return `embedding <|${k}|> [${queryEmbedding}]`;
+}
+
+function generateWhereClause(
+  resource: Resource,
+  params?: IResourceSelectParams
+): string {
+  const conditions: string[] = [];
+
+  const whereClause = params?.whereClause;
+  if (whereClause && typeof whereClause === "string") {
+    conditions.push(whereClause);
+  } else if (whereClause && typeof whereClause === "object") {
+    conditions.push(whereClause.join(" AND "));
+  }
+
+  if (params?.searchType === SearchType.SEMANTIC && params?.search) {
+    conditions.push(
+      generateSemanticSearchClause(
+        params.search.queryEmbedding,
+        params.semanticSearchTopK
+      )
+    );
+  } else if (params?.search) {
+    conditions.push(generateSearchClause(params.search));
+  }
+
+  for (const [key, value] of Object.entries(params?.filters ?? {})) {
+    if (Array.isArray(value)) {
+      conditions.push(`${key} IN [${value.map(formatValue).join(", ")}]`);
+    } else if (typeof value === "object") {
+      if ("greaterThan" in value) {
+        conditions.push(`${key} > ${formatValue(value.greaterThan)}`);
+      }
+      if ("lessThan" in value) {
+        conditions.push(`${key} < ${formatValue(value.lessThan)}`);
+      }
+      if ("greaterThanOrEqual" in value) {
+        conditions.push(`${key} >= ${formatValue(value.greaterThanOrEqual)}`);
+      }
+      if ("lessThanOrEqual" in value) {
+        conditions.push(`${key} <= ${formatValue(value.lessThanOrEqual)}`);
+      }
+      if ("notIn" in value) {
+        conditions.push(
+          `${key} NOT IN [${value.notIn.map(formatValue).join(", ")}]`
+        );
+      }
+    } else if (typeof value === "boolean") {
+      if (value === true) {
+        conditions.push(`${key} IS true`);
+      } else if (value === false) {
+        conditions.push(
+          `(${key} IS NULL OR ${key} IS false OR ${key} IS NONE OR ${key} IS 0)`
+        );
+      }
+    } else if (value !== undefined) {
+      conditions.push(`${key} = ${formatValue(value)}`);
+    }
+  }
+
+  // return conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+  const clause =
+    conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+  return commonQueryReplacements(clause, resource);
+
+  function formatValue(value: IPrimitiveDbDataType): string {
+    if (typeof value === "string") {
+      return `'${value.replace(/'/g, "''")}'`; // Escape single quotes
+    }
+    if (typeof value === "boolean") {
+      return value ? "true" : "false"; // Use 'true' and 'false' for boolean literals
+    }
+    return String(value);
   }
 }
