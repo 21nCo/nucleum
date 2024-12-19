@@ -31,7 +31,10 @@
   } from "../collection/collection.type";
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { isValidString } from "$lib/shared/utils/text.utils";
-  import { isEmptyMd } from "$lib/client/components/markdown/markdown.utils";
+  import {
+    isEmptyMd,
+    textToMdBlocks
+  } from "$lib/client/components/markdown/markdown.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
   import view from "$lib/client/stores/view.store";
   import context from "$lib/client/stores/context.store";
@@ -124,13 +127,7 @@
         (!$captureStore.clipboard.contentType ||
           $captureStore.clipboard.contentType === NodeType.SIMPLE_TEXT)
       ) {
-        newBlock = [
-          {
-            id: generateResourceId(Resource.node),
-            contentType: NodeType.SIMPLE_TEXT,
-            body: $captureStore.clipboard.text
-          }
-        ];
+        newBlock = textToMdBlocks($captureStore.clipboard.text);
       } else if ($captureStore.clipboard.file) {
         const result = await captureStore.saveFile(
           $captureStore.clipboard.file,

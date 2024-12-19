@@ -4,7 +4,9 @@ import type {
   ListBlockWithChildren,
   IMarkdown,
   IBlock,
-  IEscapeShortcut
+  IEscapeShortcut,
+  IListBlockBody,
+  IBlockBody
 } from "$lib/client/components/markdown/md.type";
 import {
   type ListChild,
@@ -12,9 +14,13 @@ import {
   type INode,
   type IActiveNode,
   type SimpleTextNodeType,
-  NodeType
+  NodeType,
+  simpleTextNodeTypeList,
+  headingNodeTypes
 } from "$lib/client/products/memotron/node/node.type";
 import { deepCopy } from "$lib/shared/utils/obj.utils";
+import { generateResourceId } from "../flux/flux.utils";
+import { Resource } from "../flux/resourceStores/resource.enum";
 
 /**
  * Recursively extracts all children of a node and its children. Useful for converting a nested structure of node into a flat array.
@@ -705,5 +711,90 @@ export function performEscShortcuts(
     const spaceCount = leadingWhitespace.replace(/\t/g, "").length;
     const spaceIndents = Math.floor(spaceCount / 4);
     return tabCount + spaceIndents;
+  }
+}
+
+export function textToMdBlocks(
+  text: string,
+  nodeContentType?: NodeType
+): IBlock[] {
+  const spans = text.split("\n");
+
+  const blocks: IBlock[] = spans.map((x) => {
+    const escResult = performEscShortcuts(
+      nodeContentType ?? NodeType.NODULAR_MARKDOWN,
+      x
+    );
+    const id = generateResourceId(Resource.node);
+    if (!escResult) {
+      return {
+        id,
+        contentType: NodeType.SIMPLE_TEXT,
+        body: x
+      };
+    }
+    const { shortcut, type, isFullReplace, indentLevel } = escResult;
+    if (isFullReplace) {
+      return {
+        id,
+        contentType: type
+      };
+    }
+    x = x.replace(shortcut, "");
+    if (headingNodeTypes.includes(type)) {
+      return {
+        id,
+        contentType: type,
+        label: x
+      };
+    } else if (simpleTextNodeTypeList.includes(type)) {
+      return {
+        id,
+        contentType: type,
+        body: x
+      };
+    }
+    if (indentLevel) {
+      return {
+        id,
+        contentType: type,
+        body: {
+          ...(resolveDefaultBodyForBlock(
+            type,
+            x.trimStart()
+          ) as IListBlockBody),
+          indent: indentLevel
+        }
+      };
+    }
+    return {
+      id,
+      contentType: type,
+      body: resolveDefaultBodyForBlock(type, x)
+    };
+  });
+
+  return blocks;
+}
+
+/**
+ * Resolves default body for non simple node types
+ * @param text
+ * @param toType
+ */
+export function resolveDefaultBodyForBlock(
+  toType: NodeType,
+  text: string
+): IBlockBody {
+  switch (toType) {
+    case NodeType.LIST:
+    case NodeType.ORDERED_LIST:
+    case NodeType.CHECKLIST:
+      return { indent: 0, text, order: 1 };
+    case NodeType.CODE:
+    case NodeType.CALLOUT:
+      return { text };
+    default:
+      return { text };
   }
 }

@@ -34,10 +34,11 @@
   import type { IRecordId } from "$lib/client/types/data.type";
   import { isSameResource } from "../flux/resourceStores/resource.utils";
   import {
-    performEscShortcuts,
+    resolveDefaultBodyForBlock,
     resolvePlainOffsetForMdEnd,
     resolvePlainText,
-    splitMarkdownAtPlainOffset
+    splitMarkdownAtPlainOffset,
+    textToMdBlocks
   } from "./markdown.utils";
   import { captureStore } from "$lib/client/products/memotron/capture/capture.store";
   import { isValidString } from "$lib/shared/utils/text.utils";
@@ -234,7 +235,7 @@
       data.body = text;
     } else if (nonSimpleTextNodeTypeList.includes(data.toType)) {
       const text: string = resolveBodyText() ?? "";
-      const body = resolveDefaultBody(data.toType, text);
+      const body = resolveDefaultBodyForBlock(data.toType, text);
       data.body = body;
     } else if (headingNodeTypes.includes(data.toType)) {
       const text: string = resolveBodyText() ?? "";
@@ -290,7 +291,7 @@
         data.blockType = NodeType.EMBED;
         data.body = { subType };
       } else if (nonSimpleTextNodeTypeList.includes(data.blockType)) {
-        data.body = resolveDefaultBody(data.blockType, "");
+        data.body = resolveDefaultBodyForBlock(data.blockType, "");
       } else if (simpleTextNodeTypeList.includes(data.blockType)) {
         data.body = "";
       } else if (headingNodeTypes.includes(data.blockType)) {
@@ -453,25 +454,6 @@
         order: currentBody.order
       }
     });
-  }
-
-  /**
-   * Resolves default body for non simple node types
-   * @param text
-   * @param toType
-   */
-  function resolveDefaultBody(toType: NodeType, text: string): IBlockBody {
-    switch (toType) {
-      case NodeType.LIST:
-      case NodeType.ORDERED_LIST:
-      case NodeType.CHECKLIST:
-        return { indent: 0, text, order: 1 };
-      case NodeType.CODE:
-      case NodeType.CALLOUT:
-        return { text };
-      default:
-        return { text };
-    }
   }
 
   function editBlockText(
@@ -669,57 +651,7 @@
         mdStore.focusBlock(block.id, { isBottom: true });
         return;
       }
-
-      const nodeContentType =
-        nodeContext?.contentType ?? NodeType.NODULAR_MARKDOWN;
-
-      const blocks: IBlock[] = spans.map((x) => {
-        const escResult = performEscShortcuts(nodeContentType, x);
-        const id = generateResourceId(Resource.node);
-        if (!escResult) {
-          return {
-            id,
-            contentType: NodeType.SIMPLE_TEXT,
-            body: x
-          };
-        }
-        const { shortcut, type, isFullReplace, indentLevel } = escResult;
-        if (isFullReplace) {
-          return {
-            id,
-            contentType: type
-          };
-        }
-        x = x.replace(shortcut, "");
-        if (headingNodeTypes.includes(type)) {
-          return {
-            id,
-            contentType: type,
-            label: x
-          };
-        } else if (simpleTextNodeTypeList.includes(type)) {
-          return {
-            id,
-            contentType: type,
-            body: x
-          };
-        }
-        if (indentLevel) {
-          return {
-            id,
-            contentType: type,
-            body: {
-              ...(resolveDefaultBody(type, x.trimStart()) as IListBlockBody),
-              indent: indentLevel
-            }
-          };
-        }
-        return {
-          id,
-          contentType: type,
-          body: resolveDefaultBody(type, x)
-        };
-      });
+      const blocks = textToMdBlocks(text, nodeContext?.contentType);
       mdStore.insertMany(block.id, blocks);
       propagateAsAction(BlockAction.INSERT_MANY, { blocks });
     }
