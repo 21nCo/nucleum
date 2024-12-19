@@ -413,6 +413,30 @@ export class AccountLambdaFunctions extends cdk.NestedStack {
       defaults.mockIntegrationOptions
     );
 
+    const syncV3Endpoint = props.api.root.addResource("syncV3");
+    const syncV3Resource = syncV3Endpoint.addResource("{method}");
+    const syncV3FunctionNode = new lambda.Function(this, "SyncV3FunctionNode", {
+      handler: "syncV3.handler",
+      functionName: generateFunctionName(
+        "syncV3FunctionNode",
+        props.environment
+      ),
+      ...nodeRuntimeFunctionProps
+    });
+    syncV3Resource.addMethod(
+      "POST",
+      new gateway.LambdaIntegration(syncV3FunctionNode)
+    );
+    syncV3Resource.addMethod(
+      "GET",
+      new gateway.LambdaIntegration(syncV3FunctionNode)
+    );
+    syncV3Resource.addMethod(
+      "OPTIONS",
+      new gateway.MockIntegration(defaults.mockIntegration),
+      defaults.mockIntegrationOptions
+    );
+
     const relayResource = props.api.root.addResource("relay");
     const relayFunctionNode = new lambda.Function(this, "RelayFunctionNode", {
       handler: "relay.handler",

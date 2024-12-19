@@ -11,6 +11,17 @@ export function resolveSyncDownQuery(
   return `BEGIN TRANSACTION; let $count = array::first(SELECT count() FROM mutation WHERE timestamp > ${lastSyncDown} AND dapId IS NOT '${dapId}' AND resource IN [${resourceList}] group all); RETURN IF $count.count < ${syncDownLimit} THEN SELECT * FROM mutation WHERE timestamp > ${lastSyncDown} AND dapId IS NOT '${dapId}' AND resource IN [${resourceList}] ORDER BY timestamp ASC ELSE $count.count END; COMMIT TRANSACTION;`;
 }
 
+export function resolveSyncDownQueryForV3(
+  lastSyncDown: number,
+  resources: Resource[],
+  dapId: string,
+  limit?: number
+) {
+  const syncDownLimit = limit || 100;
+  const resourceList = resources.map((x) => `'${x}'`).join(",");
+  return `BEGIN TRANSACTION; let $mutations = SELECT resourceId, timestamp FROM mutation WHERE timestamp > ${lastSyncDown} AND dapId IS NOT '${dapId}' AND resource IN [${resourceList}] ORDER BY timestamp DESC; let $latestTimestamp = return array::first($mutations); let $records = select * from array::distinct(array::flatten(select value rec from (select if type::is::array(resourceId) then resourceId.map(|$v| type::record($v)); else [type::record(resourceId)] end as rec from $mutations))); return {latestTimestamp: $latestTimestamp, records: $records }; COMMIT TRANSACTION;`;
+}
+
 export function resolveCountQuery(resources: Resource[]) {
   let query = "";
   for (const resource of resources) {
