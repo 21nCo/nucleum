@@ -11,6 +11,7 @@
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   export let node: INode;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
+  let previousLabel = node.label;
   const dispatch = createEventDispatcher();
   function onLabelChange(e: any) {
     dispatch("labelChange", e.detail);
@@ -38,11 +39,13 @@
         placeholder="Node title"
         width="w-full"
         on:input={onLabelChange}
-      />
-      <Button
-        icon="ph:check-circle"
-        size={Size.sm}
-        on:click={() => {
+        isShowSaveControl={true}
+        on:save={() => {
+          dispatch("editModeChange", false);
+        }}
+        on:cancel={() => {
+          node.label = previousLabel;
+          dispatch("labelChange", node.label);
           dispatch("editModeChange", false);
         }}
       />
@@ -53,6 +56,10 @@
           item={node}
           isNodePageContext={true}
           {accessPoint}
+          on:click={() => {
+            previousLabel = node.label;
+            dispatch("editModeChange", true);
+          }}
         />
       </span>
     {/if}

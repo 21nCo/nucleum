@@ -72,7 +72,7 @@
     },
     {
       id: NodeType.CHECKLIST,
-      key: "+"
+      key: "+ or [ ]"
     },
     {
       id: NodeType.DIVIDER,

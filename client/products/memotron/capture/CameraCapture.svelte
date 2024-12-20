@@ -16,16 +16,20 @@
   let isSaving = false;
   const dispatch = createEventDispatcher();
   let error: string | null = null;
+  let stream: MediaStream | null = null;
 
   onMount(() => {
     containerHeight = window.innerHeight;
     containerWidth = window.innerWidth;
     startCamera();
+    return () => {
+      stopCamera();
+    };
   });
 
   async function startCamera() {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
+      stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: "environment"
         }
@@ -38,6 +42,17 @@
     } catch (e) {
       console.error("Error accessing the camera: ", e);
       error = "No Camera found.";
+    }
+  }
+  function stopCamera() {
+    if (stream) {
+      stream.getTracks().forEach((track) => {
+        track.stop();
+      });
+      if (videoElement) {
+        videoElement.srcObject = null;
+      }
+      stream = null;
     }
   }
 

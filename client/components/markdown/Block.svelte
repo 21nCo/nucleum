@@ -51,6 +51,11 @@
   import { resolveMultipleFilesData } from "$lib/client/products/memotron/capture/capture.utils";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { Size } from "$lib/client/types/size.enum";
+  import { isValidUrl } from "$lib/shared/utils/utils";
+  import account from "$lib/client/stores/account.store";
+  import { UserDataMode } from "$lib/client/types/account.type";
+  import { Persistence } from "$lib/client/persistence/persistence";
+  import { wait } from "$lib/client/utils/time.utils";
 
   export let block: IBlock;
   export let mdStore: MdStoreType;
@@ -235,7 +240,20 @@
       data.body = text;
     } else if (nonSimpleTextNodeTypeList.includes(data.toType)) {
       const text: string = resolveBodyText() ?? "";
-      const body = resolveDefaultBodyForBlock(data.toType, text);
+      let body = resolveDefaultBodyForBlock(data.toType, text);
+      if (
+        data.params?.indentLevel ||
+        data.params?.listOrder ||
+        data.params?.isChecked
+      ) {
+        body = body as IListBlockBody;
+        body = {
+          ...body,
+          indent: data.params?.indentLevel ?? 0,
+          order: data.params?.listOrder ?? 0,
+          checked: data.params?.isChecked ?? false
+        };
+      }
       data.body = body;
     } else if (headingNodeTypes.includes(data.toType)) {
       const text: string = resolveBodyText() ?? "";
@@ -642,9 +660,34 @@
       const spans = text.split("\n");
 
       if (spans.length === 1) {
-        const modifiedBlockText = editBlockText(block, text, {
-          isAppend: true
-        });
+        const isUrl = text.startsWith("http") && isValidUrl(text);
+        let modifiedBlockText;
+        if (isUrl) {
+          progressState = "Inserting inline link";
+          let label = text.split("://").pop()?.split("/")[0];
+          if ($account?.dataMode === UserDataMode.CLOUD) {
+            try {
+              const data = await new Persistence().retrieveUrlData(text);
+              if (data?.parsedData) {
+                label = isValidString(data.parsedData.label)
+                  ? data.parsedData.label
+                  : isValidString(data.parsedData.metadata?.ogTitle)
+                    ? data.parsedData.metadata.ogTitle
+                    : label;
+              }
+            } catch (e) {
+              console.error(e);
+            }
+          }
+          const urlText = `[${label}](${text})`;
+          modifiedBlockText = editBlockText(block, urlText, {
+            isAppend: true
+          });
+        } else {
+          modifiedBlockText = editBlockText(block, text, {
+            isAppend: true
+          });
+        }
         block.body = modifiedBlockText;
         propagate(BlockAction.CHANGE, { body: modifiedBlockText });
         contentRefreshId = new Date().getTime();
@@ -746,6 +789,17 @@
     errors: { file: File; type: string }[]
   ) {
     try {
+      if (block.contentType === NodeType.EMBED && !block.body.id) {
+        return;
+      }
+      const hasInvalidFiles = all.some(
+        (file) => !isValidString(file.type) || file.size === 0
+      );
+      if (hasInvalidFiles) {
+        toasts.error("Invalid files detected");
+        return;
+      }
+
       if (errors && errors.length > 0) {
         let error = resolveFileUploadErrorMessage(errors, {
           maxFileSizeMB: MAX_FILE_SIZE_MB
@@ -783,6 +837,10 @@
     }
   }
 
+  /**
+   * Added wait so that progress element is present in DOM before the progress is being updated in captureStore.saveMultipleFiles
+   * @param files
+   */
   async function insertMultipleFiles(files: File[]) {
     logger.log({ at: "insertMultipleFiles", files });
     if (!files || files.length === 0) return;
@@ -792,11 +850,13 @@
       toasts.error(error);
       return;
     }
+    await wait(10);
     const result = await captureStore.saveMultipleFiles(
       multipleFilesData.files,
       {
         isEmbedContext: true,
-        creationContext: nodeContext?.id
+        creationContext: nodeContext?.id,
+        uploadProgressId: "node-embed-upload-progress"
       }
     );
     if (!result) {
@@ -845,7 +905,9 @@
     "relative flex w-full min-h-fit h-11 items-center gap-2 rounded-md border border-transparent",
     {
       "grid grid-cols-[2.5rem_1fr_2.5rem]": isLeftControlsEnabled,
-      dragging: isDragging
+      dragging: isDragging,
+      "prevent-reorder-feedback-for-files":
+        block.contentType === NodeType.EMBED && !block.body.id
     },
     $mdStore.params?.isNodular &&
       !$mdStore.params?.isReadOnly && {
@@ -911,6 +973,7 @@
       >
         <Icon icon="svg-spinners:3-dots-fade" />
         <span class="text-fgs3 text-b2">{progressState}</span>
+        <span id="node-embed-upload-progress" class="text-fgs3 text-b3"></span>
       </div>
     {/if}
   </div>
@@ -918,8 +981,8 @@
     <div class="flex items-center justify-center">
       {#if isHovering && !isFocusing && !isSoleBlock && [...simpleTextNodeTypeList, ...headingNodeTypes, ...listNodeTypes, NodeType.DIVIDER, NodeType.DOUBLE_DIVIDER].includes(block.contentType)}
         <Button
-          icon="ph:trash"
-          size={Size.sm}
+          icon="ph:trash-thin"
+          size={Size.md}
           tooltip="Delete block"
           on:click={deleteBlock}
         />

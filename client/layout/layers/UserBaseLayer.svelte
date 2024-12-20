@@ -85,7 +85,7 @@
     $appLoadingState.isBaseLoaded = true;
     if (userDataState?.paginateResources) {
       await flux.paginateResources(userDataState.paginateResources, 100);
-    } else if (userDataState?.counts) {
+    } else if (userDataState?.counts && !import.meta.env?.DEV) {
       await flux.reconcile({ counts: userDataState.counts });
     }
     initializeTaco();

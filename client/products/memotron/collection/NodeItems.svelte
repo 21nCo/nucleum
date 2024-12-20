@@ -68,9 +68,12 @@
 
   function resizeMasonryItem(item: HTMLElement) {
     if (!gridRef) return;
-
+    const itemContentType = item.getAttribute("data-type") as NodeType;
     const contentHeight =
-      item.querySelector(".item-content")?.getBoundingClientRect().height ?? 0;
+      itemContentType === NodeType.AUDIO
+        ? 180
+        : (item.querySelector(".item-content")?.getBoundingClientRect()
+            .height ?? 0);
     const rowSpan = Math.ceil((contentHeight + gap) / (rowHeight + gap));
     item.style.gridRowEnd = `span ${rowSpan}`;
     // item.style.height = `calc(${rowSpan} * (${rowHeight}px + ${gap}px) - ${gap}px)`;
@@ -82,8 +85,9 @@
         NodeType.WEB_PAGE,
         NodeType.KINDLE_BOOK,
         NodeType.YOUTUBE_VIDEO,
-        NodeType.TWITTER_PROFILE
-      ].includes(item.getAttribute("data-type") as NodeType)
+        NodeType.TWITTER_PROFILE,
+        NodeType.AUDIO
+      ].includes(itemContentType)
     ) {
       const child = item.querySelector(".item-content");
       if (child && child instanceof HTMLElement) {

@@ -87,6 +87,7 @@
         {isInEditMode}
         {editModeOptions}
         {size}
+        {style}
         {isActive}
         {isDisabled}
         {isShowNumberShortcut}
@@ -128,6 +129,7 @@
       {isInEditMode}
       {editModeOptions}
       {size}
+      {style}
       {isActive}
       {isDisabled}
       {isShowNumberShortcut}
@@ -182,6 +184,7 @@
         {isInEditMode}
         {editModeOptions}
         {size}
+        {style}
         {isActive}
         {isDisabled}
         {isShowNumberShortcut}

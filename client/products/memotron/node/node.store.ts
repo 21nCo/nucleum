@@ -697,7 +697,7 @@ export function resolveNodeContextMenu(
   const nodeActions = new NodeActions(node, nodeStore, accessPoint);
   const ctx = get(context);
   let commonGroups: { group: string; items: IContextMenuItem[] }[] = [];
-  if (ctx.isEmbed) {
+  if (ctx.isEmbed && ctx.embed === Embed.HANDSET) {
     commonGroups = [
       {
         group: "more",

@@ -24,7 +24,11 @@
   import { logger } from "../../debug/logger.client";
   import { SearchStore } from "$lib/client/products/memotron/memotron.store";
   import type { IRecordId } from "$lib/client/types/data.type";
-  import { performEscShortcuts, renderMdAsHtml } from "../markdown.utils";
+  import {
+    inlineLinkPatterns,
+    performEscShortcuts,
+    renderMdAsHtml
+  } from "../markdown.utils";
 
   const nodeContentContext = getContext<any>("content");
   const blockContext = getContext<any>("block");
@@ -124,6 +128,18 @@
         sizing = "font-medium";
         blockSpecificPlaceholder = "Quote";
         break;
+      case NodeType.LIST:
+        sizing = "text-base";
+        blockSpecificPlaceholder = "List item";
+        break;
+      case NodeType.ORDERED_LIST:
+        sizing = "text-base";
+        blockSpecificPlaceholder = "List item";
+        break;
+      case NodeType.CHECKLIST:
+        sizing = "text-base";
+        blockSpecificPlaceholder = "Check item";
+        break;
       default:
         sizing = "text-base";
         blockSpecificPlaceholder = undefined;
@@ -160,7 +176,9 @@
   function convert(
     toType: SimpleTextNodeType | ListNodeType,
     params?: {
-      listType?: ListType;
+      indentLevel?: number;
+      listOrder?: number;
+      isChecked?: boolean;
     }
   ) {
     if (contentType === toType) return;
@@ -237,19 +255,22 @@
     type: "keyup" | "keydown" = "keydown"
   ) {
     if (!$mdStore.params?.canUseSlashShortcut) return false;
-    if (type === "keydown" && (event.key === "@" || event.key === "[")) {
+    if (
+      type === "keydown" &&
+      (event.key === "@" || (event.key === "[" && text.endsWith("[")))
+    ) {
       logger.log({
         at: "handleMentionShortcut - triggered",
         key: event.key
       });
-      mentionTriggerKey = event.key;
+      mentionTriggerKey = event.key === "[" ? "[[" : event.key;
       showPopover("mentionSearch");
       return true;
     } else if (!isRenderMentionSearch) {
       return false;
     } else if (
       type === "keyup" &&
-      (event.key === "Escape" || (!text.includes("@") && !text.includes("[")))
+      (event.key === "Escape" || (!text.includes("@") && !text.includes("[[")))
     ) {
       hidePopover("mentionSearch");
     } else if (type === "keyup") {
@@ -418,7 +439,8 @@
 
     const result = performEscShortcuts(nodeContentType, text);
     if (!result) return false;
-    const { shortcut, type, isFullReplace } = result;
+    const { shortcut, type, isFullReplace, indentLevel, listOrder, isChecked } =
+      result;
     if (isFullReplace) {
       text = "";
       dispatchChangeEvent();
@@ -429,7 +451,11 @@
     text = text.replace(shortcut, "");
     dispatchChangeEvent();
     textRef.replace(shortcut, "");
-    convert(type as SimpleTextNodeType | ListNodeType);
+    convert(type as SimpleTextNodeType | ListNodeType, {
+      indentLevel,
+      listOrder,
+      isChecked
+    });
     return true;
   }
 
@@ -448,11 +474,13 @@
   }
   function dispatchChangeEvent() {
     const { added, removed } = diffStrings(previousVal, text);
-    const mentionPattern = /\[.*?\]\(resource=(.*?)\)/g;
+    const mentionPattern = inlineLinkPatterns.find(
+      (pattern) => pattern.type === InlineType.MENTION
+    )?.regex;
     let match;
-    while ((match = mentionPattern.exec(removed)) !== null) {
-      const id = match[1];
-      propagateToNodeContent("unmention", { location: id, id });
+    while ((match = mentionPattern?.exec(removed)) !== null) {
+      const mentionId = match?.[2];
+      propagateToNodeContent("unmention", { location: id, id: mentionId });
     }
     if (previousVal === text) return;
     dispatch("update", text);

@@ -100,7 +100,7 @@
       {isHovering}
       bind:text={body.text}
       on:update={handleUpdate}
-      contentType={NodeType.LIST}
+      {contentType}
       {id}
     />
   </div>

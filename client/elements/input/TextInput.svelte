@@ -249,15 +249,17 @@
           {#if isShowSaveControl}
             <Button
               icon="ph:check"
+              id="input-save-control"
               size={Size.sm}
-              on:click={() => dispatch("save", { value })}
+              on:click={(e) => dispatch("save", { event: e, value })}
             />
           {/if}
           {#if isShowSaveControl || isShowClearControl}
             <Button
               icon="ph:x"
+              id="input-cancel-control"
               size={Size.sm}
-              on:click={() => dispatch("cancel")}
+              on:click={(e) => dispatch("cancel", { event: e })}
             />
           {/if}
         </div>

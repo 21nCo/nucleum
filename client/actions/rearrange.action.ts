@@ -222,7 +222,12 @@ export const reorderList: Action<HTMLElement, DragDropOptions> = (
   function handleDragOver(e: DragEvent) {
     e.preventDefault();
     const target = findDraggableParent(e.target as HTMLElement);
-    if (target) {
+    if (
+      target &&
+      (!target.classList.contains("prevent-reorder-feedback-for-files") ||
+        (target.classList.contains("prevent-reorder-feedback-for-files") &&
+          !e.dataTransfer?.types?.includes("Files")))
+    ) {
       target.classList.add(...draggedOverClasses);
     }
   }

@@ -370,7 +370,10 @@
       resource === Resource.node &&
       mutation.action === PersistenceActionType.INSERT &&
       mutation.records.length === 1 &&
-      !rootNodeTypeList.includes(mutation.records[0].contentType as NodeType)
+      (!rootNodeTypeList.includes(
+        mutation.records[0].contentType as NodeType
+      ) ||
+        mutation.records[0].creationContext)
     ) {
       return;
     }

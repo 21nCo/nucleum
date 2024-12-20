@@ -320,9 +320,9 @@
         })}
       />
     {:else if item.contentType === NodeType.AUDIO && _url}
-      <span class="w-full h-full overflow-clip relative z-0">
+      <div class="overflow-clip text-wrap h-32 w-full flex">
         <NodeThumbnailAudioPreview url={_url} />
-      </span>
+      </div>
     {:else if item.contentType === NodeType.PDF && _url}
       <span class="w-full h-80 overflow-clip relative z-0">
         <NodeThumbnailPdfPreview url={_url} />

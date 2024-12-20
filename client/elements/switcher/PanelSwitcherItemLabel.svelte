@@ -1,5 +1,8 @@
 <script lang="ts">
-  import type { PanelSwitcherEditModeOptions } from "$lib/client/types/switcher.enum";
+  import {
+    PanelSwitcherStyle,
+    type PanelSwitcherEditModeOptions
+  } from "$lib/client/types/switcher.enum";
   import { createEventDispatcher } from "svelte";
   import Icon from "../Icon.svelte";
   import Button from "../button/Button.svelte";
@@ -8,13 +11,15 @@
   import Popover from "../popover/Popover.svelte";
   import TextInput from "../input/TextInput.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
-  import TextWithHoverTooltip from "../text/TextWithHoverTooltip.svelte";
   import AddNewButton from "../button/AddNewButton.svelte";
+  import { tooltip } from "$lib/client/actions/popover.action";
+  import { isValidString } from "$lib/shared/utils/text.utils";
   const dispatch = createEventDispatcher();
   export let item: ISelectItem;
   export let isInEditMode: boolean = false;
   export let isDisabled: boolean = false;
   export let size = Size.md;
+  export let style: PanelSwitcherStyle = PanelSwitcherStyle.BAR;
   export let editModeOptions: PanelSwitcherEditModeOptions | undefined =
     undefined;
   export let isActive: boolean = false;
@@ -49,17 +54,26 @@
       }}
     >
       <button
-        class="min-w-fit whitespace-nowrap"
+        class="flex items-center max-w-36 whitespace-nowrap"
         on:dblclick={() => {
           labelEditPopoverRef.toggle();
         }}
       >
-        <TextWithHoverTooltip text={item.label} truncateLength={20} />
+        <div
+          class="truncate"
+          use:tooltip={{
+            text: item.label,
+            isEnableOnlyOnTruncate: true
+          }}
+        >
+          {isValidString(item.label) ? item.label : "Untitled"}
+        </div>
       </button>
       <button slot="popover" class="w-60 h-20 p-4" on:click|stopPropagation>
         <TextInput
           bind:this={inputRef}
           bind:value={item.label}
+          placeholder="Label"
           on:input={(e) => {
             dispatch("change", { ...item });
           }}
@@ -94,7 +108,26 @@
         })}
       />
     {/if}
-    <TextWithHoverTooltip text={item.label} truncateLength={20} />
+    <div
+      class={cn(
+        "flex items-center max-w-36",
+        !isActive && {
+          "hover:text-fgs2":
+            style === PanelSwitcherStyle.BAR ||
+            style === PanelSwitcherStyle.SNAKE
+        }
+      )}
+    >
+      <span
+        class="truncate"
+        use:tooltip={{
+          text: item.label,
+          isEnableOnlyOnTruncate: true
+        }}
+      >
+        {isValidString(item.label) ? item.label : "Untitled"}
+      </span>
+    </div>
     {#if isShowNumberShortcut}
       <span class="text-b4 text-fgs3 w-4 h-4 bg-bgs2 rounded-md">
         {index + 1}

@@ -626,6 +626,12 @@ function initAppStore(seed: AppStore) {
       window.history.back();
     }
   };
+
+  const goForward = () => {
+    if (window.history.length > 1) {
+      window.history.forward();
+    }
+  };
   /**
    * Handles resource click.
    *
@@ -909,7 +915,8 @@ function initAppStore(seed: AppStore) {
     determineClickAccessMode,
     isOverlay,
     closeResource,
-    goBack
+    goBack,
+    goForward
   };
 }
 

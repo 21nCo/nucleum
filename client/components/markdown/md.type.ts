@@ -237,4 +237,5 @@ export type IEscapeShortcut = {
   type: NodeType;
   indentable?: boolean;
   isRegex?: boolean;
+  isChecked?: boolean;
 };

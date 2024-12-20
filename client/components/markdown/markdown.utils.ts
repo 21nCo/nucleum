@@ -1,12 +1,13 @@
-import type {
-  IBlockInterface,
-  IMarkdownStore,
-  ListBlockWithChildren,
-  IMarkdown,
-  IBlock,
-  IEscapeShortcut,
-  IListBlockBody,
-  IBlockBody
+import {
+  type IBlockInterface,
+  type IMarkdownStore,
+  type ListBlockWithChildren,
+  type IMarkdown,
+  type IBlock,
+  type IEscapeShortcut,
+  type IListBlockBody,
+  type IBlockBody,
+  InlineType
 } from "$lib/client/components/markdown/md.type";
 import {
   type ListChild,
@@ -195,6 +196,21 @@ export const inlineStylingPatterns = [
   // }
 ];
 
+export const inlineLinkPatterns = [
+  {
+    type: InlineType.MENTION,
+    regex: /\[(.*?)\]\(resource=(.*?)\)/g,
+    replacement:
+      '<button class="mention text-aps1 underline-dotted-primary" id="$2" data-mention-id="$2">$1</button>'
+  },
+  {
+    type: InlineType.LINK,
+    regex: /\[(.*?)\]\(https?:\/\/(.*?)\)/g,
+    replacement:
+      '<button class="text-aps1 underline hover:bg-aps3 px-0.5 rounded-md" data-href="https://$2">$1</button>'
+  }
+];
+
 export const symbolPatterns = [
   { regex: /←&gt;/g, replacement: "↔" },
   { regex: /-&gt;/g, replacement: "→" },
@@ -223,10 +239,15 @@ export function renderMdAsHtml(
   parsedText = replaceSymbolPatterns(parsedText);
   parsedText = replaceInlineStylePatterns(parsedText);
   parsedText = parsedText.replace(/\n/g, "<br>");
-  parsedText = parsedText.replace(
-    /\[(.*?)\]\(resource=(.*?)\)/g,
-    '<a class="mention text-aps1 underline-dotted-primary" id="$2" href="?pop=$2">$1</a>'
-  );
+  parsedText = replaceInlineLinkPatterns(parsedText);
+  // parsedText = parsedText.replace(
+  //   /\[(.*?)\]\(resource=(.*?)\)/g,
+  //   '<a class="mention text-aps1 underline-dotted-primary" id="$2" href="?pop=$2">$1</a>'
+  // );
+  // parsedText = parsedText.replace(
+  //   /\[(.*?)\]\(https?:\/\/(.*?)\)/g,
+  //   '<a class="text-aps1 underline-dotted-primary" href="https://$2" target="_blank" rel="noopener noreferrer">$1</a>'
+  // );
   if (params?.isIncludeSpaces) parsedText = parsedText.replace(/ /g, "&nbsp;");
   return parsedText;
 }
@@ -264,6 +285,14 @@ export function findSymbolPatterns(text: string) {
 export function replaceInlineStylePatterns(text: string) {
   let html = text;
   inlineStylingPatterns.forEach((pattern) => {
+    html = html.replace(pattern.regex, pattern.replacement);
+  });
+  return html;
+}
+
+export function replaceInlineLinkPatterns(text: string) {
+  let html = text;
+  inlineLinkPatterns.forEach((pattern) => {
     html = html.replace(pattern.regex, pattern.replacement);
   });
   return html;
@@ -310,6 +339,12 @@ export const htmlToMarkdownPatterns = [
     regex:
       /<button[^>]*id=\"(.*?)\"[^>]*class=\".*?mention.*?\"[^>]*>(.*?)<\/button>/g,
     replacement: (match, id, label) => `[${label}](resource=${id})`
+  },
+  {
+    regex:
+      /<button[^>]*class="[^"]*"[^>]*data-href="https?:\/\/(.*?)"[^>]*>(.*?)<\/button>/g,
+    replacement: (match: string, url: string, label: string) =>
+      `[${label}](https://${url})`
   }
 ];
 
@@ -648,6 +683,21 @@ function getEscapeShortcuts(nodeContentType: NodeType) {
     { shortcut: "* ", type: NodeType.LIST, indentable: true },
     { shortcut: "- ", type: NodeType.LIST, indentable: true },
     { shortcut: "+ ", type: NodeType.CHECKLIST, indentable: true },
+    { shortcut: "[ ] ", type: NodeType.CHECKLIST, indentable: true },
+    { shortcut: "[] ", type: NodeType.CHECKLIST, indentable: true },
+    {
+      shortcut: "[x] ",
+      type: NodeType.CHECKLIST,
+      indentable: true,
+      isChecked: true
+    },
+    { shortcut: "- [ ]  ", type: NodeType.CHECKLIST, indentable: true },
+    {
+      shortcut: "- [x]  ",
+      type: NodeType.CHECKLIST,
+      indentable: true,
+      isChecked: true
+    },
     {
       shortcut: /^\d+\.\s.*/,
       type: NodeType.ORDERED_LIST,
@@ -672,6 +722,7 @@ export function performEscShortcuts(
   indentLevel?: number;
   isFullReplace?: boolean;
   listOrder?: number;
+  isChecked?: boolean;
 } | null {
   const {
     textEscapeShortcuts,
@@ -683,13 +734,13 @@ export function performEscShortcuts(
   let type: NodeType | undefined = undefined;
   let indentLevel: number | undefined = undefined;
   let listOrder: number | undefined = undefined;
+  let isCheckedVal: boolean | undefined = undefined;
 
   [...textEscapeShortcuts, ...listEscapeShortcuts].forEach(
-    ({ shortcut: short, type: t, indentable, isRegex }) => {
+    ({ shortcut: short, type: t, indentable, isRegex, isChecked }) => {
       indentLevel = getIndentationLevel(text);
       const trimmedText = text.trimStart();
       const _text = indentable ? trimmedText : text;
-
       if (isRegex) {
         if (trimmedText.match(short)) {
           shortcut = trimmedText.match(/^\d+\.\s/)?.[0] || "";
@@ -699,11 +750,18 @@ export function performEscShortcuts(
       } else if (typeof short === "string" && _text.startsWith(short)) {
         shortcut = short;
         type = t;
+        isCheckedVal = isChecked ?? false;
       }
     }
   );
   if (shortcut && type) {
-    return { shortcut, type, indentLevel, listOrder };
+    return {
+      shortcut,
+      type,
+      indentLevel,
+      listOrder,
+      isChecked: isCheckedVal
+    };
   }
 
   structuralEscapeShortcuts.forEach(({ shortcut: short, type: t }) => {
@@ -746,7 +804,8 @@ export function textToMdBlocks(
         body: x
       };
     }
-    const { shortcut, type, isFullReplace, indentLevel, listOrder } = escResult;
+    const { shortcut, type, isFullReplace, indentLevel, listOrder, isChecked } =
+      escResult;
     if (isFullReplace) {
       return {
         id,
@@ -767,7 +826,7 @@ export function textToMdBlocks(
         body: x
       };
     }
-    if (indentLevel || listOrder) {
+    if (indentLevel || listOrder || isChecked) {
       return {
         id,
         contentType: type,
@@ -777,7 +836,8 @@ export function textToMdBlocks(
             x.trimStart()
           ) as IListBlockBody),
           indent: indentLevel,
-          order: listOrder
+          order: listOrder,
+          checked: isChecked
         }
       };
     }
@@ -787,7 +847,6 @@ export function textToMdBlocks(
       body: resolveDefaultBodyForBlock(type, x)
     };
   });
-
   return blocks;
 }
 
