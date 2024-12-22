@@ -51,7 +51,6 @@ describe("syncDownV3", () => {
     };
 
     const result = await syncDownV3(body, global.testEnv.agent);
-
     expect(result).toBeDefined();
     expect(result).toHaveProperty("error");
   });

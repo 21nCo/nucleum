@@ -57,7 +57,6 @@ export async function syncV2(
       default:
         return { error: "Invalid sync method" };
     }
-    console.log({ at: "syncV2 - result", result, body, method });
     return result;
   } catch (e) {
     console.error({ at: "syncV2 - error", error: e });
@@ -136,6 +135,8 @@ export async function syncUp(body: ISyncUpBody, agent: Agent) {
 export async function syncDown(body: ISyncDownBody, agent: Agent) {
   try {
     const { lastSyncDown, resources, dapId } = body;
+    if (!resources || resources?.length < 1)
+      return { error: "No resources found" };
     const fetchBackQuery = resolveSyncDownQuery(lastSyncDown, resources, dapId);
     const countQuery = resolveCountQuery(resources);
     const fullQuery = `${fetchBackQuery}; ${countQuery};`;

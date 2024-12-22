@@ -140,6 +140,8 @@ export async function syncUp(body: ISyncUpBody, agent: Agent) {
 export async function syncDown(body: ISyncDownBody, agent: Agent) {
   try {
     const { lastSyncDown, resources, dapId } = body;
+    if (!resources || resources?.length < 1)
+      return { error: "No resources found" };
     const fetchBackQuery = resolveSyncDownQueryForV3(
       lastSyncDown,
       resources,
