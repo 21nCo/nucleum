@@ -5,6 +5,7 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import SelectPropertyOption from "./SelectPropertyOption.svelte";
   import {
+    iconSelectPropertyTypes,
     PropertyType,
     type IPropertyConfigOption,
     type ISelectProperty,
@@ -15,12 +16,13 @@
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import type { IRecordId } from "$lib/client/types/data.type";
   import FormElement from "$lib/client/elements/FormElement.svelte";
+  import IconSelect from "./IconSelect.svelte";
   const dispatch = createEventDispatcher();
   export let property: ISelectProperty | IUniversalProperty;
   export let options: IPropertyConfigOption[];
   export let style: InputStyle = InputStyle.FILLED;
   export let label: InputLabel | undefined = undefined;
-  export let value: string | string[];
+  export let value: string | string[] | null;
   export let parentBackgroundIndex: number = 0;
   let isOptionsVisible: boolean = false;
   let classList = "relative flex flex-col items-start gap-1 w-full";
@@ -29,6 +31,11 @@
     property.type === PropertyType.MULTI_SELECT ||
     (property.type === PropertyType.UNIVERSAL &&
       property.config?.isMultiSelect);
+
+  $: isIconSelectType =
+    property.type === PropertyType.UNIVERSAL &&
+    property.config?.type &&
+    iconSelectPropertyTypes.includes(property.config.type);
 
   function onSelect(val: string | string[]) {
     value = val;
@@ -49,7 +56,7 @@
     ref?.dispatchEvent(new CustomEvent("hide"));
   }
 
-  function shouldShowPlaceholder(val: string | string[]) {
+  function shouldShowPlaceholder(val: string | string[] | null) {
     return (
       isEmptyValue() ||
       isEmptyMultiSelect() ||
@@ -81,74 +88,83 @@
 </script>
 
 <div class={classList}>
-  <FormElement class="w-full" {style} {label} isFocused={isOptionsVisible}>
-    <div
-      class="flex justify-between gap-4 w-full p-2"
-      bind:this={ref}
-      use:popover={{
-        content: SelectPropertyOptionsPopover,
-        id: "select-options-popover",
-        isSpanToTriggerWidth: true,
-        componentProps: {
-          property: {
-            id: property.id,
-            type: property.type,
-            config:
-              property.type === PropertyType.UNIVERSAL
-                ? {
-                    options
-                  }
-                : property.config,
-            default: property.default
-          },
-          isMultiSelect,
-          value,
-          onNewOption,
-          onConfigChange,
-          onSelect
-        }
-      }}
-      on:change={(e) => {
-        isOptionsVisible = e.detail?.open;
-      }}
-    >
-      {#if shouldShowPlaceholder(value)}
-        <span class="placeholder">
-          Select {property?.label?.toLowerCase()}
-        </span>
-      {:else if isMultiSelect && isValidArrayWithData(value)}
-        <div class="flex gap-2 flex-wrap w-full">
-          {#each value as option}
-            {@const item = options?.find((x) => x.id === option)}
-            {#if item}
-              <SelectPropertyOption
-                item={property.type === PropertyType.UNIVERSAL
+  <FormElement
+    class="w-full"
+    style={isIconSelectType ? InputStyle.PLAIN : style}
+    {label}
+    isFocused={isOptionsVisible}
+  >
+    {#if isIconSelectType}
+      <IconSelect {options} {value} {onSelect} {isMultiSelect} />
+    {:else}
+      <div
+        class="flex justify-between gap-4 w-full p-2"
+        bind:this={ref}
+        use:popover={{
+          content: SelectPropertyOptionsPopover,
+          id: "select-options-popover",
+          isSpanToTriggerWidth: true,
+          componentProps: {
+            property: {
+              id: property.id,
+              type: property.type,
+              config:
+                property.type === PropertyType.UNIVERSAL
                   ? {
-                      ...item,
-                      color: 50
+                      options
                     }
-                  : item}
-                isSelectedContext={true}
-                isPlain={true}
-              />
-            {/if}
-          {/each}
-        </div>
-      {:else if typeof value === "string"}
-        {@const item = options?.find((x) => x.id === value)}
-        {#if item}
-          <SelectPropertyOption
-            item={property.type === PropertyType.UNIVERSAL
-              ? {
-                  ...item,
-                  color: 50
-                }
-              : item}
-            isSelectedContext={true}
-          />
+                  : property.config,
+              default: property.default
+            },
+            isMultiSelect,
+            value,
+            onNewOption,
+            onConfigChange,
+            onSelect
+          }
+        }}
+        on:change={(e) => {
+          isOptionsVisible = e.detail?.open;
+        }}
+      >
+        {#if shouldShowPlaceholder(value)}
+          <span class="placeholder">
+            Select {property?.label?.toLowerCase()}
+          </span>
+        {:else if value && isMultiSelect && isValidArrayWithData(value)}
+          <div class="flex gap-2 flex-wrap w-full">
+            {#each value as option}
+              {@const item = options?.find((x) => x.id === option)}
+              {#if item}
+                <SelectPropertyOption
+                  item={property.type === PropertyType.UNIVERSAL
+                    ? {
+                        ...item,
+                        color: 50
+                      }
+                    : item}
+                  isSelectedContext={true}
+                  isPlain={true}
+                />
+              {/if}
+            {/each}
+          </div>
+        {:else if typeof value === "string"}
+          {@const item = options?.find((x) => x.id === value)}
+          {#if item}
+            <SelectPropertyOption
+              item={property.type === PropertyType.UNIVERSAL
+                ? {
+                    ...item,
+                    color: 50
+                  }
+                : item}
+              isSelectedContext={true}
+            />
+          {/if}
         {/if}
-      {/if}
-      <Icon icon={isOptionsVisible ? "chevup" : "chevdown"} size={Size.sm} />
-    </div>
+        <Icon icon={isOptionsVisible ? "chevup" : "chevdown"} size={Size.sm} />
+      </div>
+    {/if}
   </FormElement>
 </div>

@@ -18,7 +18,10 @@
   import ShortcutRunner from "../../components/shortcuts/ShortcutRunner.svelte";
   import Intercom from "./Intercom.svelte";
   import CacheLayer from "./CacheLayer.svelte";
-  import { localCacheableStores } from "$local/localStoresMap";
+  import {
+    localCacheableStores,
+    remoteOnlyStores
+  } from "$local/localStoresMap";
   import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
   import { appMenuStore } from "../../stores/appMenu/appMenu.store";
   import { AlertType } from "$lib/client/types/notification.type";
@@ -73,15 +76,17 @@
     addWindowEventListeners();
     console.time("init");
     const initState = await initializeDatabase();
-    let paginateResult;
+    let userDataState;
     if (initState !== undefined)
-      paginateResult = await initializeEssentialUserData(initState);
+      userDataState = await initializeEssentialUserData(initState);
     await initializeUserConfig();
     dispatch("ready");
     console.timeEnd("init");
     $appLoadingState.isBaseLoaded = true;
-    if (paginateResult?.paginateResources) {
-      await flux.paginateResources(paginateResult.paginateResources, 100);
+    if (userDataState?.paginateResources) {
+      await flux.paginateResources(userDataState.paginateResources, 100);
+    } else if (userDataState?.counts && !import.meta.env?.DEV) {
+      await flux.reconcile({ counts: userDataState.counts });
     }
     initializeTaco();
   });
@@ -235,12 +240,19 @@
       new SurrealPersistence(),
       {
         ...params,
-        appVersion: $appStore.appData?.version
+        appVersion: $appStore.appData?.version,
+        remoteOnlyStores: [...remoteOnlyStores]
       }
     );
   }
 
-  async function initializeEssentialUserData(initState: number) {
+  async function initializeEssentialUserData(initState: number): Promise<
+    | {
+        paginateResources?: any;
+        counts?: any;
+      }
+    | undefined
+  > {
     if ($account.dataMode === UserDataMode.LOCAL) {
       return;
     }
@@ -260,8 +272,7 @@
         }
       } else {
         loadingMessage = loadingMessages.syncDown;
-        await flux.syncDown(true);
-        await flux.loadInMemoryStores();
+        return flux.initialSyncDown();
       }
     }
   }

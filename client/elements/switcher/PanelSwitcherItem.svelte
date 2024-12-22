@@ -26,7 +26,6 @@
   export let parentBgIndex: number = 1;
   export let isShowNumberShortcut: boolean = false;
   export let index: number = 0;
-
   function onClick() {
     if (item.value === "$add") {
       dispatch("add");
@@ -88,6 +87,7 @@
         {isInEditMode}
         {editModeOptions}
         {size}
+        {style}
         {isActive}
         {isDisabled}
         {isShowNumberShortcut}
@@ -129,6 +129,7 @@
       {isInEditMode}
       {editModeOptions}
       {size}
+      {style}
       {isActive}
       {isDisabled}
       {isShowNumberShortcut}
@@ -183,6 +184,7 @@
         {isInEditMode}
         {editModeOptions}
         {size}
+        {style}
         {isActive}
         {isDisabled}
         {isShowNumberShortcut}

@@ -13,6 +13,7 @@
   import { logger } from "$lib/client/components/debug/logger.client";
   import SelectPropertyOptionList from "./SelectPropertyOptionList.svelte";
   import type { IRecordId } from "$lib/client/types/data.type";
+  import { resolveSelectPropertySelection } from "../property.utils";
   export let property: {
     id: IRecordId;
     type:
@@ -40,22 +41,7 @@
 
   function onselect(e: CustomEvent<string>) {
     const val = e.detail;
-    if (isMultiSelect) {
-      if (typeof value === "string") {
-        if (value === "none" || value === val) value = [val];
-        else value = [value, val];
-      } else if (Array.isArray(value)) {
-        value = value.filter((x) => x !== "none");
-        if (value.includes(val)) {
-          value = value.filter((x) => x !== val);
-        } else {
-          value.push(val);
-        }
-      }
-      value = value;
-    } else {
-      value = val;
-    }
+    value = resolveSelectPropertySelection(value, val, { isMultiSelect });
     onSelect(value);
   }
   function onenter(e: any) {

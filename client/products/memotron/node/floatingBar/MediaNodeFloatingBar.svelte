@@ -108,7 +108,7 @@
               $node.isInEditMode = e.detail;
             }}
           />
-          {#if !isConstrainedWidth}
+          {#if !isConstrainedWidth && !$node.isInEditMode}
             <div class="text-b3 text-fgs3 whitespace-nowrap">
               {formatDatetime($userPreferences, $node.createdAt)}
             </div>

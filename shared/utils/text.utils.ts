@@ -66,7 +66,10 @@ export function isValidString(str: string | undefined | null) {
     str != "NaN" &&
     str != "false" &&
     str != "0" &&
-    str != "none";
+    str != "none" &&
+    str != "None" &&
+    str != "NONE" &&
+    str != "Access Denied";
   if (isValid) return str;
   return undefined;
 }

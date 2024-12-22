@@ -1,7 +1,7 @@
 <script lang="ts">
   import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import Rating from "$lib/client/elements/rating/Rating.svelte";
+  import Rating from "$lib/client/products/memotron/collection/properties/ratingProperty/Rating.svelte";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import view from "$lib/client/stores/view.store";
   import { Orientation } from "$lib/client/types/direction.enum";
@@ -38,7 +38,7 @@
   export let context: "default" | "propertiesPane" | "collectionView" =
     "default";
   export let isReadOnlyMode: boolean = false;
-  let _value: IPropertyValue;
+  let _value: IPropertyValue | null = null;
   $: _value = assignDefaultValue(value);
   $: options =
     property.type === PropertyType.SINGLE_SELECT ||
@@ -83,7 +83,7 @@
         typeof value !== "string") ||
       (property.type === PropertyType.NUMBER && typeof value !== "number")
     ) {
-      value = resolvePropertyDefaultValue(property.type);
+      value = resolvePropertyDefaultValue(property.type) ?? null;
     }
     return value;
   }
@@ -130,7 +130,9 @@
         })}
         on:click={() => {
           if (property.type === PropertyType.URL) {
-            const url = _value?.includes("http") ? _value : `https://${_value}`;
+            const url = _value?.toString().includes("http")
+              ? _value.toString()
+              : `https://${_value}`;
             window.open(url, "_blank");
           } else if (property.type === PropertyType.EMAIL) {
             window.open(`mailto:${_value}`, "_blank");
@@ -147,12 +149,11 @@
             )}
             isSelectedContext={true}
           />
-        {:else if property.type === PropertyType.RATING}
+        {:else if property.type === PropertyType.RATING && typeof _value === "number"}
           <Rating
             isReadOnlyMode={true}
-            size={context === "collectionView" ? Size.md : Size.lg}
-            avatar={property.config?.ratingAvatar}
-            value={_value}
+            avatar={property.config?.avatar}
+            value={_value ?? 0}
             count={5}
           />
         {:else}
@@ -182,12 +183,11 @@
   {:else if property.type === PropertyType.CHECKBOX && typeof _value === "boolean"}
     <!-- <CheckboxInput bind:checked={property.value} label={details.label} /> -->
     <SwitchInput bind:checked={_value} {label} {style} on:change />
-  {:else if property.type === PropertyType.RATING && property.config?.ratingAvatar && typeof _value === "number"}
+  {:else if property.type === PropertyType.RATING && typeof _value === "number"}
     <Rating
       {label}
       {style}
-      size={context === "collectionView" ? Size.md : Size.lg}
-      avatar={property.config.ratingAvatar}
+      avatar={property.config?.avatar}
       bind:value={_value}
       count={5}
       on:change
@@ -226,7 +226,7 @@
         on:configChange
       />
     {/if}
-  {:else if property.type === PropertyType.DATE && _value && _value instanceof Date}
+  {:else if property.type === PropertyType.DATE}
     <DatePicker bind:date={_value} {label} {style} on:change />
   {:else if nodeId}
     <MetaPropertyItem {property} {nodeId} />

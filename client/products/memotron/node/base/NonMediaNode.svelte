@@ -2,11 +2,8 @@
   import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
   import { nodeStore, type IActiveNodeStore } from "../node.store";
   import NodeRightPane from "../rightPanel/NodeRightPane.svelte";
-  import { generateUID } from "$lib/client/utils/utils";
-  import { appStore, isInEditMode } from "$lib/client/stores/app.store";
   import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
   import NodeFloatingBar from "../floatingBar/NodeFloatingBar.svelte";
-  import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
   import NodeTitleBreadcrumbs from "../title/NodeTitleBreadcrumbs.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import NodeContent from "../content/NodeContent.svelte";
@@ -16,13 +13,12 @@
   import { InputStyle } from "$lib/client/types/input.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import NodeAvatar from "../avatar/NodeAvatar.svelte";
-  import { fade, slide } from "svelte/transition";
+  import { fade } from "svelte/transition";
   import CollectionsLane from "../floatingBar/CollectionsLane.svelte";
   import { headingNodeTypes, NodeRightPaneType, NodeView } from "../node.type";
   import NodePropertiesPane from "../rightPanel/NodePropertiesPane.svelte";
   import view from "$lib/client/stores/view.store";
   import NodeRightPaneContent from "../rightPanel/NodeRightPaneContent.svelte";
-  import NodeGraph from "../../graph/NodeGraph.svelte";
   import NodeBirdView from "../birdView/NodeBirdView.svelte";
   import {
     ResourceAccessMode,
@@ -31,12 +27,13 @@
   import { resizeListener } from "$lib/client/actions/resize.action";
   import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
   import { getMdStore } from "$lib/client/components/markdown/markdown.store";
+  import TableOfContents from "$lib/client/components/markdown/TableOfContents.svelte";
+  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 
   export let node: IActiveNodeStore;
   export let selectedView: NodeView = NodeView.CONTENT;
   let lastScrollTop = 0;
-  let scrollDirection = "none";
-  let mdId = generateUID();
+  let mdId = generateSimpleRandomId();
   let isStickied = false;
   let isShowFloatingBar = true;
   let isRightPanelCollapsed: boolean = true;
@@ -60,12 +57,12 @@
     $node.trashInformation !== undefined;
 
   function onScroll(e: any) {
-    const st = event?.target?.scrollTop;
-    if (st > lastScrollTop) {
-      scrollDirection = "down";
+    const st = e.target?.scrollTop;
+    if (st === 0 || st < 50) {
+      isShowFloatingBar = true;
+    } else if (st > lastScrollTop) {
       isShowFloatingBar = false;
     } else if (st < lastScrollTop) {
-      scrollDirection = "up";
       isShowFloatingBar = true;
     }
     lastScrollTop = st;
@@ -268,6 +265,10 @@
               bind:pane={rightPane}
               on:close={closeRightPane}
             />
+          {:else if $node.isInFocusMode}
+            <div class="flex">
+              <TableOfContents {mdId} />
+            </div>
           {/if}
         </div>
       {/key}
@@ -276,7 +277,7 @@
     {/if}
     {#if (isShowFloatingBar || isConstrainedWidth) && !$node.isInFocusMode}
       <div transition:fade={{ duration: 200 }}>
-        <BottomFloat margin={isConstrainedWidth ? "mb-8" : "mb-0"}>
+        <BottomFloat margin={isConstrainedWidth ? "mb-4" : "mb-0"}>
           <NodeFloatingBar
             {node}
             {isConstrainedWidth}
@@ -310,9 +311,9 @@
       </div>
     {/if}
     {#if $node.isInFocusMode}
-      <BottomFloat margin={isConstrainedWidth ? "mb-8" : "mb-6"}>
+      <BottomFloat margin="mb-4">
         <button
-          class="flex justify-center items-center gap-2 bg-bgs2 rounded-md px-4 py-2 shadow-sm hover:bg-bgs3"
+          class="flex justify-center items-center gap-2 bg-bgs2 border border-brs3 rounded-md px-4 py-2 shadow-sm hover:bg-bgs3"
           on:click={() => {
             nodeStore.toggleFocusMode($node.id, false);
           }}

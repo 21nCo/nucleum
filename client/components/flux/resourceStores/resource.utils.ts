@@ -116,7 +116,11 @@ export function shiftResourceInArray(
   if (fromIndex === -1 || toIndex === -1) return array;
   const newArray = [...array];
   if (isPlaceAfter) {
-    newArray.splice(toIndex + 1, 0, newArray.splice(fromIndex, 1)[0]);
+    if (fromIndex < toIndex) {
+      newArray.splice(toIndex, 0, newArray.splice(fromIndex, 1)[0]);
+    } else {
+      newArray.splice(toIndex + 1, 0, newArray.splice(fromIndex, 1)[0]);
+    }
   } else {
     newArray.splice(toIndex, 0, newArray.splice(fromIndex, 1)[0]);
   }

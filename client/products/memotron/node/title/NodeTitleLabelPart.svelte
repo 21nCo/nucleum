@@ -41,7 +41,7 @@
   });
 </script>
 
-<div
+<button
   class={cn("flex gap-1 items-center truncate userdata", {
     "text-h5": accessPoint === ResourceAccessPoint.SEARCH_RESULT,
     "text-b2":
@@ -50,6 +50,7 @@
     "text-fgs3": accessPoint === ResourceAccessPoint.MARKDOWN_EMBED,
     "text-h4 font-medium": accessPoint === ResourceAccessPoint.SELF
   })}
+  on:click
 >
   <NodeAvatar
     node={item}
@@ -91,4 +92,4 @@
     {resolveEmptyLabel()}
   {/if}
   <!-- {item.label ?? item.body ?? resolveEmptyLabel()} -->
-</div>
+</button>

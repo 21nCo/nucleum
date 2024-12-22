@@ -41,6 +41,7 @@
   import view from "$lib/client/stores/view.store";
   import TextArea from "$lib/client/elements/input/TextArea.svelte";
   import { toasts } from "$lib/client/stores/notification.store";
+  import { tooltip } from "$lib/client/actions/popover.action";
   export let context: ResourceAccessPoint | undefined = undefined;
   let title: string;
   let description: string;
@@ -153,7 +154,9 @@
       <div class="flex flex-col gap-11 mo:p-4 p-10 w-full overflow-auto">
         <div class="flex items-center justify-between w-full gap-2">
           <Text content="Create collection" style={TextStyle.PANEL_HEADING} />
-          <Toggle icon="star" bind:on={isStarred} />
+          <span use:tooltip={{ text: "Star collection" }}>
+            <Toggle icon="star" bind:on={isStarred} />
+          </span>
         </div>
         <div class="flex flex-col gap-6">
           <OptionSelector

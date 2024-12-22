@@ -1,40 +1,33 @@
 <script lang="ts">
-  import AvatarRenderer from "$lib/client/elements/avatarPicker/AvatarRenderer.svelte";
-  import type {
-    AvatarWithCode,
-    IconAvatar
-  } from "$lib/client/types/avatar.type";
-  import { Size } from "$lib/client/types/size.enum";
   import { InputStyle, type InputLabel } from "$lib/client/types/input.type";
   import { cn } from "$lib/client/utils/ui.utils";
-  import InputBaseElement from "../InputBaseElement.svelte";
+  import InputBaseElement from "../../../../../elements/InputBaseElement.svelte";
   import { createEventDispatcher } from "svelte";
-  import context from "$lib/client/stores/context.store";
-  import { OperatingSystem } from "$lib/client/types/context.type";
+  import Icon from "$lib/client/elements/Icon.svelte";
   const dispatch = createEventDispatcher();
-  export let avatar: AvatarWithCode<IconAvatar>;
+  export let avatar: string = "star";
   export let count: number;
   export let value: number;
-  export let size: Size = Size.md;
   export let style: InputStyle = InputStyle.BORDERED;
   export let label: InputLabel | undefined = undefined;
   export let isReadOnlyMode: boolean = false;
+  if (typeof avatar !== "string") {
+    avatar = "star";
+  }
 </script>
 
 {#if isReadOnlyMode}
   <div class={cn("flex gap-1")}>
     {#each Array(count) as _, item}
-      <AvatarRenderer
-        dev_iOSTempRatingFallback={$context.os === OperatingSystem.IOS}
-        avatar={{ ...avatar, isFilled: +item + 1 <= value }}
-        {size}
-      />
+      {@const _icon = +item + 1 <= value ? avatar + "-fill" : avatar}
+      <Icon icon={`ph:${_icon}`} />
     {/each}
   </div>
 {:else}
   <InputBaseElement {style} {label}>
     <div class={cn("flex gap-1")}>
       {#each Array(count) as _, item}
+        {@const _icon = +item + 1 <= value ? avatar + "-fill" : avatar}
         <button
           on:click={() => {
             value = +item + 1;
@@ -42,11 +35,7 @@
           }}
           class="flex items-center h-full"
         >
-          <AvatarRenderer
-            dev_iOSTempRatingFallback={$context.os === OperatingSystem.IOS}
-            avatar={{ ...avatar, isFilled: +item + 1 <= value }}
-            {size}
-          />
+          <Icon icon={`ph:${_icon}`} />
         </button>
       {/each}
     </div>

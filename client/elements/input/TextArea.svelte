@@ -1,24 +1,21 @@
 <script lang="ts">
-  import { Size } from "$lib/client/types/size.enum";
-  import { createEventDispatcher, onMount } from "svelte";
+  import { createEventDispatcher } from "svelte";
   import view from "$lib/client/stores/view.store";
   import { InputStyle, type InputLabel } from "$lib/client/types/input.type";
   import InputBaseElement from "../InputBaseElement.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
-  import type { IResource } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { Size } from "$lib/client/types/size.enum";
+  export let size: Size = Size.md;
   export let value: any;
   export let placeholder: string | undefined = undefined;
   export let label: InputLabel | undefined = undefined;
   export let style: InputStyle = InputStyle.BORDERED;
-  export let size: Size = Size.md;
   export let isEnableSaveFeedback: boolean = false;
   export let rows: number = 5;
   export let resizable: boolean = true;
   export let changeCallback: (value: string) => void = () => {};
   export let width: string = "w-full";
   let isShowSaveFeedback: boolean = false;
-  let searchResults: IResource[] = [];
-  let selectedIndex: number = 0;
   let isFocused: boolean = false;
   export function focus() {
     if (inputRef) inputRef.focus();
@@ -27,7 +24,6 @@
     if (inputRef) inputRef.blur();
   }
   export function reset() {
-    resetSearch();
     value = "";
   }
   let inputRef: any;
@@ -60,19 +56,15 @@
       }, 2000);
     }
   }
-
-  function resetSearch() {
-    searchResults = [];
-    selectedIndex = 0;
-  }
 </script>
 
 <InputBaseElement {style} {label} {isFocused}>
   <textarea
     style="max-width:unset;"
-    class={cn(width, "text-b2", inputClasses, {
+    class={cn(width, inputClasses, {
       "resize-none": !resizable,
-      "max-w-[unset]": $view.isPortrait
+      "max-w-[unset]": $view.isPortrait,
+      "text-b2": size === Size.sm
     })}
     {rows}
     bind:value

@@ -16,7 +16,6 @@ import { accessLogStore } from "$lib/client/components/accessLogging/accesslog.s
 import { markdownSettings } from "$lib/client/components/markdown/markdown.settings";
 
 export const memotronCacheableStores: IStore[] = [
-  // vectorResourceStore,
   nodeStore,
   collectionStore,
   propertyStore,
@@ -25,6 +24,10 @@ export const memotronCacheableStores: IStore[] = [
   fileStore,
   linker,
   linkTagStore,
-  // accessLogStore,
   markdownSettings
+];
+
+export const memotronRemoteOnlyStores: IStore[] = [
+  vectorResourceStore,
+  accessLogStore
 ];

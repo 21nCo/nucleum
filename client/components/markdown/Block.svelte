@@ -34,10 +34,11 @@
   import type { IRecordId } from "$lib/client/types/data.type";
   import { isSameResource } from "../flux/resourceStores/resource.utils";
   import {
-    performEscShortcuts,
+    resolveDefaultBodyForBlock,
     resolvePlainOffsetForMdEnd,
     resolvePlainText,
-    splitMarkdownAtPlainOffset
+    splitMarkdownAtPlainOffset,
+    textToMdBlocks
   } from "./markdown.utils";
   import { captureStore } from "$lib/client/products/memotron/capture/capture.store";
   import { isValidString } from "$lib/shared/utils/text.utils";
@@ -50,6 +51,11 @@
   import { resolveMultipleFilesData } from "$lib/client/products/memotron/capture/capture.utils";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { Size } from "$lib/client/types/size.enum";
+  import { isValidUrl } from "$lib/shared/utils/utils";
+  import account from "$lib/client/stores/account.store";
+  import { UserDataMode } from "$lib/client/types/account.type";
+  import { Persistence } from "$lib/client/persistence/persistence";
+  import { wait } from "$lib/client/utils/time.utils";
 
   export let block: IBlock;
   export let mdStore: MdStoreType;
@@ -234,7 +240,20 @@
       data.body = text;
     } else if (nonSimpleTextNodeTypeList.includes(data.toType)) {
       const text: string = resolveBodyText() ?? "";
-      const body = resolveDefaultBody(data.toType, text);
+      let body = resolveDefaultBodyForBlock(data.toType, text);
+      if (
+        data.params?.indentLevel ||
+        data.params?.listOrder ||
+        data.params?.isChecked
+      ) {
+        body = body as IListBlockBody;
+        body = {
+          ...body,
+          indent: data.params?.indentLevel ?? 0,
+          order: data.params?.listOrder ?? 0,
+          checked: data.params?.isChecked ?? false
+        };
+      }
       data.body = body;
     } else if (headingNodeTypes.includes(data.toType)) {
       const text: string = resolveBodyText() ?? "";
@@ -290,7 +309,7 @@
         data.blockType = NodeType.EMBED;
         data.body = { subType };
       } else if (nonSimpleTextNodeTypeList.includes(data.blockType)) {
-        data.body = resolveDefaultBody(data.blockType, "");
+        data.body = resolveDefaultBodyForBlock(data.blockType, "");
       } else if (simpleTextNodeTypeList.includes(data.blockType)) {
         data.body = "";
       } else if (headingNodeTypes.includes(data.blockType)) {
@@ -453,25 +472,6 @@
         order: currentBody.order
       }
     });
-  }
-
-  /**
-   * Resolves default body for non simple node types
-   * @param text
-   * @param toType
-   */
-  function resolveDefaultBody(toType: NodeType, text: string): IBlockBody {
-    switch (toType) {
-      case NodeType.LIST:
-      case NodeType.ORDERED_LIST:
-      case NodeType.CHECKLIST:
-        return { indent: 0, text, order: 1 };
-      case NodeType.CODE:
-      case NodeType.CALLOUT:
-        return { text };
-      default:
-        return { text };
-    }
   }
 
   function editBlockText(
@@ -660,66 +660,41 @@
       const spans = text.split("\n");
 
       if (spans.length === 1) {
-        const modifiedBlockText = editBlockText(block, text, {
-          isAppend: true
-        });
+        const isUrl = text.startsWith("http") && isValidUrl(text);
+        let modifiedBlockText;
+        if (isUrl) {
+          progressState = "Inserting inline link";
+          let label = text.split("://").pop()?.split("/")[0];
+          if ($account?.dataMode === UserDataMode.CLOUD) {
+            try {
+              const data = await new Persistence().retrieveUrlData(text);
+              if (data?.parsedData) {
+                label = isValidString(data.parsedData.label)
+                  ? data.parsedData.label
+                  : isValidString(data.parsedData.metadata?.ogTitle)
+                    ? data.parsedData.metadata.ogTitle
+                    : label;
+              }
+            } catch (e) {
+              console.error(e);
+            }
+          }
+          const urlText = `[${label}](${text})`;
+          modifiedBlockText = editBlockText(block, urlText, {
+            isAppend: true
+          });
+        } else {
+          modifiedBlockText = editBlockText(block, text, {
+            isAppend: true
+          });
+        }
         block.body = modifiedBlockText;
         propagate(BlockAction.CHANGE, { body: modifiedBlockText });
         contentRefreshId = new Date().getTime();
         mdStore.focusBlock(block.id, { isBottom: true });
         return;
       }
-
-      const nodeContentType =
-        nodeContext?.contentType ?? NodeType.NODULAR_MARKDOWN;
-
-      const blocks: IBlock[] = spans.map((x) => {
-        const escResult = performEscShortcuts(nodeContentType, x);
-        const id = generateResourceId(Resource.node);
-        if (!escResult) {
-          return {
-            id,
-            contentType: NodeType.SIMPLE_TEXT,
-            body: x
-          };
-        }
-        const { shortcut, type, isFullReplace, indentLevel } = escResult;
-        if (isFullReplace) {
-          return {
-            id,
-            contentType: type
-          };
-        }
-        x = x.replace(shortcut, "");
-        if (headingNodeTypes.includes(type)) {
-          return {
-            id,
-            contentType: type,
-            label: x
-          };
-        } else if (simpleTextNodeTypeList.includes(type)) {
-          return {
-            id,
-            contentType: type,
-            body: x
-          };
-        }
-        if (indentLevel) {
-          return {
-            id,
-            contentType: type,
-            body: {
-              ...(resolveDefaultBody(type, x.trimStart()) as IListBlockBody),
-              indent: indentLevel
-            }
-          };
-        }
-        return {
-          id,
-          contentType: type,
-          body: resolveDefaultBody(type, x)
-        };
-      });
+      const blocks = textToMdBlocks(text, nodeContext?.contentType);
       mdStore.insertMany(block.id, blocks);
       propagateAsAction(BlockAction.INSERT_MANY, { blocks });
     }
@@ -814,6 +789,17 @@
     errors: { file: File; type: string }[]
   ) {
     try {
+      if (block.contentType === NodeType.EMBED && !block.body.id) {
+        return;
+      }
+      const hasInvalidFiles = all.some(
+        (file) => !isValidString(file.type) || file.size === 0
+      );
+      if (hasInvalidFiles) {
+        toasts.error("Invalid files detected");
+        return;
+      }
+
       if (errors && errors.length > 0) {
         let error = resolveFileUploadErrorMessage(errors, {
           maxFileSizeMB: MAX_FILE_SIZE_MB
@@ -851,6 +837,10 @@
     }
   }
 
+  /**
+   * Added wait so that progress element is present in DOM before the progress is being updated in captureStore.saveMultipleFiles
+   * @param files
+   */
   async function insertMultipleFiles(files: File[]) {
     logger.log({ at: "insertMultipleFiles", files });
     if (!files || files.length === 0) return;
@@ -860,11 +850,13 @@
       toasts.error(error);
       return;
     }
+    await wait(10);
     const result = await captureStore.saveMultipleFiles(
       multipleFilesData.files,
       {
         isEmbedContext: true,
-        creationContext: nodeContext?.id
+        creationContext: nodeContext?.id,
+        uploadProgressId: "node-embed-upload-progress"
       }
     );
     if (!result) {
@@ -910,10 +902,12 @@
 <!--TODO -  Note - when reenabling drag and drag to rearrange - make sure it is not interfering with text selection or media grid space slider -->
 <div
   class={cn(
-    "relative flex w-full min-h-fit h-10 items-center gap-2 rounded-md border border-transparent",
+    "relative flex w-full min-h-fit h-11 items-center gap-2 rounded-md border border-transparent",
     {
       "grid grid-cols-[2.5rem_1fr_2.5rem]": isLeftControlsEnabled,
-      dragging: isDragging
+      dragging: isDragging,
+      "prevent-reorder-feedback-for-files":
+        block.contentType === NodeType.EMBED && !block.body.id
     },
     $mdStore.params?.isNodular &&
       !$mdStore.params?.isReadOnly && {
@@ -979,35 +973,19 @@
       >
         <Icon icon="svg-spinners:3-dots-fade" />
         <span class="text-fgs3 text-b2">{progressState}</span>
+        <span id="node-embed-upload-progress" class="text-fgs3 text-b3"></span>
       </div>
     {/if}
   </div>
   {#if !$mdStore.params?.isReadOnly}
     <div class="flex items-center justify-center">
-      {#if isHovering && !isFocusing && !isSoleBlock && [...simpleTextNodeTypeList, ...listNodeTypes, NodeType.DIVIDER, NodeType.DOUBLE_DIVIDER].includes(block.contentType)}
+      {#if isHovering && !isFocusing && !isSoleBlock && [...simpleTextNodeTypeList, ...headingNodeTypes, ...listNodeTypes, NodeType.DIVIDER, NodeType.DOUBLE_DIVIDER].includes(block.contentType)}
         <Button
-          icon="ph:trash"
-          size={Size.sm}
+          icon="ph:trash-thin"
+          size={Size.md}
           tooltip="Delete block"
           on:click={deleteBlock}
         />
-      {/if}
-    </div>
-  {/if}
-  {#if isHovering && !isFocusing && !$mdStore.params?.isReadOnly}
-    <div
-      class={cn(
-        "absolute inset-y-0 right-0 flex items-center justify-center pr-2",
-        {
-          "bg-gradient-to-r from-bgs2/40 via-bgs2 to-bgs2 pl-32 rounded-r-md":
-            isFocusable
-        }
-      )}
-    >
-      {#if isFocusable}
-        <span class="text-b3 text-fgs1 rounded-md px-2 py-1 bg-bgs3">
-          {resolveHeadingText(block.contentType)}
-        </span>
       {/if}
     </div>
   {/if}

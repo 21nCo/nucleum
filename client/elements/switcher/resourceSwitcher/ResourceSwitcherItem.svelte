@@ -139,14 +139,14 @@
       "border border-aps1 bg-aps3 hover:bg--aps2": isActive,
       "outline-transparent border-brs3 text-fgs3 hover:bg-bgs2": !isActive,
       "opacity-80 cursor-not-allowed": item.isDisabled,
-      "px-4 py-1":
+      "px-4 py-1.5":
         iconOrientation === Orientation.Horizontal && $view.isConstrainedWidth
     },
     !$view.isConstrainedWidth &&
       iconOrientation === Orientation.Horizontal && {
         "min-w-56 h-20": size === Size.lg,
         "min-w-48 h-14": size === Size.md,
-        "min-w-40 h-10": size === Size.sm
+        "min-w-40 px-5 h-10": size === Size.sm
       }
   )}
   on:click

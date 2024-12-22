@@ -45,6 +45,7 @@ import { activeResourceFilterV2 } from "$lib/client/utils/utils";
 import { toasts } from "$lib/client/stores/notification.store";
 import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
 import { GlobalEvent } from "$lib/client/types/event.enum";
+import { Embed } from "$lib/client/types/context.type";
 
 class CollectionStore extends ResourceStore<ICollection> {
   constructor() {
@@ -477,7 +478,7 @@ export function resolveCollectionContextMenu(
   );
   const ctx = get(context);
   let commonGroups: { group: string; items: IContextMenuItem[] }[] = [];
-  if (ctx.isEmbed) {
+  if (ctx.isEmbed && ctx.embed === Embed.HANDSET) {
     commonGroups = [
       {
         group: "more",

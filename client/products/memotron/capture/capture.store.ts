@@ -252,10 +252,20 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     params?: {
       isEmbedContext?: boolean;
       creationContext?: IRecordId;
+      uploadProgressId?: string;
     }
   ) {
     let nodes: OmitForCapture<IMediaNode>[] = [];
-    for (const item of files) {
+    for (const [index, item] of files.entries()) {
+      if (params?.uploadProgressId) {
+        const progressElement = document.getElementById(
+          params.uploadProgressId
+        );
+        if (progressElement) {
+          progressElement.dataset.progress = `${(index + 1) / files.length}`;
+          progressElement.innerHTML = `${index + 1} / ${files.length}`;
+        }
+      }
       if (!item.contentType) continue;
       const response = await account.uploadFileV2(
         item.file.type,

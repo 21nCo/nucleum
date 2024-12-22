@@ -354,9 +354,10 @@
 </script>
 
 <div
-  class={cn(
-    "h-full w-full flex justify-center rounded-l-md border border-transparent hover:bg-bgs2 hover:border-brs2"
-  )}
+  class={cn("h-full w-full flex justify-center rounded-l-md border", {
+    "bg-bgs2 border-brs2": isHovering,
+    "border-transparent": !isHovering
+  })}
   use:popover={{
     placement: Placement.Left,
     content: ContextMenu,

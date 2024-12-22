@@ -52,10 +52,13 @@ import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { FluxMethod, type IFluxMethod } from "./flux.type";
 import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
 import { TacoActions } from "$lib/client/products/memotron/taco/taco.types";
+import { interceptSurrealResponse } from "$lib/client/utils/utils";
+import { determineResourceType } from "./resourceStores/resource.utils";
 
 class Flux {
   static _instance: Flux | null = null;
   stores: IStore[] = [];
+  remoteOnlyStores: IStore[] = [];
   provider!: PersistenceProvider;
   persistence!: IPersistence;
   // syncer!: ISyncHandler;
@@ -78,6 +81,7 @@ class Flux {
       dapId: string;
       userId?: string;
       appVersion?: string;
+      remoteOnlyStores?: IStore[];
     }
   ): Promise<number> {
     logger.log({ at: "flux.initialize", stores, params });
@@ -86,6 +90,7 @@ class Flux {
     Flux._instance.isLocalMode = !params.userId;
     Flux._instance.persistence = persistence;
     Flux._instance.stores = stores;
+    Flux._instance.remoteOnlyStores = params.remoteOnlyStores ?? [];
     switch (provider) {
       case PersistenceProvider.SURREAL_SURREAL:
       case PersistenceProvider.DEXIE_SURREAL:
@@ -123,8 +128,11 @@ class Flux {
     });
   }
 
-  async loadInMemoryStores() {
-    logger.log({ at: "flux.loadInMemoryStores" });
+  async loadInMemoryStores(params?: {
+    kvRecords?: string[];
+    resources?: Resource[];
+  }) {
+    logger.debug({ at: "flux.loadInMemoryStores", params });
     try {
       let kvStores = this.stores.filter(
         (x) => x.dataType === StoreDataType.KVO
@@ -132,6 +140,7 @@ class Flux {
       const data = await this.persistence.selectMany(Resource.kv);
       if (!data) return;
       data.forEach((record: any) => {
+        if (params?.kvRecords && !params.kvRecords.includes(record.id)) return;
         const store = kvStores.find(
           (x) => "kv:" + x.id === record.id.toString()
         );
@@ -141,6 +150,11 @@ class Flux {
       let inMemoryResouceStores = this.stores.filter((x) => x.isInMemory);
       if (!inMemoryResouceStores) return;
       for (const store of inMemoryResouceStores) {
+        if (
+          params?.resources &&
+          !params.resources.includes(store.id as Resource)
+        )
+          continue;
         const data = await this.persistence.selectMany(store.id as Resource);
         if (data && Array.isArray(data) && store?.loader) {
           logger.log({
@@ -240,7 +254,7 @@ class Flux {
     let response;
     logger.log({ at: "flux.mutation", resource, params });
     try {
-      if (!additionalParams?.isCloudOnlyResource) {
+      if (!additionalParams?.isCloudOnlyResource || this.isLocalMode) {
         response = await this.persistence.mutation(resource, params);
       }
       let mutation: IMutation;
@@ -366,7 +380,12 @@ class Flux {
   ) {
     try {
       logger.log({ at: "flux.select", resourceId });
-      if (additionalParams?.isCloudOnlyResource) {
+      const isOffline = await determineIfOffline();
+      if (
+        !this.isLocalMode &&
+        additionalParams?.isCloudOnlyResource &&
+        !isOffline
+      ) {
         return this.remoteRelay({
           method: FluxMethod.SELECT,
           args: { resourceId, properties }
@@ -390,13 +409,23 @@ class Flux {
     additionalParams?: { isCloudOnlyResource?: boolean }
   ) {
     try {
-      logger.log({ at: "flux.selectMany", resource, params });
-      if (additionalParams?.isCloudOnlyResource) {
+      logger.log({
+        at: "flux.selectMany",
+        resource,
+        params,
+        additionalParams
+      });
+      const isOffline = await determineIfOffline();
+      if (
+        !this.isLocalMode &&
+        additionalParams?.isCloudOnlyResource &&
+        !isOffline
+      ) {
         if (
           params?.searchType === SearchType.SEMANTIC &&
           params?.search?.query
         ) {
-          let queryEmbedding: Float32Array[] | null = null;
+          let queryEmbedding: Float32Array[] | undefined = undefined;
           // queryEmbedding = await FeatureExtractor.generateVectorEmbeddings(
           //   params.search.query
           // );
@@ -412,15 +441,17 @@ class Flux {
             };
           });
           queryEmbedding = result?.data;
-          params.properties.push(
+          params.properties = [
+            ...(params?.properties ?? []),
             `vector::similarity::cosine(embedding,[${queryEmbedding}]) AS dist`
-          );
+          ];
           params.search.queryEmbedding = queryEmbedding;
         }
-        return this.remoteRelay({
+        const result = await this.remoteRelay({
           method: FluxMethod.SELECT_MANY,
           args: { resource, params }
         });
+        return interceptSurrealResponse(result, "flux.selectMany");
       }
       const result = await this.persistence.selectMany(resource, params);
       logger.log({ at: "flux.selectMany - result", resource, params, result });
@@ -488,7 +519,7 @@ class Flux {
 
   async performSync(method: SyncMethod, data: any) {
     try {
-      const result = await performApiCall(`syncV2/${method}`, "POST", data);
+      const result = await performApiCall(`syncV3/${method}`, "POST", data);
       let response;
       if (result?.ok) {
         response = await result.json();
@@ -536,7 +567,7 @@ class Flux {
       const result = await performApiCall(`relay`, "POST", body);
       if (result?.ok) {
         const response = await result.json();
-        logger.debug({ at: "flux.remoteRelay", body, response });
+        logger.log({ at: "flux.remoteRelay", body, response });
         return response;
       }
     } catch (e) {
@@ -669,9 +700,8 @@ class Flux {
   /**
    * Syncs down from cloud to local.
    */
-  async syncDown(isFirstLoad: boolean = false) {
-    logger.log({ at: "flux.syncDown", isFirstLoad });
-    let isShowCompletedStatus: boolean = true;
+  async syncDown(params?: { isPreventInMemoryStoreLoad?: boolean }) {
+    logger.log({ at: "flux.syncDown" });
     try {
       if (await determineIfOffline()) return;
       if (this.isSyncDownPending) return;
@@ -689,108 +719,91 @@ class Flux {
       this.isSyncDownPending = false;
       logger.log({ at: "flux.syncDown - result", result });
       if (result.syncDownData) {
-        const status = await this.processSyncDown(
-          result.syncDownData,
-          isFirstLoad
-        );
-        if (status === -1) {
-          isShowCompletedStatus = false;
-        }
-      }
-      if (isFirstLoad && result.counts) {
-        let resourcesWithMissSync = [];
-        for (let resource of resources) {
-          const localCount = (
-            await this.persistence.selectMany(resource as Resource)
-          ).length;
-          const cloudCount = result.counts[resource];
-          if (localCount < cloudCount) {
-            resourcesWithMissSync.push(resource);
-            logger.log({
-              at: "flux.syncDown - resource with miss sync",
-              resource,
-              localCount,
-              cloudCount
-            });
-          }
-        }
-        logger.log({
-          at: "flux.syncDown - resourcesWithMissSync",
-          resourcesWithMissSync
-        });
-        if (resourcesWithMissSync.length > 0) {
-          const result = await this.cloneDown(resourcesWithMissSync, {
-            isReconciliation: true
-          });
-          if (result?.paginateResources) {
-            await this.paginateResources(result.paginateResources);
-          }
-        }
+        await this.processSyncDown(result.syncDownData, params);
       }
       return result;
     } catch (e) {
       logger.error({ at: "flux.syncDown", error: e });
     } finally {
-      if (
-        !this.isExtensionEnvironment &&
-        isFirstLoad &&
-        isShowCompletedStatus
-      ) {
-        // dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
-        //   message: `Sync completed.`,
-        //   subMessage: "",
-        //   isFinished: true
-        // });
-      }
       this.isSyncDownPending = false;
     }
   }
 
-  private async processSyncDown(response: any, isFirstLoad: boolean = false) {
+  private async processSyncDown(
+    response: any,
+    params?: { isPreventInMemoryStoreLoad?: boolean }
+  ) {
     if (!response) {
       return;
     }
     if (typeof response === "number") {
       console.log("large sync down detected: ", response);
-      // await this.clear();
-      // window.location.reload();
-      return -1;
+      await this.reconcile({ reCloneAll: true });
+      return;
     }
-    const mutations: IMutation[] = response;
-    logger.log({ at: "processSyncDown", mutations, isFirstLoad });
-    if (!Array.isArray(mutations) || mutations.length === 0) return;
-    for (let mutation of mutations) {
-      await this.persistence.mutation(
-        mutation.resource as Resource,
-        mutation.params
+
+    const syncRecords: any[] = response?.records;
+    logger.log({ at: "processSyncDown", mutations: syncRecords });
+    if (!Array.isArray(syncRecords) || syncRecords.length === 0) return;
+    let data: { resource: Resource; records: any[] }[] = [];
+    const recordsByResource = new Map<Resource, any[]>();
+
+    for (let record of syncRecords) {
+      const resourceType = determineResourceType(record.id);
+      if (!resourceType) continue;
+
+      if (!recordsByResource.has(resourceType)) {
+        recordsByResource.set(resourceType, []);
+      }
+      recordsByResource.get(resourceType)!.push(record);
+    }
+
+    data = Array.from(recordsByResource.entries()).map(
+      ([resource, records]) => ({
+        resource,
+        records
+      })
+    );
+
+    for (let { resource, records } of data) {
+      const mutationResult = await this.persistence.mutation(
+        resource as Resource,
+        {
+          records,
+          action: PersistenceActionType.INSERT
+        }
       );
     }
-    logger.log({
-      at: "flux.syncDown - loading in memory stores",
-      mutations
-    });
-    await this.loadInMemoryStores();
-    // await clientStorage.set(
-    //   ClientStorageKey.LAST_SYNC_DOWN,
-    //   mutations[mutations.length - 1].timestamp
-    // );
-    await this.persistence.mutation(Resource.kv, {
-      record: {
-        id: "kv:local",
-        lastSyncDown: mutations[mutations.length - 1].timestamp
-      },
-      action: PersistenceActionType.MERGE
-    });
+    if (!params?.isPreventInMemoryStoreLoad) {
+      logger.log({
+        at: "flux.syncDown - loading in memory stores",
+        mutations: syncRecords
+      });
+      const kvData = data.find((x) => x.resource === Resource.kv);
+      await this.loadInMemoryStores({
+        kvRecords: kvData?.records.map((x) => x.id),
+        resources: data.map((x) => x.resource)
+      });
+    }
+    if (response.latestTimestamp.timestamp) {
+      await this.persistence.mutation(Resource.kv, {
+        record: {
+          id: "kv:local",
+          lastSyncDown: response.latestTimestamp.timestamp
+        },
+        action: PersistenceActionType.MERGE
+      });
+    }
     if (!this.isExtensionEnvironment) {
       dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
     }
-    return mutations;
+    return syncRecords;
   }
 
   /**
    * Clones down from cloud to local.
    */
-  async cloneDown(
+  private async cloneDown(
     resources: Resource[],
     params?: {
       isReconciliation?: boolean;
@@ -917,6 +930,55 @@ class Flux {
     }
   }
 
+  /**
+   * Performs initial sync down for a returning cloud user on app load.
+   */
+  async initialSyncDown() {
+    const result = await this.syncDown({ isPreventInMemoryStoreLoad: true });
+    await this.loadInMemoryStores();
+    return result;
+  }
+
+  /**
+   * Compares resource counts from cloud and local and clones down missing resources.
+   * @param counts - resource counts from cloud
+   */
+  async reconcile(params?: { counts?: any; reCloneAll?: boolean }) {
+    const resources = this.resolveSyncResources();
+    let resourcesForReconciliation = [];
+    if (params?.reCloneAll) {
+      resourcesForReconciliation = [...resources];
+    } else {
+      for (let resource of resources) {
+        const localCount = (
+          await this.persistence.selectMany(resource as Resource)
+        ).length;
+        const cloudCount = params?.counts?.[resource];
+        if (localCount < cloudCount) {
+          resourcesForReconciliation.push(resource);
+          logger.debug({
+            at: "flux.reconcile - resource with miss sync",
+            resource,
+            localCount,
+            cloudCount
+          });
+        }
+      }
+    }
+    logger.log({
+      at: "flux.reconcile - resourcesForReconciliation",
+      resourcesForReconciliation
+    });
+    if (resourcesForReconciliation.length > 0) {
+      const result = await this.cloneDown(resourcesForReconciliation, {
+        isReconciliation: true
+      });
+      if (result?.paginateResources) {
+        await this.paginateResources(result.paginateResources);
+      }
+    }
+  }
+
   async paginateResources(resources: Resource[], offset?: number) {
     for (let resource of resources) {
       await this.paginateResource(
@@ -969,7 +1031,9 @@ class Flux {
     logger.log({ at: "flux.cloneUp" });
     if (await determineIfOffline()) return;
     const resources = this.resolveSyncResources();
-    for (let resource of resources) {
+    const remoteOnlyResources = this.remoteOnlyStores.map((x) => x.id);
+    const _all = [...resources, ...remoteOnlyResources];
+    for (let resource of _all) {
       const records = await this.persistence.selectMany(resource as Resource);
       if (records.length > 0) {
         await this.performSync(SyncMethod.CLONE_UP, {
@@ -1111,6 +1175,7 @@ export async function initFlux(
     dapId: string;
     userId?: string;
     appVersion?: string;
+    remoteOnlyStores?: IStore[];
   }
 ) {
   logger.log({ at: "initFlux", stores, provider, persistence, params });

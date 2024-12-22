@@ -28,10 +28,6 @@ export function resolvePropertyDefaultValue(type: PropertyType) {
     case PropertyType.SINGLE_SELECT:
     case PropertyType.MULTI_SELECT:
       return "none";
-    case PropertyType.DATE:
-      return new Date();
-    default:
-      return "";
   }
 }
 
@@ -163,14 +159,7 @@ export function resolvePropertyDefaultConfig(
 ): IPropertyConfig {
   if (type === PropertyType.RATING) {
     return {
-      ratingAvatar: {
-        type: AvatarType.ICON,
-        code: "&#XF09A",
-        name: "star_outline",
-        frequency: 0,
-        isFilled: false,
-        color: "bg"
-      }
+      avatar: "star"
     };
   } else if (
     type === PropertyType.SINGLE_SELECT ||
@@ -189,6 +178,100 @@ export function resolvePropertyDefaultConfig(
   return {};
 }
 
+const weatherOptions: IPropertyConfigOption[] = [
+  {
+    id: "sun",
+    label: "Sunny",
+    icon: "☀️"
+  },
+  {
+    id: "cloud",
+    label: "Cloudy",
+    icon: "☁️"
+  },
+  {
+    id: "rain",
+    label: "Rainy",
+    icon: "🌧️"
+  },
+  {
+    id: "snow",
+    label: "Snowy",
+    icon: "❄️"
+  },
+  {
+    id: "sun-cloud",
+    label: "Sunny with clouds",
+    icon: "🌤️"
+  },
+  {
+    id: "hot",
+    label: "Hot",
+    icon: "🌡️"
+  }
+];
+
+const moodOptions = [
+  {
+    id: "fantastic",
+    label: "Fantastic",
+    icon: "😁"
+  },
+  {
+    id: "great",
+    label: "Great",
+    icon: "😃"
+  },
+  {
+    id: "good",
+    label: "Good",
+    icon: "🙂"
+  },
+  {
+    id: "okay",
+    label: "Okay",
+    icon: "😐"
+  },
+  {
+    id: "bad",
+    label: "Bad",
+    icon: "☹️"
+  }
+];
+
+const reactionOptions = [
+  {
+    id: "like",
+    label: "Like",
+    icon: "👍"
+  },
+  {
+    id: "dislike",
+    label: "Dislike",
+    icon: "👎"
+  },
+  {
+    id: "love",
+    label: "Love",
+    icon: "❤️"
+  },
+  {
+    id: "laugh",
+    label: "Laugh",
+    icon: "😂"
+  },
+  {
+    id: "sad",
+    label: "Sad",
+    icon: "😢"
+  },
+  {
+    id: "angry",
+    label: "Angry",
+    icon: "😡"
+  }
+];
+
 export function resolveUniversalPropertyOptions(
   type: UniversalPropertyType
 ): IPropertyConfigOption[] {
@@ -203,6 +286,12 @@ export function resolveUniversalPropertyOptions(
       return resolveContinentOptions();
     case UniversalPropertyType.TIMEZONE:
       return resolveTimezoneOptions();
+    case UniversalPropertyType.WEATHER:
+      return weatherOptions;
+    case UniversalPropertyType.MOOD_LOG:
+      return moodOptions;
+    case UniversalPropertyType.REACTION:
+      return reactionOptions;
     default:
       return [];
   }
@@ -305,4 +394,30 @@ export function resolveUniversalPropertyOptions(
       };
     });
   }
+}
+
+export function resolveSelectPropertySelection(
+  value: string | string[] | null,
+  selected: string,
+  params?: { isMultiSelect?: boolean }
+): string | string[] {
+  if (params?.isMultiSelect) {
+    if (value && typeof value === "string") {
+      if (value === "none" || value === selected) value = [selected];
+      else value = [value, selected];
+    } else if (Array.isArray(value)) {
+      value = value.filter((x) => x !== "none");
+      if (value.includes(selected)) {
+        value = value.filter((x) => x !== selected);
+      } else {
+        value.push(selected);
+      }
+    } else {
+      value = [selected];
+    }
+    value = value;
+  } else {
+    value = selected;
+  }
+  return value;
 }

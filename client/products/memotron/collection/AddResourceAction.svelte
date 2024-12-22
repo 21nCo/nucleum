@@ -51,7 +51,7 @@
   <div slot="popover" class="flex flex-col px-2 py-2 w-48">
     {#each options as option}
       <button
-        class="flex gap-2 px-3 py-2 hover:bg-bgs2 rounded-md text-fgs2"
+        class="flex items-center gap-2 px-3 py-2 hover:bg-bgs2 rounded-md text-fgs2"
         on:click={() => dispatch("add", option.value)}
       >
         <Icon icon={option.icon} size={Size.sm} />

@@ -8,7 +8,7 @@
   import AbsoluteTimeRangePopover from "./absolute/AbsoluteTimeRangePopover.svelte";
   const dispatch = createEventDispatcher();
   export let parentBackgroundIndex: number = 1;
-  export let date: Date;
+  export let date: Date | undefined = undefined;
   export let style: InputStyle = InputStyle.BORDERED;
   export let label: InputLabel | undefined = undefined;
   export let variant:
@@ -24,6 +24,7 @@
   let isPopoverActive: boolean = false;
   let isPopoverVisible: boolean = false;
   let dateInput: HTMLInputElement;
+  let _date: Date = date ?? new Date();
   function updateDate(e: any) {
     const newDate = new Date(e.target.value);
     date = newDate;
@@ -45,16 +46,20 @@
     }}
   >
     <Icon icon="calendar" size={Size.md} />
-    <span class="text-fgs2 text-base">
-      {formatDate(date)}
-    </span>
+    {#if date}
+      <span class="text-fgs2 text-base">
+        {formatDate(date)}
+      </span>
+    {:else}
+      <span class="text-fgs2 text-b2">Select a date</span>
+    {/if}
     <slot:fragment slot="popover">
       <AbsoluteTimeRangePopover
         isDatePickerMode={true}
-        bind:selectedDate={date}
+        bind:selectedDate={_date}
         on:change={() => {
           // popoverRef?.toggle();
-          dispatch("change", date);
+          dispatch("change", _date);
         }}
       />
     </slot:fragment>

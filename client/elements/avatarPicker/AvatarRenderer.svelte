@@ -65,15 +65,14 @@
       <span
         class={cn(
           "material-symbols-rounded",
-          isHoverEnabled && "hover:scale-[1.2] transition-transform",
-          avatar.color === "bw" && "text-fgs2"
+          isHoverEnabled && "hover:scale-[1.2] transition-transform"
+          // avatar.color === "bw" && "text-fgs2"
         )}
-        style="font-variation-settings: 'FILL' {avatar?.isFilled
-          ? 1
-          : 0}, 'wght'
-      700, 'GRAD' 0, 'opsz' 48; color:{avatar?.color !== 'bw'
-          ? avatar?.color
-          : ''}; font-size: {fontSize};"
+        style:font-variation-settings={`'FILL' ${
+          avatar?.isFilled ? 1 : 0
+        }, 'wght' 400, 'GRAD' 0, 'opsz' 20`}
+        style:color={avatar?.color !== "bw" ? avatar?.color : ""}
+        style:font-size={fontSize}
       >
         {@html avatar.code}
       </span>

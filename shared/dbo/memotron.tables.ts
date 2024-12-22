@@ -43,6 +43,10 @@ DEFINE FIELD IF NOT EXISTS config on TABLE node FLEXIBLE TYPE option<object>;
 }
 
 //TODO- while deleting a node make sure to delete its vector as well important* lese retrieved data can be pointing to undefined or null causing issues in node display and casuing stopdown
+/**
+ * DEFINE INDEX IF NOT EXISTS nodeSemanticSearchIndex ON TABLE vector FIELDS embedding MTREE DIMENSION 768 DIST COSINE TYPE F32;
+ * @returns
+ */
 function vector() {
   const def = `DEFINE TABLE IF NOT EXISTS vector SCHEMAFULL;
 DEFINE FIELD IF NOT EXISTS createdBy on TABLE vector TYPE option<record<user>>;
@@ -51,9 +55,9 @@ DEFINE FIELD IF NOT EXISTS createdAt on TABLE vector TYPE datetime;
 DEFINE FIELD IF NOT EXISTS modifiedAt on TABLE vector TYPE datetime;
 DEFINE FIELD IF NOT EXISTS embedding on TABLE vector TYPE array<float>;
 DEFINE FIELD IF NOT EXISTS node on TABLE vector TYPE option<record<node>>;
-DEFINE INDEX IF NOT EXISTS nodeSemanticSearchIndex ON TABLE vector FIELDS embedding MTREE DIMENSION 768 DIST COSINE TYPE F32;
 `;
-  return [def];
+  const deleteIndex = `REMOVE INDEX IF EXISTS nodeSemanticSearchIndex ON TABLE vector;`;
+  return [def, deleteIndex];
 }
 /**
  * 

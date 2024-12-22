@@ -346,7 +346,7 @@
 <svelte:window on:click={handleOutsideClickModal} />
 {#if isPickerOpen}
   <!-- svelte-ignore a11y-click-events-have-key-events -->
-  <div
+  <button
     class={cn(
       "flex flex-col gap-4 w-80 px-4 py-4 text-fgs3 rounded-md shadow-lg border border-brs2",
       bg(parentBgIndex)
@@ -354,10 +354,8 @@
     on:click|stopPropagation
   >
     <div class="flex items-center w-full justify-between text-b2">
-      <div class="flex gap-1">
-        <button on:click={previousDecade} aria-label="calendar backward">
-          <Icon icon="chevleft" size={Size.sm} />
-        </button>
+      <div class="flex gap-1 items-center">
+        <Button icon="chevleft" on:click={previousDecade} size={Size.sm} />
 
         <div class="flex justify-between">
           <!-- <button on:click={previousDecade} class="focus:outline-none"
@@ -382,9 +380,7 @@
               (selectedDecade + 20).toString().slice(2)}</button
           > -->
         </div>
-        <button on:click={nextDecade} aria-label="calendar forward">
-          <Icon icon="chevright" size={Size.sm} />
-        </button>
+        <Button icon="chevright" on:click={nextDecade} size={Size.sm} />
       </div>
       {#if !isSameDay(selectedDate, new Date())}
         <Button
@@ -400,15 +396,12 @@
     </div>
     {#if monthMode || dayMode}
       <div class="w-full flex items-center justify-between text-b3">
-        <button
-          on:click={() => {
-            previousYear(2);
-          }}
-          aria-label="calendar backward"
-        >
-          <Icon icon="chevleft" size={Size.sm} />
-        </button>
-        <div class="px-2 grow flex items-center justify-around">
+        <Button
+          icon="chevleft"
+          on:click={() => previousYear(2)}
+          size={Size.sm}
+        />
+        <div class="grow flex items-center justify-around">
           <!-- <button
             on:click={() => {
               previousYear(2);
@@ -465,7 +458,7 @@
                 abg(mapYear == yearPool[index]),
                 {
                   "font-medium": mapYear == yearPool[index],
-                  "hover:bg-bgs2": mapMonth != monthPool[index]
+                  "hover:bg-bgs2": mapYear != yearPool[index]
                 }
               )}
               >{ucFirst(
@@ -474,14 +467,7 @@
             >
           {/each}
         </div>
-        <button
-          on:click={() => {
-            nextYear(2);
-          }}
-          aria-label="calendar forward"
-        >
-          <Icon icon="chevright" size={Size.sm} />
-        </button>
+        <Button icon="chevright" on:click={() => nextYear(2)} size={Size.sm} />
       </div>
     {/if}
 
@@ -767,7 +753,7 @@
         </div>
       </div>
     {/if}
-  </div>
+  </button>
 {:else}
   <button on:click|stopPropagation={enablePicker} class="text-fgs1">
     -- Pick Range --

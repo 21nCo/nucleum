@@ -156,6 +156,7 @@
 
   let classListParam = "";
   let dev_useIconifyTailwind = false;
+  let isUseIconifySprite = true;
   export { classListParam as class };
   let _classList = "";
   let variant: IconVariant = IconVariant.Outline;
@@ -272,18 +273,24 @@
   on:click
 >
   {#if icon?.includes(":") && renderedIconifyIcon && !isExtensionEnvironment()}
-    {#if !dev_useIconifyTailwind}
+    {@const sizePx =
+      size === Size.xxl
+        ? "3rem"
+        : size === Size.xl
+          ? "1.75rem"
+          : size === Size.lg
+            ? "1.5rem"
+            : size === Size.md
+              ? "1.25rem"
+              : "1rem"}
+    {#if isUseIconifySprite && !icon.startsWith("svg-spinners")}
+      <svg width={sizePx} height={sizePx} class={_classList + " iconifysvg "}>
+        <use href={`icons/sprite.svg#${renderedIconifyIcon}`} />
+      </svg>
+    {:else if dev_useIconifyTailwind}
+      <span class="iconify text-fgs1 {renderedIconifyIcon} w-5 h-5"></span>
+    {:else}
       <!-- TODO - fix import issue on plasmo - disabling for now -->
-      {@const sizePx =
-        size === Size.xxl
-          ? "3rem"
-          : size === Size.xl
-            ? "1.75rem"
-            : size === Size.lg
-              ? "1.5rem"
-              : size === Size.md
-                ? "1.25rem"
-                : "1rem"}
       <div
         class={cn(renderedIconifyIcon, {
           "w-14 h-14": size === Size.xxl,
@@ -301,8 +308,6 @@
           class={_classList + " iconifysvg "}
         />
       </div>
-    {:else if dev_useIconifyTailwind}
-      <span class="iconify text-fgs1 {renderedIconifyIcon} w-5 h-5"></span>
     {/if}
   {:else if icon}
     <svg

@@ -1,12 +1,8 @@
 <script lang="ts">
-  import Rating from "$lib/client/elements/rating/Rating.svelte";
-  import type {
-    AvatarWithCode,
-    IconAvatar
-  } from "$lib/client/types/avatar.type";
+  import Rating from "$lib/client/products/memotron/collection/properties/ratingProperty/Rating.svelte";
   import { InputStyle } from "$lib/client/types/input.type";
-  import EndText from "./EndText.svelte";
-  export let avatar: AvatarWithCode<IconAvatar>;
+  import EndText from "../../propertyConfig/EndText.svelte";
+  export let avatar: string;
   export let value: number = 0;
   export let count: number = 5;
   let experimentalCountIncrementor = false;

@@ -666,7 +666,6 @@ export function popover(node: HTMLElement, params: PopoverParams) {
       triggerMethod.includes(PopoverTriggerMethod.HOVER) &&
       event.type === "mouseleave"
     ) {
-      console.log("mouseleave", lastTriggeredBy, triggerMethod);
       if (
         isShown &&
         !(

@@ -2,6 +2,7 @@
   import { createEventDispatcher, onMount } from "svelte";
   import {
     type IBlock,
+    InlineType,
     type SpanContent,
     SpanType
   } from "$lib/client/components/markdown/md.type";
@@ -11,6 +12,7 @@
     extractInlineMarkdownFromHtml,
     findInlineStylingPatterns,
     findSymbolPatterns,
+    inlineLinkPatterns,
     replaceInlineStylePatterns,
     replaceSymbolPatterns
   } from "../markdown.utils";
@@ -21,6 +23,7 @@
   import { isValidString, truncateString } from "$lib/shared/utils/text.utils";
   import { resolveNodeLabelString } from "$lib/client/products/memotron/node/node.utils";
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  import { handleMarkdownLinks } from "$lib/client/actions/md.action";
   const dispatch = createEventDispatcher();
   //   export let block: Block<TextContent>;
   export let id: string = generateUID();
@@ -94,17 +97,39 @@
     customCaret = document.getElementById("customcaret");
     innerHTML = content ? replaceInlineStylePatterns(content) : "";
     renderMentionPlaceholders();
+    renderInlineLinks();
     setTimeout(() => {
       renderMentions(true);
     }, 10);
   });
 
   function renderMentionPlaceholders() {
-    const regex = /\[(.*?)\]\(resource=(.*?)\)/g;
+    const regex = inlineLinkPatterns.find(
+      (pattern) => pattern.type === InlineType.MENTION
+    )?.regex;
+    if (!regex) return;
     innerHTML = innerHTML.replace(
       regex,
       (match, p1, p2) => `<button data-mention-id='${p2}'></button>`
     );
+  }
+  function renderInlineLinks() {
+    const inlineLinkPattern = inlineLinkPatterns.find(
+      (pattern) => pattern.type === InlineType.LINK
+    );
+    if (inlineLinkPattern) {
+      const matches = inlineLinkPattern.regex.exec(innerHTML);
+      if (matches) {
+        newInlineSpanId = generateSimpleRandomId();
+        innerHTML = innerHTML.replace(
+          inlineLinkPattern.regex,
+          inlineLinkPattern.replacement +
+            `<span id="${newInlineSpanId}">&#8203;</span>`
+        );
+        return true;
+      }
+    }
+    return false;
   }
   export function focus(params?: { xOffset?: number; isBottom?: boolean }) {
     logger.log({ at: "InlineMarkdownTextInput - focus", params, id });
@@ -786,7 +811,11 @@
     saveCaretPosition();
     content = parsedMdContent ?? "";
     dispatch("change");
-    const steps = [replaceInlineSymbols, () => replaceInlineStyling(event)];
+    const steps = [
+      replaceInlineSymbols,
+      () => replaceInlineStyling(event),
+      () => handleInlineLinks(event)
+    ];
     for (const func of steps) {
       if (func()) return;
     }
@@ -812,6 +841,19 @@
       restoreCaretPosition(true);
       return true;
     }
+  }
+
+  /**
+   * Replaces inline styling patterns with the respective HTML tags
+   * @param event - Keyboard event
+   */
+  function handleInlineLinks(event: KeyboardEvent) {
+    if (event.key === "Backspace" || !(event.key === ")")) {
+      return false;
+    }
+    const isRendered = renderInlineLinks();
+    if (isRendered) restoreCaretPosition();
+    return isRendered;
   }
 
   /**
@@ -857,7 +899,7 @@
     }
     if (!matches || !(matches.length > 0)) return false;
     matches.forEach(({ match, pattern }) => {
-      newInlineSpanId = generateUID();
+      newInlineSpanId = generateSimpleRandomId();
       isNewSpanInserted = true;
       const replacementWithNewSpan =
         pattern.replacement + `<span id="${newInlineSpanId}">&nbsp;</span>`;
@@ -948,7 +990,7 @@
       data-type={dataType}
       style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word;"
       class={cn(
-        "inline-markdown relative w-full h-full text-left outline-none py-0.5",
+        "inline-markdown relative w-full h-full text-left outline-none py-1.5",
         classList,
         {
           customcaret: isCustomCaret,
@@ -981,6 +1023,7 @@
           bottom: 60
         }
       }}
+      use:handleMarkdownLinks
     ></div>
     {#if isCustomCaret}
       <div

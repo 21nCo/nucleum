@@ -20,16 +20,22 @@
   const bgHsl = currentColors.bgs1;
   const apHsl = currentColors.aps1;
   const apHue = apHsl?.split(" ")[0].split("(")[1];
+  let stream: MediaStream | null = null;
+
   onMount(() => {
     canvasContext = canvasElement.getContext("2d")!;
     // audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+    return () => {
+      cleanup();
+    };
   });
 
   export async function start(source: any = undefined) {
     let isMicrophone = false;
     if (!source || source === "microphone") {
       isMicrophone = true;
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       source = audioContext.createMediaStreamSource(stream);
     }
     analyser = audioContext.createAnalyser();
@@ -45,6 +51,18 @@
     drawVisualizer();
     // drawWavyOne();
     // drawWavyTwo();
+  }
+
+  function cleanup() {
+    if (analyser) {
+      analyser.disconnect();
+    }
+    if (stream) {
+      stream.getTracks().forEach((track) => {
+        track.stop();
+      });
+      stream = null;
+    }
   }
 
   export async function stop() {

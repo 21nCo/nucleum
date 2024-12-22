@@ -12,11 +12,13 @@
   import type { IFile } from "$lib/client/components/files/file.type";
   import { fileStore } from "$lib/client/components/files/file.store";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { copyToClipboard } from "$lib/client/utils/utils";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { formatBytes } from "$lib/shared/utils/text.utils";
+  import { createEventDispatcher } from "svelte";
+  import { hoverable } from "$lib/client/actions/hover.action";
+  const dispatch = createEventDispatcher();
 
   export let node: INode;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -26,7 +28,7 @@
   let webContentRef: any;
   let _file: IFile;
   let _url: string;
-
+  let isHovering: boolean = false;
   onMount(() => {
     resolveData();
   });
@@ -80,7 +82,14 @@
 </script>
 
 {#if _file && (node.contentType === NodeType.FILE || isHidePreview)}
-  <button class="flex w-full h-full items-center justify-between p-3">
+  <button
+    class="flex w-full items-center justify-between px-3 h-12"
+    use:hoverable={{
+      onHover: (e) => {
+        isHovering = e;
+      }
+    }}
+  >
     <span class="flex items-center gap-2">
       <Icon icon={resolveFileIcon()} size={Size.xl} />
       <span class="text-sm">{_file.name ?? _file.label}</span>
@@ -88,13 +97,24 @@
         {_file.size ? formatBytes(_file.size) : "Unknown size"}
       </span>
     </span>
-    <Button
-      icon="ph:download-simple-light"
-      tooltip="Download file"
-      on:click={() => {
-        fileStore.download(_file);
-      }}
-    />
+    {#if isHovering}
+      <span class="flex items-center gap-1">
+        <Button
+          icon="ph:download-simple-light"
+          tooltip="Download file"
+          on:click={() => {
+            fileStore.download(_file);
+          }}
+        />
+        <Button
+          icon="ph:trash"
+          tooltip="Delete file"
+          on:click={() => {
+            dispatch("delete");
+          }}
+        />
+      </span>
+    {/if}
   </button>
 {:else if node.contentType === NodeType.AUDIO && _url}
   <!-- <audio controls src={$node.body?.url} /> -->

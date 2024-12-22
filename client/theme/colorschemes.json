@@ -57,8 +57,8 @@
       "brs4": "hsl(229 19% 28%)",
       "fgs1": "hsl(0 0% 95%)",
       "fgs2": "hsl(0 0% 79%)",
-      "fgs3": "hsl(0 0% 81%)",
-      "fgs4": "hsl(0 0% 79%)"
+      "fgs3": "hsl(0 0% 65%)",
+      "fgs4": "hsl(0 0% 55%)"
     },
     "id": "colorscheme:clean_tidyblue_dark",
     "isDark": true,
@@ -122,8 +122,8 @@
       "brs4": "hsl(0 4% 24%)",
       "fgs1": "hsl(0 0% 95%)",
       "fgs2": "hsl(0 0% 79%)",
-      "fgs3": "hsl(0 0% 81%)",
-      "fgs4": "hsl(0 0% 79%)"
+      "fgs3": "hsl(0 0% 65%)",
+      "fgs4": "hsl(0 0% 55%)"
     },
     "id": "colorscheme:clean_tidyred_dark",
     "isDark": true,
@@ -189,8 +189,8 @@
       "brs4": "hsl(229 8% 28%)",
       "fgs1": "hsl(0 0% 100%)",
       "fgs2": "hsl(0 0% 92%)",
-      "fgs3": "hsl(0 0% 87%)",
-      "fgs4": "hsl(0 0% 79%)",
+      "fgs3": "hsl(0 0% 65%)",
+      "fgs4": "hsl(0 0% 55%)",
       "bgg1": "hsla(117, 23%, 19%, 1)"
     },
     "id": "colorscheme:clean_tidymono_dark",
@@ -260,8 +260,8 @@
       "brs4": "hsl(229 19% 28%)",
       "fgs1": "hsl(0 0% 95%)",
       "fgs2": "hsl(0 0% 79%)",
-      "fgs3": "hsl(0 0% 81%)",
-      "fgs4": "hsl(0 0% 79%)"
+      "fgs3": "hsl(0 0% 65%)",
+      "fgs4": "hsl(0 0% 55%)"
     },
     "id": "colorscheme:clean_tidyiris_dark",
     "isDark": true,
@@ -359,8 +359,8 @@
       "brs4": "hsl(81 4% 24%)",
       "fgs1": "hsl(0 0% 95%)",
       "fgs2": "hsl(0 0% 79%)",
-      "fgs3": "hsl(0 0% 81%)",
-      "fgs4": "hsl(0 0% 79%)"
+      "fgs3": "hsl(0 0% 65%)",
+      "fgs4": "hsl(0 0% 55%)"
     },
     "id": "colorscheme:clean_tidyapple_dark",
     "isDark": true,
@@ -391,8 +391,8 @@
       "brs4": "hsl(152 4% 24%)",
       "fgs1": "hsl(0 0% 95%)",
       "fgs2": "hsl(0 0% 79%)",
-      "fgs3": "hsl(0 0% 81%)",
-      "fgs4": "hsl(0 0% 79%)"
+      "fgs3": "hsl(0 0% 65%)",
+      "fgs4": "hsl(0 0% 55%)"
     },
     "id": "colorscheme:clean_tidyoxide_dark",
     "isDark": true,

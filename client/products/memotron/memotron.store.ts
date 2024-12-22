@@ -151,6 +151,13 @@ export class SearchStore {
         },
         limit: this.limit,
         offset: this.offset
+      },
+      {
+        isCloudOnlyResource:
+          this.searchType === SearchType.SEMANTIC &&
+          isValidString(this.searchQuery)
+            ? true
+            : false
       }
     );
 

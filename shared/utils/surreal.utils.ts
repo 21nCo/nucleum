@@ -5,8 +5,8 @@ import { pointronDboDefinitions } from "$lib/shared/dbo/pointron.dbo";
 import { pointronTables } from "$lib/shared/dbo/pointron.tables";
 import { globalTables } from "../dbo/global.tables";
 import {
-  IPrimitiveDbDataType,
-  IResourceSelectParams,
+  type IPrimitiveDbDataType,
+  type IResourceSelectParams,
   PersistenceActionType,
   SearchType,
   StoreDataType,

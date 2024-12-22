@@ -62,6 +62,21 @@ export const metaPropertyOptions = [
 
 export const universalPropertyOptions = [
   {
+    label: "Weather",
+    icon: "ph:cloud-sun-light",
+    value: UniversalPropertyType.WEATHER
+  },
+  {
+    label: "Mood log",
+    icon: "ph:smiley-light",
+    value: UniversalPropertyType.MOOD_LOG
+  },
+  {
+    label: "Reaction",
+    icon: "ph:thumbs-up-light",
+    value: UniversalPropertyType.REACTION
+  },
+  {
     label: "Country",
     icon: "ph:globe-light",
     value: UniversalPropertyType.COUNTRY

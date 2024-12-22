@@ -512,5 +512,23 @@ export const globalActions: IAction[] = [
         orientation: Orientation.Horizontal
       }
     }
+  },
+  {
+    action: Action.GO_BACK,
+    label: "Go back",
+    isMeta: true,
+    type: ActionType.FUNCTION,
+    fn: async () => {
+      appStore.goBack();
+    }
+  },
+  {
+    action: Action.GO_FORWARD,
+    label: "Go forward",
+    isMeta: true,
+    type: ActionType.FUNCTION,
+    fn: async () => {
+      appStore.goForward();
+    }
   }
 ];
