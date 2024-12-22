@@ -83,7 +83,7 @@
 
 {#if _file && (node.contentType === NodeType.FILE || isHidePreview)}
   <button
-    class="flex w-full h-full items-center justify-between p-3"
+    class="flex w-full items-center justify-between px-3 h-12"
     use:hoverable={{
       onHover: (e) => {
         isHovering = e;

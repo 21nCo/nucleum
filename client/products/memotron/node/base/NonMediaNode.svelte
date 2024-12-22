@@ -266,7 +266,9 @@
               on:close={closeRightPane}
             />
           {:else if $node.isInFocusMode}
-            <TableOfContents {mdId} />
+            <div class="flex">
+              <TableOfContents {mdId} />
+            </div>
           {/if}
         </div>
       {/key}

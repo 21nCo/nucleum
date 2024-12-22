@@ -82,9 +82,9 @@
               "bg-bgs2": isInView,
               "rounded-t-md": isFirstInView,
               "rounded-b-md": isLastInView,
-              "text-aps1": isActive
+              "text-aps1": isActive && !$mdStore.params?.isReadOnly
             },
-            !isActive && {
+            (!isActive || $mdStore.params?.isReadOnly) && {
               "text-fgs1": isInView,
               "text-fgs3": !isInView
             }
@@ -99,7 +99,7 @@
             class={cn(
               "bg-aps1 min-w-1.5 h-1.5 flex justify-center items-center rounded-full",
               {
-                "opacity-0": !isActive
+                "opacity-0": !isActive || $mdStore.params?.isReadOnly
               }
             )}
           >

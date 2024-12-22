@@ -31,7 +31,7 @@
     bg(parentBgIndex),
     {
       "w-48 text-b3": size === Size.sm,
-      "w-52 text-b2": size === Size.md,
+      "w-56 text-b2": size === Size.md,
       "w-64 text-b2": size === Size.lg,
       "w-72 text-b2": size === Size.xl
     }

@@ -12,7 +12,7 @@
 <div
   class="flex flex-col justify-between gap-4 h-80 p-3 bg-bgs1 border border-brs2 rounded-md"
 >
-  <div class="flex flex-col gap-2">
+  <div class="flex flex-col gap-2 overflow-y-auto">
     {#each universalPropertyOptions as option}
       <button
         class={cn(

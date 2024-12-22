@@ -3,7 +3,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { type IProperty, PropertyType } from "../property.type";
   import EndText from "./EndText.svelte";
-  import RatingPropertyConfig from "./RatingPropertyConfig.svelte";
+  import RatingPropertyConfig from "../ratingProperty/config/RatingPropertyConfig.svelte";
   import SelectPropertyConfig from "./selectProperty/SelectPropertyConfig.svelte";
   import UniversalPropertyConfig from "./universalProperty/UniversalPropertyConfig.svelte";
   export let row: IProperty;

@@ -65,7 +65,11 @@ export type IUniversalProperty = IPropertyInterface<
 >;
 
 export type IRatingPropertyConfig = {
-  ratingAvatar: AvatarWithCode<IconAvatar>;
+  /**
+   * @deprecated Use avatar instead
+   */
+  ratingAvatar?: AvatarWithCode<IconAvatar>;
+  avatar: string;
 };
 export type IRatingProperty = IPropertyInterface<
   PropertyType.RATING,
@@ -75,6 +79,10 @@ export type IRatingProperty = IPropertyInterface<
 export type IPropertyConfigOption = {
   id: string;
   label: string;
+  /**
+   * For Icon select universal properties
+   */
+  icon?: string;
   color?: number;
   groupId?: string;
 };
@@ -124,7 +132,10 @@ export enum UniversalPropertyType {
   LANGUAGE = "language",
   CURRENCY = "currency",
   CONTINENT = "continent",
-  TIMEZONE = "timezone"
+  TIMEZONE = "timezone",
+  WEATHER = "weather",
+  MOOD_LOG = "mood-log",
+  REACTION = "reaction"
 }
 
 export const textPropertyTypes = [
@@ -157,3 +168,9 @@ export type IPropertyEditorStore = IObservableStoreSubject & {
   properties: OmitForCaptureWithId<IProperty>[];
   typeToExtend?: ICollection;
 };
+
+export const iconSelectPropertyTypes = [
+  UniversalPropertyType.WEATHER,
+  UniversalPropertyType.MOOD_LOG,
+  UniversalPropertyType.REACTION
+];

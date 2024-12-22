@@ -155,6 +155,7 @@
           }
         }}
         use:tooltip={{
+          disabled: !$collection.isInEditMode,
           text: "Collection description"
         }}
       >

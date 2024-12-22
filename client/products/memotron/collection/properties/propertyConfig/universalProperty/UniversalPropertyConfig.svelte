@@ -1,17 +1,32 @@
 <script lang="ts">
   import { popover } from "$lib/client/actions/popover.action";
+  import Divider from "$lib/client/elements/Divider.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import {
+    iconSelectPropertyTypes,
     UniversalPropertyType,
+    type IPropertyConfigOption,
     type IUniversalProperty
   } from "$lib/client/products/memotron/collection/properties/property.type";
+  import { ColorStrength } from "$lib/client/types/appearance.type";
+  import { Orientation } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { enumToString } from "$lib/shared/utils/text.utils";
   import { universalPropertyOptions } from "../../property.store";
+  import { resolveUniversalPropertyOptions } from "../../property.utils";
   import UniversalPropertyConfigPopover from "./UniversalPropertyConfigPopover.svelte";
   export let property: IUniversalProperty;
   export let isPopoverOpen: boolean = false;
   let ref: HTMLElement;
+  let icons: IPropertyConfigOption[] = [];
+
+  $: isIconSelectType =
+    property.config?.type &&
+    iconSelectPropertyTypes.includes(property.config.type);
+
+  $: if (property.config?.type && isIconSelectType) {
+    icons = resolveUniversalPropertyOptions(property.config.type);
+  }
 
   function resolvePropertyIcon(type: UniversalPropertyType) {
     return (
@@ -49,7 +64,7 @@
           : resolvePropertyIcon(property.config.type)}
         size={Size.sm}
       />
-      <span>
+      <span class="whitespace-nowrap">
         {enumToString(property.config?.type)}
       </span>
     {:else}
@@ -60,4 +75,19 @@
     icon={isPopoverOpen ? "ph:caret-up-light" : "ph:caret-down-light"}
     size={Size.sm}
   />
+  {#if isIconSelectType}
+    <span class="flex gap-2 items-center w-1/2 h-full">
+      <Divider
+        orientation={Orientation.Vertical}
+        colorStrength={ColorStrength.Strong}
+      />
+      <div class="flex text-b2 gap-1">
+        {#each icons as icon}
+          <span>
+            {icon.icon}
+          </span>
+        {/each}
+      </div>
+    </span>
+  {/if}
 </div>
