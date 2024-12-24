@@ -94,17 +94,24 @@ export function generateUID() {
   );
 }
 
-export function isValidUrl(url: string) {
-  const urlPattern = new RegExp(
-    "^(https?:\\/\\/)?" +
-      "((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|" +
-      "((\\d{1,3}\\.){3}\\d{1,3}))" +
-      "(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*" +
-      "(\\?[;&a-z\\d%_.~+=-]*)?" +
-      "(\\#[-a-z\\d_]*)?$",
-    "i"
-  );
-  return urlPattern.test(url);
+export function isValidUrl(url: any): boolean {
+  if (url === undefined || url === null) {
+    return false;
+  }
+
+  try {
+    const urlObj = new URL(String(url));
+    if (!["http:", "https:"].includes(urlObj.protocol)) {
+      return false;
+    }
+    const hostname = urlObj.hostname;
+    if (!hostname || hostname.endsWith(".") || !hostname.includes(".")) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function isUrlMatchPattern(url: string) {
@@ -141,4 +148,55 @@ export function compareVersions(v1: string, v2: string) {
   if (minor1 !== minor2) return minor1 > minor2 ? 1 : -1;
   if (patch1 !== patch2) return patch1 > patch2 ? 1 : -1;
   return 0;
+}
+
+export function sanitize(text: string) {
+  const gistMatch = text.match(
+    /<script src="https:\/\/gist\.github\.com\/([^\/]+)\/([^"]+)\.js"><\/script>/
+  );
+  if (gistMatch) {
+    return {
+      embed: `https://gist.github.com/${gistMatch[1]}/${gistMatch[2]}`,
+      isGist: true
+    };
+  }
+
+  const gitlabMatch = text.match(
+    /<script src="https:\/\/gitlab\.com\/-\/snippets\/(\d+)\.js"><\/script>/
+  );
+  if (gitlabMatch) {
+    return {
+      embed: `https://gitlab.com/-/snippets/${gitlabMatch[1]}`,
+      isGist: true
+    };
+  }
+
+  const sanitizedText = text
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+    .replace(/javascript:/gi, "")
+    .replace(/on\w+=/gi, "")
+    .replace(/data:/gi, "");
+
+  if (
+    sanitizedText.startsWith("<iframe") ||
+    sanitizedText.startsWith("<video") ||
+    sanitizedText.startsWith("<audio") ||
+    sanitizedText.startsWith("<object") ||
+    sanitizedText.startsWith("<embed")
+  ) {
+    const url = sanitizedText.match(/src="([^"]+)"/)?.[1];
+    if (url) {
+      try {
+        const parsedUrl = new URL(url);
+        if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+          throw new Error("Invalid URL");
+        }
+        return { embed: url };
+      } catch {
+        throw new Error("Invalid URL");
+      }
+    }
+  }
+
+  return sanitizedText.replace(/<[^>]*>/g, "");
 }

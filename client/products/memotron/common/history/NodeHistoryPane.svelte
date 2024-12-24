@@ -43,7 +43,7 @@
       if (isValidArrayWithData(result)) {
         openActions = result.map((log: IAccessLog) => ({
           action: "Opened",
-          timestamp: log.createdAt
+          timestamp: new Date(log.createdAt)
         }));
         accessLogs = [...accessLogs, ...openActions];
       }
@@ -54,12 +54,13 @@
         }
       });
       if (isValidArrayWithData(mutations)) {
-        accessLogs = accessLogs.concat(
-          mutations.map((mutation: IMutation) => ({
+        accessLogs = [
+          ...accessLogs,
+          ...mutations.map((mutation: IMutation) => ({
             action: resolveMutationAction(mutation),
             timestamp: new Date(mutation.createdAt)
           }))
-        );
+        ];
       }
       accessLogs = accessLogs.sort(
         (a, b) => b.timestamp.getTime() - a.timestamp.getTime()

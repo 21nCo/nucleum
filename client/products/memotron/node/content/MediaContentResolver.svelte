@@ -14,11 +14,8 @@
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import Button from "$lib/client/elements/button/Button.svelte";
   import { formatBytes } from "$lib/shared/utils/text.utils";
-  import { createEventDispatcher } from "svelte";
-  import { hoverable } from "$lib/client/actions/hover.action";
-  const dispatch = createEventDispatcher();
+  import { resolveFileIcon } from "../node.utils";
 
   export let node: INode;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -28,7 +25,6 @@
   let webContentRef: any;
   let _file: IFile;
   let _url: string;
-  let isHovering: boolean = false;
   onMount(() => {
     resolveData();
   });
@@ -48,73 +44,17 @@
     _file = result;
     _url = _file.url ?? "";
   }
-
-  function resolveFileIcon() {
-    if (!_file) return;
-    if (_file.type.includes("zip") || _file.label?.endsWith(".zip"))
-      return "ph:file-zip-light";
-    if (
-      _file.type.includes("excel") ||
-      _file.label?.endsWith(".xlsx") ||
-      _file.label?.endsWith(".xls")
-    )
-      return "ph:file-xls-light";
-    if (
-      _file.type.includes("word") ||
-      _file.label?.endsWith(".docx") ||
-      _file.label?.endsWith(".doc")
-    )
-      return "ph:file-doc-light";
-    if (_file.type.includes("powerpoint") || _file.label?.endsWith(".pptx"))
-      return "ph:file-ppt-light";
-
-    if (_file.type.includes("csv") || _file.label?.endsWith(".csv"))
-      return "ph:file-csv-light";
-
-    if (_file.type.includes("html") || _file.label?.endsWith(".html"))
-      return "ph:file-html-light";
-
-    if (_file.type.includes("text") || _file.label?.endsWith(".txt"))
-      return "ph:file-txt-light";
-
-    return "ph:file-light";
-  }
 </script>
 
 {#if _file && (node.contentType === NodeType.FILE || isHidePreview)}
-  <button
-    class="flex w-full items-center justify-between px-3 h-12"
-    use:hoverable={{
-      onHover: (e) => {
-        isHovering = e;
-      }
-    }}
-  >
+  <button class="flex w-full items-center justify-between h-12">
     <span class="flex items-center gap-2">
-      <Icon icon={resolveFileIcon()} size={Size.xl} />
+      <Icon icon={resolveFileIcon(_file)} size={Size.lg} />
       <span class="text-sm">{_file.name ?? _file.label}</span>
       <span class="text-xs text-fgs4">
         {_file.size ? formatBytes(_file.size) : "Unknown size"}
       </span>
     </span>
-    {#if isHovering}
-      <span class="flex items-center gap-1">
-        <Button
-          icon="ph:download-simple-light"
-          tooltip="Download file"
-          on:click={() => {
-            fileStore.download(_file);
-          }}
-        />
-        <Button
-          icon="ph:trash"
-          tooltip="Delete file"
-          on:click={() => {
-            dispatch("delete");
-          }}
-        />
-      </span>
-    {/if}
   </button>
 {:else if node.contentType === NodeType.AUDIO && _url}
   <!-- <audio controls src={$node.body?.url} /> -->

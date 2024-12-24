@@ -232,6 +232,7 @@ export class ActiveCollectionStore extends ActiveResourceStore<
         val.accessMode = accessMode;
         return val;
       });
+      console.time("ActiveCollectionStore.init - select");
       const result = await flux.select(this.id, [
         "*",
         "(select * from $parent.views) as views",
@@ -239,16 +240,15 @@ export class ActiveCollectionStore extends ActiveResourceStore<
         "typeToExtend.* as typeToExtend"
         // "(array::first(select out, count() from link where out is $parent.id group by out)).count as totalNodeCount"
       ]);
+      console.timeEnd("ActiveCollectionStore.init - select");
       logger.log({ at: "ActiveCollectionStore.init - select", result });
       let record = result;
       if (!record) return;
-      const totalNodeCount = await collectionStore.resolveNodeCount(this.id);
       this.set({
         ...record,
         accessMode,
         isViewDataLoading: true,
         isPageLoading: false,
-        totalNodeCount,
         views: record.views.map((x) => {
           return { ...x, data: [] };
         })
@@ -263,6 +263,18 @@ export class ActiveCollectionStore extends ActiveResourceStore<
         error: e
       });
     }
+  }
+
+  async refreshTotalNodeCount() {
+    console.time("ActiveCollectionStore.refreshTotalNodeCount");
+    const totalNodeCount = await collectionStore.resolveNodeCount(this.id);
+    if (totalNodeCount) {
+      this.update((val) => {
+        val.totalNodeCount = totalNodeCount;
+        return val;
+      });
+    }
+    console.timeEnd("ActiveCollectionStore.refreshTotalNodeCount");
   }
 
   async createView(viewToDuplicate?: IRecordId) {
@@ -350,7 +362,9 @@ export class ActiveCollectionStore extends ActiveResourceStore<
         val.isViewDataLoading = true;
         return val;
       });
+      console.time("ActiveCollectionStore.loadViewData - fetchViewData");
       const response = await viewStore.fetchViewData(collection.id, view);
+      console.timeEnd("ActiveCollectionStore.loadViewData - fetchViewData");
       logger.log({
         at: "ActiveCollectionStore.loadViewData - response",
         view,

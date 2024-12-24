@@ -209,6 +209,7 @@
   <div class="flex px-3 py-2">
     <TextInput
       bind:value={newLabel}
+      hasControls={true}
       on:enter={addOption}
       on:save={addOption}
       on:cancel={() => {

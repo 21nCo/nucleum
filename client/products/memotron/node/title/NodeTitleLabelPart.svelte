@@ -47,7 +47,7 @@
     "text-b2":
       accessPoint !== ResourceAccessPoint.SEARCH_RESULT &&
       accessPoint !== ResourceAccessPoint.SELF,
-    "text-fgs3": accessPoint === ResourceAccessPoint.MARKDOWN_EMBED,
+    "text-fgs2": accessPoint === ResourceAccessPoint.MARKDOWN_EMBED,
     "text-h4 font-medium": accessPoint === ResourceAccessPoint.SELF
   })}
   on:click

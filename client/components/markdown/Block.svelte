@@ -56,6 +56,9 @@
   import { UserDataMode } from "$lib/client/types/account.type";
   import { Persistence } from "$lib/client/persistence/persistence";
   import { wait } from "$lib/client/utils/time.utils";
+  import { nodeStore } from "$lib/client/products/memotron/node/node.store";
+  import { appStore } from "$lib/client/stores/app.store";
+  import type { IMultiFileCaptureData } from "$lib/client/products/memotron/capture/capture.type";
 
   export let block: IBlock;
   export let mdStore: MdStoreType;
@@ -182,6 +185,10 @@
         handleBackspaceWithContent();
         break;
 
+      case BlockAction.GO_TO_EXTERNAL_LINK:
+        handleGoToExternalLink();
+        break;
+
       default:
         propagate(action, data);
         break;
@@ -191,6 +198,13 @@
   function deleteBlock() {
     mdStore.deleteBlock(block.id);
     propagateAsAction(BlockAction.DELETE, {});
+  }
+
+  async function handleGoToExternalLink() {
+    if (!block.body?.id) return;
+    const node = await nodeStore.select(block.body.id);
+    if (!node || !node.url) return;
+    appStore.openLink(node.url);
   }
 
   function handleBackspaceWithContent() {
@@ -259,6 +273,8 @@
       const text: string = resolveBodyText() ?? "";
       // block.body = null;
       data.label = text;
+    } else if (data.toType === NodeType.EMBED) {
+      data.body = { subType: NodeType.UNKNOWN };
     }
     block.contentType = data.toType;
     if (data.body) block.body = data.body;
@@ -314,6 +330,8 @@
         data.body = "";
       } else if (headingNodeTypes.includes(data.blockType)) {
         data.label = "";
+      } else if (data.blockType === NodeType.EMBED) {
+        data.body = { subType: NodeType.UNKNOWN };
       }
     } else {
       if (!data) data = {};
@@ -557,78 +575,19 @@
     event.preventDefault();
     progressState = "Pasting";
     try {
-      const items = event?.clipboardData?.items;
-      if (!items) return;
-      const itemArray = Array.from(items);
-      logger.log({
-        at: "handlePaste",
-        items,
-        length: items?.length,
-        types: itemArray.map((i) => i.type)
-      });
-      // const allTexts = await Promise.all(
-      //   itemArray.map((i) => getAsStringPromise(i))
-      // );
-      // console.log("allTexts", allTexts);
-
-      const isMultipleFiles =
-        items.length > 1 && itemArray.every((i) => !i.type.includes("text"));
-      if (isMultipleFiles) {
-        await handlePasteForMultipleFiles(event);
+      const data = await captureStore.resolvePasteContents(event);
+      if (!data || data.error) {
+        toasts.error(data?.error ?? "Failed to paste. Please try again.");
         return;
       }
-
-      const isSimpleText =
-        (items.length === 1 && items[0].type === "text/plain") ||
-        itemArray.every((i) => i.type.includes("text"));
-      if (isSimpleText) {
-        const simpleTextItem =
-          items.length === 1
-            ? items[0]
-            : itemArray.find((i) => i.type === "text/plain");
-        await handlePasteForText(simpleTextItem);
+      if (data.multipleFiles) {
+        insertMultipleFiles(data.multipleFiles);
         return;
       }
-
-      const isMdText = itemArray.some(
-        (i) => i.type === "text/markdown" || i.type.includes("notion")
-      );
-      if (isMdText) {
-        const mdTextItem = itemArray.find((i) => i.type === "text/plain");
-        await handlePasteForText(mdTextItem);
-        return;
-      }
-
-      const isCodeText = itemArray.some((i) => i.type === "vscode-editor-data");
       let newBlock: Pick<IBlock, "contentType" | "body"> | undefined;
       let fileEmbed: any;
-      if (isCodeText) {
-        const [text, metadataString] = await Promise.all([
-          getAsStringPromise(itemArray.find((i) => i.type === "text/plain")),
-          getAsStringPromise(
-            itemArray.find((i) => i.type === "vscode-editor-data")
-          )
-        ]);
-        let metadata;
-        try {
-          metadata = metadataString ? JSON.parse(metadataString) : null;
-        } catch (e) {
-          metadata = null;
-        }
-
-        newBlock = {
-          contentType: NodeType.CODE,
-          body: {
-            text,
-            language: metadata?.mode
-          }
-        };
-      } else {
-        const blob = items[0].getAsFile();
-        if (!blob) {
-          throw new Error("blob not found");
-        }
-        fileEmbed = await captureStore.saveFile(blob, undefined, {
+      if (data.file) {
+        fileEmbed = await captureStore.saveFile(data.file, data.contentType, {
           isEmbedContext: true,
           creationContext: nodeContext?.id ?? undefined
         });
@@ -642,78 +601,87 @@
             subType: fileEmbed.contentType
           }
         };
+        processPasteOrDrop(newBlock, fileEmbed);
+        return;
       }
-      processPasteOrDrop(newBlock, fileEmbed);
+
+      if (!data.text) return;
+      if (data.textMetadata?.isMultiBlockText) {
+        const blocks = textToMdBlocks(data.text, nodeContext?.contentType);
+        mdStore.insertMany(block.id, blocks);
+        propagateAsAction(BlockAction.INSERT_MANY, { blocks });
+        return;
+      }
+      if (
+        data.textMetadata?.isEmbed ||
+        data.contentType === NodeType.YOUTUBE_VIDEO
+      ) {
+        const webpageNode = await captureStore.saveWebpage(data.text, {
+          contentType: data.contentType,
+          isEmbedContext: true,
+          creationContext: nodeContext?.id ?? undefined
+        });
+        if (!webpageNode) return;
+        newBlock = {
+          contentType: NodeType.EMBED,
+          body: {
+            id: webpageNode[0].id,
+            subType: webpageNode[0].contentType
+          }
+        };
+        processPasteOrDrop(newBlock, webpageNode[0]);
+        return;
+      }
+      if (data.contentType === NodeType.CODE) {
+        newBlock = {
+          contentType: NodeType.CODE,
+          body: {
+            text: data.text,
+            language: data.textMetadata?.codeLanguage
+          }
+        };
+        processPasteOrDrop(newBlock);
+        return;
+      }
+
+      let modifiedBlockText;
+      if (!data.textMetadata?.isUrl) {
+        modifiedBlockText = editBlockText(block, data.text, {
+          isAppend: true
+        });
+      } else {
+        progressState = "Inserting inline link";
+        let label = data.text.split("://").pop()?.split("/")[0];
+        if ($account?.dataMode === UserDataMode.CLOUD) {
+          try {
+            const urlData = await new Persistence().retrieveUrlData(data.text);
+            if (urlData?.parsedData) {
+              label = isValidString(urlData.parsedData.label)
+                ? urlData.parsedData.label
+                : isValidString(urlData.parsedData.metadata?.ogTitle)
+                  ? urlData.parsedData.metadata.ogTitle
+                  : label;
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        }
+        const urlText = `[${label}](${data.text})`;
+        modifiedBlockText = editBlockText(block, urlText, {
+          isAppend: true
+        });
+      }
+
+      block.body = modifiedBlockText;
+      propagate(BlockAction.CHANGE, { body: modifiedBlockText });
+      contentRefreshId = new Date().getTime();
+      mdStore.focusBlock(block.id, { isBottom: true });
     } catch (e) {
       logger.error({ at: "handlePaste", error: e });
       toasts.error("Failed to paste. Please try again.");
     } finally {
       progressState = undefined;
       event.preventDefault();
-    }
-
-    async function handlePasteForText(item: DataTransferItem | undefined) {
-      if (!item) {
-        throw new Error("No text item found");
-      }
-      const text = await getAsStringPromise(item);
-      const spans = text.split("\n");
-
-      if (spans.length === 1) {
-        const isUrl = text.startsWith("http") && isValidUrl(text);
-        let modifiedBlockText;
-        if (isUrl) {
-          progressState = "Inserting inline link";
-          let label = text.split("://").pop()?.split("/")[0];
-          if ($account?.dataMode === UserDataMode.CLOUD) {
-            try {
-              const data = await new Persistence().retrieveUrlData(text);
-              if (data?.parsedData) {
-                label = isValidString(data.parsedData.label)
-                  ? data.parsedData.label
-                  : isValidString(data.parsedData.metadata?.ogTitle)
-                    ? data.parsedData.metadata.ogTitle
-                    : label;
-              }
-            } catch (e) {
-              console.error(e);
-            }
-          }
-          const urlText = `[${label}](${text})`;
-          modifiedBlockText = editBlockText(block, urlText, {
-            isAppend: true
-          });
-        } else {
-          modifiedBlockText = editBlockText(block, text, {
-            isAppend: true
-          });
-        }
-        block.body = modifiedBlockText;
-        propagate(BlockAction.CHANGE, { body: modifiedBlockText });
-        contentRefreshId = new Date().getTime();
-        mdStore.focusBlock(block.id, { isBottom: true });
-        return;
-      }
-      const blocks = textToMdBlocks(text, nodeContext?.contentType);
-      mdStore.insertMany(block.id, blocks);
-      propagateAsAction(BlockAction.INSERT_MANY, { blocks });
-    }
-
-    function getAsStringPromise(item?: DataTransferItem): Promise<string> {
-      return new Promise((resolve) => {
-        if (!item) {
-          resolve("");
-          return;
-        }
-        item.getAsString((value) => resolve(value));
-      });
-    }
-
-    function handlePasteForMultipleFiles(event: ClipboardEvent) {
-      const filesData = event?.clipboardData?.files;
-      if (!filesData) return;
-      let allFiles = Array.from(filesData);
-      return insertMultipleFiles(allFiles);
     }
   }
 
@@ -810,7 +778,7 @@
       if (all.length === 0) return;
       progressState = "Uploading";
       if (all.length !== 1) {
-        await insertMultipleFiles(all);
+        await handleMultiFileDrop(all);
         return;
       }
       let file = all[0];
@@ -841,7 +809,7 @@
    * Added wait so that progress element is present in DOM before the progress is being updated in captureStore.saveMultipleFiles
    * @param files
    */
-  async function insertMultipleFiles(files: File[]) {
+  async function handleMultiFileDrop(files: File[]) {
     logger.log({ at: "insertMultipleFiles", files });
     if (!files || files.length === 0) return;
     const multipleFilesData = resolveMultipleFilesData(files, MAX_FILE_SIZE_MB);
@@ -850,6 +818,10 @@
       toasts.error(error);
       return;
     }
+    insertMultipleFiles(multipleFilesData);
+  }
+
+  async function insertMultipleFiles(multipleFilesData: IMultiFileCaptureData) {
     await wait(10);
     const result = await captureStore.saveMultipleFiles(
       multipleFilesData.files,

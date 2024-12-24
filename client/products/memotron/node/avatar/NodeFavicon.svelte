@@ -3,10 +3,10 @@
   import { Size } from "$lib/client/types/size.enum";
   import { onMount } from "svelte";
   import { type INode, NodeType } from "../../node/node.type";
-  import { urlMap } from "../../common/urlMap";
   import { lazyLoad } from "$lib/client/actions/lazyload.action";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { resolveNodeFavicon } from "../node.utils";
+  import { resolveFallbackIconForUrl, resolveNodeFavicon } from "../node.utils";
+  import { isValidUrl } from "$lib/shared/utils/utils";
   export let node: INode;
   export let size: Size.sm | Size.md | Size.lg = Size.md;
   let favicon: string | undefined = undefined;
@@ -22,7 +22,7 @@
     <Icon icon="ph:crop-thin" {size} />
   {:else if node.contentType === NodeType.KINDLE_HIGHLIGHT}
     <Icon icon="book-open" {size} />
-  {:else if favicon}
+  {:else if isValidUrl(favicon)}
     <img
       use:lazyLoad={favicon}
       alt="favicon"
@@ -33,6 +33,6 @@
       })}
     />
   {:else}
-    <Icon icon="globe-alt" {size} />
+    <Icon icon={resolveFallbackIconForUrl(node.url)} {size} />
   {/if}
 </span>

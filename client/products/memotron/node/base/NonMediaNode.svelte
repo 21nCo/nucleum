@@ -265,7 +265,7 @@
               bind:pane={rightPane}
               on:close={closeRightPane}
             />
-          {:else if $node.isInFocusMode}
+          {:else if $node.isInFocusMode && !isConstrainedWidth}
             <div class="flex">
               <TableOfContents {mdId} />
             </div>

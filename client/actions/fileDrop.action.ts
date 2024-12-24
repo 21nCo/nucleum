@@ -97,6 +97,11 @@ export function fileDrop(node: HTMLElement, options = {}) {
     input.click();
   }
 
+  function handleBrowse() {
+    if (settings.disabled) return;
+    input.click();
+  }
+
   function handleChange() {
     if (!input.files) return;
     handleFiles(input.files);
@@ -109,6 +114,7 @@ export function fileDrop(node: HTMLElement, options = {}) {
   node.addEventListener("dragleave", handleDragLeave);
   node.addEventListener("drop", handleDrop);
   node.addEventListener("click", handleClick);
+  node.addEventListener("browse", handleBrowse);
   input.addEventListener("change", handleChange);
 
   return {

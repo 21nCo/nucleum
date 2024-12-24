@@ -12,7 +12,8 @@ import {
 } from "$lib/client/products/memotron/node/node.type";
 import {
   CaptureType,
-  type ICaptureStore
+  type ICaptureStore,
+  type IPasteCaptureData
 } from "$lib/client/products/memotron/capture/capture.type";
 import account from "$lib/client/stores/account.store";
 import { toasts } from "$lib/client/stores/notification.store";
@@ -27,7 +28,10 @@ import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.sto
 import { logger } from "$lib/client/components/debug/logger.client";
 import { linker } from "$lib/client/products/memotron/linking/link.store";
 import { collectionStore } from "../collection/collection.store";
-import { resolveContentTypeForFile } from "./capture.utils";
+import {
+  resolveContentTypeForFile,
+  resolveMultipleFilesData
+} from "./capture.utils";
 import {
   ResourceAccessMode,
   type OmitForCapture
@@ -43,7 +47,7 @@ import {
   isSameResource,
   resourceInList
 } from "$lib/client/components/flux/resourceStores/resource.utils";
-import { resolveResource } from "../memotron.store";
+import { MAX_FILE_SIZE_MB, resolveResource } from "../memotron.store";
 import { fileStore } from "$lib/client/components/files/file.store";
 import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 import { appStore } from "$lib/client/stores/app.store";
@@ -58,6 +62,11 @@ import { Embed } from "$lib/client/types/context.type";
 import { TacoActions } from "../taco/taco.types";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { runVectorGeneration } from "../taco/taco.store";
+import {
+  fetchYouTubeMetadata,
+  resolveUrlData,
+  sanitizeAndResolve
+} from "../node/url.utils";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
@@ -208,6 +217,143 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       val.links = val.links?.filter((link) => !isSameResource(link.to, id));
       return val;
     });
+  }
+
+  async resolvePasteContents(
+    event: ClipboardEvent
+  ): Promise<IPasteCaptureData | undefined> {
+    const items = event?.clipboardData?.items;
+    if (!items) return;
+    const itemArray = Array.from(items);
+    logger.log({
+      at: "handlePaste",
+      items,
+      length: items?.length,
+      types: itemArray.map((i) => i.type)
+    });
+    // const allTexts = await Promise.all(
+    //   itemArray.map((i) => getAsStringPromise(i))
+    // );
+    // console.log("allTexts", allTexts);
+    const isAllFiles =
+      items.length > 1 && itemArray.every((i) => !i.type.includes("text"));
+    const files = event?.clipboardData?.files;
+    if (files && files.length > 0) {
+      if (!files) return;
+      let allFiles = Array.from(files);
+      const multipleFilesData = resolveMultipleFilesData(
+        allFiles,
+        MAX_FILE_SIZE_MB
+      );
+      if (
+        files.length === 1 &&
+        multipleFilesData &&
+        multipleFilesData.sizeExceededCount === 1
+      ) {
+        return {
+          error: `File size exceeds the maximum limit of ${MAX_FILE_SIZE_MB} MB.`
+        };
+      } else if (multipleFilesData && multipleFilesData.sizeExceededCount > 1) {
+        return {
+          error: `${multipleFilesData.sizeExceededCount} files exceed the maximum size of ${MAX_FILE_SIZE_MB} MB.`
+        };
+      }
+      if (files.length === 1) {
+        const fileData = multipleFilesData.files[0];
+        return {
+          file: fileData.file,
+          contentType: fileData.contentType
+        };
+      }
+      return {
+        multipleFiles: multipleFilesData
+      };
+    }
+
+    const text = event?.clipboardData?.getData("text");
+    if (!text) return;
+    const sanitized = sanitizeAndResolve(text);
+
+    const isCodeText = itemArray.some((i) => i.type === "vscode-editor-data");
+    if (isCodeText && typeof sanitized === "string") {
+      const [text, metadataString] = await Promise.all([
+        getAsStringPromise(itemArray.find((i) => i.type === "text/plain")),
+        getAsStringPromise(
+          itemArray.find((i) => i.type === "vscode-editor-data")
+        )
+      ]);
+      let metadata;
+      try {
+        metadata = metadataString ? JSON.parse(metadataString) : null;
+      } catch (e) {
+        metadata = null;
+      }
+
+      return {
+        contentType: NodeType.CODE,
+        text: sanitized,
+        textMetadata: { codeLanguage: metadata?.mode }
+      };
+    }
+
+    if (typeof sanitized === "object") {
+      return {
+        contentType: sanitized.contentType,
+        text: sanitized.url,
+        textMetadata: {
+          isUrl: true,
+          isEmbed: sanitized.isEmbed
+        }
+      };
+    }
+    const isMdText = itemArray.some(
+      (i) => i.type === "text/markdown" || i.type.includes("notion")
+    );
+    const spans = sanitized.split("\n");
+
+    if (spans.length > 1) {
+      return {
+        text: sanitized,
+        textMetadata: {
+          isMultiBlockText: true,
+          isMarkdown: isMdText
+        }
+      };
+    }
+
+    return {
+      text: sanitized,
+      textMetadata: {
+        isMarkdown: isMdText
+      }
+    };
+
+    if (isMdText) {
+      const mdTextItem = itemArray.find((i) => i.type === "text/plain");
+      // await handlePasteForText(mdTextItem);
+    }
+
+    const isSimpleText =
+      (items.length === 1 && items[0].type === "text/plain") ||
+      itemArray.every((i) => i.type.includes("text"));
+    if (isSimpleText) {
+      const simpleTextItem =
+        items.length === 1
+          ? items[0]
+          : itemArray.find((i) => i.type === "text/plain");
+      // await handlePasteForText(simpleTextItem);
+      return;
+    }
+
+    function getAsStringPromise(item?: DataTransferItem): Promise<string> {
+      return new Promise((resolve) => {
+        if (!item) {
+          resolve("");
+          return;
+        }
+        item.getAsString((value) => resolve(value));
+      });
+    }
   }
 
   async saveFile(
@@ -371,13 +517,21 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
   async saveWebpage(
     text: string,
     params?: {
+      contentType?: NodeType;
       isPreventOpenOnSave?: boolean;
       isEmbedContext?: boolean;
       creationContext?: IRecordId;
     }
   ) {
+    if (params?.isEmbedContext) {
+      const urlData = resolveUrlData(text);
+      if (urlData?.convertToEmbedUrl) {
+        text = urlData.convertToEmbedUrl(text);
+      }
+    }
+
     let node: OmitForCapture<IWebPage> = {
-      contentType: NodeType.WEB_PAGE,
+      contentType: params?.contentType ?? NodeType.WEB_PAGE,
       label: text.split("://").pop(),
       url: text,
       creationContext: params?.isEmbedContext
@@ -390,18 +544,32 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     };
     const accountVal = account.get();
     if (accountVal?.dataMode === UserDataMode.CLOUD) {
-      const data = await new Persistence().retrieveUrlData(text);
-      if (data?.parsedData) {
-        const parsedData = data.parsedData;
-        node.label = parsedData.label ?? node.label;
-        node.url = parsedData.url ?? node.url;
-        node.contentType = parsedData.contentType ?? node.contentType;
-        node.body.description =
-          parsedData.body.description ?? node.body.description;
-        node.body.hash = parsedData.body.hash ?? node.body.hash;
-        node.metadata = {
-          ...parsedData.metadata
-        };
+      if (params?.contentType === NodeType.YOUTUBE_VIDEO) {
+        const youtubeMetadata = await fetchYouTubeMetadata(text);
+        if (youtubeMetadata) {
+          node.label = youtubeMetadata.title;
+          node.metadata = {
+            authorName: youtubeMetadata.author_name,
+            authorUrl: youtubeMetadata.author_url,
+            thumbnailUrl: youtubeMetadata.thumbnail_url
+          };
+        }
+      } else {
+        const data = await new Persistence().retrieveUrlData(text);
+        console.log({ at: "saveWebpage - retrieveUrlData", data });
+        if (data?.parsedData) {
+          const parsedData = data.parsedData;
+          node.label = parsedData.label ?? node.label;
+          node.url = parsedData.url ?? node.url;
+          node.contentType =
+            params?.contentType ?? parsedData.contentType ?? node.contentType;
+          node.body.description =
+            parsedData.body.description ?? node.body.description;
+          node.body.hash = parsedData.body.hash ?? node.body.hash;
+          node.metadata = {
+            ...parsedData.metadata
+          };
+        }
       }
     }
     const result = await nodeStore.create(node, {

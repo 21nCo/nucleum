@@ -39,7 +39,7 @@
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
   import SearchSingleSelect from "$lib/client/elements/select/SearchSingleSelect.svelte";
-  import { CollectionType } from "../collection.type";
+  import { CollectionType, type ICollection } from "../collection.type";
   import { confirmationNotification } from "$lib/client/stores/notification.store";
   import { AlertType } from "$lib/client/types/notification.type";
   import Button from "$lib/client/elements/button/Button.svelte";
@@ -53,10 +53,12 @@
   } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { resolvePropertyDefaultConfig } from "./property.utils";
   import { objIsEmpty } from "$lib/shared/utils/obj.utils";
+  import CollectionTitleLabelPart from "../title/CollectionTitleLabelPart.svelte";
   export let id: IRecordId | undefined = undefined;
   let collection: IActiveCollectionStore | undefined = id
     ? ActiveCollectionStore.resolve(id)
     : undefined;
+  let derivedCollections: ICollection[] = [];
   let tableId = "properties-table";
   let columns: TableColumn[] = [
     {
@@ -132,8 +134,17 @@
   onMount(async () => {
     if (collection && (!$collection || !$collection.label)) {
       await collection.init(ResourceAccessMode.POP);
-      isTypeExtension = $propertyEditorStore?.typeToExtend ? true : false;
+    } else {
+      propertyEditorStore.set({
+        properties: $collection?.properties ?? [],
+        typeToExtend: $collection?.typeToExtend
+      });
     }
+    isTypeExtension = $propertyEditorStore?.typeToExtend ? true : false;
+    if (collection)
+      derivedCollections = await collectionStore.fetchDerivedCollections(
+        collection?.id
+      );
   });
 
   function onPropertyTypeChange(e: { id: IRecordId; type: PropertyType }) {
@@ -201,9 +212,6 @@
 
   async function onTypeExtensionChange(e: CustomEvent) {
     if (e.detail && collection) {
-      const derivedCollections = await collectionStore.fetchDerivedCollections(
-        collection.id
-      );
       if (derivedCollections.length > 0) {
         confirmationNotification.notify({
           message: `**${derivedCollections.length} collection(s)** are derived from this collection. This collection cannot extend another collection.`,
@@ -231,8 +239,15 @@
 
   function onGotoBase() {
     if (!$propertyEditorStore.typeToExtend?.id) return;
+    onGoto(
+      $propertyEditorStore.typeToExtend.id,
+      $propertyEditorStore.typeToExtend.label
+    );
+  }
+
+  function onGoto(id: IRecordId, label?: string) {
     confirmationNotification.notify({
-      message: `You are about to redirect to **${$propertyEditorStore.typeToExtend?.label}** collection. Please save your changes before proceeding.`,
+      message: `You are about to redirect to **${label ?? "Untitled"}** collection. Please save your changes before proceeding.`,
       title: "Save changes",
       type: AlertType.WARNING,
       confirmAction: {
@@ -240,10 +255,7 @@
         callback: async () => {
           await onSave();
           modalEvent.hide(MemotronAction.EDIT_COLLECTION_PROPERTIES);
-          appStore.openResource(
-            $propertyEditorStore.typeToExtend?.id!,
-            ResourceAccessMode.POP
-          );
+          appStore.openResource(id, ResourceAccessMode.POP);
           return true;
         }
       }
@@ -306,6 +318,26 @@
                   on:click={onGotoBase}
                 />
               {/if}
+            </div>
+          </div>
+        {/if}
+        {#if derivedCollections.length > 0}
+          <div class="flex flex-col items-start w-full gap-2">
+            <Text
+              content="Derived collections"
+              style={TextStyle.SECTION_HEADING}
+            />
+            <div class="flex items-center flex-wrap w-full gap-2">
+              {#each derivedCollections as collection}
+                <button
+                  class="flex items-center gap-2 hover:text-aps1 px-2 py-0.5 border border-brs3 hover:border-aps1 rounded-md"
+                  on:click={() => {
+                    onGoto(collection.id, collection.label);
+                  }}
+                >
+                  <CollectionTitleLabelPart item={collection} />
+                </button>
+              {/each}
             </div>
           </div>
         {/if}

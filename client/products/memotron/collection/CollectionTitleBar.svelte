@@ -26,6 +26,7 @@
   import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
   import FormLabelTooltip from "$lib/client/elements/text/formLabel/FormLabelTooltip.svelte";
   import { isValidAvatar } from "$lib/client/elements/avatarPicker/avatar.utils";
+  import { fade } from "svelte/transition";
 
   const dispatch = createEventDispatcher();
   export let searchQuery: string = "";
@@ -239,6 +240,7 @@
             // "ml-2": isSingleViewMode && !isMiniSearch,
             "flex-1 border px-3 py-2": !isMiniSearch || isSearchFocused
           })}
+          transition:fade={{ duration: 100 }}
         >
           {#if isMiniSearch && !isSearchFocused}
             <Button

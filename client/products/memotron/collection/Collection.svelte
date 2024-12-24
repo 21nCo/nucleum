@@ -36,8 +36,6 @@
     ResourceAccessPoint
   } from "$lib/client/components/flux/resourceStores/resource.type";
   import { isValidString } from "$lib/shared/utils/text.utils";
-
-  import { metaPropertyOptions } from "./properties/property.store";
   import {
     CollectionLayout,
     CollectionType,
@@ -157,6 +155,7 @@
     refreshViewsLane();
     isReady = true;
     await refresh({ isNewView: true });
+    await collection.refreshTotalNodeCount();
   });
 
   async function resolvePropertyList() {

@@ -4,7 +4,6 @@ import { GlobalEvent, type Event } from "../types/event.enum";
 import type { IPopoverRenderParams } from "../types/popover.type";
 import { deepCopy } from "../../shared/utils/obj.utils";
 import { logger } from "../components/debug/logger.client";
-import { urlMap } from "../products/memotron/common/urlMap";
 
 function documentDimensions() {
   const documentWidth = window.innerWidth;
@@ -451,28 +450,6 @@ export function trackPosition(node: HTMLElement) {
       cancelAnimationFrame(frame);
     }
   };
-}
-
-export async function resolveIframability(url: string): Promise<boolean> {
-  try {
-    return new Promise(async (resolve) => {
-      if (!url) {
-        resolve(false);
-        return;
-      }
-      const host = new URL(url).host;
-      const fromUrlMap = urlMap.find(
-        (x) => x.domain === host || host.includes("." + x.domain)
-      );
-      if (fromUrlMap?.isIframeable) {
-        resolve(true);
-        return;
-      }
-      resolve(false);
-    });
-  } catch (e) {
-    return Promise.resolve(false);
-  }
 }
 
 export async function generateFingerprint() {

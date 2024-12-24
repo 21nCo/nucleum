@@ -33,6 +33,7 @@
   import { isValidString } from "$lib/shared/utils/text.utils";
   import {
     isEmptyMd,
+    resolveDefaultBodyForBlock,
     textToMdBlocks
   } from "$lib/client/components/markdown/markdown.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
@@ -117,42 +118,20 @@
    */
   async function onClipboard() {
     try {
+      logger.debug({
+        at: "Capture.svelte - onClipboard",
+        clipboard: $captureStore.clipboard
+      });
       isProcessingClipboard = true;
       const ogEmptyState = isEmptyState;
       isEmptyState = false;
       if (!$captureStore.clipboard || !$captureStore.body) return;
+      const data = $captureStore.clipboard;
       let newBlock: IBlock[] | undefined = undefined;
-      if (
-        $captureStore.clipboard.text &&
-        (!$captureStore.clipboard.contentType ||
-          $captureStore.clipboard.contentType === NodeType.SIMPLE_TEXT)
-      ) {
-        newBlock = textToMdBlocks($captureStore.clipboard.text);
-      } else if ($captureStore.clipboard.file) {
-        const result = await captureStore.saveFile(
-          $captureStore.clipboard.file,
-          $captureStore.clipboard.contentType,
-          {
-            isEmbedContext: true
-          }
-        );
-        if (!result || "error" in result) return;
-        newBlock = [
-          {
-            id: generateResourceId(Resource.node),
-            contentType: NodeType.EMBED,
-            body: {
-              id: result.id,
-              subType: result.contentType
-            }
-          }
-        ];
-        captureStore.addMentionLink("root", result as INodeThumb, {
-          location: newBlock[0].id
-        });
-      } else if ($captureStore.clipboard.files) {
+
+      if (data.multipleFiles) {
         const result = await captureStore.saveMultipleFiles(
-          $captureStore.clipboard.files,
+          data.multipleFiles.files,
           {
             isEmbedContext: true
           }
@@ -172,7 +151,67 @@
             location: block.id
           });
         });
+      } else if (data.file) {
+        const result = await captureStore.saveFile(
+          data.file,
+          data.contentType,
+          {
+            isEmbedContext: true
+          }
+        );
+        if (!result || "error" in result) return;
+        newBlock = [
+          {
+            id: generateResourceId(Resource.node),
+            contentType: NodeType.EMBED,
+            body: {
+              id: result.id,
+              subType: result.contentType
+            }
+          }
+        ];
+        captureStore.addMentionLink("root", result as INodeThumb, {
+          location: newBlock[0].id
+        });
+      } else if (data.text) {
+        if (data.textMetadata?.isMultiBlockText) {
+          newBlock = textToMdBlocks(data.text);
+        } else if (data.textMetadata?.isUrl) {
+          const saveResult = await captureStore.saveWebpage(data.text, {
+            contentType: data.contentType,
+            isEmbedContext: true
+          });
+          if (
+            !saveResult ||
+            !Array.isArray(saveResult) ||
+            "error" in saveResult
+          )
+            return;
+          newBlock = [
+            {
+              id: generateResourceId(Resource.node),
+              contentType: NodeType.EMBED,
+              body: {
+                id: saveResult[0].id,
+                subType: saveResult[0].contentType
+              }
+            }
+          ];
+          captureStore.addMentionLink("root", saveResult[0] as INodeThumb, {
+            location: newBlock[0].id
+          });
+        } else {
+          const contentType = data.contentType ?? NodeType.SIMPLE_TEXT;
+          newBlock = [
+            {
+              id: generateResourceId(Resource.node),
+              contentType,
+              body: resolveDefaultBodyForBlock(contentType, data.text)
+            }
+          ];
+        }
       }
+
       if (!newBlock) return;
       if (ogEmptyState) {
         $captureStore.body.blocks.unshift(...newBlock);
@@ -185,7 +224,7 @@
     } finally {
       isEmptyState = false;
       isProcessingClipboard = false;
-      $captureStore.clipboard = null;
+      $captureStore.clipboard = undefined;
     }
   }
 

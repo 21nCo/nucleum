@@ -1,17 +1,23 @@
 <script lang="ts">
   import { logger } from "$lib/client/components/debug/logger.client";
+  import { ErrorMessage } from "$lib/client/components/error/error.type";
   import FileView from "$lib/client/components/files/FileView.svelte";
   import modalEvent from "$lib/client/components/modal/modal.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import CheckboxInput from "$lib/client/elements/toggle/CheckboxInput.svelte";
-  import { resolveContentTypeForUrl } from "$lib/client/extensions/clipper/clipper.utils";
   import { appStore } from "$lib/client/stores/app.store";
   import { ButtonVariant } from "$lib/client/types/button.type";
+  import { MAX_FILE_SIZE_MB } from "../memotron.store";
   import { MemotronAction } from "../memotronAction.enum";
   import { NodeType } from "../node/node.type";
   import { resolveNodeContentLabel, resolveNodeIcon } from "../node/node.utils";
+  import { sanitizeAndResolve } from "../node/url.utils";
   import { captureStore } from "./capture.store";
+  import type {
+    IMultiFileCaptureData,
+    IPasteCaptureData
+  } from "./capture.type";
   import {
     resolveContentTypeForFile,
     resolveMultipleFilesData
@@ -19,41 +25,57 @@
   export let event: ClipboardEvent;
   let nodeType: NodeType | undefined = undefined;
   const unsupportedNodeTypes = [NodeType.TWITTER_PROFILE, NodeType.TWEET];
+  const cannotSaveAsStandaloneNodeTypes = [NodeType.SIMPLE_TEXT, NodeType.CODE];
   let nodeTypeLabel: string | undefined = undefined;
+  /**
+   * @deprecated - use data
+   */
   let file: File | undefined = undefined;
-  let multipleFilesData:
-    | {
-        files: { file: File; contentType: NodeType }[];
-        incompatibleFormats: string[];
-        totalCount: number;
-        sizeExceededCount: number;
-      }
-    | undefined = undefined;
+  /**
+   * @deprecated - use data
+   */
+  let isEmbed: boolean | undefined = undefined;
+  /**
+   * @deprecated - use data
+   */
+  let multipleFilesData: IMultiFileCaptureData | undefined = undefined;
+  /**
+   * @deprecated - use data
+   */
   let text: string | undefined = undefined;
   let isSaveInProgress: boolean = false;
   let isOpenOnSave: boolean = false;
   let isRememberChoice: boolean = false;
   let dev_isEnableChoice: boolean = false;
   let error: string | undefined = undefined;
-  const MAX_FILE_SIZE_MB = 15;
+  let data: IPasteCaptureData | undefined = undefined;
+  let saveAsNodeFilesCount: number = 0;
 
   $: if (nodeType) nodeTypeLabel = resolveNodeContentLabel(nodeType);
-  resolve(event);
+  resolveV2(event);
 
+  /**
+   * @deprecated - use resolveV2
+   * @param event
+   */
   function resolve(event: ClipboardEvent) {
     if (!event) return;
     const filesData = event?.clipboardData?.files;
     text = event?.clipboardData?.getData("text");
     if (text) {
-      if (text.startsWith("http")) {
-        nodeType = resolveContentTypeForUrl(text);
-      } else {
+      const result = sanitizeAndResolve(text);
+      if (typeof result === "string") {
         nodeType = NodeType.SIMPLE_TEXT;
+        text = result;
+      } else {
+        nodeType = result.contentType;
+        text = result.url;
+        isEmbed = result.isEmbed;
       }
     } else if (filesData && filesData.length === 1) {
       file = filesData[0];
       if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-        error = "File size exceeds the maximum limit of 15 MB.";
+        error = `File size exceeds the maximum limit of ${MAX_FILE_SIZE_MB} MB.`;
         return;
       }
       nodeType = resolveContentTypeForFile(file);
@@ -66,23 +88,41 @@
     }
   }
 
-  async function onSaveAsNode() {
-    if (text) {
-      await saveWebpage();
-    } else if (file) {
-      await saveFile();
-    } else if (multipleFilesData) {
-      await saveFiles();
+  async function resolveV2(event: ClipboardEvent) {
+    if (!event) return;
+    data = await captureStore.resolvePasteContents(event);
+    if (!data || data.error) {
+      error = data?.error ?? ErrorMessage.DEFAULT;
+      return;
+    }
+    nodeType = data.contentType;
+    if (data.multipleFiles && data.multipleFiles.files?.length > 0) {
+      saveAsNodeFilesCount = data.multipleFiles?.files?.filter((file) => {
+        return file.contentType !== NodeType.FILE;
+      }).length;
     }
   }
 
-  async function saveWebpage() {
+  async function onSaveAsNode() {
     try {
-      if (!text) return;
+      if (!data) return;
       isSaveInProgress = true;
-      await captureStore.saveWebpage(text, {
-        isPreventOpenOnSave: !isOpenOnSave
-      });
+      if (data.text) {
+        await captureStore.saveWebpage(data.text, {
+          isPreventOpenOnSave: !isOpenOnSave,
+          contentType: nodeType
+        });
+      } else if (data.multipleFiles && data.multipleFiles.files.length === 1) {
+        await captureStore.saveFile(
+          data.multipleFiles.files[0].file,
+          nodeType,
+          {
+            isPreventOpenOnSave: !isOpenOnSave
+          }
+        );
+      } else if (data.multipleFiles && data.multipleFiles.files.length > 1) {
+        await captureStore.saveMultipleFiles(data.multipleFiles.files);
+      }
       postSave();
     } catch (error) {
       logger.error(error);
@@ -96,49 +136,20 @@
     modalEvent.hide(MemotronAction.PASTE_CONFIRMATION);
   }
 
-  async function saveFile() {
-    if (!file) return;
-    isSaveInProgress = true;
-    await captureStore.saveFile(file, nodeType, {
-      isPreventOpenOnSave: !isOpenOnSave
-    });
-    postSave();
-  }
-
-  async function saveFiles() {
-    if (!multipleFilesData?.files) return;
-    isSaveInProgress = true;
-    await captureStore.saveMultipleFiles(multipleFilesData.files);
-    postSave();
-  }
-
-  function resolvePasteResolutionMessage() {
+  function resolvePasteResolutionMessage(data: IPasteCaptureData | undefined) {
     if (error) return error;
     if (nodeTypeLabel) return `${nodeTypeLabel} detected`;
-    if (multipleFilesData?.totalCount)
-      return `${multipleFilesData.totalCount} files detected. ${multipleFilesData.files?.length} can be saved as nodes.`;
-    if (file) return "Unsupported file type. Can't be saved as node.";
+    if (data?.multipleFiles?.totalCount)
+      return `${data.multipleFiles.totalCount} files detected. ${saveAsNodeFilesCount} can be saved as ${saveAsNodeFilesCount > 1 ? "nodes" : "node"}.`;
+    if (data?.file && nodeType === NodeType.FILE)
+      return "Unsupported file type. Can't be saved as node.";
+    if (data?.text) return "Text detected";
     return "Nothing";
   }
 
   function onInsertIntoMarkdown() {
-    let data: any = {};
-    if (text) {
-      data = {
-        text
-      };
-    } else if (file) {
-      data = {
-        file
-      };
-    } else if (multipleFilesData) {
-      data = {
-        files: multipleFilesData.files
-      };
-    }
     $captureStore.clipboard = {
-      ...data,
-      contentType: nodeType
+      ...data
     };
     modalEvent.hide(MemotronAction.PASTE_CONFIRMATION);
     appStore.runAction(MemotronAction.CAPTURE, {
@@ -148,42 +159,61 @@
     });
   }
 
-  function resolveInsertIntoMdLabel() {
-    if (multipleFilesData) {
-      return `Insert ${multipleFilesData.totalCount} into markdown`;
+  function resolveInsertIntoMdLabel(data: IPasteCaptureData | undefined) {
+    if (data?.multipleFiles) {
+      return `Insert ${data.multipleFiles.totalCount} into markdown`;
     }
-    if (file && !nodeTypeLabel) {
+    if (data?.file && !nodeTypeLabel) {
       return "Insert file into markdown";
     }
     return "Insert into markdown";
   }
+
+  function resovleUnsupportedFormats(data: IMultiFileCaptureData | undefined) {
+    if (!data) return;
+    return data.files
+      .filter((file) => {
+        return file.contentType === NodeType.FILE;
+      })
+      ?.map((file) => {
+        return file.file.name.split(".").pop();
+      })
+      ?.join(", ");
+  }
+
+  $: console.log({ data, nodeType, nodeTypeLabel });
 </script>
 
 <div class="flex flex-col justify-between items-center w-full h-full">
   <div
     class="flex flex-col gap-2 items-center justify-center h-36 w-full rounded-md bg-bgs2 p-2"
   >
-    {#if file}
+    {#if data?.file}
       <FileView
-        blob={new Blob([file], { type: file.type })}
+        blob={new Blob([data.file], { type: data.file.type })}
         class="h-24 object-cover rounded-md"
       />
     {/if}
-    {#if text}
-      <div class="flex flex-col w-full">
-        <span class="text-b3 text-fgs3 truncate w-full">{text}</span>
+    {#if data?.text}
+      <div class="flex flex-col items-center w-full">
+        <span class="text-b3 text-fgs3 truncate w-full text-center"
+          >{data.text}</span
+        >
       </div>
     {/if}
     <span class="flex gap-2 items-center">
       {#if nodeType}
-        <Icon icon={resolveNodeIcon(nodeType)} />
+        <Icon icon={resolveNodeIcon(nodeType, data?.text)} />
       {/if}
-      {resolvePasteResolutionMessage()}
+      {resolvePasteResolutionMessage(data)}
     </span>
     <span class="text-b3 text-fgs3">
-      {#if multipleFilesData && multipleFilesData.incompatibleFormats.length > 0}
-        Unsupported formats: {multipleFilesData.incompatibleFormats.join(", ")}
-      {:else if file && !nodeTypeLabel && !error}
+      {#if data?.multipleFiles && saveAsNodeFilesCount < data.multipleFiles.files?.length}
+        Unsupported formats for node: {resovleUnsupportedFormats(
+          data.multipleFiles
+        )}
+        <!-- {multipleFilesData.incompatibleFormats.join(", ")} -->
+      {:else if data?.file && !nodeTypeLabel && !error}
         Supported formats: .jpg, .png, .mp3, .wav
       {/if}
     </span>
@@ -192,7 +222,7 @@
     {#if nodeType && unsupportedNodeTypes.includes(nodeType)}
       <span>Direct <b>{nodeTypeLabel}</b> saving is not supported yet.</span>
     {:else if !error}
-      {#if nodeType && nodeType !== NodeType.SIMPLE_TEXT}
+      {#if nodeType && !cannotSaveAsStandaloneNodeTypes.includes(nodeType)}
         <Button
           label="Save and open"
           icon="ph:arrow-up-right-light"
@@ -212,9 +242,11 @@
           on:click={onSaveAsNode}
         />
       {/if}
-      {#if multipleFilesData?.files && multipleFilesData.files.length > 1}
+      {#if data?.multipleFiles && saveAsNodeFilesCount >= 1}
         <Button
-          label="Save {multipleFilesData.files.length} nodes"
+          label="Save {saveAsNodeFilesCount} as {saveAsNodeFilesCount === 1
+            ? 'node'
+            : 'nodes'}"
           icon="ph:arrow-right-light"
           isLoading={isSaveInProgress && !isOpenOnSave}
           isExpandToFullWidth={true}
@@ -223,7 +255,7 @@
         />
       {/if}
       <Button
-        label={resolveInsertIntoMdLabel()}
+        label={resolveInsertIntoMdLabel(data)}
         icon="ph:markdown-logo-light"
         on:click={onInsertIntoMarkdown}
         isExpandToFullWidth={true}

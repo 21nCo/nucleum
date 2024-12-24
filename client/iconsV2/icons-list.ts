@@ -65,6 +65,10 @@ const phosphorIcons = [
   "arrows-out-line-horizontal-light",
   "arrows-out-line-horizontal-thin",
   "arrows-out-line-horizontal-fill",
+  "arrows-in-line-horizontal",
+  "arrows-in-line-horizontal-light",
+  "arrows-in-line-horizontal-thin",
+  "arrows-in-line-horizontal-fill",
   "arrows-clockwise",
   "arrows-clockwise-light",
   "arrows-clockwise-thin",
@@ -132,6 +136,34 @@ const phosphorIcons = [
   "file-pdf-light",
   "file-pdf-thin",
   "file-pdf-fill",
+  "file-csv",
+  "file-csv-light",
+  "file-csv-thin",
+  "file-csv-fill",
+  "file-html",
+  "file-html-light",
+  "file-html-thin",
+  "file-html-fill",
+  "file-txt",
+  "file-txt-light",
+  "file-txt-thin",
+  "file-txt-fill",
+  "file-zip",
+  "file-zip-light",
+  "file-zip-thin",
+  "file-zip-fill",
+  "file-doc",
+  "file-doc-light",
+  "file-doc-thin",
+  "file-doc-fill",
+  "file-ppt",
+  "file-ppt-light",
+  "file-ppt-thin",
+  "file-ppt-fill",
+  "file-xls",
+  "file-xls-light",
+  "file-xls-thin",
+  "file-xls-fill",
 
   // Actions
   "crop",
@@ -329,6 +361,9 @@ const phosphorIcons = [
   "caret-up-light",
   "caret-up-thin",
   "caret-up-fill",
+  "caret-right-light",
+  "caret-right-thin",
+  "caret-right-fill",
   "cube",
   "cube-light",
   "cube-thin",
@@ -486,7 +521,31 @@ const phosphorIcons = [
   "check-square-offset-light",
   "map-pin-light",
   "arrow-arc-left-thin",
-  "floppy-disk"
+  "floppy-disk",
+  "calendar",
+  "calendar-light",
+  "calendar-thin",
+  "calendar-fill",
+  "calendar-range",
+  "calendar-range-light",
+  "calendar-range-thin",
+  "calendar-range-fill",
+  "calendar-blank",
+  "calendar-blank-light",
+  "calendar-blank-thin",
+  "calendar-blank-fill",
+  "tree-view",
+  "tree-view-light",
+  "tree-view-thin",
+  "tree-view-fill",
+  "github-logo",
+  "dev-to-logo",
+  "google-drive-logo",
+  "instagram-logo",
+  "reddit-logo-light",
+  "reddit-logo",
+  "git-branch-light",
+  "target-light"
 ];
 
 export const phosphorRatingIcons = [
@@ -605,6 +664,26 @@ const hugeiconsIcons = [
   "heading-04"
 ];
 
+const logos = [
+  //Used in Markdown embed placeholder
+  "google-drive",
+  "youtube-icon",
+  "google-maps",
+  "replit-icon",
+  "gitlab",
+  "figma",
+  "typeform-icon",
+
+  "medium-icon",
+  "stackoverflow-icon",
+  "quora",
+  "linkedin-icon",
+  "facebook",
+  "reddit-icon"
+];
+
+const simpleIcons = ["wikipedia", "googledocs", "abstract", "mixpanel"];
+
 const svgSpinnersIcons = ["90-ring-with-bg", "3-dots-fade", "180-ring-with-bg"];
 
 const heroiconsIcons = ["cog"];
@@ -622,5 +701,7 @@ export const iconSets = {
   heroicons: heroiconsIcons,
   "lets-icons": letsIconsIcons,
   ri: remixIcons,
-  proicons: proIcons
+  proicons: proIcons,
+  "simple-icons": simpleIcons,
+  logos
 };

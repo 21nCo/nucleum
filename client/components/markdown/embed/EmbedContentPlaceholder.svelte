@@ -46,9 +46,23 @@
     NodeType.KINDLE_HIGHLIGHT,
     NodeType.TEXT_CLIP
   ];
+
+  const embedIcons = [
+    "simple-icons:wikipedia",
+    "logos:youtube-icon",
+    "logos:figma",
+    "logos:replit-icon",
+    "ph:github-logo",
+    "logos:gitlab",
+    "logos:google-maps",
+    "logos:google-drive",
+    "logos:typeform-icon"
+  ];
+
   let error: string | undefined = undefined;
   let isSaveInProgress: boolean = false;
   let isAudioCaptureInProgress: boolean = false;
+  let ref: HTMLElement | undefined = undefined;
 
   $: label = subType ? enumToString(subType) : undefined;
 
@@ -142,9 +156,11 @@
         "mo:h-60 h-72": !subType
       }
     )}
+    bind:this={ref}
     use:fileDrop={{
       accept: resoveFileUploadAcceptedFormats(),
       multiple: false,
+      isPreventClickToBrowse: true,
       maxSize: MAX_FILE_SIZE_MB * 1024 * 1024,
       onDrop: handleDrop,
       dragOverClass: ["bg-opacity-100", "border-fgs3"]
@@ -171,6 +187,13 @@
             <Icon icon="ph:book-light" class="stroke-fgs3" />
           {:else if subType === NodeType.YOUTUBE_VIDEO || subType === NodeType.YOUTUBE_CHANNEL}
             <Icon icon="ph:youtube-logo" class="stroke-fgs3" />
+          {:else if !subType}
+            <div class="flex items-center justify-center gap-3">
+              {#each embedIcons as icon}
+                <Icon {icon} class="stroke-fgs3" size={Size.sm} />
+              {/each}
+              <span class="text-b3"> & more... </span>
+            </div>
           {/if}
           {#if label}
             <span class="text-fgs2 text-b2">{label}</span>
@@ -187,14 +210,20 @@
         {/if}
         {#if (subType && webNodeTypeList.includes(subType) && !onlyFromLibraryTypes.includes(subType)) || !subType}
           <button
-            class="flex justify-center items-center gap-3 mo:w-full w-1/2"
+            class="flex justify-center items-center gap-3 mo:w-full w-3/4"
             on:click|stopPropagation
           >
             <TextInput
               bind:value={linkInputValue}
-              placeholder="Type or paste link here"
+              icon="ph:globe-light"
+              placeholder="Type or paste embed code/link here"
             />
-            <Button label="Go" on:click={onLinkInput} />
+            <Button
+              label="Go"
+              type={ButtonVariant.PRIMARY}
+              style={ButtonStyle.OUTLINED}
+              on:click={onLinkInput}
+            />
           </button>
         {/if}
         {#if (subType && !onlyFromLibraryTypes.includes(subType)) || !subType}
@@ -225,6 +254,9 @@
               icon="ph:upload-light"
               {...commonButtonParams}
               type={ButtonVariant.PRIMARY}
+              on:click={() => {
+                ref?.dispatchEvent(new CustomEvent("browse"));
+              }}
             />
           {/if}
           <button

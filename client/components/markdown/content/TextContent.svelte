@@ -344,9 +344,11 @@
     const position = e.detail.position;
     const position2 = e.detail.position2;
     if (!event.altKey) {
-      const textLength = text.length;
       let isHandled = false;
-      if (event.key === "ArrowUp" && position?.caretOffset === 0) {
+      if (
+        event.key === "ArrowUp" &&
+        (position?.caretOffset === 0 || position?.isFirstLine)
+      ) {
         if (mdStore.isFirstBlock(id)) {
           const captureTitle = document.getElementById("capture-title");
           let nodeTitle = undefined;
@@ -364,15 +366,19 @@
           }
         }
         mdStore.shiftFocus(id, "up", {
-          xOffset: position2?.caretOffset
+          xOffset: position?.caretOffset
         });
         isHandled = true;
       } else if (
         event.key === "ArrowDown" &&
-        position?.caretOffset === textLength
+        ((position?.caretOffset === 0 &&
+          (position?.totalLength === 0 || !position?.isMultilined)) ||
+          position?.caretOffset !== 0) &&
+        (position?.caretOffset === position?.totalLength ||
+          position?.isLastLine)
       ) {
         mdStore.shiftFocus(id, "down", {
-          xOffset: position2?.caretOffset
+          xOffset: position?.caretOffset
         });
         isHandled = true;
       }

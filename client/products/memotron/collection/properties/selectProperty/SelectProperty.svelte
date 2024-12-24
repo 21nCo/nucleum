@@ -144,7 +144,6 @@
                       }
                     : item}
                   isSelectedContext={true}
-                  isPlain={true}
                 />
               {/if}
             {/each}

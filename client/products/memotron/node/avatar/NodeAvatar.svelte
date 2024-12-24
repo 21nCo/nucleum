@@ -7,8 +7,8 @@
   import { onMount } from "svelte";
   import type { ICollectionExpanded } from "../../collection/collection.type";
   import { nodeStore } from "../node.store";
-  import { type INode, webNodeTypeList } from "../node.type";
-  import { resolveNodeIcon } from "../node.utils";
+  import { type INode, NodeType, webNodeTypeList } from "../node.type";
+  import { resolveFileIcon, resolveNodeIcon } from "../node.utils";
   import NodeFavicon from "./NodeFavicon.svelte";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   export let types: ICollectionExpanded[] | undefined = undefined;
@@ -50,6 +50,8 @@
   </span>
 {:else if node && webNodeTypeList.includes(node.contentType)}
   <NodeFavicon {node} {size} />
-{:else if node}
+{:else if node && node.contentType === NodeType.FILE}
+  <Icon icon={resolveFileIcon(node.file)} {size} />
+{:else if node && node.contentType}
   <Icon icon={resolveNodeIcon(node.contentType)} {size} />
 {/if}

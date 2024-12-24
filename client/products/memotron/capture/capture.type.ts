@@ -52,7 +52,7 @@ export type ICaptureStore = IObservableStoreSubject & {
   /**
    * Used in context of `Insert into markdown` from global paste and global drag and drop upload
    */
-  clipboard?: any;
+  clipboard?: IPasteCaptureData;
 };
 
 type ICaptureLink = {
@@ -63,4 +63,25 @@ type ICaptureLink = {
   toSubType?: CollectionType | NodeType;
   location?: IRecordId;
   tags?: IRecordId[];
+};
+
+export type IMultiFileCaptureData = {
+  files: { file: File; contentType: NodeType }[];
+  totalCount: number;
+  sizeExceededCount: number;
+};
+
+export type IPasteCaptureData = {
+  contentType?: NodeType;
+  text?: string;
+  textMetadata?: {
+    isMultiBlockText?: boolean;
+    isUrl?: boolean;
+    isMarkdown?: boolean;
+    isEmbed?: boolean;
+    codeLanguage?: string;
+  };
+  file?: File;
+  multipleFiles?: IMultiFileCaptureData;
+  error?: string;
 };

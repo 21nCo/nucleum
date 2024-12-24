@@ -6,16 +6,14 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   export let item: IPropertyConfigOption;
   export let isSelectedContext: boolean = false;
-  export let isPlain: boolean = false;
   export let isSelected: boolean = false;
   export let isPreventTagStyle: boolean = false;
 </script>
 
 <button
   class={cn("text-left text-b2 flex justify-between", {
-    "py-1.5 hover:bg-bgs3": !isSelectedContext,
-    "px-3 w-full": !isPlain,
-    "bg-bgs3": isSelected && !isSelectedContext
+    "bg-bgs3": isSelected && !isSelectedContext,
+    "py-1.5 hover:bg-bgs3 px-3 w-full": !isSelectedContext
   })}
   on:click
 >

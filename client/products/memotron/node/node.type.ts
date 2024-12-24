@@ -205,6 +205,7 @@ export enum NodeType {
   GRAPH_AS_EMBED = "GRAPH_AS_EMBED",
   CALENDAR_AS_EMBED = "CALENDAR_AS_EMBED",
   TREE_OF_LINKS = "TREE_OF_LINKS",
+  GIST = "GIST",
 
   //LAYOUT
   DIVIDER = "DIVIDER",
@@ -474,6 +475,7 @@ export type IMediaGridNode = INodeInterface<
  */
 export const webNodeTypeList = [
   NodeType.WEB_PAGE,
+  NodeType.GIST,
   NodeType.TEXT_CLIP,
   NodeType.IMAGE_CLIP,
   NodeType.AUDIO_CLIP,
@@ -495,6 +497,14 @@ type IGenericWebPageBody = {
 };
 export type IGenericWebPage = INodeInterface<
   NodeType.WEB_PAGE,
+  IGenericWebPageBody,
+  IWebPageMetadata
+> &
+  INodeHasUrl &
+  INodeHasLabel;
+
+export type IGist = INodeInterface<
+  NodeType.GIST,
   IGenericWebPageBody,
   IWebPageMetadata
 > &
@@ -591,6 +601,9 @@ type IYoutubeVideoBody = {
 };
 type IYoutubeVideoMetadata = IWebPageMetadata & {
   popularity?: number;
+  authorName?: string;
+  authorUrl?: string;
+  thumbnailUrl?: string;
 };
 export type IYoutubeVideo = INodeInterface<
   NodeType.YOUTUBE_VIDEO,
@@ -723,7 +736,8 @@ export type IWebPage =
   | IYoutubeChannel
   | IYoutubeVideo
   | ITwitterProfile
-  | IKindleBook;
+  | IKindleBook
+  | IGist;
 
 export type INodeBody =
   | IBlockBody

@@ -10,15 +10,55 @@
     DropdownGroup,
     DropdownItem
   } from "$lib/client/types/dropdownItem.type";
-  export let groups: DropdownGroup[];
+  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
+  import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
+  import {
+    PropertyTypeMode,
+    type IPropertyTypeSelectorGroup
+  } from "./propertyTypeSelector.type";
+  export let groups: IPropertyTypeSelectorGroup[];
   export let options: DropdownItem[];
   export let onSelect: (e: string) => void;
+  let mode: PropertyTypeMode = PropertyTypeMode.MANUAL;
+  let _groups: IPropertyTypeSelectorGroup[] = [];
+  refreshGroups();
+
+  function refreshGroups() {
+    _groups = groups.filter((group) => group.mode === mode);
+  }
 </script>
 
 <div
-  class="flex flex-col gap-3 bg-bgs1 border border-brs2 rounded-md py-4 px-1 w-60 max-h-full overflow-y-auto"
+  class="flex flex-col gap-3 bg-bgs1 border border-brs2 rounded-md py-4 px-1 w-72 max-h-full overflow-y-auto"
 >
-  {#each groups as group}
+  <div class="flex flex-col gap-3 px-3">
+    <!-- <Text
+      content="Choose property type"
+      style={TextStyle.SECTION_HEADING}
+    /> -->
+    <div class="flex justify-center">
+      <PanelSwitcher
+        items={[
+          {
+            label: "Manual",
+            value: PropertyTypeMode.MANUAL
+          },
+          {
+            label: "Auto",
+            value: PropertyTypeMode.AUTO
+          }
+        ]}
+        size={Size.xs}
+        style={PanelSwitcherStyle.TRAIN}
+        bind:value={mode}
+        on:switch={(e) => {
+          console.log(e);
+          refreshGroups();
+        }}
+      />
+    </div>
+  </div>
+  {#each _groups as group}
     {@const groupOptions = options.filter(
       (option) => option.groupId === group.id
     )}
@@ -27,6 +67,9 @@
         <Text content={group.label} style={TextStyle.SECTION_HEADING_SMALL} />
         {#if group.info}
           <FormLabelTooltip info={group.info} />
+        {/if}
+        {#if group.badge}
+          <Badge text={group.badge} />
         {/if}
       </span>
       {#each groupOptions as option}

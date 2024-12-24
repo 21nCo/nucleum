@@ -8,7 +8,8 @@
     headingNodeTypes,
     mediaNodeTypeList,
     NodeType,
-    structuralNodeTypes
+    structuralNodeTypes,
+    webNodeTypeList
   } from "$lib/client/products/memotron/node/node.type";
   import { createEventDispatcher, onMount } from "svelte";
   import type { MdStoreType } from "../markdown.store";
@@ -123,6 +124,13 @@
       icon: "copy",
       callback: async () => {
         dispatch("action", { action: BlockAction.COPY_BLOCK_TEXT });
+      }
+    },
+    [BlockAction.GO_TO_EXTERNAL_LINK]: {
+      value: BlockAction.GO_TO_EXTERNAL_LINK,
+      icon: "arrow-up-right",
+      callback: async () => {
+        dispatch("action", { action: BlockAction.GO_TO_EXTERNAL_LINK });
       }
     },
     [BlockAction.DELETE]: {
@@ -307,11 +315,20 @@
       }
       if (
         block.body.subType === NodeType.WEB_PAGE ||
-        block.body.subType === NodeType.PDF
+        block.body.subType === NodeType.PDF ||
+        block.body.subType === NodeType.GIST ||
+        block.body.subType === NodeType.YOUTUBE_VIDEO
       ) {
         items.forEach((group) => {
           if (group.group === "base") {
             group.items.push(resolveEmbedPreviewToggleAction());
+          }
+        });
+      }
+      if (block.body.subType && webNodeTypeList.includes(block.body.subType)) {
+        items.forEach((group) => {
+          if (group.group === "base") {
+            group.items.push(actions[BlockAction.GO_TO_EXTERNAL_LINK]);
           }
         });
       }

@@ -135,17 +135,21 @@
     logger.log({ at: "InlineMarkdownTextInput - focus", params, id });
     const element = blockRef;
     if (!element) return;
-
+    const isOffsetGreaterThanLength =
+      params?.xOffset && params?.xOffset > element.textContent?.length;
     if (
       params?.xOffset &&
       typeof params?.xOffset === "number" &&
-      params?.xOffset !== 0
+      params?.xOffset !== 0 &&
+      !isOffsetGreaterThanLength
     ) {
       setCaretPosition(element, params.xOffset);
     } else {
       const range = document.createRange();
       range.selectNodeContents(element);
-      const isAtStart = params?.xOffset === 0 || !params?.isBottom;
+      const isAtStart =
+        (params?.xOffset === 0 || !params?.isBottom) &&
+        !isOffsetGreaterThanLength;
       range.collapse(isAtStart);
       const selection = window.getSelection();
       selection?.removeAllRanges();
@@ -681,7 +685,8 @@
     const caretBottom = caretRect.bottom;
     const editableBottom = editableRect.bottom;
     let isLastLine = editableBottom - caretBottom < lineHeight;
-    // logger.log({
+    const lineFactor = (editableBottom - caretBottom) / lineHeight;
+    // logger.debug({
     //   lineHeight,
     //   caretBottom,
     //   editableBottom,
@@ -695,10 +700,18 @@
       isLastLine = true;
     }
 
+    const isMultilined = editableRect.height > 2 * lineHeight;
     const totalOffset = getCaretCharacterOffsetWithin(blockRef);
     let caretOffset = getLineStartOffset(blockRef, totalOffset);
-
-    return { isFirstLine, isLastLine, caretOffset };
+    const totalLength = blockRef.textContent?.length || 0;
+    return {
+      isFirstLine,
+      isLastLine,
+      caretOffset,
+      totalLength,
+      isMultilined,
+      lineFactor
+    };
 
     function getCaretCharacterOffsetWithin(element) {
       let caretOffset = 0;

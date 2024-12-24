@@ -328,6 +328,9 @@ export class ActiveNodeStore extends ActiveResourceStore<
         collections
       });
       const types = await collectionStore.resolveTypes(collections);
+      const avatar = await this.resourceStore.refreshNodeAvatar(this.id, {
+        types
+      });
       let blocks: INode[] = [];
       if (
         node.contentType === NodeType.NODULAR_MARKDOWN ||
@@ -340,6 +343,7 @@ export class ActiveNodeStore extends ActiveResourceStore<
         n.links = links;
         n.collections = collections;
         n.blocks = blocks;
+        n.avatar = avatar;
         return n;
       });
     } catch (e) {

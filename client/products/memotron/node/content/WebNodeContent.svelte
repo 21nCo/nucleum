@@ -15,6 +15,7 @@
   import type { IContextMenu } from "$lib/client/types/select.type";
   import TwitterProfilePreview from "./web/TwitterProfilePreview.svelte";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import GistPreview from "./web/GistPreview.svelte";
   export let node: IClip | IWebPage;
   export let isLinkHovering: boolean = false;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -57,7 +58,9 @@
 
 <div class="h-full w-full">
   {#if node.contentType === NodeType.WEB_PAGE}
-    <WebPagePreview {node} />
+    <WebPagePreview {node} {accessPoint} />
+  {:else if node.contentType === NodeType.GIST}
+    <GistPreview {node} {accessPoint} />
   {:else if node.contentType === NodeType.TEXT_CLIP || node.contentType === NodeType.WEB_SCREENSHOT_CLIP || node.contentType === NodeType.KINDLE_HIGHLIGHT}
     <WebClipPreview {node} {accessPoint} />
   {:else if node.contentType === NodeType.TWEET}

@@ -55,7 +55,6 @@ import {
   relayToBackgroundScript,
   relayToSidePanel
 } from "$lib/client/utils/extension.utils";
-import { urlMap } from "$lib/client/products/memotron/common/urlMap";
 import { extensionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
 import { FluxMethod } from "$lib/client/components/flux/flux.type";
 import {
@@ -65,6 +64,7 @@ import {
 } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { ResourceError } from "$lib/client/components/error/errors";
 import { ResourceErrorCode } from "$lib/client/components/error/error.type";
+import { resolveUrlData } from "$lib/client/products/memotron/node/url.utils";
 
 class WebpageStore extends ObservableStore<IWebpageStore> {
   previousValue: string = "";
@@ -201,9 +201,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
 
     async function extractData() {
       const host = window.location.host;
-      if (
-        urlMap.some((x) => host === x.domain || host.includes("." + x.domain))
-      ) {
+      if (resolveUrlData(host)) {
         logger.log({
           at: "extractData",
           host,

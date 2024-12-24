@@ -19,6 +19,12 @@
   let multipleTypesList: ICollectionExpanded[] = [];
   let refreshId: number = new Date().getTime();
 
+  $: isReadOnlyMode =
+    $node.isInReadOnlyMode ||
+    $node.isLocked ||
+    $node.isArchived ||
+    $node.trashInformation !== undefined;
+
   async function propagateChanges(e: CustomEvent) {
     if (!e.detail || !e.detail?.id || e.detail?.value === undefined) return;
     node.updateProperty({
@@ -106,7 +112,7 @@
   }
 </script>
 
-<div class="flex flex-col gap-12 w-full flex-grow">
+<div class="flex flex-col gap-6 w-full flex-grow">
   {#if !isVisibleProps && multipleTypesList.length > 0}
     <OptionSelector
       options={multipleTypesList.map((x) => ({
@@ -119,11 +125,9 @@
       on:select={handleTypeChange}
     />
   {/if}
-  <div class="w-full h-full overflow-auto">
+  <div class="flex flex-col gap-6 w-full h-full overflow-auto">
     {#if !isVisibleProps}
-      <div class="mb-4">
-        <ResourceStatusBanner resource={node} />
-      </div>
+      <ResourceStatusBanner resource={node} />
     {/if}
     {#if _types && _types.length > 0}
       {#key refreshId}
@@ -132,16 +136,13 @@
           types={_types}
           context={isVisibleProps ? "mainpanel" : "rightpanel"}
           isIncludeExtendedProperties={isVisibleProps}
-          isReadOnlyMode={$node.isInReadOnlyMode ||
-            $node.isLocked ||
-            $node.isArchived ||
-            $node.trashInformation !== undefined}
+          {isReadOnlyMode}
           nodeId={$node.id}
           on:change={propagateChanges}
           on:showAll
         />
-        {#if !isVisibleProps && _types.length === 1}
-          <div class="flex justify-center mt-6">
+        {#if !isVisibleProps && !isReadOnlyMode && _types.length === 1}
+          <div class="flex justify-center">
             <Button
               label="Edit"
               style={ButtonStyle.OUTLINED}

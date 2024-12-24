@@ -11,7 +11,6 @@ import {
 } from "$lib/client/products/memotron/node/node.type";
 import { ExtensionEvent, type TabData } from "$lib/client/types/extension.type";
 import { relayToContentScript } from "$lib/client/utils/extension.utils";
-import { contentTypeMap } from "$lib/client/products/memotron/common/urlMap";
 import { enumToString } from "$lib/shared/utils/text.utils";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { ClipperElementIdentifier } from "$lib/client/products/memotron/common/clip.type";
@@ -19,6 +18,7 @@ import {
   generateHash,
   generateSHA256Hash
 } from "$lib/shared/utils/crypto.utils";
+import { contentTypeMap } from "$lib/client/products/memotron/node/url.utils";
 
 export function isYoutubeVideoUrl(url) {
   const regex = /^https?:\/\/(www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/;
@@ -144,7 +144,7 @@ export async function extractFullTabData(
     doc.querySelector("meta[name='twitter:card']") as HTMLMetaElement
   )?.content;
   const { ogTitle, ogImage, ogDescription, ogUrl } = resolveOgData(doc);
-  console.log({ innerHTML: doc.body?.innerHTML, docText: params?.docText });
+  // console.log({ innerHTML: doc.body?.innerHTML, docText: params?.docText });
   const hash = await generateSHA256Hash(doc.body?.innerHTML ?? params?.docText);
   const url = params?.url ? resolveUrl(params.url) : resolveUrl();
   const contentType = resolveContentTypeForUrl(url);

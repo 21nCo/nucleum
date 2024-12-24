@@ -16,6 +16,7 @@
   import { MemotronAction } from "../memotronAction.enum";
   import type { NodeType } from "../node/node.type";
   import { captureStore } from "./capture.store";
+  import type { IMultiFileCaptureData } from "./capture.type";
   import { resolveMultipleFilesData } from "./capture.utils";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
@@ -32,13 +33,7 @@
     ...pdfFileTypes
   ].join(",");
 
-  let multipleFilesData:
-    | {
-        files: { file: File; contentType: NodeType }[];
-        incompatibleFormats: string[];
-        totalCount: number;
-      }
-    | undefined = undefined;
+  let multipleFilesData: IMultiFileCaptureData | undefined = undefined;
   let isSaveInProgress: boolean = false;
   let error: string | undefined = undefined;
 
@@ -63,13 +58,8 @@
         const result = await captureStore.saveFile(file);
       } else if (all.length > 1) {
         multipleFilesData = resolveMultipleFilesData(all, MAX_FILE_SIZE_MB);
-        if (
-          multipleFilesData &&
-          multipleFilesData.incompatibleFormats.length > 0
-        ) {
-          error = `The following formats are not supported: ${multipleFilesData.incompatibleFormats.join(
-            ", "
-          )}`;
+        if (multipleFilesData && multipleFilesData.sizeExceededCount > 0) {
+          error = `${multipleFilesData.sizeExceededCount} files exceed the maximum size of ${MAX_FILE_SIZE_MB} MB.`;
         } else {
           isValidMultipleFiles = true;
         }

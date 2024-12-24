@@ -113,17 +113,34 @@ export enum PropertyType {
   RATING = "rating",
   DATE = "date",
   RANGE = "range",
-  TIME_TRACKING = "time-tracking",
   LINK_LIST = "link-list",
   FILE = "file",
-  FORMULA = "formula",
 
-  // Auto properties
+  // System properties
   CREATED_TIME = "created-time",
   MODIFIED_TIME = "modified-time",
+  LAST_OPENED_TIME = "last-opened-time",
   CREATED_BY = "created-by",
   MODIFIED_BY = "modified-by",
-  LOCATION = "location"
+  LOCATION = "location",
+  NUMBER_OF_VISITS = "number-of-visits",
+  SYSTEM_ID = "system-id",
+
+  //Auto properties
+  FORMULA = "formula",
+  AI_AUTOFILL = "ai-autofill",
+  CUSTOM_ID = "custom-id",
+  LINKS_COUNT = "links-count",
+
+  //Detection properties
+  COLORS = "colors",
+  SCENE = "scene",
+
+  //Integration properties
+  TIME_TRACKING = "time-tracking",
+  CALENDAR_EVENT = "calendar-event",
+  GOAL = "goal",
+  GIT = "git"
 }
 
 export enum UniversalPropertyType {

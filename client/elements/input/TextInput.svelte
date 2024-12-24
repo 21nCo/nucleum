@@ -8,6 +8,7 @@
   import { isValidHyperlink } from "$lib/shared/utils/utils";
   import Link from "../text/Link.svelte";
   import Button from "../button/Button.svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
   export let value: any;
   export let placeholder: string | undefined = undefined;
   export let label: InputLabel | undefined = undefined;
@@ -23,6 +24,7 @@
     | undefined = undefined;
   export let isExperimentalMdInput: boolean = false;
   export let icon: string | undefined = undefined;
+  export let hasControls: boolean = false;
   export let isShowSaveControl: boolean = false;
   export let isShowClearControl: boolean = false;
   export let isPreventDefaultOnEnter: boolean = false;
@@ -219,7 +221,9 @@
         {/if}
         <input
           {id}
-          class={inputClasses}
+          class={cn(inputClasses, {
+            "h-7": hasControls
+          })}
           bind:value
           on:paste|stopPropagation
           on:change|stopPropagation

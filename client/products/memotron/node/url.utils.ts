@@ -1,0 +1,181 @@
+import { sanitize } from "$lib/shared/utils/utils";
+import { NodeType } from "$lib/client/products/memotron/node/node.type";
+import { isValidUrl } from "$lib/shared/utils/utils";
+
+export const contentTypeMap: {
+  contentType:
+    | NodeType.TWEET
+    | NodeType.TWITTER_PROFILE
+    | NodeType.YOUTUBE_VIDEO
+    | NodeType.YOUTUBE_CHANNEL;
+  regex: RegExp[];
+  currentDomain?: string;
+}[] = [
+  {
+    contentType: NodeType.TWEET,
+    regex: [
+      /^https:\/\/(?:www\.)?(twitter\.com|x\.com)\/([a-zA-Z0-9_]+)\/status\/(\d+)\/?$/
+    ],
+    currentDomain: "x.com"
+  },
+  {
+    contentType: NodeType.TWITTER_PROFILE,
+    regex: [/^https:\/\/(?:www\.)?(twitter\.com|x\.com)\/([a-zA-Z0-9_]+)\/?$/]
+  },
+  {
+    contentType: NodeType.YOUTUBE_VIDEO,
+    regex: [
+      /^https:\/\/(?:www\.)?(youtube\.com)\/watch\?v=([a-zA-Z0-9_-]+)/,
+      /^https:\/\/youtu\.be\/([a-zA-Z0-9_-]+)(\?.*)?$/,
+      /^https:\/\/(?:www\.)?(youtube\.com)\/embed\/([a-zA-Z0-9_-]+)/
+    ]
+  },
+  {
+    contentType: NodeType.YOUTUBE_CHANNEL,
+    regex: [/^https:\/\/(?:www\.)?(youtube\.com)\/channel\/([a-zA-Z0-9_-]+)/]
+  }
+];
+
+//TODO - metadata for all these pages
+const urlMap = [
+  {
+    domain: "x.com",
+    faviconUrl:
+      "https://abs.twimg.com/responsive-web/client-web/icon-ios.77d25eba.png",
+    ogImage:
+      "https://abs.twimg.com/responsive-web/client-web/icon-ios.77d25eba.png",
+    isIframeable: false
+  },
+  {
+    domain: "wikipedia.org",
+    faviconUrl: "https://en.wikipedia.org/static/apple-touch/wikipedia.png",
+    isIframeable: true
+  },
+  {
+    domain: "youtube.com",
+    faviconUrl:
+      "https://www.youtube.com/s/desktop/4610dd25/img/favicon_144x144.png",
+    ogImage: "https://www.youtube.com/img/desktop/yt_1200.png"
+  },
+  {
+    domain: "medium.com",
+    isIframeable: false
+  },
+  {
+    domain: /^https:\/\/(?:[\w-]+\.)?typeform\.(?:com|io)(?:\/.*)?$/,
+    isIframeable: true
+  },
+  {
+    domain: "memotron.io",
+    isIframeable: true
+  },
+  {
+    domain: /^https?:\/\/(?:gist\.|)github\.com/,
+    faviconUrl: "https://github.githubassets.com/favicons/favicon.svg",
+    isIframeable: false
+  },
+  {
+    domain: /^https?:\/\/maps\.app\.goo\.gl\/.+$/,
+    customMessage:
+      "Preview not available for this Google Maps URL. Please use the embed URL instead."
+  },
+  {
+    domain:
+      /^https?:\/\/(?:www\.)?(?:docs\.google\.com\/(?:document|spreadsheets|presentation)\/d\/[a-zA-Z0-9_-]+(?:\/.*)?|(?:maps)?\.?google\.com(?:\/maps)?(?:\/embed\/?(?:\?[^]*)?)?$)/,
+    isIframeable: true
+  },
+  {
+    domain:
+      /^https?:\/\/(?:www\.|)?figma\.com\/(?:design|files|board|slides)\/[^/]+(?:\/.*)?$/,
+    customMessage:
+      "Preview not available for this Figma URL. Please use the embed URL instead.",
+    convertToEmbedUrl: (url: string) => {
+      const embedUrl = url.replace(
+        /^https?:\/\/(?:www\.|)?figma\.com/,
+        "https://embed.figma.com"
+      );
+      const separator = embedUrl.includes("?") ? "&" : "?";
+      return `${embedUrl}${separator}embed-host=21n`;
+    }
+  },
+  {
+    domain: /^https?:\/\/embed\.figma\.com(?:\/[^?]*)?(?:\?.*)?$/,
+    isIframeable: true
+  },
+  {
+    domain: /^https?:\/\/replit\.com\/@[\w-]+\/[\w-]+(?:[?#].*)?$/,
+    isIframeable: true,
+    convertToEmbedUrl: (url: string) => {
+      const urlObj = new URL(url);
+      if (!urlObj.searchParams.has("embed")) {
+        urlObj.searchParams.set("embed", "true");
+      }
+      return urlObj.toString();
+    }
+  }
+];
+
+export function resolveUrlData(url: string) {
+  const item = urlMap.find((x) =>
+    x.domain instanceof RegExp
+      ? x.domain.test(url)
+      : x.domain === url || url.includes("." + x.domain)
+  );
+  return item;
+}
+
+export function sanitizeAndResolve(
+  text: string
+): { contentType: NodeType; url: string; isEmbed?: boolean } | string {
+  const sanitized = sanitize(text);
+  if (typeof sanitized !== "object" && !isValidUrl(sanitized)) {
+    return sanitized;
+  }
+  let url = typeof sanitized === "string" ? sanitized : sanitized.embed;
+  let isEmbed = typeof sanitized === "object" && sanitized.embed !== undefined;
+
+  if (typeof sanitized === "object" && sanitized.isGist) {
+    return {
+      contentType: NodeType.GIST,
+      url: sanitized.embed,
+      isEmbed: true
+    };
+  }
+  const contentTypeFromMap = contentTypeMap.find((item) =>
+    item.regex.some((regex) => regex.test(text))
+  );
+  if (contentTypeFromMap) {
+    return {
+      contentType: contentTypeFromMap.contentType,
+      url,
+      isEmbed
+    };
+  }
+  return {
+    contentType: NodeType.WEB_PAGE,
+    url,
+    isEmbed
+  };
+}
+
+export async function fetchYouTubeMetadata(url: string): Promise<{
+  title: string;
+  author_name: string;
+  author_url: string;
+  thumbnail_url: string;
+} | null> {
+  try {
+    const normalizedUrl = url.replace(
+      /(youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)/,
+      "youtube.com/watch?v="
+    );
+    const oEmbedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(normalizedUrl)}&format=json`;
+    const response = await fetch(oEmbedUrl);
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data || null;
+  } catch (error) {
+    console.error("Error fetching YouTube title:", error);
+    return null;
+  }
+}

@@ -35,7 +35,7 @@
 </script>
 
 <aside
-  class={cn("flex justify--end gap-2 h-full overflow-auto", {
+  class={cn("flex justify--end gap-2 h-full overflow-auto shrink-0", {
     "mr-2 mb-2 bg-bgs2 rounded-md": nodePageVariant === "v1",
     "max-w-[28rem] w-[28rem] min-w-[28rem]": !isRightPanelCollapsed && pane
   })}

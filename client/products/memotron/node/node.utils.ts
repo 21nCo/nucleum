@@ -17,10 +17,12 @@ import {
 } from "$lib/client/products/memotron/node/node.type";
 import { getGeoLocation } from "$lib/client/utils/browser.utils";
 import { logger } from "$lib/client/components/debug/logger.client";
-import { urlMap } from "../common/urlMap";
 import { formatSeconds } from "$lib/client/utils/time.utils";
 import { TimeFormat } from "$lib/client/types/time.type";
 import { isRecordId } from "$lib/client/components/flux/resourceStores/resource.utils";
+import type { IFile } from "$lib/client/components/files/file.type";
+import { resolveUrlData } from "./url.utils";
+import { isValidUrl } from "$lib/shared/utils/utils";
 
 export function resolveContentPreview(node: INode) {
   const { body, contentType, metadata } = node;
@@ -32,10 +34,8 @@ export function resolveContentPreview(node: INode) {
   } else if (contentType === NodeType.TWITTER_PROFILE) {
     if ("bio" in body && body.bio) return body.bio;
     if (!node.url) return "";
-    const hostPart = new URL(node.url).host;
-    const ogImageUrl = urlMap.find(
-      (x) => hostPart === x.domain || hostPart.includes("." + x.domain)
-    )?.ogImage;
+
+    const ogImageUrl = resolveUrlData(node.url)?.ogImage;
     return ogImageUrl ?? "";
   } else if (
     contentType === NodeType.TEXT_CLIP &&
@@ -119,7 +119,7 @@ export function generateMarkdownText(blocks: IBlock[]) {
   return blocks.map((b) => getMarkdownSymbolPrepended(b)).join("\n");
 }
 
-export function resolveNodeIcon(contentType: NodeType) {
+export function resolveNodeIcon(contentType: NodeType, url?: string) {
   switch (contentType) {
     case NodeType.IMAGE:
       return "ph:image-light";
@@ -153,9 +153,35 @@ export function resolveNodeIcon(contentType: NodeType) {
       return "ph:amazon-logo-light";
     case NodeType.KINDLE_HIGHLIGHT:
       return "ph:bookmark-simple-light";
+    case NodeType.CODE:
+      return "code";
     default:
-      return "ph:book-light";
+      return url && isValidUrl(url)
+        ? resolveFallbackIconForUrl(url)
+        : "ph:book-light";
   }
+}
+
+export function resolveFallbackIconForUrl(url: string | undefined) {
+  if (!url) return "ph:globe-alt";
+  const hostPart = new URL(url).host;
+  if (hostPart.includes("replit.com")) return "logos:replit-icon";
+  if (hostPart.includes("github.com")) return "ph:github-logo";
+  if (hostPart.includes("gitlab.com")) return "logos:gitlab";
+  if (hostPart.includes("pinterest.com")) return "logos:pinterest-icon";
+  if (hostPart.includes("youtube.com")) return "logos:youtube-icon";
+  if (hostPart.includes("twitter.com")) return "ph:x-logo";
+  if (hostPart.includes("instagram.com")) return "ph:instagram-logo";
+  if (hostPart.includes("linkedin.com")) return "logos:linkedin-icon";
+  if (hostPart.includes("facebook.com")) return "logos:facebook";
+  if (hostPart.includes("reddit.com")) return "logos:reddit-icon";
+  if (hostPart.includes("quora.com")) return "logos:quora";
+  if (hostPart.includes("wikipedia.org")) return "simple-icons:wikipedia";
+  if (hostPart.includes("medium.com")) return "logos:medium-icon";
+  if (hostPart.includes("stackoverflow.com")) return "logos:stackoverflow-icon";
+  if (hostPart.includes("dev.to")) return "ph:dev-to-logo";
+  if (hostPart.includes("drive.google.com")) return "logos:google-drive";
+  return "ph:globe-alt";
 }
 
 export function resolveNodeContentLabel(contentType: NodeType) {
@@ -197,11 +223,10 @@ export function resolveFilePreview(node: INode) {
 
 export function resolveUrlPreview(node: INode) {
   const { contentType, body, metadata } = node;
-  if (
-    contentType === NodeType.WEB_PAGE ||
-    contentType === NodeType.YOUTUBE_VIDEO
-  ) {
+  if (contentType === NodeType.WEB_PAGE) {
     return metadata?.ogImage ?? metadata?.screenshotUrl;
+  } else if (contentType === NodeType.YOUTUBE_VIDEO) {
+    return metadata?.ogImage ?? metadata?.thumbnailUrl;
   } else if (contentType === NodeType.TWITTER_PROFILE) {
     return body?.profileImageUrl;
   } else if (contentType === NodeType.KINDLE_BOOK) {
@@ -295,36 +320,70 @@ export function resolveNodeLabel(item: INodeThumb) {
 }
 
 export function resolveNodeFavicon(node: INode) {
-  if (
-    node.contentType === NodeType.TWITTER_PROFILE &&
-    "profileImageUrl" in node.body &&
-    node.body.profileImageUrl
-  ) {
-    return node.body.profileImageUrl;
-  } else if (
-    node.contentType === NodeType.KINDLE_BOOK &&
-    "imageUrl" in node.body &&
-    node.body.imageUrl
-  ) {
-    return node.body.imageUrl;
-  } else if (node.metadata?.faviconLink) {
-    return node.metadata.faviconLink;
-  } else if (node.parent) {
-    //TODO - resolve using context API
-    // const parent = await dexie.node.get(node.parent);
-    // if (parent && parent.metadata?.faviconLink)
-    //   return parent.metadata.faviconLink;
-  }
+  try {
+    if (
+      node.contentType === NodeType.TWITTER_PROFILE &&
+      "profileImageUrl" in node.body &&
+      node.body.profileImageUrl
+    ) {
+      return node.body.profileImageUrl;
+    } else if (
+      node.contentType === NodeType.KINDLE_BOOK &&
+      "imageUrl" in node.body &&
+      node.body.imageUrl
+    ) {
+      return node.body.imageUrl;
+    } else if (node.metadata?.faviconLink) {
+      return node.metadata.faviconLink;
+    } else if (node.parent) {
+      //TODO - resolve using context API
+      // const parent = await dexie.node.get(node.parent);
+      // if (parent && parent.metadata?.faviconLink)
+      //   return parent.metadata.faviconLink;
+    }
 
-  if (!("url" in node) || !node.url || !node.url.includes("https://")) return;
-  const hostPart = new URL(node.url).host;
-  let favicon = urlMap.find(
-    (x) => hostPart === x.domain || hostPart.includes("." + x.domain)
-  )?.faviconUrl;
-  if (favicon) return favicon;
-  //TODO - testing
-  favicon = `https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${hostPart}&size=128"`;
-  return favicon;
+    if (!("url" in node) || !node.url || !node.url.includes("https://")) return;
+    const hostPart = new URL(node.url).host;
+    let favicon = resolveUrlData(node.url)?.faviconUrl;
+    if (favicon) return favicon;
+    //TODO - testing
+    // favicon = `https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${hostPart}&size=128"`;
+    // return favicon;
+  } catch (e) {
+    logger.error({ at: "resolveNodeFavicon", e });
+    return;
+  }
+}
+
+export function resolveFileIcon(file: IFile) {
+  if (!file) return;
+  if (file.type.includes("zip") || file.label?.endsWith(".zip"))
+    return "ph:file-zip-light";
+  if (
+    file.type.includes("excel") ||
+    file.label?.endsWith(".xlsx") ||
+    file.label?.endsWith(".xls")
+  )
+    return "ph:file-xls-light";
+  if (
+    file.type.includes("word") ||
+    file.label?.endsWith(".docx") ||
+    file.label?.endsWith(".doc")
+  )
+    return "ph:file-doc-light";
+  if (file.type.includes("powerpoint") || file.label?.endsWith(".pptx"))
+    return "ph:file-ppt-light";
+
+  if (file.type.includes("csv") || file.label?.endsWith(".csv"))
+    return "ph:file-csv-light";
+
+  if (file.type.includes("html") || file.label?.endsWith(".html"))
+    return "ph:file-html-light";
+
+  if (file.type.includes("text") || file.label?.endsWith(".txt"))
+    return "ph:file-txt-light";
+
+  return "ph:file-light";
 }
 
 export function resolveNodeGraphFill(node: INode) {

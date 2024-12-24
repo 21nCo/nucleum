@@ -446,7 +446,6 @@ export class Persistence {
     let parsedData = null;
     if (data?.text) {
       parsedData = await parseHtml(data.text);
-      console.log("parsed html", parsedData);
     }
     return { ...data, parsedData };
     function parseHtml(html: string) {

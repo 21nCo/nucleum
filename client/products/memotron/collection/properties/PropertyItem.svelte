@@ -141,7 +141,6 @@
       >
         {#if property.type === PropertyType.SINGLE_SELECT}
           <SelectPropertyOption
-            isPlain={true}
             item={property.config?.options?.find(
               (x) =>
                 x.id === _value ||
@@ -200,7 +199,6 @@
             <SelectPropertyOption
               item={options?.find((x) => x.id === value)}
               isSelectedContext={true}
-              isPlain={true}
             />
           {/each}
         </div>
@@ -211,7 +209,6 @@
               x.id === _value || (_value === null && x.id === property.default)
           )}
           isSelectedContext={true}
-          isPlain={true}
         />
       {/if}
     {:else}

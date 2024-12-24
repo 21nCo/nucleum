@@ -1,6 +1,7 @@
 <script lang="ts">
   import MediaContentResolver from "$lib/client/products/memotron/node/content/MediaContentResolver.svelte";
   import {
+    mediaNodeTypeList,
     NodeType,
     type INode
   } from "$lib/client/products/memotron/node/node.type";
@@ -16,7 +17,6 @@
   } from "../../flux/resourceStores/resource.type";
   import YoutubeVideoPreview from "$lib/client/products/memotron/node/content/web/YoutubeVideoPreview.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { resolveContentTypeForUrl } from "$lib/client/extensions/clipper/clipper.utils";
   import { captureStore } from "$lib/client/products/memotron/capture/capture.store";
   import { Resource } from "../../flux/resourceStores/resource.enum";
   import Collection from "$lib/client/products/memotron/collection/Collection.svelte";
@@ -28,23 +28,40 @@
   import { Size } from "$lib/client/types/size.enum";
   import type { MdStoreType } from "../markdown.store";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
+  import { toasts } from "$lib/client/stores/notification.store";
+  import { formatBytes } from "$lib/shared/utils/text.utils";
+  import Button from "$lib/client/elements/button/Button.svelte";
+  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
+  import { fileStore } from "../../files/file.store";
+  import type { IFile } from "../../files/file.type";
+  import { ErrorMessage } from "../../error/error.type";
+  import { sanitizeAndResolve } from "$lib/client/products/memotron/node/url.utils";
+
   const dispatch = createEventDispatcher();
   const nodeContext = getContext<any>("node");
   const contentContext = getContext<any>("content");
   export let id: IRecordId;
   export let body: IEmbedBlockBody;
   export let mdStore: MdStoreType;
+  export let isHovering = false;
 
   let linkInputValue = "";
   let _mediaBlock: INode | undefined;
+  let _mediaBlockFile: IFile | undefined;
   let height = body?.height ?? 300;
   let isLoading = true;
   let isEditingTitle = false;
   let titleInputValue = "";
   let titleInputRef: TextInput | undefined;
 
-  const titleNotRequiredTypes = [NodeType.FILE, NodeType.KINDLE_BOOK];
-  const resizableTypes = [NodeType.IMAGE, NodeType.PDF];
+  const titleNotRequiredTypes = [NodeType.KINDLE_BOOK];
+  const resizableTypes = [
+    NodeType.IMAGE,
+    NodeType.PDF,
+    NodeType.WEB_PAGE,
+    NodeType.YOUTUBE_VIDEO,
+    NodeType.GIST
+  ];
 
   $: isResizable =
     (_mediaBlock?.contentType &&
@@ -54,8 +71,12 @@
 
   $: isShowTitle =
     _mediaBlock?.contentType &&
-    !titleNotRequiredTypes.includes(_mediaBlock?.contentType) &&
-    !body?.isHidePreview;
+    !titleNotRequiredTypes.includes(_mediaBlock?.contentType);
+
+  $: isShowPreview =
+    _mediaBlock?.contentType &&
+    !body?.isHidePreview &&
+    _mediaBlock?.contentType !== NodeType.FILE;
 
   function onSelectFromLibrary(event: CustomEvent) {
     logger.debug({ at: "EmbedContent onSelectFromLibrary", event });
@@ -92,27 +113,47 @@
   });
 
   async function assignNodeMediaContent(id: IRecordId) {
-    const node = await nodeStore.select(id, ["*", "parent.* as parent"]);
-    if (node) _mediaBlock = node;
+    const node = await nodeStore.select(id, [
+      "*",
+      "parent.* as parent",
+      "file.* as file"
+    ]);
+    if (node) {
+      _mediaBlock = node;
+      _mediaBlockFile = node.file as IFile;
+    }
   }
 
   async function onLinkInput() {
-    if (body?.subType) {
-      //TODO - validation of url for the subType
-      mergeBody({ url: linkInputValue });
-    } else {
-      const nodeType = resolveContentTypeForUrl(linkInputValue);
-      if (nodeType === NodeType.WEB_PAGE) {
-        const result = await captureStore.saveWebpage(linkInputValue, {
-          isEmbedContext: true,
-          creationContext: nodeContext?.id ?? undefined
-        });
-        if (!result) return;
-        mergeBody({ id: result[0].id, subType: nodeType });
-        _mediaBlock = result[0];
-      } else {
-        mergeBody({ subType: nodeType, url: linkInputValue });
+    try {
+      isLoading = true;
+      const sanitized = sanitizeAndResolve(linkInputValue);
+      if (typeof sanitized === "string") {
+        toasts.error("Invalid URL");
+        return;
       }
+
+      if (body?.subType && body.subType !== NodeType.UNKNOWN) {
+        if (sanitized.contentType !== body.subType) {
+          toasts.error(`Invalid URL. Expected ${body.subType} URL`);
+          return;
+        }
+        mergeBody({ url: sanitized.url });
+        return;
+      }
+      const result = await captureStore.saveWebpage(sanitized.url, {
+        contentType: sanitized.contentType,
+        isEmbedContext: true,
+        creationContext: nodeContext?.id ?? undefined
+      });
+      if (!result) return;
+      mergeBody({ id: result[0].id, subType: sanitized.contentType });
+      _mediaBlock = result[0];
+    } catch (e) {
+      logger.error({ at: "EmbedContent onLinkInput", e });
+      toasts.error(ErrorMessage.DEFAULT);
+    } finally {
+      isLoading = false;
     }
   }
 
@@ -120,12 +161,21 @@
     height = e.height;
     mergeBody({ height });
   }
+
+  function onEditTitle(e: MouseEvent) {
+    e.stopPropagation();
+    isEditingTitle = true;
+    titleInputValue = _mediaBlock?.label ?? "";
+    setTimeout(() => {
+      titleInputRef?.focus();
+    }, 100);
+  }
 </script>
 
 {#if body.id && _mediaBlock && !isLoading}
   <button
-    class={cn("flex flex-col gap-4 w-full", {
-      "pt-2": isShowTitle,
+    class={cn("flex flex-col w-full", {
+      "pt-2": isShowTitle && isShowPreview,
       "py-2": !isShowTitle
     })}
     style={isResizable
@@ -141,30 +191,35 @@
     on:click={(e) => {
       if (e.target && e.target.classList.contains("resizer")) return;
       if (_mediaBlock?.contentType === NodeType.FILE) return;
-      appStore.openResource(body.id, ResourceAccessMode.POP);
+      if (body.id) appStore.openResource(body.id, ResourceAccessMode.POP);
     }}
   >
-    <div
-      class={cn("flex w-full", {
-        // "min-h-[40rem] h-[40rem]": _mediaBlock.contentType === NodeType.PDF,
-        "h-4/5 justify-center": isResizable && !isEditingTitle,
-        "h-7/10 justify-center": isEditingTitle,
-        "h-auto max-h-[20rem]": !isResizable
-      })}
-    >
-      <MediaContentResolver
-        node={_mediaBlock}
-        accessPoint={ResourceAccessPoint.MARKDOWN_EMBED}
-        isHidePreview={body?.isHidePreview}
-        on:delete
-      />
-    </div>
+    {#if isShowPreview}
+      <div
+        class={cn("flex w-full", {
+          // "min-h-[40rem] h-[40rem]": _mediaBlock.contentType === NodeType.PDF,
+          "flex-grow justify-center": isResizable,
+          "h-auto max-h-[20rem]": !isResizable,
+          "overflow-auto": _mediaBlock?.contentType === NodeType.GIST
+        })}
+      >
+        <MediaContentResolver
+          node={_mediaBlock}
+          accessPoint={ResourceAccessPoint.MARKDOWN_EMBED}
+          on:delete
+        />
+      </div>
+    {/if}
     {#if isShowTitle}
       {#if isEditingTitle && !$mdStore.params?.isReadOnly}
-        <button on:click|stopPropagation>
+        <button
+          class="flex justify-center items-center w-full h-16 rounded-md"
+          on:click|stopPropagation
+        >
           <TextInput
             bind:value={titleInputValue}
             bind:this={titleInputRef}
+            parentBackgroundIndex={2}
             placeholder="Title"
             width="w-full"
             size={Size.sm}
@@ -188,20 +243,111 @@
         </button>
       {:else}
         <button
-          class="w-full flex justify-center"
-          on:click={(e) => {
-            isEditingTitle = true;
-            titleInputValue = _mediaBlock?.label ?? "";
-            setTimeout(() => {
-              titleInputRef?.focus();
-            }, 100);
-            e.stopPropagation();
-          }}
+          class={cn(
+            "flex w-full justify-between items-center gap-2 rounded-md",
+            {
+              "h-16 px-3": !isShowPreview,
+              "bg-bgs2": !isShowPreview && !isHovering,
+              "h-20": isShowPreview
+            }
+          )}
+          on:click={onEditTitle}
         >
-          <NodeTitleLabelPart
-            item={_mediaBlock}
-            accessPoint={ResourceAccessPoint.MARKDOWN_EMBED}
-          />
+          <div
+            class={cn("flex w-96 mo:w-full", {
+              "flex-col gap-1": _mediaBlock?.url,
+              "gap-2 items-center": _mediaBlockFile
+            })}
+          >
+            <NodeTitleLabelPart
+              item={_mediaBlock}
+              accessPoint={ResourceAccessPoint.MARKDOWN_EMBED}
+            />
+            {#if !isShowPreview && _mediaBlockFile}
+              <span
+                class="text-left text-b4 text-fgs4 whitespace-nowrap shrink-0"
+              >
+                {_mediaBlockFile.size
+                  ? formatBytes(_mediaBlockFile.size)
+                  : "Unknown size"}
+              </span>
+            {:else if !isShowPreview && _mediaBlock?.url}
+              <button
+                class="text-xs text-left text-fgs4 whitespace-nowrap shrink-0 hover:underline"
+                on:click={(e) => {
+                  if (_mediaBlock?.url) {
+                    appStore.openLink(_mediaBlock.url);
+                  }
+                  e.stopPropagation();
+                }}
+              >
+                {_mediaBlock.url.replace(/^https?:\/\//, "").split("?")[0]}
+              </button>
+            {/if}
+          </div>
+          {#if isHovering}
+            <div class="flex gap-2 items-center shrink-0">
+              <Button
+                icon="ph:pencil-simple-light"
+                tooltip="Edit title"
+                size={Size.sm}
+                style={ButtonStyle.OUTLINED}
+                on:click={(e) => {
+                  onEditTitle(e.detail);
+                }}
+              />
+              {#if _mediaBlock?.contentType !== NodeType.FILE}
+                <Button
+                  icon="ph:circle-light"
+                  tooltip="Go to node"
+                  size={Size.sm}
+                  style={ButtonStyle.OUTLINED}
+                  on:click={() => {
+                    if (body.id)
+                      appStore.openResource(body.id, ResourceAccessMode.POP);
+                  }}
+                />
+              {/if}
+              {#if mediaNodeTypeList.includes(_mediaBlock?.contentType)}
+                <Button
+                  icon="ph:download-simple-light"
+                  tooltip="Download"
+                  size={Size.sm}
+                  style={ButtonStyle.OUTLINED}
+                  on:click={(e) => {
+                    if (_mediaBlock?.file) {
+                      fileStore.download(_mediaBlock.file);
+                    }
+                    e.detail.stopPropagation();
+                  }}
+                />
+              {/if}
+              {#if _mediaBlock?.url}
+                <Button
+                  icon="ph:arrow-up-right-light"
+                  tooltip="Go to external link"
+                  size={Size.sm}
+                  style={ButtonStyle.OUTLINED}
+                  on:click={(e) => {
+                    if (_mediaBlock?.url) {
+                      appStore.openLink(_mediaBlock.url);
+                    }
+                    e.detail.stopPropagation();
+                  }}
+                />
+              {/if}
+              <Button
+                icon="ph:trash-light"
+                tooltip="Delete"
+                size={Size.sm}
+                type={ButtonVariant.DANGER}
+                style={ButtonStyle.OUTLINED}
+                on:click={() => {
+                  dispatch("delete");
+                }}
+              />
+            </div>
+          {/if}
         </button>
       {/if}
     {/if}
@@ -220,7 +366,9 @@
   </div>
 {:else}
   <EmbedContentPlaceholder
-    subType={body?.subType}
+    subType={body?.subType && body.subType !== NodeType.UNKNOWN
+      ? body.subType
+      : undefined}
     bind:linkInputValue
     on:select={onSelectFromLibrary}
     on:linkInput={onLinkInput}

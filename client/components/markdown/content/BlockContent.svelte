@@ -39,6 +39,7 @@
       id={block.id}
       body={block.body}
       {mdStore}
+      {isHovering}
       on:update
       on:delete
     />
