@@ -159,7 +159,7 @@ export type StructuralNodeType =
   | NodeType.TOC;
 
 export type OtherNodeType =
-  | NodeType.MATH
+  | NodeType.LATEX
   | NodeType.CALLOUT
   | NodeType.LINK
   | NodeType.EMBED
@@ -181,7 +181,7 @@ export enum NodeType {
   SIMPLE_TEXT = "SIMPLE_TEXT",
   QUOTE = "QUOTE",
   CODE = "CODE",
-  MATH = "MATH",
+  LATEX = "LATEX",
   CALLOUT = "CALLOUT",
   LINK = "LINK",
 
@@ -430,7 +430,15 @@ type MediaNodeType =
   | NodeType.PDF
   | NodeType.FILE;
 
-export type IMediaNode = INodeInterface<MediaNodeType, any, INodeMetadata> & {
+type IMediaNodeMetadata = INodeMetadata & {
+  colors?: string[];
+};
+
+export type IMediaNode = INodeInterface<
+  MediaNodeType,
+  any,
+  IMediaNodeMetadata
+> & {
   file: IRecordId;
 };
 

@@ -29,7 +29,7 @@
       href={node.url}
       target="_blank"
       rel="noopener noreferrer"
-      class="flex items-center gap-1 text-b3 w-full hover:text-aps1"
+      class="flex items-center gap-1 text-b3 w-full hover:text-aps1 hover:underline"
       on:click={(e) => {
         e.stopPropagation();
       }}

@@ -174,8 +174,7 @@
             {#if isInThinMode}
               <!-- todo - on click - show command bar -->
               <Icon
-                size={Size.lg}
-                icon="command"
+                icon="ph:terminal-window-light"
                 class="stroke-fgs2 hover:stroke-aps1"
                 on:click={() => appStore.runAction(Action.CMD)}
               />

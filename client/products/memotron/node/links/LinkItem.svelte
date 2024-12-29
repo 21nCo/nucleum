@@ -29,7 +29,7 @@
     on:action
   >
     <span slot="right" class="flex bg-bgs2 rounded-md border border-brs3">
-      <Toggle icon="ph:tag-thin" bind:on={isShowLinkTagger} />
+      <Toggle icon="ph:tag-light" bind:on={isShowLinkTagger} />
     </span>
     <span
       slot="bottom"

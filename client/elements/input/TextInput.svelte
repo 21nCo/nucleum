@@ -128,6 +128,7 @@
       on:blur
       on:change
       on:enter
+      on:paste
     />
   </div>
 {:else}

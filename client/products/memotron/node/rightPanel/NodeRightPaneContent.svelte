@@ -36,7 +36,7 @@
     <Text content={properCase(pane)} style={TextStyle.PANEL_HEADING_SMALL} />
     {#if _isShowClose}
       <Button
-        icon="ph:x-circle-thin"
+        icon="ph:x-circle-light"
         tooltip="Close"
         on:click={() => {
           dispatch("close", pane);

@@ -8,6 +8,7 @@ export type ISelectItem = {
   activeLabel?: string;
   isDisabled?: boolean;
   badge?: string;
+  tooltip?: string;
 };
 
 export enum OptionSelectorStyle {

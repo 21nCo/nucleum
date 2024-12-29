@@ -710,8 +710,8 @@
     refreshPlaceholder();
   }
 
-  function handlePaste(event: ClipboardEvent) {
-    relay(BlockAction.PASTE, event);
+  function handlePaste(event: CustomEvent<ClipboardEvent>) {
+    relay(BlockAction.PASTE, event.detail);
   }
 </script>
 

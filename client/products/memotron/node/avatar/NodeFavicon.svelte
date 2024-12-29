@@ -17,9 +17,9 @@
 
 <span class="shrink-0 flex items-center justify-center">
   {#if node.contentType === NodeType.TEXT_CLIP}
-    <Icon icon="ph:highlighter-circle-thin" {size} />
+    <Icon icon="ph:highlighter-circle-light" {size} />
   {:else if node.contentType === NodeType.WEB_SCREENSHOT_CLIP}
-    <Icon icon="ph:crop-thin" {size} />
+    <Icon icon="ph:crop-light" {size} />
   {:else if node.contentType === NodeType.KINDLE_HIGHLIGHT}
     <Icon icon="book-open" {size} />
   {:else if isValidUrl(favicon)}

@@ -22,7 +22,10 @@
     localCacheableStores,
     remoteOnlyStores
   } from "$local/localStoresMap";
-  import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
+  import {
+    dispatchCustomEvent,
+    isExtensionEnvironment
+  } from "$lib/client/utils/browser.utils";
   import { appMenuStore } from "../../stores/appMenu/appMenu.store";
   import { AlertType } from "$lib/client/types/notification.type";
   import { cacheableStores } from "$lib/client/stores/globalStoresMap";
@@ -85,8 +88,10 @@
     $appLoadingState.isBaseLoaded = true;
     if (userDataState?.paginateResources) {
       await flux.paginateResources(userDataState.paginateResources, 100);
+      dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
     } else if (userDataState?.counts && !import.meta.env?.DEV) {
       await flux.reconcile({ counts: userDataState.counts });
+      dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
     }
     initializeTaco();
   });
@@ -119,9 +124,6 @@
       refreshTimeZone();
       const isCloudUser = $account.dataMode === UserDataMode.CLOUD;
       if (isCloudUser && !dev_isDisableSyncOnAppear) {
-        if ($context.embed !== Embed.HANDSET) {
-          toasts.showProgress("sync", "Syncing...");
-        }
         await flux.syncDown();
         await account.ping();
       }
@@ -129,8 +131,6 @@
       performAppUpdateCheck();
     } catch (e) {
       logger.error(e);
-    } finally {
-      toasts.closeProgress("sync");
     }
   }
 

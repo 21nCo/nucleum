@@ -2,11 +2,9 @@
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
-  import NodeAvatar from "../avatar/NodeAvatar.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import NodeTitleLabelPart from "./NodeTitleLabelPart.svelte";
-  import { NodeType, webNodeTypeList, type INode } from "../node.type";
-  import Button from "$lib/client/elements/button/Button.svelte";
+  import type { INode } from "../node.type";
   import { createEventDispatcher } from "svelte";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   export let node: INode;
@@ -16,23 +14,15 @@
   function onLabelChange(e: any) {
     dispatch("labelChange", e.detail);
   }
-  $: isWebNode = webNodeTypeList.includes(node.contentType);
 </script>
 
 <div
-  class={cn("flex items-center flex-1 min-w-0 gap-2", {
+  class={cn("flex items-center flex-1 min-w-0 gap-2 h-12", {
     "max-w-fit": !node.isInEditMode
   })}
 >
   {#if !node.focusedBlock}
-    <!-- {#if !isWebNode || node.contentType === NodeType.WEB_PAGE}
-      <NodeAvatar
-        {node}
-        {accessPoint}
-        size={accessPoint === ResourceAccessPoint.SELF ? Size.md : Size.sm}
-      />
-    {/if} -->
-    {#if node.isInEditMode && !isWebNode}
+    {#if node.isInEditMode}
       <TextInput
         size={Size.xl}
         bind:value={node.label}

@@ -606,7 +606,7 @@
           <div class="px-4 flex justify-center items-center w-full h-12">
             <Button
               label="Close edit mode"
-              icon="ph:x-thin"
+              icon="ph:x-light"
               on:click={() => {
                 $collection.isInEditMode = false;
               }}
@@ -674,11 +674,11 @@
                     items={[
                       {
                         value: "filter",
-                        icon: "ph:funnel-thin"
+                        icon: "ph:funnel-light"
                       },
                       {
                         value: "sort",
-                        icon: "ph:arrows-down-up-thin"
+                        icon: "ph:arrows-down-up-light"
                       }
                     ]}
                   /> -->

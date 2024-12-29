@@ -19,11 +19,11 @@ export const UNASSIGNED_LABEL = "Unassigned";
 export function resolveCollectionTypeIcon(type: CollectionType) {
   switch (type) {
     case CollectionType.UNTYPED:
-      return "ph:brackets-round";
+      return "ph:brackets-round-light";
     case CollectionType.TYPED:
-      return "ph:cube";
+      return "ph:cube-light";
     case CollectionType.QUERY:
-      return "ph:database";
+      return "ph:database-light";
   }
 }
 
@@ -124,7 +124,7 @@ export function resolveOptionsForGrouping(
         return count && count > 0;
       })
       .map((option) => ({
-        label: option.label,
+        label: `${option.icon ? option.icon + " " : ""}${option.label}`,
         value: option.id?.toLowerCase(),
         color: option.color
       }));

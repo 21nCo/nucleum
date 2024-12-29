@@ -17,6 +17,7 @@ export enum PropertyTypeGroup {
   SELECT = "select",
   WIZARD = "wizard",
   SYSTEM = "system",
+  RULE_BASED = "rule-based",
   DETECTION = "detection",
   INTEGRATION = "integration"
 }

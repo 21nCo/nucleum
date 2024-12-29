@@ -7,10 +7,10 @@
     resourceIdToElementId,
     resourceInList
   } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   import Check from "$lib/client/icons/Check.svelte";
   import type { IRecordId } from "$lib/client/types/data.type";
   import { Arrangement } from "$lib/client/types/direction.enum";
+  import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import ResourceThumbnailContextMenu from "./ResourceThumbnailContextMenu.svelte";
 
@@ -33,8 +33,6 @@
   $: isSelected = $multiSelectStore.some(resourceInList(item.id));
 </script>
 
-<!-- TODO - position of right click context menu at cursor instead of bottom of the thumbnail -->
-<!-- <ContextMenuAction {contextMenu}> -->
 <div
   class={cn("relative flex flex-col w-full resource", {
     "h-full": arrangement === Arrangement.MASONRY
@@ -48,13 +46,14 @@
   <slot />
   {#if isSelected || $multiSelectStore.length > 0}
     <button
-      class="absolute top-0 left-0 flex gap-2 bg-bgs2 border border-brs3 rounded-full m-3 p-0.5"
+      class="absolute inset-x-0 top-0 w-6 h-6 gap-2 bg-bgs2 border border-brs3 rounded-full m-2 flex items-center justify-center"
       on:click|stopPropagation
     >
       {#if isSelected}
         <Check
           isChecked={true}
           isRounded={true}
+          size={Size.lg}
           on:click={() => {
             $multiSelectStore = $multiSelectStore.filter((x) => x != item.id);
           }}
@@ -63,6 +62,7 @@
         <Check
           isChecked={false}
           isRounded={true}
+          size={Size.lg}
           on:click={() => {
             $multiSelectStore = [...$multiSelectStore, item.id];
           }}
@@ -107,4 +107,3 @@
     </button>
   {/if}
 </div>
-<!-- </ContextMenuAction> -->

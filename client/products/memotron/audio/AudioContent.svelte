@@ -240,7 +240,7 @@
             wavesurferPreview.play();
           }}
           type={ButtonVariant.PRIMARY}
-          icon="ph:play-thin"
+          icon="ph:play-light"
           label="Play"
         />
       {:else if recordingState === PlayActionState.PREVIEWING}
@@ -252,7 +252,7 @@
               previewingState = PlayActionState.PAUSEPREVIEWING;
             }}
             type={ButtonVariant.PRIMARY}
-            icon="ph:pause-thin"
+            icon="ph:pause-light"
             label="Pause"
           />
         {:else}
@@ -263,7 +263,7 @@
               previewingState = PlayActionState.RESUMEPREVIEWING;
             }}
             type={ButtonVariant.PRIMARY}
-            icon="ph:play-thin"
+            icon="ph:play-light"
             label="Resume"
           />
         {/if}

@@ -140,7 +140,11 @@ class Flux {
       const data = await this.persistence.selectMany(Resource.kv);
       if (!data) return;
       data.forEach((record: any) => {
-        if (params?.kvRecords && !params.kvRecords.includes(record.id)) return;
+        if (
+          params?.kvRecords &&
+          !params.kvRecords.includes(record.id.toString())
+        )
+          return;
         const store = kvStores.find(
           (x) => "kv:" + x.id === record.id.toString()
         );
@@ -349,6 +353,8 @@ class Flux {
       case PersistenceActionType.INSERT:
       case PersistenceActionType.BULK_MERGE:
         return params?.records.map((x) => x.id);
+      case PersistenceActionType.BULK_DELETE:
+        return params?.recordIds;
       case PersistenceActionType.REPLACE:
       case PersistenceActionType.MERGE:
         return params?.record?.id;
@@ -766,6 +772,7 @@ class Flux {
     );
 
     for (let { resource, records } of data) {
+      this.propagateSyncStatus(resource);
       const mutationResult = await this.persistence.mutation(
         resource as Resource,
         {
@@ -773,6 +780,7 @@ class Flux {
           action: PersistenceActionType.INSERT
         }
       );
+      this.propagateSyncStatus(resource, true);
     }
     if (!params?.isPreventInMemoryStoreLoad) {
       logger.log({
@@ -979,16 +987,34 @@ class Flux {
     }
   }
 
+  propagateSyncStatus(resource: Resource, isFinish?: boolean) {
+    let status = "";
+    if (isFinish) {
+      status = `${resource}:finished`;
+    } else {
+      status = `${resource}:started`;
+    }
+    const elements = document.querySelectorAll(`[data-syncfeedback="true"]`);
+    if (elements) {
+      for (let element of elements) {
+        element.setAttribute("data-syncstatus", status);
+      }
+    }
+  }
+
   async paginateResources(resources: Resource[], offset?: number) {
     for (let resource of resources) {
+      this.propagateSyncStatus(resource);
       await this.paginateResource(
         resource,
         offset !== undefined ? offset : this.cloneDownLimit,
         this.cloneDownLimit
       );
+      this.propagateSyncStatus(resource, true);
     }
   }
   async paginateResource(resource: Resource, offset: number, limit: number) {
+    this.propagateSyncStatus(resource);
     const result = await this.performSync(SyncMethod.CLONE_DOWN_PAGINATE, {
       resource,
       isExtension: this.isExtensionEnvironment,

@@ -228,7 +228,7 @@
                     <CollectionsLane {node} {isReadOnlyMode} />
                   </div>
                 {/if}
-                <div class="pl-12">
+                <div class="px-12">
                   <ResourceStatusBanner resource={node} />
                 </div>
                 {#if $node.types && $node.types.length > 0 && !$node.focusedBlock}

@@ -28,7 +28,7 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
     action: Action.LOCAL_AI_SETTINGS,
     cmdLabel: [{ variant: "aiSettings", label: "AI Settings" }],
     label: "AI Settings",
-    icon: "ph:brain-light",
+    icon: "ph:head-circuit-light",
     component: TacoSettings,
     hideContext: [Embed.HANDSET],
     modalParams: {
@@ -42,7 +42,7 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
   {
     action: Action.MODE_OF_INTERACTION,
     label: "Mode of interaction",
-    icon: "cursor-arrow-rays",
+    icon: "ph:cursor-click-light",
     component: InteractionModeSettings,
     modalParams: {
       title: "Mode of interaction",
@@ -118,7 +118,7 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
   {
     action: "sync",
     label: "Sync",
-    icon: "sync",
+    icon: "ph:arrows-clockwise-light",
     component: SyncSettings,
     modalParams: {
       title: "Sync Settings"

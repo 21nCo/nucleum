@@ -67,6 +67,7 @@ import {
   resolveUrlData,
   sanitizeAndResolve
 } from "../node/url.utils";
+import { getImageColorsFromFile } from "$lib/client/utils/ui.utils";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
@@ -375,10 +376,18 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     const fileId = response[0].id;
     contentType = contentType ?? resolveContentTypeForFile(file);
     if (!contentType) return { error: "File type not supported" };
+    let metadata = {};
+    if (file.type.startsWith("image/")) {
+      const colors = await getImageColorsFromFile(file, 10);
+      metadata = {
+        colors
+      };
+    }
     const node = {
       contentType,
       file: fileId,
       label: file.name,
+      metadata,
       creationContext: params?.isEmbedContext
         ? (params?.creationContext ?? this.get().nodeId)
         : undefined
@@ -421,10 +430,18 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       if (!response) continue;
       if (!response[0].id) continue;
       const fileId = response[0].id;
+      let metadata = {};
+      if (item.file.type.startsWith("image/")) {
+        const colors = await getImageColorsFromFile(item.file, 10);
+        metadata = {
+          colors
+        };
+      }
       const node = {
         contentType: item.contentType,
         file: fileId,
         label: item.file.name,
+        metadata,
         creationContext: params?.isEmbedContext
           ? (params?.creationContext ?? this.get().nodeId)
           : undefined
@@ -500,12 +517,19 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     );
     if (!result) return;
     const fileId = result[0].id;
+    const colors = await getImageColorsFromFile(
+      new File([data], fileName, { type: contentType }),
+      10
+    );
     const node: OmitForCapture<IMediaNode> = {
       id,
       contentType: NodeType.IMAGE,
       file: fileId,
       label: `Image Capture - ${new Date().toLocaleString()}`,
-      body: {}
+      body: {},
+      metadata: {
+        colors
+      }
     };
     const result2 = await nodeStore.create(node, {
       context: MemotronAction.CAPTURE

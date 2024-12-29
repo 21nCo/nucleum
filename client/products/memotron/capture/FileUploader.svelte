@@ -30,7 +30,8 @@
     ...imageFileTypes,
     ...videoFileTypes,
     ...audioFileTypes,
-    ...pdfFileTypes
+    ...pdfFileTypes,
+    ".md"
   ].join(",");
 
   let multipleFilesData: IMultiFileCaptureData | undefined = undefined;

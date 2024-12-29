@@ -972,9 +972,20 @@
   }
   async function handlePaste(event: ClipboardEvent) {
     if (isMarkdown) {
-      //TODO - relay paste event
+      dispatch("paste", event);
     } else {
-      //TODO - test paste functionality
+      event.preventDefault();
+      const text = event.clipboardData?.getData("text/plain") ?? "";
+
+      // document.execCommand("insertText", false, text);
+
+      const selection = window.getSelection();
+      const range = selection?.getRangeAt(0);
+      range?.deleteContents();
+      range?.insertNode(document.createTextNode(text));
+      content = blockRef.textContent ?? "";
+      dispatch("paste", { value: text });
+      dispatch("change");
     }
   }
   /**
@@ -1025,7 +1036,6 @@
       on:focus
       on:pointerenter
       on:pointerleave
-      on:paste
       bind:innerHTML
       contenteditable
       {placeholder}

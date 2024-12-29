@@ -157,6 +157,7 @@
   let classListParam = "";
   let dev_useIconifyTailwind = false;
   let isUseIconifySprite = true;
+  const spriteVersion = 2;
   export { classListParam as class };
   let _classList = "";
   let variant: IconVariant = IconVariant.Outline;
@@ -285,7 +286,29 @@
               : "1rem"}
     {#if isUseIconifySprite && !icon.startsWith("svg-spinners")}
       <svg width={sizePx} height={sizePx} class={_classList + " iconifysvg "}>
-        <use href={`icons/sprite.svg#${renderedIconifyIcon}`} />
+        {#if renderedIconifyIcon.startsWith("ph:")}
+          {#if renderedIconifyIcon.endsWith("-light")}
+            <use
+              href={`/icons/sprite-ph-light-v${spriteVersion}.svg#${renderedIconifyIcon}`}
+            />
+          {:else if renderedIconifyIcon.endsWith("-fill")}
+            <use
+              href={`/icons/sprite-ph-fill-v${spriteVersion}.svg#${renderedIconifyIcon}`}
+            />
+          {:else if renderedIconifyIcon.endsWith("-thin")}
+            <use
+              href={`/icons/sprite-ph-thin-v${spriteVersion}.svg#${renderedIconifyIcon}`}
+            />
+          {:else}
+            <use
+              href={`/icons/sprite-ph-base-v${spriteVersion}.svg#${renderedIconifyIcon}`}
+            />
+          {/if}
+        {:else}
+          <use
+            href={`/icons/sprite-v${spriteVersion}.svg#${renderedIconifyIcon}`}
+          />
+        {/if}
       </svg>
     {:else if dev_useIconifyTailwind}
       <span class="iconify text-fgs1 {renderedIconifyIcon} w-5 h-5"></span>

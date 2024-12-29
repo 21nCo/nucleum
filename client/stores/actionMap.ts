@@ -139,7 +139,7 @@ export const globalActions: IAction[] = [
   {
     action: "chat",
     label: "Chat with us",
-    icon: "chatleftright",
+    icon: "ph:chats-light",
     type: ActionType.FUNCTION,
     fn: async () => {
       modalEvent.hide(Action.HELP);
@@ -159,14 +159,14 @@ export const globalActions: IAction[] = [
   {
     action: "call",
     label: "Book a call",
-    icon: "video-camera",
+    icon: "ph:video-conference-light",
     type: ActionType.MODAL,
     component: BookACall
   },
   {
     action: "faqs",
     label: "FAQs",
-    icon: "help",
+    icon: "ph:question-light",
     type: ActionType.LINK
   },
   {
@@ -178,7 +178,7 @@ export const globalActions: IAction[] = [
   {
     action: "opencollective",
     label: "Support us",
-    icon: "gift",
+    icon: "ph:gift-light",
     isInactive: true,
     type: ActionType.LINK
   },
@@ -225,7 +225,7 @@ export const globalActions: IAction[] = [
   {
     action: "git",
     label: "Star us on git",
-    icon: "star",
+    icon: "ph:star-light",
     isInactive: true,
     type: ActionType.LINK
   },
@@ -250,7 +250,7 @@ export const globalActions: IAction[] = [
     get label() {
       return this.modalParams?.title;
     },
-    icon: "lock-closed",
+    icon: "ph:lock-simple-light",
     isMeta: true,
     type: ActionType.LINK,
     contentType: ContentType.SPACE_DOC,
@@ -264,14 +264,14 @@ export const globalActions: IAction[] = [
   {
     action: Action.CHANGELOG + "mobile",
     label: "What's new",
-    icon: "sparkles",
+    icon: "ph:sparkle-light",
     isMeta: true,
     type: ActionType.LINK
   },
   {
     action: Action.CHANGELOG,
     label: "What's new",
-    icon: "sparkles",
+    icon: "ph:sparkle-light",
     isMeta: true,
     type: ActionType.FUNCTION,
     fn: async (params?: IActionFnParams) => {
@@ -288,7 +288,7 @@ export const globalActions: IAction[] = [
   {
     action: Action.CHANGELOG + "supahub",
     label: "What's new",
-    icon: "sparkles",
+    icon: "ph:sparkle-light",
     cmdLabel: [
       { variant: "whatsNew", label: "What's new" },
       { variant: "changelog", label: "Changelog" }
@@ -309,7 +309,7 @@ export const globalActions: IAction[] = [
   {
     action: Action.ROADMAP + "mobile",
     label: "Roadmap",
-    icon: "map",
+    icon: "ph:map-trifold-light",
     isMeta: true,
     type: ActionType.LINK
   },
@@ -332,7 +332,7 @@ export const globalActions: IAction[] = [
   {
     action: Action.ROADMAP,
     label: "Roadmap",
-    icon: "map",
+    icon: "ph:map-trifold-light",
     isMeta: true,
     type: ActionType.FUNCTION,
     fn: async (params?: IActionFnParams) => {
@@ -349,7 +349,7 @@ export const globalActions: IAction[] = [
   {
     action: Action.ROADMAP + "supahub",
     label: "Roadmap",
-    icon: "map",
+    icon: "ph:map-trifold-light",
     type: ActionType.MODAL,
     component: SupahubEmbed,
     modalParams: {
@@ -366,20 +366,20 @@ export const globalActions: IAction[] = [
   {
     action: "feedback",
     label: "Give feedback",
-    icon: "chat-bubble-bottom-center",
+    icon: "ph:chat-centered-dots-light",
     isInactive: true,
     type: ActionType.LINK
   },
   {
     action: "requestfeature",
     label: "Request a feature",
-    icon: "light-bulb",
+    icon: "ph:lightbulb-light",
     type: ActionType.LINK
   },
   {
     action: "report",
     label: "Report an issue",
-    icon: "flag",
+    icon: "ph:flag-light",
     type: ActionType.MODAL,
     isInactive: true
   },

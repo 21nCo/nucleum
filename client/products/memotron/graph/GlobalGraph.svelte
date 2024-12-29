@@ -81,7 +81,9 @@
           "contentType"
         ],
         filters: {
-          contentType: [...rootNodeTypeList, ...headingNodeTypes],
+          // contentType: [...rootNodeTypeList, ...headingNodeTypes],
+          contentType: [...rootNodeTypeList],
+          creationContext: false,
           ...activeResourceFilterV2
         }
       });

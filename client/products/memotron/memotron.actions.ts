@@ -73,7 +73,7 @@ export const memotronActions: IAction[] = [
     action: MemotronAction.CAPTURE,
     component: Capture,
     label: "Capture",
-    icon: "capture",
+    icon: "ph:plus-circle-light",
     type: ActionType.RESOURCE,
     accessMode: ResourceAccessMode.POP,
     // isRenderAsPageInPortrait: true,
@@ -240,7 +240,7 @@ export const memotronActions: IAction[] = [
     action: resourceAction(Resource.node, ResourceActionType.BROWSE),
     component: NodeBrowser,
     label: "Nodes",
-    icon: "node",
+    icon: "ph:circle-light",
     type: ActionType.PAGE,
     loadingComponent: NodeLoadingPulse
   },
@@ -275,7 +275,6 @@ export const memotronActions: IAction[] = [
   {
     action: MemotronAction.LIBRARY,
     label: "Library",
-    // icon: "globe-alt",
     icon: "ph:globe-light",
     component: Library,
     type: ActionType.PAGE,
@@ -477,7 +476,7 @@ export const memotronActions: IAction[] = [
     action: resourceAction(Resource.linkTag, ResourceActionType.BROWSE),
     type: ActionType.MODAL,
     label: "Link Tags",
-    icon: "ph:tag",
+    icon: "ph:tag-light",
     component: LinkTagsControlPanel,
     modalParams: {
       title: "Link Tags",
@@ -535,7 +534,7 @@ export const memotronActions: IAction[] = [
     action: MemotronAction.DATA_SETTINGS,
     type: ActionType.MODAL,
     label: "Data Settings",
-    icon: "ph:database",
+    icon: "ph:database-light",
     component: MemotronDataSettings,
     hideContext: [Embed.HANDSET],
     modalParams: {

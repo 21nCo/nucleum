@@ -50,14 +50,6 @@
       mode: PropertyTypeMode.AUTO
     },
     {
-      id: PropertyTypeGroup.DEFAULT,
-      label: "More",
-      order: 0,
-      badge: "Planned",
-      isDisabled: true,
-      mode: PropertyTypeMode.AUTO
-    },
-    {
       id: PropertyTypeGroup.DETECTION,
       label: "Auto detection",
       info: {
@@ -65,6 +57,12 @@
         size: Size.xs
       },
       order: 2,
+      mode: PropertyTypeMode.AUTO
+    },
+    {
+      id: PropertyTypeGroup.RULE_BASED,
+      label: "Rule based",
+      order: 0,
       badge: "Planned",
       isDisabled: true,
       mode: PropertyTypeMode.AUTO

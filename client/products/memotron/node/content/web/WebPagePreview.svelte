@@ -74,6 +74,10 @@
         const frameAncestorsVal = headers["frame-ancestors"];
         if (frameAncestorsVal === "'none'") return false;
       }
+      if (headers["content-security-policy"]) {
+        const cspVal = headers["content-security-policy"];
+        if (cspVal.includes("frame-ancestors")) return false;
+      }
       return true;
     }
   }
@@ -127,6 +131,7 @@
         size={Size.md}
         type={ButtonVariant.PRIMARY}
         style={ButtonStyle.OUTLINED}
+        tooltip="Close preview"
         on:click={() => {
           isIframeShown = !isIframeShown;
         }}

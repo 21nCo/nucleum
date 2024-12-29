@@ -20,12 +20,12 @@
     {
       value: Arrangement.LIST,
       label: "List",
-      icon: "ph:list-thin"
+      icon: "ph:list-light"
     },
     {
       value: Arrangement.GRID,
       label: "Grid",
-      icon: "ph:squares-four-thin"
+      icon: "ph:squares-four-light"
     }
   ];
   $: if (
@@ -35,7 +35,7 @@
     allArrangements.push({
       value: Arrangement.MASONRY,
       label: "Masonry",
-      icon: "ph:gradient-thin"
+      icon: "ph:gradient-light"
     });
   } else {
     allArrangements = allArrangements.filter(
