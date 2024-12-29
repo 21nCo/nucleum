@@ -238,7 +238,6 @@
                       {node}
                       isVisibleProps={true}
                       on:showAll={() => {
-                        console.log("showAll");
                         rightPane = NodeRightPaneType.PROPERTIES;
                         isRightPanelCollapsed = false;
                       }}

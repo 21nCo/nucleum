@@ -21,22 +21,22 @@
 
   /**
    * Required for change subscriptions.
-   * Works along with {@link subscribeToContext} and {@link subscribeToResource} for further filtering of change events.
+   * Works along with {@link subscribeToContext} and {@link subscribeToRecords} for further filtering of change events.
    *
    * Resources to subscribe to - a change event will be dispatched if any mutation happens to these resources from anywhere else in the app so that derived or dependant stores can be reloaded or pages/components can be refreshed
    *
    */
-  export let subscribeTo: Set<Resource> = new Set();
+  export let subscribeToResource: Set<Resource> = new Set();
 
   /**
-   * Context in which the change event should trigger for given {@link subscribeTo} resources
+   * Context in which the change event should trigger for given {@link subscribeToResource} resources
    */
   export let subscribeToContext: Set<string> | undefined = undefined;
 
   /**
-   * change event will only trigger if the specified resource is mutated. If undefined, change event will trigger as per {@link subscribeTo} and {@link subscribeToContext}
+   * change event will only trigger if the specified resource is mutated. If undefined, change event will trigger as per {@link subscribeToResource} and {@link subscribeToContext}
    */
-  export let subscribeToResource: IRecordId | undefined = undefined;
+  export let subscribeToRecords: IRecordId[] | undefined = undefined;
 
   /**
    * Performs sync down action on mount if the user is a cloud user and if this flag is set to true
@@ -74,19 +74,19 @@
   ) {
     const data = e.detail;
     const mutation = data.params;
-    if (!data || !mutation || !subscribeTo.has(data.resource)) return;
+    if (!data || !mutation || !subscribeToResource.has(data.resource)) return;
     // console.log({ at: "onMutation", data, mutation });
     if (
-      subscribeToResource &&
+      subscribeToRecords &&
       mutation?.action === PersistenceActionType.MERGE &&
-      isSameResource(mutation?.record?.id, subscribeToResource)
+      subscribeToRecords.some((x) => isSameResource(mutation?.record?.id, x))
     ) {
       dispatch("change", data);
       return;
     }
     const excludeProperties = ["isArchived", "trashInformation"];
     const isExcludedPropertyCase =
-      !subscribeToResource &&
+      !subscribeToRecords &&
       mutation?.action === PersistenceActionType.MERGE &&
       excludeProperties.some((x) => mutation?.record[x] !== undefined);
     if (isExcludedPropertyCase) {

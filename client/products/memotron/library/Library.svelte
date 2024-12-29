@@ -654,7 +654,7 @@
 
 <ComponentBaseLayer
   syncDownOnMount={true}
-  subscribeTo={availableResources}
+  subscribeToResource={availableResources}
   subscribeToContext={new Set([
     ResourceAccessPoint.LIBRARY,
     MemotronAction.CAPTURE,

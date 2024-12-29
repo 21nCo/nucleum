@@ -345,7 +345,7 @@
 </Panel>
 
 <ComponentBaseLayer
-  subscribeTo={new Set([resource])}
+  subscribeToResource={new Set([resource])}
   subscribeToContext={new Set([
     ResourceAccessPoint.BROWSER,
     MemotronAction.CAPTURE,

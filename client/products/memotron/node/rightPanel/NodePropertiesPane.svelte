@@ -1,6 +1,6 @@
 <script lang="ts">
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { appStore, isInEditMode } from "$lib/client/stores/app.store";
+  import { appStore } from "$lib/client/stores/app.store";
   import PropertiesListView from "$lib/client/products/memotron/collection/properties/PropertiesListView.svelte";
   import type { IActiveNodeStore } from "$lib/client/products/memotron/node/node.store";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
@@ -13,6 +13,9 @@
   import { MemotronAction } from "../../memotronAction.enum";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import ResourceStatusBanner from "../../common/ResourceStatusBanner.svelte";
+  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { collectionStore } from "../../collection/collection.store";
   export let node: IActiveNodeStore;
   export let isVisibleProps: boolean = false;
   let _types: ICollectionExpanded[] | null = null;
@@ -34,14 +37,26 @@
   }
 
   onMount(() => {
+    refresh();
+  });
+
+  function refresh() {
     if (!isVisibleProps) {
-      resolveTypes();
+      resolveRenderedTypes();
     } else {
       _types = $node.types ?? [];
     }
-  });
+  }
+  async function refreshTypeData() {
+    if (!$node.types) return;
+    $node.types = await collectionStore.resolveTypes(
+      $node.types.map((x) => x.id)
+    );
+    refresh();
+    refreshId = new Date().getTime();
+  }
 
-  function resolveTypes() {
+  function resolveRenderedTypes() {
     if ($node.types?.length === 1) {
       const type = $node.types[0];
       type.properties = type.properties?.filter((x) => x);
@@ -174,3 +189,8 @@
     {/if}
   </div>
 </div>
+<ComponentBaseLayer
+  subscribeToResource={new Set([Resource.collection])}
+  subscribeToRecords={$node.types?.map((x) => x.id) ?? []}
+  on:change={refreshTypeData}
+/>

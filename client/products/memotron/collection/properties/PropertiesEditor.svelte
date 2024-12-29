@@ -135,7 +135,8 @@
   onMount(async () => {
     if (collection && (!$collection || !$collection.label)) {
       await collection.init(ResourceAccessMode.POP);
-    } else {
+    } else if (collection) {
+      await collection.refreshProperties();
       propertyEditorStore.set({
         properties: $collection?.properties ?? [],
         typeToExtend: $collection?.typeToExtend

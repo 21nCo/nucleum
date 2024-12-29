@@ -382,7 +382,7 @@
 </ResourceThumbnailBase>
 
 <ComponentBaseLayer
-  subscribeTo={new Set([Resource.node])}
-  subscribeToResource={item.id}
+  subscribeToResource={new Set([Resource.node])}
+  subscribeToRecords={[item.id]}
   on:change={onNodeChange}
 />
