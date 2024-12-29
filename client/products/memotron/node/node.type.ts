@@ -413,6 +413,10 @@ type INodeHasLabel = {
   label: string;
 };
 
+type INodeHasFile = {
+  file: IRecordId;
+};
+
 // ===== Media node types =====
 
 export const mediaNodeTypeList = [
@@ -423,24 +427,45 @@ export const mediaNodeTypeList = [
   NodeType.FILE
 ];
 
-type MediaNodeType =
-  | NodeType.IMAGE
-  | NodeType.VIDEO
-  | NodeType.AUDIO
-  | NodeType.PDF
-  | NodeType.FILE;
-
-type IMediaNodeMetadata = INodeMetadata & {
+type IImageMetadata = INodeMetadata & {
   colors?: string[];
 };
 
-export type IMediaNode = INodeInterface<
-  MediaNodeType,
-  any,
-  IMediaNodeMetadata
-> & {
-  file: IRecordId;
+type IAudioMetadata = INodeMetadata & {
+  album?: string;
+  artist?: string;
+  picture?: IRecordId;
+  title?: string;
+  genre?: string;
+  composer?: string;
+  year?: number;
+  copyright?: string;
+  duration?: number;
+  bitrate?: number;
+  sampleRate?: number;
+  numberOfChannels?: number;
+  codec?: string;
 };
+
+export type IImageNode = INodeInterface<NodeType.IMAGE, any, IImageMetadata> &
+  INodeHasFile;
+
+export type IAudioNode = INodeInterface<NodeType.AUDIO, any, IAudioMetadata> &
+  INodeHasFile;
+
+export type IVideoNode = INodeInterface<NodeType.VIDEO, any, any> &
+  INodeHasFile;
+
+export type IPDFNode = INodeInterface<NodeType.PDF, any, any> & INodeHasFile;
+
+export type IFileNode = INodeInterface<NodeType.FILE, any, any> & INodeHasFile;
+
+export type IMediaNode =
+  | IImageNode
+  | IAudioNode
+  | IVideoNode
+  | IPDFNode
+  | IFileNode;
 
 // ===== Layout node types =====
 

@@ -68,6 +68,7 @@ import {
   sanitizeAndResolve
 } from "../node/url.utils";
 import { getImageColorsFromFile } from "$lib/client/utils/ui.utils";
+import { parseBlob } from "music-metadata";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
@@ -357,6 +358,45 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     }
   }
 
+  private async parseMetadata(file: File) {
+    let metadata = {};
+    if (file.type.startsWith("image/")) {
+      const colors = await getImageColorsFromFile(file, 10);
+      metadata = {
+        colors
+      };
+    } else if (file.type.startsWith("audio/")) {
+      let parsedMetadata = await parseBlob(file);
+      if (parsedMetadata?.common) {
+        let imageId: IRecordId | undefined = undefined;
+        if (parsedMetadata.common.picture?.[0]?.data) {
+          try {
+            const imageData = parsedMetadata.common.picture[0].data;
+            const imageFile = new File([imageData], file.name, {
+              type: "image/jpeg"
+            });
+            const imageUploadResponse = await account.uploadFileV2(
+              "image/jpeg",
+              file.name,
+              imageFile
+            );
+            if (imageUploadResponse) {
+              imageId = imageUploadResponse[0].id;
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        }
+        metadata = {
+          ...parsedMetadata.common,
+          ...parsedMetadata.format,
+          picture: imageId
+        };
+      }
+    }
+    return metadata;
+  }
+
   async saveFile(
     file: File,
     contentType?: NodeType,
@@ -376,13 +416,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     const fileId = response[0].id;
     contentType = contentType ?? resolveContentTypeForFile(file);
     if (!contentType) return { error: "File type not supported" };
-    let metadata = {};
-    if (file.type.startsWith("image/")) {
-      const colors = await getImageColorsFromFile(file, 10);
-      metadata = {
-        colors
-      };
-    }
+    const metadata = await this.parseMetadata(file);
     const node = {
       contentType,
       file: fileId,
@@ -430,13 +464,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       if (!response) continue;
       if (!response[0].id) continue;
       const fileId = response[0].id;
-      let metadata = {};
-      if (item.file.type.startsWith("image/")) {
-        const colors = await getImageColorsFromFile(item.file, 10);
-        metadata = {
-          colors
-        };
-      }
+      const metadata = await this.parseMetadata(item.file);
       const node = {
         contentType: item.contentType,
         file: fileId,

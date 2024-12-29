@@ -36,10 +36,13 @@
   import { Embed } from "$lib/client/types/context.type";
   import { read_audio } from "@huggingface/transformers";
   import { TacoActions, TranscriptionModel } from "../taco/taco.types";
+  import FileView from "$lib/client/components/files/FileView.svelte";
+  import { isRecordId } from "$lib/client/components/flux/resourceStores/resource.utils";
 
   export let body: any = {};
   export let url: string;
   export let nodeId: string = "dummy";
+  export let metadata: any = {};
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   const _previewId = generateSimpleRandomId();
   let isDisabled: boolean = body?.initTranscription == true ? true : false;
@@ -218,7 +221,17 @@
     class="flex flex-col gap-2 w-full text-justify border- border-brs3 rounded-md py-2"
   >
     <div class="flex flex-col gap-2 w-full">
-      <div id={_previewId} class="audio-preview-container w-full" />
+      <div class="w-full flex gap-2 mo:flex-col justify-center items-center">
+        {#if isRecordId(metadata?.picture)}
+          <div class="w-48">
+            <FileView
+              id={metadata?.picture}
+              class="w-full h-full object-cover rounded-md"
+            />
+          </div>
+        {/if}
+        <div id={_previewId} class="audio-preview-container w-full" />
+      </div>
       <div class="flex justify-between px-0.5 text-fgs2">
         <span>
           {formatSeconds(previewCountDown, TimeFormat.CLOCK)}
@@ -228,6 +241,7 @@
         </span>
       </div>
     </div>
+
     <!-- <audio controls>
       <source src={url} type="audio/webm" />
     </audio> -->

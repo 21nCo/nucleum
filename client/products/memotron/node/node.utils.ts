@@ -215,7 +215,7 @@ export function resolveNodeContentLabel(contentType: NodeType) {
 }
 
 export function resolveFilePreview(node: INode) {
-  const { contentType, body, file } = node;
+  const { contentType, body, file, metadata } = node;
   if (
     contentType === NodeType.IMAGE ||
     contentType === NodeType.FILE ||
@@ -226,6 +226,8 @@ export function resolveFilePreview(node: INode) {
     return body.file;
   } else if (contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP) {
     return body.thumbnail;
+  } else if (contentType === NodeType.AUDIO) {
+    return metadata?.picture;
   }
   return undefined;
 }
