@@ -322,7 +322,7 @@
           "pr-10": !$view.isConstrainedWidth && body?.mdBlocks
         })}
       >
-        <p class="p-2 text-center text-rose-700" class:hidden={!isError}>
+        <p class="p-2 text-center text-ars1" class:hidden={!isError}>
           Transcription Error.
         </p>
         {#if body?.initTranscription == true || isDisabled}

@@ -35,6 +35,7 @@
   let searchStore = new SearchStore();
   let isRefreshing: boolean = false;
   let searchResultsPopover: SearchResultsPopover;
+  let dev_enableSemanticSearch: boolean = false;
   const switchItems = [
     {
       label: "Everything",
@@ -117,7 +118,7 @@
         />
       </span>
       <div class="flex gap-2">
-        {#if $userPreferences.localAI.semanticSearch}
+        {#if dev_enableSemanticSearch && $userPreferences.localAI.semanticSearch}
           <SwitchInput
             label={{ label: "Semantic", orientation: Orientation.Horizontal }}
             size={Size.sm}

@@ -207,7 +207,11 @@ const phosphorIcons = [
   "sigma",
   "circle-dashed",
   "arrow-u-up-left",
-  "arrow-counter-clockwise"
+  "arrow-counter-clockwise",
+  "warning",
+  "info",
+  "lightbulb",
+  "error"
 ];
 
 export const phosphorRatingIcons = [
