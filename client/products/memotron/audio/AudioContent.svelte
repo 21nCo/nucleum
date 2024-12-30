@@ -38,6 +38,7 @@
   import { TacoActions, TranscriptionModel } from "../taco/taco.types";
   import FileView from "$lib/client/components/files/FileView.svelte";
   import { isRecordId } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import Icon from "$lib/client/elements/Icon.svelte";
 
   export let body: any = {};
   export let url: string;
@@ -110,7 +111,7 @@
         action: TacoActions.GET_TRANSCRIPTION,
         params: {
           audioData: audioData,
-          model: model
+          model: TranscriptionModel.DISTILL_SMALL_EN
         }
       });
       result = await new Promise((resolve, reject) => {
@@ -141,15 +142,16 @@
    */
   async function convertToMarkdown() {
     let transcript: string | null;
-    if (
-      (body?.transcription || body?.mdBlocks) &&
-      $userPreferences.lastUsedTranscriptionModel === model
-    ) {
-      alert(
-        "Retranscription runs only when model is changed, using retranscipt button on same model has no effect"
-      );
-      transcript = body.transcription;
-    } else transcript = await onTranscribe();
+    // if (
+    //   (body?.transcription || body?.mdBlocks) &&
+    //   $userPreferences.lastUsedTranscriptionModel === model
+    // ) {
+    //   alert(
+    //     "Retranscription runs only when model is changed, using retranscipt button on same model has no effect"
+    //   );
+    //   transcript = body.transcription;
+    // } else
+    transcript = await onTranscribe();
     if (!transcript || typeof transcript !== "string") return;
     label = body?.initTranscription == false ? "Retranscribe" : "Transcribe";
     $userPreferences.lastUsedTranscriptionModel = model;
@@ -299,7 +301,7 @@
     >
       <div class="flex w-full justify-between gap-3 mo:px-2 px-10">
         <Text content="Transcription" style={TextStyle.PANEL_HEADING_SMALL} />
-        {#if !$view.isConstrainedWidth}
+        <!-- {#if !$view.isConstrainedWidth}
           <DropDown
             items={accuracy}
             isDisableSearch={true}
@@ -313,7 +315,7 @@
             value={model}
             on:select={(e) => (model = e.detail)}
           />
-        {/if}
+        {/if} -->
       </div>
       <div
         class={cn("flex w-full flex-1 overflow-y-auto", {
@@ -324,7 +326,10 @@
           Transcription Error.
         </p>
         {#if body?.initTranscription == true || isDisabled}
-          <p class="p-2">Transcribing...</p>
+          <div class="flex items-center justify-center gap-2 p-2 w-full">
+            <Icon icon="svg-spinners:3-dots-fade" />
+            <span class="text-fgs3">Transcribing...</span>
+          </div>
         {:else if body?.mdBlocks !== undefined}
           <NodularMarkdown
             mdId={generateUID()}
@@ -333,7 +338,7 @@
             on:change={onMarkdownChange}
           />
         {:else if body?.transcription !== undefined}
-          <TextArea bind:value={body.transcription} />
+          <TextArea bind:value={body.transcription} style={InputStyle.PLAIN} />
           <!-- <p class="p-2">{body.transcription}</p> -->
         {:else}
           <span
