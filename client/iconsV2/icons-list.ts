@@ -211,7 +211,16 @@ const phosphorIcons = [
   "warning",
   "info",
   "lightbulb",
-  "error"
+  "error",
+  "device-mobile",
+  "device-tablet",
+  "desktop",
+  "aperture",
+  "android-logo",
+  "apple-logo",
+  "windows-logo",
+  "linux-logo",
+  "chrome-logo"
 ];
 
 export const phosphorRatingIcons = [

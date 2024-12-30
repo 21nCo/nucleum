@@ -21,7 +21,15 @@
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
 
-  const imageFileTypes = [".jpg", ".png", ".jpeg", ".webp", ".gif", ".svg"];
+  const imageFileTypes = [
+    ".jpg",
+    ".png",
+    ".jpeg",
+    ".webp",
+    ".gif",
+    ".svg"
+    // ".heic"
+  ];
   const videoFileTypes = [".mp4", ".mov"];
   const audioFileTypes = [".wav", ".mp3"];
   const pdfFileTypes = [".pdf"];

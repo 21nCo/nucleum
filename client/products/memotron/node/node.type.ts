@@ -427,17 +427,35 @@ export const mediaNodeTypeList = [
   NodeType.FILE
 ];
 
-type IImageMetadata = INodeMetadata & {
+export type IImageMetadata = INodeMetadata & {
   colors?: string[];
+  deviceInfo?: {
+    make: string;
+    model: string;
+    software: string;
+  };
+  imageDetails?: {
+    width: number;
+    height: number;
+    orientation: string;
+    dateTime: string;
+  };
+  cameraSettings?: {
+    aperture: string;
+    exposureTime: string;
+    iso: number;
+    focalLength: string;
+    flash: string;
+  };
 };
 
-type IAudioMetadata = INodeMetadata & {
+export type IAudioMetadata = INodeMetadata & {
   album?: string;
   artist?: string;
   picture?: IRecordId;
   title?: string;
-  genre?: string;
-  composer?: string;
+  genre?: string[];
+  composer?: string[];
   year?: number;
   copyright?: string;
   duration?: number;

@@ -3,10 +3,13 @@
   import { formatDatetime } from "$lib/client/utils/time.utils";
 
   export let label: string;
-  export let value: string;
-  function valueFormatter(value: string) {
+  export let value: string | string[] | number | undefined = undefined;
+  function valueFormatter(value: string | string[] | number) {
     if (typeof value === "number") {
       return value;
+    }
+    if (Array.isArray(value)) {
+      return value.join(", ");
     }
     const date = new Date(value);
     if (!isNaN(date.getTime())) {
@@ -16,9 +19,14 @@
   }
 </script>
 
-{#if label && value}
+{#if label}
   <div class="flex justify-between gap-2 items-center w-full">
     <span class="text-fgs3 text-b3">{label}</span>
-    <span class="text-fgs1 text-b2 text-right">{valueFormatter(value)}</span>
+    <slot>
+      {#if value}
+        <span class="text-fgs1 text-b2 text-right">{valueFormatter(value)}</span
+        >
+      {/if}
+    </slot>
   </div>
 {/if}

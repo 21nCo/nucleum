@@ -8,7 +8,9 @@ import {
   type INodeThumb,
   type INodePropertyValue,
   type IMediaGridItem,
-  type IWebPage
+  type IWebPage,
+  type IAudioMetadata,
+  type IImageMetadata
 } from "$lib/client/products/memotron/node/node.type";
 import {
   CaptureType,
@@ -69,6 +71,7 @@ import {
 } from "../node/url.utils";
 import { getImageColorsFromFile } from "$lib/client/utils/ui.utils";
 import { parseBlob } from "music-metadata";
+import ExifReader from "exifreader";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
@@ -359,13 +362,19 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
   }
 
   private async parseMetadata(file: File) {
-    let metadata = {};
     if (file.type.startsWith("image/")) {
+      let metadata: IImageMetadata = {};
       const colors = await getImageColorsFromFile(file, 10);
+      const tags = await ExifReader.load(file);
+      const importantMetadata = extractImportantMetadata(tags);
       metadata = {
-        colors
+        colors,
+        ...importantMetadata
       };
-    } else if (file.type.startsWith("audio/")) {
+      return metadata;
+    }
+    if (file.type.startsWith("audio/")) {
+      let metadata: IAudioMetadata = {};
       let parsedMetadata = await parseBlob(file);
       if (parsedMetadata?.common) {
         let imageId: IRecordId | undefined = undefined;
@@ -393,8 +402,39 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
           picture: imageId
         };
       }
+      return metadata;
     }
-    return metadata;
+
+    function extractImportantMetadata(tags: any): IImageMetadata {
+      return {
+        deviceInfo: {
+          make: tags.Make?.description || "Unknown",
+          model: tags.Model?.description || "Unknown",
+          software: tags.Software?.description || "Unknown"
+        },
+        imageDetails: {
+          width: tags["Image Width"]?.value || tags.PixelXDimension?.value || 0,
+          height:
+            tags["Image Height"]?.value || tags.PixelYDimension?.value || 0,
+          orientation: tags.Orientation?.description || "Unknown",
+          dateTime: tags.DateTime?.description || "Unknown"
+        },
+        cameraSettings: {
+          aperture: tags.FNumber?.description || "Unknown",
+          exposureTime: tags.ExposureTime?.description || "Unknown",
+          iso: tags.ISOSpeedRatings?.value || 0,
+          focalLength: tags.FocalLength?.description || "Unknown",
+          flash: tags.Flash?.description || "Unknown"
+        },
+        location: tags.GPSLatitude
+          ? {
+              latitude: tags.GPSLatitude.description,
+              longitude: tags.GPSLongitude.description,
+              altitude: tags.GPSAltitude?.description || "Unknown"
+            }
+          : undefined
+      };
+    }
   }
 
   async saveFile(
