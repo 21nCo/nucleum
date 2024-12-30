@@ -13,7 +13,9 @@
     // await tryLoadArtwork();
     await loadArtworkUsingLibrary();
     if (!imageUrl || showWaveform) {
-      renderAudioPreview();
+      setTimeout(() => {
+        renderAudioPreview();
+      }, 1000);
     }
   });
 

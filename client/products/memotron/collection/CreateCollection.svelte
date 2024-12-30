@@ -169,7 +169,8 @@
               value: type,
               icon: resolveCollectionTypeIcon(type),
               isDisabled: type === CollectionType.QUERY,
-              badge: type === CollectionType.QUERY ? "planned" : undefined
+              badge: type === CollectionType.QUERY ? "planned" : undefined,
+              tooltip: generateInfo(type).content
             }))}
             style={$view.isConstrainedWidth
               ? OptionSelectorStyle.OUTLINE
@@ -182,7 +183,7 @@
             size={$view.isConstrainedWidth ? Size.sm : Size.md}
             isPreventWrap={$view.isConstrainedWidth}
           />
-          <InlineInfoBanner {...generateInfo(selectedType)} />
+          <!-- <InlineInfoBanner {...generateInfo(selectedType)} /> -->
         </div>
         <div class="flex flex-col gap-2">
           <FormControlLabel
@@ -210,6 +211,7 @@
         <TextArea
           bind:value={description}
           placeholder="Description (Optional)"
+          rows={3}
           label={{ label: "Description", orientation: Orientation.Vertical }}
         />
         {#if selectedType === CollectionType.TYPED}

@@ -14,6 +14,7 @@
   import AvatarRenderer from "../avatarPicker/AvatarRenderer.svelte";
   import TextWithHoverTooltip from "../text/TextWithHoverTooltip.svelte";
   import Badge from "../text/Badge.svelte";
+  import { tooltip } from "$lib/client/actions/popover.action";
   export let item: ISelectItem;
   export let size: Size.lg | Size.md | Size.sm = Size.md;
   export let isActive: boolean = false;
@@ -44,6 +45,12 @@
       "hover:bg-bgs2": !isActive
     })}
     on:click
+    use:tooltip={{
+      disabled: !item.tooltip,
+      text: item.tooltip,
+      delay: 1000,
+      isLarger: true
+    }}
   >
     <div
       class={cn("flex items-center", {
@@ -72,10 +79,14 @@
       {:else if item.icon && typeof item.icon === "object"}
         <AvatarRenderer avatar={item.icon} {size} />
       {/if}
-      <TextWithHoverTooltip
+      <!-- <TextWithHoverTooltip
         text={properCase(item.label ?? item.value.toString())}
         truncateLength={20}
-      />
+        tooltip={item.tooltip}
+      /> -->
+      <div>
+        {properCase(item.label ?? item.value.toString())}
+      </div>
       {#if item.badge}
         <Badge text={item.badge} />
       {/if}

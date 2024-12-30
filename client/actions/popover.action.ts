@@ -3,6 +3,7 @@ import { Placement } from "../types/direction.enum";
 import { PopoverTriggerMethod } from "../types/popover.type";
 import { deepCopy } from "$lib/shared/utils/obj.utils";
 import { getEventPath } from "../utils/browser.utils";
+import { renderMdAsHtml } from "../components/markdown/markdown.utils";
 
 interface TooltipReturn {
   update: (newParams: TooltipParams) => void;
@@ -20,6 +21,7 @@ interface TooltipParams {
    * If set to true, the tooltip will be enabled only when the text is truncated
    */
   isEnableOnlyOnTruncate?: boolean;
+  isLarger?: boolean;
 }
 
 interface TooltipReturn {
@@ -39,17 +41,23 @@ export function tooltip(
     offsetInPx = 10,
     delay = 300,
     disabled = false,
-    isEnableOnlyOnTruncate = false
+    isEnableOnlyOnTruncate = false,
+    isLarger = false
   } = params;
-  const baseClassList =
-    "fixed z-50 px-3 bg-fgs2 text-bgs1 py-1 text-b3 shadow-md rounded-md pointer-events-none opacity-0 transition-opacity duration-200 tooltip";
+  let baseClassList =
+    "fixed z-50 px-3 bg-fgs2 text-bgs1 shadow-md rounded-md pointer-events-none opacity-0 transition-opacity duration-200 tooltip";
+  if (isLarger) {
+    baseClassList += " py-2 text-b2 max-w-lg";
+  } else {
+    baseClassList += " py-1 text-b3 max-w-md";
+  }
   let tooltipsContainer = document.getElementById("tooltips");
 
   function createTooltip(): void {
     if (!text || disabled) return;
     if (isEnableOnlyOnTruncate && node.scrollWidth <= node.clientWidth) return;
     tooltipElement = document.createElement("div");
-    tooltipElement.textContent = text;
+    tooltipElement.innerHTML = renderMdAsHtml(text);
     tooltipElement.className = `${baseClassList} ${classList}`;
     if (tooltipsContainer) {
       tooltipsContainer.appendChild(tooltipElement);
@@ -206,7 +214,8 @@ export function tooltip(
         direction = "top",
         offsetInPx = 10,
         delay = 300,
-        disabled = false
+        disabled = false,
+        isLarger = false
       } = newParams);
       if (disabled) {
         removeAllTraces();

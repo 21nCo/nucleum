@@ -366,6 +366,8 @@ const remixIcons = ["sketching"];
 
 const proIcons = ["send"];
 
+const fa6BrandsIcons = ["unsplash"];
+
 export const iconSets = {
   hugeicons: hugeiconsIcons,
   "svg-spinners": svgSpinnersIcons,
@@ -374,7 +376,8 @@ export const iconSets = {
   ri: remixIcons,
   proicons: proIcons,
   "simple-icons": simpleIcons,
-  logos
+  logos,
+  "fa6-brands": fa6BrandsIcons
 };
 
 export const phIcons = {

@@ -164,15 +164,15 @@
   let refreshResetTimeout: any;
   async function refresh(isPagination?: boolean) {
     logger.log({ at: "Library - refresh", isPagination, selectedResource });
+    if (!availableResources.has(selectedResource)) {
+      data = [];
+      return;
+    }
     if (isPagination !== true) {
       isRefreshing = true;
       data = [];
     }
     try {
-      if (!availableResources.has(selectedResource)) {
-        data = [];
-        return;
-      }
       let orderBy: IResourceSelectOrderBy | undefined;
       let semanticSearchTopK: number | undefined;
       if (searchStore.searchType == SearchType.SEMANTIC) {
