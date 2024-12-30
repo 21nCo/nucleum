@@ -33,6 +33,7 @@
   import { getSettingsAsModal } from "../settingsActionMap";
   import { globalActions } from "$lib/client/stores/actionMap";
   import { localActions } from "$local/localActionMap";
+  import { fileEmbedChannel } from "$lib/client/components/files/fileEmbedChannel.store";
 
   let timer: any;
   let isMounted = false;
@@ -257,6 +258,19 @@
     $context.isInOfflineMode = !navigator.onLine;
   }
 
+  function handleMessageFromParent(event: any) {
+    try {
+      if (event?.data?.type === "SWIFT_MESSAGE" && event?.data?.payload) {
+        const parsed = JSON.parse(event.data.payload);
+        if (parsed?.id && parsed?.data) {
+          fileEmbedChannel.setFile(parsed.id, parsed.data);
+        }
+      }
+    } catch (e) {
+      logger.error({ at: "handleMessageFromParent", error: e });
+    }
+  }
+
   function addWindowEventListeners() {
     window.addEventListener(
       GlobalEvent.CUSTOM_NAVIGATION,
@@ -268,6 +282,7 @@
     };
     window.addEventListener("online", updateOnlineStatus);
     window.addEventListener("offline", updateOnlineStatus);
+    window.addEventListener("message", handleMessageFromParent);
   }
   function removeWindowEventListeners() {
     window.removeEventListener(
@@ -278,6 +293,7 @@
     window.onpopstate = null;
     window.removeEventListener("online", updateOnlineStatus);
     window.removeEventListener("offline", updateOnlineStatus);
+    window.removeEventListener("message", handleMessageFromParent);
   }
   onDestroy(() => {
     removeWindowEventListeners();

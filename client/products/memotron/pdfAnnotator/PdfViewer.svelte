@@ -13,6 +13,7 @@
   import context from "$lib/client/stores/context.store";
   import { postToParent } from "$lib/client/utils/embed.utils";
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  import { fileEmbedChannel } from "$lib/client/components/files/fileEmbedChannel.store";
 
   // pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
   // pdfjs.GlobalWorkerOptions.workerSrc =
@@ -97,17 +98,21 @@
     _prev_gap_top = current_gap_top;
   };
   onMount(async () => {
+    if ($context.isEmbed) {
+      try {
+        dataViaEmbed = await fileEmbedChannel.fetch(
+          url.toString(),
+          embed_message_id
+        );
+      } catch (error) {
+        load_error_messge = "Error loading PDF. Please try again.";
+        return;
+      }
+    }
     const render = renderDocument("onMount");
     onPasswordSubmit = () => {
       renderDocument("onPasswordSubmit");
     };
-
-    if ($context.isEmbed) {
-      postToParent({
-        fetch: JSON.stringify({ url: url.toString(), id: embed_message_id })
-      });
-    }
-    window.addEventListener("message", handleMessageFromParent);
 
     return () => {
       render.then((pdf_viewer) => {
@@ -151,7 +156,7 @@
     try {
       if ($context.isEmbed) {
         if (!dataViaEmbed) return;
-        pdfData = base64ToUint8Array(dataViaEmbed);
+        pdfData = fileEmbedChannel.base64ToUint8Array(dataViaEmbed);
       } else {
         const arrayBuffer = await fetch(url.toString()).then((response) =>
           response.arrayBuffer()
@@ -207,28 +212,6 @@
     pdfViewer = pdf_viewer;
     return pdf_viewer;
   };
-
-  function handleMessageFromParent(event: any) {
-    if (event?.data?.type === "SWIFT_MESSAGE" && event?.data?.payload) {
-      const parsed = JSON.parse(event.data.payload);
-      if (parsed?.id && parsed?.id === embed_message_id) {
-        if (parsed?.data) {
-          dataViaEmbed = parsed.data;
-          renderDocument("onMessageFromParent");
-        }
-      }
-    }
-  }
-
-  function base64ToUint8Array(base64: string): Uint8Array {
-    const binaryString = atob(base64);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-
-    return bytes;
-  }
 
   function download(url: string) {
     const a = document.createElement("a");

@@ -1,11 +1,13 @@
 import { persistenceInstance } from "$lib/client/persistence/persistence";
 import { nodeStore } from "$lib/client/products/memotron/node/node.store";
+import context from "$lib/client/stores/context.store";
 import { toasts } from "$lib/client/stores/notification.store";
 import type { IRecordId } from "$lib/client/types/data.type";
 import {
   getBucketNameandKey,
   isUrlExpired
 } from "$lib/client/utils/account.utils";
+import { get } from "svelte/store";
 import { logger } from "../debug/logger.client";
 import { Resource } from "../flux/resourceStores/resource.enum";
 import { ResourceStore } from "../flux/resourceStores/resource.store";
@@ -14,6 +16,8 @@ import {
   isRecordId
 } from "../flux/resourceStores/resource.utils";
 import type { IFile } from "./file.type";
+import { fileEmbedChannel } from "./fileEmbedChannel.store";
+import { OperatingSystem } from "$lib/client/types/context.type";
 
 class FileStore extends ResourceStore<IFile> {
   constructor() {
@@ -22,6 +26,7 @@ class FileStore extends ResourceStore<IFile> {
 
   async download(file: IFile | IRecordId | string) {
     logger.log({ at: "fileStore - download", file });
+    const defaultErrMessage = "Error downloading file. Please try again.";
     try {
       let _file;
       if (typeof file === "object" && "url" in file) _file = file;
@@ -39,13 +44,29 @@ class FileStore extends ResourceStore<IFile> {
         }
         if (!fileId) return;
         _file = await this.select(fileId);
-        console.log({ _file });
         if (!_file) return;
       }
-      const response = await fetch(_file.url);
-      const blob = await response.blob();
-      const downloadUrl = URL.createObjectURL(blob);
-
+      const contextStore = get(context);
+      if (contextStore.isEmbed) {
+        fileEmbedChannel.downloadFromUrl(_file.url, _file.label.split(".")[0]);
+        if (contextStore.os === OperatingSystem.MACOS) {
+          toasts.success("File downloaded to Downloads folder");
+        }
+        return;
+      }
+      let blob;
+      try {
+        const response = await fetch(_file.url);
+        blob = await response.blob();
+      } catch (error: any) {
+        toasts.error(defaultErrMessage);
+        return;
+      }
+      if (!blob) {
+        toasts.error(defaultErrMessage);
+        return;
+      }
+      let downloadUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = downloadUrl;
       link.download = _file.name || _file.label || "download";
@@ -56,7 +77,7 @@ class FileStore extends ResourceStore<IFile> {
       URL.revokeObjectURL(downloadUrl);
     } catch (error) {
       logger.error({ at: "fileStore - download", error });
-      toasts.error("Error downloading file. Please try again.");
+      toasts.error(defaultErrMessage);
     }
   }
 

@@ -1,10 +1,12 @@
 <script lang="ts">
   import { fileDrop } from "$lib/client/actions/fileDrop.action";
+  import { fileEmbedChannel } from "$lib/client/components/files/fileEmbedChannel.store";
   import { flux } from "$lib/client/components/flux/flux";
   import Button from "$lib/client/elements/button/Button.svelte";
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import account from "$lib/client/stores/account.store";
+  import context from "$lib/client/stores/context.store";
   import {
     confirmationNotification,
     toasts
@@ -23,10 +25,19 @@
     isBackupInProgress = true;
     try {
       const data = await flux.export();
-      downloadJson(
-        JSON.stringify(data),
-        `memotron-backup-${formatDate(new Date())}`
-      );
+      const fileName = `memotron-backup-${formatDate(new Date())}`;
+      if ($context.isEmbed) {
+        const url = await account.uploadFileV2(
+          "application/json",
+          "memotron_backup",
+          new Blob([JSON.stringify(data)], { type: "application/json" }),
+          { isReturnUrl: true }
+        );
+        fileEmbedChannel.downloadFromUrl(url, fileName);
+        toasts.success("Backup file downloaded successfully");
+        return;
+      }
+      downloadJson(JSON.stringify(data), fileName);
     } catch (e) {
       console.error(e);
     } finally {

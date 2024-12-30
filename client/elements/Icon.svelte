@@ -157,7 +157,7 @@
   let classListParam = "";
   let dev_useIconifyTailwind = false;
   let isUseIconifySprite = true;
-  const spriteVersion = 2;
+  const spriteVersion = 3;
   export { classListParam as class };
   let _classList = "";
   let variant: IconVariant = IconVariant.Outline;

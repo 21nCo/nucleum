@@ -742,10 +742,7 @@ export function resolveNodeContextMenu(
     group: "shareAndExport",
     items: [resourceActions.copyLink()]
   };
-  if (
-    mediaNodeTypeList.includes(node.contentType) &&
-    !params?.isConstrainedWidth
-  ) {
+  if (mediaNodeTypeList.includes(node.contentType)) {
     mediaShareAndExportGroup.items.unshift(nodeActions.download);
   }
   if (

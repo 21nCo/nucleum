@@ -205,7 +205,9 @@ const phosphorIcons = [
   "text-align-left",
   "shapes",
   "sigma",
-  "circle-dashed"
+  "circle-dashed",
+  "arrow-u-up-left",
+  "arrow-counter-clockwise"
 ];
 
 export const phosphorRatingIcons = [
