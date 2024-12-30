@@ -10,6 +10,9 @@
   // import spreadsvg from "./images/toolbarPageView.svg?url";
   // import gapsvg from "./images/toolbarPageGap.svg?url";
   import "./pdfviewer.css";
+  import context from "$lib/client/stores/context.store";
+  import { postToParent } from "$lib/client/utils/embed.utils";
+  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 
   // pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
   // pdfjs.GlobalWorkerOptions.workerSrc =
@@ -25,6 +28,8 @@
   export let url: string | URL; //url of pdf.
   const INTERNAL_URL = url.toString();
   let currentPGNumber: Number = 1;
+  let embed_message_id = generateSimpleRandomId();
+  let dataViaEmbed: any;
   // let classname = ""; //allows component to recieve classes
   // export { classname as class };
 
@@ -51,7 +56,7 @@
   let container: HTMLDivElement;
   let password = "";
   let password_error = false;
-  let password_message = "";
+  let load_error_messge: string | null = null;
   let _prev_gap_top = "8px";
   let _prev_gap_bottom = "8px";
 
@@ -92,6 +97,26 @@
     _prev_gap_top = current_gap_top;
   };
   onMount(async () => {
+    const render = renderDocument("onMount");
+    onPasswordSubmit = () => {
+      renderDocument("onPasswordSubmit");
+    };
+
+    if ($context.isEmbed) {
+      postToParent({
+        fetch: JSON.stringify({ url: url.toString(), id: embed_message_id })
+      });
+    }
+    window.addEventListener("message", handleMessageFromParent);
+
+    return () => {
+      render.then((pdf_viewer) => {
+        pdf_viewer.cleanup();
+      });
+    };
+  });
+
+  const renderDocument = async (from: string) => {
     // const init_promise = import("pdfjs-dist/web/pdf_viewer.js").then(
     const init_promise = import("pdfjs-dist/web/pdf_viewer.mjs").then(
       (pdfjs_viewer) => {
@@ -120,62 +145,90 @@
       }
     );
 
-    const renderDocument = async () => {
-      const { pdf_viewer, pdf_link_service } = await init_promise;
-      // Loading document.
-      const loading_task = pdfjs.getDocument({
-        url,
-        password,
-        isEvalSupported: false
-      });
-      loading_task.promise
-        .then((pdf_document) => {
-          pdf_viewer.setDocument(pdf_document);
-          pdf_link_service.setDocument(pdf_document, null);
-          pdf_viewer.currentScale = scale;
-          pdf_viewer.spreadMode = _spread_mode;
-          pdfDocument = pdf_document;
-          pdfViewer.eventBus.on("pagechanging", (eventt: any) => {
-            currentPGNumber = eventt.pageNumber;
-          });
-        })
-        .catch(function (error) {
-          password_error = true;
-          password_message = error.message;
-        });
-
-      onZoomIn = () => {
-        if (scale <= MAX_SCALE) {
-          scale = scale + 0.1;
-          pdf_viewer.currentScale = scale;
-          eventDispatcher("zoomIn");
-        }
-      };
-      onZoomOut = () => {
-        if (scale >= MIN_SCALE) {
-          scale = scale - 0.1;
-          pdf_viewer.currentScale = scale;
-          eventDispatcher("zoomOut");
-        }
-      };
-      onPageDisplay = () => {
-        _spread_mode = (_spread_mode + 1) % 3;
+    const { pdf_viewer, pdf_link_service } = await init_promise;
+    // Loading document.
+    let pdfData: Uint8Array;
+    try {
+      if ($context.isEmbed) {
+        if (!dataViaEmbed) return;
+        pdfData = base64ToUint8Array(dataViaEmbed);
+      } else {
+        const arrayBuffer = await fetch(url.toString()).then((response) =>
+          response.arrayBuffer()
+        );
+        pdfData = new Uint8Array(arrayBuffer);
+      }
+    } catch (error) {
+      console.error("Error loading PDF:", error);
+      load_error_messge = "Error loading PDF. Please try again.";
+      return;
+    }
+    console.log({ pdfData: pdfData?.length });
+    if (!pdfData) return;
+    const loading_task = pdfjs.getDocument({
+      data: pdfData,
+      password,
+      isEvalSupported: false
+    });
+    loading_task.promise
+      .then((pdf_document) => {
+        pdf_viewer.setDocument(pdf_document);
+        pdf_link_service.setDocument(pdf_document, null);
+        pdf_viewer.currentScale = scale;
         pdf_viewer.spreadMode = _spread_mode;
-      };
-      pdfViewer = pdf_viewer;
-      return pdf_viewer;
-    };
-    const render = renderDocument();
-
-    onPasswordSubmit = () => {
-      renderDocument();
-    };
-    return () => {
-      render.then((pdf_viewer) => {
-        pdf_viewer.cleanup();
+        pdfDocument = pdf_document;
+        pdfViewer.eventBus.on("pagechanging", (eventt: any) => {
+          currentPGNumber = eventt.pageNumber;
+        });
+      })
+      .catch(function (error) {
+        password_error = true;
+        load_error_messge = error.message;
       });
+
+    onZoomIn = () => {
+      if (scale <= MAX_SCALE) {
+        scale = scale + 0.1;
+        pdf_viewer.currentScale = scale;
+        eventDispatcher("zoomIn");
+      }
     };
-  });
+    onZoomOut = () => {
+      if (scale >= MIN_SCALE) {
+        scale = scale - 0.1;
+        pdf_viewer.currentScale = scale;
+        eventDispatcher("zoomOut");
+      }
+    };
+    onPageDisplay = () => {
+      _spread_mode = (_spread_mode + 1) % 3;
+      pdf_viewer.spreadMode = _spread_mode;
+    };
+    pdfViewer = pdf_viewer;
+    return pdf_viewer;
+  };
+
+  function handleMessageFromParent(event: any) {
+    if (event?.data?.type === "SWIFT_MESSAGE" && event?.data?.payload) {
+      const parsed = JSON.parse(event.data.payload);
+      if (parsed?.id && parsed?.id === embed_message_id) {
+        if (parsed?.data) {
+          dataViaEmbed = parsed.data;
+          renderDocument("onMessageFromParent");
+        }
+      }
+    }
+  }
+
+  function base64ToUint8Array(base64: string): Uint8Array {
+    const binaryString = atob(base64);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+
+    return bytes;
+  }
 
   function download(url: string) {
     const a = document.createElement("a");
@@ -205,16 +258,18 @@
   bind:this={component_container}
 >
   <div id="viewer-parent" class="w-full h-full">
-    {#if password_error === true}
+    {#if load_error_messge}
       <div class="spdfinner">
-        <p>This document requires a password to open:</p>
-        <p>{password_message}</p>
-        <div>
-          <input type="password" bind:value={password} />
-          <button on:click={onPasswordSubmit} class="password-button">
-            Submit
-          </button>
-        </div>
+        {#if password_error}
+          <p>This document requires a password to open:</p>
+          <div>
+            <input type="password" bind:value={password} />
+            <button on:click={onPasswordSubmit} class="password-button">
+              Submit
+            </button>
+          </div>
+        {/if}
+        <p>{load_error_messge}</p>
       </div>
     {:else}<!-- svelte-ignore a11y-click-events-have-key-events -->
       <!-- <div class="spdfbanner">

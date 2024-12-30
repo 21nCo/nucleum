@@ -10,7 +10,7 @@ function resolveLinkForResource(resource: string) {
   return (
     "http://" +
     (import.meta.env?.VITE_HOST ?? window.location.host) +
-    "/?focus=" +
+    "/?full=" +
     resource
   );
 }
