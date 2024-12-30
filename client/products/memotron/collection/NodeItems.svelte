@@ -20,6 +20,7 @@
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { resolveMultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
   import { logger } from "$lib/client/components/debug/logger.client";
+  import { resolveFilePreview } from "../node/node.utils";
 
   export let nodes: INodeThumb[] = [];
   export let arrangement: Arrangement = Arrangement.LIST;
@@ -69,8 +70,9 @@
   function resizeMasonryItem(item: HTMLElement) {
     if (!gridRef) return;
     const itemContentType = item.getAttribute("data-type") as NodeType;
+    const hasPicture = item.getAttribute("data-has-picture");
     const contentHeight =
-      itemContentType === NodeType.AUDIO
+      itemContentType === NodeType.AUDIO && !hasPicture
         ? 180
         : (item.querySelector(".item-content")?.getBoundingClientRect()
             .height ?? 0);
@@ -127,6 +129,7 @@
         class="relative grid-item w-full"
         data-id={item.id}
         data-type={item.contentType}
+        data-has-picture={resolveFilePreview(item)}
         draggable={isDraggable}
       >
         <button
@@ -154,10 +157,11 @@
             {accessPointId}
             {isHideTitle}
             {visibleProps}
-            on:load={() =>
+            on:load={(e) => {
               resizeMasonryItem(
                 gridRef.querySelector(`[data-id="${item.id}"]`)
-              )}
+              );
+            }}
           />
         </button>
       </div>

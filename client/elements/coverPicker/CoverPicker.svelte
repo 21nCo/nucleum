@@ -184,7 +184,7 @@
           {
             label: "Library",
             value: Method.LIBRARY,
-            icon: "ph:globe-thin"
+            icon: "ph:globe-light"
           },
           {
             label: "Unsplash",

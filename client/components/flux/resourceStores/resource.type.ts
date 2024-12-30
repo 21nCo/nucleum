@@ -149,6 +149,10 @@ export enum ResourceAccessPoint {
    */
   NODE_LINKS = "nodelinks",
   /**
+   * The resource is being accessed from the default right pane
+   */
+  DEFAULT_RIGHT_PANE_LINKS = "defaultrightpanelinks",
+  /**
    * The resource is being accessed from the node clips pane
    */
   NODE_TRACES = "nodetraces",

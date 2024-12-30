@@ -28,6 +28,7 @@
   export let isShowAddButton: boolean = false;
   let isFiltersVisible: boolean = false;
   let isSearchFocused: boolean = false;
+  let dev_enableSemanticSearch: boolean = false;
   function onKeydown(event: any) {}
   function onKeyup(event: any) {
     refresh();
@@ -84,7 +85,7 @@
             on:select={refresh}
           />
         {/if}
-        {#if $userPreferences.localAI.semanticSearch && (selectedSubType === "nodular_markdown" || selectedSubType === "all")}
+        {#if dev_enableSemanticSearch && $userPreferences.localAI.semanticSearch && (selectedSubType === "nodular_markdown" || selectedSubType === "all")}
           <SwitchInput
             label={{ label: "Semantic", orientation: Orientation.Horizontal }}
             size={Size.sm}

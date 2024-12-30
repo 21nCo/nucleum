@@ -37,11 +37,7 @@
           : ''} {isCpActive ? 'bg-aps1' : ''}"
         on:click={() => appStore.runAction(Action.SETTINGS)}
       >
-        <Icon
-          icon="heroicons:cog"
-          size={isInThinMode ? Size.lg : Size.md}
-          isAccentBgContext={isCpActive}
-        />
+        <Icon icon="ph:gear-six-light" isAccentBgContext={isCpActive} />
       </button>
       <button
         class="flex h-full w-full justify-center px-2 items-center gap-1 {isInThinMode
@@ -52,7 +48,7 @@
           appStore.runAction(Action.HELP);
         }}
       >
-        <Icon icon="ph:question-thin" size={isInThinMode ? Size.lg : Size.md} />
+        <Icon icon="ph:question-light" />
         {#if !isInThinMode}
           <span class="text-b3 text-fgs2">Help</span>
         {/if}

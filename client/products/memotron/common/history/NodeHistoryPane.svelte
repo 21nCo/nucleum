@@ -54,9 +54,15 @@
         }
       });
       if (isValidArrayWithData(mutations)) {
+        const _mutations = mutations.filter(
+          (m: IMutation) =>
+            m.params.action !== PersistenceActionType.MERGE ||
+            (m.params.action === PersistenceActionType.MERGE &&
+              m.params.record.modifiedAt)
+        );
         accessLogs = [
           ...accessLogs,
-          ...mutations.map((mutation: IMutation) => ({
+          ..._mutations.map((mutation: IMutation) => ({
             action: resolveMutationAction(mutation),
             timestamp: new Date(mutation.createdAt)
           }))

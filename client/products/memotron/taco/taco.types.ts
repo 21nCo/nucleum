@@ -2,7 +2,8 @@ export enum TranscriptionModel {
   TINy_EN = "Xenova/whisper-tiny.en",
   SMALL_EN = "Xenova/whisper-small.en",
   BASE_EN = "Xenova/whisper-base.en",
-  MEDIUM_EN = "Xenova/whisper-medium.en"
+  MEDIUM_EN = "Xenova/whisper-medium.en",
+  DISTILL_SMALL_EN = "distil-whisper/distil-small.en"
 }
 
 export enum TacoActions {

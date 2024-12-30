@@ -36,10 +36,14 @@
   import { Embed } from "$lib/client/types/context.type";
   import { read_audio } from "@huggingface/transformers";
   import { TacoActions, TranscriptionModel } from "../taco/taco.types";
+  import FileView from "$lib/client/components/files/FileView.svelte";
+  import { isRecordId } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import Icon from "$lib/client/elements/Icon.svelte";
 
   export let body: any = {};
   export let url: string;
   export let nodeId: string = "dummy";
+  export let metadata: any = {};
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   const _previewId = generateSimpleRandomId();
   let isDisabled: boolean = body?.initTranscription == true ? true : false;
@@ -107,7 +111,7 @@
         action: TacoActions.GET_TRANSCRIPTION,
         params: {
           audioData: audioData,
-          model: model
+          model: TranscriptionModel.DISTILL_SMALL_EN
         }
       });
       result = await new Promise((resolve, reject) => {
@@ -138,15 +142,16 @@
    */
   async function convertToMarkdown() {
     let transcript: string | null;
-    if (
-      (body?.transcription || body?.mdBlocks) &&
-      $userPreferences.lastUsedTranscriptionModel === model
-    ) {
-      alert(
-        "Retranscription runs only when model is changed, using retranscipt button on same model has no effect"
-      );
-      transcript = body.transcription;
-    } else transcript = await onTranscribe();
+    // if (
+    //   (body?.transcription || body?.mdBlocks) &&
+    //   $userPreferences.lastUsedTranscriptionModel === model
+    // ) {
+    //   alert(
+    //     "Retranscription runs only when model is changed, using retranscipt button on same model has no effect"
+    //   );
+    //   transcript = body.transcription;
+    // } else
+    transcript = await onTranscribe();
     if (!transcript || typeof transcript !== "string") return;
     label = body?.initTranscription == false ? "Retranscribe" : "Transcribe";
     $userPreferences.lastUsedTranscriptionModel = model;
@@ -218,7 +223,17 @@
     class="flex flex-col gap-2 w-full text-justify border- border-brs3 rounded-md py-2"
   >
     <div class="flex flex-col gap-2 w-full">
-      <div id={_previewId} class="audio-preview-container w-full" />
+      <div class="w-full flex gap-2 mo:flex-col justify-center items-center">
+        {#if isRecordId(metadata?.picture)}
+          <div class="w-48">
+            <FileView
+              id={metadata?.picture}
+              class="w-full h-full object-cover rounded-md"
+            />
+          </div>
+        {/if}
+        <div id={_previewId} class="audio-preview-container w-full" />
+      </div>
       <div class="flex justify-between px-0.5 text-fgs2">
         <span>
           {formatSeconds(previewCountDown, TimeFormat.CLOCK)}
@@ -228,6 +243,7 @@
         </span>
       </div>
     </div>
+
     <!-- <audio controls>
       <source src={url} type="audio/webm" />
     </audio> -->
@@ -240,7 +256,7 @@
             wavesurferPreview.play();
           }}
           type={ButtonVariant.PRIMARY}
-          icon="ph:play-thin"
+          icon="ph:play-light"
           label="Play"
         />
       {:else if recordingState === PlayActionState.PREVIEWING}
@@ -252,7 +268,7 @@
               previewingState = PlayActionState.PAUSEPREVIEWING;
             }}
             type={ButtonVariant.PRIMARY}
-            icon="ph:pause-thin"
+            icon="ph:pause-light"
             label="Pause"
           />
         {:else}
@@ -263,7 +279,7 @@
               previewingState = PlayActionState.RESUMEPREVIEWING;
             }}
             type={ButtonVariant.PRIMARY}
-            icon="ph:play-thin"
+            icon="ph:play-light"
             label="Resume"
           />
         {/if}
@@ -285,7 +301,7 @@
     >
       <div class="flex w-full justify-between gap-3 mo:px-2 px-10">
         <Text content="Transcription" style={TextStyle.PANEL_HEADING_SMALL} />
-        {#if !$view.isConstrainedWidth}
+        <!-- {#if !$view.isConstrainedWidth}
           <DropDown
             items={accuracy}
             isDisableSearch={true}
@@ -299,18 +315,21 @@
             value={model}
             on:select={(e) => (model = e.detail)}
           />
-        {/if}
+        {/if} -->
       </div>
       <div
         class={cn("flex w-full flex-1 overflow-y-auto", {
           "pr-10": !$view.isConstrainedWidth && body?.mdBlocks
         })}
       >
-        <p class="p-2 text-center text-rose-700" class:hidden={!isError}>
+        <p class="p-2 text-center text-ars1" class:hidden={!isError}>
           Transcription Error.
         </p>
         {#if body?.initTranscription == true || isDisabled}
-          <p class="p-2">Transcribing...</p>
+          <div class="flex items-center justify-center gap-2 p-2 w-full">
+            <Icon icon="svg-spinners:3-dots-fade" />
+            <span class="text-fgs3">Transcribing...</span>
+          </div>
         {:else if body?.mdBlocks !== undefined}
           <NodularMarkdown
             mdId={generateUID()}
@@ -319,7 +338,7 @@
             on:change={onMarkdownChange}
           />
         {:else if body?.transcription !== undefined}
-          <TextArea bind:value={body.transcription} />
+          <TextArea bind:value={body.transcription} style={InputStyle.PLAIN} />
           <!-- <p class="p-2">{body.transcription}</p> -->
         {:else}
           <span

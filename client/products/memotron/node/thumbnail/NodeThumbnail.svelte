@@ -66,6 +66,10 @@
     accessPoint === ResourceAccessPoint.NODE_TRACES;
   $: isShouldContainImage = resolveIfImageShouldContain(item.contentType);
 
+  $: isLinkContext =
+    accessPoint === ResourceAccessPoint.NODE_LINKS ||
+    accessPoint === ResourceAccessPoint.DEFAULT_RIGHT_PANE_LINKS;
+
   onMount(async () => {
     await resolveUrl();
   });
@@ -103,7 +107,7 @@
       class={cn("relative flex flex-col w-full border rounded-md truncate", {
         "bg-ccs5 hover:bg-ccs4 border-ccs2": isApplyCustomColor,
         "bg-bgs2 border-transparent hover:border-brs3": !isApplyCustomColor,
-        "p-2": accessPoint === ResourceAccessPoint.NODE_LINKS
+        "p-2": isLinkContext
       })}
     >
       <button
@@ -123,7 +127,7 @@
               },
               !isFullExpand && {
                 "min-w-12 w-1/10 max-w-1/10": true,
-                "border-r": accessPoint !== ResourceAccessPoint.NODE_LINKS,
+                "border-r": !isLinkContext,
                 "border-ccs2": isApplyCustomColor,
                 "border-brs3": !isApplyCustomColor
               }
@@ -138,7 +142,7 @@
                 isHideControls={true}
                 isLazyLoad={true}
                 class={cn("object-cover h-full w-full", {
-                  "rounded-md": accessPoint === ResourceAccessPoint.NODE_LINKS
+                  "rounded-md": isLinkContext
                 })}
               />
             {:else if urlPreview}
@@ -146,7 +150,7 @@
                 src={urlPreview}
                 {arrangement}
                 class={cn("object-cover h-full w-full", {
-                  "rounded-md": accessPoint === ResourceAccessPoint.NODE_LINKS
+                  "rounded-md": isLinkContext
                 })}
               />
             {:else if item.contentType === NodeType.AUDIO && _url}
@@ -160,7 +164,7 @@
             {:else}
               <div
                 class={cn("h-full text-wrap text-left text-b3 overflow-clip", {
-                  "p-2": accessPoint !== ResourceAccessPoint.NODE_LINKS
+                  "p-2": !isLinkContext
                 })}
               >
                 {#if item.contentType === NodeType.TWEET && contentPreview}
@@ -378,7 +382,7 @@
 </ResourceThumbnailBase>
 
 <ComponentBaseLayer
-  subscribeTo={new Set([Resource.node])}
-  subscribeToResource={item.id}
+  subscribeToResource={new Set([Resource.node])}
+  subscribeToRecords={[item.id]}
   on:change={onNodeChange}
 />

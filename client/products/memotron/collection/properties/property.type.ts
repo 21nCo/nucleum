@@ -119,7 +119,6 @@ export enum PropertyType {
   // System properties
   CREATED_TIME = "created-time",
   MODIFIED_TIME = "modified-time",
-  LAST_OPENED_TIME = "last-opened-time",
   CREATED_BY = "created-by",
   MODIFIED_BY = "modified-by",
   LOCATION = "location",

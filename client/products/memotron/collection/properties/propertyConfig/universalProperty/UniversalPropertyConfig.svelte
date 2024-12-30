@@ -18,14 +18,14 @@
   export let property: IUniversalProperty;
   export let isPopoverOpen: boolean = false;
   let ref: HTMLElement;
-  let icons: IPropertyConfigOption[] = [];
+  let options: IPropertyConfigOption[] = [];
 
   $: isIconSelectType =
     property.config?.type &&
     iconSelectPropertyTypes.includes(property.config.type);
 
-  $: if (property.config?.type && isIconSelectType) {
-    icons = resolveUniversalPropertyOptions(property.config.type);
+  $: if (property.config?.type) {
+    options = resolveUniversalPropertyOptions(property.config.type);
   }
 
   function resolvePropertyIcon(type: UniversalPropertyType) {
@@ -75,19 +75,26 @@
     icon={isPopoverOpen ? "ph:caret-up-light" : "ph:caret-down-light"}
     size={Size.sm}
   />
-  {#if isIconSelectType}
+  {#if property.config?.type && property.config?.type !== UniversalPropertyType.NONE}
     <span class="flex gap-2 items-center w-1/2 h-full">
       <Divider
         orientation={Orientation.Vertical}
         colorStrength={ColorStrength.Strong}
       />
-      <div class="flex text-b2 gap-1">
-        {#each icons as icon}
-          <span>
-            {icon.icon}
-          </span>
-        {/each}
-      </div>
+      {#if isIconSelectType}
+        <div class="flex text-b2 justify-around w-full">
+          {#each options as icon}
+            <span>
+              {icon.icon}
+            </span>
+          {/each}
+        </div>
+      {:else}
+        <span class="text-b3 text-fgs3">
+          {options.length}
+          {options.length === 1 ? "option" : "options"}
+        </span>
+      {/if}
     </span>
   {/if}
 </div>

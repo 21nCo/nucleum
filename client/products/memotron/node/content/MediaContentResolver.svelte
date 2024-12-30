@@ -64,6 +64,7 @@
     body={node?.body}
     url={_url}
     nodeId={node.id.toString()}
+    metadata={node.metadata}
     {accessPoint}
   />
 {:else if (node.contentType === NodeType.IMAGE || node.contentType === NodeType.VIDEO) && _file}

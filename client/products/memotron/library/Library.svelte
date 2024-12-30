@@ -17,7 +17,10 @@
     ISelectItem
   } from "$lib/client/types/select.type";
   import { appStore } from "$lib/client/stores/app.store";
-  import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import {
+    isSameResource,
+    resourceAction
+  } from "$lib/client/components/flux/resourceStores/resource.utils";
   import {
     ResourceAccessPoint,
     ResourceActionType
@@ -63,6 +66,10 @@
   import { Embed } from "$lib/client/types/context.type";
   import { toasts } from "$lib/client/stores/notification.store";
   import Icon from "$lib/client/elements/Icon.svelte";
+  import SyncStatusPropagator from "$lib/client/elements/feedback/SyncStatusPropagator.svelte";
+  import InlineSyncingFeedback from "$lib/client/elements/feedback/InlineSyncingFeedback.svelte";
+  import RefreshingOverlayFeedback from "$lib/client/elements/feedback/RefreshingOverlayFeedback.svelte";
+  import { enumToString } from "$lib/shared/utils/text.utils";
 
   let searchQuery: string = "";
   let selectedResource: Resource = Resource.node;
@@ -87,6 +94,8 @@
   const commonResourceProps = {
     isHidePinAction: true
   };
+  let isSyncing: boolean = false;
+  let syncStatusPropagatorRef: SyncStatusPropagator;
   const resources: IResourceSwitchItem[] = [
     // {
     //   ...commonResourceProps,
@@ -152,7 +161,7 @@
       pageSub();
     };
   });
-
+  let refreshResetTimeout: any;
   async function refresh(isPagination?: boolean) {
     logger.log({ at: "Library - refresh", isPagination, selectedResource });
     if (isPagination !== true) {
@@ -172,18 +181,7 @@
           createdAt: "desc"
         };
       }
-
-      let filters: any = {
-        isStarred: isStarFilterSelected ? true : undefined,
-        isArchived: isArchivedFilterSelected ? true : undefined
-      };
-      if (selectedSubType !== "all" && selectedSubType !== "recents") {
-        if (selectedResource === Resource.node) {
-          filters = { ...filters, contentType: selectedSubType };
-        } else if (selectedResource === Resource.collection) {
-          filters = { ...filters, type: selectedSubType };
-        }
-      }
+      const filters = resolveFilters();
       const newData = await searchStore.select({
         resource: selectedResource,
         searchQuery,
@@ -195,13 +193,30 @@
       });
       if (isPagination) data = [...data, ...newData];
       else data = [...newData];
-      setTimeout(() => {
+      clearTimeout(refreshResetTimeout);
+      refreshResetTimeout = setTimeout(() => {
         isRefreshing = false;
       }, 1);
       await refreshTotalCounts(filters);
-    } finally {
+    } catch (e) {
       isRefreshing = false;
+      logger.error({ at: "Library - refresh", e });
     }
+  }
+
+  function resolveFilters() {
+    let filters: any = {
+      isStarred: isStarFilterSelected ? true : undefined,
+      isArchived: isArchivedFilterSelected ? true : undefined
+    };
+    if (selectedSubType !== "all" && selectedSubType !== "recents") {
+      if (selectedResource === Resource.node) {
+        filters = { ...filters, contentType: selectedSubType };
+      } else if (selectedResource === Resource.collection) {
+        filters = { ...filters, type: selectedSubType };
+      }
+    }
+    return filters;
   }
 
   async function refreshTotalCounts(filters: any) {
@@ -242,7 +257,9 @@
   function resolveResourceLabel(isPlural: boolean = false) {
     let label = "items";
     if (selectedResource === Resource.everything) label = "item";
-    else label = selectedResource;
+    else if (selectedSubType && selectedSubType !== "all") {
+      label = ` ${enumToString(selectedSubType).toLowerCase()} ${selectedResource}`;
+    } else label = selectedResource;
     return label + ((data && data.length > 1) || isPlural ? "s" : "");
   }
   function resolveEmptyStateMessage() {
@@ -287,7 +304,7 @@
       {
         label: "All",
         value: "all",
-        icon: "ph:asterisk"
+        icon: "ph:asterisk-light"
       }
       //Note: Right now - all is already sorted by recents
       // {
@@ -305,6 +322,7 @@
         NodeType.AUDIO,
         NodeType.VIDEO,
         NodeType.WEB_PAGE,
+        NodeType.GIST,
         NodeType.TEXT_CLIP,
         NodeType.WEB_SCREENSHOT_CLIP,
         NodeType.TWEET,
@@ -338,10 +356,13 @@
     return items;
   }
   /**
-   * Disabling refresh on node merge mutations to avoid flickering effect in the background for repeated refreshes when editing a markdown node
+   *
+   * For nodes, filters nodes if has isArchived or trashInformation i.e. deleted or archived irrespective of whether its a root node or md block node as md blocks are anyways not present in data. Currently does full refresh for unarchive or undelete which is optimal if the nodes are root nodes.
+   *
+   * TODO - undo delete for block nodes case in markdown node - to avoid flickering in the background when editing a markdown node in modal.
    * @param e
    */
-  function onResourceMutation(
+  async function onResourceMutation(
     e: CustomEvent<{
       resource: Resource;
       params: IMutationParamsv2<INode | ICollection>;
@@ -353,16 +374,12 @@
     logger.log({ at: "Library - onResourceMutation", resource, ...mutation });
     if (
       mutation.action === PersistenceActionType.MERGE &&
-      !watchProperties.some((x) => mutation.record[x] !== undefined)
+      watchProperties.some((x) => mutation.record[x])
     ) {
-      return;
-    }
-
-    if (
-      resource === Resource.node &&
-      mutation.action === PersistenceActionType.MERGE &&
-      !rootNodeTypeList.includes(mutation.record.contentType as NodeType)
-    ) {
+      const id = mutation.record.id;
+      if (id) data = data.filter((x) => !isSameResource(x.id, id));
+      const filters = resolveFilters();
+      await refreshTotalCounts(filters);
       return;
     }
 
@@ -450,11 +467,13 @@
               resource: e.detail,
               type: "all"
             });
+            syncStatusPropagatorRef?.refresh(e.detail);
           }}
           size={variant === "v2" ? Size.md : Size.sm}
         />
       </span>
       {#if selectedResource != Resource.everything && !$view.isConstrainedWidth}
+        <InlineSyncingFeedback {isSyncing} />
         <span>
           <span class="flex gap-2 items-center">
             {#if availableResources.has(selectedResource)}
@@ -546,10 +565,13 @@
           <LibraryLoadingPulse resource={selectedResource} />
         {:else if data && data.length > 0}
           <div
-            class={cn("flex flex-col grow", {
+            class={cn("relative flex flex-col grow", {
               "px--5": variant === "v2"
             })}
           >
+            {#if isConstrainedWidth && isSyncing}
+              <RefreshingOverlayFeedback loadingText="Syncing..." />
+            {/if}
             <Resources
               {data}
               accessPoint={ResourceAccessPoint.LIBRARY}
@@ -624,9 +646,15 @@
   {/if}
 </div>
 
+<SyncStatusPropagator
+  bind:this={syncStatusPropagatorRef}
+  resource={selectedResource}
+  bind:isSyncing
+/>
+
 <ComponentBaseLayer
   syncDownOnMount={true}
-  subscribeTo={availableResources}
+  subscribeToResource={availableResources}
   subscribeToContext={new Set([
     ResourceAccessPoint.LIBRARY,
     MemotronAction.CAPTURE,

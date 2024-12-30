@@ -201,14 +201,14 @@
 
   <div class="flex justify-center w-full gap-4">
     <Button
-      icon="logout"
+      icon="ph:sign-out-light"
       label="Sign out"
       on:click={async () => {
         await account.signOut();
       }}
     />
     <Button
-      icon="trash"
+      icon="ph:trash-light"
       label="Delete account"
       type={ButtonVariant.DANGER}
       on:click={async () => {

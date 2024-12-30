@@ -126,7 +126,7 @@ class NodeStore extends ResourceStore<INode> {
     }
     if (!types || !isValidArrayWithData(types)) return;
     const avatar = this.resolveNodeAvatar(types);
-    this.modify(id, {
+    this.modifyAsSystem(id, {
       avatar
     });
     return avatar;
@@ -605,13 +605,13 @@ const nodeStaticActions = {
   },
   propertiesPane: {
     value: NodeRightPaneType.PROPERTIES,
-    icon: "widget",
+    icon: "ph:shapes-light",
     label: "Show properties",
     tooltip: "Show properties"
   },
   sideNotesPane: {
     value: NodeRightPaneType.SIDENOTES,
-    icon: "ph:note-thin",
+    icon: "ph:note-light",
     label: "Side notes",
     tooltip: "Side notes"
   },
@@ -623,13 +623,13 @@ const nodeStaticActions = {
   },
   tracesPane: {
     value: NodeRightPaneType.TRACES,
-    icon: "bookmark",
+    icon: "ph:bookmark-simple-light",
     label: "Show traces",
     tooltip: "Show traces"
   },
   showForks: {
     value: "forks",
-    icon: "ph:git-fork-thin",
+    icon: "ph:git-fork-light",
     tooltip: "Show forks"
   }
 };
@@ -742,13 +742,14 @@ export function resolveNodeContextMenu(
     group: "shareAndExport",
     items: [resourceActions.copyLink()]
   };
-  if (
-    mediaNodeTypeList.includes(node.contentType) &&
-    !params?.isConstrainedWidth
-  ) {
+  if (mediaNodeTypeList.includes(node.contentType)) {
     mediaShareAndExportGroup.items.unshift(nodeActions.download);
   }
-  if (accessPoint === ResourceAccessPoint.NODE_LINKS && params?.accessPointId) {
+  if (
+    (accessPoint === ResourceAccessPoint.NODE_LINKS ||
+      accessPoint === ResourceAccessPoint.DEFAULT_RIGHT_PANE_LINKS) &&
+    params?.accessPointId
+  ) {
     let baseItems = [resourceActions.copyLink()];
     if (accessPoint === ResourceAccessPoint.NODE_LINKS) {
       baseItems.unshift(

@@ -7,7 +7,8 @@ import {
   type LayoutContent,
   type StructuralContent,
   type NodeContent,
-  type StructuralNodeType
+  type StructuralNodeType,
+  structuralNodeTypes
 } from "$lib/client/products/memotron/node/node.type";
 
 import {
@@ -385,11 +386,16 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
     this.update((n) => {
       const contextIndex = n.blocks.findIndex((b) => b.id === id);
       if (contextIndex === -1) return n;
-      const siblingIndex =
+      let siblingIndex =
         direction === "up" ? contextIndex - 1 : contextIndex + 1;
+      let siblingBlock = n.blocks[siblingIndex];
+      while (structuralNodeTypes.includes(siblingBlock?.contentType)) {
+        siblingIndex = direction === "up" ? siblingIndex - 1 : siblingIndex + 1;
+        siblingBlock = n.blocks[siblingIndex];
+      }
       if (siblingIndex < 0 || siblingIndex > n.blocks.length - 1) return n;
       this.focus.set({
-        id: n.blocks[siblingIndex].id,
+        id: siblingBlock.id,
         params: {
           ...params,
           isBottom: direction === "up"

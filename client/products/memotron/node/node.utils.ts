@@ -130,7 +130,9 @@ export function resolveNodeIcon(contentType: NodeType, url?: string) {
     case NodeType.TEXT_CLIP:
       return "ph:highlighter-circle-light";
     case NodeType.WEB_PAGE:
-      return "ph:globe-light";
+      return url && isValidUrl(url)
+        ? resolveFallbackIconForUrl(url)
+        : "ph:globe-light";
     case NodeType.PDF:
       return "ph:file-pdf-light";
     case NodeType.AUDIO:
@@ -154,7 +156,8 @@ export function resolveNodeIcon(contentType: NodeType, url?: string) {
     case NodeType.KINDLE_HIGHLIGHT:
       return "ph:bookmark-simple-light";
     case NodeType.CODE:
-      return "code";
+    case NodeType.GIST:
+      return "ph:code-light";
     default:
       return url && isValidUrl(url)
         ? resolveFallbackIconForUrl(url)
@@ -163,8 +166,14 @@ export function resolveNodeIcon(contentType: NodeType, url?: string) {
 }
 
 export function resolveFallbackIconForUrl(url: string | undefined) {
-  if (!url) return "ph:globe-alt";
-  const hostPart = new URL(url).host;
+  let hostPart;
+  try {
+    if (!url) return "ph:globe";
+    hostPart = new URL(url).host;
+  } catch (e) {
+    logger.error({ at: "resolveFallbackIconForUrl", e });
+    return "ph:globe";
+  }
   if (hostPart.includes("replit.com")) return "logos:replit-icon";
   if (hostPart.includes("github.com")) return "ph:github-logo";
   if (hostPart.includes("gitlab.com")) return "logos:gitlab";
@@ -181,7 +190,7 @@ export function resolveFallbackIconForUrl(url: string | undefined) {
   if (hostPart.includes("stackoverflow.com")) return "logos:stackoverflow-icon";
   if (hostPart.includes("dev.to")) return "ph:dev-to-logo";
   if (hostPart.includes("drive.google.com")) return "logos:google-drive";
-  return "ph:globe-alt";
+  return "ph:globe";
 }
 
 export function resolveNodeContentLabel(contentType: NodeType) {
@@ -206,7 +215,7 @@ export function resolveNodeContentLabel(contentType: NodeType) {
 }
 
 export function resolveFilePreview(node: INode) {
-  const { contentType, body, file } = node;
+  const { contentType, body, file, metadata } = node;
   if (
     contentType === NodeType.IMAGE ||
     contentType === NodeType.FILE ||
@@ -217,6 +226,8 @@ export function resolveFilePreview(node: INode) {
     return body.file;
   } else if (contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP) {
     return body.thumbnail;
+  } else if (contentType === NodeType.AUDIO) {
+    return metadata?.picture;
   }
   return undefined;
 }

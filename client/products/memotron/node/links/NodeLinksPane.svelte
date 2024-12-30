@@ -362,12 +362,12 @@
         <slot name="right" slot="right">
           <div class="flex items-center">
             <!-- <Toggle
-              icon="ph:lightbulb-thin"
+              icon="ph:lightbulb-light"
               tooltip="Link suggestions"
               bind:on={isShowLinkSuggestions}
             /> -->
             <Toggle
-              icon="ph:tag-thin"
+              icon="ph:tag-light"
               tooltip="Link tags"
               bind:on={isShowLinkTagFilters}
               count={selectedLinkTags.length > 0

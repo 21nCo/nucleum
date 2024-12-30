@@ -9,6 +9,7 @@
   import LocationCard from "../../node/metadata/LocationCard.svelte";
   import { ActiveNodeStore } from "../../node/node.store";
   import type { IRecordId } from "$lib/client/types/data.type";
+  import ColorsProperty from "./colorsProperty/ColorsProperty.svelte";
   export let property: IProperty;
   export let nodeId: IRecordId;
   const node = ActiveNodeStore.resolve(nodeId);
@@ -35,6 +36,12 @@
     {formatDatetime($userPreferences, new Date($node?.createdAt))}
   {:else if property.type === PropertyType.MODIFIED_TIME}
     {formatDatetime($userPreferences, new Date($node?.modifiedAt))}
+  {:else if property.type === PropertyType.SYSTEM_ID}
+    {nodeId}
+  {:else if property.type === PropertyType.LINKS_COUNT}
+    <!-- TODO -->
+  {:else if property.type === PropertyType.COLORS}
+    <ColorsProperty colors={$node?.metadata?.colors} />
   {:else if property.type === PropertyType.LOCATION}
     <LocationCard metadata={$node?.metadata} />
   {/if}

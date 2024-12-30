@@ -116,14 +116,6 @@
           label="Storage size"
           value={$node.file?.size ? formatBytes($node.file.size) : "NA"}
         />
-        {#if $node.contentType === NodeType.AUDIO || ($node.contentType === NodeType.VIDEO && $node.file?.duration)}
-          <BasicInfoItem
-            label="Duration"
-            value={$node.file?.duration
-              ? (formatSeconds($node.file.duration) ?? "NA")
-              : "NA"}
-          />
-        {/if}
         {#if $node.contentType === NodeType.IMAGE}
           <BasicInfoItem
             label="Rendered resolution"
@@ -157,6 +149,57 @@
         <BasicInfoItem label="Last modified at" value={$node.modifiedAt} />
       {/if}
     </div>
+    {#if $node.contentType === NodeType.AUDIO && $node.metadata}
+      <div class="flex flex-col gap-3 rounded-md mo:p-2 p-4 w-full bg-bgs2">
+        <BasicInfoItem
+          label="Duration"
+          value={$node.file?.duration
+            ? (formatSeconds($node.file.duration) ?? "NA")
+            : $node.metadata.duration
+              ? formatSeconds($node.metadata.duration)
+              : "NA"}
+        />
+        {#if $node.metadata?.title}
+          <BasicInfoItem label="Title" value={$node.metadata?.title} />
+        {/if}
+        {#if $node.metadata?.album}
+          <BasicInfoItem label="Album" value={$node.metadata?.album} />
+        {/if}
+        {#if $node.metadata?.artist}
+          <BasicInfoItem label="Artist" value={$node.metadata?.artist} />
+        {/if}
+        {#if $node.metadata?.genre}
+          <BasicInfoItem label="Genre" value={$node.metadata?.genre} />
+        {/if}
+        {#if $node.metadata?.composer}
+          <BasicInfoItem label="Composer" value={$node.metadata?.composer} />
+        {/if}
+        {#if $node.metadata?.year}
+          <BasicInfoItem label="Year" value={$node.metadata?.year} />
+        {/if}
+        {#if $node.metadata?.sampleRate}
+          <BasicInfoItem
+            label="Sample rate"
+            value={$node.metadata?.sampleRate}
+          />
+        {/if}
+        {#if $node.metadata?.bitrate}
+          <BasicInfoItem label="Bitrate" value={$node.metadata?.bitrate} />
+        {/if}
+        {#if $node.metadata?.numberOfChannels}
+          <BasicInfoItem
+            label="Channels"
+            value={$node.metadata?.numberOfChannels}
+          />
+        {/if}
+        {#if $node.metadata?.codec}
+          <BasicInfoItem label="Codec" value={$node.metadata?.codec} />
+        {/if}
+        {#if $node.metadata?.copyright}
+          <BasicInfoItem label="Copyright" value={$node.metadata?.copyright} />
+        {/if}
+      </div>
+    {/if}
     <div class="flex flex-wrap gap-3">
       {#if viewLogs && viewLogs.length > 0}
         <InfoCard label="Total view count" value={viewLogs.length} />

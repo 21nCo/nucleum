@@ -19,7 +19,7 @@
 
   export let isCmdBarLaunch: boolean = false;
 
-  const mainLabel = `We will download AI models to your device so that you can use AI for free and offline. No privacy compromise. No data leaving your device.`;
+  const mainLabel = `We will download AI models to your device so that you can use AI for free and offline.`;
   let progress = 0;
   let label: string;
   let isDisabled: boolean = false;
@@ -109,7 +109,7 @@
       {mainLabel}
     </div>
 
-    <SwitchInput
+    <!-- <SwitchInput
       size={Size.sm}
       {isDisabled}
       bind:checked={$userPreferences.localAI.semanticSearch}
@@ -121,7 +121,7 @@
           body: "Enable this to search for semantically relevant content in the search bar."
         }
       }}
-    />
+    /> -->
     <SwitchInput
       size={Size.sm}
       {isDisabled}
@@ -131,7 +131,7 @@
       label={{
         label: "Audio Transcription - 380MB",
         tooltip: {
-          body: "Enable this to transcribe audio files and convert them to text and to enable to Audio to Markdown"
+          body: "Enable this to transcribe audio files and convert them to text and to enable Audio to Markdown"
         }
       }}
     />

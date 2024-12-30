@@ -265,6 +265,24 @@ export class ActiveCollectionStore extends ActiveResourceStore<
     }
   }
 
+  async refreshProperties() {
+    logger.log({ at: "ActiveCollectionStore.refreshProperties", id: this.id });
+    try {
+      const result = await this.resourceStore.select(this.id, [
+        "(select * from $parent.properties) as properties",
+        "typeToExtend.* as typeToExtend"
+      ]);
+      if (!result) return;
+      this.update((val) => {
+        val.properties = result.properties;
+        val.typeToExtend = result.typeToExtend;
+        return val;
+      });
+    } catch (e) {
+      logger.error({ at: "ActiveCollectionStore.refreshProperties", e });
+    }
+  }
+
   async refreshTotalNodeCount() {
     console.time("ActiveCollectionStore.refreshTotalNodeCount");
     const totalNodeCount = await collectionStore.resolveNodeCount(this.id);

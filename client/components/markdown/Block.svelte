@@ -953,7 +953,7 @@
     <div class="flex items-center justify-center">
       {#if isHovering && !isFocusing && !isSoleBlock && [...simpleTextNodeTypeList, ...headingNodeTypes, ...listNodeTypes, NodeType.DIVIDER, NodeType.DOUBLE_DIVIDER].includes(block.contentType)}
         <Button
-          icon="ph:trash-thin"
+          icon="ph:trash-light"
           size={Size.md}
           tooltip="Delete block"
           on:click={deleteBlock}

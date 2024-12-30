@@ -115,8 +115,8 @@
 </button>
 
 <ComponentBaseLayer
-  subscribeTo={new Set([resourceType])}
-  subscribeToResource={item}
+  subscribeToResource={new Set([resourceType])}
+  subscribeToRecords={[item]}
   on:change={(e) => {
     const record = e?.detail?.params?.record;
     if (record) {

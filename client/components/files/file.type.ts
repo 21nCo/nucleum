@@ -1,3 +1,4 @@
+import type { IObservableStoreSubject } from "$lib/client/types/data.type";
 import type { IResource } from "../flux/resourceStores/resource.type";
 
 export type IFile = IResource & {
@@ -20,4 +21,8 @@ export type IImageRepositionerOptions = {
   enabled?: boolean;
   axis?: "x" | "y";
   initialPosition?: number;
+};
+
+export type IFileEmbedChannel = IObservableStoreSubject & {
+  files: { id: string; data: any }[];
 };

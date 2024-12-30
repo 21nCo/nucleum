@@ -132,7 +132,7 @@
               {#if context === "mainpanel"}
                 <Button
                   label="See all"
-                  icon="ph:arrow-right-thin"
+                  icon="ph:arrow-right-light"
                   size={Size.sm}
                   style={ButtonStyle.PLAIN}
                   on:click={(e) => {

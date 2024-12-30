@@ -53,10 +53,17 @@ export const autoPropertyOptions = [
     groupId: PropertyTypeGroup.SYSTEM
   },
   {
-    label: "Last opened time",
-    icon: "ph:clock-light",
-    value: PropertyType.LAST_OPENED_TIME,
+    label: "Location",
+    icon: "ph:map-pin-light",
+    value: PropertyType.LOCATION,
     groupId: PropertyTypeGroup.SYSTEM
+  },
+  {
+    label: "System ID",
+    icon: "ph:hash-light",
+    value: PropertyType.SYSTEM_ID,
+    groupId: PropertyTypeGroup.SYSTEM,
+    badge: "New"
   },
   // {
   //   label: "Number of visits",
@@ -67,9 +74,19 @@ export const autoPropertyOptions = [
   //   isDisabled: true
   // },
   {
-    label: "Location",
-    icon: "ph:map-pin-light",
-    value: PropertyType.LOCATION,
+    label: "Calendar events",
+    icon: "ph:calendar-light",
+    value: PropertyType.CALENDAR_EVENT,
+    isDisabled: true,
+    badge: "Planned",
+    groupId: PropertyTypeGroup.SYSTEM
+  },
+  {
+    label: "Links count",
+    icon: "ph:link-light",
+    value: PropertyType.LINKS_COUNT,
+    isDisabled: true,
+    badge: "Planned",
     groupId: PropertyTypeGroup.SYSTEM
   },
   {
@@ -77,54 +94,42 @@ export const autoPropertyOptions = [
     icon: "ph:math-operations-light",
     value: PropertyType.FORMULA,
     isDisabled: true,
-    groupId: PropertyTypeGroup.DEFAULT
+    groupId: PropertyTypeGroup.RULE_BASED
   },
   {
     label: "Custom ID",
     icon: "ph:hash-light",
     value: PropertyType.CUSTOM_ID,
     isDisabled: true,
-    groupId: PropertyTypeGroup.DEFAULT
-  },
-  {
-    label: "Links count",
-    icon: "ph:link-light",
-    value: PropertyType.LINKS_COUNT,
-    isDisabled: true,
-    groupId: PropertyTypeGroup.DEFAULT
+    groupId: PropertyTypeGroup.RULE_BASED
   },
   {
     label: "AI autofill",
     icon: "ph:magic-wand-light",
     value: PropertyType.AI_AUTOFILL,
     isDisabled: true,
-    groupId: PropertyTypeGroup.DETECTION
+    groupId: PropertyTypeGroup.RULE_BASED
   },
   {
     label: "Colors",
     icon: "ph:palette-light",
     value: PropertyType.COLORS,
-    isDisabled: true,
-    groupId: PropertyTypeGroup.DETECTION
+    groupId: PropertyTypeGroup.DETECTION,
+    badge: "New",
+    tooltip: "Detects colors from an image node."
   },
   {
     label: "Scene",
     icon: "ph:image-light",
     value: PropertyType.SCENE,
     isDisabled: true,
+    badge: "Planned",
     groupId: PropertyTypeGroup.DETECTION
   },
   {
     label: "Time tracking [Pointron]",
     icon: "ph:timer-light",
     value: PropertyType.TIME_TRACKING,
-    isDisabled: true,
-    groupId: PropertyTypeGroup.INTEGRATION
-  },
-  {
-    label: "Calendar event",
-    icon: "ph:calendar-light",
-    value: PropertyType.CALENDAR_EVENT,
     isDisabled: true,
     groupId: PropertyTypeGroup.INTEGRATION
   },

@@ -275,7 +275,7 @@
         <slot name="additional"></slot>
         {#if !$collection.isInEditMode && dev_isEnableMetaViewsToggle}
           <Toggle
-            icon="ph:monitor-play-thin"
+            icon="ph:monitor-play-light"
             tooltip="Play actions"
             bind:on={isShowMetaViews}
           />
@@ -283,7 +283,7 @@
         <Toggle
           icon={$collection.isInEditMode
             ? "ph:pencil-simple-slash-light"
-            : "ph:pencil-simple-line-thin"}
+            : "ph:pencil-simple-line-light"}
           tooltip={$collection.isInEditMode
             ? "Exit edit mode"
             : "Enter edit mode"}

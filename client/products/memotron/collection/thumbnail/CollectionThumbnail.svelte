@@ -63,7 +63,7 @@
 </ResourceThumbnailBase>
 
 <ComponentBaseLayer
-  subscribeTo={new Set([Resource.collection])}
-  subscribeToResource={item.id}
+  subscribeToResource={new Set([Resource.collection])}
+  subscribeToRecords={[item.id]}
   on:change={onCollectionChange}
 />

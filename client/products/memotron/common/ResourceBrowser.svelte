@@ -15,7 +15,10 @@
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { page } from "$app/stores";
   import ResourceResolver from "$lib/client/layout/paint/ResourceResolver.svelte";
-  import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import {
+    isSameResource,
+    resourceAction
+  } from "$lib/client/components/flux/resourceStores/resource.utils";
   import {
     ResourceAccessPoint,
     ResourceActionType,
@@ -39,6 +42,7 @@
   import { intersection } from "$lib/client/actions/intersection.action";
   import { debouncer } from "$lib/client/utils/utils";
   import { logger } from "$lib/client/components/debug/logger.client";
+  import { PersistenceActionType } from "$lib/client/types/data.type";
   export let resource: Resource;
 
   let searchQuery: string = "";
@@ -155,6 +159,33 @@
   }
   function resolveResourceLabel(isPlural: boolean = false) {
     return resource + ((data && data.length > 1) || isPlural ? "s" : "");
+  }
+
+  async function onResourceMutation(
+    e: CustomEvent<{ resource: Resource; params: any; context: string }>
+  ) {
+    const watchProperties = ["isArchived", "trashInformation"];
+    const resource = e.detail.resource;
+    const mutation = e.detail.params;
+    logger.log({
+      at: "ResourceBrowser - onResourceMutation",
+      resource,
+      ...mutation
+    });
+    if (
+      mutation.action === PersistenceActionType.MERGE &&
+      mutation.record.id &&
+      watchProperties.some((x) => mutation.record[x])
+    ) {
+      const id = mutation.record.id;
+      if (id) {
+        data = data.filter((x) => !isSameResource(x.id, id));
+        starred = starred.filter((x) => !isSameResource(x.id, id));
+      }
+      await refreshTotalCounts();
+      return;
+    }
+    refresh();
   }
 </script>
 
@@ -314,7 +345,7 @@
 </Panel>
 
 <ComponentBaseLayer
-  subscribeTo={new Set([resource])}
+  subscribeToResource={new Set([resource])}
   subscribeToContext={new Set([
     ResourceAccessPoint.BROWSER,
     MemotronAction.CAPTURE,
@@ -322,5 +353,5 @@
   ])}
   syncDownOnMount={true}
   on:syncDown={() => refresh()}
-  on:change={() => refresh()}
+  on:change={onResourceMutation}
 />

@@ -154,7 +154,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
       value: "edit",
       icon: this.resource.isInEditMode
         ? "ph:pencil-simple-slash-light"
-        : "ph:pencil-simple-line-thin",
+        : "ph:pencil-simple-line-light",
       callback: async () => {
         if (context != ResourceAccessPoint.SELF) {
           appStore.openResource(

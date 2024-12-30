@@ -8,7 +8,7 @@
     TableCellType,
     type TableColumn
   } from "$lib/client/types/table.type";
-  import { enumToString } from "$lib/shared/utils/text.utils";
+  import { enumToString, isValidString } from "$lib/shared/utils/text.utils";
   import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 
   import {
@@ -74,6 +74,7 @@
     {
       label: "Label",
       key: "label",
+      width: 0.65,
       type: TableCellType.TEXT_INPUT,
       placeholder: (row: any) => {
         return enumToString(row.type);
@@ -134,7 +135,8 @@
   onMount(async () => {
     if (collection && (!$collection || !$collection.label)) {
       await collection.init(ResourceAccessMode.POP);
-    } else {
+    } else if (collection) {
+      await collection.refreshProperties();
       propertyEditorStore.set({
         properties: $collection?.properties ?? [],
         typeToExtend: $collection?.typeToExtend
@@ -160,7 +162,7 @@
       convert();
     } else {
       confirmationNotification.notify({
-        message: `You are about to change the property type of **${existing.label ?? "Untitled"}** from **${enumToString(existing.type)}** to **${enumToString(e.type)}**. This will delete existing configuration for this property. Are you sure you want to proceed?`,
+        message: `You are about to change the property type of **${isValidString(existing.label) ? existing.label : "Untitled"}** from **${enumToString(existing.type)}** to **${enumToString(e.type)}**. This will delete existing configuration for this property. Are you sure you want to proceed?`,
         title: "Change property type",
         type: AlertType.WARNING,
         confirmAction: {

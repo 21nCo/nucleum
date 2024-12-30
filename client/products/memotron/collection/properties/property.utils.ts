@@ -12,7 +12,7 @@ import type { ISelectItem } from "$lib/client/types/select.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 import { enumToString, isValidString } from "$lib/shared/utils/text.utils";
 import type { OmitForCaptureWithId } from "$lib/client/components/flux/resourceStores/resource.type";
-import { propertyOptions } from "./property.store";
+import { propertyOptions, universalPropertyOptions } from "./property.store";
 import { AvatarType } from "$lib/client/types/avatar.type";
 import { iso31661CountryCodes } from "./countries";
 import { languages } from "./languages";
@@ -148,6 +148,12 @@ export const assignDefaultLabelAsFallback = (
 };
 
 export function resolvePropertyIcon(property: IProperty) {
+  if (property.type === PropertyType.UNIVERSAL) {
+    return (
+      universalPropertyOptions.find((x) => x.value === property.config?.type)
+        ?.icon ?? "ph:globe-light"
+    );
+  }
   return (
     propertyOptions.find((x) => x.value === property.type)?.icon ??
     "ph:circle-dashed-light"

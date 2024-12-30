@@ -393,10 +393,11 @@ class Transcriber {
   static built = false;
   static transcriber: any;
   static models = [
-    "Xenova/whisper-tiny.en",
-    "Xenova/whisper-small.en",
-    "Xenova/whisper-base.en",
-    "Xenova/whisper-medium.en"
+    "distil-whisper/distil-small.en"
+    // "Xenova/whisper-tiny.en",
+    // "Xenova/whisper-small.en",
+    // "Xenova/whisper-base.en",
+    // "Xenova/whisper-medium.en"
   ];
   static model = Transcriber.models[0];
   static async initAll() {
@@ -452,6 +453,95 @@ class Transcriber {
     } catch (error) {
       console.error("Error during extraction:", error);
       throw error;
+    }
+  }
+
+  static async transcribev2(
+    audioData: Float32Array | Int16Array,
+    model: TranscriptionModel
+  ) {
+    try {
+      if (!audioData) {
+        throw new Error("No audio data provided");
+      }
+
+      let processedAudio: Float32Array;
+      if (audioData instanceof Int16Array) {
+        processedAudio = new Float32Array(audioData.length);
+        for (let i = 0; i < audioData.length; i++) {
+          processedAudio[i] = audioData[i] / 32768.0;
+        }
+      } else if (audioData instanceof Float32Array) {
+        processedAudio = audioData;
+      } else {
+        throw new Error("Invalid audio data format");
+      }
+      if (Transcriber.model !== model || !Transcriber.built) {
+        Transcriber.model = model;
+        Transcriber.built = false;
+        delete Transcriber.transcriber;
+        await Transcriber.init();
+      }
+
+      const processingConfig = {
+        chunk_length_s: 15,
+        stride_length_s: 3,
+        return_timestamps: false,
+        sampling_rate: 16000,
+        max_new_tokens: 128,
+        num_threads: 1,
+        num_beams: 1,
+        do_sample: false
+      };
+
+      console.log("Processing audio:", {
+        dataLength: processedAudio.length,
+        config: processingConfig,
+        modelName: Transcriber.model
+      });
+
+      const sampleRate = processingConfig.sampling_rate;
+      const chunkLengthSamples = processingConfig.chunk_length_s * sampleRate;
+      const strideLengthSamples = processingConfig.stride_length_s * sampleRate;
+
+      let transcribedText = "";
+      let start = 0;
+      while (start < processedAudio.length) {
+        const end = Math.min(start + chunkLengthSamples, processedAudio.length);
+        const audioChunk = processedAudio.slice(start, end);
+
+        const output = await Transcriber.transcriber(
+          audioChunk,
+          processingConfig
+        );
+        if (output?.text) {
+          transcribedText += output.text + " ";
+        } else {
+          console.error(
+            "No transcription output for chunk starting at sample:",
+            start
+          );
+        }
+
+        start += chunkLengthSamples - strideLengthSamples;
+      }
+
+      postMessage(transcribedText.trim());
+    } catch (error) {
+      console.error("Transcription error:", error);
+      postMessage({
+        status: "error",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unknown transcription error",
+        details: {
+          modelName: Transcriber.model,
+          errorType: typeof error,
+          errorValue: String(error),
+          audioLength: audioData?.length
+        }
+      });
     }
   }
 }

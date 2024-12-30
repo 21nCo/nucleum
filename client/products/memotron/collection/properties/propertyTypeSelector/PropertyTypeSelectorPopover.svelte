@@ -16,6 +16,8 @@
     PropertyTypeMode,
     type IPropertyTypeSelectorGroup
   } from "./propertyTypeSelector.type";
+  import { tooltip } from "$lib/client/actions/popover.action";
+  import { Placement } from "$lib/client/types/direction.enum";
   export let groups: IPropertyTypeSelectorGroup[];
   export let options: DropdownItem[];
   export let onSelect: (e: string) => void;
@@ -75,12 +77,17 @@
       {#each groupOptions as option}
         <button
           class={cn(
-            "flex items-center justify-between gap-2 px-3 py-2 rounded-md w-full",
+            "relative flex items-center justify-between gap-2 px-3 py-2 rounded-md w-full",
             {
               "text-fgs3 cursor-not-allowed": option.isDisabled,
               "hover:bg-bgs2": !option.isDisabled
             }
           )}
+          use:tooltip={{
+            disabled: !option.tooltip,
+            text: option.tooltip,
+            direction: Placement.Bottom
+          }}
           on:click={() => {
             if (option.isDisabled) return;
             onSelect(option.value);

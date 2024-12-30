@@ -362,6 +362,38 @@ export class ResourceStore<T extends IResource> implements IStore {
     return this.persistModification(data, additionalParams);
   }
 
+  /**
+   * Modifies the resource with given id as a system i.e. modifiedBy and modifiedAt are not set - with the properties passed and persists the change. If an active resource is present, it will be updated with the new properties.
+   * @param id id of the resource to be updated
+   * @param properties properties to be updated
+   * @param mutatationQueueParams params to be passed to the mutation queue
+   * @returns
+   */
+  async modifyAsSystem(
+    id: IRecordId,
+    properties: Partial<T>,
+    additionalParams?: IResourceMutationParams
+  ) {
+    const activeResource = activeResources.get(id.toString());
+    if (activeResource && !additionalParams?.isPreventBackPropagation) {
+      activeResource.update((prev: T) => ({
+        ...prev,
+        ...properties
+      }));
+    }
+    const data: Partial<T> = {
+      id,
+      ...properties
+    };
+
+    if (additionalParams?.isDebounced) {
+      return this.resolveDebouncerForPersist(
+        additionalParams.debounceKey ?? id.toString()
+      )(data);
+    }
+    return this.persistModification(data, additionalParams);
+  }
+
   async trash(id: IRecordId, additionalParams?: IResourceMutationParams) {
     return this.modify(
       id,

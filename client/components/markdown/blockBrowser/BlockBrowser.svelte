@@ -31,7 +31,7 @@
         label: "Embed anything",
         description: "Embed block",
         type: NodeType.EMBED,
-        icon: "code"
+        icon: "ph:code-light"
       },
       // {
       //   label: "Embed node",
@@ -44,43 +44,43 @@
         label: "Embed collection",
         description: "Embed Collection block",
         type: NodeType.COLLECTION_AS_EMBED,
-        icon: "hugeicons:code"
+        icon: "ph:brackets-round-light"
       },
       {
         label: "Web text clip",
         description: "Embed web text clip",
         type: NodeType.TEXT_CLIP,
-        icon: "ph:highlighter-circle-thin"
+        icon: "ph:highlighter-circle-light"
       },
       {
         label: "Youtube video",
         description: "Embed youtube video block",
         type: NodeType.YOUTUBE_VIDEO,
-        icon: "ph:youtube-logo-thin"
+        icon: "ph:youtube-logo-light"
       },
       {
         label: "Tweet",
         description: "Embed tweet block",
         type: NodeType.TWEET,
-        icon: "ph:x-logo-thin"
+        icon: "ph:x-logo-light"
       },
       {
         label: "Kindle book",
         description: "Embed kindle book block",
         type: NodeType.KINDLE_BOOK,
-        icon: "ph:amazon-logo-thin"
+        icon: "ph:amazon-logo-light"
       },
       {
         label: "Kindle highlight",
         description: "Embed kindle highlight block",
         type: NodeType.KINDLE_HIGHLIGHT,
-        icon: "ph:bookmark-simple-thin"
+        icon: "ph:bookmark-simple-light"
       },
       {
         label: "Graph",
         description: "Embed node graph",
         type: NodeType.GRAPH_AS_EMBED,
-        icon: "ph:graph-thin",
+        icon: "ph:graph-light",
         isDisabled: true,
         badge: "planned"
       },
@@ -88,7 +88,7 @@
         label: "Tree of links",
         description: "Embed tree of links",
         type: NodeType.TREE_OF_LINKS,
-        icon: "ph:tree-view-thin",
+        icon: "ph:tree-view-light",
         isDisabled: true,
         badge: "planned"
       },
@@ -96,7 +96,7 @@
         label: "Calendar",
         description: "Embed calendar",
         type: NodeType.CALENDAR_AS_EMBED,
-        icon: "ph:calendar-thin",
+        icon: "ph:calendar-light",
         isDisabled: true,
         badge: "planned"
       },
@@ -104,7 +104,7 @@
         label: "Table of contents",
         description: "Embed table of contents block",
         type: NodeType.TOC,
-        icon: "list",
+        icon: "ph:list-bullets-light",
         isDisabled: true,
         badge: "planned"
       }
@@ -138,7 +138,7 @@
         label: "Cards",
         description: "Cards block",
         type: NodeType.CARDS,
-        icon: "squares-2x2",
+        icon: "ph:squares-four-light",
         badge: "planned",
         isDisabled: true
       },
@@ -162,7 +162,7 @@
         label: "Table",
         description: "Table block",
         type: NodeType.TABLE,
-        icon: "hugeicons:layout-table-02",
+        icon: "ph:table-light",
         badge: "planned",
         isDisabled: true
       },
@@ -170,7 +170,7 @@
         label: "Stack",
         description: "Stack block",
         type: NodeType.STACK,
-        icon: "rectangle-stack",
+        icon: "ph:stack-light",
         badge: "planned",
         isDisabled: true
       }
@@ -183,19 +183,19 @@
         label: "Image",
         description: "Image block",
         type: NodeType.IMAGE,
-        icon: "image"
+        icon: "ph:image-light"
       },
       {
         label: "Audio",
         description: "Audio block",
         type: NodeType.AUDIO,
-        icon: "music"
+        icon: "ph:music-note-light"
       },
       {
         label: "Video",
         description: "Video block",
         type: NodeType.VIDEO,
-        icon: "video-camera"
+        icon: "ph:video-light"
       },
       {
         label: "PDF",
@@ -228,7 +228,7 @@
         description: "Unordered List block",
         type: NodeType.LIST,
         // icon: "lucide:list"
-        icon: "hugeicons:left-to-right-list-bullet",
+        icon: "ph:list-bullets-light",
         isShowShortcut: true
       },
       {
@@ -236,7 +236,7 @@
         description: "Ordered List block",
         type: NodeType.ORDERED_LIST,
         // icon: "lucide:list-ordered"
-        icon: "hugeicons:left-to-right-list-number",
+        icon: "ph:list-numbers-light",
         isShowShortcut: true
       },
       {
@@ -244,7 +244,7 @@
         description: "Checklist block",
         type: NodeType.CHECKLIST,
         // icon: "lucide:list-todo"
-        icon: "hugeicons:check-list",
+        icon: "ph:list-checks-light",
         isShowShortcut: true
       }
     ]
@@ -286,34 +286,34 @@
         label: "Paragraph",
         description: "Paragraph block",
         type: NodeType.SIMPLE_TEXT,
-        icon: "hugeicons:paragraph"
+        icon: "ph:paragraph-light"
       },
       {
         label: "Quote",
         description: "Quote block",
         type: NodeType.QUOTE,
-        icon: "hugeicons:quote-up",
+        icon: "ph:quotes-light",
         isShowShortcut: true
       },
       {
         label: "Callout",
         description: "Callout block",
         type: NodeType.CALLOUT,
-        icon: "bookmark",
+        icon: "ph:info-light",
         isShowShortcut: true
       },
       {
         label: "Code",
         description: "Code block",
         type: NodeType.CODE,
-        icon: "code",
+        icon: "ph:code-block-light",
         isShowShortcut: true
       },
       {
-        label: "Math",
-        description: "Math block",
-        type: NodeType.MATH,
-        icon: "hugeicons:summation-01",
+        label: "Latex",
+        description: "Latex block",
+        type: NodeType.LATEX,
+        icon: "ph:sigma-light",
         badge: "planned",
         isDisabled: true
       }
@@ -467,7 +467,7 @@
           description: "Heading 1 block",
           type: NodeType.HEADING1,
           // icon: "lucide:heading-1"
-          icon: "hugeicons:heading-01",
+          icon: "ph:text-h-one-light",
           isShowShortcut: true,
           isDisabled: isHeading1Disabled,
           badge: isHeading1Disabled ? "NA" : undefined,
@@ -478,7 +478,7 @@
           description: "Heading 2 block",
           type: NodeType.HEADING2,
           // icon: "lucide:heading-2"
-          icon: "hugeicons:heading-02",
+          icon: "ph:text-h-two-light",
           isShowShortcut: true,
           isDisabled: isHeading2Disabled,
           badge: isHeading2Disabled ? "NA" : undefined,
@@ -489,7 +489,7 @@
           description: "Heading 3 block",
           type: NodeType.HEADING3,
           // icon: "lucide:heading-3"
-          icon: "hugeicons:heading-03",
+          icon: "ph:text-h-three-light",
           isShowShortcut: true,
           isDisabled: isHeading3Disabled,
           badge: isHeading3Disabled ? "NA" : undefined,
@@ -500,7 +500,7 @@
           description: "Heading 4 block",
           type: NodeType.HEADING4,
           // icon: "lucide:heading-4"
-          icon: "hugeicons:heading-04",
+          icon: "ph:text-h-four-light",
           isShowShortcut: true,
           isDisabled: isHeading4Disabled,
           badge: isHeading4Disabled ? "NA" : undefined,

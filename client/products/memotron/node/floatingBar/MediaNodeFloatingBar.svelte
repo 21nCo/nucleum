@@ -86,10 +86,8 @@
     {/if}
     <div
       class={cn(
-        "flex flex-col gap-2 w-full justify-center items-center bg-bgs1 mo:p-2 p-3",
+        "flex flex-col gap-2 w-full justify-center items-center bg-bgs1 mo:p-2 p-3 border-t border-t-brs2",
         {
-          "border-t border-t-brs2": isConstrainedWidth,
-          "border border-brs2": !isConstrainedWidth,
           "rounded-b-md": $node.accessMode === ResourceAccessMode.POP,
           "w-full": $node.accessMode !== ResourceAccessMode.SLIDESHOW,
           "rounded-md shadow-md":
@@ -102,7 +100,8 @@
           <NodeTitle
             node={$node}
             on:labelChange={(e) => {
-              if ($node.label) node.debouncedModify({ label: $node.label });
+              if ($node.label !== undefined)
+                node.debouncedModify({ label: $node.label });
             }}
             on:editModeChange={(e) => {
               $node.isInEditMode = e.detail;
@@ -117,7 +116,7 @@
         <span class="flex gap-5">
           {#if !isConstrainedWidth}
             <Toggle
-              icon="ph:bird-thin"
+              icon="ph:bird-light"
               tooltip="Bird view"
               on={nodeView === NodeView.BIRD_VIEW}
               on:change={(e) => {

@@ -82,7 +82,7 @@
     <Button
       label="edit"
       isPreventMinWidth={true}
-      icon="ph:pencil-simple-line-thin"
+      icon="ph:pencil-simple-line-light"
       size={Size.sm}
       on:click={() => {
         appStore.runAction(MemotronAction.LIBRARY);

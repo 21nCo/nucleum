@@ -128,7 +128,7 @@
             {links}
             accessPointId={node.id}
             on:click={onLinkClick}
-            accessPoint={ResourceAccessPoint.NODE_LINKS}
+            accessPoint={ResourceAccessPoint.DEFAULT_RIGHT_PANE_LINKS}
           />
         {:else}
           <span
@@ -147,7 +147,7 @@
       </span>
       <span>
         <Button
-          icon="ph:arrows-out-simple-thin"
+          icon="ph:arrows-out-simple-light"
           size={Size.sm}
           on:click={() => (pane = NodeRightPaneType.SIDENOTES)}
         />
