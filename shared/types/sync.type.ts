@@ -6,7 +6,8 @@ export enum SyncMethod {
   SYNC_DOWN = "down",
   CLONE_UP = "cloneup",
   CLONE_DOWN = "clonedown",
-  CLONE_DOWN_PAGINATE = "clonedown_paginate"
+  CLONE_DOWN_PAGINATE = "clonedown_paginate",
+  RECONCILE = "reconcile"
 }
 
 export type ISyncUpBody = {
@@ -38,4 +39,9 @@ export type ICloneDownPaginateBody = {
   isExtension: boolean;
   offset: number;
   limit: number;
+};
+
+export type IReconcileBody = {
+  resources: Resource[];
+  isExtension?: boolean;
 };
