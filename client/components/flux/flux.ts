@@ -984,6 +984,11 @@ class Flux {
       if (result?.paginateResources) {
         await this.paginateResources(result.paginateResources);
       }
+      if (!params?.reCloneAll) {
+        this.performSync(SyncMethod.RECONCILE, {
+          resources: resourcesForReconciliation
+        });
+      }
     }
   }
 

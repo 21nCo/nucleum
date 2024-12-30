@@ -228,6 +228,7 @@ export async function reconcile(body: IReconcileBody, agent: Agent) {
           break;
       }
     }
+    return { success: true };
   } catch (e) {
     console.error({ at: "reconcile - error", error: e });
     return { error: "Sync failed" };
