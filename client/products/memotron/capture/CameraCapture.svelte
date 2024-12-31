@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount } from "svelte";
+  import { createEventDispatcher, onDestroy, onMount } from "svelte";
   import { captureStore } from "./capture.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { Size } from "$lib/client/types/size.enum";
@@ -24,11 +24,20 @@
     startCamera();
     return () => {
       stopCamera();
+      stopCamerav2();
     };
   });
-
+  let deviceInfo: MediaDeviceInfo | null = null;
   async function startCamera() {
     try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevice = devices.find(
+        (device) => device.kind === "videoinput"
+      );
+      if (videoDevice) {
+        deviceInfo = videoDevice;
+      }
+
       stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: "environment"
@@ -45,6 +54,7 @@
     }
   }
   function stopCamera() {
+    console.log("Executing stopCamera");
     if (stream) {
       stream.getTracks().forEach((track) => {
         track.stop();
@@ -55,6 +65,36 @@
       stream = null;
     }
   }
+
+  function stopCamerav2() {
+    console.log("Executing stopCamerav2");
+    if (stream) {
+      const tracks = stream.getTracks();
+      tracks.forEach((track) => {
+        track.enabled = false;
+        track.stop();
+      });
+
+      if (videoElement) {
+        videoElement.srcObject = null;
+        videoElement.load();
+      }
+
+      stream = null;
+      if (window.gc) {
+        try {
+          window.gc();
+        } catch (e) {
+          console.debug("Manual GC not available");
+        }
+      }
+    }
+  }
+
+  onDestroy(() => {
+    stopCamera();
+    stopCamerav2();
+  });
 
   function adjustVideoSize() {
     const videoAspect = videoElement.videoWidth / videoElement.videoHeight;
@@ -96,13 +136,15 @@
       isSaving = true;
       canvasElement.toBlob(async (blob) => {
         if (blob) {
-          await captureStore.saveCameraCapture(blob);
+          await captureStore.saveCameraCapture(blob, {
+            deviceInfo
+          });
+          isSaving = false;
         }
       }, "image/jpeg");
     } catch (e) {
       error = "Something went wrong. Please try again.";
       logger.error({ at: "CameraCapture.savePhoto", error: e });
-    } finally {
       isSaving = false;
     }
   }

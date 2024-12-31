@@ -70,24 +70,22 @@
     options={[
       {
         value: InteractionMode.DEFAULT,
-        // TODO - icon
-        icon: "clock"
+        icon: "ph:circle-dashed-light"
       },
       {
         value: InteractionMode.KEYBOARD_CENTRIC,
         label: "Keyboard centric",
-        // TODO - add keyboard icon
-        icon: "rocket"
+        icon: "ph:keyboard-light"
       },
       {
         value: InteractionMode.COMMAND_ONLY,
-        label: "Command only [beta]",
-        icon: "command"
+        label: "Command only",
+        icon: "ph:terminal-window-light"
       },
       {
         value: InteractionMode.VOICE_ONLY,
-        label: "Voice [coming soon]",
-        icon: "microphone",
+        label: "Voice only [planned]",
+        icon: "ph:microphone",
         isDisabled: true
       }
     ]}
@@ -128,10 +126,10 @@
       <Text content="Keyboard shortcuts" style={TextStyle.SECTION_HEADING} />
       <ShortcutSettings />
     </div>
-  {:else if selectedMode === InteractionMode.COMMAND_ONLY}
+  {:else if selectedMode === InteractionMode.VOICE_ONLY}
     <InlineInfoBanner
       type={InfoTextType.WARNING}
-      content="Command only mode is currenlty in beta. Please report any issues you encounter."
+      content="Voice only mode is currenlty in beta. Please report any issues you encounter."
     />
   {/if}
   <ScrollViewBottomSpacer />

@@ -367,31 +367,31 @@ export function resolveNodeFavicon(node: INode) {
 }
 
 export function resolveFileIcon(file: IFile) {
-  if (!file) return;
-  if (file.type.includes("zip") || file.label?.endsWith(".zip"))
+  if (!file || (!file.type && !file.label)) return;
+  if (file.type?.includes("zip") || file.label?.endsWith(".zip"))
     return "ph:file-zip-light";
   if (
-    file.type.includes("excel") ||
+    file.type?.includes("excel") ||
     file.label?.endsWith(".xlsx") ||
     file.label?.endsWith(".xls")
   )
     return "ph:file-xls-light";
   if (
-    file.type.includes("word") ||
+    file.type?.includes("word") ||
     file.label?.endsWith(".docx") ||
     file.label?.endsWith(".doc")
   )
     return "ph:file-doc-light";
-  if (file.type.includes("powerpoint") || file.label?.endsWith(".pptx"))
+  if (file.type?.includes("powerpoint") || file.label?.endsWith(".pptx"))
     return "ph:file-ppt-light";
 
-  if (file.type.includes("csv") || file.label?.endsWith(".csv"))
+  if (file.type?.includes("csv") || file.label?.endsWith(".csv"))
     return "ph:file-csv-light";
 
-  if (file.type.includes("html") || file.label?.endsWith(".html"))
+  if (file.type?.includes("html") || file.label?.endsWith(".html"))
     return "ph:file-html-light";
 
-  if (file.type.includes("text") || file.label?.endsWith(".txt"))
+  if (file.type?.includes("text") || file.label?.endsWith(".txt"))
     return "ph:file-txt-light";
 
   return "ph:file-light";

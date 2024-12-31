@@ -18,6 +18,7 @@ import {
 import type { IFile } from "./file.type";
 import { fileEmbedChannel } from "./fileEmbedChannel.store";
 import { OperatingSystem } from "$lib/client/types/context.type";
+import account from "$lib/client/stores/account.store";
 
 class FileStore extends ResourceStore<IFile> {
   constructor() {
@@ -66,19 +67,48 @@ class FileStore extends ResourceStore<IFile> {
         toasts.error(defaultErrMessage);
         return;
       }
-      let downloadUrl = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = _file.name || _file.label || "download";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      URL.revokeObjectURL(downloadUrl);
+      this.downloadFromBlob(blob, {
+        fileName: _file.name || _file.label || "download",
+        contentType: _file.type
+      });
     } catch (error) {
       logger.error({ at: "fileStore - download", error });
       toasts.error(defaultErrMessage);
     }
+  }
+
+  async downloadFromBlob(
+    blob: Blob,
+    params?: {
+      contentType?: string;
+      fileName?: string;
+      fileNameForEmbed?: string;
+      isHandleEmbedCase?: boolean;
+    }
+  ) {
+    if (get(context).isEmbed) {
+      if (!params?.isHandleEmbedCase) return;
+      const url = await account.uploadFileV2(
+        params?.contentType || "text/plain",
+        params?.fileNameForEmbed || params?.fileName || "download",
+        blob,
+        {
+          isReturnUrl: true
+        }
+      );
+      if (url) {
+        fileEmbedChannel.downloadFromUrl(url);
+      }
+      return;
+    }
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = params?.fileName || "download";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(blobUrl);
   }
 
   private async updateUrlIfExpired(

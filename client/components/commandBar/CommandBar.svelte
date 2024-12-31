@@ -19,6 +19,8 @@
   import { Embed } from "$lib/client/types/context.type";
   import { keyboardShortcuts } from "../shortcuts/shortcuts.store";
   import { renderMdAsHtml } from "../markdown/markdown.utils";
+  import { resolveShortcutText } from "../shortcuts/shortcut.utils";
+  import { KeyboardKey, ModifierKey } from "$lib/client/types/keyboard.type";
   export let command: string | undefined = undefined;
   export let commandType: ActionType | undefined = undefined;
   export let componentParams: any = undefined;
@@ -68,6 +70,7 @@
         : (searchAction.searchActionParams?.placeholder ?? "select an item");
   }
   function close() {
+    value = "";
     modalEvent.hide(Action.CMD);
   }
   /**
@@ -75,8 +78,17 @@
    * @param event
    */
   const shortcutListener = (event: KeyboardEvent) => {
-    const { shortcut } = keyboardShortcuts.resolveShortcut(event);
-    if (shortcut && shortcut.action === Action.CMD) {
+    const { shortcut, modifiers } = keyboardShortcuts.resolveShortcut(event);
+    if (!shortcut && event?.key === KeyboardKey.ESCAPE && isFocusing) {
+      inputRef.blur();
+      isFocusing = false;
+      return;
+    }
+    if (
+      (shortcut && shortcut.action === Action.CMD) ||
+      (!shortcut && modifiers.length === 0 && event.code === KeyboardKey.SPACE)
+    ) {
+      event.preventDefault();
       if (!isFocusing) inputRef.focus();
       else {
         inputRef.blur();
@@ -113,9 +125,6 @@
       on:focus={() => {
         isFocusing = true;
       }}
-      on:blur={() => {
-        isFocusing = false;
-      }}
       class="h-[3.6rem] mo:h-20 mo:w-full bg-transparent px-4 grow focus:border-none focus:outline-none text-h5"
       {placeholder}
     />
@@ -126,13 +135,11 @@
         >
           {#if value}
             Press <b>Enter</b> to run
-          {:else if isFullPageContext}
-            <Icon icon="command" size={Size.sm} />
-            <ShortcutText
-              shortcut={Action.CMD}
-              parentBgIndex={2}
-              isPlainText={true}
-            />
+          {:else if isFullPageContext && !isFocusing}
+            Press
+            {resolveShortcutText("Space", [], $context.os)} to focus
+          {:else if isFullPageContext && isFocusing}
+            Press <b>Esc</b> to close
           {:else}
             Cmd bar
           {/if}

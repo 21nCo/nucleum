@@ -73,8 +73,8 @@
           isValidMultipleFiles = true;
         }
       }
-    } catch (e) {
-      logger.error(e);
+    } catch (e: any) {
+      logger.error(e.message);
       error = "Something went wrong";
     } finally {
       isSaveInProgress = false;

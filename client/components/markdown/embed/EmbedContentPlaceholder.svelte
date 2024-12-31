@@ -39,12 +39,20 @@
     style: ButtonStyle.OUTLINED
   };
 
-  const onlyFromLibraryTypes = [
+  const libraryOnlyTypesTemporary = [
     NodeType.TWEET,
     NodeType.TWITTER_PROFILE,
     NodeType.KINDLE_BOOK,
     NodeType.KINDLE_HIGHLIGHT,
     NodeType.TEXT_CLIP
+  ];
+
+  const libraryOnlyTypes = [
+    NodeType.TREE_OF_LINKS,
+    NodeType.CALENDAR_AS_EMBED,
+    NodeType.COLLECTION_AS_EMBED,
+    NodeType.TOC,
+    NodeType.GRAPH_AS_EMBED
   ];
 
   const embedIcons = [
@@ -64,7 +72,18 @@
   let isAudioCaptureInProgress: boolean = false;
   let ref: HTMLElement | undefined = undefined;
 
-  $: label = subType ? enumToString(subType) : undefined;
+  $: label = subType ? resolveLabel(subType) : undefined;
+
+  function resolveLabel(subType: NodeType) {
+    if (libraryOnlyTypes.includes(subType)) {
+      if (subType === NodeType.TREE_OF_LINKS) return "Node links tree";
+      if (subType === NodeType.CALENDAR_AS_EMBED) return "Embed calendar";
+      if (subType === NodeType.COLLECTION_AS_EMBED) return "Embed collection";
+      if (subType === NodeType.TOC) return "Embed table of contents";
+      if (subType === NodeType.GRAPH_AS_EMBED) return "Embed graph";
+    }
+    return enumToString(subType);
+  }
 
   function onSelectFromLibrary(event: CustomEvent) {
     if (event.detail.item) dispatch("select", event.detail.item);
@@ -156,6 +175,7 @@
         "mo:h-60 h-72": !subType
       }
     )}
+    data-subtype={subType}
     bind:this={ref}
     use:fileDrop={{
       accept: resoveFileUploadAcceptedFormats(),
@@ -208,7 +228,7 @@
             {/if}
           </span>
         {/if}
-        {#if (subType && webNodeTypeList.includes(subType) && !onlyFromLibraryTypes.includes(subType)) || !subType}
+        {#if (subType && webNodeTypeList.includes(subType) && !libraryOnlyTypesTemporary.includes(subType)) || !subType}
           <button
             class="flex justify-center items-center gap-3 mo:w-full w-3/4"
             on:click|stopPropagation
@@ -226,7 +246,7 @@
             />
           </button>
         {/if}
-        {#if (subType && !onlyFromLibraryTypes.includes(subType)) || !subType}
+        {#if (subType && ![...libraryOnlyTypesTemporary, ...libraryOnlyTypes].includes(subType)) || !subType}
           <div class="w-1/3">
             <Divider isShowOr={true} colorStrength={ColorStrength.Strong} />
           </div>
@@ -276,7 +296,7 @@
             />
           </button>
         </div>
-        {#if subType && onlyFromLibraryTypes.includes(subType)}
+        {#if subType && [...libraryOnlyTypesTemporary].includes(subType)}
           <span class="text-fgs2 text-b2">
             Note: Only saved {label}s from library can be embedded at the
             moment.

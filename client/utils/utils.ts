@@ -202,6 +202,7 @@ export function generateCmdType(actionType: ActionType) {
 }
 
 /**
+ * @deprecated - use fileStore.downloadFromBlob instead
  * Downloads a json file
  * @param data stringified json
  * @param label

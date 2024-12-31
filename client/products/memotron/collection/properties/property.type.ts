@@ -142,6 +142,22 @@ export enum PropertyType {
   GIT = "git"
 }
 
+export const manualPropertyTypes = [
+  PropertyType.TEXT,
+  PropertyType.NUMBER,
+  PropertyType.EMAIL,
+  PropertyType.URL,
+  PropertyType.CHECKBOX,
+  PropertyType.DATE,
+  PropertyType.RANGE,
+  PropertyType.LINK_LIST,
+  PropertyType.FILE,
+  PropertyType.SINGLE_SELECT,
+  PropertyType.MULTI_SELECT,
+  PropertyType.UNIVERSAL,
+  PropertyType.RATING
+];
+
 export enum UniversalPropertyType {
   NONE = "none",
   COUNTRY = "country",

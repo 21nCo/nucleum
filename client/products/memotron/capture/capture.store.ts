@@ -10,7 +10,8 @@ import {
   type IMediaGridItem,
   type IWebPage,
   type IAudioMetadata,
-  type IImageMetadata
+  type IImageMetadata,
+  type IImageNode
 } from "$lib/client/products/memotron/node/node.type";
 import {
   CaptureType,
@@ -70,8 +71,9 @@ import {
   sanitizeAndResolve
 } from "../node/url.utils";
 import { getImageColorsFromFile } from "$lib/client/utils/ui.utils";
-import { parseBlob } from "music-metadata";
+import { parseBuffer } from "music-metadata";
 import ExifReader from "exifreader";
+import { getDeviceInfo } from "$lib/client/utils/browser.utils";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
@@ -362,75 +364,83 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
   }
 
   private async parseMetadata(file: File) {
-    if (file.type.startsWith("image/")) {
-      let metadata: IImageMetadata = {};
-      const colors = await getImageColorsFromFile(file, 10);
-      const tags = await ExifReader.load(file);
-      const importantMetadata = extractImportantMetadata(tags);
-      metadata = {
-        colors,
-        ...importantMetadata
-      };
-      return metadata;
-    }
-    if (file.type.startsWith("audio/")) {
-      let metadata: IAudioMetadata = {};
-      let parsedMetadata = await parseBlob(file);
-      if (parsedMetadata?.common) {
-        let imageId: IRecordId | undefined = undefined;
-        if (parsedMetadata.common.picture?.[0]?.data) {
-          try {
-            const imageData = parsedMetadata.common.picture[0].data;
-            const imageFile = new File([imageData], file.name, {
-              type: "image/jpeg"
-            });
-            const imageUploadResponse = await account.uploadFileV2(
-              "image/jpeg",
-              file.name,
-              imageFile
-            );
-            if (imageUploadResponse) {
-              imageId = imageUploadResponse[0].id;
-            }
-          } catch (e) {
-            console.error(e);
-          }
-        }
+    try {
+      if (file.type.startsWith("image/")) {
+        let metadata: IImageMetadata = {};
+        const colors = await getImageColorsFromFile(file, 10);
+        const tags = await ExifReader.load(file);
+        const importantMetadata = extractImportantMetadata(tags);
         metadata = {
-          ...parsedMetadata.common,
-          ...parsedMetadata.format,
-          picture: imageId
+          colors,
+          ...importantMetadata
         };
+        return metadata;
       }
-      return metadata;
+      if (file.type.startsWith("audio/")) {
+        let metadata: IAudioMetadata = {};
+        // let parsedMetadata = await parseBlob(file);
+        let parsedMetadata = await parseBuffer(
+          new Uint8Array(await file.arrayBuffer())
+        );
+        if (parsedMetadata?.common) {
+          let imageId: IRecordId | undefined = undefined;
+          if (parsedMetadata.common.picture?.[0]?.data) {
+            try {
+              const imageData = parsedMetadata.common.picture[0].data;
+              const imageFile = new File([imageData], file.name, {
+                type: "image/jpeg"
+              });
+              const imageUploadResponse = await account.uploadFileV2(
+                "image/jpeg",
+                file.name,
+                imageFile
+              );
+              if (imageUploadResponse) {
+                imageId = imageUploadResponse[0].id;
+              }
+            } catch (e) {
+              console.error(e);
+            }
+          }
+          metadata = {
+            ...parsedMetadata.common,
+            ...parsedMetadata.format,
+            picture: imageId
+          };
+        }
+        return metadata;
+      }
+    } catch (e: any) {
+      console.error("CaptureStore - parseMetadata", e);
+      return;
     }
 
     function extractImportantMetadata(tags: any): IImageMetadata {
       return {
         deviceInfo: {
-          make: tags.Make?.description || "Unknown",
-          model: tags.Model?.description || "Unknown",
-          software: tags.Software?.description || "Unknown"
+          make: tags.Make?.description,
+          model: tags.Model?.description,
+          software: tags.Software?.description
         },
         imageDetails: {
           width: tags["Image Width"]?.value || tags.PixelXDimension?.value || 0,
           height:
             tags["Image Height"]?.value || tags.PixelYDimension?.value || 0,
-          orientation: tags.Orientation?.description || "Unknown",
-          dateTime: tags.DateTime?.description || "Unknown"
+          orientation: tags.Orientation?.description,
+          dateTime: tags.DateTime?.description
         },
         cameraSettings: {
-          aperture: tags.FNumber?.description || "Unknown",
-          exposureTime: tags.ExposureTime?.description || "Unknown",
-          iso: tags.ISOSpeedRatings?.value || 0,
-          focalLength: tags.FocalLength?.description || "Unknown",
-          flash: tags.Flash?.description || "Unknown"
+          aperture: tags.FNumber?.description,
+          exposureTime: tags.ExposureTime?.description,
+          iso: tags.ISOSpeedRatings?.value,
+          focalLength: tags.FocalLength?.description,
+          flash: tags.Flash?.description
         },
         location: tags.GPSLatitude
           ? {
               latitude: tags.GPSLatitude.description,
               longitude: tags.GPSLongitude.description,
-              altitude: tags.GPSAltitude?.description || "Unknown"
+              altitude: tags.GPSAltitude?.description
             }
           : undefined
       };
@@ -550,10 +560,14 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     );
     if (!result) return;
     const fileId = result[0].id;
+    const metadata = await this.parseMetadata(
+      new File([data], `${fileName}.mp3`, { type: contentType })
+    );
     const node: OmitForCapture<IMediaNode> = {
       id,
       contentType: NodeType.AUDIO,
       file: fileId,
+      metadata,
       creationContext: params?.isEmbedContext
         ? (params?.creationContext ?? this.get().nodeId)
         : undefined,
@@ -573,8 +587,15 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     return result2?.[0];
   }
 
-  async saveCameraCapture(data: Blob) {
-    logger.debug({ at: "CaptureStore.saveCameraCapture", length: data.size });
+  async saveCameraCapture(
+    data: Blob,
+    params?: { deviceInfo?: MediaDeviceInfo | null }
+  ) {
+    logger.debug({
+      at: "CaptureStore.saveCameraCapture",
+      length: data.size,
+      params
+    });
     const contentType = "image/jpeg";
     const id = generateResourceId(Resource.node);
     const fileName = generateSimpleRandomId();
@@ -585,18 +606,33 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     );
     if (!result) return;
     const fileId = result[0].id;
-    const colors = await getImageColorsFromFile(
-      new File([data], fileName, { type: contentType }),
-      10
+    // const colors = await getImageColorsFromFile(
+    //   new File([data], fileName, { type: contentType }),
+    //   10
+    // );
+    const metadata: IImageMetadata | undefined = await this.parseMetadata(
+      new File([data], fileName, { type: contentType })
     );
-    const node: OmitForCapture<IMediaNode> = {
+    const deviceInfo = await getDeviceInfo();
+    const node: OmitForCapture<IImageNode> = {
       id,
       contentType: NodeType.IMAGE,
       file: fileId,
       label: `Image Capture - ${new Date().toLocaleString()}`,
       body: {},
       metadata: {
-        colors
+        ...metadata,
+        deviceInfo: {
+          deviceLabel: params?.deviceInfo?.label,
+          deviceId: params?.deviceInfo?.deviceId,
+          model: metadata?.deviceInfo?.model ?? deviceInfo?.model,
+          make: metadata?.deviceInfo?.make ?? deviceInfo?.make,
+          platform: deviceInfo?.platform
+        },
+        imageDetails: {
+          ...metadata?.imageDetails,
+          dateTime: metadata?.imageDetails?.dateTime ?? new Date().toISOString()
+        }
       }
     };
     const result2 = await nodeStore.create(node, {

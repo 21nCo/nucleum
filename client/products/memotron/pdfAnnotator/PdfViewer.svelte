@@ -31,6 +31,7 @@
   let currentPGNumber: Number = 1;
   let embed_message_id = generateSimpleRandomId();
   let dataViaEmbed: any;
+  let pdfData: Uint8Array;
   // let classname = ""; //allows component to recieve classes
   // export { classname as class };
 
@@ -152,7 +153,6 @@
 
     const { pdf_viewer, pdf_link_service } = await init_promise;
     // Loading document.
-    let pdfData: Uint8Array;
     try {
       if ($context.isEmbed) {
         if (!dataViaEmbed) return;

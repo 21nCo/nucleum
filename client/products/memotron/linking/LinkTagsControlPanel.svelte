@@ -97,7 +97,7 @@
   {#if errorMessage}
     <InlineErrorMessage bind:error={errorMessage} />
   {/if}
-  <div class="flex flex-col flex-grow gap-6 overflow-auto">
+  <div class="flex flex-col flex-grow gap-6 px-0.5 overflow-auto">
     {#if !groups || groups.length === 0}
       <EmptyStatusView
         mainText="No link tags found."

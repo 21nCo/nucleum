@@ -25,13 +25,12 @@
   }}
 >
   {#if !isUrlOnIcon && isHovering && node.url}
-    <a
-      href={node.url}
-      target="_blank"
-      rel="noopener noreferrer"
+    <button
       class="flex items-center gap-1 text-b3 w-full hover:text-aps1 hover:underline"
       on:click={(e) => {
         e.stopPropagation();
+        if (!node.url) return;
+        appStore.openLink(node.url);
       }}
       use:hoverable={{
         onHover: (e) => (isHoveringUrl = e)
@@ -48,7 +47,7 @@
       <span class="truncate w-full text-left">
         {node.url}
       </span>
-    </a>
+    </button>
   {:else}
     <!-- <NodeAvatar {node} size={Size.sm} /> -->
     <div class="flex-1 min-w-0">

@@ -449,14 +449,11 @@ function embedLineUsingPDFLib(
   });
 }
 export async function embedAnnotationsandDownload(
-  originalPdfUrl: any,
+  pdfData: ArrayBuffer,
   annotations: any,
   highlighters: IHighlighter[]
 ) {
-  const existingPdfBytes = await fetch(originalPdfUrl).then((res) =>
-    res.arrayBuffer()
-  );
-  const pdfDoc = await PDFDocument.load(existingPdfBytes);
+  const pdfDoc = await PDFDocument.load(pdfData);
 
   annotations.forEach((annotation: any) => {
     const page = pdfDoc.getPage(annotation.pageNumber - 1);
@@ -513,16 +510,7 @@ export async function embedAnnotationsandDownload(
 
   const pdfBytes = await pdfDoc.save();
   const blob = new Blob([pdfBytes], { type: "application/pdf" });
-  const blobUrl = URL.createObjectURL(blob);
-
-  // Download the PDF with embedded annotations
-  const a = document.createElement("a");
-  a.href = blobUrl;
-  a.download = "annotated_document.pdf";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  // return pdfBytes;
+  return blob;
 }
 export function getBoundingRectSE(start: Coords, end: Coords): LTWH {
   return {

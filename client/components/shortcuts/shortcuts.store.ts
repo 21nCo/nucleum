@@ -74,7 +74,7 @@ class KeyboardShortcuts extends KeyValueStore<IKeyboardShortcutsStore> {
    * @param modifiers
    */
   resolveShortcut(event: KeyboardEvent) {
-    if (!event?.key) return;
+    if (!event?.key) return { shortcut: undefined, modifiers: [] };
     const key = event.key;
     const modifiers = resolveModifiers(event);
     const keyMap = this.fecthKeyMap();
