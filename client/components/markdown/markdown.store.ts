@@ -566,6 +566,83 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
     }
   }
 
+  reconcileOrderedListOnDrag(id: IRecordId) {
+    try {
+      const md = this.get();
+      const contextIndex = md.blocks.findIndex(resourceInList(id));
+      const contextBlock = md.blocks[contextIndex];
+      if (contextBlock.contentType !== NodeType.ORDERED_LIST) return;
+      let traverseIndex = contextIndex - 1;
+      let traversalBlock = md.blocks[traverseIndex];
+      let preceeding = [];
+      while (
+        traversalBlock?.contentType === NodeType.ORDERED_LIST &&
+        traverseIndex >= 0
+      ) {
+        preceeding.unshift(traversalBlock);
+        traverseIndex--;
+        traversalBlock = md.blocks[traverseIndex];
+      }
+      const succeeding = [];
+      traverseIndex = contextIndex + 1;
+      traversalBlock = md.blocks[traverseIndex];
+      while (
+        traversalBlock?.contentType === NodeType.ORDERED_LIST &&
+        traverseIndex < md.blocks.length
+      ) {
+        succeeding.push(traversalBlock);
+        traverseIndex++;
+        traversalBlock = md.blocks[traverseIndex];
+      }
+      const set = [...preceeding, contextBlock, ...succeeding];
+      const rootLevel = set.filter((b) => b.body.indent === 0);
+      const modifiedRootLevel = rootLevel.map((b, index) => ({
+        ...b,
+        body: { ...b.body, order: index + 1 }
+      }));
+
+      let previousIndent = 0;
+      let modifiedSubLevel: IListBlock[] = [];
+      set.forEach((b, index) => {
+        if (b.body.indent > previousIndent) {
+          let operatingSet: IListBlock[] = [];
+          operatingSet.push(b);
+          for (let i = index + 1; i < set.length; i++) {
+            if (set[i].body.indent === b.body.indent) {
+              operatingSet.push(set[i]);
+            }
+            if (set[i].body.indent < b.body.indent) break;
+          }
+          operatingSet = operatingSet.map((b, index) => ({
+            ...b,
+            body: { ...b.body, order: index + 1 }
+          }));
+          modifiedSubLevel.push(...operatingSet);
+        }
+        previousIndent = b.body.indent;
+      });
+
+      let changedBlocks: IListBlock[] = [];
+      this.update((n) => {
+        [...modifiedRootLevel, ...modifiedSubLevel].forEach((b) => {
+          const existingBlockIndex = n.blocks.findIndex(resourceInList(b.id));
+          if (
+            existingBlockIndex !== -1 &&
+            n.blocks[existingBlockIndex].body.order !== b.body.order
+          ) {
+            changedBlocks.push(b);
+            n.blocks[existingBlockIndex] = b;
+          }
+        });
+        return n;
+      });
+      return changedBlocks;
+    } catch (e) {
+      console.error(e);
+      return [];
+    }
+  }
+
   reconcileOrderedList(
     id: IRecordId,
     body: IListBlockBody,

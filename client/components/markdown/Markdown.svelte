@@ -1,7 +1,8 @@
 <script lang="ts">
-  import type {
-    IMarkdown,
-    IMarkdownParams
+  import {
+    BlockAction,
+    type IMarkdown,
+    type IMarkdownParams
   } from "$lib/client/components/markdown/md.type";
   import { createEventDispatcher, onMount } from "svelte";
   import Block from "./Block.svelte";
@@ -23,7 +24,11 @@
     reorderList,
     type DragDropEvent
   } from "$lib/client/actions/rearrange.action";
-  import { shiftResourceInArray } from "../flux/resourceStores/resource.utils";
+  import {
+    resourceInList,
+    shiftResourceInArray
+  } from "../flux/resourceStores/resource.utils";
+  import { NodeType } from "$lib/client/products/memotron/node/node.type";
 
   /**
    * Propagates the event to the parent component.
@@ -90,25 +95,36 @@
 
   function onReorderBlocks(event: DragDropEvent) {
     logger.log({ event, at: "Markdown.svelte onReorderBlocks" });
+    let { fromId, toId } = event;
     if (
       !event ||
       event.listId !== "markdown" ||
-      !event.fromId ||
-      !event.toId ||
-      event.fromId === event.toId
+      !fromId ||
+      !toId ||
+      fromId === toId
     )
       return;
-
-    $mdStore.blocks = shiftResourceInArray(
-      $mdStore.blocks,
-      event.fromId,
-      event.toId,
-      true
-    );
-
+    const fromBlock = $mdStore.blocks.find(resourceInList(fromId));
+    const toBlock = $mdStore.blocks.find(resourceInList(toId));
+    const toIndex = $mdStore.blocks.findIndex(resourceInList(toId));
+    const toSiblingBlock = $mdStore.blocks[toIndex + 1];
+    let needsReconciliation =
+      fromBlock?.contentType === NodeType.ORDERED_LIST &&
+      (toBlock?.contentType === NodeType.ORDERED_LIST ||
+        toSiblingBlock?.contentType === NodeType.ORDERED_LIST);
+    $mdStore.blocks = shiftResourceInArray($mdStore.blocks, fromId, toId, true);
     dispatch("rearrange", {
       md: { ...md, blocks: $mdStore.blocks }
     });
+    if (needsReconciliation) {
+      const changedBlocks = mdStore.reconcileOrderedListOnDrag(fromId);
+      changedBlocks?.forEach((b) => {
+        propagate(BlockAction.CHANGE, {
+          id: b.id,
+          body: b.body
+        });
+      });
+    }
   }
 </script>
 
