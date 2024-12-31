@@ -3,7 +3,7 @@ import { readFile, unlink, writeFile } from "fs/promises";
 import { locate } from "@iconify/json";
 import { iconSets, phIcons } from "./icons-list";
 
-const version = 4;
+const version = 5;
 const spriteContentStart =
   '<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">';
 
