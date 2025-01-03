@@ -24,15 +24,14 @@
 <button
   {id}
   contenteditable="false"
-  class="mention inline-block hover:bg-aps3 px-0.5 rounded-md text-aps1"
+  class="mention inline-block hover:bg-aps3 px-0.5 rounded-md text-aps1 max-w-48 truncate"
   on:click|stopPropagation={(e) => appStore.resourceClickHandler(e, id)}
 >
-  <span class="underline-dotted-primary">
+  <span class="underline-dotted-primary truncate">
     {#if isLoading}
       {label ?? "Loading..."}
     {:else}
-      {isValidString(truncateString(resolveNodeLabelString(resource), 50)) ??
-        "Unknown"}
+      {isValidString(resolveNodeLabelString(resource)) ?? "Unknown"}
     {/if}
   </span>
 </button>

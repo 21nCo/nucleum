@@ -147,3 +147,111 @@ export function formatBytes(bytes: number, decimals = 2) {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${parseFloat((bytes / k ** i).toFixed(dm))} ${sizes[i]}`;
 }
+
+export function textIsCode(text: string) {
+  const keywords = [
+    "if",
+    "else",
+    "for",
+    "while",
+    "return",
+    "function",
+    "class",
+    "def",
+    "import",
+    "from",
+    "as",
+    "try",
+    "catch",
+    "throw",
+    "async",
+    "await",
+    "const",
+    "let",
+    "var",
+    "with",
+    "raise",
+    "elif",
+    "public",
+    "private",
+    "protected",
+    "static",
+    "void",
+    "new",
+    "synchronized",
+    "throws",
+    "finally",
+    "include",
+    "define",
+    "struct",
+    "typedef",
+    "namespace",
+    "virtual",
+    "inline",
+    "then",
+    "elif",
+    "fi",
+    "do",
+    "done",
+    "case",
+    "esac",
+    "module",
+    "unless",
+    "when",
+    "do",
+    "end",
+    "yield",
+    "elseif",
+    "static",
+    "package",
+    "switch",
+    "defer",
+    "guard",
+    "fun",
+    "when",
+    "val",
+    "var"
+  ];
+
+  const keywordRegex = new RegExp(`\\b(${keywords.join("|")})\\b`, "g");
+  const matches = text.match(keywordRegex);
+
+  if (!matches) {
+    return false;
+  }
+
+  const totalWords = text.split(/\s+/).length;
+  const keywordDensity = matches.length / totalWords;
+
+  const keywordThreshold = 3;
+  const densityThreshold = 0.1;
+
+  if (matches.length < keywordThreshold && totalWords > 100) {
+    return false;
+  }
+
+  if (keywordDensity < densityThreshold) {
+    return false;
+  }
+
+  const codePatternRegex =
+    /(\{|\}|\(|\)|;|\/\/|\/\*|\*\/|#|`|=|=>|->|:=|&&|\|\||\.\.\.|->|<|>|!=|==|===|!==|<<|>>|%|&|\||\^|\?)/;
+  const hasCodePattern = codePatternRegex.test(text);
+
+  const stringPatternRegex = /(['"`].*?['"`]|["`].*?["`])/;
+  const hasStringPattern = stringPatternRegex.test(text);
+
+  const indentationPatternRegex = /^\s{2,}|\t/;
+  const hasIndentation = indentationPatternRegex.test(text);
+
+  const prosePatternRegex = /\b(the|a|an|and|but|or|for|nor|so|yet)\b/i;
+  const hasProseElements = prosePatternRegex.test(text);
+
+  if (hasProseElements) {
+    return false;
+  }
+
+  const isCodeContext = hasCodePattern || hasStringPattern || hasIndentation;
+
+  return isCodeContext;
+}

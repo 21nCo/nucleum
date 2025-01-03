@@ -25,7 +25,11 @@
   export let event: ClipboardEvent;
   let nodeType: NodeType | undefined = undefined;
   const unsupportedNodeTypes = [NodeType.TWITTER_PROFILE, NodeType.TWEET];
-  const cannotSaveAsStandaloneNodeTypes = [NodeType.SIMPLE_TEXT, NodeType.CODE];
+  const cannotSaveAsStandaloneNodeTypes = [
+    NodeType.SIMPLE_TEXT,
+    NodeType.CODE,
+    NodeType.FILE
+  ];
   let nodeTypeLabel: string | undefined = undefined;
   /**
    * @deprecated - use data
@@ -112,14 +116,10 @@
           isPreventOpenOnSave: !isOpenOnSave,
           contentType: nodeType
         });
-      } else if (data.multipleFiles && data.multipleFiles.files.length === 1) {
-        await captureStore.saveFile(
-          data.multipleFiles.files[0].file,
-          nodeType,
-          {
-            isPreventOpenOnSave: !isOpenOnSave
-          }
-        );
+      } else if (data.file) {
+        await captureStore.saveFile(data.file, nodeType, {
+          isPreventOpenOnSave: !isOpenOnSave
+        });
       } else if (data.multipleFiles && data.multipleFiles.files.length > 1) {
         await captureStore.saveMultipleFiles(data.multipleFiles.files);
       }

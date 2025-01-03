@@ -13,7 +13,11 @@
   } from "$lib/client/products/memotron/node/node.type";
   import { createEventDispatcher, onDestroy } from "svelte";
   import Markdown from "./Markdown.svelte";
-  import { recursivelyExtractAllChildrenIntoArray } from "./markdown.utils";
+  import {
+    extractRootStructure,
+    extractStructureForChildren,
+    recursivelyExtractAllChildrenIntoArray
+  } from "./markdown.utils";
   import { hierarchyFactorLimit } from "$lib/client/products/memotron/node/node.store";
   import { isReplaceableMd } from "./markdown.store";
   import { logger } from "../debug/logger.client";
@@ -132,85 +136,7 @@
         return 0;
     }
   }
-  function resolveFactor(blockType: NodeType) {
-    switch (blockType) {
-      case NodeType.HEADING1:
-        return 1;
-      case NodeType.HEADING2:
-        return 2;
-      case NodeType.HEADING3:
-        return 3;
-      case NodeType.HEADING4:
-        return 4;
-      case NodeType.HEADING5:
-        return 5;
-      default:
-        return 100;
-    }
-  }
 
-  /**
-   * Extracts the structure of the children blocks from the markdown.
-   * @param blocks
-   */
-  function extractStructureForChildren(blocks: IMarkdown): INodeStructure[] {
-    let structure: INodeStructure[] = [];
-    let collapsedHierarchy: INodeStructure[] = [];
-    structure = blocks.blocks.map((block) => {
-      return {
-        id: block.id,
-        factor: resolveFactor(block.contentType as NodeType),
-        children: []
-      };
-    });
-    let leftovers: INodeStructure[] = [...structure];
-    [5, 4, 3, 2, 1].forEach((level) => {
-      const levelBlocks = leftovers.filter((block) => block.factor === level);
-      if (levelBlocks.length === 0) return;
-      levelBlocks.forEach((block) => {
-        const index = leftovers.findIndex((b) => b.id === block.id);
-        const stopIndex = leftovers.findIndex(
-          (b, i) => i > index && b.factor <= block.factor
-        );
-        if (stopIndex === -1) {
-          block.children = leftovers.slice(index + 1).map((x) => x.id);
-          leftovers = leftovers.filter((b) => !block.children.includes(b.id));
-          return;
-        }
-        const children = leftovers.slice(index + 1, stopIndex);
-        block.children = children.map((x) => x.id);
-        leftovers = leftovers.filter((b) => !block.children.includes(b.id));
-      });
-      collapsedHierarchy = [...collapsedHierarchy, ...levelBlocks];
-    });
-    collapsedHierarchy.forEach((block) => {
-      const item = structure.find((x) => x.id === block.id);
-      if (item) item.children = block.children;
-    });
-    logger.log({ collapsedHierarchy, structure });
-    return structure;
-  }
-  /**
-   * Extracts the root structure of the markdown from the children structure.
-   */
-  function extractRootStructure() {
-    let rootBlocks: any = [];
-    let firstHeadingHit = false;
-    childrenWithStructure.forEach((block) => {
-      if (!firstHeadingHit && block.factor <= hierarchyFactorLimit) {
-        firstHeadingHit = true;
-        rootBlocks.push(block);
-      } else if (!firstHeadingHit) rootBlocks.push(block);
-      else if (block.factor > hierarchyFactorLimit) return;
-      else {
-        const lowestFactor = Math.min(...rootBlocks.map((x) => x.factor));
-        if (block.factor <= lowestFactor) {
-          rootBlocks.push(block);
-        }
-      }
-    });
-    return rootBlocks;
-  }
   /**
    *
    * calculates the structure of the root markdown upon changes in structure of the markdown.
@@ -221,7 +147,7 @@
    * @param isInitCalculation
    */
   function reCalculateStructure(md: IMarkdown, isInitCalculation = false) {
-    const result = extractStructureForChildren(md);
+    const result = extractStructureForChildren(md.blocks);
     if (!focusedBlock) childrenWithStructure = result;
     else {
       focusedBlockChildrenWithStructure = result;
@@ -246,7 +172,11 @@
         ...succeedingBlocks
       ];
     }
-    if (!focusedBlock) rootStructure = extractRootStructure().map((x) => x.id);
+    if (!focusedBlock)
+      rootStructure = extractRootStructure(
+        childrenWithStructure,
+        hierarchyFactorLimit
+      ).map((x) => x.id);
     if (isInitCalculation) return;
     //TODO - if focused - propagate only children of the focusedNode
     dispatch("restructure", {

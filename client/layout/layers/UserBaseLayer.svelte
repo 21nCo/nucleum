@@ -362,7 +362,10 @@
     );
   }
   function handleBeforeUnload(event: any) {
-    if ($context.isInOfflineMode || $account.dataMode === UserDataMode.LOCAL) {
+    if (
+      !import.meta.env?.DEV &&
+      ($context.isInOfflineMode || $account.dataMode === UserDataMode.LOCAL)
+    ) {
       event.preventDefault();
       event.returnValue = "";
       // confirmationNotification.notify({

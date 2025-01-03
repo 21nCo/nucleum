@@ -221,7 +221,8 @@ const phosphorIcons = [
   "windows-logo",
   "linux-logo",
   "chrome-logo",
-  "arrow-clockwise"
+  "arrow-clockwise",
+  "caret-left"
 ];
 
 export const phosphorRatingIcons = [

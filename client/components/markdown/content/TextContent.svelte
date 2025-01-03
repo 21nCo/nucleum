@@ -211,10 +211,29 @@
     popover: "blockBrowser" | "mentionSearch" = "blockBrowser"
   ) {
     if (popover === "blockBrowser") isBlockBrowserRendered = true;
-    else isRenderMentionSearch = true;
+    else {
+      isRenderMentionSearch = true;
+      appendZeroWidthSpace();
+    }
     setTimeout(() => {
       popoverRef.show();
     }, 10);
+
+    /**
+     * Appends a zero width space to the text so that the mention search query can be resolved in the search results popover
+     */
+    function appendZeroWidthSpace() {
+      const selection = window.getSelection();
+      const range = selection?.getRangeAt(0);
+      if (range) {
+        const zwsp = document.createTextNode("\u200b");
+        range.insertNode(zwsp);
+        range.setStartBefore(zwsp);
+        range.setEndBefore(zwsp);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      }
+    }
   }
   /**
    * Handles block browser shortcuts.

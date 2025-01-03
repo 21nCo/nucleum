@@ -386,7 +386,6 @@
     if (
       resource === Resource.node &&
       mutation.action === PersistenceActionType.INSERT &&
-      mutation.records.length === 1 &&
       (!rootNodeTypeList.includes(
         mutation.records[0].contentType as NodeType
       ) ||
@@ -581,7 +580,7 @@
                 !searchQuery}
               arrangement={$view.isConstrainedWidth
                 ? selectedResource === Resource.node
-                  ? Arrangement.MASONRY
+                  ? Arrangement.GRID
                   : Arrangement.LIST
                 : Arrangement.GRID}
             />

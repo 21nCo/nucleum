@@ -67,6 +67,7 @@
   let contentRefreshId: number = new Date().getTime();
   let isDragging: boolean = false;
   let progressState: string | undefined = undefined;
+  const uploadProgressElementId = "node-embed-upload-progress";
   $: isFocusable =
     $mdStore.params?.isNodular && headingNodeTypes.includes(block.contentType);
 
@@ -818,7 +819,7 @@
       toasts.error(error);
       return;
     }
-    insertMultipleFiles(multipleFilesData);
+    return insertMultipleFiles(multipleFilesData);
   }
 
   async function insertMultipleFiles(multipleFilesData: IMultiFileCaptureData) {
@@ -828,7 +829,7 @@
       {
         isEmbedContext: true,
         creationContext: nodeContext?.id,
-        uploadProgressId: "node-embed-upload-progress"
+        uploadProgressId: uploadProgressElementId
       }
     );
     if (!result) {
@@ -945,7 +946,7 @@
       >
         <Icon icon="svg-spinners:3-dots-fade" />
         <span class="text-fgs3 text-b2">{progressState}</span>
-        <span id="node-embed-upload-progress" class="text-fgs3 text-b3"></span>
+        <span id={uploadProgressElementId} class="text-fgs3 text-b3"></span>
       </div>
     {/if}
   </div>

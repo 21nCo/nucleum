@@ -13,7 +13,6 @@
   import { OptionSelectorStyle } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
-  import { InfoTextType } from "$lib/client/types/text.type";
   import ShortcutSettings from "../../shortcuts/settings/ShortcutSettings.svelte";
   import { InteractionMode } from "./interactionMode.type";
   let selectedMode: InteractionMode = uiState.getState(
@@ -42,8 +41,8 @@
         return "In **keyboard centric mode**, additional hot keys will be enabled and shortcut hints will be shown if enabled. We have designed this mode to maximize keyboard usage eliminating the need to use trackpad or mouse.";
       case InteractionMode.COMMAND_ONLY:
         return "**Command only mode** is taking keyboard centric mode to next level. Everything will be hidden and can be accessed on-demand using commands.";
-      case InteractionMode.VOICE_ONLY:
-        return "For a complete **hands-free experience**, turn on this mode and let the voice commander take care of the rest. Will be available soon...";
+      case InteractionMode.AGENT:
+        return "For a complete **hands-free experience**, turn on this mode and let the AI agent take care of the rest. This mode will be available soon...";
     }
   }
   function onInteractionModeSelect() {
@@ -58,7 +57,7 @@
   <OptionSelector
     bind:selected={selectedMode}
     style={OptionSelectorStyle.OUTLINE}
-    size={Size.sm}
+    size={Size.md}
     labelProps={{
       label: "Preferred mode of interaction",
       tooltip: {
@@ -75,7 +74,8 @@
       {
         value: InteractionMode.KEYBOARD_CENTRIC,
         label: "Keyboard centric",
-        icon: "ph:keyboard-light"
+        icon: "ph:keyboard-light",
+        tooltip: resolveInfo(InteractionMode.KEYBOARD_CENTRIC)
       },
       {
         value: InteractionMode.COMMAND_ONLY,
@@ -83,10 +83,12 @@
         icon: "ph:terminal-window-light"
       },
       {
-        value: InteractionMode.VOICE_ONLY,
-        label: "Voice only [planned]",
-        icon: "ph:microphone",
-        isDisabled: true
+        value: InteractionMode.AGENT,
+        label: "Agent",
+        icon: "ph:sparkle-light",
+        badge: "planned",
+        isDisabled: true,
+        tooltip: resolveInfo(InteractionMode.AGENT)
       }
     ]}
   />
@@ -126,13 +128,8 @@
       <Text content="Keyboard shortcuts" style={TextStyle.SECTION_HEADING} />
       <ShortcutSettings />
     </div>
-  {:else if selectedMode === InteractionMode.VOICE_ONLY}
-    <InlineInfoBanner
-      type={InfoTextType.WARNING}
-      content="Voice only mode is currenlty in beta. Please report any issues you encounter."
-    />
+  {:else}
+    <InlineInfoBanner content={resolveInfo(selectedMode)} />
   {/if}
-  <ScrollViewBottomSpacer />
-  <InlineInfoBanner content={resolveInfo(selectedMode)} />
   <ScrollViewBottomSpacer />
 </div>

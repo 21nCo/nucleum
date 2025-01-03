@@ -11,6 +11,8 @@ export function resolveContentTypeForFile(file: File) {
     nodeType = NodeType.AUDIO;
   } else if (file.type.includes("application/pdf")) {
     nodeType = NodeType.PDF;
+  } else if (file.type.includes("markdown")) {
+    nodeType = NodeType.NODULAR_MARKDOWN;
   } else {
     nodeType = NodeType.FILE;
   }
