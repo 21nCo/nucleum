@@ -6,6 +6,7 @@
   import { moveItemInArray } from "$lib/shared/utils/obj.utils";
   import type { IRecordId } from "$lib/client/types/data.type";
   let pinnedItems: IRecordId[] = tabs.get();
+  let isInFocusMode = false;
   onMount(() => {
     const unsubscribe = uiState.subscribe((x) => {
       pinnedItems = tabs.get();
@@ -14,9 +15,15 @@
       if (unsubscribe) unsubscribe();
     };
   });
+
+  function handleFocusMode(e: CustomEvent<boolean>) {
+    if (typeof e.detail === "boolean") {
+      isInFocusMode = e.detail;
+    }
+  }
 </script>
 
-{#if pinnedItems?.length > 0}
+{#if pinnedItems?.length > 0 && !isInFocusMode}
   <div
     class="flex gap-3 justify-between items-center w-full h--12 bg-bgs2 py--2 pr-4 userdata"
   >
@@ -42,3 +49,4 @@
     </span>
   </div>
 {/if}
+<svelte:window on:focusMode={handleFocusMode} />

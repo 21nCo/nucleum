@@ -74,7 +74,7 @@
     >
       <div class="text-b3 text-center">
         {#if $account.dataMode === UserDataMode.LOCAL}
-          Using Offline Mode.
+          You are using offline mode.
           <div>Please create account to enable cloud sync.</div>
         {:else}
           No Account found.

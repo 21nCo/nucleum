@@ -108,7 +108,7 @@
         {:else if resource === Resource.file}
           <button class="h-40" on:click={(e) => onClick(e, item)}>
             <FileView
-              id={item.id}
+              file={item}
               isLazyLoad={true}
               class={cn("h-full w-full rounded-md object-cover", {})}
             />

@@ -24,7 +24,6 @@
     startCamera();
     return () => {
       stopCamera();
-      stopCamerav2();
     };
   });
   let deviceInfo: MediaDeviceInfo | null = null;
@@ -54,25 +53,13 @@
     }
   }
   function stopCamera() {
-    console.log("Executing stopCamera");
-    if (stream) {
-      stream.getTracks().forEach((track) => {
-        track.stop();
-      });
-      if (videoElement) {
-        videoElement.srcObject = null;
-      }
-      stream = null;
-    }
-  }
-
-  function stopCamerav2() {
-    console.log("Executing stopCamerav2");
+    console.log("Stopping camera and cleaning up resources");
     if (stream) {
       const tracks = stream.getTracks();
       tracks.forEach((track) => {
         track.enabled = false;
         track.stop();
+        stream?.removeTrack(track);
       });
 
       if (videoElement) {
@@ -81,19 +68,11 @@
       }
 
       stream = null;
-      if (window.gc) {
-        try {
-          window.gc();
-        } catch (e) {
-          console.debug("Manual GC not available");
-        }
-      }
     }
   }
 
   onDestroy(() => {
     stopCamera();
-    stopCamerav2();
   });
 
   function adjustVideoSize() {

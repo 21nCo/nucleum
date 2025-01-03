@@ -26,6 +26,7 @@
   let isInThinMode = refreshSidebarCollapseState();
   // $: isRounded = $appearance.skin === AppSkin.Glassy ? true : false;
   let isRounded = false;
+  let isInFocusMode = false;
   onMount(() => {
     if ($view.landscapiness < 1.25) {
       isInThinMode = true;
@@ -44,9 +45,14 @@
     isMinimized = !isMinimized;
     if (isMinimized) isHovered = false;
   }
+  function handleFocusMode(e: CustomEvent<boolean>) {
+    if (typeof e.detail === "boolean") {
+      isInFocusMode = e.detail;
+    }
+  }
 </script>
 
-{#if !$appStore.isMenuHidden}
+{#if !$appStore.isMenuHidden && !isInFocusMode}
   {#if $view.isPortrait}
     <div
       class="absolute {testingInMobileBrowser
@@ -196,3 +202,5 @@
     </button>
   {/if}
 {/if}
+
+<svelte:window on:focusMode={handleFocusMode} />

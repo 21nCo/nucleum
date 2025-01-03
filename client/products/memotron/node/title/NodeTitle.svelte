@@ -30,6 +30,9 @@
         width="w-full"
         on:input={onLabelChange}
         isShowSaveControl={true}
+        on:enter={() => {
+          dispatch("editModeChange", false);
+        }}
         on:save={() => {
           dispatch("editModeChange", false);
         }}

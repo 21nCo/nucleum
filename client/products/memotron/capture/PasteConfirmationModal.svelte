@@ -8,6 +8,7 @@
   import CheckboxInput from "$lib/client/elements/toggle/CheckboxInput.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { ButtonVariant } from "$lib/client/types/button.type";
+  import { onMount } from "svelte";
   import { MAX_FILE_SIZE_MB } from "../memotron.store";
   import { MemotronAction } from "../memotronAction.enum";
   import { NodeType } from "../node/node.type";
@@ -22,6 +23,8 @@
     resolveContentTypeForFile,
     resolveMultipleFilesData
   } from "./capture.utils";
+  import account from "$lib/client/stores/account.store";
+  import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
   export let event: ClipboardEvent;
   let nodeType: NodeType | undefined = undefined;
   const unsupportedNodeTypes = [NodeType.TWITTER_PROFILE, NodeType.TWEET];
@@ -54,9 +57,14 @@
   let error: string | undefined = undefined;
   let data: IPasteCaptureData | undefined = undefined;
   let saveAsNodeFilesCount: number = 0;
+  let isOffline: boolean = false;
 
   $: if (nodeType) nodeTypeLabel = resolveNodeContentLabel(nodeType);
   resolveV2(event);
+
+  onMount(async () => {
+    isOffline = await account.isCloudUserOffline();
+  });
 
   /**
    * @deprecated - use resolveV2
@@ -221,6 +229,11 @@
   <div class="flex flex-col gap-3 w-72 flex-1 items-center justify-center">
     {#if nodeType && unsupportedNodeTypes.includes(nodeType)}
       <span>Direct <b>{nodeTypeLabel}</b> saving is not supported yet.</span>
+    {:else if isOffline}
+      <InlineErrorMessage
+        error={"You seem to be offline. File upload is not yet available in offline mode."}
+        isDissappear={false}
+      />
     {:else if !error}
       {#if nodeType && !cannotSaveAsStandaloneNodeTypes.includes(nodeType)}
         <Button

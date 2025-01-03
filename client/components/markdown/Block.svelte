@@ -26,7 +26,10 @@
   import { setContext } from "svelte";
   import { logger } from "../debug/logger.client";
   import { copyToClipboard } from "$lib/client/utils/utils";
-  import { toasts } from "$lib/client/stores/notification.store";
+  import {
+    confirmationNotification,
+    toasts
+  } from "$lib/client/stores/notification.store";
   import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
   import { MemotronEvent } from "$lib/client/products/memotron/memotron.type";
   import { hoverable } from "$lib/client/actions/hover.action";
@@ -59,6 +62,7 @@
   import { nodeStore } from "$lib/client/products/memotron/node/node.store";
   import { appStore } from "$lib/client/stores/app.store";
   import type { IMultiFileCaptureData } from "$lib/client/products/memotron/capture/capture.type";
+  import { AlertType } from "$lib/client/types/notification.type";
 
   export let block: IBlock;
   export let mdStore: MdStoreType;
@@ -758,6 +762,15 @@
     errors: { file: File; type: string }[]
   ) {
     try {
+      if (await account.isCloudUserOffline()) {
+        confirmationNotification.notify({
+          title: "Offline",
+          message:
+            "You seem to be offline. File upload is not yet available in offline mode.",
+          type: AlertType.ERROR
+        });
+        return;
+      }
       if (block.contentType === NodeType.EMBED && !block.body.id) {
         return;
       }

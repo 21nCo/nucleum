@@ -6,6 +6,7 @@
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
+  import account from "$lib/client/stores/account.store";
   import { appStore } from "$lib/client/stores/app.store";
   import context from "$lib/client/stores/context.store";
   import view from "$lib/client/stores/view.store";
@@ -57,6 +58,11 @@
   ) {
     try {
       error = undefined;
+      if (await account.isCloudUserOffline()) {
+        error =
+          "You seem to be offline. File upload is not yet available in offline mode.";
+        return;
+      }
       if (errors && errors.length > 0) {
         error = resolveFileUploadErrorMessage(errors, {
           maxFileSizeMB: MAX_FILE_SIZE_MB
