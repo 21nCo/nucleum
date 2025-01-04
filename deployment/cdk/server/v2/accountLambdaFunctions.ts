@@ -27,9 +27,9 @@ export class AccountLambdaFunctions extends cdk.NestedStack {
     const accountEndpoint = props.api.addResource("account");
 
     const pingResource = accountEndpoint.addResource("ping");
-    const pingFunction = new lambda.Function(this, "PingFunction", {
+    const pingFunction = new lambda.Function(this, "PingFunctionv2", {
       handler: "index.handler",
-      functionName: generateFunctionName("pingFunction", props.environment),
+      functionName: generateFunctionName("pingFunctionv2", props.environment),
       code: lambda.Code.fromAsset(path.join(__dirname, basePath + "ping/dist")),
       ...nodeRuntimeFunctionProps,
     });
