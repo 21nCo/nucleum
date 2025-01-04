@@ -575,6 +575,7 @@ export function splitMarkdownAtPlainOffset(
 function getEscapeShortcuts(nodeContentType: NodeType) {
   const textEscapeShortcuts: IEscapeShortcut[] = [
     { shortcut: '" ', type: NodeType.QUOTE },
+    { shortcut: "“ ", type: NodeType.QUOTE },
     { shortcut: "> ", type: NodeType.QUOTE },
     { shortcut: "&gt; ", type: NodeType.QUOTE },
     { shortcut: "! ", type: NodeType.CALLOUT },

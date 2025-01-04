@@ -347,7 +347,9 @@
           <TextArea bind:value={body.transcription} style={InputStyle.PLAIN} />
           <!-- <p class="p-2">{body.transcription}</p> -->
         {:else if !isTranscribeAvailable}
-          <span class="text-fgs3 text-center text-b2 px-2">
+          <span
+            class="flex w-full justify-center text-fgs3 text-center text-b2 px-2"
+          >
             Local AI Transcription is not available on mobile devices including
             iOS and iPadOS yet. Please use desktop to transcribe your audio.
           </span>

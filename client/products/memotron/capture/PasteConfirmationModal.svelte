@@ -63,7 +63,7 @@
   resolveV2(event);
 
   onMount(async () => {
-    isOffline = await account.isCloudUserOffline();
+    isOffline = account.isCloudUserAndOffline();
   });
 
   /**

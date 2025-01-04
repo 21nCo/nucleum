@@ -44,7 +44,7 @@
     textToMdBlocks
   } from "./markdown.utils";
   import { captureStore } from "$lib/client/products/memotron/capture/capture.store";
-  import { isValidString } from "$lib/shared/utils/text.utils";
+  import { isValidString, truncateString } from "$lib/shared/utils/text.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { fileDrop } from "$lib/client/actions/fileDrop.action";
   import { MAX_FILE_SIZE_MB } from "$lib/client/products/memotron/memotron.store";
@@ -569,7 +569,7 @@
     } else {
       block.body = detail as IBlockBody;
     }
-    propagate(BlockAction.CHANGE, { body: detail });
+    propagate(BlockAction.CHANGE, { body: block.body });
   }
 
   /**
@@ -657,7 +657,7 @@
       } else {
         progressState = "Inserting inline link";
         let label = data.text.split("://").pop()?.split("/")[0];
-        if ($account?.dataMode === UserDataMode.CLOUD) {
+        if (account.isCloudUserAndOnline()) {
           try {
             const urlData = await new Persistence().retrieveUrlData(data.text);
             if (urlData?.parsedData) {
@@ -671,6 +671,7 @@
             console.error(e);
           }
         }
+        label = truncateString(label ?? "", 30);
         const urlText = `[${label}](${data.text})`;
         modifiedBlockText = editBlockText(block, urlText, {
           isAppend: true
@@ -762,7 +763,7 @@
     errors: { file: File; type: string }[]
   ) {
     try {
-      if (await account.isCloudUserOffline()) {
+      if (account.isCloudUserAndOffline()) {
         confirmationNotification.notify({
           title: "Offline",
           message:

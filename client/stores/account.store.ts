@@ -442,10 +442,18 @@ class AccountStore extends ObservableStore<
     }
   }
 
-  async isCloudUserOffline() {
+  isCloudUserAndOffline() {
     const account = this.get();
     const ctx = get(context);
     if (account.dataMode === UserDataMode.CLOUD && ctx.isInOfflineMode)
+      return true;
+    return false;
+  }
+
+  isCloudUserAndOnline() {
+    const account = this.get();
+    const ctx = get(context);
+    if (account.dataMode === UserDataMode.CLOUD && !ctx.isInOfflineMode)
       return true;
     return false;
   }

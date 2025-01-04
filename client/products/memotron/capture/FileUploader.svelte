@@ -58,7 +58,7 @@
   ) {
     try {
       error = undefined;
-      if (await account.isCloudUserOffline()) {
+      if (account.isCloudUserAndOffline()) {
         error =
           "You seem to be offline. File upload is not yet available in offline mode.";
         return;
