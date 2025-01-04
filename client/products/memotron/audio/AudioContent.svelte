@@ -33,7 +33,7 @@
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import context from "$lib/client/stores/context.store";
-  import { Embed } from "$lib/client/types/context.type";
+  import { OperatingSystem } from "$lib/client/types/context.type";
   import { read_audio } from "@huggingface/transformers";
   import { TacoActions, TranscriptionModel } from "../taco/taco.types";
   import FileView from "$lib/client/components/files/FileView.svelte";
@@ -60,6 +60,12 @@
     | PlayActionState.PAUSEPREVIEWING
     | PlayActionState.RESUMEPREVIEWING = PlayActionState.RESUMEPREVIEWING;
   let isError: boolean = false;
+
+  $: isTranscribeEnabled =
+    $userPreferences.localAI.audioTranscription &&
+    accessPoint === ResourceAccessPoint.SELF;
+
+  $: isTranscribeAvailable = $context.os !== OperatingSystem.IOS;
 
   let isConvertToMarkdown: boolean = false;
   // let modelOptions: string[] = [
@@ -285,7 +291,7 @@
         {/if}
       {/if}
       <!-- TODO - reenable transcription after iOS crash issue fix -->
-      {#if $userPreferences.localAI.audioTranscription && accessPoint === ResourceAccessPoint.SELF && $context.embed !== Embed.HANDSET}
+      {#if isTranscribeEnabled && isTranscribeAvailable}
         <Button
           on:click={convertToMarkdown}
           {isDisabled}
@@ -295,7 +301,7 @@
       {/if}
     </div>
   </div>
-  {#if accessPoint === ResourceAccessPoint.SELF && $context.embed !== Embed.HANDSET}
+  {#if accessPoint === ResourceAccessPoint.SELF}
     <div
       class="flex flex-col w-full flex-1 items-center gap-6 border border-brs2 rounded-md bg-bgs2 bg-opacity-30 py-4"
     >
@@ -340,6 +346,11 @@
         {:else if body?.transcription !== undefined}
           <TextArea bind:value={body.transcription} style={InputStyle.PLAIN} />
           <!-- <p class="p-2">{body.transcription}</p> -->
+        {:else if !isTranscribeAvailable}
+          <span class="text-fgs3 text-center text-b2 px-2">
+            Local AI Transcription is not available on mobile devices including
+            iOS and iPadOS yet. Please use desktop to transcribe your audio.
+          </span>
         {:else}
           <span
             class="w-full h-full flex flex-col gap-2 justify-center items-center text-fgs3"
@@ -369,10 +380,12 @@
           </span>
         {/if}
       </div>
-      <div class="text-b3 text-fgs3 px-2">
-        Note: Transcription is currently only available for English language. We
-        are working to expand this to other languages.
-      </div>
+      {#if isTranscribeAvailable}
+        <div class="text-b3 text-fgs3 px-2">
+          Note: Transcription is currently only available for English language.
+          We are working to expand this to other languages.
+        </div>
+      {/if}
     </div>
   {/if}
 </div>
