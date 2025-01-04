@@ -24,6 +24,11 @@ export interface CustomLambdaNestedStackProps extends CustomNestedStackProps {
   lambdaEnvVars: ILambdaEnvironmentVariables;
 }
 
+export interface CustomLambdaNestedStackPropsV2 extends CustomNestedStackProps {
+  api: gateway.Resource;
+  lambdaEnvVars: ILambdaEnvironmentVariables;
+}
+
 export interface CustomDatabaseNestedStackProps extends cdk.NestedStackProps {
   zone: route53.IHostedZone;
   environment: IDatabaseEnvironmentVariables;

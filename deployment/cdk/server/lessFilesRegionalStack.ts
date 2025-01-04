@@ -5,8 +5,6 @@ import {
   CustomFilesNestedStackProps,
   CustomFilesLambdaNestedStackProps,
 } from "../types/customNestedStackProps.type";
-import { AccountLambdaFunctions } from "./accountLambdaFunctions";
-import { ApiGateway } from "aws-cdk-lib/aws-route53-targets";
 import * as path from "path";
 import { Route53HealthCheck } from "../route53HealthCheck";
 import { generateFunctionName, resolveAcmCertificate } from "../cdk.utils";

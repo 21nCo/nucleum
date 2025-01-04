@@ -3,6 +3,7 @@ import { Construct } from "constructs";
 import { IEnvironment } from "../types/env.type";
 import {
   CustomLambdaNestedStackProps,
+  CustomLambdaNestedStackPropsV2,
   CustomNestedStackProps
 } from "../types/customNestedStackProps.type";
 import { AccountLambdaFunctions } from "./accountLambdaFunctions";
@@ -29,7 +30,8 @@ import {
   RecordTarget
 } from "aws-cdk-lib/aws-route53";
 import { PointronLambdaFunctions } from "./pointronLambdaFunctions";
-
+import { SyncLambdaFunctions } from "./v2/syncLambdaFunctions";
+import { AccountLambdaFunctions as AccountLambdaFunctionsV2 } from "./v2/accountLambdaFunctions";
 export class ServerlessRegionalStack extends NestedStack {
   certificate: ICertificate;
   /**
@@ -71,6 +73,16 @@ export class ServerlessRegionalStack extends NestedStack {
     new PointronLambdaFunctions(this, "PointronStack", lambaProps, fileBuckets);
     new AccountLambdaFunctions(this, "AccountStack", lambaProps);
     new SpacesLambdaFunctions(this, "SpacesStack", lambaProps);
+
+    //v2
+    const v2Resource = this.api.root.addResource("v2");
+    const lambdaPropsV2: CustomLambdaNestedStackPropsV2 = {
+      ...props,
+      api: v2Resource,
+      lambdaEnvVars
+    };
+    new SyncLambdaFunctions(this, "V2SyncStack", lambdaPropsV2);
+    new AccountLambdaFunctionsV2(this, "V2AccountStack", lambdaPropsV2);
   }
 
   /**

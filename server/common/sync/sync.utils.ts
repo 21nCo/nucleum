@@ -22,6 +22,15 @@ export function resolveSyncDownQueryForV3(
   return `BEGIN TRANSACTION; let $mutations = SELECT resourceId, timestamp FROM mutation WHERE timestamp > ${lastSyncDown} AND dapId IS NOT '${dapId}' AND resource IN [${resourceList}] AND resourceId IS NOT NONE AND resourceId IS NOT '$NONE' ORDER BY timestamp DESC; let $latestTimestamp = return array::first($mutations); let $records = select * from array::distinct(array::flatten(select value rec from (select if type::is::array(resourceId) then resourceId.map(|$v| type::record($v)); else [type::record(resourceId)] end as rec from $mutations))); return {latestTimestamp: $latestTimestamp, records: $records }; COMMIT TRANSACTION;`;
 }
 
+export function resolveSyncDownQueryV4(
+  lastSyncDown: number,
+  resources: Resource[],
+  dapId: string
+) {
+  const resourceList = resources.map((x) => `'${x}'`).join(",");
+  return `BEGIN TRANSACTION; let $mutations = SELECT resourceId, timestamp,action, resource FROM mutation WHERE timestamp > ${lastSyncDown} AND dapId IS NOT '${dapId}' AND resource IN [${resourceList}] AND resourceId IS NOT NONE AND resourceId IS NOT '$NONE' ORDER BY timestamp DESC; let $latestTimestamp = return array::first($mutations); let $records = select * from array::distinct(array::flatten(select value rec from (select if type::is::array(resourceId) then resourceId.map(|$v| type::record($v)); else [type::record(resourceId)] end as rec from $mutations where action is not 'delete'))); let $deleted = select * from $mutations where action is 'delete'; return {latestTimestamp: $latestTimestamp, records: $records, deleted: $deleted }; COMMIT TRANSACTION;`;
+}
+
 export function resolveCountQuery(resources: Resource[]) {
   let query = "";
   for (const resource of resources) {
