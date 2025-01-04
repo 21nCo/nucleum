@@ -65,7 +65,7 @@ import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
 import { Persistence } from "$lib/client/persistence/persistence";
 import view from "$lib/client/stores/view.store";
 import context from "$lib/client/stores/context.store";
-import { Embed } from "$lib/client/types/context.type";
+import { Embed, OperatingSystem } from "$lib/client/types/context.type";
 import { TacoActions } from "../taco/taco.types";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { runVectorGeneration } from "../taco/taco.store";
@@ -679,9 +679,19 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     return result2?.[0];
   }
 
+  /**
+   *
+   * Note: not opening upon save for macOS case because it is causing camera in use indicator to continue to be turned on when the camera is not in use anymore.
+   * @param data
+   * @param params
+   * @returns
+   */
   async saveCameraCapture(
     data: Blob,
-    params?: { deviceInfo?: MediaDeviceInfo | null }
+    params?: {
+      deviceInfo?: MediaDeviceInfo | null;
+      isMediaDeviceCapture?: boolean;
+    }
   ) {
     logger.debug({
       at: "CaptureStore.saveCameraCapture",
@@ -731,7 +741,12 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       context: MemotronAction.CAPTURE
     });
     await this.saveLinks(id);
-    this.postSave(result2, { isOpenUponSuccess: true });
+    const ctx = get(context);
+    let isOpenUponSuccess = true;
+    if (params?.isMediaDeviceCapture && ctx.os === OperatingSystem.MACOS) {
+      isOpenUponSuccess = false;
+    }
+    this.postSave(result2, { isOpenUponSuccess });
   }
 
   async saveWebpage(

@@ -371,8 +371,10 @@ class Flux {
         return ResourceActionType.CREATE;
       case PersistenceActionType.REPLACE:
       case PersistenceActionType.MERGE:
+      case PersistenceActionType.BULK_MERGE:
         return ResourceActionType.EDIT;
       case PersistenceActionType.DELETE:
+      case PersistenceActionType.BULK_DELETE:
         return ResourceActionType.DELETE;
       default:
         return ResourceActionType.EDIT;
@@ -525,7 +527,7 @@ class Flux {
 
   async performSync(method: SyncMethod, data: any) {
     try {
-      const result = await performApiCall(`syncV3/${method}`, "POST", data);
+      const result = await performApiCall(`v2/sync/${method}`, "POST", data);
       let response;
       if (result?.ok) {
         response = await result.json();
@@ -749,6 +751,10 @@ class Flux {
     }
 
     const syncRecords: any[] = response?.records;
+    const deletedRecords: any[] = response?.deleted;
+    if (deletedRecords && deletedRecords.length > 0) {
+      await this.processDeletedRecords(deletedRecords);
+    }
     logger.log({ at: "processSyncDown", mutations: syncRecords });
     if (!Array.isArray(syncRecords) || syncRecords.length === 0) return;
     let data: { resource: Resource; records: any[] }[] = [];
@@ -806,6 +812,32 @@ class Flux {
       dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
     }
     return syncRecords;
+  }
+  private async processDeletedRecords(deletedRecords: any[]) {
+    try {
+      const delteRecordsByResource = new Map<Resource, any[]>();
+      for (let record of deletedRecords) {
+        if (!record.resource) continue;
+        if (!delteRecordsByResource.has(record.resource)) {
+          delteRecordsByResource.set(record.resource, []);
+        }
+        delteRecordsByResource
+          .get(record.resource)!
+          .push(
+            Array.isArray(record.resourceId)
+              ? record.resourceId
+              : [record.resourceId]
+          );
+      }
+      for (let [resource, ids] of delteRecordsByResource) {
+        await this.persistence.mutation(resource, {
+          action: PersistenceActionType.BULK_DELETE,
+          recordIds: ids
+        });
+      }
+    } catch (e) {
+      logger.error({ at: "flux.processDeletedRecords", error: e });
+    }
   }
 
   /**

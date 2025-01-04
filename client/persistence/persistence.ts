@@ -84,7 +84,7 @@ export class Persistence {
   };
   ping = async () => {
     try {
-      const response = await performApiCall("account/ping", "POST", {});
+      const response = await performApiCall("v2/account/ping", "POST", {});
       if (!response?.ok) {
         return;
       }

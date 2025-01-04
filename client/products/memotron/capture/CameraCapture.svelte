@@ -112,7 +112,8 @@
       canvasElement.toBlob(async (blob) => {
         if (blob) {
           await captureStore.saveCameraCapture(blob, {
-            deviceInfo
+            deviceInfo,
+            isMediaDeviceCapture: true
           });
           isSaving = false;
         }
