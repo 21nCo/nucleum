@@ -17,11 +17,11 @@ export class AccountLambdaFunctions extends cdk.NestedStack {
     props: CustomLambdaNestedStackPropsV2
   ) {
     super(scope, id, props);
-    const basePath = "./../../../../src/v2/account/";
+    const basePath = "./../../../../../src/v2/account/";
     const nodeRuntimeFunctionProps = {
       runtime: lambda.Runtime.NODEJS_20_X,
       timeout: Duration.minutes(defaults.timeout),
-      environment: props.lambdaEnvVars
+      environment: props.lambdaEnvVars,
     };
 
     const accountEndpoint = props.api.addResource("account");
@@ -31,7 +31,7 @@ export class AccountLambdaFunctions extends cdk.NestedStack {
       handler: "index.handler",
       functionName: generateFunctionName("pingFunction", props.environment),
       code: lambda.Code.fromAsset(path.join(__dirname, basePath + "ping/dist")),
-      ...nodeRuntimeFunctionProps
+      ...nodeRuntimeFunctionProps,
     });
     pingResource.addMethod("GET", new gateway.LambdaIntegration(pingFunction));
 
