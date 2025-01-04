@@ -33,7 +33,7 @@ export class AccountLambdaFunctions extends cdk.NestedStack {
       code: lambda.Code.fromAsset(path.join(__dirname, basePath + "ping/dist")),
       ...nodeRuntimeFunctionProps,
     });
-    pingResource.addMethod("GET", new gateway.LambdaIntegration(pingFunction));
+    pingResource.addMethod("POST", new gateway.LambdaIntegration(pingFunction));
 
     for (const resource of [pingResource]) {
       resource.addMethod(
