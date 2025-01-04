@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher, onDestroy, onMount } from "svelte";
+  import { createEventDispatcher, onMount } from "svelte";
   import { captureStore } from "./capture.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { Size } from "$lib/client/types/size.enum";
@@ -34,7 +34,7 @@
         (device) => device.kind === "videoinput"
       );
       if (videoDevice) {
-        deviceInfo = videoDevice;
+        deviceInfo = { ...videoDevice };
       }
 
       stream = await navigator.mediaDevices.getUserMedia({
@@ -71,10 +71,6 @@
     }
   }
 
-  onDestroy(() => {
-    stopCamera();
-  });
-
   function adjustVideoSize() {
     const videoAspect = videoElement.videoWidth / videoElement.videoHeight;
     const containerAspect = containerWidth / containerHeight;
@@ -95,14 +91,14 @@
       const { videoWidth, videoHeight } = videoElement;
       const { width: containerWidth, height: containerHeight } =
         videoElement.getBoundingClientRect();
-
       canvasElement.width = videoWidth;
       canvasElement.height = videoHeight;
-
       const context = canvasElement.getContext("2d");
       context?.drawImage(videoElement, 0, 0, videoWidth, videoHeight);
-
-      photoTaken = true;
+      stopCamera();
+      setTimeout(() => {
+        photoTaken = true;
+      }, 100);
     }
   }
 
@@ -130,6 +126,7 @@
 
   function retakePhoto() {
     photoTaken = false;
+    startCamera();
   }
 </script>
 
@@ -163,7 +160,6 @@
       class:hidden={!photoTaken}
     ></canvas>
   </div>
-
   <div
     class={cn(
       "absolute mo:bottom-20 bottom-0 left-0 right-0 h-24  flex  gap-4 items-center bg-bgs1 px-4",
