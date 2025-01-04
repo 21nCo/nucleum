@@ -1,6 +1,6 @@
 <script lang="ts">
   import { fileDrop } from "$lib/client/actions/fileDrop.action";
-  import { fileEmbedChannel } from "$lib/client/components/files/fileEmbedChannel.store";
+  import { fileStore } from "$lib/client/components/files/file.store";
   import { flux } from "$lib/client/components/flux/flux";
   import Button from "$lib/client/elements/button/Button.svelte";
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
@@ -12,11 +12,9 @@
     toasts
   } from "$lib/client/stores/notification.store";
   import { ButtonVariant } from "$lib/client/types/button.type";
-  import { Size } from "$lib/client/types/size.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { InfoTextType } from "$lib/client/types/text.type";
   import { formatDate } from "$lib/client/utils/time.utils";
-  import { downloadJson } from "$lib/client/utils/utils";
 
   let isBackupInProgress: boolean = false;
   let isRestoreInProgress: boolean = false;
@@ -25,19 +23,20 @@
     isBackupInProgress = true;
     try {
       const data = await flux.export();
-      const fileName = `memotron-backup-${formatDate(new Date())}`;
+      const fileName = `memotron-backup-${formatDate(new Date())}.json`;
+      const blob = new Blob([JSON.stringify(data)], {
+        type: "application/json"
+      });
+      fileStore.downloadFromBlob(blob, {
+        fileName: fileName,
+        fileNameForEmbed: "memotron_backup",
+        contentType: "application/json",
+        isHandleEmbedCase: true
+      });
       if ($context.isEmbed) {
-        const url = await account.uploadFileV2(
-          "application/json",
-          "memotron_backup",
-          new Blob([JSON.stringify(data)], { type: "application/json" }),
-          { isReturnUrl: true }
-        );
-        fileEmbedChannel.downloadFromUrl(url, fileName);
         toasts.success("Backup file downloaded successfully");
         return;
       }
-      downloadJson(JSON.stringify(data), fileName);
     } catch (e) {
       console.error(e);
     } finally {

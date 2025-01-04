@@ -5,11 +5,14 @@
   import BasicInfoItem from "./BasicInfoItem.svelte";
   export let metadata: IImageMetadata | undefined = undefined;
   export let renderingDetails: any = undefined;
-  $: console.log({ metadata });
+
+  function isDeviceInfoIsPresent(deviceInfo: any) {
+    return deviceInfo?.make || deviceInfo?.model || deviceInfo?.deviceLabel;
+  }
 </script>
 
 <div class="flex flex-col gap-3 rounded-md mo:p-2 p-4 w-full bg-bgs2">
-  {#if metadata?.deviceInfo}
+  {#if metadata?.deviceInfo && isDeviceInfoIsPresent(metadata?.deviceInfo)}
     <BasicInfoItem label="Device">
       <span class="flex text-b2 gap-1">
         {#if ["iPhone"].some((m) => metadata?.deviceInfo?.model?.includes(m))}
@@ -20,8 +23,11 @@
           <Icon icon="ph:desktop-light" size={Size.sm} />
         {/if}
         <span>
-          {metadata?.deviceInfo?.make}
-          {metadata?.deviceInfo?.model}
+          {metadata?.deviceInfo?.make ?? ""}
+          {metadata?.deviceInfo?.model ?? ""}
+          {metadata?.deviceInfo?.deviceLabel
+            ? " - " + metadata?.deviceInfo?.deviceLabel
+            : ""}
         </span>
       </span>
     </BasicInfoItem>

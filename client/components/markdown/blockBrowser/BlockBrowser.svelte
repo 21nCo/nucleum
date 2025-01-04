@@ -85,8 +85,8 @@
         badge: "planned"
       },
       {
-        label: "Tree of links",
-        description: "Embed tree of links",
+        label: "Node links tree",
+        description: "Embed node links tree",
         type: NodeType.TREE_OF_LINKS,
         icon: "ph:tree-view-light",
         isDisabled: true,

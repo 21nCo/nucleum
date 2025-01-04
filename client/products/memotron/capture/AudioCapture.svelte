@@ -11,7 +11,7 @@
   import { captureStore } from "./capture.store";
   import view from "$lib/client/stores/view.store";
   import PlayerControl from "$lib/client/elements/player/controls/PlayerControl.svelte";
-  import { createEventDispatcher } from "svelte";
+  import { createEventDispatcher, onDestroy } from "svelte";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import type { IRecordId } from "$lib/client/types/data.type";
   const dispatch = createEventDispatcher();
@@ -30,6 +30,10 @@
   /**
    * @description Start recording audio, if already recording or previewing, it will reset the recording states and wavesurfer instances
    */
+
+  onDestroy(() => {
+    cleanup();
+  });
 
   //TODO - Add a recording limit of 1hr 15min
   function startRecording() {
@@ -66,6 +70,23 @@
     if (record.isRecording() || record.isPaused()) {
       record.stopRecording();
     }
+  }
+
+  function cleanup() {
+    if (record) {
+      if (record.isRecording() || record.isPaused()) {
+        record.stopRecording();
+      }
+      record.unAll();
+      record.destroy();
+    }
+    if (wavesurfer) {
+      wavesurfer.destroy();
+    }
+    recordingState = PlayActionState.NOT_STARTED;
+    url = "";
+    blobRefernce = null;
+    isShowPreview = false;
   }
 
   /**
@@ -184,7 +205,10 @@
         />
       {/if}
       <PlayerControl
-        on:click={() => dispatch("cancel")}
+        on:click={() => {
+          cleanup();
+          dispatch("cancel");
+        }}
         icon="ph:x-light"
         type={ButtonVariant.DANGER}
         label="Cancel"
@@ -231,7 +255,10 @@
         />
       {/if}
       <Button
-        on:click={() => dispatch("cancel")}
+        on:click={() => {
+          cleanup();
+          dispatch("cancel");
+        }}
         icon="ph:x-light"
         type={ButtonVariant.DANGER}
         label="Cancel"

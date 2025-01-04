@@ -17,7 +17,8 @@ import {
   type SimpleTextNodeType,
   NodeType,
   simpleTextNodeTypeList,
-  headingNodeTypes
+  headingNodeTypes,
+  type INodeStructure
 } from "$lib/client/products/memotron/node/node.type";
 import { deepCopy } from "$lib/shared/utils/obj.utils";
 import { generateResourceId } from "../flux/flux.utils";
@@ -413,99 +414,98 @@ export function resolvePlainText(mdString: string) {
     .trim();
 }
 
+/**
+ *
+ * Validation cases
+ * 1. & symbol
+ * 2. mention, inline link
+ *
+ * @param markdown
+ * @returns
+ */
 function createPositionMapping(markdown: string): {
   plainText: string;
   mapping: number[];
 } {
   let plainText = "";
-  let mapping: number[] = []; // mapping[plainIndex] = markdownIndex
+  let mapping: number[] = [];
   let markdownIndex = 0;
   let plainIndex = 0;
 
+  const patterns = [
+    {
+      type: "html-entity",
+      regex: /^&(?:amp|lt|gt|quot|apos|dash|ndash);/,
+      length: (matchStr: string) => matchStr.length,
+      transform: (matchStr: string) => {
+        switch (matchStr) {
+          case "&amp;":
+            return "&";
+          case "&lt;":
+            return "<";
+          case "&gt;":
+            return ">";
+          case "&quot;":
+            return '"';
+          case "&apos;":
+            return "'";
+          case "&dash;":
+          case "&ndash;":
+            return "–";
+          default:
+            return matchStr;
+        }
+      }
+    },
+    { type: "formatting", regex: /^(?:\*\*|__)/, length: 2 },
+    {
+      type: "formatting",
+      regex: /^(?:\*|_|~~)/,
+      length: (matchStr: string) => matchStr.length
+    },
+    { type: "formatting", regex: /^`/, length: 1 },
+    {
+      type: "link",
+      regex: /^\[([^\]]+)\]\([^\)]+\)/,
+      length: (matchStr: string) => matchStr.length,
+      extract: (matchStr: string) => matchStr.match(/^\[([^\]]+)\]/)?.[1] || ""
+    },
+    { type: "any-other", regex: /^./, length: 1 }
+  ];
+
   const length = markdown.length;
   while (markdownIndex < length) {
-    const patterns = [
-      { type: "formatting", regex: /^(?:\*\*|__)/, length: 2 },
-      {
-        type: "formatting",
-        regex: /^(?:\*|_|~~)/,
-        length: (match: string) => match.length
-      },
-      { type: "formatting", regex: /^`/, length: 1 },
-      {
-        type: "link",
-        regex: /^\[([^\]]+)\]\([^\)]+\)/,
-        length: (match: string) => match.length
-      },
-      {
-        type: "image",
-        regex: /^!\[([^\]]*)\]\([^\)]+\)/,
-        length: (match: string) => match.length
-      },
-      {
-        type: "heading",
-        regex: /^(#+\s+)/,
-        length: (match: string) => match.length
-      },
-      {
-        type: "blockquote",
-        regex: /^(>\s+)/,
-        length: (match: string) => match.length
-      },
-      {
-        type: "unordered-list",
-        regex: /^([\-\*\+]\s+)/,
-        length: (match: string) => match.length
-      },
-      {
-        type: "ordered-list",
-        regex: /^(\d+\.\s+)/,
-        length: (match: string) => match.length
-      },
-      {
-        type: "horizontal-rule",
-        regex: /^((?:-){3,}|(?:\*){3,}|(?:_){3,})(\n|$)/,
-        length: (match: string) => match.length
-      },
-      { type: "newline", regex: /^\n/, length: 1 },
-      { type: "any-other", regex: /^./, length: 1 }
-    ];
-
     let matched = false;
 
     for (const pattern of patterns) {
-      const match = markdown.substring(markdownIndex).match(pattern.regex);
+      const substring = markdown.substring(markdownIndex);
+      const match = substring.match(pattern.regex);
       if (match) {
+        const matchText = match[0];
         const matchLength =
           typeof pattern.length === "function"
-            ? pattern.length(match[0])
+            ? pattern.length(matchText)
             : pattern.length;
 
-        if (pattern.type === "link") {
-          const linkText = match[1];
+        if (pattern.type === "html-entity") {
+          const transformed = pattern.transform!(matchText);
+          plainText += transformed;
+          for (let i = 0; i < transformed.length; i++) {
+            mapping[plainIndex++] = markdownIndex + matchLength - 1;
+          }
+        } else if (pattern.type === "link") {
+          const linkText = pattern.extract ? pattern.extract(matchText) : "";
           for (let i = 0; i < linkText.length; i++) {
             plainText += linkText[i];
             mapping[plainIndex++] = markdownIndex + 1 + i;
           }
-        } else if (pattern.type === "image") {
-          // Image syntax, skip
-        } else if (pattern.type === "formatting") {
-          // Formatting syntax, skip the syntax characters
-        } else if (
-          pattern.type === "heading" ||
-          pattern.type === "blockquote" ||
-          pattern.type === "unordered-list" ||
-          pattern.type === "ordered-list" ||
-          pattern.type === "horizontal-rule"
-        ) {
         } else if (pattern.type === "newline") {
           plainText += "\n";
           mapping[plainIndex++] = markdownIndex;
         } else if (pattern.type === "any-other") {
-          plainText += match[0];
+          plainText += matchText;
           mapping[plainIndex++] = markdownIndex;
         }
-
         markdownIndex += matchLength;
         matched = true;
         break;
@@ -520,78 +520,18 @@ function createPositionMapping(markdown: string): {
   return { plainText, mapping };
 }
 
-function createPositionMappingv2(markdown: string): {
-  plainText: string;
-  mapping: number[];
-} {
-  let plainText = "";
-  let mapping: number[] = []; // mapping[plainIndex] = markdownIndex
-  let markdownIndex = 0;
-  let plainIndex = 0;
-
-  const length = markdown.length;
-  while (markdownIndex < length) {
-    const char = markdown[markdownIndex];
-
-    // Handling formatting characters
-    if (
-      (char === "*" && markdown[markdownIndex + 1] === "*") ||
-      (char === "_" && markdown[markdownIndex + 1] === "_")
-    ) {
-      // Skip the double formatting characters (bold or underline)
-      markdownIndex += 2;
-      continue;
-    } else if (char === "*" || char === "_" || char === "~" || char === "`") {
-      // Skip single formatting characters (italic, strikethrough, code)
-      markdownIndex += 1;
-      continue;
-    }
-
-    // Handle links
-    if (char === "[") {
-      const linkMatch = markdown
-        .substring(markdownIndex)
-        .match(/^\[([^\]]+)\]\([^\)]+\)/);
-      if (linkMatch) {
-        const linkText = linkMatch[1];
-        for (let i = 0; i < linkText.length; i++) {
-          plainText += linkText[i];
-          mapping[plainIndex++] = markdownIndex + 1 + i;
-        }
-        markdownIndex += linkMatch[0].length;
-        continue;
-      }
-    }
-
-    // Handle images
-    if (char === "!" && markdown[markdownIndex + 1] === "[") {
-      const imageMatch = markdown
-        .substring(markdownIndex)
-        .match(/^!\[[^\]]*\]\([^\)]+\)/);
-      if (imageMatch) {
-        // Skip the entire image syntax
-        markdownIndex += imageMatch[0].length;
-        continue;
-      }
-    }
-
-    // Add character to plain text and update mapping
-    plainText += char;
-    mapping[plainIndex++] = markdownIndex++;
-  }
-
-  return { plainText, mapping };
-}
-
 function resolveMarkdownOffset(plainOffset: number, mapping: number[]): number {
-  if (plainOffset < 0 || plainOffset >= mapping.length) {
-    throw new Error("Plain text offset is out of bounds");
-  }
+  if (!mapping.length) return 0;
+
+  if (plainOffset < 0) return 0;
+  if (plainOffset >= mapping.length)
+    return mapping[mapping.length - 1] + 1 || 0;
+
   return mapping[plainOffset];
 }
 
 export function resolvePlainOffsetForMdEnd(markdown: string) {
-  const plainText = resolvePlainText(markdown);
+  const { plainText } = createPositionMapping(markdown);
   return plainText.length;
 }
 
@@ -599,11 +539,13 @@ export function splitMarkdownAtPlainOffset(
   markdown: string,
   plainOffset: number
 ): { before: string; after: string } {
+  if (!markdown) return { before: "", after: "" };
+
   const { plainText, mapping } = createPositionMapping(markdown);
+  plainOffset = Math.max(0, Math.min(plainText.length, plainOffset));
   const markdownOffset = resolveMarkdownOffset(plainOffset, mapping);
   const before = markdown.substring(0, markdownOffset);
   const after = markdown.substring(markdownOffset);
-
   if (before.endsWith("**")) {
     return { before: before.slice(0, -2), after: "**" + after };
   }
@@ -633,6 +575,7 @@ export function splitMarkdownAtPlainOffset(
 function getEscapeShortcuts(nodeContentType: NodeType) {
   const textEscapeShortcuts: IEscapeShortcut[] = [
     { shortcut: '" ', type: NodeType.QUOTE },
+    { shortcut: "“ ", type: NodeType.QUOTE },
     { shortcut: "> ", type: NodeType.QUOTE },
     { shortcut: "&gt; ", type: NodeType.QUOTE },
     { shortcut: "! ", type: NodeType.CALLOUT },
@@ -870,4 +813,90 @@ export function resolveDefaultBodyForBlock(
     default:
       return { text };
   }
+}
+
+/**
+ * Extracts the structure of the children blocks from the markdown.
+ * @param blocks
+ */
+export function extractStructureForChildren(
+  blocks: IBlock[]
+): INodeStructure[] {
+  let structure: INodeStructure[] = [];
+  let collapsedHierarchy: INodeStructure[] = [];
+  structure = blocks.map((block) => {
+    return {
+      id: block.id,
+      factor: resolveFactor(block.contentType as NodeType),
+      children: []
+    };
+  });
+  let leftovers: INodeStructure[] = [...structure];
+  [5, 4, 3, 2, 1].forEach((level) => {
+    const levelBlocks = leftovers.filter((block) => block.factor === level);
+    if (levelBlocks.length === 0) return;
+    levelBlocks.forEach((block) => {
+      const index = leftovers.findIndex((b) => b.id === block.id);
+      const stopIndex = leftovers.findIndex(
+        (b, i) => i > index && b.factor <= block.factor
+      );
+      if (stopIndex === -1) {
+        block.children = leftovers.slice(index + 1).map((x) => x.id);
+        leftovers = leftovers.filter((b) => !block.children.includes(b.id));
+        return;
+      }
+      const children = leftovers.slice(index + 1, stopIndex);
+      block.children = children.map((x) => x.id);
+      leftovers = leftovers.filter((b) => !block.children.includes(b.id));
+    });
+    collapsedHierarchy = [...collapsedHierarchy, ...levelBlocks];
+  });
+  collapsedHierarchy.forEach((block) => {
+    const item = structure.find((x) => x.id === block.id);
+    if (item) item.children = block.children;
+  });
+  // logger.log({ collapsedHierarchy, structure });
+  return structure;
+
+  function resolveFactor(blockType: NodeType) {
+    switch (blockType) {
+      case NodeType.HEADING1:
+        return 1;
+      case NodeType.HEADING2:
+        return 2;
+      case NodeType.HEADING3:
+        return 3;
+      case NodeType.HEADING4:
+        return 4;
+      case NodeType.HEADING5:
+        return 5;
+      default:
+        return 100;
+    }
+  }
+}
+
+/**
+ * Extracts the root structure of the markdown from the children structure.
+ */
+export function extractRootStructure(
+  structure: INodeStructure[],
+  hierarchyFactorLimit: number
+) {
+  let rootBlocks: any = [];
+  let firstHeadingHit = false;
+  structure.forEach((block) => {
+    if (!firstHeadingHit && block.factor <= hierarchyFactorLimit) {
+      firstHeadingHit = true;
+      rootBlocks.push(block);
+    } else if (!firstHeadingHit) rootBlocks.push(block);
+    else if (block.factor > hierarchyFactorLimit) return;
+    else {
+      const lowestFactor = Math.min(...rootBlocks.map((x) => x.factor));
+      if (block.factor <= lowestFactor) {
+        rootBlocks.push(block);
+      }
+    }
+  });
+  return rootBlocks;
 }

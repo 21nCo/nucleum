@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount } from "svelte";
+  import { createEventDispatcher, onDestroy, onMount } from "svelte";
   import { captureStore } from "./capture.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { Size } from "$lib/client/types/size.enum";
@@ -26,9 +26,17 @@
       stopCamera();
     };
   });
-
+  let deviceInfo: MediaDeviceInfo | null = null;
   async function startCamera() {
     try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevice = devices.find(
+        (device) => device.kind === "videoinput"
+      );
+      if (videoDevice) {
+        deviceInfo = videoDevice;
+      }
+
       stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: "environment"
@@ -45,16 +53,27 @@
     }
   }
   function stopCamera() {
+    console.log("Stopping camera and cleaning up resources");
     if (stream) {
-      stream.getTracks().forEach((track) => {
+      const tracks = stream.getTracks();
+      tracks.forEach((track) => {
+        track.enabled = false;
         track.stop();
+        stream?.removeTrack(track);
       });
+
       if (videoElement) {
         videoElement.srcObject = null;
+        videoElement.load();
       }
+
       stream = null;
     }
   }
+
+  onDestroy(() => {
+    stopCamera();
+  });
 
   function adjustVideoSize() {
     const videoAspect = videoElement.videoWidth / videoElement.videoHeight;
@@ -96,13 +115,15 @@
       isSaving = true;
       canvasElement.toBlob(async (blob) => {
         if (blob) {
-          await captureStore.saveCameraCapture(blob);
+          await captureStore.saveCameraCapture(blob, {
+            deviceInfo
+          });
+          isSaving = false;
         }
       }, "image/jpeg");
     } catch (e) {
       error = "Something went wrong. Please try again.";
       logger.error({ at: "CameraCapture.savePhoto", error: e });
-    } finally {
       isSaving = false;
     }
   }

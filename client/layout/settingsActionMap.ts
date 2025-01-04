@@ -13,7 +13,7 @@ import { Size } from "../types/size.enum";
 import { Orientation } from "../types/direction.enum";
 import { Action } from "../types/action.enum";
 import InteractionModeSettings from "../components/settings/interactionMode/InteractionModeSettings.svelte";
-import { Embed } from "../types/context.type";
+import { Embed, OperatingSystem } from "../types/context.type";
 import SyncSettings from "../components/settings/sync/SyncSettings.svelte";
 import TacoSettings from "../components/settings/taco/TacoSettings.svelte";
 import { UserDataMode } from "../types/account.type";
@@ -30,7 +30,7 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
     label: "AI Settings",
     icon: "ph:head-circuit-light",
     component: TacoSettings,
-    hideContext: [Embed.HANDSET],
+    hideContext: [OperatingSystem.IOS],
     modalParams: {
       title: "AI Settings",
       layout: {

@@ -6,7 +6,6 @@
   import view from "$lib/client/stores/view.store";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { InputStyle } from "$lib/client/types/input.type";
-  import { Size } from "$lib/client/types/size.enum";
   import { enumToString, isValidString } from "$lib/shared/utils/text.utils";
   import { cn } from "$lib/client/utils/ui.utils";
   import MetaPropertyItem from "./MetaPropertyItem.svelte";
@@ -16,10 +15,14 @@
     type IPropertyValue,
     type ISelectProperty,
     type IUniversalProperty,
+    manualPropertyTypes,
     PropertyType,
     textPropertyTypes
   } from "./property.type";
-  import type { IRecordId } from "$lib/client/types/data.type";
+  import {
+    PersistenceActionType,
+    type IRecordId
+  } from "$lib/client/types/data.type";
   import SelectPropertyOption from "./selectProperty/SelectPropertyOption.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
@@ -28,6 +31,9 @@
     resolveUniversalPropertyOptions
   } from "./property.utils";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   export let value: IPropertyValue | null = null;
   export let property: IProperty;
   export let nodeId: IRecordId | undefined = undefined;
@@ -38,8 +44,7 @@
   export let context: "default" | "propertiesPane" | "collectionView" =
     "default";
   export let isReadOnlyMode: boolean = false;
-  let _value: IPropertyValue | null = null;
-  $: _value = assignDefaultValue(value);
+  let _value: IPropertyValue | null = assignDefaultValue(value);
   $: options =
     property.type === PropertyType.SINGLE_SELECT ||
     property.type === PropertyType.MULTI_SELECT ||
@@ -103,6 +108,18 @@
       return resolveUniversalPropertyOptions(property.config.type);
     }
     return property.config?.options ?? [];
+  }
+
+  function onChangesElsewhere(e: any) {
+    const { action, record } = e.detail?.params;
+    if (action !== PersistenceActionType.MERGE || !record || !record.properties)
+      return;
+    const { properties } = record;
+    const prop = properties.find(resourceInList(property.id));
+    if (!prop) return;
+    if (prop.value.toString() !== _value?.toString()) {
+      _value = assignDefaultValue(prop.value);
+    }
   }
 </script>
 
@@ -229,3 +246,11 @@
     <MetaPropertyItem {property} {nodeId} />
   {/if}
 </div>
+
+{#if !isReadOnlyMode && nodeId && manualPropertyTypes.includes(property.type)}
+  <ComponentBaseLayer
+    subscribeToResource={new Set([Resource.node])}
+    subscribeToRecords={[nodeId]}
+    on:change={onChangesElsewhere}
+  />
+{/if}

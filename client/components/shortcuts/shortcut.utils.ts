@@ -23,7 +23,7 @@ export function resolveShortcutText(
     });
   }
   if (modifierLabels.length === 0) return key.toUpperCase();
-  return modifierLabels.join(" + ") + " + " + key.toUpperCase();
+  return modifierLabels.join(" + ") + (key ? " + " + key.toUpperCase() : "");
 }
 
 export function resolveModifiers(event: KeyboardEvent) {

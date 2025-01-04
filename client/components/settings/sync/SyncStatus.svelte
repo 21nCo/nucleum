@@ -19,7 +19,7 @@
   });
 </script>
 
-<div class="flex items-center gap-2 border- border-brs3 px-4 py-1 rounded-md">
+<div class="flex items-center gap-1 border- border-brs3 px-4 py-1 rounded-md">
   <span
     class={cn("w-3 h-3 rounded-full", {
       "bg-ags1": status === "SYNCED",
@@ -34,7 +34,8 @@
   >
   {#if lastSyncedAt}
     <span class="text-b3 text-fgs3"
-      >{formatDatetime($userPreferences, new Date(+lastSyncedAt))}</span
+      >- Last synced at:
+      {formatDatetime($userPreferences, new Date(+lastSyncedAt))}</span
     >
   {/if}
 </div>

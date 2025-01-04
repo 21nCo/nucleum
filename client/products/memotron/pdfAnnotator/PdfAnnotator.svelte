@@ -39,6 +39,9 @@
   import context from "$lib/client/stores/context.store";
   import { Embed, OperatingSystem } from "$lib/client/types/context.type";
   import view from "$lib/client/stores/view.store";
+  import { fileStore } from "$lib/client/components/files/file.store";
+  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  import { fileEmbedChannel } from "$lib/client/components/files/fileEmbedChannel.store";
   const dispatch = createEventDispatcher();
   export let url: string;
   export let node: any;
@@ -56,6 +59,10 @@
   let endPageNumber: number | undefined;
   let currentPageNumber: number | undefined;
   let viewerContainerElement: HTMLElement;
+  /**
+   * Disabling due to failure in webview, misplacement of highlights in downloaded file
+   */
+  let dev_isEnableDownloadAnnotatedPdf = false;
   const mouseUpHandler = (event: any) =>
     handleMouseUp(event, viewerContainerElement);
   let shapeVisible = false;
@@ -859,7 +866,7 @@
     <div
       class="flex items-center justify-between w-full h-14 px-4 gap-8 border-b border-b-brs2"
     >
-      <div class="flex gap-6 items-center search-bar flex-1">
+      <div class="flex gap-6 items-center justify-between search-bar flex-1">
         <div class="w-6/10 flex gap-4 items-center">
           <div class="flex items-center w-9/10">
             <TextInput
@@ -911,23 +918,44 @@
           />
         </div>
       </div>
-      <div>
-        <Button
-          icon="download"
-          size={Size.sm}
-          label="Download"
-          on:click={() =>
-            embedAnnotationsandDownload(
-              url,
-              annots,
-              $highlightStore.highlighters
-            )}
-        />
-        <!-- <button
+      {#if dev_isEnableDownloadAnnotatedPdf}
+        <div>
+          <Button
+            icon="download"
+            size={Size.sm}
+            label="Download"
+            on:click={async () => {
+              let pdfData;
+              if ($context.isEmbed) {
+                const embed_message_id = generateSimpleRandomId();
+                const response = await fileEmbedChannel.fetch(
+                  url.toString(),
+                  embed_message_id
+                );
+                pdfData = Buffer.from(response);
+              } else {
+                pdfData = await fetch(url.toString()).then((response) =>
+                  response.arrayBuffer()
+                );
+              }
+              const blob = await embedAnnotationsandDownload(
+                pdfData,
+                annots,
+                $highlightStore.highlighters
+              );
+              fileStore.downloadFromBlob(blob, {
+                fileName: "annotated_document.pdf",
+                contentType: "application/pdf",
+                isHandleEmbedCase: true
+              });
+            }}
+          />
+          <!-- <button
     on:click={deleleAllAnnotations}
     class="material-symbols-rounded mx-2">{@html "&#Xe16c"}</button
     > -->
-      </div>
+        </div>
+      {/if}
     </div>
   {/if}
   <div class="w-full flex-1">

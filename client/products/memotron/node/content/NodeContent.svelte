@@ -135,14 +135,6 @@
     if (!block.source && !block.id) return;
     const id = block.id ?? block.source;
     if ("body" in block) {
-      //TODO - watch if this is needed - causing unexpected behavior for embed blocks body not updating as /image string is updated after body is converted to null.
-      // let params = {};
-      // if (typeof block.body === "string" || "text" in block.body) {
-      //   params = {
-      //     isDebounced: true,
-      //     debounceKey: "text"
-      //   };
-      // }
       node.updateBlock(
         id,
         { body: block.body },

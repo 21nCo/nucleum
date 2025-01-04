@@ -6,11 +6,13 @@
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
+  import account from "$lib/client/stores/account.store";
   import { appStore } from "$lib/client/stores/app.store";
   import context from "$lib/client/stores/context.store";
   import view from "$lib/client/stores/view.store";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import { Embed } from "$lib/client/types/context.type";
+  import { wait } from "$lib/client/utils/time.utils";
   import { MAX_FILE_SIZE_MB } from "../memotron.store";
   import { resolveFileUploadErrorMessage } from "../memotron.utils";
   import { MemotronAction } from "../memotronAction.enum";
@@ -47,6 +49,7 @@
   let error: string | undefined = undefined;
 
   let isValidMultipleFiles = false;
+  const uploadProgressElementId = "node-embed-upload-progress";
 
   async function handleDrop(
     all: File[],
@@ -55,6 +58,11 @@
   ) {
     try {
       error = undefined;
+      if (account.isCloudUserAndOffline()) {
+        error =
+          "You seem to be offline. File upload is not yet available in offline mode.";
+        return;
+      }
       if (errors && errors.length > 0) {
         error = resolveFileUploadErrorMessage(errors, {
           maxFileSizeMB: MAX_FILE_SIZE_MB
@@ -73,8 +81,8 @@
           isValidMultipleFiles = true;
         }
       }
-    } catch (e) {
-      logger.error(e);
+    } catch (e: any) {
+      logger.error(e.message);
       error = "Something went wrong";
     } finally {
       isSaveInProgress = false;
@@ -85,7 +93,10 @@
     if (e.detail) e.detail.stopPropagation();
     if (!multipleFilesData) return;
     isSaveInProgress = true;
-    await captureStore.saveMultipleFiles(multipleFilesData.files);
+    await wait(10);
+    await captureStore.saveMultipleFiles(multipleFilesData.files, {
+      uploadProgressId: uploadProgressElementId
+    });
     isSaveInProgress = false;
   }
 
@@ -98,7 +109,7 @@
     if (e.detail) e.detail.stopPropagation();
     if (!multipleFilesData) return;
     $captureStore.clipboard = {
-      files: multipleFilesData.files
+      multipleFiles: multipleFilesData
     };
     appStore.runAction(MemotronAction.CAPTURE_SECONDARY, {
       searchParams: {
@@ -137,7 +148,13 @@
       </div>
       <div class="flex flex-col items-center gap-6 w-full">
         <div class="flex flex-col items-center gap-2">
-          {#if isValidMultipleFiles && multipleFilesData}
+          {#if isSaveInProgress}
+            <div class="flex items-center gap-1">
+              <span class="text-fgs3 text-b3">Uploading..</span>
+              <span id={uploadProgressElementId} class="text-fgs3 text-b3"
+              ></span>
+            </div>
+          {:else if isValidMultipleFiles && multipleFilesData}
             <div>
               {multipleFilesData.files.length} files selected
             </div>
@@ -189,11 +206,13 @@
         {/if}
       </div>
       <div class="flex mo:flex-col text-fgs3 text-b3 gap-3 p-3">
-        <span>Currently accepted file types: <b> image, audio, pdf </b> </span>
+        <span
+          >Currently accepted file types: <b> image, audio, pdf, md </b>
+        </span>
         {#if !$view.isConstrainedWidth}
           |
         {/if}
-        <span>Max size per file: 15MB</span>
+        <span>Max size per file: {MAX_FILE_SIZE_MB}MB</span>
       </div>
     </div>
   {/if}

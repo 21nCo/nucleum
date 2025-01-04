@@ -430,22 +430,25 @@ export const mediaNodeTypeList = [
 export type IImageMetadata = INodeMetadata & {
   colors?: string[];
   deviceInfo?: {
-    make: string;
-    model: string;
-    software: string;
+    make?: string;
+    model?: string;
+    software?: string;
+    deviceId?: string;
+    platform?: string;
+    deviceLabel?: string;
   };
   imageDetails?: {
-    width: number;
-    height: number;
-    orientation: string;
-    dateTime: string;
+    width?: number;
+    height?: number;
+    orientation?: string;
+    dateTime?: string;
   };
   cameraSettings?: {
-    aperture: string;
-    exposureTime: string;
-    iso: number;
-    focalLength: string;
-    flash: string;
+    aperture?: string;
+    exposureTime?: string;
+    iso?: number;
+    focalLength?: string;
+    flash?: string;
   };
 };
 

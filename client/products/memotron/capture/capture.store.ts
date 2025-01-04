@@ -10,7 +10,8 @@ import {
   type IMediaGridItem,
   type IWebPage,
   type IAudioMetadata,
-  type IImageMetadata
+  type IImageMetadata,
+  type IImageNode
 } from "$lib/client/products/memotron/node/node.type";
 import {
   CaptureType,
@@ -25,7 +26,11 @@ import {
   getMarkdownSymbolPrepended,
   resolveNodeCaptureMetadata
 } from "$lib/client/products/memotron/node/node.utils";
-import { nodeStore, vectorResourceStore } from "../node/node.store";
+import {
+  hierarchyFactorLimit,
+  nodeStore,
+  vectorResourceStore
+} from "../node/node.store";
 import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { linker } from "$lib/client/products/memotron/linking/link.store";
@@ -70,8 +75,16 @@ import {
   sanitizeAndResolve
 } from "../node/url.utils";
 import { getImageColorsFromFile } from "$lib/client/utils/ui.utils";
-import { parseBlob } from "music-metadata";
+import { parseBuffer } from "music-metadata";
 import ExifReader from "exifreader";
+import { getDeviceInfo } from "$lib/client/utils/browser.utils";
+import { textIsCode } from "$lib/shared/utils/text.utils";
+import {
+  extractRootStructure,
+  extractStructureForChildren,
+  textToMdBlocks
+} from "$lib/client/components/markdown/markdown.utils";
+import type { IBlock } from "$lib/client/components/markdown/md.type";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
@@ -279,7 +292,10 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     if (!text) return;
     const sanitized = sanitizeAndResolve(text);
 
-    const isCodeText = itemArray.some((i) => i.type === "vscode-editor-data");
+    let isCodeText = itemArray.some((i) => i.type === "vscode-editor-data");
+    if (!isCodeText && typeof sanitized === "string") {
+      isCodeText = textIsCode(sanitized);
+    }
     if (isCodeText && typeof sanitized === "string") {
       const [text, metadataString] = await Promise.all([
         getAsStringPromise(itemArray.find((i) => i.type === "text/plain")),
@@ -333,23 +349,6 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       }
     };
 
-    if (isMdText) {
-      const mdTextItem = itemArray.find((i) => i.type === "text/plain");
-      // await handlePasteForText(mdTextItem);
-    }
-
-    const isSimpleText =
-      (items.length === 1 && items[0].type === "text/plain") ||
-      itemArray.every((i) => i.type.includes("text"));
-    if (isSimpleText) {
-      const simpleTextItem =
-        items.length === 1
-          ? items[0]
-          : itemArray.find((i) => i.type === "text/plain");
-      // await handlePasteForText(simpleTextItem);
-      return;
-    }
-
     function getAsStringPromise(item?: DataTransferItem): Promise<string> {
       return new Promise((resolve) => {
         if (!item) {
@@ -362,75 +361,83 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
   }
 
   private async parseMetadata(file: File) {
-    if (file.type.startsWith("image/")) {
-      let metadata: IImageMetadata = {};
-      const colors = await getImageColorsFromFile(file, 10);
-      const tags = await ExifReader.load(file);
-      const importantMetadata = extractImportantMetadata(tags);
-      metadata = {
-        colors,
-        ...importantMetadata
-      };
-      return metadata;
-    }
-    if (file.type.startsWith("audio/")) {
-      let metadata: IAudioMetadata = {};
-      let parsedMetadata = await parseBlob(file);
-      if (parsedMetadata?.common) {
-        let imageId: IRecordId | undefined = undefined;
-        if (parsedMetadata.common.picture?.[0]?.data) {
-          try {
-            const imageData = parsedMetadata.common.picture[0].data;
-            const imageFile = new File([imageData], file.name, {
-              type: "image/jpeg"
-            });
-            const imageUploadResponse = await account.uploadFileV2(
-              "image/jpeg",
-              file.name,
-              imageFile
-            );
-            if (imageUploadResponse) {
-              imageId = imageUploadResponse[0].id;
-            }
-          } catch (e) {
-            console.error(e);
-          }
-        }
+    try {
+      if (file.type.startsWith("image/")) {
+        let metadata: IImageMetadata = {};
+        const colors = await getImageColorsFromFile(file, 10);
+        const tags = await ExifReader.load(file);
+        const importantMetadata = extractImportantMetadata(tags);
         metadata = {
-          ...parsedMetadata.common,
-          ...parsedMetadata.format,
-          picture: imageId
+          colors,
+          ...importantMetadata
         };
+        return metadata;
       }
-      return metadata;
+      if (file.type.startsWith("audio/")) {
+        let metadata: IAudioMetadata = {};
+        // let parsedMetadata = await parseBlob(file);
+        let parsedMetadata = await parseBuffer(
+          new Uint8Array(await file.arrayBuffer())
+        );
+        if (parsedMetadata?.common) {
+          let imageId: IRecordId | undefined = undefined;
+          if (parsedMetadata.common.picture?.[0]?.data) {
+            try {
+              const imageData = parsedMetadata.common.picture[0].data;
+              const imageFile = new File([imageData], file.name, {
+                type: "image/jpeg"
+              });
+              const imageUploadResponse = await account.uploadFileV2(
+                "image/jpeg",
+                file.name,
+                imageFile
+              );
+              if (imageUploadResponse) {
+                imageId = imageUploadResponse[0].id;
+              }
+            } catch (e) {
+              console.error(e);
+            }
+          }
+          metadata = {
+            ...parsedMetadata.common,
+            ...parsedMetadata.format,
+            picture: imageId
+          };
+        }
+        return metadata;
+      }
+    } catch (e: any) {
+      console.error("CaptureStore - parseMetadata", e);
+      return;
     }
 
     function extractImportantMetadata(tags: any): IImageMetadata {
       return {
         deviceInfo: {
-          make: tags.Make?.description || "Unknown",
-          model: tags.Model?.description || "Unknown",
-          software: tags.Software?.description || "Unknown"
+          make: tags.Make?.description,
+          model: tags.Model?.description,
+          software: tags.Software?.description
         },
         imageDetails: {
           width: tags["Image Width"]?.value || tags.PixelXDimension?.value || 0,
           height:
             tags["Image Height"]?.value || tags.PixelYDimension?.value || 0,
-          orientation: tags.Orientation?.description || "Unknown",
-          dateTime: tags.DateTime?.description || "Unknown"
+          orientation: tags.Orientation?.description,
+          dateTime: tags.DateTime?.description
         },
         cameraSettings: {
-          aperture: tags.FNumber?.description || "Unknown",
-          exposureTime: tags.ExposureTime?.description || "Unknown",
-          iso: tags.ISOSpeedRatings?.value || 0,
-          focalLength: tags.FocalLength?.description || "Unknown",
-          flash: tags.Flash?.description || "Unknown"
+          aperture: tags.FNumber?.description,
+          exposureTime: tags.ExposureTime?.description,
+          iso: tags.ISOSpeedRatings?.value,
+          focalLength: tags.FocalLength?.description,
+          flash: tags.Flash?.description
         },
         location: tags.GPSLatitude
           ? {
               latitude: tags.GPSLatitude.description,
               longitude: tags.GPSLongitude.description,
-              altitude: tags.GPSAltitude?.description || "Unknown"
+              altitude: tags.GPSAltitude?.description
             }
           : undefined
       };
@@ -446,6 +453,16 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       creationContext?: IRecordId;
     }
   ) {
+    contentType = contentType ?? resolveContentTypeForFile(file);
+    if (!contentType) return { error: "File type not supported" };
+    if (contentType === NodeType.NODULAR_MARKDOWN && !params?.isEmbedContext) {
+      const result = await this.saveMarkdownFromMdFile(file);
+      this.postSave(result, {
+        isOpenUponSuccess: !params?.isPreventOpenOnSave,
+        isEmbedContext: params?.isEmbedContext
+      });
+      return result?.[0];
+    }
     const response = await account.uploadFileV2(
       file.type,
       file.name,
@@ -454,8 +471,6 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     if (!response) return;
     if (!response[0].id) return;
     const fileId = response[0].id;
-    contentType = contentType ?? resolveContentTypeForFile(file);
-    if (!contentType) return { error: "File type not supported" };
     const metadata = await this.parseMetadata(file);
     const node = {
       contentType,
@@ -476,6 +491,71 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     return result?.[0];
   }
 
+  async saveMarkdownFromMdFile(file: File) {
+    try {
+      const text = await file.text();
+      return this.saveMarkdownFromText(text, file.name);
+    } catch (e: any) {
+      logger.error({
+        at: "CaptureStore - saveMarkdownFromMdFile",
+        message: e.message,
+        file: file.name
+      });
+      return;
+    }
+  }
+
+  private async saveMarkdownFromText(text: string, title?: string) {
+    const blocks: IBlock[] = textToMdBlocks(text);
+    const structure = extractStructureForChildren(blocks);
+    const rootStructure = extractRootStructure(structure, hierarchyFactorLimit);
+    const id = generateResourceId(Resource.node);
+    const rootBlocks = blocks.filter((b) =>
+      rootStructure.some(resourceInList(b))
+    );
+    const mdText = generateMarkdownText(rootBlocks);
+    let root: INodeItemCaptured = {
+      id,
+      label: title ?? "",
+      properties: [],
+      body: "",
+      text: mdText,
+      children: rootStructure.map((x: any) => x.id),
+      contentType: NodeType.NODULAR_MARKDOWN
+    };
+    let remainingResources: INodeItemCaptured[] = [];
+    for (const block of structure) {
+      const correspondingContent = blocks.find(resourceInList(block));
+      let mdText = "";
+      if (block.children && block.children.length > 0) {
+        const childrenNodes = blocks.filter((b) =>
+          block.children?.some(resourceInList(b))
+        );
+        mdText = generateMarkdownText(childrenNodes);
+      }
+      remainingResources.push({
+        id: block.id,
+        contentType: correspondingContent?.contentType ?? NodeType.SIMPLE_TEXT,
+        body: correspondingContent?.body,
+        label: correspondingContent?.label,
+        text: mdText,
+        creationContext: id,
+        children: block.children
+      });
+    }
+    const result: any = await nodeStore.create([root, ...remainingResources], {
+      context: MemotronAction.CAPTURE
+    });
+    return result;
+  }
+
+  async saveMarkdownFromMdFiles(files: File[]) {
+    const results = await Promise.all(
+      files.map((file) => this.saveMarkdownFromMdFile(file))
+    );
+    return results.map((x) => x?.[0]);
+  }
+
   async saveMultipleFiles(
     files: { file: File; contentType: NodeType }[],
     params?: {
@@ -484,7 +564,20 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       uploadProgressId?: string;
     }
   ) {
+    if (
+      files.every((x) => x.contentType === NodeType.NODULAR_MARKDOWN) &&
+      !params?.isEmbedContext
+    ) {
+      const result = await this.saveMarkdownFromMdFiles(
+        files.map((x) => x.file)
+      );
+      this.postSave(result, {
+        isEmbedContext: params?.isEmbedContext
+      });
+      return result;
+    }
     let nodes: OmitForCapture<IMediaNode>[] = [];
+    let mdNodesResult: any[] = [];
     for (const [index, item] of files.entries()) {
       if (params?.uploadProgressId) {
         const progressElement = document.getElementById(
@@ -496,6 +589,14 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
         }
       }
       if (!item.contentType) continue;
+      if (
+        item.contentType === NodeType.NODULAR_MARKDOWN &&
+        !params?.isEmbedContext
+      ) {
+        const result = await this.saveMarkdownFromMdFile(item.file);
+        mdNodesResult.push(result?.[0]);
+        continue;
+      }
       const response = await account.uploadFileV2(
         item.file.type,
         item.file.name,
@@ -516,9 +617,10 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       } as IMediaNode;
       nodes.push(node);
     }
-    const result = await nodeStore.create(nodes, {
+    const mediaNodesResult = await nodeStore.create(nodes, {
       context: MemotronAction.CAPTURE
     });
+    const result = [...(mediaNodesResult ?? []), ...(mdNodesResult ?? [])];
     this.postSave(result, {
       isEmbedContext: params?.isEmbedContext
     });
@@ -550,10 +652,14 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     );
     if (!result) return;
     const fileId = result[0].id;
+    const metadata = await this.parseMetadata(
+      new File([data], `${fileName}.mp3`, { type: contentType })
+    );
     const node: OmitForCapture<IMediaNode> = {
       id,
       contentType: NodeType.AUDIO,
       file: fileId,
+      metadata,
       creationContext: params?.isEmbedContext
         ? (params?.creationContext ?? this.get().nodeId)
         : undefined,
@@ -573,8 +679,15 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     return result2?.[0];
   }
 
-  async saveCameraCapture(data: Blob) {
-    logger.debug({ at: "CaptureStore.saveCameraCapture", length: data.size });
+  async saveCameraCapture(
+    data: Blob,
+    params?: { deviceInfo?: MediaDeviceInfo | null }
+  ) {
+    logger.debug({
+      at: "CaptureStore.saveCameraCapture",
+      length: data.size,
+      params
+    });
     const contentType = "image/jpeg";
     const id = generateResourceId(Resource.node);
     const fileName = generateSimpleRandomId();
@@ -585,18 +698,33 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     );
     if (!result) return;
     const fileId = result[0].id;
-    const colors = await getImageColorsFromFile(
-      new File([data], fileName, { type: contentType }),
-      10
+    // const colors = await getImageColorsFromFile(
+    //   new File([data], fileName, { type: contentType }),
+    //   10
+    // );
+    const metadata: IImageMetadata | undefined = await this.parseMetadata(
+      new File([data], fileName, { type: contentType })
     );
-    const node: OmitForCapture<IMediaNode> = {
+    const deviceInfo = await getDeviceInfo();
+    const node: OmitForCapture<IImageNode> = {
       id,
       contentType: NodeType.IMAGE,
       file: fileId,
       label: `Image Capture - ${new Date().toLocaleString()}`,
       body: {},
       metadata: {
-        colors
+        ...metadata,
+        deviceInfo: {
+          deviceLabel: params?.deviceInfo?.label,
+          deviceId: params?.deviceInfo?.deviceId,
+          model: metadata?.deviceInfo?.model ?? deviceInfo?.model,
+          make: metadata?.deviceInfo?.make ?? deviceInfo?.make,
+          platform: deviceInfo?.platform
+        },
+        imageDetails: {
+          ...metadata?.imageDetails,
+          dateTime: metadata?.imageDetails?.dateTime ?? new Date().toISOString()
+        }
       }
     };
     const result2 = await nodeStore.create(node, {
@@ -689,7 +817,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       return;
     }
     const viewStore = get(view);
-    if (result.length === 1 || node.contentType === NodeType.NODULAR_MARKDOWN) {
+    if (result.length === 1) {
       if (!viewStore.isConstrainedWidth && !params?.isEmbedContext)
         toasts.success("Node saved successfully!");
       if (params?.isOpenUponSuccess && !params?.isEmbedContext)
@@ -796,7 +924,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       let vectorInsertionresult: any;
       if (val.rootStructure.length > 0) {
         const rootBlocks = val.body.blocks.filter((b) =>
-          val.rootStructure.includes(b.id)
+          val.rootStructure.some(resourceInList(b))
         );
         console.time("generateMarkdownText");
         mdText = generateMarkdownText(rootBlocks);
@@ -927,7 +1055,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       context: MemotronAction.CAPTURE
     });
     await this.saveLinks(id);
-    this.postSave(result);
+    this.postSave(result.slice(0, 1));
     runVectorGeneration();
     console.timeEnd("saveMarkdownCapture");
     return result;

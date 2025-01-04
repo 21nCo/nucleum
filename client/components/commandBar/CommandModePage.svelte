@@ -9,16 +9,15 @@
   import view from "$lib/client/stores/view.store";
   import { Action } from "$lib/client/types/action.enum";
   import { ColorStrength } from "$lib/client/types/appearance.type";
-  import { ButtonVariant } from "$lib/client/types/button.type";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { Display } from "$lib/client/types/view.type";
   import { formatDatetime } from "$lib/client/utils/time.utils";
-  import { renderMdAsHtml } from "../markdown/markdown.utils";
   import { player } from "../modal/modal.store";
   import ProfilePicture from "../settings/account/ProfilePicture.svelte";
   import { InteractionMode } from "../settings/interactionMode/interactionMode.type";
   import CommandBar from "./CommandBar.svelte";
+  import ShortcutText from "$lib/client/elements/text/ShortcutText.svelte";
 </script>
 
 <div class="flex flex-col w-full h-full">
@@ -57,12 +56,12 @@
   <footer
     class="w-full flex flex-col gap-2 justify-center items-center h-1/6 text-fgs2 text-b2"
   >
-    <span>
-      {@html renderMdAsHtml(
-        "Command only mode is in **beta**. Please report any issues you encounter using *Chat with us* command."
-      )}
-    </span>
-    <span>
+    <div class="flex flex-col items-center gap-4">
+      <span class="flex flex-row text-fgs3 gap-1">
+        Press
+        <ShortcutText shortcut={Action.GLOBAL_SEARCH} parentBgIndex={2} />
+        to search
+      </span>
       <Button
         label="Exit Command Mode"
         size={Size.sm}
@@ -76,6 +75,6 @@
           );
         }}
       />
-    </span>
+    </div>
   </footer>
 </div>

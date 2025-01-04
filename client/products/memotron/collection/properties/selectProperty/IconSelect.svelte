@@ -16,7 +16,6 @@
       on:click={() => {
         const val = option.id;
         value = resolveSelectPropertySelection(value, val, { isMultiSelect });
-        console.log({ value });
         onSelect(value);
       }}
     />

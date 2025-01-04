@@ -4,15 +4,20 @@ import { nodeStore, vectorResourceStore } from "../node/node.store";
 import { NodeType } from "../node/node.type";
 import { TacoActions } from "./taco.types";
 import { tacoWorker } from "../memotron.utils";
-import { Embed } from "$lib/client/types/context.type";
+import { Embed, OperatingSystem } from "$lib/client/types/context.type";
 import context from "$lib/client/stores/context.store";
+import { deleteAllLocalModels } from "./taco.utils";
 
 const dev_isEnableSemanticSearch = false;
 
 export async function initializeTaco() {
   try {
     const userPref = get(userPreferences);
-    if (get(context).embed === Embed.HANDSET) return;
+    const ctx = get(context);
+    if (ctx.os === OperatingSystem.IOS) {
+      await deleteAllLocalModels();
+      return;
+    }
     if (dev_isEnableSemanticSearch && userPref.localAI.semanticSearch) {
       tacoWorker.postMessage({
         action: TacoActions.INITIALIZE_FEATURE_EXTRACTOR

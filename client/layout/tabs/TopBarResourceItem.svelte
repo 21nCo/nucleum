@@ -88,7 +88,9 @@
   on:click
 >
   <div class="truncate text-b3">
-    {#if action?.resourceLabelRenderer && resource}
+    {#if !resource}
+      <span class="w-32"> loading... </span>
+    {:else if action?.resourceLabelRenderer && resource}
       <svelte:component this={action.resourceLabelRenderer} item={resource} />
     {:else}
       {resource?.label ?? "Untitled"}

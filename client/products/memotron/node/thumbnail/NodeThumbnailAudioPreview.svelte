@@ -4,14 +4,18 @@
   import appearance from "$lib/client/stores/appearance.store";
   import { onMount } from "svelte";
   import { parseBlob } from "music-metadata";
-
+  import { onDestroy } from "svelte";
+  import context from "$lib/client/stores/context.store";
   export let url: string = "";
   let imageUrl: string | null = null;
   let showWaveform = true;
+  let dev_isTryArtworkFallback = false;
 
   onMount(async () => {
     // await tryLoadArtwork();
-    await loadArtworkUsingLibrary();
+    if (!$context.isEmbed && dev_isTryArtworkFallback) {
+      await loadArtworkUsingMetadata();
+    }
     if (!imageUrl || showWaveform) {
       setTimeout(() => {
         renderAudioPreview();
@@ -75,7 +79,7 @@
     }
   }
 
-  async function loadArtworkUsingLibrary() {
+  async function loadArtworkUsingMetadata() {
     try {
       const response = await fetch(url);
       const blob = await response.blob();
@@ -91,7 +95,6 @@
     }
   }
 
-  import { onDestroy } from "svelte";
   onDestroy(() => {
     if (imageUrl) {
       URL.revokeObjectURL(imageUrl);

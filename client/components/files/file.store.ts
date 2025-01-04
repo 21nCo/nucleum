@@ -18,6 +18,7 @@ import {
 import type { IFile } from "./file.type";
 import { fileEmbedChannel } from "./fileEmbedChannel.store";
 import { OperatingSystem } from "$lib/client/types/context.type";
+import account from "$lib/client/stores/account.store";
 
 class FileStore extends ResourceStore<IFile> {
   constructor() {
@@ -29,7 +30,8 @@ class FileStore extends ResourceStore<IFile> {
     const defaultErrMessage = "Error downloading file. Please try again.";
     try {
       let _file;
-      if (typeof file === "object" && "url" in file) _file = file;
+      if (typeof file === "object" && ("url" in file || "data" in file))
+        _file = file;
       else if (typeof file === "string" && file.includes("http")) _file = file;
       else {
         let fileId: IRecordId | undefined = undefined;
@@ -48,6 +50,7 @@ class FileStore extends ResourceStore<IFile> {
       }
       const contextStore = get(context);
       if (contextStore.isEmbed) {
+        //TODO - handle offline user case
         fileEmbedChannel.downloadFromUrl(_file.url, _file.label.split(".")[0]);
         if (contextStore.os === OperatingSystem.MACOS) {
           toasts.success("File downloaded to Downloads folder");
@@ -56,8 +59,12 @@ class FileStore extends ResourceStore<IFile> {
       }
       let blob;
       try {
-        const response = await fetch(_file.url);
-        blob = await response.blob();
+        if (_file.data) {
+          blob = new Blob([_file.data], { type: _file.type });
+        } else {
+          const response = await fetch(_file.url);
+          blob = await response.blob();
+        }
       } catch (error: any) {
         toasts.error(defaultErrMessage);
         return;
@@ -66,29 +73,53 @@ class FileStore extends ResourceStore<IFile> {
         toasts.error(defaultErrMessage);
         return;
       }
-      let downloadUrl = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = _file.name || _file.label || "download";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      URL.revokeObjectURL(downloadUrl);
+      this.downloadFromBlob(blob, {
+        fileName: _file.name || _file.label || "download",
+        contentType: _file.type
+      });
     } catch (error) {
       logger.error({ at: "fileStore - download", error });
       toasts.error(defaultErrMessage);
     }
   }
 
+  async downloadFromBlob(
+    blob: Blob,
+    params?: {
+      contentType?: string;
+      fileName?: string;
+      fileNameForEmbed?: string;
+      isHandleEmbedCase?: boolean;
+    }
+  ) {
+    if (get(context).isEmbed) {
+      if (!params?.isHandleEmbedCase) return;
+      const url = await account.uploadFileV2(
+        params?.contentType || "text/plain",
+        params?.fileNameForEmbed || params?.fileName || "download",
+        blob,
+        {
+          isReturnUrl: true
+        }
+      );
+      if (url) {
+        fileEmbedChannel.downloadFromUrl(url);
+      }
+      return;
+    }
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = params?.fileName || "download";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(blobUrl);
+  }
+
   private async updateUrlIfExpired(
     file: IFile | IRecordId
   ): Promise<IFile | undefined> {
-    if (isRecordId(file)) {
-      const _file = await this.select(file as IRecordId);
-      if (!_file) return;
-      file = _file;
-    }
     if (typeof file !== "object" || !("url" in file) || !file.url) return;
     if (isUrlExpired(file.url)) {
       let key = getBucketNameandKey(file.url);
@@ -114,13 +145,18 @@ class FileStore extends ResourceStore<IFile> {
   async refresh(file: IFile | IRecordId): Promise<IFile | undefined> {
     logger.log({ at: "fileStore - refresh", file });
     if (!file) return;
+    if (isRecordId(file)) {
+      const _file = await this.select(file as IRecordId);
+      if (!_file) return;
+      file = _file;
+    }
     if (typeof file === "object" && "data" in file && file.data) {
       return {
         ...file,
         url: URL.createObjectURL(new Blob([file.data], { type: file.type }))
       };
     }
-    const response = await fileStore.updateUrlIfExpired(file);
+    const response = await this.updateUrlIfExpired(file);
     if (!response) return;
     file = { ...response };
     return file;

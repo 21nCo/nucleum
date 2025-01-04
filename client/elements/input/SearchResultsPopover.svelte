@@ -82,7 +82,7 @@
     ) {
       let trigger = shortcutTriggers.find((trigger) => value.includes(trigger));
       if (trigger) {
-        value = value.split(trigger)[1].split(" ")[0];
+        value = value.split(trigger)[1].split("\u200b")[0];
       }
     }
     // console.log("keyup - search results popover", { event, value });

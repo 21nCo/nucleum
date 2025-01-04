@@ -590,6 +590,7 @@ function initActiveNodeEventStore(id: string) {
     }
   };
 }
+
 const nodeStaticActions = {
   linksPane: {
     value: NodeRightPaneType.LINKS,

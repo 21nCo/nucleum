@@ -260,6 +260,7 @@ function initAppStore(seed: AppStore) {
     const contextData = get(context);
     const accountData = get(account);
     if (action && action.hideContext?.includes(contextData.embed)) return null;
+    if (action && action.hideContext?.includes(contextData.os)) return null;
     if (action && action.hideContext?.includes(accountData.dataMode))
       return null;
     if (action) return action;

@@ -34,6 +34,7 @@ import { generateResourceId } from "../components/flux/flux.utils";
 import { Resource } from "../components/flux/resourceStores/resource.enum";
 import { dispatchCustomEvent } from "../utils/browser.utils";
 import { GlobalEvent } from "../types/event.enum";
+import context from "./context.store";
 
 export const isRefreshingToken = writable(false);
 
@@ -439,6 +440,22 @@ class AccountStore extends ObservableStore<
     } else {
       return true;
     }
+  }
+
+  isCloudUserAndOffline() {
+    const account = this.get();
+    const ctx = get(context);
+    if (account.dataMode === UserDataMode.CLOUD && ctx.isInOfflineMode)
+      return true;
+    return false;
+  }
+
+  isCloudUserAndOnline() {
+    const account = this.get();
+    const ctx = get(context);
+    if (account.dataMode === UserDataMode.CLOUD && !ctx.isInOfflineMode)
+      return true;
+    return false;
   }
 }
 

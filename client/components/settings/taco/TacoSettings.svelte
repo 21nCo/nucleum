@@ -16,6 +16,7 @@
   } from "$lib/client/products/memotron/taco/taco.types";
   import { runVectorGeneration } from "$lib/client/products/memotron/taco/taco.store";
   import { appStore } from "$lib/client/stores/app.store";
+  import { deleteItemsFromCache } from "$lib/client/products/memotron/taco/taco.utils";
 
   export let isCmdBarLaunch: boolean = false;
 
@@ -23,21 +24,6 @@
   let progress = 0;
   let label: string;
   let isDisabled: boolean = false;
-
-  async function deleteItemsFromCache(
-    modelMatch: string,
-    cacheName: string = "transformers-cache"
-  ) {
-    let transformersCache = await caches.open(cacheName);
-    let all = await transformersCache.keys();
-    let filteredUrls = all
-      .filter((key) => key.url.includes(modelMatch))
-      .map((key) => key.url);
-    if (!transformersCache) return;
-    for (let url of filteredUrls) {
-      await transformersCache.delete(url);
-    }
-  }
 
   function progressUpdate(e: any, currentToggle: TacoLocalAIOptions) {
     if (e.data.progress) progress = e.data.progress;
