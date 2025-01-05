@@ -7,10 +7,14 @@
   import view from "$lib/client/stores/view.store";
   import { logger } from "$lib/client/components/debug/logger.client";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { ErrorMessage } from "$lib/client/components/error/error.type";
+  import { appStore } from "$lib/client/stores/app.store";
+  import type { IRecordId } from "$lib/client/types/data.type";
 
   let videoElement: HTMLVideoElement;
   let canvasElement: HTMLCanvasElement;
   let photoTaken = false;
+  let savedResource: IRecordId | null = null;
   let containerHeight: number;
   let containerWidth: number;
   let isSaving = false;
@@ -102,24 +106,47 @@
     }
   }
 
-  function savePhoto() {
+  async function savePhoto() {
     if (!canvasElement) {
       error = "Something went wrong. Please try again.";
       return;
     }
     try {
       isSaving = true;
-      canvasElement.toBlob(async (blob) => {
-        if (blob) {
-          await captureStore.saveCameraCapture(blob, {
-            deviceInfo,
-            isMediaDeviceCapture: true
-          });
-          isSaving = false;
-        }
-      }, "image/jpeg");
+      // canvasElement.toBlob(async (blob) => {
+      //   if (blob) {
+      //     await captureStore.saveCameraCapture(blob, {
+      //       deviceInfo,
+      //       isMediaDeviceCapture: true
+      //     });
+      //     isSaving = false;
+      //   }
+      // }, "image/jpeg");
+
+      const blob = await new Promise<Blob | null>((resolve) => {
+        canvasElement.toBlob((b) => resolve(b), "image/jpeg");
+      });
+      if (!blob) {
+        error = ErrorMessage.DEFAULT;
+        logger.error({ at: "CameraCapture.savePhoto", error: "No blob" });
+        isSaving = false;
+        return;
+      }
+      const result = await captureStore.saveCameraCapture(blob, {
+        deviceInfo,
+        isMediaDeviceCapture: true
+      });
+      isSaving = false;
+      const node = Array.isArray(result) ? result[0] : result;
+      if (!result || !node || !node?.id) {
+        error = ErrorMessage.DEFAULT;
+        logger.error({ at: "CameraCapture.savePhoto", error: result });
+        isSaving = false;
+        return;
+      }
+      savedResource = node.id;
     } catch (e) {
-      error = "Something went wrong. Please try again.";
+      error = ErrorMessage.DEFAULT;
       logger.error({ at: "CameraCapture.savePhoto", error: e });
       isSaving = false;
     }
@@ -170,7 +197,11 @@
       }
     )}
   >
-    {#if photoTaken}
+    {#if savedResource}
+      <div class="flex items-center justify-center text-fgs3">
+        Node saved successfully!
+      </div>
+    {:else if photoTaken}
       <Button
         icon="ph:arrow-clockwise-light"
         label="Retake"

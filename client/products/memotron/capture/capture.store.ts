@@ -742,11 +742,10 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     });
     await this.saveLinks(id);
     const ctx = get(context);
-    let isOpenUponSuccess = true;
     if (params?.isMediaDeviceCapture && ctx.os === OperatingSystem.MACOS) {
-      isOpenUponSuccess = false;
+      return result2;
     }
-    this.postSave(result2, { isOpenUponSuccess });
+    this.postSave(result2, { isOpenUponSuccess: true });
   }
 
   async saveWebpage(
