@@ -22,6 +22,11 @@ export function postMessageToParent(message: EmbedMessage) {
     message
   });
 }
+
+/**
+ * TODO - security check
+ * @param message 
+ */
 export function postToParent(message: any) {
   logger.log({
     at: "posting message to parent",
@@ -35,6 +40,12 @@ export function postToParent(message: any) {
   try {
     //@ts-ignore
     window?.webkit?.messageHandlers?.iOSNative?.postMessage(message);
+  } catch (error) {
+    logger.error(error);
+  }
+  try {
+    //@ts-ignore
+    window?.chrome?.webview?.postMessage(message);
   } catch (error) {
     logger.error(error);
   }

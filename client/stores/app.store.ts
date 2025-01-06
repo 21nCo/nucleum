@@ -428,12 +428,15 @@ function initAppStore(seed: AppStore) {
     url += "&redirect_uri=" + redirectUri;
     // url += "&redirect_uri=" + encodeURIComponent(redirectUri);
     if (
-      ctx.isEmbed &&
-      (ctx.os === OperatingSystem.IOS ||
-        (ctx.os === OperatingSystem.MACOS &&
-          provider !== IdentityProvider.Apple))
+      ctx.isEmbed
     ) {
-      if (ctx.os === OperatingSystem.MACOS) {
+
+      if(provider === IdentityProvider.Apple && ctx.os === OperatingSystem.MACOS) {
+        goto(url);
+        return;
+      }
+
+      if (ctx.os === OperatingSystem.MACOS || ctx.os === OperatingSystem.WINDOWS) {
         const host =
           dev || app.isDebugMode
             ? "http://localhost:5002"

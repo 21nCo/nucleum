@@ -79,9 +79,9 @@
       handleMacOSEmbedRedirection(data.token);
     } else if (
       $context.os == OperatingSystem.IOS ||
-      (isEmbedRedirection && $context.os === OperatingSystem.MACOS)
+      (isEmbedRedirection && ($context.os === OperatingSystem.MACOS || $context.os === OperatingSystem.WINDOWS))
     ) {
-      handleAppleUrlSchemeRedirection(data.token);
+      handleUrlSchemeRedirection(data.token);
     } else if (data.userInfo) {
       debugMessage = "signing in with oauth";
       account.signIn({ ...data, userInfo: data.userInfo });
@@ -91,19 +91,19 @@
     }
   }
 
-  async function handleAppleUrlSchemeRedirection(token: string) {
+  async function handleUrlSchemeRedirection(token: string) {
     try {
-      debugMessage = "ios - apple url scheme redirection";
+      debugMessage = "ios - url scheme redirection";
       console.log({
-        ctx: "handleAppleUrlSchemeRedirection",
+        ctx: "handleUrlSchemeRedirection",
         product: $appStore.product
       });
       appStore.gotoPath(
         $appStore.product + "://oauthsignin" + "?token=" + token
       );
     } catch (err) {
-      debugMessage = "ios - apple url scheme redirection error" + err;
-      console.error({ err, ctx: "handleAppleUrlSchemeRedirection" });
+      debugMessage = "ios - url scheme redirection error" + err;
+      console.error({ err, ctx: "handleUrlSchemeRedirection" });
       appStore.gotoErrorPage(debugMessage);
     }
   }

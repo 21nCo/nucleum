@@ -271,6 +271,11 @@
     }
   }
 
+  function handleMessageFromChromeWebview(event: any) {
+    const messageFromChromeWebView = event.data;
+    console.log("Received from Chrome Webview:", messageFromChromeWebView);
+  }
+
   function addWindowEventListeners() {
     window.addEventListener(
       GlobalEvent.CUSTOM_NAVIGATION,
@@ -283,6 +288,12 @@
     window.addEventListener("online", updateOnlineStatus);
     window.addEventListener("offline", updateOnlineStatus);
     window.addEventListener("message", handleMessageFromParent);
+    try {
+      //@ts-ignore
+      window.chrome.webview.addEventListener('message', handleMessageFromChromeWebview);
+    } catch (error) {
+      logger.error(error);
+    }
   }
   function removeWindowEventListeners() {
     window.removeEventListener(
@@ -294,6 +305,12 @@
     window.removeEventListener("online", updateOnlineStatus);
     window.removeEventListener("offline", updateOnlineStatus);
     window.removeEventListener("message", handleMessageFromParent);
+    try {
+      //@ts-ignore
+      window.chrome.webview.removeEventListener('message', handleMessageFromChromeWebview);
+    } catch (error) {
+      logger.error(error);
+    }
   }
   onDestroy(() => {
     removeWindowEventListeners();
