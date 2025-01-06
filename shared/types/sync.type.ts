@@ -6,7 +6,7 @@ export enum SyncMethod {
   SYNC_DOWN = "down",
   CLONE_UP = "cloneup",
   CLONE_DOWN = "clonedown",
-  CLONE_DOWN_PAGINATE = "clonedown_paginate",
+  CLONE_DOWN_PAGINATE = "paginate",
   RECONCILE = "reconcile"
 }
 
