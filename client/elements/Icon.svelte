@@ -127,6 +127,7 @@
   import PhCrossCircled from "../icons/PhCrossCircled.svelte";
   import PhBookmarks from "../icons/PhBookmarks.svelte";
   import PhArrowElbow from "../icons/PhArrowElbow.svelte";
+  import { resolveSpriteSheetPath, extensionSprites } from "./icons/icon.store";
 
   export let icon: string | undefined = undefined;
   export let size: Size.xs | Size.sm | Size.md | Size.lg | Size.xl | Size.xxl =
@@ -157,7 +158,6 @@
   let classListParam = "";
   let dev_useIconifyTailwind = false;
   let isUseIconifySprite = true;
-  const spriteVersion = 6;
   export { classListParam as class };
   let _classList = "";
   let variant: IconVariant = IconVariant.Outline;
@@ -266,6 +266,34 @@
     }
     return renderedIcon;
   }
+
+  function resolveSpriteIconPath(icon: string) {
+    let sheet = "sprite";
+    if (icon.startsWith("ph:")) {
+      if (icon.endsWith("-light")) {
+        sheet = "sprite-ph-light";
+      } else if (icon.endsWith("-fill")) {
+        sheet = "sprite-ph-fill";
+      } else if (icon.endsWith("-thin")) {
+        sheet = "sprite-ph-thin";
+      } else {
+        sheet = "sprite-ph-base";
+      }
+    }
+    const path = resolveSpriteSheetPath(sheet);
+    if (isExtensionEnvironment()) {
+      // if (!isContentScript()) {
+      //   const url = `${path}#${icon}`;
+      //   return chrome.runtime.getURL(url);
+      // }
+      if (extensionSprites.has(sheet)) {
+        const sprite = extensionSprites.get(sheet);
+        return `${sprite}#${icon}`;
+      }
+      return null;
+    }
+    return `${path}#${icon}`;
+  }
 </script>
 
 <button
@@ -273,7 +301,7 @@
   tabindex={isTabbable ? 0 : -1}
   on:click
 >
-  {#if icon?.includes(":") && renderedIconifyIcon && !isExtensionEnvironment()}
+  {#if icon?.includes(":") && renderedIconifyIcon}
     {@const sizePx =
       size === Size.xxl
         ? "3rem"
@@ -286,29 +314,7 @@
               : "1rem"}
     {#if isUseIconifySprite && !icon.startsWith("svg-spinners")}
       <svg width={sizePx} height={sizePx} class={_classList + " iconifysvg "}>
-        {#if renderedIconifyIcon.startsWith("ph:")}
-          {#if renderedIconifyIcon.endsWith("-light")}
-            <use
-              href={`/icons/sprite-ph-light-v${spriteVersion}.svg#${renderedIconifyIcon}`}
-            />
-          {:else if renderedIconifyIcon.endsWith("-fill")}
-            <use
-              href={`/icons/sprite-ph-fill-v${spriteVersion}.svg#${renderedIconifyIcon}`}
-            />
-          {:else if renderedIconifyIcon.endsWith("-thin")}
-            <use
-              href={`/icons/sprite-ph-thin-v${spriteVersion}.svg#${renderedIconifyIcon}`}
-            />
-          {:else}
-            <use
-              href={`/icons/sprite-ph-base-v${spriteVersion}.svg#${renderedIconifyIcon}`}
-            />
-          {/if}
-        {:else}
-          <use
-            href={`/icons/sprite-v${spriteVersion}.svg#${renderedIconifyIcon}`}
-          />
-        {/if}
+        <use href={resolveSpriteIconPath(renderedIconifyIcon)} />
       </svg>
     {:else if dev_useIconifyTailwind}
       <span class="iconify text-fgs1 {renderedIconifyIcon} w-5 h-5"></span>
@@ -324,12 +330,12 @@
           "w-3 h-3": size === Size.xs
         })}
       >
-        <IconifyIcon
+        <!-- <IconifyIcon
           icon={renderedIconifyIcon}
           width={sizePx}
           height={sizePx}
           class={_classList + " iconifysvg "}
-        />
+        /> -->
       </div>
     {/if}
   {:else if icon}

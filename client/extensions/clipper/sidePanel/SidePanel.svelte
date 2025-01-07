@@ -34,6 +34,7 @@
   import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { screenShotOnlyPages } from "$lib/client/products/memotron/common/urlMap";
   import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
+  import Icon from "$lib/client/elements/Icon.svelte";
   let mode: "Clips" | "Capture" | "Notes" = "Clips";
   let title = "";
   let isPageSaved = false;
@@ -169,9 +170,10 @@
           <span>
             {#if isPageSaved}
               <div
-                class="min-w-fit bg-bgs2 border rounded-md px-3 py-1.5 border-brs3"
+                class="min-w-fit bg-bgs2 border rounded-md px-3 py-1.5 border-brs3 flex items-center gap-2"
               >
-                Saved
+                <Icon icon="ph:check" />
+                <span>Saved</span>
               </div>
             {:else}
               <button

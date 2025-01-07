@@ -116,7 +116,7 @@
     />
   {/if}
   <Toggle
-    icon="ph:crop"
+    icon="ph:crop-light"
     tooltip="Snip"
     size={Size.md}
     bind:on={isSnipActive}
@@ -147,7 +147,7 @@
           : Orientation.Horizontal}
       />
       <Toggle
-        icon="ph:highlighter"
+        icon="ph:highlighter-light"
         tooltip="Highlighter"
         size={Size.md}
         bind:on={isAutoHighlighterExpanded}
@@ -183,7 +183,7 @@
     </div>
   {/if}
   <Button
-    icon="ph:bookmarks"
+    icon="ph:bookmarks-light"
     tooltip="Open Side panel"
     {...buttonParams}
     on:click={() =>
@@ -192,7 +192,7 @@
         data: { action: ExtensionEvent.TOGGLE_SIDEPANEL }
       })}
   />
-  <Button
+  <!-- <Button
     icon={$toolbarState.position === Placement.Right
       ? "ph:arrow-elbow-down-left"
       : "ph:arrow-elbow-right-up"}
@@ -212,9 +212,9 @@
       }
       toolbarState.changePosition(val);
     }}
-  />
+  /> -->
   <Button
-    icon="ph:x-circle"
+    icon="ph:x-circle-light"
     tooltip="Collapse"
     {...buttonParams}
     on:click={() => {

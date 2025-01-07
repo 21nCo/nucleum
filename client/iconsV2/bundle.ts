@@ -4,6 +4,8 @@ import { locate } from "@iconify/json";
 import { iconSets, phIcons } from "./icons-list";
 
 const version = 6;
+const isExtension = true;
+
 const spriteContentStart =
   '<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">';
 
@@ -45,16 +47,13 @@ async function buildPhSprite() {
 async function build(spriteContent: string, prefix: string) {
   await deletePreviousVersions(prefix, version);
   spriteContent += "</svg>";
-  await writeFile(
-    `./../../../static/icons/${prefix}-v${version}.svg`,
-    spriteContent
-  );
+  await writeFile(resolveFullPath(prefix), spriteContent);
 }
 
 async function deletePreviousVersions(prefix: string, version: number) {
   for (let v = 1; v < version; v++) {
     try {
-      await unlink(`./../../../static/icons/${prefix}-v${v}.svg`);
+      await unlink(resolveFullPath(prefix, v));
       console.log(`Deleted ${prefix}-v${v}.svg`);
     } catch (error) {
       // Ignore if file doesn't exist
@@ -83,6 +82,13 @@ function addIconsToSprite(
   }
   console.log(`${setName}: ${iconNames.size} icons added to sprite`);
   return spriteContent;
+}
+
+function resolveFullPath(prefix: string, versionParam?: number) {
+  if (isExtension) {
+    return `./../../../assets/icons/${prefix}.svg`;
+  }
+  return `./../../../static/icons/${prefix}-v${versionParam ?? version}.svg`;
 }
 
 buildIconSprite();

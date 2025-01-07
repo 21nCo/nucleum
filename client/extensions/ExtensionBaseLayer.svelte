@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import { StoreDataType, type IStore } from "../types/data.type";
   import { resolveCurrentUserId, resolveToken } from "../utils/account.utils";
   import account from "../stores/account.store";
@@ -22,6 +22,10 @@
   import { extractProduct } from "$lib/shared/utils/utils";
   import { relayToSidePanel } from "../utils/extension.utils";
   import { ExtensionEvent } from "../types/extension.type";
+  import {
+    cleanExtensionSprites,
+    extensionSprites
+  } from "../elements/icons/icon.store";
   const dispatch = createEventDispatcher();
   export let id: string;
   export let stores: IStore[] = [];
@@ -29,6 +33,19 @@
   $: product = extractProduct(window.location.hostname);
   $: isSelfPage =
     product.product === "memotron" || process.env.NODE_ENV === "development";
+
+  const sprites = {
+    sprite: require("data-text:/assets/icons/sprite.svg"),
+    "sprite-ph-base": require("data-text:/assets/icons/sprite-ph-base.svg"),
+    "sprite-ph-light": require("data-text:/assets/icons/sprite-ph-light.svg"),
+    "sprite-ph-fill": require("data-text:/assets/icons/sprite-ph-fill.svg")
+  };
+
+  Object.entries(sprites).forEach(([key, content]) => {
+    const blob = new Blob([content], { type: "image/svg+xml" });
+    const url = URL.createObjectURL(blob);
+    extensionSprites.set(key, url);
+  });
 
   onMount(async () => {
     window.addEventListener(
@@ -54,6 +71,10 @@
       false
     );
     await refreshUserSession();
+  });
+
+  onDestroy(() => {
+    cleanExtensionSprites();
   });
 
   async function refreshUserSession() {

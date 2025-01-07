@@ -597,3 +597,14 @@ export async function getDeviceInfo() {
     logger.error({ at: "getDeviceInfo", error: e });
   }
 }
+
+export function isContentScript(): boolean {
+  try {
+    return (
+      typeof window !== 'undefined' &&
+      window.location.protocol !== 'chrome-extension:'
+    );
+  } catch {
+    return false;
+  }
+}
