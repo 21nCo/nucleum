@@ -211,7 +211,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       }
       const ssFile = await screenshotWebpage();
       const tab = await extractFullTabData();
-      tab.metadata = { ...tab.metadata, screenshotFile: ssFile };
+      tab.metadata = { ...tab.metadata, screenshotFile: ssFile.id };
       return tab;
 
       async function screenshotWebpage() {
@@ -244,7 +244,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
    */
   async saveClip(data: IClipCapture) {
     let webpage = this.get();
-    logger.log({ at: "saveClip", webpage, data });
+    logger.debug({ at: "saveClip", webpage, data });
 
     const id = generateResourceId(Resource.node);
     if (!webpage.id) {
@@ -268,7 +268,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     };
     const response = await nodeStore.create([clip]);
     if (!response || !Array.isArray(response)) return;
-    logger.log({ at: "saveClip", response });
+    logger.debug({ at: "saveClip", response });
     const clipNode = response[0] as IWebScreenshotClip;
     if (!clipNode) return;
     const clips = [...(this.get().clips ?? []), { ...clipNode, links: [] }];

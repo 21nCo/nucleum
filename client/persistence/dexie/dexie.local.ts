@@ -46,6 +46,12 @@ export class DexiePersistence implements IPersistence {
     return 0;
   }
 
+  async terminate() {
+    await this.instance?.close();
+    this.instance = undefined;
+    return true;
+  }
+
   private async addInitializationLog(params?: IPersistenceInitParams) {
     await this.instance?.table(Resource.kv).add({
       id: "kv:local",

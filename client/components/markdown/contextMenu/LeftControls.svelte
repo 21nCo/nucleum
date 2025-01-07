@@ -34,7 +34,7 @@
   import { popover, tooltip } from "$lib/client/actions/popover.action";
   import ContextMenu from "$lib/client/elements/contextMenu/ContextMenu.svelte";
   import { hoverable } from "$lib/client/actions/hover.action";
-  import { fileStore } from "../../files/file.store";
+  import { nodeStore } from "$lib/client/products/memotron/node/node.store";
   const dispatch = createEventDispatcher();
   export let block: IBlock;
   export let isFocusing: boolean = false;
@@ -194,7 +194,7 @@
       value: BlockAction.DOWNLOAD,
       icon: "ph:download-simple-light",
       callback: async () => {
-        fileStore.download(block.body.id);
+        nodeStore.download(block.body.id);
       }
     }
   };

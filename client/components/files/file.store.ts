@@ -1,5 +1,4 @@
 import { persistenceInstance } from "$lib/client/persistence/persistence";
-import { nodeStore } from "$lib/client/products/memotron/node/node.store";
 import context from "$lib/client/stores/context.store";
 import { toasts } from "$lib/client/stores/notification.store";
 import type { IRecordId } from "$lib/client/types/data.type";
@@ -12,7 +11,6 @@ import { logger } from "../debug/logger.client";
 import { Resource } from "../flux/resourceStores/resource.enum";
 import { ResourceStore } from "../flux/resourceStores/resource.store";
 import {
-  determineResourceType,
   isRecordId
 } from "../flux/resourceStores/resource.utils";
 import type { IFile } from "./file.type";
@@ -34,18 +32,7 @@ class FileStore extends ResourceStore<IFile> {
         _file = file;
       else if (typeof file === "string" && file.includes("http")) _file = file;
       else {
-        let fileId: IRecordId | undefined = undefined;
-        const resource = determineResourceType(file);
-        if (resource === Resource.node) {
-          const node = await nodeStore.select(file as IRecordId);
-          if (node && node.file) {
-            fileId = node.file;
-          }
-        } else {
-          fileId = file as IRecordId;
-        }
-        if (!fileId) return;
-        _file = await this.select(fileId);
+        _file = await this.select(file as IRecordId);
         if (!_file) return;
       }
       const contextStore = get(context);

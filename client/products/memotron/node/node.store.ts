@@ -29,11 +29,8 @@ import {
   ResourceAccessPoint
 } from "$lib/client/components/flux/resourceStores/resource.type";
 import { ResourceActions } from "../common/resource.actions";
-import { MemotronAction } from "../memotronAction.enum";
-import { appStore } from "$lib/client/stores/app.store";
 import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
 import { get, writable } from "svelte/store";
-import { SearchStore } from "../memotron.store";
 import { linker } from "$lib/client/products/memotron/linking/link.store";
 import {
   ContextMenuType,
@@ -69,12 +66,11 @@ import type { IBlock } from "$lib/client/components/markdown/md.type";
 export const hierarchyFactorLimit = 5;
 
 class NodeStore extends ResourceStore<INode> {
-  searchStore: SearchStore;
+  searchStore: any;
   constructor() {
     super(Resource.node, {
       dboDependencies: ["fn::memotron::node::fetch", "fn::memotron::timeline"]
     });
-    this.searchStore = new SearchStore(Resource.node);
   }
   async fetchTimeline(date: Date) {
     const query = `fn::memotron::timeline($date)`;
@@ -100,6 +96,11 @@ class NodeStore extends ResourceStore<INode> {
     return response;
   }
 
+  /**
+   * @deprecated
+   * @param query 
+   * @returns 
+   */
   async search(query: string) {
     if (isValidString(query)) {
       this.searchStore.searchQuery = query;
@@ -143,6 +144,21 @@ class NodeStore extends ResourceStore<INode> {
       return baseAvatars;
     } else {
       return avatars;
+    }
+  }
+
+  async download(node: IRecordId | INode) {
+    let file;
+    if (isRecordId(node)) {
+      const result = await this.select(node);
+      if (result?.file) {
+        file = result.file;
+      }
+    } else if (typeof node === "object" && "file" in node) {
+      file = node.file;
+    }
+    if (file) {
+      return fileStore.download(file);
     }
   }
 }

@@ -256,7 +256,7 @@ class Flux {
     additionalParams: IMutationAdditionalParams = {}
   ) {
     let response;
-    logger.log({ at: "flux.mutation", resource, params });
+    logger.debug({ at: "flux.mutation", resource, params });
     try {
       if (!additionalParams?.isCloudOnlyResource || this.isLocalMode) {
         response = await this.persistence.mutation(resource, params);
@@ -270,7 +270,7 @@ class Flux {
       }
       if (this.isExtensionEnvironment) {
         setTimeout(async () => {
-          await this.sync(mutation);
+          await this.syncForExtension(mutation);
         }, 100);
       }
       if (!additionalParams?.isPreventSubscriptions) {
@@ -493,13 +493,13 @@ class Flux {
     });
     logger.log({ at: "kvMerge - result", storeId, record, result });
     if (!this.isLocalMode) {
-      await this.insertMutation(Resource.kv, {
+      const mutation = await this.insertMutation(Resource.kv, {
         record,
         action: PersistenceActionType.MERGE
       });
       if (this.isExtensionEnvironment) {
         setTimeout(async () => {
-          await this.sync();
+          await this.syncForExtension(mutation);
         }, 100);
       }
     }
@@ -580,6 +580,46 @@ class Flux {
       }
     } catch (e) {
       logger.error({ at: "flux.remoteRelay", body, error: e });
+    }
+  }
+
+
+  /**
+   * For Extension Environment:
+  * Sync up the local changes and from response - syncs down the changes from cloud.
+  * @returns
+  */
+  async syncForExtension(mutation?: IMutation) {
+    try {
+      if(!mutation) return;
+      const isOffline = await determineIfOffline();
+      if (isOffline) {
+        //TODO - user feedback that internet connection is required for sync to work
+        console.log("offline detected - extension");
+        return;
+      }
+      logger.log({
+        at: "flux.syncForExtension",
+        mutation,
+        isExtensionEnvironment: this.isExtensionEnvironment
+      });
+      const local = await this.resolveLocal();
+      const lastSyncDown =
+        local?.lastSyncDown ?? new Date().getTime() - 1000 * 60 * 60 * 24;
+      const dapId = await this.resolveDapId(local);
+      let response = await this.performSync(SyncMethod.SYNC_UP, {
+          mutations: [{ ...mutation, dapId }],
+          lastSyncDown,
+          resources: this.resolveSyncResources(),
+          dapId
+        });
+      logger.log({ at: "flux.syncForExtension - response", mutation, response });
+      if (response?.syncDownData) {
+        await this.processSyncDown(response.syncDownData);
+      }
+      return response;
+    } catch (e) {
+      logger.error({ at: "flux.syncForExtension", error: e });
     }
   }
 

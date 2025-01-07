@@ -118,7 +118,7 @@
   import Underline from "../icons/Underline.svelte";
   import Strikethrough from "../icons/Strikethrough.svelte";
   import Highlight from "../icons/Highlight.svelte";
-  import IconifyIcon from "@iconify/svelte";
+  // import IconifyIcon from "@iconify/svelte";
   import { logger } from "../components/debug/logger.client";
   import { isExtensionEnvironment } from "../utils/browser.utils";
   import Crop from "../icons/Crop.svelte";
