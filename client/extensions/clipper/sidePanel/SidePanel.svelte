@@ -172,7 +172,7 @@
               <div
                 class="min-w-fit bg-bgs2 border rounded-md px-3 py-1.5 border-brs3 flex items-center gap-2"
               >
-                <Icon icon="ph:check" />
+                <Icon icon="ph:check-light" size={Size.sm} />
                 <span>Saved</span>
               </div>
             {:else}

@@ -2,7 +2,7 @@ import { tick } from "svelte";
 import { Placement } from "../types/direction.enum";
 import { PopoverTriggerMethod } from "../types/popover.type";
 import { deepCopy } from "$lib/shared/utils/obj.utils";
-import { getEventPath } from "../utils/browser.utils";
+import { getEventPath, isExtensionEnvironment } from "../utils/browser.utils";
 import { renderMdAsHtml } from "../components/markdown/markdown.utils";
 
 interface TooltipReturn {
@@ -295,7 +295,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
 
   let isShown = false;
   let lastTriggeredBy: PopoverTriggerMethod | null = null;
-  let popoverContainer = document.getElementById("popovers");
+  let popoverContainer = document.getElementById("popovers") ?? node?.getRootNode()?.getElementById("popovers");
 
   async function createPopover(): Promise<void> {
     popoverElement = document.createElement("div");
@@ -305,11 +305,9 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     popoverElement.id = id;
     popoverElement.setAttribute("data-group-id", groupId);
 
-    // node.appendChild(popoverElement);
-
     if (isRenderAsSibling && node.parentNode) {
       node.parentNode.insertBefore(popoverElement, node.nextSibling);
-    } else {
+    } else if (popoverContainer) {
       popoverContainer?.appendChild(popoverElement);
     }
 
@@ -549,12 +547,15 @@ export function popover(node: HTMLElement, params: PopoverParams) {
   }
 
   async function showPopover(e?: any): Promise<void> {
-    // console.log("showPopover", e, popoverElement);
-    if (!popoverElement) await createPopover();
-    positionPopover();
-    isShown = true;
-    triggerChangeEvent();
-    document.addEventListener("click", handleOutsideClickv2);
+    try {
+      if (!popoverElement) await createPopover();
+        positionPopover();
+      isShown = true;
+      triggerChangeEvent();
+      document.addEventListener("click", handleOutsideClickv2);
+    } catch (e) {
+      console.error("showPopover", e);
+    }
   }
 
   function hidePopover(e?: any): void {
@@ -602,8 +603,8 @@ export function popover(node: HTMLElement, params: PopoverParams) {
    * @returns
    */
   function handleOutsideClickv2(event: MouseEvent): void {
-    // console.log("handleOutsideClickv2", event);
-    if (!popoverElement || !node) return;
+    console.log("handleOutsideClickv2", event);
+    if (!popoverElement || !node || event.target.nodeName === "PLASMO-CSUI") return;
 
     const target = event.target as Element;
     const path =

@@ -15,5 +15,7 @@
 >
   <ThemeLayer extensionContext={id}>
     <slot />
+    <div id="popovers"></div>
+    <div id="tooltips"></div>
   </ThemeLayer>
 </div>

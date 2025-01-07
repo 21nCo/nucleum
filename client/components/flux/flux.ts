@@ -795,7 +795,7 @@ class Flux {
     if (deletedRecords && deletedRecords.length > 0) {
       await this.processDeletedRecords(deletedRecords);
     }
-    logger.log({ at: "processSyncDown", mutations: syncRecords });
+    logger.log({ at: "processSyncDown", syncRecords });
     if (!Array.isArray(syncRecords) || syncRecords.length === 0) return;
     let data: { resource: Resource; records: any[] }[] = [];
     const recordsByResource = new Map<Resource, any[]>();
@@ -1065,6 +1065,7 @@ class Flux {
   }
 
   propagateSyncStatus(resource: Resource, isFinish?: boolean) {
+    if (this.isExtensionEnvironment) return;
     let status = "";
     if (isFinish) {
       status = `${resource}:finished`;
