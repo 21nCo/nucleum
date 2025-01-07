@@ -217,7 +217,10 @@
           on:color={onActivateColor}
           on:save={onSaveClick}
           on:saved={() => {
-            $feedbackPane.feedback = "Page saved!";
+            $feedbackPane.feedback = {
+              message: "Page saved!",
+              type: AlertType.SUCCESS
+            };
             feedbackPane.toggle();
           }}
           on:summarize

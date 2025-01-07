@@ -1,12 +1,14 @@
 <script lang="ts">
+  import Icon from "$lib/client/elements/Icon.svelte";
   import { AlertType } from "$lib/client/types/notification.type";
+  import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
 
   export let feedback: { message: string; type: AlertType } | string = "";
 </script>
 
 <div
-  class={cn("flex w-full justify-center text-b2 h-4", {
+  class={cn("flex items-center gap-1 w-full justify-center text-b2 h-4", {
     "text-fgs3": typeof feedback === "string",
     "text-ags1":
       typeof feedback != "string" && feedback?.type === AlertType.SUCCESS,
@@ -14,5 +16,16 @@
       typeof feedback != "string" && feedback?.type === AlertType.ERROR
   })}
 >
-  {typeof feedback == "string" ? feedback : feedback.message}
+  {#if typeof feedback === "object"}
+    {#if feedback?.type === AlertType.PROGRESS}
+      <Icon icon="svg-spinners:90-ring-with-bg" size={Size.xs} />
+    {:else if feedback?.type === AlertType.SUCCESS}
+      <Icon icon="ph:check-circle" size={Size.xs} class="text-ags1" />
+    {:else if feedback?.type === AlertType.ERROR}
+      <Icon icon="ph:x-circle" size={Size.xs} class="text-ars1" />
+    {/if}
+  {/if}
+  <span>
+    {typeof feedback == "string" ? feedback : feedback.message}
+  </span>
 </div>

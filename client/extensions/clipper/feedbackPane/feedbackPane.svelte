@@ -57,18 +57,30 @@
   }
 
   async function onNotesChange(e: CustomEvent) {
-    $feedbackPane.feedback = "Saving...";
+    $feedbackPane.feedback = {
+      message: "Saving...",
+      type: AlertType.PROGRESS
+    };
+    let response;
     if ($feedbackPane.focusedClip) {
-      const response = await webpage.persistClipNotes(
+      response = await webpage.persistClipNotes(
         $feedbackPane.focusedClip.id,
         notes
       );
-    } else $webpage.notes = notes;
-    //TODO - TEMP - show feedback from result - getting result from debounded function
-    clearTimeout(notesTimeout);
-    notesTimeout = setTimeout(() => {
-      $feedbackPane.feedback = "Notes saved!";
-    }, 1000);
+    } else {
+      response = await webpage.persistPageNotes(notes);
+    }
+    if (!response) {
+      $feedbackPane.feedback = {
+        message: "Notes failed to save",
+        type: AlertType.ERROR
+      };
+    } else {
+      $feedbackPane.feedback = {
+        message: "Notes saved!",
+        type: AlertType.SUCCESS
+      };
+    }
   }
   function onHover() {
     restartCloseTimer();
@@ -128,23 +140,42 @@
     console.log("link click", e.detail);
   }
 
-  function onPropertyUpdate(e: CustomEvent) {
+  async function onPropertyUpdate(e: CustomEvent) {
     if (!e.detail || !e.detail?.id || e.detail?.value === undefined) return;
+    $feedbackPane.feedback = {
+      message: "Syncing changes...",
+      type: AlertType.PROGRESS
+    };
     logger.log({
       at: "onPropertyUpdate",
       detail: e.detail,
       fc: $feedbackPane.focusedClip
     });
+    let response;
     if ($feedbackPane.focusedClip)
-      webpage.updateClipProperty($feedbackPane.focusedClip.id, {
-        id: e.detail.id,
-        value: e.detail.value
-      });
+      response = await webpage.updateClipProperty(
+        $feedbackPane.focusedClip.id,
+        {
+          id: e.detail.id,
+          value: e.detail.value
+        }
+      );
     else
-      webpage.updatePageProperty({
+      response = await webpage.updatePageProperty({
         id: e.detail.id,
         value: e.detail.value
       });
+    if (!response || response.error) {
+      $feedbackPane.feedback = {
+        message: response?.error ?? "Property update failed! Please try again.",
+        type: AlertType.ERROR
+      };
+      return;
+    }
+    $feedbackPane.feedback = {
+      message: "Synced!",
+      type: AlertType.SUCCESS
+    };
   }
 </script>
 

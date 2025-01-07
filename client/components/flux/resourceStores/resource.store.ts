@@ -1,7 +1,7 @@
 import { get, writable } from "svelte/store";
 import {
   activeResourceFilter,
-  debouncer,
+  asyncDebouncer,
   generateUID
 } from "../../../utils/utils";
 import {
@@ -314,7 +314,7 @@ export class ResourceStore<T extends IResource> implements IStore {
     if (!this.debouncers.has(id)) {
       this.debouncers.set(
         id,
-        debouncer(this.persistModification.bind(this), 2000)
+        asyncDebouncer(this.persistModification.bind(this), 2000)
       );
     }
     let val = this.debouncers.get(id);

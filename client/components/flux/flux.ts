@@ -19,7 +19,8 @@ import {
 } from "$lib/client/types/data.type";
 import {
   detectTimeZone,
-  detectTimeZoneFallback
+  detectTimeZoneFallback,
+  wait
 } from "$lib/client/utils/time.utils";
 import {
   type ILocal,
@@ -268,10 +269,9 @@ class Flux {
       ) {
         mutation = await this.insertMutation(resource, params);
       }
-      if (this.isExtensionEnvironment) {
-        setTimeout(async () => {
-          await this.syncForExtension(mutation);
-        }, 100);
+      if (this.isExtensionEnvironment && mutation) {
+        await wait(100);
+        response = await this.syncForExtension(mutation);
       }
       if (!additionalParams?.isPreventSubscriptions) {
         if (this.isExtensionEnvironment) {

@@ -13,7 +13,7 @@ import { Resource } from "$lib/client/components/flux/resourceStores/resource.en
 import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
 import { AlertType } from "$lib/client/types/notification.type";
 import { objIsEmpty, shallowDiff } from "$lib/shared/utils/obj.utils";
-import { activeResourceFilter, debouncer } from "$lib/client/utils/utils";
+import { activeResourceFilter, asyncDebouncer, debouncer } from "$lib/client/utils/utils";
 import { removeHighlight } from "./highlightV4";
 import {
   SyncStatus,
@@ -522,10 +522,11 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       return n;
     });
   }
-  private _persistNotes = async (id: string, notes: string) => {
-    return await nodeStore.modify(id, { notes });
+  private _persistNotes = (id: string, notes: string) => {
+    return nodeStore.modify(id, { notes });
   };
-  private _debouncedPersistNotes = debouncer(this._persistNotes, 2000);
+  private _debouncedPersistNotes = asyncDebouncer(this._persistNotes, 2000);
+
   set(newValue: IWebpageStore) {
     let changedProperties: any = {};
     if (this.previousValue) {
@@ -545,11 +546,21 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       this._debouncedPersistNotes(newValue.id, newValue.notes);
     }
   }
-  async persistClipNotes(id: IRecordId, notes: string) {
-    return new Promise((resolve) => {
-      const result = this._debouncedPersistNotes(id, notes);
-      resolve(result);
+
+  async persistPageNotes(notes: string) {
+    const webpage = this.get();
+    if (!webpage.id) return;
+    const response = await this._debouncedPersistNotes(webpage.id, notes);
+    if (!response) return;
+    this.update((n) => {
+      n.notes = notes;
+      return n;
     });
+    return response;
+  }
+
+  async persistClipNotes(id: IRecordId, notes: string) {
+    return this._debouncedPersistNotes(id, notes);
   }
 
   async updatePageProperty(property: INodePropertyValue) {
@@ -559,11 +570,13 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       (x) => !isSameResource(x, property)
     );
     const newProperties = [...(properties ?? []), property];
-    await this.updateProperties(webpage.id, newProperties);
+    const response = await this.updateProperties(webpage.id, newProperties);
+    if (!response || response.error) return;
     this.update((n) => {
       n.properties = [...newProperties];
       return n;
     });
+    return response;
   }
 
   async updateClipProperty(id: IRecordId, property: INodePropertyValue) {
@@ -581,7 +594,8 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       (x) => !isSameResource(x, property)
     );
     const newProperties = [...(properties ?? []), property];
-    await this.updateProperties(id, newProperties);
+    const response = await this.updateProperties(id, newProperties);
+    if (!response || response.error) return;
     this.update((n) => {
       n.clips = n.clips?.map((c) => {
         if (isSameResource(c, id)) {
@@ -591,13 +605,13 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       });
       return n;
     });
+    return response;
   }
 
-  private async updateProperties(
+  private updateProperties(
     id: IRecordId,
     properties: INodePropertyValue[]
   ) {
-    logger.log({ at: "updateProperties", id, properties });
     return nodeStore.modify(
       id,
       {

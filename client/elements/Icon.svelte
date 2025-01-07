@@ -128,6 +128,10 @@
   import PhBookmarks from "../icons/PhBookmarks.svelte";
   import PhArrowElbow from "../icons/PhArrowElbow.svelte";
   import { resolveSpriteSheetPath, extensionSprites } from "./icons/icon.store";
+  import EclipseHalf from "../iconsV2/svgSpinners/EclipseHalf.svelte";
+  import One80RingWithBg from "../iconsV2/svgSpinners/One80RingWithBg.svelte";
+  import NinetyRingWithBg from "../iconsV2/svgSpinners/NinetyRingWithBg.svelte";
+  import ThreeDotsFade from "../iconsV2/svgSpinners/ThreeDotsFade.svelte";
 
   export let icon: string | undefined = undefined;
   export let size: Size.xs | Size.sm | Size.md | Size.lg | Size.xl | Size.xxl =
@@ -312,15 +316,29 @@
             : size === Size.md
               ? "1.25rem"
               : "1rem"}
-    {#if isUseIconifySprite && !icon.startsWith("svg-spinners")}
+    {#if icon.startsWith("svg-spinners")}
+      <div
+        class={_classList + " iconifysvg " + renderedIconifyIcon}
+        style={`width: ${sizePx}; height: ${sizePx};`}
+      >
+        {#if icon.includes("3-dots-fade")}
+          <ThreeDotsFade />
+        {:else if icon.includes("90-ring-with-bg")}
+          <NinetyRingWithBg />
+        {:else if icon.includes("180-ring-with-bg")}
+          <One80RingWithBg />
+        {:else if icon.includes("eclipse-half")}
+          <EclipseHalf />
+        {/if}
+      </div>
+    {:else if isUseIconifySprite}
       <svg width={sizePx} height={sizePx} class={_classList + " iconifysvg "}>
         <use href={resolveSpriteIconPath(renderedIconifyIcon)} />
       </svg>
     {:else if dev_useIconifyTailwind}
       <span class="iconify text-fgs1 {renderedIconifyIcon} w-5 h-5"></span>
     {:else}
-      <!-- TODO - fix import issue on plasmo - disabling for now -->
-      <div
+      <!-- <div
         class={cn(renderedIconifyIcon, {
           "w-14 h-14": size === Size.xxl,
           "w-8 h-8": size === Size.xl,
@@ -330,13 +348,13 @@
           "w-3 h-3": size === Size.xs
         })}
       >
-        <!-- <IconifyIcon
-          icon={renderedIconifyIcon}
-          width={sizePx}
-          height={sizePx}
-          class={_classList + " iconifysvg "}
-        /> -->
-      </div>
+        <IconifyIcon
+      icon={renderedIconifyIcon}
+      width={sizePx}
+      height={sizePx}
+      class={_classList + " iconifysvg "}
+    />
+      </div> -->
     {/if}
   {:else if icon}
     <svg
