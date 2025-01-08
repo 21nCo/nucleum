@@ -31,6 +31,8 @@
   import { fileStore } from "$lib/client/components/files/file.store";
   import { propertyStore } from "$lib/client/products/memotron/collection/properties/property.store";
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { ResourceError } from "$lib/client/components/error/errors";
+  import { deepCopy } from "$lib/shared/utils/obj.utils";
 
   export let id: string;
   let textClipperRef: any;
@@ -61,56 +63,67 @@
   async function onSaveClick() {
     try {
       const contentTypeStr = enumToString(contentType);
-      feedbackPane.setSavingStatus(`Saving ${contentTypeStr}...`);
+      feedbackPane.onPageSaveStart(`Saving ${contentTypeStr}...`);
+      let result;
       if (contentType === NodeType.TWEET) {
         const tweetNode = extractTweetFromTweeetPage();
         if (!tweetNode) return;
-        await webpage.saveTweet(tweetNode, true);
+        result = await webpage.saveTweet(tweetNode, true);
       } else if (contentType === NodeType.TWITTER_PROFILE) {
         const data = extractTwitterProfile();
         if (!data) return;
-        await webpage.saveTwitterProfile(data);
+        result = await webpage.saveTwitterProfile(data);
       } else {
-        await webpage.savePage();
+        result = await webpage.savePage();
       }
-      $feedbackPane.feedback = {
-        message: `${contentTypeStr} saved!`,
-        type: AlertType.SUCCESS
-      };
+      if (!result || result.error) {
+        feedbackPane.setErrorFeedback({
+          isPreventAutoClose: false
+        });
+        return;
+      }
+      feedbackPane.onPageSaveSuccess(`${contentTypeStr} saved!`);
     } catch (error) {
-      $feedbackPane.feedback = {
-        message: "Something went wrong. Please try again.",
-        type: AlertType.ERROR
-      };
-    } finally {
-      $feedbackPane.isPreventAutoClose = false;
+      feedbackPane.setErrorFeedback({
+        isPreventAutoClose: false
+      });
     }
   }
 
   async function onMutationRelayFromSidePanel(data: any) {
-    logger.debug({ at: "onMutationRelayFromSidePanel", data });
-    let result;
-    if (data.action === "link") {
-      result = await webpage.linkClip(data.clipId, data.linkTo);
-    } else if (data.action === "unlink") {
-      result = await webpage.removeLinkForClip(data.clipId, data.linkTo);
-    } else if (data.action === "notes") {
-      //TODO - result
-      await webpage.persistClipNotes(data.clipId, data.notes);
-      result = { id: data.clipId, type: AlertType.SUCCESS };
-    } else if (data.action === "webpageNotes") {
-      $webpage.notes = data.notes;
-      result = { type: AlertType.SUCCESS };
-    } else if (data.action === "delete") {
-      await webpage.removeClip(data.clipId);
-      result = { type: AlertType.SUCCESS };
-    } else if (data.action === "property") {
-      await webpage.updateClipProperty(data.clipId, data.property);
-      result = { type: AlertType.SUCCESS };
+    try {
+      logger.debug({ at: "onMutationRelayFromSidePanel", data });
+      let result;
+      if (data.action === "link") {
+        result = await webpage.linkClip(data.clipId, data.linkTo);
+      } else if (data.action === "unlink") {
+        result = await webpage.removeLinkForClip(data.clipId, data.linkTo);
+      } else if (data.action === "notes") {
+        result = await webpage.persistClipNotes(data.clipId, data.notes);
+      } else if (data.action === "webpageNotes") {
+        result = await webpage.persistPageNotes(data.notes);
+      } else if (data.action === "delete") {
+        result = await webpage.removeClip(data.clipId);
+      } else if (data.action === "property") {
+        result = await webpage.updateClipProperty(data.clipId, data.property);
+      }
+      if (data.clipId && result) {
+        const clip = $webpage.clips?.find(resourceInList(data.clipId));
+        return {
+          ...result,
+          clip
+        };
+      } else return result;
+    } catch (error) {
+      logger.error({ at: "onMutationRelayFromSidePanel", error });
+      let errMessage = "Mutation failed";
+      if (error instanceof ResourceError) {
+        errMessage = error.message;
+      }
+      return {
+        error: errMessage
+      };
     }
-    if (result?.type === AlertType.SUCCESS && data.clipId)
-      return $webpage.clips?.find(resourceInList(data.clipId));
-    else return result;
   }
 
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -175,7 +188,7 @@
 
           case ClipperExtensionEvent.MUTATION_RELAY:
             const result = await onMutationRelayFromSidePanel(message.data);
-            return { status: "success", message: "Clip mutation", result };
+            return result;
           case ExtensionEvent.MUTATION:
             await extensionBaseRef.loadInMemoryStore(message.data?.resource);
             return { status: "success", message: "In memory store reloaded" };

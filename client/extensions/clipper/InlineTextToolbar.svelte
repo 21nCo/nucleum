@@ -11,6 +11,10 @@
   import LinkActionOnClipper from "$lib/client/products/memotron/common/linkbox/LinkActionOnClipper.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
   import HighlightColors from "$lib/client/products/memotron/common/highlighters/HighlightColors.svelte";
+  import { debouncer } from "$lib/client/utils/utils";
+  import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { ResourceError } from "$lib/client/components/error/errors";
 
   export let id: string | null = null;
   export let selectedHighlighterId: string | null = null;
@@ -28,19 +32,23 @@
     notes = clip?.notes ?? "";
   }
 
-  async function onNotesChange(e: CustomEvent) {
-    feedback = "Saving...";
-    logger.log({ at: "onNotesChange", id, notes });
-    const response = await webpage.persistClipNotes(id, notes);
-    //TODO - TEMP - show feedback from result - getting result from debounded function
-    setTimeout(() => {
-      feedback = "Notes saved!";
-    }, 1000);
-  }
   onMount(() => {
     feedback = "";
     if (id) refreshClip(id, $webpage.clips);
   });
+
+  async function onNotesChange(e: CustomEvent) {
+    feedback = { message: "Saving...", type: AlertType.PROGRESS };
+    logger.log({ at: "onNotesChange", id, notes });
+    const response = await webpage.persistClipNotes(id, notes);
+    if (!response) {
+      feedback = { message: "Notes save failed", type: AlertType.ERROR };
+    } else {
+      feedback = { message: "Notes saved!", type: AlertType.SUCCESS };
+    }
+  }
+
+  const debouncedNotesChange = debouncer(onNotesChange, 1500);
 
   async function onPropertyUpdate(e: CustomEvent) {
     if (!e.detail || !e.detail?.id || e.detail?.value === undefined || !id)
@@ -49,6 +57,41 @@
       id: e.detail.id,
       value: e.detail.value
     });
+  }
+
+  async function onLink(e: CustomEvent) {
+    try {
+      if (!e.detail || !id) return;
+      const resourceType = determineResourceType(e.detail);
+      const feedbackMessage =
+        resourceType === Resource.collection
+          ? "Adding to collection..."
+          : "Linking...";
+      feedback = {
+        message: feedbackMessage,
+        type: AlertType.PROGRESS
+      };
+      let result = await webpage.linkClip(id, e.detail);
+      if (!result) return;
+      const successMessage =
+        resourceType === Resource.collection
+          ? "Added to collection!"
+          : "Clip linked!";
+      feedback = {
+        message: successMessage,
+        type: AlertType.SUCCESS
+      };
+      refreshClip(id);
+    } catch (error) {
+      let errMessage = "Linking failed";
+      if (error instanceof ResourceError) {
+        errMessage = error.message;
+      }
+      feedback = {
+        message: errMessage,
+        type: AlertType.ERROR
+      };
+    }
   }
 </script>
 
@@ -87,17 +130,7 @@
     {/if}
   </div>
   {#if isLinkboxOpened}
-    <LinkBoxOnClipper
-      on:link={async (e) => {
-        feedback = "Linking...";
-        let result;
-        if (e.detail) result = await webpage.linkClip(id, e.detail);
-        feedback = result?.message
-          ? result
-          : { message: "Linking failed", type: AlertType.ERROR };
-        refreshClip(id);
-      }}
-    />
+    <LinkBoxOnClipper on:link={onLink} />
     <LinkItems
       links={clip?.links}
       isWrapItems={true}
@@ -122,7 +155,7 @@
     <InlineMarkdownTextInput
       placeholder="Add notes"
       bind:content={notes}
-      on:change={onNotesChange}
+      on:change={debouncedNotesChange}
     />
   {/if}
   {#if feedback}

@@ -34,6 +34,10 @@
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { debouncer } from "$lib/client/utils/utils";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
+
   export let value: IPropertyValue | null = null;
   export let property: IProperty;
   export let nodeId: IRecordId | undefined = undefined;
@@ -121,6 +125,12 @@
       _value = assignDefaultValue(prop.value);
     }
   }
+
+  function propagateChange() {
+    dispatch("change", _value);
+  }
+
+  const debouncedPropagateChange = debouncer(propagateChange, 1500);
 </script>
 
 <div
@@ -185,7 +195,7 @@
       bind:value={_value}
       {label}
       placeholder="Enter text"
-      on:change
+      on:change={debouncedPropagateChange}
     />
   {:else if property.type === PropertyType.NUMBER || property.type === PropertyType.EMAIL || property.type === PropertyType.URL}
     <TextInput
@@ -193,7 +203,7 @@
       bind:value={_value}
       {label}
       placeholder={`Enter ${property.type}`}
-      on:change
+      on:change={debouncedPropagateChange}
       type={property.type}
     />
   {:else if property.type === PropertyType.CHECKBOX && typeof _value === "boolean"}

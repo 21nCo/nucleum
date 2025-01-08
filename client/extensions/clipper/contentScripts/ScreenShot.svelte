@@ -22,6 +22,8 @@
   let lockedLeftValue: number = -1;
   let recordMousemove: boolean = false;
   let bgColor: string = "rgba(0,0,0,0.1)";
+  let borderColor: string = "rgba(0,0,0,0.1)";
+  let isSaveInProgress: boolean = false;
 
   /**
    * @summary Sets the capture area shade color
@@ -37,7 +39,8 @@
     const compRed = 255 - red;
     const compGreen = 255 - green;
     const compBlue = 255 - blue;
-    bgColor = `rgba(${compRed},${compGreen},${compBlue},0.6)`;
+    bgColor = `rgba(${compRed},${compGreen},${compBlue},0.1)`;
+    borderColor = `rgba(${compRed},${compGreen},${compBlue},0.5)`;
   });
 
   async function saveSnip(uploadResponse: any) {
@@ -54,13 +57,12 @@
     } catch (e) {
       logger.error({ at: "ScreenShot - saveSnip", error: e });
     } finally {
-      $feedbackPane.isShowStatusOnly = false;
-      $feedbackPane.isPreventAutoClose = false;
+      feedbackPane.onPageSaveSuccess("Screenshot saved!");
     }
   }
 
   function processScreenshot(data, area: IArea) {
-    feedbackPane.setSavingStatus("Processing screenshot", true);
+    feedbackPane.onPageSaveStart("Processing screenshot");
     const img = new Image();
     img.crossOrigin = "Anonymous";
     img.src = data;
@@ -106,7 +108,6 @@
           event: ExtensionEvent.UPLOAD_FILE,
           data: { dataUrl, contentType }
         });
-        console.log({ at: "snip - processScreenshot", response });
         saveSnip(response);
       }
     };
@@ -190,6 +191,7 @@
   function onMouseup(e: MouseEvent) {
     try {
       if (!recordMousemove) return;
+      isSaveInProgress = true;
       snip({
         x: leftValue,
         y: topValue,
@@ -219,8 +221,38 @@
   on:mousemove={onMousemove}
 >
   <div
-    class={cn("fixed")}
-    style="top:{topValue}px; left:{leftValue}px;height:{heightValue}px; width:{widthValue}px;background-color:{bgColor};"
-  ></div>
+    class="fixed inset-0"
+    style="
+  background-color: {isSaveInProgress ? 'transparent' : bgColor};
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% 100%,
+    0 100%,
+    0 0,
+    {leftValue}px {topValue}px,
+    {leftValue}px {topValue + heightValue}px,
+    {leftValue + widthValue}px {topValue + heightValue}px,
+    {leftValue + widthValue}px {topValue}px,
+    {leftValue}px {topValue}px
+  );
+"
+  />
+  <div
+    class="fixed rounded-sm"
+    style="
+    top: {topValue}px;
+    left: {leftValue}px;
+    height: {heightValue}px;
+    width: {widthValue}px;
+    border:1px dotted {isSaveInProgress ? 'transparent' : borderColor};
+    pointer-events: none;
+  "
+  />
+  <!--
+  <div
+    class="fixed rounded-md"
+    style="top:{topValue}px; left:{leftValue}px;height:{heightValue}px; width:{widthValue}px;border:1.5px solid {bgColor};"
+  ></div> -->
 </button>
 <svelte:window on:keydown={handleKeyDown} />

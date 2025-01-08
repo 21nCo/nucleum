@@ -1071,9 +1071,11 @@
     caret-color: transparent;
   }
 
+  /* Using gray since rgba var is failing in case of extension */
   div[contenteditable]:empty::after {
     content: attr(placeholder);
-    color: rgba(var(--colors-fgs2), 0.5);
+    /* color: rgba(var(--colors-fgs1), 0.5); */
+    color: gray;
   }
   [contenteditable]::selection {
     background-color: rgba(var(--colors-aps1), 0.3);

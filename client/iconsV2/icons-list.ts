@@ -335,7 +335,8 @@ const hugeiconsIcons = [
   "heading-01",
   "heading-02",
   "heading-03",
-  "heading-04"
+  "heading-04",
+  "sidebar-right"
 ];
 
 const logos = [

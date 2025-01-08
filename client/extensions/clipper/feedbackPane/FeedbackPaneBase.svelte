@@ -29,7 +29,7 @@
   on:keydown={onKey}
   on:keyup={onKey}
   class={cn(
-    "fixed w-96 flex flex-col items-center gap-4 p-4 bg-bgs1 shadow-md rounded-md border border-brs2",
+    "fixed w-96 max-h-[40rem] mo:max-h-full flex flex-col items-center gap-4 p-4 bg-bgs1 shadow-md rounded-md border border-brs2",
     {
       "top-1/2 transform -translate-y-1/2 space-y-1.5":
         $toolbarState.position === Placement.Right,

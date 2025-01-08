@@ -15,6 +15,10 @@
   import type { INodeLinkThumb } from "../../node/node.type";
   import { linker } from "../../linking/link.store";
   import LinkTags from "../../linking/LinkTags.svelte";
+  import Text from "$lib/client/elements/text/Text.svelte";
+  import { TextStyle } from "$lib/client/types/text.enum";
+  import { properCase } from "$lib/shared/utils/text.utils";
+  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   const dispatch = createEventDispatcher();
   export let links: IRecordId[];
   export let propertyValues: INodePropertyValue[] = [];
@@ -40,7 +44,6 @@
     const type = determineResourceType(item);
     if (type === Resource.collection) {
       const result = await collectionStore.resolveTypes([item], true);
-      console.log({ at: "refreshExpansion", result });
       if (result && isValidArrayWithData(result)) {
         types = result;
         if (
@@ -70,6 +73,11 @@
         expansionState = "error";
       }
     }
+    propagateExpansionState();
+  }
+
+  function propagateExpansionState() {
+    dispatch("expansion", expand ? expansionState : null);
   }
 </script>
 
@@ -90,6 +98,7 @@
           if (isExpandable) {
             expand = expand === item ? null : item;
             if (expand) refreshExpansion(item);
+            propagateExpansionState();
             e.stopPropagation();
           } else {
             dispatch("click", {
@@ -127,14 +136,25 @@
         <LinkTags bind:link />
       {/if}
     {:else if expansionState === "has-props"}
-      <PropertiesListView
-        {types}
-        values={propertyValues}
-        context="clip"
-        on:change={(e) => {
-          dispatch("propertyChange", e.detail);
-        }}
-      />
+      <div
+        class="w-full h-96 p-2 rounded-md bg-bgs2 bg-opacity-30 flex flex-col gap-3 items-start"
+      >
+        <Text
+          content={`${types[0]?.label ? types[0].label + ":" : ""} Properties (${types[0]?.properties?.length})`}
+          style={TextStyle.SECTION_HEADING_SMALL}
+        />
+        <div class="overflow-y-auto h-full w-full styledscroll">
+          <PropertiesListView
+            {types}
+            values={propertyValues}
+            context="clip"
+            on:change={(e) => {
+              dispatch("propertyChange", e.detail);
+            }}
+          />
+          <ScrollViewBottomSpacer />
+        </div>
+      </div>
     {/if}
   {/if}
 {/if}

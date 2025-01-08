@@ -306,21 +306,18 @@
   on:click
 >
   {#if icon?.includes(":") && renderedIconifyIcon}
-    {@const sizePx =
+    {@const sizeClass =
       size === Size.xxl
-        ? "3rem"
+        ? "w-12 h-12"
         : size === Size.xl
-          ? "1.75rem"
+          ? "w-7 h-7"
           : size === Size.lg
-            ? "1.5rem"
+            ? "w-6 h-6"
             : size === Size.md
-              ? "1.25rem"
-              : "1rem"}
+              ? "w-5 h-5"
+              : "w-4 h-4"}
     {#if icon.startsWith("svg-spinners")}
-      <div
-        class={_classList + " iconifysvg " + renderedIconifyIcon}
-        style={`width: ${sizePx}; height: ${sizePx};`}
-      >
+      <div class={cn(_classList, "iconifysvg", sizeClass, renderedIconifyIcon)}>
         {#if icon.includes("3-dots-fade")}
           <ThreeDotsFade />
         {:else if icon.includes("90-ring-with-bg")}
@@ -332,7 +329,7 @@
         {/if}
       </div>
     {:else if isUseIconifySprite}
-      <svg width={sizePx} height={sizePx} class={_classList + " iconifysvg "}>
+      <svg class={cn(_classList, "iconifysvg", sizeClass)}>
         <use href={resolveSpriteIconPath(renderedIconifyIcon)} />
       </svg>
     {:else if dev_useIconifyTailwind}

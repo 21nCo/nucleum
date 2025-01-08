@@ -104,7 +104,7 @@
     })}
   >
     <div
-      class={cn("flex flex-col border border-bgs1 rounded-md", {
+      class={cn("flex flex-col border border-transparent rounded-md", {
         "border-brs3": isCollapsed || isCollapserHovered
       })}
     >

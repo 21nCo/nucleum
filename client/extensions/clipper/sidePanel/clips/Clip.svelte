@@ -21,6 +21,11 @@
   import TextClip from "./TextClip.svelte";
   import { hoverable } from "$lib/client/actions/hover.action";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
+  import { debouncer } from "$lib/client/utils/utils";
+  import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
+  import { Size } from "$lib/client/types/size.enum";
 
   const dispatch = createEventDispatcher();
 
@@ -30,11 +35,17 @@
   let feedback: string | { message: string; type: AlertType } = "";
   let notes: string = "";
   let isHovered: boolean = false;
-  let notesSavingFeedbackTimeout: any;
   refreshDerivedData();
+
+  onMount(() => {
+    feedback = "";
+  });
+
   async function onNotesChange(e: CustomEvent) {
-    if (notesSavingFeedbackTimeout) clearTimeout(notesSavingFeedbackTimeout);
-    feedback = "Saving...";
+    feedback = {
+      message: "Saving...",
+      type: AlertType.PROGRESS
+    };
     const result = await relayToContentScript({
       event: ClipperExtensionEvent.MUTATION_RELAY,
       data: {
@@ -43,49 +54,71 @@
         notes
       }
     });
+    console.log({ at: "Clip - onNotesChange", result });
+    if (!result || result.error) {
+      feedback = {
+        message: result?.error ?? "Notes saving failed",
+        type: AlertType.ERROR
+      };
+      return;
+    }
     clip.notes = notes;
-    notesSavingFeedbackTimeout = setTimeout(() => {
-      feedback = "Notes saved!";
-    }, 1000);
+    feedback = {
+      message: "Notes saved!",
+      type: AlertType.SUCCESS
+    };
   }
 
-  onMount(() => {
-    feedback = "";
-  });
+  const debouncedNotesChange = debouncer(onNotesChange, 1500);
 
   function refreshDerivedData() {
     notes = clip?.notes ?? "";
   }
 
   async function onLinkAction(e: CustomEvent, action: string = "link") {
-    feedback = action === "link" ? "Linking..." : "Removing link...";
-    let result;
-    if (e.detail) {
-      const response = await relayToContentScript({
-        event: ClipperExtensionEvent.MUTATION_RELAY,
-        data: {
-          action,
-          clipId: clip.id,
-          linkTo: e.detail
-        }
-      });
-      result = response?.result;
+    if (!e.detail) return;
+    const resourceType = determineResourceType(e.detail);
+    let feedbackMessage = "";
+    if (resourceType === Resource.collection) {
+      feedbackMessage =
+        action === "link"
+          ? "Adding to collection..."
+          : "Removing from collection...";
+    } else {
+      feedbackMessage = action === "link" ? "Linking..." : "Removing link...";
     }
-    // console.log({ at: "onLinkAction", result });
-    feedback = result?.id
-      ? {
-          message:
-            action === "link" ? "Linking successful" : "Unlinking successful",
-          type: AlertType.SUCCESS
-        }
-      : result?.message
-        ? result
-        : {
-            message: action === "link" ? "Linking failed" : "Unlinking failed",
-            type: AlertType.ERROR
-          };
-    if (!result?.id) return;
-    clip = result;
+    feedback = {
+      message: feedbackMessage,
+      type: AlertType.PROGRESS
+    };
+    const result = await relayToContentScript({
+      event: ClipperExtensionEvent.MUTATION_RELAY,
+      data: {
+        action,
+        clipId: clip.id,
+        linkTo: e.detail
+      }
+    });
+    console.log({ at: "Clip - onLinkAction", result });
+    if (!result || result.error) {
+      feedback = {
+        message: result?.error ?? "Linking failed",
+        type: AlertType.ERROR
+      };
+      return;
+    }
+    let successMessage = "";
+    if (resourceType === Resource.collection) {
+      successMessage =
+        action === "link" ? "Added to collection!" : "Removed from collection!";
+    } else {
+      successMessage = action === "link" ? "Clip linked!" : "Link removed!";
+    }
+    feedback = {
+      message: successMessage,
+      type: AlertType.SUCCESS
+    };
+    if (result.clip) clip = result.clip;
     refreshDerivedData();
   }
   function onClick(e: PointerEvent | MouseEvent) {
@@ -113,6 +146,10 @@
 
   async function onPropertyChanges(e: CustomEvent) {
     if (!e.detail || !e.detail?.id || e.detail?.value === undefined) return;
+    feedback = {
+      message: "Syncing changes...",
+      type: AlertType.PROGRESS
+    };
     const result = await relayToContentScript({
       event: ClipperExtensionEvent.MUTATION_RELAY,
       data: {
@@ -121,12 +158,24 @@
         property: e.detail
       }
     });
+    if (!result || result.error) {
+      feedback = {
+        message: result?.error ?? "Property update failed",
+        type: AlertType.ERROR
+      };
+      return;
+    }
+    feedback = {
+      message: "Synced!",
+      type: AlertType.SUCCESS
+    };
+    if (result.clip.properties) clip.properties = result.clip.properties;
   }
 </script>
 
 <button
   on:click={onClick}
-  class="relative flex flex-col gap-2 border border-brs3 rounded-md p-3 hover:border-aps1"
+  class="relative flex flex-col gap-2 border border-brs2 rounded-md p-3 hover:border-brs3"
   use:hoverable={{
     onHover: (e) => {
       isHovered = e;
@@ -145,15 +194,22 @@
         {#if isHovered || clip?.notes || clip?.links.length}
           <span class="flex gap-1 items-center">
             {#if isHovered || clip?.links.length}
-              <LinkActionOnClipper links={clip?.links} bind:isLinkboxOpened />
+              <LinkActionOnClipper
+                links={clip?.links}
+                bind:isLinkboxOpened
+                on:change={(e) => {
+                  if (e.detail) isNotesOpened = false;
+                }}
+              />
             {/if}
             {#if isHovered || clip?.notes}
-              <Button
+              <Toggle
                 icon={clip?.notes ? "document-text" : "document"}
                 tooltip={clip?.notes ? "View notes" : "Add notes"}
-                on:click={(e) => {
-                  isNotesOpened = !isNotesOpened;
-                  e.stopPropagation();
+                bind:on={isNotesOpened}
+                bgSize={Size.sm}
+                on:change={(e) => {
+                  if (e.detail) isLinkboxOpened = false;
                 }}
               />
             {/if}
@@ -175,13 +231,20 @@
           {formatSeconds(clip.body.timestamp, TimeFormat.CLOCK)}
         </div>
         <div class="flex gap-1 items-center">
-          <LinkActionOnClipper links={clip?.links} bind:isLinkboxOpened />
-          <Button
+          <LinkActionOnClipper
+            links={clip?.links}
+            bind:isLinkboxOpened
+            on:change={(e) => {
+              if (e.detail) isNotesOpened = false;
+            }}
+          />
+          <Toggle
             icon={clip?.notes ? "document-text" : "document"}
             tooltip={clip?.notes ? "View notes" : "Add notes"}
-            on:click={(e) => {
-              isNotesOpened = !isNotesOpened;
-              e.stopPropagation();
+            bind:on={isNotesOpened}
+            bgSize={Size.sm}
+            on:change={(e) => {
+              if (e.detail) isLinkboxOpened = false;
             }}
           />
           {#if isHovered}
@@ -192,25 +255,23 @@
     </span>
   {/if}
   {#if isLinkboxOpened}
-    {#key clip}
-      <LinkBoxOnClipper on:link={onLinkAction} />
-      <LinkItems
-        links={clip?.links}
-        nodeId={clip.id}
-        propertyValues={clip?.properties}
-        isWrapItems={true}
-        isExpandable={true}
-        on:click
-        on:unlink={(e) => onLinkAction(e, "unlink")}
-        on:propertyChange={onPropertyChanges}
-      />
-    {/key}
+    <LinkBoxOnClipper on:link={onLinkAction} />
+    <LinkItems
+      links={clip?.links}
+      nodeId={clip.id}
+      propertyValues={clip?.properties}
+      isWrapItems={true}
+      isExpandable={true}
+      on:click
+      on:unlink={(e) => onLinkAction(e, "unlink")}
+      on:propertyChange={onPropertyChanges}
+    />
   {/if}
   {#if isNotesOpened}
     <InlineMarkdownTextInput
       placeholder="Add notes"
       bind:content={notes}
-      on:change={onNotesChange}
+      on:change={debouncedNotesChange}
     />
   {/if}
   {#if feedback}

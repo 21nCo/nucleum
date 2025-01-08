@@ -145,6 +145,13 @@
 </div>
 
 <style>
+  #ntheme {
+    font-family:
+      Hanken Grotesk,
+      system-ui,
+      -apple-system,
+      sans-serif !important;
+  }
   /* .glass {
     background-image: url(back.png);
   } */

@@ -13,7 +13,7 @@ import { Resource } from "$lib/client/components/flux/resourceStores/resource.en
 import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
 import { AlertType } from "$lib/client/types/notification.type";
 import { objIsEmpty, shallowDiff } from "$lib/shared/utils/obj.utils";
-import { activeResourceFilter, asyncDebouncer, debouncer } from "$lib/client/utils/utils";
+import { activeResourceFilter} from "$lib/client/utils/utils";
 import { removeHighlight } from "./highlightV4";
 import {
   SyncStatus,
@@ -63,7 +63,7 @@ import {
   resourceInList
 } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { ResourceError } from "$lib/client/components/error/errors";
-import { ResourceErrorCode } from "$lib/client/components/error/error.type";
+import { ErrorMessage, ResourceErrorCode } from "$lib/client/components/error/error.type";
 import { resolveUrlData } from "$lib/client/products/memotron/node/url.utils";
 
 class WebpageStore extends ObservableStore<IWebpageStore> {
@@ -191,13 +191,14 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       creationContext
     };
     const response = await nodeStore.create([node]);
+    if (!response) return;
     logger.log({ at: "savePage", response });
     this.update((n) => {
       n.id = id;
       return n;
     });
     relayToSidePanel({ event: ExtensionEvent.PAGE_STATE, data: node });
-    return id;
+    return response;
 
     async function extractData() {
       const host = window.location.host;
@@ -430,12 +431,14 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
   async linkClip(from: IRecordId, to: IRecordId) {
     const webpage = this.get();
     const clip = webpage?.clips?.find(resourceInList(from));
-    if (!clip) return;
+    if (!clip)
+      throw new ResourceError("Clip not found", ResourceErrorCode.NOT_FOUND);
     const isAlreadyLinked = clip.links?.some(resourceInList(to));
     if (isAlreadyLinked)
-      return { message: "Already linked", type: AlertType.ERROR };
+      throw new ResourceError("Already linked", ResourceErrorCode.ALREADY_EXISTS);
     const response = await linker.link(from, to);
-    if (!response) return { message: "Linking failed", type: AlertType.ERROR };
+    if (!response || response.error)
+      throw new ResourceError(response?.error ?? "Linking failed", ResourceErrorCode.INTERNAL_ERROR);
     this.update((n) => {
       n.clips = n.clips?.map((c) => {
         if (isSameResource(c, from)) {
@@ -446,11 +449,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       return n;
     });
     appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
-    const toType = determineResourceType(to);
-    if (toType === Resource.collection) {
-      return { message: "Added to collection!", type: AlertType.SUCCESS };
-    }
-    return { message: "Linked!", type: AlertType.SUCCESS };
+    return response;
   }
 
   async removeLinkForClip(from: IRecordId, to: IRecordId) {
@@ -522,10 +521,10 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       return n;
     });
   }
-  private _persistNotes = (id: string, notes: string) => {
+
+  private async _persistNotes(id: IRecordId, notes: string) {
     return nodeStore.modify(id, { notes });
-  };
-  private _debouncedPersistNotes = asyncDebouncer(this._persistNotes, 2000);
+  }
 
   set(newValue: IWebpageStore) {
     let changedProperties: any = {};
@@ -543,14 +542,14 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     this._set(newValue);
     this.previousValue = JSON.stringify(newValue);
     if (!objIsEmpty(changedProperties) && changedProperties.notes) {
-      this._debouncedPersistNotes(newValue.id, newValue.notes);
+      this._persistNotes(newValue.id, newValue.notes);
     }
   }
 
   async persistPageNotes(notes: string) {
     const webpage = this.get();
     if (!webpage.id) return;
-    const response = await this._debouncedPersistNotes(webpage.id, notes);
+    const response = await this._persistNotes(webpage.id, notes);
     if (!response) return;
     this.update((n) => {
       n.notes = notes;
@@ -560,7 +559,24 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
   }
 
   async persistClipNotes(id: IRecordId, notes: string) {
-    return this._debouncedPersistNotes(id, notes);
+    const webpage = this.get();
+    if (!webpage?.clips) return;
+    const clip = webpage.clips?.find(resourceInList(id));
+    if (!clip) return;
+    const response = await this._persistNotes(id, notes);
+    if (!response) return;
+    this.update((n) => {
+      n.clips = n.clips?.map((c) => {
+        if (isSameResource(c, id)) {
+          console.log({ at: "persistClipNotes", c, notes });
+          c.notes = notes;
+          return c;
+        }
+        return c;
+      });
+      return n;
+    });
+    return response;
   }
 
   async updatePageProperty(property: INodePropertyValue) {
@@ -616,10 +632,6 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       id,
       {
         properties: [...properties]
-      },
-      {
-        isDebounced: true,
-        debounceKey: "propertyUpdate" + id.toString()
       }
     );
   }
@@ -655,12 +667,44 @@ class FeedbackPaneStore extends ObservableStore<IFeedbackPaneStore> {
     });
   }
 
-  setSavingStatus(text: string, isShowStatusOnly: boolean = false) {
+  /**
+   * Sets saving status with single message and prevents auto close.
+   * @param text 
+   */
+  onPageSaveStart(text: string) {
     this.update((n) => {
-      n.feedback = text;
+      n.feedback = {
+        message: text,
+        type: AlertType.PROGRESS
+      };
       n.isShown = true;
       n.isPreventAutoClose = true;
-      n.isShowStatusOnly = isShowStatusOnly;
+      n.isShowStatusOnly = true;
+      return n;
+    });
+  }
+
+  onPageSaveSuccess(message: string) {
+    this.update((n) => {
+      n.feedback = {
+        message,
+        type: AlertType.SUCCESS
+      };
+      n.isPreventAutoClose = false;
+      n.isShowStatusOnly = false;
+      return n;
+    });
+  }
+
+  setErrorFeedback(params?: { message?: string, isPreventAutoClose?: boolean }) {
+    this.update((n) => {
+      n.feedback = {
+        message: params?.message ?? ErrorMessage.DEFAULT,
+        type: AlertType.ERROR
+      };
+      if (params?.isPreventAutoClose !== undefined) {
+        n.isPreventAutoClose = params.isPreventAutoClose;
+      }
       return n;
     });
   }

@@ -15,6 +15,7 @@
   export let tooltipOptions: IToolTipOptions | undefined = undefined;
   export let isPreventFillOnActive: boolean = false;
   export let count: number | undefined = undefined;
+  export let bgSize: Size.sm | Size.md | Size.lg = Size.md;
   let isHovering: boolean = false;
   function onclick() {
     on = !on;
@@ -28,9 +29,9 @@
   {tooltip}
   {tooltipOptions}
   class={cn("flex relative items-center justify-center rounded-md", {
-    "min-h-8 min-w-8": size === Size.sm,
-    "min-h-10 min-w-10": size === Size.md,
-    "min-h-12 min-w-12": size === Size.lg,
+    "min-h-8 min-w-8": bgSize === Size.sm || (!bgSize && size === Size.sm),
+    "min-h-10 min-w-10": bgSize === Size.md || (!bgSize && size === Size.md),
+    "min-h-12 min-w-12": bgSize === Size.lg || (!bgSize && size === Size.lg),
     [bg(parentBgIndex)]: isHovering || on
   })}
 >

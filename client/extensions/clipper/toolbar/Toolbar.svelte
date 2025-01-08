@@ -74,6 +74,7 @@
         $toolbarState.position === Placement.Bottom
     }
   )}
+  draggable="true"
 >
   {#if !isScreenShotOnly && !$syncStore.id}
     {#if $webpage?.id}
@@ -118,7 +119,7 @@
   <Toggle
     icon="ph:crop-light"
     tooltip="Snip"
-    size={Size.md}
+    bgSize={Size.sm}
     bind:on={isSnipActive}
     {tooltipOptions}
     on:change={() => resetAll("snip")}
@@ -149,7 +150,7 @@
       <Toggle
         icon="ph:highlighter-light"
         tooltip="Highlighter"
-        size={Size.md}
+        bgSize={Size.sm}
         bind:on={isAutoHighlighterExpanded}
         {tooltipOptions}
         on:change={toggleAutoHighligher}
@@ -183,7 +184,7 @@
     </div>
   {/if}
   <Button
-    icon="ph:bookmarks-light"
+    icon="hugeicons:sidebar-right"
     tooltip="Open Side panel"
     {...buttonParams}
     on:click={() =>
@@ -192,7 +193,7 @@
         data: { action: ExtensionEvent.TOGGLE_SIDEPANEL }
       })}
   />
-  <!-- <Button
+  <Button
     icon={$toolbarState.position === Placement.Right
       ? "ph:arrow-elbow-down-left"
       : "ph:arrow-elbow-right-up"}
@@ -212,7 +213,7 @@
       }
       toolbarState.changePosition(val);
     }}
-  /> -->
+  />
   <Button
     icon="ph:x-circle-light"
     tooltip="Collapse"

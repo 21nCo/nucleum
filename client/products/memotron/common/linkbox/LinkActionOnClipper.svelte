@@ -1,6 +1,8 @@
 <script lang="ts">
   import { abg, cn } from "$lib/client/utils/ui.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
   export let links: string[];
   export let isLinkboxOpened: boolean = false;
 </script>
@@ -15,6 +17,7 @@
   )}
   on:click|stopPropagation={() => {
     isLinkboxOpened = !isLinkboxOpened;
+    dispatch("change", isLinkboxOpened);
   }}
 >
   <Icon
