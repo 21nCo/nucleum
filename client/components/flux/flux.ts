@@ -257,7 +257,7 @@ class Flux {
     additionalParams: IMutationAdditionalParams = {}
   ) {
     let response;
-    logger.debug({ at: "flux.mutation", resource, params });
+    logger.log({ at: "flux.mutation", resource, params });
     try {
       if (!additionalParams?.isCloudOnlyResource || this.isLocalMode) {
         response = await this.persistence.mutation(resource, params);
@@ -583,15 +583,14 @@ class Flux {
     }
   }
 
-
   /**
    * For Extension Environment:
-  * Sync up the local changes and from response - syncs down the changes from cloud.
-  * @returns
-  */
+   * Sync up the local changes and from response - syncs down the changes from cloud.
+   * @returns
+   */
   async syncForExtension(mutation?: IMutation) {
     try {
-      if(!mutation) return;
+      if (!mutation) return;
       const isOffline = await determineIfOffline();
       if (isOffline) {
         //TODO - user feedback that internet connection is required for sync to work
@@ -608,12 +607,16 @@ class Flux {
         local?.lastSyncDown ?? new Date().getTime() - 1000 * 60 * 60 * 24;
       const dapId = await this.resolveDapId(local);
       let response = await this.performSync(SyncMethod.SYNC_UP, {
-          mutations: [{ ...mutation, dapId }],
-          lastSyncDown,
-          resources: this.resolveSyncResources(),
-          dapId
-        });
-      logger.log({ at: "flux.syncForExtension - response", mutation, response });
+        mutations: [{ ...mutation, dapId }],
+        lastSyncDown,
+        resources: this.resolveSyncResources(),
+        dapId
+      });
+      logger.log({
+        at: "flux.syncForExtension - response",
+        mutation,
+        response
+      });
       if (response?.syncDownData) {
         await this.processSyncDown(response.syncDownData);
       }

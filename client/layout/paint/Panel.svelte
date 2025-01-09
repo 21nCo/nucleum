@@ -61,7 +61,13 @@
           <Text style={titleStyle} content={title || ""} />
           <slot name="toprightactions">
             {#if isShowCollapseButton}
-              <Button icon="cross" on:click={() => (isCollapsed = true)} />
+              <div class="flex items-center">
+                <Button
+                  icon="ph:caret-left-light"
+                  tooltip="Collapse panel"
+                  on:click={() => (isCollapsed = true)}
+                />
+              </div>
             {/if}
           </slot>
         </div>
@@ -69,7 +75,7 @@
       {#if $$slots.nonpadded}
         <slot name="nonpadded" />
       {:else}
-        <div class="px-4 flex-1 overflow-auto">
+        <div class="px-3 flex-1 overflow-auto">
           <slot />
         </div>
       {/if}

@@ -18,6 +18,7 @@ export enum Resource {
   uiState = "uiState",
   keyboardShortcuts = "keyboardShortcuts",
   mutation = "mutation",
+  event = "event",
 
   //Pointron
   pointronPreferences = "pointronPreferences",
@@ -42,6 +43,8 @@ export enum Resource {
   pointAnalyticsConfig = "pointAnalyticsConfig",
   quickFocusItems = "quickFocusItems",
   task = "task",
+  habit = "habit",
+  session = "session",
 
   //Memotron
   vector = "vector",
@@ -62,5 +65,16 @@ export enum Resource {
 
   //Memotron clipper
   clipperToolbarState = "clipperToolbarState",
-  clipperSync = "clipperSync"
+  clipperSync = "clipperSync",
+
+  //Feedtron
+  feed = "feed",
+  source = "source",
+
+  //Hometron
+  thing = "thing",
+
+  //Finatron
+  account = "account",
+  transaction = "transaction"
 }

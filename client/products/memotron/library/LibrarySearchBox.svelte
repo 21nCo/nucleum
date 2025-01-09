@@ -20,7 +20,7 @@
   const dispatch = createEventDispatcher();
   export let selectedResource: Resource;
   export let resources: IResourceSwitchItem[];
-  export let variant: "v1" | "v2" | "v3";
+  export let variant: "v1" | "v2" | "v3" = "v1";
   export let searchQuery: string = "";
   export let isStickied: boolean = false;
   export let searchStore;

@@ -127,7 +127,10 @@
   import PhCrossCircled from "../icons/PhCrossCircled.svelte";
   import PhBookmarks from "../icons/PhBookmarks.svelte";
   import PhArrowElbow from "../icons/PhArrowElbow.svelte";
-  import { resolveSpriteSheetPath, extensionSprites } from "./icons/icon.store";
+  import {
+    resolveSpriteSheetPath,
+    extensionSprites
+  } from "../iconsV2/icon.store";
   import EclipseHalf from "../iconsV2/svgSpinners/EclipseHalf.svelte";
   import One80RingWithBg from "../iconsV2/svgSpinners/One80RingWithBg.svelte";
   import NinetyRingWithBg from "../iconsV2/svgSpinners/NinetyRingWithBg.svelte";

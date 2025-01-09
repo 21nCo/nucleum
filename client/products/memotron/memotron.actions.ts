@@ -10,7 +10,7 @@ import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
 import ProductFeatureWheel from "$lib/client/components/blank/ProductFeatureWheel.svelte";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import PropertyConfig from "$lib/client/products/memotron/collection/properties/propertyConfig/PropertyConfig.svelte";
-import Library from "$lib/client/products/memotron/library/Library.svelte";
+import MemotronLibrary from "$lib/client/products/memotron/library/MemotronLibrary.svelte";
 import TestHome from "$local/TestHome.svelte";
 import CreateCollection from "$lib/client/products/memotron/collection/CreateCollection.svelte";
 import PropertiesEditor from "$lib/client/products/memotron/collection/properties/PropertiesEditor.svelte";
@@ -232,7 +232,7 @@ export const memotronActions: IAction[] = [
     action: resourceAction(Resource.collection, ResourceActionType.BROWSE),
     component: CollectionBrowser,
     label: "Collections",
-    icon: "ph:circles-four-light",
+    icon: "ph:brackets-round-light",
     type: ActionType.PAGE,
     loadingComponent: NodeLoadingPulse
   },
@@ -240,7 +240,7 @@ export const memotronActions: IAction[] = [
     action: resourceAction(Resource.node, ResourceActionType.BROWSE),
     component: NodeBrowser,
     label: "Nodes",
-    icon: "ph:circle-light",
+    icon: "ph:hexagon-light",
     type: ActionType.PAGE,
     loadingComponent: NodeLoadingPulse
   },
@@ -275,8 +275,8 @@ export const memotronActions: IAction[] = [
   {
     action: MemotronAction.LIBRARY,
     label: "Library",
-    icon: "ph:globe-light",
-    component: Library,
+    icon: "ph:squares-four-light",
+    component: MemotronLibrary,
     type: ActionType.PAGE,
     modalParams: {
       layout: {

@@ -187,6 +187,7 @@ const phosphorIcons = [
   "hash",
   "envelope",
   "link",
+  "caret-circle-up",
   "caret-circle-down",
   "list-bullets",
   "list-dashes",
@@ -222,7 +223,17 @@ const phosphorIcons = [
   "linux-logo",
   "chrome-logo",
   "arrow-clockwise",
-  "caret-left"
+  "caret-left",
+  "infinity",
+  "rss",
+  "rss-simple",
+  "piggy-bank",
+  "bicycle",
+  "umbrella-simple",
+  "coffee",
+  "armchair",
+  "bank",
+  "currency-circle-dollar"
 ];
 
 export const phosphorRatingIcons = [
@@ -385,6 +396,8 @@ export const iconSets = {
 
 export const phIcons = {
   base: [...phosphorIcons, ...phosphorRatingIcons],
-  light: [...phosphorIcons].map((icon) => icon + "-light"),
+  light: [...phosphorIcons, ...phosphorRatingIcons].map(
+    (icon) => icon + "-light"
+  ),
   fill: [...phosphorIcons, ...phosphorRatingIcons].map((icon) => icon + "-fill")
 };

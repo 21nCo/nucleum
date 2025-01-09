@@ -189,23 +189,24 @@
   }
 </script>
 
-<Panel {floatingButton}>
+<Panel {floatingButton} title={resource + "s"}>
   <div
     class="relative flex flex-col gap-4 h-full overflow-auto"
     slot="nonpadded"
   >
-    <header class="flex gap-1 items-center py-4 px-5 border-b border-brs2">
+    <header class="flex gap-1 items-center p-3 pb-1.5 border-b border-brs2">
       <!-- TODO - use InlineSearchBar -->
       <TextInput
         bind:value={searchQuery}
         size={Size.lg}
+        icon="ph:magnifying-glass"
         style={InputStyle.PLAIN}
         on:keyup={debouncedSearch}
         placeholder={"Search " + resource + "s"}
       />
       {#if searchQuery}
         <Button
-          icon="cross"
+          icon="ph:x-light"
           tooltip="Clear query"
           size={Size.sm}
           on:click={() => {
@@ -217,7 +218,7 @@
             <Button icon="adjustments-vertical" size={Size.sm} /> -->
       {/if}
       <Button
-        icon="adjustments-vertical"
+        icon="ph:sliders-horizontal-light"
         tooltip="Settings & refine"
         tooltipOptions={{
           placement: Placement.Right
@@ -244,7 +245,9 @@
             isPreventMinWidth={true}
           /> -->
           <Button
-            icon={arrangement === Arrangement.LIST ? "list" : "rectangle-group"}
+            icon={arrangement === Arrangement.LIST
+              ? "ph:list"
+              : "ph:squares-four"}
             style={ButtonStyle.OUTLINED}
             size={Size.sm}
             isPreventMinWidth={true}

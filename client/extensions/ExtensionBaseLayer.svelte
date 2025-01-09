@@ -25,7 +25,7 @@
   import {
     cleanExtensionSprites,
     extensionSprites
-  } from "../elements/icons/icon.store";
+  } from "../iconsV2/icon.store";
   const dispatch = createEventDispatcher();
   export let id: string;
   export let stores: IStore[] = [];
