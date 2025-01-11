@@ -22,7 +22,7 @@
   import { deepCopy } from "$lib/shared/utils/obj.utils";
   import { getContext } from "svelte";
   import { logger } from "../../debug/logger.client";
-  import { SearchStore } from "$lib/client/products/memotron/memotron.store";
+  import { SearchStore } from "$lib/client/components/record/record.store";
   import type { IRecordId } from "$lib/client/types/data.type";
   import {
     inlineLinkPatterns,

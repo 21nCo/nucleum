@@ -9,7 +9,7 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import { onMount } from "svelte";
-  import { MAX_FILE_SIZE_MB } from "../memotron.store";
+  import { MAX_FILE_SIZE_MB } from "../../../components/record/record.store";
   import { MemotronAction } from "../memotronAction.enum";
   import { NodeType } from "../node/node.type";
   import { resolveNodeContentLabel, resolveNodeIcon } from "../node/node.utils";
@@ -25,6 +25,9 @@
   } from "./capture.utils";
   import account from "$lib/client/stores/account.store";
   import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
+  import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
   export let event: ClipboardEvent;
   let nodeType: NodeType | undefined = undefined;
   const unsupportedNodeTypes = [NodeType.TWITTER_PROFILE, NodeType.TWEET];
@@ -160,11 +163,14 @@
       ...data
     };
     modalEvent.hide(MemotronAction.PASTE_CONFIRMATION);
-    appStore.runAction(MemotronAction.CAPTURE, {
-      searchParams: {
-        clipboard: true
+    appStore.runAction(
+      resourceAction(Resource.node, ResourceActionType.CREATE),
+      {
+        searchParams: {
+          clipboard: true
+        }
       }
-    });
+    );
   }
 
   function resolveInsertIntoMdLabel(data: IPasteCaptureData | undefined) {

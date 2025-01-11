@@ -15,7 +15,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { nodeStore } from "$lib/client/products/memotron/node/node.store";
-  import { collectionStore } from "$lib/client/products/memotron/collection/collection.store";
+  import { collectionStore } from "$lib/client/components/collection/collection.store";
   import { webpage } from "../contentScripts/store";
   import {
     linker,

@@ -4,8 +4,8 @@
   import Tag from "$lib/client/elements/text/Tag.svelte";
   import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { collectionStore } from "../../collection/collection.store";
-  import { nodeStore } from "../../node/node.store";
+  import { collectionStore } from "$lib/client/components/collection/collection.store";
+  import { nodeStore } from "$lib/client/products/memotron/node/node.store";
   import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
 
   export let id: IRecordId;

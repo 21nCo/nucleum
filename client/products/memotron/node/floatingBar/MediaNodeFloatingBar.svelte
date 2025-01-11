@@ -19,7 +19,7 @@
   } from "../node.store";
   import NodeTitle from "../title/NodeTitle.svelte";
   import { NodeRightPaneType, NodeType, NodeView } from "../node.type";
-  import ResourceStatusBanner from "../../common/ResourceStatusBanner.svelte";
+  import ResourceStatusBanner from "../../../../components/record/RecordStatusBanner.svelte";
   import { formatDatetime } from "$lib/client/utils/time.utils";
   import ToggleGroup from "$lib/client/elements/toggle/ToggleGroup.svelte";
   import CollectionsLane from "./CollectionsLane.svelte";

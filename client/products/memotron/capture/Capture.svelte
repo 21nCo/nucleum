@@ -10,15 +10,15 @@
   import TypeSelector from "./TypeSelector.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { InputStyle } from "$lib/client/types/input.type";
-  import PropertiesListView from "../collection/properties/PropertiesListView.svelte";
-  import NodeAvatar from "../node/avatar/NodeAvatar.svelte";
+  import PropertiesListView from "$lib/client/components/collection/properties/PropertiesListView.svelte";
+  import NodeAvatar from "$lib/client/products/memotron/node/avatar/NodeAvatar.svelte";
   import {
     LinkType,
     NodeType,
     type INodeThumb
   } from "$lib/client/products/memotron/node/node.type";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { collectionStore } from "../collection/collection.store";
+  import { collectionStore } from "$lib/client/components/collection/collection.store";
   import { CaptureType } from "./capture.type";
   import FileUploader from "./FileUploader.svelte";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
@@ -28,7 +28,7 @@
   import {
     CollectionType,
     type ICollectionExpanded
-  } from "../collection/collection.type";
+  } from "$lib/client/components/collection/collection.type";
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { isValidString } from "$lib/shared/utils/text.utils";
   import {

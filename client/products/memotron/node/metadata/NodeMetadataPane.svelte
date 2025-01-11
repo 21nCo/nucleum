@@ -7,7 +7,6 @@
   import { headingNodeTypes, NodeType, webNodeTypeList } from "../node.type";
   import BasicInfoItem from "./BasicInfoItem.svelte";
   import InfoCard from "./InfoCard.svelte";
-  import LocationCard from "./LocationCard.svelte";
 
   import { onMount } from "svelte";
   import { accessLogStore } from "$lib/client/components/accessLogging/accesslog.store";
@@ -17,6 +16,7 @@
   import { logger } from "$lib/client/components/debug/logger.client";
   import AudioMetadata from "./AudioMetadata.svelte";
   import ImageMetadata from "./ImageMetadata.svelte";
+  import LocationProperty from "$lib/client/components/collection/properties/locationProperty/LocationProperty.svelte";
   export let node: IActiveNodeStore;
   export let renderingDetails: any = undefined;
   let lastAccessLog: IAccessLog | undefined = undefined;
@@ -156,7 +156,7 @@
     </div>
     {#if $node.metadata?.location}
       <div class={cn("rounded-md w-full bg-bgs2")}>
-        <LocationCard metadata={$node.metadata} />
+        <LocationProperty location={$node.metadata?.location} />
       </div>
     {/if}
   </div>

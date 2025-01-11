@@ -11,8 +11,8 @@
     resolveIfImageShouldContain,
     resolveUrlPreview
   } from "$lib/client/products/memotron/node/node.utils";
-  import ResourceGridThumbnail from "../../common/thumbnail/ResourceGridThumbnail.svelte";
-  import ResourceThumbnailBase from "../../common/thumbnail/ResourceThumbnailBase.svelte";
+  import ResourceGridThumbnail from "../../../../components/record/thumbnail/ResourceGridThumbnail.svelte";
+  import ResourceThumbnailBase from "../../../../components/record/thumbnail/ResourceThumbnailBase.svelte";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
@@ -31,7 +31,7 @@
   import { onMount } from "svelte";
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
   import NodeThumbnailProperties from "./NodeThumbnailProperties.svelte";
-  import type { IProperty } from "../../collection/properties/property.type";
+  import type { IProperty } from "$lib/client/components/collection/properties/property.type";
   import { isValidString } from "$lib/shared/utils/text.utils";
   import ImagePreview from "../content/ImagePreview.svelte";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";

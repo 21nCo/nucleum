@@ -7,7 +7,7 @@ export type ISelectItem = {
   activeIcon?: string | IAvatar;
   activeLabel?: string;
   isDisabled?: boolean;
-  badge?: string;
+  badge?: string | number;
   tooltip?: string;
 };
 

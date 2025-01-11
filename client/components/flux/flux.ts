@@ -411,6 +411,9 @@ class Flux {
     }
   }
 
+  /**
+   * TODO - remove tacoWorker
+   */
   async selectMany(
     resource: Resource,
     params?: IResourceSelectParams,

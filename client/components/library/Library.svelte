@@ -2,7 +2,7 @@
   import FloatingButton from "$lib/client/elements/button/FloatingButton.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
-  import Resources from "$lib/client/products/memotron/common/Resources.svelte";
+  import Records from "$lib/client/components/record/Records.svelte";
   import { onMount } from "svelte";
   import { Size } from "$lib/client/types/size.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
@@ -26,32 +26,24 @@
     ResourceAccessPoint,
     ResourceActionType
   } from "$lib/client/components/flux/resourceStores/resource.type";
-  import BulkEditBar from "$lib/client/products/memotron/common/BulkEditBar.svelte";
-  import { collectionStore } from "$lib/client/products/memotron/collection/collection.store";
+  import BulkEditBar from "$lib/client/components/record/BulkEditBar.svelte";
   import {
     BulkEditor,
     SearchStore
-  } from "$lib/client/products/memotron/memotron.store";
-  import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
+  } from "$lib/client/components/record/record.store";
   import { resolveMultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
-  import { nodeStore } from "$lib/client/products/memotron/node/node.store";
-  import LibrarySearchBox from "$lib/client/products/memotron/library/LibrarySearchBox.svelte";
-  import { ColorStrength } from "$lib/client/types/appearance.type";
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
+  import LibrarySearchBox from "$lib/client/components/library/LibrarySearchBox.svelte";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import {
     CollectionType,
     type ICollection
-  } from "$lib/client/products/memotron/collection/collection.type";
+  } from "$lib/client/components/collection/collection.type";
   import {
     NodeType,
     rootNodeTypeList,
     type INode
   } from "$lib/client/products/memotron/node/node.type";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
-  import VerticalSwitcher from "$lib/client/elements/switcher/VerticalSwitcher.svelte";
-  import { VerticalSwitcherStyle } from "$lib/client/types/switcher.enum";
   import {
     resolveNodeIcon,
     resolveNodeContentLabel
@@ -59,7 +51,7 @@
   import {
     resolveCollectionTypeIcon,
     resolveCollectionTypeLabel
-  } from "$lib/client/products/memotron/collection/collection.utils";
+  } from "$lib/client/components/collection/collection.utils";
   import { debouncer } from "$lib/client/utils/utils";
   import {
     PersistenceActionType,
@@ -68,7 +60,7 @@
     type IResourceSelectOrderBy
   } from "$lib/client/types/data.type";
   import { page } from "$app/stores";
-  import LibraryLoadingPulse from "$lib/client/products/memotron/library/LibraryLoadingPulse.svelte";
+  import LibraryLoadingPulse from "$lib/client/components/library/LibraryLoadingPulse.svelte";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import view from "$lib/client/stores/view.store";
   import { logger } from "$lib/client/components/debug/logger.client";
@@ -79,10 +71,15 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import SyncStatusPropagator from "$lib/client/elements/feedback/SyncStatusPropagator.svelte";
   import InlineSyncingFeedback from "$lib/client/elements/feedback/InlineSyncingFeedback.svelte";
-  import RefreshingOverlayFeedback from "$lib/client/elements/feedback/RefreshingOverlayFeedback.svelte";
   import { enumToString } from "$lib/shared/utils/text.utils";
   import Panel from "$lib/client/layout/paint/Panel.svelte";
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
+  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
+  import Divider from "$lib/client/elements/Divider.svelte";
+  import {
+    isValidArray,
+    isValidArrayWithData
+  } from "$lib/shared/utils/obj.utils";
 
   export let resources: Resource[] = [];
 
@@ -105,11 +102,14 @@
     Resource.node,
     Resource.collection
   ]);
-  const commonResourceProps = {
-    isHidePinAction: true
-  };
   let isSyncing: boolean = false;
   let syncStatusPropagatorRef: SyncStatusPropagator;
+  let subTypeCounts: { count: number; type: NodeType | CollectionType }[] = [];
+  let isExpandableSubTypes: boolean = false;
+  let isExpandSubTypes: boolean = false;
+  let allSubTypes: ISelectItem[] = [];
+  let renderedSubTypes: ISelectItem[] = [];
+
   const resourceList: IResourceSwitchItem[] = [
     {
       label: "Nodes",
@@ -177,6 +177,10 @@
       icon: "ph:arrows-left-right-light"
     }
   ];
+  const resourcesWithExpandableSubTypes = [Resource.node];
+
+  $: isExpandableSubTypes =
+    resourcesWithExpandableSubTypes.includes(selectedResource);
 
   let _resources: IResourceSwitchItem[] = [];
 
@@ -259,7 +263,8 @@
       refreshResetTimeout = setTimeout(() => {
         isRefreshing = false;
       }, 1);
-      await refreshTotalCounts(filters);
+      await refreshTotalRecordCounts(filters);
+      await refreshSubTypeSwitcher();
     } catch (e) {
       isRefreshing = false;
       logger.error({ at: "Library - refresh", e });
@@ -267,10 +272,7 @@
   }
 
   function resolveFilters() {
-    let filters: any = {
-      isStarred: isStarFilterSelected ? true : undefined,
-      isArchived: isArchivedFilterSelected ? true : undefined
-    };
+    let filters: any = resolveBaseFilters();
     if (selectedSubType !== "all" && selectedSubType !== "recents") {
       if (selectedResource === Resource.node) {
         filters = { ...filters, contentType: selectedSubType };
@@ -281,7 +283,14 @@
     return filters;
   }
 
-  async function refreshTotalCounts(filters: any) {
+  function resolveBaseFilters() {
+    return {
+      isStarred: isStarFilterSelected ? true : undefined,
+      isArchived: isArchivedFilterSelected ? true : undefined
+    };
+  }
+
+  async function refreshTotalRecordCounts(filters: any) {
     try {
       isRefreshingTotalCount = true;
       await resourceSwitcherRef?.refresh(selectedResource);
@@ -299,6 +308,95 @@
     }
   }
 
+  async function refreshSubTypeSwitcher() {
+    try {
+      const filters = resolveBaseFilters();
+      subTypeCounts = await searchStore.resolveSubTypeCounts(
+        selectedResource,
+        filters
+      );
+      allSubTypes = resolveSubItems(selectedResource);
+      if (isValidArrayWithData(subTypeCounts)) {
+        allSubTypes = allSubTypes.map((x) => {
+          const count = subTypeCounts.find(
+            (y: { type: any; count: number }) =>
+              y.type?.toLowerCase() === x.value?.toLowerCase()
+          )?.count;
+          return {
+            ...x,
+            badge: count ? count : undefined
+          };
+        });
+      }
+      if (!isExpandableSubTypes || isExpandSubTypes) {
+        renderedSubTypes = [...allSubTypes];
+        return;
+      }
+      renderedSubTypes = [...allSubTypes].filter(
+        (x) => x.value === "all" || (x.badge && x.badge > 0)
+      );
+    } catch (e) {
+      logger.error({ at: "Library - refreshSubTypeCountsAndSort", e });
+    }
+
+    function resolveSubItems(resource: Resource) {
+      const items: ISelectItem[] = [
+        {
+          label: "All",
+          value: "all",
+          icon: "ph:asterisk-light"
+        }
+        //Note: Right now - all is already sorted by recents
+        // {
+        //   label: "Recently opened",
+        //   value: "recents",
+        //   icon: "ph:clock"
+        // }
+      ];
+
+      if (resource === Resource.node) {
+        const nodeTypes = [
+          NodeType.NODULAR_MARKDOWN,
+          NodeType.PDF,
+          NodeType.IMAGE,
+          NodeType.AUDIO,
+          NodeType.VIDEO,
+          NodeType.WEB_PAGE,
+          NodeType.GIST,
+          NodeType.TEXT_CLIP,
+          NodeType.WEB_SCREENSHOT_CLIP,
+          NodeType.TWEET,
+          NodeType.TWITTER_PROFILE,
+          NodeType.YOUTUBE_VIDEO,
+          NodeType.YOUTUBE_TIMESTAMP_CLIP,
+          NodeType.KINDLE_BOOK,
+          NodeType.KINDLE_HIGHLIGHT
+        ].map((x) => {
+          return {
+            label: resolveNodeContentLabel(x),
+            value: x.toLowerCase(),
+            icon: resolveNodeIcon(x)
+          };
+        });
+        items.push(...nodeTypes);
+      } else if (resource === Resource.collection) {
+        const collectionTypes = [
+          CollectionType.UNTYPED,
+          CollectionType.TYPED,
+          CollectionType.QUERY
+        ].map((x) => {
+          return {
+            label: resolveCollectionTypeLabel(x),
+            value: x.toLowerCase(),
+            icon: resolveCollectionTypeIcon(x)
+          };
+        });
+        items.push(...collectionTypes);
+      }
+      return items;
+    }
+  }
+
   const debouncedSearch = debouncer(refresh, 500);
 
   function onScroll() {
@@ -307,6 +405,7 @@
     // console.log({ elementTarget, positionFromTop });
     isStickied = positionFromTop ? positionFromTop <= 0 : false;
   }
+
   function resolveFooterMessage(data: any[], totalCount: number) {
     if (!data || !data.length) return;
     let prefix = "Showing " + data.length + " ";
@@ -316,6 +415,7 @@
       return `${prefix} ${label} containing "${searchQuery}"`;
     else return `Showing ${data.length} of ${totalCount ?? "Unknown"} ${label}`;
   }
+
   function resolveResourceLabel(isPlural: boolean = false) {
     let label = "items";
     if (selectedResource === Resource.everything) label = "item";
@@ -324,6 +424,7 @@
     } else label = selectedResource;
     return label + ((data && data.length > 1) || isPlural ? "s" : "");
   }
+
   function resolveEmptyStateMessage() {
     const label = resolveResourceLabel(true);
     if (isStarFilterSelected)
@@ -349,9 +450,11 @@
       };
     }
   }
+
   function onSelectAll() {
     $multiSelectStore = data.map((x) => x.id);
   }
+
   async function onBulkAction(e: CustomEvent<string>) {
     try {
       const editor = new BulkEditor(selectedResource, multiSelectStore);
@@ -361,62 +464,6 @@
     }
   }
 
-  function resolveSubItems(resource: Resource) {
-    const items: ISelectItem[] = [
-      {
-        label: "All",
-        value: "all",
-        icon: "ph:asterisk-light"
-      }
-      //Note: Right now - all is already sorted by recents
-      // {
-      //   label: "Recently opened",
-      //   value: "recents",
-      //   icon: "ph:clock"
-      // }
-    ];
-
-    if (resource === Resource.node) {
-      const nodeTypes = [
-        NodeType.NODULAR_MARKDOWN,
-        NodeType.PDF,
-        NodeType.IMAGE,
-        NodeType.AUDIO,
-        NodeType.VIDEO,
-        NodeType.WEB_PAGE,
-        NodeType.GIST,
-        NodeType.TEXT_CLIP,
-        NodeType.WEB_SCREENSHOT_CLIP,
-        NodeType.TWEET,
-        NodeType.TWITTER_PROFILE,
-        NodeType.YOUTUBE_VIDEO,
-        NodeType.YOUTUBE_TIMESTAMP_CLIP,
-        NodeType.KINDLE_BOOK,
-        NodeType.KINDLE_HIGHLIGHT
-      ].map((x) => {
-        return {
-          label: resolveNodeContentLabel(x),
-          value: x.toLowerCase(),
-          icon: resolveNodeIcon(x)
-        };
-      });
-      items.push(...nodeTypes);
-    } else if (resource === Resource.collection) {
-      const collectionTypes = [
-        CollectionType.UNTYPED,
-        CollectionType.TYPED,
-        CollectionType.QUERY
-      ].map((x) => {
-        return {
-          label: resolveCollectionTypeLabel(x),
-          value: x.toLowerCase(),
-          icon: resolveCollectionTypeIcon(x)
-        };
-      });
-      items.push(...collectionTypes);
-    }
-    return items;
-  }
   /**
    *
    * For nodes, filters nodes if has isArchived or trashInformation i.e. deleted or archived irrespective of whether its a root node or md block node as md blocks are anyways not present in data. Currently does full refresh for unarchive or undelete which is optimal if the nodes are root nodes.
@@ -441,7 +488,7 @@
       const id = mutation.record.id;
       if (id) data = data.filter((x) => !isSameResource(x.id, id));
       const filters = resolveFilters();
-      await refreshTotalCounts(filters);
+      await refreshTotalRecordCounts(filters);
       return;
     }
 
@@ -459,13 +506,9 @@
   }
 
   function onCreateResource() {
-    if (selectedResource === Resource.node) {
-      appStore.runAction(MemotronAction.CAPTURE);
-    } else {
-      appStore.runAction(
-        resourceAction(selectedResource, ResourceActionType.CREATE)
-      );
-    }
+    appStore.runAction(
+      resourceAction(selectedResource, ResourceActionType.CREATE)
+    );
   }
 </script>
 
@@ -506,11 +549,11 @@
           refresh();
         }}
       />
-      <div class="flex px-4">
+      <div class="flex px-4 gap-2">
         <OptionSelector
           style={OptionSelectorStyle.OUTLINE}
           size={Size.sm}
-          options={resolveSubItems(selectedResource)}
+          options={renderedSubTypes}
           selected={selectedSubType}
           on:select={(e) => {
             if (!e?.detail) return;
@@ -519,21 +562,92 @@
             });
           }}
         />
+        {#if !isExpandSubTypes}
+          <Divider orientation={Orientation.Vertical} />
+        {/if}
+        <div class="flex gap-1">
+          {#if !isExpandSubTypes}
+            <Toggle
+              bind:on={isStarFilterSelected}
+              icon="ph:star-light"
+              tooltip="Show starred items"
+              bgSize={Size.sm}
+              on:change={() => refresh()}
+            />
+            <Toggle
+              bind:on={isArchivedFilterSelected}
+              icon="ph:archive-light"
+              tooltip="Show archived items"
+              on:change={() => refresh()}
+              bgSize={Size.sm}
+            />
+          {/if}
+          {#if isExpandableSubTypes}
+            <Toggle
+              bind:on={isExpandSubTypes}
+              icon={isExpandSubTypes
+                ? "ph:caret-left-light"
+                : "ph:caret-down-light"}
+              tooltip="Show all sub types"
+              bgSize={Size.sm}
+              on:change={() => refreshSubTypeSwitcher()}
+            />
+          {/if}
+        </div>
       </div>
-      <div class="flex px-4 overflow-auto">
-        <Resources
-          {data}
-          accessPoint={ResourceAccessPoint.LIBRARY}
-          resource={selectedResource}
-          size={$view.isConstrainedWidth ? Size.sm : Size.md}
-          isShowLoadingPulseAtTheEnd={data.length < totalCount && !searchQuery}
-          arrangement={$view.isConstrainedWidth
-            ? selectedResource === Resource.node
-              ? Arrangement.GRID
-              : Arrangement.LIST
-            : Arrangement.GRID}
-        />
-        <ScrollViewBottomSpacer />
+      <div class="flex flex-col gap-4 px-4 overflow-auto grow">
+        {#if isRefreshing}
+          <LibraryLoadingPulse resource={selectedResource} />
+        {:else if data && data.length > 0}
+          <InlineSyncingFeedback {isSyncing} isFullWidthVariant={true} />
+          <div>
+            <Records
+              {data}
+              accessPoint={ResourceAccessPoint.LIBRARY}
+              resource={selectedResource}
+              size={$view.isConstrainedWidth ? Size.sm : Size.md}
+              isShowLoadingPulseAtTheEnd={data.length < totalCount &&
+                !searchQuery}
+              arrangement={$view.isConstrainedWidth
+                ? selectedResource === Resource.node
+                  ? Arrangement.GRID
+                  : Arrangement.LIST
+                : Arrangement.GRID}
+            />
+          </div>
+          <div
+            class="flex w-full justify-center text-b2 text-fgs3"
+            use:intersection={{
+              rootMargin: "100px",
+              callback: () => {
+                refresh(true);
+              }
+            }}
+          >
+            {#if isRefreshingTotalCount}
+              <Icon icon="svg-spinners:3-dots-fade" />
+            {:else}
+              {resolveFooterMessage(data, totalCount) ?? ""}
+            {/if}
+          </div>
+          <ScrollViewBottomSpacer />
+        {:else}
+          <EmptyStatusView
+            size={Size.lg}
+            {...resolveEmptyStateMessage()}
+            isSearchContext={true}
+            actionText={selectedResource === Resource.node &&
+            $context.embed !== Embed.HANDSET
+              ? "Install chrome extension"
+              : undefined}
+            on:click={() => {
+              appStore.openLink(
+                $appStore.appData?.urls?.chromeExtension ??
+                  "https://memotron.io"
+              );
+            }}
+          />
+        {/if}
       </div>
     </div>
   </Panel>
@@ -564,8 +678,7 @@
   subscribeToResource={availableResources}
   subscribeToContext={new Set([
     ResourceAccessPoint.LIBRARY,
-    MemotronAction.CAPTURE,
-    resourceAction(Resource.collection, ResourceActionType.CREATE)
+    ...resources.map((x) => resourceAction(x, ResourceActionType.CREATE))
   ])}
   on:syncDown={() => refresh()}
   on:change={onResourceMutation}

@@ -47,7 +47,7 @@
   import { isValidString, truncateString } from "$lib/shared/utils/text.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { fileDrop } from "$lib/client/actions/fileDrop.action";
-  import { MAX_FILE_SIZE_MB } from "$lib/client/products/memotron/memotron.store";
+  import { MAX_FILE_SIZE_MB } from "$lib/client/components/record/record.store";
   import { resolveFileUploadErrorMessage } from "$lib/client/products/memotron/memotron.utils";
   import { generateResourceId } from "../flux/flux.utils";
   import { Resource } from "../flux/resourceStores/resource.enum";

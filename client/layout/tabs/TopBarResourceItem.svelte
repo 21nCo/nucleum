@@ -5,7 +5,7 @@
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
   import ContextMenu from "$lib/client/elements/contextMenu/ContextMenu.svelte";
-  import { resolveResource } from "$lib/client/products/memotron/memotron.store";
+  import { resolveResource } from "$lib/client/components/record/record.store";
   import { appStore } from "$lib/client/stores/app.store";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import type { IRecordId } from "$lib/client/types/data.type";

@@ -2,7 +2,7 @@
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import Icon from "$lib/client/elements/Icon.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import { SearchStore } from "$lib/client/products/memotron/memotron.store";
+  import { SearchStore } from "$lib/client/components/record/record.store";
   import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
   import { SearchType } from "$lib/client/types/data.type";
 

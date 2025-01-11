@@ -28,7 +28,7 @@ import {
   ResourceAccessMode,
   ResourceAccessPoint
 } from "$lib/client/components/flux/resourceStores/resource.type";
-import { ResourceActions } from "../common/resource.actions";
+import { ResourceActions } from "$lib/client/components/record/resource.actions";
 import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
 import { get, writable } from "svelte/store";
 import { linker } from "$lib/client/products/memotron/linking/link.store";
@@ -39,7 +39,7 @@ import {
 } from "$lib/client/types/select.type";
 import { flux } from "$lib/client/components/flux/flux";
 import { logger } from "$lib/client/components/debug/logger.client";
-import { collectionStore } from "../collection/collection.store";
+import { collectionStore } from "$lib/client/components/collection/collection.store";
 import type { IRecordId } from "$lib/client/types/data.type";
 import type { IToggleItem } from "$lib/client/elements/toggle/toggle.type";
 import { generateMarkdownText, getMarkdownSymbolPrepended } from "./node.utils";
@@ -52,7 +52,7 @@ import {
 import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
 
 import context from "$lib/client/stores/context.store";
-import type { ICollectionExpanded } from "../collection/collection.type";
+import type { ICollectionExpanded } from "$lib/client/components/collection/collection.type";
 import type { IAvatar } from "$lib/client/types/avatar.type";
 import { Embed } from "$lib/client/types/context.type";
 import { TacoActions } from "../taco/taco.types";
@@ -98,8 +98,8 @@ class NodeStore extends ResourceStore<INode> {
 
   /**
    * @deprecated
-   * @param query 
-   * @returns 
+   * @param query
+   * @returns
    */
   async search(query: string) {
     if (isValidString(query)) {

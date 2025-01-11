@@ -13,7 +13,7 @@
   import { ButtonVariant } from "$lib/client/types/button.type";
   import { Embed } from "$lib/client/types/context.type";
   import { wait } from "$lib/client/utils/time.utils";
-  import { MAX_FILE_SIZE_MB } from "../memotron.store";
+  import { MAX_FILE_SIZE_MB } from "../../../components/record/record.store";
   import { resolveFileUploadErrorMessage } from "../memotron.utils";
   import { MemotronAction } from "../memotronAction.enum";
   import type { NodeType } from "../node/node.type";

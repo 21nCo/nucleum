@@ -9,7 +9,7 @@
   import FeedbackPane from "$lib/client/extensions/clipper/feedbackPane/FeedbackPane.svelte";
   import ClipperShortcuts from "$lib/client/extensions/clipper/ClipperShortcuts.svelte";
   import { nodeStore } from "$lib/client/products/memotron/node/node.store";
-  import { collectionStore } from "$lib/client/products/memotron/collection/collection.store";
+  import { collectionStore } from "$lib/client/components/collection/collection.store";
   import Toolbar from "$lib/client/extensions/clipper/toolbar/Toolbar.svelte";
   import TextClipper from "$lib/client/extensions/clipper/contentScripts/TextClipper.svelte";
   import { webpage, toolbarState, feedbackPane, syncStore } from "./store";
@@ -29,7 +29,7 @@
   import LoginNotification from "../feedbackPane/LoginNotification.svelte";
   import { relayToBackgroundScript } from "$lib/client/utils/extension.utils";
   import { fileStore } from "$lib/client/components/files/file.store";
-  import { propertyStore } from "$lib/client/products/memotron/collection/properties/property.store";
+  import { propertyStore } from "$lib/client/components/collection/properties/property.store";
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { ResourceError } from "$lib/client/components/error/errors";
   import { deepCopy } from "$lib/shared/utils/obj.utils";

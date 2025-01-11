@@ -20,7 +20,7 @@
   import FileView from "$lib/client/components/files/FileView.svelte";
   import { FileType, type IFile } from "$lib/client/components/files/file.type";
   import { cn } from "$lib/client/utils/ui.utils";
-  import Resources from "$lib/client/products/memotron/common/Resources.svelte";
+  import Resources from "$lib/client/components/record/Records.svelte";
   import ComingSoonView from "../ComingSoonView.svelte";
   import { fileStore } from "$lib/client/components/files/file.store";
   import EmptyStatusView from "../feedback/EmptyStatusView.svelte";

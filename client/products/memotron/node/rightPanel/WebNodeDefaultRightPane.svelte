@@ -13,7 +13,7 @@
   import { TextStyle } from "$lib/client/types/text.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import { getContext, onMount } from "svelte";
-  import Resources from "../../common/Resources.svelte";
+  import Resources from "../../../../components/record/Records.svelte";
   import LinkThumbnailItems from "../links/LinkThumbnailItems.svelte";
   import { nodeStore, type IActiveNodeStore } from "../node.store";
   import {

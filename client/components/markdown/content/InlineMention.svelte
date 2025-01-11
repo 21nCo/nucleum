@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { resolveResource } from "$lib/client/products/memotron/memotron.store";
+  import { resolveResource } from "$lib/client/components/record/record.store";
   import { resolveNodeLabelString } from "$lib/client/products/memotron/node/node.utils";
   import { appStore } from "$lib/client/stores/app.store";
   import { isValidString, truncateString } from "$lib/shared/utils/text.utils";

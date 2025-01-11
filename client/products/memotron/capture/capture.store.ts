@@ -34,13 +34,14 @@ import {
 import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { linker } from "$lib/client/products/memotron/linking/link.store";
-import { collectionStore } from "../collection/collection.store";
+import { collectionStore } from "$lib/client/components/collection/collection.store";
 import {
   resolveContentTypeForFile,
   resolveMultipleFilesData
 } from "./capture.utils";
 import {
   ResourceAccessMode,
+  ResourceActionType,
   type OmitForCapture
 } from "$lib/client/components/flux/resourceStores/resource.type";
 import type { IRecordId } from "$lib/client/types/data.type";
@@ -48,13 +49,17 @@ import {
   CollectionType,
   type ICollection,
   type ICollectionThumb
-} from "../collection/collection.type";
+} from "$lib/client/components/collection/collection.type";
 import {
   determineResourceType,
   isSameResource,
+  resourceAction,
   resourceInList
 } from "$lib/client/components/flux/resourceStores/resource.utils";
-import { MAX_FILE_SIZE_MB, resolveResource } from "../memotron.store";
+import {
+  MAX_FILE_SIZE_MB,
+  resolveResource
+} from "$lib/client/components/record/record.store";
 import { fileStore } from "$lib/client/components/files/file.store";
 import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 import { appStore } from "$lib/client/stores/app.store";
@@ -87,6 +92,7 @@ import {
 import type { IBlock } from "$lib/client/components/markdown/md.type";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
+const captureAction = resourceAction(Resource.node, ResourceActionType.CREATE);
 
 function generateSeedStore(): ICaptureStore {
   const blockId = generateResourceId(Resource.node);
@@ -482,7 +488,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
         : undefined
     } as IMediaNode;
     const result = await nodeStore.create([node], {
-      context: MemotronAction.CAPTURE
+      context: captureAction
     });
     this.postSave(result, {
       isOpenUponSuccess: !params?.isPreventOpenOnSave,
@@ -544,7 +550,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       });
     }
     const result: any = await nodeStore.create([root, ...remainingResources], {
-      context: MemotronAction.CAPTURE
+      context: captureAction
     });
     return result;
   }
@@ -618,7 +624,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       nodes.push(node);
     }
     const mediaNodesResult = await nodeStore.create(nodes, {
-      context: MemotronAction.CAPTURE
+      context: captureAction
     });
     const result = [...(mediaNodesResult ?? []), ...(mdNodesResult ?? [])];
     this.postSave(result, {
@@ -669,7 +675,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       }
     };
     const result2 = await nodeStore.create(node, {
-      context: MemotronAction.CAPTURE
+      context: captureAction
     });
     await this.saveLinks(id);
     this.postSave(result2, {
@@ -738,7 +744,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       }
     };
     const result2 = await nodeStore.create(node, {
-      context: MemotronAction.CAPTURE
+      context: captureAction
     });
     await this.saveLinks(id);
     const ctx = get(context);
@@ -807,7 +813,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       }
     }
     const result = await nodeStore.create(node, {
-      context: MemotronAction.CAPTURE
+      context: captureAction
     });
     this.postSave(result, {
       isOpenUponSuccess: !params?.isPreventOpenOnSave,
@@ -842,7 +848,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     if (params?.isEmbedContext) return;
     if (!params?.isOpenUponSuccess) {
       appStore.closeResource({
-        id: MemotronAction.CAPTURE,
+        id: captureAction,
         accessMode: ResourceAccessMode.POP
       });
       appStore.closeResource({
@@ -1066,7 +1072,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     }
 
     let result: any = await nodeStore.create([root, ...remainingResources], {
-      context: MemotronAction.CAPTURE
+      context: captureAction
     });
     await this.saveLinks(id);
     this.postSave(result.slice(0, 1));

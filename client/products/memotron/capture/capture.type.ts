@@ -1,4 +1,4 @@
-import type { IProperty } from "$lib/client/products/memotron/collection/properties/property.type";
+import type { IProperty } from "$lib/client/components/collection/properties/property.type";
 import type { IAvatar } from "$lib/client/types/avatar.type";
 import type {
   IObservableStoreSubject,
@@ -11,7 +11,7 @@ import type {
   LinkType,
   NodeType
 } from "$lib/client/products/memotron/node/node.type";
-import type { CollectionType } from "../collection/collection.type";
+import type { CollectionType } from "$lib/client/components/collection/collection.type";
 import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 
 export enum CaptureType {

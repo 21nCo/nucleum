@@ -18,7 +18,7 @@
   import view from "$lib/client/stores/view.store";
   import Badge from "../../text/Badge.svelte";
   import { onMount } from "svelte";
-  import { SearchStore } from "$lib/client/products/memotron/memotron.store";
+  import { SearchStore } from "$lib/client/components/record/record.store";
   import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
   export let item: IResourceSwitchItem;
   export let size: Size.lg | Size.md | Size.sm = Size.md;

@@ -19,7 +19,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { captureStore } from "$lib/client/products/memotron/capture/capture.store";
   import { Resource } from "../../flux/resourceStores/resource.enum";
-  import Collection from "$lib/client/products/memotron/collection/Collection.svelte";
+  import Collection from "$lib/client/components/collection/Collection.svelte";
   import { determineResourceType } from "../../flux/resourceStores/resource.utils";
   import { resizable } from "$lib/client/actions/resize.action";
   import { appStore } from "$lib/client/stores/app.store";

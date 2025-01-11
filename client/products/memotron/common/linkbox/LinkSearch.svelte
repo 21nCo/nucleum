@@ -4,7 +4,7 @@
   import type { IPopoverOptions } from "$lib/client/types/popover.type";
   import { Placement } from "$lib/client/types/direction.enum";
   import { type InputLabel, InputStyle } from "$lib/client/types/input.type";
-  import { SearchStore } from "../../memotron.store";
+  import { SearchStore } from "../../../../components/record/record.store";
   import { onMount } from "svelte";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
@@ -12,11 +12,11 @@
   import view from "$lib/client/stores/view.store";
   import { nodeStore } from "../../node/node.store";
   import { NodeType } from "../../node/node.type";
-  import { collectionStore } from "../../collection/collection.store";
+  import { collectionStore } from "$lib/client/components/collection/collection.store";
   import {
     CollectionLayout,
     CollectionType
-  } from "../../collection/collection.type";
+  } from "$lib/client/components/collection/collection.type";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { toasts } from "$lib/client/stores/notification.store";
   import type { IRecordId } from "$lib/client/types/data.type";

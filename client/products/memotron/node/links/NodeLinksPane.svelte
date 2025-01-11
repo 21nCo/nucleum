@@ -11,7 +11,7 @@
     ResourceAccessPoint
   } from "$lib/client/components/flux/resourceStores/resource.type";
   import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
-  import BulkEditBar from "../../common/BulkEditBar.svelte";
+  import BulkEditBar from "../../../../components/record/BulkEditBar.svelte";
   import InlineTimeoutMessage from "$lib/client/elements/text/InlineTimeoutMessage.svelte";
   import { AlertType } from "$lib/client/types/notification.type";
   import {
@@ -41,7 +41,7 @@
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
   import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
   import { activeResourceFilterV2 } from "$lib/client/utils/utils";
-  import { BulkEditor } from "../../memotron.store";
+  import { BulkEditor } from "../../../../components/record/record.store";
   import { toasts } from "$lib/client/stores/notification.store";
   import { deepCopy, isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import {

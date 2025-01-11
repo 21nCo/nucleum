@@ -8,7 +8,7 @@
     NodeThumbnailVariant,
     type INodeThumbnail
   } from "$lib/client/products/memotron/node/node.type";
-  import NodeItems from "$lib/client/products/memotron/collection/NodeItems.svelte";
+  import NodeRecords from "$lib/client/products/memotron/node/NodeRecords.svelte";
   import { nodeStore } from "../../node/node.store";
   export let context: "journal" | "journal-modal-viewer" = "journal";
   export let parentBgIndex: number = 0;
@@ -35,7 +35,7 @@
 
 <div class="flex h-full w-full">
   {#if isValidArrayWithData(nodes) && !isLoadingState}
-    <NodeItems
+    <NodeRecords
       {nodes}
       arrangement={NodeThumbnailVariant.LIST}
       {parentBgIndex}

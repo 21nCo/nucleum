@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Orientation, Placement } from "$lib/client/types/direction.enum";
+  import { Placement } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { properCase } from "$lib/shared/utils/text.utils";
   import type { IResourceSwitchItem } from "$lib/client/types/select.type";
@@ -15,11 +15,10 @@
   import { hoverable } from "$lib/client/actions/hover.action";
   import { popover } from "$lib/client/actions/popover.action";
   import ContextMenu from "$lib/client/elements/contextMenu/ContextMenu.svelte";
-  import view from "$lib/client/stores/view.store";
   import Badge from "$lib/client/elements/text/Badge.svelte";
   import { onMount } from "svelte";
-  import { SearchStore } from "$lib/client/products/memotron/memotron.store";
-  import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
+  import { SearchStore } from "$lib/client/components/record/record.store";
+
   export let item: IResourceSwitchItem;
   export let isActive: boolean = false;
   export let parentBgIndex: number = 1;
@@ -83,16 +82,12 @@
             value: "create",
             icon: "plus",
             callback: async () => {
-              if (item.value === Resource.node) {
-                appStore.runAction(MemotronAction.CAPTURE);
-              } else {
-                appStore.runAction(
-                  resourceAction(
-                    item.value as Resource,
-                    ResourceActionType.CREATE
-                  )
-                );
-              }
+              appStore.runAction(
+                resourceAction(
+                  item.value as Resource,
+                  ResourceActionType.CREATE
+                )
+              );
               popRef.dispatchEvent(new CustomEvent("hide"));
             }
           }

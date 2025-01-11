@@ -8,7 +8,7 @@
   import { canHaveTraces, NodeType } from "../node.type";
   import { highlightStore } from "../../common/highlighters/highlight.store";
   import { AnnotationType } from "../../pdfAnnotator/pdfAnnotator.type";
-  import Resources from "../../common/Resources.svelte";
+  import Resources from "../../../../components/record/Records.svelte";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";

@@ -1,6 +1,6 @@
 <script>
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import ResourceBrowser from "../common/ResourceBrowser.svelte";
+  import ResourceBrowser from "../../../components/record/ResourceBrowser.svelte";
 </script>
 
 <ResourceBrowser resource={Resource.node} />

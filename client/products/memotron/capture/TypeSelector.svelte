@@ -8,7 +8,7 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { flux } from "$lib/client/components/flux/flux";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { CollectionType } from "../collection/collection.type";
+  import { CollectionType } from "$lib/client/components/collection/collection.type";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   import TypeSelectorItem from "./typeSelector/TypeSelectorItem.svelte";

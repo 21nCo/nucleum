@@ -1,6 +1,6 @@
 <script lang="ts">
   import LinkSearchResultItem from "$lib/client/products/memotron/common/linkbox/LinkSearchResultItem.svelte";
-  import { SearchStore } from "$lib/client/products/memotron/memotron.store";
+  import { SearchStore } from "$lib/client/components/record/record.store";
   import { NodeType } from "$lib/client/products/memotron/node/node.type";
   import { enumToString } from "$lib/shared/utils/text.utils";
   import { onMount } from "svelte";

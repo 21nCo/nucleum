@@ -8,7 +8,7 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import NodeContent from "../content/NodeContent.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import ResourceStatusBanner from "../../common/ResourceStatusBanner.svelte";
+  import ResourceStatusBanner from "../../../../components/record/RecordStatusBanner.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import { InputStyle } from "$lib/client/types/input.type";
   import { cn } from "$lib/client/utils/ui.utils";

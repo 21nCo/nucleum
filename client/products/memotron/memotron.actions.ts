@@ -9,12 +9,9 @@ import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadi
 import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
 import ProductFeatureWheel from "$lib/client/components/blank/ProductFeatureWheel.svelte";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import PropertyConfig from "$lib/client/products/memotron/collection/properties/propertyConfig/PropertyConfig.svelte";
 import MemotronLibrary from "$lib/client/products/memotron/library/MemotronLibrary.svelte";
 import TestHome from "$local/TestHome.svelte";
-import CreateCollection from "$lib/client/products/memotron/collection/CreateCollection.svelte";
-import PropertiesEditor from "$lib/client/products/memotron/collection/properties/PropertiesEditor.svelte";
-import { MemotronAction } from "./memotronAction.enum";
+import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
 import {
   ResourceAccessMode,
   ResourceActionType,
@@ -24,10 +21,8 @@ import {
   determineResourceType,
   resourceAction
 } from "$lib/client/components/flux/resourceStores/resource.utils";
-import CollectionBrowser from "$lib/client/products/memotron/collection/CollectionBrowser.svelte";
 import NodeBrowser from "$lib/client/products/memotron/node/NodeBrowser.svelte";
 import ResourceSearchModal from "./library/search/ResourceSearchModal.svelte";
-import Collection from "./collection/Collection.svelte";
 import { Action } from "$lib/client/types/action.enum";
 import PasteConfirmationModal from "./capture/PasteConfirmationModal.svelte";
 import { linker } from "./linking/link.store";
@@ -43,14 +38,10 @@ import NodeTitleLabelPart from "./node/title/NodeTitleLabelPart.svelte";
 import MemotronGreenUse from "./base/MemotronGreenUse.svelte";
 import GlobalGraph from "./graph/GlobalGraph.svelte";
 import CalloutSettings from "$lib/client/components/markdown/callout/CalloutSettings.svelte";
-import CreateCombination from "./combination/CreateCombination.svelte";
 import MemotronDataSettings from "./settings/MemotronDataSettings.svelte";
-import CollectionTitleLabelPart from "./collection/title/CollectionTitleLabelPart.svelte";
 import { Embed } from "$lib/client/types/context.type";
-import { SearchStore } from "./memotron.store";
+import { SearchStore } from "$lib/client/components/record/record.store";
 import type { IRecordId } from "$lib/client/types/data.type";
-import { ResourceError } from "$lib/client/components/error/errors";
-import { ResourceErrorCode } from "$lib/client/components/error/error.type";
 
 export const memotronActions: IAction[] = [
   {
@@ -70,7 +61,7 @@ export const memotronActions: IAction[] = [
     }
   },
   {
-    action: MemotronAction.CAPTURE,
+    action: resourceAction(Resource.node, ResourceActionType.CREATE),
     component: Capture,
     label: "Capture",
     icon: "ph:plus-circle-light",
@@ -136,45 +127,6 @@ export const memotronActions: IAction[] = [
     }
   },
   {
-    action: resourceAction(Resource.collection, ResourceActionType.CREATE),
-    component: CreateCollection,
-    label: "Create a new collection",
-    type: ActionType.MODAL,
-    modalParams: {
-      layout: {
-        size: Size.lg,
-        orientation: Orientation.Horizontal,
-        ignoreSafeArea: true
-      }
-    }
-  },
-  {
-    action: MemotronAction.EDIT_COLLECTION_PROPERTIES,
-    component: PropertiesEditor,
-    type: ActionType.MODAL,
-    isMeta: true,
-    modalParams: {
-      layout: {
-        size: Size.xxl,
-        orientation: Orientation.Horizontal
-      }
-    }
-  },
-  {
-    action: resourceAction(Resource.combination, ResourceActionType.CREATE),
-    component: CreateCombination,
-    label: "Create a new combination",
-    type: ActionType.MODAL,
-    isInactive: true,
-    modalParams: {
-      title: "Create a new combination",
-      layout: {
-        size: Size.md,
-        orientation: Orientation.Horizontal
-      }
-    }
-  },
-  {
     action: MemotronAction.JOURNAL_MODAL_VIEWER,
     component: JournalModalViewer,
     type: ActionType.MODAL,
@@ -229,35 +181,12 @@ export const memotronActions: IAction[] = [
     }
   },
   {
-    action: resourceAction(Resource.collection, ResourceActionType.BROWSE),
-    component: CollectionBrowser,
-    label: "Collections",
-    icon: "ph:brackets-round-light",
-    type: ActionType.PAGE,
-    loadingComponent: NodeLoadingPulse
-  },
-  {
     action: resourceAction(Resource.node, ResourceActionType.BROWSE),
     component: NodeBrowser,
     label: "Nodes",
     icon: "ph:hexagon-light",
     type: ActionType.PAGE,
     loadingComponent: NodeLoadingPulse
-  },
-  {
-    action: Resource.collection,
-    type: ActionType.MODAL,
-    component: Collection,
-    resourceLabelRenderer: CollectionTitleLabelPart,
-    modalParams: {
-      layout: {
-        size: Size.xxl,
-        orientation: Orientation.Horizontal,
-        ignoreSafeArea: true,
-        isShowCantileverClose: true,
-        isShowBackButton: true
-      }
-    }
   },
   {
     action: Resource.combination,
@@ -316,12 +245,6 @@ export const memotronActions: IAction[] = [
     }
   },
   {
-    action: "propertyConfig",
-    type: ActionType.INLINE,
-    isMeta: true,
-    component: PropertyConfig
-  },
-  {
     action: MemotronAction.PASTE_CONFIRMATION,
     type: ActionType.MODAL,
     isMeta: true,
@@ -330,51 +253,6 @@ export const memotronActions: IAction[] = [
       title: "Paste Confirmation",
       layout: {
         size: Size.sm
-      }
-    }
-  },
-  {
-    action: MemotronAction.ADD_NODE_TO_COLLECTION,
-    type: ActionType.SEARCH_CMD,
-    cmdLabel: "Add node to collection",
-    isMeta: true,
-    searchActionParams: {
-      searchStoreId: Resource.node,
-      placeholder: "select a node",
-      searchResultComponent: LinkSearchResultItem,
-      callback: async (id: string, label?: string, componentParams?: any) => {
-        try {
-          if (!componentParams?.id) {
-            toasts.error();
-            return;
-          }
-          const result = await linker.link(id, componentParams.id, {
-            context: componentParams.id.toString()
-          });
-          logger.log({
-            at: "addNodeToCollection",
-            id,
-            label,
-            componentParams,
-            result
-          });
-          if (!result) {
-            toasts.error();
-            return;
-          }
-          toasts.success(`**${label}** added to collection`);
-        } catch (e) {
-          logger.error(e);
-          if (e instanceof ResourceError) {
-            if (e.code === ResourceErrorCode.ALREADY_EXISTS) {
-              toasts.error("Already added to collection");
-            } else {
-              toasts.error();
-            }
-          } else {
-            toasts.error();
-          }
-        }
       }
     }
   },

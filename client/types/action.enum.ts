@@ -24,5 +24,6 @@ export enum Action {
   LOCAL_AI_SETTINGS = "ai",
   GUIDES = "guides",
   GO_BACK = "GO_BACK",
-  GO_FORWARD = "GO_FORWARD"
+  GO_FORWARD = "GO_FORWARD",
+  ADD_ITEM_TO_COLLECTION = "add-item-to-collection"
 }

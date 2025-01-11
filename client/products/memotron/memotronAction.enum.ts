@@ -1,4 +1,7 @@
 export enum MemotronAction {
+  /**
+   * @deprecated - use resourceAction(Resource.collection, ResourceActionType.CREATE) instead
+   */
   CAPTURE = "capture",
   /**
    * Capture drag and drop listener of files from outside the app.
@@ -9,11 +12,17 @@ export enum MemotronAction {
   SERENDIPITY = "serendipity",
   PUBLISH = "publish",
   HISTORY = "history",
+  /**
+   * @deprecated - use resourceAction(Resource.property, ResourceActionType.EDIT) instead
+   */
   EDIT_COLLECTION_PROPERTIES = "edit-collection-properties",
   CREATE_TYPE = "create-type",
   LIBRARY = "library",
   SEARCH = "search",
   PASTE_CONFIRMATION = "paste-confirmation",
+  /**
+   * @deprecated - use Action.ADD_ITEM_TO_COLLECTION instead
+   */
   ADD_NODE_TO_COLLECTION = "add-node-to-collection",
   BULK_LINK = "bulk-link",
   OPEN_CHAT = "open-chat",

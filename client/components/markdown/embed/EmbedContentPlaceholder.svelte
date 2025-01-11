@@ -8,7 +8,7 @@
   import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
   import AudioCapture from "$lib/client/products/memotron/capture/AudioCapture.svelte";
   import { captureStore } from "$lib/client/products/memotron/capture/capture.store";
-  import { MAX_FILE_SIZE_MB } from "$lib/client/products/memotron/memotron.store";
+  import { MAX_FILE_SIZE_MB } from "$lib/client/components/record/record.store";
   import { resolveFileUploadErrorMessage } from "$lib/client/products/memotron/memotron.utils";
   import {
     mediaNodeTypeList,

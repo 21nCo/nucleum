@@ -5,14 +5,18 @@
     resourceInList
   } from "$lib/client/components/flux/resourceStores/resource.utils";
   import type { IRecordId } from "$lib/client/types/data.type";
-  import type { IProperty } from "../../collection/properties/property.type";
-  import PropertyItem from "../../collection/properties/PropertyItem.svelte";
-  import { nodeStore } from "../node.store";
-  import type { INodePropertyValue } from "../node.type";
+  import type { IProperty } from "$lib/client/components/collection/properties/property.type";
+  import PropertyItem from "$lib/client/components/collection/properties/PropertyItem.svelte";
+  import {
+    ActiveNodeStore,
+    nodeStore
+  } from "$lib/client/products/memotron/node/node.store";
+  import type { INodePropertyValue } from "$lib/client/products/memotron/node/node.type";
   export let values: INodePropertyValue[] = [];
   export let properties: IProperty[] = [];
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
   export let nodeId: IRecordId;
+  let node = ActiveNodeStore.resolve(nodeId);
   async function propagateChanges(id: IRecordId, value: any) {
     values = values?.filter((x) => !isSameResource(x, id)) ?? [];
     const newValue = {
@@ -34,7 +38,7 @@
     <PropertyItem
       value={values?.find(resourceInList(property))?.value}
       {property}
-      {nodeId}
+      item={$node}
       on:change={(e) => {
         propagateChanges(property.id, e.detail);
       }}

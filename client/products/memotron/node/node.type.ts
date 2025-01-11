@@ -8,7 +8,7 @@ import type { IRecordId, IStore } from "../../../types/data.type";
 import type {
   IProperty,
   IPropertyValue
-} from "$lib/client/products/memotron/collection/properties/property.type";
+} from "$lib/client/components/collection/properties/property.type";
 import {
   ResourceAccessMode,
   type CaptureOmittedFields,
@@ -20,7 +20,7 @@ import type { IFile } from "$lib/client/components/files/file.type";
 import type {
   IActiveCollection,
   ICollectionExpanded
-} from "../collection/collection.type";
+} from "$lib/client/components/collection/collection.type";
 
 export type INodeItemCaptured = OmitForCapture<INodeInterface> & {
   id: IRecordId;
@@ -367,11 +367,17 @@ export enum LinkType {
 
 export type INodeMetadata = { location?: any };
 
+/**
+ * @deprecated - use ICollectionItemPropertyValue instead
+ */
 export type INodePropertyValue = {
   id: IRecordId;
   value: IPropertyValue | null;
 };
 
+/**
+ * @deprecated - use Arrangement instead
+ */
 export enum NodeThumbnailVariant {
   LIST = "LIST",
   GRID = "GRID",

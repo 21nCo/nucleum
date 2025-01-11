@@ -2,7 +2,7 @@
   import FloatingButton from "$lib/client/elements/button/FloatingButton.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
-  import Resources from "../common/Resources.svelte";
+  import Resources from "../../../components/record/Records.svelte";
   import { onMount } from "svelte";
   import { Size } from "$lib/client/types/size.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
@@ -25,13 +25,15 @@
     ResourceAccessPoint,
     ResourceActionType
   } from "$lib/client/components/flux/resourceStores/resource.type";
-  import BulkEditBar from "../common/BulkEditBar.svelte";
-  import { collectionStore } from "../collection/collection.store";
-  import { BulkEditor, SearchStore } from "../memotron.store";
+  import BulkEditBar from "../../../components/record/BulkEditBar.svelte";
+  import {
+    BulkEditor,
+    SearchStore
+  } from "../../../components/record/record.store";
   import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
   import { resolveMultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
   import { nodeStore } from "../node/node.store";
-  import LibrarySearchBox from "./LibrarySearchBox.svelte";
+  import LibrarySearchBox from "../../../components/library/LibrarySearchBox.svelte";
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import Divider from "$lib/client/elements/Divider.svelte";
   import { MemotronAction } from "../memotronAction.enum";
@@ -39,7 +41,7 @@
   import {
     CollectionType,
     type ICollection
-  } from "../collection/collection.type";
+  } from "$lib/client/components/collection/collection.type";
   import { NodeType, rootNodeTypeList, type INode } from "../node/node.type";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import VerticalSwitcher from "$lib/client/elements/switcher/VerticalSwitcher.svelte";
@@ -48,7 +50,7 @@
   import {
     resolveCollectionTypeIcon,
     resolveCollectionTypeLabel
-  } from "../collection/collection.utils";
+  } from "$lib/client/components/collection/collection.utils";
   import { debouncer } from "$lib/client/utils/utils";
   import {
     PersistenceActionType,
@@ -57,7 +59,7 @@
     type IResourceSelectOrderBy
   } from "$lib/client/types/data.type";
   import { page } from "$app/stores";
-  import LibraryLoadingPulse from "./LibraryLoadingPulse.svelte";
+  import LibraryLoadingPulse from "../../../components/library/LibraryLoadingPulse.svelte";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import view from "$lib/client/stores/view.store";
   import { logger } from "$lib/client/components/debug/logger.client";
@@ -554,6 +556,7 @@
           <LibrarySearchBox
             {variant}
             {resources}
+            {selectedSubType}
             bind:selectedResource
             bind:searchQuery
             on:keydown={() => refresh()}

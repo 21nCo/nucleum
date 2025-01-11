@@ -7,7 +7,7 @@
   import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import SearchResults from "./SearchResults.svelte";
-  import { SearchStore } from "../../memotron.store";
+  import { SearchStore } from "../../../../components/record/record.store";
   import { onMount } from "svelte";
   import { isValidString } from "$lib/shared/utils/text.utils";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";

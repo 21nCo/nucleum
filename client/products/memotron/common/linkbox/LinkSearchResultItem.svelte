@@ -2,14 +2,18 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { properCase } from "$lib/shared/utils/text.utils";
-  import NodeTitleBreadcrumbs from "../../node/title/NodeTitleBreadcrumbs.svelte";
-  import { headingNodeTypes, NodeType, type INode } from "../../node/node.type";
+  import NodeTitleBreadcrumbs from "$lib/client/products/memotron/node/title/NodeTitleBreadcrumbs.svelte";
+  import {
+    headingNodeTypes,
+    NodeType,
+    type INode
+  } from "$lib/client/products/memotron/node/node.type";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import CollectionTitleLabelPart from "../../collection/title/CollectionTitleLabelPart.svelte";
-  import type { ICollectionThumb } from "../../collection/collection.type";
+  import CollectionTitleLabelPart from "$lib/client/components/collection/title/CollectionTitleLabelPart.svelte";
+  import type { ICollectionThumb } from "$lib/client/components/collection/collection.type";
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
-  import NodeTitleLabelPart from "../../node/title/NodeTitleLabelPart.svelte";
+  import NodeTitleLabelPart from "$lib/client/products/memotron/node/title/NodeTitleLabelPart.svelte";
   export let item: INode | ICollectionThumb;
   export let isHideResourceType: boolean = false;
 

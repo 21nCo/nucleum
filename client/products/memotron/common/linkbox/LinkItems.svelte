@@ -8,13 +8,13 @@
     removeDuplicatesFilter
   } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { collectionStore } from "../../collection/collection.store";
-  import PropertiesListView from "../../collection/properties/PropertiesListView.svelte";
+  import { collectionStore } from "$lib/client/components/collection/collection.store";
+  import PropertiesListView from "$lib/client/components/collection/properties/PropertiesListView.svelte";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import LinkTagger from "../../linking/LinkTagger.svelte";
-  import type { INodeLinkThumb } from "../../node/node.type";
-  import { linker } from "../../linking/link.store";
-  import LinkTags from "../../linking/LinkTags.svelte";
+  import LinkTagger from "$lib/client/products/memotron/linking/LinkTagger.svelte";
+  import type { INodeLinkThumb } from "$lib/client/products/memotron/node/node.type";
+  import { linker } from "$lib/client/products/memotron/linking/link.store";
+  import LinkTags from "$lib/client/products/memotron/linking/LinkTags.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { properCase } from "$lib/shared/utils/text.utils";

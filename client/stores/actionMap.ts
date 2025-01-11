@@ -31,6 +31,23 @@ import SurrealLocalViewer from "../components/debug/SurrealLocalViewer.svelte";
 import PrivacyPolicy from "../landing/shared/PrivacyPolicy.svelte";
 import HashnodeEmbed from "../components/cx/hashnode/HashnodeEmbed.svelte";
 import { Embed } from "../types/context.type";
+import { ResourceActionType } from "../components/flux/resourceStores/resource.type";
+import { resourceAction } from "../components/flux/resourceStores/resource.utils";
+import { Resource } from "../components/flux/resourceStores/resource.enum";
+import CreateCollection from "$lib/client/components/collection/CreateCollection.svelte";
+import PropertiesEditor from "$lib/client/components/collection/properties/PropertiesEditor.svelte";
+import CreateCombination from "$lib/client/components/combination/CreateCombination.svelte";
+import { linker } from "../products/memotron/linking/link.store";
+import { ResourceError } from "$lib/client/components/error/errors";
+import { ResourceErrorCode } from "$lib/client/components/error/error.type";
+import CollectionTitleLabelPart from "$lib/client/components/collection/title/CollectionTitleLabelPart.svelte";
+import Collection from "$lib/client/components/collection/Collection.svelte";
+import CollectionBrowser from "$lib/client/components/collection/CollectionBrowser.svelte";
+import PropertyConfig from "$lib/client/components/collection/properties/propertyConfig/PropertyConfig.svelte";
+import { logger } from "../components/debug/logger.client";
+import { toasts } from "./notification.store";
+import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
+import LinkSearchResultItem from "$lib/client/products/memotron/common/linkbox/LinkSearchResultItem.svelte";
 
 export const globalActions: IAction[] = [
   {
@@ -530,5 +547,118 @@ export const globalActions: IAction[] = [
     fn: async () => {
       appStore.goForward();
     }
+  },
+  {
+    action: resourceAction(Resource.collection, ResourceActionType.CREATE),
+    component: CreateCollection,
+    label: "Create a new collection",
+    type: ActionType.MODAL,
+    modalParams: {
+      layout: {
+        size: Size.lg,
+        orientation: Orientation.Horizontal,
+        ignoreSafeArea: true
+      }
+    }
+  },
+  {
+    action: resourceAction(Resource.property, ResourceActionType.EDIT),
+    component: PropertiesEditor,
+    type: ActionType.MODAL,
+    isMeta: true,
+    modalParams: {
+      layout: {
+        size: Size.xxl,
+        orientation: Orientation.Horizontal
+      }
+    }
+  },
+  {
+    action: resourceAction(Resource.combination, ResourceActionType.CREATE),
+    component: CreateCombination,
+    label: "Create a new combination",
+    type: ActionType.MODAL,
+    isInactive: true,
+    modalParams: {
+      title: "Create a new combination",
+      layout: {
+        size: Size.md,
+        orientation: Orientation.Horizontal
+      }
+    }
+  },
+  {
+    action: Resource.collection,
+    type: ActionType.MODAL,
+    component: Collection,
+    resourceLabelRenderer: CollectionTitleLabelPart,
+    modalParams: {
+      layout: {
+        size: Size.xxl,
+        orientation: Orientation.Horizontal,
+        ignoreSafeArea: true,
+        isShowCantileverClose: true,
+        isShowBackButton: true
+      }
+    }
+  },
+  {
+    action: resourceAction(Resource.collection, ResourceActionType.BROWSE),
+    component: CollectionBrowser,
+    label: "Collections",
+    icon: "ph:brackets-round-light",
+    type: ActionType.PAGE,
+    loadingComponent: NodeLoadingPulse
+  },
+  {
+    action: Action.ADD_ITEM_TO_COLLECTION,
+    type: ActionType.SEARCH_CMD,
+    cmdLabel: "Add node to collection",
+    isMeta: true,
+    searchActionParams: {
+      searchStoreId: Resource.node,
+      placeholder: "select a node",
+      searchResultComponent: LinkSearchResultItem,
+      callback: async (id: string, label?: string, componentParams?: any) => {
+        try {
+          if (!componentParams?.id) {
+            toasts.error();
+            return;
+          }
+          const result = await linker.link(id, componentParams.id, {
+            context: componentParams.id.toString()
+          });
+          logger.log({
+            at: "addNodeToCollection",
+            id,
+            label,
+            componentParams,
+            result
+          });
+          if (!result) {
+            toasts.error();
+            return;
+          }
+          toasts.success(`**${label}** added to collection`);
+        } catch (e) {
+          logger.error(e);
+          if (e instanceof ResourceError) {
+            if (e.code === ResourceErrorCode.ALREADY_EXISTS) {
+              toasts.error("Already added to collection");
+            } else {
+              toasts.error();
+            }
+          } else {
+            toasts.error();
+          }
+        }
+      }
+    }
+  },
+  {
+    action: "propertyConfig",
+    type: ActionType.INLINE,
+    isMeta: true,
+    component: PropertyConfig
   }
 ];

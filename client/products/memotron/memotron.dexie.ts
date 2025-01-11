@@ -7,10 +7,10 @@ import { AppDexie } from "$lib/client/persistence/dexie";
 import type {
   ICollection,
   ICollectionView
-} from "$lib/client/products/memotron/collection/collection.type";
-import type { IProperty } from "./collection/properties/property.type";
+} from "$lib/client/components/collection/collection.type";
+import type { IProperty } from "$lib/client/components/collection/properties/property.type";
 import type { IFile } from "$lib/client/components/files/file.type";
-import type { ILinkTag } from "./linking/link.type";
+import type { ILinkTag } from "$lib/client/products/memotron/linking/link.type";
 
 export class MemotronDexie extends AppDexie {
   node!: Table<INode>;
