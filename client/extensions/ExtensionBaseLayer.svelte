@@ -26,6 +26,7 @@
     cleanExtensionSprites,
     extensionSprites
   } from "../iconsV2/icon.store";
+  import jwt_decode from "jwt-decode";
   const dispatch = createEventDispatcher();
   export let id: string;
   export let stores: IStore[] = [];
@@ -80,13 +81,27 @@
   async function refreshUserSession() {
     const dapId = await getDapId();
     const token = await resolveToken();
-    if (!token) {
+    let isSessionExpired = false;
+    if (token) isSessionExpired = await checkIfSessionExpired(token);
+    if (!token || isSessionExpired) {
       dispatch("login", {
         code: -1
       });
       return;
     }
     await bootup();
+    return true;
+  }
+
+  async function checkIfSessionExpired(token: string) {
+    logger.log({ at: "checkIfSessionExpired" });
+    let decodedToken: any = jwt_decode(token);
+    let exp = decodedToken?.exp ?? 0;
+    const currentTime = new Date().getTime() / 1000;
+    if (currentTime < exp) {
+      return false;
+    }
+    await clientStorage.remove(ClientStorageKey.STOKEN);
     return true;
   }
 
