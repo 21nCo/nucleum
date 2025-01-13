@@ -22,6 +22,7 @@
   export let activeHighlighter: string | null = null;
   export let isSnipActive: boolean = false;
   export let contentType: NodeType = NodeType.WEB_PAGE;
+  export let isDragging: boolean = false;
 
   let isAutoHighlighterExpanded = false;
   $: isScreenShotOnly = screenShotOnlyPages.some((regex) =>
@@ -64,17 +65,21 @@
   }
 </script>
 
-<div
+<button
   class={cn(
     "fixed bg-bgs1 border border-brs3 rounded-full min-h-fit flex gap-3  justify-center items-center shadow-md",
     {
       "right-0 top-1/2 flex-col w-11 2k:w-12 mr-4 2k:mr-6 py-3 transform -translate-y-1/2 space-y-1.5":
         $toolbarState.position === Placement.Right || !$toolbarState.position,
-      "bottom-0 right-1/2 transform translate-x-1/2 flex-row py-2 mb-4 px-6":
-        $toolbarState.position === Placement.Bottom
+      "bottom-0 right-1/2 transform translate-x-1/2 flex-row py-2 mb-4 px-6 h-12":
+        $toolbarState.position === Placement.Bottom,
+      "left-0 top-1/2 flex-col w-11 2k:w-12 ml-4 2k:ml-6 py-3 transform -translate-y-1/2 space-y-1.5":
+        $toolbarState.position === Placement.Left
     }
   )}
   draggable="true"
+  on:dragstart={() => (isDragging = true)}
+  on:dragend={() => (isDragging = false)}
 >
   {#if !isScreenShotOnly && !$syncStore.id}
     {#if $webpage?.id}
@@ -194,27 +199,6 @@
       })}
   />
   <Button
-    icon={$toolbarState.position === Placement.Right
-      ? "ph:arrow-elbow-down-left"
-      : "ph:arrow-elbow-right-up"}
-    tooltip={$toolbarState.position === Placement.Right
-      ? "Move to bottom"
-      : "Move to right"}
-    {...buttonParams}
-    on:click={() => {
-      let val;
-      if ($toolbarState.position === Placement.Right) {
-        val = Placement.Bottom;
-      } else if (
-        $toolbarState.position === Placement.Bottom ||
-        !$toolbarState.position
-      ) {
-        val = Placement.Right;
-      }
-      toolbarState.changePosition(val);
-    }}
-  />
-  <Button
     icon="ph:x-circle-light"
     tooltip="Collapse"
     {...buttonParams}
@@ -222,4 +206,4 @@
       dispatch("collapse");
     }}
   />
-</div>
+</button>

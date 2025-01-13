@@ -32,7 +32,8 @@
   import { propertyStore } from "$lib/client/components/collection/properties/property.store";
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { ResourceError } from "$lib/client/components/error/errors";
-  import { deepCopy } from "$lib/shared/utils/obj.utils";
+  import { Placement } from "$lib/client/types/direction.enum";
+  import ToolbarPlacementHintBlock from "../toolbar/ToolbarPlacementHintBlock.svelte";
 
   export let id: string;
   let textClipperRef: any;
@@ -41,6 +42,8 @@
   let loginNotification: number | null = null;
   let isDisableClipper = true;
   let isLoggedIn: boolean = false;
+  let isDraggingToolbar: boolean = false;
+
   const unavailableUrlsList = [
     /^https:\/\/(?:.*\.)?memotron\.io(?:\/.*)?$/,
     /^https:\/\/memotron\.tidigit\.dev(?:\/.*)?$/,
@@ -227,6 +230,7 @@
         <Toolbar
           {contentType}
           bind:isSnipActive
+          bind:isDragging={isDraggingToolbar}
           on:color={onActivateColor}
           on:save={onSaveClick}
           on:saved={() => {
@@ -269,6 +273,18 @@
             isSnipActive = false;
           }}
         />
+      {/if}
+    {/if}
+    {#if isDraggingToolbar}
+      {#if $toolbarState.position === Placement.Right}
+        <ToolbarPlacementHintBlock position={Placement.Left} />
+        <ToolbarPlacementHintBlock position={Placement.Bottom} />
+      {:else if $toolbarState.position === Placement.Bottom}
+        <ToolbarPlacementHintBlock position={Placement.Left} />
+        <ToolbarPlacementHintBlock position={Placement.Right} />
+      {:else if $toolbarState.position === Placement.Left}
+        <ToolbarPlacementHintBlock position={Placement.Right} />
+        <ToolbarPlacementHintBlock position={Placement.Bottom} />
       {/if}
     {/if}
   {/if}
