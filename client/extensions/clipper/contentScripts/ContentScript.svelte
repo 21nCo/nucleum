@@ -67,6 +67,13 @@
     try {
       const contentTypeStr = enumToString(contentType);
       feedbackPane.onPageSaveStart(`Saving ${contentTypeStr}...`);
+      if ($webpage.id) {
+        feedbackPane.setErrorFeedback({
+          message: "Page already saved.",
+          isPreventAutoClose: false
+        });
+        return;
+      }
       let result;
       if (contentType === NodeType.TWEET) {
         const tweetNode = extractTweetFromTweeetPage();
@@ -188,6 +195,10 @@
             }
             await onSaveClick();
             return { status: "success", message: "Page saved" };
+
+          case ClipperExtensionEvent.TAKE_SCREENSHOT_SHORTCUT:
+            isSnipActive = true;
+            return { status: "success", message: "Screenshot taken" };
 
           case ClipperExtensionEvent.MUTATION_RELAY:
             const result = await onMutationRelayFromSidePanel(message.data);

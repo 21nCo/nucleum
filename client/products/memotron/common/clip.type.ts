@@ -23,6 +23,10 @@ export enum ClipperExtensionEvent {
    */
   SAVE_WEBPAGE = "SAVE_WEBPAGE",
   /**
+   * Event to relay taking screenshot from side panel or background script -> to content script to take screenshot.
+   */
+  TAKE_SCREENSHOT_SHORTCUT = "TAKE_SCREENSHOT_SHORTCUT",
+  /**
    * Event to trigger refreshing of clips rendering on the content script.
    */
   REFRESH_CLIPS_RENDERING = "REFRESH_CLIPS_RENDERING",
