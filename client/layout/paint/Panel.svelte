@@ -14,10 +14,16 @@
   import { appEvents } from "$lib/client/stores/notification.store";
   import { GlobalEvent } from "$lib/client/types/event.enum";
   import { Display } from "$lib/client/types/view.type";
+  import Icon from "$lib/client/elements/Icon.svelte";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
+
   export let title: string | undefined = undefined;
   export let titleStyle: TextStyle = TextStyle.PAGE_HEADING_SUBTLE;
   export let floatingButton: IButtonParams | undefined = undefined;
   export let panelSize: Size.sm | Size.md | Size.lg = Size.md;
+  export let isNavActivated: boolean = false;
+  export let isShowBackButton: boolean = false;
 
   onMount(() => {
     const unsubscribe = appEvents.subscribe((e) => {
@@ -52,13 +58,21 @@
         }
       )}
     >
-      {#if title || isShowCollapseButton}
-        <div
+      {#if !isNavActivated && (title || isShowCollapseButton)}
+        <button
           class={cn(
-            "flex justify-between w-full portrait:px-4 portrait:py-2 px-3 pt-2 overflow-auto min-h-fit mo:min-h-14"
+            "flex justify-between items-center w-full px-4 pt-2 overflow-auto min-h-fit mo:min-h-14"
           )}
+          on:click={() => {
+            if (isShowBackButton) dispatch("back");
+          }}
         >
-          <Text style={titleStyle} content={title || ""} />
+          <div class="flex items-center gap-2">
+            {#if isShowBackButton}
+              <Icon icon="ph:caret-left-light" class="text-fgs3" />
+            {/if}
+            <Text style={titleStyle} content={title || ""} />
+          </div>
           <slot name="toprightactions">
             {#if isShowCollapseButton}
               <div class="flex items-center">
@@ -70,12 +84,15 @@
               </div>
             {/if}
           </slot>
-        </div>
+        </button>
       {/if}
       {#if $$slots.nonpadded}
         <slot name="nonpadded" />
+      {:else if isNavActivated && $$slots.nav}
+        <!-- TODO - overlay nav on top and add gesture to go back instead / or use safari webview existing gesture for browser back navigation -->
+        <slot name="nav" />
       {:else}
-        <div class="px-3 flex-1 overflow-auto">
+        <div class="px-4 flex-grow">
           <slot />
         </div>
       {/if}

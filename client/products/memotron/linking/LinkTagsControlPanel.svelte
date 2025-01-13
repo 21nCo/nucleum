@@ -70,7 +70,7 @@
   $: groups = $linkTagStore ? linkTagStore.transform($linkTagStore) : [];
 </script>
 
-<div class="flex flex-col gap-12 pt-3 w-full h-full">
+<div class="flex flex-col gap-6 pt-3 w-full h-full">
   <div class="w-full flex gap-6">
     <TextInput
       bind:value={inputValue}
@@ -97,7 +97,7 @@
   {#if errorMessage}
     <InlineErrorMessage bind:error={errorMessage} />
   {/if}
-  <div class="flex flex-col flex-grow gap-6 px-0.5 overflow-auto">
+  <div class="flex flex-col flex-grow gap-4 px-0.5 overflow-auto">
     {#if !groups || groups.length === 0}
       <EmptyStatusView
         mainText="No link tags found."

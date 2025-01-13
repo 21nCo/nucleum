@@ -51,6 +51,7 @@
       delay: 1000,
       isLarger: true
     }}
+    in:fade
   >
     <div
       class={cn("flex items-center", {

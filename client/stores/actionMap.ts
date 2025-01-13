@@ -40,14 +40,16 @@ import CreateCombination from "$lib/client/components/combination/CreateCombinat
 import { linker } from "../products/memotron/linking/link.store";
 import { ResourceError } from "$lib/client/components/error/errors";
 import { ResourceErrorCode } from "$lib/client/components/error/error.type";
-import CollectionTitleLabelPart from "$lib/client/components/collection/title/CollectionTitleLabelPart.svelte";
+import CollectionTitleLabelPart from "$lib/client/components/collection/thumbnail/CollectionThumbnailLabel.svelte";
 import Collection from "$lib/client/components/collection/Collection.svelte";
-import CollectionBrowser from "$lib/client/components/collection/CollectionBrowser.svelte";
 import PropertyConfig from "$lib/client/components/collection/properties/propertyConfig/PropertyConfig.svelte";
 import { logger } from "../components/debug/logger.client";
 import { toasts } from "./notification.store";
 import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
 import LinkSearchResultItem from "$lib/client/products/memotron/common/linkbox/LinkSearchResultItem.svelte";
+import { SearchStore } from "../components/record/record.store";
+import { isValidString } from "$lib/shared/utils/text.utils";
+import ResourceBrowser from "../components/library/resourceBrowser/ResourceBrowser.svelte";
 
 export const globalActions: IAction[] = [
   {
@@ -604,11 +606,24 @@ export const globalActions: IAction[] = [
   },
   {
     action: resourceAction(Resource.collection, ResourceActionType.BROWSE),
-    component: CollectionBrowser,
+    component: ResourceBrowser,
     label: "Collections",
     icon: "ph:brackets-round-light",
     type: ActionType.PAGE,
+    componentParams: {
+      resource: Resource.collection
+    },
     loadingComponent: NodeLoadingPulse
+  },
+  {
+    action: resourceAction(Resource.tag, ResourceActionType.BROWSE),
+    component: ResourceBrowser,
+    label: "Tags",
+    icon: "ph:tag-light",
+    type: ActionType.PAGE,
+    componentParams: {
+      resource: Resource.tag
+    }
   },
   {
     action: Action.ADD_ITEM_TO_COLLECTION,
@@ -616,9 +631,18 @@ export const globalActions: IAction[] = [
     cmdLabel: "Add node to collection",
     isMeta: true,
     searchActionParams: {
-      searchStoreId: Resource.node,
       placeholder: "select a node",
       searchResultComponent: LinkSearchResultItem,
+      searchCallback: async (query: string, componentParams?: any) => {
+        //TODO - resource.type based on collection resource type
+        const searchStore = new SearchStore(Resource.node);
+        if (isValidString(query)) {
+          searchStore.searchQuery = query;
+          return searchStore.nodes();
+        } else {
+          return searchStore.recents();
+        }
+      },
       callback: async (id: string, label?: string, componentParams?: any) => {
         try {
           if (!componentParams?.id) {

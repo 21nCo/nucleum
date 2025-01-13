@@ -1,6 +1,5 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import { Orientation } from "$lib/client/types/direction.enum";
   import type {
     IResourceSwitchItem,
     ISelectValue
@@ -20,9 +19,9 @@
 </script>
 
 <div
-  class="w-full grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] mo:mb-1 gap-4"
+  class="w-full grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] mo:mb-1 gap-3"
 >
-  {#each options as item, index}
+  {#each options as item, index (item.value)}
     <ResourceSwitcherItem
       bind:this={refs[item.value]}
       {item}

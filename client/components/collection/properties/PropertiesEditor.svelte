@@ -54,7 +54,7 @@
   } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { resolvePropertyDefaultConfig } from "./property.utils";
   import { objIsEmpty } from "$lib/shared/utils/obj.utils";
-  import CollectionTitleLabelPart from "../title/CollectionTitleLabelPart.svelte";
+  import CollectionTitleLabelPart from "../thumbnail/CollectionThumbnailLabel.svelte";
   export let id: IRecordId | undefined = undefined;
   let collection: IActiveCollectionStore | undefined = id
     ? ActiveCollectionStore.resolve(id)

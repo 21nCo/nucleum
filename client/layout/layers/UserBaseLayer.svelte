@@ -79,13 +79,14 @@
     addWindowEventListeners();
     console.time("init");
     const initState = await initializeDatabase();
+    refreshAppMenuDefaults(false);
+    $appLoadingState.isBaseLoaded = true;
     let userDataState;
     if (initState !== undefined)
       userDataState = await initializeEssentialUserData(initState);
     await initializeUserConfig();
     dispatch("ready");
     console.timeEnd("init");
-    $appLoadingState.isBaseLoaded = true;
     if (userDataState?.paginateResources) {
       await flux.paginateResources(userDataState.paginateResources, 100);
       dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
@@ -267,6 +268,7 @@
       if (initState === 0) {
         loadingMessage = loadingMessages.cloneDown;
         const result = await flux.initializeEssentialDataForCloudUser();
+        dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
         if (typeof result === "object" && result?.ifrCloneResult) {
           return result.ifrCloneResult;
         }
@@ -279,27 +281,31 @@
 
   async function initializeUserConfig() {
     const isLiteMode = $context.isSheet;
-    const defaultAppMenu = $appStore.appData?.appMenu ?? [];
-    const defaultAppMenuMobile = $appStore.appData?.appMenuMobile ?? [];
-    const appMenuDefaults = {
-      all: defaultAppMenu,
-      mobile: defaultAppMenuMobile
-    };
     if ($account.dataMode === UserDataMode.CLOUD && !isLiteMode) {
       refreshTimeZone();
-      appMenuStore.setDefaults(appMenuDefaults, true);
       setAnalyticsUserIdentity();
       await account.ping();
-    } else {
-      appMenuStore.setDefaults(appMenuDefaults);
     }
-
+    refreshAppMenuDefaults();
     function setAnalyticsUserIdentity() {
       if (!$account.userInfo) return;
       posthog.identify($account.userInfo.id, {
         region: $account.userInfo.region
       });
     }
+  }
+
+  function refreshAppMenuDefaults(isPersist?: boolean) {
+    const defaultAppMenu = $appStore.appData?.appMenu ?? [];
+    const defaultAppMenuMobile = $appStore.appData?.appMenuMobile ?? [];
+    const appMenuDefaults = {
+      all: defaultAppMenu,
+      mobile: defaultAppMenuMobile
+    };
+    appMenuStore.setDefaults(
+      appMenuDefaults,
+      isPersist ?? $account.dataMode === UserDataMode.CLOUD
+    );
   }
 
   /**

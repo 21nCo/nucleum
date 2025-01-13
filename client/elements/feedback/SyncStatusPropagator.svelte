@@ -1,13 +1,25 @@
 <script lang="ts">
   import { observeAttributes } from "$lib/client/actions/observe.action";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { onMount } from "svelte";
   export let resource: Resource;
   export let isSyncing: boolean = false;
   let ref: HTMLElement;
 
+  onMount(() => {
+    refreshFromGlobal();
+  });
+
   export function refresh(resourceParam?: Resource) {
     const syncstatusVal = ref?.getAttribute("data-syncstatus");
     setStatus(syncstatusVal, resourceParam);
+  }
+
+  function refreshFromGlobal() {
+    const syncstatusVal = document
+      .getElementById("global-sync-status")
+      ?.getAttribute("data-syncstatus");
+    if (syncstatusVal) setStatus(syncstatusVal);
   }
 
   function handleAttributeChange(

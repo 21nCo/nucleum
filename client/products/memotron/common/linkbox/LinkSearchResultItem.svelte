@@ -10,7 +10,7 @@
   } from "$lib/client/products/memotron/node/node.type";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import CollectionTitleLabelPart from "$lib/client/components/collection/title/CollectionTitleLabelPart.svelte";
+  import CollectionTitleLabelPart from "$lib/client/components/collection/thumbnail/CollectionThumbnailLabel.svelte";
   import type { ICollectionThumb } from "$lib/client/components/collection/collection.type";
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
   import NodeTitleLabelPart from "$lib/client/products/memotron/node/title/NodeTitleLabelPart.svelte";

@@ -28,6 +28,8 @@
   export let isShowSaveControl: boolean = false;
   export let isShowClearControl: boolean = false;
   export let isPreventDefaultOnEnter: boolean = false;
+  export let isRounded: boolean = false;
+  export let height: string = "h-11";
   let isShowSaveFeedback: boolean = false;
   let isFocused: boolean = false;
   export function focus() {
@@ -132,7 +134,12 @@
     />
   </div>
 {:else}
-  <InputBaseElement {style} {isFocused} {label}>
+  <InputBaseElement
+    {style}
+    {isFocused}
+    {label}
+    class={cn(height, { "!rounded-full": isRounded })}
+  >
     {#if type === "password"}
       <input
         {id}

@@ -37,6 +37,7 @@
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import NodeThumbnailTwitterProfilePreview from "./NodeThumbnailTwitterProfilePreview.svelte";
+  import Icon from "$lib/client/elements/Icon.svelte";
   export let item: INodeThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let isHidePreview: boolean = false;
@@ -106,13 +107,15 @@
     <div
       class={cn("relative flex flex-col w-full border rounded-md truncate", {
         "bg-ccs5 hover:bg-ccs4 border-ccs2": isApplyCustomColor,
-        "bg-bgs2 border-transparent hover:border-brs3": !isApplyCustomColor,
+        "border-transparent hover:border-brs3 px-1": !isApplyCustomColor,
+        "bg-bgs2 bg-opacity-50 px-2":
+          !isApplyCustomColor && accessPoint === ResourceAccessPoint.LIBRARY,
         "p-2": isLinkContext
       })}
     >
       <button
-        class={cn("flex w-full border- rounded--md truncate", {
-          "h-20": !visibleProps || visibleProps.length === 0
+        class={cn("flex w-full items-center border- rounded--md truncate", {
+          "h-16": !visibleProps || visibleProps.length === 0
           // "bg-ccs5 hover:bg-ccs4 border-ccs2": isApplyCustomColor,
           // "bg-bgs2 border-brs3 hover:border-fgs4": !isApplyCustomColor
         })}
@@ -122,14 +125,14 @@
           <div
             class={cn(
               {
-                "h-20": !visibleProps || visibleProps.length === 0,
+                "h-10": !visibleProps || visibleProps.length === 0,
                 "w-full p-2 flex justify-start": isFullExpand
               },
               !isFullExpand && {
-                "min-w-12 w-1/10 max-w-1/10": true,
-                "border-r": !isLinkContext,
-                "border-ccs2": isApplyCustomColor,
-                "border-brs3": !isApplyCustomColor
+                "min-w-10 w-1/10 max-w-1/10": true,
+                "border-r": !isLinkContext && isApplyCustomColor,
+                "border-ccs2": isApplyCustomColor
+                // "border-brs3": !isApplyCustomColor
               }
             )}
           >
@@ -141,30 +144,31 @@
                 id={hasFullFileDetails ? undefined : filePreview}
                 isHideControls={true}
                 isLazyLoad={true}
-                class={cn("object-cover h-full w-full", {
-                  "rounded-md": isLinkContext
+                class={cn("object-cover h-full w-full rounded-md", {
+                  // "rounded-md": isLinkContext,
+                  // "rounded-full": !isLinkContext
                 })}
               />
             {:else if urlPreview}
               <ImagePreview
                 src={urlPreview}
                 {arrangement}
-                class={cn("object-cover h-full w-full", {
-                  "rounded-md": isLinkContext
+                class={cn("object-cover h-full w-full rounded-md", {
+                  // "rounded-md": isLinkContext
                 })}
               />
             {:else if item.contentType === NodeType.AUDIO && _url}
               <span class="w-full h-full overflow-clip">
                 <NodeThumbnailAudioPreview url={_url} />
               </span>
-            {:else if item.contentType === NodeType.PDF && _url}
+              <!-- {:else if item.contentType === NodeType.PDF && _url}
               <span class="w-full h-full overflow-clip relative z-0">
                 <NodeThumbnailPdfPreview url={_url} />
-              </span>
+              </span> -->
             {:else}
               <div
                 class={cn("h-full text-wrap text-left text-b3 overflow-clip", {
-                  "p-2": !isLinkContext
+                  "p-2": !isLinkContext && contentPreview
                 })}
               >
                 {#if item.contentType === NodeType.TWEET && contentPreview}
@@ -175,6 +179,12 @@
                   <span class="text-fgs3 userdata">
                     {contentPreview}
                   </span>
+                {:else}
+                  <div
+                    class="flex justify-center items-center bg-bgs2 w-full h-full rounded-md"
+                  >
+                    <Icon icon="ph:file-light" class="text-fgs3" />
+                  </div>
                 {/if}
               </div>
             {/if}

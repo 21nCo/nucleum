@@ -56,5 +56,5 @@
 </script>
 
 {#if action}
-  <ComponentResolver {action} />
+  <ComponentResolver {action} params={action.componentParams} />
 {/if}

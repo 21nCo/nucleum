@@ -9,12 +9,14 @@
     ResourceAccessPointState
   } from "$lib/client/components/flux/resourceStores/resource.type";
   import ResourceThumbnailBase from "$lib/client/components/record/thumbnail/ResourceThumbnailBase.svelte";
-  import CollectionThumbnailTitle from "./CollectionThumbnailTitle.svelte";
+  import CollectionThumbnailLabelRow from "./CollectionThumbnailLabelRow.svelte";
   import ResourceThumbnailContentTypeOverlay from "$lib/client/components/record/thumbnail/ResourceThumbnailContentTypeOverlay.svelte";
   import CollectionPropertyCount from "../counts/CollectionPropertyCount.svelte";
   import CollectionNodeCount from "../counts/CollectionItemCount.svelte";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import CollectionThumbnailLabel from "./CollectionThumbnailLabel.svelte";
+  import CollectionThumbnailAvatar from "./CollectionThumbnailAvatar.svelte";
   export let item: ICollectionThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let size: Size.sm | Size.md = Size.md;
@@ -33,10 +35,18 @@
 <ResourceThumbnailBase bind:item {accessPoint} {arrangement}>
   {#if arrangement === Arrangement.LIST}
     <button
-      class="flex h-12 gap-4 w-full rounded-md bg-bgs2 border border-transparent hover:border-aps2 p-3"
+      class="flex items-center h-16 gap-3 w-full rounded-md bg-bgs2 bg-opacity-50 border border-transparent hover:border-bgs2 p-3"
       on:click
     >
-      <CollectionThumbnailTitle {item} {accessPoint} {accessPointState} />
+      <CollectionThumbnailAvatar {item} size={Size.lg} />
+      <div class="flex flex-col gap-1 flex-grow">
+        <CollectionThumbnailLabel {item} isShowAvatar={false} />
+        {#if item.description}
+          <span class="text-b3 text-fgs3 truncate text-left">
+            {item.description}
+          </span>
+        {/if}
+      </div>
     </button>
   {:else if arrangement === Arrangement.GRID || arrangement === Arrangement.MASONRY}
     <ResourceGridThumbnail {item} {size} on:click>
@@ -50,7 +60,7 @@
       <!-- <ResourceThumbnailContentTypeOverlay contentType={item.type} /> -->
       <Cover {item} {arrangement} />
       <slot slot="bottom" name="bottom">
-        <CollectionThumbnailTitle {item} {arrangement} {accessPoint} />
+        <CollectionThumbnailLabelRow {item} {arrangement} {accessPoint} />
         <span class="flex gap-2">
           {#if accessPointState === ResourceAccessPointState.DEFAULT}
             <CollectionNodeCount {item} isShowLabel={true} />

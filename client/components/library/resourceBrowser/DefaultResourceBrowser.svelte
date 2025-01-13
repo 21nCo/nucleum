@@ -10,7 +10,7 @@
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import Resources from "./Records.svelte";
+  import Records from "../../record/Records.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { page } from "$app/stores";
   import ResourceResolver from "$lib/client/layout/paint/ResourceResolver.svelte";
@@ -25,9 +25,9 @@
     ResourceAccessPointState
   } from "$lib/client/components/flux/resourceStores/resource.type";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import BulkEditBar from "./BulkEditBar.svelte";
+  import BulkEditBar from "../../record/BulkEditBar.svelte";
   import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
-  import { BulkEditor, SearchStore } from "./record.store";
+  import { BulkEditor, SearchStore } from "../../record/record.store";
   import { onMount } from "svelte";
   import { isValidString } from "$lib/shared/utils/text.utils";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
@@ -36,13 +36,17 @@
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { toasts } from "$lib/client/stores/notification.store";
   import Badge from "$lib/client/elements/text/Badge.svelte";
-  import { MemotronAction } from "../../products/memotron/memotronAction.enum";
+  import { MemotronAction } from "../../../products/memotron/memotronAction.enum";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { intersection } from "$lib/client/actions/intersection.action";
   import { debouncer } from "$lib/client/utils/utils";
   import { logger } from "$lib/client/components/debug/logger.client";
   import { PersistenceActionType } from "$lib/client/types/data.type";
+  import view from "$lib/client/stores/view.store";
+  import InlineSearchBar from "$lib/client/elements/InlineSearchBar.svelte";
+  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   export let resource: Resource;
+  export let isLibraryNavContext: boolean = false;
 
   let searchQuery: string = "";
   let isRefineShown = false;
@@ -52,11 +56,13 @@
   let isRefreshingTotalCount = false;
   let totalCount = 0;
   let isStarFilterSelected = false;
+  let isSearchExpanded = false;
   let arrangement: Arrangement = uiState.getResourceState(
     resource,
     ResourceAccessPoint.BROWSER,
     UIState.arrangement
   );
+  let subType: any = null;
   $: id = $page.url.searchParams.get(ResourceAccessMode.INLINE);
   $: multiSelectContext = {
     resource,
@@ -68,16 +74,7 @@
       ? undefined
       : {
           label: "Create " + resource,
-          callback: async () => {
-            appStore.runAction(
-              resourceAction(resource, ResourceActionType.CREATE),
-              {
-                componentParams: {
-                  context: ResourceAccessPoint.BROWSER
-                }
-              }
-            );
-          },
+          callback: addAction,
           icon: "plus",
           variant: ButtonVariant.PRIMARY
         };
@@ -88,12 +85,23 @@
 
   let data: any[] = [];
   let starred: any[] = [];
+
   onMount(async () => {
     await refresh();
   });
+
+  const addAction = async () => {
+    appStore.runAction(resourceAction(resource, ResourceActionType.CREATE), {
+      componentParams: {
+        context: ResourceAccessPoint.BROWSER
+      }
+    });
+  };
+
   function onSelectAll() {
     $multiSelectStore = data.map((x) => x.id);
   }
+
   async function onBulkAction(e: CustomEvent<string>) {
     try {
       const editor = new BulkEditor(resource, multiSelectStore);
@@ -138,8 +146,6 @@
     }
   }
 
-  const debouncedSearch = debouncer(refresh, 500);
-
   function resolveFooterMessage(data: any[], totalCount: number) {
     if (!data || !data.length) return;
     let prefix = "Showing " + data.length + " ";
@@ -181,45 +187,62 @@
   }
 </script>
 
-<Panel {floatingButton} title={resource + "s"}>
+<Panel
+  {floatingButton}
+  title={resource + "s"}
+  isShowBackButton={isLibraryNavContext}
+  on:back
+>
   <div
     class="relative flex flex-col gap-4 h-full overflow-auto"
     slot="nonpadded"
   >
-    <header class="flex gap-1 items-center p-3 pb-1.5 border-b border-brs2">
-      <!-- TODO - use InlineSearchBar -->
-      <TextInput
-        bind:value={searchQuery}
-        size={Size.lg}
-        icon="ph:magnifying-glass"
-        style={InputStyle.PLAIN}
-        on:keyup={debouncedSearch}
-        placeholder={"Search " + resource + "s"}
-      />
-      {#if searchQuery}
-        <Button
-          icon="ph:x-light"
-          tooltip="Clear query"
-          size={Size.sm}
-          on:click={() => {
-            searchQuery = "";
-            refresh();
-          }}
-        />
-        <!-- {:else}
-            <Button icon="adjustments-vertical" size={Size.sm} /> -->
+    <header class="flex gap-1 items-center pt-3 pb-1.5 border--b border--brs2">
+      {#if isSearchExpanded}
+        <InlineSearchBar
+          bind:query={searchQuery}
+          padding="px-4"
+          on:search={() => refresh()}
+          placeholder={"Search " + resource + "s"}
+          style={$view.isConstrainedWidth
+            ? InputStyle.FILLED
+            : InputStyle.PLAIN}
+        >
+          <Button
+            icon="ph:x-light"
+            on:click={() => (isSearchExpanded = !isSearchExpanded)}
+          />
+        </InlineSearchBar>
+      {:else}
+        <!--  -->
+        <div class="flex items-center w-full gap-2 px-2">
+          <Button
+            icon="ph:magnifying-glass-light"
+            on:click={() => (isSearchExpanded = !isSearchExpanded)}
+          />
+          <div class="flex-1 min-w-0">
+            <OptionSelector
+              size={Size.sm}
+              options={[
+                { label: "All", value: "all", icon: "ph:asterisk-light" },
+                { label: "Starred", value: "starred", icon: "ph:star-light" }
+              ]}
+              on:change={() => {}}
+            />
+          </div>
+          <Button
+            icon="ph:sliders-horizontal-light"
+            tooltip="Settings & refine"
+            tooltipOptions={{
+              placement: Placement.Right
+            }}
+            size={Size.md}
+            on:click={() => (isRefineShown = !isRefineShown)}
+          />
+        </div>
       {/if}
-      <Button
-        icon="ph:sliders-horizontal-light"
-        tooltip="Settings & refine"
-        tooltipOptions={{
-          placement: Placement.Right
-        }}
-        size={Size.md}
-        on:click={() => (isRefineShown = !isRefineShown)}
-      />
     </header>
-    <main class="flex flex-col gap-8 mx-5 overflow-auto">
+    <main class="flex flex-col gap-8 mx-4 overflow-auto">
       {#if isRefineShown}
         <div class="flex gap-4 items-center">
           <!-- <Button
@@ -269,13 +292,15 @@
       {#if state === ResourceAccessPointState.DEFAULT && starred.length > 0}
         <div class="flex flex-col gap-4">
           <Text style={TextStyle.SECTION_HEADING} content="Starred" />
-          <Resources
+          <Records
             data={starred}
             accessPoint={ResourceAccessPoint.BROWSER}
             {resource}
             {arrangement}
             size={Size.sm}
-            defaultAccessMode={ResourceAccessMode.INLINE}
+            defaultAccessMode={$view.isConstrainedWidth
+              ? ResourceAccessMode.POP
+              : ResourceAccessMode.INLINE}
           />
         </div>
       {/if}
@@ -286,13 +311,15 @@
             ? "Search results"
             : "All"}
         />
-        <Resources
+        <Records
           {data}
           accessPoint={ResourceAccessPoint.BROWSER}
           {resource}
           {arrangement}
           size={Size.sm}
-          defaultAccessMode={ResourceAccessMode.INLINE}
+          defaultAccessMode={$view.isConstrainedWidth
+            ? ResourceAccessMode.POP
+            : ResourceAccessMode.INLINE}
           accessPointState={state}
         />
       </div>
@@ -337,6 +364,19 @@
       {/if}
     {/key}
   </slot>
+  <div class="flex h-full items-center" slot="toprightactions">
+    {#if isLibraryNavContext || $view.isConstrainedWidth}
+      <Button
+        icon="ph:plus"
+        label="New"
+        isPreventMinWidth={true}
+        size={Size.sm}
+        type={ButtonVariant.PRIMARY}
+        style={ButtonStyle.DEFAULT}
+        on:click={addAction}
+      />
+    {/if}
+  </div>
 </Panel>
 
 <ComponentBaseLayer

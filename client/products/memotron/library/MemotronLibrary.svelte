@@ -7,7 +7,8 @@
   resources={[
     Resource.node,
     Resource.collection,
-    Resource.combination,
-    Resource.task
+    Resource.tag,
+    Resource.task,
+    Resource.combination
   ]}
 />

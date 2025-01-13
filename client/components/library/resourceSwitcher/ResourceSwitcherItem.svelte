@@ -18,6 +18,8 @@
   import Badge from "$lib/client/elements/text/Badge.svelte";
   import { onMount } from "svelte";
   import { SearchStore } from "$lib/client/components/record/record.store";
+  import view from "$lib/client/stores/view.store";
+  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
 
   export let item: IResourceSwitchItem;
   export let isActive: boolean = false;
@@ -125,9 +127,13 @@
     "relative flex-1 flex gap-1 items-center whitespace-nowrap border px-4 py-3 rounded-md text-b2",
     {
       "border border-aps1 bg-aps3 hover:bg--aps2": isActive,
-      "outline-transparent border-brs3 text-fgs2 bg-bgs2": !isActive,
-      "hover:bg-bgs3 hover:text-fgs1": !isActive && !item.isDisabled,
       "opacity-80 cursor-not-allowed": item.isDisabled
+    },
+    !isActive && {
+      "outline-transparent bg-bgs2 border-brs3": true,
+      "text-fgs2": !$view.isConstrainedWidth,
+      "text-fgs1": $view.isConstrainedWidth,
+      "hover:bg-bgs3 hover:text-fgs1": !item.isDisabled
     }
   )}
   on:click
@@ -143,8 +149,12 @@
         size={Size.lg}
         class={cn({
           "fill-aps1": isActive,
-          "stroke-fgs2": (!isActive && !isHovering) || item.isDisabled,
-          "stroke-fgs1": !isActive && isHovering && !item.isDisabled
+          "stroke-fgs2":
+            (!$view.isConstrainedWidth && !isActive && !isHovering) ||
+            item.isDisabled,
+          "stroke-fgs1":
+            (!isActive && isHovering && !item.isDisabled) ||
+            $view.isConstrainedWidth
         })}
       />
     {:else if item.icon && typeof item.icon === "object"}
@@ -185,3 +195,9 @@
     </span>
   {/if}
 </button>
+
+<ComponentBaseLayer
+  on:syncDown={() => {
+    refresh();
+  }}
+/>

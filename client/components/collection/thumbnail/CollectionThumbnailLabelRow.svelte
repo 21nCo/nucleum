@@ -7,7 +7,7 @@
   import { Arrangement } from "$lib/client/types/direction.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import { type ICollectionThumb } from "../collection.type";
-  import CollectionTitleLabelPart from "../title/CollectionTitleLabelPart.svelte";
+  import CollectionThumbnailLabel from "./CollectionThumbnailLabel.svelte";
   import CollectionNodeCount from "../counts/CollectionItemCount.svelte";
   export let item: ICollectionThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
@@ -30,7 +30,7 @@
         arrangement === Arrangement.GRID || arrangement === Arrangement.MASONRY
     })}
   >
-    <CollectionTitleLabelPart {item} {accessPoint} />
+    <CollectionThumbnailLabel {item} />
     {#if item.isStarred}
       <Icon icon="star" class="fill-yellow-400" />
     {/if}

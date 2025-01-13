@@ -115,6 +115,11 @@ export type IAction = {
    * If true, the action will be rendered as a page in portrait mode irrespective of the action type like Modal or Resource.
    */
   isRenderAsPageInPortrait?: boolean;
+
+  /**
+   * Params will be passed via PagePainter -> ComponentResolver
+   */
+  componentParams?: any;
 };
 
 export type IActionFnParams = {

@@ -9,8 +9,8 @@
 </script>
 
 <span
-  class={cn("flex items-center gap-2 text-fgs3", {
-    "w-full justify-center py-1.5 bg-bgs2 rounded-md": isFullWidthVariant
+  class={cn("flex items-center gap-2 text-aps1", {
+    "w-full justify-center py-2 bg-aps3 rounded-md": isFullWidthVariant
   })}
   class:hidden={!isSyncing}
   in:scale={{ duration: 200, easing: easeBounceIn }}
@@ -20,6 +20,7 @@
       ? "svg-spinners:3-dots-fade"
       : "svg-spinners:eclipse-half"}
     size={Size.xs}
+    class="text-aps1"
   />
   <span class="text-b3"> Syncing... </span>
 </span>

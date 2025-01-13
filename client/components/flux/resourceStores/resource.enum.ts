@@ -19,6 +19,7 @@ export enum Resource {
   keyboardShortcuts = "keyboardShortcuts",
   mutation = "mutation",
   event = "event",
+  tag = "tag",
 
   //Pointron
   pointronPreferences = "pointronPreferences",
@@ -45,7 +46,7 @@ export enum Resource {
   task = "task",
   habit = "habit",
   session = "session",
-
+  taskTag = "taskTag",
   //Memotron
   vector = "vector",
   node = "node",

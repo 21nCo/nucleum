@@ -21,7 +21,6 @@ import {
   determineResourceType,
   resourceAction
 } from "$lib/client/components/flux/resourceStores/resource.utils";
-import NodeBrowser from "$lib/client/products/memotron/node/NodeBrowser.svelte";
 import ResourceSearchModal from "./library/search/ResourceSearchModal.svelte";
 import { Action } from "$lib/client/types/action.enum";
 import PasteConfirmationModal from "./capture/PasteConfirmationModal.svelte";
@@ -42,6 +41,7 @@ import MemotronDataSettings from "./settings/MemotronDataSettings.svelte";
 import { Embed } from "$lib/client/types/context.type";
 import { SearchStore } from "$lib/client/components/record/record.store";
 import type { IRecordId } from "$lib/client/types/data.type";
+import ResourceBrowser from "$lib/client/components/library/resourceBrowser/ResourceBrowser.svelte";
 
 export const memotronActions: IAction[] = [
   {
@@ -182,11 +182,14 @@ export const memotronActions: IAction[] = [
   },
   {
     action: resourceAction(Resource.node, ResourceActionType.BROWSE),
-    component: NodeBrowser,
+    component: ResourceBrowser,
     label: "Nodes",
     icon: "ph:hexagon-light",
     type: ActionType.PAGE,
-    loadingComponent: NodeLoadingPulse
+    loadingComponent: NodeLoadingPulse,
+    componentParams: {
+      resource: Resource.node
+    }
   },
   {
     action: Resource.combination,

@@ -11,6 +11,8 @@
   } from "$lib/client/types/select.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import type { InputLabel } from "$lib/client/types/input.type";
+  import context from "$lib/client/stores/context.store";
+  import { OperatingSystem } from "$lib/client/types/context.type";
   const dispatch = createEventDispatcher();
   export let options: ISelectItem[];
   export let labelProps: InputLabel | undefined = undefined;
@@ -28,7 +30,8 @@
   ><div
     class={cn({
       "relative w-full": labelProps?.orientation === Orientation.Vertical,
-      "max-w-[16rem] grow": labelProps?.orientation === Orientation.Horizontal
+      "max-w-[16rem] grow": labelProps?.orientation === Orientation.Horizontal,
+      "w-full overflow-auto": isPreventWrap
     })}
   >
     <div
@@ -37,6 +40,12 @@
         "border border-brs3": style === OptionSelectorStyle.TRAIN,
         "flex-wrap overflow-y-auto":
           style === OptionSelectorStyle.OUTLINE && !isPreventWrap,
+        "overflow-x-auto": isPreventWrap,
+        "py-0.5":
+          isPreventWrap &&
+          $context.isEmbed &&
+          ($context.os === OperatingSystem.IOS ||
+            $context.os === OperatingSystem.MACOS),
         "gap-6": style === OptionSelectorStyle.OUTLINE && size === Size.lg,
         "gap-4": style === OptionSelectorStyle.OUTLINE && size === Size.md,
         "gap-2": style === OptionSelectorStyle.OUTLINE && size === Size.sm,

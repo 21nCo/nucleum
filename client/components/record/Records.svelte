@@ -58,11 +58,15 @@
   {:else}
     <div
       class={cn(
-        `h-full w-full gap-4 grid grid-cols-[repeat(auto-fill,minmax(${width}px,1fr))] content-start`
+        `h-full w-full grid grid-cols-[repeat(auto-fill,minmax(${width}px,1fr))] content-start`,
+        {
+          "gap-2": arrangement === Arrangement.LIST,
+          "gap-4": arrangement === Arrangement.GRID
+        }
       )}
     >
       {#each data as item (item)}
-        {#if resource === Resource.everything}
+        {#if resource === Resource.everything || resource === Resource.unknown}
           {@const resourceType = determineResourceType(item.id)}
           {#if resourceType === Resource.node}
             <NodeThumbnail

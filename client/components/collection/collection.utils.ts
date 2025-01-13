@@ -141,3 +141,18 @@ export function resolveOptionsForGrouping(
     } else return filteredOptions;
   }
 }
+
+export function resolveCollectionSubTypesForSwitcher() {
+  const collectionTypes = [
+    CollectionType.UNTYPED,
+    CollectionType.TYPED,
+    CollectionType.QUERY
+  ].map((x) => {
+    return {
+      label: resolveCollectionTypeLabel(x),
+      value: x.toLowerCase(),
+      icon: resolveCollectionTypeIcon(x)
+    };
+  });
+  return collectionTypes;
+}

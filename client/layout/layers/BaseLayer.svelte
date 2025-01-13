@@ -290,7 +290,10 @@
     window.addEventListener("message", handleMessageFromParent);
     try {
       //@ts-ignore
-      window.chrome.webview.addEventListener('message', handleMessageFromChromeWebview);
+      window.chrome.webview.addEventListener(
+        "message",
+        handleMessageFromChromeWebview
+      );
     } catch (error) {
       logger.error(error);
     }
@@ -307,7 +310,10 @@
     window.removeEventListener("message", handleMessageFromParent);
     try {
       //@ts-ignore
-      window.chrome.webview.removeEventListener('message', handleMessageFromChromeWebview);
+      window.chrome.webview.removeEventListener(
+        "message",
+        handleMessageFromChromeWebview
+      );
     } catch (error) {
       logger.error(error);
     }
@@ -332,6 +338,8 @@
     {/if}
     <div id="popovers"></div>
     <div id="tooltips"></div>
+    <span id="global-sync-status" data-syncstatus="" data-syncfeedback="true"
+    ></span>
   </ThemeLayer>
 </div>
 <EmbedTelemetry />

@@ -986,6 +986,7 @@ class Flux {
    */
   async initializeEssentialDataForCloudUser() {
     try {
+      this.propagateSyncStatus(Resource.everything);
       const resources = this.resolveFIRResources();
       const result = await this.cloneDown(resources, {
         limit: 1000
@@ -1007,12 +1008,14 @@ class Flux {
         },
         action: PersistenceActionType.MERGE
       });
+      this.propagateSyncStatus(Resource.everything, true);
       return {
         finiteCloneResult: result,
         ifrCloneResult: ifrResult
       };
     } catch (e) {
       logger.error({ at: "flux.cloneDownEssentials", error: e });
+      this.propagateSyncStatus(Resource.everything, true);
     }
   }
 
@@ -1020,9 +1023,16 @@ class Flux {
    * Performs initial sync down for a returning cloud user on app load.
    */
   async initialSyncDown() {
-    const result = await this.syncDown({ isPreventInMemoryStoreLoad: true });
-    await this.loadInMemoryStores();
-    return result;
+    try {
+      this.propagateSyncStatus(Resource.everything);
+      const result = await this.syncDown({ isPreventInMemoryStoreLoad: true });
+      await this.loadInMemoryStores();
+      this.propagateSyncStatus(Resource.everything, true);
+      return result;
+    } catch (e) {
+      logger.error({ at: "flux.initialSyncDown", error: e });
+      this.propagateSyncStatus(Resource.everything, true);
+    }
   }
 
   /**

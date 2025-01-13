@@ -404,3 +404,30 @@ export function resolveNodeGraphFill(node: INode) {
   )
     return "black";
 }
+
+export function resolveNodeSubTypesForSwitcher() {
+  const nodeTypes = [
+    NodeType.NODULAR_MARKDOWN,
+    NodeType.PDF,
+    NodeType.IMAGE,
+    NodeType.AUDIO,
+    NodeType.VIDEO,
+    NodeType.WEB_PAGE,
+    NodeType.GIST,
+    NodeType.TEXT_CLIP,
+    NodeType.WEB_SCREENSHOT_CLIP,
+    NodeType.TWEET,
+    NodeType.TWITTER_PROFILE,
+    NodeType.YOUTUBE_VIDEO,
+    NodeType.YOUTUBE_TIMESTAMP_CLIP,
+    NodeType.KINDLE_BOOK,
+    NodeType.KINDLE_HIGHLIGHT
+  ].map((x) => {
+    return {
+      label: resolveNodeContentLabel(x),
+      value: x.toLowerCase(),
+      icon: resolveNodeIcon(x)
+    };
+  });
+  return nodeTypes;
+}
