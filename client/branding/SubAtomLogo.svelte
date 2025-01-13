@@ -3,8 +3,9 @@
   import { ClientStorageKey } from "../persistence/persistence.type";
   import { clientStorage } from "../persistence/persistence.utils";
   import { Size } from "../types/size.enum";
+  import { cn } from "../utils/ui.utils";
   export let subatom: string | undefined = undefined;
-  export let size: Size.sm | Size.md = Size.md;
+  export let size: Size.sm | Size.md | Size.xs = Size.md;
 
   onMount(async () => {
     if (!subatom)
@@ -16,7 +17,11 @@
 
 <button on:click>
   <svg
-    class="w-16 h-16"
+    class={cn({
+      "w-16 h-16": size === Size.md,
+      "w-8 h-8": size === Size.sm,
+      "w-6 h-6": size === Size.xs
+    })}
     viewBox="0 0 462 462"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
