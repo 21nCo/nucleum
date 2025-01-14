@@ -8,6 +8,7 @@ import {
 } from "../persistence/persistence.utils";
 import { postToParent } from "./embed.utils";
 import { LicenseType } from "../types/account.type";
+import jwt_decode from "jwt-decode";
 
 export function getBucketNameandKey(url: string) {
   const urlParts = url.split("/");
@@ -145,4 +146,11 @@ export function resolveLicenseString(userInfo: any) {
       return "Early Adopter - limited free cloud sync trial";
     }
   }
+}
+
+export function isTokenExpired(token: string) {
+  const decoded: any = jwt_decode(token);
+  const exp = decoded.exp ?? 0;
+  const currentTime = Math.floor(Date.now() / 1000);
+  return exp < currentTime;
 }
