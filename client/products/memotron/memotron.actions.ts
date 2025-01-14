@@ -207,7 +207,7 @@ export const memotronActions: IAction[] = [
   {
     action: MemotronAction.LIBRARY,
     label: "Library",
-    icon: "ph:squares-four-light",
+    icon: "ph:stack-light",
     component: MemotronLibrary,
     type: ActionType.PAGE,
     modalParams: {

@@ -4,7 +4,7 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import ShortcutText from "$lib/client/elements/text/ShortcutText.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
-  import LeftNav from "$lib/client/layout/leftPanel/LeftNav.svelte";
+  import LeftNavExpandable from "$lib/client/layout/leftPanel/LeftNavExpandable.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { Action } from "$lib/client/types/action.enum";
   import { Size } from "$lib/client/types/size.enum";
@@ -12,7 +12,7 @@
   import { TextStyle } from "$lib/client/types/text.enum";
 </script>
 
-<LeftNav>
+<LeftNavExpandable>
   <!-- <slot name="top" slot="top">
     <div class="text-b3 text-fgs3">
       {"[Memotron Preview]"}
@@ -50,4 +50,4 @@
         <span class="text-b3 text-fgs3 self-center">No starred items found</span>
       </div>
     </slot> -->
-</LeftNav>
+</LeftNavExpandable>

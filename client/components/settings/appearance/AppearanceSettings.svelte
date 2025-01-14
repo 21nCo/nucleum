@@ -139,4 +139,14 @@ setting on your device."
       }
     }}
   />
+  <SwitchInput
+    bind:checked={$userPreferences.appearance.isFixedLeftNav}
+    isExpanded={true}
+    label={{
+      label: "Fixed app menu bar",
+      tooltip: {
+        body: "Enable this to fix the app menu bar to the left side of the screen. This defaults the app menu bar to collapsed state, removes expand button and adds labels to the app menu items."
+      }
+    }}
+  />
 </ScrollView>

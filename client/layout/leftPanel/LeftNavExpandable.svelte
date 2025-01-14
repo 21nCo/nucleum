@@ -1,0 +1,137 @@
+<script lang="ts">
+  import AppMenuSwitcher from "$lib/client/layout/leftPanel/appMenuSwitcher/AppMenuSwitcher.svelte";
+  import { appStore } from "$lib/client/stores/app.store";
+  import view from "$lib/client/stores/view.store";
+  import { LayoutContext } from "$lib/client/types/layout.type";
+  import { Size } from "$lib/client/types/size.enum";
+  import Button from "$lib/client/elements/button/Button.svelte";
+  import LeftBottomBar from "./LeftBottomBar.svelte";
+  import { onMount } from "svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
+  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import LeftNavCommandAction from "./LeftNavCommandAction.svelte";
+  import LeftNavOfflineStatus from "./LeftNavOfflineStatus.svelte";
+
+  export let isRounded = false;
+  let isMinimized: boolean = false;
+  let headerHeight: number = 150;
+  let isHovered: boolean = false;
+  let isInThinMode = refreshSidebarCollapseState();
+  onMount(() => {
+    if ($view.landscapiness < 1.25) {
+      isInThinMode = true;
+    }
+    const sub = uiState.subscribe((x) => {
+      isInThinMode = refreshSidebarCollapseState();
+    });
+    return () => {
+      sub();
+    };
+  });
+  function refreshSidebarCollapseState() {
+    return uiState.getState(UIState.isInThinMode);
+  }
+  function onMinimizeToggled() {
+    isMinimized = !isMinimized;
+    if (isMinimized) isHovered = false;
+  }
+</script>
+
+{#if isMinimized}
+  <button
+    class="leftnav flex flex-col items-center gap-4 absolute rounded-md left-1 z-30 {isHovered
+      ? 'bg-bgs3 p-4 w-48'
+      : 'bg-aps1 opacity-50'}"
+    style="top: {headerHeight}px"
+    on:mouseenter={() => (isHovered = true)}
+    on:mouseleave={() => (isHovered = false)}
+  >
+    <AppMenuSwitcher
+      {isHovered}
+      parentBackgroundIndex={1}
+      layoutContext={LayoutContext.MINIMIZED}
+    />
+    {#if isHovered}
+      <Button
+        on:click={onMinimizeToggled}
+        size={Size.sm}
+        label="switch to verbose"
+      />
+    {/if}
+  </button>
+{:else}
+  <button
+    class={cn("leftnav flex justify-center items-center h-full", {
+      "w-16 min-w-[4rem]": isInThinMode,
+      "w-56 min-w-[14rem]": !isInThinMode,
+      "ml-2": isRounded,
+      "border--r border-r-brs2": !isRounded
+    })}
+    on:mouseenter={() => (isHovered = true)}
+    on:mouseleave={() => (isHovered = false)}
+  >
+    <div
+      class={cn(
+        "flex flex-col pt-4 gap-4 items-center justify-between overflow-auto w-full bg-bgs2",
+        {
+          "rounded-lg border-none": isRounded,
+          "border-r border-brs2": !isRounded
+        }
+      )}
+      style={isRounded ? "height: calc(100% - 1rem);" : "height:100%"}
+    >
+      <div class="w-full flex flex-col gap-8">
+        <div
+          class="w-full flex items-center h-6 {isInThinMode
+            ? 'justify-center'
+            : $$slots.top
+              ? 'justify-between'
+              : 'justify-end'}  px-2"
+        >
+          {#if !isInThinMode}
+            <slot name="top" />
+          {/if}
+          {#if isHovered}
+            <Button
+              icon="sidebar-toggle"
+              size={Size.lg}
+              on:click={() => {
+                uiState.toggleSidebar();
+              }}
+            />
+          {/if}
+        </div>
+        {#if isInThinMode}
+          <slot name="header-thin" />
+        {:else}
+          <slot name="header" />
+        {/if}
+        <div class="flex flex-col gap-8 items-center w-full p-2">
+          <AppMenuSwitcher
+            parentBackgroundIndex={1}
+            layoutContext={isInThinMode
+              ? LayoutContext.THIN
+              : LayoutContext.DEFAULT}
+          />
+          {#if !isInThinMode}
+            <slot name="mid" />
+          {/if}
+        </div>
+      </div>
+      <div class="w-full flex flex-col gap-2 items-center">
+        {#if $appStore.isDebugMode}
+          <Button
+            on:click={onMinimizeToggled}
+            size={Size.xs}
+            label={isInThinMode ? "min" : "switch to min mode"}
+            parentBgIndex={2}
+          />
+        {/if}
+        <LeftNavOfflineStatus {isInThinMode} />
+        <LeftNavCommandAction {isInThinMode} />
+        <LeftBottomBar {isInThinMode} {isRounded} />
+      </div>
+    </div>
+  </button>
+{/if}

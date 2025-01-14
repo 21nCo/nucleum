@@ -59,6 +59,7 @@ export type UserAppearanceSettings = {
   lightColorSchemeId: string;
   darkColorSchemeId: string;
   isBlurredBgForPopups?: boolean;
+  isFixedLeftNav?: boolean;
 };
 
 export type TimeZoneRecord = {

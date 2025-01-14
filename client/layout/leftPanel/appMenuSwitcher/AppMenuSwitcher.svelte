@@ -16,6 +16,8 @@
   import view from "$lib/client/stores/view.store";
   import context from "$lib/client/stores/context.store";
   import { OperatingSystem } from "$lib/client/types/context.type";
+  import { cn } from "$lib/client/utils/ui.utils";
+  import AppMenuSwitcherItemGroup from "./AppMenuSwitcherItemGroup.svelte";
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
   export let parentBackgroundIndex: number;
   export let isHovered: boolean = false;
@@ -87,9 +89,13 @@
     current = item.action;
     appEvents.publish(GlobalEvent.APP_MENU_SWITCHED, item.action);
   }
+
+  function onClickFromGroup(e: CustomEvent<IAction>) {
+    onClick(e.detail);
+  }
 </script>
 
-{#if layoutContext == LayoutContext.PORTRAIT}
+{#if layoutContext === LayoutContext.PORTRAIT}
   <div class="flex justify-around items-center px-2 min-w-min w-full">
     {#each allPages as item, index (item.action)}
       {#if index == Math.floor(allPages.length / 2) && $appStore.appData?.isShowCaptureOnMobile}
@@ -98,44 +104,38 @@
       <AppMenuSwitcherItem
         {parentBackgroundIndex}
         {layoutContext}
-        isShowLabel={true}
         on:click={() => onClick(item)}
         {item}
       />
     {/each}
   </div>
 {:else}
-  <div class="flex flex-col gap-1 justify-center rounded-lg min-w-min w-full">
-    <div class="flex flex-col gap-1">
-      {#each defaultPages as item (item.action)}
-        <AppMenuSwitcherItem
+  <div
+    class={cn("flex flex-col justify-center rounded-lg min-w-min w-full", {
+      "gap-3": layoutContext === LayoutContext.THIN_WITH_LABEL,
+      "gap-1": layoutContext !== LayoutContext.THIN_WITH_LABEL
+    })}
+  >
+    <AppMenuSwitcherItemGroup
+      {parentBackgroundIndex}
+      {layoutContext}
+      items={defaultPages}
+      on:click={onClickFromGroup}
+    />
+    {#if userPinnedPages.length > 0}
+      <div
+        class={cn("flex flex-col", {
+          "gap-3": layoutContext === LayoutContext.THIN_WITH_LABEL,
+          "gap-1": layoutContext !== LayoutContext.THIN_WITH_LABEL
+        })}
+      >
+        <Divider colorStrength={ColorStrength.Strong} />
+        <AppMenuSwitcherItemGroup
           {parentBackgroundIndex}
           {layoutContext}
-          isShowLabel={layoutContext == LayoutContext.DEFAULT}
-          on:click={() => onClick(item)}
-          {item}
+          items={userPinnedPages}
+          on:click={onClickFromGroup}
         />
-      {/each}
-    </div>
-    {#if userPinnedPages.length > 0}
-      <div class="flex flex-col gap-1">
-        <Divider colorStrength={ColorStrength.Strong} />
-        <!-- {#if layoutContext === LayoutContext.DEFAULT}
-          <div class="px-1">
-            <Text content="Pinned" style={TextStyle.SECTION_HEADING_SMALL} />
-          </div>
-        {/if} -->
-        <div class="flex flex-col gap-1">
-          {#each userPinnedPages as item (item.action)}
-            <AppMenuSwitcherItem
-              {parentBackgroundIndex}
-              {layoutContext}
-              isShowLabel={layoutContext == LayoutContext.DEFAULT}
-              on:click={() => onClick(item)}
-              {item}
-            />
-          {/each}
-        </div>
       </div>
     {/if}
   </div>

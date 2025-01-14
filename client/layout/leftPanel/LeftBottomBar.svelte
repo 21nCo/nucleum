@@ -7,48 +7,49 @@
   import { cn } from "$lib/client/utils/ui.utils";
   export let isInThinMode: boolean = false;
   export let isRounded: boolean = false;
-  //let isCpActive: boolean = false;
+  export let size: Size.sm | Size.md | Size.lg = Size.md;
   $: isCpActive =
     $page.params.route?.includes("/cp") || $page.route.id?.includes("/cp");
-  // onMount(() => {
-  //   windowObject.subscribe((x) => {
-  //     console.log({ x });
-  //     isCpActive = x?.currentPath?.includes("/cp");
-  //   });
-  // });
 </script>
 
 <div
   class={cn("w-full bg-bgs3", {
-    "h-24": isInThinMode,
+    "h-28": isInThinMode && size === Size.lg,
+    "h-24": isInThinMode && size === Size.md,
     "h-12": !isInThinMode
   })}
 >
   {#if $appStore.appData?.leftPanelFooter === "simple" || !$appStore.appData?.leftPanelFooter}
     <div
-      class="w-full h-full flex {isInThinMode
-        ? 'flex-col items-center'
-        : 'flex-row'} justify-between items-center"
+      class={cn("w-full h-full flex justify-between items-center", {
+        "flex-col": isInThinMode
+      })}
     >
       <button
-        class="flex gap-2 h-full w-full items-center justify-center px-2 {!isInThinMode &&
-        isRounded
-          ? 'rounded-bl-lg'
-          : ''} {isCpActive ? 'bg-aps1' : ''}"
+        class={cn(
+          "flex gap-2 h-full w-full items-center justify-center px-2 hover:bg-bgs4",
+          {
+            "rounded-bl-lg": !isInThinMode && isRounded,
+            "bg-aps1": isCpActive
+          }
+        )}
         on:click={() => appStore.runAction(Action.SETTINGS)}
       >
-        <Icon icon="ph:gear-six-light" isAccentBgContext={isCpActive} />
+        <Icon icon="ph:gear-six-light" isAccentBgContext={isCpActive} {size} />
       </button>
       <button
-        class="flex h-full w-full justify-center px-2 items-center gap-1 {isInThinMode
-          ? 'rounded-b-lg'
-          : 'rounded-br-lg'}"
+        class={cn(
+          "flex h-full w-full justify-center px-2 items-center gap-1 hover:bg-bgs4",
+          {
+            "rounded-b-lg": isInThinMode,
+            "rounded-br-lg": !isInThinMode
+          }
+        )}
         on:click={() => {
-          // openLink($appStore?.appData?.urls?.help);
           appStore.runAction(Action.HELP);
         }}
       >
-        <Icon icon="ph:question-light" />
+        <Icon icon="ph:question-light" {size} />
         {#if !isInThinMode}
           <span class="text-b3 text-fgs2">Help</span>
         {/if}

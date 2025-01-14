@@ -5,7 +5,8 @@ export enum LayoutContext {
    */
   MINIMIZED,
   PORTRAIT,
-  THIN
+  THIN,
+  THIN_WITH_LABEL
 }
 
 export enum Layout {

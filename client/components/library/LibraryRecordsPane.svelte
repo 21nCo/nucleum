@@ -15,6 +15,7 @@
   } from "$lib/client/types/select.type";
   import { appStore } from "$lib/client/stores/app.store";
   import {
+    ResourceAccessMode,
     ResourceAccessPoint,
     ResourceAccessPointState,
     ResourceActionType
@@ -608,6 +609,9 @@
           {accessPoint}
           {accessPointState}
           {resource}
+          defaultAccessMode={accessPoint === ResourceAccessPoint.LIBRARY
+            ? ResourceAccessMode.POP
+            : ResourceAccessMode.INLINE}
           size={$view.isConstrainedWidth ? Size.sm : Size.md}
           isShowLoadingPulseAtTheEnd={data.length < totalCountAfterFilter &&
             !searchQuery}

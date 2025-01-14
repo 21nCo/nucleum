@@ -13,21 +13,26 @@
   import { uiStateDerived } from "$lib/client/stores/uiState/uiState.store";
   import { keyboardShortcuts } from "$lib/client/components/shortcuts/shortcuts.store";
   import { tooltip } from "$lib/client/actions/popover.action";
+  import { hoverable } from "$lib/client/actions/hover.action";
   const dispatch = createEventDispatcher();
   export let item: IAction;
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
+  export let parentBackgroundIndex: number;
   $: isShowHotKeyHint =
     $uiStateDerived?.isShowHotKeyHints &&
     layoutContext === LayoutContext.DEFAULT;
   $: isActive =
     $page.params.route?.includes(item.path ?? item.action) ||
     $page.route.id?.includes(item.path ?? item.action);
-  export let isShowLabel: boolean = true;
-  export let parentBackgroundIndex: number;
+  $: isShowLabel =
+    layoutContext === LayoutContext.PORTRAIT ||
+    layoutContext === LayoutContext.DEFAULT ||
+    layoutContext === LayoutContext.THIN_WITH_LABEL;
   let buttonRef: HTMLElement;
   let pad: number;
   let rive: any;
   let isOutlineStyle: boolean = false;
+  let isHovering: boolean = false;
   $: if ($view.height) {
     let rawPad = ($view.width / 10) * $view.scale;
     pad = rawPad > 30 ? 30 : rawPad;
@@ -37,19 +42,35 @@
   onMount(() => {
     uiStateDerived.refreshShortcutHintsState();
   });
+
   function onClick() {
     postMessageToParent(EmbedMessage.MENU_ITEM_SELECTED);
     rive?.fire();
     dispatch("click", {});
   }
+
   function onHover() {
     rive?.fire();
   }
+
   function resolveHotKey() {
     const keyMap = keyboardShortcuts.fecthKeyMap();
     const shortcut = keyMap.find((x) => x.action === item.action);
     if (!shortcut) return;
     return shortcut.key;
+  }
+
+  function resolveIconSize(layoutContext: LayoutContext) {
+    if (
+      layoutContext === LayoutContext.PORTRAIT ||
+      layoutContext === LayoutContext.THIN_WITH_LABEL
+    ) {
+      return Size.lg;
+    }
+    if (layoutContext === LayoutContext.THIN) {
+      return Size.md;
+    }
+    return Size.sm;
   }
 </script>
 
@@ -59,7 +80,7 @@
     direction: Placement.Right
   }}
   class={cn(
-    "appmenuitem flex items-center cursor-pointer",
+    "appmenuitem flex items-center cursor-pointer w-full",
     (layoutContext === LayoutContext.DEFAULT ||
       layoutContext === LayoutContext.MINIMIZED) && {
       "bg-aps3 border-aps2 border text-aps1 hover:bg-aps2 hover:bg-opacity-70":
@@ -68,25 +89,35 @@
       [abg()]: isActive && !isOutlineStyle,
       "border border-transparent": !isActive && isOutlineStyle
     },
-    layoutContext === LayoutContext.PORTRAIT && {
-      "w-12 flex-col gap-1 text-b4 rounded-lg": isShowLabel,
-      "text-aps1": isActive
-    },
     {
-      "text-b2 gap-2 rounded-lg p-2 h-9":
-        isShowLabel && layoutContext != LayoutContext.PORTRAIT,
+      "w-12 flex-col gap-1 rounded-lg":
+        isShowLabel && layoutContext === LayoutContext.PORTRAIT,
+      "gap-2 rounded-lg p-2 h-9": layoutContext === LayoutContext.DEFAULT,
       "px-4 py-3 rounded-full": !isShowLabel,
       "justify-between": isShowHotKeyHint
     }
   )}
   on:click={onClick}
+  use:hoverable={{
+    onHover: (isHoveringParam) => {
+      isHovering = isHoveringParam;
+    }
+  }}
 >
   <div
     class={cn("flex gap-1", {
-      "flex-col items-center": layoutContext === LayoutContext.PORTRAIT
+      "flex-col items-center":
+        layoutContext === LayoutContext.PORTRAIT ||
+        layoutContext === LayoutContext.THIN_WITH_LABEL,
+      "w-full py-2 rounded-md hover:bg-bgs3 border":
+        layoutContext === LayoutContext.THIN_WITH_LABEL,
+      "border-transparent":
+        layoutContext === LayoutContext.THIN_WITH_LABEL && !isActive,
+      "bg-bgs3 border-brs3":
+        layoutContext === LayoutContext.THIN_WITH_LABEL && isActive
     })}
   >
-    {#if item.icon && item.icon != "initials"}
+    {#if item.icon}
       <!-- <RiveAnimatedIcon icon={item.icon ?? ""} bind:this={rive} /> -->
       <div
         class="w-6 flex flex-col gap-1 items-center justify-center"
@@ -94,10 +125,7 @@
       >
         <Icon
           icon={item.icon}
-          size={layoutContext === LayoutContext.THIN ||
-          layoutContext === LayoutContext.PORTRAIT
-            ? Size.md
-            : Size.sm}
+          size={resolveIconSize(layoutContext)}
           class={cn(
             (layoutContext === LayoutContext.DEFAULT ||
               layoutContext === LayoutContext.MINIMIZED) && {
@@ -105,8 +133,17 @@
               "fill-abg": isActive && !isOutlineStyle
             },
             (layoutContext === LayoutContext.PORTRAIT ||
-              layoutContext === LayoutContext.THIN) && {
-              "fill-aps1": isActive
+              layoutContext === LayoutContext.THIN ||
+              layoutContext === LayoutContext.THIN_WITH_LABEL) && {
+              "fill-aps1": isActive,
+              "fill-fgs2":
+                !isActive &&
+                layoutContext === LayoutContext.THIN_WITH_LABEL &&
+                !isHovering,
+              "fill-fgs1":
+                !isActive &&
+                layoutContext === LayoutContext.THIN_WITH_LABEL &&
+                isHovering
             }
           )}
           isFilled={isActive}
@@ -120,13 +157,30 @@
           />
         {/if}
       </div>
-    {:else if item.icon == "initials"}
-      <div class=" w-6 flex justify-center {isActive ? 'font-medium' : ''}">
-        {"Pr"}
-      </div>
     {/if}
     {#if isShowLabel}
-      {item.label}
+      <div
+        class={cn({
+          "text-b2": layoutContext === LayoutContext.DEFAULT,
+          "text-b4 w-18 truncate":
+            layoutContext === LayoutContext.THIN_WITH_LABEL,
+          "text-b4": layoutContext === LayoutContext.PORTRAIT,
+          "text-aps1":
+            (layoutContext === LayoutContext.THIN_WITH_LABEL ||
+              layoutContext === LayoutContext.PORTRAIT) &&
+            isActive,
+          "text-fgs2":
+            layoutContext === LayoutContext.THIN_WITH_LABEL &&
+            !isActive &&
+            !isHovering,
+          "text-fgs1":
+            layoutContext === LayoutContext.THIN_WITH_LABEL &&
+            isHovering &&
+            !isActive
+        })}
+      >
+        {item.label}
+      </div>
     {/if}
   </div>
   {#if isShowHotKeyHint}

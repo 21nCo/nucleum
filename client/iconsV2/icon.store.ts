@@ -11,5 +11,5 @@ export function resolveSpriteSheetPath(sheet: string) {
   if (isExtensionEnvironment()) {
     return `assets/icons/${sheet}.svg`;
   }
-  return `icons/${sheet}-v${spriteVersion}.svg`;
+  return `/icons/${sheet}-v${spriteVersion}.svg`;
 }

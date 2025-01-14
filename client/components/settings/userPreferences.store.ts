@@ -38,7 +38,8 @@ export const seedUserPreferences: IUserGlobalPreferences = {
     isSyncWithSystem: true,
     lightColorSchemeId: defaultColorSchemeId,
     darkColorSchemeId: defaultDarkColorSchemeId,
-    isBlurredBgForPopups: false
+    isBlurredBgForPopups: false,
+    isFixedLeftNav: false
   },
   avatarPicker: {
     skinIndex: 0,

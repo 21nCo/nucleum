@@ -4,7 +4,7 @@
     sessionStore,
     todayFocusStore
   } from "$lib/client/products/pointron/focus/session.store";
-  import LeftNav from "$lib/client/layout/leftPanel/LeftNav.svelte";
+  import LeftNavExpandable from "$lib/client/layout/leftPanel/LeftNavExpandable.svelte";
   import ProfileLeftPanelSection from "$lib/client/components/settings/account/ProfileLeftPanelSection.svelte";
 
   onMount(() => {
@@ -21,7 +21,7 @@
   }
 </script>
 
-<LeftNav>
+<LeftNavExpandable>
   <slot name="header" slot="header">
     <div class="flex flex-col w-full justify-center items-center gap-4">
       <ProfileLeftPanelSection />
@@ -35,4 +35,4 @@
       <AgeTimer />
     {/if}
   </div> -->
-</LeftNav>
+</LeftNavExpandable>

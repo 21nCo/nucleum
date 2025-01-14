@@ -26,6 +26,8 @@
   import { Action } from "$lib/client/types/action.enum";
   import CommandModePage from "$lib/client/components/commandBar/CommandModePage.svelte";
   import { clipTextSearchFallback } from "./fallbacks";
+  import MemotronLeftNavFixed from "./MemotronLeftNavFixed.svelte";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   let isLiteMode = $context.isEmbed && $context.isSheet;
   let interactionMode: InteractionMode;
   let isHideLeftNavBar: boolean = refreshSidebarState();
@@ -120,7 +122,11 @@
       <div class="flex flex-col w-full h-full">
         <div class="flex w-full flex-grow">
           {#if !isHideLeftNavBar || interactionMode === InteractionMode.DEFAULT || $context.embed === Embed.HANDSET}
-            <MemotronLeftNav />
+            {#if $userPreferences.appearance.isFixedLeftNav}
+              <MemotronLeftNavFixed />
+            {:else}
+              <MemotronLeftNav />
+            {/if}
           {/if}
           <div
             class="flex flex-col h-full {$view.isPortrait
