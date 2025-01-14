@@ -34,12 +34,14 @@
   import { ResourceError } from "$lib/client/components/error/errors";
   import { Placement } from "$lib/client/types/direction.enum";
   import ToolbarPlacementHintBlock from "../toolbar/ToolbarPlacementHintBlock.svelte";
+  import { clientStorage } from "$lib/client/persistence/persistence.utils";
+  import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
 
   export let id: string;
   let textClipperRef: any;
   let extensionBaseRef: ExtensionBaseLayer;
   let isSnipActive: boolean = false;
-  let loginNotification: number | null = null;
+  let loginState: number | null = null;
   let isDisableClipper = true;
   let isLoggedIn: boolean = false;
   let isDraggingToolbar: boolean = false;
@@ -150,33 +152,33 @@
             const token = await extensionBaseRef.onTabUpdate();
             if (token) isLoggedIn = true;
             if (!isLoggedIn) {
-              loginNotification = -3;
+              setLoginState(-3);
               webpage.reset();
               return {
                 status: "error",
                 message: "You are not logged in"
               };
             } else {
-              loginNotification = null;
+              loginState = null;
             }
             webpage.onContextChange(message.tab);
             return { status: "success", message: "context changed" };
 
           case ExtensionEvent.LOGOUT:
-            loginNotification = -2;
+            setLoginState(-2);
             isLoggedIn = false;
             webpage.reset();
             return { status: "success", message: "Logged out" };
 
           case ExtensionEvent.TOKEN_NOT_FOUND:
-            loginNotification = -3;
+            setLoginState(-3);
             isLoggedIn = false;
             webpage.reset();
             return { status: "success", message: "Logged out" };
 
           case ExtensionEvent.PAGE_STATE:
             if (!isLoggedIn) {
-              loginNotification = -3;
+              setLoginState(-3);
               return {
                 status: "error",
                 message: "You are not logged in"
@@ -187,7 +189,7 @@
 
           case ClipperExtensionEvent.SAVE_WEBPAGE:
             if (!isLoggedIn) {
-              loginNotification = -3;
+              setLoginState(-3);
               return {
                 status: "error",
                 message: "You are not logged in"
@@ -214,6 +216,23 @@
     handleMessage().then(sendResponse);
     return true;
   });
+
+  async function setLoginState(code: number) {
+    loginState = code;
+    if (code === 1) {
+      clientStorage.remove(ClientStorageKey.GUEST_TOOLBAR_STATE);
+    } else {
+      const guestToolbarState = await clientStorage.get(
+        ClientStorageKey.GUEST_TOOLBAR_STATE
+      );
+      if (guestToolbarState) {
+        const parsed = JSON.parse(guestToolbarState);
+        if (parsed.isCollapsed && $toolbarState.isOpen) {
+          toolbarState.toggle(false);
+        }
+      }
+    }
+  }
 </script>
 
 <ExtensionBaseLayer
@@ -231,11 +250,16 @@
     highlightStore,
     fileStore
   ]}
-  on:login={(e) => (loginNotification = e.detail.code)}
+  on:login={(e) => setLoginState(e.detail.code)}
 >
   {#if !isDisableClipper}
     {#if !$toolbarState?.isOpen}
-      <ToolbarOpener on:click={() => toolbarState.toggle(true)} />
+      <ToolbarOpener
+        on:click={() => {
+          toolbarState.toggle(true);
+          clientStorage.remove(ClientStorageKey.GUEST_TOOLBAR_STATE);
+        }}
+      />
     {:else}
       {#if isLoggedIn}
         <Toolbar
@@ -256,15 +280,21 @@
         />
       {/if}
       <!-- <div out:fade={{ duration: 150 }}> -->
-      {#if loginNotification !== null}
+      {#if loginState !== null}
         <LoginNotification
           isWithoutToolbarContext={!isLoggedIn}
-          bind:code={loginNotification}
+          code={loginState}
+          on:later={async () => {
+            toolbarState.toggle(false);
+            await clientStorage.set(ClientStorageKey.GUEST_TOOLBAR_STATE, {
+              isCollapsed: true
+            });
+          }}
           on:click={() => {
             relayToBackgroundScript({
               event: ExtensionEvent.LOGIN
             });
-            loginNotification = null;
+            loginState = null;
           }}
         />
       {:else if $feedbackPane.isShown}

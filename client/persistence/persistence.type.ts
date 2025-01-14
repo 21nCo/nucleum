@@ -44,7 +44,11 @@ export enum ClientStorageKey {
 
   INTERCOM_ID = "intercomId",
   OFFLINE_MODE = "offlineMode",
-  LOW_DATA_MODE = "lowDataMode"
+  LOW_DATA_MODE = "lowDataMode",
+  /**
+   * Clipper extension toolbar state for guest users.
+   */
+  GUEST_TOOLBAR_STATE = "guestToolbarState"
 }
 
 export interface IPersistence {

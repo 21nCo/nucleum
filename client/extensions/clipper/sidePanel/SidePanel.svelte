@@ -239,6 +239,7 @@
             <span> Please login to continue. </span>
             <Button
               label="Login"
+              icon="ph:sign-in-light"
               type={ButtonVariant.PRIMARY}
               on:click={() => openAppPath("signup?ext=true")}
             />

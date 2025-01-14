@@ -4,6 +4,8 @@
   import { ButtonVariant } from "$lib/client/types/button.type";
   import { extractProduct } from "$lib/shared/utils/utils";
   import FeedbackPaneBase from "./FeedbackPaneBase.svelte";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
   export let code: number;
   export let isWithoutToolbarContext: boolean = false;
 
@@ -31,12 +33,19 @@
       {/if}
     </div>
     {#if code !== 1}
-      <div class="flex justify-center">
+      <div class="flex gap-2 justify-center items-center">
         <Button
-          icon="arrow-right"
+          icon="ph:sign-in-light"
           label="Login"
           type={ButtonVariant.PRIMARY}
           on:click
+        />
+        <Button
+          icon="ph:arrow-counter-clockwise-light"
+          label="I'll login later"
+          on:click={() => {
+            dispatch("later");
+          }}
         />
       </div>
     {/if}

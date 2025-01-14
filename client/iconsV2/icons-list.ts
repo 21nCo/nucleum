@@ -179,6 +179,7 @@ const phosphorIcons = [
   "plus-circle",
   "cursor-click",
   "sign-out",
+  "sign-in",
   "git-branch",
   "target",
   "smiley",
