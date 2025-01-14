@@ -1,7 +1,11 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
   import { StoreDataType, type IStore } from "../types/data.type";
-  import { resolveCurrentUserId, resolveToken } from "../utils/account.utils";
+  import {
+    isTokenExpired,
+    resolveCurrentUserId,
+    resolveToken
+  } from "../utils/account.utils";
   import account from "../stores/account.store";
   import ExtensionThemeBase from "./ExtensionThemeBase.svelte";
   import {
@@ -26,7 +30,6 @@
     cleanExtensionSprites,
     extensionSprites
   } from "../iconsV2/icon.store";
-  import jwt_decode from "jwt-decode";
   //!Below working with dev but not build or package
   // import sprite from "data-text:/assets/icons/sprite.svg";
   // import spritePhBase from "data-text:/assets/icons/sprite-ph-base.svg";
@@ -103,14 +106,12 @@
 
   async function checkIfSessionExpired(token: string) {
     logger.log({ at: "checkIfSessionExpired" });
-    let decodedToken: any = jwt_decode(token);
-    let exp = decodedToken?.exp ?? 0;
-    const currentTime = new Date().getTime() / 1000;
-    if (currentTime < exp) {
-      return false;
+    const isExpired = isTokenExpired(token);
+    if (isExpired) {
+      await clientStorage.remove(ClientStorageKey.STOKEN);
+      return true;
     }
-    await clientStorage.remove(ClientStorageKey.STOKEN);
-    return true;
+    return false;
   }
 
   export async function onTabUpdate() {

@@ -72,7 +72,7 @@ export function createClipButton(controlElement) {
 
 export function createClipPointer() {
   const pointer = document.createElement("div");
-  pointer.className = "my-custom-pointer";
+  pointer.className = "memotron-clip-pointer";
 
   pointer.innerHTML = `
                        <svg width="16" height="19" viewBox="0 0 16 19" fill="none" xmlns="http://www.w3.org/2000/svg">

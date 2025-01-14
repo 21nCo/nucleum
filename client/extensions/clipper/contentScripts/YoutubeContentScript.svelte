@@ -17,6 +17,8 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import { getPort } from "@plasmohq/messaging/port";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { formatSeconds } from "$lib/client/utils/time.utils";
+  import { TimeFormat } from "$lib/client/types/time.type";
   let clipCount = 0;
   export let isRenderedAsOverlay: boolean = false;
   const channel = getPort("channel");
@@ -45,7 +47,37 @@
       const videoId = new URLSearchParams(window.location.search).get("v");
       const videoPlayer = document.querySelector("video");
       if (videoPlayer && !isNaN(videoPlayer.currentTime)) {
+        const adModuleElement = document.querySelector(".ytp-ad-module");
+        const videoAdElement = document.querySelector(".video-ads");
+        if (adModuleElement || videoAdElement) {
+          const childrenCount = adModuleElement?.children.length;
+          const videoAdChildrenCount = videoAdElement?.children.length;
+          console.log({
+            at: "adModuleElement",
+            childrenCount,
+            videoAdChildrenCount
+          });
+          if (
+            (childrenCount && childrenCount > 0) ||
+            (videoAdChildrenCount && videoAdChildrenCount > 0)
+          ) {
+            window.alert(
+              `Cannot clip video while an ad is playing. Please wait for the ad to finish.`
+            );
+            return null;
+          }
+        }
         const timestamp = Math.floor(videoPlayer.currentTime);
+        //if already exists, don't create a new pointer
+        const isExists = $webpage.clips?.find(
+          (clip) => clip.body?.timestamp === timestamp
+        );
+        if (isExists) {
+          window.alert(
+            `Clip already exists at this timestamp: ${formatSeconds(timestamp, TimeFormat.CLOCK)}`
+          );
+          return null;
+        }
         placePointerOnPlayer(timestamp);
         const contentType = "image/png";
         const dataUrl = captureVideoFrame(videoPlayer);
@@ -109,8 +141,9 @@
   function removeAllPointers() {
     const playerControls = document.querySelector(".ytp-chrome-bottom");
     if (playerControls && playerControls instanceof HTMLElement) {
-      const existingPointers =
-        playerControls.querySelectorAll(".my-custom-pointer");
+      const existingPointers = playerControls.querySelectorAll(
+        ".memotron-clip-pointer"
+      );
       existingPointers.forEach((pointer) => pointer.remove());
     }
   }
@@ -136,17 +169,55 @@
     logger.debug({ at: "YoutubeContentScript - channel listener", msg });
   }
 
+  let sizeButtonListener: () => void;
+  let fullscreenButtonListener: () => void;
+  let attachedElements: {
+    sizeButton: Element | null;
+    fullscreenButton: Element | null;
+  } | null = null;
+
+  function attachPlayerControlListeners() {
+    const sizeButton = document.querySelector(".ytp-size-button");
+    const fullscreenButton = document.querySelector(".ytp-fullscreen-button");
+    if (sizeButton && fullscreenButton) {
+      sizeButtonListener = () => {
+        setTimeout(() => {
+          refreshTimestamps();
+        }, 1000);
+      };
+      fullscreenButtonListener = () => {
+        setTimeout(() => {
+          refreshTimestamps();
+        }, 1000);
+      };
+
+      sizeButton.addEventListener("click", sizeButtonListener);
+      fullscreenButton.addEventListener("click", fullscreenButtonListener);
+
+      attachedElements = { sizeButton, fullscreenButton };
+      return true;
+    }
+    return false;
+  }
+
   onMount(() => {
     clipCount = 0;
     channel.onMessage.addListener(onChannelMessage);
+    if (!attachPlayerControlListeners()) {
+      setTimeout(() => {
+        attachPlayerControlListeners();
+      }, 1000);
+    }
+    scheduleReconciliation();
     const sub = appEvents.subscribe(async (x) => {
       if (x.event === ClipperExtensionEvent.REFRESH_CLIPS_RENDERING) {
-        logger.log({
-          at: "onMessage - Youtube content script",
+        logger.debug({
+          at: "YoutubeContentScript - onMessage - REFRESH_CLIPS_RENDERING",
           event: x.event
         });
         setTimeout(() => {
           refreshTimestamps();
+          scheduleReconciliation();
         }, 1000);
       }
     });
@@ -154,9 +225,27 @@
       sub();
     };
   });
+
   onDestroy(() => {
     channel.onMessage.removeListener(onChannelMessage);
+
+    if (attachedElements && sizeButtonListener && fullscreenButtonListener) {
+      attachedElements.sizeButton?.removeEventListener(
+        "click",
+        sizeButtonListener
+      );
+      attachedElements.fullscreenButton?.removeEventListener(
+        "click",
+        fullscreenButtonListener
+      );
+    }
   });
+
+  function scheduleReconciliation() {
+    setTimeout(() => {
+      reconcile();
+    }, 10000);
+  }
 
   async function onClick() {
     const clipDetails = await clip();
@@ -174,8 +263,32 @@
     clipCount++;
     //TODO - show feedback
   }
+
+  function reconcile() {
+    const playerControls = document.querySelector(".ytp-chrome-bottom");
+    if (playerControls && playerControls instanceof HTMLElement) {
+      const existingPointers = playerControls.querySelectorAll(
+        ".memotron-clip-pointer"
+      );
+      const renderedPointerCount = existingPointers.length;
+      const actualPointerCount = $webpage.clips?.filter(
+        (clip) => clip.contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP
+      ).length;
+      if (renderedPointerCount !== actualPointerCount) {
+        console.log({
+          at: "Reconciling",
+          renderedPointerCount,
+          actualPointerCount
+        });
+        refreshTimestamps();
+      }
+    }
+  }
+
   function resizeEventListener() {
-    refreshTimestamps();
+    setTimeout(() => {
+      refreshTimestamps();
+    }, 1000);
   }
 </script>
 
