@@ -126,7 +126,8 @@
     if (
       target.classList.contains("inline-markdown") ||
       e.pointerId === -1 ||
-      target.nodeName === "svg"
+      target.nodeName === "svg" ||
+      target.nodeName === "path"
     )
       return;
     dispatch("click");
@@ -174,7 +175,6 @@
 </script>
 
 <button
-  on:click={onClick}
   class="relative flex flex-col gap-2 border border-brs2 rounded-md p-3 hover:border-brs3"
   use:hoverable={{
     onHover: (e) => {
@@ -184,16 +184,16 @@
 >
   {#if clip.contentType === NodeType.TEXT_CLIP || clip.contentType === NodeType.WEB_SCREENSHOT_CLIP}
     <div class="flex flex-col gap-2 text-left">
-      <TextClip {clip} on:click on:keydown />
+      <TextClip {clip} on:click={onClick} on:keydown />
       <div
         class="flex gap-1 justify-between bg-bgs1 rounded-md px-1 h-8 items-center"
       >
         <span class="text-b4 text-fgs2">
           {formatDatetime($userPreferences, clip.createdAt)}
         </span>
-        {#if isHovered || clip?.notes || clip?.links.length}
+        {#if isHovered || clip?.notes || clip?.links.length || isLinkboxOpened || isNotesOpened}
           <span class="flex gap-1 items-center">
-            {#if isHovered || clip?.links.length}
+            {#if isHovered || clip?.links.length || isLinkboxOpened}
               <LinkActionOnClipper
                 links={clip?.links}
                 bind:isLinkboxOpened
@@ -202,7 +202,7 @@
                 }}
               />
             {/if}
-            {#if isHovered || clip?.notes}
+            {#if isHovered || clip?.notes || isNotesOpened}
               <Toggle
                 icon={clip?.notes ? "document-text" : "document"}
                 tooltip={clip?.notes ? "View notes" : "Add notes"}
@@ -221,7 +221,7 @@
       </div>
     </div>
   {:else if clip.contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP && "timestamp" in clip.body}
-    <span class="flex gap-4 justify-center items-center">
+    <button class="flex gap-4 justify-center items-center" on:click={onClick}>
       <FileView
         id={clip.body.thumbnail}
         class="thumbnail w-32 h-[72px] rounded-md"
@@ -252,7 +252,7 @@
           {/if}
         </div>
       </div>
-    </span>
+    </button>
   {/if}
   {#if isLinkboxOpened}
     <LinkBoxOnClipper on:link={onLinkAction} />

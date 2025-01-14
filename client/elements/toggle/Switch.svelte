@@ -32,8 +32,14 @@
       on:click|stopPropagation
     />
     <div
-      class={"block bg-bgs4 rounded-full" +
+      data-class={"block bg-bgs4 rounded-full" +
         (size == Size.sm ? " w-7 h-4" : " w-[48px] h-6")}
+      class={cn("block rounded-full", {
+        "w-7 h-4": size == Size.sm,
+        "w-[48px] h-6": size != Size.sm,
+        "bg-bgs4": !on,
+        "bg-aps1": on
+      })}
     />
     <div
       class={cn("dot absolute bg-bgs1 rounded-full transition", {
@@ -45,9 +51,9 @@
 </label>
 
 <style>
-  input:checked + .block {
+  /* input:checked + .block {
     background-color: rgba(var(--colors-aps1), 1);
-  }
+  } */
   input:checked + .block + .dot {
     transform: translateX(100%);
   }

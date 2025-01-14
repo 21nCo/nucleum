@@ -118,6 +118,7 @@
   function onSelect(e: CustomEvent) {
     onSelectCallback?.(e.detail.item);
     dispatch("select", e.detail);
+    searchInputRef?.reset();
   }
 
   function onHide() {

@@ -75,6 +75,8 @@ export class DexiePersistence implements IPersistence {
       case PersistenceActionType.DELETE:
         logger.log({ at: "DexiePersistence.mutation delete", params });
         return this.instance?.table(resource).delete(params.recordId);
+      case PersistenceActionType.BULK_DELETE:
+        return this.instance?.table(resource).bulkDelete(params.recordIds);
       case PersistenceActionType.BULK_MERGE:
         //TODO
         return;

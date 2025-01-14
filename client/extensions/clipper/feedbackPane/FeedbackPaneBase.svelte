@@ -4,6 +4,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { hoverable } from "$lib/client/actions/hover.action";
   import { createEventDispatcher } from "svelte";
+  import { fly, scale } from "svelte/transition";
   const dispatch = createEventDispatcher();
   export let isHovering = false;
   export let isWithoutToolbarContext: boolean = false;
@@ -17,6 +18,25 @@
   function onKey(e: KeyboardEvent) {
     e.stopPropagation();
   }
+
+  function resolveFlyParams(position: Placement) {
+    if (position === Placement.Right) {
+      return {
+        x: 10,
+        duration: 300
+      };
+    } else if (position === Placement.Left) {
+      return {
+        x: -10,
+        duration: 300
+      };
+    } else if (position === Placement.Bottom) {
+      return {
+        y: 10,
+        duration: 300
+      };
+    }
+  }
 </script>
 
 <button
@@ -29,17 +49,28 @@
   on:keydown={onKey}
   on:keyup={onKey}
   class={cn(
-    "fixed w-96 max-h-[40rem] mo:max-h-full flex flex-col items-center gap-4 p-4 bg-bgs1 shadow-md rounded-md border border-brs2",
+    "fixed w-96 h-fit max-h-[40rem] mo:max-h-full flex flex-col items-center justify-center gap-4 p-4 bg-bgs1 shadow-md rounded-md border border-brs2",
     {
-      "top-1/2 transform -translate-y-1/2 space-y-1.5":
-        $toolbarState.position === Placement.Right,
-      "bottom-0 right-0 m-6": $toolbarState.position === Placement.Bottom,
+      "inset-y-0 my-auto":
+        $toolbarState.position === Placement.Right ||
+        $toolbarState.position === Placement.Left,
+      "inset-x-0 mx-auto": $toolbarState.position === Placement.Bottom,
+      "bottom-4":
+        $toolbarState.position === Placement.Bottom && isWithoutToolbarContext,
+      "bottom-20 2k:bottom-24":
+        $toolbarState.position === Placement.Bottom && !isWithoutToolbarContext,
       "right-4":
         $toolbarState.position === Placement.Right && isWithoutToolbarContext,
       "right-16 2k:right-20":
-        $toolbarState.position === Placement.Right && !isWithoutToolbarContext
+        $toolbarState.position === Placement.Right && !isWithoutToolbarContext,
+      "left-4":
+        $toolbarState.position === Placement.Left && isWithoutToolbarContext,
+      "left-16 2k:left-20":
+        $toolbarState.position === Placement.Left && !isWithoutToolbarContext
     }
   )}
+  in:fly={resolveFlyParams($toolbarState.position)}
+  out:scale
 >
   <slot />
 </button>

@@ -19,8 +19,9 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { formatSeconds } from "$lib/client/utils/time.utils";
   import { TimeFormat } from "$lib/client/types/time.type";
-  let clipCount = 0;
   export let isRenderedAsOverlay: boolean = false;
+  let clipCount = 0;
+  let isClipInProgress = false;
   const channel = getPort("channel");
 
   function refreshTimestamps() {
@@ -248,20 +249,31 @@
   }
 
   async function onClick() {
-    const clipDetails = await clip();
-    if (!clipDetails) return;
-    const clipItem: IClipCapture = {
-      contentType: NodeType.YOUTUBE_TIMESTAMP_CLIP,
-      url: clipDetails.videoUrlWithTimestamp,
-      body: {
-        timestamp: clipDetails.timestamp,
-        thumbnail: clipDetails.fileId
-      },
-      metadata: {}
-    };
-    await webpage.saveClip(clipItem);
-    clipCount++;
-    //TODO - show feedback
+    try {
+      if (isClipInProgress) return;
+      isClipInProgress = true;
+      const clipDetails = await clip();
+      if (!clipDetails) {
+        isClipInProgress = false;
+        return;
+      }
+      const clipItem: IClipCapture = {
+        contentType: NodeType.YOUTUBE_TIMESTAMP_CLIP,
+        url: clipDetails.videoUrlWithTimestamp,
+        body: {
+          timestamp: clipDetails.timestamp,
+          thumbnail: clipDetails.fileId
+        },
+        metadata: {}
+      };
+      await webpage.saveClip(clipItem);
+      clipCount++;
+      //TODO - show feedback
+      isClipInProgress = false;
+    } catch (e) {
+      logger.error({ at: "YoutubeContentScript - onClick", error: e });
+      isClipInProgress = false;
+    }
   }
 
   function reconcile() {
@@ -314,7 +326,7 @@
       on:click|stopPropagation={onClick}
       class="bg-aps3 hover:bg-aps2 border border-aps2 flex w-12 justify-center items-center h-full rounded-r-md"
     >
-      <Icon icon="plus" />
+      <Icon icon={isClipInProgress ? "svg-spinners:3-dots-fade" : "ph:plus"} />
     </button>
   </button>
 </div>

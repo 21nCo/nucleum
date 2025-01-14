@@ -28,7 +28,7 @@
     ($feedbackPane.focusedClip
       ? $feedbackPane.focusedClip.notes
       : $webpage?.notes) ?? "";
-  let autoCloseDuration = 4;
+  let autoCloseDuration = 40;
   let closeTimer: any;
   let closeActionTimestamp: number;
   let isHovering = false;
@@ -309,7 +309,9 @@
           class="h-full w-full max-h-40 object-cover"
         />
       {:else if $feedbackPane.focusedClip?.contentType === NodeType.TWEET}
-        <span class="text-b2 p-1 border border-brs2 rounded-md">
+        <span
+          class="text-b2 p-1 border border-brs2 rounded-md overflow-clip max-h-40"
+        >
           <NodeThumbnailTweetPreview
             text={$feedbackPane.focusedClip.body.content}
           />

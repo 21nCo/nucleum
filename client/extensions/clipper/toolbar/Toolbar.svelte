@@ -18,6 +18,7 @@
   import { highlightStore } from "$lib/client/products/memotron/common/highlighters/highlight.store";
   import { ExtensionEvent } from "$lib/client/types/extension.type";
   import { relayToBackgroundScript } from "$lib/client/utils/extension.utils";
+  import { fly, scale } from "svelte/transition";
   const dispatch = createEventDispatcher();
   export let activeHighlighter: string | null = null;
   export let isSnipActive: boolean = false;
@@ -63,23 +64,45 @@
       isSnipActive = false;
     }
   }
+
+  function resolveFlyParams(position: Placement) {
+    if (position === Placement.Right) {
+      return {
+        x: 10,
+        duration: 300
+      };
+    } else if (position === Placement.Left) {
+      return {
+        x: -10,
+        duration: 300
+      };
+    } else if (position === Placement.Bottom) {
+      return {
+        y: 10,
+        duration: 300
+      };
+    }
+  }
 </script>
 
 <button
   class={cn(
-    "fixed bg-bgs1 border border-brs3 rounded-full min-h-fit flex gap-3  justify-center items-center shadow-md",
+    "fixed bg-bgs1 border border-brs3 rounded-full min-h-fit min-w-fit flex gap-3 justify-center items-center shadow-md",
     {
-      "right-0 top-1/2 flex-col w-11 2k:w-12 mr-4 2k:mr-6 py-3 transform -translate-y-1/2 space-y-1.5":
-        $toolbarState.position === Placement.Right || !$toolbarState.position,
-      "bottom-0 right-1/2 transform translate-x-1/2 flex-row py-2 mb-4 px-6 h-12":
-        $toolbarState.position === Placement.Bottom,
-      "left-0 top-1/2 flex-col w-11 2k:w-12 ml-4 2k:ml-6 py-3 transform -translate-y-1/2 space-y-1.5":
-        $toolbarState.position === Placement.Left
+      "w-11 2k:w-12 inset-y-0 my-auto flex-col py-6":
+        $toolbarState.position === Placement.Right ||
+        $toolbarState.position === Placement.Left,
+      "right-0 mr-4 2k:mr-6": $toolbarState.position === Placement.Right,
+      "left-0 ml-4 2k:ml-6": $toolbarState.position === Placement.Left,
+      "h-12 w-fit inset-x-0 mx-auto bottom-0 mb-4 px-6":
+        $toolbarState.position === Placement.Bottom
     }
   )}
   draggable="true"
   on:dragstart={() => (isDragging = true)}
   on:dragend={() => (isDragging = false)}
+  in:fly={resolveFlyParams($toolbarState.position)}
+  out:scale
 >
   {#if !isScreenShotOnly && !$syncStore.id}
     {#if $webpage?.id}

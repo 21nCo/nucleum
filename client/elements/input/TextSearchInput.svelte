@@ -82,6 +82,7 @@
   }
   export function reset() {
     onReset();
+    searchResultsPopover?.reset();
   }
   function onReset() {
     value = "";
