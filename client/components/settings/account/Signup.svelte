@@ -7,7 +7,6 @@
   import { page } from "$app/stores";
   import { onMount } from "svelte";
   import view from "$lib/client/stores/view.store";
-  import { postTokenToExtension } from "$lib/client/utils/embed.utils";
   import SubAtomLogo from "$lib/client/branding/SubAtomLogo.svelte";
   import { properCase } from "$lib/shared/utils/text.utils";
   import { Action } from "$lib/client/types/action.enum";
@@ -41,12 +40,7 @@
       clientStorage.remove(ClientStorageKey.STOKEN);
       return;
     }
-    if (isLoginFromExtensionParam && isLoginFromExtensionParam === "true") {
-      const userInfo = await clientStorage.get(ClientStorageKey.USER_INFO);
-      postTokenToExtension({ token, userInfo });
-      // appStore.runAction(Action.EXTENSTION_LOGIN);
-      appStore.gotoPath("/ext/login");
-    } else appStore.gotoPath("/");
+    appStore.gotoPath("/");
   });
 </script>
 

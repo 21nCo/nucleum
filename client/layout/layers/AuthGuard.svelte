@@ -12,6 +12,7 @@
     UserDataMode,
     UserSessionType
   } from "$lib/client/types/account.type";
+  import { postTokenToExtension } from "$lib/client/utils/embed.utils";
   import { wait } from "$lib/client/utils/time.utils";
   import { onMount } from "svelte";
 
@@ -33,6 +34,19 @@
     ) {
       $account.sessionType = UserSessionType.NEW;
       appStore.gotoPath("/bootstrap");
+    } else if (result) {
+      const isLoginFromExtension = await clientStorage.getForSession(
+        ClientStorageKey.IS_EXTENSION_LOGIN
+      );
+      if (isLoginFromExtension) {
+        clientStorage.removeForSession(ClientStorageKey.IS_EXTENSION_LOGIN);
+        const userInfo = await clientStorage.get(ClientStorageKey.USER_INFO);
+        const token = await clientStorage.get(ClientStorageKey.STOKEN);
+        postTokenToExtension({ token, userInfo });
+        // appStore.runAction(Action.EXTENSTION_LOGIN);
+        appStore.gotoPath("/ext/login");
+        return;
+      }
     }
     isLoggedIn = result;
     console.log({ isLoggedIn });

@@ -7,12 +7,10 @@
   import { handleOAuthRedirection } from "$lib/client/components/oauth/oauth.utils";
   import { onMount } from "svelte";
   import context from "$lib/client/stores/context.store";
-  import { Embed, OperatingSystem } from "$lib/client/types/context.type";
+  import { OperatingSystem } from "$lib/client/types/context.type";
   import { logger } from "../debug/logger.client";
   import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
   import { clientStorage } from "$lib/client/persistence/persistence.utils";
-  import { postTokenToExtension } from "$lib/client/utils/embed.utils";
-  import { Action } from "$lib/client/types/action.enum";
 
   let debugMessage = "debug";
   $: {
@@ -55,9 +53,6 @@
     refreshToken?: string;
     userInfo?: any;
   }) {
-    const isExtensionLogin = await clientStorage.getForSession(
-      ClientStorageKey.IS_EXTENSION_LOGIN
-    );
     const isEmbedRedirection = await clientStorage.getForSession(
       ClientStorageKey.EMBED_OAUTH
     );
@@ -67,19 +62,15 @@
       isEmbed: $context.isEmbed,
       embed: $context.embed,
       userAgent: navigator.userAgent,
-      isExtensionLogin,
       isEmbedRedirection
     });
-    if (isExtensionLogin) {
-      clientStorage.removeForSession(ClientStorageKey.IS_EXTENSION_LOGIN);
-      postTokenToExtension(data);
-      // appStore.runAction(Action.EXTENSTION_LOGIN);
-      appStore.gotoPath("/ext/login");
-    } else if ($context.os == OperatingSystem.MACOS && $context.isEmbed) {
+    if ($context.os == OperatingSystem.MACOS && $context.isEmbed) {
       handleMacOSEmbedRedirection(data.token);
     } else if (
       $context.os == OperatingSystem.IOS ||
-      (isEmbedRedirection && ($context.os === OperatingSystem.MACOS || $context.os === OperatingSystem.WINDOWS))
+      (isEmbedRedirection &&
+        ($context.os === OperatingSystem.MACOS ||
+          $context.os === OperatingSystem.WINDOWS))
     ) {
       handleUrlSchemeRedirection(data.token);
     } else if (data.userInfo) {
