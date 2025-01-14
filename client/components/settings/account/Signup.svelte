@@ -13,6 +13,7 @@
   import { Action } from "$lib/client/types/action.enum";
   import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
   import { clientStorage } from "$lib/client/persistence/persistence.utils";
+  import { isTokenExpired } from "$lib/client/utils/account.utils";
 
   let isSignup = true;
   let message: string | undefined = undefined;
@@ -35,6 +36,11 @@
     }
     const token = await clientStorage.get(ClientStorageKey.STOKEN);
     if (!token) return;
+    const isExpired = isTokenExpired(token);
+    if (isExpired) {
+      clientStorage.remove(ClientStorageKey.STOKEN);
+      return;
+    }
     if (isLoginFromExtensionParam && isLoginFromExtensionParam === "true") {
       const userInfo = await clientStorage.get(ClientStorageKey.USER_INFO);
       postTokenToExtension({ token, userInfo });
