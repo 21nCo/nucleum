@@ -27,6 +27,12 @@
     extensionSprites
   } from "../iconsV2/icon.store";
   import jwt_decode from "jwt-decode";
+  //!Below working with dev but not build or package
+  // import sprite from "data-text:/assets/icons/sprite.svg";
+  // import spritePhBase from "data-text:/assets/icons/sprite-ph-base.svg";
+  // import spritePhFill from "data-text:/assets/icons/sprite-ph-fill.svg";
+  // import spritePhLight from "data-text:/assets/icons/sprite-ph-light.svg";
+  import { resolveIconSvgSheetText } from "./iconSvgSheetTextResolver";
   const dispatch = createEventDispatcher();
   export let id: string;
   export let stores: IStore[] = [];
@@ -35,14 +41,16 @@
   $: isSelfPage =
     product.product === "memotron" || process.env.NODE_ENV === "development";
 
-  const sprites = {
-    sprite: require("data-text:/assets/icons/sprite.svg"),
-    "sprite-ph-base": require("data-text:/assets/icons/sprite-ph-base.svg"),
-    "sprite-ph-light": require("data-text:/assets/icons/sprite-ph-light.svg"),
-    "sprite-ph-fill": require("data-text:/assets/icons/sprite-ph-fill.svg")
-  };
+  const sprites = [
+    "sprite",
+    "sprite-ph-base",
+    "sprite-ph-light",
+    "sprite-ph-fill"
+  ];
 
-  Object.entries(sprites).forEach(([key, content]) => {
+  sprites.forEach((key) => {
+    const content = resolveIconSvgSheetText(key);
+    if (!content) return;
     const blob = new Blob([content], { type: "image/svg+xml" });
     const url = URL.createObjectURL(blob);
     extensionSprites.set(key, url);
