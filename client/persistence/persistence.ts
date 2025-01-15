@@ -436,13 +436,21 @@ export class Persistence {
     }
   }
 
-  async retrieveUrlData(url: string) {
+  async retrieveUrlData(
+    url: string,
+    params?: {
+      isReturnRawData?: boolean;
+    }
+  ) {
     const response = await performApiCall("utils/n/run", "POST", {
       url,
       action: "get-webpage"
     });
     if (!response?.ok) return;
     const data = await response.json();
+    if (params?.isReturnRawData) {
+      return data;
+    }
     let parsedData = null;
     if (data?.text) {
       parsedData = await parseHtml(data.text);

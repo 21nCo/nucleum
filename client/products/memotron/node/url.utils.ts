@@ -165,11 +165,12 @@ export async function fetchYouTubeMetadata(url: string): Promise<{
   thumbnail_url: string;
 } | null> {
   try {
-    const normalizedUrl = url.replace(
-      /(youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)/,
-      "youtube.com/watch?v="
-    );
-    const oEmbedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(normalizedUrl)}&format=json`;
+    // const normalizedUrl = url.replace(
+    //   /(youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)/,
+    //   "youtube.com/watch?v="
+    // );
+    // const oEmbedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(normalizedUrl)}&format=json`;
+    const oEmbedUrl = `https://www.youtube.com/oembed?url=${url}&format=json`;
     const response = await fetch(oEmbedUrl);
     if (!response.ok) return null;
     const data = await response.json();
