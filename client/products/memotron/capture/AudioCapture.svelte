@@ -128,17 +128,29 @@
   }
 
   async function onFinish() {
+    const waveformBlob = await resolveWaveFormBlob();
     isSaveInProgress = true;
     const result = await captureStore.saveAudioRecording(
       blobRefernce,
       recordingDuration,
       {
         isEmbedContext: accessPoint === ResourceAccessPoint.MARKDOWN_EMBED,
-        creationContext
+        creationContext,
+        thumbnailBlob: waveformBlob
       }
     );
     isSaveInProgress = false;
     dispatch("save", result);
+  }
+
+  async function resolveWaveFormBlob() {
+    try {
+      const blob = await wavesurfer.exportImage("image/jpeg", 0.5, "blob");
+      return blob[1];
+    } catch (error) {
+      console.error("Failed to generate waveform:", error);
+      return undefined;
+    }
   }
 </script>
 

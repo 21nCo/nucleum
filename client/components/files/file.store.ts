@@ -10,9 +10,7 @@ import { get } from "svelte/store";
 import { logger } from "../debug/logger.client";
 import { Resource } from "../flux/resourceStores/resource.enum";
 import { ResourceStore } from "../flux/resourceStores/resource.store";
-import {
-  isRecordId
-} from "../flux/resourceStores/resource.utils";
+import { isRecordId } from "../flux/resourceStores/resource.utils";
 import type { IFile } from "./file.type";
 import { fileEmbedChannel } from "./fileEmbedChannel.store";
 import { OperatingSystem } from "$lib/client/types/context.type";
@@ -105,10 +103,31 @@ class FileStore extends ResourceStore<IFile> {
   }
 
   private async updateUrlIfExpired(
-    file: IFile | IRecordId
+    file: IFile | IRecordId,
+    params?: {
+      isUseThumbnailIfAvailable?: boolean;
+    }
   ): Promise<IFile | undefined> {
     if (typeof file !== "object" || !("url" in file) || !file.url) return;
-    if (isUrlExpired(file.url)) {
+
+    if (
+      params?.isUseThumbnailIfAvailable &&
+      file.thumbnailUrl &&
+      isUrlExpired(file.thumbnailUrl)
+    ) {
+      let key = getBucketNameandKey(file.thumbnailUrl);
+      let signedUrl = await persistenceInstance.fetchSignedUrlForGet(key);
+      const result = await this.modify(
+        file.id,
+        {
+          thumbnailUrl: signedUrl?.getUrl
+        },
+        {
+          isPreventCloudPersistence: true
+        }
+      );
+      return { ...file, thumbnailUrl: signedUrl?.getUrl };
+    } else if (isUrlExpired(file.url)) {
       let key = getBucketNameandKey(file.url);
       let signedUrl = await persistenceInstance.fetchSignedUrlForGet(key);
       const result = await this.modify(
@@ -129,7 +148,12 @@ class FileStore extends ResourceStore<IFile> {
    * @param file
    * @returns a promise of file or undefined
    */
-  async refresh(file: IFile | IRecordId): Promise<IFile | undefined> {
+  async refresh(
+    file: IFile | IRecordId,
+    params?: {
+      isUseThumbnailIfAvailable?: boolean;
+    }
+  ): Promise<IFile | undefined> {
     logger.log({ at: "fileStore - refresh", file });
     if (!file) return;
     if (isRecordId(file)) {
@@ -137,13 +161,26 @@ class FileStore extends ResourceStore<IFile> {
       if (!_file) return;
       file = _file;
     }
+    if (
+      params?.isUseThumbnailIfAvailable &&
+      typeof file === "object" &&
+      "thumbnailData" in file &&
+      file.thumbnailData
+    ) {
+      return {
+        ...file,
+        thumbnailUrl: URL.createObjectURL(
+          new Blob([file.thumbnailData], { type: "image/jpeg" })
+        )
+      };
+    }
     if (typeof file === "object" && "data" in file && file.data) {
       return {
         ...file,
         url: URL.createObjectURL(new Blob([file.data], { type: file.type }))
       };
     }
-    const response = await this.updateUrlIfExpired(file);
+    const response = await this.updateUrlIfExpired(file, params);
     if (!response) return;
     file = { ...response };
     return file;

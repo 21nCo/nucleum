@@ -396,7 +396,10 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
               const imageUploadResponse = await account.uploadFileV2(
                 "image/jpeg",
                 file.name,
-                imageFile
+                imageFile,
+                {
+                  isGenerateThumbnail: true
+                }
               );
               if (imageUploadResponse) {
                 imageId = imageUploadResponse[0].id;
@@ -472,7 +475,10 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     const response = await account.uploadFileV2(
       file.type,
       file.name,
-      new Blob([file], { type: file.type })
+      new Blob([file], { type: file.type }),
+      {
+        isGenerateThumbnail: true
+      }
     );
     if (!response) return;
     if (!response[0].id) return;
@@ -606,7 +612,10 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       const response = await account.uploadFileV2(
         item.file.type,
         item.file.name,
-        new Blob([item.file], { type: item.file.type })
+        new Blob([item.file], { type: item.file.type }),
+        {
+          isGenerateThumbnail: true
+        }
       );
       if (!response) continue;
       if (!response[0].id) continue;
@@ -646,6 +655,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       isPreventOpenOnSave?: boolean;
       isEmbedContext?: boolean;
       creationContext?: IRecordId;
+      thumbnailBlob?: Blob;
     }
   ) {
     const contentType = "audio/mp3";
@@ -654,7 +664,10 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     const result = await account.uploadFileV2(
       contentType,
       `${fileName}.mp3`,
-      data
+      data,
+      {
+        thumbnailBlob: params?.thumbnailBlob
+      }
     );
     if (!result) return;
     const fileId = result[0].id;
@@ -710,7 +723,10 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     const result = await account.uploadFileV2(
       contentType,
       `${fileName}.jpeg`,
-      data
+      data,
+      {
+        isGenerateThumbnail: true
+      }
     );
     if (!result) return;
     const fileId = result[0].id;

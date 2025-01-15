@@ -227,6 +227,7 @@ export function resolveFilePreview(node: INode) {
   } else if (contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP) {
     return body.thumbnail;
   } else if (contentType === NodeType.AUDIO) {
+    if (file?.thumbnailUrl) return file;
     return metadata?.picture;
   }
   return undefined;
@@ -236,7 +237,10 @@ export function resolveUrlPreview(node: INode) {
   const { contentType, body, metadata } = node;
   if (contentType === NodeType.WEB_PAGE) {
     return metadata?.ogImage ?? metadata?.screenshotUrl;
-  } else if (contentType === NodeType.YOUTUBE_VIDEO) {
+  } else if (
+    contentType === NodeType.YOUTUBE_VIDEO ||
+    contentType === NodeType.YOUTUBE_CHANNEL
+  ) {
     return metadata?.ogImage ?? metadata?.thumbnailUrl;
   } else if (contentType === NodeType.TWITTER_PROFILE) {
     return body?.profileImageUrl;

@@ -30,6 +30,10 @@
     undefined;
   export let isHideControls: boolean = false;
   export let renderingDetails: any = undefined;
+  /**
+   * If true, then use the thumbnail if available
+   */
+  export let isUseThumbnailIfAvailable: boolean = false;
   let classList: string = "";
   export { classList as class };
   $: _id = id ?? file?.id;
@@ -56,9 +60,14 @@
     const isLatestFilePresent = file && _id && isSameResource(file, _id);
     if (blob) return URL.createObjectURL(blob);
     else if (id || isLatestFilePresent) {
-      const result = await fileStore.refresh(isLatestFilePresent ? file : id);
+      const result = await fileStore.refresh(isLatestFilePresent ? file : id, {
+        isUseThumbnailIfAvailable
+      });
       if (result) {
         file = result;
+        if (isUseThumbnailIfAvailable && file?.thumbnailUrl) {
+          return file.thumbnailUrl;
+        }
         return file.url ?? "";
       }
     }
@@ -82,7 +91,7 @@
   }
 </script>
 
-{#if type === FileType.IMAGE}
+{#if type === FileType.IMAGE || (isUseThumbnailIfAvailable && file?.thumbnailUrl)}
   <img
     alt="..."
     on:load={onImageLoad}

@@ -114,6 +114,7 @@
             <FileView
               file={item}
               isLazyLoad={true}
+              isUseThumbnailIfAvailable={true}
               class={cn("h-full w-full rounded-md object-cover", {})}
             />
           </button>

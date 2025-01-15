@@ -144,6 +144,7 @@
                 id={hasFullFileDetails ? undefined : filePreview}
                 isHideControls={true}
                 isLazyLoad={true}
+                isUseThumbnailIfAvailable={true}
                 class={cn("object-cover h-full w-full rounded-md", {
                   // "rounded-md": isLinkContext,
                   // "rounded-full": !isLinkContext
@@ -247,6 +248,7 @@
               id={hasFullFileDetails ? undefined : filePreview}
               isLazyLoad={true}
               isHideControls={true}
+              isUseThumbnailIfAvailable={true}
               class="absolute inset-0 w-full rounded-t-md object-cover h-full"
             />
           {:else if urlPreview && item.contentType === NodeType.TWITTER_PROFILE}
@@ -313,6 +315,7 @@
         id={hasFullFileDetails ? undefined : filePreview}
         isHideControls={true}
         isLazyLoad={true}
+        isUseThumbnailIfAvailable={true}
         class={cn("w-full h-auto", {
           "rounded-md": isHideTitle,
           "rounded-t-md": !isHideTitle

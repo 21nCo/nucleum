@@ -7,6 +7,8 @@ export type IFile = IResource & {
   duration?: number;
   url?: string | null;
   data?: Uint8Array;
+  thumbnailUrl?: string | null;
+  thumbnailData?: Uint8Array;
 };
 
 export enum FileType {

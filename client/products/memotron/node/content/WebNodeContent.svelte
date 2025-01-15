@@ -57,7 +57,7 @@
 </script>
 
 <div class="h-full w-full">
-  {#if node.contentType === NodeType.WEB_PAGE}
+  {#if node.contentType === NodeType.WEB_PAGE || node.contentType === NodeType.YOUTUBE_CHANNEL}
     <WebPagePreview {node} {accessPoint} />
   {:else if node.contentType === NodeType.GIST}
     <GistPreview {node} {accessPoint} />

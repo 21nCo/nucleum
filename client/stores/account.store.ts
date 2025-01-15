@@ -35,6 +35,7 @@ import { Resource } from "../components/flux/resourceStores/resource.enum";
 import { dispatchCustomEvent } from "../utils/browser.utils";
 import { GlobalEvent } from "../types/event.enum";
 import context from "./context.store";
+import { compressImageToTargetSize } from "../utils/ui.utils";
 
 export const isRefreshingToken = writable(false);
 
@@ -310,13 +311,15 @@ class AccountStore extends ObservableStore<
   async uploadFileV2(
     contentType: string,
     fileName: string,
-    blob: any,
+    blob: Blob,
     params: {
       isTemp?: boolean;
       isReturnUrl?: boolean;
       isExtensionEnv?: boolean;
       isPreventSync?: boolean;
       isMeta?: boolean;
+      thumbnailBlob?: Blob;
+      isGenerateThumbnail?: boolean;
     } = {}
   ) {
     try {
@@ -326,9 +329,22 @@ class AccountStore extends ObservableStore<
       });
       logger.log({ at: "uploadFileV2", id, contentType, fileName });
       fileName = fileName.replace(/\s+/g, "_").replace(/[\(\)@]/g, "");
+      let thumbnailBlob: Blob | undefined = params.thumbnailBlob;
+      if (
+        params.isGenerateThumbnail &&
+        !thumbnailBlob &&
+        contentType.includes("image")
+      ) {
+        thumbnailBlob = await compressImageToTargetSize(blob);
+      }
       if (account.dataMode === UserDataMode.LOCAL || params.isPreventSync) {
         const arrayBuffer = await blob.arrayBuffer();
         const uint8Array = new Uint8Array(arrayBuffer);
+        let thumbnailUint8Array: Uint8Array | undefined;
+        if (thumbnailBlob) {
+          const thumbnailArrayBuffer = await thumbnailBlob?.arrayBuffer();
+          thumbnailUint8Array = new Uint8Array(thumbnailArrayBuffer);
+        }
         const response = await fileStore.create([
           {
             id,
@@ -336,7 +352,8 @@ class AccountStore extends ObservableStore<
             type: contentType,
             data: uint8Array,
             size: uint8Array.length,
-            isMeta: params.isMeta
+            isMeta: params.isMeta,
+            thumbnailData: thumbnailUint8Array
           }
         ]);
         return response;
@@ -357,13 +374,34 @@ class AccountStore extends ObservableStore<
         const key = getBucketNameandKey(signedUrlResponse.uploadURL);
         const signedGetUrl = await this.persistence.fetchSignedUrlForGet(key);
         const url = signedGetUrl?.getUrl;
+        let thumbnailUrl: string | undefined;
+        if (thumbnailBlob) {
+          const signedThumbnailUrlResponse = await this.getSignedUrl(
+            "image/jpeg",
+            "thumbnail_" + fileName,
+            params.isTemp ?? false
+          );
+          const thumbnailUploadUrl = signedThumbnailUrlResponse?.uploadURL;
+          if (thumbnailUploadUrl) {
+            await this.persistence.uploadFile(
+              thumbnailUploadUrl,
+              "image/jpeg",
+              thumbnailBlob
+            );
+            const thumbnailKey = getBucketNameandKey(thumbnailUploadUrl);
+            const signedThumbnailGetUrl =
+              await this.persistence.fetchSignedUrlForGet(thumbnailKey);
+            thumbnailUrl = signedThumbnailGetUrl?.getUrl;
+          }
+        }
         const file = {
           id,
           label: fileName,
           type: contentType,
           url,
           size: blob.size,
-          isMeta: params.isMeta
+          isMeta: params.isMeta,
+          thumbnailUrl
         };
         if (params.isReturnUrl) {
           return url;
