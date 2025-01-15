@@ -711,6 +711,7 @@
     textRef.addMention(item, mentionSearchQuery, mentionTriggerKey);
     hidePopover("mentionSearch");
     mentionSearchQuery = "";
+    dispatchChangeEvent();
     propagateToNodeContent("mention", {
       location: id,
       item

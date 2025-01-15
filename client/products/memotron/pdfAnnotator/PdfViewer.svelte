@@ -14,6 +14,7 @@
   import { postToParent } from "$lib/client/utils/embed.utils";
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   import { fileEmbedChannel } from "$lib/client/components/files/fileEmbedChannel.store";
+  import { OperatingSystem } from "$lib/client/types/context.type";
 
   // pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
   // pdfjs.GlobalWorkerOptions.workerSrc =
@@ -31,6 +32,8 @@
   let currentPGNumber: Number = 1;
   let embed_message_id = generateSimpleRandomId();
   let dataViaEmbed: any;
+  $: isDataViaEmbed =
+    $context.isEmbed && $context.os !== OperatingSystem.WINDOWS;
   let pdfData: Uint8Array;
   // let classname = ""; //allows component to recieve classes
   // export { classname as class };
@@ -99,7 +102,7 @@
     _prev_gap_top = current_gap_top;
   };
   onMount(async () => {
-    if ($context.isEmbed) {
+    if (isDataViaEmbed) {
       try {
         dataViaEmbed = await fileEmbedChannel.fetch(
           url.toString(),
@@ -154,7 +157,7 @@
     const { pdf_viewer, pdf_link_service } = await init_promise;
     // Loading document.
     try {
-      if ($context.isEmbed) {
+      if (isDataViaEmbed) {
         if (!dataViaEmbed) return;
         pdfData = fileEmbedChannel.base64ToUint8Array(dataViaEmbed);
       } else {
