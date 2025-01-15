@@ -118,7 +118,7 @@
     const data = await relayToBackgroundScript({
       event: ClipperExtensionEvent.SCREENSHOT
     });
-    processScreenshot(data, area);
+    processScreenshot(data.data, area);
   }
 
   function getScreenshotDimensions(

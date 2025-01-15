@@ -237,10 +237,11 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
         const result = await relayToBackgroundScript({
           event: ExtensionEvent.UPLOAD_FILE,
           data: {
-            dataUrl: ss,
+            dataUrl: ss.data,
             contentType: "image/png",
             params: {
-              isMeta: true
+              isMeta: true,
+              thumbnailDataUrl: ss.lowRes
             }
           }
         });

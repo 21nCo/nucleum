@@ -63,7 +63,9 @@ class FileEmbedChannel extends ObservableStore<IFileEmbedChannel> {
 
     return bytes;
   }
-
+  /**
+   * TODO - use ui.utils.ts base64ToBlob instead 
+   * */
   base64ToBlob(base64: string, type: string): Blob {
     const uint8Array = this.base64ToUint8Array(base64);
     return new Blob([uint8Array], { type });
