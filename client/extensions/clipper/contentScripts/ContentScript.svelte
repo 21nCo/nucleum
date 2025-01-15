@@ -86,7 +86,7 @@
         if (!data) return;
         result = await webpage.saveTwitterProfile(data);
       } else {
-        result = await webpage.savePage();
+        result = await webpage.savePage({ contentType });
       }
       if (!result || result.error) {
         feedbackPane.setErrorFeedback({

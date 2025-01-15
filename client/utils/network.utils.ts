@@ -5,11 +5,12 @@ import { resolveToken, signout } from "./account.utils";
 import {
   dispatchCustomEvent,
   generateFingerprint,
+  isContentScript,
   isExtensionEnvironment
 } from "./browser.utils";
 import { clientStorage } from "../persistence/persistence.utils";
 import { detectTimeZone } from "./time.utils";
-import { relayToContentScript } from "./extension.utils";
+import { relayToBackgroundScript, relayToContentScript } from "./extension.utils";
 import { ExtensionEvent } from "../types/extension.type";
 import { relayToSidePanel } from "./extension.utils";
 
@@ -43,6 +44,14 @@ export async function performApiCall(
   }
 ) {
   // console.log("Performing API call:", { endpoint, method, body });
+  const isExtEnv = isExtensionEnvironment();
+  if (isExtEnv && isContentScript()) {
+    const response = await relayToBackgroundScript({
+      event: ExtensionEvent.RUN,
+      data: { action: ExtensionEvent.API_CALL, endpoint, method, body, params }
+    });
+    return response;
+  }
   let baseUrl =
     import.meta.env?.VITE_API_URL ?? process.env.PLASMO_PUBLIC_API_URL;
   if (params?.isFileApi) {
@@ -64,7 +73,7 @@ export async function performApiCall(
     let referrer = "";
     let urlParams = {};
     let host = "";
-    if (!isExtensionEnvironment()) {
+    if (!isExtEnv) {
       origin = window.location.origin;
       href = window.location.href;
       referrer = document.referrer;

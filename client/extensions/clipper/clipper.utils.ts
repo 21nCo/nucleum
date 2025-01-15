@@ -18,7 +18,7 @@ import {
   generateHash,
   generateSHA256Hash
 } from "$lib/shared/utils/crypto.utils";
-import { contentTypeMap } from "$lib/client/products/memotron/node/url.utils";
+import { contentTypeMap, fetchYouTubeMetadata } from "$lib/client/products/memotron/node/url.utils";
 
 export function isYoutubeVideoUrl(url) {
   const regex = /^https?:\/\/(www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/;
@@ -182,6 +182,34 @@ export function extractMinimalTabData(): OmitForCapture<IWebPage> {
     contentType,
     url,
     body: { hash }
+  };
+}
+
+export async function extractYoutubeVideoData() {
+  const hash = generateHash(document.body.innerHTML);
+  const url = resolveUrl();
+  let title = document.title;
+  let metadata;
+  let youtubeMetadataFromOEmbedAPI;
+  try {
+    youtubeMetadataFromOEmbedAPI = await fetchYouTubeMetadata(window.location.href);
+  } catch (e) {
+    logger.error({ at: "extractYoutubeVideoData", error: e });
+  }
+  if (youtubeMetadataFromOEmbedAPI) {
+    title = title ?? youtubeMetadataFromOEmbedAPI.title;
+    metadata = {
+      authorName: youtubeMetadataFromOEmbedAPI.author_name,
+      authorUrl: youtubeMetadataFromOEmbedAPI.author_url,
+      thumbnailUrl: youtubeMetadataFromOEmbedAPI.thumbnail_url
+    }
+  }
+  return {
+    label: title,
+    contentType: NodeType.YOUTUBE_VIDEO,
+    url,
+    body: { hash },
+    metadata
   };
 }
 

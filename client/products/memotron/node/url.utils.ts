@@ -32,7 +32,10 @@ export const contentTypeMap: {
   },
   {
     contentType: NodeType.YOUTUBE_CHANNEL,
-    regex: [/^https:\/\/(?:www\.)?(youtube\.com)\/channel\/([a-zA-Z0-9_-]+)/]
+    regex: [
+      /^https:\/\/(?:www\.)?(youtube\.com)\/channel\/([a-zA-Z0-9_-]+)/,
+      /^https:\/\/(?:www\.)?(youtube\.com)\/@([a-zA-Z0-9_-]+)/
+    ]
   }
 ];
 

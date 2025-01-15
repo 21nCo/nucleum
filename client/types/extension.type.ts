@@ -40,7 +40,11 @@ export enum ExtensionEvent {
   /**
    * Triggered by flux from background script to side panel and content script so that operations like reloading in memory stores can be performed.
    */
-  MUTATION = "mutation"
+  MUTATION = "mutation",
+  /**
+   * Triggered by flux from background script to side panel and content script so that operations like reloading in memory stores can be performed.
+   */
+  API_CALL = "api_call"
 }
 
 export type TabBaseData = {

@@ -41,6 +41,7 @@ import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import {
   extractFullTabData,
   extractMinimalTabData,
+  extractYoutubeVideoData,
   resolveUrl
 } from "../clipper.utils";
 import type {
@@ -64,7 +65,8 @@ import {
 } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { ResourceError } from "$lib/client/components/error/errors";
 import { ErrorMessage, ResourceErrorCode } from "$lib/client/components/error/error.type";
-import { resolveUrlData } from "$lib/client/products/memotron/node/url.utils";
+import { fetchYouTubeMetadata, resolveUrlData } from "$lib/client/products/memotron/node/url.utils";
+import { Persistence } from "$lib/client/persistence/persistence";
 
 class WebpageStore extends ObservableStore<IWebpageStore> {
   previousValue: string = "";
@@ -182,13 +184,16 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
    * @param data - tab data
    * @returns
    */
-  async savePage(creationContext?: IRecordId) {
+  async savePage(params?: {
+    creationContext?: IRecordId,
+    contentType?: NodeType
+  }) {
     let data: OmitForCapture<IWebPage> = await extractData();
     const id = generateResourceId(Resource.node);
     const node = {
       id,
       ...data,
-      creationContext
+      creationContext: params?.creationContext,
     };
     const response = await nodeStore.create([node]);
     if (!response) return;
@@ -201,6 +206,16 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     return response;
 
     async function extractData() {
+      if (params?.contentType === NodeType.YOUTUBE_VIDEO) {
+        return extractYoutubeVideoData();
+      } else if (params?.contentType === NodeType.YOUTUBE_CHANNEL) { 
+        const urlData = await new Persistence().retrieveUrlData(window.location.href);
+        if (urlData?.parsedData) {
+          return urlData.parsedData;
+        } else {
+          return extractMinimalTabData();
+        }
+      }
       const host = window.location.host;
       if (resolveUrlData(host)) {
         logger.log({
@@ -249,7 +264,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
 
     const id = generateResourceId(Resource.node);
     if (!webpage.id) {
-      await this.savePage(id);
+      await this.savePage({ creationContext: id });
     }
     webpage = this.get();
     const clipUrl = resolveClipUrl(data);

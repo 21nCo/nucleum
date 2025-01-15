@@ -87,14 +87,14 @@
 
 <button
   class={cn(
-    "fixed bg-bgs1 border border-brs3 rounded-full min-h-fit min-w-fit flex gap-3 justify-center items-center shadow-md",
+    "fixed bg-bgs1 border border-brs3 rounded-full min-h-fit min-w-fit flex gap-5 justify-center items-center shadow-md",
     {
-      "w-11 2k:w-12 inset-y-0 my-auto flex-col py-6":
+      "w-11 2k:w-12 inset-y-0 my-auto flex-col py-3":
         $toolbarState.position === Placement.Right ||
         $toolbarState.position === Placement.Left,
       "right-0 mr-4 2k:mr-6": $toolbarState.position === Placement.Right,
       "left-0 ml-4 2k:ml-6": $toolbarState.position === Placement.Left,
-      "h-12 w-fit inset-x-0 mx-auto bottom-0 mb-4 px-6":
+      "h-12 w-fit inset-x-0 mx-auto bottom-0 mb-4 px-3":
         $toolbarState.position === Placement.Bottom
     }
   )}
@@ -163,7 +163,7 @@
       }}
     /> -->
     <div
-      class={cn("flex gap-2 items-center", {
+      class={cn("flex gap-3 items-center", {
         "flex-col w-full":
           $toolbarState.position === Placement.Right ||
           $toolbarState.position === Placement.Left,
@@ -185,7 +185,7 @@
       />
       {#if isAutoHighlighterExpanded}
         <div
-          class={cn("flex gap-2 items-center justify-center", {
+          class={cn("flex gap-3 items-center justify-center", {
             "flex-col w-full":
               $toolbarState.position === Placement.Right ||
               $toolbarState.position === Placement.Left,

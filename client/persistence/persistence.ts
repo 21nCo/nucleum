@@ -21,6 +21,7 @@ import type {
 } from "../components/flux/resourceStores/resource.type";
 import { ClientStorageKey } from "./persistence.type";
 import { extractFullTabData } from "../extensions/clipper/clipper.utils";
+import { isContentScript } from "../utils/browser.utils";
 
 export const cloudProvider = writable(Cloud.surreal);
 
@@ -446,8 +447,14 @@ export class Persistence {
       url,
       action: "get-webpage"
     });
-    if (!response?.ok) return;
-    const data = await response.json();
+    let data;
+    if (isContentScript()) {
+      if (!response) return;
+      data = response;
+    } else {
+      if (!response?.ok) return;
+      data = await response.json();
+    }
     if (params?.isReturnRawData) {
       return data;
     }
