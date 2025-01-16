@@ -229,6 +229,12 @@ export function resolveFilePreview(node: INode) {
   } else if (contentType === NodeType.AUDIO) {
     if (file?.thumbnailUrl) return file;
     return metadata?.picture;
+  } else if (
+    contentType === NodeType.WEB_PAGE &&
+    !metadata?.ogImage &&
+    !metadata?.screenshotUrl
+  ) {
+    return metadata?.screenshotFile;
   }
   return undefined;
 }

@@ -67,9 +67,13 @@
             if (isShowBackButton) dispatch("back");
           }}
         >
-          <div class="flex items-center gap-2">
+          <div
+            class={cn("flex items-center gap-2", {
+              "hover:bg-bgs2 rounded-md px-1": isShowBackButton
+            })}
+          >
             {#if isShowBackButton}
-              <Icon icon="ph:caret-left-light" class="text-fgs3" />
+              <Icon icon="ph:caret-left" class="text-fgs3 opacity-40" />
             {/if}
             <Text style={titleStyle} content={title || ""} />
           </div>

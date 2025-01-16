@@ -161,7 +161,9 @@
   async function refreshRecents() {
     try {
       isRecentsDataRefreshing = true;
-      const result = await searchStore.recents();
+      const result = await searchStore.recents(Resource.everything, {
+        limit: 20
+      });
       if (isValidArrayWithData(result)) {
         recentsData = [...result];
       } else {

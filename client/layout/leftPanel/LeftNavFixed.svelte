@@ -6,6 +6,9 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import LeftNavCommandAction from "./LeftNavCommandAction.svelte";
   import LeftNavOfflineStatus from "./LeftNavOfflineStatus.svelte";
+  import Button from "$lib/client/elements/button/Button.svelte";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { Action } from "$lib/client/types/action.enum";
   export let isRounded = false;
 </script>
 
@@ -29,7 +32,14 @@
     style={isRounded ? "height: calc(100% - 1rem);" : "height:100%"}
   >
     <div class="w-full flex flex-col gap-8 overflow-auto">
-      <slot name="header" />
+      <div class="w-full flex justify-center">
+        <Button
+          icon="ph:magnifying-glass-light"
+          parentBgIndex={2}
+          size={Size.lg}
+          on:click={() => appStore.runAction(Action.GLOBAL_SEARCH)}
+        />
+      </div>
       <div class="flex flex-col gap-8 items-center w-full p-2 overflow-auto">
         <AppMenuSwitcher
           parentBackgroundIndex={1}

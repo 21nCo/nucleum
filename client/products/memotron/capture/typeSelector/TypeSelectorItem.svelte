@@ -7,6 +7,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import { enumToString } from "$lib/shared/utils/text.utils";
+  import { fade, fly } from "svelte/transition";
   import { CaptureType } from "../capture.type";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
@@ -38,6 +39,7 @@
     }
     dispatch("click", item.value);
   }}
+  in:fade
 >
   {#if item.value === CaptureType.UPLOAD && $context.isEmbed && $context.os === OperatingSystem.IOS}
     <input

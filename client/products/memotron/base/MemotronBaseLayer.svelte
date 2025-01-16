@@ -8,16 +8,12 @@
   } from "$lib/client/utils/embed.utils";
   import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
   import context from "$lib/client/stores/context.store";
-  import MemotronLeftNav from "./MemotronLeftNav.svelte";
   import view from "$lib/client/stores/view.store";
   import AppSplitView from "$lib/client/layout/AppSplitView.svelte";
   import MemotronNotifications from "./MemotronNotifications.svelte";
   import Tabs from "$lib/client/layout/tabs/Tabs.svelte";
   import UserBaseLayer from "$lib/client/layout/layers/UserBaseLayer.svelte";
   import { MemotronAction } from "../memotronAction.enum";
-  import modalEvent from "$lib/client/components/modal/modal.store";
-  import { captureStore } from "../capture/capture.store";
-  import { CaptureType } from "../capture/capture.type";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import { InteractionMode } from "$lib/client/components/settings/interactionMode/interactionMode.type";
   import { Embed } from "$lib/client/types/context.type";
@@ -26,7 +22,7 @@
   import { Action } from "$lib/client/types/action.enum";
   import CommandModePage from "$lib/client/components/commandBar/CommandModePage.svelte";
   import { clipTextSearchFallback } from "./fallbacks";
-  import MemotronLeftNavFixed from "./MemotronLeftNavFixed.svelte";
+  import LeftNav from "$lib/client/layout/leftPanel/LeftNav.svelte";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   let isLiteMode = $context.isEmbed && $context.isSheet;
   let interactionMode: InteractionMode;
@@ -122,11 +118,11 @@
       <div class="flex flex-col w-full h-full">
         <div class="flex w-full flex-grow">
           {#if !isHideLeftNavBar || interactionMode === InteractionMode.DEFAULT || $context.embed === Embed.HANDSET}
-            {#if $userPreferences.appearance.isFixedLeftNav}
-              <MemotronLeftNavFixed />
-            {:else}
-              <MemotronLeftNav />
-            {/if}
+            <LeftNav
+              variant={$userPreferences.appearance.isFixedLeftNav
+                ? "fixed"
+                : "expandable"}
+            />
           {/if}
           <div
             class="flex flex-col h-full {$view.isPortrait

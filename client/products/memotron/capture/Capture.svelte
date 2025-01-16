@@ -44,6 +44,9 @@
   import type { IBlock } from "$lib/client/components/markdown/md.type";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { generateResourceId } from "$lib/client/components/flux/flux.utils";
+  import { fly } from "svelte/transition";
+  import { postMessageToParent } from "$lib/client/utils/embed.utils";
+  import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
 
   export let isWindowDnD = false;
   let bulkQueryParam: string | null = null;
@@ -306,6 +309,7 @@
     if ($view.isConstrainedWidth) {
       appStore.closeResource({ accessMode: ResourceAccessMode.POP });
     }
+    postMessageToParent(EmbedMessage.MENU_ITEM_SELECTED);
   }
 
   async function setTypeFromLinkParam(linkQueryParam: string) {
@@ -536,8 +540,22 @@
           </footer>
         {/if}
         {#if isEmptyState && $view.isConstrainedWidth}
-          <div class="w-full flex justify-center mb-10">
-            <Button icon="ph:x-light" label="Cancel" on:click={reset} />
+          <div
+            class="w-full flex justify-center mb-5"
+            in:fly={{ y: -100, duration: 250 }}
+          >
+            <!-- <Button
+              icon="ph:x-light"
+              on:click={reset}
+              style={ButtonStyle.OUTLINED}
+              size={Size.lg}
+            /> -->
+            <button
+              class="flex w-12 h-12 text-fgs3 hover:bg-bgs3 bg-bgs2 rounded-full items-center justify-center"
+              on:click={reset}
+            >
+              <Icon icon="ph:x-light" />
+            </button>
           </div>
         {/if}
       </div>
