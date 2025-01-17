@@ -89,4 +89,5 @@
   videoUrl="https://www.youtube.com/embed/{videoId}?autoplay=1&mute=1"
   thumbnailUrl="https://img.youtube.com/vi/{videoId}/maxresdefault.jpg"
 />
-<IrregularTileItemsSection items={features} title="Navigating your memory" />
+<div class="w-full h-[300px]"></div>
+<!-- <IrregularTileItemsSection items={features} title="Navigating your memory" /> -->

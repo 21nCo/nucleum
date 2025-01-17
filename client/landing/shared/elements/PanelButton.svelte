@@ -46,9 +46,9 @@
     {id}
     class={cn(
       "w-[115px] h-full flex flex-col items-center justify-center p-4 text-center text-fgs3 text-base leading-5 ml-[1px]",
-      label == PanelName.PRODUCTS && "border-l border-brs3 hover:border-brs4",
+      label == PanelName.PRODUCTS && "border-l border-brs2 hover:border-brs3",
       label == PanelName.BUILT_AT_BLANK_COOP &&
-        "border-r border-brs3 hover:border-brs4",
+        "border-r border-brs2 hover:border-brs3",
       className,
       {
         "hover:text-aps1": isInteractive
