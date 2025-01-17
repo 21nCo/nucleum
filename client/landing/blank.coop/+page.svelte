@@ -80,20 +80,6 @@
         description: x.label,
         href: x?.href
       };
-    }),
-    ...$portalsStore.slice(0, 1).map((x) => {
-      return {
-        title: x.title,
-        description: x.label,
-        href: x?.href
-      };
-    }),
-    ...$microToolsStore.slice(0, 1).map((x) => {
-      return {
-        title: x.title,
-        description: x.label,
-        href: x?.href
-      };
     })
   ];
 </script>

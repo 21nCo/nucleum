@@ -9,8 +9,6 @@
   import { addAnimateClass } from "$lib/client/utils/ui.utils";
 
   export let currentProducts: ITileItem[];
-  export let microTools: ITileItem[];
-  export let portals: ITileItem[];
   export let upcomingProducts: ITileItem[];
 
   const id: string = "products-panel";
@@ -59,30 +57,6 @@
               isPanelView={true}
               isEnableBackground={true}
             />
-          {/each}
-        </div>
-      </div>
-      <div class="flex flex-col gap-3">
-        <p
-          class="text-fgs2 text-[21px] mo:text-[15px] leading-[28px] mo:leading-5 font-medium"
-        >
-          Community tools
-        </p>
-        <div class="grid grid-cols-2 gap-6">
-          {#each portals as product}
-            <TileItem item={product} isPanelView={true} />
-          {/each}
-        </div>
-      </div>
-      <div class="flex flex-col gap-3">
-        <p
-          class="text-fgs2 text-[21px] mo:text-[15px] leading-[28px] mo:leading-5 font-medium"
-        >
-          Micro tools
-        </p>
-        <div class="grid grid-cols-2 gap-6">
-          {#each microTools as product}
-            <TileItem item={product} isPanelView={true} />
           {/each}
         </div>
       </div>

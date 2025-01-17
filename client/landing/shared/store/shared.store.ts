@@ -18,6 +18,9 @@ export const currentProductsStore = readable<ITileItem[]>([
   }
 ]);
 
+/**
+ * @deprecated - merged into Fyweb
+ */
 export const portalsStore = readable<ITileItem[]>([
   {
     image: staticUrl + "/images/product/ar-product-image.png",
@@ -27,6 +30,9 @@ export const portalsStore = readable<ITileItem[]>([
   }
 ]);
 
+/**
+ * @deprecated - merged into Fyweb
+ */
 export const microToolsStore = readable<ITileItem[]>([
   {
     title: "Depersonate",
@@ -41,25 +47,33 @@ export const microToolsStore = readable<ITileItem[]>([
 ]);
 
 export const upcomingProductsStore = writable<ITileItem[]>([
-  {
-    icon: "",
-    title: "Selftron",
-    label: "Your health compass.",
-    description:
-      "Selftron offers top-notch tracking and analytics for your body and mind, making it easier to understand and improve your wellness"
-  },
+  // {
+  //   icon: "",
+  //   title: "Selftron",
+  //   label: "Your health compass.",
+  //   description:
+  //     "Selftron offers top-notch tracking and analytics for your body and mind, making it easier to understand and improve your wellness"
+  // },
   {
     icon: "nucleus",
     title: "Nucleus",
     label: "Your life's digital harmony.",
-    description: ""
+    description: "",
+    href: "https://docs.21n.io/21n/products/up-next"
   },
+  // {
+  //   icon: "",
+  //   title: "Product router",
+  //   label: "Discover your next favorite product.",
+  //   description:
+  //     "Product router is a platform that helps you discover new products and services that you might be interested in"
+  // },
   {
     icon: "",
-    title: "Product router",
-    label: "Discover your next favorite product.",
-    description:
-      "Product router is a platform that helps you discover new products and services that you might be interested in"
+    title: "Fyweb",
+    label: "The next generation of the web.",
+    description: "",
+    href: "https://docs.21n.io/21n/products/up-next"
   },
   {
     icon: "",
@@ -67,36 +81,29 @@ export const upcomingProductsStore = writable<ITileItem[]>([
     label: "Redoing the cloud.",
     description: "",
     href: "https://recloud.io"
-  },
-  {
-    icon: "",
-    title: "Longpress",
-    label: "Next generation of search and discovery.",
-    description:
-      "Longpress is a next-gen search and discovery platform powered by AI"
-  },
-  {
-    icon: "",
-    title: "Fyweb",
-    label: "Collective human intelligence for the 21st century.",
-    description:
-      "In a world full of scattered information, harnessing collective intelligence is key. Fywed makes it effortless to connect and collaborate for smarter solutions"
-  },
-  {
-    icon: "",
-    title: "Dapien",
-    label: "Your new address on the internet",
-    description:
-      "Dapien offers a new way to showcase your identity and connect with others, giving you a unique address on the internet to share and discove"
-  },
-
-  {
-    icon: "",
-    title: "Gathery",
-    label: "Transforming how humans come together.",
-    description:
-      "Gathery redefines how you meet people and form groups, making connections simpler and more meaningful"
   }
+  // {
+  //   icon: "",
+  //   title: "Longpress",
+  //   label: "Next generation of search and discovery.",
+  //   description:
+  //     "Longpress is a next-gen search and discovery platform powered by AI"
+  // },
+  // {
+  //   icon: "",
+  //   title: "Dapien",
+  //   label: "Your new address on the internet",
+  //   description:
+  //     "Dapien offers a new way to showcase your identity and connect with others, giving you a unique address on the internet to share and discove"
+  // },
+
+  // {
+  //   icon: "",
+  //   title: "Gathery",
+  //   label: "Transforming how humans come together.",
+  //   description:
+  //     "Gathery redefines how you meet people and form groups, making connections simpler and more meaningful"
+  // }
 ]);
 
 export const isProductsPanelOpen = writable<Boolean>(false);
