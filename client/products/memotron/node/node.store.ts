@@ -857,15 +857,19 @@ export function resolveNodeContextMenu(
       ...commonGroups
     ];
   }
+  const toggleGroupItems =
+    node.contentType === NodeType.NODULAR_MARKDOWN
+      ? [
+          resourceActions.starAsToggle(),
+          resourceActions.toggleLock(),
+          resourceActions.toggleFocusMode()
+        ]
+      : [resourceActions.toggleFocusMode()];
   return [
     {
       group: "editModes",
       isToggleGroup: true,
-      items: [
-        resourceActions.starAsToggle(),
-        resourceActions.toggleLock(),
-        resourceActions.toggleFocusMode()
-      ]
+      items: toggleGroupItems
     },
     {
       group: "all",

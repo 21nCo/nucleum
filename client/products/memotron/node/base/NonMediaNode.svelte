@@ -94,9 +94,8 @@
     });
     $mdStore.headingsInView = visibleHeadings.map((x) => x.id);
   }
-  function onLabelChange(e: any) {
-    // console.log("onLabelChange", e);
-    if ($node.label) node.debouncedModify({ label: $node.label });
+  async function onLabelChange(e: any) {
+    if ($node.label) await node.modify({ label: $node.label });
   }
 
   function closeRightPane() {
@@ -208,7 +207,7 @@
                         style={InputStyle.PLAIN}
                         placeholder="Node title"
                         width="w-full"
-                        on:change={onLabelChange}
+                        on:debouncedChange={onLabelChange}
                         on:keydown={(e) => {
                           const event = e.detail;
                           if (event.key === "ArrowDown") {
@@ -265,7 +264,7 @@
               on:close={closeRightPane}
             />
           {:else if $node.isInFocusMode && !isConstrainedWidth}
-            <div class="flex">
+            <div class="flex max-w-sm">
               <TableOfContents {mdId} />
             </div>
           {/if}

@@ -31,6 +31,7 @@
   import { fade } from "svelte/transition";
   import { resourceAction } from "../flux/resourceStores/resource.utils";
   import { Resource } from "../flux/resourceStores/resource.enum";
+  import CollectionDescriptionEditPopover from "./CollectionDescriptionEditPopover.svelte";
 
   const dispatch = createEventDispatcher();
   export let searchQuery: string = "";
@@ -45,8 +46,7 @@
   let rightPartWidth = 0;
 
   function onLabelChange(e: any) {
-    if ($collection.label)
-      collection.debouncedModify({ label: $collection.label });
+    if ($collection.label) collection.modify({ label: $collection.label });
   }
 
   function onAvatarChange() {
@@ -66,10 +66,6 @@
         }
       }
     );
-  }
-
-  function onDescriptionChange(value: string) {
-    collection.debouncedModify({ description: value });
   }
 
   function resolveSearchPlaceholder(count: number) {
@@ -135,7 +131,7 @@
         placeholder="Collection title"
         style={InputStyle.PLAIN}
         width="w-full"
-        on:input={onLabelChange}
+        on:debouncedChange={onLabelChange}
       />
     {:else}
       <div class="truncate userdata">
@@ -149,17 +145,15 @@
           triggerMethod: $collection.isInEditMode
             ? [PopoverTriggerMethod.CLICK]
             : [PopoverTriggerMethod.HOVER, PopoverTriggerMethod.CLICK],
-          content: $collection.isInEditMode ? TextArea : Tooltip,
+          content: $collection.isInEditMode
+            ? CollectionDescriptionEditPopover
+            : Tooltip,
           componentProps: {
+            collection,
             info: {
               body: $collection.description,
               size: Size.sm
-            },
-            value: $collection.description,
-            style: InputStyle.FILLED,
-            width: "w-96 max-w-full",
-            placeholder: "Add a description",
-            changeCallback: onDescriptionChange
+            }
           }
         }}
         use:tooltip={{
@@ -180,7 +174,7 @@
           icon="star"
           class="fill-yellow-400"
           on:click={() => {
-            collection.debouncedModify({ isStarred: false });
+            collection.modify({ isStarred: false });
           }}
         />
       </button>

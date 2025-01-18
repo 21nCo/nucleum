@@ -84,6 +84,7 @@ export type AppearanceStore = IStore & {
   systemTheme: Theme;
   typeface: string;
   accessibilitySizingFactor: number;
+  isFixedLeftNav?: boolean;
 };
 
 export enum Color {

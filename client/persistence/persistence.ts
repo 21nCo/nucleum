@@ -21,7 +21,10 @@ import type {
 } from "../components/flux/resourceStores/resource.type";
 import { ClientStorageKey } from "./persistence.type";
 import { extractFullTabData } from "../extensions/clipper/clipper.utils";
-import { isContentScript } from "../utils/browser.utils";
+import {
+  isContentScript,
+  isExtensionEnvironment
+} from "../utils/browser.utils";
 
 export const cloudProvider = writable(Cloud.surreal);
 
@@ -448,7 +451,9 @@ export class Persistence {
       action: "get-webpage"
     });
     let data;
-    if (isContentScript()) {
+    const isExtentionContentScript = isContentScript();
+    const isExtensionEnv = isExtensionEnvironment();
+    if (isExtensionEnv && isExtentionContentScript) {
       if (!response) return;
       data = response;
     } else {

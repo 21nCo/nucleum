@@ -89,7 +89,7 @@
     }
   }
 
-  const onNotesChangeDebounced = debouncer(onNotesChange, 2000);
+  const onNotesChangeDebounced = debouncer(onNotesChange, 1500);
 
   function onHover() {
     restartCloseTimer();

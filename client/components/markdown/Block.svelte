@@ -63,6 +63,11 @@
   import { appStore } from "$lib/client/stores/app.store";
   import type { IMultiFileCaptureData } from "$lib/client/products/memotron/capture/capture.type";
   import { AlertType } from "$lib/client/types/notification.type";
+  import FocusRing from "./contextMenu/FocusRing.svelte";
+  import { createEventDispatcher } from "svelte";
+  import { tooltip } from "$lib/client/actions/popover.action";
+  import { Placement } from "$lib/client/types/direction.enum";
+  const dispatch = createEventDispatcher();
 
   export let block: IBlock;
   export let mdStore: MdStoreType;
@@ -72,7 +77,7 @@
   let isDragging: boolean = false;
   let progressState: string | undefined = undefined;
   const uploadProgressElementId = "node-embed-upload-progress";
-  $: isFocusable =
+  $: isNodularizable =
     $mdStore.params?.isNodular && headingNodeTypes.includes(block.contentType);
 
   $: isLeftControlsEnabled =
@@ -926,12 +931,30 @@
 >
   {#if isLeftControlsEnabled}
     {#if $mdStore.params?.isReadOnly}
-      <span />
+      {#if isNodularizable}
+        <div
+          class="flex items-center justify-end"
+          use:tooltip={{
+            text: "Click ring to zoom in",
+            direction: Placement.Bottom,
+            delay: 500
+          }}
+        >
+          <FocusRing
+            on:click={() => {
+              dispatch("nodularize", { id: block.id });
+            }}
+          />
+        </div>
+      {:else}
+        <span />
+      {/if}
     {:else}
       <LeftControls
         {isSoleBlock}
         {block}
         {isFocusing}
+        {isNodularizable}
         isDisableTooltip={isDragging}
         isBlockHovering={isHovering}
         on:nodularize

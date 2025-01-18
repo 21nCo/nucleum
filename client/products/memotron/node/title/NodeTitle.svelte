@@ -28,7 +28,7 @@
         bind:value={node.label}
         placeholder="Node title"
         width="w-full"
-        on:input={onLabelChange}
+        on:debouncedChange={onLabelChange}
         isShowSaveControl={true}
         on:enter={() => {
           dispatch("editModeChange", false);

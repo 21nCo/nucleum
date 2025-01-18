@@ -1,18 +1,15 @@
 <script lang="ts">
-  import Breadcrumb from "$lib/client/elements/breadcrumb/Breadcrumb.svelte";
-  import type { BreadcrumbItem } from "$lib/client/types/breadcrumbItem.type";
-  import { onMount } from "svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { createEventDispatcher } from "svelte";
+  import type { IBreadcrumbItem } from "$lib/client/elements/breadcrumbsV2/breadcrumbItem.type";
+  import { createEventDispatcher, onMount } from "svelte";
   import type { IRecordId } from "$lib/client/types/data.type";
   import { nodeStore } from "../node.store";
   import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
+  import Breadcrumbs from "$lib/client/elements/breadcrumbsV2/Breadcrumbs.svelte";
   const dispatch = createEventDispatcher();
   export let mdParent: IRecordId[] | undefined = undefined;
   export let id: IRecordId | undefined = undefined;
   export let currentLabel: string | undefined = undefined;
-  export let isSubtleContext: boolean = false;
-  let breadcrumbs: BreadcrumbItem[] | undefined = undefined;
+  let breadcrumbs: IBreadcrumbItem[] | undefined = undefined;
   onMount(async () => {
     breadcrumbs = await refreshBreadcrumbs();
     if (breadcrumbs && breadcrumbs.length > 0 && currentLabel) {
@@ -63,11 +60,9 @@
 </script>
 
 {#if breadcrumbs && breadcrumbs.length > 0}
-  <Breadcrumb
+  <Breadcrumbs
     items={breadcrumbs}
-    {isSubtleContext}
     isPreventDefault={true}
-    spaceAvailable={Size.lg}
     on:click={onBreadcrumbClick}
   />
 {/if}

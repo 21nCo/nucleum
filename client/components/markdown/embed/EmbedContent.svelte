@@ -59,6 +59,7 @@
     NodeType.IMAGE,
     NodeType.PDF,
     NodeType.WEB_PAGE,
+    NodeType.WEB_SCREENSHOT_CLIP,
     NodeType.YOUTUBE_VIDEO,
     NodeType.GIST
   ];

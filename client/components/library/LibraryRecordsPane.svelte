@@ -679,6 +679,7 @@
     resourceAction(resource, ResourceActionType.CREATE)
   ])}
   on:syncDown={() => {
+    console.log("syncDown - library - refreshing");
     refresh();
   }}
   on:change={onResourceMutation}

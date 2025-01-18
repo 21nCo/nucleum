@@ -4,6 +4,7 @@
   import LeftNavExpandable from "./LeftNavExpandable.svelte";
   import LeftNavFixed from "./LeftNavFixed.svelte";
   import PortraitBottomNav from "./PortraitBottomNav.svelte";
+
   export let variant: "fixed" | "expandable" = "expandable";
   import ProfileLeftPanelSection from "$lib/client/components/settings/account/ProfileLeftPanelSection.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";

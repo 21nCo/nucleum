@@ -41,11 +41,10 @@
   export let isBlockHovering: boolean = false;
   export let isDisableTooltip: boolean = false;
   export let isSoleBlock: boolean = false;
+  export let isNodularizable: boolean = false;
   let isHovering: boolean = false;
   let isPopoverVisible: boolean = false;
   let contextMenuRef: any;
-
-  $: isNodularizable = headingNodeTypes.includes(block.contentType);
 
   $: isDebugLeftControls = false;
 

@@ -18,7 +18,6 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import NodeThumbnailTitle from "./NodeThumbnailTitle.svelte";
   import TextClipPreview from "../content/web/TextClipPreview.svelte";
-  import { lazyLoad } from "$lib/client/actions/lazyload.action";
   import FileView from "$lib/client/components/files/FileView.svelte";
   import { formatDatetime, formatSeconds } from "$lib/client/utils/time.utils";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
@@ -125,11 +124,11 @@
           <div
             class={cn(
               {
-                "h-10": !visibleProps || visibleProps.length === 0,
-                "w-full p-2 flex justify-start": isFullExpand
+                "w-full h-full p-2 flex justify-start": isFullExpand
               },
               !isFullExpand && {
                 "min-w-10 w-1/10 max-w-1/10": true,
+                "h-10": !visibleProps || visibleProps.length === 0,
                 "border-r": !isLinkContext && isApplyCustomColor,
                 "border-ccs2": isApplyCustomColor
                 // "border-brs3": !isApplyCustomColor
@@ -249,6 +248,7 @@
               isLazyLoad={true}
               isHideControls={true}
               isUseThumbnailIfAvailable={true}
+              isApplyBgColor={false}
               class="absolute inset-0 w-full rounded-t-md object-cover h-full"
             />
           {:else if urlPreview && item.contentType === NodeType.TWITTER_PROFILE}
@@ -257,6 +257,7 @@
             <ImagePreview
               src={urlPreview}
               {arrangement}
+              isApplyBgColor={isShouldContainImage}
               class={cn("absolute inset-0 w-full h-full", {
                 "object-contain": isShouldContainImage,
                 "rounded-t-md object-cover": !isShouldContainImage

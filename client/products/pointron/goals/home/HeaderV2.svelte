@@ -7,7 +7,7 @@
   import Breadcrumb from "$lib/client/elements/breadcrumb/Breadcrumb.svelte";
   import { appStore, isInEditMode } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
-  import type { BreadcrumbItem } from "$lib/client/types/breadcrumbItem.type";
+  import type { IBreadcrumbItem } from "$lib/client/elements/breadcrumbsV2/breadcrumbItem.type";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";
@@ -25,7 +25,7 @@
   import { logger } from "$lib/client/components/debug/logger.client";
   import { LogType } from "$lib/client/components/debug/debug.type";
   import Icon from "$lib/client/elements/Icon.svelte";
-  let parentBreadcrumbs: BreadcrumbItem[] = [];
+  let parentBreadcrumbs: IBreadcrumbItem[] = [];
   $: refresh($currentGoal);
   function refresh(goal: IGoal) {
     parentBreadcrumbs = [];

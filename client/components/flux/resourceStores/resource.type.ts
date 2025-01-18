@@ -247,6 +247,7 @@ export type IResourceMutationParams = IMutationAdditionalParams & {
    */
   isPreventBackPropagation?: boolean;
   /**
+   * @deprecated - use debouncer at source instead
    * Whether the mutation persistance should be debounced
    */
   isDebounced?: boolean;

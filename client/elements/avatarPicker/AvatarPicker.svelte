@@ -79,9 +79,7 @@
    * To add the next set of emojis based on the previously added emojis
    */
   let previousKVIndex = -1;
-  /**
-   * To add the next set of icons based on the previously added icons
-   */
+  let isLoadingMore = false;
   let previousIconIndex = 0;
 
   /**
@@ -150,35 +148,48 @@
     };
   });
 
-  function lazyLoadAvatars() {
-    if (mode == AvatarType.ICON) {
-      if (previousIconIndex == 0) {
-        lazyLoadedAvatars[storeAvatarsKV[0][0]] = storeAvatarsKV[0][1];
-        lazyLoadedAvatars[storeAvatarsKV[1][0]] = storeAvatarsKV[1][1];
-      }
-      let i = previousIconIndex;
-      if (lazyLoadedAvatars[storeAvatarsKV[2][0]] == undefined) {
-        lazyLoadedAvatars[storeAvatarsKV[2][0]] = [];
-      }
-      for (
-        ;
-        i < storeAvatarsKV[2][1].length && i < previousIconIndex + 100;
-        i++
-      ) {
-        lazyLoadedAvatars[storeAvatarsKV[2][0]].push(storeAvatarsKV[2][1][i]);
-      }
-      avatars = lazyLoadedAvatars;
-      previousIconIndex = i;
-    } else if (mode == AvatarType.EMOJI) {
-      previousKVIndex++;
-      if (previousKVIndex < storeAvatarsKV.length) {
-        lazyLoadedAvatars[storeAvatarsKV[previousKVIndex][0]] =
-          storeAvatarsKV[previousKVIndex][1];
+  async function lazyLoadAvatars() {
+    if (isLoadingMore) return;
+    isLoadingMore = true;
+
+    try {
+      if (mode == AvatarType.ICON) {
+        if (previousIconIndex == 0) {
+          lazyLoadedAvatars[storeAvatarsKV[0][0]] = storeAvatarsKV[0][1];
+          lazyLoadedAvatars[storeAvatarsKV[1][0]] = storeAvatarsKV[1][1];
+        }
+        let i = previousIconIndex;
+        if (lazyLoadedAvatars[storeAvatarsKV[2][0]] == undefined) {
+          lazyLoadedAvatars[storeAvatarsKV[2][0]] = [];
+        }
+        for (
+          ;
+          i < storeAvatarsKV[2][1].length && i < previousIconIndex + 100;
+          i++
+        ) {
+          lazyLoadedAvatars[storeAvatarsKV[2][0]].push(storeAvatarsKV[2][1][i]);
+        }
         avatars = lazyLoadedAvatars;
-        if (previousKVIndex == 0 || previousKVIndex == 1) {
-          lazyLoadAvatars();
+        previousIconIndex = i;
+      } else if (mode == AvatarType.EMOJI) {
+        if (previousKVIndex === -1) {
+          const initialCategories = storeAvatarsKV.slice(0, 3);
+          for (const [category, emojis] of initialCategories) {
+            lazyLoadedAvatars[category] = emojis.slice(0, 100);
+          }
+          avatars = { ...lazyLoadedAvatars };
+          previousKVIndex = 2;
+          return;
+        }
+        previousKVIndex++;
+        if (previousKVIndex < storeAvatarsKV.length) {
+          const [category, emojis] = storeAvatarsKV[previousKVIndex];
+          lazyLoadedAvatars[category] = emojis.slice(0, 100);
+          avatars = { ...lazyLoadedAvatars };
         }
       }
+    } finally {
+      isLoadingMore = false;
     }
   }
 
@@ -210,44 +221,70 @@
    * @desc avt - Avatar Category Indicators Class
    * @desc AVT - Avatar Category Containers Class
    */
-  function handleScroll() {
-    let scrollBottom =
+  const handleScroll = debouncer(function () {
+    const scrollBottom =
       avatarsParentContainer.scrollTop + avatarsParentContainer.clientHeight;
-    if (scrollBottom + 100 >= avatarsParentContainer.scrollHeight)
+
+    if (
+      scrollBottom + 100 >= avatarsParentContainer.scrollHeight &&
+      !isLoadingMore
+    ) {
       lazyLoadAvatars();
-    let scrollTop = avatarsParentContainer.scrollTop;
-    let avtContainers = document.querySelectorAll(".AVT");
-    avtContainers.forEach((avtContainer: any) => {
-      let avtContainerHeight = avtContainer.offsetHeight;
-      let avtContainerTop = avtContainer.offsetTop - 10;
-      let avtContainerIndicator = document.getElementById(
-        avtContainer.id.toLowerCase()
-      );
-      if (
-        scrollTop > avtContainerTop &&
-        scrollTop < avtContainerTop + avtContainerHeight
-      ) {
-        // avtContainerIndicator?.classList.add("bg-aps1", "text-bgs1");
-        activeCategory = avtContainer.id;
-      } else avtContainerIndicator?.classList.remove("bg-aps1", "text-bgs1");
+    }
+
+    const scrollTop = avatarsParentContainer.scrollTop;
+    const avtContainers = document.querySelectorAll(".AVT");
+
+    requestAnimationFrame(() => {
+      avtContainers.forEach((avtContainer: any) => {
+        const avtContainerHeight = avtContainer.offsetHeight;
+        const avtContainerTop = avtContainer.offsetTop - 10;
+
+        if (
+          scrollTop > avtContainerTop &&
+          scrollTop < avtContainerTop + avtContainerHeight
+        ) {
+          activeCategory = avtContainer.id;
+        }
+      });
     });
-  }
+  }, 16); // Debounce to roughly match 60fps
+
   /**
    * When a panel item is clicked this function is invoked. It scrolls the avatarsParentContainer to the corresponding panel item category.
    * @summary To scroll to the corresponding panel item category
    * @param event
    */
   async function panelItemClickHandler(event: any) {
-    let currentElement = document.getElementById(event.target.id.toUpperCase());
-    if (!currentElement) {
-      lazyLoadAvatars();
-      await tick();
-      panelItemClickHandler(event);
-    } else {
-      avatarsParentContainer.scrollTo({
-        top: currentElement?.offsetTop,
-        left: 0,
-        behavior: "smooth"
+    const targetId = event.target.id.toUpperCase();
+    const categoryIndex = parseInt(targetId.replace("AVT", ""));
+
+    if (isNaN(categoryIndex)) return;
+
+    if (mode === AvatarType.EMOJI) {
+      isLoadingMore = true;
+      try {
+        for (let i = 0; i <= categoryIndex; i++) {
+          const [category, emojis] = storeAvatarsKV[i] || [];
+          if (category && !lazyLoadedAvatars[category]) {
+            lazyLoadedAvatars[category] = emojis.slice(0, 100);
+          }
+        }
+        avatars = { ...lazyLoadedAvatars };
+        await tick();
+      } finally {
+        isLoadingMore = false;
+      }
+    }
+
+    const currentElement = document.getElementById("AVT" + categoryIndex);
+    if (currentElement) {
+      requestAnimationFrame(() => {
+        avatarsParentContainer?.scrollTo({
+          top: currentElement.offsetTop,
+          left: 0,
+          behavior: "smooth"
+        });
       });
     }
   }
@@ -418,18 +455,26 @@
   async function handleModeSwitch(e: any) {
     mode = e.detail.toUpperCase();
     lazyLoadedAvatars = {};
-    avatarsParentContainer.scrollTop = 0;
+    avatars = {};
+    avatarKeys = [];
+    previousKVIndex = -1;
+    previousIconIndex = 0;
+    isLoadingMore = false;
+
+    if (avatarsParentContainer) {
+      avatarsParentContainer.scrollTop = 0;
+    }
+
     if (mode === AvatarType.ICON) {
-      previousIconIndex = 0;
       storeAvatars = materialSymbolsWithCategories;
     } else {
-      previousKVIndex = -1;
       storeAvatars = emojisWithCategories;
     }
+
     updateUsedAndCustomAvatars($userPreferences);
     storeAvatarsKV = Object.entries(storeAvatars);
     storeAvatarsKey = Object.keys(storeAvatars);
-    lazyLoadAvatars();
+    await lazyLoadAvatars();
   }
 </script>
 

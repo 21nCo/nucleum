@@ -16,29 +16,35 @@
 
   export let node: IWebPage;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
-  let isLoading: boolean = true;
-  let isIframeShown: boolean =
-    accessPoint === ResourceAccessPoint.MARKDOWN_EMBED ||
-    accessPoint === ResourceAccessPoint.SELF;
+  let isCheckingIframability: boolean = true;
+  let isIframeShown: boolean = false;
   let isIframeable: boolean = false;
   let isHovering: boolean = false;
   let customMessage: string | undefined = undefined;
+
   onMount(async () => {
     await initialize();
   });
 
   async function initialize() {
     try {
-      customMessage = await resolveCustomMessage(node.url);
-      if (customMessage) return;
-      isIframeable = await resolveIframability(node.url, {
-        isUseCloud: $account.dataMode === UserDataMode.CLOUD
-      });
-      isLoading = false;
+      customMessage = resolveCustomMessage(node.url);
+      if (!customMessage) {
+        const result = await resolveIframability(node.url, {
+          isUseCloud: $account.dataMode === UserDataMode.CLOUD
+        });
+        isIframeable = result;
+        if (
+          isIframeable &&
+          accessPoint === ResourceAccessPoint.MARKDOWN_EMBED
+        ) {
+          isIframeShown = true;
+        }
+        isCheckingIframability = false;
+      }
     } catch (e) {
       console.error(e);
-    } finally {
-      isLoading = false;
+      isCheckingIframability = false;
     }
   }
 
@@ -54,10 +60,11 @@
       return true;
     }
     if (params?.isUseCloud) {
-      const urlData = await new Persistence().retrieveUrlData(url);
+      const urlData = await new Persistence().retrieveUrlData(url, {
+        isReturnRawData: true
+      });
       if (isValidString(urlData?.headers)) {
         const headers = JSON.parse(urlData.headers);
-        console.log({ at: "resolveIframability", urlData, headers });
         if (!headers) return false;
         return resolveIframabilityFromHeaders(headers);
       }
@@ -82,7 +89,7 @@
     }
   }
 
-  async function resolveCustomMessage(url: string) {
+  function resolveCustomMessage(url: string) {
     const urlData = resolveUrlData(url);
     return urlData?.customMessage;
   }
@@ -92,10 +99,12 @@
   class="relative w-full h-full flex justify-center items-center"
   bind:isHovering
 >
-  {#if isLoading}
-    <div class="text-center text-b3 text-fgs3">Loading...</div>
-  {:else if customMessage}
+  {#if customMessage}
     <div class="text-center text-b3 text-fgs3">{customMessage}</div>
+  {:else if accessPoint === ResourceAccessPoint.MARKDOWN_EMBED && isCheckingIframability}
+    <div class="text-center text-b3 text-fgs3">Loading preview...</div>
+  {:else if accessPoint === ResourceAccessPoint.MARKDOWN_EMBED && !isIframeable}
+    <div class="text-center text-b3 text-fgs3">Preview not available</div>
   {:else if isIframeable && isIframeShown}
     <iframe
       src={node.url}
@@ -107,21 +116,18 @@
     />
   {:else if isValidString(node.metadata?.ogImage)}
     <ImagePreview
-      src={node.metadata?.ogImage}
+      src={node.metadata?.ogImage || ""}
       class="w-full h-full object-contain rounded--md"
     />
   {:else if node.metadata?.screenshotFile}
     <FileView id={node.metadata.screenshotFile} />
   {:else}
     <div class="text-center text-b3 text-fgs3">
-      {#if isIframeable}
-        Click to preview site.
-      {:else}
-        No preview available for this page. Please use the link below to view
-        the page.
-      {/if}
+      No preview available for this page. Please use the link below to view the
+      page.
     </div>
   {/if}
+
   {#if isIframeShown && isIframeable && accessPoint !== ResourceAccessPoint.MARKDOWN_EMBED}
     <div
       class="absolute top-0 right-0 mx-4 my-2 flex gap-2 items-center justify-center"

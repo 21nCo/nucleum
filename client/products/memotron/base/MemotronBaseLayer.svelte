@@ -23,7 +23,7 @@
   import CommandModePage from "$lib/client/components/commandBar/CommandModePage.svelte";
   import { clipTextSearchFallback } from "./fallbacks";
   import LeftNav from "$lib/client/layout/leftPanel/LeftNav.svelte";
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
+  import appearance from "$lib/client/stores/appearance.store";
   let isLiteMode = $context.isEmbed && $context.isSheet;
   let interactionMode: InteractionMode;
   let isHideLeftNavBar: boolean = refreshSidebarState();
@@ -119,9 +119,7 @@
         <div class="flex w-full flex-grow">
           {#if !isHideLeftNavBar || interactionMode === InteractionMode.DEFAULT || $context.embed === Embed.HANDSET}
             <LeftNav
-              variant={$userPreferences.appearance.isFixedLeftNav
-                ? "fixed"
-                : "expandable"}
+              variant={$appearance.isFixedLeftNav ? "fixed" : "expandable"}
             />
           {/if}
           <div

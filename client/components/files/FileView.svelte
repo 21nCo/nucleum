@@ -34,6 +34,7 @@
    * If true, then use the thumbnail if available
    */
   export let isUseThumbnailIfAvailable: boolean = false;
+  export let isApplyBgColor: boolean = false;
   let classList: string = "";
   export { classList as class };
   $: _id = id ?? file?.id;
@@ -97,7 +98,12 @@
     on:load={onImageLoad}
     class={classList + " ph-no-capture userdata"}
     draggable={isDraggable}
-    use:fileLoaderv2={{ source: resolveSrc, isLazyLoad, id: _id?.toString() }}
+    use:fileLoaderv2={{
+      source: resolveSrc,
+      isLazyLoad,
+      id: _id?.toString(),
+      isApplyBgColorFromImage: isApplyBgColor
+    }}
     use:imageRepositioner={{
       onPositionChange: handlePositionChange,
       ...(repositionParams ?? {

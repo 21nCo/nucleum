@@ -9,13 +9,13 @@
   import Link from "../text/Link.svelte";
   import Button from "../button/Button.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { debouncer } from "$lib/client/utils/utils";
   export let value: any;
   export let placeholder: string | undefined = undefined;
   export let label: InputLabel | undefined = undefined;
   export let style: InputStyle = InputStyle.BORDERED;
   export let size: Size = Size.md;
   export let parentBackgroundIndex: number = 1;
-  export let isEnableSaveFeedback: boolean = false;
   export let type: string = "text";
   export let id: string = "";
   export let width: string | undefined = undefined;
@@ -29,8 +29,7 @@
   export let isShowClearControl: boolean = false;
   export let isPreventDefaultOnEnter: boolean = false;
   export let isRounded: boolean = false;
-  export let height: string = "h-11";
-  let isShowSaveFeedback: boolean = false;
+  export let height: string = style === InputStyle.PLAIN ? "" : "h-11";
   let isFocused: boolean = false;
   export function focus() {
     if (inputRef) inputRef.focus();
@@ -46,8 +45,6 @@
   export let isDisabled = false;
   let inputClasses: string =
     "text-input w-full bg-transparent focus:outline-none focus:border-none";
-  let changeTimer: any;
-  let changeElaspsedTime: number = 0;
   const dispatch = createEventDispatcher();
 
   $: isLinkType = type === "url" || type === "link" || type === "email";
@@ -72,26 +69,14 @@
   function onChange() {
     dispatch("input", { value });
     dispatch("change", value);
-    isShowSaveFeedback = false;
-    resetChangeTimer();
+    debouncedChangeEvent();
   }
-  function resetChangeTimer() {
-    changeElaspsedTime = 0;
-    clearTimeout(changeTimer);
-    changeTimer = setInterval(() => {
-      changeElaspsedTime += 1;
-    }, 1000);
-  }
-  $: {
-    if (changeElaspsedTime > 1) {
-      isShowSaveFeedback = true;
-      setTimeout(() => {
-        isShowSaveFeedback = false;
-        changeElaspsedTime = 0;
-        clearTimeout(changeTimer);
-      }, 2000);
-    }
-  }
+
+  const debouncedChangeEvent = debouncer(
+    () => dispatch("debouncedChange", value),
+    1000
+  );
+
   function handleKeyUp(event: any) {
     if (event.key === "Enter") {
       dispatch("enter", { value });
@@ -129,6 +114,7 @@
       on:focus
       on:blur
       on:change
+      on:debouncedChange
       on:enter
       on:paste
     />

@@ -101,7 +101,7 @@
             node={$node}
             on:labelChange={(e) => {
               if ($node.label !== undefined)
-                node.debouncedModify({ label: $node.label });
+                node.modify({ label: $node.label });
             }}
             on:editModeChange={(e) => {
               $node.isInEditMode = e.detail;

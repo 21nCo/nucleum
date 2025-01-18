@@ -274,7 +274,7 @@ export function resolveNodeLabelString(item: INodeThumb) {
 export function resolveNodeLabel(item: INodeThumb) {
   if (!item) return "";
 
-  if (item.label) return item.label;
+  if (item.label && !item.parent) return item.label;
 
   let parent;
   if (item.parent && item.parent.id && !isRecordId(item.parent))
@@ -294,18 +294,21 @@ export function resolveNodeLabel(item: INodeThumb) {
     case NodeType.TEXT_CLIP:
     case NodeType.WEB_SCREENSHOT_CLIP:
     case NodeType.KINDLE_HIGHLIGHT:
-      if (!parent?.label) return defaultLabels[item.contentType];
+      if (!parent?.label) return item.label ?? defaultLabels[item.contentType];
       const weburl = item.url?.split("://").pop()?.split("/")[0];
       return {
-        label: "Clipped from:",
+        label: item.label ? item.label + " - " : "Clipped from - ",
         parent,
         text: item.body?.text ?? item.text ?? `Clip: ${parent?.label ?? weburl}`
       };
     case NodeType.YOUTUBE_TIMESTAMP_CLIP:
       const timestamp = formatSeconds(item.body.timestamp, TimeFormat.CLOCK);
-      if (!parent?.label) return `At - ${timestamp}`;
+      if (!parent?.label)
+        return item.label
+          ? item.label + " - " + timestamp
+          : `At - ${timestamp}`;
       return {
-        label: `${timestamp} - `,
+        label: `${item.label ? item.label + " - " : "At "}${timestamp}: `,
         parent,
         text: timestamp
       };
@@ -317,7 +320,7 @@ export function resolveNodeLabel(item: INodeThumb) {
         ? (parent.label ?? parent.body.name)
         : "Unknown";
       return {
-        label: "Tweet by ",
+        label: ` ${item.label ? item.label + " - " : ""} Tweet by: `,
         parent: { id: parent?.id, label: twitterProfileLabel },
         text: item.body?.content ?? item.text ?? `Tweet: ${twitterProfileLabel}`
       };

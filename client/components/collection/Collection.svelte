@@ -455,7 +455,7 @@
       }
       setTimeout(() => {
         //TODO - collection resource type instead of node
-        resourceAction(Resource.node, ResourceActionType.CREATE);
+        appStore.runResourceAction(Resource.node, ResourceActionType.CREATE);
       }, 10);
     }
   }

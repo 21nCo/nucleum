@@ -140,8 +140,9 @@ setting on your device."
     }}
   />
   <SwitchInput
-    bind:checked={$userPreferences.appearance.isFixedLeftNav}
+    checked={$appearance.isFixedLeftNav}
     isExpanded={true}
+    on:change={(e) => appearance.setLeftNavFixed(e.detail)}
     label={{
       label: "Fixed app menu bar",
       tooltip: {

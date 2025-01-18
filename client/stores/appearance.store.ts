@@ -27,6 +27,7 @@ const seedAppearance: AppearanceStore = {
   userThemeSetting: Theme.LIGHT,
   systemTheme: Theme.LIGHT,
   accessibilitySizingFactor: 1,
+  isFixedLeftNav: false,
   typeface:
     " Hanken Grotesk, Hanken Grotesk Variable, Nunito, Teachers, Montserrat, Proxima Nova,  Poppins, Noto Sans ",
   //BlinkMacSystemFont
@@ -57,7 +58,8 @@ function initAppearanceStore() {
       theme: store.theme,
       isSyncWithSystem: store.isSyncWithSystem,
       lightColorSchemeId: store.lightColorSchemeId,
-      darkColorSchemeId: store.darkColorSchemeId
+      darkColorSchemeId: store.darkColorSchemeId,
+      isFixedLeftNav: store.isFixedLeftNav
     });
     cache(store);
   };
@@ -106,6 +108,7 @@ function initAppearanceStore() {
         return modified;
       });
     },
+
     // rename to setAppearance
     setTheme: (skin: AppSkin, colorSchemeId: string) => {
       let cs = colorSchemes.find((cs) => cs.id == colorSchemeId);
@@ -117,6 +120,7 @@ function initAppearanceStore() {
         return modified;
       });
     },
+
     setColorScheme: (colorSchemeId: string) => {
       let cs = colorSchemes.find((cs) => cs.id == colorSchemeId);
       if (!cs) return;
@@ -136,6 +140,7 @@ function initAppearanceStore() {
         return modified;
       });
     },
+
     modifyUserThemeSetting: (theme: Theme) => {
       update((a) => {
         let modified: AppearanceStore = { ...a, userThemeSetting: theme };
@@ -148,6 +153,7 @@ function initAppearanceStore() {
         return modified;
       });
     },
+
     modifySyncWithSystem: (isSync: boolean) => {
       update((a) => {
         let modified = { ...a, isSyncWithSystem: isSync };
@@ -160,6 +166,7 @@ function initAppearanceStore() {
         return modified;
       });
     },
+
     /**
      * Sets the system theme in appearance store to either light or dark based on `prefers-color-scheme: dark` media query and updates color scheme accordingly.
      * @param isDark boolean value to set the system theme to dark or light
@@ -177,14 +184,22 @@ function initAppearanceStore() {
         return modified;
       });
     },
+
     switchTheme: (theme: Theme) => {
       update((a) => {
         const modified = switchTheme(theme, a);
         persist(modified);
         return modified;
       });
+    },
+
+    setLeftNavFixed: (isFixed: boolean) => {
+      update((a) => {
+        const modified = { ...a, isFixedLeftNav: isFixed };
+        persist(modified);
+        return modified;
+      });
     }
-    // switchSkin
   };
 }
 

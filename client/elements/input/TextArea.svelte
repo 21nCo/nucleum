@@ -5,17 +5,17 @@
   import InputBaseElement from "../InputBaseElement.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import { Size } from "$lib/client/types/size.enum";
+  import { debouncer } from "$lib/client/utils/utils";
   export let size: Size = Size.md;
   export let value: any;
   export let placeholder: string | undefined = undefined;
   export let label: InputLabel | undefined = undefined;
   export let style: InputStyle = InputStyle.BORDERED;
-  export let isEnableSaveFeedback: boolean = false;
   export let rows: number = 5;
   export let resizable: boolean = true;
   export let changeCallback: (value: string) => void = () => {};
+  export let debouncedChangeCallback: (value: string) => void = () => {};
   export let width: string = "w-full";
-  let isShowSaveFeedback: boolean = false;
   let isFocused: boolean = false;
   export function focus() {
     if (inputRef) inputRef.focus();
@@ -30,32 +30,17 @@
   export let isDisabled = false;
   let inputClasses: string =
     "text-input bg-transparent focus:outline-none focus:border-none";
-  let changeTimer: any;
-  let changeElaspsedTime: number = 0;
   const dispatch = createEventDispatcher();
   function onChange() {
-    dispatch("input", { value });
+    dispatch("change", value);
     changeCallback(value);
-    isShowSaveFeedback = false;
-    resetChangeTimer();
+    debouncedChange();
   }
-  function resetChangeTimer() {
-    changeElaspsedTime = 0;
-    clearTimeout(changeTimer);
-    changeTimer = setInterval(() => {
-      changeElaspsedTime += 1;
-    }, 1000);
-  }
-  $: {
-    if (changeElaspsedTime > 1) {
-      isShowSaveFeedback = true;
-      setTimeout(() => {
-        isShowSaveFeedback = false;
-        changeElaspsedTime = 0;
-        clearTimeout(changeTimer);
-      }, 2000);
-    }
-  }
+
+  const debouncedChange = debouncer(() => {
+    dispatch("debouncedChange", value);
+    debouncedChangeCallback(value);
+  }, 1000);
 </script>
 
 <InputBaseElement {style} {label} {isFocused}>
@@ -85,7 +70,4 @@
     disabled={isDisabled}
     bind:this={inputRef}
   />
-  {#if isEnableSaveFeedback && isShowSaveFeedback}
-    <div class="absolute right-0 text-b2 text-fgs2">saved</div>
-  {/if}
 </InputBaseElement>

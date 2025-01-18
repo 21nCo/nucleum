@@ -1,9 +1,6 @@
 <script lang="ts">
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import {
-    ResourceAccessMode,
-    ResourceAccessPoint
-  } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import InlineMarkdownTextInput from "$lib/client/components/markdown/content/InlineMarkdownTextInput.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import Badge from "$lib/client/elements/text/Badge.svelte";
@@ -25,13 +22,16 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { activeResourceFilterV2 } from "$lib/client/utils/utils";
+  import { focusById } from "$lib/client/actions/focusById.action";
+  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+
   export let node: IActiveNodeStore;
   export let pane: NodeRightPaneType | undefined = undefined;
   let links: { link: INodeLinkThumb; node: INode }[] = [];
-  let notesInputRef: InlineMarkdownTextInput;
+  const notesInputId = generateSimpleRandomId();
   const contentContext = getContext<any>("content");
-  function onChange(e: any) {
-    if ($node.notes) node.debouncedModify({ notes: $node.notes });
+  function onNotesChange(e: any) {
+    if ($node.notes) node.modify({ notes: $node.notes });
   }
 
   onMount(async () => {
@@ -155,13 +155,13 @@
     </span>
     <button
       class="flex w-full flex-1 bg-bgs2 bg-opacity-60 rounded-md p-4"
-      on:click={() => notesInputRef?.focus()}
+      use:focusById={notesInputId}
     >
       <InlineMarkdownTextInput
-        bind:this={notesInputRef}
+        id={notesInputId}
         placeholder="Add notes"
         bind:content={$node.notes}
-        on:change={onChange}
+        on:debouncedChange={onNotesChange}
       />
     </button>
   </div>

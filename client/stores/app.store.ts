@@ -36,6 +36,7 @@ import { Size } from "../types/size.enum";
 import type { IRecordId } from "../types/data.type";
 import account from "./account.store";
 import { tabs } from "../layout/tabs/tabs.store";
+import { resourceAction } from "../components/flux/resourceStores/resource.utils";
 
 // export const app = writable<{ product: string; env: string }>({
 //   product: "tidy",
@@ -266,6 +267,7 @@ function initAppStore(seed: AppStore) {
     if (action) return action;
     return null;
   };
+
   const runAction = (
     slug: string,
     params: {
@@ -427,16 +429,19 @@ function initAppStore(seed: AppStore) {
     if (!redirectUri) return;
     url += "&redirect_uri=" + redirectUri;
     // url += "&redirect_uri=" + encodeURIComponent(redirectUri);
-    if (
-      ctx.isEmbed
-    ) {
-
-      if(provider === IdentityProvider.Apple && ctx.os === OperatingSystem.MACOS) {
+    if (ctx.isEmbed) {
+      if (
+        provider === IdentityProvider.Apple &&
+        ctx.os === OperatingSystem.MACOS
+      ) {
         goto(url);
         return;
       }
 
-      if (ctx.os === OperatingSystem.MACOS || ctx.os === OperatingSystem.WINDOWS) {
+      if (
+        ctx.os === OperatingSystem.MACOS ||
+        ctx.os === OperatingSystem.WINDOWS
+      ) {
         const host =
           dev || app.isDebugMode
             ? "http://localhost:5002"
@@ -901,6 +906,9 @@ function initAppStore(seed: AppStore) {
         n.actions = [...actions];
         return n;
       });
+    },
+    runResourceAction: (resource: Resource, action: ResourceActionType) => {
+      return runAction(resourceAction(resource, action));
     },
     gotoPath,
     gotoErrorPage,

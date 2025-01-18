@@ -52,7 +52,7 @@
     <div
       class={cn("flex", {
         "flex-col": !group.isToggleGroup,
-        "flex-row justify-around py-2": group.isToggleGroup
+        "flex-row justify-around p-2 gap-2": group.isToggleGroup
       })}
     >
       {#each group.items as item}

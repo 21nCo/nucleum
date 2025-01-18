@@ -1,4 +1,4 @@
-export type BreadcrumbItem = {
+export type IBreadcrumbItem = {
   label: string;
   path?: string;
   resourceId?: string;

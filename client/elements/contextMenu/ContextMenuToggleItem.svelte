@@ -27,14 +27,18 @@
       isHovering = e;
     }
   }}
-  class={cn("flex flex-col items-center justify-center rounded-md border", {
-    "min-h-8 min-w-8": size === Size.sm,
-    "min-h-10 min-w-10": size === Size.md,
-    "min-h-16 min-w-16": size === Size.lg,
-    [bg(parentBgIndex + 1)]: isHovering,
-    "bg-aps3 border-aps1 text-aps1": on,
-    "border-brs3": !on && !isHovering
-  })}
+  class={cn(
+    "flex flex-col items-center justify-center rounded-md border flex-1",
+    {
+      "min-h-8 min-w-8": size === Size.sm,
+      "min-h-10 min-w-10": size === Size.md,
+      "min-h-16 min-w-16": size === Size.lg,
+      [bg(parentBgIndex + 1)]: isHovering,
+      "bg-aps3 border-aps1 text-aps1": on,
+      "border-brs4": !on && isHovering,
+      "border-brs3": !on && !isHovering
+    }
+  )}
 >
   <Icon
     icon={on ? item.activeIcon : item.icon}

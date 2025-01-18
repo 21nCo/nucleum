@@ -1,6 +1,6 @@
 <script lang="ts">
   import BreadcrumbItemView from "./BreadcrumbItemView.svelte";
-  import type { BreadcrumbItem } from "$lib/client/types/breadcrumbItem.type";
+  import type { IBreadcrumbItem } from "$lib/client/elements/breadcrumbsV2/breadcrumbItem.type";
   import { textTruncateMapper } from "$lib/client/utils/utils";
   import view from "$lib/client/stores/view.store";
   import { Display } from "$lib/client/types/view.type";
@@ -10,14 +10,14 @@
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { Size } from "$lib/client/types/size.enum";
   const dispatch = createEventDispatcher();
-  export let items: BreadcrumbItem[] = [];
+  export let items: IBreadcrumbItem[] = [];
   export let isPreventDefault: boolean = false;
   export let spaceAvailable: Size.sm | Size.md | Size.lg = Size.md;
   export let isSubtleContext: boolean = false;
   $: slice = resolveSlice($view.display);
   $: truncateLength = determineTruncateLength($view.display, spaceAvailable);
   // let truncateLength = undefined;
-  let _items: BreadcrumbItem[] = [];
+  let _items: IBreadcrumbItem[] = [];
   $: _items =
     slice != undefined && slice <= items.length
       ? [
@@ -50,7 +50,7 @@
       return 2;
     }
   }
-  function onClick(e: MouseEvent, item: BreadcrumbItem) {
+  function onClick(e: MouseEvent, item: IBreadcrumbItem) {
     if (isPreventDefault) {
       dispatch("click", { event: e, item });
       return;

@@ -82,6 +82,12 @@ export function imageRepositioner(
       if (isApplyCursorStyle) {
         node.style.cursor = axis === "x" ? "ew-resize" : "ns-resize";
       }
+      node.style.objectFit = "cover";
+      node.style.userSelect = "none";
+      if (node.tagName !== "IMG") {
+        node.style.aspectRatio = aspectRatio.toString();
+        node.style.overflow = "hidden";
+      }
     } else {
       node.removeEventListener("mousedown", handleMousedown);
       node.removeEventListener("touchstart", handleTouchstart);
@@ -90,15 +96,13 @@ export function imageRepositioner(
       if (isApplyCursorStyle) {
         node.style.cursor = "default";
       }
+      node.style.removeProperty("object-fit");
+      node.style.removeProperty("user-select");
+      if (node.tagName !== "IMG") {
+        node.style.removeProperty("aspect-ratio");
+        node.style.removeProperty("overflow");
+      }
     }
-  }
-
-  node.style.objectFit = "cover";
-  node.style.userSelect = "none";
-
-  if (node.tagName !== "IMG") {
-    node.style.aspectRatio = aspectRatio.toString();
-    node.style.overflow = "hidden";
   }
 
   updateListeners();

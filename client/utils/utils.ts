@@ -265,40 +265,6 @@ export function debouncer(func: any, timeout: number) {
   };
 }
 
-/**
- * Creates a debounced version of an async function that returns a Promise
- * @param func The function to be debounced
- * @param timeout Wait time in milliseconds before the function is called
- * @returns A debounced version of the function that returns a Promise
- */
-export function asyncDebouncer<T>(
-  func: (...args: any[]) => Promise<T> | T,
-  timeout: number
-) {
-  let timer: NodeJS.Timeout;
-  let pendingPromise: Promise<T> | null = null;
-
-  return function (this: any, ...args: any[]) {
-    if (pendingPromise) return pendingPromise;
-
-    pendingPromise = new Promise<T>((resolve, reject) => {
-      clearTimeout(timer);
-      timer = setTimeout(async () => {
-        try {
-          const result = await func.apply(this, args);
-          resolve(result);
-        } catch (error) {
-          reject(error);
-        } finally {
-          pendingPromise = null;
-        }
-      }, timeout);
-    });
-
-    return pendingPromise;
-  };
-}
-
 export const activeResourceFilter = (x: any) =>
   !x.isArchived && !x.trashInformation;
 

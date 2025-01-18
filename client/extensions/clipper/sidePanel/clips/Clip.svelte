@@ -21,7 +21,6 @@
   import TextClip from "./TextClip.svelte";
   import { hoverable } from "$lib/client/actions/hover.action";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import { debouncer } from "$lib/client/utils/utils";
   import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
@@ -68,8 +67,6 @@
       type: AlertType.SUCCESS
     };
   }
-
-  const debouncedNotesChange = debouncer(onNotesChange, 1500);
 
   function refreshDerivedData() {
     notes = clip?.notes ?? "";
@@ -271,7 +268,7 @@
     <InlineMarkdownTextInput
       placeholder="Add notes"
       bind:content={notes}
-      on:change={debouncedNotesChange}
+      on:debouncedChange={onNotesChange}
     />
   {/if}
   {#if feedback}

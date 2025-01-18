@@ -1,10 +1,13 @@
 <script lang="ts">
-  import { lazyLoad } from "$lib/client/actions/lazyload.action";
+  import { fileLoaderv2 } from "$lib/client/actions/lazyload.action";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Arrangement } from "$lib/client/types/direction.enum";
   import { cn } from "$lib/client/utils/ui.utils";
+
   export let src: string;
   export let arrangement: Arrangement | undefined = undefined;
+  export let isApplyBgColor = false;
+
   let classList = "";
   export { classList as class };
 </script>
@@ -12,11 +15,12 @@
 <img
   alt="..."
   class={classList}
-  use:lazyLoad={src}
+  use:fileLoaderv2={{ source: src, isApplyBgColorFromImage: isApplyBgColor }}
   on:load
   on:error={(e) => {
-    e.currentTarget.style.display = "none";
-    e.currentTarget.nextElementSibling?.classList.remove("hidden");
+    const target = e.currentTarget;
+    target.style.display = "none";
+    target.nextElementSibling?.classList.remove("hidden");
   }}
 />
 <div

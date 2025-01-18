@@ -27,6 +27,7 @@
     class={cn("relative rounded-md min-w-fit whitespace-nowrap border", {
       "w-40": size === Size.lg,
       "w-36": size === Size.md,
+      "px-3 py-1 text-b2": size === Size.sm,
       "flex grow justify-center": style === OptionSelectorStyle.TRAIN,
       "px-12 py-8":
         iconOrientation === Orientation.Horizontal && size === Size.lg,
@@ -36,7 +37,6 @@
       "px-6 py-5": iconOrientation === Orientation.Vertical && size === Size.md,
       "w-20 px-3 py-3":
         iconOrientation === Orientation.Vertical && size === Size.sm,
-      "px-3 py-1 text-b2": size === Size.sm,
       "border border-aps1 bg-aps3 hover:bg--aps2": isActive,
       "outline-transparent border-brs3":
         !isActive && style === OptionSelectorStyle.OUTLINE,
@@ -89,7 +89,7 @@
         {properCase(item.label ?? item.value.toString())}
       </div>
       {#if item.badge}
-        <Badge text={item.badge} />
+        <Badge text={item.badge} isAccentColor={isActive} {size} />
       {/if}
     </div>
   </button>

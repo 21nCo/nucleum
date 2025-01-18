@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount } from "svelte";
+  import { createEventDispatcher, onMount, onDestroy } from "svelte";
   import {
     type IBlock,
     InlineType,
@@ -7,7 +7,7 @@
     SpanType
   } from "$lib/client/components/markdown/md.type";
   import TextWithSpans from "./TextWithSpans.svelte";
-  import { generateUID } from "$lib/client/utils/utils";
+  import { debouncer, generateUID } from "$lib/client/utils/utils";
   import {
     extractInlineMarkdownFromHtml,
     findInlineStylingPatterns,
@@ -93,6 +93,10 @@
     typeof content === "string" ? parseSpansFromText(content) : [];
   // replaceInlineStyling();
 
+  let mutationObserver: MutationObserver;
+  let isKeyboardInput = false;
+  let keyboardTimeout: any;
+
   onMount(() => {
     customCaret = document.getElementById("customcaret");
     innerHTML = content ? replaceInlineStylePatterns(content) : "";
@@ -101,6 +105,36 @@
     setTimeout(() => {
       renderMentions(true);
     }, 10);
+
+    mutationObserver = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (
+          (mutation.type === "characterData" ||
+            mutation.type === "childList") &&
+          !isKeyboardInput
+        ) {
+          const parsedMdContent = extractInlineMarkdownFromHtml(
+            blockRef.innerHTML
+          );
+          content = parsedMdContent ?? "";
+          dispatchChangeEvent();
+        }
+      });
+    });
+
+    if (blockRef) {
+      mutationObserver.observe(blockRef, {
+        childList: true,
+        characterData: true,
+        subtree: true
+      });
+    }
+  });
+
+  onDestroy(() => {
+    if (mutationObserver) {
+      mutationObserver.disconnect();
+    }
   });
 
   function renderMentionPlaceholders() {
@@ -219,12 +253,12 @@
   export function removeSlashText() {
     innerHTML = innerHTML.split("/")[0];
     content = blockRef.textContent;
-    dispatch("change", content);
+    dispatchChangeEvent();
   }
   export function addCharacter(character: string) {
     innerHTML = innerHTML + character;
     content = blockRef.textContent;
-    dispatch("change", content);
+    dispatchChangeEvent();
   }
 
   /**
@@ -634,14 +668,14 @@
 
   function handleKeyDown(event: KeyboardEvent) {
     clearTimeout(typingTimeout);
+    clearTimeout(keyboardTimeout);
+    isKeyboardInput = true;
     typing = true;
     if (isMarkdown) {
       const position = resolveCaretPosition();
-      // const position2 = checkCaretPositionv2();
       dispatch("keydown", {
         event,
         position
-        // position2
       });
     } else {
       dispatch("keydown", event);
@@ -805,7 +839,7 @@
   }
 
   /**
-   * Handles keyup event to perform various actions like escape shortcuts, symbol and inline shortcut formatting, backspace event etc.
+   * Handles keyup event to perform various actions like symbol and inline shortcut formatting, backspace event etc.
    *
    * 1. Sets the caret position so that events like backspace at the start of the block can be handled
    * 2. Delegates block browser shortcut handling, Escape shortcut handling, list contextual actions, backspace at the start of the block, symbol replacement, inline styling replacement
@@ -816,14 +850,9 @@
    */
   function handleKeyUp(event: KeyboardEvent) {
     const parsedMdContent = extractInlineMarkdownFromHtml(blockRef.innerHTML);
-    // console.log("keyup", {
-    //   event,
-    //   textContent: deepCopy(blockRef.textContent),
-    //   parsedMdContent
-    // });
     saveCaretPosition();
     content = parsedMdContent ?? "";
-    dispatch("change");
+    dispatchChangeEvent();
     const steps = [
       replaceInlineSymbols,
       () => replaceInlineStyling(event),
@@ -841,9 +870,13 @@
       });
     }
     clearTimeout(typingTimeout);
+    clearTimeout(keyboardTimeout);
     typingTimeout = setTimeout(() => {
       typing = false;
     }, 10);
+    keyboardTimeout = setTimeout(() => {
+      isKeyboardInput = false;
+    }, 30);
     /**
      * Replaces symbol shortcut patterns with the symbols
      */
@@ -915,7 +948,7 @@
       newInlineSpanId = generateSimpleRandomId();
       isNewSpanInserted = true;
       const replacementWithNewSpan =
-        pattern.replacement + `<span id="${newInlineSpanId}">&nbsp;</span>`;
+        pattern.replacement + `<span id="${newInlineSpanId}">&#8203;</span>`;
       if (inlineCaretResolutionMethod === InlineCaretResolutionMethod.T2) {
         // if (typeof content !== "string") return;
         caretPositionT2 = {
@@ -985,9 +1018,19 @@
       range?.insertNode(document.createTextNode(text));
       content = blockRef.textContent ?? "";
       dispatch("paste", { value: text });
-      dispatch("change");
+      dispatchChangeEvent();
     }
   }
+
+  function dispatchChangeEvent() {
+    dispatch("change", content);
+    debouncedDispatchChange();
+  }
+  const debouncedDispatchChange = debouncer(
+    () => dispatch("debouncedChange", content),
+    1000
+  );
+
   /**
    * oninput event handler
    *

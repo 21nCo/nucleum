@@ -1,6 +1,7 @@
 import { generateRandomId } from "$lib/shared/utils/crypto.utils";
 import { isValidString } from "$lib/shared/utils/text.utils";
 import { logger } from "../components/debug/logger.client";
+import { getImageColors } from "$lib/client/utils/ui.utils";
 
 /**
  * Lazy loads an image when it is in the viewport.
@@ -8,7 +9,7 @@ import { logger } from "../components/debug/logger.client";
  * @param src
  * @returns
  */
-export function lazyLoad(image, src) {
+export function lazyLoad(image: HTMLImageElement, src: string) {
   const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (entry.isIntersecting) {
@@ -116,27 +117,49 @@ export function fileLoaderv2(
     source: string | (() => Promise<string>);
     isLazyLoad?: boolean;
     id?: string | number;
+    isApplyBgColorFromImage?: boolean;
+    isApplyBgColorToParent?: boolean;
   }
 ) {
   let observer: IntersectionObserver;
   let source = params.source;
   let isLazyLoad = params.isLazyLoad ?? true;
   let currentId = params.id;
+  let dominantColor: string;
 
   async function loadSource() {
     node.id = `${currentId?.toString() ?? ""}-${generateRandomId()}`;
     try {
       if (node instanceof HTMLImageElement) {
+        node.style.opacity = "0";
         node.src =
           "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
         node.classList.add("bg-bgs3");
       }
       const sourceValue =
         typeof source === "function" ? await source() : source;
-      if (node instanceof HTMLImageElement) {
-        if (isValidString(sourceValue)) {
-          node.src = sourceValue;
+      if (node instanceof HTMLImageElement && isValidString(sourceValue)) {
+        try {
+          if (params.isApplyBgColorFromImage) {
+            node.src = sourceValue;
+            const colors = await getImageColors(node);
+            dominantColor = colors[0];
+            const targetNode = params.isApplyBgColorToParent
+              ? node.parentElement
+              : node;
+            if (targetNode) {
+              targetNode.style.backgroundColor = dominantColor;
+            }
+          } else {
+            node.src = sourceValue;
+          }
           node.classList.remove("bg-bgs3");
+          node.style.opacity = "1";
+          node.style.transition = "opacity 0.2s ease-in";
+        } catch (imgError) {
+          console.warn("Failed to load image:", imgError);
+          node.classList.remove("bg-bgs3");
+          node.style.opacity = "1";
         }
       } else if (
         node instanceof HTMLAudioElement ||
@@ -181,9 +204,24 @@ export function fileLoaderv2(
       source: string | (() => Promise<string>);
       isLazyLoad?: boolean;
       id?: string | number;
+      isApplyBgColorFromImage?: boolean;
+      isApplyBgColorToParent?: boolean;
     }) {
       source = newParams.source;
       isLazyLoad = newParams.isLazyLoad ?? true;
+
+      if (dominantColor && node instanceof HTMLImageElement) {
+        const targetNode = newParams.isApplyBgColorToParent
+          ? node.parentElement
+          : node;
+        if (targetNode) {
+          if (!newParams.isApplyBgColorFromImage) {
+            targetNode.style.removeProperty("background-color");
+          } else {
+            targetNode.style.backgroundColor = dominantColor;
+          }
+        }
+      }
 
       if (newParams.id !== currentId) {
         currentId = newParams.id;
