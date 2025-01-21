@@ -21,7 +21,7 @@
       <a
         class="text-aps1 text-b2 w-full justify-end mt-8"
         target="_blank"
-        href="https://papers.21n.io/soft">Read our white paper</a
+        href="https://papers.21n.org/soft">Read our white paper</a
       >
     </div>
   </div>

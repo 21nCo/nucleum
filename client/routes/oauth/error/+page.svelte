@@ -12,7 +12,7 @@
           variant: ButtonVariant.PRIMARY,
           callback: async () => {
             appStore.openLink(
-              $appStore?.appData?.urls?.earlyAccess ?? "https://21n.io"
+              $appStore?.appData?.urls?.earlyAccess ?? "https://21n.org"
             );
           }
         }

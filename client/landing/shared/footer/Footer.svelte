@@ -42,7 +42,7 @@
   }
   let socials = [
     {
-      href: footerValues.twitterUrl ?? "https://twitter.com/21nCompany",
+      href: footerValues.twitterUrl ?? "https://x.com/21nOrg",
       icon: "x",
       primary: "hsla(0, 0%, 0%, 1)",
       isHovered: false

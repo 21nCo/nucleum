@@ -462,8 +462,8 @@
               >You can review and change your personal information by logging
               into your account and visiting your account profile page on our
               apps. You may also send us an email at <a
-                href="mailto:contact@21n.io"
-                class="text-aps1">contact@21n.io</a
+                href="mailto:contact@21n.org"
+                class="text-aps1">contact@21n.org</a
               ><span id="lqtkgpfuworgd">​</span> to request access to, correct or
               delete any personal information that you have provided to us. We cannot
               delete your personal information except by also deleting your user
@@ -565,8 +565,8 @@
               privacy practices, contact us at:
             </p>
             <p>
-              <a href="mailto:contact@21n.io" class="text-aps1"
-                >contact@21n.io</a
+              <a href="mailto:contact@21n.org" class="text-aps1"
+                >contact@21n.org</a
               >.
             </p>
           </div>

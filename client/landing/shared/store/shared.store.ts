@@ -59,7 +59,7 @@ export const upcomingProductsStore = writable<ITileItem[]>([
     title: "Nucleus",
     label: "Your life's digital harmony.",
     description: "",
-    href: "https://docs.21n.io/21n/products/up-next"
+    href: "https://docs.21n.org/21n/products/up-next"
   },
   // {
   //   icon: "",
@@ -73,7 +73,7 @@ export const upcomingProductsStore = writable<ITileItem[]>([
     title: "Fyweb",
     label: "The next generation of the web.",
     description: "",
-    href: "https://docs.21n.io/21n/products/up-next"
+    href: "https://docs.21n.org/21n/products/up-next"
   },
   {
     icon: "",

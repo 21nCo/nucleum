@@ -17,10 +17,10 @@
   } from "../shared/store/shared.store";
   import TileItemsSection from "../shared/tile/TileItemsSection.svelte";
 
-  const whitePaperUrl = "https://papers.21n.io/soft";
+  const whitePaperUrl = "https://papers.21n.org/soft";
 
   let heroInputs: IHeroInputs = {
-    tagline: "21st century native company",
+    tagline: "21st century native org",
     description: "Pioneering sustainable technology for the modern era"
   };
 
@@ -29,14 +29,14 @@
       icon: "fluent-emoji:astronaut",
       title: "Truly 21st century native",
       description:
-        "We named our company '21n' to remind us about how a company should be running in this century every single step of the way, and that's what we are striving to be.",
+        "We named our organization '21n' to remind us about how an organization should be running in this century every single step of the way, and that's what we are striving to be.",
       href: whitePaperUrl
     },
     {
       icon: "fluent-emoji:globe-showing-europe-africa",
       title: "Triple bottom line",
       description:
-        "As a conscious company, we harness the power of business to improve lives and drive progress, all while keeping people and the planet at the forefront of our mission.",
+        "As a conscious organization, we harness the power of business to improve lives and drive progress, all while keeping people and the planet at the forefront of our mission.",
       href: whitePaperUrl
     },
     {
