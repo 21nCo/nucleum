@@ -29,7 +29,7 @@
       iosDownloadUrl:
         "https://apps.apple.com/in/app/memotron-your-memory-atlas/id6737236940",
       androidDownloadUrl:
-        "https://apps.apple.com/in/app/memotron-your-memory-atlas/id6737236940"
+        "https://play.google.com/store/apps/details?id=io.memotron.app.twa"
     },
     btn2: {
       label: "Get started",

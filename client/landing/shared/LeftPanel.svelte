@@ -15,6 +15,6 @@
     if (!isProduct) return;
     console.log({ at: "leftpanel click", isProduct });
     await addAnimateClass("animate-bounce-l", id);
-    window.location.href = "https://21n.io/";
+    window.location.href = "https://21n.org/";
   }}
 />

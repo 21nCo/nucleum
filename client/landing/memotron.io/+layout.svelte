@@ -5,7 +5,11 @@
     icon: "memotron",
     title: "Memotron",
     items: [
-      { label: "Discord", href: "https://discord.gg/blanklabs" },
+      {
+        label: "Downloads",
+        href: "https://docs.memotron.io/docs/getting-started/installation"
+      },
+      { label: "Discord", href: "https://discord.com/invite/9HJqKYTZKg" },
       { label: "Pricing", href: "/pricing" }
     ],
     cta: {
@@ -16,10 +20,10 @@
   let footerValues: IFooter = {
     appStoreUrl:
       "https://apps.apple.com/in/app/memotron-your-memory-atlas/id6737236940",
-    twitterUrl: "https://x.com/memotronIO",
+    twitterUrl: "https://x.com/memotronApp",
     docsUrl: "https://docs.memotron.io",
-    youtubeUrl: "https://www.youtube.com/@21nCompany",
-    roadmapUrl: "https://memotron.supahub.com/roadmap",
+    youtubeUrl: "https://www.youtube.com/@21nOrg",
+    roadmapUrl: "https://docs.memotron.io/docs/more/roadmap",
     changelogUrl: "https://memotron.supahub.com/changelog"
   };
 </script>
