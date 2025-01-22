@@ -216,10 +216,16 @@ class AccountStore extends ObservableStore<
     this.postToEmbed();
     const isOffline = await determineIfOffline();
     if (isOffline) return;
-    const response = await this.persistence.ping();
-    const user = response?.[0]?.result?.[0];
+    let response = await this.persistence.ping();
+    const user = Array.isArray(response)
+      ? response?.[0]?.result?.[0]
+      : undefined;
     if (!response) {
-      appStore.gotoErrorPage("Something went wrong.");
+      const reTryResponse = await this.persistence.ping();
+      if (!reTryResponse) {
+        appStore.gotoErrorPage("Something went wrong.");
+      }
+      response = reTryResponse;
     }
     if (response && !user) {
       await this.signOut({ isPreventRedirect: true });

@@ -40,17 +40,17 @@
     {
       label: "Everything",
       value: Resource.everything,
-      icon: "ph:asterisk"
+      icon: "ph:asterisk-light"
     },
     {
       label: "Nodes",
       value: Resource.node,
-      icon: "ph:circle"
+      icon: "ph:hexagon-light"
     },
     {
       label: "Collections",
       value: Resource.collection,
-      icon: "ph:circles-four"
+      icon: "ph:brackets-round-light"
     }
   ];
   onMount(async () => {

@@ -599,11 +599,11 @@
         maxFileSizeInMb: MAX_FILE_SIZE_MB
       });
       if (!data || data.error) {
-        toasts.error(data?.error ?? "Failed to paste. Please try again.");
-        return;
+        throw new Error(data?.error ?? "Failed to paste. Please try again.");
       }
       if (data.multipleFiles) {
-        insertMultipleFiles(data.multipleFiles);
+        await insertMultipleFiles(data.multipleFiles);
+        progressState = undefined;
         return;
       }
       let newBlock: Pick<IBlock, "contentType" | "body"> | undefined;
@@ -624,6 +624,7 @@
           }
         };
         processPasteOrDrop(newBlock, fileEmbed);
+        progressState = undefined;
         return;
       }
 
@@ -632,6 +633,7 @@
         const blocks = textToMdBlocks(data.text, nodeContext?.contentType);
         mdStore.insertMany(block.id, blocks);
         propagateAsAction(BlockAction.INSERT_MANY, { blocks });
+        progressState = undefined;
         return;
       }
       if (
@@ -652,6 +654,7 @@
           }
         };
         processPasteOrDrop(newBlock, webpageNode[0]);
+        progressState = undefined;
         return;
       }
       if (data.contentType === NodeType.CODE) {
@@ -663,12 +666,13 @@
           }
         };
         processPasteOrDrop(newBlock);
+        progressState = undefined;
         return;
       }
+      progressState = undefined;
     } catch (e) {
       logger.error({ at: "handlePaste", error: e });
-      toasts.error("Failed to paste. Please try again.");
-    } finally {
+      toasts.error(e.message ?? "Failed to paste. Please try again.");
       progressState = undefined;
     }
   }

@@ -285,7 +285,7 @@ export class ActiveNodeStore extends ActiveResourceStore<
   };
   resolveDebouncerForBlockPersistance(id: string) {
     if (!this.debouncers?.has(id)) {
-      this.debouncers.set(id, debouncer(this.updateBlockPropagator, 2000));
+      this.debouncers.set(id, debouncer(this.updateBlockPropagator, 1000));
     }
     let val = this.debouncers.get(id);
     return val!;

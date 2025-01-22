@@ -70,6 +70,7 @@
       {#if item.icon && typeof item.icon === "string"}
         <Icon
           icon={item.icon}
+          isFilled={isActive}
           class={cn({
             "fill-aps1": isActive && !item.isDisabled,
             "stroke-fgs1": !isActive && !item.isDisabled,
