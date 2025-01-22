@@ -57,7 +57,7 @@
     }}
     bind:this={ref}
   >
-    {#if avatar && !objIsEmpty(avatar)}
+    {#if avatar && !objIsEmpty(avatar) && (avatar.code || avatar.file)}
       <AvatarRenderer {avatar} {size} />
     {:else}
       +

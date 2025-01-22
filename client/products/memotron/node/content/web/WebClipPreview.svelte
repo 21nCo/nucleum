@@ -18,7 +18,9 @@
 
 <div
   class={cn("w-full h-full flex justify-center items-center", {
-    "max-h-32": accessPoint !== ResourceAccessPoint.SELF
+    "max-h-32":
+      accessPoint !== ResourceAccessPoint.SELF &&
+      node.contentType !== NodeType.WEB_SCREENSHOT_CLIP
   })}
 >
   {#if node.contentType === NodeType.TEXT_CLIP || node.contentType === NodeType.KINDLE_HIGHLIGHT}

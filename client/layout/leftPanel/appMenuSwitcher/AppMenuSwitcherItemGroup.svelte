@@ -12,7 +12,7 @@
 
 <div
   class={cn("flex flex-col", {
-    "gap-3 items-center": layoutContext === LayoutContext.THIN_WITH_LABEL,
+    "gap-2 items-center": layoutContext === LayoutContext.THIN_WITH_LABEL,
     "gap-1": layoutContext !== LayoutContext.THIN_WITH_LABEL
   })}
 >

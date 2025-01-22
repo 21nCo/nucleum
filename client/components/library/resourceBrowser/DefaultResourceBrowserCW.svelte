@@ -6,33 +6,27 @@
   import { Size } from "$lib/client/types/size.enum";
   import { appStore } from "$lib/client/stores/app.store";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { page } from "$app/stores";
-  import ResourceResolver from "$lib/client/layout/paint/ResourceResolver.svelte";
   import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
   import {
     ResourceAccessPoint,
     ResourceActionType,
-    ResourceAccessMode,
     ResourceAccessPointState
   } from "$lib/client/components/flux/resourceStores/resource.type";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { isValidString } from "$lib/shared/utils/text.utils";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { resolveMultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
-  import view from "$lib/client/stores/view.store";
   import LibraryRecordsPane from "../LibraryRecordsPane.svelte";
   export let resource: Resource;
 
   let searchQuery: string = "";
-  let id: string | null = null;
   let arrangement: Arrangement =
     uiState.getResourceState(
       resource,
       ResourceAccessPoint.BROWSER,
       UIState.arrangement
     ) ?? Arrangement.LIST;
-  $: id = $page.url.searchParams.get(ResourceAccessMode.INLINE);
+
   $: multiSelectContext = {
     resource,
     accessPoint: ResourceAccessPoint.BROWSER
@@ -63,7 +57,7 @@
   };
 </script>
 
-<Panel {floatingButton} title={resource + "s"} on:back>
+<Panel {floatingButton} title={resource + "s"} isShowBackButton={true} on:back>
   <div
     class="relative flex flex-col gap-4 h-full overflow-auto py-3"
     slot="nonpadded"
@@ -77,17 +71,15 @@
       isConstrainedWidth={true}
     />
   </div>
-  <slot slot="right" name="right">
-    {#key id}
-      {#if id}
-        <ResourceResolver {id} accessMode={ResourceAccessMode.INLINE} />
-      {:else}
-        <EmptyStatusView
-          size={Size.lg}
-          mainText="Nothing selected."
-          subText={`Please select a ${resource} to view it here.`}
-        />
-      {/if}
-    {/key}
-  </slot>
+  <div class="flex h-full items-center" slot="toprightactions">
+    <Button
+      icon="ph:plus"
+      label="New"
+      isPreventMinWidth={true}
+      size={Size.sm}
+      type={ButtonVariant.PRIMARY}
+      style={ButtonStyle.DEFAULT}
+      on:click={addAction}
+    />
+  </div>
 </Panel>

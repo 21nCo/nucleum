@@ -71,9 +71,16 @@
 
   function handleColorChange(e: CustomEvent) {
     if (e.detail.hex) {
+      dispatch("change", `hex_${e.detail.hex}`);
+    }
+  }
+
+  function handleColorChangeDebounced(e: CustomEvent) {
+    if (e.detail.hex) {
       dispatch("select", `hex_${e.detail.hex}`);
     }
   }
+
   function handleGradientChange(e: CustomEvent) {
     dispatch("select", `gradient_${e.detail}`);
   }
@@ -213,6 +220,7 @@
             isHueMode={false}
             isShowPreview={false}
             on:change={handleColorChange}
+            on:debouncedChange={handleColorChangeDebounced}
             bind:hex={_value}
           />
         </div>

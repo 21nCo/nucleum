@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { appConstants } from "$lib/client/stores/app.store";
+  import { appConstants, appStore } from "$lib/client/stores/app.store";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import { onMount } from "svelte";
   import { AppSkin, Theme } from "$lib/client/types/appearance.type";
@@ -139,15 +139,17 @@ setting on your device."
       }
     }}
   />
-  <SwitchInput
-    checked={$appearance.isFixedLeftNav}
-    isExpanded={true}
-    on:change={(e) => appearance.setLeftNavFixed(e.detail)}
-    label={{
-      label: "Fixed app menu bar",
-      tooltip: {
-        body: "Enable this to fix the app menu bar to the left side of the screen. This defaults the app menu bar to collapsed state, removes expand button and adds labels to the app menu items."
-      }
-    }}
-  />
+  {#if $appStore.isDebugMode}
+    <SwitchInput
+      checked={$appearance.isFixedLeftNav}
+      isExpanded={true}
+      on:change={(e) => appearance.setLeftNavFixed(e.detail)}
+      label={{
+        label: "Fixed app menu bar",
+        tooltip: {
+          body: "Enable this to fix the app menu bar to the left side of the screen. This defaults the app menu bar to collapsed state, removes expand button and adds labels to the app menu items."
+        }
+      }}
+    />
+  {/if}
 </ScrollView>

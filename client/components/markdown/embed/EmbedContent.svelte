@@ -36,6 +36,7 @@
   import type { IFile } from "../../files/file.type";
   import { ErrorMessage } from "../../error/error.type";
   import { sanitizeAndResolve } from "$lib/client/products/memotron/node/url.utils";
+  import { debouncer } from "$lib/client/utils/utils";
 
   const dispatch = createEventDispatcher();
   const nodeContext = getContext<any>("node");
@@ -85,21 +86,27 @@
     const resource = determineResourceType(event.detail.id);
     if (resource === Resource.node) {
       _mediaBlock = event.detail;
-      mergeBody({ id: event.detail.id, subType: event.detail.contentType });
+      dispatchUpdateEvent({
+        id: event.detail.id,
+        subType: event.detail.contentType
+      });
       contentContext.publish("mention", {
         location: id,
         item: event.detail
       });
     } else if (resource === Resource.collection) {
-      mergeBody({
+      dispatchUpdateEvent({
         id: event.detail.id,
         subType: NodeType.COLLECTION_AS_EMBED
       });
     }
   }
-  function mergeBody(body: Partial<IEmbedBlockBody>) {
+
+  function dispatchUpdateEvent(body: Partial<IEmbedBlockBody>) {
     dispatch("update", body);
   }
+  const debouncedDispatchUpdateEvent = debouncer(dispatchUpdateEvent, 500);
+
   onMount(async () => {
     try {
       isLoading = true;
@@ -139,7 +146,7 @@
           toasts.error(`Invalid URL. Expected ${body.subType} URL`);
           return;
         }
-        mergeBody({ url: sanitized.url });
+        dispatchUpdateEvent({ url: sanitized.url });
         return;
       }
       const result = await captureStore.saveWebpage(sanitized.url, {
@@ -148,7 +155,7 @@
         creationContext: nodeContext?.id ?? undefined
       });
       if (!result) return;
-      mergeBody({ id: result[0].id, subType: sanitized.contentType });
+      dispatchUpdateEvent({ id: result[0].id, subType: sanitized.contentType });
       _mediaBlock = result[0];
     } catch (e) {
       logger.error({ at: "EmbedContent onLinkInput", e });
@@ -160,7 +167,7 @@
 
   function onResize(e: any) {
     height = e.height;
-    mergeBody({ height });
+    debouncedDispatchUpdateEvent({ height });
   }
 
   function onEditTitle(e: MouseEvent) {

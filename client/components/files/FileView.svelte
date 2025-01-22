@@ -15,6 +15,7 @@
   import { imageRepositioner } from "$lib/client/actions/imageRepositioning.action";
   import { createEventDispatcher } from "svelte";
   import { isSameResource } from "../flux/resourceStores/resource.utils";
+  import { debouncer } from "$lib/client/utils/utils";
 
   const dispatch = createEventDispatcher();
 
@@ -77,7 +78,11 @@
 
   function handlePositionChange(newPosition: number) {
     dispatch("reposition", newPosition);
+    debouncedRepositionPropagation(newPosition);
   }
+  const debouncedRepositionPropagation = debouncer((newPosition: number) => {
+    dispatch("repositionDebounced", newPosition);
+  }, 1000);
 
   function onImageLoad(e: Event) {
     if (ref && ref instanceof HTMLImageElement) {

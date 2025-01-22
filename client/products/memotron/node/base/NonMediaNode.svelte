@@ -232,16 +232,14 @@
                 </div>
                 {#if $node.types && $node.types.length > 0 && !$node.focusedBlock}
                   <!-- TODO - later - show properties of focused node if the focused blocks is associated with a type collection -->
-                  <div class="mo:px-0 px-2">
-                    <NodePropertiesPane
-                      {node}
-                      isVisibleProps={true}
-                      on:showAll={() => {
-                        rightPane = NodeRightPaneType.PROPERTIES;
-                        isRightPanelCollapsed = false;
-                      }}
-                    />
-                  </div>
+                  <NodePropertiesPane
+                    {node}
+                    isVisibleProps={true}
+                    on:showAll={() => {
+                      rightPane = NodeRightPaneType.PROPERTIES;
+                      isRightPanelCollapsed = false;
+                    }}
+                  />
                 {/if}
                 <NodeContent {node} {mdId} {isReadOnlyMode} />
               </main>

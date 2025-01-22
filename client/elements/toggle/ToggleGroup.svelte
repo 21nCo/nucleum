@@ -9,6 +9,7 @@
 
   export let items: IToggleItem[] = [];
   export let size: Size.sm | Size.md | Size.lg = Size.md;
+  export let bgSize: Size.sm | Size.md | Size.lg = Size.md;
   export let parentBgIndex: number = 1;
   export let selected: string | undefined = undefined;
   let classList: string = "";
@@ -24,6 +25,7 @@
     <Toggle
       icon={item.icon}
       {size}
+      {bgSize}
       {parentBgIndex}
       on={selected === item.value}
       tooltip={item.tooltip ?? enumToString(item.value)}

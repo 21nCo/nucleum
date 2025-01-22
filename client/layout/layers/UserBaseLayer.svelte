@@ -125,7 +125,7 @@
       refreshTimeZone();
       const isCloudUser = $account.dataMode === UserDataMode.CLOUD;
       if (isCloudUser && !dev_isDisableSyncOnAppear) {
-        await flux.syncDown();
+        await flux.syncDown({ src: "onAppear" });
         await account.ping();
       }
       if (isExtensionEnvironment() || import.meta.env?.DEV) return;

@@ -50,7 +50,7 @@
   }
 
   function onAvatarChange() {
-    collection.debouncedModify({ avatar: $collection.avatar });
+    collection.modify({ avatar: $collection.avatar });
   }
 
   function onSearchQueryChange(e: any) {

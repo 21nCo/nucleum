@@ -184,12 +184,12 @@
     {/each}
   </div>
   {#if addAction}
-    <div class="flex justify-center items-center p-3 w-full">
+    <div class="flex justify--center items-center p-3 pt-6 w-full">
       <Button
         label={addAction}
-        icon="plus"
+        icon="ph:plus"
+        style={ButtonStyle.PLAIN}
         type={ButtonVariant.SECONDARY}
-        style={ButtonStyle.OUTLINED}
         on:click={() => {
           dispatch("add");
         }}

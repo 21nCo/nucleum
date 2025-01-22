@@ -20,6 +20,7 @@
    * @type {Date}
    */
   export let selectedDate: Date = new Date();
+  export let onDateChange: (val: Date) => void;
   let yearMode: boolean = scale === TimeScale.YEARS;
   let monthMode: boolean = scale === TimeScale.MONTHS;
   let dayMode: boolean = scale === TimeScale.DAYS;
@@ -284,11 +285,17 @@
     selectedDecade++;
     nextYear(10);
   }
+
+  function dispatchDateChange(val: Date) {
+    dispatch("change", val);
+    onDateChange(val);
+  }
+
   function selectDate(y: number, m: number, d: number) {
     let date = y + "-" + m + "-" + d;
     if (isDatePickerMode) {
       selectedDate = new Date(dayjs(date).format("YYYY-MM-DD"));
-      dispatch("change", date);
+      dispatchDateChange(selectedDate);
       return;
     }
     if (startSelected == false || dayjs(date).isBefore(dayjs(startString))) {

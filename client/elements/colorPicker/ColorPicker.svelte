@@ -7,6 +7,7 @@
   import type { InputLabel } from "$lib/client/types/input.type";
   import ColorPickerElement from "./ColorPickerElement.svelte";
   import { createEventDispatcher } from "svelte";
+  import { debouncer } from "$lib/client/utils/utils";
   const dispatch = createEventDispatcher();
 
   export let hue = 0;
@@ -15,6 +16,13 @@
   export let isHueMode: boolean = true;
   export let hex: string = "#000000";
   export let onChangeCallback: (
+    value: number | string,
+    additional?: {
+      saturation?: number;
+      lightness?: number;
+    }
+  ) => void = () => {};
+  export let onDebouncedChangeCallback: (
     value: number | string,
     additional?: {
       saturation?: number;
@@ -34,6 +42,16 @@
       lightness
     });
   }
+
+  function onDebouncedChange(e: CustomEvent<number | string>) {
+    dispatch("debouncedChange", e.detail);
+    onDebouncedChangeCallback(e.detail, {
+      saturation,
+      lightness
+    });
+  }
+
+  const debouncedChangePropagation = debouncer(onDebouncedChange, 1000);
 </script>
 
 <FormControlLabelWrapper props={label}>
@@ -45,9 +63,14 @@
         bind:fgColorHsl
         bind:lightness
         on:change={onChange}
+        on:debouncedChange={debouncedChangePropagation}
       />
     {:else}
-      <ColorPickerElement on:change={onChange} bind:value={hex} />
+      <ColorPickerElement
+        on:change={onChange}
+        on:debouncedChange={debouncedChangePropagation}
+        bind:value={hex}
+      />
     {/if}
     {#if $appStore.isDebugMode}
       <Button

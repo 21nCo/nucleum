@@ -28,6 +28,7 @@
   import LibraryLoadingPulse from "./LibraryLoadingPulse.svelte";
   import { Arrangement } from "$lib/client/types/direction.enum";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
+  import ResourceBrowserCw from "./resourceBrowser/ResourceBrowserCW.svelte";
 
   export let resources: Resource[] = [];
 
@@ -239,9 +240,8 @@
     </div>
   {/if}
   <div slot="nav" class="flex flex-grow">
-    <ResourceBrowser
+    <ResourceBrowserCw
       resource={selectedResource}
-      isLibraryNavContext={true}
       on:back={() => {
         selectedResource = Resource.unknown;
         appStore.toggleSearchParam(["resource"]);

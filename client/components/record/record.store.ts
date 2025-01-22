@@ -271,6 +271,7 @@ export class SearchStore {
       exclude?: IRecordId[];
     }
   ) {
+    logger.log({ at: "searchForLinking", query, params });
     let nodes = [];
     if (params?.resource === Resource.node || !params?.resource) {
       nodes = await flux.selectMany(Resource.node, {

@@ -95,7 +95,11 @@
         >
           <span class="flex items-center gap-2">
             {#if option.icon && typeof option.icon === "string"}
-              <Icon icon={option.icon} size={Size.sm} />
+              <Icon
+                icon={option.icon}
+                size={Size.sm}
+                class={option.isDisabled ? "text-fgs3" : ""}
+              />
             {/if}
             <span class="whitespace-nowrap text-b2">
               {option.label}

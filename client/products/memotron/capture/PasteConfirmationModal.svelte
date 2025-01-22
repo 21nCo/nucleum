@@ -21,7 +21,8 @@
   } from "./capture.type";
   import {
     resolveContentTypeForFile,
-    resolveMultipleFilesData
+    resolveMultipleFilesData,
+    resolvePasteContents
   } from "./capture.utils";
   import account from "$lib/client/stores/account.store";
   import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
@@ -105,7 +106,9 @@
 
   async function resolveV2(event: ClipboardEvent) {
     if (!event) return;
-    data = await captureStore.resolvePasteContents(event);
+    data = await resolvePasteContents(event, {
+      maxFileSizeInMb: MAX_FILE_SIZE_MB
+    });
     if (!data || data.error) {
       error = data?.error ?? ErrorMessage.DEFAULT;
       return;

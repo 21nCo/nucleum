@@ -621,7 +621,9 @@ class Flux {
         response
       });
       if (response?.syncDownData) {
-        await this.processSyncDown(response.syncDownData);
+        await this.processSyncDown(response.syncDownData, {
+          src: "syncForExtension"
+        });
       }
       return response;
     } catch (e) {
@@ -683,7 +685,7 @@ class Flux {
       }
       logger.log({ at: "flux.sync - response", mutation, response });
       if (response?.syncDownData) {
-        await this.processSyncDown(response.syncDownData);
+        await this.processSyncDown(response.syncDownData, { src: "sync" });
       }
       return response;
     } catch (e) {
@@ -754,8 +756,8 @@ class Flux {
   /**
    * Syncs down from cloud to local.
    */
-  async syncDown(params?: { isPreventInMemoryStoreLoad?: boolean }) {
-    logger.log({ at: "flux.syncDown" });
+  async syncDown(params?: { isInitialSyncdown?: boolean; src?: string }) {
+    logger.log({ at: "flux.syncDown", params });
     try {
       if (await determineIfOffline()) return;
       if (this.isSyncDownPending) return;
@@ -785,8 +787,9 @@ class Flux {
 
   private async processSyncDown(
     response: any,
-    params?: { isPreventInMemoryStoreLoad?: boolean }
+    params?: { isInitialSyncdown?: boolean; src?: string }
   ) {
+    logger.debug({ at: "flux.processSyncDown", ...params });
     if (!response) {
       return;
     }
@@ -834,7 +837,7 @@ class Flux {
       );
       this.propagateSyncStatus(resource, true);
     }
-    if (!params?.isPreventInMemoryStoreLoad) {
+    if (!params?.isInitialSyncdown) {
       logger.log({
         at: "flux.syncDown - loading in memory stores",
         mutations: syncRecords
@@ -854,7 +857,7 @@ class Flux {
         action: PersistenceActionType.MERGE
       });
     }
-    if (!this.isExtensionEnvironment) {
+    if (!this.isExtensionEnvironment && !params?.isInitialSyncdown) {
       dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
     }
     return syncRecords;
@@ -1025,7 +1028,7 @@ class Flux {
   async initialSyncDown() {
     try {
       this.propagateSyncStatus(Resource.everything);
-      const result = await this.syncDown({ isPreventInMemoryStoreLoad: true });
+      const result = await this.syncDown({ isInitialSyncdown: true });
       await this.loadInMemoryStores();
       this.propagateSyncStatus(Resource.everything, true);
       return result;

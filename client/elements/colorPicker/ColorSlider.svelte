@@ -6,7 +6,9 @@
     resolveSaturationAndLightness,
     retrieveCurrentColors
   } from "$lib/client/utils/theme.utils";
+  import { debouncer } from "$lib/client/utils/utils";
   import { createEventDispatcher } from "svelte";
+
   export let hue: number | undefined = 0;
   export let saturation: number = 50;
   export let lightness: number = 50;
@@ -14,16 +16,26 @@
   export let fgColorHsl: string = refreshFgColorHsl(hue);
   $: fgColorHsl = refreshFgColorHsl(hue);
   const dispatch = createEventDispatcher();
+
   const handleHueChange = (event: Event) => {
     const target = event.target as HTMLInputElement;
     hue = parseInt(target.value);
     dispatch("change", hue);
+    debouncedChangePropagation();
   };
+
+  function onDebouncedChange() {
+    dispatch("debouncedChange", hue);
+  }
+
+  const debouncedChangePropagation = debouncer(onDebouncedChange, 1000);
+
   let values = resolveSaturationAndLightness($appearance);
   if (values) {
     saturation = values.saturation;
     lightness = values.lightness;
   }
+
   function refreshFgColorHsl(hue: number = 0) {
     const val = resolveIfActiveFgFg(hue ?? undefined, $appearance)
       ? currentColors["fgs1"]

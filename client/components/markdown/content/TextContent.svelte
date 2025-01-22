@@ -765,42 +765,29 @@
   isPreventDefault={true}
 >
   <div class="relative w-full flex justify-start">
-    {#if $mdStore.params?.isReadOnly}
-      <div
+    <div
+      class={cn(
+        sizing,
+        "w-full flex justify-start",
+        contentType === NodeType.QUOTE ? "pl-4" : ""
+      )}
+    >
+      <InlineMarkdownTextInput
+        bind:this={textRef}
+        bind:content={text}
         id={id.toString()}
-        data-type={contentType}
-        style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word;"
-        class="justify-start text-left w-full min-h-fit outline-none py-2 {sizing} {contentType ===
-        NodeType.QUOTE
-          ? 'px-2'
-          : 'px-1'}"
-      >
-        {@html renderMdAsHtml(text)}
-      </div>
-    {:else}
-      <div
-        class={cn(
-          sizing,
-          "w-full flex justify-start",
-          contentType === NodeType.QUOTE ? "pl-4" : ""
-        )}
-      >
-        <InlineMarkdownTextInput
-          bind:this={textRef}
-          bind:content={text}
-          id={id.toString()}
-          dataType={contentType}
-          isMarkdown={true}
-          on:keydown={handleKeyDown}
-          on:keyup={handleKeyUp}
-          on:change={dispatchChangeEvent}
-          on:focus={onFocus}
-          on:blur={onBlur}
-          on:paste={handlePaste}
-          bind:placeholder
-        />
-      </div>
-    {/if}
+        dataType={contentType}
+        isMarkdown={true}
+        isReadOnly={$mdStore.params?.isReadOnly}
+        on:keydown={handleKeyDown}
+        on:keyup={handleKeyUp}
+        on:change={dispatchChangeEvent}
+        on:focus={onFocus}
+        on:blur={onBlur}
+        on:paste={handlePaste}
+        bind:placeholder
+      />
+    </div>
     {#if contentType === NodeType.QUOTE}
       <div class="absolute top-0 left-0 h-full flex flex-col justify-center">
         <span class="w-1 bg-aps1 h-full my-2 rounded-md" />

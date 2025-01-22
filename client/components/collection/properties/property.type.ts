@@ -70,6 +70,7 @@ export type IRatingPropertyConfig = {
    */
   ratingAvatar?: AvatarWithCode<IconAvatar>;
   avatar: string;
+  scale?: number;
 };
 export type IRatingProperty = IPropertyInterface<
   PropertyType.RATING,

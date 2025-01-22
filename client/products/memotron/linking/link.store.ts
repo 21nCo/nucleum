@@ -92,6 +92,7 @@ class Linker extends ResourceStore<INodeLink> {
     const allIds = [...(links ?? []), ...(reverseDirectionLinks ?? [])].map(
       (x) => x.id
     );
+    if (allIds.length < 1) return true;
     const response = await this.deleteMany(allIds, {
       context: params?.context
     });

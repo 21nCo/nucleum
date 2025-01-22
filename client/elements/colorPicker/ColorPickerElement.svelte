@@ -1,5 +1,6 @@
 <script lang="ts">
   import { appStore } from "$lib/client/stores/app.store";
+  import { debouncer } from "$lib/client/utils/utils";
   import { onMount, createEventDispatcher } from "svelte";
   export let value: string;
   const dispatch = createEventDispatcher();
@@ -63,7 +64,15 @@
       rgb: selectedColor,
       hex: value
     });
+    debouncedChangePropagation();
   }
+
+  const debouncedChangePropagation = debouncer(() => {
+    dispatch("debouncedChange", {
+      rgb: selectedColor,
+      hex: value
+    });
+  }, 1000);
 </script>
 
 <div class="flex flex-col items-center space-y-6 p-4">

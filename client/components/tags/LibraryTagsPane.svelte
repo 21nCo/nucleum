@@ -15,18 +15,17 @@
 </script>
 
 <div class="flex flex-col gap-5 w-full h-full px-4 py-2">
-  <div class="flex items-center gap-2">
+  <button
+    class="flex items-center gap-2 hover:bg-bgs2 rounded-md"
+    on:click={() => {
+      dispatch("back");
+    }}
+  >
     {#if isLibraryNavContext}
-      <Icon
-        icon="ph:caret-left-light"
-        class="text-fgs3"
-        on:click={() => {
-          dispatch("back");
-        }}
-      />
+      <Icon icon="ph:caret-left-light" class="text-fgs3" />
     {/if}
     <Text content="Tags" style={TextStyle.PAGE_HEADING_SUBTLE} />
-  </div>
+  </button>
   <div class="flex flex-col gap-3">
     <OptionSelector
       size={Size.sm}

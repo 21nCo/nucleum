@@ -182,10 +182,11 @@
     }}
   >
     {#if isValidAndUniqueArray($mdStore.blocks)}
-      {#each $mdStore.blocks as block (block.id)}
+      {#each $mdStore.blocks as block, index (block.id)}
         <Block
           {block}
           {mdStore}
+          {index}
           on:nodularize={(e) => {
             propagate("focus", e.detail);
           }}

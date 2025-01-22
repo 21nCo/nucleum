@@ -21,7 +21,6 @@
   import { Placement } from "$lib/client/types/direction.enum";
   import type { IWebpageStore } from "../contentScripts/types";
   import { logger } from "$lib/client/components/debug/logger.client";
-  import { debouncer } from "$lib/client/utils/utils";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { ResourceError } from "$lib/client/components/error/errors";
   let notes: string =
@@ -88,8 +87,6 @@
       };
     }
   }
-
-  const onNotesChangeDebounced = debouncer(onNotesChange, 1500);
 
   function onHover() {
     restartCloseTimer();
@@ -288,8 +285,7 @@
         <InlineMarkdownTextInput
           placeholder="Add notes"
           bind:content={notes}
-          on:change={onNotesChangeDebounced}
-          on:input={onNotesChangeDebounced}
+          on:debouncedChange={onNotesChange}
           on:focus={() => {
             $feedbackPane.isPreventAutoClose = true;
           }}

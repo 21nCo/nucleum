@@ -100,15 +100,23 @@
 
 {#if properties && properties.length > 0}
   <div
-    class={cn("w-full", {
-      "xl:pl-6": !isRenderAsColumn && !isCollapsed,
-      "xl:pl-10": !isRenderAsColumn && isCollapsed
-    })}
+    class={cn(
+      "w-full",
+      !isRenderAsColumn && {
+        "pl-8": !isCollapsed && !$view.isConstrainedWidth,
+        "pl-12": isCollapsed
+      }
+    )}
   >
     <div
-      class={cn("flex flex-col border border-transparent rounded-md", {
-        "border-brs3": isCollapsed || isCollapserHovered
-      })}
+      class={cn(
+        "flex flex-col rounded-md",
+        !isRenderAsColumn && {
+          border: true,
+          "border-brs3": isCollapsed || isCollapserHovered,
+          "border-transparent": !isCollapsed && !isCollapserHovered
+        }
+      )}
     >
       {#if !isRenderAsColumn}
         <button
@@ -119,8 +127,9 @@
           on:click={() => {
             isCollapsed = !isCollapsed;
           }}
-          use:hoverable
-          on:hover={(e) => (isCollapserHovered = e.detail)}
+          use:hoverable={{
+            onHover: (val) => (isCollapserHovered = val)
+          }}
         >
           <span class="flex items-center gap-2">
             <!-- <Icon icon="widget" size={Size.sm} /> -->
@@ -144,7 +153,7 @@
                 />
               {/if}
               <Button
-                icon={isCollapsed ? "chevdown" : "chevup"}
+                icon={isCollapsed ? "ph:caret-down-light" : "ph:caret-up-light"}
                 tooltip={isCollapsed ? "Expand" : "Collapse"}
               />
             {/if}

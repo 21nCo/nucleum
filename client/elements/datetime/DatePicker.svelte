@@ -6,6 +6,9 @@
   import { InputStyle, type InputLabel } from "$lib/client/types/input.type";
   import InputBaseElement from "../InputBaseElement.svelte";
   import AbsoluteTimeRangePopover from "./absolute/AbsoluteTimeRangePopover.svelte";
+  import FormElement from "../FormElement.svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
+  import { popover } from "$lib/client/actions/popover.action";
   const dispatch = createEventDispatcher();
   export let parentBackgroundIndex: number = 1;
   export let date: Date | undefined = undefined;
@@ -17,7 +20,7 @@
     | "inline"
     | "icon"
     | "use-time-period-picker" = "wide";
-  let popoverRef: any;
+  let ref: any;
   /**
    * @deprecated
    */
@@ -30,10 +33,14 @@
     date = newDate;
     dispatch("change", date);
   }
+
+  function hidePopover() {
+    ref?.dispatchEvent(new CustomEvent("hide"));
+  }
 </script>
 
 {#if variant == "wide" || variant == "wide-center"}
-  <InputBaseElement
+  <!-- <InputBaseElement
     class="gap-2 min-w-fit {variant === 'wide-center'
       ? 'justify-center'
       : 'justify-start'}"
@@ -59,11 +66,48 @@
         bind:selectedDate={_date}
         on:change={() => {
           // popoverRef?.toggle();
+          date = _date;
           dispatch("change", _date);
         }}
       />
     </slot:fragment>
-  </InputBaseElement>
+  </InputBaseElement> -->
+
+  <FormElement {style} {label} isFocused={isPopoverVisible}>
+    <div
+      class={cn("flex items-center gap-2 p-2 w-full", {
+        "justify-center": variant == "wide-center",
+        "justify-start": variant == "wide"
+      })}
+      bind:this={ref}
+      use:popover={{
+        content: AbsoluteTimeRangePopover,
+        id: "date-picker-popover",
+        isSpanToTriggerWidth: true,
+        componentProps: {
+          isDatePickerMode: true,
+          selectedDate: _date,
+          onDateChange: (val) => {
+            date = val;
+            dispatch("change", val);
+            hidePopover();
+          }
+        }
+      }}
+      on:change={(e) => {
+        isPopoverVisible = e.detail?.open;
+      }}
+    >
+      <Icon icon="calendar" size={Size.md} />
+      {#if date}
+        <span class="text-fgs2 text-base">
+          {formatDate(date)}
+        </span>
+      {:else}
+        <span class="text-fgs2 text-b2">Select a date</span>
+      {/if}
+    </div>
+  </FormElement>
 {:else}
   <div class="relative">
     <input

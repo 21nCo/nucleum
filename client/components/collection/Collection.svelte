@@ -376,23 +376,38 @@
     // console.log("onTabSwitch", selectedTab);
     await refresh();
   }
+
+  /**
+   * Used only in case of color picker, for other cases, persistCoverChange is used to set the cover and persist. For color picker, the select event is triggered debounced, therefore onCoverChange is used to set the cover without persisting.
+   * @param e
+   */
   function onCoverChange(e: CustomEvent) {
-    collection.debouncedModify({ cover: e.detail }, "cover");
+    $collection.cover = e.detail;
   }
+
+  function persistCoverChange(e: CustomEvent) {
+    collection.modify({ cover: e.detail });
+  }
+
   function onPlacementChange(e: CustomEvent) {
     logger.log({ at: "onPlacementChange", e });
-    collection.debouncedModify(
-      {
-        coverLayout: {
-          ...$collection.coverLayout,
-          placement: e.detail
-        }
-      },
-      "coverPlacement"
-    );
+    collection.modify({
+      coverLayout: {
+        ...$collection.coverLayout,
+        placement: e.detail
+      }
+    });
   }
+
   function onCoverReposition(e: CustomEvent) {
     logger.log({ at: "onCoverReposition", e });
+    const result = resolveCoverPosition(e);
+    if (result && $collection.isInEditMode) {
+      $collection.coverLayout = result;
+    }
+  }
+
+  function resolveCoverPosition(e: CustomEvent) {
     if (
       (coverPlacement === Placement.Top &&
         $collection.coverLayout?.position?.y === e.detail) ||
@@ -400,40 +415,46 @@
         $collection.coverLayout?.position?.x === e.detail)
     )
       return;
-    collection.debouncedModify(
-      {
-        coverLayout: {
-          ...$collection.coverLayout,
-          position:
-            coverPlacement === Placement.Top
-              ? { y: e.detail, x: $collection.coverLayout?.position?.x }
-              : { x: e.detail, y: $collection.coverLayout?.position?.y }
-        }
-      },
-      "coverPosition"
-    );
+    return {
+      ...$collection.coverLayout,
+      position:
+        coverPlacement === Placement.Top
+          ? { y: e.detail, x: $collection.coverLayout?.position?.x }
+          : { x: e.detail, y: $collection.coverLayout?.position?.y }
+    };
+  }
+
+  function onCoverRepositionDebounced(e: CustomEvent) {
+    logger.log({ at: "onCoverRepositionDebounced", e });
+    if ($collection.isInEditMode) {
+      collection.modify({ coverLayout: $collection.coverLayout });
+    }
   }
 
   function onCoverResize(e: CustomEvent) {
     logger.log({ at: "onCoverResize", e });
-    collection.debouncedModify(
-      {
-        coverLayout: {
-          ...$collection.coverLayout,
-          size:
-            coverPlacement === Placement.Top
-              ? {
-                  height: e.detail.height,
-                  width: $collection.coverLayout?.size?.width
-                }
-              : {
-                  width: e.detail.width,
-                  height: $collection.coverLayout?.size?.height
-                }
-        }
-      },
-      "coverSize"
-    );
+    $collection.coverLayout = resolveCoverResized(e);
+  }
+
+  function resolveCoverResized(e: CustomEvent) {
+    return {
+      ...$collection.coverLayout,
+      size:
+        coverPlacement === Placement.Top
+          ? {
+              height: e.detail.height,
+              width: $collection.coverLayout?.size?.width
+            }
+          : {
+              width: e.detail.width,
+              height: $collection.coverLayout?.size?.height
+            }
+    };
+  }
+
+  function onCoverResizeDebounced(e: CustomEvent) {
+    logger.log({ at: "onCoverResizeDebounced", e });
+    collection.modify({ coverLayout: resolveCoverResized(e) });
   }
 
   function onAddResource(e: CustomEvent) {
@@ -519,7 +540,9 @@
         on:change={onCoverChange}
         on:placement={onPlacementChange}
         on:reposition={onCoverReposition}
+        on:repositionDebounced={onCoverRepositionDebounced}
         on:resize={onCoverResize}
+        on:resizeDebounced={onCoverResizeDebounced}
       />
     {/if}
     {#if isCoverPickerOpen}
@@ -531,7 +554,8 @@
       >
         <CoverPicker
           value={$collection.cover}
-          on:select={onCoverChange}
+          on:change={onCoverChange}
+          on:select={persistCoverChange}
           orientation={coverPlacement === Placement.Top
             ? Orientation.Horizontal
             : Orientation.Vertical}
@@ -767,7 +791,9 @@
         on:change={onCoverChange}
         on:placement={onPlacementChange}
         on:reposition={onCoverReposition}
+        on:repositionDebounced={onCoverRepositionDebounced}
         on:resize={onCoverResize}
+        on:resizeDebounced={onCoverResizeDebounced}
       />
     {/if}
     {#if $collection?.accessMode === ResourceAccessMode.SPLIT || $collection?.accessMode === ResourceAccessMode.FULL || $collection?.accessMode === ResourceAccessMode.FSPLIT}

@@ -181,7 +181,7 @@
             isReadOnlyMode={true}
             avatar={property.config?.avatar}
             value={_value ?? 0}
-            count={5}
+            count={property.config?.scale ?? 5}
           />
         {:else}
           {_value && isValidString(_value.toString())
@@ -216,7 +216,7 @@
       {style}
       avatar={property.config?.avatar}
       bind:value={_value}
-      count={5}
+      count={property.config?.scale ?? 5}
       on:change
     />
   {:else if property.type === PropertyType.SINGLE_SELECT || property.type === PropertyType.MULTI_SELECT || property.type === PropertyType.UNIVERSAL}

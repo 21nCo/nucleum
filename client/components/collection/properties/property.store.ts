@@ -62,8 +62,7 @@ export const autoPropertyOptions = [
     label: "System ID",
     icon: "ph:hash-light",
     value: PropertyType.SYSTEM_ID,
-    groupId: PropertyTypeGroup.SYSTEM,
-    badge: "New"
+    groupId: PropertyTypeGroup.SYSTEM
   },
   // {
   //   label: "Number of visits",
@@ -115,7 +114,6 @@ export const autoPropertyOptions = [
     icon: "ph:palette-light",
     value: PropertyType.COLORS,
     groupId: PropertyTypeGroup.DETECTION,
-    badge: "New",
     tooltip: "Detects colors from an image node."
   },
   {
@@ -227,25 +225,23 @@ export const propertyOptions = [
     label: "Multi select",
     icon: "ph:list-bullets-light",
     value: PropertyType.MULTI_SELECT,
-    groupId: PropertyTypeGroup.SELECT,
-    badge: "New"
+    groupId: PropertyTypeGroup.SELECT
   },
   {
     label: "Universal select",
     icon: "ph:globe-light",
     value: PropertyType.UNIVERSAL,
-    groupId: PropertyTypeGroup.SELECT,
-    badge: "New"
+    groupId: PropertyTypeGroup.SELECT
   },
   {
     label: "Rating",
-    icon: "star",
+    icon: "ph:star-light",
     value: PropertyType.RATING,
     groupId: PropertyTypeGroup.WIZARD
   },
   {
     label: "Date",
-    icon: "calendar",
+    icon: "ph:calendar-light",
     value: PropertyType.DATE,
     groupId: PropertyTypeGroup.WIZARD
   },
@@ -265,7 +261,7 @@ export const propertyOptions = [
   },
   {
     label: "Attachement(s)",
-    icon: "upload",
+    icon: "ph:upload-light",
     value: PropertyType.FILE,
     badge: "Planned",
     isDisabled: true,

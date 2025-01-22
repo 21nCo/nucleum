@@ -55,7 +55,7 @@
       if ($account.dataMode !== UserDataMode.CLOUD || $context.isInOfflineMode)
         return;
       //TODO avoid duplicate syncDown if already triggered by global syncDown on appear
-      flux.syncDown();
+      flux.syncDown({ src: "ComponentBaseLayer" });
     }
   });
 

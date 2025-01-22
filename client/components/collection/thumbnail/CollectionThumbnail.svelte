@@ -62,9 +62,10 @@
       <slot slot="bottom" name="bottom">
         <CollectionThumbnailLabelRow {item} {arrangement} {accessPoint} />
         <span class="flex gap-2">
-          {#if accessPointState === ResourceAccessPointState.DEFAULT}
+          <!-- TODO - create in memory cache for counts - this is causing performance issues -->
+          <!-- {#if accessPointState === ResourceAccessPointState.DEFAULT}
             <CollectionNodeCount {item} isShowLabel={true} />
-          {/if}
+          {/if} -->
           <CollectionPropertyCount {item} />
         </span>
       </slot>

@@ -38,6 +38,7 @@
   id="resourceThumbnailContextMenu"
   menuResolver={() => resolveContextMenu(item, accessPoint)}
   size={Size.md}
+  actionSize={Size.md}
   on:action={onAction}
   position={Placement.BottomCenter}
   isRenderAsSibling={true}

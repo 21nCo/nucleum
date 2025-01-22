@@ -1,6 +1,7 @@
 <script lang="ts">
   import TextArea from "$lib/client/elements/input/TextArea.svelte";
   import InlineFeedbackText from "$lib/client/extensions/clipper/InlineFeedbackText.svelte";
+  import { Orientation } from "$lib/client/types/direction.enum";
   import { InputStyle } from "$lib/client/types/input.type";
   import { AlertType } from "$lib/client/types/notification.type";
   import type { IActiveCollectionStore } from "./collection.store";
@@ -33,9 +34,16 @@
   }
 </script>
 
-<div class="flex flex-col gap-3 p-3 w-96 max-w-full">
+<div
+  class="flex flex-col gap-3 p-3 w-96 max-w-full bg-bgs1 border border-brs2 rounded-md"
+>
   <TextArea
     placeholder="Add a description"
+    width="w-full"
+    label={{
+      label: "Edit collection description",
+      orientation: Orientation.Vertical
+    }}
     style={InputStyle.FILLED}
     bind:value={$collection.description}
     rows={4}

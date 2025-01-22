@@ -17,6 +17,7 @@
   export let id: string;
   export let menuResolver: () => { group: string; items: IContextMenuItem[] }[];
   export let size: Size.sm | Size.md | Size.lg = Size.md;
+  export let actionSize: Size.sm | Size.md | Size.lg = Size.md;
   export let tooltip: string | undefined = undefined;
   export let tooltipOptions: IPopoverRenderBaseParams | undefined = undefined;
   export let parentBgIndex: number = 1;
@@ -123,6 +124,8 @@
       {tooltip}
       parentBgIndex={parentBgIndex + 1}
       isPreventFillOnActive={true}
+      size={actionSize}
+      bgSize={actionSize}
       bind:on={isPopoverVisible}
     />
   </slot>

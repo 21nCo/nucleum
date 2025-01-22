@@ -270,7 +270,10 @@ export class ActiveCollectionStore extends ActiveResourceStore<
   }
 
   async refreshProperties() {
-    logger.log({ at: "ActiveCollectionStore.refreshProperties", id: this.id });
+    logger.log({
+      at: "ActiveCollectionStore.refreshProperties",
+      id: this.id
+    });
     try {
       const result = await this.resourceStore.select(this.id, [
         "(select * from $parent.properties) as properties",

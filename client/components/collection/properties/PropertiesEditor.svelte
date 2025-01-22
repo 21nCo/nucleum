@@ -1,6 +1,5 @@
 <script lang="ts">
   import Table2 from "$lib/client/elements/table/Table2.svelte";
-  import { InputStyle } from "$lib/client/types/input.type";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { Size } from "$lib/client/types/size.enum";
   import {
@@ -12,6 +11,7 @@
   import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 
   import {
+    manualPropertyTypes,
     PropertyType,
     propertyTypesWithUserConfiguration,
     selectOptionsPropertyTypes,
@@ -110,10 +110,7 @@
         body: "Selecting this will show the property during capture or clipping if an item is added to this typed collection. Using this will make capturing essential properties easier at source.",
         size: Size.xs
       },
-      disabledCriteria: (row: any) =>
-        row.type === PropertyType.CREATED_TIME ||
-        row.type === PropertyType.MODIFIED_TIME ||
-        row.type === PropertyType.LOCATION
+      disabledCriteria: (row: any) => !manualPropertyTypes.includes(row.type)
     }
   ];
   let isTypeExtension: boolean = $propertyEditorStore?.typeToExtend
@@ -268,6 +265,7 @@
       }
     });
   }
+
   async function onSave() {
     if (
       $propertyEditorStore.properties.some(

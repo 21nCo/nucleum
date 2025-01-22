@@ -202,13 +202,13 @@ export const inlineLinkPatterns = [
     type: InlineType.MENTION,
     regex: /\[(.*?)\]\(resource=(.*?)\)/g,
     replacement:
-      '<button class="mention text-aps1 underline-dotted-primary" id="$2" data-mention-id="$2">$1</button>'
+      '<placeholder class="inline-mention" data-record-id="$2" data-label="$1" > $1 </placeholder>'
   },
   {
     type: InlineType.LINK,
     regex: /\[(.*?)\]\(https?:\/\/(.*?)\)/g,
     replacement:
-      '<button class="text-aps1 underline hover:bg-aps3 px-0.5 rounded-md" data-href="https://$2">$1</button>'
+      '<placeholder class="inline-link text-aps1 underline hover:bg-aps3 px-0.5 rounded-md cursor-pointer" data-href="https://$2" data-label="$1" >$1</placeholder>'
   }
 ];
 
@@ -338,14 +338,16 @@ export const htmlToMarkdownPatterns = [
   },
   {
     regex:
-      /<button[^>]*id=\"(.*?)\"[^>]*class=\".*?mention.*?\"[^>]*>(.*?)<\/button>/g,
-    replacement: (match, id, label) => `[${label}](resource=${id})`
+      /<a[^>]*inline-mention.*?data-record-id="([^"]*)".*?data-label="([^"]*)".*?>.*?<\/a>/gs,
+    replacement: (match: string, id: string, label: string) => {
+      return `[${label}](resource=${id})`;
+    }
   },
   {
-    regex:
-      /<button[^>]*class="[^"]*"[^>]*data-href="https?:\/\/(.*?)"[^>]*>(.*?)<\/button>/g,
-    replacement: (match: string, url: string, label: string) =>
-      `[${label}](https://${url})`
+    regex: /<a[^>]*inline-link[^>]*?href="([^"]*)"[^>]*?>([\s\S]*?)<\/a>/g,
+    replacement: (match: string, url: string, label: string) => {
+      return `[${label}](${url.startsWith("http") ? url : "https://" + url})`;
+    }
   }
 ];
 
@@ -420,6 +422,10 @@ export function resolvePlainText(mdString: string) {
  * 1. & symbol
  * 2. mention, inline link
  *
+ *
+ * Notes:
+ * For `link` pattern and mention case - 2 characters are added to the mapping array to account for hexagon symbol and space between hexagon symbol and text.
+ *
  * @param markdown
  * @returns
  */
@@ -435,7 +441,7 @@ function createPositionMapping(markdown: string): {
   const patterns = [
     {
       type: "html-entity",
-      regex: /^&(?:amp|lt|gt|quot|apos|dash|ndash);/,
+      regex: /^&(?:amp|lt|gt|quot|apos|dash|ndash|#\d+);/,
       length: (matchStr: string) => matchStr.length,
       transform: (matchStr: string) => {
         switch (matchStr) {
@@ -452,8 +458,13 @@ function createPositionMapping(markdown: string): {
           case "&dash;":
           case "&ndash;":
             return "–";
-          default:
+          default: {
+            const numericMatch = matchStr.match(/^&#(\d+);$/);
+            if (numericMatch) {
+              return String.fromCharCode(parseInt(numericMatch[1], 10));
+            }
             return matchStr;
+          }
         }
       }
     },
@@ -495,6 +506,11 @@ function createPositionMapping(markdown: string): {
           }
         } else if (pattern.type === "link") {
           const linkText = pattern.extract ? pattern.extract(matchText) : "";
+          if (matchText.includes("resource=")) {
+            plainText += "⬡ ";
+            mapping[plainIndex++] = markdownIndex + 1;
+            mapping[plainIndex++] = markdownIndex + 2;
+          }
           for (let i = 0; i < linkText.length; i++) {
             plainText += linkText[i];
             mapping[plainIndex++] = markdownIndex + 1 + i;

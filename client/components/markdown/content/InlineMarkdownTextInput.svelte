@@ -16,14 +16,18 @@
     replaceInlineStylePatterns,
     replaceSymbolPatterns
   } from "../markdown.utils";
-  import InlineMention from "./InlineMention.svelte";
+  import InlineMention from "./inline/InlineMention.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import { logger } from "../../debug/logger.client";
   import { scrollIntoViewOnFocus } from "$lib/client/actions/scroll.action";
   import { isValidString, truncateString } from "$lib/shared/utils/text.utils";
   import { resolveNodeLabelString } from "$lib/client/products/memotron/node/node.utils";
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
-  import { handleMarkdownLinks } from "$lib/client/actions/md.action";
+  import InlineLink from "./inline/InlineLink.svelte";
+  import { resolvePasteContents } from "$lib/client/products/memotron/capture/capture.utils";
+  import { MAX_FILE_SIZE_MB } from "../../record/record.store";
+  import { NodeType } from "$lib/client/products/memotron/node/node.type";
+
   const dispatch = createEventDispatcher();
   //   export let block: Block<TextContent>;
   export let id: string = generateUID();
@@ -31,6 +35,7 @@
   export let content: string | undefined = "";
   export let placeholder: string | undefined = "";
   export let isMarkdown: boolean = false;
+  export let isReadOnly: boolean = false;
   let classList: string = "";
   export { classList as class };
   let blockRef: any;
@@ -96,14 +101,17 @@
   let mutationObserver: MutationObserver;
   let isKeyboardInput = false;
   let keyboardTimeout: any;
+  let isInitialRender = true;
 
   onMount(() => {
     customCaret = document.getElementById("customcaret");
     innerHTML = content ? replaceInlineStylePatterns(content) : "";
     renderMentionPlaceholders();
-    renderInlineLinks();
+    const hasLinks = renderInlineLinkPlaceholders();
     setTimeout(() => {
       renderMentions(true);
+      if (hasLinks) renderInlineLinks(true);
+      isInitialRender = false;
     }, 10);
 
     mutationObserver = new MutationObserver((mutations) => {
@@ -111,7 +119,8 @@
         if (
           (mutation.type === "characterData" ||
             mutation.type === "childList") &&
-          !isKeyboardInput
+          !isKeyboardInput &&
+          !isInitialRender
         ) {
           const parsedMdContent = extractInlineMarkdownFromHtml(
             blockRef.innerHTML
@@ -138,16 +147,32 @@
   });
 
   function renderMentionPlaceholders() {
-    const regex = inlineLinkPatterns.find(
+    const pattern = inlineLinkPatterns.find(
       (pattern) => pattern.type === InlineType.MENTION
-    )?.regex;
-    if (!regex) return;
-    innerHTML = innerHTML.replace(
-      regex,
-      (match, p1, p2) => `<button data-mention-id='${p2}'></button>`
     );
+    if (!pattern) return;
+    innerHTML = innerHTML.replace(pattern.regex, pattern.replacement);
   }
-  function renderInlineLinks() {
+
+  function renderInlineLinkPlaceholders(isNewInsert?: boolean) {
+    const pattern = inlineLinkPatterns.find(
+      (pattern) => pattern.type === InlineType.LINK
+    );
+    if (!pattern) return;
+    if (isNewInsert) {
+      innerHTML = blockRef.innerHTML;
+    }
+    const matches = pattern.regex.exec(innerHTML);
+    if (!matches) return;
+    innerHTML = innerHTML.replace(pattern.regex, pattern.replacement);
+    return true;
+  }
+
+  /**
+   * @deprecated - use renderInlineLinkPlaceholders + renderInlineLinks instead
+   */
+  function renderInlineLinksv1() {
+    console.log("renderInlineLinks", innerHTML);
     const inlineLinkPattern = inlineLinkPatterns.find(
       (pattern) => pattern.type === InlineType.LINK
     );
@@ -230,23 +255,26 @@
     searchQuery: string,
     triggerKey?: string
   ) {
-    const label = isValidString(
-      truncateString(resolveNodeLabelString(item), 50)
-    );
+    const label = isValidString(resolveNodeLabelString(item));
     content = content?.replace(
       triggerKey + (searchQuery ?? ""),
       `[${label ?? "Unknown"}](resource=${item.id})`
     );
+    const mentionRegexPattern = inlineLinkPatterns.find(
+      (pattern) => pattern.type === InlineType.MENTION
+    );
     innerHTML = innerHTML.replace(
       triggerKey + (searchQuery ?? ""),
-      `<button data-mention-id='${item.id}' data-label='${label}'>
-      </button>`
+      mentionRegexPattern?.replacement
+        .replace("$1", label ?? "Unknown")
+        .replace("$2", item.id.toString()) ?? ""
     );
     setTimeout(() => {
       renderMentions();
     }, 10);
     // refreshMentions();
   }
+
   export function set(content: string) {
     innerHTML = content;
   }
@@ -279,14 +307,15 @@
       sel.addRange(range);
     });
   }
+
   export function renderMentions(isInitialRender: boolean = false) {
     try {
       const container = document.getElementById(id);
       if (!container) return;
-      const mentions = container.querySelectorAll("button[data-mention-id]");
+      const mentions = container.querySelectorAll("placeholder.inline-mention");
       mentions.forEach((el) => {
-        const id = el.getAttribute("data-mention-id")
-          ? el.getAttribute("data-mention-id")
+        const id = el.getAttribute("data-record-id")
+          ? el.getAttribute("data-record-id")
           : "";
         const label = el.getAttribute("data-label");
         const placeholder = document.createElement("div");
@@ -313,6 +342,48 @@
       });
     } catch (error) {
       logger.error({ at: "renderMentions", error });
+    }
+  }
+
+  function renderInlineLinks(isInitialRender: boolean = false) {
+    try {
+      const container = document.getElementById(id);
+      if (!container) return false;
+      const inlineLinks = container.querySelectorAll("placeholder.inline-link");
+      if (!inlineLinks.length) return false;
+      inlineLinks.forEach((el) => {
+        const href = el.getAttribute("data-href")
+          ? el.getAttribute("data-href")
+          : "";
+        const label = el.getAttribute("data-label")
+          ? el.getAttribute("data-label")
+          : "";
+        const placeholder = document.createElement("div");
+        const inlineLink = new InlineLink({
+          target: placeholder,
+          props: { href: href ?? "", label: label ?? "" }
+        });
+        if (isInitialRender) {
+          el.replaceWith(...placeholder.childNodes);
+          return;
+        }
+        newInlineSpanId = generateSimpleRandomId();
+        caretPositionT2 = {
+          ...caretPositionT2,
+          index: caretPositionT2?.index ?? 0,
+          elementId: newInlineSpanId
+        };
+        let newSpan = document.createElement("span");
+        newSpan.id = newInlineSpanId;
+        newSpan.innerHTML = "&#8203;";
+        placeholder.appendChild(newSpan);
+        el.replaceWith(...placeholder.childNodes);
+        restoreCaretPosition();
+      });
+      return true;
+    } catch (error) {
+      logger.error({ at: "renderInlineLinks", error });
+      return false;
     }
   }
 
@@ -536,6 +607,7 @@
     selection?.removeAllRanges();
     selection?.addRange(range);
   }
+
   function restoreCaretPosition(isSymbol: boolean = false) {
     setTimeout(() => {
       if (inlineCaretResolutionMethod === InlineCaretResolutionMethod.T1) {
@@ -568,6 +640,7 @@
       }
     }, 10);
   }
+
   function restoreCaretPositionT2() {
     if (!caretPositionT2) return;
     const range = document.createRange();
@@ -897,9 +970,12 @@
     if (event.key === "Backspace" || !(event.key === ")")) {
       return false;
     }
-    const isRendered = renderInlineLinks();
-    if (isRendered) restoreCaretPosition();
-    return isRendered;
+    const hasPlaceholders = renderInlineLinkPlaceholders(true);
+    if (!hasPlaceholders) return;
+    setTimeout(() => {
+      renderInlineLinks();
+    }, 10);
+    return true;
   }
 
   /**
@@ -1004,14 +1080,46 @@
     // console.log("mousedown", event, block);
   }
   async function handlePaste(event: ClipboardEvent) {
-    if (isMarkdown) {
+    const data = await resolvePasteContents(event, {
+      maxFileSizeInMb: MAX_FILE_SIZE_MB
+    });
+    if (!data || data.error || (!isMarkdown && !data?.text)) return;
+    if (!isMarkdown) {
+      pasteText();
+      return;
+    }
+
+    if (
+      !data.text ||
+      data.textMetadata?.isMultiBlockText ||
+      data.textMetadata?.isEmbed ||
+      (data.contentType &&
+        [NodeType.YOUTUBE_VIDEO, NodeType.CODE].includes(data.contentType))
+    ) {
       dispatch("paste", event);
-    } else {
-      event.preventDefault();
-      const text = event.clipboardData?.getData("text/plain") ?? "";
+      return;
+    }
+    if (data.text && data.textMetadata?.isUrl) {
+      const domain = data.text.split("://").pop();
+      let parts = domain?.split("/");
+      let label =
+        parts?.[0] + ": " + (parts?.[1] ? parts?.[1].split("_").join(" ") : "");
+      label = truncateString(label ?? "", 30);
+      const urlText = `[${label}](${data.text})`;
+      pasteText(urlText);
+      const hasPlaceholders = renderInlineLinkPlaceholders(true);
+      if (!hasPlaceholders) return;
+      setTimeout(() => {
+        renderInlineLinks();
+      }, 10);
+      return;
+    }
+    pasteText();
 
+    function pasteText(text?: string) {
+      event?.preventDefault();
+      if (!text) text = event.clipboardData?.getData("text/plain") ?? "";
       // document.execCommand("insertText", false, text);
-
       const selection = window.getSelection();
       const range = selection?.getRangeAt(0);
       range?.deleteContents();
@@ -1049,7 +1157,15 @@
   }
 </script>
 
-{#if typeof content === "string"}
+{#if isReadOnly}
+  <div
+    data-type={dataType}
+    bind:innerHTML
+    style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word;"
+    class="w-full h-full text-left outline-none py-1.5"
+    contenteditable="false"
+  ></div>
+{:else if typeof content === "string"}
   <div class="relative w-full userdata">
     <div
       bind:this={blockRef}
@@ -1089,7 +1205,6 @@
           bottom: 60
         }
       }}
-      use:handleMarkdownLinks
     ></div>
     {#if isCustomCaret}
       <div

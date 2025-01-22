@@ -13,6 +13,7 @@
   import type { IImageRepositionerOptions } from "$lib/client/components/files/file.type";
   import { resizable } from "$lib/client/actions/resize.action";
   import view from "$lib/client/stores/view.store";
+  import { debouncer } from "$lib/client/utils/utils";
 
   const dispatch = createEventDispatcher();
   export let cover: string | undefined = undefined;
@@ -104,7 +105,12 @@
 
   function onResize(e: any) {
     dispatch("resize", e);
+    debouncedResizePropagation(e);
   }
+
+  const debouncedResizePropagation = debouncer((e: any) => {
+    dispatch("resizeDebounced", e);
+  }, 1000);
 </script>
 
 <!-- TODO - Cover photo popover with upload, from link, solid colors, graphics and unsplash options -->
@@ -137,6 +143,7 @@
           "rounded-xl": dev_isRoundedCover
         })}
         on:reposition
+        on:repositionDebounced
       />
     {:else if isInEditMode}
       + Add cover photo
@@ -156,27 +163,31 @@
       {/if}
       <div
         class={cn(
-          "absolute custom--gradient flex w-full justify-end items-center gap-2 bottom-0 right-0 pb-3 pt-4 px-4 cursor-default",
+          "absolute custom--gradient items-center gap-2 bottom-0 pb-3 pt-4 px-4 cursor-default",
           {
-            "flex-col pt-8":
-              placement === Placement.Left || placement === Placement.Right
+            "flex-col pt-8 mx-auto":
+              placement === Placement.Left || placement === Placement.Right,
+            "right-0": placement === Placement.Top
           }
         )}
       >
         <span
           class={cn("flex gap-3", {
             "flex-col":
-              placement === Placement.Left || placement === Placement.Right
+              placement === Placement.Left || placement === Placement.Right,
+            "items-center": placement === Placement.Top
           })}
         >
           {#if !isConstrainedWidth}
             <span class="flex gap-3 items-center bg-bgs2 rounded-full px-4">
-              <span> Layout </span>
+              <span class="text-fgs2 text-b2"> Layout </span>
               <ToggleGroup
                 size={Size.sm}
+                bgSize={Size.sm}
                 selected={placement}
                 on:change={onPlacementChange}
                 parentBgIndex={2}
+                class="gap-1"
                 items={[
                   {
                     value: Placement.Left,

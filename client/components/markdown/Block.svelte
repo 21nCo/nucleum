@@ -51,7 +51,10 @@
   import { resolveFileUploadErrorMessage } from "$lib/client/products/memotron/memotron.utils";
   import { generateResourceId } from "../flux/flux.utils";
   import { Resource } from "../flux/resourceStores/resource.enum";
-  import { resolveMultipleFilesData } from "$lib/client/products/memotron/capture/capture.utils";
+  import {
+    resolveMultipleFilesData,
+    resolvePasteContents
+  } from "$lib/client/products/memotron/capture/capture.utils";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { isValidUrl } from "$lib/shared/utils/utils";
@@ -67,10 +70,12 @@
   import { createEventDispatcher } from "svelte";
   import { tooltip } from "$lib/client/actions/popover.action";
   import { Placement } from "$lib/client/types/direction.enum";
+  import { observeAttributes } from "$lib/client/actions/observe.action";
   const dispatch = createEventDispatcher();
 
   export let block: IBlock;
   export let mdStore: MdStoreType;
+  export let index: number;
   let isHovering: boolean = false;
   let isFocusing: boolean = false;
   let contentRefreshId: number = new Date().getTime();
@@ -115,6 +120,10 @@
     });
   }
 
+  function refresh() {
+    contentRefreshId = new Date().getTime();
+  }
+
   onMount(() => {
     const unsubscribe = mdStore?.alter?.subscribe((b) => {
       if (b && isSameResource(b, block.id)) {
@@ -124,7 +133,7 @@
         } else {
           propagate(BlockAction.CHANGE, { body: b.body });
         }
-        contentRefreshId = new Date().getTime();
+        refresh();
       }
     });
     return () => {
@@ -372,7 +381,7 @@
             body: modifiedBody
           });
         }
-        contentRefreshId = new Date().getTime();
+        refresh();
       }
       data.body = newText;
     }
@@ -582,10 +591,13 @@
    * @param event
    */
   async function handlePaste(event: ClipboardEvent) {
-    event.preventDefault();
-    progressState = "Pasting";
     try {
-      const data = await captureStore.resolvePasteContents(event);
+      if (!(event instanceof ClipboardEvent)) return;
+      event.preventDefault();
+      progressState = "Pasting";
+      const data = await resolvePasteContents(event, {
+        maxFileSizeInMb: MAX_FILE_SIZE_MB
+      });
       if (!data || data.error) {
         toasts.error(data?.error ?? "Failed to paste. Please try again.");
         return;
@@ -653,46 +665,11 @@
         processPasteOrDrop(newBlock);
         return;
       }
-
-      let modifiedBlockText;
-      if (!data.textMetadata?.isUrl) {
-        modifiedBlockText = editBlockText(block, data.text, {
-          isAppend: true
-        });
-      } else {
-        progressState = "Inserting inline link";
-        let label = data.text.split("://").pop()?.split("/")[0];
-        if (account.isCloudUserAndOnline()) {
-          try {
-            const urlData = await new Persistence().retrieveUrlData(data.text);
-            if (urlData?.parsedData) {
-              label = isValidString(urlData.parsedData.label)
-                ? urlData.parsedData.label
-                : isValidString(urlData.parsedData.metadata?.ogTitle)
-                  ? urlData.parsedData.metadata.ogTitle
-                  : label;
-            }
-          } catch (e) {
-            console.error(e);
-          }
-        }
-        label = truncateString(label ?? "", 30);
-        const urlText = `[${label}](${data.text})`;
-        modifiedBlockText = editBlockText(block, urlText, {
-          isAppend: true
-        });
-      }
-
-      block.body = modifiedBlockText;
-      propagate(BlockAction.CHANGE, { body: modifiedBlockText });
-      contentRefreshId = new Date().getTime();
-      mdStore.focusBlock(block.id, { isBottom: true });
     } catch (e) {
       logger.error({ at: "handlePaste", error: e });
       toasts.error("Failed to paste. Please try again.");
     } finally {
       progressState = undefined;
-      event.preventDefault();
     }
   }
 
@@ -907,7 +884,7 @@
       }
   )}
   draggable={!$mdStore.params?.isReadOnly && !isFocusing}
-  data-index={block.id}
+  data-index={index}
   data-id={block.id}
   data-content={block.contentType}
   data-node={block.id}
@@ -927,6 +904,14 @@
     maxSize: MAX_FILE_SIZE_MB * 1024 * 1024,
     onDrop: handleFileDrop,
     isPreventClickToBrowse: true
+  }}
+  use:observeAttributes={{
+    attributes: ["index"],
+    callback: () => {
+      if (isDragging) {
+        refresh();
+      }
+    }
   }}
 >
   {#if isLeftControlsEnabled}

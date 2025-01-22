@@ -20,6 +20,7 @@
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { collectionStore } from "$lib/client/components/collection/collection.store";
   import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { cn } from "$lib/client/utils/ui.utils";
   export let node: IActiveNodeStore;
   export let isVisibleProps: boolean = false;
   let _types: ICollectionExpanded[] | null = null;
@@ -134,7 +135,11 @@
   }
 </script>
 
-<div class="flex flex-col gap-6 w-full flex-grow">
+<div
+  class={cn("flex flex-col gap-6 w-full", {
+    "flex-grow": !isVisibleProps
+  })}
+>
   {#if !isVisibleProps && multipleTypesList.length > 0}
     <OptionSelector
       options={multipleTypesList.map((x) => ({

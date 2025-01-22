@@ -36,5 +36,6 @@
     type={FileType.IMAGE}
     class={cn("h-full w-full object-cover", classList)}
     on:reposition
+    on:repositionDebounced
   />
 {/if}
