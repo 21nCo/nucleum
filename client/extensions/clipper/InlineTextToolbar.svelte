@@ -15,6 +15,9 @@
   import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { ResourceError } from "$lib/client/components/error/errors";
+  import { ButtonVariant } from "$lib/client/types/button.type";
+  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
+  import { Size } from "$lib/client/types/size.enum";
 
   export let id: string | null = null;
   export let selectedHighlighterId: string | null = null;
@@ -110,16 +113,19 @@
         size={Size.xs}
       /> -->
       <LinkActionOnClipper links={clip?.links} bind:isLinkboxOpened />
-      <Button
-        icon="document-text"
-        tooltip="Add notes"
-        on:click={() => {
-          isNotesOpened = !isNotesOpened;
+      <Toggle
+        icon={notes ? "ph:note-light" : "ph:note-blank-light"}
+        tooltip={notes ? "View notes" : "Add notes"}
+        bind:on={isNotesOpened}
+        bgSize={Size.sm}
+        on:change={(e) => {
+          if (e.detail) isLinkboxOpened = false;
         }}
       />
       <Button
-        icon="trash"
+        icon="ph:trash-light"
         tooltip="Delete clip"
+        type={ButtonVariant.DANGER}
         on:click={async () => {
           let result = await webpage.removeClip(id);
           feedback = result?.message

@@ -71,39 +71,12 @@
     </button>
   {/if}
   {#if isHovering}
-    <button
-      class={cn("absolute top-0 right-0 flex gap-2 p--1", {
-        "border rounded-md": arrangement !== Arrangement.LIST,
-        "m-3": arrangement !== Arrangement.LIST && !isHidePreview,
-        "m-1": arrangement !== Arrangement.LIST && isHidePreview,
-        "bg-ccs4 border-ccs2":
-          arrangement != Arrangement.LIST && isApplyCustomColor,
-        "bg-bgs2 border-brs3":
-          arrangement != Arrangement.LIST && !isApplyCustomColor,
-        "h-full flex-col justify-center": arrangement === Arrangement.LIST
-      })}
-      on:click|stopPropagation
-    >
-      <div class="flex">
-        <slot name="right" />
-        <div
-          class={cn({
-            "mx-2 border rounded-md": arrangement === Arrangement.LIST,
-            "bg-ccs4 border-ccs2":
-              arrangement === Arrangement.LIST && isApplyCustomColor,
-            "bg-bgs2 border-brs3":
-              arrangement === Arrangement.LIST && !isApplyCustomColor
-          })}
-        >
-          <ResourceThumbnailContextMenu
-            bind:item
-            {accessPoint}
-            {accessPointId}
-            {accessPointContext}
-            on:action
-          />
-        </div>
-      </div>
-    </button>
+    <ResourceThumbnailContextMenu
+      bind:item
+      {accessPoint}
+      {accessPointId}
+      {accessPointContext}
+      on:action
+    />
   {/if}
 </div>

@@ -234,7 +234,8 @@ const phosphorIcons = [
   "coffee",
   "armchair",
   "bank",
-  "currency-circle-dollar"
+  "currency-circle-dollar",
+  "note-blank"
 ];
 
 export const phosphorRatingIcons = [

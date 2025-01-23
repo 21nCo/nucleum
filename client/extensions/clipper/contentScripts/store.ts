@@ -444,7 +444,9 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     return { message: "Unlinked!", type: AlertType.SUCCESS };
   }
 
-  async linkClip(from: IRecordId, to: IRecordId) {
+  async linkClip(from: IRecordId, to: IRecordId, params?: {
+    isFromSidePanel?: boolean
+  }) {
     const webpage = this.get();
     const clip = webpage?.clips?.find(resourceInList(from));
     if (!clip)
@@ -465,10 +467,18 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       return n;
     });
     appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
+    if (!params?.isFromSidePanel) {
+      relayToSidePanel({
+        event: ClipperExtensionEvent.REFRESH_CLIP,
+        data: { clipId: from, clip: this.get().clips?.find(resourceInList(from)) }
+      });
+    }
     return response;
   }
 
-  async removeLinkForClip(from: IRecordId, to: IRecordId) {
+  async removeLinkForClip(from: IRecordId, to: IRecordId, params?: {
+    isFromSidePanel?: boolean
+  }) {
     const response = await linker.unlink(from, to);
     if (!response)
       return { message: "Unlinking failed", type: AlertType.ERROR };
@@ -482,10 +492,18 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       return n;
     });
     appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
+    if (!params?.isFromSidePanel) {
+      relayToSidePanel({
+        event: ClipperExtensionEvent.REFRESH_CLIP,
+        data: { clipId: from, clip: this.get().clips?.find(resourceInList(from)) }
+      });
+    }
     return { message: "Unlinked!", type: AlertType.SUCCESS };
   }
 
-  async removeClip(id: string) {
+  async removeClip(id: string, params?: {
+    isFromSidePanel?: boolean
+  }) {
     const response = await nodeStore.trash(id);
     console.log({ response });
     if (!response)
@@ -496,6 +514,12 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     });
     removeHighlight(id);
     appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
+    if (!params?.isFromSidePanel) {
+      relayToSidePanel({
+        event: ClipperExtensionEvent.CLIPS_CHANGED,
+        data: this.get().clips
+      });
+    }
     return { message: "Clip removed!", type: AlertType.SUCCESS };
   }
 
@@ -517,8 +541,8 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       return n;
     });
     relayToSidePanel({
-      event: ClipperExtensionEvent.CLIPS_CHANGED,
-      data: this.get().clips
+      event: ClipperExtensionEvent.REFRESH_CLIP,
+      data: { clipId: id, clip: this.get().clips?.find(resourceInList(id)) }
     });
     return { message: "Color updated!", type: AlertType.SUCCESS };
   }
@@ -574,7 +598,9 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     return response;
   }
 
-  async persistClipNotes(id: IRecordId, notes: string) {
+  async persistClipNotes(id: IRecordId, notes: string, params?: {
+    isFromSidePanel?: boolean
+  }) {
     const webpage = this.get();
     if (!webpage?.clips) return;
     const clip = webpage.clips?.find(resourceInList(id));
@@ -592,6 +618,12 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       });
       return n;
     });
+    if (!params?.isFromSidePanel) {
+      relayToSidePanel({
+        event: ClipperExtensionEvent.REFRESH_CLIP,
+        data: { clipId: id, clip: this.get().clips?.find(resourceInList(id)) }
+      });
+    }
     return response;
   }
 
@@ -611,7 +643,9 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     return response;
   }
 
-  async updateClipProperty(id: IRecordId, property: INodePropertyValue) {
+  async updateClipProperty(id: IRecordId, property: INodePropertyValue, params?: {
+    isFromSidePanel?: boolean
+  }) {
     logger.log({
       at: "updateClipProperty",
       id,
@@ -637,6 +671,12 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       });
       return n;
     });
+    if (!params?.isFromSidePanel) {
+      relayToSidePanel({
+        event: ClipperExtensionEvent.REFRESH_CLIP,
+        data: { clipId: id, clip: this.get().clips?.find(resourceInList(id)) }
+      });
+    }
     return response;
   }
 

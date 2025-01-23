@@ -37,7 +37,11 @@ export enum ClipperExtensionEvent {
   /**
    * Event to trigger syncing of highlights from sync pages.
    */
-  START_SYNC = "START_SYNC"
+  START_SYNC = "START_SYNC",
+  /**
+   * Event to trigger refreshing of a clip from content script to side panel when the clip is mutated from content script.
+   */
+  REFRESH_CLIP = "REFRESH_CLIP"
 }
 
 export enum ClipperElementIdentifier {

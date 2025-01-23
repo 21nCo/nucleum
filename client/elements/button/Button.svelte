@@ -129,7 +129,9 @@
               style === ButtonStyle.PLAIN &&
               type === ButtonVariant.SECONDARY),
           "stroke-ars1":
-            (style === ButtonStyle.OUTLINED || style === ButtonStyle.PLAIN) &&
+            (style === ButtonStyle.OUTLINED ||
+              style === ButtonStyle.PLAIN ||
+              (isIconOnlyButton && style === ButtonStyle.DEFAULT)) &&
             type === ButtonVariant.DANGER,
           "stroke-fgs2": type === ButtonVariant.SECONDARY,
           "stroke-abg":

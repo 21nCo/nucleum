@@ -149,7 +149,7 @@
     }
   }
 
-  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  const messageListener = (message, sender, sendResponse) => {
     logger.log({
       at: "onMessage - Youtube content script",
       event: message.event
@@ -164,7 +164,7 @@
         player.currentTime = message.data.clip.body.timestamp;
       }
     }
-  });
+  };
 
   function onChannelMessage(msg: any) {
     logger.debug({ at: "YoutubeContentScript - channel listener", msg });
@@ -203,6 +203,7 @@
 
   onMount(() => {
     clipCount = 0;
+    chrome.runtime.onMessage.addListener(messageListener);
     channel.onMessage.addListener(onChannelMessage);
     if (!attachPlayerControlListeners()) {
       setTimeout(() => {
@@ -229,7 +230,7 @@
 
   onDestroy(() => {
     channel.onMessage.removeListener(onChannelMessage);
-
+    chrome.runtime.onMessage.removeListener(messageListener);
     if (attachedElements && sizeButtonListener && fullscreenButtonListener) {
       attachedElements.sizeButton?.removeEventListener(
         "click",

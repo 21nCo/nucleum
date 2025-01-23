@@ -35,6 +35,7 @@
   import { screenShotOnlyPages } from "$lib/client/products/memotron/common/urlMap";
   import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
+  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   let mode: "Clips" | "Capture" | "Notes" = "Clips";
   let title = "";
   let isPageSaved = false;
@@ -44,6 +45,7 @@
   let isLoggedIn = false;
   let refreshId: number = new Date().getTime();
   let isNotAvailable = false;
+  let isMemotronPage = false;
 
   const channel = getPort("channel");
   const stores = [linkTagStore];
@@ -52,7 +54,7 @@
       event: ClipperExtensionEvent.SAVE_WEBPAGE
     });
   }
-  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  const messageListener = (message: any, sender: any, sendResponse: any) => {
     if (message.event === ExtensionEvent.PAGE_STATE) {
       refreshState(message.data);
       sendResponse({ status: "success", message: "State refreshed" });
@@ -70,7 +72,7 @@
       isLoggedIn = false;
     }
     return true;
-  });
+  };
 
   function onChannelMessage(msg: any) {
     logger.log({ at: "SidePanel - channel listener", msg });
@@ -78,6 +80,9 @@
 
   onMount(async () => {
     channel.onMessage.addListener(onChannelMessage);
+    if (messageListener) {
+      chrome.runtime.onMessage.addListener(messageListener);
+    }
     logger.log({ at: "onMount - SidePanel" });
     const tab = await chrome.storage.local.get("tab");
     title = tab.tab.title;
@@ -90,8 +95,24 @@
 
   onDestroy(() => {
     channel.onMessage.removeListener(onChannelMessage);
+    if (messageListener) {
+      chrome.runtime.onMessage.removeListener(messageListener);
+    }
   });
 
+  const memotronUrlsList = [
+    /^https:\/\/(?:.*\.)?memotron\.io(?:\/.*)?$/,
+    /^https:\/\/(?:.*\.)?tidigit\.dev(?:\/.*)?$/
+  ];
+  const unavailableUrlsList = [
+    ...screenShotOnlyPages,
+    /^https:\/\/app\.memotron\.io(?:\/.*)?$/,
+    /^https:\/\/memotron\.tidigit\.dev(?:\/.*)?$/,
+    /^https:\/\/(?:www\.)?(twitter\.com|x\.com)\/([a-zA-Z0-9_]+)\/status\/(\d+)\/?$/,
+    /^https:\/\/(?:.*\.)?amazon\.[a-z]{2,3}(?:\/.*)?$/,
+    /^https:\/\/(?:.*\.)?twitter\.[a-z]{2,3}(?:\/.*)?$/,
+    /^https:\/\/(?:.*\.)?x\.[a-z]{2,3}(?:\/.*)?$/
+  ];
   //TODO - maintain a store with the data.
   async function refreshState(data: any) {
     logger.debug({ at: "SidePanel - refreshState", data });
@@ -103,16 +124,8 @@
     if (data.notes) notes = data.notes;
     else notes = "";
     if (data.url) {
-      const unavailableUrlsList = [
-        ...screenShotOnlyPages,
-        /^https:\/\/(?:www\.)?(twitter\.com|x\.com)\/([a-zA-Z0-9_]+)\/status\/(\d+)\/?$/,
-        /^https:\/\/(?:.*\.)?memotron\.io(?:\/.*)?$/,
-        /^https:\/\/(?:.*\.)?amazon\.[a-z]{2,3}(?:\/.*)?$/,
-        /^https:\/\/(?:.*\.)?twitter\.[a-z]{2,3}(?:\/.*)?$/,
-        /^https:\/\/(?:.*\.)?x\.[a-z]{2,3}(?:\/.*)?$/,
-        /^https:\/\/memotron\.tidigit\.dev(?:\/.*)?$/
-      ];
       isNotAvailable = unavailableUrlsList.some((x) => x.test(data.url));
+      isMemotronPage = memotronUrlsList.some((x) => x.test(data.url));
     }
     const token = await resolveToken();
     if (token) {
@@ -199,7 +212,7 @@
           {#if mode === "Clips"}
             <div class="flex flex-col gap-2 p-4 h-full w-full">
               {#key clips}
-                <ClipsPane {clips} />
+                <ClipsPane {clips} {isMemotronPage} />
               {/key}
             </div>
           {:else if mode === "Notes"}
@@ -224,11 +237,12 @@
         </div>
       {:else if isNotAvailable}
         <div class="flex w-full flex-1">
-          <ComingSoonView
-            mainText="This page is not available on side panel yet"
-            subText="We are working on it!"
-            isHideRoadmap={true}
-            style={2}
+          <EmptyStatusView
+            mainText={isMemotronPage
+              ? "Hello from the other side of Memotron👋."
+              : "Clips cannot be shown here for this web page."}
+            subText="Some web pages are not supported for clipping / showing clips in the side panel."
+            isNotAvailableContext={true}
           />
         </div>
       {:else}
@@ -247,24 +261,32 @@
         </div>
       {/if}
       <footer
-        class="h-12 border-t border-t-brs3 flex justify-between items-center px-3"
+        class="h-14 border-t border-t-brs3 flex justify-between items-center px-3"
       >
-        <Button
-          label="Go to app"
-          size={Size.sm}
-          style={ButtonStyle.PLAIN}
-          on:click={() => openAppPath("")}
-        />
-        {#if isLoggedIn}
-          <span class="flex items-center gap-2">
-            <span>
-              {$account?.userInfo?.nickName ?? "Unknown user"}
-            </span>
+        <span class="flex items-center gap-2">
+          <Button
+            tooltip="Help and support"
+            icon="ph:question-light"
+            size={Size.sm}
+            style={ButtonStyle.OUTLINED}
+            on:click={() => {
+              window.open("https://discord.com/invite/9HJqKYTZKg", "_blank");
+            }}
+          />
+          <Button
+            tooltip="Go to app"
+            icon="ph:hexagon-light"
+            size={Size.sm}
+            style={ButtonStyle.OUTLINED}
+            on:click={() => openAppPath("")}
+          />
+          {#if isLoggedIn}
             <Button
-              label="logout"
+              tooltip="logout"
+              icon="ph:sign-out-light"
               size={Size.sm}
-              isUnderlined={true}
-              style={ButtonStyle.PLAIN}
+              type={ButtonVariant.DANGER}
+              style={ButtonStyle.OUTLINED}
               on:click={() => {
                 account.signOut();
                 clips = [];
@@ -272,16 +294,26 @@
                 relayToContentScript({
                   event: ExtensionEvent.LOGOUT
                 });
+                isLoggedIn = false;
               }}
             />
+          {:else if !isLoggedIn}
+            <Button
+              tooltip="Login"
+              icon="ph:sign-in-light"
+              type={ButtonVariant.PRIMARY}
+              size={Size.sm}
+              style={ButtonStyle.OUTLINED}
+              on:click={() => openAppPath("signup?ext=true")}
+            />
+          {/if}
+        </span>
+        {#if isLoggedIn}
+          <span>
+            {$account?.userInfo?.nickName ?? "Unknown user"}
           </span>
-        {:else if !isLoggedIn}
-          <Button
-            label="Login"
-            size={Size.sm}
-            style={ButtonStyle.PLAIN}
-            on:click={() => openAppPath("signup?ext=true")}
-          />
+        {:else}
+          <span> Not logged in. </span>
         {/if}
       </footer>
     </div>

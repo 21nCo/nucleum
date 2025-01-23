@@ -583,6 +583,10 @@ type IWebPageMetadata = {
   ogUrl?: string;
   twitterCard?: string;
   screenshotFile?: IRecordId;
+  browser?: {
+    userAgent: string;
+    uAData: any;
+  };
 };
 
 export type ITextClipBody = {

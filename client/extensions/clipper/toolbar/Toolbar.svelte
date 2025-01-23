@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
+  import { createEventDispatcher, onMount } from "svelte";
   import HightlightColorItem from "$lib/client/products/memotron/common/highlighters/HightlightColorItem.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import Divider from "$lib/client/elements/Divider.svelte";
@@ -25,6 +25,7 @@
   export let contentType: NodeType = NodeType.WEB_PAGE;
   export let isDragging: boolean = false;
 
+  let isSidePanelAvailable = true;
   let isAutoHighlighterExpanded = false;
   $: isScreenShotOnly = screenShotOnlyPages.some((regex) =>
     regex.test($webpage.url)
@@ -47,6 +48,16 @@
   $: buttonParams = {
     tooltipOptions
   };
+
+  onMount(() => {
+    setTimeout(() => {
+      const arcBrowserCssVal = getComputedStyle(
+        document.documentElement
+      ).getPropertyValue("--arc-palette-title");
+      isSidePanelAvailable = arcBrowserCssVal ? false : true;
+    }, 2000);
+  });
+
   function toggleAutoHighligher() {
     if (!isAutoHighlighterExpanded) {
       activeHighlighter = null;
@@ -211,16 +222,18 @@
       />
     </div>
   {/if}
-  <Button
-    icon="hugeicons:sidebar-right"
-    tooltip="Open Side panel"
-    {...buttonParams}
-    on:click={() =>
-      relayToBackgroundScript({
-        event: ExtensionEvent.RUN,
-        data: { action: ExtensionEvent.TOGGLE_SIDEPANEL }
-      })}
-  />
+  {#if isSidePanelAvailable}
+    <Button
+      icon="hugeicons:sidebar-right"
+      tooltip="Open Side panel"
+      {...buttonParams}
+      on:click={() =>
+        relayToBackgroundScript({
+          event: ExtensionEvent.RUN,
+          data: { action: ExtensionEvent.TOGGLE_SIDEPANEL }
+        })}
+    />
+  {/if}
   <Button
     icon="ph:x-circle-light"
     tooltip="Collapse"

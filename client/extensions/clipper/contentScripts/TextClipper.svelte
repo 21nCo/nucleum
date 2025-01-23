@@ -36,6 +36,7 @@
   let inlineToolbarFeedback: { message: string; type: AlertType } | string = "";
   let renderedHighlights: string[] = [];
   onMount(() => {
+    chrome.runtime.onMessage.addListener(messageListener);
     const sub = appEvents.subscribe((x) => {
       if (x.event === ClipperExtensionEvent.REFRESH_CLIPS_RENDERING) {
         logger.log({ at: "onMessage - text clipper", event: x.event });
@@ -44,6 +45,7 @@
     });
     return () => {
       sub();
+      chrome.runtime.onMessage.removeListener(messageListener);
     };
   });
   async function handleTextSelection() {
@@ -227,7 +229,7 @@
     }
   }
 
-  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  const messageListener = (message, sender, sendResponse) => {
     logger.log({
       at: "onMessage - Text clipper",
       message,
@@ -250,7 +252,8 @@
       );
       sendResponse(clipsOrder);
     }
-  });
+  };
+
   function scrollToHighlight(clipId: string) {
     const element = document.querySelector(`[data-highlight-id="${clipId}"]`);
     if (element) {

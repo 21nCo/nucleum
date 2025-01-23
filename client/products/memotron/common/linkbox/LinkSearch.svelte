@@ -88,7 +88,7 @@
           placement: resultsPlacement
         };
         placeholder = "Link to a node or add to a collection";
-        icon = "arrow-up-right";
+        icon = "ph:link-light";
         inputStyle = InputStyle.BORDERED;
         break;
     }

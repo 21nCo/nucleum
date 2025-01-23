@@ -27,7 +27,7 @@
     ($feedbackPane.focusedClip
       ? $feedbackPane.focusedClip.notes
       : $webpage?.notes) ?? "";
-  let autoCloseDuration = 40;
+  let autoCloseDuration = 4;
   let closeTimer: any;
   let closeActionTimestamp: number;
   let isHovering = false;

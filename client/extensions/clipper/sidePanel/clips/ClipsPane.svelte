@@ -18,6 +18,7 @@
   import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
 
   export let clips: IClip[] = [];
+  export let isMemotronPage: boolean = false;
   let transformedClips: IClip[] = [];
   let isLoadingState: boolean = true;
 
@@ -117,8 +118,12 @@
     <EmptyStatusView
       {isLoadingState}
       isSearchContext={true}
-      mainText="No clips found."
-      subText="Start highlighting to create clips."
+      mainText={isMemotronPage
+        ? "Hello from the other side of Memotron👋."
+        : "No clips found."}
+      subText={isMemotronPage
+        ? "Start highlighting to save clips about Memotron to your Memotron."
+        : "Start highlighting to create clips."}
     />
   {/if}
 </main>

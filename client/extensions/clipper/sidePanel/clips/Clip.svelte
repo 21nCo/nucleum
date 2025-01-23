@@ -13,10 +13,13 @@
   import LinkItems from "$lib/client/products/memotron/common/linkbox/LinkItems.svelte";
   import LinkActionOnClipper from "$lib/client/products/memotron/common/linkbox/LinkActionOnClipper.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
-  import { relayToContentScript } from "$lib/client/utils/extension.utils";
+  import {
+    openAppPath,
+    relayToContentScript
+  } from "$lib/client/utils/extension.utils";
   import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
   import InlineFeedbackText from "../../InlineFeedbackText.svelte";
-  import { onMount, createEventDispatcher } from "svelte";
+  import { onMount, createEventDispatcher, onDestroy } from "svelte";
   import FileView from "$lib/client/components/files/FileView.svelte";
   import TextClip from "./TextClip.svelte";
   import { hoverable } from "$lib/client/actions/hover.action";
@@ -25,6 +28,10 @@
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
   import { Size } from "$lib/client/types/size.enum";
+  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
+  import ResourceThumbnailContextMenu from "$lib/client/components/record/thumbnail/ResourceThumbnailContextMenu.svelte";
+  import { Arrangement } from "$lib/client/types/direction.enum";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
 
   const dispatch = createEventDispatcher();
 
@@ -37,8 +44,28 @@
   refreshDerivedData();
 
   onMount(() => {
+    chrome.runtime.onMessage.addListener(messageListener);
     feedback = "";
   });
+
+  onDestroy(() => {
+    chrome.runtime.onMessage.removeListener(messageListener);
+  });
+
+  function messageListener(message: any, sender: any, sendResponse: any) {
+    if (message.event === ClipperExtensionEvent.REFRESH_CLIP) {
+      console.log({
+        at: "Clip - messageListener - REFRESH_CLIP",
+        message,
+        clip
+      });
+      if (message.data.clipId === clip.id) {
+        clip = message.data.clip;
+        refreshDerivedData();
+      }
+    }
+    return true;
+  }
 
   async function onNotesChange(e: CustomEvent) {
     feedback = {
@@ -130,8 +157,7 @@
     dispatch("click");
   }
 
-  async function onDelete(e) {
-    e.stopPropagation();
+  async function onDelete() {
     const result = await relayToContentScript({
       event: ClipperExtensionEvent.MUTATION_RELAY,
       data: {
@@ -180,8 +206,10 @@
   }}
 >
   {#if clip.contentType === NodeType.TEXT_CLIP || clip.contentType === NodeType.WEB_SCREENSHOT_CLIP}
-    <div class="flex flex-col gap-2 text-left">
-      <TextClip {clip} on:click={onClick} on:keydown />
+    <div class="flex flex-col gap-2 text-left w-full">
+      {#key clip.body.highlighterId}
+        <TextClip {clip} on:click={onClick} on:keydown />
+      {/key}
       <div
         class="flex gap-1 justify-between bg-bgs1 rounded-md px-1 h-8 items-center"
       >
@@ -201,7 +229,7 @@
             {/if}
             {#if isHovered || clip?.notes || isNotesOpened}
               <Toggle
-                icon={clip?.notes ? "document-text" : "document"}
+                icon={clip?.notes ? "ph:note-light" : "ph:note-blank-light"}
                 tooltip={clip?.notes ? "View notes" : "Add notes"}
                 bind:on={isNotesOpened}
                 bgSize={Size.sm}
@@ -209,9 +237,6 @@
                   if (e.detail) isLinkboxOpened = false;
                 }}
               />
-            {/if}
-            {#if isHovered}
-              <Button icon="trash" tooltip="Delete clip" on:click={onDelete} />
             {/if}
           </span>
         {/if}
@@ -236,7 +261,7 @@
             }}
           />
           <Toggle
-            icon={clip?.notes ? "document-text" : "document"}
+            icon={clip?.notes ? "ph:note-light" : "ph:note-blank-light"}
             tooltip={clip?.notes ? "View notes" : "Add notes"}
             bind:on={isNotesOpened}
             bgSize={Size.sm}
@@ -244,9 +269,6 @@
               if (e.detail) isLinkboxOpened = false;
             }}
           />
-          {#if isHovered}
-            <Button icon="trash" tooltip="Delete clip" on:click={onDelete} />
-          {/if}
         </div>
       </div>
     </button>
@@ -273,5 +295,22 @@
   {/if}
   {#if feedback}
     <InlineFeedbackText bind:feedback />
+  {/if}
+  {#if isHovered}
+    <ResourceThumbnailContextMenu
+      item={clip}
+      arrangement={Arrangement.GRID}
+      accessPoint={ResourceAccessPoint.CLIPPER}
+      size={Size.sm}
+      on:action={(e) => {
+        const action = e?.detail?.action;
+        if (action === "delete") {
+          onDelete();
+        } else if (action === "openInApp") {
+          // onOpenInApp();
+          openAppPath(`library?pop=${clip.id}`);
+        }
+      }}
+    />
   {/if}
 </button>

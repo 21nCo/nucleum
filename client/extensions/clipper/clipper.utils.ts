@@ -144,6 +144,7 @@ export async function extractFullTabData(
     doc.querySelector("meta[name='twitter:card']") as HTMLMetaElement
   )?.content;
   const { ogTitle, ogImage, ogDescription, ogUrl } = resolveOgData(doc);
+  const browser = extractBrowserDetails();
   // console.log({ innerHTML: doc.body?.innerHTML, docText: params?.docText });
   const hash = await generateSHA256Hash(doc.body?.innerHTML ?? params?.docText);
   const url = params?.url ? resolveUrl(params.url) : resolveUrl();
@@ -164,7 +165,8 @@ export async function extractFullTabData(
       ogTitle,
       ogDescription,
       ogUrl,
-      twitterCard
+      twitterCard,
+      browser
     }
   };
 }
@@ -173,11 +175,12 @@ export function extractMinimalTabData(): OmitForCapture<IWebPage> {
   const title = document.title;
   const hash = generateHash(document.body.innerHTML);
   const { ogTitle, ogImage, ogDescription, ogUrl } = resolveOgData();
+  const browser = extractBrowserDetails();
   const url = resolveUrl();
   const contentType = resolveContentTypeForUrl(url);
   logger.log({ at: "extractMinimalTabData", url, contentType });
   return {
-    metadata: { ogTitle, ogImage, ogDescription, ogUrl },
+    metadata: { ogTitle, ogImage, ogDescription, ogUrl, browser },
     label: title,
     contentType,
     url,
@@ -211,6 +214,12 @@ export async function extractYoutubeVideoData() {
     body: { hash },
     metadata
   };
+}
+
+function extractBrowserDetails() {
+  const userAgent = navigator.userAgent;
+  const uAData = navigator.userAgentData;
+  return { userAgent, uAData };
 }
 
 export function resolveUrl(url?: string) {

@@ -686,6 +686,18 @@ class NodeActions {
     icon: "share",
     callback: async () => {}
   };
+  trashFromClipper = {
+    value: "delete",
+    icon: "ph:trash-light",
+    callback: async () => {}
+  };
+  goToResourceFromClipper = {
+    value: "openInApp",
+    label: "Open in app",
+    icon: "ph:arrow-up-right-light",
+    callback: async () => {}
+  };
+
   toggleFullWidth() {
     return {
       value: "toggleFullWidth",
@@ -718,6 +730,12 @@ export function resolveNodeContextMenu(
 ): IContextMenu {
   const resourceActions = new ResourceActions(node, nodeStore, accessPoint);
   const nodeActions = new NodeActions(node, nodeStore, accessPoint);
+  if (accessPoint === ResourceAccessPoint.CLIPPER) {
+    return [{
+      group: "all",
+      items: [ nodeActions.goToResourceFromClipper, nodeActions.trashFromClipper]
+    }];
+  }
   const ctx = get(context);
   let commonGroups: { group: string; items: IContextMenuItem[] }[] = [];
   if (ctx.isEmbed && ctx.embed === Embed.HANDSET) {

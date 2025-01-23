@@ -16,13 +16,13 @@
 >
   <button
     class={cn(
-      "flex items-center justify-center p-2 text-center m-4 border-2 rounded-md text-fgs3",
+      "flex items-center justify-center p-2 text-center m-4 border rounded-md ",
       {
-        "w-3/5 min-h-72": position === Placement.Bottom,
-        "h-3/5 min-w-72":
+        "w-3/5 min-h-40": position === Placement.Bottom,
+        "h-3/5 min-w-40":
           position === Placement.Left || position === Placement.Right,
-        "border-solid border-brs3 bg-bgs3": isDraggedOver,
-        "border-dashed border-brs2 bg-bgs2": !isDraggedOver
+        "border-solid border-fgs1 bg-fgs2": isDraggedOver,
+        "border-dashed border-fgs1 bg-fgs3 bg-opacity-70": !isDraggedOver
       }
     )}
     on:dragover={(event) => {
@@ -40,6 +40,8 @@
       }
     }}
   >
-    Move here to stick toolbar to the {position.toLowerCase()}
+    <span class="bg-fgs2 p-2 rounded-md text-bgs2">
+      Move here to stick toolbar to the {position.toLowerCase()}
+    </span>
   </button>
 </div>

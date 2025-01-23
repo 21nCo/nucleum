@@ -25,7 +25,7 @@
     {:else if style === 2}
       <ComingSoon width={200} />
     {/if}
-    <div>{mainText ?? ""}</div>
+    <div class="text-center">{mainText ?? ""}</div>
   </div>
   <div class="text-fgs3 text-center text-b3">
     {subText ?? ""}

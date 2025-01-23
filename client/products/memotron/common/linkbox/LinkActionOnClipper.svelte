@@ -2,6 +2,7 @@
   import { abg, cn } from "$lib/client/utils/ui.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { createEventDispatcher } from "svelte";
+  import { Size } from "$lib/client/types/size.enum";
   const dispatch = createEventDispatcher();
   export let links: string[];
   export let isLinkboxOpened: boolean = false;
@@ -21,8 +22,9 @@
   }}
 >
   <Icon
-    icon={isLinkboxOpened ? "link-arrow-down" : "link-arrow-left"}
+    icon={isLinkboxOpened ? "ph:link" : "ph:link-light"}
     isAccentBgContext={isLinkboxOpened}
+    size={Size.sm}
   />
   <span> Link </span>
   {#if links?.length > 0}

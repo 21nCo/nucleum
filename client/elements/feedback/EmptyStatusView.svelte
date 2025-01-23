@@ -11,11 +11,13 @@
   import NoResultsIllustration from "$lib/client/illustrations/NoResultsIllustration.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import Icon from "../Icon.svelte";
+  import ComingSoon from "$lib/client/illustrations/pixelsmarket/ComingSoon.svelte";
   export let mainText: string | undefined = undefined;
   export let subText: string | undefined = undefined;
   export let size: Size.sm | Size.md | Size.lg = Size.md;
   export let isLoadingState: boolean = false;
   export let isSearchContext: boolean = false;
+  export let isNotAvailableContext: boolean = false;
   export let actionText: string | undefined = undefined;
   export let loadingText: string | undefined = undefined;
   export let loadingAnimation: LoadingAnimationType =
@@ -51,6 +53,8 @@
       >
         <NoResultsIllustration />
       </div>
+    {:else if isNotAvailableContext}
+      <ComingSoon width={200} />
     {:else if size === Size.sm}
       <EmptyStatusInbox width={40} />
       <!-- <EmptyStatus size={Size.sm} /> -->

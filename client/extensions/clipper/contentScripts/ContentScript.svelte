@@ -36,6 +36,7 @@
   import ToolbarPlacementHintBlock from "../toolbar/ToolbarPlacementHintBlock.svelte";
   import { clientStorage } from "$lib/client/persistence/persistence.utils";
   import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
+  import { onDestroy, onMount } from "svelte";
 
   export let id: string;
   let textClipperRef: any;
@@ -64,6 +65,14 @@
   function onActivateColor(e) {
     textClipperRef.onActivateColor(e);
   }
+
+  onMount(() => {
+    chrome.runtime.onMessage.addListener(messageListener);
+  });
+
+  onDestroy(() => {
+    chrome.runtime.onMessage.removeListener(messageListener);
+  });
 
   async function onSaveClick() {
     try {
@@ -107,17 +116,27 @@
       logger.debug({ at: "onMutationRelayFromSidePanel", data });
       let result;
       if (data.action === "link") {
-        result = await webpage.linkClip(data.clipId, data.linkTo);
+        result = await webpage.linkClip(data.clipId, data.linkTo, {
+          isFromSidePanel: true
+        });
       } else if (data.action === "unlink") {
-        result = await webpage.removeLinkForClip(data.clipId, data.linkTo);
+        result = await webpage.removeLinkForClip(data.clipId, data.linkTo, {
+          isFromSidePanel: true
+        });
       } else if (data.action === "notes") {
-        result = await webpage.persistClipNotes(data.clipId, data.notes);
+        result = await webpage.persistClipNotes(data.clipId, data.notes, {
+          isFromSidePanel: true
+        });
       } else if (data.action === "webpageNotes") {
         result = await webpage.persistPageNotes(data.notes);
       } else if (data.action === "delete") {
-        result = await webpage.removeClip(data.clipId);
+        result = await webpage.removeClip(data.clipId, {
+          isFromSidePanel: true
+        });
       } else if (data.action === "property") {
-        result = await webpage.updateClipProperty(data.clipId, data.property);
+        result = await webpage.updateClipProperty(data.clipId, data.property, {
+          isFromSidePanel: true
+        });
       }
       if (data.clipId && result) {
         const clip = $webpage.clips?.find(resourceInList(data.clipId));
@@ -138,7 +157,7 @@
     }
   }
 
-  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  const messageListener = (message: any, sender: any, sendResponse: any) => {
     logger.log({
       at: "onMessage - Content script",
       event: message.event,
@@ -215,7 +234,7 @@
     };
     handleMessage().then(sendResponse);
     return true;
-  });
+  };
 
   async function setLoginState(code: number) {
     loginState = code;

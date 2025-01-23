@@ -109,7 +109,6 @@ class CollectionStore extends ResourceStore<ICollection> {
     if (isFromExtension) {
       const result = await this.select(collections[0]);
       if (!result) return types;
-      console.log({ at: "resolveTypes - isFromExtension", result });
       if (!result || result.type !== CollectionType.TYPED) return [];
       if (!result.properties && !result.typeToExtend) return [result];
       let typeToExtend: ICollection | undefined;
@@ -123,11 +122,6 @@ class CollectionStore extends ResourceStore<ICollection> {
             ...(typeToExtend?.properties ?? [])
           ]
         }
-      });
-      console.log({
-        at: "resolveTypes - isFromExtension",
-        typeToExtend,
-        properties
       });
       if (!typeToExtend) return [{ ...result, properties }];
       const mainProps = result.properties?.map((x) => {
