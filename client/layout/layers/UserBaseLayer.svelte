@@ -22,6 +22,7 @@
     localCacheableStores,
     remoteOnlyStores
   } from "$local/localStoresMap";
+  import { resourcesForRecents } from "$local/local";
   import {
     dispatchCustomEvent,
     isExtensionEnvironment
@@ -47,6 +48,7 @@
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   import { initializeTaco } from "$lib/client/products/memotron/taco/taco.store";
+  import { recentsStore } from "$lib/client/components/record/recent.store";
 
   const loadingMessages = {
     cloneUp: {
@@ -94,6 +96,7 @@
       await flux.reconcile({ counts: userDataState.counts });
       dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
     }
+    await recentsStore.initialize(resourcesForRecents);
     initializeTaco();
   });
   /**

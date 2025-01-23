@@ -30,6 +30,7 @@ import {
   searchSort
 } from "$lib/client/products/memotron/memotron.utils";
 import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
+import { recentsStore } from "./recent.store";
 
 export const MAX_FILE_SIZE_MB = 100;
 
@@ -272,6 +273,13 @@ export class SearchStore {
     }
   ) {
     logger.log({ at: "searchForLinking", query, params });
+    if (!isValidString(query)) {
+      const items = recentsStore.resolve({
+        type: params?.resource,
+        exclude: params?.exclude
+      });
+      return items;
+    }
     let nodes = [];
     if (params?.resource === Resource.node || !params?.resource) {
       nodes = await flux.selectMany(Resource.node, {
@@ -360,58 +368,6 @@ export class SearchStore {
       });
     }
     return [...(nodes ?? []), ...(collections ?? [])];
-  }
-
-  private async recentNodes() {
-    const result = await flux.selectMany(Resource.node, {
-      properties: ["*", "parent.* as parent"],
-      filters: {
-        contentType: rootNodeTypeList.concat(headingNodeTypes),
-        ...activeResourceFilterV2,
-        creationContext: false
-      },
-      orderBy: this.orderBy ?? {
-        modifiedAt: "desc"
-      },
-      limit: this.limit,
-      offset: this.offset
-    });
-    logger.log({ at: "recentNodes", result });
-    return result;
-  }
-  private async recentCollections() {
-    const result = await flux.selectMany(Resource.collection, {
-      filters: {
-        ...activeResourceFilterV2
-      },
-      orderBy: this.orderBy ?? {
-        modifiedAt: "desc"
-      },
-      limit: this.limit,
-      offset: this.offset
-    });
-    logger.log({ at: "recentCollections", result });
-    return result;
-  }
-
-  async recents(
-    resource?: Resource,
-    params?: { limit?: number; offset?: number }
-  ) {
-    this.resource = resource ?? this.resource;
-    this.limit = params?.limit ?? this.limit;
-    this.offset = params?.offset ?? this.offset;
-    let data: any[] = [];
-    if (this.resource === Resource.everything) {
-      const nodes = await this.recentNodes();
-      const collections = await this.recentCollections();
-      data = [...nodes, ...(collections ?? [])];
-    } else if (this.resource === Resource.node) {
-      data = await this.recentNodes();
-    } else if (this.resource === Resource.collection) {
-      data = (await this.recentCollections()) ?? [];
-    }
-    return data;
   }
 
   async resolveCount(

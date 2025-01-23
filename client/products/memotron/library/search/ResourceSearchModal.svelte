@@ -7,7 +7,8 @@
   import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import SearchResults from "./SearchResults.svelte";
-  import { SearchStore } from "../../../../components/record/record.store";
+  import { SearchStore } from "$lib/client/components/record/record.store";
+  import { recentsStore } from "$lib/client/components/record/recent.store";
   import { onMount } from "svelte";
   import { isValidString } from "$lib/shared/utils/text.utils";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
@@ -79,10 +80,7 @@
         });
       } else {
         data = [];
-        recents = await searchStore.recents(resource, {
-          limit: 30,
-          offset: 0
-        });
+        recents = recentsStore.resolve({ type: resource });
         return recents;
       }
       return data;

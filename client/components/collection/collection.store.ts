@@ -44,6 +44,7 @@ import { toasts } from "$lib/client/stores/notification.store";
 import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
 import { GlobalEvent } from "$lib/client/types/event.enum";
 import { Embed } from "$lib/client/types/context.type";
+import { recentsStore } from "../record/recent.store";
 
 class CollectionStore extends ResourceStore<ICollection> {
   constructor() {
@@ -86,6 +87,10 @@ class CollectionStore extends ResourceStore<ICollection> {
       subGroupBy: "none"
     });
     resource.views = [viewId];
+    recentsStore.add(resource, {
+      type: Resource.collection,
+      timestamp: new Date()
+    });
     return super.create(resource, additionalParams);
   }
 
@@ -260,6 +265,10 @@ export class ActiveCollectionStore extends ActiveResourceStore<
       propertyEditorStore.set({
         properties: record.properties ?? [],
         typeToExtend: record.typeToExtend
+      });
+      recentsStore.add(record, {
+        type: Resource.collection,
+        timestamp: new Date()
       });
     } catch (e) {
       console.error("error in init collection store", {

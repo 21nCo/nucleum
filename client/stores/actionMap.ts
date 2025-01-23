@@ -48,6 +48,7 @@ import { toasts } from "./notification.store";
 import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
 import LinkSearchResultItem from "$lib/client/products/memotron/common/linkbox/LinkSearchResultItem.svelte";
 import { SearchStore } from "../components/record/record.store";
+import { recentsStore } from "../components/record/recent.store";
 import { isValidString } from "$lib/shared/utils/text.utils";
 import ResourceBrowser from "../components/library/resourceBrowser/ResourceBrowser.svelte";
 
@@ -640,7 +641,7 @@ export const globalActions: IAction[] = [
           searchStore.searchQuery = query;
           return searchStore.nodes();
         } else {
-          return searchStore.recents();
+          return recentsStore.resolve({ type: Resource.node });
         }
       },
       callback: async (id: string, label?: string, componentParams?: any) => {

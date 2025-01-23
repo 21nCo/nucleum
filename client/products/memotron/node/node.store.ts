@@ -62,6 +62,7 @@ import { toasts } from "$lib/client/stores/notification.store";
 import { fileStore } from "$lib/client/components/files/file.store";
 import { recursivelyExtractAllChildrenIntoArray } from "$lib/client/components/markdown/markdown.utils";
 import type { IBlock } from "$lib/client/components/markdown/md.type";
+import { recentsStore } from "$lib/client/components/record/recent.store";
 
 export const hierarchyFactorLimit = 5;
 
@@ -306,6 +307,7 @@ export class ActiveNodeStore extends ActiveResourceStore<
           node.clips.sort((a, b) => a.body.timestamp - b.body.timestamp);
         }
         this.set({ ...node, accessMode });
+        recentsStore.add(node, { type: Resource.node, timestamp: new Date() });
       }
       const rawLinks =
         node.links.length > 0

@@ -12,7 +12,7 @@
     ResourceAccessPoint,
     ResourceActionType
   } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { SearchStore } from "$lib/client/components/record/record.store";
+  import { recentsStore } from "$lib/client/components/record/recent.store";
   import { page } from "$app/stores";
   import view from "$lib/client/stores/view.store";
   import { logger } from "$lib/client/components/debug/logger.client";
@@ -21,9 +21,7 @@
   import Panel from "$lib/client/layout/paint/Panel.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
-  import ResourceBrowser from "./resourceBrowser/ResourceBrowser.svelte";
   import LibraryRecordsPane from "./LibraryRecordsPane.svelte";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import LibraryLoadingPulse from "./LibraryLoadingPulse.svelte";
   import { Arrangement } from "$lib/client/types/direction.enum";
@@ -35,9 +33,6 @@
   let selectedResource: Resource = $view.isConstrainedWidth
     ? Resource.unknown
     : Resource.node;
-  let recentsData: any[] = [];
-  let isRecentsDataRefreshing: boolean = false;
-  let searchStore = new SearchStore();
   let resourceSwitcherRef: ResourceSwitcher;
   let availableResources: Set<Resource> = new Set([
     Resource.node,
@@ -151,31 +146,10 @@
         selectedResource = Resource.unknown;
       }
     });
-    if ($view.isConstrainedWidth) {
-      refreshRecents();
-    }
     return () => {
       pageSub();
     };
   });
-
-  async function refreshRecents() {
-    try {
-      isRecentsDataRefreshing = true;
-      const result = await searchStore.recents(Resource.everything, {
-        limit: 20
-      });
-      if (isValidArrayWithData(result)) {
-        recentsData = [...result];
-      } else {
-        recentsData = [];
-      }
-      isRecentsDataRefreshing = false;
-    } catch (e) {
-      logger.error(e);
-      isRecentsDataRefreshing = false;
-    }
-  }
 
   function onCreateResource() {
     appStore.runAction(
@@ -216,12 +190,13 @@
     <div class="flex flex-col gap-2 w-full flex-grow">
       <Text content="Recents" style={TextStyle.SECTION_HEADING} />
       <div class="flex flex-col gap-4 w-full flex-grow">
-        {#if isRecentsDataRefreshing}
+        {#if !$recentsStore.isInitialized}
           <LibraryLoadingPulse
             arrangement={Arrangement.LIST}
             isConstrainedWidth={true}
           />
-        {:else if recentsData && recentsData.length > 0}
+        {:else if $recentsStore.recents && $recentsStore.recents.length > 0}
+          {@const recentsData = recentsStore.resolve()}
           <Records
             data={recentsData}
             accessPoint={ResourceAccessPoint.LIBRARY}
