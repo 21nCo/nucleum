@@ -76,6 +76,9 @@
       {accessPoint}
       {accessPointId}
       {accessPointContext}
+      {arrangement}
+      {isHidePreview}
+      {isApplyCustomColor}
       on:action
     />
   {/if}

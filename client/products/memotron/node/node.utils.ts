@@ -235,6 +235,8 @@ export function resolveFilePreview(node: INode) {
     !metadata?.screenshotUrl
   ) {
     return metadata?.screenshotFile;
+  } else if (contentType === NodeType.PDF && file?.thumbnailUrl) {
+    return file;
   }
   return undefined;
 }

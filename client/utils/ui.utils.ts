@@ -1,6 +1,7 @@
 import type { ClassValue } from "clsx";
 import { clsx } from "clsx";
 import QRCode from "qrcode";
+import * as pdfjs from "pdfjs-dist";
 
 /**
  * To add animate class which gets autoremoved after 300ms
@@ -499,7 +500,6 @@ function calculateInitialQuality(size: number): number {
   return 0.8; // < 1MB: start with high quality
 }
 
-
 export function base64ToBlob(base64: string, contentType: string): Blob {
   const byteCharacters = atob(base64);
   const byteNumbers = new Array(byteCharacters.length);
@@ -508,4 +508,38 @@ export function base64ToBlob(base64: string, contentType: string): Blob {
   }
   const byteArray = new Uint8Array(byteNumbers);
   return new Blob([byteArray], { type: contentType });
+}
+
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.mjs",
+  import.meta.url
+).toString();
+
+export async function generateImagePreviewFromPdf(pdfBlob: Blob) {
+  try {
+    const pdfData = new Uint8Array(await pdfBlob.arrayBuffer());
+    const loadingTask = pdfjs.getDocument({ data: pdfData });
+    const pdf = await loadingTask.promise;
+    const page = await pdf.getPage(1);
+    const scale = 1.5;
+    const viewport = page.getViewport({ scale });
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    canvas.height = viewport.height;
+    canvas.width = viewport.width;
+    const renderContext = {
+      canvasContext: context,
+      viewport: viewport
+    };
+    await page.render(renderContext).promise;
+
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        resolve(blob);
+      }, "image/png");
+    });
+  } catch (error) {
+    console.error("Error generating image preview from PDF:", error);
+    throw error;
+  }
 }

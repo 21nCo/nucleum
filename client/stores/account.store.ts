@@ -35,7 +35,10 @@ import { Resource } from "../components/flux/resourceStores/resource.enum";
 import { dispatchCustomEvent } from "../utils/browser.utils";
 import { GlobalEvent } from "../types/event.enum";
 import context from "./context.store";
-import { compressImageToTargetSize } from "../utils/ui.utils";
+import {
+  compressImageToTargetSize,
+  generateImagePreviewFromPdf
+} from "../utils/ui.utils";
 
 export const isRefreshingToken = writable(false);
 
@@ -334,14 +337,17 @@ class AccountStore extends ObservableStore<
         id: contentType.split("/")[0] + "_" + generateSimpleRandomId()
       });
       logger.log({ at: "uploadFileV2", id, contentType, fileName });
-      fileName = fileName.replace(/\s+/g, "_").replace(/[\(\)@]/g, "");
+      fileName = fileName
+        .replace(/\s+/g, "_")
+        .replace(/[()@#$%&*!?<>{}[\]\\\/\^~`+=;:]/g, "_");
       let thumbnailBlob: Blob | undefined = params.thumbnailBlob;
-      if (
-        params.isGenerateThumbnail &&
-        !thumbnailBlob &&
-        contentType.includes("image")
-      ) {
-        thumbnailBlob = await compressImageToTargetSize(blob);
+      if (params.isGenerateThumbnail && !thumbnailBlob) {
+        if (contentType.includes("image")) {
+          thumbnailBlob = await compressImageToTargetSize(blob);
+        } else if (contentType.includes("pdf")) {
+          const result = await generateImagePreviewFromPdf(blob);
+          if (result) thumbnailBlob = result;
+        }
       }
       if (account.dataMode === UserDataMode.LOCAL || params.isPreventSync) {
         const arrayBuffer = await blob.arrayBuffer();

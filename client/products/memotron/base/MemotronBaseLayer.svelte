@@ -1,7 +1,10 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { appLoadingState, appStore } from "$lib/client/stores/app.store";
-  import { scheduledNotifications } from "$lib/client/stores/notification.store";
+  import {
+    scheduledNotifications,
+    toasts
+  } from "$lib/client/stores/notification.store";
   import {
     postMessageToParent,
     postToParent
@@ -21,8 +24,12 @@
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
   import { Action } from "$lib/client/types/action.enum";
   import CommandModePage from "$lib/client/components/commandBar/CommandModePage.svelte";
-  import { clipTextSearchFallback } from "./fallbacks";
+  import {
+    clipTextSearchFallback,
+    lowResThumbnailsBackPropagation
+  } from "./fallbacks";
   import LeftNav from "$lib/client/layout/leftPanel/LeftNav.svelte";
+  import { logger } from "$lib/client/components/debug/logger.client";
   let isLiteMode = $context.isEmbed && $context.isSheet;
   let interactionMode: InteractionMode;
   let isHideLeftNavBar: boolean = refreshSidebarState();
@@ -104,8 +111,20 @@
     await runFallbacks();
   }
   async function runFallbacks() {
-    await clipTextSearchFallback();
-    // await migrateTo0_56_0();
+    try {
+      toasts.showProgress("update", "Updating the app");
+      await clipTextSearchFallback();
+      if (!$context.isEmbed) {
+        await lowResThumbnailsBackPropagation();
+      }
+      // await migrateTo0_56_0();
+    } catch (error) {
+      logger.error({ at: "lowResThumbnailsBackPropagation", error });
+    } finally {
+      toasts.success("Update completed", {
+        closeProgressId: "update"
+      });
+    }
   }
 </script>
 
