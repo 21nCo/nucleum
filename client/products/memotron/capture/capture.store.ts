@@ -90,6 +90,7 @@ import {
   textToMdBlocks
 } from "$lib/client/components/markdown/markdown.utils";
 import type { IBlock } from "$lib/client/components/markdown/md.type";
+import { recentsStore } from "$lib/client/components/record/recent.store";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 const captureAction = resourceAction(Resource.node, ResourceActionType.CREATE);
@@ -343,7 +344,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     if (!contentType) return { error: "File type not supported" };
     if (contentType === NodeType.NODULAR_MARKDOWN && !params?.isEmbedContext) {
       const result = await this.saveMarkdownFromMdFile(file);
-      this.postSave(result, {
+      this.postSave(result?.slice(0, 1), {
         isOpenUponSuccess: !params?.isPreventOpenOnSave,
         isEmbedContext: params?.isEmbedContext
       });
@@ -731,6 +732,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     }
     const viewStore = get(view);
     if (result.length === 1) {
+      recentsStore.add(node, { type: Resource.node, timestamp: new Date() });
       if (!viewStore.isConstrainedWidth && !params?.isEmbedContext)
         toasts.success("Node saved successfully!");
       if (params?.isOpenUponSuccess && !params?.isEmbedContext)
