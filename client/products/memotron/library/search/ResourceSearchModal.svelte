@@ -26,6 +26,7 @@
   import SearchResultsPopover from "$lib/client/elements/input/SearchResultsPopover.svelte";
   import LinkSearchResultItem from "../../common/linkbox/LinkSearchResultItem.svelte";
   import { appStore } from "$lib/client/stores/app.store";
+  import view from "$lib/client/stores/view.store";
 
   let resource: Resource = Resource.everything;
   let isFiltersVisible: boolean = false;
@@ -131,6 +132,15 @@
             checked={searchStore.searchType === SearchType.SEMANTIC}
           />
         {/if}
+        {#if $view.isConstrainedWidth}
+          <Button
+            icon="ph:x-light"
+            style={ButtonStyle.OUTLINED}
+            on:click={() => {
+              appStore.goBack();
+            }}
+          />
+        {/if}
         {#if isFiltersVisible}
           <Button
             icon="funnel"
@@ -159,6 +169,7 @@
       bind:value={resource}
       style={PanelSwitcherStyle.BAR}
       isExpandToFullWidth={true}
+      isPreventDropdownForCW={true}
       size={Size.sm}
       on:switch={() => {
         searchResultsPopover?.search();

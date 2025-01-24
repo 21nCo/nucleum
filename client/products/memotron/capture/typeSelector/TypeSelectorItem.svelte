@@ -10,12 +10,13 @@
   import { fade, fly } from "svelte/transition";
   import { CaptureType } from "../capture.type";
   import { createEventDispatcher } from "svelte";
+  import view from "$lib/client/stores/view.store";
   const dispatch = createEventDispatcher();
 
   export let item: ISelectItem;
-  export let size: Size.md | Size.lg = Size.md;
   export let isActive: boolean = false;
   let inputRef: HTMLInputElement;
+  $: size = $view.isConstrainedWidth ? Size.sm : Size.md;
   function handleCapture(e: Event) {
     dispatch("capture", e);
   }
@@ -23,7 +24,7 @@
 
 <button
   class={cn(
-    "flex gap-2 items-center justify-center px-6 h-16 rounded-md border",
+    "flex gap-1 dp:gap-2 items-center justify-center px-3 dp:px-6 h-14 dp:h-16 rounded-md border",
     {
       "bg-aps3 border-aps1 text-aps1": isActive,
       "border-brs3 hover:bg-bgs2": !isActive
@@ -64,7 +65,7 @@
   {:else if item.icon && typeof item.icon === "object"}
     <AvatarRenderer avatar={item.icon} {size} />
   {/if}
-  <div class="whitespace-nowrap truncate">
+  <div class="whitespace-nowrap truncate text-b2 dp:text-base">
     {item.label ?? enumToString(item.value)}
   </div>
 </button>

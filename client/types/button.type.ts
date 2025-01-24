@@ -17,6 +17,7 @@ export type IButtonParams = {
   parentBgIndex?: number;
   shortcut?: string;
   isPreventMinWidth?: boolean;
+  popoverAction?: any;
 };
 
 export enum ButtonVariant {

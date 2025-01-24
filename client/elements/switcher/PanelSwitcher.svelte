@@ -37,10 +37,12 @@
   export let triggerItemEdit: string | null = null;
   export let isShowNumberShortcut: boolean = false;
   export let addText: string | undefined = undefined;
+  export let isPreventDropdownForCW: boolean = false;
   let _items: ISelectItem[];
   $: _items = items.every((x) => typeof x === "string")
     ? items.map((x) => ({ label: x, value: x }))
     : items;
+  $: isRenderAsDropdown = $view.isConstrainedWidth && !isPreventDropdownForCW;
   onMount(() => {
     if (value === undefined) value = _items[0]?.value;
   });
@@ -59,7 +61,7 @@
   <div
     bind:this={parent}
     class={cn("relative panel-switcher flex items-center shrink-0", {
-      "overflow-x-auto": !$view.isConstrainedWidth,
+      "overflow-x-auto": !isRenderAsDropdown,
       "w-full justify-between px-2":
         (style === PanelSwitcherStyle.BAR ||
           style === PanelSwitcherStyle.SNAKE) &&
@@ -108,7 +110,7 @@
           </slot>
         </span>
       {/if}
-      {#if $view.isConstrainedWidth}
+      {#if isRenderAsDropdown}
         <div class="flex pl-2">
           <DropDown
             items={_items}

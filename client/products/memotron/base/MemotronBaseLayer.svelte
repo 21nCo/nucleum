@@ -121,9 +121,7 @@
     } catch (error) {
       logger.error({ at: "lowResThumbnailsBackPropagation", error });
     } finally {
-      toasts.success("Update completed", {
-        closeProgressId: "update"
-      });
+      toasts.closeProgress("update");
     }
   }
 </script>

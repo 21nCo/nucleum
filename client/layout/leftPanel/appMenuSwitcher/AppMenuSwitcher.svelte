@@ -7,8 +7,6 @@
   import { appStore, isInEditMode } from "$lib/client/stores/app.store";
   import { appMenuStore } from "../../../stores/appMenu/appMenu.store";
   import type { IAppMenuStore } from "$lib/client/stores/appMenu/appMenu.type";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { TextStyle } from "$lib/client/types/text.enum";
   import { appEvents, toasts } from "$lib/client/stores/notification.store";
   import Divider from "$lib/client/elements/Divider.svelte";
   import { ColorStrength } from "$lib/client/types/appearance.type";
@@ -18,6 +16,7 @@
   import { OperatingSystem } from "$lib/client/types/context.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import AppMenuSwitcherItemGroup from "./AppMenuSwitcherItemGroup.svelte";
+
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
   export let parentBackgroundIndex: number;
   export let isHovered: boolean = false;
@@ -25,6 +24,7 @@
   let defaultPages: IAction[] = [];
   let userPinnedPages: IAction[] = [];
   let current: string;
+
   refresh(appMenuStore.get());
   onMount(() => {
     const unsubscribe = appMenuStore.subscribe((x: IAppMenuStore) => {

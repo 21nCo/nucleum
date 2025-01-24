@@ -24,9 +24,11 @@
   import LibraryRecordsPane from "./LibraryRecordsPane.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import LibraryLoadingPulse from "./LibraryLoadingPulse.svelte";
-  import { Arrangement } from "$lib/client/types/direction.enum";
+  import { Arrangement, Placement } from "$lib/client/types/direction.enum";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import ResourceBrowserCw from "./resourceBrowser/ResourceBrowserCW.svelte";
+  import { Action } from "$lib/client/types/action.enum";
+  import ContextMenu from "$lib/client/elements/contextMenu/ContextMenu.svelte";
 
   export let resources: Resource[] = [];
 
@@ -123,17 +125,39 @@
     return resource;
   });
 
-  $: floatingButton = !availableResources.has(selectedResource)
-    ? undefined
-    : {
-        label: "Create new " + selectedResource,
-        callback: async () => {
-          onCreateResource();
-        },
-        icon: "ph:plus-light",
-        variant: ButtonVariant.PRIMARY,
-        style: ButtonStyle.DEFAULT
-      };
+  $: floatingButton =
+    $view.isConstrainedWidth && selectedResource === Resource.unknown
+      ? [
+          {
+            label: "Search",
+            callback: async () => {
+              appStore.runAction(Action.GLOBAL_SEARCH);
+            },
+            icon: "ph:magnifying-glass-light"
+          },
+          {
+            label: "Create",
+            popoverAction: {
+              content: ContextMenu,
+              placement: Placement.TopCenter,
+              componentProps: {
+                menuResolver: resolveCreateResourceMenu
+              }
+            },
+            icon: "ph:plus-circle-light"
+          }
+        ]
+      : !availableResources.has(selectedResource)
+        ? undefined
+        : {
+            label: "Create new " + selectedResource,
+            callback: async () => {
+              onCreateResource();
+            },
+            icon: "ph:plus-light",
+            variant: ButtonVariant.PRIMARY,
+            style: ButtonStyle.DEFAULT
+          };
 
   onMount(() => {
     const pageSub = page.subscribe(async (p) => {
@@ -151,10 +175,36 @@
     };
   });
 
-  function onCreateResource() {
+  function onCreateResource(resource?: Resource) {
     appStore.runAction(
-      resourceAction(selectedResource, ResourceActionType.CREATE)
+      resourceAction(resource ?? selectedResource, ResourceActionType.CREATE)
     );
+  }
+
+  function resolveCreateResourceMenu() {
+    return [
+      {
+        group: "all",
+        items: [
+          {
+            label: "New node",
+            value: "node",
+            icon: "ph:hexagon-light",
+            callback: async () => {
+              onCreateResource(Resource.node);
+            }
+          },
+          {
+            label: "New collection",
+            value: "collection",
+            icon: "ph:brackets-round-light",
+            callback: async () => {
+              onCreateResource(Resource.collection);
+            }
+          }
+        ]
+      }
+    ];
   }
 
   async function refreshTotalRecordCounts() {

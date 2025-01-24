@@ -35,6 +35,9 @@
   export function focus() {
     searchInputRef?.focus();
   }
+  export function blur() {
+    searchInputRef?.blur();
+  }
 
   function propagate() {
     dispatch("search");
@@ -64,7 +67,10 @@
     height="h-10"
     icon={style === InputStyle.PLAIN ? undefined : "ph:magnifying-glass-light"}
     isShowClearControl={query !== ""}
-    on:focus={() => (isSearchFocused = true)}
+    on:focus={() => {
+      isSearchFocused = true;
+      dispatch("focus");
+    }}
     on:blur={() => (isSearchFocused = false)}
     on:cancel={() => {
       query = "";

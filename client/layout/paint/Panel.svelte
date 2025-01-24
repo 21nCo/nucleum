@@ -20,7 +20,8 @@
 
   export let title: string | undefined = undefined;
   export let titleStyle: TextStyle = TextStyle.PAGE_HEADING_SUBTLE;
-  export let floatingButton: IButtonParams | undefined = undefined;
+  export let floatingButton: IButtonParams | IButtonParams[] | undefined =
+    undefined;
   export let panelSize: Size.sm | Size.md | Size.lg = Size.md;
   export let isNavActivated: boolean = false;
   export let isShowBackButton: boolean = false;
@@ -101,7 +102,11 @@
         </div>
       {/if}
       {#if floatingButton}
-        <FloatingButton params={floatingButton} />
+        <FloatingButton
+          params={Array.isArray(floatingButton)
+            ? floatingButton
+            : [floatingButton]}
+        />
       {/if}
     </div>
   {/if}

@@ -4,7 +4,7 @@
   import view from "../stores/view.store";
   import { cn } from "../utils/ui.utils";
   export let isAppMenuHidden: boolean = false;
-  export let margin: string = "mb-8";
+  export let margin: string | undefined = undefined;
   export let zIndex: string = "z-20";
   let classList: string = "";
   export { classList as class };
@@ -17,7 +17,7 @@
 
 <div
   class={cn(
-    "bottomfloat absolute bottom-0 flex inset-x-0",
+    "bottomfloat absolute bottom-0 flex inset-x-0 mx-auto",
     zIndex && zIndex,
     margin && margin,
     !margin && {

@@ -71,7 +71,7 @@
       isConstrainedWidth={true}
     />
   </div>
-  <div class="flex h-full items-center" slot="toprightactions">
+  <!-- <div class="flex h-full items-center" slot="toprightactions">
     <Button
       icon="ph:plus"
       label="New"
@@ -81,5 +81,5 @@
       style={ButtonStyle.DEFAULT}
       on:click={addAction}
     />
-  </div>
+  </div> -->
 </Panel>

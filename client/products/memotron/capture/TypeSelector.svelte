@@ -63,7 +63,7 @@
   </div>
   {#key types}
     <div
-      class="grid mo:grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] gap-4 w-full"
+      class="grid mo:grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] gap-2 dp:gap-4 w-full"
     >
       {#each [...contentTypes, ...types] as item}
         <TypeSelectorItem

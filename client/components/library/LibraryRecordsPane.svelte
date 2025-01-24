@@ -609,7 +609,8 @@
           {accessPoint}
           {accessPointState}
           {resource}
-          defaultAccessMode={accessPoint === ResourceAccessPoint.LIBRARY
+          defaultAccessMode={accessPoint === ResourceAccessPoint.LIBRARY ||
+          $view.isConstrainedWidth
             ? ResourceAccessMode.POP
             : ResourceAccessMode.INLINE}
           size={$view.isConstrainedWidth ? Size.sm : Size.md}
