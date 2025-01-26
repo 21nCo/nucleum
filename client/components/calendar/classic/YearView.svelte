@@ -267,7 +267,7 @@
         <h2 class="text-xl font-medium">{year}</h2>
       </div>
       <div
-        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-4"
+        class="grid grid-cols-1 sm:grid-cols-2 lp:grid-cols-3 dp:grid-cols-4 2k:grid-cols-5 gap-x-6 gap-y-4"
       >
         {#each months as { days, monthIndex }}
           <div class="flex flex-col min-w-[240px]">

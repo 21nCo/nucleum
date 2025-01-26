@@ -87,9 +87,7 @@
   $: currentYear = selectedDate.getFullYear();
 </script>
 
-<header
-  class="flex items-center justify-between p-4 border-b border-brs3 bg-bgs1 sticky top-0 z-10"
->
+<header class="flex items-center justify-between w-full sticky top-0 z-10">
   <div class="flex items-center gap-4">
     <Button
       type={ButtonVariant.PRIMARY}

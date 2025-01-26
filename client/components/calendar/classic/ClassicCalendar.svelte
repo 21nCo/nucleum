@@ -6,6 +6,9 @@
   import WeekView from "./WeekView.svelte";
   import DayView from "./DayView.svelte";
   import YearView from "./YearView.svelte";
+  import CalendarLayout from "../CalendarLayout.svelte";
+
+  export let panel: string = "classic";
 
   let selectedDate = new Date();
   let selectedView: "month" | "week" | "day" | "year" = "month";
@@ -31,8 +34,8 @@
   }
 </script>
 
-<div class="flex h-full">
-  <div class="flex flex-col flex-1 min-w-0">
+<CalendarLayout bind:panel>
+  <slot name="header" slot="header">
     <CalendarHeader
       bind:selectedDate
       bind:selectedView
@@ -59,30 +62,30 @@
         }
       }}
     />
-    <div class="flex flex-1 min-h-0">
-      <!-- <CalendarSidebar {events} /> -->
-      <div class="flex-1 overflow-auto">
-        {#if selectedView === "month"}
-          <MonthView bind:selectedDate {events} />
-        {:else if selectedView === "week"}
-          <WeekView
-            bind:this={weekViewRef}
-            {selectedDate}
-            {events}
-            on:monthChange={handleMonthChange}
-            on:visibleDatesChange={handleVisibleDatesChange}
-          />
-        {:else if selectedView === "day"}
-          <DayView {selectedDate} {events} />
-        {:else if selectedView === "year"}
-          <YearView
-            bind:this={yearViewRef}
-            bind:selectedDate
-            {events}
-            on:yearChange={handleYearChange}
-          />
-        {/if}
-      </div>
+  </slot>
+  <div class="flex h-full">
+    <!-- <CalendarSidebar {events} /> -->
+    <div class="flex-1 overflow-auto">
+      {#if selectedView === "month"}
+        <MonthView bind:selectedDate {events} />
+      {:else if selectedView === "week"}
+        <WeekView
+          bind:this={weekViewRef}
+          {selectedDate}
+          {events}
+          on:monthChange={handleMonthChange}
+          on:visibleDatesChange={handleVisibleDatesChange}
+        />
+      {:else if selectedView === "day"}
+        <DayView {selectedDate} {events} />
+      {:else if selectedView === "year"}
+        <YearView
+          bind:this={yearViewRef}
+          bind:selectedDate
+          {events}
+          on:yearChange={handleYearChange}
+        />
+      {/if}
     </div>
   </div>
-</div>
+</CalendarLayout>
