@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Size } from "$lib/client/types/size.enum";
   import CalendarHeader from "./CalendarHeader.svelte";
-  import CalendarGrid from "./CalendarGrid.svelte";
+  import MonthView from "./MonthView.svelte";
   import CalendarSidebar from "./CalendarSidebar.svelte";
   import WeekView from "./WeekView.svelte";
   import DayView from "./DayView.svelte";
@@ -11,6 +11,7 @@
   let selectedView: "month" | "week" | "day" | "year" = "month";
   let events: any[] = [];
   let yearViewRef: YearView;
+  let weekViewRef: WeekView;
 
   function handleYearChange(event: CustomEvent) {
     selectedDate = new Date(
@@ -19,6 +20,10 @@
       selectedDate.getDate()
     );
   }
+
+  function handleMonthChange(event: CustomEvent) {
+    selectedDate = event.detail;
+  }
 </script>
 
 <div class="flex h-full">
@@ -26,17 +31,40 @@
     <CalendarHeader
       bind:selectedDate
       bind:selectedView
-      on:goToToday={() => yearViewRef?.scrollToToday()}
-      on:goToPrevious={() => yearViewRef?.navigatePrevYear()}
-      on:goToNext={() => yearViewRef?.navigateNextYear()}
+      on:goToToday={() => {
+        if (selectedView === "year") {
+          yearViewRef?.scrollToToday();
+        } else if (selectedView === "week") {
+          weekViewRef?.scrollToToday();
+        }
+      }}
+      on:goToPrevious={() => {
+        if (selectedView === "year") {
+          yearViewRef?.navigatePrevYear();
+        } else if (selectedView === "week") {
+          weekViewRef?.scrollToPrevWeek();
+        }
+      }}
+      on:goToNext={() => {
+        if (selectedView === "year") {
+          yearViewRef?.navigateNextYear();
+        } else if (selectedView === "week") {
+          weekViewRef?.scrollToNextWeek();
+        }
+      }}
     />
     <div class="flex flex-1 min-h-0">
       <!-- <CalendarSidebar {events} /> -->
       <div class="flex-1 overflow-auto">
         {#if selectedView === "month"}
-          <CalendarGrid {selectedDate} {events} />
+          <MonthView bind:selectedDate {events} />
         {:else if selectedView === "week"}
-          <WeekView {selectedDate} {events} />
+          <WeekView
+            bind:this={weekViewRef}
+            {selectedDate}
+            {events}
+            on:monthChange={handleMonthChange}
+          />
         {:else if selectedView === "day"}
           <DayView {selectedDate} {events} />
         {:else if selectedView === "year"}

@@ -28,16 +28,13 @@
   ];
 
   function goToPrevious() {
-    if (selectedView === "year") {
+    if (selectedView === "year" || selectedView === "week") {
       dispatch("goToPrevious");
     } else {
       const date = new Date(selectedDate);
       switch (selectedView) {
         case "month":
           date.setMonth(date.getMonth() - 1);
-          break;
-        case "week":
-          date.setDate(date.getDate() - 7);
           break;
         case "day":
           date.setDate(date.getDate() - 1);
@@ -48,16 +45,13 @@
   }
 
   function goToNext() {
-    if (selectedView === "year") {
+    if (selectedView === "year" || selectedView === "week") {
       dispatch("goToNext");
     } else {
       const date = new Date(selectedDate);
       switch (selectedView) {
         case "month":
           date.setMonth(date.getMonth() + 1);
-          break;
-        case "week":
-          date.setDate(date.getDate() + 7);
           break;
         case "day":
           date.setDate(date.getDate() + 1);
@@ -68,7 +62,7 @@
   }
 
   function goToToday() {
-    if (selectedView === "year") {
+    if (selectedView === "year" || selectedView === "week") {
       dispatch("goToToday");
     } else {
       selectedDate = new Date();

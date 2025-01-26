@@ -1,11 +1,39 @@
 <script lang="ts">
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { createEventDispatcher } from "svelte";
 
   export let selectedDate: Date;
   export let events: any[] = [];
 
+  const dispatch = createEventDispatcher();
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  let isScrolling = false;
+  let scrollTimeout: NodeJS.Timeout;
+
+  function handleWheel(event: WheelEvent) {
+    if (isScrolling) return;
+
+    isScrolling = true;
+    clearTimeout(scrollTimeout);
+
+    const delta = event.deltaY;
+    const newDate = new Date(selectedDate);
+
+    if (delta > 0) {
+      newDate.setMonth(newDate.getMonth() + 1);
+    } else {
+      newDate.setMonth(newDate.getMonth() - 1);
+    }
+
+    selectedDate = newDate;
+    dispatch("monthChange", newDate);
+
+    scrollTimeout = setTimeout(() => {
+      isScrolling = false;
+    }, 150);
+  }
 
   function getDaysInMonth(date: Date): Date[] {
     const year = date.getFullYear();
@@ -38,8 +66,8 @@
   $: today = new Date();
 </script>
 
-<div class="flex-1 overflow-auto">
-  <div class="grid grid-cols-7 h-full">
+<div class="flex-1 overflow-auto h-full" on:wheel={handleWheel}>
+  <div class="grid grid-cols-7 h-full grid-rows-[auto_1fr_1fr_1fr_1fr_1fr_1fr]">
     {#each weekDays as day}
       <div
         class="p-2 text-b3 text-fgs3 text-center border-b border-r border-brs3"
@@ -50,13 +78,10 @@
 
     {#each calendarDays as day}
       <div
-        class={cn(
-          "p-2 border-b border-r border-brs3 min-h-[100px] relative group",
-          {
-            "bg-bgs2": day.getMonth() !== selectedDate.getMonth(),
-            "bg-aps3": day.toDateString() === today.toDateString()
-          }
-        )}
+        class={cn("p-2 border-b border-r border-brs3 relative group", {
+          "bg-bgs2": day.getMonth() !== selectedDate.getMonth(),
+          "bg-aps3": day.toDateString() === today.toDateString()
+        })}
       >
         <span
           class={cn("text-b3", {
