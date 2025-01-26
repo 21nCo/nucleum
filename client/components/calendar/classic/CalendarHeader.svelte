@@ -11,6 +11,7 @@
 
   export let selectedDate: Date;
   export let selectedView: "month" | "week" | "day" | "year" = "month";
+  export let visibleWeekDates: Date[] | undefined = undefined;
 
   const monthNames = [
     "January",
@@ -69,6 +70,19 @@
     }
   }
 
+  function getWeekDates(date: Date) {
+    const week = [];
+    const current = new Date(date);
+    current.setDate(current.getDate() - current.getDay()); // Start from Sunday
+
+    for (let i = 0; i < 7; i++) {
+      week.push(new Date(current));
+      current.setDate(current.getDate() + 1);
+    }
+    return week;
+  }
+
+  $: weekDates = getWeekDates(selectedDate);
   $: currentMonth = monthNames[selectedDate.getMonth()];
   $: currentYear = selectedDate.getFullYear();
 </script>
@@ -103,6 +117,18 @@
     <h2 class="text-h4">
       {#if selectedView === "year"}
         {currentYear}
+      {:else if selectedView === "week"}
+        {#if visibleWeekDates && visibleWeekDates.length >= 7}
+          {monthNames[visibleWeekDates[0].getMonth()]}
+          {visibleWeekDates[0].getDate()} - {monthNames[
+            visibleWeekDates[6].getMonth()
+          ]}
+          {visibleWeekDates[6].getDate()}, {visibleWeekDates[6].getFullYear()}
+        {:else}
+          {monthNames[weekDates[0].getMonth()]}
+          {weekDates[0].getDate()} - {monthNames[weekDates[6].getMonth()]}
+          {weekDates[6].getDate()}, {currentYear}
+        {/if}
       {:else}
         {currentMonth} {currentYear}
       {/if}

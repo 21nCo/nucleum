@@ -1,6 +1,9 @@
 <script lang="ts">
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { createEventDispatcher } from "svelte";
+
+  const dispatch = createEventDispatcher();
 
   export let selectedDate: Date;
   export let events: any[] = [];
@@ -97,6 +100,16 @@
       const isScrollingRight = scrollLeft > lastScrollLeft;
       lastScrollLeft = scrollLeft;
 
+      // Get the visible week's dates and emit them
+      const visibleWeekIndex = Math.round(scrollLeft / clientWidth);
+      const visibleWeek = weeks[visibleWeekIndex];
+      if (visibleWeek) {
+        dispatch("visibleDatesChange", { dates: visibleWeek.dates });
+        // Also update selectedDate to match the visible week
+        selectedDate = new Date(visibleWeek.startDate);
+        dispatch("monthChange", selectedDate);
+      }
+
       // Load more weeks when scrolling near the edges
       if (
         isScrollingRight &&
@@ -164,6 +177,11 @@
     // Initialize weeks when selectedDate changes
     if (!weeks.length) {
       weeks = loadInitialWeeks(selectedDate);
+      // Emit initial visible dates
+      const initialWeek = weeks[Math.floor(INITIAL_RANGE / 2)];
+      if (initialWeek) {
+        dispatch("visibleDatesChange", { dates: initialWeek.dates });
+      }
     }
   }
 

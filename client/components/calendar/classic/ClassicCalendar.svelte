@@ -12,6 +12,7 @@
   let events: any[] = [];
   let yearViewRef: YearView;
   let weekViewRef: WeekView;
+  let visibleWeekDates: Date[] | undefined;
 
   function handleYearChange(event: CustomEvent) {
     selectedDate = new Date(
@@ -24,6 +25,10 @@
   function handleMonthChange(event: CustomEvent) {
     selectedDate = event.detail;
   }
+
+  function handleVisibleDatesChange(event: CustomEvent) {
+    visibleWeekDates = event.detail.dates;
+  }
 </script>
 
 <div class="flex h-full">
@@ -31,6 +36,7 @@
     <CalendarHeader
       bind:selectedDate
       bind:selectedView
+      {visibleWeekDates}
       on:goToToday={() => {
         if (selectedView === "year") {
           yearViewRef?.scrollToToday();
@@ -64,6 +70,7 @@
             {selectedDate}
             {events}
             on:monthChange={handleMonthChange}
+            on:visibleDatesChange={handleVisibleDatesChange}
           />
         {:else if selectedView === "day"}
           <DayView {selectedDate} {events} />
