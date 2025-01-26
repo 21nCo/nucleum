@@ -69,8 +69,14 @@
   import FocusRing from "./contextMenu/FocusRing.svelte";
   import { createEventDispatcher } from "svelte";
   import { tooltip } from "$lib/client/actions/popover.action";
-  import { Placement } from "$lib/client/types/direction.enum";
+  import { Orientation, Placement } from "$lib/client/types/direction.enum";
   import { observeAttributes } from "$lib/client/actions/observe.action";
+  import KeyboardToolbar from "$lib/client/elements/keyboardToolbar/KeyboardToolbar.svelte";
+  import Divider from "$lib/client/elements/Divider.svelte";
+  import { ColorStrength } from "$lib/client/types/appearance.type";
+  import context from "$lib/client/stores/context.store";
+  import { OperatingSystem } from "$lib/client/types/context.type";
+  import KeyboardToolbarKey from "../../elements/keyboardToolbar/KeyboardToolbarKey.svelte";
   const dispatch = createEventDispatcher();
 
   export let block: IBlock;
@@ -81,6 +87,7 @@
   let contentRefreshId: number = new Date().getTime();
   let isDragging: boolean = false;
   let progressState: string | undefined = undefined;
+  let isPreventDefaultOnKeyboardClose: boolean = false;
   const uploadProgressElementId = "node-embed-upload-progress";
   $: isNodularizable =
     $mdStore.params?.isNodular && headingNodeTypes.includes(block.contentType);
@@ -870,6 +877,52 @@
         return "";
     }
   }
+
+  function insertTextAtCursor(text: string) {
+    const activeElement = document.activeElement;
+    if (!activeElement) return;
+
+    // Create an input event
+    const inputEvent = new InputEvent("input", {
+      inputType: "insertText",
+      data: text,
+      bubbles: true,
+      cancelable: true
+    });
+
+    // For contenteditable elements
+    if (activeElement.hasAttribute("contenteditable")) {
+      const selection = window.getSelection();
+      const range = selection?.getRangeAt(0);
+      if (range) {
+        range.deleteContents();
+        range.insertNode(document.createTextNode(text));
+        range.collapse(false);
+        activeElement.dispatchEvent(inputEvent);
+      }
+      return;
+    }
+
+    // For input/textarea elements
+    if (
+      activeElement instanceof HTMLInputElement ||
+      activeElement instanceof HTMLTextAreaElement
+    ) {
+      const start = activeElement.selectionStart ?? 0;
+      const end = activeElement.selectionEnd ?? 0;
+      const value = activeElement.value;
+
+      // Update the value
+      activeElement.value =
+        value.substring(0, start) + text + value.substring(end);
+
+      // Update cursor position
+      activeElement.setSelectionRange(start + text.length, start + text.length);
+
+      // Dispatch the input event
+      activeElement.dispatchEvent(inputEvent);
+    }
+  }
 </script>
 
 <!--TODO -  Note - when reenabling drag and drag to rearrange - make sure it is not interfering with text selection or media grid space slider -->
@@ -989,3 +1042,107 @@
     </div>
   {/if}
 </div>
+
+<KeyboardToolbar
+  isMdToolbar={true}
+  offset={56}
+  {isPreventDefaultOnKeyboardClose}
+  class="bg-white dark:bg-black flex flex-col"
+>
+  <div class="flex items-center justify-between w-full h-[56px]">
+    <div
+      class={cn(
+        "flex items-center justify-start gap-1.5 min-w-0 flex-1 h-full overflow-x-auto text-fgs1 pl-1 pr-2",
+        {
+          // "bg-[#D1D4D9] dark:bg-[#242424]":
+          //   $context.os === OperatingSystem.IOS,
+          "[background:linear-gradient(65deg,#D1D4D9_0%,#D1D4D9_90%,white_90%,white_100%)] dark:[background:linear-gradient(65deg,#2C2C2C_0%,#2C2C2C_90%,black_90%,black_100%)]":
+            $context.os === OperatingSystem.IOS
+        }
+      )}
+    >
+      <KeyboardToolbarKey
+        icon="ph:at"
+        on:click={(e) => {
+          insertTextAtCursor("@");
+        }}
+      />
+      <KeyboardToolbarKey
+        icon="ph:hash"
+        on:click={(e) => {
+          e.preventDefault();
+          insertTextAtCursor("#");
+        }}
+      />
+      <KeyboardToolbarKey
+        icon="ph:asterisk"
+        on:click={(e) => {
+          e.preventDefault();
+          insertTextAtCursor("*");
+        }}
+      />
+      <KeyboardToolbarKey
+        icon="ph:quotes"
+        on:click={(e) => {
+          e.preventDefault();
+          insertTextAtCursor('"');
+        }}
+      />
+      <KeyboardToolbarKey
+        icon="hugeicons:solid-line-01"
+        on:click={(e) => {
+          e.preventDefault();
+          insertTextAtCursor("-");
+        }}
+      />
+      <KeyboardToolbarKey
+        icon="ph:trash"
+        on:click={() => {
+          //TODO - input >
+        }}
+      />
+    </div>
+    <div class="flex items-center gap-3 h-full pr-2">
+      <!-- <Divider
+          orientation={Orientation.Vertical}
+          colorStrength={ColorStrength.Strong}
+        /> -->
+      <Button
+        icon="ph:plus-circle-light"
+        size={Size.md}
+        tooltip="Add block"
+        on:click={() => {
+          //TODO - add block
+          document.activeElement?.blur();
+          isPreventDefaultOnKeyboardClose = true;
+        }}
+      />
+      <Button
+        icon="ph:command-light"
+        size={Size.md}
+        tooltip="Actions"
+        on:mousedown={(e) => e.preventDefault()}
+        on:click={() => {
+          //TODO - show actions
+          if (!isPreventDefaultOnKeyboardClose) {
+            document.activeElement?.blur();
+            isPreventDefaultOnKeyboardClose = true;
+          } else {
+            //TODO - focus on the block
+            isPreventDefaultOnKeyboardClose = false;
+          }
+        }}
+      />
+      <Button
+        icon="ph:caret-line-down-light"
+        size={Size.md}
+        tooltip="Close keyboard"
+        on:click={() => {
+          document.activeElement?.blur();
+          isPreventDefaultOnKeyboardClose = false;
+        }}
+      />
+    </div>
+  </div>
+  <div class="min-h-0 flex-1">action area</div>
+</KeyboardToolbar>

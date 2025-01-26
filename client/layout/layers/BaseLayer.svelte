@@ -338,6 +338,7 @@
     {/if}
     <div id="popovers"></div>
     <div id="tooltips"></div>
+    <div id="toolbars"></div>
     <span id="global-sync-status" data-syncstatus="" data-syncfeedback="true"
     ></span>
   </ThemeLayer>

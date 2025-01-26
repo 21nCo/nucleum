@@ -10,6 +10,10 @@
   import Button from "../button/Button.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import { debouncer } from "$lib/client/utils/utils";
+  import KeyboardToolbar from "../keyboardToolbar/KeyboardToolbar.svelte";
+  import { ButtonStyle } from "$lib/client/types/button.type";
+  import context from "$lib/client/stores/context.store";
+  import { OperatingSystem } from "$lib/client/types/context.type";
   export let value: any;
   export let placeholder: string | undefined = undefined;
   export let label: InputLabel | undefined = undefined;
@@ -252,7 +256,7 @@
               on:click={(e) => dispatch("save", { event: e, value })}
             />
           {/if}
-          {#if isShowSaveControl || isShowClearControl}
+          {#if (isShowSaveControl || isShowClearControl) && !($context.isEmbed && $context.os === OperatingSystem.IOS)}
             <Button
               icon="ph:x"
               id="input-cancel-control"
@@ -264,4 +268,61 @@
       {/if}
     {/if}
   </InputBaseElement>
+{/if}
+{#if isFocused}
+  <KeyboardToolbar class="bg-bgs2 h-12 px-4 flex items-center justify-between">
+    <div class="flex items-center justify-center gap-2">
+      <!-- <Button
+        icon="ph:arrow-u-up-left-light"
+        parentBgIndex={2}
+        on:click={() => {
+          // TODO: undo
+        }}
+      />
+      <Button
+        icon="ph:arrow-u-up-right-light"
+        parentBgIndex={2}
+        on:click={() => {
+          // TODO: redo
+        }}
+      /> -->
+      <!-- <Button
+        icon="copy"
+        label="paste"
+        size={Size.sm}
+        parentBgIndex={2}
+        style={ButtonStyle.DEFAULT}
+        isPreventMinWidth={true}
+        on:click={() => {
+          // TODO: paste
+        }}
+        on:mousedown={(e) => e.preventDefault()}
+      /> -->
+    </div>
+    <div class="flex items-center justify-center gap-2">
+      <Button
+        icon="ph:x-light"
+        label="clear"
+        parentBgIndex={2}
+        size={Size.sm}
+        style={ButtonStyle.DEFAULT}
+        isPreventMinWidth={true}
+        on:click={() => {
+          inputRef.value = "";
+        }}
+        on:mousedown={(e) => e.preventDefault()}
+      />
+      <Button
+        icon="ph:caret-line-down-light"
+        label="close"
+        parentBgIndex={2}
+        size={Size.sm}
+        style={ButtonStyle.DEFAULT}
+        isPreventMinWidth={true}
+        on:click={() => {
+          document.activeElement?.blur();
+        }}
+      />
+    </div>
+  </KeyboardToolbar>
 {/if}

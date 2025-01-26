@@ -78,7 +78,7 @@
     },
     [BlockAction.LINK]: {
       value: BlockAction.LINK,
-      icon: "arrow-up-right",
+      icon: "ph:link-light",
       callback: async () => {},
       secondStepComponent: {
         component: BlockBrowser
@@ -86,7 +86,7 @@
     },
     [BlockAction.COPY_LINK]: {
       value: BlockAction.COPY_LINK,
-      icon: "copy",
+      icon: "ph:clipboard-light",
       callback: async () => {}
     },
     [BlockAction.INSERT]: {
@@ -110,17 +110,17 @@
     },
     [BlockAction.INSERT_ABOVE]: {
       value: BlockAction.INSERT_ABOVE,
-      icon: "arrow-up",
+      icon: "ph:arrow-up",
       callback: async () => {}
     },
     [BlockAction.INSERT_BELOW]: {
       value: BlockAction.INSERT_BELOW,
-      icon: "arrow-down",
+      icon: "ph:arrow-down",
       callback: async () => {}
     },
     [BlockAction.COPY_BLOCK_TEXT]: {
       value: BlockAction.COPY_BLOCK_TEXT,
-      icon: "copy",
+      icon: "ph:clipboard-light",
       callback: async () => {
         dispatch("action", { action: BlockAction.COPY_BLOCK_TEXT });
       }
@@ -141,7 +141,7 @@
     },
     [BlockAction.FOCUS]: {
       value: BlockAction.FOCUS,
-      icon: "node",
+      icon: "ph:circle-light",
       callback: async () => {
         onNodularize();
       }
@@ -186,7 +186,7 @@
     },
     [BlockAction.SHORTCUTS]: {
       value: BlockAction.SHORTCUTS,
-      icon: "command",
+      icon: "ph:command-light",
       action: Action.MARKDOWN_SHORTCUTS
     },
     [BlockAction.DOWNLOAD]: {

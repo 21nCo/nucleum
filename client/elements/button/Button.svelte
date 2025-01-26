@@ -6,12 +6,11 @@
   import { Placement } from "$lib/client/types/direction.enum";
   import { bg, cn } from "$lib/client/utils/ui.utils";
   import type { IPopoverRenderBaseParams } from "$lib/client/types/popover.type";
-  import HoverableElement from "../HoverableElement.svelte";
-  // import { uiStateDerived } from "$lib/client/stores/uiState/uiState.store";
-  // import ShortcutText from "../text/ShortcutText.svelte";
   import context from "$lib/client/stores/context.store";
   import { Embed } from "$lib/client/types/context.type";
   import Badge from "../text/Badge.svelte";
+  import { hoverable } from "$lib/client/actions/hover.action";
+  import { tooltip as tooltipAction } from "$lib/client/actions/popover.action";
   export let parentBgIndex: number = 1;
   export let label: string | undefined = undefined;
   export let className: string = "";
@@ -45,9 +44,13 @@
   $: isIconOnlyButton = !label && !$$slots.default;
 </script>
 
-<HoverableElement
+<button
   {id}
-  bind:isHovering
+  use:hoverable={{
+    onHover: (val) => {
+      isHovering = val;
+    }
+  }}
   type="button"
   class={cn(
     "relative flex flex-row justify-center items-center rounded-full",
@@ -105,10 +108,14 @@
     className
   )}
   on:click
+  on:mousedown
   bind:this={buttonRef}
-  {tooltip}
-  {tooltipOptions}
-  isDisabled={isDisabled || isLoading}
+  use:tooltipAction={{
+    text: tooltip,
+    direction: tooltipOptions.placement,
+    offsetInPx: tooltipOptions.offsetInPx
+  }}
+  disabled={isDisabled || isLoading}
 >
   {#if isLoading}
     <InlineLoadingAnimation
@@ -165,4 +172,4 @@
       <slot />
     {/if}
   {/if}
-</HoverableElement>
+</button>

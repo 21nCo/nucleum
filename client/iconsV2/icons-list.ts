@@ -19,6 +19,42 @@ const phosphorIcons = [
   "arrows-out-line-horizontal",
   "arrows-in-line-horizontal",
   "arrows-clockwise",
+  "arrow-line-down",
+  "arrow-line-up",
+  "arrow-line-left",
+  "arrow-line-right",
+  "arrow-line-up-right",
+  "arrow-line-down-left",
+  "arrow-line-down-left",
+  "arrow-line-down-right",
+  "arrow-u-up-right",
+  "arrow-u-up-left",
+  "arrow-clockwise",
+  "arrow-counter-clockwise",
+  "arrow-elbow-down-right",
+  "arrow-arc-left",
+
+  //Carets
+  "caret-down",
+  "caret-up",
+  "caret-left",
+  "caret-right",
+  "caret-circle-up",
+  "caret-circle-down",
+  "caret-circle-left",
+  "caret-circle-right",
+  "caret-line-down",
+  "caret-line-up",
+  "caret-line-left",
+  "caret-line-right",
+  "caret-double-down",
+  "caret-double-up",
+  "caret-double-left",
+  "caret-double-right",
+  "caret-circle-double-down",
+  "caret-circle-double-up",
+  "caret-circle-double-left",
+  "caret-circle-double-right",
 
   // UI Controls
   "x",
@@ -33,7 +69,10 @@ const phosphorIcons = [
   "dots-six-vertical",
   "dots-six-vertical-bold",
   "dots-six",
-
+  "dots-three-circle",
+  "dots-three-circle-vertical",
+  "dots-three-outline",
+  "dots-three-outline-vertical",
   // Media and Files
   "image",
   "video",
@@ -101,8 +140,6 @@ const phosphorIcons = [
   "brain",
   "bird",
   "butterfly",
-  "caret-down",
-  "caret-up",
   "cube",
   "database",
   "globe",
@@ -138,7 +175,6 @@ const phosphorIcons = [
   "money",
   "currency-dollar",
   "translate",
-  "arrow-arc-left",
   "floppy-disk",
   "calendar",
   "calendar-range",
@@ -188,8 +224,6 @@ const phosphorIcons = [
   "hash",
   "envelope",
   "link",
-  "caret-circle-up",
-  "caret-circle-down",
   "list-bullets",
   "list-dashes",
   "list-numbers",
@@ -199,17 +233,14 @@ const phosphorIcons = [
   "math-operations",
   "check-square-offset",
   "map-pin",
-  "caret-right",
   "book-open",
-  "arrow-elbow-down-right",
   "pencil-simple-slash",
   "stop",
   "text-align-left",
   "shapes",
   "sigma",
   "circle-dashed",
-  "arrow-u-up-left",
-  "arrow-counter-clockwise",
+
   "warning",
   "info",
   "lightbulb",
@@ -223,8 +254,6 @@ const phosphorIcons = [
   "windows-logo",
   "linux-logo",
   "chrome-logo",
-  "arrow-clockwise",
-  "caret-left",
   "infinity",
   "rss",
   "rss-simple",
@@ -235,7 +264,9 @@ const phosphorIcons = [
   "armchair",
   "bank",
   "currency-circle-dollar",
-  "note-blank"
+  "note-blank",
+  "clipboard",
+  "command"
 ];
 
 export const phosphorRatingIcons = [
@@ -384,6 +415,16 @@ const proIcons = ["send"];
 
 const fa6BrandsIcons = ["unsplash"];
 
+const materialSymbolsLightIcons = ["keyboard-hide-outline-rounded"];
+
+const f7Icons = ["keyboard-chevron-compact-down"];
+
+const fluentIcons = ["keyboard-dock-20-regular"];
+
+const tablerIcons = ["keyboard-show"];
+
+const uilIcons = ["keyboard-hide"];
+
 export const iconSets = {
   hugeicons: hugeiconsIcons,
   "svg-spinners": svgSpinnersIcons,
@@ -393,7 +434,12 @@ export const iconSets = {
   proicons: proIcons,
   "simple-icons": simpleIcons,
   logos,
-  "fa6-brands": fa6BrandsIcons
+  "fa6-brands": fa6BrandsIcons,
+  "material-symbols-light": materialSymbolsLightIcons,
+  f7: f7Icons,
+  fluent: fluentIcons,
+  tabler: tablerIcons,
+  uil: uilIcons
 };
 
 export const phIcons = {

@@ -150,15 +150,18 @@
   /**
    *
    * TODO - mode blockToFocus as its own store and send offset in case of tab operations and caret at the end or in the middle before tab operations - currently caret is being set to the start if no timeout is used since the focus is being set before the block is rendered - subscribe to blockToFocus in inlineMarkdownTextInput and set the focus there if that's the last resort (but try avoiding any md related features in inlineMarkdownTextInput)
+   *
+   * Notes: if timeout is used - virtual keyboard is not being triggered on mobile devices as setTimeout() is creating another call stack.
    */
   onMount(() => {
     hidePopover();
     const focusBlockSub = mdStore.focus.subscribe((x) => {
       if (x?.id === id) {
         logger.log({ at: "TextContent focus", x });
-        setTimeout(() => {
-          textRef?.focus(x.params);
-        }, 10);
+        // setTimeout(() => {
+        //   textRef?.focus(x.params);
+        // }, 10);
+        textRef?.focus(x.params);
         assignPlaceholder();
       }
     });

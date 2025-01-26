@@ -112,9 +112,9 @@
   }
   async function runFallbacks() {
     try {
-      toasts.showProgress("update", "Updating the app");
       await clipTextSearchFallback();
       if (!$context.isEmbed) {
+        toasts.showProgress("update", "Updating the app");
         await lowResThumbnailsBackPropagation();
       }
       // await migrateTo0_56_0();
