@@ -685,7 +685,7 @@
 <div
   class="relative flex flex-col max-w--[800px] max-h--[800px] w-full h-full min-h-[600px]"
 >
-  <div class="p-2 flex">
+  <!-- <div class="p-2 flex">
     <PanelSwitcher
       size={Size.sm}
       style={PanelSwitcherStyle.TRAIN}
@@ -698,7 +698,7 @@
     {#if isNotToday}
       <TodayButton on:click={goToToday} />
     {/if}
-  </div>
+  </div> -->
   <div class="flex h-full w-full overflow-auto">
     {#key mode && instaceId}
       {#if mode != Modes.YEARS}
