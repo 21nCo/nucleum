@@ -29,6 +29,12 @@
     performEscShortcuts,
     renderMdAsHtml
   } from "../markdown.utils";
+  import view from "$lib/client/stores/view.store";
+  import context from "$lib/client/stores/context.store";
+  import { popover } from "$lib/client/actions/popover.action";
+  import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
+  import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
+  import { GlobalEvent } from "$lib/client/types/event.enum";
 
   const nodeContentContext = getContext<any>("content");
   const blockContext = getContext<any>("block");
@@ -80,7 +86,6 @@
   let placeholder: string;
   let popoverRef: any;
   let blockBrowserRef: any;
-  let mentionSearchRef: SearchResultsPopover;
   let isBlockBrowserRendered: boolean = false;
   let isRenderMentionSearch: boolean = false;
   let blockSearchQuery = "";
@@ -218,6 +223,7 @@
       isRenderMentionSearch = true;
       appendZeroWidthSpace();
     }
+    if ($view.isConstrainedWidth) return;
     setTimeout(() => {
       popoverRef.show();
     }, 10);
@@ -246,7 +252,11 @@
     event: KeyboardEvent,
     type: "keyup" | "keydown" = "keydown"
   ) {
-    if (!$mdStore.params?.canUseSlashShortcut) return false;
+    if (
+      !$mdStore.params?.canUseSlashShortcut ||
+      ($context.isTouchDevice && $view.isConstrainedWidth)
+    )
+      return false;
     if (type === "keyup" && event.key === "/") {
       console.log("block browser shortcut");
       showPopover("blockBrowser");
@@ -296,14 +306,16 @@
     ) {
       hidePopover("mentionSearch");
     } else if (type === "keyup") {
-      mentionSearchRef.keyup(event);
+      // mentionSearchRef.keyup(event);
+      dispatchCustomEvent(GlobalEvent.SEARCH_RESULT_KEYUP, event);
     } else if (
       type === "keydown" &&
       (event.key === "ArrowDown" ||
         event.key === "ArrowUp" ||
         event.key === "Enter")
     ) {
-      mentionSearchRef.keydown(event);
+      // mentionSearchRef.keydown(event);
+      dispatchCustomEvent(GlobalEvent.SEARCH_RESULT_KEYDOWN, event);
       event.preventDefault();
     }
     return true;
@@ -756,7 +768,7 @@
 <Popover
   bind:this={popoverRef}
   options={{
-    isPlaceAtCaret: true,
+    isPlaceAtCaret: $view.isConstrainedWidth ? false : true,
     offsetInPx: 10,
     id: isRenderMentionSearch ? "mentionSearchPopover" : "blockBrowserPopover",
     class: cn({
@@ -806,7 +818,6 @@
       />
     {:else if isRenderMentionSearch}
       <SearchResultsPopover
-        bind:this={mentionSearchRef}
         searchResultComponent={LinkSearchResultItem}
         isAlwaysShowSearchFeedback={true}
         searchCallback={onMentionSearch}
@@ -819,3 +830,24 @@
     {/if}
   </slot>
 </Popover>
+{#if $view.isConstrainedWidth && isRenderMentionSearch}
+  <div
+    class="w-full"
+    use:popover={{
+      content: SearchResultsPopover,
+      isSpanToTriggerWidth: true,
+      triggerMethod: [PopoverTriggerMethod.SHOW_BY_DEFAULT],
+      componentProps: {
+        searchResultComponent: LinkSearchResultItem,
+        isAlwaysShowSearchFeedback: true,
+        searchCallback: onMentionSearch,
+        shortcutTriggers: ["@", "["],
+        onSelect: onMentionSelect,
+        isApplyPopoverStyling: true,
+        onReset: () => {
+          hidePopover("mentionSearch");
+        }
+      }
+    }}
+  />
+{/if}

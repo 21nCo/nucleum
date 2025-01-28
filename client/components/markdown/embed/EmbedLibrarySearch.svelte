@@ -8,6 +8,7 @@
   import TextSearchInput from "$lib/client/elements/input/TextSearchInput.svelte";
   export let subType: NodeType;
   export let onSelect: (event: CustomEvent) => void;
+  export let onReset: () => void;
   let searchQuery = "";
   let searchRef: TextSearchInput;
   const searchStore = new SearchStore();
@@ -29,16 +30,19 @@
 </script>
 
 <!-- TODO - improve search results - to show image preview, tweet preview, etc -->
-<TextSearchInput
-  bind:this={searchRef}
-  bind:value={searchQuery}
-  isInline={true}
-  {searchCallback}
-  placeholder={`Search ${label}`}
-  emptyStateLabel="No results found"
-  searchResultComponent={LinkSearchResultItem}
-  searchResultComponentProps={{
-    isHideResourceType: true
-  }}
-  on:select={onSelect}
-/>
+<div class="mo:w-[20rem] bg-bgs1 rounded-md">
+  <TextSearchInput
+    bind:this={searchRef}
+    bind:value={searchQuery}
+    isInline={true}
+    {searchCallback}
+    placeholder={`Search ${label}`}
+    emptyStateLabel="No results found"
+    searchResultComponent={LinkSearchResultItem}
+    searchResultComponentProps={{
+      isHideResourceType: true
+    }}
+    on:select={onSelect}
+    on:reset={onReset}
+  />
+</div>

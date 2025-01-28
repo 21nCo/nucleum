@@ -27,6 +27,9 @@
   export let isInlineContext: boolean = false;
   export let isAlwaysShowSearchFeedback: boolean = false;
   export let bottomMessage: string | undefined = undefined;
+  export let onSelect: Function | undefined = undefined;
+  export let onReset: Function | undefined = undefined;
+  export let isApplyPopoverStyling: boolean = false;
   let value: string;
   type SearchItem = Partial<IResource & Record<string, unknown>>;
   let results: SearchItem[] = [];
@@ -38,11 +41,13 @@
     resetSearch();
     value = "";
     dispatch("reset");
+    if (onReset) onReset();
   }
   const dispatch = createEventDispatcher();
 
   function onSearchResultSelection(item: SearchItem, e?: MouseEvent) {
     dispatch("select", { item, event: e });
+    if (onSelect) onSelect({ detail: { item, event: e } });
     hide();
   }
   function resetSearch() {
@@ -158,9 +163,10 @@
 </script>
 
 <div
-  class={cn("flex flex-col justify-between  w-full", {
+  class={cn("flex flex-col justify-between w-full", {
     "max-h-72 h-72": !isInlineContext,
-    "h-full": isInlineContext
+    "h-full": isInlineContext,
+    "bg-bgs1 rounded-md border border-brs2": isApplyPopoverStyling
   })}
 >
   <div class="flex flex-col flex-grow items-center w-full">
@@ -229,3 +235,12 @@
     </div>
   {/if}
 </div>
+
+<svelte:window
+  on:searchresultkeyup={(e) => {
+    keyup(e.detail);
+  }}
+  on:searchresultkeydown={(e) => {
+    keydown(e.detail);
+  }}
+/>

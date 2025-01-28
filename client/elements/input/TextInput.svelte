@@ -270,7 +270,7 @@
   </InputBaseElement>
 {/if}
 {#if isFocused}
-  <KeyboardToolbar class="bg-bgs2 h-12 px-4 flex items-center justify-between">
+  <KeyboardToolbar class="bg-bgs2 h-14 px-4 flex items-center justify-between">
     <div class="flex items-center justify-center gap-2">
       <!-- <Button
         icon="ph:arrow-u-up-left-light"

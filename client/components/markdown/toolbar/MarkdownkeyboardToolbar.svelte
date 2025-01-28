@@ -8,6 +8,7 @@
     embedNodeTypeList,
     mediaNodeTypeList,
     NodeType,
+    structuralNodeTypes,
     webNodeTypeList
   } from "$lib/client/products/memotron/node/node.type";
   import context from "$lib/client/stores/context.store";
@@ -87,6 +88,45 @@
     const activeElement = document.activeElement;
     if (!activeElement) return;
 
+    let keyupEvents: KeyboardEvent[] = [];
+    if (text === "@") {
+      const shiftKeyupEvent = new KeyboardEvent("keyup", {
+        key: "Shift",
+        code: "ShiftLeft",
+        shiftKey: false,
+        bubbles: true,
+        cancelable: true
+      });
+
+      const digit2KeyupEvent = new KeyboardEvent("keyup", {
+        key: "2",
+        code: "Digit2",
+        shiftKey: false,
+        bubbles: true,
+        cancelable: true
+      });
+      keyupEvents = [shiftKeyupEvent, digit2KeyupEvent];
+    } else {
+      const keyupEvent = new KeyboardEvent("keyup", {
+        key: text,
+        bubbles: true,
+        cancelable: true
+      });
+      keyupEvents = [keyupEvent];
+    }
+
+    // Create keyboard events
+    const keydownEvent = new KeyboardEvent("keydown", {
+      key: text,
+      bubbles: true,
+      cancelable: true
+    });
+    const keypressEvent = new KeyboardEvent("keypress", {
+      key: text,
+      bubbles: true,
+      cancelable: true
+    });
+
     // Create an input event
     const inputEvent = new InputEvent("input", {
       inputType: "insertText",
@@ -100,10 +140,18 @@
       const selection = window.getSelection();
       const range = selection?.getRangeAt(0);
       if (range) {
+        // Dispatch events in order
+        activeElement.dispatchEvent(keydownEvent);
+        activeElement.dispatchEvent(keypressEvent);
+
         range.deleteContents();
         range.insertNode(document.createTextNode(text));
         range.collapse(false);
+
         activeElement.dispatchEvent(inputEvent);
+        keyupEvents.forEach((event) => {
+          activeElement.dispatchEvent(event);
+        });
       }
       return;
     }
@@ -117,6 +165,10 @@
       const end = activeElement.selectionEnd ?? 0;
       const value = activeElement.value;
 
+      // Dispatch events in order
+      activeElement.dispatchEvent(keydownEvent);
+      activeElement.dispatchEvent(keypressEvent);
+
       // Update the value
       activeElement.value =
         value.substring(0, start) + text + value.substring(end);
@@ -124,8 +176,11 @@
       // Update cursor position
       activeElement.setSelectionRange(start + text.length, start + text.length);
 
-      // Dispatch the input event
+      // Dispatch remaining events
       activeElement.dispatchEvent(inputEvent);
+      keyupEvents.forEach((event) => {
+        activeElement.dispatchEvent(event);
+      });
     }
   }
 
@@ -265,6 +320,7 @@
               ...mediaNodeTypeList,
               ...webNodeTypeList,
               ...embedNodeTypeList,
+              ...structuralNodeTypes,
               NodeType.EMBED
             ].includes(toType)
           ) {

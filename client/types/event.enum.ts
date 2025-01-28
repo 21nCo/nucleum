@@ -40,7 +40,9 @@ export enum GlobalEvent {
   /**
    * Listened to in ResourceResolver - to reload entire loaded resource
    */
-  RELOAD_RESOURCE = "reloadResource"
+  RELOAD_RESOURCE = "reloadResource",
+  SEARCH_RESULT_KEYUP = "searchresultkeyup",
+  SEARCH_RESULT_KEYDOWN = "searchresultkeydown"
 }
 
 export enum PlayActionState {

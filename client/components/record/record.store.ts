@@ -274,10 +274,15 @@ export class SearchStore {
   ) {
     logger.log({ at: "searchForLinking", query, params });
     if (!isValidString(query)) {
-      const items = recentsStore.resolve({
+      let items = recentsStore.resolve({
         type: params?.resource,
         exclude: params?.exclude
       });
+      if (params?.subType && params.resource === Resource.node) {
+        items = items.filter((x) => x.contentType === params.subType);
+      } else if (params?.subType && params.resource === Resource.collection) {
+        items = items.filter((x) => x.type === params.subType);
+      }
       return items;
     }
     let nodes = [];

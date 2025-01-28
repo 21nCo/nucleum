@@ -100,9 +100,13 @@
 
 {#if isInline}
   <div
-    class={cn("flex flex-col gap-1 bg-bgs1 p-2 rounded-md", width && width, {
-      "mo:w-full w-[30rem] max-w-full": !width
-    })}
+    class={cn(
+      "flex flex-col gap-1 bg-bgs1 p-2 rounded-md border border-brs2",
+      width && width,
+      {
+        "mo:w-full w-[30rem] max-w-full": !width
+      }
+    )}
   >
     <TextInput
       bind:value

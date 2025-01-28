@@ -30,5 +30,6 @@ export enum PopoverTriggerMethod {
   CLICK = "click",
   RIGHT_CLICK = "right-click",
   HOVER = "hover",
-  NONE = "none"
+  NONE = "none",
+  SHOW_BY_DEFAULT = "show-by-default"
 }

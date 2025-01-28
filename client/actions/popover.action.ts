@@ -295,7 +295,9 @@ export function popover(node: HTMLElement, params: PopoverParams) {
 
   let isShown = false;
   let lastTriggeredBy: PopoverTriggerMethod | null = null;
-  let popoverContainer = document.getElementById("popovers") ?? node?.getRootNode()?.getElementById("popovers");
+  let popoverContainer =
+    document.getElementById("popovers") ??
+    node?.getRootNode()?.getElementById("popovers");
 
   async function createPopover(): Promise<void> {
     popoverElement = document.createElement("div");
@@ -549,7 +551,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
   async function showPopover(e?: any): Promise<void> {
     try {
       if (!popoverElement) await createPopover();
-        positionPopover();
+      positionPopover();
       isShown = true;
       triggerChangeEvent();
       document.addEventListener("click", handleOutsideClickv2);
@@ -604,7 +606,8 @@ export function popover(node: HTMLElement, params: PopoverParams) {
    */
   function handleOutsideClickv2(event: MouseEvent): void {
     console.log("handleOutsideClickv2", event);
-    if (!popoverElement || !node || event.target.nodeName === "PLASMO-CSUI") return;
+    if (!popoverElement || !node || event.target.nodeName === "PLASMO-CSUI")
+      return;
 
     const target = event.target as Element;
     const path =
@@ -720,6 +723,10 @@ export function popover(node: HTMLElement, params: PopoverParams) {
   setupEventListeners();
   const actionMap = new WeakMap();
   actionMap.set(node, { show: showPopover, hide: hidePopover });
+
+  if (triggerMethod.includes(PopoverTriggerMethod.SHOW_BY_DEFAULT)) {
+    showPopover();
+  }
 
   return {
     update(newParams: PopoverParams): void {

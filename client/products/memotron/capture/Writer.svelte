@@ -11,8 +11,7 @@
   import type { IRecordId } from "$lib/client/types/data.type";
   import CameraCapture from "./CameraCapture.svelte";
   import { createEventDispatcher } from "svelte";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { Size } from "$lib/client/types/size.enum";
+  import { virtualKeyboard } from "$lib/client/actions/virtualKeyboard.action";
   const dispatch = createEventDispatcher();
 
   let mdRef: NodularMarkdown | undefined = undefined;
@@ -53,7 +52,13 @@
   let isShowTOC: boolean = false;
 </script>
 
-<div class="flex w-full h-full max-h-full justify-between">
+<div
+  class="flex w-full max-h-full justify-between"
+  use:virtualKeyboard={{
+    defaultHeight: "100dvh",
+    offset: 100
+  }}
+>
   {#if captureType === CaptureType.AUDIO}
     <div class="w-full h-full flex items-center justify-center">
       <AudioCapture bind:isSaveInProgress on:cancel />
@@ -77,7 +82,6 @@
           dispatch("change", e.detail);
         }}
       />
-      <ScrollViewBottomSpacer size={Size.xl} />
     </div>
     <!-- TODO - add condition for if headings present or if mentions present -->
     {#if isShowTOC}

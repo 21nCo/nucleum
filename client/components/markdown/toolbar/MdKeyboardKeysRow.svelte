@@ -18,7 +18,7 @@
       //   $context.os === OperatingSystem.IOS
     }
   )}
-  transition:fly={{ y: 10 }}
+  in:fly={{ y: 10 }}
 >
   <KeyboardToolbarKey
     icon="ph:at"

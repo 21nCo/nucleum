@@ -37,6 +37,7 @@
   import { ErrorMessage } from "../../error/error.type";
   import { sanitizeAndResolve } from "$lib/client/products/memotron/node/url.utils";
   import { debouncer } from "$lib/client/utils/utils";
+  import context from "$lib/client/stores/context.store";
 
   const dispatch = createEventDispatcher();
   const nodeContext = getContext<any>("node");
@@ -190,7 +191,7 @@
       ? `min-height: ${height}px; height: ${height}px; max-height: ${height}px;`
       : ""}
     use:resizable={{
-      enabled: isResizable && !isEditingTitle,
+      enabled: !$context.isTouchDevice && isResizable && !isEditingTitle,
       minHeight: 300,
       maxHeight: 1600,
       edges: ["bottom"],

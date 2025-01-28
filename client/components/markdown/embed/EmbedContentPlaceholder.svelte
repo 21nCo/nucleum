@@ -30,10 +30,12 @@
   import { ResourceAccessPoint } from "../../flux/resourceStores/resource.type";
   import EmbedLibrarySearch from "./EmbedLibrarySearch.svelte";
   import { createEventDispatcher, getContext } from "svelte";
+  import view from "$lib/client/stores/view.store";
   const dispatch = createEventDispatcher();
   const nodeContext = getContext<any>("node");
   export let linkInputValue = "";
   export let subType: NodeType | undefined;
+  let librarySearchPopoverRef: HTMLElement | undefined = undefined;
   const commonButtonParams: IButtonParams = {
     size: Size.sm,
     style: ButtonStyle.OUTLINED
@@ -262,7 +264,7 @@
               /> -->
             {:else if subType === NodeType.AUDIO}
               <Button
-                label="Record"
+                label={$view.isConstrainedWidth ? "" : "Record"}
                 icon="ph:microphone-light"
                 {...commonButtonParams}
                 type={ButtonVariant.PRIMARY}
@@ -270,7 +272,9 @@
               />
             {/if}
             <Button
-              label="Upload"
+              label={$view.isConstrainedWidth && subType === NodeType.AUDIO
+                ? ""
+                : "Upload"}
               icon="ph:upload-light"
               {...commonButtonParams}
               type={ButtonVariant.PRIMARY}
@@ -281,11 +285,17 @@
           {/if}
           <button
             on:click|stopPropagation
+            bind:this={librarySearchPopoverRef}
             use:popover={{
               content: EmbedLibrarySearch,
               componentProps: {
                 subType,
-                onSelect: onSelectFromLibrary
+                onSelect: onSelectFromLibrary,
+                onReset: () => {
+                  librarySearchPopoverRef?.dispatchEvent(
+                    new CustomEvent("hide")
+                  );
+                }
               }
             }}
           >
