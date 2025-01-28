@@ -11,6 +11,8 @@
   import type { IRecordId } from "$lib/client/types/data.type";
   import CameraCapture from "./CameraCapture.svelte";
   import { createEventDispatcher } from "svelte";
+  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { Size } from "$lib/client/types/size.enum";
   const dispatch = createEventDispatcher();
 
   let mdRef: NodularMarkdown | undefined = undefined;
@@ -75,6 +77,7 @@
           dispatch("change", e.detail);
         }}
       />
+      <ScrollViewBottomSpacer size={Size.xl} />
     </div>
     <!-- TODO - add condition for if headings present or if mentions present -->
     {#if isShowTOC}

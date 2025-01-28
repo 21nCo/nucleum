@@ -51,6 +51,7 @@ export function mdToolbar(node: HTMLElement, params?: IMdToolbarParams) {
     const keyboardHeight =
       window.innerHeight -
       (window.visualViewport?.height ?? window.innerHeight);
+    // const keyboardHeight = 300;
     const offsetY = window.visualViewport ? window.visualViewport.offsetTop : 0;
     const bottomOffset = Math.max(0, keyboardHeight - offsetY);
     const elementTopPosition = window.innerHeight - keyboardHeight;
@@ -59,7 +60,7 @@ export function mdToolbar(node: HTMLElement, params?: IMdToolbarParams) {
     //   keyboardHeight,
     //   offsetY,
     //   bottomOffset,
-    //   offset: params?.offset
+    //   offset
     // });
     if (keyboardHeight === 0 && !isPreventDefaultOnKeyboardClose) {
       node.style.display = "none";

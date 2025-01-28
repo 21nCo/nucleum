@@ -138,14 +138,15 @@ select {
   text-transform: none;
 }
 
-button,
+/* TODO - causing unexpected issues... check the need for this... */
+/* button,
 [type="button"],
 [type="reset"],
 [type="submit"] {
   -webkit-appearance: button;
   background-color: transparent;
   background-image: none;
-}
+} */
 
 :-moz-focusring {
   outline: auto;

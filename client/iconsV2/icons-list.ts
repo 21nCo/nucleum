@@ -186,6 +186,7 @@ const phosphorIcons = [
   "instagram-logo",
   "reddit-logo",
   "brackets-round",
+  "brackets-square",
   "code",
   "code-simple",
   "paragraph",

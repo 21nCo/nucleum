@@ -36,7 +36,8 @@
       value: CaptureType.UPLOAD
     }
   ];
-  let types: ISelectItem[] = [];
+
+  let types: (ISelectItem & { isShortcut?: boolean })[] = [];
 
   function refreshTypes() {
     flux
@@ -48,10 +49,11 @@
         }
       })
       .then((data) => {
-        types = data.map((type) => ({
+        types = data.map((type: any) => ({
           value: type.id,
           label: type.label,
-          icon: type.avatar
+          icon: type.avatar,
+          isShortcut: true
         }));
       });
   }

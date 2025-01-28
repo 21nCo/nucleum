@@ -6,6 +6,9 @@
   import { createEventDispatcher } from "svelte";
   import type { IToolTipOptions } from "../text/text.type";
   import Badge from "../text/Badge.svelte";
+  import { hoverable } from "$lib/client/actions/hover.action";
+  import { tooltip as tooltipAction } from "$lib/client/actions/popover.action";
+  import { Placement } from "$lib/client/types/direction.enum";
   const dispatch = createEventDispatcher();
   export let icon: string;
   export let on: boolean = false;
@@ -23,11 +26,18 @@
   }
 </script>
 
-<HoverableElement
+<button
   on:click={onclick}
-  bind:isHovering
-  {tooltip}
-  {tooltipOptions}
+  on:mousedown
+  use:hoverable={{
+    onHover: (value) => {
+      isHovering = value;
+    }
+  }}
+  use:tooltipAction={{
+    text: tooltip,
+    direction: tooltipOptions?.placement ?? Placement.Bottom
+  }}
   class={cn("flex relative items-center justify-center rounded-md", {
     "min-h-8 min-w-8": bgSize === Size.sm || (!bgSize && size === Size.sm),
     "min-h-10 min-w-10": bgSize === Size.md || (!bgSize && size === Size.md),
@@ -50,4 +60,4 @@
       <Badge text={count} size={Size.sm} />
     </div>
   {/if}
-</HoverableElement>
+</button>

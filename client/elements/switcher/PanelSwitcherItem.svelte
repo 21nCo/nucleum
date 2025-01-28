@@ -70,7 +70,9 @@
   >
     <div
       class={cn("flex items-center min-w-fit", {
-        "text-base": (size === Size.md && $view.isPortrait) || size === Size.sm,
+        "text-base":
+          (size === Size.md && $view.isPortrait) ||
+          (size === Size.md && !$view.isPortrait),
         "text-b2": (size === Size.sm && $view.isPortrait) || size === Size.xs,
         "text-h4": size === Size.lg,
         "text-fgs3": !isActive,

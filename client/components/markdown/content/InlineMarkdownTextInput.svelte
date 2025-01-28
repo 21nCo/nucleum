@@ -27,6 +27,7 @@
   import { resolvePasteContents } from "$lib/client/products/memotron/capture/capture.utils";
   import { MAX_FILE_SIZE_MB } from "../../record/record.store";
   import { NodeType } from "$lib/client/products/memotron/node/node.type";
+  import view from "$lib/client/stores/view.store";
 
   const dispatch = createEventDispatcher();
   //   export let block: Block<TextContent>;
@@ -1202,7 +1203,7 @@
         behavior: "auto",
         block: "center",
         eager: {
-          bottom: 60
+          bottom: $view.isConstrainedWidth ? 250 : 60
         }
       }}
     ></div>

@@ -13,7 +13,7 @@
   import view from "$lib/client/stores/view.store";
   const dispatch = createEventDispatcher();
 
-  export let item: ISelectItem;
+  export let item: ISelectItem & { isShortcut?: boolean };
   export let isActive: boolean = false;
   let inputRef: HTMLInputElement;
   $: size = $view.isConstrainedWidth ? Size.sm : Size.md;
@@ -24,10 +24,11 @@
 
 <button
   class={cn(
-    "flex gap-1 dp:gap-2 items-center justify-center px-3 dp:px-6 h-14 dp:h-16 rounded-md border",
+    "flex gap-1 dp:gap-2 items-center justify-center px-3 dp:px-5 h-14 dp:h-16 rounded-md border",
     {
       "bg-aps3 border-aps1 text-aps1": isActive,
-      "border-brs3 hover:bg-bgs2": !isActive
+      "border-brs3 hover:bg-bgs2": !isActive,
+      "bg-bgs2 bg-opacity-50 hover:bg-opacity-100": item.isShortcut && !isActive
     }
   )}
   on:click={(e) => {

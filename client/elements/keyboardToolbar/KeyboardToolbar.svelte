@@ -2,6 +2,7 @@
   import { onMount, onDestroy } from "svelte";
   import { mdToolbar, simpleToolbar } from "./keyboardToolbar.action";
   import { cn } from "../../utils/ui.utils";
+  import { fly } from "svelte/transition";
   let classList: string = "";
   export { classList as class };
   export let isMdToolbar: boolean = false;
@@ -10,9 +11,17 @@
   let ref: HTMLElement;
   let portal: HTMLElement;
 
+  export function close() {
+    const allToolbars = document.querySelectorAll(".toolbar");
+    allToolbars.forEach((toolbar) => {
+      (toolbar as HTMLElement).style.display = "none";
+    });
+    document.activeElement?.blur();
+  }
+
   onMount(() => {
     portal = document.createElement("div");
-    portal.className = "toolbar";
+    portal.className = "toolbar-container";
     document.getElementById("toolbars")?.appendChild(portal);
     portal.appendChild(ref);
   });
@@ -22,12 +31,12 @@
   });
 </script>
 
-<div class="toolbar-placeholder">
+<div class="toolbar-placeholder" in:fly={{ y: 50 }}>
   <div bind:this={ref}>
     {#if isMdToolbar}
       <div
         class={cn(
-          "fixed left-0 bottom-0 w-screen border-t border-brs3 z-50",
+          "toolbar fixed left-0 bottom-0 w-screen border-t border-brs3 z-50",
           classList
         )}
         use:mdToolbar={{
@@ -41,7 +50,7 @@
     {:else}
       <div
         class={cn(
-          "fixed left-0 bottom-0 w-screen border-t border-brs3 z-50",
+          "toolbar fixed left-0 bottom-0 w-screen border-t border-brs3 z-50",
           classList
         )}
         use:simpleToolbar
