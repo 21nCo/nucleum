@@ -1,14 +1,39 @@
 <script lang="ts">
   import { hoverable } from "$lib/client/actions/hover.action";
   import SubAtomLogo from "$lib/client/branding/SubAtomLogo.svelte";
+  import { Placement } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
+  import { cn } from "$lib/client/utils/ui.utils";
   import { fly } from "svelte/transition";
+  import { toolbarState } from "../contentScripts/store";
   let isHovering = false;
 </script>
 
-<div class="fixed right-0 inset-y-0 h-full flex justify-center items-center">
+<div
+  class={cn("fixed flex h-fit", {
+    "inset-y-0 my-auto w-fit":
+      $toolbarState.position === Placement.Right ||
+      $toolbarState.position === Placement.Left,
+    "right-0": $toolbarState.position === Placement.Right,
+    "left-0": $toolbarState.position === Placement.Left,
+    "inset-x-0 mx-auto bottom-0 w-52":
+      $toolbarState.position === Placement.Bottom
+  })}
+>
   <button
-    class="flex items-center gap-1 w-fit h-fit bg-bgs2 text-fgs1 rounded-l-full border-l border-y border-brs3 shadow-md px-1"
+    class={cn(
+      "flex items-center gap-1 h-fit bg-bgs2 text-fgs1 border-y border-brs3 shadow-md px-1",
+      {
+        "w-fit":
+          $toolbarState.position === Placement.Right ||
+          $toolbarState.position === Placement.Left,
+        "rounded-l-full border-l": $toolbarState.position === Placement.Right,
+        "rounded-r-full border-r": $toolbarState.position === Placement.Left,
+        "rounded-t-lg border-x w-full justify-center":
+          $toolbarState.position === Placement.Bottom,
+        "bg-bgs3": $toolbarState.position === Placement.Bottom && isHovering
+      }
+    )}
     on:click
     use:hoverable={{
       onHover: (isHoveringParam) => {
@@ -16,9 +41,27 @@
       }
     }}
   >
-    <SubAtomLogo subatom="memotron" size={Size.sm} />
-    {#if isHovering}
-      <span in:fly={{ x: 50 }}> Memotron clipper </span>
+    {#if $toolbarState.position === Placement.Right || $toolbarState.position === Placement.Bottom}
+      <SubAtomLogo subatom="memotron" size={Size.sm} />
+    {/if}
+    {#if isHovering || $toolbarState.position === Placement.Bottom}
+      <span
+        in:fly={$toolbarState.position === Placement.Bottom
+          ? { y: 50 }
+          : $toolbarState.position === Placement.Right
+            ? { x: 50 }
+            : { x: -50 }}
+        class="whitespace-nowrap"
+      >
+        {#if $toolbarState.position === Placement.Bottom && isHovering}
+          Open toolbar
+        {:else}
+          Memotron clipper
+        {/if}
+      </span>
+    {/if}
+    {#if $toolbarState.position === Placement.Left}
+      <SubAtomLogo subatom="memotron" size={Size.sm} />
     {/if}
   </button>
 </div>

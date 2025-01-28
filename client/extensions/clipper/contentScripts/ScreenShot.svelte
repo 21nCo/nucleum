@@ -30,15 +30,28 @@
    * @description Gets the background color of the body element and converts it to RGB values then inverts the RGB values to form a visible color for the capture area shade
    */
   onMount(() => {
-    screenshotElement.style.cursor = "crosshair";
+    // screenshotElement.style.cursor = "crosshair";
+    const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+      <path d="M 15 0 L 15 32 M 0 15 L 32 15" stroke="white" stroke-width="5"/>
+      <path d="M 15 0 L 15 32 M 0 15 L 32 15" stroke="black" stroke-width="2"/>
+    </svg>`;
+    const blob = new Blob([svgContent], { type: "image/svg+xml" });
+    const cursorUrl = URL.createObjectURL(blob);
+    screenshotElement.style.cursor = `url('${cursorUrl}') 16 16, crosshair`;
     const bodyBackgroundColor = getComputedStyle(document.body).backgroundColor;
-    const rgbValues: any = bodyBackgroundColor.match(/\d+/g);
+
+    const rgbValues =
+      bodyBackgroundColor === "rgba(0, 0, 0, 0)"
+        ? [255, 255, 255]
+        : bodyBackgroundColor.match(/\d+/g);
+
     const red = parseInt(rgbValues[0]);
     const green = parseInt(rgbValues[1]);
     const blue = parseInt(rgbValues[2]);
     const compRed = 255 - red;
     const compGreen = 255 - green;
     const compBlue = 255 - blue;
+
     bgColor = `rgba(${compRed},${compGreen},${compBlue},0.1)`;
     borderColor = `rgba(${compRed},${compGreen},${compBlue},0.5)`;
   });
@@ -245,7 +258,7 @@
     left: {leftValue}px;
     height: {heightValue}px;
     width: {widthValue}px;
-    border:1px dotted {isSaveInProgress ? 'transparent' : borderColor};
+    border:2px dotted {isSaveInProgress ? 'transparent' : borderColor};
     pointer-events: none;
   "
   />

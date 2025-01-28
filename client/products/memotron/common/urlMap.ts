@@ -42,3 +42,30 @@ export const minimalMetadataPages = [
   "patreon.com",
   "soundcloud.com"
 ];
+
+
+export const memotronUrlsList = [
+  /^https:\/\/(?:.*\.)?memotron\.io(?:\/.*)?$/,
+  /^https:\/\/(?:.*\.)?tidigit\.dev(?:\/.*)?$/
+];
+export const unavailableUrlsList = [
+  /^https:\/\/app\.memotron\.io(?:\/.*)?$/,
+  /^https:\/\/memotron\.tidigit\.dev(?:\/.*)?$/,
+  /^https:\/\/pointron\.tidigit\.dev(?:\/.*)?$/,
+  /^https?:\/\/localhost(?::[0-9]+)?(?:\/.*)?$/,
+  /^https:\/\/accounts\.google\.com(?:\/.*)?$/,
+  /^https:\/\/appleid\.apple\.com(?:\/.*)?$/
+ 
+];
+
+export const sidePanelUnavailableUrlsList = [
+  ...unavailableUrlsList,
+  /^https:\/\/(?:www\.)?(twitter\.com|x\.com)\/([a-zA-Z0-9_]+)\/status\/(\d+)\/?$/,
+  /^https:\/\/(?:.*\.)?amazon\.[a-z]{2,3}(?:\/.*)?$/,
+  /^https:\/\/(?:.*\.)?twitter\.[a-z]{2,3}(?:\/.*)?$/,
+  /^https:\/\/(?:.*\.)?x\.[a-z]{2,3}(?:\/.*)?$/
+]
+
+export const toolbarUnavailableUrlsList = [
+  ...unavailableUrlsList,
+]

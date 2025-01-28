@@ -37,6 +37,7 @@
   import { clientStorage } from "$lib/client/persistence/persistence.utils";
   import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
   import { onDestroy, onMount } from "svelte";
+  import { toolbarUnavailableUrlsList } from "$lib/client/products/memotron/common/urlMap";
 
   export let id: string;
   let textClipperRef: any;
@@ -47,17 +48,7 @@
   let isLoggedIn: boolean = false;
   let isDraggingToolbar: boolean = false;
 
-  const unavailableUrlsList = [
-    /^https:\/\/(?:.*\.)?memotron\.io(?:\/.*)?$/,
-    /^https:\/\/memotron\.tidigit\.dev(?:\/.*)?$/,
-    /^https:\/\/(?:.*\.)?pointron\.io(?:\/.*)?$/,
-    /^https:\/\/pointron\.tidigit\.dev(?:\/.*)?$/,
-    /^https?:\/\/localhost(?::[0-9]+)?(?:\/.*)?$/,
-    /^https:\/\/accounts\.google\.com(?:\/.*)?$/,
-    /^https:\/\/appleid\.apple\.com(?:\/.*)?$/
-  ];
-
-  $: isDisableClipper = unavailableUrlsList.some((regex) => {
+  $: isDisableClipper = toolbarUnavailableUrlsList.some((regex) => {
     return regex.test(window.location.href);
   });
 

@@ -54,12 +54,38 @@
   const debouncedNotesChange = debouncer(onNotesChange, 1500);
 
   async function onPropertyUpdate(e: CustomEvent) {
-    if (!e.detail || !e.detail?.id || e.detail?.value === undefined || !id)
-      return;
-    webpage.updateClipProperty(id, {
-      id: e.detail.id,
-      value: e.detail.value
-    });
+    try {
+      if (!e.detail || !e.detail?.id || e.detail?.value === undefined || !id)
+        return;
+      feedback = {
+        message: "Syncing changes...",
+        type: AlertType.PROGRESS
+      };
+      let result = await webpage.updateClipProperty(id, {
+        id: e.detail.id,
+        value: e.detail.value
+      });
+      if (!result) {
+        feedback = {
+          message: "Property update failed",
+          type: AlertType.ERROR
+        };
+        return;
+      }
+      feedback = {
+        message: "Synced!",
+        type: AlertType.SUCCESS
+      };
+    } catch (error) {
+      let errMessage = "Property update failed";
+      if (error instanceof ResourceError) {
+        errMessage = error.message;
+      }
+      feedback = {
+        message: errMessage,
+        type: AlertType.ERROR
+      };
+    }
   }
 
   async function onLink(e: CustomEvent) {

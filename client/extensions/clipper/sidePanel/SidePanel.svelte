@@ -32,7 +32,10 @@
     loadInMemoryStores
   } from "$lib/client/components/flux/fluxExtentionMediator";
   import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { screenShotOnlyPages } from "$lib/client/products/memotron/common/urlMap";
+  import {
+    memotronUrlsList,
+    sidePanelUnavailableUrlsList
+  } from "$lib/client/products/memotron/common/urlMap";
   import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
@@ -100,19 +103,6 @@
     }
   });
 
-  const memotronUrlsList = [
-    /^https:\/\/(?:.*\.)?memotron\.io(?:\/.*)?$/,
-    /^https:\/\/(?:.*\.)?tidigit\.dev(?:\/.*)?$/
-  ];
-  const unavailableUrlsList = [
-    ...screenShotOnlyPages,
-    /^https:\/\/app\.memotron\.io(?:\/.*)?$/,
-    /^https:\/\/memotron\.tidigit\.dev(?:\/.*)?$/,
-    /^https:\/\/(?:www\.)?(twitter\.com|x\.com)\/([a-zA-Z0-9_]+)\/status\/(\d+)\/?$/,
-    /^https:\/\/(?:.*\.)?amazon\.[a-z]{2,3}(?:\/.*)?$/,
-    /^https:\/\/(?:.*\.)?twitter\.[a-z]{2,3}(?:\/.*)?$/,
-    /^https:\/\/(?:.*\.)?x\.[a-z]{2,3}(?:\/.*)?$/
-  ];
   //TODO - maintain a store with the data.
   async function refreshState(data: any) {
     logger.debug({ at: "SidePanel - refreshState", data });
@@ -124,7 +114,9 @@
     if (data.notes) notes = data.notes;
     else notes = "";
     if (data.url) {
-      isNotAvailable = unavailableUrlsList.some((x) => x.test(data.url));
+      isNotAvailable = sidePanelUnavailableUrlsList.some((x) =>
+        x.test(data.url)
+      );
       isMemotronPage = memotronUrlsList.some((x) => x.test(data.url));
     }
     const token = await resolveToken();

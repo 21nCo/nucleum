@@ -37,8 +37,10 @@ import { GlobalEvent } from "../types/event.enum";
 import context from "./context.store";
 import {
   compressImageToTargetSize,
-  generateImagePreviewFromPdf
 } from "../utils/ui.utils";
+import {
+  generateImagePreviewFromPdf
+} from "../utils/pdf.utils";
 
 export const isRefreshingToken = writable(false);
 
