@@ -11,7 +11,7 @@
     "flex items-center justify-center rounded-md p-1 h-[42px] w-[34px] min-w-[34px] min-h-[42px] click:bg-fgs4 shadow-sm",
     {
       "bg-white dark:bg-[#6b6b6b]": isApplySystemColors,
-      "bg-bgs3": !isApplySystemColors
+      "bg-bgs3 active:bg-bgs4": !isApplySystemColors
     }
   )}
   on:click

@@ -27,8 +27,9 @@
     "flex gap-1 dp:gap-2 items-center justify-center px-3 dp:px-5 h-14 dp:h-16 rounded-md border",
     {
       "bg-aps3 border-aps1 text-aps1": isActive,
-      "border-brs3 hover:bg-bgs2": !isActive,
-      "bg-bgs2 bg-opacity-50 hover:bg-opacity-100": item.isShortcut && !isActive
+      "border-brs3 notouch:hover:bg-bgs2 active:bg-bgs2": !isActive,
+      "bg-bgs2 bg-opacity-50 notouch:hover:bg-opacity-100 active:bg-opacity-100":
+        item.isShortcut && !isActive
     }
   )}
   on:click={(e) => {

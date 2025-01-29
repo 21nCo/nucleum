@@ -35,6 +35,7 @@
   import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
   import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
   import { GlobalEvent } from "$lib/client/types/event.enum";
+  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 
   const nodeContentContext = getContext<any>("content");
   const blockContext = getContext<any>("block");
@@ -92,6 +93,7 @@
   let mentionSearchQuery = "";
   let previousVal = deepCopy(text);
   let mentionTriggerKey: string;
+  let mentionSearchPopoverId: string = generateSimpleRandomId();
   let caretPositionT2:
     | {
         element?: any;
@@ -307,7 +309,10 @@
       hidePopover("mentionSearch");
     } else if (type === "keyup") {
       // mentionSearchRef.keyup(event);
-      dispatchCustomEvent(GlobalEvent.SEARCH_RESULT_KEYUP, event);
+      dispatchCustomEvent(GlobalEvent.SEARCH_RESULT_KEYUP, {
+        id: mentionSearchPopoverId,
+        event
+      });
     } else if (
       type === "keydown" &&
       (event.key === "ArrowDown" ||
@@ -315,7 +320,10 @@
         event.key === "Enter")
     ) {
       // mentionSearchRef.keydown(event);
-      dispatchCustomEvent(GlobalEvent.SEARCH_RESULT_KEYDOWN, event);
+      dispatchCustomEvent(GlobalEvent.SEARCH_RESULT_KEYDOWN, {
+        id: mentionSearchPopoverId,
+        event
+      });
       event.preventDefault();
     }
     return true;
@@ -816,9 +824,10 @@
         on:select={onBlockSelect}
         bind:searchQueryString={blockSearchQuery}
       />
-    {:else if isRenderMentionSearch}
+    {:else if !$view.isConstrainedWidth && isRenderMentionSearch}
       <SearchResultsPopover
         searchResultComponent={LinkSearchResultItem}
+        id={mentionSearchPopoverId}
         isAlwaysShowSearchFeedback={true}
         searchCallback={onMentionSearch}
         shortcutTriggers={["@", "["]}
@@ -840,6 +849,7 @@
       componentProps: {
         searchResultComponent: LinkSearchResultItem,
         isAlwaysShowSearchFeedback: true,
+        id: mentionSearchPopoverId,
         searchCallback: onMentionSearch,
         shortcutTriggers: ["@", "["],
         onSelect: onMentionSelect,

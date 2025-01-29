@@ -3,7 +3,7 @@
   import TextInput from "./input/TextInput.svelte";
   import Button from "./button/Button.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import { createEventDispatcher, onMount } from "svelte";
+  import { createEventDispatcher, onMount, tick } from "svelte";
   import { uiStateDerived } from "../stores/uiState/uiState.store";
   import ShortcutText from "./text/ShortcutText.svelte";
   import { GlobalEvent } from "../types/event.enum";
@@ -21,10 +21,13 @@
   const dispatch = createEventDispatcher();
   let searchInputRef: any;
   let isSearchFocused: boolean = false;
+
   onMount(() => {
     const appEventSub = appEvents.subscribe((x: IEvent) => {
       if (x.event === GlobalEvent.ACTIVATE_SEARCH_BOX) {
-        searchInputRef?.focus();
+        requestAnimationFrame(() => {
+          searchInputRef?.focus();
+        });
       }
     });
     return () => {
@@ -32,9 +35,11 @@
     };
   });
 
-  export function focus() {
+  export async function focus() {
+    await tick();
     searchInputRef?.focus();
   }
+
   export function blur() {
     searchInputRef?.blur();
   }

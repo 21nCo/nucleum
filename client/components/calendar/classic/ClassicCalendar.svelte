@@ -11,7 +11,7 @@
   export let panel: string = "classic";
 
   let selectedDate = new Date();
-  let selectedView: "month" | "week" | "day" | "year" = "month";
+  let selectedView: "month" | "week" | "day" | "year" = "year";
   let events: any[] = [];
   let yearViewRef: YearView;
   let weekViewRef: WeekView;

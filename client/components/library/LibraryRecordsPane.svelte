@@ -62,7 +62,7 @@
   import { toasts } from "$lib/client/stores/notification.store";
   import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
   import LibraryTagsPane from "../tags/LibraryTagsPane.svelte";
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import { page } from "$app/stores";
   import InlineSearchBar from "$lib/client/elements/InlineSearchBar.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
@@ -433,11 +433,10 @@
       <div class="flex items-center w-full gap-2 px-2 h-12 min-h-12">
         <Button
           icon="ph:magnifying-glass-light"
-          on:click={() => {
+          on:click={async () => {
             isSearchExpanded = !isSearchExpanded;
-            setTimeout(() => {
-              searchInputRef?.focus();
-            }, 100);
+            await tick();
+            searchInputRef?.focus();
           }}
         />
         <div class="flex-1 min-w-0" in:fade>

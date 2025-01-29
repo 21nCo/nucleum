@@ -13,6 +13,7 @@
   import { extensionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
   import { logger } from "$lib/client/components/debug/logger.client";
   import Icon from "../Icon.svelte";
+  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   export let searchStoreId: string | undefined = undefined;
   export let searchCallback: Function | undefined = undefined;
   export let searchResultComponent: any = undefined;
@@ -30,6 +31,8 @@
   export let onSelect: Function | undefined = undefined;
   export let onReset: Function | undefined = undefined;
   export let isApplyPopoverStyling: boolean = false;
+  export let id: string = generateSimpleRandomId();
+
   let value: string;
   type SearchItem = Partial<IResource & Record<string, unknown>>;
   let results: SearchItem[] = [];
@@ -163,6 +166,7 @@
 </script>
 
 <div
+  {id}
   class={cn("flex flex-col justify-between w-full", {
     "max-h-72 h-72": !isInlineContext,
     "h-full": isInlineContext,
@@ -238,9 +242,11 @@
 
 <svelte:window
   on:searchresultkeyup={(e) => {
-    keyup(e.detail);
+    if (id !== e.detail.id || !e.detail.event) return;
+    keyup(e.detail.event);
   }}
   on:searchresultkeydown={(e) => {
-    keydown(e.detail);
+    if (id !== e.detail.id || !e.detail.event) return;
+    keydown(e.detail.event);
   }}
 />

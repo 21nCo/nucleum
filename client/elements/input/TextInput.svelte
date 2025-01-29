@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Size } from "$lib/client/types/size.enum";
-  import { createEventDispatcher, onMount } from "svelte";
+  import { createEventDispatcher, onMount, tick } from "svelte";
   import InlineMarkdownTextInput from "$lib/client/components/markdown/content/InlineMarkdownTextInput.svelte";
   import Icon from "../Icon.svelte";
   import { InputStyle, type InputLabel } from "$lib/client/types/input.type";
@@ -35,7 +35,8 @@
   export let isRounded: boolean = false;
   export let height: string = style === InputStyle.PLAIN ? "" : "h-11";
   let isFocused: boolean = false;
-  export function focus() {
+  export async function focus() {
+    await tick();
     if (inputRef) inputRef.focus();
   }
   export function blur() {
@@ -187,9 +188,9 @@
             class="text-fgs3 h-6 w-full flex gap-2 items-center justify-start"
             on:click={() => {
               isFocused = true;
-              setTimeout(() => {
+              requestAnimationFrame(() => {
                 inputRef?.focus();
-              }, 10);
+              });
             }}
           >
             {#if isValidLink}
@@ -309,6 +310,7 @@
         isPreventMinWidth={true}
         on:click={() => {
           inputRef.value = "";
+          dispatch("cancel");
         }}
         on:mousedown={(e) => e.preventDefault()}
       />

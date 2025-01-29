@@ -105,8 +105,10 @@
   {#if arrangement === Arrangement.LIST}
     <div
       class={cn("relative flex flex-col w-full border rounded-md truncate", {
-        "bg-ccs5 hover:bg-ccs4 border-ccs2": isApplyCustomColor,
-        "border-transparent hover:border-brs3 px-1": !isApplyCustomColor,
+        "bg-ccs5 notouch:hover:bg-ccs4 active:bg-ccs4 border-ccs2":
+          isApplyCustomColor,
+        "border-transparent notouch:hover:border-brs3 active:border-brs3 px-1":
+          !isApplyCustomColor,
         "bg-bgs2 bg-opacity-50 px-2":
           !isApplyCustomColor && accessPoint === ResourceAccessPoint.LIBRARY,
         "p-2": isLinkContext

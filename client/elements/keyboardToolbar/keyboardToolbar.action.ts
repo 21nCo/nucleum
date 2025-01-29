@@ -10,6 +10,8 @@ export function simpleToolbar(
     const keyboardHeight =
       window.innerHeight -
       (window.visualViewport?.height ?? window.innerHeight);
+    // const keyboardHeight = 300;
+
     const offsetY = window.visualViewport ? window.visualViewport.offsetTop : 0;
     const bottomOffset = Math.max(0, keyboardHeight - offsetY);
     if (keyboardHeight === 0) {

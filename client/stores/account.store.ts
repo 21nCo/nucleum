@@ -35,12 +35,8 @@ import { Resource } from "../components/flux/resourceStores/resource.enum";
 import { dispatchCustomEvent } from "../utils/browser.utils";
 import { GlobalEvent } from "../types/event.enum";
 import context from "./context.store";
-import {
-  compressImageToTargetSize,
-} from "../utils/ui.utils";
-import {
-  generateImagePreviewFromPdf
-} from "../utils/pdf.utils";
+import { compressImageToTargetSize } from "../utils/ui.utils";
+import { generateImagePreviewFromPdf } from "../utils/pdf.utils";
 
 export const isRefreshingToken = writable(false);
 
@@ -222,15 +218,14 @@ class AccountStore extends ObservableStore<
     const isOffline = await determineIfOffline();
     if (isOffline) return;
     let response = await this.persistence.ping();
-    const user = Array.isArray(response)
-      ? response?.[0]?.result?.[0]
-      : undefined;
+    let user = Array.isArray(response) ? response?.[0]?.result?.[0] : undefined;
     if (!response) {
       const reTryResponse = await this.persistence.ping();
       if (!reTryResponse) {
         appStore.gotoErrorPage("Something went wrong.");
       }
       response = reTryResponse;
+      user = Array.isArray(response) ? response?.[0]?.result?.[0] : undefined;
     }
     if (response && !user) {
       await this.signOut({ isPreventRedirect: true });

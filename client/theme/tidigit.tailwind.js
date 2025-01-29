@@ -51,6 +51,10 @@ module.exports = {
        */
       mo: { raw: "(max-width: 600px) and (max-height: 1000px)" },
       /**
+       * Non-touch devices (devices that can hover)
+       */
+      notouch: { raw: "(hover: hover) and (pointer: fine)" },
+      /**
        * Tablet in portrait, or vertical splits on laptop/desktop/tablet in landscape
        */
       tp: { raw: "(min-width: 600px) and (min-height: 500px)" },

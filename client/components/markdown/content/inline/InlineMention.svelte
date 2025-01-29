@@ -26,7 +26,7 @@
 </script>
 
 <a
-  class="inline-mention px-1 bg-bgs2 hover:bg-bgs3 rounded-md max-w-48 truncate"
+  class="inline-mention px-1 bg-bgs2 notouch:hover:bg-bgs3 active:bg-bgs3 rounded-md max-w-48 truncate"
   data-record-id={id}
   data-label={label}
   href={`?pop=${id}`}
@@ -55,7 +55,7 @@
     </span>
     <!-- {/if} -->
   </span>
-  <span class="underline- truncate">
+  <span class="text-wrap truncate">
     {#if isLoading}
       {label ?? "Loading..."}
     {:else}

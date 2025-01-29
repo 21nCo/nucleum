@@ -149,9 +149,17 @@
         range.collapse(false);
 
         activeElement.dispatchEvent(inputEvent);
-        keyupEvents.forEach((event) => {
-          activeElement.dispatchEvent(event);
-        });
+        if (text === "@") {
+          setTimeout(() => {
+            keyupEvents.forEach((event) => {
+              activeElement.dispatchEvent(event);
+            });
+          }, 10);
+        } else {
+          keyupEvents.forEach((event) => {
+            activeElement.dispatchEvent(event);
+          });
+        }
       }
       return;
     }

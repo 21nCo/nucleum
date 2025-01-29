@@ -42,7 +42,7 @@
         !isActive && style === OptionSelectorStyle.OUTLINE,
       "border-transparent": !isActive && style === OptionSelectorStyle.TRAIN,
       "opacity-80 cursor-not-allowed": item.isDisabled,
-      "hover:bg-bgs2": !isActive
+      "notouch:hover:bg-bgs2 active:bg-bgs2": !isActive
     })}
     on:click
     use:tooltip={{
