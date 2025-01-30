@@ -1,7 +1,10 @@
 import type { IFile } from "$lib/client/components/files/file.type";
 import type { IActiveResource } from "$lib/client/components/flux/resourceStores/resource.type";
 import type { IAvatar } from "$lib/client/types/avatar.type";
-import type { IRecordId } from "$lib/client/types/data.type";
+import type {
+  IObservableStoreSubject,
+  IRecordId
+} from "$lib/client/types/data.type";
 import type { Arrangement, Placement } from "$lib/client/types/direction.enum";
 import type { IMemotronItemBase } from "$lib/client/products/memotron/memotron.type";
 import type { INodeThumb } from "$lib/client/products/memotron/node/node.type";
@@ -124,4 +127,11 @@ export type ICollectionItem = INodeThumb;
 export type ICollectionItemPropertyValue = {
   id: IRecordId;
   value: IPropertyValue | null;
+};
+
+export type ICollectionCountStore = IObservableStoreSubject & {
+  counts: {
+    [key: string]: number;
+  };
+  isInitialized: boolean;
 };

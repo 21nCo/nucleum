@@ -2,7 +2,7 @@
   import type { ICollectionThumb } from "../collection.type";
   import { onMount } from "svelte";
   import CountBadge from "./CountBadge.svelte";
-  import { collectionStore } from "../collection.store";
+  import { collectionCountStore } from "../collectionCount.store";
 
   export let item: ICollectionThumb;
   export let isShowLabel: boolean = false;
@@ -12,7 +12,7 @@
   });
 
   async function refreshNodeCount() {
-    nodeCount = await collectionStore.resolveItemsCount(item.id);
+    nodeCount = await collectionCountStore.resolveCount(item.id);
   }
 
   function resolveLabel() {

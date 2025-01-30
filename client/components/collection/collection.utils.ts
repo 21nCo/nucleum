@@ -145,8 +145,8 @@ export function resolveOptionsForGrouping(
 export function resolveCollectionSubTypesForSwitcher() {
   const collectionTypes = [
     CollectionType.UNTYPED,
-    CollectionType.TYPED,
-    CollectionType.QUERY
+    CollectionType.TYPED
+    // CollectionType.QUERY
   ].map((x) => {
     return {
       label: resolveCollectionTypeLabel(x),

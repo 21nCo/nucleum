@@ -62,7 +62,7 @@
   import { toasts } from "$lib/client/stores/notification.store";
   import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
   import LibraryTagsPane from "../tags/LibraryTagsPane.svelte";
-  import { onMount, tick } from "svelte";
+  import { onDestroy, onMount, tick } from "svelte";
   import { page } from "$app/stores";
   import InlineSearchBar from "$lib/client/elements/InlineSearchBar.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
@@ -79,6 +79,7 @@
   } from "../flux/resourceStores/resource.utils";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { createEventDispatcher } from "svelte";
+  import { collectionCountStore } from "../collection/collectionCount.store";
   const dispatch = createEventDispatcher();
 
   export let resource: Resource;
@@ -98,7 +99,7 @@
   QAsearchStore.searchType = SearchType.SEMANTIC;
   type SubType = "all" | "recents" | "starred" | NodeType | CollectionType;
   let selectedSubType: SubType = "all";
-  let isRefreshing: boolean = false;
+  let isRefreshing: boolean = true;
   let totalCountAfterFilter: number = 0;
   let isRefreshingTotalCount: boolean = false;
   let availableResources: Set<Resource> = new Set([
@@ -138,18 +139,24 @@
   };
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
 
-  onMount(() => {
-    const pageSub = page.subscribe(async (p) => {
+  let pageSub: any;
+  onMount(async () => {
+    console.log("LibraryRecordsPane - onMount");
+    pageSub = page.subscribe(async (p) => {
       const subResourceParam = p.url.searchParams.get("type");
       if (subResourceParam && subResourceParam !== selectedSubType) {
         selectedSubType = (subResourceParam as SubType) ?? "all";
         await refresh();
       }
     });
+    if (resource === Resource.collection) {
+      await collectionCountStore.initialize();
+    }
     refresh();
-    return () => {
-      pageSub();
-    };
+  });
+
+  onDestroy(() => {
+    pageSub();
   });
 
   function onSelectAll() {
@@ -167,7 +174,7 @@
 
   async function refreshFilteredRecordsCount() {
     const filters = resolveFilters();
-    await _refreshFilteresRecordsCount(filters);
+    await _refreshFiltersRecordsCount(filters);
   }
 
   function refreshTotalRecordsCount() {
@@ -214,7 +221,7 @@
       refreshResetTimeout = setTimeout(() => {
         isRefreshing = false;
       }, 1);
-      await _refreshFilteresRecordsCount(filters);
+      await _refreshFiltersRecordsCount(filters);
     } catch (e) {
       isRefreshing = false;
       logger.error({ at: "Library - refresh", e });
@@ -243,7 +250,7 @@
     };
   }
 
-  async function _refreshFilteresRecordsCount(filters: any) {
+  async function _refreshFiltersRecordsCount(filters: any) {
     try {
       isRefreshingTotalCount = true;
       totalCountAfterFilter = await searchStore.resolveCount(
