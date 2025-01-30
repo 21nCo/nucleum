@@ -10,6 +10,10 @@ export async function performUtilRunAction(body: any, user: any) {
         return { error: "URL not specified" };
       }
       return getWebpage(body.url);
+    } else if (body.action === "unsplash-browse") {
+      return unsplashBrowse(body);
+    } else if (body.action === "unsplash-download") {
+      return unsplashDownload(body);
     }
     return { error: "Action not supported" };
   } catch (error) {
@@ -34,6 +38,30 @@ export async function performUtilRunAction(body: any, user: any) {
       return { error: "Invalid URL found", message: error };
     }
   }
+}
+
+async function unsplashBrowse(body: any) {
+  const { query, page, perPage } = body;
+  const endpoint = query
+    ? `https://api.unsplash.com/search/photos?query=${query}&page=${page}&per_page=${perPage}`
+    : `https://api.unsplash.com/photos?page=${page}&per_page=${perPage}`;
+
+  const response = await fetch(endpoint, {
+    headers: {
+      Authorization: `Client-ID ${process.env.UNSPLASH_ACCESS_KEY}`,
+    },
+  });
+
+  const data = await response.json();
+  return data;
+}
+
+async function unsplashDownload(body: any) {
+  const { url } = body;
+  const clientId = process.env.UNSPLASH_ACCESS_KEY;
+  const response = await fetch(url + `?client_id=${clientId}`);
+  const data = await response.json();
+  return data;
 }
 
 function captureScreenshot(text: string) {
