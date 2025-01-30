@@ -18,15 +18,15 @@
   import type { IRecordId } from "$lib/client/types/data.type";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import FileView from "$lib/client/components/files/FileView.svelte";
-  import { FileType, type IFile } from "$lib/client/components/files/file.type";
+  import { FileType } from "$lib/client/components/files/file.type";
   import { cn } from "$lib/client/utils/ui.utils";
-  import Resources from "$lib/client/components/record/Records.svelte";
   import ComingSoonView from "../ComingSoonView.svelte";
-  import { fileStore } from "$lib/client/components/files/file.store";
-  import EmptyStatusView from "../feedback/EmptyStatusView.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
   import view from "$lib/client/stores/view.store";
-  export let orientation: Orientation = Orientation.Vertical;
+  import UnsplashPicker from "./UnsplashPicker.svelte";
+  import CoverPickerFromLibrary from "./CoverPickerFromLibrary.svelte";
+  import { isRecordId } from "$lib/client/components/flux/resourceStores/resource.utils";
+
   const dispatch = createEventDispatcher();
 
   enum Method {
@@ -37,19 +37,17 @@
     AI = "ai"
   }
 
+  export let orientation: Orientation = Orientation.Vertical;
   export let value: IRecordId | undefined = undefined;
 
-  let isUploadInProgress = false;
-
   let selectedMethod: Method = Method.COLOR;
-  let _value = transformValue(value);
-  let imageFilesFromLibrary: IFile[] = [];
+  let _value: string | undefined = transformValue(value);
+  let isUploadInProgress = false;
 
   onMount(async () => {
     if ($view.isConstrainedWidth) {
       orientation = Orientation.Vertical;
     }
-    imageFilesFromLibrary = await fetchImageFilesFromLibrary();
   });
 
   function transformValue(value: IRecordId | undefined) {
@@ -104,15 +102,6 @@
       dispatch("select", value);
     }
     isUploadInProgress = false;
-  }
-
-  function fetchImageFilesFromLibrary() {
-    return fileStore.selectMany({
-      search: {
-        properties: ["type"],
-        query: "image"
-      }
-    });
   }
 </script>
 
@@ -201,7 +190,9 @@
           {
             label: "AI",
             value: Method.AI,
-            icon: "ph:magic-wand-light"
+            icon: "ph:magic-wand-light",
+            isDisabled: true,
+            badge: "soon"
           }
         ]}
         style={PanelSwitcherStyle.BAR}
@@ -230,27 +221,20 @@
           bind:value={_value}
         />
       {:else if selectedMethod === Method.LIBRARY}
-        {#if imageFilesFromLibrary.length > 0}
-          <div class="flex overflow-auto">
-            <Resources
-              resource={Resource.file}
-              width={100}
-              data={imageFilesFromLibrary}
-              isPreventDefault={true}
-              on:click={(e) => {
-                if (e.detail.id) {
-                  value = e.detail.id;
-                  _value = value;
-                  dispatch("select", value);
-                }
-              }}
-            />
-          </div>
-        {:else}
-          <div class="flex flex-1 w-full items-center justify-center">
-            <EmptyStatusView subText="No images found from library" />
-          </div>
-        {/if}
+        <CoverPickerFromLibrary
+          on:click={(e) => {
+            if (e.detail.file) {
+              const _id = isRecordId(e.detail.file)
+                ? e.detail.file
+                : e.detail.file.id;
+              value = _id;
+              _value = value;
+              dispatch("select", value);
+            }
+          }}
+        />
+      {:else if selectedMethod === Method.UNSPLASH}
+        <UnsplashPicker on:select={(e) => dispatch("select", e.detail)} />
       {:else}
         <div class="flex flex-1 w-full items-center justify-center">
           <ComingSoonView />

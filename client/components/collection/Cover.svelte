@@ -26,7 +26,10 @@
   export let isHovered = false;
   export let isConstrainedWidth: boolean = false;
 
-  $: isPositionable = cover?.toString().includes("file:") && isInEditMode;
+  $: isPositionable =
+    (cover?.toString().includes("file:") ||
+      cover?.toString().includes("unsplash_")) &&
+    isInEditMode;
 
   $: height = isConstrainedWidth ? 100 : (size?.height ?? $view.height / 5);
 

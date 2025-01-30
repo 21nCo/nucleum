@@ -70,7 +70,7 @@
       {/if}
     </button>
   {/if}
-  {#if isHovering}
+  {#if isHovering && accessPoint !== ResourceAccessPoint.PICKER}
     <ResourceThumbnailContextMenu
       bind:item
       {accessPoint}

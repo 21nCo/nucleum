@@ -267,7 +267,9 @@ const phosphorIcons = [
   "currency-circle-dollar",
   "note-blank",
   "clipboard",
-  "command"
+  "command",
+  "sidebar",
+  "chalkboard-simple"
 ];
 
 export const phosphorRatingIcons = [

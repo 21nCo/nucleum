@@ -55,6 +55,10 @@ module.exports = {
        */
       notouch: { raw: "(hover: hover) and (pointer: fine)" },
       /**
+       * Touch devices
+       */
+      touch: { raw: "(hover: none) and (pointer: coarse)" },
+      /**
        * Tablet in portrait, or vertical splits on laptop/desktop/tablet in landscape
        */
       tp: { raw: "(min-width: 600px) and (min-height: 500px)" },

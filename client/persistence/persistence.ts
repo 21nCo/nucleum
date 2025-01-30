@@ -477,6 +477,32 @@ export class Persistence {
       });
     }
   }
+
+  async browseUnsplash(params?: {
+    query?: string;
+    page?: number;
+    perPage?: number;
+  }) {
+    const response = await performApiCall("utils/n/run", "POST", {
+      action: "unsplash-browse",
+      ...params
+    });
+
+    if (!response?.ok) return;
+    const data = await response.json();
+    return data;
+  }
+
+  async triggerUnsplashDownload(params?: { url: string }) {
+    const response = await performApiCall("utils/n/run", "POST", {
+      action: "unsplash-download",
+      ...params
+    });
+
+    if (!response?.ok) return;
+    const data = await response.json();
+    return data;
+  }
 }
 
 export const persistenceInstance = new Persistence();

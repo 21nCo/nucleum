@@ -17,27 +17,23 @@
   let error: string | undefined = undefined;
   const typeOptions: ISelectItem[] = [
     {
-      label: "Side navigation",
+      label: "Side nav",
       icon: "ph:sidebar-light",
       value: CombinationType.SIDENAV
     },
     {
-      label: "Whiteboard",
+      label: "Canvas",
       icon: "ph:chalkboard-simple-light",
-      value: CombinationType.WHITEBOARD,
-      isDisabled: true,
-      badge: "planned"
+      value: CombinationType.WHITEBOARD
     },
     {
       label: "Mind map",
       icon: "ph:tree-view-light",
-      value: CombinationType.MINDMAP,
-      isDisabled: true,
-      badge: "planned"
+      value: CombinationType.MINDMAP
     },
     {
-      label: "Dashboard",
-      icon: "ph:presentation-chart-light",
+      label: "Wall",
+      icon: "widget",
       value: CombinationType.DASHBOARD,
       isDisabled: true,
       badge: "planned"

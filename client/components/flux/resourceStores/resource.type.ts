@@ -170,7 +170,8 @@ export enum ResourceAccessPoint {
    */
   COMBINATION = "combination",
   CAPTURE = "capture",
-  CLIPPER = "clipper"
+  CLIPPER = "clipper",
+  PICKER = "picker"
 }
 
 export enum ResourceAccessPointState {
