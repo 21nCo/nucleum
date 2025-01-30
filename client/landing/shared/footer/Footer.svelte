@@ -82,11 +82,15 @@
     {
       title: "Privacy policy",
       href: "/privacy"
+    },
+    {
+      title: "Terms and conditions",
+      href: "/tos"
+    },
+    {
+      title: "Refund policy",
+      href: "/refundpolicy"
     }
-    // {
-    //   title: "Terms and conditions",
-    //   href: "/tos"
-    // }
   ];
   if (footerValues.helpUrl) {
     information.push({
