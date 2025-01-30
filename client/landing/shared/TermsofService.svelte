@@ -281,7 +281,7 @@
   <ul>
     <li>
       By visiting our website: <a
-        href="21n.org"
+        href="https://21n.org"
         target="_blank"
         rel="noopener noreferrer">21n.org</a
       >
