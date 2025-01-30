@@ -26,6 +26,7 @@
     "flex w-full gap-6 justify-between items-center px-1 py-2 min-h-fit"
   )}
   on:click
+  on:mousedown={(e) => e.preventDefault()}
 >
   <span
     class={cn("flex flex-col h-full", {

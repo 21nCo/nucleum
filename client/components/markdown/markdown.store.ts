@@ -77,7 +77,10 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
     | { id?: IRecordId; params?: { xOffset?: number; isBottom?: boolean } }
     | undefined
   >(undefined);
-  alter = writable<IBlock | undefined>(undefined);
+  alter = writable<
+    | { action: BlockAction; block?: IBlock; data?: any; blockId?: IRecordId }
+    | undefined
+  >(undefined);
   constructor() {
     super("markdownStore");
     this.set(seedMdStore);
@@ -365,8 +368,8 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
 
   deleteBlock(id: IRecordId, params?: { isPreventFocus?: boolean }) {
     this.update((n) => {
-      const deleteIndex = n.blocks.findIndex((b) => b.id === id);
-      n.blocks = n.blocks.filter((b) => b.id !== id);
+      const deleteIndex = n.blocks.findIndex(resourceInList(id));
+      n.blocks = n.blocks.filter((b) => !isSameResource(b, id));
       if (deleteIndex && !params?.isPreventFocus)
         this.focus.set({
           id: n.blocks[deleteIndex - 1].id,
@@ -374,6 +377,13 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
             isBottom: true
           }
         });
+      return n;
+    });
+  }
+
+  deleteMany(ids: IRecordId[]) {
+    this.update((n) => {
+      n.blocks = n.blocks.filter((b) => !ids.some(resourceInList(b)));
       return n;
     });
   }
@@ -477,8 +487,13 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
     this.focus.set({ id, params });
   }
 
-  alterBlock(block: IBlock) {
-    this.alter.set(block);
+  alterBlock(params?: {
+    action: BlockAction;
+    block?: IBlock;
+    data?: any;
+    blockId?: IRecordId;
+  }) {
+    this.alter.set(params);
   }
 
   isFirstBlockAndIsEmpty(id: IRecordId) {

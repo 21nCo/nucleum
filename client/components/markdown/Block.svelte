@@ -73,17 +73,18 @@
   import { observeAttributes } from "$lib/client/actions/observe.action";
   import context from "$lib/client/stores/context.store";
   import MarkdownkeyboardToolbar from "./toolbar/MarkdownkeyboardToolbar.svelte";
+  import { rightswipe } from "$lib/client/actions/gestures.action";
   const dispatch = createEventDispatcher();
 
   export let block: IBlock;
   export let mdStore: MdStoreType;
   export let index: number;
+  export let isSelected: boolean = false;
   let isHovering: boolean = false;
   let isFocusing: boolean = false;
   let contentRefreshId: number = new Date().getTime();
   let isDragging: boolean = false;
   let progressState: string | undefined = undefined;
-  let keyboardToolbarPanelSelection: string | undefined = undefined;
   const uploadProgressElementId = "node-embed-upload-progress";
   $: isNodularizable =
     $mdStore.params?.isNodular && headingNodeTypes.includes(block.contentType);
@@ -128,7 +129,17 @@
   }
 
   onMount(() => {
-    const unsubscribe = mdStore?.alter?.subscribe((b) => {
+    const unsubscribe = mdStore?.alter?.subscribe((x) => {
+      if (!x?.action) return;
+      if (
+        x.action !== BlockAction.CHANGE &&
+        x.blockId &&
+        isSameResource(x.blockId, block.id)
+      ) {
+        blockEvent(x.action, x?.data);
+        return;
+      }
+      const b = x?.block;
       if (b && isSameResource(b, block.id)) {
         block = b;
         if (headingNodeTypes.includes(b.contentType)) {
@@ -255,7 +266,7 @@
     } else {
       previousBlock.body = modifiedPreviousBlockText;
     }
-    mdStore.alterBlock(previousBlock);
+    mdStore.alterBlock({ action: BlockAction.CHANGE, block: previousBlock });
     mdStore.focusBlock(previousBlock.id, { xOffset: offset });
     mdStore.deleteBlock(block.id, { isPreventFocus: true });
     propagateAsAction(BlockAction.DELETE, {});
@@ -873,6 +884,11 @@
         return "";
     }
   }
+
+  function onGestureAction() {
+    isSelected = !isSelected;
+    dispatch("select");
+  }
 </script>
 
 <!--TODO -  Note - when reenabling drag and drag to rearrange - make sure it is not interfering with text selection or media grid space slider -->
@@ -888,8 +904,8 @@
     $mdStore.params?.isNodular &&
       !$mdStore.params?.isReadOnly && {
         "bg-bgs2 bg-opacity-50 !border-brs1":
-          isHovering && !isFocusing && !keyboardToolbarPanelSelection,
-        "bg-aps2 !border-aps1": keyboardToolbarPanelSelection
+          isHovering && !isFocusing && !isSelected,
+        "bg-aps2 !border-aps1": isSelected
       }
   )}
   draggable={!$mdStore.params?.isReadOnly && !isFocusing}
@@ -900,6 +916,9 @@
   on:dragstart={() => (isDragging = true)}
   on:dragend={() => (isDragging = false)}
   role="listitem"
+  use:rightswipe={{
+    callback: onGestureAction
+  }}
   use:hoverable={{
     onHover: (e) => {
       isHovering = e;
@@ -994,28 +1013,3 @@
     </div>
   {/if}
 </div>
-
-{#if $context.isTouchDevice && (isFocusing || keyboardToolbarPanelSelection)}
-  <MarkdownkeyboardToolbar
-    bind:keyboardToolbarPanelSelection
-    on:action={(e) => {
-      const { action, data } = e.detail;
-      blockEvent(action, data);
-    }}
-    on:insert={(e) => {
-      const toType = e.detail;
-      if (block.contentType === NodeType.SIMPLE_TEXT && !block.body) {
-        blockEvent(BlockAction.CONVERT, {
-          toType
-        });
-      } else {
-        blockEvent(BlockAction.INSERT, {
-          blockType: toType
-        });
-      }
-    }}
-    on:focus={() => {
-      mdStore.focusBlock(block.id);
-    }}
-  />
-{/if}

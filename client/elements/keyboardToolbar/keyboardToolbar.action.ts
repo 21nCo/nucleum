@@ -73,6 +73,7 @@ export function mdToolbar(node: HTMLElement, params?: IMdToolbarParams) {
         node.style.top = `${elementTopPosition - offset}px`;
       }
     }
+    window.dispatchEvent(new CustomEvent("mdtoolbar"));
     params?.onHeightChange?.(bottomOffset);
   }
 

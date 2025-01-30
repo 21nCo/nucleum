@@ -28,13 +28,15 @@
   import { BlockAction } from "../md.type";
   import MdKeyboardKeysRow from "./MdKeyboardKeysRow.svelte";
   import { createEventDispatcher, getContext } from "svelte";
+  import type { IRecordId } from "$lib/client/types/data.type";
   const dispatch = createEventDispatcher();
   const nodeContext = getContext<any>("node");
 
   export let keyboardToolbarPanelSelection: string | undefined = undefined;
+  export let selectedBlocks: IRecordId[] = [];
   let isPreventDefaultOnKeyboardClose: boolean = false;
   let keyboardToolbarRef: KeyboardToolbar;
-  let keyboardToolbarActions: {
+  const keyboardToolbarActions: {
     value: BlockAction;
     icon: string;
     label: string;
@@ -71,6 +73,28 @@
     }
   ];
 
+  const bulkKeyboardToolbarActions: {
+    value: BlockAction;
+    icon: string;
+    label: string;
+  }[] = [
+    // {
+    //   value: BlockAction.DUPLICATE,
+    //   icon: "ph:copy-light",
+    //   label: "Duplicate"
+    // },
+    // {
+    //   value: BlockAction.COPY_BLOCK_TEXT,
+    //   icon: "ph:clipboard-light",
+    //   label: "Copy block text"
+    // },
+    {
+      value: BlockAction.DELETE,
+      icon: "ph:trash-light",
+      label: "Delete"
+    }
+  ];
+
   const configData = resolveBlockBrowserConfigOnKeyboard({
     contentType: nodeContext?.contentType,
     context: $context
@@ -83,6 +107,13 @@
     })) ?? [])
   ];
   let selectedSection = configData.config[0].section;
+
+  export function action(action: "actions" | "insert") {
+    isPreventDefaultOnKeyboardClose = true;
+    if (keyboardToolbarPanelSelection !== action)
+      keyboardToolbarPanelSelection = action;
+    document.activeElement?.blur();
+  }
 
   function insertTextAtCursor(text: string) {
     const activeElement = document.activeElement;
@@ -197,20 +228,22 @@
       !keyboardToolbarPanelSelection ||
       keyboardToolbarPanelSelection !== action
     ) {
+      if (!keyboardToolbarPanelSelection) dispatch("select");
       isPreventDefaultOnKeyboardClose = true;
       keyboardToolbarPanelSelection = action;
       document.activeElement?.blur();
     } else {
       keyboardToolbarPanelSelection = undefined;
       dispatch("focus");
+      dispatch("unselect");
     }
   }
 
   function onKeyboardToolbarKeyPress(e: CustomEvent<string>) {
     const key = e.detail;
-    if (["@", "#", "*", '"', "[]"].includes(key)) {
+    if (["@", "#", "*", '"', "[]", "-"].includes(key)) {
       insertTextAtCursor(key);
-    } else if (key === "-") {
+    } else if (key === "--") {
       onAction(BlockAction.INSERT, {
         blockType: NodeType.DIVIDER
       });
@@ -241,18 +274,23 @@
   <div class="flex items-center justify-between gap-1 w-full h-[56px]">
     <div
       class={cn("flex items-center gap-1 h-full pl-2", {
-        "w-full": keyboardToolbarPanelSelection === "insert"
+        "w-full": keyboardToolbarPanelSelection !== undefined,
+        "justify-between":
+          keyboardToolbarPanelSelection === "actions" &&
+          selectedBlocks.length > 1
       })}
     >
-      <Toggle
-        icon="ph:plus-circle-light"
-        parentBgIndex={2}
-        on={keyboardToolbarPanelSelection === "insert"}
-        on:mousedown={(e) => e.preventDefault()}
-        on:change={() => {
-          onKeyboardToolbarAction("insert");
-        }}
-      />
+      {#if selectedBlocks.length <= 1}
+        <Toggle
+          icon="ph:plus-circle-light"
+          parentBgIndex={2}
+          on={keyboardToolbarPanelSelection === "insert"}
+          on:mousedown={(e) => e.preventDefault()}
+          on:change={() => {
+            onKeyboardToolbarAction("insert");
+          }}
+        />
+      {/if}
       {#if keyboardToolbarPanelSelection === "insert"}
         <!-- <Divider
           orientation={Orientation.Vertical}
@@ -284,6 +322,11 @@
             onKeyboardToolbarAction("actions");
           }}
         />
+        {#if selectedBlocks.length > 1}
+          <span class="text-b2 text-fgs2 px-2">
+            {selectedBlocks.length} blocks selected
+          </span>
+        {/if}
       {/if}
     </div>
 
@@ -296,8 +339,12 @@
   </div>
   <div class="min-h-0 flex-1 p-2">
     {#if keyboardToolbarPanelSelection === "actions"}
+      {@const actions =
+        selectedBlocks.length > 1
+          ? bulkKeyboardToolbarActions
+          : keyboardToolbarActions}
       <div class="grid grid-cols-2 gap-2" transition:fly={{ y: 10 }}>
-        {#each keyboardToolbarActions as action}
+        {#each actions as action}
           <Button
             icon={action.icon}
             label={action.label}

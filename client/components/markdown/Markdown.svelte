@@ -25,10 +25,13 @@
     type DragDropEvent
   } from "$lib/client/actions/rearrange.action";
   import {
+    isSameResource,
     resourceInList,
     shiftResourceInArray
   } from "../flux/resourceStores/resource.utils";
   import { NodeType } from "$lib/client/products/memotron/node/node.type";
+  import context from "$lib/client/stores/context.store";
+  import MarkdownkeyboardToolbar from "./toolbar/MarkdownkeyboardToolbar.svelte";
 
   /**
    * Propagates the event to the parent component.
@@ -47,6 +50,14 @@
 
   function markdownContext(message: any) {
     if (!message) return;
+    if (message.event === "focus") {
+      focusedBlock = message.id;
+      return;
+    } else if (message.event === "blur") {
+      if (focusedBlock === message.id) {
+        focusedBlock = undefined;
+      }
+    }
     if (message.event) propagate(message.event, message.data);
   }
   setContext("markdown", markdownContext);
@@ -61,6 +72,11 @@
   mdStore.load(md);
   $: if (params) mdStore?.setParams(params);
   // $: console.log("blocks", $mdStore.blocks);
+  let keyboardToolbarPanelSelection: string | undefined = undefined;
+  let keyboardToolbarRef: MarkdownkeyboardToolbar | undefined = undefined;
+  let focusedBlock: IRecordId | undefined = undefined;
+  let selectedBlocks: IRecordId[] = [];
+
   onMount(() => {
     const mdChangeSub = mdContentChangeEvent.subscribe((val) => {
       // console.log("md content changed", val);
@@ -187,8 +203,26 @@
           {block}
           {mdStore}
           {index}
+          isSelected={selectedBlocks.some(resourceInList(block.id))}
           on:nodularize={(e) => {
             propagate("focus", e.detail);
+          }}
+          on:select={(e) => {
+            const isAlreadyExists = selectedBlocks.some(
+              resourceInList(block.id)
+            );
+            if (isAlreadyExists) {
+              selectedBlocks = selectedBlocks.filter(
+                (x) => !isSameResource(x, block)
+              );
+              if (selectedBlocks.length === 0) {
+                keyboardToolbarPanelSelection = undefined;
+              }
+            } else {
+              selectedBlocks = [...selectedBlocks, block.id];
+              keyboardToolbarPanelSelection = "actions";
+              keyboardToolbarRef?.action("actions");
+            }
           }}
         />
       {/each}
@@ -200,3 +234,60 @@
     {/if}
   </div>
 </button>
+{#if $context.isTouchDevice && (focusedBlock || keyboardToolbarPanelSelection)}
+  <MarkdownkeyboardToolbar
+    bind:this={keyboardToolbarRef}
+    bind:keyboardToolbarPanelSelection
+    {selectedBlocks}
+    on:select={() => {
+      if (focusedBlock) selectedBlocks = [focusedBlock];
+    }}
+    on:unselect={() => {
+      selectedBlocks = [];
+    }}
+    on:action={(e) => {
+      const { action, data } = e.detail;
+      if (selectedBlocks.length === 1) {
+        mdStore.alterBlock({ action, data, blockId: selectedBlocks[0] });
+      } else if (
+        selectedBlocks.length === 0 &&
+        action === BlockAction.INSERT &&
+        focusedBlock
+      ) {
+        mdStore.alterBlock({ action, data, blockId: focusedBlock });
+      } else {
+        //TODO - other bulk block actions
+        if (action === BlockAction.DELETE) {
+          mdStore.deleteMany(selectedBlocks);
+          propagate("action", {
+            action: BlockAction.DELETE_MANY,
+            source: selectedBlocks
+          });
+        }
+      }
+      selectedBlocks = [];
+    }}
+    on:insert={(e) => {
+      const toType = e.detail;
+      const block = $mdStore.blocks.find(resourceInList(selectedBlocks[0]));
+      if (!block) return;
+      if (block.contentType === NodeType.SIMPLE_TEXT && !block.body) {
+        mdStore.alterBlock({
+          action: BlockAction.CONVERT,
+          data: { toType },
+          blockId: block.id
+        });
+      } else {
+        mdStore.alterBlock({
+          action: BlockAction.INSERT,
+          data: { blockType: toType },
+          blockId: block.id
+        });
+      }
+      selectedBlocks = [];
+    }}
+    on:focus={() => {
+      if (selectedBlocks.length === 1) mdStore.focusBlock(selectedBlocks[0]);
+    }}
+  />
+{/if}

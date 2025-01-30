@@ -11,7 +11,7 @@
   import type { IRecordId } from "$lib/client/types/data.type";
   import CameraCapture from "./CameraCapture.svelte";
   import { createEventDispatcher } from "svelte";
-  import { virtualKeyboard } from "$lib/client/actions/virtualKeyboard.action";
+  import { activeHeight } from "$lib/client/actions/viewport";
   const dispatch = createEventDispatcher();
 
   let mdRef: NodularMarkdown | undefined = undefined;
@@ -54,7 +54,7 @@
 
 <div
   class="flex w-full max-h-full justify-between"
-  use:virtualKeyboard={{
+  use:activeHeight={{
     defaultHeight: "100dvh",
     offset: 100
   }}

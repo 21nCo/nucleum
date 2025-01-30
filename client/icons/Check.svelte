@@ -8,7 +8,7 @@
   $: width = size === Size.sm ? 15 : size === Size.md ? 18 : 20;
 </script>
 
-<button on:click>
+<button on:click on:mousedown={(e) => e.preventDefault()}>
   {#if isChecked}
     <svg
       {width}

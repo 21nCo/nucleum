@@ -40,6 +40,7 @@
   const nodeContentContext = getContext<any>("content");
   const blockContext = getContext<any>("block");
   const nodeContext = getContext<any>("node");
+  const markdownContext = getContext<any>("markdown");
 
   function propagateToNodeContent(event: string, data: any) {
     if (!nodeContentContext) {
@@ -743,6 +744,7 @@
 
   function onFocus() {
     isFocusing = true;
+    markdownContext({ event: "focus", id });
     refreshPlaceholder();
     mdStore.setActiveHeading(id);
   }
@@ -750,6 +752,7 @@
   function onBlur() {
     dispatch("blur");
     isFocusing = false;
+    markdownContext({ event: "blur", id });
     refreshPlaceholder();
   }
 

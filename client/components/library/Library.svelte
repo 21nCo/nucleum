@@ -246,7 +246,9 @@
             isConstrainedWidth={true}
           />
         {:else if $recentsStore.recents && $recentsStore.recents.length > 0}
-          {@const recentsData = recentsStore.resolve()}
+          {@const recentsData = $recentsStore.recents
+            .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+            .map((x) => x.record)}
           <Records
             data={recentsData}
             accessPoint={ResourceAccessPoint.LIBRARY}

@@ -112,9 +112,9 @@ export class ActiveResourceStore<
 
   /**
    * @deprecated - use debouncer at source
-   * @param val 
-   * @param key 
-   * @returns 
+   * @param val
+   * @param key
+   * @returns
    */
   debouncedModify(val: Partial<T>, key?: string) {
     return this.resourceStore.modify(this.id, val, {
@@ -403,6 +403,22 @@ export class ResourceStore<T extends IResource> implements IStore {
   async trash(id: IRecordId, additionalParams?: IResourceMutationParams) {
     return this.modify(
       id,
+      {
+        trashInformation: {
+          deletedBy: this.currentUserId,
+          deletedAt: new Date().toISOString()
+        }
+      } as Partial<T>,
+      additionalParams
+    );
+  }
+
+  async trashMany(
+    ids: IRecordId[],
+    additionalParams?: IResourceMutationParams
+  ) {
+    return this.bulkModify(
+      ids,
       {
         trashInformation: {
           deletedBy: this.currentUserId,

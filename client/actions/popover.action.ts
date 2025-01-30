@@ -2,7 +2,7 @@ import { tick } from "svelte";
 import { Placement } from "../types/direction.enum";
 import { PopoverTriggerMethod } from "../types/popover.type";
 import { deepCopy } from "$lib/shared/utils/obj.utils";
-import { getEventPath, isExtensionEnvironment } from "../utils/browser.utils";
+import { detectTouchDevice, getEventPath } from "../utils/browser.utils";
 import { renderMdAsHtml } from "../components/markdown/markdown.utils";
 
 interface TooltipReturn {
@@ -33,6 +33,14 @@ export function tooltip(
   node: HTMLElement,
   params: TooltipParams
 ): TooltipReturn {
+  const isTouchDevice = detectTouchDevice();
+  if (isTouchDevice || "ontouchstart" in window) {
+    return {
+      update: () => {},
+      destroy: () => {}
+    };
+  }
+
   let tooltipElement: HTMLDivElement | null = null;
   let {
     text,

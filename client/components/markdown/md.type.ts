@@ -131,6 +131,7 @@ export enum BlockAction {
   INSERT_MANY = "insert_many",
   MENTION = "mention",
   DELETE = "delete",
+  DELETE_MANY = "delete_many",
   MOVEUP = "moveup",
   MOVEDOWN = "movedown",
   LINK = "link",

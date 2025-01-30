@@ -83,21 +83,29 @@
     const initState = await initializeDatabase();
     refreshAppMenuDefaults(false);
     $appLoadingState.isBaseLoaded = true;
-    let userDataState;
+    let userDataState: any;
     if (initState !== undefined)
       userDataState = await initializeEssentialUserData(initState);
-    await initializeUserConfig();
+    const promises = [
+      recentsStore.initialize(resourcesForRecents),
+      initializeUserConfig()
+    ];
+    await Promise.all(promises);
+
     dispatch("ready");
     console.timeEnd("init");
-    if (userDataState?.paginateResources) {
-      await flux.paginateResources(userDataState.paginateResources, 100);
-      dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
-    } else if (userDataState?.counts && !import.meta.env?.DEV) {
-      await flux.reconcile({ counts: userDataState.counts });
-      dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
-    }
-    await recentsStore.initialize(resourcesForRecents);
-    initializeTaco();
+
+    requestIdleCallback(async () => {
+      if (userDataState?.paginateResources) {
+        await flux.paginateResources(userDataState.paginateResources, 100);
+        dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
+      } else if (userDataState?.counts && !import.meta.env?.DEV) {
+        await flux.reconcile({ counts: userDataState.counts });
+        dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
+      }
+      await recentsStore.initialize(resourcesForRecents);
+      initializeTaco();
+    });
   });
   /**
    * Refreshes the timezone of the user. If the user is signing up, it will set & persist the timezone to the detected timezone. If the user is logged in, it will set the timezone to the detected timezone only if the timezone is different from the saved timezone.
@@ -283,6 +291,7 @@
   }
 
   async function initializeUserConfig() {
+    console.time("initializeUserConfig");
     const isLiteMode = $context.isSheet;
     if ($account.dataMode === UserDataMode.CLOUD && !isLiteMode) {
       refreshTimeZone();
@@ -290,6 +299,7 @@
       await account.ping();
     }
     refreshAppMenuDefaults();
+    console.timeEnd("initializeUserConfig");
     function setAnalyticsUserIdentity() {
       if (!$account.userInfo) return;
       posthog.identify($account.userInfo.id, {

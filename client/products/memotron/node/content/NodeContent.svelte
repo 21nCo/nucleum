@@ -227,6 +227,9 @@
       case BlockAction.DELETE:
         onDelete(e);
         break;
+      case BlockAction.DELETE_MANY:
+        onDeleteMany(e);
+        break;
     }
     async function onInsert(e: CustomEvent) {
       logger.log({ at: "NodeContent - onInsert", ...e.detail });
@@ -279,6 +282,12 @@
       logger.log({ at: "NodeContent - onDelete", e });
       if (!e.detail.source) return;
       node.deleteBlock(e.detail.source);
+    }
+
+    function onDeleteMany(e: CustomEvent) {
+      logger.log({ at: "NodeContent - onDeleteMany", ...e.detail });
+      if (!e.detail.source) return;
+      node.deleteMany(e.detail.source);
     }
   }
 </script>

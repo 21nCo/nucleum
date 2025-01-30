@@ -435,8 +435,12 @@ export class ActiveNodeStore extends ActiveResourceStore<
     );
   };
 
-  deleteBlock = async (id: string) => {
+  deleteBlock = async (id: IRecordId) => {
     return this.resourceStore.trash(id);
+  };
+
+  deleteMany = async (ids: IRecordId[]) => {
+    return this.resourceStore.trashMany(ids);
   };
 
   mention = async (
@@ -731,10 +735,15 @@ export function resolveNodeContextMenu(
   const resourceActions = new ResourceActions(node, nodeStore, accessPoint);
   const nodeActions = new NodeActions(node, nodeStore, accessPoint);
   if (accessPoint === ResourceAccessPoint.CLIPPER) {
-    return [{
-      group: "all",
-      items: [ nodeActions.goToResourceFromClipper, nodeActions.trashFromClipper]
-    }];
+    return [
+      {
+        group: "all",
+        items: [
+          nodeActions.goToResourceFromClipper,
+          nodeActions.trashFromClipper
+        ]
+      }
+    ];
   }
   const ctx = get(context);
   let commonGroups: { group: string; items: IContextMenuItem[] }[] = [];

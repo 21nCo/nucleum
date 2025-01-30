@@ -36,7 +36,7 @@
     {#if isMdToolbar}
       <div
         class={cn(
-          "toolbar fixed left-0 bottom-0 w-screen border-t border-brs3 z-50",
+          "mdtoolbar toolbar fixed left-0 bottom-0 w-screen border-t border-brs3 z-50",
           classList
         )}
         use:mdToolbar={{
