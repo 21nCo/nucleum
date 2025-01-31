@@ -77,7 +77,6 @@ import { runVectorGeneration } from "../taco/taco.store";
 import {
   fetchYouTubeMetadata,
   resolveUrlData,
-  sanitizeAndResolve
 } from "../node/url.utils";
 import { getImageColorsFromFile } from "$lib/client/utils/ui.utils";
 import { parseBuffer } from "music-metadata";

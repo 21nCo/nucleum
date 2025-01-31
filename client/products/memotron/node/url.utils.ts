@@ -4,10 +4,11 @@ import { isValidUrl } from "$lib/shared/utils/utils";
 
 export const contentTypeMap: {
   contentType:
-    | NodeType.TWEET
-    | NodeType.TWITTER_PROFILE
-    | NodeType.YOUTUBE_VIDEO
-    | NodeType.YOUTUBE_CHANNEL;
+  | NodeType.TWEET
+  | NodeType.TWITTER_PROFILE
+  | NodeType.YOUTUBE_VIDEO
+  | NodeType.YOUTUBE_CHANNEL
+  | NodeType.GIST;
   regex: RegExp[];
   currentDomain?: string;
 }[] = [
@@ -35,6 +36,15 @@ export const contentTypeMap: {
     regex: [
       /^https:\/\/(?:www\.)?(youtube\.com)\/channel\/([a-zA-Z0-9_-]+)/,
       /^https:\/\/(?:www\.)?(youtube\.com)\/@([a-zA-Z0-9_-]+)/
+    ]
+  },
+  {
+    contentType: NodeType.GIST,
+    regex: [
+      /^https:\/\/gist\.github\.com\/([a-zA-Z0-9-]+)\/([a-f0-9]+)$/,
+      /^https:\/\/gist\.github\.com\/([a-f0-9]+)$/,
+      /^https:\/\/gitlab\.com\/-\/snippets\/(\d+)$/,
+      /^https:\/\/gitlab\.com\/([^/]+)\/([^/]+)\/-\/snippets\/(\d+)$/
     ]
   }
 ];
