@@ -98,7 +98,9 @@ export class ClientStack extends Stack {
       sources: [s3deploy.Source.asset("./../../../../build")],
       destinationBucket: siteBucket,
       distribution,
-      distributionPaths: ["/*"]
+      distributionPaths: ["/*"],
+      memoryLimit: 1024,
+      timeout: Duration.minutes(15)
     });
   }
 }
