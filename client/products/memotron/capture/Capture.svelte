@@ -47,6 +47,9 @@
   import { fly } from "svelte/transition";
   import { postMessageToParent } from "$lib/client/utils/embed.utils";
   import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
+  import { appEvents } from "$lib/client/stores/notification.store";
+  import type { IEvent } from "$lib/client/types/event.type";
+  import { MemotronEvent } from "../memotron.type";
 
   export let isWindowDnD = false;
   let bulkQueryParam: string | null = null;
@@ -66,6 +69,7 @@
   let dev_iosCameraCaptureMethod: "input" | "swift-relay" = "input";
   let dev_isShowDraftSaveFeedback: boolean = false;
   let isProcessingClipboard: boolean = false;
+  let subs: any[] = [];
 
   async function refreshTypeData() {
     const typeIds =
@@ -85,6 +89,12 @@
   }
 
   onMount(async () => {
+    const appEventSub = appEvents.subscribe((x: IEvent) => {
+      if (x.event === MemotronEvent.SAVE_CAPTURE_SHORTCUT) {
+        onSave();
+      }
+    });
+    subs.push(appEventSub);
     if (captureType !== CaptureType.MARKDOWN && !isWindowDnD) {
       reset();
     }
@@ -111,6 +121,7 @@
    * Note: a timeout is added to remove query params - since without timeout, it is interfering with removal of pop query param for capture thus the capture modal keeps opening
    */
   onDestroy(() => {
+    subs.forEach((x) => x());
     setTimeout(() => {
       appStore.toggleSearchParam(["link", "bulk", "clipboard"]);
     }, 100);
@@ -372,6 +383,18 @@
       reset();
     }
   }
+
+  async function onSave() {
+    isSaving = true;
+    const result = await captureStore.saveMarkdownCapture();
+    if (bulkQueryParam === "true" && linkQueryParam) {
+      await setTypeFromLinkParam(linkQueryParam);
+    } else {
+      types = [];
+      isEmptyState = true;
+    }
+    isSaving = false;
+  }
 </script>
 
 {#if isSaving}
@@ -457,17 +480,7 @@
                   style={ButtonStyle.OUTLINED}
                   isPreventMinWidth={true}
                   icon="ph:floppy-disk"
-                  on:click={async () => {
-                    isSaving = true;
-                    const result = await captureStore.saveMarkdownCapture();
-                    if (bulkQueryParam === "true" && linkQueryParam) {
-                      await setTypeFromLinkParam(linkQueryParam);
-                    } else {
-                      types = [];
-                      isEmptyState = true;
-                    }
-                    isSaving = false;
-                  }}
+                  on:click={onSave}
                 />
                 <Button
                   label={$view.isConstrainedWidth ? undefined : "Clear"}

@@ -42,6 +42,7 @@ import { Embed } from "$lib/client/types/context.type";
 import { SearchStore } from "$lib/client/components/record/record.store";
 import type { IRecordId } from "$lib/client/types/data.type";
 import ResourceBrowser from "$lib/client/components/library/resourceBrowser/ResourceBrowser.svelte";
+import { MemotronEvent } from "./memotron.type";
 
 export const memotronActions: IAction[] = [
   {
@@ -425,5 +426,11 @@ export const memotronActions: IAction[] = [
         orientation: Orientation.Horizontal
       }
     }
+  },
+  {
+    action: MemotronEvent.SAVE_CAPTURE_SHORTCUT,
+    label: "Save capture shortcut",
+    isMeta: true,
+    type: ActionType.EVENT
   }
 ];

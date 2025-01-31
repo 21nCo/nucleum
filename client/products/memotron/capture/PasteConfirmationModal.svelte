@@ -31,7 +31,7 @@
   import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
   export let event: ClipboardEvent;
   let nodeType: NodeType | undefined = undefined;
-  const unsupportedNodeTypes = [NodeType.TWITTER_PROFILE, NodeType.TWEET];
+  const unsupportedNodeTypes = [NodeType.TWITTER_PROFILE];
   const cannotSaveAsStandaloneNodeTypes = [
     NodeType.SIMPLE_TEXT,
     NodeType.CODE,

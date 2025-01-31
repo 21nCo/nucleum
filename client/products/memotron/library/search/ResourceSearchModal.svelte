@@ -112,7 +112,7 @@
             searchResultsPopover?.keyup(event);
           }}
           type="text"
-          placeholder="Search resources"
+          placeholder={`Search ${resource === Resource.everything ? "anything" : resource + "s"}`}
           class="text-h3 w-full bg-transparent focus:outline-none focus:border-none"
         />
       </span>

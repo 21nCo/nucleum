@@ -7,7 +7,7 @@ import ShareToFriends from "../components/settings/ShareToFriends.svelte";
 import DateTimeSettings from "../components/settings/datetime/DateTimeSettings.svelte";
 import AppMenuSettings from "../components/settings/AppMenuSettings.svelte";
 import AccessibilitySettings from "$lib/client/components/settings/appearance/accessibility/AccessibilitySettings.svelte";
-import ThemeSettingView from "$lib/client/components/settings/appearance/AppearanceSettings.svelte";
+import AppearanceSettings from "$lib/client/components/settings/appearance/AppearanceSettings.svelte";
 import SettingsAsModal from "../components/settings/SettingsAsModal.svelte";
 import { Size } from "../types/size.enum";
 import { Orientation } from "../types/direction.enum";
@@ -62,7 +62,7 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
       { variant: "toggleLightMode", label: "Toggle Light Mode" }
     ],
     icon: "ph:palette-light",
-    component: ThemeSettingView,
+    component: AppearanceSettings,
     modalParams: {
       title: "Appearance Settings",
       layout: {

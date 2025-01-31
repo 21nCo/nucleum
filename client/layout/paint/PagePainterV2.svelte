@@ -7,10 +7,15 @@
   import ComponentResolver from "./ComponentResolver.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
   export let prefix: string | undefined = undefined;
+  export let cmdPageLaunch: string | undefined = undefined;
+
   let action: IAction | null = null;
   let pageSub: any;
   const fileBasedRoutes = ["cparchived"];
   function resolvePath() {
+    if (cmdPageLaunch) {
+      return cmdPageLaunch;
+    }
     if ($context.isSheet) {
       return $appStore.sheetPath;
     }

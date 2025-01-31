@@ -413,22 +413,6 @@ export class ResourceStore<T extends IResource> implements IStore {
     );
   }
 
-  async trashMany(
-    ids: IRecordId[],
-    additionalParams?: IResourceMutationParams
-  ) {
-    return this.bulkModify(
-      ids,
-      {
-        trashInformation: {
-          deletedBy: this.currentUserId,
-          deletedAt: new Date().toISOString()
-        }
-      } as Partial<T>,
-      additionalParams
-    );
-  }
-
   async bulkModify(
     ids: IRecordId[],
     data: Partial<T>,
@@ -471,6 +455,7 @@ export class ResourceStore<T extends IResource> implements IStore {
       }
     );
   }
+
   async bulkTrash(
     ids: IRecordId[],
     additionalParams?: IResourceMutationParams

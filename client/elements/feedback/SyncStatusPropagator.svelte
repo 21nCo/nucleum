@@ -34,7 +34,9 @@
   function setStatus(value: string | null, resourceParam?: Resource) {
     if (
       (value?.includes(resourceParam ?? resource) ||
-        value?.includes(Resource.everything)) &&
+        value?.includes(Resource.everything) ||
+        resource === Resource.everything ||
+        resource === Resource.unknown) &&
       !value?.includes("finished")
     ) {
       isSyncing = true;

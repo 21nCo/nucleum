@@ -9,6 +9,7 @@
   import { removeDuplicatesFilter } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { appStore } from "$lib/client/stores/app.store";
   import { persistenceInstance } from "$lib/client/persistence/persistence";
+  import { safeRequestIdleCallback } from "$lib/client/utils/browser.utils";
 
   const dispatch = createEventDispatcher();
   let searchQuery = "";
@@ -62,7 +63,7 @@
 
   async function handleImageSelect(image: any) {
     dispatch("select", `unsplash_${image.urls.raw}`);
-    requestIdleCallback(async () => {
+    safeRequestIdleCallback(async () => {
       await persistenceInstance.triggerUnsplashDownload({
         url: image.links.download_location
       });

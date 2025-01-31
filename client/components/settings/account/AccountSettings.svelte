@@ -130,11 +130,16 @@
       </div>
       <div class="flex flex-col min-h-12 items-center gap-1 w-full">
         {#if isEditing}
-          <TextInput bind:value={name} />
+          <TextInput bind:value={name} on:enter={onSave} />
         {:else}
-          <div class="text-b2 text-fgs3">
+          <button
+            class="text-b2 text-fgs3"
+            on:click={() => {
+              isEditing = true;
+            }}
+          >
             {isValidString(name) ? name : "Unknown"}
-          </div>
+          </button>
         {/if}
       </div>
       <div class="self-center flex min-h-8 gap-2 items-center">
@@ -165,7 +170,7 @@
             on:click={() => {
               isEditing = false;
               profilePicture = $userPreferences.profilePicture;
-              name = $userPreferences.name;
+              name = $userPreferences.name || $account.userInfo?.nickName || "";
             }}
           />
         {/if}

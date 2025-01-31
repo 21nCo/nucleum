@@ -1,6 +1,7 @@
 import type { IAction } from "./action.type";
+import type { IObservableStoreSubject } from "./data.type";
 
-export type View = {
+export type IViewStore = IObservableStoreSubject & {
   height: number;
   width: number;
   landscapiness: number;

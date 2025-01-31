@@ -14,11 +14,14 @@
   import TypeSelectorItem from "./typeSelector/TypeSelectorItem.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
+  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+
   export let isCapturePage: boolean = false;
   export let selected: string;
   let dev_isEnableEditShortcuts: boolean = false;
   refreshTypes();
-  const contentTypes: ISelectItem[] = [
+  const contentTypes: (ISelectItem & { value: string })[] = [
     {
       value: CaptureType.MARKDOWN,
       icon: "ph:markdown-logo-light"
@@ -37,7 +40,7 @@
     }
   ];
 
-  let types: (ISelectItem & { isShortcut?: boolean })[] = [];
+  let types: (ISelectItem & { value: string; isShortcut?: boolean })[] = [];
 
   function refreshTypes() {
     flux
@@ -49,13 +52,44 @@
         }
       })
       .then((data) => {
+        const recents = uiState.getState(UIState.captureShortcutRecents);
         types = data.map((type: any) => ({
           value: type.id,
           label: type.label,
           icon: type.avatar,
           isShortcut: true
         }));
+        types.sort((a, b) => {
+          const aIndex = recents.indexOf(a.value.toString());
+          const bIndex = recents.indexOf(b.value.toString());
+          if (aIndex !== -1 && bIndex !== -1) {
+            return aIndex - bIndex;
+          }
+          if (aIndex !== -1) {
+            return -1;
+          }
+          if (bIndex !== -1) {
+            return 1;
+          }
+          return 0;
+        });
       });
+  }
+
+  function onselect(val: string) {
+    selected = val;
+    const valString = val.toString();
+    let recents = uiState.getState(UIState.captureShortcutRecents);
+    if (recents && recents.includes(valString)) {
+      recents = recents.filter((x: string) => x !== valString);
+      recents.unshift(valString);
+    } else if (recents) {
+      recents.unshift(valString);
+    } else {
+      recents = [valString];
+    }
+    uiState.setState(UIState.captureShortcutRecents, recents);
+    dispatch("select", val);
   }
 </script>
 
@@ -71,10 +105,7 @@
         <TypeSelectorItem
           {item}
           isActive={selected === item.value}
-          on:click={() => {
-            selected = item.value;
-            dispatch("select", item.value);
-          }}
+          on:click={() => onselect(item.value)}
           on:capture
         />
       {/each}

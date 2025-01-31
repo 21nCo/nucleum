@@ -1,5 +1,6 @@
 import { writable } from "svelte/store";
-import { Display, type View } from "../types/view.type";
+import { Display, type IViewStore } from "../types/view.type";
+import { ObservableStore } from "./client.store";
 
 /**
  * Programmatically set the screen size - Refer tidigit.tailwind.cjs for more details
@@ -39,7 +40,10 @@ function calculateScreen(width: number, height: number): Display {
   return display;
 }
 
-const view = initViewStore({
+/**
+ * @deprecated - use ViewStore instead
+ */
+const viewV1 = initViewStore({
   height: 0,
   width: 0,
   landscapiness: 0,
@@ -52,16 +56,19 @@ const view = initViewStore({
   isConstrainedWidth: false
 });
 
-function initViewStore(settings: View) {
-  const { subscribe, set, update } = writable<View>(settings);
+/**
+ * @deprecated - use ViewStore instead
+ */
+function initViewStore(settings: IViewStore) {
+  const { subscribe, set, update } = writable<IViewStore>(settings);
   return {
     subscribe,
     set,
-    reset: (view: View) => {
+    reset: (view: IViewStore) => {
       set(view);
     },
     update: (width: number, height: number) => {
-      update((n: View) => {
+      update((n: IViewStore) => {
         n = {
           ...n,
           height: height,
@@ -79,4 +86,33 @@ function initViewStore(settings: View) {
   };
 }
 
+class ViewStore extends ObservableStore<IViewStore> {
+  constructor() {
+    super("view");
+    this.refresh(window.innerWidth, window.innerHeight);
+  }
+
+  reset(view: IViewStore) {
+    this.set(view);
+  }
+
+  refresh(width: number, height: number) {
+    this.update((n: IViewStore) => {
+      n = {
+        ...n,
+        height: height,
+        width: width,
+        landscapiness: width / height,
+        scale: (width / 1000 + height / 1000) / 2,
+        isPortrait: false,
+        isConstrainedWidth: width <= 800
+      };
+      n.display = calculateScreen(width, height);
+      n.isPortrait = n.landscapiness < 1;
+      return n;
+    });
+  }
+}
+
+export const view = new ViewStore();
 export default view;

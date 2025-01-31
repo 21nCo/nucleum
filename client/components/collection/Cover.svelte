@@ -14,6 +14,7 @@
   import { resizable } from "$lib/client/actions/resize.action";
   import view from "$lib/client/stores/view.store";
   import { debouncer } from "$lib/client/utils/utils";
+  import context from "$lib/client/stores/context.store";
 
   const dispatch = createEventDispatcher();
   export let cover: string | undefined = undefined;
@@ -86,7 +87,7 @@
   }
 
   function resolveResizeParams(placement: Placement, isInEditMode: boolean) {
-    if (!isInEditMode || !cover)
+    if (!isInEditMode || !cover || $context.isTouchDevice)
       return {
         enabled: false
       };

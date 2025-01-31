@@ -601,10 +601,23 @@ export async function getDeviceInfo() {
 export function isContentScript(): boolean {
   try {
     return (
-      typeof window !== 'undefined' &&
-      window.location.protocol !== 'chrome-extension:'
+      typeof window !== "undefined" &&
+      window.location.protocol !== "chrome-extension:"
     );
   } catch {
     return false;
   }
 }
+
+export const safeRequestIdleCallback = (callback: IdleRequestCallback) => {
+  if (typeof window.requestIdleCallback !== "undefined") {
+    return window.requestIdleCallback(callback);
+  } else {
+    return setTimeout(() => {
+      callback({
+        didTimeout: false,
+        timeRemaining: () => 0
+      });
+    }, 1);
+  }
+};

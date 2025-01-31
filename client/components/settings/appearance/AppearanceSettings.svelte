@@ -11,6 +11,7 @@
   import ScrollView from "$lib/client/layout/scrollView/ScrollView.svelte";
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
+  import { view } from "$lib/client/stores/view.store";
   export let parentBackgroundIndex: number = 1;
   let selectedSkinIndex: number = 0;
   let selectedTheme: Theme;
@@ -129,16 +130,18 @@
 setting on your device."
     />
   {/if}
-  <SwitchInput
-    bind:checked={$userPreferences.appearance.isBlurredBgForPopups}
-    isExpanded={true}
-    label={{
-      label: "Blurred background for popups",
-      tooltip: {
-        body: "Enable this to blur the background of popups."
-      }
-    }}
-  />
+  {#if !$view.isConstrainedWidth}
+    <SwitchInput
+      bind:checked={$userPreferences.appearance.isBlurredBgForPopups}
+      isExpanded={true}
+      label={{
+        label: "Blurred background for popups",
+        tooltip: {
+          body: "Enable this to blur the background of popups."
+        }
+      }}
+    />
+  {/if}
   {#if $appStore.isDebugMode}
     <SwitchInput
       checked={$appearance.isFixedLeftNav}

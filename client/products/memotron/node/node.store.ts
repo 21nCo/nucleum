@@ -440,7 +440,7 @@ export class ActiveNodeStore extends ActiveResourceStore<
   };
 
   deleteMany = async (ids: IRecordId[]) => {
-    return this.resourceStore.trashMany(ids);
+    return this.resourceStore.bulkTrash(ids);
   };
 
   mention = async (

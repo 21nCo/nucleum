@@ -29,6 +29,8 @@
   import { getMdStore } from "$lib/client/components/markdown/markdown.store";
   import TableOfContents from "$lib/client/components/markdown/TableOfContents.svelte";
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  import context from "$lib/client/stores/context.store";
+  import { Embed } from "$lib/client/types/context.type";
 
   export let node: IActiveNodeStore;
   export let selectedView: NodeView = NodeView.CONTENT;
@@ -273,7 +275,13 @@
     {/if}
     {#if (isShowFloatingBar || isConstrainedWidth) && !$node.isInFocusMode}
       <div transition:fade={{ duration: 200 }}>
-        <BottomFloat margin={isConstrainedWidth ? "mb-4" : "mb-0"}>
+        <BottomFloat
+          margin={isConstrainedWidth && $context.embed === Embed.HANDSET
+            ? "mb-8"
+            : isConstrainedWidth
+              ? "mb-4"
+              : "mb-0"}
+        >
           <NodeFloatingBar
             {node}
             {isConstrainedWidth}
@@ -307,7 +315,7 @@
       </div>
     {/if}
     {#if $node.isInFocusMode}
-      <BottomFloat margin="mb-4">
+      <BottomFloat margin={$context.embed === Embed.HANDSET ? "mb-8" : "mb-4"}>
         <button
           class="flex justify-center items-center gap-2 bg-bgs2 border border-brs3 rounded-md px-4 py-2 shadow-sm hover:bg-bgs3"
           on:click={() => {

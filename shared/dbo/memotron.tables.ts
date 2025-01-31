@@ -129,7 +129,10 @@ function linkTag() {
   DEFINE FIELD IF NOT EXISTS createdBy on TABLE linkTag TYPE option<record<user>>;
   DEFINE FIELD IF NOT EXISTS modifiedBy on TABLE linkTag TYPE option<record<user>>;
   DEFINE FIELD IF NOT EXISTS createdAt on TABLE linkTag TYPE datetime;
-  DEFINE FIELD IF NOT EXISTS modifiedAt on TABLE linkTag TYPE datetime;`;
+  DEFINE FIELD IF NOT EXISTS modifiedAt on TABLE linkTag TYPE datetime;
+  DEFINE FIELD IF NOT EXISTS isArchived on TABLE linkTag DEFAULT false;
+  DEFINE FIELD IF NOT EXISTS trashInformation on TABLE linkTag FLEXIBLE TYPE option<object>;
+  `;
   return [def];
 }
 

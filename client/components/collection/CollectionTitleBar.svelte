@@ -79,14 +79,16 @@
   <!-- TODO breadcrumbs - if launched as child from a combination i.e. if parent present -->
   <!-- TODO - back button to previous resource - if launched from a mention or links -->
   {#if isConstrainedWidth}
-    <Icon
-      icon="ph:caret-left-light"
+    <button
+      class="flex active:bg-bgs2 rounded-md p-1"
       on:click={() => {
         appStore.closeResource({
           id: collection.id
         });
       }}
-    />
+    >
+      <Icon icon="ph:caret-left-light" />
+    </button>
   {/if}
   {#if $collection.type === CollectionType.TYPED}
     {@const avatar =
@@ -138,7 +140,7 @@
         {$collection.label ?? "Untitled collection"}
       </div>
     {/if}
-    {#if $collection.description || $collection.isInEditMode}
+    {#if ($collection.description && !isConstrainedWidth) || $collection.isInEditMode}
       <span
         class="flex justify-center items-center"
         use:popover={{
@@ -166,6 +168,7 @@
     {/if}
     {#if $collection.isStarred}
       <button
+        class="flex items-center justify-center"
         use:tooltip={{
           text: "Unstar collection"
         }}
@@ -179,7 +182,7 @@
         />
       </button>
     {/if}
-    {#if !$collection.isInEditMode && $collection.type === CollectionType.TYPED}
+    {#if !$collection.isInEditMode && $collection.type === CollectionType.TYPED && !isConstrainedWidth}
       <button
         class="flex text-b3 text-fgs3 rounded-md border border-brs3"
         on:click={openPropertiesEditor}
@@ -212,9 +215,6 @@
   </span>
 
   {#if isConstrainedWidth}
-    {#if !$collection.isInEditMode}
-      <AddResourceAction on:add variant="minimal" />
-    {/if}
     <ContextMenuAction
       menuResolver={() =>
         resolveCollectionContextMenu($collection, ResourceAccessPoint.SELF)}

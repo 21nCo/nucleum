@@ -22,7 +22,6 @@
   import { Embed } from "$lib/client/types/context.type";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
-  import { Action } from "$lib/client/types/action.enum";
   import CommandModePage from "$lib/client/components/commandBar/CommandModePage.svelte";
   import {
     clipTextSearchFallback,
@@ -31,20 +30,12 @@
   import LeftNav from "$lib/client/layout/leftPanel/LeftNav.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
   let isLiteMode = $context.isEmbed && $context.isSheet;
-  let interactionMode: InteractionMode;
   let isHideLeftNavBar: boolean = refreshSidebarState();
 
   onMount(async () => {
     initializeData();
-    const uiStateSub = uiState.subscribe(() => {
-      refreshInteractionModeState();
-      isHideLeftNavBar = refreshSidebarState();
-    });
     $appLoadingState.isLocalLoaded = true;
     postMessageToParent(EmbedMessage.MOUNT);
-    return () => {
-      uiStateSub();
-    };
   });
   async function handleVisibilityChange() {
     if (document?.hidden) {
@@ -68,16 +59,11 @@
   }
   async function initializeData() {
     if (isLiteMode) return;
-    refreshInteractionModeState();
   }
   function refreshSidebarState() {
     return uiState.getState(UIState.isHideLeftNavBar);
   }
-  function refreshInteractionModeState() {
-    interactionMode = uiState.getState(Action.MODE_OF_INTERACTION, {
-      isProductScoped: true
-    });
-  }
+
   function handlePaste(event: ClipboardEvent) {
     if (!$appStore.isDnDPageActive) {
       appStore.runAction(MemotronAction.PASTE_CONFIRMATION, {
@@ -128,12 +114,14 @@
 
 <UserBaseLayer on:ready={onUserBaseLayerReady}>
   {#if $appLoadingState.isBaseLoaded && $appLoadingState.isLocalLoaded}
-    {#if interactionMode === InteractionMode.COMMAND_ONLY && $context.embed !== Embed.HANDSET}
-      <CommandModePage />
+    {#if $appStore.interactionMode === InteractionMode.COMMAND_ONLY && $context.embed !== Embed.HANDSET}
+      <CommandModePage>
+        <slot />
+      </CommandModePage>
     {:else}
       <div class="flex flex-col w-full h-full">
         <div class="flex w-full flex-grow">
-          {#if !isHideLeftNavBar || interactionMode === InteractionMode.DEFAULT || $context.embed === Embed.HANDSET}
+          {#if !isHideLeftNavBar || $appStore.interactionMode === InteractionMode.DEFAULT || $context.embed === Embed.HANDSET}
             <LeftNav variant="fixed" />
           {/if}
           <div

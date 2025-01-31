@@ -19,7 +19,7 @@ export class RecentsStore extends ObservableStore<IRecentsStore> {
     this.set({ recents: [], isInitialized: false });
   }
 
-  async initialize(resources: Resource[]) {
+  async refresh(resources: Resource[]) {
     let recents: { type: Resource; record: any; timestamp: Date }[] = [];
     for (const resource of resources) {
       const data = await this.recents(resource);

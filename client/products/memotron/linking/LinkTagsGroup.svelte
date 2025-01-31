@@ -175,9 +175,11 @@
               bind:value={inputValueWithinGroup}
               placeholder="Editing tag"
             />
-            <span>
+            <span class="flex gap-2">
               <Button
                 label="Update"
+                icon="ph:check-light"
+                isPreventMinWidth={true}
                 on:click={(e) => {
                   dispatch("update", {
                     id: item.id,
@@ -185,6 +187,17 @@
                   });
                   editTagPopover?.hide();
                   inputValueWithinGroup = "";
+                }}
+                size={Size.sm}
+              />
+              <Button
+                label="Delete"
+                icon="ph:trash-light"
+                isPreventMinWidth={true}
+                type={ButtonVariant.DANGER}
+                on:click={(e) => {
+                  dispatch("remove", item.id);
+                  editTagPopover?.hide();
                 }}
                 size={Size.sm}
               />

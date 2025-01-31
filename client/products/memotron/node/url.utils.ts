@@ -4,11 +4,11 @@ import { isValidUrl } from "$lib/shared/utils/utils";
 
 export const contentTypeMap: {
   contentType:
-  | NodeType.TWEET
-  | NodeType.TWITTER_PROFILE
-  | NodeType.YOUTUBE_VIDEO
-  | NodeType.YOUTUBE_CHANNEL
-  | NodeType.GIST;
+    | NodeType.TWEET
+    | NodeType.TWITTER_PROFILE
+    | NodeType.YOUTUBE_VIDEO
+    | NodeType.YOUTUBE_CHANNEL
+    | NodeType.GIST;
   regex: RegExp[];
   currentDomain?: string;
 }[] = [
@@ -155,7 +155,7 @@ export function sanitizeAndResolve(
     };
   }
   const contentTypeFromMap = contentTypeMap.find((item) =>
-    item.regex.some((regex) => regex.test(text))
+    item.regex.some((regex) => regex.test(url.trim()))
   );
   if (contentTypeFromMap) {
     return {

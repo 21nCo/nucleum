@@ -135,7 +135,7 @@
 
   $: multiSelectContext = {
     resource,
-    accessPoint: ResourceAccessPoint.LIBRARY
+    accessPoint
   };
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
 
@@ -509,8 +509,8 @@
             width="w-40"
             isDisableSearch={true}
             size={Size.sm}
+            value={arrangement ?? undefined}
             on:select={(e) => {
-              console.log({ e });
               if (!e?.detail) return;
               const newArrangement = e.detail;
               uiState.setResourceState(
@@ -520,7 +520,6 @@
                 newArrangement
               );
               arrangement = newArrangement;
-              console.log({ newArrangement });
             }}
           />
           <SwitchInput
@@ -666,7 +665,8 @@
   {#if $multiSelectStore.length > 0}
     <BottomFloat zIndex="z-30">
       <BulkEditBar
-        isConstrainedWidth={$view.isConstrainedWidth}
+        isConstrainedWidth={$view.isConstrainedWidth ||
+          accessPoint === ResourceAccessPoint.BROWSER}
         context={multiSelectContext}
         subContext={selectedSubType +
           (isStarFilterSelected ? "starred" : "") +

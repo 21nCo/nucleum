@@ -82,6 +82,7 @@
   import { BulkEditor } from "$lib/client/components/record/record.store";
   import { toasts } from "$lib/client/stores/notification.store";
   import { Action } from "$lib/client/types/action.enum";
+  import InlineSearchBar from "$lib/client/elements/InlineSearchBar.svelte";
 
   export let id: string = "";
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -610,23 +611,28 @@
         </div>
         {#if isConstrainedWidth && !$collection.isInEditMode}
           <div
-            class={cn("flex px-4", {
+            class={cn("flex flex-col px-4", {
               "pb-3": isSingleViewMode,
               "-mt-3": !isSingleViewMode
             })}
           >
-            <TextInput
-              bind:value={searchQuery}
-              style={InputStyle.BORDERED}
-              size={Size.sm}
-              placeholder={`Search this collection (${$collection.totalNodeCount ?? 0} items)`}
-              on:input={onSearch}
-              isShowClearControl={searchQuery.length > 0}
-              on:cancel={() => {
-                searchQuery = "";
-                refresh();
-              }}
-            />
+            <!-- {#if $collection.description}
+              <div class="text-fgs3 text-b3 py-2">
+                {$collection.description}
+              </div>
+            {/if} -->
+            <div class="flex items-center justify-center">
+              <InlineSearchBar
+                bind:query={searchQuery}
+                style={InputStyle.FILLED}
+                on:search={onSearch}
+                placeholder={`Search this collection (${$collection.totalNodeCount ?? 0} items)`}
+              >
+                {#if !$collection.isInEditMode}
+                  <AddResourceAction on:add={onAddResource} variant="minimal" />
+                {/if}
+              </InlineSearchBar>
+            </div>
           </div>
         {/if}
         {#if $collection.isInEditMode && isConstrainedWidth}

@@ -15,8 +15,7 @@ import {
 } from "$lib/client/products/memotron/node/node.type";
 import {
   CaptureType,
-  type ICaptureStore,
-  type IPasteCaptureData
+  type ICaptureStore
 } from "$lib/client/products/memotron/capture/capture.type";
 import account from "$lib/client/stores/account.store";
 import { toasts } from "$lib/client/stores/notification.store";
@@ -74,10 +73,7 @@ import { Embed, OperatingSystem } from "$lib/client/types/context.type";
 import { TacoActions } from "../taco/taco.types";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { runVectorGeneration } from "../taco/taco.store";
-import {
-  fetchYouTubeMetadata,
-  resolveUrlData,
-} from "../node/url.utils";
+import { fetchYouTubeMetadata, resolveUrlData } from "../node/url.utils";
 import { getImageColorsFromFile } from "$lib/client/utils/ui.utils";
 import { parseBuffer } from "music-metadata";
 import ExifReader from "exifreader";

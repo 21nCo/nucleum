@@ -21,5 +21,11 @@ export enum UIState {
   quickFocusTag = "quickFocusTag",
   focusComposeType = "focusComposeType",
   focusAdvancedComposeMode = "focusAdvancedComposeMode",
-  journalYearSelection = "journalYearSelection"
+  journalYearSelection = "journalYearSelection",
+
+  //Memotron
+  /**
+   * List of recently used capture shortcuts on capture page
+   */
+  captureShortcutRecents = "captureShortcutRecents"
 }

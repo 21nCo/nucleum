@@ -3,7 +3,7 @@ import type { UserDataMode } from "./account.type";
 import { Embed, OperatingSystem, type IAppContext } from "./context.type";
 import type { ConfirmationNotification } from "./notification.type";
 import type { ModalParams } from "./popup.type";
-import type { View } from "./view.type";
+import type { IViewStore } from "./view.type";
 
 export type IAction = {
   action: string;
@@ -124,7 +124,7 @@ export type IAction = {
 
 export type IActionFnParams = {
   componentParams?: any;
-  view?: View;
+  view?: IViewStore;
   context?: IAppContext;
 };
 

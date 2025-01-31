@@ -320,28 +320,26 @@ function initAppStore(seed: AppStore) {
       openResource(action.action, action.accessMode ?? ResourceAccessMode.POP, {
         searchParams: params?.searchParams
       });
-    } else if (
-      (action.type === ActionType.MODAL ||
-        (store.interactionMode === InteractionMode.COMMAND_ONLY &&
-          ctx.embed !== Embed.HANDSET)) &&
-      !isRenderAsPage
-    ) {
-      if (action.type === ActionType.PAGE) {
-        action.modalParams = {
-          layout: {
-            size: Size.full
-          }
-        };
-      }
+    } else if (action.type === ActionType.MODAL && !isRenderAsPage) {
       modalEvent.notify({
         path: action.action,
         isShow: true,
-        componentParams: params?.componentParams,
+        componentParams: {
+          ...(action?.componentParams ?? {}),
+          ...(params?.componentParams ?? {})
+        },
         ...action.modalParams
       });
     } else if (action.component) {
       logger.log({ at: "running action", action });
-      gotoPath("/" + (action.path ?? action.action));
+      if (
+        store.interactionMode === InteractionMode.COMMAND_ONLY &&
+        ctx.embed !== Embed.HANDSET
+      ) {
+        toggleSearchParam({ tab: "page:" + action.action });
+      } else {
+        gotoPath("/" + (action.path ?? action.action));
+      }
       return;
     }
   };

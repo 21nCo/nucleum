@@ -5,7 +5,6 @@
   import { GlobalEvent } from "$lib/client/types/event.enum";
   import { Embed } from "$lib/client/types/context.type";
   import { pingParent, postToParent } from "$lib/client/utils/embed.utils";
-  import view from "$lib/client/stores/view.store";
   import account from "$lib/client/stores/account.store";
   import { appStore, currentTime } from "$lib/client/stores/app.store";
   import { toasts } from "$lib/client/stores/notification.store";
@@ -43,7 +42,6 @@
   onMount(async () => {
     try {
       await bootup();
-      view.update(window.innerWidth, window.innerHeight);
     } catch (e) {
       logger.error({ at: "BaseLayer.onMount", error: e });
     } finally {

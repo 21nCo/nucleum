@@ -16,6 +16,8 @@
   import { Display } from "$lib/client/types/view.type";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { createEventDispatcher } from "svelte";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { InteractionMode } from "$lib/client/components/settings/interactionMode/interactionMode.type";
   const dispatch = createEventDispatcher();
 
   export let title: string | undefined = undefined;
@@ -40,7 +42,10 @@
   let isCollapsed = false;
 
   $: isShowCollapseButton =
-    $view.display !== Display.TK && !$view.isConstrainedWidth;
+    $view.display !== Display.TK &&
+    !$view.isConstrainedWidth &&
+    $appStore.interactionMode !== InteractionMode.COMMAND_ONLY &&
+    $appStore.interactionMode !== InteractionMode.AGENT;
 </script>
 
 <div class="flex w-full h-full">
@@ -70,7 +75,7 @@
         >
           <div
             class={cn("flex items-center gap-2", {
-              "hover:bg-bgs2 rounded-md px-1": isShowBackButton
+              "active:bg-bgs2 rounded-md px-1": isShowBackButton
             })}
           >
             {#if isShowBackButton}

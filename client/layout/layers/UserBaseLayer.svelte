@@ -25,7 +25,8 @@
   import { resourcesForRecents } from "$local/local";
   import {
     dispatchCustomEvent,
-    isExtensionEnvironment
+    isExtensionEnvironment,
+    safeRequestIdleCallback
   } from "$lib/client/utils/browser.utils";
   import { appMenuStore } from "../../stores/appMenu/appMenu.store";
   import { AlertType } from "$lib/client/types/notification.type";
@@ -49,6 +50,8 @@
   const dispatch = createEventDispatcher();
   import { initializeTaco } from "$lib/client/products/memotron/taco/taco.store";
   import { recentsStore } from "$lib/client/components/record/recent.store";
+  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import { Action } from "$lib/client/types/action.enum";
 
   const loadingMessages = {
     cloneUp: {
@@ -72,6 +75,7 @@
   let isAppLoading = false;
   let error: string | null = null;
   let dev_isDisableSyncOnAppear = false;
+  let subs: any[] = [];
 
   onMount(async () => {
     if ((<any>window).Intercom)
@@ -79,6 +83,12 @@
         hide_default_launcher: true
       });
     addWindowEventListeners();
+    refreshUIStateDerived();
+    const uiStateSub = uiState.subscribe(() => {
+      refreshUIStateDerived();
+    });
+    subs.push(uiStateSub);
+
     console.time("init");
     const initState = await initializeDatabase();
     refreshAppMenuDefaults(false);
@@ -87,7 +97,7 @@
     if (initState !== undefined)
       userDataState = await initializeEssentialUserData(initState);
     const promises = [
-      recentsStore.initialize(resourcesForRecents),
+      recentsStore.refresh(resourcesForRecents),
       initializeUserConfig()
     ];
     await Promise.all(promises);
@@ -95,7 +105,7 @@
     dispatch("ready");
     console.timeEnd("init");
 
-    requestIdleCallback(async () => {
+    safeRequestIdleCallback(async () => {
       if (userDataState?.paginateResources) {
         await flux.paginateResources(userDataState.paginateResources, 100);
         dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
@@ -103,10 +113,17 @@
         await flux.reconcile({ counts: userDataState.counts });
         dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
       }
-      await recentsStore.initialize(resourcesForRecents);
+      await recentsStore.refresh(resourcesForRecents);
       initializeTaco();
     });
   });
+
+  function refreshUIStateDerived() {
+    const interactionMode = uiState.getState(Action.MODE_OF_INTERACTION, {
+      isProductScoped: true
+    });
+    $appStore.interactionMode = interactionMode;
+  }
   /**
    * Refreshes the timezone of the user. If the user is signing up, it will set & persist the timezone to the detected timezone. If the user is logged in, it will set the timezone to the detected timezone only if the timezone is different from the saved timezone.
    *
@@ -137,6 +154,7 @@
       const isCloudUser = $account.dataMode === UserDataMode.CLOUD;
       if (isCloudUser && !dev_isDisableSyncOnAppear) {
         await flux.syncDown({ src: "onAppear" });
+        await recentsStore.refresh(resourcesForRecents);
         await account.ping();
       }
       if (isExtensionEnvironment() || import.meta.env?.DEV) return;
@@ -177,7 +195,7 @@
   }
 
   const windowResizeListener = (event: Event) => {
-    view.update(window.innerWidth, window.innerHeight);
+    view.refresh(window.innerWidth, window.innerHeight);
   };
 
   const messageReceivedListener = (event: any) => {
@@ -403,6 +421,7 @@
   }
   onDestroy(() => {
     removeWindowEventListeners();
+    subs.forEach((sub) => sub());
   });
 </script>
 

@@ -100,7 +100,6 @@ export async function resolvePasteContents(
   const text = event?.clipboardData?.getData("text");
   if (!text) return;
   const sanitized = sanitizeAndResolve(text);
-
   let isCodeText = itemArray.some((i) => i.type === "vscode-editor-data");
   if (!isCodeText && typeof sanitized === "string") {
     isCodeText = textIsCode(sanitized);

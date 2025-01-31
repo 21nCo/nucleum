@@ -3,7 +3,7 @@
   import Divider from "$lib/client/elements/Divider.svelte";
   import ComponentResolver from "$lib/client/layout/paint/ComponentResolver.svelte";
   import account from "$lib/client/stores/account.store";
-  import { currentTime } from "$lib/client/stores/app.store";
+  import { appStore, currentTime } from "$lib/client/stores/app.store";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import view from "$lib/client/stores/view.store";
@@ -18,63 +18,93 @@
   import { InteractionMode } from "../settings/interactionMode/interactionMode.type";
   import CommandBar from "./CommandBar.svelte";
   import ShortcutText from "$lib/client/elements/text/ShortcutText.svelte";
+  import Tabs from "$lib/client/layout/tabs/Tabs.svelte";
+  import { page } from "$app/stores";
+  import PagePainterV2 from "$lib/client/layout/paint/PagePainterV2.svelte";
+
+  let isCmdHome = true;
+
+  $: activeTab = $page.url.searchParams.get("tab");
 </script>
 
 <div class="flex flex-col w-full h-full">
-  <div
-    class="flex flex-col dp:flex-row gap-6 w-full h-11/12 justify-center items-center p-4 tp:p-8 dp:p-16"
-  >
-    <div class="dp:w-1/2 dp:h-full flex flex-col gap-6 dp:justify-center">
-      <ProfilePicture context="cmd-page" />
-      <div class="flex flex-col gap-1">
-        <div class="text-xl text-fgs2">
-          Hi {$account.userInfo?.nickName}!
-        </div>
-        <div class="text-fgs3">
-          {formatDatetime($userPreferences, $currentTime)}
-        </div>
-      </div>
-      {#if $player.isMiniOn}
-        <Divider />
-        <ComponentResolver path={$player.action + Action.CMD} />
-      {/if}
-    </div>
-    {#if $view.display === Display.DP}
-      <Divider
-        orientation={Orientation.Vertical}
-        colorStrength={ColorStrength.Strong}
-      />
-    {/if}
-    <div
-      class="h-96 w-[40rem] dp:h-[40rem] dp:w-1/2 flex justify-center items-center"
-    >
-      <div class="h-full w-full dp:h-2/3 dp:w-full flex items-center">
-        <CommandBar isFullPageContext={true} />
-      </div>
-    </div>
+  <div>
+    <Tabs
+      isShowHome={true}
+      {activeTab}
+      on:home={(e) => {
+        isCmdHome = e.detail;
+        if (isCmdHome) appStore.toggleSearchParam(["tab"]);
+      }}
+    />
   </div>
-  <footer
-    class="w-full flex flex-col gap-2 justify-center items-center h-1/6 text-fgs2 text-b2"
-  >
-    <div class="flex flex-col items-center gap-4">
-      <span class="flex flex-row text-fgs3 gap-1">
-        Press
-        <ShortcutText shortcut={Action.GLOBAL_SEARCH} parentBgIndex={2} />
-        to search
-      </span>
-      <Button
-        label="Exit Command Mode"
-        size={Size.sm}
-        on:click={() => {
-          uiState.setState(
-            Action.MODE_OF_INTERACTION,
-            InteractionMode.DEFAULT,
-            {
-              isProductScoped: true
-            }
-          );
-        }}
-      />
+  {#if activeTab?.includes("page:")}
+    <div class="w-full min-h-0 flex-1">
+      <PagePainterV2 cmdPageLaunch={activeTab.split("page:")[1]} />
     </div>
-  </footer>
+  {:else if isCmdHome}
+    <div
+      class="flex flex-col dp:flex-row gap-6 w-full flex-1 min-h-0 justify-center items-center p-4 tp:p-8 dp:p-16"
+    >
+      <div class="dp:w-1/2 dp:h-full flex flex-col gap-6 dp:justify-center">
+        <ProfilePicture context="cmd-page" />
+        <button
+          class="flex flex-col gap-1"
+          on:click={() => {
+            appStore.runAction(Action.SETTINGS);
+          }}
+        >
+          <div class="text-xl text-fgs2">
+            Hi {$account.userInfo?.nickName}!
+          </div>
+          <div class="text-fgs3">
+            {formatDatetime($userPreferences, $currentTime)}
+          </div>
+        </button>
+        {#if $player.isMiniOn}
+          <Divider />
+          <ComponentResolver path={$player.action + Action.CMD} />
+        {/if}
+      </div>
+      <!-- {#if $view.display === Display.DP}
+        <Divider
+          orientation={Orientation.Vertical}
+          colorStrength={ColorStrength.Strong}
+        />
+      {/if} -->
+      <div
+        class="h-96 w-[40rem] dp:h-[40rem] dp:w-1/2 flex justify-center items-center"
+      >
+        <div class="h-full w-full dp:h-2/3 dp:w-full flex items-center">
+          <CommandBar isFullPageContext={true} />
+        </div>
+      </div>
+    </div>
+    <footer
+      class="w-full flex flex-col gap-2 justify-center items-center h-1/6 text-fgs2 text-b2"
+    >
+      <div class="flex flex-col items-center gap-4">
+        <span class="flex flex-row text-fgs3 gap-1">
+          Press
+          <ShortcutText shortcut={Action.GLOBAL_SEARCH} parentBgIndex={2} />
+          to search
+        </span>
+        <Button
+          label="Exit Command Mode"
+          size={Size.sm}
+          on:click={() => {
+            uiState.setState(
+              Action.MODE_OF_INTERACTION,
+              InteractionMode.DEFAULT,
+              {
+                isProductScoped: true
+              }
+            );
+          }}
+        />
+      </div>
+    </footer>
+  {:else}
+    <slot />
+  {/if}
 </div>
