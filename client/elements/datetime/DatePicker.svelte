@@ -83,6 +83,7 @@
       use:popover={{
         content: AbsoluteTimeRangePopover,
         id: "date-picker-popover",
+        isRenderAtBottomForCW: true,
         componentProps: {
           isDatePickerMode: true,
           selectedDate: _date,

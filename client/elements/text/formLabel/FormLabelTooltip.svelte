@@ -28,7 +28,7 @@
       ? [PopoverTriggerMethod.CLICK]
       : [PopoverTriggerMethod.CLICK, PopoverTriggerMethod.HOVER],
     placement: info.placement ?? Placement.Right,
-    isTooltip: true,
+    isRenderAtBottomForCW: true,
     componentProps: {
       info,
       onClose: closeTooltip

@@ -48,6 +48,7 @@
     class={"flex justify-center items-center w-full h-full text-b1 text-fgs3 rounded-md border border-brs3 border-dashed hover:bg-bgs2 hover:text-fgs2"}
     use:popover={{
       content: AvatarPicker,
+      isRenderAtBottomForCW: true,
       componentProps: {
         avatarClickCallback: handleAvatarEmitted,
         deleteCallback: handleDeleteEmitted,

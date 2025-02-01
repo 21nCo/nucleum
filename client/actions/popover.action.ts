@@ -275,7 +275,10 @@ interface PopoverParams {
   placement?: Placement;
   isSpanToTriggerWidth?: boolean;
   offsetInPx?: number;
-  isTooltip?: boolean;
+  /**
+   * If set to true, the popover will be rendered at the bottom of the trigger element for constrained width context
+   */
+  isRenderAtBottomForCW?: boolean;
   content: Content;
   triggerMethod?: PopoverTriggerMethod[];
   componentProps?: Record<string, any>;
@@ -294,7 +297,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     placement = Placement.BottomCenter,
     isSpanToTriggerWidth = false,
     offsetInPx = 4,
-    isTooltip = false,
+    isRenderAtBottomForCW: isTooltip = false,
     content,
     triggerMethod = [PopoverTriggerMethod.CLICK],
     componentProps = {},
@@ -347,11 +350,24 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     let popRect = popoverElement.getBoundingClientRect();
     const { documentWidth, documentHeight } = documentDimensions();
     if (isTooltip && window.innerWidth < 800) {
+      const finalTop = window.innerHeight - popRect.height - 24;
+      popoverElement.style.position = "fixed";
+      popoverElement.style.transition =
+        "all 0.2s cubic-bezier(0.23, 1, 0.32, 1)";
       popoverElement.style.left = `0px`;
-      popoverElement.style.top = `${window.innerHeight - popRect.height - 24}px`;
+      popoverElement.style.top = `${window.innerHeight}px`;
       popoverElement.style.width = `${documentWidth - 24}px`;
       popoverElement.style.margin = "12px";
-      popoverElement.style.opacity = "1";
+      popoverElement.style.opacity = "0";
+
+      popoverElement.offsetHeight;
+      const element = popoverElement;
+      requestAnimationFrame(() => {
+        if (element) {
+          element.style.top = `${finalTop}px`;
+          element.style.opacity = "1";
+        }
+      });
       return;
     }
 
@@ -759,7 +775,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
         groupId = "popover",
         id = "popover",
         isRenderAsSibling = false,
-        isTooltip = false
+        isRenderAtBottomForCW: isTooltip = false
       } = newParams);
       if (popoverElement) {
         positionPopover();

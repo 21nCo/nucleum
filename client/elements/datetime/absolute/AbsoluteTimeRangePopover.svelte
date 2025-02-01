@@ -355,7 +355,7 @@
   <!-- svelte-ignore a11y-click-events-have-key-events -->
   <button
     class={cn(
-      "flex flex-col gap-4 w-80 px-4 py-4 text-fgs3 rounded-md shadow-lg border border-brs2",
+      "flex flex-col gap-4  cw:w-full w-80 px-4 py-4 text-fgs3 rounded-md shadow-lg border border-brs2",
       bg(parentBgIndex)
     )}
     on:click|stopPropagation

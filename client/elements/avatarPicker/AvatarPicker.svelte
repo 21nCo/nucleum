@@ -483,7 +483,7 @@
     "bg-bgs1 mo:h-96 h-[30.5rem] mo:border mo:border-brs2 rounded-md max-w-full",
     {
       "w-[35rem]": isExpanded,
-      "w-[24rem]": !isExpanded
+      "cw:w-full w-[24rem]": !isExpanded
     }
   )}
 >
