@@ -575,7 +575,7 @@
   function onBlockUpdate(e: CustomEvent<any>) {
     const detail: Partial<IBlockBody> = e?.detail;
     logger.log({ at: "onBlockUpdate", detail, block });
-    if (!detail) return;
+    if (detail === undefined || detail === null) return;
     if (
       headingNodeTypes.includes(block.contentType) &&
       typeof detail === "string"

@@ -73,7 +73,7 @@
   searchImages("");
 </script>
 
-<div class="flex flex-col gap-4 h-full">
+<div class="flex flex-col gap-4 flex-1 overflow-y-auto">
   <div class="flex items-center gap-2">
     <TextInput
       bind:value={searchQuery}
