@@ -57,3 +57,45 @@ export function observeAttributes(
     }
   };
 }
+
+interface TrackPositionParams {
+  callback: (position: { x: number; y: number }) => void;
+}
+
+/**
+ * Tracks the position of an element in the viewport.
+ * @param node The HTML element to track
+ * @param params Configuration parameters including the callback function
+ */
+export function trackPosition(node: HTMLElement, params: TrackPositionParams) {
+  let frame: number;
+  let lastX = 0;
+  let lastY = 0;
+  let { callback } = params;
+
+  function update() {
+    const rect = node.getBoundingClientRect();
+    const x = rect.left + window.scrollX;
+    const y = rect.top + window.scrollY;
+
+    if (x !== lastX || y !== lastY) {
+      lastX = x;
+      lastY = y;
+      callback({ x, y });
+    }
+
+    frame = requestAnimationFrame(update);
+  }
+
+  update();
+
+  return {
+    destroy() {
+      cancelAnimationFrame(frame);
+    },
+
+    update(newParams: TrackPositionParams) {
+      callback = newParams.callback;
+    }
+  };
+}

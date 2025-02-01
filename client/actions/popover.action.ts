@@ -275,6 +275,7 @@ interface PopoverParams {
   placement?: Placement;
   isSpanToTriggerWidth?: boolean;
   offsetInPx?: number;
+  isTooltip?: boolean;
   content: Content;
   triggerMethod?: PopoverTriggerMethod[];
   componentProps?: Record<string, any>;
@@ -293,6 +294,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     placement = Placement.BottomCenter,
     isSpanToTriggerWidth = false,
     offsetInPx = 4,
+    isTooltip = false,
     content,
     triggerMethod = [PopoverTriggerMethod.CLICK],
     componentProps = {},
@@ -344,6 +346,15 @@ export function popover(node: HTMLElement, params: PopoverParams) {
 
     let popRect = popoverElement.getBoundingClientRect();
     const { documentWidth, documentHeight } = documentDimensions();
+    if (isTooltip && window.innerWidth < 800) {
+      popoverElement.style.left = `0px`;
+      popoverElement.style.top = `${window.innerHeight - popRect.height - 24}px`;
+      popoverElement.style.width = `${documentWidth - 24}px`;
+      popoverElement.style.margin = "12px";
+      popoverElement.style.opacity = "1";
+      return;
+    }
+
     let adjustedPlacement = placement;
     resetPosition();
     adjustIfNotEnoughTop();
@@ -747,7 +758,8 @@ export function popover(node: HTMLElement, params: PopoverParams) {
         componentProps = {},
         groupId = "popover",
         id = "popover",
-        isRenderAsSibling = false
+        isRenderAsSibling = false,
+        isTooltip = false
       } = newParams);
       if (popoverElement) {
         positionPopover();

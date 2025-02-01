@@ -414,44 +414,6 @@ export function resolveModalOnFront() {
   return modals[modals.length - 1];
 }
 
-/**
- * Tracks the position of an element in the viewport.
- * @param node
- * @param options
- * @returns
- */
-export function trackPosition(node: HTMLElement) {
-  let frame: number;
-  let lastX = 0;
-  let lastY = 0;
-
-  function update() {
-    const rect = node.getBoundingClientRect();
-    const x = rect.left + window.scrollX;
-    const y = rect.top + window.scrollY;
-
-    if (x !== lastX || y !== lastY) {
-      lastX = x;
-      lastY = y;
-      node.dispatchEvent(
-        new CustomEvent("positionchange", {
-          detail: { x, y }
-        })
-      );
-    }
-
-    frame = requestAnimationFrame(update);
-  }
-
-  update();
-
-  return {
-    destroy() {
-      cancelAnimationFrame(frame);
-    }
-  };
-}
-
 export async function generateFingerprint() {
   try {
     if (isExtensionEnvironment()) {
