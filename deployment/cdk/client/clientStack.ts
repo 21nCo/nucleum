@@ -102,7 +102,6 @@ export class ClientStack extends Stack {
       memoryLimit: 1024,
       prune: false,
       retainOnDelete: false,
-      useEfs: true,
       storageClass: s3deploy.StorageClass.STANDARD
     });
   }
