@@ -35,29 +35,31 @@ function resolveEnvv1(subdomain: string) {
 export function extractProduct(host: string) {
   if (!host) return { product: "", env: "" };
 
-  const simpleDomainMatch = host.match(/^([^.]+)\.(com|io|org|run)$/);
+  const simpleDomainMatch = host.match(/^([^.]+)\.(com|io|org|run|app)$/);
   if (simpleDomainMatch) {
     return {
       product: simpleDomainMatch[1],
-      env: "landing"
+      env: "landing",
     };
   }
 
   const blankFormatMatch = host.match(
-    /^([^.]+)\.(tidigit|blank|21n)\.(dev|xyz|run|live)$/
+    /^([^.]+)\.(tidigit|blank|21n)\.(dev|xyz|run|live|io|com)$/
   );
   if (blankFormatMatch) {
     return {
       product: blankFormatMatch[1],
-      env: resolveEnv(blankFormatMatch[3])
+      env: resolveEnv(blankFormatMatch[3]),
     };
   }
 
-  const straightFormatMatch = host.match(/^(.+)\.([^.]+)\.(com|io|org|run)$/);
+  const straightFormatMatch = host.match(
+    /^(.+)\.([^.]+)\.(com|io|org|run|app)$/
+  );
   if (straightFormatMatch) {
     return {
       env: resolveEnv(straightFormatMatch[1]),
-      product: straightFormatMatch[2]
+      product: straightFormatMatch[2],
     };
   }
 
@@ -77,7 +79,8 @@ export function extractProduct(host: string) {
       slug === "web" ||
       slug === "www" ||
       slug === "desktop" ||
-      slug === "live"
+      slug === "live" ||
+      slug === "io"
     ) {
       return "live";
     } else {
@@ -157,7 +160,7 @@ export function sanitize(text: string) {
   if (gistMatch) {
     return {
       embed: `https://gist.github.com/${gistMatch[1]}/${gistMatch[2]}`,
-      isGist: true
+      isGist: true,
     };
   }
 
@@ -167,7 +170,7 @@ export function sanitize(text: string) {
   if (gitlabMatch) {
     return {
       embed: `https://gitlab.com/-/snippets/${gitlabMatch[1]}`,
-      isGist: true
+      isGist: true,
     };
   }
 
