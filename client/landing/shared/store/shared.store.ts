@@ -14,7 +14,7 @@ export const currentProductsStore = readable<ITileItem[]>([
     image: staticUrl + "/images/product/memotron-product-image.png",
     title: "Memotron",
     label: "Your memory atlas.",
-    href: "https://memotron.io"
+    href: "https://memotron.app"
   }
 ]);
 

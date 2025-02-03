@@ -1,7 +1,7 @@
 import { logger } from "../components/debug/logger.client";
 import type { ClipperExtensionEvent } from "../products/memotron/common/clip.type";
 import type { ExtensionEvent } from "../types/extension.type";
-import { sendToBackground } from "@plasmohq/messaging"
+import { sendToBackground } from "@plasmohq/messaging";
 
 //TODO - Temp - use utils.ts after lib refactoring
 export function interceptSurrealResponse(response: any, context: string = "") {
@@ -26,12 +26,12 @@ function checkSurrealResponse(
 }
 
 /**
- * @param message 
- * @param tabId 
- * @returns 
+ * @param message
+ * @param tabId
+ * @returns
  */
 export async function relayToContentScript(
-  message: {event: ExtensionEvent | ClipperExtensionEvent, data?: any},
+  message: { event: ExtensionEvent | ClipperExtensionEvent; data?: any },
   tabId?: number
 ): Promise<any> {
   if (!tabId) {
@@ -53,12 +53,17 @@ export async function relayToContentScript(
   });
 }
 
-
-export async function relayToSidePanel(  message: {event: ExtensionEvent | ClipperExtensionEvent, data?: any}) { 
+export async function relayToSidePanel(message: {
+  event: ExtensionEvent | ClipperExtensionEvent;
+  data?: any;
+}) {
   chrome.runtime.sendMessage(message);
 }
 
-export async function relayToBackgroundScript(message: {event: ExtensionEvent | ClipperExtensionEvent, data?: any}) { 
+export async function relayToBackgroundScript(message: {
+  event: ExtensionEvent | ClipperExtensionEvent;
+  data?: any;
+}) {
   // return new Promise((resolve, reject) => {
   //   chrome.runtime.sendMessage(message, (response) => {
   //     if (chrome.runtime.lastError) {
@@ -69,20 +74,22 @@ export async function relayToBackgroundScript(message: {event: ExtensionEvent | 
   //   });
   // });
   try {
-    logger.log({ at: "relayToBackgroundScript", message, chromeRuntimeId: chrome.runtime.id });
-    const response = await sendToBackground(
-      {
-        name: message.event,
-        body: message.data,
-        extensionId: chrome.runtime.id
-      })
-    return response
+    logger.log({
+      at: "relayToBackgroundScript",
+      message,
+      chromeRuntimeId: chrome.runtime.id
+    });
+    const response = await sendToBackground({
+      name: message.event,
+      body: message.data,
+      extensionId: chrome.runtime.id
+    });
+    return response;
   } catch (error) {
-    console.log("Error sending message to background:", error)
-    throw error
+    console.log("Error sending message to background:", error);
+    throw error;
   }
 }
-
 
 export async function openLink(url: string) {
   return new Promise((resolve, reject) => {
@@ -92,11 +99,12 @@ export async function openLink(url: string) {
       } else {
         resolve(tab);
       }
-    })
+    });
   });
 }
 
 export async function openAppPath(path: string) {
-  const appUrl = process.env.PLASMO_PUBLIC_APP_URL ?? "https://app.memotron.io" 
-  return openLink(appUrl + "/" + path)
+  const appUrl =
+    process.env.PLASMO_PUBLIC_APP_URL ?? "https://web.memotron.app";
+  return openLink(appUrl + "/" + path);
 }

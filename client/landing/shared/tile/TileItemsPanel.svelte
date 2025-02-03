@@ -29,7 +29,7 @@
     <!-- {#if $view.isPortrait} -->
     <div class="flex pb-4">
       <p class="text-[17px] tp:text-[28px] leading-6 font-extrabold">
-        Products
+        Products from 21n
       </p>
       {#if $view.isPortrait}
         <SvgIcon

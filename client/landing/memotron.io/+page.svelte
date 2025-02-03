@@ -16,7 +16,7 @@
     tagline: "Your memory atlas.",
     description:
       "Memotron is a digital memory and thinking tool that is unbelievably powerful, insanely reliable, and surprisingly intuitive. Transform the way you learn, think and create.",
-    href: "https://memotron.io",
+    href: "https://memotron.app",
     earlyAccessUrl: "https://tally.so/r/3qB0x9"
   };
 
@@ -34,8 +34,8 @@
     btn2: {
       label: "Get started",
       icon: "arrow-NW",
-      macDownloadUrl: "https://app.memotron.io",
-      windowsDownloadUrl: "https://app.memotron.io"
+      macDownloadUrl: "https://web.memotron.app",
+      windowsDownloadUrl: "https://web.memotron.app"
     }
   };
 

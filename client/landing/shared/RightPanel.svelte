@@ -57,7 +57,8 @@
   {id}
   isRightPanel={true}
   label="Products"
-  icon="ham-burger-menu"
+  description="Products from 21n"
+  icon="long-arrow-right"
   on:click={async () => {
     await addAnimateClass("animate-bounce-r", id);
     $isProductsPanelOpen = true;
