@@ -34,7 +34,7 @@
   export let accessPoint: ResourceAccessPoint | undefined = undefined;
   export let visibleProps: IProperty[] = [];
 
-  $: columns = Math.floor(($view.width / 500) * density);
+  $: columns = Math.max(1, Math.floor(($view.width / 500) * density));
 
   export let gap = 12;
   let rowHeight = 4;

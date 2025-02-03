@@ -19,6 +19,7 @@
   import { TextStyle } from "$lib/client/types/text.enum";
   import { properCase } from "$lib/shared/utils/text.utils";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import context from "$lib/client/stores/context.store";
   const dispatch = createEventDispatcher();
   export let links: IRecordId[];
   export let propertyValues: INodePropertyValue[] = [];
@@ -79,6 +80,20 @@
   function propagateExpansionState() {
     dispatch("expansion", expand ? expansionState : null);
   }
+
+  function onClickItem(item: IRecordId, e: any) {
+    if (isExpandable) {
+      expand = expand === item ? null : item;
+      if (expand) refreshExpansion(item);
+      propagateExpansionState();
+      e.stopPropagation();
+    } else {
+      dispatch("click", {
+        item,
+        event: e
+      });
+    }
+  }
 </script>
 
 {#if _links?.length > 0}
@@ -95,17 +110,11 @@
         isRemovable={!isReadOnlyMode}
         isActive={expand === item}
         on:click={(e) => {
-          if (isExpandable) {
-            expand = expand === item ? null : item;
-            if (expand) refreshExpansion(item);
-            propagateExpansionState();
-            e.stopPropagation();
-          } else {
-            dispatch("click", {
-              item,
-              event: e
-            });
-          }
+          if ($context.isTouchDevice) return;
+          onClickItem(item, e);
+        }}
+        on:goToResource={(e) => {
+          onClickItem(item, e);
         }}
         on:remove={() => {
           dispatch("unlink", item);

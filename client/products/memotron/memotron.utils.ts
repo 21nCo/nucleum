@@ -110,7 +110,7 @@ export const highlightSearchQuery = (items: any[], searchQuery: string) => {
     if (aLabel.includes(normalizedQuery)) {
       labelSearch = item.label.replace(
         new RegExp(`(${searchQuery})`, "gi"),
-        "`$1`"
+        "#$1#"
       );
     }
 
@@ -123,7 +123,7 @@ export const highlightSearchQuery = (items: any[], searchQuery: string) => {
           .replace(/\(resource=[^)]+\)/g, "")
           .replace(/[\r\n\s]+/g, " ")
           .trim()
-          .replace(new RegExp(`(${searchQuery})`, "gi"), "`$1`");
+          .replace(new RegExp(`(${searchQuery})`, "gi"), "#$1#");
       } else {
         const startIndex = Math.max(0, matchIndex - preContextLength);
         const endIndex = Math.min(
@@ -142,7 +142,7 @@ export const highlightSearchQuery = (items: any[], searchQuery: string) => {
 
         bodySearch = truncatedText.replace(
           new RegExp(`(${searchQuery})`, "gi"),
-          "`$1`"
+          "#$1#"
         );
       }
     }

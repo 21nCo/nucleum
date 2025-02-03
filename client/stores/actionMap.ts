@@ -161,6 +161,7 @@ export const globalActions: IAction[] = [
     label: "Chat with us",
     icon: "ph:chats-light",
     type: ActionType.FUNCTION,
+    isInactive: true,
     fn: async () => {
       modalEvent.hide(Action.HELP);
       modalEvent.hide(Action.SETTINGS);
@@ -637,8 +638,11 @@ export const globalActions: IAction[] = [
         //TODO - resource.type based on collection resource type
         const searchStore = new SearchStore(Resource.node);
         if (isValidString(query)) {
-          searchStore.searchQuery = query;
-          return searchStore.nodes();
+          return searchStore.select({
+            resource: Resource.node,
+            searchQuery: query,
+            limit: 50
+          });
         } else {
           return recentsStore.resolve({ type: Resource.node });
         }

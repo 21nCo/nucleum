@@ -942,6 +942,15 @@
         caretPosition: caretPositionT2?.index,
         position
       });
+      setTimeout(() => {
+        if (blockRef) {
+          const parsedMdContent = extractInlineMarkdownFromHtml(
+            blockRef?.innerHTML
+          );
+          content = parsedMdContent ?? "";
+          dispatchChangeEvent();
+        }
+      }, 500);
     }
     clearTimeout(typingTimeout);
     clearTimeout(keyboardTimeout);

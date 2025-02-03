@@ -184,9 +184,11 @@
   bind:this={searchInputRef}
   bind:value={searchQuery}
   isInline={context === "nodepageCollectionsLane"}
-  width={context === "nodepageCollectionsLane" && $view.isPortrait
-    ? "w-80"
-    : undefined}
+  width={$view.isConstrainedWidth
+    ? "w-full"
+    : context === "nodepageCollectionsLane" && $view.isPortrait
+      ? "w-80"
+      : undefined}
   style={inputStyle}
   {icon}
   {label}

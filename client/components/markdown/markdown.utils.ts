@@ -190,6 +190,13 @@ export const inlineStylingPatterns = [
       "`",
       "<span class='bg-aps2 px-0.5 text-b2 font-mono'>$1</span>"
     )
+  },
+  {
+    regex: /\#([^\#]+)\#(?!#)/g,
+    replacement: encapsulateInlinePattern(
+      "#",
+      "<span class='bg-aps2 rounded-sm'>$1</span>"
+    )
   }
   // {
   //   regex: /#\[((?:\S|\s\S)+?)\]\(([^)]+?)\)/g,

@@ -100,7 +100,11 @@ export class ClientStack extends Stack {
       distribution,
       distributionPaths: ["/*"],
       memoryLimit: 1024,
-      timeout: Duration.minutes(15)
+      prune: false,
+      retainOnDelete: false,
+      useEfs: true,
+      storageClass: s3deploy.StorageClass.STANDARD,
+      expires: Duration.days(365)
     });
   }
 }

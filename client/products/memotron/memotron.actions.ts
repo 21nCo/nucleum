@@ -387,6 +387,7 @@ export const memotronActions: IAction[] = [
     action: "onboarding",
     type: ActionType.PAGE,
     isMeta: true,
+    isMenuHidden: true,
     label: "Onboarding",
     icon: "ph:rocket",
     component: MemotronOnboarding

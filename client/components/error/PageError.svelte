@@ -65,7 +65,7 @@
             type={ButtonVariant.PRIMARY}
             label="Chat with us"
             on:click={() => {
-              appStore.runAction("chat");
+              appStore.runAction("discord");
             }}
           />
         {/if}

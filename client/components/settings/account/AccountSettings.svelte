@@ -87,7 +87,7 @@
 </script>
 
 <div class="flex flex-col w-full h-full gap-12 items-start overflow-y-auto">
-  <div
+  <!-- <div
     class="flex flex-col gap-1 w-full justify-center rounded-md bg-bgs2 p-4 text-left"
   >
     <div>Hi {$userPreferences.name ?? $account.userInfo?.nickName ?? ""}!</div>
@@ -107,7 +107,7 @@
       </div>
     </div>
     <div class="text-fgs3 text-b3 mt-4">-Team Memotron</div>
-  </div>
+  </div> -->
   <div class="flex mo:flex-col gap-4 w-full">
     <div
       class="flex flex-col items-center justify-center bg-bgs2 bg-opacity-50 rounded-md gap-4 w-1/3 mo:w-full p-4"

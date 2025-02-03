@@ -58,7 +58,9 @@
     {accessPoint}
   />
   {#if item.labelSearch}
-    {@html renderMdAsHtml(item.labelSearch)}
+    <span>
+      {@html renderMdAsHtml(item.labelSearch)}
+    </span>
   {:else if _label}
     {#if typeof _label === "string"}
       {_label ?? "Unknown"}

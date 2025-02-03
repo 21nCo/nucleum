@@ -792,8 +792,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     //TODO - extract nodes from markdown blocks and save
     const ctx = get(context);
     console.time("metadata");
-    let metadata =
-      ctx.embed === Embed.HANDSET ? {} : await resolveNodeCaptureMetadata();
+    let metadata = ctx.isEmbed ? {} : await resolveNodeCaptureMetadata();
     console.timeEnd("metadata");
     logger.log({ at: "CaptureStore.saveMarkdownCapture", val, metadata });
     // const id = prefixTable(generateRandomId(), Resource.node);

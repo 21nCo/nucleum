@@ -318,8 +318,8 @@ export class SurrealPersistence implements IPersistence {
       if (Array.isArray(result) && result[0] && Array.isArray(result[0]))
         return result[0];
       else return null;
-    } catch (e) {
-      logger.error({ at: "SurrealPersistence.insert", e });
+    } catch (e: any) {
+      logger.error({ at: "SurrealPersistence.insert", message: e.message });
     }
     return null;
   }
@@ -363,8 +363,8 @@ export class SurrealPersistence implements IPersistence {
         }
       }
       return [records];
-    } catch (e) {
-      logger.error({ at: "SurrealPersistence.upsert", e });
+    } catch (e: any) {
+      logger.error({ at: "SurrealPersistence.upsert", message: e.message });
     } finally {
       this.isProcessingOperation = false;
     }
@@ -452,8 +452,8 @@ export class SurrealPersistence implements IPersistence {
         return insertResult;
       }
       return result;
-    } catch (e) {
-      logger.error({ at: "SurrealPersistence.merge", e });
+    } catch (e: any) {
+      logger.error({ at: "SurrealPersistence.merge", message: e.message });
     } finally {
       this.isProcessingOperation = false;
       logger.log({
@@ -582,8 +582,8 @@ export class SurrealPersistence implements IPersistence {
       logger.log({ at: "SurrealPersistence.select", query, resourceId });
       const result = await this.instance?.query_raw(query);
       return interceptSurrealResponse(result);
-    } catch (e) {
-      logger.error({ at: "SurrealPersistence.select", e });
+    } catch (e: any) {
+      logger.error({ at: "SurrealPersistence.select", message: e.message });
     } finally {
       this.isProcessingOperation = false;
     }
@@ -618,8 +618,8 @@ export class SurrealPersistence implements IPersistence {
         });
       }
       return interceptSurrealResponse(result);
-    } catch (e) {
-      logger.error({ at: "SurrealPersistence.selectMany", e });
+    } catch (e: any) {
+      logger.error({ at: "SurrealPersistence.selectMany", message: e.message });
     } finally {
       this.isProcessingOperation = false;
     }

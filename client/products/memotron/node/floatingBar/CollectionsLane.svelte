@@ -116,6 +116,8 @@
       bind:this={popoverRef}
       use:popover={{
         content: LinkSearch,
+        isRenderAsModalForCW: true,
+        cwModalPosition: Placement.Top,
         componentProps: {
           onSelectCallback: onSelect,
           searchQuery: "",

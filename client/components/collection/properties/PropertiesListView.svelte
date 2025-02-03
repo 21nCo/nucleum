@@ -102,10 +102,11 @@
   <div
     class={cn(
       "w-full",
-      !isRenderAsColumn && {
-        "pl-8": !isCollapsed && !$view.isConstrainedWidth,
-        "pl-12": isCollapsed
-      }
+      !isRenderAsColumn &&
+        !$view.isConstrainedWidth && {
+          "pl-8": !isCollapsed,
+          "pl-12": isCollapsed
+        }
     )}
   >
     <div

@@ -31,6 +31,7 @@
   function updateDate(e: any) {
     const newDate = new Date(e.target.value);
     date = newDate;
+    _date = newDate;
     dispatch("change", date);
   }
 
@@ -83,12 +84,13 @@
       use:popover={{
         content: AbsoluteTimeRangePopover,
         id: "date-picker-popover",
-        isRenderAtBottomForCW: true,
+        isRenderAsModalForCW: true,
         componentProps: {
           isDatePickerMode: true,
           selectedDate: _date,
           onDateChange: (val) => {
             date = val;
+            _date = val;
             dispatch("change", val);
             hidePopover();
           }

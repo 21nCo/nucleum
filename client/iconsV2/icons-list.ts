@@ -16,6 +16,7 @@ const phosphorIcons = [
   "arrows-left-right",
   "arrows-out",
   "arrows-out-simple",
+  "arrows-out-cardinal",
   "arrows-out-line-horizontal",
   "arrows-in-line-horizontal",
   "arrows-clockwise",

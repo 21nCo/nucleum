@@ -13,7 +13,8 @@
   export let cover: string;
   let classList: string = "";
   export { classList as class };
-  export let repositionParams: IImageRepositionerOptions = {};
+  export let repositionParams: IImageRepositionerOptions | undefined =
+    undefined;
   export let isLazyLoad: boolean = false;
 
   function handlePositionChange(newPosition: number) {

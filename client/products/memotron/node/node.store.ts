@@ -286,7 +286,7 @@ export class ActiveNodeStore extends ActiveResourceStore<
   };
   resolveDebouncerForBlockPersistance(id: string) {
     if (!this.debouncers?.has(id)) {
-      this.debouncers.set(id, debouncer(this.updateBlockPropagator, 1000));
+      this.debouncers.set(id, debouncer(this.updateBlockPropagator, 500));
     }
     let val = this.debouncers.get(id);
     return val!;
@@ -338,7 +338,7 @@ export class ActiveNodeStore extends ActiveResourceStore<
         .map((x: INodeLink) =>
           x.out.tb === Resource.collection ? x.out : x.in
         );
-      logger.debug({
+      console.log({
         at: "ActiveNodeStore.fetch",
         node,
         rawLinks,

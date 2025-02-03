@@ -4,6 +4,7 @@ import { PopoverTriggerMethod } from "../types/popover.type";
 import { deepCopy } from "$lib/shared/utils/obj.utils";
 import { detectTouchDevice, getEventPath } from "../utils/browser.utils";
 import { renderMdAsHtml } from "../components/markdown/markdown.utils";
+import { postToParent } from "../utils/embed.utils";
 
 interface TooltipReturn {
   update: (newParams: TooltipParams) => void;
@@ -278,7 +279,8 @@ interface PopoverParams {
   /**
    * If set to true, the popover will be rendered at the bottom of the trigger element for constrained width context
    */
-  isRenderAtBottomForCW?: boolean;
+  isRenderAsModalForCW?: boolean;
+  cwModalPosition?: Placement.Bottom | Placement.Top;
   content: Content;
   triggerMethod?: PopoverTriggerMethod[];
   componentProps?: Record<string, any>;
@@ -297,7 +299,8 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     placement = Placement.BottomCenter,
     isSpanToTriggerWidth = false,
     offsetInPx = 4,
-    isRenderAtBottomForCW: isTooltip = false,
+    isRenderAsModalForCW = false,
+    cwModalPosition = Placement.Bottom,
     content,
     triggerMethod = [PopoverTriggerMethod.CLICK],
     componentProps = {},
@@ -311,6 +314,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
   let popoverContainer =
     document.getElementById("popovers") ??
     node?.getRootNode()?.getElementById("popovers");
+  let cwModalOverlay: HTMLDivElement | null = null;
 
   async function createPopover(): Promise<void> {
     popoverElement = document.createElement("div");
@@ -349,25 +353,51 @@ export function popover(node: HTMLElement, params: PopoverParams) {
 
     let popRect = popoverElement.getBoundingClientRect();
     const { documentWidth, documentHeight } = documentDimensions();
-    if (isTooltip && window.innerWidth < 800) {
-      const finalTop = window.innerHeight - popRect.height - 24;
+    if (isRenderAsModalForCW && window.innerWidth < 800) {
+      cwModalOverlay = document.createElement("div");
+      cwModalOverlay.className = "fixed inset-0 bg-black bg-opacity-60";
+      cwModalOverlay.style.zIndex = "60";
+      cwModalOverlay.style.opacity = "0";
+      cwModalOverlay.style.transition =
+        "opacity 0.2s cubic-bezier(0.23, 1, 0.32, 1)";
+      document.body.appendChild(cwModalOverlay);
+
+      const finalTop = window.innerHeight - popRect.height - 42;
       popoverElement.style.position = "fixed";
       popoverElement.style.transition =
         "all 0.2s cubic-bezier(0.23, 1, 0.32, 1)";
       popoverElement.style.left = `0px`;
-      popoverElement.style.top = `${window.innerHeight}px`;
+      if (cwModalPosition === Placement.Bottom) {
+        popoverElement.style.top = `${window.innerHeight}px`;
+      } else {
+        popoverElement.style.bottom = "24px";
+      }
       popoverElement.style.width = `${documentWidth - 24}px`;
       popoverElement.style.margin = "12px";
       popoverElement.style.opacity = "0";
+      popoverElement.style.zIndex = "70";
 
       popoverElement.offsetHeight;
       const element = popoverElement;
       requestAnimationFrame(() => {
         if (element) {
-          element.style.top = `${finalTop}px`;
+          if (cwModalPosition === Placement.Bottom) {
+            element.style.top = `${finalTop}px`;
+          } else {
+            element.style.top = "24px";
+            element.style.height = "fit-content";
+          }
           element.style.opacity = "1";
+          postToParent({ bg: 100 });
+          if (cwModalOverlay) cwModalOverlay.style.opacity = "1";
         }
       });
+
+      const handleOverlayClick = () => {
+        hidePopover();
+      };
+      cwModalOverlay.addEventListener("click", handleOverlayClick);
+
       return;
     }
 
@@ -609,6 +639,11 @@ export function popover(node: HTMLElement, params: PopoverParams) {
         component = null;
       }
     }
+    if (cwModalOverlay) {
+      cwModalOverlay.style.opacity = "0";
+      cwModalOverlay.remove();
+      postToParent({ bg: 1 });
+    }
     isShown = false;
     triggerChangeEvent();
     document.removeEventListener("click", handleOutsideClickv2);
@@ -775,7 +810,8 @@ export function popover(node: HTMLElement, params: PopoverParams) {
         groupId = "popover",
         id = "popover",
         isRenderAsSibling = false,
-        isRenderAtBottomForCW: isTooltip = false
+        isRenderAsModalForCW = false,
+        cwModalPosition = Placement.Bottom
       } = newParams);
       if (popoverElement) {
         positionPopover();

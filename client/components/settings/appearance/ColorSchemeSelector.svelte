@@ -7,8 +7,11 @@
   import ColorSchemeSelectorItem from "./ColorSchemeSelectorItem.svelte";
   import FormControlLabelWrapper from "$lib/client/elements/text/formLabel/FormControlLabelWrapper.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
+  import { Size } from "$lib/client/types/size.enum";
+  import { cn } from "$lib/client/utils/ui.utils";
   export let theme: Theme = Theme.LIGHT;
   export let label: string = "Color scheme";
+  export let size: Size.sm | Size.md = Size.md;
   let filteredColorSchemes: ColorScheme[];
   export let selectedSchemeId: string;
   const dispatch = createEventDispatcher();
@@ -29,10 +32,16 @@
 
 <FormControlLabelWrapper props={{ label, orientation: Orientation.Vertical }}>
   {#if filteredColorSchemes && filteredColorSchemes.length > 0}
-    <div class="flex flex-wrap gap-6 text-b2 mt-2">
+    <div
+      class={cn("flex flex-wrap text-b2 mt-2", {
+        "gap-6": size === Size.md,
+        "gap-4": size === Size.sm
+      })}
+    >
       {#each filteredColorSchemes as colorScheme (colorScheme.id)}
         <ColorSchemeSelectorItem
           {colorScheme}
+          {size}
           isActive={colorScheme.id === selectedSchemeId}
           on:click={() => {
             dispatch("select", colorScheme.id);

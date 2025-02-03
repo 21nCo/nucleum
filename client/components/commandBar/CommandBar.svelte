@@ -21,6 +21,7 @@
   import { renderMdAsHtml } from "../markdown/markdown.utils";
   import { resolveShortcutText } from "../shortcuts/shortcut.utils";
   import { KeyboardKey, ModifierKey } from "$lib/client/types/keyboard.type";
+  import KeyboardToolbar from "$lib/client/elements/keyboardToolbar/KeyboardToolbar.svelte";
   export let command: string | undefined = undefined;
   export let commandType: ActionType | undefined = undefined;
   export let componentParams: any = undefined;
@@ -53,7 +54,7 @@
     }
   }
   function handleKeyDown(event: any) {
-    if (event.key === "Backspace") {
+    if (event.key === "Backspace" && !$view.isConstrainedWidth) {
       if (value == "" && isPerformingSearchAction) {
         isPerformingSearchAction = false;
         placeholder = defaultPlaceholder;
@@ -111,9 +112,13 @@
   >
     {#if isPerformingSearchAction}
       <div
-        class="h-5/6 mo:w-full mo:ml-0 ml-2 bg-bgs3 flex items-center justify-center px-4 mo:rounded-b-md rounded-md"
+        class="h-5/6 cw:w-full cw:max-w-full max-w-60 cw:ml-0 ml-2 bg-bgs3 flex items-center cw:justify-start justify-center px-4 cw:rounded-none rounded-md truncate"
       >
-        {@html renderMdAsHtml(componentParams?.label ?? searchAction.cmdLabel)}
+        <span class="truncate">
+          {@html renderMdAsHtml(
+            componentParams?.label ?? searchAction.cmdLabel
+          )}
+        </span>
       </div>
     {/if}
     <input
@@ -128,7 +133,7 @@
       class="h-[3.6rem] mo:h-20 mo:w-full bg-transparent px-4 grow focus:border-none focus:outline-none text-h5"
       {placeholder}
     />
-    {#if $view.display !== Display.MO && $context.embed !== Embed.HANDSET}
+    {#if !$view.isConstrainedWidth && $context.embed !== Embed.HANDSET}
       <div class="mr-4">
         <div
           class="px-2 flex justify-center items-center gap-2 bg-bgs3 rounded-md py-1 text-b3 text-fgs3 min-w-fit w-fit"
@@ -184,4 +189,34 @@
     </div>
   {/if}
 </div>
+
+<KeyboardToolbar class="bg-bgs2 h-14 px-4 flex items-center justify-between">
+  <div class="flex items-center justify-center gap-2">
+    <!-- left actions -->
+  </div>
+  <div class="flex items-center justify-center gap-2">
+    <Button
+      icon="ph:x-light"
+      label="clear"
+      parentBgIndex={2}
+      size={Size.sm}
+      style={ButtonStyle.DEFAULT}
+      isPreventMinWidth={true}
+      on:click={() => {
+        value = "";
+      }}
+      on:mousedown={(e) => e.preventDefault()}
+    />
+    <Button
+      icon="ph:caret-line-down-light"
+      label="cancel"
+      parentBgIndex={2}
+      size={Size.sm}
+      style={ButtonStyle.DEFAULT}
+      isPreventMinWidth={true}
+      on:click={close}
+    />
+  </div>
+</KeyboardToolbar>
+
 <svelte:window on:keydown={shortcutListener} />

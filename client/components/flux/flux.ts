@@ -688,8 +688,8 @@ class Flux {
         await this.processSyncDown(response.syncDownData, { src: "sync" });
       }
       return response;
-    } catch (e) {
-      logger.error({ at: "flux.sync", error: e });
+    } catch (e: any) {
+      logger.error({ at: "flux.sync", error: e, message: e.message });
     } finally {
       this.isSyncUpPending = false;
     }

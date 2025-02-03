@@ -36,25 +36,25 @@
     {#if isMdToolbar}
       <div
         class={cn(
-          "mdtoolbar toolbar fixed left-0 bottom-0 w-screen border-t border-brs3 z-50",
+          "mdtoolbar toolbar fixed left-0 bottom-0 w-screen border-t border-brs3 z-[70]",
           classList
         )}
         use:mdToolbar={{
           offset,
           isPreventDefaultOnKeyboardClose
         }}
-        style="display: none;"
+        style="display: none; z-index: 70;"
       >
         <slot />
       </div>
     {:else}
       <div
         class={cn(
-          "toolbar fixed left-0 bottom-0 w-screen border-t border-brs3 z-50",
+          "toolbar fixed left-0 bottom-0 w-screen border-t border-brs3 z-[70]",
           classList
         )}
         use:simpleToolbar
-        style="display: none;"
+        style="display: none; z-index: 70;"
       >
         <slot />
       </div>

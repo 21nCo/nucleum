@@ -7,6 +7,12 @@
   import { collectionStore } from "$lib/client/components/collection/collection.store";
   import { nodeStore } from "$lib/client/products/memotron/node/node.store";
   import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
+  import { popover } from "$lib/client/actions/popover.action";
+  import context from "$lib/client/stores/context.store";
+  import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
+  import { createEventDispatcher } from "svelte";
+  import ContextMenu from "$lib/client/elements/contextMenu/ContextMenu.svelte";
+  const dispatch = createEventDispatcher();
 
   export let id: IRecordId;
   export let parentBgIndex: number = 1;
@@ -37,17 +43,64 @@
     }
     return undefined;
   }
+
+  function resolveContextMenu() {
+    return [
+      {
+        group: "all",
+        items: [
+          {
+            label: `Go to ${item?.label}`,
+            value: "goToResource",
+            icon: "ph:arrow-right-light",
+            callback: async () => {
+              dispatch("goToResource", id);
+            }
+          },
+          {
+            label: "Remove",
+            value: "delete",
+            icon: "ph:trash-light",
+            callback: async () => {
+              dispatch("remove", id);
+            }
+          }
+        ]
+      }
+    ];
+  }
 </script>
 
 {#if item?.label}
-  <Tag
-    {id}
-    label={item?.label}
-    {parentBgIndex}
-    {isActive}
-    icon={resovleIcon()}
-    {isRemovable}
-    on:click
-    on:remove
-  />
+  <div
+    use:popover={{
+      content: ContextMenu,
+      triggerMethod: $context.isTouchDevice
+        ? [PopoverTriggerMethod.CLICK]
+        : [PopoverTriggerMethod.RIGHT_CLICK],
+      // componentProps: {
+      //   label: item?.label,
+      //   onGoToResource: () => {
+      //     dispatch("goToResource", id);
+      //   },
+      //   onRemove: () => {
+      //     dispatch("remove", id);
+      //   }
+      // },
+      componentProps: { menuResolver: resolveContextMenu },
+      id: "linkItemContextMenu",
+      groupId: "linkItemContextMenuGroup"
+    }}
+  >
+    <Tag
+      {id}
+      label={item?.label}
+      {parentBgIndex}
+      {isActive}
+      icon={resovleIcon()}
+      {isRemovable}
+      on:click
+      on:remove
+    />
+  </div>
 {/if}

@@ -32,6 +32,7 @@
         item.isShortcut && !isActive
     }
   )}
+  data-value={item.value}
   on:click={(e) => {
     if (
       item.value === CaptureType.UPLOAD &&

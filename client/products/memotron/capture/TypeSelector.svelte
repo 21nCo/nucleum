@@ -16,6 +16,11 @@
   import { TextStyle } from "$lib/client/types/text.enum";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import {
+    isSameResource,
+    removeDuplicatesFilter,
+    resourceInList
+  } from "$lib/client/components/flux/resourceStores/resource.utils";
 
   export let isCapturePage: boolean = false;
   export let selected: string;
@@ -52,14 +57,16 @@
         }
       })
       .then((data) => {
-        const recents = uiState.getState(UIState.captureShortcutRecents);
-        types = data.map((type: any) => ({
+        const recents = uiState
+          .getState(UIState.captureShortcutRecents)
+          ?.map((x) => x.toString());
+        const _types = data.map((type: any) => ({
           value: type.id,
           label: type.label,
           icon: type.avatar,
           isShortcut: true
         }));
-        types.sort((a, b) => {
+        types = _types.sort((a, b) => {
           const aIndex = recents.indexOf(a.value.toString());
           const bIndex = recents.indexOf(b.value.toString());
           if (aIndex !== -1 && bIndex !== -1) {
@@ -78,16 +85,16 @@
 
   function onselect(val: string) {
     selected = val;
-    const valString = val.toString();
     let recents = uiState.getState(UIState.captureShortcutRecents);
-    if (recents && recents.includes(valString)) {
-      recents = recents.filter((x: string) => x !== valString);
-      recents.unshift(valString);
+    if (recents && recents.some(resourceInList(val))) {
+      recents = recents.filter((x: string) => !isSameResource(x, val));
+      recents.unshift(val);
     } else if (recents) {
-      recents.unshift(valString);
+      recents.unshift(val);
     } else {
-      recents = [valString];
+      recents = [val];
     }
+    recents = recents.filter(removeDuplicatesFilter);
     uiState.setState(UIState.captureShortcutRecents, recents);
     dispatch("select", val);
   }

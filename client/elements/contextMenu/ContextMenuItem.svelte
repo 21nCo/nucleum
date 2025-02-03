@@ -32,7 +32,7 @@
 {:else}
   <button
     class={cn(
-      "flex items-center gap-2.5 justify-between hover:bg-bgs3 rounded-md",
+      "flex items-center gap-2.5 justify-between notouch:hover:bg-bgs3 active:bg-bgs3 rounded-md truncate",
       {
         "p-1.5": size === Size.sm,
         "p-2": size === Size.md,
