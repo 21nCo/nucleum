@@ -62,7 +62,7 @@
       else defaultRootFontSize = 16;
     }
     rootFontSize = defaultRootFontSize + 0.6 * $view.scale;
-    console.log({ rootFontSize, defaultRootFontSize, scale: $view.scale });
+
     const dom = document.getElementById(extensionContext + "-root");
     if (extensionContext && dom) {
       const shadowRoot = dom.shadowRoot;

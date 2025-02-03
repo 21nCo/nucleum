@@ -651,6 +651,14 @@ class Flux {
         isExtensionEnvironment: this.isExtensionEnvironment
       });
       const local = await this.resolveLocal();
+      if (!local) {
+        //TODO - case when flux isn't responding or local is not present
+        dispatchCustomEvent(GlobalEvent.CUSTOM_ALERT, {
+          error: "fluxerror",
+          message: "Something went wrong. Please try again."
+        });
+        return;
+      }
       const lastSyncDown =
         local?.lastSyncDown ?? new Date().getTime() - 1000 * 60 * 60 * 24;
       const dapId = await this.resolveDapId(local);
