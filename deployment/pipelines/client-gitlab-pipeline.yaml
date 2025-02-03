@@ -46,12 +46,12 @@ dev_build_job:
   extends: .base_build_job
   environment: dev
   only:
-    - dev
+    - dev-deploy
 dev_cdk_deploy_job:
   extends: .base_cdk_deploy_job
   environment: dev
   only:
-    - dev
+    - dev-deploy
 
 #Pre
 pre_build_job:

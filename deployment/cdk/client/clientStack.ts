@@ -103,8 +103,7 @@ export class ClientStack extends Stack {
       prune: false,
       retainOnDelete: false,
       useEfs: true,
-      storageClass: s3deploy.StorageClass.STANDARD,
-      expires: Duration.days(365)
+      storageClass: s3deploy.StorageClass.STANDARD
     });
   }
 }
