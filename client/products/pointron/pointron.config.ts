@@ -9,7 +9,7 @@ import {
   quickFocusItemStore
 } from "$lib/client/products/pointron/goals/goal.store";
 import { focusHeatmapStore } from "$lib/client/products/pointron/journal/journal.store";
-
+import { accessLogStore } from "$lib/client/components/accessLogging/accesslog.store";
 import {
   logsPaneStore,
   manualLogStore,
@@ -20,6 +20,10 @@ import {
   tagStore
 } from "$lib/client/products/pointron/pointron.store";
 import type { IStore } from "$lib/client/types/data.type";
+import {
+  collectionStore,
+  viewStore
+} from "$lib/client/components/collection/collection.store";
 
 export const pointronCacheableStores: IStore[] = [
   analyticsConfigStore,
@@ -33,5 +37,9 @@ export const pointronCacheableStores: IStore[] = [
   manualLogStore,
   focusHeatmapStore,
   pointLogStore,
-  pointSessionStore
+  pointSessionStore,
+  collectionStore,
+  viewStore
 ];
+
+export const pointronRemoteOnlyStores: IStore[] = [accessLogStore];

@@ -64,7 +64,7 @@ import ImportOnboarding from "./settings/data/ImportOnboarding.svelte";
 import { Action } from "$lib/client/types/action.enum";
 import FocusPlayerCommandModeWidget from "./focus/player/FocusPlayerCommandModeWidget.svelte";
 import Goals from "./goals/Goals.svelte";
-
+import PointronLibrary from "./library/PointronLibrary.svelte";
 const isSessionRunningPreCondition = () => get(sessionStore).isSessionRunning;
 
 export const pointronActions: IAction[] = [
@@ -672,6 +672,19 @@ export const pointronActions: IAction[] = [
         secondaryAction: {
           label: "Done"
         }
+      }
+    }
+  },
+  {
+    action: Action.LIBRARY,
+    label: "Library",
+    icon: "ph:stack-light",
+    component: PointronLibrary,
+    type: ActionType.PAGE,
+    modalParams: {
+      layout: {
+        size: Size.lg,
+        orientation: Orientation.Horizontal
       }
     }
   }

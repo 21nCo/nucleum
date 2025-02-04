@@ -11,7 +11,7 @@ import { Resource } from "$lib/client/components/flux/resourceStores/resource.en
 import { CacheStrategy, StoreDataType } from "$lib/client/types/data.type";
 import { generateSessionId, generateUID } from "$lib/client/utils/utils";
 import { logger } from "$lib/client/components/debug/logger.client";
-import { generateResourceId, prefixTable } from "$lib/shared/utils/text.utils";
+import { prefixTable } from "$lib/shared/utils/text.utils";
 import { pointronPreferences } from "../pointron.store";
 import { dataManager } from "$lib/client/persistence/dataManager";
 import { appEvents, toasts } from "$lib/client/stores/notification.store";

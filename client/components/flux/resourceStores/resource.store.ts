@@ -797,4 +797,8 @@ export class ResourceFIRStore<
     });
     this.cache();
   }
+
+  cache() {
+    //
+  }
 }

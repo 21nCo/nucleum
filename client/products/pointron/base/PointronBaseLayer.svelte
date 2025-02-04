@@ -20,6 +20,7 @@
   import { fullScreen } from "$lib/client/components/modal/modal.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
   import SessionTitle from "./SessionTitle.svelte";
+  import LeftNav from "$lib/client/layout/leftPanel/LeftNav.svelte";
   let isLiteMode = $context.isEmbed && $context.isSheet;
   let interactionMode: InteractionMode;
   let isHideLeftNavBar: boolean = refreshSidebarState();
@@ -78,7 +79,8 @@
       <CommandModePage />
     {:else}
       {#if !isHideLeftNavBar || interactionMode === InteractionMode.DEFAULT || $context.embed === Embed.HANDSET}
-        <LocalLeftNav />
+        <!-- <LocalLeftNav /> -->
+        <LeftNav variant="fixed" />
       {/if}
       <div
         class="flex flex-col h-full {$view.isPortrait ? 'w-full' : 'flex-grow'}"

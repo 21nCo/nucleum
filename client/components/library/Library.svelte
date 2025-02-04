@@ -71,9 +71,7 @@
     {
       label: "Tasks",
       value: Resource.task,
-      icon: "ph:check-circle-light",
-      badge: "Planned",
-      isDisabled: true
+      icon: "ph:check-circle-light"
     },
     {
       label: "Events",
