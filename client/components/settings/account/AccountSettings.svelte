@@ -26,6 +26,8 @@
   import { isRecordId } from "../../flux/resourceStores/resource.utils";
   import { Resource } from "../../flux/resourceStores/resource.enum";
   import type { IRecordId } from "$lib/client/types/data.type";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { Action } from "$lib/client/types/action.enum";
   let name = "";
   let emailParts: EmailParts | undefined = undefined;
   let isEditing = false;
@@ -200,6 +202,13 @@
           <div class="text-b2 text-fgs3">Plan</div>
           <div class="">Complimentary cloud sync trial 🎉</div>
         </div>
+        <Button
+          label="Upgrade"
+          icon="ph:sparkle-light"
+          on:click={() => {
+            appStore.runAction(Action.USER_PLAN);
+          }}
+        />
       </div>
     </div>
   </div>
