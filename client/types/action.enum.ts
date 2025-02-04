@@ -25,5 +25,6 @@ export enum Action {
   GUIDES = "guides",
   GO_BACK = "GO_BACK",
   GO_FORWARD = "GO_FORWARD",
-  ADD_ITEM_TO_COLLECTION = "add-item-to-collection"
+  ADD_ITEM_TO_COLLECTION = "add-item-to-collection",
+  LIBRARY = "library"
 }
