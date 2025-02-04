@@ -104,6 +104,7 @@ export async function openLink(url: string) {
 }
 
 export async function openAppPath(path: string) {
-  const appUrl = process.env.PLASMO_PUBLIC_APP_URL ?? "https://app.memotron.io";
+  const appUrl =
+    process.env.PLASMO_PUBLIC_APP_URL ?? "https://web.memotron.app";
   return openLink(appUrl + "/" + path);
 }

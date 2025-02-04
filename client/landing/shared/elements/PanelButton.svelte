@@ -6,13 +6,18 @@
   import { onMount } from "svelte";
   import { PanelName } from "../Landing.types";
   import DayAndNightToggle from "../DayAndNightToggle.svelte";
+  import { hoverable } from "$lib/client/actions/hover.action";
+  import appearance from "$lib/client/stores/appearance.store";
+  import { Theme } from "$lib/client/types/appearance.type";
   export let label: string;
+  export let description: string;
   export let icon: string;
   let className: string = "";
   export { className as class };
   export let id: string = "";
   export let isProduct: boolean = false;
   export let isRightPanel: boolean = false;
+  let isHovered: boolean = false;
   let disableBG: boolean = false;
   $: isInteractive = isProduct || isRightPanel;
   // function onScroll(e) {
@@ -45,20 +50,32 @@
   <button
     {id}
     class={cn(
-      "w-[115px] h-full flex flex-col items-center justify-center p-4 text-center text-fgs3 text-base leading-5 ml-[1px]",
-      label == PanelName.PRODUCTS && "border-l border-brs3 hover:border-brs4",
-      label == PanelName.BUILT_AT_BLANK_COOP &&
-        "border-r border-brs3 hover:border-brs4",
+      "w-[115px] h-full flex flex-col items-center justify-center p-4 text-center text-fgs4 text-opacity-80 text-base leading-5 ml-[1px] border-brs2 hover:border-brs3",
       className,
       {
-        "hover:text-aps1": isInteractive
+        "border-l": label == PanelName.PRODUCTS,
+        "border-r": label == "21n",
+        "hover:text-fgs1": isInteractive
       }
     )}
     on:click
+    use:hoverable={{
+      onHover: (value) => {
+        isHovered = value;
+      }
+    }}
   >
     {#if isInteractive}
-      <SvgIcon {icon} size={Size.lg} class="mb-2" />
-      {label}
+      {#if isHovered}
+        <SvgIcon {icon} size={Size.lg} class="mb-2" />
+      {/if}
+      {#if isHovered}
+        {description ?? label}
+      {:else if label === "21n"}
+        <SvgIcon icon="21n-temp" size={Size.xl} class="mb-2" />
+      {:else}
+        {label}
+      {/if}
     {:else}
       <DayAndNightToggle />
     {/if}

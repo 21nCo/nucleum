@@ -1,9 +1,9 @@
 <script>
-  import TermsofService from "../../shared/TermsofService.svelte";
+  import RefundPolicy from "../../shared/RefundPolicy.svelte";
 </script>
 
 <div
   class="relative flex flex-col justify-start items-start text-start w-full h-auto p-8"
 >
-  <TermsofService />
+  <RefundPolicy />
 </div>

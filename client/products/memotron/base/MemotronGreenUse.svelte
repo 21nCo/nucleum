@@ -4,9 +4,10 @@
 
 <div class="flex flex-col gap-4 pb-32">
   <span class="text-left">
-    As a concious company, however small it is, we are commited to make every
-    single effort to help preserve the planet. Please help us by using Memotron
-    in a green way. Read the suggestions below to become part of our mission.
+    As a concious organization, however small it is, we are commited to make
+    every single effort to help preserve the planet. Please help us by using
+    Memotron in a green way. Read the suggestions below to become part of our
+    mission.
   </span>
   <div class="flex flex-col gap-4 bg-bgs2 rounded-md p-4">
     <div class="flex flex-col gap-2 text-left">

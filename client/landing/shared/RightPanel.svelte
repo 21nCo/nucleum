@@ -8,9 +8,7 @@
   import {
     currentProductsStore,
     isProductsPanelOpen,
-    upcomingProductsStore,
-    microToolsStore,
-    portalsStore
+    upcomingProductsStore
   } from "./store/shared.store";
   import TileItemsPanel from "./tile/TileItemsPanel.svelte";
 
@@ -23,21 +21,7 @@
       href: x?.href
     };
   });
-  const utilityProducts: ITileItem[] = $microToolsStore.map((x) => {
-    return {
-      title: x.title,
-      image: x.image,
-      description: x.label,
-      href: x?.href
-    };
-  });
-  const portals: ITileItem[] = $portalsStore.map((x) => {
-    return {
-      title: x.title,
-      description: x.label,
-      href: x?.href
-    };
-  });
+
   const upcomingProducts: ITileItem[] = $upcomingProductsStore.map((x) => {
     return {
       title: x.title,
@@ -66,19 +50,15 @@
     role="button"
     tabindex="0"
   >
-    <TileItemsPanel
-      {currentProducts}
-      microTools={utilityProducts}
-      {upcomingProducts}
-      {portals}
-    />
+    <TileItemsPanel {currentProducts} {upcomingProducts} />
   </div>
 {/if}
 <PanelButton
   {id}
   isRightPanel={true}
   label="Products"
-  icon="ham-burger-menu"
+  description="Products from 21n"
+  icon="long-arrow-right"
   on:click={async () => {
     await addAnimateClass("animate-bounce-r", id);
     $isProductsPanelOpen = true;

@@ -42,7 +42,7 @@
   }
   let socials = [
     {
-      href: footerValues.twitterUrl ?? "https://twitter.com/21nCompany",
+      href: footerValues.twitterUrl ?? "https://x.com/21nOrg",
       icon: "x",
       primary: "hsla(0, 0%, 0%, 1)",
       isHovered: false
@@ -82,11 +82,15 @@
     {
       title: "Privacy policy",
       href: "/privacy"
+    },
+    {
+      title: "Terms and conditions",
+      href: "/tos"
+    },
+    {
+      title: "Refund policy",
+      href: "/refundpolicy"
     }
-    // {
-    //   title: "Terms and conditions",
-    //   href: "/tos"
-    // }
   ];
   if (footerValues.helpUrl) {
     information.push({

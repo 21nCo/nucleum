@@ -616,7 +616,7 @@
             on:click={() => {
               appStore.openLink(
                 $appStore.appData?.urls?.chromeExtension ??
-                  "https://memotron.io"
+                  "https://memotron.app"
               );
             }}
           />

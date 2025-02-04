@@ -36,7 +36,7 @@
 
 <div
   class={cn(
-    "flex w-full items-center justify-center sticky top-0 z-50 box-content bg-bgs1 mo:pt-3 mo:pb-2",
+    "flex w-full items-center justify-center sticky top-0 z-50 box-content bg-bgs1 mo:pt-3 mo:pb-2 lp:border-b border-brs2",
     {
       "pt-7 pb-4": $isProductPage,
       "py-4": !$isProductPage

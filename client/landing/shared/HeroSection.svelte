@@ -7,6 +7,7 @@
   import { Theme } from "$lib/client/types/appearance.type";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
+  import BackgroundPattern from "./BackgroundPattern.svelte";
   import ButtonAsLink from "./ButtonAsLink.svelte";
   import DayAndNightToggle from "./DayAndNightToggle.svelte";
   import type { IHeroInputs } from "./Landing.types";
@@ -16,7 +17,8 @@
   export let isComingSoon = false;
   export let heroInputs: IHeroInputs;
   export { className as class };
-  $: mainGradient =
+
+  $: greenGradient =
     $appearance.theme === Theme.DARK
       ? "rgba(97, 255, 113, 0.30)"
       : "rgba(97, 255, 113, 0.2)";
@@ -24,7 +26,14 @@
   // let gradientColor2 = "rgba(127, 227, 154, 0.3)";
   // let gradientColor2 = "rgba(127, 184, 227, 0.3)";
   // let gradientColor2 = "rgba(97, 255, 113, 0.15)";
-  $: gradientColor2 = mainGradient;
+
+  $: monoGradient =
+    $appearance.theme === Theme.DARK
+      ? "rgba(240, 248, 255, 0.2)"
+      : "rgba(0,0,0, 0.1)";
+
+  $: mainGradient = monoGradient;
+  $: gradientColor2 = monoGradient;
 
   export let dev_gradientBgVariant:
     | "one-center"
@@ -109,6 +118,7 @@ transform: translate(-50%, -50%);
   "
       ></div>
     {/if}
+    <BackgroundPattern mode={$appearance.theme} />
     {#if $appearance.theme === Theme.DARK}
       <!-- <div class="absolute inset-0 bg-black/10"></div> -->
     {:else}

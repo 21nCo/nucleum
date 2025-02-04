@@ -8,13 +8,13 @@
 
 <PanelButton
   {id}
-  label={PanelName.BUILT_AT_BLANK_COOP}
+  label="21n"
+  description="Built at 21n"
   {isProduct}
   icon="long-arrow-left"
   on:click={async () => {
     if (!isProduct) return;
-    console.log({ at: "leftpanel click", isProduct });
     await addAnimateClass("animate-bounce-l", id);
-    window.location.href = "https://21n.io/";
+    window.location.href = "https://21n.org/";
   }}
 />

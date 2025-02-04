@@ -16,7 +16,7 @@
     tagline: "Your memory atlas.",
     description:
       "Memotron is a digital memory and thinking tool that is unbelievably powerful, insanely reliable, and surprisingly intuitive. Transform the way you learn, think and create.",
-    href: "https://memotron.io",
+    href: "https://memotron.app",
     earlyAccessUrl: "https://tally.so/r/3qB0x9"
   };
 
@@ -29,13 +29,13 @@
       iosDownloadUrl:
         "https://apps.apple.com/in/app/memotron-your-memory-atlas/id6737236940",
       androidDownloadUrl:
-        "https://apps.apple.com/in/app/memotron-your-memory-atlas/id6737236940"
+        "https://play.google.com/store/apps/details?id=io.memotron.app.twa"
     },
     btn2: {
       label: "Get started",
       icon: "arrow-NW",
-      macDownloadUrl: "https://app.memotron.io",
-      windowsDownloadUrl: "https://app.memotron.io"
+      macDownloadUrl: "https://web.memotron.app",
+      windowsDownloadUrl: "https://web.memotron.app"
     }
   };
 
@@ -89,4 +89,5 @@
   videoUrl="https://www.youtube.com/embed/{videoId}?autoplay=1&mute=1"
   thumbnailUrl="https://img.youtube.com/vi/{videoId}/maxresdefault.jpg"
 />
-<IrregularTileItemsSection items={features} title="Navigating your memory" />
+<div class="w-full h-[300px]"></div>
+<!-- <IrregularTileItemsSection items={features} title="Navigating your memory" /> -->
