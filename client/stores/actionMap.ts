@@ -51,6 +51,7 @@ import { SearchStore } from "../components/record/record.store";
 import { recentsStore } from "../components/record/recent.store";
 import { isValidString } from "$lib/shared/utils/text.utils";
 import ResourceBrowser from "../components/library/resourceBrowser/ResourceBrowser.svelte";
+import UserPlan from "../components/subscription/UserPlan.svelte";
 
 export const globalActions: IAction[] = [
   {
@@ -688,5 +689,17 @@ export const globalActions: IAction[] = [
     type: ActionType.INLINE,
     isMeta: true,
     component: PropertyConfig
+  },
+  {
+    action: Action.USER_PLAN,
+    type: ActionType.MODAL,
+    isMeta: true,
+    component: UserPlan,
+    modalParams: {
+      layout: {
+        size: Size.full,
+        orientation: Orientation.Horizontal
+      }
+    }
   }
 ];
