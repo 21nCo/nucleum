@@ -32,9 +32,14 @@
       value: CombinationType.MINDMAP
     },
     {
+      label: "Timeline",
+      icon: "ph:calendar-blank-light",
+      value: CombinationType.TIMELINE
+    },
+    {
       label: "Wall",
       icon: "widget",
-      value: CombinationType.DASHBOARD,
+      value: CombinationType.WALL,
       isDisabled: true,
       badge: "planned"
     }

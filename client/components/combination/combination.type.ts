@@ -13,5 +13,6 @@ export enum CombinationType {
   SIDENAV = "sidenav",
   WHITEBOARD = "whiteboard",
   MINDMAP = "mindmap",
-  DASHBOARD = "dashboard"
+  WALL = "wall",
+  TIMELINE = "timeline"
 }

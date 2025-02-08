@@ -25,7 +25,7 @@
       price: {
         [BillingPeriod.MONTHLY]: "$7",
         [BillingPeriod.YEARLY]: "$60",
-        [BillingPeriod.LIFETIME]: "$299"
+        [BillingPeriod.LIFETIME]: "$250"
       },
       features: [
         "Unlimited cloud sync",
@@ -41,7 +41,7 @@
       price: {
         [BillingPeriod.MONTHLY]: "$15",
         [BillingPeriod.YEARLY]: "$144",
-        [BillingPeriod.LIFETIME]: "$399"
+        [BillingPeriod.LIFETIME]: "$450"
       },
       features: [
         "Unlimited cloud sync for Memotron, Pointron - [more soon](https://21n.org)",
