@@ -20,6 +20,7 @@ export enum Resource {
   mutation = "mutation",
   event = "event",
   tag = "tag",
+  todo = "todo",
 
   //Pointron
   pointronPreferences = "pointronPreferences",
@@ -46,10 +47,10 @@ export enum Resource {
   task = "task",
   habit = "habit",
   session = "session",
-  taskTag = "taskTag",
   //Memotron
   vector = "vector",
   node = "node",
+  relation = "relation",
   curation = "curation",
   type = "type",
   property = "property",

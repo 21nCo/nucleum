@@ -21,6 +21,7 @@ import { Arrangement } from "$lib/client/types/direction.enum";
 import {
   ResourceAccessMode,
   ResourceAccessPoint,
+  ResourceActionType,
   type OmitForCapture,
   type OmitForCaptureWithId
 } from "$lib/client/components/flux/resourceStores/resource.type";
@@ -38,13 +39,17 @@ import {
 } from "$lib/client/types/select.type";
 import context from "$lib/client/stores/context.store";
 import { get } from "svelte/store";
-import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
+import {
+  resourceAction,
+  resourceInList
+} from "$lib/client/components/flux/resourceStores/resource.utils";
 import { activeResourceFilterV2 } from "$lib/client/utils/utils";
 import { toasts } from "$lib/client/stores/notification.store";
 import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
 import { GlobalEvent } from "$lib/client/types/event.enum";
 import { Embed } from "$lib/client/types/context.type";
 import { recentsStore } from "../record/recent.store";
+import { appStore } from "$lib/client/stores/app.store";
 
 class CollectionStore extends ResourceStore<ICollection> {
   constructor() {
@@ -606,6 +611,21 @@ export function resolveCollectionContextMenu(
                 toasts.success("Capture shortcut updated");
               }
               return result;
+            }
+          },
+          {
+            value: "editProperties",
+            icon: "ph:cube-light",
+            label: "Edit properties",
+            callback: async () => {
+              appStore.runAction(
+                resourceAction(Resource.property, ResourceActionType.EDIT),
+                {
+                  componentParams: {
+                    id: collection?.id
+                  }
+                }
+              );
             }
           }
         ]

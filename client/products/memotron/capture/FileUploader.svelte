@@ -127,7 +127,7 @@
     />
   {:else}
     <div
-      class="flex flex-col gap-6 mo:w-9/10 w-4/5 mo:h-9/10 h-4/5 justify-between items-center border border-dashed border-brs3 bg-bgs2/50 rounded-md"
+      class="flex flex-col gap-6 mo:w-9/10 w-full mo:h-9/10 h-4/5 justify-between items-center border border-dashed border-brs3 bg-bgs2/50 rounded-md"
       use:fileDrop={{
         accept: supportedFileTypes,
         multiple: true,

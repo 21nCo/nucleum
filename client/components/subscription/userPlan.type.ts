@@ -5,7 +5,8 @@ export enum BillingPeriod {
 }
 
 export enum PlanType {
-  CLOUD_SYNC = "cloud_sync",
+  TRIAL = "trial",
+  CLOUD_SYNC = "sync",
   NUCLEUS = "nucleus"
 }
 

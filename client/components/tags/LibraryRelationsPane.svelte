@@ -24,27 +24,9 @@
     {#if isLibraryNavContext}
       <Icon icon="ph:caret-left-light" class="text-fgs3" />
     {/if}
-    <Text content="Tags" style={TextStyle.PAGE_HEADING_SUBTLE} />
+    <Text content="Relations" style={TextStyle.PAGE_HEADING_SUBTLE} />
   </button>
   <div class="flex flex-col gap-3">
-    <OptionSelector
-      size={Size.sm}
-      bind:selected={selectedSubType}
-      options={[
-        {
-          label: "Link tags",
-          icon: "ph:link",
-          value: Resource.linkTag
-        },
-        {
-          label: "Task tags",
-          icon: "ph:check-circle",
-          value: Resource.taskTag,
-          badge: "Planned",
-          isDisabled: true
-        }
-      ]}
-    />
     {#if selectedSubType === Resource.linkTag}
       <LinkTagsControlPanel />
     {:else}

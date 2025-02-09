@@ -8,6 +8,7 @@
   export let isMdToolbar: boolean = false;
   export let offset: number = 0;
   export let isPreventDefaultOnKeyboardClose: boolean = false;
+  export let zIndex: number = 70;
   let ref: HTMLElement;
   let portal: HTMLElement;
 
@@ -36,25 +37,27 @@
     {#if isMdToolbar}
       <div
         class={cn(
-          "mdtoolbar toolbar fixed left-0 bottom-0 w-screen border-t border-brs3 z-[70]",
-          classList
+          "mdtoolbar toolbar fixed left-0 bottom-0 w-screen border-t border-brs3",
+          classList,
+          `z-[${zIndex}]`
         )}
         use:mdToolbar={{
           offset,
           isPreventDefaultOnKeyboardClose
         }}
-        style="display: none; z-index: 70;"
+        style="display: none; z-index: {zIndex};"
       >
         <slot />
       </div>
     {:else}
       <div
         class={cn(
-          "toolbar fixed left-0 bottom-0 w-screen border-t border-brs3 z-[70]",
-          classList
+          "toolbar fixed left-0 bottom-0 w-screen border-t border-brs3",
+          classList,
+          `z-[${zIndex}]`
         )}
         use:simpleToolbar
-        style="display: none; z-index: 70;"
+        style="display: none; z-index: {zIndex};"
       >
         <slot />
       </div>

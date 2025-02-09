@@ -8,6 +8,10 @@
 
 {#if item.type === CollectionType.TYPED && item.properties && item.properties?.length > 0}
   <div class="flex gap-2">
-    <CountBadge count={item.properties?.length} icon="ph:cube" />
+    <CountBadge
+      count={item.properties?.length}
+      icon="ph:cube-light"
+      label="properties"
+    />
   </div>
 {/if}

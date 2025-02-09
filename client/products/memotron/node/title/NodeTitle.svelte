@@ -7,10 +7,15 @@
   import type { INode } from "../node.type";
   import { createEventDispatcher } from "svelte";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import context from "$lib/client/stores/context.store";
+  import TextInputOnKeyboardToolbar from "$lib/client/elements/input/TextInputOnKeyboardToolbar.svelte";
   export let node: INode;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   let previousLabel = node.label;
+  let isKeyboardEditorMounted = false;
   const dispatch = createEventDispatcher();
+  let keyboardEditorRef: TextInputOnKeyboardToolbar;
+  let textInputRef: TextInput;
   function onLabelChange(e: any) {
     dispatch("labelChange", e.detail);
   }
@@ -23,12 +28,38 @@
 >
   {#if !node.focusedBlock}
     {#if node.isInEditMode}
+      {#if $context.isTouchDevice}
+        <TextInputOnKeyboardToolbar
+          bind:value={node.label}
+          bind:this={keyboardEditorRef}
+          on:debouncedChange={onLabelChange}
+          on:mount={() => {
+            isKeyboardEditorMounted = true;
+            keyboardEditorRef?.focus();
+          }}
+          on:save={() => {
+            dispatch("editModeChange", false);
+          }}
+          on:cancel={() => {
+            node.label = previousLabel;
+            isKeyboardEditorMounted = false;
+            dispatch("labelChange", node.label);
+            dispatch("editModeChange", false);
+          }}
+        />
+      {/if}
       <TextInput
         size={Size.xl}
         bind:value={node.label}
+        bind:this={textInputRef}
         placeholder="Node title"
         width="w-full"
+        on:mount={() => {
+          textInputRef?.focus();
+          keyboardEditorRef?.focus();
+        }}
         on:debouncedChange={onLabelChange}
+        isPreserveKeyboardToolbar={isKeyboardEditorMounted}
         isShowSaveControl={true}
         on:enter={() => {
           dispatch("editModeChange", false);

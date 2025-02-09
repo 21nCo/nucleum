@@ -71,10 +71,10 @@
 </script>
 
 <div class="flex flex-col gap-6 pt-3 w-full h-full">
-  <div class="w-full flex gap-6">
+  <div class="w-full flex cw:gap-3 gap-6">
     <TextInput
       bind:value={inputValue}
-      placeholder="Type tag or group:tag to add"
+      placeholder="Type relation or group:relation to add"
       on:enter={() => save()}
     />
     {#if $view.isConstrainedWidth}
@@ -100,8 +100,8 @@
   <div class="flex flex-col flex-grow gap-4 px-0.5 overflow-auto">
     {#if !groups || groups.length === 0}
       <EmptyStatusView
-        mainText="No link tags found."
-        subText="Add some link tags to start using for link relationships."
+        mainText="No relations found."
+        subText="Add some relations to start using for link relationships."
       />
     {:else}
       {#each groups as group}
@@ -121,7 +121,7 @@
   </div>
   <InlineInfoBanner
     type={InfoTextType.TIP}
-    content="Tip: Use link tags to maintain relationship information between nodes."
+    content="Tip: Use relations to maintain relationship information between nodes."
     action={{
       label: "Learn more",
       action:

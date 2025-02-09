@@ -10,13 +10,13 @@
       ($context.os === OperatingSystem.IOS ||
         $context.os === OperatingSystem.MACOS)
     ) {
-      return [Resource.node, Resource.collection, Resource.tag];
+      return [Resource.node, Resource.collection, Resource.relation];
     }
     return [
       Resource.node,
       Resource.collection,
-      Resource.tag,
-      Resource.task,
+      Resource.relation,
+      Resource.todo,
       Resource.combination
     ];
   }

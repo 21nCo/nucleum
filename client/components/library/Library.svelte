@@ -51,15 +51,22 @@
       icon: "ph:hexagon-light"
     },
     {
+      label: "Relations",
+      value: Resource.relation,
+      icon: "ph:link-light"
+    },
+    {
       label: "Collections",
       value: Resource.collection,
       icon: "ph:brackets-round-light",
       isPinned: true
     },
     {
-      label: "Tags",
-      value: Resource.tag,
-      icon: "ph:tag-light"
+      label: "Todos",
+      value: Resource.todo,
+      icon: "ph:check-square-offset-light",
+      badge: "Planned",
+      isDisabled: true
     },
     {
       label: "Combinations",
@@ -71,7 +78,7 @@
     {
       label: "Tasks",
       value: Resource.task,
-      icon: "ph:check-circle-light"
+      icon: "ph:circle-light"
     },
     {
       label: "Events",

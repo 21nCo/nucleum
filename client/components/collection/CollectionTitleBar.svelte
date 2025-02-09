@@ -87,7 +87,7 @@
         });
       }}
     >
-      <Icon icon="ph:caret-left-light" />
+      <Icon icon="ph:caret-left-light" size={Size.lg} />
     </button>
   {/if}
   {#if $collection.type === CollectionType.TYPED}
@@ -116,7 +116,7 @@
   {/if}
   <span
     class={cn(
-      "flex items-center gap-4 font-medium mo:text-h4 text-h1 whitespace-nowrap flex-1 min-w-0 border rounded-md text-left mr-6",
+      "flex items-center gap-4 font-medium cw:text-h4 cw:h-12 text-h1 whitespace-nowrap flex-1 min-w-0 border rounded-md text-left cw:mr-0 mr-6",
       {
         "border-transparent": !$collection.isInEditMode,
         "border-brs3 px-2": $collection.isInEditMode

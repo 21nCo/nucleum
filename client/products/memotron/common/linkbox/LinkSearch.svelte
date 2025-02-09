@@ -60,7 +60,7 @@
           offsetInPx: 12,
           placement: Placement.TopCenter
         };
-        placeholder = "Start typing to link to a node or add to a collection";
+        placeholder = "Link to a node or add to a collection";
         inputStyle = InputStyle.PLAIN;
         break;
       case "nodelinkspane":

@@ -13,21 +13,10 @@
   let link: string;
 </script>
 
-<section class="flex flex-col gap-2 w-full">
-  <div class="h-8">
-    {#if isValidArrayWithData($captureStore.links)}
-      <LinkItems
-        links={$captureStore.links
-          ?.filter((x) => x.linkType !== LinkType.MENTION)
-          ?.map((x) => x.to) ?? []}
-        on:unlink={(e) => {
-          captureStore.removeDLink(e.detail);
-          dispatch("unlinked", e.detail);
-        }}
-      />
-    {/if}
-  </div>
-  <Divider />
+<section
+  class="flex flex-col gap-4 w-full bg--bgs2 border border-brs3 rounded-md p-2"
+>
+  <!-- <Divider /> -->
   <div class={cn("flex", "gap-2")}>
     <div class="flex gap-1">
       <Icon icon="ph:link-light" size={Size.sm} />
@@ -43,4 +32,19 @@
       }}
     />
   </div>
+
+  {#if isValidArrayWithData($captureStore.links)}
+    <div class="flex flex-col gap-2 overflow-y-auto styledscroll">
+      <LinkItems
+        isExpandable={true}
+        links={$captureStore.links
+          ?.filter((x) => x.linkType !== LinkType.MENTION)
+          ?.map((x) => x.to) ?? []}
+        on:unlink={(e) => {
+          captureStore.removeDLink(e.detail);
+          dispatch("unlinked", e.detail);
+        }}
+      />
+    </div>
+  {/if}
 </section>

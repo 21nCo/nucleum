@@ -367,15 +367,18 @@ export function popover(node: HTMLElement, params: PopoverParams) {
       popoverElement.style.transition =
         "all 0.2s cubic-bezier(0.23, 1, 0.32, 1)";
       popoverElement.style.left = `0px`;
-      if (cwModalPosition === Placement.Bottom) {
-        popoverElement.style.top = `${window.innerHeight}px`;
-      } else {
-        popoverElement.style.bottom = "24px";
-      }
       popoverElement.style.width = `${documentWidth - 24}px`;
       popoverElement.style.margin = "12px";
       popoverElement.style.opacity = "0";
       popoverElement.style.zIndex = "70";
+
+      if (cwModalPosition === Placement.Bottom) {
+        popoverElement.style.top = `${window.innerHeight}px`;
+        popoverElement.style.bottom = "auto";
+      } else {
+        popoverElement.style.top = `-${popRect.height}px`;
+        popoverElement.style.bottom = "auto";
+      }
 
       popoverElement.offsetHeight;
       const element = popoverElement;
@@ -384,7 +387,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
           if (cwModalPosition === Placement.Bottom) {
             element.style.top = `${finalTop}px`;
           } else {
-            element.style.top = "24px";
+            element.style.top = "12px";
             element.style.height = "fit-content";
           }
           element.style.opacity = "1";

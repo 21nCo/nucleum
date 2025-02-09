@@ -61,7 +61,7 @@
   import { resolveMultiSelectStore } from "../flux/resourceStores/resource.store";
   import { toasts } from "$lib/client/stores/notification.store";
   import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
-  import LibraryTagsPane from "../tags/LibraryTagsPane.svelte";
+  import LibraryRelationsPane from "../tags/LibraryRelationsPane.svelte";
   import { onDestroy, onMount, tick } from "svelte";
   import { page } from "$app/stores";
   import InlineSearchBar from "$lib/client/elements/InlineSearchBar.svelte";
@@ -130,7 +130,7 @@
   let isRefineShown = false;
 
   $: isGenericSubType = ["all", "starred", "recents"].includes(selectedSubType);
-  $: isCustomPane = [Resource.tag, Resource.task].includes(resource);
+  $: isCustomPane = [Resource.relation, Resource.task].includes(resource);
   $: isExpandableSubTypes = [Resource.node].includes(resource);
 
   $: multiSelectContext = {
@@ -416,8 +416,8 @@
 </script>
 
 {#if isCustomPane}
-  {#if resource === Resource.tag}
-    <LibraryTagsPane />
+  {#if resource === Resource.relation}
+    <LibraryRelationsPane />
   {/if}
 {:else}
   {#if isConstrainedWidth}

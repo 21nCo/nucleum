@@ -10,6 +10,7 @@
   import { createEventDispatcher } from "svelte";
   import { objIsEmpty } from "$lib/shared/utils/obj.utils";
   import { popover } from "$lib/client/actions/popover.action";
+  import { Placement } from "$lib/client/types/direction.enum";
   const dispatch = createEventDispatcher();
   export let avatar: IAvatar | undefined = undefined;
   export let size: Size = Size.md;
@@ -49,6 +50,7 @@
     use:popover={{
       content: AvatarPicker,
       isRenderAsModalForCW: true,
+      cwModalPosition: Placement.Top,
       componentProps: {
         avatarClickCallback: handleAvatarEmitted,
         deleteCallback: handleDeleteEmitted,

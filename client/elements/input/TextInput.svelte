@@ -14,6 +14,7 @@
   import { ButtonStyle } from "$lib/client/types/button.type";
   import context from "$lib/client/stores/context.store";
   import { OperatingSystem } from "$lib/client/types/context.type";
+  import { mount } from "$lib/client/actions/mount.action";
   export let value: any;
   export let placeholder: string | undefined = undefined;
   export let label: InputLabel | undefined = undefined;
@@ -34,6 +35,8 @@
   export let isPreventDefaultOnEnter: boolean = false;
   export let isRounded: boolean = false;
   export let height: string = style === InputStyle.PLAIN ? "" : "h-11";
+  export let isPreventKeyboardToolbar: boolean = false;
+  export let isPreserveKeyboardToolbar: boolean = false;
   let isFocused: boolean = false;
   export async function focus() {
     await tick();
@@ -240,6 +243,9 @@
           autocomplete="off"
           tabindex={isDisabled ? -1 : 0}
           {...type ? { type } : {}}
+          use:mount={() => {
+            dispatch("mount");
+          }}
         />
       {/if}
       <!-- {#if icon}
@@ -270,7 +276,7 @@
     {/if}
   </InputBaseElement>
 {/if}
-{#if isFocused}
+{#if isPreserveKeyboardToolbar || (!isPreventKeyboardToolbar && isFocused)}
   <KeyboardToolbar class="bg-bgs2 h-14 px-4 flex items-center justify-between">
     <div class="flex items-center justify-center gap-2">
       <!-- <Button

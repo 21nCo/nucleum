@@ -70,6 +70,7 @@
   let dev_isShowDraftSaveFeedback: boolean = false;
   let isProcessingClipboard: boolean = false;
   let subs: any[] = [];
+  let isLinksExpanded: boolean = false;
 
   async function refreshTypeData() {
     const typeIds =
@@ -263,6 +264,7 @@
       return;
     }
     isEmptyState = false;
+    isLinksExpanded = true;
     await captureStore.onTypeSelect(e.detail);
     await refreshTypeData();
 
@@ -410,8 +412,8 @@
       <Writer />
     </div>
   </div> -->
-{:else if captureType === CaptureType.UPLOAD && !($context.isEmbed && $context.os === OperatingSystem.IOS)}
-  <FileUploader on:cancel={reset} />
+  <!-- {:else if captureType === CaptureType.UPLOAD && !($context.isEmbed && $context.os === OperatingSystem.IOS)}
+  <FileUploader on:cancel={reset} /> -->
 {:else if captureType === CaptureType.CAMERA && dev_iosCameraCaptureMethod === "input" && $context.isEmbed && $context.os === OperatingSystem.IOS}
   <!-- <CameraCaptureUsingInput /> -->
   <input
@@ -428,7 +430,7 @@
   {#key $captureStore.refreshId}
     <div class="w-full h-full flex justify-center">
       <div class="w-full max-w-5xl h-full flex flex-col p-4 bg-bgs1">
-        {#if captureType !== CaptureType.AUDIO && captureType !== CaptureType.CAMERA}
+        {#if captureType !== CaptureType.AUDIO && captureType !== CaptureType.CAMERA && captureType !== CaptureType.UPLOAD}
           <header
             class={cn("flex justify-between gap-4 items-center w-full", {
               "px-12": !$view.isConstrainedWidth
@@ -474,6 +476,14 @@
                   </div>
                 {/if}
                 <Button
+                  label={$view.isConstrainedWidth ? undefined : "Links"}
+                  size={Size.sm}
+                  style={ButtonStyle.OUTLINED}
+                  isPreventMinWidth={true}
+                  icon="ph:link-light"
+                  on:click={() => (isLinksExpanded = !isLinksExpanded)}
+                />
+                <Button
                   label={$view.isConstrainedWidth ? undefined : "Save"}
                   type={ButtonVariant.PRIMARY}
                   size={Size.sm}
@@ -494,6 +504,15 @@
             </div>
           </header>
         {/if}
+        {#if !isEmptyState && isLinksExpanded}
+          <div
+            class={cn("w-full py-3 h-fit", {
+              "dp:px-10": captureType === CaptureType.MARKDOWN
+            })}
+          >
+            <LinkboxOnCapture on:linked={onLink} on:unlinked={onUnlink} />
+          </div>
+        {/if}
         {#if isProcessingClipboard}
           <div
             class="flex w-full items-center justify-center gap-2 bg-gradient-to-r from-transparent via-bgs2 to-transparent p-2"
@@ -507,8 +526,7 @@
           </div>
         {/if}
         <main class="flex flex-col gap-6 w-full flex-grow">
-          {#if types && types.length > 0}
-            <!-- TODO - send only selected type if properties are to be shown upon link click -->
+          <!-- {#if types && types.length > 0}
             {#key types.map((x) => x.id).join(",")}
               <PropertiesListView
                 context="capture"
@@ -518,21 +536,25 @@
                 on:change={propagatePropertyChanges}
               />
             {/key}
-          {/if}
+          {/if} -->
           <div
             class={cn("w-full", {
               "h-48": isEmptyState,
               "h-full": !isEmptyState
             })}
           >
-            <Writer
-              {captureType}
-              bind:isEmptyState
-              bind:this={writerRef}
-              bind:isSaveInProgress={isSaving}
-              on:change={refreshEmptyState}
-              on:cancel={reset}
-            />
+            {#if captureType === CaptureType.UPLOAD}
+              <FileUploader on:cancel={reset} />
+            {:else}
+              <Writer
+                {captureType}
+                bind:isEmptyState
+                bind:this={writerRef}
+                bind:isSaveInProgress={isSaving}
+                on:change={refreshEmptyState}
+                on:cancel={reset}
+              />
+            {/if}
           </div>
           {#if isEmptyState}
             <div class="w-full dp:px-10 dp:my-10">
@@ -547,11 +569,7 @@
             </div>
           {/if}
         </main>
-        {#if !isEmptyState}
-          <footer class="w-full dp:px-10 mo:min-h-[8rem] min-h-[10rem]">
-            <LinkboxOnCapture on:linked={onLink} on:unlinked={onUnlink} />
-          </footer>
-        {/if}
+
         {#if isEmptyState && $view.isConstrainedWidth}
           <div
             class="w-full flex justify-center mb-5"
