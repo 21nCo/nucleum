@@ -148,6 +148,7 @@
         icon: x.avatar
       }))}
       size={Size.sm}
+      isShowExpandFeedbackOnActive={true}
       selected={multipleTypesList[0].id.toString()}
       on:select={handleTypeChange}
     />

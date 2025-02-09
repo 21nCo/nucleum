@@ -112,7 +112,7 @@
       class={cn(
         "flex items-center max-w-36",
         !isActive && {
-          "hover:text-fgs2":
+          "group-hover:text-fgs2":
             style === PanelSwitcherStyle.BAR ||
             style === PanelSwitcherStyle.SNAKE
         }

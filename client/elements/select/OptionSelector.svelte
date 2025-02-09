@@ -22,6 +22,7 @@
   export let style: OptionSelectorStyle = OptionSelectorStyle.OUTLINE;
   export let iconOrientation: Orientation = Orientation.Horizontal;
   export let isPreventWrap: boolean = false;
+  export let isShowExpandFeedbackOnActive = false;
   let classList: string = "flex w-full";
   if (selected === undefined) selected = options[0]?.value;
 </script>
@@ -63,6 +64,7 @@
           {item}
           {size}
           {style}
+          {isShowExpandFeedbackOnActive}
           {iconOrientation}
           isActive={selected === item.value}
           on:click={() => {

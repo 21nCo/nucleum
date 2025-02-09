@@ -24,6 +24,7 @@
 
   export let isCapturePage: boolean = false;
   export let selected: string;
+  export let isHideTypeShortcuts: boolean = false;
   let dev_isEnableEditShortcuts: boolean = false;
   refreshTypes();
   const contentTypes: (ISelectItem & { value: string })[] = [
@@ -48,6 +49,7 @@
   let types: (ISelectItem & { value: string; isShortcut?: boolean })[] = [];
 
   function refreshTypes() {
+    if (isHideTypeShortcuts) return [];
     flux
       .selectMany(Resource.collection, {
         filters: {
@@ -108,7 +110,7 @@
     <div
       class="grid mo:grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] gap-2 dp:gap-4 w-full"
     >
-      {#each [...contentTypes, ...types] as item}
+      {#each [...contentTypes, ...(isHideTypeShortcuts ? [] : types)] as item}
         <TypeSelectorItem
           {item}
           isActive={selected === item.value}
