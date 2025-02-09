@@ -14,11 +14,13 @@ beforeAll(async () => {
   const environment = setupTestEnvironment();
   process.env.DB_USER = "system";
   process.env.DOMAIN = environment.domain;
+  process.env.ADMIN_DB_NAME = "admin";
+  process.env.ADMIN_NS = "admin";
   global.testEnv = {
     ...environment,
     cleanup: async () => {
       // Environment-specific cleanup
-    }
+    },
   };
 });
 
