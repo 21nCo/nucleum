@@ -52,6 +52,8 @@ import { recentsStore } from "../components/record/recent.store";
 import { isValidString } from "$lib/shared/utils/text.utils";
 import ResourceBrowser from "../components/library/resourceBrowser/ResourceBrowser.svelte";
 import UserPlan from "../components/subscription/UserPlan.svelte";
+import InactivePlan from "../components/subscription/InactivePlan.svelte";
+import { ButtonVariant } from "../types/button.type";
 
 export const globalActions: IAction[] = [
   {
@@ -699,6 +701,35 @@ export const globalActions: IAction[] = [
       layout: {
         size: Size.full,
         orientation: Orientation.Horizontal
+      }
+    }
+  },
+  {
+    action: Action.INACTIVE_PLAN,
+    type: ActionType.MODAL,
+    isMeta: true,
+    component: InactivePlan,
+    modalParams: {
+      isDismissable: false,
+      layout: {
+        size: Size.md,
+        orientation: Orientation.Horizontal,
+        primaryAction: {
+          label: "Upgrade now",
+          icon: "ph:sparkle-light",
+          variant: ButtonVariant.PRIMARY,
+          callback: async () => {
+            appStore.runAction(Action.USER_PLAN);
+          }
+        },
+        secondaryAction: {
+          label: "I'll do it later",
+          icon: "ph:clock-light",
+          variant: ButtonVariant.SECONDARY,
+          callback: async () => {
+            modalEvent.hide(Action.INACTIVE_PLAN);
+          }
+        }
       }
     }
   }

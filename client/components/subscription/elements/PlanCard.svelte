@@ -5,15 +5,15 @@
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import PlanFeatureList from "./PlanFeatureList.svelte";
   import type { ICurrentPlan, IPlan } from "../userPlan.type";
-  import { BillingPeriod, PlanType } from "../userPlan.type";
+  import { BillingCycle, PlanType } from "../userPlan.type";
   import Icon from "$lib/client/elements/Icon.svelte";
 
   export let plans: IPlan[] = [];
   export let currentPlan: ICurrentPlan | null = null;
   export let plan: IPlan =
     plans.find((p) => p.type === currentPlan?.type) || plans[0];
-  export let period: BillingPeriod =
-    currentPlan?.billingPeriod || BillingPeriod.MONTHLY;
+  export let period: BillingCycle =
+    currentPlan?.billingCycle || BillingCycle.MONTHLY;
   export let isCurrentPage = false;
   let isCurrentPlan = currentPlan?.type === plan.type;
 
@@ -33,11 +33,14 @@
 </script>
 
 <div
-  class={cn("flex flex-col flex-1 p-6 rounded-lg border relative", {
-    "border-aps1 hover:bg-aps3": plan.isPopular && !currentPlan,
-    "border-brs3 hover:bg-bgs2": !plan.isPopular || currentPlan,
-    "md:col-span-2 max-w-3xl mx-auto w-full": isCurrentPage
-  })}
+  class={cn(
+    "flex flex-col flex-1 max-h-[42rem] p-6 rounded-lg border relative",
+    {
+      "border-aps1 hover:bg-aps3": plan.isPopular && !currentPlan,
+      "border-brs3 hover:bg-bgs2": !plan.isPopular || currentPlan,
+      "md:col-span-2 max-w-3xl mx-auto w-full": isCurrentPage
+    }
+  )}
 >
   {#if plan.isPopular && !currentPlan}
     <div class="absolute -top-3 right-4">
@@ -50,7 +53,7 @@
   {#if isCurrentPlan}
     <div class="absolute -top-3 left-4">
       <span class="px-3 py-1 text-sm rounded-full bg-ags1 text-abg">
-        Current Plan • {currentPlan?.billingPeriod.toLowerCase()}
+        Current Plan • {currentPlan?.billingCycle.toLowerCase()}
       </span>
     </div>
   {/if}
@@ -69,24 +72,26 @@
       </div>
 
       <div>
-        {#if period !== BillingPeriod.YEARLY}
+        {#if period !== BillingCycle.YEARLY}
           <div class="flex items-baseline gap-2">
             <span class="text-xl font-bold text-fgs1">
               {plan.price[period]}
             </span>
             <span class="text-sm text-fgs2">
-              {period === BillingPeriod.LIFETIME ? "one-time" : "/month"}
+              {period === BillingCycle.LIFETIME ? "one-time" : "/month"}
             </span>
           </div>
-        {:else if period === BillingPeriod.YEARLY}
+        {:else if period === BillingCycle.YEARLY}
           <div class="flex items-baseline gap-2">
             <span class="text-xl font-bold text-fgs1">
-              {`$${(parseInt(plan.price[BillingPeriod.YEARLY].replace("$", "")) / 12).toFixed(2)}`}
+              {`$${(parseInt(plan.price[BillingCycle.YEARLY].replace("$", "")) / 12).toFixed(2)}`}
             </span>
             <span class="text-sm text-fgs2">/month</span>
           </div>
-          <div class="mt-1 text-b3 text-fgs2">
-            Total billable today: {plan.price[BillingPeriod.YEARLY]}
+          <div class="mt-1 text-b2 text-fgs2">
+            Total billable today: <b>
+              {plan.price[BillingCycle.YEARLY]}
+            </b>
           </div>
         {/if}
       </div>
@@ -99,7 +104,7 @@
     </div>
 
     <div class="mt-auto pt-6 flex justify-center">
-      {#if isCurrentPlan && currentPlan?.billingPeriod === period}
+      {#if isCurrentPlan && currentPlan?.billingCycle === period}
         <div class="space-y-2">
           <Button
             label="Cancel Subscription"
@@ -111,7 +116,7 @@
             Access until end of billing period
           </p>
         </div>
-      {:else if isCurrentPlan && currentPlan?.billingPeriod !== period}
+      {:else if isCurrentPlan && currentPlan?.billingCycle !== period}
         <Button
           label={`Change to ${period.toLowerCase()}`}
           icon="ph:arrow-right-light"

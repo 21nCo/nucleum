@@ -18,7 +18,11 @@ import {
 } from "$lib/client/stores/notification.store";
 import { appStore } from "./app.store";
 import jwt_decode from "jwt-decode";
-import { getBucketNameandKey, signout } from "../utils/account.utils";
+import {
+  determineIfPlanIsActive,
+  getBucketNameandKey,
+  signout
+} from "../utils/account.utils";
 import { ObservableStore } from "./client.store";
 import {
   StoreDataType,
@@ -37,6 +41,7 @@ import { GlobalEvent } from "../types/event.enum";
 import context from "./context.store";
 import { compressImageToTargetSize } from "../utils/ui.utils";
 import { generateImagePreviewFromPdf } from "../utils/pdf.utils";
+import { Action } from "../types/action.enum";
 
 export const isRefreshingToken = writable(false);
 
@@ -232,8 +237,38 @@ class AccountStore extends ObservableStore<
       await flux.clear();
       appStore.gotoPath("/signup?msg=notfound");
     }
+    if (user.userPlan) {
+      this.update((n) => {
+        n.plan = user.userPlan;
+        return n;
+      });
+      const isActive = determineIfPlanIsActive(user.userPlan);
+      if (!isActive) {
+        appStore.runAction(Action.INACTIVE_PLAN);
+      }
+    }
     return response;
   }
+
+  async refreshPlanData() {
+    try {
+      const isOffline = await determineIfOffline();
+      if (isOffline) return;
+      const response = await this.persistence.getUserPlan();
+      const data = Array.isArray(response)
+        ? response[0]?.result?.[0]
+        : undefined;
+      if (data?.userPlan) {
+        this.update((n) => {
+          n.plan = data.userPlan;
+          return n;
+        });
+      }
+    } catch (e) {
+      logger.error({ at: "refreshPlanData", error: e });
+    }
+  }
+
   async logGuest(id: string) {
     try {
       return this.persistence.runAccountAction("guest", { id });

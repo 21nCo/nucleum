@@ -7,8 +7,11 @@ import {
   retrieveLocally
 } from "../persistence/persistence.utils";
 import { postToParent } from "./embed.utils";
-import { LicenseType } from "../types/account.type";
+import { LicenseType, type IUserPlan } from "../types/account.type";
 import jwt_decode from "jwt-decode";
+import { PlanType } from "../components/subscription/userPlan.type";
+import { formatDate } from "./time.utils";
+import { enumToString } from "$lib/shared/utils/text.utils";
 
 export function getBucketNameandKey(url: string) {
   const urlParts = url.split("/");
@@ -153,4 +156,49 @@ export function isTokenExpired(token: string) {
   const exp = decoded.exp ?? 0;
   const currentTime = Math.floor(Date.now() / 1000);
   return exp < currentTime;
+}
+
+export function resolvePlanLabel(plan: IUserPlan | undefined) {
+  if (!plan || !plan.plan) return "Unknown plan";
+  if (plan.plan === PlanType.TRIAL) {
+    const isActive = determineIfPlanIsActive(plan);
+    if (!isActive) {
+      return `Free trial expired - Please upgrade`;
+    } else if (plan.trialPlan?.expiry) {
+      return `Free trial - expires ${formatDate(
+        new Date(plan.trialPlan?.expiry)
+      )}`;
+    } else {
+      return `Free trial`;
+    }
+  } else if (
+    plan.plan === PlanType.NUCLEUS ||
+    plan.plan === PlanType.CLOUD_SYNC
+  ) {
+    if (plan.isCancelled) {
+      return `Plan cancelled`;
+    } else if (plan.billingErrors) {
+      return `Billing issue`;
+    } else {
+      return `${enumToString(plan.plan)} - ${plan.billingCycle} plan 🎉`;
+    }
+  } else {
+    return `Unknown plan`;
+  }
+}
+
+export function determineIfPlanIsActive(plan: IUserPlan) {
+  if (plan.plan === PlanType.TRIAL && plan.trialPlan?.expiry) {
+    const isExpired =
+      new Date(plan.trialPlan.expiry).getTime() < new Date().getTime();
+    return !isExpired;
+  } else if (
+    (plan.plan === PlanType.CLOUD_SYNC || plan.plan === PlanType.NUCLEUS) &&
+    plan.billingErrors
+  ) {
+    return false;
+  } else if (plan.isCancelled) {
+    return false;
+  }
+  return true;
 }

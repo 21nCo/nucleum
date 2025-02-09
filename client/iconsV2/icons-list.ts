@@ -270,7 +270,11 @@ const phosphorIcons = [
   "clipboard",
   "command",
   "sidebar",
-  "chalkboard-simple"
+  "chalkboard-simple",
+  "cloud",
+  "cloud-check",
+  "wallet",
+  "scroll"
 ];
 
 export const phosphorRatingIcons = [

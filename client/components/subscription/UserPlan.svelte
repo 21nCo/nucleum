@@ -3,18 +3,20 @@
   import { Size } from "$lib/client/types/size.enum";
   import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
   import type { IPlan, ICurrentPlan } from "./userPlan.type";
-  import { BillingPeriod, PlanType } from "./userPlan.type";
+  import { BillingCycle, PlanType } from "./userPlan.type";
   import PlanHeader from "./elements/PlanHeader.svelte";
   import PlanCard from "./elements/PlanCard.svelte";
+  import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
+  import { Action } from "$lib/client/types/action.enum";
 
-  let selectedPeriod: BillingPeriod = BillingPeriod.YEARLY;
+  let selectedPeriod: BillingCycle = BillingCycle.YEARLY;
   let showAllPlans = false;
   export let currentPlan: ICurrentPlan | null = null;
 
   const billingPeriods = [
-    { value: BillingPeriod.MONTHLY, label: "Monthly" },
-    { value: BillingPeriod.YEARLY, label: "Yearly", badge: "-20%" },
-    { value: BillingPeriod.LIFETIME, label: "Lifetime" }
+    { value: BillingCycle.MONTHLY, label: "Monthly" },
+    { value: BillingCycle.YEARLY, label: "Yearly", badge: "-20%" },
+    { value: BillingCycle.LIFETIME, label: "Lifetime" }
   ];
 
   const plans: IPlan[] = [
@@ -23,15 +25,27 @@
       type: PlanType.CLOUD_SYNC,
       description: "Real-time sync across all devices for Memotron",
       price: {
-        [BillingPeriod.MONTHLY]: "$7",
-        [BillingPeriod.YEARLY]: "$60",
-        [BillingPeriod.LIFETIME]: "$250"
+        [BillingCycle.MONTHLY]: "$7",
+        [BillingCycle.YEARLY]: "$60",
+        [BillingCycle.LIFETIME]: "$250"
       },
       features: [
-        "Unlimited cloud sync",
-        "End-to-end encryption",
-        "20 GB of media storage (add-on for more)",
-        "Email and community support"
+        {
+          icon: "ph:arrows-left-right-light",
+          label: "Unlimited cloud sync"
+        },
+        {
+          icon: "ph:lock-light",
+          label: "End-to-end encryption"
+        },
+        {
+          icon: "ph:database-light",
+          label: "20 GB of media storage (add-on for more)"
+        },
+        {
+          icon: "ph:at-light",
+          label: "Email and community support"
+        }
       ]
     },
     {
@@ -39,18 +53,40 @@
       type: PlanType.NUCLEUS,
       description: "Everything productivity, single plan",
       price: {
-        [BillingPeriod.MONTHLY]: "$15",
-        [BillingPeriod.YEARLY]: "$144",
-        [BillingPeriod.LIFETIME]: "$450"
+        [BillingCycle.MONTHLY]: "$15",
+        [BillingCycle.YEARLY]: "$144",
+        [BillingCycle.LIFETIME]: "$450"
       },
       features: [
-        "Unlimited cloud sync for Memotron, Pointron - [more soon](https://21n.org)",
-        "End-to-end encryption",
-        "100 GB of media storage (add-on for more)",
-        "Access to Nucleus - the everything productivity app",
-        "Early access to new products, features",
-        "Priority chat support",
-        "Support independent organization - [21n.org](https://21n.org)"
+        {
+          icon: "ph:arrows-left-right-light",
+          label:
+            "Unlimited cloud sync for Memotron, Pointron - [more soon](https://21n.org)"
+        },
+        {
+          icon: "ph:lock-light",
+          label: "End-to-end encryption"
+        },
+        {
+          icon: "ph:database-light",
+          label: "100 GB of media storage (add-on for more)"
+        },
+        {
+          icon: "ph:sparkle-light",
+          label: "Access to Nucleus - the everything productivity app"
+        },
+        {
+          icon: "ph:clock-light",
+          label: "Early access to new products, features"
+        },
+        {
+          icon: "ph:chat-centered-dots-light",
+          label: "Priority chat support"
+        },
+        {
+          icon: "ph:hand-heart-light",
+          label: "Support independent organization - [21n.org](https://21n.org)"
+        }
       ],
       isPopular: true
     }
@@ -62,7 +98,7 @@
     {currentPlan}
     bind:showAllPlans
     on:showAllPlans={() => {
-      selectedPeriod = currentPlan?.billingPeriod || BillingPeriod.YEARLY;
+      selectedPeriod = currentPlan?.billingCycle || BillingCycle.YEARLY;
     }}
   />
 
@@ -89,3 +125,4 @@
     </div>
   </div>
 </div>
+<FullScreenCloseButton isFloat={true} path={Action.USER_PLAN} />
