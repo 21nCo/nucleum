@@ -355,13 +355,17 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     );
     if (!response) return;
     if (!response[0].id) return;
+    const id = generateResourceId(Resource.node);
     const fileId = response[0].id;
     const metadata = await this.parseMetadata(file);
+    const captureStore = this.get();
     const node = {
+      id,
       contentType,
       file: fileId,
       label: file.name,
       metadata,
+      properties: params?.isEmbedContext ? [] : captureStore.properties,
       creationContext: params?.isEmbedContext
         ? (params?.creationContext ?? this.get().nodeId)
         : undefined
@@ -369,6 +373,9 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     const result = await nodeStore.create([node], {
       context: captureAction
     });
+    if (!params?.isEmbedContext) {
+      await this.saveLinks(id);
+    }
     this.postSave(result, {
       isOpenUponSuccess: !params?.isPreventOpenOnSave,
       isEmbedContext: params?.isEmbedContext
@@ -463,6 +470,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     }
     let nodes: OmitForCapture<IMediaNode>[] = [];
     let mdNodesResult: any[] = [];
+    const captureStore = this.get();
     for (const [index, item] of files.entries()) {
       if (params?.uploadProgressId) {
         const progressElement = document.getElementById(
@@ -493,12 +501,15 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       if (!response) continue;
       if (!response[0].id) continue;
       const fileId = response[0].id;
+      const id = generateResourceId(Resource.node);
       const metadata = await this.parseMetadata(item.file);
       const node = {
+        id,
         contentType: item.contentType,
         file: fileId,
         label: item.file.name,
         metadata,
+        properties: params?.isEmbedContext ? [] : captureStore.properties,
         creationContext: params?.isEmbedContext
           ? (params?.creationContext ?? this.get().nodeId)
           : undefined
@@ -509,6 +520,9 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       context: captureAction
     });
     const result = [...(mediaNodesResult ?? []), ...(mdNodesResult ?? [])];
+    if (!params?.isEmbedContext) {
+      await this.saveLinksForMultiFileCapture(nodes);
+    }
     this.postSave(result, {
       isEmbedContext: params?.isEmbedContext
     });
@@ -547,11 +561,13 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     const metadata = await this.parseMetadata(
       new File([data], `${fileName}.mp3`, { type: contentType })
     );
+    const captureStore = this.get();
     const node: OmitForCapture<IMediaNode> = {
       id,
       contentType: NodeType.AUDIO,
       file: fileId,
       metadata,
+      properties: captureStore.properties,
       creationContext: params?.isEmbedContext
         ? (params?.creationContext ?? this.get().nodeId)
         : undefined,
@@ -611,12 +627,14 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       new File([data], fileName, { type: contentType })
     );
     const deviceInfo = await getDeviceInfo();
+    const captureStore = this.get();
     const node: OmitForCapture<IImageNode> = {
       id,
       contentType: NodeType.IMAGE,
       file: fileId,
       label: `Image Capture - ${new Date().toLocaleString()}`,
       body: {},
+      properties: captureStore.properties,
       metadata: {
         ...metadata,
         deviceInfo: {
@@ -754,7 +772,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     // this.modify({ ...generateSeedStore() }, { isPersist: false });
   }
 
-  async saveLinks(rootId: IRecordId) {
+  private async saveLinks(rootId: IRecordId) {
     const val = this.get();
     const rootLinks = [
       ...(val.links ? val.links.filter((x) => x.from === "root") : [])
@@ -783,6 +801,27 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     });
 
     logger.log({ at: "CaptureStore.save", rootLinks, blockLinks, links });
+    return linker.linkMany(links);
+  }
+
+  private async saveLinksForMultiFileCapture(nodes: any[]) {
+    const val = this.get();
+    const rootLinks = [
+      ...(val.links ? val.links.filter((x) => x.from === "root") : [])
+    ];
+    if (!isValidArrayWithData(rootLinks)) return;
+    let links: any[] = [];
+    nodes.forEach((node) => {
+      links.push(
+        ...(rootLinks.map((x) => ({
+          in: node.id,
+          out: x.to,
+          linkType: x.linkType,
+          toType: x.toType,
+          tags: x.tags
+        })) ?? [])
+      );
+    });
     return linker.linkMany(links);
   }
 

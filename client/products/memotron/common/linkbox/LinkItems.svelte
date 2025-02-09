@@ -28,7 +28,8 @@
   export let isExpandable: boolean = false;
   export let nodeId: IRecordId | undefined = undefined;
   export let isReadOnlyMode: boolean = false;
-  let expand: IRecordId | null = null;
+  export let expand: IRecordId | null = null;
+  export let ctx: "clip" | "capture" = "clip";
   let expansionState:
     | "not-type"
     | "node"
@@ -39,6 +40,9 @@
   let types: any[] = [];
   let link: INodeLinkThumb;
   $: _links = links?.filter(removeDuplicatesFilter) ?? [];
+  $: if (expand) {
+    refreshExpansion(expand);
+  }
 
   async function refreshExpansion(item: IRecordId) {
     expansionState = "loading";
@@ -146,7 +150,10 @@
       {/if}
     {:else if expansionState === "has-props"}
       <div
-        class="w-full h-96 p-2 rounded-md bg-bgs2 bg-opacity-30 flex flex-col gap-3 items-start"
+        class={cn("w-full p-2 rounded-md flex flex-col gap-3 items-start", {
+          "h-96 bg-bgs2 bg-opacity-30": ctx === "clip",
+          "h-fit max-h-96": ctx === "capture"
+        })}
       >
         <Text
           content={`${types[0]?.label ? types[0].label + ":" : ""} Properties (${types[0]?.properties?.length})`}
@@ -161,7 +168,9 @@
               dispatch("propertyChange", e.detail);
             }}
           />
-          <ScrollViewBottomSpacer />
+          {#if ctx === "clip"}
+            <ScrollViewBottomSpacer />
+          {/if}
         </div>
       </div>
     {/if}

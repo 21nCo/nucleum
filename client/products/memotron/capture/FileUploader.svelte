@@ -89,8 +89,8 @@
     }
   }
 
-  async function saveAll(e: CustomEvent) {
-    if (e.detail) e.detail.stopPropagation();
+  async function saveAll(e: MouseEvent) {
+    if (e) e.stopPropagation();
     if (!multipleFilesData) return;
     isSaveInProgress = true;
     await wait(10);
@@ -105,8 +105,8 @@
    *
    * Note: MemotronAction.CAPTURE_SECONDARY is used as fileUploader can be triggered either via global drag and drop (MemotronAction.CAPTURE_DND) or regular capture (MemotronAction.CAPTURE). Using .CAPTURE will not reload the capture as search param remains the same.
    */
-  async function handleInsertIntoMd(e: CustomEvent) {
-    if (e.detail) e.detail.stopPropagation();
+  async function handleInsertIntoMd(e: MouseEvent) {
+    if (e) e.stopPropagation();
     if (!multipleFilesData) return;
     $captureStore.clipboard = {
       multipleFiles: multipleFilesData
@@ -127,7 +127,7 @@
     />
   {:else}
     <div
-      class="flex flex-col gap-6 mo:w-9/10 w-full mo:h-9/10 h-4/5 justify-between items-center border border-dashed border-brs3 bg-bgs2/50 rounded-md"
+      class="flex flex-col gap-6 mo:w-9/10 w-full mo:h-9/10 h-9/10 justify-between items-center border border-dashed border-brs3 bg-bgs2/50 rounded-md"
       use:fileDrop={{
         accept: supportedFileTypes,
         multiple: true,

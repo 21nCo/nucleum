@@ -46,7 +46,7 @@
 <!-- TODO - svelte 5 snippets for PanelSwitcherItemLabel multiple references -->
 {#if style === PanelSwitcherStyle.BAR}
   <button
-    class={cn("relative flex bg-transparent", {
+    class={cn("relative group flex bg-transparent", {
       "px-4":
         (size === Size.md || size === Size.lg) &&
         barStyle === BarStyle.OVERFLOW &&
@@ -110,7 +110,7 @@
   </button>
 {:else if style === PanelSwitcherStyle.SNAKE}
   <button
-    class={cn("relative flex items-center gap-1 py-2", {
+    class={cn("relative group flex items-center gap-1 py-2", {
       "px-6": item.icon,
       "px-4": !item.icon,
       "border border-brs3 rounded-t-md text-fgs1": isActive,
