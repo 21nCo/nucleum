@@ -38,6 +38,10 @@
   export let isShowNumberShortcut: boolean = false;
   export let addText: string | undefined = undefined;
   export let isPreventDropdownForCW: boolean = false;
+  /**
+   * Bar style rendered over a bg shade to give TRAIN style but with bars
+   */
+  export let isBgBar: boolean = false;
   let _items: ISelectItem[];
   $: _items = items.every((x) => typeof x === "string")
     ? items.map((x) => ({ label: x, value: x }))
@@ -71,7 +75,8 @@
           barStyle != BarStyle.UNDER &&
           barStyle != BarStyle.DOT) ||
           style === PanelSwitcherStyle.SNAKE) &&
-        isExpandToFullWidth,
+        isExpandToFullWidth &&
+        !isBgBar,
       "inline-block": style !== PanelSwitcherStyle.BAR || !isExpandToFullWidth
     })}
   >

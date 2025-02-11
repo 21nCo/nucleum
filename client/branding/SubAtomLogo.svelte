@@ -27,26 +27,7 @@
     xmlns="http://www.w3.org/2000/svg"
   >
     {#if subatom === "pointron"}
-      <path
-        d="M231.36 127.234C288.392 127.234 334.625 173.468 334.625 230.5"
-        class="stroke-logo-dark dark:stroke-logo-light"
-        stroke-width="27.5374"
-      />
-      <path
-        d="M128.096 230.5C128.096 173.468 174.329 127.234 231.361 127.234"
-        class="stroke-logo-dark dark:stroke-logo-light"
-        stroke-width="27.5374"
-      />
-      <path
-        d="M231.361 333.766C174.329 333.766 128.096 287.532 128.096 230.5"
-        class="stroke-logo-dark dark:stroke-logo-light"
-        stroke-width="27.5374"
-      />
-      <path
-        d="M334.625 230.5C334.625 287.532 288.392 333.766 231.36 333.766"
-        class="stroke-logo-dark dark:stroke-logo-light"
-        stroke-width="27.5374"
-      />
+      <circle cx="232" cy="230" r="95" stroke="white" stroke-width="28" />
     {:else if subatom === "memotron"}
       <!-- <rect
         x="192.756"

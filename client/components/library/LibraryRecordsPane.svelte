@@ -80,6 +80,7 @@
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { createEventDispatcher } from "svelte";
   import { collectionCountStore } from "../collection/collectionCount.store";
+  import { resolveTaskSubTypesForSwitcher } from "../tasks/task.utils";
   const dispatch = createEventDispatcher();
 
   export let resource: Resource;
@@ -104,11 +105,13 @@
   let isRefreshingTotalCount: boolean = false;
   let availableResources: Set<Resource> = new Set([
     Resource.node,
-    Resource.collection
+    Resource.collection,
+    Resource.task
   ]);
 
   const nodeSubTypesForSwitcher = resolveNodeSubTypesForSwitcher();
   const collectionSubTypesForSwitcher = resolveCollectionSubTypesForSwitcher();
+  const taskSubTypesForSwitcher = resolveTaskSubTypesForSwitcher(true);
   const allSubTypeSwitcherItem = {
     label: "All",
     value: "all",
@@ -130,7 +133,7 @@
   let isRefineShown = false;
 
   $: isGenericSubType = ["all", "starred", "recents"].includes(selectedSubType);
-  $: isCustomPane = [Resource.relation, Resource.task].includes(resource);
+  $: isCustomPane = [Resource.relation].includes(resource);
   $: isExpandableSubTypes = [Resource.node].includes(resource);
 
   $: multiSelectContext = {
@@ -316,6 +319,8 @@
         items.push(...nodeSubTypesForSwitcher);
       } else if (resource === Resource.collection) {
         items.push(...collectionSubTypesForSwitcher);
+      } else if (resource === Resource.task) {
+        items.push(...taskSubTypesForSwitcher);
       }
       return items;
     }
@@ -412,6 +417,16 @@
       return;
     }
     await refresh();
+  }
+
+  function resolveArrangement() {
+    if (arrangement) return arrangement;
+    if ($view.isConstrainedWidth) {
+      if (resource === Resource.node) return Arrangement.GRID;
+      else return Arrangement.LIST;
+    }
+    if (resource === Resource.task) return Arrangement.LIST;
+    return Arrangement.GRID;
   }
 </script>
 
@@ -621,12 +636,7 @@
           size={$view.isConstrainedWidth ? Size.sm : Size.md}
           isShowLoadingPulseAtTheEnd={data.length < totalCountAfterFilter &&
             !searchQuery}
-          arrangement={arrangement ??
-            ($view.isConstrainedWidth
-              ? resource === Resource.node
-                ? Arrangement.GRID
-                : Arrangement.LIST
-              : Arrangement.GRID)}
+          arrangement={resolveArrangement()}
         />
       </div>
       <div

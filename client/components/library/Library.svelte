@@ -7,7 +7,10 @@
   import ResourceSwitcher from "./resourceSwitcher/ResourceSwitcher.svelte";
   import { type IResourceSwitchItem } from "$lib/client/types/select.type";
   import { appStore } from "$lib/client/stores/app.store";
-  import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import {
+    resolveResourceSwitcher,
+    resourceAction
+  } from "$lib/client/components/flux/resourceStores/resource.utils";
   import {
     ResourceAccessPoint,
     ResourceActionType
@@ -38,89 +41,14 @@
   let resourceSwitcherRef: ResourceSwitcher;
   let availableResources: Set<Resource> = new Set([
     Resource.node,
-    Resource.collection
+    Resource.collection,
+    Resource.task
   ]);
   let isSyncing: boolean = false;
   let syncStatusPropagatorRef: SyncStatusPropagator;
   let recordsPaneRef: LibraryRecordsPane;
 
-  const resourceList: IResourceSwitchItem[] = [
-    {
-      label: "Nodes",
-      value: Resource.node,
-      icon: "ph:hexagon-light"
-    },
-    {
-      label: "Relations",
-      value: Resource.relation,
-      icon: "ph:link-light"
-    },
-    {
-      label: "Collections",
-      value: Resource.collection,
-      icon: "ph:brackets-round-light",
-      isPinned: true
-    },
-    {
-      label: "Todos",
-      value: Resource.todo,
-      icon: "ph:check-square-offset-light",
-      badge: "Planned",
-      isDisabled: true
-    },
-    {
-      label: "Combinations",
-      value: Resource.combination,
-      icon: "ph:bounding-box-light",
-      badge: "Planned",
-      isDisabled: true
-    },
-    {
-      label: "Tasks",
-      value: Resource.task,
-      icon: "ph:circle-light"
-    },
-    {
-      label: "Events",
-      value: Resource.event,
-      icon: "ph:calendar-light"
-    },
-    {
-      label: "Habits",
-      value: Resource.habit,
-      icon: "ph:caret-circle-up-light"
-    },
-    {
-      label: "Sessions",
-      value: Resource.session,
-      icon: "ph:clock-light"
-    },
-    {
-      label: "Things",
-      value: Resource.thing,
-      icon: "ph:bicycle-light"
-    },
-    {
-      label: "Feeds",
-      value: Resource.feed,
-      icon: "ph:rss-light"
-    },
-    {
-      label: "Sources",
-      value: Resource.source,
-      icon: "ph:globe-light"
-    },
-    {
-      label: "Accounts",
-      value: Resource.account,
-      icon: "ph:bank-light"
-    },
-    {
-      label: "Transactions",
-      value: Resource.transaction,
-      icon: "ph:arrows-left-right-light"
-    }
-  ];
+  const resourceList: IResourceSwitchItem[] = resolveResourceSwitcher();
 
   let _resources: IResourceSwitchItem[] = [];
 

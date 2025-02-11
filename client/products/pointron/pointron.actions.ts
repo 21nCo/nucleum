@@ -360,7 +360,7 @@ export const pointronActions: IAction[] = [
   {
     action: PointronAction.FOCUS,
     component: Focus,
-    icon: "bolt",
+    icon: "ph:circle-light",
     type: ActionType.PAGE,
     label: "Focus"
   },
@@ -368,16 +368,16 @@ export const pointronActions: IAction[] = [
     action: "analytics",
     component: AnalyticsV2,
     type: ActionType.PAGE,
-    icon: "chart",
+    icon: "ph:presentation-chart-light",
     label: "Analytics"
   },
-  {
-    action: "goal",
-    component: Goals,
-    icon: "goals",
-    type: ActionType.PAGE,
-    label: "Goals"
-  },
+  // {
+  //   action: "goal",
+  //   component: Goals,
+  //   icon: "goals",
+  //   type: ActionType.PAGE,
+  //   label: "Goals"
+  // },
   {
     action: PointronAction.SESSION_SETTINGS_MODAL,
     get cmdLabel() {

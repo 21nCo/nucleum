@@ -2,9 +2,10 @@
   import { Resource } from "../../flux/resourceStores/resource.enum";
   import LibraryRelationsPane from "../../tags/LibraryRelationsPane.svelte";
   import DefaultResourceBrowserCw from "./DefaultResourceBrowserCW.svelte";
+  import { isCustomPane } from "../library.utils";
   export let resource: Resource;
 
-  $: customBrowser = [Resource.relation, Resource.task].includes(resource);
+  $: customBrowser = isCustomPane(resource);
 </script>
 
 {#key resource}

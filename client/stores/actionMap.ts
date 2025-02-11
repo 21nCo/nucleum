@@ -54,7 +54,9 @@ import ResourceBrowser from "../components/library/resourceBrowser/ResourceBrows
 import UserPlan from "../components/subscription/UserPlan.svelte";
 import InactivePlan from "../components/subscription/InactivePlan.svelte";
 import { ButtonVariant } from "../types/button.type";
-
+import CreateTask from "$lib/client/components/tasks/CreateTask.svelte";
+import Task from "../components/tasks/Task.svelte";
+import TaskTitleLabelPart from "../components/tasks/TaskTitleLabelPart.svelte";
 export const globalActions: IAction[] = [
   {
     action: "404",
@@ -732,5 +734,44 @@ export const globalActions: IAction[] = [
         }
       }
     }
+  },
+  {
+    action: resourceAction(Resource.task, ResourceActionType.CREATE),
+    cmdLabel: "Create a new task",
+    component: CreateTask,
+    type: ActionType.MODAL,
+    modalParams: {
+      title: "Create a new task",
+      layout: {
+        size: Size.lg,
+        orientation: Orientation.Vertical
+      }
+    }
+  },
+  {
+    action: Resource.task,
+    type: ActionType.MODAL,
+    component: Task,
+    resourceLabelRenderer: TaskTitleLabelPart,
+    modalParams: {
+      layout: {
+        size: Size.xxl,
+        orientation: Orientation.Horizontal,
+        ignoreSafeArea: true,
+        isShowCantileverClose: true,
+        isShowBackButton: true
+      }
+    }
+  },
+  {
+    action: resourceAction(Resource.task, ResourceActionType.BROWSE),
+    component: ResourceBrowser,
+    label: "Tasks",
+    icon: "ph:check-circle-light",
+    type: ActionType.PAGE,
+    componentParams: {
+      resource: Resource.task
+    },
+    loadingComponent: NodeLoadingPulse
   }
 ];

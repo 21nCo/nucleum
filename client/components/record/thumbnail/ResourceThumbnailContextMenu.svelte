@@ -10,6 +10,7 @@
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { Arrangement, Placement } from "$lib/client/types/direction.enum";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { resolveTaskContextMenu } from "$lib/client/components/tasks/task.store";
 
   const dispatch = createEventDispatcher();
   export let item: any;
@@ -34,6 +35,8 @@
       });
     } else if (resourceType === Resource.collection) {
       return resolveCollectionContextMenu(item, accessPoint);
+    } else if (resourceType === Resource.task) {
+      return resolveTaskContextMenu(item, accessPoint);
     } else {
       return [];
     }

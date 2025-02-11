@@ -14,9 +14,9 @@
     }
     return [
       Resource.task,
-      Resource.habit,
       Resource.todo,
       Resource.collection,
+      Resource.habit,
       Resource.combination
     ];
   }
