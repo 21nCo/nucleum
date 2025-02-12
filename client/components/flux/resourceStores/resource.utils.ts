@@ -3,6 +3,8 @@ import type { ResourceAccessPoint, ResourceActionType } from "./resource.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 import { RecordId } from "surrealdb";
 import { logger } from "../../debug/logger.client";
+import { properCase } from "$lib/shared/utils/text.utils";
+import type { IResourceSwitchItem } from "$lib/client/types/select.type";
 
 export function resourceAction(resource: Resource, action: ResourceActionType) {
   return `${resource}_${action}`;
@@ -147,4 +149,74 @@ export function resourceIdToElementId(
   accessPointId: IRecordId | undefined = undefined
 ) {
   return `${elementType}-${resourceId}-${accessPoint ?? "none"}-${accessPointId ?? "none"}`;
+}
+
+export function resolveResourceIcon(resource: Resource) {
+  switch (resource) {
+    case Resource.collection:
+      return "ph:brackets-round-light";
+    case Resource.node:
+      return "ph:hexagon-light";
+    case Resource.relation:
+      return "ph:link-light";
+    case Resource.task:
+      return "ph:check-circle-light";
+    case Resource.todo:
+      return "ph:check-square-offset-light";
+    case Resource.combination:
+      return "ph:bounding-box-light";
+    case Resource.event:
+      return "ph:calendar-light";
+    case Resource.habit:
+      return "ph:caret-circle-up-light";
+    case Resource.session:
+      return "ph:clock-light";
+    case Resource.thing:
+      return "ph:bicycle-light";
+    case Resource.feed:
+      return "ph:rss-light";
+    case Resource.source:
+      return "ph:globe-light";
+    case Resource.account:
+      return "ph:bank-light";
+    case Resource.transaction:
+      return "ph:arrows-left-right-light";
+    default:
+      return "ph:question-fill";
+  }
+}
+
+const availableResources = [
+  Resource.collection,
+  Resource.node,
+  Resource.relation,
+  Resource.task,
+  Resource.todo
+];
+
+export function resolveResourceSwitcher(): IResourceSwitchItem[] {
+  const resources = [
+    Resource.event,
+    Resource.todo,
+    Resource.collection,
+    Resource.combination,
+    Resource.task,
+    Resource.habit,
+    Resource.session,
+    Resource.node,
+    Resource.relation,
+    Resource.thing,
+    Resource.feed,
+    Resource.source,
+    Resource.account,
+    Resource.transaction
+  ];
+
+  return resources.map((resource) => ({
+    label: properCase(resource) + "s",
+    value: resource,
+    icon: resolveResourceIcon(resource),
+    isDisabled: !availableResources.includes(resource),
+    badge: !availableResources.includes(resource) ? "Planned" : undefined
+  }));
 }

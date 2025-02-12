@@ -97,6 +97,7 @@
       label={item?.label}
       {parentBgIndex}
       {isActive}
+      isShowExpandFeedbackOnActive={true}
       icon={resovleIcon()}
       {isRemovable}
       on:click

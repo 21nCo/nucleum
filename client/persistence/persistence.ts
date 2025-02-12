@@ -98,6 +98,35 @@ export class Persistence {
       logger.error(err);
     }
   };
+
+  getUserPlan = async () => {
+    try {
+      const response = await performApiCall("v2/plan/get", "POST", {});
+      if (!response?.ok) {
+        return;
+      }
+      const data = await response.json();
+      return data;
+    } catch (err) {
+      logger.error(err);
+    }
+  };
+
+  initiateSubscription = async (params: any) => {
+    try {
+      const response = await performApiCall("v2/plan/subscribe", "POST", {
+        ...params
+      });
+      if (!response?.ok) {
+        return;
+      }
+      const data = await response.json();
+      return data;
+    } catch (err) {
+      logger.error(err);
+    }
+  };
+
   async runAccountAction(action: string, params: any) {
     try {
       const response = await performApiCall("account/n/action", "POST", {

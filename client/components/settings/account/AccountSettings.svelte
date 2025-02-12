@@ -28,11 +28,21 @@
   import type { IRecordId } from "$lib/client/types/data.type";
   import { appStore } from "$lib/client/stores/app.store";
   import { Action } from "$lib/client/types/action.enum";
+  import {
+    determineIfPlanIsActive,
+    resolvePlanLabel
+  } from "$lib/client/utils/account.utils";
+  import { PlanType } from "../../subscription/userPlan.type";
+  import { formatDate } from "$lib/client/utils/time.utils";
   let name = "";
   let emailParts: EmailParts | undefined = undefined;
   let isEditing = false;
   let isSaveInProgress = false;
   let profilePicture: IRecordId | undefined = $userPreferences.profilePicture;
+  $: isActivePlan = $account.plan
+    ? determineIfPlanIsActive($account.plan)
+    : true;
+
   onMount(() => {
     const unsubscribeAccount = account.subscribe((value) => {
       if (value.dataMode === UserDataMode.CLOUD) {
@@ -43,6 +53,8 @@
     const unsubscribeUserPreferences = userPreferences.subscribe((value) => {
       name = value.name || $account.userInfo?.nickName || "";
     });
+
+    account.refreshPlanData();
     return () => {
       unsubscribeAccount();
       unsubscribeUserPreferences();
@@ -200,15 +212,38 @@
         </div>
         <div class="flex flex-col gap-1 w-full items-start">
           <div class="text-b2 text-fgs3">Plan</div>
-          <div class="">Complimentary cloud sync trial 🎉</div>
+          <div
+            class={cn({
+              "text-ars1": !isActivePlan
+            })}
+          >
+            {resolvePlanLabel($account.plan)}
+          </div>
+          {#if isActivePlan && ($account.plan?.plan === PlanType.CLOUD_SYNC || $account.plan?.plan === PlanType.NUCLEUS) && $account.plan?.nextRenewal}
+            <div class="text-fgs3 text-b3 mt-2">
+              Next renewal: {formatDate(new Date($account.plan?.nextRenewal))}
+            </div>
+          {/if}
         </div>
-        <Button
-          label="Upgrade"
-          icon="ph:sparkle-light"
-          on:click={() => {
-            appStore.runAction(Action.USER_PLAN);
-          }}
-        />
+        {#if !isActivePlan || $account.plan?.plan === PlanType.TRIAL}
+          <Button
+            label="Upgrade"
+            type={ButtonVariant.PRIMARY}
+            style={ButtonStyle.OUTLINED}
+            icon="ph:sparkle-light"
+            on:click={() => {
+              appStore.runAction(Action.USER_PLAN);
+            }}
+          />
+        {:else if isActivePlan}
+          <Button
+            label="Go to billing"
+            icon="ph:wallet-light"
+            on:click={() => {
+              appStore.runAction(Action.USER_BILLING);
+            }}
+          />
+        {/if}
       </div>
     </div>
   </div>

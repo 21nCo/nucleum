@@ -20,6 +20,7 @@
   export let isActive: boolean = false;
   export let style: OptionSelectorStyle = OptionSelectorStyle.TRAIN;
   export let iconOrientation: Orientation = Orientation.Horizontal;
+  export let isShowExpandFeedbackOnActive = false;
 </script>
 
 {#if style === OptionSelectorStyle.TRAIN || style === OptionSelectorStyle.OUTLINE}
@@ -93,6 +94,22 @@
         <Badge text={item.badge} isAccentColor={isActive} {size} />
       {/if}
     </div>
+    {#if isActive && isShowExpandFeedbackOnActive}
+      <svg
+        width="16"
+        height="10"
+        viewBox="0 0 16 10"
+        class={cn("absolute left-1/2 -bottom-[5px] -translate-x-1/2")}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M2 7C2 7 4.5 7 8 7C11.5 7 14 7 14 7L8 1L2 7Z"
+          class="stroke-aps1 fill-bgs1"
+          stroke-width="1.2"
+          stroke-linejoin="round"
+        />
+      </svg>
+    {/if}
   </button>
 {:else if style === OptionSelectorStyle.CHECK_CIRCLE}
   <button

@@ -5,17 +5,43 @@
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import PlanFeatureList from "./PlanFeatureList.svelte";
   import type { ICurrentPlan, IPlan } from "../userPlan.type";
-  import { BillingPeriod, PlanType } from "../userPlan.type";
+  import { BillingCycle, PlanType } from "../userPlan.type";
   import Icon from "$lib/client/elements/Icon.svelte";
+  import account from "$lib/client/stores/account.store";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
 
   export let plans: IPlan[] = [];
   export let currentPlan: ICurrentPlan | null = null;
   export let plan: IPlan =
     plans.find((p) => p.type === currentPlan?.type) || plans[0];
-  export let period: BillingPeriod =
-    currentPlan?.billingPeriod || BillingPeriod.MONTHLY;
+  export let period: BillingCycle =
+    currentPlan?.billingCycle || BillingCycle.MONTHLY;
   export let isCurrentPage = false;
   let isCurrentPlan = currentPlan?.type === plan.type;
+  let progressState: "initiating" | "upgrading" | "downgrading" | null = null;
+  $: actualPrice =
+    period === BillingCycle.YEARLY
+      ? plan.price[BillingCycle.YEARLY] / 12
+      : plan.price[period];
+  $: discountedPrice = $account.plan?.discount
+    ? resolveDiscountedPrice(actualPrice, $account.plan?.discount)
+    : actualPrice;
+
+  $: if (period) {
+    resetLoadingState(period);
+  }
+
+  function resetLoadingState(period: BillingCycle) {
+    progressState = null;
+  }
+
+  function resolveDiscountedPrice(price: number, discount: any) {
+    if (discount.first && period !== BillingCycle.MONTHLY) {
+      return price * (1 - discount.first / 100);
+    }
+    return null;
+  }
 
   function isUpgrade(plan: IPlan) {
     if (!currentPlan) return false;
@@ -33,11 +59,14 @@
 </script>
 
 <div
-  class={cn("flex flex-col flex-1 p-6 rounded-lg border relative", {
-    "border-aps1 hover:bg-aps3": plan.isPopular && !currentPlan,
-    "border-brs3 hover:bg-bgs2": !plan.isPopular || currentPlan,
-    "md:col-span-2 max-w-3xl mx-auto w-full": isCurrentPage
-  })}
+  class={cn(
+    "flex flex-col flex-1 max-h-[42rem] p-6 rounded-lg border relative",
+    {
+      "border-aps1 hover:bg-aps3": plan.isPopular && !currentPlan,
+      "border-brs3 hover:bg-bgs2": !plan.isPopular || currentPlan,
+      "md:col-span-2 max-w-3xl mx-auto w-full": isCurrentPage
+    }
+  )}
 >
   {#if plan.isPopular && !currentPlan}
     <div class="absolute -top-3 right-4">
@@ -50,7 +79,7 @@
   {#if isCurrentPlan}
     <div class="absolute -top-3 left-4">
       <span class="px-3 py-1 text-sm rounded-full bg-ags1 text-abg">
-        Current Plan • {currentPlan?.billingPeriod.toLowerCase()}
+        Current Plan • {currentPlan?.billingCycle.toLowerCase()}
       </span>
     </div>
   {/if}
@@ -69,24 +98,50 @@
       </div>
 
       <div>
-        {#if period !== BillingPeriod.YEARLY}
+        {#if period !== BillingCycle.YEARLY}
           <div class="flex items-baseline gap-2">
-            <span class="text-xl font-bold text-fgs1">
-              {plan.price[period]}
+            {#if discountedPrice}
+              <span class="text-xl font-bold text-ags1">
+                ${discountedPrice}
+              </span>
+            {/if}
+            <span
+              class={cn("text-xl font-bold", {
+                "line-through text-fgs3": discountedPrice,
+                "text-fgs1": !discountedPrice
+              })}
+            >
+              ${actualPrice}
             </span>
             <span class="text-sm text-fgs2">
-              {period === BillingPeriod.LIFETIME ? "one-time" : "/month"}
+              {period === BillingCycle.LIFETIME ? "one-time" : "/month"}
             </span>
           </div>
-        {:else if period === BillingPeriod.YEARLY}
+        {:else if period === BillingCycle.YEARLY}
           <div class="flex items-baseline gap-2">
-            <span class="text-xl font-bold text-fgs1">
-              {`$${(parseInt(plan.price[BillingPeriod.YEARLY].replace("$", "")) / 12).toFixed(2)}`}
+            {#if discountedPrice}
+              <span class="text-xl font-bold text-ags1">
+                ${discountedPrice}
+              </span>
+            {/if}
+            <span
+              class={cn("text-xl font-bold", {
+                "line-through text-fgs3": discountedPrice,
+                "text-fgs1": !discountedPrice
+              })}
+            >
+              {`$${actualPrice.toFixed(2)}`}
             </span>
             <span class="text-sm text-fgs2">/month</span>
           </div>
-          <div class="mt-1 text-b3 text-fgs2">
-            Total billable today: {plan.price[BillingPeriod.YEARLY]}
+          <div class="mt-1 text-b2 text-fgs2 underline">
+            Total billable today: <b>
+              {#if discountedPrice}
+                ${discountedPrice * 12}
+              {:else}
+                ${actualPrice * 12}
+              {/if}
+            </b>
           </div>
         {/if}
       </div>
@@ -99,7 +154,7 @@
     </div>
 
     <div class="mt-auto pt-6 flex justify-center">
-      {#if isCurrentPlan && currentPlan?.billingPeriod === period}
+      {#if isCurrentPlan && currentPlan?.billingCycle === period}
         <div class="space-y-2">
           <Button
             label="Cancel Subscription"
@@ -111,36 +166,54 @@
             Access until end of billing period
           </p>
         </div>
-      {:else if isCurrentPlan && currentPlan?.billingPeriod !== period}
+      {:else if isCurrentPlan && currentPlan?.billingCycle !== period}
         <Button
           label={`Change to ${period.toLowerCase()}`}
           icon="ph:arrow-right-light"
           type={ButtonVariant.PRIMARY}
           style={ButtonStyle.OUTLINED}
           size={Size.lg}
+          on:click={() => {
+            dispatch("change");
+          }}
         />
       {:else if isUpgrade(plan)}
         <Button
           icon="ph:arrow-up-light"
           label="Upgrade Plan"
+          isLoading={progressState === "upgrading"}
           type={ButtonVariant.PRIMARY}
           size={Size.lg}
+          on:click={() => {
+            progressState = "upgrading";
+            dispatch("upgrade");
+          }}
         />
       {:else if isDowngrade(plan)}
         <Button
           icon="ph:arrow-down-light"
           label="Downgrade Plan"
+          isLoading={progressState === "downgrading"}
           type={ButtonVariant.PRIMARY}
           style={ButtonStyle.OUTLINED}
           size={Size.lg}
+          on:click={() => {
+            progressState = "downgrading";
+            dispatch("downgrade");
+          }}
         />
       {:else}
         <Button
           icon="ph:arrow-right-light"
           label="Choose Plan"
           type={ButtonVariant.PRIMARY}
+          isLoading={progressState === "initiating"}
           style={plan.isPopular ? ButtonStyle.DEFAULT : ButtonStyle.OUTLINED}
           size={Size.lg}
+          on:click={() => {
+            progressState = "initiating";
+            dispatch("choose");
+          }}
         />
       {/if}
     </div>

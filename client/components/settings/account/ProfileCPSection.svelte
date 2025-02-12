@@ -13,13 +13,28 @@
   import { Modes } from "../../calendar/birdView/Birdview.type";
   import modalEvent from "../../modal/modal.store";
   import { Action } from "$lib/client/types/action.enum";
-  import { resolveLicenseString } from "$lib/client/utils/account.utils";
+  import {
+    determineIfPlanIsActive,
+    resolveLicenseString,
+    resolvePlanLabel
+  } from "$lib/client/utils/account.utils";
   import { userPreferences } from "../userPreferences.store";
+  import { PlanType } from "../../subscription/userPlan.type";
+  import Icon from "$lib/client/elements/Icon.svelte";
   export let context: "page" | "modal" = "page";
   export let parentBackgroundIndex: number = 1;
-
+  let isActivePlan = false;
   function determineLicense() {
-    return resolveLicenseString($account.userInfo);
+    if (!$account.plan) return "Unknown";
+    isActivePlan = determineIfPlanIsActive($account.plan);
+    if ($account.plan?.plan === PlanType.TRIAL) {
+      if (!isActivePlan) {
+        return "Trial expired - Please upgrade";
+      }
+      return resolveLicenseString($account.userInfo);
+    } else {
+      return resolvePlanLabel($account.plan);
+    }
   }
 </script>
 
@@ -59,11 +74,18 @@
       </div>
       <div class="flex w-full justify-end">
         <div
-          class="text-b3 bg-ags1 text-bgs1 px-3 py-1 rounded-tl-md {context ===
-          'page'
-            ? 'rounded-br-md'
-            : ''}"
+          class={cn(
+            "flex items-center gap-1 text-b3 text-bgs1 px-3 py-1 rounded-tl-md",
+            {
+              "bg-ags1": isActivePlan,
+              "bg-ars1": !isActivePlan,
+              "rounded-br-md": context === "page"
+            }
+          )}
         >
+          {#if !isActivePlan}
+            <Icon icon="ph:clock-light" class="text-bgs1" size={Size.sm} />
+          {/if}
           {determineLicense()}
         </div>
       </div>

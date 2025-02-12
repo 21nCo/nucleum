@@ -4,6 +4,8 @@
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import type { ICurrentPlan } from "../userPlan.type";
   import { createEventDispatcher } from "svelte";
+  import account from "$lib/client/stores/account.store";
+  import { resolveDiscountLabel } from "$lib/client/utils/account.utils";
   const dispatch = createEventDispatcher();
 
   export let currentPlan: ICurrentPlan | null = null;
@@ -34,6 +36,11 @@
       <p class="text-sm text-center text-fgs2">
         Select a plan that works best for you
       </p>
+      {#if $account.plan?.discount}
+        <div class="text-center text-ags1 font-medium">
+          🎉🎉 {resolveDiscountLabel($account.plan)}
+        </div>
+      {/if}
     </div>
   {/if}
 </div>

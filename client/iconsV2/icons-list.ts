@@ -12,6 +12,7 @@ const phosphorIcons = [
   "arrow-down-left",
   "arrow-elbow-down-left",
   "arrow-elbow-right-up",
+  "arrow-elbow-left-up",
   "arrow-bend-down-left",
   "arrows-left-right",
   "arrows-out",
@@ -270,7 +271,23 @@ const phosphorIcons = [
   "clipboard",
   "command",
   "sidebar",
-  "chalkboard-simple"
+  "chalkboard-simple",
+  "cloud",
+  "cloud-check",
+  "wallet",
+  "scroll",
+
+  //Charts
+  "chart-bar",
+  "chart-bar-horizontal",
+  "chart-line",
+  "chart-polar",
+  "chart-donut",
+  "chart-scatter",
+  "chart-line-up",
+  "chart-line-down",
+  "chart-pie",
+  "presentation-chart"
 ];
 
 export const phosphorRatingIcons = [

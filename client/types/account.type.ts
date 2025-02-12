@@ -1,8 +1,14 @@
+import type {
+  BillingCycle,
+  PlanType
+} from "../components/subscription/userPlan.type";
+
 export type UserAccount = {
   dataMode: UserDataMode;
   userId?: string;
   token?: string;
   userInfo?: UserInformation;
+  plan?: IUserPlan;
   sessionType: UserSessionType;
 };
 
@@ -46,4 +52,25 @@ export enum UserSessionType {
   UNDETERMINED = "UNDETERMINED",
   NEW = "NEW",
   RETURNING = "RETURNING"
+}
+
+export interface IUserPlan {
+  plan: PlanType;
+  billingCycle?: BillingCycle;
+  trialPlan?: ITrialPlan;
+  discount?: any;
+  billingErrors?: any;
+  isCancelled?: boolean;
+  nextRenewal?: Date;
+}
+
+export interface ITrialPlan {
+  plan: TrialPlanType;
+  expiry: Date;
+}
+
+export enum TrialPlanType {
+  ONE_YEAR = "1year",
+  FOUR_MONTHS = "4mo",
+  ONE_MONTH = "1mo"
 }

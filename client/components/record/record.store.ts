@@ -200,6 +200,34 @@ export class SearchStore {
     return result;
   }
 
+  async tasks() {
+    const result = await flux.selectMany(Resource.task, {
+      properties: [labelSearchProp, "*"],
+      filters: {
+        trashInformation: false,
+        ...this.filters,
+        isArchived: this.filters.isArchived ?? false,
+        type:
+          "type" in this.filters && this.filters.type
+            ? this.filters.type?.toUpperCase()
+            : undefined
+      },
+      search: isValidString(this.searchQuery)
+        ? {
+            query: this.searchQuery,
+            properties: ["label"]
+          }
+        : undefined,
+      orderBy: this.orderBy ?? {
+        modifiedAt: "desc"
+      },
+      limit: this.limit,
+      offset: this.offset
+    });
+    logger.log({ at: "refreshCollections", result });
+    return result;
+  }
+
   async select(params: {
     resource?: Resource;
     searchQuery?: string;
@@ -232,6 +260,8 @@ export class SearchStore {
       data = (await this.nodes()) ?? [];
     } else if (this.resource === Resource.collection) {
       data = (await this.collections()) ?? [];
+    } else if (this.resource === Resource.task) {
+      data = (await this.tasks()) ?? [];
     }
     if (isValidArray(data)) {
       if (isValidString(this.searchQuery)) {

@@ -52,7 +52,11 @@ import { recentsStore } from "../components/record/recent.store";
 import { isValidString } from "$lib/shared/utils/text.utils";
 import ResourceBrowser from "../components/library/resourceBrowser/ResourceBrowser.svelte";
 import UserPlan from "../components/subscription/UserPlan.svelte";
-
+import InactivePlan from "../components/subscription/InactivePlan.svelte";
+import { ButtonVariant } from "../types/button.type";
+import CreateTask from "$lib/client/components/tasks/CreateTask.svelte";
+import Task from "../components/tasks/Task.svelte";
+import TaskTitleLabelPart from "../components/tasks/TaskTitleLabelPart.svelte";
 export const globalActions: IAction[] = [
   {
     action: "404",
@@ -701,5 +705,73 @@ export const globalActions: IAction[] = [
         orientation: Orientation.Horizontal
       }
     }
+  },
+  {
+    action: Action.INACTIVE_PLAN,
+    type: ActionType.MODAL,
+    isMeta: true,
+    component: InactivePlan,
+    modalParams: {
+      isDismissable: false,
+      layout: {
+        size: Size.md,
+        orientation: Orientation.Horizontal,
+        primaryAction: {
+          label: "Upgrade now",
+          icon: "ph:sparkle-light",
+          variant: ButtonVariant.PRIMARY,
+          callback: async () => {
+            appStore.runAction(Action.USER_PLAN);
+          }
+        },
+        secondaryAction: {
+          label: "I'll do it later",
+          icon: "ph:clock-light",
+          variant: ButtonVariant.SECONDARY,
+          callback: async () => {
+            modalEvent.hide(Action.INACTIVE_PLAN);
+          }
+        }
+      }
+    }
+  },
+  {
+    action: resourceAction(Resource.task, ResourceActionType.CREATE),
+    cmdLabel: "Create a new task",
+    component: CreateTask,
+    type: ActionType.MODAL,
+    modalParams: {
+      title: "Create a new task",
+      layout: {
+        size: Size.lg,
+        orientation: Orientation.Vertical
+      }
+    }
+  },
+  {
+    action: Resource.task,
+    type: ActionType.MODAL,
+    component: Task,
+    resourceLabelRenderer: TaskTitleLabelPart,
+    modalParams: {
+      layout: {
+        size: Size.xxl,
+        orientation: Orientation.Horizontal,
+        ignoreSafeArea: true,
+        isShowCantileverClose: true,
+        isShowBackButton: true
+      }
+    }
+  },
+  {
+    action: resourceAction(Resource.task, ResourceActionType.BROWSE),
+    component: ResourceBrowser,
+    label: "Tasks",
+    icon: "ph:check-circle-light",
+    type: ActionType.PAGE,
+    componentParams: {
+      resource: Resource.task
+    },
+    loadingComponent: NodeLoadingPulse
   }
 ];

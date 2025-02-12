@@ -29,7 +29,10 @@
     CollectionType,
     type ICollectionExpanded
   } from "$lib/client/components/collection/collection.type";
-  import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import {
+    isRecordId,
+    resourceInList
+  } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { isValidString } from "$lib/shared/utils/text.utils";
   import {
     isEmptyMd,
@@ -50,6 +53,12 @@
   import { appEvents } from "$lib/client/stores/notification.store";
   import type { IEvent } from "$lib/client/types/event.type";
   import { MemotronEvent } from "../memotron.type";
+  import Tag from "$lib/client/elements/text/Tag.svelte";
+  import { Orientation, Placement } from "$lib/client/types/direction.enum";
+  import type { IRecordId } from "$lib/client/types/data.type";
+  import Divider from "$lib/client/elements/Divider.svelte";
+  import { ColorStrength } from "$lib/client/types/appearance.type";
+  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
 
   export let isWindowDnD = false;
   let bulkQueryParam: string | null = null;
@@ -71,7 +80,8 @@
   let isProcessingClipboard: boolean = false;
   let subs: any[] = [];
   let isLinksExpanded: boolean = false;
-
+  let expandedType: IRecordId | null = null;
+  let isCaptureFromCollectionPage: boolean = false;
   async function refreshTypeData() {
     const typeIds =
       $captureStore.links
@@ -264,9 +274,12 @@
       return;
     }
     isEmptyState = false;
-    isLinksExpanded = true;
     await captureStore.onTypeSelect(e.detail);
     await refreshTypeData();
+    if (isRecordId(e.detail)) {
+      isLinksExpanded = true;
+      expandedType = e.detail;
+    }
 
     function triggerNativeCameraCaptureUsingInputAPI() {
       setTimeout(() => {
@@ -278,6 +291,7 @@
   async function onLink(e: CustomEvent) {
     if (e.detail.id && e.detail.type === CollectionType.TYPED) {
       await refreshTypeData();
+      expandedType = e.detail.id;
     }
   }
   async function onUnlink(e: CustomEvent) {
@@ -306,14 +320,6 @@
     isEmptyState = true;
   }
 
-  async function propagatePropertyChanges(e: CustomEvent) {
-    if (!e.detail || !e.detail?.id || e.detail?.value === undefined) return;
-    captureStore.updateProperty({
-      id: e.detail.id,
-      value: e.detail.value
-    });
-  }
-
   function reset() {
     captureStore.reset();
     isEmptyState = true;
@@ -328,7 +334,9 @@
   async function setTypeFromLinkParam(linkQueryParam: string) {
     await captureStore.directLink(linkQueryParam);
     await refreshTypeData();
-    isEmptyState = false;
+    isLinksExpanded = true;
+    isCaptureFromCollectionPage = true;
+    // isEmptyState = false;
   }
 
   function onTitleEnter(e: any) {
@@ -459,7 +467,7 @@
                 />
               </div>
             </div>
-            <div class="flex gap-3 items-center">
+            <div class="flex cw:gap-2 gap-3 items-center h-full">
               {#if !isEmptyState}
                 {#if !$view.isConstrainedWidth && dev_isShowDraftSaveFeedback}
                   <div class="flex items-center gap-1">
@@ -475,14 +483,28 @@
                     </span>
                   </div>
                 {/if}
-                <Button
-                  label={$view.isConstrainedWidth ? undefined : "Links"}
-                  size={Size.sm}
-                  style={ButtonStyle.OUTLINED}
-                  isPreventMinWidth={true}
-                  icon="ph:link-light"
-                  on:click={() => (isLinksExpanded = !isLinksExpanded)}
-                />
+                {#if $view.isConstrainedWidth}
+                  <Toggle
+                    icon="ph:link-light"
+                    bind:on={isLinksExpanded}
+                    bgSize={Size.sm}
+                  />
+                {:else}
+                  <Tag
+                    label="Links"
+                    icon="ph:link-light"
+                    isActive={isLinksExpanded}
+                    isShowExpandFeedbackOnActive={true}
+                    isRemovable={false}
+                    on:click={() => (isLinksExpanded = !isLinksExpanded)}
+                  />
+                {/if}
+                <div class="h-full py-2">
+                  <Divider
+                    orientation={Orientation.Vertical}
+                    colorStrength={ColorStrength.Strong}
+                  />
+                </div>
                 <Button
                   label={$view.isConstrainedWidth ? undefined : "Save"}
                   type={ButtonVariant.PRIMARY}
@@ -504,13 +526,21 @@
             </div>
           </header>
         {/if}
-        {#if !isEmptyState && isLinksExpanded}
+        {#if (!isEmptyState || isCaptureFromCollectionPage) && (isLinksExpanded || captureType === CaptureType.AUDIO || captureType === CaptureType.CAMERA || captureType === CaptureType.UPLOAD)}
           <div
             class={cn("w-full py-3 h-fit", {
-              "dp:px-10": captureType === CaptureType.MARKDOWN
+              "dp:px-10":
+                captureType !== CaptureType.AUDIO &&
+                captureType !== CaptureType.CAMERA &&
+                captureType !== CaptureType.UPLOAD
             })}
+            in:fly={{ y: -50, duration: 250 }}
           >
-            <LinkboxOnCapture on:linked={onLink} on:unlinked={onUnlink} />
+            <LinkboxOnCapture
+              on:linked={onLink}
+              on:unlinked={onUnlink}
+              expand={expandedType}
+            />
           </div>
         {/if}
         {#if isProcessingClipboard}
@@ -561,6 +591,7 @@
               <TypeSelector
                 bind:selected={captureType}
                 isCapturePage={true}
+                isHideTypeShortcuts={isCaptureFromCollectionPage}
                 on:select={onTypeSelect}
                 on:capture={(e) => {
                   handleCapture(e.detail);

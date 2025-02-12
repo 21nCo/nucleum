@@ -661,7 +661,7 @@
 
     function resolveDefaultPlaceholder() {
       let dynamicPlaceholder = undefined;
-      if (nodeContentContext.resolveDynamicParams) {
+      if (nodeContentContext?.resolveDynamicParams) {
         const params = nodeContentContext.resolveDynamicParams(
           isFirstBlockAndIsEmpty
         );
