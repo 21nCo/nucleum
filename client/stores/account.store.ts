@@ -269,6 +269,17 @@ class AccountStore extends ObservableStore<
     }
   }
 
+  async initiateSubscription(params: any) {
+    try {
+      const isOffline = await determineIfOffline();
+      if (isOffline) return;
+      const response = await this.persistence.initiateSubscription(params);
+      console.log({ at: "initiateSubscription", response });
+    } catch (e) {
+      logger.error({ at: "initiateSubscription", error: e });
+    }
+  }
+
   async logGuest(id: string) {
     try {
       return this.persistence.runAccountAction("guest", { id });

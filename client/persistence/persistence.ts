@@ -112,6 +112,21 @@ export class Persistence {
     }
   };
 
+  initiateSubscription = async (params: any) => {
+    try {
+      const response = await performApiCall("v2/plan/subscribe", "POST", {
+        ...params
+      });
+      if (!response?.ok) {
+        return;
+      }
+      const data = await response.json();
+      return data;
+    } catch (err) {
+      logger.error(err);
+    }
+  };
+
   async runAccountAction(action: string, params: any) {
     try {
       const response = await performApiCall("account/n/action", "POST", {

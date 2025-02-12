@@ -7,6 +7,9 @@
   import type { ICurrentPlan, IPlan } from "../userPlan.type";
   import { BillingCycle, PlanType } from "../userPlan.type";
   import Icon from "$lib/client/elements/Icon.svelte";
+  import account from "$lib/client/stores/account.store";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
 
   export let plans: IPlan[] = [];
   export let currentPlan: ICurrentPlan | null = null;
@@ -16,6 +19,29 @@
     currentPlan?.billingCycle || BillingCycle.MONTHLY;
   export let isCurrentPage = false;
   let isCurrentPlan = currentPlan?.type === plan.type;
+  let progressState: "initiating" | "upgrading" | "downgrading" | null = null;
+  $: actualPrice =
+    period === BillingCycle.YEARLY
+      ? plan.price[BillingCycle.YEARLY] / 12
+      : plan.price[period];
+  $: discountedPrice = $account.plan?.discount
+    ? resolveDiscountedPrice(actualPrice, $account.plan?.discount)
+    : actualPrice;
+
+  $: if (period) {
+    resetLoadingState(period);
+  }
+
+  function resetLoadingState(period: BillingCycle) {
+    progressState = null;
+  }
+
+  function resolveDiscountedPrice(price: number, discount: any) {
+    if (discount.first && period !== BillingCycle.MONTHLY) {
+      return price * (1 - discount.first / 100);
+    }
+    return null;
+  }
 
   function isUpgrade(plan: IPlan) {
     if (!currentPlan) return false;
@@ -74,8 +100,18 @@
       <div>
         {#if period !== BillingCycle.YEARLY}
           <div class="flex items-baseline gap-2">
-            <span class="text-xl font-bold text-fgs1">
-              {plan.price[period]}
+            {#if discountedPrice}
+              <span class="text-xl font-bold text-ags1">
+                ${discountedPrice}
+              </span>
+            {/if}
+            <span
+              class={cn("text-xl font-bold", {
+                "line-through text-fgs3": discountedPrice,
+                "text-fgs1": !discountedPrice
+              })}
+            >
+              ${actualPrice}
             </span>
             <span class="text-sm text-fgs2">
               {period === BillingCycle.LIFETIME ? "one-time" : "/month"}
@@ -83,14 +119,28 @@
           </div>
         {:else if period === BillingCycle.YEARLY}
           <div class="flex items-baseline gap-2">
-            <span class="text-xl font-bold text-fgs1">
-              {`$${(parseInt(plan.price[BillingCycle.YEARLY].replace("$", "")) / 12).toFixed(2)}`}
+            {#if discountedPrice}
+              <span class="text-xl font-bold text-ags1">
+                ${discountedPrice}
+              </span>
+            {/if}
+            <span
+              class={cn("text-xl font-bold", {
+                "line-through text-fgs3": discountedPrice,
+                "text-fgs1": !discountedPrice
+              })}
+            >
+              {`$${actualPrice.toFixed(2)}`}
             </span>
             <span class="text-sm text-fgs2">/month</span>
           </div>
-          <div class="mt-1 text-b2 text-fgs2">
+          <div class="mt-1 text-b2 text-fgs2 underline">
             Total billable today: <b>
-              {plan.price[BillingCycle.YEARLY]}
+              {#if discountedPrice}
+                ${discountedPrice * 12}
+              {:else}
+                ${actualPrice * 12}
+              {/if}
             </b>
           </div>
         {/if}
@@ -123,29 +173,47 @@
           type={ButtonVariant.PRIMARY}
           style={ButtonStyle.OUTLINED}
           size={Size.lg}
+          on:click={() => {
+            dispatch("change");
+          }}
         />
       {:else if isUpgrade(plan)}
         <Button
           icon="ph:arrow-up-light"
           label="Upgrade Plan"
+          isLoading={progressState === "upgrading"}
           type={ButtonVariant.PRIMARY}
           size={Size.lg}
+          on:click={() => {
+            progressState = "upgrading";
+            dispatch("upgrade");
+          }}
         />
       {:else if isDowngrade(plan)}
         <Button
           icon="ph:arrow-down-light"
           label="Downgrade Plan"
+          isLoading={progressState === "downgrading"}
           type={ButtonVariant.PRIMARY}
           style={ButtonStyle.OUTLINED}
           size={Size.lg}
+          on:click={() => {
+            progressState = "downgrading";
+            dispatch("downgrade");
+          }}
         />
       {:else}
         <Button
           icon="ph:arrow-right-light"
           label="Choose Plan"
           type={ButtonVariant.PRIMARY}
+          isLoading={progressState === "initiating"}
           style={plan.isPopular ? ButtonStyle.DEFAULT : ButtonStyle.OUTLINED}
           size={Size.lg}
+          on:click={() => {
+            progressState = "initiating";
+            dispatch("choose");
+          }}
         />
       {/if}
     </div>

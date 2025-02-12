@@ -8,6 +8,7 @@
   import PlanCard from "./elements/PlanCard.svelte";
   import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
   import { Action } from "$lib/client/types/action.enum";
+  import account from "$lib/client/stores/account.store";
 
   let selectedPeriod: BillingCycle = BillingCycle.YEARLY;
   let showAllPlans = false;
@@ -25,9 +26,9 @@
       type: PlanType.CLOUD_SYNC,
       description: "Real-time sync across all devices for Memotron",
       price: {
-        [BillingCycle.MONTHLY]: "$7",
-        [BillingCycle.YEARLY]: "$60",
-        [BillingCycle.LIFETIME]: "$250"
+        [BillingCycle.MONTHLY]: 7,
+        [BillingCycle.YEARLY]: 60,
+        [BillingCycle.LIFETIME]: 250
       },
       features: [
         {
@@ -53,9 +54,9 @@
       type: PlanType.NUCLEUS,
       description: "Everything productivity, single plan",
       price: {
-        [BillingCycle.MONTHLY]: "$15",
-        [BillingCycle.YEARLY]: "$144",
-        [BillingCycle.LIFETIME]: "$450"
+        [BillingCycle.MONTHLY]: 15,
+        [BillingCycle.YEARLY]: 144,
+        [BillingCycle.LIFETIME]: 450
       },
       features: [
         {
@@ -73,7 +74,7 @@
         },
         {
           icon: "ph:sparkle-light",
-          label: "Access to Nucleus - the everything productivity app"
+          label: "Early access to Nucleus - the everything productivity app"
         },
         {
           icon: "ph:clock-light",
@@ -91,6 +92,25 @@
       isPopular: true
     }
   ];
+
+  function onChange(plan?: IPlan) {
+    console.log("onChange", plan);
+  }
+
+  function onUpgrade(plan?: IPlan) {
+    console.log("onUpgrade", plan);
+  }
+
+  function onDowngrade(plan?: IPlan) {
+    console.log("onDowngrade", plan);
+  }
+
+  function onChoose(plan: IPlan) {
+    account.initiateSubscription({
+      plan: plan.type,
+      cycle: selectedPeriod
+    });
+  }
 </script>
 
 <div class="flex flex-col gap-3 dp:gap-6 h-full w-full overflow-auto">
@@ -116,10 +136,26 @@
   <div class="flex-1 px-4 pb-3 dp:pb-12 w-full">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto h-full">
       {#if currentPlan && !showAllPlans}
-        <PlanCard {plans} {currentPlan} isCurrentPage={true} />
+        <PlanCard
+          {plans}
+          {currentPlan}
+          isCurrentPage={true}
+          on:change={() => onChange()}
+          on:upgrade={() => onUpgrade()}
+          on:downgrade={() => onDowngrade()}
+        />
       {:else}
         {#each plans as plan}
-          <PlanCard {plans} {plan} {currentPlan} period={selectedPeriod} />
+          <PlanCard
+            {plans}
+            {plan}
+            {currentPlan}
+            period={selectedPeriod}
+            on:change={() => onChange(plan)}
+            on:upgrade={() => onUpgrade(plan)}
+            on:downgrade={() => onDowngrade(plan)}
+            on:choose={() => onChoose(plan)}
+          />
         {/each}
       {/if}
     </div>

@@ -202,3 +202,18 @@ export function determineIfPlanIsActive(plan: IUserPlan) {
   }
   return true;
 }
+
+export function resolveDiscountLabel(plan: IUserPlan) {
+  if (!plan?.discount) return null;
+  if (plan.discount.first) {
+    const discount = plan.discount.first;
+    if (discount === 50) {
+      return "As a early adopter, you get 50% off for annual/lifetime plans on your first purchase";
+    } else if (discount === 35) {
+      return "As a early member, you get 35% off for annual/lifetime plans on your first purchase";
+    } else {
+      return `You are eligible for a ${discount}% discount on your first purchase`;
+    }
+  }
+  return null;
+}

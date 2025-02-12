@@ -240,7 +240,7 @@
             label="Go to billing"
             icon="ph:wallet-light"
             on:click={() => {
-              appStore.runAction(Action.USER_PLAN);
+              appStore.runAction(Action.USER_BILLING);
             }}
           />
         {/if}
