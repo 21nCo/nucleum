@@ -52,8 +52,6 @@ import {
 import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
 
 import context from "$lib/client/stores/context.store";
-import type { ICollectionExpanded } from "$lib/client/components/collection/collection.type";
-import type { IAvatar } from "$lib/client/types/avatar.type";
 import { Embed } from "$lib/client/types/context.type";
 import { TacoActions } from "../taco/taco.types";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
@@ -61,8 +59,8 @@ import { generateResourceId } from "$lib/shared/utils/surreal.utils";
 import { toasts } from "$lib/client/stores/notification.store";
 import { fileStore } from "$lib/client/components/files/file.store";
 import { recursivelyExtractAllChildrenIntoArray } from "$lib/client/components/markdown/markdown.utils";
-import type { IBlock } from "$lib/client/components/markdown/md.type";
 import { recentsStore } from "$lib/client/components/record/recent.store";
+import { CollectibleStore } from "$lib/client/components/collection/collectible.store";
 
 export const hierarchyFactorLimit = 5;
 
@@ -111,43 +109,6 @@ class NodeStore extends ResourceStore<INode> {
     }
   }
 
-  async refreshNodeAvatar(
-    id: IRecordId,
-    params: {
-      collections?: IRecordId[];
-      types?: ICollectionExpanded[];
-    }
-  ) {
-    logger.log({
-      at: "NodeStore.refreshNodeAvatar",
-      params
-    });
-    let types = params?.types;
-    if (!types && params.collections) {
-      types = await collectionStore.resolveTypes(params.collections);
-    }
-    if (!types || !isValidArrayWithData(types)) return;
-    const avatar = this.resolveNodeAvatar(types);
-    this.modifyAsSystem(id, {
-      avatar
-    });
-    return avatar;
-  }
-
-  resolveNodeAvatar(types: ICollectionExpanded[]) {
-    const avatars = types
-      ?.flatMap((x) => [x.avatar])
-      .filter((a) => a) as IAvatar[];
-    const baseAvatars = types
-      ?.flatMap((x) => [x.typeToExtend?.avatar])
-      .filter((a) => a) as IAvatar[];
-    if (baseAvatars.length > 0) {
-      return baseAvatars;
-    } else {
-      return avatars;
-    }
-  }
-
   async download(node: IRecordId | INode) {
     let file;
     if (isRecordId(node)) {
@@ -190,10 +151,7 @@ export function resolveActiveNodeStore(id: IRecordId, context: string = "") {
   return val!;
 }
 
-export class ActiveNodeStore extends ActiveResourceStore<
-  IActiveNode,
-  NodeStore
-> {
+export class ActiveNodeStore extends CollectibleStore<IActiveNode, NodeStore> {
   eventStore: any;
   debouncers = new Map<string, any>();
   constructor(node: IRecordId) {
@@ -486,45 +444,18 @@ export class ActiveNodeStore extends ActiveResourceStore<
     }));
   };
 
-  private async refreshTypes() {
-    const self = this.get();
-    const collections = self.collections;
-    if (!collections || collections.length === 0) {
-      this.update((n) => ({ ...n, types: [] }));
-      return;
-    }
-    const types = await collectionStore.resolveTypes(collections);
-    const avatar = await this.resourceStore.refreshNodeAvatar(self.id, {
-      types
-    });
-    this.update((n) => ({ ...n, types, avatar }));
-  }
-
   async linkCollection(id: IRecordId) {
     const node = this.get();
     let src = node.id;
     if (node.focusedBlock) src = node.focusedBlock;
-    const result = await linker.link(src, id);
-    if (result) {
-      this.update((n) => ({
-        ...n,
-        collections: [...(n.collections ?? []), id]
-      }));
-      await this.refreshTypes();
-    }
-    return result;
+    return super.linkCollection(id, src);
   }
 
   async unlinkCollection(id: IRecordId) {
     const node = this.get();
     let src = node.id;
     if (node.focusedBlock) src = node.focusedBlock;
-    await linker.unlink(src, id);
-    this.update((n) => ({
-      ...n,
-      collections: n.collections?.filter((x) => !isSameResource(x, id))
-    }));
-    await this.refreshTypes();
+    return super.unlinkCollection(id, src);
   }
 
   /**

@@ -4,6 +4,7 @@ import type {
   IActiveResource,
   IResource
 } from "../flux/resourceStores/resource.type";
+import type { ICollectionExpanded } from "../collection/collection.type";
 
 export enum TaskType {
   INDEFINITE = "INDEFINITE",
@@ -28,4 +29,6 @@ export interface ITaskThumb extends ITaskBase {}
 export type IActiveTask = IActiveResource &
   ITask & {
     isPageLoading: boolean;
+    collections?: IRecordId[];
+    types?: ICollectionExpanded[];
   };

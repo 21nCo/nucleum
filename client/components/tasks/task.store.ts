@@ -17,6 +17,7 @@ import {
 import type { OmitForCapture } from "../flux/resourceStores/resource.type";
 import { ResourceActions } from "../record/resource.actions";
 import type { IContextMenu } from "$lib/client/types/select.type";
+import { CollectibleStore } from "../collection/collectible.store";
 
 class TaskStore extends ResourceStore<ITask> {
   constructor() {
@@ -56,10 +57,7 @@ class TaskStore extends ResourceStore<ITask> {
 
 export const taskStore = new TaskStore();
 
-export class ActiveTaskStore extends ActiveResourceStore<
-  IActiveTask,
-  TaskStore
-> {
+export class ActiveTaskStore extends CollectibleStore<IActiveTask, TaskStore> {
   constructor(taskId: IRecordId) {
     super(taskId, taskStore);
   }

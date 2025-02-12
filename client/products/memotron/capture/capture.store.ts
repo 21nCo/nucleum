@@ -86,6 +86,7 @@ import {
 } from "$lib/client/components/markdown/markdown.utils";
 import type { IBlock } from "$lib/client/components/markdown/md.type";
 import { recentsStore } from "$lib/client/components/record/recent.store";
+import { CollectibleStore } from "$lib/client/components/collection/collectible.store";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 const captureAction = resourceAction(Resource.node, ResourceActionType.CREATE);
@@ -367,7 +368,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       metadata,
       properties: params?.isEmbedContext ? [] : captureStore.properties,
       creationContext: params?.isEmbedContext
-        ? (params?.creationContext ?? this.get().nodeId)
+        ? params?.creationContext ?? this.get().nodeId
         : undefined
     } as IMediaNode;
     const result = await nodeStore.create([node], {
@@ -511,7 +512,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
         metadata,
         properties: params?.isEmbedContext ? [] : captureStore.properties,
         creationContext: params?.isEmbedContext
-          ? (params?.creationContext ?? this.get().nodeId)
+          ? params?.creationContext ?? this.get().nodeId
           : undefined
       } as IMediaNode;
       nodes.push(node);
@@ -569,7 +570,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       metadata,
       properties: captureStore.properties,
       creationContext: params?.isEmbedContext
-        ? (params?.creationContext ?? this.get().nodeId)
+        ? params?.creationContext ?? this.get().nodeId
         : undefined,
       label: `Audio Recording - ${new Date().toLocaleString()}`,
       body: {
@@ -682,7 +683,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       label: text.split("://").pop(),
       url: text,
       creationContext: params?.isEmbedContext
-        ? (params?.creationContext ?? this.get().nodeId)
+        ? params?.creationContext ?? this.get().nodeId
         : undefined,
       body: {
         hash: "",
@@ -796,7 +797,11 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     const typedCollections = val.links
       ?.filter((x) => x.from === "root" && x.toSubType === CollectionType.TYPED)
       .map((x) => x.to);
-    await nodeStore.refreshNodeAvatar(rootId, {
+    // await nodeStore.refreshNodeAvatar(rootId, {
+    //   collections: typedCollections
+    // });
+    const collectibleStore = new CollectibleStore({ id: rootId }, nodeStore);
+    await collectibleStore.refreshAvatar(rootId, {
       collections: typedCollections
     });
 

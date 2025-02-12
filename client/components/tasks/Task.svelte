@@ -1,5 +1,9 @@
 <script lang="ts">
-  import { ActiveTaskStore, type IActiveTaskStore } from "./task.store";
+  import {
+    ActiveTaskStore,
+    resolveTaskContextMenu,
+    type IActiveTaskStore
+  } from "./task.store";
   import { onMount } from "svelte";
   import PageLoadingPulse from "$lib/client/elements/feedback/animations/PageLoadingPulse.svelte";
   import {
@@ -19,6 +23,10 @@
   } from "$lib/client/types/switcher.enum";
   import { resolveResourceIcon } from "../flux/resourceStores/resource.utils";
   import { Resource } from "../flux/resourceStores/resource.enum";
+  import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
+  import { Placement } from "$lib/client/types/direction.enum";
+  import { Size } from "$lib/client/types/size.enum";
+  import TaskCollectionsLane from "./TaskCollectionsLane.svelte";
 
   export let id: string;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -41,10 +49,19 @@
   <div class="flex w-full h-full gap-4 p-4">
     <aside class="flex flex-col gap-4 bg-bgs2 rounded-lg p-4 w-80">
       <div class="flex items-center gap-3">
-        <Icon icon={resolveTaskTypeIcon($task.type)} class="text-fgs3" />
+        <!-- <Icon icon={resolveTaskTypeIcon($task.type)} class="text-fgs3" /> -->
         <h1 class="text-h3 font-medium">{$task.label}</h1>
+        <ContextMenuAction
+          menuResolver={() =>
+            resolveTaskContextMenu($task, ResourceAccessPoint.SELF)}
+          position={Placement.BottomCenter}
+          id="taskContextMenu"
+          size={Size.lg}
+        />
       </div>
-
+      <div>
+        <TaskCollectionsLane {task} />
+      </div>
       {#if $task.startDate || $task.endDate}
         <div class="text-b2 text-fgs3">
           {#if $task.startDate}
@@ -58,6 +75,7 @@
 
       {#if $task.description}
         <div class="mt-4">
+          <span class="text-b2 text-fgs3">Description</span>
           <Markdown md={$task.description} />
         </div>
       {/if}
