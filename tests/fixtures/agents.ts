@@ -2,8 +2,8 @@ import { CONTEXT } from "$lib/server/common/account/account.type";
 
 export const mockAgents = {
   dev: {
-    id: "m3hb3a4gf6jxl0kkqisq6n5i",
-    db: "m3hb3a4gf6jxl0kkqisq6n5i",
+    id: "m6oycdd9ighfkxlf8ctxw4pr",
+    db: "m6oycdd9ighfkxlf8ctxw4pr",
     ns: "user",
     tk: "tokenone",
     region: "insouth",
@@ -13,14 +13,14 @@ export const mockAgents = {
     issuer: "tidigit.dev",
     aud: "memotron.tidigit.dev",
     iss: "tidigit.dev",
-    context: CONTEXT.USER
+    context: CONTEXT.USER,
   },
   pre: {
     id: "pre-agent",
-    context: CONTEXT.USER
+    context: CONTEXT.USER,
   },
   live: {
     id: "live-agent",
-    context: CONTEXT.USER
-  }
+    context: CONTEXT.USER,
+  },
 } as const;

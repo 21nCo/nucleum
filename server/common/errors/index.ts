@@ -36,3 +36,9 @@ export class NotFoundError extends BaseError {
     super(`${resource} not found`, 404);
   }
 }
+
+export class InternalServerError extends BaseError {
+  constructor(message: string) {
+    super(message, 500);
+  }
+}
