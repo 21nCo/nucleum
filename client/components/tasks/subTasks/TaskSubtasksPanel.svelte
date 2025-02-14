@@ -11,6 +11,7 @@
   import { taskStore, type IActiveTaskStore } from "../task.store";
   import { SubTasksMethod } from "../task.type";
   import SubTaskItem from "./SubTaskItem.svelte";
+  import SubTasksMethodSwitcher from "./SubTasksMethodSwitcher.svelte";
   export let task: IActiveTaskStore;
   $: _subTasks = [
     ...($task.subTasks || []),
@@ -62,31 +63,7 @@
 
 {#if $task.subTasks}
   <div class="flex items-center justify-end gap-2 w-full">
-    <div class="text-fgs3">
-      <DropDown
-        bind:value={$task.subTasksMethod}
-        popoverWidth="w-32"
-        style={InputStyle.PLAIN}
-        isDisableSearch={true}
-        items={[
-          {
-            value: SubTasksMethod.DEFAULT,
-            icon: "ph:circle-dashed-light",
-            label: "Default"
-          },
-          {
-            value: SubTasksMethod.STEPS,
-            icon: "ph:list-numbers-light",
-            label: "Steps"
-          }
-          // {
-          //   value: SubTasksMethod.TREE,
-          //   icon: "ph:tree-view-light",
-          //   label: "Tree"
-          // }
-        ]}
-      />
-    </div>
+    <SubTasksMethodSwitcher bind:subTasksMethod={$task.subTasksMethod} />
   </div>
   <div
     class={cn("flex flex-col p-4", {

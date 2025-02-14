@@ -22,8 +22,10 @@
   import ModalFooter from "../modal/ModalFooter.svelte";
   import { taskStore } from "./task.store";
   import { toasts } from "$lib/client/stores/notification.store";
-  import { TaskType } from "./task.type";
+  import { SubTasksMethod, TaskType } from "./task.type";
   import { resolveTaskSubTypesForSwitcher } from "./task.utils";
+  import SubTaskStepMarker from "./subTasks/SubTaskStepMarker.svelte";
+  import SubTasksMethodSwitcher from "./subTasks/SubTasksMethodSwitcher.svelte";
   export let context: ResourceAccessPoint | undefined = undefined;
 
   let label: string = "";
@@ -44,6 +46,7 @@
   let isCollectionSelectorVisible: boolean = false;
   let subTasks: string[] = [];
   let newSubTask: string = "";
+  let subTasksMethod: SubTasksMethod = SubTasksMethod.DEFAULT;
   async function handleCreate() {
     try {
       if (!label) {
@@ -116,15 +119,27 @@
       </div>
     {/if}
     {#if isSubTasksVisible}
-      <div class="flex flex-col gap-4 bg-bgs2 rounded-md p-4">
+      <div class="flex flex-col gap-4 bg--bgs2 rounded-md p-4">
         <span class="text-b2 font-medium text-fgs2">Sub tasks</span>
-        {#each subTasks as task}
-          <TextInput
-            bind:value={task}
-            placeholder="+ Sub task name"
-            isShowClearControl={true}
-            on:cancel={() => (subTasks = subTasks.filter((t) => t !== task))}
-          />
+        <div class="flex items-center justify-end gap-2 w-full">
+          <SubTasksMethodSwitcher bind:subTasksMethod />
+        </div>
+        {#each subTasks as task, index (task)}
+          <div class="flex items-center gap-2">
+            {#if subTasksMethod === SubTasksMethod.STEPS}
+              <SubTaskStepMarker
+                subTask={task}
+                {index}
+                totalLength={subTasks.length}
+              />
+            {/if}
+            <TextInput
+              bind:value={task}
+              placeholder="+ Sub task name"
+              isShowClearControl={true}
+              on:cancel={() => (subTasks = subTasks.filter((t) => t !== task))}
+            />
+          </div>
         {/each}
         <TextInput
           bind:value={newSubTask}
