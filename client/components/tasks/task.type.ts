@@ -23,6 +23,7 @@ export interface ITaskBase {
   subTasks?: IRecordId[];
   subTasksMethod?: SubTasksMethod;
   status?: TaskStatus;
+  color?: number;
 }
 
 export interface ITask extends ITaskBase {}

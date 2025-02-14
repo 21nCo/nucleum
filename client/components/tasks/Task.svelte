@@ -16,6 +16,7 @@
   import { resizeListener } from "$lib/client/actions/resize.action";
   import TaskTitleRow from "./info/TaskTitleRow.svelte";
   import TaskSubtasksPanel from "./subTasks/TaskSubtasksPanel.svelte";
+  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
 
   export let id: string;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -72,48 +73,57 @@
     selectedPanel = items[0].value;
     return items;
   }
+
+  $: console.log({ task: $task });
 </script>
 
-{#if !$task || !isReady}
-  <div class="w-full h-full p-4">
-    <PageLoadingPulse />
-  </div>
-{:else if $task}
-  <div
-    class="flex w-full h-full gap-4 p-4 overflow-auto"
-    use:resizeListener={(e) => {
-      containerWidth = e.width;
-    }}
-  >
-    {#if !isConstrainedWidth}
-      <aside class="flex flex-col gap-4 bg-bgs2 rounded-lg p-4 w-96">
-        <TaskInfoPanel {task} />
-      </aside>
-    {/if}
-    <main class="flex flex-col gap-4 flex-1 overflow-auto">
-      <div
-        class="flex flex-col w-full overflow-auto gap-3 bg-bgs2 rounded-lg border border-brs3"
-      >
-        {#if isConstrainedWidth}
-          <TaskTitleRow {task} isConstrainedWidth={true} />
-        {/if}
-        <PanelSwitcher
-          items={resolvePanelSwitcherItems(isConstrainedWidth)}
-          style={PanelSwitcherStyle.BAR}
-          bind:value={selectedPanel}
-          isExpandToFullWidth={true}
-          isPreventDropdownForCW={true}
-          parentBgIndex={2}
-          isBgBar={true}
-        ></PanelSwitcher>
-      </div>
-      <div class="flex-1">
-        {#if selectedPanel === "info"}
-          <TaskInfoPanel {task} {isConstrainedWidth} />
-        {:else if selectedPanel === "subtasks"}
-          <TaskSubtasksPanel {task} />
-        {/if}
-      </div>
-    </main>
-  </div>
-{/if}
+<CustomColorPropagator
+  class="h-full w-full"
+  color={$task?.color ?? ($task?.parent ? $task.parent?.[0]?.color : undefined)}
+>
+  {#if !$task || !isReady}
+    <div class="w-full h-full p-4">
+      <PageLoadingPulse />
+    </div>
+  {:else if $task}
+    <div
+      class="flex w-full h-full gap-4 p-4 overflow-auto"
+      use:resizeListener={(e) => {
+        containerWidth = e.width;
+      }}
+    >
+      {#if !isConstrainedWidth}
+        <aside
+          class="flex flex-col gap-4 bg-bgs2 border border-brs3 rounded-lg p-4 w-96 2k:w-[30rem]"
+        >
+          <TaskInfoPanel {task} />
+        </aside>
+      {/if}
+      <main class="flex flex-col gap-4 flex-1 overflow-auto">
+        <div
+          class="flex flex-col w-full overflow-auto gap-3 bg-bgs2 rounded-lg border border-brs3"
+        >
+          {#if isConstrainedWidth}
+            <TaskTitleRow {task} isConstrainedWidth={true} />
+          {/if}
+          <PanelSwitcher
+            items={resolvePanelSwitcherItems(isConstrainedWidth)}
+            style={PanelSwitcherStyle.BAR}
+            bind:value={selectedPanel}
+            isExpandToFullWidth={true}
+            isPreventDropdownForCW={true}
+            parentBgIndex={2}
+            isBgBar={true}
+          ></PanelSwitcher>
+        </div>
+        <div class="flex-1">
+          {#if selectedPanel === "info"}
+            <TaskInfoPanel {task} {isConstrainedWidth} />
+          {:else if selectedPanel === "subtasks"}
+            <TaskSubtasksPanel {task} />
+          {/if}
+        </div>
+      </main>
+    </div>
+  {/if}
+</CustomColorPropagator>

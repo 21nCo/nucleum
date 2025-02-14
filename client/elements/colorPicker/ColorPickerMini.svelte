@@ -5,6 +5,7 @@
   const dispatch = createEventDispatcher();
   export let hue: number;
   export let changeCallback: (value: number | string) => void;
+  export let onDebouncedChangeCallback: (value: number | string) => void;
   let saturation = 50;
   let lightness = 50;
 
@@ -31,6 +32,7 @@
     componentProps: {
       hue,
       onChangeCallback: onChange,
+      onDebouncedChangeCallback,
       isShowPreview: false
     }
   }}

@@ -33,10 +33,14 @@
     reorderList,
     type DragDropEvent
   } from "$lib/client/actions/rearrange.action";
+  import GoalColorPickerWithPreview from "$lib/client/products/pointron/goals/GoalColorPickerWithPreview.svelte";
+  import { isValidString } from "$lib/shared/utils/text.utils";
+  import type { IRecordId } from "$lib/client/types/data.type";
   export let context: ResourceAccessPoint | undefined = undefined;
 
   let label: string = "";
   let type: TaskType = TaskType.INDEFINITE;
+  let color: number | undefined = undefined;
   let description: IMarkdown = {
     blocks: [
       {
@@ -54,6 +58,7 @@
   let subTasks: string[] = [];
   let newSubTask: string = "";
   let subTasksMethod: SubTasksMethod = SubTasksMethod.DEFAULT;
+  let parent: ITask | undefined;
   async function handleCreate() {
     try {
       if (!label) {
@@ -67,7 +72,9 @@
         subTasksMethod,
         description: isDescriptionVisible ? description : undefined,
         startDate: type === TaskType.DEFINITE ? date : undefined,
-        endDate: type === TaskType.DEFINITE ? date : undefined
+        endDate: type === TaskType.DEFINITE ? date : undefined,
+        parent: parent ? [parent.id] : undefined,
+        color
       };
 
       const result = await taskStore.save(task, {
@@ -117,6 +124,12 @@
       size={Size.md}
       style={OptionSelectorStyle.TRAIN}
     />
+    {#if !parent}
+      <GoalColorPickerWithPreview
+        bind:hue={color}
+        label={isValidString(label) ? label : "Preview"}
+      />
+    {/if}
     {#if type === TaskType.DEFINITE}
       <DatePicker
         label={{

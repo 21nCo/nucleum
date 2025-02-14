@@ -15,7 +15,7 @@
 
 <button
   class={cn("flex relative z-20 items-center gap-2 p-1.5 rounded-md", {
-    "bg-aps1": isActive || isAccent,
+    "bg-ccs1 text-cbg": isActive || isAccent,
     "bg-bgs3 notouch:hover:bg-bgs4 active:bg-bgs4": !isActive && !isAccent
   })}
   use:tooltip={{
@@ -30,6 +30,10 @@
       ? "ph:check-circle-light"
       : resolveTaskStatusIcon(status)}
     size={Size.sm}
+    class={cn({
+      "text-cbg": isActive || isAccent,
+      "text-fgs3": !isActive && !isAccent
+    })}
   />
   {#if isActive}
     <span

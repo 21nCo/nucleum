@@ -4,14 +4,17 @@
     type IActiveTaskStore
   } from "$lib/client/components/tasks/task.store";
   import Breadcrumbs from "$lib/client/elements/breadcrumbsV2/Breadcrumbs.svelte";
+  import ColorPickerMini from "$lib/client/elements/colorPicker/ColorPickerMini.svelte";
   import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
+  import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import { Placement } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { ResourceAccessPoint } from "../../flux/resourceStores/resource.type";
   export let task: IActiveTaskStore;
   export let isConstrainedWidth = false;
-
+  let labelEditVal = "";
   function resolveBreadcrumbs() {
     const parentItems = $task.parent?.map((p) => ({
       label: p.label,
@@ -25,6 +28,27 @@
     }
     return parentItems;
   }
+
+  function handleLabelChange(e: CustomEvent<string>) {
+    task.modify({
+      label: e.detail
+    });
+  }
+
+  function handleColorChange(e: number | string) {
+    task.modify({
+      color: +e
+    });
+  }
+
+  function handleLabelSave(e: any) {
+    $task.label = labelEditVal;
+    task.modify({
+      label: labelEditVal
+    });
+    labelEditVal = "";
+    $task.isInEditMode = false;
+  }
 </script>
 
 <div
@@ -34,10 +58,44 @@
 >
   <!-- <Icon icon={resolveTaskTypeIcon($task.type)} class="text-fgs3" /> -->
   <Breadcrumbs items={resolveBreadcrumbs()} />
-  <div class="w-full flex items-center justify-between">
-    <div class="flex-1">
-      <h1 class="text-h4 lp:text-h3 font-medium flex-1">{$task.label}</h1>
-    </div>
+  <div class="w-full flex items-center justify-between gap-1">
+    {#if $task.isInEditMode}
+      <div class="flex items-center gap-2 flex-1">
+        <span class="flex-1">
+          <TextInput
+            bind:value={labelEditVal}
+            placeholder="Enter task name"
+            width="w-full"
+            isShowSaveControl={true}
+            parentBackgroundIndex={2}
+            on:debouncedChange={handleLabelChange}
+            on:save={handleLabelSave}
+            on:cancel={() => {
+              $task.isInEditMode = false;
+              labelEditVal = "";
+            }}
+          />
+        </span>
+        {#if !isValidArrayWithData($task.parent)}
+          <ColorPickerMini
+            bind:hue={$task.color}
+            onDebouncedChangeCallback={handleColorChange}
+          />
+        {/if}
+      </div>
+    {:else}
+      <button
+        class="flex-1"
+        on:click={() => {
+          $task.isInEditMode = true;
+          labelEditVal = $task.label;
+        }}
+      >
+        <h1 class="text-left text-h4 lp:text-h3 font-medium flex-1 text-ccs1">
+          {$task.label}
+        </h1>
+      </button>
+    {/if}
     <ContextMenuAction
       menuResolver={() =>
         resolveTaskContextMenu($task, ResourceAccessPoint.SELF)}

@@ -22,7 +22,7 @@
     {#if status === TaskStatus.IN_PROGRESS}
       <div
         class={cn(
-          "absolute top-1/2 left-0 w-1/2 border-2 border-t border-aps1 z-10"
+          "absolute top-1/2 left-0 w-1/2 border-2 border-t border-ccs1 z-10"
         )}
       />
     {/if}

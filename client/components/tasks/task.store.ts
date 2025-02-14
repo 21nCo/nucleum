@@ -1,9 +1,5 @@
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import {
-  ResourceStore,
-  activeResources,
-  ActiveResourceStore
-} from "$lib/client/components/flux/resourceStores/resource.store";
+import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
 import { StoreDataType, type IRecordId } from "$lib/client/types/data.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import { logger } from "$lib/client/components/debug/logger.client";
@@ -14,7 +10,10 @@ import {
   ResourceAccessMode,
   ResourceAccessPoint
 } from "../flux/resourceStores/resource.type";
-import type { OmitForCapture } from "../flux/resourceStores/resource.type";
+import type {
+  OmitForCapture,
+  OmitForCaptureWithId
+} from "../flux/resourceStores/resource.type";
 import { ResourceActions } from "../record/resource.actions";
 import type { IContextMenu } from "$lib/client/types/select.type";
 import { CollectibleStore } from "../collection/collectible.store";
@@ -35,7 +34,7 @@ class TaskStore extends ResourceStore<ITask> {
     logger.log({ at: "TaskStore.save", form });
 
     let subTaskIds: IRecordId[] = [];
-    let subTasks: OmitForCapture<ITask>[] = [];
+    let subTasks: OmitForCaptureWithId<ITask>[] = [];
     if (additionalParams?.subTasks && additionalParams.subTasks.length > 0) {
       subTasks = additionalParams.subTasks.map((subTask) => ({
         id: generateResourceId(Resource.task),
@@ -48,7 +47,7 @@ class TaskStore extends ResourceStore<ITask> {
       subTaskIds = subTasks.map((subTask) => subTask.id);
     }
 
-    const resource: OmitForCapture<ITask> = {
+    const resource: OmitForCaptureWithId<ITask> = {
       id,
       label: form.label || "",
       type: form.type || TaskType.INDEFINITE,
@@ -56,10 +55,9 @@ class TaskStore extends ResourceStore<ITask> {
       startDate: form.startDate,
       endDate: form.endDate,
       parent: form.parent,
+      color: form.color,
       subTasks: subTaskIds,
-      isCompleted: false,
-      subTasksMethod: form.subTasksMethod,
-      accessMode: ResourceAccessMode.POP
+      subTasksMethod: form.subTasksMethod
     };
 
     recentsStore.add(resource, {

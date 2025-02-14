@@ -105,7 +105,7 @@
         {size}
         isFilled={isActive}
         class={cn({
-          "fill-aps1": isActive
+          "fill-ccs1": isActive
         })}
       />
     {/if}
@@ -130,7 +130,7 @@
       </span>
       {#if item.badge}
         <span class="ml-2">
-          <Badge {size} text={item.badge} isAccentColor={isActive} />
+          <Badge {size} text={item.badge} isApplyCustomColor={isActive} />
         </span>
       {/if}
     </div>
