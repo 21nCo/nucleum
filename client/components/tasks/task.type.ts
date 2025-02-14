@@ -1,9 +1,6 @@
 import type { IMarkdown } from "../markdown/md.type";
 import type { IRecordId } from "$lib/client/types/data.type";
-import type {
-  IActiveResource,
-  IResource
-} from "../flux/resourceStores/resource.type";
+import type { IActiveResource } from "../flux/resourceStores/resource.type";
 import type { ICollectionExpanded } from "../collection/collection.type";
 
 export enum TaskType {
@@ -25,6 +22,7 @@ export interface ITaskBase {
   parent?: IRecordId[];
   subTasks?: IRecordId[];
   subTasksMethod?: SubTasksMethod;
+  status?: TaskStatus;
 }
 
 export interface ITask extends ITaskBase {}
@@ -38,3 +36,9 @@ export type IActiveTask = IActiveResource &
     collections?: IRecordId[];
     types?: ICollectionExpanded[];
   };
+
+export enum TaskStatus {
+  NOT_STARTED = "NOT_STARTED",
+  IN_PROGRESS = "IN_PROGRESS",
+  COMPLETED = "COMPLETED"
+}

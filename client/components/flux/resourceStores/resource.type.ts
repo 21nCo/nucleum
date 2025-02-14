@@ -171,7 +171,11 @@ export enum ResourceAccessPoint {
   COMBINATION = "combination",
   CAPTURE = "capture",
   CLIPPER = "clipper",
-  PICKER = "picker"
+  PICKER = "picker",
+  /**
+   * The resource is being accessed from a creation form
+   */
+  FORM = "form"
 }
 
 export enum ResourceAccessPointState {

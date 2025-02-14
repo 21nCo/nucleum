@@ -58,6 +58,7 @@ class TaskStore extends ResourceStore<ITask> {
       parent: form.parent,
       subTasks: subTaskIds,
       isCompleted: false,
+      subTasksMethod: form.subTasksMethod,
       accessMode: ResourceAccessMode.POP
     };
 

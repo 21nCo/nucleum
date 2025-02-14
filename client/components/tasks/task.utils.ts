@@ -1,4 +1,4 @@
-import { TaskType } from "./task.type";
+import { TaskStatus, TaskType } from "./task.type";
 import type { ISelectItem } from "$lib/client/types/select.type";
 
 export function resolveTaskTypeIcon(type: TaskType) {
@@ -40,4 +40,17 @@ export function resolveTaskSubTypesForSwitcher(
     };
   });
   return taskTypes;
+}
+
+export function resolveTaskStatusIcon(status: TaskStatus) {
+  switch (status) {
+    case TaskStatus.NOT_STARTED:
+      return "ph:circle-light";
+    case TaskStatus.IN_PROGRESS:
+      return "ph:hourglass-simple-light";
+    case TaskStatus.COMPLETED:
+      return "ph:check-circle-fill";
+    default:
+      return "ph:circle-light";
+  }
 }

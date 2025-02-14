@@ -27,16 +27,23 @@
   }
 </script>
 
-<div class={cn("flex items-center gap-3", { "px-6 pt-2": isConstrainedWidth })}>
+<div
+  class={cn("flex flex-col items-center gap-1", {
+    "px-3 lp:px-6 pt-2": isConstrainedWidth
+  })}
+>
   <!-- <Icon icon={resolveTaskTypeIcon($task.type)} class="text-fgs3" /> -->
-  <div class="flex-1">
-    <Breadcrumbs items={resolveBreadcrumbs()} />
-    <h1 class="text-h3 font-medium flex-1">{$task.label}</h1>
+  <Breadcrumbs items={resolveBreadcrumbs()} />
+  <div class="w-full flex items-center justify-between">
+    <div class="flex-1">
+      <h1 class="text-h4 lp:text-h3 font-medium flex-1">{$task.label}</h1>
+    </div>
+    <ContextMenuAction
+      menuResolver={() =>
+        resolveTaskContextMenu($task, ResourceAccessPoint.SELF)}
+      position={Placement.BottomCenter}
+      id="taskContextMenu"
+      size={Size.lg}
+    />
   </div>
-  <ContextMenuAction
-    menuResolver={() => resolveTaskContextMenu($task, ResourceAccessPoint.SELF)}
-    position={Placement.BottomCenter}
-    id="taskContextMenu"
-    size={Size.lg}
-  />
 </div>

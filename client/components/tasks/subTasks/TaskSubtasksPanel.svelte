@@ -1,20 +1,33 @@
 <script lang="ts">
+  import {
+    reorderList,
+    type DragDropEvent
+  } from "$lib/client/actions/rearrange.action";
   import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import type { IRecordId } from "$lib/client/types/data.type";
   import { InputStyle } from "$lib/client/types/input.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import { ResourceAccessMode } from "../../flux/resourceStores/resource.type";
-  import { resourceInList } from "../../flux/resourceStores/resource.utils";
+  import {
+    resourceInList,
+    shiftResourceInArray
+  } from "../../flux/resourceStores/resource.utils";
   import NestedList from "../../nestedList/NestedList.svelte";
   import { NestedListStyle } from "../../nestedList/nestedList.type";
   import { taskStore, type IActiveTaskStore } from "../task.store";
   import { SubTasksMethod } from "../task.type";
+  import { resolveTaskStatusIcon } from "../task.utils";
   import SubTaskItem from "./SubTaskItem.svelte";
   import SubTasksMethodSwitcher from "./SubTasksMethodSwitcher.svelte";
   export let task: IActiveTaskStore;
   $: _subTasks = [
-    ...($task.subTasks || []),
+    ...($task.subTasks
+      ? $task.subTasks.map((t) => ({
+          ...t,
+          icon: resolveTaskStatusIcon(t.status)
+        }))
+      : []),
     $task.subTasksMethod !== SubTasksMethod.DEFAULT && {
       label: undefined,
       type: "add"
@@ -56,20 +69,53 @@
     const item = _subTasks.find(resourceInList(id));
     if (item) return item;
     const result = await taskStore.select(id);
-    if (result) return result;
+    if (result)
+      return {
+        ...result,
+        icon: resolveTaskStatusIcon(result.status)
+      };
     else return "";
+  }
+
+  function onReorderSubTasks(event: DragDropEvent) {
+    const { fromId, toId } = event;
+    if (!fromId || !toId || fromId === toId) return;
+    _subTasks = shiftResourceInArray(_subTasks, fromId, toId);
+    task.modify(
+      {
+        subTasks: _subTasks.map((t) => t.id).filter((id) => id)
+      },
+      {
+        isPreventBackPropagation: true
+      }
+    );
+  }
+
+  function onSubTasksMethodChange(e: any) {
+    task.modify({
+      subTasksMethod: $task.subTasksMethod
+    });
   }
 </script>
 
 {#if $task.subTasks}
   <div class="flex items-center justify-end gap-2 w-full">
-    <SubTasksMethodSwitcher bind:subTasksMethod={$task.subTasksMethod} />
+    <SubTasksMethodSwitcher
+      bind:subTasksMethod={$task.subTasksMethod}
+      on:select={onSubTasksMethodChange}
+    />
   </div>
   <div
     class={cn("flex flex-col p-4", {
       "gap-6": $task.subTasksMethod === SubTasksMethod.STEPS,
       "gap-2": $task.subTasksMethod === SubTasksMethod.DEFAULT
     })}
+    use:reorderList={{
+      listId: "subTasks",
+      draggedOverClass: "!border-aps1",
+      onDrop: onReorderSubTasks,
+      dragImage: "dragimage"
+    }}
   >
     {#if !$task.subTasksMethod || $task.subTasksMethod === SubTasksMethod.DEFAULT}
       <NestedList

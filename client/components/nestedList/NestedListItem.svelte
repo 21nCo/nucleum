@@ -10,6 +10,8 @@
   import { InputStyle } from "$lib/client/types/input.type";
   import { isSameResource } from "../flux/resourceStores/resource.utils";
   import type { IRecordId } from "$lib/client/types/data.type";
+  import { hoverable } from "$lib/client/actions/hover.action";
+  import { tooltip } from "$lib/client/actions/popover.action";
   const dispatch = createEventDispatcher();
   export let id: string;
   export let index: number;
@@ -26,6 +28,7 @@
   let content: NestedItemContent | undefined = undefined;
   let children: string[] = [];
   let isCollapsed = true;
+  let isIconHovering = false;
   $: if (id) {
     refreshContentAndChildren(id);
   }
@@ -72,19 +75,28 @@
       })}
       style="padding-left: {nestingLevel ? nestingLevel * 2.5 : 0.8}rem"
     >
-      <span class="flex gap-2 text-left w-full min-w-0 flex-1">
-        {#if content.icon}
-          <Icon
-            icon={content.icon}
-            class={cn({
-              "fill-ccs1": isActive,
-              "stroke-fgs1": !isActive
-            })}
-          />
-        {:else if children?.length > 0}
-          <span
-            class="flex items-center justify-center hover:bg-bgs3 rounded-md p-1"
-          >
+      <span
+        class="flex items-center gap-2 text-left w-full min-w-0 flex-1"
+        use:hoverable={{
+          onHover: (val) => {
+            isIconHovering = val;
+          }
+        }}
+      >
+        <span
+          class={cn("flex items-center justify-center rounded-md p-1", {
+            "hover:bg-bgs3": children?.length > 0
+          })}
+        >
+          {#if content.icon && (!isIconHovering || children?.length < 1)}
+            <Icon
+              icon={content.icon}
+              class={cn({
+                "fill-ccs1": isActive,
+                "stroke-fgs1": !isActive
+              })}
+            />
+          {:else if children?.length > 0}
             <Icon
               icon={isCollapsed
                 ? "ph:caret-right-light"
@@ -95,21 +107,21 @@
               })}
               on:click={onchevclick}
             />
-          </span>
-        {/if}
-        <TextWithHoverTooltip text={content.label} class="truncate" />
+          {/if}
+        </span>
+        <span
+          class="flex-1"
+          use:tooltip={{
+            isEnableOnlyOnTruncate: true
+          }}
+        >
+          {content.label}
+        </span>
+        <!-- <TextWithHoverTooltip text={content.label} class="truncate" /> -->
       </span>
       <span class="shrink-0">
-        {#if content.icon && children.length > 0}
-          <Icon
-            icon={isCollapsed ? "ph:caret-right-light" : "ph:caret-down-light"}
-            class={cn({
-              "stroke-cbg": isActive,
-              "stroke-fgs1": !isActive
-            })}
-          />
-        {:else if children.length > 0}
-          <span class="text-b4 text-fgs2 bg-bgs2 rounded-md px-2 py-0.5">
+        {#if children.length > 0}
+          <span class="text-b3 text-fgs2 bg-bgs2 rounded-md px-2 py-0.5">
             {children.length}
           </span>
         {/if}

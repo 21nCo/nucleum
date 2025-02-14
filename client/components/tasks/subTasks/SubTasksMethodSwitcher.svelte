@@ -28,5 +28,6 @@
       //   label: "Tree"
       // }
     ]}
+    on:select
   />
 </div>

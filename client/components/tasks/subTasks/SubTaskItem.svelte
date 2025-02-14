@@ -4,7 +4,7 @@
   import { InputStyle } from "$lib/client/types/input.type";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { SubTasksMethod, type ITask } from "../task.type";
+  import { SubTasksMethod, TaskStatus, type ITask } from "../task.type";
   import { createEventDispatcher } from "svelte";
   import SubTaskStepMarker from "./SubTaskStepMarker.svelte";
   export let subTask: ITask | { label?: string; type: string };
@@ -29,10 +29,18 @@
       }
     )}
     on:click
+    data-id={subTask.id}
+    data-index={index}
+    data-type={subTask.type}
+    draggable={true}
   >
     <SubTaskStepMarker {subTask} {index} {totalLength} />
     {#if subTask.label}
-      <div class="text-left flex-1 py-1.5 group-hover:text-aps1">
+      <div
+        class={cn("text-left flex-1 py-1.5 group-hover:text-aps1", {
+          "line-through": subTask.status === TaskStatus.COMPLETED
+        })}
+      >
         {subTask.label}
       </div>
     {:else}

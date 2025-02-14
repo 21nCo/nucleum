@@ -107,7 +107,7 @@
           isBgBar={true}
         ></PanelSwitcher>
       </div>
-      <div>
+      <div class="flex-1">
         {#if selectedPanel === "info"}
           <TaskInfoPanel {task} {isConstrainedWidth} />
         {:else if selectedPanel === "subtasks"}
