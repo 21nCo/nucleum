@@ -210,7 +210,8 @@ export class SearchStore {
         type:
           "type" in this.filters && this.filters.type
             ? this.filters.type?.toUpperCase()
-            : undefined
+            : undefined,
+        parent: this.searchQuery ? undefined : false
       },
       search: isValidString(this.searchQuery)
         ? {
@@ -441,7 +442,8 @@ export class SearchStore {
             ...activeResourceFilterV2,
             ...additionalFilters,
             isArchived: this.filters.isArchived ?? false,
-            type: subType ? [subType] : undefined
+            type: subType ? [subType] : undefined,
+            parent: resource === Resource.task ? false : undefined
           },
           groupBy: ["all"]
         });

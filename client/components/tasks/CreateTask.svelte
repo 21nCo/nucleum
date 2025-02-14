@@ -42,7 +42,8 @@
   let isSubTasksVisible: boolean = false;
   let isParentSelectorVisible: boolean = false;
   let isCollectionSelectorVisible: boolean = false;
-
+  let subTasks: string[] = [];
+  let newSubTask: string = "";
   async function handleCreate() {
     try {
       if (!label) {
@@ -58,15 +59,24 @@
         endDate: type === TaskType.DEFINITE ? date : undefined
       };
 
-      await taskStore.save(task, {
+      const result = await taskStore.save(task, {
+        subTasks,
         context:
           context ?? resourceAction(Resource.task, ResourceActionType.CREATE)
       });
       toasts.success("Task created successfully");
+      return result;
     } catch (error) {
       console.error("Error creating task:", error);
       toasts.error("Failed to create task");
     }
+  }
+
+  function handleAddSubTask() {
+    if (newSubTask) {
+      subTasks = [...subTasks, newSubTask];
+    }
+    newSubTask = "";
   }
 </script>
 
@@ -103,6 +113,28 @@
       <div class="flex flex-col gap-4 bg-bgs2 rounded-md p-4">
         <span class="text-b2 font-medium text-fgs2">Description</span>
         <Markdown bind:md={description} />
+      </div>
+    {/if}
+    {#if isSubTasksVisible}
+      <div class="flex flex-col gap-4 bg-bgs2 rounded-md p-4">
+        <span class="text-b2 font-medium text-fgs2">Sub tasks</span>
+        {#each subTasks as task}
+          <TextInput
+            bind:value={task}
+            placeholder="+ Sub task name"
+            isShowClearControl={true}
+            on:cancel={() => (subTasks = subTasks.filter((t) => t !== task))}
+          />
+        {/each}
+        <TextInput
+          bind:value={newSubTask}
+          placeholder="Sub task name"
+          icon="ph:plus-light"
+          isShowSaveControl={newSubTask !== ""}
+          on:enter={handleAddSubTask}
+          on:save={handleAddSubTask}
+          on:cancel={() => (newSubTask = "")}
+        />
       </div>
     {/if}
   </div>

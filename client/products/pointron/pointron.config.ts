@@ -24,6 +24,7 @@ import {
   collectionStore,
   viewStore
 } from "$lib/client/components/collection/collection.store";
+import { taskStore } from "$lib/client/components/tasks/task.store";
 
 export const pointronCacheableStores: IStore[] = [
   analyticsConfigStore,
@@ -39,7 +40,8 @@ export const pointronCacheableStores: IStore[] = [
   pointLogStore,
   pointSessionStore,
   collectionStore,
-  viewStore
+  viewStore,
+  taskStore
 ];
 
 export const pointronRemoteOnlyStores: IStore[] = [accessLogStore];

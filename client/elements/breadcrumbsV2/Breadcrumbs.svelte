@@ -2,11 +2,11 @@
   import type { IBreadcrumbItem } from "$lib/client/elements/breadcrumbsV2/breadcrumbItem.type";
   import { appStore } from "$lib/client/stores/app.store";
   import { createEventDispatcher } from "svelte";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import BreadcrumbItem from "./BreadcrumbItem.svelte";
   import { popover } from "$lib/client/actions/popover.action";
   import BreadcrumbsOverflowPopover from "./BreadcrumbsOverflowPopover.svelte";
   import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   const dispatch = createEventDispatcher();
   export let items: IBreadcrumbItem[] = [];
   /**
@@ -21,10 +21,13 @@
     }
     if (item.path) appStore.gotoPath(item.path);
     else if (item.resourceId)
-      appStore.gotoResource(
-        item.resourceId.split(":")[0] as Resource,
-        item.resourceId
-      );
+      appStore.openResource(item.resourceId, ResourceAccessMode.POP, {
+        replaceId: items[items.length - 1].id
+      });
+    // appStore.gotoResource(
+    //   item.resourceId.split(":")[0] as Resource,
+    //   item.resourceId
+    // );
   }
 </script>
 

@@ -14,6 +14,7 @@
   import AddNewButton from "../button/AddNewButton.svelte";
   import { tooltip } from "$lib/client/actions/popover.action";
   import { isValidString } from "$lib/shared/utils/text.utils";
+  import Badge from "../text/Badge.svelte";
   const dispatch = createEventDispatcher();
   export let item: ISelectItem;
   export let isInEditMode: boolean = false;
@@ -127,6 +128,11 @@
       >
         {isValidString(item.label) ? item.label : "Untitled"}
       </span>
+      {#if item.badge}
+        <span class="ml-2">
+          <Badge {size} text={item.badge} isAccentColor={isActive} />
+        </span>
+      {/if}
     </div>
     {#if isShowNumberShortcut}
       <span class="text-b4 text-fgs3 w-4 h-4 bg-bgs2 rounded-md">

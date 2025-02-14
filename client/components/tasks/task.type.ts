@@ -11,15 +11,20 @@ export enum TaskType {
   DEFINITE = "DEFINITE",
   ROUTINE = "ROUTINE"
 }
-
+export enum SubTasksMethod {
+  DEFAULT = "DEFAULT",
+  TREE = "TREE",
+  STEPS = "STEPS"
+}
 export interface ITaskBase {
   label: string;
   type: TaskType;
   description?: IMarkdown;
   startDate?: Date;
   endDate?: Date;
-  parent?: IRecordId;
+  parent?: IRecordId[];
   subTasks?: IRecordId[];
+  subTasksMethod?: SubTasksMethod;
 }
 
 export interface ITask extends ITaskBase {}
@@ -28,6 +33,7 @@ export interface ITaskThumb extends ITaskBase {}
 
 export type IActiveTask = IActiveResource &
   ITask & {
+    subTasks?: IActiveTask[];
     isPageLoading: boolean;
     collections?: IRecordId[];
     types?: ICollectionExpanded[];

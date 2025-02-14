@@ -72,7 +72,7 @@
           <div class="flex flex-col gap-1 flex-grow">
             <div class="flex items-center gap-2">
               <span class="text-b2 font-medium truncate">{item.label}</span>
-              {#if item.startDate || item.endDate}
+              <!-- {#if item.startDate || item.endDate}
                 <span class="text-b3 text-fgs3">
                   {#if item.startDate}
                     {formatDatetime($userPreferences, item.startDate)}
@@ -81,7 +81,7 @@
                     - {formatDatetime($userPreferences, item.endDate)}
                   {/if}
                 </span>
-              {/if}
+              {/if} -->
             </div>
             {#if item.description}
               <span class="text-b3 text-fgs3 truncate text-left">

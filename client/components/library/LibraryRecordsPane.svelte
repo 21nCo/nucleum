@@ -236,7 +236,10 @@
     if (!isGenericSubType) {
       if (resource === Resource.node) {
         filters = { ...filters, contentType: selectedSubType };
-      } else if (resource === Resource.collection) {
+      } else if (
+        resource === Resource.collection ||
+        resource === Resource.task
+      ) {
         filters = { ...filters, type: selectedSubType };
       }
     }

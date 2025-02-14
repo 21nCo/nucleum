@@ -15,7 +15,7 @@
   import { dataManager } from "$lib/client/persistence/dataManager";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import PageLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import TreeMap from "$lib/client/components/treeMap/TreeMap.svelte";
+  import TreeMap from "$lib/client/components/nestedList/NestedList.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { tagStore } from "../pointron.store";

@@ -27,11 +27,26 @@ class TaskStore extends ResourceStore<ITask> {
   async save(
     form: OmitForCapture<ITask>,
     additionalParams?: {
+      subTasks?: string[];
       context?: string;
     }
   ) {
     const id = generateResourceId(Resource.task);
     logger.log({ at: "TaskStore.save", form });
+
+    let subTaskIds: IRecordId[] = [];
+    let subTasks: OmitForCapture<ITask>[] = [];
+    if (additionalParams?.subTasks && additionalParams.subTasks.length > 0) {
+      subTasks = additionalParams.subTasks.map((subTask) => ({
+        id: generateResourceId(Resource.task),
+        label: subTask,
+        type: TaskType.INDEFINITE,
+        parent: [id],
+        isCompleted: false,
+        accessMode: ResourceAccessMode.POP
+      }));
+      subTaskIds = subTasks.map((subTask) => subTask.id);
+    }
 
     const resource: OmitForCapture<ITask> = {
       id,
@@ -41,7 +56,7 @@ class TaskStore extends ResourceStore<ITask> {
       startDate: form.startDate,
       endDate: form.endDate,
       parent: form.parent,
-      subTasks: form.subTasks || [],
+      subTasks: subTaskIds,
       isCompleted: false,
       accessMode: ResourceAccessMode.POP
     };
@@ -51,7 +66,49 @@ class TaskStore extends ResourceStore<ITask> {
       timestamp: new Date()
     });
 
-    return super.create(resource, additionalParams);
+    return super.create([resource, ...subTasks], additionalParams);
+  }
+
+  async addSubTaskWithContext(
+    src: IRecordId[],
+    subTask: {
+      label: string;
+      type?: TaskType;
+    },
+    currentSubTasks?: IRecordId[]
+  ) {
+    const task = {
+      id: generateResourceId(Resource.task),
+      label: subTask.label,
+      type: subTask.type ?? TaskType.INDEFINITE,
+      parent: [...src]
+    };
+    await super.modify(
+      src[src.length - 1],
+      {
+        subTasks: [...(currentSubTasks || []), task.id]
+      },
+      {
+        isPreventBackPropagation: true
+      }
+    );
+    return super.create([task]);
+  }
+
+  async addSubTask(
+    src: IRecordId,
+    subTask: {
+      label: string;
+      type?: TaskType;
+    }
+  ) {
+    const taskData = await super.select(src);
+    if (!taskData) return;
+    this.addSubTaskWithContext(
+      [...(taskData.parent || []), src],
+      subTask,
+      taskData.subTasks
+    );
   }
 }
 
@@ -65,8 +122,12 @@ export class ActiveTaskStore extends CollectibleStore<IActiveTask, TaskStore> {
   async init(accessMode: ResourceAccessMode) {
     logger.log({ at: "ActiveTaskStore.init", id: this.id });
     try {
-      const result = await this.resourceStore.select(this.id);
-      logger.log({ at: "ActiveTaskStore.init - select", result });
+      const result = await this.resourceStore.select(this.id, [
+        "*",
+        "(select * from $parent.subTasks) as subTasks",
+        "(select * from $parent.parent) as parent"
+      ]);
+      logger.debug({ at: "ActiveTaskStore.init - select", result });
 
       if (!result) {
         this.set({

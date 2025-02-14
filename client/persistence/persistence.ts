@@ -170,7 +170,7 @@ export class Persistence {
     try {
       const product = await clientStorage.get(ClientStorageKey.PRODUCT);
       if (!product) return;
-      let response = await performStaticDataOperation(`${product}.json`);
+      let response = await performStaticDataOperation(`next/${product}.json`);
       if (response?.ok) {
         let jsonValue = await response.json();
         if (!jsonValue) return;
