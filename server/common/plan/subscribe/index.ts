@@ -44,7 +44,7 @@ async function newSubscription(body: any, agent: Agent) {
   if (!productId) throw new InternalServerError("Product not found");
 
   const nonce = await generateSHA256Hash(
-    `${agent.id}-${productId}-${plan}-${cycle}`
+    `${agent.id}-${productId}-${new Date().getTime()}`
   );
   const transaction = await createTransaction({
     productId,
@@ -97,7 +97,7 @@ async function createTransaction(params: {
   status: "pending" | "completed" | "cancelled" | "failed";
 }) {
   const query = `
-    INSERT INTO transaction [{ userId: user:${params.userId}, productId: "${params.productId}", plan: "${params.plan}", cycle: "${params.cycle}", discount: ${params.discount}, status: "${params.status}", nonce: "${params.nonce}"}]`;
+    INSERT INTO transaction [{ userId: user:${params.userId}, productId: "${params.productId}", plan: "${params.plan}", cycle: "${params.cycle}", discount: ${params.discount}, status: "${params.status}", createdAt: time::now(), nonce: "${params.nonce}"}]`;
   const transaction = await performQueryOnMasterDb(query);
   return transaction;
 }

@@ -69,3 +69,13 @@ export async function createPaymentUsingHttp(params: {
   console.log({ response });
   return response.json();
 }
+
+export async function verifyPayment(paymentId: string) {
+  const dodopayments = new DodoPayments({
+    baseURL: process.env.DODO_BASE_URL ?? "https://test.dodopayments.com",
+    bearerToken: process.env.DODO_API_KEY,
+  });
+
+  const payment = await dodopayments.payments.retrieve(paymentId);
+  return payment;
+}

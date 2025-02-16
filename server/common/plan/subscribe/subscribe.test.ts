@@ -23,7 +23,7 @@ describe("subscribe", () => {
         plan: PlanType.CLOUD_SYNC,
         cycle: BillingCycle.YEARLY,
         context: {
-          origin: "https://test.com",
+          origin: "https://21n.org",
         },
       };
 
