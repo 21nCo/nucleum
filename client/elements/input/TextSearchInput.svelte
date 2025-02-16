@@ -29,7 +29,6 @@
   export let searchResultComponent: any = undefined;
   export let searchResultComponentProps: Record<string, unknown> = {};
   export let emptyStateLabel: string | undefined = undefined;
-  export let isPreventDefaultResults: boolean = false;
   export let isChipsMode: boolean = false;
   /**
    * If true, the search results popover will be shown inline with the input element instead as a popover.
@@ -44,6 +43,7 @@
    * If true, the search results popover will be shown when the input is focused and hidden when the input is blurred.
    */
   export let isShowPopoverOnFocus: boolean = false;
+  export let isShowDefaultResultsOnMount: boolean = false;
   let isFocused: boolean = false;
   let chips: any[] = [];
   let inputRef: any;
@@ -64,16 +64,12 @@
   }
 
   export function showDefaultResults() {
-    if (isPreventDefaultResults) return;
     show();
     searchResultsPopover?.search();
   }
 
   function onKeyup(event: any) {
-    if (
-      (!value && isPreventDefaultResults) ||
-      (!searchCallback && !searchStoreId)
-    ) {
+    if (!searchCallback && !searchStoreId) {
       hide();
       // return;
     } else show();
@@ -170,7 +166,7 @@
     {/if}
     <input
       {id}
-      use:mount={showDefaultResults}
+      use:mount={isShowDefaultResultsOnMount ? showDefaultResults : () => {}}
       class={cn(
         "text-input bg-transparent focus:outline-none focus:border-none placeholder:font-light placeholder:text-fgs3 placeholder:text-b2",
         {

@@ -21,7 +21,7 @@
   const contentPreview = resolveContentPreview(node);
 
   onMount(async () => {
-    parentUsername = node.parent.toString().split("twitterProfile_")[1] ?? "";
+    parentUsername = node.parent?.toString().split("twitterProfile_")[1] ?? "";
     if (!parentUsername) {
       parentUsername = node.parent?.url?.split("x.com/")[1] ?? "";
     }
@@ -48,7 +48,14 @@
 {#if oembedHtml}
   {@html oembedHtml}
 {:else if account.isCloudUserAndOnline()}
-  <TweetPreviewUsingWidget tweetUrl={node.url} />
+  <button
+    class="w-full h-full px-4 cw:py-12 flex justify-center items-center overflow-y-auto"
+    on:click={() => {
+      appStore.openLink(node.url);
+    }}
+  >
+    <TweetPreviewUsingWidget tweetUrl={node.url} />
+  </button>
 {:else}
   <div
     class="w-full h-full mo:p-4 flex flex-col gap-6 justify-center items-center"

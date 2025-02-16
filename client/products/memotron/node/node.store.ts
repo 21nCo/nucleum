@@ -60,6 +60,7 @@ import { toasts } from "$lib/client/stores/notification.store";
 import { fileStore } from "$lib/client/components/files/file.store";
 import { recursivelyExtractAllChildrenIntoArray } from "$lib/client/components/markdown/markdown.utils";
 import { recentsStore } from "$lib/client/components/record/recent.store";
+import view from "$lib/client/stores/view.store";
 import { CollectibleStore } from "$lib/client/components/collection/collectible.store";
 
 export const hierarchyFactorLimit = 5;
@@ -829,6 +830,19 @@ export function resolveNodeContextMenu(
           resourceActions.toggleFocusMode()
         ]
       : [resourceActions.toggleFocusMode()];
+  const viewStore = get(view);
+  const secondGroupItems = viewStore.isConstrainedWidth
+    ? [
+        resourceActions.toggleReadMode(),
+        nodeStaticActions.metadataPane,
+        nodeStaticActions.historyPane
+      ]
+    : [
+        resourceActions.toggleReadMode(),
+        nodeActions.toggleFullWidth(),
+        nodeStaticActions.metadataPane,
+        nodeStaticActions.historyPane
+      ];
   return [
     {
       group: "editModes",
@@ -837,12 +851,7 @@ export function resolveNodeContextMenu(
     },
     {
       group: "all",
-      items: [
-        resourceActions.toggleReadMode(),
-        nodeActions.toggleFullWidth(),
-        nodeStaticActions.metadataPane,
-        nodeStaticActions.historyPane
-      ]
+      items: secondGroupItems
     },
     {
       group: "shareAndExport",

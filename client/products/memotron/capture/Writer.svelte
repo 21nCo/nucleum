@@ -12,6 +12,7 @@
   import CameraCapture from "./CameraCapture.svelte";
   import { createEventDispatcher } from "svelte";
   import { activeHeight } from "$lib/client/actions/viewport";
+  import context from "$lib/client/stores/context.store";
   const dispatch = createEventDispatcher();
 
   let mdRef: NodularMarkdown | undefined = undefined;
@@ -56,7 +57,7 @@
   class="flex w-full max-h-full justify-between"
   use:activeHeight={{
     defaultHeight: "100dvh",
-    offset: 100
+    offset: 150
   }}
 >
   {#if captureType === CaptureType.AUDIO}
@@ -77,6 +78,7 @@
         bind:childrenWithStructure={$captureStore.childrenWithStructure}
         bind:rootStructure={$captureStore.rootStructure}
         bind:this={mdRef}
+        params={{ isPreventFocusOnLoad: $context.isTouchDevice }}
         on:change
         on:action={(e) => {
           dispatch("change", e.detail);

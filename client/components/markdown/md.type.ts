@@ -66,6 +66,7 @@ export type IMarkdownParams = {
   isReadOnly?: boolean;
   title?: string;
   canUseSlashShortcut?: boolean;
+  isPreventFocusOnLoad?: boolean;
 };
 
 /**

@@ -20,8 +20,9 @@
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { toasts } from "$lib/client/stores/notification.store";
   import type { IRecordId } from "$lib/client/types/data.type";
+  import context from "$lib/client/stores/context.store";
   const dispatch = createEventDispatcher();
-  export let context:
+  export let ctx:
     | "capture"
     | "nodelinkspane"
     | "clipper"
@@ -38,7 +39,7 @@
   let icon: string = "";
   let label: InputLabel | undefined = undefined;
   let searchInputRef: TextSearchInput;
-  resolveOptions(context);
+  resolveOptions(ctx);
 
   export function focus() {
     searchInputRef?.focus();
@@ -46,7 +47,7 @@
   }
 
   onMount(() => {
-    if (context === "nodepageCollectionsLane") {
+    if (ctx === "nodepageCollectionsLane") {
       focus();
     }
   });
@@ -97,9 +98,9 @@
   function onsearch(searchQuery: string) {
     let query = searchQuery;
     let resource =
-      context === "nodepageCollectionsLane"
+      ctx === "nodepageCollectionsLane"
         ? Resource.collection
-        : context === "nodelinkspane"
+        : ctx === "nodelinkspane"
           ? Resource.node
           : undefined;
     if (searchQuery?.startsWith("@")) {
@@ -132,8 +133,8 @@
     if (!e.detail.event || !e.detail.value) return;
     let result: any;
     if (
-      context === "nodepageCollectionsLane" ||
-      ((context === "capture" || context === "clipper") &&
+      ctx === "nodepageCollectionsLane" ||
+      ((ctx === "capture" || ctx === "clipper") &&
         (e.detail.event.shiftKey || e.detail.value.startsWith("@")))
     ) {
       let val = e.detail.value;
@@ -166,7 +167,9 @@
       case "nodelinkspane":
         return `No results found. Press **Enter** to create a new node`;
       default:
-        return `No results found. Press **Enter** to create a new node or **Shift + Enter** to create a new collection`;
+        return $context.isTouchDevice
+          ? `No results found. Press **Enter** to create a new node`
+          : `No results found. Press **Enter** to create a new node or **Shift + Enter** to create a new collection`;
     }
   }
   function resolveBottomMessage(context: string) {
@@ -183,10 +186,10 @@
 <TextSearchInput
   bind:this={searchInputRef}
   bind:value={searchQuery}
-  isInline={context === "nodepageCollectionsLane"}
+  isInline={ctx === "nodepageCollectionsLane"}
   width={$view.isConstrainedWidth
     ? "w-full"
-    : context === "nodepageCollectionsLane" && $view.isPortrait
+    : ctx === "nodepageCollectionsLane" && $view.isPortrait
       ? "w-80"
       : undefined}
   style={inputStyle}
@@ -195,15 +198,15 @@
   searchResultComponent={LinkSearchResultItem}
   searchResultComponentProps={{
     isHideResourceType:
-      context === "nodepageCollectionsLane" || context === "nodelinkspane"
+      ctx === "nodepageCollectionsLane" || ctx === "nodelinkspane"
   }}
   {popoverOptions}
-  emptyStateLabel={resolveEmptyStateLabel(context)}
+  emptyStateLabel={resolveEmptyStateLabel(ctx)}
   on:select={onSelect}
   on:hide={onHide}
   on:empty-enter={onEmptyEnter}
   searchCallback={onsearch}
   {placeholder}
   isShowPopoverOnFocus={true}
-  bottomMessage={resolveBottomMessage(context)}
+  bottomMessage={resolveBottomMessage(ctx)}
 />

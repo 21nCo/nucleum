@@ -9,6 +9,7 @@
   import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
   import view from "$lib/client/stores/view.store";
   export let info: InputLabelInfoToolTip;
+  export let icon: string = "ph:info-light";
   let ref: HTMLElement;
 
   function closeTooltip() {
@@ -17,7 +18,7 @@
 </script>
 
 <button
-  class="relative rounded-full w-4 h-4 flex justify-center items-center text-b3 text-fgs3 cursor-pointer"
+  class="relative rounded-full w-fit h-fit flex justify-center items-center text-b3 text-fgs3 cursor-pointer active:bg-bgs2 notouch:hover:bg-bgs2"
   use:trackPosition={{
     callback: closeTooltip
   }}
@@ -35,5 +36,5 @@
     }
   }}
 >
-  <Icon icon="info" size={info.size ?? Size.sm} />
+  <Icon {icon} size={info.size ?? Size.sm} class="text-fgs3" />
 </button>

@@ -28,6 +28,9 @@
   import { MAX_FILE_SIZE_MB } from "../../record/record.store";
   import { NodeType } from "$lib/client/products/memotron/node/node.type";
   import view from "$lib/client/stores/view.store";
+  import KeyboardToolbar from "$lib/client/elements/keyboardToolbar/KeyboardToolbar.svelte";
+  import Button from "$lib/client/elements/button/Button.svelte";
+  import { Size } from "$lib/client/types/size.enum";
 
   const dispatch = createEventDispatcher();
   //   export let block: Block<TextContent>;
@@ -1228,6 +1231,24 @@
   <div contenteditable class="outline-none">
     <TextWithSpans content={spans} />
   </div>
+{/if}
+
+{#if !isMarkdown}
+  <KeyboardToolbar class="bg-bgs2 h-14 px-4 flex items-center justify-between">
+    <div class="flex items-center justify-center gap-2"></div>
+    <div class="flex items-center justify-center gap-2">
+      <Button
+        icon="ph:caret-line-down-light"
+        label="close"
+        parentBgIndex={2}
+        size={Size.sm}
+        isPreventMinWidth={true}
+        on:click={() => {
+          document.activeElement?.blur();
+        }}
+      />
+    </div>
+  </KeyboardToolbar>
 {/if}
 
 <style>

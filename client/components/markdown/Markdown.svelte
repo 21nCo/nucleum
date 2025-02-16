@@ -69,7 +69,7 @@
   export let id: string | undefined = undefined;
   let mdId: string = id ?? generateSimpleRandomId();
   const mdStore = getMdStore(mdId);
-  mdStore.load(md);
+  mdStore.load(md, { isPreventFocus: params?.isPreventFocusOnLoad });
   $: if (params) mdStore?.setParams(params);
   // $: console.log("blocks", $mdStore.blocks);
   let keyboardToolbarPanelSelection: string | undefined = undefined;

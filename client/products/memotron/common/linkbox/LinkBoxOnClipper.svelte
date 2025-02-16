@@ -8,7 +8,7 @@
 </script>
 
 <LinkSearch
-  context="clipper"
+  ctx="clipper"
   bind:searchQuery
   resultsPlacement={$toolbarState.position === Placement.Bottom
     ? Placement.TopCenter

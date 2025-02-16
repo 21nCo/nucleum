@@ -40,6 +40,7 @@
       <TextInput
         bind:value={groupLabelInput}
         isShowSaveControl={true}
+        placeholder="Group name"
         on:save={() => {
           if (!groupLabelInput) return;
           if (group) group.label = groupLabelInput;

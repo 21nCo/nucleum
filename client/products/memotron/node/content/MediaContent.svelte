@@ -13,6 +13,8 @@
   import MediaContentResolver from "./MediaContentResolver.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { isRecordId } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import context from "$lib/client/stores/context.store";
+  import { OperatingSystem } from "$lib/client/types/context.type";
 
   export let node: IActiveNodeStore;
   export let isConstrainedWidth: boolean = false;
@@ -54,7 +56,11 @@
           (webNodeTypeList.includes($node?.contentType) && !isConstrainedWidth),
         grow:
           $node.accessMode === ResourceAccessMode.POP ||
-          $node.accessMode === ResourceAccessMode.INLINE
+          $node.accessMode === ResourceAccessMode.INLINE,
+        "mt-16":
+          $context.isEmbed &&
+          $context.os === OperatingSystem.IOS &&
+          $node.contentType === NodeType.VIDEO
       })}
     >
       <MediaContentResolver

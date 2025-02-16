@@ -51,3 +51,40 @@ export const activeHeight: Action<HTMLElement, ActiveHeightActionParams> = (
     }
   };
 };
+
+interface VirtualKeyboardActionParams {
+  onKeyboardChange: (isVisible: boolean, keyboardHeight: number) => void;
+}
+
+export const virtualKeyboard: Action<
+  HTMLElement,
+  VirtualKeyboardActionParams
+> = (node, params) => {
+  let lastHeight = window.innerHeight;
+
+  const handleResize = () => {
+    const currentHeight = window.visualViewport?.height ?? window.innerHeight;
+    const keyboardHeight = window.innerHeight - currentHeight;
+    const isKeyboardVisible = keyboardHeight > 150;
+
+    if (currentHeight !== lastHeight) {
+      params.onKeyboardChange(isKeyboardVisible, keyboardHeight);
+      lastHeight = currentHeight;
+    }
+  };
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", handleResize);
+  }
+
+  return {
+    destroy() {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener("resize", handleResize);
+      }
+    },
+    update(newParams: VirtualKeyboardActionParams) {
+      params = newParams;
+    }
+  };
+};

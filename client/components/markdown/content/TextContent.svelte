@@ -670,7 +670,7 @@
       return (
         dynamicPlaceholder ??
         $mdStore.params?.placeholder ??
-        ($mdStore.params?.isNodular
+        ($mdStore.params?.isNodular && !$view.isConstrainedWidth
           ? "Start typing or use / to browse..."
           : "Start typing... ")
       );
