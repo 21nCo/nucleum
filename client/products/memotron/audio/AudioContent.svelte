@@ -257,7 +257,7 @@
       {#if recordingState === PlayActionState.STOPPED}
         <Button
           on:click={(e) => {
-            e.detail?.stopPropagation();
+            e?.stopPropagation();
             recordingState = PlayActionState.PREVIEWING;
             wavesurferPreview.play();
           }}
@@ -269,7 +269,7 @@
         {#if previewingState === PlayActionState.RESUMEPREVIEWING}
           <Button
             on:click={(e) => {
-              e.detail?.stopPropagation();
+              e?.stopPropagation();
               wavesurferPreview.pause();
               previewingState = PlayActionState.PAUSEPREVIEWING;
             }}
@@ -280,7 +280,7 @@
         {:else}
           <Button
             on:click={(e) => {
-              e.detail?.stopPropagation();
+              e?.stopPropagation();
               wavesurferPreview.play();
               previewingState = PlayActionState.RESUMEPREVIEWING;
             }}

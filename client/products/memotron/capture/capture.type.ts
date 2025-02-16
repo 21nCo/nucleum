@@ -55,7 +55,7 @@ export type ICaptureStore = IObservableStoreSubject & {
   clipboard?: IPasteCaptureData;
 };
 
-type ICaptureLink = {
+export type ICaptureLink = {
   from: IRecordId | "root";
   to: IRecordId;
   linkType: LinkType;

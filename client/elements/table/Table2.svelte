@@ -115,7 +115,8 @@
     class="flex flex-col px-3"
     use:reorderList={{
       listId: id,
-      draggedOverClass: "!outline-aps1"
+      draggedOverClass: "!outline-aps1",
+      dragImage: "dragimage"
     }}
     on:reorder
   >

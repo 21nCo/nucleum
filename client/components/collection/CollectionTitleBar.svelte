@@ -82,9 +82,10 @@
     <button
       class="flex active:bg-bgs2 rounded-md p-1"
       on:click={() => {
-        appStore.closeResource({
-          id: collection.id
-        });
+        appStore.goBack();
+        // appStore.closeResource({
+        //   id: collection.id
+        // });
       }}
     >
       <Icon icon="ph:caret-left-light" size={Size.lg} />

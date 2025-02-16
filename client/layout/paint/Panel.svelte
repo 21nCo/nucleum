@@ -18,6 +18,7 @@
   import { createEventDispatcher } from "svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { InteractionMode } from "$lib/client/components/settings/interactionMode/interactionMode.type";
+  import { tooltip } from "$lib/client/actions/popover.action";
   const dispatch = createEventDispatcher();
 
   export let title: string | undefined = undefined;
@@ -79,16 +80,26 @@
             })}
           >
             {#if isShowBackButton}
-              <Icon icon="ph:caret-left" class="text-fgs3 opacity-40" />
+              <Icon
+                icon="ph:caret-left"
+                class="text-fgs3 opacity-40"
+                size={Size.lg}
+              />
             {/if}
             <Text style={titleStyle} content={title || ""} />
           </div>
           <slot name="toprightactions">
             {#if isShowCollapseButton}
-              <div class="flex items-center">
-                <Button
+              <div
+                class="flex items-center text-fgs3 p-1 hover:bg-bgs2 rounded-md"
+                use:tooltip={{
+                  text: "Collapse panel"
+                }}
+              >
+                <Icon
                   icon="ph:caret-left-light"
-                  tooltip="Collapse panel"
+                  class="text-fgs3"
+                  size={Size.lg}
                   on:click={() => (isCollapsed = true)}
                 />
               </div>

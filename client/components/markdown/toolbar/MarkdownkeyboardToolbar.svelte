@@ -304,7 +304,6 @@
             items={categories}
             value={selectedSection}
             parentBgIndex={2}
-            isPreventDropdownForCW={true}
             style={PanelSwitcherStyle.BAR}
             barStyle={BarStyle.UNDER}
             on:switch={(e) => {

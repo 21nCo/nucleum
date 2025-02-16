@@ -90,12 +90,12 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
     this.set(seedMdStore);
   }
 
-  load(md: IMarkdown) {
+  load(md: IMarkdown, params?: { isPreventFocus?: boolean }) {
     this.set({
       blocks: md.blocks,
       headingsInView: []
     });
-    this.focus.set({ id: md.blocks?.[0]?.id });
+    if (!params?.isPreventFocus) this.focus.set({ id: md.blocks?.[0]?.id });
   }
 
   setParams(params: IMarkdownParams) {

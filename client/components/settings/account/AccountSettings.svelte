@@ -202,13 +202,13 @@
           <div class="text-b2 text-fgs3">Plan</div>
           <div class="">Complimentary cloud sync trial 🎉</div>
         </div>
-        <Button
+        <!-- <Button
           label="Upgrade"
           icon="ph:sparkle-light"
           on:click={() => {
             appStore.runAction(Action.USER_PLAN);
           }}
-        />
+        /> -->
       </div>
     </div>
   </div>

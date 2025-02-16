@@ -693,6 +693,7 @@
                 isExpandToFullWidth={true}
                 barStyle={BarStyle.EXACT}
                 isInEditMode={$collection.isInEditMode}
+                isRenderDropdownForCW={true}
                 bind:triggerItemEdit
                 on:remove={onViewRemove}
                 on:add={onViewAdd}

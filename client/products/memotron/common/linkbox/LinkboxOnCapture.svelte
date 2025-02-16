@@ -9,6 +9,8 @@
   import { createEventDispatcher } from "svelte";
   import { LinkType } from "../../node/node.type";
   import type { IRecordId } from "$lib/client/types/data.type";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
   export let expand: IRecordId | null = null;
   const dispatch = createEventDispatcher();
   let link: string;
@@ -30,7 +32,7 @@
       <Icon icon="ph:link-light" size={Size.sm} />
     </div>
     <LinkSearch
-      context="capture"
+      ctx="capture"
       searchQuery={link}
       on:select={async (e) => {
         if (!e.detail.item) return;
@@ -44,14 +46,18 @@
   {#if isValidArrayWithData($captureStore.links)}
     <div class="flex flex-col gap-2 overflow-y-auto styledscroll">
       <LinkItems
-        ctx="capture"
         {expand}
+        accessPoint={ResourceAccessPoint.CAPTURE}
         isExpandable={true}
         links={$captureStore.links
           ?.filter((x) => x.linkType !== LinkType.MENTION)
           ?.map((x) => x.to) ?? []}
+        nodeId={$captureStore.nodeId}
         propertyValues={$captureStore.properties}
         on:unlink={(e) => {
+          if (expand && isSameResource(expand, e.detail)) {
+            expand = null;
+          }
           captureStore.removeDLink(e.detail);
           dispatch("unlinked", e.detail);
         }}

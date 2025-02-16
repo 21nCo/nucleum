@@ -169,7 +169,6 @@
       bind:value={resource}
       style={PanelSwitcherStyle.BAR}
       isExpandToFullWidth={true}
-      isPreventDropdownForCW={true}
       size={Size.sm}
       on:switch={() => {
         searchResultsPopover?.search();

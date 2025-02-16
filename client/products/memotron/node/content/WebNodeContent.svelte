@@ -78,7 +78,7 @@
       bind:this={youtubeVideoRef}
     />
   {/if}
-  {#if "url" in node && node.url && accessPoint === ResourceAccessPoint.SELF}
+  {#if "url" in node && node.url && accessPoint === ResourceAccessPoint.SELF && node.contentType !== NodeType.TWEET}
     <div
       class="absolute bottom-0 left-0 m-2 flex gap-2 items-center max-w-full"
     >

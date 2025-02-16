@@ -119,7 +119,7 @@
       <ScrollViewBottomSpacer />
     {/if}
   </div>
-  <InlineInfoBanner
+  <!-- <InlineInfoBanner
     type={InfoTextType.TIP}
     content="Tip: Use relations to maintain relationship information between nodes."
     action={{
@@ -128,5 +128,5 @@
         $appStore?.appData?.urls?.kbLinkTags ??
         "https://docs.memotron.io/page/faqs"
     }}
-  />
+  /> -->
 </div>

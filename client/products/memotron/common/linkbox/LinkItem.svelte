@@ -12,12 +12,15 @@
   import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
   import { createEventDispatcher } from "svelte";
   import ContextMenu from "$lib/client/elements/contextMenu/ContextMenu.svelte";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   const dispatch = createEventDispatcher();
 
   export let id: IRecordId;
   export let parentBgIndex: number = 1;
   export let isActive: boolean = false;
   export let isRemovable: boolean = true;
+  export let isAlwaysShowRemove: boolean = false;
+  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.CLIPPER;
   let item: any;
 
   function resolveItem() {
@@ -45,6 +48,25 @@
   }
 
   function resolveContextMenu() {
+    const removeItem = {
+      label: "Remove",
+      value: "delete",
+      icon: "ph:trash-light",
+      callback: async () => {
+        dispatch("remove", id);
+      }
+    };
+    if (
+      accessPoint === ResourceAccessPoint.CAPTURE ||
+      accessPoint === ResourceAccessPoint.CLIPPER
+    ) {
+      return [
+        {
+          group: "all",
+          items: [removeItem]
+        }
+      ];
+    }
     return [
       {
         group: "all",
@@ -57,14 +79,7 @@
               dispatch("goToResource", id);
             }
           },
-          {
-            label: "Remove",
-            value: "delete",
-            icon: "ph:trash-light",
-            callback: async () => {
-              dispatch("remove", id);
-            }
-          }
+          removeItem
         ]
       }
     ];
@@ -75,9 +90,10 @@
   <div
     use:popover={{
       content: ContextMenu,
-      triggerMethod: $context.isTouchDevice
-        ? [PopoverTriggerMethod.CLICK]
-        : [PopoverTriggerMethod.RIGHT_CLICK],
+      triggerMethod:
+        $context.isTouchDevice && accessPoint === ResourceAccessPoint.SELF
+          ? [PopoverTriggerMethod.CLICK]
+          : [PopoverTriggerMethod.RIGHT_CLICK],
       // componentProps: {
       //   label: item?.label,
       //   onGoToResource: () => {
@@ -100,6 +116,7 @@
       isShowExpandFeedbackOnActive={true}
       icon={resovleIcon()}
       {isRemovable}
+      removeStyle={isAlwaysShowRemove ? "always-show" : "inline"}
       on:click
       on:remove
     />

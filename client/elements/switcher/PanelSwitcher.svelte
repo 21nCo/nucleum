@@ -37,12 +37,12 @@
   export let triggerItemEdit: string | null = null;
   export let isShowNumberShortcut: boolean = false;
   export let addText: string | undefined = undefined;
-  export let isPreventDropdownForCW: boolean = false;
+  export let isRenderDropdownForCW: boolean = false;
   let _items: ISelectItem[];
   $: _items = items.every((x) => typeof x === "string")
     ? items.map((x) => ({ label: x, value: x }))
     : items;
-  $: isRenderAsDropdown = $view.isConstrainedWidth && !isPreventDropdownForCW;
+  $: isRenderAsDropdown = $view.isConstrainedWidth && isRenderDropdownForCW;
   onMount(() => {
     if (value === undefined) value = _items[0]?.value;
   });

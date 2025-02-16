@@ -16,6 +16,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+  import { isValidString } from "$lib/shared/utils/text.utils";
   import type {
     ISelectPropertyConfig,
     IPropertyConfigOption,
@@ -109,18 +110,20 @@
     if (newLabel.includes(":")) {
       const group = newLabel.split(":")[0];
       label = newLabel.split(":")[1];
-      const existingGroup = config.groups?.find(
-        (g) => g.label.toLowerCase() === group.toLowerCase()
-      );
-      if (!existingGroup) {
-        const newGroupId = generateSimpleRandomId();
-        config.groups = [
-          ...(config.groups ?? []),
-          { id: newGroupId, label: group }
-        ];
-        groupId = newGroupId;
-      } else {
-        groupId = existingGroup.id;
+      if (isValidString(group)) {
+        const existingGroup = config.groups?.find(
+          (g) => g.label.toLowerCase() === group.toLowerCase()
+        );
+        if (!existingGroup) {
+          const newGroupId = generateSimpleRandomId();
+          config.groups = [
+            ...(config.groups ?? []),
+            { id: newGroupId, label: group }
+          ];
+          groupId = newGroupId;
+        } else {
+          groupId = existingGroup.id;
+        }
       }
     }
     const newOption: IPropertyConfigOption = {
@@ -223,6 +226,7 @@
     class="flex flex-col gap-6 flex-grow p-3"
     use:reorderList={{
       listId: "options",
+      dragImage: "dragimage",
       draggedOverClass: "outline outline-aps1",
       onDrop: onReorderOptions
     }}

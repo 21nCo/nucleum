@@ -4,6 +4,7 @@
   import modalEvent from "$lib/client/components/modal/modal.store";
   import { tabs } from "$lib/client/layout/tabs/tabs.store";
   import { appStore } from "$lib/client/stores/app.store";
+  import view from "$lib/client/stores/view.store";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { Placement } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
@@ -31,6 +32,7 @@
   )}
   use:tooltip={{ text: "Close", direction: Placement.Left }}
   on:click={() => {
+    if ($view.isConstrainedWidth) appStore.goBack();
     appStore.closeResource({ accessMode });
     if (path) modalEvent.hide(path, "ModalCloseButton.svelte");
   }}

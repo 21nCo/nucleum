@@ -142,10 +142,7 @@
               class={cn("flex flex-col justify-center items-center h-full", {
                 "flex-grow": isWidened,
                 "flex-grow max-w-[50rem] overflow-auto": !isWidened,
-                "dp:min-w-[50rem]":
-                  !isWidened &&
-                  $node.accessMode !== ResourceAccessMode.SPLIT &&
-                  $node.accessMode !== ResourceAccessMode.FSPLIT
+                "dp:min-w-[50rem]": !isWidened && !isConstrainedWidth
               })}
             >
               {#if headingNodeTypes.includes($node.contentType)}
@@ -229,7 +226,7 @@
                     <CollectionsLane {node} {isReadOnlyMode} />
                   </div>
                 {/if}
-                <div class="px-12">
+                <div class="cw:px-0 px-12">
                   <ResourceStatusBanner resource={node} />
                 </div>
                 {#if $node.types && $node.types.length > 0 && !$node.focusedBlock}

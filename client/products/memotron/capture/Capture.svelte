@@ -19,7 +19,7 @@
   } from "$lib/client/products/memotron/node/node.type";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { collectionStore } from "$lib/client/components/collection/collection.store";
-  import { CaptureType } from "./capture.type";
+  import { CaptureType, type ICaptureLink } from "./capture.type";
   import FileUploader from "./FileUploader.svelte";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { onDestroy, onMount } from "svelte";
@@ -292,6 +292,8 @@
     if (e.detail.id && e.detail.type === CollectionType.TYPED) {
       await refreshTypeData();
       expandedType = e.detail.id;
+    } else {
+      expandedType = null;
     }
   }
   async function onUnlink(e: CustomEvent) {
@@ -405,6 +407,14 @@
     }
     isSaving = false;
   }
+
+  function resolveDirectLinksCount(links: ICaptureLink[] | undefined) {
+    const len = links?.filter(
+      (x) => x.linkType === LinkType.DIRECT && x.from === "root"
+    )?.length;
+    if (len && len > 0) return len;
+    return undefined;
+  }
 </script>
 
 {#if isSaving}
@@ -494,6 +504,7 @@
                     label="Links"
                     icon="ph:link-light"
                     isActive={isLinksExpanded}
+                    count={resolveDirectLinksCount($captureStore.links)}
                     isShowExpandFeedbackOnActive={true}
                     isRemovable={false}
                     on:click={() => (isLinksExpanded = !isLinksExpanded)}
@@ -534,7 +545,6 @@
                 captureType !== CaptureType.CAMERA &&
                 captureType !== CaptureType.UPLOAD
             })}
-            in:fly={{ y: -50, duration: 250 }}
           >
             <LinkboxOnCapture
               on:linked={onLink}
@@ -573,7 +583,7 @@
               "h-full": !isEmptyState
             })}
           >
-            {#if captureType === CaptureType.UPLOAD}
+            {#if captureType === CaptureType.UPLOAD && !($context.isEmbed && $context.os === OperatingSystem.IOS)}
               <FileUploader on:cancel={reset} />
             {:else}
               <Writer

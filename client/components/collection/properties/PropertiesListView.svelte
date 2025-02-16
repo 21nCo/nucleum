@@ -66,6 +66,7 @@
     else if (context === "mainpanel")
       properties = resolvePropertiesForNodePage(propertyConfig);
     else if (context === "rightpanel") properties = propertyConfig;
+    dispatch("propertyCount", properties.length);
   }
 
   async function onNewOption(e: CustomEvent) {

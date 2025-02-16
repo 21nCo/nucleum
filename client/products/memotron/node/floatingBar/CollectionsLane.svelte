@@ -18,6 +18,7 @@
   import { logger } from "$lib/client/components/debug/logger.client";
   import { ResourceError } from "$lib/client/components/error/errors";
   import { ResourceErrorCode } from "$lib/client/components/error/error.type";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
 
   export let node: IActiveNodeStore;
   export let isReadOnlyMode: boolean = false;
@@ -104,6 +105,7 @@
   {#if $node.collections && $node.collections.length > 0}
     <span>
       <LinkItems
+        accessPoint={ResourceAccessPoint.SELF}
         links={$node.collections}
         {isReadOnlyMode}
         on:unlink={onUnlink}
@@ -124,7 +126,7 @@
           onHideCallback: () => {
             hidePopover();
           },
-          context: "nodepageCollectionsLane"
+          ctx: "nodepageCollectionsLane"
         }
       }}
     >

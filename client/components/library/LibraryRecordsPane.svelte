@@ -433,6 +433,7 @@
         <Button
           icon="ph:x-circle-light"
           tooltip="Close search"
+          size={Size.lg}
           on:click={() => (isSearchExpanded = !isSearchExpanded)}
         />
       </InlineSearchBar>
@@ -440,6 +441,7 @@
       <div class="flex items-center w-full gap-2 px-2 h-12 min-h-12">
         <Button
           icon="ph:magnifying-glass-light"
+          size={Size.lg}
           on:click={async () => {
             isSearchExpanded = !isSearchExpanded;
             await tick();
@@ -464,6 +466,7 @@
           bind:on={isRefineShown}
           icon="ph:sliders-horizontal-light"
           tooltip="Settings & filters"
+          size={Size.lg}
           bgSize={Size.sm}
         />
       </div>

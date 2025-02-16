@@ -63,6 +63,7 @@ import { fileStore } from "$lib/client/components/files/file.store";
 import { recursivelyExtractAllChildrenIntoArray } from "$lib/client/components/markdown/markdown.utils";
 import type { IBlock } from "$lib/client/components/markdown/md.type";
 import { recentsStore } from "$lib/client/components/record/recent.store";
+import view from "$lib/client/stores/view.store";
 
 export const hierarchyFactorLimit = 5;
 
@@ -898,6 +899,19 @@ export function resolveNodeContextMenu(
           resourceActions.toggleFocusMode()
         ]
       : [resourceActions.toggleFocusMode()];
+  const viewStore = get(view);
+  const secondGroupItems = viewStore.isConstrainedWidth
+    ? [
+        resourceActions.toggleReadMode(),
+        nodeStaticActions.metadataPane,
+        nodeStaticActions.historyPane
+      ]
+    : [
+        resourceActions.toggleReadMode(),
+        nodeActions.toggleFullWidth(),
+        nodeStaticActions.metadataPane,
+        nodeStaticActions.historyPane
+      ];
   return [
     {
       group: "editModes",
@@ -906,12 +920,7 @@ export function resolveNodeContextMenu(
     },
     {
       group: "all",
-      items: [
-        resourceActions.toggleReadMode(),
-        nodeActions.toggleFullWidth(),
-        nodeStaticActions.metadataPane,
-        nodeStaticActions.historyPane
-      ]
+      items: secondGroupItems
     },
     {
       group: "shareAndExport",

@@ -5,6 +5,7 @@
   import type { IRecordId } from "$lib/client/types/data.type";
   import {
     determineResourceType,
+    isSameResource,
     removeDuplicatesFilter
   } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
@@ -17,19 +18,21 @@
   import LinkTags from "$lib/client/products/memotron/linking/LinkTags.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
-  import { properCase } from "$lib/shared/utils/text.utils";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import context from "$lib/client/stores/context.store";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import type { ICollectionItemPropertyValue } from "$lib/client/components/collection/collection.type";
   const dispatch = createEventDispatcher();
   export let links: IRecordId[];
-  export let propertyValues: INodePropertyValue[] = [];
+  export let propertyValues: ICollectionItemPropertyValue[] = [];
   export let isWrapItems: boolean = false;
   export let parentBgIndex: number = 1;
   export let isExpandable: boolean = false;
   export let nodeId: IRecordId | undefined = undefined;
   export let isReadOnlyMode: boolean = false;
   export let expand: IRecordId | null = null;
-  export let ctx: "clip" | "capture" = "clip";
+  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.CLIPPER;
+  // export let ctx: "clip" | "capture" = "clip";
   let expansionState:
     | "not-type"
     | "node"
@@ -39,6 +42,7 @@
     | "error" = "loading";
   let types: any[] = [];
   let link: INodeLinkThumb;
+  let propertyCount: number | undefined = undefined;
   $: _links = links?.filter(removeDuplicatesFilter) ?? [];
   $: if (expand) {
     refreshExpansion(expand);
@@ -46,6 +50,7 @@
 
   async function refreshExpansion(item: IRecordId) {
     expansionState = "loading";
+    propertyCount = undefined;
     const type = determineResourceType(item);
     if (type === Resource.collection) {
       const result = await collectionStore.resolveTypes([item], true);
@@ -87,7 +92,7 @@
 
   function onClickItem(item: IRecordId, e: any) {
     if (isExpandable) {
-      expand = expand === item ? null : item;
+      expand = expand && isSameResource(expand, item) ? null : item;
       if (expand) refreshExpansion(item);
       propagateExpansionState();
       e.stopPropagation();
@@ -111,16 +116,28 @@
       <LinkItem
         id={item}
         {parentBgIndex}
-        isRemovable={!isReadOnlyMode}
-        isActive={expand === item}
+        {accessPoint}
+        isAlwaysShowRemove={accessPoint === ResourceAccessPoint.CAPTURE}
+        isRemovable={!isReadOnlyMode &&
+          (accessPoint !== ResourceAccessPoint.SELF ||
+            (accessPoint === ResourceAccessPoint.SELF &&
+              !$context.isTouchDevice))}
+        isActive={expand && isSameResource(expand, item) ? true : undefined}
         on:click={(e) => {
-          if ($context.isTouchDevice) return;
+          if (
+            $context.isTouchDevice &&
+            accessPoint === ResourceAccessPoint.SELF
+          )
+            return;
           onClickItem(item, e);
         }}
         on:goToResource={(e) => {
           onClickItem(item, e);
         }}
         on:remove={() => {
+          if (expand && isSameResource(expand, item)) {
+            expand = null;
+          }
           dispatch("unlink", item);
         }}
       />
@@ -129,9 +146,12 @@
   {#if isExpandable && expand}
     {#if expansionState === "loading" || expansionState === "not-type" || expansionState === "no-props" || expansionState === "error"}
       <div
-        class={cn("flex justify-center items-center w-full h-full", {
-          "text-ars1": expansionState === "error"
-        })}
+        class={cn(
+          "flex justify-center items-center w-full h-full text-fgs3 text-b2",
+          {
+            "text-ars1": expansionState === "error"
+          }
+        )}
       >
         {#if expansionState === "loading"}
           loading...
@@ -139,6 +159,8 @@
           Not a typed collection.
         {:else if expansionState === "no-props"}
           No properties found.
+        {:else if expansionState === "error" && accessPoint === ResourceAccessPoint.CAPTURE}
+          Adding relationship to node links is not available yet for capture
         {:else if expansionState === "error"}
           Something went wrong.
         {/if}
@@ -151,12 +173,13 @@
     {:else if expansionState === "has-props"}
       <div
         class={cn("w-full p-2 rounded-md flex flex-col gap-3 items-start", {
-          "h-96 bg-bgs2 bg-opacity-30": ctx === "clip",
-          "h-fit max-h-96": ctx === "capture"
+          "h-96 bg-bgs2 bg-opacity-30":
+            accessPoint === ResourceAccessPoint.CLIPPER,
+          "h-fit max-h-96": accessPoint === ResourceAccessPoint.CAPTURE
         })}
       >
         <Text
-          content={`${types[0]?.label ? types[0].label + ":" : ""} Properties (${types[0]?.properties?.length})`}
+          content={`${types[0]?.label ? types[0].label + ":" : ""} Properties (${propertyCount ?? ""})`}
           style={TextStyle.SECTION_HEADING_SMALL}
         />
         <div class="overflow-y-auto h-full w-full styledscroll">
@@ -167,8 +190,11 @@
             on:change={(e) => {
               dispatch("propertyChange", e.detail);
             }}
+            on:propertyCount={(e) => {
+              propertyCount = e.detail;
+            }}
           />
-          {#if ctx === "clip"}
+          {#if accessPoint === ResourceAccessPoint.CLIPPER}
             <ScrollViewBottomSpacer />
           {/if}
         </div>

@@ -92,6 +92,7 @@ export class SearchStore {
    * @returns
    */
   async nodes() {
+    console.log("record.store.ts - nodes");
     const result = await flux.selectMany(
       this.searchType == SearchType.SEMANTIC && this.searchQuery
         ? Resource.vector
@@ -164,7 +165,7 @@ export class SearchStore {
             : false
       }
     );
-
+    console.log("record.store.ts - nodes - result");
     logger.log({ at: "refreshNodes", result });
 
     // const result2 = await flux.selectByQuery("select * from node;");

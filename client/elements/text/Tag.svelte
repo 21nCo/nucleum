@@ -10,6 +10,7 @@
   import AvatarRenderer from "../avatarPicker/AvatarRenderer.svelte";
   import type { IRecordId } from "$lib/client/types/data.type";
   import { Placement } from "$lib/client/types/direction.enum";
+  import context from "$lib/client/stores/context.store";
   const dispatch = createEventDispatcher();
   export let label: string;
   export let parentBgIndex: number = 1;
@@ -24,7 +25,13 @@
     | Placement.BottomCenter
     | Placement.BottomLeft
     | Placement.BottomRight = Placement.BottomCenter;
+  export let removeStyle: "overlay" | "inline" | "always-show" = "inline";
   let isHovering = false;
+  $: isRemoveIconRenderedInline =
+    isRemovable &&
+    ($context.isTouchDevice ||
+      removeStyle === "always-show" ||
+      (removeStyle === "inline" && isHovering));
 </script>
 
 <div class="overflow-hidden">
@@ -33,15 +40,17 @@
       "relative flex gap-2 items-center justify-center whitespace-nowrap border min-w-20",
       {
         "text-b3 px-2 py-0.5 rounded-md": size === Size.sm,
-        "text-b2 px-3 py-1 rounded-full": size === Size.md,
+        "text-b2 pl-4 pr-2 py-1 rounded-full": size === Size.md,
+        "pr-4": size === Size.md && !isRemoveIconRenderedInline,
         "border-brs3 hover:border-fgs4": !isActive,
         "border-aps1": isActive
       }
     )}
     id={id?.toString()}
     on:click
-    use:hoverable
-    on:hover={(e) => (isHovering = e.detail)}
+    use:hoverable={{
+      onHover: (value) => (isHovering = value)
+    }}
   >
     {#if icon && typeof icon === "string"}
       <Icon {icon} size={Size.sm} />
@@ -52,16 +61,17 @@
     {#if count !== undefined}
       <Badge text={count} size={size === Size.sm ? Size.xs : Size.sm} />
     {/if}
-    {#if isHovering && isRemovable}
+    {#if isRemoveIconRenderedInline}
       <button
-        class={cn(
-          "absolute top-0 right-0 rounded-full bg-gradient-to-l  to-transparent pr-2 pl-3 flex h-full items-center",
-          {
-            "from-bgs1 via-bgs1": parentBgIndex === 1,
-            "from-bgs2 via-bgs2": parentBgIndex === 2,
-            "from-bgs3 via-bgs3": parentBgIndex === 3
-          }
-        )}
+        class={cn("rounded-full flex h-full items-center", {
+          "from-bgs1 via-bgs1": parentBgIndex === 1,
+          "from-bgs2 via-bgs2": parentBgIndex === 2,
+          "from-bgs3 via-bgs3": parentBgIndex === 3,
+          "absolute top-0 right-0 bg-gradient-to-l  to-transparent pr-2 pl-3":
+            removeStyle === "overlay",
+          "active:bg-bgs2 notouch:hover:bg-bgs2":
+            removeStyle === "inline" || removeStyle === "always-show"
+        })}
         on:click={(e) => {
           dispatch("remove");
           e.stopPropagation();

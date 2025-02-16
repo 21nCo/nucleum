@@ -26,6 +26,7 @@ import { tabs } from "$lib/client/layout/tabs/tabs.store";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { LinkType } from "$lib/client/products/memotron/node/node.type";
 import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
+import { toasts } from "$lib/client/stores/notification.store";
 
 export class ResourceActions<T extends IMemotronItemBase> {
   constructor(
@@ -42,7 +43,10 @@ export class ResourceActions<T extends IMemotronItemBase> {
       label: "Copy link",
       value: "link",
       icon: "copy",
-      callback: async () => copyResourceLinkToClipboard(this.resource.id)
+      callback: async () => {
+        copyResourceLinkToClipboard(this.resource.id);
+        toasts.success("Link copied to clipboard");
+      }
     };
   }
   copyContents(): IContextMenuItem {
@@ -50,7 +54,10 @@ export class ResourceActions<T extends IMemotronItemBase> {
       label: "Copy contents",
       value: "copy-contents",
       icon: "copy",
-      callback: async () => this.store.copyContents(this.resource.id)
+      callback: async () => {
+        this.store.copyContents(this.resource.id);
+        toasts.success("Contents copied to clipboard");
+      }
     };
   }
   star(): IContextMenuItem {

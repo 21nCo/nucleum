@@ -2,7 +2,6 @@
   import { Size } from "$lib/client/types/size.enum";
   import { createEventDispatcher } from "svelte";
   import SearchResultItem from "./SearchResultItem.svelte";
-  import Button from "../button/Button.svelte";
   import { debouncer } from "$lib/client/utils/utils";
   import { cn } from "$lib/client/utils/ui.utils";
   import type { IResource } from "$lib/client/components/flux/resourceStores/resource.type";
@@ -230,12 +229,13 @@
           {@html renderMdAsHtml(bottomMessage)}
         </span>
       {/if}
-      <Button
-        size={Size.xs}
-        label="close"
-        parentBgIndex={bottomMessage ? 1 : 0}
+      <button
+        class="flex items-center gap-1 active:bg-bgs2 px-1 rounded-md"
         on:click={reset}
-      />
+      >
+        <Icon icon="ph:x-light" size={Size.sm} class="text-fgs3" />
+        <span class="text-fgs3 text-b2">Close</span>
+      </button>
     </div>
   {/if}
 </div>
