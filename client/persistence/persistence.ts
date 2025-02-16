@@ -127,6 +127,21 @@ export class Persistence {
     }
   };
 
+  verifyPayment = async (nonce: string) => {
+    try {
+      const response = await performApiCall("v2/plan/verify", "POST", {
+        nonce
+      });
+      if (!response?.ok) {
+        return;
+      }
+      const data = await response.json();
+      return data;
+    } catch (err) {
+      logger.error(err);
+    }
+  };
+
   async runAccountAction(action: string, params: any) {
     try {
       const response = await performApiCall("account/n/action", "POST", {

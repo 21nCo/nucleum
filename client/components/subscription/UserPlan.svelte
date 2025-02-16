@@ -9,6 +9,7 @@
   import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
   import { Action } from "$lib/client/types/action.enum";
   import account from "$lib/client/stores/account.store";
+  import { SUBSCRIPTION_PLANS } from "./userPlan.utils";
 
   let selectedPeriod: BillingCycle = BillingCycle.YEARLY;
   let showAllPlans = false;
@@ -18,79 +19,6 @@
     { value: BillingCycle.MONTHLY, label: "Monthly" },
     { value: BillingCycle.YEARLY, label: "Yearly", badge: "-20%" },
     { value: BillingCycle.LIFETIME, label: "Lifetime" }
-  ];
-
-  const plans: IPlan[] = [
-    {
-      name: "Memotron Sync",
-      type: PlanType.CLOUD_SYNC,
-      description: "Real-time sync across all devices for Memotron",
-      price: {
-        [BillingCycle.MONTHLY]: 7,
-        [BillingCycle.YEARLY]: 60,
-        [BillingCycle.LIFETIME]: 250
-      },
-      features: [
-        {
-          icon: "ph:arrows-left-right-light",
-          label: "Unlimited cloud sync"
-        },
-        {
-          icon: "ph:lock-light",
-          label: "End-to-end encryption"
-        },
-        {
-          icon: "ph:database-light",
-          label: "20 GB of media storage (add-on for more)"
-        },
-        {
-          icon: "ph:at-light",
-          label: "Email and community support"
-        }
-      ]
-    },
-    {
-      name: "Nucleus",
-      type: PlanType.NUCLEUS,
-      description: "Everything productivity, single plan",
-      price: {
-        [BillingCycle.MONTHLY]: 15,
-        [BillingCycle.YEARLY]: 144,
-        [BillingCycle.LIFETIME]: 450
-      },
-      features: [
-        {
-          icon: "ph:arrows-left-right-light",
-          label:
-            "Unlimited cloud sync for Memotron, Pointron - [more soon](https://21n.org)"
-        },
-        {
-          icon: "ph:lock-light",
-          label: "End-to-end encryption"
-        },
-        {
-          icon: "ph:database-light",
-          label: "100 GB of media storage (add-on for more)"
-        },
-        {
-          icon: "ph:sparkle-light",
-          label: "Early access to Nucleus - the everything productivity app"
-        },
-        {
-          icon: "ph:clock-light",
-          label: "Early access to new products, features"
-        },
-        {
-          icon: "ph:chat-centered-dots-light",
-          label: "Priority chat support"
-        },
-        {
-          icon: "ph:hand-heart-light",
-          label: "Support independent organization - [21n.org](https://21n.org)"
-        }
-      ],
-      isPopular: true
-    }
   ];
 
   function onChange(plan?: IPlan) {
@@ -105,11 +33,14 @@
     console.log("onDowngrade", plan);
   }
 
-  function onChoose(plan: IPlan) {
-    account.initiateSubscription({
+  async function onChoose(plan: IPlan) {
+    const response = await account.initiateSubscription({
       plan: plan.type,
       cycle: selectedPeriod
     });
+    if (response && response.nonce) {
+      window.location.href = response.paymentLink;
+    }
   }
 </script>
 
@@ -137,7 +68,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto h-full">
       {#if currentPlan && !showAllPlans}
         <PlanCard
-          {plans}
+          plans={SUBSCRIPTION_PLANS}
           {currentPlan}
           isCurrentPage={true}
           on:change={() => onChange()}
@@ -145,9 +76,9 @@
           on:downgrade={() => onDowngrade()}
         />
       {:else}
-        {#each plans as plan}
+        {#each SUBSCRIPTION_PLANS as plan}
           <PlanCard
-            {plans}
+            plans={SUBSCRIPTION_PLANS}
             {plan}
             {currentPlan}
             period={selectedPeriod}

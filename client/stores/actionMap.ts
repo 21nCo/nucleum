@@ -57,6 +57,8 @@ import { ButtonVariant } from "../types/button.type";
 import CreateTask from "$lib/client/components/tasks/CreateTask.svelte";
 import Task from "../components/tasks/Task.svelte";
 import TaskTitleLabelPart from "../components/tasks/TaskTitleLabelPart.svelte";
+import PaymentRedirect from "../components/subscription/PaymentRedirect.svelte";
+import PlanOnboarding from "../components/subscription/PlanOnboarding.svelte";
 export const globalActions: IAction[] = [
   {
     action: "404",
@@ -773,5 +775,16 @@ export const globalActions: IAction[] = [
       resource: Resource.task
     },
     loadingComponent: NodeLoadingPulse
+  },
+  {
+    action: "pay",
+    type: ActionType.PAGE,
+    isMenuHidden: true,
+    component: PaymentRedirect
+  },
+  {
+    action: Action.PLAN_ONBOARDING,
+    type: ActionType.PAGE,
+    component: PlanOnboarding
   }
 ];

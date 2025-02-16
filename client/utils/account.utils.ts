@@ -9,7 +9,10 @@ import {
 import { postToParent } from "./embed.utils";
 import { LicenseType, type IUserPlan } from "../types/account.type";
 import jwt_decode from "jwt-decode";
-import { PlanType } from "../components/subscription/userPlan.type";
+import {
+  BillingCycle,
+  PlanType
+} from "../components/subscription/userPlan.type";
 import { formatDate } from "./time.utils";
 import { enumToString } from "$lib/shared/utils/text.utils";
 
@@ -180,7 +183,7 @@ export function resolvePlanLabel(plan: IUserPlan | undefined) {
     } else if (plan.billingErrors) {
       return `Billing issue`;
     } else {
-      return `${enumToString(plan.plan)} - ${plan.billingCycle} plan 🎉`;
+      return `${enumToString(plan.plan)} - ${plan.cycle} plan 🎉`;
     }
   } else {
     return `Unknown plan`;
@@ -216,4 +219,19 @@ export function resolveDiscountLabel(plan: IUserPlan) {
     }
   }
   return null;
+}
+
+export function resolveNextRenewalDate(plan: IUserPlan) {
+  if (!plan?.paymentDate) return null;
+  const paymentDate = new Date(plan.paymentDate);
+  let multiplier = 1;
+  if (plan.cycle === BillingCycle.MONTHLY) {
+    multiplier = 30;
+  } else if (plan.cycle === BillingCycle.YEARLY) {
+    multiplier = 365;
+  }
+  const nextRenewal = new Date(
+    paymentDate.getTime() + 24 * 60 * 60 * 1000 * multiplier
+  );
+  return nextRenewal;
 }

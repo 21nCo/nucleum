@@ -56,11 +56,19 @@ export enum UserSessionType {
 
 export interface IUserPlan {
   plan: PlanType;
+  cycle?: BillingCycle;
+  /**
+   * @deprecated
+   */
   billingCycle?: BillingCycle;
   trialPlan?: ITrialPlan;
   discount?: any;
   billingErrors?: any;
   isCancelled?: boolean;
+  paymentDate?: Date;
+  /**
+   * @deprecated
+   */
   nextRenewal?: Date;
 }
 
