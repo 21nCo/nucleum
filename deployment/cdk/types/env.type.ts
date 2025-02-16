@@ -19,6 +19,8 @@ export type ILambdaEnvironmentVariables = {
   OAUTH_APPLE_SECRET: string;
   GOOGLE_GEO_API_KEY: string;
   UNSPLASH_ACCESS_KEY: string;
+  DODO_BASE_URL: string;
+  DODO_API_KEY: string;
 
   FILE_BUCKET_PREFIX: string;
   TEMP_BUCKET_PREFIX: string;

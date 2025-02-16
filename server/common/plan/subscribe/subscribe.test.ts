@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { subscribe } from "./index";
 import {
-  BillingPeriod,
+  BillingCycle,
   PlanType,
 } from "$lib/client/components/subscription/userPlan.type";
 import { ValidationError } from "../../errors";
@@ -21,7 +21,7 @@ describe("subscribe", () => {
     async () => {
       const subscriptionData = {
         plan: PlanType.CLOUD_SYNC,
-        cycle: BillingPeriod.MONTHLY,
+        cycle: BillingCycle.YEARLY,
       };
 
       const result = await subscribe(subscriptionData, global.testEnv.agent);
@@ -35,7 +35,7 @@ describe("subscribe", () => {
 
   it("should throw error when plan is missing", async () => {
     const invalidData = {
-      cycle: BillingPeriod.MONTHLY,
+      cycle: BillingCycle.MONTHLY,
     };
 
     await expect(subscribe(invalidData, global.testEnv.agent)).rejects.toThrow(
@@ -67,7 +67,7 @@ describe("subscribe", () => {
 
     const subscriptionData = {
       plan: PlanType.CLOUD_SYNC,
-      cycle: BillingPeriod.MONTHLY,
+      cycle: BillingCycle.MONTHLY,
     };
 
     await expect(subscribe(subscriptionData, invalidAgent)).rejects.toThrow(

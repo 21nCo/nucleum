@@ -24,6 +24,7 @@ async function newSubscription(body: any, agent: Agent) {
   const { plan, cycle } = body;
   if (!plan) throw new ValidationError("No plan provided");
   if (!cycle) throw new ValidationError("No cycle provided");
+  //TODO - retrieve billing address of user as well
   const userDataResult = await performQueryOnMasterDb(
     resolvePlanQuery(agent.id)
   );
@@ -55,33 +56,32 @@ async function newSubscription(body: any, agent: Agent) {
     status: "pending",
   });
   console.log({ transaction });
+  let transactionId = "";
   if (Array.isArray(transaction) && transaction.length > 0) {
-    const transactionId = transaction[0].result?.[0]?.id;
+    transactionId = transaction[0].result?.[0]?.id;
     console.log({ transactionId });
     if (!transactionId)
       throw new InternalServerError("Transaction not created");
   }
 
-  // const customer = await createCustomer({
-  //   email: user.context.oauthData.email,
-  //   name: user.nickName,
-  // });
-  // console.log({ customer });
-  const payment = await createPaymentUsingHttp({
+  //TODO - create subscription if monthly
+  const payment = await createPayment({
     email: user.context.oauthData.email,
     name: user.nickName,
     productId,
   });
   console.log({ payment });
-  //4. create subscription in dodo
-  //5. return subscription id
 
-  // Temporary mock return for tests
+  if (!payment || !payment.payment_link) {
+    throw new InternalServerError("Payment not created");
+  }
+  const updateResult = await updateTransaction(transactionId, {
+    dodoPayment: payment,
+  });
+  console.log({ updateResult, nonce, link: payment.payment_link });
   return {
-    subscriptionId: "mock-subscription-id",
-    plan,
-    cycle,
-    status: "active",
+    nonce,
+    paymentLink: payment.payment_link,
   };
 }
 
@@ -96,6 +96,12 @@ async function createTransaction(params: {
 }) {
   const query = `
     INSERT INTO transaction [{ userId: user:${params.userId}, productId: "${params.productId}", plan: "${params.plan}", cycle: "${params.cycle}", discount: ${params.discount}, status: "${params.status}", nonce: "${params.nonce}"}]`;
+  const transaction = await performQueryOnMasterDb(query);
+  return transaction;
+}
+
+async function updateTransaction(id: string, props: any) {
+  const query = `UPDATE ${id} MERGE ${JSON.stringify(props)}`;
   const transaction = await performQueryOnMasterDb(query);
   return transaction;
 }

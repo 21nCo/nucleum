@@ -15,10 +15,10 @@ export function resolveDodoProductId({
 }) {
   const product = paymentProductsList.find(
     (product) =>
-      (product.plan === plan &&
-        product.cycle === cycle &&
-        product.discount === discount) ||
-      !product.discount
+      product.plan === plan &&
+      product.cycle === cycle &&
+      (!product.discount || product.discount === discount)
   );
+  console.log({ product, plan, cycle, discount });
   return product?.dodoProductId;
 }
