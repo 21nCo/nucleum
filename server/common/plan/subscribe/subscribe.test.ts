@@ -22,6 +22,9 @@ describe("subscribe", () => {
       const subscriptionData = {
         plan: PlanType.CLOUD_SYNC,
         cycle: BillingCycle.YEARLY,
+        context: {
+          origin: "https://test.com",
+        },
       };
 
       const result = await subscribe(subscriptionData, global.testEnv.agent);

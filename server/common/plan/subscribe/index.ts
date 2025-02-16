@@ -21,7 +21,7 @@ export async function subscribe(body: any, agent: Agent) {
 }
 
 async function newSubscription(body: any, agent: Agent) {
-  const { plan, cycle } = body;
+  const { plan, cycle, context } = body;
   if (!plan) throw new ValidationError("No plan provided");
   if (!cycle) throw new ValidationError("No cycle provided");
   //TODO - retrieve billing address of user as well
@@ -65,12 +65,14 @@ async function newSubscription(body: any, agent: Agent) {
   }
 
   //TODO - create subscription if monthly
+  const returnUrl = context.origin + "/pay?nonce=" + nonce;
   const payment = await createPayment({
     email: user.context.oauthData.email,
     name: user.nickName,
     productId,
+    returnUrl,
   });
-  console.log({ payment });
+  console.log({ payment, returnUrl });
 
   if (!payment || !payment.payment_link) {
     throw new InternalServerError("Payment not created");

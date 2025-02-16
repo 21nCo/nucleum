@@ -16,6 +16,7 @@ export async function createPayment(params: {
   productId: string;
   email: string;
   name: string;
+  returnUrl?: string;
 }) {
   const dodopayments = new DodoPayments({
     baseURL: process.env.DODO_BASE_URL ?? "https://test.dodopayments.com",
@@ -35,6 +36,7 @@ export async function createPayment(params: {
       name: params.name ?? "someone",
     },
     payment_link: true,
+    return_url: params.returnUrl ?? "",
     product_cart: [{ product_id: params.productId, quantity: 1 }],
   });
   return payment;
