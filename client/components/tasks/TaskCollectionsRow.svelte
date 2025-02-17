@@ -17,6 +17,7 @@
   import { ResourceErrorCode } from "$lib/client/components/error/error.type";
   import type { IActiveTaskStore } from "./task.store";
   import { resolveTaskTypeIcon } from "./task.utils";
+  import { enumToString } from "$lib/shared/utils/text.utils";
 
   export let task: IActiveTaskStore;
   export let isReadOnlyMode: boolean = false;
@@ -78,7 +79,7 @@
       });
     }}
     use:tooltip={{
-      text: `See all ${$task.type} tasks`,
+      text: `See all **${enumToString($task.type)}** tasks`,
       direction: Placement.Bottom
     }}
   >
@@ -87,7 +88,7 @@
       size={Size.sm}
       class="fill-fgs1"
     />
-    {$task.type}
+    {enumToString($task.type)}
   </button>
   <span class="h-full flex items-center justify-center">
     <Divider
