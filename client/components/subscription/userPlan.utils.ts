@@ -1,14 +1,20 @@
 import { BillingCycle, PlanType, type IPlan } from "./userPlan.type";
 
+const plans = import.meta.env.VITE_PLANS;
+let rates: number[] = [7, 60, 250, 15, 144, 450];
+if (plans) {
+  rates = plans.split(",").map((rate: string) => parseInt(rate));
+}
+
 export const SUBSCRIPTION_PLANS: IPlan[] = [
   {
     name: "Memotron Sync",
     type: PlanType.CLOUD_SYNC,
     description: "Real-time sync across all devices for Memotron",
     price: {
-      [BillingCycle.MONTHLY]: 7,
-      [BillingCycle.YEARLY]: 60,
-      [BillingCycle.LIFETIME]: 250
+      [BillingCycle.MONTHLY]: rates[0],
+      [BillingCycle.YEARLY]: rates[1],
+      [BillingCycle.LIFETIME]: rates[2]
     },
     features: [
       {
@@ -34,9 +40,9 @@ export const SUBSCRIPTION_PLANS: IPlan[] = [
     type: PlanType.NUCLEUS,
     description: "Everything productivity, single plan",
     price: {
-      [BillingCycle.MONTHLY]: 15,
-      [BillingCycle.YEARLY]: 144,
-      [BillingCycle.LIFETIME]: 450
+      [BillingCycle.MONTHLY]: rates[3],
+      [BillingCycle.YEARLY]: rates[4],
+      [BillingCycle.LIFETIME]: rates[5]
     },
     features: [
       {
