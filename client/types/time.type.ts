@@ -1,8 +1,8 @@
 export enum TimeScale {
   DAYS = "DAYS",
-  // WEEKS = "WEEKS",
+  WEEKS = "WEEKS",
   MONTHS = "MONTHS",
-  // QUARTERS = "QUARTERS",
+  QUARTERS = "QUARTERS",
   YEARS = "YEARS"
 }
 

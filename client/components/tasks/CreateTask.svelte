@@ -35,7 +35,9 @@
   } from "$lib/client/actions/rearrange.action";
   import GoalColorPickerWithPreview from "$lib/client/products/pointron/goals/GoalColorPickerWithPreview.svelte";
   import { isValidString } from "$lib/shared/utils/text.utils";
-  import type { IRecordId } from "$lib/client/types/data.type";
+  import TimeRangePicker from "$lib/client/elements/datetime/TimeRangePicker.svelte";
+  import TimeSpan from "$lib/client/elements/datetime/TimeSpan.svelte";
+  import { TimeScale } from "$lib/client/types/time.type";
   export let context: ResourceAccessPoint | undefined = undefined;
 
   let label: string = "";
@@ -50,7 +52,9 @@
       }
     ]
   };
-  let date: Date | undefined;
+  let startDate: Date | undefined;
+  let endDate: Date | undefined;
+  let spanScale: TimeScale | undefined;
   let isDescriptionVisible: boolean = false;
   let isSubTasksVisible: boolean = false;
   let isParentSelectorVisible: boolean = false;
@@ -71,8 +75,8 @@
         type,
         subTasksMethod,
         description: isDescriptionVisible ? description : undefined,
-        startDate: type === TaskType.DEFINITE ? date : undefined,
-        endDate: type === TaskType.DEFINITE ? date : undefined,
+        startDate: type === TaskType.DEFINITE ? startDate : undefined,
+        endDate: type === TaskType.DEFINITE ? endDate : undefined,
         parent: parent ? [parent.id] : undefined,
         color
       };
@@ -101,6 +105,11 @@
     const { fromId, toId } = event;
     if (!fromId || !toId || fromId === toId) return;
     subTasks = shiftResourceInArray(subTasks, fromId, toId);
+  }
+
+  function onDateChange(val: CustomEvent<{ start: Date; end: Date }>) {
+    startDate = new Date(val.detail.start);
+    endDate = new Date(val.detail.end);
   }
 </script>
 
@@ -131,13 +140,28 @@
       />
     {/if}
     {#if type === TaskType.DEFINITE}
-      <DatePicker
+      <TimeRangePicker
         label={{
           label: "Start and end date",
           orientation: Orientation.Vertical
         }}
-        bind:date
+        initialStartDate={startDate}
+        initialEndDate={endDate}
+        on:change={onDateChange}
       />
+      {#if startDate && endDate}
+        <TimeSpan
+          scales={[
+            TimeScale.DAYS,
+            TimeScale.WEEKS,
+            TimeScale.MONTHS,
+            TimeScale.YEARS
+          ]}
+          start={startDate}
+          end={endDate}
+          bind:spanScale
+        />
+      {/if}
     {/if}
     {#if isDescriptionVisible}
       <div class="flex flex-col gap-4 bg-bgs2 rounded-md p-4">

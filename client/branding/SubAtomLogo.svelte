@@ -27,7 +27,13 @@
     xmlns="http://www.w3.org/2000/svg"
   >
     {#if subatom === "pointron"}
-      <circle cx="232" cy="230" r="95" stroke="white" stroke-width="28" />
+      <circle
+        cx="232"
+        cy="230"
+        r="95"
+        class="stroke-logo-dark dark:stroke-logo-light"
+        stroke-width="28"
+      />
     {:else if subatom === "memotron"}
       <!-- <rect
         x="192.756"
