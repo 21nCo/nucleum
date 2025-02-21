@@ -16,6 +16,7 @@ beforeAll(async () => {
   process.env.DOMAIN = environment.domain;
   process.env.ADMIN_DB_NAME = "admin";
   process.env.ADMIN_NS = "admin";
+  process.env.NODE_ENV = "dev";
   global.testEnv = {
     ...environment,
     cleanup: async () => {
