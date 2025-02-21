@@ -1,7 +1,7 @@
 import { BillingCycle, PlanType, type IPlan } from "./userPlan.type";
 
 const plans = import.meta.env.VITE_PLANS;
-let rates: number[] = [7, 60, 250, 15, 144, 450];
+let rates: number[] = [7, 60, 200, 15, 144, 450];
 if (plans) {
   rates = plans.split(",").map((rate: string) => parseInt(rate));
 }

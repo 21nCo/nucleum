@@ -9,6 +9,8 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import account from "$lib/client/stores/account.store";
   import { createEventDispatcher } from "svelte";
+  import PlanIcon from "./PlanIcon.svelte";
+  import Divider from "$lib/client/elements/Divider.svelte";
   const dispatch = createEventDispatcher();
 
   export let plans: IPlan[] = [];
@@ -60,9 +62,9 @@
 
 <div
   class={cn(
-    "flex flex-col flex-1 max-h-[42rem] p-6 rounded-lg border relative",
+    "flex flex-col flex-1 max-h-[48rem] p-6 rounded-lg border relative",
     {
-      "border-aps1 hover:bg-aps3": plan.isPopular && !currentPlan,
+      "border-aps1 hover:bg-aps3/30": plan.isPopular && !currentPlan,
       "border-brs3 hover:bg-bgs2": !plan.isPopular || currentPlan,
       "md:col-span-2 max-w-3xl mx-auto w-full": isCurrentPage
     }
@@ -71,7 +73,7 @@
   {#if plan.isPopular && !currentPlan}
     <div class="absolute -top-3 right-4">
       <span class="px-3 py-1 text-sm rounded-full bg-aps1 text-abg"
-        >Most Popular</span
+        >Recommended</span
       >
     </div>
   {/if}
@@ -86,71 +88,54 @@
 
   <div class="flex flex-col h-full">
     <div class="space-y-6">
-      <div>
-        {#if plan.type === PlanType.CLOUD_SYNC}
-          <Icon icon="ph:arrows-clockwise-light" size={Size.xl} />
-        {:else}
-          <!-- TODO - nucleus - multi app logo -->
-          <Icon icon="ph:sparkle-light" size={Size.xl} />
-        {/if}
-        <h3 class="text-3xl font-semibold text-fgs1">{plan.name}</h3>
-        <p class="mt-2 text-sm text-fgs2">{plan.description}</p>
+      <div class="flex flex-col gap-4">
+        <PlanIcon type={plan.type} />
+        <div>
+          <h3 class="text-3xl font-semibold text-fgs1">{plan.name}</h3>
+          <p class="mt-2 text-b2 text-fgs1">{plan.description}</p>
+        </div>
       </div>
 
       <div>
-        {#if period !== BillingCycle.YEARLY}
-          <div class="flex items-baseline gap-2">
-            {#if discountedPrice}
-              <span class="text-xl font-bold text-ags1">
-                ${discountedPrice}
-              </span>
-            {/if}
-            <span
-              class={cn("text-xl font-bold", {
-                "line-through text-fgs3": discountedPrice,
-                "text-fgs1": !discountedPrice
-              })}
-            >
+        <div class="flex items-baseline gap-2">
+          {#if discountedPrice}
+            <span class="text-xl font-semibold text-ags1">
+              ${discountedPrice}
+            </span>
+          {/if}
+          <span
+            class={cn("text-xl font-medium", {
+              "line-through text-fgs3": discountedPrice,
+              "text-fgs1": !discountedPrice
+            })}
+          >
+            {#if period === BillingCycle.YEARLY}
+              ${actualPrice.toFixed(2)}
+            {:else}
               ${actualPrice}
-            </span>
-            <span class="text-sm text-fgs2">
-              {period === BillingCycle.LIFETIME ? "one-time" : "/month"}
-            </span>
-          </div>
-        {:else if period === BillingCycle.YEARLY}
-          <div class="flex items-baseline gap-2">
-            {#if discountedPrice}
-              <span class="text-xl font-bold text-ags1">
-                ${discountedPrice}
-              </span>
             {/if}
-            <span
-              class={cn("text-xl font-bold", {
-                "line-through text-fgs3": discountedPrice,
-                "text-fgs1": !discountedPrice
-              })}
-            >
-              {`$${actualPrice.toFixed(2)}`}
-            </span>
-            <span class="text-sm text-fgs2">/month</span>
-          </div>
-          <div class="mt-1 text-b2 text-fgs2 underline">
-            Total billable today: <b>
+          </span>
+          <span class="text-sm text-fgs2">
+            {period === BillingCycle.LIFETIME ? "one-time" : "/month"}
+          </span>
+        </div>
+        <div class="mt-1 text-base text-fgs2">
+          {#if period === BillingCycle.YEARLY}
+            Pay <b>
               {#if discountedPrice}
                 ${discountedPrice * 12}
               {:else}
                 ${actualPrice * 12}
               {/if}
             </b>
-          </div>
-        {/if}
+            today for a full year
+          {:else if period === BillingCycle.LIFETIME}
+            Get lifetime for the price of just 3 years!
+          {/if}
+        </div>
       </div>
-      <PlanFeatureList
-        features={plan.features}
-        moreLink={plan.type === PlanType.NUCLEUS
-          ? "https://21n.org"
-          : undefined}
-      />
+      <Divider />
+      <PlanFeatureList features={plan.features} />
     </div>
 
     <div class="mt-auto pt-6 flex justify-center">
@@ -179,7 +164,6 @@
         />
       {:else if isUpgrade(plan)}
         <Button
-          icon="ph:arrow-up-light"
           label="Upgrade Plan"
           isLoading={progressState === "upgrading"}
           type={ButtonVariant.PRIMARY}
@@ -191,7 +175,6 @@
         />
       {:else if isDowngrade(plan)}
         <Button
-          icon="ph:arrow-down-light"
           label="Downgrade Plan"
           isLoading={progressState === "downgrading"}
           type={ButtonVariant.PRIMARY}
@@ -204,7 +187,6 @@
         />
       {:else}
         <Button
-          icon="ph:arrow-right-light"
           label="Choose Plan"
           type={ButtonVariant.PRIMARY}
           isLoading={progressState === "initiating"}

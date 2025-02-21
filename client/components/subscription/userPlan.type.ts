@@ -26,3 +26,13 @@ export interface ICurrentPlan {
   type: PlanType;
   billingCycle: BillingCycle;
 }
+
+export interface IBillingAddress {
+  name: string;
+  email: string;
+  street: string;
+  city: string;
+  state: string;
+  country: string;
+  zipcode: string;
+}

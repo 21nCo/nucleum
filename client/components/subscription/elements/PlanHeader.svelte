@@ -15,7 +15,7 @@
 <div class="flex flex-col items-center">
   {#if currentPlan}
     <div class="flex flex-col items-center gap-4 py-3 dp:pt-6">
-      <h2 class="text-2xl font-semibold text-fgs1">Your Current Plan</h2>
+      <h2 class="text-xl font-semibold text-fgs1">Your Current Plan</h2>
       <p class="text-sm text-center text-fgs2">
         Review your subscription and available options
       </p>
@@ -31,15 +31,18 @@
       />
     </div>
   {:else}
-    <div class="flex flex-col items-center gap-4 py-3 dp:pt-6">
-      <h2 class="text-2xl font-semibold text-fgs1">Choose Your Plan</h2>
-      <p class="text-sm text-center text-fgs2">
-        Select a plan that works best for you
-      </p>
+    <div class="flex flex-col items-center gap-3 py-3 dp:pt-6">
+      <h2 class="text-xl font-semibold text-fgs1">Choose Your Plan</h2>
       {#if $account.plan?.discount}
-        <div class="text-center text-ags1 font-medium">
-          🎉🎉 {resolveDiscountLabel($account.plan)}
+        <div
+          class="text-center bg-ags1 rounded-md px-2 py-1 text-b2 text-cbg font-medium"
+        >
+          🎉 {resolveDiscountLabel($account.plan)}
         </div>
+      {:else}
+        <p class="text-sm text-center text-fgs2">
+          Select a plan that works best for you
+        </p>
       {/if}
     </div>
   {/if}

@@ -6,6 +6,10 @@
   export let parentBgIndex: number = 1;
   export let isApplyCustomColor = false;
   export let isAccentColor = false;
+
+  $: isGeneric =
+    typeof text === "string" &&
+    !["new", "soon", "planned", "beta"].includes(text.toLowerCase());
 </script>
 
 {#if typeof text === "number"}
@@ -34,12 +38,9 @@
       "bg-ags3 text-ags1 border border-ags1": ["soon", "planned"].includes(
         text.toLowerCase()
       ),
-      "text-fgs2 border border-brs3": ![
-        "new",
-        "soon",
-        "planned",
-        "beta"
-      ].includes(text.toLowerCase()),
+      "border border-brs3": isGeneric,
+      "text-fgs2": isGeneric && !isAccentColor && !isApplyCustomColor,
+      "text-cbg": isGeneric && (isAccentColor || isApplyCustomColor),
       "px-1.5 py-0.25 text-b4": size === Size.md,
       "px-1 py-0.25 text-b5": size === Size.sm
     })}
