@@ -1,20 +1,23 @@
 import {
   APIGatewayProxyEvent,
   APIGatewayProxyEventV2,
-  APIGatewayProxyResultV2
+  APIGatewayProxyResultV2,
 } from "aws-lambda";
 import { authorize } from "./common/auth";
 import { parse } from "querystring";
 import {
   AuthenticationError,
   AuthorizationError,
-  ValidationError
+  DatabaseError,
+  InternalServerError,
+  NotFoundError,
+  ValidationError,
 } from "./common/errors";
 
 export const accessControlHeaders = {
   "Access-Control-Allow-Origin": "*", //TODO - dynamic origin
   "Access-Control-Allow-Headers": "Content-Type Authorization",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS"
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 
 export async function lambdaUsingNode(
@@ -35,9 +38,9 @@ export async function lambdaUsingNode(
           statusCode: 401,
           headers: {
             "Content-Type": "text/plain",
-            ...accessControlHeaders
+            ...accessControlHeaders,
           },
-          body: "Unauthorized"
+          body: "Unauthorized",
         };
       }
     }
@@ -50,7 +53,7 @@ export async function lambdaUsingNode(
       body = { ...event.queryStringParameters };
       console.log("GET request", {
         body,
-        queryStringParameters: event.queryStringParameters
+        queryStringParameters: event.queryStringParameters,
       });
     } else if (httpMethod === "POST") {
       if (contentType === "multipart/form-data") {
@@ -79,7 +82,10 @@ export async function lambdaUsingNode(
     if (
       e instanceof ValidationError ||
       e instanceof AuthenticationError ||
-      e instanceof AuthorizationError
+      e instanceof AuthorizationError ||
+      e instanceof InternalServerError ||
+      e instanceof NotFoundError ||
+      e instanceof DatabaseError
     ) {
       statusCode = e.statusCode;
       responseBody = JSON.stringify({ error: e.message });
@@ -93,9 +99,9 @@ export async function lambdaUsingNode(
     headers: {
       "Content-Type": "application/json",
       ...accessControlHeaders,
-      ...responseHeaders
+      ...responseHeaders,
     },
-    body: responseBody
+    body: responseBody,
   };
 }
 
@@ -117,8 +123,8 @@ export async function lamdbaUsingBun(
         status: 401,
         headers: {
           "Content-Type": "text/plain",
-          ...accessControlHeaders
-        }
+          ...accessControlHeaders,
+        },
       });
     }
     const body = await request.json();
@@ -139,7 +145,7 @@ export async function lamdbaUsingBun(
     status: statusCode,
     headers: {
       "Content-Type": "application/json",
-      ...accessControlHeaders
-    }
+      ...accessControlHeaders,
+    },
   });
 }
