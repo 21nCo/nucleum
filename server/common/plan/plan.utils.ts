@@ -8,17 +8,22 @@ export function resolveDodoProductId({
   plan,
   cycle,
   discount,
+  product,
+  isTest,
 }: {
   plan: string;
   cycle: string;
   discount: number;
+  product: string;
+  isTest: boolean;
 }) {
-  const product = paymentProductsList.find(
-    (product) =>
-      product.plan === plan &&
-      product.cycle === cycle &&
-      (!product.discount || product.discount === discount)
+  const record = paymentProductsList.find(
+    (r) =>
+      r.plan === plan &&
+      r.cycle === cycle &&
+      (!r.discount || r.discount === discount) &&
+      (!r.product || r.product === product)
   );
-  console.log({ product, plan, cycle, discount });
-  return product?.dodoProductId;
+  if (isTest) return record?.dodoTestProductId;
+  return record?.dodoProductId;
 }

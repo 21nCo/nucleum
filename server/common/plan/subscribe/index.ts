@@ -1,16 +1,9 @@
+import { BillingCycle } from "$lib/client/components/subscription/userPlan.type";
 import { performQueryOnMasterDb } from "$lib/server/surrealHelpers";
-import {
-  generateRandomId,
-  generateSHA256Hash,
-} from "$lib/shared/utils/crypto.utils";
-import { generateUID } from "$lib/shared/utils/utils";
+import { generateSHA256Hash } from "$lib/shared/utils/crypto.utils";
 import { Agent } from "../../account/account.type";
 import { InternalServerError, ValidationError } from "../../errors";
-import {
-  createCustomer,
-  createPayment,
-  createPaymentUsingHttp,
-} from "../dodoPaymentProvider";
+import { createPayment, createSubscription } from "../dodoPaymentProvider";
 import { resolveDodoProductId, resolvePlanQuery } from "../plan.utils";
 
 export async function subscribe(body: any, agent: Agent) {
@@ -21,10 +14,9 @@ export async function subscribe(body: any, agent: Agent) {
 }
 
 async function newSubscription(body: any, agent: Agent) {
-  const { plan, cycle, context } = body;
+  const { plan, cycle, context, product, billing } = body;
   if (!plan) throw new ValidationError("No plan provided");
   if (!cycle) throw new ValidationError("No cycle provided");
-  //TODO - retrieve billing address of user as well
   const userDataResult = await performQueryOnMasterDb(
     resolvePlanQuery(agent.id)
   );
@@ -39,8 +31,15 @@ async function newSubscription(body: any, agent: Agent) {
   if (discountData.first) {
     discount = discountData.first;
   }
-  const productId = resolveDodoProductId({ plan, cycle, discount });
-  console.log({ user, productId, discount });
+  const isTest = process.env.NODE_ENV === "dev";
+  const productId = resolveDodoProductId({
+    plan,
+    cycle,
+    discount,
+    product,
+    isTest,
+  });
+
   if (!productId) throw new InternalServerError("Product not found");
 
   const nonce = await generateSHA256Hash(
@@ -55,7 +54,7 @@ async function newSubscription(body: any, agent: Agent) {
     nonce,
     status: "pending",
   });
-  console.log({ transaction });
+
   let transactionId = "";
   if (Array.isArray(transaction) && transaction.length > 0) {
     transactionId = transaction[0].result?.[0]?.id;
@@ -64,14 +63,25 @@ async function newSubscription(body: any, agent: Agent) {
       throw new InternalServerError("Transaction not created");
   }
 
-  //TODO - create subscription if monthly
   const returnUrl = context.origin + "/pay?nonce=" + nonce;
-  const payment = await createPayment({
-    email: user.context.oauthData.email,
-    name: user.nickName,
-    productId,
-    returnUrl,
-  });
+  let payment;
+  if (cycle === BillingCycle.MONTHLY) {
+    payment = await createSubscription({
+      email: user.context.oauthData.email ?? billing.email,
+      name: user.nickName ?? billing.name,
+      billing,
+      productId,
+      returnUrl,
+    });
+  } else {
+    payment = await createPayment({
+      email: user.context.oauthData.email ?? billing.email,
+      name: user.nickName ?? billing.name,
+      billing,
+      productId,
+      returnUrl,
+    });
+  }
   console.log({ payment, returnUrl });
 
   if (!payment || !payment.payment_link) {

@@ -16,6 +16,7 @@ export async function createPayment(params: {
   productId: string;
   email: string;
   name: string;
+  billing: any;
   returnUrl?: string;
 }) {
   const dodopayments = new DodoPayments({
@@ -24,20 +25,40 @@ export async function createPayment(params: {
   });
   console.log({ email: params.email, name: params.name });
   const payment = await dodopayments.payments.create({
-    billing: {
-      city: "Hyderabad",
-      country: "IN",
-      state: "Telangana",
-      street: "street",
-      zipcode: "500085",
-    },
+    billing: params.billing,
     customer: {
-      email: params.email ?? "test@21n.org",
-      name: params.name ?? "someone",
+      email: params.email,
+      name: params.name,
     },
     payment_link: true,
     return_url: params.returnUrl ?? "",
     product_cart: [{ product_id: params.productId, quantity: 1 }],
+  });
+  return payment;
+}
+
+export async function createSubscription(params: {
+  productId: string;
+  email: string;
+  name: string;
+  billing: any;
+  returnUrl?: string;
+}) {
+  const dodopayments = new DodoPayments({
+    baseURL: process.env.DODO_BASE_URL ?? "https://test.dodopayments.com",
+    bearerToken: process.env.DODO_API_KEY,
+  });
+  console.log({ email: params.email, name: params.name });
+  const payment = await dodopayments.subscriptions.create({
+    billing: params.billing,
+    customer: {
+      email: params.email,
+      name: params.name,
+    },
+    payment_link: true,
+    return_url: params.returnUrl ?? "",
+    product_id: params.productId,
+    quantity: 1,
   });
   return payment;
 }

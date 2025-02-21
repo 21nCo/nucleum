@@ -6,6 +6,17 @@ import {
 } from "$lib/client/components/subscription/userPlan.type";
 import { ValidationError } from "../../errors";
 
+const product = "memotron";
+const billing = {
+  city: "Hyderabad",
+  country: "IN",
+  state: "Telangana",
+  street: "street",
+  zipcode: "500085",
+  email: "test@21n.org",
+  name: "user",
+};
+
 describe("subscribe", () => {
   it("should throw error when no body is provided", async () => {
     await expect(subscribe(null, global.testEnv.agent)).rejects.toThrow(
@@ -17,11 +28,13 @@ describe("subscribe", () => {
   });
 
   it(
-    "should create a new subscription with valid input",
+    "should create a payment - cloud sync yearly",
     async () => {
       const subscriptionData = {
         plan: PlanType.CLOUD_SYNC,
         cycle: BillingCycle.YEARLY,
+        product,
+        billing,
         context: {
           origin: "https://21n.org",
         },
@@ -29,9 +42,65 @@ describe("subscribe", () => {
 
       const result = await subscribe(subscriptionData, global.testEnv.agent);
 
-      // Verify the result structure
       expect(result).toBeDefined();
-      // Add more specific assertions based on your actual implementation
+    },
+    { timeout: 30000 }
+  );
+
+  it(
+    "should create a payment - cloud sync monthly",
+    async () => {
+      const subscriptionData = {
+        plan: PlanType.CLOUD_SYNC,
+        cycle: BillingCycle.MONTHLY,
+        product,
+        billing,
+        context: {
+          origin: "https://21n.org",
+        },
+      };
+
+      const result = await subscribe(subscriptionData, global.testEnv.agent);
+
+      expect(result).toBeDefined();
+    },
+    { timeout: 30000 }
+  );
+
+  it(
+    "should create a payment - nucleus yearly",
+    async () => {
+      const subscriptionData = {
+        plan: PlanType.NUCLEUS,
+        cycle: BillingCycle.YEARLY,
+        billing,
+        context: {
+          origin: "https://21n.org",
+        },
+      };
+
+      const result = await subscribe(subscriptionData, global.testEnv.agent);
+
+      expect(result).toBeDefined();
+    },
+    { timeout: 30000 }
+  );
+
+  it(
+    "should create a payment - nucleus lifetime",
+    async () => {
+      const subscriptionData = {
+        plan: PlanType.NUCLEUS,
+        cycle: BillingCycle.LIFETIME,
+        billing,
+        context: {
+          origin: "https://21n.org",
+        },
+      };
+
+      const result = await subscribe(subscriptionData, global.testEnv.agent);
+
+      expect(result).toBeDefined();
     },
     { timeout: 30000 }
   );
