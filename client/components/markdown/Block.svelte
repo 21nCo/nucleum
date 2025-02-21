@@ -899,7 +899,8 @@
       "grid grid-cols-[2.5rem_1fr_2.5rem]": isLeftControlsEnabled,
       dragging: isDragging,
       "prevent-reorder-feedback-for-files":
-        block.contentType === NodeType.EMBED && !block.body.id
+        block.contentType === NodeType.EMBED && !block.body.id,
+      "bg-bgs2": $context.isTouchDevice && block.contentType === NodeType.EMBED
     },
     $mdStore.params?.isNodular &&
       !$mdStore.params?.isReadOnly && {

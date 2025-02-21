@@ -9,7 +9,7 @@
   import { appStore } from "$lib/client/stores/app.store";
   import ViewSettingsBar from "./ViewSettingsBar.svelte";
   import PageLoadingPulse from "$lib/client/elements/feedback/animations/PageLoadingPulse.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { bg, cn } from "$lib/client/utils/ui.utils";
   import ViewTabSwitcher from "./tabSwitcher/ViewTabSwitcher.svelte";
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
   import {
@@ -86,6 +86,8 @@
 
   export let id: string = "";
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
+  export let parentBgIndex: number = 1;
+
   export let accessMode: ResourceAccessMode = ResourceAccessMode.POP;
   let collection: IActiveCollectionStore = ActiveCollectionStore.resolve(id);
   let activeView: ICollectionViewWithData | null = null;
@@ -574,17 +576,21 @@
       >
         <div
           class={cn("px-4 stickyheader", {
-            "sticky top-0 bg-bgs1": isSingleViewMode,
+            "sticky top-0": isSingleViewMode,
+            [bg(parentBgIndex - 1)]: isSingleViewMode,
             // When in edit mode, interfering with view settings dropdown when the dropdown opens on top if z-20 is set
             "z-20": isSingleViewMode && !$collection.isInEditMode,
             "pb-8": isSingleViewMode && !isShowMetaViews && !isConstrainedWidth,
             "pt-6": !isConstrainedWidth,
-            "p-2": isConstrainedWidth
+            "p-2": isConstrainedWidth,
+            "max-w-full overflow-x-auto":
+              accessPoint === ResourceAccessPoint.MARKDOWN_EMBED
           })}
         >
           <CollectionTitleBar
             on:back
             {collection}
+            {accessPoint}
             {isSingleViewMode}
             {isConstrainedWidth}
             bind:searchQuery
@@ -679,9 +685,13 @@
         {/if}
         {#if (activeView && isValidString(activeView.tabBy)) || $collection.isInEditMode || !isSingleViewMode}
           <header
-            class={cn("sticky top-0 z-10 flex flex-col gap-6 bg-bgs1 w-full", {
-              "pt-4": isStickied
-            })}
+            class={cn(
+              "sticky top-0 z-10 flex flex-col gap-6 w-full",
+              bg(parentBgIndex - 1),
+              {
+                "pt-4": isStickied
+              }
+            )}
           >
             {#if !isSingleViewMode || $collection.isInEditMode}
               <PanelSwitcher
@@ -694,6 +704,7 @@
                 barStyle={BarStyle.EXACT}
                 isInEditMode={$collection.isInEditMode}
                 isRenderDropdownForCW={true}
+                {parentBgIndex}
                 bind:triggerItemEdit
                 on:remove={onViewRemove}
                 on:add={onViewAdd}

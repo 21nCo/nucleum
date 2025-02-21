@@ -31,6 +31,7 @@
   import type { IRecordId } from "$lib/client/types/data.type";
   import type { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import view from "$lib/client/stores/view.store";
+  import context from "$lib/client/stores/context.store";
 
   export let node: IActiveNodeStore;
   export let mdId: string;
@@ -303,7 +304,8 @@
           node={$node}
           {mdId}
           params={{
-            isReadOnly: isReadOnlyMode
+            isReadOnly: isReadOnlyMode,
+            isPreventFocusOnLoad: $context.isTouchDevice
           }}
           bind:md={$node.md}
           bind:this={markdownRef}

@@ -49,7 +49,7 @@
   {@html oembedHtml}
 {:else if account.isCloudUserAndOnline()}
   <button
-    class="w-full h-full px-4 cw:py-12 flex justify-center items-center overflow-y-auto"
+    class="w-full h-full px-4 flex justify-center items-center overflow-y-auto"
     on:click={() => {
       appStore.openLink(node.url);
     }}
