@@ -5,13 +5,13 @@
   export let colorStrength: ColorStrength = ColorStrength.Normal;
   export let orientation: Orientation = Orientation.Horizontal;
   export let thickness: number = 1;
-  export let isShowOr: boolean = false;
+  export let text: string | undefined = undefined;
 </script>
 
-{#if isShowOr}
+{#if text}
   <div class="flex w-full items-center gap-2">
     <svelte:self {colorStrength} {thickness} />
-    <span class="text-fgs2 text-b3">or</span>
+    <span class="text-fgs2 text-b3">{text}</span>
     <svelte:self {colorStrength} {thickness} />
   </div>
 {:else}
