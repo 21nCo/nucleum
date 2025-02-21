@@ -67,16 +67,16 @@ async function newSubscription(body: any, agent: Agent) {
   let payment;
   if (cycle === BillingCycle.MONTHLY) {
     payment = await createSubscription({
-      email: user.context.oauthData.email ?? billing.email,
-      name: user.nickName ?? billing.name,
+      email: billing.email ?? user.context.oauthData.email,
+      name: billing.name ?? user.nickName,
       billing,
       productId,
       returnUrl,
     });
   } else {
     payment = await createPayment({
-      email: user.context.oauthData.email ?? billing.email,
-      name: user.nickName ?? billing.name,
+      email: billing.email ?? user.context.oauthData.email,
+      name: billing.name ?? user.nickName,
       billing,
       productId,
       returnUrl,

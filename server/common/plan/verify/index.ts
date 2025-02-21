@@ -28,13 +28,21 @@ export async function verify(body: VerifyRequest, agent: Agent) {
     return user;
   }
 
-  if (!transaction.dodoPayment || !transaction.dodoPayment.payment_id) {
+  if (
+    !transaction.dodoPayment ||
+    (!transaction.dodoPayment.payment_id &&
+      !transaction.dodoPayment.subscription_id)
+  ) {
     throw new InternalServerError(
       "Invalid transaction: missing payment information"
     );
   }
-
-  const paymentStatus = await verifyPayment(transaction.dodoPayment.payment_id);
+  const isSubscription = !!transaction.dodoPayment.subscription_id;
+  const paymentStatus = await verifyPayment(
+    transaction.dodoPayment.payment_id ??
+      transaction.dodoPayment.subscription_id,
+    isSubscription
+  );
 
   if (!paymentStatus) {
     throw new InternalServerError("Failed to verify payment status");
@@ -42,7 +50,8 @@ export async function verify(body: VerifyRequest, agent: Agent) {
   console.log({ user, transaction, paymentStatus });
 
   const newStatus =
-    paymentStatus.status === "succeeded"
+    (isSubscription && paymentStatus.status === "active") ||
+    (!isSubscription && paymentStatus.status === "succeeded")
       ? "completed"
       : paymentStatus.status === "failed"
       ? "failed"
@@ -108,7 +117,7 @@ async function promoteUserPlan(params?: {
         UPDATE ${params.id} MERGE {
             cycle: "${params.cycle}",
             plan: "${params.plan}",
-            transactionId: "${params.transactionId}",
+            transactionId: ${params.transactionId},
             paymentDate: "${params.paymentDate}"
         }
     `;

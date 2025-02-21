@@ -27,7 +27,7 @@ describe("verify", () => {
     async () => {
       // Using the provided nonce for successful case
       const validNonce =
-        "0be718ac3446fe7abdf528124c5ae9b69969392042d7e0110bb03dbfc794f3df";
+        "7998e8201a9b618e3ac637fa4f60be2508a9de58c3459a902bf7bf74d205bca4";
       //   "e576d89ad257961a5cbdc27f01f352cc329d27f8a5e33215e4389410066eb8d8";
 
       const result = await verify({ nonce: validNonce }, global.testEnv.agent);
