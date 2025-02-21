@@ -363,6 +363,9 @@
           />
         {/each}
       </div>
+      <span class="text-b3 text-fgs3 flex justify-center mt-4">
+        Tip: swipe from left to right to select a block
+      </span>
     {:else if keyboardToolbarPanelSelection === "insert"}
       <BlockBrowserOnKeyboard
         {configData}

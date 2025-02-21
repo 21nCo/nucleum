@@ -223,9 +223,7 @@
         </span>
         {#if subType && mediaNodeTypeList.includes(subType)}
           <span class="text-fgs2 text-b2">
-            {#if $context.embed === Embed.HANDSET}
-              Click to browse {label ?? "file"}s
-            {:else}
+            {#if $context.embed !== Embed.HANDSET}
               Drag and drop your {label ?? "files"} here
             {/if}
           </span>
@@ -241,16 +239,17 @@
               placeholder="Type or paste embed code/link here"
             />
             <Button
-              label="Go"
+              label={$view.isConstrainedWidth ? "" : "Go"}
+              icon="ph:arrow-right-light"
               type={ButtonVariant.PRIMARY}
               style={ButtonStyle.OUTLINED}
               on:click={onLinkInput}
             />
           </button>
         {/if}
-        {#if (subType && ![...libraryOnlyTypesTemporary, ...libraryOnlyTypes].includes(subType)) || !subType}
+        {#if $context.embed !== Embed.HANDSET && ((subType && ![...libraryOnlyTypesTemporary, ...libraryOnlyTypes].includes(subType)) || !subType)}
           <div class="w-1/3">
-            <Divider isShowOr={true} colorStrength={ColorStrength.Strong} />
+            <Divider text="or" colorStrength={ColorStrength.Strong} />
           </div>
         {/if}
         <div class="flex items-center justify-center gap-3 w-full">

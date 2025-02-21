@@ -36,9 +36,9 @@
     $multiSelectStore.length > 0
       ? undefined
       : {
-          label: "Create " + resource,
+          label: "Create new " + resource,
           callback: addAction,
-          icon: "plus",
+          icon: "ph:plus-light",
           variant: ButtonVariant.PRIMARY
         };
 

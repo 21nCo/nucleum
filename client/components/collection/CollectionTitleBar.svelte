@@ -36,6 +36,7 @@
   const dispatch = createEventDispatcher();
   export let searchQuery: string = "";
   export let collection: IActiveCollectionStore;
+  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   export let isShowMetaViews: boolean = false;
   export let isSingleViewMode: boolean = false;
   export let isConstrainedWidth: boolean = false;
@@ -78,7 +79,7 @@
 >
   <!-- TODO breadcrumbs - if launched as child from a combination i.e. if parent present -->
   <!-- TODO - back button to previous resource - if launched from a mention or links -->
-  {#if isConstrainedWidth}
+  {#if isConstrainedWidth && accessPoint !== ResourceAccessPoint.MARKDOWN_EMBED}
     <button
       class="flex active:bg-bgs2 rounded-md p-1"
       on:click={() => {
@@ -215,7 +216,7 @@
     {/if}
   </span>
 
-  {#if isConstrainedWidth}
+  {#if isConstrainedWidth && accessPoint !== ResourceAccessPoint.MARKDOWN_EMBED}
     <ContextMenuAction
       menuResolver={() =>
         resolveCollectionContextMenu($collection, ResourceAccessPoint.SELF)}
@@ -223,7 +224,7 @@
       id="collectionContextMenu"
       size={Size.lg}
     />
-  {:else}
+  {:else if accessPoint !== ResourceAccessPoint.MARKDOWN_EMBED}
     <span
       class={cn("flex gap-3 justify-end items-center", {
         "w-1/2": !$collection.isInEditMode,

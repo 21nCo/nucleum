@@ -56,7 +56,7 @@
   }
 </script>
 
-<div class="h-full w-full">
+<div class="h-full w-full cw:py-12">
   {#if node.contentType === NodeType.WEB_PAGE || node.contentType === NodeType.YOUTUBE_CHANNEL}
     <WebPagePreview {node} {accessPoint} />
   {:else if node.contentType === NodeType.GIST}

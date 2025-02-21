@@ -38,6 +38,8 @@
   import { sanitizeAndResolve } from "$lib/client/products/memotron/node/url.utils";
   import { debouncer } from "$lib/client/utils/utils";
   import context from "$lib/client/stores/context.store";
+  import { Embed } from "$lib/client/types/context.type";
+  import view from "$lib/client/stores/view.store";
 
   const dispatch = createEventDispatcher();
   const nodeContext = getContext<any>("node");
@@ -172,6 +174,10 @@
   }
 
   function onEditTitle(e: MouseEvent) {
+    if ($view.isConstrainedWidth) {
+      if (body.id) appStore.openResource(body.id, ResourceAccessMode.POP);
+      return;
+    }
     e.stopPropagation();
     isEditingTitle = true;
     titleInputValue = _mediaBlock?.label ?? "";
@@ -184,8 +190,9 @@
 {#if body.id && _mediaBlock && !isLoading}
   <button
     class={cn("flex flex-col w-full", {
-      "pt-2": isShowTitle && isShowPreview,
-      "py-2": !isShowTitle
+      "pt-4": isShowTitle && isShowPreview,
+      "py-2": !isShowTitle,
+      "my-4": $view.isConstrainedWidth
     })}
     style={isResizable
       ? `min-height: ${height}px; height: ${height}px; max-height: ${height}px;`
@@ -364,8 +371,12 @@
 {:else if body?.url && body?.subType === NodeType.YOUTUBE_VIDEO}
   <YoutubeVideoPreview url={body.url} />
 {:else if body?.subType === NodeType.COLLECTION_AS_EMBED && body?.id}
-  <div class="w-full h-96">
-    <Collection id={body.id} accessPoint={ResourceAccessPoint.MARKDOWN_EMBED} />
+  <div class="h-96 w-[90vw] py-4 max-w-full overflow-x-auto">
+    <Collection
+      id={body.id}
+      accessPoint={ResourceAccessPoint.MARKDOWN_EMBED}
+      parentBgIndex={$context.embed === Embed.HANDSET ? 2 : 1}
+    />
   </div>
 {:else if isLoading}
   <div
