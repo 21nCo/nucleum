@@ -54,6 +54,7 @@ class TaskStore extends ResourceStore<ITask> {
       description: form.description,
       startDate: form.startDate,
       endDate: form.endDate,
+      spanScale: form.spanScale,
       parent: form.parent,
       color: form.color,
       subTasks: subTaskIds,

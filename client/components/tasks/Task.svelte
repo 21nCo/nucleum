@@ -94,7 +94,7 @@
     >
       {#if !isConstrainedWidth}
         <aside
-          class="flex flex-col gap-4 bg-bgs2 border border-brs3 rounded-lg p-4 w-96 2k:w-[30rem]"
+          class="flex flex-col gap-4 bg--bgs2 border border-brs3 rounded-lg p-4 w-96 2k:w-[30rem]"
         >
           <TaskInfoPanel {task} />
         </aside>
@@ -111,7 +111,6 @@
             style={PanelSwitcherStyle.BAR}
             bind:value={selectedPanel}
             isExpandToFullWidth={true}
-            isPreventDropdownForCW={true}
             parentBgIndex={2}
             isBgBar={true}
           ></PanelSwitcher>

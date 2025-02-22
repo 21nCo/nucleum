@@ -125,6 +125,8 @@
         if (!isSelectingEnd) {
           startDate = selectedDay;
           isSelectingEnd = true;
+          currentView = selectedDay.add(1, "month");
+          selectedYear = currentView.year();
           dispatchRangeChange({
             start: startDate.format("YYYY-MM-DD"),
             end: endDate ? endDate.format("YYYY-MM-DD") : ""
@@ -132,6 +134,8 @@
         } else {
           endDate = selectedDay;
           isSelectingEnd = false;
+          currentView = selectedDay.subtract(1, "month");
+          selectedYear = currentView.year();
           dispatchRangeChange({
             start: startDate ? startDate.format("YYYY-MM-DD") : "",
             end: endDate.format("YYYY-MM-DD")
@@ -141,6 +145,8 @@
         startDate = selectedDay;
         endDate = null;
         isSelectingEnd = true;
+        currentView = selectedDay.add(1, "month");
+        selectedYear = currentView.year();
         dispatchRangeChange({
           start: startDate.format("YYYY-MM-DD"),
           end: ""
@@ -150,6 +156,8 @@
       if (endDate && selectedDay.isBefore(endDate)) {
         startDate = selectedDay;
         isSelectingEnd = true;
+        currentView = selectedDay.add(1, "month");
+        selectedYear = currentView.year();
         dispatchRangeChange({
           start: startDate.format("YYYY-MM-DD"),
           end: endDate.format("YYYY-MM-DD")
@@ -158,6 +166,8 @@
         startDate = selectedDay;
         endDate = null;
         isSelectingEnd = true;
+        currentView = selectedDay.add(1, "month");
+        selectedYear = currentView.year();
         dispatchRangeChange({
           start: startDate.format("YYYY-MM-DD"),
           end: ""
@@ -207,13 +217,22 @@
     event.stopPropagation();
     isSelectingEnd = selectingEnd;
 
-    // Update the calendar view to show the selected date's month
-    if (selectingEnd && endDate) {
-      currentView = endDate;
-      selectedYear = endDate.year();
-    } else if (!selectingEnd && startDate) {
-      currentView = startDate;
-      selectedYear = startDate.year();
+    if (selectingEnd) {
+      if (endDate) {
+        currentView = endDate;
+        selectedYear = endDate.year();
+      } else if (startDate) {
+        currentView = startDate.add(1, "month");
+        selectedYear = currentView.year();
+      }
+    } else {
+      if (startDate) {
+        currentView = startDate;
+        selectedYear = startDate.year();
+      } else if (endDate) {
+        currentView = endDate.subtract(1, "month");
+        selectedYear = currentView.year();
+      }
     }
   }
 

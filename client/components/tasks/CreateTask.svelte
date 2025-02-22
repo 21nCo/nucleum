@@ -78,7 +78,8 @@
         startDate: type === TaskType.DEFINITE ? startDate : undefined,
         endDate: type === TaskType.DEFINITE ? endDate : undefined,
         parent: parent ? [parent.id] : undefined,
-        color
+        color,
+        spanScale
       };
 
       const result = await taskStore.save(task, {

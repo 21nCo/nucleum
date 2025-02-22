@@ -10,7 +10,7 @@
   export let end: Date;
   export let scales: TimeScale[] = Object.values(TimeScale);
   export let spanScale: TimeScale | undefined = undefined;
-
+  let ref: HTMLButtonElement | undefined;
   const scaleThresholds = {
     [TimeScale.YEARS]: 365.25,
     [TimeScale.QUARTERS]: 91.31,
@@ -72,6 +72,11 @@
   function handleScaleSelect(scale: TimeScale) {
     spanScale = scale;
     dispatch("change", scale);
+    hidePopover();
+  }
+
+  function hidePopover() {
+    ref?.dispatchEvent(new CustomEvent("hide"));
   }
 </script>
 
@@ -80,6 +85,7 @@
     Spanning {timeSpan.count}
     <button
       class="cursor-pointer border-b border-dotted border-fgs2 hover:border-fgs3"
+      bind:this={ref}
       use:popover={{
         placement: Placement.BottomCenter,
         content: TimeScaleSelector,
