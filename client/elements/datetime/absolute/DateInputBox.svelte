@@ -5,38 +5,42 @@
   import type { Dayjs } from "dayjs";
 
   export let parentBgIndex: number = 0;
-  export let isSelected: boolean = false;
+  export let isActive: boolean = false;
   export let selectedDate: Dayjs | null = null;
-  export let dateInput: string = "";
   export let label: string;
   export let onInputChange: (value: string) => void;
   export let onClear: (event: MouseEvent) => void;
   export let onBoxClick: (event: MouseEvent) => void;
 
-  let isEditing = false;
-  let internalDateInput = "";
-
-  $: if (!isEditing) {
-    internalDateInput = dateInput;
-  }
+  $: selectedDateFormatted = selectedDate?.format("YYYY-MM-DD") || "";
+  $: inputValue = selectedDateFormatted;
 
   function handleClick(e: MouseEvent) {
-    isEditing = true;
-    if (selectedDate) {
-      internalDateInput = selectedDate.format("YYYY-MM-DD");
-      onInputChange(internalDateInput);
+    inputValue = selectedDate?.format("YYYY-MM-DD") || "";
+    if (!isActive) {
+      isActive = true;
     }
     onBoxClick(e);
   }
 
   function handleBlur() {
-    isEditing = false;
+    isActive = false;
+    inputValue = selectedDate?.format("YYYY-MM-DD") || "";
   }
 
   function handleInput(e: Event) {
     const value = (e.target as HTMLInputElement).value;
-    internalDateInput = value;
+    inputValue = value;
     onInputChange(value);
+    if (!isActive) {
+      isActive = true;
+    }
+  }
+
+  function handleClear(e: MouseEvent) {
+    inputValue = "";
+    isActive = true;
+    onClear(e);
   }
 </script>
 
@@ -47,19 +51,19 @@
       "w-full text-b2 text-fgs3 px-2 py-1 rounded-md cursor-pointer flex items-center justify-between",
       {
         [bg(parentBgIndex + 1)]: true,
-        "ring-2 ring-aps1": isSelected
+        "ring-2 ring-aps1": isActive
       }
     )}
     on:click={handleClick}
   >
-    {#if selectedDate && !isEditing}
+    {#if selectedDate && !isActive}
       <span class="truncate">{selectedDate.format("YYYY-MM-DD")}</span>
     {:else}
       <input
         type="text"
         class="bg-transparent outline-none w-full"
         placeholder="yyyy-mm-dd"
-        bind:value={internalDateInput}
+        bind:value={inputValue}
         on:input={handleInput}
         on:blur={handleBlur}
       />
@@ -72,7 +76,7 @@
           icon="ph:x-circle"
           size={Size.xs}
           class="stroke-ars1"
-          on:click={onClear}
+          on:click={handleClear}
         />
       </button>
     {/if}
