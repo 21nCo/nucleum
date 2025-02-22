@@ -7,6 +7,7 @@
   import { TaskStatus, TaskType } from "../task.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import TimelineCard from "./TimelineCard.svelte";
+  import RecordStatusBanner from "../../record/RecordStatusBanner.svelte";
   export let task: IActiveTaskStore;
   export let isConstrainedWidth = false;
   function handleStatusChange(e: CustomEvent<TaskStatus>) {
@@ -33,6 +34,7 @@
       <TaskCollectionsRow {task} />
     </div>
   </div>
+  <RecordStatusBanner resource={task} />
   <div class="flex flex-col gap-1">
     <span class="text-b2 text-fgs3">Status</span>
     <TaskStatusSwitcher status={$task.status} on:change={handleStatusChange} />

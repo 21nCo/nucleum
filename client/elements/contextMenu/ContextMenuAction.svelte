@@ -18,6 +18,7 @@
   export let menuResolver: () => { group: string; items: IContextMenuItem[] }[];
   export let size: Size.sm | Size.md | Size.lg = Size.md;
   export let actionSize: Size.sm | Size.md | Size.lg = Size.md;
+  export let actionBgSize: Size.sm | Size.md | Size.lg | undefined = undefined;
   export let tooltip: string | undefined = undefined;
   export let tooltipOptions: IPopoverRenderBaseParams | undefined = undefined;
   export let parentBgIndex: number = 1;
@@ -33,6 +34,7 @@
    * If set to true, the context menu will be rendered as a sibling of the trigger button. By default, popovers are rendered in popovers container to avoid z-index issues with other elements in the DOM.
    */
   export let isRenderAsSibling = false;
+  export let icon: string = "ph:dots-three-vertical";
   let classList: string = "";
   export { classList as class };
   let contextMenuPopoverRef: any;
@@ -120,12 +122,12 @@
 >
   <slot>
     <Toggle
-      icon="ph:dots-three-vertical"
+      {icon}
       {tooltip}
       parentBgIndex={parentBgIndex + 1}
       isPreventFillOnActive={true}
       size={actionSize}
-      bgSize={actionSize}
+      bgSize={actionBgSize ?? actionSize}
       bind:on={isPopoverVisible}
     />
   </slot>

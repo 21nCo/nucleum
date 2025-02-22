@@ -9,6 +9,7 @@
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import context from "$lib/client/stores/context.store";
   import TextInputOnKeyboardToolbar from "$lib/client/elements/input/TextInputOnKeyboardToolbar.svelte";
+  import RecordStarStatusFeedback from "$lib/client/components/record/RecordStarStatusFeedback.svelte";
   export let node: INode;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   let previousLabel = node.label;
@@ -87,8 +88,6 @@
         />
       </span>
     {/if}
-    {#if node.isStarred}
-      <Icon icon="star" class="fill-yellow-400" />
-    {/if}
+    <RecordStarStatusFeedback isStarred={node.isStarred} />
   {/if}
 </div>

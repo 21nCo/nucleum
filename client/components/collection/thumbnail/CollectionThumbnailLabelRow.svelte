@@ -9,6 +9,7 @@
   import { type ICollectionThumb } from "../collection.type";
   import CollectionThumbnailLabel from "./CollectionThumbnailLabel.svelte";
   import CollectionNodeCount from "../counts/CollectionItemCount.svelte";
+  import RecordStarStatusFeedback from "../../record/RecordStarStatusFeedback.svelte";
   export let item: ICollectionThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
@@ -31,9 +32,7 @@
     })}
   >
     <CollectionThumbnailLabel {item} />
-    {#if item.isStarred}
-      <Icon icon="star" class="fill-yellow-400" />
-    {/if}
+    <RecordStarStatusFeedback isStarred={item.isStarred} />
   </div>
   {#if arrangement === Arrangement.LIST && accessPoint === ResourceAccessPoint.BROWSER && accessPointState === ResourceAccessPointState.DEFAULT}
     <CollectionNodeCount {item} />

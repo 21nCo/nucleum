@@ -60,7 +60,7 @@
   </div>
   {#if index !== totalLength - 1}
     <div
-      class={cn("w-0.5 h-12 border absolute top-8 left-4 -translate-x-1/2", {
+      class={cn("w-0.25 h-12 border-l absolute top-8 left-4 -translate-x-1/2", {
         "border-brs3":
           !subTask.status || subTask.status === TaskStatus.NOT_STARTED,
         "border-dashed": subTask.status !== TaskStatus.COMPLETED,

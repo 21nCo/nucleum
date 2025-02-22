@@ -31,8 +31,14 @@ import SurrealLocalViewer from "../components/debug/SurrealLocalViewer.svelte";
 import PrivacyPolicy from "../landing/shared/PrivacyPolicy.svelte";
 import HashnodeEmbed from "../components/cx/hashnode/HashnodeEmbed.svelte";
 import { Embed } from "../types/context.type";
-import { ResourceActionType } from "../components/flux/resourceStores/resource.type";
-import { resourceAction } from "../components/flux/resourceStores/resource.utils";
+import {
+  ResourceActionType,
+  type IMultiSelectStore
+} from "../components/flux/resourceStores/resource.type";
+import {
+  determineResourceType,
+  resourceAction
+} from "../components/flux/resourceStores/resource.utils";
 import { Resource } from "../components/flux/resourceStores/resource.enum";
 import CreateCollection from "$lib/client/components/collection/CreateCollection.svelte";
 import PropertiesEditor from "$lib/client/components/collection/properties/PropertiesEditor.svelte";
@@ -59,6 +65,8 @@ import Task from "../components/tasks/Task.svelte";
 import TaskTitleLabelPart from "../components/tasks/TaskTitleLabelPart.svelte";
 import PaymentRedirect from "../components/subscription/PaymentRedirect.svelte";
 import PlanOnboarding from "../components/subscription/PlanOnboarding.svelte";
+import type { IRecordId } from "$lib/client/types/data.type";
+
 export const globalActions: IAction[] = [
   {
     action: "404",
@@ -786,5 +794,99 @@ export const globalActions: IAction[] = [
     action: Action.PLAN_ONBOARDING,
     type: ActionType.PAGE,
     component: PlanOnboarding
+  },
+  {
+    action: Action.BULK_LINK,
+    type: ActionType.SEARCH_CMD,
+    cmdLabel: "Link to a node or add to a collection",
+    isMeta: true,
+    searchActionParams: {
+      searchCallback: async (search: string, componentParams?: any) => {
+        const result = await new SearchStore().searchForLinking(search, {
+          resource: componentParams?.resource
+        });
+        return result;
+      },
+      placeholder: (componentParams?: any) => {
+        return componentParams?.resource === Resource.collection
+          ? "select a collection"
+          : componentParams?.resource === Resource.node
+            ? "select a node"
+            : "select a node or a collection";
+      },
+      searchResultComponent: LinkSearchResultItem,
+      callback: async (
+        id: string,
+        label?: string,
+        componentParams?: {
+          multiSelectStore?: IMultiSelectStore;
+          items?: IRecordId[];
+        }
+      ) => {
+        try {
+          const items =
+            componentParams?.multiSelectStore?.get() ?? componentParams?.items;
+          const context = componentParams?.multiSelectStore?.context;
+          if (!items) {
+            toasts.error("Something went wrong. Please try again later.", {
+              closeProgressId: "bulklink"
+            });
+            return;
+          }
+          const resourceType = determineResourceType(id);
+          toasts.showProgress(
+            "bulklink",
+            resourceType === Resource.collection
+              ? "Adding to collection"
+              : "Linking to node"
+          );
+          const result = await linker.bulkLink(
+            items,
+            id,
+            resourceType,
+            context?.accessPoint
+          );
+          logger.log({
+            at: "bulkLink",
+            id,
+            resourceType,
+            label,
+            items,
+            result
+          });
+          if (!result) {
+            toasts.error("Something went wrong. Please try again later.", {
+              closeProgressId: "bulklink"
+            });
+            return;
+          }
+          componentParams?.multiSelectStore?.reset();
+          if (resourceType === Resource.collection) {
+            toasts.success(
+              `**${items.length}** ${
+                items.length > 1 ? "items" : "item"
+              } added to collection ${label ? `**${label}**` : ""}`,
+              {
+                closeProgressId: "bulklink"
+              }
+            );
+          } else {
+            toasts.success(
+              `**${items.length}** ${
+                items.length > 1 ? "items" : "item"
+              } linked to node ${label ? `**${label}**` : ""}`,
+              {
+                closeProgressId: "bulklink"
+              }
+            );
+          }
+        } catch (e) {
+          logger.error(e);
+          toasts.error("Something went wrong. Please try again later.", {
+            closeProgressId: "bulklink"
+          });
+        }
+      }
+    }
   }
 ];

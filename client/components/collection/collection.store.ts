@@ -50,6 +50,7 @@ import { GlobalEvent } from "$lib/client/types/event.enum";
 import { Embed } from "$lib/client/types/context.type";
 import { recentsStore } from "../record/recent.store";
 import { appStore } from "$lib/client/stores/app.store";
+import { resolveCollectionResource } from "./collection.utils";
 
 class CollectionStore extends ResourceStore<ICollection> {
   constructor() {
@@ -66,21 +67,23 @@ class CollectionStore extends ResourceStore<ICollection> {
     const id = generateResourceId(Resource.collection);
     const propertyEditor = propertyEditorStore.get();
     logger.log({ at: "CollectionStore.save", propertyEditor, form });
+    const defaultResource = resolveCollectionResource(get(appStore).product);
     let properties: OmitForCaptureWithId<IProperty>[] =
       propertyEditor.properties;
-    const resource: OmitForCapture<ICollection> = {
+    const record: OmitForCapture<ICollection> = {
       ...form,
       id,
       views: [],
       properties: [],
       defaultLayout: undefined,
       typeToExtend: propertyEditor.typeToExtend?.id ?? undefined,
-      type: form.type ?? CollectionType.UNTYPED
+      type: form.type ?? CollectionType.UNTYPED,
+      resource: form.resource ?? defaultResource
     };
     if (form.type === CollectionType.TYPED && properties?.length > 0) {
       properties = properties.map(assignDefaultLabelAsFallback);
       await propertyStore.create(properties);
-      resource.properties = properties.map((p) => p.id);
+      record.properties = properties.map((p) => p.id);
     }
     const viewId = generateResourceId(Resource.view);
     await viewStore.create({
@@ -91,12 +94,12 @@ class CollectionStore extends ResourceStore<ICollection> {
       groupBy: "none",
       subGroupBy: "none"
     });
-    resource.views = [viewId];
-    recentsStore.add(resource, {
+    record.views = [viewId];
+    recentsStore.add(record, {
       type: Resource.collection,
       timestamp: new Date()
     });
-    return super.create(resource, additionalParams);
+    return super.create(record, additionalParams);
   }
 
   /**
@@ -396,7 +399,10 @@ export class ActiveCollectionStore extends ActiveResourceStore<
         return val;
       });
       console.time("ActiveCollectionStore.loadViewData - fetchViewData");
-      const response = await viewStore.fetchViewData(collection.id, view);
+      const response = await viewStore.fetchViewData(collection.id, {
+        view,
+        resource: collection.resource
+      });
       console.timeEnd("ActiveCollectionStore.loadViewData - fetchViewData");
       logger.log({
         at: "ActiveCollectionStore.loadViewData - response",
@@ -472,24 +478,40 @@ class CollectionViewStore extends ResourceStore<ICollectionView> {
    * @param collectionId
    * @returns
    */
-  async fetchViewData(collectionId: IRecordId, view: ICollectionView) {
-    const allNodes = await flux.selectMany(Resource.link, {
+  async fetchViewData(
+    collectionId: IRecordId,
+    params?: {
+      view?: ICollectionView;
+      resource?: Resource;
+    }
+  ) {
+    const { view, resource } = params ?? {};
+    const items = await flux.selectMany(Resource.link, {
       filters: {
         out: collectionId.toString()
       }
     });
-    const nodeIds = allNodes.map((x) => x.in);
-    const nodes = await flux.selectMany(Resource.node, {
-      properties: ["*", "parent.* as parent", "file.* as file"],
-      filters: {
-        id: nodeIds,
-        ...activeResourceFilterV2
-      },
-      orderBy: {
-        modifiedAt: "desc"
-      }
-    });
-    return nodes;
+    const ids = items.map((x) => x.in);
+    if (!resource || resource === Resource.node) {
+      const nodes = await flux.selectMany(Resource.node, {
+        properties: ["*", "parent.* as parent", "file.* as file"],
+        filters: {
+          id: ids,
+          ...activeResourceFilterV2
+        },
+        orderBy: {
+          modifiedAt: "desc"
+        }
+      });
+      return nodes;
+    } else if (resource === Resource.task) {
+      const tasks = await flux.selectMany(Resource.task, {
+        filters: {
+          id: ids
+        }
+      });
+      return tasks;
+    }
   }
 }
 

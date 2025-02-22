@@ -4,17 +4,20 @@
     type IActiveTaskStore
   } from "$lib/client/components/tasks/task.store";
   import Breadcrumbs from "$lib/client/elements/breadcrumbsV2/Breadcrumbs.svelte";
+  import Button from "$lib/client/elements/button/Button.svelte";
   import ColorPickerMini from "$lib/client/elements/colorPicker/ColorPickerMini.svelte";
   import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
+  import { appStore } from "$lib/client/stores/app.store";
   import { Placement } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { ResourceAccessPoint } from "../../flux/resourceStores/resource.type";
+  import RecordStarStatusFeedback from "../../record/RecordStarStatusFeedback.svelte";
   export let task: IActiveTaskStore;
   export let isConstrainedWidth = false;
-  let labelEditVal = "";
+  let labelEditVal = $task.label;
   function resolveBreadcrumbs() {
     const parentItems = $task.parent?.map((p) => ({
       label: p.label,
@@ -91,9 +94,12 @@
           labelEditVal = $task.label;
         }}
       >
-        <h1 class="text-left text-h4 lp:text-h3 font-medium flex-1 text-ccs1">
-          {$task.label}
-        </h1>
+        <div class="flex items-center gap-2 w-full">
+          <h1 class="text-left text-h4 lp:text-h3 font-medium text-ccs1">
+            {$task.label}
+          </h1>
+          <RecordStarStatusFeedback isStarred={$task.isStarred} />
+        </div>
       </button>
     {/if}
     <ContextMenuAction
@@ -102,6 +108,17 @@
       position={Placement.BottomCenter}
       id="taskContextMenu"
       size={Size.lg}
+      icon={isConstrainedWidth ? "ph:dots-three-outline-light" : undefined}
+      actionBgSize={isConstrainedWidth ? Size.sm : undefined}
     />
+    {#if isConstrainedWidth}
+      <Button
+        icon="ph:x-light"
+        parentBgIndex={2}
+        on:click={() => {
+          appStore.goBack();
+        }}
+      />
+    {/if}
   </div>
 </div>

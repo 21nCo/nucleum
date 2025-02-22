@@ -31,6 +31,10 @@ import {
 } from "$lib/client/products/memotron/memotron.utils";
 import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { recentsStore } from "./recent.store";
+import { get } from "svelte/store";
+import { resolveCollectionResource } from "../collection/collection.utils";
+import { taskStore } from "../tasks/task.store";
+import { Action } from "$lib/client/types/action.enum";
 
 export const MAX_FILE_SIZE_MB = 100;
 
@@ -51,8 +55,10 @@ export class SearchStore {
   searchType: SearchType = SearchType.FULL_TEXT;
   semanticSearchTopK: number | undefined;
   dev_isUseIndexSearch: boolean = false;
+  collectibleResource: Resource | undefined;
   constructor(resource: Resource = Resource.everything) {
     this.resource = resource;
+    this.collectibleResource = resolveCollectionResource(get(appStore).product);
   }
   levenshteinDistance(a: string, b: string): number {
     const matrix = [];
@@ -179,6 +185,11 @@ export class SearchStore {
       filters: {
         trashInformation: false,
         ...this.filters,
+        ...(this.collectibleResource
+          ? {
+              resource: this.collectibleResource
+            }
+          : {}),
         isArchived: this.filters.isArchived ?? false,
         type:
           "type" in this.filters && this.filters.type
@@ -315,6 +326,12 @@ export class SearchStore {
       } else if (params?.subType && params.resource === Resource.collection) {
         items = items.filter((x) => x.type === params.subType);
       }
+      if (
+        params?.resource === Resource.collection &&
+        this.collectibleResource
+      ) {
+        items = items.filter((x) => x.resource === this.collectibleResource);
+      }
       return items;
     }
     let nodes = [];
@@ -345,7 +362,12 @@ export class SearchStore {
     if (params?.resource === Resource.collection || !params?.resource) {
       collections = await flux.selectMany(Resource.collection, {
         filters: {
-          ...activeResourceFilterV2
+          ...activeResourceFilterV2,
+          ...(this.collectibleResource
+            ? {
+                resource: this.collectibleResource
+              }
+            : {})
         },
         search: isValidString(query)
           ? {
@@ -442,6 +464,11 @@ export class SearchStore {
           filters: {
             ...activeResourceFilterV2,
             ...additionalFilters,
+            ...(resource === Resource.collection && this.collectibleResource
+              ? {
+                  resource: this.collectibleResource
+                }
+              : {}),
             isArchived: this.filters.isArchived ?? false,
             type: subType ? [subType] : undefined,
             parent: resource === Resource.task ? false : undefined
@@ -528,7 +555,7 @@ export class BulkEditor {
             onSuccess(action, items.length, Resource.node);
             break;
           case "link":
-            appStore.runAction(MemotronAction.BULK_LINK, {
+            appStore.runAction(Action.BULK_LINK, {
               componentParams: {
                 label: "Link to a node",
                 resource: Resource.node,
@@ -537,7 +564,7 @@ export class BulkEditor {
             });
             break;
           case "linkbox":
-            appStore.runAction(MemotronAction.BULK_LINK, {
+            appStore.runAction(Action.BULK_LINK, {
               componentParams: {
                 label: "Link to a node or add to a collection",
                 multiSelectStore: this.multiSelectStore
@@ -545,7 +572,7 @@ export class BulkEditor {
             });
             break;
           case "collect":
-            appStore.runAction(MemotronAction.BULK_LINK, {
+            appStore.runAction(Action.BULK_LINK, {
               componentParams: {
                 label: "Add to collection",
                 resource: Resource.collection,
@@ -643,6 +670,53 @@ export class BulkEditor {
           case "delete":
             await collectionStore.bulkTrash(items, additionalParams);
             onSuccess(action, items.length, Resource.collection);
+            break;
+        }
+      } else if (this.resource === Resource.task) {
+        switch (action) {
+          case "star":
+            await taskStore.bulkModify(
+              items,
+              {
+                isStarred: true
+              },
+              additionalParams
+            );
+            onSuccess(action, items.length, Resource.task);
+            break;
+          case "unstar":
+            await taskStore.bulkModify(
+              items,
+              {
+                isStarred: false
+              },
+              additionalParams
+            );
+            onSuccess(action, items.length, Resource.task);
+            break;
+          case "archive":
+            await taskStore.bulkModify(
+              items,
+              {
+                isArchived: true
+              },
+              additionalParams
+            );
+            onSuccess(action, items.length, Resource.task);
+            break;
+          case "unarchive":
+            await taskStore.bulkModify(
+              items,
+              {
+                isArchived: false
+              },
+              additionalParams
+            );
+            onSuccess(action, items.length, Resource.task);
+            break;
+          case "delete":
+            await taskStore.bulkTrash(items, additionalParams);
+            onSuccess(action, items.length, Resource.task);
             break;
         }
       }

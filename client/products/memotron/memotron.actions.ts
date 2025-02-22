@@ -24,23 +24,17 @@ import {
 import ResourceSearchModal from "./library/search/ResourceSearchModal.svelte";
 import { Action } from "$lib/client/types/action.enum";
 import PasteConfirmationModal from "./capture/PasteConfirmationModal.svelte";
-import { linker } from "./linking/link.store";
-import { toasts } from "$lib/client/stores/notification.store";
-import { logger } from "$lib/client/components/debug/logger.client";
 import LinkTagsControlPanel from "./linking/LinkTagsControlPanel.svelte";
 import Chat from "$lib/client/products/memotron/taco/Chat.svelte";
 import CaptureDnD from "./capture/CaptureDnD.svelte";
 import MemotronHome from "./home/MemotronHome.svelte";
 import MemotronOnboarding from "./base/MemotronOnboarding.svelte";
-import LinkSearchResultItem from "./common/linkbox/LinkSearchResultItem.svelte";
 import NodeTitleLabelPart from "./node/title/NodeTitleLabelPart.svelte";
 import MemotronGreenUse from "./base/MemotronGreenUse.svelte";
 import GlobalGraph from "./graph/GlobalGraph.svelte";
 import CalloutSettings from "$lib/client/components/markdown/callout/CalloutSettings.svelte";
 import MemotronDataSettings from "./settings/MemotronDataSettings.svelte";
 import { Embed } from "$lib/client/types/context.type";
-import { SearchStore } from "$lib/client/components/record/record.store";
-import type { IRecordId } from "$lib/client/types/data.type";
 import ResourceBrowser from "$lib/client/components/library/resourceBrowser/ResourceBrowser.svelte";
 import { MemotronEvent } from "./memotron.type";
 
@@ -257,100 +251,6 @@ export const memotronActions: IAction[] = [
       title: "Paste Confirmation",
       layout: {
         size: Size.sm
-      }
-    }
-  },
-  {
-    action: MemotronAction.BULK_LINK,
-    type: ActionType.SEARCH_CMD,
-    cmdLabel: "Link to a node or add to a collection",
-    isMeta: true,
-    searchActionParams: {
-      searchCallback: async (search: string, componentParams?: any) => {
-        const result = await new SearchStore().searchForLinking(search, {
-          resource: componentParams?.resource
-        });
-        return result;
-      },
-      placeholder: (componentParams?: any) => {
-        return componentParams?.resource === Resource.collection
-          ? "select a collection"
-          : componentParams?.resource === Resource.node
-            ? "select a node"
-            : "select a node or a collection";
-      },
-      searchResultComponent: LinkSearchResultItem,
-      callback: async (
-        id: string,
-        label?: string,
-        componentParams?: {
-          multiSelectStore?: IMultiSelectStore;
-          items?: IRecordId[];
-        }
-      ) => {
-        try {
-          const items =
-            componentParams?.multiSelectStore?.get() ?? componentParams?.items;
-          const context = componentParams?.multiSelectStore?.context;
-          if (!items) {
-            toasts.error("Something went wrong. Please try again later.", {
-              closeProgressId: "bulklink"
-            });
-            return;
-          }
-          const resourceType = determineResourceType(id);
-          toasts.showProgress(
-            "bulklink",
-            resourceType === Resource.collection
-              ? "Adding to collection"
-              : "Linking to node"
-          );
-          const result = await linker.bulkLink(
-            items,
-            id,
-            resourceType,
-            context?.accessPoint
-          );
-          logger.log({
-            at: "bulkLink",
-            id,
-            resourceType,
-            label,
-            items,
-            result
-          });
-          if (!result) {
-            toasts.error("Something went wrong. Please try again later.", {
-              closeProgressId: "bulklink"
-            });
-            return;
-          }
-          componentParams?.multiSelectStore?.reset();
-          if (resourceType === Resource.collection) {
-            toasts.success(
-              `**${items.length}** ${
-                items.length > 1 ? "items" : "item"
-              } added to collection ${label ? `**${label}**` : ""}`,
-              {
-                closeProgressId: "bulklink"
-              }
-            );
-          } else {
-            toasts.success(
-              `**${items.length}** ${
-                items.length > 1 ? "items" : "item"
-              } linked to node ${label ? `**${label}**` : ""}`,
-              {
-                closeProgressId: "bulklink"
-              }
-            );
-          }
-        } catch (e) {
-          logger.error(e);
-          toasts.error("Something went wrong. Please try again later.", {
-            closeProgressId: "bulklink"
-          });
-        }
       }
     }
   },

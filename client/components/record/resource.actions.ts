@@ -27,6 +27,7 @@ import { Resource } from "$lib/client/components/flux/resourceStores/resource.en
 import { LinkType } from "$lib/client/products/memotron/node/node.type";
 import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
 import { toasts } from "$lib/client/stores/notification.store";
+import { Action } from "$lib/client/types/action.enum";
 
 export class ResourceActions<T extends IMemotronItemBase> {
   constructor(
@@ -322,8 +323,24 @@ export class ResourceActions<T extends IMemotronItemBase> {
       value: "link",
       icon: "ph:link-light",
       callback: async () => {
-        appStore.runAction(MemotronAction.BULK_LINK, {
+        appStore.runAction(Action.BULK_LINK, {
           componentParams: {
+            items: [this.resource.id]
+          }
+        });
+      }
+    };
+  }
+  addToCollection(): IContextMenuItem {
+    return {
+      label: "Add to collection",
+      value: "addToCollection",
+      icon: "ph:plus-light",
+      callback: async () => {
+        appStore.runAction(Action.BULK_LINK, {
+          componentParams: {
+            label: "Add to collection",
+            resource: Resource.collection,
             items: [this.resource.id]
           }
         });

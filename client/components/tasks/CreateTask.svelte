@@ -61,7 +61,6 @@
   let spanScale: TimeScale | undefined;
   let isDescriptionVisible: boolean = false;
   let isSubTasksVisible: boolean = false;
-  let isParentSelectorVisible: boolean = false;
   let isCollectionSelectorVisible: boolean = false;
   let subTasks: string[] = [];
   let newSubTask: string = "";
@@ -143,7 +142,8 @@
     />
     {#if !parent}
       <GoalColorPickerWithPreview
-        bind:hue={color}
+        hue={color}
+        on:change={(e) => (color = e.detail)}
         label={isValidString(label) ? label : "Preview"}
       />
     {/if}
@@ -256,16 +256,7 @@
           on:click={() => (isSubTasksVisible = true)}
         />
       {/if}
-      {#if !isParentSelectorVisible}
-        <Button
-          label="Add parent"
-          icon="ph:arrow-elbow-right-up-light"
-          style={ButtonStyle.OUTLINED}
-          size={Size.sm}
-          on:click={() => (isParentSelectorVisible = true)}
-        />
-      {/if}
-      {#if !isCollectionSelectorVisible}
+      <!-- {#if !isCollectionSelectorVisible}
         <Button
           label="Add to a collection"
           icon="ph:plus-light"
@@ -273,7 +264,7 @@
           size={Size.sm}
           on:click={() => (isCollectionSelectorVisible = true)}
         />
-      {/if}
+      {/if} -->
     </div>
     <ModalFooter
       action={resourceAction(Resource.task, ResourceActionType.CREATE)}

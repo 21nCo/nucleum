@@ -15,7 +15,11 @@ import type {
   OmitForCaptureWithId
 } from "../flux/resourceStores/resource.type";
 import { ResourceActions } from "../record/resource.actions";
-import type { IContextMenu } from "$lib/client/types/select.type";
+import {
+  ContextMenuType,
+  type IContextMenu,
+  type IContextMenuItem
+} from "$lib/client/types/select.type";
 import { CollectibleStore } from "../collection/collectible.store";
 
 class TaskStore extends ResourceStore<ITask> {
@@ -125,7 +129,9 @@ export class ActiveTaskStore extends CollectibleStore<IActiveTask, TaskStore> {
       const result = await this.resourceStore.select(this.id, [
         "*",
         "(select * from $parent.subTasks) as subTasks",
-        "(select * from $parent.parent) as parent"
+        "(select * from $parent.parent) as parent",
+        "->link.* as outlinks",
+        "<-link.* as inlinks"
       ]);
       logger.debug({ at: "ActiveTaskStore.init - select", result });
 
@@ -141,9 +147,18 @@ export class ActiveTaskStore extends CollectibleStore<IActiveTask, TaskStore> {
         });
         return;
       }
+      const collections: IRecordId[] = result.outlinks
+        .filter((x: any) => x.out.tb === Resource.collection)
+        .map((x: any) => x.out);
+      console.log({
+        at: "ActiveTaskStore.init",
+        result,
+        collections
+      });
 
       this.set({
         ...result,
+        collections,
         isPageLoading: false,
         accessMode
       });
@@ -163,12 +178,99 @@ export class ActiveTaskStore extends CollectibleStore<IActiveTask, TaskStore> {
 
 export type IActiveTaskStore = InstanceType<typeof ActiveTaskStore>;
 
+class TaskActions {
+  constructor(
+    private task: ITask,
+    private store: TaskStore,
+    private accessPoint: ResourceAccessPoint
+  ) {}
+
+  share = {
+    value: "share",
+    icon: "share",
+    callback: async () => {}
+  };
+
+  focusNow = {
+    value: "focusNow",
+    label: "Focus now",
+    icon: "ph:circle-light",
+    callback: async () => {
+      //TODO - focus now
+    }
+  };
+
+  pinToQuickFocus() {
+    return {
+      value: "pinToQuickFocus",
+      label: "Pin to quick focus",
+      icon: "ph:circle-light",
+      type: ContextMenuType.SWITCH,
+      initialValue: this.task.isPinnedForQuickFocus,
+      callback: async (checked) => {
+        return this.store.modify(this.task.id, {
+          isPinnedForQuickFocus: checked
+        });
+      }
+    };
+  }
+}
+
 export function resolveTaskContextMenu(
   task: ITask,
-  accessPoint: ResourceAccessPoint
+  accessPoint: ResourceAccessPoint,
+  params?: {
+    accessPointId?: IRecordId;
+  }
 ): IContextMenu {
   const resourceActions = new ResourceActions(task, taskStore, accessPoint);
+  const taskActions = new TaskActions(task, taskStore, accessPoint);
+
+  let primaryItems: IContextMenuItem[] = [];
+
+  if (accessPoint === ResourceAccessPoint.SELF) {
+    primaryItems = [
+      resourceActions.star(),
+      resourceActions.edit(accessPoint),
+      resourceActions.copyLink()
+    ];
+  } else if (
+    accessPoint === ResourceAccessPoint.COLLECTION &&
+    params?.accessPointId
+  ) {
+    primaryItems = [
+      resourceActions.unlink(params?.accessPointId),
+      resourceActions.select(accessPoint, params?.accessPointId),
+      resourceActions.star(),
+      resourceActions.edit(accessPoint),
+      resourceActions.copyLink()
+    ];
+  } else {
+    primaryItems = [
+      resourceActions.select(accessPoint, params?.accessPointId),
+      resourceActions.star(),
+      resourceActions.addToCollection(),
+      resourceActions.edit(accessPoint),
+      resourceActions.copyLink()
+    ];
+  }
   return [
+    {
+      group: "primary",
+      items: [...primaryItems]
+    },
+    {
+      group: "focus",
+      items: [taskActions.focusNow, taskActions.pinToQuickFocus()]
+    },
+    {
+      group: "open",
+      items: [
+        resourceActions.openAsTab(),
+        resourceActions.openAsSplit(),
+        resourceActions.openAsFull()
+      ]
+    },
     {
       group: "more",
       items: [resourceActions.archive(), resourceActions.trash()]

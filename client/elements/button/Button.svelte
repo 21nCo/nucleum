@@ -85,7 +85,7 @@
     style === ButtonStyle.DEFAULT &&
       !isIconOnlyButton && [
         {
-          "hover:opacity-90 text-abg":
+          "hover:brightness-110 text-abg":
             type === ButtonVariant.PRIMARY || type === ButtonVariant.DANGER,
           "bg-aps1": type === ButtonVariant.PRIMARY,
           "bg-ars1": type === ButtonVariant.DANGER,

@@ -2,7 +2,7 @@
   import Notifications from "./Notifications.svelte";
   import { onMount } from "svelte";
   import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
-  import { appLoadingState } from "$lib/client/stores/app.store";
+  import { appLoadingState, appStore } from "$lib/client/stores/app.store";
   import { scheduledNotifications } from "$lib/client/stores/notification.store";
 
   import { postToParent } from "$lib/client/utils/embed.utils";
@@ -21,6 +21,8 @@
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
   import SessionTitle from "./SessionTitle.svelte";
   import LeftNav from "$lib/client/layout/leftPanel/LeftNav.svelte";
+  import Tabs from "$lib/client/layout/tabs/Tabs.svelte";
+  import AppSplitView from "$lib/client/layout/AppSplitView.svelte";
   let isLiteMode = $context.isEmbed && $context.isSheet;
   let interactionMode: InteractionMode;
   let isHideLeftNavBar: boolean = refreshSidebarState();
@@ -74,20 +76,35 @@
 
 <UserBaseLayer>
   {#if $appLoadingState.isBaseLoaded && $appLoadingState.isLocalLoaded}
-    <!-- TODO - except touch devices -->
-    {#if interactionMode === InteractionMode.COMMAND_ONLY && $context.embed !== Embed.HANDSET}
-      <CommandModePage />
-    {:else}
-      {#if !isHideLeftNavBar || interactionMode === InteractionMode.DEFAULT || $context.embed === Embed.HANDSET}
-        <!-- <LocalLeftNav /> -->
-        <LeftNav variant="fixed" />
-      {/if}
-      <div
-        class="flex flex-col h-full {$view.isPortrait ? 'w-full' : 'flex-grow'}"
-      >
+    {#if $appStore.interactionMode === InteractionMode.COMMAND_ONLY && $context.embed !== Embed.HANDSET}
+      <CommandModePage>
         <slot />
+      </CommandModePage>
+    {:else}
+      <div class="flex flex-col w-full h-full">
+        <div class="flex w-full flex-grow">
+          {#if !isHideLeftNavBar || $appStore.interactionMode === InteractionMode.DEFAULT || $context.embed === Embed.HANDSET}
+            <LeftNav variant="fixed" />
+          {/if}
+          <div
+            class="flex flex-col h-full {$view.isPortrait
+              ? 'w-full'
+              : 'flex-grow'}"
+          >
+            {#if !$view.isPortrait}
+              <Tabs />
+            {/if}
+            <div class="w-full flex-grow">
+              <AppSplitView>
+                <slot name="main" slot="main">
+                  <slot />
+                </slot>
+              </AppSplitView>
+            </div>
+          </div>
+          <!-- <RightPanel /> -->
+        </div>
       </div>
-      <!-- <RightPanel /> -->
     {/if}
   {/if}
   {#if $sessionStore?.isSessionRunning}
