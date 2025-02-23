@@ -2,8 +2,13 @@ import { BillingCycle } from "$lib/client/components/subscription/userPlan.type"
 import { PlanType } from "$lib/client/components/subscription/userPlan.type";
 import { performQueryOnMasterDb } from "$lib/server/surrealHelpers";
 import { Agent } from "../../account/account.type";
-import { resolvePromotePlanQuery, resolvePlanQuery } from "../plan.utils";
+import {
+  resolvePromotePlanQuery,
+  resolvePlanQuery,
+  resolveTransactionStatus,
+} from "../plan.utils";
 import { ValidationError, InternalServerError } from "../../errors";
+import { verifyPayment } from "../dodoPaymentProvider";
 
 export async function restore(body: any, agent: Agent) {
   const user = await retrieveUserPlan(agent.id);
@@ -21,24 +26,27 @@ export async function restore(body: any, agent: Agent) {
     return { status: "no_transactions" };
   }
 
-  const validTransaction = findValidTransaction(transactions);
-  if (!validTransaction) {
+  const validTransactions = await findValidTransaction(transactions, agent.id);
+  if (!validTransactions || validTransactions.length === 0) {
     return { status: "no_valid_transaction" };
   }
-
+  const transaction = validTransactions[0];
   const userPlanUpdateResult = await promoteUserPlan({
     id: user.userPlan.id,
-    cycle: validTransaction.cycle,
-    plan: validTransaction.plan,
-    transactionId: validTransaction.id,
-    paymentDate: validTransaction.createdAt,
+    cycle: transaction.cycle,
+    plan: transaction.plan,
+    transactionId: transaction.id,
+    paymentDate: transaction.createdAt,
   });
-  console.log({ userPlanUpdateResult });
   if (!userPlanUpdateResult || !userPlanUpdateResult[0]?.result?.[0]) {
     throw new InternalServerError("Failed to update user plan");
   }
 
-  return userPlanUpdateResult[0].result[0];
+  return {
+    userPlan: userPlanUpdateResult[0].result[0],
+    status:
+      validTransactions.length > 1 ? "multiple_valid_transactions" : "success",
+  };
 }
 
 async function retrieveUserPlan(id: string) {
@@ -58,10 +66,18 @@ async function retrieveUserTransactions(userId: string) {
   return transactionResult[0].result;
 }
 
-function findValidTransaction(transactions: any[]) {
+async function findValidTransaction(transactions: any[], userId: string) {
+  const transactionsWithPendingStatus = transactions.filter(
+    (transaction) => transaction.status === "pending"
+  );
+  if (transactionsWithPendingStatus.length > 0) {
+    await reconcilePayments(transactionsWithPendingStatus);
+    transactions = await retrieveUserTransactions(userId);
+  }
+
   const now = new Date();
 
-  return transactions.find((transaction) => {
+  return transactions.filter((transaction) => {
     if (transaction.status !== "completed") {
       return false;
     }
@@ -93,4 +109,44 @@ async function promoteUserPlan(params?: {
   const query = resolvePromotePlanQuery(params);
   const updateResult = await performQueryOnMasterDb(query);
   return updateResult;
+}
+
+async function reconcilePayments(transactions: any[]) {
+  const updatePromises = transactions.map(async (transaction) => {
+    if (
+      !transaction.dodoPayment ||
+      (!transaction.dodoPayment.payment_id &&
+        !transaction.dodoPayment.subscription_id)
+    ) {
+      return;
+    }
+
+    const isSubscription = !!transaction.dodoPayment.subscription_id;
+    const paymentStatus = await verifyPayment(
+      transaction.dodoPayment.payment_id ??
+        transaction.dodoPayment.subscription_id,
+      isSubscription
+    );
+
+    if (!paymentStatus) {
+      console.error(
+        `Failed to verify payment status for transaction ${transaction.id}`
+      );
+      return;
+    }
+
+    const newStatus = resolveTransactionStatus(isSubscription, paymentStatus);
+
+    const updateQuery = `
+      UPDATE ${transaction.id} MERGE {
+        status: "${newStatus}",
+        lastVerified: time::now(),
+        paymentStatus: ${JSON.stringify(paymentStatus)}
+      }
+    `;
+
+    await performQueryOnMasterDb(updateQuery);
+  });
+
+  await Promise.all(updatePromises);
 }

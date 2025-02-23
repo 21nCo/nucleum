@@ -48,3 +48,28 @@ export function resolvePromotePlanQuery(params?: {
     `;
   return query;
 }
+
+export interface DodoPaymentResponse {
+  status?: string;
+  [key: string]: any;
+}
+
+export function resolveTransactionStatus(
+  isSubscription: boolean,
+  paymentStatus: DodoPaymentResponse
+): "completed" | "failed" | "pending" {
+  if (!paymentStatus?.status) {
+    return "pending";
+  }
+
+  if (isSubscription && paymentStatus.status === "active") {
+    return "completed";
+  }
+  if (!isSubscription && paymentStatus.status === "succeeded") {
+    return "completed";
+  }
+  if (paymentStatus.status === "failed") {
+    return "failed";
+  }
+  return "pending";
+}

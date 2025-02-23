@@ -10,7 +10,11 @@ import {
   BillingCycle,
   PlanType,
 } from "$lib/client/components/subscription/userPlan.type";
-import { resolvePlanQuery, resolvePromotePlanQuery } from "../plan.utils";
+import {
+  resolvePlanQuery,
+  resolvePromotePlanQuery,
+  resolveTransactionStatus,
+} from "../plan.utils";
 
 interface VerifyRequest {
   nonce: string;
@@ -47,16 +51,8 @@ export async function verify(body: VerifyRequest, agent: Agent) {
   if (!paymentStatus) {
     throw new InternalServerError("Failed to verify payment status");
   }
-  console.log({ user, transaction, paymentStatus });
 
-  const newStatus =
-    (isSubscription && paymentStatus.status === "active") ||
-    (!isSubscription && paymentStatus.status === "succeeded")
-      ? "completed"
-      : paymentStatus.status === "failed"
-      ? "failed"
-      : "pending";
-
+  const newStatus = resolveTransactionStatus(isSubscription, paymentStatus);
   const updateQuery = `
     UPDATE ${transaction.id} MERGE {
       status: "${newStatus}",
