@@ -305,7 +305,7 @@ export class ActiveNodeStore extends CollectibleStore<IActiveNode, NodeStore> {
         collections
       });
       const types = await collectionStore.resolveTypes(collections);
-      const avatar = await this.resourceStore.refreshNodeAvatar(this.id, {
+      const avatar = await this.refreshAvatar(this.id, {
         types
       });
       let blocks: INode[] = [];

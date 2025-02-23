@@ -18,7 +18,8 @@
   let _avatars: IAvatar[] | undefined = undefined;
 
   $: if (types && types.length > 0) {
-    _avatars = nodeStore.resolveNodeAvatar(types);
+    //TODO:  new ICollectibleStore changes
+    // _avatars = nodeStore.resolveAvatar(types);
   } else if (types?.length === 0) {
     _avatars = [];
   }
@@ -31,7 +32,8 @@
     if (node && node.avatar) {
       _avatars = node.avatar;
     } else if (types) {
-      _avatars = nodeStore.resolveNodeAvatar(types);
+      //TODO:   new ICollectibleStore changes
+      // _avatars = nodeStore.resolveAvatar(types);
     }
   }
 </script>
