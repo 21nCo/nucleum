@@ -10,7 +10,7 @@ import {
   BillingCycle,
   PlanType,
 } from "$lib/client/components/subscription/userPlan.type";
-import { resolvePlanQuery } from "../plan.utils";
+import { resolvePlanQuery, resolvePromotePlanQuery } from "../plan.utils";
 
 interface VerifyRequest {
   nonce: string;
@@ -113,18 +113,8 @@ async function promoteUserPlan(params?: {
   transactionId: string;
   paymentDate: string;
 }) {
-  const query = `
-        UPDATE ${params.id} MERGE {
-            cycle: "${params.cycle}",
-            plan: "${params.plan}",
-            transactionId: ${params.transactionId},
-            paymentDate: "${params.paymentDate}",
-            status: "active"
-        }
-    `;
-  console.log({ query });
+  const query = resolvePromotePlanQuery(params);
   const updateResult = await performQueryOnMasterDb(query);
-  console.log({ updateResult });
   return updateResult;
 }
 
