@@ -43,6 +43,15 @@ async function cancel(agent: Agent) {
     console.log({ subscriptionData, transaction });
     await updateSubscriptionStatus(transaction.id, subscriptionData);
   }
+  if (
+    user.userPlan.status === "refunded" ||
+    user.userPlan.status === "cancelled"
+  ) {
+    return {
+      status: "success",
+      message: "Subscription cancelled successfully",
+    };
+  }
   let newStatus = "cancelled";
   if (
     transaction.cycle === BillingCycle.YEARLY ||
@@ -71,7 +80,10 @@ async function cancel(agent: Agent) {
         newStatus = "refunded";
       }
     } else if (daysUsed <= 30 && transaction.dodoPayment?.payment_id) {
-      const data = await refundPayment(transaction.dodoPayment.payment_id);
+      const data = await refundPayment(
+        transaction.dodoPayment.payment_id,
+        transaction.dodoPayment.total_amount
+      );
       await updateRefundStatus(transaction.id, data);
       newStatus = "refunded";
     }

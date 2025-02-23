@@ -120,9 +120,9 @@ export async function refundPayment(paymentId: string, amount?: number) {
     baseURL: process.env.DODO_BASE_URL ?? "https://test.dodopayments.com",
     bearerToken: process.env.DODO_API_KEY,
   });
-  const refund = await dodopayments.refunds.create({
-    payment_id: paymentId,
-    amount,
-  });
+  const body = amount
+    ? { payment_id: paymentId, amount }
+    : { payment_id: paymentId };
+  const refund = await dodopayments.refunds.create(body);
   return refund;
 }
