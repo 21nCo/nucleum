@@ -64,7 +64,7 @@
   class={cn(" flex justify-center items-center bg-bgs3", {
     "rounded-full w-16 h-16": context === "cp-profile",
     "rounded-md w-20 h-20": context === "cmd-page",
-    "rounded-full w-24 h-24 border-4": context === "account-settings",
+    "rounded-md w-full border-4": context === "account-settings",
     "border-transparent": context === "account-settings" && !isEditing,
     "outline-2 outline-dashed outline-fgs3 border-bgs1":
       context === "account-settings" && isEditing
@@ -77,9 +77,8 @@
       id={fileId}
       isLazyLoad={false}
       class={cn("object-cover w-full h-full", {
-        "rounded-md": context === "cmd-page",
-        "rounded-full":
-          context === "cp-profile" || context === "account-settings"
+        "rounded-md": context === "cmd-page" || context === "account-settings",
+        "rounded-full": context === "cp-profile"
       })}
     />
   {:else if initials}

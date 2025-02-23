@@ -1,13 +1,13 @@
 <script lang="ts">
   import { type IActiveTaskStore } from "$lib/client/components/tasks/task.store";
   import TaskCollectionsRow from "../TaskCollectionsRow.svelte";
-  import { formatDatetime } from "$lib/client/utils/time.utils";
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import Markdown from "$lib/client/components/markdown/Markdown.svelte";
   import TaskTitleRow from "./TaskTitleRow.svelte";
   import TaskStatusSwitcher from "../status/TaskStatusSwitcher.svelte";
-  import { TaskStatus } from "../task.type";
+  import { TaskStatus, TaskType } from "../task.type";
   import { cn } from "$lib/client/utils/ui.utils";
+  import TimelineCard from "./TimelineCard.svelte";
+  import RecordStatusBanner from "../../record/RecordStatusBanner.svelte";
   export let task: IActiveTaskStore;
   export let isConstrainedWidth = false;
   function handleStatusChange(e: CustomEvent<TaskStatus>) {
@@ -34,19 +34,13 @@
       <TaskCollectionsRow {task} />
     </div>
   </div>
+  <RecordStatusBanner resource={task} />
   <div class="flex flex-col gap-1">
     <span class="text-b2 text-fgs3">Status</span>
     <TaskStatusSwitcher status={$task.status} on:change={handleStatusChange} />
   </div>
-  {#if $task.startDate || $task.endDate}
-    <div class="text-b2 text-fgs3">
-      {#if $task.startDate}
-        {formatDatetime($userPreferences, $task.startDate)}
-      {/if}
-      {#if $task.endDate}
-        - {formatDatetime($userPreferences, $task.endDate)}
-      {/if}
-    </div>
+  {#if $task.type === TaskType.DEFINITE}
+    <TimelineCard {task} />
   {/if}
 
   {#if $task.description}

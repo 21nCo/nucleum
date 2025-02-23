@@ -38,6 +38,10 @@
   import TimeRangePicker from "$lib/client/elements/datetime/TimeRangePicker.svelte";
   import TimeSpan from "$lib/client/elements/datetime/TimeSpan.svelte";
   import { TimeScale } from "$lib/client/types/time.type";
+  import {
+    activeScales,
+    resolveDefaultSpanScale
+  } from "$lib/client/elements/datetime/datetime.utils";
   export let context: ResourceAccessPoint | undefined = undefined;
 
   let label: string = "";
@@ -57,7 +61,6 @@
   let spanScale: TimeScale | undefined;
   let isDescriptionVisible: boolean = false;
   let isSubTasksVisible: boolean = false;
-  let isParentSelectorVisible: boolean = false;
   let isCollectionSelectorVisible: boolean = false;
   let subTasks: string[] = [];
   let newSubTask: string = "";
@@ -70,6 +73,9 @@
         return;
       }
 
+      if (type === TaskType.DEFINITE && !spanScale && startDate && endDate) {
+        spanScale = resolveDefaultSpanScale(startDate, endDate, activeScales);
+      }
       const task: ITask = {
         label,
         type,
@@ -78,7 +84,8 @@
         startDate: type === TaskType.DEFINITE ? startDate : undefined,
         endDate: type === TaskType.DEFINITE ? endDate : undefined,
         parent: parent ? [parent.id] : undefined,
-        color
+        color,
+        spanScale
       };
 
       const result = await taskStore.save(task, {
@@ -135,7 +142,8 @@
     />
     {#if !parent}
       <GoalColorPickerWithPreview
-        bind:hue={color}
+        hue={color}
+        on:change={(e) => (color = e.detail)}
         label={isValidString(label) ? label : "Preview"}
       />
     {/if}
@@ -151,12 +159,7 @@
       />
       {#if startDate && endDate}
         <TimeSpan
-          scales={[
-            TimeScale.DAYS,
-            TimeScale.WEEKS,
-            TimeScale.MONTHS,
-            TimeScale.YEARS
-          ]}
+          scales={activeScales}
           start={startDate}
           end={endDate}
           bind:spanScale
@@ -253,16 +256,7 @@
           on:click={() => (isSubTasksVisible = true)}
         />
       {/if}
-      {#if !isParentSelectorVisible}
-        <Button
-          label="Add parent"
-          icon="ph:arrow-elbow-right-up-light"
-          style={ButtonStyle.OUTLINED}
-          size={Size.sm}
-          on:click={() => (isParentSelectorVisible = true)}
-        />
-      {/if}
-      {#if !isCollectionSelectorVisible}
+      <!-- {#if !isCollectionSelectorVisible}
         <Button
           label="Add to a collection"
           icon="ph:plus-light"
@@ -270,7 +264,7 @@
           size={Size.sm}
           on:click={() => (isCollectionSelectorVisible = true)}
         />
-      {/if}
+      {/if} -->
     </div>
     <ModalFooter
       action={resourceAction(Resource.task, ResourceActionType.CREATE)}

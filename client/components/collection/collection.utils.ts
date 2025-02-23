@@ -11,6 +11,7 @@ import {
   resourceInList
 } from "$lib/client/components/flux/resourceStores/resource.utils";
 import type { ISelectItem } from "$lib/client/types/select.type";
+import { Resource } from "../flux/resourceStores/resource.enum";
 
 export const UNASSIGNED_VALUE = "unassigned";
 export const UNASSIGNED_LABEL = "Unassigned";
@@ -155,4 +156,13 @@ export function resolveCollectionSubTypesForSwitcher() {
     };
   });
   return collectionTypes;
+}
+
+export function resolveCollectionResource(product: string) {
+  switch (product) {
+    case "pointron":
+      return Resource.task;
+    case "memotron":
+      return Resource.node;
+  }
 }

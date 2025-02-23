@@ -9,6 +9,7 @@ import type { Arrangement, Placement } from "$lib/client/types/direction.enum";
 import type { IMemotronItemBase } from "$lib/client/products/memotron/memotron.type";
 import type { INodeThumb } from "$lib/client/products/memotron/node/node.type";
 import type { IProperty, IPropertyValue } from "./properties/property.type";
+import type { Resource } from "../flux/resourceStores/resource.enum";
 
 export enum CollectionType {
   TYPED = "TYPED",
@@ -32,6 +33,7 @@ interface ICollectionBase extends IMemotronItemBase {
   isCaptureShortcutEnabled?: boolean;
   query?: string;
   avatar?: IAvatar;
+  resource?: Resource;
 }
 
 export type IActiveCollection = IActiveResource &

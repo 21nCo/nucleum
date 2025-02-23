@@ -17,6 +17,8 @@
   import TaskTitleRow from "./info/TaskTitleRow.svelte";
   import TaskSubtasksPanel from "./subTasks/TaskSubtasksPanel.svelte";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
+  import Button from "$lib/client/elements/button/Button.svelte";
+  import { appStore } from "$lib/client/stores/app.store";
 
   export let id: string;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -94,7 +96,7 @@
     >
       {#if !isConstrainedWidth}
         <aside
-          class="flex flex-col gap-4 bg-bgs2 border border-brs3 rounded-lg p-4 w-96 2k:w-[30rem]"
+          class="flex flex-col gap-4 bg--bgs2 border border-brs3 rounded-lg p-4 w-96 2k:w-[30rem]"
         >
           <TaskInfoPanel {task} />
         </aside>
@@ -111,10 +113,22 @@
             style={PanelSwitcherStyle.BAR}
             bind:value={selectedPanel}
             isExpandToFullWidth={true}
-            isPreventDropdownForCW={true}
             parentBgIndex={2}
             isBgBar={true}
-          ></PanelSwitcher>
+          >
+            <div slot="right">
+              {#if $task.accessMode === ResourceAccessMode.FULL}
+                <Button
+                  icon="ph:x-light"
+                  tooltip="Close full screen"
+                  parentBgIndex={2}
+                  on:click={() => {
+                    appStore.goBack();
+                  }}
+                />
+              {/if}
+            </div>
+          </PanelSwitcher>
         </div>
         <div class="flex-1">
           {#if selectedPanel === "info"}

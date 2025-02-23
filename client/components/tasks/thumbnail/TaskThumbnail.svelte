@@ -14,6 +14,7 @@
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { resolveTaskTypeIcon } from "../task.utils";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
+  import RecordStarStatusFeedback from "../../record/RecordStarStatusFeedback.svelte";
 
   export let item: ITask;
   export let arrangement: Arrangement = Arrangement.LIST;
@@ -74,6 +75,7 @@
             <div class="flex flex-col gap-1 flex-grow">
               <div class="flex items-center gap-2">
                 <span class="text-b2 font-medium truncate">{item.label}</span>
+                <RecordStarStatusFeedback isStarred={item.isStarred} />
                 <!-- {#if item.startDate || item.endDate}
                 <span class="text-b3 text-fgs3">
                   {#if item.startDate}

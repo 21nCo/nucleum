@@ -27,7 +27,7 @@ export class MemotronDexie extends AppDexie {
       .stores({
         node: "id, title, children, contentType, createdAt, modifiedAt, interactedAt, text",
         collection:
-          "id, type, label, isStarred, isCaptureShortcutEnabled, createdAt, modifiedAt, interactedAt",
+          "id, type, resource, label, isStarred, isCaptureShortcutEnabled, createdAt, modifiedAt, interactedAt",
         property: "id, label, createdAt, modifiedAt, interactedAt",
         view: "id, label, createdAt, modifiedAt, interactedAt",
         file: "id, label, type, size, createdAt",

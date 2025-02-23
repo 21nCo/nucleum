@@ -10,6 +10,7 @@
   import { tooltip } from "$lib/client/actions/popover.action";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import view from "$lib/client/stores/view.store";
+  import RecordStarStatusFeedback from "$lib/client/components/record/RecordStarStatusFeedback.svelte";
   export let node: INode;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
   export let isUrlOnIcon: boolean = false;
@@ -78,9 +79,7 @@
           </button>
         {/if}
       {/if}
-      {#if node.isStarred}
-        <Icon icon="star" class="fill-yellow-400" />
-      {/if}
+      <RecordStarStatusFeedback isStarred={node.isStarred} />
     </span>
   {/if}
 </div>

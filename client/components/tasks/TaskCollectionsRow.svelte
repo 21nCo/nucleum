@@ -120,7 +120,7 @@
           onHideCallback: () => {
             hidePopover();
           },
-          context: "nodepageCollectionsLane"
+          ctx: "nodepageCollectionsLane"
         }
       }}
     >

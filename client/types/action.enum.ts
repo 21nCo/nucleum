@@ -30,5 +30,6 @@ export enum Action {
   GO_BACK = "GO_BACK",
   GO_FORWARD = "GO_FORWARD",
   ADD_ITEM_TO_COLLECTION = "add-item-to-collection",
-  LIBRARY = "library"
+  LIBRARY = "library",
+  BULK_LINK = "bulk-link"
 }

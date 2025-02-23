@@ -33,7 +33,7 @@
     resolveNextRenewalDate,
     resolvePlanLabel
   } from "$lib/client/utils/account.utils";
-  import { PlanType } from "../../subscription/userPlan.type";
+  import { BillingCycle, PlanType } from "../../subscription/userPlan.type";
   import { formatDate } from "$lib/client/utils/time.utils";
   let name = "";
   let emailParts: EmailParts | undefined = undefined;
@@ -220,7 +220,7 @@
           >
             {resolvePlanLabel($account.plan)}
           </div>
-          {#if isActivePlan && ($account.plan?.plan === PlanType.CLOUD_SYNC || $account.plan?.plan === PlanType.NUCLEUS) && $account.plan?.paymentDate}
+          {#if isActivePlan && $account.plan?.cycle !== BillingCycle.LIFETIME && ($account.plan?.plan === PlanType.CLOUD_SYNC || $account.plan?.plan === PlanType.NUCLEUS) && $account.plan?.paymentDate}
             {@const nextRenewal = resolveNextRenewalDate($account.plan)}
             {#if nextRenewal}
               <div class="text-fgs3 text-b3 mt-2">

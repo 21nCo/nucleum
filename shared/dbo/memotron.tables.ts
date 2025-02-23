@@ -96,6 +96,7 @@ function collection() {
   const def = `DEFINE TABLE IF NOT EXISTS collection SCHEMAFULL;
   DEFINE FIELD IF NOT EXISTS label on TABLE collection TYPE option<string>;
   DEFINE FIELD IF NOT EXISTS type on TABLE collection TYPE string;
+  DEFINE FIELD IF NOT EXISTS resource on TABLE collection TYPE option<string>;
   DEFINE FIELD IF NOT EXISTS cover on TABLE collection TYPE option<string | record<file>>;
   DEFINE FIELD IF NOT EXISTS coverLayout on TABLE collection FLEXIBLE TYPE option<object>;
   DEFINE FIELD IF NOT EXISTS description on TABLE collection TYPE option<string>;

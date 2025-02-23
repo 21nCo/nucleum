@@ -27,8 +27,9 @@
   );
 
   let today = dayjs();
-  let currentView =
-    initialStartDate && dayjs(initialStartDate).isValid()
+  let currentView = isDatePickerMode
+    ? dayjs(selectedDate)
+    : initialStartDate && dayjs(initialStartDate).isValid()
       ? dayjs(initialStartDate)
       : dayjs();
   let selectedYear = currentView.year();
@@ -42,30 +43,9 @@
       ? dayjs(initialEndDate)
       : null;
   let isSelectingEnd = false;
-
-  let visibleMonths: dayjs.Dayjs[] = [];
-
-  let startDateInput = "";
-  let endDateInput = "";
-
-  $: {
-    visibleMonths = Array.from({ length: 12 }, (_, i) =>
-      dayjs().month(i).startOf("month")
-    );
-    if (startDate) {
-      startDateInput = "";
-    }
-    if (endDate) {
-      endDateInput = "";
-    }
-  }
-
+  let isSelectingStart = true;
   $: selectedMonth = currentView.month();
   $: calendarRows = generateCalendarRows(currentView);
-  $: if (isDatePickerMode && selectedDate) {
-    currentView = dayjs(selectedDate);
-    selectedYear = currentView.year();
-  }
 
   onMount(() => {
     dayjs.locale("en");
@@ -103,67 +83,60 @@
     const year = parseInt(input.value);
     if (!isNaN(year) && year > 1900 && year < 2100) {
       selectedYear = year;
-      currentView = currentView.year(year);
+      if (isDatePickerMode) {
+        currentView = dayjs(currentView).year(year);
+      } else {
+        currentView = currentView.year(year);
+      }
     }
   }
 
   function selectMonth(month: number) {
-    currentView = currentView.month(month - 1);
+    if (isDatePickerMode) {
+      currentView = dayjs(currentView).month(month - 1);
+    } else {
+      currentView = currentView.month(month - 1);
+    }
   }
 
-  function selectDate(day: number) {
+  /**
+   * Selects a day in the calendar.
+   * If the date picker mode is active, it will select the day and update the current view.
+   * If the date picker mode is not active, it will select the day and update the start or end date depending on the state.
+   * @param day - The day to select.
+   */
+  function selectDay(day: number) {
     const selectedDay = currentView.date(day);
 
     if (isDatePickerMode) {
       selectedDate = selectedDay.toDate();
+      currentView = dayjs(selectedDay);
       dispatchDateChange(selectedDate);
       return;
     }
 
-    if (!startDate || isSelectingEnd) {
-      if (!startDate || selectedDay.isAfter(startDate)) {
-        if (!isSelectingEnd) {
-          startDate = selectedDay;
-          isSelectingEnd = true;
-          dispatchRangeChange({
-            start: startDate.format("YYYY-MM-DD"),
-            end: endDate ? endDate.format("YYYY-MM-DD") : ""
-          });
-        } else {
-          endDate = selectedDay;
-          isSelectingEnd = false;
-          dispatchRangeChange({
-            start: startDate ? startDate.format("YYYY-MM-DD") : "",
-            end: endDate.format("YYYY-MM-DD")
-          });
-        }
-      } else {
-        startDate = selectedDay;
-        endDate = null;
+    if (isSelectingStart) {
+      startDate = selectedDay;
+      currentView = selectedDay;
+      if (!endDate) {
+        isSelectingStart = false;
         isSelectingEnd = true;
-        dispatchRangeChange({
-          start: startDate.format("YYYY-MM-DD"),
-          end: ""
-        });
       }
-    } else {
-      if (endDate && selectedDay.isBefore(endDate)) {
-        startDate = selectedDay;
-        isSelectingEnd = true;
-        dispatchRangeChange({
-          start: startDate.format("YYYY-MM-DD"),
-          end: endDate.format("YYYY-MM-DD")
-        });
-      } else {
-        startDate = selectedDay;
-        endDate = null;
-        isSelectingEnd = true;
-        dispatchRangeChange({
-          start: startDate.format("YYYY-MM-DD"),
-          end: ""
-        });
+      dispatchRangeChange({
+        start: startDate.format("YYYY-MM-DD"),
+        end: endDate ? endDate.format("YYYY-MM-DD") : ""
+      });
+    } else if (isSelectingEnd) {
+      if (selectedDay.isBefore(startDate)) {
+        return;
       }
+      endDate = selectedDay;
+      dispatchRangeChange({
+        start: startDate?.format("YYYY-MM-DD") ?? "",
+        end: endDate.format("YYYY-MM-DD")
+      });
     }
+    selectedYear = currentView.year();
   }
 
   function dispatchDateChange(val: Date) {
@@ -184,63 +157,78 @@
     );
   }
 
-  function resetSelection(resetStart = false, resetEnd = false) {
-    if (resetStart) {
-      startDate = null;
-      isSelectingEnd = false;
-      dispatchRangeChange({
-        start: "",
-        end: endDate ? endDate.format("YYYY-MM-DD") : ""
-      });
-    }
-    if (resetEnd) {
-      endDate = null;
-      isSelectingEnd = true;
-      dispatchRangeChange({
-        start: startDate ? startDate.format("YYYY-MM-DD") : "",
-        end: ""
-      });
-    }
+  function resetStart() {
+    startDate = null;
+    isSelectingEnd = false;
+    dispatchRangeChange({
+      start: "",
+      end: endDate ? endDate.format("YYYY-MM-DD") : ""
+    });
+  }
+  function resetEnd() {
+    endDate = null;
+    isSelectingEnd = true;
+    dispatchRangeChange({
+      start: startDate ? startDate.format("YYYY-MM-DD") : "",
+      end: ""
+    });
   }
 
   function setSelectionMode(selectingEnd: boolean, event: MouseEvent) {
     event.stopPropagation();
     isSelectingEnd = selectingEnd;
+    isSelectingStart = !selectingEnd;
 
-    // Update the calendar view to show the selected date's month
-    if (selectingEnd && endDate) {
-      currentView = endDate;
-      selectedYear = endDate.year();
-    } else if (!selectingEnd && startDate) {
-      currentView = startDate;
-      selectedYear = startDate.year();
+    if (selectingEnd) {
+      if (endDate) {
+        currentView = endDate;
+        selectedYear = endDate.year();
+      } else if (startDate) {
+        currentView = startDate.add(1, "month");
+        selectedYear = currentView.year();
+      }
+    } else {
+      if (startDate) {
+        currentView = startDate;
+        selectedYear = startDate.year();
+      } else if (endDate) {
+        currentView = endDate.subtract(1, "month");
+        selectedYear = currentView.year();
+      }
     }
   }
 
   function handleClearClick(clearStart: boolean, event: MouseEvent) {
     event.stopPropagation();
-    resetSelection(clearStart, !clearStart);
+    if (clearStart) {
+      resetStart();
+    } else {
+      resetEnd();
+    }
   }
 
   function navigateMonth(delta: number) {
-    currentView = currentView.add(delta, "month");
+    if (isDatePickerMode) {
+      currentView = dayjs(currentView).add(delta, "month");
+    } else {
+      currentView = currentView.add(delta, "month");
+    }
   }
 
   function navigateYear(delta: number) {
-    selectedYear += delta;
-    currentView = currentView.year(selectedYear);
+    const newYear = selectedYear + delta;
+    if (newYear > 1900 && newYear < 2100) {
+      selectedYear = newYear;
+      if (isDatePickerMode) {
+        currentView = dayjs(currentView).year(newYear);
+      } else {
+        currentView = currentView.year(newYear);
+      }
+    }
   }
 
   function handleDateInput(input: string, isStart: boolean) {
-    // Handle incomplete dates
     if (input.length < 10) {
-      if (isStart) {
-        startDateInput = input;
-      } else {
-        endDateInput = input;
-      }
-
-      // Try to parse year if we have enough digits
       if (input.length >= 4) {
         const year = parseInt(input.substring(0, 4));
         if (!isNaN(year) && year >= 1900 && year <= 2100) {
@@ -249,7 +237,6 @@
         }
       }
 
-      // Try to parse month if we have enough digits
       if (input.length >= 7) {
         const month = parseInt(input.substring(5, 7));
         if (!isNaN(month) && month >= 1 && month <= 12) {
@@ -260,12 +247,10 @@
       return;
     }
 
-    // Parse complete date
     const parsed = dayjs(input, "YYYY-MM-DD", true);
     if (parsed.isValid()) {
       if (isStart) {
         startDate = parsed;
-        startDateInput = input;
         if (!isSelectingEnd) {
           currentView = parsed;
           selectedYear = parsed.year();
@@ -279,7 +264,6 @@
           return;
         }
         endDate = parsed;
-        endDateInput = input;
         if (isSelectingEnd) {
           currentView = parsed;
           selectedYear = parsed.year();
@@ -306,9 +290,8 @@
     <div class="flex w-full gap-4">
       <DateInputBox
         {parentBgIndex}
-        isSelected={!isSelectingEnd}
+        isActive={isSelectingStart && !isSelectingEnd}
         selectedDate={startDate}
-        dateInput={startDateInput}
         label="Start"
         onInputChange={(value) => handleDateInput(value, true)}
         onClear={(e) => handleClearClick(true, e)}
@@ -316,9 +299,8 @@
       />
       <DateInputBox
         {parentBgIndex}
-        isSelected={isSelectingEnd}
+        isActive={isSelectingEnd}
         selectedDate={endDate}
-        dateInput={endDateInput}
         label="End"
         onInputChange={(value) => handleDateInput(value, false)}
         onClear={(e) => handleClearClick(false, e)}
@@ -409,36 +391,46 @@
             {#each week as day}
               <td class="p-0">
                 {#if day !== null}
-                  {@const currentDate = currentView.date(day)}
+                  {@const date = currentView.date(day)}
                   <div
                     class="flex w-full h-7 justify-center items-center relative"
                   >
-                    {#if startDate && endDate && isDateInRange(currentDate)}
+                    {#if startDate && endDate && isDateInRange(date)}
                       <div class="absolute inset-0 bg-aps2/20" />
                     {/if}
-                    {#if (startDate && currentDate.isSame(startDate, "day")) || (endDate && currentDate.isSame(endDate, "day"))}
+                    {#if (startDate && date.isSame(startDate, "day")) || (endDate && date.isSame(endDate, "day"))}
                       <div class="absolute inset-0 bg-aps1" />
                     {/if}
                     <button
+                      data-day={date}
                       class={cn(
-                        "rounded-md w-6 h-6 flex items-center justify-center relative z-10",
+                        "rounded-md w-6 h-6 flex items-center justify-center relative z-10 border border-transparent",
                         {
-                          "text-abg":
-                            (startDate &&
-                              currentDate.isSame(startDate, "day")) ||
-                            (endDate && currentDate.isSame(endDate, "day")),
-                          "bg-ass1 text-abg font-medium":
-                            currentDate.isSame(today, "day") &&
-                            !currentDate.isSame(startDate, "day") &&
-                            !currentDate.isSame(endDate, "day"),
+                          "text-abg bg-aps1 !border-aps1":
+                            (isDatePickerMode &&
+                              date.isSame(dayjs(selectedDate), "day")) ||
+                            (startDate && date.isSame(startDate, "day")) ||
+                            (endDate && date.isSame(endDate, "day")),
+                          "!border-ass1":
+                            date.isSame(today, "day") &&
+                            !(
+                              isDatePickerMode &&
+                              date.isSame(dayjs(selectedDate), "day")
+                            ) &&
+                            !(startDate && date.isSame(startDate, "day")) &&
+                            !(endDate && date.isSame(endDate, "day")),
                           "hover:bg-bgs2":
-                            !currentDate.isSame(today, "day") &&
-                            !isDateInRange(currentDate) &&
-                            !currentDate.isSame(startDate, "day") &&
-                            !currentDate.isSame(endDate, "day")
+                            !date.isSame(today, "day") &&
+                            !isDateInRange(date) &&
+                            !(
+                              isDatePickerMode &&
+                              date.isSame(dayjs(selectedDate), "day")
+                            ) &&
+                            !date.isSame(startDate, "day") &&
+                            !date.isSame(endDate, "day")
                         }
                       )}
-                      on:click={() => selectDate(day)}
+                      on:click={() => selectDay(day)}
                     >
                       {day}
                     </button>

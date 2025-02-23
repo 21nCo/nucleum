@@ -24,6 +24,9 @@ export enum MemotronAction {
    * @deprecated - use Action.ADD_ITEM_TO_COLLECTION instead
    */
   ADD_NODE_TO_COLLECTION = "add-node-to-collection",
+  /**
+   * @deprecated - use Action.BULK_LINK instead
+   */
   BULK_LINK = "bulk-link",
   OPEN_CHAT = "open-chat",
   CALLOUT_SETTINGS = "edit-callout-settings",

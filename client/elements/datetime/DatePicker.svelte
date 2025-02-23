@@ -9,6 +9,7 @@
   import FormElement from "../FormElement.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import { popover } from "$lib/client/actions/popover.action";
+  import AbsoluteTimeRangePopoverV2 from "./absolute/AbsoluteTimeRangePopoverV2.svelte";
   const dispatch = createEventDispatcher();
   export let parentBackgroundIndex: number = 1;
   export let date: Date | undefined = undefined;
@@ -82,7 +83,7 @@
       })}
       bind:this={ref}
       use:popover={{
-        content: AbsoluteTimeRangePopover,
+        content: AbsoluteTimeRangePopoverV2,
         id: "date-picker-popover",
         isRenderAsModalForCW: true,
         componentProps: {
@@ -110,6 +111,27 @@
       {/if}
     </div>
   </FormElement>
+{:else if variant == "inline"}
+  <div
+    class="relative"
+    use:popover={{
+      content: AbsoluteTimeRangePopoverV2,
+      id: "date-picker-popover",
+      isRenderAsModalForCW: true,
+      componentProps: {
+        isDatePickerMode: true,
+        selectedDate: _date,
+        onDateChange: (val) => {
+          date = val;
+          _date = val;
+          dispatch("change", val);
+          hidePopover();
+        }
+      }
+    }}
+  >
+    {formatDate(date)}
+  </div>
 {:else}
   <div class="relative">
     <input

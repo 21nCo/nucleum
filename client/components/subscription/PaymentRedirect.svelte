@@ -2,11 +2,11 @@
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import account from "$lib/client/stores/account.store";
   import { appStore } from "$lib/client/stores/app.store";
-  import { toasts } from "$lib/client/stores/notification.store";
   import { Action } from "$lib/client/types/action.enum";
   import { onMount } from "svelte";
 
   let nonce: string | null;
+  let error: string | null = null;
   onMount(() => {
     const urlParams = new URLSearchParams(window.location.search);
     nonce = urlParams.get("nonce");
@@ -23,9 +23,16 @@
       appStore.runAction(Action.PLAN_ONBOARDING);
     } else {
       //TODO - error cases
-      toasts.error("Payment failed");
+      error = "Payment failed";
     }
   }
 </script>
 
-<EmptyStatusView isLoadingState={true} loadingText="Confirming payment..." />
+{#if error}
+  <EmptyStatusView
+    mainText={error}
+    subText="Please try again after sometime. You will receive a refund if an amount is deducted from your account."
+  />
+{:else}
+  <EmptyStatusView isLoadingState={true} loadingText="Confirming payment..." />
+{/if}

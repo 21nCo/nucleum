@@ -8,11 +8,13 @@
   export let moreLink: string | undefined = undefined;
 </script>
 
-<ul class="space-y-3">
+<ul class="space-y-3.5">
   {#each features as feature}
-    <li class="flex items-center gap-2 text-sm text-fgs2">
+    <li class="flex items--start gap-3 text-b2 text-fgs2">
       <Icon icon={feature.icon} class="shrink-0" />
-      {@html renderMdAsHtml(feature.label)}
+      <span>
+        {@html renderMdAsHtml(feature.label)}
+      </span>
     </li>
   {/each}
   {#if moreLink}

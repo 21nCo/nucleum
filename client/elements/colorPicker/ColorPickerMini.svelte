@@ -1,5 +1,8 @@
 <script lang="ts">
   import { popover } from "$lib/client/actions/popover.action";
+  import { Size } from "$lib/client/types/size.enum";
+  import Icon from "../Icon.svelte";
+  import CustomColorPropagator from "../style/CustomColorPropagator.svelte";
   import ColorPickerPopover from "./ColorPickerPopover.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
@@ -37,8 +40,11 @@
     }
   }}
 >
-  <div
-    class="w-8 h-8 rounded-full"
-    style="background-color:hsl({hue}, {saturation}%, {lightness}%);"
-  ></div>
+  <CustomColorPropagator color={hue}>
+    <div
+      class="w-8 h-8 rounded-full flex items-center justify-center border border-brs3 bg-ccs1"
+    >
+      <Icon icon="ph:paint-brush-light" class="text-cbg" size={Size.sm} />
+    </div>
+  </CustomColorPropagator>
 </div>
