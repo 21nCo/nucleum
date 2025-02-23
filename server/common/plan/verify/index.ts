@@ -118,7 +118,8 @@ async function promoteUserPlan(params?: {
             cycle: "${params.cycle}",
             plan: "${params.plan}",
             transactionId: ${params.transactionId},
-            paymentDate: "${params.paymentDate}"
+            paymentDate: "${params.paymentDate}",
+            status: "active"
         }
     `;
   console.log({ query });
