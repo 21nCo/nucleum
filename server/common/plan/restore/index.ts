@@ -17,7 +17,10 @@ export async function restore(body: any, agent: Agent) {
   }
 
   //TODO - use enum
-  if (user.userPlan.status === "active") {
+  if (
+    user.userPlan.status === "active" &&
+    user.userPlan.plan !== PlanType.TRIAL
+  ) {
     return user;
   }
 
