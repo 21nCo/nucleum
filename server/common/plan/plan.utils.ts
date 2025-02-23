@@ -1,3 +1,5 @@
+import { BillingCycle } from "$lib/client/components/subscription/userPlan.type";
+import { PlanType } from "$lib/client/components/subscription/userPlan.type";
 import { paymentProductsList } from "./paymentProducts";
 
 export function resolvePlanQuery(userId: string) {
@@ -26,4 +28,48 @@ export function resolveDodoProductId({
   );
   if (isTest) return record?.dodoTestProductId;
   return record?.dodoProductId;
+}
+
+export function resolvePromotePlanQuery(params?: {
+  id: string;
+  cycle: BillingCycle;
+  plan: PlanType;
+  transactionId: string;
+  paymentDate: string;
+}) {
+  const query = `
+        UPDATE ${params.id} MERGE {
+            cycle: "${params.cycle}",
+            plan: "${params.plan}",
+            transactionId: ${params.transactionId},
+            paymentDate: "${params.paymentDate}",
+            status: "active"
+        }
+    `;
+  return query;
+}
+
+export interface DodoPaymentResponse {
+  status?: string;
+  [key: string]: any;
+}
+
+export function resolveTransactionStatus(
+  isSubscription: boolean,
+  paymentStatus: DodoPaymentResponse
+): "completed" | "failed" | "pending" {
+  if (!paymentStatus?.status) {
+    return "pending";
+  }
+
+  if (isSubscription && paymentStatus.status === "active") {
+    return "completed";
+  }
+  if (!isSubscription && paymentStatus.status === "succeeded") {
+    return "completed";
+  }
+  if (paymentStatus.status === "failed") {
+    return "failed";
+  }
+  return "pending";
 }

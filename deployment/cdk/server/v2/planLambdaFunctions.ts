@@ -73,7 +73,47 @@ export class PlanLambdaFunctions extends cdk.NestedStack {
       new gateway.LambdaIntegration(verifyFunction)
     );
 
-    for (const resource of [getResource, subscribeResource, verifyResource]) {
+    const modifyResource = planEndpoint.addResource("modify");
+    const modifyFunction = new lambda.Function(this, "ModifyPlanFunction", {
+      handler: "index.handler",
+      functionName: generateFunctionName(
+        "modifyPlanFunction",
+        props.environment
+      ),
+      code: lambda.Code.fromAsset(
+        path.join(__dirname, basePath + "modify/dist")
+      ),
+      ...nodeRuntimeFunctionProps,
+    });
+    modifyResource.addMethod(
+      "POST",
+      new gateway.LambdaIntegration(modifyFunction)
+    );
+
+    const restoreResource = planEndpoint.addResource("restore");
+    const restoreFunction = new lambda.Function(this, "RestorePlanFunction", {
+      handler: "index.handler",
+      functionName: generateFunctionName(
+        "restorePlanFunction",
+        props.environment
+      ),
+      code: lambda.Code.fromAsset(
+        path.join(__dirname, basePath + "restore/dist")
+      ),
+      ...nodeRuntimeFunctionProps,
+    });
+    restoreResource.addMethod(
+      "POST",
+      new gateway.LambdaIntegration(restoreFunction)
+    );
+
+    for (const resource of [
+      getResource,
+      subscribeResource,
+      verifyResource,
+      modifyResource,
+      restoreResource,
+    ]) {
       resource.addMethod(
         "OPTIONS",
         new gateway.MockIntegration(defaults.mockIntegration),
