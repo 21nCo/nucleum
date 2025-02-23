@@ -8,43 +8,21 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";
-  import { SUBSCRIPTION_PLANS } from "./userPlan.utils";
+  import {
+    resolveNextRenewalDate,
+    resolvePlanLabel,
+    SUBSCRIPTION_PLANS
+  } from "./userPlan.utils";
   import { appStore } from "$lib/client/stores/app.store";
+  import { formatDate } from "$lib/client/utils/time.utils";
 
-  let planName: string;
-  let cycleLabel: string;
-  let nextPayment: string | undefined;
   let currentPlanFeatures: Array<{ icon: string; label: string }> = [];
+  $: renewalDate = $account.plan
+    ? resolveNextRenewalDate($account.plan)
+    : undefined;
 
   $: {
     if ($account.plan) {
-      planName =
-        $account.plan.plan === PlanType.CLOUD_SYNC
-          ? "Memotron Sync"
-          : $account.plan.plan === PlanType.NUCLEUS
-            ? "Nucleus"
-            : "Unknown";
-      cycleLabel =
-        $account.plan.cycle === BillingCycle.LIFETIME
-          ? "lifetime"
-          : $account.plan.cycle === BillingCycle.YEARLY
-            ? "yearly"
-            : $account.plan.cycle === BillingCycle.MONTHLY
-              ? "monthly"
-              : "Unknown";
-
-      if (
-        $account.plan.paymentDate &&
-        $account.plan.cycle !== BillingCycle.LIFETIME
-      ) {
-        const nextDate = new Date($account.plan.paymentDate);
-        nextDate.setMonth(
-          nextDate.getMonth() +
-            ($account.plan.cycle === BillingCycle.YEARLY ? 12 : 1)
-        );
-        nextPayment = nextDate.toLocaleDateString();
-      }
-
       // Get features from the shared plans data
       const selectedPlan = SUBSCRIPTION_PLANS.find(
         (p) => p.type === $account.plan?.plan
@@ -64,16 +42,18 @@
   </div>
 
   <h1 class="text-3xl font-semibold text-fgs1 mb-8">
-    Welcome to {planName}! 🎉
+    Welcome to {resolvePlanLabel($account.plan)}
   </h1>
 
   <div class="bg-bgs2 p-8 rounded-xl mb-8">
-    <p class="text-h3 text-fgs2 mb-4">
-      Your {cycleLabel} subscription is now active.
-    </p>
+    {#if $account.plan?.cycle !== BillingCycle.LIFETIME}
+      <p class="text-h3 text-fgs2 mb-4">Your subscription is now active.</p>
+    {/if}
 
-    {#if nextPayment}
-      <p class="text-sm text-fgs3 mb-8">Next payment due: {nextPayment}</p>
+    {#if renewalDate}
+      <p class="text-sm text-fgs3 mb-8">
+        Next payment due: {formatDate(renewalDate)}
+      </p>
     {/if}
 
     <div class="text-left">
@@ -92,7 +72,7 @@
   <Button
     type={ButtonVariant.PRIMARY}
     icon="ph:rocket-light"
-    label="Start using {planName}"
+    label="Get started"
     on:click={() => {
       appStore.gotoPath("/");
     }}

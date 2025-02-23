@@ -54,6 +54,12 @@ export enum UserSessionType {
   RETURNING = "RETURNING"
 }
 
+export enum PlanStatus {
+  ACTIVE = "active",
+  CANCELLED = "cancelled",
+  REFUNDED = "refunded"
+}
+
 export interface IUserPlan {
   plan: PlanType;
   cycle?: BillingCycle;
@@ -64,6 +70,7 @@ export interface IUserPlan {
   trialPlan?: ITrialPlan;
   discount?: any;
   billingErrors?: any;
+  status?: PlanStatus;
   isCancelled?: boolean;
   paymentDate?: Date;
   /**

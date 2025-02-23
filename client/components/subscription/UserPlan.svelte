@@ -15,12 +15,13 @@
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
 
   let selectedPeriod: BillingCycle = BillingCycle.YEARLY;
-  let showAllPlans = false;
+  let showAllPlans = true;
   let isBillingAddressCapture = false;
   let selectedPlan: IPlan | null = null;
   let billingAddress: IBillingAddress | undefined = undefined;
   let isRedirecting = false;
-  export let currentPlan: ICurrentPlan | null = null;
+  let isSwitching = false;
+  $: currentPlan = $account.plan;
 
   const billingPeriods = [
     { value: BillingCycle.MONTHLY, label: "Monthly" },
@@ -28,16 +29,30 @@
     { value: BillingCycle.LIFETIME, label: "Lifetime" }
   ];
 
-  function onChange(plan?: IPlan) {
-    console.log("onChange", plan);
+  async function onSwitch(plan?: IPlan) {
+    console.log("onSwitch", plan);
+    isBillingAddressCapture = true;
+    isSwitching = true;
+    selectedPlan = plan || null;
   }
 
-  function onUpgrade(plan?: IPlan) {
-    console.log("onUpgrade", plan);
+  async function onSwitchProceed() {
+    isRedirecting = true;
+    const response = await account.modifySubscription({
+      type: "switch",
+      plan: selectedPlan?.type,
+      cycle: selectedPeriod,
+      billing: billingAddress,
+      product: $appStore.product
+    });
+    console.log({ at: "onSwitchProceed", response });
+    if (response && response.nonce) {
+      window.location.href = response.paymentLink;
+    }
   }
 
-  function onDowngrade(plan?: IPlan) {
-    console.log("onDowngrade", plan);
+  async function onCancel() {
+    appStore.runAction(Action.USER_PLAN_CANCELATION);
   }
 
   function onChoose(plan: IPlan) {
@@ -47,6 +62,10 @@
 
   async function onProceed() {
     if (!selectedPlan || !billingAddress) {
+      return;
+    }
+    if (isSwitching) {
+      await onSwitchProceed();
       return;
     }
     isRedirecting = true;
@@ -75,7 +94,7 @@
       {currentPlan}
       bind:showAllPlans
       on:showAllPlans={() => {
-        selectedPeriod = currentPlan?.billingCycle || BillingCycle.YEARLY;
+        selectedPeriod = currentPlan?.cycle || BillingCycle.YEARLY;
       }}
     />
 
@@ -99,9 +118,8 @@
             plans={SUBSCRIPTION_PLANS}
             {currentPlan}
             isCurrentPage={true}
-            on:change={() => onChange()}
-            on:upgrade={() => onUpgrade()}
-            on:downgrade={() => onDowngrade()}
+            on:switch={() => onSwitch()}
+            on:cancel={() => onCancel()}
           />
         {:else}
           {#each SUBSCRIPTION_PLANS as plan}
@@ -110,10 +128,9 @@
               {plan}
               {currentPlan}
               period={selectedPeriod}
-              on:change={() => onChange(plan)}
-              on:upgrade={() => onUpgrade(plan)}
-              on:downgrade={() => onDowngrade(plan)}
+              on:switch={() => onSwitch(plan)}
               on:choose={() => onChoose(plan)}
+              on:cancel={() => onCancel()}
             />
           {/each}
         {/if}

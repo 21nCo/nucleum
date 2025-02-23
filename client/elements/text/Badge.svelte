@@ -9,7 +9,7 @@
 
   $: isGeneric =
     typeof text === "string" &&
-    !["new", "soon", "planned", "beta"].includes(text.toLowerCase());
+    !["new", "soon", "planned", "beta", "trial"].includes(text.toLowerCase());
 </script>
 
 {#if typeof text === "number"}
@@ -31,7 +31,9 @@
 {:else}
   <div
     class={cn("flex justify-center items-center min-w-fit rounded-md", {
-      "bg-aps3 text-aps1 border border-aps2": text.toLowerCase() === "new",
+      "bg-aps3 text-aps1 border border-aps2": ["new", "trial"].includes(
+        text.toLowerCase()
+      ),
       "bg-ass3 text-ass1 border border-ass1": ["beta"].includes(
         text.toLowerCase()
       ),

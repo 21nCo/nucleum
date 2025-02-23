@@ -18,11 +18,8 @@ import {
 } from "$lib/client/stores/notification.store";
 import { appStore } from "./app.store";
 import jwt_decode from "jwt-decode";
-import {
-  determineIfPlanIsActive,
-  getBucketNameandKey,
-  signout
-} from "../utils/account.utils";
+import { getBucketNameandKey, signout } from "../utils/account.utils";
+import { determineIfPlanIsActive } from "$lib/client/components/subscription/userPlan.utils";
 import { ObservableStore } from "./client.store";
 import {
   StoreDataType,
@@ -281,6 +278,33 @@ class AccountStore extends ObservableStore<
     }
   }
 
+  async modifySubscription(params: any) {
+    try {
+      const isOffline = await determineIfOffline();
+      if (isOffline) return;
+      const response = await this.persistence.modifySubscription(params);
+      return response;
+    } catch (e) {
+      logger.error({ at: "modifySubscription", error: e });
+    }
+  }
+
+  async restorePurchase() {
+    try {
+      const isOffline = await determineIfOffline();
+      if (isOffline) return;
+      const response = await this.persistence.restorePurchase();
+      if (response && response.userPlan) {
+        this.update((n) => {
+          n.plan = response.userPlan;
+          return n;
+        });
+      }
+      return response;
+    } catch (e) {
+      logger.error({ at: "restorePurchase", error: e });
+    }
+  }
   async verifyPayment(nonce: string) {
     const response = await this.persistence.verifyPayment(nonce);
     if (response && response.id) {

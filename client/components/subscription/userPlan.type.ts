@@ -22,6 +22,9 @@ export interface IPlan {
   isPopular?: boolean;
 }
 
+/**
+ * @deprecated - use IUserPlan instead
+ */
 export interface ICurrentPlan {
   type: PlanType;
   billingCycle: BillingCycle;

@@ -1,20 +1,38 @@
 <script lang="ts">
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
+  import ErrorStatusPane from "$lib/client/elements/feedback/ErrorStatusPane.svelte";
   import account from "$lib/client/stores/account.store";
   import { appStore } from "$lib/client/stores/app.store";
   import { Action } from "$lib/client/types/action.enum";
   import { onMount } from "svelte";
 
   let nonce: string | null;
+  let statusUrlParam: string | null = null;
   let error: string | null = null;
+  let errorSubText: string = "";
+
   onMount(() => {
     const urlParams = new URLSearchParams(window.location.search);
     nonce = urlParams.get("nonce");
+    statusUrlParam = urlParams.get("status");
     if (nonce?.includes("?")) {
       nonce = nonce.split("?")[0];
     }
     checkPaymentStatus();
   });
+
+  function resolveErrorSubText() {
+    switch (statusUrlParam) {
+      case "processing":
+        errorSubText =
+          "Please come back in a few minutes to check the status of your payment. You will receive a refund if the transaction fails.";
+        break;
+      default:
+        errorSubText =
+          "Please try again after sometime. You will receive a refund if an amount is deducted from your account.";
+        break;
+    }
+  }
 
   async function checkPaymentStatus() {
     if (!nonce) return;
@@ -22,17 +40,31 @@
     if (response?.status === "success") {
       appStore.runAction(Action.PLAN_ONBOARDING);
     } else {
-      //TODO - error cases
-      error = "Payment failed";
+      if (statusUrlParam) {
+        switch (statusUrlParam) {
+          case "processing":
+            error = "Payment is pending";
+            break;
+          case "canceled":
+            error = "Payment was canceled";
+            break;
+          case "failed":
+            error = "Payment failed";
+            break;
+          default:
+            error = "Something went wrong";
+            break;
+        }
+      } else {
+        error = "Payment failed";
+      }
+      resolveErrorSubText();
     }
   }
 </script>
 
 {#if error}
-  <EmptyStatusView
-    mainText={error}
-    subText="Please try again after sometime. You will receive a refund if an amount is deducted from your account."
-  />
+  <ErrorStatusPane {error} subText={errorSubText} />
 {:else}
   <EmptyStatusView isLoadingState={true} loadingText="Confirming payment..." />
 {/if}

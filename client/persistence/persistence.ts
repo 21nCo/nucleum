@@ -127,6 +127,34 @@ export class Persistence {
     }
   };
 
+  modifySubscription = async (params: any) => {
+    try {
+      const response = await performApiCall("v2/plan/modify", "POST", {
+        ...params
+      });
+      if (!response?.ok) {
+        return;
+      }
+      const data = await response.json();
+      return data;
+    } catch (err) {
+      logger.error(err);
+    }
+  };
+
+  restorePurchase = async () => {
+    try {
+      const response = await performApiCall("v2/plan/restore", "POST", {});
+      if (!response?.ok) {
+        return;
+      }
+      const data = await response.json();
+      return data;
+    } catch (err) {
+      logger.error(err);
+    }
+  };
+
   verifyPayment = async (nonce: string) => {
     try {
       const response = await performApiCall("v2/plan/verify", "POST", {

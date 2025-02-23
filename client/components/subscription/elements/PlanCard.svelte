@@ -4,24 +4,29 @@
   import { Size } from "$lib/client/types/size.enum";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import PlanFeatureList from "./PlanFeatureList.svelte";
-  import type { ICurrentPlan, IPlan } from "../userPlan.type";
+  import type { IPlan } from "../userPlan.type";
   import { BillingCycle, PlanType } from "../userPlan.type";
-  import Icon from "$lib/client/elements/Icon.svelte";
   import account from "$lib/client/stores/account.store";
   import { createEventDispatcher } from "svelte";
   import PlanIcon from "./PlanIcon.svelte";
   import Divider from "$lib/client/elements/Divider.svelte";
+  import { PlanStatus, type IUserPlan } from "$lib/client/types/account.type";
   const dispatch = createEventDispatcher();
 
   export let plans: IPlan[] = [];
-  export let currentPlan: ICurrentPlan | null = null;
+  export let currentPlan: IUserPlan | undefined = undefined;
   export let plan: IPlan =
-    plans.find((p) => p.type === currentPlan?.type) || plans[0];
-  export let period: BillingCycle =
-    currentPlan?.billingCycle || BillingCycle.MONTHLY;
+    plans.find((p) => p.type === currentPlan?.plan) || plans[0];
+  export let period: BillingCycle = currentPlan?.cycle || BillingCycle.MONTHLY;
   export let isCurrentPage = false;
-  let isCurrentPlan = currentPlan?.type === plan.type;
-  let progressState: "initiating" | "upgrading" | "downgrading" | null = null;
+  let isCurrentPlan = currentPlan?.plan === plan.type;
+  let progressState:
+    | "initiating"
+    | "upgrading"
+    | "downgrading"
+    | "switching"
+    | "cancelling"
+    | null = null;
   $: actualPrice =
     period === BillingCycle.YEARLY
       ? plan.price[BillingCycle.YEARLY] / 12
@@ -46,15 +51,25 @@
   }
 
   function isUpgrade(plan: IPlan) {
-    if (!currentPlan) return false;
-    const currentIndex = plans.findIndex((p) => p.type === currentPlan.type);
+    if (
+      !currentPlan ||
+      currentPlan.plan === PlanType.TRIAL ||
+      currentPlan.status !== PlanStatus.ACTIVE
+    )
+      return false;
+    const currentIndex = plans.findIndex((p) => p.type === currentPlan.plan);
     const newIndex = plans.findIndex((p) => p.type === plan.type);
     return newIndex > currentIndex;
   }
 
   function isDowngrade(plan: IPlan) {
-    if (!currentPlan) return false;
-    const currentIndex = plans.findIndex((p) => p.type === currentPlan.type);
+    if (
+      !currentPlan ||
+      currentPlan.plan === PlanType.TRIAL ||
+      currentPlan.status !== PlanStatus.ACTIVE
+    )
+      return false;
+    const currentIndex = plans.findIndex((p) => p.type === currentPlan.plan);
     const newIndex = plans.findIndex((p) => p.type === plan.type);
     return newIndex < currentIndex;
   }
@@ -81,7 +96,7 @@
   {#if isCurrentPlan}
     <div class="absolute -top-3 left-4">
       <span class="px-3 py-1 text-sm rounded-full bg-ags1 text-abg">
-        Current Plan • {currentPlan?.billingCycle.toLowerCase()}
+        Current Plan • {currentPlan?.cycle?.toLowerCase()}
       </span>
     </div>
   {/if}
@@ -139,50 +154,60 @@
     </div>
 
     <div class="mt-auto pt-6 flex justify-center">
-      {#if isCurrentPlan && currentPlan?.billingCycle === period}
+      {#if isCurrentPlan && currentPlan?.cycle === period && currentPlan?.status === PlanStatus.ACTIVE}
         <div class="space-y-2">
           <Button
             label="Cancel Subscription"
             icon="ph:x-light"
             type={ButtonVariant.DANGER}
+            style={ButtonStyle.OUTLINED}
+            isLoading={progressState === "cancelling"}
             size={Size.lg}
+            on:click={() => {
+              progressState = "cancelling";
+              dispatch("cancel");
+            }}
           />
           <p class="text-center text-sm text-fgs3">
             Access until end of billing period
           </p>
         </div>
-      {:else if isCurrentPlan && currentPlan?.billingCycle !== period}
+      {:else if isCurrentPlan && currentPlan?.cycle !== period && currentPlan?.status === PlanStatus.ACTIVE}
         <Button
-          label={`Change to ${period.toLowerCase()}`}
+          label={`Switch to ${period.toLowerCase()}`}
           icon="ph:arrow-right-light"
+          isLoading={progressState === "switching"}
           type={ButtonVariant.PRIMARY}
           style={ButtonStyle.OUTLINED}
           size={Size.lg}
           on:click={() => {
-            dispatch("change");
+            progressState = "switching";
+            dispatch("switch");
           }}
         />
       {:else if isUpgrade(plan)}
         <Button
-          label="Upgrade Plan"
+          label="Upgrade"
+          icon="ph:arrow-up-light"
           isLoading={progressState === "upgrading"}
           type={ButtonVariant.PRIMARY}
           size={Size.lg}
           on:click={() => {
             progressState = "upgrading";
-            dispatch("upgrade");
+            dispatch("switch");
           }}
         />
       {:else if isDowngrade(plan)}
         <Button
-          label="Downgrade Plan"
+          label={`Switch to ${plan.name}`}
+          icon="ph:arrow-right-light"
           isLoading={progressState === "downgrading"}
           type={ButtonVariant.PRIMARY}
           style={ButtonStyle.OUTLINED}
           size={Size.lg}
           on:click={() => {
             progressState = "downgrading";
-            dispatch("downgrade");
+            dispatch("switch");
           }}
         />
       {:else}
