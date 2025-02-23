@@ -66,6 +66,8 @@ import TaskTitleLabelPart from "../components/tasks/TaskTitleLabelPart.svelte";
 import PaymentRedirect from "../components/subscription/PaymentRedirect.svelte";
 import PlanOnboarding from "../components/subscription/PlanOnboarding.svelte";
 import type { IRecordId } from "$lib/client/types/data.type";
+import UserBilling from "../components/subscription/UserBilling.svelte";
+import UserPlanCancellation from "../components/subscription/UserPlanCancellation.svelte";
 
 export const globalActions: IAction[] = [
   {
@@ -787,13 +789,37 @@ export const globalActions: IAction[] = [
   {
     action: "pay",
     type: ActionType.PAGE,
-    isMenuHidden: true,
     component: PaymentRedirect
   },
   {
     action: Action.PLAN_ONBOARDING,
     type: ActionType.PAGE,
     component: PlanOnboarding
+  },
+  {
+    action: Action.USER_BILLING,
+    label: "Billing",
+    icon: "ph:wallet-light",
+    type: ActionType.MODAL,
+    component: UserBilling,
+    modalParams: {
+      layout: {
+        size: Size.lg,
+        orientation: Orientation.Horizontal
+      }
+    }
+  },
+  {
+    action: Action.USER_PLAN_CANCELATION,
+    isMeta: true,
+    type: ActionType.MODAL,
+    component: UserPlanCancellation,
+    modalParams: {
+      layout: {
+        size: Size.lg,
+        orientation: Orientation.Horizontal
+      }
+    }
   },
   {
     action: Action.BULK_LINK,

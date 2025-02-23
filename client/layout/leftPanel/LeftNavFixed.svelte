@@ -9,6 +9,9 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { Action } from "$lib/client/types/action.enum";
+  import account from "$lib/client/stores/account.store";
+  import { PlanType } from "$lib/client/components/subscription/userPlan.type";
+  import { resolveTrialDaysLeft } from "$lib/client/components/subscription/userPlan.utils";
   export let isRounded = false;
 </script>
 
@@ -40,6 +43,16 @@
           on:click={() => appStore.runAction(Action.GLOBAL_SEARCH)}
         />
       </div>
+      {#if $account.plan?.plan === PlanType.TRIAL}
+        <span
+          class="flex flex-col gap-1 justify-center items-center bg-aps2 border border-aps1 rounded-md p-1.5 mx-1.5"
+        >
+          <span class="text-b2"> Trial </span>
+          <span class="text-b4">
+            {resolveTrialDaysLeft($account.plan)} days left
+          </span>
+        </span>
+      {/if}
       <div class="flex flex-col gap-8 items-center w-full p-2 overflow-auto">
         <AppMenuSwitcher
           parentBackgroundIndex={1}

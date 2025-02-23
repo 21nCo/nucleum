@@ -40,6 +40,7 @@
   import NodeRightPaneContent from "../rightPanel/NodeRightPaneContent.svelte";
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
   import { toasts } from "$lib/client/stores/notification.store";
+  import NodeTimelineView from "../timeline/NodeTimelineView.svelte";
   export let node: IActiveNodeStore;
   export let rightPane: NodeRightPaneType | undefined = undefined;
   let linkedNodes: INode[];
@@ -382,7 +383,7 @@
         </div>
       {:else}
         <PanelSwitcher
-          items={["Graph", "Serendipity"]}
+          items={["Graph", "Timeline", "Serendipity"]}
           size={Size.sm}
           style={PanelSwitcherStyle.TRAIN}
           bind:value={selectedView}
@@ -472,6 +473,8 @@
           on:select={onNodeSelect}
           on:canvasClick={closeSplitResource}
         />
+      {:else if selectedView === "Timeline"}
+        <NodeTimelineView node={$node} />
       {:else}
         <ComingSoonView
           mainText="Coming soon"

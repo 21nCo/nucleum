@@ -7,6 +7,7 @@
     isValidString
   } from "$lib/shared/utils/text.utils";
   import {
+    PlanStatus,
     UserDataMode,
     type EmailParts
   } from "$lib/client/types/account.type";
@@ -32,9 +33,10 @@
     determineIfPlanIsActive,
     resolveNextRenewalDate,
     resolvePlanLabel
-  } from "$lib/client/utils/account.utils";
+  } from "$lib/client/components/subscription/userPlan.utils";
   import { BillingCycle, PlanType } from "../../subscription/userPlan.type";
   import { formatDate } from "$lib/client/utils/time.utils";
+  import RestorePurchaseAction from "../../subscription/RestorePurchaseAction.svelte";
   let name = "";
   let emailParts: EmailParts | undefined = undefined;
   let isEditing = false;
@@ -221,12 +223,14 @@
             {resolvePlanLabel($account.plan)}
           </div>
           {#if isActivePlan && $account.plan?.cycle !== BillingCycle.LIFETIME && ($account.plan?.plan === PlanType.CLOUD_SYNC || $account.plan?.plan === PlanType.NUCLEUS) && $account.plan?.paymentDate}
-            {@const nextRenewal = resolveNextRenewalDate($account.plan)}
-            {#if nextRenewal}
-              <div class="text-fgs3 text-b3 mt-2">
-                Next renewal: {formatDate(nextRenewal)}
-              </div>
-            {/if}
+            {@const nextPayment = resolveNextRenewalDate($account.plan)}
+            <div class="text-fgs3 text-b3 mt-2">
+              {#if nextPayment && $account.plan?.status === PlanStatus.ACTIVE}
+                Next renewal: {formatDate(nextPayment)}
+              {:else if nextPayment && $account.plan?.status === PlanStatus.CANCELLED}
+                Expires: {formatDate(nextPayment)}
+              {/if}
+            </div>
           {/if}
         </div>
         {#if !isActivePlan || $account.plan?.plan === PlanType.TRIAL}
@@ -247,6 +251,9 @@
               appStore.runAction(Action.USER_BILLING);
             }}
           />
+        {/if}
+        {#if !isActivePlan || $account.plan?.plan === PlanType.TRIAL}
+          <RestorePurchaseAction />
         {/if}
       </div>
     </div>

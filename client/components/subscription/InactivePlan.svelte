@@ -1,7 +1,12 @@
 <script lang="ts">
+  import Button from "$lib/client/elements/button/Button.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import account from "$lib/client/stores/account.store";
+  import { Action } from "$lib/client/types/action.enum";
+  import { ButtonStyle } from "$lib/client/types/button.type";
   import { formatDate } from "$lib/client/utils/time.utils";
+  import modalEvent from "../modal/modal.store";
+  import RestorePurchaseAction from "./RestorePurchaseAction.svelte";
   import { PlanType } from "./userPlan.type";
 
   $: trialExpiry =
@@ -15,6 +20,10 @@
     ($account.plan?.plan === PlanType.CLOUD_SYNC ||
       $account.plan?.plan === PlanType.NUCLEUS) &&
     $account.plan?.billingErrors;
+
+  if (window.location.href.includes("/pay?")) {
+    modalEvent.hide(Action.INACTIVE_PLAN);
+  }
 
   const primeFeatures: { icon: string; label: string }[] = [
     {
@@ -85,5 +94,6 @@
         <p class="text-sm text-fgs3">Choose a plan that works best for you</p>
       </div>
     {/if}
+    <RestorePurchaseAction />
   </div>
 </div>

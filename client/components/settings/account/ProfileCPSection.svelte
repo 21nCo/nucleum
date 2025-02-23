@@ -17,7 +17,7 @@
     determineIfPlanIsActive,
     resolveLicenseString,
     resolvePlanLabel
-  } from "$lib/client/utils/account.utils";
+  } from "$lib/client/components/subscription/userPlan.utils";
   import { userPreferences } from "../userPreferences.store";
   import { PlanType } from "../../subscription/userPlan.type";
   import Icon from "$lib/client/elements/Icon.svelte";
