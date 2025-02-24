@@ -79,6 +79,7 @@
               isNodePageContext
           })}
           on:click={(e) => {
+            if (accessPoint === ResourceAccessPoint.SEARCH_RESULT) return;
             appStore.resourceClickHandler(e, _label?.parent.id, {
               replaceId:
                 accessPoint === ResourceAccessPoint.SELF ? item.id : undefined,

@@ -65,6 +65,7 @@
     NodeType.WEB_PAGE,
     NodeType.WEB_SCREENSHOT_CLIP,
     NodeType.YOUTUBE_VIDEO,
+    NodeType.YOUTUBE_TIMESTAMP_CLIP,
     NodeType.GIST
   ];
 

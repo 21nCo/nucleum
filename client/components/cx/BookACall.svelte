@@ -45,7 +45,7 @@
 
       Cal.ns["30min"]("inline", {
         elementOrSelector: "#my-cal-inline",
-        calLink: "blankcoop/30min",
+        calLink: "21native/30min",
         layout: "month_view"
       });
 
