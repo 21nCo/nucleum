@@ -2,7 +2,7 @@
   import { Control } from "$lib/client/types/pointron/control.enum";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   import ControlItem from "./ControlItem.svelte";
-  import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
+  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { SessionType } from "$lib/client/products/pointron/logs/log.type";
   import { appStore } from "$lib/client/stores/app.store";
@@ -13,23 +13,23 @@
   async function controlClickHandler(event: any) {
     let control = event.detail.control;
     if (control === Control.START) {
-      await sessionStore.startSession();
+      await activeSession.startSession();
     } else if (control === Control.BREAK) {
-      await sessionStore.startBreak();
+      await activeSession.startBreak();
     } else if (control === Control.FINISH) {
-      if ($sessionStore.state === SessionState.TIME_IS_UP) {
-        await sessionStore.finishSession();
+      if ($activeSession.state === SessionState.TIME_IS_UP) {
+        await activeSession.finishSession();
       } else {
-        await sessionStore.finishSession();
+        await activeSession.finishSession();
       }
     } else if (control === Control.RESUME || control === Control.SKIPBREAK) {
-      await sessionStore.resumeSession();
+      await activeSession.resumeSession();
     } else if (control === Control.EXTEND) {
-      await sessionStore.extendSession();
+      await activeSession.extendSession();
     } else if (control === Control.ABANDON) {
       appStore.runAction(PointronAction.ABANDON_SESSION);
     } else {
-      $sessionStore.state = SessionState.NOT_STARTED;
+      $activeSession.state = SessionState.NOT_STARTED;
     }
   }
 </script>
@@ -42,13 +42,13 @@
     "gap-8 mo:gap-6": context === SessionUIContext.DEFAULT
   })}
 >
-  {#if $sessionStore.state === SessionState.NOT_STARTED}
+  {#if $activeSession.state === SessionState.NOT_STARTED}
     <ControlItem
       control={Control.START}
       isProminent={true}
       on:click={controlClickHandler}
     />
-  {:else if $sessionStore.type === SessionType.PREDEFINED_INTERVALS}
+  {:else if $activeSession.type === SessionType.PREDEFINED_INTERVALS}
     <ControlItem
       control={Control.ABANDON}
       on:click={controlClickHandler}
@@ -59,7 +59,7 @@
       on:click={controlClickHandler}
       {...controlItemProps}
     />
-  {:else if $sessionStore.state === SessionState.FOCUS_RUNNING}
+  {:else if $activeSession.state === SessionState.FOCUS_RUNNING}
     <ControlItem
       control={Control.BREAK}
       on:click={controlClickHandler}
@@ -70,7 +70,7 @@
       on:click={controlClickHandler}
       {...controlItemProps}
     />
-  {:else if $sessionStore.state === SessionState.FOCUS_COMPLETED}
+  {:else if $activeSession.state === SessionState.FOCUS_COMPLETED}
     <ControlItem
       control={Control.SKIPBREAK}
       on:click={controlClickHandler}
@@ -87,7 +87,7 @@
       on:click={controlClickHandler}
       {...controlItemProps}
     />
-  {:else if $sessionStore.state === SessionState.BREAK_RUNNING}
+  {:else if $activeSession.state === SessionState.BREAK_RUNNING}
     <ControlItem
       control={Control.RESUME}
       on:click={controlClickHandler}
@@ -98,7 +98,7 @@
       on:click={controlClickHandler}
       {...controlItemProps}
     />
-  {:else if $sessionStore.state === SessionState.BREAK_COMPLETED}
+  {:else if $activeSession.state === SessionState.BREAK_COMPLETED}
     <ControlItem
       control={Control.RESUME}
       isProminent={true}
@@ -110,7 +110,7 @@
       on:click={controlClickHandler}
       {...controlItemProps}
     />
-  {:else if $sessionStore.state === SessionState.TIME_IS_UP}
+  {:else if $activeSession.state === SessionState.TIME_IS_UP}
     <ControlItem
       control={Control.EXTEND}
       on:click={controlClickHandler}
@@ -122,7 +122,7 @@
       on:click={controlClickHandler}
       {...controlItemProps}
     />
-  {:else if $sessionStore.state === SessionState.TIME_IS_RUNNING_OUT}
+  {:else if $activeSession.state === SessionState.TIME_IS_RUNNING_OUT}
     <ControlItem
       control={Control.EXTEND}
       on:click={controlClickHandler}

@@ -5,7 +5,7 @@
   import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
   import ControlIcon from "./ControlIcon.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { sessionStore } from "../../session.store";
+  import { activeSession } from "../../session.store";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   import { SessionUIContext } from "$lib/client/types/pointron/session.type";
   export let control: Control;
@@ -19,8 +19,8 @@
     dispatch("click", { control });
   }
   $: isBreakReminderMode =
-    $sessionStore.timeRemainingToTakeBreak != undefined &&
-    $sessionStore.timeRemainingToTakeBreak < 0;
+    $activeSession.timeRemainingToTakeBreak != undefined &&
+    $activeSession.timeRemainingToTakeBreak < 0;
   onMount(() => {
     //todo - later - causing flickering of the screen
     // if (isProminent) {
@@ -58,10 +58,10 @@
       context === SessionUIContext.FOCUS_PLAYER && {
         "w-10 h-10 dp:w-12 dp:h-12 border": true,
         "border-cbg":
-          $sessionStore.state == SessionState.FOCUS_RUNNING &&
+          $activeSession.state == SessionState.FOCUS_RUNNING &&
           !isBreakReminderMode,
         "border-abg":
-          $sessionStore.state != SessionState.FOCUS_RUNNING ||
+          $activeSession.state != SessionState.FOCUS_RUNNING ||
           isBreakReminderMode
       },
       context !== SessionUIContext.FOCUS_PLAYER && {

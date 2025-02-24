@@ -1,6 +1,6 @@
 <script lang="ts">
   import { startTouch, moveTouch } from "$lib/client/utils/touchGesture";
-  import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
+  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
   import { SessionUIContext } from "$lib/client/types/pointron/session.type";
   import { isInEditMode } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
@@ -49,7 +49,7 @@
       <IntervalBar />
       <div class="flex flex-col w-full items-center">
         <SessionTimeText size={Size.sm} />
-        {#if $sessionStore.type != SessionType.COUNTUP && isShowTimeLeftOnMobile}
+        {#if $activeSession.type != SessionType.COUNTUP && isShowTimeLeftOnMobile}
           <div class="w-full px-6">
             <TimeleftIndicator parentBgIndex={0} />
           </div>
@@ -76,7 +76,7 @@
     {/if}
   </div>
 {:else if layout == 1}
-  {@const parentBgIndex = isInline && !$sessionStore.isQuickStartOn ? 1 : 2}
+  {@const parentBgIndex = isInline && !$activeSession.isQuickStartOn ? 1 : 2}
   <div
     class="flex w-full h-full {$appearance.skin === AppSkin.Glassy
       ? 'glassthick'
@@ -86,7 +86,7 @@
     <div
       class={cn("flex flex-col items-center justify-center flex-grow ", {
         "bg-bgs1": parentBgIndex === 1,
-        "bg-bgs2": !isInline || $sessionStore.isQuickStartOn
+        "bg-bgs2": !isInline || $activeSession.isQuickStartOn
       })}
     >
       <div class="flex flex-col justify-between w-full h-full py-6 px-10">
@@ -97,7 +97,7 @@
         />
         <div class="flex flex-col w-full items-center px-4 lg:px-8 xl:px-20">
           <SessionTimeText parentBackgroundIndex={parentBgIndex} />
-          {#if $sessionStore.type != SessionType.COUNTUP}
+          {#if $activeSession.type != SessionType.COUNTUP}
             <TimeleftIndicator {parentBgIndex} />
           {/if}
         </div>
@@ -113,7 +113,7 @@
         </div>
       </div>
     </div>
-    {#if !isInline || !$sessionStore.isQuickStartOn}
+    {#if !isInline || !$activeSession.isQuickStartOn}
       {#if isInline}
         <Divider orientation={Orientation.Vertical} />
       {/if}

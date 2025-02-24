@@ -68,6 +68,7 @@ import PlanOnboarding from "../components/subscription/PlanOnboarding.svelte";
 import type { IRecordId } from "$lib/client/types/data.type";
 import UserBilling from "../components/subscription/UserBilling.svelte";
 import UserPlanCancellation from "../components/subscription/UserPlanCancellation.svelte";
+import DocusaurusEmbed from "../components/cx/docusaurus/DocusaurusEmbed.svelte";
 
 export const globalActions: IAction[] = [
   {
@@ -119,32 +120,31 @@ export const globalActions: IAction[] = [
     type: ActionType.LINK
   },
   {
-    action: Action.GUIDES,
+    action: Action.DOCS,
     label: "Guides and docs",
     icon: "ph:book-open-text-light",
     isMeta: true,
-    // type: ActionType.LINK
     type: ActionType.FUNCTION,
     fn: async (params?: IActionFnParams) => {
       if (
         params?.context?.embed === Embed.HANDSET ||
         params?.context?.embed === Embed.TABLET
       ) {
-        appStore.runAction(Action.GUIDES + "mobile");
+        appStore.runAction(Action.DOCS + "mobile");
       } else {
-        appStore.runAction(Action.GUIDES + "hashnode");
+        appStore.runAction(Action.DOCS + "docusaurus");
       }
     }
   },
   {
-    action: Action.GUIDES + "mobile",
+    action: Action.DOCS + "mobile",
     label: "Guides and docs",
     icon: "ph:book-open-text-light",
     isMeta: true,
     type: ActionType.LINK
   },
   {
-    action: Action.GUIDES + "hashnode",
+    action: Action.DOCS + "docusaurus",
     label: "Guides and docs",
     icon: "ph:book-open-text-light",
     cmdLabel: [
@@ -152,7 +152,10 @@ export const globalActions: IAction[] = [
       { variant: "guides", label: "Guides" }
     ],
     type: ActionType.MODAL,
-    component: HashnodeEmbed,
+    component: DocusaurusEmbed,
+    componentParams: {
+      context: "docs"
+    },
     modalParams: {
       layout: {
         size: Size.xxl,
@@ -205,8 +208,61 @@ export const globalActions: IAction[] = [
     action: "faqs",
     label: "FAQs",
     icon: "ph:question-light",
-    type: ActionType.LINK
+    type: ActionType.MODAL,
+    handsetBehaviorType: ActionType.LINK,
+    component: DocusaurusEmbed,
+    componentParams: {
+      context: "faqs"
+    },
+    modalParams: {
+      layout: {
+        size: Size.xxl,
+        orientation: Orientation.Horizontal,
+        ignoreSafeArea: true
+      }
+    }
   },
+  {
+    action: Action.CHANGELOG,
+    label: "What's new",
+    icon: "ph:sparkle-light",
+    cmdLabel: [
+      { variant: "whatsNew", label: "What's new" },
+      { variant: "changelog", label: "Changelog" }
+    ],
+    type: ActionType.MODAL,
+    handsetBehaviorType: ActionType.LINK,
+    component: DocusaurusEmbed,
+    componentParams: {
+      context: "changelog"
+    },
+    modalParams: {
+      layout: {
+        size: Size.xxl,
+        orientation: Orientation.Horizontal,
+        ignoreSafeArea: true
+      }
+    }
+  },
+  {
+    action: Action.ROADMAP,
+    label: "Roadmap",
+    icon: "ph:map-trifold-light",
+    type: ActionType.MODAL,
+    handsetBehaviorType: ActionType.LINK,
+    component: DocusaurusEmbed,
+    componentParams: {
+      context: "roadmap"
+    },
+    modalParams: {
+      layout: {
+        size: Size.xxl,
+        orientation: Orientation.Horizontal,
+        ignoreSafeArea: true
+      }
+    }
+  },
+
   {
     action: "discord",
     label: "Join us on discord",
@@ -296,108 +352,6 @@ export const globalActions: IAction[] = [
       title: "Terms of service",
       layout: {
         size: Size.xl
-      }
-    }
-  },
-  {
-    action: Action.CHANGELOG + "mobile",
-    label: "What's new",
-    icon: "ph:sparkle-light",
-    isMeta: true,
-    type: ActionType.LINK
-  },
-  {
-    action: Action.CHANGELOG,
-    label: "What's new",
-    icon: "ph:sparkle-light",
-    isMeta: true,
-    type: ActionType.FUNCTION,
-    fn: async (params?: IActionFnParams) => {
-      if (
-        params?.context?.embed === Embed.HANDSET ||
-        params?.context?.embed === Embed.TABLET
-      ) {
-        appStore.runAction(Action.CHANGELOG + "mobile");
-      } else {
-        appStore.runAction(Action.CHANGELOG + "supahub");
-      }
-    }
-  },
-  {
-    action: Action.CHANGELOG + "supahub",
-    label: "What's new",
-    icon: "ph:sparkle-light",
-    cmdLabel: [
-      { variant: "whatsNew", label: "What's new" },
-      { variant: "changelog", label: "Changelog" }
-    ],
-    type: ActionType.MODAL,
-    component: SupahubEmbed,
-    modalParams: {
-      layout: {
-        size: Size.xxl,
-        orientation: Orientation.Horizontal,
-        ignoreSafeArea: true
-      },
-      componentParams: {
-        context: "Changelog"
-      }
-    }
-  },
-  {
-    action: Action.ROADMAP + "mobile",
-    label: "Roadmap",
-    icon: "ph:map-trifold-light",
-    isMeta: true,
-    type: ActionType.LINK
-  },
-  {
-    action: Action.ROADMAP + "inactive",
-    isInactive: true,
-    get label() {
-      return this.modalParams?.title;
-    },
-    icon: "map",
-    type: ActionType.MODAL,
-    contentType: ContentType.SPACE_DOC,
-    modalParams: {
-      title: "Roadmap",
-      layout: {
-        size: Size.xl
-      }
-    }
-  },
-  {
-    action: Action.ROADMAP,
-    label: "Roadmap",
-    icon: "ph:map-trifold-light",
-    isMeta: true,
-    type: ActionType.FUNCTION,
-    fn: async (params?: IActionFnParams) => {
-      if (
-        params?.context?.embed === Embed.HANDSET ||
-        params?.context?.embed === Embed.TABLET
-      ) {
-        appStore.runAction(Action.ROADMAP + "mobile");
-      } else {
-        appStore.runAction(Action.ROADMAP + "supahub");
-      }
-    }
-  },
-  {
-    action: Action.ROADMAP + "supahub",
-    label: "Roadmap",
-    icon: "ph:map-trifold-light",
-    type: ActionType.MODAL,
-    component: SupahubEmbed,
-    modalParams: {
-      layout: {
-        size: Size.xxl,
-        orientation: Orientation.Horizontal,
-        ignoreSafeArea: true
-      },
-      componentParams: {
-        context: "Roadmap"
       }
     }
   },

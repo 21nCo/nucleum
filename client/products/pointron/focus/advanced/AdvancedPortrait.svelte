@@ -19,11 +19,11 @@
   >
     <!-- TODO - count should ignore parent goal if tasks added -->
     <span class="underline-dotted">
-      {$focusItemsStore.goals.length > 0
-        ? $focusItemsStore.goals.length + " focus Items added"
+      {$focusItemsStore.tasks.length > 0
+        ? $focusItemsStore.tasks.length + " focus Items added"
         : "+ add focus items"}
     </span>
-    {#if $focusItemsStore.goals.length > 0}
+    {#if $focusItemsStore.tasks.length > 0}
       <span class="text-b4 text-fgs3"> tap to edit </span>
     {/if}
   </button>

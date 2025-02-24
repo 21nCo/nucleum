@@ -21,6 +21,8 @@ import {
   type IContextMenuItem
 } from "$lib/client/types/select.type";
 import { CollectibleStore } from "../collection/collectible.store";
+import { activeSession } from "$lib/client/products/pointron/focus/session.store";
+import { get } from "svelte/store";
 
 class TaskStore extends ResourceStore<ITask> {
   constructor() {
@@ -196,7 +198,9 @@ class TaskActions {
     label: "Focus now",
     icon: "ph:circle-light",
     callback: async () => {
-      //TODO - focus now
+      if (get(activeSession).isSessionRunning)
+        await activeSession.finishSession(true);
+      await activeSession.quickStart(this.task.id);
     }
   };
 
@@ -208,9 +212,15 @@ class TaskActions {
       type: ContextMenuType.SWITCH,
       initialValue: this.task.isPinnedForQuickFocus,
       callback: async (checked) => {
-        return this.store.modify(this.task.id, {
-          isPinnedForQuickFocus: checked
-        });
+        return this.store.modify(
+          this.task.id,
+          {
+            isPinnedForQuickFocus: checked
+          },
+          {
+            context: this.accessPoint
+          }
+        );
       }
     };
   }

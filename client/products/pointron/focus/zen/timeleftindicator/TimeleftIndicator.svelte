@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
+  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
   import { onMount } from "svelte";
   import Spoke from "./Spoke.svelte";
   export let parentBgIndex: number = 1;
@@ -12,7 +12,8 @@
   let desiredPartValues = [480, 240, 120, 60, 30, 15, 10, 5, 1];
   let desiredNumberOfParts = [3, 4, 5, 6];
   let majorStops: number[] = [];
-  $: timeRemaining = $sessionStore.plannedDuration - $sessionStore.totalElapsed;
+  $: timeRemaining =
+    $activeSession.plannedDuration - $activeSession.totalElapsed;
   //$: console.log({ timeRemaining });
   onMount(() => {
     // sessionStore.subscribe((x) => {
@@ -30,9 +31,9 @@
   });
 
   function refresh() {
-    let plannedDurationInMinutes = $sessionStore.plannedDuration / 60;
+    let plannedDurationInMinutes = $activeSession.plannedDuration / 60;
     let plannedDurationInHours = plannedDurationInMinutes / 60;
-    let plannedDurationInSeconds = $sessionStore.plannedDuration;
+    let plannedDurationInSeconds = $activeSession.plannedDuration;
     if (plannedDurationInHours >= 3) {
       for (let i = 0; i < desiredNumberOfParts.length; i++) {
         if (

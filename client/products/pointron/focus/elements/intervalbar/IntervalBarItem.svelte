@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
+  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
   import {
     BlockType,
     SessionUIContext
@@ -48,7 +48,7 @@
     style="width: {progress * 100}%"
     bind:this={activeBarRef}
   >
-    {#if context !== SessionUIContext.PIP && $sessionStore.isSessionRunning && isActiveProgress && xPosition && yPositon && xPosition > 0 && yPositon > 0}
+    {#if context !== SessionUIContext.PIP && $activeSession.isSessionRunning && isActiveProgress && xPosition && yPositon && xPosition > 0 && yPositon > 0}
       <div
         class="fixed text-b3 rounded-md flex justify-center items-center min-w-fit px-1 {context ===
         SessionUIContext.ZEN_ON_DESKTOP

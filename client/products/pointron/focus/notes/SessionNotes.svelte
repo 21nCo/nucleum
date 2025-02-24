@@ -1,12 +1,12 @@
 <script>
-  import { sessionStore } from "../session.store";
+  import { activeSession } from "../session.store";
   import FocusNotes from "./FocusNotes.svelte";
 </script>
 
 <FocusNotes
-  bind:md={$sessionStore.notes}
+  bind:md={$activeSession.notes}
   parentBgIndex={2}
   on:change={(e) => {
-    sessionStore.saveNotes();
+    activeSession.saveNotes();
   }}
 />

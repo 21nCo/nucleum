@@ -1,13 +1,17 @@
 import type {
-  IFocusGoal,
+  IFocusTask,
   FocusLog,
   ISessionInterval,
-  IFocusTask
+  IFocusTodo
 } from "$lib/client/types/pointron/session.type";
-import type { IObservableStoreSubject } from "$lib/client/types/data.type";
+import type {
+  IObservableStoreSubject,
+  IRecordId
+} from "$lib/client/types/data.type";
 import type { IMarkdown } from "$lib/client/components/markdown/md.type";
 import type { TimeScale } from "$lib/client/types/time.type";
 import type { IResource } from "$lib/client/components/flux/resourceStores/resource.type";
+import type { IMemotronItemBase } from "../../memotron/memotron.type";
 
 export enum SessionType {
   PREDEFINED_INTERVALS = "PREDEFINED_INTERVALS",
@@ -16,44 +20,45 @@ export enum SessionType {
   MANUAL_ENTRY = "MANUAL_ENTRY"
 }
 
-export type SessionBase = {
+export type ISessionBase = IMemotronItemBase & {
   type: SessionType;
-  logs: FocusLog[];
+  //TODO - check the need for below
+  // logs: FocusLog[];
   blocks: ISessionInterval[];
   elapsed: number;
   extended: number;
 };
 
-export type IPointSession = IResource &
-  SessionBase & {
-    elapsed: number;
-    extended: number;
-    start: number | string;
-    end: number | string;
-    plannedEnd: number | string;
-    id: string;
-    focusItems?: {
-      goals: IFocusGoal[];
-      tasks: IFocusTask[];
-    };
-    manualEntryId?: string;
-    notes: IMarkdown;
-  };
+export type ISession = ISessionBase & {
+  elapsed: number;
+  extended: number;
+  start: number | string;
+  end: number | string;
+  plannedEnd?: number | string;
+  id: string;
+  tasks: IFocusTask[];
+  manualEntryId?: string;
+  notes: IMarkdown;
+};
 
-export type IPointLog = IResource & {
+export type ISessionLog = IResource & {
   start: string;
   end: string;
-  sessionId: string;
+  sessionId: IRecordId;
+  /**
+   * @deprecated
+   */
   taskName?: string;
   totalFocus?: number;
   totalBreak?: number;
-  goalId?: string;
+  taskId?: IRecordId;
+  todoId?: IRecordId;
   manualEntryId?: string;
   tzOffset?: number;
   targets?: { scale: TimeScale; target: number }[];
 };
 
-export interface IPointLogStore extends IObservableStoreSubject {
+export interface ISessionLogStore extends IObservableStoreSubject {
   manualLogs: IManualSessionLogForm[];
   manualLogError?: string;
 }

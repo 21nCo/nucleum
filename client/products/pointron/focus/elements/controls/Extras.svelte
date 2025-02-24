@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
+  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { SessionType } from "$lib/client/products/pointron/logs/log.type";
   import Button from "$lib/client/elements/button/Button.svelte";
@@ -56,7 +56,7 @@
       appStore.runAction(PointronAction.THINK_MODE);
     }}
   />
-  {#if $sessionStore.type != SessionType.PREDEFINED_INTERVALS}
+  {#if $activeSession.type != SessionType.PREDEFINED_INTERVALS}
     <Button
       icon="cross-circled"
       tooltip="Abandon focus session"

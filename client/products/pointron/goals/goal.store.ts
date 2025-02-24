@@ -373,6 +373,9 @@ class QuickFocusItemStore extends ObservableStore<IQuickFocusItemStore> {
   }
 }
 
+/**
+ * @deprecated
+ */
 export const quickFocusItemStore = new QuickFocusItemStore();
 
 export const currentGoal = initCurrentGoalStore(seedGoal);

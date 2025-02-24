@@ -27,6 +27,7 @@ export enum Action {
   COVER_PICKER = "COVER_PICKER",
   SYNC_SETTINGS = "sync",
   LOCAL_AI_SETTINGS = "ai",
+  DOCS = "docs",
   GUIDES = "guides",
   GO_BACK = "GO_BACK",
   GO_FORWARD = "GO_FORWARD",

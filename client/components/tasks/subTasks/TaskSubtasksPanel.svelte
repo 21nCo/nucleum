@@ -42,7 +42,7 @@
 
   async function onAddSubTask(e: any) {
     const result = await taskStore.addSubTaskWithContext(
-      [...($task.parent || []), $task.id],
+      [...($task.parent || []).map((p) => p.id), $task.id],
       {
         label: e.detail.label
       },

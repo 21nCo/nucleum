@@ -1,18 +1,12 @@
 import {
   attachTimeToDate,
   formatTime,
-  isSameDay,
-  toLocalISOString
+  isSameDay
 } from "$lib/client/utils/time.utils";
 import { currentTime } from "$lib/client/stores/app.store";
 import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-import { get, writable } from "svelte/store";
+import { get } from "svelte/store";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { CacheStrategy, StoreDataType } from "$lib/client/types/data.type";
-import { generateSessionId, generateUID } from "$lib/client/utils/utils";
-import { logger } from "$lib/client/components/debug/logger.client";
-import { prefixTable } from "$lib/shared/utils/text.utils";
-import { pointronPreferences } from "../pointron.store";
 import { dataManager } from "$lib/client/persistence/dataManager";
 import { appEvents, toasts } from "$lib/client/stores/notification.store";
 import {
@@ -21,9 +15,9 @@ import {
   type LogThumbnail,
   type ILogsPaneStore,
   type IManualSessionLogForm,
-  type IPointLog,
-  type IPointLogStore,
-  type IPointSession
+  type ISessionLog,
+  type ISessionLogStore,
+  type ISession
 } from "./log.type";
 import { resolveSessionTimeSplit } from "$lib/client/products/pointron/pointron.utils";
 import { replaceParams } from "$lib/shared/utils/surreal.utils";
@@ -31,30 +25,31 @@ import { NodeType } from "$lib/client/products/memotron/node/node.type";
 import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
 import { ObservableStore } from "$lib/client/stores/client.store";
 import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
-import { pointSessionStore } from "../focus/session.store";
+import { sessionStore } from "../focus/session.store";
 import { BlockType } from "$lib/client/types/pointron/session.type";
+import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+import type { OmitForCaptureWithId } from "$lib/client/components/flux/resourceStores/resource.type";
+import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 
-class PointLogStore extends ResourceStore<IPointLog> {
+class SessionLogStore extends ResourceStore<ISessionLog> {
   constructor() {
-    super(Resource.PointLog, {
-      cacheStrategy: CacheStrategy.NO_CACHE
-    });
+    super(Resource.sessionLog);
   }
 }
 
-export const pointLogStore = new PointLogStore();
+export const sessionLogStore = new SessionLogStore();
 
-class ManualLogStore extends ObservableStore<IPointLogStore> {
+class ManualLogStore extends ObservableStore<ISessionLogStore> {
   constructor() {
-    super(Resource.PointLog, StoreDataType.NA, {
-      mutatingResources: [Resource.PointSession, Resource.PointLog]
-    });
+    super("manualLogStore");
   }
+
   reset() {
     this.set({
       manualLogs: []
     });
   }
+
   generateNewLog(goalId: string | undefined = undefined) {
     const userGlobalPreferences = get(userPreferences);
     let newLog: IManualSessionLogForm = {
@@ -66,13 +61,13 @@ class ManualLogStore extends ObservableStore<IPointLogStore> {
       startTime: formatTime(userGlobalPreferences, get(currentTime), {
         format: "24"
       })!,
-      id: generateUID(),
+      id: generateSimpleRandomId(),
       goalId: goalId ?? "",
       duration: 0,
       notes: {
         blocks: [
           {
-            id: generateUID(),
+            id: generateSimpleRandomId(),
             contentType: NodeType.SIMPLE_TEXT,
             body: ""
           }
@@ -81,84 +76,86 @@ class ManualLogStore extends ObservableStore<IPointLogStore> {
     };
     return newLog;
   }
-  addNewManualLog(goalId?: string) {
+
+  addNew(goalId?: string) {
     this.update((n) => {
       let newLog = this.generateNewLog(goalId);
       n.manualLogs.push(newLog);
       return n;
     });
   }
-  removeManualLog(logId: string) {
+
+  remove(logId: string) {
     this.update((n) => {
       n.manualLogs = n.manualLogs.filter((x) => x.id != logId);
       return n;
     });
   }
-  updateManualLog(log: IManualSessionLogForm) {
+
+  updateLog(log: IManualSessionLogForm) {
     this.update((n) => {
       let index = n.manualLogs.findIndex((x) => x.id == log.id);
       n.manualLogs[index] = log;
       return n;
     });
   }
-  async saveManualLogs() {
+
+  async save() {
     let n = this.get();
-    let sessionEntries: Partial<IPointSession>[] = [];
-    let logEntries: Partial<IPointLog>[] = [];
+    let sessionEntries: OmitForCaptureWithId<ISession>[] = [];
+    let logEntries: OmitForCaptureWithId<ISessionLog>[] = [];
     n.manualLogs.forEach((entry) => {
       const duration = entry.duration;
       let start = attachTimeToDate(entry.startDate, entry.startTime);
       let end = attachTimeToDate(entry.endDate, entry.endTime);
-      const id = generateSessionId(start.getTime());
-      const log: Partial<IPointLog> = {
+      const sessionId = generateResourceId(Resource.session);
+      const log: OmitForCaptureWithId<ISessionLog> = {
         start: start.toISOString(),
         end: end.toISOString(),
-        id: prefixTable(id, Resource.PointLog),
-        sessionId: prefixTable(id, Resource.PointSession),
+        id: generateResourceId(Resource.sessionLog),
+        sessionId: sessionId,
         totalFocus: duration,
         totalBreak: 0,
-        goalId: entry.goalId,
-        manualEntryId: entry.id,
-        tzOffset: get(userPreferences).timeZoneOffset,
-        targets: get(pointronPreferences).horizonTargets
+        taskId: entry.goalId,
+        manualEntryId: entry.id
+        // tzOffset: get(userPreferences).timeZoneOffset,
+        // targets: get(pointronPreferences).horizonTargets
       };
-      const session: Partial<IPointSession> = {
+
+      const session: OmitForCaptureWithId<ISession> = {
         start: start.toISOString(),
         end: end.toISOString(),
         elapsed: duration,
-        id: prefixTable(id, Resource.PointSession),
+        id: sessionId,
         manualEntryId: entry.id,
-        logs: [{ ...log, start: start.getTime(), end: end.getTime() }],
+        // logs: [{ ...log, start: start.getTime(), end: end.getTime() }],
         blocks: [
           {
             start: start.getTime(),
             type: BlockType.FOCUS,
             duration: duration,
             progress: 1,
-            id
+            id: generateSimpleRandomId()
           },
           {
-            id: generateUID(),
+            id: generateSimpleRandomId(),
             start: end.getTime(),
             type: BlockType.NONE,
             progress: 0,
             duration: 0
           }
         ],
-        focusItems: {
-          goals: [
-            {
-              id: entry.goalId,
-              blocks: [
-                {
-                  start: start.getTime(),
-                  end: end.getTime()
-                }
-              ]
-            }
-          ],
-          tasks: []
-        },
+        tasks: [
+          {
+            id: entry.goalId,
+            blocks: [
+              {
+                start: start.getTime(),
+                end: end.getTime()
+              }
+            ]
+          }
+        ],
         notes: entry.notes ?? {
           blocks: []
         },
@@ -168,18 +165,8 @@ class ManualLogStore extends ObservableStore<IPointLogStore> {
       sessionEntries.push(session);
       logEntries.push(log);
     });
-    pointLogStore.create(logEntries, {
-      queueParams: {
-        isUseQueueFirstApproach: true,
-        mutationId: `${this.id}-saveManualLogs`
-      }
-    });
-    pointSessionStore.create(sessionEntries, {
-      queueParams: {
-        isUseQueueFirstApproach: true,
-        mutationId: `${this.id}-saveManualSessionLogs`
-      }
-    });
+    sessionLogStore.create(logEntries);
+    sessionStore.create(sessionEntries);
     this.reset();
     toasts.success("Manual log added successfully");
     appEvents.publish(PointronEvent.REFRESH_QUICK_FOCUS, true);

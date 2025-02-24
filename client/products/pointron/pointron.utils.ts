@@ -9,9 +9,9 @@ import {
   BlockType
 } from "$lib/client/types/pointron/session.type";
 import type { ITag } from "$lib/client/types/pointron/tag.type";
-import { sessionStore } from "./focus/session.store";
+import { activeSession } from "./focus/session.store";
 import { generateUID } from "$lib/client/utils/utils";
-import { type IPointSession, SessionType } from "./logs/log.type";
+import { type ISession, SessionType } from "./logs/log.type";
 
 export function getTotalsFromComposition(
   params: {
@@ -29,12 +29,12 @@ export function getTotalsFromComposition(
   let duration = intervals.reduce((sum, item) => sum + (item.duration ?? 0), 0);
   let focus = intervals.reduce(
     (sum, item) =>
-      sum + (item.type === BlockType.FOCUS ? (item.duration ?? 0) : 0),
+      sum + (item.type === BlockType.FOCUS ? item.duration ?? 0 : 0),
     0
   );
   let brek = intervals.reduce(
     (sum, item) =>
-      sum + (item.type === BlockType.BREAK ? (item.duration ?? 0) : 0),
+      sum + (item.type === BlockType.BREAK ? item.duration ?? 0 : 0),
     0
   );
   return { duration, focus, brek };
@@ -131,7 +131,7 @@ function generateIntervals(composition: SessionComposition) {
       numberOfFocusRounds = 1;
     }
   } else if (composition.type === SessionCompositionType.END_TIME_FIXED) {
-    const endTime = get(sessionStore).end;
+    const endTime = get(activeSession).end;
     if (!endTime) return [];
     if (
       composition.breakType === BreakCompositionType.PREDEFINED &&
@@ -200,7 +200,7 @@ export function resolveSessionSplitFromIntervals(
   return { focus, brek };
 }
 
-export function resolveSessionTimeSplit(x: IPointSession) {
+export function resolveSessionTimeSplit(x: ISession) {
   let sessionTime = { focus: 0, brek: 0 };
   if (
     (x.type === SessionType.COUNTUP || x.type === SessionType.MANUAL_ENTRY) &&
@@ -213,7 +213,7 @@ export function resolveSessionTimeSplit(x: IPointSession) {
   return sessionTime;
 }
 
-export function resolveSessionTimeLegacy(session: IPointSession) {
+export function resolveSessionTimeLegacy(session: ISession) {
   if (
     (session.type === SessionType.COUNTUP && session.blocks.length === 1) ||
     session.type === SessionType.MANUAL_ENTRY

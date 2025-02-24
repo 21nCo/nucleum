@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
+  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
   import IntervalBarItem from "$lib/client/products/pointron/focus/elements/intervalbar/IntervalBarItem.svelte";
   import { SessionType } from "$lib/client/products/pointron/logs/log.type";
   import {
@@ -15,8 +15,8 @@
   let preceedingHiddenBars: ISessionInterval[] = [];
   let succeedingHiddenBars: ISessionInterval[] = [];
   function resolveCountupBarDuration(bar: ISessionInterval) {
-    const barIndex = $sessionStore.intervals.findIndex((x) => x.id == bar.id);
-    const endTime = $sessionStore.intervals[barIndex + 1]?.start;
+    const barIndex = $activeSession.intervals.findIndex((x) => x.id == bar.id);
+    const endTime = $activeSession.intervals[barIndex + 1]?.start;
     if (bar.start && barIndex > -1 && endTime) {
       return (endTime - bar.start) / 1000;
     } else if (bar.start) {
@@ -27,8 +27,8 @@
   }
   $: visibleLimit =
     $view.isPortrait || context === SessionUIContext.THIN_ON_DESKTOP ? 4 : 10;
-  $: isHideSomeBars = $sessionStore.intervals.length > visibleLimit;
-  $: visibleBars = resolveVisibleBars($sessionStore.intervals);
+  $: isHideSomeBars = $activeSession.intervals.length > visibleLimit;
+  $: visibleBars = resolveVisibleBars($activeSession.intervals);
   function resolveVisibleBars(blocks: ISessionInterval[]) {
     // console.log({
     //   context,
@@ -36,7 +36,7 @@
     //   isHideSomeBars,
     //   type: $sessionStore.type
     // });
-    if (!isHideSomeBars || $sessionStore.type === SessionType.COUNTUP) {
+    if (!isHideSomeBars || $activeSession.type === SessionType.COUNTUP) {
       preceedingHiddenBars = [];
       succeedingHiddenBars = [];
       return blocks;
@@ -46,7 +46,7 @@
     );
     if (
       barInProgressIndex === -1 &&
-      $sessionStore.state === SessionState.NOT_STARTED
+      $activeSession.state === SessionState.NOT_STARTED
     ) {
       barInProgressIndex = Math.floor(blocks.length / 2);
     }
@@ -82,7 +82,7 @@
       return blocks.slice(0, visibleLimit);
     } else if (
       barInProgressIndex >
-      $sessionStore.intervals.length - visibleLimit
+      $activeSession.intervals.length - visibleLimit
     ) {
       preceedingHiddenBars = blocks.slice(0, barInProgressIndex - visibleLimit);
       succeedingHiddenBars = [];
@@ -91,14 +91,14 @@
     }
   }
   function resolveWidth(bar: ISessionInterval) {
-    if ($sessionStore.type === SessionType.COUNTUP) {
+    if ($activeSession.type === SessionType.COUNTUP) {
       return (
-        ($sessionStore.totalElapsed
-          ? (resolveCountupBarDuration(bar) ?? 0) / $sessionStore.totalElapsed
+        ($activeSession.totalElapsed
+          ? (resolveCountupBarDuration(bar) ?? 0) / $activeSession.totalElapsed
           : 100) * 100
       );
     } else if (!isHideSomeBars)
-      return ((bar?.duration ?? 0) / $sessionStore.plannedDuration) * 100;
+      return ((bar?.duration ?? 0) / $activeSession.plannedDuration) * 100;
     return (
       ((bar.duration ?? 0) /
         visibleBars.reduce((acc, cur) => acc + cur.duration, 0)) *

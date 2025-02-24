@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import {
-    sessionStore,
+    activeSession,
     todayFocusStore
   } from "$lib/client/products/pointron/focus/session.store";
   import LeftNavExpandable from "$lib/client/layout/leftPanel/LeftNavExpandable.svelte";
@@ -10,7 +10,7 @@
   onMount(() => {
     bootup();
     return () => {
-      sessionStore.clearIntervals();
+      activeSession.clearIntervals();
     };
   });
 

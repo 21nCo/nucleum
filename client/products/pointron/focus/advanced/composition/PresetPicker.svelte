@@ -1,6 +1,6 @@
 <script lang="ts">
   import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
-  import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
+  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import PresetItem from "../presets/PresetItem.svelte";
@@ -9,14 +9,14 @@
   import ScrollView from "$lib/client/layout/scrollView/ScrollView.svelte";
   export let isExpandedVariant: boolean = false;
   let isInEditMode: boolean = false;
-  let selectedPresetIndex: number = $sessionStore.composition
-    ? $pointronPreferences.presets.indexOf($sessionStore.composition)
+  let selectedPresetIndex: number = $activeSession.composition
+    ? $pointronPreferences.presets.indexOf($activeSession.composition)
     : 0;
   export let parentBackgroundIndex: number = 1;
 
   function onPresetSelection(event: any) {
     const preset = event.detail.preset;
-    sessionStore.onPresetSelection(preset);
+    activeSession.onPresetSelection(preset);
     selectedPresetIndex = $pointronPreferences.presets.indexOf(preset);
   }
 </script>

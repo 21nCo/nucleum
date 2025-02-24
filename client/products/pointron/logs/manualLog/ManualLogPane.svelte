@@ -10,7 +10,7 @@
     postMessageToParent(EmbedMessage.SHEET_MOUNTED);
     manualLogStore.reset();
     if ($manualLogStore.manualLogs.length === 0) {
-      manualLogStore.addNewManualLog();
+      manualLogStore.addNew();
     }
   });
 </script>
@@ -27,7 +27,7 @@
     <Button
       label="Add another entry"
       icon="plus"
-      on:click={() => manualLogStore.addNewManualLog()}
+      on:click={() => manualLogStore.addNew()}
     />
   </div>
 </div>

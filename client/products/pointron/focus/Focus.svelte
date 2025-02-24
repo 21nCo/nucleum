@@ -8,7 +8,7 @@
   import QuickStart from "./quickstart/QuickStart.svelte";
   import Advanced from "./advanced/Advanced.svelte";
   import view from "$lib/client/stores/view.store";
-  import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
+  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
   import Zen from "./zen/Zen.svelte";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
@@ -22,12 +22,7 @@
     type IButtonParams
   } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";
-  import { dataManager } from "$lib/client/persistence/dataManager";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import PageLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import { manualLogStore } from "../logs/log.store";
   import { appStore } from "$lib/client/stores/app.store";
-  import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   import QuickStartLayoutToggle from "./quickstart/actions/QuickStartLayoutToggle.svelte";
   let mode: number = 0;
   let isInlineEnabled: boolean = true;
@@ -47,27 +42,8 @@
     style: ButtonStyle.DEFAULT,
     shortcut: PointronAction.START_FOCUS_SESSION
   };
-  /**
-   * Refresh the page data
-   *
-   * Note: Setting a delay to ensure that dataManager loads session, focus items data before performing check and triggering loadEmptyState.
-   */
+
   onMount(async () => {
-    await refresh();
-    // setTimeout(() => {
-    //   if ($sessionStore.isSessionRunning) {
-    //     if ($sessionStore.isQuickStartOn) {
-    //       mode = 0;
-    //     } else {
-    //       mode = 1;
-    //     }
-    //   } else if (
-    //     !$sessionStore.isSessionRunning &&
-    //     $sessionStore.state != SessionState.FINISHED
-    //   ) {
-    //     sessionStore.loadEmptyState();
-    //   }
-    // }, 1000);
     let queryParamMode = $page.url.searchParams.get("mode");
     if (queryParamMode) {
       mode = +queryParamMode;
@@ -77,22 +53,14 @@
     appStore.runAction(PointronAction.MANUAL_FOCUS_ENTRY_POP);
   }
   async function onStartSessionClicked() {
-    await sessionStore.startSession();
-  }
-  async function refresh() {
-    await dataManager.refreshPage([
-      Resource.quickFocusItems,
-      Resource.PointTag
-      // Resource.pointSessionFocusItemsv2,
-      // Resource.pointSessionSnapshotv2
-    ]);
+    await activeSession.startSession();
   }
 </script>
 
 {#if $view.isPortrait}
   <div class="relative flex w-full h-full">
     <div class="flex flex-col h-full w-full">
-      {#if $sessionStore.isSessionRunning && !$sessionStore.isQuickStartOn && isInlineEnabled}
+      {#if $activeSession.isSessionRunning && !$activeSession.isQuickStartOn && isInlineEnabled}
         <Zen isInline={true} />
       {:else}
         <div
@@ -107,7 +75,7 @@
               value={mode === 0 ? "Quick Focus" : "Advanced"}
               style={PanelSwitcherStyle.BAR}
               barStyle={BarStyle.DOT}
-              isDisableEnabled={$sessionStore.isSessionRunning}
+              isDisableEnabled={$activeSession.isSessionRunning}
               on:switch={(e) => {
                 mode = e.detail === "Quick Focus" ? 0 : 1;
               }}
@@ -119,11 +87,11 @@
           </div>
           {#if mode === 0}
             <QuickStart />
-            <FloatingButton params={addManualLogButton} />
+            <FloatingButton params={[addManualLogButton]} />
             <!-- <ManualFocusLog /> -->
           {:else}
             <AdvancedPortrait />
-            <FloatingButton params={startSessionButton} />
+            <FloatingButton params={[startSessionButton]} />
           {/if}
         </div>
       {/if}
@@ -134,7 +102,7 @@
   </div>
 {:else}
   <div class="flex w-full h-full">
-    {#if $sessionStore.isSessionRunning && !$sessionStore.isQuickStartOn}
+    {#if $activeSession.isSessionRunning && !$activeSession.isQuickStartOn}
       <Zen isInline={true} />
     {:else}
       <Panel
@@ -151,15 +119,14 @@
           </span>
         </slot:fragment>
         <slot name="right" slot="right">
-          {#if $sessionStore.isSessionRunning}
+          {#if $activeSession.isSessionRunning}
             <Zen isInline={true} />
           {:else}
             <Advanced />
-            <FloatingButton params={startSessionButton} />
+            <FloatingButton params={[startSessionButton]} />
           {/if}
         </slot>
       </Panel>
     {/if}
   </div>
 {/if}
-<PageLayer on:appear={refresh} />

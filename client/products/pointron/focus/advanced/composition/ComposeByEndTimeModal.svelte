@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
+  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
   import { SessionCompositionType } from "$lib/client/types/pointron/sessionComposition.type";
   import TimeSelector from "$lib/client/components/TimeSelector.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
@@ -20,14 +20,14 @@
     return endTime;
   }
   function onChange() {
-    $sessionStore.end = resolveEndTime();
-    $sessionStore.composition.type = SessionCompositionType.END_TIME_FIXED;
-    sessionStore.onComposeComplete();
+    $activeSession.end = resolveEndTime();
+    $activeSession.composition.type = SessionCompositionType.END_TIME_FIXED;
+    activeSession.onComposeComplete();
   }
 </script>
 
 <div class="flex flex-col h-full w-full gap-12">
-  <ComposeTotalsText composition={$sessionStore.composition} />
+  <ComposeTotalsText composition={$activeSession.composition} />
   <div class="flex flex-col gap-6 w-full">
     <TimeSelector
       label="Session end time"
@@ -39,7 +39,7 @@
     />
     <ComposeBreak
       on:change={onChange}
-      bind:composition={$sessionStore.composition}
+      bind:composition={$activeSession.composition}
     />
   </div>
 </div>

@@ -23,6 +23,8 @@
   import { isPrimaryActionDisabled } from "$lib/client/components/modal/modal.store";
 
   import GoalSearchThumbnail from "../../goals/thumbnails/GoalSearchThumbnail.svelte";
+  import { SearchStore } from "$lib/client/components/record/record.store";
+  import TaskSearchResultItem from "$lib/client/components/tasks/TaskSearchResultItem.svelte";
   export let item: IManualSessionLogForm;
 
   let previousStartDate: Date = item.startDate;
@@ -36,6 +38,7 @@
   let selectedQuickAddItem: number = 0;
   let error: string = "";
   let defaultTime = Date.now();
+  const searchStore = new SearchStore(Resource.task);
 
   if (item.goalId !== "") selectedGoal = { label: $swipeLabel };
 
@@ -190,12 +193,21 @@
       return;
     }
     if (selectedGoal === undefined) {
-      error = "Please select a goal";
+      error = "Please select a task";
       $isPrimaryActionDisabled = true;
       return;
     }
     error = "";
     $isPrimaryActionDisabled = false;
+  }
+
+  async function searchCallback(searchQuery: string) {
+    const result = await searchStore.select({
+      searchQuery,
+      isIncludeSubItems: true
+    });
+    console.log(result);
+    return result;
   }
 </script>
 
@@ -211,7 +223,7 @@
         style={ButtonStyle.OUTLINED}
         isPreventMinWidth={true}
         label="Remove"
-        on:click={() => manualLogStore.removeManualLog(item.id)}
+        on:click={() => manualLogStore.remove(item.id)}
       />
     </div>
   {/if}
@@ -235,10 +247,10 @@
       on:select={onGoalSelect}
       bind:value={label}
       bind:this={inputRef}
-      searchResultComponent={GoalSearchThumbnail}
-      searchStoreId={Resource.PointGoal}
+      searchResultComponent={TaskSearchResultItem}
+      {searchCallback}
       style={InputStyle.BORDERED}
-      placeholder="Start typing to select goal"
+      placeholder="Start typing to select task"
     />
   {/if}
 

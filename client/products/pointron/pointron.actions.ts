@@ -51,8 +51,8 @@ import AnalyticsV2 from "$lib/client/products/pointron/analytics/AnalyticsV2.sve
 import { Orientation } from "$lib/client/types/direction.enum";
 import PresetSettings from "$lib/client/products/pointron/focus/advanced/presets/PresetSettings.svelte";
 import {
-  pointSessionStore,
-  sessionStore
+  sessionStore,
+  activeSession
 } from "$lib/client/products/pointron/focus/session.store";
 import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
 import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
@@ -65,7 +65,10 @@ import { Action } from "$lib/client/types/action.enum";
 import FocusPlayerCommandModeWidget from "./focus/player/FocusPlayerCommandModeWidget.svelte";
 import Goals from "./goals/Goals.svelte";
 import PointronLibrary from "./library/PointronLibrary.svelte";
-const isSessionRunningPreCondition = () => get(sessionStore).isSessionRunning;
+import { SearchStore } from "$lib/client/components/record/record.store";
+import { taskStore } from "$lib/client/components/tasks/task.store";
+import TaskSearchResultItem from "$lib/client/components/tasks/TaskSearchResultItem.svelte";
+const isSessionRunningPreCondition = () => get(activeSession).isSessionRunning;
 
 export const pointronActions: IAction[] = [
   {
@@ -108,7 +111,7 @@ export const pointronActions: IAction[] = [
         orientation: Orientation.Vertical,
         primaryAction: {
           label: "Done",
-          callback: () => sessionStore.close()
+          callback: () => activeSession.close()
         }
       }
     }
@@ -123,7 +126,7 @@ export const pointronActions: IAction[] = [
         size: Size.xs,
         primaryAction: {
           label: "Save Preset",
-          callback: () => sessionStore.saveCurrentCompositionAsPreset()
+          callback: () => activeSession.saveCurrentCompositionAsPreset()
         },
         secondaryAction: {
           label: "Cancel"
@@ -190,7 +193,7 @@ export const pointronActions: IAction[] = [
         primaryAction: {
           label: "Save entries",
           style: ButtonStyle.DEFAULT,
-          callback: () => manualLogStore.saveManualLogs()
+          callback: () => manualLogStore.save()
         },
         secondaryAction: {
           label: "Discard",
@@ -231,7 +234,7 @@ export const pointronActions: IAction[] = [
         },
         primaryAction: {
           label: "Take break",
-          callback: () => sessionStore.startBreak()
+          callback: () => activeSession.startBreak()
         }
       }
     }
@@ -534,12 +537,29 @@ export const pointronActions: IAction[] = [
     label: "Pin a goal to quick focus",
     type: ActionType.SEARCH_CMD,
     searchActionParams: {
-      searchStoreId: Resource.PointGoal,
-      placeholder: "Select a goal to pin",
+      placeholder: "Select a task to pin",
+      searchResultComponent: TaskSearchResultItem,
+      searchCallback: async (searchQuery: string) => {
+        const result = await new SearchStore(Resource.task).select({
+          searchQuery,
+          filters: {
+            isPinnedForQuickFocus: false
+          }
+        });
+        return result;
+      },
       callback: async (id: string, label?: string) => {
-        const result = await quickFocusItemStore.pinGoal(id);
-        if (result === -1) toasts.error("Goal already pinned");
-        else toasts.success(`Goal **${label}** pinned to quick focus`);
+        const result = await taskStore.modify(
+          id,
+          {
+            isPinnedForQuickFocus: true
+          },
+          {
+            context: PointronAction.PIN_TO_QUICK_FOCUS
+          }
+        );
+        if (result) toasts.success(`Task **${label}** pinned to quick focus`);
+        else toasts.error("Failed to pin task to quick focus");
       }
     }
   },
@@ -548,11 +568,18 @@ export const pointronActions: IAction[] = [
     label: "Quick focus",
     type: ActionType.SEARCH_CMD,
     searchActionParams: {
-      searchStoreId: Resource.PointGoal,
-      placeholder: "Select a goal to focus",
+      searchResultComponent: TaskSearchResultItem,
+      searchCallback: async (searchQuery: string) => {
+        const result = await new SearchStore(Resource.task).select({
+          searchQuery,
+          isIncludeSubItems: true
+        });
+        return result;
+      },
+      placeholder: "Select a task to focus",
       callback: (id: string, label?: string) => {
         console.log("search action selected id:", { id });
-        sessionStore.quickStart(id);
+        activeSession.quickStart(id);
       }
     }
   },
@@ -561,14 +588,14 @@ export const pointronActions: IAction[] = [
     label: "Start a new focus session",
     type: ActionType.FUNCTION,
     fn: async () => {
-      sessionStore.startSession();
+      activeSession.startSession();
     }
   },
   {
     action: PointronAction.FINISH_FOCUS_SESSION,
     label: "Finish the current session",
     fn: async (params?: IActionFnParams) => {
-      sessionStore.finishSession(params?.componentParams);
+      activeSession.finishSession(params?.componentParams);
     },
     type: ActionType.CONFIRMATION,
     preCondition: isSessionRunningPreCondition,
@@ -579,7 +606,7 @@ export const pointronActions: IAction[] = [
         label: "Finish",
         variant: ButtonVariant.PRIMARY,
         callback: () => {
-          return Promise.resolve(sessionStore.finishSession());
+          return Promise.resolve(activeSession.finishSession());
         }
       }
     }
@@ -587,7 +614,7 @@ export const pointronActions: IAction[] = [
   {
     action: PointronAction.ABANDON_SESSION,
     label: "Abandon the current session",
-    fn: sessionStore.close,
+    fn: activeSession.close,
     type: ActionType.CONFIRMATION,
     preCondition: isSessionRunningPreCondition,
     confirmation: {
@@ -597,7 +624,7 @@ export const pointronActions: IAction[] = [
         label: "Abandon",
         variant: ButtonVariant.DANGER,
         callback: () => {
-          return Promise.resolve(sessionStore.close());
+          return Promise.resolve(activeSession.close());
         }
       }
     }
@@ -644,7 +671,7 @@ export const pointronActions: IAction[] = [
           icon: "trash",
           variant: ButtonVariant.DANGER,
           callback: async () => {
-            const response = await pointSessionStore.delete(
+            const response = await sessionStore.delete(
               params?.componentParams?.id
             );
             if (response) {

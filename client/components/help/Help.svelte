@@ -11,6 +11,7 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { isValidString } from "$lib/shared/utils/text.utils";
   import { formatDate } from "$lib/client/utils/time.utils";
+  import { Size } from "$lib/client/types/size.enum";
   let pageAction: IAction | null = null;
   $: config = $appStore?.appData?.help;
   async function runAction(slug: string) {
@@ -19,6 +20,10 @@
       isReturnIfComponent: true
     });
     if (!result) return;
+    if (result.modalParams?.layout?.size === Size.xxl) {
+      appStore.runAction(slug);
+      return;
+    }
     pageAction = result;
   }
 </script>
@@ -35,7 +40,8 @@
         />
         <ComponentResolver
           action={pageAction}
-          params={pageAction.modalParams?.componentParams}
+          params={pageAction?.componentParams ??
+            pageAction.modalParams?.componentParams}
         />
       </div>
     {:else}

@@ -248,6 +248,9 @@ export interface IMutationParams {
   cacheStrategy?: CacheStrategy;
 }
 
+/**
+ * @deprecated - used with v1 flux - dataManager
+ */
 export interface IMutationQueueParams {
   /**
    * If true, the mutation will be queued and will be persisted to the server at an interval usually 1-2 seconds - to combine multiple mutations into one.

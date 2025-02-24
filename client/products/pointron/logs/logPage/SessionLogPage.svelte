@@ -21,20 +21,20 @@
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import { formatTime, isSameDateTime } from "$lib/client/utils/time.utils";
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
-  import { pointSessionStore } from "../../focus/session.store";
-  import type { IFocusTask } from "$lib/client/types/pointron/session.type";
+  import { sessionStore } from "../../focus/session.store";
+  import type { IFocusTodo } from "$lib/client/types/pointron/session.type";
   export let id: string;
   export let log: any = undefined;
   let selectedTab: "Summary" | "Notes" = "Summary";
   let isLoadingState: boolean = false;
   let focusItems: any[] = [];
-  let tasksList: IFocusTask[] = [];
+  let tasksList: IFocusTodo[] = [];
   onMount(async () => {
     await refresh();
   });
   async function refresh() {
     isLoadingState = true;
-    const response = await pointSessionStore.fetch(id);
+    const response = await sessionStore.select(id);
     if (response && response.id) {
       log = response;
       if (
@@ -146,7 +146,7 @@
               {#if focusItems.length}
                 {#each focusItems as item, index (item)}
                   <FocusItem
-                    {item}
+                    focusItem={item}
                     {tasksList}
                     intervals={log.blocks}
                     contxt="history"

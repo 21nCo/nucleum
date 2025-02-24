@@ -32,7 +32,9 @@ export interface ITaskBase extends IMemotronItemBase {
 
 export interface ITask extends ITaskBase {}
 
-export interface ITaskThumb extends ITaskBase {}
+export type ITaskThumb = ITaskBase & {
+  parent?: ITaskThumb[];
+};
 
 export type IActiveTask = IActiveResource &
   ITask & {

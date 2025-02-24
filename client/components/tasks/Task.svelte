@@ -19,6 +19,7 @@
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { appStore } from "$lib/client/stores/app.store";
+  import TaskHistory from "./history/TaskHistory.svelte";
 
   export let id: string;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -135,6 +136,8 @@
             <TaskInfoPanel {task} {isConstrainedWidth} />
           {:else if selectedPanel === "subtasks"}
             <TaskSubtasksPanel {task} />
+          {:else if selectedPanel === "history"}
+            <TaskHistory {task} />
           {/if}
         </div>
       </main>

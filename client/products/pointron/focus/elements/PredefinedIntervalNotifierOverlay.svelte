@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import modalEvent from "$lib/client/components/modal/modal.store";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-  import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
+  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import { tweened } from "svelte/motion";
@@ -25,26 +25,26 @@
 
 <div
   class={cn("flex w-full h-full items-center justify-center p-4 text-abg", {
-    "bg-ass1": $sessionStore.state === SessionState.BREAK_RUNNING,
-    "bg-aps1": $sessionStore.state === SessionState.FOCUS_RUNNING
+    "bg-ass1": $activeSession.state === SessionState.BREAK_RUNNING,
+    "bg-aps1": $activeSession.state === SessionState.FOCUS_RUNNING
   })}
 >
   <!-- TODO - Add illustrations -->
-  {#if $sessionStore.state === SessionState.BREAK_RUNNING}
+  {#if $activeSession.state === SessionState.BREAK_RUNNING}
     BREAK STARTED
   {:else}
     FOCUS STARTED
   {/if}
   <div
     class={cn("absolute bottom-0 left-0 w-full h-2", {
-      "bg-ass1": $sessionStore.state === SessionState.BREAK_RUNNING,
-      "bg-aps1": $sessionStore.state === SessionState.FOCUS_RUNNING
+      "bg-ass1": $activeSession.state === SessionState.BREAK_RUNNING,
+      "bg-aps1": $activeSession.state === SessionState.FOCUS_RUNNING
     })}
   >
     <div
       class={cn("h-full transition-all duration-100 ease-linear", {
-        "bg-ass2": $sessionStore.state === SessionState.BREAK_RUNNING,
-        "bg-aps2": $sessionStore.state === SessionState.FOCUS_RUNNING
+        "bg-ass2": $activeSession.state === SessionState.BREAK_RUNNING,
+        "bg-aps2": $activeSession.state === SessionState.FOCUS_RUNNING
       })}
       style="width: {$progress}%;"
     ></div>

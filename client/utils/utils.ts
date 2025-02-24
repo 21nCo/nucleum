@@ -156,7 +156,12 @@ export function getJustDate(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
-export function generateSessionId(timestamp: number) {
+/**
+ * @deprecated - use generateResourceId instead
+ * @param timestamp
+ * @returns
+ */
+export function generatSessionId(timestamp: number) {
   return String(Math.floor(timestamp));
 }
 

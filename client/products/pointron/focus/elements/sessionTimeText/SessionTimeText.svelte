@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
+  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
   import view from "$lib/client/stores/view.store";
   import { Size } from "$lib/client/types/size.enum";
   import { TimeFormat } from "$lib/client/types/time.type";
@@ -11,7 +11,7 @@
   import { resolveSessionSplitFromIntervals } from "../../../pointron.utils";
   export let parentBackgroundIndex: number = 1;
   export let size: Size = Size.md;
-  $: splits = resolveSessionSplitFromIntervals($sessionStore.intervals);
+  $: splits = resolveSessionSplitFromIntervals($activeSession.intervals);
   // $: console.log({
   //   splits,
   //   timeElapsed: $sessionStore.timeElapsed,
@@ -27,13 +27,13 @@
         "text-5xl dp:text-7xl font-bold": size === Size.sm,
         "text-7xl dp:text-9xl font-black": size !== Size.sm,
         "text-ars1":
-          $sessionStore.timeRemainingToTakeBreak != undefined &&
-          $sessionStore.timeRemainingToTakeBreak < 0
+          $activeSession.timeRemainingToTakeBreak != undefined &&
+          $activeSession.timeRemainingToTakeBreak < 0
       })}
     >
       {formatSeconds(
-        $sessionStore.isSessionRunning
-          ? $sessionStore.timeElapsed
+        $activeSession.isSessionRunning
+          ? $activeSession.timeElapsed
           : splits.focus + splits.brek,
         TimeFormat.CLOCK
       )}
@@ -46,13 +46,13 @@
     )}
   >
     <div>
-      Session: {formatSeconds($sessionStore.totalElapsed, TimeFormat.CLOCK)}
+      Session: {formatSeconds($activeSession.totalElapsed, TimeFormat.CLOCK)}
     </div>
     <div class="text-aps1">
       F: {formatSeconds(splits.focus, TimeFormat.CLOCK)}
-      {#if $sessionStore.composition?.type == SessionCompositionType.TARGET_FOCUS}
+      {#if $activeSession.composition?.type == SessionCompositionType.TARGET_FOCUS}
         / {formatSeconds(
-          $sessionStore.composition.focusDuration,
+          $activeSession.composition.focusDuration,
           TimeFormat.CLOCK
         )}
       {/if}

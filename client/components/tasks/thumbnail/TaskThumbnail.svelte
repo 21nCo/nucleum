@@ -15,6 +15,8 @@
   import { resolveTaskTypeIcon } from "../task.utils";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import RecordStarStatusFeedback from "../../record/RecordStarStatusFeedback.svelte";
+  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
+  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
 
   export let item: ITask;
   export let arrangement: Arrangement = Arrangement.LIST;
@@ -24,6 +26,12 @@
   export let isApplyCustomColor: boolean = false;
   export let isDraggable: boolean = false;
   export let refreshId: number = new Date().getTime();
+
+  $: isCurrentlyFocusing =
+    $activeSession.currentFocusItem &&
+    isSameResource(item, $activeSession.currentFocusItem) &&
+    $activeSession.isQuickStartOn &&
+    $activeSession.isSessionRunning;
 
   let isHovering: boolean = false;
 
@@ -49,14 +57,20 @@
   <CustomColorPropagator color={item.color}>
     {#if arrangement === Arrangement.LIST}
       <div
-        class={cn("relative flex flex-col w-full border rounded-md truncate", {
-          "bg-ccs5 notouch:hover:bg-ccs4 active:bg-ccs4 border-ccs2":
-            isApplyCustomColor,
-          "border-transparent notouch:hover:border-brs3 active:border-brs3 px-1":
-            !isApplyCustomColor,
-          "bg-bgs2 bg-opacity-50 px-2":
-            !isApplyCustomColor && accessPoint === ResourceAccessPoint.LIBRARY
-        })}
+        class={cn(
+          "relative flex flex-col w-full border rounded-md truncate",
+          {
+            "bg-ccs3 border border-ccs1": isCurrentlyFocusing
+          },
+          !isCurrentlyFocusing && {
+            "bg-ccs5 notouch:hover:bg-ccs4 active:bg-ccs4 border-ccs2":
+              isApplyCustomColor,
+            "border-transparent notouch:hover:border-brs3 active:border-brs3 px-1":
+              !isApplyCustomColor,
+            "bg-bgs2 bg-opacity-50 px-2":
+              !isApplyCustomColor && accessPoint === ResourceAccessPoint.LIBRARY
+          }
+        )}
       >
         <button class="flex w-full items-center h-16 truncate" on:click>
           <div class="flex items-center gap-3 p-3 w-full">
@@ -87,15 +101,17 @@
                 </span>
               {/if} -->
               </div>
-              {#if item.description}
-                <span class="text-b3 text-fgs3 truncate text-left">
+              <span class="text-b3 text-fgs3 truncate text-left">
+                {#if isCurrentlyFocusing}
+                  Currently focusing...
+                {:else if item.description}
                   {@html renderMdAsHtml(
                     typeof item.description.blocks?.[0]?.body === "string"
                       ? item.description.blocks[0].body
                       : ""
                   )}
-                </span>
-              {/if}
+                {/if}
+              </span>
             </div>
           </div>
         </button>

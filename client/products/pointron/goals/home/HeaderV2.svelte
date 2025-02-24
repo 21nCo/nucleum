@@ -13,7 +13,7 @@
   import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
-  import { sessionStore } from "../../focus/session.store";
+  import { activeSession } from "../../focus/session.store";
   import {
     confirmationNotification,
     toasts
@@ -77,7 +77,7 @@
             label: "Focus now",
             icon: "bolt",
             callback: async () => {
-              if ($sessionStore.isSessionRunning) {
+              if ($activeSession.isSessionRunning) {
                 confirmationNotification.notify({
                   title: "Session running",
                   message:
@@ -87,13 +87,13 @@
                     icon: "play",
                     variant: ButtonVariant.PRIMARY,
                     callback: async () => {
-                      await sessionStore.finishSession();
-                      return sessionStore.quickStart($currentGoal.id);
+                      await activeSession.finishSession();
+                      return activeSession.quickStart($currentGoal.id);
                     }
                   }
                 });
               } else {
-                await sessionStore.quickStart($currentGoal.id);
+                await activeSession.quickStart($currentGoal.id);
               }
               logger.log(
                 { display: $view.display, isPortrait: $view.isPortrait },

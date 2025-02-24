@@ -1,16 +1,15 @@
 <script lang="ts">
   import {
     focusItemsStore,
-    sessionStore
+    activeSession
   } from "$lib/client/products/pointron/focus/session.store";
   import type {
-    IFocusTask,
+    IFocusTodo,
     IActiveSessionStore,
     ISessionInterval
   } from "$lib/client/types/pointron/session.type";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
-  import DraggableElement from "$lib/client/elements/DraggableElement.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import Check from "$lib/client/icons/Check.svelte";
@@ -26,7 +25,9 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { SessionType } from "../../../logs/log.type";
   import { resolveTaskFocus } from "../../session.utils";
-  export let task: IFocusTask;
+  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
+
+  export let todo: IFocusTodo;
   export let isInEditMode: boolean = false;
   export let intervals: ISessionInterval[] = [];
   export let context: "current" | "history" = "current";
@@ -42,13 +43,13 @@
   $: isDragEnabled = $view.isPortrait ? false : true;
   let scrollToTask: any = null;
   $: workedTime =
-    context === "history" && task.worked
-      ? task.worked
+    context === "history" && todo.worked
+      ? todo.worked
       : resolveTaskFocus(
-          context === "history" ? intervals : $sessionStore.intervals,
-          task.blocks,
-          isInprogress && $sessionStore.currentTask
-            ? $sessionStore.currentTask.start
+          context === "history" ? intervals : $activeSession.intervals,
+          todo.blocks,
+          isInprogress && $activeSession.currentFocusItem
+            ? $activeSession.currentFocusItem.start
             : undefined
         );
   // $: console.log({
@@ -59,12 +60,12 @@
   // });
   onMount(() => {
     estimatePopupRef.style.display = "none";
-    label = task.label;
+    label = todo.label;
     // workedTime = +task.worked;
     // estimateInMinutes = task.estimated;
     if (context === "history") return;
-    const sub = sessionStore.subscribe((x: IActiveSessionStore) => {
-      if (x.currentTask?.id === task.id) {
+    const sub = activeSession.subscribe((x: IActiveSessionStore) => {
+      if (x.currentFocusItem && isSameResource(x.currentFocusItem, todo)) {
         isInprogress = true;
       } else {
         isInprogress = false;
@@ -77,21 +78,23 @@
     scrollToTask.scrollIntoView({ behavior: "smooth", block: "center" });
 
   async function save() {
-    task.label = label;
-    await focusItemsStore.updateTaskLabel(task.id, label);
+    todo.label = label;
+    await focusItemsStore.updateTodoLabel(todo.id, label);
   }
+
   async function onCheckClicked(event: MouseEvent) {
     if (context === "history") return;
-    task.checked = !task.checked;
-    focusItemsStore.updateTask(task.id, {
-      checked: task.checked
+    todo.checked = !todo.checked;
+    focusItemsStore.updateTodo(todo.id, {
+      checked: todo.checked
     });
     if (isInprogress) {
       isInprogress = false;
-      await sessionStore.stopCurrentTaskOrGoal();
+      await activeSession.stopCurrentFocusItem();
     }
     event.stopPropagation();
   }
+
   function onEstimateClicked(event: MouseEvent) {
     renderPopover({
       triggerRef: estimateButtonRef,
@@ -99,9 +102,11 @@
       placement: $view.isPortrait ? Placement.BottomRight : Placement.Left
     });
   }
+
   function hideEstimatePopup() {
     estimatePopupRef.style.display = "none";
   }
+
   function handleKeyUp(event: any) {
     if (event.key === "Enter") {
       labelInputElement.blur();
@@ -110,41 +115,42 @@
     save();
     event.stopPropagation();
   }
+
   async function clickHandler() {
     if (
       isInEditMode ||
       context === "history" ||
-      ($sessionStore.isSessionRunning &&
-        $sessionStore.type === SessionType.PREDEFINED_INTERVALS &&
-        $sessionStore.state === SessionState.BREAK_RUNNING)
+      ($activeSession.isSessionRunning &&
+        $activeSession.type === SessionType.PREDEFINED_INTERVALS &&
+        $activeSession.state === SessionState.BREAK_RUNNING)
     )
       return;
-    if ($sessionStore.isSessionRunning) {
+    if ($activeSession.isSessionRunning) {
       if (isInprogress) {
-        await sessionStore.stopCurrentTaskOrGoal();
+        await activeSession.stopCurrentFocusItem();
       } else {
-        if (task.checked) task.checked = false;
-        await sessionStore.startTask(task.id);
+        if (todo.checked) todo.checked = false;
+        await activeSession.startTask(todo.id);
       }
     } else {
       labelInputElement.focus();
     }
   }
+
   function onEstimationFocus(event: any) {
     event.stopPropagation();
   }
+
   async function onDeleteClicked() {
-    await focusItemsStore.removeTask(task.id);
+    await focusItemsStore.removeTodo(todo.id);
   }
 </script>
 
-<DraggableElement
-  item={task}
-  isDraggable={isDragEnabled &&
-    ((context === "current" && !$sessionStore.isSessionRunning) ||
+<div
+  draggable={isDragEnabled &&
+    ((context === "current" && !$activeSession.isSessionRunning) ||
       isInEditMode)}
-  id={task.id}
-  classList="flex gap-2 items-center w-full"
+  class="flex gap-2 items-center w-full"
 >
   <button
     class={cn(
@@ -156,28 +162,28 @@
     on:click={clickHandler}
   >
     <div
-      class="flex gap-2 flex-grow justify-start items-center truncate {task.checked &&
+      class="flex gap-2 flex-grow justify-start items-center truncate {todo.checked &&
         'line-through'}"
     >
       <Check
-        isChecked={task.checked}
+        isChecked={todo.checked}
         on:click={onCheckClicked}
         isAccentBgActive={isInprogress}
         size={Size.sm}
       />
-      {#if isInEditMode || (context === "current" && !$sessionStore.isSessionRunning)}
+      {#if isInEditMode || (context === "current" && !$activeSession.isSessionRunning)}
         <TextInput
           on:keyup={handleKeyUp}
           on:focus
           on:blur
           bind:this={labelInputElement}
           bind:value={label}
-          placeholder="Add a task"
+          placeholder="Add a todo"
           style={InputStyle.PLAIN}
           size={Size.md}
         />
       {:else}
-        <div class="text-b2" bind:this={scrollToTask}>{task.label}</div>
+        <div class="text-b2" bind:this={scrollToTask}>{todo.label}</div>
       {/if}
     </div>
     <div class="min-w-fit flex justify-center items-center">
@@ -195,16 +201,16 @@
           })}
         />
         <div
-          class={task.estimated == 0 || !task.estimated || isInprogress
+          class={todo.estimated == 0 || !todo.estimated || isInprogress
             ? ""
-            : workedTime >= task.estimated
+            : workedTime >= todo.estimated
               ? "text-ars1"
               : "text-ags1"}
         >
           {formatSeconds(workedTime)}
         </div>
-        {task.estimated && task.estimated != 0
-          ? "/ " + formatSeconds(task.estimated)
+        {todo.estimated && todo.estimated != 0
+          ? "/ " + formatSeconds(todo.estimated)
           : ""}
       </button>
 
@@ -218,7 +224,7 @@
         >
           <div class="w-full h-full">
             <DurationInput
-              bind:value={task.estimated}
+              bind:value={todo.estimated}
               label={{
                 label: "Estimated time",
                 orientation: Orientation.Vertical
@@ -238,7 +244,7 @@
       </button>
     </div>
   </button>
-  {#if isInEditMode || (context === "current" && !$sessionStore.isSessionRunning)}
+  {#if isInEditMode || (context === "current" && !$activeSession.isSessionRunning)}
     <Button icon="cross" on:click={onDeleteClicked} tooltip="Remove" />
   {/if}
   <span
@@ -246,4 +252,4 @@
     on:touchstart={() => (isDragEnabled = true)}
     on:touchend={() => (isDragEnabled = false)}>⇳</span
   >
-</DraggableElement>
+</div>

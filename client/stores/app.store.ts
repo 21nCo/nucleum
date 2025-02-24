@@ -291,6 +291,9 @@ function initAppStore(seed: AppStore) {
     const viewData = get(view);
     const isRenderAsPage =
       action.isRenderAsPageInPortrait && viewData.isPortrait;
+    if (ctx.embed === Embed.HANDSET) {
+      action.type = action.handsetBehaviorType ?? action.type;
+    }
     if (action.type === ActionType.LINK) {
       const url = store.appData.urls[action.action];
       if (!url) return;
@@ -385,7 +388,7 @@ function initAppStore(seed: AppStore) {
         ? import.meta.env?.VITE_HOST
         : window.location.hostname;
     const redirect = ctx.isEmbed
-      ? (import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host)
+      ? import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host
       : window.location.origin;
     // const origin = window.location.origin;
     const guestPartForState = guest ?? (await getDapId()) ?? "";

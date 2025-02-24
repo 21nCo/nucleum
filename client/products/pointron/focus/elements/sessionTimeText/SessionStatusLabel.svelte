@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
+  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
   import { BlockType } from "$lib/client/types/pointron/session.type";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   import { SessionType } from "$lib/client/products/pointron/logs/log.type";
@@ -8,37 +8,37 @@
   export let size: Size = Size.md;
   export let isDefaultColor: boolean = false;
   $: extentionElapsed =
-    $sessionStore.type === SessionType.COUNTDOWN &&
-    $sessionStore.plannedDuration
-      ? $sessionStore.totalElapsed -
-        ($sessionStore.plannedDuration - $sessionStore.totalExtended)
+    $activeSession.type === SessionType.COUNTDOWN &&
+    $activeSession.plannedDuration
+      ? $activeSession.totalElapsed -
+        ($activeSession.plannedDuration - $activeSession.totalExtended)
       : 0;
   $: labelClasses =
     `${size === Size.md ? "font-medium p-3 text-h5 dp:text-h3" : "text-b2"} ` +
     (!isDefaultColor
-      ? $sessionStore.state === SessionState.FOCUS_RUNNING
+      ? $activeSession.state === SessionState.FOCUS_RUNNING
         ? "text-aps1"
-        : $sessionStore.state === SessionState.BREAK_RUNNING
+        : $activeSession.state === SessionState.BREAK_RUNNING
           ? "text-ass1"
           : "text-accent3"
       : "");
   $: sessionLabel =
-    $sessionStore.state === SessionState.FINISHED
+    $activeSession.state === SessionState.FINISHED
       ? "SESSION FINISHED"
-      : $sessionStore.state === SessionState.TIME_IS_UP
+      : $activeSession.state === SessionState.TIME_IS_UP
         ? "TIME UP"
-        : $sessionStore.state === SessionState.FOCUS_COMPLETED
+        : $activeSession.state === SessionState.FOCUS_COMPLETED
           ? "INTERVAL COMPLETED"
-          : $sessionStore.state === SessionState.BREAK_COMPLETED
+          : $activeSession.state === SessionState.BREAK_COMPLETED
             ? "BREAK COMPLETED"
-            : $sessionStore.state === SessionState.BREAK_RUNNING
+            : $activeSession.state === SessionState.BREAK_RUNNING
               ? "CURRENT BREAK"
               : "CURRENT FOCUS";
 </script>
 
 <div class={labelClasses}>
   {sessionLabel}
-  {#if extentionElapsed && extentionElapsed > 0 && $sessionStore.isSessionRunning}
+  {#if extentionElapsed && extentionElapsed > 0 && $activeSession.isSessionRunning}
     | extended: {formatSeconds(extentionElapsed)}
   {/if}
 </div>

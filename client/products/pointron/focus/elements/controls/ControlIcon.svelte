@@ -6,7 +6,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import { Display } from "$lib/client/types/view.type";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { sessionStore } from "../../session.store";
+  import { activeSession } from "../../session.store";
   export let icon: string;
   export let context: SessionUIContext = SessionUIContext.DEFAULT;
   let iconSize: Size.md | Size.lg | Size.xl = Size.xl;
@@ -18,8 +18,8 @@
         ? Size.lg
         : Size.xl;
   $: isBreakReminderMode =
-    $sessionStore.timeRemainingToTakeBreak != undefined &&
-    $sessionStore.timeRemainingToTakeBreak < 0;
+    $activeSession.timeRemainingToTakeBreak != undefined &&
+    $activeSession.timeRemainingToTakeBreak < 0;
 </script>
 
 <Icon
@@ -31,10 +31,11 @@
     },
     context === SessionUIContext.FOCUS_PLAYER && {
       "fill-cbg":
-        $sessionStore.state == SessionState.FOCUS_RUNNING &&
+        $activeSession.state == SessionState.FOCUS_RUNNING &&
         !isBreakReminderMode,
       "fill-abg":
-        $sessionStore.state != SessionState.FOCUS_RUNNING || isBreakReminderMode
+        $activeSession.state != SessionState.FOCUS_RUNNING ||
+        isBreakReminderMode
     }
   )}
 />

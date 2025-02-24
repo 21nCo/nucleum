@@ -212,9 +212,13 @@ export class SearchStore {
     return result;
   }
 
-  async tasks() {
+  async tasks(params: { isIncludeSubItems?: boolean }) {
     const result = await flux.selectMany(Resource.task, {
-      properties: [labelSearchProp, "*"],
+      properties: [
+        labelSearchProp,
+        "*",
+        "(select * from $parent.parent) as parent"
+      ],
       filters: {
         trashInformation: false,
         ...this.filters,
@@ -223,7 +227,7 @@ export class SearchStore {
           "type" in this.filters && this.filters.type
             ? this.filters.type?.toUpperCase()
             : undefined,
-        parent: this.searchQuery ? undefined : false
+        parent: this.searchQuery || params.isIncludeSubItems ? undefined : false
       },
       search: isValidString(this.searchQuery)
         ? {
@@ -237,7 +241,7 @@ export class SearchStore {
       limit: this.limit,
       offset: this.offset
     });
-    logger.log({ at: "refreshCollections", result });
+    logger.log({ at: "refreshTasks", result });
     return result;
   }
 
@@ -250,6 +254,7 @@ export class SearchStore {
     filters?: IResourceSelectFilters;
     searchType?: SearchType;
     semanticSearchTopK?: number | undefined;
+    isIncludeSubItems?: boolean;
   }) {
     this.resource = params.resource ?? this.resource;
     this.searchQuery = params.searchQuery ?? this.searchQuery;
@@ -274,7 +279,9 @@ export class SearchStore {
     } else if (this.resource === Resource.collection) {
       data = (await this.collections()) ?? [];
     } else if (this.resource === Resource.task) {
-      data = (await this.tasks()) ?? [];
+      data =
+        (await this.tasks({ isIncludeSubItems: params.isIncludeSubItems })) ??
+        [];
     }
     if (isValidArray(data)) {
       if (isValidString(this.searchQuery)) {

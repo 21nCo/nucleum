@@ -1,6 +1,6 @@
 <script lang="ts">
   import { backgroundSoundStore } from "$lib/client/products/pointron/pointron.store";
-  import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
+  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
   import { isValidString } from "$lib/shared/utils/text.utils";
   import { onMount } from "svelte";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
@@ -21,7 +21,7 @@
         playIfSoundFileExists();
       }
     });
-    const sessionStoreSub = sessionStore.subscribe((x) => {
+    const sessionStoreSub = activeSession.subscribe((x) => {
       if (
         !x?.isSessionRunning ||
         (x?.isSessionRunning && x?.state != SessionState.FOCUS_RUNNING)

@@ -219,7 +219,6 @@ export class ResourceStore<T extends IResource> implements IStore {
       | OmitForCaptureWithId<T>[],
     params?: {
       customQuery?: string;
-      queueParams?: IMutationQueueParams;
       customQueryAdditionalParams?: { [key: string]: any };
       context?: string;
     }

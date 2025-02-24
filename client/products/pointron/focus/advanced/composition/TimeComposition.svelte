@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
+  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
   import Slider from "../slider/Slider.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { Size } from "$lib/client/types/size.enum";
@@ -25,19 +25,19 @@
   $: parentBackgroundIndex = isExpandedMode ? 1 : 2;
   function onDynamicSliderChange(event: any) {
     if (
-      $sessionStore.isSessionRunning ||
-      $sessionStore.preventSliderReverseEventTemp
+      $activeSession.isSessionRunning ||
+      $activeSession.preventSliderReverseEventTemp
     )
       return;
     selectedDynamicDuration = Number(event.detail.value);
-    sessionStore.onSliderDurationChange(selectedDynamicDuration);
+    activeSession.onSliderDurationChange(selectedDynamicDuration);
   }
   function onCompositionChanges() {
     logger.log({
       at: "onCompositionChanges",
-      composition: deepCopy($sessionStore.composition)
+      composition: deepCopy($activeSession.composition)
     });
-    sessionStore.onComposeComplete();
+    activeSession.onComposeComplete();
   }
   function onModeSwitch(event: any) {
     console.log({ event });
@@ -73,7 +73,7 @@
           />
         </div>
       </div> -->
-      <ComposeTotalsText composition={$sessionStore.composition} />
+      <ComposeTotalsText composition={$activeSession.composition} />
       <div class="flex w-full justify-center">
         <PanelSwitcher
           style={PanelSwitcherStyle.TRAIN}
@@ -91,7 +91,7 @@
         isExpandedVariant={isExpandedMode}
         {parentBackgroundIndex}
       />
-    {:else if $sessionStore.composition.type === SessionCompositionType.END_TIME_FIXED}
+    {:else if $activeSession.composition.type === SessionCompositionType.END_TIME_FIXED}
       <!-- TODO -->
       <div class="py-8 flex flex-col items-center gap-4">
         <div class="flex flex-col gap-2 items-center">
@@ -103,13 +103,13 @@
           size={Size.sm}
           icon="cross"
           on:click={() => {
-            sessionStore.resetComposition();
+            activeSession.resetComposition();
           }}
         />
       </div>
     {:else}
       <ComposeDuration
-        bind:composition={$sessionStore.composition}
+        bind:composition={$activeSession.composition}
         on:change={onCompositionChanges}
         isShowSave={true}
       />

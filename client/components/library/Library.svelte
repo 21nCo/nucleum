@@ -37,7 +37,7 @@
 
   let selectedResource: Resource = $view.isConstrainedWidth
     ? Resource.unknown
-    : Resource.node;
+    : resources[0];
   let resourceSwitcherRef: ResourceSwitcher;
   let availableResources: Set<Resource> = new Set([
     Resource.node,

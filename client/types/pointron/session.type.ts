@@ -1,11 +1,14 @@
 import type { SessionComposition } from "$lib/client/types/pointron/sessionComposition.type";
 import type { SessionState } from "./sessionState.enum";
 import type { IMarkdown } from "$lib/client/components/markdown/md.type";
-import type { IObservableStoreSubject } from "$lib/client/types/data.type";
+import type {
+  IObservableStoreSubject,
+  IRecordId
+} from "$lib/client/types/data.type";
 import type { SessionType } from "$lib/client/products/pointron/logs/log.type";
 
 export type IActiveSessionStore = IObservableStoreSubject & {
-  currentSessionId: string | undefined;
+  currentSessionId: IRecordId | undefined;
   type: SessionType;
   state: SessionState;
   composition: SessionComposition;
@@ -19,7 +22,7 @@ export type IActiveSessionStore = IObservableStoreSubject & {
   totalIdle: number;
   intervals: ISessionInterval[];
   currentBlockId: string;
-  currentTask?: ICurrentTask;
+  currentFocusItem?: ICurrentFocusItem;
   currentIdle: number;
   isSessionRunning: boolean;
   preventSliderReverseEventTemp?: boolean;
@@ -28,9 +31,9 @@ export type IActiveSessionStore = IObservableStoreSubject & {
   notes: IMarkdown;
 };
 
-export type ICurrentTask = {
+export type ICurrentFocusItem = {
   start: number;
-  id: string;
+  id: IRecordId;
 };
 
 export type FocusLog = {
@@ -90,7 +93,7 @@ export enum BlockType {
 }
 
 type IFocusItem = {
-  id: string;
+  id: IRecordId;
   blocks?: {
     start: number;
     end: number;
@@ -99,10 +102,10 @@ type IFocusItem = {
   checked?: boolean;
 };
 
-export type IFocusGoal = IFocusItem & {
-  tasks?: string[];
-};
 export type IFocusTask = IFocusItem & {
+  todos?: IRecordId[];
+};
+export type IFocusTodo = IFocusItem & {
   label: string;
 };
 
@@ -115,6 +118,6 @@ export enum SessionUIContext {
 }
 
 export interface IFocusItemsStore extends IObservableStoreSubject {
-  goals: IFocusGoal[];
   tasks: IFocusTask[];
+  todos: IFocusTodo[];
 }

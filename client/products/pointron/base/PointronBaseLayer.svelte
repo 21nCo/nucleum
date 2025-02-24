@@ -1,7 +1,7 @@
 <script lang="ts">
   import Notifications from "./Notifications.svelte";
   import { onMount } from "svelte";
-  import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
+  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
   import { appLoadingState, appStore } from "$lib/client/stores/app.store";
   import { scheduledNotifications } from "$lib/client/stores/notification.store";
 
@@ -34,7 +34,7 @@
     });
     $appLoadingState.isLocalLoaded = true;
     return () => {
-      sessionStore.clearIntervals();
+      activeSession.clearIntervals();
       uiStateSub();
     };
   });
@@ -43,7 +43,7 @@
   }
   async function initializeData() {
     if (isLiteMode) return;
-    if ($sessionStore?.isSessionRunning) {
+    if ($activeSession?.isSessionRunning) {
       fullScreen.show(PointronAction.FULL_SCREEN_FOCUS);
     }
     refreshInteractionModeState();
@@ -107,7 +107,7 @@
       </div>
     {/if}
   {/if}
-  {#if $sessionStore?.isSessionRunning}
+  {#if $activeSession?.isSessionRunning}
     <SessionTitle />
   {/if}
   <Notifications />

@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
+  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
   import ComposeDuration from "./ComposeDuration.svelte";
   function onCompositionChanges() {
-    sessionStore.onComposeComplete();
+    activeSession.onComposeComplete();
   }
 </script>
 
 <ComposeDuration
-  bind:composition={$sessionStore.composition}
+  bind:composition={$activeSession.composition}
   on:change={onCompositionChanges}
 />

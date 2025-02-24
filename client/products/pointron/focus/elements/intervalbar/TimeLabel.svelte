@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
+  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { SessionUIContext } from "$lib/client/types/pointron/session.type";
   import { SessionCompositionType } from "$lib/client/types/pointron/sessionComposition.type";
@@ -23,7 +23,7 @@
     hideToolTip();
     if (context === SessionUIContext.ZEN_ON_DESKTOP) {
       timeClassList = "text-h4";
-    } else if ($sessionStore.state === SessionState.NOT_STARTED) {
+    } else if ($activeSession.state === SessionState.NOT_STARTED) {
       timeClassList = "text-base";
     } else {
       timeClassList = "text-base";
@@ -31,14 +31,17 @@
     labelClassList =
       context === SessionUIContext.ZEN_ON_DESKTOP
         ? "text-b2"
-        : $sessionStore.state === SessionState.NOT_STARTED
+        : $activeSession.state === SessionState.NOT_STARTED
           ? "text-b4"
           : "text-b3";
   });
   function toggleHoverState(event: MouseEvent | FocusEvent) {
     if (resolveHoverState(event)) {
       isHovering = true;
-      if ($sessionStore.state === SessionState.NOT_STARTED && label === "end") {
+      if (
+        $activeSession.state === SessionState.NOT_STARTED &&
+        label === "end"
+      ) {
         tooltip =
           "Click this to fix the end time of the session and calculate duration accordingly.";
         // if (labelRef && toolTipRef)
@@ -70,7 +73,7 @@
   {#if label === "start"}
     {#if context !== SessionUIContext.PIP}
       <div class={cn("text-fgs3", labelClassList)}>
-        {$sessionStore.state === SessionState.NOT_STARTED
+        {$activeSession.state === SessionState.NOT_STARTED
           ? "Now"
           : context != SessionUIContext.ZEN_ON_DESKTOP
             ? "Start"
@@ -78,10 +81,10 @@
       </div>
     {/if}
     <div class={timeClassList}>
-      {#if $sessionStore.state == SessionState.NOT_STARTED && $currentTime}
+      {#if $activeSession.state == SessionState.NOT_STARTED && $currentTime}
         {formatTime($userPreferences, $currentTime)}
-      {:else if $sessionStore.intervals.length > 0 && $sessionStore.start}
-        {formatTime($userPreferences, $sessionStore.start)}
+      {:else if $activeSession.intervals.length > 0 && $activeSession.start}
+        {formatTime($userPreferences, $activeSession.start)}
       {/if}
     </div>
   {:else}
@@ -90,42 +93,43 @@
         {context != SessionUIContext.ZEN_ON_DESKTOP ? "End" : "End time"}
       </div>
     {/if}
-    {#if $sessionStore.state === SessionState.NOT_STARTED}
+    {#if $activeSession.state === SessionState.NOT_STARTED}
       <button
-        class=" rounded-md underline-dotted border- border--dotted border--brs3 {$sessionStore
+        class=" rounded-md underline-dotted border- border--dotted border--brs3 {$activeSession
           .composition?.type === SessionCompositionType.COUNTUP
           ? 'text--base px--2'
           : 'text--b3 px--2 py--[0.2rem]'}"
         on:click={() =>
           appStore.runAction(PointronAction.COMPOSE_BY_END_TIME_MODAL)}
       >
-        {#if $sessionStore.composition?.type === SessionCompositionType.END_TIME_FIXED && $sessionStore.end}
-          {formatTime($userPreferences, $sessionStore.end)}
-        {:else if $sessionStore.composition?.type === SessionCompositionType.COUNTUP}
+        {#if $activeSession.composition?.type === SessionCompositionType.END_TIME_FIXED && $activeSession.end}
+          {formatTime($userPreferences, $activeSession.end)}
+        {:else if $activeSession.composition?.type === SessionCompositionType.COUNTUP}
           <span>&nbsp; ♾️ &nbsp;</span>
         {:else}
           {formatTime(
             $userPreferences,
             new Date(
-              $currentTime.getTime() + $sessionStore.plannedDuration * 1000
+              $currentTime.getTime() + $activeSession.plannedDuration * 1000
             )
           )}
         {/if}
       </button>
     {:else}
       <div class={timeClassList}>
-        {#if $sessionStore.type === SessionType.COUNTUP && $sessionStore.state != SessionState.FINISHED}
+        {#if $activeSession.type === SessionType.COUNTUP && $activeSession.state != SessionState.FINISHED}
           {$currentTime ? formatTime($userPreferences, $currentTime) : ""}
-        {:else if $sessionStore.type === SessionType.COUNTUP && $sessionStore.state === SessionState.FINISHED}
+        {:else if $activeSession.type === SessionType.COUNTUP && $activeSession.state === SessionState.FINISHED}
           <!-- {#if $sessionStore.end}
             {formatTime($userPreferences, $sessionStore.end)}
           {:else if $sessionStore.start} -->
-          {#if $sessionStore.start}
+          {#if $activeSession.start}
             {formatTime(
               $userPreferences,
               new Date(
-                $sessionStore.start.getTime() +
-                  ($sessionStore.totalElapsed + $sessionStore.totalIdle) * 1000
+                $activeSession.start.getTime() +
+                  ($activeSession.totalElapsed + $activeSession.totalIdle) *
+                    1000
               )
             )}
           {/if}
@@ -134,15 +138,15 @@
           {$sessionStore.end} -->
           <!-- {:else if $sessionStore.composition?.type === SessionCompositionType.TARGET_FOCUS && $sessionStore.end}
           {formatTime($sessionStore.end)} -->
-        {:else if $sessionStore.start}
-          {#if $sessionStore.end}
-            {formatTime($userPreferences, $sessionStore.end)}
+        {:else if $activeSession.start}
+          {#if $activeSession.end}
+            {formatTime($userPreferences, $activeSession.end)}
           {:else}
             {formatTime(
               $userPreferences,
               new Date(
-                $sessionStore.start.getTime() +
-                  ($sessionStore.plannedDuration + $sessionStore.totalIdle) *
+                $activeSession.start.getTime() +
+                  ($activeSession.plannedDuration + $activeSession.totalIdle) *
                     1000
               )
             )}

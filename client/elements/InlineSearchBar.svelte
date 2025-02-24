@@ -57,7 +57,7 @@
     "h-10": size === Size.sm,
     "min-h-12": size === Size.md,
     "min-h-14": size === Size.lg,
-    "px-3": isPadded && !padding,
+    "px-4": isPadded && !padding,
     "border-fgs3 border-opacity-80": isSearchFocused,
     "border-brs2": !isSearchFocused
   })}

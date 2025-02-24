@@ -1,17 +1,13 @@
 <script lang="ts">
-  import { dragAndDropStore } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
-  import { DragStatus } from "$lib/client/types/dragstatus.enum";
-  import { handleDragNDrop } from "$lib/client/utils/dragDrop";
   import {
     focusItemsStore,
-    sessionStore
+    activeSession
   } from "$lib/client/products/pointron/focus/session.store";
-  import { onDestroy, onMount } from "svelte";
-  import Task from "./Task.svelte";
-  import AddTask from "./AddTask.svelte";
+  import { onMount } from "svelte";
+  import FocusTodo from "./FocusTodo.svelte";
+  import AddTodo from "./AddTodo.svelte";
   import { formatSeconds } from "$lib/client/utils/time.utils";
-  import DraggableElement from "$lib/client/elements/DraggableElement.svelte";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   import { Size } from "$lib/client/types/size.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
@@ -23,34 +19,37 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { SessionType } from "../../../logs/log.type";
   import type {
-    IFocusGoal,
     IFocusTask,
     ISessionInterval
   } from "$lib/client/types/pointron/session.type";
-  import { goalStore } from "../../../goals/goal.store";
   import { resolveTaskFocus } from "../../session.utils";
-  export let item: IFocusGoal;
+  import type { ITaskThumb } from "$lib/client/components/tasks/task.type";
+  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
+
+  export let task: ITaskThumb;
+  export let focusItem: IFocusTask;
+  export let todos: any[] = [];
   export let isFocusAddTask: boolean = false;
   export let isInEditMode: boolean = false;
   export let contxt: "current" | "history" = "current";
   export let intervals: ISessionInterval[] = [];
-  export let tasksList: IFocusTask[] = [];
+
+  let parentHierarchy: string[] = [];
   let isInprogress: boolean = false;
   let addTaskInputRef: any;
   // let workedTime: number = 0;
   let isDragEnabled: boolean;
-  $: isPortraitDragEnabled = $view.isPortrait && isInEditMode ? true : false;
   $: isDragEnabled = $view.isPortrait ? false : true;
-  $: isInprogress = $sessionStore.currentTask?.id === item.id;
-  // $: console.log({ isInprogress, item, goal });
-  $: tasks = tasksList?.filter((x) => item.tasks?.includes(x.id)) ?? [];
-  $: goal = goalStore.resolveGoal(item.id);
-  //TODO - test parentHierarchy
-  $: parentHierarchy = goal?.parent?.hierarchy?.map((x: any) => x.label);
-  // $: console.log({ item, tasks, goal, parentHierarchy });
+  $: isInprogress =
+    ($activeSession.currentFocusItem &&
+      isSameResource(focusItem, $activeSession.currentFocusItem)) ??
+    false;
+
+  $: parentHierarchy = task?.parent?.map((x: any) => x.label) ?? [];
+
   onMount(() => {
     try {
-      if (item.id && contxt == "current") {
+      if (focusItem.id && contxt == "current") {
         if (
           isFocusAddTask &&
           addTaskInputRef &&
@@ -63,67 +62,39 @@
       console.warn("Error in focusItem.svelte", e);
     }
   });
-  const unSubscribeDND = dragAndDropStore.subscribe(async (x: any) => {
-    if (
-      x.dragId == "goalItem" ||
-      x.dragId == "soloTaskItem" ||
-      x.dropId == "goalItem" ||
-      x.dropId == "soloTaskItem"
-    ) {
-      console.log(
-        "This subscribe is not for goals or soloTaskItem  so returning"
-      );
-      return;
-    } else if (
-      x.dropItem.id == item.id &&
-      x.dropItem.id == x.dragItem.id &&
-      $dragAndDropStore.dragStatus == DragStatus.DROPPED
-    ) {
-      let modifiedItems = handleDragNDrop(x, tasks);
-      if (modifiedItems) {
-        await focusItemsStore.updateOrderValueForTasks(item.id, modifiedItems);
-        item.tasks = modifiedItems;
-        item = item;
-        dragAndDropStore.reset();
-      }
-    }
-  });
-  onDestroy(unSubscribeDND);
 
   async function clickHandler() {
     if (
       isInEditMode ||
       contxt === "history" ||
-      ($sessionStore.isSessionRunning &&
-        $sessionStore.type === SessionType.PREDEFINED_INTERVALS &&
-        $sessionStore.state === SessionState.BREAK_RUNNING)
+      ($activeSession.isSessionRunning &&
+        $activeSession.type === SessionType.PREDEFINED_INTERVALS &&
+        $activeSession.state === SessionState.BREAK_RUNNING)
     )
       return;
-    if ($sessionStore.isSessionRunning) {
+    if ($activeSession.isSessionRunning) {
       if (isInprogress) {
-        await sessionStore.stopCurrentTaskOrGoal();
+        await activeSession.stopCurrentFocusItem();
       } else {
-        await sessionStore.startTask(item.id);
+        await activeSession.startTask(focusItem.id);
       }
     }
   }
   async function onDeleteClicked() {
-    await focusItemsStore.removeGoal(item.id);
+    await focusItemsStore.removeTask(focusItem.id);
   }
   // $: console.log({ item, intervals, isInprogress, tasks });
 </script>
 
-<DraggableElement
-  isDraggable={isDragEnabled &&
+<div
+  draggable={isDragEnabled &&
     contxt === "current" &&
-    (!$sessionStore.isSessionRunning || isInEditMode)}
-  {item}
-  id="goalItem"
-  classList="flex flex-col gap-4 w-full"
+    (!$activeSession.isSessionRunning || isInEditMode)}
+  class="flex flex-col gap-4 w-full"
 >
-  {#if (item.id && (!$sessionStore.isSessionRunning || isInEditMode) && contxt === "current") || (item.id && tasks.length > 0)}
+  {#if (focusItem.id && (!$activeSession.isSessionRunning || isInEditMode) && contxt === "current") || (focusItem.id && todos.length > 0)}
     <CustomColorPropagator
-      color={goal.color}
+      color={task.color}
       class="relative flex items-center gap-2 w-full"
     >
       <div
@@ -131,8 +102,8 @@
       >
         <div
           class={cn("text-left px-3 pt-3 font-medium truncate min-w-0 flex-1", {
-            "text-ccs1": goal.color,
-            "text-fgs2": !goal.color
+            "text-ccs1": task.color,
+            "text-fgs2": !task.color
           })}
         >
           <div>
@@ -142,34 +113,33 @@
               truncateLength={15}
             />
           </div>
-          {goal.label}
-          <!-- TODO - drag the entire focus item for rearranging -->
-          <!-- <span
-            class="text-xl {isPortraitDragEnabled ? '' : 'hidden'}"
-            on:touchstart={() => (isDragEnabled = true)}
-            on:touchend={() => (isDragEnabled = false)}>&nbsp&nbsp⇳</span
-          > -->
+          {task.label}
         </div>
         <div class="px-2">
-          {#if tasks && tasks.length > 0}
-            {#each tasks as task, index (task)}
-              <Task {task} {intervals} {isInEditMode} context={contxt} />
-              {#if index < tasks.length - 1}
+          {#if todos && todos.length > 0}
+            {#each todos as task, index (task)}
+              <FocusTodo
+                todo={task}
+                {intervals}
+                {isInEditMode}
+                context={contxt}
+              />
+              {#if index < todos.length - 1}
                 <div class="mx-1 border-b border-bgs2" />
               {/if}
             {/each}
           {/if}
-          {#if (contxt === "current" && !$sessionStore.isSessionRunning) || isInEditMode}
+          {#if (contxt === "current" && !$activeSession.isSessionRunning) || isInEditMode}
             <div class="mx-1 border-b border-bgs2" />
-            <AddTask
-              goalId={item.id}
-              placeholder={"add task"}
+            <AddTodo
+              taskId={focusItem.id}
+              placeholder="Add todo"
               bind:this={addTaskInputRef}
             />
           {/if}
         </div>
       </div>
-      {#if isInEditMode || (contxt === "current" && !$sessionStore.isSessionRunning)}
+      {#if isInEditMode || (contxt === "current" && !$activeSession.isSessionRunning)}
         <!-- <Button icon="trash" size={Size.sm} on:click={onDeleteClicked} /> -->
         <div class="absolute bg-bgs1 right-1 -top-3">
           <Button
@@ -184,7 +154,7 @@
         </div>
       {/if}
     </CustomColorPropagator>
-  {:else if item.id}
+  {:else if focusItem.id}
     <CustomColorPropagator
       class={cn(
         "flex  gap-4 items-center border-2 border-bgs2 w-full p-3 rounded-md",
@@ -193,7 +163,7 @@
           "text-ccs1": !isInprogress
         }
       )}
-      color={goal.color}
+      color={task.color}
       on:click={clickHandler}
     >
       <div class="text-left truncate min-w-0 flex-1">
@@ -204,31 +174,31 @@
             truncateLength={15}
           />
         </div>
-        {goal.label}
+        {task.label}
       </div>
-      {#if isInprogress && contxt == "current" && $sessionStore.currentTask}
+      {#if isInprogress && contxt == "current" && $activeSession.currentFocusItem}
         <div class="leading-none text-b3">
           <!-- TODO - test if worked time is correct -->
           {formatSeconds(
             resolveTaskFocus(
-              $sessionStore.intervals,
-              item.blocks,
-              $sessionStore.currentTask.start
+              $activeSession.intervals,
+              focusItem.blocks,
+              $activeSession.currentFocusItem.start
             )
           )}
         </div>
       {:else}
         <div class="text-fgs3 text-b3">
           {formatSeconds(
-            contxt === "history" && item.worked
-              ? item.worked
+            contxt === "history" && focusItem.worked
+              ? focusItem.worked
               : resolveTaskFocus(
-                  contxt == "current" ? $sessionStore.intervals : intervals,
-                  item.blocks
+                  contxt == "current" ? $activeSession.intervals : intervals,
+                  focusItem.blocks
                 )
           )}
         </div>
       {/if}
     </CustomColorPropagator>
   {/if}
-</DraggableElement>
+</div>

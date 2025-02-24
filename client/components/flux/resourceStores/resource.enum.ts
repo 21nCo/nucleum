@@ -29,15 +29,34 @@ export enum Resource {
   pointSessionSnapshot = "pointSessionSnapshot",
   pointSessionFocusItems = "pointSessionFocusItems",
   pointSessionSnapshotv2 = "pointSessionSnapshotv2",
+  /**
+   * @deprecated - use {@link sessionFocusItems} instead
+   */
   pointSessionFocusItemsv2 = "pointSessionFocusItemsv2",
-  Routine = "Routine",
-  CurrentTask = "CurrentTask",
+  /**
+   * @deprecated - use {@link session} instead
+   */
   PointSession = "PointSession",
+  /**
+   * @deprecated - use {@link todo} instead
+   */
   PointTask = "PointTask",
+  /**
+   * @deprecated - no longer supported
+   */
   PointTag = "PointTag",
+  /**
+   * @deprecated - use {@link sessionLog} instead
+   */
   PointLog = "PointLog",
   PointTimer = "PointTimer",
+  /**
+   * @deprecated - use {@link task} instead
+   */
   PointGoal = "PointGoal",
+  /**
+   * @deprecated - use {@link task} instead
+   */
   goal = "goal",
   logsPane = "logsPane",
   targetsPane = "targetsPane",
@@ -47,6 +66,8 @@ export enum Resource {
   task = "task",
   habit = "habit",
   session = "session",
+  sessionLog = "sessionLog",
+  sessionFocusItems = "sessionFocusItems",
   //Memotron
   vector = "vector",
   node = "node",

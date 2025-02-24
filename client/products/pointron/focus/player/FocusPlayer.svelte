@@ -1,6 +1,6 @@
 <script lang="ts">
   import { startTouch, moveTouch } from "$lib/client/utils/touchGesture";
-  import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
+  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
   import { SessionUIContext } from "$lib/client/types/pointron/session.type";
   import Icon from "$lib/client/elements/Icon.svelte";
   import view from "$lib/client/stores/view.store";
@@ -18,15 +18,17 @@
   import IntervalBar from "../elements/intervalbar/IntervalBar.svelte";
   import { fullScreen, player } from "$lib/client/components/modal/modal.store";
   import { logger } from "$lib/client/components/debug/logger.client";
+  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
   let playerContainerRef: any;
   let playerRef: HTMLElement | null = document.getElementById("focusplayer");
   let playerContainer: HTMLElement | null =
     document.getElementById("playercontainer");
   let isPipShown = false;
+  let currentTask: any;
   $: isBreakReminderMode =
-    $sessionStore.timeRemainingToTakeBreak != undefined &&
-    $sessionStore.timeRemainingToTakeBreak < 0;
-  $: currentGoal = sessionStore.resolveCurrentGoal($sessionStore.currentTask);
+    $activeSession.timeRemainingToTakeBreak != undefined &&
+    $activeSession.timeRemainingToTakeBreak < 0;
+
   function enableFullScreenPlayer() {
     if (isPipShown) return;
     fullScreen.show(PointronAction.FULL_SCREEN_FOCUS);
@@ -37,7 +39,7 @@
   }
 
   function closePip() {
-    if (playerRef && $sessionStore.isSessionRunning)
+    if (playerRef && $activeSession.isSessionRunning)
       playerContainer?.append(playerRef);
     isPipShown = false;
     if ($player.isPipOn) {
@@ -100,12 +102,21 @@
   onMount(() => {
     playerRef = document.getElementById("focusplayer");
     playerContainer = document.getElementById("playercontainer");
-    const sessionSub = sessionStore.subscribe((x) => {
+    const sessionSub = activeSession.subscribe(async (x) => {
       if (
         x.state === SessionState.FINISHED ||
         x.state === SessionState.NOT_STARTED
       ) {
         closePip();
+      }
+      if (
+        x.currentFocusItem &&
+        !isSameResource(currentTask, x.currentFocusItem)
+      ) {
+        currentTask = await activeSession.resolveCurrentFocusItemData({
+          item: x.currentFocusItem,
+          isReturnTaskIfTodo: true
+        });
       }
     });
     const sub = player.subscribe((x) => {
@@ -151,7 +162,7 @@
       <div class="flex flex-col gap-1 w-full">
         <CustomColorPropagator
           type="button"
-          color={currentGoal?.color}
+          color={currentTask?.color}
           class={cn(
             "flex gap-2 h-full justify-between items-center px-4 py-2",
             isPipShown && {
@@ -164,10 +175,10 @@
               "w-[26rem] rounded-md": !$view.isPortrait,
               "bg-ars1 text-abg": isBreakReminderMode,
               "bg-ccs1 text-cbg":
-                $sessionStore.state === SessionState.FOCUS_RUNNING &&
+                $activeSession.state === SessionState.FOCUS_RUNNING &&
                 !isBreakReminderMode,
               "bg-ass1 text-abg":
-                $sessionStore.state != SessionState.FOCUS_RUNNING
+                $activeSession.state != SessionState.FOCUS_RUNNING
             },
             isPipShown && {
               "w-full": true
@@ -175,7 +186,7 @@
           )}
           on:click={clickHandler}
         >
-          {#if $sessionStore.state === SessionState.FINISHED}
+          {#if $activeSession.state === SessionState.FINISHED}
             <div class="flex w-full h-12 justify-center items-center">
               <InlineLoadingAnimation />Finishing session...
             </div>
@@ -206,11 +217,11 @@
                       isTabbable={true}
                       class={cn({
                         "stroke-cbg":
-                          $sessionStore.state === SessionState.FOCUS_RUNNING &&
+                          $activeSession.state === SessionState.FOCUS_RUNNING &&
                           !isBreakReminderMode,
                         "stroke-abg":
                           isBreakReminderMode ||
-                          $sessionStore.state != SessionState.FOCUS_RUNNING
+                          $activeSession.state != SessionState.FOCUS_RUNNING
                       })}
                     />
                   </button>
@@ -222,11 +233,11 @@
                   isTabbable={true}
                   class={cn({
                     "stroke-cbg":
-                      $sessionStore.state === SessionState.FOCUS_RUNNING &&
+                      $activeSession.state === SessionState.FOCUS_RUNNING &&
                       !isBreakReminderMode,
                     "stroke-abg":
                       isBreakReminderMode ||
-                      $sessionStore.state != SessionState.FOCUS_RUNNING
+                      $activeSession.state != SessionState.FOCUS_RUNNING
                   })}
                 />
               {/if}
