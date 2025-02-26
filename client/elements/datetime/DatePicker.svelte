@@ -15,11 +15,13 @@
   export let date: Date | undefined = undefined;
   export let style: InputStyle = InputStyle.BORDERED;
   export let label: InputLabel | undefined = undefined;
+  export let placeholder: string = "Select a date";
   export let variant:
     | "wide"
     | "wide-center"
     | "inline"
-    | "icon"
+    | "icon-only"
+    | "inline-with-icon"
     | "use-time-period-picker" = "wide";
   let ref: any;
   /**
@@ -99,6 +101,11 @@
       }}
       on:change={(e) => {
         isPopoverVisible = e.detail?.open;
+        if (isPopoverVisible) {
+          dispatch("opened");
+        } else {
+          dispatch("closed");
+        }
       }}
     >
       <Icon icon="calendar" size={Size.md} />
@@ -107,13 +114,15 @@
           {formatDate(date)}
         </span>
       {:else}
-        <span class="text-fgs2 text-b2">Select a date</span>
+        <span class="text-fgs2 text-b2">{placeholder}</span>
       {/if}
     </div>
   </FormElement>
-{:else if variant == "inline"}
+{:else if variant == "inline" || variant == "icon-only" || variant === "inline-with-icon"}
   <div
-    class="relative"
+    class={cn("relative flex items-center gap-1 justify-center", {
+      "p-1 hover:bg-bgs2 rounded-md": variant === "icon-only"
+    })}
     use:popover={{
       content: AbsoluteTimeRangePopoverV2,
       id: "date-picker-popover",
@@ -130,7 +139,12 @@
       }
     }}
   >
-    {formatDate(date)}
+    {#if variant === "icon-only" || variant === "inline-with-icon"}
+      <Icon icon="ph:calendar-light" />
+    {/if}
+    {#if variant === "inline" || variant === "inline-with-icon"}
+      {date ? formatDate(date) : placeholder}
+    {/if}
   </div>
 {:else}
   <div class="relative">

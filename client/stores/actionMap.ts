@@ -70,6 +70,8 @@ import type { IRecordId } from "$lib/client/types/data.type";
 import UserBilling from "../components/subscription/UserBilling.svelte";
 import UserPlanCancellation from "../components/subscription/UserPlanCancellation.svelte";
 import DocusaurusEmbed from "../components/cx/docusaurus/DocusaurusEmbed.svelte";
+import { goalStore } from "../components/goals/goal.store";
+import CreateTask from "../components/tasks/CreateTask.svelte";
 
 export const globalActions: IAction[] = [
   {
@@ -553,7 +555,7 @@ export const globalActions: IAction[] = [
     component: CreateCombination,
     label: "Create a new combination",
     type: ActionType.MODAL,
-    isInactive: true,
+    // isInactive: true,
     modalParams: {
       title: "Create a new combination",
       layout: {
@@ -705,13 +707,19 @@ export const globalActions: IAction[] = [
   {
     action: resourceAction(Resource.goal, ResourceActionType.CREATE),
     cmdLabel: "Create a new goal",
-    component: CreateGoal,
+    type: ActionType.FUNCTION,
+    fn: async () => {
+      await goalStore.createNew();
+    }
+  },
+  {
+    action: resourceAction(Resource.task, ResourceActionType.CREATE),
+    cmdLabel: "Create a new task",
     type: ActionType.MODAL,
+    component: CreateTask,
     modalParams: {
-      title: "Create a new goal",
       layout: {
-        size: Size.lg,
-        orientation: Orientation.Vertical
+        isDynamicSize: true
       }
     }
   },

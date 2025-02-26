@@ -647,7 +647,7 @@
               label="Close edit mode"
               icon="ph:x-light"
               on:click={() => {
-                $collection.isInEditMode = false;
+                collection.toggleEditMode(false);
               }}
               style={ButtonStyle.PLAIN}
             />

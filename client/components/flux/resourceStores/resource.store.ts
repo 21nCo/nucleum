@@ -42,6 +42,7 @@ import { toasts } from "$lib/client/stores/notification.store";
 import { logger } from "../../debug/logger.client";
 import { isSameResource, resourceInList } from "./resource.utils";
 import { GlobalEvent } from "$lib/client/types/event.enum";
+import { appStore } from "$lib/client/stores/app.store";
 // import { appStore } from "$lib/client/stores/app.store";
 
 export const activeResources = new Map<string, ActiveResourceStore<any, any>>();
@@ -137,6 +138,10 @@ export class ActiveResourceStore<
   }
   toggleReadMode(val: boolean) {
     return this.update((prev) => ({ ...prev, isInReadOnlyMode: val }));
+  }
+  toggleEditMode(val: boolean) {
+    appStore.toggleSearchParam(val ? { edit: "true" } : ["edit"]);
+    return this.update((prev) => ({ ...prev, isInEditMode: val }));
   }
   toggleLock(val: boolean) {
     return this.resourceStore.toggleLock(this.id, val);

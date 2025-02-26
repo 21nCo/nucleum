@@ -28,7 +28,7 @@ export type IActiveSessionStore = IObservableStoreSubject & {
   preventSliderReverseEventTemp?: boolean;
   widgetSnapshot?: any;
   timeRemainingToTakeBreak?: number;
-  notes: IMarkdown;
+  notes?: IMarkdown;
 };
 
 export type ICurrentFocusItem = {

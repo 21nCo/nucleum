@@ -44,11 +44,7 @@ import { logger } from "../debug/logger.client";
  * Used to identify if temporary s3 storage should be used or not, If true, temporary s3 storage is used
  */
 export const isReplaceableMd = writable<boolean>(false);
-export const emptyBlock: IBlockInterface = {
-  contentType: NodeType.SIMPLE_TEXT,
-  body: "",
-  id: generateResourceId(Resource.node)
-};
+
 const seedMdStore: IMarkdownStore = {
   blocks: [],
   headingsInView: []
@@ -90,12 +86,22 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
     this.set(seedMdStore);
   }
 
-  load(md: IMarkdown, params?: { isPreventFocus?: boolean }) {
+  load(md?: IMarkdown, params?: { isPreventFocus?: boolean }) {
+    let isEmpty = !md || !md.blocks || md.blocks.length === 0;
     this.set({
-      blocks: md.blocks,
+      blocks: isEmpty
+        ? [
+            {
+              id: generateResourceId(Resource.node),
+              contentType: NodeType.SIMPLE_TEXT,
+              body: ""
+            }
+          ]
+        : md!.blocks,
       headingsInView: []
     });
-    if (!params?.isPreventFocus) this.focus.set({ id: md.blocks?.[0]?.id });
+    if (!params?.isPreventFocus) this.focus.set({ id: md?.blocks?.[0]?.id });
+    if (isEmpty) mdContentChangeEvent.trigger();
   }
 
   setParams(params: IMarkdownParams) {

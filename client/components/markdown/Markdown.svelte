@@ -32,6 +32,7 @@
   import { NodeType } from "$lib/client/products/memotron/node/node.type";
   import context from "$lib/client/stores/context.store";
   import MarkdownkeyboardToolbar from "./toolbar/MarkdownkeyboardToolbar.svelte";
+  import { debouncer } from "$lib/client/utils/utils";
 
   /**
    * Propagates the event to the parent component.
@@ -62,7 +63,7 @@
   }
   setContext("markdown", markdownContext);
 
-  export let md: IMarkdown;
+  export let md: IMarkdown | undefined = undefined;
   export let params: IMarkdownParams | undefined = undefined;
   export let parentBackgroundIndex: number | undefined = undefined;
   const dispatch = createEventDispatcher();
@@ -80,13 +81,19 @@
   onMount(() => {
     const mdChangeSub = mdContentChangeEvent.subscribe((val) => {
       // console.log("md content changed", val);
-      if ("blocks" in md) md = { ...md, blocks: $mdStore.blocks };
+      if (md && "blocks" in md) md = { ...md, blocks: $mdStore.blocks };
+      else md = { blocks: $mdStore.blocks };
       dispatch("blocks", $mdStore.blocks);
+      dispatchDebouncedChangeEvent();
     });
     return () => {
       mdChangeSub();
     };
   });
+
+  const dispatchDebouncedChangeEvent = debouncer(() => {
+    dispatch("debouncedChange", md);
+  }, 1000);
 
   function onKeyDown(event: KeyboardEvent) {
     const focus = get(mdStore.focus);
@@ -105,7 +112,7 @@
     if (blockId) {
       mdStore.focus.set({ id: blockId });
     } else {
-      mdStore.focus.set({ id: md.blocks[0].id });
+      mdStore.focus.set({ id: md?.blocks[0].id });
     }
   }
 

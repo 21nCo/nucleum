@@ -23,6 +23,7 @@ import {
 import { CollectibleStore } from "../collection/collectible.store";
 import { activeSession } from "$lib/client/products/pointron/focus/session.store";
 import { get } from "svelte/store";
+import { appStore } from "$lib/client/stores/app.store";
 
 class GoalStore extends ResourceStore<IGoal> {
   constructor() {
@@ -32,25 +33,25 @@ class GoalStore extends ResourceStore<IGoal> {
   async save(
     form: OmitForCapture<IGoal>,
     additionalParams?: {
-      subTasks?: string[];
+      subGoals?: string[];
       context?: string;
     }
   ) {
     const id = generateResourceId(Resource.goal);
     logger.log({ at: "GoalStore.save", form });
 
-    let subTaskIds: IRecordId[] = [];
-    let subTasks: OmitForCaptureWithId<IGoal>[] = [];
-    if (additionalParams?.subTasks && additionalParams.subTasks.length > 0) {
-      subTasks = additionalParams.subTasks.map((subTask) => ({
+    let subGoalIds: IRecordId[] = [];
+    let subGoals: OmitForCaptureWithId<IGoal>[] = [];
+    if (additionalParams?.subGoals && additionalParams.subGoals.length > 0) {
+      subGoals = additionalParams.subGoals.map((subGoal) => ({
         id: generateResourceId(Resource.goal),
-        label: subTask,
+        label: subGoal,
         type: GoalType.INDEFINITE,
         parent: [id],
         isCompleted: false,
         accessMode: ResourceAccessMode.POP
       }));
-      subTaskIds = subTasks.map((subTask) => subTask.id);
+      subGoalIds = subGoals.map((subGoal) => subGoal.id);
     }
 
     const resource: OmitForCaptureWithId<IGoal> = {
@@ -63,7 +64,7 @@ class GoalStore extends ResourceStore<IGoal> {
       spanScale: form.spanScale,
       parent: form.parent,
       color: form.color,
-      children: subTaskIds,
+      children: subGoalIds,
       subGoalsLayout: form.subGoalsLayout
     };
 
@@ -72,7 +73,22 @@ class GoalStore extends ResourceStore<IGoal> {
       timestamp: new Date()
     });
 
-    return this.create([resource, ...subTasks], additionalParams);
+    return this.create([resource, ...subGoals], additionalParams);
+  }
+
+  async createNew() {
+    const id = generateResourceId(Resource.goal);
+    const goal: OmitForCaptureWithId<IGoal> = {
+      id,
+      label: "",
+      type: GoalType.INDEFINITE
+    };
+    await this.create([goal]);
+    appStore.openResource(id, ResourceAccessMode.POP, {
+      searchParams: {
+        edit: "true"
+      }
+    });
   }
 
   async addSubGoalWithContext(
@@ -126,7 +142,10 @@ export class ActiveGoalStore extends CollectibleStore<IActiveGoal, GoalStore> {
     super(goalId, goalStore);
   }
 
-  async init(accessMode: ResourceAccessMode) {
+  async init(
+    accessMode: ResourceAccessMode,
+    params?: { isInEditMode?: boolean }
+  ) {
     logger.log({ at: "ActiveGoalStore.init", id: this.id });
     try {
       const result = await this.resourceStore.select(this.id, [
@@ -163,7 +182,8 @@ export class ActiveGoalStore extends CollectibleStore<IActiveGoal, GoalStore> {
         ...result,
         collections,
         isPageLoading: false,
-        accessMode
+        accessMode,
+        ...(params?.isInEditMode && { isInEditMode: true })
       });
 
       recentsStore.add(result, {

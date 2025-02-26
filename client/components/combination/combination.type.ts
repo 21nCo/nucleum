@@ -14,5 +14,8 @@ export enum CombinationType {
   WHITEBOARD = "whiteboard",
   MINDMAP = "mindmap",
   WALL = "wall",
+  /**
+   * Previous - Pyramid, Funnel views merged into regular timeline view.
+   */
   TIMELINE = "timeline"
 }

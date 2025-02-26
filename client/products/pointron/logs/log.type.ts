@@ -71,7 +71,7 @@ export type IManualSessionLogForm = {
   endDate: Date;
   goalId: string;
   duration: number;
-  notes: IMarkdown;
+  notes?: IMarkdown;
 };
 
 export interface ILogsPaneStore extends IObservableStoreSubject {

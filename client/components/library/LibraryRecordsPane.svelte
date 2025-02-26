@@ -82,6 +82,7 @@
   import { createEventDispatcher } from "svelte";
   import { collectionCountStore } from "../collection/collectionCount.store";
   import { resolveGoalSubTypesForSwitcher } from "../goals/goal.utils";
+  import { resolveTaskSubTypesForSwitcher } from "../tasks/task.utils";
   const dispatch = createEventDispatcher();
 
   export let resource: Resource;
@@ -99,7 +100,14 @@
   let searchStore = new SearchStore();
   let QAsearchStore = new SearchStore();
   QAsearchStore.searchType = SearchType.SEMANTIC;
-  type SubType = "all" | "recents" | "starred" | NodeType | CollectionType;
+  type SubType =
+    | "all"
+    | "recents"
+    | "starred"
+    | NodeType
+    | CollectionType
+    | "incomplete"
+    | "bydate";
   let selectedSubType: SubType = "all";
   let isRefreshing: boolean = true;
   let totalCountAfterFilter: number = 0;
@@ -109,6 +117,7 @@
   const nodeSubTypesForSwitcher = resolveNodeSubTypesForSwitcher();
   const collectionSubTypesForSwitcher = resolveCollectionSubTypesForSwitcher();
   const goalSubTypesForSwitcher = resolveGoalSubTypesForSwitcher(true);
+  const taskSubTypesForSwitcher = resolveTaskSubTypesForSwitcher();
   const allSubTypeSwitcherItem = {
     label: "All",
     value: "all",
@@ -238,6 +247,10 @@
         resource === Resource.goal
       ) {
         filters = { ...filters, type: selectedSubType };
+      } else if (resource === Resource.task) {
+        if (selectedSubType === "incomplete") {
+          filters = { ...filters, isChecked: false };
+        }
       }
     }
     return filters;
@@ -321,6 +334,8 @@
         items.push(...collectionSubTypesForSwitcher);
       } else if (resource === Resource.goal) {
         items.push(...goalSubTypesForSwitcher);
+      } else if (resource === Resource.task) {
+        items.push(...taskSubTypesForSwitcher);
       }
       return items;
     }
@@ -641,6 +656,7 @@
           isShowLoadingPulseAtTheEnd={data.length < totalCountAfterFilter &&
             !searchQuery}
           arrangement={resolveArrangement()}
+          isPreventGrid={resource === Resource.task}
         />
       </div>
       <div

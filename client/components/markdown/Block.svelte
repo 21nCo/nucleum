@@ -1001,7 +1001,7 @@
       </div>
     {/if}
   </div>
-  {#if !$mdStore.params?.isReadOnly}
+  {#if !$mdStore.params?.isReadOnly && $mdStore.params?.isNodular}
     <div class="flex items-center justify-center">
       {#if isHovering && !isFocusing && !isSoleBlock && [...simpleTextNodeTypeList, ...headingNodeTypes, ...listNodeTypes, NodeType.DIVIDER, NodeType.DOUBLE_DIVIDER].includes(block.contentType)}
         <Button

@@ -28,6 +28,7 @@
   export let orientation: Orientation = Orientation.Vertical;
   export let hasCantileverButtons: boolean = false;
   export let isInFocusMode = false;
+  export let isDynamicSize: boolean = false;
   let dialog: HTMLDialogElement;
   /**
    * Safari focuses the dialog element or a button present on the dialog when the dilaog is shown. This focusTrap is used to remove the focus from the dialog element or the button.
@@ -81,6 +82,9 @@
   }
 
   function resolveSizeClasses() {
+    if (isDynamicSize) {
+      return {};
+    }
     return {
       "w-full h-full min-h-screen min-w-screen": size === Size.full,
       // "w-[20rem] tp:w-[25rem] h-[25rem] min-h-[20rem]": size === Size.sm,

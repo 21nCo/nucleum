@@ -175,7 +175,11 @@ export enum ResourceAccessPoint {
   /**
    * The resource is being accessed from a creation form
    */
-  FORM = "form"
+  FORM = "form",
+  /**
+   * The resource is being accessed from a goal
+   */
+  GOAL = "goal"
 }
 
 export enum ResourceAccessPointState {

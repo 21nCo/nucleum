@@ -492,7 +492,8 @@ export class SearchStore {
       } else if (
         resource === Resource.collection ||
         resource === Resource.combination ||
-        resource === Resource.goal
+        resource === Resource.goal ||
+        resource === Resource.task
       ) {
         const result = await flux.selectMany(resource, {
           properties: ["count()"],

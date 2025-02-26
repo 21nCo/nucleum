@@ -1,23 +1,23 @@
 <script lang="ts">
+  import { mount } from "$lib/client/actions/mount.action";
   import {
     resolveGoalContextMenu,
     type IActiveGoalStore
   } from "$lib/client/components/goals/goal.store";
   import Breadcrumbs from "$lib/client/elements/breadcrumbsV2/Breadcrumbs.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
-  import ColorPickerMini from "$lib/client/elements/colorPicker/ColorPickerMini.svelte";
   import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { Placement } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { ResourceAccessPoint } from "../../flux/resourceStores/resource.type";
   import RecordStarStatusFeedback from "../../record/RecordStarStatusFeedback.svelte";
   export let goal: IActiveGoalStore;
   export let isConstrainedWidth = false;
   let labelEditVal = $goal.label;
+  let inputRef: TextInput;
   function resolveBreadcrumbs() {
     const parentItems = $goal.parent?.map((p) => ({
       label: p.label,
@@ -38,19 +38,13 @@
     });
   }
 
-  function handleColorChange(e: number | string) {
-    goal.modify({
-      color: +e
-    });
-  }
-
   function handleLabelSave(e: any) {
     $goal.label = labelEditVal;
     goal.modify({
       label: labelEditVal
     });
     labelEditVal = "";
-    $goal.isInEditMode = false;
+    goal.toggleEditMode(false);
   }
 </script>
 
@@ -60,48 +54,53 @@
   })}
 >
   <!-- <Icon icon={resolveTaskTypeIcon($task.type)} class="text-fgs3" /> -->
-  <Breadcrumbs items={resolveBreadcrumbs()} />
   <div class="w-full flex items-center justify-between gap-1">
-    {#if $goal.isInEditMode}
-      <div class="flex items-center gap-2 flex-1">
-        <span class="flex-1">
-          <TextInput
-            bind:value={labelEditVal}
-            placeholder="Enter task name"
-            width="w-full"
-            isShowSaveControl={true}
-            parentBackgroundIndex={2}
-            on:debouncedChange={handleLabelChange}
-            on:save={handleLabelSave}
-            on:cancel={() => {
-              $goal.isInEditMode = false;
-              labelEditVal = "";
-            }}
-          />
-        </span>
-        {#if !isValidArrayWithData($goal.parent)}
-          <ColorPickerMini
-            bind:hue={$goal.color}
-            onDebouncedChangeCallback={handleColorChange}
-          />
-        {/if}
-      </div>
-    {:else}
-      <button
-        class="flex-1"
-        on:click={() => {
-          $goal.isInEditMode = true;
-          labelEditVal = $goal.label;
-        }}
-      >
-        <div class="flex items-center gap-2 w-full">
-          <h1 class="text-left text-h4 lp:text-h3 font-medium text-ccs1">
-            {$goal.label}
-          </h1>
-          <RecordStarStatusFeedback isStarred={$goal.isStarred} />
+    <div class="flex flex-col flex-1 min-w-0">
+      {#if !$goal.isInEditMode}
+        <Breadcrumbs items={resolveBreadcrumbs()} />
+      {/if}
+      {#if $goal.isInEditMode}
+        <div
+          class="flex items-center gap-2 w-full"
+          use:mount={() => {
+            labelEditVal = $goal.label;
+            inputRef?.focus();
+          }}
+        >
+          <span class="flex-1">
+            <TextInput
+              bind:this={inputRef}
+              bind:value={labelEditVal}
+              placeholder="Enter task name"
+              width="w-full"
+              parentBackgroundIndex={2}
+              on:debouncedChange={handleLabelChange}
+              on:save={handleLabelSave}
+              on:enter={handleLabelSave}
+              on:cancel={() => {
+                goal.toggleEditMode(false);
+                labelEditVal = "";
+              }}
+            />
+          </span>
         </div>
-      </button>
-    {/if}
+      {:else}
+        <button
+          class="w-full"
+          on:click={() => {
+            goal.toggleEditMode(true);
+            labelEditVal = $goal.label;
+          }}
+        >
+          <div class="flex items-center gap-2 w-full">
+            <h1 class="text-left text-h4 lp:text-h3 font-medium text-ccs1">
+              {$goal.label ? $goal.label : "Untitled"}
+            </h1>
+            <RecordStarStatusFeedback isStarred={$goal.isStarred} />
+          </div>
+        </button>
+      {/if}
+    </div>
     <ContextMenuAction
       menuResolver={() =>
         resolveGoalContextMenu($goal, ResourceAccessPoint.SELF)}

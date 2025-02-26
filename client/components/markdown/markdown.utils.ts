@@ -923,15 +923,3 @@ export function extractRootStructure(
   });
   return rootBlocks;
 }
-
-export function seedMarkdown() {
-  return {
-    blocks: [
-      {
-        id: "1",
-        contentType: NodeType.SIMPLE_TEXT,
-        body: ""
-      }
-    ]
-  };
-}

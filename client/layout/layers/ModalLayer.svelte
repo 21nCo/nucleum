@@ -299,6 +299,7 @@
       $context.embed != Embed.HANDSET &&
       isDialogEnabled}
     size={modal.layout?.size ?? Size.md}
+    isDynamicSize={modal.layout?.isDynamicSize}
     orientation={modal.layout?.orientation ?? Orientation.Vertical}
     isOnRight={modal?.isOnRight}
     hasCantileverButtons={modal.layout?.isShowCantileverClose ||

@@ -10,6 +10,11 @@
   import RecordStatusBanner from "../../record/RecordStatusBanner.svelte";
   import { activeSession } from "$lib/client/products/pointron/focus/session.store";
   import { isSameResource } from "../../flux/resourceStores/resource.utils";
+  import type { IMarkdown } from "$lib/client/components/markdown/md.type";
+  import { isEmptyMd } from "../../markdown/markdown.utils";
+  import GoalInfoEditControl from "./GoalInfoEditControl.svelte";
+  import Icon from "$lib/client/elements/Icon.svelte";
+  import { Size } from "$lib/client/types/size.enum";
   export let goal: IActiveGoalStore;
   export let isConstrainedWidth = false;
   function handleStatusChange(e: CustomEvent<GoalStatus>) {
@@ -23,10 +28,27 @@
     isSameResource(goal, $activeSession.currentFocusItem) &&
     $activeSession.isQuickStartOn &&
     $activeSession.isSessionRunning;
+
+  function onDescriptionChange(e: CustomEvent<IMarkdown>) {
+    goal.modify({
+      description: e.detail
+    });
+  }
 </script>
 
+{#if $goal.isInEditMode}
+  <button
+    class="flex gap-1 w-full h-12 bg-ass1 text-abg items-center justify-center rounded-md hover:brightness-110"
+    on:click={() => {
+      goal.toggleEditMode(false);
+    }}
+  >
+    <Icon icon="ph:x" size={Size.sm} class="text-abg" />
+    <span> Close edit mode </span>
+  </button>
+{/if}
 <div
-  class={cn("flex flex-col gap-6", {
+  class={cn("relative flex flex-col gap-6 h-full", {
     "bg-bgs2 rounded-md p-3 h-full": isConstrainedWidth
   })}
 >
@@ -38,25 +60,46 @@
       {#if isConstrainedWidth}
         <span class="text-b2 text-fgs3">Collections</span>
       {/if}
-      <GoalCollectionsRow task={goal} />
+      {#if $goal.isInEditMode}
+        <div class="grid grid-cols-2 gap-2 h-20 my-4">
+          <GoalInfoEditControl {goal} control="color" />
+          <GoalInfoEditControl {goal} control="type" />
+        </div>
+      {:else}
+        <GoalCollectionsRow task={goal} />
+      {/if}
     </div>
   </div>
   <RecordStatusBanner resource={goal} />
   {#if isCurrentlyFocusing}
     Currently focusing...
   {/if}
-  <div class="flex flex-col gap-1">
-    <span class="text-b2 text-fgs3">Status</span>
-    <GoalStatusSwitcher status={$goal.status} on:change={handleStatusChange} />
-  </div>
+  {#if !$goal.isInEditMode}
+    <div class="flex flex-col gap-1">
+      <span class="text-b2 text-fgs3">Status</span>
+      <GoalStatusSwitcher
+        status={$goal.status}
+        on:change={handleStatusChange}
+      />
+    </div>
+  {/if}
   {#if $goal.type === GoalType.DEFINITE}
     <TimelineCard {goal} />
   {/if}
 
-  {#if $goal.description}
+  {#if ($goal.description && !isEmptyMd($goal.description.blocks)) || $goal.isInEditMode}
     <div>
       <span class="text-b2 text-fgs3">Description</span>
-      <Markdown md={$goal.description} />
+      <div class="flex flex-col gap-2 p-2 bg-bgs2 rounded-md overflow-auto">
+        <Markdown
+          md={$goal.description}
+          params={{
+            placeholder: "Type...",
+            isPreventFocusOnLoad: true
+          }}
+          on:debouncedChange={onDescriptionChange}
+        />
+      </div>
     </div>
   {/if}
 </div>

@@ -21,8 +21,18 @@
   import NodeItems from "$lib/client/products/memotron/node/NodeRecords.svelte";
   import LibraryLoadingPulse from "$lib/client/components/library/LibraryLoadingPulse.svelte";
   import GoalThumbnail from "../goals/thumbnail/GoalThumbnail.svelte";
+  import TaskThumbnail from "../tasks/TaskThumbnail.svelte";
+  import TasksLibrary from "../tasks/TasksLibrary.svelte";
+  import type { IGoalThumb } from "../goals/goal.type";
+  import type { ITaskThumb } from "../tasks/task.type";
   const dispatch = createEventDispatcher();
-  export let data: (INodeThumb | ICollection | IFile)[] = [];
+  export let data: (
+    | INodeThumb
+    | ICollection
+    | IFile
+    | IGoalThumb
+    | ITaskThumb
+  )[] = [];
   export let resource: Resource = Resource.node;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let defaultAccessMode: ResourceAccessMode = ResourceAccessMode.POP;
@@ -33,6 +43,7 @@
   export let isPreventDefault = false;
   export let width: number = 290;
   export let isShowLoadingPulseAtTheEnd: boolean = false;
+  export let isPreventGrid: boolean = false;
   let parentBgIndex = 1;
   $: multiSelectContext = {
     resource,
@@ -56,15 +67,17 @@
   <!-- <div class={cn("flex h-full w-full gap-4 flex-row flex-wrap content-start")}> -->
   {#if resource === Resource.node && arrangement === Arrangement.MASONRY}
     <NodeItems nodes={data} {arrangement} density={3} {accessPoint} />
+  {:else if resource === Resource.task && accessPoint === ResourceAccessPoint.LIBRARY}
+    <TasksLibrary {data} {arrangement} {accessPoint} {parentBgIndex} />
   {:else}
     <div
-      class={cn(
-        `h-full w-full grid grid-cols-[repeat(auto-fill,minmax(${width}px,1fr))] content-start`,
-        {
-          "gap-2": arrangement === Arrangement.LIST,
-          "gap-4": arrangement === Arrangement.GRID
-        }
-      )}
+      class={cn(`h-full w-full content-start`, {
+        "flex flex-col gap-2": isPreventGrid,
+        [`grid grid-cols-[repeat(auto-fill,minmax(${width}px,1fr))]`]:
+          !isPreventGrid,
+        "gap-2": arrangement === Arrangement.LIST,
+        "gap-4": arrangement === Arrangement.GRID
+      })}
     >
       {#each data as item (item)}
         {#if resource === Resource.everything || resource === Resource.unknown}
@@ -103,6 +116,14 @@
           />
         {:else if resource === Resource.goal && arrangement !== Arrangement.MASONRY}
           <GoalThumbnail
+            {item}
+            {accessPoint}
+            {parentBgIndex}
+            {arrangement}
+            on:click={(e) => onClick(e, item)}
+          />
+        {:else if resource === Resource.task && arrangement !== Arrangement.MASONRY}
+          <TaskThumbnail
             {item}
             {accessPoint}
             {parentBgIndex}

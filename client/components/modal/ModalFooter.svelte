@@ -79,6 +79,7 @@
         style={primaryAction.style ?? ButtonStyle.DEFAULT}
         isLoading={isPrimaryActionInProgress}
         isDisabled={$isPrimaryActionDisabled}
+        size={primaryAction.size ?? Size.md}
         on:click={onPrimaryClick}
         label={primaryAction.label}
         shortcut={GlobalEvent.ENTER}

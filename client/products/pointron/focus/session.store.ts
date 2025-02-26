@@ -91,15 +91,6 @@ const seedSessionStore: IActiveSessionStore = {
   totalIdle: 0,
   totalExtended: 0,
   plannedDuration: 0,
-  notes: {
-    blocks: [
-      {
-        id: generateSimpleRandomId(),
-        contentType: NodeType.SIMPLE_TEXT,
-        body: ""
-      }
-    ]
-  },
   intervals: [
     {
       id: generateSimpleRandomId(),

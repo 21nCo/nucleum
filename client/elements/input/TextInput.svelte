@@ -224,7 +224,8 @@
         <input
           {id}
           class={cn(inputClasses, {
-            "h-7": hasControls
+            "h-7": hasControls,
+            "h-12 text-h3": size === Size.lg
           })}
           bind:value
           on:paste|stopPropagation

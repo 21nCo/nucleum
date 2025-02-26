@@ -7,6 +7,7 @@
   import { SubGoalsLayout, GoalStatus, type IGoal } from "../goal.type";
   import { createEventDispatcher } from "svelte";
   import StepMarker from "./StepMarker.svelte";
+  import { formatDate } from "$lib/client/utils/time.utils";
   export let subGoal: IGoal | { label?: string; type: string };
   export let index: number;
   export let totalLength: number;
@@ -41,8 +42,14 @@
           "line-through": subGoal.status === GoalStatus.COMPLETED
         })}
       >
-        {subGoal.label}
+        {subGoal.label ? subGoal.label : "Untitled"}
       </div>
+      {#if subGoal.startDate && subGoal.endDate}
+        <div class="text-b3 text-fgs3">
+          {formatDate(new Date(subGoal.startDate))} -
+          {formatDate(new Date(subGoal.endDate))}
+        </div>
+      {/if}
     {:else}
       <TextInput
         bind:value={newSubGoalLabel}

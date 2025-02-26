@@ -21,6 +21,7 @@
   import GoalHistory from "./history/GoalHistory.svelte";
   import GoalTasks from "./tasks/GoalTasks.svelte";
   import { onMount } from "svelte";
+  import { page } from "$app/stores";
 
   export let id: string;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -39,7 +40,10 @@
   let selectedPanel = isConstrainedWidth ? "info" : "subgoals";
 
   onMount(async () => {
-    goal.init(accessMode);
+    const editSearchParam = $page.url.searchParams.get("edit");
+    goal.init(accessMode, {
+      isInEditMode: editSearchParam === "true"
+    });
     isReady = true;
   });
 

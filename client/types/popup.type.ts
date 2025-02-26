@@ -27,6 +27,7 @@ export type ModalParams = {
 
 export type ModalLayoutParams = {
   size?: Size;
+  isDynamicSize?: boolean;
   orientation?: Orientation;
   primaryAction?: IButtonParams;
   secondaryAction?: IButtonParams;

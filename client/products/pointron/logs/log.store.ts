@@ -63,16 +63,7 @@ class ManualLogStore extends ObservableStore<ISessionLogStore> {
       })!,
       id: generateSimpleRandomId(),
       goalId: goalId ?? "",
-      duration: 0,
-      notes: {
-        blocks: [
-          {
-            id: generateSimpleRandomId(),
-            contentType: NodeType.SIMPLE_TEXT,
-            body: ""
-          }
-        ]
-      }
+      duration: 0
     };
     return newLog;
   }

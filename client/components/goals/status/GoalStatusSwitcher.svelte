@@ -16,7 +16,7 @@
     <div
       class={cn("absolute top-1/2 left-0 right-0 border-t z-10", {
         "border-fgs4 border-dashed": status !== GoalStatus.COMPLETED,
-        "border-aps1 border-2": status === GoalStatus.COMPLETED
+        "border-ccs1 border-2": status === GoalStatus.COMPLETED
       })}
     />
     {#if status === GoalStatus.IN_PROGRESS}

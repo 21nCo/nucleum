@@ -104,7 +104,7 @@
                 node.modify({ label: $node.label });
             }}
             on:editModeChange={(e) => {
-              $node.isInEditMode = e.detail;
+              node.toggleEditMode(e.detail);
             }}
           />
           {#if !isConstrainedWidth && !$node.isInEditMode}
