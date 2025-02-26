@@ -6,9 +6,9 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { enumToString } from "$lib/shared/utils/text.utils";
   import { fly } from "svelte/transition";
-  import { TaskStatus } from "../task.type";
-  import { resolveTaskStatusIcon } from "../task.utils";
-  export let status: TaskStatus;
+  import { GoalStatus } from "../goal.type";
+  import { resolveGoalStatusIcon } from "../goal.utils";
+  export let status: GoalStatus;
   export let isActive = false;
   export let isAccent = false;
 </script>
@@ -26,9 +26,9 @@
   on:click
 >
   <Icon
-    icon={status === TaskStatus.COMPLETED
+    icon={status === GoalStatus.COMPLETED
       ? "ph:check-circle-light"
-      : resolveTaskStatusIcon(status)}
+      : resolveGoalStatusIcon(status)}
     size={Size.sm}
     class={cn({
       "text-cbg": isActive || isAccent,

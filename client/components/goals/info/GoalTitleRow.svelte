@@ -1,8 +1,8 @@
 <script lang="ts">
   import {
-    resolveTaskContextMenu,
-    type IActiveTaskStore
-  } from "$lib/client/components/tasks/task.store";
+    resolveGoalContextMenu,
+    type IActiveGoalStore
+  } from "$lib/client/components/goals/goal.store";
   import Breadcrumbs from "$lib/client/elements/breadcrumbsV2/Breadcrumbs.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import ColorPickerMini from "$lib/client/elements/colorPicker/ColorPickerMini.svelte";
@@ -15,42 +15,42 @@
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { ResourceAccessPoint } from "../../flux/resourceStores/resource.type";
   import RecordStarStatusFeedback from "../../record/RecordStarStatusFeedback.svelte";
-  export let task: IActiveTaskStore;
+  export let goal: IActiveGoalStore;
   export let isConstrainedWidth = false;
-  let labelEditVal = $task.label;
+  let labelEditVal = $goal.label;
   function resolveBreadcrumbs() {
-    const parentItems = $task.parent?.map((p) => ({
+    const parentItems = $goal.parent?.map((p) => ({
       label: p.label,
       resourceId: p.id?.toString()
     }));
     if (parentItems && parentItems.length > 0) {
       parentItems.push({
-        label: $task.label,
-        resourceId: $task.id?.toString()
+        label: $goal.label,
+        resourceId: $goal.id?.toString()
       });
     }
     return parentItems;
   }
 
   function handleLabelChange(e: CustomEvent<string>) {
-    task.modify({
+    goal.modify({
       label: e.detail
     });
   }
 
   function handleColorChange(e: number | string) {
-    task.modify({
+    goal.modify({
       color: +e
     });
   }
 
   function handleLabelSave(e: any) {
-    $task.label = labelEditVal;
-    task.modify({
+    $goal.label = labelEditVal;
+    goal.modify({
       label: labelEditVal
     });
     labelEditVal = "";
-    $task.isInEditMode = false;
+    $goal.isInEditMode = false;
   }
 </script>
 
@@ -62,7 +62,7 @@
   <!-- <Icon icon={resolveTaskTypeIcon($task.type)} class="text-fgs3" /> -->
   <Breadcrumbs items={resolveBreadcrumbs()} />
   <div class="w-full flex items-center justify-between gap-1">
-    {#if $task.isInEditMode}
+    {#if $goal.isInEditMode}
       <div class="flex items-center gap-2 flex-1">
         <span class="flex-1">
           <TextInput
@@ -74,14 +74,14 @@
             on:debouncedChange={handleLabelChange}
             on:save={handleLabelSave}
             on:cancel={() => {
-              $task.isInEditMode = false;
+              $goal.isInEditMode = false;
               labelEditVal = "";
             }}
           />
         </span>
-        {#if !isValidArrayWithData($task.parent)}
+        {#if !isValidArrayWithData($goal.parent)}
           <ColorPickerMini
-            bind:hue={$task.color}
+            bind:hue={$goal.color}
             onDebouncedChangeCallback={handleColorChange}
           />
         {/if}
@@ -90,21 +90,21 @@
       <button
         class="flex-1"
         on:click={() => {
-          $task.isInEditMode = true;
-          labelEditVal = $task.label;
+          $goal.isInEditMode = true;
+          labelEditVal = $goal.label;
         }}
       >
         <div class="flex items-center gap-2 w-full">
           <h1 class="text-left text-h4 lp:text-h3 font-medium text-ccs1">
-            {$task.label}
+            {$goal.label}
           </h1>
-          <RecordStarStatusFeedback isStarred={$task.isStarred} />
+          <RecordStarStatusFeedback isStarred={$goal.isStarred} />
         </div>
       </button>
     {/if}
     <ContextMenuAction
       menuResolver={() =>
-        resolveTaskContextMenu($task, ResourceAccessPoint.SELF)}
+        resolveGoalContextMenu($goal, ResourceAccessPoint.SELF)}
       position={Placement.BottomCenter}
       id="taskContextMenu"
       size={Size.lg}

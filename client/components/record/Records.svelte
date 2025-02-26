@@ -20,7 +20,7 @@
   import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
   import NodeItems from "$lib/client/products/memotron/node/NodeRecords.svelte";
   import LibraryLoadingPulse from "$lib/client/components/library/LibraryLoadingPulse.svelte";
-  import TaskThumbnail from "../tasks/thumbnail/TaskThumbnail.svelte";
+  import GoalThumbnail from "../goals/thumbnail/GoalThumbnail.svelte";
   const dispatch = createEventDispatcher();
   export let data: (INodeThumb | ICollection | IFile)[] = [];
   export let resource: Resource = Resource.node;
@@ -101,8 +101,8 @@
             {arrangement}
             on:click={(e) => onClick(e, item)}
           />
-        {:else if resource === Resource.task && arrangement !== Arrangement.MASONRY}
-          <TaskThumbnail
+        {:else if resource === Resource.goal && arrangement !== Arrangement.MASONRY}
+          <GoalThumbnail
             {item}
             {accessPoint}
             {parentBgIndex}

@@ -33,7 +33,7 @@ import { resourceInList } from "$lib/client/components/flux/resourceStores/resou
 import { recentsStore } from "./recent.store";
 import { get } from "svelte/store";
 import { resolveCollectionResource } from "../collection/collection.utils";
-import { taskStore } from "../tasks/task.store";
+import { goalStore } from "../goals/goal.store";
 import { Action } from "$lib/client/types/action.enum";
 
 export const MAX_FILE_SIZE_MB = 100;
@@ -55,7 +55,7 @@ export class SearchStore {
   searchType: SearchType = SearchType.FULL_TEXT;
   semanticSearchTopK: number | undefined;
   dev_isUseIndexSearch: boolean = false;
-  collectibleResource: Resource | undefined;
+  collectibleResource: Resource[] | undefined;
   constructor(resource: Resource = Resource.everything) {
     this.resource = resource;
     this.collectibleResource = resolveCollectionResource(get(appStore).product);
@@ -212,8 +212,8 @@ export class SearchStore {
     return result;
   }
 
-  async tasks(params: { isIncludeSubItems?: boolean }) {
-    const result = await flux.selectMany(Resource.task, {
+  async goals(params: { isIncludeSubItems?: boolean }) {
+    const result = await flux.selectMany(Resource.goal, {
       properties: [
         labelSearchProp,
         "*",
@@ -228,6 +228,30 @@ export class SearchStore {
             ? this.filters.type?.toUpperCase()
             : undefined,
         parent: this.searchQuery || params.isIncludeSubItems ? undefined : false
+      },
+      search: isValidString(this.searchQuery)
+        ? {
+            query: this.searchQuery,
+            properties: ["label"]
+          }
+        : undefined,
+      orderBy: this.orderBy ?? {
+        modifiedAt: "desc"
+      },
+      limit: this.limit,
+      offset: this.offset
+    });
+    logger.log({ at: "refreshGoals", result });
+    return result;
+  }
+
+  async tasks() {
+    const result = await flux.selectMany(Resource.task, {
+      properties: [labelSearchProp, "*"],
+      filters: {
+        trashInformation: false,
+        ...this.filters,
+        isArchived: this.filters.isArchived ?? false
       },
       search: isValidString(this.searchQuery)
         ? {
@@ -278,10 +302,12 @@ export class SearchStore {
       data = (await this.nodes()) ?? [];
     } else if (this.resource === Resource.collection) {
       data = (await this.collections()) ?? [];
-    } else if (this.resource === Resource.task) {
+    } else if (this.resource === Resource.goal) {
       data =
-        (await this.tasks({ isIncludeSubItems: params.isIncludeSubItems })) ??
+        (await this.goals({ isIncludeSubItems: params.isIncludeSubItems })) ??
         [];
+    } else if (this.resource === Resource.task) {
+      data = (await this.tasks()) ?? [];
     }
     if (isValidArray(data)) {
       if (isValidString(this.searchQuery)) {
@@ -337,7 +363,9 @@ export class SearchStore {
         params?.resource === Resource.collection &&
         this.collectibleResource
       ) {
-        items = items.filter((x) => x.resource === this.collectibleResource);
+        items = items.filter((x) =>
+          this.collectibleResource?.includes(x.resource)
+        );
       }
       return items;
     }
@@ -464,7 +492,7 @@ export class SearchStore {
       } else if (
         resource === Resource.collection ||
         resource === Resource.combination ||
-        resource === Resource.task
+        resource === Resource.goal
       ) {
         const result = await flux.selectMany(resource, {
           properties: ["count()"],
@@ -478,7 +506,7 @@ export class SearchStore {
               : {}),
             isArchived: this.filters.isArchived ?? false,
             type: subType ? [subType] : undefined,
-            parent: resource === Resource.task ? false : undefined
+            parent: resource === Resource.goal ? false : undefined
           },
           groupBy: ["all"]
         });
@@ -682,7 +710,7 @@ export class BulkEditor {
       } else if (this.resource === Resource.task) {
         switch (action) {
           case "star":
-            await taskStore.bulkModify(
+            await goalStore.bulkModify(
               items,
               {
                 isStarred: true
@@ -692,7 +720,7 @@ export class BulkEditor {
             onSuccess(action, items.length, Resource.task);
             break;
           case "unstar":
-            await taskStore.bulkModify(
+            await goalStore.bulkModify(
               items,
               {
                 isStarred: false
@@ -702,7 +730,7 @@ export class BulkEditor {
             onSuccess(action, items.length, Resource.task);
             break;
           case "archive":
-            await taskStore.bulkModify(
+            await goalStore.bulkModify(
               items,
               {
                 isArchived: true
@@ -712,7 +740,7 @@ export class BulkEditor {
             onSuccess(action, items.length, Resource.task);
             break;
           case "unarchive":
-            await taskStore.bulkModify(
+            await goalStore.bulkModify(
               items,
               {
                 isArchived: false
@@ -722,7 +750,7 @@ export class BulkEditor {
             onSuccess(action, items.length, Resource.task);
             break;
           case "delete":
-            await taskStore.bulkTrash(items, additionalParams);
+            await goalStore.bulkTrash(items, additionalParams);
             onSuccess(action, items.length, Resource.task);
             break;
         }

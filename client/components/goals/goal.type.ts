@@ -5,46 +5,54 @@ import type { ICollectionExpanded } from "../collection/collection.type";
 import type { TimeScale } from "$lib/client/types/time.type";
 import type { IMemotronItemBase } from "$lib/client/products/memotron/memotron.type";
 
-export enum TaskType {
+export enum GoalType {
   INDEFINITE = "INDEFINITE",
   DEFINITE = "DEFINITE",
+  /**
+   * @deprecated - repeated tasks i.e. routines are now handled in todos
+   */
   ROUTINE = "ROUTINE"
 }
-export enum SubTasksMethod {
+export enum SubGoalsLayout {
   DEFAULT = "DEFAULT",
   TREE = "TREE",
-  STEPS = "STEPS"
+  STEPS = "STEPS",
+  TABS = "TABS",
+  BOARDS = "BOARDS"
 }
-export interface ITaskBase extends IMemotronItemBase {
+export interface IGoalBase extends IMemotronItemBase {
   label: string;
-  type: TaskType;
+  type: GoalType;
   description?: IMarkdown;
   startDate?: Date;
   endDate?: Date;
   spanScale?: TimeScale;
-  parent?: IRecordId[];
-  subTasks?: IRecordId[];
-  subTasksMethod?: SubTasksMethod;
-  status?: TaskStatus;
+  subGoalsLayout?: SubGoalsLayout;
+  status?: GoalStatus;
   color?: number;
   isPinnedForQuickFocus?: boolean;
 }
 
-export interface ITask extends ITaskBase {}
+export interface IGoal extends IGoalBase {
+  parent?: IRecordId[];
+  children?: IRecordId[];
+}
 
-export type ITaskThumb = ITaskBase & {
-  parent?: ITaskThumb[];
+export type IGoalThumb = IGoalBase & {
+  parent?: IGoalThumb[];
+  children?: IRecordId[];
 };
 
-export type IActiveTask = IActiveResource &
-  ITask & {
-    subTasks?: IActiveTask[];
+export type IActiveGoal = IActiveResource &
+  IGoalBase & {
+    parent?: IGoalThumb[];
+    children?: IActiveGoal[];
     isPageLoading: boolean;
     collections?: IRecordId[];
     types?: ICollectionExpanded[];
   };
 
-export enum TaskStatus {
+export enum GoalStatus {
   NOT_STARTED = "NOT_STARTED",
   IN_PROGRESS = "IN_PROGRESS",
   COMPLETED = "COMPLETED"

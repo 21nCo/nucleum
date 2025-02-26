@@ -11,7 +11,7 @@
   const dispatch = createEventDispatcher();
   export let items: string[] = [];
   export let contentCallback: (id: string) => Promise<NestedItemContent>;
-  export let childrenCallback: (id: string) => Promise<string[]>;
+  export let childrenCallback: (id: string) => Promise<IRecordId[]>;
   export let style: NestedListStyle = NestedListStyle.DEFAULT;
   export let isExpandOnClickAnywhere: boolean = false;
   export let isShowAddButton: boolean = false;

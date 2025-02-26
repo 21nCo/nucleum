@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { IActiveTaskStore } from "../task.store";
+  import type { IActiveGoalStore } from "../goal.store";
   import { TimeScale } from "$lib/client/types/time.type";
   import { InputStyle } from "$lib/client/types/input.type";
   import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
@@ -11,36 +11,36 @@
     resolveDefaultSpanScale
   } from "$lib/client/elements/datetime/datetime.utils";
 
-  export let task: IActiveTaskStore;
+  export let goal: IActiveGoalStore;
 
-  $: startDate = $task.startDate ? new Date($task.startDate) : new Date();
-  $: endDate = $task.endDate ? new Date($task.endDate) : new Date();
+  $: startDate = $goal.startDate ? new Date($goal.startDate) : new Date();
+  $: endDate = $goal.endDate ? new Date($goal.endDate) : new Date();
 
-  $: if (!$task.spanScale && $task.startDate && $task.endDate) {
+  $: if (!$goal.spanScale && $goal.startDate && $goal.endDate) {
     const spanScale = resolveDefaultSpanScale(startDate, endDate, activeScales);
     if (spanScale) {
-      task.modify({
+      goal.modify({
         spanScale
       });
     }
   }
 
   function handleStartDateChange(e: CustomEvent) {
-    $task.startDate = e.detail;
-    task.modify({
+    $goal.startDate = e.detail;
+    goal.modify({
       startDate: e.detail
     });
   }
 
   function handleEndDateChange(e: CustomEvent) {
-    $task.endDate = e.detail;
-    task.modify({
+    $goal.endDate = e.detail;
+    goal.modify({
       endDate: e.detail
     });
   }
 
   function handleSpanChange(e: CustomEvent<TimeScale>) {
-    task.modify({
+    goal.modify({
       spanScale: e.detail
     });
   }
@@ -64,11 +64,11 @@
   <Divider />
   <div class="flex flex-col gap-2">
     <div class="relative px-6">
-      <TimelineCardAxis {startDate} {endDate} spanScale={$task.spanScale} />
+      <TimelineCardAxis {startDate} {endDate} spanScale={$goal.spanScale} />
     </div>
   </div>
 
-  {#if $task.startDate && $task.endDate}
+  {#if $goal.startDate && $goal.endDate}
     <div class="flex text-b3 text-fgs3 w-full justify-center">
       <TimeSpan
         scales={[
@@ -77,9 +77,9 @@
           TimeScale.MONTHS,
           TimeScale.YEARS
         ]}
-        start={new Date($task.startDate)}
-        end={new Date($task.endDate)}
-        spanScale={$task.spanScale}
+        start={new Date($goal.startDate)}
+        end={new Date($goal.endDate)}
+        spanScale={$goal.spanScale}
         on:change={handleSpanChange}
       />
     </div>

@@ -116,7 +116,7 @@ class ManualLogStore extends ObservableStore<ISessionLogStore> {
         sessionId: sessionId,
         totalFocus: duration,
         totalBreak: 0,
-        taskId: entry.goalId,
+        goalId: entry.goalId,
         manualEntryId: entry.id
         // tzOffset: get(userPreferences).timeZoneOffset,
         // targets: get(pointronPreferences).horizonTargets
@@ -145,7 +145,7 @@ class ManualLogStore extends ObservableStore<ISessionLogStore> {
             duration: 0
           }
         ],
-        tasks: [
+        goals: [
           {
             id: entry.goalId,
             blocks: [

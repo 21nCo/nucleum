@@ -24,7 +24,7 @@
 
   import GoalSearchThumbnail from "../../goals/thumbnails/GoalSearchThumbnail.svelte";
   import { SearchStore } from "$lib/client/components/record/record.store";
-  import TaskSearchResultItem from "$lib/client/components/tasks/TaskSearchResultItem.svelte";
+  import GoalSearchResultItem from "$lib/client/components/goals/GoalSearchResultItem.svelte";
   export let item: IManualSessionLogForm;
 
   let previousStartDate: Date = item.startDate;
@@ -38,7 +38,7 @@
   let selectedQuickAddItem: number = 0;
   let error: string = "";
   let defaultTime = Date.now();
-  const searchStore = new SearchStore(Resource.task);
+  const searchStore = new SearchStore(Resource.goal);
 
   if (item.goalId !== "") selectedGoal = { label: $swipeLabel };
 
@@ -193,7 +193,7 @@
       return;
     }
     if (selectedGoal === undefined) {
-      error = "Please select a task";
+      error = "Please select a goal";
       $isPrimaryActionDisabled = true;
       return;
     }
@@ -247,10 +247,10 @@
       on:select={onGoalSelect}
       bind:value={label}
       bind:this={inputRef}
-      searchResultComponent={TaskSearchResultItem}
+      searchResultComponent={GoalSearchResultItem}
       {searchCallback}
       style={InputStyle.BORDERED}
-      placeholder="Start typing to select task"
+      placeholder="Start typing to select goal"
     />
   {/if}
 

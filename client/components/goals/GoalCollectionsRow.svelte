@@ -15,11 +15,11 @@
   import { logger } from "$lib/client/components/debug/logger.client";
   import { ResourceError } from "$lib/client/components/error/errors";
   import { ResourceErrorCode } from "$lib/client/components/error/error.type";
-  import type { IActiveTaskStore } from "./task.store";
-  import { resolveTaskTypeIcon } from "./task.utils";
+  import type { IActiveGoalStore } from "./goal.store";
+  import { resolveGoalTypeIcon } from "./goal.utils";
   import { enumToString } from "$lib/shared/utils/text.utils";
 
-  export let task: IActiveTaskStore;
+  export let task: IActiveGoalStore;
   export let isReadOnlyMode: boolean = false;
   let popoverRef: any;
 
@@ -84,7 +84,7 @@
     }}
   >
     <Icon
-      icon={resolveTaskTypeIcon($task.type)}
+      icon={resolveGoalTypeIcon($task.type)}
       size={Size.sm}
       class="fill-fgs1"
     />

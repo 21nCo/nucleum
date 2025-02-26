@@ -7,26 +7,26 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { isValidArray } from "$lib/shared/utils/obj.utils";
   import { onMount } from "svelte";
-  import { taskStore } from "../task.store";
+  import { goalStore } from "../goal.store";
   export let id: IRecordId;
-  export let isIncludeSubTasks = false;
+  export let isIncludeSubGoals = false;
   let sessionLogs: ISessionLog[] = [];
   let isLoading = true;
 
   async function refresh() {
     isLoading = true;
-    if (isIncludeSubTasks) {
-      const subTasks = await taskStore.selectMany({
+    if (isIncludeSubGoals) {
+      const subGoals = await goalStore.selectMany({
         search: {
           properties: ["parent"],
           query: id.toString()
         }
       });
-      console.log({ subTasks });
+      console.log({ subGoals });
     }
     const result = await sessionLogStore.selectMany({
       filters: {
-        taskId: id.toString()
+        goalId: id.toString()
       }
     });
     if (isValidArray(result)) {

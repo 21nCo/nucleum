@@ -5,20 +5,19 @@
     activeSession
   } from "$lib/client/products/pointron/focus/session.store";
   import FocusItem from "./FocusItem.svelte";
-  import AddTask from "./AddTask.svelte";
+  import AddFocusItem from "./AddFocusItem.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
-  import type { ITaskThumb } from "$lib/client/components/tasks/task.type";
-  import { taskStore } from "$lib/client/components/tasks/task.store";
+  import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
+  import { goalStore } from "$lib/client/components/goals/goal.store";
   import { onMount } from "svelte";
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import type { IFocusTask } from "$lib/client/types/pointron/session.type";
+  import type { IFocusGoal } from "$lib/client/types/pointron/session.type";
 
   export let isInEditMode: boolean = false;
-  let goalEntry: string = "";
   let isFocusingAddGoal: boolean = false;
-  let tasks: ITaskThumb[] = [];
+  let goals: IGoalThumb[] = [];
   let isRefreshing: boolean = false;
 
   function onBlur() {
@@ -31,12 +30,11 @@
 
   async function refresh() {
     isRefreshing = true;
-    tasks = await taskStore.selectMany({
+    goals = await goalStore.selectMany({
       filters: {
-        id: $focusItemsStore.tasks.map((x) => x.id.toString())
+        id: $focusItemsStore.goals.map((x) => x.id.toString())
       }
     });
-    console.log({ tasks });
     isRefreshing = false;
   }
 
@@ -44,7 +42,7 @@
     refresh();
   });
 
-  function resolveTodos(focusItem: IFocusTask) {
+  function resolveTodos(focusItem: IFocusGoal) {
     return $focusItemsStore.todos.filter((x) =>
       focusItem.todos?.some(resourceInList(x.id))
     );
@@ -56,7 +54,7 @@
     "pt-6": isInEditMode
   })}
 >
-  {#if $focusItemsStore.tasks.length === 0 && !isInEditMode && $activeSession.isSessionRunning}
+  {#if $focusItemsStore.goals?.length === 0 && !isInEditMode && $activeSession.isSessionRunning}
     <div class="h-full">
       <EmptyStatusView
         size={Size.sm}
@@ -65,9 +63,9 @@
         subText="Toggle edit mode to add focus items."
       />
     </div>
-  {:else if tasks.length > 0}
-    {#each tasks as item, index (item)}
-      {@const focusItem = $focusItemsStore.tasks.find(resourceInList(item))}
+  {:else if goals.length > 0}
+    {#each goals as item, index (item)}
+      {@const focusItem = $focusItemsStore.goals.find(resourceInList(item))}
       {#if focusItem}
         <FocusItem
           {isInEditMode}
@@ -76,7 +74,7 @@
           todos={resolveTodos(focusItem)}
           isFocusAddTask={$lastActiveGoalIdForEditing
             ? $lastActiveGoalIdForEditing === item.id
-            : index === $focusItemsStore.tasks.length - 1}
+            : index === $focusItemsStore.goals.length - 1}
         />
       {/if}
     {/each}
@@ -89,7 +87,7 @@
           ? 'border-aps1'
           : 'border-brs3'}"
       >
-        <AddTask bind:label={goalEntry} on:blur={onBlur} on:focus={onfocus} />
+        <AddFocusItem on:blur={onBlur} on:focus={onfocus} />
       </div>
     </div>
   {/if}

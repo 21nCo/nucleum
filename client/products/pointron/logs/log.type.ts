@@ -1,5 +1,5 @@
 import type {
-  IFocusTask,
+  IFocusGoal,
   FocusLog,
   ISessionInterval,
   IFocusTodo
@@ -36,7 +36,7 @@ export type ISession = ISessionBase & {
   end: number | string;
   plannedEnd?: number | string;
   id: string;
-  tasks: IFocusTask[];
+  goals: IFocusGoal[];
   manualEntryId?: string;
   notes: IMarkdown;
 };
@@ -51,7 +51,7 @@ export type ISessionLog = IResource & {
   taskName?: string;
   totalFocus?: number;
   totalBreak?: number;
-  taskId?: IRecordId;
+  goalId?: IRecordId;
   todoId?: IRecordId;
   manualEntryId?: string;
   tzOffset?: number;

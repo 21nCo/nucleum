@@ -9,7 +9,8 @@
   import { appStore } from "$lib/client/stores/app.store";
   import {
     resolveResourceSwitcher,
-    resourceAction
+    resourceAction,
+    availableResources
   } from "$lib/client/components/flux/resourceStores/resource.utils";
   import {
     ResourceAccessPoint,
@@ -39,11 +40,7 @@
     ? Resource.unknown
     : resources[0];
   let resourceSwitcherRef: ResourceSwitcher;
-  let availableResources: Set<Resource> = new Set([
-    Resource.node,
-    Resource.collection,
-    Resource.task
-  ]);
+  let availableResourcesSet: Set<Resource> = new Set(availableResources);
   let isSyncing: boolean = false;
   let syncStatusPropagatorRef: SyncStatusPropagator;
   let recordsPaneRef: LibraryRecordsPane;
@@ -80,7 +77,7 @@
             icon: "ph:plus-circle-light"
           }
         ]
-      : !availableResources.has(selectedResource)
+      : !availableResourcesSet.has(selectedResource)
         ? undefined
         : {
             label: "Create new " + selectedResource,

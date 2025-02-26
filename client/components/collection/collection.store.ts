@@ -78,7 +78,7 @@ class CollectionStore extends ResourceStore<ICollection> {
       defaultLayout: undefined,
       typeToExtend: propertyEditor.typeToExtend?.id ?? undefined,
       type: form.type ?? CollectionType.UNTYPED,
-      resource: form.resource ?? defaultResource
+      resource: form.resource ?? defaultResource[0]
     };
     if (form.type === CollectionType.TYPED && properties?.length > 0) {
       properties = properties.map(assignDefaultLabelAsFallback);

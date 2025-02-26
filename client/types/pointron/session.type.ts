@@ -102,7 +102,7 @@ type IFocusItem = {
   checked?: boolean;
 };
 
-export type IFocusTask = IFocusItem & {
+export type IFocusGoal = IFocusItem & {
   todos?: IRecordId[];
 };
 export type IFocusTodo = IFocusItem & {
@@ -118,6 +118,6 @@ export enum SessionUIContext {
 }
 
 export interface IFocusItemsStore extends IObservableStoreSubject {
-  tasks: IFocusTask[];
+  goals: IFocusGoal[];
   todos: IFocusTodo[];
 }

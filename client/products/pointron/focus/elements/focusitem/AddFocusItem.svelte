@@ -9,22 +9,22 @@
   import GoalSearchThumbnail from "../../../goals/thumbnails/GoalSearchThumbnail.svelte";
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { SearchStore } from "$lib/client/components/record/record.store";
-  import { taskStore } from "$lib/client/components/tasks/task.store";
-  import { TaskType } from "$lib/client/components/tasks/task.type";
-  export let label: string = "";
+  import { goalStore } from "$lib/client/components/goals/goal.store";
+  import { GoalType } from "$lib/client/components/goals/goal.type";
+  let label: string = "";
   let inputRef: any;
-  let searchStore = new SearchStore(Resource.task);
+  let searchStore = new SearchStore();
 
   async function onSelect(event: any) {
     let task = event?.detail?.item;
     console.log("Task: ", task);
     if (!task || !task.id) return;
-    if ($focusItemsStore.tasks.some(resourceInList(task))) {
+    if ($focusItemsStore.goals.some(resourceInList(task))) {
       toasts.error("Task already exists in focus list");
       return;
     }
     reset();
-    await focusItemsStore.addTask(task.id);
+    await focusItemsStore.addGoal(task.id);
   }
 
   function reset() {
@@ -34,25 +34,31 @@
   async function handleEmptyEnter(
     e: CustomEvent<{ event: KeyboardEvent; value: string }>
   ) {
-    const task = await taskStore.save({
+    const task = await goalStore.save({
       label: e.detail.value,
-      type: TaskType.INDEFINITE
+      type: GoalType.INDEFINITE
     });
     if (!task || !Array.isArray(task) || task.length === 0) {
       toasts.error("Something went wrong. Please try again later.");
       return;
     }
-    await focusItemsStore.addTask(task[0].id);
+    await focusItemsStore.addGoal(task[0].id);
     reset();
   }
 
   async function searchCallback(searchQuery: string) {
     console.log("Search: ", searchQuery);
+    const goals = await searchStore.select({
+      resource: Resource.goal,
+      searchQuery,
+      isIncludeSubItems: true
+    });
     const tasks = await searchStore.select({
+      resource: Resource.task,
       searchQuery
     });
-    console.log("Tasks: ", tasks);
-    return tasks;
+    console.log({ goals, tasks });
+    return [...goals, ...tasks];
   }
 </script>
 
@@ -64,12 +70,12 @@
     on:empty-enter={handleEmptyEnter}
     bind:value={label}
     bind:this={inputRef}
-    emptyStateLabel="No tasks found. Press **Enter** to create a new task."
+    emptyStateLabel="No goals or tasks found. Press **Enter** to create a new task."
     searchResultComponent={GoalSearchThumbnail}
     {searchCallback}
     style={InputStyle.PLAIN}
     popoverOptions={{ offsetInPx: 16 }}
-    placeholder="+ start typing a task name..."
+    placeholder="+ start typing a goal or task name..."
   />
 
   <div class=" justify-end items-center">

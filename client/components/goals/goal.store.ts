@@ -4,8 +4,8 @@ import { StoreDataType, type IRecordId } from "$lib/client/types/data.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { recentsStore } from "../record/recent.store";
-import type { IActiveTask, ITask } from "./task.type";
-import { TaskType } from "./task.type";
+import type { IActiveGoal, IGoal } from "./goal.type";
+import { GoalType } from "./goal.type";
 import {
   ResourceAccessMode,
   ResourceAccessPoint
@@ -24,28 +24,28 @@ import { CollectibleStore } from "../collection/collectible.store";
 import { activeSession } from "$lib/client/products/pointron/focus/session.store";
 import { get } from "svelte/store";
 
-class TaskStore extends ResourceStore<ITask> {
+class GoalStore extends ResourceStore<IGoal> {
   constructor() {
-    super(Resource.task);
+    super(Resource.goal);
   }
 
   async save(
-    form: OmitForCapture<ITask>,
+    form: OmitForCapture<IGoal>,
     additionalParams?: {
       subTasks?: string[];
       context?: string;
     }
   ) {
-    const id = generateResourceId(Resource.task);
-    logger.log({ at: "TaskStore.save", form });
+    const id = generateResourceId(Resource.goal);
+    logger.log({ at: "GoalStore.save", form });
 
     let subTaskIds: IRecordId[] = [];
-    let subTasks: OmitForCaptureWithId<ITask>[] = [];
+    let subTasks: OmitForCaptureWithId<IGoal>[] = [];
     if (additionalParams?.subTasks && additionalParams.subTasks.length > 0) {
       subTasks = additionalParams.subTasks.map((subTask) => ({
-        id: generateResourceId(Resource.task),
+        id: generateResourceId(Resource.goal),
         label: subTask,
-        type: TaskType.INDEFINITE,
+        type: GoalType.INDEFINITE,
         parent: [id],
         isCompleted: false,
         accessMode: ResourceAccessMode.POP
@@ -53,95 +53,96 @@ class TaskStore extends ResourceStore<ITask> {
       subTaskIds = subTasks.map((subTask) => subTask.id);
     }
 
-    const resource: OmitForCaptureWithId<ITask> = {
+    const resource: OmitForCaptureWithId<IGoal> = {
       id,
       label: form.label || "",
-      type: form.type || TaskType.INDEFINITE,
+      type: form.type || GoalType.INDEFINITE,
       description: form.description,
       startDate: form.startDate,
       endDate: form.endDate,
       spanScale: form.spanScale,
       parent: form.parent,
       color: form.color,
-      subTasks: subTaskIds,
-      subTasksMethod: form.subTasksMethod
+      children: subTaskIds,
+      subGoalsLayout: form.subGoalsLayout
     };
 
     recentsStore.add(resource, {
-      type: Resource.task,
+      type: Resource.goal,
       timestamp: new Date()
     });
 
-    return super.create([resource, ...subTasks], additionalParams);
+    return this.create([resource, ...subTasks], additionalParams);
   }
 
-  async addSubTaskWithContext(
+  async addSubGoalWithContext(
     src: IRecordId[],
-    subTask: {
+    subGoal: {
       label: string;
-      type?: TaskType;
+      type?: GoalType;
     },
-    currentSubTasks?: IRecordId[]
+    currentSubGoals?: IRecordId[]
   ) {
-    const task = {
-      id: generateResourceId(Resource.task),
-      label: subTask.label,
-      type: subTask.type ?? TaskType.INDEFINITE,
+    const goal = {
+      id: generateResourceId(Resource.goal),
+      label: subGoal.label,
+      type: subGoal.type ?? GoalType.INDEFINITE,
       parent: [...src]
     };
-    await super.modify(
+    await this.modify(
       src[src.length - 1],
       {
-        subTasks: [...(currentSubTasks || []), task.id]
+        children: [...(currentSubGoals || []), goal.id]
       },
       {
         isPreventBackPropagation: true
       }
     );
-    return super.create([task]);
+    console.log({ at: "GoalStore.addSubGoalWithContext", goal });
+    return this.create([goal]);
   }
 
-  async addSubTask(
+  async addSubGoal(
     src: IRecordId,
-    subTask: {
+    subGoal: {
       label: string;
-      type?: TaskType;
+      type?: GoalType;
     }
   ) {
-    const taskData = await super.select(src);
-    if (!taskData) return;
-    this.addSubTaskWithContext(
-      [...(taskData.parent || []), src],
-      subTask,
-      taskData.subTasks
+    const goalData: IGoal = await this.select(src);
+    if (!goalData) return;
+    this.addSubGoalWithContext(
+      [...(goalData.parent || []), src],
+      subGoal,
+      goalData.children
     );
   }
 }
 
-export const taskStore = new TaskStore();
+export const goalStore = new GoalStore();
 
-export class ActiveTaskStore extends CollectibleStore<IActiveTask, TaskStore> {
-  constructor(taskId: IRecordId) {
-    super(taskId, taskStore);
+export class ActiveGoalStore extends CollectibleStore<IActiveGoal, GoalStore> {
+  constructor(goalId: IRecordId) {
+    super(goalId, goalStore);
   }
 
   async init(accessMode: ResourceAccessMode) {
-    logger.log({ at: "ActiveTaskStore.init", id: this.id });
+    logger.log({ at: "ActiveGoalStore.init", id: this.id });
     try {
       const result = await this.resourceStore.select(this.id, [
         "*",
-        "(select * from $parent.subTasks) as subTasks",
+        "(select * from $parent.children) as children",
         "(select * from $parent.parent) as parent",
         "->link.* as outlinks",
         "<-link.* as inlinks"
       ]);
-      logger.debug({ at: "ActiveTaskStore.init - select", result });
+      logger.debug({ at: "ActiveGoalStore.init - select", result });
 
       if (!result) {
         this.set({
           id: this.id,
           label: "",
-          type: TaskType.INDEFINITE,
+          type: GoalType.INDEFINITE,
           modifiedAt: new Date().toISOString(),
           createdAt: new Date().toISOString(),
           accessMode,
@@ -153,7 +154,7 @@ export class ActiveTaskStore extends CollectibleStore<IActiveTask, TaskStore> {
         .filter((x: any) => x.out.tb === Resource.collection)
         .map((x: any) => x.out);
       console.log({
-        at: "ActiveTaskStore.init",
+        at: "ActiveGoalStore.init",
         result,
         collections
       });
@@ -166,11 +167,11 @@ export class ActiveTaskStore extends CollectibleStore<IActiveTask, TaskStore> {
       });
 
       recentsStore.add(result, {
-        type: Resource.task,
+        type: Resource.goal,
         timestamp: new Date()
       });
     } catch (e) {
-      console.error("error in init task store", {
+      console.error("error in init goal store", {
         id: this.id,
         error: e
       });
@@ -178,12 +179,12 @@ export class ActiveTaskStore extends CollectibleStore<IActiveTask, TaskStore> {
   }
 }
 
-export type IActiveTaskStore = InstanceType<typeof ActiveTaskStore>;
+export type IActiveGoalStore = InstanceType<typeof ActiveGoalStore>;
 
-class TaskActions {
+class GoalActions {
   constructor(
-    private task: ITask,
-    private store: TaskStore,
+    private goal: IGoal,
+    private store: GoalStore,
     private accessPoint: ResourceAccessPoint
   ) {}
 
@@ -200,7 +201,7 @@ class TaskActions {
     callback: async () => {
       if (get(activeSession).isSessionRunning)
         await activeSession.finishSession(true);
-      await activeSession.quickStart(this.task.id);
+      await activeSession.quickStart(this.goal.id);
     }
   };
 
@@ -210,10 +211,10 @@ class TaskActions {
       label: "Pin to quick focus",
       icon: "ph:circle-light",
       type: ContextMenuType.SWITCH,
-      initialValue: this.task.isPinnedForQuickFocus,
+      initialValue: this.goal.isPinnedForQuickFocus,
       callback: async (checked) => {
         return this.store.modify(
-          this.task.id,
+          this.goal.id,
           {
             isPinnedForQuickFocus: checked
           },
@@ -226,15 +227,15 @@ class TaskActions {
   }
 }
 
-export function resolveTaskContextMenu(
-  task: ITask,
+export function resolveGoalContextMenu(
+  goal: IGoal,
   accessPoint: ResourceAccessPoint,
   params?: {
     accessPointId?: IRecordId;
   }
 ): IContextMenu {
-  const resourceActions = new ResourceActions(task, taskStore, accessPoint);
-  const taskActions = new TaskActions(task, taskStore, accessPoint);
+  const resourceActions = new ResourceActions(goal, goalStore, accessPoint);
+  const goalActions = new GoalActions(goal, goalStore, accessPoint);
 
   let primaryItems: IContextMenuItem[] = [];
 
@@ -271,7 +272,7 @@ export function resolveTaskContextMenu(
     },
     {
       group: "focus",
-      items: [taskActions.focusNow, taskActions.pinToQuickFocus()]
+      items: [goalActions.focusNow, goalActions.pinToQuickFocus()]
     },
     {
       group: "open",

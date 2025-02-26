@@ -12,7 +12,8 @@
   import { Resource } from "../flux/resourceStores/resource.enum";
   import {
     ResourceAccessPoint,
-    ResourceActionType
+    ResourceActionType,
+    type OmitForCapture
   } from "../flux/resourceStores/resource.type";
   import {
     resourceAction,
@@ -23,12 +24,12 @@
   import { NodeType } from "$lib/client/products/memotron/node/node.type";
   import { generateResourceId } from "../flux/flux.utils";
   import ModalFooter from "../modal/ModalFooter.svelte";
-  import { taskStore } from "./task.store";
+  import { goalStore } from "./goal.store";
   import { toasts } from "$lib/client/stores/notification.store";
-  import { SubTasksMethod, TaskType, type ITask } from "./task.type";
-  import { resolveTaskSubTypesForSwitcher } from "./task.utils";
-  import SubTaskStepMarker from "./subTasks/SubTaskStepMarker.svelte";
-  import SubTasksMethodSwitcher from "./subTasks/SubTasksMethodSwitcher.svelte";
+  import { SubGoalsLayout, GoalType, type IGoal } from "./goal.type";
+  import { resolveGoalSubTypesForSwitcher } from "./goal.utils";
+  import StepMarker from "./sub/StepMarker.svelte";
+  import SubGoalsLayoutSwitcher from "./sub/SubGoalsLayoutSwitcher.svelte";
   import {
     reorderList,
     type DragDropEvent
@@ -45,7 +46,7 @@
   export let context: ResourceAccessPoint | undefined = undefined;
 
   let label: string = "";
-  let type: TaskType = TaskType.INDEFINITE;
+  let type: GoalType = GoalType.INDEFINITE;
   let color: number | undefined = undefined;
   let description: IMarkdown = {
     blocks: [
@@ -64,8 +65,8 @@
   let isCollectionSelectorVisible: boolean = false;
   let subTasks: string[] = [];
   let newSubTask: string = "";
-  let subTasksMethod: SubTasksMethod = SubTasksMethod.DEFAULT;
-  let parent: ITask | undefined;
+  let subTasksMethod: SubGoalsLayout = SubGoalsLayout.DEFAULT;
+  let parent: IGoal | undefined;
   async function handleCreate() {
     try {
       if (!label) {
@@ -73,22 +74,22 @@
         return;
       }
 
-      if (type === TaskType.DEFINITE && !spanScale && startDate && endDate) {
+      if (type === GoalType.DEFINITE && !spanScale && startDate && endDate) {
         spanScale = resolveDefaultSpanScale(startDate, endDate, activeScales);
       }
-      const task: ITask = {
+      const task: OmitForCapture<IGoal> = {
         label,
         type,
-        subTasksMethod,
+        subGoalsLayout: subTasksMethod,
         description: isDescriptionVisible ? description : undefined,
-        startDate: type === TaskType.DEFINITE ? startDate : undefined,
-        endDate: type === TaskType.DEFINITE ? endDate : undefined,
+        startDate: type === GoalType.DEFINITE ? startDate : undefined,
+        endDate: type === GoalType.DEFINITE ? endDate : undefined,
         parent: parent ? [parent.id] : undefined,
         color,
         spanScale
       };
 
-      const result = await taskStore.save(task, {
+      const result = await goalStore.save(task, {
         subTasks,
         context:
           context ?? resourceAction(Resource.task, ResourceActionType.CREATE)
@@ -126,17 +127,17 @@
   <div class="flex flex-col w-full gap-6">
     <!-- <LinkboxOnCapture /> -->
     <TextInput
-      label={{ label: "Name of the task", orientation: Orientation.Vertical }}
+      label={{ label: "Name of the goal", orientation: Orientation.Vertical }}
       bind:value={label}
-      placeholder="Some task name"
+      placeholder="Some goal name"
     />
     <OptionSelector
       labelProps={{
-        label: "Type of the task",
+        label: "Type of the goal",
         orientation: Orientation.Vertical
       }}
       bind:selected={type}
-      options={resolveTaskSubTypesForSwitcher()}
+      options={resolveGoalSubTypesForSwitcher()}
       size={Size.md}
       style={OptionSelectorStyle.TRAIN}
     />
@@ -147,7 +148,7 @@
         label={isValidString(label) ? label : "Preview"}
       />
     {/if}
-    {#if type === TaskType.DEFINITE}
+    {#if type === GoalType.DEFINITE}
       <TimeRangePicker
         label={{
           label: "Start and end date",
@@ -176,7 +177,7 @@
       <div class="flex flex-col gap-4 bg--bgs2 rounded-md p-4">
         <span class="text-b2 font-medium text-fgs2">Sub tasks</span>
         <div class="flex items-center justify-end gap-2 w-full">
-          <SubTasksMethodSwitcher bind:subTasksMethod />
+          <SubGoalsLayoutSwitcher bind:layout={subTasksMethod} />
         </div>
         <div
           use:reorderList={{
@@ -194,9 +195,9 @@
               data-index={index}
               draggable={true}
             >
-              {#if subTasksMethod === SubTasksMethod.STEPS}
-                <SubTaskStepMarker
-                  subTask={task}
+              {#if subTasksMethod === SubGoalsLayout.STEPS}
+                <StepMarker
+                  item={task}
                   {index}
                   totalLength={subTasks.length + 1}
                   accessPoint={ResourceAccessPoint.FORM}
@@ -212,9 +213,9 @@
             </div>
           {/each}
           <div class="flex items-center gap-2">
-            {#if subTasksMethod === SubTasksMethod.STEPS}
-              <SubTaskStepMarker
-                subTask={{ label: newSubTask, type: "add" }}
+            {#if subTasksMethod === SubGoalsLayout.STEPS}
+              <StepMarker
+                item={{ label: newSubTask, type: "add" }}
                 index={subTasks.length}
                 totalLength={subTasks.length + 1}
               />
@@ -222,7 +223,7 @@
             <TextInput
               bind:value={newSubTask}
               placeholder="Sub task name"
-              icon={subTasksMethod === SubTasksMethod.STEPS
+              icon={subTasksMethod === SubGoalsLayout.STEPS
                 ? undefined
                 : "ph:plus-light"}
               isShowSaveControl={newSubTask !== ""}
@@ -249,7 +250,7 @@
       {/if}
       {#if !isSubTasksVisible}
         <Button
-          label="Add sub tasks"
+          label="Add sub goals"
           icon="ph:tree-view-light"
           style={ButtonStyle.OUTLINED}
           size={Size.sm}

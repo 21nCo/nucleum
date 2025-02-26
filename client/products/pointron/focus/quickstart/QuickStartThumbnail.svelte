@@ -12,11 +12,11 @@
   import { resolveTaskFocus } from "../session.utils";
   import UnpinAction from "./actions/UnpinAction.svelte";
   import { toasts } from "$lib/client/stores/notification.store";
-  import type { ITaskThumb } from "$lib/client/components/tasks/task.type";
+  import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
   import { hoverable } from "$lib/client/actions/hover.action";
-  import { taskStore } from "$lib/client/components/tasks/task.store";
+  import { goalStore } from "$lib/client/components/goals/goal.store";
   import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
-  export let task: Pick<ITaskThumb, "id" | "label" | "color" | "parent"> & {
+  export let item: Pick<IGoalThumb, "id" | "label" | "color" | "parent"> & {
     focus?: number;
   };
   export let layout: Layout;
@@ -31,7 +31,7 @@
 
   $: isActive =
     $activeSession.currentFocusItem &&
-    isSameResource(task, $activeSession.currentFocusItem) &&
+    isSameResource(item, $activeSession.currentFocusItem) &&
     $activeSession.isQuickStartOn &&
     $activeSession.isSessionRunning;
   $: if (isActive) {
@@ -42,14 +42,14 @@
     );
   }
 
-  $: if (task.focus) {
-    todayFocusDuration = task.focus;
+  $: if (item.focus) {
+    todayFocusDuration = item.focus;
   }
-  $: color = task.color ?? task.parent?.[0]?.color;
+  $: color = item.color ?? item.parent?.[0]?.color;
 
   onMount(async () => {
-    if (task.parent && task.parent?.length > 0)
-      parentLabels = task.parent.map((x: any) => x.label) ?? [];
+    if (item.parent && item.parent?.length > 0)
+      parentLabels = item.parent.map((x: any) => x.label) ?? [];
   });
 
   async function toggleSession() {
@@ -60,20 +60,20 @@
     } else {
       if ($activeSession.isSessionRunning)
         await activeSession.finishSession(true);
-      await activeSession.quickStart(task.id);
+      await activeSession.quickStart(item.id);
     }
   }
 
   async function unPin() {
-    await taskStore.modify(task.id, { isPinnedForQuickFocus: false });
-    toasts.success(`Task **${task.label}** unpinned from quick focus`);
+    await goalStore.modify(item.id, { isPinnedForQuickFocus: false });
+    toasts.success(`Goal **${item.label}** unpinned from quick focus`);
     refresh();
   }
 </script>
 
 {#if layout === Layout.LIST}
   <button
-    id={task.id.toString()}
+    id={item.id.toString()}
     use:hoverable={{
       onHover: (val) => {
         isHovering = val;
@@ -130,7 +130,7 @@
               <div class="w-2 h-2 bg-ccs1 rounded-full"></div>
             {/if} -->
             <div>
-              {task.label ?? ""}
+              {item.label ?? ""}
             </div>
           </div>
         </div>
@@ -189,7 +189,7 @@
       <div class="flex gap-2 items-center">
         <div class="flex flex-col items-start">
           <div class="text-left text-b2 truncate w-40 md:w-40">
-            {task.label ?? ""}
+            {item.label ?? ""}
           </div>
         </div>
       </div>

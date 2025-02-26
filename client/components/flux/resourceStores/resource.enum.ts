@@ -20,6 +20,9 @@ export enum Resource {
   mutation = "mutation",
   event = "event",
   tag = "tag",
+  /**
+   * @deprecated - use {@link task} instead
+   */
   todo = "todo",
 
   //Pointron
@@ -54,9 +57,6 @@ export enum Resource {
    * @deprecated - use {@link task} instead
    */
   PointGoal = "PointGoal",
-  /**
-   * @deprecated - use {@link task} instead
-   */
   goal = "goal",
   logsPane = "logsPane",
   targetsPane = "targetsPane",

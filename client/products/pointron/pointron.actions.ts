@@ -66,8 +66,8 @@ import FocusPlayerCommandModeWidget from "./focus/player/FocusPlayerCommandModeW
 import Goals from "./goals/Goals.svelte";
 import PointronLibrary from "./library/PointronLibrary.svelte";
 import { SearchStore } from "$lib/client/components/record/record.store";
-import { taskStore } from "$lib/client/components/tasks/task.store";
-import TaskSearchResultItem from "$lib/client/components/tasks/TaskSearchResultItem.svelte";
+import { goalStore } from "$lib/client/components/goals/goal.store";
+import GoalSearchResultItem from "$lib/client/components/goals/GoalSearchResultItem.svelte";
 const isSessionRunningPreCondition = () => get(activeSession).isSessionRunning;
 
 export const pointronActions: IAction[] = [
@@ -371,7 +371,8 @@ export const pointronActions: IAction[] = [
     action: "analytics",
     component: AnalyticsV2,
     type: ActionType.PAGE,
-    icon: "ph:presentation-chart-light",
+    // icon: "ph:presentation-chart-light",
+    icon: "ph:chart-line-up-light",
     label: "Analytics"
   },
   // {
@@ -538,9 +539,9 @@ export const pointronActions: IAction[] = [
     type: ActionType.SEARCH_CMD,
     searchActionParams: {
       placeholder: "Select a task to pin",
-      searchResultComponent: TaskSearchResultItem,
+      searchResultComponent: GoalSearchResultItem,
       searchCallback: async (searchQuery: string) => {
-        const result = await new SearchStore(Resource.task).select({
+        const result = await new SearchStore(Resource.goal).select({
           searchQuery,
           filters: {
             isPinnedForQuickFocus: false
@@ -549,7 +550,7 @@ export const pointronActions: IAction[] = [
         return result;
       },
       callback: async (id: string, label?: string) => {
-        const result = await taskStore.modify(
+        const result = await goalStore.modify(
           id,
           {
             isPinnedForQuickFocus: true
@@ -558,8 +559,8 @@ export const pointronActions: IAction[] = [
             context: PointronAction.PIN_TO_QUICK_FOCUS
           }
         );
-        if (result) toasts.success(`Task **${label}** pinned to quick focus`);
-        else toasts.error("Failed to pin task to quick focus");
+        if (result) toasts.success(`Goal **${label}** pinned to quick focus`);
+        else toasts.error("Failed to pin goal to quick focus");
       }
     }
   },
@@ -568,15 +569,15 @@ export const pointronActions: IAction[] = [
     label: "Quick focus",
     type: ActionType.SEARCH_CMD,
     searchActionParams: {
-      searchResultComponent: TaskSearchResultItem,
+      searchResultComponent: GoalSearchResultItem,
       searchCallback: async (searchQuery: string) => {
-        const result = await new SearchStore(Resource.task).select({
+        const result = await new SearchStore(Resource.goal).select({
           searchQuery,
           isIncludeSubItems: true
         });
         return result;
       },
-      placeholder: "Select a task to focus",
+      placeholder: "Select a goal to focus",
       callback: (id: string, label?: string) => {
         console.log("search action selected id:", { id });
         activeSession.quickStart(id);

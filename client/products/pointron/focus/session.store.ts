@@ -3,7 +3,7 @@ import {
   type IActiveSessionStore,
   type ISessionInterval,
   BlockType,
-  type IFocusTask,
+  type IFocusGoal,
   type IFocusItemsStore,
   type ICurrentFocusItem
 } from "$lib/client/types/pointron/session.type";
@@ -55,7 +55,7 @@ import {
 import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
 import { resolveTaskFocus, resolveTotalTaskTime } from "./session.utils";
 import { postToParent } from "$lib/client/utils/embed.utils";
-import { taskStore } from "$lib/client/components/tasks/task.store";
+import { goalStore } from "$lib/client/components/goals/goal.store";
 import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 import type { OmitForCaptureWithId } from "$lib/client/components/flux/resourceStores/resource.type";
 
@@ -1004,10 +1004,10 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     let focusItems = focusItemsStore.get();
     if (
       !isQuickStart &&
-      (focusItems.todos.length > 0 || focusItems.tasks.length > 0)
+      (focusItems.todos.length > 0 || focusItems.goals.length > 0)
     ) {
       currentFocusItem = {
-        id: focusItems.todos?.[0]?.id ?? focusItems.tasks[0].id,
+        id: focusItems.todos?.[0]?.id ?? focusItems.goals[0].id,
         start: new Date().getTime()
       };
     }
@@ -1027,10 +1027,10 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
   }
 
   /**
-   * Starts a quick start session for a given task.
-   * @param taskId
+   * Starts a quick start session for a given goal.
+   * @param goalId
    */
-  async quickStart(taskId: IRecordId) {
+  async quickStart(goalId: IRecordId) {
     let n = this.reset();
     focusItemsStore.reset();
     try {
@@ -1052,11 +1052,11 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
           end: undefined,
           plannedDuration: 0,
           isQuickStartOn: true,
-          currentFocusItem: { start: new Date().getTime(), id: taskId }
+          currentFocusItem: { start: new Date().getTime(), id: goalId }
         },
         { isPersist: false }
       );
-      await focusItemsStore.addTask(taskId);
+      await focusItemsStore.addGoal(goalId);
       return this.startSession(true);
     } catch (err) {
       logger.error(err);
@@ -1137,7 +1137,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     if (!item) return;
     const resourceType = determineResourceType(item.id);
     if (resourceType === Resource.task) {
-      const task = await taskStore.select(item.id);
+      const task = await goalStore.select(item.id);
       return task;
     }
     return focusItemsStore.get().todos.find(resourceInList(item.id));
@@ -1151,7 +1151,7 @@ export const lastActiveGoalIdForEditing = writable<IRecordId | undefined>(
 );
 
 const seedFocusItemsStore: IFocusItemsStore = {
-  tasks: [],
+  goals: [],
   todos: []
 };
 
@@ -1162,7 +1162,7 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
   reset(isPersist: boolean = false) {
     logger.log({ context: "focus items store - reset" });
     this.modify(
-      { tasks: [], todos: [] },
+      { goals: [], todos: [] },
       {
         isPersist
       }
@@ -1170,13 +1170,13 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
     appEvents.publish(PointronEvent.REFRESH_FOCUSITEMS);
   }
 
-  async addTodo(label: string, taskId: IRecordId) {
+  async addTodo(label: string, goalId: IRecordId) {
     let n = this.get();
     //TODO - create todo record if new
     let id = generateResourceId(Resource.todo);
     this.modify({
-      tasks: n.tasks.map((x: IFocusTask) => {
-        if (isSameResource(x.id, taskId)) x.todos = [...(x.todos ?? []), id];
+      goals: n.goals.map((x: IFocusGoal) => {
+        if (isSameResource(x.id, goalId)) x.todos = [...(x.todos ?? []), id];
         return x;
       }),
       todos: [
@@ -1187,14 +1187,14 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
         }
       ]
     });
-    if (taskId) lastActiveGoalIdForEditing.set(taskId);
+    if (goalId) lastActiveGoalIdForEditing.set(goalId);
     appEvents.publish(PointronEvent.REFRESH_FOCUSITEMS);
   }
 
-  async addTask(id: IRecordId) {
+  async addGoal(id: IRecordId) {
     let n = this.get();
-    if (n.tasks.some(resourceInList(id))) return;
-    n.tasks.push({ id, todos: [], blocks: [] });
+    if (n.goals.some(resourceInList(id))) return;
+    n.goals.push({ id, todos: [], blocks: [] });
     this.modify(n);
     lastActiveGoalIdForEditing.set(id);
     appEvents.publish(PointronEvent.REFRESH_FOCUSITEMS);
@@ -1216,15 +1216,15 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
   async appendFocusBlock(id: IRecordId, block: { start: number; end: number }) {
     let n = this.get();
     const resourceType = determineResourceType(id);
-    if (resourceType === Resource.task) {
-      const tasks = n.tasks.map((g) => {
+    if (resourceType === Resource.goal) {
+      const goals = n.goals.map((g) => {
         if (isSameResource(g.id, id)) {
           g.blocks = [...(g.blocks ?? []), block];
           return g;
         }
         return g;
       });
-      return this.modify({ tasks });
+      return this.modify({ goals });
     }
     const todos = n.todos.map((t) => {
       if (isSameResource(t.id, id)) {
@@ -1259,10 +1259,10 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
   //TODO - with new changes
   async updateOrderValueForTasks(goalId: string, modifiedItems: any) {
     let n = this.get();
-    if (n && n.tasks.length > 0) {
+    if (n && n.goals.length > 0) {
       modifiedItems.forEach((item: any) => {
-        let index = n.tasks.findIndex((i) => i.taskId == item.taskId);
-        if (n.tasks[index].goalId == goalId) n.tasks[index].order = item.order;
+        let index = n.goals.findIndex((i) => i.taskId == item.taskId);
+        if (n.goals[index].goalId == goalId) n.goals[index].order = item.order;
       });
     }
     this.modify(n);
@@ -1273,11 +1273,11 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
     if (!isValidArrayWithData(modifiedItems)) return;
     modifiedItems.forEach((item: any) => {
       if (item?.taskId) {
-        let index = n.tasks.findIndex((i: any) => i?.taskId == item.taskId);
-        n.tasks[index].order = item.order;
+        let index = n.goals.findIndex((i: any) => i?.taskId == item.taskId);
+        n.goals[index].order = item.order;
       } else {
-        let index = n.tasks.findIndex((i: any) => i?.goalId == item.goalId);
-        n.tasks[index].order = item.order;
+        let index = n.goals.findIndex((i: any) => i?.goalId == item.goalId);
+        n.goals[index].order = item.order;
       }
     });
     this.modify(n);
@@ -1288,8 +1288,8 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
     if (n && n.todos.length > 0) {
       n.todos = n.todos.filter((t) => !isSameResource(t.id, id));
     }
-    if (n && n.tasks.length > 0) {
-      n.tasks = n.tasks.map((g) => {
+    if (n && n.goals.length > 0) {
+      n.goals = n.goals.map((g) => {
         if (g.todos && g.todos?.length > 0) {
           g.todos = g.todos.filter((t) => !isSameResource(t, id));
         }
@@ -1300,10 +1300,10 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
     appEvents.publish(PointronEvent.REFRESH_FOCUSITEMS);
   }
 
-  async removeTask(id: IRecordId) {
+  async removeGoal(id: IRecordId) {
     let n = this.get();
-    if (n && n.tasks.length > 0) {
-      n.tasks = n.tasks.filter((t) => !isSameResource(t.id, id));
+    if (n && n.goals.length > 0) {
+      n.goals = n.goals.filter((t) => !isSameResource(t.id, id));
     }
     this.modify(n);
     appEvents.publish(PointronEvent.REFRESH_FOCUSITEMS);
@@ -1360,12 +1360,12 @@ class SessionStore extends ResourceStore<ISession> {
           duration: 0
         }
       ],
-      tasks: focusItemStore.tasks,
+      goals: focusItemStore.goals,
       notes: activeSessionVal.notes
     };
     const logs: OmitForCaptureWithId<ISessionLog>[] = [];
 
-    focusItemStore.tasks.forEach((g: IFocusTask) => {
+    focusItemStore.goals.forEach((g: IFocusGoal) => {
       if (g.blocks && g.blocks.length > 0) {
         logs.push(
           ...g.blocks.map((block) => {
@@ -1402,10 +1402,10 @@ class SessionStore extends ResourceStore<ISession> {
     }
 
     function generateLogFromBlock(
-      taskId: IRecordId,
+      goalId: IRecordId,
       todoId: IRecordId,
       block: { start: number; end: number }
-    ) {
+    ): OmitForCaptureWithId<ISessionLog> {
       const total = resolveTotalTaskTime([block]);
       const focus = resolveTaskFocus(session.blocks, [block]);
       const breakTime = Number((total - focus).toFixed(1));
@@ -1421,7 +1421,7 @@ class SessionStore extends ResourceStore<ISession> {
         start: new Date(block.start).toISOString(),
         end: new Date(block.end).toISOString(),
         sessionId: session.id,
-        taskId: taskId,
+        goalId: goalId,
         todoId: todoId,
         totalFocus: focus,
         totalBreak: breakTime

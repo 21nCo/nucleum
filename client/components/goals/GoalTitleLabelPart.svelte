@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { ITaskThumb } from "../task.type";
-  export let item: ITaskThumb;
+  import type { IGoalThumb } from "./goal.type";
+  export let item: IGoalThumb;
 </script>
 
 <div>

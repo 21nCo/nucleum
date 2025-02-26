@@ -2,23 +2,23 @@
   import { Arrangement } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import ResourceGridThumbnail from "../../../components/record/thumbnail/ResourceGridThumbnail.svelte";
-  import ResourceThumbnailBase from "../../../components/record/thumbnail/ResourceThumbnailBase.svelte";
+  import ResourceGridThumbnail from "../../record/thumbnail/ResourceGridThumbnail.svelte";
+  import ResourceThumbnailBase from "../../record/thumbnail/ResourceThumbnailBase.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { formatDatetime } from "$lib/client/utils/time.utils";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import { TaskType, type ITask } from "../task.type";
+  import { type IGoalThumb } from "../goal.type";
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { resolveTaskTypeIcon } from "../task.utils";
+  import { resolveGoalTypeIcon } from "../goal.utils";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import RecordStarStatusFeedback from "../../record/RecordStarStatusFeedback.svelte";
   import { activeSession } from "$lib/client/products/pointron/focus/session.store";
   import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
 
-  export let item: ITask;
+  export let item: IGoalThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let size: Size.sm | Size.md = Size.md;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
@@ -76,7 +76,7 @@
           <div class="flex items-center gap-3 p-3 w-full">
             <div class="flex items-center gap-2">
               <Icon
-                icon={resolveTaskTypeIcon(item.type)}
+                icon={resolveGoalTypeIcon(item.type)}
                 class={cn({
                   "text-ccs1": item.color
                 })}
@@ -122,7 +122,7 @@
           <div class="flex flex-col gap-2">
             <div class="flex items-center gap-2">
               <Icon
-                icon={resolveTaskTypeIcon(item.type)}
+                icon={resolveGoalTypeIcon(item.type)}
                 class={cn("text-fgs3", {
                   // "text-green-500": item.isCompleted
                 })}

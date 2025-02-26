@@ -17,7 +17,7 @@
   import { Embed } from "$lib/client/types/context.type";
   import { SearchStore } from "$lib/client/components/record/record.store";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import type { ITaskThumb } from "$lib/client/components/tasks/task.type";
+  import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
   import { isValidArray } from "$lib/shared/utils/obj.utils";
   import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
@@ -27,9 +27,9 @@
   let searchInput = "";
   let layout = Layout.LIST;
   let isInEditMode = false;
-  let searchStore: SearchStore = new SearchStore(Resource.task);
+  let searchStore: SearchStore = new SearchStore(Resource.goal);
   restoreLayoutState();
-  let items: ITaskThumb[] = [];
+  let items: IGoalThumb[] = [];
 
   onMount(() => {
     refresh();
@@ -87,7 +87,7 @@
       bind:query={searchInput}
       isPadded={true}
       on:search={onSearch}
-      placeholder="Search for a task"
+      placeholder="Search for a goal"
     />
     <!-- <div class="mo:p-0 px-3">
       <TagsContainer
@@ -107,14 +107,14 @@
       })}
     >
       {#each items as item, index (item)}
-        <QuickStartThumbnail {refresh} task={item} {layout} {isInEditMode} />
+        <QuickStartThumbnail {refresh} {item} {layout} {isInEditMode} />
       {/each}
     </div>
 
     <div class="flex flex--col gap-2 w-full justify-center items-center">
       {#if isInEditMode}
         <Button
-          label="Pin another task"
+          label="Pin another goal"
           size={Size.sm}
           type={ButtonVariant.PRIMARY}
           style={ButtonStyle.OUTLINED}
@@ -135,12 +135,12 @@
       size={Size.sm}
       {isLoadingState}
       isSearchContext={true}
-      mainText={"No pinned tasks found"}
-      subText="Please create a new task or pin an existing one to the quick focus section."
-      actionText={"Create new task"}
+      mainText={"No pinned goals found"}
+      subText="Please create a new goal or pin an existing one to the quick focus section."
+      actionText={"Create new goal"}
       on:click={() => {
         appStore.runAction(
-          resourceAction(Resource.task, ResourceActionType.CREATE)
+          resourceAction(Resource.goal, ResourceActionType.CREATE)
         );
       }}
     />
@@ -148,7 +148,7 @@
 </div>
 
 <ComponentBaseLayer
-  subscribeToResource={new Set([Resource.task])}
+  subscribeToResource={new Set([Resource.goal])}
   subscribeToContext={new Set([PointronAction.PIN_TO_QUICK_FOCUS])}
   on:change={refresh}
 />

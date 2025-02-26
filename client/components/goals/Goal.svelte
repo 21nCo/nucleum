@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { ActiveTaskStore, type IActiveTaskStore } from "./task.store";
-  import { onMount } from "svelte";
+  import { ActiveGoalStore, type IActiveGoalStore } from "./goal.store";
   import PageLoadingPulse from "$lib/client/elements/feedback/animations/PageLoadingPulse.svelte";
   import {
     ResourceAccessMode,
@@ -11,49 +10,51 @@
   import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
   import { resolveResourceIcon } from "../flux/resourceStores/resource.utils";
   import { Resource } from "../flux/resourceStores/resource.enum";
-  import TaskInfoPanel from "./info/TaskInfoPanel.svelte";
+  import GoalInfoPanel from "./info/GoalInfoPanel.svelte";
   import view from "$lib/client/stores/view.store";
   import { resizeListener } from "$lib/client/actions/resize.action";
-  import TaskTitleRow from "./info/TaskTitleRow.svelte";
-  import TaskSubtasksPanel from "./subTasks/TaskSubtasksPanel.svelte";
+  import GoalTitleRow from "./info/GoalTitleRow.svelte";
+  import SubGoalsPanel from "./sub/SubGoalsPanel.svelte";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import TaskHistory from "./history/TaskHistory.svelte";
+  import GoalHistory from "./history/GoalHistory.svelte";
+  import GoalTasks from "./tasks/GoalTasks.svelte";
+  import { onMount } from "svelte";
 
   export let id: string;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   export let accessMode: ResourceAccessMode = ResourceAccessMode.POP;
 
   let containerWidth = 0;
-  let task: IActiveTaskStore = ActiveTaskStore.resolve(id);
+  let goal: IActiveGoalStore = ActiveGoalStore.resolve(id);
   let isReady = false;
 
   $: isConstrainedWidth =
     $view.isConstrainedWidth ||
-    $task?.accessMode === ResourceAccessMode.SPLIT ||
-    $task?.accessMode === ResourceAccessMode.FSPLIT ||
+    $goal?.accessMode === ResourceAccessMode.SPLIT ||
+    $goal?.accessMode === ResourceAccessMode.FSPLIT ||
     containerWidth < 800;
 
-  let selectedPanel = isConstrainedWidth ? "info" : "subtasks";
+  let selectedPanel = isConstrainedWidth ? "info" : "subgoals";
 
   onMount(async () => {
-    task.init(accessMode);
+    goal.init(accessMode);
     isReady = true;
   });
 
   function resolvePanelSwitcherItems(isConstrainedWidth: boolean) {
     const items = [
       {
-        label: "Sub tasks",
-        value: "subtasks",
-        icon: "ph:tree-view-light",
-        badge: $task.subTasks?.length
+        label: "Sub goals",
+        value: "subgoals",
+        icon: resolveResourceIcon(Resource.goal),
+        badge: $goal.children?.length
       },
       {
-        label: "Todos",
+        label: "Tasks",
         value: "todos",
-        icon: resolveResourceIcon(Resource.todo)
+        icon: resolveResourceIcon(Resource.task)
       },
       {
         label: "Analytics",
@@ -76,19 +77,17 @@
     selectedPanel = items[0].value;
     return items;
   }
-
-  $: console.log({ task: $task });
 </script>
 
 <CustomColorPropagator
   class="h-full w-full"
-  color={$task?.color ?? ($task?.parent ? $task.parent?.[0]?.color : undefined)}
+  color={$goal?.color ?? ($goal?.parent ? $goal.parent?.[0]?.color : undefined)}
 >
-  {#if !$task || !isReady}
+  {#if !$goal || !isReady}
     <div class="w-full h-full p-4">
       <PageLoadingPulse />
     </div>
-  {:else if $task}
+  {:else if $goal}
     <div
       class="flex w-full h-full gap-4 p-4 overflow-auto"
       use:resizeListener={(e) => {
@@ -99,7 +98,7 @@
         <aside
           class="flex flex-col gap-4 bg--bgs2 border border-brs3 rounded-lg p-4 w-96 2k:w-[30rem]"
         >
-          <TaskInfoPanel {task} />
+          <GoalInfoPanel {goal} />
         </aside>
       {/if}
       <main class="flex flex-col gap-4 flex-1 overflow-auto">
@@ -107,7 +106,7 @@
           class="flex flex-col w-full overflow-auto gap-3 bg-bgs2 rounded-lg border border-brs3"
         >
           {#if isConstrainedWidth}
-            <TaskTitleRow {task} isConstrainedWidth={true} />
+            <GoalTitleRow {goal} isConstrainedWidth={true} />
           {/if}
           <PanelSwitcher
             items={resolvePanelSwitcherItems(isConstrainedWidth)}
@@ -118,7 +117,7 @@
             isBgBar={true}
           >
             <div slot="right">
-              {#if $task.accessMode === ResourceAccessMode.FULL}
+              {#if $goal.accessMode === ResourceAccessMode.FULL}
                 <Button
                   icon="ph:x-light"
                   tooltip="Close full screen"
@@ -133,11 +132,13 @@
         </div>
         <div class="flex-1">
           {#if selectedPanel === "info"}
-            <TaskInfoPanel {task} {isConstrainedWidth} />
-          {:else if selectedPanel === "subtasks"}
-            <TaskSubtasksPanel {task} />
+            <GoalInfoPanel {goal} {isConstrainedWidth} />
+          {:else if selectedPanel === "subgoals"}
+            <SubGoalsPanel {goal} />
           {:else if selectedPanel === "history"}
-            <TaskHistory {task} />
+            <GoalHistory {goal} />
+          {:else if selectedPanel === "todos"}
+            <GoalTasks id={$goal.id} />
           {/if}
         </div>
       </main>

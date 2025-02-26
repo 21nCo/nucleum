@@ -17,7 +17,7 @@
   export let index: number;
   export let totalLength: number;
   export let contentCallback: (id: string) => Promise<NestedItemContent>;
-  export let childrenCallback: (id: string) => Promise<string[]>;
+  export let childrenCallback: (id: string) => Promise<IRecordId[]>;
   export let nestingLevel: number = 0;
   export let style: NestedListStyle = NestedListStyle.DEFAULT;
   export let isExpandOnClickAnywhere: boolean = false;
@@ -26,7 +26,7 @@
   export let expandedItem: IRecordId | undefined = undefined;
   let addTextInputValue: string = "";
   let content: NestedItemContent | undefined = undefined;
-  let children: string[] = [];
+  let children: IRecordId[] = [];
   let isCollapsed = true;
   let isIconHovering = false;
   $: if (id) {
@@ -54,7 +54,7 @@
     dispatch("addSub", {
       id,
       label: addTextInputValue,
-      subTasks: children
+      children
     });
     addTextInputValue = "";
     setTimeout(() => {

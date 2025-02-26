@@ -159,9 +159,14 @@ export function resolveResourceIcon(resource: Resource) {
       return "ph:hexagon-light";
     case Resource.relation:
       return "ph:link-light";
+    case Resource.goal:
+      return "ph:circle-light";
     case Resource.task:
-      return "ph:check-circle-light";
+      // return "ph:check-circle-light";
+      return "ph:check-square-light";
+    // return "ph:circle-light";
     case Resource.todo:
+      // return "ph:check-circle-light";
       return "ph:check-square-offset-light";
     case Resource.combination:
       return "ph:bounding-box-light";
@@ -186,10 +191,11 @@ export function resolveResourceIcon(resource: Resource) {
   }
 }
 
-const availableResources = [
+export const availableResources = [
   Resource.collection,
   Resource.node,
   Resource.relation,
+  Resource.goal,
   Resource.task,
   Resource.todo
 ];
@@ -200,6 +206,7 @@ export function resolveResourceSwitcher(): IResourceSwitchItem[] {
     Resource.todo,
     Resource.collection,
     Resource.combination,
+    Resource.goal,
     Resource.task,
     Resource.habit,
     Resource.session,

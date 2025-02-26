@@ -19,15 +19,15 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { SessionType } from "../../../logs/log.type";
   import type {
-    IFocusTask,
+    IFocusGoal,
     ISessionInterval
   } from "$lib/client/types/pointron/session.type";
   import { resolveTaskFocus } from "../../session.utils";
-  import type { ITaskThumb } from "$lib/client/components/tasks/task.type";
+  import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
   import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
 
-  export let task: ITaskThumb;
-  export let focusItem: IFocusTask;
+  export let task: IGoalThumb;
+  export let focusItem: IFocusGoal;
   export let todos: any[] = [];
   export let isFocusAddTask: boolean = false;
   export let isInEditMode: boolean = false;
@@ -81,7 +81,7 @@
     }
   }
   async function onDeleteClicked() {
-    await focusItemsStore.removeTask(focusItem.id);
+    await focusItemsStore.removeGoal(focusItem.id);
   }
   // $: console.log({ item, intervals, isInprogress, tasks });
 </script>

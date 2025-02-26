@@ -74,13 +74,14 @@
   import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
   import { fade, fly } from "svelte/transition";
   import {
+    availableResources,
     isSameResource,
     resourceAction
   } from "../flux/resourceStores/resource.utils";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { createEventDispatcher } from "svelte";
   import { collectionCountStore } from "../collection/collectionCount.store";
-  import { resolveTaskSubTypesForSwitcher } from "../tasks/task.utils";
+  import { resolveGoalSubTypesForSwitcher } from "../goals/goal.utils";
   const dispatch = createEventDispatcher();
 
   export let resource: Resource;
@@ -103,15 +104,11 @@
   let isRefreshing: boolean = true;
   let totalCountAfterFilter: number = 0;
   let isRefreshingTotalCount: boolean = false;
-  let availableResources: Set<Resource> = new Set([
-    Resource.node,
-    Resource.collection,
-    Resource.task
-  ]);
+  let availableResourcesSet: Set<Resource> = new Set(availableResources);
 
   const nodeSubTypesForSwitcher = resolveNodeSubTypesForSwitcher();
   const collectionSubTypesForSwitcher = resolveCollectionSubTypesForSwitcher();
-  const taskSubTypesForSwitcher = resolveTaskSubTypesForSwitcher(true);
+  const goalSubTypesForSwitcher = resolveGoalSubTypesForSwitcher(true);
   const allSubTypeSwitcherItem = {
     label: "All",
     value: "all",
@@ -190,7 +187,7 @@
       isPagination,
       selectedResource: resource
     });
-    if (!availableResources.has(resource)) {
+    if (!availableResourcesSet.has(resource)) {
       data = [];
       return;
     }
@@ -238,7 +235,7 @@
         filters = { ...filters, contentType: selectedSubType };
       } else if (
         resource === Resource.collection ||
-        resource === Resource.task
+        resource === Resource.goal
       ) {
         filters = { ...filters, type: selectedSubType };
       }
@@ -322,8 +319,8 @@
         items.push(...nodeSubTypesForSwitcher);
       } else if (resource === Resource.collection) {
         items.push(...collectionSubTypesForSwitcher);
-      } else if (resource === Resource.task) {
-        items.push(...taskSubTypesForSwitcher);
+      } else if (resource === Resource.goal) {
+        items.push(...goalSubTypesForSwitcher);
       }
       return items;
     }
@@ -428,7 +425,8 @@
       if (resource === Resource.node) return Arrangement.GRID;
       else return Arrangement.LIST;
     }
-    if (resource === Resource.task) return Arrangement.LIST;
+    if (resource === Resource.goal || resource === Resource.task)
+      return Arrangement.LIST;
     return Arrangement.GRID;
   }
 </script>

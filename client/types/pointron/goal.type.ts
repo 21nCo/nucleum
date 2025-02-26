@@ -9,6 +9,9 @@ import type {
 } from "../../components/flux/resourceStores/resource.type";
 import { TagId } from "./tagId.enum";
 
+/**
+ * @deprecated - use IGoal from goals/goal.type.ts instead
+ */
 export type IGoal = {
   id: string;
   label: string;

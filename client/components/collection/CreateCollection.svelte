@@ -22,7 +22,10 @@
   import { onMount } from "svelte";
   import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
   import { ButtonVariant } from "$lib/client/types/button.type";
-  import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import {
+    resolveResourceIcon,
+    resourceAction
+  } from "$lib/client/components/flux/resourceStores/resource.utils";
   import {
     ResourceAccessPoint,
     ResourceActionType
@@ -30,6 +33,7 @@
   import { logger } from "$lib/client/components/debug/logger.client";
   import Divider from "$lib/client/elements/Divider.svelte";
   import {
+    resolveCollectionResource,
     resolveCollectionTypeIcon,
     resolveCollectionTypeLabel
   } from "./collection.utils";
@@ -54,6 +58,10 @@
   let coverPhoto: any;
   let isShowCoverPicker: boolean = false;
   let isCoverPickerHovered: boolean = false;
+  let resource: Resource | undefined = undefined;
+  let collectibleResources: Resource[] = resolveCollectionResource(
+    $appStore.product
+  );
 
   const formLabelConfig = {
     orientation: Orientation.Vertical
@@ -91,6 +99,51 @@
             action: $appStore?.appData?.urls?.kbSimpleCollections
           }
         };
+    }
+  }
+
+  async function onSave() {
+    try {
+      logger.log({
+        at: "create collection",
+        title,
+        selectedType
+      });
+      const result = await collectionStore.save(
+        {
+          label: title,
+          description,
+          type: selectedType,
+          defaultLayout: selectedView,
+          isStarred,
+          cover: coverPhoto,
+          resource: resource,
+          isCaptureShortcutEnabled:
+            selectedType === CollectionType.TYPED
+              ? isCaptureShortcutEnabled
+              : undefined,
+          avatar: {
+            code: avatar?.code,
+            color: avatar?.color,
+            file: avatar?.file,
+            isFilled: avatar?.isFilled,
+            type: avatar?.type
+          }
+        },
+        {
+          context:
+            context ??
+            resourceAction(Resource.collection, ResourceActionType.CREATE)
+        }
+      );
+      if (!result) {
+        toasts.error("Error creating collection. Please try again.");
+        return;
+      }
+      return true;
+    } catch (e) {
+      logger.error({ at: "create collection", error: e });
+      toasts.error("Error creating collection. Please try again.");
     }
   }
 </script>
@@ -177,7 +230,7 @@
               : OptionSelectorStyle.TRAIN}
             labelProps={{
               ...formLabelConfig,
-              label: "Type of collection"
+              label: "Collection type"
             }}
             bind:selected={selectedType}
             size={$view.isConstrainedWidth ? Size.sm : Size.md}
@@ -185,6 +238,21 @@
           />
           <!-- <InlineInfoBanner {...generateInfo(selectedType)} /> -->
         </div>
+        {#if collectibleResources.length > 1}
+          <OptionSelector
+            options={collectibleResources.map((resource) => ({
+              value: resource,
+              icon: resolveResourceIcon(resource)
+            }))}
+            style={OptionSelectorStyle.TRAIN}
+            size={Size.sm}
+            bind:selected={resource}
+            labelProps={{
+              ...formLabelConfig,
+              label: "Resource to collect"
+            }}
+          />
+        {/if}
         <div class="flex flex-col gap-2">
           <FormControlLabel
             props={{
@@ -238,52 +306,7 @@
         action={resourceAction(Resource.collection, ResourceActionType.CREATE)}
         primaryAction={{
           label: "Save",
-          callback: async () => {
-            try {
-              logger.log({
-                at: "create collection",
-                title,
-                selectedType
-              });
-              const result = await collectionStore.save(
-                {
-                  label: title,
-                  description,
-                  type: selectedType,
-                  defaultLayout: selectedView,
-                  isStarred,
-                  cover: coverPhoto,
-                  isCaptureShortcutEnabled:
-                    selectedType === CollectionType.TYPED
-                      ? isCaptureShortcutEnabled
-                      : undefined,
-                  avatar: {
-                    code: avatar?.code,
-                    color: avatar?.color,
-                    file: avatar?.file,
-                    isFilled: avatar?.isFilled,
-                    type: avatar?.type
-                  }
-                },
-                {
-                  context:
-                    context ??
-                    resourceAction(
-                      Resource.collection,
-                      ResourceActionType.CREATE
-                    )
-                }
-              );
-              if (!result) {
-                toasts.error("Error creating collection. Please try again.");
-                return;
-              }
-              return true;
-            } catch (e) {
-              logger.error({ at: "create collection", error: e });
-              toasts.error("Error creating collection. Please try again.");
-            }
-          }
+          callback: onSave
         }}
         secondaryAction={{
           label: "Discard"

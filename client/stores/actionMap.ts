@@ -37,6 +37,7 @@ import {
 } from "../components/flux/resourceStores/resource.type";
 import {
   determineResourceType,
+  resolveResourceIcon,
   resourceAction
 } from "../components/flux/resourceStores/resource.utils";
 import { Resource } from "../components/flux/resourceStores/resource.enum";
@@ -60,9 +61,9 @@ import ResourceBrowser from "../components/library/resourceBrowser/ResourceBrows
 import UserPlan from "../components/subscription/UserPlan.svelte";
 import InactivePlan from "../components/subscription/InactivePlan.svelte";
 import { ButtonVariant } from "../types/button.type";
-import CreateTask from "$lib/client/components/tasks/CreateTask.svelte";
-import Task from "../components/tasks/Task.svelte";
-import TaskTitleLabelPart from "../components/tasks/TaskTitleLabelPart.svelte";
+import CreateGoal from "$lib/client/components/goals/CreateGoal.svelte";
+import Goal from "../components/goals/Goal.svelte";
+import GoalTitleLabelPart from "../components/goals/GoalTitleLabelPart.svelte";
 import PaymentRedirect from "../components/subscription/PaymentRedirect.svelte";
 import PlanOnboarding from "../components/subscription/PlanOnboarding.svelte";
 import type { IRecordId } from "$lib/client/types/data.type";
@@ -702,12 +703,12 @@ export const globalActions: IAction[] = [
     }
   },
   {
-    action: resourceAction(Resource.task, ResourceActionType.CREATE),
-    cmdLabel: "Create a new task",
-    component: CreateTask,
+    action: resourceAction(Resource.goal, ResourceActionType.CREATE),
+    cmdLabel: "Create a new goal",
+    component: CreateGoal,
     type: ActionType.MODAL,
     modalParams: {
-      title: "Create a new task",
+      title: "Create a new goal",
       layout: {
         size: Size.lg,
         orientation: Orientation.Vertical
@@ -715,10 +716,10 @@ export const globalActions: IAction[] = [
     }
   },
   {
-    action: Resource.task,
+    action: Resource.goal,
     type: ActionType.MODAL,
-    component: Task,
-    resourceLabelRenderer: TaskTitleLabelPart,
+    component: Goal,
+    resourceLabelRenderer: GoalTitleLabelPart,
     modalParams: {
       layout: {
         size: Size.xxl,
@@ -730,10 +731,21 @@ export const globalActions: IAction[] = [
     }
   },
   {
+    action: resourceAction(Resource.goal, ResourceActionType.BROWSE),
+    component: ResourceBrowser,
+    label: "Goals",
+    icon: resolveResourceIcon(Resource.goal),
+    type: ActionType.PAGE,
+    componentParams: {
+      resource: Resource.goal
+    },
+    loadingComponent: NodeLoadingPulse
+  },
+  {
     action: resourceAction(Resource.task, ResourceActionType.BROWSE),
     component: ResourceBrowser,
     label: "Tasks",
-    icon: "ph:check-circle-light",
+    icon: resolveResourceIcon(Resource.task),
     type: ActionType.PAGE,
     componentParams: {
       resource: Resource.task
