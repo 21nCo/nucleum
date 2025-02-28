@@ -126,6 +126,9 @@ export class ActiveResourceStore<
   delete() {
     return this.resourceStore.trash(this.id);
   }
+  deletePermanently() {
+    return this.resourceStore.delete(this.id);
+  }
   archive() {
     return this.resourceStore.archive(this.id);
   }

@@ -17,7 +17,6 @@
   } from "../../flux/resourceStores/resource.type";
   import YoutubeVideoPreview from "$lib/client/products/memotron/node/content/web/YoutubeVideoPreview.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { captureStore } from "$lib/client/products/memotron/capture/capture.store";
   import { Resource } from "../../flux/resourceStores/resource.enum";
   import Collection from "$lib/client/components/collection/Collection.svelte";
   import { determineResourceType } from "../../flux/resourceStores/resource.utils";
@@ -40,9 +39,17 @@
   import context from "$lib/client/stores/context.store";
   import { Embed } from "$lib/client/types/context.type";
   import view from "$lib/client/stores/view.store";
+  import {
+    ActiveCaptureStore,
+    type IActiveCaptureStore
+  } from "$lib/client/products/memotron/capture/capture.store";
 
   const dispatch = createEventDispatcher();
   const nodeContext = getContext<any>("node");
+  let captureStore: IActiveCaptureStore | undefined;
+  $: if (nodeContext?.id) {
+    captureStore = ActiveCaptureStore.resolve(nodeContext?.id);
+  }
   const contentContext = getContext<any>("content");
   export let id: IRecordId;
   export let body: IEmbedBlockBody;
@@ -153,7 +160,7 @@
         dispatchUpdateEvent({ url: sanitized.url });
         return;
       }
-      const result = await captureStore.saveWebpage(sanitized.url, {
+      const result = await captureStore?.saveWebpage(sanitized.url, {
         contentType: sanitized.contentType,
         isEmbedContext: true,
         creationContext: nodeContext?.id ?? undefined

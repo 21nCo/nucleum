@@ -8,13 +8,14 @@
   import RecordPlugin from "wavesurfer.js/dist/plugins/record";
   import { retrieveCurrentColors } from "$lib/client/utils/theme.utils";
   import appearance from "$lib/client/stores/appearance.store";
-  import { captureStore } from "./capture.store";
   import view from "$lib/client/stores/view.store";
   import PlayerControl from "$lib/client/elements/player/controls/PlayerControl.svelte";
   import { createEventDispatcher, onDestroy } from "svelte";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import type { IRecordId } from "$lib/client/types/data.type";
+  import type { IActiveCaptureStore } from "./capture.store";
   const dispatch = createEventDispatcher();
+  export let captureStore: IActiveCaptureStore;
   export let isSaveInProgress: boolean = false;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.CAPTURE;
   export let creationContext: IRecordId | undefined = undefined;

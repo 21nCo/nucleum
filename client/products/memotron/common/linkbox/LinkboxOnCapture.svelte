@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { captureStore } from "$lib/client/products/memotron/capture/capture.store";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
@@ -11,10 +10,11 @@
   import type { IRecordId } from "$lib/client/types/data.type";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import type { IActiveCaptureStore } from "../../capture/capture.store";
+  export let captureStore: IActiveCaptureStore;
   export let expand: IRecordId | null = null;
   const dispatch = createEventDispatcher();
   let link: string;
-
   async function propagatePropertyChanges(e: CustomEvent) {
     if (!e.detail || !e.detail?.id || e.detail?.value === undefined) return;
     captureStore.updateProperty({

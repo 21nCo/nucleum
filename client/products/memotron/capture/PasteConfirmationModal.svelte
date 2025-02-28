@@ -14,7 +14,10 @@
   import { NodeType } from "../node/node.type";
   import { resolveNodeContentLabel, resolveNodeIcon } from "../node/node.utils";
   import { sanitizeAndResolve } from "../node/url.utils";
-  import { captureStore } from "./capture.store";
+  import {
+    ActiveCaptureStore,
+    type IActiveCaptureStore
+  } from "./capture.store";
   import type {
     IMultiFileCaptureData,
     IPasteCaptureData
@@ -29,7 +32,10 @@
   import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { generateResourceId } from "$lib/shared/utils/surreal.utils";
   export let event: ClipboardEvent;
+  let id = generateResourceId(Resource.capture);
+  let captureStore: IActiveCaptureStore = ActiveCaptureStore.resolve(id);
   let nodeType: NodeType | undefined = undefined;
   const unsupportedNodeTypes = [NodeType.TWITTER_PROFILE];
   const cannotSaveAsStandaloneNodeTypes = [
@@ -171,6 +177,9 @@
       {
         searchParams: {
           clipboard: true
+        },
+        componentParams: {
+          captureId: id
         }
       }
     );

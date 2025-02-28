@@ -17,10 +17,11 @@
   import { resolveFileUploadErrorMessage } from "../memotron.utils";
   import { MemotronAction } from "../memotronAction.enum";
   import type { NodeType } from "../node/node.type";
-  import { captureStore } from "./capture.store";
   import type { IMultiFileCaptureData } from "./capture.type";
   import { resolveMultipleFilesData } from "./capture.utils";
   import { createEventDispatcher } from "svelte";
+  import type { IActiveCaptureStore } from "./capture.store";
+  export let captureStore: IActiveCaptureStore;
   const dispatch = createEventDispatcher();
 
   const imageFileTypes = [
@@ -114,6 +115,9 @@
     appStore.runAction(MemotronAction.CAPTURE_SECONDARY, {
       searchParams: {
         clipboard: true
+      },
+      componentParams: {
+        captureId: $captureStore.id
       }
     });
   }

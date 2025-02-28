@@ -15,7 +15,8 @@ import {
 } from "$lib/client/products/memotron/node/node.type";
 import {
   CaptureType,
-  type ICaptureStore
+  type IActiveCapture,
+  type ICapture
 } from "$lib/client/products/memotron/capture/capture.type";
 import account from "$lib/client/stores/account.store";
 import { toasts } from "$lib/client/stores/notification.store";
@@ -30,14 +31,10 @@ import {
   nodeStore,
   vectorResourceStore
 } from "../node/node.store";
-import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { linker } from "$lib/client/products/memotron/linking/link.store";
 import { collectionStore } from "$lib/client/components/collection/collection.store";
-import {
-  resolveContentTypeForFile,
-  resolveMultipleFilesData
-} from "./capture.utils";
+import { resolveContentTypeForFile } from "./capture.utils";
 import {
   ResourceAccessMode,
   ResourceActionType,
@@ -55,10 +52,7 @@ import {
   resourceAction,
   resourceInList
 } from "$lib/client/components/flux/resourceStores/resource.utils";
-import {
-  MAX_FILE_SIZE_MB,
-  resolveResource
-} from "$lib/client/components/record/record.store";
+import { resolveResource } from "$lib/client/components/record/record.store";
 import { fileStore } from "$lib/client/components/files/file.store";
 import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 import { appStore } from "$lib/client/stores/app.store";
@@ -86,14 +80,19 @@ import {
 } from "$lib/client/components/markdown/markdown.utils";
 import type { IBlock } from "$lib/client/components/markdown/md.type";
 import { recentsStore } from "$lib/client/components/record/recent.store";
+import {
+  ActiveResourceStore,
+  ResourceStore
+} from "$lib/client/components/flux/resourceStores/resource.store";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 const captureAction = resourceAction(Resource.node, ResourceActionType.CREATE);
 
-function generateSeedStore(): ICaptureStore {
+function generateSeedStore(): IActiveCapture {
   const blockId = generateResourceId(Resource.node);
   const nodeId = generateResourceId(Resource.node);
   return {
+    id: generateResourceId(Resource.capture),
     nodeId,
     refreshId: new Date().getTime(),
     label: "",
@@ -114,29 +113,49 @@ function generateSeedStore(): ICaptureStore {
   };
 }
 
-class CaptureStore extends KeyValueStore<ICaptureStore> {
+class CaptureStore extends ResourceStore<ICapture> {
+  constructor() {
+    super(Resource.capture);
+  }
+}
+
+export const captureStore = new CaptureStore();
+
+export type IActiveCaptureStore = InstanceType<typeof ActiveCaptureStore>;
+
+export class ActiveCaptureStore extends ActiveResourceStore<
+  IActiveCapture,
+  CaptureStore
+> {
   private saveFeedbackTimeout: NodeJS.Timeout | null = null;
   /**
    * Disabling vector generation on save for now - as it is delaying the save process significantly sometimes.
    */
   private dev_isEnableVectorGenOnSave = false;
-  constructor() {
-    super(Resource.capture, { ...generateSeedStore() });
+  // constructor() {
+  //   super(Resource.capture, { ...generateSeedStore() });
+  // }
+  constructor(capture: IRecordId) {
+    super(capture, captureStore);
+    this.set({ ...generateSeedStore() });
   }
-  set(val: ICaptureStore) {
-    this.update((store) => {
-      store.isRefreshing = true;
-      return store;
-    });
-    this.modify(val, { isDebouncedPersist: true });
-    if (this.saveFeedbackTimeout) clearTimeout(this.saveFeedbackTimeout);
-    this.saveFeedbackTimeout = setTimeout(() => {
-      this.update((store) => {
-        store.isRefreshing = false;
-        return store;
-      });
-    }, 1500);
-  }
+
+  //TODO - persistance which is relying on this set fn
+  // set(val: IActiveCapture) {
+  //   this.update((store) => {
+  //     store.isRefreshing = true;
+  //     return store;
+  //   });
+  //   this.modify(val, { isDebouncedPersist: true });
+  //   if (this.saveFeedbackTimeout) clearTimeout(this.saveFeedbackTimeout);
+  //   this.saveFeedbackTimeout = setTimeout(() => {
+  //     this.update((store) => {
+  //       store.isRefreshing = false;
+  //       return store;
+  //     });
+  //   }, 1500);
+  // }
+
   reset() {
     logger.log({ at: "CaptureStore.reset" });
     const seedStore = generateSeedStore();
@@ -145,6 +164,12 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       refreshId: new Date().getTime()
     });
   }
+
+  /**
+   * @deprecated - use init instead
+   * @param data
+   * @returns
+   */
   loader(data: any) {
     if (!data) return;
     const val = {
@@ -154,25 +179,25 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     };
     this.modify(val, { isPersist: false });
   }
+
   async onTypeSelect(val: CaptureType | IRecordId) {
     logger.log({ context: "onTypeSelect", val });
     if (!val.toString().startsWith(Resource.collection)) return;
     const type: ICollection = await collectionStore.select(val);
     if (!type) return;
-    this.update((store: ICaptureStore) => {
-      store.links = [
-        ...(store.links ?? []),
-        {
-          from: "root",
-          to: type.id,
-          linkType: LinkType.DIRECT,
-          toType: Resource.collection,
-          toSubType: CollectionType.TYPED
-        }
-      ];
-      return store;
+    const link = {
+      from: "root",
+      to: type.id,
+      linkType: LinkType.DIRECT,
+      toType: Resource.collection,
+      toSubType: CollectionType.TYPED
+    };
+    const store = this.get();
+    this.modify({
+      links: [...(store.links ?? []), link]
     });
   }
+
   addMentionLink(
     from: IRecordId,
     to: INodeThumb | ICollectionThumb,
@@ -183,15 +208,25 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
   ) {
     return this._addLink(from, to, LinkType.MENTION, params);
   }
+
   removeMentionLink(from: IRecordId, to: IRecordId) {
-    this.update((val) => {
-      val.links = val.links?.filter(
-        (link) =>
-          !(isSameResource(link.from, from) && isSameResource(link.to, to))
-      );
-      return val;
+    const store = this.get();
+    if (!store.links) return;
+    if (
+      !store.links.some(
+        (link) => isSameResource(link.from, from) && isSameResource(link.to, to)
+      )
+    )
+      return;
+    const modifiedLinks = store.links.filter(
+      (link) =>
+        !(isSameResource(link.from, from) && isSameResource(link.to, to))
+    );
+    this.modify({
+      links: modifiedLinks
     });
   }
+
   async directLink(item: IRecordId | INodeThumb | ICollectionThumb) {
     if (typeof item === "string" || "tb" in item) {
       const resource = await resolveResource(item as IRecordId);
@@ -213,29 +248,31 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     const store = this.get();
     if (store.links?.some((link) => isSameResource(link.to, to.id))) return;
     const toType = determineResourceType(to.id);
-    this.update((val) => {
-      val.links = [
-        ...(val.links ?? []),
-        {
-          from,
-          to: to.id,
-          linkType,
-          toType: toType as Resource.node | Resource.collection,
-          toSubType: ("contentType" in to ? to.contentType : to.type) as
-            | NodeType
-            | CollectionType,
-          location: params?.location,
-          tags: params?.linkTags
-        }
-      ];
-      return val;
+    const link = {
+      from,
+      to: to.id,
+      linkType,
+      toType: toType as Resource.node | Resource.collection,
+      toSubType: ("contentType" in to ? to.contentType : to.type) as
+        | NodeType
+        | CollectionType,
+      location: params?.location,
+      tags: params?.linkTags
+    };
+    this.modify({
+      links: [...(store.links ?? []), link]
     });
   }
 
   removeDLink(id: IRecordId) {
-    this.update((val) => {
-      val.links = val.links?.filter((link) => !isSameResource(link.to, id));
-      return val;
+    const store = this.get();
+    if (!store.links) return;
+    if (!store.links.some((link) => isSameResource(link.to, id))) return;
+    const modifiedLinks = store.links.filter(
+      (link) => !isSameResource(link.to, id)
+    );
+    this.modify({
+      links: modifiedLinks
     });
   }
 
@@ -528,7 +565,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     });
     return result;
   }
-
+  // TODO - check for persistance need here
   updateProperty = async (property: INodePropertyValue) => {
     let properties = this.get().properties ?? [];
     properties = properties.filter((x) => !isSameResource(x, property));
@@ -768,7 +805,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
         accessMode: ResourceAccessMode.POP
       });
     }
-    this.reset();
+    this.deletePermanently();
     // this.modify({ ...generateSeedStore() }, { isPersist: false });
   }
 
@@ -1009,5 +1046,3 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     return result;
   }
 }
-
-export const captureStore = new CaptureStore();
