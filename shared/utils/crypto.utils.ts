@@ -43,6 +43,33 @@ export function generateRandomId(length = 16) {
 }
 
 /**
+ * Enhanced version of generateRandomId that adds timestamp-based entropy
+ * and falls back to generateSimpleRandomId if crypto API fails
+ */
+export function generateRandomIdv2(length = 16) {
+  try {
+    const randomValues = new Uint8Array(length);
+    crypto.getRandomValues(randomValues);
+
+    const timestamp = Date.now().toString();
+    const timestampBytes = new TextEncoder().encode(timestamp);
+
+    for (let i = 0; i < Math.min(timestampBytes.length, length); i++) {
+      randomValues[i] = (randomValues[i] + timestampBytes[i]) % 256;
+    }
+
+    return Array.from(randomValues)
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+  } catch (error) {
+    console.warn(
+      "Crypto API failed, using timestamp fallback for ID generation"
+    );
+    return generateSimpleRandomId();
+  }
+}
+
+/**
  * Generates a simple unique identifier.
  */
 export function generateSimpleRandomId() {

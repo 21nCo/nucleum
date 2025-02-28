@@ -7,7 +7,6 @@
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
   import AudioCapture from "$lib/client/products/memotron/capture/AudioCapture.svelte";
-  import { captureStore } from "$lib/client/products/memotron/capture/capture.store";
   import { MAX_FILE_SIZE_MB } from "$lib/client/components/record/record.store";
   import { resolveFileUploadErrorMessage } from "$lib/client/products/memotron/memotron.utils";
   import {
@@ -31,8 +30,16 @@
   import EmbedLibrarySearch from "./EmbedLibrarySearch.svelte";
   import { createEventDispatcher, getContext } from "svelte";
   import view from "$lib/client/stores/view.store";
+  import {
+    ActiveCaptureStore,
+    type IActiveCaptureStore
+  } from "$lib/client/products/memotron/capture/capture.store";
   const dispatch = createEventDispatcher();
   const nodeContext = getContext<any>("node");
+  let captureStore: IActiveCaptureStore | undefined;
+  $: if (nodeContext?.id) {
+    captureStore = ActiveCaptureStore.resolve(nodeContext?.id);
+  }
   export let linkInputValue = "";
   export let subType: NodeType | undefined;
   let librarySearchPopoverRef: HTMLElement | undefined = undefined;
@@ -112,7 +119,7 @@
       if (all.length === 1) {
         isSaveInProgress = true;
         let file = all[0];
-        const result = await captureStore.saveFile(file, undefined, {
+        const result = await captureStore?.saveFile(file, undefined, {
           isEmbedContext: true,
           creationContext: nodeContext?.id ?? undefined
         });
@@ -158,8 +165,9 @@
       <div class="flex items-center justify-center w-full h-full">
         <Icon icon="svg-spinners:3-dots-fade" size={Size.xl} />
       </div>
-    {:else}
+    {:else if captureStore}
       <AudioCapture
+        {captureStore}
         accessPoint={ResourceAccessPoint.MARKDOWN_EMBED}
         creationContext={nodeContext?.id}
         on:save={onAudioCaptureSave}

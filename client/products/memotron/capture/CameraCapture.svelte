@@ -1,6 +1,5 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
-  import { captureStore } from "./capture.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { ButtonVariant } from "$lib/client/types/button.type";
@@ -10,7 +9,8 @@
   import { ErrorMessage } from "$lib/client/components/error/error.type";
   import { appStore } from "$lib/client/stores/app.store";
   import type { IRecordId } from "$lib/client/types/data.type";
-
+  import type { IActiveCaptureStore } from "./capture.store";
+  export let captureStore: IActiveCaptureStore;
   let videoElement: HTMLVideoElement;
   let canvasElement: HTMLCanvasElement;
   let photoTaken = false;

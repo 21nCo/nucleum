@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { captureStore } from "$lib/client/products/memotron/capture/capture.store";
   import { CaptureType } from "$lib/client/products/memotron/capture/capture.type";
   import AudioCapture from "./AudioCapture.svelte";
   import NodularMarkdown from "$lib/client/components/markdown/NodularMarkdown.svelte";
@@ -13,8 +12,9 @@
   import { createEventDispatcher } from "svelte";
   import { activeHeight } from "$lib/client/actions/viewport";
   import context from "$lib/client/stores/context.store";
+  import type { IActiveCaptureStore } from "./capture.store";
   const dispatch = createEventDispatcher();
-
+  export let captureStore: IActiveCaptureStore;
   let mdRef: NodularMarkdown | undefined = undefined;
 
   function handleEvent(event: string, data: any) {
@@ -62,11 +62,11 @@
 >
   {#if captureType === CaptureType.AUDIO}
     <div class="w-full h-full flex items-center justify-center">
-      <AudioCapture bind:isSaveInProgress on:cancel />
+      <AudioCapture {captureStore} bind:isSaveInProgress on:cancel />
     </div>
   {:else if captureType === CaptureType.CAMERA}
     <div class="w-full h-full flex items-center justify-center text-fgs4">
-      <CameraCapture on:cancel />
+      <CameraCapture {captureStore} on:cancel />
     </div>
   {:else if "blocks" in $captureStore.body}
     <div class="overflow-auto h-full w-full dp:px--10">

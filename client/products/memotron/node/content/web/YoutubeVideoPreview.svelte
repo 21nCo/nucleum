@@ -1,35 +1,70 @@
 <script lang="ts">
   import { logger } from "$lib/client/components/debug/logger.client";
   import { onMount } from "svelte";
+
+  // Extend Window interface to include YouTube specific properties
+  declare global {
+    interface Window {
+      YT: any;
+      onYouTubeIframeAPIReady: () => void;
+      [key: string]: any; // Allow dynamic properties for instance-specific callbacks
+    }
+  }
+
   export let url: string;
   export let timestamp: number | null = null;
   let videoId: string | null = null;
 
+  const instanceId = Math.random().toString(36).substring(2, 15);
   let player: any;
   let playerReady = false;
   let errorMessage = "";
   $: console.log({ url, videoId });
+
   onMount(() => {
-    // if (url) videoId = new URL(url).searchParams.get("v") || "";
     if (url) {
       videoId = extractVideoId(url);
     }
     if (!videoId) return;
-    if (window.YT && window.YT.Player) {
+
+    // Create a unique callback name for this instance
+    const callbackName = `onYouTubeIframeAPIReady_${instanceId}`;
+
+    const win = window as any;
+    if (win.YT && win.YT.Player) {
       initializePlayer();
     } else {
-      const tag = document.createElement("script");
-      tag.src = "https://www.youtube.com/iframe_api";
-      const firstScriptTag = document.getElementsByTagName("script")[0];
-      firstScriptTag?.parentNode?.insertBefore(tag, firstScriptTag);
+      // Only load the API script if it hasn't been loaded yet
+      if (
+        !document.querySelector(
+          'script[src="https://www.youtube.com/iframe_api"]'
+        )
+      ) {
+        const tag = document.createElement("script");
+        tag.src = "https://www.youtube.com/iframe_api";
+        const firstScriptTag = document.getElementsByTagName("script")[0];
+        firstScriptTag?.parentNode?.insertBefore(tag, firstScriptTag);
+      }
 
-      window.onYouTubeIframeAPIReady = initializePlayer;
+      // Set up unique callback for this instance
+      win[callbackName] = initializePlayer;
+      if (!win.onYouTubeIframeAPIReady) {
+        win.onYouTubeIframeAPIReady = () => {
+          // Call all instance-specific callbacks
+          Object.keys(win).forEach((key) => {
+            if (key.startsWith("onYouTubeIframeAPIReady_")) {
+              win[key]();
+            }
+          });
+        };
+      }
     }
 
     return () => {
       if (player && typeof player.destroy === "function") {
         player.destroy();
       }
+      delete win[callbackName];
     };
   });
 
@@ -48,7 +83,8 @@
 
   function initializePlayer() {
     try {
-      player = new window.YT.Player("player-container", {
+      const containerId = `player-container-${instanceId}`;
+      player = new window.YT.Player(containerId, {
         height: "600",
         width: "100%",
         videoId: videoId,
@@ -113,7 +149,7 @@
 </script>
 
 <div class="flex flex-col w-full h-full justify-center items-center">
-  <div id="player-container" class="w-full">
+  <div id={`player-container-${instanceId}`} class="w-full">
     {#if errorMessage}
       <div
         class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"

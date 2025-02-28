@@ -13,6 +13,10 @@ import type {
 } from "$lib/client/products/memotron/node/node.type";
 import type { CollectionType } from "$lib/client/components/collection/collection.type";
 import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import type {
+  IActiveResource,
+  IResource
+} from "$lib/client/components/flux/resourceStores/resource.type";
 
 export enum CaptureType {
   MARKDOWN = "MARKDOWN",
@@ -22,7 +26,7 @@ export enum CaptureType {
   UPLOAD = "UPLOAD"
 }
 
-export type ICaptureStore = IObservableStoreSubject & {
+export type ICapture = IResource & {
   label: string | null;
   /**
    * @deprecated
@@ -54,6 +58,8 @@ export type ICaptureStore = IObservableStoreSubject & {
    */
   clipboard?: IPasteCaptureData;
 };
+
+export type IActiveCapture = IActiveResource & ICapture;
 
 export type ICaptureLink = {
   from: IRecordId | "root";

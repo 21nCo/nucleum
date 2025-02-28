@@ -1,6 +1,5 @@
 <script lang="ts">
   import Writer from "./Writer.svelte";
-  import { captureStore } from "$lib/client/products/memotron/capture/capture.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { appStore, isInEditMode } from "$lib/client/stores/app.store";
@@ -59,11 +58,17 @@
   import Divider from "$lib/client/elements/Divider.svelte";
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
-
+  import {
+    ActiveCaptureStore,
+    type IActiveCaptureStore
+  } from "./capture.store";
+  import { debouncer } from "$lib/client/utils/utils";
+  export let captureId: IRecordId = generateResourceId(Resource.capture);
   export let isWindowDnD = false;
   let bulkQueryParam: string | null = null;
   let linkQueryParam: string | null = null;
-
+  let captureStore: IActiveCaptureStore;
+  $: if (captureId) captureStore = ActiveCaptureStore.resolve(captureId);
   let isSaving: boolean = false;
   let isEmptyState: boolean = true;
   isInEditMode.set(true);
@@ -244,6 +249,7 @@
         $captureStore.body.blocks.push(...newBlock);
       }
       $captureStore.refreshId = new Date().getTime();
+      persist();
     } catch (e) {
       logger.error({ at: "Capture.svelte - onClipboard", error: e });
     } finally {
@@ -415,6 +421,25 @@
     if (len && len > 0) return len;
     return undefined;
   }
+
+  function persistLabel() {
+    captureStore.modify(
+      { label: $captureStore.label },
+      { isPreventBackPropagation: true }
+    );
+  }
+
+  function onContentChange(e: CustomEvent) {
+    refreshEmptyState();
+    debouncedPersist();
+  }
+
+  const debouncedPersist = debouncer(persist, 1000);
+
+  function persist() {
+    const val = $captureStore;
+    captureStore.modify({ ...val }, { isPreventBackPropagation: true });
+  }
 </script>
 
 {#if isSaving}
@@ -433,7 +458,9 @@
   <!-- {:else if captureType === CaptureType.UPLOAD && !($context.isEmbed && $context.os === OperatingSystem.IOS)}
   <FileUploader on:cancel={reset} /> -->
 {:else if captureType === CaptureType.CAMERA && dev_iosCameraCaptureMethod === "input" && $context.isEmbed && $context.os === OperatingSystem.IOS}
-  <!-- <CameraCaptureUsingInput /> -->
+  <!-- <CameraCaptureUsingInput 
+    {captureStore}
+  /> -->
   <input
     bind:this={cameraCaptureRef}
     type="file"
@@ -466,6 +493,7 @@
                   placeholder="Untitled"
                   isPreventDefaultOnEnter={true}
                   on:change={refreshEmptyState}
+                  on:debouncedChange={persistLabel}
                   on:enter={onTitleEnter}
                   on:keydown={(e) => {
                     const event = e.detail;
@@ -547,6 +575,7 @@
             })}
           >
             <LinkboxOnCapture
+              {captureStore}
               on:linked={onLink}
               on:unlinked={onUnlink}
               expand={expandedType}
@@ -584,14 +613,15 @@
             })}
           >
             {#if captureType === CaptureType.UPLOAD && !($context.isEmbed && $context.os === OperatingSystem.IOS)}
-              <FileUploader on:cancel={reset} />
+              <FileUploader {captureStore} on:cancel={reset} />
             {:else}
               <Writer
                 {captureType}
+                {captureStore}
                 bind:isEmptyState
                 bind:this={writerRef}
                 bind:isSaveInProgress={isSaving}
-                on:change={refreshEmptyState}
+                on:change={onContentChange}
                 on:cancel={reset}
               />
             {/if}

@@ -1,10 +1,10 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
-  import { captureStore } from "./capture.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { ButtonVariant } from "$lib/client/types/button.type";
-
+  import type { IActiveCaptureStore } from "./capture.store";
+  export let captureStore: IActiveCaptureStore;
   let photoTaken = false;
   let imagePreview: string | null = null;
   const dispatch = createEventDispatcher();

@@ -43,7 +43,6 @@
     splitMarkdownAtPlainOffset,
     textToMdBlocks
   } from "./markdown.utils";
-  import { captureStore } from "$lib/client/products/memotron/capture/capture.store";
   import { isValidString, truncateString } from "$lib/shared/utils/text.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { fileDrop } from "$lib/client/actions/fileDrop.action";
@@ -74,6 +73,11 @@
   import context from "$lib/client/stores/context.store";
   import MarkdownkeyboardToolbar from "./toolbar/MarkdownkeyboardToolbar.svelte";
   import { rightswipe } from "$lib/client/actions/gestures.action";
+  import {
+    ActiveCaptureStore,
+    type IActiveCaptureStore
+  } from "$lib/client/products/memotron/capture/capture.store";
+
   const dispatch = createEventDispatcher();
 
   export let block: IBlock;
@@ -98,6 +102,10 @@
   const markdownContext = getContext<any>("markdown");
   const nodeContext = getContext<any>("node");
   const contentContext = getContext<any>("content");
+  let captureStore: IActiveCaptureStore | undefined;
+  $: if (nodeContext?.id) {
+    captureStore = ActiveCaptureStore.resolve(nodeContext?.id);
+  }
 
   const blockContext = {
     publish: blockEvent
@@ -623,7 +631,7 @@
       let newBlock: Pick<IBlock, "contentType" | "body"> | undefined;
       let fileEmbed: any;
       if (data.file) {
-        fileEmbed = await captureStore.saveFile(data.file, data.contentType, {
+        fileEmbed = await captureStore?.saveFile(data.file, data.contentType, {
           isEmbedContext: true,
           creationContext: nodeContext?.id ?? undefined
         });
@@ -654,7 +662,7 @@
         data.textMetadata?.isEmbed ||
         data.contentType === NodeType.YOUTUBE_VIDEO
       ) {
-        const webpageNode = await captureStore.saveWebpage(data.text, {
+        const webpageNode = await captureStore?.saveWebpage(data.text, {
           contentType: data.contentType,
           isEmbedContext: true,
           creationContext: nodeContext?.id ?? undefined
@@ -797,7 +805,7 @@
         return;
       }
       let file = all[0];
-      const fileEmbed = await captureStore.saveFile(file, undefined, {
+      const fileEmbed = await captureStore?.saveFile(file, undefined, {
         isEmbedContext: true,
         creationContext: nodeContext?.id ?? undefined
       });
@@ -838,7 +846,7 @@
 
   async function insertMultipleFiles(multipleFilesData: IMultiFileCaptureData) {
     await wait(10);
-    const result = await captureStore.saveMultipleFiles(
+    const result = await captureStore?.saveMultipleFiles(
       multipleFilesData.files,
       {
         isEmbedContext: true,
