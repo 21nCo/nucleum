@@ -318,6 +318,24 @@ export type IResourceFilterValue =
       notIn?: IPrimitiveDbDataType[];
     };
 
+export enum IResourceFilterOperator {
+  EQUALS = "equals",
+  NOT_EQUALS = "notEquals",
+  GREATER_THAN = "greaterThan",
+  GREATER_THAN_OR_EQUALS = "greaterThanOrEqual",
+  LESS_THAN = "lessThan",
+  LESS_THAN_OR_EQUALS = "lessThanOrEqual",
+  IN = "in",
+  NOT_IN = "notIn"
+}
+
+export enum IResourceFilterDateGrouping {
+  DAY = "day",
+  WEEK = "week",
+  MONTH = "month",
+  YEAR = "year"
+}
+
 export type IResourceSelectOrderBy = {
   [key: string]: "asc" | "desc";
 };

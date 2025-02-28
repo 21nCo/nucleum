@@ -606,7 +606,7 @@ export class SurrealPersistence implements IPersistence {
         });
         // console.time(`SurrealPersistence.selectMany - ${resource}`);
       }
-      const result = await this.instance?.query_raw(query, params);
+      const result = await this.instance?.queryRaw(query, params);
       if (resource !== Resource.mutation) {
         // console.timeEnd(`SurrealPersistence.selectMany - ${resource}`);
         logger.log({

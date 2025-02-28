@@ -11,7 +11,9 @@ import {
   SearchType,
   StoreDataType,
   type IMutation,
-  type IRecordId
+  type IRecordId,
+  IResourceFilterOperator,
+  IResourceFilterDateGrouping
 } from "$lib/client/types/data.type";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { generateRandomId } from "./crypto.utils";
@@ -463,6 +465,26 @@ function generateWhereClause(
   for (const [key, value] of Object.entries(params?.filters ?? {})) {
     if (Array.isArray(value)) {
       conditions.push(`${key} IN [${value.map(formatValue).join(", ")}]`);
+    } else if (Date.parse(value)) {
+      conditions.push(resolveDateCondition(key, value));
+    } else if (
+      typeof value === "object" &&
+      "type" in value &&
+      value.type === "date"
+    ) {
+      let groupBy = IResourceFilterDateGrouping.DAY;
+      if ("groupBy" in value) {
+        groupBy = value.groupBy as IResourceFilterDateGrouping;
+      }
+      Object.entries(value).forEach(([operator, date]) => {
+        if (operator === "type" || operator === "groupBy") return;
+        conditions.push(
+          resolveDateCondition(key, date as Date, {
+            operator: operator as IResourceFilterOperator,
+            groupBy: groupBy as IResourceFilterDateGrouping
+          })
+        );
+      });
     } else if (typeof value === "object") {
       if ("greaterThan" in value) {
         conditions.push(`${key} > ${formatValue(value.greaterThan)}`);
@@ -507,5 +529,43 @@ function generateWhereClause(
       return value ? "true" : "false"; // Use 'true' and 'false' for boolean literals
     }
     return String(value);
+  }
+
+  function resolveDateCondition(
+    key: string,
+    value: Date,
+    params?: {
+      operator?: IResourceFilterOperator;
+      groupBy?: IResourceFilterDateGrouping;
+    }
+  ) {
+    const {
+      operator = IResourceFilterOperator.EQUALS,
+      groupBy = IResourceFilterDateGrouping.DAY
+    } = params ?? {};
+    return `(${key} is not NONE AND time::group(${key},"${groupBy}") ${resolveOperator(operator)} time::group("${value.toISOString()}","${groupBy}"))`;
+  }
+
+  function resolveOperator(operator: IResourceFilterOperator) {
+    switch (operator) {
+      case IResourceFilterOperator.EQUALS:
+        return "=";
+      case IResourceFilterOperator.NOT_EQUALS:
+        return "!=";
+      case IResourceFilterOperator.GREATER_THAN:
+        return ">";
+      case IResourceFilterOperator.LESS_THAN:
+        return "<";
+      case IResourceFilterOperator.GREATER_THAN_OR_EQUALS:
+        return ">=";
+      case IResourceFilterOperator.LESS_THAN_OR_EQUALS:
+        return "<=";
+      case IResourceFilterOperator.IN:
+        return "IN";
+      case IResourceFilterOperator.NOT_IN:
+        return "NOT IN";
+      default:
+        return "=";
+    }
   }
 }

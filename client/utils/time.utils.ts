@@ -507,7 +507,9 @@ export function formatDate(
     | "verbose"
     | "mm-dd"
     | "mmm-dd"
-    | "mmm-yy" = "verbose"
+    | "mmm-yy"
+    | "mmm-yyyy"
+    | "yyyy" = "verbose"
 ) {
   if (format === "iso" || format === "iso-short") {
     let year = date.getFullYear();
@@ -535,6 +537,15 @@ export function formatDate(
     return date.toLocaleDateString(locale, {
       month: "short",
       year: "2-digit"
+    });
+  } else if (format === "mmm-yyyy") {
+    return date.toLocaleDateString(locale, {
+      month: "short",
+      year: "numeric"
+    });
+  } else if (format === "yyyy") {
+    return date.toLocaleDateString(locale, {
+      year: "numeric"
     });
   }
 }

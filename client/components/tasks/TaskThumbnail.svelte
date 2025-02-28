@@ -12,13 +12,16 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import { InputStyle } from "$lib/client/types/input.type";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
+  import type { IRecordId } from "$lib/client/types/data.type";
   export let item: ITaskThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
-  export let size: Size.sm | Size.md = Size.md;
+  export let size: Size.sm | Size.md | Size.lg = Size.md;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
-  export let accessPointId: string;
+  export let accessPointId: IRecordId | undefined = undefined;
   export let isApplyCustomColor: boolean = false;
   export let isDraggable: boolean = false;
+  export let parentBgIndex: number = 1;
   let isHovering = false;
   let isDatePickerOpen = false;
 </script>
@@ -32,14 +35,14 @@
   {isDraggable}
 >
   <div
-    class="flex gap-2 items-center px-4 py-2 h-12 bg-bgs2/50 hover:bg-bgs2 border border-brs2 rounded-md"
+    class="flex gap-2 items-center px-4 py-2 h-14 bg-bgs2/50 hover:bg-bgs2 border border-brs2 rounded-md"
     use:hoverable={{
       onHover: (value) => {
         isHovering = value;
       }
     }}
   >
-    <TaskCheckbox id={item.id} bind:isChecked={item.isChecked} />
+    <TaskCheckbox id={item.id} bind:isChecked={item.isChecked} {size} />
     {#if item.isChecked}
       <span class="line-through flex-1">
         {item.label}
@@ -51,7 +54,21 @@
     {/if}
     {#if item.date && !isHovering}
       <span class="text-b3 text-fgs3">
-        {formatDate(item.date)}
+        Due: {formatDate(item.date)}
+      </span>
+    {/if}
+    {#if item.completed && !isHovering}
+      {@const isCompletedBeforeDue = item.date && item.completed < item.date}
+      {#if item.date}
+        <span class="text-b3 text-fgs3"> | </span>
+      {/if}
+      <span
+        class={cn("text-b3 text-ags1", {
+          "text-ags1": isCompletedBeforeDue,
+          "text-ars1": !isCompletedBeforeDue && item.date
+        })}
+      >
+        Completed: {formatDate(item.completed)}
       </span>
     {/if}
     {#if isHovering || isDatePickerOpen}

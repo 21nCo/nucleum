@@ -36,8 +36,7 @@
     rootNodeTypeList,
     type INode
   } from "$lib/client/products/memotron/node/node.type";
-  import { resolveNodeSubTypesForSwitcher } from "$lib/client/products/memotron/node/node.utils";
-  import { resolveCollectionSubTypesForSwitcher } from "$lib/client/components/collection/collection.utils";
+
   import { debouncer } from "$lib/client/utils/utils";
   import {
     PersistenceActionType,
@@ -81,8 +80,11 @@
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { createEventDispatcher } from "svelte";
   import { collectionCountStore } from "../collection/collectionCount.store";
-  import { resolveGoalSubTypesForSwitcher } from "../goals/goal.utils";
-  import { resolveTaskSubTypesForSwitcher } from "../tasks/task.utils";
+
+  import TaskLibrary from "../tasks/TaskLibrary.svelte";
+  import LibrarySubTypeSwitcher from "./LibrarySubTypeSwitcher.svelte";
+  import type { SubType } from "./library.type";
+  import { isCustomPane } from "./library.utils";
   const dispatch = createEventDispatcher();
 
   export let resource: Resource;
@@ -100,48 +102,17 @@
   let searchStore = new SearchStore();
   let QAsearchStore = new SearchStore();
   QAsearchStore.searchType = SearchType.SEMANTIC;
-  type SubType =
-    | "all"
-    | "recents"
-    | "starred"
-    | NodeType
-    | CollectionType
-    | "incomplete"
-    | "bydate";
   let selectedSubType: SubType = "all";
   let isRefreshing: boolean = true;
   let totalCountAfterFilter: number = 0;
   let isRefreshingTotalCount: boolean = false;
   let availableResourcesSet: Set<Resource> = new Set(availableResources);
-
-  const nodeSubTypesForSwitcher = resolveNodeSubTypesForSwitcher();
-  const collectionSubTypesForSwitcher = resolveCollectionSubTypesForSwitcher();
-  const goalSubTypesForSwitcher = resolveGoalSubTypesForSwitcher(true);
-  const taskSubTypesForSwitcher = resolveTaskSubTypesForSwitcher();
-  const allSubTypeSwitcherItem = {
-    label: "All",
-    value: "all",
-    icon: "ph:asterisk-light"
-  };
-  const starredSubTypeSwitcherItem = {
-    label: "Starred",
-    value: "starred",
-    icon: "ph:star-light"
-  };
-  let subTypeCounts: { count: number; type: NodeType | CollectionType }[] = [];
-  let isExpandableSubTypes: boolean = false;
-  let isExpandSubTypes: boolean = false;
-  let allSubTypes: ISelectItem[] = [];
-  let renderedSubTypes: ISelectItem[] = [allSubTypeSwitcherItem];
   let refreshResetTimeout: any;
   let isSearchExpanded = false;
   let searchInputRef: InlineSearchBar;
   let isRefineShown = false;
-
+  let subTypeSwitcherRef: LibrarySubTypeSwitcher;
   $: isGenericSubType = ["all", "starred", "recents"].includes(selectedSubType);
-  $: isCustomPane = [Resource.relation].includes(resource);
-  $: isExpandableSubTypes = [Resource.node].includes(resource);
-
   $: multiSelectContext = {
     resource,
     accessPoint
@@ -153,10 +124,27 @@
     console.log("LibraryRecordsPane - onMount");
     pageSub = page.subscribe(async (p) => {
       const subResourceParam = p.url.searchParams.get("type");
+      let isRefreshNeeded = false;
       if (subResourceParam && subResourceParam !== selectedSubType) {
         selectedSubType = (subResourceParam as SubType) ?? "all";
-        await refresh();
+        isRefreshNeeded = true;
       }
+      if (p.url.searchParams.get("starred")) {
+        isStarFilterSelected = true;
+        isRefreshNeeded = true;
+      } else if (isStarFilterSelected) {
+        isStarFilterSelected = false;
+        isRefreshNeeded = true;
+      }
+
+      if (p.url.searchParams.get("archived")) {
+        isArchivedFilterSelected = true;
+        isRefreshNeeded = true;
+      } else if (isArchivedFilterSelected) {
+        isArchivedFilterSelected = false;
+        isRefreshNeeded = true;
+      }
+      if (isRefreshNeeded) await refresh();
     });
     if (resource === Resource.collection) {
       await collectionCountStore.initialize();
@@ -213,7 +201,7 @@
           createdAt: "desc"
         };
       }
-      await refreshSubTypeSwitcher();
+      subTypeSwitcherRef?.refresh();
       const filters = resolveFilters();
       const newData = await searchStore.select({
         resource,
@@ -280,64 +268,6 @@
       logger.error({ at: "Library - refreshTotalCounts", e });
     } finally {
       isRefreshingTotalCount = false;
-    }
-  }
-
-  async function refreshSubTypeSwitcher() {
-    try {
-      const filters = resolveBaseFilters();
-      allSubTypes = resolveSubItems(resource);
-      if (isConstrainedWidth) {
-        renderedSubTypes = [...allSubTypes];
-        return;
-      }
-      if (isExpandableSubTypes) {
-        subTypeCounts = await searchStore.resolveSubTypeCounts(
-          resource,
-          filters
-        );
-        if (isValidArrayWithData(subTypeCounts)) {
-          allSubTypes = allSubTypes.map((x) => {
-            let count = subTypeCounts.find(
-              (y: { type: any; count: number }) =>
-                y.type?.toLowerCase() === x.value?.toLowerCase()
-            )?.count;
-            return {
-              ...x,
-              badge: count ? count : undefined
-            };
-          });
-        }
-      }
-      if (!isExpandableSubTypes || isExpandSubTypes) {
-        renderedSubTypes = [...allSubTypes];
-        return;
-      }
-      renderedSubTypes = [...allSubTypes]
-        .filter((x) => x.value === "all" || (x.badge && x.badge > 0))
-        ?.sort((a, b) => (b.badge ?? 0) - (a.badge ?? 0));
-      renderedSubTypes.pop();
-      renderedSubTypes.unshift(allSubTypeSwitcherItem);
-    } catch (e) {
-      logger.error({ at: "Library - refreshSubTypeCountsAndSort", e });
-    }
-
-    function resolveSubItems(resource: Resource) {
-      const items: ISelectItem[] = [allSubTypeSwitcherItem];
-      if (isConstrainedWidth) {
-        items.push(starredSubTypeSwitcherItem);
-      }
-      if (isConstrainedWidth && isExpandableSubTypes) return items;
-      if (resource === Resource.node) {
-        items.push(...nodeSubTypesForSwitcher);
-      } else if (resource === Resource.collection) {
-        items.push(...collectionSubTypesForSwitcher);
-      } else if (resource === Resource.goal) {
-        items.push(...goalSubTypesForSwitcher);
-      } else if (resource === Resource.task) {
-        items.push(...taskSubTypesForSwitcher);
-      }
-      return items;
     }
   }
 
@@ -446,9 +376,11 @@
   }
 </script>
 
-{#if isCustomPane}
+{#if isCustomPane(resource)}
   {#if resource === Resource.relation}
     <LibraryRelationsPane />
+  {:else if resource === Resource.task}
+    <TaskLibrary {accessPoint} />
   {/if}
 {:else}
   {#if isConstrainedWidth}
@@ -480,17 +412,11 @@
           }}
         />
         <div class="flex-1 min-w-0" in:fade>
-          <OptionSelector
-            size={Size.sm}
-            options={renderedSubTypes}
-            selected={selectedSubType}
-            isPreventWrap={true}
-            on:select={(e) => {
-              if (!e?.detail) return;
-              appStore.toggleSearchParam({
-                type: e.detail.toLowerCase()
-              });
-            }}
+          <LibrarySubTypeSwitcher
+            {resource}
+            {isConstrainedWidth}
+            {accessPoint}
+            bind:this={subTypeSwitcherRef}
           />
         </div>
         <Toggle
@@ -587,55 +513,12 @@
         refresh();
       }}
     />
-    <div class="flex px-4 gap-2 min-h-fit w-full">
-      <div class="flex-1 min-w-0">
-        <OptionSelector
-          style={OptionSelectorStyle.OUTLINE}
-          size={Size.sm}
-          options={renderedSubTypes}
-          selected={selectedSubType}
-          isPreventWrap={isExpandableSubTypes && !isExpandSubTypes}
-          on:select={(e) => {
-            if (!e?.detail) return;
-            appStore.toggleSearchParam({
-              type: e.detail.toLowerCase()
-            });
-          }}
-        />
-      </div>
-      {#if !isExpandSubTypes}
-        <Divider orientation={Orientation.Vertical} />
-      {/if}
-      <div class="flex gap-1">
-        {#if !isExpandSubTypes}
-          <Toggle
-            bind:on={isStarFilterSelected}
-            icon="ph:star-light"
-            tooltip="Show starred items"
-            bgSize={Size.sm}
-            on:change={() => refresh()}
-          />
-          <Toggle
-            bind:on={isArchivedFilterSelected}
-            icon="ph:archive-light"
-            tooltip="Show archived items"
-            on:change={() => refresh()}
-            bgSize={Size.sm}
-          />
-        {/if}
-        {#if isExpandableSubTypes}
-          <Toggle
-            bind:on={isExpandSubTypes}
-            icon={isExpandSubTypes
-              ? "ph:caret-left-light"
-              : "ph:caret-down-light"}
-            tooltip="Show all sub types"
-            bgSize={Size.sm}
-            on:change={() => refreshSubTypeSwitcher()}
-          />
-        {/if}
-      </div>
-    </div>
+    <LibrarySubTypeSwitcher
+      {resource}
+      {isConstrainedWidth}
+      {accessPoint}
+      bind:this={subTypeSwitcherRef}
+    />
   {/if}
   <div class="flex flex-col gap-4 px-4 overflow-auto grow">
     <InlineSyncingFeedback {isSyncing} isFullWidthVariant={true} />

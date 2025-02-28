@@ -22,7 +22,7 @@
   import LibraryLoadingPulse from "$lib/client/components/library/LibraryLoadingPulse.svelte";
   import GoalThumbnail from "../goals/thumbnail/GoalThumbnail.svelte";
   import TaskThumbnail from "../tasks/TaskThumbnail.svelte";
-  import TasksLibrary from "../tasks/TasksLibrary.svelte";
+  import TaskRecords from "../tasks/TaskRecords.svelte";
   import type { IGoalThumb } from "../goals/goal.type";
   import type { ITaskThumb } from "../tasks/task.type";
   const dispatch = createEventDispatcher();
@@ -68,7 +68,7 @@
   {#if resource === Resource.node && arrangement === Arrangement.MASONRY}
     <NodeItems nodes={data} {arrangement} density={3} {accessPoint} />
   {:else if resource === Resource.task && accessPoint === ResourceAccessPoint.LIBRARY}
-    <TasksLibrary {data} {arrangement} {accessPoint} {parentBgIndex} />
+    <TaskRecords {data} {arrangement} {accessPoint} {parentBgIndex} />
   {:else}
     <div
       class={cn(`h-full w-full content-start`, {

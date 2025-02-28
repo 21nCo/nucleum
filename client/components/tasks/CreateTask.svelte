@@ -1,6 +1,7 @@
 <script lang="ts">
   import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
+  import type { IRecordId } from "$lib/client/types/data.type";
   import { InputStyle } from "$lib/client/types/input.type";
   import { Size } from "$lib/client/types/size.enum";
   import { Resource } from "../flux/resourceStores/resource.enum";
@@ -9,14 +10,16 @@
   import modalEvent from "../modal/modal.store";
   import ModalFooter from "../modal/ModalFooter.svelte";
   import { taskStore } from "./task.store";
+  export let date: Date | undefined = undefined;
+  export let goalId: IRecordId | undefined = undefined;
   const action = resourceAction(Resource.task, ResourceActionType.CREATE);
   let label = "";
-  let date: Date | undefined = undefined;
   let inputRef: TextInput | undefined;
   async function handleCreate() {
     return taskStore.save({
       label,
       date,
+      goal: goalId,
       isChecked: false
     });
   }

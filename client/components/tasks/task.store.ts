@@ -31,10 +31,10 @@ class TaskStore extends ResourceStore<ITask> {
   async toggle(id: IRecordId) {
     const task = await super.select(id);
     if (!task) return;
-
+    const newVal = !task.isChecked;
     return super.modify(id, {
-      isChecked: !task.isChecked,
-      completed: task.isChecked ? new Date() : undefined
+      isChecked: newVal,
+      completed: newVal ? new Date() : undefined
     });
   }
 }
