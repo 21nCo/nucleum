@@ -12,7 +12,6 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
   const dispatch = createEventDispatcher();
-  let refreshId: number = new Date().getTime();
   let drafts: ICapture[] = [];
   let ref: HTMLButtonElement;
   onMount(() => {
@@ -32,15 +31,21 @@
 
   async function onDelete(id: IRecordId) {
     await captureStore.delete(id);
-    drafts = drafts.filter((draft) => !isSameResource(draft, id));
-    refreshId = new Date().getTime();
+    const filteredDrafts = drafts.filter((draft) => !isSameResource(draft, id));
+    if (filteredDrafts.length === 0) {
+      hidePopover();
+    }
+    drafts = [...filteredDrafts];
+  }
+  function hidePopover() {
+    ref.dispatchEvent(new Event("hide"));
   }
 </script>
 
 {#if drafts.length > 0}
   <div class="flex justify-center items-center">
     <button
-      class="flex items-center gap-1 text-b2 notouch:hover:bg-bgs2 active:bg-bgs2 rounded-md px-3 py-2 border border-dashed border-brs3"
+      class="flex items-center gap-1 text-b2 notouch:hover:bg-ass2/10 active:bg-ass2/10 rounded-md px-3 py-2 border border-dashed border-ass1 text-ass1"
       bind:this={ref}
       use:popover={{
         content: DraftsPopover,
@@ -48,9 +53,7 @@
         isRenderAsModalForCW: true,
         componentProps: {
           drafts,
-          onClose: () => {
-            ref.dispatchEvent(new Event("hide"));
-          },
+          onClose: hidePopover,
           onSelect: (draft) => {
             dispatch("select", draft);
           },
@@ -58,8 +61,9 @@
         }
       }}
     >
-      <Icon icon="ph:file-light" size={Size.sm} />
-      {drafts.length} drafts available
+      <Icon icon="ph:file-light" size={Size.sm} class="text-ass1" />
+      {drafts.length}
+      {drafts.length === 1 ? "draft" : "drafts"} available
     </button>
   </div>
 {/if}

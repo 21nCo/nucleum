@@ -64,6 +64,7 @@
   } from "./capture.store";
   import { debouncer } from "$lib/client/utils/utils";
   import CaptureDraftsAction from "./draftSelector/CaptureDraftsAction.svelte";
+  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   export let captureId: IRecordId = generateResourceId(Resource.capture);
   export let isWindowDnD = false;
   let bulkQueryParam: string | null = null;
@@ -628,7 +629,7 @@
             {/if}
           </div>
           {#if isEmptyState}
-            <div class="w-full dp:px-10 dp:my-10">
+            <div class="flex flex-col gap-8 w-full dp:px-10 dp:my-10">
               <TypeSelector
                 bind:selected={captureType}
                 isCapturePage={true}
@@ -646,6 +647,9 @@
                   isEmptyState = false;
                 }}
               />
+              {#if $view.isConstrainedWidth}
+                <ScrollViewBottomSpacer size={Size.sm} />
+              {/if}
             </div>
           {/if}
         </main>

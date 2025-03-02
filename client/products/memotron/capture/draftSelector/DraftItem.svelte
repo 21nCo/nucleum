@@ -1,6 +1,7 @@
 <script lang="ts">
   import { hoverable } from "$lib/client/actions/hover.action";
   import Button from "$lib/client/elements/button/Button.svelte";
+  import context from "$lib/client/stores/context.store";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";
   import { formatDate } from "$lib/client/utils/time.utils";
@@ -20,24 +21,25 @@
   }}
   on:click
 >
-  <div class="text-b2 font-medium text-fgs1">
+  <div class="text-b2 font-medium text-fgs1 text-start">
     {draft.label ? draft.label : "Untitled"}
   </div>
-  {#if isHovered}
-    <Button
-      icon="ph:trash-light"
-      tooltip="Delete draft"
-      size={Size.sm}
-      type={ButtonVariant.DANGER}
-      style={ButtonStyle.OUTLINED}
-      on:click={(e) => {
-        e.stopPropagation();
-        dispatch("delete", draft);
-      }}
-    />
-  {:else}
-    <div class="text-b3 text-fgs3">
+  <div class="flex items-center gap-2">
+    <div class="text-b3 text-fgs3 whitespace-nowrap">
       {formatDate(new Date(draft.modifiedAt))}
     </div>
-  {/if}
+    {#if isHovered || $context.isTouchDevice}
+      <Button
+        icon="ph:trash-light"
+        tooltip="Delete draft"
+        size={Size.sm}
+        type={ButtonVariant.DANGER}
+        style={ButtonStyle.OUTLINED}
+        on:click={(e) => {
+          e.stopPropagation();
+          dispatch("delete", draft);
+        }}
+      />
+    {/if}
+  </div>
 </button>
