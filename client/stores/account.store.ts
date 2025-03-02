@@ -146,7 +146,8 @@ class AccountStore extends ObservableStore<
       };
       return n;
     });
-    await flux?.terminate();
+    // TODO - this is causing issue in macOS app - signout is not working
+    // await flux?.terminate();
     await signout(params, "signOut account.store");
   }
   async embedOAuthSignin(token: string) {

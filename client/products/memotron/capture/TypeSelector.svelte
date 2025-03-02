@@ -102,7 +102,7 @@
   }
 </script>
 
-<div class="h-full w-full flex flex-col items-center gap-3 dp:gap-4">
+<div class="w-full flex flex-col items-center gap-3 dp:gap-4">
   <div class="self-start">
     <Text content="Select a type" style={TextStyle.SECTION_HEADING} />
   </div>

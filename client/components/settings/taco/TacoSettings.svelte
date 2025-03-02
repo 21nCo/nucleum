@@ -94,7 +94,10 @@
     <div class="text-fgs2 text-b2 min-w-fit text-left">
       {mainLabel}
     </div>
-
+    <InlineInfoBanner
+      content="Local AI is still in **experimental mode**. Please turn off AI models if you face any issues"
+      icon="ph:warning-light"
+    />
     <!-- <SwitchInput
       size={Size.sm}
       {isDisabled}

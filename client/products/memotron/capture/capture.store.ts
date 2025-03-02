@@ -157,12 +157,21 @@ export class ActiveCaptureStore extends ActiveResourceStore<
   //   }, 1500);
   // }
 
+  init(draft: ICapture) {
+    this.modify({
+      ...draft,
+      refreshId: new Date().getTime()
+    });
+  }
+
   reset() {
     logger.log({ at: "CaptureStore.reset" });
     const seedStore = generateSeedStore();
-    this.modify({
-      ...seedStore,
-      refreshId: new Date().getTime()
+    this.update(() => {
+      return {
+        ...seedStore,
+        refreshId: new Date().getTime()
+      };
     });
   }
 

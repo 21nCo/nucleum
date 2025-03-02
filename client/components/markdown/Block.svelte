@@ -104,7 +104,7 @@
   const contentContext = getContext<any>("content");
   let captureStore: IActiveCaptureStore | undefined;
   $: if (nodeContext?.id) {
-    captureStore = ActiveCaptureStore.resolve(nodeContext?.id);
+    captureStore = ActiveCaptureStore.resolve(nodeContext?.id + "capture");
   }
 
   const blockContext = {
