@@ -48,7 +48,7 @@
   const nodeContext = getContext<any>("node");
   let captureStore: IActiveCaptureStore | undefined;
   $: if (nodeContext?.id) {
-    captureStore = ActiveCaptureStore.resolve(nodeContext?.id);
+    captureStore = ActiveCaptureStore.resolve(nodeContext?.id + "capture");
   }
   const contentContext = getContext<any>("content");
   export let id: IRecordId;

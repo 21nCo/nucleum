@@ -12,13 +12,7 @@
     ) {
       return [Resource.node, Resource.collection, Resource.relation];
     }
-    return [
-      Resource.node,
-      Resource.collection,
-      Resource.relation,
-      Resource.todo,
-      Resource.combination
-    ];
+    return [Resource.node, Resource.collection, Resource.relation];
   }
 </script>
 

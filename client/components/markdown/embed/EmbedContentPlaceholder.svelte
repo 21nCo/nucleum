@@ -38,7 +38,7 @@
   const nodeContext = getContext<any>("node");
   let captureStore: IActiveCaptureStore | undefined;
   $: if (nodeContext?.id) {
-    captureStore = ActiveCaptureStore.resolve(nodeContext?.id);
+    captureStore = ActiveCaptureStore.resolve(nodeContext?.id + "capture");
   }
   export let linkInputValue = "";
   export let subType: NodeType | undefined;

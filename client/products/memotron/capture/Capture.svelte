@@ -63,12 +63,13 @@
     type IActiveCaptureStore
   } from "./capture.store";
   import { debouncer } from "$lib/client/utils/utils";
+  import CaptureDraftsAction from "./draftSelector/CaptureDraftsAction.svelte";
   export let captureId: IRecordId = generateResourceId(Resource.capture);
   export let isWindowDnD = false;
   let bulkQueryParam: string | null = null;
   let linkQueryParam: string | null = null;
   let captureStore: IActiveCaptureStore;
-  $: if (captureId) captureStore = ActiveCaptureStore.resolve(captureId);
+  if (captureId) captureStore = ActiveCaptureStore.resolve(captureId);
   let isSaving: boolean = false;
   let isEmptyState: boolean = true;
   isInEditMode.set(true);
@@ -635,6 +636,14 @@
                 on:select={onTypeSelect}
                 on:capture={(e) => {
                   handleCapture(e.detail);
+                }}
+              />
+              <CaptureDraftsAction
+                on:select={(e) => {
+                  captureId = e.detail.id;
+                  captureStore = ActiveCaptureStore.resolve(captureId);
+                  captureStore.init(e.detail);
+                  isEmptyState = false;
                 }}
               />
             </div>
