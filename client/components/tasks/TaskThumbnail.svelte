@@ -4,7 +4,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import ResourceThumbnailBase from "../record/thumbnail/ResourceThumbnailBase.svelte";
-  import { formatDate } from "$lib/client/utils/time.utils";
+  import { compareDates, formatDate } from "$lib/client/utils/time.utils";
   import TaskCheckbox from "./TaskCheckbox.svelte";
   import { hoverable } from "$lib/client/actions/hover.action";
   import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
@@ -14,6 +14,7 @@
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import type { IRecordId } from "$lib/client/types/data.type";
+  import TaskThumbnailGoalLabel from "./TaskThumbnailGoalLabel.svelte";
   export let item: ITaskThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let size: Size.sm | Size.md | Size.lg = Size.md;
@@ -42,23 +43,45 @@
       }
     }}
   >
-    <TaskCheckbox id={item.id} bind:isChecked={item.isChecked} {size} />
-    {#if item.isChecked}
-      <span class="line-through flex-1">
-        {item.label}
-      </span>
-    {:else}
-      <span class="flex-1">
-        <TextInput bind:value={item.label} style={InputStyle.PLAIN} />
-      </span>
-    {/if}
+    <TaskCheckbox
+      id={item.id}
+      bind:isChecked={item.isChecked}
+      {size}
+      {accessPoint}
+    />
+    <div class="flex-1 flex flex-col">
+      {#if item.goal && accessPoint !== ResourceAccessPoint.GOAL}
+        <TaskThumbnailGoalLabel goal={item.goal} />
+      {/if}
+      {#if item.isChecked}
+        <span class="line-through">
+          {item.label}
+        </span>
+      {:else}
+        <span class="">
+          <TextInput
+            bind:value={item.label}
+            style={InputStyle.PLAIN}
+            on:debouncedChange={(e) => {
+              taskStore.modify(
+                item.id,
+                { label: e.detail },
+                { context: accessPoint }
+              );
+            }}
+          />
+        </span>
+      {/if}
+    </div>
+
     {#if item.date && !isHovering}
       <span class="text-b3 text-fgs3">
         Due: {formatDate(item.date)}
       </span>
     {/if}
     {#if item.completed && !isHovering}
-      {@const isCompletedBeforeDue = item.date && item.completed < item.date}
+      {@const isCompletedBeforeDue =
+        item.date && compareDates(item.completed, item.date, "<=")}
       {#if item.date}
         <span class="text-b3 text-fgs3"> | </span>
       {/if}
@@ -78,7 +101,13 @@
           placeholder="Set date"
           on:change={(e) => {
             item.date = e.detail;
-            taskStore.modify(item.id, { date: e.detail });
+            taskStore.modify(
+              item.id,
+              { date: e.detail },
+              {
+                context: accessPoint
+              }
+            );
           }}
           on:opened={() => {
             isDatePickerOpen = true;

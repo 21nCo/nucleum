@@ -58,7 +58,8 @@
       {
         label: "Tasks",
         value: "todos",
-        icon: resolveResourceIcon(Resource.task)
+        icon: resolveResourceIcon(Resource.task),
+        badge: $goal.tasks?.length
       },
       {
         label: "Analytics",

@@ -33,5 +33,6 @@ export enum Action {
   GO_FORWARD = "GO_FORWARD",
   ADD_ITEM_TO_COLLECTION = "add-item-to-collection",
   LIBRARY = "library",
-  BULK_LINK = "bulk-link"
+  BULK_LINK = "bulk-link",
+  EDIT_TASK_GOAL = "edit-task-goal"
 }

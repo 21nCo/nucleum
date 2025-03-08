@@ -10,4 +10,5 @@ export type SubType =
   | "incomplete"
   | "bydate"
   | "bymonth"
-  | "without-due-date";
+  | "without-due-date"
+  | "without-goal";

@@ -11,6 +11,7 @@
   import { Arrangement, Placement } from "$lib/client/types/direction.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import { resolveGoalContextMenu } from "$lib/client/components/goals/goal.store";
+  import { resolveTaskContextMenu } from "../../tasks/task.store";
 
   const dispatch = createEventDispatcher();
   export let item: any;
@@ -37,6 +38,8 @@
       return resolveCollectionContextMenu(item, accessPoint);
     } else if (resourceType === Resource.goal) {
       return resolveGoalContextMenu(item, accessPoint);
+    } else if (resourceType === Resource.task) {
+      return resolveTaskContextMenu(item, accessPoint, { accessPointId });
     } else {
       return [];
     }

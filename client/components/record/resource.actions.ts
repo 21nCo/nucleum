@@ -169,13 +169,19 @@ export class ResourceActions<T extends IMemotronItemBase> {
             this.resource.id,
             context === ResourceAccessPoint.BROWSER
               ? ResourceAccessMode.INLINE
-              : ResourceAccessMode.POP
+              : ResourceAccessMode.POP,
+            {
+              searchParams: {
+                edit: true
+              }
+            }
+          );
+        } else {
+          this.store.toggleEditMode(
+            this.resource.id,
+            !this.resource.isInEditMode
           );
         }
-        this.store.toggleEditMode(
-          this.resource.id,
-          !this.resource.isInEditMode
-        );
       }
     };
   }

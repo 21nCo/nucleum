@@ -595,7 +595,7 @@
   syncDownOnMount={true}
   subscribeToResource={new Set([resource])}
   subscribeToContext={new Set([
-    ResourceAccessPoint.LIBRARY,
+    accessPoint,
     resourceAction(resource, ResourceActionType.CREATE)
   ])}
   on:syncDown={() => {

@@ -599,3 +599,32 @@ export function formatDatetime(
   const formattedTime = formatTime(userPreferences, date);
   return `${formattedDate} ${formattedTime}`;
 }
+
+/**
+ * Compares two dates - ignores time
+ * @param date1
+ * @param date2
+ * @param operator
+ * @returns
+ */
+export function compareDates(
+  date1: Date,
+  date2: Date,
+  operator: "==" | ">=" | "<=" | ">" | "<"
+) {
+  const d1 = new Date(date1.getFullYear(), date1.getMonth(), date1.getDate());
+  const d2 = new Date(date2.getFullYear(), date2.getMonth(), date2.getDate());
+
+  if (operator === "==") {
+    return d1.getTime() === d2.getTime();
+  } else if (operator === ">=") {
+    return d1.getTime() >= d2.getTime();
+  } else if (operator === "<=") {
+    return d1.getTime() <= d2.getTime();
+  } else if (operator === ">") {
+    return d1.getTime() > d2.getTime();
+  } else if (operator === "<") {
+    return d1.getTime() < d2.getTime();
+  }
+  return false;
+}

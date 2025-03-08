@@ -72,6 +72,8 @@ import UserPlanCancellation from "../components/subscription/UserPlanCancellatio
 import DocusaurusEmbed from "../components/cx/docusaurus/DocusaurusEmbed.svelte";
 import { goalStore } from "../components/goals/goal.store";
 import CreateTask from "../components/tasks/CreateTask.svelte";
+import GoalSearchResultItem from "../components/goals/GoalSearchResultItem.svelte";
+import { taskStore } from "../components/tasks/task.store";
 
 export const globalActions: IAction[] = [
   {
@@ -759,6 +761,35 @@ export const globalActions: IAction[] = [
       resource: Resource.task
     },
     loadingComponent: NodeLoadingPulse
+  },
+  {
+    action: Action.EDIT_TASK_GOAL,
+    type: ActionType.SEARCH_CMD,
+    cmdLabel: "Edit goal for task",
+    isMeta: true,
+    searchActionParams: {
+      placeholder: "select a goal",
+      searchResultComponent: GoalSearchResultItem,
+      searchCallback: async (query: string, componentParams?: any) => {
+        return new SearchStore(Resource.goal).select({
+          resource: Resource.goal,
+          searchQuery: query,
+          limit: 50
+        });
+      },
+      callback: async (id: string, label?: string, componentParams?: any) => {
+        console.log(id, label, componentParams);
+        taskStore.modify(
+          componentParams.taskId,
+          {
+            goal: id
+          },
+          {
+            context: componentParams?.context
+          }
+        );
+      }
+    }
   },
   {
     action: "pay",

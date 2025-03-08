@@ -5,7 +5,10 @@
     ResourceActionType
   } from "$lib/client/components/flux/resourceStores/resource.type";
   import { onMount } from "svelte";
-  import { SearchStore } from "$lib/client/components/record/record.store";
+  import {
+    BulkEditor,
+    SearchStore
+  } from "$lib/client/components/record/record.store";
   import type { ITaskThumb } from "$lib/client/components/tasks/task.type";
   import {
     isValidArray,
@@ -29,20 +32,27 @@
   import AbsoluteTimeRangePopoverV2 from "$lib/client/elements/datetime/absolute/AbsoluteTimeRangePopoverV2.svelte";
   import { Placement } from "$lib/client/types/direction.enum";
   import { popover } from "$lib/client/actions/popover.action";
-  import Icon from "$lib/client/elements/Icon.svelte";
   import { formatDate, isSameDay } from "$lib/client/utils/time.utils";
   import AddNewTaskInline from "./AddNewTaskInline.svelte";
   import { taskStore } from "./task.store";
   import { toasts } from "$lib/client/stores/notification.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { Action } from "$lib/client/types/action.enum";
   import { resourceAction } from "../flux/resourceStores/resource.utils";
+  import { ButtonVariant } from "$lib/client/types/button.type";
+  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
+  import { generateMiniRandomId } from "$lib/shared/utils/crypto.utils";
+  import { resolveMultiSelectStore } from "../flux/resourceStores/resource.store";
+  import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
+  import BulkEditBar from "../record/BulkEditBar.svelte";
+  import view from "$lib/client/stores/view.store";
 
   export let goalId: IRecordId | undefined = undefined;
   export let collectionId: IRecordId | undefined = undefined;
   export let accessPoint: ResourceAccessPoint | undefined = undefined;
   export let parentBgIndex: number = 1;
+  const instance = generateMiniRandomId();
   let tasks: ITaskThumb[] = [];
   let searchStore = new SearchStore(Resource.task);
   let searchQuery = "";
@@ -55,11 +65,22 @@
   let taskRecordsRef: TaskRecords | undefined;
   let dateSelectionPopoverRef: HTMLDivElement;
   let addNewTaskInlineRef: AddNewTaskInline | undefined;
+  let isRefreshing = false;
+
+  $: multiSelectContext = {
+    resource: Resource.task,
+    accessPoint: resolveAccessPoint(),
+    accessPointId: resolveAccessPointId()
+  };
+  $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
+
   onMount(() => {
     refresh();
 
     const pageSub = page.subscribe(async (p) => {
-      const subResourceParam = p.url.searchParams.get("type");
+      const subResourceParam = goalId
+        ? p.url.searchParams.get(`${instance}-type`)
+        : p.url.searchParams.get("type");
       let isRefreshNeeded = false;
       if (subResourceParam && subResourceParam !== selectedSubType) {
         selectedSubType = (subResourceParam as SubType) ?? "all";
@@ -84,6 +105,7 @@
   });
 
   async function refresh() {
+    isRefreshing = true;
     const filters = resolveFilters();
     const result = await searchStore.select({
       filters,
@@ -94,6 +116,7 @@
     } else {
       tasks = [];
     }
+    isRefreshing = false;
   }
 
   function resolveBaseFilters() {
@@ -121,6 +144,8 @@
           equals: selectedDate
         }
       };
+    } else if (selectedSubType === "without-goal") {
+      filters = { ...filters, goal: false };
     }
     return filters;
   }
@@ -161,6 +186,30 @@
       return undefined;
     }
   }
+
+  function onResourceMutation(e: any) {
+    console.log("onResourceMutation  - task library", e);
+    refresh();
+  }
+
+  function onSelectAll() {
+    $multiSelectStore = tasks.map((x) => x.id);
+  }
+
+  async function onBulkAction(e: CustomEvent<string>) {
+    try {
+      const editor = new BulkEditor(Resource.task, multiSelectStore);
+      await editor.run(e.detail);
+    } catch (e) {
+      toasts.error("Failed to perform bulk action");
+    }
+  }
+
+  function resolveAccessPointId() {
+    if (goalId) return goalId.toString();
+    else if (collectionId) return collectionId.toString();
+    return undefined;
+  }
 </script>
 
 <div
@@ -173,6 +222,7 @@
   <LibrarySubTypeSwitcher
     resource={Resource.task}
     accessPoint={resolveAccessPoint()}
+    subContext={goalId ? instance : undefined}
   >
     <Toggle
       bind:on={isHideCompletedFilterSelected}
@@ -247,12 +297,19 @@
   >
     <Button
       icon="ph:plus-light"
+      type={ButtonVariant.PRIMARY}
+      size={Size.md}
+      label="Create"
+      isPreventMinWidth={true}
       on:click={() => {
         appStore.runAction(
           resourceAction(Resource.task, ResourceActionType.CREATE),
           {
             componentParams: {
-              date: selectedDate,
+              date:
+                selectedSubType === "bydate" || selectedSubType === "bymonth"
+                  ? selectedDate
+                  : undefined,
               goalId: goalId,
               collectionId: collectionId
             }
@@ -261,21 +318,57 @@
       }}
     />
   </InlineSearchBar>
-  <div
-    class={cn("flex flex-col gap-4 overflow-auto grow", {
-      "px-4": accessPoint === ResourceAccessPoint.LIBRARY
-    })}
-  >
-    <!-- {#if selectedSubType !== "bymonth"}
+  {#if tasks && tasks.length > 0}
+    <div
+      class={cn("flex flex-col gap-4 overflow-auto grow", {
+        "px-4": accessPoint === ResourceAccessPoint.LIBRARY
+      })}
+    >
+      <!-- {#if selectedSubType !== "bymonth"}
       <AddNewTaskInline on:add={onAdd} bind:this={addNewTaskInlineRef} />
     {/if} -->
-    <TaskRecords
-      bind:this={taskRecordsRef}
-      data={tasks}
-      accessPoint={resolveAccessPoint()}
-      accessPointId={goalId ?? collectionId}
-      {parentBgIndex}
+      <TaskRecords
+        bind:this={taskRecordsRef}
+        data={tasks}
+        accessPoint={resolveAccessPoint()}
+        accessPointId={resolveAccessPointId()}
+        {parentBgIndex}
+      />
+      <ScrollViewBottomSpacer />
+    </div>
+  {:else}
+    <EmptyStatusView
+      isSearchContext={searchQuery !== ""}
+      isLoadingState={isRefreshing}
+      mainText="No tasks found"
+      subText={searchQuery !== ""
+        ? "Try different search criteria."
+        : "Create a task to get started."}
     />
-    <ScrollViewBottomSpacer />
-  </div>
+  {/if}
 </div>
+{#if $multiSelectStore.length > 0}
+  <BottomFloat zIndex="z-30">
+    <BulkEditBar
+      isConstrainedWidth={$view.isConstrainedWidth ||
+        accessPoint === ResourceAccessPoint.BROWSER}
+      context={multiSelectContext}
+      subContext={selectedSubType +
+        (isArchivedFilterSelected ? "archived" : "")}
+      on:selectAll={onSelectAll}
+      on:action={onBulkAction}
+    />
+  </BottomFloat>
+{/if}
+<ComponentBaseLayer
+  syncDownOnMount={true}
+  subscribeToResource={new Set([Resource.task])}
+  subscribeToContext={new Set([
+    resolveAccessPoint(),
+    resourceAction(Resource.task, ResourceActionType.CREATE)
+  ])}
+  on:syncDown={() => {
+    refresh();
+  }}
+  on:change={onResourceMutation}
+/>

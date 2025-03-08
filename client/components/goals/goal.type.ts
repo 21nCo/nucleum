@@ -4,6 +4,7 @@ import type { IActiveResource } from "../flux/resourceStores/resource.type";
 import type { ICollectionExpanded } from "../collection/collection.type";
 import type { TimeScale } from "$lib/client/types/time.type";
 import type { IMemotronItemBase } from "$lib/client/products/memotron/memotron.type";
+import type { ITask } from "../tasks/task.type";
 
 export enum GoalType {
   INDEFINITE = "INDEFINITE",
@@ -50,6 +51,7 @@ export type IActiveGoal = IActiveResource &
     isPageLoading: boolean;
     collections?: IRecordId[];
     types?: ICollectionExpanded[];
+    tasks?: ITask[];
   };
 
 export enum GoalStatus {

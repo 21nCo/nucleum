@@ -247,7 +247,7 @@ export class SearchStore {
 
   async tasks() {
     const result = await flux.selectMany(Resource.task, {
-      properties: [labelSearchProp, "*"],
+      properties: [labelSearchProp, "*", "goal.* as goal"],
       filters: {
         trashInformation: false,
         ...this.filters,

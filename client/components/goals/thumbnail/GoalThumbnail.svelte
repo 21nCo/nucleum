@@ -88,7 +88,9 @@
 
             <div class="flex flex-col gap-1 flex-grow">
               <div class="flex items-center gap-2">
-                <span class="text-b2 font-medium truncate">{item.label}</span>
+                <span class="text-b2 font-medium truncate"
+                  >{item.label ? item.label : "Untitled"}</span
+                >
                 <RecordStarStatusFeedback isStarred={item.isStarred} />
                 <!-- {#if item.startDate || item.endDate}
                 <span class="text-b3 text-fgs3">
@@ -148,7 +150,9 @@
 
         <div slot="bottom" class="flex flex-col w-full">
           <div class="flex items-center gap-2">
-            <span class="text-b2 font-medium truncate">{item.label}</span>
+            <span class="text-b2 font-medium truncate"
+              >{item.label ? item.label : "Untitled"}</span
+            >
             {#if item.startDate || item.endDate}
               <span class="text-b3 text-fgs3">
                 {#if item.startDate}

@@ -5,13 +5,17 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { taskStore } from "./task.store";
   import { createEventDispatcher } from "svelte";
+  import type { ResourceAccessPoint } from "../flux/resourceStores/resource.type";
   const dispatch = createEventDispatcher();
   export let isChecked = false;
   export let id: IRecordId;
   export let size: Size = Size.md;
+  export let accessPoint: ResourceAccessPoint;
   function onToggle() {
     isChecked = !isChecked;
-    taskStore.toggle(id);
+    taskStore.toggle(id, {
+      context: accessPoint
+    });
     dispatch("toggle", id);
   }
 </script>

@@ -146,6 +146,8 @@ export const appConstants = {
   tempColorSchemes
 };
 
+const resourceSpecificSearchParams = ["edit", /-type$/, "popAt"];
+
 export const appStore = initAppStore({
   product: "tidy",
   env: "dev",
@@ -467,7 +469,7 @@ function initAppStore(seed: AppStore) {
    * @returns
    */
   const toggleSearchParam = (
-    params: Record<string, string | boolean | number> | string[],
+    params: Record<string, string | boolean | number> | (string | RegExp)[],
     additional?: {
       isPreventRefresh?: boolean;
       url?: URL;
@@ -478,8 +480,13 @@ function initAppStore(seed: AppStore) {
     const url = additional?.url ?? new URL(window.location.href);
     if (Array.isArray(params)) {
       params.forEach((p) => {
-        if (!url.searchParams.get(p)) return;
-        url.searchParams.delete(p);
+        if (typeof p === "string" && !url.searchParams.get(p)) return;
+        if (typeof p === "string") url.searchParams.delete(p);
+        else if (p instanceof RegExp) {
+          url.searchParams.forEach((value, key) => {
+            if (p.test(key)) url.searchParams.delete(key);
+          });
+        }
       });
       if (!additional?.isPreventRefresh) appStore.gotoPath(url.href);
       return url;
@@ -600,6 +607,14 @@ function initAppStore(seed: AppStore) {
       if (isFullOrPop) accessMode = ResourceAccessMode.FSPLIT;
       else accessMode = ResourceAccessMode.SPLIT;
     }
+
+    if (!params?.searchParams) {
+      url =
+        toggleSearchParam(resourceSpecificSearchParams, {
+          isPreventRefresh: true,
+          url
+        }) ?? url;
+    }
     toggleSearchParam(
       {
         [accessMode]: id.toString(),
@@ -689,19 +704,24 @@ function initAppStore(seed: AppStore) {
     isRestrictToModals?: boolean;
     inlineRestoreId?: IRecordId;
   }) => {
-    const url = new URL(window.location.href);
+    const url =
+      toggleSearchParam(resourceSpecificSearchParams, {
+        isPreventRefresh: true
+      }) ?? new URL(window.location.href);
     if (props?.accessMode) {
-      toggleSearchParam([props.accessMode]);
+      toggleSearchParam([props.accessMode], { url });
       return;
     } else if (props?.id) {
       const accessMode = determineResourceAccessMode(props.id);
       if (accessMode) {
-        toggleSearchParam([accessMode]);
+        toggleSearchParam([accessMode], { url });
       }
       return;
     }
     if (props?.isRestrictToModals) {
-      toggleSearchParam([ResourceAccessMode.FSPLIT, ResourceAccessMode.POP]);
+      toggleSearchParam([ResourceAccessMode.FSPLIT, ResourceAccessMode.POP], {
+        url
+      });
       return;
     }
     const prevMode = url.searchParams.get("prev");

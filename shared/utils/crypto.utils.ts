@@ -79,3 +79,7 @@ export function generateSimpleRandomId() {
     Math.random().toString(36).slice(2, 10)
   );
 }
+
+export function generateMiniRandomId() {
+  return Math.random().toString(36).slice(2, 10);
+}

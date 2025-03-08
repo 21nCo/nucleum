@@ -27,11 +27,14 @@
   export let resource: Resource;
   export let isConstrainedWidth: boolean = $view.isConstrainedWidth;
   export let accessPoint: ResourceAccessPoint;
+  export let subContext: string | undefined = undefined;
 
   const nodeSubTypesForSwitcher = resolveNodeSubTypesForSwitcher();
   const collectionSubTypesForSwitcher = resolveCollectionSubTypesForSwitcher();
   const goalSubTypesForSwitcher = resolveGoalSubTypesForSwitcher(true);
-  const taskSubTypesForSwitcher = resolveTaskSubTypesForSwitcher();
+  const taskSubTypesForSwitcher = resolveTaskSubTypesForSwitcher(
+    accessPoint === ResourceAccessPoint.GOAL
+  );
   const allSubTypeSwitcherItem = {
     label: "All",
     value: "all",
@@ -162,9 +165,15 @@
         isPreventWrap={isExpandableSubTypes && !isExpandSubTypes}
         on:select={(e) => {
           if (!e?.detail) return;
-          appStore.toggleSearchParam({
-            type: e.detail.toLowerCase()
-          });
+          if (subContext) {
+            appStore.toggleSearchParam({
+              [`${subContext}-type`]: e.detail.toLowerCase()
+            });
+          } else {
+            appStore.toggleSearchParam({
+              type: e.detail.toLowerCase()
+            });
+          }
         }}
       />
     </div>
