@@ -25,8 +25,10 @@
       <span class="text-b4"
         >Turn off edit mode to start tasks or switch between them.</span
       >
-    {:else if $focusItemsStore.goals.length > 0}
-      <span class="text-b3"> Tap on a task/goal to start or stop it. </span>
+    {:else if $focusItemsStore.items.length > 0}
+      <span class="text-b3">
+        Tap on a goal/task to start or stop focusing it.
+      </span>
     {/if}
   </div>
 </div>

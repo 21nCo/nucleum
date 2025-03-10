@@ -5,7 +5,6 @@
     activeSession
   } from "$lib/client/products/pointron/focus/session.store";
   import { onMount } from "svelte";
-  import FocusTodo from "./FocusTodo.svelte";
   import AddTodo from "./AddTodo.svelte";
   import { formatSeconds } from "$lib/client/utils/time.utils";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
@@ -19,20 +18,29 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { SessionType } from "../../../logs/log.type";
   import type {
-    IFocusGoal,
+    IFocusItem,
     ISessionInterval
   } from "$lib/client/types/pointron/session.type";
   import { resolveTaskFocus } from "../../session.utils";
   import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
-  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import {
+    isSameResource,
+    resourceInList
+  } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import FocusTask from "./FocusTask.svelte";
+  import type { ITaskThumb } from "$lib/client/components/tasks/task.type";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
 
-  export let task: IGoalThumb;
-  export let focusItem: IFocusGoal;
-  export let todos: any[] = [];
+  export let focusItem: IFocusItem;
+  export let tasks: ITaskThumb[] = [];
+  export let goals: IGoalThumb[] = [];
   export let isFocusAddTask: boolean = false;
   export let isInEditMode: boolean = false;
   export let contxt: "current" | "history" = "current";
   export let intervals: ISessionInterval[] = [];
+  $: goal = goals.find(resourceInList(focusItem.id));
+  $: tasksUnderGoal = resolveTaskFocusItems(focusItem);
 
   let parentHierarchy: string[] = [];
   let isInprogress: boolean = false;
@@ -45,7 +53,7 @@
       isSameResource(focusItem, $activeSession.currentFocusItem)) ??
     false;
 
-  $: parentHierarchy = task?.parent?.map((x: any) => x.label) ?? [];
+  $: parentHierarchy = goal?.parent?.map((x: any) => x.label) ?? [];
 
   onMount(() => {
     try {
@@ -81,9 +89,16 @@
     }
   }
   async function onDeleteClicked() {
-    await focusItemsStore.removeGoal(focusItem.id);
+    await focusItemsStore.removeFocusItem(focusItem.id);
   }
-  // $: console.log({ item, intervals, isInprogress, tasks });
+
+  function resolveTaskFocusItems(focusItem: IFocusItem) {
+    return $focusItemsStore.items.filter((x) =>
+      focusItem.tasks?.some(resourceInList(x.id))
+    );
+  }
+
+  $: console.log({ focusItem, goal, goals, intervals, isInprogress, tasks });
 </script>
 
 <div
@@ -92,18 +107,18 @@
     (!$activeSession.isSessionRunning || isInEditMode)}
   class="flex flex-col gap-4 w-full"
 >
-  {#if (focusItem.id && (!$activeSession.isSessionRunning || isInEditMode) && contxt === "current") || (focusItem.id && todos.length > 0)}
+  {#if (goal && (!$activeSession.isSessionRunning || isInEditMode) && contxt === "current") || (goal && tasksUnderGoal.length > 0)}
     <CustomColorPropagator
-      color={task.color}
+      color={goal.color}
       class="relative flex items-center gap-2 w-full"
     >
       <div
-        class="flex flex-col gap-2 w-full pb-2 border-2 border-bgs2 rounded-md"
+        class="flex flex-col gap-2 w-full pb-2 border border-brs3 rounded-md"
       >
         <div
           class={cn("text-left px-3 pt-3 font-medium truncate min-w-0 flex-1", {
-            "text-ccs1": task.color,
-            "text-fgs2": !task.color
+            "text-ccs1": goal.color,
+            "text-fgs2": !goal.color
           })}
         >
           <div>
@@ -113,18 +128,30 @@
               truncateLength={15}
             />
           </div>
-          {task.label}
+          <button
+            class="notouch:hover:underline active:underline"
+            on:click={(e) => {
+              e.stopPropagation();
+              appStore.openResource(goal.id, ResourceAccessMode.POP);
+            }}
+          >
+            {goal.label}
+          </button>
         </div>
         <div class="px-2">
-          {#if todos && todos.length > 0}
-            {#each todos as task, index (task)}
-              <FocusTodo
-                todo={task}
-                {intervals}
-                {isInEditMode}
-                context={contxt}
-              />
-              {#if index < todos.length - 1}
+          {#if tasksUnderGoal && tasksUnderGoal.length > 0}
+            {#each tasksUnderGoal as taskFocusItem, index (taskFocusItem)}
+              {@const task = tasks.find(resourceInList(taskFocusItem.id))}
+              {#if task}
+                <FocusTask
+                  focusItem={taskFocusItem}
+                  {task}
+                  {intervals}
+                  {isInEditMode}
+                  context={contxt}
+                />
+              {/if}
+              {#if index < tasksUnderGoal.length - 1}
                 <div class="mx-1 border-b border-bgs2" />
               {/if}
             {/each}
@@ -132,8 +159,8 @@
           {#if (contxt === "current" && !$activeSession.isSessionRunning) || isInEditMode}
             <div class="mx-1 border-b border-bgs2" />
             <AddTodo
-              taskId={focusItem.id}
-              placeholder="Add todo"
+              goalId={focusItem.id}
+              placeholder="Add a task"
               bind:this={addTaskInputRef}
             />
           {/if}
@@ -154,16 +181,16 @@
         </div>
       {/if}
     </CustomColorPropagator>
-  {:else if focusItem.id}
+  {:else if goal}
     <CustomColorPropagator
       class={cn(
-        "flex  gap-4 items-center border-2 border-bgs2 w-full p-3 rounded-md",
+        "flex  gap-4 items-center border border-brs3 w-full p-3 rounded-md",
         {
           "bg-ccs1 border-ccs1": isInprogress,
           "text-ccs1": !isInprogress
         }
       )}
-      color={task.color}
+      color={goal.color}
       on:click={clickHandler}
     >
       <div class="text-left truncate min-w-0 flex-1">
@@ -174,7 +201,15 @@
             truncateLength={15}
           />
         </div>
-        {task.label}
+        <button
+          class="notouch:hover:underline active:underline"
+          on:click={(e) => {
+            e.stopPropagation();
+            appStore.openResource(goal.id, ResourceAccessMode.POP);
+          }}
+        >
+          {goal.label}
+        </button>
       </div>
       {#if isInprogress && contxt == "current" && $activeSession.currentFocusItem}
         <div class="leading-none text-b3">
@@ -200,5 +235,17 @@
         </div>
       {/if}
     </CustomColorPropagator>
+  {:else}
+    {@const task = tasks.find(resourceInList(focusItem.id))}
+    {#if task}
+      <FocusTask
+        {focusItem}
+        {task}
+        {intervals}
+        {isInEditMode}
+        context={contxt}
+        isStandalone={true}
+      />
+    {/if}
   {/if}
 </div>

@@ -105,8 +105,8 @@ class ManualLogStore extends ObservableStore<ISessionLogStore> {
         end: end.toISOString(),
         id: generateResourceId(Resource.sessionLog),
         sessionId: sessionId,
-        totalFocus: duration,
-        totalBreak: 0,
+        focus: duration,
+        breakTime: 0,
         goalId: entry.goalId,
         manualEntryId: entry.id
         // tzOffset: get(userPreferences).timeZoneOffset,
@@ -136,7 +136,7 @@ class ManualLogStore extends ObservableStore<ISessionLogStore> {
             duration: 0
           }
         ],
-        goals: [
+        items: [
           {
             id: entry.goalId,
             blocks: [

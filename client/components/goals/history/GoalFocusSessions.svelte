@@ -111,32 +111,32 @@
 
                   <div class="flex flex-col gap-2">
                     <div class="flex h-1 w-48">
-                      {#if log.totalFocus}
+                      {#if log.focus}
                         <div
                           class={cn("bg-aps1 rounded-l", {
-                            "rounded-r": !log.totalBreak
+                            "rounded-r": !log.breakTime
                           })}
-                          style="flex: {log.totalFocus}; min-width: 2px;"
-                          title="Focus: {formatSeconds(log.totalFocus)}"
+                          style="flex: {log.focus}; min-width: 2px;"
+                          title="Focus: {formatSeconds(log.focus)}"
                         />
                       {/if}
-                      {#if log.totalBreak}
+                      {#if log.breakTime}
                         <div
                           class={cn("bg-ass1 rounded-r", {
-                            "rounded-l": !log.totalFocus
+                            "rounded-l": !log.focus
                           })}
-                          style="flex: {log.totalBreak}; min-width: 2px;"
-                          title="Break: {formatSeconds(log.totalBreak)}"
+                          style="flex: {log.breakTime}; min-width: 2px;"
+                          title="Break: {formatSeconds(log.breakTime)}"
                         />
                       {/if}
                     </div>
 
                     <div class="flex gap-3 text-b3 text-fgs2">
-                      {#if log.totalFocus}
-                        <span>Focus: {formatSeconds(log.totalFocus)}</span>
+                      {#if log.focus}
+                        <span>Focus: {formatSeconds(log.focus)}</span>
                       {/if}
-                      {#if log.totalBreak}
-                        <span>Break: {formatSeconds(log.totalBreak)}</span>
+                      {#if log.breakTime}
+                        <span>Break: {formatSeconds(log.breakTime)}</span>
                       {/if}
                     </div>
                   </div>

@@ -6,6 +6,7 @@
   import TimeInputWithSuggestions from "./TimeInputWithSuggestions.svelte";
   import TimeUnitDropdown from "./TimeUnitDropdown.svelte";
   import type { InputLabel } from "$lib/client/types/input.type";
+  import { debouncer } from "$lib/client/utils/utils";
   export let parentBackgroundIndex: number = 1;
   export let value: number;
   export let label: InputLabel | undefined = undefined;
@@ -46,7 +47,18 @@
       value = value * 3600;
     else if (newTimeUnit === TimeUnit.SECONDS && oldTimeUnit === TimeUnit.HOURS)
       value = value / 3600;
+    propagateChange(value);
+    debouncedChange(value);
+  }
+
+  const debouncedChange = debouncer(onDebouncedChange, 1000);
+
+  function propagateChange(value: number) {
     dispatch("change", { value });
+  }
+
+  function onDebouncedChange(value: number) {
+    dispatch("debouncedChange", { value });
   }
 </script>
 

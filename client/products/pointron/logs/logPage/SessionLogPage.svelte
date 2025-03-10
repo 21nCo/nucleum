@@ -22,13 +22,13 @@
   import { formatTime, isSameDateTime } from "$lib/client/utils/time.utils";
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   import { sessionStore } from "../../focus/session.store";
-  import type { IFocusTodo } from "$lib/client/types/pointron/session.type";
+  import type { IFocusTask } from "$lib/client/types/pointron/session.type";
   export let id: string;
   export let log: any = undefined;
   let selectedTab: "Summary" | "Notes" = "Summary";
   let isLoadingState: boolean = false;
   let focusItems: any[] = [];
-  let tasksList: IFocusTodo[] = [];
+  let tasksList: IFocusTask[] = [];
   onMount(async () => {
     await refresh();
   });

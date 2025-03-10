@@ -1,8 +1,6 @@
 import type {
-  IFocusGoal,
-  FocusLog,
-  ISessionInterval,
-  IFocusTodo
+  IFocusItem,
+  ISessionInterval
 } from "$lib/client/types/pointron/session.type";
 import type {
   IObservableStoreSubject,
@@ -36,7 +34,7 @@ export type ISession = ISessionBase & {
   end: number | string;
   plannedEnd?: number | string;
   id: string;
-  goals: IFocusGoal[];
+  items: IFocusItem[];
   manualEntryId?: string;
   notes: IMarkdown;
 };
@@ -49,10 +47,10 @@ export type ISessionLog = IResource & {
    * @deprecated
    */
   taskName?: string;
-  totalFocus?: number;
-  totalBreak?: number;
+  focus?: number;
+  breakTime?: number;
   goalId?: IRecordId;
-  todoId?: IRecordId;
+  taskId?: IRecordId;
   manualEntryId?: string;
   tzOffset?: number;
   targets?: { scale: TimeScale; target: number }[];

@@ -92,22 +92,26 @@ export enum BlockType {
   NONE
 }
 
-type IFocusItem = {
+export type IFocusItem = {
   id: IRecordId;
   blocks?: {
     start: number;
     end: number;
   }[];
-  estimated?: number;
-  checked?: boolean;
+  tasks?: IRecordId[];
 };
 
+/**
+ * @deprecated - use {@link IFocusItem} instead
+ */
 export type IFocusGoal = IFocusItem & {
-  todos?: IRecordId[];
+  tasks?: IRecordId[];
 };
-export type IFocusTodo = IFocusItem & {
-  label: string;
-};
+
+/**
+ * @deprecated - use {@link IFocusItem} instead
+ */
+export type IFocusTask = IFocusItem & {};
 
 export enum SessionUIContext {
   DEFAULT = "DEFAULT",
@@ -118,6 +122,14 @@ export enum SessionUIContext {
 }
 
 export interface IFocusItemsStore extends IObservableStoreSubject {
-  goals: IFocusGoal[];
-  todos: IFocusTodo[];
+  /**
+   * @deprecated - use items instead
+   */
+  goals?: IFocusGoal[];
+  /**
+   * @deprecated - use items instead
+   */
+  tasks?: IFocusTask[];
+  items: IFocusItem[];
+  refreshId: number;
 }

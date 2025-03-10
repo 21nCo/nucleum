@@ -11,7 +11,9 @@
   export let id: IRecordId;
   export let size: Size = Size.md;
   export let accessPoint: ResourceAccessPoint;
-  function onToggle() {
+  export let isAccentBg = false;
+  function onToggle(e: MouseEvent) {
+    e.stopPropagation();
     isChecked = !isChecked;
     taskStore.toggle(id, {
       context: accessPoint
@@ -30,14 +32,20 @@
 <button on:click={onToggle}>
   <div
     class={cn("rounded-md flex items-center justify-center border", {
-      "bg-aps1 border-transparent": isChecked,
-      "border-fgs4": !isChecked,
+      "bg-aps1 border-transparent": isChecked && !isAccentBg,
+      "bg-ccs3 border-transparent": isChecked && isAccentBg,
+      "border-fgs4": !isChecked && !isAccentBg,
+      "border-cbg": !isChecked && isAccentBg,
       "w-4 h-4": size === Size.md,
       "w-5 h-5": size === Size.lg
     })}
   >
     {#if isChecked}
-      <Icon icon="ph:check" class="text-abg" size={Size.sm} />
+      <Icon
+        icon="ph:check"
+        class={cn({ "text-abg": !isAccentBg, "text-ccs1": isAccentBg })}
+        size={Size.sm}
+      />
     {/if}
   </div>
 </button>

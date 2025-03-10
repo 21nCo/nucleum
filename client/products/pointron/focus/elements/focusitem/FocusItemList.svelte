@@ -10,15 +10,19 @@
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
-  import { goalStore } from "$lib/client/components/goals/goal.store";
   import { onMount } from "svelte";
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import type { IFocusGoal } from "$lib/client/types/pointron/session.type";
-
+  import { SearchStore } from "$lib/client/components/record/record.store";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import type { ITaskThumb } from "$lib/client/components/tasks/task.type";
+  import type { IFocusItem } from "$lib/client/types/pointron/session.type";
   export let isInEditMode: boolean = false;
   let isFocusingAddGoal: boolean = false;
+  let focusItems: IFocusItem[] = [];
   let goals: IGoalThumb[] = [];
+  let tasks: ITaskThumb[] = [];
   let isRefreshing: boolean = false;
+  const searchStore = new SearchStore();
 
   function onBlur() {
     isFocusingAddGoal = false;
@@ -30,9 +34,25 @@
 
   async function refresh() {
     isRefreshing = true;
-    goals = await goalStore.selectMany({
+    const tasksWithGoal = $focusItemsStore.items
+      .map((x) => x.tasks)
+      .flat()
+      .filter((x) => x);
+    focusItems = $focusItemsStore.items.filter(
+      (x) => !tasksWithGoal.some(resourceInList(x))
+    );
+    console.log({ tasksWithGoal, focusItems });
+    goals = await searchStore.select({
+      resource: Resource.goal,
       filters: {
-        id: $focusItemsStore.goals.map((x) => x.id.toString())
+        id: $focusItemsStore.items.map((x) => x.id.toString())
+      },
+      isIncludeSubItems: true
+    });
+    tasks = await searchStore.select({
+      resource: Resource.task,
+      filters: {
+        id: $focusItemsStore.items.map((x) => x.id.toString())
       }
     });
     isRefreshing = false;
@@ -40,13 +60,14 @@
 
   onMount(() => {
     refresh();
+    focusItemsStore.subscribe((x) => {
+      if (x.refreshId) {
+        refresh();
+      }
+    });
   });
 
-  function resolveTodos(focusItem: IFocusGoal) {
-    return $focusItemsStore.todos.filter((x) =>
-      focusItem.todos?.some(resourceInList(x.id))
-    );
-  }
+  $: console.log({ focusItemsStore: $focusItemsStore, focusItems });
 </script>
 
 <div
@@ -54,7 +75,7 @@
     "pt-6": isInEditMode
   })}
 >
-  {#if $focusItemsStore.goals?.length === 0 && !isInEditMode && $activeSession.isSessionRunning}
+  {#if $focusItemsStore.items?.length === 0 && !isInEditMode && $activeSession.isSessionRunning}
     <div class="h-full">
       <EmptyStatusView
         size={Size.sm}
@@ -63,20 +84,17 @@
         subText="Toggle edit mode to add focus items."
       />
     </div>
-  {:else if goals.length > 0}
-    {#each goals as item, index (item)}
-      {@const focusItem = $focusItemsStore.goals.find(resourceInList(item))}
-      {#if focusItem}
-        <FocusItem
-          {isInEditMode}
-          task={item}
-          {focusItem}
-          todos={resolveTodos(focusItem)}
-          isFocusAddTask={$lastActiveGoalIdForEditing
-            ? $lastActiveGoalIdForEditing === item.id
-            : index === $focusItemsStore.goals.length - 1}
-        />
-      {/if}
+  {:else if focusItems.length > 0}
+    {#each focusItems as focusItem, index (focusItem.id)}
+      <FocusItem
+        {isInEditMode}
+        {focusItem}
+        {tasks}
+        {goals}
+        isFocusAddTask={$lastActiveGoalIdForEditing
+          ? $lastActiveGoalIdForEditing === focusItem.id
+          : index === $focusItemsStore.items.length - 1}
+      />
     {/each}
   {/if}
 

@@ -179,7 +179,11 @@ export enum ResourceAccessPoint {
   /**
    * The resource is being accessed from a goal
    */
-  GOAL = "goal"
+  GOAL = "goal",
+  /**
+   * The resource is being accessed from focus pages
+   */
+  FOCUS = "focus"
 }
 
 export enum ResourceAccessPointState {

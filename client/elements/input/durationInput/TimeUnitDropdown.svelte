@@ -1,6 +1,7 @@
 <script lang="ts">
+  import { popover } from "$lib/client/actions/popover.action";
   import type { TimeUnit } from "$lib/client/types/time.type";
-  import TimeUnitItem from "./TimeUnitItem.svelte";
+  import TimeUnitDropdownPopover from "./TimeUnitDropdownPopover.svelte";
   import { createEventDispatcher } from "svelte";
 
   export let units: TimeUnit[];
@@ -11,17 +12,20 @@
   let unitClasses: string =
     "border rounded-r-md py-2 px-4 min-w-[90px] cursor-pointer flex justify-center relative select-none border-brs3";
   const containerId = "units-dropdown-container";
+  let popoverRef: HTMLElement;
 
   const dispatch = createEventDispatcher();
 
   function closeUnitDropdown() {
     isUnitDropdownOpen = false;
     selectedIndex = -1;
+    popoverRef?.dispatchEvent(new CustomEvent("hide"));
   }
-  function handleTimeUnitItemClick(event: CustomEvent<TimeUnit>) {
-    const item = event.detail;
-    timeUnitSelection(item);
+
+  function handleTimeUnitItemClick(unit: TimeUnit) {
+    timeUnitSelection(unit);
   }
+
   function timeUnitSelection(item: TimeUnit) {
     if (currentTimeUnit !== item) {
       dispatch("change", {
@@ -34,10 +38,7 @@
     }
     closeUnitDropdown();
   }
-  function handleIsUnitDropDownOpen() {
-    isUnitDropdownOpen = !isUnitDropdownOpen;
-    if (isUnitDropdownOpen) selectedIndex = units.indexOf(currentTimeUnit);
-  }
+
   function handleKeyDownInDropdown(event: KeyboardEvent) {
     if (!isUnitDropdownOpen) return;
     if (event.key === "Enter") {
@@ -56,7 +57,21 @@
 <button
   id={containerId}
   tabindex="0"
-  on:click={handleIsUnitDropDownOpen}
+  bind:this={popoverRef}
+  use:popover={{
+    content: TimeUnitDropdownPopover,
+    componentProps: {
+      units,
+      currentTimeUnit,
+      isUnitDropdownOpen,
+      selectedIndex,
+      handleTimeUnitItemClick
+    }
+  }}
+  on:change={(e) => {
+    isUnitDropdownOpen = e.detail?.open;
+    if (isUnitDropdownOpen) selectedIndex = units.indexOf(currentTimeUnit);
+  }}
   on:keydown={handleKeyDownInDropdown}
   class={unitClasses}
 >
@@ -67,19 +82,6 @@
         isUnitDropdownOpen ? `rotate-180` : `rotate-0`
       }`}
     />
-  </div>
-  <div
-    class="units-dropdown absolute bg-bgs2 top-[calc(100%+2px)] -right-[2px] w-full rounded-sm flex flex-col gap-1 z-[200]"
-  >
-    {#if units.length > 1 && isUnitDropdownOpen}
-      {#each units as unit, index}
-        <TimeUnitItem
-          isActive={currentTimeUnit === unit || selectedIndex === index}
-          {unit}
-          on:click={handleTimeUnitItemClick}
-        />
-      {/each}
-    {/if}
   </div>
 </button>
 

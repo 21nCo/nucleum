@@ -28,7 +28,10 @@
   export let searchCallback: Function | undefined = undefined;
   export let searchResultComponent: any = undefined;
   export let searchResultComponentProps: Record<string, unknown> = {};
-  export let emptyStateLabel: string | undefined = undefined;
+  export let emptyStateLabel:
+    | string
+    | { mainText?: string; subText?: string }
+    | undefined = undefined;
   export let isChipsMode: boolean = false;
   /**
    * If true, the search results popover will be shown inline with the input element instead as a popover.

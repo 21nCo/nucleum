@@ -5,7 +5,8 @@ import {
   BlockType,
   type IFocusGoal,
   type IFocusItemsStore,
-  type ICurrentFocusItem
+  type ICurrentFocusItem,
+  type IFocusItem
 } from "$lib/client/types/pointron/session.type";
 import {
   generateIntervalsFromComposition,
@@ -58,6 +59,8 @@ import { postToParent } from "$lib/client/utils/embed.utils";
 import { goalStore } from "$lib/client/components/goals/goal.store";
 import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 import type { OmitForCaptureWithId } from "$lib/client/components/flux/resourceStores/resource.type";
+import { taskStore } from "$lib/client/components/tasks/task.store";
+import { GoalType } from "$lib/client/components/goals/goal.type";
 
 /** @deprecated */
 export const todayFocusStore = initTodayFocus();
@@ -993,12 +996,9 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     this.isIntervalTimeLimitNotified = false;
     let currentFocusItem = this.get().currentFocusItem;
     let focusItems = focusItemsStore.get();
-    if (
-      !isQuickStart &&
-      (focusItems.todos.length > 0 || focusItems.goals.length > 0)
-    ) {
+    if (!isQuickStart && focusItems.items.length > 0) {
       currentFocusItem = {
-        id: focusItems.todos?.[0]?.id ?? focusItems.goals[0].id,
+        id: focusItems.items[0].id,
         start: new Date().getTime()
       };
     }
@@ -1131,7 +1131,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       const task = await goalStore.select(item.id);
       return task;
     }
-    return focusItemsStore.get().todos.find(resourceInList(item.id));
+    return focusItemsStore.get().items.find(resourceInList(item.id));
   }
 }
 
@@ -1142,8 +1142,8 @@ export const lastActiveGoalIdForEditing = writable<IRecordId | undefined>(
 );
 
 const seedFocusItemsStore: IFocusItemsStore = {
-  goals: [],
-  todos: []
+  items: [],
+  refreshId: new Date().getTime()
 };
 
 class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
@@ -1153,7 +1153,7 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
   reset(isPersist: boolean = false) {
     logger.log({ context: "focus items store - reset" });
     this.modify(
-      { goals: [], todos: [] },
+      { items: [] },
       {
         isPersist
       }
@@ -1161,20 +1161,32 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
     appEvents.publish(PointronEvent.REFRESH_FOCUSITEMS);
   }
 
-  async addTodo(label: string, goalId: IRecordId) {
+  async addNewTask(label: string, goalId?: IRecordId) {
+    let id = generateResourceId(Resource.task);
+    let task = await taskStore.save(
+      { label, isChecked: false, goal: goalId },
+      { id }
+    );
+    if (!task || !Array.isArray(task) || task.length === 0) return;
+    await this.addTask(id, goalId);
+  }
+
+  async addTask(id: IRecordId, goalId?: IRecordId) {
     let n = this.get();
-    //TODO - create todo record if new
-    let id = generateResourceId(Resource.todo);
+    if (goalId && !n.items.some(resourceInList(goalId))) {
+      n.items.push({ id: goalId, tasks: [], blocks: [] });
+    }
     this.modify({
-      goals: n.goals.map((x: IFocusGoal) => {
-        if (isSameResource(x.id, goalId)) x.todos = [...(x.todos ?? []), id];
-        return x;
-      }),
-      todos: [
-        ...(n.todos ?? []),
+      items: [
+        ...(n.items.map((x: IFocusItem) => {
+          if (goalId && isSameResource(x.id, goalId))
+            x.tasks = [...(x.tasks ?? []), id];
+          return x;
+        }) ?? []),
         {
-          label,
-          id
+          id,
+          tasks: [],
+          blocks: []
         }
       ]
     });
@@ -1182,120 +1194,45 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
     appEvents.publish(PointronEvent.REFRESH_FOCUSITEMS);
   }
 
+  async addNewGoal(label: string) {
+    let goal = await goalStore.save({ label, type: GoalType.INDEFINITE });
+    if (!goal || !Array.isArray(goal) || goal.length === 0) return;
+    await this.addGoal(goal[0].id);
+  }
+
   async addGoal(id: IRecordId) {
     let n = this.get();
-    if (n.goals.some(resourceInList(id))) return;
-    n.goals.push({ id, todos: [], blocks: [] });
+    if (n.items.some(resourceInList(id))) return;
+    n.items.push({ id, tasks: [], blocks: [] });
+    n.refreshId = new Date().getTime();
     this.modify(n);
     lastActiveGoalIdForEditing.set(id);
     appEvents.publish(PointronEvent.REFRESH_FOCUSITEMS);
   }
 
-  async updateTodoLabel(id: IRecordId, label: string) {
-    let n = this.get();
-    const todos = n.todos.map((t) => {
-      if (isSameResource(t, id)) {
-        t.label = label;
-        return t;
-      }
-      return t;
-    });
-    //TODO - debounce at source, propagate change to todo record
-    this.modify({ todos }, { isDebouncedPersist: true });
-  }
-
   async appendFocusBlock(id: IRecordId, block: { start: number; end: number }) {
     let n = this.get();
-    const resourceType = determineResourceType(id);
-    if (resourceType === Resource.goal) {
-      const goals = n.goals.map((g) => {
-        if (isSameResource(g.id, id)) {
-          g.blocks = [...(g.blocks ?? []), block];
-          return g;
-        }
-        return g;
-      });
-      return this.modify({ goals });
-    }
-    const todos = n.todos.map((t) => {
-      if (isSameResource(t.id, id)) {
-        t.blocks = [...(t.blocks ?? []), block];
-        return t;
+    const items = n.items.map((item) => {
+      if (isSameResource(item.id, id)) {
+        item.blocks = [...(item.blocks ?? []), block];
+        return item;
       }
-      return t;
+      return item;
     });
-    return this.modify({ todos });
+    return this.modify({ items });
   }
 
-  async updateTodo(
-    id: IRecordId,
-    props: {
-      estimated?: number;
-      checked?: boolean;
-    }
-  ) {
+  async removeFocusItem(id: IRecordId) {
     let n = this.get();
-    const todos = n.todos.map((t) => {
-      if (isSameResource(t.id, id)) {
-        t.estimated = props.estimated ?? t.estimated;
-        t.checked = props.checked ?? t.checked;
-        return t;
+    if (!n || n.items.length === 0) return;
+    n.items = n.items.filter((item) => !isSameResource(item.id, id));
+
+    n.items = n.items.map((item) => {
+      if (item.tasks && item.tasks?.length > 0) {
+        item.tasks = item.tasks.filter((t) => !isSameResource(t, id));
       }
-      return t;
+      return item;
     });
-    //TODO - propagate change to todo record
-    this.modify({ todos });
-  }
-
-  //TODO - with new changes
-  async updateOrderValueForTasks(goalId: string, modifiedItems: any) {
-    let n = this.get();
-    if (n && n.goals.length > 0) {
-      modifiedItems.forEach((item: any) => {
-        let index = n.goals.findIndex((i) => i.taskId == item.taskId);
-        if (n.goals[index].goalId == goalId) n.goals[index].order = item.order;
-      });
-    }
-    this.modify(n);
-  }
-  //TODO - with new changes - use array index instead of order
-  async updateOrderValueForFI(modifiedItems: any) {
-    let n = this.get();
-    if (!isValidArrayWithData(modifiedItems)) return;
-    modifiedItems.forEach((item: any) => {
-      if (item?.taskId) {
-        let index = n.goals.findIndex((i: any) => i?.taskId == item.taskId);
-        n.goals[index].order = item.order;
-      } else {
-        let index = n.goals.findIndex((i: any) => i?.goalId == item.goalId);
-        n.goals[index].order = item.order;
-      }
-    });
-    this.modify(n);
-  }
-
-  async removeTodo(id: IRecordId) {
-    let n = this.get();
-    if (n && n.todos.length > 0) {
-      n.todos = n.todos.filter((t) => !isSameResource(t.id, id));
-    }
-    if (n && n.goals.length > 0) {
-      n.goals = n.goals.map((g) => {
-        if (g.todos && g.todos?.length > 0) {
-          g.todos = g.todos.filter((t) => !isSameResource(t, id));
-        }
-        return g;
-      });
-    }
-    this.modify(n);
-    appEvents.publish(PointronEvent.REFRESH_FOCUSITEMS);
-  }
-
-  async removeGoal(id: IRecordId) {
-    let n = this.get();
-    if (n && n.goals.length > 0) {
-      n.goals = n.goals.filter((t) => !isSameResource(t.id, id));
-    }
     this.modify(n);
     appEvents.publish(PointronEvent.REFRESH_FOCUSITEMS);
   }
@@ -1306,6 +1243,11 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
       data
     });
     //TODO - check if any existing task or goal is dependent on this change - change of label for a goal or color etc
+  }
+
+  resolveCount(items: IFocusItem[]) {
+    //TODO - don't count goals with tasks as focus item
+    return items.length;
   }
 }
 
@@ -1351,31 +1293,26 @@ class SessionStore extends ResourceStore<ISession> {
           duration: 0
         }
       ],
-      goals: focusItemStore.goals,
+      focusItems: focusItemStore.items,
       notes: activeSessionVal.notes
     };
     const logs: OmitForCaptureWithId<ISessionLog>[] = [];
 
-    focusItemStore.goals.forEach((g: IFocusGoal) => {
-      if (g.blocks && g.blocks.length > 0) {
+    focusItemStore.items.forEach((item: IFocusItem) => {
+      const resourceType = determineResourceType(item.id);
+      const goalId =
+        resourceType === Resource.goal
+          ? item.id
+          : focusItemStore.items.find((x) =>
+              x.tasks?.some(resourceInList(item.id))
+            )?.id ?? "";
+      const taskId = resourceType === Resource.task ? item.id : "";
+      if (item.blocks && item.blocks.length > 0) {
         logs.push(
-          ...g.blocks.map((block) => {
-            return generateLogFromBlock(g.id, "", block);
+          ...item.blocks.map((block) => {
+            return generateLogFromBlock(goalId, taskId, block);
           })
         );
-      }
-      if (g.todos && g.todos.length > 0) {
-        g.todos.forEach((t) => {
-          const todo = focusItemStore.todos.find((x) => x.id == t);
-          if (!todo) return;
-          if (todo.blocks && todo.blocks.length > 0) {
-            logs.push(
-              ...todo.blocks.map((block) => {
-                return generateLogFromBlock(g.id, todo.id, block);
-              })
-            );
-          }
-        });
       }
     });
     this.create(session);
@@ -1394,7 +1331,7 @@ class SessionStore extends ResourceStore<ISession> {
 
     function generateLogFromBlock(
       goalId: IRecordId,
-      todoId: IRecordId,
+      taskId: IRecordId,
       block: { start: number; end: number }
     ): OmitForCaptureWithId<ISessionLog> {
       const total = resolveTotalTaskTime([block]);
@@ -1412,10 +1349,10 @@ class SessionStore extends ResourceStore<ISession> {
         start: new Date(block.start).toISOString(),
         end: new Date(block.end).toISOString(),
         sessionId: session.id,
-        goalId: goalId,
-        todoId: todoId,
-        totalFocus: focus,
-        totalBreak: breakTime
+        goalId,
+        taskId,
+        focus,
+        breakTime
         //TODO - check the need for the below
         // tzOffset: get(userPreferences).timeZoneOffset,
         // targets: get(pointronPreferences).horizonTargets

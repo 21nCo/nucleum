@@ -1,14 +1,18 @@
 <script lang="ts">
   import BreadcrumbMini from "$lib/client/elements/breadcrumb/BreadcrumbMini.svelte";
+  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import type { IGoalThumb } from "./goal.type";
   export let item: IGoalThumb;
   $: parentLabels = item.parent?.map((x) => x.label);
 </script>
 
-<div class="flex flex-col w-full items-start">
+<CustomColorPropagator
+  color={item.color}
+  class="flex flex-col w-full items-start text-ccs1"
+>
   {#if parentLabels}
     <BreadcrumbMini hierarchy={parentLabels} />
   {/if}
   <!-- TODO - task color if required -->
   {item.label}
-</div>
+</CustomColorPropagator>

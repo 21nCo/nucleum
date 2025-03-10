@@ -4,6 +4,8 @@
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { focusItemsStore } from "$lib/client/products/pointron/focus/session.store";
   import { appStore } from "$lib/client/stores/app.store";
+
+  $: focusItemsCount = focusItemsStore.resolveCount($focusItemsStore.items);
 </script>
 
 <div
@@ -17,13 +19,12 @@
     class="flex flex-col items-center gap-1 pb-40"
     on:click={() => appStore.runAction(PointronAction.SHOW_FOCUSITEMS_MODAL)}
   >
-    <!-- TODO - count should ignore parent goal if tasks added -->
     <span class="underline-dotted">
-      {$focusItemsStore.goals.length > 0
-        ? $focusItemsStore.goals.length + " focus Items added"
+      {focusItemsCount > 0
+        ? focusItemsCount + " focus Items added"
         : "+ add focus items"}
     </span>
-    {#if $focusItemsStore.goals.length > 0}
+    {#if focusItemsCount > 0}
       <span class="text-b4 text-fgs3"> tap to edit </span>
     {/if}
   </button>

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { cn } from "$lib/client/utils/ui.utils";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let unit: string;
@@ -11,7 +12,10 @@
 
 <button
   on:click={onclick}
-  class="text-b3 leading-8 py-1 px-2 rounded-sm font-medium w-full cursor-pointer hover:bg-bgs3 text-left {isActive
-    ? 'bg-bgs3'
-    : ''}">{unit}</button
+  class={cn(
+    "text-b2 leading-8 py-1 px-2 w-full cursor-pointer notouch:hover:bg-bgs2 active:bg-bgs2 text-left",
+    {
+      "bg-bgs2": isActive
+    }
+  )}>{unit}</button
 >

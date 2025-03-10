@@ -22,7 +22,8 @@
    */
   export let shortcutTrigger: string | undefined = undefined;
   export let shortcutTriggers: string[] = [];
-  export let emptyStateLabel: string = "No results found";
+  export let emptyStateLabel: string | { mainText?: string; subText?: string } =
+    "No results found";
   export let isPreventDefaultResults: boolean = false;
   export let isInlineContext: boolean = false;
   export let isAlwaysShowSearchFeedback: boolean = false;
@@ -210,9 +211,20 @@
             <span class="text-b3 text-fgs3">Searching...</span>
           </span>
         {:else if results?.length === 0}
-          <span>
-            {@html renderMdAsHtml(emptyStateLabel)}
-          </span>
+          {#if typeof emptyStateLabel === "string"}
+            <span>
+              {@html renderMdAsHtml(emptyStateLabel)}
+            </span>
+          {:else if emptyStateLabel.mainText && emptyStateLabel.subText}
+            <div class="flex flex-col gap-2 text-center">
+              <span class="text-b2 font-medium">
+                {@html renderMdAsHtml(emptyStateLabel.mainText)}
+              </span>
+              <span>
+                {@html renderMdAsHtml(emptyStateLabel.subText)}
+              </span>
+            </div>
+          {/if}
         {/if}
       </div>
     {/if}

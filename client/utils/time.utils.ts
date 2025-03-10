@@ -2,7 +2,8 @@ import {
   TimePeriodType,
   type TimePeriod,
   TimeScale,
-  TimeFormat
+  TimeFormat,
+  TimeUnit
 } from "$lib/client/types/time.type";
 import moment from "moment-timezone";
 import type { UserDate } from "$lib/client/types/userDate.type";
@@ -627,4 +628,20 @@ export function compareDates(
     return d1.getTime() < d2.getTime();
   }
   return false;
+}
+
+export function resolveDurationInSeconds(duration: {
+  value: number;
+  unit: TimeUnit;
+}) {
+  switch (duration.unit) {
+    case TimeUnit.SECONDS:
+      return duration.value;
+    case TimeUnit.MINUTES:
+      return duration.value * 60;
+    case TimeUnit.HOURS:
+      return duration.value * 60 * 60;
+    default:
+      return duration.value;
+  }
 }
