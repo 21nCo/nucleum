@@ -186,7 +186,13 @@
 
 {#if !$view.isPortrait && (isValidArrayWithData($toasts) || $player.isMiniOn)}
   <div
-    class="fixed bottom-0 right-0 mr-6 mb-6 flex flex-col items-end gap-4 z-[100]"
+    class={cn(
+      "fixed bottom-0 right-0 mr-6 mb-6 flex flex-col items-end gap-4",
+      {
+        "z-[100]": !$fullScreen.path,
+        "z-40": $fullScreen.path
+      }
+    )}
   >
     {#if isValidArrayWithData($toasts)}
       <div class="flex flex-col gap-3" transition:slide={{ duration: 200 }}>

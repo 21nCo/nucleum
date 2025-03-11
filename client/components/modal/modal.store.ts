@@ -4,6 +4,7 @@ import { logger } from "../debug/logger.client";
 import { ObservableStore } from "$lib/client/stores/client.store";
 import { appStore } from "$lib/client/stores/app.store";
 import type { IObservableStoreSubject } from "$lib/client/types/data.type";
+import { ResourceAccessMode } from "../flux/resourceStores/resource.type";
 
 const defaultModal = {
   path: "",
@@ -95,13 +96,16 @@ class FullScreenStore extends ObservableStore<
   show(path: string) {
     logger.log({ at: "fullscreen.show", path });
     this.set({ path });
-    appStore.runAction(path);
-    appStore.toggleSearchParam({ fsp: path });
+    // appStore.runAction(path);
+    appStore.toggleSearchParam({ [ResourceAccessMode.FULL]: path });
   }
 
+  /**
+   * Hides the full screen modal and shows the mini player if required
+   * @param isShowMiniIfNoPip - if true, the mini player will be shown
+   */
   hide(isShowMiniIfNoPip: boolean = true) {
     let fullScreenAction = this.get().path;
-    console.log({ fullScreenAction });
     if (!fullScreenAction) return;
     if (fullScreenAction && isShowMiniIfNoPip) {
       let miniAction =
@@ -111,14 +115,16 @@ class FullScreenStore extends ObservableStore<
       }
     }
     this.set({ path: undefined });
-    modalEvent.hide(fullScreenAction ?? "", "app.store");
-    appStore.toggleSearchParam(["fsp"]);
+    // modalEvent.hide(fullScreenAction ?? "", "app.store");
+    appStore.toggleSearchParam([ResourceAccessMode.FULL]);
   }
 
   restore() {
-    const fspParam = new URLSearchParams(window.location.search).get("fsp");
-    if (fspParam) {
-      this.show(fspParam);
+    const fullSearchParam = new URLSearchParams(window.location.search).get(
+      ResourceAccessMode.FULL
+    );
+    if (fullSearchParam) {
+      this.show(fullSearchParam);
       return true;
     }
   }

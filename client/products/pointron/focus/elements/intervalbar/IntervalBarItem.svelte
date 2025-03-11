@@ -8,6 +8,7 @@
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import view from "$lib/client/stores/view.store";
   import { formatTime } from "$lib/client/utils/time.utils";
+  import { cn } from "$lib/client/utils/ui.utils";
   export let progress: number = 0;
   export let color: string | undefined = undefined;
   export let type: BlockType = BlockType.FOCUS;
@@ -50,10 +51,15 @@
   >
     {#if context !== SessionUIContext.PIP && $activeSession.isSessionRunning && isActiveProgress && xPosition && yPositon && xPosition > 0 && yPositon > 0}
       <div
-        class="fixed text-b3 rounded-md flex justify-center items-center min-w-fit px-1 {context ===
-        SessionUIContext.ZEN_ON_DESKTOP
-          ? 'bg-bgs3 text-fgs2 text-b3 h-6'
-          : 'bg-bgs2 text-fgs3 text-b4 h-4'}"
+        class={cn(
+          "fixed text-b3 rounded-md flex justify-center items-center min-w-fit px-1",
+          {
+            "bg-bgs4 text-fgs2 text-b3 h-5":
+              context === SessionUIContext.ZEN_ON_DESKTOP,
+            "bg-bgs3 text-fgs3 text-b4 h-4":
+              context !== SessionUIContext.ZEN_ON_DESKTOP
+          }
+        )}
         style="left: calc({xPosition}px - {$view.isPortrait
           ? '24px'
           : '28px'}); top: calc({yPositon}px - {$view.isPortrait
@@ -61,6 +67,23 @@
           : '30px'})"
       >
         {formatTime($userPreferences, $currentTime)}
+        <svg
+          width="16"
+          height="10"
+          viewBox="0 0 16 10"
+          class="absolute -bottom-[5px] left-1/2 -translate-x-1/2 rotate-180"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M2 7C2 7 4.5 7 8 7C11.5 7 14 7 14 7L8 1L2 7Z"
+            class={cn({
+              "fill-bgs4": context === SessionUIContext.ZEN_ON_DESKTOP,
+              "fill-bgs3": context !== SessionUIContext.ZEN_ON_DESKTOP
+            })}
+            stroke-width="1.2"
+            stroke-linejoin="round"
+          />
+        </svg>
       </div>
     {/if}
   </div>

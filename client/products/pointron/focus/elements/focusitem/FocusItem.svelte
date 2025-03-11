@@ -97,8 +97,6 @@
       focusItem.tasks?.some(resourceInList(x.id))
     );
   }
-
-  $: console.log({ focusItem, goal, goals, intervals, isInprogress, tasks });
 </script>
 
 <div

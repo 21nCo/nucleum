@@ -24,7 +24,7 @@
   let playerContainer: HTMLElement | null =
     document.getElementById("playercontainer");
   let isPipShown = false;
-  let currentTask: any;
+  let currentGoal: any;
   $: isBreakReminderMode =
     $activeSession.timeRemainingToTakeBreak != undefined &&
     $activeSession.timeRemainingToTakeBreak < 0;
@@ -91,6 +91,8 @@
           }
         });
         pipWindow.document.body.append(playerRef);
+        pipWindow.document.body.style.height = "100vh";
+        pipWindow.document.body.style.width = "100vw";
         isPipShown = true;
       } else {
         closePip();
@@ -111,11 +113,11 @@
       }
       if (
         x.currentFocusItem &&
-        !isSameResource(currentTask, x.currentFocusItem)
+        !isSameResource(currentGoal, x.currentFocusItem)
       ) {
-        currentTask = await activeSession.resolveCurrentFocusItemData({
+        currentGoal = await activeSession.resolveCurrentFocusItemData({
           item: x.currentFocusItem,
-          isReturnTaskIfTodo: true
+          isReturnGoalIfTask: true
         });
       }
     });
@@ -150,7 +152,7 @@
 >
   <div
     id="focusplayer"
-    class={cn("flex w-full h-full", $appearance.colorScheme.tailwindSelector, {
+    class={cn("flex h-full w-full", $appearance.colorScheme.tailwindSelector, {
       "text-base text-fgs1": isPipShown,
       "bg-bgs1": isPipShown && !isBreakReminderMode,
       "bg-ars1 animate--pulse animate-pulse-subtle":
@@ -162,7 +164,7 @@
       <div class="flex flex-col gap-1 w-full">
         <CustomColorPropagator
           type="button"
-          color={currentTask?.color}
+          color={currentGoal?.color ?? currentGoal?.parent?.[0]?.color}
           class={cn(
             "flex gap-2 h-full justify-between items-center px-4 py-2",
             isPipShown && {

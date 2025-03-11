@@ -9,10 +9,12 @@
   import TextSearchInput from "$lib/client/elements/input/TextSearchInput.svelte";
   import { SearchStore } from "$lib/client/components/record/record.store";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { toasts } from "$lib/client/stores/notification.store";
+  import { ErrorMessage } from "$lib/client/components/error/error.type";
   export let goalId: IRecordId;
   export let placeholder: string = "+ add a task";
   let label: string = "";
-  let inputRef: any;
+  let inputRef: TextSearchInput;
   const searchStore = new SearchStore(Resource.task);
 
   export function focus() {
@@ -24,6 +26,7 @@
     const labelCopy = label;
     reset();
     if (goalId) await focusItemsStore.addNewTask(labelCopy, goalId);
+    inputRef?.hide();
   }
 
   function reset() {
@@ -40,9 +43,13 @@
   }
 
   async function onSelect(event: any) {
-    if (!event.detail.item) return;
-    const task = event.detail.item;
-    await focusItemsStore.addTask(task.id, goalId);
+    try {
+      if (!event.detail.item) return;
+      const task = event.detail.item;
+      await focusItemsStore.addTask(task.id, goalId);
+    } catch (error: any) {
+      toasts.error(error.message ?? ErrorMessage.DEFAULT);
+    }
   }
 </script>
 

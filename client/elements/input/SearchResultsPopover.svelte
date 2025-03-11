@@ -242,7 +242,7 @@
         </span>
       {/if}
       <button
-        class="flex items-center gap-1 active:bg-bgs2 px-1 rounded-md"
+        class="flex items-center gap-1 active:bg-bgs2 notouch:hover:bg-bgs2 px-1 rounded-md"
         on:click={reset}
       >
         <Icon icon="ph:x-light" size={Size.sm} class="text-fgs3" />

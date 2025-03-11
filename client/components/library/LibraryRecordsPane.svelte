@@ -112,7 +112,7 @@
   let searchInputRef: InlineSearchBar;
   let isRefineShown = false;
   let subTypeSwitcherRef: LibrarySubTypeSwitcher;
-  $: isGenericSubType = ["all", "starred", "recents"].includes(selectedSubType);
+
   $: multiSelectContext = {
     resource,
     accessPoint
@@ -121,7 +121,6 @@
 
   let pageSub: any;
   onMount(async () => {
-    console.log("LibraryRecordsPane - onMount");
     pageSub = page.subscribe(async (p) => {
       const subResourceParam = p.url.searchParams.get("type");
       let isRefreshNeeded = false;
@@ -182,7 +181,8 @@
     logger.log({
       at: "LibraryRecordsPane - refresh",
       isPagination,
-      selectedResource: resource
+      resource,
+      selectedSubType
     });
     if (!availableResourcesSet.has(resource)) {
       data = [];
@@ -225,9 +225,13 @@
     }
   }
 
+  function isGenericSubType() {
+    return ["all", "starred", "recents"].includes(selectedSubType);
+  }
+
   function resolveFilters() {
     let filters: any = resolveBaseFilters();
-    if (!isGenericSubType) {
+    if (!isGenericSubType()) {
       if (resource === Resource.node) {
         filters = { ...filters, contentType: selectedSubType };
       } else if (
@@ -259,7 +263,7 @@
       isRefreshingTotalCount = true;
       totalCountAfterFilter = await searchStore.resolveCount(
         resource,
-        !isGenericSubType
+        !isGenericSubType()
           ? (selectedSubType.toUpperCase() as NodeType | CollectionType)
           : undefined,
         filters

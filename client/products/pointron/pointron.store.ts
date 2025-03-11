@@ -8,7 +8,6 @@ import {
   type SessionComposition,
   BreakCompositionType
 } from "$lib/client/types/pointron/sessionComposition.type";
-import { generateUID } from "$lib/client/utils/utils";
 import { toasts } from "$lib/client/stores/notification.store";
 import { ChartType } from "$lib/client/types/analytics.type";
 import { TimePeriodType, TimeScale } from "$lib/client/types/time.type";
@@ -20,46 +19,49 @@ import type { IPointronPreferences } from "$lib/client/types/pointron/pointronPr
 import { defaultAppMenu } from "$local/local";
 import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
 import { ResourceFIRStore } from "$lib/client/components/flux/resourceStores/resource.store";
+import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 
 export const swipeLabel = writable("");
 export const lastImportTime = writable<number>(Date.now());
-const seedPresets: SessionComposition[] = [
-  {
-    id: generateUID(),
-    type: SessionCompositionType.POMODORO,
-    numberOfFocusRounds: 4,
-    focusDuration: 28 * 60,
-    breakDuration: 2 * 60,
-    totalDuration: 0,
-    breakReminder: 600,
-    numberOfBreaks: 1,
-    name: "Preset 1",
-    breakType: BreakCompositionType.PREDEFINED
-  },
-  {
-    id: generateUID(),
-    type: SessionCompositionType.POMODORO,
-    numberOfFocusRounds: 3,
-    focusDuration: 10 * 60,
-    breakDuration: 2 * 60,
-    totalDuration: 0,
-    breakReminder: 600,
-    numberOfBreaks: 1,
-    name: "Morning focus",
-    breakType: BreakCompositionType.PREDEFINED
-  },
-  {
-    id: generateUID(),
-    type: SessionCompositionType.TOTAL_DURATION,
-    focusDuration: 0,
-    breakDuration: 10 * 60,
-    totalDuration: 10 * 60 * 60,
-    numberOfBreaks: 9,
-    breakReminder: 600,
-    name: "10 hr deep study",
-    breakType: BreakCompositionType.PREDEFINED
-  }
-];
+function generateSeedPresets(): SessionComposition[] {
+  return [
+    {
+      id: generateSimpleRandomId(),
+      type: SessionCompositionType.POMODORO,
+      numberOfFocusRounds: 4,
+      focusDuration: 28 * 60,
+      breakDuration: 2 * 60,
+      totalDuration: 0,
+      breakReminder: 600,
+      numberOfBreaks: 1,
+      name: "Preset 1",
+      breakType: BreakCompositionType.PREDEFINED
+    },
+    {
+      id: generateSimpleRandomId(),
+      type: SessionCompositionType.POMODORO,
+      numberOfFocusRounds: 3,
+      focusDuration: 10 * 60,
+      breakDuration: 2 * 60,
+      totalDuration: 0,
+      breakReminder: 600,
+      numberOfBreaks: 1,
+      name: "Morning focus",
+      breakType: BreakCompositionType.PREDEFINED
+    },
+    {
+      id: generateSimpleRandomId(),
+      type: SessionCompositionType.TOTAL_DURATION,
+      focusDuration: 0,
+      breakDuration: 10 * 60,
+      totalDuration: 10 * 60 * 60,
+      numberOfBreaks: 9,
+      breakReminder: 600,
+      name: "10 hr deep study",
+      breakType: BreakCompositionType.PREDEFINED
+    }
+  ];
+}
 
 export const defaultHorizonChartConfiguration: HorizonChart[] = [
   {
@@ -118,7 +120,7 @@ const userLocalPreferencesId = Resource.pointronPreferences;
 export const seedLocalPreferences: IPointronPreferences = {
   isEnableAgeCounter: false,
   extendDuration: 5,
-  presets: seedPresets,
+  presets: generateSeedPresets(),
   isEnableAutoStartInterval: true,
   isIncludeBreakInAnalytics: false,
   timerMode: TimerMode.JOURNAL,
@@ -162,7 +164,7 @@ class PointronPreferencesStore extends KeyValueStore<IPointronPreferences> {
     if (!data.id) return;
     data.appMenu = defaultAppMenu;
     if (!data.uiStates) data.uiStates = seedLocalPreferences.uiStates;
-    if (!data.presets) data.presets = seedPresets;
+    if (!data.presets) data.presets = generateSeedPresets();
     //m.horizonCharts = defaultHorizonChartConfiguration;
     this.modify(data, { isPersist: false });
   }

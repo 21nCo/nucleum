@@ -13,7 +13,7 @@
   import { SessionUIContext } from "$lib/client/types/pointron/session.type";
   $: isExpandedMode =
     ($view.landscapiness > 1.4 && $view.scale > 1) || $view.scale > 1.3;
-  $: isExtraLargeScreen = $view.landscapiness > 1.5 && $view.scale > 1.5;
+  $: isExtraLargeScreen = $view.landscapiness > 1.7 && $view.scale > 1.8;
 </script>
 
 <div class="relative flex flex-col w-full h-full p-4">

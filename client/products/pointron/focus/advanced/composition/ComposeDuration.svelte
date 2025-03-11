@@ -25,6 +25,7 @@
   import { appStore } from "$lib/client/stores/app.store";
   import Divider from "$lib/client/elements/Divider.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   const dispatch = createEventDispatcher();
   export let composition: SessionComposition;
   export let isShowSave: boolean = false;
@@ -52,40 +53,50 @@
   // }
   if (composition.type === SessionCompositionType.SLIDER)
     composition.type = SessionCompositionType.TOTAL_DURATION;
-  let seedPomodoroRound: SessionComposition = {
-    id: generateUID(),
-    type: SessionCompositionType.POMODORO,
-    numberOfFocusRounds: 2,
-    focusDuration: 28 * 60,
-    breakDuration: 2 * 60,
-    totalDuration: 0,
-    numberOfBreaks: 1,
-    breakReminder: 0,
-    breakType: BreakCompositionType.PREDEFINED
-  };
+
+  function generateSeedPomodoroRound() {
+    const id = generateSimpleRandomId();
+    return {
+      id,
+      type: SessionCompositionType.POMODORO,
+      numberOfFocusRounds: 2,
+      focusDuration: 28 * 60,
+      breakDuration: 2 * 60,
+      totalDuration: 0,
+      numberOfBreaks: 1,
+      breakReminder: 0,
+      breakType: BreakCompositionType.PREDEFINED
+    };
+  }
 
   let totals = getTotalsFromComposition({ composition });
   // $: console.log({ composition });
 
   function removeAdditionalHandler(event: any) {
     composition.additional = composition.additional?.filter(
-      (x) => x.id != event?.detail?.preset.id
+      (x) => x.id !== event?.detail?.preset?.id
     );
+    dispatch("change", composition);
   }
   function onAddAdditionalClicked() {
     composition.additional = [
       ...(composition.additional ?? []),
-      seedPomodoroRound
+      generateSeedPomodoroRound()
     ];
+    dispatch("change", composition);
   }
-  function onEachAdditionalEdit(event: any) {
-    let presetToBeSaved = event.detail.preset;
-    if (presetToBeSaved.id != composition.id) {
-      removeAdditionalHandler(event);
+  function onEachAdditionalEdit(item: SessionComposition) {
+    if (!item) return;
+    let presetToBeSaved = { ...item };
+    if (presetToBeSaved?.id !== composition.id) {
+      composition.additional = composition.additional?.filter(
+        (x) => x.id !== presetToBeSaved.id
+      );
       composition.additional = [
         ...(composition.additional ?? []),
-        event.detail.preset
+        presetToBeSaved
       ];
+      dispatch("change", composition);
     }
   }
   function saveHandler() {
@@ -154,7 +165,7 @@
             <PomodoroUnitView
               composition={item}
               on:remove={removeAdditionalHandler}
-              on:change={onEachAdditionalEdit}
+              on:change={() => onEachAdditionalEdit(item)}
               isShowRemove={true}
             />
           {/each}
@@ -170,7 +181,7 @@
         </div>
       </div>
     {:else}
-      <div class="flex flex-col gap-6 h-96 overflow-y-auto">
+      <div class="flex flex-col gap-6 h--96 overflow-y-auto">
         {#if composition.type != SessionCompositionType.COUNTUP}
           {#if composition.type !== SessionCompositionType.TARGET_FOCUS}
             <DurationInput

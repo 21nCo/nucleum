@@ -7,20 +7,16 @@
   import { SessionType } from "$lib/client/products/pointron/logs/log.type";
   import { appStore, currentTime } from "$lib/client/stores/app.store";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import { resolveHoverState } from "$lib/client/utils/browser.utils";
   import { formatTime } from "$lib/client/utils/time.utils";
   import { onMount } from "svelte";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { tooltip } from "$lib/client/actions/popover.action";
   export let label: "start" | "end" = "start";
   export let context: SessionUIContext = SessionUIContext.DEFAULT;
   let timeClassList = "";
   let labelClassList = "";
-  let isHovering = false;
-  let toolTipRef: HTMLElement;
-  let tooltip: string | undefined = undefined;
   let labelRef: HTMLElement;
   onMount(() => {
-    hideToolTip();
     if (context === SessionUIContext.ZEN_ON_DESKTOP) {
       timeClassList = "text-h4";
     } else if ($activeSession.state === SessionState.NOT_STARTED) {
@@ -35,49 +31,26 @@
           ? "text-b4"
           : "text-b3";
   });
-  function toggleHoverState(event: MouseEvent | FocusEvent) {
-    if (resolveHoverState(event)) {
-      isHovering = true;
-      if (
-        $activeSession.state === SessionState.NOT_STARTED &&
-        label === "end"
-      ) {
-        tooltip =
-          "Click this to fix the end time of the session and calculate duration accordingly.";
-        // if (labelRef && toolTipRef)
-        //   renderPopoverv2(labelRef, toolTipRef, Direction.Down);
-      }
-    } else {
-      isHovering = false;
-      tooltip === undefined;
-      hideToolTip();
-    }
-  }
-  function hideToolTip() {
-    if (toolTipRef && toolTipRef?.style?.display != "none")
-      toolTipRef.style.display = "none";
-  }
 </script>
 
 <div
   bind:this={labelRef}
-  class={cn(
-    "flex flex-col items-center min-w-fit",
-    context !== SessionUIContext.PIP && "relative bottom-2.5"
-  )}
-  on:mouseover={toggleHoverState}
-  on:mouseout={toggleHoverState}
-  on:focus={toggleHoverState}
-  on:blur={toggleHoverState}
+  class={cn("flex flex-col min-w-fit", {
+    "relative bottom-2.5": context !== SessionUIContext.PIP,
+    "items-start": label === "start",
+    "items-end": label === "end"
+  })}
+  use:tooltip={{
+    disabled: !(
+      $activeSession.state === SessionState.NOT_STARTED && label === "end"
+    ),
+    text: "Click this to fix the end time of the session and calculate duration accordingly."
+  }}
 >
   {#if label === "start"}
     {#if context !== SessionUIContext.PIP}
       <div class={cn("text-fgs3", labelClassList)}>
-        {$activeSession.state === SessionState.NOT_STARTED
-          ? "Now"
-          : context != SessionUIContext.ZEN_ON_DESKTOP
-            ? "Start"
-            : "Start time"}
+        {$activeSession.state === SessionState.NOT_STARTED ? "Now" : "Start"}
       </div>
     {/if}
     <div class={timeClassList}>
@@ -90,7 +63,10 @@
   {:else}
     {#if context !== SessionUIContext.PIP}
       <div class={cn("text-fgs3", labelClassList)}>
-        {context != SessionUIContext.ZEN_ON_DESKTOP ? "End" : "End time"}
+        {$activeSession.composition?.type === SessionCompositionType.COUNTUP &&
+        $activeSession.isSessionRunning
+          ? "Now"
+          : "End"}
       </div>
     {/if}
     {#if $activeSession.state === SessionState.NOT_STARTED}
@@ -155,9 +131,4 @@
       </div>
     {/if}
   {/if}
-  <!-- {#if tooltip}
-    <div bind:this={toolTipRef}>
-      <Tooltip info={{ body: tooltip }} />
-    </div>
-  {/if} -->
 </div>

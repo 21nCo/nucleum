@@ -15,6 +15,8 @@
   import GoalInfoEditControl from "./GoalInfoEditControl.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
+  import { formatDatetime } from "$lib/client/utils/time.utils";
+  import { userPreferences } from "../../settings/userPreferences.store";
   export let goal: IActiveGoalStore;
   export let isConstrainedWidth = false;
   function handleStatusChange(e: CustomEvent<GoalStatus>) {
@@ -102,4 +104,7 @@
       </div>
     </div>
   {/if}
+  <div class="text-fgs3 text-b3 mx-auto mt-auto">
+    Created: {formatDatetime($userPreferences, $goal.createdAt)}
+  </div>
 </div>

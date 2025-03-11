@@ -10,8 +10,8 @@ import {
 } from "$lib/client/types/pointron/session.type";
 import type { ITag } from "$lib/client/types/pointron/tag.type";
 import { activeSession } from "./focus/session.store";
-import { generateUID } from "$lib/client/utils/utils";
 import { type ISession, SessionType } from "./logs/log.type";
+import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 
 export function getTotalsFromComposition(
   params: {
@@ -53,7 +53,11 @@ export function generateIntervalsFromComposition(
     return intervals;
   }
   bars = generateIntervals(composition);
-  if (composition.additional && composition.additional.length > 0) {
+  if (
+    composition.type === SessionCompositionType.POMODORO &&
+    composition.additional &&
+    composition.additional.length > 0
+  ) {
     composition.additional.forEach((p) => {
       bars = [...bars, ...generateIntervals(p)];
     });
@@ -159,24 +163,28 @@ function generateIntervals(composition: SessionComposition) {
     bars = [
       ...bars,
       {
-        id: generateUID(),
+        id: generateSimpleRandomId(),
         duration: focusDuration,
         progress: 0,
         type: BlockType.FOCUS
       }
     ];
     if (
+      composition.breakType === BreakCompositionType.PREDEFINED &&
       composition.breakDuration > 0 &&
-      !(
-        i === numberOfFocusRounds - 1 &&
-        (composition.additional === undefined ||
-          composition.additional.length < 1)
-      )
+      ((composition.type === SessionCompositionType.POMODORO &&
+        !(
+          i === numberOfFocusRounds - 1 &&
+          (composition.additional === undefined ||
+            composition.additional.length < 1)
+        )) ||
+        (composition.type === SessionCompositionType.TOTAL_DURATION &&
+          i !== numberOfFocusRounds - 1))
     ) {
       bars = [
         ...bars,
         {
-          id: generateUID(),
+          id: generateSimpleRandomId(),
           duration: composition.breakDuration,
           progress: 0,
           type: BlockType.BREAK

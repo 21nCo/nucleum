@@ -66,8 +66,6 @@
       }
     });
   });
-
-  $: console.log({ focusItemsStore: $focusItemsStore, focusItems });
 </script>
 
 <div

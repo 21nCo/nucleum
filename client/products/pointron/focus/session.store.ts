@@ -61,6 +61,7 @@ import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 import type { OmitForCaptureWithId } from "$lib/client/components/flux/resourceStores/resource.type";
 import { taskStore } from "$lib/client/components/tasks/task.store";
 import { GoalType } from "$lib/client/components/goals/goal.type";
+import { SearchStore } from "$lib/client/components/record/record.store";
 
 /** @deprecated */
 export const todayFocusStore = initTodayFocus();
@@ -192,6 +193,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     modalEvent.hide(PointronEvent.SESSION_FINISHED);
     modalEvent.hide(PointronEvent.BREAK_REMINDER);
     let newSession: IActiveSessionStore = deepCopy(seedSessionStore);
+    newSession.notes = undefined;
     newSession.composition.breakReminder =
       get(pointronPreferences)?.breakReminder;
     return newSession;
@@ -1062,7 +1064,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
   async resetComposition() {
     let composition = {
       id: generateSimpleRandomId(),
-      type: SessionCompositionType.TOTAL_DURATION,
+      type: SessionCompositionType.COUNTUP,
       focusDuration: 0,
       numberOfBreaks: 0,
       breakDuration: 5 * 60,
@@ -1120,18 +1122,29 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
   async resolveCurrentFocusItemData(
     params: {
       item?: ICurrentFocusItem;
-      isReturnTaskIfTodo?: boolean;
+      isReturnGoalIfTask?: boolean;
     } = {}
   ) {
     let item = params.item;
     if (!item) item = this.get().currentFocusItem;
     if (!item) return;
     const resourceType = determineResourceType(item.id);
-    if (resourceType === Resource.task) {
-      const task = await goalStore.select(item.id);
-      return task;
+    if (resourceType === Resource.goal) {
+      const goal = await new SearchStore(Resource.goal).select({
+        filters: {
+          id: item.id.toString()
+        },
+        isIncludeSubItems: true
+      });
+      return goal?.[0];
+    } else if (resourceType === Resource.task) {
+      const task = await new SearchStore(Resource.task).select({
+        filters: {
+          id: item.id.toString()
+        }
+      });
+      return task?.[0];
     }
-    return focusItemsStore.get().items.find(resourceInList(item.id));
   }
 }
 
@@ -1176,6 +1189,8 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
     if (goalId && !n.items.some(resourceInList(goalId))) {
       n.items.push({ id: goalId, tasks: [], blocks: [] });
     }
+    if (n.items.some(resourceInList(id)))
+      throw new Error("Task already exists");
     this.modify({
       items: [
         ...(n.items.map((x: IFocusItem) => {
@@ -1225,7 +1240,13 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
   async removeFocusItem(id: IRecordId) {
     let n = this.get();
     if (!n || n.items.length === 0) return;
-    n.items = n.items.filter((item) => !isSameResource(item.id, id));
+    const removedItem = n.items.find((item) => isSameResource(item.id, id));
+    if (!removedItem) return;
+    n.items = n.items.filter(
+      (item) =>
+        !isSameResource(item.id, id) &&
+        !removedItem.tasks?.some(resourceInList(item.id))
+    );
 
     n.items = n.items.map((item) => {
       if (item.tasks && item.tasks?.length > 0) {
