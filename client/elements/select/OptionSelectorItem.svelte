@@ -23,28 +23,47 @@
   export let isShowExpandFeedbackOnActive = false;
 </script>
 
-{#if style === OptionSelectorStyle.TRAIN || style === OptionSelectorStyle.OUTLINE}
+{#if style === OptionSelectorStyle.TRAIN || style === OptionSelectorStyle.OUTLINE || style === OptionSelectorStyle.ICON}
   <button
-    class={cn("relative rounded-md min-w-fit whitespace-nowrap border", {
-      "w-40": size === Size.lg,
-      "w-36": size === Size.md,
-      "px-3 py-1 text-b2": size === Size.sm,
-      "flex grow justify-center": style === OptionSelectorStyle.TRAIN,
-      "px-12 py-8":
-        iconOrientation === Orientation.Horizontal && size === Size.lg,
-      "px-8 py-4":
-        iconOrientation === Orientation.Horizontal && size === Size.md,
-      "px-8 py-6": iconOrientation === Orientation.Vertical && size === Size.lg,
-      "px-6 py-5": iconOrientation === Orientation.Vertical && size === Size.md,
-      "w-20 px-3 py-3":
-        iconOrientation === Orientation.Vertical && size === Size.sm,
-      "border border-aps1 bg-aps3 hover:bg--aps2": isActive,
-      "outline-transparent border-brs3":
-        !isActive && style === OptionSelectorStyle.OUTLINE,
-      "border-transparent": !isActive && style === OptionSelectorStyle.TRAIN,
-      "opacity-80 cursor-not-allowed": item.isDisabled,
-      "notouch:hover:bg-bgs2 active:bg-bgs2": !isActive
-    })}
+    class={cn(
+      "relative rounded-md min-w-fit whitespace-nowrap border",
+      {
+        "flex justify-center rounded-[5.5px]":
+          style === OptionSelectorStyle.ICON,
+        "flex grow justify-center":
+          style === OptionSelectorStyle.TRAIN ||
+          style === OptionSelectorStyle.ICON,
+        "outline-transparent border-brs3":
+          !isActive && style === OptionSelectorStyle.OUTLINE,
+        "border-transparent":
+          !isActive &&
+          (style === OptionSelectorStyle.TRAIN ||
+            style === OptionSelectorStyle.ICON),
+        "opacity-80 cursor-not-allowed": item.isDisabled,
+        "notouch:hover:bg-bgs2 active:bg-bgs2": !isActive
+      },
+      style === OptionSelectorStyle.ICON && {
+        "border border-aps2 bg-aps3": isActive,
+        "p-1.5": size === Size.lg,
+        "p-1": size === Size.md || size === Size.sm
+      },
+      style !== OptionSelectorStyle.ICON && {
+        "border border-aps1 bg-aps3 hover:bg--aps2": isActive,
+        "w-40": size === Size.lg,
+        "w-36": size === Size.md,
+        "px-3 py-1 text-b2": size === Size.sm,
+        "px-12 py-8":
+          iconOrientation === Orientation.Horizontal && size === Size.lg,
+        "px-8 py-4":
+          iconOrientation === Orientation.Horizontal && size === Size.md,
+        "px-8 py-6":
+          iconOrientation === Orientation.Vertical && size === Size.lg,
+        "px-6 py-5":
+          iconOrientation === Orientation.Vertical && size === Size.md,
+        "w-20 px-3 py-3":
+          iconOrientation === Orientation.Vertical && size === Size.sm
+      }
+    )}
     on:click
     use:tooltip={{
       disabled: !item.tooltip,
@@ -87,9 +106,11 @@
         truncateLength={20}
         tooltip={item.tooltip}
       /> -->
-      <div>
-        {properCase(item.label ?? item.value.toString())}
-      </div>
+      {#if style !== OptionSelectorStyle.ICON}
+        <div>
+          {properCase(item.label ?? item.value.toString())}
+        </div>
+      {/if}
       {#if item.badge}
         <Badge text={item.badge} isAccentColor={isActive} {size} />
       {/if}

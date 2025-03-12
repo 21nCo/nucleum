@@ -97,19 +97,15 @@
   bind:isActive
   bind:this={baseRef}
   {popoverOptions}
-  class={cn(
-    "flex justify-between gap-4 items-center",
-    isEnforceWidth && width,
-    {
-      "w-full": !label?.label && style != InputStyle.PLAIN,
-      [width]:
-        isEnforceWidth ||
-        (label?.label &&
-          (label?.orientation === Orientation.Horizontal ||
-            !label?.orientation ||
-            (label?.orientation === Orientation.Vertical && label?.isShrink)))
-    }
-  )}
+  class={cn("flex justify-between gap-4 items-center", {
+    "w-full": !label?.label && style !== InputStyle.PLAIN && !isEnforceWidth,
+    [width]:
+      isEnforceWidth ||
+      (label?.label &&
+        (label?.orientation === Orientation.Horizontal ||
+          !label?.orientation ||
+          (label?.orientation === Orientation.Vertical && label?.isShrink)))
+  })}
 >
   <div class="flex items-center gap-2">
     {#if selected?.icon && typeof selected?.icon === "string"}

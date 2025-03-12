@@ -3,7 +3,7 @@ import { readFile, unlink, writeFile } from "fs/promises";
 import { locate } from "@iconify/json";
 import { iconSets, phIcons } from "./icons-list";
 
-const version = 15;
+const version = 17;
 const isExtension = false;
 
 const spriteContentStart =

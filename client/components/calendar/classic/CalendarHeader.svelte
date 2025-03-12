@@ -6,11 +6,12 @@
   import { createEventDispatcher } from "svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import { ButtonStyle } from "$lib/client/types/button.type";
-
+  import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
+  import { TimeScaleUnit } from "$lib/client/types/time.type";
   const dispatch = createEventDispatcher();
 
   export let selectedDate: Date;
-  export let selectedView: "month" | "week" | "day" | "year" = "month";
+  export let selectedView: TimeScaleUnit = TimeScaleUnit.MONTH;
   export let visibleWeekDates: Date[] | undefined = undefined;
 
   const monthNames = [
@@ -29,15 +30,18 @@
   ];
 
   function goToPrevious() {
-    if (selectedView === "year" || selectedView === "week") {
+    if (
+      selectedView === TimeScaleUnit.YEAR ||
+      selectedView === TimeScaleUnit.WEEK
+    ) {
       dispatch("goToPrevious");
     } else {
       const date = new Date(selectedDate);
       switch (selectedView) {
-        case "month":
+        case TimeScaleUnit.MONTH:
           date.setMonth(date.getMonth() - 1);
           break;
-        case "day":
+        case TimeScaleUnit.DAY:
           date.setDate(date.getDate() - 1);
           break;
       }
@@ -46,15 +50,18 @@
   }
 
   function goToNext() {
-    if (selectedView === "year" || selectedView === "week") {
+    if (
+      selectedView === TimeScaleUnit.YEAR ||
+      selectedView === TimeScaleUnit.WEEK
+    ) {
       dispatch("goToNext");
     } else {
       const date = new Date(selectedDate);
       switch (selectedView) {
-        case "month":
+        case TimeScaleUnit.MONTH:
           date.setMonth(date.getMonth() + 1);
           break;
-        case "day":
+        case TimeScaleUnit.DAY:
           date.setDate(date.getDate() + 1);
           break;
       }
@@ -63,7 +70,10 @@
   }
 
   function goToToday() {
-    if (selectedView === "year" || selectedView === "week") {
+    if (
+      selectedView === TimeScaleUnit.YEAR ||
+      selectedView === TimeScaleUnit.WEEK
+    ) {
       dispatch("goToToday");
     } else {
       selectedDate = new Date();
@@ -89,13 +99,6 @@
 
 <header class="flex items-center justify-between w-full sticky top-0 z-10">
   <div class="flex items-center gap-4">
-    <Button
-      type={ButtonVariant.PRIMARY}
-      style={ButtonStyle.DEFAULT}
-      size={Size.sm}
-      label="Go to today"
-      on:click={goToToday}
-    />
     <div class="flex gap-1">
       <Button
         type={ButtonVariant.SECONDARY}
@@ -113,9 +116,9 @@
       />
     </div>
     <h2 class="text-h4">
-      {#if selectedView === "year"}
+      {#if selectedView === TimeScaleUnit.YEAR}
         {currentYear}
-      {:else if selectedView === "week"}
+      {:else if selectedView === TimeScaleUnit.WEEK}
         {#if visibleWeekDates && visibleWeekDates.length >= 7}
           {monthNames[visibleWeekDates[0].getMonth()]}
           {visibleWeekDates[0].getDate()} - {monthNames[
@@ -134,44 +137,38 @@
   </div>
   <div class="flex items-center gap-2">
     <Button
-      type={selectedView === "day"
-        ? ButtonVariant.PRIMARY
-        : ButtonVariant.SECONDARY}
+      type={ButtonVariant.PRIMARY}
       style={ButtonStyle.OUTLINED}
       size={Size.sm}
+      label="Go to today"
       isPreventMinWidth={true}
-      label="Day"
-      on:click={() => (selectedView = "day")}
+      on:click={goToToday}
     />
-    <Button
-      type={selectedView === "week"
-        ? ButtonVariant.PRIMARY
-        : ButtonVariant.SECONDARY}
-      style={ButtonStyle.OUTLINED}
+    <DropDown
+      items={[
+        {
+          label: "Day",
+          value: TimeScaleUnit.DAY,
+          isDisabled: true,
+          badge: "planned"
+        },
+        {
+          label: "Week",
+          value: TimeScaleUnit.WEEK,
+          isDisabled: true,
+          badge: "planned"
+        },
+        { label: "Month", value: TimeScaleUnit.MONTH },
+        { label: "Year", value: TimeScaleUnit.YEAR }
+      ]}
+      value={selectedView}
+      isDisableSearch={true}
+      width="min-w-32"
       size={Size.sm}
-      isPreventMinWidth={true}
-      label="Week"
-      on:click={() => (selectedView = "week")}
-    />
-    <Button
-      type={selectedView === "month"
-        ? ButtonVariant.PRIMARY
-        : ButtonVariant.SECONDARY}
-      style={ButtonStyle.OUTLINED}
-      size={Size.sm}
-      isPreventMinWidth={true}
-      label="Month"
-      on:click={() => (selectedView = "month")}
-    />
-    <Button
-      type={selectedView === "year"
-        ? ButtonVariant.PRIMARY
-        : ButtonVariant.SECONDARY}
-      style={ButtonStyle.OUTLINED}
-      size={Size.sm}
-      isPreventMinWidth={true}
-      label="Year"
-      on:click={() => (selectedView = "year")}
+      isEnforceWidth={true}
+      on:select={(e) => {
+        selectedView = e.detail;
+      }}
     />
   </div>
 </header>

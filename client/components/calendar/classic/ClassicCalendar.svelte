@@ -7,11 +7,13 @@
   import DayView from "./DayView.svelte";
   import YearView from "./YearView.svelte";
   import CalendarLayout from "../CalendarLayout.svelte";
-
+  import view from "$lib/client/stores/view.store";
+  import CalendarColumn from "../column/CalendarColumn.svelte";
+  import { TimeScaleUnit } from "$lib/client/types/time.type";
   export let panel: string = "classic";
 
   let selectedDate = new Date();
-  let selectedView: "month" | "week" | "day" | "year" = "year";
+  let selectedView: TimeScaleUnit = TimeScaleUnit.YEAR;
   let events: any[] = [];
   let yearViewRef: YearView;
   let weekViewRef: WeekView;
@@ -41,23 +43,23 @@
       bind:selectedView
       {visibleWeekDates}
       on:goToToday={() => {
-        if (selectedView === "year") {
+        if (selectedView === TimeScaleUnit.YEAR) {
           yearViewRef?.scrollToToday();
-        } else if (selectedView === "week") {
+        } else if (selectedView === TimeScaleUnit.WEEK) {
           weekViewRef?.scrollToToday();
         }
       }}
       on:goToPrevious={() => {
-        if (selectedView === "year") {
+        if (selectedView === TimeScaleUnit.YEAR) {
           yearViewRef?.navigatePrevYear();
-        } else if (selectedView === "week") {
+        } else if (selectedView === TimeScaleUnit.WEEK) {
           weekViewRef?.scrollToPrevWeek();
         }
       }}
       on:goToNext={() => {
-        if (selectedView === "year") {
+        if (selectedView === TimeScaleUnit.YEAR) {
           yearViewRef?.navigateNextYear();
-        } else if (selectedView === "week") {
+        } else if (selectedView === TimeScaleUnit.WEEK) {
           weekViewRef?.scrollToNextWeek();
         }
       }}
@@ -66,9 +68,9 @@
   <div class="flex h-full">
     <!-- <CalendarSidebar {events} /> -->
     <div class="flex-1 overflow-auto">
-      {#if selectedView === "month"}
-        <MonthView bind:selectedDate {events} />
-      {:else if selectedView === "week"}
+      {#if selectedView === TimeScaleUnit.MONTH}
+        <MonthView bind:selectedDate {events} on:dateSelect />
+      {:else if selectedView === TimeScaleUnit.WEEK}
         <WeekView
           bind:this={weekViewRef}
           {selectedDate}
@@ -76,16 +78,22 @@
           on:monthChange={handleMonthChange}
           on:visibleDatesChange={handleVisibleDatesChange}
         />
-      {:else if selectedView === "day"}
+      {:else if selectedView === TimeScaleUnit.DAY}
         <DayView {selectedDate} {events} />
-      {:else if selectedView === "year"}
+      {:else if selectedView === TimeScaleUnit.YEAR}
         <YearView
           bind:this={yearViewRef}
           bind:selectedDate
           {events}
           on:yearChange={handleYearChange}
+          on:dateSelect
         />
       {/if}
     </div>
+    {#if !$view.isConstrainedWidth}
+      <div class="w-96 p-3 border-l border-brs3">
+        <CalendarColumn scale={TimeScaleUnit.DAY} date={selectedDate} />
+      </div>
+    {/if}
   </div>
 </CalendarLayout>

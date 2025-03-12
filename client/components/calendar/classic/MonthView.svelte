@@ -41,18 +41,15 @@
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
 
-    // Get days from previous month to fill the first week
     const daysFromPrevMonth = firstDay.getDay();
     const prevMonthDays = [...Array(daysFromPrevMonth)].map((_, i) => {
       return new Date(year, month, -daysFromPrevMonth + i + 1);
     });
 
-    // Get all days in current month
     const daysInMonth = [...Array(lastDay.getDate())].map((_, i) => {
       return new Date(year, month, i + 1);
     });
 
-    // Get days from next month to complete the last week
     const remainingDays =
       (7 - ((daysFromPrevMonth + daysInMonth.length) % 7)) % 7;
     const nextMonthDays = [...Array(remainingDays)].map((_, i) => {
@@ -77,22 +74,36 @@
     {/each}
 
     {#each calendarDays as day}
-      <div
-        class={cn("p-2 border-b border-r border-brs3 relative group", {
-          "bg-bgs2": day.getMonth() !== selectedDate.getMonth(),
-          "bg-aps3": day.toDateString() === today.toDateString()
+      {@const isToday = day.toDateString() === today.toDateString()}
+      {@const isSelected = day.toDateString() === selectedDate.toDateString()}
+      {@const isNotCurrentMonth = day.getMonth() !== selectedDate.getMonth()}
+      <button
+        class={cn("p-2 border-b border-r border-brs3 relative group flex", {
+          "bg-bgs2/50": isNotCurrentMonth,
+          "notouch:hover:bg-bgs2": !isToday && !isSelected,
+          "bg-ass3 text-ass1 notouch:hover:bg-ass2": isToday && !isSelected,
+          "bg-aps3 text-aps1": isSelected
         })}
+        on:click={() => {
+          selectedDate = day;
+          dispatch("dateSelect", day);
+        }}
       >
         <span
-          class={cn("text-b3", {
-            "text-fgs3": day.getMonth() !== selectedDate.getMonth(),
-            "text-aps1": day.toDateString() === today.toDateString()
-          })}
+          class={cn(
+            "text-b2 text-left w-7 h-7 rounded-full flex items-center justify-center",
+            {
+              "text-fgs3": isNotCurrentMonth,
+              "bg-aps1 text-abg": isSelected,
+              "bg-ass1 text-abg": isToday && !isSelected
+            }
+          )}
         >
           {day.getDate()}
         </span>
-
-        <!-- Events would go here -->
+        {#if isToday}
+          <span class="text-b3 p-1"> Today </span>
+        {/if}
         <div class="mt-1 space-y-1">
           {#each events.filter((event) => event.date.toDateString() === day.toDateString()) as event}
             <div class="text-b4 p-1 rounded bg-aps3 text-aps1">
@@ -100,7 +111,7 @@
             </div>
           {/each}
         </div>
-      </div>
+      </button>
     {/each}
   </div>
 </div>

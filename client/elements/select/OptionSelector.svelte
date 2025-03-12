@@ -37,8 +37,9 @@
   >
     <div
       class={cn(classList, {
-        "rounded-md": style === OptionSelectorStyle.TRAIN,
-        "border border-brs3": style === OptionSelectorStyle.TRAIN,
+        "border border-brs3 rounded-md":
+          style === OptionSelectorStyle.TRAIN ||
+          style === OptionSelectorStyle.ICON,
         "flex-wrap overflow-y-auto":
           style === OptionSelectorStyle.OUTLINE && !isPreventWrap,
         "overflow-x-auto": isPreventWrap,
@@ -49,7 +50,11 @@
             $context.os === OperatingSystem.MACOS),
         "gap-6": style === OptionSelectorStyle.OUTLINE && size === Size.lg,
         "gap-4": style === OptionSelectorStyle.OUTLINE && size === Size.md,
-        "gap-2": style === OptionSelectorStyle.OUTLINE && size === Size.sm,
+        "gap-2":
+          (style === OptionSelectorStyle.OUTLINE && size === Size.sm) ||
+          (style === OptionSelectorStyle.OUTLINE &&
+            (size === Size.md || size === Size.lg)),
+        "gap-1.5": style === OptionSelectorStyle.ICON && size === Size.sm,
         grow: style === OptionSelectorStyle.CHECK_CIRCLE,
         "justify-start gap-8":
           style === OptionSelectorStyle.CHECK_CIRCLE &&

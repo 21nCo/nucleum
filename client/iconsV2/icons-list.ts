@@ -66,6 +66,7 @@ const phosphorIcons = [
   "minus-circle",
   "check",
   "check-circle",
+  "dots-nine",
   "dots-three-vertical",
   "dots-six-vertical",
   "dots-six-vertical-bold",
@@ -163,6 +164,9 @@ const phosphorIcons = [
   "chat-teardrop-text",
   "clock",
   "clock-countdown",
+  "clock-afternoon",
+  "clock-clockwise",
+  "clock-counter-clockwise",
   "git-fork",
   "gradient",
   "list",
@@ -436,7 +440,8 @@ const simpleIcons = ["wikipedia", "googledocs", "abstract", "mixpanel"];
 
 const svgSpinnersIcons = ["90-ring-with-bg", "3-dots-fade", "180-ring-with-bg"];
 
-const heroiconsIcons = ["cog"];
+const heroiconsIcons = ["cog", "rectangle-group", "rectangle-stack"];
+const heroiconsSolid = heroiconsIcons.map((icon) => icon + "-solid");
 
 const letsIconsIcons = ["color-picker", "color-mode-light"];
 
@@ -459,7 +464,7 @@ const uilIcons = ["keyboard-hide"];
 export const iconSets = {
   hugeicons: hugeiconsIcons,
   "svg-spinners": svgSpinnersIcons,
-  heroicons: heroiconsIcons,
+  heroicons: [...heroiconsIcons, ...heroiconsSolid],
   "lets-icons": letsIconsIcons,
   ri: remixIcons,
   proicons: proIcons,

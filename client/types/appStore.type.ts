@@ -1,8 +1,8 @@
 import type { IAction } from "$lib/client/types/action.type";
 import type { InteractionMode } from "../components/settings/interactionMode/interactionMode.type";
-
+import type { Product } from "./product.type";
 export type AppStore = {
-  product: string;
+  product: Product;
   env: string;
   appData: any;
   isDebugMode: boolean;

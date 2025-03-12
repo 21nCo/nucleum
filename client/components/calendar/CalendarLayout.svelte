@@ -3,12 +3,18 @@
   import { Size } from "$lib/client/types/size.enum";
   import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
   import type { ISelectItem } from "$lib/client/types/select.type";
-  export let panel: string = "bird";
+  import { CalendarLayout } from "./calendar.type";
+  export let panel: CalendarLayout = CalendarLayout.Bird;
 
   const panelOptions: ISelectItem[] = [
-    { value: "bird", label: "Bird View" },
-    { value: "classic", label: "Classic" },
-    { value: "journal", label: "Journal" }
+    { value: CalendarLayout.Classic, label: "Classic" },
+    { value: CalendarLayout.Journal, label: "Journal" }
+    // {
+    //   value: CalendarLayout.Bird,
+    //   label: "Bird",
+    //   badge: "planned",
+    //   isDisabled: true
+    // }
   ];
 </script>
 

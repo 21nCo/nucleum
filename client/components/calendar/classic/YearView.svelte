@@ -2,6 +2,7 @@
   import { createEventDispatcher } from "svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { compareDates, isSameDay } from "$lib/client/utils/time.utils";
 
   export let selectedDate: Date;
   export let events: Array<any> = [];
@@ -24,7 +25,7 @@
     "December"
   ];
 
-  const INITIAL_RANGE = 10; // Initial number of years to show
+  const INITIAL_RANGE = 10;
   let years: ReturnType<typeof getYearData>[] = [];
   let visibleYear: number;
   let lastScrollTop = 0;
@@ -37,19 +38,16 @@
     const lastDay = new Date(year, month + 1, 0);
     const days = [];
 
-    // Add empty days for padding
     for (let i = 0; i < firstDay.getDay(); i++) {
       days.push(null);
     }
 
-    // Add days of the month
     for (let i = 1; i <= lastDay.getDate(); i++) {
       days.push(new Date(year, month, i));
     }
 
-    // Add empty days at the end to complete the grid
     const totalDays = days.length;
-    const remainingDays = 42 - totalDays; // 6 rows * 7 days = 42
+    const remainingDays = 42 - totalDays;
     for (let i = 0; i < remainingDays; i++) {
       days.push(null);
     }
@@ -80,7 +78,7 @@
     const start = centerYear - halfRange;
     return Array.from({ length: INITIAL_RANGE }, (_, i) =>
       getYearData(start + i)
-    ).sort((a, b) => a.year - b.year); // Ensure years are in order
+    ).sort((a, b) => a.year - b.year);
   }
 
   function loadMoreYears(direction: "up" | "down") {
@@ -100,7 +98,6 @@
       const prevScrollHeight = containerRef?.scrollHeight || 0;
       years = [...newYears, ...years];
 
-      // Maintain scroll position after prepending years
       if (containerRef) {
         requestAnimationFrame(() => {
           const newScrollHeight = containerRef.scrollHeight;
@@ -114,14 +111,11 @@
   function scrollToYear(year: number) {
     if (!containerRef) return;
 
-    // Find the index of the year
     const yearIndex = years.findIndex((y) => y.year === year);
     if (yearIndex === -1) {
-      // If year not loaded, load it and center it
       const newYears = loadInitialYears(year);
       years = newYears;
 
-      // Wait for DOM update then scroll
       requestAnimationFrame(() => {
         if (!containerRef) return;
         const yearHeight = containerRef.scrollHeight / years.length;
@@ -131,7 +125,6 @@
       return;
     }
 
-    // Calculate exact position of the year
     const yearHeight = containerRef.scrollHeight / years.length;
     const targetScroll = yearHeight * yearIndex;
 
@@ -145,16 +138,13 @@
     const target = e.target as HTMLElement;
     const { scrollTop, scrollHeight, clientHeight } = target;
 
-    // Clear any pending scroll timeouts
     if (scrollTimeout) {
       clearTimeout(scrollTimeout);
     }
 
-    // Determine scroll direction
     const isScrollingDown = scrollTop > lastScrollTop;
     lastScrollTop = scrollTop;
 
-    // Calculate current visible year without snapping
     const yearHeight = scrollHeight / years.length;
     const currentIndex = Math.floor(
       (scrollTop + clientHeight / 2) / yearHeight
@@ -163,17 +153,14 @@
 
     if (newVisibleYear && newVisibleYear !== visibleYear) {
       visibleYear = newVisibleYear;
-      // Update selected date without scrolling
       selectedDate = new Date(
         newVisibleYear,
         selectedDate.getMonth(),
         selectedDate.getDate()
       );
-      // Dispatch year change event
       dispatch("yearChange", { year: newVisibleYear });
     }
 
-    // Load more years when approaching edges with larger buffer
     const scrollBuffer = yearHeight * 3;
 
     if (
@@ -186,7 +173,6 @@
     }
   }
 
-  // Navigation methods
   export function scrollToToday() {
     const today = new Date();
     const targetYear = today.getFullYear();
@@ -194,7 +180,6 @@
   }
 
   export function navigateToYear(targetYear: number) {
-    // Load the year if it's not in view
     if (!years.some((y) => y.year === targetYear)) {
       years = loadInitialYears(targetYear);
     }
@@ -220,7 +205,6 @@
     navigateToYear(visibleYear + 1);
   }
 
-  // Initialize years array
   $: {
     if (years.length === 0) {
       const currentYear = selectedDate.getFullYear();
@@ -228,7 +212,6 @@
       visibleYear = currentYear;
       dispatch("yearChange", { year: currentYear });
 
-      // Initial scroll without animation
       requestAnimationFrame(() => {
         if (!containerRef) return;
         const yearHeight = containerRef.scrollHeight / years.length;
@@ -238,14 +221,13 @@
     }
   }
 
-  // Only watch for selectedDate changes when explicitly navigating
   $: {
     if (containerRef && selectedDate && isExplicitNavigation) {
       scrollToYear(selectedDate.getFullYear());
     }
   }
 
-  $: isToday = (date: Date | null) => {
+  function isToday(date: Date | null) {
     if (!date) return false;
     const today = new Date();
     return (
@@ -253,7 +235,13 @@
       date.getMonth() === today.getMonth() &&
       date.getFullYear() === today.getFullYear()
     );
-  };
+  }
+
+  function isPastDate(date: Date | null) {
+    if (!date) return false;
+    const today = new Date();
+    return compareDates(date, today, "<");
+  }
 </script>
 
 <div
@@ -264,35 +252,43 @@
   {#each years as { year, months }}
     <div class="px-6 py-4">
       <div class="mb-4">
-        <h2 class="text-xl font-medium">{year}</h2>
+        <h2 class="text-h2 font-bold ml-3">{year}</h2>
       </div>
       <div
-        class="grid grid-cols-1 sm:grid-cols-2 lp:grid-cols-3 dp:grid-cols-4 2k:grid-cols-5 gap-x-6 gap-y-4"
+        class="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-x-16 gap-y-12"
       >
         {#each months as { days, monthIndex }}
           <div class="flex flex-col min-w-[240px]">
-            <div class="mb-1 font-medium text-fgs1">
+            <div class="mb-1 ml-3 font-medium text-fgs1 text-h5">
               {monthNames[monthIndex]}
             </div>
-            <div class="grid grid-cols-7 text-center text-sm">
+            <div class="grid grid-cols-7 text-center text-b2">
               {#each weekDays as day}
-                <div class="text-fgs3 mb-1">{day}</div>
+                <div class="text-fgs4 mb-1 text-b4">{day}</div>
               {/each}
               {#each days as date}
                 {#if date}
-                  <div
-                    class={cn(
-                      "py-0.5",
-                      isToday(date) && "text-aps1 font-medium",
-                      !isToday(date) && "text-fgs2 hover:text-fgs1"
-                    )}
+                  {@const isSelected = isSameDay(selectedDate, date)}
+                  {@const isCurrentDay = isToday(date)}
+                  <button
+                    class={cn("py-1 rounded-md border", {
+                      "text-fgs4 border-transparent":
+                        isPastDate(date) && !isSelected,
+                      "text-ass1 font-medium border-ass1 notouch:hover:bg-ass2 active:bg-ass2":
+                        isCurrentDay && !isSelected,
+                      "text-fgs2 hover:text-fgs1 border-transparent notouch:hover:bg-bgs2 active:bg-bgs2":
+                        !isCurrentDay && !isSelected,
+                      "bg-aps1 text-abg border-transparent": isSelected
+                    })}
+                    on:click={() => {
+                      selectedDate = date;
+                      dispatch("dateChange", { date });
+                    }}
                   >
                     {date.getDate()}
-                  </div>
+                  </button>
                 {:else}
-                  <div class="py-0.5 text-fgs4">
-                    <!-- empty cell -->
-                  </div>
+                  <div class="py-0.5 text-fgs4"></div>
                 {/if}
               {/each}
             </div>

@@ -69,7 +69,7 @@
       {
         label: "History",
         value: "history",
-        icon: "ph:clock-countdown-light"
+        icon: "ph:clock-counter-clockwise-light"
       }
     ];
     if (isConstrainedWidth) {

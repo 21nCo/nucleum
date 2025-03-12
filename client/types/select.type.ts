@@ -14,7 +14,8 @@ export type ISelectItem = {
 export enum OptionSelectorStyle {
   TRAIN,
   OUTLINE,
-  CHECK_CIRCLE
+  CHECK_CIRCLE,
+  ICON
 }
 
 export type IContextMenu = IContextMenuGroup[];

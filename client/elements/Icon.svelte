@@ -267,6 +267,8 @@
       renderedIcon = isFilled ? icon.replace("-light", "-fill") : icon;
     } else if (icon.includes("-thin")) {
       renderedIcon = isFilled ? icon.replace("-thin", "-fill") : icon;
+    } else if (icon.includes("heroicons")) {
+      renderedIcon = isFilled ? icon + "-solid" : icon;
     }
     if (dev_useIconifyTailwind) {
       renderedIcon = renderedIcon.replace(":", "--");

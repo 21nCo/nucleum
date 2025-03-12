@@ -183,7 +183,11 @@ export enum ResourceAccessPoint {
   /**
    * The resource is being accessed from focus pages
    */
-  FOCUS = "focus"
+  FOCUS = "focus",
+  /**
+   * The resource is being accessed from calendar
+   */
+  CALENDAR = "calendar"
 }
 
 export enum ResourceAccessPointState {

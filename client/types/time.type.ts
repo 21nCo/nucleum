@@ -6,6 +6,14 @@ export enum TimeScale {
   YEARS = "YEARS"
 }
 
+export enum TimeScaleUnit {
+  DAY = "DAY",
+  WEEK = "WEEK",
+  MONTH = "MONTH",
+  QUARTER = "QUARTER",
+  YEAR = "YEAR"
+}
+
 export enum TimePeriodType {
   /**
    * A relative time period is a time period that is relative to the current time. For example, a relative time period with {@link TimePeriodValue} of -1 would be the time period from now to 1 day ago.
