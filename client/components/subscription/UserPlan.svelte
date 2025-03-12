@@ -13,6 +13,9 @@
   import BillingAddressCapture from "./BillingAddressCapture.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
+  import context from "$lib/client/stores/context.store";
+  import { OperatingSystem } from "$lib/client/types/context.type";
+  import { postToParent } from "$lib/client/utils/embed.utils";
 
   let selectedPeriod: BillingCycle = BillingCycle.YEARLY;
   let showAllPlans = true;
@@ -31,6 +34,7 @@
 
   async function onSwitch(plan?: IPlan) {
     console.log("onSwitch", plan);
+    testIOSPurchase();
     isBillingAddressCapture = true;
     isSwitching = true;
     selectedPlan = plan || null;
@@ -56,8 +60,20 @@
   }
 
   function onChoose(plan: IPlan) {
+    testIOSPurchase();
     isBillingAddressCapture = true;
     selectedPlan = plan;
+  }
+
+  function testIOSPurchase() {
+    console.log({ at: "testIOSPurchase", context: $context });
+    if ($context.isEmbed && $context.os === OperatingSystem.IOS) {
+      postToParent({
+        purchase: JSON.stringify({
+          productId: "io.memotron.plan.nucleus.yearly"
+        })
+      });
+    }
   }
 
   async function onProceed() {

@@ -21,6 +21,9 @@ export interface IPointronPreferences extends IObservableStoreSubject {
   isIncludeBreakInAnalytics: boolean;
   timerMode: TimerMode;
   breakReminder: number;
+  /**
+   * @deprecated - use appMenu store instead
+   */
   appMenu: string[];
   cloudProvider?: Cloud;
   manualEntryQuickDurations?: number[];

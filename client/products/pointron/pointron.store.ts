@@ -16,7 +16,6 @@ import { Layout } from "$lib/client/types/layout.type";
 import type { ITag } from "$lib/client/types/pointron/tag.type";
 import { StoreDataType } from "$lib/client/types/data.type";
 import type { IPointronPreferences } from "$lib/client/types/pointron/pointronPreferences.type";
-import { defaultAppMenu } from "$local/local";
 import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
 import { ResourceFIRStore } from "$lib/client/components/flux/resourceStores/resource.store";
 import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
@@ -124,7 +123,7 @@ export const seedLocalPreferences: IPointronPreferences = {
   isEnableAutoStartInterval: true,
   isIncludeBreakInAnalytics: false,
   timerMode: TimerMode.JOURNAL,
-  appMenu: defaultAppMenu,
+  appMenu: [],
   manualEntryQuickDurations: [5, 10, 15, 30, 60],
   horizonCharts: defaultHorizonChartConfiguration,
   horizonsWithTarget: [],
@@ -162,7 +161,6 @@ class PointronPreferencesStore extends KeyValueStore<IPointronPreferences> {
   }
   loader(data: IPointronPreferences) {
     if (!data.id) return;
-    data.appMenu = defaultAppMenu;
     if (!data.uiStates) data.uiStates = seedLocalPreferences.uiStates;
     if (!data.presets) data.presets = generateSeedPresets();
     //m.horizonCharts = defaultHorizonChartConfiguration;

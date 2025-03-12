@@ -25,7 +25,7 @@ export function postMessageToParent(message: EmbedMessage) {
 
 /**
  * TODO - security check
- * @param message 
+ * @param message
  */
 export function postToParent(message: any) {
   logger.log({
