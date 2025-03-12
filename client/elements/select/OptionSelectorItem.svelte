@@ -1,11 +1,10 @@
 <script lang="ts">
-  import view from "$lib/client/stores/view.store";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
-  import { properCase, truncateString } from "$lib/shared/utils/text.utils";
+  import { properCase } from "$lib/shared/utils/text.utils";
   import { fade, scale } from "svelte/transition";
   import Icon from "../Icon.svelte";
-  import { easeBackOut, easeBounceIn, easeCircleIn } from "d3";
+  import { easeBackOut } from "d3";
   import {
     OptionSelectorStyle,
     type ISelectItem
