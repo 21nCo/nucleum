@@ -8,6 +8,8 @@
   import { ButtonStyle } from "$lib/client/types/button.type";
   import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
   import { TimeScaleUnit } from "$lib/client/types/time.type";
+  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import { UIState } from "$lib/client/stores/uiState/uiState.type";
   const dispatch = createEventDispatcher();
 
   export let selectedDate: Date;
@@ -95,6 +97,14 @@
   $: weekDates = getWeekDates(selectedDate);
   $: currentMonth = monthNames[selectedDate.getMonth()];
   $: currentYear = selectedDate.getFullYear();
+
+  function onScaleSelection(e: CustomEvent) {
+    if (!e.detail) return;
+    selectedView = e.detail;
+    uiState.setState(UIState.calendarScale, selectedView, {
+      isDeviceScoped: true
+    });
+  }
 </script>
 
 <header class="flex items-center justify-between w-full sticky top-0 z-10">
@@ -166,9 +176,7 @@
       width="min-w-32"
       size={Size.sm}
       isEnforceWidth={true}
-      on:select={(e) => {
-        selectedView = e.detail;
-      }}
+      on:select={onScaleSelection}
     />
   </div>
 </header>

@@ -4,7 +4,9 @@
   import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
   import type { ISelectItem } from "$lib/client/types/select.type";
   import { CalendarLayout } from "./calendar.type";
-  export let panel: CalendarLayout = CalendarLayout.Bird;
+  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  export let panel: CalendarLayout = CalendarLayout.Classic;
 
   const panelOptions: ISelectItem[] = [
     { value: CalendarLayout.Classic, label: "Classic" },
@@ -16,6 +18,14 @@
     //   isDisabled: true
     // }
   ];
+
+  function onPanelSwitch(event: CustomEvent) {
+    if (!event.detail || !Object.values(CalendarLayout).includes(event.detail))
+      return;
+    uiState.setState(UIState.calendarLayout, event.detail, {
+      isDeviceScoped: true
+    });
+  }
 </script>
 
 <div class="flex flex-col h-full w-full">
@@ -25,6 +35,7 @@
       bind:value={panel}
       style={PanelSwitcherStyle.TRAIN}
       size={Size.sm}
+      on:switch={onPanelSwitch}
     />
     <slot name="header" />
   </div>

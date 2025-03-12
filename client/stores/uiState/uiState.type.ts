@@ -27,5 +27,9 @@ export enum UIState {
   /**
    * List of recently used capture shortcuts on capture page
    */
-  captureShortcutRecents = "captureShortcutRecents"
+  captureShortcutRecents = "captureShortcutRecents",
+  calendarLayout = "calendarLayout",
+  calendarScale = "calendarScale",
+  calendarColumnPanel = "calendarColumnPanel",
+  calendarHistoryTab = "calendarHistoryTab"
 }

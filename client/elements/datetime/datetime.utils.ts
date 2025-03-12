@@ -21,6 +21,31 @@ export function getDaysCount(start: Date, end: Date): number {
   return diffMs / (1000 * 60 * 60 * 24);
 }
 
+/**
+ * Calculates the time offset needed to ensure a date maintains the same day
+ * when converted to UTC via toISOString().
+ *
+ * @param date The input date
+ * @returns A new Date object with the appropriate offset to maintain the same day in UTC
+ */
+export function getUtcSafeDay(date: Date): Date {
+  if (!date) return date;
+  const localDay = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate()
+  );
+  const timezoneOffset = localDay.getTimezoneOffset();
+  const offsetDate = new Date(localDay);
+  if (timezoneOffset < 0) {
+    offsetDate.setMinutes(offsetDate.getMinutes() - timezoneOffset);
+  } else {
+    offsetDate.setMinutes(offsetDate.getMinutes() + timezoneOffset);
+  }
+  console.log({ offsetDate });
+  return offsetDate;
+}
+
 export function calculateTimeSpan(
   start: Date,
   end: Date,

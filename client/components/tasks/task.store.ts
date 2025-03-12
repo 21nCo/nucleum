@@ -16,6 +16,7 @@ import type {
 import { ResourceActions } from "../record/resource.actions";
 import { appStore } from "$lib/client/stores/app.store";
 import { Action } from "$lib/client/types/action.enum";
+import { getUtcSafeDay } from "$lib/client/elements/datetime/datetime.utils";
 class TaskStore extends ResourceStore<ITask> {
   constructor() {
     super(Resource.task);
@@ -31,7 +32,7 @@ class TaskStore extends ResourceStore<ITask> {
       label: form.label,
       isChecked: form.isChecked ?? false,
       estimated: form.estimated,
-      date: form.date,
+      date: form.date ? getUtcSafeDay(form.date) : undefined,
       goal: form.goal
     };
 
