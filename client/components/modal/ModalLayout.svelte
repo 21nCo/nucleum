@@ -143,7 +143,7 @@
     {/if}
     {#if params.layout?.isShowCantileverClose && !isInFocusMode}
       <button
-        class="absolute top-2 -right-10 bg-ars1 w-10 h-12 rounded-r-md flex justify-center items-center hover:bg-opacity-80"
+        class="absolute top-2 -right-10 bg-ars1 w-10 h-12 rounded-r-md flex justify-center items-center hover:brightness-110"
         on:click={() => handleClose(ResourceAccessMode.POP)}
         use:tooltip={{ text: "Close", direction: Placement.Left }}
       >
@@ -152,7 +152,7 @@
     {/if}
     {#if params.layout?.isShowBackButton && !isInFocusMode}
       <button
-        class="absolute top-16 -right-10 bg-bgs4 w-10 h-12 rounded-r-md flex justify-center items-center hover:bg-opacity-80"
+        class="absolute top-16 -right-10 bg-bgs4 w-10 h-12 rounded-r-md flex justify-center items-center hover:brightness-110"
         on:click={() => appStore.goBack(resource)}
         use:tooltip={{ text: "Go back", direction: Placement.Left }}
       >

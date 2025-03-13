@@ -41,7 +41,6 @@
     focusItems = $focusItemsStore.items.filter(
       (x) => !tasksWithGoal.some(resourceInList(x))
     );
-    console.log({ tasksWithGoal, focusItems });
     goals = await searchStore.select({
       resource: Resource.goal,
       filters: {

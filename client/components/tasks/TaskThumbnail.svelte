@@ -36,7 +36,11 @@
   {isDraggable}
 >
   <div
-    class="flex gap-2 items-center px-4 py-2 h-14 bg-bgs2/50 hover:bg-bgs2 border border-brs2 rounded-md"
+    class={cn("flex gap-2 items-center px-4 py-2 h-14 rounded-md", {
+      "m-4 min-w-[30rem] pr-12": accessPoint === ResourceAccessPoint.SELF,
+      "bg-bgs2/50 hover:bg-bgs2 border border-brs2":
+        accessPoint !== ResourceAccessPoint.SELF
+    })}
     use:hoverable={{
       onHover: (value) => {
         isHovering = value;

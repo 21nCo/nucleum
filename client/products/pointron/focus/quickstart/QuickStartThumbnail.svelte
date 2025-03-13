@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
+  import {
+    activeSession,
+    currentFocusItem
+  } from "$lib/client/products/pointron/focus/session.store";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import { Layout } from "$lib/client/types/layout.type";
@@ -30,15 +33,15 @@
   let isFinishingState: boolean = false;
 
   $: isActive =
-    $activeSession.currentFocusItem &&
-    isSameResource(item, $activeSession.currentFocusItem) &&
+    $currentFocusItem &&
+    isSameResource(item, $currentFocusItem) &&
     $activeSession.isQuickStartOn &&
     $activeSession.isSessionRunning;
   $: if (isActive) {
     focusTime = resolveTaskFocus(
       $activeSession.intervals,
       undefined,
-      $activeSession.currentFocusItem?.start
+      $currentFocusItem?.start
     );
   }
 
@@ -136,7 +139,7 @@
         </div>
       </div>
 
-      {#if isActive && $activeSession.currentFocusItem}
+      {#if isActive && $currentFocusItem}
         <div class="flex flex-col items-end">
           <div class="flex items-center gap-1 text-b4">
             <div>
@@ -193,7 +196,7 @@
           </div>
         </div>
       </div>
-      {#if isActive && $activeSession.currentFocusItem}
+      {#if isActive && $currentFocusItem}
         <div class="flex w-full justify-between text-h4">
           <!-- <div class="flex items-center gap-1 text-b5">
           <div>

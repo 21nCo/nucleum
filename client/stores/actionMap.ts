@@ -24,12 +24,10 @@ import Calendar from "../components/calendar/Calendar.svelte";
 import { GlobalEvent } from "../types/event.enum";
 import { uiState } from "./uiState/uiState.store";
 import BookACall from "../components/cx/BookACall.svelte";
-import SupahubEmbed from "../components/cx/supahub/SupahubEmbed.svelte";
 import MdShortcuts from "../components/markdown/shortcuts/MdShortcuts.svelte";
 import CoverPicker from "../elements/coverPicker/CoverPicker.svelte";
 import SurrealLocalViewer from "../components/debug/SurrealLocalViewer.svelte";
 import PrivacyPolicy from "../landing/shared/PrivacyPolicy.svelte";
-import HashnodeEmbed from "../components/cx/hashnode/HashnodeEmbed.svelte";
 import { Embed } from "../types/context.type";
 import {
   ResourceActionType,
@@ -61,7 +59,6 @@ import ResourceBrowser from "../components/library/resourceBrowser/ResourceBrows
 import UserPlan from "../components/subscription/UserPlan.svelte";
 import InactivePlan from "../components/subscription/InactivePlan.svelte";
 import { ButtonVariant } from "../types/button.type";
-import CreateGoal from "$lib/client/components/goals/CreateGoal.svelte";
 import Goal from "../components/goals/Goal.svelte";
 import GoalTitleLabelPart from "../components/goals/GoalTitleLabelPart.svelte";
 import PaymentRedirect from "../components/subscription/PaymentRedirect.svelte";
@@ -74,6 +71,7 @@ import { goalStore } from "../components/goals/goal.store";
 import CreateTask from "../components/tasks/CreateTask.svelte";
 import GoalSearchResultItem from "../components/goals/GoalSearchResultItem.svelte";
 import { taskStore } from "../components/tasks/task.store";
+import Task from "../components/tasks/Task.svelte";
 
 export const globalActions: IAction[] = [
   {
@@ -721,6 +719,18 @@ export const globalActions: IAction[] = [
     modalParams: {
       layout: {
         isDynamicSize: true
+      }
+    }
+  },
+  {
+    action: Resource.task,
+    isMeta: true,
+    type: ActionType.MODAL,
+    component: Task,
+    modalParams: {
+      layout: {
+        isDynamicSize: true,
+        ignoreSafeArea: true
       }
     }
   },

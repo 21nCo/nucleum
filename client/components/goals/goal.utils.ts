@@ -1,4 +1,4 @@
-import { GoalStatus, GoalType } from "./goal.type";
+import { GoalStatus, GoalType, type IGoalThumb } from "./goal.type";
 import type { ISelectItem } from "$lib/client/types/select.type";
 
 export function resolveGoalTypeIcon(type: GoalType) {
@@ -43,4 +43,11 @@ export function resolveGoalStatusIcon(status: GoalStatus) {
     default:
       return "ph:circle-light";
   }
+}
+
+export function resolveGoalColor(goal?: IGoalThumb) {
+  if (goal?.color) return goal.color;
+  else if (goal?.parent && goal?.parent?.length > 0)
+    return goal.parent[0].color;
+  else return undefined;
 }

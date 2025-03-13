@@ -20,8 +20,8 @@
           value: "focus"
         },
         {
-          label: "Activity",
-          icon: "ph:clock-light",
+          label: "All activity",
+          icon: "ph:clock-counter-clockwise-light",
           value: "activity"
         }
       ]}

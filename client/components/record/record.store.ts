@@ -269,6 +269,34 @@ export class SearchStore {
     return result;
   }
 
+  async sessions() {
+    const result = await flux.selectMany(Resource.session, {
+      properties: [
+        labelSearchProp,
+        "*",
+        "select * from (select value id from $parent.items) as expandedItems"
+      ],
+      filters: {
+        trashInformation: false,
+        ...this.filters,
+        isArchived: this.filters.isArchived ?? false
+      },
+      search: isValidString(this.searchQuery)
+        ? {
+            query: this.searchQuery,
+            properties: ["label"]
+          }
+        : undefined,
+      orderBy: this.orderBy ?? {
+        modifiedAt: "desc"
+      },
+      limit: this.limit,
+      offset: this.offset
+    });
+    logger.log({ at: "refreshSessions", result });
+    return result;
+  }
+
   async select(params: {
     resource?: Resource;
     searchQuery?: string;
@@ -308,6 +336,8 @@ export class SearchStore {
         [];
     } else if (this.resource === Resource.task) {
       data = (await this.tasks()) ?? [];
+    } else if (this.resource === Resource.session) {
+      data = (await this.sessions()) ?? [];
     }
     if (isValidArray(data)) {
       if (isValidString(this.searchQuery)) {

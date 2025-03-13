@@ -8,7 +8,16 @@ export enum PointronEvent {
   SESSION_CLOSED = "SESSION_CLOSED",
   SESSION_TIME_IS_UP = "SESSION_TIME_IS_UP",
   BREAK_REMINDER = "BREAK_REMINDER",
+  /**
+   * @deprecated - use resource subscription via ComponentBaseLayer instead
+   */
   REFRESH_FOCUSITEMS = "REFRESH_FOCUSITEMS",
+  /**
+   * @deprecated - use resource subscription via ComponentBaseLayer instead
+   */
   REFRESH_QUICK_FOCUS = "REFRESH_QUICK_FOCUS",
+  /**
+   * @deprecated - use resource subscription via ComponentBaseLayer instead
+   */
   REFRESH_LOGS = "REFRESH_LOGS"
 }

@@ -11,21 +11,23 @@
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import { resolveHoverState } from "$lib/client/utils/browser.utils";
   import { formatSeconds, formatTime } from "$lib/client/utils/time.utils";
-  import type { LogThumbnail } from "./log.type";
+  import type { ISessionThumb } from "./log.type";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
-  import { goalStore } from "../goals/goal.store";
-  export let log: LogThumbnail;
+  import { resolveSessionSplitFromIntervals } from "../pointron.utils";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
+  export let log: ISessionThumb;
   export let context: "journal" | "logs" = "logs";
   export let isLast: boolean = false;
   export let variant: "v1" | "v2" = "v1";
   let isEnableVariableHeight: boolean = true;
   let isHovering: boolean = false;
-  let height = 166;
-  let total = log.totalFocus + log.totalBreak;
-  let minHeight = 110;
-  $: goals = resolveGoals(log);
+  let height = 120;
+  let minHeight = 60;
+  $: splits = resolveSessionSplitFromIntervals(log.blocks);
+  $: total = splits.focus + splits.brek;
 
   if (isEnableVariableHeight) {
     // let baseHeight = 110;
@@ -55,21 +57,6 @@
     } else {
       height = minHeight + 100;
     }
-  }
-
-  function resolveGoals(log: LogThumbnail) {
-    if (log.tasks && log.tasks.length > 0) {
-      const goalIds = log.tasks.map((x: any) => x.goalId);
-      return $goalStore.items.filter((x) => goalIds.includes(x.id));
-    } else if (
-      log.focusItems &&
-      log.focusItems.goals &&
-      log.focusItems.goals.length > 0
-    ) {
-      const goalIds = log.focusItems.goals.map((x: any) => x.id);
-      return $goalStore.items.filter((x) => goalIds.includes(x.id));
-    }
-    return [];
   }
 
   async function handleDelete(event: MouseEvent) {
@@ -131,12 +118,12 @@
               <div class="min-w-fit text-aps1 text-b3">
                 <!-- {$windowObject.isInPortraitMode ? "F:" : "Focus:"} -->
                 F:
-                {formatSeconds(log.totalFocus)}
+                {formatSeconds(splits.focus)}
               </div>
               <div class="min-w-fit text-ass1 text-b3">
                 <!-- {$windowObject.isInPortraitMode ? "B:" : "Break:"} -->
                 B:
-                {formatSeconds(log.totalBreak)}
+                {formatSeconds(splits.brek)}
               </div>
             {/if}
           </div>
@@ -164,18 +151,21 @@
         <Text content="Goals" style={TextStyle.SECTION_HEADING} />
       {/if}
       <div class="flex flex-col w-full">
-        {#if goals && goals.length > 0}
-          {#each goals as goal}
-            <CustomColorPropagator
-              color={goal.color ?? goal.parent?.color}
-              class="flex w-full gap-2 text-base items-center"
-            >
-              <div class="w-2 h-2 rounded-sm bg-ccs1" />
-              <div class="text-left mo:text-b2 text-ccs1 truncate w-4/5">
-                <!-- {truncateString(goal.label, $view.isPortrait ? 20 : 25)} -->
-                {goal.label}
-              </div>
-            </CustomColorPropagator>
+        {#if log.expandedItems && log.expandedItems.length > 0}
+          {#each log.expandedItems as item}
+            {@const resourceType = determineResourceType(item.id)}
+            {#if resourceType === Resource.goal}
+              <CustomColorPropagator
+                color={item?.color}
+                class="flex w-full gap-2 text-base items-center"
+              >
+                <div class="w-2 h-2 rounded-sm bg-ccs1" />
+                <div class="text-left mo:text-b2 text-ccs1 truncate w-4/5">
+                  <!-- {truncateString(goal.label, $view.isPortrait ? 20 : 25)} -->
+                  {item.label}
+                </div>
+              </CustomColorPropagator>
+            {/if}
           {/each}
         {:else}
           <div class="text-b4 text-fgs2 font-medium">NO GOALS</div>
@@ -204,11 +194,11 @@
         </div>
         <div class="min-w-fit text-aps1">
           F:
-          {formatSeconds(log.totalFocus)}
+          {formatSeconds(splits.focus)}
         </div>
         <div class="min-w-fit text-ass1">
           B:
-          {formatSeconds(log.totalBreak)}
+          {formatSeconds(splits.brek)}
         </div>
       </div>
     {/if}

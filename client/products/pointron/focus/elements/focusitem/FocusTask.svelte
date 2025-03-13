@@ -1,12 +1,13 @@
 <script lang="ts">
   import {
     focusItemsStore,
-    activeSession
+    activeSession,
+    currentFocusItem
   } from "$lib/client/products/pointron/focus/session.store";
   import type {
-    IActiveSessionStore,
     ISessionInterval,
-    IFocusItem
+    IFocusItem,
+    ICurrentFocusItem
   } from "$lib/client/types/pointron/session.type";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
@@ -48,8 +49,8 @@
       : resolveTaskFocus(
           context === "history" ? intervals : $activeSession.intervals,
           focusItem.blocks,
-          isInprogress && $activeSession.currentFocusItem
-            ? $activeSession.currentFocusItem.start
+          isInprogress && $currentFocusItem
+            ? $currentFocusItem.start
             : undefined
         );
   // $: console.log({
@@ -63,13 +64,15 @@
     // workedTime = +task.worked;
     // estimateInMinutes = task.estimated;
     if (context === "history") return;
-    const sub = activeSession.subscribe((x: IActiveSessionStore) => {
-      if (x.currentFocusItem && isSameResource(x.currentFocusItem, focusItem)) {
-        isInprogress = true;
-      } else {
-        isInprogress = false;
+    const sub = currentFocusItem.subscribe(
+      (x: ICurrentFocusItem | undefined) => {
+        if (x && isSameResource(x, focusItem)) {
+          isInprogress = true;
+        } else {
+          isInprogress = false;
+        }
       }
-    });
+    );
     return () => sub();
   });
 

@@ -16,6 +16,7 @@
     type IMutation
   } from "$lib/client/types/data.type";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { resolveMutationAction } from "$lib/client/components/flux/flux.utils";
   export let node: IActiveNodeStore | null = null;
   let accessLogs: { action: string; timestamp: Date }[] = [];
   let isLoading: boolean = false;
@@ -76,28 +77,6 @@
     } finally {
       isLoading = false;
     }
-  }
-
-  function resolveMutationAction(mutation: IMutation) {
-    const mutationAction = mutation.params.action;
-    const mutationChangedProperties = mutation.params.record;
-    if (mutationAction === PersistenceActionType.MERGE) {
-      if ("isArchived" in mutationChangedProperties) {
-        return mutationChangedProperties.isArchived
-          ? "🗃️ Archived"
-          : "↵ Unarchived";
-      }
-      if ("trashInformation" in mutationChangedProperties) {
-        return mutationChangedProperties.trashInformation &&
-          mutationChangedProperties.trashInformation !== "$NONE"
-          ? "⌫ Deleted"
-          : "↵ Restored";
-      }
-      if ("isLocked" in mutationChangedProperties) {
-        return mutationChangedProperties.isLocked ? "🔒 Locked" : "🔑 Unlocked";
-      }
-    }
-    return "📝 Edited";
   }
 </script>
 

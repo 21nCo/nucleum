@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onDestroy, onMount } from "svelte";
+  import { onMount } from "svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "$lib/client/types/size.enum";
@@ -12,30 +12,41 @@
   import { LoadingAnimationType } from "$lib/client/types/feedback.type";
   import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
   import LogThumbnailItem from "./LogThumbnailItem.svelte";
-  import { logsPaneStore } from "./log.store";
   import DaySummaryPart from "./daySummary/DaySummaryPart.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import ScrollView from "$lib/client/layout/scrollView/ScrollView.svelte";
-  import { appEvents } from "$lib/client/stores/notification.store";
-  import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
+  import type { ISessionThumb } from "./log.type";
+  import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { SearchStore } from "$lib/client/components/record/record.store";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   export let date: Date = new Date();
+
   export let context: "journal" | "logs" = "logs";
   let selectedId: string | undefined = undefined;
+  let isRefreshing: boolean = false;
+  let logs: ISessionThumb[] = [];
   $: dateString = date.toISOString().split("T")[0];
   $: if (dateString) refresh();
-  onMount(async () => {
+  onMount(() => {
     postMessageToParent(EmbedMessage.SHEET_MOUNTED);
-    const sub = appEvents.subscribe(async (x) => {
-      if (x.event === PointronEvent.REFRESH_LOGS) {
-        await refresh();
-      }
-    });
-    return () => {
-      sub();
-    };
   });
   async function refresh() {
-    logsPaneStore.refreshForDate(date);
+    isRefreshing = true;
+    const result = await new SearchStore(Resource.session).select({
+      filters: {
+        start: date
+      },
+      orderBy: {
+        start: "asc"
+      }
+    });
+    console.log({ result });
+    if (isValidArrayWithData(result)) {
+      logs = result;
+    }
+    isRefreshing = false;
   }
 </script>
 
@@ -51,7 +62,7 @@
     </div>
     <SessionLogPage
       id={selectedId}
-      log={$logsPaneStore.logs.find((x) => x.id === selectedId)}
+      log={logs.find(resourceInList(selectedId))}
     />
   </div>
 {:else}
@@ -103,8 +114,8 @@
         </div>
       </div>
     {/if}
-    {#if !$logsPaneStore.isRefreshing && $logsPaneStore.logs.length > 0}
-      <DaySummaryPart summary={$logsPaneStore.summary} />
+    {#if !isRefreshing && logs.length > 0}
+      <!-- <DaySummaryPart summary={$logsPaneStore.summary} /> -->
       <ScrollView
         class={{
           "w-full flex flex-col gap-4 flex-grow": true,
@@ -112,18 +123,14 @@
           "px-8": !$view.isPortrait && context === "logs"
         }}
       >
-        {#each $logsPaneStore.logs as log, index}
+        {#each logs as log, index}
           <LogThumbnailItem
             {log}
             {context}
-            isLast={index === $logsPaneStore.logs.length - 1}
+            isLast={index === logs.length - 1}
             on:click={() => {
               if (context === "journal") {
-                appStore.runAction(PointronAction.SESSION_LOG_MODAL, {
-                  componentParams: {
-                    id: log.id
-                  }
-                });
+                appStore.openResource(log.id, ResourceAccessMode.POP);
                 return;
               }
               selectedId = log.id;
@@ -138,10 +145,9 @@
         loadingAnimation={LoadingAnimationType.LOGS_PULSE}
         isSearchContext={true}
         pulseCount={2}
-        isLoadingState={$logsPaneStore.isRefreshing ||
-          $logsPaneStore.isPageRefreshing}
-        mainText="No session logs for this date"
-        subText="Please select a different date to see logs"
+        isLoadingState={isRefreshing}
+        mainText="No sessions found"
+        subText="Please select a different date to see focus sessions"
       />
     {/if}
   </div>

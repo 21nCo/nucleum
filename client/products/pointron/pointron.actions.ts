@@ -29,16 +29,11 @@ import { Size } from "$lib/client/types/size.enum";
 import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
 import { get } from "svelte/store";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import modalEvent from "$lib/client/components/modal/modal.store";
 import {
   toasts,
-  confirmationNotification,
-  appEvents
+  confirmationNotification
 } from "$lib/client/stores/notification.store";
-import { AlertType } from "$lib/client/types/notification.type";
-import { generateUID } from "$lib/client/utils/utils";
 import CreateGoal from "$lib/client/products/pointron/goals/create/CreateGoal.svelte";
-import GoalHomeV2 from "$lib/client/products/pointron/goals/home/GoalHomeV2.svelte";
 import FocusItemsModal from "$lib/client/products/pointron/focus/advanced/FocusItemsModal.svelte";
 import BreakReminderModal from "$lib/client/products/pointron/focus/elements/BreakReminderModal.svelte";
 import PredefinedIntervalNotifierOverlay from "$lib/client/products/pointron/focus/elements/PredefinedIntervalNotifierOverlay.svelte";
@@ -57,13 +52,11 @@ import {
 import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
 import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
 import AnalyticsViewsPageEditMobile from "./analytics/AnalyticsViewsPageEditMobile.svelte";
-import { quickFocusItemStore } from "./goals/goal.store";
 import { appStore } from "$lib/client/stores/app.store";
 import { Embed } from "$lib/client/types/context.type";
 import ImportOnboarding from "./settings/data/ImportOnboarding.svelte";
 import { Action } from "$lib/client/types/action.enum";
 import FocusPlayerCommandModeWidget from "./focus/player/FocusPlayerCommandModeWidget.svelte";
-import Goals from "./goals/Goals.svelte";
 import PointronLibrary from "./library/PointronLibrary.svelte";
 import { SearchStore } from "$lib/client/components/record/record.store";
 import { goalStore } from "$lib/client/components/goals/goal.store";
@@ -135,14 +128,16 @@ export const pointronActions: IAction[] = [
     }
   },
   {
-    action: PointronAction.SESSION_LOG_MODAL,
+    action: Resource.session,
     component: SessionLogPage,
     type: ActionType.MODAL,
     isMeta: true,
     modalParams: {
-      title: "Session Log",
+      title: "Session details",
       layout: {
-        size: Size.lg
+        size: Size.lg,
+        isShowCantileverClose: true,
+        isShowBackButton: true
       }
     }
   },
@@ -669,7 +664,7 @@ export const pointronActions: IAction[] = [
         message: "Are you sure you want to delete this session log?",
         confirmAction: {
           label: "Delete",
-          icon: "trash",
+          icon: "ph:trash-light",
           variant: ButtonVariant.DANGER,
           callback: async () => {
             const response = await sessionStore.delete(
@@ -677,11 +672,10 @@ export const pointronActions: IAction[] = [
             );
             if (response) {
               toasts.success("Session log deleted successfully");
-              appEvents.publish(PointronEvent.REFRESH_LOGS);
             } else {
               toasts.error("Failed to delete session log");
             }
-            modalEvent.hide(PointronAction.SESSION_LOG_MODAL);
+            appStore.closeResource(params?.componentParams?.id);
             return true;
           }
         }

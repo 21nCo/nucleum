@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
+  import {
+    activeSession,
+    currentFocusItem
+  } from "$lib/client/products/pointron/focus/session.store";
   import { SessionUIContext } from "$lib/client/types/pointron/session.type";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   import { Size } from "$lib/client/types/size.enum";
@@ -12,13 +15,10 @@
   export let context: SessionUIContext = SessionUIContext.DEFAULT;
   let currentTask: any;
   onMount(() => {
-    const sub = activeSession.subscribe(async (s) => {
-      if (
-        s.currentFocusItem &&
-        !isSameResource(currentTask, s.currentFocusItem)
-      ) {
+    const sub = currentFocusItem.subscribe(async (s) => {
+      if (s && !isSameResource(currentTask, s)) {
         currentTask = await activeSession.resolveCurrentFocusItemData({
-          item: s.currentFocusItem
+          item: s
         });
       }
     });

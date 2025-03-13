@@ -8,8 +8,11 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import TimelineCard from "./TimelineCard.svelte";
   import RecordStatusBanner from "../../record/RecordStatusBanner.svelte";
-  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
-  import { isSameResource } from "../../flux/resourceStores/resource.utils";
+  import {
+    activeSession,
+    currentFocusItem,
+    focusItemsStore
+  } from "$lib/client/products/pointron/focus/session.store";
   import type { IMarkdown } from "$lib/client/components/markdown/md.type";
   import { isEmptyMd } from "../../markdown/markdown.utils";
   import GoalInfoEditControl from "./GoalInfoEditControl.svelte";
@@ -17,6 +20,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import { formatDatetime } from "$lib/client/utils/time.utils";
   import { userPreferences } from "../../settings/userPreferences.store";
+  import { resolveIfCurrentFocusItem } from "$lib/client/products/pointron/focus/session.utils";
   export let goal: IActiveGoalStore;
   export let isConstrainedWidth = false;
   function handleStatusChange(e: CustomEvent<GoalStatus>) {
@@ -26,10 +30,8 @@
     });
   }
   $: isCurrentlyFocusing =
-    $activeSession.currentFocusItem &&
-    isSameResource(goal, $activeSession.currentFocusItem) &&
-    $activeSession.isQuickStartOn &&
-    $activeSession.isSessionRunning;
+    $activeSession.isSessionRunning &&
+    resolveIfCurrentFocusItem($focusItemsStore, goal.id, $currentFocusItem);
 
   function onDescriptionChange(e: CustomEvent<IMarkdown>) {
     goal.modify({

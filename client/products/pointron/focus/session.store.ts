@@ -85,6 +85,10 @@ function initTodayFocus() {
 
 export const newPresetLabel = writable<string>("");
 
+export const currentFocusItem = writable<ICurrentFocusItem | undefined>(
+  undefined
+);
+
 const seedSessionStore: IActiveSessionStore = {
   currentSessionId: undefined,
   isQuickStartOn: false,
@@ -735,12 +739,14 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     }
   ) {
     let session = this.get();
-    if (!session.currentFocusItem) return;
+    let currentFocus = get(currentFocusItem);
+    if (!currentFocus) return;
     let end = new Date().getTime();
-    await focusItemsStore.appendFocusBlock(session.currentFocusItem.id, {
-      start: session.currentFocusItem.start,
+    await focusItemsStore.appendFocusBlock(currentFocus.id, {
+      start: currentFocus.start,
       end
     });
+    currentFocusItem.set(undefined);
     return this.modify(
       {
         currentFocusItem: undefined,
@@ -787,6 +793,9 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
         },
         { isPersist: false }
       );
+      if (savedSessionStore.currentFocusItem) {
+        currentFocusItem.set(savedSessionStore.currentFocusItem);
+      }
       this._resumeTimer({
         isResetTimer: false
       });
@@ -809,11 +818,12 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
 
   async finishSession(isClose: boolean = false) {
     let session = this.get();
+    let currentFocus = get(currentFocusItem);
     if (!session.isQuickStartOn)
       fullPageLoadingScreen.show("Finishing session...");
     try {
       const now = new Date().getTime();
-      if (session.currentFocusItem)
+      if (currentFocus)
         await this._stopCurrentFocusItem({
           isSessionFinish: true
         });
@@ -834,6 +844,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       } else {
         this.shallowReset();
         // this.propagateMessageToParent(session);
+        currentFocusItem.set(undefined);
         this.modify({
           isSessionRunning: false,
           state: SessionState.FINISHED,
@@ -849,9 +860,12 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
 
   async startTask(id: IRecordId) {
     let session = this.get();
-    if (session.currentFocusItem) await this._stopCurrentFocusItem();
+    let currentFocus = get(currentFocusItem);
+    if (currentFocus) await this._stopCurrentFocusItem();
+    const newFocus = { start: new Date().getTime(), id };
+    currentFocusItem.set(newFocus);
     this.modify(
-      { currentFocusItem: { start: new Date().getTime(), id } },
+      { currentFocusItem: newFocus },
       { isPersist: session.state != SessionState.BREAK_RUNNING }
     );
     if (session.state === SessionState.BREAK_RUNNING) {
@@ -996,13 +1010,14 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     }
     const sessionId = generateResourceId(Resource.session);
     this.isIntervalTimeLimitNotified = false;
-    let currentFocusItem = this.get().currentFocusItem;
+    let currentFocus = get(currentFocusItem);
     let focusItems = focusItemsStore.get();
     if (!isQuickStart && focusItems.items.length > 0) {
-      currentFocusItem = {
+      currentFocus = {
         id: focusItems.items[0].id,
         start: new Date().getTime()
       };
+      currentFocusItem.set(currentFocus);
     }
     this.modify(
       {
@@ -1010,7 +1025,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
         isSessionRunning: true,
         start: new Date(),
         state: SessionState.FOCUS_RUNNING,
-        currentFocusItem: currentFocusItem
+        currentFocusItem: currentFocus
       },
       { isPersist: false }
     );
@@ -1037,6 +1052,8 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
         id: "slider",
         breakType: BreakCompositionType.REMINDER
       };
+      const newFocus = { start: new Date().getTime(), id: goalId };
+      currentFocusItem.set(newFocus);
       this.modify(
         {
           ...n,
@@ -1045,7 +1062,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
           end: undefined,
           plannedDuration: 0,
           isQuickStartOn: true,
-          currentFocusItem: { start: new Date().getTime(), id: goalId }
+          currentFocusItem: newFocus
         },
         { isPersist: false }
       );
@@ -1126,7 +1143,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     } = {}
   ) {
     let item = params.item;
-    if (!item) item = this.get().currentFocusItem;
+    if (!item) item = get(currentFocusItem);
     if (!item) return;
     const resourceType = determineResourceType(item.id);
     if (resourceType === Resource.goal) {
@@ -1314,7 +1331,7 @@ class SessionStore extends ResourceStore<ISession> {
           duration: 0
         }
       ],
-      focusItems: focusItemStore.items,
+      items: focusItemStore.items,
       notes: activeSessionVal.notes
     };
     const logs: OmitForCaptureWithId<ISessionLog>[] = [];

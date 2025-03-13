@@ -1,8 +1,17 @@
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import {
+  determineResourceType,
+  isSameResource,
+  resourceInList
+} from "$lib/client/components/flux/resourceStores/resource.utils";
+import type { IRecordId } from "$lib/client/types/data.type";
 import {
   BlockType,
+  type ICurrentFocusItem,
+  type IFocusItemsStore,
   type ISessionInterval
 } from "$lib/client/types/pointron/session.type";
-import { deepCopy, sortArrayByOrder } from "$lib/shared/utils/obj.utils";
+import { sortArrayByOrder } from "$lib/shared/utils/obj.utils";
 
 export function transformFocusItemsV1(rawItems: any[]) {
   let items: any[] = [];
@@ -170,5 +179,24 @@ export function resolveTaskFocus(
       focus: focus / 1000,
       brek: brek / 1000
     };
+  }
+}
+
+export function resolveIfCurrentFocusItem(
+  focusItems: IFocusItemsStore,
+  id: IRecordId,
+  currentFocusItem?: ICurrentFocusItem
+) {
+  if (!currentFocusItem) return false;
+  const resourceType = determineResourceType(currentFocusItem.id);
+  if (resourceType === Resource.goal) {
+    return isSameResource(id, currentFocusItem);
+  } else if (resourceType === Resource.task) {
+    const correspondingGoal = focusItems.items.find((x) =>
+      x.tasks?.some(resourceInList(currentFocusItem))
+    );
+    if (correspondingGoal) {
+      return isSameResource(correspondingGoal.id, id);
+    }
   }
 }

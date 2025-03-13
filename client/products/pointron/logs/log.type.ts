@@ -10,6 +10,8 @@ import type { IMarkdown } from "$lib/client/components/markdown/md.type";
 import type { TimeScale } from "$lib/client/types/time.type";
 import type { IResource } from "$lib/client/components/flux/resourceStores/resource.type";
 import type { IMemotronItemBase } from "../../memotron/memotron.type";
+import type { IGoal } from "$lib/client/components/goals/goal.type";
+import type { ITask } from "$lib/client/components/tasks/task.type";
 
 export enum SessionType {
   PREDEFINED_INTERVALS = "PREDEFINED_INTERVALS",
@@ -34,9 +36,19 @@ export type ISession = ISessionBase & {
   end: number | string;
   plannedEnd?: number | string;
   id: string;
+  /**
+   * @deprecated
+   * Previously used pre v0.82.0
+   */
+  focusItems?: any;
+  /**
+   * @deprecated
+   * Previously used pre v0.82.0
+   */
+  goals?: any;
   items: IFocusItem[];
   manualEntryId?: string;
-  notes: IMarkdown;
+  notes?: IMarkdown;
 };
 
 export type ISessionLog = IResource & {
@@ -72,21 +84,17 @@ export type IManualSessionLogForm = {
   notes?: IMarkdown;
 };
 
+/**
+ * @deprecated - use sessionStore instead
+ */
 export interface ILogsPaneStore extends IObservableStoreSubject {
-  logs: LogThumbnail[];
+  logs: ISessionThumb[];
   summary: DaySummary;
   date: Date;
 }
 
-export type LogThumbnail = {
-  id: string;
-  start: string;
-  end: string;
-  totalFocus: number;
-  totalBreak: number;
-  goals: any;
-  tasks: any;
-  focusItems: any;
+export type ISessionThumb = ISession & {
+  expandedItems: (IGoal | ITask)[];
 };
 
 export type DaySummary = {

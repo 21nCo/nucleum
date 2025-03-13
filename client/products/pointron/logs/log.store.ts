@@ -12,7 +12,7 @@ import { appEvents, toasts } from "$lib/client/stores/notification.store";
 import {
   SessionType,
   type DaySummary,
-  type LogThumbnail,
+  type ISessionThumb,
   type ILogsPaneStore,
   type IManualSessionLogForm,
   type ISessionLog,
@@ -184,7 +184,7 @@ class LogsPaneStore extends ObservableStore<ILogsPaneStore> {
    * @param logs LogThumbnail[]
    * @returns DaySummary
    */
-  generateSummary(logs: LogThumbnail[]): DaySummary {
+  generateSummary(logs: ISessionThumb[]): DaySummary {
     let focus = 0;
     let breakTime = 0;
     logs.forEach((x) => {
@@ -244,4 +244,7 @@ class LogsPaneStore extends ObservableStore<ILogsPaneStore> {
   }
 }
 
+/**
+ * @deprecated - use sessionStore instead
+ */
 export const logsPaneStore = new LogsPaneStore();

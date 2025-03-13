@@ -9,6 +9,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import { TimeScaleUnit } from "$lib/client/types/time.type";
   import { formatDate } from "$lib/client/utils/time.utils";
+  import { enumToString } from "$lib/shared/utils/text.utils";
   import { CalendarColumnPanel } from "../calendar.type";
   import CalendarColumnTasksPanel from "./CalendarColumnTasksPanel.svelte";
   import CalendarHistoryPanel from "./CalendarHistoryPanel.svelte";
@@ -22,8 +23,6 @@
     });
     return panelState ?? CalendarColumnPanel.Tasks;
   }
-
-  $: isNucleus = $appStore.product === Product.NUCLEUS;
   $: panels = resolvePanels($appStore.product);
 
   function resolvePanels(product: Product) {
@@ -74,8 +73,14 @@
 
 <div class="flex flex-col h-full">
   <div class="flex items-center justify-between">
-    <div class="text-h4 font-medium text-fgs3">
-      {formatDate(date)}
+    <div class="flex items-center gap-2">
+      <div class="text-h4 font-medium text-fgs3">
+        {formatDate(date)}
+      </div>
+      |
+      <div class="text-b2 text-fgs3">
+        {enumToString(selectedPanel)}
+      </div>
     </div>
     <div>
       <OptionSelector
@@ -90,7 +95,7 @@
   {#if selectedPanel === CalendarColumnPanel.Tasks}
     <CalendarColumnTasksPanel {date} />
   {:else if selectedPanel === CalendarColumnPanel.History}
-    <CalendarHistoryPanel {date} {isNucleus} />
+    <CalendarHistoryPanel {date} />
   {:else}
     <div class="my-auto">
       <ComingSoonView />

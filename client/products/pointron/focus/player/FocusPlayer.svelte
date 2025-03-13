@@ -1,6 +1,9 @@
 <script lang="ts">
   import { startTouch, moveTouch } from "$lib/client/utils/touchGesture";
-  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
+  import {
+    activeSession,
+    currentFocusItem
+  } from "$lib/client/products/pointron/focus/session.store";
   import { SessionUIContext } from "$lib/client/types/pointron/session.type";
   import Icon from "$lib/client/elements/Icon.svelte";
   import view from "$lib/client/stores/view.store";
@@ -19,6 +22,7 @@
   import { fullScreen, player } from "$lib/client/components/modal/modal.store";
   import { logger } from "$lib/client/components/debug/logger.client";
   import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { resolveGoalColor } from "$lib/client/components/goals/goal.utils";
   let playerContainerRef: any;
   let playerRef: HTMLElement | null = document.getElementById("focusplayer");
   let playerContainer: HTMLElement | null =
@@ -111,12 +115,11 @@
       ) {
         closePip();
       }
-      if (
-        x.currentFocusItem &&
-        !isSameResource(currentGoal, x.currentFocusItem)
-      ) {
+    });
+    const currentFocusItemSub = currentFocusItem.subscribe(async (x) => {
+      if (x && !isSameResource(currentGoal, x)) {
         currentGoal = await activeSession.resolveCurrentFocusItemData({
-          item: x.currentFocusItem,
+          item: x,
           isReturnGoalIfTask: true
         });
       }
@@ -131,6 +134,7 @@
     return () => {
       sub();
       sessionSub();
+      currentFocusItemSub();
     };
   });
 </script>
@@ -164,7 +168,7 @@
       <div class="flex flex-col gap-1 w-full">
         <CustomColorPropagator
           type="button"
-          color={currentGoal?.color ?? currentGoal?.parent?.[0]?.color}
+          color={resolveGoalColor(currentGoal)}
           class={cn(
             "flex gap-2 h-full justify-between items-center px-4 py-2",
             isPipShown && {

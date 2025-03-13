@@ -15,8 +15,12 @@
   import { resolveGoalTypeIcon } from "../goal.utils";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import RecordStarStatusFeedback from "../../record/RecordStarStatusFeedback.svelte";
-  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
-  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import {
+    activeSession,
+    currentFocusItem,
+    focusItemsStore
+  } from "$lib/client/products/pointron/focus/session.store";
+  import { resolveIfCurrentFocusItem } from "$lib/client/products/pointron/focus/session.utils";
 
   export let item: IGoalThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
@@ -27,11 +31,11 @@
   export let isDraggable: boolean = false;
   export let refreshId: number = new Date().getTime();
 
-  $: isCurrentlyFocusing =
-    $activeSession.currentFocusItem &&
-    isSameResource(item, $activeSession.currentFocusItem) &&
-    $activeSession.isQuickStartOn &&
-    $activeSession.isSessionRunning;
+  $: isCurrentlyFocusing = resolveIfCurrentFocusItem(
+    $focusItemsStore,
+    item.id,
+    $currentFocusItem
+  );
 
   let isHovering: boolean = false;
 

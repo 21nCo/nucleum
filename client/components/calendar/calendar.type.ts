@@ -16,6 +16,8 @@ export enum CalendarColumnPanel {
 }
 
 export enum CalendarHistoryTab {
+  ALL = "all",
   FOCUS_SESSIONS = "focus-sessions",
-  NODES = "nodes"
+  NODES = "nodes",
+  ACTIVITY = "activity"
 }

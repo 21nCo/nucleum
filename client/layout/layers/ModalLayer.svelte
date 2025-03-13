@@ -259,6 +259,7 @@
       {isInFocusMode}
       isDismissable={pop.modalParams?.isDismissable ?? true}
       isShowOverlay={pop.modalParams?.isShowOverlay ?? true}
+      isDynamicSize={pop.modalParams?.layout?.isDynamicSize}
       isUseDialog={pop.modalParams?.layout?.size != Size.full &&
         $context.embed != Embed.HANDSET &&
         isDialogEnabled}

@@ -2,7 +2,8 @@
   import view from "$lib/client/stores/view.store";
   import {
     focusItemsStore,
-    activeSession
+    activeSession,
+    currentFocusItem
   } from "$lib/client/products/pointron/focus/session.store";
   import { onMount } from "svelte";
   import AddTodo from "./AddTodo.svelte";
@@ -31,6 +32,7 @@
   import type { ITaskThumb } from "$lib/client/components/tasks/task.type";
   import { appStore } from "$lib/client/stores/app.store";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { resolveGoalColor } from "$lib/client/components/goals/goal.utils";
 
   export let focusItem: IFocusItem;
   export let tasks: ITaskThumb[] = [];
@@ -40,6 +42,7 @@
   export let contxt: "current" | "history" = "current";
   export let intervals: ISessionInterval[] = [];
   $: goal = goals.find(resourceInList(focusItem.id));
+  $: color = resolveGoalColor(goal);
   $: tasksUnderGoal = resolveTaskFocusItems(focusItem);
 
   let parentHierarchy: string[] = [];
@@ -49,8 +52,7 @@
   let isDragEnabled: boolean;
   $: isDragEnabled = $view.isPortrait ? false : true;
   $: isInprogress =
-    ($activeSession.currentFocusItem &&
-      isSameResource(focusItem, $activeSession.currentFocusItem)) ??
+    ($currentFocusItem && isSameResource(focusItem, $currentFocusItem)) ??
     false;
 
   $: parentHierarchy = goal?.parent?.map((x: any) => x.label) ?? [];
@@ -107,7 +109,7 @@
 >
   {#if (goal && (!$activeSession.isSessionRunning || isInEditMode) && contxt === "current") || (goal && tasksUnderGoal.length > 0)}
     <CustomColorPropagator
-      color={goal.color}
+      {color}
       class="relative flex items-center gap-2 w-full"
     >
       <div
@@ -188,7 +190,7 @@
           "text-ccs1": !isInprogress
         }
       )}
-      color={goal.color}
+      {color}
       on:click={clickHandler}
     >
       <div class="text-left truncate min-w-0 flex-1">
@@ -209,14 +211,14 @@
           {goal.label}
         </button>
       </div>
-      {#if isInprogress && contxt == "current" && $activeSession.currentFocusItem}
+      {#if isInprogress && contxt == "current" && $currentFocusItem}
         <div class="leading-none text-b3">
           <!-- TODO - test if worked time is correct -->
           {formatSeconds(
             resolveTaskFocus(
               $activeSession.intervals,
               focusItem.blocks,
-              $activeSession.currentFocusItem.start
+              $currentFocusItem.start
             )
           )}
         </div>

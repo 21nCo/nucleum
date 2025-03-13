@@ -22,6 +22,9 @@ export type IActiveSessionStore = IObservableStoreSubject & {
   totalIdle: number;
   intervals: ISessionInterval[];
   currentBlockId: string;
+  /**
+   * Only for persistance of currentFocusItem store
+   */
   currentFocusItem?: ICurrentFocusItem;
   currentIdle: number;
   isSessionRunning: boolean;
