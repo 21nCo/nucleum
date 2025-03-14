@@ -41,7 +41,7 @@ class SessionLogStore extends ResourceStore<ISessionLog> {
     const properties = [
       "*",
       "goalId.* as goal",
-      "(select * from $parent.goalId.parent) as topLevelGoal",
+      // "(select * from $parent.goalId.parent) as topLevelGoal",
       "sessionId.* as session",
       ...(params?.properties ?? [])
     ];

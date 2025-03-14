@@ -4,21 +4,10 @@ import { userDatev4 } from "./global.dbo";
  * Pointron dbo definitions used by the client apps.
  */
 export const pointronDboDefinitions = {
-  "fn::pointron::analytics::focusByCurrentHorizon::v3":
-    analyticsFocusByCurrentHorizonv3(),
-  "fn::pointron::analytics::page::fetch": analyticsPageFetch(),
-  "fn::pointron::analytics::targetsAndStreak::v2":
-    analyticsTargetsAndStreakV2(),
-  "fn::pointron::analytics::targets::v3": analyticsTargetsV3(),
-  "fn::pointron::analytics::goal::v3": analyticsGoalV3(),
   "fn::pointron::export": pointronExport(),
   "fn::pointron::import": pointronImport(),
   "fn::pointron::importChunk": pointronImportChunk(),
-  "fn::pointron::revertImport": pointronRevertImport(),
-  "fn::pointron::goal::fetchAll": goalFetchAll(),
-  "fn::pointron::goal::fetchQuickFocusItems::v2": goalFetchQuickFocusItemsV2(),
-  "fn::pointron::journal::fetch": journalFetch(),
-  "fn::pointron::iOS::currentSessionWidget": iOSCurrentSessionWidget()
+  "fn::pointron::revertImport": pointronRevertImport()
 };
 
 function analyticsFocusByCurrentHorizonv3() {
