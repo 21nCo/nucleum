@@ -12,17 +12,16 @@
   import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
   import { onMount } from "svelte";
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { SearchStore } from "$lib/client/components/record/record.store";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import type { ITaskThumb } from "$lib/client/components/tasks/task.type";
   import type { IFocusItem } from "$lib/client/types/pointron/session.type";
+  import { goalStore } from "$lib/client/components/goals/goal.store";
+  import { taskStore } from "$lib/client/components/tasks/task.store";
   export let isInEditMode: boolean = false;
   let isFocusingAddGoal: boolean = false;
   let focusItems: IFocusItem[] = [];
   let goals: IGoalThumb[] = [];
   let tasks: ITaskThumb[] = [];
   let isRefreshing: boolean = false;
-  const searchStore = new SearchStore();
 
   function onBlur() {
     isFocusingAddGoal = false;
@@ -41,15 +40,17 @@
     focusItems = $focusItemsStore.items.filter(
       (x) => !tasksWithGoal.some(resourceInList(x))
     );
-    goals = await searchStore.select({
-      resource: Resource.goal,
-      filters: {
-        id: $focusItemsStore.items.map((x) => x.id.toString())
+    goals = await goalStore.selectMany(
+      {
+        filters: {
+          id: $focusItemsStore.items.map((x) => x.id.toString())
+        }
       },
-      isIncludeSubItems: true
-    });
-    tasks = await searchStore.select({
-      resource: Resource.task,
+      {
+        isIncludeSubItems: true
+      }
+    );
+    tasks = await taskStore.selectMany({
       filters: {
         id: $focusItemsStore.items.map((x) => x.id.toString())
       }

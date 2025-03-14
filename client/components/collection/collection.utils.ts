@@ -161,11 +161,11 @@ export function resolveCollectionSubTypesForSwitcher() {
 export function resolveCollectionResource(product: string): Resource[] {
   switch (product) {
     case "pointron":
-      return [Resource.goal, Resource.task];
+      return [Resource.goal];
     case "memotron":
       return [Resource.node];
     case "nucleus":
-      return [Resource.node, Resource.goal, Resource.task];
+      return [Resource.node, Resource.goal];
     default:
       return [];
   }

@@ -30,10 +30,26 @@ import { BlockType } from "$lib/client/types/pointron/session.type";
 import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 import type { OmitForCaptureWithId } from "$lib/client/components/flux/resourceStores/resource.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
+import type { IResourceSelectParams } from "$lib/client/types/data.type";
 
 class SessionLogStore extends ResourceStore<ISessionLog> {
   constructor() {
     super(Resource.sessionLog);
+  }
+
+  selectMany(params?: IResourceSelectParams, additionalParams?: any) {
+    const properties = [
+      "*",
+      "goalId.* as goal",
+      "(select * from $parent.goalId.parent) as topLevelGoal",
+      "sessionId.* as session",
+      ...(params?.properties ?? [])
+    ];
+    params = {
+      ...(params ?? {}),
+      properties
+    };
+    return super.selectMany(params, additionalParams);
   }
 }
 

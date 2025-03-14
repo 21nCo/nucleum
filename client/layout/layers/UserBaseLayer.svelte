@@ -22,7 +22,7 @@
     localCacheableStores,
     remoteOnlyStores
   } from "$local/localStoresMap";
-  import { resourcesForRecents } from "$local/local";
+  import { searcheableResources } from "$local/local";
   import {
     dispatchCustomEvent,
     isExtensionEnvironment,
@@ -97,7 +97,7 @@
     if (initState !== undefined)
       userDataState = await initializeEssentialUserData(initState);
     const promises = [
-      recentsStore.refresh(resourcesForRecents),
+      recentsStore.refresh(searcheableResources),
       initializeUserConfig()
     ];
     await Promise.all(promises);
@@ -113,7 +113,7 @@
         await flux.reconcile({ counts: userDataState.counts });
         dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
       }
-      await recentsStore.refresh(resourcesForRecents);
+      await recentsStore.refresh(searcheableResources);
       initializeTaco();
     });
   });
@@ -154,7 +154,7 @@
       const isCloudUser = $account.dataMode === UserDataMode.CLOUD;
       if (isCloudUser && !dev_isDisableSyncOnAppear) {
         await flux.syncDown({ src: "onAppear" });
-        await recentsStore.refresh(resourcesForRecents);
+        await recentsStore.refresh(searcheableResources);
         await account.ping();
       }
       if (isExtensionEnvironment() || import.meta.env?.DEV) return;

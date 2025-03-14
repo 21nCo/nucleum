@@ -68,6 +68,11 @@ export type ISessionLog = IResource & {
   targets?: { scale: TimeScale; target: number }[];
 };
 
+export type ISessionLogThumb = ISessionLog & {
+  goal: IGoal;
+  session: ISession;
+};
+
 export interface ISessionLogStore extends IObservableStoreSubject {
   manualLogs: IManualSessionLogForm[];
   manualLogError?: string;

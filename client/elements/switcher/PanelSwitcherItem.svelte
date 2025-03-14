@@ -97,6 +97,7 @@
         bind:triggerItemEdit
         on:remove
         on:change
+        on:debouncedChange
       />
     </div>
     {#if isActive && (barStyle === BarStyle.UNDER || barStyle === BarStyle.DOT)}
@@ -139,9 +140,10 @@
       bind:triggerItemEdit
       on:remove
       on:change
+      on:debouncedChange
     />
     {#if isActive}
-      <div class="absolute h-1 w-full bg-bgs1 -bottom-1 left-0" />
+      <div class="absolute h-2 w-full bg-bgs1 -bottom-1 left-0" />
     {/if}
   </button>
 {:else if style === PanelSwitcherStyle.DOT}
@@ -194,6 +196,7 @@
         bind:triggerItemEdit
         on:remove
         on:change
+        on:debouncedChange
       />
     </div>
   </button>

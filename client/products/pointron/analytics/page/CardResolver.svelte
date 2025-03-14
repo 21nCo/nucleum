@@ -3,7 +3,8 @@
   import {
     AnalyticsCardType,
     type AnalyticsCard,
-    type AnalyticsDataRecord
+    type AnalyticsDataRecord,
+    type IAnalyticsLabelColor
   } from "../analytics.types";
   import TopNCard from "../cards/topN/TopNCard.svelte";
   import MetricsCard from "../cards/metrics/MetricsCard.svelte";
@@ -14,7 +15,7 @@
   export let data: AnalyticsDataRecord[];
   export let parentBgIndex: number = 1;
   export let previousTimePeriodData: AnalyticsDataRecord[] = [];
-  export let goalColors: any;
+  export let goalColors: IAnalyticsLabelColor[];
 </script>
 
 {#if card.type === AnalyticsCardType.PIE || card.type === AnalyticsCardType.DONUT || card.type === AnalyticsCardType.AREA || card.type === AnalyticsCardType.LINE || card.type === AnalyticsCardType.BAR}

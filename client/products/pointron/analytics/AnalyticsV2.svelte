@@ -4,9 +4,7 @@
   import Text from "$lib/client/elements/text/Text.svelte";
   import EditModeToggle from "$lib/client/elements/toggle/EditModeToggle.svelte";
   import { appStore, isInEditMode } from "$lib/client/stores/app.store";
-  import { dataManager } from "$lib/client/persistence/dataManager";
   import view from "$lib/client/stores/view.store";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
@@ -18,7 +16,6 @@
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import {
     onAddPageClicked,
-    onPageSwitch,
     onPagelabelChange,
     onRemovePageClicked
   } from "./analytics.utils";
@@ -35,7 +32,6 @@
     if ($context.embed == Embed.HANDSET) {
       postToParent({ bg: 2 });
     }
-    await dataManager.refresh(Resource.pointAnalyticsConfig);
     if (!$selectedPageId) {
       $selectedPageId = $analyticsConfigStore.pages[0]?.id;
     }
@@ -98,7 +94,7 @@
               bind:value={$selectedPageId}
               on:add={onAddPageClicked}
               on:remove={onRemovePageClicked}
-              on:change={onPagelabelChange}
+              on:debouncedChange={onPagelabelChange}
             />
           </div>
           <div class="flex items-center gap-2 ml-auto">

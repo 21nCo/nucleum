@@ -10,7 +10,7 @@
   let isIncludeSubGoals = false;
 </script>
 
-<div class="flex flex-col w-full h-full gap-2">
+<div class="flex flex-col w-full h-full gap-2 overflow-auto">
   <div class="flex w-full gap-4 justify-between px-4">
     <OptionSelector
       options={[

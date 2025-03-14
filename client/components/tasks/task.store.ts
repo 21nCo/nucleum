@@ -1,6 +1,9 @@
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
-import { type IRecordId } from "$lib/client/types/data.type";
+import {
+  type IRecordId,
+  type IResourceSelectParams
+} from "$lib/client/types/data.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import { logger } from "$lib/client/components/debug/logger.client";
 import type { ITask } from "./task.type";
@@ -22,6 +25,15 @@ class TaskStore extends ResourceStore<ITask> {
     super(Resource.task);
   }
 
+  selectMany(params?: IResourceSelectParams, additionalParams?: any) {
+    const properties = ["*", "goal.* as goal", ...(params?.properties ?? [])];
+    params = {
+      ...(params ?? {}),
+      properties
+    };
+    return super.selectMany(params, additionalParams);
+  }
+
   async save(
     form: OmitForCapture<ITask>,
     params?: { id?: IRecordId; context?: string }
@@ -33,7 +45,7 @@ class TaskStore extends ResourceStore<ITask> {
       isChecked: form.isChecked ?? false,
       estimated: form.estimated,
       date: form.date ? getUtcSafeDay(form.date) : undefined,
-      goal: form.goal
+      goalId: form.goalId
     };
 
     return super.create([resource], {

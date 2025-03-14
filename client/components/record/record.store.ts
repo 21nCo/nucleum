@@ -21,7 +21,10 @@ import { FluxMethod } from "$lib/client/components/flux/flux.type";
 import type { CollectionType } from "$lib/client/components/collection/collection.type";
 import { collectionStore } from "$lib/client/components/collection/collection.store";
 import { nodeStore } from "$lib/client/products/memotron/node/node.store";
-import type { MultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
+import type {
+  MultiSelectStore,
+  ResourceStore
+} from "$lib/client/components/flux/resourceStores/resource.store";
 import { appStore } from "$lib/client/stores/app.store";
 import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
 import { linker } from "$lib/client/products/memotron/linking/link.store";
@@ -35,6 +38,8 @@ import { get } from "svelte/store";
 import { resolveCollectionResource } from "../collection/collection.utils";
 import { goalStore } from "../goals/goal.store";
 import { Action } from "$lib/client/types/action.enum";
+import { localCacheableStores, remoteOnlyStores } from "$local/localStoresMap";
+import { searcheableResources } from "$local/local";
 
 export const MAX_FILE_SIZE_MB = 100;
 
@@ -45,21 +50,34 @@ export function resolveResource(id: IRecordId) {
 const labelSearchProp =
   "search::highlight('**', '**', 1, false) AS labelSearch";
 
+function resolveSearchProperties(resource: Resource) {
+  switch (resource) {
+    case Resource.node:
+      return ["label", "text"];
+    default:
+      return ["label"];
+  }
+}
+
 export class SearchStore {
   resource: Resource = Resource.everything;
-  searchQuery: string = "";
-  limit: number | undefined = undefined;
-  offset: number | undefined = undefined;
-  orderBy: IResourceSelectOrderBy | undefined = undefined;
-  filters: IResourceSelectFilters = {};
-  searchType: SearchType = SearchType.FULL_TEXT;
-  semanticSearchTopK: number | undefined;
   dev_isUseIndexSearch: boolean = false;
   collectibleResource: Resource[] | undefined;
+  resourceStore: ResourceStore<any> | undefined;
   constructor(resource: Resource = Resource.everything) {
     this.resource = resource;
     this.collectibleResource = resolveCollectionResource(get(appStore).product);
+    if (resource !== Resource.everything) {
+      this.setResourceStore(resource);
+    }
   }
+
+  setResourceStore(resource: Resource) {
+    this.resourceStore = [...localCacheableStores, ...remoteOnlyStores].find(
+      (store) => store.id === resource
+    ) as ResourceStore<any>;
+  }
+
   levenshteinDistance(a: string, b: string): number {
     const matrix = [];
 
@@ -89,6 +107,8 @@ export class SearchStore {
   }
 
   /**
+   *
+   * @deprecated - use nodeStore.selectMany or searchStore.select instead
    * TODO - group by mdParent if searching
    *
    *
@@ -97,17 +117,15 @@ export class SearchStore {
    *
    * @returns
    */
-  async nodes() {
+  async nodes(params: any) {
     console.log("record.store.ts - nodes");
     const result = await flux.selectMany(
-      this.searchType == SearchType.SEMANTIC && this.searchQuery
+      params.searchType == SearchType.SEMANTIC && params.searchQuery
         ? Resource.vector
         : Resource.node,
       {
-        semanticSearchTopK: this.semanticSearchTopK,
-        searchType: this.searchType,
         properties:
-          this.searchType === SearchType.SEMANTIC && this.searchQuery
+          params.searchType === SearchType.SEMANTIC && params.searchQuery
             ? [
                 "node.body as body",
                 "node.children as children",
@@ -134,39 +152,28 @@ export class SearchStore {
                 "search::highlight('**', '**', 2, false) AS bodySearch"
               ],
         filters:
-          this.searchType == SearchType.SEMANTIC && this.searchQuery
+          params.searchType == SearchType.SEMANTIC && params.searchQuery
             ? {}
             : {
-                trashInformation: false,
                 creationContext:
-                  isValidString(this.searchQuery) || this.filters.contentType
+                  isValidString(params.searchQuery) ||
+                  params.filters.contentType
                     ? undefined
                     : false,
-                ...this.filters,
-                isArchived: this.filters.isArchived ?? false,
+                ...params.filters,
+                isArchived: params.filters.isArchived ?? false,
                 contentType:
-                  "contentType" in this.filters
-                    ? this.filters.contentType?.toUpperCase()
-                    : this.searchQuery
+                  "contentType" in params.filters
+                    ? params.filters.contentType?.toUpperCase()
+                    : params.searchQuery
                       ? undefined
                       : rootNodeTypeList
-              },
-        search: isValidString(this.searchQuery)
-          ? {
-              query: this.searchQuery,
-              properties: ["label", "text"]
-            }
-          : undefined,
-        orderBy: this.orderBy ?? {
-          modifiedAt: "desc"
-        },
-        limit: this.limit,
-        offset: this.offset
+              }
       },
       {
         isCloudOnlyResource:
-          this.searchType === SearchType.SEMANTIC &&
-          isValidString(this.searchQuery)
+          params.searchType === SearchType.SEMANTIC &&
+          isValidString(params.searchQuery)
             ? true
             : false
       }
@@ -176,124 +183,6 @@ export class SearchStore {
 
     // const result2 = await flux.selectByQuery("select * from node;");
     // logger.log({ at: "all nodes: ", result2 });
-    return result;
-  }
-
-  async collections() {
-    const result = await flux.selectMany(Resource.collection, {
-      properties: [labelSearchProp, "*", "typeToExtend.* as typeToExtend"],
-      filters: {
-        trashInformation: false,
-        ...this.filters,
-        ...(this.collectibleResource
-          ? {
-              resource: this.collectibleResource
-            }
-          : {}),
-        isArchived: this.filters.isArchived ?? false,
-        type:
-          "type" in this.filters && this.filters.type
-            ? this.filters.type?.toUpperCase()
-            : undefined
-      },
-      search: isValidString(this.searchQuery)
-        ? {
-            query: this.searchQuery,
-            properties: ["label"]
-          }
-        : undefined,
-      orderBy: this.orderBy ?? {
-        modifiedAt: "desc"
-      },
-      limit: this.limit,
-      offset: this.offset
-    });
-    logger.log({ at: "refreshCollections", result });
-    return result;
-  }
-
-  async goals(params: { isIncludeSubItems?: boolean }) {
-    const result = await flux.selectMany(Resource.goal, {
-      properties: [
-        labelSearchProp,
-        "*",
-        "(select * from $parent.parent) as parent"
-      ],
-      filters: {
-        trashInformation: false,
-        ...this.filters,
-        isArchived: this.filters.isArchived ?? false,
-        type:
-          "type" in this.filters && this.filters.type
-            ? this.filters.type?.toUpperCase()
-            : undefined,
-        parent: this.searchQuery || params.isIncludeSubItems ? undefined : false
-      },
-      search: isValidString(this.searchQuery)
-        ? {
-            query: this.searchQuery,
-            properties: ["label"]
-          }
-        : undefined,
-      orderBy: this.orderBy ?? {
-        modifiedAt: "desc"
-      },
-      limit: this.limit,
-      offset: this.offset
-    });
-    logger.log({ at: "refreshGoals", result });
-    return result;
-  }
-
-  async tasks() {
-    const result = await flux.selectMany(Resource.task, {
-      properties: [labelSearchProp, "*", "goal.* as goal"],
-      filters: {
-        trashInformation: false,
-        ...this.filters,
-        isArchived: this.filters.isArchived ?? false
-      },
-      search: isValidString(this.searchQuery)
-        ? {
-            query: this.searchQuery,
-            properties: ["label"]
-          }
-        : undefined,
-      orderBy: this.orderBy ?? {
-        modifiedAt: "desc"
-      },
-      limit: this.limit,
-      offset: this.offset
-    });
-    logger.log({ at: "refreshTasks", result });
-    return result;
-  }
-
-  async sessions() {
-    const result = await flux.selectMany(Resource.session, {
-      properties: [
-        labelSearchProp,
-        "*",
-        "select * from (select value id from $parent.items) as expandedItems"
-      ],
-      filters: {
-        trashInformation: false,
-        ...this.filters,
-        isArchived: this.filters.isArchived ?? false
-      },
-      search: isValidString(this.searchQuery)
-        ? {
-            query: this.searchQuery,
-            properties: ["label"]
-          }
-        : undefined,
-      orderBy: this.orderBy ?? {
-        modifiedAt: "desc"
-      },
-      limit: this.limit,
-      offset: this.offset
-    });
-    logger.log({ at: "refreshSessions", result });
     return result;
   }
 
@@ -309,40 +198,52 @@ export class SearchStore {
     isIncludeSubItems?: boolean;
   }) {
     this.resource = params.resource ?? this.resource;
-    this.searchQuery = params.searchQuery ?? this.searchQuery;
-    this.limit = params.limit ?? this.limit;
-    this.offset = params.offset ?? this.offset;
-    this.orderBy = params.orderBy ?? this.orderBy;
-    this.filters = params.filters ?? this.filters;
-    this.searchType = params.searchType ?? this.searchType;
-    this.semanticSearchTopK =
-      params.semanticSearchTopK ?? this.semanticSearchTopK;
-    logger.log({
+    logger.debug({
       at: "SearchStore.refresh",
-      ...this
+      params
     });
     let data: any;
+    const selectParams = {
+      properties: [labelSearchProp],
+      filters: params.filters,
+      search: isValidString(params.searchQuery)
+        ? {
+            query: params.searchQuery!,
+            properties: resolveSearchProperties(this.resource)
+          }
+        : undefined,
+      limit: params.limit,
+      offset: params.offset,
+      orderBy: params.orderBy ?? {
+        modifiedAt: "desc"
+      },
+      searchType: params.searchType,
+      semanticSearchTopK: params.semanticSearchTopK
+    };
     if (this.resource === Resource.everything) {
-      const nodes = await this.nodes();
-      const collections = await this.collections();
-      data = [...(nodes ?? []), ...(collections ?? [])];
-    } else if (this.resource === Resource.node) {
-      data = (await this.nodes()) ?? [];
-    } else if (this.resource === Resource.collection) {
-      data = (await this.collections()) ?? [];
-    } else if (this.resource === Resource.goal) {
-      data =
-        (await this.goals({ isIncludeSubItems: params.isIncludeSubItems })) ??
-        [];
-    } else if (this.resource === Resource.task) {
-      data = (await this.tasks()) ?? [];
-    } else if (this.resource === Resource.session) {
-      data = (await this.sessions()) ?? [];
+      searcheableResources.forEach(async (resource) => {
+        if (isValidString(params.searchQuery)) {
+          selectParams.search = {
+            query: params.searchQuery!,
+            properties: resolveSearchProperties(resource)
+          };
+        }
+        const result = await this.resourceStore?.selectMany(selectParams, {
+          isIncludeSubItems: params.isIncludeSubItems
+        });
+        data = [...data, ...result];
+      });
+    } else {
+      this.setResourceStore(this.resource);
+      data = await this.resourceStore?.selectMany(selectParams, {
+        isIncludeSubItems: params.isIncludeSubItems
+      });
     }
+    console.log({ data });
     if (isValidArray(data)) {
-      if (isValidString(this.searchQuery)) {
+      if (isValidString(params.searchQuery)) {
         if (!this.dev_isUseIndexSearch)
-          data = highlightSearchQuery(data, this.searchQuery);
+          data = highlightSearchQuery(data, params.searchQuery!);
         data = data.sort(searchSort);
       }
       return data;
@@ -358,7 +259,7 @@ export class SearchStore {
         ...activeResourceFilterV2,
         isStarred: true
       },
-      orderBy: this.orderBy ?? {
+      orderBy: {
         modifiedAt: "desc"
       }
     });
@@ -512,7 +413,7 @@ export class SearchStore {
           filters: {
             ...activeResourceFilterV2,
             ...additionalFilters,
-            isArchived: this.filters.isArchived ?? false,
+            isArchived: additionalFilters?.isArchived ?? false,
             contentType: subType ? [subType] : [...rootNodeTypeList],
             creationContext: subType ? undefined : false
           },
@@ -535,7 +436,7 @@ export class SearchStore {
                   resource: this.collectibleResource
                 }
               : {}),
-            isArchived: this.filters.isArchived ?? false,
+            isArchived: additionalFilters?.isArchived ?? false,
             type: subType ? [subType] : undefined,
             parent: resource === Resource.goal ? false : undefined
           },

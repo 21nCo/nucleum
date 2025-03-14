@@ -108,7 +108,7 @@
       {/if}
       <main class="flex flex-col gap-4 flex-1 overflow-auto">
         <div
-          class="flex flex-col w-full overflow-auto gap-3 bg-bgs2 rounded-lg border border-brs3"
+          class="flex flex-col w-full overflow-auto gap-3 bg-bgs2 rounded-lg border border-brs3 shrink-0"
         >
           {#if isConstrainedWidth}
             <GoalTitleRow {goal} isConstrainedWidth={true} />
@@ -135,7 +135,7 @@
             </div>
           </PanelSwitcher>
         </div>
-        <div class="flex-1">
+        <div class="flex-1 overflow-auto">
           {#if selectedPanel === "info"}
             <GoalInfoPanel {goal} {isConstrainedWidth} />
           {:else if selectedPanel === "subgoals"}

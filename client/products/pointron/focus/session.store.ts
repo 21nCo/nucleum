@@ -3,7 +3,6 @@ import {
   type IActiveSessionStore,
   type ISessionInterval,
   BlockType,
-  type IFocusGoal,
   type IFocusItemsStore,
   type ICurrentFocusItem,
   type IFocusItem
@@ -35,7 +34,10 @@ import {
 import { deepCopy, isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { AlertType } from "$lib/client/types/notification.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
-import type { IRecordId } from "$lib/client/types/data.type";
+import type {
+  IRecordId,
+  IResourceSelectParams
+} from "$lib/client/types/data.type";
 import { logger } from "$lib/client/components/debug/logger.client";
 import {
   type ISessionLog,
@@ -61,7 +63,6 @@ import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 import type { OmitForCaptureWithId } from "$lib/client/components/flux/resourceStores/resource.type";
 import { taskStore } from "$lib/client/components/tasks/task.store";
 import { GoalType } from "$lib/client/components/goals/goal.type";
-import { SearchStore } from "$lib/client/components/record/record.store";
 
 /** @deprecated */
 export const todayFocusStore = initTodayFocus();
@@ -1147,15 +1148,17 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     if (!item) return;
     const resourceType = determineResourceType(item.id);
     if (resourceType === Resource.goal) {
-      const goal = await new SearchStore(Resource.goal).select({
-        filters: {
-          id: item.id.toString()
+      const goal = await goalStore.selectMany(
+        {
+          filters: {
+            id: item.id.toString()
+          }
         },
-        isIncludeSubItems: true
-      });
+        { isIncludeSubItems: true }
+      );
       return goal?.[0];
     } else if (resourceType === Resource.task) {
-      const task = await new SearchStore(Resource.task).select({
+      const task = await taskStore.selectMany({
         filters: {
           id: item.id.toString()
         }
@@ -1194,7 +1197,7 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
   async addNewTask(label: string, goalId?: IRecordId) {
     let id = generateResourceId(Resource.task);
     let task = await taskStore.save(
-      { label, isChecked: false, goal: goalId },
+      { label, isChecked: false, goalId: goalId },
       { id }
     );
     if (!task || !Array.isArray(task) || task.length === 0) return;
@@ -1294,6 +1297,19 @@ export const focusItemsStore = new FocusItemsStore();
 class SessionStore extends ResourceStore<ISession> {
   constructor() {
     super(Resource.session);
+  }
+
+  selectMany(params?: IResourceSelectParams, additionalParams?: any) {
+    const properties = [
+      "*",
+      "select * from (select value id from $parent.items) as expandedItems",
+      ...(params?.properties ?? [])
+    ];
+    params = {
+      ...(params ?? {}),
+      properties
+    };
+    return super.selectMany(params, additionalParams);
   }
 
   /**

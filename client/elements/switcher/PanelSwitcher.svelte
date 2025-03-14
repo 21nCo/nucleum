@@ -65,7 +65,8 @@
   <div
     bind:this={parent}
     class={cn("relative panel-switcher flex items-center shrink-0", {
-      "overflow-x-auto": !isRenderAsDropdown,
+      "overflow-x-auto":
+        !isRenderAsDropdown && style !== PanelSwitcherStyle.SNAKE,
       "w-full justify-between px-2":
         (style === PanelSwitcherStyle.BAR ||
           style === PanelSwitcherStyle.SNAKE) &&
@@ -158,6 +159,7 @@
               );
             }}
             on:change
+            on:debouncedChange
             on:remove
           />
         {/each}

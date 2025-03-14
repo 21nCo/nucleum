@@ -129,7 +129,7 @@
   function resolveFilters() {
     let filters: any = resolveBaseFilters();
     if (goalId) {
-      filters = { ...filters, goal: goalId.toString() };
+      filters = { ...filters, goalId: goalId.toString() };
     }
     if (selectedSubType === "without-due-date") {
       filters = { ...filters, date: false };
@@ -145,7 +145,7 @@
         }
       };
     } else if (selectedSubType === "without-goal") {
-      filters = { ...filters, goal: false };
+      filters = { ...filters, goalId: false };
     }
     return filters;
   }
@@ -168,7 +168,7 @@
       label,
       date: resolveDateForNewTask(),
       isChecked: false,
-      goal: goalId,
+      goalId: goalId,
       collection: collectionId
     });
     if (isValidArrayWithData(task)) {

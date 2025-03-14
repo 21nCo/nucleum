@@ -575,7 +575,16 @@ export class ResourceStore<T extends IResource> implements IStore {
 
   get() {}
 
-  selectMany(params?: IResourceSelectParams) {
+  selectMany(params?: IResourceSelectParams, additionalParams?: any) {
+    const filters = {
+      trashInformation: false,
+      ...(params?.filters ?? {}),
+      isArchived: params?.filters?.isArchived ?? false
+    };
+    params = {
+      ...params,
+      filters
+    };
     if (this.isExtensionEnvironment) {
       return extensionFlux({
         method: FluxMethod.SELECT_MANY,

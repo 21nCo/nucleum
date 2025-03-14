@@ -42,7 +42,7 @@
       {
         label,
         date,
-        goal: goalId ?? goal?.id,
+        goalId: goalId ?? goal?.id,
         isChecked: false
       },
       {

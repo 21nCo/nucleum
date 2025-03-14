@@ -304,7 +304,7 @@ export type IMutationParamsv2<T> =
   | IBulkDeleteMutation
   | ICustomMutationParams;
 
-export type IPrimitiveDbDataType = string | number | boolean;
+export type IPrimitiveDbDataType = string | number | boolean | Date | IRecordId;
 
 export type IResourceFilterValue =
   | IPrimitiveDbDataType

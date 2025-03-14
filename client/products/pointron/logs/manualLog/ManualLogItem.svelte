@@ -206,7 +206,6 @@
       searchQuery,
       isIncludeSubItems: true
     });
-    console.log(result);
     return result;
   }
 </script>

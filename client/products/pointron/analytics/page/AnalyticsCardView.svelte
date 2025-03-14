@@ -10,7 +10,8 @@
   import {
     AnalyticsCardType,
     type AnalyticsCard,
-    type AnalyticsDataRecord
+    type AnalyticsDataRecord,
+    type IAnalyticsLabelColor
   } from "../analytics.types";
   import { analyticsConfigStore } from "../analytics.store";
   import { createEventDispatcher } from "svelte";
@@ -24,7 +25,7 @@
   export let pageId: string;
   export let data: AnalyticsDataRecord[];
   export let previousTimePeriodData: AnalyticsDataRecord[] = [];
-  export let goalColors: any;
+  export let goalColors: IAnalyticsLabelColor[];
   let parentBgIndex = $view.isPortrait ? 1 : 2;
   const dispatch = createEventDispatcher();
   $: timePeriod = timePeriodLabel(card.period);
@@ -107,7 +108,7 @@
             bind:value={card.label}
             placeholder="chart title"
             style={InputStyle.PLAIN}
-            on:change={onCardLabelChange}
+            on:debouncedChange={onCardLabelChange}
           />
           <span class="flex gap-2 items-center">
             <GroupingAndFilters
@@ -152,7 +153,7 @@
         <span class="font-medium">
           {card.type === AnalyticsCardType.TARGETS
             ? "Targets"
-            : (card.label ?? timePeriod)}
+            : card.label ?? timePeriod}
         </span>
         {#if card.type != AnalyticsCardType.TARGETS && card.label}
           <span class="text-fgs2 text-b2">

@@ -1,6 +1,10 @@
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
-import { StoreDataType, type IRecordId } from "$lib/client/types/data.type";
+import {
+  StoreDataType,
+  type IRecordId,
+  type IResourceSelectParams
+} from "$lib/client/types/data.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { recentsStore } from "../record/recent.store";
@@ -28,6 +32,31 @@ import { appStore } from "$lib/client/stores/app.store";
 class GoalStore extends ResourceStore<IGoal> {
   constructor() {
     super(Resource.goal);
+  }
+
+  selectMany(params?: IResourceSelectParams, additionalParams?: any) {
+    const properties = [
+      "*",
+      "(select * from $parent.parent) as parent",
+      ...(params?.properties ?? [])
+    ];
+    const filters = {
+      ...(params?.filters ?? {}),
+      type:
+        params?.filters && "type" in params.filters && params?.filters?.type
+          ? params.filters.type?.toUpperCase()
+          : undefined,
+      parent:
+        params?.search || additionalParams?.isIncludeSubItems
+          ? undefined
+          : false
+    };
+    params = {
+      ...(params ?? {}),
+      properties,
+      filters
+    };
+    return super.selectMany(params, additionalParams);
   }
 
   async save(

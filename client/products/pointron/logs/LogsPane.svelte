@@ -18,9 +18,8 @@
   import type { ISessionThumb } from "./log.type";
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { SearchStore } from "$lib/client/components/record/record.store";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { sessionLogStore } from "./log.store";
   export let date: Date = new Date();
 
   export let context: "journal" | "logs" = "logs";
@@ -34,7 +33,7 @@
   });
   async function refresh() {
     isRefreshing = true;
-    const result = await new SearchStore(Resource.session).select({
+    const result = await sessionLogStore.selectMany({
       filters: {
         start: date
       },

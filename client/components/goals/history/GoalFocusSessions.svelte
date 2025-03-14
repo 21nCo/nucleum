@@ -12,6 +12,7 @@
   import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
   import { isSameResource } from "../../flux/resourceStores/resource.utils";
   import GoalFocusSessionThumbnail from "./GoalFocusSessionThumbnail.svelte";
+  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   export let id: IRecordId;
   export let isIncludeSubGoals = false;
   let sessions: ISessionThumb[] = [];
@@ -77,7 +78,7 @@
   }
 </script>
 
-<div class="flex flex-col w-full h-full gap-4 py-8">
+<div class="flex flex-col w-full h-full gap-4 py-8 overflow-auto">
   {#if isLoading || sessionLogs.length === 0}
     <EmptyStatusView
       isLoadingState={isLoading}
@@ -112,6 +113,7 @@
           </div>
         </div>
       {/each}
+      <ScrollViewBottomSpacer />
     </div>
   {/if}
 </div>

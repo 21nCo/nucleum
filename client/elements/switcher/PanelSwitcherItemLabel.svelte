@@ -78,6 +78,9 @@
           on:input={(e) => {
             dispatch("change", { ...item });
           }}
+          on:debouncedChange={(e) => {
+            dispatch("debouncedChange", { ...item });
+          }}
         />
       </button>
     </Popover>

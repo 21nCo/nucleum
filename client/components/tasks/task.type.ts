@@ -16,11 +16,11 @@ interface ITaskBase extends IMemotronItemBase {
 }
 
 export interface ITask extends ITaskBase {
-  goal?: IRecordId;
+  goalId?: IRecordId;
 }
 
 export interface ITaskStore extends IObservableStoreSubject {}
 
 export interface ITaskThumb extends ITaskBase {
-  goal: IGoal;
+  goal?: IGoal;
 }

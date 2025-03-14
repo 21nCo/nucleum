@@ -290,6 +290,9 @@ class GoalStore extends ResourceFIRStore<IGoal> {
   }
 }
 
+/**
+ * @deprecated
+ */
 export const goalStore = new GoalStore();
 
 class QuickFocusItemStore extends ObservableStore<IQuickFocusItemStore> {

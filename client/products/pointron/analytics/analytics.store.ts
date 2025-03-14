@@ -7,10 +7,9 @@ import {
   type AnalyticsCard,
   AnalyticsCardType
 } from "./analytics.types";
-import { generateUID, interceptSurrealResponse } from "$lib/client/utils/utils";
+import { interceptSurrealResponse } from "$lib/client/utils/utils";
 import { TimePeriodType, TimeScale } from "$lib/client/types/time.type";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { deepCopy } from "$lib/shared/utils/obj.utils";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import {
   generateAnalyticsSeedPage,
@@ -18,6 +17,7 @@ import {
   generateParamsForCards
 } from "./analytics.utils";
 import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
+import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 
 export const selectedPageId = writable<string>();
 const analyticsConfigStoreId = Resource.pointAnalyticsConfig;
@@ -29,28 +29,17 @@ const seedAnalyticsConfig: IAnalyticsConfigStore = {
 
 class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
   constructor() {
-    super(
-      Resource.pointAnalyticsConfig,
-      { ...seedAnalyticsConfig },
-      {
-        dboDependencies: [
-          "fn::pointron::analytics::page::fetch",
-          "fn::pointron::analytics::targets::v3",
-          "fn::pointron::analytics::goal::v3"
-        ]
-      }
-    );
+    super(Resource.pointAnalyticsConfig, { ...seedAnalyticsConfig });
   }
-  set(config: IAnalyticsConfigStore) {
-    this.modify(config, { isDebouncedPersist: true });
-  }
+
   reset() {
     const val = {
       ...seedAnalyticsConfig,
       pages: [generateAnalyticsSeedPage()]
     };
-    return this.modify(val, { isDebouncedPersist: true });
+    return this.modify(val);
   }
+
   loader(data: IAnalyticsConfigStore) {
     if (data.pages.length === 0) {
       this.loadSeedData();
@@ -59,6 +48,7 @@ class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
       this.modify(val, { isPersist: false });
     }
   }
+
   updateCardConfig(pageId: string, config: AnalyticsCard) {
     let state = this.get();
     const page = state.pages.find((p) => p.id === pageId);
@@ -66,8 +56,9 @@ class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
     const chart = page.cards.find((c) => c.id === config.id);
     if (!chart) return;
     Object.assign(chart, config);
-    this.modify(state, { isDebouncedPersist: true });
+    this.modify(state);
   }
+
   removeCard(pageId: string, chartId: string) {
     let state = this.get();
     const page = state.pages.find((p) => p.id === pageId);
@@ -76,14 +67,15 @@ class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
     if (index > -1) {
       page.cards.splice(index, 1);
     }
-    this.modify(state, { isDebouncedPersist: true });
+    this.modify(state);
   }
+
   addCard(pageId: string) {
     let state = this.get();
     const page = state.pages.find((p) => p.id === pageId);
     if (!page) return;
     page.cards.push({
-      id: generateUID(),
+      id: generateSimpleRandomId(),
       grouping: AnalyticsCardGrouping.DEFAULT,
       filter: [],
       type: AnalyticsCardType.PIE,
@@ -95,28 +87,31 @@ class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
         }
       }
     });
-    this.modify(state, { isDebouncedPersist: true });
+    this.modify(state);
   }
+
   addPage() {
     let state = this.get();
     const newPage = generateAnalyticsSeedPage();
-    state.pages.push({ ...newPage, id: generateUID() });
-    this.modify(state, { isDebouncedPersist: true });
+    state.pages.push({ ...newPage, id: generateSimpleRandomId() });
+    this.modify(state);
   }
+
   editPageLabel(id: string, label: string) {
     let state = this.get();
     const page = state.pages.find((p) => p.id === id);
     if (!page) return;
     page.label = label;
-    this.modify(state, { isDebouncedPersist: true });
+    this.modify(state);
   }
+
   removePage(id: string) {
     let state = this.get();
     const index = state.pages.findIndex((p) => p.id === id);
     if (index > -1) {
       state.pages.splice(index, 1);
     }
-    this.modify(state, { isDebouncedPersist: true });
+    this.modify(state);
   }
 }
 
@@ -131,6 +126,7 @@ export type AnalyticsPageStoreType = ReturnType<typeof initAnalyticsPageStore>;
 const activeAnalyticsPageStores = new Map<string, AnalyticsPageStoreType>();
 
 /**
+ * @deprecated
  * Resolves the analytics page for the given id. If the store does not exist, it will be initialized.
  * @param id - The id of the analytics page
  * @returns The active analytics page store

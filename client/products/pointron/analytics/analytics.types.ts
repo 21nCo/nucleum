@@ -66,3 +66,8 @@ export type TopNCardDataRecord = {
   previousValue: number;
   color: number;
 };
+
+export type IAnalyticsLabelColor = {
+  label: string;
+  color: number;
+};

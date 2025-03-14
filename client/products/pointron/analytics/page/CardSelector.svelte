@@ -8,25 +8,25 @@
     {
       label: "Pie chart",
       value: AnalyticsCardType.PIE,
-      icon: "chart",
+      icon: "ph:chart-pie-light",
       groupId: "charts"
     },
     {
       label: "Donut chart",
       value: AnalyticsCardType.DONUT,
-      icon: "chart",
+      icon: "ph:chart-donut-light",
       groupId: "charts"
     },
     {
       label: "Line chart",
       value: AnalyticsCardType.LINE,
-      icon: "linechart",
+      icon: "ph:chart-line-light",
       groupId: "charts"
     },
     {
       label: "Bar chart",
       value: AnalyticsCardType.BAR,
-      icon: "barchart",
+      icon: "ph:chart-bar-light",
       groupId: "charts"
     },
     {
@@ -36,22 +36,24 @@
       groupId: "charts"
     },
     {
-      label: "Targets",
-      value: AnalyticsCardType.TARGETS,
-      icon: "rocket",
-      groupId: "other"
-    },
-    {
       label: "Top goals",
       value: AnalyticsCardType.TOP_N,
-      icon: "rectangle-stack",
+      icon: "ph:rocket-light",
       groupId: "other"
     },
     {
       label: "Metrics",
       value: AnalyticsCardType.METRICS,
-      icon: "adjustments-vertical",
+      icon: "ph:squares-four-light",
       groupId: "other"
+    },
+    {
+      label: "Targets",
+      value: AnalyticsCardType.TARGETS,
+      icon: "ph:target-light",
+      groupId: "other",
+      badge: "planned",
+      isDisabled: true
     }
   ];
   let groups: DropdownGroup[] = [

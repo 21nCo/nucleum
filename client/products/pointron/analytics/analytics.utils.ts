@@ -9,7 +9,6 @@ import {
   determineTimePeriod,
   determineTimePeriodv2
 } from "$lib/client/utils/time.utils";
-import { generateUID } from "$lib/client/utils/utils";
 import { get } from "svelte/store";
 import { analyticsConfigStore, selectedPageId } from "./analytics.store";
 import {
@@ -18,6 +17,7 @@ import {
   type AnalyticsPage,
   type AnalyticsCard
 } from "./analytics.types";
+import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 
 export function onAddPageClicked() {
   analyticsConfigStore.addPage();
@@ -88,11 +88,11 @@ export function generateParamsForCards(cards: AnalyticsCard[]) {
 
 export function generateAnalyticsSeedPages() {
   const page1 = {
-    id: generateUID(),
+    id: generateSimpleRandomId(),
     label: "Overview",
     cards: [
       {
-        id: generateUID(),
+        id: generateSimpleRandomId(),
         grouping: AnalyticsCardGrouping.DEFAULT,
         filter: [],
         type: AnalyticsCardType.DONUT,
@@ -105,7 +105,7 @@ export function generateAnalyticsSeedPages() {
         }
       },
       {
-        id: generateUID(),
+        id: generateSimpleRandomId(),
         grouping: AnalyticsCardGrouping.TOP_LEVEL_GOALS,
         filter: [],
         type: AnalyticsCardType.TOP_N,
@@ -117,21 +117,21 @@ export function generateAnalyticsSeedPages() {
           }
         }
       },
+      // {
+      //   id: generateSimpleRandomId(),
+      //   grouping: AnalyticsCardGrouping.TOP_LEVEL_GOALS,
+      //   filter: [],
+      //   type: AnalyticsCardType.TARGETS,
+      //   period: {
+      //     scale: TimeScale.DAYS,
+      //     value: {
+      //       type: TimePeriodType.RELATIVE,
+      //       param: -7
+      //     }
+      //   }
+      // },
       {
-        id: generateUID(),
-        grouping: AnalyticsCardGrouping.TOP_LEVEL_GOALS,
-        filter: [],
-        type: AnalyticsCardType.TARGETS,
-        period: {
-          scale: TimeScale.DAYS,
-          value: {
-            type: TimePeriodType.RELATIVE,
-            param: -7
-          }
-        }
-      },
-      {
-        id: generateUID(),
+        id: generateSimpleRandomId(),
         grouping: AnalyticsCardGrouping.DEFAULT,
         filter: [],
         type: AnalyticsCardType.BAR,
@@ -146,11 +146,11 @@ export function generateAnalyticsSeedPages() {
     ]
   };
   const page2 = {
-    id: generateUID(),
+    id: generateSimpleRandomId(),
     label: "Days",
     cards: [
       {
-        id: generateUID(),
+        id: generateSimpleRandomId(),
         grouping: AnalyticsCardGrouping.DEFAULT,
         filter: [],
         type: AnalyticsCardType.METRICS,
@@ -163,7 +163,7 @@ export function generateAnalyticsSeedPages() {
         }
       },
       {
-        id: generateUID(),
+        id: generateSimpleRandomId(),
         grouping: AnalyticsCardGrouping.DEFAULT,
         filter: [],
         type: AnalyticsCardType.DONUT,
@@ -176,7 +176,7 @@ export function generateAnalyticsSeedPages() {
         }
       },
       {
-        id: generateUID(),
+        id: generateSimpleRandomId(),
         grouping: AnalyticsCardGrouping.DEFAULT,
         filter: [],
         type: AnalyticsCardType.DONUT,
@@ -189,7 +189,7 @@ export function generateAnalyticsSeedPages() {
         }
       },
       {
-        id: generateUID(),
+        id: generateSimpleRandomId(),
         grouping: AnalyticsCardGrouping.DEFAULT,
         filter: [],
         type: AnalyticsCardType.DONUT,
@@ -202,7 +202,7 @@ export function generateAnalyticsSeedPages() {
         }
       },
       {
-        id: generateUID(),
+        id: generateSimpleRandomId(),
         grouping: AnalyticsCardGrouping.DEFAULT,
         filter: [],
         type: AnalyticsCardType.BAR,
@@ -217,11 +217,11 @@ export function generateAnalyticsSeedPages() {
     ]
   };
   const page3 = {
-    id: generateUID(),
+    id: generateSimpleRandomId(),
     label: "Months",
     cards: [
       {
-        id: generateUID(),
+        id: generateSimpleRandomId(),
         grouping: AnalyticsCardGrouping.DEFAULT,
         filter: [],
         type: AnalyticsCardType.METRICS,
@@ -234,7 +234,7 @@ export function generateAnalyticsSeedPages() {
         }
       },
       {
-        id: generateUID(),
+        id: generateSimpleRandomId(),
         grouping: AnalyticsCardGrouping.DEFAULT,
         filter: [],
         type: AnalyticsCardType.DONUT,
@@ -247,7 +247,7 @@ export function generateAnalyticsSeedPages() {
         }
       },
       {
-        id: generateUID(),
+        id: generateSimpleRandomId(),
         grouping: AnalyticsCardGrouping.DEFAULT,
         filter: [],
         type: AnalyticsCardType.DONUT,
@@ -260,7 +260,7 @@ export function generateAnalyticsSeedPages() {
         }
       },
       {
-        id: generateUID(),
+        id: generateSimpleRandomId(),
         grouping: AnalyticsCardGrouping.DEFAULT,
         filter: [],
         type: AnalyticsCardType.DONUT,
@@ -273,7 +273,7 @@ export function generateAnalyticsSeedPages() {
         }
       },
       {
-        id: generateUID(),
+        id: generateSimpleRandomId(),
         grouping: AnalyticsCardGrouping.DEFAULT,
         filter: [],
         type: AnalyticsCardType.BAR,
@@ -288,11 +288,11 @@ export function generateAnalyticsSeedPages() {
     ]
   };
   const page4 = {
-    id: generateUID(),
+    id: generateSimpleRandomId(),
     label: "Years",
     cards: [
       {
-        id: generateUID(),
+        id: generateSimpleRandomId(),
         grouping: AnalyticsCardGrouping.DEFAULT,
         filter: [],
         type: AnalyticsCardType.METRICS,
@@ -305,7 +305,7 @@ export function generateAnalyticsSeedPages() {
         }
       },
       {
-        id: generateUID(),
+        id: generateSimpleRandomId(),
         grouping: AnalyticsCardGrouping.DEFAULT,
         filter: [],
         type: AnalyticsCardType.DONUT,
@@ -318,7 +318,7 @@ export function generateAnalyticsSeedPages() {
         }
       },
       {
-        id: generateUID(),
+        id: generateSimpleRandomId(),
         grouping: AnalyticsCardGrouping.DEFAULT,
         filter: [],
         type: AnalyticsCardType.DONUT,
@@ -331,7 +331,7 @@ export function generateAnalyticsSeedPages() {
         }
       },
       {
-        id: generateUID(),
+        id: generateSimpleRandomId(),
         grouping: AnalyticsCardGrouping.DEFAULT,
         filter: [],
         type: AnalyticsCardType.BAR,
@@ -350,11 +350,11 @@ export function generateAnalyticsSeedPages() {
 
 export function generateAnalyticsSeedPage(): AnalyticsPage {
   return {
-    id: generateUID(),
+    id: generateSimpleRandomId(),
     label: "New view",
     cards: [
       {
-        id: generateUID(),
+        id: generateSimpleRandomId(),
         grouping: AnalyticsCardGrouping.DEFAULT,
         filter: [],
         type: AnalyticsCardType.DONUT,
@@ -367,7 +367,7 @@ export function generateAnalyticsSeedPage(): AnalyticsPage {
         }
       },
       {
-        id: generateUID(),
+        id: generateSimpleRandomId(),
         grouping: AnalyticsCardGrouping.DEFAULT,
         filter: [],
         type: AnalyticsCardType.TOP_N,
@@ -380,7 +380,7 @@ export function generateAnalyticsSeedPage(): AnalyticsPage {
         }
       },
       {
-        id: generateUID(),
+        id: generateSimpleRandomId(),
         grouping: AnalyticsCardGrouping.DEFAULT,
         filter: [],
         type: AnalyticsCardType.BAR,

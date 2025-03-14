@@ -791,7 +791,7 @@ export const globalActions: IAction[] = [
         taskStore.modify(
           componentParams.taskId,
           {
-            goal: id
+            goalId: id
           },
           {
             context: componentParams?.context

@@ -101,7 +101,7 @@
   let data: any[] = [];
   let searchStore = new SearchStore();
   let QAsearchStore = new SearchStore();
-  QAsearchStore.searchType = SearchType.SEMANTIC;
+  // QAsearchStore.searchType = SearchType.SEMANTIC;
   let selectedSubType: SubType = "all";
   let isRefreshing: boolean = true;
   let totalCountAfterFilter: number = 0;
@@ -195,12 +195,12 @@
     try {
       let orderBy: IResourceSelectOrderBy | undefined;
       let semanticSearchTopK: number | undefined;
-      if (searchStore.searchType == SearchType.SEMANTIC) {
-        orderBy = {
-          dist: "desc",
-          createdAt: "desc"
-        };
-      }
+      // if (searchStore.searchType == SearchType.SEMANTIC) {
+      //   orderBy = {
+      //     dist: "desc",
+      //     createdAt: "desc"
+      //   };
+      // }
       subTypeSwitcherRef?.refresh();
       const filters = resolveFilters();
       const newData = await searchStore.select({
@@ -509,11 +509,11 @@
       bind:searchQuery
       on:refresh={debouncedSearch}
       on:semanticSearch={(e) => {
-        if (e.detail) {
-          searchStore.searchType = SearchType.SEMANTIC;
-        } else {
-          searchStore.searchType = SearchType.FULL_TEXT;
-        }
+        // if (e.detail) {
+        //   searchStore.searchType = SearchType.SEMANTIC;
+        // } else {
+        //   searchStore.searchType = SearchType.FULL_TEXT;
+        // }
         refresh();
       }}
     />

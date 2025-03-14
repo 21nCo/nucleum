@@ -29,6 +29,9 @@
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
+  import { goalStore } from "$lib/client/components/goals/goal.store";
+  import { taskStore } from "$lib/client/components/tasks/task.store";
+
   export let id: string;
   export let log: any = undefined;
   export let accessMode: ResourceAccessMode = ResourceAccessMode.POP;
@@ -123,13 +126,17 @@
       log = response;
     }
     if (log.items) {
-      goals = await new SearchStore(Resource.goal).select({
-        filters: {
-          id: log.items.map((x) => x.id)
+      goals = await goalStore.selectMany(
+        {
+          filters: {
+            id: log.items.map((x) => x.id)
+          }
         },
-        isIncludeSubItems: true
-      });
-      tasks = await new SearchStore(Resource.task).select({
+        {
+          isIncludeSubItems: true
+        }
+      );
+      tasks = await taskStore.selectMany({
         filters: {
           id: log.items.map((x) => x.id)
         }

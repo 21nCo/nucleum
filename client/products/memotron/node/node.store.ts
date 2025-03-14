@@ -11,7 +11,8 @@ import {
   canHaveTraces,
   NodeView,
   headingNodeTypes,
-  mediaNodeTypeList
+  mediaNodeTypeList,
+  rootNodeTypeList
 } from "$lib/client/products/memotron/node/node.type";
 import {
   activeResources,
@@ -40,7 +41,10 @@ import {
 import { flux } from "$lib/client/components/flux/flux";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { collectionStore } from "$lib/client/components/collection/collection.store";
-import type { IRecordId } from "$lib/client/types/data.type";
+import type {
+  IRecordId,
+  IResourceSelectParams
+} from "$lib/client/types/data.type";
 import type { IToggleItem } from "$lib/client/elements/toggle/toggle.type";
 import { generateMarkdownText, getMarkdownSymbolPrepended } from "./node.utils";
 import { isValidString } from "$lib/shared/utils/text.utils";
@@ -72,6 +76,39 @@ class NodeStore extends ResourceStore<INode> {
       dboDependencies: ["fn::memotron::node::fetch", "fn::memotron::timeline"]
     });
   }
+
+  selectMany(params?: IResourceSelectParams, additionalParams?: any) {
+    const properties = [
+      "*",
+      "parent.* as parent",
+      "file.* as file",
+      "search::highlight('**', '**', 2, false) AS bodySearch",
+      ...(params?.properties ?? [])
+    ];
+    const isContentTypePresent =
+      params?.filters &&
+      "contentType" in params?.filters &&
+      params.filters.contentType;
+    const filters = {
+      creationContext:
+        isValidString(params?.search?.query) || isContentTypePresent
+          ? undefined
+          : false,
+      ...(params?.filters ?? {}),
+      contentType: isContentTypePresent
+        ? params?.filters?.contentType?.toUpperCase()
+        : params?.search?.query
+          ? undefined
+          : rootNodeTypeList
+    };
+    params = {
+      ...(params ?? {}),
+      properties,
+      filters
+    };
+    return super.selectMany(params, additionalParams);
+  }
+
   async fetchTimeline(date: Date) {
     const query = `fn::memotron::timeline($date)`;
     const response = await flux.selectByQuery(query, {

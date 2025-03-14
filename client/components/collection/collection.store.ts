@@ -28,7 +28,11 @@ import {
 import { ResourceActions } from "$lib/client/components/record/resource.actions";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { flux } from "$lib/client/components/flux/flux";
-import { StoreDataType, type IRecordId } from "$lib/client/types/data.type";
+import {
+  StoreDataType,
+  type IRecordId,
+  type IResourceSelectParams
+} from "$lib/client/types/data.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import { assignDefaultLabelAsFallback } from "./properties/property.utils";
 import type { IProperty } from "./properties/property.type";
@@ -53,11 +57,40 @@ import { appStore } from "$lib/client/stores/app.store";
 import { resolveCollectionResource } from "./collection.utils";
 
 class CollectionStore extends ResourceStore<ICollection> {
+  collectibleResource: Resource[] | undefined;
   constructor() {
     super(Resource.collection, {
       dataType: StoreDataType.FIR
     });
+    this.collectibleResource = resolveCollectionResource(get(appStore).product);
   }
+
+  selectMany(params?: IResourceSelectParams, additionalParams?: any) {
+    const properties = [
+      "*",
+      "typeToExtend.* as typeToExtend",
+      ...(params?.properties ?? [])
+    ];
+    const filters = {
+      ...(params?.filters ?? {}),
+      type:
+        params?.filters && "type" in params.filters && params?.filters?.type
+          ? params.filters.type?.toUpperCase()
+          : undefined,
+      ...(this.collectibleResource
+        ? {
+            resource: this.collectibleResource
+          }
+        : {})
+    };
+    params = {
+      ...(params ?? {}),
+      properties,
+      filters
+    };
+    return super.selectMany(params, additionalParams);
+  }
+
   async save(
     form: Partial<ICollection> & { defaultLayout: CollectionLayout },
     additionalParams?: {
@@ -67,7 +100,6 @@ class CollectionStore extends ResourceStore<ICollection> {
     const id = generateResourceId(Resource.collection);
     const propertyEditor = propertyEditorStore.get();
     logger.log({ at: "CollectionStore.save", propertyEditor, form });
-    const defaultResource = resolveCollectionResource(get(appStore).product);
     let properties: OmitForCaptureWithId<IProperty>[] =
       propertyEditor.properties;
     const record: OmitForCapture<ICollection> = {
@@ -78,7 +110,7 @@ class CollectionStore extends ResourceStore<ICollection> {
       defaultLayout: undefined,
       typeToExtend: propertyEditor.typeToExtend?.id ?? undefined,
       type: form.type ?? CollectionType.UNTYPED,
-      resource: form.resource ?? defaultResource[0]
+      resource: form.resource ?? this.collectibleResource?.[0]
     };
     if (form.type === CollectionType.TYPED && properties?.length > 0) {
       properties = properties.map(assignDefaultLabelAsFallback);

@@ -24,13 +24,14 @@
     AnalyticsCardType,
     type AnalyticsCard,
     type AnalyticsDataRecord,
-    type ChartDataRecord
+    type ChartDataRecord,
+    type IAnalyticsLabelColor
   } from "../analytics.types";
   import { cn } from "$lib/client/utils/ui.utils";
   import view from "$lib/client/stores/view.store";
   export let chart: AnalyticsCard;
   export let rawData: AnalyticsDataRecord[];
-  export let goalColors: { label: string; color: number }[];
+  export let goalColors: IAnalyticsLabelColor[];
   let data: ChartDataRecord[];
   let options: any;
   let isLoadingState = true;
