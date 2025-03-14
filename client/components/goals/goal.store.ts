@@ -47,7 +47,9 @@ class GoalStore extends ResourceStore<IGoal> {
           ? params.filters.type?.toUpperCase()
           : undefined,
       parent:
-        params?.search || additionalParams?.isIncludeSubItems
+        params?.search ||
+        additionalParams?.isIncludeSubItems ||
+        params?.filters?.isStarred
           ? undefined
           : false
     };

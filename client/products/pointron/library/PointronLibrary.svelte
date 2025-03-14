@@ -17,6 +17,7 @@
       Resource.task,
       Resource.collection,
       Resource.habit,
+      Resource.event,
       Resource.combination
     ];
   }

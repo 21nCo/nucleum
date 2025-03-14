@@ -239,7 +239,6 @@ export class SearchStore {
         isIncludeSubItems: params.isIncludeSubItems
       });
     }
-    console.log({ data });
     if (isValidArray(data)) {
       if (isValidString(params.searchQuery)) {
         if (!this.dev_isUseIndexSearch)

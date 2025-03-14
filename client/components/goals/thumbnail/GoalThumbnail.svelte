@@ -107,7 +107,7 @@
                 </span>
               {/if} -->
               </div>
-              <span class="text-b3 text-fgs3 truncate text-left">
+              <span class="text-b3 text-fgs3 truncate text-left max-h-6">
                 {#if isCurrentlyFocusing}
                   Currently focusing...
                 {:else if item.description}

@@ -636,7 +636,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
           (x) => x.id == session.currentBlockId
         );
         if (currentBlockIndex === session.intervals.length - 1) {
-          this.finishSession();
+          this.prefinishSession();
         } else {
           isContinueSession = true;
         }
@@ -651,7 +651,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       newBars = [...newBars, { ...bar, progress: refreshedProgress }];
     });
     if (totalElapsedRemaining > 0) {
-      this.finishSession();
+      this.prefinishSession();
     }
     return { intervals: newBars, isContinueSession };
   }
@@ -800,7 +800,10 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       this._resumeTimer({
         isResetTimer: false
       });
-    } else if (savedSessionStore.state === SessionState.FINISHED) {
+    } else if (
+      savedSessionStore.state === SessionState.FINISHED ||
+      savedSessionStore.state === SessionState.PRE_FINISHED
+    ) {
       this.shallowReset();
       appStore.runAction(PointronEvent.SESSION_FINISHED);
       this.modify(savedSessionStore, { isPersist: false });
@@ -815,6 +818,20 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     logger.log({ context: "session store loadEmptyState" });
     this.modify(this.reset(), { isPersist: false });
     this.propagateMessageToParent(this.get());
+  }
+
+  /**
+   * This is called when the session is auto finished without user interaction. This happens in cases of countdown or end time fixed sessions.
+   *
+   *Note:  This is used instead of finishSession directly as finishSession is causing unintented behavior when the app is left in the background or when the computer is in sleep state. In such cases, 100s of sessionLog entries are being created.
+   */
+  prefinishSession() {
+    this.shallowReset();
+    this.modify({
+      state: SessionState.PRE_FINISHED,
+      isSessionRunning: false
+    });
+    appEvents.publish(PointronEvent.SESSION_FINISHED);
   }
 
   async finishSession(isClose: boolean = false) {

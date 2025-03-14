@@ -6,5 +6,6 @@ export enum SessionState {
   BREAK_COMPLETED,
   TIME_IS_RUNNING_OUT,
   TIME_IS_UP,
-  FINISHED
+  FINISHED,
+  PRE_FINISHED
 }

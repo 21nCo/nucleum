@@ -61,6 +61,7 @@ import PointronLibrary from "./library/PointronLibrary.svelte";
 import { SearchStore } from "$lib/client/components/record/record.store";
 import { goalStore } from "$lib/client/components/goals/goal.store";
 import GoalSearchResultItem from "$lib/client/components/goals/GoalSearchResultItem.svelte";
+import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
 const isSessionRunningPreCondition = () => get(activeSession).isSessionRunning;
 
 export const pointronActions: IAction[] = [
@@ -104,7 +105,14 @@ export const pointronActions: IAction[] = [
         orientation: Orientation.Vertical,
         primaryAction: {
           label: "Done",
-          callback: () => activeSession.close()
+          callback: () => {
+            const focus = get(activeSession);
+            if (focus.state === SessionState.PRE_FINISHED) {
+              return activeSession.finishSession(true);
+            } else {
+              return activeSession.close();
+            }
+          }
         }
       }
     }
