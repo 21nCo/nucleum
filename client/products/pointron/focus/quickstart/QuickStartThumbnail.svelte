@@ -19,6 +19,7 @@
   import { hoverable } from "$lib/client/actions/hover.action";
   import { goalStore } from "$lib/client/components/goals/goal.store";
   import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { focusAggregates } from "../../analytics/analytics.store";
   export let item: Pick<IGoalThumb, "id" | "label" | "color" | "parent"> & {
     focus?: number;
   };
@@ -26,7 +27,7 @@
   export let refresh: any;
   export let isInEditMode: boolean = false;
   let isColorGoalTextExperimental = false;
-  let todayFocusDuration: number | undefined = undefined;
+  let todayFocusDuration: number | undefined = item.focus;
   let parentLabels: string[] = [];
   let focusTime: number;
   let isHovering = false;
@@ -36,7 +37,8 @@
     $currentFocusItem &&
     isSameResource(item, $currentFocusItem) &&
     $activeSession.isQuickStartOn &&
-    $activeSession.isSessionRunning;
+    $activeSession.isSessionRunning &&
+    !isFinishingState;
   $: if (isActive) {
     focusTime = resolveTaskFocus(
       $activeSession.intervals,
@@ -45,11 +47,6 @@
     );
   }
 
-  $: if (item.focus) {
-    todayFocusDuration = item.focus;
-  }
-  $: color = item.color ?? item.parent?.[0]?.color;
-
   onMount(async () => {
     if (item.parent && item.parent?.length > 0)
       parentLabels = item.parent.map((x: any) => x.label) ?? [];
@@ -57,14 +54,23 @@
 
   async function toggleSession() {
     if (isInEditMode) return;
-    isFinishingState = true;
     if (isActive) {
+      isFinishingState = true;
       await activeSession.finishSession(true);
+      await refreshFocus();
+      isFinishingState = false;
     } else {
       if ($activeSession.isSessionRunning)
         await activeSession.finishSession(true);
       await activeSession.quickStart(item.id);
     }
+  }
+
+  async function refreshFocus() {
+    todayFocusDuration = await focusAggregates.aggregateFocusForADay({
+      day: new Date(),
+      goalId: item.id
+    });
   }
 
   async function unPin() {
@@ -94,15 +100,15 @@
           "border-[1.5px] border-dashed border-ccs1 hover:bg-bgs2": isInEditMode
         }
       )}
-      {color}
+      color={item.color}
       on:click={toggleSession}
     >
       <div class="flex gap-2 items-center h-full">
         {#if !isActive && !isInEditMode}
           <div
             class={cn("w-0.5 h-8 ml-0.5 rounded-full", {
-              "bg-ccs1": color,
-              "bg-fgs2": !color
+              "bg-ccs1": item.color,
+              "bg-fgs2": !item.color
             })}
           />
         {/if}
@@ -178,7 +184,7 @@
       "border-[1.5px] border-dashed border-ccs1 dark:border-ccs2 hover:bg-bgs2":
         isInEditMode
     })}
-    {color}
+    color={item.color}
     on:click={toggleSession}
   >
     <button

@@ -9,17 +9,31 @@
   import { ButtonStyle } from "$lib/client/types/button.type";
   import Icon from "$lib/client/elements/Icon.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
+  import { goalStore } from "$lib/client/components/goals/goal.store";
+  import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
+  import { onMount } from "svelte";
 
   export let id: string;
   let config = $analyticsConfigStore.pages.find((x) => x.id === id);
+  let goals: IGoalThumb[] = [];
+  let isLoading = true;
 
   async function addCard() {
     analyticsConfigStore.addCard(id);
-    // await resolveData();
+  }
+
+  onMount(() => {
+    refreshGoals();
+  });
+
+  async function refreshGoals() {
+    isLoading = true;
+    goals = await goalStore.selectMany({}, { isIncludeSubItems: true });
+    isLoading = false;
   }
 </script>
 
-{#if config}
+{#if config && !isLoading}
   <div
     class={cn("flex h-full max-h-full p-2", {
       "flex-col gap-3 overflow-auto": $view.isPortrait,
@@ -29,6 +43,7 @@
     {#each config.cards as card, index}
       <AnalyticsCardView
         {card}
+        {goals}
         position={{ index, total: config.cards.length }}
         pageId={id}
       />
@@ -57,6 +72,7 @@
   </div>
 {:else}
   <EmptyStatusView
+    isLoadingState={isLoading}
     mainText={!config
       ? "Geez Something went wrong!"
       : "Shoot! No cards configured."}

@@ -28,14 +28,17 @@
   import { sessionLogStore } from "../../logs/log.store";
   import type { ISessionLogThumb } from "../../logs/log.type";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import { goalStore } from "$lib/client/components/goals/goal.store";
-  import { removeDuplicatesFilter } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import {
+    removeDuplicatesFilter,
+    resourceInList
+  } from "$lib/client/components/flux/resourceStores/resource.utils";
   import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
   import { resolveGoalColor } from "$lib/client/components/goals/goal.utils";
   import account from "$lib/client/stores/account.store";
   export let card: AnalyticsCard;
   export let position: { index: number; total: number };
   export let pageId: string;
+  export let goals: IGoalThumb[] = [];
   let data: AnalyticsDataRecord[];
   let previousTimePeriodData: AnalyticsDataRecord[] = [];
   let goalColors: IAnalyticsLabelColor[] = [];
@@ -95,6 +98,12 @@
     });
   }
 
+  function resolveGoalFromId(id: IRecordId | undefined) {
+    if (!id) return;
+    const goal = goals.find(resourceInList(id));
+    return goal;
+  }
+
   async function refresh() {
     isRefreshing = true;
 
@@ -130,7 +139,9 @@
           goalId: log.goalId || "",
           start: log.start,
           topLevelGoal:
-            log.topLevelGoal?.[0]?.label ?? log.goal?.label ?? "Unknown"
+            resolveGoalFromId(log.goal?.parent?.[0])?.label ??
+            log.goal?.label ??
+            "Unknown"
         })
       );
 
@@ -175,27 +186,21 @@
         }
       }
 
-      // if (isValidArrayWithData(goalIds)) {
-      //   const goals = await goalStore.selectMany(
-      //     {
-      //       filters: {
-      //         id: goalIds.filter(removeDuplicatesFilter)
-      //       }
-      //     },
-      //     { isIncludeSubItems: true }
-      //   );
-      //   goals.forEach((goal: IGoalThumb) => {
-      //     let color = resolveGoalColor(goal);
-      //     color = color ?? Math.floor(Math.random() * 360);
-      //     if (!colors.some((x) => x.label === goal.label)) {
-      //       colors.push({
-      //         label: goal.label,
-      //         color: color
-      //       });
-      //     }
-      //   });
-      // }
-      // goalColors = colors;
+      if (isValidArrayWithData(goalIds)) {
+        goalIds.filter(removeDuplicatesFilter).forEach((goalId: IRecordId) => {
+          const goal = resolveGoalFromId(goalId);
+          if (!goal) return;
+          let color = resolveGoalColor(goal);
+          color = color ?? Math.floor(Math.random() * 360);
+          if (!colors.some((x) => x.label === goal.label)) {
+            colors.push({
+              label: goal.label,
+              color: color
+            });
+          }
+        });
+      }
+      goalColors = colors;
       isRefreshing = false;
     } catch (error) {
       console.error("Error resolving analytics data:", error);

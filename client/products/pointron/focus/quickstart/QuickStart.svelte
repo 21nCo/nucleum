@@ -19,9 +19,16 @@
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
   import { isValidArray } from "$lib/shared/utils/obj.utils";
-  import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import {
+    resourceAction,
+    resourceInList
+  } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  import { resolveGoalColor } from "$lib/client/components/goals/goal.utils";
+  import { focusAggregates } from "../../analytics/analytics.store";
+  import { LoadingAnimationType } from "$lib/client/types/feedback.type";
+  import { Point } from "maplibre-gl";
 
   let isLoadingState = false;
   let searchInput = "";
@@ -49,6 +56,7 @@
   }
 
   async function refresh() {
+    isLoadingState = true;
     const result = await searchStore.select({
       filters: {
         isPinnedForQuickFocus: true
@@ -56,9 +64,27 @@
       searchQuery: "",
       isIncludeSubItems: true
     });
+    const focusData = await focusAggregates.aggregateFocusForADay({
+      day: new Date(),
+      goalIds: result.map((x: any) => x.id)
+    });
     if (isValidArray(result)) {
-      items = result;
+      items = result
+        .map((x: any) => ({
+          ...x,
+          color: resolveGoalColor(x),
+          focus: focusData.find(resourceInList(x.id))?.focus
+        }))
+        .sort((a: IGoalThumb, b: IGoalThumb) => {
+          if (a.color === b.color) {
+            return a.label.localeCompare(b.label);
+          }
+          if (a.color === undefined) return 1;
+          if (b.color === undefined) return -1;
+          return a.color - b.color;
+        });
     }
+    isLoadingState = false;
   }
 
   async function onSearch(event: any) {
@@ -74,7 +100,10 @@
       isIncludeSubItems: true
     });
     if (isValidArray(result)) {
-      items = result;
+      items = result.map((x: any) => ({
+        ...x,
+        color: resolveGoalColor(x)
+      }));
     }
   }
 </script>
@@ -135,6 +164,9 @@
       size={Size.sm}
       {isLoadingState}
       isSearchContext={true}
+      loadingAnimation={layout !== Layout.LIST
+        ? LoadingAnimationType.QUICK_FOCUS_ITEMS_GRID_PULSE
+        : LoadingAnimationType.QUICK_FOCUS_ITEM_PULSE}
       mainText={"No pinned goals found"}
       subText="Please create a new goal or pin an existing one to the quick focus section."
       actionText={"Create new goal"}
@@ -148,8 +180,11 @@
 </div>
 
 <ComponentBaseLayer
-  subscribeToResource={new Set([Resource.goal])}
-  subscribeToContext={new Set([PointronAction.PIN_TO_QUICK_FOCUS])}
+  subscribeToResource={new Set([Resource.goal, Resource.sessionLog])}
+  subscribeToContext={new Set([
+    PointronAction.PIN_TO_QUICK_FOCUS,
+    PointronAction.FINISH_FOCUS_SESSION
+  ])}
   on:change={refresh}
 />
 

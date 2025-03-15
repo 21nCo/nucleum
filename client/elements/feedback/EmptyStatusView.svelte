@@ -12,6 +12,8 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import Icon from "../Icon.svelte";
   import ComingSoon from "$lib/client/illustrations/pixelsmarket/ComingSoon.svelte";
+  import QuickFocusItemsGridPulse from "./animations/thumbnailPulse/QuickFocusItemsGridPulse.svelte";
+  import QuickFocusItemPulse from "./animations/thumbnailPulse/QuickFocusItemPulse.svelte";
   export let mainText: string | undefined = undefined;
   export let subText: string | undefined = undefined;
   export let size: Size.sm | Size.md | Size.lg = Size.md;
@@ -42,6 +44,10 @@
     <LogsLoadingPulse count={pulseCount} />
   {:else if isLoadingState && loadingAnimation === LoadingAnimationType.DASHBOARD_PULSE}
     <DashboardLoadingPulse />
+  {:else if isLoadingState && loadingAnimation === LoadingAnimationType.QUICK_FOCUS_ITEMS_GRID_PULSE}
+    <QuickFocusItemsGridPulse />
+  {:else if isLoadingState && loadingAnimation === LoadingAnimationType.QUICK_FOCUS_ITEM_PULSE}
+    <QuickFocusItemPulse />
   {:else}
     {#if isSearchContext}
       <div

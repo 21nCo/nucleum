@@ -1387,7 +1387,9 @@ class SessionStore extends ResourceStore<ISession> {
       }
     });
     this.create(session);
-    sessionLogStore.create(logs);
+    sessionLogStore.create(logs, {
+      context: PointronAction.FINISH_FOCUS_SESSION
+    });
 
     function resolvePlannedEndTime(session: IActiveSessionStore) {
       if (session.type == SessionType.COUNTUP) {

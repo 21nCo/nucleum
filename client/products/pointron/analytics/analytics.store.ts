@@ -18,6 +18,10 @@ import {
 } from "./analytics.utils";
 import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
 import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+import { ObservableStore } from "$lib/client/stores/client.store";
+import { sessionLogStore } from "../logs/log.store";
+import type { IRecordId } from "$lib/client/types/data.type";
+import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
 
 export const selectedPageId = writable<string>();
 const analyticsConfigStoreId = Resource.pointAnalyticsConfig;
@@ -187,3 +191,40 @@ function initAnalyticsPageStore(config: AnalyticsPage) {
     }
   };
 }
+
+class FocusAggregates {
+  async aggregateFocusForADay(params: {
+    day: Date;
+    goalIds?: IRecordId[];
+    goalId?: IRecordId;
+  }) {
+    const logs = await sessionLogStore.selectMany({
+      filters: {
+        start: params.day,
+        goalId: params.goalIds ?? params.goalId?.toString()
+      }
+    });
+    if (!logs) return 0;
+    if (params.goalIds) {
+      let data: {
+        id: IRecordId;
+        focus: number;
+      }[] = [];
+      params.goalIds.forEach((goalId) => {
+        const goalLogs = logs.filter((log) =>
+          isSameResource(log.goalId, goalId)
+        );
+        const focus = goalLogs.reduce((acc, log) => acc + log.focus, 0);
+        data.push({
+          id: goalId,
+          focus
+        });
+      });
+      return data;
+    } else {
+      return logs.reduce((acc, log) => acc + log.focus, 0);
+    }
+  }
+}
+
+export const focusAggregates = new FocusAggregates();

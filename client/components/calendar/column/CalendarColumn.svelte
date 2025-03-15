@@ -13,6 +13,7 @@
   import { CalendarColumnPanel } from "../calendar.type";
   import CalendarColumnTasksPanel from "./CalendarColumnTasksPanel.svelte";
   import CalendarHistoryPanel from "./CalendarHistoryPanel.svelte";
+  import CalendarOverviewPanel from "./overview/CalendarOverviewPanel.svelte";
   export let scale: TimeScaleUnit;
   export let date: Date;
   let selectedPanel: CalendarColumnPanel = resolvePanelSelection();
@@ -96,6 +97,8 @@
     <CalendarColumnTasksPanel {date} />
   {:else if selectedPanel === CalendarColumnPanel.History}
     <CalendarHistoryPanel {date} />
+  {:else if selectedPanel === CalendarColumnPanel.Overview}
+    <CalendarOverviewPanel {date} />
   {:else}
     <div class="my-auto">
       <ComingSoonView />
