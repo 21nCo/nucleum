@@ -1,4 +1,25 @@
-export const pointronTables = [...pointAggFocusByYear()];
+export const pointronTables = [...sessionLog(), ...sessionLogIndices()];
+
+function sessionLog() {
+  const def = `DEFINE TABLE IF NOT EXISTS sessionLog SCHEMAFULL;
+DEFINE FIELD IF NOT EXISTS createdBy on TABLE sessionLog TYPE option<record<user>>;
+DEFINE FIELD IF NOT EXISTS modifiedBy on TABLE sessionLog TYPE option<record<user>>;
+DEFINE FIELD IF NOT EXISTS createdAt on TABLE sessionLog TYPE datetime;
+DEFINE FIELD IF NOT EXISTS modifiedAt on TABLE sessionLog TYPE datetime;
+DEFINE FIELD IF NOT EXISTS start on TABLE sessionLog TYPE datetime;
+DEFINE FIELD IF NOT EXISTS end on TABLE sessionLog TYPE datetime;
+DEFINE FIELD IF NOT EXISTS focus on TABLE sessionLog TYPE number;
+DEFINE FIELD IF NOT EXISTS breakTime on TABLE sessionLog TYPE number;
+DEFINE FIELD IF NOT EXISTS goalId on TABLE sessionLog TYPE option<record<goal>>;
+DEFINE FIELD IF NOT EXISTS sessionId on TABLE sessionLog TYPE option<record<session>>;
+`;
+  return [def];
+}
+
+function sessionLogIndices() {
+  const def = `DEFINE INDEX IF NOT EXISTS sessionLogIndex ON TABLE sessionLog COLUMNS start;`;
+  return [def];
+}
 
 function pointLog() {
   const def = `DEFINE TABLE PointLog SCHEMALESS;`;

@@ -595,7 +595,8 @@ export class ResourceStore<T extends IResource> implements IStore {
       });
     }
     return flux.selectMany(this.id, params, {
-      isCloudOnlyResource: this.isCloudOnlyResource
+      isCloudOnlyResource:
+        this.isCloudOnlyResource ?? additionalParams?.isUseCloud
     });
   }
 
