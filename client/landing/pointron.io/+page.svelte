@@ -9,14 +9,18 @@
       "Track time, achieve goals and form habits with Pointron, your personal productivity companion.",
     btn1: {
       label: "Download mobile app",
-      iosDownloadUrl: "https://www.pointron.io/ios",
-      androidDownloadUrl: "https://www.pointron.io/android"
+      iosDownloadUrl:
+        "https://apps.apple.com/in/app/pointron-focus-time-tracker/id6469411284",
+      androidDownloadUrl:
+        "https://apps.apple.com/in/app/pointron-focus-time-tracker/id6469411284"
     },
     btn2: {
       label: "Download desktop app",
       icon: "download",
-      macDownloadUrl: "https://www.pointron.io/mac",
-      windowsDownloadUrl: "https://www.pointron.io/windows"
+      macDownloadUrl:
+        "https://apps.apple.com/in/app/pointron-focus-time-tracker/id6469411284",
+      windowsDownloadUrl:
+        "https://apps.apple.com/in/app/pointron-focus-time-tracker/id6469411284"
     }
   };
 

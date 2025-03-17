@@ -7,13 +7,13 @@
     icon: "pointron",
     title: "Pointron",
     items: [
-      { label: "Discord", href: "https://discord.gg/blanklabs" },
-      { label: "Roadmap", href: "/blog" },
-      { label: "Pricing", href: "/pricing" }
+      { label: "Discord", href: "https://discord.com/invite/9HJqKYTZKg" },
+      { label: "Roadmap", href: "https://docs.pointron.app/pointron/roadmap" }
+      // { label: "Pricing", href: "/pricing" }
     ],
     cta: {
       label: "Access Web",
-      href: "https://app.pointron.io"
+      href: "https://web.pointron.xyz"
     }
   };
   let footerValues: IFooter = {

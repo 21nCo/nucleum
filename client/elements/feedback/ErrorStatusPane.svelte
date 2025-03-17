@@ -13,7 +13,7 @@
       {error ?? "Something went wrong."}
     </div>
     <div class="text-b2 text-fgs3">
-      {subText}
+      {subText ?? "Please try again later."}
     </div>
   </div>
   <div class="text-b2 text-fgs3 mt-auto pb-8">
