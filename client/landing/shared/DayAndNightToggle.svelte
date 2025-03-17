@@ -9,13 +9,15 @@
   let className: string = "";
   export { className as class };
   let isNight: boolean = false;
+
   onMount(() => {
     $appearance.isSyncWithSystem = false;
     $appearance.lightColorSchemeId = "colorscheme:clean_tidymono_light";
-    $appearance.darkColorSchemeId = "colorscheme:clean_tidymono_dark";
+    $appearance.darkColorSchemeId = "colorscheme:clean_tidyoxide_dark";
     if ($appearance.theme === Theme.DARK) isNight = true;
     else isNight = false;
   });
+
   function toggle() {
     isNight = !isNight;
     appearance.modifyUserThemeSetting(

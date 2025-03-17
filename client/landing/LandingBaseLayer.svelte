@@ -11,7 +11,7 @@
   class={cn(
     "dark text-base text-fgs1 bg-bgs1 relative w-screen h-screen flex",
     $appearance.theme,
-    $appearance.colorScheme.tailwindSelector
+    $appearance.colorScheme?.tailwindSelector
   )}
 >
   <MetadataLayer />

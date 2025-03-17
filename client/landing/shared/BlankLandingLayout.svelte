@@ -31,7 +31,7 @@
   }
   onMount(async () => {
     isProductPage.set(isProduct);
-    view.update(window.innerWidth, window.innerHeight);
+    view?.update(window.innerWidth, window.innerHeight);
     if (window.location.pathname === "/" || window.location.pathname === "")
       addEntryAnimation(id);
   });

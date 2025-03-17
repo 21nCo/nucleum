@@ -122,7 +122,7 @@ transform: translate(-50%, -50%);
     {#if $appearance.theme === Theme.DARK}
       <!-- <div class="absolute inset-0 bg-black/10"></div> -->
     {:else}
-      <div class="absolute inset-0 backdrop-blur-xl"></div>
+      <!-- <div class="absolute inset-0 backdrop-blur-xl"></div> -->
       <div class="absolute inset-0 bg-white/10"></div>
     {/if}
     <div
