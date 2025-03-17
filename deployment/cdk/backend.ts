@@ -13,10 +13,9 @@ export class BackendRegionalStack extends Stack {
   ) {
     super(scope, id, props);
 
-    const { zone, bunRuntimeLayer } = resolveCommonResources(this, environment);
+    const { zone } = resolveCommonResources(this, environment);
     const nestedStackProps: CustomNestedStackProps = {
       zone,
-      bunRuntimeLayer,
       environment
     };
     new ServerlessRegionalStack(

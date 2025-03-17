@@ -18,9 +18,12 @@ export class AccountLambdaFunctions extends cdk.NestedStack {
   ) {
     super(scope, id, props);
 
+    /**
+     * @deprecated - not used anymore as bun functions were removed.
+     */
     const functionProps = {
       runtime: lambda.Runtime.PROVIDED_AL2,
-      layers: [props.bunRuntimeLayer],
+      // layers: [props.bunRuntimeLayer],
       architecture: lambda.Architecture.ARM_64,
       timeout: Duration.minutes(defaults.timeout),
       code: lambda.Code.fromAsset(
@@ -38,115 +41,6 @@ export class AccountLambdaFunctions extends cdk.NestedStack {
     };
     const accountEndpoint = props.api.root.addResource("account");
     const accountNodeEndpoint = accountEndpoint.addResource("n");
-    const signupFunction = new lambda.Function(this, "SignupFunction", {
-      handler: "signup.handler",
-      functionName: generateFunctionName("signupFunction", props.environment),
-      ...functionProps
-    });
-    const updateDbFunction = new lambda.Function(this, "UpdateDbFunction", {
-      handler: "updateDb.handler",
-      functionName: generateFunctionName("updateDbFunction", props.environment),
-      ...functionProps
-    });
-    const signinFunction = new lambda.Function(this, "SigninFunction", {
-      handler: "signin.handler",
-      functionName: generateFunctionName("signinFunction", props.environment),
-      ...functionProps
-    });
-    const oauthFunction = new lambda.Function(this, "OauthFunction", {
-      handler: "oauth.handler",
-      functionName: generateFunctionName("oauthFunction", props.environment),
-      ...functionProps
-    });
-    const pingFunction = new lambda.Function(this, "PingFunction", {
-      handler: "ping.handler",
-      functionName: generateFunctionName("pingFunction", props.environment),
-      ...functionProps
-    });
-    const deleteAccountFunction = new lambda.Function(
-      this,
-      "DeleteAccountFunction",
-      {
-        handler: "deleteAccount.handler",
-        functionName: generateFunctionName(
-          "deleteAccountFunction",
-          props.environment
-        ),
-        ...functionProps
-      }
-    );
-    const runSqlFunction = new lambda.Function(this, "RunSqlFunction", {
-      handler: "runSql.handler",
-      functionName: generateFunctionName("runSqlFunction", props.environment),
-      ...functionProps
-    });
-    const signupResource = accountEndpoint.addResource("signup");
-    signupResource.addMethod(
-      "POST",
-      new gateway.LambdaIntegration(signupFunction)
-    );
-    signupResource.addMethod(
-      "OPTIONS",
-      new gateway.MockIntegration(defaults.mockIntegration),
-      defaults.mockIntegrationOptions
-    );
-    const siginResource = accountEndpoint.addResource("signin");
-    siginResource.addMethod(
-      "POST",
-      new gateway.LambdaIntegration(signinFunction)
-    );
-    siginResource.addMethod(
-      "OPTIONS",
-      new gateway.MockIntegration(defaults.mockIntegration),
-      defaults.mockIntegrationOptions
-    );
-    const oauthResource = accountEndpoint.addResource("oauth");
-    oauthResource.addMethod(
-      "POST",
-      new gateway.LambdaIntegration(oauthFunction)
-    );
-    oauthResource.addMethod(
-      "OPTIONS",
-      new gateway.MockIntegration(defaults.mockIntegration),
-      defaults.mockIntegrationOptions
-    );
-    const pingResource = accountEndpoint.addResource("ping");
-    pingResource.addMethod("POST", new gateway.LambdaIntegration(pingFunction));
-    pingResource.addMethod(
-      "OPTIONS",
-      new gateway.MockIntegration(defaults.mockIntegration),
-      defaults.mockIntegrationOptions
-    );
-    const updateDbResource = accountEndpoint.addResource("updateDb");
-    updateDbResource.addMethod(
-      "POST",
-      new gateway.LambdaIntegration(updateDbFunction)
-    );
-    updateDbResource.addMethod(
-      "OPTIONS",
-      new gateway.MockIntegration(defaults.mockIntegration),
-      defaults.mockIntegrationOptions
-    );
-    const deleteAccountResource = accountEndpoint.addResource("deleteAccount");
-    deleteAccountResource.addMethod(
-      "POST",
-      new gateway.LambdaIntegration(deleteAccountFunction)
-    );
-    deleteAccountResource.addMethod(
-      "OPTIONS",
-      new gateway.MockIntegration(defaults.mockIntegration),
-      defaults.mockIntegrationOptions
-    );
-    const runSqlResource = accountEndpoint.addResource("run");
-    runSqlResource.addMethod(
-      "POST",
-      new gateway.LambdaIntegration(runSqlFunction)
-    );
-    runSqlResource.addMethod(
-      "OPTIONS",
-      new gateway.MockIntegration(defaults.mockIntegration),
-      defaults.mockIntegrationOptions
-    );
 
     //NODE RUNTIME VARIANTS
     const signupFunctionNode = new lambda.Function(this, "SignupFunctionNode", {

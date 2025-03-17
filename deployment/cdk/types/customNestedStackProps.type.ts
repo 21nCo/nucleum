@@ -4,14 +4,14 @@ import {
   IDatabaseEnvironmentVariables,
   IEnvironment,
   IFilesEnvironmentVariables,
-  ILambdaEnvironmentVariables,
+  ILambdaEnvironmentVariables
 } from "./env.type";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as gateway from "aws-cdk-lib/aws-apigateway";
 
 export interface CustomNestedStackProps extends cdk.NestedStackProps {
   zone: route53.IHostedZone;
-  bunRuntimeLayer: lambda.ILayerVersion;
+  bunRuntimeLayer?: lambda.ILayerVersion;
   environment: IEnvironment;
   /**
    * Relevant for Db Stacks only

@@ -28,9 +28,12 @@ export class UtilsLambdaFunctions extends NestedStack {
       license: "Apache-2.0",
       description: "A layer to hold the AWS SDK and other dependencies"
     });
+    /**
+     * @deprecated - not used anymore as bun functions were removed.
+     */
     const functionProps = {
       runtime: Runtime.PROVIDED_AL2,
-      layers: [props.bunRuntimeLayer],
+      // layers: [props.bunRuntimeLayer],
       architecture: Architecture.ARM_64,
       timeout: Duration.minutes(defaults.timeout),
       code: Code.fromAsset(
@@ -47,15 +50,6 @@ export class UtilsLambdaFunctions extends NestedStack {
       ),
       environment: props.lambdaEnvVars
     };
-    const testingEndPoint = props.api.root.addResource("testing");
-    const bunTestFunction = new Function(this, "BunFunction", {
-      handler: "bunping.fetch",
-      functionName: generateFunctionName("buntesting", props.environment),
-      ...functionProps
-    });
-    testingEndPoint
-      .addResource("bun")
-      .addMethod("GET", new LambdaIntegration(bunTestFunction));
 
     const utils = props.api.root.addResource("utils");
     const utilsNodeResource = utils.addResource("n");
