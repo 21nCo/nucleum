@@ -37,7 +37,10 @@ import CreateGoal from "$lib/client/products/pointron/goals/create/CreateGoal.sv
 import FocusItemsModal from "$lib/client/products/pointron/focus/advanced/FocusItemsModal.svelte";
 import BreakReminderModal from "$lib/client/products/pointron/focus/elements/BreakReminderModal.svelte";
 import PredefinedIntervalNotifierOverlay from "$lib/client/products/pointron/focus/elements/PredefinedIntervalNotifierOverlay.svelte";
-import { manualLogStore } from "$lib/client/products/pointron/logs/log.store";
+import {
+  manualLogStore,
+  sessionLogStore
+} from "$lib/client/products/pointron/logs/log.store";
 import ControlPanelLogsPane from "$lib/client/products/pointron/logs/ControlPanelLogsPane.svelte";
 import SessionLogPage from "$lib/client/products/pointron/logs/logPage/SessionLogPage.svelte";
 import ManualLogPane from "$lib/client/products/pointron/logs/manualLog/ManualLogPane.svelte";
@@ -678,6 +681,16 @@ export const pointronActions: IAction[] = [
             const response = await sessionStore.delete(
               params?.componentParams?.id
             );
+            const sessionLogs = await sessionLogStore.selectMany({
+              filters: {
+                sessionId: params?.componentParams?.id
+              }
+            });
+            if (sessionLogs) {
+              await sessionLogStore.deleteMany(
+                sessionLogs.map((log: any) => log.id)
+              );
+            }
             if (response) {
               toasts.success("Session log deleted successfully");
             } else {

@@ -22,11 +22,8 @@
   import { formatTime, isSameDateTime } from "$lib/client/utils/time.utils";
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   import { sessionStore } from "../../focus/session.store";
-  import type { IFocusTask } from "$lib/client/types/pointron/session.type";
   import type { ITaskThumb } from "$lib/client/components/tasks/task.type";
   import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
-  import { SearchStore } from "$lib/client/components/record/record.store";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
   import { goalStore } from "$lib/client/components/goals/goal.store";
@@ -38,12 +35,6 @@
   let selectedTab: "Summary" | "Notes" = "Summary";
   let isLoadingState: boolean = false;
 
-  let focusItems: any[] = [];
-  /**
-   * @deprecated
-   */
-  let tasksList: IFocusTask[] = [];
-
   let goals: IGoalThumb[] = [];
   let tasks: ITaskThumb[] = [];
 
@@ -51,80 +42,13 @@
     await refreshv2();
   });
 
-  /**
-   * @deprecated - use refreshv2 instead
-   */
-  async function refresh() {
-    isLoadingState = true;
-    const response = await sessionStore.select(id);
-    if (response && response.id) {
-      log = response;
-      if (
-        log.goals &&
-        log.goals.length > 0 &&
-        log.logs &&
-        log.logs.length > 0
-      ) {
-        calculateWorkedTimeV1();
-        tasksList = log.goals
-          .filter((x) => x.taskId)
-          .map((x) => {
-            return {
-              id: x.taskId,
-              label: x.label,
-              worked: x.worked,
-              estimated: x.estimate,
-              checked: x.checked
-            };
-          });
-        focusItems = log.goals
-          .filter((x) => !x.taskId)
-          .map((x) => {
-            return {
-              id: x.goalId,
-              tasks: log.goals
-                .filter((y) => y.goalId === x.goalId && y.taskId)
-                .map((y) => y.taskId),
-              worked: x.worked,
-              estimated: x.estimate
-            };
-          });
-      } else if (
-        log.focusItems &&
-        log.focusItems.goals &&
-        log.focusItems.tasks
-      ) {
-        tasksList = log.focusItems.goals;
-        focusItems = log.focusItems.tasks;
-      }
-    }
-    isLoadingState = false;
-
-    /**
-     * Calculates the worked time - using the v1 schema of PointSession
-     */
-    function calculateWorkedTimeV1() {
-      log.tasks = log.tasks.map((item: any) => {
-        const logsForTask = log.logs.filter(
-          (x: any) =>
-            (x.taskId === item.taskId && x.goalId === item.goalId) ||
-            (x.goalId === item.goalId && !x.taskId)
-        );
-        item.worked = logsForTask.reduce(
-          (acc: number, curr: any) => acc + curr.totalFocus,
-          0
-        );
-        return item;
-      });
-    }
-  }
-
   async function refreshv2() {
     isLoadingState = true;
     const response = await sessionStore.select(id);
     if (response && response.id) {
       log = response;
     }
+    console.log({ response });
     if (log.items) {
       goals = await goalStore.selectMany(
         {

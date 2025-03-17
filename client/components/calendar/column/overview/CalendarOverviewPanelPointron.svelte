@@ -10,6 +10,7 @@
   let data: ISessionLog[] = [];
   let previousTimePeriodData: ISessionLog[] = [];
   let isRefreshing = false;
+  let dev_isUseCloud = false;
 
   $: totalFocus = data.reduce((acc, curr) => acc + (curr.focus ?? 0), 0);
   $: totalBreak = data.reduce((acc, curr) => acc + (curr.breakTime ?? 0), 0);
@@ -30,7 +31,7 @@
 
   async function refresh() {
     isRefreshing = true;
-    const isUseCloud = account.isCloudUserAndOnline();
+    const isUseCloud = dev_isUseCloud && account.isCloudUserAndOnline();
     [data, previousTimePeriodData] = await Promise.all([
       sessionLogStore.selectMany(
         {

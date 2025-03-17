@@ -10,7 +10,8 @@ import {
 import {
   generateIntervalsFromComposition,
   getTotalsFromComposition,
-  refreshPredefinedIntervalsStartTime
+  refreshPredefinedIntervalsStartTime,
+  resolveSessionTimeSplit
 } from "$lib/client/products/pointron/pointron.utils";
 import { get, writable } from "svelte/store";
 import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
@@ -1319,7 +1320,7 @@ class SessionStore extends ResourceStore<ISession> {
   selectMany(params?: IResourceSelectParams, additionalParams?: any) {
     const properties = [
       "*",
-      "select * from (select value id from $parent.items) as expandedItems",
+      "select *, (select * from $parent.parent) as parent from (select value id from $parent.items) as expandedItems",
       ...(params?.properties ?? [])
     ];
     params = {
@@ -1386,6 +1387,26 @@ class SessionStore extends ResourceStore<ISession> {
         );
       }
     });
+
+    const totalTimeFromLogs = logs.reduce((acc, log) => {
+      return acc + ((log.focus ?? 0) + (log.breakTime ?? 0));
+    }, 0);
+
+    const sessionTotals = resolveSessionTimeSplit(session);
+
+    const remainingTime =
+      sessionTotals.focus + sessionTotals.brek - totalTimeFromLogs;
+    console.log({ sessionTotals, remainingTime, totalTimeFromLogs });
+    if (remainingTime > 0) {
+      logs.push({
+        id: generateResourceId(Resource.sessionLog),
+        start: new Date(session.start).toISOString(),
+        end: new Date(session.end).toISOString(),
+        sessionId: session.id,
+        focus: remainingTime,
+        breakTime: 0
+      });
+    }
     this.create(session);
     sessionLogStore.create(logs, {
       context: PointronAction.FINISH_FOCUS_SESSION

@@ -8,24 +8,27 @@
   import BackButton from "$lib/client/elements/button/BackButton.svelte";
   import { postMessageToParent } from "$lib/client/utils/embed.utils";
   import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
-  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { LoadingAnimationType } from "$lib/client/types/feedback.type";
   import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
   import LogThumbnailItem from "./LogThumbnailItem.svelte";
   import DaySummaryPart from "./daySummary/DaySummaryPart.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import ScrollView from "$lib/client/layout/scrollView/ScrollView.svelte";
-  import type { ISessionThumb } from "./log.type";
+  import type { DaySummary, ISessionThumb } from "./log.type";
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { sessionLogStore } from "./log.store";
+  import { sessionStore } from "../focus/session.store";
+  import { resolveSessionTimeSplit } from "../pointron.utils";
   export let date: Date = new Date();
 
   export let context: "journal" | "logs" = "logs";
   let selectedId: string | undefined = undefined;
   let isRefreshing: boolean = false;
-  let logs: ISessionThumb[] = [];
+  let sessions: (ISessionThumb & {
+    splits: { focus: number; brek: number };
+  })[] = [];
+  let summary: DaySummary = { focus: 0, break: 0 };
   $: dateString = date.toISOString().split("T")[0];
   $: if (dateString) refresh();
   onMount(() => {
@@ -33,7 +36,7 @@
   });
   async function refresh() {
     isRefreshing = true;
-    const result = await sessionLogStore.selectMany({
+    const result = await sessionStore.selectMany({
       filters: {
         start: date
       },
@@ -41,11 +44,28 @@
         start: "asc"
       }
     });
-    console.log({ result });
     if (isValidArrayWithData(result)) {
-      logs = result;
+      sessions = result.map((session: ISessionThumb) => ({
+        ...session,
+        splits: resolveSessionTimeSplit(session)
+      }));
+      summary = generateSummary(sessions);
     }
     isRefreshing = false;
+  }
+
+  function generateSummary(
+    logs: (ISessionThumb & {
+      splits: { focus: number; brek: number };
+    })[]
+  ): DaySummary {
+    let focus = 0;
+    let breakTime = 0;
+    logs.forEach((x) => {
+      focus += x.splits.focus;
+      breakTime += x.splits.brek;
+    });
+    return { focus, break: breakTime };
   }
 </script>
 
@@ -61,7 +81,7 @@
     </div>
     <SessionLogPage
       id={selectedId}
-      log={logs.find(resourceInList(selectedId))}
+      log={sessions.find(resourceInList(selectedId))}
     />
   </div>
 {:else}
@@ -113,8 +133,8 @@
         </div>
       </div>
     {/if}
-    {#if !isRefreshing && logs.length > 0}
-      <!-- <DaySummaryPart summary={$logsPaneStore.summary} /> -->
+    {#if !isRefreshing && sessions.length > 0}
+      <DaySummaryPart {summary} />
       <ScrollView
         class={{
           "w-full flex flex-col gap-4 flex-grow": true,
@@ -122,17 +142,17 @@
           "px-8": !$view.isPortrait && context === "logs"
         }}
       >
-        {#each logs as log, index}
+        {#each sessions as session, index}
           <LogThumbnailItem
-            {log}
+            {session}
             {context}
-            isLast={index === logs.length - 1}
+            isLast={index === sessions.length - 1}
             on:click={() => {
               if (context === "journal") {
-                appStore.openResource(log.id, ResourceAccessMode.POP);
+                appStore.openResource(session.id, ResourceAccessMode.POP);
                 return;
               }
-              selectedId = log.id;
+              selectedId = session.id;
             }}
             on:refresh={refresh}
           />

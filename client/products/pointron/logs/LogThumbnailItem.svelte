@@ -15,10 +15,12 @@
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
-  import { resolveSessionSplitFromIntervals } from "../pointron.utils";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
-  export let log: ISessionThumb;
+  import { resolveGoalColor } from "$lib/client/components/goals/goal.utils";
+  export let session: ISessionThumb & {
+    splits: { focus: number; brek: number };
+  };
   export let context: "journal" | "logs" = "logs";
   export let isLast: boolean = false;
   export let variant: "v1" | "v2" = "v1";
@@ -26,8 +28,7 @@
   let isHovering: boolean = false;
   let height = 120;
   let minHeight = 60;
-  $: splits = resolveSessionSplitFromIntervals(log.blocks);
-  $: total = splits.focus + splits.brek;
+  $: total = session.splits.focus + session.splits.brek;
 
   if (isEnableVariableHeight) {
     // let baseHeight = 110;
@@ -61,7 +62,7 @@
 
   async function handleDelete(event: MouseEvent) {
     appStore.runAction(PointronAction.DELETE_SESSION, {
-      componentParams: { id: log.id }
+      componentParams: { id: session.id }
     });
     event.stopPropagation();
   }
@@ -99,7 +100,7 @@
         "mo:text-b2 text-b3 text-fgs3": variant === "v1"
       })}
     >
-      {formatTime($userPreferences, new Date(log.start))}
+      {formatTime($userPreferences, new Date(session.start))}
     </div>
     <div class="flex h-full gap-2">
       <!-- <div class="bg-bgs3 h-full w-0.5 flex-grow rounded-full" /> -->
@@ -118,12 +119,12 @@
               <div class="min-w-fit text-aps1 text-b3">
                 <!-- {$windowObject.isInPortraitMode ? "F:" : "Focus:"} -->
                 F:
-                {formatSeconds(splits.focus)}
+                {formatSeconds(session.splits.focus)}
               </div>
               <div class="min-w-fit text-ass1 text-b3">
                 <!-- {$windowObject.isInPortraitMode ? "B:" : "Break:"} -->
                 B:
-                {formatSeconds(splits.brek)}
+                {formatSeconds(session.splits.brek)}
               </div>
             {/if}
           </div>
@@ -136,7 +137,7 @@
         "mo:text-b2 text-b3 text-fgs3": variant === "v1"
       })}
     >
-      {formatTime($userPreferences, new Date(log.end))}
+      {formatTime($userPreferences, new Date(session.end))}
     </div>
   </div>
   <div
@@ -151,12 +152,12 @@
         <Text content="Goals" style={TextStyle.SECTION_HEADING} />
       {/if}
       <div class="flex flex-col w-full">
-        {#if log.expandedItems && log.expandedItems.length > 0}
-          {#each log.expandedItems as item}
+        {#if session.expandedItems && session.expandedItems.length > 0}
+          {#each session.expandedItems as item}
             {@const resourceType = determineResourceType(item.id)}
             {#if resourceType === Resource.goal}
               <CustomColorPropagator
-                color={item?.color}
+                color={resolveGoalColor(item)}
                 class="flex w-full gap-2 text-base items-center"
               >
                 <div class="w-2 h-2 rounded-sm bg-ccs1" />
@@ -194,11 +195,11 @@
         </div>
         <div class="min-w-fit text-aps1">
           F:
-          {formatSeconds(splits.focus)}
+          {formatSeconds(session.splits.focus)}
         </div>
         <div class="min-w-fit text-ass1">
           B:
-          {formatSeconds(splits.brek)}
+          {formatSeconds(session.splits.brek)}
         </div>
       </div>
     {/if}

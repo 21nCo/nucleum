@@ -61,7 +61,7 @@ class TaskStore extends ResourceStore<ITask> {
       id,
       {
         isChecked: newVal,
-        completed: newVal ? new Date() : undefined
+        completedAt: newVal ? new Date() : undefined
       },
       {
         context: params?.context

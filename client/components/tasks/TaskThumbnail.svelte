@@ -83,9 +83,9 @@
         Due: {formatDate(item.date)}
       </span>
     {/if}
-    {#if item.completed && !isHovering}
+    {#if item.completedAt && !isHovering}
       {@const isCompletedBeforeDue =
-        item.date && compareDates(item.completed, item.date, "<=")}
+        item.date && compareDates(item.completedAt, item.date, "<=")}
       {#if item.date}
         <span class="text-b3 text-fgs3"> | </span>
       {/if}
@@ -95,7 +95,7 @@
           "text-ars1": !isCompletedBeforeDue && item.date
         })}
       >
-        Completed: {formatDate(item.completed)}
+        Completed: {formatDate(item.completedAt)}
       </span>
     {/if}
     {#if isHovering || isDatePickerOpen}

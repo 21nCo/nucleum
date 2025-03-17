@@ -12,7 +12,7 @@ interface ITaskBase extends IMemotronItemBase {
    */
   estimated?: number;
   date?: Date;
-  completed?: Date;
+  completedAt?: Date;
 }
 
 export interface ITask extends ITaskBase {

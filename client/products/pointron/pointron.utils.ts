@@ -215,7 +215,7 @@ export function resolveSessionTimeSplit(x: ISession) {
     new Date(x.start).getTime() < new Date("2024-08-22").getTime()
   ) {
     sessionTime = resolveSessionTimeLegacy(x);
-  } else {
+  } else if (x.blocks) {
     sessionTime = resolveSessionSplitFromIntervals(x.blocks);
   }
   return sessionTime;

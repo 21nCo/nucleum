@@ -35,6 +35,8 @@
   import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
   import { resolveGoalColor } from "$lib/client/components/goals/goal.utils";
   import account from "$lib/client/stores/account.store";
+  import { toasts } from "$lib/client/stores/notification.store";
+  import { ErrorMessage } from "$lib/client/components/error/error.type";
   export let card: AnalyticsCard;
   export let position: { index: number; total: number };
   export let pageId: string;
@@ -45,6 +47,7 @@
   let parentBgIndex = $view.isPortrait ? 1 : 2;
   const dispatch = createEventDispatcher();
   let isRefreshing = false;
+  const dev_isUseCloud = false;
 
   $: timePeriod = timePeriodLabel(card.period);
   $: isCarbonChart =
@@ -121,16 +124,26 @@
 
       // Fetch session logs for this time period
       console.time(`logs query - ${card.id}`);
-      const logs = await sessionLogStore.selectMany(
+      const isUseCloud = dev_isUseCloud && account.isCloudUserAndOnline();
+      let logs = await sessionLogStore.selectMany(
         {
           filters
         },
         {
-          isUseCloud: account.isCloudUserAndOnline()
+          isUseCloud
         }
       );
       console.timeEnd(`logs query - ${card.id}`);
       console.log({ logs });
+      if (!logs && isUseCloud) {
+        logs = await sessionLogStore.selectMany({
+          filters
+        });
+      }
+      if (!logs) {
+        toasts.error(ErrorMessage.DEFAULT);
+        return;
+      }
       const processedLogs: AnalyticsDataRecord[] = logs.map(
         (log: ISessionLogThumb) => ({
           brek: log.breakTime || 0,
