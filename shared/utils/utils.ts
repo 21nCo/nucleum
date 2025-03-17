@@ -35,11 +35,11 @@ function resolveEnvv1(subdomain: string) {
 export function extractProduct(host: string) {
   if (!host) return { product: "", env: "" };
 
-  const simpleDomainMatch = host.match(/^([^.]+)\.(com|io|org|run|app)$/);
+  const simpleDomainMatch = host.match(/^([^.]+)\.(com|io|org|run|app|to)$/);
   if (simpleDomainMatch) {
     return {
       product: simpleDomainMatch[1],
-      env: "landing",
+      env: "landing"
     };
   }
 
@@ -49,17 +49,17 @@ export function extractProduct(host: string) {
   if (blankFormatMatch) {
     return {
       product: blankFormatMatch[1],
-      env: resolveEnv(blankFormatMatch[3]),
+      env: resolveEnv(blankFormatMatch[3])
     };
   }
 
   const straightFormatMatch = host.match(
-    /^(.+)\.([^.]+)\.(com|io|org|run|app)$/
+    /^(.+)\.([^.]+)\.(com|io|org|run|app|xyz)$/
   );
   if (straightFormatMatch) {
     return {
       env: resolveEnv(straightFormatMatch[1]),
-      product: straightFormatMatch[2],
+      product: straightFormatMatch[2]
     };
   }
 
@@ -160,7 +160,7 @@ export function sanitize(text: string) {
   if (gistMatch) {
     return {
       embed: `https://gist.github.com/${gistMatch[1]}/${gistMatch[2]}`,
-      isGist: true,
+      isGist: true
     };
   }
 
@@ -170,7 +170,7 @@ export function sanitize(text: string) {
   if (gitlabMatch) {
     return {
       embed: `https://gitlab.com/-/snippets/${gitlabMatch[1]}`,
-      isGist: true,
+      isGist: true
     };
   }
 
