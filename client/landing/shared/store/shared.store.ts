@@ -1,5 +1,7 @@
 import { readable, writable } from "svelte/store";
 import type { ITileItem } from "../Landing.types";
+import { GlobalEvent } from "$lib/client/types/event.enum";
+import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
 
 const staticUrl = import.meta.env.VITE_STATIC_URL;
 
@@ -109,3 +111,20 @@ export const upcomingProductsStore = writable<ITileItem[]>([
 export const isProductsPanelOpen = writable<Boolean>(false);
 
 export const isProductPage = writable<Boolean>(false);
+
+class LandingStore {
+  openLink(url: string) {
+    if (!url) return;
+    if (!url.includes("http")) {
+      dispatchCustomEvent(GlobalEvent.CUSTOM_NAVIGATION, { path: url });
+      return;
+    }
+
+    let win = window?.open(url, "_blank");
+    if (win) {
+      win.focus();
+    }
+  }
+}
+
+export const landing = new LandingStore();

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
-  import EarlyAccess from "$lib/client/components/EarlyAccess.svelte";
+  // import EarlyAccess from "$lib/client/components/EarlyAccess.svelte";
   import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
   import appearance from "$lib/client/stores/appearance.store";
   import view from "$lib/client/stores/view.store";
@@ -200,7 +200,7 @@ transform: translate(-50%, -50%);
         {/if}
       </div>
     {:else if isComingSoon}
-      <EarlyAccess version="V3" url={heroInputs.earlyAccessUrl} />
+      <!-- <EarlyAccess version="V3" url={heroInputs.earlyAccessUrl} /> -->
     {:else}
       <div class="absolute bottom-12 flex w-full justify-center">
         <Pulldown />

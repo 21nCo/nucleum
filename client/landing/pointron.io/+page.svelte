@@ -4,9 +4,9 @@
   import type { IHeroInputs, ITileItem } from "../shared/Landing.types";
   import IrregularTileItemsSection from "../shared/tile/IrregularTileItemsSection.svelte";
   let heroInputs: IHeroInputs = {
-    tagline: "The one focus time tracker that you will ever need",
+    tagline: "Your focus haven",
     description:
-      "In a world that constantly distracts, being time-aware is vital for productivity and personal wellbeing. Pointron simplifies this for you.",
+      "Track time, achieve goals and form habits with Pointron, your personal productivity companion.",
     btn1: {
       label: "Download mobile app",
       iosDownloadUrl: "https://www.pointron.io/ios",
@@ -31,14 +31,15 @@
       image: staticUrl + "/pointron/landing/focusitems.gif"
     },
     {
-      title: "infinitely nested goals",
+      title: "Infinitely nested goals",
       description:
-        "In a more granular manner, you can create goals and infinitely nest sub goals, attach tags to goals to track your progress.",
+        "In a more granular manner, you can create goals and infinitely nest sub goals, associate tasks to goals to track your progress.",
       image: staticUrl + "/pointron/landing/goals.gif"
     },
     {
-      title: "Jounrnal",
-      description: "",
+      title: "Calendar",
+      description:
+        "Track your time and goals in a calendar view. Add events to your calendar to stay on top of your schedule.",
       image: staticUrl + "/pointron/landing/quickfocus.gif"
     },
     {
@@ -48,7 +49,7 @@
       image: staticUrl + "/pointron/landing/custom.gif"
     },
     {
-      title: "Advanced analytics",
+      title: "Analytics",
       description:
         "When its time, make thoughtful decisions or track the progress of your goals and sub goals using powerful analytics.",
       image: staticUrl + "/pointron/landing/analytics.gif"
@@ -63,10 +64,10 @@
 </script>
 
 <HeroSection {heroInputs} />
-<HeroVideo
+<!-- <HeroVideo
   videoUrl="https://youtu.be/CguXo8YQnm4"
   thumbnailUrl="https://img.youtube.com/vi/CguXo8YQnm4/maxresdefault.jpg"
-/>
+/> -->
 <IrregularTileItemsSection
   items={features}
   title="Navigating your productivity"

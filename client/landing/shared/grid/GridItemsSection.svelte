@@ -4,8 +4,7 @@
   import Item from "./Item.svelte";
   import Title from "../Title.svelte";
   import Button from "../elements/Button.svelte";
-  import { goto } from "$app/navigation";
-  import { appStore } from "$lib/client/stores/app.store";
+  import { landing } from "../store/shared.store";
   export let title: string;
   export let items: IGridItem[];
   export let whitePaperUrl: string;
@@ -21,6 +20,6 @@
   <Button
     label="White paper"
     icon="long-arrow-right"
-    on:click={() => appStore.openLink(whitePaperUrl)}
+    on:click={() => landing.openLink(whitePaperUrl)}
   />
 </Section>

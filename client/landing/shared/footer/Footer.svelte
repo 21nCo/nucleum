@@ -14,9 +14,12 @@
   import view from "$lib/client/stores/view.store";
   import { Theme } from "$lib/client/types/appearance.type";
   import QrElement from "../elements/QRElement.svelte";
-  import { isProductPage, isProductsPanelOpen } from "../store/shared.store";
+  import {
+    isProductPage,
+    isProductsPanelOpen,
+    landing
+  } from "../store/shared.store";
   import ButtonAsLink from "../ButtonAsLink.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
   export let products: IListItem[];
   export let footerValues: IFooter;
   export let appStoreUrl: string =
@@ -186,7 +189,7 @@
           <Button
             label={joinUs.title}
             isShort={true}
-            on:click={() => appStore.openLink(joinUs.href)}
+            on:click={() => landing.openLink(joinUs.href)}
           />
         </div>
       </div>
@@ -219,7 +222,7 @@
             on:mouseenter={() => handleHover(index)}
             on:mouseleave={() => handleLeave(index)}
             tabindex="0"
-            on:click={() => appStore.openLink(social.href)}
+            on:click={() => landing.openLink(social.href)}
           >
             <SvgIcon icon={social.icon} size={Size.lg} />
           </button>

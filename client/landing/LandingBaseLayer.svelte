@@ -2,7 +2,7 @@
   import "../app.css";
   import { cn } from "$lib/client/utils/ui.utils";
   import ThemeLayer from "../layout/layers/themeLayer/ThemeLayer.svelte";
-  import AnalyticsLayer from "../layout/layers/analytics/AnalyticsLayer.svelte";
+  // import AnalyticsLayer from "../layout/layers/analytics/AnalyticsLayer.svelte";
   import MetadataLayer from "../layout/layers/MetadataLayer.svelte";
   import appearance from "$lib/client/stores/appearance.store";
 </script>
@@ -15,7 +15,7 @@
   )}
 >
   <MetadataLayer />
-  <AnalyticsLayer isLanding={true} />
+  <!-- <AnalyticsLayer isLanding={true} /> -->
   <ThemeLayer>
     <slot />
   </ThemeLayer>
