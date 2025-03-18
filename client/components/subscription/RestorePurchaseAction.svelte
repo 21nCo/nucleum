@@ -4,9 +4,16 @@
   import account from "$lib/client/stores/account.store";
   import { Size } from "$lib/client/types/size.enum";
   import { toasts } from "$lib/client/stores/notification.store";
+  import context from "$lib/client/stores/context.store";
+  import { OperatingSystem } from "$lib/client/types/context.type";
+  import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
+  import { postMessageToParent } from "$lib/client/utils/embed.utils";
 
   async function restore() {
-    //TODO - case for Apple, Play store and Microsoft stores
+    if ($context.isEmbed && $context.os === OperatingSystem.IOS) {
+      postMessageToParent(EmbedMessage.RESTORE_PURCHASE);
+      return;
+    }
     toasts.showProgress("restorePlan", "Restoring purchase...");
     const response = await account.restorePurchase();
     if (response.status === "multiple_valid_transactions") {
