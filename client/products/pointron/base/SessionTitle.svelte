@@ -7,9 +7,19 @@
 </script>
 
 <svelte:head>
-  <title
-    >{formatSeconds($activeSession.timeElapsed, TimeFormat.CLOCK)}
-    [{$activeSession.state === SessionState.FOCUS_RUNNING ? "Focus" : "Break"}]
-    - Pointron</title
-  >
+  {#if $activeSession.isSessionRunning}
+    {#key $activeSession.timeElapsed}
+      <title>
+        {$activeSession.state === SessionState.FOCUS_RUNNING
+          ? "Focus"
+          : "Break"}: {formatSeconds(
+          $activeSession.timeElapsed,
+          TimeFormat.CLOCK
+        )}
+        - Pointron
+      </title>
+    {/key}
+  {:else}
+    <title>Pointron - Your focus haven</title>
+  {/if}
 </svelte:head>

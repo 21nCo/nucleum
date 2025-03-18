@@ -61,11 +61,11 @@
         icon: resolveResourceIcon(Resource.task),
         badge: $goal.tasks?.length
       },
-      {
-        label: "Analytics",
-        value: "analytics",
-        icon: "ph:chart-line-up-light"
-      },
+      // {
+      //   label: "Analytics",
+      //   value: "analytics",
+      //   icon: "ph:chart-line-up-light"
+      // },
       {
         label: "History",
         value: "history",

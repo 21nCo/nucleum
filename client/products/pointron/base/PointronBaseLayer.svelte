@@ -117,9 +117,7 @@
       </div>
     {/if}
   {/if}
-  {#if $activeSession?.isSessionRunning}
-    <SessionTitle />
-  {/if}
+  <SessionTitle />
   <Notifications />
   <BackgroundSoundPlayer />
 </UserBaseLayer>
