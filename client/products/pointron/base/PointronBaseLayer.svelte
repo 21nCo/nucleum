@@ -23,6 +23,8 @@
   import LeftNav from "$lib/client/layout/leftPanel/LeftNav.svelte";
   import Tabs from "$lib/client/layout/tabs/Tabs.svelte";
   import AppSplitView from "$lib/client/layout/AppSplitView.svelte";
+  import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
+  import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
   let isLiteMode = $context.isEmbed && $context.isSheet;
   let interactionMode: InteractionMode;
   let isHideLeftNavBar: boolean = refreshSidebarState();
@@ -72,6 +74,14 @@
       });
     }
   }
+  function onAppear() {
+    if (
+      $activeSession.state === SessionState.FINISHED ||
+      $activeSession.state === SessionState.PRE_FINISHED
+    ) {
+      appStore.runAction(PointronEvent.SESSION_FINISHED);
+    }
+  }
 </script>
 
 <UserBaseLayer>
@@ -113,4 +123,5 @@
   <Notifications />
   <BackgroundSoundPlayer />
 </UserBaseLayer>
+<svelte:window on:focus={onAppear} />
 <svelte:document on:visibilitychange={handleVisibilityChange} />

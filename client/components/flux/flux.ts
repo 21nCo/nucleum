@@ -643,10 +643,13 @@ class Flux {
         console.log("offline detected - extension");
         return;
       } else if (isOffline) return;
-      if (this.isSyncUpPending) return;
+      if (this.isSyncUpPending) {
+        return;
+      }
       this.isSyncUpPending = true;
       logger.log({
         at: "flux.sync",
+        isSyncUpPending: this.isSyncUpPending,
         mutation,
         isExtensionEnvironment: this.isExtensionEnvironment
       });
@@ -657,6 +660,7 @@ class Flux {
           error: "fluxerror",
           message: "Something went wrong. Please try again."
         });
+        this.isSyncUpPending = false;
         return;
       }
       const lastSyncDown =
@@ -673,7 +677,10 @@ class Flux {
       } else {
         const { mutations, lastSyncUp } = await this.resolveItemsForSyncUp();
         logger.log({ at: "flux.sync", mutations, lastSyncUp });
-        if (!mutations || mutations.length === 0) return;
+        if (!mutations || mutations.length === 0) {
+          this.isSyncUpPending = false;
+          return;
+        }
         const resources = this.resolveSyncResources();
         response = await this.performSync(SyncMethod.SYNC_UP, {
           mutations,
@@ -695,11 +702,11 @@ class Flux {
       if (response?.syncDownData) {
         await this.processSyncDown(response.syncDownData, { src: "sync" });
       }
+      this.isSyncUpPending = false;
       return response;
     } catch (e: any) {
-      logger.error({ at: "flux.sync", error: e, message: e.message });
-    } finally {
       this.isSyncUpPending = false;
+      logger.error({ at: "flux.sync", error: e, message: e.message });
     }
   }
 
