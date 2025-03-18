@@ -85,7 +85,7 @@
       mainText="No focus sessions recorded yet"
     />
   {:else}
-    <div class="relative flex flex-col gap-8">
+    <div class="relative flex flex-col gap-8 userdata">
       <div class="absolute left-[5.5px] -top-6 bottom-0 w-[2px] bg-bgs4" />
 
       {#each groupSessionsByDay(sessions) as [date, daySessions]}

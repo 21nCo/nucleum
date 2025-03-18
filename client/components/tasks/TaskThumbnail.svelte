@@ -53,7 +53,7 @@
       {size}
       {accessPoint}
     />
-    <div class="flex-1 flex flex-col">
+    <div class="flex-1 flex flex-col userdata">
       {#if item.goal && accessPoint !== ResourceAccessPoint.GOAL}
         <TaskThumbnailGoalLabel goal={item.goal} />
       {/if}
@@ -79,7 +79,7 @@
     </div>
 
     {#if item.date && !isHovering}
-      <span class="text-b3 text-fgs3">
+      <span class="text-b3 text-fgs3 userdata">
         Due: {formatDate(item.date)}
       </span>
     {/if}
@@ -87,10 +87,10 @@
       {@const isCompletedBeforeDue =
         item.date && compareDates(item.completedAt, item.date, "<=")}
       {#if item.date}
-        <span class="text-b3 text-fgs3"> | </span>
+        <span class="text-b3 text-fgs3 userdata"> | </span>
       {/if}
       <span
-        class={cn("text-b3 text-ags1", {
+        class={cn("text-b3 text-ags1 userdata", {
           "text-ags1": isCompletedBeforeDue,
           "text-ars1": !isCompletedBeforeDue && item.date
         })}

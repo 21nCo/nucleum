@@ -111,7 +111,7 @@
 </script>
 
 <div
-  class="flex flex-col w-96 h-60 gap-4 items-center justify-between overflow-auto"
+  class="flex flex-col w-96 h-60 gap-4 items-center justify-between overflow-auto userdata"
 >
   <div class="flex flex-col w-full gap-6">
     <!-- <LinkboxOnCapture /> -->

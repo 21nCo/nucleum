@@ -34,7 +34,7 @@
 </script>
 
 <div
-  class="relative flex flex-col w-full gap-6 2k:gap-8 p-3 dp:p-4 2k:p-6 rounded-md border-2 border-bgs2"
+  class="relative flex flex-col w-full gap-6 2k:gap-8 p-3 dp:p-4 2k:p-6 rounded-md border-2 border-bgs2 userdata"
 >
   {#if isShowRemove}
     <!-- <div class="self-end">

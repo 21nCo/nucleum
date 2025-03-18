@@ -320,7 +320,7 @@
   </InlineSearchBar>
   {#if tasks && tasks.length > 0}
     <div
-      class={cn("flex flex-col gap-4 overflow-auto grow", {
+      class={cn("flex flex-col gap-4 overflow-auto grow userdata ph-no-capture", {
         "px-4": accessPoint === ResourceAccessPoint.LIBRARY
       })}
     >

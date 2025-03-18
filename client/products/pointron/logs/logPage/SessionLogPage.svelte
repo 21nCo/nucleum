@@ -71,7 +71,7 @@
 </script>
 
 {#if log}
-  <div class="flex flex-col gap-4 flex-grow w-full items-center p-4">
+  <div class="flex flex-col gap-4 flex-grow w-full items-center p-4 userdata">
     {#if accessMode === ResourceAccessMode.SPLIT || accessMode === ResourceAccessMode.FSPLIT}
       <div class="flex gap-4 w-full justify-between">
         <Text content="Session details" style={TextStyle.PANEL_HEADING} />

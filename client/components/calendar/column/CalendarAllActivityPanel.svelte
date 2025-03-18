@@ -97,7 +97,7 @@
     isSearchContext={true}
   />
 {:else if logs.length > 0}
-  <div class="flex flex-col flex-grow gap-4 overflow-y-auto">
+  <div class="flex flex-col flex-grow gap-4 overflow-y-auto userdata">
     {#each logs as log}
       <button
         class="flex flex-row items-start gap-2 p-2 hover:bg-bgs2 rounded-md"

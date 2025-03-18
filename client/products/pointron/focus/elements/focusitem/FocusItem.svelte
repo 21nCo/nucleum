@@ -105,7 +105,7 @@
   draggable={isDragEnabled &&
     contxt === "current" &&
     (!$activeSession.isSessionRunning || isInEditMode)}
-  class="flex flex-col gap-4 w-full"
+  class="flex flex-col gap-4 w-full userdata"
 >
   {#if (goal && (!$activeSession.isSessionRunning || isInEditMode) && contxt === "current") || (goal && tasksUnderGoal.length > 0)}
     <CustomColorPropagator

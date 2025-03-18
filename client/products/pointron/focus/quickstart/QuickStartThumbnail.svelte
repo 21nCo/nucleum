@@ -88,7 +88,7 @@
         isHovering = val;
       }
     }}
-    class={cn("relative cursor-pointer", {})}
+    class={cn("relative cursor-pointer userdata", {})}
   >
     <CustomColorPropagator
       class={cn(
@@ -178,12 +178,15 @@
   <!-- TODO - dark:bg-ccs3 isn't working due to bg-cc classes implementation. replacing `bg-ccs4 dark:bg-ccs3` with regular bg classes `bg-bgs1 dark:bg-bgs2` works -->
   <CustomColorPropagator
     type="button"
-    class={cn("relative flex rounded-md h-[4.3rem] p-2 transition-ease", {
-      "bg-ccs1 border border-ccs1": isActive && !isInEditMode,
-      "bg-ccs4 dark:bg-ccs3 border border-ccs2": !isActive && !isInEditMode,
-      "border-[1.5px] border-dashed border-ccs1 dark:border-ccs2 hover:bg-bgs2":
-        isInEditMode
-    })}
+    class={cn(
+      "relative flex rounded-md h-[4.3rem] p-2 transition-ease userdata",
+      {
+        "bg-ccs1 border border-ccs1": isActive && !isInEditMode,
+        "bg-ccs4 dark:bg-ccs3 border border-ccs2": !isActive && !isInEditMode,
+        "border-[1.5px] border-dashed border-ccs1 dark:border-ccs2 hover:bg-bgs2":
+          isInEditMode
+      }
+    )}
     color={item.color}
     on:click={toggleSession}
   >

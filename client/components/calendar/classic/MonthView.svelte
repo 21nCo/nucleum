@@ -106,7 +106,9 @@
         {/if}
         <div class="mt-1 space-y-1">
           {#each events.filter((event) => event.date.toDateString() === day.toDateString()) as event}
-            <div class="text-b4 p-1 rounded bg-aps3 text-aps1">
+            <div
+              class="text-b4 p-1 rounded bg-aps3 text-aps1 userdata ph-no-capture"
+            >
               {event.title}
             </div>
           {/each}

@@ -94,7 +94,9 @@
   {#if ($goal.description && !isEmptyMd($goal.description.blocks)) || $goal.isInEditMode}
     <div>
       <span class="text-b2 text-fgs3">Description</span>
-      <div class="flex flex-col gap-2 p-2 bg-bgs2 rounded-md overflow-auto">
+      <div
+        class="flex flex-col gap-2 p-2 bg-bgs2 rounded-md overflow-auto userdata"
+      >
         <Markdown
           md={$goal.description}
           params={{
@@ -106,7 +108,7 @@
       </div>
     </div>
   {/if}
-  <div class="text-fgs3 text-b3 mx-auto mt-auto">
+  <div class="text-fgs3 text-b3 mx-auto mt-auto userdata">
     Created: {formatDatetime($userPreferences, $goal.createdAt)}
   </div>
 </div>

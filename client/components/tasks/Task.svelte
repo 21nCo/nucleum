@@ -18,7 +18,7 @@
 </script>
 
 {#if task}
-  <div class="my-auto">
+  <div class="my-auto userdata ph-no-capture">
     <TaskThumbnail item={task} accessPoint={ResourceAccessPoint.SELF} />
   </div>
 {/if}

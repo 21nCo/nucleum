@@ -49,7 +49,7 @@
 </script>
 
 <div
-  class={cn("flex flex-col items-center gap-1", {
+  class={cn("flex flex-col items-center gap-1 userdata", {
     "px-3 lp:px-6 pt-2": isConstrainedWidth
   })}
 >

@@ -106,7 +106,7 @@
     />
   </div>
   <div
-    class={cn("flex flex-col p-4", {
+    class={cn("flex flex-col p-4 userdata", {
       "gap-6": $goal.subGoalsLayout === SubGoalsLayout.STEPS,
       "gap-2": $goal.subGoalsLayout === SubGoalsLayout.DEFAULT
     })}

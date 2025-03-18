@@ -36,14 +36,17 @@
   <HoverableElement
     type="button"
     bind:isHovering
-    class={cn("relative flex items-center gap-2 px-2 2k:px-3 py-4 rounded-md", {
-      [abg(isActive, parentBackgroundIndex)]: !isInEditMode,
-      "w-full max-w-md": isExpandedVariant,
-      "w-36 min-w-[9rem] h-10": !isExpandedVariant,
-      "hover:bg-bgs3": !isActive && !isInEditMode,
-      "border border-brs2": !isInEditMode,
-      "border border-dashed border-fgs2 hover:bg-bgs2": isInEditMode
-    })}
+    class={cn(
+      "relative flex items-center gap-2 px-2 2k:px-3 py-4 rounded-md userdata",
+      {
+        [abg(isActive, parentBackgroundIndex)]: !isInEditMode,
+        "w-full max-w-md": isExpandedVariant,
+        "w-36 min-w-[9rem] h-10": !isExpandedVariant,
+        "hover:bg-bgs3": !isActive && !isInEditMode,
+        "border border-brs2": !isInEditMode,
+        "border border-dashed border-fgs2 hover:bg-bgs2": isInEditMode
+      }
+    )}
     on:click={handleClick}
   >
     <span class="flex gap-1 h-full min-w-0 flex-1">

@@ -210,9 +210,12 @@
 </script>
 
 <div
-  class={cn("gap-2 w-full h-full flex flex-col justify-center items-center", {
-    "p-4": !$view.isPortrait
-  })}
+  class={cn(
+    "gap-2 w-full h-full flex flex-col justify-center items-center userdata",
+    {
+      "p-4": !$view.isPortrait
+    }
+  )}
 >
   {#if options && data && data.length > 0}
     <div
