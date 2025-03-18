@@ -2,8 +2,8 @@
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
-  import type { IPlan, ICurrentPlan, IBillingAddress } from "./userPlan.type";
-  import { BillingCycle, PlanType } from "./userPlan.type";
+  import type { IPlan, IBillingAddress } from "./userPlan.type";
+  import { BillingCycle } from "./userPlan.type";
   import PlanHeader from "./elements/PlanHeader.svelte";
   import PlanCard from "./elements/PlanCard.svelte";
   import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
@@ -33,11 +33,14 @@
   ];
 
   async function onSwitch(plan?: IPlan) {
-    console.log("onSwitch", plan);
-    testIOSPurchase();
+    selectedPlan = plan || null;
+    console.log({ at: "onSwitch", selectedPlan, plan });
+    if ($context.isEmbed && $context.os === OperatingSystem.IOS) {
+      completePurchaseOnIOS();
+      return;
+    }
     isBillingAddressCapture = true;
     isSwitching = true;
-    selectedPlan = plan || null;
   }
 
   async function onSwitchProceed() {
@@ -60,19 +63,28 @@
   }
 
   function onChoose(plan: IPlan) {
-    testIOSPurchase();
-    isBillingAddressCapture = true;
     selectedPlan = plan;
+    console.log({ at: "onChoose", selectedPlan });
+    if ($context.isEmbed && $context.os === OperatingSystem.IOS) {
+      completePurchaseOnIOS();
+      return;
+    }
+    isBillingAddressCapture = true;
   }
 
-  function testIOSPurchase() {
-    console.log({ at: "testIOSPurchase", context: $context });
-    if ($context.isEmbed && $context.os === OperatingSystem.IOS) {
-      postToParent({
-        purchase: JSON.stringify({
-          productId: "io.memotron.plan.nucleus.yearly"
-        })
-      });
+
+  
+
+  function completePurchaseOnIOS() {
+    const productId = formProductId();
+    postToParent({
+      purchase: JSON.stringify({
+        productId
+      })
+    });
+
+    function formProductId() {
+      return `app.${$appStore.product}.${selectedPlan?.type}.${selectedPeriod}`;
     }
   }
 

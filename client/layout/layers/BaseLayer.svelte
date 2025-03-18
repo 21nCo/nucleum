@@ -260,6 +260,10 @@
     try {
       if (event?.data?.type === "SWIFT_MESSAGE" && event?.data?.payload) {
         const parsed = JSON.parse(event.data.payload);
+        console.log({
+          at: "handleMessageFromParent - SWIFT_MESSAGE",
+          parsed
+        });
         if (parsed?.id && parsed?.data) {
           fileEmbedChannel.setFile(parsed.id, parsed.data);
         }
