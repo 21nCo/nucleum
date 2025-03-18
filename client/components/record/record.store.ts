@@ -221,18 +221,23 @@ export class SearchStore {
       semanticSearchTopK: params.semanticSearchTopK
     };
     if (this.resource === Resource.everything) {
-      searcheableResources.forEach(async (resource) => {
-        if (isValidString(params.searchQuery)) {
-          selectParams.search = {
-            query: params.searchQuery!,
-            properties: resolveSearchProperties(resource)
-          };
-        }
-        const result = await this.resourceStore?.selectMany(selectParams, {
-          isIncludeSubItems: params.isIncludeSubItems
-        });
-        data = [...data, ...result];
-      });
+      data = (
+        await Promise.all(
+          searcheableResources.map(async (resource) => {
+            if (isValidString(params.searchQuery)) {
+              selectParams.search = {
+                query: params.searchQuery!,
+                properties: resolveSearchProperties(resource)
+              };
+            }
+            this.setResourceStore(resource);
+            const result = await this.resourceStore?.selectMany(selectParams, {
+              isIncludeSubItems: params.isIncludeSubItems
+            });
+            return Array.isArray(result) ? result : [];
+          })
+        )
+      ).flat();
     } else {
       this.setResourceStore(this.resource);
       data = await this.resourceStore?.selectMany(selectParams, {

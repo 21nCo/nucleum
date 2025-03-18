@@ -10,19 +10,12 @@ import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
 import ProductFeatureWheel from "$lib/client/components/blank/ProductFeatureWheel.svelte";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import MemotronLibrary from "$lib/client/products/memotron/library/MemotronLibrary.svelte";
-import TestHome from "$local/TestHome.svelte";
 import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
 import {
   ResourceAccessMode,
-  ResourceActionType,
-  type IMultiSelectStore
+  ResourceActionType
 } from "$lib/client/components/flux/resourceStores/resource.type";
-import {
-  determineResourceType,
-  resourceAction
-} from "$lib/client/components/flux/resourceStores/resource.utils";
-import ResourceSearchModal from "./library/search/ResourceSearchModal.svelte";
-import { Action } from "$lib/client/types/action.enum";
+import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
 import PasteConfirmationModal from "./capture/PasteConfirmationModal.svelte";
 import LinkTagsControlPanel from "./linking/LinkTagsControlPanel.svelte";
 import Chat from "$lib/client/products/memotron/taco/Chat.svelte";
@@ -102,22 +95,6 @@ export const memotronActions: IAction[] = [
         ignoreSafeArea: true,
         isShowCantileverClose: true,
         isShowBackButton: false
-      }
-    }
-  },
-  {
-    action: Action.GLOBAL_SEARCH,
-    component: ResourceSearchModal,
-    label: "Search resources",
-    // type: ActionType.MODAL,
-    type: ActionType.RESOURCE,
-    accessMode: ResourceAccessMode.POP,
-    modalParams: {
-      layout: {
-        orientation: Orientation.Horizontal,
-        size: Size.xl,
-        ignoreSafeArea: true,
-        isShowCantileverClose: true
       }
     }
   },
@@ -218,7 +195,7 @@ export const memotronActions: IAction[] = [
     label: "Rewind",
     isInactive: true,
     icon: "sync",
-    component: TestHome
+    component: ComingSoonView
   },
   {
     action: "serendipity",
@@ -226,7 +203,7 @@ export const memotronActions: IAction[] = [
     label: "Serendipity",
     isInactive: true,
     icon: "light-bulb",
-    component: TestHome
+    component: ComingSoonView
   },
   {
     action: "fw",

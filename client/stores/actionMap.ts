@@ -30,6 +30,7 @@ import SurrealLocalViewer from "../components/debug/SurrealLocalViewer.svelte";
 import PrivacyPolicy from "../landing/shared/PrivacyPolicy.svelte";
 import { Embed } from "../types/context.type";
 import {
+  ResourceAccessMode,
   ResourceActionType,
   type IMultiSelectStore
 } from "../components/flux/resourceStores/resource.type";
@@ -72,6 +73,7 @@ import CreateTask from "../components/tasks/CreateTask.svelte";
 import GoalSearchResultItem from "../components/goals/GoalSearchResultItem.svelte";
 import { taskStore } from "../components/tasks/task.store";
 import Task from "../components/tasks/Task.svelte";
+import ResourceSearchModal from "../products/memotron/library/search/ResourceSearchModal.svelte";
 
 export const globalActions: IAction[] = [
   {
@@ -926,6 +928,22 @@ export const globalActions: IAction[] = [
             closeProgressId: "bulklink"
           });
         }
+      }
+    }
+  },
+  {
+    action: Action.GLOBAL_SEARCH,
+    component: ResourceSearchModal,
+    label: "Search resources",
+    // type: ActionType.MODAL,
+    type: ActionType.RESOURCE,
+    accessMode: ResourceAccessMode.POP,
+    modalParams: {
+      layout: {
+        orientation: Orientation.Horizontal,
+        size: Size.xl,
+        ignoreSafeArea: true,
+        isShowCantileverClose: true
       }
     }
   }

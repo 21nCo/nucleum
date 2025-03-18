@@ -10,7 +10,7 @@
   import { SearchStore } from "$lib/client/components/record/record.store";
   import { recentsStore } from "$lib/client/components/record/recent.store";
   import { onMount } from "svelte";
-  import { isValidString } from "$lib/shared/utils/text.utils";
+  import { isValidString, properCase } from "$lib/shared/utils/text.utils";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
@@ -27,6 +27,8 @@
   import LinkSearchResultItem from "../../common/linkbox/LinkSearchResultItem.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
+  import { searcheableResources } from "$local/local";
+  import { resolveResourceIcon } from "$lib/client/components/flux/resourceStores/resource.utils";
 
   let resource: Resource = Resource.everything;
   let isFiltersVisible: boolean = false;
@@ -44,16 +46,11 @@
       value: Resource.everything,
       icon: "ph:asterisk-light"
     },
-    {
-      label: "Nodes",
-      value: Resource.node,
-      icon: "ph:hexagon-light"
-    },
-    {
-      label: "Collections",
-      value: Resource.collection,
-      icon: "ph:brackets-round-light"
-    }
+    ...searcheableResources.map((x) => ({
+      label: properCase(x),
+      value: x,
+      icon: resolveResourceIcon(x)
+    }))
   ];
   onMount(async () => {
     inputRef?.focus();
@@ -66,12 +63,12 @@
         isRefreshing = true;
         let orderBy: IResourceSelectOrderBy | undefined;
         let semanticSearchTopK: number | undefined;
-        if (searchStore.searchType == SearchType.SEMANTIC) {
-          orderBy = {
-            dist: "desc",
-            createdAt: "desc"
-          };
-        }
+        // if (searchStore.searchType == SearchType.SEMANTIC) {
+        //   orderBy = {
+        //     dist: "desc",
+        //     createdAt: "desc"
+        //   };
+        // }
         data = await searchStore.select({
           resource,
           searchQuery,

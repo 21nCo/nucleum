@@ -14,7 +14,9 @@
   import type { ICollectionThumb } from "$lib/client/components/collection/collection.type";
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
   import NodeTitleLabelPart from "$lib/client/products/memotron/node/title/NodeTitleLabelPart.svelte";
-  export let item: INode | ICollectionThumb;
+  import GoalSearchResultItem from "$lib/client/components/goals/GoalSearchResultItem.svelte";
+  import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
+  export let item: INode | ICollectionThumb | IGoalThumb;
   export let isHideResourceType: boolean = false;
 
   $: resourceType = determineResourceType(item.id);
@@ -55,6 +57,12 @@
       {/if}
     {:else if resourceType === Resource.collection}
       <CollectionTitleLabelPart {item} isShowFallbackIcons={true} />
+    {:else if resourceType === Resource.goal}
+      <GoalSearchResultItem {item} />
+    {:else}
+      <div class="flex text-left">
+        {item.label}
+      </div>
     {/if}
   </span>
   {#if !isHideResourceType}
