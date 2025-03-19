@@ -2,12 +2,12 @@ import DodoPayments from "dodopayments";
 
 export async function createCustomer(params: { email: string; name: string }) {
   const dodopayments = new DodoPayments({
-    bearerToken: process.env.DODO_API_KEY,
+    bearerToken: process.env.DODO_API_KEY
   });
   console.log({ email: params.email, name: params.name });
   const customer = await dodopayments.customers.create({
     email: params.email ?? "test@21n.org",
-    name: params.name ?? "someone",
+    name: params.name ?? "someone"
   });
   return customer;
 }
@@ -21,18 +21,18 @@ export async function createPayment(params: {
 }) {
   const dodopayments = new DodoPayments({
     baseURL: process.env.DODO_BASE_URL ?? "https://test.dodopayments.com",
-    bearerToken: process.env.DODO_API_KEY,
+    bearerToken: process.env.DODO_API_KEY
   });
   console.log({ email: params.email, name: params.name });
   const payment = await dodopayments.payments.create({
     billing: params.billing,
     customer: {
       email: params.email,
-      name: params.name,
+      name: params.name
     },
     payment_link: true,
     return_url: params.returnUrl ?? "",
-    product_cart: [{ product_id: params.productId, quantity: 1 }],
+    product_cart: [{ product_id: params.productId, quantity: 1 }]
   });
   return payment;
 }
@@ -46,19 +46,19 @@ export async function createSubscription(params: {
 }) {
   const dodopayments = new DodoPayments({
     baseURL: process.env.DODO_BASE_URL ?? "https://test.dodopayments.com",
-    bearerToken: process.env.DODO_API_KEY,
+    bearerToken: process.env.DODO_API_KEY
   });
   console.log({ email: params.email, name: params.name });
   const payment = await dodopayments.subscriptions.create({
     billing: params.billing,
     customer: {
       email: params.email,
-      name: params.name,
+      name: params.name
     },
     payment_link: true,
     return_url: params.returnUrl ?? "",
     product_id: params.productId,
-    quantity: 1,
+    quantity: 1
   });
   return payment;
 }
@@ -72,7 +72,7 @@ export async function createPaymentUsingHttp(params: {
     method: "POST",
     headers: {
       Authorization: `Bearer ${process.env.DODO_API_KEY}`,
-      "Content-Type": "application/json",
+      "Content-Type": "application/json"
     },
     body: JSON.stringify({
       billing: {
@@ -80,12 +80,12 @@ export async function createPaymentUsingHttp(params: {
         country: "IN",
         state: "Telangana",
         street: "street",
-        zipcode: "500085",
+        zipcode: "500085"
       },
       payment_link: true,
       customer: { email: params.email, name: params.name },
-      product_cart: [{ product_id: params.productId, quantity: 1 }],
-    }),
+      product_cart: [{ product_id: params.productId, quantity: 1 }]
+    })
   });
   console.log({ response });
   return response.json();
@@ -94,7 +94,7 @@ export async function createPaymentUsingHttp(params: {
 export async function verifyPayment(id: string, isSubscription?: boolean) {
   const dodopayments = new DodoPayments({
     baseURL: process.env.DODO_BASE_URL ?? "https://test.dodopayments.com",
-    bearerToken: process.env.DODO_API_KEY,
+    bearerToken: process.env.DODO_API_KEY
   });
   if (isSubscription) {
     const payment = await dodopayments.subscriptions.retrieve(id);
@@ -107,10 +107,10 @@ export async function verifyPayment(id: string, isSubscription?: boolean) {
 export async function cancelSubscription(subscriptionId: string) {
   const dodopayments = new DodoPayments({
     baseURL: process.env.DODO_BASE_URL ?? "https://test.dodopayments.com",
-    bearerToken: process.env.DODO_API_KEY,
+    bearerToken: process.env.DODO_API_KEY
   });
   const subscription = await dodopayments.subscriptions.update(subscriptionId, {
-    status: "cancelled",
+    status: "cancelled"
   });
   return subscription;
 }
@@ -118,11 +118,39 @@ export async function cancelSubscription(subscriptionId: string) {
 export async function refundPayment(paymentId: string, amount?: number) {
   const dodopayments = new DodoPayments({
     baseURL: process.env.DODO_BASE_URL ?? "https://test.dodopayments.com",
-    bearerToken: process.env.DODO_API_KEY,
+    bearerToken: process.env.DODO_API_KEY
   });
   const body = amount
     ? { payment_id: paymentId, amount }
     : { payment_id: paymentId };
   const refund = await dodopayments.refunds.create(body);
   return refund;
+}
+
+export async function refundPaymentForSubscription(
+  subscriptionId: string,
+  amount?: number
+) {
+  try {
+    const dodopayments = new DodoPayments({
+      baseURL: process.env.DODO_BASE_URL ?? "https://test.dodopayments.com",
+      bearerToken: process.env.DODO_API_KEY
+    });
+
+    const payments = await dodopayments.payments.list({
+      query: {
+        subscription_id: subscriptionId
+      }
+    });
+    const payment = payments?.items?.[0];
+    if (!payment?.payment_id) {
+      console.log(`No payment ID found for subscription ${subscriptionId}`);
+      // throw new Error(`No payment ID found for subscription ${subscriptionId}`);
+      return null;
+    }
+    return refundPayment(payment.payment_id, payment.total_amount ?? amount);
+  } catch (error) {
+    console.log({ error });
+    return null;
+  }
 }
