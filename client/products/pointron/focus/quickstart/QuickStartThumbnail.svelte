@@ -56,12 +56,12 @@
     if (isInEditMode) return;
     if (isActive) {
       isFinishingState = true;
-      await activeSession.finishSession(true);
+      await activeSession.finishSession({ isClose: true });
       await refreshFocus();
       isFinishingState = false;
     } else {
       if ($activeSession.isSessionRunning)
-        await activeSession.finishSession(true);
+        await activeSession.finishSession({ isQuickStartSwitch: true });
       await activeSession.quickStart(item.id);
     }
   }

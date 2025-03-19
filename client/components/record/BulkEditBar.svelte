@@ -17,6 +17,12 @@
   export let context: IMultiSelectContext;
   export let subContext: string = "";
   export let isConstrainedWidth: boolean = false;
+  const isHideStar = [Resource.task, Resource.session].includes(
+    context.resource
+  );
+  const isHideArchive = [Resource.task, Resource.session].includes(
+    context.resource
+  );
   $: multiSelectStore = resolveMultiSelectStore(context);
   const miniButtonProps: {} = {
     size: Size.md,
@@ -103,6 +109,17 @@
           />
         {/if}
       {/if}
+      {#if context.resource === Resource.task}
+        <Button
+          label="Mark as completed"
+          icon="ph:check-square-light"
+          {parentBgIndex}
+          {...expandedButtonProps}
+          on:click={() => {
+            dispatch("action", "complete");
+          }}
+        />
+      {/if}
       {#if subContext.includes("starred")}
         <Button
           label={isConstrainedWidth ? undefined : "Unstar"}
@@ -113,7 +130,7 @@
             dispatch("action", "unstar");
           }}
         />
-      {:else}
+      {:else if !isHideStar}
         <Button
           label={isConstrainedWidth ? undefined : "Star"}
           tooltip={isConstrainedWidth ? "Star" : undefined}
@@ -138,7 +155,7 @@
           dispatch("action", "unarchive");
         }}
       />
-    {:else}
+    {:else if !isHideArchive}
       <Button
         label={isConstrainedWidth ? undefined : "Archive"}
         tooltip={isConstrainedWidth ? "Archive" : undefined}

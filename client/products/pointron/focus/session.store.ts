@@ -835,7 +835,10 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     appEvents.publish(PointronEvent.SESSION_FINISHED);
   }
 
-  async finishSession(isClose: boolean = false) {
+  async finishSession(params?: {
+    isClose?: boolean;
+    isQuickStartSwitch?: boolean;
+  }) {
     let session = this.get();
     let currentFocus = get(currentFocusItem);
     if (!session.isQuickStartOn)
@@ -858,9 +861,9 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     } catch (err) {
       logger.error(err);
     } finally {
-      if (isClose) {
+      if (params?.isClose) {
         this.close();
-      } else {
+      } else if (!params?.isQuickStartSwitch) {
         this.shallowReset();
         // this.propagateMessageToParent(session);
         currentFocusItem.set(undefined);
@@ -1193,8 +1196,7 @@ export const lastActiveGoalIdForEditing = writable<IRecordId | undefined>(
 );
 
 const seedFocusItemsStore: IFocusItemsStore = {
-  items: [],
-  refreshId: new Date().getTime()
+  items: []
 };
 
 class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
@@ -1209,17 +1211,12 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
         isPersist
       }
     );
-    appEvents.publish(PointronEvent.REFRESH_FOCUSITEMS);
   }
 
   async addNewTask(label: string, goalId?: IRecordId) {
     let id = generateResourceId(Resource.task);
-    let task = await taskStore.save(
-      { label, isChecked: false, goalId: goalId },
-      { id }
-    );
-    if (!task || !Array.isArray(task) || task.length === 0) return;
     await this.addTask(id, goalId);
+    return taskStore.save({ label, isChecked: false, goalId: goalId }, { id });
   }
 
   async addTask(id: IRecordId, goalId?: IRecordId) {
@@ -1244,7 +1241,6 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
       ]
     });
     if (goalId) lastActiveGoalIdForEditing.set(goalId);
-    appEvents.publish(PointronEvent.REFRESH_FOCUSITEMS);
   }
 
   async addNewGoal(label: string) {
@@ -1257,10 +1253,8 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
     let n = this.get();
     if (n.items.some(resourceInList(id))) return;
     n.items.push({ id, tasks: [], blocks: [] });
-    n.refreshId = new Date().getTime();
     this.modify(n);
     lastActiveGoalIdForEditing.set(id);
-    appEvents.publish(PointronEvent.REFRESH_FOCUSITEMS);
   }
 
   async appendFocusBlock(id: IRecordId, block: { start: number; end: number }) {
@@ -1293,7 +1287,6 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
       return item;
     });
     this.modify(n);
-    appEvents.publish(PointronEvent.REFRESH_FOCUSITEMS);
   }
 
   async propagateDependencyChanges(data: any) {

@@ -9,10 +9,11 @@
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { SearchStore } from "$lib/client/components/record/record.store";
   import FocusItemSearchResultItem from "./FocusItemSearchResultItem.svelte";
+  import { createEventDispatcher } from "svelte";
   let label: string = "";
   let inputRef: any;
   let searchStore = new SearchStore();
-
+  const dispatch = createEventDispatcher();
   async function onSelect(event: any) {
     let item = event?.detail?.item;
     if (!item || !item.id) return;
@@ -21,27 +22,26 @@
       return;
     }
     reset();
-    if (item.goal) {
-      await focusItemsStore.addTask(item.id, item.goal.id);
-    } else {
-      await focusItemsStore.addGoal(item.id);
-    }
+    dispatch("select", item);
   }
 
   function reset() {
-    inputRef.reset();
+    label = "";
+    inputRef?.reset();
   }
 
   async function handleEmptyEnter(
     e: CustomEvent<{ event: KeyboardEvent; value: string }>
   ) {
     if (e.detail.event.shiftKey) {
-      await focusItemsStore.addNewGoal(e.detail.value);
-      reset();
+      dispatch("createGoal", e.detail.value);
+      setTimeout(() => {
+        reset();
+      }, 500);
       return;
     }
-    await focusItemsStore.addNewTask(e.detail.value);
     reset();
+    dispatch("createTask", e.detail.value);
   }
 
   async function searchCallback(searchQuery: string) {

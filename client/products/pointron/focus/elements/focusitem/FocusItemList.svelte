@@ -10,12 +10,22 @@
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
-  import { onMount } from "svelte";
-  import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { onDestroy, onMount } from "svelte";
+  import {
+    isSameResource,
+    resourceInList
+  } from "$lib/client/components/flux/resourceStores/resource.utils";
   import type { ITaskThumb } from "$lib/client/components/tasks/task.type";
   import type { IFocusItem } from "$lib/client/types/pointron/session.type";
   import { goalStore } from "$lib/client/components/goals/goal.store";
   import { taskStore } from "$lib/client/components/tasks/task.store";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+  import { appEvents, toasts } from "$lib/client/stores/notification.store";
+  import { ErrorMessage } from "$lib/client/components/error/error.type";
+  import type { IRecordId } from "$lib/client/types/data.type";
+  import { LoadingAnimationType } from "$lib/client/types/feedback.type";
+  import { fullScreen } from "$lib/client/components/modal/modal.store";
+  import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
   export let isInEditMode: boolean = false;
   let isFocusingAddGoal: boolean = false;
   let focusItems: IFocusItem[] = [];
@@ -58,14 +68,83 @@
     isRefreshing = false;
   }
 
-  onMount(() => {
+  let fullScreenSub: () => void;
+  let appEventSub: () => void;
+  onMount(async () => {
+    while (!focusItemsStore.isInitialized) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
     refresh();
-    focusItemsStore.subscribe((x) => {
-      if (x.refreshId) {
+    fullScreenSub = fullScreen.subscribe((x) => {
+      if (!x.path) {
+        refresh();
+      }
+    });
+    appEventSub = appEvents.subscribe((x) => {
+      if (x.event === PointronEvent.SESSION_CLOSED) {
         refresh();
       }
     });
   });
+
+  onDestroy(() => {
+    if (fullScreenSub) fullScreenSub();
+    if (appEventSub) appEventSub();
+  });
+
+  async function onCreateNewGoalTask(event: any) {
+    try {
+      const { label, goalId } = event.detail;
+      const result = await focusItemsStore.addNewTask(label, goalId);
+      if (isValidArrayWithData(result)) {
+        addTask(result![0], goalId);
+      } else {
+        toasts.error(ErrorMessage.DEFAULT);
+      }
+    } catch (error) {
+      toasts.error(ErrorMessage.DEFAULT);
+    }
+  }
+
+  async function onSelect(event: any) {
+    const item = event.detail;
+    if (!item || !item.id) return;
+    if (item.goal || item.goalId) {
+      await focusItemsStore.addTask(item.id, item.goal?.id ?? item.goalId);
+      addTask(item, item.goal?.id ?? item.goalId);
+    } else {
+      await focusItemsStore.addGoal(item.id);
+      refresh();
+    }
+  }
+
+  function addTask(task: ITaskThumb, goalId?: IRecordId) {
+    tasks = [...tasks, task];
+    focusItems = focusItems.map((x) => {
+      if (goalId && isSameResource(x.id, goalId)) {
+        return { ...x, tasks: [...(x.tasks ?? []), task.id] };
+      }
+      return x;
+    });
+  }
+
+  function onRemove(event: any) {
+    const id = event.detail;
+    focusItemsStore.removeFocusItem(id);
+    refresh();
+  }
+
+  async function onCreateGoal(event: any) {
+    const label = event.detail;
+    await focusItemsStore.addNewGoal(label);
+    refresh();
+  }
+
+  async function onCreateStandaloneTask(event: any) {
+    const label = event.detail;
+    await focusItemsStore.addNewTask(label);
+    refresh();
+  }
 </script>
 
 <div
@@ -73,22 +152,26 @@
     "pt-6": isInEditMode
   })}
 >
-  {#if $focusItemsStore.items?.length === 0 && !isInEditMode && $activeSession.isSessionRunning}
+  {#if ($focusItemsStore.items?.length === 0 && !isInEditMode && $activeSession.isSessionRunning) || isRefreshing}
     <div class="h-full">
       <EmptyStatusView
         size={Size.sm}
         isLoadingState={isRefreshing}
+        loadingAnimation={LoadingAnimationType.FOCUS_ITEMS_PULSE}
         mainText="No focus items added."
         subText="Toggle edit mode to add focus items."
       />
     </div>
-  {:else if focusItems.length > 0}
+  {:else if $focusItemsStore.items?.length > 0 && focusItems.length > 0}
     {#each focusItems as focusItem, index (focusItem.id)}
       <FocusItem
         {isInEditMode}
         {focusItem}
         {tasks}
         {goals}
+        on:createNew={onCreateNewGoalTask}
+        on:select={onSelect}
+        on:remove={onRemove}
         isFocusAddTask={$lastActiveGoalIdForEditing
           ? $lastActiveGoalIdForEditing === focusItem.id
           : index === $focusItemsStore.items.length - 1}
@@ -96,14 +179,20 @@
     {/each}
   {/if}
 
-  {#if !$activeSession.isSessionRunning || isInEditMode}
+  {#if !isRefreshing && (!$activeSession.isSessionRunning || isInEditMode)}
     <div class="flex flex-col gap-2 w-full pt-4">
       <div
         class="flex items-center w-full border rounded-md {isFocusingAddGoal
           ? 'border-aps1'
           : 'border-brs3'}"
       >
-        <AddFocusItem on:blur={onBlur} on:focus={onfocus} />
+        <AddFocusItem
+          on:blur={onBlur}
+          on:focus={onfocus}
+          on:select={onSelect}
+          on:createGoal={onCreateGoal}
+          on:createTask={onCreateStandaloneTask}
+        />
       </div>
     </div>
   {/if}

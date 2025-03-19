@@ -46,7 +46,7 @@
     <DashboardLoadingPulse />
   {:else if isLoadingState && loadingAnimation === LoadingAnimationType.QUICK_FOCUS_ITEMS_GRID_PULSE}
     <QuickFocusItemsGridPulse />
-  {:else if isLoadingState && loadingAnimation === LoadingAnimationType.QUICK_FOCUS_ITEM_PULSE}
+  {:else if isLoadingState && loadingAnimation === LoadingAnimationType.FOCUS_ITEMS_PULSE}
     <QuickFocusItemPulse />
   {:else}
     {#if isSearchContext}

@@ -29,7 +29,8 @@
   import { popover } from "$lib/client/actions/popover.action";
   import FocusTaskEstimatedTimePopover from "./FocusTaskEstimatedTimePopover.svelte";
   import type { TimeUnit } from "$lib/client/types/time.type";
-
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
   export let task: ITaskThumb;
   export let focusItem: IFocusItem;
   export let isInEditMode: boolean = false;
@@ -113,8 +114,8 @@
     }
   }
 
-  async function onDeleteClicked() {
-    await focusItemsStore.removeFocusItem(focusItem.id);
+  async function onRemove() {
+    dispatch("remove", focusItem.id);
   }
 
   function onEstimatedTimeChange(
@@ -208,6 +209,6 @@
     </div>
   </button>
   {#if isInEditMode || (context === "current" && !$activeSession.isSessionRunning)}
-    <Button icon="cross" on:click={onDeleteClicked} tooltip="Remove" />
+    <Button icon="cross" on:click={onRemove} tooltip="Remove" />
   {/if}
 </div>

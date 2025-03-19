@@ -1,7 +1,5 @@
 <script lang="ts">
-  import { focusItemsStore } from "$lib/client/products/pointron/focus/session.store";
   import Button from "$lib/client/elements/button/Button.svelte";
-  import Check from "$lib/client/icons/Check.svelte";
   import { Placement } from "$lib/client/types/direction.enum";
   import { InputStyle } from "$lib/client/types/input.type";
   import { Size } from "$lib/client/types/size.enum";
@@ -11,11 +9,14 @@
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { toasts } from "$lib/client/stores/notification.store";
   import { ErrorMessage } from "$lib/client/components/error/error.type";
+  import { createEventDispatcher } from "svelte";
+
   export let goalId: IRecordId;
   export let placeholder: string = "+ add a task";
   let label: string = "";
   let inputRef: TextSearchInput;
   const searchStore = new SearchStore(Resource.task);
+  const dispatch = createEventDispatcher();
 
   export function focus() {
     inputRef.focus();
@@ -25,19 +26,23 @@
     if (!label) return;
     const labelCopy = label;
     reset();
-    if (goalId) await focusItemsStore.addNewTask(labelCopy, goalId);
-    inputRef?.hide();
+    dispatch("createNew", {
+      label: labelCopy,
+      goalId
+    });
+    // if (goalId) await focusItemsStore.addNewTask(labelCopy, goalId);
   }
 
   function reset() {
     label = "";
+    inputRef?.reset();
   }
 
   function searchCallback(search: string) {
     return searchStore.select({
       searchQuery: search,
       filters: {
-        goal: goalId.toString()
+        goalId: goalId.toString()
       }
     });
   }
@@ -46,7 +51,7 @@
     try {
       if (!event.detail.item) return;
       const task = event.detail.item;
-      await focusItemsStore.addTask(task.id, goalId);
+      dispatch("select", task);
     } catch (error: any) {
       toasts.error(error.message ?? ErrorMessage.DEFAULT);
     }

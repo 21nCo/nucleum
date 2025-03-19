@@ -33,6 +33,8 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import { resolveGoalColor } from "$lib/client/components/goals/goal.utils";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
 
   export let focusItem: IFocusItem;
   export let tasks: ITaskThumb[] = [];
@@ -90,8 +92,8 @@
       }
     }
   }
-  async function onDeleteClicked() {
-    await focusItemsStore.removeFocusItem(focusItem.id);
+  async function onRemoveClicked() {
+    dispatch("remove", focusItem.id);
   }
 
   function resolveTaskFocusItems(focusItem: IFocusItem) {
@@ -149,6 +151,7 @@
                   {intervals}
                   {isInEditMode}
                   context={contxt}
+                  on:remove
                 />
               {/if}
               {#if index < tasksUnderGoal.length - 1}
@@ -162,6 +165,8 @@
               goalId={focusItem.id}
               placeholder="Add a task"
               bind:this={addTaskInputRef}
+              on:createNew
+              on:select
             />
           {/if}
         </div>
@@ -176,7 +181,7 @@
             style={ButtonStyle.OUTLINED}
             isPreventMinWidth={true}
             label="Remove"
-            on:click={onDeleteClicked}
+            on:click={onRemoveClicked}
           />
         </div>
       {/if}
@@ -245,6 +250,7 @@
         {isInEditMode}
         context={contxt}
         isStandalone={true}
+        on:remove
       />
     {/if}
   {/if}

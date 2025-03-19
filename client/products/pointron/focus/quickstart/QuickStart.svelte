@@ -166,7 +166,7 @@
       isSearchContext={true}
       loadingAnimation={layout !== Layout.LIST
         ? LoadingAnimationType.QUICK_FOCUS_ITEMS_GRID_PULSE
-        : LoadingAnimationType.QUICK_FOCUS_ITEM_PULSE}
+        : LoadingAnimationType.FOCUS_ITEMS_PULSE}
       mainText={"No pinned goals found"}
       subText="Please create a new goal or pin an existing one to the quick focus section."
       actionText={"Create new goal"}

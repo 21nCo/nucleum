@@ -47,6 +47,8 @@
   import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
   import BulkEditBar from "../record/BulkEditBar.svelte";
   import view from "$lib/client/stores/view.store";
+  import InlineSyncingFeedback from "$lib/client/elements/feedback/InlineSyncingFeedback.svelte";
+  import SyncStatusPropagator from "$lib/client/elements/feedback/SyncStatusPropagator.svelte";
 
   export let goalId: IRecordId | undefined = undefined;
   export let collectionId: IRecordId | undefined = undefined;
@@ -66,7 +68,7 @@
   let dateSelectionPopoverRef: HTMLDivElement;
   let addNewTaskInlineRef: AddNewTaskInline | undefined;
   let isRefreshing = false;
-
+  let isSyncing = false;
   $: multiSelectContext = {
     resource: Resource.task,
     accessPoint: resolveAccessPoint(),
@@ -210,6 +212,7 @@
     else if (collectionId) return collectionId.toString();
     return undefined;
   }
+  $: console.log({ tasks });
 </script>
 
 <div
@@ -318,11 +321,18 @@
       }}
     />
   </InlineSearchBar>
+  <div class="px-4 w-full">
+    <InlineSyncingFeedback {isSyncing} isFullWidthVariant={true} />
+  </div>
+
   {#if tasks && tasks.length > 0}
     <div
-      class={cn("flex flex-col gap-4 overflow-auto grow userdata ph-no-capture", {
-        "px-4": accessPoint === ResourceAccessPoint.LIBRARY
-      })}
+      class={cn(
+        "flex flex-col gap-4 overflow-auto grow userdata ph-no-capture",
+        {
+          "px-4": accessPoint === ResourceAccessPoint.LIBRARY
+        }
+      )}
     >
       <!-- {#if selectedSubType !== "bymonth"}
       <AddNewTaskInline on:add={onAdd} bind:this={addNewTaskInlineRef} />
@@ -372,3 +382,5 @@
   }}
   on:change={onResourceMutation}
 />
+
+<SyncStatusPropagator resource={Resource.task} bind:isSyncing />

@@ -40,6 +40,7 @@ import { goalStore } from "../goals/goal.store";
 import { Action } from "$lib/client/types/action.enum";
 import { localCacheableStores, remoteOnlyStores } from "$local/localStoresMap";
 import { searcheableResources } from "$local/local";
+import { taskStore } from "../tasks/task.store";
 
 export const MAX_FILE_SIZE_MB = 100;
 
@@ -643,7 +644,7 @@ export class BulkEditor {
             onSuccess(action, items.length, Resource.collection);
             break;
         }
-      } else if (this.resource === Resource.task) {
+      } else if (this.resource === Resource.goal) {
         switch (action) {
           case "star":
             await goalStore.bulkModify(
@@ -653,7 +654,7 @@ export class BulkEditor {
               },
               additionalParams
             );
-            onSuccess(action, items.length, Resource.task);
+            onSuccess(action, items.length, this.resource);
             break;
           case "unstar":
             await goalStore.bulkModify(
@@ -663,7 +664,7 @@ export class BulkEditor {
               },
               additionalParams
             );
-            onSuccess(action, items.length, Resource.task);
+            onSuccess(action, items.length, this.resource);
             break;
           case "archive":
             await goalStore.bulkModify(
@@ -673,7 +674,7 @@ export class BulkEditor {
               },
               additionalParams
             );
-            onSuccess(action, items.length, Resource.task);
+            onSuccess(action, items.length, this.resource);
             break;
           case "unarchive":
             await goalStore.bulkModify(
@@ -683,11 +684,29 @@ export class BulkEditor {
               },
               additionalParams
             );
-            onSuccess(action, items.length, Resource.task);
+            onSuccess(action, items.length, this.resource);
             break;
           case "delete":
             await goalStore.bulkTrash(items, additionalParams);
-            onSuccess(action, items.length, Resource.task);
+            onSuccess(action, items.length, this.resource);
+            break;
+        }
+      } else if (this.resource === Resource.task) {
+        switch (action) {
+          case "complete":
+            await taskStore.bulkModify(
+              items,
+              {
+                isChecked: true,
+                completedAt: new Date()
+              },
+              additionalParams
+            );
+            onSuccess(action, items.length, this.resource);
+            break;
+          case "delete":
+            await goalStore.bulkTrash(items, additionalParams);
+            onSuccess(action, items.length, this.resource);
             break;
         }
       }

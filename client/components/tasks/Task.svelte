@@ -6,6 +6,10 @@
   import type { ITaskThumb } from "./task.type";
 
   import TaskThumbnail from "./TaskThumbnail.svelte";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+  import { Resource } from "../flux/resourceStores/resource.enum";
+  import { recentsStore } from "../record/recent.store";
+
   export let id: IRecordId;
   let task: ITaskThumb | undefined = undefined;
 
@@ -13,7 +17,18 @@
     await refresh();
   });
   async function refresh() {
-    task = await taskStore.select(id);
+    const result = await taskStore.selectMany({
+      filters: {
+        id
+      }
+    });
+    if (isValidArrayWithData(result)) {
+      task = result[0];
+      recentsStore.add(task, {
+        type: Resource.task,
+        timestamp: new Date()
+      });
+    }
   }
 </script>
 

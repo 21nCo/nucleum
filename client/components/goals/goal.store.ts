@@ -251,7 +251,7 @@ class GoalActions {
     icon: "ph:circle-light",
     callback: async () => {
       if (get(activeSession).isSessionRunning)
-        await activeSession.finishSession(true);
+        await activeSession.finishSession({ isQuickStartSwitch: true });
       await activeSession.quickStart(this.goal.id);
     }
   };

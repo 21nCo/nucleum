@@ -111,7 +111,7 @@ export const pointronActions: IAction[] = [
           callback: () => {
             const focus = get(activeSession);
             if (focus.state === SessionState.PRE_FINISHED) {
-              return activeSession.finishSession(true);
+              return activeSession.finishSession({ isClose: true });
             } else {
               return activeSession.close();
             }

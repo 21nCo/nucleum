@@ -21,6 +21,7 @@ export class KeyValueStore<T extends IObservableStoreSubject>
   declare id: Resource;
   isSynchronousCache: boolean = false;
   isPreventAutoPersist: boolean = false;
+  isInitialized: boolean = false;
   protected previousValue: string = "";
   seed: T;
   private _debouncedPersist = debouncer(this.persist, 3000);
@@ -74,6 +75,7 @@ export class KeyValueStore<T extends IObservableStoreSubject>
   loader(data: T) {
     // console.log({ context: "kv.store loader", id: this.id, data });
     if (!data.id) return;
+    this.isInitialized = true;
     this.__set({ ...data });
   }
   /**

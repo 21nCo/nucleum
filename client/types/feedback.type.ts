@@ -4,5 +4,5 @@ export enum LoadingAnimationType {
   DASHBOARD_PULSE = "dashboard_pulse",
   SPINNER = "spinner",
   QUICK_FOCUS_ITEMS_GRID_PULSE = "quick_focus_items_grid_pulse",
-  QUICK_FOCUS_ITEM_PULSE = "quick_focus_item_pulse"
+  FOCUS_ITEMS_PULSE = "focus_items_pulse"
 }

@@ -134,5 +134,4 @@ export interface IFocusItemsStore extends IObservableStoreSubject {
    */
   tasks?: IFocusTask[];
   items: IFocusItem[];
-  refreshId: number;
 }

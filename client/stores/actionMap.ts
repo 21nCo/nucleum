@@ -789,8 +789,7 @@ export const globalActions: IAction[] = [
         });
       },
       callback: async (id: string, label?: string, componentParams?: any) => {
-        console.log(id, label, componentParams);
-        taskStore.modify(
+        await taskStore.modify(
           componentParams.taskId,
           {
             goalId: id
@@ -799,6 +798,7 @@ export const globalActions: IAction[] = [
             context: componentParams?.context
           }
         );
+        toasts.success(`Goal updated for task`);
       }
     }
   },
