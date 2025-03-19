@@ -695,7 +695,7 @@ export const globalActions: IAction[] = [
           }
         },
         secondaryAction: {
-          label: "I'll do it later",
+          label: "I need some more time",
           icon: "ph:clock-light",
           variant: ButtonVariant.SECONDARY,
           callback: async () => {
@@ -809,8 +809,15 @@ export const globalActions: IAction[] = [
   },
   {
     action: Action.PLAN_ONBOARDING,
-    type: ActionType.PAGE,
-    component: PlanOnboarding
+    isMeta: true,
+    type: ActionType.MODAL,
+    component: PlanOnboarding,
+    modalParams: {
+      layout: {
+        size: Size.lg,
+        orientation: Orientation.Horizontal
+      }
+    }
   },
   {
     action: Action.USER_BILLING,
@@ -833,7 +840,7 @@ export const globalActions: IAction[] = [
     modalParams: {
       layout: {
         size: Size.lg,
-        orientation: Orientation.Horizontal
+        orientation: Orientation.Vertical
       }
     }
   },

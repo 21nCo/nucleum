@@ -18,7 +18,6 @@
   import { postToParent } from "$lib/client/utils/embed.utils";
 
   let selectedPeriod: BillingCycle = BillingCycle.YEARLY;
-  let showAllPlans = true;
   let isBillingAddressCapture = false;
   let selectedPlan: IPlan | null = null;
   let billingAddress: IBillingAddress | undefined = undefined;
@@ -34,7 +33,6 @@
 
   async function onSwitch(plan?: IPlan) {
     selectedPlan = plan || null;
-    console.log({ at: "onSwitch", selectedPlan, plan });
     if ($context.isEmbed && $context.os === OperatingSystem.IOS) {
       completePurchaseOnIOS();
       return;
@@ -64,16 +62,12 @@
 
   function onChoose(plan: IPlan) {
     selectedPlan = plan;
-    console.log({ at: "onChoose", selectedPlan });
     if ($context.isEmbed && $context.os === OperatingSystem.IOS) {
       completePurchaseOnIOS();
       return;
     }
     isBillingAddressCapture = true;
   }
-
-
-  
 
   function completePurchaseOnIOS() {
     const productId = formProductId();
@@ -117,51 +111,33 @@
 {:else if isBillingAddressCapture}
   <BillingAddressCapture bind:billingAddress on:proceed={onProceed} />
 {:else}
-  <div class="flex flex-col gap-3 dp:gap-6 h-full w-full overflow-auto">
-    <PlanHeader
-      {currentPlan}
-      bind:showAllPlans
-      on:showAllPlans={() => {
-        selectedPeriod = currentPlan?.cycle || BillingCycle.YEARLY;
-      }}
-    />
+  <div class="flex flex-col gap-6 h-full w-full overflow-auto">
+    <PlanHeader />
 
-    {#if !currentPlan || showAllPlans}
-      <div class="flex justify-center w-full">
-        <PanelSwitcher
-          items={billingPeriods}
-          bind:value={selectedPeriod}
-          style={PanelSwitcherStyle.TRAIN}
-          size={Size.sm}
-        />
-      </div>
-    {/if}
+    <div class="flex justify-center w-full cw:mb-6">
+      <PanelSwitcher
+        items={billingPeriods}
+        bind:value={selectedPeriod}
+        style={PanelSwitcherStyle.TRAIN}
+        size={Size.sm}
+      />
+    </div>
 
     <div class="flex-1 px-4 pb-3 dp:pb-12 w-full">
       <div
         class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto h-full"
       >
-        {#if currentPlan && !showAllPlans}
+        {#each SUBSCRIPTION_PLANS as plan}
           <PlanCard
             plans={SUBSCRIPTION_PLANS}
+            {plan}
             {currentPlan}
-            isCurrentPage={true}
-            on:switch={() => onSwitch()}
+            period={selectedPeriod}
+            on:switch={() => onSwitch(plan)}
+            on:choose={() => onChoose(plan)}
             on:cancel={() => onCancel()}
           />
-        {:else}
-          {#each SUBSCRIPTION_PLANS as plan}
-            <PlanCard
-              plans={SUBSCRIPTION_PLANS}
-              {plan}
-              {currentPlan}
-              period={selectedPeriod}
-              on:switch={() => onSwitch(plan)}
-              on:choose={() => onChoose(plan)}
-              on:cancel={() => onCancel()}
-            />
-          {/each}
-        {/if}
+        {/each}
       </div>
     </div>
   </div>

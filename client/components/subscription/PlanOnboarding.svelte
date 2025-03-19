@@ -15,6 +15,8 @@
   } from "./userPlan.utils";
   import { appStore } from "$lib/client/stores/app.store";
   import { formatDate } from "$lib/client/utils/time.utils";
+  import { renderMdAsHtml } from "../markdown/markdown.utils";
+  import PlanIcon from "./elements/PlanIcon.svelte";
 
   let currentPlanFeatures: Array<{ icon: string; label: string }> = [];
   $: renewalDate = $account.plan
@@ -34,18 +36,18 @@
   }
 </script>
 
-<div
-  class="max-w-[600px] mx-auto my-16 px-8 text-center flex flex-col gap-4 items-center"
->
+<div class="w-full my-16 px-8 text-center flex flex-col gap-4 items-center">
   <div class="text-[4rem] mb-4">
-    <Icon icon="ph:check-circle" class="text-ags1" size={Size.xl} />
+    <!-- <Icon icon="ph:check-circle" class="text-ags1" size={Size.xl} /> -->
+    <!-- 🎉 -->
+    <PlanIcon type={$account.plan?.plan} />
   </div>
 
   <h1 class="text-3xl font-semibold text-fgs1 mb-8">
-    Welcome to {resolvePlanLabel($account.plan)}
+    Welcome to {resolvePlanLabel($account.plan)} 🎉
   </h1>
 
-  <div class="bg-bgs2 p-8 rounded-xl mb-8">
+  <div class="bg-bgs2 p-8 rounded-xl mb-8 w-4/5 text-left">
     {#if $account.plan?.cycle !== BillingCycle.LIFETIME}
       <p class="text-h3 text-fgs2 mb-4">Your subscription is now active.</p>
     {/if}
@@ -61,20 +63,23 @@
       <ul class="space-y-3">
         {#each currentPlanFeatures as feature}
           <li class="flex items-center gap-2 text-fgs2">
-            <Icon icon={feature.icon} size={Size.md} class="text-aps1" />
-            <span>{feature.label}</span>
+            <Icon icon={feature.icon} size={Size.md} class="text-fgs1" />
+            <span>
+              {@html renderMdAsHtml(feature.label)}
+            </span>
           </li>
         {/each}
       </ul>
     </div>
+    <div class="mt-12">
+      <Button
+        type={ButtonVariant.PRIMARY}
+        icon="ph:rocket-light"
+        label="Get started"
+        on:click={() => {
+          appStore.gotoPath("/");
+        }}
+      />
+    </div>
   </div>
-
-  <Button
-    type={ButtonVariant.PRIMARY}
-    icon="ph:rocket-light"
-    label="Get started"
-    on:click={() => {
-      appStore.gotoPath("/");
-    }}
-  />
 </div>

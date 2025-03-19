@@ -15,7 +15,7 @@ if (plans) {
 
 export const SUBSCRIPTION_PLANS: IPlan[] = [
   {
-    name: "Memotron Sync",
+    name: "Memotron sync",
     type: PlanType.CLOUD_SYNC,
     description: "Real-time sync across all devices for Memotron",
     price: {
@@ -28,10 +28,10 @@ export const SUBSCRIPTION_PLANS: IPlan[] = [
         icon: "ph:arrows-left-right-light",
         label: "Unlimited cloud sync"
       },
-      {
-        icon: "ph:lock-light",
-        label: "End-to-end encryption"
-      },
+      // {
+      //   icon: "ph:lock-light",
+      //   label: "End-to-end encryption"
+      // },
       {
         icon: "ph:database-light",
         label: "20 GB of media storage (add-on for more)"
@@ -55,15 +55,15 @@ export const SUBSCRIPTION_PLANS: IPlan[] = [
       {
         icon: "ph:arrows-left-right-light",
         label:
-          "Unlimited cloud sync for Memotron, Pointron - [more soon](https://21n.org)"
+          "Unlimited cloud sync for Memotron, Pointron *(more coming soon)*"
       },
-      {
-        icon: "ph:lock-light",
-        label: "End-to-end encryption"
-      },
+      // {
+      //   icon: "ph:lock-light",
+      //   label: "End-to-end encryption"
+      // },
       {
         icon: "ph:database-light",
-        label: "100 GB of media storage (add-on for more)"
+        label: "100 GB of media storage *(add-on for more)*"
       },
       {
         icon: "ph:sparkle-light",
@@ -79,7 +79,7 @@ export const SUBSCRIPTION_PLANS: IPlan[] = [
       },
       {
         icon: "ph:hand-heart-light",
-        label: "Support independent organization - [21n.org](https://21n.org)"
+        label: "Support our mission *(21n.org)*"
       }
     ],
     isPopular: true
@@ -141,7 +141,7 @@ export function resolvePlanLabel(plan: IUserPlan | undefined) {
     } else if (plan.billingErrors) {
       return `Billing issue`;
     } else {
-      return `${enumToString(plan.plan)} - ${plan.cycle} plan 🎉`;
+      return `${enumToString(plan.plan)} - ${plan.cycle} plan`;
     }
   } else {
     return `Unknown plan`;

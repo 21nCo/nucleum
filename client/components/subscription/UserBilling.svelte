@@ -80,7 +80,7 @@
               appStore.runAction(Action.USER_PLAN_CANCELATION);
             }}
           />
-          {#if $account.plan?.cycle !== BillingCycle.LIFETIME}
+          <!-- {#if $account.plan?.cycle !== BillingCycle.LIFETIME}
             <Button
               icon="ph:arrow-right-light"
               parentBgIndex={2}
@@ -89,7 +89,7 @@
                 appStore.runAction(Action.USER_PLAN);
               }}
             />
-          {/if}
+          {/if} -->
         {/if}
       </div>
     {/if}

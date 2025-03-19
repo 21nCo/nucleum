@@ -1,13 +1,29 @@
 <script lang="ts">
+  import view from "$lib/client/stores/view.store";
   import { PlanType } from "../userPlan.type";
 
   export let type: PlanType;
+
+  $: width = resolveWidth(type);
+
+  function resolveWidth(type: PlanType) {
+    if (type === PlanType.CLOUD_SYNC) {
+      if ($view.isConstrainedWidth) {
+        return "32";
+      }
+      return "76";
+    }
+    if ($view.isConstrainedWidth) {
+      return "32";
+    }
+    return "72";
+  }
 </script>
 
 {#if type === PlanType.CLOUD_SYNC}
   <svg
-    width="76"
-    height="76"
+    {width}
+    height={width}
     viewBox="0 0 76 76"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
@@ -27,8 +43,8 @@
   </svg>
 {:else}
   <svg
-    width="72"
-    height="72"
+    {width}
+    height={width}
     viewBox="0 0 72 72"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
@@ -41,22 +57,22 @@
     />
     <circle
       cx="36.0024"
-      cy="36.0019"
-      r="12.2778"
+      cy="36.0024"
+      r="13.7778"
       class="stroke-fgs1"
       stroke-width="3"
     />
     <circle
       cx="35.8979"
-      cy="35.8984"
-      r="3.48776"
+      cy="35.8979"
+      r="4.98776"
       class="stroke-fgs1"
       stroke-width="3"
     />
     <circle
       cx="36.0002"
       cy="36.0012"
-      r="20.8889"
+      r="22.3889"
       class="stroke-fgs1"
       stroke-width="3"
     />
@@ -67,45 +83,16 @@
       class="stroke-fgs1"
       stroke-width="1.48966"
     />
+    <circle cx="63.5" cy="11.5" r="1.5" class="fill-fgs1" />
+    <circle cx="4.5" cy="14.5" r="1.5" class="fill-fgs1" />
+    <circle cx="2.5" cy="23.5" r="1.5" class="fill-fgs1" />
+    <circle cx="2.5" cy="57.5" r="1.5" class="fill-fgs1" />
+    <circle cx="15.5" cy="68.5" r="1.5" class="fill-fgs1" />
+    <circle cx="49.5" cy="2.5" r="1.5" class="fill-fgs1" />
     <circle
       cx="5.95828"
-      cy="65.5242"
+      cy="65.5247"
       r="4.22069"
-      class="stroke-fgs1"
-      stroke-width="1.48966"
-    />
-    <circle
-      cx="63.7448"
-      cy="12.7448"
-      r="0.744828"
-      class="stroke-fgs1"
-      stroke-width="1.48966"
-    />
-    <circle
-      cx="1.74483"
-      cy="57.7448"
-      r="0.744828"
-      class="stroke-fgs1"
-      stroke-width="1.48966"
-    />
-    <circle
-      cx="14.5"
-      cy="69.5"
-      r="0.5"
-      class="stroke-fgs1"
-      stroke-width="1.48966"
-    />
-    <circle
-      cx="67.2819"
-      cy="39.9724"
-      r="0.744828"
-      class="stroke-fgs1"
-      stroke-width="1.48966"
-    />
-    <circle
-      cx="2.74483"
-      cy="13.7448"
-      r="0.744828"
       class="stroke-fgs1"
       stroke-width="1.48966"
     />

@@ -13,11 +13,10 @@
   import { PlanStatus, type IUserPlan } from "$lib/client/types/account.type";
   const dispatch = createEventDispatcher();
 
-  export let plans: IPlan[] = [];
+  export let plans: IPlan[];
+  export let plan: IPlan;
+  export let period: BillingCycle;
   export let currentPlan: IUserPlan | undefined = undefined;
-  export let plan: IPlan =
-    plans.find((p) => p.type === currentPlan?.plan) || plans[0];
-  export let period: BillingCycle = currentPlan?.cycle || BillingCycle.MONTHLY;
   export let isCurrentPage = false;
   let isCurrentPlan = currentPlan?.plan === plan.type;
   let progressState:
@@ -79,13 +78,13 @@
   class={cn(
     "flex flex-col flex-1 max-h-[48rem] p-6 rounded-lg border relative",
     {
-      "border-aps1 hover:bg-aps3/30": plan.isPopular && !currentPlan,
-      "border-brs3 hover:bg-bgs2": !plan.isPopular || currentPlan,
+      "border-2 border-aps1 hover:bg-aps3/30": plan.isPopular,
+      "border-brs3 hover:bg-bgs2": !plan.isPopular,
       "md:col-span-2 max-w-3xl mx-auto w-full": isCurrentPage
     }
   )}
 >
-  {#if plan.isPopular && !currentPlan}
+  {#if plan.isPopular}
     <div class="absolute -top-3 right-4">
       <span class="px-3 py-1 text-sm rounded-full bg-aps1 text-abg"
         >Recommended</span
@@ -106,7 +105,9 @@
       <div class="flex flex-col gap-4">
         <PlanIcon type={plan.type} />
         <div>
-          <h3 class="text-3xl font-semibold text-fgs1">{plan.name}</h3>
+          <h3 class="cw:text-h3 text-3xl font-semibold text-fgs1">
+            {plan.name}
+          </h3>
           <p class="mt-2 text-b2 text-fgs1">{plan.description}</p>
         </div>
       </div>
@@ -114,12 +115,12 @@
       <div>
         <div class="flex items-baseline gap-2">
           {#if discountedPrice}
-            <span class="text-xl font-semibold text-ags1">
+            <span class="cw:text-h1 text-xl font-semibold text-ags1">
               ${discountedPrice}
             </span>
           {/if}
           <span
-            class={cn("text-xl font-medium", {
+            class={cn("cw:text-h1 text-xl font-medium", {
               "line-through text-fgs3": discountedPrice,
               "text-fgs1": !discountedPrice
             })}
@@ -153,7 +154,7 @@
       <PlanFeatureList features={plan.features} />
     </div>
 
-    <div class="mt-auto pt-6 flex justify-center">
+    <div class="mt-auto pt-6 flex justify-start">
       {#if isCurrentPlan && currentPlan?.cycle === period && currentPlan?.status === PlanStatus.ACTIVE}
         <div class="space-y-2">
           <Button
@@ -213,6 +214,7 @@
       {:else}
         <Button
           label="Choose Plan"
+          icon="ph:arrow-right-light"
           type={ButtonVariant.PRIMARY}
           isLoading={progressState === "initiating"}
           style={plan.isPopular ? ButtonStyle.DEFAULT : ButtonStyle.OUTLINED}

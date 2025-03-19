@@ -170,7 +170,7 @@
   <button
     class={cn("relative min-w-fit", {
       "rounded-full px-6 py-3": size === Size.md,
-      "rounded-md px-3 py-1 w-24": size === Size.sm,
+      "rounded-md px-3 py-1.5 w-24": size === Size.sm,
       "rounded-md px-2 py-0.5 w-16": size === Size.xs,
       "bg-ccs1 text-abg": isActive
     })}
