@@ -2,22 +2,23 @@ import { Agent } from "../../account/account.type";
 import {
   ValidationError,
   NotFoundError,
-  InternalServerError,
+  InternalServerError
 } from "../../errors";
 import { performQueryOnMasterDb } from "$lib/server/surrealHelpers";
 import { verifyPayment } from "../dodoPaymentProvider";
 import {
   BillingCycle,
-  PlanType,
+  PlanType
 } from "$lib/client/components/subscription/userPlan.type";
 import {
   resolvePlanQuery,
   resolvePromotePlanQuery,
-  resolveTransactionStatus,
+  resolveTransactionStatus
 } from "../plan.utils";
 
 interface VerifyRequest {
   nonce: string;
+  embedTransaction?: any;
   isReconciliation?: boolean;
 }
 
@@ -75,7 +76,7 @@ export async function verify(body: VerifyRequest, agent: Agent) {
       cycle: updatedTransaction.cycle,
       plan: updatedTransaction.plan,
       transactionId: updatedTransaction.id,
-      paymentDate: updatedTransaction.createdAt,
+      paymentDate: updatedTransaction.createdAt
     });
     if (!userPlanUpdateResult || !userPlanUpdateResult[0]?.result?.[0]) {
       throw new InternalServerError("Failed to update user plan");
@@ -85,7 +86,7 @@ export async function verify(body: VerifyRequest, agent: Agent) {
   }
   console.log({ newStatus });
   return {
-    status: newStatus,
+    status: newStatus
   };
 }
 
