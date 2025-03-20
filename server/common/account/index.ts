@@ -13,6 +13,7 @@ import {
 } from "../errors";
 import { performQueryOnBehalfOfUser } from "../user/user";
 import { getEmailParts } from "./account.utils";
+import { generateRandomIdv2 } from "$lib/shared/utils/crypto.utils";
 
 export async function signup(data: any, isOAuth = false) {
   console.log("signup", { data, isOAuth });
@@ -149,7 +150,22 @@ async function bootstrapUserAccount(authHeader: any, body: any) {
     region
   });
   console.log("bootstrap response", { bootstrapResponse });
-  const query = `update user:${id} set region = "${region}", isBootstrapped = true; select context.guest.* as guest from user:${id};`;
+  const userPlanId = generateRandomIdv2();
+  const userPlanQuery = `create userPlan content {
+    id: userPlan:${userPlanId},
+    userId: user:${id},
+    plan: "trial",
+    trialPlan: {
+    plan: "1mo",
+    expiry: d"${new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()}",
+    },
+    discount: {
+      first: 35,
+    },
+  }`;
+  const userPlanResponse = await performQueryOnMasterDb(userPlanQuery);
+  console.log("userPlan response", { userPlanResponse });
+  const query = `update user:${id} set region = "${region}", userPlan = userPlan:${userPlanId}, isBootstrapped = true; select context.guest.* as guest from user:${id};`;
   const response = await performQueryOnMasterDb(query);
   console.log("bootstrap response", { response: JSON.stringify(response) });
   if (!response) throw new DatabaseError("Bootstrapping failed");

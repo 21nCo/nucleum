@@ -1,12 +1,16 @@
 import { Agent } from "../../account/account.type";
 import {
   BillingCycle,
-  PlanType,
+  PlanType
 } from "$lib/client/components/subscription/userPlan.type";
 import { ValidationError } from "../../errors";
 import { performQueryOnMasterDb } from "$lib/server/surrealHelpers";
 import { resolvePlanQuery } from "../plan.utils";
-import { cancelSubscription, refundPayment } from "../dodoPaymentProvider";
+import {
+  cancelSubscription,
+  refundPayment,
+  refundPaymentForSubscription
+} from "../dodoPaymentProvider";
 
 interface ModifyRequest {
   type: "cancel" | "switch";
@@ -40,16 +44,17 @@ async function cancel(agent: Agent) {
     const subscriptionData = await cancelSubscription(
       transaction.dodoPayment.subscription_id
     );
-    console.log({ subscriptionData, transaction });
+    // console.log({ subscriptionData, transaction });
     await updateSubscriptionStatus(transaction.id, subscriptionData);
   }
   if (
     user.userPlan.status === "refunded" ||
     user.userPlan.status === "cancelled"
   ) {
+    console.log("Subscription already cancelled");
     return {
       status: "success",
-      message: "Subscription cancelled successfully",
+      message: "Subscription cancelled successfully"
     };
   }
   let newStatus = "cancelled";
@@ -63,8 +68,7 @@ async function cancel(agent: Agent) {
     const daysUsed = Math.floor(
       (now.getTime() - paymentDate.getTime()) / (1000 * 60 * 60 * 24)
     );
-
-    //TODO - cases of subscription_id -> payment_id is needed for refund API
+    console.log({ daysUsed, totalDays });
     if (daysUsed > 30 && isPartialRefundAvailable) {
       const remainingDays = Math.max(0, totalDays - daysUsed);
       const refundAmount = Math.floor(
@@ -86,6 +90,15 @@ async function cancel(agent: Agent) {
       );
       await updateRefundStatus(transaction.id, data);
       newStatus = "refunded";
+    } else if (daysUsed <= 30 && transaction.dodoPayment?.subscription_id) {
+      const data = await refundPaymentForSubscription(
+        transaction.dodoPayment.subscription_id,
+        transaction.dodoPayment.recurring_pre_tax_amount
+      );
+      if (data) {
+        await updateRefundStatus(transaction.id, data);
+        newStatus = "refunded";
+      }
     }
   }
 
