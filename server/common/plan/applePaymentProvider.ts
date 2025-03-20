@@ -50,6 +50,7 @@ export async function verifyAppleSubscription(
         "Apple Subscription Verification Error:",
         url,
         process.env.NODE_ENV,
+        process.env,
         await response.text()
       );
       return null;
