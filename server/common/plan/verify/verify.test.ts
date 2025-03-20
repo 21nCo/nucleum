@@ -27,10 +27,33 @@ describe("verify", () => {
     async () => {
       // Using the provided nonce for successful case
       const validNonce =
-        "7998e8201a9b618e3ac637fa4f60be2508a9de58c3459a902bf7bf74d205bca4";
+        "fef6bc65bfa24751aa3f476e9b8deaa3ed872b6d8bef7bc9d58544a39dd46bf7";
       //   "e576d89ad257961a5cbdc27f01f352cc329d27f8a5e33215e4389410066eb8d8";
 
       const result = await verify({ nonce: validNonce }, global.testEnv.agent);
+      console.log({ result });
+      expect(result).toBeDefined();
+    },
+    { timeout: 30000 }
+  );
+
+  it.only(
+    "should verify payment with valid nonce - apple embed",
+    async () => {
+      // Using the provided nonce for successful case
+      const validNonce =
+        "fef6bc65bfa24751aa3f476e9b8deaa3ed872b6d8bef7bc9d58544a39dd46bf7";
+      //   "e576d89ad257961a5cbdc27f01f352cc329d27f8a5e33215e4389410066eb8d8";
+
+      const result = await verify(
+        {
+          nonce: validNonce,
+          embedTransaction: {
+            subscriptionId: "2000000878679577"
+          }
+        },
+        global.testEnv.agent
+      );
       console.log({ result });
       expect(result).toBeDefined();
     },

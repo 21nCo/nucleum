@@ -11,7 +11,7 @@ export function resolveDodoProductId({
   cycle,
   discount,
   product,
-  isTest,
+  isTest
 }: {
   plan: string;
   cycle: string;
@@ -54,7 +54,21 @@ export interface DodoPaymentResponse {
   [key: string]: any;
 }
 
-export function resolveTransactionStatus(
+export interface AppleVerificationResponse {
+  status:
+    | "active"
+    | "expired"
+    | "grace_period"
+    | "billing_retry"
+    | "revoked"
+    | "refunded";
+  originalTransactionId?: string;
+  expiresDate?: string;
+  environment: "Production" | "Sandbox";
+  lastTransactionId?: string;
+}
+
+export function resolveTransactionStatusFromDodo(
   isSubscription: boolean,
   paymentStatus: DodoPaymentResponse
 ): "completed" | "failed" | "pending" {
@@ -72,4 +86,23 @@ export function resolveTransactionStatus(
     return "failed";
   }
   return "pending";
+}
+
+export function resolveTransactionStatusFromApple(
+  verificationResponse: AppleVerificationResponse
+): "completed" | "failed" | "pending" {
+  switch (verificationResponse.status) {
+    case "active":
+      return "completed";
+    case "grace_period":
+    case "billing_retry":
+      // Still considered active but requires attention
+      return "completed";
+    case "expired":
+    case "revoked":
+    case "refunded":
+      return "failed";
+    default:
+      return "pending";
+  }
 }

@@ -6,6 +6,7 @@ import {
 } from "../../errors";
 import { performQueryOnMasterDb } from "$lib/server/surrealHelpers";
 import { verifyPayment } from "../dodoPaymentProvider";
+import { verifyAppleSubscription } from "../applePaymentProvider";
 import {
   BillingCycle,
   PlanType
@@ -13,7 +14,8 @@ import {
 import {
   resolvePlanQuery,
   resolvePromotePlanQuery,
-  resolveTransactionStatus
+  resolveTransactionStatusFromDodo,
+  resolveTransactionStatusFromApple
 } from "../plan.utils";
 
 interface VerifyRequest {
@@ -33,6 +35,32 @@ export async function verify(body: VerifyRequest, agent: Agent) {
     return user;
   }
 
+  let result = null;
+  if (transaction.embed) {
+    switch (transaction.embed) {
+      case "apple":
+        result = await handleAppleStoreVerification({
+          transaction,
+          body,
+          user
+        });
+        break;
+      case "google":
+        result = await handleGoogleStoreVerification({ transaction, user });
+        break;
+      case "microsoft":
+        result = await handleMicrosoftStoreVerification({ transaction, user });
+        break;
+      default:
+        throw new InternalServerError("Invalid embed");
+    }
+  } else {
+    result = await handleDodoPaymentVerification(transaction, user);
+  }
+  return result;
+}
+
+async function handleDodoPaymentVerification(transaction: any, user: any) {
   if (
     !transaction.dodoPayment ||
     (!transaction.dodoPayment.payment_id &&
@@ -53,7 +81,10 @@ export async function verify(body: VerifyRequest, agent: Agent) {
     throw new InternalServerError("Failed to verify payment status");
   }
 
-  const newStatus = resolveTransactionStatus(isSubscription, paymentStatus);
+  const newStatus = resolveTransactionStatusFromDodo(
+    isSubscription,
+    paymentStatus
+  );
   const updateQuery = `
     UPDATE ${transaction.id} MERGE {
       status: "${newStatus}",
@@ -88,6 +119,105 @@ export async function verify(body: VerifyRequest, agent: Agent) {
   return {
     status: newStatus
   };
+}
+
+async function handleAppleStoreVerification(params: {
+  transaction: any;
+  body: any;
+  user: any;
+}) {
+  const { transaction, body, user } = params;
+
+  if (!body.embedTransaction || !body.embedTransaction.subscriptionId) {
+    throw new InternalServerError(
+      "Invalid Apple transaction: missing subscription information"
+    );
+  }
+  const subscriptionId = body.embedTransaction.subscriptionId;
+  console.log({ subscriptionId });
+  const verificationResponse = await verifyAppleSubscription(subscriptionId);
+  // console.log({ verificationResponse });
+  if (!verificationResponse) {
+    throw new InternalServerError("Failed to verify Apple subscription status");
+  }
+
+  // Map Apple's status to our system status using the utility function
+  const newStatus = resolveTransactionStatusFromApple(verificationResponse);
+
+  // Update transaction status
+  const updateQuery = `
+    UPDATE ${transaction.id} MERGE {
+      status: "${newStatus}",
+      lastVerified: time::now(),
+      applePayment: {
+        subscription_id: "${subscriptionId}",
+        originalTransactionId: "${
+          verificationResponse.originalTransactionId || ""
+        }",
+        lastTransactionId: "${verificationResponse.lastTransactionId || ""}",
+        expiresDate: "${verificationResponse.expiresDate || ""}",
+        environment: "${verificationResponse.environment}",
+        status: "${verificationResponse.status}"
+      }
+    }
+  `;
+
+  const updateResult = await performQueryOnMasterDb(updateQuery);
+
+  if (!updateResult || !updateResult[0]?.result?.[0]) {
+    throw new InternalServerError("Failed to update Apple transaction status");
+  }
+
+  const updatedTransaction = updateResult[0].result[0];
+
+  // If verification was successful, promote the user's plan
+  if (newStatus === "completed") {
+    const userPlanUpdateResult = await promoteUserPlan({
+      id: user.userPlan.id,
+      cycle: updatedTransaction.cycle,
+      plan: updatedTransaction.plan,
+      transactionId: updatedTransaction.id,
+      paymentDate: updatedTransaction.createdAt
+    });
+
+    if (!userPlanUpdateResult || !userPlanUpdateResult[0]?.result?.[0]) {
+      throw new InternalServerError(
+        "Failed to update user plan after Apple verification"
+      );
+    }
+
+    const updatedUserPlan = userPlanUpdateResult[0].result[0];
+    return updatedUserPlan;
+  }
+
+  console.log({ newStatus });
+  return {
+    status: newStatus
+  };
+}
+
+async function handleGoogleStoreVerification(params: {
+  transaction: any;
+  user: any;
+}) {
+  const { transaction, user } = params;
+  console.log({ transaction });
+  // Implementation would follow similar pattern to Apple verification
+  throw new InternalServerError(
+    "Google Store verification not implemented yet"
+  );
+}
+
+async function handleMicrosoftStoreVerification(params: {
+  transaction: any;
+  user: any;
+}) {
+  const { transaction, user } = params;
+  console.log({ transaction });
+  // Implementation would follow similar pattern to Apple verification
+  throw new InternalServerError(
+    "Microsoft Store verification not implemented yet"
+  );
 }
 
 export async function webhook(body: any) {

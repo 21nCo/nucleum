@@ -5,7 +5,7 @@ import { Agent } from "../../account/account.type";
 import {
   resolvePromotePlanQuery,
   resolvePlanQuery,
-  resolveTransactionStatus,
+  resolveTransactionStatusFromDodo
 } from "../plan.utils";
 import { ValidationError, InternalServerError } from "../../errors";
 import { verifyPayment } from "../dodoPaymentProvider";
@@ -39,7 +39,7 @@ export async function restore(body: any, agent: Agent) {
     cycle: transaction.cycle,
     plan: transaction.plan,
     transactionId: transaction.id,
-    paymentDate: transaction.createdAt,
+    paymentDate: transaction.createdAt
   });
   if (!userPlanUpdateResult || !userPlanUpdateResult[0]?.result?.[0]) {
     throw new InternalServerError("Failed to update user plan");
@@ -48,7 +48,7 @@ export async function restore(body: any, agent: Agent) {
   return {
     userPlan: userPlanUpdateResult[0].result[0],
     status:
-      validTransactions.length > 1 ? "multiple_valid_transactions" : "success",
+      validTransactions.length > 1 ? "multiple_valid_transactions" : "success"
   };
 }
 
@@ -138,7 +138,10 @@ async function reconcilePayments(transactions: any[]) {
       return;
     }
 
-    const newStatus = resolveTransactionStatus(isSubscription, paymentStatus);
+    const newStatus = resolveTransactionStatusFromDodo(
+      isSubscription,
+      paymentStatus
+    );
 
     const updateQuery = `
       UPDATE ${transaction.id} MERGE {

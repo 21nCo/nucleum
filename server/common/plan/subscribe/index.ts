@@ -14,7 +14,7 @@ export async function subscribe(body: any, agent: Agent) {
 }
 
 async function newSubscription(body: any, agent: Agent) {
-  const { plan, cycle, context, product, billing } = body;
+  const { plan, cycle, context, product, billing, embed } = body;
   if (!plan) throw new ValidationError("No plan provided");
   if (!cycle) throw new ValidationError("No cycle provided");
   const userDataResult = await performQueryOnMasterDb(
@@ -31,16 +31,21 @@ async function newSubscription(body: any, agent: Agent) {
   if (discountData.first) {
     discount = discountData.first;
   }
-  const isTest = process.env.NODE_ENV === "dev";
-  const productId = resolveDodoProductId({
-    plan,
-    cycle,
-    discount,
-    product,
-    isTest,
-  });
+  let productId = "";
+  if (embed) {
+    productId = `app.${product}.${plan}.${cycle}`;
+  } else {
+    const isTest = process.env.NODE_ENV === "dev";
+    productId = resolveDodoProductId({
+      plan,
+      cycle,
+      discount,
+      product,
+      isTest
+    });
 
-  if (!productId) throw new InternalServerError("Product not found");
+    if (!productId) throw new InternalServerError("Product not found");
+  }
 
   const nonce = await generateSHA256Hash(
     `${agent.id}-${productId}-${new Date().getTime()}`
@@ -52,7 +57,8 @@ async function newSubscription(body: any, agent: Agent) {
     cycle,
     discount,
     nonce,
-    status: "pending",
+    embed,
+    status: "pending"
   });
 
   let transactionId = "";
@@ -62,7 +68,11 @@ async function newSubscription(body: any, agent: Agent) {
     if (!transactionId)
       throw new InternalServerError("Transaction not created");
   }
-
+  if (embed) {
+    return {
+      nonce
+    };
+  }
   const returnUrl = context.origin + "/pay?nonce=" + nonce;
   let payment;
   if (cycle === BillingCycle.MONTHLY) {
@@ -71,7 +81,7 @@ async function newSubscription(body: any, agent: Agent) {
       name: billing.name ?? user.nickName,
       billing,
       productId,
-      returnUrl,
+      returnUrl
     });
   } else {
     payment = await createPayment({
@@ -79,7 +89,7 @@ async function newSubscription(body: any, agent: Agent) {
       name: billing.name ?? user.nickName,
       billing,
       productId,
-      returnUrl,
+      returnUrl
     });
   }
   console.log({ payment, returnUrl });
@@ -88,12 +98,12 @@ async function newSubscription(body: any, agent: Agent) {
     throw new InternalServerError("Payment not created");
   }
   const updateResult = await updateTransaction(transactionId, {
-    dodoPayment: payment,
+    dodoPayment: payment
   });
   console.log({ updateResult, nonce, link: payment.payment_link });
   return {
     nonce,
-    paymentLink: payment.payment_link,
+    paymentLink: payment.payment_link
   };
 }
 
@@ -104,10 +114,11 @@ async function createTransaction(params: {
   cycle: string;
   discount: number;
   nonce: string;
+  embed?: string;
   status: "pending" | "completed" | "cancelled" | "failed";
 }) {
   const query = `
-    INSERT INTO transaction [{ userId: user:${params.userId}, productId: "${params.productId}", plan: "${params.plan}", cycle: "${params.cycle}", discount: ${params.discount}, status: "${params.status}", createdAt: time::now(), nonce: "${params.nonce}"}]`;
+    INSERT INTO transaction [{ userId: user:${params.userId}, productId: "${params.productId}", plan: "${params.plan}", cycle: "${params.cycle}", discount: ${params.discount}, status: "${params.status}", createdAt: time::now(), nonce: "${params.nonce}", embed: "${params.embed}"}]`;
   const transaction = await performQueryOnMasterDb(query);
   return transaction;
 }

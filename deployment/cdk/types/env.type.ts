@@ -21,6 +21,10 @@ export type ILambdaEnvironmentVariables = {
   UNSPLASH_ACCESS_KEY: string;
   DODO_BASE_URL: string;
   DODO_API_KEY: string;
+  APPLE_ISSUER_ID: string;
+  APPLE_KEY_ID: string;
+  APPLE_BUNDLE_ID: string;
+  APPLE_PRIVATE_KEY: string;
 
   FILE_BUCKET_PREFIX: string;
   TEMP_BUCKET_PREFIX: string;
