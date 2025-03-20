@@ -127,15 +127,18 @@ async function handleAppleStoreVerification(params: {
   user: any;
 }) {
   const { transaction, body, user } = params;
-
-  if (!body.embedTransaction || !body.embedTransaction.subscriptionId) {
+  const transactionId = Array.isArray(body.embedTransaction)
+    ? body.embedTransaction[0]?.transactionId
+    : typeof body.embedTransaction === "string"
+    ? body.embedTransaction
+    : null;
+  if (!transactionId) {
     throw new InternalServerError(
-      "Invalid Apple transaction: missing subscription information"
+      "Invalid Apple transaction: missing transaction information"
     );
   }
-  const subscriptionId = body.embedTransaction.subscriptionId;
-  console.log({ subscriptionId });
-  const verificationResponse = await verifyAppleSubscription(subscriptionId);
+  console.log({ transactionId });
+  const verificationResponse = await verifyAppleSubscription(transactionId);
   // console.log({ verificationResponse });
   if (!verificationResponse) {
     throw new InternalServerError("Failed to verify Apple subscription status");
@@ -150,7 +153,7 @@ async function handleAppleStoreVerification(params: {
       status: "${newStatus}",
       lastVerified: time::now(),
       applePayment: {
-        subscription_id: "${subscriptionId}",
+        transactionId: "${transactionId}",
         originalTransactionId: "${
           verificationResponse.originalTransactionId || ""
         }",

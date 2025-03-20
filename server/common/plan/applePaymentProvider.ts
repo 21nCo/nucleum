@@ -20,7 +20,7 @@ interface VerificationResponse {
  * @returns Subscription status information
  */
 export async function verifyAppleSubscription(
-  subscriptionId: string
+  transactionId: string
 ): Promise<VerificationResponse | null> {
   try {
     // Create JWT for authentication with Apple
@@ -35,7 +35,7 @@ export async function verifyAppleSubscription(
         : "https://api.storekit-sandbox.apple.com/inApps/v1";
 
     // App Store Server API endpoint for subscription status
-    const url = `${baseUrl}/subscriptions/${subscriptionId}`;
+    const url = `${baseUrl}/subscriptions/${transactionId}`;
 
     const response = await fetch(url, {
       method: "GET",
