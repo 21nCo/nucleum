@@ -24,6 +24,10 @@
   let isRedirecting = false;
   let isSwitching = false;
   $: currentPlan = $account.plan;
+  $: isAppleContext =
+    $context.isEmbed &&
+    ($context.os === OperatingSystem.IOS ||
+      $context.os === OperatingSystem.MACOS);
 
   const billingPeriods = [
     { value: BillingCycle.MONTHLY, label: "Monthly" },
@@ -33,7 +37,7 @@
 
   async function onSwitch(plan?: IPlan) {
     selectedPlan = plan || null;
-    if ($context.isEmbed && $context.os === OperatingSystem.IOS) {
+    if (isAppleContext) {
       completePurchaseOnIOS();
       return;
     }
@@ -62,7 +66,7 @@
 
   function onChoose(plan: IPlan) {
     selectedPlan = plan;
-    if ($context.isEmbed && $context.os === OperatingSystem.IOS) {
+    if (isAppleContext) {
       completePurchaseOnIOS();
       return;
     }

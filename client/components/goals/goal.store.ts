@@ -7,7 +7,6 @@ import {
 } from "$lib/client/types/data.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import { logger } from "$lib/client/components/debug/logger.client";
-import { recentsStore } from "../record/recent.store";
 import type { IActiveGoal, IGoal } from "./goal.type";
 import { GoalType } from "./goal.type";
 import {
@@ -99,7 +98,8 @@ class GoalStore extends ResourceStore<IGoal> {
       subGoalsLayout: form.subGoalsLayout
     };
 
-    recentsStore.add(resource, {
+    appStore.addToRecents({
+      record: resource,
       type: Resource.goal,
       timestamp: new Date()
     });
@@ -107,14 +107,17 @@ class GoalStore extends ResourceStore<IGoal> {
     return this.create([resource, ...subGoals], additionalParams);
   }
 
-  async createNew() {
+  async createNew(params?: { isQuickFocus?: boolean; context?: string }) {
     const id = generateResourceId(Resource.goal);
     const goal: OmitForCaptureWithId<IGoal> = {
       id,
       label: "",
+      isPinnedForQuickFocus: params?.isQuickFocus,
       type: GoalType.INDEFINITE
     };
-    await this.create([goal]);
+    await this.create([goal], {
+      context: params?.context
+    });
     appStore.openResource(id, ResourceAccessMode.POP, {
       searchParams: {
         edit: "true"
@@ -217,7 +220,8 @@ export class ActiveGoalStore extends CollectibleStore<IActiveGoal, GoalStore> {
         ...(params?.isInEditMode && { isInEditMode: true })
       });
 
-      recentsStore.add(result, {
+      appStore.addToRecents({
+        record: result,
         type: Resource.goal,
         timestamp: new Date()
       });

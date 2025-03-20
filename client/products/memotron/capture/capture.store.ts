@@ -79,7 +79,6 @@ import {
   textToMdBlocks
 } from "$lib/client/components/markdown/markdown.utils";
 import type { IBlock } from "$lib/client/components/markdown/md.type";
-import { recentsStore } from "$lib/client/components/record/recent.store";
 import {
   ActiveResourceStore,
   ResourceStore
@@ -414,7 +413,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       metadata,
       properties: params?.isEmbedContext ? [] : captureStore.properties,
       creationContext: params?.isEmbedContext
-        ? (params?.creationContext ?? this.get().nodeId)
+        ? params?.creationContext ?? this.get().nodeId
         : undefined
     } as IMediaNode;
     const result = await nodeStore.create([node], {
@@ -558,7 +557,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         metadata,
         properties: params?.isEmbedContext ? [] : captureStore.properties,
         creationContext: params?.isEmbedContext
-          ? (params?.creationContext ?? this.get().nodeId)
+          ? params?.creationContext ?? this.get().nodeId
           : undefined
       } as IMediaNode;
       nodes.push(node);
@@ -616,7 +615,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       metadata,
       properties: captureStore.properties,
       creationContext: params?.isEmbedContext
-        ? (params?.creationContext ?? this.get().nodeId)
+        ? params?.creationContext ?? this.get().nodeId
         : undefined,
       label: `Audio Recording - ${new Date().toLocaleString()}`,
       body: {
@@ -729,7 +728,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       label: text.split("://").pop(),
       url: text,
       creationContext: params?.isEmbedContext
-        ? (params?.creationContext ?? this.get().nodeId)
+        ? params?.creationContext ?? this.get().nodeId
         : undefined,
       body: {
         hash: "",
@@ -792,7 +791,11 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     }
     const viewStore = get(view);
     if (result.length === 1) {
-      recentsStore.add(node, { type: Resource.node, timestamp: new Date() });
+      appStore.addToRecents({
+        record: node,
+        type: Resource.node,
+        timestamp: new Date()
+      });
       if (!viewStore.isConstrainedWidth && !params?.isEmbedContext)
         toasts.success("Node saved successfully!");
       if (params?.isOpenUponSuccess && !params?.isEmbedContext)

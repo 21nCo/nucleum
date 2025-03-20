@@ -24,3 +24,26 @@ export interface ITaskStore extends IObservableStoreSubject {}
 export interface ITaskThumb extends ITaskBase {
   goal?: IGoal;
 }
+
+export enum TaskSubTypeForSwitcher {
+  BY_DATE = "bydate",
+  BY_MONTH = "bymonth",
+  /**
+   * @deprecated
+   */
+  OVERDUE = "overdue",
+  /**
+   * @deprecated
+   */
+  WITHOUT_DUE_DATE = "without-due-date",
+  /**
+   * @deprecated
+   */
+  WITHOUT_GOAL = "without-goal"
+}
+
+export enum TaskDueDateFilter {
+  ALL = "all",
+  OVERDUE = "overdue",
+  WITHOUT_DUE_DATE = "without-due-date"
+}

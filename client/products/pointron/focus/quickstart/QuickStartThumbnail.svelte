@@ -20,11 +20,15 @@
   import { goalStore } from "$lib/client/components/goals/goal.store";
   import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { focusAggregates } from "../../analytics/analytics.store";
+  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
+
   export let item: Pick<IGoalThumb, "id" | "label" | "color" | "parent"> & {
     focus?: number;
   };
   export let layout: Layout;
-  export let refresh: any;
   export let isInEditMode: boolean = false;
   let isColorGoalTextExperimental = false;
   let todayFocusDuration: number | undefined = item.focus;
@@ -76,7 +80,18 @@
   async function unPin() {
     await goalStore.modify(item.id, { isPinnedForQuickFocus: false });
     toasts.success(`Goal **${item.label}** unpinned from quick focus`);
-    refresh();
+    dispatch("unpin", item.id);
+  }
+
+  async function onGoalChanges() {
+    const goal = await goalStore.selectMany({
+      filters: {
+        id: item.id
+      }
+    });
+    if (goal?.[0]) {
+      item = { ...goal[0], focus: item.focus };
+    }
   }
 </script>
 
@@ -92,7 +107,7 @@
   >
     <CustomColorPropagator
       class={cn(
-        "flex justify-between h-16 min-h-[4rem] w-full items-center rounded-md  z-10",
+        "flex justify-between gap-2 h-16 min-h-[4rem] w-full items-center rounded-md  z-10",
         {
           "px-3": isActive || isInEditMode,
           "bg-ccs1": isActive && !isInEditMode,
@@ -103,7 +118,7 @@
       color={item.color}
       on:click={toggleSession}
     >
-      <div class="flex gap-2 items-center h-full">
+      <div class="flex gap-2 items-center h-full flex-1 min-w-0">
         {#if !isActive && !isInEditMode}
           <div
             class={cn("w-0.5 h-8 ml-0.5 rounded-full", {
@@ -113,7 +128,7 @@
           />
         {/if}
         <div
-          class={cn("flex flex-col items-start", {
+          class={cn("flex flex-col items-start flex-1 min-w-0", {
             "text-ccs1": !isActive && isColorGoalTextExperimental,
             "text-fgs1": !isActive
           })}
@@ -133,13 +148,13 @@
             </div>
           {/key}
           <div
-            class="font-medium text-left flex items-center gap-2 truncate actualQSContent"
+            class="font-medium text-left flex items-center gap-2 actualQSContent w-full"
           >
             <!-- {#if !isActive}
               <div class="w-2 h-2 bg-ccs1 rounded-full"></div>
             {/if} -->
-            <div>
-              {item.label ?? ""}
+            <div class="truncate">
+              {item.label ? item.label : "Untitled"}
             </div>
           </div>
         </div>
@@ -201,7 +216,7 @@
       <div class="flex gap-2 items-center">
         <div class="flex flex-col items-start">
           <div class="text-left text-b2 truncate w-40 md:w-40">
-            {item.label ?? ""}
+            {item.label ? item.label : "Untitled"}
           </div>
         </div>
       </div>
@@ -233,3 +248,8 @@
     {/if}
   </CustomColorPropagator>
 {/if}
+<ComponentBaseLayer
+  subscribeToResource={new Set([Resource.goal])}
+  subscribeToRecords={[item.id]}
+  on:change={onGoalChanges}
+/>

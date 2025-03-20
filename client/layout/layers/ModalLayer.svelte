@@ -187,7 +187,7 @@
 {#if !$view.isPortrait && (isValidArrayWithData($toasts) || $player.isMiniOn)}
   <div
     class={cn(
-      "fixed bottom-0 right-0 mr-6 mb-6 flex flex-col items-end gap-4",
+      "fixed bottom-0 right-0 mb-6 mr-6 flex flex-col items-end gap-4",
       {
         "z-[100]": !$fullScreen.path,
         "z-40": $fullScreen.path

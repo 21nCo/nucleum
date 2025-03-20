@@ -52,6 +52,8 @@
   import { recentsStore } from "$lib/client/components/record/recent.store";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { Action } from "$lib/client/types/action.enum";
+  import ZohoSalesIq from "./support/ZohoSalesIQ.svelte";
+  import { PlanType } from "$lib/client/components/subscription/userPlan.type";
 
   const loadingMessages = {
     cloneUp: {
@@ -378,6 +380,15 @@
     }
   }
 
+  function handleAddToRecents(event: any) {
+    logger.log({ at: "handleAddToRecents", event });
+    const { record, type, timestamp } = event.detail;
+    recentsStore.add(record, {
+      type,
+      timestamp
+    });
+  }
+
   function addWindowEventListeners() {
     window.addEventListener(
       GlobalEvent.PERSIST_APPEARANCE_USER,
@@ -387,6 +398,7 @@
       GlobalEvent.APP_LOADING_STATUS,
       handleAppLoadingStatus
     );
+    window.addEventListener(GlobalEvent.ADD_TO_RECENTS, handleAddToRecents);
   }
   function removeWindowEventListeners() {
     window.removeEventListener(
@@ -397,6 +409,7 @@
       GlobalEvent.APP_LOADING_STATUS,
       handleAppLoadingStatus
     );
+    window.removeEventListener(GlobalEvent.ADD_TO_RECENTS, handleAddToRecents);
   }
   function handleBeforeUnload(event: any) {
     if (
@@ -450,6 +463,9 @@
   <CacheLayer />
 {/if}
 <Intercom />
+{#if $account.plan?.plan === PlanType.NUCLEUS}
+  <ZohoSalesIq />
+{/if}
 
 <svelte:window
   on:resize={windowResizeListener}

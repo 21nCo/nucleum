@@ -10,7 +10,9 @@ import { rootNodeTypeList } from "$lib/client/products/memotron/node/node.type";
 import { activeResourceFilterV2 } from "$lib/client/utils/utils";
 import { logger } from "../debug/logger.client";
 import { accessLogStore } from "../accessLogging/accesslog.store";
-import { ResourceActionType } from "../flux/resourceStores/resource.type";
+import { localCacheableStores, remoteOnlyStores } from "$local/localStoresMap";
+import type { ResourceStore } from "../flux/resourceStores/resource.store";
+import { searcheableResources } from "$local/local";
 
 export class RecentsStore extends ObservableStore<IRecentsStore> {
   private readonly LIMIT = 20;
@@ -82,12 +84,14 @@ export class RecentsStore extends ObservableStore<IRecentsStore> {
     let data: any[] = [];
     if (resource === Resource.everything) {
       const nodes = await this.recentNodes();
-      const collections = await this.recentCollections();
-      data = [...nodes, ...(collections ?? [])];
+      for (const resource of searcheableResources) {
+        const resourceData = await this.recentResources(resource);
+        data = [...nodes, ...(resourceData ?? [])];
+      }
     } else if (resource === Resource.node) {
       data = await this.recentNodes();
-    } else if (resource === Resource.collection) {
-      data = (await this.recentCollections()) ?? [];
+    } else if (resource) {
+      data = (await this.recentResources(resource)) ?? [];
     }
     return data;
   }
@@ -109,17 +113,17 @@ export class RecentsStore extends ObservableStore<IRecentsStore> {
     return result;
   }
 
-  private async recentCollections() {
-    const result = await flux.selectMany(Resource.collection, {
-      filters: {
-        ...activeResourceFilterV2
-      },
+  private async recentResources(resource: Resource) {
+    const resourceStore = [...localCacheableStores, ...remoteOnlyStores].find(
+      (store) => store.id === resource
+    ) as ResourceStore<any>;
+    const result = await resourceStore?.selectMany({
       orderBy: {
         modifiedAt: "desc"
       },
       limit: this.LIMIT
     });
-    logger.log({ at: "recentCollections", result });
+    logger.log({ at: "recentResources", result });
     return result;
   }
 }

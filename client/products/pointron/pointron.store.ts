@@ -33,7 +33,7 @@ function generateSeedPresets(): SessionComposition[] {
       totalDuration: 0,
       breakReminder: 600,
       numberOfBreaks: 1,
-      name: "Preset 1",
+      name: "Sample preset 1",
       breakType: BreakCompositionType.PREDEFINED
     },
     {
@@ -45,7 +45,7 @@ function generateSeedPresets(): SessionComposition[] {
       totalDuration: 0,
       breakReminder: 600,
       numberOfBreaks: 1,
-      name: "Morning focus",
+      name: "Sample focus preset 2",
       breakType: BreakCompositionType.PREDEFINED
     },
     {
@@ -56,7 +56,7 @@ function generateSeedPresets(): SessionComposition[] {
       totalDuration: 10 * 60 * 60,
       numberOfBreaks: 9,
       breakReminder: 600,
-      name: "10 hr deep study",
+      name: "Sample preset 3",
       breakType: BreakCompositionType.PREDEFINED
     }
   ];

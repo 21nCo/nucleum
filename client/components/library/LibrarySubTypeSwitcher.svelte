@@ -24,17 +24,21 @@
   import { onMount } from "svelte";
   import { ResourceAccessPoint } from "../flux/resourceStores/resource.type";
   import { cn } from "$lib/client/utils/ui.utils";
+  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
+  import {
+    BarStyle,
+    PanelSwitcherStyle
+  } from "$lib/client/types/switcher.enum";
   export let resource: Resource;
   export let isConstrainedWidth: boolean = $view.isConstrainedWidth;
   export let accessPoint: ResourceAccessPoint;
   export let subContext: string | undefined = undefined;
+  export let selectedSubType: SubType = "all";
 
   const nodeSubTypesForSwitcher = resolveNodeSubTypesForSwitcher();
   const collectionSubTypesForSwitcher = resolveCollectionSubTypesForSwitcher();
   const goalSubTypesForSwitcher = resolveGoalSubTypesForSwitcher(true);
-  const taskSubTypesForSwitcher = resolveTaskSubTypesForSwitcher(
-    accessPoint === ResourceAccessPoint.GOAL
-  );
+  const taskSubTypesForSwitcher = resolveTaskSubTypesForSwitcher();
   const allSubTypeSwitcherItem = {
     label: "All",
     value: "all",
@@ -53,8 +57,6 @@
   let allSubTypes: ISelectItem[] = [];
   let renderedSubTypes: ISelectItem[] = [allSubTypeSwitcherItem];
   let searchStore = new SearchStore();
-
-  let selectedSubType: SubType = "all";
 
   $: isExpandableSubTypes = [Resource.node].includes(resource);
   $: isNonStarrable = [Resource.task].includes(resource);
@@ -135,6 +137,18 @@
       return items;
     }
   }
+
+  function onSelect(val: SubType) {
+    if (subContext) {
+      appStore.toggleSearchParam({
+        [`${subContext}-type`]: val.toLowerCase()
+      });
+    } else {
+      appStore.toggleSearchParam({
+        type: val.toLowerCase()
+      });
+    }
+  }
 </script>
 
 {#if isConstrainedWidth}
@@ -157,25 +171,34 @@
     })}
   >
     <div class="flex-1 min-w-0">
-      <OptionSelector
-        style={OptionSelectorStyle.OUTLINE}
-        size={Size.sm}
-        options={renderedSubTypes}
-        selected={selectedSubType}
-        isPreventWrap={isExpandableSubTypes && !isExpandSubTypes}
-        on:select={(e) => {
-          if (!e?.detail) return;
-          if (subContext) {
-            appStore.toggleSearchParam({
-              [`${subContext}-type`]: e.detail.toLowerCase()
-            });
-          } else {
-            appStore.toggleSearchParam({
-              type: e.detail.toLowerCase()
-            });
-          }
-        }}
-      />
+      {#if resource === Resource.task}
+        <PanelSwitcher
+          items={renderedSubTypes.map((x) => ({
+            label: x.label,
+            value: x.value
+          }))}
+          value={selectedSubType}
+          size={Size.sm}
+          style={PanelSwitcherStyle.BAR}
+          barStyle={BarStyle.DOT}
+          on:switch={(e) => {
+            if (!e?.detail) return;
+            onSelect(e.detail);
+          }}
+        />
+      {:else}
+        <OptionSelector
+          style={OptionSelectorStyle.OUTLINE}
+          size={Size.sm}
+          options={renderedSubTypes}
+          selected={selectedSubType}
+          isPreventWrap={isExpandableSubTypes && !isExpandSubTypes}
+          on:select={(e) => {
+            if (!e?.detail) return;
+            onSelect(e.detail);
+          }}
+        />
+      {/if}
     </div>
     {#if !isExpandSubTypes}
       <Divider orientation={Orientation.Vertical} />

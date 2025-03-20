@@ -1,21 +1,22 @@
 <script lang="ts">
-  import { page } from "$app/stores";
   import { Arrangement } from "$lib/client/types/direction.enum";
   import { ResourceAccessPoint } from "../flux/resourceStores/resource.type";
-  import type { ITaskThumb } from "./task.type";
+  import { TaskSubTypeForSwitcher, type ITaskThumb } from "./task.type";
   import TaskThumbnail from "./TaskThumbnail.svelte";
   import { formatDate } from "$lib/client/utils/time.utils";
   import { Size } from "$lib/client/types/size.enum";
   import type { IRecordId } from "$lib/client/types/data.type";
   import Button from "$lib/client/elements/button/Button.svelte";
+  import type { SubType } from "../library/library.type";
   export let data: ITaskThumb[];
   export let arrangement: Arrangement = Arrangement.LIST;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.LIBRARY;
   export let accessPointId: IRecordId | undefined = undefined;
   export let parentBgIndex = 1;
-  $: typeParam = $page.url.searchParams.get("type");
+  export let subType: SubType | undefined = undefined;
 
-  $: tasksByDate = typeParam === "bymonth" ? groupTasksByDate(data) : null;
+  $: tasksByDate =
+    subType === TaskSubTypeForSwitcher.BY_MONTH ? groupTasksByDate(data) : null;
 
   export function scrollToDate(date: Date) {
     const dateKey = formatDate(date);
@@ -79,7 +80,7 @@
   }
 </script>
 
-{#if typeParam === "bymonth" && tasksByDate}
+{#if subType === TaskSubTypeForSwitcher.BY_MONTH && tasksByDate}
   <div class="flex flex-col gap-12">
     {#each tasksByDate as [date, tasks]}
       <div class="flex flex-col gap-2">

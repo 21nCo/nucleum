@@ -17,7 +17,13 @@
     toasts.showProgress("restorePlan", "Restoring purchase...");
     const response = await account.restorePurchase();
     if (response.status === "multiple_valid_transactions") {
-      //TODO - show a notification to the user that they have multiple active plans
+      toasts.error("Please contact us via Discord or email.", {
+        title: "Multiple valid plans found."
+      });
+    } else if (response.status === "no_valid_transaction") {
+      toasts.error("No valid plan found");
+    } else if (response.status === "success") {
+      toasts.success("Purchase restored");
     }
     toasts.closeProgress("restorePlan");
   }

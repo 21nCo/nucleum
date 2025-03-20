@@ -11,9 +11,8 @@
   import { formatDate } from "$lib/client/utils/time.utils";
   import PlanFeatureList from "./elements/PlanFeatureList.svelte";
   import { Action } from "$lib/client/types/action.enum";
-  import { BillingCycle, PlanType } from "./userPlan.type";
+  import { PlanType } from "./userPlan.type";
   import { PlanStatus } from "$lib/client/types/account.type";
-  import { Size } from "$lib/client/types/size.enum";
   import RestorePurchaseAction from "./RestorePurchaseAction.svelte";
 
   let currentPlanFeatures: Array<{ icon: string; label: string }> = [];
@@ -54,14 +53,14 @@
           }}
         />
       </div>
-    {:else}
+    {:else if $account.plan}
       <div class="text-left">
         <h2 class="text-lg text-fgs1 mb-3">What's included:</h2>
         <PlanFeatureList features={currentPlanFeatures} />
       </div>
 
       <div class="flex gap-2">
-        {#if $account.plan?.status === PlanStatus.CANCELLED || $account.plan?.status === PlanStatus.REFUNDED}
+        {#if $account.plan.status === PlanStatus.CANCELLED || $account.plan.status === PlanStatus.REFUNDED}
           <Button
             icon="ph:arrow-counter-clockwise-light"
             label="Reactivate"

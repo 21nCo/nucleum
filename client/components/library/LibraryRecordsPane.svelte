@@ -297,7 +297,7 @@
     else if (searchQuery)
       return {
         mainText: `No ${label} found.`,
-        subText: `Please try a different search.`
+        subText: `Please try a different search or create a new ${resource}.`
       };
     else {
       if (resource === Resource.node) {
@@ -420,6 +420,7 @@
             {resource}
             {isConstrainedWidth}
             {accessPoint}
+            {selectedSubType}
             bind:this={subTypeSwitcherRef}
           />
         </div>
@@ -521,6 +522,7 @@
       {resource}
       {isConstrainedWidth}
       {accessPoint}
+      {selectedSubType}
       bind:this={subTypeSwitcherRef}
     />
   {/if}
@@ -570,11 +572,17 @@
         actionText={resource === Resource.node &&
         $context.embed !== Embed.HANDSET
           ? "Install chrome extension"
-          : undefined}
+          : "Create new " + resource}
         on:click={() => {
-          appStore.openLink(
-            $appStore.appData?.urls?.chromeExtension ?? "https://memotron.io"
-          );
+          if (resource === Resource.node) {
+            appStore.openLink(
+              $appStore.appData?.urls?.chromeExtension ?? "https://memotron.io"
+            );
+          } else {
+            appStore.runAction(
+              resourceAction(resource, ResourceActionType.CREATE)
+            );
+          }
         }}
       />
     {/if}

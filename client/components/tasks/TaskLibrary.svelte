@@ -9,7 +9,11 @@
     BulkEditor,
     SearchStore
   } from "$lib/client/components/record/record.store";
-  import type { ITaskThumb } from "$lib/client/components/tasks/task.type";
+  import {
+    TaskDueDateFilter,
+    TaskSubTypeForSwitcher,
+    type ITaskThumb
+  } from "$lib/client/components/tasks/task.type";
   import {
     isValidArray,
     isValidArrayWithData
@@ -32,7 +36,11 @@
   import AbsoluteTimeRangePopoverV2 from "$lib/client/elements/datetime/absolute/AbsoluteTimeRangePopoverV2.svelte";
   import { Placement } from "$lib/client/types/direction.enum";
   import { popover } from "$lib/client/actions/popover.action";
-  import { formatDate, isSameDay } from "$lib/client/utils/time.utils";
+  import {
+    compareDates,
+    formatDate,
+    isSameDay
+  } from "$lib/client/utils/time.utils";
   import AddNewTaskInline from "./AddNewTaskInline.svelte";
   import { taskStore } from "./task.store";
   import { toasts } from "$lib/client/stores/notification.store";
@@ -49,6 +57,11 @@
   import view from "$lib/client/stores/view.store";
   import InlineSyncingFeedback from "$lib/client/elements/feedback/InlineSyncingFeedback.svelte";
   import SyncStatusPropagator from "$lib/client/elements/feedback/SyncStatusPropagator.svelte";
+  import { fly } from "svelte/transition";
+  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
+  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
+  import { resolveTaskDueDateFilters } from "./task.utils";
+  import { OptionSelectorStyle } from "$lib/client/types/select.type";
 
   export let goalId: IRecordId | undefined = undefined;
   export let collectionId: IRecordId | undefined = undefined;
@@ -61,6 +74,9 @@
   let searchInputRef: InlineSearchBar | undefined;
   let isArchivedFilterSelected = false;
   let isHideCompletedFilterSelected = false;
+  let isHideGoalTasksFilterSelected = false;
+  let dueDateFilter: TaskDueDateFilter = TaskDueDateFilter.ALL;
+  let isFiltersExpanded = false;
   let selectedSubType: SubType = "all";
   let selectedDate: Date = new Date();
   let viewDate: Date = new Date();
@@ -109,11 +125,20 @@
   async function refresh() {
     isRefreshing = true;
     const filters = resolveFilters();
-    const result = await searchStore.select({
+    let result = await searchStore.select({
       filters,
       searchQuery
     });
     if (isValidArray(result)) {
+      //TODO - for by_month case + overdue - the date filter has 2 conditions with AND operator - below is temporary fix until complex filters are implemented
+      if (
+        selectedSubType === TaskSubTypeForSwitcher.BY_MONTH &&
+        dueDateFilter === TaskDueDateFilter.OVERDUE
+      ) {
+        result = result.filter((x: any) => {
+          return x.date && compareDates(x.date, new Date(), "<");
+        });
+      }
       tasks = [...result];
     } else {
       tasks = [];
@@ -123,8 +148,13 @@
 
   function resolveBaseFilters() {
     return {
-      isChecked: isHideCompletedFilterSelected ? false : undefined,
-      isArchived: isArchivedFilterSelected ? true : undefined
+      isArchived: isArchivedFilterSelected ? true : undefined,
+      goalId: isHideGoalTasksFilterSelected ? false : undefined,
+      isChecked:
+        dueDateFilter === TaskDueDateFilter.OVERDUE ||
+        isHideCompletedFilterSelected
+          ? false
+          : undefined
     };
   }
 
@@ -133,11 +163,10 @@
     if (goalId) {
       filters = { ...filters, goalId: goalId.toString() };
     }
-    if (selectedSubType === "without-due-date") {
-      filters = { ...filters, date: false };
-    } else if (selectedSubType === "bydate") {
+    filters = { ...filters, date: resolveDateFilter() };
+    if (selectedSubType === TaskSubTypeForSwitcher.BY_DATE) {
       filters = { ...filters, date: selectedDate };
-    } else if (selectedSubType === "bymonth") {
+    } else if (selectedSubType === TaskSubTypeForSwitcher.BY_MONTH) {
       filters = {
         ...filters,
         date: {
@@ -146,10 +175,19 @@
           equals: selectedDate
         }
       };
-    } else if (selectedSubType === "without-goal") {
-      filters = { ...filters, goalId: false };
     }
     return filters;
+
+    function resolveDateFilter() {
+      if (dueDateFilter === TaskDueDateFilter.ALL) return undefined;
+      else if (dueDateFilter === TaskDueDateFilter.OVERDUE)
+        return {
+          type: "date",
+          lessThan: new Date()
+        };
+      else if (dueDateFilter === TaskDueDateFilter.WITHOUT_DUE_DATE)
+        return false;
+    }
   }
 
   function resolveAccessPoint() {
@@ -182,8 +220,9 @@
     }
 
     function resolveDateForNewTask() {
-      if (selectedSubType === "bydate") return selectedDate;
-      else if (selectedSubType === "bymonth")
+      if (selectedSubType === TaskSubTypeForSwitcher.BY_DATE)
+        return selectedDate;
+      else if (selectedSubType === TaskSubTypeForSwitcher.BY_MONTH)
         return new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
       return undefined;
     }
@@ -212,7 +251,6 @@
     else if (collectionId) return collectionId.toString();
     return undefined;
   }
-  $: console.log({ tasks });
 </script>
 
 <div
@@ -228,15 +266,49 @@
     subContext={goalId ? instance : undefined}
   >
     <Toggle
-      bind:on={isHideCompletedFilterSelected}
-      icon="ph:eye-slash-light"
-      tooltip="Hide completed tasks"
-      bgSize={Size.sm}
-      on:change={() => refresh()}
+      bind:on={isFiltersExpanded}
+      icon="ph:sliders-light"
+      tooltip="Filters and options"
     />
   </LibrarySubTypeSwitcher>
 
-  {#if selectedSubType === "bydate" || selectedSubType === "bymonth"}
+  {#if isFiltersExpanded}
+    <div
+      class="flex flex-col gap-4 bg-bgs2 rounded-md p-4 mx-4"
+      in:fly={{ y: -20, duration: 300 }}
+    >
+      {#if selectedSubType !== TaskSubTypeForSwitcher.BY_DATE}
+        <OptionSelector
+          options={resolveTaskDueDateFilters({
+            isDatedContext: selectedSubType === TaskSubTypeForSwitcher.BY_MONTH
+          })}
+          labelProps={{ label: "Due date" }}
+          selected={dueDateFilter}
+          size={Size.sm}
+          style={OptionSelectorStyle.TRAIN}
+          on:select={(e) => {
+            if (!e?.detail) return;
+            dueDateFilter = e.detail;
+            refresh();
+          }}
+        />
+      {/if}
+      <SwitchInput
+        bind:checked={isHideCompletedFilterSelected}
+        isExpanded={true}
+        label={{ label: "Hide completed tasks" }}
+        on:change={() => refresh()}
+      />
+      <SwitchInput
+        bind:checked={isHideGoalTasksFilterSelected}
+        isExpanded={true}
+        label={{ label: "Hide tasks with a goal" }}
+        on:change={() => refresh()}
+      />
+    </div>
+  {/if}
+
+  {#if selectedSubType === TaskSubTypeForSwitcher.BY_DATE || selectedSubType === TaskSubTypeForSwitcher.BY_MONTH}
     <div class="flex flex-col gap-6 border border-brs2 rounded-md p-4">
       <div class="flex justify-center w-full gap-2 px-2">
         <div
@@ -261,17 +333,18 @@
           }}
         >
           <!-- <Icon icon="ph:calendar" /> -->
-          {selectedSubType === "bydate" && isSameDay(viewDate, selectedDate)
+          {selectedSubType === TaskSubTypeForSwitcher.BY_DATE &&
+          isSameDay(viewDate, selectedDate)
             ? formatDate(viewDate)
-            : selectedSubType === "bydate" ||
-                (selectedSubType === "bymonth" &&
+            : selectedSubType === TaskSubTypeForSwitcher.BY_DATE ||
+                (selectedSubType === TaskSubTypeForSwitcher.BY_MONTH &&
                   isSameDay(viewDate, selectedDate))
               ? formatDate(viewDate, "mmm-yyyy")
               : formatDate(viewDate, "yyyy")}
         </div>
       </div>
       <DatePickerRow
-        isDateMode={selectedSubType === "bydate"}
+        isDateMode={selectedSubType === TaskSubTypeForSwitcher.BY_DATE}
         date={selectedDate}
         on:pageChange={(e) => {
           console.log({ e });
@@ -310,7 +383,8 @@
           {
             componentParams: {
               date:
-                selectedSubType === "bydate" || selectedSubType === "bymonth"
+                selectedSubType === TaskSubTypeForSwitcher.BY_DATE ||
+                selectedSubType === TaskSubTypeForSwitcher.BY_MONTH
                   ? selectedDate
                   : undefined,
               goalId: goalId,
@@ -334,7 +408,7 @@
         }
       )}
     >
-      <!-- {#if selectedSubType !== "bymonth"}
+      <!-- {#if selectedSubType !== TaskSubTypeForSwitcher.BY_MONTH}
       <AddNewTaskInline on:add={onAdd} bind:this={addNewTaskInlineRef} />
     {/if} -->
       <TaskRecords
@@ -343,6 +417,7 @@
         accessPoint={resolveAccessPoint()}
         accessPointId={resolveAccessPointId()}
         {parentBgIndex}
+        subType={selectedSubType}
       />
       <ScrollViewBottomSpacer />
     </div>
@@ -352,8 +427,14 @@
       isLoadingState={isRefreshing}
       mainText="No tasks found"
       subText={searchQuery !== ""
-        ? "Try different search criteria."
+        ? "Try different search criteria or create a new task."
         : "Create a task to get started."}
+      actionText="Create new task"
+      on:click={() => {
+        appStore.runAction(
+          resourceAction(Resource.task, ResourceActionType.CREATE)
+        );
+      }}
     />
   {/if}
 </div>

@@ -42,7 +42,7 @@
       ),
       "border border-brs3": isGeneric,
       "text-fgs2": isGeneric && !isAccentColor && !isApplyCustomColor,
-      "text-cbg": isGeneric && (isAccentColor || isApplyCustomColor),
+      "text-cbg border-cbg": isGeneric && (isAccentColor || isApplyCustomColor),
       "px-1.5 py-0.25 text-b4": size === Size.md,
       "px-1 py-0.25 text-b5": size === Size.sm
     })}

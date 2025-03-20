@@ -15,10 +15,10 @@
     return [
       Resource.goal,
       Resource.task,
-      Resource.collection,
-      Resource.habit,
-      Resource.event,
-      Resource.combination
+      Resource.collection
+      // Resource.habit,
+      // Resource.event,
+      // Resource.combination
     ];
   }
 </script>

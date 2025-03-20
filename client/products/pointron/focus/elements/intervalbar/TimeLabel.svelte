@@ -10,7 +10,6 @@
   import { formatTime } from "$lib/client/utils/time.utils";
   import { onMount } from "svelte";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { tooltip } from "$lib/client/actions/popover.action";
   export let label: "start" | "end" = "start";
   export let context: SessionUIContext = SessionUIContext.DEFAULT;
   let timeClassList = "";
@@ -40,12 +39,6 @@
     "items-start": label === "start",
     "items-end": label === "end"
   })}
-  use:tooltip={{
-    disabled: !(
-      $activeSession.state === SessionState.NOT_STARTED && label === "end"
-    ),
-    text: "Click this to fix the end time of the session and calculate duration accordingly."
-  }}
 >
   {#if label === "start"}
     {#if context !== SessionUIContext.PIP}

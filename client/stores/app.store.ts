@@ -12,7 +12,7 @@ import {
   IdentityProvider,
   type OAuthProviderConfig
 } from "../types/oauth.type";
-import { goto } from "../utils/browser.utils";
+import { dispatchCustomEvent, goto } from "../utils/browser.utils";
 import { persistLocally, getDapId } from "../persistence/persistence.utils";
 import { postToParent } from "$lib/client/utils/embed.utils";
 import modalEvent from "../components/modal/modal.store";
@@ -30,7 +30,7 @@ import {
 } from "../components/flux/resourceStores/resource.type";
 import { InteractionMode } from "../components/settings/interactionMode/interactionMode.type";
 import { Action } from "../types/action.enum";
-import type { Event } from "../types/event.enum";
+import { GlobalEvent, type Event } from "../types/event.enum";
 import { logger } from "../components/debug/logger.client";
 import { Size } from "../types/size.enum";
 import type { IRecordId } from "../types/data.type";
@@ -843,6 +843,9 @@ function initAppStore(seed: AppStore) {
     },
     runResourceAction: (resource: Resource, action: ResourceActionType) => {
       return runAction(resourceAction(resource, action));
+    },
+    addToRecents: (data: { record: any; type: Resource; timestamp: Date }) => {
+      dispatchCustomEvent(GlobalEvent.ADD_TO_RECENTS, data);
     },
     gotoPath,
     gotoErrorPage,

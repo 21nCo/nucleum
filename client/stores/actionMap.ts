@@ -709,8 +709,8 @@ export const globalActions: IAction[] = [
     action: resourceAction(Resource.goal, ResourceActionType.CREATE),
     cmdLabel: "Create a new goal",
     type: ActionType.FUNCTION,
-    fn: async () => {
-      await goalStore.createNew();
+    fn: async (props?: IActionFnParams) => {
+      await goalStore.createNew(props?.componentParams);
     }
   },
   {

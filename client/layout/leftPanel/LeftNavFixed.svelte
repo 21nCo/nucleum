@@ -13,6 +13,10 @@
   import { PlanType } from "$lib/client/components/subscription/userPlan.type";
   import { resolveTrialDaysLeft } from "$lib/client/components/subscription/userPlan.utils";
   export let isRounded = false;
+  $: trialDaysLeft =
+    $account.plan?.plan === PlanType.TRIAL
+      ? resolveTrialDaysLeft($account.plan)
+      : undefined;
 </script>
 
 <button
@@ -43,15 +47,16 @@
           on:click={() => appStore.runAction(Action.GLOBAL_SEARCH)}
         />
       </div>
-      {#if $account.plan?.plan === PlanType.TRIAL}
-        <span
+      {#if trialDaysLeft && trialDaysLeft < 15}
+        <button
           class="flex flex-col gap-1 justify-center items-center bg-aps2 border border-aps1 rounded-md p-1.5 mx-1.5"
+          on:click={() => appStore.runAction(Action.SETTINGS)}
         >
           <span class="text-b2"> Trial </span>
           <span class="text-b4">
-            {resolveTrialDaysLeft($account.plan)} days left
+            {trialDaysLeft} days left
           </span>
-        </span>
+        </button>
       {/if}
       <div class="flex flex-col gap-8 items-center w-full p-2 overflow-auto">
         <AppMenuSwitcher
