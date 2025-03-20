@@ -27,8 +27,7 @@ export async function verifyAppleSubscription(
     const token = createJWT();
 
     // Apple's environment - production or sandbox
-    const environment =
-      process.env.NODE_ENV === "dev" ? "Sandbox" : "Production";
+    const environment = process.env.ENV === "dev" ? "Sandbox" : "Production";
     const baseUrl =
       environment === "Production"
         ? "https://api.storekit.apple.com/inApps/v1"
@@ -49,8 +48,7 @@ export async function verifyAppleSubscription(
       console.error(
         "Apple Subscription Verification Error:",
         url,
-        process.env.NODE_ENV,
-        process.env,
+        process.env.ENV,
         await response.text()
       );
       return null;
