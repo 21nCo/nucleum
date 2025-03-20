@@ -309,8 +309,9 @@ class AccountStore extends ObservableStore<
   async verifyPayment(nonce: string) {
     const response = await this.persistence.verifyPayment(nonce);
     if (response && response.id) {
+      const plan = response.userPlan ?? response;
       this.update((n) => {
-        n.plan = response;
+        n.plan = plan;
         return n;
       });
       return { status: "success" };

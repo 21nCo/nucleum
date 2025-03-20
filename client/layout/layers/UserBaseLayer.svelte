@@ -54,6 +54,9 @@
   import { Action } from "$lib/client/types/action.enum";
   import ZohoSalesIq from "./support/ZohoSalesIQ.svelte";
   import { PlanType } from "$lib/client/components/subscription/userPlan.type";
+  import { fileEmbedChannel } from "$lib/client/components/files/fileEmbedChannel.store";
+  import { ErrorMessage } from "$lib/client/components/error/error.type";
+  import modalEvent from "$lib/client/components/modal/modal.store";
 
   const loadingMessages = {
     cloneUp: {
@@ -389,6 +392,36 @@
     });
   }
 
+  async function handleMessageFromParent(event: any) {
+    try {
+      if (event?.data?.type === "SWIFT_MESSAGE" && event?.data?.payload) {
+        const parsed = JSON.parse(event.data.payload);
+        console.log({
+          at: "handleMessageFromParent - SWIFT_MESSAGE",
+          parsed
+        });
+        if (parsed.type === "PURCHASE_SUCCESS") {
+          const response = await account.verifyPayment(parsed.nonce);
+          isAppLoading = false;
+          modalEvent.hide(Action.USER_PLAN);
+          if (response?.status === "success") {
+            appStore.runAction(Action.PLAN_ONBOARDING);
+          } else {
+            toasts.error(ErrorMessage.DEFAULT);
+          }
+        } else if (parsed.type === "PURCHASE_ERROR") {
+          isAppLoading = false;
+          modalEvent.hide(Action.USER_PLAN);
+          toasts.error(ErrorMessage.DEFAULT);
+        } else if (parsed?.id && parsed?.data) {
+          fileEmbedChannel.setFile(parsed.id, parsed.data);
+        }
+      }
+    } catch (e) {
+      logger.error({ at: "handleMessageFromParent", error: e });
+    }
+  }
+
   function addWindowEventListeners() {
     window.addEventListener(
       GlobalEvent.PERSIST_APPEARANCE_USER,
@@ -399,6 +432,7 @@
       handleAppLoadingStatus
     );
     window.addEventListener(GlobalEvent.ADD_TO_RECENTS, handleAddToRecents);
+    window.addEventListener("message", handleMessageFromParent);
   }
   function removeWindowEventListeners() {
     window.removeEventListener(
@@ -410,6 +444,7 @@
       handleAppLoadingStatus
     );
     window.removeEventListener(GlobalEvent.ADD_TO_RECENTS, handleAddToRecents);
+    window.removeEventListener("message", handleMessageFromParent);
   }
   function handleBeforeUnload(event: any) {
     if (

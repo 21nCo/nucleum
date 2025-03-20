@@ -3,12 +3,13 @@
   import view from "$lib/client/stores/view.store";
   import { cn } from "$lib/client/utils/ui.utils";
   import { resolveDiscountLabel } from "../userPlan.utils";
+  export let isPreventDiscounting = false;
 </script>
 
 <div class="flex flex-col items-center px-4 cw:mt-12">
   <div class="flex flex-col items-center gap-3 py-3 dp:pt-6">
     <h2 class="cw:text-h3 text-xl font-semibold text-fgs1">Choose Your Plan</h2>
-    {#if $account.plan?.discount}
+    {#if $account.plan?.discount && !isPreventDiscounting}
       <div
         class={cn("text-center rounded-md px-2 py-1 text-b2", {
           "text-ags1": $view.isConstrainedWidth,

@@ -20,6 +20,7 @@
   export let period: BillingCycle;
   export let currentPlan: IUserPlan | undefined = undefined;
   export let isCurrentPage = false;
+  export let isPreventDiscounting = false;
   let isCurrentPlan = currentPlan?.plan === plan.type;
   let progressState:
     | "initiating"
@@ -32,9 +33,10 @@
     period === BillingCycle.YEARLY
       ? plan.price[BillingCycle.YEARLY] / 12
       : plan.price[period];
-  $: discountedPrice = $account.plan?.discount
-    ? resolveDiscountedPrice(actualPrice, $account.plan?.discount)
-    : actualPrice;
+  $: discountedPrice =
+    !isPreventDiscounting && $account.plan?.discount
+      ? resolveDiscountedPrice(actualPrice, $account.plan?.discount)
+      : null;
 
   $: if (period) {
     resetLoadingState(period);
