@@ -2,8 +2,8 @@
   import Onboarding from "$lib/client/components/onboarding/Onboarding.svelte";
   import type { IOnboardingConfig } from "$lib/client/components/onboarding/onboarding.type";
   const config: IOnboardingConfig = {
-    headline: "At last, your memory atlas!",
-    subline: "One click to unlock your digital memory paradise. ✨🎉"
+    headline: "Welcome to your focus haven!",
+    subline: "One click to reimagine your focus journey. ✨"
   };
 </script>
 

@@ -19,12 +19,12 @@
   import { resolveGoalTypeIcon } from "./goal.utils";
   import { enumToString } from "$lib/shared/utils/text.utils";
 
-  export let task: IActiveGoalStore;
+  export let goal: IActiveGoalStore;
   export let isReadOnlyMode: boolean = false;
   let popoverRef: any;
 
   async function onUnlink(e: CustomEvent) {
-    await task.unlinkCollection(e.detail);
+    await goal.unlinkCollection(e.detail);
   }
 
   async function onSelect(item: any) {
@@ -35,11 +35,11 @@
         toasts.error();
         return;
       }
-      if ($task.collections?.some(resourceInList(id))) {
+      if ($goal.collections?.some(resourceInList(id))) {
         toasts.error("Collection already exists.");
         return;
       }
-      const result = await task.linkCollection(id);
+      const result = await goal.linkCollection(id);
       if (!result) {
         toasts.error();
         return;
@@ -73,22 +73,22 @@
       appStore.closeResource();
       appStore.gotoPath("/library", {
         queryParams: {
-          resource: Resource.task,
-          type: $task.type.toLowerCase()
+          resource: Resource.goal,
+          type: $goal.type.toLowerCase()
         }
       });
     }}
     use:tooltip={{
-      text: `See all **${enumToString($task.type)}** tasks`,
+      text: `See all **${enumToString($goal.type)}** goals`,
       direction: Placement.Bottom
     }}
   >
     <Icon
-      icon={resolveGoalTypeIcon($task.type)}
+      icon={resolveGoalTypeIcon($goal.type)}
       size={Size.sm}
       class="fill-fgs1"
     />
-    {enumToString($task.type)}
+    {enumToString($goal.type)}
   </button>
   <span class="h-full flex items-center justify-center">
     <Divider
@@ -97,10 +97,10 @@
     />
   </span>
 
-  {#if $task.collections && $task.collections.length > 0}
+  {#if $goal.collections && $goal.collections.length > 0}
     <span>
       <LinkItems
-        links={$task.collections}
+        links={$goal.collections}
         {isReadOnlyMode}
         on:unlink={onUnlink}
         on:click={onClick}

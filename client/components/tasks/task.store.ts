@@ -20,7 +20,6 @@ import { ResourceActions } from "../record/resource.actions";
 import { appStore } from "$lib/client/stores/app.store";
 import { Action } from "$lib/client/types/action.enum";
 import { getUtcSafeDay } from "$lib/client/elements/datetime/datetime.utils";
-import { recentsStore } from "../record/recent.store";
 class TaskStore extends ResourceStore<ITask> {
   constructor() {
     super(Resource.task);
@@ -48,7 +47,8 @@ class TaskStore extends ResourceStore<ITask> {
       date: form.date ? getUtcSafeDay(form.date) : undefined,
       goalId: form.goalId
     };
-    recentsStore.add(resource, {
+    appStore.addToRecents({
+      record: resource,
       type: Resource.task,
       timestamp: new Date()
     });

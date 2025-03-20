@@ -20,6 +20,7 @@
   import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
   import { isValidArray } from "$lib/shared/utils/obj.utils";
   import {
+    isSameResource,
     resourceAction,
     resourceInList
   } from "$lib/client/components/flux/resourceStores/resource.utils";
@@ -28,7 +29,8 @@
   import { resolveGoalColor } from "$lib/client/components/goals/goal.utils";
   import { focusAggregates } from "../../analytics/analytics.store";
   import { LoadingAnimationType } from "$lib/client/types/feedback.type";
-  import { Point } from "maplibre-gl";
+  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import type { IRecordId } from "$lib/client/types/data.type";
 
   let isLoadingState = false;
   let searchInput = "";
@@ -106,6 +108,10 @@
       }));
     }
   }
+
+  function onUnpin(e: CustomEvent<IRecordId>) {
+    items = items.filter((x) => !isSameResource(x.id, e.detail));
+  }
 </script>
 
 <div class="flex flex-col flex-grow gap-4 w-full">
@@ -128,7 +134,7 @@
   {#if !isLoadingState && items.length > 0}
     <div
       class={cn("w-full px-4", {
-        "flex flex-col gap-3 grow": layout === Layout.LIST,
+        "flex flex-col gap-3": layout === Layout.LIST,
         "grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))]":
           layout != Layout.LIST,
         "gap-2": layout != Layout.LIST && !isInEditMode,
@@ -136,7 +142,12 @@
       })}
     >
       {#each items as item, index (item)}
-        <QuickStartThumbnail {refresh} {item} {layout} {isInEditMode} />
+        <QuickStartThumbnail
+          {item}
+          {layout}
+          {isInEditMode}
+          on:unpin={onUnpin}
+        />
       {/each}
     </div>
 
@@ -159,6 +170,7 @@
         on:click={() => (isInEditMode = !isInEditMode)}
       />
     </div>
+    <ScrollViewBottomSpacer />
   {:else}
     <EmptyStatusView
       size={Size.sm}
@@ -172,7 +184,13 @@
       actionText={"Create new goal"}
       on:click={() => {
         appStore.runAction(
-          resourceAction(Resource.goal, ResourceActionType.CREATE)
+          resourceAction(Resource.goal, ResourceActionType.CREATE),
+          {
+            componentParams: {
+              isQuickFocus: true,
+              context: PointronAction.PIN_TO_QUICK_FOCUS
+            }
+          }
         );
       }}
     />

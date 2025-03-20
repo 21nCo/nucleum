@@ -1,8 +1,10 @@
 <script lang="ts">
   import view from "$lib/client/stores/view.store";
+  import { Product } from "$lib/client/types/product.type";
   import { PlanType } from "../userPlan.type";
 
   export let type: PlanType;
+  export let product: Product;
 
   $: width = resolveWidth(type);
 
@@ -20,7 +22,7 @@
   }
 </script>
 
-{#if type === PlanType.CLOUD_SYNC}
+{#if type === PlanType.CLOUD_SYNC && product === Product.MEMOTRON}
   <svg
     {width}
     height={width}
@@ -40,6 +42,23 @@
       class="stroke-fgs1"
       stroke-width="3"
     />
+  </svg>
+{:else if type === PlanType.CLOUD_SYNC && product === Product.POINTRON}
+  <svg
+    {width}
+    height={width}
+    viewBox="0 0 76 76"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M74 38C74 18.1177 57.8822 2 38 2C22.6865 2 9.60617 11.5614 4.40333 25.04M2 38C2 57.8822 18.1177 74 38 74C53.5308 74 66.7645 64.1654 71.8133 50.384M71.8133 50.384L67.088 51.824M71.8133 50.384L74 54.416M4.40333 25.04L2.576 20.72M4.40333 25.04L9.2 23.888"
+      class="stroke-fgs1"
+      stroke-width="3"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <circle cx="38" cy="38" r="11" class="stroke-fgs1" stroke-width="3" />
   </svg>
 {:else}
   <svg

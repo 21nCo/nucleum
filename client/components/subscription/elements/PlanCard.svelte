@@ -11,6 +11,8 @@
   import PlanIcon from "./PlanIcon.svelte";
   import Divider from "$lib/client/elements/Divider.svelte";
   import { PlanStatus, type IUserPlan } from "$lib/client/types/account.type";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { properCase } from "$lib/shared/utils/text.utils";
   const dispatch = createEventDispatcher();
 
   export let plans: IPlan[];
@@ -44,7 +46,7 @@
 
   function resolveDiscountedPrice(price: number, discount: any) {
     if (discount.first && period !== BillingCycle.MONTHLY) {
-      return price * (1 - discount.first / 100);
+      return (price * (1 - discount.first / 100)).toFixed(2);
     }
     return null;
   }
@@ -103,12 +105,20 @@
   <div class="flex flex-col h-full">
     <div class="space-y-6">
       <div class="flex flex-col gap-4">
-        <PlanIcon type={plan.type} />
+        <PlanIcon type={plan.type} product={$appStore.product} />
         <div>
           <h3 class="cw:text-h3 text-3xl font-semibold text-fgs1">
+            {#if plan.type === PlanType.CLOUD_SYNC}
+              {properCase($appStore.product)}
+            {/if}
             {plan.name}
           </h3>
-          <p class="mt-2 text-b2 text-fgs1">{plan.description}</p>
+          <p class="mt-2 text-b2 text-fgs1">
+            {plan.description}
+            {#if plan.type === PlanType.CLOUD_SYNC}
+              for {properCase($appStore.product)}
+            {/if}
+          </p>
         </div>
       </div>
 
@@ -120,9 +130,9 @@
             </span>
           {/if}
           <span
-            class={cn("cw:text-h1 text-xl font-medium", {
-              "line-through text-fgs3": discountedPrice,
-              "text-fgs1": !discountedPrice
+            class={cn("cw:text-h1 font-medium", {
+              "line-through text-fgs3 text-h3": discountedPrice,
+              "text-fgs1 text-xl": !discountedPrice
             })}
           >
             {#if period === BillingCycle.YEARLY}

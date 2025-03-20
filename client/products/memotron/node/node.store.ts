@@ -63,9 +63,9 @@ import { generateResourceId } from "$lib/shared/utils/surreal.utils";
 import { toasts } from "$lib/client/stores/notification.store";
 import { fileStore } from "$lib/client/components/files/file.store";
 import { recursivelyExtractAllChildrenIntoArray } from "$lib/client/components/markdown/markdown.utils";
-import { recentsStore } from "$lib/client/components/record/recent.store";
 import view from "$lib/client/stores/view.store";
 import { CollectibleStore } from "$lib/client/components/collection/collectible.store";
+import { appStore } from "$lib/client/stores/app.store";
 
 export const hierarchyFactorLimit = 5;
 
@@ -303,7 +303,11 @@ export class ActiveNodeStore extends CollectibleStore<IActiveNode, NodeStore> {
           node.clips.sort((a, b) => a.body.timestamp - b.body.timestamp);
         }
         this.set({ ...node, accessMode });
-        recentsStore.add(node, { type: Resource.node, timestamp: new Date() });
+        appStore.addToRecents({
+          record: node,
+          type: Resource.node,
+          timestamp: new Date()
+        });
       }
       const rawLinks =
         node.links.length > 0

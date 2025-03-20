@@ -15,9 +15,9 @@ if (plans) {
 
 export const SUBSCRIPTION_PLANS: IPlan[] = [
   {
-    name: "Memotron sync",
+    name: "sync",
     type: PlanType.CLOUD_SYNC,
-    description: "Real-time sync across all devices for Memotron",
+    description: "Real-time sync across all devices",
     price: {
       [BillingCycle.MONTHLY]: rates[0],
       [BillingCycle.YEARLY]: rates[1],

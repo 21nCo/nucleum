@@ -70,7 +70,7 @@
           <GoalInfoEditControl {goal} control="type" />
         </div>
       {:else}
-        <GoalCollectionsRow task={goal} />
+        <GoalCollectionsRow {goal} />
       {/if}
     </div>
   </div>

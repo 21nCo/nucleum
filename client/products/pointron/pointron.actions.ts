@@ -15,7 +15,7 @@ import AddTagModal from "$lib/client/products/pointron/tag/AddTagModal.svelte";
 import ImportAppData from "$lib/client/products/pointron/settings/ImportAppData/ImportAppData.svelte";
 import TagsList from "$lib/client/products/pointron/settings/tags/TagsList.svelte";
 import EditPresetView from "$lib/client/products/pointron/focus/advanced/presets/EditPresetModal.svelte";
-import Onboarding from "$lib/client/products/pointron/onboarding/Onboarding.svelte";
+import PointronOnboarding from "$lib/client/products/pointron/base/PointronOnboarding.svelte";
 import ComposeByEndTimeModal from "$lib/client/products/pointron/focus/advanced/composition/ComposeByEndTimeModal.svelte";
 import ComposeModal from "$lib/client/products/pointron/focus/advanced/composition/ComposeModal.svelte";
 import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
@@ -65,6 +65,7 @@ import { SearchStore } from "$lib/client/components/record/record.store";
 import { goalStore } from "$lib/client/components/goals/goal.store";
 import GoalSearchResultItem from "$lib/client/components/goals/GoalSearchResultItem.svelte";
 import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
+
 const isSessionRunningPreCondition = () => get(activeSession).isSessionRunning;
 
 export const pointronActions: IAction[] = [
@@ -315,7 +316,7 @@ export const pointronActions: IAction[] = [
   },
   {
     action: "onboarding",
-    component: Onboarding,
+    component: PointronOnboarding,
     isMenuHidden: true,
     label: "Onboarding",
     type: ActionType.PAGE,

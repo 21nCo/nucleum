@@ -37,6 +37,7 @@
   import account from "$lib/client/stores/account.store";
   import { toasts } from "$lib/client/stores/notification.store";
   import { ErrorMessage } from "$lib/client/components/error/error.type";
+  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   export let card: AnalyticsCard;
   export let position: { index: number; total: number };
   export let pageId: string;
@@ -244,10 +245,17 @@
         : "height: calc(50vh - 2.85rem);"
     : ""}
 >
-  {#if isRefreshing || !data || data.length === 0}
+  {#if isRefreshing}
     <div class="animate-pulse flex flex-col gap-3">
       <div class="h-8 w-full bg-bgs3 bg-opacity-50 rounded-md"></div>
       <div class="h-4 w-1/2 bg-bgs3 bg-opacity-50 rounded-md"></div>
+    </div>
+  {:else if !data}
+    <div class="flex w-full h-full justify-center items-center">
+      <EmptyStatusView
+        size={Size.sm}
+        mainText="Something went wrong. Please try again"
+      />
     </div>
   {:else}
     <header

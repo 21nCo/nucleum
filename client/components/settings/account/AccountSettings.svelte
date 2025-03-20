@@ -44,7 +44,7 @@
   let profilePicture: IRecordId | undefined = $userPreferences.profilePicture;
   $: isActivePlan = $account.plan
     ? determineIfPlanIsActive($account.plan)
-    : true;
+    : false;
 
   onMount(() => {
     const unsubscribeAccount = account.subscribe((value) => {

@@ -25,6 +25,8 @@
   export let parentBgIndex: number = 1;
   let isHovering = false;
   let isDatePickerOpen = false;
+  $: isOverdue =
+    !item.isChecked && item.date && compareDates(item.date, new Date(), "<");
 </script>
 
 <ResourceThumbnailBase
@@ -79,7 +81,12 @@
     </div>
 
     {#if item.date && !isHovering}
-      <span class="text-b3 text-fgs3 userdata">
+      <span
+        class={cn("text-b3 userdata", {
+          "text-ars1": isOverdue,
+          "text-fgs3": !isOverdue
+        })}
+      >
         Due: {formatDate(item.date)}
       </span>
     {/if}

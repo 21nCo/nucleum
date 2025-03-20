@@ -290,6 +290,7 @@ const phosphorIcons = [
   "rectangles-two",
   "push-pin-slash",
   "push-pin-simple-slash",
+  "alarm",
 
   //Charts
   "chart-bar",

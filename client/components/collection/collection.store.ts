@@ -52,7 +52,6 @@ import { toasts } from "$lib/client/stores/notification.store";
 import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
 import { GlobalEvent } from "$lib/client/types/event.enum";
 import { Embed } from "$lib/client/types/context.type";
-import { recentsStore } from "../record/recent.store";
 import { appStore } from "$lib/client/stores/app.store";
 import { resolveCollectionResource } from "./collection.utils";
 
@@ -62,10 +61,15 @@ class CollectionStore extends ResourceStore<ICollection> {
     super(Resource.collection, {
       dataType: StoreDataType.FIR
     });
+    this.refreshCollectibleResource();
+  }
+
+  refreshCollectibleResource() {
     this.collectibleResource = resolveCollectionResource(get(appStore).product);
   }
 
   selectMany(params?: IResourceSelectParams, additionalParams?: any) {
+    this.refreshCollectibleResource();
     const properties = [
       "*",
       "typeToExtend.* as typeToExtend",
@@ -97,6 +101,7 @@ class CollectionStore extends ResourceStore<ICollection> {
       context?: string;
     }
   ) {
+    this.refreshCollectibleResource();
     const id = generateResourceId(Resource.collection);
     const propertyEditor = propertyEditorStore.get();
     logger.log({ at: "CollectionStore.save", propertyEditor, form });
@@ -127,7 +132,8 @@ class CollectionStore extends ResourceStore<ICollection> {
       subGroupBy: "none"
     });
     record.views = [viewId];
-    recentsStore.add(record, {
+    appStore.addToRecents({
+      record,
       type: Resource.collection,
       timestamp: new Date()
     });
@@ -300,7 +306,8 @@ export class ActiveCollectionStore extends ActiveResourceStore<
         properties: record.properties ?? [],
         typeToExtend: record.typeToExtend
       });
-      recentsStore.add(record, {
+      appStore.addToRecents({
+        record,
         type: Resource.collection,
         timestamp: new Date()
       });
@@ -536,13 +543,13 @@ class CollectionViewStore extends ResourceStore<ICollectionView> {
         }
       });
       return nodes;
-    } else if (resource === Resource.task) {
-      const tasks = await flux.selectMany(Resource.task, {
+    } else if (resource === Resource.goal) {
+      const goals = await flux.selectMany(Resource.goal, {
         filters: {
           id: ids
         }
       });
-      return tasks;
+      return goals;
     }
   }
 }

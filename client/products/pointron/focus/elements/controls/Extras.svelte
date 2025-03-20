@@ -24,7 +24,7 @@
         ? Size.md
         : Size.lg,
     tooltipOptions: {
-      placement: Placement.TopCenter,
+      // placement: Placement.TopCenter,
       offsetInPx: 4,
       isUseAbsolutePositioning: true
     }
