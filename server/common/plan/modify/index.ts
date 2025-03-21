@@ -11,12 +11,15 @@ import {
   refundPayment,
   refundPaymentForSubscription
 } from "../dodoPaymentProvider";
+import { PaymentProvider } from "$lib/shared/types/plan.type";
+import { getLatestSubscriptionPayment } from "../applePaymentProvider";
 
 interface ModifyRequest {
-  type: "cancel" | "switch";
+  type: "cancel" | "switch" | "sync";
   plan?: PlanType;
   cycle?: BillingCycle;
   billing?: any;
+  embedTransaction?: any;
 }
 const isPartialRefundAvailable =
   process.env.PARTIAL_REFUND_AVAILABLE === "true";
@@ -26,6 +29,8 @@ export function modify(body: ModifyRequest, agent: Agent) {
     return cancel(agent);
   } else if (body.type === "switch") {
     return switchPlan(body, agent);
+  } else if (body.type === "sync") {
+    return sync(body, agent);
   }
 }
 
@@ -155,3 +160,31 @@ async function updateSubscriptionStatus(
 }
 
 function switchPlan(body: ModifyRequest, agent: Agent) {}
+
+/**
+ * Syncs status of the subscription with the latest status from the payment provider
+ * @param agent
+ */
+async function sync(body: ModifyRequest, agent: Agent) {
+  const user = await retrieveUserPlan(agent.id);
+  if (!user?.userPlan?.transactionId) {
+    throw new ValidationError("No active subscription found");
+  }
+
+  const transaction = await retrieveTransaction(user.userPlan.transactionId);
+  if (!transaction) {
+    throw new ValidationError("Transaction not found");
+  }
+  console.log({ transaction });
+  if (transaction.provider === PaymentProvider.APPLE) {
+    //1. query Apple API to get the latest subscription status using transaction.applePayment.transactionId or use transactions restored from the body if transaction is not present on the db or is invalid
+    //2. if the subscription is active, update the userPlan with newest paymentDate and add the latest transactions to original transaction
+    //3. if the subscription is refunded or cancelled - update the userPlan status to refunded or cancelled accordingly - if cancelled - turn off the isAutoRenew
+    const latestTransaction = await getLatestSubscriptionPayment(
+      transaction.applePayment.originalTransactionId
+    );
+    if (latestTransaction) {
+      //TODO
+    }
+  }
+}

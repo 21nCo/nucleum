@@ -1,4 +1,6 @@
 import { default as jwt } from "jsonwebtoken";
+import { writeFileSync, mkdirSync, existsSync } from "fs";
+import { join } from "path";
 
 interface VerificationResponse {
   status:
@@ -16,7 +18,7 @@ interface VerificationResponse {
 
 /**
  * Verifies an Apple App Store subscription using the App Store Server API
- * @param subscriptionId The original transaction id or last transaction id
+ * @param transactionId The original transaction id or last transaction id
  * @returns Subscription status information
  */
 export async function verifyAppleSubscription(
@@ -34,7 +36,7 @@ export async function verifyAppleSubscription(
         : "https://api.storekit-sandbox.apple.com/inApps/v1";
 
     // App Store Server API endpoint for subscription status
-    const url = `${baseUrl}/subscriptions/${transactionId}`;
+    const url = `${baseUrl}/transactions/${transactionId}`;
 
     const response = await fetch(url, {
       method: "GET",
@@ -55,9 +57,9 @@ export async function verifyAppleSubscription(
     }
 
     const data = await response.json();
-    console.log({
-      responseData: JSON.stringify(data, null, 2)
-    });
+
+    // Save response data to a file
+    // saveResponseToFile(data, transactionId);
 
     // Handle response format with data array containing lastTransactions
     if (data.data && Array.isArray(data.data) && data.data.length > 0) {
@@ -85,6 +87,10 @@ export async function verifyAppleSubscription(
             ).toString("utf8");
             parsedTransaction = JSON.parse(decodedPayload);
             // console.log("Parsed transaction:", parsedTransaction);
+            // saveResponseToFile(
+            //   parsedTransaction,
+            //   transaction.originalTransactionId
+            // );
           } catch (error) {
             console.error("Error parsing signed transaction info:", error);
           }
@@ -250,5 +256,130 @@ export async function trackRefundRequest(
   } catch (error) {
     console.error("Error tracking Apple refund request:", error);
     return false;
+  }
+}
+
+/**
+ * Saves API response data to a file for debugging
+ */
+function saveResponseToFile(data: any, transactionId: string): void {
+  try {
+    // Create a logs directory if it doesn't exist
+    const logsDir = join(process.cwd(), "logs", "apple");
+    if (!existsSync(logsDir)) {
+      mkdirSync(logsDir, { recursive: true });
+    }
+
+    // Create a filename with timestamp and transaction ID
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const filename = join(
+      logsDir,
+      `apple-response-${timestamp}-${transactionId}.json`
+    );
+
+    // Write the data to the file
+    writeFileSync(filename, JSON.stringify(data, null, 2), "utf8");
+    console.log(`Apple API response saved to ${filename}`);
+  } catch (error) {
+    console.error("Error saving Apple API response to file:", error);
+  }
+}
+
+/**
+ * Gets the latest payment transaction for a subscription using the history endpoint
+ * @param transactionId The original transaction id
+ * @returns Latest transaction information or null if not found
+ */
+export async function getLatestSubscriptionPayment(transactionId: string) {
+  try {
+    // Create JWT for authentication with Apple
+    const token = createJWT();
+
+    // Apple's environment - production or sandbox
+    const environment = process.env.ENV === "dev" ? "Sandbox" : "Production";
+    const baseUrl =
+      environment === "Production"
+        ? "https://api.storekit.apple.com/inApps/v2"
+        : "https://api.storekit-sandbox.apple.com/inApps/v2";
+
+    // App Store Server API endpoint for transaction history
+    const url = `${baseUrl}/history/${transactionId}`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    if (!response.ok) {
+      console.error(
+        "Apple Transaction History Error:",
+        url,
+        process.env.ENV,
+        await response.text()
+      );
+      return null;
+    }
+
+    const data = await response.json();
+
+    // Save response data for debugging
+    saveResponseToFile(data, `history-${transactionId}`);
+
+    // Handle response format with signedTransactions array
+    if (
+      data.signedTransactions &&
+      Array.isArray(data.signedTransactions) &&
+      data.signedTransactions.length > 0
+    ) {
+      // Sort transactions by purchase date to get the latest one
+      const transactions = data.signedTransactions
+        .map((signedTx) => {
+          try {
+            const payloadBase64 = signedTx.split(".")[1];
+            const decodedPayload = Buffer.from(
+              payloadBase64,
+              "base64"
+            ).toString("utf8");
+            return JSON.parse(decodedPayload);
+          } catch (error) {
+            console.error("Error parsing signed transaction:", error);
+            return null;
+          }
+        })
+        .filter((tx) => tx !== null);
+
+      // Sort by purchaseDate in descending order
+      transactions.sort((a, b) => {
+        const dateA = new Date(a.purchaseDate).getTime();
+        const dateB = new Date(b.purchaseDate).getTime();
+        return dateB - dateA;
+      });
+      saveResponseToFile(transactions, `history-transactions-${transactionId}`);
+      // Return the latest transaction if available
+      if (transactions.length > 0) {
+        const latestTransaction = transactions[0];
+        return {
+          transactionId: latestTransaction.transactionId,
+          originalTransactionId: latestTransaction.originalTransactionId,
+          purchaseDate: new Date(latestTransaction.purchaseDate).toISOString(),
+          expiresDate: latestTransaction.expiresDate
+            ? new Date(latestTransaction.expiresDate).toISOString()
+            : null,
+          productId: latestTransaction.productId,
+          webOrderLineItemId: latestTransaction.webOrderLineItemId,
+          subscriptionGroupIdentifier:
+            latestTransaction.subscriptionGroupIdentifier,
+          environment: environment
+        };
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Error getting latest subscription payment:", error);
+    return null;
   }
 }

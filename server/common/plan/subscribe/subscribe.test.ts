@@ -55,7 +55,7 @@ describe("subscribe", () => {
         cycle: BillingCycle.YEARLY,
         product,
         billing,
-        embed: "apple",
+        provider: "apple",
         context: {
           origin: "https://21n.org"
         }

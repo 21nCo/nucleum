@@ -48,6 +48,13 @@ describe("modify", () => {
     );
   });
 
+  describe("sync", () => {
+    it.only("should sync the subscription status", async () => {
+      const result = await modify({ type: "sync" }, global.testEnv.agent);
+      expect(result).toBeDefined();
+    });
+  });
+
   describe("switch plan", () => {
     it(
       "should switch to a new plan",

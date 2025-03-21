@@ -1,5 +1,6 @@
 import { BillingCycle } from "$lib/client/components/subscription/userPlan.type";
 import { PlanType } from "$lib/client/components/subscription/userPlan.type";
+import { PaymentProvider } from "$lib/shared/types/plan.type";
 import { paymentProductsList } from "./paymentProducts";
 
 export function resolvePlanQuery(userId: string) {
@@ -36,6 +37,7 @@ export function resolvePromotePlanQuery(params?: {
   plan: PlanType;
   transactionId: string;
   paymentDate: string;
+  provider?: PaymentProvider;
 }) {
   const query = `
         UPDATE ${params.id} MERGE {
@@ -43,6 +45,7 @@ export function resolvePromotePlanQuery(params?: {
             plan: "${params.plan}",
             transactionId: ${params.transactionId},
             paymentDate: "${params.paymentDate}",
+            provider: "${params.provider}",
             status: "active"
         }
     `;
