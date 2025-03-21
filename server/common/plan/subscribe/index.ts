@@ -14,7 +14,7 @@ export async function subscribe(body: any, agent: Agent) {
 }
 
 async function newSubscription(body: any, agent: Agent) {
-  const { plan, cycle, context, product, billing, embed } = body;
+  const { plan, cycle, context, product, billing, provider } = body;
   if (!plan) throw new ValidationError("No plan provided");
   if (!cycle) throw new ValidationError("No cycle provided");
   const userDataResult = await performQueryOnMasterDb(
@@ -32,7 +32,7 @@ async function newSubscription(body: any, agent: Agent) {
     discount = discountData.first;
   }
   let productId = "";
-  if (embed) {
+  if (provider) {
     productId = `app.${product}.${plan}.${cycle}`;
   } else {
     const isTest = process.env.NODE_ENV === "dev";
@@ -57,7 +57,7 @@ async function newSubscription(body: any, agent: Agent) {
     cycle,
     discount,
     nonce,
-    embed,
+    provider,
     status: "pending"
   });
 
@@ -68,7 +68,7 @@ async function newSubscription(body: any, agent: Agent) {
     if (!transactionId)
       throw new InternalServerError("Transaction not created");
   }
-  if (embed) {
+  if (provider) {
     return {
       nonce
     };
@@ -114,11 +114,11 @@ async function createTransaction(params: {
   cycle: string;
   discount: number;
   nonce: string;
-  embed?: string;
+  provider?: string;
   status: "pending" | "completed" | "cancelled" | "failed";
 }) {
   const query = `
-    INSERT INTO transaction [{ userId: user:${params.userId}, productId: "${params.productId}", plan: "${params.plan}", cycle: "${params.cycle}", discount: ${params.discount}, status: "${params.status}", createdAt: time::now(), nonce: "${params.nonce}", embed: "${params.embed}"}]`;
+    INSERT INTO transaction [{ userId: user:${params.userId}, productId: "${params.productId}", plan: "${params.plan}", cycle: "${params.cycle}", discount: ${params.discount}, status: "${params.status}", createdAt: time::now(), nonce: "${params.nonce}", provider: "${params.provider}"}]`;
   const transaction = await performQueryOnMasterDb(query);
   return transaction;
 }

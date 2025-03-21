@@ -42,15 +42,17 @@ describe("verify", () => {
     async () => {
       // Using the provided nonce for successful case
       const validNonce =
-        "fef6bc65bfa24751aa3f476e9b8deaa3ed872b6d8bef7bc9d58544a39dd46bf7";
+        "6da55bcbcdbc0184c7f222d1625e8026c3cf01bb68da16ae6ce255ba2c9aa4bc";
       //   "e576d89ad257961a5cbdc27f01f352cc329d27f8a5e33215e4389410066eb8d8";
 
       const result = await verify(
         {
           nonce: validNonce,
-          embedTransaction: {
-            subscriptionId: "2000000878679577"
-          }
+          embedTransaction: [
+            {
+              transactionId: "2000000879945450"
+            }
+          ]
         },
         global.testEnv.agent
       );

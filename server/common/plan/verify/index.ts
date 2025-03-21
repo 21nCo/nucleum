@@ -17,6 +17,7 @@ import {
   resolveTransactionStatusFromDodo,
   resolveTransactionStatusFromApple
 } from "../plan.utils";
+import { PaymentProvider } from "$lib/shared/types/plan.type";
 
 interface VerifyRequest {
   nonce: string;
@@ -36,23 +37,26 @@ export async function verify(body: VerifyRequest, agent: Agent) {
   }
 
   let result = null;
-  if (transaction.embed) {
-    switch (transaction.embed) {
-      case "apple":
+  if (transaction.provider) {
+    switch (transaction.provider) {
+      case PaymentProvider.APPLE:
         result = await handleAppleStoreVerification({
           transaction,
           body,
           user
         });
         break;
-      case "google":
+      case PaymentProvider.GOOGLE:
         result = await handleGoogleStoreVerification({ transaction, user });
         break;
-      case "microsoft":
+      case PaymentProvider.MICROSOFT:
         result = await handleMicrosoftStoreVerification({ transaction, user });
         break;
+      case PaymentProvider.SELF:
+        result = await handleDodoPaymentVerification(transaction, user);
+        break;
       default:
-        throw new InternalServerError("Invalid embed");
+        throw new InternalServerError("Invalid provider");
     }
   } else {
     result = await handleDodoPaymentVerification(transaction, user);
@@ -107,7 +111,8 @@ async function handleDodoPaymentVerification(transaction: any, user: any) {
       cycle: updatedTransaction.cycle,
       plan: updatedTransaction.plan,
       transactionId: updatedTransaction.id,
-      paymentDate: updatedTransaction.createdAt
+      paymentDate: updatedTransaction.createdAt,
+      provider: PaymentProvider.SELF
     });
     if (!userPlanUpdateResult || !userPlanUpdateResult[0]?.result?.[0]) {
       throw new InternalServerError("Failed to update user plan");
@@ -159,8 +164,13 @@ async function handleAppleStoreVerification(params: {
         }",
         lastTransactionId: "${verificationResponse.lastTransactionId || ""}",
         expiresDate: "${verificationResponse.expiresDate || ""}",
+        purchaseDate: "${verificationResponse.purchaseDate || ""}",
         environment: "${verificationResponse.environment}",
-        status: "${verificationResponse.status}"
+        status: "${verificationResponse.status}",
+        transactionData: ${JSON.stringify(
+          verificationResponse.transactionData
+        )},
+        renewalData: ${JSON.stringify(verificationResponse.renewalData)}
       }
     }
   `;
@@ -173,14 +183,15 @@ async function handleAppleStoreVerification(params: {
 
   const updatedTransaction = updateResult[0].result[0];
 
-  // If verification was successful, promote the user's plan
   if (newStatus === "completed") {
     const userPlanUpdateResult = await promoteUserPlan({
       id: user.userPlan.id,
       cycle: updatedTransaction.cycle,
       plan: updatedTransaction.plan,
       transactionId: updatedTransaction.id,
-      paymentDate: updatedTransaction.createdAt
+      paymentDate: updatedTransaction.createdAt,
+      provider: PaymentProvider.APPLE,
+      isAutoRenew: true
     });
 
     if (!userPlanUpdateResult || !userPlanUpdateResult[0]?.result?.[0]) {
@@ -242,6 +253,8 @@ async function promoteUserPlan(params?: {
   plan: PlanType;
   transactionId: string;
   paymentDate: string;
+  provider?: PaymentProvider;
+  isAutoRenew?: boolean;
 }) {
   const query = resolvePromotePlanQuery(params);
   const updateResult = await performQueryOnMasterDb(query);

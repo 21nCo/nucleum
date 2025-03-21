@@ -11,12 +11,18 @@ import {
   refundPayment,
   refundPaymentForSubscription
 } from "../dodoPaymentProvider";
+import { PaymentProvider } from "$lib/shared/types/plan.type";
+import {
+  getLatestSubscriptionPayment,
+  verifyAppleSubscription
+} from "../applePaymentProvider";
 
 interface ModifyRequest {
-  type: "cancel" | "switch";
+  type: "cancel" | "switch" | "sync";
   plan?: PlanType;
   cycle?: BillingCycle;
   billing?: any;
+  embedTransaction?: any;
 }
 const isPartialRefundAvailable =
   process.env.PARTIAL_REFUND_AVAILABLE === "true";
@@ -26,6 +32,8 @@ export function modify(body: ModifyRequest, agent: Agent) {
     return cancel(agent);
   } else if (body.type === "switch") {
     return switchPlan(body, agent);
+  } else if (body.type === "sync") {
+    return sync(body, agent);
   }
 }
 
@@ -155,3 +163,51 @@ async function updateSubscriptionStatus(
 }
 
 function switchPlan(body: ModifyRequest, agent: Agent) {}
+
+/**
+ * Syncs status of the subscription with the latest status from the payment provider
+ * @param agent
+ */
+async function sync(body: ModifyRequest, agent: Agent) {
+  const user = await retrieveUserPlan(agent.id);
+  if (!user?.userPlan?.transactionId) {
+    throw new ValidationError("No active subscription found");
+  }
+
+  const transaction = await retrieveTransaction(user.userPlan.transactionId);
+  if (!transaction) {
+    throw new ValidationError("Transaction not found");
+  }
+
+  if (transaction.provider === PaymentProvider.APPLE) {
+    const verificationResponse = await verifyAppleSubscription(
+      transaction.applePayment.originalTransactionId
+    );
+    if (!verificationResponse) {
+      //TODO - fallback with history API and embedTransaction from body
+      const latestTransaction = await getLatestSubscriptionPayment(
+        transaction.applePayment.originalTransactionId
+      );
+    }
+    const transactionUpdateQuery = `
+      UPDATE ${transaction.id} MERGE {
+        lastVerified: time::now(),
+        subscriptionUpdateData: ${JSON.stringify(verificationResponse)}
+      }
+    `;
+    await performQueryOnMasterDb(transactionUpdateQuery);
+    const isAutoRenew =
+      verificationResponse.renewalData?.autoRenewStatus === 1 ? true : false;
+    const latestPurchaseDate = new Date(
+      verificationResponse.purchaseDate
+    ).toISOString();
+    const updateQuery = `
+        UPDATE ${user.userPlan.id} MERGE {
+          paymentDate: "${latestPurchaseDate}",
+          nextRenewalDate: "${verificationResponse.renewalDate}",
+          status: "${verificationResponse.status}",
+          isAutoRenew: ${isAutoRenew}
+        }`;
+    await performQueryOnMasterDb(updateQuery);
+  }
+}
