@@ -7,7 +7,7 @@
     items: [
       {
         label: "Downloads",
-        href: "https://docs.memotron.app/docs/getting-started/installation"
+        href: "https://docs.memotron.app/memotron/installation"
       },
       { label: "Discord", href: "https://discord.com/invite/9HJqKYTZKg" },
       { label: "Pricing", href: "/pricing" }
@@ -23,8 +23,8 @@
     twitterUrl: "https://x.com/memotronApp",
     docsUrl: "https://docs.memotron.app",
     youtubeUrl: "https://www.youtube.com/@21nOrg",
-    roadmapUrl: "https://docs.memotron.app/docs/more/roadmap",
-    changelogUrl: "https://memotron.supahub.com/changelog"
+    roadmapUrl: "https://docs.memotron.app/memotron/roadmap",
+    changelogUrl: "https://docs.memotron.app/changelog/memotron/new"
   };
 </script>
 

@@ -22,6 +22,7 @@
   import { resolveShortcutText } from "../shortcuts/shortcut.utils";
   import { KeyboardKey, ModifierKey } from "$lib/client/types/keyboard.type";
   import KeyboardToolbar from "$lib/client/elements/keyboardToolbar/KeyboardToolbar.svelte";
+  import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
   export let command: string | undefined = undefined;
   export let commandType: ActionType | undefined = undefined;
   export let componentParams: any = undefined;
@@ -68,7 +69,7 @@
     placeholder =
       typeof searchAction.searchActionParams?.placeholder === "function"
         ? searchAction.searchActionParams.placeholder(componentParams)
-        : (searchAction.searchActionParams?.placeholder ?? "select an item");
+        : searchAction.searchActionParams?.placeholder ?? "select an item";
   }
   function close() {
     value = "";
@@ -120,6 +121,9 @@
           )}
         </span>
       </div>
+      {#if $view.isConstrainedWidth}
+        <FullScreenCloseButton path={Action.CMD} />
+      {/if}
     {/if}
     <input
       bind:this={inputRef}

@@ -99,6 +99,16 @@
               {arrangement}
               on:click={(e) => onClick(e, item)}
             />
+          {:else if resourceType === Resource.goal}
+            <GoalThumbnail
+              {item}
+              {accessPoint}
+              {parentBgIndex}
+              {arrangement}
+              on:click={(e) => onClick(e, item)}
+            />
+          {:else if resourceType === Resource.task}
+            <TaskThumbnail {item} {accessPoint} {arrangement} {parentBgIndex} />
           {:else}
             <div
               class="h-72 w-80 border border-brs3 rounded-md hover:border-aps1 grow"

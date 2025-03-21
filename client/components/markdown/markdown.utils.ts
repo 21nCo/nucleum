@@ -14,15 +14,12 @@ import {
   type ListContent,
   type INode,
   type IActiveNode,
-  type SimpleTextNodeType,
   NodeType,
   simpleTextNodeTypeList,
   headingNodeTypes,
   type INodeStructure
 } from "$lib/client/products/memotron/node/node.type";
-import { deepCopy } from "$lib/shared/utils/obj.utils";
-import { generateResourceId } from "../flux/flux.utils";
-import { Resource } from "../flux/resourceStores/resource.enum";
+import { generateRandomIdv2 } from "$lib/shared/utils/crypto.utils";
 
 /**
  * Recursively extracts all children of a node and its children. Useful for converting a nested structure of node into a flat array.
@@ -43,20 +40,6 @@ export function recursivelyExtractAllChildrenIntoArray(md: IActiveNode) {
   } catch (e) {
     return [];
   }
-}
-
-/**
- * @deprecated - no longer used
- * @param mdStore
- * @returns
- */
-export function parseBlocksIntoNestedMd(mdStore: IMarkdownStore) {
-  const md = deepCopy(mdStore.node);
-  md.children = recursivelyFormParentFromChildren(
-    mdStore.blocks,
-    md.childrenHierarchy
-  );
-  return md;
 }
 
 /**
@@ -751,6 +734,13 @@ export function performEscShortcuts(
   }
 }
 
+/**
+ *
+ * Note: removed generateResourceId() for generating id to remove dependency on flux.utils or surreal.utils as this utils is being used in landing pages
+ * @param text
+ * @param nodeContentType
+ * @returns
+ */
 export function textToMdBlocks(
   text: string,
   nodeContentType?: NodeType
@@ -762,7 +752,7 @@ export function textToMdBlocks(
       nodeContentType ?? NodeType.NODULAR_MARKDOWN,
       x
     );
-    const id = generateResourceId(Resource.node);
+    const id = `node:${generateRandomIdv2()}`;
     if (!escResult) {
       return {
         id,

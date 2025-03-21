@@ -85,7 +85,11 @@
       <span
         class="absolute right-0 h-full flex items-center bg-gradient-to-l from-bgs2 via-bgs2 to-transparent pr-3 pl-10 rounded-md"
       >
-        <Button icon="trash" on:click={deleteHandler} tooltip="Delete preset" />
+        <Button
+          icon="ph:trash-light"
+          on:click={deleteHandler}
+          tooltip="Delete preset"
+        />
       </span>
     {/if}
   </HoverableElement>

@@ -32,7 +32,7 @@
   )}
   use:tooltip={{ text: "Close", direction: Placement.Left }}
   on:click={() => {
-    if ($view.isConstrainedWidth) appStore.goBack();
+    if ($view.isConstrainedWidth && !path) appStore.goBack();
     appStore.closeResource({ accessMode });
     if (path) modalEvent.hide(path, "ModalCloseButton.svelte");
   }}

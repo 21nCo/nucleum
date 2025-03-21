@@ -26,6 +26,14 @@
   }
   $: panels = resolvePanels($appStore.product);
 
+  /**
+   * Notes on timeline:
+   * - Sub timeline (hours for a day, days for a week etc) - Time blocking/slotting
+   * - Collapsible all-day events, tasks inbox (collapsible so that timeline is not crowded)
+   * - Past days/periods - will be more restrospective, future days will have planned events, tasks etc - current day/period tries to show both
+   * - Timeline will move out of panel switcher when enough width is available for the calendar column
+   * @param product
+   */
   function resolvePanels(product: Product) {
     const timeline = {
       label: "Timeline",
@@ -72,7 +80,7 @@
   }
 </script>
 
-<div class="flex flex-col h-full">
+<div class="flex flex-col h-full w-full">
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-2">
       <div class="text-h4 font-medium text-fgs3">
@@ -93,15 +101,17 @@
       />
     </div>
   </div>
-  {#if selectedPanel === CalendarColumnPanel.Tasks}
-    <CalendarColumnTasksPanel {date} />
-  {:else if selectedPanel === CalendarColumnPanel.History}
-    <CalendarHistoryPanel {date} />
-  {:else if selectedPanel === CalendarColumnPanel.Overview}
-    <CalendarOverviewPanel {date} />
-  {:else}
-    <div class="my-auto">
-      <ComingSoonView />
-    </div>
-  {/if}
+  <div class="flex flex-grow w-full py-4">
+    {#if selectedPanel === CalendarColumnPanel.Tasks}
+      <CalendarColumnTasksPanel {date} />
+    {:else if selectedPanel === CalendarColumnPanel.History}
+      <CalendarHistoryPanel {date} />
+    {:else if selectedPanel === CalendarColumnPanel.Overview}
+      <CalendarOverviewPanel {date} />
+    {:else}
+      <div class="my-auto">
+        <ComingSoonView />
+      </div>
+    {/if}
+  </div>
 </div>

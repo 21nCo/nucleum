@@ -16,6 +16,9 @@
   import context from "$lib/client/stores/context.store";
   import { OperatingSystem } from "$lib/client/types/context.type";
   import { postToParent } from "$lib/client/utils/embed.utils";
+  import { toasts } from "$lib/client/stores/notification.store";
+  import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
+  import { GlobalEvent } from "$lib/client/types/event.enum";
 
   let selectedPeriod: BillingCycle = BillingCycle.YEARLY;
   let isBillingAddressCapture = false;
@@ -38,7 +41,7 @@
   async function onSwitch(plan?: IPlan) {
     selectedPlan = plan || null;
     if (isAppleContext) {
-      completePurchaseOnIOS();
+      await completePurchaseOnIOS();
       return;
     }
     isBillingAddressCapture = true;
@@ -64,23 +67,38 @@
     appStore.runAction(Action.USER_PLAN_CANCELATION);
   }
 
-  function onChoose(plan: IPlan) {
+  async function onChoose(plan: IPlan) {
     selectedPlan = plan;
     if (isAppleContext) {
-      completePurchaseOnIOS();
+      await completePurchaseOnIOS();
       return;
     }
     isBillingAddressCapture = true;
   }
 
-  function completePurchaseOnIOS() {
+  async function completePurchaseOnIOS() {
     const productId = formProductId();
+    const response = await account.initiateSubscription({
+      plan: selectedPlan?.type,
+      cycle: selectedPeriod,
+      billing: billingAddress,
+      product: $appStore.product,
+      embed: "apple"
+    });
+    if (!response || !response.nonce) {
+      toasts.error("Something went wrong. Please try again");
+      return;
+    }
     postToParent({
       purchase: JSON.stringify({
-        productId
+        productId,
+        nonce: response.nonce
       })
     });
-
+    dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
+      message: `Purchasing the plan...`,
+      subMessage: ""
+    });
     function formProductId() {
       return `app.${$appStore.product}.${selectedPlan?.type}.${selectedPeriod}`;
     }
@@ -116,7 +134,7 @@
   <BillingAddressCapture bind:billingAddress on:proceed={onProceed} />
 {:else}
   <div class="flex flex-col gap-6 h-full w-full overflow-auto">
-    <PlanHeader />
+    <PlanHeader isPreventDiscounting={isAppleContext} />
 
     <div class="flex justify-center w-full cw:mb-6">
       <PanelSwitcher
@@ -137,6 +155,7 @@
             {plan}
             {currentPlan}
             period={selectedPeriod}
+            isPreventDiscounting={isAppleContext}
             on:switch={() => onSwitch(plan)}
             on:choose={() => onChoose(plan)}
             on:cancel={() => onCancel()}

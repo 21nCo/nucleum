@@ -8,9 +8,13 @@
   import { OperatingSystem } from "$lib/client/types/context.type";
   import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
   import { postMessageToParent } from "$lib/client/utils/embed.utils";
+  $: isAppleContext =
+    $context.isEmbed &&
+    ($context.os === OperatingSystem.IOS ||
+      $context.os === OperatingSystem.MACOS);
 
   async function restore() {
-    if ($context.isEmbed && $context.os === OperatingSystem.IOS) {
+    if (isAppleContext) {
       postMessageToParent(EmbedMessage.RESTORE_PURCHASE);
       return;
     }

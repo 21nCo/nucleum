@@ -23,7 +23,6 @@
     getDapId
   } from "$lib/client/persistence/persistence.utils";
   import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   import { cn } from "$lib/client/utils/ui.utils";
   import appearance from "$lib/client/stores/appearance.store";
   import MetadataLayer from "./MetadataLayer.svelte";
@@ -32,7 +31,6 @@
   import { getSettingsAsModal } from "../settingsActionMap";
   import { globalActions } from "$lib/client/stores/actionMap";
   import { localActions } from "$local/localActionMap";
-  import { fileEmbedChannel } from "$lib/client/components/files/fileEmbedChannel.store";
 
   let timer: any;
   let isMounted = false;
@@ -256,23 +254,6 @@
     $context.isInOfflineMode = !navigator.onLine;
   }
 
-  function handleMessageFromParent(event: any) {
-    try {
-      if (event?.data?.type === "SWIFT_MESSAGE" && event?.data?.payload) {
-        const parsed = JSON.parse(event.data.payload);
-        console.log({
-          at: "handleMessageFromParent - SWIFT_MESSAGE",
-          parsed
-        });
-        if (parsed?.id && parsed?.data) {
-          fileEmbedChannel.setFile(parsed.id, parsed.data);
-        }
-      }
-    } catch (e) {
-      logger.error({ at: "handleMessageFromParent", error: e });
-    }
-  }
-
   function handleMessageFromChromeWebview(event: any) {
     const messageFromChromeWebView = event.data;
     console.log("Received from Chrome Webview:", messageFromChromeWebView);
@@ -289,7 +270,6 @@
     };
     window.addEventListener("online", updateOnlineStatus);
     window.addEventListener("offline", updateOnlineStatus);
-    window.addEventListener("message", handleMessageFromParent);
     try {
       //@ts-ignore
       window.chrome.webview.addEventListener(
@@ -309,7 +289,6 @@
     window.onpopstate = null;
     window.removeEventListener("online", updateOnlineStatus);
     window.removeEventListener("offline", updateOnlineStatus);
-    window.removeEventListener("message", handleMessageFromParent);
     try {
       //@ts-ignore
       window.chrome.webview.removeEventListener(

@@ -458,6 +458,14 @@ const f7Icons = ["keyboard-chevron-compact-down"];
 
 const fluentIcons = ["keyboard-dock-20-regular"];
 
+const fluentEmojiIcons = [
+  "astronaut",
+  "globe-showing-europe-africa",
+  "glowing-star",
+  "rocket",
+  "potted-plant"
+];
+
 const tablerIcons = ["keyboard-show"];
 
 const uilIcons = ["keyboard-hide"];
@@ -475,6 +483,7 @@ export const iconSets = {
   "material-symbols-light": materialSymbolsLightIcons,
   f7: f7Icons,
   fluent: fluentIcons,
+  "fluent-emoji": fluentEmojiIcons,
   tabler: tablerIcons,
   uil: uilIcons
 };

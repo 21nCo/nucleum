@@ -7,10 +7,18 @@
   export let isDateMode: boolean = true;
   export let date: Date = new Date();
   export let currentPage: number = 1;
+  export let density: Size = Size.md;
 
   const dispatch = createEventDispatcher();
   let containerWidth: number = 300;
-  let minItemWidth = 40;
+  let minItemWidth =
+    density === Size.sm
+      ? 50
+      : density === Size.md
+        ? 40
+        : density === Size.lg
+          ? 30
+          : 20;
   let containerRef: HTMLDivElement;
   let previousMode = isDateMode;
   let previousDate: Date = new Date(date);
@@ -447,7 +455,7 @@
   ];
 </script>
 
-<div class="flex flex-col gap-2">
+<div class="flex flex-col gap-2 w-full">
   <div
     class="flex items-center w-full"
     bind:clientWidth={containerWidth}

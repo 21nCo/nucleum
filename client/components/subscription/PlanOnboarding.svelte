@@ -20,12 +20,12 @@
   import modalEvent from "../modal/modal.store";
 
   let currentPlanFeatures: Array<{ icon: string; label: string }> = [];
-  $: renewalDate = $account.plan
+  $: renewalDate = $account.plan?.plan
     ? resolveNextRenewalDate($account.plan)
     : undefined;
 
   $: {
-    if ($account.plan) {
+    if ($account.plan?.plan) {
       // Get features from the shared plans data
       const selectedPlan = SUBSCRIPTION_PLANS.find(
         (p) => p.type === $account.plan?.plan

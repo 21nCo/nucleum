@@ -28,6 +28,7 @@
   import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
   import { goalStore } from "$lib/client/components/goals/goal.store";
   import { taskStore } from "$lib/client/components/tasks/task.store";
+  import view from "$lib/client/stores/view.store";
 
   export let id: string;
   export let log: any = undefined;
@@ -72,7 +73,7 @@
 
 {#if log}
   <div class="flex flex-col gap-4 flex-grow w-full items-center p-4 userdata">
-    {#if accessMode === ResourceAccessMode.SPLIT || accessMode === ResourceAccessMode.FSPLIT}
+    {#if accessMode === ResourceAccessMode.SPLIT || accessMode === ResourceAccessMode.FSPLIT || $view.isConstrainedWidth}
       <div class="flex gap-4 w-full justify-between">
         <Text content="Session details" style={TextStyle.PANEL_HEADING} />
       </div>

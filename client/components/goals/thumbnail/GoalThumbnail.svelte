@@ -39,7 +39,7 @@
 
   let isHovering: boolean = false;
 
-  function onTaskChange(e: any) {
+  function onGoalChanges(e: any) {
     const data = e.detail?.params?.record;
     if (data) {
       item = { ...item, ...data };
@@ -175,7 +175,7 @@
 </ResourceThumbnailBase>
 
 <ComponentBaseLayer
-  subscribeToResource={new Set([Resource.task])}
+  subscribeToResource={new Set([Resource.goal])}
   subscribeToRecords={[item.id]}
-  on:change={onTaskChange}
+  on:change={onGoalChanges}
 />

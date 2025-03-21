@@ -14,5 +14,5 @@
     <BreadcrumbMini hierarchy={parentLabels} />
   {/if}
   <!-- TODO - task color if required -->
-  {item.label}
+  {item.label ? item.label : "Untitled"}
 </CustomColorPropagator>
