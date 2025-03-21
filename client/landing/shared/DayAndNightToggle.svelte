@@ -12,7 +12,7 @@
 
   onMount(() => {
     $appearance.isSyncWithSystem = false;
-    $appearance.lightColorSchemeId = "colorscheme:clean_tidymono_light";
+    $appearance.lightColorSchemeId = "colorscheme:clean_tidyblue_light";
     $appearance.darkColorSchemeId = "colorscheme:clean_tidyoxide_dark";
     if ($appearance.theme === Theme.DARK) isNight = true;
     else isNight = false;

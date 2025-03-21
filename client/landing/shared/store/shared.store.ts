@@ -10,7 +10,7 @@ export const currentProductsStore = readable<ITileItem[]>([
     image: staticUrl + "/images/product/pointron-product-image.png",
     title: "Pointron",
     label: "Your focus haven.",
-    href: "https://pointron.io"
+    href: "https://pointron.app"
   },
   {
     image: staticUrl + "/images/product/memotron-product-image.png",
