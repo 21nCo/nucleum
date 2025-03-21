@@ -1,6 +1,4 @@
 <script lang="ts">
-  import CommingSoonSection from "../shared/CommingSoonSection.svelte";
-  import { extractProductv1 } from "$lib/shared/utils/utils";
   import { upcomingProductsStore } from "../shared/store/shared.store";
   import HeroSection from "../shared/HeroSection.svelte";
   import HeroVideo from "../shared/elements/HeroVideo.svelte";
@@ -8,10 +6,6 @@
   import IrregularTileItemsSection from "../shared/tile/IrregularTileItemsSection.svelte";
 
   let heroData: any;
-  const { product } = extractProductv1(window.location.host);
-  let i = $upcomingProductsStore.findIndex(
-    (x) => x.title.toLocaleLowerCase() === product
-  );
   heroData = {
     tagline: "Your memory atlas.",
     description:
@@ -90,4 +84,4 @@
   thumbnailUrl="https://img.youtube.com/vi/{videoId}/maxresdefault.jpg"
 />
 <div class="w-full h-[300px]"></div>
-<!-- <IrregularTileItemsSection items={features} title="Navigating your memory" /> -->
+<IrregularTileItemsSection items={features} title="Navigating your memory" />
