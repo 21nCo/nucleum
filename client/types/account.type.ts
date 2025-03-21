@@ -77,6 +77,15 @@ export interface IUserPlan {
    * @deprecated
    */
   nextRenewal?: Date;
+  provider?: PaymentProvider;
+  isAutoRenew?: boolean;
+}
+
+export enum PaymentProvider {
+  SELF = "self",
+  APPLE = "apple",
+  GOOGLE = "google",
+  MICROSOFT = "microsoft"
 }
 
 export interface ITrialPlan {

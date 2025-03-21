@@ -57,7 +57,7 @@
 
     {#if renewalDate}
       <p class="text-sm text-fgs3 mb-8">
-        Next payment due: {formatDate(renewalDate)}
+        Next payment: {formatDate(renewalDate)}
       </p>
     {/if}
 

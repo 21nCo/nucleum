@@ -19,6 +19,7 @@
   import { toasts } from "$lib/client/stores/notification.store";
   import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
   import { GlobalEvent } from "$lib/client/types/event.enum";
+  import { PaymentProvider } from "$lib/client/types/account.type";
 
   let selectedPeriod: BillingCycle = BillingCycle.YEARLY;
   let isBillingAddressCapture = false;
@@ -83,7 +84,7 @@
       cycle: selectedPeriod,
       billing: billingAddress,
       product: $appStore.product,
-      embed: "apple"
+      provider: PaymentProvider.APPLE
     });
     if (!response || !response.nonce) {
       toasts.error("Something went wrong. Please try again");

@@ -7,7 +7,7 @@
   } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";
   import { InfoTextType } from "$lib/client/types/text.type";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { bg, cn } from "$lib/client/utils/ui.utils";
   import Icon from "../Icon.svelte";
   import Button from "../button/Button.svelte";
   import Link from "./Link.svelte";
@@ -15,11 +15,13 @@
   export let icon: string | undefined = undefined;
   export let type: InfoTextType = InfoTextType.INFO;
   export let action: IButtonParams | undefined = undefined;
+  export let parentBgIndex: number = 1;
 </script>
 
 <div
   class={cn("flex w-full rounded-md gap-4 p-4 text-b2", {
-    "bg-bgs2": type === InfoTextType.INFO || type === InfoTextType.TIP,
+    [bg(parentBgIndex)]:
+      type === InfoTextType.INFO || type === InfoTextType.TIP,
     "bg-ars2 text-ars1": type === InfoTextType.ERROR,
     "bg-ass1 dark:bg-ass2 text-bgs1": type === InfoTextType.WARNING
   })}

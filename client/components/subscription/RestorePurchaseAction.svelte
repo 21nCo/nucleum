@@ -16,6 +16,7 @@
   async function restore() {
     if (isAppleContext) {
       postMessageToParent(EmbedMessage.RESTORE_PURCHASE);
+      // postMessageToParent(EmbedMessage.CHECK_SUBSCRIPTION);
       return;
     }
     toasts.showProgress("restorePlan", "Restoring purchase...");

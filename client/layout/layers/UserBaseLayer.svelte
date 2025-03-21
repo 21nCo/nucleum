@@ -37,6 +37,7 @@
   import { LogType } from "$lib/client/components/debug/debug.type";
   import { flux, initFlux } from "$lib/client/components/flux/flux";
   import {
+    PaymentProvider,
     UserDataMode,
     UserSessionType
   } from "$lib/client/types/account.type";
@@ -119,6 +120,7 @@
         dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
       }
       await recentsStore.refresh(searcheableResources);
+      await syncAccountPaidPlanFromExternalProvider();
       initializeTaco();
     });
   });
@@ -360,6 +362,18 @@
     }
   }
 
+  async function syncAccountPaidPlanFromExternalProvider() {
+    if (
+      $account.dataMode === UserDataMode.LOCAL ||
+      !$account.plan?.provider ||
+      $account.plan?.provider === PaymentProvider.SELF
+    )
+      return;
+    const response = await account.modifySubscription({
+      type: "sync"
+    });
+  }
+
   function handlePersistAppearance(event: any) {
     userPreferences.setAppearance(event.detail);
   }
@@ -415,6 +429,11 @@
           toasts.error(ErrorMessage.DEFAULT);
         } else if (parsed?.id && parsed?.data) {
           fileEmbedChannel.setFile(parsed.id, parsed.data);
+        } else if (parsed.type === "RESTORE_PURCHASE_SUCCESS") {
+          const response = await account.modifySubscription({
+            type: "sync",
+            embedTransaction: parsed.embedTransaction
+          });
         }
       }
     } catch (e) {
