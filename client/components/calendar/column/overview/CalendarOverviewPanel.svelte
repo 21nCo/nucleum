@@ -7,7 +7,7 @@
   $: product = $appStore.product;
 </script>
 
-<div class="w-full h-full py-4">
+<div class="w-full h-full">
   {#if product === Product.POINTRON}
     <CalendarOverviewPanelPointron {date} />
   {:else}

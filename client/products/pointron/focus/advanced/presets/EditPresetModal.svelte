@@ -15,6 +15,7 @@
   import { onMount } from "svelte";
   import ComposeTotalsText from "../composition/ComposeTotalsText.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
+  import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
   export let id: string;
   let composition: SessionComposition;
 
@@ -81,4 +82,5 @@
       }}
     />
   {/if}
+  <FullScreenCloseButton path={PointronAction.EDIT_PRESET} />
 </div>

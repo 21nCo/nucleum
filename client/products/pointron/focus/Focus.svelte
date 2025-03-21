@@ -24,6 +24,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import { appStore } from "$lib/client/stores/app.store";
   import QuickStartLayoutToggle from "./quickstart/actions/QuickStartLayoutToggle.svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
   let mode: number = 0;
   let isInlineEnabled: boolean = true;
   let addManualLogButton: IButtonParams = {
@@ -64,9 +65,11 @@
         <Zen isInline={true} />
       {:else}
         <div
-          class="flex flex-col gap-3 w-full h-full items-center {$view.isPortrait
-            ? 'px-4 py-2'
-            : 'p-6'}"
+          class={cn("flex flex-col gap-3 w-full h-full items-center", {
+            "py-2": $view.isPortrait,
+            "px-4": $view.isPortrait && mode !== 0,
+            "p-6": !$view.isPortrait
+          })}
         >
           <div class="flex w-full gap-8 items-center justify-center">
             <PanelSwitcher

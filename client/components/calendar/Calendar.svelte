@@ -5,6 +5,8 @@
   import { CalendarLayout } from "./calendar.type";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import view from "$lib/client/stores/view.store";
+  import CalendarCw from "./CalendarCW.svelte";
   export let panel: CalendarLayout = resolvePanelSelection();
 
   function resolvePanelSelection() {
@@ -15,7 +17,9 @@
   }
 </script>
 
-{#if panel === CalendarLayout.Bird}
+{#if $view.isConstrainedWidth}
+  <CalendarCw />
+{:else if panel === CalendarLayout.Bird}
   <BirdCalendar bind:panel />
 {:else if panel === CalendarLayout.Classic}
   <ClassicCalendar bind:panel />

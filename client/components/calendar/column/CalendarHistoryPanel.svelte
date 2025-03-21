@@ -57,7 +57,7 @@
   }
 </script>
 
-<div class="flex flex-col h-full gap-4 mt-4">
+<div class="flex flex-col h-full w-full gap-4">
   <OptionSelector
     options={tabs}
     isPreventWrap={true}
@@ -65,11 +65,13 @@
     on:select={onTabSelection}
     size={Size.sm}
   />
-  {#if tab === CalendarHistoryTab.ALL}
-    <CalendarAllActivityPanel {date} />
-  {:else if tab === CalendarHistoryTab.FOCUS_SESSIONS}
-    <LogsPane {date} context="journal" />
-  {:else if tab === CalendarHistoryTab.NODES}
-    <ComingSoonView />
-  {/if}
+  <div class="flex flex-grow w-full">
+    {#if tab === CalendarHistoryTab.ALL}
+      <CalendarAllActivityPanel {date} />
+    {:else if tab === CalendarHistoryTab.FOCUS_SESSIONS}
+      <LogsPane {date} context="journal" />
+    {:else if tab === CalendarHistoryTab.NODES}
+      <ComingSoonView />
+    {/if}
+  </div>
 </div>

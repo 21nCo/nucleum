@@ -27,6 +27,9 @@ import { CollectibleStore } from "../collection/collectible.store";
 import { activeSession } from "$lib/client/products/pointron/focus/session.store";
 import { get } from "svelte/store";
 import { appStore } from "$lib/client/stores/app.store";
+import context from "$lib/client/stores/context.store";
+import { Embed } from "$lib/client/types/context.type";
+import view from "$lib/client/stores/view.store";
 
 class GoalStore extends ResourceStore<IGoal> {
   constructor() {
@@ -320,6 +323,16 @@ export function resolveGoalContextMenu(
       resourceActions.copyLink()
     ];
   }
+  const openingActionGroup = {
+    group: "open",
+    items: [
+      resourceActions.openAsTab(),
+      resourceActions.openAsSplit(),
+      resourceActions.openAsFull()
+    ]
+  };
+  const ctx = get(context);
+  const viewStore = get(view);
   return [
     {
       group: "primary",
@@ -329,14 +342,10 @@ export function resolveGoalContextMenu(
       group: "focus",
       items: [goalActions.focusNow, goalActions.pinToQuickFocus()]
     },
-    {
-      group: "open",
-      items: [
-        resourceActions.openAsTab(),
-        resourceActions.openAsSplit(),
-        resourceActions.openAsFull()
-      ]
-    },
+    ...((ctx.isEmbed && ctx.embed === Embed.HANDSET) ||
+    viewStore.isConstrainedWidth
+      ? []
+      : [openingActionGroup]),
     {
       group: "more",
       items: [resourceActions.archive(), resourceActions.trash()]
