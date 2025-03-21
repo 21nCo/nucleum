@@ -1,6 +1,6 @@
 import { default as jwt } from "jsonwebtoken";
 import { writeFileSync, mkdirSync, existsSync } from "fs";
-import { join } from "path";
+import { join, parse } from "path";
 
 interface VerificationResponse {
   status:
@@ -12,8 +12,12 @@ interface VerificationResponse {
     | "refunded";
   originalTransactionId?: string;
   expiresDate?: string;
+  purchaseDate?: string;
+  renewalDate?: string;
   environment: "Production" | "Sandbox";
   lastTransactionId?: string;
+  transactionData?: any;
+  renewalData?: any;
 }
 
 /**
@@ -36,7 +40,7 @@ export async function verifyAppleSubscription(
         : "https://api.storekit-sandbox.apple.com/inApps/v1";
 
     // App Store Server API endpoint for subscription status
-    const url = `${baseUrl}/transactions/${transactionId}`;
+    const url = `${baseUrl}/subscriptions/${transactionId}`;
 
     const response = await fetch(url, {
       method: "GET",
@@ -75,6 +79,7 @@ export async function verifyAppleSubscription(
 
         // Parse the signed transaction info if available
         let parsedTransaction = null;
+        let parsedRenewalInfo = null;
         if (transaction.signedTransactionInfo) {
           try {
             // Extract the payload part of the JWT (middle section between dots)
@@ -87,24 +92,48 @@ export async function verifyAppleSubscription(
             ).toString("utf8");
             parsedTransaction = JSON.parse(decodedPayload);
             // console.log("Parsed transaction:", parsedTransaction);
-            // saveResponseToFile(
-            //   parsedTransaction,
-            //   transaction.originalTransactionId
-            // );
           } catch (error) {
             console.error("Error parsing signed transaction info:", error);
           }
         }
+        if (transaction.signedRenewalInfo) {
+          try {
+            const payloadBase64 = transaction.signedRenewalInfo.split(".")[1];
+            const decodedPayload = Buffer.from(
+              payloadBase64,
+              "base64"
+            ).toString("utf8");
+            parsedRenewalInfo = JSON.parse(decodedPayload);
+          } catch (error) {
+            console.error("Error parsing signed renewal info:", error);
+          }
+        }
+        // saveResponseToFile(
+        //   {
+        //     transaction,
+        //     parsedTransaction,
+        //     parsedRenewalInfo
+        //   },
+        //   transaction.originalTransactionId + "-parsed"
+        // );
 
         // Map to our verification response format
         return {
           status: mapStatusCode(transaction.status),
           originalTransactionId: transaction.originalTransactionId || "",
+          purchaseDate: parsedTransaction?.purchaseDate
+            ? new Date(parsedTransaction.purchaseDate).toISOString()
+            : new Date().toISOString(),
           expiresDate: parsedTransaction?.expiresDate
             ? new Date(parsedTransaction.expiresDate).toISOString()
             : new Date().toISOString(),
+          renewalDate: parsedRenewalInfo?.renewalDate
+            ? new Date(parsedRenewalInfo.renewalDate).toISOString()
+            : null,
           environment: data.environment || environment,
-          lastTransactionId: parsedTransaction?.transactionId || ""
+          lastTransactionId: parsedTransaction?.transactionId || "",
+          transactionData: parsedTransaction,
+          renewalData: parsedRenewalInfo
         };
       }
     }

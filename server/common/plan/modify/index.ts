@@ -12,7 +12,10 @@ import {
   refundPaymentForSubscription
 } from "../dodoPaymentProvider";
 import { PaymentProvider } from "$lib/shared/types/plan.type";
-import { getLatestSubscriptionPayment } from "../applePaymentProvider";
+import {
+  getLatestSubscriptionPayment,
+  verifyAppleSubscription
+} from "../applePaymentProvider";
 
 interface ModifyRequest {
   type: "cancel" | "switch" | "sync";
@@ -175,16 +178,36 @@ async function sync(body: ModifyRequest, agent: Agent) {
   if (!transaction) {
     throw new ValidationError("Transaction not found");
   }
-  console.log({ transaction });
+
   if (transaction.provider === PaymentProvider.APPLE) {
-    //1. query Apple API to get the latest subscription status using transaction.applePayment.transactionId or use transactions restored from the body if transaction is not present on the db or is invalid
-    //2. if the subscription is active, update the userPlan with newest paymentDate and add the latest transactions to original transaction
-    //3. if the subscription is refunded or cancelled - update the userPlan status to refunded or cancelled accordingly - if cancelled - turn off the isAutoRenew
-    const latestTransaction = await getLatestSubscriptionPayment(
+    const verificationResponse = await verifyAppleSubscription(
       transaction.applePayment.originalTransactionId
     );
-    if (latestTransaction) {
-      //TODO
+    if (!verificationResponse) {
+      //TODO - fallback with history API and embedTransaction from body
+      const latestTransaction = await getLatestSubscriptionPayment(
+        transaction.applePayment.originalTransactionId
+      );
     }
+    const transactionUpdateQuery = `
+      UPDATE ${transaction.id} MERGE {
+        lastVerified: time::now(),
+        subscriptionUpdateData: ${JSON.stringify(verificationResponse)}
+      }
+    `;
+    await performQueryOnMasterDb(transactionUpdateQuery);
+    const isAutoRenew =
+      verificationResponse.renewalData?.autoRenewStatus === 1 ? true : false;
+    const latestPurchaseDate = new Date(
+      verificationResponse.purchaseDate
+    ).toISOString();
+    const updateQuery = `
+        UPDATE ${user.userPlan.id} MERGE {
+          paymentDate: "${latestPurchaseDate}",
+          nextRenewalDate: "${verificationResponse.renewalDate}",
+          status: "${verificationResponse.status}",
+          isAutoRenew: ${isAutoRenew}
+        }`;
+    await performQueryOnMasterDb(updateQuery);
   }
 }

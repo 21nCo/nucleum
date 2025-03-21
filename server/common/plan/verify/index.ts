@@ -164,8 +164,13 @@ async function handleAppleStoreVerification(params: {
         }",
         lastTransactionId: "${verificationResponse.lastTransactionId || ""}",
         expiresDate: "${verificationResponse.expiresDate || ""}",
+        purchaseDate: "${verificationResponse.purchaseDate || ""}",
         environment: "${verificationResponse.environment}",
-        status: "${verificationResponse.status}"
+        status: "${verificationResponse.status}",
+        transactionData: ${JSON.stringify(
+          verificationResponse.transactionData
+        )},
+        renewalData: ${JSON.stringify(verificationResponse.renewalData)}
       }
     }
   `;
@@ -178,7 +183,6 @@ async function handleAppleStoreVerification(params: {
 
   const updatedTransaction = updateResult[0].result[0];
 
-  // If verification was successful, promote the user's plan
   if (newStatus === "completed") {
     const userPlanUpdateResult = await promoteUserPlan({
       id: user.userPlan.id,
@@ -186,7 +190,8 @@ async function handleAppleStoreVerification(params: {
       plan: updatedTransaction.plan,
       transactionId: updatedTransaction.id,
       paymentDate: updatedTransaction.createdAt,
-      provider: PaymentProvider.APPLE
+      provider: PaymentProvider.APPLE,
+      isAutoRenew: true
     });
 
     if (!userPlanUpdateResult || !userPlanUpdateResult[0]?.result?.[0]) {
@@ -249,6 +254,7 @@ async function promoteUserPlan(params?: {
   transactionId: string;
   paymentDate: string;
   provider?: PaymentProvider;
+  isAutoRenew?: boolean;
 }) {
   const query = resolvePromotePlanQuery(params);
   const updateResult = await performQueryOnMasterDb(query);

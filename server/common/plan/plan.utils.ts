@@ -38,6 +38,7 @@ export function resolvePromotePlanQuery(params?: {
   transactionId: string;
   paymentDate: string;
   provider?: PaymentProvider;
+  isAutoRenew?: boolean;
 }) {
   const query = `
         UPDATE ${params.id} MERGE {
@@ -46,7 +47,8 @@ export function resolvePromotePlanQuery(params?: {
             transactionId: ${params.transactionId},
             paymentDate: "${params.paymentDate}",
             provider: "${params.provider}",
-            status: "active"
+            status: "active",
+            isAutoRenew: ${params.isAutoRenew}
         }
     `;
   return query;
