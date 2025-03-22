@@ -191,6 +191,7 @@ async function sync(body: ModifyRequest, agent: Agent) {
         transaction.applePayment.originalTransactionId
       );
     }
+
     if (!verificationResponse) {
       console.log("Subscription verification failed. Trying fallback methods");
       //TODO - fallback with history API and embedTransaction from body
@@ -237,5 +238,7 @@ async function sync(body: ModifyRequest, agent: Agent) {
           isAutoRenew: ${isAutoRenew}
         }`;
     await performQueryOnMasterDb(updateQuery);
+    const userPlan = await retrieveUserPlan(agent.id);
+    return userPlan;
   }
 }

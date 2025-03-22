@@ -16,6 +16,6 @@ export const environments = {
 };
 
 export function setupTestEnvironment() {
-  const env = process.env.TEST_ENV || "dev";
+  const env = process.env.ENV || "dev";
   return environments[env];
 }

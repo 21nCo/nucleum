@@ -41,7 +41,11 @@ export async function verifyAppleSubscription(
 
     // App Store Server API endpoint for subscription status
     const url = `${baseUrl}/subscriptions/${transactionId}`;
-
+    console.log({
+      at: "verifyAppleSubscription",
+      url,
+      transactionId
+    });
     const response = await fetch(url, {
       method: "GET",
       headers: {
@@ -49,7 +53,6 @@ export async function verifyAppleSubscription(
         "Content-Type": "application/json"
       }
     });
-
     if (!response.ok) {
       console.error(
         "Apple Subscription Verification Error:",
