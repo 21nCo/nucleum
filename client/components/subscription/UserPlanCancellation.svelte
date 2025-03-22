@@ -8,7 +8,7 @@
   import { formatDate } from "$lib/client/utils/time.utils";
   import PlanFeatureList from "./elements/PlanFeatureList.svelte";
   import { toasts } from "$lib/client/stores/notification.store";
-  import { PaymentProvider } from "$lib/client/types/account.type";
+  import { PaymentProvider } from "$lib/shared/types/plan.type";
   import { postMessageToParent } from "$lib/client/utils/embed.utils";
   import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
 

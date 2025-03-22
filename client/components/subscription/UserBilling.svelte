@@ -12,11 +12,8 @@
   import PlanFeatureList from "./elements/PlanFeatureList.svelte";
   import { Action } from "$lib/client/types/action.enum";
   import { PlanType } from "./userPlan.type";
-  import {
-    PaymentProvider,
-    PlanStatus,
-    type IUserPlan
-  } from "$lib/client/types/account.type";
+  import { PlanStatus, type IUserPlan } from "$lib/client/types/account.type";
+  import { PaymentProvider } from "$lib/shared/types/plan.type";
   import RestorePurchaseAction from "./RestorePurchaseAction.svelte";
   import context from "$lib/client/stores/context.store";
   import { OperatingSystem } from "$lib/client/types/context.type";

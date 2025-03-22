@@ -37,7 +37,6 @@
   import { LogType } from "$lib/client/components/debug/debug.type";
   import { flux, initFlux } from "$lib/client/components/flux/flux";
   import {
-    PaymentProvider,
     UserDataMode,
     UserSessionType
   } from "$lib/client/types/account.type";
@@ -54,10 +53,14 @@
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { Action } from "$lib/client/types/action.enum";
   import ZohoSalesIq from "./support/ZohoSalesIQ.svelte";
-  import { PlanType } from "$lib/client/components/subscription/userPlan.type";
+  import {
+    BillingCycle,
+    PlanType
+  } from "$lib/client/components/subscription/userPlan.type";
   import { fileEmbedChannel } from "$lib/client/components/files/fileEmbedChannel.store";
   import { ErrorMessage } from "$lib/client/components/error/error.type";
   import modalEvent from "$lib/client/components/modal/modal.store";
+  import { PaymentProvider } from "$lib/shared/types/plan.type";
 
   const loadingMessages = {
     cloneUp: {
@@ -366,12 +369,16 @@
     if (
       $account.dataMode === UserDataMode.LOCAL ||
       !$account.plan?.provider ||
-      $account.plan?.provider === PaymentProvider.SELF
+      $account.plan?.provider === PaymentProvider.SELF ||
+      $account.plan?.cycle === BillingCycle.LIFETIME
     )
       return;
     const response = await account.modifySubscription({
       type: "sync"
     });
+    if (response.userPlan) {
+      account.handlePlanStatus(response.userPlan);
+    }
   }
 
   function handlePersistAppearance(event: any) {
@@ -415,6 +422,7 @@
           parsed
         });
         if (parsed.type === "PURCHASE_SUCCESS") {
+          loadingMessage.message = "Verifying payment...";
           const response = await account.verifyPayment(parsed.nonce);
           isAppLoading = false;
           modalEvent.hide(Action.USER_PLAN);

@@ -1,3 +1,4 @@
+import type { PaymentProvider } from "$lib/shared/types/plan.type";
 import type {
   BillingCycle,
   PlanType
@@ -73,19 +74,9 @@ export interface IUserPlan {
   status?: PlanStatus;
   isCancelled?: boolean;
   paymentDate?: Date;
-  /**
-   * @deprecated
-   */
-  nextRenewal?: Date;
+  renewalDate?: Date;
   provider?: PaymentProvider;
   isAutoRenew?: boolean;
-}
-
-export enum PaymentProvider {
-  SELF = "self",
-  APPLE = "apple",
-  GOOGLE = "google",
-  MICROSOFT = "microsoft"
 }
 
 export interface ITrialPlan {

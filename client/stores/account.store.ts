@@ -1,7 +1,9 @@
 import { get, writable } from "svelte/store";
 import {
+  PlanStatus,
   UserDataMode,
   UserSessionType,
+  type IUserPlan,
   type UserAccount,
   type UserInformation
 } from "../types/account.type";
@@ -19,7 +21,10 @@ import {
 import { appStore } from "./app.store";
 import jwt_decode from "jwt-decode";
 import { getBucketNameandKey, signout } from "../utils/account.utils";
-import { determineIfPlanIsActive } from "$lib/client/components/subscription/userPlan.utils";
+import {
+  determineIfPlanIsActive,
+  determineIfSubscriptionExpired
+} from "$lib/client/components/subscription/userPlan.utils";
 import { ObservableStore } from "./client.store";
 import {
   StoreDataType,
@@ -240,12 +245,28 @@ class AccountStore extends ObservableStore<
         n.plan = user.userPlan;
         return n;
       });
-      const isActive = determineIfPlanIsActive(user.userPlan);
-      if (!isActive) {
-        appStore.runAction(Action.INACTIVE_PLAN);
-      }
+      await this.handlePlanStatus(user.userPlan);
     }
     return response;
+  }
+
+  async handlePlanStatus(plan: IUserPlan) {
+    const isActive = determineIfPlanIsActive(plan);
+    if (!isActive) {
+      appStore.runAction(Action.INACTIVE_PLAN);
+    }
+    let expiry = determineIfSubscriptionExpired(plan);
+    if (!expiry.isExpired) return;
+    await this.modifySubscription({
+      type: "sync"
+    });
+    plan = this.get()?.plan ?? plan;
+    expiry = determineIfSubscriptionExpired(plan);
+    if (!expiry.isExpired) return;
+    if (!expiry.isWithinBuffer) {
+      appStore.runAction(Action.INACTIVE_PLAN);
+      // appStore.runAction(Action.EXPIRED_PLAN);
+    }
   }
 
   async refreshPlanData() {
@@ -284,6 +305,12 @@ class AccountStore extends ObservableStore<
       const isOffline = await determineIfOffline();
       if (isOffline) return;
       const response = await this.persistence.modifySubscription(params);
+      if (response && response.userPlan) {
+        this.update((n) => {
+          n.plan = response.userPlan;
+          return n;
+        });
+      }
       return response;
     } catch (e) {
       logger.error({ at: "modifySubscription", error: e });

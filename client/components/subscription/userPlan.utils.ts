@@ -164,6 +164,40 @@ export function determineIfPlanIsActive(plan: IUserPlan) {
   return true;
 }
 
+export function determineIfSubscriptionExpired(plan: IUserPlan) {
+  if (plan.cycle === BillingCycle.LIFETIME)
+    return {
+      isExpired: false
+    };
+  if (plan.plan === PlanType.CLOUD_SYNC || plan.plan === PlanType.NUCLEUS) {
+    const buffer = plan.status === PlanStatus.CANCELLED ? 2 : 7;
+    const purchaseDate =
+      typeof plan.paymentDate === "string"
+        ? new Date(plan.paymentDate)
+        : plan.paymentDate;
+    const renewalDate = plan.renewalDate
+      ? new Date(plan.renewalDate)
+      : new Date(
+          purchaseDate.getTime() +
+            (plan.cycle === BillingCycle.MONTHLY
+              ? 31 * 24 * 60 * 60 * 1000
+              : 365 * 24 * 60 * 60 * 1000)
+        );
+    const isExpired =
+      renewalDate.getTime() + 24 * 60 * 60 * 1000 < new Date().getTime();
+    const isWithinBuffer =
+      renewalDate.getTime() + buffer * 24 * 60 * 60 * 1000 >
+      new Date().getTime();
+    return {
+      isExpired,
+      isWithinBuffer
+    };
+  }
+  return {
+    isExpired: false
+  };
+}
+
 export function resolveDiscountLabel(plan: IUserPlan) {
   if (!plan?.discount) return null;
   if (plan.discount.first) {

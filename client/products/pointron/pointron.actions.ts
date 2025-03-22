@@ -600,6 +600,18 @@ export const pointronActions: IAction[] = [
     }
   },
   {
+    action: PointronAction.TOGGLE_FOCUS_SESSION,
+    isMeta: true,
+    type: ActionType.FUNCTION,
+    fn: async () => {
+      if (isSessionRunningPreCondition()) {
+        appStore.runAction(PointronAction.FINISH_FOCUS_SESSION);
+      } else {
+        appStore.runAction(PointronAction.START_FOCUS_SESSION);
+      }
+    }
+  },
+  {
     action: PointronAction.FINISH_FOCUS_SESSION,
     label: "Finish the current session",
     fn: async (params?: IActionFnParams) => {

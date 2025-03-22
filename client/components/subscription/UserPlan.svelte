@@ -19,7 +19,7 @@
   import { toasts } from "$lib/client/stores/notification.store";
   import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
   import { GlobalEvent } from "$lib/client/types/event.enum";
-  import { PaymentProvider } from "$lib/client/types/account.type";
+  import { PaymentProvider } from "$lib/shared/types/plan.type";
 
   let selectedPeriod: BillingCycle = BillingCycle.YEARLY;
   let isBillingAddressCapture = false;

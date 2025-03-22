@@ -77,13 +77,14 @@
     else return "";
   }
 
-  function onReorderSubGoals(event: DragDropEvent) {
+  async function onReorderSubGoals(event: DragDropEvent) {
     const { fromId, toId } = event;
-    if (!fromId || !toId || fromId === toId) return;
+    if (!fromId || !toId || fromId === toId || !$goal.children) return;
     _subGoals = shiftResourceInArray(_subGoals, fromId, toId);
-    goal.modify(
+    const subGoals = _subGoals.map((t) => t.id).filter((id) => id);
+    await goal.modify(
       {
-        subGoals: _subGoals.map((t) => t.id).filter((id) => id)
+        children: subGoals
       },
       {
         isPreventBackPropagation: true
