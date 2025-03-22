@@ -39,6 +39,7 @@ export function resolvePromotePlanQuery(params?: {
   paymentDate: string;
   provider?: PaymentProvider;
   isAutoRenew?: boolean;
+  renewalDate?: string;
 }) {
   const query = `
         UPDATE ${params.id} MERGE {
@@ -46,6 +47,7 @@ export function resolvePromotePlanQuery(params?: {
             plan: "${params.plan}",
             transactionId: ${params.transactionId},
             paymentDate: "${params.paymentDate}",
+            renewalDate: "${params.renewalDate}",
             provider: "${params.provider}",
             status: "active",
             isAutoRenew: ${params.isAutoRenew}
@@ -73,6 +75,7 @@ export interface AppleVerificationResponse {
   lastTransactionId?: string;
 }
 
+//pending, active, on_hold, paused, cancelled, failed, expired
 export function resolveTransactionStatusFromDodo(
   isSubscription: boolean,
   paymentStatus: DodoPaymentResponse

@@ -104,6 +104,10 @@ async function handleDodoPaymentVerification(transaction: any, user: any) {
   }
 
   const updatedTransaction = updateResult[0].result[0];
+  const renewalDate =
+    "next_billing_date" in paymentStatus
+      ? paymentStatus.next_billing_date
+      : undefined;
 
   if (newStatus === "completed") {
     const userPlanUpdateResult = await promoteUserPlan({
@@ -112,6 +116,8 @@ async function handleDodoPaymentVerification(transaction: any, user: any) {
       plan: updatedTransaction.plan,
       transactionId: updatedTransaction.id,
       paymentDate: updatedTransaction.createdAt,
+      isAutoRenew: isSubscription,
+      renewalDate,
       provider: PaymentProvider.SELF
     });
     if (!userPlanUpdateResult || !userPlanUpdateResult[0]?.result?.[0]) {
@@ -190,6 +196,7 @@ async function handleAppleStoreVerification(params: {
       plan: updatedTransaction.plan,
       transactionId: updatedTransaction.id,
       paymentDate: updatedTransaction.createdAt,
+      renewalDate: verificationResponse.renewalDate,
       provider: PaymentProvider.APPLE,
       isAutoRenew: true
     });
@@ -255,6 +262,7 @@ async function promoteUserPlan(params?: {
   paymentDate: string;
   provider?: PaymentProvider;
   isAutoRenew?: boolean;
+  renewalDate?: string;
 }) {
   const query = resolvePromotePlanQuery(params);
   const updateResult = await performQueryOnMasterDb(query);

@@ -5,11 +5,15 @@ import {
 } from "$lib/client/components/subscription/userPlan.type";
 import { ValidationError } from "../../errors";
 import { performQueryOnMasterDb } from "$lib/server/surrealHelpers";
-import { resolvePlanQuery } from "../plan.utils";
+import {
+  resolvePlanQuery,
+  resolveTransactionStatusFromDodo
+} from "../plan.utils";
 import {
   cancelSubscription,
   refundPayment,
-  refundPaymentForSubscription
+  refundPaymentForSubscription,
+  verifyPayment
 } from "../dodoPaymentProvider";
 import { PaymentProvider } from "$lib/shared/types/plan.type";
 import {
@@ -180,7 +184,29 @@ async function sync(body: ModifyRequest, agent: Agent) {
     throw new ValidationError("Transaction not found");
   }
 
-  if (transaction.provider === PaymentProvider.APPLE) {
+  if (!transaction.provider || transaction.provider === PaymentProvider.SELF) {
+    if (!transaction.dodoPayment?.subscription_id) return;
+    const verificationResponse = await verifyPayment(
+      transaction.dodoPayment?.subscription_id,
+      true
+    );
+    if (!verificationResponse) {
+      throw new ValidationError("Subscription verification failed");
+    }
+    const renewalDate =
+      "next_billing_date" in verificationResponse
+        ? verificationResponse.next_billing_date
+        : undefined;
+    const updateQuery = `
+      UPDATE ${transaction.id} MERGE {
+        status: "${verificationResponse.status}",
+        renewalDate: "${renewalDate}"
+      }
+    `;
+    await performQueryOnMasterDb(updateQuery);
+    const userPlan = await retrieveUserPlan(agent.id);
+    return userPlan;
+  } else if (transaction.provider === PaymentProvider.APPLE) {
     let verificationResponse: AppleVerificationResponse | null = null;
     console.log({
       at: "sync - verifying apple subscription",
@@ -233,7 +259,7 @@ async function sync(body: ModifyRequest, agent: Agent) {
     const updateQuery = `
         UPDATE ${user.userPlan.id} MERGE {
           paymentDate: "${latestPurchaseDate}",
-          nextRenewalDate: "${verificationResponse.renewalDate}",
+          renewalDate: "${verificationResponse.renewalDate}",
           status: "${verificationResponse.status}",
           isAutoRenew: ${isAutoRenew}
         }`;
