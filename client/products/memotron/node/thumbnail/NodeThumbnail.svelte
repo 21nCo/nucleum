@@ -19,7 +19,11 @@
   import NodeThumbnailTitle from "./NodeThumbnailTitle.svelte";
   import TextClipPreview from "../content/web/TextClipPreview.svelte";
   import FileView from "$lib/client/components/files/FileView.svelte";
-  import { formatDatetime, formatSeconds } from "$lib/client/utils/time.utils";
+  import {
+    formatDatetime,
+    formatSeconds,
+    formatTime
+  } from "$lib/client/utils/time.utils";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import NodeThumbnailTweetPreview from "./NodeThumbnailTweetPreview.svelte";
   import NodeThumbnailAudioPreview from "./NodeThumbnailAudioPreview.svelte";
@@ -202,7 +206,11 @@
               />
             {/key}
             <div class="text-b3 text-fgs3">
-              {formatDatetime($userPreferences, item.createdAt)}
+              {#if accessPoint === ResourceAccessPoint.CALENDAR}
+                {formatTime($userPreferences, item.createdAt)}
+              {:else}
+                {formatDatetime($userPreferences, item.createdAt)}
+              {/if}
             </div>
             {#if visibleProps.length > 0}
               <div class="py-1">

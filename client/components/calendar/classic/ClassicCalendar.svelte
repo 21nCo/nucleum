@@ -11,6 +11,9 @@
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
   import { CalendarLayout } from "../calendar.type";
+  import { resizable } from "$lib/client/actions/resize.action";
+  import context from "$lib/client/stores/context.store";
+  import { debouncer } from "$lib/client/utils/utils";
   export let panel: CalendarLayout = CalendarLayout.Classic;
 
   let selectedDate = new Date();
@@ -19,12 +22,20 @@
   let yearViewRef: YearView;
   let weekViewRef: WeekView;
   let visibleWeekDates: Date[] | undefined;
-
+  let width = resolveSavedWidthSelection() ?? 380;
   function resolveSavedScaleSelection() {
     const scaleState = uiState.getState(UIState.calendarScale, {
       isDeviceScoped: true
     });
     return scaleState ?? TimeScaleUnit.YEAR;
+  }
+
+  function resolveSavedWidthSelection() {
+    const widthState = uiState.getState(UIState.classicCalendarColumnWidth, {
+      isDeviceScoped: true,
+      isProductScoped: true
+    });
+    return widthState;
   }
 
   function handleYearChange(event: CustomEvent) {
@@ -42,6 +53,18 @@
   function handleVisibleDatesChange(event: CustomEvent) {
     visibleWeekDates = event.detail.dates;
   }
+
+  function onResize(e: any) {
+    width = e.width;
+    debouncedResizePersist(width);
+  }
+
+  const debouncedResizePersist = debouncer((width: number) => {
+    uiState.setState(UIState.classicCalendarColumnWidth, width, {
+      isDeviceScoped: true,
+      isProductScoped: true
+    });
+  }, 1000);
 </script>
 
 <CalendarLayoutView bind:panel>
@@ -99,7 +122,17 @@
       {/if}
     </div>
     {#if !$view.isConstrainedWidth}
-      <div class="w-96 dp:w-[28rem] p-3 border-l border-brs3">
+      <div
+        class="relative w-96 dp:w-[28rem] p-3 border-l border-brs3"
+        style={`min-width: ${width}px; width: ${width}px; max-width: ${width}px;`}
+        use:resizable={{
+          enabled: !$context.isTouchDevice,
+          minWidth: 380,
+          maxWidth: 800,
+          edges: ["left"],
+          onResize: onResize
+        }}
+      >
         {#key selectedDate}
           <CalendarColumn scale={TimeScaleUnit.DAY} date={selectedDate} />
         {/key}

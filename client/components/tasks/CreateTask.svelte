@@ -18,13 +18,16 @@
   import { taskStore } from "./task.store";
   import { goalStore } from "../goals/goal.store";
   import TaskThumbnailGoalLabel from "./TaskThumbnailGoalLabel.svelte";
-
+  import { Product } from "$lib/client/types/product.type";
+  import { appStore } from "$lib/client/stores/app.store";
   export let date: Date | undefined = undefined;
   export let goalId: IRecordId | undefined = undefined;
   const action = resourceAction(Resource.task, ResourceActionType.CREATE);
   let label = "";
   let inputRef: TextInput | undefined;
-  let isShowGoalPicker = true;
+  let isShowGoalPicker =
+    $appStore.product === Product.POINTRON ||
+    $appStore.product === Product.NUCLEUS;
   let goalSearchQuery = "";
   let goalSearchInput: TextSearchInput | undefined;
   let searchStore = new SearchStore(Resource.goal);

@@ -5,7 +5,8 @@ import {
 } from "$lib/client/types/data.type";
 import { generateRandomIdv2 } from "$lib/shared/utils/crypto.utils";
 import { RecordId } from "surrealdb";
-import type { Resource } from "./resourceStores/resource.enum";
+import { Resource } from "./resourceStores/resource.enum";
+import { NodeType } from "$lib/client/products/memotron/node/node.type";
 
 export function generateResourceId(
   itemType: Resource,
@@ -60,6 +61,18 @@ export function resolveMutationLabel(mutation: IMutation): {
     return {
       action: `${action} ${mutation.resource}`,
       resourceLabel: mutation.params.records?.[0]?.label ?? "Unknown"
+    };
+  } else if (
+    Array.isArray(mutation.resourceId) &&
+    mutation.resourceId.length > 1 &&
+    mutation.resource === Resource.node
+  ) {
+    const nodularMd = mutation.params.records.filter(
+      (x) => x.contentType === NodeType.NODULAR_MARKDOWN
+    );
+    return {
+      action: `${action} ${mutation.resource}`,
+      resourceLabel: nodularMd.length > 0 ? nodularMd[0].label : "Untitled"
     };
   }
   return {

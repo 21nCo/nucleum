@@ -9,21 +9,24 @@
   import { Size } from "$lib/client/types/size.enum";
   import { CalendarHistoryTab } from "../calendar.type";
   import CalendarAllActivityPanel from "./CalendarAllActivityPanel.svelte";
+  import CalendarHistoryNodeEntries from "./CalendarHistoryNodeEntries.svelte";
   export let date: Date;
   let tab: CalendarHistoryTab = resolveTabSelection();
   $: tabs = resolveTabs($appStore.product);
 
   function resolveTabSelection() {
     const tabState = uiState.getState(UIState.calendarHistoryTab, {
-      isDeviceScoped: true
+      isDeviceScoped: true,
+      isProductScoped: true
     });
-    return tabState ?? CalendarHistoryTab.FOCUS_SESSIONS;
+    return tabState ?? CalendarHistoryTab.ALL;
   }
 
   function onTabSelection(e: CustomEvent) {
     if (!e.detail) return;
     uiState.setState(UIState.calendarHistoryTab, e.detail, {
-      isDeviceScoped: true
+      isDeviceScoped: true,
+      isProductScoped: true
     });
   }
 
@@ -71,7 +74,7 @@
     {:else if tab === CalendarHistoryTab.FOCUS_SESSIONS}
       <LogsPane {date} context="journal" />
     {:else if tab === CalendarHistoryTab.NODES}
-      <ComingSoonView />
+      <CalendarHistoryNodeEntries {date} />
     {/if}
   </div>
 </div>

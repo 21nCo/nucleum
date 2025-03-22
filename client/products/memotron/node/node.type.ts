@@ -82,6 +82,7 @@ type INodeInterface<
   mdText?: string;
   text?: string;
   config?: any;
+  metaType?: NodeMetaType;
 };
 
 export type ILink = IMemotronItemBase & {
@@ -144,6 +145,10 @@ export enum ListType {
   UNORDERED = "UNORDERED",
   CHECKLIST = "CHECKLIST",
   TOGGLELIST = "TOGGLELIST"
+}
+
+export enum NodeMetaType {
+  CALENDAR_NOTES = "CALENDAR_NOTES"
 }
 
 export type LayoutNodeType =

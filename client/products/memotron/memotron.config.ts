@@ -14,6 +14,7 @@ import { fileStore } from "$lib/client/components/files/file.store";
 import { linkTagStore } from "$lib/client/products/memotron/linking/link.store";
 import { accessLogStore } from "$lib/client/components/accessLogging/accesslog.store";
 import { markdownSettings } from "$lib/client/components/markdown/markdown.settings";
+import { taskStore } from "$lib/client/components/tasks/task.store";
 
 export const memotronCacheableStores: IStore[] = [
   nodeStore,
@@ -24,7 +25,8 @@ export const memotronCacheableStores: IStore[] = [
   fileStore,
   linker,
   linkTagStore,
-  markdownSettings
+  markdownSettings,
+  taskStore
 ];
 
 export const memotronRemoteOnlyStores: IStore[] = [

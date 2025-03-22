@@ -13,6 +13,8 @@
   import { ResourceAccessMode } from "../../flux/resourceStores/resource.type";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { searcheableResources } from "$local/local";
+  import { Product } from "$lib/client/types/product.type";
 
   export let date: Date;
   let isLoading: boolean = false;
@@ -22,25 +24,20 @@
     resourceLabel?: string;
     resourceId?: IRecordId;
   }[] = [];
-  onMount(() => {
-    refresh();
-  });
+  $: if (date) {
+    refresh(date);
+  }
 
-  async function refresh() {
+  async function refresh(date: Date) {
     try {
       isLoading = true;
+      date = new Date(date.getFullYear(), date.getMonth(), date.getDate());
       const mutations = await flux.selectMany(
         Resource.mutation,
         {
           filters: {
             action: ["create", "delete"],
-            resource: [
-              Resource.goal,
-              Resource.task,
-              Resource.node,
-              Resource.collection,
-              Resource.combination
-            ],
+            resource: [...searcheableResources],
             timestamp: {
               greaterThanOrEqual: date.getTime(),
               lessThanOrEqual: date.getTime() + 24 * 60 * 60 * 1000
@@ -64,27 +61,32 @@
           })
         ];
       }
-      const focusSessionsResult = await new SearchStore(
-        Resource.session
-      ).select({
-        filters: {
-          start: date
+      if (
+        $appStore.product === Product.POINTRON ||
+        $appStore.product === Product.NUCLEUS
+      ) {
+        const focusSessionsResult = await new SearchStore(
+          Resource.session
+        ).select({
+          filters: {
+            start: date
+          }
+        });
+        if (isValidArrayWithData(focusSessionsResult)) {
+          logs.push(
+            ...focusSessionsResult.map((session: any) => ({
+              action: `○ Focus`,
+              resourceLabel: formatSeconds(session.elapsed),
+              timestamp: new Date(session.start),
+              resourceId: [session.id]
+            }))
+          );
         }
-      });
-      if (isValidArrayWithData(focusSessionsResult)) {
-        logs.push(
-          ...focusSessionsResult.map((session: any) => ({
-            action: `○ Focus`,
-            resourceLabel: formatSeconds(session.elapsed),
-            timestamp: new Date(session.start),
-            resourceId: [session.id]
-          }))
-        );
       }
       logs = logs.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+      isLoading = false;
     } catch (e) {
       logger.error({ at: "CalendarAllActivityPanel.refresh", e });
-    } finally {
       isLoading = false;
     }
   }
@@ -111,9 +113,9 @@
           >{formatTime($userPreferences, log.timestamp)}</span
         >
         <div class="flex justify-between gap-4 flex-1">
-          <span class="text-b3 text-fgs3">{log.action}</span>
+          <span class="text-b3 text-fgs3 text-left">{log.action}</span>
           {#if log.resourceLabel}
-            <span class="text-b2 notouch:hover:text-aps1 text-left"
+            <span class="text-b2 notouch:hover:text-aps1 text-right"
               >{log.resourceLabel}</span
             >
           {/if}

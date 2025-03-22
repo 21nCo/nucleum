@@ -30,6 +30,7 @@ export enum UIState {
   captureShortcutRecents = "captureShortcutRecents",
   calendarLayout = "calendarLayout",
   calendarScale = "calendarScale",
+  classicCalendarColumnWidth = "classicCalendarColumnWidth",
   calendarColumnPanel = "calendarColumnPanel",
   calendarHistoryTab = "calendarHistoryTab"
 }

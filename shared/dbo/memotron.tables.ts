@@ -38,6 +38,7 @@ DEFINE FIELD OVERWRITE avatar on TABLE node FLEXIBLE TYPE option<array | object 
 DEFINE FIELD IF NOT EXISTS text on TABLE node TYPE option<string>;
 DEFINE FIELD IF NOT EXISTS isLocked on TABLE node DEFAULT false;
 DEFINE FIELD IF NOT EXISTS config on TABLE node FLEXIBLE TYPE option<object>;
+DEFINE FIELD IF NOT EXISTS metaType on TABLE node TYPE option<string>;
 `;
   return [def];
 }

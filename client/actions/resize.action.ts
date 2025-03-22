@@ -33,21 +33,85 @@ export const resizable: Action<HTMLElement, ResizableOptions> = (
   let startWidth: number;
   let startHeight: number;
   let handles: HTMLDivElement[] = [];
+  let hitAreas: HTMLDivElement[] = [];
   let overlay: HTMLDivElement | null = null;
+
+  function createHitArea(edge: Edge) {
+    const hitArea = document.createElement("div");
+    hitArea.style.position = "absolute";
+    hitArea.style.zIndex = "20";
+    hitArea.style.backgroundColor = "rgba(0, 0, 0, 0)";
+    hitArea.dataset.edge = edge;
+
+    // Set position and size
+    switch (edge) {
+      case "left":
+        hitArea.style.top = "0";
+        hitArea.style.left = "-5px";
+        hitArea.style.width = "10px";
+        hitArea.style.height = "100%";
+        hitArea.style.cursor = "col-resize";
+        break;
+      case "right":
+        hitArea.style.top = "0";
+        hitArea.style.right = "-5px";
+        hitArea.style.width = "10px";
+        hitArea.style.height = "100%";
+        hitArea.style.cursor = "col-resize";
+        break;
+      case "top":
+        hitArea.style.top = "-5px";
+        hitArea.style.left = "0";
+        hitArea.style.width = "100%";
+        hitArea.style.height = "10px";
+        hitArea.style.cursor = "row-resize";
+        break;
+      case "bottom":
+        hitArea.style.bottom = "-5px";
+        hitArea.style.left = "0";
+        hitArea.style.width = "100%";
+        hitArea.style.height = "10px";
+        hitArea.style.cursor = "row-resize";
+        break;
+    }
+
+    node.appendChild(hitArea);
+
+    // Add mousedown event to hit areas to enable resizing from them
+    hitArea.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      enabled && startResize(e, edge);
+    });
+
+    const handle = handles.find((h) => h.dataset.edge === edge);
+    if (handle) {
+      hitArea.addEventListener("mouseenter", () => {
+        if (enabled) {
+          hitArea.style.backgroundColor = "rgba(0, 200, 0, 0.05)";
+          handle.style.display = "block";
+        }
+      });
+      hitArea.addEventListener("mouseleave", () => {
+        if (!resizing && enabled) {
+          hitArea.style.backgroundColor = "rgba(0, 0, 0, 0)";
+          handle.style.display = "none";
+        }
+      });
+    } else {
+      console.warn(`No handle found for edge: ${edge}`);
+    }
+
+    return hitArea;
+  }
 
   function createHandle(edge: Edge) {
     const handle = document.createElement("div");
     handle.className = `absolute ${getHandleClass(edge)}`;
     handle.style.display = "none";
+    handle.dataset.edge = edge;
+    handle.style.zIndex = "30";
     node.appendChild(handle);
-
-    handle.addEventListener(
-      "mouseenter",
-      () => enabled && (handle.style.display = "block")
-    );
-    handle.addEventListener("mouseleave", () => {
-      if (!resizing && enabled) handle.style.display = "none";
-    });
 
     handle.addEventListener("mousedown", (e) => {
       e.preventDefault();
@@ -70,18 +134,19 @@ export const resizable: Action<HTMLElement, ResizableOptions> = (
   }
 
   function getHandleClass(edge: Edge): string {
-    const baseClasses = "resizer bg-aps1 opacity-50 z-10";
+    const baseClasses = "resizer bg-aps1 opacity-50 pointer-events-auto";
     switch (edge) {
       case "left":
-        return `${baseClasses} top-0 left-0 w-1.5 h-full cursor-col-resize`;
+        return `${baseClasses} top-0 left-0 w-1.5 h-full`;
       case "right":
-        return `${baseClasses} top-0 right-0 w-1.5 h-full cursor-col-resize`;
+        return `${baseClasses} top-0 right-0 w-1.5 h-full`;
       case "top":
-        return `${baseClasses} top-0 left-0 w-full h-1.5 cursor-row-resize`;
+        return `${baseClasses} top-0 left-0 w-full h-1.5`;
       case "bottom":
-        return `${baseClasses} bottom-0 left-0 w-full h-1.5 cursor-row-resize`;
+        return `${baseClasses} bottom-0 left-0 w-full h-1.5`;
     }
   }
+
   /**
    * To prevents click events on the node which is being resized at the end of the resizing process
    */
@@ -111,6 +176,11 @@ export const resizable: Action<HTMLElement, ResizableOptions> = (
     startY = e.clientY;
     startWidth = node.offsetWidth;
     startHeight = node.offsetHeight;
+
+    const handle = handles.find((h) => h.dataset.edge === edge);
+    if (handle) {
+      handle.style.display = "block";
+    }
 
     createOverlay();
     document.addEventListener("mousemove", resize);
@@ -155,21 +225,38 @@ export const resizable: Action<HTMLElement, ResizableOptions> = (
     activeEdge = null;
     document.removeEventListener("mousemove", resize);
     document.removeEventListener("mouseup", stopResize);
-    handles.forEach((handle) => {
-      if (!handle.matches(":hover") && enabled) {
+
+    hitAreas.forEach((hitArea) => {
+      const edge = hitArea.dataset.edge as Edge;
+      const handle = handles.find((h) => h.dataset.edge === edge);
+
+      if (handle && !hitArea.matches(":hover") && enabled) {
         handle.style.display = "none";
       }
     });
+
     removeOverlay();
   }
 
   function setupHandles() {
+    removeHandles();
+
     handles = edges.map(createHandle);
+    hitAreas = edges.map(createHitArea);
+
+    const computedStyle = window.getComputedStyle(node);
+    if (computedStyle.position === "static") {
+      node.style.position = "relative";
+    }
+
+    node.style.overflow = "visible";
   }
 
   function removeHandles() {
     handles.forEach((handle) => handle.remove());
     handles = [];
+    hitAreas.forEach((area) => area.remove());
+    hitAreas = [];
   }
 
   function updateHandles() {
@@ -179,18 +266,6 @@ export const resizable: Action<HTMLElement, ResizableOptions> = (
       removeHandles();
     }
   }
-
-  node.addEventListener("mouseenter", () => {
-    if (enabled) {
-      handles.forEach((handle) => (handle.style.display = "block"));
-    }
-  });
-
-  node.addEventListener("mouseleave", () => {
-    if (!resizing && enabled) {
-      handles.forEach((handle) => (handle.style.display = "none"));
-    }
-  });
 
   updateHandles();
 

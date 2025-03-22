@@ -20,6 +20,8 @@ import { ResourceActions } from "../record/resource.actions";
 import { appStore } from "$lib/client/stores/app.store";
 import { Action } from "$lib/client/types/action.enum";
 import { getUtcSafeDay } from "$lib/client/elements/datetime/datetime.utils";
+import { Product } from "$lib/client/types/product.type";
+import { get } from "svelte/store";
 class TaskStore extends ResourceStore<ITask> {
   constructor() {
     super(Resource.task);
@@ -120,7 +122,7 @@ export function resolveTaskContextMenu(
 ): IContextMenu {
   const resourceActions = new ResourceActions(goal, taskStore, accessPoint);
   const taskActions = new TaskActions(goal, taskStore, accessPoint);
-
+  const product = get(appStore).product;
   let primaryItems: IContextMenuItem[] = [];
 
   if (accessPoint === ResourceAccessPoint.COLLECTION && params?.accessPointId) {
@@ -138,12 +140,17 @@ export function resolveTaskContextMenu(
       taskActions.toggle()
       // resourceActions.addToCollection()
     ];
-  } else {
+  } else if (product === Product.POINTRON || product === Product.NUCLEUS) {
     primaryItems = [
       resourceActions.select(accessPoint, params?.accessPointId),
       taskActions.editGoal,
       taskActions.toggle()
       // resourceActions.addToCollection()
+    ];
+  } else {
+    primaryItems = [
+      resourceActions.select(accessPoint, params?.accessPointId),
+      taskActions.toggle()
     ];
   }
   return [

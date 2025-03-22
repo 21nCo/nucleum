@@ -30,9 +30,10 @@ const locale =
     : "";
 export function formatTime(
   userPreferences: IUserGlobalPreferences,
-  date: Date,
+  date: Date | string,
   params?: { format?: string; isIncludeSeconds?: boolean }
 ) {
+  if (typeof date === "string") date = new Date(date);
   let userPreferredFormat = userPreferences.timeFormat;
   const format = params?.format ?? userPreferredFormat ?? "meridian";
   if (format === "24") {

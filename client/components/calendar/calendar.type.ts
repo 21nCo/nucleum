@@ -19,5 +19,8 @@ export enum CalendarHistoryTab {
   ALL = "all",
   FOCUS_SESSIONS = "focus-sessions",
   NODES = "nodes",
+  /**
+   * @deprecated - use {@link CalendarHistoryTab.ALL} instead
+   */
   ACTIVITY = "activity"
 }

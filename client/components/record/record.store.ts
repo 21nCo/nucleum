@@ -199,7 +199,7 @@ export class SearchStore {
     isIncludeSubItems?: boolean;
   }) {
     this.resource = params.resource ?? this.resource;
-    logger.debug({
+    logger.log({
       at: "SearchStore.refresh",
       params
     });

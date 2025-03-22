@@ -240,7 +240,7 @@ class AccountStore extends ObservableStore<
       await flux.clear();
       appStore.gotoPath("/signup?msg=notfound");
     }
-    if (user.userPlan) {
+    if (user?.userPlan) {
       this.update((n) => {
         n.plan = user.userPlan;
         return n;

@@ -13,6 +13,7 @@
   import { CalendarColumnPanel } from "../calendar.type";
   import CalendarColumnTasksPanel from "./CalendarColumnTasksPanel.svelte";
   import CalendarHistoryPanel from "./CalendarHistoryPanel.svelte";
+  import CalendarNotesPanel from "./CalendarNotesPanel.svelte";
   import CalendarOverviewPanel from "./overview/CalendarOverviewPanel.svelte";
   export let scale: TimeScaleUnit;
   export let date: Date;
@@ -20,7 +21,8 @@
 
   function resolvePanelSelection() {
     const panelState = uiState.getState(UIState.calendarColumnPanel, {
-      isDeviceScoped: true
+      isDeviceScoped: true,
+      isProductScoped: true
     });
     return panelState ?? CalendarColumnPanel.Tasks;
   }
@@ -66,7 +68,7 @@
         return [tempTasksPanel, overview, history];
       case Product.MEMOTRON:
       case Product.NUCLEUS:
-        return [tempTasksPanel, overview, notes, history];
+        return [tempTasksPanel, notes, history];
       default:
         return [timeline, overview, history];
     }
@@ -75,7 +77,8 @@
   function onPanelSelection(e: CustomEvent) {
     if (!e.detail) return;
     uiState.setState(UIState.calendarColumnPanel, e.detail, {
-      isDeviceScoped: true
+      isDeviceScoped: true,
+      isProductScoped: true
     });
   }
 </script>
@@ -108,6 +111,8 @@
       <CalendarHistoryPanel {date} />
     {:else if selectedPanel === CalendarColumnPanel.Overview}
       <CalendarOverviewPanel {date} />
+    {:else if selectedPanel === CalendarColumnPanel.Notes}
+      <CalendarNotesPanel {date} {scale} />
     {:else}
       <div class="my-auto">
         <ComingSoonView />

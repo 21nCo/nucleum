@@ -137,7 +137,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
   // }
   constructor(capture: IRecordId) {
     super(capture, captureStore);
-    this.set({ ...generateSeedStore() });
+    this.set({ ...generateSeedStore(), id: capture });
   }
 
   //TODO - persistance which is relying on this set fn
@@ -413,7 +413,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       metadata,
       properties: params?.isEmbedContext ? [] : captureStore.properties,
       creationContext: params?.isEmbedContext
-        ? params?.creationContext ?? this.get().nodeId
+        ? (params?.creationContext ?? this.get().nodeId)
         : undefined
     } as IMediaNode;
     const result = await nodeStore.create([node], {
@@ -557,7 +557,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         metadata,
         properties: params?.isEmbedContext ? [] : captureStore.properties,
         creationContext: params?.isEmbedContext
-          ? params?.creationContext ?? this.get().nodeId
+          ? (params?.creationContext ?? this.get().nodeId)
           : undefined
       } as IMediaNode;
       nodes.push(node);
@@ -615,7 +615,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       metadata,
       properties: captureStore.properties,
       creationContext: params?.isEmbedContext
-        ? params?.creationContext ?? this.get().nodeId
+        ? (params?.creationContext ?? this.get().nodeId)
         : undefined,
       label: `Audio Recording - ${new Date().toLocaleString()}`,
       body: {
@@ -728,7 +728,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       label: text.split("://").pop(),
       url: text,
       creationContext: params?.isEmbedContext
-        ? params?.creationContext ?? this.get().nodeId
+        ? (params?.creationContext ?? this.get().nodeId)
         : undefined,
       body: {
         hash: "",
@@ -818,7 +818,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         accessMode: ResourceAccessMode.POP
       });
     }
-    this.deletePermanently();
+    await this.deletePermanently();
     // this.modify({ ...generateSeedStore() }, { isPersist: false });
   }
 

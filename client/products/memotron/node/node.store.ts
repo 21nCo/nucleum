@@ -89,14 +89,22 @@ class NodeStore extends ResourceStore<INode> {
       params?.filters &&
       "contentType" in params?.filters &&
       params.filters.contentType;
+    const isMetaTypePresent =
+      params?.filters &&
+      "metaType" in params?.filters &&
+      params.filters.metaType;
     const filters = {
       creationContext:
         isValidString(params?.search?.query) || isContentTypePresent
           ? undefined
           : false,
+      metaType:
+        isValidString(params?.search?.query) || isMetaTypePresent
+          ? undefined
+          : false,
       ...(params?.filters ?? {}),
       contentType: isContentTypePresent
-        ? params?.filters?.contentType?.toUpperCase()
+        ? resolveContentTypeParam(params?.filters?.contentType)
         : params?.search?.query
           ? undefined
           : rootNodeTypeList
@@ -107,6 +115,13 @@ class NodeStore extends ResourceStore<INode> {
       filters
     };
     return super.selectMany(params, additionalParams);
+
+    function resolveContentTypeParam(contentType: string | Array<string>) {
+      if (typeof contentType === "string") {
+        return contentType.toUpperCase();
+      }
+      return contentType;
+    }
   }
 
   async fetchTimeline(date: Date) {
