@@ -1,10 +1,13 @@
 <script lang="ts">
   import Button from "$lib/client/elements/button/Button.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
+  import PlanExpired from "$lib/client/illustrations/PlanExpired.svelte";
   import account from "$lib/client/stores/account.store";
+  import { appStore } from "$lib/client/stores/app.store";
   import { Action } from "$lib/client/types/action.enum";
   import { ButtonStyle } from "$lib/client/types/button.type";
   import { formatDate } from "$lib/client/utils/time.utils";
+  import { properCase } from "$lib/shared/utils/text.utils";
   import modalEvent from "../modal/modal.store";
   import RestorePurchaseAction from "./RestorePurchaseAction.svelte";
   import { PlanType } from "./userPlan.type";
@@ -45,6 +48,9 @@
   class="flex flex-col items-center justify-center gap-6 h-full w-full overflow-auto p-6 text-center"
 >
   <div class="flex flex-col gap-4 max-w-lg">
+    <div class="flex justify-center">
+      <PlanExpired />
+    </div>
     <div class="flex flex-col gap-2">
       <h1 class="text-h1 font-bold text-ars1">
         {#if isTrialExpired}
@@ -71,8 +77,9 @@
           Please update your billing information to continue using sync
           features.
         {:else}
-          Please upgrade your plan to continue using Memotron's premium
-          features.
+          Please upgrade your plan to continue using {properCase(
+            $appStore.product
+          )}'s premium features.
         {/if}
       </p>
     </div>

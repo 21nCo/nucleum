@@ -23,11 +23,12 @@
   import { formatDatetime } from "$lib/client/utils/time.utils";
   import ToggleGroup from "$lib/client/elements/toggle/ToggleGroup.svelte";
   import CollectionsLane from "./CollectionsLane.svelte";
-  import NodePropertiesPane from "../rightPanel/NodePropertiesPane.svelte";
+  import PropertiesPane from "$lib/client/components/collection/properties/PropertiesPane.svelte";
   import { hoverable } from "$lib/client/actions/hover.action";
   import view from "$lib/client/stores/view.store";
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
   import { Size } from "$lib/client/types/size.enum";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let isHovering: boolean = false;
@@ -192,7 +193,11 @@
       </div>
       {#if dev_isShowMainProperties}
         <div class="w-full">
-          <NodePropertiesPane {node} isVisibleProps={true} />
+          <PropertiesPane
+            item={node}
+            resource={Resource.node}
+            isVisibleProps={true}
+          />
         </div>
       {/if}
       <div class="flex w-full justify-between">

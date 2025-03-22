@@ -12,8 +12,16 @@
   import PlanFeatureList from "./elements/PlanFeatureList.svelte";
   import { Action } from "$lib/client/types/action.enum";
   import { PlanType } from "./userPlan.type";
-  import { PlanStatus } from "$lib/client/types/account.type";
+  import {
+    PaymentProvider,
+    PlanStatus,
+    type IUserPlan
+  } from "$lib/client/types/account.type";
   import RestorePurchaseAction from "./RestorePurchaseAction.svelte";
+  import context from "$lib/client/stores/context.store";
+  import { OperatingSystem } from "$lib/client/types/context.type";
+  import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
+  import { InfoTextType } from "$lib/client/types/text.type";
 
   let currentPlanFeatures: Array<{ icon: string; label: string }> = [];
   $: renewalDate = $account.plan
@@ -28,19 +36,72 @@
       currentPlanFeatures = selectedPlan.features;
     }
   }
+  $: canCancel = resolveCanCancel($account.plan);
+
+  function resolveCanCancel(plan: IUserPlan | undefined) {
+    if (!plan) return false;
+    if (!plan.provider || plan.provider === PaymentProvider.SELF) {
+      return true;
+    }
+    if (
+      plan.provider === PaymentProvider.APPLE &&
+      $context.isEmbed &&
+      ($context.os === OperatingSystem.IOS ||
+        $context.os === OperatingSystem.MACOS)
+    ) {
+      return true;
+    }
+    return false;
+  }
+
+  function resolveCannotCancelContent() {
+    if ($account.plan?.provider === PaymentProvider.APPLE) {
+      return "You have purchased this plan through **Apple App Store**. Kindly visit App store settings to make changes to your subscription.";
+    } else if ($account.plan?.provider === PaymentProvider.GOOGLE) {
+      return "You have purchased this plan through **Google Play Store**. Kindly visit Play store settings to make changes to your subscription.";
+    } else if ($account.plan?.provider === PaymentProvider.MICROSOFT) {
+      return "You have purchased this plan through **Microsoft Store**. Kindly visit Microsoft Store settings to make changes to your subscription.";
+    } else {
+      return "You have purchased this plan through an external provider. Please contact support to cancel your subscription.";
+    }
+  }
+
+  function resolveProviderLabel(provider: PaymentProvider) {
+    switch (provider) {
+      case PaymentProvider.APPLE:
+        return "Apple App Store";
+      case PaymentProvider.GOOGLE:
+        return "Google Play Store";
+      case PaymentProvider.MICROSOFT:
+        return "Microsoft Store";
+      default:
+        return "External Provider";
+    }
+  }
 </script>
 
 <div class="flex flex-col gap-4 items-center w-full h-full">
   <div class="flex flex-col gap-8 bg-bgs2 p-8 rounded-md w-full">
     <div class="flex flex-col gap-2">
       <p class="text-h3 text-fgs2">{resolvePlanLabel($account.plan)}</p>
-      <p class="text-sm text-fgs3">
-        {#if renewalDate && $account.plan?.status === PlanStatus.ACTIVE}
-          Next payment due: {formatDate(renewalDate)}
-        {:else if renewalDate && $account.plan?.status === PlanStatus.CANCELLED}
-          Expires: {formatDate(renewalDate)}
+      <div class="flex flex-wrap justify-between gap-2">
+        <p class="text-sm text-fgs3">
+          {#if renewalDate && $account.plan?.status === PlanStatus.ACTIVE}
+            Next payment: <b>
+              {formatDate(renewalDate)}
+            </b>
+          {:else if renewalDate && $account.plan?.status === PlanStatus.CANCELLED}
+            Expires: {formatDate(renewalDate)}
+          {/if}
+        </p>
+        {#if $account.plan?.provider}
+          <p class="text-sm text-fgs3">
+            Purchased through: <b>
+              {resolveProviderLabel($account.plan?.provider)}
+            </b>
+          </p>
         {/if}
-      </p>
+      </div>
     </div>
     {#if $account.plan?.plan === PlanType.TRIAL}
       <div>
@@ -69,7 +130,7 @@
               appStore.runAction(Action.USER_PLAN);
             }}
           />
-        {:else}
+        {:else if canCancel}
           <Button
             type={ButtonVariant.DANGER}
             style={ButtonStyle.OUTLINED}
@@ -91,6 +152,13 @@
           {/if} -->
         {/if}
       </div>
+    {/if}
+    {#if !canCancel}
+      <InlineInfoBanner
+        content={resolveCannotCancelContent()}
+        parentBgIndex={2}
+        type={InfoTextType.INFO}
+      />
     {/if}
     <RestorePurchaseAction />
   </div>

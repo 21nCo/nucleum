@@ -25,11 +25,13 @@
   } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   import { propertyStore } from "./property.store";
+  import { Resource } from "../../flux/resourceStores/resource.enum";
   const dispatch = createEventDispatcher();
   export let types: ICollectionExpanded[] | undefined = undefined;
   export let isIncludeExtendedProperties: boolean = true;
   export let values: ICollectionItemPropertyValue[] = [];
   export let item: ICollectionItem | null = null;
+  export let resource: Resource;
   export let context: "capture" | "clip" | "mainpanel" | "rightpanel" =
     "capture";
   export let isReadOnlyMode: boolean = false;
@@ -104,7 +106,8 @@
     class={cn(
       "w-full",
       !isRenderAsColumn &&
-        !$view.isConstrainedWidth && {
+        !$view.isConstrainedWidth &&
+        resource === Resource.node && {
           "pl-8": !isCollapsed,
           "pl-12": isCollapsed
         }
@@ -115,8 +118,10 @@
         "flex flex-col rounded-md",
         !isRenderAsColumn && {
           border: true,
-          "border-brs3": isCollapsed || isCollapserHovered,
-          "border-transparent": !isCollapsed && !isCollapserHovered
+          "border-brs3":
+            isCollapsed || isCollapserHovered || resource === Resource.goal,
+          "border-transparent":
+            !isCollapsed && !isCollapserHovered && resource !== Resource.goal
         }
       )}
     >
@@ -150,7 +155,7 @@
                   style={ButtonStyle.PLAIN}
                   on:click={(e) => {
                     dispatch("showAll");
-                    if (e.detail) e.detail.stopPropagation();
+                    if (e) e.stopPropagation();
                   }}
                 />
               {/if}

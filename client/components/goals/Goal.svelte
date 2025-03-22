@@ -22,6 +22,7 @@
   import GoalTasks from "./tasks/GoalTasks.svelte";
   import { onMount } from "svelte";
   import { page } from "$app/stores";
+  import PropertiesPane from "../collection/properties/PropertiesPane.svelte";
 
   export let id: string;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -79,13 +80,24 @@
         icon: "ph:info-light"
       });
     }
+    if ($goal.types && $goal.types.length > 0) {
+      items.push({
+        label: "Properties",
+        value: "properties",
+        icon: "ph:shapes-light"
+      });
+    }
     selectedPanel = items[0].value;
     return items;
+  }
+
+  function showAllProperties() {
+    selectedPanel = "properties";
   }
 </script>
 
 <CustomColorPropagator
-  class="h-full w-full"
+  class="h-full w-full bg-gradient-to-br from-bgs1 via-bgs1 to-ccs5"
   color={$goal?.color ?? ($goal?.parent ? $goal.parent?.[0]?.color : undefined)}
 >
   {#if !$goal || !isReady}
@@ -103,7 +115,7 @@
         <aside
           class="flex flex-col gap-4 bg--bgs2 border border-brs3 rounded-lg p-4 w-96 2k:w-[30rem]"
         >
-          <GoalInfoPanel {goal} />
+          <GoalInfoPanel {goal} on:showAllProperties={showAllProperties} />
         </aside>
       {/if}
       <main class="flex flex-col gap-4 flex-1 overflow-auto">
@@ -137,13 +149,23 @@
         </div>
         <div class="flex-1 overflow-auto">
           {#if selectedPanel === "info"}
-            <GoalInfoPanel {goal} {isConstrainedWidth} />
+            <GoalInfoPanel
+              {goal}
+              {isConstrainedWidth}
+              on:showAllProperties={showAllProperties}
+            />
           {:else if selectedPanel === "subgoals"}
             <SubGoalsPanel {goal} />
           {:else if selectedPanel === "history"}
             <GoalHistory {goal} />
           {:else if selectedPanel === "todos"}
             <GoalTasks id={$goal.id} />
+          {:else if selectedPanel === "properties"}
+            <div class="flex w-full justify-center">
+              <div class="w-96">
+                <PropertiesPane item={goal} resource={Resource.goal} />
+              </div>
+            </div>
           {/if}
         </div>
       </main>

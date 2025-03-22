@@ -158,6 +158,7 @@
   </div>
 {:else}
   <CollectionItems
+    resource={$collection.resource}
     items={data}
     arrangement={view.arrangement}
     density={view.density}

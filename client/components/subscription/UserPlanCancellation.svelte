@@ -8,6 +8,9 @@
   import { formatDate } from "$lib/client/utils/time.utils";
   import PlanFeatureList from "./elements/PlanFeatureList.svelte";
   import { toasts } from "$lib/client/stores/notification.store";
+  import { PaymentProvider } from "$lib/client/types/account.type";
+  import { postMessageToParent } from "$lib/client/utils/embed.utils";
+  import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
 
   let isCancelInProgress = false;
   $: isFullRefundable = resolveIfEligibleForFullRefund(
@@ -18,6 +21,10 @@
     : [];
   async function proceed() {
     if (isCancelInProgress) return;
+    if ($account.plan?.provider === PaymentProvider.APPLE) {
+      postMessageToParent(EmbedMessage.MODIFY_SUBSCRIPTION);
+      return;
+    }
     isCancelInProgress = true;
     const response = await account.modifySubscription({
       type: "cancel"

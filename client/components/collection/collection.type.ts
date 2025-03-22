@@ -10,6 +10,7 @@ import type { IMemotronItemBase } from "$lib/client/products/memotron/memotron.t
 import type { INodeThumb } from "$lib/client/products/memotron/node/node.type";
 import type { IProperty, IPropertyValue } from "./properties/property.type";
 import type { Resource } from "../flux/resourceStores/resource.enum";
+import type { IGoalThumb } from "../goals/goal.type";
 
 export enum CollectionType {
   TYPED = "TYPED",
@@ -124,7 +125,7 @@ export interface ICollectionViewArrangementConfig {
 }
 
 //TODO - add more collectible items
-export type ICollectionItem = INodeThumb;
+export type ICollectionItem = INodeThumb | IGoalThumb;
 
 export type ICollectionItemPropertyValue = {
   id: IRecordId;

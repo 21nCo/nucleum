@@ -30,6 +30,7 @@ import { appStore } from "$lib/client/stores/app.store";
 import context from "$lib/client/stores/context.store";
 import { Embed } from "$lib/client/types/context.type";
 import view from "$lib/client/stores/view.store";
+import { collectionStore } from "../collection/collection.store";
 
 class GoalStore extends ResourceStore<IGoal> {
   constructor() {
@@ -209,14 +210,18 @@ export class ActiveGoalStore extends CollectibleStore<IActiveGoal, GoalStore> {
       const collections: IRecordId[] = result.outlinks
         .filter((x: any) => x.out.tb === Resource.collection)
         .map((x: any) => x.out);
+      const types = await collectionStore.resolveTypes(collections);
+
       console.log({
         at: "ActiveGoalStore.init",
         result,
-        collections
+        collections,
+        types
       });
 
       this.set({
         ...result,
+        types,
         collections,
         isPageLoading: false,
         accessMode,

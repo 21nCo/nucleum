@@ -4,7 +4,10 @@ import type { IRecordId } from "$lib/client/types/data.type";
 import { linker } from "$lib/client/products/memotron/linking/link.store";
 import { isSameResource } from "../flux/resourceStores/resource.utils";
 import { collectionStore } from "../collection/collection.store";
-import type { ICollectionExpanded } from "./collection.type";
+import type {
+  ICollectionExpanded,
+  ICollectionItemPropertyValue
+} from "./collection.type";
 import { logger } from "../debug/logger.client";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import type { IAvatar } from "$lib/client/types/avatar.type";
@@ -91,4 +94,20 @@ export class CollectibleStore<
       return avatars;
     }
   }
+
+  updateProperty = async (property: ICollectionItemPropertyValue) => {
+    let properties = this.get().properties ?? [];
+    properties = properties.filter((x) => !isSameResource(x, property));
+    this.update((prev) => ({ ...prev, properties: [...properties, property] }));
+    return this.resourceStore.modify(
+      this.id,
+      {
+        properties: [...properties, property]
+      },
+      {
+        isDebounced: true,
+        debounceKey: "property" + property.id.toString()
+      }
+    );
+  };
 }

@@ -9,10 +9,11 @@
   import { NodeRightPaneType, NodeType } from "../node.type";
   import NodeTracesPane from "../traces/NodeTracesPane.svelte";
   import NodeSidenotesPane from "./NodeSidenotesPane.svelte";
-  import NodePropertiesPane from "./NodePropertiesPane.svelte";
+  import PropertiesPane from "$lib/client/components/collection/properties/PropertiesPane.svelte";
   import NodeMetadataPane from "../metadata/NodeMetadataPane.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { createEventDispatcher } from "svelte";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   const dispatch = createEventDispatcher();
   export let pane: NodeRightPaneType;
   export let node: IActiveNodeStore;
@@ -49,7 +50,7 @@
   {:else if pane === NodeRightPaneType.LINKS}
     <NodeLinksPane {node} />
   {:else if pane === NodeRightPaneType.PROPERTIES}
-    <NodePropertiesPane {node} />
+    <PropertiesPane item={node} resource={Resource.node} />
   {:else if pane === NodeRightPaneType.TRACES}
     <NodeTracesPane {node} />
   {:else if pane === NodeRightPaneType.HISTORY}

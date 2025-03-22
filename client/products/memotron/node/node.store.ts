@@ -368,21 +368,6 @@ export class ActiveNodeStore extends CollectibleStore<IActiveNode, NodeStore> {
       logger.error({ at: "node.store fetch", e });
     }
   };
-  updateProperty = async (property: INodePropertyValue) => {
-    let properties = this.get().properties ?? [];
-    properties = properties.filter((x) => !isSameResource(x, property));
-    this.update((prev) => ({ ...prev, properties: [...properties, property] }));
-    return this.resourceStore.modify(
-      this.id,
-      {
-        properties: [...properties, property]
-      },
-      {
-        isDebounced: true,
-        debounceKey: "property" + property.id.toString()
-      }
-    );
-  };
 
   updateBlock = (
     id: IRecordId,

@@ -21,21 +21,24 @@
   import { collectionStore } from "$lib/client/components/collection/collection.store";
   import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
   import { cn } from "$lib/client/utils/ui.utils";
-  export let node: IActiveNodeStore;
+  import type { IActiveGoalStore } from "../../goals/goal.store";
+
+  export let item: IActiveNodeStore | IActiveGoalStore;
+  export let resource: Resource;
   export let isVisibleProps: boolean = false;
   let _types: ICollectionExpanded[] | null = null;
   let multipleTypesList: ICollectionExpanded[] = [];
   let refreshId: number = new Date().getTime();
 
   $: isReadOnlyMode =
-    $node.isInReadOnlyMode ||
-    $node.isLocked ||
-    $node.isArchived ||
-    $node.trashInformation !== undefined;
+    $item.isInReadOnlyMode ||
+    $item.isLocked ||
+    $item.isArchived ||
+    $item.trashInformation !== undefined;
 
   async function propagateChanges(e: CustomEvent) {
     if (!e.detail || !e.detail?.id || e.detail?.value === undefined) return;
-    node.updateProperty({
+    item.updateProperty({
       id: e.detail.id,
       value: e.detail.value
     });
@@ -49,21 +52,21 @@
     if (!isVisibleProps) {
       resolveRenderedTypes();
     } else {
-      _types = $node.types ?? [];
+      _types = $item.types ?? [];
     }
   }
   async function refreshTypeData() {
-    if (!$node.types) return;
-    $node.types = await collectionStore.resolveTypes(
-      $node.types.map((x) => x.id)
+    if (!$item.types) return;
+    $item.types = await collectionStore.resolveTypes(
+      $item.types.map((x) => x.id)
     );
     refresh();
     refreshId = new Date().getTime();
   }
 
   function resolveRenderedTypes() {
-    if ($node.types?.length === 1) {
-      const type = $node.types[0];
+    if ($item.types?.length === 1) {
+      const type = $item.types[0];
       type.properties = type.properties?.filter((x) => x);
       type.extendProperties = type.extendProperties?.filter((x) => x);
       if (
@@ -95,7 +98,7 @@
         _types = [type];
       }
     } else {
-      const allTypes = $node.types;
+      const allTypes = $item.types;
       const extendedTypes: ICollectionExpanded[] = allTypes
         ?.map((x) => {
           if (x.typeToExtend) {
@@ -128,7 +131,7 @@
       resourceAction(Resource.property, ResourceActionType.EDIT),
       {
         componentParams: {
-          id: _types?.[0]?.id ?? $node.types?.[0]?.id ?? ""
+          id: _types?.[0]?.id ?? $item.types?.[0]?.id ?? ""
         }
       }
     );
@@ -155,17 +158,18 @@
   {/if}
   <div class="flex flex-col gap-6 w-full h-full overflow-auto">
     {#if !isVisibleProps}
-      <ResourceStatusBanner resource={node} />
+      <ResourceStatusBanner resource={item} />
     {/if}
     {#if _types && _types.length > 0}
       {#key refreshId}
         <PropertiesListView
-          bind:values={$node.properties}
+          bind:values={$item.properties}
           types={_types}
+          {resource}
           context={isVisibleProps ? "mainpanel" : "rightpanel"}
           isIncludeExtendedProperties={isVisibleProps}
           {isReadOnlyMode}
-          item={$node}
+          item={$item}
           on:change={propagateChanges}
           on:showAll
         />
@@ -184,7 +188,7 @@
         {/if}
       {/key}
     {:else if !isVisibleProps}
-      {@const typesPresent = $node.types && $node.types.length > 0}
+      {@const typesPresent = $item.types && $item.types.length > 0}
       <div class="flex w-full h-full items-center justify-center">
         <EmptyStatusView
           size={Size.sm}
@@ -204,6 +208,6 @@
 </div>
 <ComponentBaseLayer
   subscribeToResource={new Set([Resource.collection])}
-  subscribeToRecords={$node.types?.map((x) => x.id) ?? []}
+  subscribeToRecords={$item.types?.map((x) => x.id) ?? []}
   on:change={refreshTypeData}
 />

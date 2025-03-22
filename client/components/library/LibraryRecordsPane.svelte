@@ -374,8 +374,7 @@
       if (resource === Resource.node) return Arrangement.GRID;
       else return Arrangement.LIST;
     }
-    if (resource === Resource.goal || resource === Resource.task)
-      return Arrangement.LIST;
+    if (resource === Resource.task) return Arrangement.LIST;
     return Arrangement.GRID;
   }
 </script>
@@ -545,7 +544,6 @@
           isShowLoadingPulseAtTheEnd={data.length < totalCountAfterFilter &&
             !searchQuery}
           arrangement={resolveArrangement()}
-          isPreventGrid={resource === Resource.task}
         />
       </div>
       <div

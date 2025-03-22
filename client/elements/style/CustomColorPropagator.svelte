@@ -147,20 +147,75 @@
     stroke: var(--customcolor, rgb(var(--colors-aps1)));
   }
 
+  :global(.group:hover .group-hover\:bg-ccs1) {
+    background-color: var(--customcolor, rgb(var(--colors-aps1)));
+    color: var(--fgwhencustombg, var(--fgwhenaccentbg));
+  }
+  :global(.group:hover .group-hover\:bg-ccs2) {
+    background-color: var(--customcolorshadetwo, rgb(var(--colors-aps2)));
+  }
+  :global(.group:hover .group-hover\:bg-ccs3) {
+    background-color: var(--customcolorshadethree, rgb(var(--colors-aps3)));
+  }
+  :global(.group:hover .group-hover\:bg-ccs4) {
+    background-color: var(--customcolorshadefour, rgb(var(--colors-aps4)));
+  }
+  :global(.group:hover .group-hover\:bg-ccs5) {
+    background-color: var(--customcolorshadefive, rgb(var(--colors-aps4)));
+  }
+
+  :global(.group:hover .group-hover\:border-ccs1) {
+    border-color: var(--customcolor, rgb(var(--colors-aps1)));
+  }
+  :global(.group:hover .group-hover\:border-ccs2) {
+    border-color: var(--customcolorshadetwo, rgb(var(--colors-aps2)));
+  }
+  :global(.group:hover .group-hover\:border-ccs3) {
+    border-color: var(--customcolorshadethree, rgb(var(--colors-aps3)));
+  }
+  :global(.group:hover .group-hover\:border-ccs4) {
+    border-color: var(--customcolorshadefour, rgb(var(--colors-aps4)));
+  }
+
+  :global(.group:hover .group-hover\:text-ccs1) {
+    color: var(--customcolor, rgb(var(--colors-aps1)));
+  }
+  :global(.group:hover .group-hover\:text-ccs2) {
+    color: var(--customcolorshadetwo, rgb(var(--colors-aps2)));
+  }
+  :global(.group:hover .group-hover\:text-ccs3) {
+    color: var(--customcolorshadethree, rgb(var(--colors-aps3)));
+  }
+  :global(.group:hover .group-hover\:text-ccs4) {
+    color: var(--customcolorshadefour, rgb(var(--colors-aps4)));
+  }
+
   :global(.to-ccs1) {
-    --tw-gradient-to: var(--customcolor, rgb(var(--colors-aps1)));
+    --tw-gradient-to: var(--customcolor, rgb(var(--colors-aps1))) !important;
   }
   :global(.to-ccs2) {
-    --tw-gradient-to: var(--customcolorshadetwo, rgb(var(--colors-aps2)));
+    --tw-gradient-to: var(
+      --customcolorshadetwo,
+      rgb(var(--colors-aps2))
+    ) !important;
   }
   :global(.to-ccs3) {
-    --tw-gradient-to: var(--customcolorshadethree, rgb(var(--colors-aps3)));
+    --tw-gradient-to: var(
+      --customcolorshadethree,
+      rgb(var(--colors-aps3))
+    ) !important;
   }
   :global(.to-ccs4) {
-    --tw-gradient-to: var(--customcolorshadefour, rgb(var(--colors-aps4)));
+    --tw-gradient-to: var(
+      --customcolorshadefour,
+      rgb(var(--colors-aps4))
+    ) !important;
   }
   :global(.to-ccs5) {
-    --tw-gradient-to: var(--customcolorshadefive, rgb(var(--colors-aps4)));
+    --tw-gradient-to: var(
+      --customcolorshadefive,
+      rgb(var(--colors-aps4))
+    ) !important;
   }
 
   :global(.\!bg-ccs1) {

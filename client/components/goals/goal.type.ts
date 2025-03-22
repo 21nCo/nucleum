@@ -1,7 +1,10 @@
 import type { IMarkdown } from "../markdown/md.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 import type { IActiveResource } from "../flux/resourceStores/resource.type";
-import type { ICollectionExpanded } from "../collection/collection.type";
+import type {
+  ICollectionExpanded,
+  ICollectionItemPropertyValue
+} from "../collection/collection.type";
 import type { TimeScale } from "$lib/client/types/time.type";
 import type { IMemotronItemBase } from "$lib/client/products/memotron/memotron.type";
 import type { ITask } from "../tasks/task.type";
@@ -32,6 +35,7 @@ export interface IGoalBase extends IMemotronItemBase {
   status?: GoalStatus;
   color?: number;
   isPinnedForQuickFocus?: boolean;
+  properties?: ICollectionItemPropertyValue[];
 }
 
 export interface IGoal extends IGoalBase {

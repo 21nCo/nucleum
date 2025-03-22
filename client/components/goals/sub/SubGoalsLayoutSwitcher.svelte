@@ -25,12 +25,16 @@
       {
         value: SubGoalsLayout.TABS,
         icon: "ph:tabs-light",
-        label: "Tabs"
+        label: "Tabs",
+        isDisabled: true,
+        badge: "planned"
       },
       {
         value: SubGoalsLayout.BOARDS,
         icon: "ph:columns-light",
-        label: "Boards"
+        label: "Boards",
+        isDisabled: true,
+        badge: "planned"
       }
     ]}
     on:select
