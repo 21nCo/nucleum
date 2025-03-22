@@ -99,7 +99,7 @@
       {/if}
     </div>
     {#if !$view.isConstrainedWidth}
-      <div class="w-96 p-3 border-l border-brs3">
+      <div class="w-96 dp:w-[28rem] p-3 border-l border-brs3">
         {#key selectedDate}
           <CalendarColumn scale={TimeScaleUnit.DAY} date={selectedDate} />
         {/key}

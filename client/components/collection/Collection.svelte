@@ -56,7 +56,6 @@
   import ArrangementSelector from "./arrangementSelector/ArrangementSelector.svelte";
   import ToggleGroup from "$lib/client/elements/toggle/ToggleGroup.svelte";
   import AddResourceAction from "./AddResourceAction.svelte";
-  import TypeExtensionAndPropertiesEditor from "./TypeExtensionAndPropertiesEditor.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
@@ -602,6 +601,7 @@
               {#if isSingleViewMode && !$collection.isInEditMode}
                 <ArrangementSelector
                   {isBoardContext}
+                  resource={$collection.resource}
                   arrangement={activeView?.arrangement ?? Arrangement.LIST}
                   density={activeView?.density}
                   isHideThumbnailPreview={activeView?.isHideThumbnailPreview}
@@ -729,6 +729,7 @@
                   /> -->
                   <ArrangementSelector
                     {isBoardContext}
+                    resource={$collection.resource}
                     arrangement={activeView?.arrangement ?? Arrangement.LIST}
                     density={activeView?.density}
                     isHideThumbnailPreview={activeView?.isHideThumbnailPreview}

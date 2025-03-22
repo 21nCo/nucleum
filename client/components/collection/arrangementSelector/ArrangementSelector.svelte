@@ -4,10 +4,12 @@
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
   import { popover } from "$lib/client/actions/popover.action";
   import ArrangementSelectorPopover from "./ArrangementSelectorPopover.svelte";
+  import { Resource } from "../../flux/resourceStores/resource.enum";
 
   const dispatch = createEventDispatcher();
 
   export let arrangement: Arrangement;
+  export let resource: Resource | undefined = undefined;
   export let density = 1;
   export let isHideThumbnailPreview: boolean = false;
   export let isHideThumbnailTitle: boolean = false;
@@ -30,6 +32,7 @@
   ];
   $: if (
     !isBoardContext &&
+    (!resource || resource === Resource.node) &&
     !allArrangements.find((a) => a.value === Arrangement.MASONRY)
   ) {
     allArrangements.push({

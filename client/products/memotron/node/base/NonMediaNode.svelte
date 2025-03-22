@@ -16,7 +16,7 @@
   import { fade } from "svelte/transition";
   import CollectionsLane from "../floatingBar/CollectionsLane.svelte";
   import { headingNodeTypes, NodeRightPaneType, NodeView } from "../node.type";
-  import NodePropertiesPane from "../rightPanel/NodePropertiesPane.svelte";
+  import PropertiesPane from "$lib/client/components/collection/properties/PropertiesPane.svelte";
   import view from "$lib/client/stores/view.store";
   import NodeRightPaneContent from "../rightPanel/NodeRightPaneContent.svelte";
   import NodeBirdView from "../birdView/NodeBirdView.svelte";
@@ -31,6 +31,7 @@
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   import context from "$lib/client/stores/context.store";
   import { Embed } from "$lib/client/types/context.type";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 
   export let node: IActiveNodeStore;
   export let selectedView: NodeView = NodeView.CONTENT;
@@ -231,8 +232,9 @@
                 </div>
                 {#if $node.types && $node.types.length > 0 && !$node.focusedBlock}
                   <!-- TODO - later - show properties of focused node if the focused blocks is associated with a type collection -->
-                  <NodePropertiesPane
-                    {node}
+                  <PropertiesPane
+                    item={node}
+                    resource={Resource.node}
                     isVisibleProps={true}
                     on:showAll={() => {
                       rightPane = NodeRightPaneType.PROPERTIES;

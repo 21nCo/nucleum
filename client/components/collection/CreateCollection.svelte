@@ -58,10 +58,10 @@
   let coverPhoto: any;
   let isShowCoverPicker: boolean = false;
   let isCoverPickerHovered: boolean = false;
-  let resource: Resource | undefined = undefined;
   let collectibleResources: Resource[] = resolveCollectionResource(
     $appStore.product
   );
+  let resource: Resource = collectibleResources[0];
 
   const formLabelConfig = {
     orientation: Orientation.Vertical
@@ -283,7 +283,10 @@
           label={{ label: "Description", orientation: Orientation.Vertical }}
         />
         {#if selectedType === CollectionType.TYPED}
-          <TypeExtensionAndPropertiesEditor bind:isCaptureShortcutEnabled />
+          <TypeExtensionAndPropertiesEditor
+            bind:isCaptureShortcutEnabled
+            {resource}
+          />
         {/if}
         <!-- <OptionSelector
           options={collectionLayoutOptions}

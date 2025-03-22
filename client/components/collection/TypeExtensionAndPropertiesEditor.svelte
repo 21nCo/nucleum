@@ -14,7 +14,7 @@
   const dispatch = createEventDispatcher();
   export let isCaptureShortcutEnabled: boolean = false;
   export let collection: IActiveCollectionStore | undefined = undefined;
-
+  export let resource: Resource | undefined = undefined;
   const formLabelConfig = {
     orientation: Orientation.Vertical
   };
@@ -52,18 +52,20 @@
     </span>
   </button>
 </div>
-<SwitchInput
-  label={{
-    ...formLabelConfig,
-    label: "Add to capture shortcuts",
-    orientation: Orientation.Horizontal,
-    tooltip: {
-      body: "Enabling this will create a shortcut on capture page to seamlessly capture a new node entry and add it to the collection.",
-      actionText: "Learn more",
-      action: "/kb/type-collections"
-    }
-  }}
-  bind:checked={isCaptureShortcutEnabled}
-  isExpanded={true}
-  on:change={onCaptureShortcutChange}
-/>
+{#if resource === Resource.node}
+  <SwitchInput
+    label={{
+      ...formLabelConfig,
+      label: "Add to capture shortcuts",
+      orientation: Orientation.Horizontal,
+      tooltip: {
+        body: "Enabling this will create a shortcut on capture page to seamlessly capture a new node entry and add it to the collection.",
+        actionText: "Learn more",
+        action: "/kb/type-collections"
+      }
+    }}
+    bind:checked={isCaptureShortcutEnabled}
+    isExpanded={true}
+    on:change={onCaptureShortcutChange}
+  />
+{/if}

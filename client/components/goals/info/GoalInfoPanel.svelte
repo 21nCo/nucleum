@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { createEventDispatcher } from "svelte";
   import { type IActiveGoalStore } from "$lib/client/components/goals/goal.store";
   import GoalCollectionsRow from "../GoalCollectionsRow.svelte";
   import Markdown from "$lib/client/components/markdown/Markdown.svelte";
@@ -21,8 +22,11 @@
   import { formatDatetime } from "$lib/client/utils/time.utils";
   import { userPreferences } from "../../settings/userPreferences.store";
   import { resolveIfCurrentFocusItem } from "$lib/client/products/pointron/focus/session.utils";
+  import PropertiesPane from "../../collection/properties/PropertiesPane.svelte";
+  import { Resource } from "../../flux/resourceStores/resource.enum";
   export let goal: IActiveGoalStore;
   export let isConstrainedWidth = false;
+  const dispatch = createEventDispatcher();
   function handleStatusChange(e: CustomEvent<GoalStatus>) {
     $goal.status = e.detail;
     goal.modify({
@@ -107,6 +111,16 @@
         />
       </div>
     </div>
+  {/if}
+  {#if $goal.types && $goal.types.length > 0}
+    <PropertiesPane
+      item={goal}
+      resource={Resource.goal}
+      isVisibleProps={true}
+      on:showAll={() => {
+        dispatch("showAllProperties");
+      }}
+    />
   {/if}
   <div class="text-fgs3 text-b3 mx-auto mt-auto userdata">
     Created: {formatDatetime($userPreferences, $goal.createdAt)}

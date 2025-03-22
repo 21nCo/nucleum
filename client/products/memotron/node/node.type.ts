@@ -19,7 +19,8 @@ import {
 import type { IFile } from "$lib/client/components/files/file.type";
 import type {
   IActiveCollection,
-  ICollectionExpanded
+  ICollectionExpanded,
+  ICollectionItemPropertyValue
 } from "$lib/client/components/collection/collection.type";
 
 export type INodeItemCaptured = OmitForCapture<INodeInterface> & {
@@ -58,7 +59,7 @@ type INodeInterface<
   body: TBody;
   contentType: TType;
   metadata?: TMetadata;
-  properties?: INodePropertyValue[];
+  properties?: ICollectionItemPropertyValue[];
   parent?: IRecordId;
   /**
    * The context in which the node was created i.e. whether nodes like AUDIO or IMAGE or PDF created independantly or from within a markdown as block. Also, for clips, whether the parent is created independently or as a supplementary when a text clip or tweet is created.

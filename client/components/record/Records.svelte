@@ -43,7 +43,6 @@
   export let isPreventDefault = false;
   export let width: number = 290;
   export let isShowLoadingPulseAtTheEnd: boolean = false;
-  export let isPreventGrid: boolean = false;
   let parentBgIndex = 1;
   $: multiSelectContext = {
     resource,
@@ -72,10 +71,9 @@
   {:else}
     <div
       class={cn(`h-full w-full content-start`, {
-        "flex flex-col gap-2": isPreventGrid,
+        "flex flex-col gap-2": arrangement === Arrangement.LIST,
         [`grid grid-cols-[repeat(auto-fill,minmax(${width}px,1fr))]`]:
-          !isPreventGrid,
-        "gap-2": arrangement === Arrangement.LIST,
+          arrangement === Arrangement.GRID,
         "gap-4": arrangement === Arrangement.GRID
       })}
     >

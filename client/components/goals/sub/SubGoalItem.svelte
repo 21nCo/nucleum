@@ -26,7 +26,7 @@
     class={cn(
       "flex group items-center gap-4 relative border border-transparent rounded-md p-1",
       {
-        "hover:border-aps2 hover:bg-aps3": subGoal.label
+        "hover:border-ccs2 hover:bg-ccs3": subGoal.label
       }
     )}
     on:click
@@ -38,7 +38,7 @@
     <StepMarker item={subGoal} {index} {totalLength} />
     {#if subGoal.label}
       <div
-        class={cn("text-left flex-1 py-1.5 group-hover:text-aps1", {
+        class={cn("text-left flex-1 py-1.5 group-hover:text-ccs1", {
           "line-through": subGoal.status === GoalStatus.COMPLETED
         })}
       >
