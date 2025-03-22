@@ -13,6 +13,7 @@ import {
 } from "../dodoPaymentProvider";
 import { PaymentProvider } from "$lib/shared/types/plan.type";
 import {
+  AppleVerificationResponse,
   getLatestSubscriptionPayment,
   verifyAppleSubscription
 } from "../applePaymentProvider";
@@ -180,14 +181,41 @@ async function sync(body: ModifyRequest, agent: Agent) {
   }
 
   if (transaction.provider === PaymentProvider.APPLE) {
-    const verificationResponse = await verifyAppleSubscription(
-      transaction.applePayment.originalTransactionId
-    );
-    if (!verificationResponse) {
-      //TODO - fallback with history API and embedTransaction from body
-      const latestTransaction = await getLatestSubscriptionPayment(
+    let verificationResponse: AppleVerificationResponse | null = null;
+    console.log({
+      at: "sync - verifying apple subscription",
+      transactionId: transaction.applePayment?.originalTransactionId
+    });
+    if (transaction.applePayment?.originalTransactionId) {
+      verificationResponse = await verifyAppleSubscription(
         transaction.applePayment.originalTransactionId
       );
+    }
+    if (!verificationResponse) {
+      console.log("Subscription verification failed. Trying fallback methods");
+      //TODO - fallback with history API and embedTransaction from body
+      if (transaction.applePayment?.originalTransactionId) {
+        const latestTransaction = await getLatestSubscriptionPayment(
+          transaction.applePayment.originalTransactionId
+        );
+        if (latestTransaction) {
+          verificationResponse = {
+            ...latestTransaction,
+            status: "active"
+          };
+        }
+      } else if (
+        body.embedTransaction &&
+        Array.isArray(body.embedTransaction) &&
+        body.embedTransaction?.[0]?.transactionId
+      ) {
+        verificationResponse = await verifyAppleSubscription(
+          body.embedTransaction?.[0]?.transactionId
+        );
+      }
+      if (!verificationResponse) {
+        throw new ValidationError("Subscription verification failed");
+      }
     }
     const transactionUpdateQuery = `
       UPDATE ${transaction.id} MERGE {

@@ -2,7 +2,7 @@ import { default as jwt } from "jsonwebtoken";
 import { writeFileSync, mkdirSync, existsSync } from "fs";
 import { join, parse } from "path";
 
-interface VerificationResponse {
+export interface AppleVerificationResponse {
   status:
     | "active"
     | "expired"
@@ -27,7 +27,7 @@ interface VerificationResponse {
  */
 export async function verifyAppleSubscription(
   transactionId: string
-): Promise<VerificationResponse | null> {
+): Promise<AppleVerificationResponse | null> {
   try {
     // Create JWT for authentication with Apple
     const token = createJWT();
@@ -140,7 +140,11 @@ export async function verifyAppleSubscription(
     // Map Apple's response to our format
     return mapAppleResponseToVerificationResponse(data, environment);
   } catch (error) {
-    console.error("Error verifying Apple subscription:", error);
+    console.error({
+      at: "Error verifying Apple subscription",
+      error,
+      transactionId
+    });
     return null;
   }
 }
@@ -148,7 +152,9 @@ export async function verifyAppleSubscription(
 /**
  * Maps Apple's numeric status codes to our status strings
  */
-function mapStatusCode(statusCode: number): VerificationResponse["status"] {
+function mapStatusCode(
+  statusCode: number
+): AppleVerificationResponse["status"] {
   switch (statusCode) {
     case 1:
       return "active";
@@ -200,9 +206,9 @@ function createJWT(): string {
 function mapAppleResponseToVerificationResponse(
   appleResponse: any,
   environment: "Production" | "Sandbox"
-): VerificationResponse {
+): AppleVerificationResponse {
   // Status mapping from Apple to our system
-  let status: VerificationResponse["status"] = "expired";
+  let status: AppleVerificationResponse["status"] = "expired";
 
   // Default expiration is set to now
   const now = new Date().toISOString();
@@ -355,7 +361,7 @@ export async function getLatestSubscriptionPayment(transactionId: string) {
     const data = await response.json();
 
     // Save response data for debugging
-    saveResponseToFile(data, `history-${transactionId}`);
+    // saveResponseToFile(data, `history-${transactionId}`);
 
     // Handle response format with signedTransactions array
     if (
@@ -386,7 +392,7 @@ export async function getLatestSubscriptionPayment(transactionId: string) {
         const dateB = new Date(b.purchaseDate).getTime();
         return dateB - dateA;
       });
-      saveResponseToFile(transactions, `history-transactions-${transactionId}`);
+      // saveResponseToFile(transactions, `history-transactions-${transactionId}`);
       // Return the latest transaction if available
       if (transactions.length > 0) {
         const latestTransaction = transactions[0];
