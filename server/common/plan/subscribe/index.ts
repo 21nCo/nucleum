@@ -1,5 +1,6 @@
 import { BillingCycle } from "$lib/client/components/subscription/userPlan.type";
 import { performQueryOnMasterDb } from "$lib/server/surrealHelpers";
+import { PaymentProvider } from "$lib/shared/types/plan.type";
 import { generateSHA256Hash } from "$lib/shared/utils/crypto.utils";
 import { Agent } from "../../account/account.type";
 import { InternalServerError, ValidationError } from "../../errors";
@@ -35,7 +36,7 @@ async function newSubscription(body: any, agent: Agent) {
   if (provider) {
     productId = `app.${product}.${plan}.${cycle}`;
   } else {
-    const isTest = process.env.NODE_ENV === "dev";
+    const isTest = process.env.ENV === "dev";
     productId = resolveDodoProductId({
       plan,
       cycle,
@@ -57,7 +58,7 @@ async function newSubscription(body: any, agent: Agent) {
     cycle,
     discount,
     nonce,
-    provider,
+    provider: provider ?? PaymentProvider.SELF,
     status: "pending"
   });
 
