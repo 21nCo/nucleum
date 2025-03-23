@@ -19,6 +19,7 @@
   import { OperatingSystem } from "$lib/client/types/context.type";
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   import { InfoTextType } from "$lib/client/types/text.type";
+  import DiscountBanner from "./elements/DiscountBanner.svelte";
 
   let currentPlanFeatures: Array<{ icon: string; label: string }> = [];
   $: renewalDate = $account.plan
@@ -34,6 +35,11 @@
     }
   }
   $: canCancel = resolveCanCancel($account.plan);
+
+  $: isAppleContext =
+    $context.isEmbed &&
+    ($context.os === OperatingSystem.IOS ||
+      $context.os === OperatingSystem.MACOS);
 
   function resolveCanCancel(plan: IUserPlan | undefined) {
     if (!plan) return false;
@@ -91,7 +97,7 @@
             Expires: {formatDate(renewalDate)}
           {/if}
         </p>
-        {#if $account.plan?.provider}
+        {#if $account.plan?.provider && $account.plan?.provider !== PaymentProvider.SELF}
           <p class="text-sm text-fgs3">
             Purchased through: <b>
               {resolveProviderLabel($account.plan?.provider)}
@@ -101,15 +107,18 @@
       </div>
     </div>
     {#if $account.plan?.plan === PlanType.TRIAL}
-      <div>
-        <Button
-          icon="ph:sparkle-light"
-          label="Upgrade"
-          type={ButtonVariant.PRIMARY}
-          on:click={() => {
-            appStore.runAction(Action.USER_PLAN);
-          }}
-        />
+      <div class="flex flex-col gap-2">
+        <div>
+          <Button
+            icon="ph:sparkle-light"
+            label="Upgrade"
+            type={ButtonVariant.PRIMARY}
+            on:click={() => {
+              appStore.runAction(Action.USER_PLAN);
+            }}
+          />
+        </div>
+        <DiscountBanner isPreventDiscounting={isAppleContext} />
       </div>
     {:else if $account.plan}
       <div class="text-left">
@@ -156,7 +165,21 @@
         parentBgIndex={2}
         type={InfoTextType.INFO}
       />
+    {:else if $account.plan?.plan === PlanType.TRIAL}
+      <InlineInfoBanner
+        content="You will need a subscription to continue using **cloud sync**. Sign up as an offline user instead to use the app for free."
+        parentBgIndex={2}
+        type={InfoTextType.INFO}
+      />
     {/if}
-    <RestorePurchaseAction />
+    <div class="flex justify-between flex-wrap gap-2">
+      <div class="text-b2 text-fgs2">
+        Have questions? Reach us at
+        <a href="mailto:hello@21n.org" class="text-aps1 hover:underline"
+          >hello@21n.org</a
+        >
+      </div>
+      <RestorePurchaseAction />
+    </div>
   </div>
 </div>

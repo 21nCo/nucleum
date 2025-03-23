@@ -4,7 +4,6 @@
   import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
   import type { IPlan, IBillingAddress } from "./userPlan.type";
   import { BillingCycle } from "./userPlan.type";
-  import PlanHeader from "./elements/PlanHeader.svelte";
   import PlanCard from "./elements/PlanCard.svelte";
   import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
   import { Action } from "$lib/client/types/action.enum";
@@ -20,6 +19,7 @@
   import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
   import { GlobalEvent } from "$lib/client/types/event.enum";
   import { PaymentProvider } from "$lib/shared/types/plan.type";
+  import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
 
   let selectedPeriod: BillingCycle = BillingCycle.YEARLY;
   let isBillingAddressCapture = false;
@@ -134,22 +134,33 @@
 {:else if isBillingAddressCapture}
   <BillingAddressCapture bind:billingAddress on:proceed={onProceed} />
 {:else}
-  <div class="flex flex-col gap-6 h-full w-full overflow-auto">
-    <PlanHeader isPreventDiscounting={isAppleContext} />
-
-    <div class="flex justify-center w-full cw:mb-6">
-      <PanelSwitcher
-        items={billingPeriods}
-        bind:value={selectedPeriod}
-        style={PanelSwitcherStyle.TRAIN}
-        size={Size.sm}
-      />
+  <div
+    class="flex flex-col gap-8 h-full w-full overflow-auto max-w-4xl mx-auto"
+  >
+    <div
+      class="flex justify-between items-center w-full cw:mb-6 px-4 cw:mt-12 pt-6 dp:pt-8"
+    >
+      <div class="flex items-center flex-wrap gap-2">
+        <div class="text-h1 text-fgs2">Choose your plan</div>
+        {#if $account.plan?.discount && !isAppleContext}
+          <div class="text-b2 px-2 py-1 rounded-md bg-bgs2 text-ags1">
+            Early Member - 35% discount applied.
+          </div>
+        {/if}
+      </div>
+      <div>
+        <DropDown
+          items={billingPeriods}
+          isDisableSearch={true}
+          bind:value={selectedPeriod}
+          size={Size.sm}
+          popoverWidth="w-40"
+        />
+      </div>
     </div>
 
     <div class="flex-1 px-4 pb-3 dp:pb-12 w-full">
-      <div
-        class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto h-full"
-      >
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mx-auto h-full">
         {#each SUBSCRIPTION_PLANS as plan}
           <PlanCard
             plans={SUBSCRIPTION_PLANS}

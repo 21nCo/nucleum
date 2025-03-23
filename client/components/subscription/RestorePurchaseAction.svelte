@@ -25,7 +25,10 @@
       toasts.error("Please contact us via Discord or email.", {
         title: "Multiple valid plans found."
       });
-    } else if (response.status === "no_valid_transaction") {
+    } else if (
+      response.status === "no_valid_transaction" ||
+      response.status === "no_transactions"
+    ) {
       toasts.error("No valid plan found");
     } else if (response.status === "success") {
       toasts.success("Purchase restored");
@@ -37,7 +40,7 @@
 <div class="flex justify-center gap-2">
   <Button
     label="Restore purchase"
-    isUnderlined={true}
+    icon="ph:arrow-u-up-left-light"
     style={ButtonStyle.PLAIN}
     size={Size.sm}
     on:click={restore}

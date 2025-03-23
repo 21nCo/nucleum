@@ -336,6 +336,9 @@ function initAppStore(seed: IAppStore) {
         },
         ...action.modalParams
       });
+      if (params?.searchParams) {
+        toggleSearchParam(params.searchParams);
+      }
     } else if (action.component) {
       logger.log({ at: "running action", action });
       if (
@@ -391,7 +394,7 @@ function initAppStore(seed: IAppStore) {
         ? import.meta.env?.VITE_HOST
         : window.location.hostname;
     const redirect = ctx.isEmbed
-      ? (import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host)
+      ? import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host
       : window.location.origin;
     // const origin = window.location.origin;
     const guestPartForState = guest ?? (await getDapId()) ?? "";

@@ -89,8 +89,9 @@
   )}
 >
   {#if plan.isPopular}
-    <div class="absolute -top-3 right-4">
-      <span class="px-3 py-1 text-sm rounded-full bg-aps1 text-abg"
+    <div class="absolute top-0 right-0">
+      <span
+        class="px-3 py-1 text-sm rounded-bl-md rounded-tr-md bg-aps1 text-abg"
         >Recommended</span
       >
     </div>
@@ -105,7 +106,7 @@
   {/if}
 
   <div class="flex flex-col h-full">
-    <div class="space-y-6">
+    <div class="space-y-4">
       <div class="flex flex-col gap-4">
         <PlanIcon type={plan.type} product={$appStore.product} />
         <div>
@@ -127,14 +128,14 @@
       <div>
         <div class="flex items-baseline gap-2">
           {#if discountedPrice}
-            <span class="cw:text-h1 text-xl font-semibold text-ags1">
+            <span class="cw:text-h1 text-h1 font-semibold text-ags1">
               ${discountedPrice}
             </span>
           {/if}
           <span
-            class={cn("cw:text-h1 font-medium", {
+            class={cn("cw:text-h1 font-semibold", {
               "line-through text-fgs3 text-h3": discountedPrice,
-              "text-fgs1 text-xl": !discountedPrice
+              "text-fgs1 text-h1": !discountedPrice
             })}
           >
             {#if period === BillingCycle.YEARLY}
@@ -147,26 +148,12 @@
             {period === BillingCycle.LIFETIME ? "one-time" : "/month"}
           </span>
         </div>
-        <div class="mt-1 text-base text-fgs2">
-          {#if period === BillingCycle.YEARLY}
-            Pay <b>
-              {#if discountedPrice}
-                ${discountedPrice * 12}
-              {:else}
-                ${actualPrice * 12}
-              {/if}
-            </b>
-            today for a full year
-          {:else if period === BillingCycle.LIFETIME}
-            Get lifetime for the price of just 3 years!
-          {/if}
-        </div>
       </div>
       <Divider />
       <PlanFeatureList features={plan.features} />
     </div>
 
-    <div class="mt-auto pt-6 flex justify-start">
+    <div class="mt-auto pt-6 mx-6 flex flex-col justify-center">
       {#if isCurrentPlan && currentPlan?.cycle === period && currentPlan?.status === PlanStatus.ACTIVE}
         <div class="space-y-2">
           <Button
@@ -236,6 +223,20 @@
             dispatch("choose");
           }}
         />
+      {/if}
+    </div>
+    <div class="mt-2 mx-auto text-b3 text-fgs2">
+      {#if period === BillingCycle.YEARLY}
+        Pay <b>
+          {#if discountedPrice}
+            ${discountedPrice * 12}
+          {:else}
+            ${actualPrice * 12}
+          {/if}
+        </b>
+        today for a full year
+      {:else if period === BillingCycle.LIFETIME}
+        Get lifetime for the price of just 3 years!
       {/if}
     </div>
   </div>

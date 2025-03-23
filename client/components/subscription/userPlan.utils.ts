@@ -123,11 +123,11 @@ export function resolvePlanLabel(plan: IUserPlan | undefined) {
     if (!isActive) {
       return `Free trial expired - Please upgrade`;
     } else if (plan.trialPlan?.expiry) {
-      return `Free trial - expires ${formatDate(
+      return `Sync free trial (Expires ${formatDate(
         new Date(plan.trialPlan?.expiry)
-      )}`;
+      )})`;
     } else {
-      return `Free trial`;
+      return `Sync free trial`;
     }
   } else if (
     plan.plan === PlanType.NUCLEUS ||

@@ -233,28 +233,15 @@
             </div>
           {/if}
         </div>
-        {#if !isActivePlan || $account.plan?.plan === PlanType.TRIAL}
-          <Button
-            label="Upgrade"
-            type={ButtonVariant.PRIMARY}
-            style={ButtonStyle.OUTLINED}
-            icon="ph:sparkle-light"
-            on:click={() => {
-              appStore.runAction(Action.USER_PLAN);
-            }}
-          />
-        {:else if isActivePlan}
-          <Button
-            label="Go to billing"
-            icon="ph:wallet-light"
-            on:click={() => {
-              appStore.runAction(Action.USER_BILLING);
-            }}
-          />
-        {/if}
-        {#if !isActivePlan || $account.plan?.plan === PlanType.TRIAL}
-          <RestorePurchaseAction />
-        {/if}
+        <Button
+          label="Go to billing"
+          icon="ph:wallet-light"
+          on:click={() => {
+            appStore.toggleSearchParam({
+              setting: Action.USER_BILLING
+            });
+          }}
+        />
       </div>
     </div>
   </div>

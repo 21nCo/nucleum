@@ -50,7 +50,12 @@
       {#if trialDaysLeft && trialDaysLeft < 15}
         <button
           class="flex flex-col gap-1 justify-center items-center bg-aps2 border border-aps1 rounded-md p-1.5 mx-1.5"
-          on:click={() => appStore.runAction(Action.SETTINGS)}
+          on:click={() =>
+            appStore.runAction(Action.SETTINGS, {
+              searchParams: {
+                setting: Action.USER_BILLING
+              }
+            })}
         >
           <span class="text-b2"> Trial </span>
           <span class="text-b4">

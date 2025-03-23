@@ -13,6 +13,7 @@
   import SettingsFooter from "./SettingsFooter.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { Action } from "$lib/client/types/action.enum";
+  import { page } from "$app/stores";
   let selected: string = "";
   let parentBgIndex: number = 2;
   // resolveAction("theme");
@@ -25,8 +26,16 @@
         if (isValidArray(cp)) config = sortArrayByOrder(cp);
       }
     });
+    const pageSub = page.subscribe((x) => {
+      const settingSearchParam = x?.url?.searchParams?.get("setting");
+      if (settingSearchParam) {
+        selected = settingSearchParam;
+        runAction(selected);
+      }
+    });
     return () => {
       sub();
+      pageSub();
     };
   });
   async function runAction(slug: string) {
@@ -78,8 +87,9 @@
                     isActive={selected === item}
                     width="w-40"
                     on:click={() => {
-                      selected = item;
-                      runAction(item);
+                      appStore.toggleSearchParam({
+                        setting: item
+                      });
                     }}
                   />
                 {/each}
