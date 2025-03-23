@@ -158,7 +158,7 @@ export function resolveResourceIcon(resource: Resource) {
     case Resource.node:
       return "ph:hexagon-light";
     case Resource.relation:
-      return "ph:link-light";
+      return "ph:link-simple-horizontal-light";
     case Resource.goal:
       return "ph:circle-light";
     case Resource.task:
@@ -196,14 +196,12 @@ export const availableResources = [
   Resource.node,
   Resource.relation,
   Resource.goal,
-  Resource.task,
-  Resource.todo
+  Resource.task
 ];
 
 export function resolveResourceSwitcher(): IResourceSwitchItem[] {
   const resources = [
     Resource.event,
-    Resource.todo,
     Resource.collection,
     Resource.combination,
     Resource.goal,

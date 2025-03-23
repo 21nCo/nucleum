@@ -53,7 +53,7 @@
     {searchCallback}
     on:select={onselect}
     on:empty-enter={onEmptyEnter}
-    emptyStateLabel="No tags found. Press enter to create a new tag"
-    placeholder="Start typing to add link tags"
+    emptyStateLabel="No relations found. Press enter to create a new relation"
+    placeholder="Start typing to add relations"
   />
 </button>

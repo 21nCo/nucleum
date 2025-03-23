@@ -31,7 +31,7 @@
   import { getSettingsAsModal } from "../settingsActionMap";
   import { globalActions } from "$lib/client/stores/actionMap";
   import { localActions } from "$local/localActionMap";
-
+  import { version, build } from "$local/local";
   let timer: any;
   let isMounted = false;
   pingParent();
@@ -60,6 +60,7 @@
    * Note: The order of operations is important as later operations rely on earlier ones.
    */
   async function bootup() {
+    setAppVersion();
     await account.init();
     await setLaunchContext();
     initActions();
@@ -91,6 +92,10 @@
     let actions = [...localActions, ...modifiedGlobalActions];
     if (isSheet) appStore.initActionsForSheet(actions);
     else appStore.initActions(actions, getSettingsAsModal());
+  }
+
+  function setAppVersion() {
+    appStore.setVersion(version, build);
   }
 
   /**

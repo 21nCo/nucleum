@@ -269,10 +269,6 @@
             />
           {/if}
         </div>
-      {:else if $collection.isInEditMode && rightPartWidth > 300}
-        <span class="text-fgs3 text-b3 whitespace-nowrap">
-          Edit mode is on
-        </span>
       {/if}
       {#if !isSearchFocused}
         <slot name="additional"></slot>
@@ -283,15 +279,13 @@
             bind:on={isShowMetaViews}
           />
         {/if}
-        <Toggle
-          icon={$collection.isInEditMode
-            ? "ph:pencil-simple-slash-light"
-            : "ph:pencil-simple-line-light"}
-          tooltip={$collection.isInEditMode
-            ? "Exit edit mode"
-            : "Enter edit mode"}
-          bind:on={$collection.isInEditMode}
-        />
+        {#if !$collection.isInEditMode}
+          <Toggle
+            icon="ph:pencil-simple-line-light"
+            tooltip="Enter edit mode"
+            bind:on={$collection.isInEditMode}
+          />
+        {/if}
         <ContextMenuAction
           menuResolver={() =>
             resolveCollectionContextMenu($collection, ResourceAccessPoint.SELF)}

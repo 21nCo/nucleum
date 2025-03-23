@@ -16,6 +16,7 @@
   import { sanitizeAndResolve } from "../node/url.utils";
   import {
     ActiveCaptureStore,
+    clipboard,
     type IActiveCaptureStore
   } from "./capture.store";
   import type {
@@ -168,9 +169,9 @@
   }
 
   function onInsertIntoMarkdown() {
-    $captureStore.clipboard = {
+    clipboard.set({
       ...data
-    };
+    });
     modalEvent.hide(MemotronAction.PASTE_CONFIRMATION);
     appStore.runAction(
       resourceAction(Resource.node, ResourceActionType.CREATE),

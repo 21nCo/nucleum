@@ -82,6 +82,7 @@
   import { toasts } from "$lib/client/stores/notification.store";
   import { Action } from "$lib/client/types/action.enum";
   import InlineSearchBar from "$lib/client/elements/InlineSearchBar.svelte";
+  import Icon from "$lib/client/elements/Icon.svelte";
 
   export let id: string = "";
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -573,6 +574,17 @@
         })}
         on:scroll={onScroll}
       >
+        {#if $collection.isInEditMode && !isCoverPickerOpen}
+          <button
+            class="w-full min-h-12 bg-ass1 text-abg flex gap-2 items-center justify-center"
+            on:click={() => {
+              collection.toggleEditMode(false);
+            }}
+          >
+            <Icon icon="ph:x-light" size={Size.sm} class="text-abg" />
+            <span> Close edit mode </span>
+          </button>
+        {/if}
         <div
           class={cn("px-4 stickyheader", {
             "sticky top-0": isSingleViewMode,
@@ -639,18 +651,6 @@
                 {/if}
               </InlineSearchBar>
             </div>
-          </div>
-        {/if}
-        {#if $collection.isInEditMode && isConstrainedWidth}
-          <div class="px-4 flex justify-center items-center w-full h-12">
-            <Button
-              label="Close edit mode"
-              icon="ph:x-light"
-              on:click={() => {
-                collection.toggleEditMode(false);
-              }}
-              style={ButtonStyle.PLAIN}
-            />
           </div>
         {/if}
         {#if isShowMetaViews}

@@ -20,7 +20,7 @@
   import type { IMultiFileCaptureData } from "./capture.type";
   import { resolveMultipleFilesData } from "./capture.utils";
   import { createEventDispatcher } from "svelte";
-  import type { IActiveCaptureStore } from "./capture.store";
+  import { clipboard, type IActiveCaptureStore } from "./capture.store";
   export let captureStore: IActiveCaptureStore;
   const dispatch = createEventDispatcher();
 
@@ -109,9 +109,9 @@
   async function handleInsertIntoMd(e: MouseEvent) {
     if (e) e.stopPropagation();
     if (!multipleFilesData) return;
-    $captureStore.clipboard = {
+    clipboard.set({
       multipleFiles: multipleFilesData
-    };
+    });
     appStore.runAction(MemotronAction.CAPTURE_SECONDARY, {
       searchParams: {
         clipboard: true
@@ -137,7 +137,7 @@
         multiple: true,
         maxSize: MAX_FILE_SIZE_MB * 1024 * 1024,
         onDrop: handleDrop,
-        dragOverClass: ["bg-opacity-100", "border-fgs3"]
+        dragOverClass: ["bg-bgs2/100", "border-fgs3"]
       }}
     >
       <div class="flex w-full justify-end p-3">

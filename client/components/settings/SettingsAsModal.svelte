@@ -6,7 +6,7 @@
   import ComponentResolver from "$lib/client/layout/paint/ComponentResolver.svelte";
   import type { IAction } from "$lib/client/types/action.type";
   import { onMount } from "svelte";
-  import type { AppStore } from "$lib/client/types/appStore.type";
+  import type { IAppStore } from "$lib/client/types/appStore.type";
   import { appStore } from "$lib/client/stores/app.store";
   import { isValidArray, sortArrayByOrder } from "$lib/shared/utils/obj.utils";
   import ProfileCpSection from "./account/ProfileCPSection.svelte";
@@ -19,7 +19,7 @@
   let pageAction: IAction | null = null;
   let config: any;
   onMount(() => {
-    const sub = appStore.subscribe((x: AppStore) => {
+    const sub = appStore.subscribe((x: IAppStore) => {
       if (x?.appData?.cp) {
         let cp = x.appData.cp;
         if (isValidArray(cp)) config = sortArrayByOrder(cp);

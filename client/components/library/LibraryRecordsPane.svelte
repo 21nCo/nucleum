@@ -119,8 +119,11 @@
   };
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
 
+  $: isCustomPanel = isCustomPane(resource);
+
   let pageSub: any;
   onMount(async () => {
+    if (isCustomPanel) return;
     pageSub = page.subscribe(async (p) => {
       const subResourceParam = p.url.searchParams.get("type");
       let isRefreshNeeded = false;
@@ -152,7 +155,7 @@
   });
 
   onDestroy(() => {
-    pageSub();
+    if (pageSub) pageSub();
   });
 
   function onSelectAll() {
@@ -178,6 +181,7 @@
   }
 
   async function refresh(isPagination?: boolean) {
+    if (isCustomPanel) return;
     logger.log({
       at: "LibraryRecordsPane - refresh",
       isPagination,
@@ -379,7 +383,7 @@
   }
 </script>
 
-{#if isCustomPane(resource)}
+{#if isCustomPanel}
   {#if resource === Resource.relation}
     <LibraryRelationsPane />
   {:else if resource === Resource.task}

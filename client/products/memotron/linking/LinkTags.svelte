@@ -30,7 +30,7 @@
     <Tag
       label={tag.label}
       size={Size.sm}
-      icon="ph:tag-light"
+      icon="ph:link-simple-horizontal-light"
       on:click={(e) => onTagClick(tag.id, e)}
       on:remove={() => onRemove(tag.id)}
     />

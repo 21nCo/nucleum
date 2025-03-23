@@ -232,13 +232,13 @@ export const memotronActions: IAction[] = [
     }
   },
   {
-    action: resourceAction(Resource.linkTag, ResourceActionType.BROWSE),
+    action: resourceAction(Resource.relation, ResourceActionType.BROWSE),
     type: ActionType.MODAL,
-    label: "Link Tags",
-    icon: "ph:tag-light",
+    label: "Relations",
+    icon: "ph:link-simple-horizontal-light",
     component: LinkTagsControlPanel,
     modalParams: {
-      title: "Link Tags",
+      title: "Relations",
       layout: {
         size: Size.lg,
         orientation: Orientation.Horizontal

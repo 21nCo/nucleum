@@ -12,6 +12,8 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { resourceAction } from "../../flux/resourceStores/resource.utils";
   import FloatingButton from "$lib/client/elements/button/FloatingButton.svelte";
+  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  import { PersistenceActionType } from "$lib/client/types/data.type";
   export let date: Date;
   let isRefreshing = false;
   let tasks: ITaskThumb[] = [];
@@ -41,6 +43,13 @@
       }
     );
   }
+
+  function onResourceMutation(event: CustomEvent) {
+    const params = event.detail?.params;
+    if (params?.action === PersistenceActionType.INSERT) {
+      refreshTimeline();
+    }
+  }
 </script>
 
 <div class="relative w-full h-full">
@@ -69,3 +78,14 @@
     />
   {/if}
 </div>
+<ComponentBaseLayer
+  subscribeToResource={new Set([Resource.task])}
+  subscribeToContext={new Set([
+    ResourceAccessPoint.CALENDAR,
+    resourceAction(Resource.task, ResourceActionType.CREATE)
+  ])}
+  on:syncDown={() => {
+    refreshTimeline();
+  }}
+  on:change={onResourceMutation}
+/>

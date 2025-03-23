@@ -162,7 +162,7 @@
         >
           <Tag
             label={item.label}
-            icon="ph:tag-light"
+            icon="ph:link-simple-horizontal-light"
             on:click={() => {
               inputValueWithinGroup = item.label ?? "";
             }}

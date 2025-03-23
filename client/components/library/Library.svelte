@@ -19,7 +19,6 @@
   import { recentsStore } from "$lib/client/components/record/recent.store";
   import { page } from "$app/stores";
   import view from "$lib/client/stores/view.store";
-  import { logger } from "$lib/client/components/debug/logger.client";
   import SyncStatusPropagator from "$lib/client/elements/feedback/SyncStatusPropagator.svelte";
   import InlineSyncingFeedback from "$lib/client/elements/feedback/InlineSyncingFeedback.svelte";
   import Panel from "$lib/client/layout/paint/Panel.svelte";

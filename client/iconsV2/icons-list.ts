@@ -106,6 +106,10 @@ const phosphorIcons = [
   "copy",
   "link",
   "link-break",
+  "link-simple",
+  "link-simple-horizontal",
+  "link-simple-break",
+  "link-simple-horizontal-break",
   "faders",
   "sliders-horizontal",
 

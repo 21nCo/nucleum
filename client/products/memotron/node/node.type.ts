@@ -148,7 +148,8 @@ export enum ListType {
 }
 
 export enum NodeMetaType {
-  CALENDAR_NOTES = "CALENDAR_NOTES"
+  CALENDAR_NOTES = "CALENDAR_NOTES",
+  AUDIO_TRANSCRIPT = "AUDIO_TRANSCRIPT"
 }
 
 export type LayoutNodeType =

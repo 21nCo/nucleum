@@ -85,6 +85,7 @@
   let error: string | null = null;
   let dev_isDisableSyncOnAppear = false;
   let subs: any[] = [];
+  const isDebug = import.meta.env?.DEV;
 
   onMount(async () => {
     if ((<any>window).Intercom)
@@ -118,7 +119,7 @@
       if (userDataState?.paginateResources) {
         await flux.paginateResources(userDataState.paginateResources, 100);
         dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
-      } else if (userDataState?.counts && !import.meta.env?.DEV) {
+      } else if (userDataState?.counts && !isDebug) {
         await flux.reconcile({ counts: userDataState.counts });
         dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
       }
@@ -167,7 +168,7 @@
         await recentsStore.refresh(searcheableResources);
         await account.ping();
       }
-      if (isExtensionEnvironment() || import.meta.env?.DEV) return;
+      if (isExtensionEnvironment() || isDebug) return;
       performAppUpdateCheck();
     } catch (e) {
       logger.error(e);
@@ -178,9 +179,9 @@
    * Checks if the app version on client is different from the version on server. If the versions are different, it will run the dbo update and prompt user to reload the app if it is a web app.
    */
   async function performAppUpdateCheck() {
-    const versionOnClient = $appStore.appData?.version;
+    const versionOnClient = $appStore.version;
     await refreshAppStaticData();
-    const latestVersion = $appStore.appData?.version;
+    const latestVersion = resolveLatestVersion();
     if (versionOnClient !== latestVersion) {
       if (!$context.isEmbed) {
         toasts.trigger({
@@ -202,6 +203,15 @@
       },
       LogType.INFO
     );
+
+    function resolveLatestVersion() {
+      const availability = $appStore.appData?.availability;
+      if (!availability) return;
+      const ctx = !$context.isEmbed ? "web" : $context.os?.toLowerCase();
+      const updated = availability[ctx];
+      if (!updated) return;
+      return updated;
+    }
   }
 
   const windowResizeListener = (event: Event) => {
@@ -230,7 +240,7 @@
         isLiteMode,
         account: $account
       });
-      if (!isLiteMode && !import.meta.env?.DEV) {
+      if (!isLiteMode && !isDebug) {
         await refreshAppStaticData();
       }
       const dapId = await getDapId();
@@ -280,7 +290,7 @@
       new SurrealPersistence(),
       {
         ...params,
-        appVersion: $appStore.appData?.version,
+        appVersion: $appStore.version + "." + $appStore.build,
         remoteOnlyStores: [...remoteOnlyStores]
       }
     );
@@ -355,7 +365,7 @@
    */
   async function refreshAppStaticData() {
     try {
-      const appData = await new Persistence().fetchAppData();
+      const appData = await new Persistence().fetchAppData($appStore.env);
       if (!appData) {
         throw new Error("App data not found");
       }
@@ -475,7 +485,7 @@
   }
   function handleBeforeUnload(event: any) {
     if (
-      !import.meta.env?.DEV &&
+      !isDebug &&
       ($context.isInOfflineMode || $account.dataMode === UserDataMode.LOCAL)
     ) {
       event.preventDefault();

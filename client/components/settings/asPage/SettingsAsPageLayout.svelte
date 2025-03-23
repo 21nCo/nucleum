@@ -1,6 +1,6 @@
 <script lang="ts">
   import { appStore } from "$lib/client/stores/app.store";
-  import type { AppStore } from "$lib/client/types/appStore.type";
+  import type { IAppStore } from "$lib/client/types/appStore.type";
   import { onMount } from "svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
   import CpThumbnailList from "./SettingsList.svelte";
@@ -20,10 +20,9 @@
   let cpConfiguration: any;
   let color = retrieveCurrentColors($appearance)?.aps1;
   onMount(() => {
-    const unsubscribe = appStore.subscribe((x: AppStore) => {
+    const unsubscribe = appStore.subscribe((x: IAppStore) => {
       if (x?.appData?.cp) {
         let cp = x.appData.cp;
-        console.log({ cp });
         if (isValidArray(cp)) cpConfiguration = sortArrayByOrder(cp);
       }
     });

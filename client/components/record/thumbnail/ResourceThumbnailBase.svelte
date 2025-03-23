@@ -80,6 +80,10 @@
       {isHidePreview}
       {isApplyCustomColor}
       on:action
-    />
+    >
+      <slot slot="right" name="right">
+        <slot name="right" />
+      </slot>
+    </ResourceThumbnailContextMenu>
   {/if}
 </div>

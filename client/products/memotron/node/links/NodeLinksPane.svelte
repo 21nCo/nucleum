@@ -367,8 +367,8 @@
               bind:on={isShowLinkSuggestions}
             /> -->
             <Toggle
-              icon="ph:tag-light"
-              tooltip="Link tags"
+              icon="ph:link-simple-horizontal-light"
+              tooltip="Relations"
               bind:on={isShowLinkTagFilters}
               count={selectedLinkTags.length > 0
                 ? selectedLinkTags.length

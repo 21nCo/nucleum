@@ -1,6 +1,6 @@
 import { get, writable } from "svelte/store";
 import { AppSkin } from "$lib/client/types/appearance.type";
-import type { AppStore } from "$lib/client/types/appStore.type";
+import type { IAppStore } from "$lib/client/types/appStore.type";
 import type { DragAndDrop } from "$lib/client/types/draganddrop.type";
 import { DragStatus } from "$lib/client/types/dragstatus.enum";
 import blankJson from "$lib/client/data/blank.json";
@@ -37,6 +37,7 @@ import type { IRecordId } from "../types/data.type";
 import account from "./account.store";
 import { tabs } from "../layout/tabs/tabs.store";
 import { resourceAction } from "../components/flux/resourceStores/resource.utils";
+import { Product } from "../types/product.type";
 
 // export const app = writable<{ product: string; env: string }>({
 //   product: "tidy",
@@ -149,7 +150,7 @@ export const appConstants = {
 const resourceSpecificSearchParams = ["edit", /-type$/, "popAt"];
 
 export const appStore = initAppStore({
-  product: "tidy",
+  product: Product.NUCLEUS,
   env: "dev",
   isDebugMode,
   isExperimentalMode,
@@ -160,8 +161,8 @@ export const appStore = initAppStore({
   interactionMode: InteractionMode.DEFAULT
 });
 
-function initAppStore(seed: AppStore) {
-  const { subscribe, set, update } = writable<AppStore>(seed);
+function initAppStore(seed: IAppStore) {
+  const { subscribe, set, update } = writable<IAppStore>(seed);
 
   const resolveComponentFromPath = (path: string) => {
     const actions = get(appStore).actions;
@@ -213,7 +214,7 @@ function initAppStore(seed: AppStore) {
     logger.log({ method: "gotoPath", path });
     //TODO
     // appStore.hideFullScreenPlayer();
-    update((n: AppStore) => {
+    update((n: IAppStore) => {
       n = {
         ...n,
         currentPath: path,
@@ -245,7 +246,7 @@ function initAppStore(seed: AppStore) {
     params: any = null
   ) => {
     const path = `/${item}/${id}`;
-    update((n: AppStore) => {
+    update((n: IAppStore) => {
       n = {
         ...n,
         currentPath: path,
@@ -390,7 +391,7 @@ function initAppStore(seed: AppStore) {
         ? import.meta.env?.VITE_HOST
         : window.location.hostname;
     const redirect = ctx.isEmbed
-      ? import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host
+      ? (import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host)
       : window.location.origin;
     // const origin = window.location.origin;
     const guestPartForState = guest ?? (await getDapId()) ?? "";
@@ -767,7 +768,7 @@ function initAppStore(seed: AppStore) {
 
   return {
     subscribe,
-    set: (m: AppStore) => {
+    set: (m: IAppStore) => {
       set(m);
     },
     update,
@@ -775,14 +776,21 @@ function initAppStore(seed: AppStore) {
       product: string;
       env: string;
     }) => {
-      update((n: AppStore) => {
+      update((n: IAppStore) => {
         n.product = details.product;
         n.env = details.env;
         return n;
       });
     },
+    setVersion(version: string, build: number) {
+      update((n: IAppStore) => {
+        n.version = version;
+        n.build = build;
+        return n;
+      });
+    },
     loadAppData(data: any, params?: { isDefaultData: boolean }) {
-      update((n: AppStore) => {
+      update((n: IAppStore) => {
         const env = n.env;
         if (data.env && data.env[env]) {
           n.appData = { ...data, ...data.env[env] };
@@ -796,14 +804,14 @@ function initAppStore(seed: AppStore) {
       });
     },
     turnDebugMode(isDebugMode: boolean) {
-      update((n: AppStore) => {
+      update((n: IAppStore) => {
         n.isDebugMode = isDebugMode;
         return n;
       });
     },
 
     toggleMenuVisibility: (isHidden?: boolean) => {
-      update((n: AppStore) => {
+      update((n: IAppStore) => {
         if (isHidden !== undefined && isHidden !== null) {
           n = { ...n, isMenuHidden: isHidden };
         } else {
@@ -813,13 +821,13 @@ function initAppStore(seed: AppStore) {
       });
     },
     toggleTopBar: (isMinimal: boolean) => {
-      update((n: AppStore) => {
+      update((n: IAppStore) => {
         n = { ...n, isMinimalTopBar: isMinimal };
         return n;
       });
     },
     setCurrentPath: (path: string) => {
-      update((n: AppStore) => {
+      update((n: IAppStore) => {
         n = {
           ...n,
           currentPath: path,
@@ -829,14 +837,14 @@ function initAppStore(seed: AppStore) {
       });
     },
     initActions: (actions: IAction[], settings: IAction[]) => {
-      update((n: AppStore) => {
+      update((n: IAppStore) => {
         if (!n.actions) n.actions = [];
         n.actions = [...actions, ...settings];
         return n;
       });
     },
     initActionsForSheet: (actions: IAction[]) => {
-      update((n: AppStore) => {
+      update((n: IAppStore) => {
         n.actions = [...actions];
         return n;
       });

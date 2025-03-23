@@ -286,10 +286,23 @@ export class SearchStore {
   ) {
     logger.log({ at: "searchForLinking", query, params });
     if (!isValidString(query)) {
-      let items = recentsStore.resolve({
-        type: params?.resource,
-        exclude: params?.exclude
-      });
+      let items = [];
+      if (params?.resource) {
+        items = recentsStore.resolve({
+          type: params?.resource,
+          exclude: params?.exclude
+        });
+      } else {
+        const recentNodes = recentsStore.resolve({
+          type: Resource.node,
+          exclude: params?.exclude
+        });
+        const recentCollections = recentsStore.resolve({
+          type: Resource.collection,
+          exclude: params?.exclude
+        });
+        items = [...recentNodes, ...recentCollections];
+      }
       if (params?.subType && params.resource === Resource.node) {
         items = items.filter((x) => x.contentType === params.subType);
       } else if (params?.subType && params.resource === Resource.collection) {
@@ -420,6 +433,7 @@ export class SearchStore {
             ...additionalFilters,
             isArchived: additionalFilters?.isArchived ?? false,
             contentType: subType ? [subType] : [...rootNodeTypeList],
+            metaType: false,
             creationContext: subType ? undefined : false
           },
           groupBy: ["all"]

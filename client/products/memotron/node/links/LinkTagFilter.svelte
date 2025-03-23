@@ -44,6 +44,6 @@
   </div>
 {:else}
   <span class="w-full text-center text-b2 text-fgs3">
-    No link tags present.
+    No relations present.
   </span>
 {/if}

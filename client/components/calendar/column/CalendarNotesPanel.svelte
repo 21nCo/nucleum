@@ -12,6 +12,7 @@
   } from "$lib/client/products/memotron/node/node.type";
   import type { TimeScaleUnit } from "$lib/client/types/time.type";
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  import { setContext } from "svelte";
   import { ResourceAccessMode } from "../../flux/resourceStores/resource.type";
   import { resolveCalendarNotesId } from "../calendar.utils";
 
@@ -38,8 +39,16 @@
     }
     node = ActiveNodeStore.resolve(id);
     await node.init(ResourceAccessMode.INLINE);
+    nodeContext.id = id;
     isLoading = false;
   }
+
+  const nodeContext = {
+    id: $node?.id,
+    contentType: NodeType.NODULAR_MARKDOWN
+  };
+
+  setContext("node", nodeContext);
 
   function formatDate(date: Date, scale: TimeScaleUnit) {
     return date.toLocaleDateString("en-US", {

@@ -62,12 +62,14 @@
         const recents = uiState
           .getState(UIState.captureShortcutRecents)
           ?.map((x) => x.toString());
-        const _types = data.map((type: any) => ({
-          value: type.id,
-          label: type.label,
-          icon: type.avatar,
-          isShortcut: true
-        }));
+        const _types = data
+          .filter((x) => !x.resource || x.resource === Resource.node)
+          .map((type: any) => ({
+            value: type.id,
+            label: type.label,
+            icon: type.avatar,
+            isShortcut: true
+          }));
         types = _types.sort((a, b) => {
           const aIndex = recents.indexOf(a.value.toString());
           const bIndex = recents.indexOf(b.value.toString());

@@ -37,18 +37,18 @@
   function onReplace(e: CustomEvent) {
     isCoverPickerOpen = true;
     dispatch("pick");
-    if (e.detail) e.detail.stopPropagation();
+    if (e instanceof MouseEvent) e.stopPropagation();
   }
 
   function onClose(e: CustomEvent) {
     isCoverPickerOpen = false;
-    if (e.detail) e.detail.stopPropagation();
+    if (e instanceof MouseEvent) e.stopPropagation();
   }
 
   function onRemove(e: CustomEvent) {
     cover = undefined;
     dispatch("change", cover);
-    if (e.detail) e.detail.stopPropagation();
+    if (e instanceof MouseEvent) e.stopPropagation();
   }
 
   function onClick(e: MouseEvent) {

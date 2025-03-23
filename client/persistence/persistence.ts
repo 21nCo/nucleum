@@ -200,20 +200,13 @@ export class Persistence {
       logger.error(err);
     }
   }
-  getLatestAppVersion = async () => {
-    try {
-      let appData = await this.fetchAppData();
-      if (!appData) return;
-      return appData.version;
-    } catch (err) {
-      logger.error(err);
-    }
-  };
-  fetchAppData = async () => {
+  fetchAppData = async (env: string) => {
     try {
       const product = await clientStorage.get(ClientStorageKey.PRODUCT);
       if (!product) return;
-      let response = await performStaticDataOperation(`next/${product}.json`);
+      let response = await performStaticDataOperation(
+        `static/${product}/${env}.json`
+      );
       if (response?.ok) {
         let jsonValue = await response.json();
         if (!jsonValue) return;

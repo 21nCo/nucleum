@@ -54,6 +54,7 @@ export type ICapture = IResource & {
    */
   nodeId?: IRecordId;
   /**
+   * @deprecated - use `clipboard` store instead
    * Used in context of `Insert into markdown` from global paste and global drag and drop upload
    */
   clipboard?: IPasteCaptureData;

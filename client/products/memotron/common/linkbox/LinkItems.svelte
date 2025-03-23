@@ -49,41 +49,46 @@
   }
 
   async function refreshExpansion(item: IRecordId) {
-    expansionState = "loading";
-    propertyCount = undefined;
-    const type = determineResourceType(item);
-    if (type === Resource.collection) {
-      const result = await collectionStore.resolveTypes([item], true);
-      if (result && isValidArrayWithData(result)) {
-        types = result;
-        if (
-          types[0]?.properties?.length > 0 ||
-          types[0]?.extendProperties?.length > 0
-        )
-          expansionState = "has-props";
-        else expansionState = "no-props";
-      } else {
-        expansionState = "not-type";
-      }
-    } else if (type === Resource.node) {
-      if (!nodeId) {
-        expansionState = "error";
-        return;
-      }
-      const linkResult = await linker.selectMany({
-        filters: {
-          in: nodeId.toString(),
-          out: item.toString()
+    try {
+      expansionState = "loading";
+      propertyCount = undefined;
+      const type = determineResourceType(item);
+      if (type === Resource.collection) {
+        const result = await collectionStore.resolveTypes([item], true);
+        if (result && isValidArrayWithData(result)) {
+          types = result;
+          if (
+            types[0]?.properties?.length > 0 ||
+            types[0]?.extendProperties?.length > 0
+          )
+            expansionState = "has-props";
+          else expansionState = "no-props";
+        } else {
+          expansionState = "not-type";
         }
-      });
-      if (linkResult && isValidArrayWithData(linkResult)) {
-        link = linkResult[0];
-        expansionState = "node";
-      } else {
-        expansionState = "error";
+      } else if (type === Resource.node) {
+        if (!nodeId) {
+          expansionState = "error";
+          return;
+        }
+        const linkResult = await linker.selectMany({
+          filters: {
+            in: nodeId.toString(),
+            out: item.toString()
+          }
+        });
+        if (linkResult && isValidArrayWithData(linkResult)) {
+          link = linkResult[0];
+          expansionState = "node";
+        } else {
+          expansionState = "error";
+        }
       }
+      propagateExpansionState();
+    } catch (e) {
+      console.error(e);
+      expansionState = "error";
     }
-    propagateExpansionState();
   }
 
   function propagateExpansionState() {

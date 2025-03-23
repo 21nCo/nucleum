@@ -15,6 +15,8 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import type { IRecordId } from "$lib/client/types/data.type";
   import TaskThumbnailGoalLabel from "./TaskThumbnailGoalLabel.svelte";
+  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  import { Resource } from "../flux/resourceStores/resource.enum";
   export let item: ITaskThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let size: Size.sm | Size.md | Size.lg = Size.md;
@@ -27,6 +29,18 @@
   let isDatePickerOpen = false;
   $: isOverdue =
     !item.isChecked && item.date && compareDates(item.date, new Date(), "<");
+
+  function onTaskChanges(event: CustomEvent) {
+    const record = event.detail.params?.record;
+    if ("isChecked" in record && record.isChecked !== item.isChecked) {
+      item.isChecked = record.isChecked;
+      if (!item.isChecked) {
+        item.completedAt = undefined;
+      } else {
+        item.completedAt = new Date();
+      }
+    }
+  }
 </script>
 
 <ResourceThumbnailBase
@@ -55,12 +69,12 @@
       {size}
       {accessPoint}
     />
-    <div class="flex-1 flex flex-col userdata">
+    <div class="flex-1 flex flex-col userdata whitespace-no-wrap min-w-fit">
       {#if item.goal && accessPoint !== ResourceAccessPoint.GOAL}
         <TaskThumbnailGoalLabel goal={item.goal} />
       {/if}
       {#if item.isChecked}
-        <span class="line-through">
+        <span class="line-through whitespace-no-wrap">
           {item.label}
         </span>
       {:else}
@@ -79,32 +93,34 @@
         </span>
       {/if}
     </div>
-
-    {#if item.date && !isHovering}
-      <span
-        class={cn("text-b3 userdata", {
-          "text-ars1": isOverdue,
-          "text-fgs3": !isOverdue
-        })}
-      >
-        Due: {formatDate(item.date)}
-      </span>
-    {/if}
-    {#if item.completedAt && !isHovering}
-      {@const isCompletedBeforeDue =
-        item.date && compareDates(item.completedAt, item.date, "<=")}
-      {#if item.date}
-        <span class="text-b3 text-fgs3 userdata"> | </span>
+    <div class="flex flex-wrap gap-2 justify-end">
+      {#if item.date && !isHovering}
+        <span
+          class={cn("text-b3 userdata", {
+            "text-ars1": isOverdue,
+            "text-fgs3": !isOverdue
+          })}
+        >
+          Due: {formatDate(item.date)}
+        </span>
       {/if}
-      <span
-        class={cn("text-b3 text-ags1 userdata", {
-          "text-ags1": isCompletedBeforeDue,
-          "text-ars1": !isCompletedBeforeDue && item.date
-        })}
-      >
-        Completed: {formatDate(item.completedAt)}
-      </span>
-    {/if}
+      {#if item.completedAt && !isHovering}
+        {@const isCompletedBeforeDue =
+          item.date && compareDates(item.completedAt, item.date, "<=")}
+        {#if item.date}
+          <span class="text-b3 text-fgs3 userdata"> | </span>
+        {/if}
+        <span
+          class={cn("text-b3 text-ags1 userdata", {
+            "text-ags1": isCompletedBeforeDue,
+            "text-ars1": !isCompletedBeforeDue && item.date
+          })}
+        >
+          Completed: {formatDate(item.completedAt)}
+        </span>
+      {/if}
+    </div>
+
     {#if isHovering || isDatePickerOpen}
       <div class="flex gap-2">
         <DatePicker
@@ -132,3 +148,8 @@
     {/if}
   </div>
 </ResourceThumbnailBase>
+<ComponentBaseLayer
+  subscribeToResource={new Set([Resource.task])}
+  subscribeToRecords={[item.id]}
+  on:change={onTaskChanges}
+/>

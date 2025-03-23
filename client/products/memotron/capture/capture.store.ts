@@ -1,4 +1,4 @@
-import { get } from "svelte/store";
+import { get, writable } from "svelte/store";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import {
   NodeType,
@@ -16,7 +16,8 @@ import {
 import {
   CaptureType,
   type IActiveCapture,
-  type ICapture
+  type ICapture,
+  type IPasteCaptureData
 } from "$lib/client/products/memotron/capture/capture.type";
 import account from "$lib/client/stores/account.store";
 import { toasts } from "$lib/client/stores/notification.store";
@@ -87,6 +88,8 @@ import { CollectibleStore } from "$lib/client/components/collection/collectible.
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 const captureAction = resourceAction(Resource.node, ResourceActionType.CREATE);
+
+export const clipboard = writable<IPasteCaptureData | null>(null);
 
 function generateSeedStore(): IActiveCapture {
   const blockId = generateResourceId(Resource.node);

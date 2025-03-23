@@ -60,6 +60,7 @@
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
   import {
     ActiveCaptureStore,
+    clipboard,
     type IActiveCaptureStore
   } from "./capture.store";
   import { debouncer } from "$lib/client/utils/utils";
@@ -152,13 +153,13 @@
     try {
       logger.debug({
         at: "Capture.svelte - onClipboard",
-        clipboard: $captureStore.clipboard
+        clipboard: $clipboard
       });
       isProcessingClipboard = true;
       const ogEmptyState = isEmptyState;
       isEmptyState = false;
-      if (!$captureStore.clipboard || !$captureStore.body) return;
-      const data = $captureStore.clipboard;
+      if (!$clipboard || !$captureStore.body) return;
+      const data = $clipboard;
       let newBlock: IBlock[] | undefined = undefined;
 
       if (data.multipleFiles) {
@@ -257,7 +258,7 @@
     } finally {
       isEmptyState = false;
       isProcessingClipboard = false;
-      $captureStore.clipboard = undefined;
+      clipboard.set(null);
     }
   }
 
@@ -312,6 +313,10 @@
 
   function refreshEmptyState(e?: CustomEvent) {
     logger.log({ at: "Capture.svelte - refreshEmptyState", e });
+    if (isWindowDnD) {
+      isEmptyState = false;
+      return;
+    }
     if (
       isValidString($captureStore.label) ||
       captureType === CaptureType.AUDIO

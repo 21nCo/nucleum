@@ -93,13 +93,15 @@ class NodeStore extends ResourceStore<INode> {
       params?.filters &&
       "metaType" in params?.filters &&
       params.filters.metaType;
+    const isIdPresent =
+      params?.filters && "id" in params?.filters && params?.filters?.id;
     const filters = {
       creationContext:
         isValidString(params?.search?.query) || isContentTypePresent
           ? undefined
           : false,
       metaType:
-        isValidString(params?.search?.query) || isMetaTypePresent
+        isValidString(params?.search?.query) || isMetaTypePresent || isIdPresent
           ? undefined
           : false,
       ...(params?.filters ?? {}),

@@ -9,10 +9,10 @@
   import type { IAction } from "$lib/client/types/action.type";
   import NavigationHeader from "$lib/client/elements/NavigationHeader.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { isValidString } from "$lib/shared/utils/text.utils";
   import { formatDate } from "$lib/client/utils/time.utils";
   import { Size } from "$lib/client/types/size.enum";
   let pageAction: IAction | null = null;
+  let updatedDate: string | undefined = resolveUpdatedDate();
   $: config = $appStore?.appData?.help;
   async function runAction(slug: string) {
     if (!slug) return;
@@ -25,6 +25,14 @@
       return;
     }
     pageAction = result;
+  }
+
+  function resolveUpdatedDate() {
+    const release = $appStore?.appData?.release;
+    if (!release || !$appStore.version) return;
+    const updated = release[$appStore.version];
+    if (!updated) return;
+    return formatDate(new Date(updated));
   }
 </script>
 
@@ -50,9 +58,7 @@
         <span class="flex flex-col items-end text-b3 text-fgs3">
           <AppNameWithVersion />
           <div>
-            {isValidString($appStore?.appData?.updated)
-              ? "Updated: " + formatDate(new Date($appStore?.appData?.updated))
-              : ""}
+            {updatedDate ? "Updated: " + updatedDate : ""}
           </div>
         </span>
       </div>
