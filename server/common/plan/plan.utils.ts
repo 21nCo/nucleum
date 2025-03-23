@@ -47,10 +47,12 @@ export function resolvePromotePlanQuery(params?: {
             plan: "${params.plan}",
             transactionId: ${params.transactionId},
             paymentDate: "${params.paymentDate}",
-            renewalDate: "${params.renewalDate}",
-            provider: "${params.provider}",
+            renewalDate: ${
+              params.renewalDate ? `"${params.renewalDate}"` : `NONE`
+            },
+            provider: ${params.provider ? `"${params.provider}"` : `NONE`},
             status: "active",
-            isAutoRenew: ${params.isAutoRenew}
+            isAutoRenew: ${params.isAutoRenew ?? false}
         }
     `;
   return query;
