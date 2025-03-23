@@ -35,7 +35,8 @@ async function newSubscription(body: any, agent: Agent) {
   if (provider) {
     productId = `app.${product}.${plan}.${cycle}`;
   } else {
-    const isTest = process.env.NODE_ENV === "dev";
+    const isTest = process.env.ENV === "dev";
+    console.log({ isTest, env: process.env.ENV });
     productId = resolveDodoProductId({
       plan,
       cycle,
