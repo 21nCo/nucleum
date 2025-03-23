@@ -63,17 +63,14 @@
 
   function onRemoveClick() {
     analyticsConfigStore.removeCard(pageId, card.id);
-    dispatch("change", card);
-    refresh();
+    dispatch("removed", card);
   }
 
   function onTimePeriodChange(e: CustomEvent) {
-    console.log({ e, period: card.period });
     analyticsConfigStore.updateCardConfig(pageId, {
       ...card,
       period: e.detail
     });
-    dispatch("change", card);
     refresh();
   }
 
@@ -83,7 +80,6 @@
       ...card,
       type: e.detail
     });
-    dispatch("change", card);
     refresh();
   }
 
@@ -92,7 +88,6 @@
     analyticsConfigStore.updateCardConfig(pageId, {
       ...card
     });
-    dispatch("change", card);
     refresh();
   }
 

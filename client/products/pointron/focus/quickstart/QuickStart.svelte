@@ -57,8 +57,8 @@
     layout = layoutState ?? Layout.LIST;
   }
 
-  async function refresh() {
-    isLoadingState = true;
+  async function refresh(params?: { isPreventLoadingPulse?: boolean }) {
+    if (!params?.isPreventLoadingPulse) isLoadingState = true;
     const result = await searchStore.select({
       filters: {
         isPinnedForQuickFocus: true
@@ -203,7 +203,9 @@
     PointronAction.PIN_TO_QUICK_FOCUS,
     PointronAction.FINISH_FOCUS_SESSION
   ])}
-  on:change={refresh}
+  on:change={() => {
+    refresh({ isPreventLoadingPulse: true });
+  }}
 />
 
 <style>

@@ -41,8 +41,8 @@
     isFocusingAddGoal = true;
   }
 
-  async function refresh() {
-    isRefreshing = true;
+  async function refresh(params?: { isShowLoadingPulse?: boolean }) {
+    if (params?.isShowLoadingPulse) isRefreshing = true;
     const tasksWithGoal = $focusItemsStore.items
       .map((x) => x.tasks)
       .flat()
@@ -74,7 +74,7 @@
     while (!focusItemsStore.isInitialized) {
       await new Promise((resolve) => setTimeout(resolve, 500));
     }
-    refresh();
+    refresh({ isShowLoadingPulse: true });
     fullScreenSub = fullScreen.subscribe((x) => {
       if (!x.path) {
         refresh();
@@ -82,7 +82,7 @@
     });
     appEventSub = appEvents.subscribe((x) => {
       if (x.event === PointronEvent.SESSION_CLOSED) {
-        refresh();
+        refresh({ isShowLoadingPulse: true });
       }
     });
   });

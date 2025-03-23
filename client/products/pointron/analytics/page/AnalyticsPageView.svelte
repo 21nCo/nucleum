@@ -12,17 +12,20 @@
   import { goalStore } from "$lib/client/components/goals/goal.store";
   import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
   import { onMount } from "svelte";
+  import type { AnalyticsPage } from "../analytics.types";
 
   export let id: string;
-  let config = $analyticsConfigStore.pages.find((x) => x.id === id);
   let goals: IGoalThumb[] = [];
   let isLoading = true;
+  let config: AnalyticsPage | undefined;
 
   async function addCard() {
     analyticsConfigStore.addCard(id);
+    refreshConfig();
   }
 
   onMount(() => {
+    refreshConfig();
     refreshGoals();
   });
 
@@ -30,6 +33,10 @@
     isLoading = true;
     goals = await goalStore.selectMany({}, { isIncludeSubItems: true });
     isLoading = false;
+  }
+
+  function refreshConfig() {
+    config = $analyticsConfigStore.pages.find((x) => x.id === id);
   }
 </script>
 
@@ -40,12 +47,13 @@
       "flex-wrap gap-2": !$view.isPortrait
     })}
   >
-    {#each config.cards as card, index}
+    {#each config.cards as card, index (card.id)}
       <AnalyticsCardView
         {card}
         {goals}
         position={{ index, total: config.cards.length }}
         pageId={id}
+        on:removed={() => refreshConfig()}
       />
     {/each}
     {#if $isInEditMode && config.cards.length < 10}

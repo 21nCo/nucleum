@@ -696,7 +696,7 @@ export const pointronActions: IAction[] = [
             );
             const sessionLogs = await sessionLogStore.selectMany({
               filters: {
-                sessionId: params?.componentParams?.id
+                sessionId: params?.componentParams?.id?.toString()
               }
             });
             if (sessionLogs) {
@@ -709,7 +709,7 @@ export const pointronActions: IAction[] = [
             } else {
               toasts.error("Failed to delete session log");
             }
-            appStore.closeResource(params?.componentParams?.id);
+            appStore.closeResource({ id: params?.componentParams?.id });
             return true;
           }
         }
