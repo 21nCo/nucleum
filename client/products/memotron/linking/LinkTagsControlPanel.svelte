@@ -98,11 +98,13 @@
     <InlineErrorMessage bind:error={errorMessage} />
   {/if}
   <div class="flex flex-col flex-grow gap-4 px-0.5 overflow-auto">
-    {#if !groups || groups.length === 0}
-      <EmptyStatusView
-        mainText="No relations found."
-        subText="Add some relations to start using for link relationships."
-      />
+    {#if !groups || groups.length === 0 || groups.every((x) => x.items.length === 0)}
+      <div class="flex flex-col gap-4 justify-center items-center flex-grow">
+        <EmptyStatusView
+          mainText="No relations found."
+          subText="Add some relations to start using for link relationships."
+        />
+      </div>
     {:else}
       {#each groups as group}
         {#if group?.items && group.items.length > 0}

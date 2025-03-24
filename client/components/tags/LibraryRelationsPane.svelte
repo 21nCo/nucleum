@@ -39,8 +39,8 @@
       }}
     />
   </button>
-  <div class="flex flex-col gap-3">
-    {#if selectedSubType === Resource.linkTag}
+  <div class="flex flex-col gap-3 flex-grow">
+    {#if selectedSubType === Resource.linkTag || selectedSubType === Resource.relation}
       <LinkTagsControlPanel />
     {:else}
       <ComingSoonView />
