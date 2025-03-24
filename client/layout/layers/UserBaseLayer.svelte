@@ -433,7 +433,10 @@
         });
         if (parsed.type === "PURCHASE_SUCCESS") {
           loadingMessage.message = "Verifying payment...";
-          const response = await account.verifyPayment(parsed.nonce);
+          const response = await account.verifyPayment(
+            parsed.nonce,
+            parsed.embedTransaction
+          );
           isAppLoading = false;
           modalEvent.hide(Action.USER_PLAN);
           if (response?.status === "success") {
@@ -535,7 +538,7 @@
   <CacheLayer />
 {/if}
 <Intercom />
-{#if $account.plan?.plan === PlanType.NUCLEUS}
+{#if $account.plan?.plan === PlanType.NUCLEUS && !$view.isConstrainedWidth}
   <ZohoSalesIq />
 {/if}
 

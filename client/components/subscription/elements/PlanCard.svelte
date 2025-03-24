@@ -13,6 +13,7 @@
   import { PlanStatus, type IUserPlan } from "$lib/client/types/account.type";
   import { appStore } from "$lib/client/stores/app.store";
   import { properCase } from "$lib/shared/utils/text.utils";
+  import view from "$lib/client/stores/view.store";
   const dispatch = createEventDispatcher();
 
   export let plans: IPlan[];
@@ -153,7 +154,7 @@
       <PlanFeatureList features={plan.features} />
     </div>
 
-    <div class="mt-auto pt-6 mx-6 flex flex-col justify-center">
+    <div class="mt-auto pt-6 mx-6 flex cw:flex-row flex-col justify-center">
       {#if isCurrentPlan && currentPlan?.cycle === period && currentPlan?.status === PlanStatus.ACTIVE}
         <div class="space-y-2">
           <Button
@@ -162,7 +163,7 @@
             type={ButtonVariant.DANGER}
             style={ButtonStyle.OUTLINED}
             isLoading={progressState === "cancelling"}
-            size={Size.lg}
+            size={$view.isConstrainedWidth ? Size.md : Size.lg}
             on:click={() => {
               progressState = "cancelling";
               dispatch("cancel");
@@ -179,7 +180,7 @@
           isLoading={progressState === "switching"}
           type={ButtonVariant.PRIMARY}
           style={ButtonStyle.OUTLINED}
-          size={Size.lg}
+          size={$view.isConstrainedWidth ? Size.md : Size.lg}
           on:click={() => {
             progressState = "switching";
             dispatch("switch");
@@ -191,7 +192,7 @@
           icon="ph:arrow-up-light"
           isLoading={progressState === "upgrading"}
           type={ButtonVariant.PRIMARY}
-          size={Size.lg}
+          size={$view.isConstrainedWidth ? Size.md : Size.lg}
           on:click={() => {
             progressState = "upgrading";
             dispatch("switch");
@@ -204,7 +205,7 @@
           isLoading={progressState === "downgrading"}
           type={ButtonVariant.PRIMARY}
           style={ButtonStyle.OUTLINED}
-          size={Size.lg}
+          size={$view.isConstrainedWidth ? Size.md : Size.lg}
           on:click={() => {
             progressState = "downgrading";
             dispatch("switch");
@@ -217,7 +218,7 @@
           type={ButtonVariant.PRIMARY}
           isLoading={progressState === "initiating"}
           style={plan.isPopular ? ButtonStyle.DEFAULT : ButtonStyle.OUTLINED}
-          size={Size.lg}
+          size={$view.isConstrainedWidth ? Size.md : Size.lg}
           on:click={() => {
             progressState = "initiating";
             dispatch("choose");

@@ -333,8 +333,11 @@ class AccountStore extends ObservableStore<
       logger.error({ at: "restorePurchase", error: e });
     }
   }
-  async verifyPayment(nonce: string) {
-    const response = await this.persistence.verifyPayment(nonce);
+  async verifyPayment(nonce: string, embedTransaction?: any) {
+    const response = await this.persistence.verifyPayment(
+      nonce,
+      embedTransaction
+    );
     if (response && response.id) {
       const plan = response.userPlan ?? response;
       this.update((n) => {

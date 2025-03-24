@@ -33,7 +33,7 @@
     ($context.os === OperatingSystem.IOS ||
       $context.os === OperatingSystem.MACOS);
 
-  const billingPeriods = [
+  let billingPeriods = [
     { value: BillingCycle.MONTHLY, label: "Billed monthly" },
     {
       value: BillingCycle.YEARLY,
@@ -41,8 +41,15 @@
       badge: "-20%"
     }
   ];
-  if (!isAppleContext) {
+  $: if (!isAppleContext) {
+    billingPeriods = billingPeriods.filter(
+      (p) => p.value !== BillingCycle.LIFETIME
+    );
     billingPeriods.push({ value: BillingCycle.LIFETIME, label: "Lifetime" });
+  } else {
+    billingPeriods = billingPeriods.filter(
+      (p) => p.value !== BillingCycle.LIFETIME
+    );
   }
 
   async function onSwitch(plan?: IPlan) {
@@ -147,10 +154,10 @@
       class="flex justify-between items-center w-full cw:mb-6 px-4 cw:mt-12 pt-6 dp:pt-8"
     >
       <div class="flex items-center flex-wrap gap-2">
-        <div class="text-h1 text-fgs2">Choose your plan</div>
+        <div class="cw:text-h3 text-h1 text-fgs2">Choose your plan</div>
         {#if $account.plan?.discount && !isAppleContext && selectedCycle !== BillingCycle.MONTHLY}
           <div
-            class="text-b2 px-2 py-1 rounded-md bg-bgs2 text-ags1 font-medium border border-brs3"
+            class="cw:text-b3 text-b2 px-2 py-1 rounded-md bg-bgs2 text-ags1 font-medium border border-brs3"
           >
             Early Member - {$account.plan?.discount?.first}% discount applied.
           </div>

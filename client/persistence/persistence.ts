@@ -155,10 +155,11 @@ export class Persistence {
     }
   };
 
-  verifyPayment = async (nonce: string) => {
+  verifyPayment = async (nonce: string, embedTransaction?: any) => {
     try {
       const response = await performApiCall("v2/plan/verify", "POST", {
-        nonce
+        nonce,
+        embedTransaction
       });
       if (!response?.ok) {
         return;
