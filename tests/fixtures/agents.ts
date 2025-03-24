@@ -20,7 +20,17 @@ export const mockAgents = {
     context: CONTEXT.USER
   },
   live: {
-    id: "live-agent",
+    id: "m34n2ih47rdb5ovwodg8jih7",
+    db: "m34n2ih47rdb5ovwodg8jih7",
+    ns: "user",
+    tk: "tokenone",
+    region: "insouth",
+    iat: 1733282501,
+    exp: 1735874501,
+    audience: "web.memotron.app",
+    issuer: "21n.live",
+    aud: "web.memotron.app",
+    iss: "21n.live",
     context: CONTEXT.USER
   }
 } as const;

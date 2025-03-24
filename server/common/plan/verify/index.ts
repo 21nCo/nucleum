@@ -6,7 +6,10 @@ import {
 } from "../../errors";
 import { performQueryOnMasterDb } from "$lib/server/surrealHelpers";
 import { verifyPayment } from "../dodoPaymentProvider";
-import { verifyAppleSubscription } from "../applePaymentProvider";
+import {
+  verifyAppleNonConsumablePurchase,
+  verifyAppleSubscription
+} from "../applePaymentProvider";
 import {
   BillingCycle,
   PlanType
@@ -149,7 +152,14 @@ async function handleAppleStoreVerification(params: {
     );
   }
   console.log({ transactionId });
-  const verificationResponse = await verifyAppleSubscription(transactionId);
+  let verificationResponse = null;
+  if (transaction?.cycle === BillingCycle.LIFETIME) {
+    verificationResponse = await verifyAppleNonConsumablePurchase(
+      transactionId
+    );
+  } else {
+    verificationResponse = await verifyAppleSubscription(transactionId);
+  }
   // console.log({ verificationResponse });
   if (!verificationResponse) {
     throw new InternalServerError("Failed to verify Apple subscription status");

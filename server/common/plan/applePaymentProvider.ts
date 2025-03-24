@@ -38,6 +38,10 @@ export async function verifyAppleSubscription(
       environment === "Production"
         ? "https://api.storekit.apple.com/inApps/v1"
         : "https://api.storekit-sandbox.apple.com/inApps/v1";
+    const fallbackBaseUrl =
+      environment === "Production"
+        ? "https://api.storekit-sandbox.apple.com/inApps/v1"
+        : "https://api.storekit.apple.com/inApps/v1";
 
     // App Store Server API endpoint for subscription status
     const url = `${baseUrl}/subscriptions/${transactionId}`;
@@ -46,7 +50,7 @@ export async function verifyAppleSubscription(
       url,
       transactionId
     });
-    const response = await fetch(url, {
+    let response = await fetch(url, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -60,13 +64,30 @@ export async function verifyAppleSubscription(
         process.env.ENV,
         await response.text()
       );
-      return null;
+      const fallbackUrl = `${fallbackBaseUrl}/subscriptions/${transactionId}`;
+      console.log({
+        at: "verifyAppleSubscription - trying sandbox as fallback",
+        fallbackUrl,
+        transactionId
+      });
+      const fallbackResponse = await fetch(fallbackUrl, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      });
+      if (fallbackResponse.ok) {
+        response = fallbackResponse;
+      } else {
+        return null;
+      }
     }
 
     const data = await response.json();
 
     // Save response data to a file
-    // saveResponseToFile(data, transactionId);
+    //saveResponseToFile(data, transactionId);
 
     // Handle response format with data array containing lastTransactions
     if (data.data && Array.isArray(data.data) && data.data.length > 0) {
@@ -418,6 +439,131 @@ export async function getLatestSubscriptionPayment(transactionId: string) {
     return null;
   } catch (error) {
     console.error("Error getting latest subscription payment:", error);
+    return null;
+  }
+}
+
+/**
+ * Verifies an Apple App Store non-consumable purchase using the App Store Server API
+ * @param transactionId The original transaction id or transaction id
+ * @returns Purchase status information
+ */
+export async function verifyAppleNonConsumablePurchase(
+  transactionId: string
+): Promise<AppleVerificationResponse | null> {
+  try {
+    // Create JWT for authentication with Apple
+    const token = createJWT();
+
+    // Apple's environment - production or sandbox
+    const environment = process.env.ENV === "dev" ? "Sandbox" : "Production";
+    const baseUrl =
+      environment === "Production"
+        ? "https://api.storekit.apple.com/inApps/v2"
+        : "https://api.storekit-sandbox.apple.com/inApps/v2";
+
+    // App Store Server API endpoint for transaction history - works for all purchase types
+    const url = `${baseUrl}/history/${transactionId}`;
+    console.log({
+      at: "verifyAppleNonConsumablePurchase",
+      url,
+      transactionId
+    });
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    if (!response.ok) {
+      console.error(
+        "Apple Non-Consumable Purchase Verification Error:",
+        url,
+        process.env.ENV,
+        await response.text()
+      );
+      return null;
+    }
+
+    const data = await response.json();
+
+    // Save response data for debugging
+    saveResponseToFile(data, `non-consumable-${transactionId}`);
+
+    // Handle response format with signedTransactions array
+    if (
+      data.signedTransactions &&
+      Array.isArray(data.signedTransactions) &&
+      data.signedTransactions.length > 0
+    ) {
+      // Parse the transactions
+      const transactions = data.signedTransactions
+        .map((signedTx) => {
+          try {
+            const payloadBase64 = signedTx.split(".")[1];
+            const decodedPayload = Buffer.from(
+              payloadBase64,
+              "base64"
+            ).toString("utf8");
+            return JSON.parse(decodedPayload);
+          } catch (error) {
+            console.error("Error parsing signed transaction:", error);
+            return null;
+          }
+        })
+        .filter((tx) => tx !== null);
+
+      // Sort by purchaseDate in descending order to get the latest
+      transactions.sort((a, b) => {
+        const dateA = new Date(a.purchaseDate).getTime();
+        const dateB = new Date(b.purchaseDate).getTime();
+        return dateB - dateA;
+      });
+
+      // For non-consumable purchases we just need to verify it exists
+      // and hasn't been refunded or revoked
+      if (transactions.length > 0) {
+        const latestTransaction = transactions[0];
+
+        // Check if the transaction type is non-consumable (inAppOwnershipType: "PURCHASED")
+        const isNonConsumable =
+          latestTransaction.type === "Non-Consumable" ||
+          latestTransaction.inAppOwnershipType === "PURCHASED";
+
+        // If it's not a non-consumable purchase, return null
+        if (!isNonConsumable) {
+          console.log(
+            "Transaction is not a non-consumable purchase:",
+            latestTransaction
+          );
+          return null;
+        }
+
+        // Check if the purchase has been revoked or refunded
+        const isRevoked = latestTransaction.revocationReason !== undefined;
+
+        return {
+          status: isRevoked ? "revoked" : "active",
+          originalTransactionId: latestTransaction.originalTransactionId,
+          purchaseDate: new Date(latestTransaction.purchaseDate).toISOString(),
+          expiresDate: null, // Non-consumable purchases don't expire
+          environment: environment,
+          lastTransactionId: latestTransaction.transactionId,
+          transactionData: latestTransaction
+        };
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error({
+      at: "Error verifying Apple non-consumable purchase",
+      error,
+      transactionId
+    });
     return null;
   }
 }
