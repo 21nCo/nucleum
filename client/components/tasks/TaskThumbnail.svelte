@@ -69,13 +69,15 @@
       {size}
       {accessPoint}
     />
-    <div class="flex-1 flex flex-col userdata whitespace-no-wrap min-w-fit">
+    <div class="flex-1 flex flex-col userdata whitespace-no-wrap">
       {#if item.goal && accessPoint !== ResourceAccessPoint.GOAL}
         <TaskThumbnailGoalLabel goal={item.goal} />
       {/if}
       {#if item.isChecked}
-        <span class="line-through whitespace-no-wrap">
-          {item.label}
+        <span class="line-through whitespace-no-wrap shrink-0">
+          <span class="truncate">
+            {item.label}
+          </span>
         </span>
       {:else}
         <span class="">
@@ -122,7 +124,7 @@
     </div>
 
     {#if isHovering || isDatePickerOpen}
-      <div class="flex gap-2">
+      <div class="flex gap-2 shrink-0">
         <DatePicker
           date={item.date}
           placeholder="Set date"

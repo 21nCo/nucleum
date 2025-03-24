@@ -172,7 +172,7 @@
           />
         {:else}
           <Button
-            icon="ph:check-bold"
+            icon="ph:check"
             size={Size.sm}
             type={ButtonVariant.PRIMARY}
             style={ButtonStyle.OUTLINED}
@@ -180,7 +180,7 @@
             on:click={onSave}
           />
           <Button
-            icon="ph:x-bold"
+            icon="ph:x"
             size={Size.sm}
             style={ButtonStyle.OUTLINED}
             tooltip="Cancel"

@@ -82,7 +82,9 @@
       })}
     />
   {:else if initials}
-    <div class="text-h3 text-fgs3">{initials}</div>
+    <div class="text-h3 text-fgs3 min-h-24 flex items-center justify-center">
+      {initials}
+    </div>
   {:else if profilePictureUrl}
     <img
       class={cn("w-full h-full", {

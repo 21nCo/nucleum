@@ -11,6 +11,7 @@
   import { PaymentProvider } from "$lib/shared/types/plan.type";
   import { postMessageToParent } from "$lib/client/utils/embed.utils";
   import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
+  import { BillingCycle } from "./userPlan.type";
 
   let isCancelInProgress = false;
   $: isFullRefundable = resolveIfEligibleForFullRefund(
@@ -39,7 +40,8 @@
   }
 
   function resolveIfEligibleForFullRefund(paymentDate: Date | undefined) {
-    if (!paymentDate) return false;
+    if (!paymentDate || $account.plan?.cycle === BillingCycle.MONTHLY)
+      return false;
     const daysUsed = Math.ceil(
       (new Date().getTime() - new Date(paymentDate).getTime()) /
         (1000 * 60 * 60 * 24)
@@ -64,7 +66,10 @@
   </div>
   <div class="flex flex-col items-center gap-4">
     <div class="text-fgs3 text-b3 text-center">
-      {#if isFullRefundable}
+      {#if $account.plan?.provider === PaymentProvider.APPLE}
+        You will be redirected to the Apple App Store to modify your
+        subscription.
+      {:else if isFullRefundable}
         You will receive a full refund and your plan will be cancelled
         immediately.
       {:else if $account.plan}

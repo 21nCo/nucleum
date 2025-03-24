@@ -39,6 +39,10 @@ export const SUBSCRIPTION_PLANS: IPlan[] = [
       {
         icon: "ph:at-light",
         label: "Email and community support"
+      },
+      {
+        icon: "ph:hand-heart-light",
+        label: "Support our mission *(21n.org)*"
       }
     ]
   },

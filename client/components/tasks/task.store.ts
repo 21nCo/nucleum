@@ -101,7 +101,7 @@ class TaskActions {
   editGoal = {
     value: "editGoal",
     icon: "ph:circle-light",
-    label: "Edit goal",
+    label: "Edit associated goal",
     callback: async () => {
       appStore.runAction(Action.EDIT_TASK_GOAL, {
         componentParams: {

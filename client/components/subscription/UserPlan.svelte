@@ -21,7 +21,7 @@
   import { PaymentProvider } from "$lib/shared/types/plan.type";
   import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
 
-  let selectedPeriod: BillingCycle = BillingCycle.YEARLY;
+  let selectedCycle: BillingCycle = BillingCycle.YEARLY;
   let isBillingAddressCapture = false;
   let selectedPlan: IPlan | null = null;
   let billingAddress: IBillingAddress | undefined = undefined;
@@ -34,10 +34,16 @@
       $context.os === OperatingSystem.MACOS);
 
   const billingPeriods = [
-    { value: BillingCycle.MONTHLY, label: "Monthly" },
-    { value: BillingCycle.YEARLY, label: "Yearly", badge: "-20%" },
-    { value: BillingCycle.LIFETIME, label: "Lifetime" }
+    { value: BillingCycle.MONTHLY, label: "Billed monthly" },
+    {
+      value: BillingCycle.YEARLY,
+      label: "Billed yearly",
+      badge: "-20%"
+    }
   ];
+  if (!isAppleContext) {
+    billingPeriods.push({ value: BillingCycle.LIFETIME, label: "Lifetime" });
+  }
 
   async function onSwitch(plan?: IPlan) {
     selectedPlan = plan || null;
@@ -54,7 +60,7 @@
     const response = await account.modifySubscription({
       type: "switch",
       plan: selectedPlan?.type,
-      cycle: selectedPeriod,
+      cycle: selectedCycle,
       billing: billingAddress,
       product: $appStore.product
     });
@@ -81,7 +87,7 @@
     const productId = formProductId();
     const response = await account.initiateSubscription({
       plan: selectedPlan?.type,
-      cycle: selectedPeriod,
+      cycle: selectedCycle,
       billing: billingAddress,
       product: $appStore.product,
       provider: PaymentProvider.APPLE
@@ -101,7 +107,7 @@
       subMessage: ""
     });
     function formProductId() {
-      return `app.${$appStore.product}.${selectedPlan?.type}.${selectedPeriod}`;
+      return `app.${$appStore.product}.${selectedPlan?.type}.${selectedCycle}`;
     }
   }
 
@@ -116,7 +122,7 @@
     isRedirecting = true;
     const response = await account.initiateSubscription({
       plan: selectedPlan?.type,
-      cycle: selectedPeriod,
+      cycle: selectedCycle,
       billing: billingAddress,
       product: $appStore.product
     });
@@ -142,9 +148,11 @@
     >
       <div class="flex items-center flex-wrap gap-2">
         <div class="text-h1 text-fgs2">Choose your plan</div>
-        {#if $account.plan?.discount && !isAppleContext}
-          <div class="text-b2 px-2 py-1 rounded-md bg-bgs2 text-ags1">
-            Early Member - 35% discount applied.
+        {#if $account.plan?.discount && !isAppleContext && selectedCycle !== BillingCycle.MONTHLY}
+          <div
+            class="text-b2 px-2 py-1 rounded-md bg-bgs2 text-ags1 font-medium border border-brs3"
+          >
+            Early Member - {$account.plan?.discount?.first}% discount applied.
           </div>
         {/if}
       </div>
@@ -152,7 +160,7 @@
         <DropDown
           items={billingPeriods}
           isDisableSearch={true}
-          bind:value={selectedPeriod}
+          bind:value={selectedCycle}
           size={Size.sm}
           popoverWidth="w-40"
         />
@@ -166,7 +174,7 @@
             plans={SUBSCRIPTION_PLANS}
             {plan}
             {currentPlan}
-            period={selectedPeriod}
+            period={selectedCycle}
             isPreventDiscounting={isAppleContext}
             on:switch={() => onSwitch(plan)}
             on:choose={() => onChoose(plan)}

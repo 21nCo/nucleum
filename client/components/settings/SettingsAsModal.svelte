@@ -59,7 +59,9 @@
       context="modal"
       parentBackgroundIndex={2}
       on:click={() => {
-        runAction(Action.ACCOUNT);
+        appStore.toggleSearchParam({
+          setting: Action.ACCOUNT
+        });
       }}
     />
     {#if config}

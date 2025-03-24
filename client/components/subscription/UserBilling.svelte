@@ -11,7 +11,7 @@
   import { formatDate } from "$lib/client/utils/time.utils";
   import PlanFeatureList from "./elements/PlanFeatureList.svelte";
   import { Action } from "$lib/client/types/action.enum";
-  import { PlanType } from "./userPlan.type";
+  import { BillingCycle, PlanType } from "./userPlan.type";
   import { PlanStatus, type IUserPlan } from "$lib/client/types/account.type";
   import { PaymentProvider } from "$lib/shared/types/plan.type";
   import RestorePurchaseAction from "./RestorePurchaseAction.svelte";
@@ -44,6 +44,7 @@
   function resolveCanCancel(plan: IUserPlan | undefined) {
     if (!plan) return false;
     if (!plan.provider || plan.provider === PaymentProvider.SELF) {
+      if (plan.cycle === BillingCycle.LIFETIME) return false;
       return true;
     }
     if (
@@ -127,7 +128,7 @@
       </div>
 
       <div class="flex gap-2">
-        {#if $account.plan.status === PlanStatus.CANCELLED || $account.plan.status === PlanStatus.REFUNDED}
+        {#if $account.plan.status === PlanStatus.REFUNDED}
           <Button
             icon="ph:arrow-counter-clockwise-light"
             label="Reactivate"
@@ -159,7 +160,9 @@
         {/if}
       </div>
     {/if}
-    {#if !canCancel}
+    {#if !canCancel && $account.plan?.cycle === BillingCycle.LIFETIME && (!$account.plan?.provider || $account.plan?.provider === PaymentProvider.SELF)}
+      For cancellation of lifetime plan, please contact us via email.
+    {:else if !canCancel}
       <InlineInfoBanner
         content={resolveCannotCancelContent()}
         parentBgIndex={2}
