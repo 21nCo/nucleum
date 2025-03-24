@@ -4,7 +4,7 @@ import { IEnvironment } from "../types/env.type";
 import {
   CustomLambdaNestedStackProps,
   CustomLambdaNestedStackPropsV2,
-  CustomNestedStackProps,
+  CustomNestedStackProps
 } from "../types/customNestedStackProps.type";
 import { AccountLambdaFunctions } from "./accountLambdaFunctions";
 import { ApiGateway } from "aws-cdk-lib/aws-route53-targets";
@@ -17,7 +17,7 @@ import { ICertificate } from "aws-cdk-lib/aws-certificatemanager";
 import {
   EndpointType,
   LambdaIntegration,
-  LambdaRestApi,
+  LambdaRestApi
 } from "aws-cdk-lib/aws-apigateway";
 import { Code, Function, Runtime } from "aws-cdk-lib/aws-lambda";
 import { Bucket, IBucket } from "aws-cdk-lib/aws-s3";
@@ -27,12 +27,13 @@ import {
   CfnRecordSet,
   CnameRecord,
   IHostedZone,
-  RecordTarget,
+  RecordTarget
 } from "aws-cdk-lib/aws-route53";
 import { PointronLambdaFunctions } from "./pointronLambdaFunctions";
 import { SyncLambdaFunctions } from "./v2/syncLambdaFunctions";
 import { AccountLambdaFunctions as AccountLambdaFunctionsV2 } from "./v2/accountLambdaFunctions";
 import { PlanLambdaFunctions } from "./v2/planLambdaFunctions";
+import { EmbedLambdaFunctions } from "./v2/embedLambdaFunctions";
 export class ServerlessRegionalStack extends NestedStack {
   certificate: ICertificate;
   /**
@@ -54,11 +55,11 @@ export class ServerlessRegionalStack extends NestedStack {
     let lambdaEnvVars = {
       ...this.env.lambdaEnv,
       USE_THIRDPARTY_AUTH_METHOD: "true",
-      URL_EXPIRATION_TIME: "300",
+      URL_EXPIRATION_TIME: "300"
     };
     console.log("initializing ServerlessRegionalStack - ", {
       region: this.region,
-      tidyregion: this.env.tidyregion,
+      tidyregion: this.env.tidyregion
     });
     this.domainName = "api." + this.env.domain;
     this.regionDomainName = this.env.tidyregion + "-" + this.domainName;
@@ -68,7 +69,7 @@ export class ServerlessRegionalStack extends NestedStack {
     const lambaProps: CustomLambdaNestedStackProps = {
       ...props,
       api: this.api,
-      lambdaEnvVars,
+      lambdaEnvVars
     };
     new UtilsLambdaFunctions(this, "UtilsStack", lambaProps);
     new PointronLambdaFunctions(this, "PointronStack", lambaProps, fileBuckets);
@@ -80,11 +81,12 @@ export class ServerlessRegionalStack extends NestedStack {
     const lambdaPropsV2: CustomLambdaNestedStackPropsV2 = {
       ...props,
       api: v2Resource,
-      lambdaEnvVars,
+      lambdaEnvVars
     };
     new SyncLambdaFunctions(this, "V2SyncStack", lambdaPropsV2);
     new AccountLambdaFunctionsV2(this, "V2AccountStack", lambdaPropsV2);
     new PlanLambdaFunctions(this, "PlanStack", lambdaPropsV2);
+    new EmbedLambdaFunctions(this, "EmbedStack", lambdaPropsV2);
   }
 
   /**
@@ -102,7 +104,7 @@ export class ServerlessRegionalStack extends NestedStack {
       code: Code.fromAsset(
         path.join(__dirname, "./../../../../src/endpoints/utils")
       ),
-      runtime: Runtime.NODEJS_20_X,
+      runtime: Runtime.NODEJS_20_X
     });
 
     this.api = new LambdaRestApi(this, "api", {
@@ -111,17 +113,17 @@ export class ServerlessRegionalStack extends NestedStack {
       domainName: {
         domainName: this.domainName,
         certificate: this.certificate,
-        endpointType: EndpointType.REGIONAL,
+        endpointType: EndpointType.REGIONAL
       },
       deployOptions: {
-        stageName: "less",
-      },
+        stageName: "less"
+      }
     });
     this.api.root.addMethod("GET", new LambdaIntegration(pingFunction));
     let pingResource = this.api.root.addResource("ping");
     pingResource.addMethod("GET", new LambdaIntegration(pingFunction));
     new CfnOutput(this, "Api root URL", {
-      value: this.api.url,
+      value: this.api.url
     });
     this.healthCheck = new Route53HealthCheck(
       this,
@@ -135,7 +137,7 @@ export class ServerlessRegionalStack extends NestedStack {
   addRoute53CnameRecordForRegionalDomain() {
     console.log("Adding Route53 CNAME record - for regional domain", {
       region: this.region,
-      regionDomain: this.regionDomainName,
+      regionDomain: this.regionDomainName
     });
     const apiDomainName = this.api.domainName?.domainName;
 
@@ -146,7 +148,7 @@ export class ServerlessRegionalStack extends NestedStack {
       zone: this.zone,
       recordName: this.regionDomainName,
       domainName: apiDomainName,
-      ttl: Duration.minutes(5),
+      ttl: Duration.minutes(5)
     });
   }
 
@@ -163,9 +165,9 @@ export class ServerlessRegionalStack extends NestedStack {
       region: this.region,
       aliasTarget: {
         hostedZoneId: this.api.domainName?.domainNameAliasHostedZoneId ?? "",
-        dnsName: this.api.domainName?.domainNameAliasDomainName ?? "",
+        dnsName: this.api.domainName?.domainNameAliasDomainName ?? ""
       },
-      hostedZoneId: this.zone.hostedZoneId,
+      hostedZoneId: this.zone.hostedZoneId
     });
   }
 
