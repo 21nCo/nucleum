@@ -1,15 +1,15 @@
 import { userDatev4 } from "./global.dbo";
 
 export const memotronTables = [
-  // ...nodesByDay(),
-  ...collection(),
-  ...linkTag(),
-  ...node(),
-  ...nodeIndices(),
-  ...collectionIndices(),
-  ...linkTagIndices(),
-  ...vector()
+  ...nodeSchemaless(),
+  ...collectionSchemaless(),
+  ...linkTagSchemaless()
 ];
+
+function nodeSchemaless() {
+  const def = `DEFINE TABLE OVERWRITE node TYPE ANY SCHEMALESS;`;
+  return [def];
+}
 
 function node() {
   const def = `DEFINE TABLE IF NOT EXISTS node TYPE ANY SCHEMAFULL;
@@ -93,6 +93,11 @@ day, month, year FROM nodesByTime GROUP BY day, month, year PERMISSIONS NONE`;
   return [...nodesByTime(), def];
 }
 
+function collectionSchemaless() {
+  const def = `DEFINE TABLE OVERWRITE collection TYPE ANY SCHEMALESS;`;
+  return [def];
+}
+
 function collection() {
   const def = `DEFINE TABLE IF NOT EXISTS collection SCHEMAFULL;
   DEFINE FIELD IF NOT EXISTS label on TABLE collection TYPE option<string>;
@@ -122,6 +127,11 @@ function collectionIndices() {
   const def = `DEFINE INDEX IF NOT EXISTS collectionLabelSearchIndex ON TABLE collection COLUMNS label SEARCH ANALYZER ascii HIGHLIGHTS;`;
   const typeIndex = `DEFINE INDEX IF NOT EXISTS fileTypeSearchIndex ON TABLE file COLUMNS type SEARCH ANALYZER ascii;`;
   return [def, typeIndex];
+}
+
+function linkTagSchemaless() {
+  const def = `DEFINE TABLE OVERWRITE linkTag TYPE ANY SCHEMALESS;`;
+  return [def];
 }
 
 function linkTag() {

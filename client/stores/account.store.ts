@@ -110,7 +110,6 @@ class AccountStore extends ObservableStore<
       isNewUser?: boolean;
     } = { isNewUser: false }
   ) {
-    console.log("signing in", { data });
     clientStorage.set(ClientStorageKey.STOKEN, data.token);
     clientStorage.set(
       ClientStorageKey.USER_INFO,

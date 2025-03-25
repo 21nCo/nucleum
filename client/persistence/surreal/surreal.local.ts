@@ -91,14 +91,14 @@ export class SurrealPersistence implements IPersistence {
         at: "surreal.persistence.initialize",
         user
       });
-      await this.instance.connect("indxdb://blank");
+      await this.instance.connect("indxdb://nativeone");
       await this.instance.use({ namespace: "user", database: this.userId });
 
       // await this.logInfo();
       // await this.testQuery();
       const localLog: ILocal = await this.select("kv:local");
-      logger.log({
-        at: "surreal.persistence.initialize - localLog",
+      logger.info({
+        at: "surreal.persistence.initialize - local",
         localLog
       });
 
@@ -216,7 +216,7 @@ export class SurrealPersistence implements IPersistence {
    * Updates the database with dbo definitions.
    */
   async updateDbo(params?: IPersistenceInitParams) {
-    logger.debug({ at: "surreal.persistence.updateDbo" });
+    logger.info({ at: "surreal.persistence.updateDbo" });
     try {
       await this.awaiter();
       dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
@@ -227,7 +227,7 @@ export class SurrealPersistence implements IPersistence {
       if (!dependencies) return;
       const query = resolveDboUpdateQuery(dependencies);
       const result = await this.instance?.query(query);
-      logger.debug({ at: "surreal.persistence.updateDbo", query, result });
+      logger.info({ at: "surreal.persistence.updateDbo", query, result });
       return result;
     } catch (e) {
       logger.error({ at: "surreal.persistence.updateDbo", e });

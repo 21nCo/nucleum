@@ -1,4 +1,9 @@
-export const pointronTables = [...sessionLog(), ...sessionLogIndices()];
+export const pointronTables = [...sessionLogSchemaless()];
+
+function sessionLogSchemaless() {
+  const def = `DEFINE TABLE OVERWRITE sessionLog TYPE ANY SCHEMALESS;`;
+  return [def];
+}
 
 function sessionLog() {
   const def = `DEFINE TABLE IF NOT EXISTS sessionLog SCHEMAFULL;

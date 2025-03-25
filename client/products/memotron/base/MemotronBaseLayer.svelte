@@ -25,6 +25,7 @@
   import CommandModePage from "$lib/client/components/commandBar/CommandModePage.svelte";
   import {
     clipTextSearchFallback,
+    collectionResourceBackPropagation,
     lowResThumbnailsBackPropagation
   } from "./fallbacks";
   import LeftNav from "$lib/client/layout/leftPanel/LeftNav.svelte";
@@ -99,6 +100,7 @@
   async function runFallbacks() {
     try {
       await clipTextSearchFallback();
+      await collectionResourceBackPropagation();
       if (!$context.isEmbed) {
         toasts.showProgress("update", "Updating the app");
         await lowResThumbnailsBackPropagation();

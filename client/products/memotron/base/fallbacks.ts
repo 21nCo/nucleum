@@ -21,7 +21,7 @@ export async function clipTextSearchFallback() {
         text: false
       }
     });
-    logger.debug({ at: "clipTextSearchFallback", clips });
+    logger.info({ at: "clipTextSearchFallback", clips });
     if (clips && isValidArrayWithData(clips)) {
       const promises = clips.map(async (clip: any) => {
         if (clip.text) return;
@@ -48,7 +48,7 @@ export async function clipTextSearchFallback() {
         label: false
       }
     });
-    logger.log({ at: "twitterProfiles", twitterProfiles });
+    logger.info({ at: "twitterProfiles", twitterProfiles });
     if (twitterProfiles && isValidArrayWithData(twitterProfiles)) {
       const promises = twitterProfiles.map(async (profile: any) => {
         profile.label = profile.body.name;
@@ -86,7 +86,7 @@ export async function lowResThumbnailsBackPropagation() {
     },
     limit: 10
   });
-  logger.debug({
+  logger.info({
     at: "lowResThumbnailsBackPropagation",
     count: imagesWithoutLowRes?.length
   });
@@ -94,7 +94,6 @@ export async function lowResThumbnailsBackPropagation() {
     //TODO
     for (const image of imagesWithoutLowRes) {
       const imageBlob = await fetch(image.url).then((res) => res.blob());
-      console.log({ imageBlob });
 
       // const thumbnailBlob = await compressImageToTargetSize(imageBlob);
       // const thumbnailUrl = await account.uploadFileV2(
@@ -106,5 +105,27 @@ export async function lowResThumbnailsBackPropagation() {
       //   }
       // );
     }
+  }
+}
+
+export async function collectionResourceBackPropagation() {
+  const collections = await flux.selectMany(Resource.collection, {
+    filters: {
+      resource: false
+    }
+  });
+  if (collections && isValidArrayWithData(collections)) {
+    await flux.mutation(Resource.collection, {
+      action: PersistenceActionType.BULK_MERGE,
+      records: collections.map((collection) => ({
+        id: collection.id,
+        resource: Resource.node,
+        modifiedAt: new Date().toISOString()
+      }))
+    });
+    logger.info({
+      at: "collectionResourceBackPropagation - completed ",
+      count: collections.length
+    });
   }
 }

@@ -44,6 +44,9 @@ class Logger {
     // console.log({ ...message, type: LogType[type] });
     this._log(message, type);
   }
+  info(message: any) {
+    this._log(message, LogType.INFO);
+  }
   error(message: any) {
     this._log(message, LogType.ERROR);
   }
