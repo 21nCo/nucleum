@@ -22,6 +22,7 @@ import { Action } from "$lib/client/types/action.enum";
 import { getUtcSafeDay } from "$lib/client/elements/datetime/datetime.utils";
 import { Product } from "$lib/client/types/product.type";
 import { get } from "svelte/store";
+import view from "$lib/client/stores/view.store";
 class TaskStore extends ResourceStore<ITask> {
   constructor() {
     super(Resource.task);
@@ -111,6 +112,12 @@ class TaskActions {
       });
     }
   };
+
+  editDate = {
+    value: "editDate",
+    icon: "ph:calendar-blank-light",
+    label: "Edit due date"
+  };
 }
 
 export function resolveTaskContextMenu(
@@ -123,36 +130,15 @@ export function resolveTaskContextMenu(
   const resourceActions = new ResourceActions(goal, taskStore, accessPoint);
   const taskActions = new TaskActions(goal, taskStore, accessPoint);
   const product = get(appStore).product;
-  let primaryItems: IContextMenuItem[] = [];
-
-  if (accessPoint === ResourceAccessPoint.COLLECTION && params?.accessPointId) {
-    primaryItems = [
-      resourceActions.unlink(params?.accessPointId),
-      resourceActions.select(accessPoint, params?.accessPointId),
-      taskActions.toggle()
-    ];
-  } else if (
-    accessPoint === ResourceAccessPoint.GOAL &&
-    params?.accessPointId
-  ) {
-    primaryItems = [
-      resourceActions.select(accessPoint, params?.accessPointId),
-      taskActions.toggle()
-      // resourceActions.addToCollection()
-    ];
-  } else if (product === Product.POINTRON || product === Product.NUCLEUS) {
-    primaryItems = [
-      resourceActions.select(accessPoint, params?.accessPointId),
-      taskActions.editGoal,
-      taskActions.toggle()
-      // resourceActions.addToCollection()
-    ];
-  } else {
-    primaryItems = [
-      resourceActions.select(accessPoint, params?.accessPointId),
-      taskActions.toggle()
-    ];
-  }
+  const viewStore = get(view);
+  let primaryItems: IContextMenuItem[] = [
+    resourceActions.select(accessPoint, params?.accessPointId),
+    ...(product === Product.POINTRON || product === Product.NUCLEUS
+      ? [taskActions.editGoal]
+      : []),
+    ...(viewStore.isConstrainedWidth ? [taskActions.editDate] : []),
+    taskActions.toggle()
+  ];
   return [
     {
       group: "primary",

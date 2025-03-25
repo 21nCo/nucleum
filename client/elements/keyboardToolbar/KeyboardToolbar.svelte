@@ -9,6 +9,7 @@
   export let offset: number = 0;
   export let isPreventDefaultOnKeyboardClose: boolean = false;
   export let zIndex: number = 70;
+  let dev_enableKeyboardToolbar: boolean = false;
   let ref: HTMLElement;
   let portal: HTMLElement;
 
@@ -24,7 +25,7 @@
     portal = document.createElement("div");
     portal.className = "toolbar-container";
     document.getElementById("toolbars")?.appendChild(portal);
-    portal.appendChild(ref);
+    if (ref) portal?.appendChild(ref);
   });
 
   onDestroy(() => {
@@ -32,41 +33,43 @@
   });
 </script>
 
-<div class="toolbar-placeholder" in:fly={{ y: 50 }}>
-  <div bind:this={ref}>
-    {#if isMdToolbar}
-      <div
-        class={cn(
-          "mdtoolbar toolbar fixed left-0 bottom-0 w-screen border-t border-brs3",
-          classList,
-          `z-[${zIndex}]`
-        )}
-        use:mdToolbar={{
-          offset,
-          isPreventDefaultOnKeyboardClose
-        }}
-        style="display: none; z-index: {zIndex};"
-      >
-        <slot />
-      </div>
-    {:else}
-      <div
-        class={cn(
-          "toolbar fixed left-0 bottom-0 w-screen border-t border-brs3",
-          classList,
-          `z-[${zIndex}]`
-        )}
-        use:simpleToolbar
-        style="display: none; z-index: {zIndex};"
-      >
-        <slot />
-      </div>
-    {/if}
+{#if dev_enableKeyboardToolbar}
+  <div class="toolbar-placeholder" in:fly={{ y: 50 }}>
+    <div bind:this={ref}>
+      {#if isMdToolbar}
+        <div
+          class={cn(
+            "mdtoolbar toolbar fixed left-0 bottom-0 w-screen border-t border-brs3",
+            classList,
+            `z-[${zIndex}]`
+          )}
+          use:mdToolbar={{
+            offset,
+            isPreventDefaultOnKeyboardClose
+          }}
+          style="display: none; z-index: {zIndex};"
+        >
+          <slot />
+        </div>
+      {:else}
+        <div
+          class={cn(
+            "toolbar fixed left-0 bottom-0 w-screen border-t border-brs3",
+            classList,
+            `z-[${zIndex}]`
+          )}
+          use:simpleToolbar
+          style="display: none; z-index: {zIndex};"
+        >
+          <slot />
+        </div>
+      {/if}
+    </div>
   </div>
-</div>
 
-<style>
-  .toolbar-placeholder {
-    display: none;
-  }
-</style>
+  <style>
+    .toolbar-placeholder {
+      display: none;
+    }
+  </style>
+{/if}

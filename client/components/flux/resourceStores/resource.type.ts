@@ -171,6 +171,9 @@ export enum ResourceAccessPoint {
   COMBINATION = "combination",
   CAPTURE = "capture",
   CLIPPER = "clipper",
+  /**
+   * Any pickers like cover picker etc.
+   */
   PICKER = "picker",
   /**
    * The resource is being accessed from a creation form

@@ -16,6 +16,7 @@
   export let heading: string | undefined = undefined;
   export let onSelect: (item: IContextMenuItem) => void = () => {};
   export let parentBgIndex: number = 1;
+  export let isFullWidth: boolean = false;
   let menu: IContextMenuGroup[] = [];
 
   onMount(() => {
@@ -30,10 +31,15 @@
     "flex flex-col gap-1 p-1 border border-brs2 rounded-md",
     bg(parentBgIndex),
     {
-      "w-48 text-b3": size === Size.sm,
-      "w-56 text-b2": size === Size.md,
-      "w-64 text-b2": size === Size.lg,
-      "w-72 text-b2": size === Size.xl
+      "w-full": isFullWidth,
+      "text-b3": size === Size.sm,
+      "text-b2": size === Size.md || size === Size.lg || size === Size.xl
+    },
+    !isFullWidth && {
+      "w-48": size === Size.sm,
+      "w-56": size === Size.md,
+      "w-64": size === Size.lg,
+      "w-72": size === Size.xl
     }
   )}
 >

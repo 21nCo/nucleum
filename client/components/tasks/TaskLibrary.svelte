@@ -47,7 +47,7 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { resourceAction } from "../flux/resourceStores/resource.utils";
-  import { ButtonVariant } from "$lib/client/types/button.type";
+  import { ButtonVariant, ButtonStyle } from "$lib/client/types/button.type";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { generateMiniRandomId } from "$lib/shared/utils/crypto.utils";
@@ -365,8 +365,9 @@
     on:search={() => refresh()}
     padding={cn({
       "px-4":
-        accessPoint === ResourceAccessPoint.LIBRARY ||
-        accessPoint === ResourceAccessPoint.BROWSER
+        !$view.isConstrainedWidth &&
+        (accessPoint === ResourceAccessPoint.LIBRARY ||
+          accessPoint === ResourceAccessPoint.BROWSER)
     })}
     placeholder={"Search tasks"}
     style={InputStyle.FILLED}
@@ -374,8 +375,9 @@
     <Button
       icon="ph:plus-light"
       type={ButtonVariant.PRIMARY}
+      style={$view.isConstrainedWidth ? ButtonStyle.OUTLINED : undefined}
       size={Size.md}
-      label="Create"
+      label={!$view.isConstrainedWidth ? "Create" : undefined}
       isPreventMinWidth={true}
       on:click={() => {
         appStore.runAction(
@@ -395,7 +397,7 @@
       }}
     />
   </InlineSearchBar>
-  <div class="px-4 w-full">
+  <div class="cw:px-0 px-4 w-full">
     <InlineSyncingFeedback {isSyncing} isFullWidthVariant={true} />
   </div>
 

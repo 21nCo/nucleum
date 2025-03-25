@@ -20,6 +20,7 @@
   export let initialEndDate: Date | null = null;
   export let onDateChange: (val: Date) => void;
   export let onRangeChange: (val: { start: string; end: string }) => void;
+  export let isCWPopoverContext: boolean = false;
 
   const DAYS = ["M", "T", "W", "T", "F", "S", "S"];
   const MONTHS = Array.from({ length: 12 }, (_, i) =>
@@ -279,9 +280,11 @@
 
 <button
   class={cn(
-    "flex flex-col gap-4 w-[20rem] p-4 text-fgs3 rounded-md shadow-lg border border-brs2",
+    "flex flex-col gap-4 p-4 text-fgs3 rounded-md shadow-lg border border-brs2",
     {
-      [bg(parentBgIndex)]: true
+      [bg(parentBgIndex)]: true,
+      "w-[20rem]": !isCWPopoverContext,
+      "w-full": isCWPopoverContext
     }
   )}
   on:click|stopPropagation

@@ -10,7 +10,8 @@
   import {
     resolveResourceSwitcher,
     resourceAction,
-    availableResources
+    availableResources,
+    resolveResourceIcon
   } from "$lib/client/components/flux/resourceStores/resource.utils";
   import {
     ResourceAccessPoint,
@@ -29,9 +30,10 @@
   import LibraryLoadingPulse from "./LibraryLoadingPulse.svelte";
   import { Arrangement, Placement } from "$lib/client/types/direction.enum";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import ResourceBrowserCw from "./resourceBrowser/ResourceBrowserCW.svelte";
   import { Action } from "$lib/client/types/action.enum";
   import ContextMenu from "$lib/client/elements/contextMenu/ContextMenu.svelte";
+  import ResourceBrowserV3 from "./resourceBrowser/ResourceBrowserV3.svelte";
+  import { Product } from "$lib/client/types/product.type";
 
   export let resources: Resource[] = [];
 
@@ -69,7 +71,9 @@
             popoverAction: {
               content: ContextMenu,
               placement: Placement.TopCenter,
+              isRenderAsModalForCW: true,
               componentProps: {
+                isFullWidth: $view.isConstrainedWidth,
                 menuResolver: resolveCreateResourceMenu
               }
             },
@@ -111,27 +115,39 @@
   }
 
   function resolveCreateResourceMenu() {
+    let resources: Resource[] = [];
+
+    switch ($appStore.product) {
+      case Product.POINTRON:
+        resources = [Resource.task, Resource.goal, Resource.collection];
+        break;
+      case Product.MEMOTRON:
+        resources = [Resource.node, Resource.task, Resource.collection];
+      case Product.NUCLEUS:
+        resources = [
+          Resource.node,
+          Resource.task,
+          Resource.goal,
+          Resource.collection
+        ];
+      default:
+        resources = [Resource.collection];
+    }
+
+    const items = resources.map((resource) => {
+      return {
+        label: "New " + resource,
+        value: resource,
+        icon: resolveResourceIcon(resource),
+        callback: async () => {
+          onCreateResource(resource);
+        }
+      };
+    });
     return [
       {
         group: "all",
-        items: [
-          {
-            label: "New node",
-            value: "node",
-            icon: "ph:hexagon-light",
-            callback: async () => {
-              onCreateResource(Resource.node);
-            }
-          },
-          {
-            label: "New collection",
-            value: "collection",
-            icon: "ph:brackets-round-light",
-            callback: async () => {
-              onCreateResource(Resource.collection);
-            }
-          }
-        ]
+        items
       }
     ];
   }
@@ -196,8 +212,9 @@
     </div>
   {/if}
   <div slot="nav" class="flex flex-grow">
-    <ResourceBrowserCw
+    <ResourceBrowserV3
       resource={selectedResource}
+      isLibraryNavContext={true}
       on:back={() => {
         selectedResource = Resource.unknown;
         appStore.toggleSearchParam(["resource"]);

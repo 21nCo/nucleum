@@ -22,6 +22,7 @@
   export let isHidePreview: boolean = false;
   export let isApplyCustomColor: boolean = false;
   export let size: Size.sm | Size.md | Size.lg = Size.md;
+  export let isInline: boolean = false;
 
   function onAction(e: CustomEvent<string>) {
     if (e.detail === "star") item.isStarred = !item.isStarred;
@@ -48,17 +49,19 @@
 
 <button
   class={cn(
-    "absolute top-0 right-0 flex gap-2 p--1",
+    "flex gap-2 p--1",
     {
+      "absolute top-0 right-0": !isInline,
       "h-full flex-col justify-center": arrangement === Arrangement.LIST
     },
-    arrangement !== Arrangement.LIST && {
-      "border rounded-md": true,
-      "m-3": !isHidePreview,
-      "m-1": isHidePreview,
-      "bg-ccs4 border-ccs2": isApplyCustomColor,
-      "bg-bgs2 border-brs3": !isApplyCustomColor
-    }
+    !isInline &&
+      arrangement !== Arrangement.LIST && {
+        "border rounded-md": true,
+        "m-3": !isHidePreview,
+        "m-1": isHidePreview,
+        "bg-ccs4 border-ccs2": isApplyCustomColor,
+        "bg-bgs2 border-brs3": !isApplyCustomColor
+      }
   )}
   on:click|stopPropagation
 >
@@ -66,13 +69,14 @@
     <slot name="right" />
     <div
       class={cn(
-        arrangement === Arrangement.LIST && {
-          "mx-2 border rounded-md": arrangement === Arrangement.LIST,
-          "bg-ccs4 border-ccs2":
-            arrangement === Arrangement.LIST && isApplyCustomColor,
-          "bg-bgs2 border-brs3":
-            arrangement === Arrangement.LIST && !isApplyCustomColor
-        }
+        !isInline &&
+          arrangement === Arrangement.LIST && {
+            "mx-2 border rounded-md": arrangement === Arrangement.LIST,
+            "bg-ccs4 border-ccs2":
+              arrangement === Arrangement.LIST && isApplyCustomColor,
+            "bg-bgs2 border-brs3":
+              arrangement === Arrangement.LIST && !isApplyCustomColor
+          }
       )}
     >
       <ContextMenuAction

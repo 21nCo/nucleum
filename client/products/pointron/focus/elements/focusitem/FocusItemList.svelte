@@ -110,8 +110,12 @@
     const item = event.detail;
     if (!item || !item.id) return;
     if (item.goal || item.goalId) {
-      await focusItemsStore.addTask(item.id, item.goal?.id ?? item.goalId);
-      addTask(item, item.goal?.id ?? item.goalId);
+      const goalId = item.goal?.id ?? item.goalId;
+      await focusItemsStore.addTask(item.id, goalId);
+      addTask(item, goalId);
+      if (!goals.some(resourceInList(goalId))) {
+        refresh();
+      }
     } else {
       await focusItemsStore.addGoal(item.id);
       refresh();

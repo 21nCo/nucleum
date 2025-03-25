@@ -1,3 +1,4 @@
+<!-- @deprecated -->
 <script lang="ts">
   import Button from "$lib/client/elements/button/Button.svelte";
   import Panel from "$lib/client/layout/paint/Panel.svelte";

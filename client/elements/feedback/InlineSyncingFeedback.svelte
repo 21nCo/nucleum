@@ -6,6 +6,7 @@
   import { scale } from "svelte/transition";
   export let isSyncing: boolean = false;
   export let isFullWidthVariant: boolean = false;
+  export let text: string = "Syncing...";
 </script>
 
 <span
@@ -22,5 +23,5 @@
     size={Size.xs}
     class="text-aps1"
   />
-  <span class="text-b3"> Syncing... </span>
+  <span class="text-b3"> {text} </span>
 </span>

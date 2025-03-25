@@ -115,7 +115,7 @@
         icon="ph:x-light"
         parentBgIndex={2}
         on:click={() => {
-          appStore.goBack();
+          appStore.closeResource({ id: $goal.id });
         }}
       />
     {/if}

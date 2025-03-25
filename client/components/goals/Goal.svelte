@@ -23,6 +23,8 @@
   import { onMount } from "svelte";
   import { page } from "$app/stores";
   import PropertiesPane from "../collection/properties/PropertiesPane.svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
+  import appearance from "$lib/client/stores/appearance.store";
 
   export let id: string;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -97,7 +99,10 @@
 </script>
 
 <CustomColorPropagator
-  class="h-full w-full bg-gradient-to-br from-bgs1 via-bgs1 to-ccs5"
+  class={cn("h-full w-full bg-gradient-to-br from-bgs1 via-bgs1", {
+    "to-ccs5/50": $appearance?.colorScheme?.isDark,
+    "to-ccs5": !$appearance?.colorScheme?.isDark
+  })}
   color={$goal?.color ?? ($goal?.parent ? $goal.parent?.[0]?.color : undefined)}
 >
   {#if !$goal || !isReady}
@@ -140,7 +145,7 @@
                   tooltip="Close full screen"
                   parentBgIndex={2}
                   on:click={() => {
-                    appStore.goBack();
+                    appStore.closeResource({ id: $goal.id });
                   }}
                 />
               {/if}

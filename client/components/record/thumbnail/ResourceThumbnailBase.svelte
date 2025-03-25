@@ -23,6 +23,7 @@
   export let isHidePreview: boolean = false;
   export let isApplyCustomColor: boolean = false;
   export let accessPointId: IRecordId | undefined = undefined;
+  export let isPreventDefaultContextMenu: boolean = false;
   $: multiSelectContext = {
     resource: determineResourceType(item.id),
     accessPoint,
@@ -70,7 +71,7 @@
       {/if}
     </button>
   {/if}
-  {#if isHovering && accessPoint !== ResourceAccessPoint.PICKER}
+  {#if isHovering && accessPoint !== ResourceAccessPoint.PICKER && !isPreventDefaultContextMenu}
     <ResourceThumbnailContextMenu
       bind:item
       {accessPoint}

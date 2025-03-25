@@ -1,14 +1,15 @@
+<!-- @deprecated -->
 <script lang="ts">
   import { Resource } from "../../flux/resourceStores/resource.enum";
   import { ResourceAccessPoint } from "../../flux/resourceStores/resource.type";
   import LibraryRelationsPane from "../../tags/LibraryRelationsPane.svelte";
   import TaskLibrary from "../../tasks/TaskLibrary.svelte";
-  import { isCustomPane } from "../library.utils";
+  import { isCustomLibrary } from "../library.utils";
   import DefaultResourceBrowserV2 from "./DefaultResourceBrowserV2.svelte";
   export let resource: Resource;
   export let isLibraryNavContext: boolean = false;
 
-  $: customBrowser = isCustomPane(resource);
+  $: customBrowser = isCustomLibrary(resource);
 </script>
 
 {#key resource}

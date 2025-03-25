@@ -17,9 +17,18 @@
   import TaskThumbnailGoalLabel from "./TaskThumbnailGoalLabel.svelte";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { Resource } from "../flux/resourceStores/resource.enum";
+  import Icon from "$lib/client/elements/Icon.svelte";
+  import ResourceThumbnailContextMenu from "../record/thumbnail/ResourceThumbnailContextMenu.svelte";
+  import view from "$lib/client/stores/view.store";
+  import { createEventDispatcher } from "svelte";
+  import { popover } from "$lib/client/actions/popover.action";
+  import AbsoluteTimeRangePopoverV2 from "$lib/client/elements/datetime/absolute/AbsoluteTimeRangePopoverV2.svelte";
+  import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
+  import { generateMiniRandomId } from "$lib/shared/utils/crypto.utils";
+  const dispatch = createEventDispatcher();
   export let item: ITaskThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
-  export let size: Size.sm | Size.md | Size.lg = Size.md;
+  export let size: Size.sm | Size.md | Size.lg = Size.lg;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
   export let accessPointId: IRecordId | undefined = undefined;
   export let isApplyCustomColor: boolean = false;
@@ -27,8 +36,11 @@
   export let parentBgIndex: number = 1;
   let isHovering = false;
   let isDatePickerOpen = false;
+  let isShowDatePickerOnCw = false;
   $: isOverdue =
     !item.isChecked && item.date && compareDates(item.date, new Date(), "<");
+
+  const instanceId = generateMiniRandomId();
 
   function onTaskChanges(event: CustomEvent) {
     const record = event.detail.params?.record;
@@ -41,6 +53,25 @@
       }
     }
   }
+
+  function onContextMenuAction(event: CustomEvent) {
+    if (event.detail.action === "editDate") {
+      isShowDatePickerOnCw = true;
+    }
+    dispatch("action", event.detail);
+  }
+
+  async function onDateChange(val: Date) {
+    item.date = val;
+    await taskStore.modify(
+      item.id,
+      { date: val },
+      {
+        context: accessPoint
+      }
+    );
+    isShowDatePickerOnCw = false;
+  }
 </script>
 
 <ResourceThumbnailBase
@@ -50,9 +81,10 @@
   {accessPointId}
   {isApplyCustomColor}
   {isDraggable}
+  isPreventDefaultContextMenu={true}
 >
   <div
-    class={cn("flex gap-2 items-center px-4 py-2 h-14 rounded-md", {
+    class={cn("flex gap-2 items-center pr-1 pl-3 py-2 h-14 rounded-md", {
       "m-4 min-w-[30rem] pr-12": accessPoint === ResourceAccessPoint.SELF,
       "bg-bgs2/50 hover:bg-bgs2 border border-brs2":
         accessPoint !== ResourceAccessPoint.SELF
@@ -63,18 +95,24 @@
       }
     }}
   >
-    <TaskCheckbox
-      id={item.id}
-      bind:isChecked={item.isChecked}
-      {size}
-      {accessPoint}
-    />
-    <div class="flex-1 flex flex-col userdata whitespace-no-wrap">
+    <div
+      class={cn("flex", {
+        "self-start": item.goal && accessPoint !== ResourceAccessPoint.GOAL
+      })}
+    >
+      <TaskCheckbox
+        id={item.id}
+        bind:isChecked={item.isChecked}
+        size={Size.lg}
+        {accessPoint}
+      />
+    </div>
+    <div class="flex-1 min-w-0 flex flex-col userdata whitespace-no-wrap">
       {#if item.goal && accessPoint !== ResourceAccessPoint.GOAL}
         <TaskThumbnailGoalLabel goal={item.goal} />
       {/if}
       {#if item.isChecked}
-        <span class="line-through whitespace-no-wrap shrink-0">
+        <span class="flex line-through whitespace-no-wrap w-full">
           <span class="truncate">
             {item.label}
           </span>
@@ -95,18 +133,47 @@
         </span>
       {/if}
     </div>
+    {#if isShowDatePickerOnCw}
+      <div
+        use:popover={{
+          content: AbsoluteTimeRangePopoverV2,
+          id: "task-date-picker-popover" + instanceId,
+          triggerMethod: [PopoverTriggerMethod.SHOW_BY_DEFAULT],
+          isRenderAsModalForCW: true,
+          componentProps: {
+            isDatePickerMode: true,
+            selectedDate: item.date,
+            isCWPopoverContext: true,
+            onDateChange: (val) => {
+              onDateChange(val);
+            }
+          }
+        }}
+        on:change={(e) => {
+          const isPopoverVisible = e.detail?.open;
+          if (isPopoverVisible) {
+            isShowDatePickerOnCw = true;
+          } else {
+            isShowDatePickerOnCw = false;
+          }
+        }}
+      ></div>
+    {/if}
     <div class="flex flex-wrap gap-2 justify-end">
       {#if item.date && !isHovering}
-        <span
+        <button
           class={cn("text-b3 userdata", {
             "text-ars1": isOverdue,
             "text-fgs3": !isOverdue
           })}
+          on:click|stopPropagation={() => {
+            isShowDatePickerOnCw = true;
+          }}
         >
           Due: {formatDate(item.date)}
-        </span>
+        </button>
       {/if}
-      {#if item.completedAt && !isHovering}
+      {#if item.completedAt && !isHovering && !$view.isConstrainedWidth}
         {@const isCompletedBeforeDue =
           item.date && compareDates(item.completedAt, item.date, "<=")}
         {#if item.date}
@@ -127,16 +194,10 @@
       <div class="flex gap-2 shrink-0">
         <DatePicker
           date={item.date}
+          id={instanceId}
           placeholder="Set date"
           on:change={(e) => {
-            item.date = e.detail;
-            taskStore.modify(
-              item.id,
-              { date: e.detail },
-              {
-                context: accessPoint
-              }
-            );
+            onDateChange(e.detail);
           }}
           on:opened={() => {
             isDatePickerOpen = true;
@@ -145,9 +206,17 @@
             isDatePickerOpen = false;
           }}
         />
-        <Button icon="ph:trash" />
       </div>
     {/if}
+    <ResourceThumbnailContextMenu
+      bind:item
+      {accessPoint}
+      {accessPointId}
+      {arrangement}
+      {isApplyCustomColor}
+      on:action={onContextMenuAction}
+      isInline={true}
+    />
   </div>
 </ResourceThumbnailBase>
 <ComponentBaseLayer

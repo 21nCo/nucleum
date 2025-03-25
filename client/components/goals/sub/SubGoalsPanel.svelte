@@ -8,6 +8,10 @@
   import type { IRecordId } from "$lib/client/types/data.type";
   import { InputStyle } from "$lib/client/types/input.type";
   import { cn } from "$lib/client/utils/ui.utils";
+  import {
+    activeResourceFilter,
+    archivedResourceFilter
+  } from "$lib/client/utils/utils";
   import { ResourceAccessMode } from "../../flux/resourceStores/resource.type";
   import {
     resourceInList,
@@ -23,7 +27,7 @@
   export let goal: IActiveGoalStore;
   $: _subGoals = [
     ...($goal.children
-      ? $goal.children.map((t) => ({
+      ? $goal.children.filter(activeResourceFilter).map((t) => ({
           ...t,
           icon: resolveGoalStatusIcon(t.status)
         }))
@@ -33,6 +37,9 @@
       type: "add"
     }
   ];
+  $: archiveSubgoalsCount = $goal.children?.filter(
+    archivedResourceFilter
+  ).length;
 
   function onSubGoalClick(id: IRecordId) {
     appStore.openResource(id, ResourceAccessMode.POP, {
@@ -148,5 +155,10 @@
         />
       {/each}
     {/if}
+  </div>
+{/if}
+{#if archiveSubgoalsCount}
+  <div class="flex items-center justify-center gap-2 w-full text-b3 text-fgs3">
+    + {archiveSubgoalsCount} archived sub goals
   </div>
 {/if}

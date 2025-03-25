@@ -28,6 +28,10 @@
   export let panelSize: Size.sm | Size.md | Size.lg = Size.md;
   export let isNavActivated: boolean = false;
   export let isShowBackButton: boolean = false;
+  /**
+   * If true, the panel will be expanded by default and there will be no right slot for record view.
+   */
+  export let isExpanded: boolean = false;
 
   onMount(() => {
     const unsubscribe = appEvents.subscribe((e) => {
@@ -55,14 +59,15 @@
       class={cn(
         "relative flex flex-col h-full",
         {
-          "w-full": $view.isConstrainedWidth
+          "w-full": $view.isConstrainedWidth || isExpanded
         },
-        !$view.isConstrainedWidth && {
-          "w-[20rem] min-w-[20rem]": panelSize === Size.sm,
-          "w-[24rem] min-w-[24rem] 2k:w-[28rem] 2k:min-w-[28rem]":
-            panelSize === Size.md,
-          "w-[28rem] min-w-[28rem]": panelSize === Size.lg
-        }
+        !$view.isConstrainedWidth &&
+          !isExpanded && {
+            "w-[20rem] min-w-[20rem]": panelSize === Size.sm,
+            "w-[24rem] min-w-[24rem] 2k:w-[28rem] 2k:min-w-[28rem]":
+              panelSize === Size.md,
+            "w-[28rem] min-w-[28rem]": panelSize === Size.lg
+          }
       )}
     >
       {#if !isNavActivated && (title || isShowCollapseButton)}
@@ -126,7 +131,7 @@
       {/if}
     </div>
   {/if}
-  {#if !$view.isConstrainedWidth}
+  {#if !$view.isConstrainedWidth && !isExpanded}
     <!-- Right split -->
     <Divider
       orientation={Orientation.Vertical}

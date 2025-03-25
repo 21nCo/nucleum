@@ -1,4 +1,3 @@
-<!-- @deprecated -->
 <script lang="ts">
   import Button from "$lib/client/elements/button/Button.svelte";
   import Panel from "$lib/client/layout/paint/Panel.svelte";
@@ -21,10 +20,13 @@
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { resolveMultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
-  import view from "$lib/client/stores/view.store";
   import LibraryRecordsPane from "../LibraryRecordsPane.svelte";
+  import { isCustomLibrary, resolveResourceTooltip } from "../library.utils";
+  import FormLabelTooltip from "$lib/client/elements/text/formLabel/FormLabelTooltip.svelte";
   export let resource: Resource;
-
+  export let isLibraryNavContext: boolean = false;
+  $: isExpanded = isCustomLibrary(resource);
+  $: tooltip = resolveResourceTooltip(resource);
   let searchQuery: string = "";
   let id: string | null = null;
   let arrangement: Arrangement =
@@ -64,7 +66,13 @@
   };
 </script>
 
-<Panel {floatingButton} title={resource + "s"} on:back>
+<Panel
+  {floatingButton}
+  title={resource + "s"}
+  {isExpanded}
+  on:back
+  isShowBackButton={isLibraryNavContext}
+>
   <div
     class="relative flex flex-col gap-4 h-full overflow-auto py-3"
     slot="nonpadded"
@@ -90,5 +98,16 @@
         />
       {/if}
     {/key}
+  </slot>
+  <slot slot="toprightactions" name="toprightactions">
+    {#if tooltip}
+      <FormLabelTooltip
+        icon="ph:question-light"
+        info={{
+          body: "Use relations to maintain relationship information between nodes.",
+          size: Size.lg
+        }}
+      />
+    {/if}
   </slot>
 </Panel>

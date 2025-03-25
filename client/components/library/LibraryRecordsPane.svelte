@@ -60,7 +60,6 @@
   import { resolveMultiSelectStore } from "../flux/resourceStores/resource.store";
   import { toasts } from "$lib/client/stores/notification.store";
   import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
-  import LibraryRelationsPane from "../tags/LibraryRelationsPane.svelte";
   import { onDestroy, onMount, tick } from "svelte";
   import { page } from "$app/stores";
   import InlineSearchBar from "$lib/client/elements/InlineSearchBar.svelte";
@@ -84,7 +83,8 @@
   import TaskLibrary from "../tasks/TaskLibrary.svelte";
   import LibrarySubTypeSwitcher from "./LibrarySubTypeSwitcher.svelte";
   import type { SubType } from "./library.type";
-  import { isCustomPane } from "./library.utils";
+  import { isCustomLibrary } from "./library.utils";
+  import LinkTagsControlPanel from "$lib/client/products/memotron/linking/LinkTagsControlPanel.svelte";
   const dispatch = createEventDispatcher();
 
   export let resource: Resource;
@@ -119,11 +119,11 @@
   };
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
 
-  $: isCustomPanel = isCustomPane(resource);
+  $: isCustom = isCustomLibrary(resource);
 
   let pageSub: any;
   onMount(async () => {
-    if (isCustomPanel) return;
+    if (isCustom) return;
     pageSub = page.subscribe(async (p) => {
       const subResourceParam = p.url.searchParams.get("type");
       let isRefreshNeeded = false;
@@ -181,7 +181,7 @@
   }
 
   async function refresh(isPagination?: boolean) {
-    if (isCustomPanel) return;
+    if (isCustom) return;
     logger.log({
       at: "LibraryRecordsPane - refresh",
       isPagination,
@@ -372,7 +372,7 @@
     await refresh();
   }
 
-  function resolveArrangement() {
+  function resolveArrangement(arrangement?: Arrangement | null) {
     if (arrangement) return arrangement;
     if ($view.isConstrainedWidth) {
       if (resource === Resource.node) return Arrangement.GRID;
@@ -383,9 +383,9 @@
   }
 </script>
 
-{#if isCustomPanel}
+{#if isCustom}
   {#if resource === Resource.relation}
-    <LibraryRelationsPane />
+    <LinkTagsControlPanel />
   {:else if resource === Resource.task}
     <TaskLibrary {accessPoint} />
   {/if}
@@ -547,7 +547,7 @@
           size={$view.isConstrainedWidth ? Size.sm : Size.md}
           isShowLoadingPulseAtTheEnd={data.length < totalCountAfterFilter &&
             !searchQuery}
-          arrangement={resolveArrangement()}
+          arrangement={resolveArrangement(arrangement)}
         />
       </div>
       <div

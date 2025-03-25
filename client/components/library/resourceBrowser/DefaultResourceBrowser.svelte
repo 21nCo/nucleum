@@ -1,3 +1,4 @@
+<!-- @deprecated -->
 <script lang="ts">
   import Button from "$lib/client/elements/button/Button.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";

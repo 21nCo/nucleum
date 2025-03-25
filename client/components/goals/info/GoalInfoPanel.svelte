@@ -57,7 +57,7 @@
 {/if}
 <div
   class={cn("relative flex flex-col gap-6 h-full", {
-    "bg-bgs2 rounded-md p-3 h-full": isConstrainedWidth
+    "rounded-md p-3 h-full": isConstrainedWidth
   })}
 >
   <div class="flex flex-col gap-2">

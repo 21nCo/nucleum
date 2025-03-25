@@ -10,6 +10,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { popover } from "$lib/client/actions/popover.action";
   import AbsoluteTimeRangePopoverV2 from "./absolute/AbsoluteTimeRangePopoverV2.svelte";
+  import view from "$lib/client/stores/view.store";
   const dispatch = createEventDispatcher();
   export let parentBackgroundIndex: number = 1;
   export let date: Date | undefined = undefined;
@@ -23,6 +24,7 @@
     | "icon-only"
     | "inline-with-icon"
     | "use-time-period-picker" = "wide";
+  export let id: string = "";
   let ref: any;
   /**
    * @deprecated
@@ -86,10 +88,11 @@
       bind:this={ref}
       use:popover={{
         content: AbsoluteTimeRangePopoverV2,
-        id: "date-picker-popover",
+        id: "date-picker-popover" + id,
         isRenderAsModalForCW: true,
         componentProps: {
           isDatePickerMode: true,
+          isCWPopoverContext: $view.isConstrainedWidth,
           selectedDate: _date,
           onDateChange: (val) => {
             date = val;
@@ -123,12 +126,14 @@
     class={cn("relative flex items-center gap-1 justify-center", {
       "p-1 hover:bg-bgs2 rounded-md": variant === "icon-only"
     })}
+    bind:this={ref}
     use:popover={{
       content: AbsoluteTimeRangePopoverV2,
       id: "date-picker-popover",
       isRenderAsModalForCW: true,
       componentProps: {
         isDatePickerMode: true,
+        isCWPopoverContext: $view.isConstrainedWidth,
         selectedDate: _date,
         onDateChange: (val) => {
           date = val;

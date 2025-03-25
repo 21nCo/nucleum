@@ -56,7 +56,7 @@ import LinkSearchResultItem from "$lib/client/products/memotron/common/linkbox/L
 import { SearchStore } from "../components/record/record.store";
 import { recentsStore } from "../components/record/recent.store";
 import { isValidString } from "$lib/shared/utils/text.utils";
-import ResourceBrowser from "../components/library/resourceBrowser/ResourceBrowser.svelte";
+import ResourceBrowser from "../components/library/resourceBrowser/ResourceBrowserV3.svelte";
 import UserPlan from "../components/subscription/UserPlan.svelte";
 import InactivePlan from "../components/subscription/InactivePlan.svelte";
 import { ButtonVariant } from "../types/button.type";

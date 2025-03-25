@@ -816,7 +816,8 @@ export function popover(node: HTMLElement, params: PopoverParams) {
         isRenderAsModalForCW = false,
         cwModalPosition = Placement.Bottom
       } = newParams);
-      if (popoverElement) {
+      //TODO - troubleshoot the root casue. Temporary fix added for date picker popover when rendered as bottom on mobile is adding many overlays on update trigger.
+      if (popoverElement && !isRenderAsModalForCW) {
         positionPopover();
       }
     },

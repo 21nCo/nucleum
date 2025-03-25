@@ -96,7 +96,11 @@
 </script>
 
 {#if layoutContext === LayoutContext.PORTRAIT}
-  <div class="flex justify-around items-center px-2 min-w-min w-full">
+  <div
+    class={cn("flex justify-around items-center min-w-min w-full", {
+      "px-2": allPages.length < 4
+    })}
+  >
     {#each allPages as item, index (item.action)}
       {#if index == Math.floor(allPages.length / 2) && $appStore.appData?.isShowCaptureOnMobile}
         <CaptureComponent />

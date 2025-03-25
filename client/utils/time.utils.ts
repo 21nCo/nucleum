@@ -597,6 +597,7 @@ export function formatDatetime(
   date: Date | string
 ) {
   if (typeof date === "string") date = new Date(date);
+  else if (typeof date === "number") date = new Date(date);
   const formattedDate = formatDate(date);
   const formattedTime = formatTime(userPreferences, date);
   return `${formattedDate} ${formattedTime}`;

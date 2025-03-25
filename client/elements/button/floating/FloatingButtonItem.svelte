@@ -30,6 +30,7 @@
   use:popover={{
     content: param.popoverAction?.content,
     placement: param.popoverAction?.placement,
+    isRenderAsModalForCW: param.popoverAction?.isRenderAsModalForCW,
     componentProps: {
       ...param.popoverAction?.componentProps,
       onSelect: (e) => {
