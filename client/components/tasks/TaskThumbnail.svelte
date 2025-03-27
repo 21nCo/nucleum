@@ -122,6 +122,7 @@
           <TextInput
             bind:value={item.label}
             style={InputStyle.PLAIN}
+            placeholder="Task name"
             on:debouncedChange={(e) => {
               taskStore.modify(
                 item.id,

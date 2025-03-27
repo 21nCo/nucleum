@@ -34,6 +34,7 @@
     ActiveCaptureStore,
     type IActiveCaptureStore
   } from "$lib/client/products/memotron/capture/capture.store";
+  import { taskStore } from "../../tasks/task.store";
   const dispatch = createEventDispatcher();
   const nodeContext = getContext<any>("node");
   let captureStore: IActiveCaptureStore | undefined;
@@ -56,12 +57,13 @@
     NodeType.TEXT_CLIP
   ];
 
-  const libraryOnlyTypes = [
+  const nonUploadTypes = [
     NodeType.TREE_OF_LINKS,
     NodeType.CALENDAR_AS_EMBED,
     NodeType.COLLECTION_AS_EMBED,
     NodeType.TOC,
-    NodeType.GRAPH_AS_EMBED
+    NodeType.GRAPH_AS_EMBED,
+    NodeType.TASK_AS_EMBED
   ];
 
   const embedIcons = [
@@ -84,10 +86,11 @@
   $: label = subType ? resolveLabel(subType) : undefined;
 
   function resolveLabel(subType: NodeType) {
-    if (libraryOnlyTypes.includes(subType)) {
+    if (nonUploadTypes.includes(subType)) {
       if (subType === NodeType.TREE_OF_LINKS) return "Node links tree";
       if (subType === NodeType.CALENDAR_AS_EMBED) return "Embed calendar";
       if (subType === NodeType.COLLECTION_AS_EMBED) return "Embed collection";
+      if (subType === NodeType.TASK_AS_EMBED) return "Add task";
       if (subType === NodeType.TOC) return "Embed table of contents";
       if (subType === NodeType.GRAPH_AS_EMBED) return "Embed graph";
     }
@@ -154,6 +157,14 @@
   function onAudioCaptureSave(e: CustomEvent) {
     isAudioCaptureInProgress = false;
     dispatch("select", e.detail);
+  }
+
+  async function onCreateNewTask() {
+    const task = await taskStore.create({
+      label: "",
+      isChecked: false
+    });
+    if (Array.isArray(task) && task.length > 0) dispatch("select", task[0]);
   }
 </script>
 
@@ -255,7 +266,7 @@
             />
           </button>
         {/if}
-        {#if $context.embed !== Embed.HANDSET && ((subType && ![...libraryOnlyTypesTemporary, ...libraryOnlyTypes].includes(subType)) || !subType)}
+        {#if $context.embed !== Embed.HANDSET && ((subType && ![...libraryOnlyTypesTemporary, ...nonUploadTypes].includes(subType)) || !subType)}
           <div class="w-1/3">
             <Divider text="or" colorStrength={ColorStrength.Strong} />
           </div>
@@ -288,6 +299,15 @@
               on:click={() => {
                 ref?.dispatchEvent(new CustomEvent("browse"));
               }}
+            />
+          {/if}
+          {#if subType === NodeType.TASK_AS_EMBED}
+            <Button
+              label="Create new task"
+              icon="ph:plus-light"
+              {...commonButtonParams}
+              type={ButtonVariant.PRIMARY}
+              on:click={onCreateNewTask}
             />
           {/if}
           <button

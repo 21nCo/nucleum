@@ -209,6 +209,7 @@ export enum NodeType {
   TOC = "TOC",
   NODE_AS_EMBED = "NODE_AS_EMBED",
   COLLECTION_AS_EMBED = "COLLECTION_AS_EMBED",
+  TASK_AS_EMBED = "TASK_AS_EMBED",
   GRAPH_AS_EMBED = "GRAPH_AS_EMBED",
   CALENDAR_AS_EMBED = "CALENDAR_AS_EMBED",
   TREE_OF_LINKS = "TREE_OF_LINKS",
@@ -303,6 +304,7 @@ export const internalUrlNodeTypeList = [
 export const embedNodeTypeList = [
   NodeType.NODE_AS_EMBED,
   NodeType.COLLECTION_AS_EMBED,
+  NodeType.TASK_AS_EMBED,
   NodeType.GRAPH_AS_EMBED,
   NodeType.CALENDAR_AS_EMBED,
   NodeType.TOC

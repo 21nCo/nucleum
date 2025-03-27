@@ -43,6 +43,7 @@
     ActiveCaptureStore,
     type IActiveCaptureStore
   } from "$lib/client/products/memotron/capture/capture.store";
+  import Task from "../../tasks/Task.svelte";
 
   const dispatch = createEventDispatcher();
   const nodeContext = getContext<any>("node");
@@ -109,6 +110,11 @@
       dispatchUpdateEvent({
         id: event.detail.id,
         subType: NodeType.COLLECTION_AS_EMBED
+      });
+    } else if (resource === Resource.task) {
+      dispatchUpdateEvent({
+        id: event.detail.id,
+        subType: NodeType.TASK_AS_EMBED
       });
     }
   }
@@ -386,6 +392,12 @@
       parentBgIndex={$context.embed === Embed.HANDSET ? 2 : 1}
     />
   </div>
+{:else if body?.subType === NodeType.TASK_AS_EMBED && body?.id}
+  {#key body.id.toString()}
+    <div class="h-fit min-h-20 w-full py-4 max-w-full overflow-x-auto">
+      <Task id={body.id} accessPoint={ResourceAccessPoint.MARKDOWN_EMBED} />
+    </div>
+  {/key}
 {:else if isLoading}
   <div
     class="flex items-center justify-center w-full h-80 bg-bgs2 bg-opacity-50"

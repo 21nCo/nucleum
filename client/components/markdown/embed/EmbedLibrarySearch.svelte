@@ -17,8 +17,14 @@
       resource:
         subType === NodeType.COLLECTION_AS_EMBED
           ? Resource.collection
-          : Resource.node,
-      subType: subType !== NodeType.COLLECTION_AS_EMBED ? subType : undefined
+          : subType === NodeType.TASK_AS_EMBED
+            ? Resource.task
+            : Resource.node,
+      subType:
+        subType !== NodeType.COLLECTION_AS_EMBED &&
+        subType !== NodeType.TASK_AS_EMBED
+          ? subType
+          : undefined
     });
   }
   $: label = subType ? enumToString(subType) + "s" : "";

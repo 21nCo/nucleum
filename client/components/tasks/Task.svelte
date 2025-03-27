@@ -11,6 +11,7 @@
   import { recentsStore } from "../record/recent.store";
 
   export let id: IRecordId;
+  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   let task: ITaskThumb | undefined = undefined;
 
   onMount(async () => {
@@ -19,7 +20,7 @@
   async function refresh() {
     const result = await taskStore.selectMany({
       filters: {
-        id
+        id: id?.toString()
       }
     });
     if (isValidArrayWithData(result)) {
@@ -34,6 +35,6 @@
 
 {#if task}
   <div class="my-auto userdata ph-no-capture">
-    <TaskThumbnail item={task} accessPoint={ResourceAccessPoint.SELF} />
+    <TaskThumbnail item={task} {accessPoint} />
   </div>
 {/if}

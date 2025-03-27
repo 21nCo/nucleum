@@ -14,6 +14,7 @@
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { convertDateStringToArray } from "$lib/client/utils/utils";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import NodeTasksPane from "./NodeTasksPane.svelte";
   const contentContext = getContext<any>("content");
 
   export let node: IActiveNodeStore | null = null;
@@ -22,6 +23,17 @@
   let selectedType: string | undefined = undefined;
 
   function resolveOptions(contentType: NodeType | undefined) {
+    const tasks = {
+      value: "tasks",
+      label: "Tasks",
+      icon: "ph:check-square-light"
+    };
+    const comments = {
+      value: "comments",
+      label: "Comments",
+      icon: "ph:chat-teardrop-text"
+    };
+
     if (contentType === NodeType.PDF) {
       return [
         {
@@ -29,10 +41,7 @@
           label: "Highlights",
           icon: "bookmark"
         },
-        {
-          value: "tasks",
-          icon: "rocket"
-        }
+        tasks
       ];
     } else if (contentType === NodeType.WEB_PAGE) {
       return [
@@ -41,10 +50,7 @@
           label: "Clips",
           icon: "bookmark"
         },
-        {
-          value: "tasks",
-          icon: "check-circle"
-        }
+        tasks
       ];
     } else if (contentType === NodeType.TWITTER_PROFILE) {
       return [
@@ -53,10 +59,7 @@
           label: "Tweets",
           icon: "ph:x-logo"
         },
-        {
-          value: "tasks",
-          icon: "check-circle"
-        }
+        tasks
       ];
     } else if (contentType === NodeType.YOUTUBE_VIDEO) {
       return [
@@ -65,10 +68,7 @@
           label: "Clips",
           icon: "ph:youtube-logo"
         },
-        {
-          value: "tasks",
-          icon: "check-circle"
-        }
+        tasks
       ];
     } else if (contentType === NodeType.KINDLE_BOOK) {
       return [
@@ -77,23 +77,10 @@
           label: "Highlights",
           icon: "bookmark"
         },
-        {
-          value: "tasks",
-          icon: "rocket"
-        }
+        tasks
       ];
     } else if (contentType === NodeType.NODULAR_MARKDOWN) {
-      return [
-        {
-          value: "comments",
-          label: "Comments",
-          icon: "ph:chat-teardrop-text"
-        },
-        {
-          value: "tasks",
-          icon: "check-circle"
-        }
-      ];
+      return [tasks, comments];
     }
   }
 </script>
@@ -226,10 +213,12 @@
       subText="This page doesn't have any clips yet"
     />
   {/if}
-{:else if selectedType === "tasks" || selectedType === "comments"}
+{:else if selectedType === "tasks"}
+  <NodeTasksPane {node} />
+{:else if selectedType === "comments"}
   <ComingSoonView
     mainText="Coming soon"
-    subText="Tasks and comments will be available soon"
+    subText="Commenting will be available soon"
   />
 {:else}
   <EmptyStatusView size={Size.sm} mainText="No traces found" />
