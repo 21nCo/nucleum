@@ -1,5 +1,6 @@
 <script lang="ts">
   import { logger } from "$lib/client/components/debug/logger.client";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import Button from "$lib/client/elements/button/Button.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
@@ -12,13 +13,18 @@
   import view from "$lib/client/stores/view.store";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import type { IRecordId } from "$lib/client/types/data.type";
+  import { InputStyle } from "$lib/client/types/input.type";
   import { Size } from "$lib/client/types/size.enum";
   import { InfoTextType } from "$lib/client/types/text.type";
+  import { cn } from "$lib/client/utils/ui.utils";
   import { linkTagStore } from "./link.store";
   import type { ILinkTag } from "./link.type";
   import LinkTagsGroup from "./LinkTagsGroup.svelte";
+
+  export let accessPoint: ResourceAccessPoint | null = null;
   let inputValue: string = "";
   let errorMessage: string | null = null;
+  let isAddFocused = false;
   async function save(params?: { group: string; label: string }) {
     if (!inputValue && !params?.label) {
       errorMessage = "Tag cannot be empty";
@@ -70,13 +76,27 @@
   $: groups = $linkTagStore ? linkTagStore.transform($linkTagStore) : [];
 </script>
 
-<div class="flex flex-col gap-6 pt-3 w-full h-full">
-  <div class="w-full flex cw:gap-3 gap-6">
-    <TextInput
-      bind:value={inputValue}
-      placeholder="Type relation or group:relation to add"
-      on:enter={() => save()}
-    />
+<div
+  class={cn("flex flex-col gap-6 pt-3 w-full h-full", {
+    "px-4": accessPoint === ResourceAccessPoint.LIBRARY
+  })}
+>
+  <div class="w-full flex cw:gap-3 gap-4">
+    <div
+      class={cn("flex-1 flex items-center px-4 h-full border rounded-full", {
+        "border-aps1": isAddFocused,
+        "border-brs3": !isAddFocused
+      })}
+    >
+      <TextInput
+        bind:value={inputValue}
+        style={InputStyle.PLAIN}
+        placeholder="Type relation or group:relation to add"
+        on:enter={() => save()}
+        on:focus={() => (isAddFocused = true)}
+        on:blur={() => (isAddFocused = false)}
+      />
+    </div>
     {#if $view.isConstrainedWidth}
       <button
         class="w-14 h-full flex justify-center items-center bg-bgs2 rounded-md"

@@ -13,12 +13,12 @@
 
   export let isShowHome = false;
   export let activeTab: string | null = null;
-  let pinnedItems: IRecordId[] = tabs.get();
+  let pinnedItems: IRecordId[] = tabs.get() ?? [];
   let isInFocusMode = false;
 
   onMount(() => {
     const unsubscribe = uiState.subscribe((x) => {
-      pinnedItems = tabs.get();
+      pinnedItems = tabs.get() ?? [];
     });
     return () => {
       if (unsubscribe) unsubscribe();

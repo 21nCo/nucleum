@@ -385,7 +385,7 @@
 
 {#if isCustom}
   {#if resource === Resource.relation}
-    <LinkTagsControlPanel />
+    <LinkTagsControlPanel {accessPoint} />
   {:else if resource === Resource.task}
     <TaskLibrary {accessPoint} />
   {/if}

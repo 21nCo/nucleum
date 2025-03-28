@@ -68,7 +68,8 @@
       disabled: !item.tooltip,
       text: item.tooltip,
       delay: 1000,
-      isLarger: true
+      isLarger: true,
+      isAllowTextWrap: true
     }}
     in:fade
   >

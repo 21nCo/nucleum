@@ -23,6 +23,7 @@ interface TooltipParams {
    */
   isEnableOnlyOnTruncate?: boolean;
   isLarger?: boolean;
+  isAllowTextWrap?: boolean;
 }
 
 interface TooltipReturn {
@@ -51,10 +52,16 @@ export function tooltip(
     delay = 300,
     disabled = false,
     isEnableOnlyOnTruncate = false,
-    isLarger = false
+    isLarger = false,
+    isAllowTextWrap = false
   } = params;
   let baseClassList =
-    "fixed z-50 px-3 bg-fgs2 text-bgs1 shadow-md rounded-md pointer-events-none opacity-0 transition-opacity duration-200 tooltip whitespace-nowrap";
+    "fixed z-50 px-3 bg-fgs2 text-bgs1 shadow-md rounded-md pointer-events-none opacity-0 transition-opacity duration-200 tooltip";
+  if (isAllowTextWrap) {
+    baseClassList += " whitespace-normal";
+  } else {
+    baseClassList += " whitespace-nowrap";
+  }
   if (isLarger) {
     baseClassList += " py-2 text-b2 max-w-lg";
   } else {
