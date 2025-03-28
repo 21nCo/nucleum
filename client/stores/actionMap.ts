@@ -74,6 +74,7 @@ import GoalSearchResultItem from "../components/goals/GoalSearchResultItem.svelt
 import { taskStore } from "../components/tasks/task.store";
 import Task from "../components/tasks/Task.svelte";
 import ResourceSearchModal from "../products/memotron/library/search/ResourceSearchModal.svelte";
+import DummyCollection from "../components/collection/DummyCollection.svelte";
 
 export const globalActions: IAction[] = [
   {
@@ -568,7 +569,7 @@ export const globalActions: IAction[] = [
   {
     action: Resource.collection,
     type: ActionType.MODAL,
-    component: Collection,
+    component: DummyCollection,
     resourceLabelRenderer: CollectionTitleLabelPart,
     modalParams: {
       layout: {

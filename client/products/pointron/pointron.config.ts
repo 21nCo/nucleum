@@ -7,7 +7,6 @@ import {
 import { focusHeatmapStore } from "$lib/client/products/pointron/journal/journal.store";
 import { accessLogStore } from "$lib/client/components/accessLogging/accesslog.store";
 import {
-  logsPaneStore,
   manualLogStore,
   sessionLogStore
 } from "$lib/client/products/pointron/logs/log.store";
@@ -22,13 +21,14 @@ import {
 } from "$lib/client/components/collection/collection.store";
 import { goalStore } from "$lib/client/components/goals/goal.store";
 import { taskStore } from "$lib/client/components/tasks/task.store";
+import { linker } from "../memotron/linking/link.store";
+import { propertyStore } from "$lib/client/components/collection/properties/property.store";
 
 export const pointronCacheableStores: IStore[] = [
   analyticsConfigStore,
   pointronPreferences,
   focusItemsStore,
   activeSession,
-  logsPaneStore,
   tagStore,
   manualLogStore,
   focusHeatmapStore,
@@ -37,7 +37,9 @@ export const pointronCacheableStores: IStore[] = [
   collectionStore,
   viewStore,
   goalStore,
-  taskStore
+  taskStore,
+  linker,
+  propertyStore
 ];
 
 export const pointronRemoteOnlyStores: IStore[] = [accessLogStore];
