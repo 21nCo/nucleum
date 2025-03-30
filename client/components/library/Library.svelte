@@ -31,7 +31,7 @@
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { Action } from "$lib/client/types/action.enum";
   import ContextMenu from "$lib/client/elements/contextMenu/ContextMenu.svelte";
-  import ResourceBrowserV3 from "./resourceBrowser/ResourceBrowserV3.svelte";
+  import ResourceBrowser from "./resourceBrowser/ResourceBrowser.svelte";
   import { Product } from "$lib/client/types/product.type";
   import { isHideCreateAction } from "./library.utils";
 
@@ -218,7 +218,7 @@
     </div>
   {/if}
   <div slot="nav" class="flex flex-grow">
-    <ResourceBrowserV3
+    <ResourceBrowser
       resource={selectedResource}
       isLibraryNavContext={true}
       on:back={() => {

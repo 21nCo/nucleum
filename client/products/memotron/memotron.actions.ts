@@ -28,7 +28,7 @@ import GlobalGraph from "./graph/GlobalGraph.svelte";
 import CalloutSettings from "$lib/client/components/markdown/callout/CalloutSettings.svelte";
 import MemotronDataSettings from "./settings/MemotronDataSettings.svelte";
 import { Embed } from "$lib/client/types/context.type";
-import ResourceBrowser from "$lib/client/components/library/resourceBrowser/ResourceBrowserv3.svelte";
+import ResourceBrowser from "$lib/client/components/library/resourceBrowser/ResourceBrowser.svelte";
 import { MemotronEvent } from "./memotron.type";
 
 export const memotronActions: IAction[] = [
