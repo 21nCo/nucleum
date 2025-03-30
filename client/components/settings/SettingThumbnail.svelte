@@ -14,6 +14,8 @@
   export let isActive: boolean = false;
   export let setActiveByPath: boolean = false;
   export let isShowDivider: boolean = false;
+  export let isRoundedTop: boolean = false;
+  export let isRoundedBottom: boolean = false;
   let isOutlineStyle: boolean = false;
   let component = appStore.resolveAction(action);
   $: if (setActiveByPath)
@@ -23,6 +25,8 @@
 {#if component && !component.isInactive}
   <button
     class={cn(orientation === Orientation.Vertical ? width : "", {
+      "rounded-t-lg": isRoundedTop,
+      "rounded-b-lg": isRoundedBottom,
       "flex px-4 py-3 w-full items-center justify-between":
         orientation === Orientation.Horizontal,
       "border-y border-transparent": !isActive && isOutlineStyle,
@@ -70,7 +74,7 @@
       </div>
     {/if}
   </button>
-  {#if orientation === Orientation.Horizontal && isShowDivider}
+  {#if orientation === Orientation.Horizontal && isShowDivider && !isRoundedBottom}
     <Divider colorStrength={ColorStrength.Subtle} />
   {/if}
 {/if}

@@ -20,6 +20,7 @@
   import { SearchStore } from "$lib/client/components/record/record.store";
   import view from "$lib/client/stores/view.store";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  import { isHideCreateAction } from "../library.utils";
 
   export let item: IResourceSwitchItem;
   export let isActive: boolean = false;
@@ -51,63 +52,50 @@
     if (item.value === Resource.combination) {
       return [];
     }
+    const pinAction = {
+      label: isCurrentResourcePinned
+        ? "Unpin from App menu"
+        : "Pin to App menu",
+      value: "pin",
+      icon: isCurrentResourcePinned
+        ? "ph:minus-circle-light"
+        : "ph:push-pin-light",
+      callback: async () => {
+        if (!isCurrentResourcePinned)
+          appMenuStore.addUserMenuItem(
+            resourceAction(item.value as Resource, ResourceActionType.BROWSE)
+          );
+        else
+          appMenuStore.removeUserMenuItem(
+            resourceAction(item.value as Resource, ResourceActionType.BROWSE)
+          );
+        popRef.dispatchEvent(new CustomEvent("hide"));
+      }
+    };
+    const createAction = {
+      label: "Create new",
+      value: "create",
+      icon: "plus",
+      callback: async () => {
+        appStore.runAction(
+          resourceAction(item.value as Resource, ResourceActionType.CREATE)
+        );
+        popRef.dispatchEvent(new CustomEvent("hide"));
+      }
+    };
+    if (isHideCreateAction(item.value as Resource)) {
+      return [
+        {
+          group: "all",
+          items: [pinAction]
+        }
+      ];
+    }
     return [
       {
         group: "all",
-        items: [
-          {
-            label: isCurrentResourcePinned
-              ? "Unpin from App menu"
-              : "Pin to App menu",
-            value: "pin",
-            icon: isCurrentResourcePinned
-              ? "ph:minus-circle-light"
-              : "ph:push-pin-light",
-            callback: async () => {
-              if (!isCurrentResourcePinned)
-                appMenuStore.addUserMenuItem(
-                  resourceAction(
-                    item.value as Resource,
-                    ResourceActionType.BROWSE
-                  )
-                );
-              else
-                appMenuStore.removeUserMenuItem(
-                  resourceAction(
-                    item.value as Resource,
-                    ResourceActionType.BROWSE
-                  )
-                );
-              popRef.dispatchEvent(new CustomEvent("hide"));
-            }
-          },
-          {
-            label: "Create new",
-            value: "create",
-            icon: "plus",
-            callback: async () => {
-              appStore.runAction(
-                resourceAction(
-                  item.value as Resource,
-                  ResourceActionType.CREATE
-                )
-              );
-              popRef.dispatchEvent(new CustomEvent("hide"));
-            }
-          }
-        ]
+        items: [pinAction, createAction]
       }
-      // {
-      //   group: "more",
-      //   items: [
-      //     {
-      //       label: "Show archived",
-      //       value: "archived",
-      //       icon: "archive",
-      //       callback: async () => {}
-      //     }
-      //   ]
-      // }
     ];
   }
 </script>

@@ -21,7 +21,11 @@
   import { resolveMultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
   import LibraryRecordsPane from "../LibraryRecordsPane.svelte";
-  import { isCustomLibrary, resolveResourceTooltip } from "../library.utils";
+  import {
+    isCustomLibrary,
+    isHideCreateAction,
+    resolveResourceTooltip
+  } from "../library.utils";
   import FormLabelTooltip from "$lib/client/elements/text/formLabel/FormLabelTooltip.svelte";
   export let resource: Resource;
   export let isLibraryNavContext: boolean = false;
@@ -42,7 +46,7 @@
   };
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
   $: floatingButton =
-    $multiSelectStore.length > 0
+    $multiSelectStore.length > 0 || isHideCreateAction(resource)
       ? undefined
       : {
           label: "Create " + resource,

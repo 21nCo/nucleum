@@ -20,7 +20,6 @@
   import { recentsStore } from "$lib/client/components/record/recent.store";
   import { page } from "$app/stores";
   import view from "$lib/client/stores/view.store";
-  import SyncStatusPropagator from "$lib/client/elements/feedback/SyncStatusPropagator.svelte";
   import InlineSyncingFeedback from "$lib/client/elements/feedback/InlineSyncingFeedback.svelte";
   import Panel from "$lib/client/layout/paint/Panel.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
@@ -34,6 +33,7 @@
   import ContextMenu from "$lib/client/elements/contextMenu/ContextMenu.svelte";
   import ResourceBrowserV3 from "./resourceBrowser/ResourceBrowserV3.svelte";
   import { Product } from "$lib/client/types/product.type";
+  import { isHideCreateAction } from "./library.utils";
 
   export let resources: Resource[] = [];
 
@@ -42,8 +42,7 @@
     : resources[0];
   let resourceSwitcherRef: ResourceSwitcher;
   let availableResourcesSet: Set<Resource> = new Set(availableResources);
-  let isSyncing: boolean = false;
-  let syncStatusPropagatorRef: SyncStatusPropagator;
+  let syncFeedbackRef: InlineSyncingFeedback;
   let recordsPaneRef: LibraryRecordsPane;
 
   const resourceList: IResourceSwitchItem[] = resolveResourceSwitcher();
@@ -74,13 +73,15 @@
               isRenderAsModalForCW: true,
               componentProps: {
                 isFullWidth: $view.isConstrainedWidth,
-                menuResolver: resolveCreateResourceMenu
+                menuResolver: resolveCreateResourceMenu,
+                size: Size.lg
               }
             },
             icon: "ph:plus-circle-light"
           }
         ]
-      : !availableResourcesSet.has(selectedResource)
+      : !availableResourcesSet.has(selectedResource) ||
+          isHideCreateAction(selectedResource)
         ? undefined
         : {
             label: "Create new " + selectedResource,
@@ -116,13 +117,13 @@
 
   function resolveCreateResourceMenu() {
     let resources: Resource[] = [];
-
     switch ($appStore.product) {
       case Product.POINTRON:
         resources = [Resource.task, Resource.goal, Resource.collection];
         break;
       case Product.MEMOTRON:
         resources = [Resource.node, Resource.task, Resource.collection];
+        break;
       case Product.NUCLEUS:
         resources = [
           Resource.node,
@@ -130,6 +131,7 @@
           Resource.goal,
           Resource.collection
         ];
+        break;
       default:
         resources = [Resource.collection];
     }
@@ -164,7 +166,11 @@
     $view.isConstrainedWidth}
 >
   {#if $view.isConstrainedWidth}
-    <InlineSyncingFeedback {isSyncing} isFullWidthVariant={true} />
+    <InlineSyncingFeedback
+      bind:this={syncFeedbackRef}
+      resource={selectedResource}
+      isFullWidthVariant={true}
+    />
   {/if}
   <div class="flex mo:py-3 py-5 w-full h-fit shrink-0">
     <ResourceSwitcher
@@ -177,7 +183,7 @@
           resource: e.detail,
           type: "all"
         });
-        syncStatusPropagatorRef?.refresh(e.detail);
+        syncFeedbackRef?.refresh(e.detail);
       }}
     />
   </div>
@@ -225,16 +231,9 @@
     {#key selectedResource}
       <LibraryRecordsPane
         resource={selectedResource}
-        {isSyncing}
         bind:this={recordsPaneRef}
         on:refreshTotalCount={refreshTotalRecordCounts}
       />
     {/key}
   </div>
 </Panel>
-
-<SyncStatusPropagator
-  bind:this={syncStatusPropagatorRef}
-  resource={selectedResource}
-  bind:isSyncing
-/>

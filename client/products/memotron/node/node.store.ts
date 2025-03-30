@@ -320,11 +320,13 @@ export class ActiveNodeStore extends CollectibleStore<IActiveNode, NodeStore> {
           node.clips.sort((a, b) => a.body.timestamp - b.body.timestamp);
         }
         this.set({ ...node, accessMode });
-        appStore.addToRecents({
-          record: node,
-          type: Resource.node,
-          timestamp: new Date()
-        });
+        if (!node.metaType) {
+          appStore.addToRecents({
+            record: node,
+            type: Resource.node,
+            timestamp: new Date()
+          });
+        }
       }
       const rawLinks =
         node.links.length > 0

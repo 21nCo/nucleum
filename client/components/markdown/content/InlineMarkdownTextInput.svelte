@@ -1213,7 +1213,7 @@
       {placeholder}
       use:scrollIntoViewOnFocus={{
         behavior: "auto",
-        block: "center",
+        block: "nearest",
         eager: {
           bottom: $view.isConstrainedWidth ? 250 : 60
         }

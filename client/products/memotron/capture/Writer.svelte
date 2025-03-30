@@ -53,13 +53,7 @@
   let isShowTOC: boolean = false;
 </script>
 
-<div
-  class="flex w-full max-h-full justify-between"
-  use:activeHeight={{
-    defaultHeight: "100dvh",
-    offset: 150
-  }}
->
+<div class="flex w-full max-h-full justify-between">
   {#if captureType === CaptureType.AUDIO}
     <div class="w-full h-full flex items-center justify-center">
       <AudioCapture {captureStore} bind:isSaveInProgress on:cancel />

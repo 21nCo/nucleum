@@ -25,6 +25,8 @@
     }}
   />
   <div class="flex flex-grow w-full">
-    <CalendarColumn scale={TimeScaleUnit.DAY} date={selectedDate} />
+    {#key selectedDate}
+      <CalendarColumn scale={TimeScaleUnit.DAY} date={selectedDate} />
+    {/key}
   </div>
 </div>

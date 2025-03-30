@@ -24,9 +24,9 @@
   }
 </script>
 
-<div class="flex flex-col gap-2">
+<div class="flex flex-col gap-2 bg-bgs2 rounded-lg mx-4">
   {#if sectionName}
-    <div class="pl-4">
+    <div class="pl-4 pt-4">
       <Text style={TextStyle.SECTION_HEADING} content={sectionName} />
     </div>
   {/if}
@@ -36,12 +36,15 @@
       : "flex flex-wrap gap-2 pl-4"}
   >
     {#if items}
-      {#each items as item}
+      {#each items as item, index}
         <SettingThumbnail
           {orientation}
           action={item}
           setActiveByPath={true}
+          parentBackgroundIndex={2}
           isShowDivider={true}
+          isRoundedTop={!sectionName}
+          isRoundedBottom={index === items.length - 1}
           on:click={() => {
             onClick(item);
           }}

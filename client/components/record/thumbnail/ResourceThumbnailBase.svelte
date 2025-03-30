@@ -8,6 +8,7 @@
     resourceInList
   } from "$lib/client/components/flux/resourceStores/resource.utils";
   import Check from "$lib/client/icons/Check.svelte";
+  import context from "$lib/client/stores/context.store";
   import type { IRecordId } from "$lib/client/types/data.type";
   import { Arrangement } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
@@ -24,6 +25,10 @@
   export let isApplyCustomColor: boolean = false;
   export let accessPointId: IRecordId | undefined = undefined;
   export let isPreventDefaultContextMenu: boolean = false;
+  /**
+   * If true, the context menu will be shown on touch devices even if the hover is not active
+   */
+  export let isAlwaysShowContextMenuOnTouchDevice: boolean = false;
   $: multiSelectContext = {
     resource: determineResourceType(item.id),
     accessPoint,
@@ -71,7 +76,7 @@
       {/if}
     </button>
   {/if}
-  {#if isHovering && accessPoint !== ResourceAccessPoint.PICKER && !isPreventDefaultContextMenu}
+  {#if (isHovering && accessPoint !== ResourceAccessPoint.PICKER && !isPreventDefaultContextMenu) || (isAlwaysShowContextMenuOnTouchDevice && $context.isTouchDevice)}
     <ResourceThumbnailContextMenu
       bind:item
       {accessPoint}

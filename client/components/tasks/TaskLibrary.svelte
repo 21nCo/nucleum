@@ -56,12 +56,13 @@
   import BulkEditBar from "../record/BulkEditBar.svelte";
   import view from "$lib/client/stores/view.store";
   import InlineSyncingFeedback from "$lib/client/elements/feedback/InlineSyncingFeedback.svelte";
-  import SyncStatusPropagator from "$lib/client/elements/feedback/SyncStatusPropagator.svelte";
   import { fly } from "svelte/transition";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import { resolveTaskDueDateFilters } from "./task.utils";
   import { OptionSelectorStyle } from "$lib/client/types/select.type";
+  import { LoadingAnimationType } from "$lib/client/types/feedback.type";
+  import { intersection } from "$lib/client/actions/intersection.action";
 
   export let goalId: IRecordId | undefined = undefined;
   export let collectionId: IRecordId | undefined = undefined;
@@ -84,7 +85,7 @@
   let dateSelectionPopoverRef: HTMLDivElement;
   let addNewTaskInlineRef: AddNewTaskInline | undefined;
   let isRefreshing = false;
-  let isSyncing = false;
+
   $: multiSelectContext = {
     resource: Resource.task,
     accessPoint: resolveAccessPoint(),
@@ -122,12 +123,21 @@
     };
   });
 
-  async function refresh() {
-    isRefreshing = true;
+  async function refresh(params?: { isPagination?: boolean }) {
+    if (!params?.isPagination) {
+      isRefreshing = true;
+      tasks = [];
+    }
     const filters = resolveFilters();
     let result = await searchStore.select({
       filters,
-      searchQuery
+      searchQuery,
+      limit:
+        selectedSubType !== TaskSubTypeForSwitcher.BY_MONTH &&
+        selectedSubType !== TaskSubTypeForSwitcher.BY_DATE
+          ? 50
+          : undefined,
+      offset: params?.isPagination ? tasks.length : undefined
     });
     if (isValidArray(result)) {
       //TODO - for by_month case + overdue - the date filter has 2 conditions with AND operator - below is temporary fix until complex filters are implemented
@@ -139,7 +149,8 @@
           return x.date && compareDates(x.date, new Date(), "<");
         });
       }
-      tasks = [...result];
+      if (params?.isPagination) tasks = [...tasks, ...result];
+      else tasks = [...result];
     } else {
       tasks = [];
     }
@@ -398,7 +409,7 @@
     />
   </InlineSearchBar>
   <div class="cw:px-0 px-4 w-full">
-    <InlineSyncingFeedback {isSyncing} isFullWidthVariant={true} />
+    <InlineSyncingFeedback resource={Resource.task} isFullWidthVariant={true} />
   </div>
 
   {#if tasks && tasks.length > 0}
@@ -421,12 +432,21 @@
         {parentBgIndex}
         subType={selectedSubType}
       />
+      <div
+        use:intersection={{
+          rootMargin: "100px",
+          callback: () => {
+            refresh({ isPagination: true });
+          }
+        }}
+      />
       <ScrollViewBottomSpacer />
     </div>
   {:else}
     <EmptyStatusView
       isSearchContext={searchQuery !== ""}
       isLoadingState={isRefreshing}
+      loadingAnimation={LoadingAnimationType.FOCUS_ITEMS_PULSE}
       mainText="No tasks found"
       subText={searchQuery !== ""
         ? "Try different search criteria or create a new task."
@@ -465,5 +485,3 @@
   }}
   on:change={onResourceMutation}
 />
-
-<SyncStatusPropagator resource={Resource.task} bind:isSyncing />

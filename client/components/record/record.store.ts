@@ -443,8 +443,10 @@ export class SearchStore {
         resource === Resource.collection ||
         resource === Resource.combination ||
         resource === Resource.goal ||
-        resource === Resource.task
+        resource === Resource.task ||
+        resource === Resource.relation
       ) {
+        if (resource === Resource.relation) resource = Resource.linkTag;
         const result = await flux.selectMany(resource, {
           properties: ["count()"],
           filters: {

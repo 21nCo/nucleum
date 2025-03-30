@@ -55,6 +55,8 @@
   export let parentBgIndex = 1;
   export let isDraggable: boolean = false;
   export let refreshId: number = new Date().getTime();
+  export let isAlwaysShowContextMenuOnTouchDevice: boolean = false;
+
   let isHovering: boolean = false;
   let _url: string;
   $: filePreview = resolveFilePreview(item);
@@ -103,6 +105,7 @@
   {isApplyCustomColor}
   {arrangement}
   {isHidePreview}
+  {isAlwaysShowContextMenuOnTouchDevice}
   bind:isHovering
   on:action
 >
@@ -114,7 +117,10 @@
         "border-transparent notouch:hover:border-brs3 active:border-brs3 px-1":
           !isApplyCustomColor,
         "bg-bgs2 bg-opacity-50 px-2":
-          !isApplyCustomColor && accessPoint === ResourceAccessPoint.LIBRARY,
+          !isApplyCustomColor &&
+          (accessPoint === ResourceAccessPoint.LIBRARY ||
+            accessPoint === ResourceAccessPoint.NODE_LINKS ||
+            accessPoint === ResourceAccessPoint.DEFAULT_RIGHT_PANE_LINKS),
         "p-2": isLinkContext
       })}
     >

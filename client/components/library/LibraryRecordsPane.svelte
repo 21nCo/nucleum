@@ -88,7 +88,6 @@
   const dispatch = createEventDispatcher();
 
   export let resource: Resource;
-  export let isSyncing: boolean = false;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.LIBRARY;
   export let accessPointState: ResourceAccessPointState =
     ResourceAccessPointState.DEFAULT;
@@ -530,7 +529,7 @@
     />
   {/if}
   <div class="flex flex-col gap-4 px-4 overflow-auto grow">
-    <InlineSyncingFeedback {isSyncing} isFullWidthVariant={true} />
+    <InlineSyncingFeedback {resource} isFullWidthVariant={true} />
     {#if isRefreshing}
       <LibraryLoadingPulse {isConstrainedWidth} {arrangement} />
     {:else if data && data.length > 0}

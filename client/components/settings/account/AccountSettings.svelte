@@ -37,6 +37,7 @@
   import { BillingCycle, PlanType } from "../../subscription/userPlan.type";
   import { formatDate } from "$lib/client/utils/time.utils";
   import RestorePurchaseAction from "../../subscription/RestorePurchaseAction.svelte";
+  import view from "$lib/client/stores/view.store";
   let name = "";
   let emailParts: EmailParts | undefined = undefined;
   let isEditing = false;
@@ -233,15 +234,17 @@
             </div>
           {/if}
         </div>
-        <Button
-          label="Go to billing"
-          icon="ph:wallet-light"
-          on:click={() => {
-            appStore.toggleSearchParam({
-              setting: Action.USER_BILLING
-            });
-          }}
-        />
+        {#if !$view.isConstrainedWidth}
+          <Button
+            label="Go to billing"
+            icon="ph:wallet-light"
+            on:click={() => {
+              appStore.toggleSearchParam({
+                setting: Action.USER_BILLING
+              });
+            }}
+          />
+        {/if}
       </div>
     </div>
   </div>

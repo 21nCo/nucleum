@@ -39,7 +39,7 @@
 </script>
 
 <div
-  class={cn("h-40 min-h-[10rem]", bg(parentBackgroundIndex), {
+  class={cn("h-40 min-h-[10rem] cw:min-h-[12rem]", bg(parentBackgroundIndex), {
     "mx-4 rounded-lg": context === "page",
     "w-full": context !== "page"
   })}

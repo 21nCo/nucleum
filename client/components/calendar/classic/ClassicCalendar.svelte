@@ -126,7 +126,8 @@
         class="relative w-96 dp:w-[28rem] p-3 border-l border-brs3"
         style={`min-width: ${width}px; width: ${width}px; max-width: ${width}px;`}
         use:resizable={{
-          enabled: !$context.isTouchDevice,
+          // enabled: !$context.isTouchDevice,
+          enabled: true,
           minWidth: 380,
           maxWidth: 800,
           edges: ["left"],

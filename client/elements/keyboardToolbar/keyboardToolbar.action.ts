@@ -70,7 +70,8 @@ export function mdToolbar(node: HTMLElement, params?: IMdToolbarParams) {
       node.style.display = "flex";
       if (!isPreventDefaultOnKeyboardClose) {
         node.style.height = `${keyboardHeight + offset}px`;
-        node.style.top = `${elementTopPosition - offset}px`;
+        // node.style.top = `${elementTopPosition - offset}px`;
+        node.style.bottom = "0px";
       }
     }
     window.dispatchEvent(new CustomEvent("mdtoolbar"));

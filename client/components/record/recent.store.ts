@@ -102,7 +102,8 @@ export class RecentsStore extends ObservableStore<IRecentsStore> {
       filters: {
         contentType: rootNodeTypeList.concat(headingNodeTypes),
         ...activeResourceFilterV2,
-        creationContext: false
+        creationContext: false,
+        metaType: false
       },
       orderBy: {
         modifiedAt: "desc"

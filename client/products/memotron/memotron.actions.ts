@@ -233,16 +233,12 @@ export const memotronActions: IAction[] = [
   },
   {
     action: resourceAction(Resource.relation, ResourceActionType.BROWSE),
-    type: ActionType.MODAL,
+    type: ActionType.PAGE,
     label: "Relations",
     icon: "ph:link-simple-horizontal-light",
-    component: LinkTagsControlPanel,
-    modalParams: {
-      title: "Relations",
-      layout: {
-        size: Size.lg,
-        orientation: Orientation.Horizontal
-      }
+    component: ResourceBrowser,
+    componentParams: {
+      resource: Resource.relation
     }
   },
   {

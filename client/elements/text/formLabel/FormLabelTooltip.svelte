@@ -23,6 +23,7 @@
     callback: closeTooltip
   }}
   bind:this={ref}
+  on:click|stopPropagation
   use:popover={{
     content: Tooltip,
     triggerMethod: $view.isConstrainedWidth

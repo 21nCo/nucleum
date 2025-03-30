@@ -615,7 +615,7 @@
           {/if} -->
           <div
             class={cn("w-full", {
-              "h-48": isEmptyState,
+              "h-48 min-h-48": isEmptyState,
               "h-full": !isEmptyState
             })}
           >

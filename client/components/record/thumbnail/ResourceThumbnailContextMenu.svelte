@@ -12,6 +12,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { resolveGoalContextMenu } from "$lib/client/components/goals/goal.store";
   import { resolveTaskContextMenu } from "../../tasks/task.store";
+  import context from "$lib/client/stores/context.store";
 
   const dispatch = createEventDispatcher();
   export let item: any;
@@ -52,6 +53,8 @@
     "flex gap-2 p--1",
     {
       "absolute top-0 right-0": !isInline,
+      "bg-gradient-to-r from-transparent via-bgs2/90 to-bgs2 rounded-md":
+        $context.isTouchDevice,
       "h-full flex-col justify-center": arrangement === Arrangement.LIST
     },
     !isInline &&

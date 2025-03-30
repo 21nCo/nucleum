@@ -4,9 +4,18 @@
   import { easeBounceIn } from "d3";
   import Icon from "../Icon.svelte";
   import { scale } from "svelte/transition";
-  export let isSyncing: boolean = false;
+  import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import SyncStatusPropagator from "./SyncStatusPropagator.svelte";
+
+  export let resource: Resource;
   export let isFullWidthVariant: boolean = false;
   export let text: string = "Syncing...";
+  let isSyncing: boolean = false;
+  let syncStatusPropagatorRef: SyncStatusPropagator | null = null;
+
+  export function refresh(resourceParam?: Resource) {
+    syncStatusPropagatorRef?.refresh(resourceParam);
+  }
 </script>
 
 <span
@@ -25,3 +34,9 @@
   />
   <span class="text-b3"> {text} </span>
 </span>
+
+<SyncStatusPropagator
+  bind:this={syncStatusPropagatorRef}
+  {resource}
+  bind:isSyncing
+/>

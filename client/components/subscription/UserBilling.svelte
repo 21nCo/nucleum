@@ -85,7 +85,7 @@
 </script>
 
 <div class="flex flex-col gap-4 items-center w-full h-full">
-  <div class="flex flex-col gap-8 bg-bgs2 p-8 rounded-md w-full">
+  <div class="flex flex-col gap-8 bg-bgs2 cw:p-4 p-8 rounded-md w-full">
     <div class="flex flex-col gap-2">
       <p class="text-h3 text-fgs2">{resolvePlanLabel($account.plan)}</p>
       <div class="flex flex-wrap justify-between gap-2">

@@ -27,6 +27,7 @@
     {accessPointId}
     {accessPointContext}
     on:action
+    isAlwaysShowContextMenuOnTouchDevice={true}
   >
     <span slot="right" class="flex bg-bgs2 rounded-md border border-brs3">
       <Toggle

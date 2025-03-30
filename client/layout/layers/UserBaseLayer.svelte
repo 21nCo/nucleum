@@ -71,7 +71,7 @@
       message: "Syncing your data from cloud..."
     },
     cloneDown: {
-      message: "Copying data from cloud..."
+      message: "Setting things up..."
     }
   };
 
@@ -102,10 +102,10 @@
     console.time("init");
     const initState = await initializeDatabase();
     refreshAppMenuDefaults(false);
-    $appLoadingState.isBaseLoaded = true;
     let userDataState: any;
     if (initState !== undefined)
       userDataState = await initializeEssentialUserData(initState);
+    $appLoadingState.isBaseLoaded = true;
     const promises = [
       recentsStore.refresh(searcheableResources),
       initializeUserConfig()
@@ -317,7 +317,6 @@
       if (initState === 0) {
         loadingMessage = loadingMessages.cloneDown;
         const result = await flux.initializeEssentialDataForCloudUser();
-        dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
         if (typeof result === "object" && result?.ifrCloneResult) {
           return result.ifrCloneResult;
         }

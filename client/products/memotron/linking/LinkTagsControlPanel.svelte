@@ -78,20 +78,25 @@
 
 <div
   class={cn("flex flex-col gap-6 pt-3 w-full h-full", {
-    "px-4": accessPoint === ResourceAccessPoint.LIBRARY
+    "px-4":
+      accessPoint === ResourceAccessPoint.LIBRARY ||
+      accessPoint === ResourceAccessPoint.BROWSER
   })}
 >
   <div class="w-full flex cw:gap-3 gap-4">
     <div
-      class={cn("flex-1 flex items-center px-4 h-full border rounded-full", {
-        "border-aps1": isAddFocused,
-        "border-brs3": !isAddFocused
-      })}
+      class={cn(
+        "flex-1 flex items-center px-4 h-10 border cw:rounded-md rounded-full",
+        {
+          "border-aps1": isAddFocused,
+          "border-brs3": !isAddFocused
+        }
+      )}
     >
       <TextInput
         bind:value={inputValue}
         style={InputStyle.PLAIN}
-        placeholder="Type relation or group:relation to add"
+        placeholder="Type relation or group:relation"
         on:enter={() => save()}
         on:focus={() => (isAddFocused = true)}
         on:blur={() => (isAddFocused = false)}
@@ -109,7 +114,6 @@
         icon="ph:plus"
         label="Add"
         type={ButtonVariant.PRIMARY}
-        style={ButtonStyle.OUTLINED}
         on:click={() => save()}
       />
     {/if}
