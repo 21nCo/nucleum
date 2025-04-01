@@ -25,7 +25,7 @@ import {
   IHostedZone,
   RecordTarget,
 } from "aws-cdk-lib/aws-route53";
-
+import { RetentionDays } from "aws-cdk-lib/aws-logs";
 export class ServerlessFilesRegionalStack extends NestedStack {
   certificate: ICertificate;
   /**
@@ -37,7 +37,7 @@ export class ServerlessFilesRegionalStack extends NestedStack {
    */
   regionDomainName: string;
   api: LambdaRestApi;
-  healthCheck: CfnHealthCheck;
+  // healthCheck: CfnHealthCheck;
   env: IFilesEnvironmentVariables;
   zone: IHostedZone;
   constructor(
@@ -84,6 +84,7 @@ export class ServerlessFilesRegionalStack extends NestedStack {
       functionName: generateFunctionName("filesApiPing", this.env),
       code: Code.fromAsset(path.join(__dirname, "./../../../../src")),
       runtime: Runtime.NODEJS_20_X,
+      logRetention: RetentionDays.ONE_DAY,
     });
 
     this.api = new LambdaRestApi(this, "filesApi", {
@@ -104,11 +105,11 @@ export class ServerlessFilesRegionalStack extends NestedStack {
     new CfnOutput(this, "Api root URL", {
       value: this.api.url,
     });
-    this.healthCheck = new Route53HealthCheck(
-      this,
-      this.api,
-      this.region
-    ).healthCheck;
+    // this.healthCheck = new Route53HealthCheck(
+    //   this,
+    //   this.api,
+    //   this.region
+    // ).healthCheck;
     this.addMultiRegionRoute53Config();
     this.addRoute53CnameRecordForRegionalDomain();
   }
@@ -140,7 +141,7 @@ export class ServerlessFilesRegionalStack extends NestedStack {
       name: this.domainName,
       type: "A",
       setIdentifier: this.region,
-      healthCheckId: this.healthCheck.ref,
+      // healthCheckId: this.healthCheck.ref,
       region: this.region,
       aliasTarget: {
         hostedZoneId: this.api.domainName?.domainNameAliasHostedZoneId ?? "",
