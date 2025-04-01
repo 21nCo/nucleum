@@ -20,6 +20,7 @@ import {
   LambdaRestApi
 } from "aws-cdk-lib/aws-apigateway";
 import { Code, Function, Runtime } from "aws-cdk-lib/aws-lambda";
+import { RetentionDays } from "aws-cdk-lib/aws-logs";
 import { Bucket, IBucket } from "aws-cdk-lib/aws-s3";
 import {
   ARecord,
@@ -104,7 +105,8 @@ export class ServerlessRegionalStack extends NestedStack {
       code: Code.fromAsset(
         path.join(__dirname, "./../../../../src/endpoints/utils")
       ),
-      runtime: Runtime.NODEJS_20_X
+      runtime: Runtime.NODEJS_20_X,
+      logRetention: RetentionDays.ONE_DAY
     });
 
     this.api = new LambdaRestApi(this, "api", {
@@ -125,11 +127,11 @@ export class ServerlessRegionalStack extends NestedStack {
     new CfnOutput(this, "Api root URL", {
       value: this.api.url
     });
-    this.healthCheck = new Route53HealthCheck(
-      this,
-      this.api,
-      this.region
-    ).healthCheck;
+    // this.healthCheck = new Route53HealthCheck(
+    //   this,
+    //   this.api,
+    //   this.region
+    // ).healthCheck;
     this.addMultiRegionRoute53Config();
     this.addRoute53CnameRecordForRegionalDomain();
   }
@@ -161,7 +163,7 @@ export class ServerlessRegionalStack extends NestedStack {
       name: this.domainName,
       type: "A",
       setIdentifier: this.region,
-      healthCheckId: this.healthCheck.ref,
+      // healthCheckId: this.healthCheck.ref,
       region: this.region,
       aliasTarget: {
         hostedZoneId: this.api.domainName?.domainNameAliasHostedZoneId ?? "",
