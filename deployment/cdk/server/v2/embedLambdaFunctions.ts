@@ -7,7 +7,7 @@ import { Construct } from "constructs";
 import { CustomLambdaNestedStackPropsV2 } from "../../types/customNestedStackProps.type";
 import { defaults } from "../../config";
 import { generateFunctionName } from "../../cdk.utils";
-
+import { RetentionDays } from "aws-cdk-lib/aws-logs";
 export class EmbedLambdaFunctions extends cdk.NestedStack {
   constructor(
     scope: Construct,
@@ -19,7 +19,8 @@ export class EmbedLambdaFunctions extends cdk.NestedStack {
     const nodeRuntimeFunctionProps = {
       runtime: lambda.Runtime.NODEJS_20_X,
       timeout: Duration.minutes(defaults.timeout),
-      environment: props.lambdaEnvVars
+      environment: props.lambdaEnvVars,
+      logRetention: RetentionDays.THREE_DAYS
     };
 
     const embedEndpoint = props.api.addResource("embed");

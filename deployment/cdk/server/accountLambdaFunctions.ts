@@ -9,7 +9,7 @@ import { Construct } from "constructs";
 import { CustomLambdaNestedStackProps } from "../types/customNestedStackProps.type";
 import { defaults } from "../config";
 import { generateFunctionName } from "../cdk.utils";
-
+import { RetentionDays } from "aws-cdk-lib/aws-logs";
 export class AccountLambdaFunctions extends cdk.NestedStack {
   constructor(
     scope: Construct,
@@ -37,7 +37,8 @@ export class AccountLambdaFunctions extends cdk.NestedStack {
       code: lambda.Code.fromAsset(
         path.join(__dirname, "./../../../../src/endpoints/account/node-dist")
       ),
-      environment: props.lambdaEnvVars
+      environment: props.lambdaEnvVars,
+      logRetention: RetentionDays.ONE_WEEK
     };
     const accountEndpoint = props.api.root.addResource("account");
     const accountNodeEndpoint = accountEndpoint.addResource("n");

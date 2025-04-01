@@ -9,7 +9,7 @@ import { Construct } from "constructs";
 import { CustomLambdaNestedStackPropsV2 } from "../../types/customNestedStackProps.type";
 import { defaults } from "../../config";
 import { generateFunctionName } from "../../cdk.utils";
-
+import { RetentionDays } from "aws-cdk-lib/aws-logs";
 export class PlanLambdaFunctions extends cdk.NestedStack {
   constructor(
     scope: Construct,
@@ -22,6 +22,7 @@ export class PlanLambdaFunctions extends cdk.NestedStack {
       runtime: lambda.Runtime.NODEJS_20_X,
       timeout: Duration.minutes(defaults.timeout),
       environment: props.lambdaEnvVars,
+      logRetention: RetentionDays.ONE_WEEK
     };
 
     const planEndpoint = props.api.addResource("plan");
@@ -31,7 +32,7 @@ export class PlanLambdaFunctions extends cdk.NestedStack {
       handler: "index.handler",
       functionName: generateFunctionName("getPlanFunction", props.environment),
       code: lambda.Code.fromAsset(path.join(__dirname, basePath + "get/dist")),
-      ...nodeRuntimeFunctionProps,
+      ...nodeRuntimeFunctionProps
     });
     getResource.addMethod("POST", new gateway.LambdaIntegration(getFunction));
 
@@ -48,7 +49,7 @@ export class PlanLambdaFunctions extends cdk.NestedStack {
         code: lambda.Code.fromAsset(
           path.join(__dirname, basePath + "subscribe/dist")
         ),
-        ...nodeRuntimeFunctionProps,
+        ...nodeRuntimeFunctionProps
       }
     );
     subscribeResource.addMethod(
@@ -66,7 +67,7 @@ export class PlanLambdaFunctions extends cdk.NestedStack {
       code: lambda.Code.fromAsset(
         path.join(__dirname, basePath + "verify/dist")
       ),
-      ...nodeRuntimeFunctionProps,
+      ...nodeRuntimeFunctionProps
     });
     verifyResource.addMethod(
       "POST",
@@ -83,7 +84,7 @@ export class PlanLambdaFunctions extends cdk.NestedStack {
       code: lambda.Code.fromAsset(
         path.join(__dirname, basePath + "modify/dist")
       ),
-      ...nodeRuntimeFunctionProps,
+      ...nodeRuntimeFunctionProps
     });
     modifyResource.addMethod(
       "POST",
@@ -100,7 +101,7 @@ export class PlanLambdaFunctions extends cdk.NestedStack {
       code: lambda.Code.fromAsset(
         path.join(__dirname, basePath + "restore/dist")
       ),
-      ...nodeRuntimeFunctionProps,
+      ...nodeRuntimeFunctionProps
     });
     restoreResource.addMethod(
       "POST",
@@ -112,7 +113,7 @@ export class PlanLambdaFunctions extends cdk.NestedStack {
       subscribeResource,
       verifyResource,
       modifyResource,
-      restoreResource,
+      restoreResource
     ]) {
       resource.addMethod(
         "OPTIONS",

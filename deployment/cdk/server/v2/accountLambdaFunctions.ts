@@ -9,7 +9,7 @@ import { Construct } from "constructs";
 import { CustomLambdaNestedStackPropsV2 } from "../../types/customNestedStackProps.type";
 import { defaults } from "../../config";
 import { generateFunctionName } from "../../cdk.utils";
-
+import { RetentionDays } from "aws-cdk-lib/aws-logs";
 export class AccountLambdaFunctions extends cdk.NestedStack {
   constructor(
     scope: Construct,
@@ -22,6 +22,7 @@ export class AccountLambdaFunctions extends cdk.NestedStack {
       runtime: lambda.Runtime.NODEJS_20_X,
       timeout: Duration.minutes(defaults.timeout),
       environment: props.lambdaEnvVars,
+      logRetention: RetentionDays.THREE_DAYS
     };
 
     const accountEndpoint = props.api.addResource("account");
@@ -31,7 +32,7 @@ export class AccountLambdaFunctions extends cdk.NestedStack {
       handler: "index.handler",
       functionName: generateFunctionName("pingFunctionv2", props.environment),
       code: lambda.Code.fromAsset(path.join(__dirname, basePath + "ping/dist")),
-      ...nodeRuntimeFunctionProps,
+      ...nodeRuntimeFunctionProps
     });
     pingResource.addMethod("POST", new gateway.LambdaIntegration(pingFunction));
 

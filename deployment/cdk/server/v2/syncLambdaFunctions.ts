@@ -9,6 +9,7 @@ import { Construct } from "constructs";
 import { CustomLambdaNestedStackPropsV2 } from "../../types/customNestedStackProps.type";
 import { defaults } from "../../config";
 import { generateFunctionName } from "../../cdk.utils";
+import { RetentionDays } from "aws-cdk-lib/aws-logs";
 
 export class SyncLambdaFunctions extends cdk.NestedStack {
   constructor(
@@ -22,6 +23,7 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
       runtime: lambda.Runtime.NODEJS_20_X,
       timeout: Duration.minutes(defaults.timeout),
       environment: props.lambdaEnvVars,
+      logRetention: RetentionDays.THREE_DAYS
     };
 
     const syncEndpoint = props.api.addResource("sync");
@@ -31,7 +33,7 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
       handler: "index.handler",
       functionName: generateFunctionName("syncUpFunction", props.environment),
       code: lambda.Code.fromAsset(path.join(__dirname, basePath + "up/dist")),
-      ...nodeRuntimeFunctionProps,
+      ...nodeRuntimeFunctionProps
     });
     syncUpResource.addMethod(
       "POST",
@@ -43,7 +45,7 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
       handler: "index.handler",
       functionName: generateFunctionName("syncDownFunction", props.environment),
       code: lambda.Code.fromAsset(path.join(__dirname, basePath + "down/dist")),
-      ...nodeRuntimeFunctionProps,
+      ...nodeRuntimeFunctionProps
     });
     syncDownResource.addMethod(
       "POST",
@@ -57,7 +59,7 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
       code: lambda.Code.fromAsset(
         path.join(__dirname, basePath + "cloneup/dist")
       ),
-      ...nodeRuntimeFunctionProps,
+      ...nodeRuntimeFunctionProps
     });
     cloneUpResource.addMethod(
       "POST",
@@ -74,7 +76,7 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
       code: lambda.Code.fromAsset(
         path.join(__dirname, basePath + "clonedown/dist")
       ),
-      ...nodeRuntimeFunctionProps,
+      ...nodeRuntimeFunctionProps
     });
     cloneDownResource.addMethod(
       "POST",
@@ -88,7 +90,7 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
       code: lambda.Code.fromAsset(
         path.join(__dirname, basePath + "paginate/dist")
       ),
-      ...nodeRuntimeFunctionProps,
+      ...nodeRuntimeFunctionProps
     });
     paginateResource.addMethod(
       "POST",
@@ -105,7 +107,7 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
       code: lambda.Code.fromAsset(
         path.join(__dirname, basePath + "reconcile/dist")
       ),
-      ...nodeRuntimeFunctionProps,
+      ...nodeRuntimeFunctionProps
     });
     reconcileResource.addMethod(
       "POST",
@@ -118,7 +120,7 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
       cloneUpResource,
       cloneDownResource,
       paginateResource,
-      reconcileResource,
+      reconcileResource
     ]) {
       resource.addMethod(
         "OPTIONS",

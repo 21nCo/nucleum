@@ -12,7 +12,7 @@ import {
   Runtime
 } from "aws-cdk-lib/aws-lambda";
 import { LambdaIntegration, MockIntegration } from "aws-cdk-lib/aws-apigateway";
-
+import { RetentionDays } from "aws-cdk-lib/aws-logs";
 export class UtilsLambdaFunctions extends NestedStack {
   constructor(
     scope: Construct,
@@ -48,7 +48,8 @@ export class UtilsLambdaFunctions extends NestedStack {
       code: Code.fromAsset(
         path.join(__dirname, "./../../../../src/endpoints/utils/node-dist")
       ),
-      environment: props.lambdaEnvVars
+      environment: props.lambdaEnvVars,
+      logRetention: RetentionDays.ONE_DAY
     };
 
     const utils = props.api.root.addResource("utils");
