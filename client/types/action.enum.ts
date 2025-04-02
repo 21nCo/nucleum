@@ -21,6 +21,7 @@ export enum Action {
   CHANGELOG = "changelog",
   PRIVACY_POLICY = "privacy",
   TERMS_OF_SERVICE = "tos",
+  TERMS_OF_SERVICE_APPLE = "tosapple",
   GLOBAL_SEARCH = "global-search",
   EXTENSTION_LOGIN = "ext_login",
   EXTENSTION_UNINSTALL = "EXTENSTION_UNINSTALL",

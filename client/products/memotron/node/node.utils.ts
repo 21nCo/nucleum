@@ -53,23 +53,6 @@ export function resolveContentPreview(node: INode) {
   return undefined;
 }
 
-export async function resolveNodeCaptureMetadata() {
-  let metadata: INodeMetadata = {};
-  let geoLocation: GeolocationPosition | undefined;
-  try {
-    geoLocation = await getGeoLocation();
-    const location = {
-      latitude: geoLocation?.coords.latitude ?? 0,
-      longitude: geoLocation?.coords.longitude ?? 0,
-      accuracy: geoLocation?.coords.accuracy ?? 0
-    };
-    metadata = { ...metadata, location };
-  } catch (e) {
-    console.error({ e });
-  }
-  return metadata;
-}
-
 export function getMarkdownSymbolPrepended(block: IBlock) {
   switch (block.contentType) {
     case NodeType.SIMPLE_TEXT:

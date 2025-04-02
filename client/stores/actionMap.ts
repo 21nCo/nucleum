@@ -362,6 +362,11 @@ export const globalActions: IAction[] = [
     }
   },
   {
+    action: Action.TERMS_OF_SERVICE_APPLE,
+    isMeta: true,
+    type: ActionType.LINK
+  },
+  {
     action: "feedback",
     label: "Give feedback",
     icon: "ph:chat-centered-dots-light",

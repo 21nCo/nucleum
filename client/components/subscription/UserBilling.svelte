@@ -20,6 +20,7 @@
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   import { InfoTextType } from "$lib/client/types/text.type";
   import DiscountBanner from "./elements/DiscountBanner.svelte";
+  import PoliciesFooter from "$lib/client/elements/PoliciesFooter.svelte";
 
   let currentPlanFeatures: Array<{ icon: string; label: string }> = [];
   $: renewalDate = $account.plan
@@ -184,5 +185,6 @@
       </div>
       <RestorePurchaseAction />
     </div>
+    <PoliciesFooter pretext="By subscribing, you agree to our" />
   </div>
 </div>

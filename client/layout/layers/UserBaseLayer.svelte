@@ -61,6 +61,7 @@
   import { ErrorMessage } from "$lib/client/components/error/error.type";
   import modalEvent from "$lib/client/components/modal/modal.store";
   import { PaymentProvider } from "$lib/shared/types/plan.type";
+  import { embedChannel } from "$lib/client/components/embed/embed.store";
 
   const loadingMessages = {
     cloneUp: {
@@ -447,13 +448,15 @@
           isAppLoading = false;
           modalEvent.hide(Action.USER_PLAN);
           toasts.error(ErrorMessage.DEFAULT);
-        } else if (parsed?.id && parsed?.data) {
-          fileEmbedChannel.setFile(parsed.id, parsed.data);
         } else if (parsed.type === "RESTORE_PURCHASE_SUCCESS") {
           const response = await account.modifySubscription({
             type: "sync",
             embedTransaction: parsed.embedTransaction
           });
+        } else if (parsed?.type && parsed?.id && parsed?.data) {
+          embedChannel.setData(parsed.id, parsed.type, parsed.data);
+        } else if (parsed?.id && parsed?.data) {
+          fileEmbedChannel.setFile(parsed.id, parsed.data);
         }
       }
     } catch (e) {

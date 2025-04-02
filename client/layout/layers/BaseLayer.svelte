@@ -112,8 +112,12 @@
       );
       if (appDetails) appStore.initializeProductInformation(appDetails);
       const cachedAppData = await clientStorage.get(ClientStorageKey.APP_DATA);
-      if (cachedAppData) {
-        appStore.loadAppData(JSON.parse(cachedAppData), {
+      const cachedAppDataJson = JSON.parse(cachedAppData ?? "{}");
+      if (
+        cachedAppDataJson &&
+        cachedAppDataJson?.dataVersion >= productData?.dataVersion
+      ) {
+        appStore.loadAppData(cachedAppDataJson, {
           isDefaultData: true
         });
       } else {

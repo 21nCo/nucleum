@@ -24,8 +24,7 @@ import { toasts } from "$lib/client/stores/notification.store";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import {
   generateMarkdownText,
-  getMarkdownSymbolPrepended,
-  resolveNodeCaptureMetadata
+  getMarkdownSymbolPrepended
 } from "$lib/client/products/memotron/node/node.utils";
 import {
   hierarchyFactorLimit,
@@ -55,7 +54,10 @@ import {
 } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { resolveResource } from "$lib/client/components/record/record.store";
 import { fileStore } from "$lib/client/components/files/file.store";
-import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+import {
+  generateMiniRandomId,
+  generateSimpleRandomId
+} from "$lib/shared/utils/crypto.utils";
 import { appStore } from "$lib/client/stores/app.store";
 import { UserDataMode } from "$lib/client/types/account.type";
 import { MemotronAction } from "../memotronAction.enum";
@@ -72,7 +74,7 @@ import { fetchYouTubeMetadata, resolveUrlData } from "../node/url.utils";
 import { getImageColorsFromFile } from "$lib/client/utils/ui.utils";
 import { parseBuffer } from "music-metadata";
 import ExifReader from "exifreader";
-import { getDeviceInfo } from "$lib/client/utils/browser.utils";
+import { getDeviceInfo, getGeoLocation } from "$lib/client/utils/browser.utils";
 import { textIsCode } from "$lib/shared/utils/text.utils";
 import {
   extractRootStructure,
@@ -85,6 +87,8 @@ import {
   ResourceStore
 } from "$lib/client/components/flux/resourceStores/resource.store";
 import { CollectibleStore } from "$lib/client/components/collection/collectible.store";
+import { embedChannel } from "$lib/client/components/embed/embed.store";
+import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 const captureAction = resourceAction(Resource.node, ResourceActionType.CREATE);
@@ -407,13 +411,17 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     const id = generateResourceId(Resource.node);
     const fileId = response[0].id;
     const metadata = await this.parseMetadata(file);
+    const location = await this.resolveLocation();
     const captureStore = this.get();
     const node = {
       id,
       contentType,
       file: fileId,
       label: file.name,
-      metadata,
+      metadata: {
+        ...metadata,
+        location
+      },
       properties: params?.isEmbedContext ? [] : captureStore.properties,
       creationContext: params?.isEmbedContext
         ? (params?.creationContext ?? this.get().nodeId)
@@ -607,6 +615,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     );
     if (!result) return;
     const fileId = result[0].id;
+    const location = await this.resolveLocation();
     const metadata = await this.parseMetadata(
       new File([data], `${fileName}.mp3`, { type: contentType })
     );
@@ -615,7 +624,10 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       id,
       contentType: NodeType.AUDIO,
       file: fileId,
-      metadata,
+      metadata: {
+        location,
+        ...metadata
+      },
       properties: captureStore.properties,
       creationContext: params?.isEmbedContext
         ? (params?.creationContext ?? this.get().nodeId)
@@ -676,6 +688,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       new File([data], fileName, { type: contentType })
     );
     const deviceInfo = await getDeviceInfo();
+    const location = await this.resolveLocation();
     const captureStore = this.get();
     const node: OmitForCapture<IImageNode> = {
       id,
@@ -686,6 +699,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       properties: captureStore.properties,
       metadata: {
         ...metadata,
+        location,
         deviceInfo: {
           deviceLabel: params?.deviceInfo?.label,
           deviceId: params?.deviceInfo?.deviceId,
@@ -801,13 +815,17 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       });
       if (!viewStore.isConstrainedWidth && !params?.isEmbedContext)
         toasts.success("Node saved successfully!");
-      if (params?.isOpenUponSuccess && !params?.isEmbedContext)
+      if (
+        !viewStore.isConstrainedWidth &&
+        params?.isOpenUponSuccess &&
+        !params?.isEmbedContext
+      )
         appStore.openResource(node.id, ResourceAccessMode.POP);
     } else if (!viewStore.isConstrainedWidth && !params?.isEmbedContext) {
       toasts.success(`${result.length} nodes saved successfully!`);
     }
     if (params?.isEmbedContext) return;
-    if (!params?.isOpenUponSuccess) {
+    if (!params?.isOpenUponSuccess || viewStore.isConstrainedWidth) {
       appStore.closeResource({
         id: captureAction,
         accessMode: ResourceAccessMode.POP
@@ -882,13 +900,47 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     return linker.linkMany(links);
   }
 
+  async resolveLocation() {
+    const ctx = get(context);
+    if (ctx.isEmbed) {
+      const locationResult = await embedChannel.fetch(
+        generateMiniRandomId(),
+        EmbedMessage.LOCATION,
+        {}
+      );
+      if (locationResult && !locationResult.error) {
+        return locationResult;
+      }
+    } else {
+      return await resolveLocationForWeb();
+    }
+
+    async function resolveLocationForWeb() {
+      let geoLocation: GeolocationPosition | undefined;
+      try {
+        geoLocation = await getGeoLocation();
+        const location = {
+          latitude: geoLocation?.coords.latitude ?? 0,
+          longitude: geoLocation?.coords.longitude ?? 0,
+          accuracy: geoLocation?.coords.accuracy ?? 0
+        };
+        return location;
+      } catch (e) {
+        console.error({ e });
+      }
+    }
+  }
+
   async saveMarkdownCapture() {
     console.time("saveMarkdownCapture");
     const val = this.get();
     //TODO - extract nodes from markdown blocks and save
     const ctx = get(context);
     console.time("metadata");
-    let metadata = ctx.isEmbed ? {} : await resolveNodeCaptureMetadata();
+    let location = await this.resolveLocation();
+    let metadata = {
+      location
+    };
     console.timeEnd("metadata");
     logger.log({ at: "CaptureStore.saveMarkdownCapture", val, metadata });
     // const id = prefixTable(generateRandomId(), Resource.node);
