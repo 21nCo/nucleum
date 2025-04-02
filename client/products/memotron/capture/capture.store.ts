@@ -371,7 +371,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         location: tags.GPSLatitude
           ? {
               latitude: tags.GPSLatitude.description,
-              longitude: tags.GPSLongitude.description,
+              longitude: tags.GPSLongitude?.description,
               altitude: tags.GPSAltitude?.description
             }
           : undefined
@@ -410,8 +410,8 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     if (!response[0].id) return;
     const id = generateResourceId(Resource.node);
     const fileId = response[0].id;
-    const metadata = await this.parseMetadata(file);
-    const location = await this.resolveLocation();
+    const metadata = (await this.parseMetadata(file)) ?? {};
+    if (!metadata?.location) metadata.location = await this.resolveLocation();
     const captureStore = this.get();
     const node = {
       id,
@@ -419,8 +419,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       file: fileId,
       label: file.name,
       metadata: {
-        ...metadata,
-        location
+        ...metadata
       },
       properties: params?.isEmbedContext ? [] : captureStore.properties,
       creationContext: params?.isEmbedContext

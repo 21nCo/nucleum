@@ -22,7 +22,7 @@
       container: mapContainerId,
       style: "https://demotiles.maplibre.org/style.json",
       center: [location?.longitude, location?.latitude],
-      zoom: 2
+      zoom: 3
     });
 
     if ($account.dataMode === UserDataMode.LOCAL || $context.isInOfflineMode)
@@ -36,15 +36,20 @@
     );
     if (res?.results?.length > 0) {
       address = res.results.find((x: any) =>
-        x.types.includes("locality")
+        x.types.includes("premise")
       )?.formatted_address;
+      if (!address) {
+        address = res.results.find((x: any) =>
+          x.types.includes("locality")
+        )?.formatted_address;
+      }
     }
   });
 </script>
 
 <div class="flex flex-col w-full">
   <div id={mapContainerId} class="w-full h-40 rounded-t-md"></div>
-  <span class="w-full flex p-2 rounded-b-md">
+  <span class="w-full flex p-2 rounded-b-md text-b2 text-fgs2">
     {address ?? ""}
   </span>
 </div>
