@@ -89,7 +89,8 @@ function initViewStore(settings: IViewStore) {
 class ViewStore extends ObservableStore<IViewStore> {
   constructor() {
     super("view");
-    this.refresh(window.innerWidth, window.innerHeight);
+    if (typeof window !== "undefined")
+      this.refresh(window.innerWidth, window.innerHeight);
   }
 
   reset(view: IViewStore) {

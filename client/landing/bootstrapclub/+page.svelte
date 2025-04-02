@@ -17,7 +17,7 @@
       </div>
     </div>
     <footer class="text-fgs3 text-b3">
-      Built at <a href="https://21n.io" class="text-aps1">21n</a>
+      Built at <a href="https://21n.org" class="text-aps1">21n</a>
     </footer>
   </div>
 </div>

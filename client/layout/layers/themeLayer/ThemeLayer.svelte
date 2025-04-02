@@ -14,7 +14,7 @@
   export let extensionContext: string | undefined = undefined;
   let fontFamily: string = "Avenir";
   let defaultRootFontSize: number = 16;
-  let rootFontSize: number = defaultRootFontSize + 0.6 * $view.scale;
+  let rootFontSize: number = defaultRootFontSize + 0.6 * $view?.scale;
   let ref: any;
   onMount(() => {
     refreshTheme();
