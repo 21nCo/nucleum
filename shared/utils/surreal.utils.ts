@@ -40,6 +40,7 @@ export function resolveDboUpdateQuery(dbo: string[]) {
     ...pointronDboDefinitions,
     ...memotronDboDefinitions
   };
+  dbo = [...dbo, ...Object.keys(globalDbo)];
 
   const updates = dbo
     .map((dependency) => functions[dependency])
@@ -543,7 +544,7 @@ function generateWhereClause(
       operator = IResourceFilterOperator.EQUALS,
       groupBy = IResourceFilterDateGrouping.DAY
     } = params ?? {};
-    return `(${key} is not NONE AND time::group(${key},"${groupBy}") ${resolveOperator(
+    return `(${key} is not NONE AND time::group(fn::user::time::date::v4(${key}),"${groupBy}") ${resolveOperator(
       operator
     )} time::group("${resolveDateInUtc(value)}","${groupBy}"))`;
 

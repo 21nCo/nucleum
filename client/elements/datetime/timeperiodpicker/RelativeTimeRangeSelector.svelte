@@ -8,6 +8,7 @@
   import { createEventDispatcher } from "svelte";
   import DropDown from "../../dropdown/DropDown.svelte";
   import { InputStyle } from "$lib/client/types/input.type";
+  import { Orientation } from "$lib/client/types/direction.enum";
   const dispatch = createEventDispatcher();
   export let scale: TimeScale;
   export let value: RelativeTimePeriodValue;
@@ -120,7 +121,7 @@
     }))}
     bind:value={dropDownValue}
     style={InputStyle.BORDERED}
-    label={{ label: "Choose time period" }}
+    label={{ label: "Choose time period", orientation: Orientation.Vertical }}
     on:select={() => {
       value = {
         type: dropDownValue.split("#")[0],

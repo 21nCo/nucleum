@@ -13,7 +13,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import {
     AnalyticsCardType,
-    type AnalyticsCard,
+    type IAnalyticsCard,
     type AnalyticsDataRecord,
     type IAnalyticsLabelColor
   } from "../analytics.types";
@@ -38,7 +38,7 @@
   import { toasts } from "$lib/client/stores/notification.store";
   import { ErrorMessage } from "$lib/client/components/error/error.type";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  export let card: AnalyticsCard;
+  export let card: IAnalyticsCard;
   export let position: { index: number; total: number };
   export let pageId: string;
   export let goals: IGoalThumb[] = [];
@@ -48,9 +48,10 @@
   let parentBgIndex = $view.isPortrait ? 1 : 2;
   const dispatch = createEventDispatcher();
   let isRefreshing = false;
+  let errorMessage: string = ErrorMessage.DEFAULT;
   const dev_isUseCloud = false;
 
-  $: timePeriod = timePeriodLabel(card.period);
+  $: timePeriod = card.period?.value ? timePeriodLabel(card.period) : "";
   $: isCarbonChart =
     card.type === AnalyticsCardType.PIE ||
     card.type === AnalyticsCardType.DONUT ||
@@ -75,7 +76,6 @@
   }
 
   function onCardTypeChange(e: CustomEvent) {
-    console.log({ e, type: card.type });
     analyticsConfigStore.updateCardConfig(pageId, {
       ...card,
       type: e.detail
@@ -83,8 +83,8 @@
     refresh();
   }
 
-  function onGroupingAndFilterChange(e: CustomEvent) {
-    console.log({ e, grouping: card.grouping });
+  function onGroupByChange(e: CustomEvent) {
+    card.isGroupByTopLevelGoals = e.detail;
     analyticsConfigStore.updateCardConfig(pageId, {
       ...card
     });
@@ -105,11 +105,24 @@
 
   async function refresh() {
     isRefreshing = true;
-
     try {
       const colors: IAnalyticsLabelColor[] = [];
       let goalIds: IRecordId[] = [];
+      if (!card.period || !card.period.value) {
+        isRefreshing = false;
+        return;
+      }
       const timePeriod = determineTimePeriodv2(card.period);
+      if (
+        !timePeriod.begin ||
+        !timePeriod.end ||
+        timePeriod.begin.toString() === "Invalid Date" ||
+        timePeriod.end.toString() === "Invalid Date"
+      ) {
+        errorMessage = "Please select a valid time period.";
+        isRefreshing = false;
+        return;
+      }
       const filters = {
         start: {
           type: "date",
@@ -130,7 +143,7 @@
         }
       );
       console.timeEnd(`logs query - ${card.id}`);
-      console.log({ logs });
+      // console.log({ logs });
       if (!logs && isUseCloud) {
         logs = await sessionLogStore.selectMany({
           filters
@@ -240,8 +253,77 @@
         : "height: calc(50vh - 2.85rem);"
     : ""}
 >
+  <header
+    class={cn("w-full", {
+      "h-6": !$isInEditMode,
+      "h-32": $isInEditMode
+    })}
+  >
+    {#if $isInEditMode}
+      <div
+        class={cn(
+          "w-full flex flex-col gap-3 border border-dashed border-brs3 rounded-md p-2 dp:p-3",
+          {}
+        )}
+      >
+        <span class="flex justify-between w-full">
+          <TextInput
+            bind:value={card.label}
+            placeholder="chart title"
+            style={InputStyle.PLAIN}
+            on:debouncedChange={onCardLabelChange}
+          />
+          <span class="flex gap-2 items-center">
+            <GroupingAndFilters {card} {onGroupByChange} {parentBgIndex} />
+            <Button
+              icon="cross-circled"
+              tooltip={$view.isPortrait ? "Remove" : ""}
+              label={$view.isPortrait ? "" : "Remove"}
+              {parentBgIndex}
+              isPreventMinWidth={true}
+              type={ButtonVariant.DANGER}
+              style={$view.isPortrait
+                ? ButtonStyle.DEFAULT
+                : ButtonStyle.OUTLINED}
+              size={$view.isPortrait ? Size.lg : Size.xs}
+              on:click={onRemoveClick}
+            />
+          </span>
+        </span>
+        <span class="flex w-full gap-2">
+          {#if card.type != AnalyticsCardType.TARGETS}
+            <span class="w-1/2">
+              <TimePeriodPicker
+                bind:period={card.period}
+                on:change={onTimePeriodChange}
+              />
+            </span>
+          {/if}
+          <span class="w-1/2">
+            <CardSelector
+              bind:selected={card.type}
+              on:select={onCardTypeChange}
+            />
+          </span>
+        </span>
+      </div>
+    {:else}
+      <div class="flex w-full justify-between items-center">
+        <span class="font-medium">
+          {card.type === AnalyticsCardType.TARGETS
+            ? "Targets"
+            : card.label ?? timePeriod}
+        </span>
+        {#if card.type != AnalyticsCardType.TARGETS && card.label}
+          <span class="text-fgs2 text-b2">
+            {timePeriod}
+          </span>
+        {/if}
+      </div>
+    {/if}
+  </header>
   {#if isRefreshing}
-    <div class="animate-pulse flex flex-col gap-3">
+    <div class="animate-pulse flex flex-col gap-3 py-1">
       <div class="h-8 w-full bg-bgs3 bg-opacity-50 rounded-md"></div>
       <div class="h-4 w-1/2 bg-bgs3 bg-opacity-50 rounded-md"></div>
     </div>
@@ -249,83 +331,13 @@
     <div class="flex w-full h-full justify-center items-center">
       <EmptyStatusView
         size={Size.sm}
-        mainText="Something went wrong. Please try again"
+        mainText={errorMessage}
+        actionText="Remove card"
+        {parentBgIndex}
+        on:click={onRemoveClick}
       />
     </div>
   {:else}
-    <header
-      class={cn("w-full", {
-        "h-6": !$isInEditMode,
-        "h-32": $isInEditMode
-      })}
-    >
-      {#if $isInEditMode}
-        <div
-          class={cn(
-            "w-full flex flex-col gap-3 border border-dashed border-brs3 rounded-md p-2 dp:p-3",
-            {}
-          )}
-        >
-          <span class="flex justify-between w-full">
-            <TextInput
-              bind:value={card.label}
-              placeholder="chart title"
-              style={InputStyle.PLAIN}
-              on:debouncedChange={onCardLabelChange}
-            />
-            <span class="flex gap-2 items-center">
-              <GroupingAndFilters
-                {card}
-                on:select={onGroupingAndFilterChange}
-                {parentBgIndex}
-              />
-              <Button
-                icon="cross-circled"
-                tooltip={$view.isPortrait ? "Remove" : ""}
-                label={$view.isPortrait ? "" : "Remove"}
-                {parentBgIndex}
-                isPreventMinWidth={true}
-                type={ButtonVariant.DANGER}
-                style={$view.isPortrait
-                  ? ButtonStyle.DEFAULT
-                  : ButtonStyle.OUTLINED}
-                size={$view.isPortrait ? Size.lg : Size.xs}
-                on:click={onRemoveClick}
-              />
-            </span>
-          </span>
-          <span class="flex w-full gap-2">
-            {#if card.type != AnalyticsCardType.TARGETS}
-              <span class="w-1/2">
-                <TimePeriodPicker
-                  bind:period={card.period}
-                  on:change={onTimePeriodChange}
-                />
-              </span>
-            {/if}
-            <span class="w-1/2">
-              <CardSelector
-                bind:selected={card.type}
-                on:select={onCardTypeChange}
-              />
-            </span>
-          </span>
-        </div>
-      {:else}
-        <div class="flex w-full justify-between items-center">
-          <span class="font-medium">
-            {card.type === AnalyticsCardType.TARGETS
-              ? "Targets"
-              : card.label ?? timePeriod}
-          </span>
-          {#if card.type != AnalyticsCardType.TARGETS && card.label}
-            <span class="text-fgs2 text-b2">
-              {timePeriod}
-            </span>
-          {/if}
-        </div>
-      {/if}
-    </header>
     <div
       class={cn("flex w-full items-center justify-center", {
         "h-[24rem]": $view.isPortrait && $isInEditMode,

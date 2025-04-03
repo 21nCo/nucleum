@@ -1,10 +1,10 @@
 <script lang="ts">
   import type {
-    AnalyticsCard,
+    IAnalyticsCard,
     AnalyticsDataRecord
   } from "../../analytics.types";
   import MetricItem from "./MetricItem.svelte";
-  export let card: AnalyticsCard;
+  export let card: IAnalyticsCard;
   export let data: AnalyticsDataRecord[];
   export let goalColors: { label: string; color: number }[] = [];
   export let previousTimePeriodData: AnalyticsDataRecord[] = [];

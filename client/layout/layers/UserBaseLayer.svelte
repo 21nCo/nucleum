@@ -147,6 +147,10 @@
     const timeZone = detectTimeZone();
     if (!timeZone || !$userPreferences) return;
     if ($userPreferences.timeZoneOffset !== timeZone.offset * 60) {
+      logger.info({
+        at: "refreshTimeZone - timezone change detected",
+        timeZone
+      });
       return userPreferences.setTimeZone(timeZone.offset * 60, timeZone.label);
     }
   }
@@ -257,7 +261,6 @@
         userId: $account.userId,
         dapId: dapId!
       });
-      //TODO - check for placement of this and duplicate check with refreshTimeZone
       await flux.seed();
       logger.log({
         at: "UserBaseLayer.initializeData - cloud",

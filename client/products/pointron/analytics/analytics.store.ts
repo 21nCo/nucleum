@@ -4,7 +4,7 @@ import {
   type IAnalyticsConfigStore,
   type AnalyticsPageStore,
   type AnalyticsPage,
-  type AnalyticsCard,
+  type IAnalyticsCard,
   AnalyticsCardType
 } from "./analytics.types";
 import { interceptSurrealResponse } from "$lib/client/utils/utils";
@@ -18,7 +18,6 @@ import {
 } from "./analytics.utils";
 import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
 import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
-import { ObservableStore } from "$lib/client/stores/client.store";
 import { sessionLogStore } from "../logs/log.store";
 import type { IRecordId } from "$lib/client/types/data.type";
 import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
@@ -27,7 +26,6 @@ export const selectedPageId = writable<string>();
 const analyticsConfigStoreId = Resource.pointAnalyticsConfig;
 
 const seedAnalyticsConfig: IAnalyticsConfigStore = {
-  isIncludeBreakInAnalytics: false,
   pages: generateAnalyticsSeedPages()
 };
 
@@ -53,7 +51,7 @@ class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
     }
   }
 
-  updateCardConfig(pageId: string, config: AnalyticsCard) {
+  updateCardConfig(pageId: string, config: IAnalyticsCard) {
     let state = this.get();
     const page = state.pages.find((p) => p.id === pageId);
     if (!page) return;
@@ -80,8 +78,6 @@ class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
     if (!page) return;
     page.cards.push({
       id: generateSimpleRandomId(),
-      grouping: AnalyticsCardGrouping.DEFAULT,
-      filter: [],
       type: AnalyticsCardType.PIE,
       period: {
         scale: TimeScale.DAYS,
@@ -115,6 +111,12 @@ class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
     if (index > -1) {
       state.pages.splice(index, 1);
     }
+    this.modify(state);
+  }
+
+  rearrangePages(ids: string[]) {
+    let state = this.get();
+    state.pages = ids.map((id) => state.pages.find((p) => p.id === id));
     this.modify(state);
   }
 }

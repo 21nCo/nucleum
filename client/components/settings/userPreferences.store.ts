@@ -65,10 +65,7 @@ export const seedUserPreferences: IUserGlobalPreferences = {
 class UserPreferencesStore extends KeyValueStore<IUserGlobalPreferences> {
   constructor() {
     super(Resource.globalPreferences, seedUserPreferences, {
-      dboDependencies: [
-        "fn::global::resource::delete",
-        "fn::global::resource::fetch"
-      ]
+      dboDependencies: []
     });
   }
   loader(data: IUserGlobalPreferences) {
@@ -97,8 +94,8 @@ class UserPreferencesStore extends KeyValueStore<IUserGlobalPreferences> {
   }
   /**
    * Sets the timezone offset and label for the user
-   * @param offset
-   * @param label
+   * @param offset - The offset of the timezone from UTC in seconds
+   * @param label - The label of the timezone
    * @returns
    */
   async setTimeZone(offset?: number, label?: string) {

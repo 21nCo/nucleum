@@ -27,8 +27,10 @@ export function userDatev4() {
 }
 
 function userTimeOffset() {
-  const definition = `DEFINE FUNCTION IF NOT EXISTS fn::user::time::offset($dateInUtc: datetime){
-    return array::first(select date, offset from tz WHERE date < $dateInUtc ORDER BY date DESC LIMIT 1).offset;
+  const definition = `DEFINE FUNCTION OVERWRITE fn::user::time::offset($dateInUtc: datetime){
+    let $records = select date, offset from tz WHERE date < $dateInUtc and time::year(date) is not 1970 ORDER BY date DESC LIMIT 1;
+    let $fallback = select date, offset from tz WHERE time::year(date) is not 1970 ORDER BY date ASC LIMIT 1;
+    return if array::len($records) > 0 then $records[0].offset else $fallback[0].offset end;
 };`;
   return [definition];
 }

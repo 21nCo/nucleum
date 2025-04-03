@@ -214,38 +214,13 @@ class Flux {
   }
 
   /**
-   * Adds a timezone record to the database on signup with 1970 as lowest to enable adding manual logs in the past or importing data from the past.
    *
-   * Note: Any manual logs or imports prior to 1970 should not be allowed as it might cause unexpected errors since aggregate table views and many calculations rely on tz table and timezone offset.
+   * Removed seed timezone record - taken care by time::offset dbo function
    * @returns
    */
   async seed() {
-    logger.log({ at: "flux.seed" });
+    logger.info({ at: "flux.seed" });
     try {
-      let offset = 0;
-      let label: string | undefined;
-      const timeZone = detectTimeZone();
-      if (!timeZone) {
-        const val = detectTimeZoneFallback();
-        offset = val.offset;
-        label = val.label;
-      }
-      const params: IInsertMutation<any> = {
-        records: [
-          {
-            offset,
-            date: new Date(Date.UTC(1970, 0, 1)).toISOString(),
-            createdAt: new Date().toISOString(),
-            label: label ?? "",
-            id: generateRandomId()
-          }
-        ],
-        action: PersistenceActionType.INSERT
-      };
-      await this.persistence.mutation(Resource.tz, params);
-      if (!this.isLocalMode) {
-        await this.insertMutation(Resource.tz, params);
-      }
     } catch (e) {
       logger.error({ at: "flux.seed", error: e });
     }

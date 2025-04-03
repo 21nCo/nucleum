@@ -22,6 +22,7 @@ export enum UIState {
   focusComposeType = "focusComposeType",
   focusAdvancedComposeMode = "focusAdvancedComposeMode",
   journalYearSelection = "journalYearSelection",
+  analyticsPage = "analyticsPage",
 
   //Memotron
   /**

@@ -1,51 +1,33 @@
 <script lang="ts">
+  import { popover } from "$lib/client/actions/popover.action";
   import Button from "$lib/client/elements/button/Button.svelte";
-  import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
-  import Popover from "$lib/client/elements/popover/Popover.svelte";
   import view from "$lib/client/stores/view.store";
-  import { Placement, Orientation } from "$lib/client/types/direction.enum";
+  import { Placement } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
-  import {
-    AnalyticsCardGrouping,
-    type AnalyticsCard
-  } from "../analytics.types";
-  export let card: AnalyticsCard;
+  import { type IAnalyticsCard } from "../analytics.types";
+  import GroupingAndFiltersPopover from "./GroupingAndFiltersPopover.svelte";
+  export let card: IAnalyticsCard;
+  export let onGroupByChange: (e: CustomEvent) => void;
   export let parentBgIndex: number = 1;
 </script>
 
-<Popover options={{ placement: Placement.BottomRight }}>
+<div
+  use:popover={{
+    content: GroupingAndFiltersPopover,
+    placement: Placement.BottomRight,
+    isRenderAsModalForCW: true,
+    componentProps: {
+      isGroupByTopLevelGoals: card.isGroupByTopLevelGoals,
+      onGroupByChange
+    }
+  }}
+>
   <Button
-    icon="funnel"
+    icon="ph:sliders-horizontal-light"
     label={$view.isPortrait ? "" : "Options"}
     {parentBgIndex}
     isPreventMinWidth={true}
     tooltip={$view.isPortrait ? "Filters and grouping" : ""}
     size={$view.isPortrait ? Size.lg : Size.xs}
   />
-  <div
-    class="mo:w-9/10 w-96 h-60 flex flex-col p-2 items-center"
-    slot="popover"
-  >
-    <span> Grouping and Filters </span>
-    <DropDown
-      label={{ label: "Grouping", orientation: Orientation.Vertical }}
-      items={[
-        { value: AnalyticsCardGrouping.DEFAULT, label: "None" },
-        {
-          value: AnalyticsCardGrouping.TOP_LEVEL_GOALS,
-          label: "Top level goals"
-        }
-        // {
-        //   value: AnalyticsCardGrouping.TAGS,
-        //   label: "Tags"
-        // }
-      ]}
-      bind:value={card.grouping}
-      isDisableSearch={true}
-      on:select
-    />
-    <span class="text-b3 text-fgs3 mt-2">
-      Group by tags and filtering goals will be available soon...</span
-    >
-  </div>
-</Popover>
+</div>

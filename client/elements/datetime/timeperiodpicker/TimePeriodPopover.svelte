@@ -11,12 +11,14 @@
   import RelativeTimeRangeSelector from "./RelativeTimeRangeSelector.svelte";
   import PanelSwitcher from "../../switcher/PanelSwitcher.svelte";
   import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
-  import AbsoluteTimeRangePopover from "../absolute/AbsoluteTimeRangePopover.svelte";
   import { OptionSelectorStyle } from "$lib/client/types/select.type";
-  import { scale } from "svelte/transition";
-  import TimePeriodPicker from "./TimePeriodPicker.svelte";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
+  import AbsoluteTimeRangePopoverV2 from "../absolute/AbsoluteTimeRangePopoverV2.svelte";
+  import { Orientation } from "$lib/client/types/direction.enum";
   const dispatch = createEventDispatcher();
   export let period: TimePeriod;
+  export let onChange: (period: TimePeriod) => void;
+
   let selectedPeriodType =
     period.value.type === TimePeriodType.ABSOLUTE ? "Absolute" : "Relative";
   let previouslySelectedRelative: any;
@@ -44,20 +46,32 @@
       param: { start: new Date(), end: new Date() }
     };
   }
-  let scales = Object.keys(TimeScale); //$userPreferences.timeScales ??
+  let scales = $userPreferences.timeScales ?? [
+    TimeScale.DAYS,
+    TimeScale.MONTHS,
+    TimeScale.YEARS
+  ];
   let selectedScale = period.scale;
+
+  function dispatchChange(period: TimePeriod) {
+    if (onChange) onChange(period);
+    dispatch("change", period);
+  }
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
-<div class="flex flex-col items-center gap-4 w-full" on:click|stopPropagation>
+<button
+  class="flex flex-col items-center gap-4 bg-bgs1 p-4 cw:w-full w-96 h-96 min-h-fit"
+  on:click|stopPropagation
+>
   <PanelSwitcher
     items={["Relative", "Absolute"]}
-    bind:value={selectedPeriodType}
+    value={selectedPeriodType}
     style={PanelSwitcherStyle.TRAIN}
     size={Size.sm}
     on:switch={(event) => {
       period =
-        selectedPeriodType === "Relative"
+        event.detail === "Relative"
           ? {
               value: {
                 type: previouslySelectedRelative.value.type,
@@ -72,32 +86,38 @@
               },
               scale: previouslySelectedAbsolute.scale
             };
-      if (selectedPeriodType === "Relative") dispatch("change", period);
+      selectedPeriodType = event.detail;
+      if (selectedPeriodType === "Relative") dispatchChange(period);
     }}
   />
-  <OptionSelector
-    labelProps={{ label: "Group by" }}
-    style={OptionSelectorStyle.TRAIN}
-    size={Size.sm}
-    options={scales.map((scale) => ({
-      value: scale
-    }))}
-    bind:selected={selectedScale}
-    on:select={() => {
-      period.scale = selectedScale;
-      if (selectedPeriodType === "Relative") {
-        previouslySelectedRelative.scale = selectedScale;
-        dispatch("change", period);
-      } else {
-        previouslySelectedAbsolute.scale = selectedScale;
-      }
-    }}
-  />
+  {#if selectedPeriodType === "Relative"}
+    <OptionSelector
+      labelProps={{ label: "Group by", orientation: Orientation.Vertical }}
+      style={OptionSelectorStyle.TRAIN}
+      size={Size.sm}
+      options={scales.map((scale) => ({
+        value: scale
+      }))}
+      selected={selectedScale}
+      on:select={(event) => {
+        const selected = event.detail;
+        period.scale = selected;
+        if (selectedPeriodType === "Relative") {
+          previouslySelectedRelative.scale = selected;
+          dispatchChange(period);
+        } else {
+          previouslySelectedAbsolute.scale = selected;
+        }
+        selectedScale = selected;
+      }}
+    />
+  {/if}
+
   {#key selectedScale}
     {#if selectedPeriodType === "Relative"}
       <RelativeTimeRangeSelector
         scale={selectedScale}
-        bind:value={period.value}
+        value={period.value}
         on:change={(event) => {
           if (selectedPeriodType === "Relative") {
             previouslySelectedRelative = {
@@ -110,14 +130,17 @@
               param: event.detail
             };
           }
-          dispatch("change", period);
+          period.value = event.detail;
+          dispatchChange(period);
         }}
       />
     {:else}
-      <AbsoluteTimeRangePopover
+      <AbsoluteTimeRangePopoverV2
         scale={selectedScale}
+        initialStartDate={period.value.param.start}
+        initialEndDate={period.value.param.end}
         on:rangePicked={(e) => {
-          const period = {
+          period = {
             scale: selectedScale,
             value: {
               param: { start: e.detail.start, end: e.detail.end },
@@ -128,9 +151,9 @@
             scale: selectedScale,
             param: period.value.param
           };
-          dispatch("change", period);
+          dispatchChange(period);
         }}
       />
     {/if}
   {/key}
-</div>
+</button>

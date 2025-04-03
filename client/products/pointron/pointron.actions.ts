@@ -396,6 +396,7 @@ export const pointronActions: IAction[] = [
     },
     label: "Session",
     path: "cp/session",
+    icon: "ph:clock-light",
     type: ActionType.MODAL,
     component: SessionSettings,
     modalParams: {
@@ -511,7 +512,7 @@ export const pointronActions: IAction[] = [
     },
     label: "Analytics",
     path: "cp/analytic-settings",
-    icon: "chart",
+    icon: "ph:chart-line-up-light",
     type: ActionType.MODAL,
     component: AnalyticsSettings,
     modalParams: {
