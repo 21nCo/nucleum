@@ -172,7 +172,7 @@
       if (isExtensionEnvironment() || isDebug) return;
       performAppUpdateCheck();
     } catch (e) {
-      logger.error(e);
+      logger.error({ at: "onAppear", error: e });
     }
   }
 
@@ -196,14 +196,11 @@
         });
       }
     }
-    logger.log(
-      {
-        at: "operformAppUpdateCheck",
-        versionOnClient,
-        appDataVersion: latestVersion
-      },
-      LogType.INFO
-    );
+    logger.info({
+      at: "operformAppUpdateCheck",
+      versionOnClient,
+      latestVersion
+    });
 
     function resolveLatestVersion() {
       const availability = $appStore.appData?.availability;
@@ -217,14 +214,6 @@
 
   const windowResizeListener = (event: Event) => {
     view.refresh(window.innerWidth, window.innerHeight);
-  };
-
-  const messageReceivedListener = (event: any) => {
-    try {
-    } catch (e) {
-      logger.error(e);
-    }
-    // postMessageToParent(event.data);
   };
 
   /**
@@ -280,7 +269,7 @@
       });
       return initState;
     } catch (e) {
-      logger.error(e);
+      logger.error({ at: "initializeDatabase", error: e });
     }
   }
 
@@ -371,7 +360,7 @@
       }
       appStore.loadAppData(appData);
     } catch (e) {
-      logger.error(e);
+      logger.error({ at: "refreshAppStaticData", error: e });
     }
   }
 
@@ -546,7 +535,6 @@
 
 <svelte:window
   on:resize={windowResizeListener}
-  on:message={messageReceivedListener}
   on:focus={onAppear}
   on:beforeunload={handleBeforeUnload}
   on:unload={handleBeforeUnload}

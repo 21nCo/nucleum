@@ -35,19 +35,19 @@ export function postToParent(message: any) {
   try {
     window?.parent?.postMessage(message, "*");
   } catch (error) {
-    logger.error(error);
+    logger.error({ at: "postToParent - parent", error });
   }
   try {
     //@ts-ignore
     window?.webkit?.messageHandlers?.iOSNative?.postMessage(message);
   } catch (error) {
-    logger.error(error);
+    logger.error({ at: "postToParent - webkit", error });
   }
   try {
     //@ts-ignore
     window?.chrome?.webview?.postMessage(message);
   } catch (error) {
-    logger.error(error);
+    logger.error({ at: "postToParent - webview", error });
   }
 }
 

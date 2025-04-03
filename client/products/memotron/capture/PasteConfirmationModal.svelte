@@ -146,7 +146,7 @@
       }
       postSave();
     } catch (error) {
-      logger.error(error);
+      logger.error({ at: "PasteConfirmationModal.onSaveAsNode", error });
     } finally {
       isSaveInProgress = false;
     }

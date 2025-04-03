@@ -423,7 +423,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       },
       properties: params?.isEmbedContext ? [] : captureStore.properties,
       creationContext: params?.isEmbedContext
-        ? (params?.creationContext ?? this.get().nodeId)
+        ? params?.creationContext ?? this.get().nodeId
         : undefined
     } as IMediaNode;
     const result = await nodeStore.create([node], {
@@ -567,7 +567,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         metadata,
         properties: params?.isEmbedContext ? [] : captureStore.properties,
         creationContext: params?.isEmbedContext
-          ? (params?.creationContext ?? this.get().nodeId)
+          ? params?.creationContext ?? this.get().nodeId
           : undefined
       } as IMediaNode;
       nodes.push(node);
@@ -629,7 +629,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       },
       properties: captureStore.properties,
       creationContext: params?.isEmbedContext
-        ? (params?.creationContext ?? this.get().nodeId)
+        ? params?.creationContext ?? this.get().nodeId
         : undefined,
       label: `Audio Recording - ${new Date().toLocaleString()}`,
       body: {
@@ -744,7 +744,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       label: text.split("://").pop(),
       url: text,
       creationContext: params?.isEmbedContext
-        ? (params?.creationContext ?? this.get().nodeId)
+        ? params?.creationContext ?? this.get().nodeId
         : undefined,
       body: {
         hash: "",
@@ -801,7 +801,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     logger.debug({ at: "CaptureStore.postSave", result });
     const node = result?.[0];
     if (!result || result.error || !node || !node.id) {
-      logger.error(result);
+      logger.error({ at: "CaptureStore.postSave", result });
       toasts.error("Something went wrong. Please try again later.");
       return;
     }

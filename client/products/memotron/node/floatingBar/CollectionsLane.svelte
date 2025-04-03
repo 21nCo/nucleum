@@ -45,7 +45,7 @@
         return;
       }
     } catch (e) {
-      logger.error(e);
+      logger.error({ at: "CollectionsLane.onSelect", error: e });
       if (e instanceof ResourceError) {
         if (e.code === ResourceErrorCode.ALREADY_EXISTS) {
           toasts.error("Collection already exists.");

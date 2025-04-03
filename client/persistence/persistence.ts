@@ -68,7 +68,7 @@ export class Persistence {
       // account.signIn(data, { isFromSignup: false, isIgnoreRefresh: false });
       return true;
     } catch (err) {
-      logger.error(err);
+      logger.error({ at: "refreshToken", error: err });
     }
   };
   getUserInfo = async (token: string) => {
@@ -83,7 +83,7 @@ export class Persistence {
       if (!data?.userInfo) return;
       return data;
     } catch (err) {
-      logger.error(err);
+      logger.error({ at: "getUserInfo", error: err });
     }
   };
   ping = async () => {
@@ -95,7 +95,7 @@ export class Persistence {
       const data = await response.json();
       return isValidArrayWithData(data);
     } catch (err) {
-      logger.error(err);
+      logger.error({ at: "ping", error: err });
     }
   };
 
@@ -108,7 +108,7 @@ export class Persistence {
       const data = await response.json();
       return data;
     } catch (err) {
-      logger.error(err);
+      logger.error({ at: "getUserPlan", error: err });
     }
   };
 
@@ -123,7 +123,7 @@ export class Persistence {
       const data = await response.json();
       return data;
     } catch (err) {
-      logger.error(err);
+      logger.error({ at: "initiateSubscription", error: err });
     }
   };
 
@@ -138,7 +138,7 @@ export class Persistence {
       const data = await response.json();
       return data;
     } catch (err) {
-      logger.error(err);
+      logger.error({ at: "modifySubscription", error: err });
     }
   };
 
@@ -151,7 +151,7 @@ export class Persistence {
       const data = await response.json();
       return data;
     } catch (err) {
-      logger.error(err);
+      logger.error({ at: "restorePurchase", error: err });
     }
   };
 
@@ -167,7 +167,7 @@ export class Persistence {
       const data = await response.json();
       return data;
     } catch (err) {
-      logger.error(err);
+      logger.error({ at: "verifyPayment", error: err });
     }
   };
 
@@ -183,7 +183,7 @@ export class Persistence {
       const data = await response.json();
       return data;
     } catch (err) {
-      logger.error(err);
+      logger.error({ at: "runAccountAction", error: err });
     }
   }
   async runGeoAction(method: string, params: any) {
@@ -198,7 +198,7 @@ export class Persistence {
       const data = await response.json();
       return data;
     } catch (err) {
-      logger.error(err);
+      logger.error({ at: "runGeoAction", error: err });
     }
   }
   fetchAppData = async (env: string) => {
@@ -463,7 +463,7 @@ export class Persistence {
       );
       return await response?.json();
     } catch (e) {
-      logger.error(e);
+      logger.error({ at: "getSignedUrl", error: e });
     }
   }
   /**
