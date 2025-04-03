@@ -83,7 +83,7 @@
         }
       }
     } catch (e: any) {
-      logger.error(e.message);
+      logger.error({ at: "FileUploader.handleDrop", error: e });
       error = "Something went wrong";
     } finally {
       isSaveInProgress = false;

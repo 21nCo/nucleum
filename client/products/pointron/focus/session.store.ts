@@ -859,7 +859,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       // session.isSessionRunning = false;
       sessionStore.finishFocus();
     } catch (err) {
-      logger.error(err);
+      logger.error({ at: "finishSession", error: err });
     } finally {
       if (params?.isClose) {
         this.close();
@@ -1091,7 +1091,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       await focusItemsStore.addGoal(goalId);
       return this.startSession(true);
     } catch (err) {
-      logger.error(err);
+      logger.error({ at: "quickStart", error: err });
     }
   }
 

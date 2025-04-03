@@ -279,15 +279,18 @@
     };
     window.addEventListener("online", updateOnlineStatus);
     window.addEventListener("offline", updateOnlineStatus);
-    try {
-      //@ts-ignore
-      window.chrome.webview.addEventListener(
-        "message",
-        handleMessageFromChromeWebview
-      );
-    } catch (error) {
-      logger.error(error);
-    }
+    // try {
+    //   //@ts-ignore
+    //   window.chrome.webview.addEventListener(
+    //     "message",
+    //     handleMessageFromChromeWebview
+    //   );
+    // } catch (error) {
+    //   logger.error({
+    //     at: "BaseLayer.addWindowEventListeners - webview listener",
+    //     error
+    //   });
+    // }
   }
   function removeWindowEventListeners() {
     window.removeEventListener(
@@ -298,15 +301,18 @@
     window.onpopstate = null;
     window.removeEventListener("online", updateOnlineStatus);
     window.removeEventListener("offline", updateOnlineStatus);
-    try {
-      //@ts-ignore
-      window.chrome.webview.removeEventListener(
-        "message",
-        handleMessageFromChromeWebview
-      );
-    } catch (error) {
-      logger.error(error);
-    }
+    // try {
+    //   //@ts-ignore
+    //   window.chrome.webview.removeEventListener(
+    //     "message",
+    //     handleMessageFromChromeWebview
+    //   );
+    // } catch (error) {
+    //   logger.error({
+    //     at: "BaseLayer.removeWindowEventListeners - webview listener",
+    //     error
+    //   });
+    // }
   }
   onDestroy(() => {
     removeWindowEventListeners();

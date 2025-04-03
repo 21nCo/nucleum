@@ -146,7 +146,7 @@
       ];
       searchQuery = "";
     } catch (e) {
-      logger.error(e);
+      logger.error({ at: "NodeLinksPane.onSelect", error: e });
       if (e instanceof ResourceError) {
         if (e.code === ResourceErrorCode.ALREADY_EXISTS) {
           toasts.error("Link already exists");

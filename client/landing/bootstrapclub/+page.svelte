@@ -11,13 +11,13 @@
         spaces for startups and solo entrepreneurs at low cost.
       </div>
       <div class="text-b2 text-fgs2">
-        If interested, please contact: <b class="text-aps1">+91 9553435937</b>
+        If interested, please contact: <b class="text-aps1">+91 9985563939</b>
         or email:
-        <b class="text-aps1">contact@21n.io</b>
+        <b class="text-aps1">contact@21n.org</b>
       </div>
     </div>
     <footer class="text-fgs3 text-b3">
-      Built at <a href="https://21n.io" class="text-aps1">21n</a>
+      Built at <a href="https://21n.org" class="text-aps1">21n</a>
     </footer>
   </div>
 </div>

@@ -133,7 +133,7 @@ class Flux {
     kvRecords?: string[];
     resources?: Resource[];
   }) {
-    logger.debug({ at: "flux.loadInMemoryStores", params });
+    logger.info({ at: "flux.loadInMemoryStores", params });
     try {
       let kvStores = this.stores.filter(
         (x) => x.dataType === StoreDataType.KVO
@@ -257,7 +257,7 @@ class Flux {
     additionalParams: IMutationAdditionalParams = {}
   ) {
     let response;
-    logger.log({ at: "flux.mutation", resource, params });
+    logger.info({ at: "flux.mutation", resource, params });
     try {
       if (!additionalParams?.isCloudOnlyResource || this.isLocalMode) {
         response = await this.persistence.mutation(resource, params);
@@ -303,7 +303,7 @@ class Flux {
     }
     const dependantStores = this.resolveDependantStores(resource);
     //TODO refresh stores
-    logger.log({
+    logger.info({
       at: "flux.mutation - result",
       resource,
       response,
@@ -649,13 +649,13 @@ class Flux {
       this.isSyncUpPending = true;
       logger.log({
         at: "flux.sync",
-        isSyncUpPending: this.isSyncUpPending,
         mutation,
         isExtensionEnvironment: this.isExtensionEnvironment
       });
       const local = await this.resolveLocal();
       if (!local) {
         //TODO - case when flux isn't responding or local is not present
+        logger.error({ at: "flux.sync", error: "local not found" });
         dispatchCustomEvent(GlobalEvent.CUSTOM_ALERT, {
           error: "fluxerror",
           message: "Something went wrong. Please try again."
@@ -676,11 +676,11 @@ class Flux {
         });
       } else {
         const { mutations, lastSyncUp } = await this.resolveItemsForSyncUp();
-        logger.log({ at: "flux.sync", mutations, lastSyncUp });
         if (!mutations || mutations.length === 0) {
           this.isSyncUpPending = false;
           return;
         }
+        logger.info({ at: "flux.sync", mutations, lastSyncUp });
         const resources = this.resolveSyncResources();
         response = await this.performSync(SyncMethod.SYNC_UP, {
           mutations,
@@ -804,7 +804,7 @@ class Flux {
     response: any,
     params?: { isInitialSyncdown?: boolean; src?: string }
   ) {
-    logger.debug({ at: "flux.processSyncDown", ...params });
+    logger.info({ at: "flux.processSyncDown", ...params });
     if (!response) {
       return;
     }
@@ -1070,7 +1070,7 @@ class Flux {
         const cloudCount = params?.counts?.[resource];
         if (localCount < cloudCount) {
           resourcesForReconciliation.push(resource);
-          logger.debug({
+          logger.info({
             at: "flux.reconcile - resource with miss sync",
             resource,
             localCount,

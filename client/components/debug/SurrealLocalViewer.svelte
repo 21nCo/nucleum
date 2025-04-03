@@ -18,6 +18,7 @@
   async function executeQuery() {
     result = await flux.selectByQuery(query);
     console.table(result);
+    console.log(result);
     renderResult();
     recentQueries = [query, ...recentQueries];
     saveRecents();

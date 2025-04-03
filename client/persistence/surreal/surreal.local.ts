@@ -65,7 +65,7 @@ export class SurrealPersistence implements IPersistence {
       // engines = await loadSurrealDBFromRemotev5(
       //   import.meta.env.VITE_STATIC_URL + "/surreal.zip"
       // );
-      logger.log({ at: "surreal.persistence.initialize - wasm loaded" });
+      logger.info({ at: "surreal.persistence.initialize - wasm loaded" });
     } catch (e) {
       logger.error({
         at: "surreal.persistence.initialize - wasm load error",
@@ -84,6 +84,13 @@ export class SurrealPersistence implements IPersistence {
           network_targets: true
         }
       })
+    });
+    this.instance.emitter.subscribe("error", (event: any) => {
+      logger.error({
+        at: "surreal.persistence.emitter",
+        event,
+        str: JSON.stringify(event)
+      });
     });
     this.userId = user;
     try {

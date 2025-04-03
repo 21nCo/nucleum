@@ -650,7 +650,7 @@ export const globalActions: IAction[] = [
           }
           toasts.success(`**${label}** added to collection`);
         } catch (e) {
-          logger.error(e);
+          logger.error({ at: "addNodeToCollection", error: e });
           if (e instanceof ResourceError) {
             if (e.code === ResourceErrorCode.ALREADY_EXISTS) {
               toasts.error("Already added to collection");
@@ -936,7 +936,7 @@ export const globalActions: IAction[] = [
             );
           }
         } catch (e) {
-          logger.error(e);
+          logger.error({ at: "bulkLink", error: e });
           toasts.error("Something went wrong. Please try again later.", {
             closeProgressId: "bulklink"
           });
