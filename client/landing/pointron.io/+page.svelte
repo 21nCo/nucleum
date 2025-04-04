@@ -5,8 +5,7 @@
   import IrregularTileItemsSection from "../shared/tile/IrregularTileItemsSection.svelte";
   let heroInputs: IHeroInputs = {
     tagline: "Your focus haven",
-    description:
-      "Track time, achieve goals and form habits with Pointron, your personal productivity companion.",
+    description: "Track time, achieve goals and form habits like never before.",
     btn1: {
       label: "Download mobile app",
       iosDownloadUrl:

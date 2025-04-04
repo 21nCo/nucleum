@@ -21,13 +21,13 @@
     <div class="flex flex-col gap-7">
       {#each list1 as item, index}
         {@const className =
-          index == list1.length - 1 ? "h-[686px]" : "h-[614px]"}
+          index == list1.length - 1 ? "h-[486px]" : "h-[414px]"}
         <IrregularTileItem {item} class={className} />
       {/each}
     </div>
     <div class="flex flex-col gap-7">
       {#each list2 as item, index}
-        {@const className = "h-[638px]"}
+        {@const className = "h-[438px]"}
         <IrregularTileItem {item} class={className} />
       {/each}
     </div>

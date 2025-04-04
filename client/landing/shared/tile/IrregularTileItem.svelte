@@ -57,10 +57,10 @@
       {description}
     </p>
   {/if}
-  {#if item?.image}
+  <!-- {#if item?.image}
     {@const image = item.image}
     <div class="flex justify-center h-45% mt-9 mo:mt-4">
       <img src={image} alt={item.title} class={cn("object-contain")} />
     </div>
-  {/if}
+  {/if} -->
 </button>
