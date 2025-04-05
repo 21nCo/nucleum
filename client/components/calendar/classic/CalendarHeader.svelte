@@ -71,12 +71,16 @@
     }
   }
 
+  /**
+   * TODO - test for bugs for setting selectedDate in year and week view
+   */
   function goToToday() {
     if (
       selectedView === TimeScaleUnit.YEAR ||
       selectedView === TimeScaleUnit.WEEK
     ) {
       dispatch("goToToday");
+      selectedDate = new Date();
     } else {
       selectedDate = new Date();
     }
@@ -147,8 +151,8 @@
   </div>
   <div class="flex items-center gap-2">
     <Button
-      type={ButtonVariant.PRIMARY}
-      style={ButtonStyle.OUTLINED}
+      type={ButtonVariant.SECONDARY}
+      style={ButtonStyle.DEFAULT}
       size={Size.sm}
       label="Go to today"
       isPreventMinWidth={true}

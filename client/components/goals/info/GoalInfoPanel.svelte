@@ -24,6 +24,7 @@
   import { resolveIfCurrentFocusItem } from "$lib/client/products/pointron/focus/session.utils";
   import PropertiesPane from "../../collection/properties/PropertiesPane.svelte";
   import { Resource } from "../../flux/resourceStores/resource.enum";
+  import { debouncer } from "$lib/client/utils/utils";
   export let goal: IActiveGoalStore;
   export let isConstrainedWidth = false;
   const dispatch = createEventDispatcher();
@@ -37,11 +38,17 @@
     $activeSession.isSessionRunning &&
     resolveIfCurrentFocusItem($focusItemsStore, goal.id, $currentFocusItem);
 
-  function onDescriptionChange(e: CustomEvent<IMarkdown>) {
-    goal.modify({
-      description: e.detail
-    });
+  async function onDescriptionChange(e: CustomEvent) {
+    const desc = e.detail?.md;
+    if (!desc) return;
+    debouncedDescriptionPersist(desc);
   }
+
+  const debouncedDescriptionPersist = debouncer((desc: any) => {
+    goal.modify({
+      description: desc
+    });
+  }, 1000);
 </script>
 
 {#if $goal.isInEditMode}
@@ -107,7 +114,7 @@
             placeholder: "Type...",
             isPreventFocusOnLoad: true
           }}
-          on:debouncedChange={onDescriptionChange}
+          on:change={onDescriptionChange}
         />
       </div>
     </div>

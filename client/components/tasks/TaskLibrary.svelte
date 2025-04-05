@@ -63,7 +63,7 @@
   import { OptionSelectorStyle } from "$lib/client/types/select.type";
   import { LoadingAnimationType } from "$lib/client/types/feedback.type";
   import { intersection } from "$lib/client/actions/intersection.action";
-
+  import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
   export let goalId: IRecordId | undefined = undefined;
   export let collectionId: IRecordId | undefined = undefined;
   export let accessPoint: ResourceAccessPoint | undefined = undefined;
@@ -217,7 +217,7 @@
     if (!label) return;
     const task = await taskStore.save({
       label,
-      date: resolveDateForNewTask(),
+      dateUnix: resolveUnixTimestamp(resolveDateForNewTask()),
       isChecked: false,
       goalId: goalId,
       collection: collectionId

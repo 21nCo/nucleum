@@ -64,6 +64,7 @@ import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 import type { OmitForCaptureWithId } from "$lib/client/components/flux/resourceStores/resource.type";
 import { taskStore } from "$lib/client/components/tasks/task.store";
 import { GoalType } from "$lib/client/components/goals/goal.type";
+import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
 
 /** @deprecated */
 export const todayFocusStore = initTodayFocus();
@@ -1341,12 +1342,18 @@ class SessionStore extends ResourceStore<ISession> {
     const session: OmitForCaptureWithId<ISession> = {
       elapsed: activeSessionVal.totalElapsed,
       extended: activeSessionVal.totalExtended,
-      start: activeSessionVal.start?.toISOString() ?? "",
-      end: endTime.toISOString(),
+      // start: activeSessionVal.start?.toISOString() ?? "",
+      startUnix: activeSessionVal.start
+        ? resolveUnixTimestamp(activeSessionVal.start)
+        : 0,
+      // end: endTime.toISOString(),
+      endUnix: resolveUnixTimestamp(endTime),
+      plannedEndUnix: plannedEndTime
+        ? resolveUnixTimestamp(plannedEndTime)
+        : undefined,
       id:
         activeSessionVal.currentSessionId ??
         generateResourceId(Resource.session),
-      plannedEnd: plannedEndTime?.toISOString(),
       type: activeSessionVal.type,
       blocks: [
         ...activeSessionVal.intervals,
@@ -1393,8 +1400,10 @@ class SessionStore extends ResourceStore<ISession> {
     if (remainingTime > 0) {
       logs.push({
         id: generateResourceId(Resource.sessionLog),
-        start: new Date(session.start).toISOString(),
-        end: new Date(session.end).toISOString(),
+        // start: new Date(session.start).toISOString(),
+        // end: new Date(session.end).toISOString(),
+        startUnix: session.startUnix,
+        endUnix: session.endUnix,
         sessionId: session.id,
         focus: remainingTime,
         breakTime: 0
@@ -1433,16 +1442,15 @@ class SessionStore extends ResourceStore<ISession> {
       });
       return {
         id: generateResourceId(Resource.sessionLog),
-        start: new Date(block.start).toISOString(),
-        end: new Date(block.end).toISOString(),
+        // start: new Date(block.start).toISOString(),
+        // end: new Date(block.end).toISOString(),
+        startUnix: resolveUnixTimestamp(new Date(block.start)),
+        endUnix: resolveUnixTimestamp(new Date(block.end)),
         sessionId: session.id,
         goalId,
         taskId,
         focus,
         breakTime
-        //TODO - check the need for the below
-        // tzOffset: get(userPreferences).timeZoneOffset,
-        // targets: get(pointronPreferences).horizonTargets
       };
     }
   }

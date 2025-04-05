@@ -60,7 +60,7 @@
     const groups = new Map<string, ISessionThumb[]>();
 
     sessions.forEach((session) => {
-      const date = new Date(session.start).toLocaleDateString();
+      const date = new Date(session.startUnix).toLocaleDateString();
       if (!groups.has(date)) {
         groups.set(date, []);
       }
@@ -69,7 +69,8 @@
 
     groups.forEach((logs) => {
       logs.sort(
-        (a, b) => new Date(b.start).getTime() - new Date(a.start).getTime()
+        (a, b) =>
+          new Date(b.startUnix).getTime() - new Date(a.startUnix).getTime()
       );
     });
     return Array.from(groups.entries()).sort(

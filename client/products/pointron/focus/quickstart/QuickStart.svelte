@@ -75,7 +75,7 @@
         .map((x: any) => ({
           ...x,
           color: resolveGoalColor(x),
-          focus: focusData.find(resourceInList(x.id))?.focus
+          focus: focusData ? focusData?.find(resourceInList(x.id))?.focus : 0
         }))
         .sort((a: IGoalThumb, b: IGoalThumb) => {
           if (a.color === b.color) {
@@ -201,7 +201,8 @@
   subscribeToResource={new Set([Resource.goal, Resource.sessionLog])}
   subscribeToContext={new Set([
     PointronAction.PIN_TO_QUICK_FOCUS,
-    PointronAction.FINISH_FOCUS_SESSION
+    PointronAction.FINISH_FOCUS_SESSION,
+    PointronAction.MANUAL_FOCUS_ENTRY
   ])}
   on:change={() => {
     refresh({ isPreventLoadingPulse: true });

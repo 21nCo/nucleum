@@ -14,14 +14,13 @@
 </script>
 
 <button
-  class={cn("flex relative z-20 items-center gap-2 p-1.5 rounded-md", {
+  class={cn("flex relative z-20 items-center gap-2 p-1.5 px-3 rounded-md", {
     "bg-ccs1 text-cbg": isActive || isAccent,
     "bg-bgs3 notouch:hover:bg-bgs4 active:bg-bgs4": !isActive && !isAccent
   })}
   use:tooltip={{
     disabled: isActive,
-    text: `Change to **${enumToString(status)}**`,
-    direction: Placement.BottomCenter
+    text: `Change to **${enumToString(status)}**`
   }}
   on:click
 >

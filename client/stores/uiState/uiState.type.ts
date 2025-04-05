@@ -23,7 +23,7 @@ export enum UIState {
   focusAdvancedComposeMode = "focusAdvancedComposeMode",
   journalYearSelection = "journalYearSelection",
   analyticsPage = "analyticsPage",
-
+  manualLogQuickDuration = "manualLogQuickDuration",
   //Memotron
   /**
    * List of recently used capture shortcuts on capture page

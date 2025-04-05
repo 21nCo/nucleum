@@ -1,7 +1,17 @@
 <script lang="ts">
   import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
   import DurationInput from "$lib/client/elements/input/durationInput/DurationInput.svelte";
+  import QuickAddDurationsEditor from "$lib/client/products/pointron/logs/manualLog/QuickAddDurationsEditor.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
+
+  if (!$pointronPreferences.manualEntryQuickDurations) {
+    pointronPreferences.setSeedManualEntryQuickDurations();
+  }
+
+  function onManualEntryQuickDurationsChange(event: CustomEvent) {
+    if (!event.detail.values) return;
+    pointronPreferences.updateManualEntryQuickDurations(event.detail.values);
+  }
 </script>
 
 <div class="flex flex-col gap-4 w-full">
@@ -29,4 +39,9 @@
       bind:value={$pointronPreferences.breakReminder}
     />
   </div>
+
+  <QuickAddDurationsEditor
+    values={$pointronPreferences.manualEntryQuickDurations}
+    on:change={onManualEntryQuickDurationsChange}
+  />
 </div>

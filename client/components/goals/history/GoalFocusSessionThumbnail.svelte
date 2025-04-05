@@ -31,8 +31,8 @@
     class="flex-1 flex flex-col items-start gap-3 p-4 rounded bg-bgs2 hover:bg-bgs3 transition-colors h-fit justify-between"
   >
     <div class="text-b2 font-medium">
-      {formatTime(new Date(session.start))} - {formatTime(
-        new Date(session.end)
+      {formatTime(new Date(session.startUnix))} - {formatTime(
+        new Date(session.endUnix)
       )}
     </div>
     <div class="flex flex-col gap-6 w-full">

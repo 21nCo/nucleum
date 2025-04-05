@@ -14,6 +14,10 @@
   import FloatingButton from "$lib/client/elements/button/FloatingButton.svelte";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { PersistenceActionType } from "$lib/client/types/data.type";
+  import Button from "$lib/client/elements/button/Button.svelte";
+  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
+  import { Size } from "$lib/client/types/size.enum";
+  import { LoadingAnimationType } from "$lib/client/types/feedback.type";
   export let date: Date;
   let isRefreshing = false;
   let tasks: ITaskThumb[] = [];
@@ -60,12 +64,23 @@
       subText="Choose a different date or create a task"
       actionText="Create task"
       on:click={handleCreateTask}
+      loadingAnimation={LoadingAnimationType.FOCUS_ITEMS_PULSE}
     />
   {:else}
     <div class="overflow-auto py-3">
       <TaskRecords data={tasks} accessPoint={ResourceAccessPoint.CALENDAR} />
     </div>
-    <FloatingButton
+    <div class="flex justify-center items-center">
+      <Button
+        icon="ph:plus-light"
+        label="Create new task"
+        size={Size.sm}
+        type={ButtonVariant.PRIMARY}
+        style={ButtonStyle.OUTLINED}
+        on:click={handleCreateTask}
+      />
+    </div>
+    <!-- <FloatingButton
       params={[
         {
           icon: "ph:plus-light",
@@ -75,7 +90,7 @@
           // style: ButtonStyle.OUTLINED
         }
       ]}
-    />
+    /> -->
   {/if}
 </div>
 <ComponentBaseLayer

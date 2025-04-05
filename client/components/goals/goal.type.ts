@@ -36,6 +36,10 @@ export interface IGoalBase extends IMemotronItemBase {
   color?: number;
   isPinnedForQuickFocus?: boolean;
   properties?: ICollectionItemPropertyValue[];
+  /**
+   * Order of tabs on goal page.
+   */
+  tabsOrder?: string[];
 }
 
 export interface IGoal extends IGoalBase {

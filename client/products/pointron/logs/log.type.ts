@@ -32,9 +32,30 @@ export type ISessionBase = IMemotronItemBase & {
 export type ISession = ISessionBase & {
   elapsed: number;
   extended: number;
-  start: number | string;
-  end: number | string;
+  /**
+   * @deprecated - older UTC version datetime - use {@link startUnix} instead
+   */
+  start?: number | string;
+  /**
+   * @deprecated - older UTC version datetime - use {@link endUnix} instead
+   */
+  end?: number | string;
+  /**
+   * The unix timestamp of the start datetime
+   */
+  startUnix: number;
+  /**
+   * The unix timestamp of the end datetime
+   */
+  endUnix: number;
+  /**
+   * @deprecated - use {@link plannedEndUnix} instead
+   */
   plannedEnd?: number | string;
+  /**
+   * The unix timestamp of the planned end datetime
+   */
+  plannedEndUnix?: number;
   id: string;
   /**
    * @deprecated
@@ -52,8 +73,22 @@ export type ISession = ISessionBase & {
 };
 
 export type ISessionLog = IResource & {
-  start: string;
-  end: string;
+  /**
+   * @deprecated - older UTC version datetime - use {@link startUnix} instead
+   */
+  start?: string;
+  /**
+   * The unix timestamp of the start date
+   */
+  startUnix: number;
+  /**
+   * @deprecated - older UTC version datetime - use {@link endUnix} instead
+   */
+  end?: string;
+  /**
+   * The unix timestamp of the end date
+   */
+  endUnix: number;
   sessionId: IRecordId;
   /**
    * @deprecated

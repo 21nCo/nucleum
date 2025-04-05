@@ -26,6 +26,7 @@
   export let parentBgIndex: number = 1;
   export let isShowNumberShortcut: boolean = false;
   export let index: number = 0;
+  export let isRearrangeableByDefault: boolean = false;
   function onClick() {
     if (item.value === "$add") {
       dispatch("add");
@@ -62,7 +63,7 @@
     on:click={onClick}
     disabled={isDisabled}
     use:rearrangeOnAxis={{
-      enabled: isInEditMode,
+      enabled: isInEditMode || isRearrangeableByDefault,
       onRearrange: handleRearrange,
       onRearranged: handleRearranged,
       threshold: 30

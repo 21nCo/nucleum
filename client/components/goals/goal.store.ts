@@ -38,9 +38,9 @@ class GoalStore extends ResourceStore<IGoal> {
   }
 
   selectMany(params?: IResourceSelectParams, additionalParams?: any) {
+    const expandedProps = ["*", "(select * from $parent.parent) as parent"];
     const properties = [
-      "*",
-      "(select * from $parent.parent) as parent",
+      ...(additionalParams?.isPreventExpansion ? [] : expandedProps),
       ...(params?.properties ?? [])
     ];
     const filters = {

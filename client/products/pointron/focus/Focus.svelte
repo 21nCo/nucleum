@@ -51,7 +51,7 @@
     }
   });
   async function onManualLogClicked() {
-    appStore.runAction(PointronAction.MANUAL_FOCUS_ENTRY_POP);
+    appStore.runAction(PointronAction.MANUAL_FOCUS_ENTRY);
   }
   async function onStartSessionClicked() {
     await activeSession.startSession();

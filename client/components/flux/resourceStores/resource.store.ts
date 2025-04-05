@@ -582,8 +582,8 @@ export class ResourceStore<T extends IResource> implements IStore {
       isArchived: params?.filters?.isArchived ?? false
     };
     params = {
-      ...params,
-      filters
+      ...params
+      // filters
     };
     if (this.isExtensionEnvironment) {
       return extensionFlux({
@@ -594,6 +594,7 @@ export class ResourceStore<T extends IResource> implements IStore {
         }
       });
     }
+    //TODO - apply active filters after query
     return flux.selectMany(this.id, params, {
       isCloudOnlyResource:
         this.isCloudOnlyResource ?? additionalParams?.isUseCloud

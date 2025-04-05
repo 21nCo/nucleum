@@ -100,7 +100,7 @@
         "mo:text-b2 text-b3 text-fgs3": variant === "v1"
       })}
     >
-      {formatTime($userPreferences, new Date(session.start))}
+      {formatTime($userPreferences, new Date(session.startUnix))}
     </div>
     <div class="flex h-full gap-2">
       <!-- <div class="bg-bgs3 h-full w-0.5 flex-grow rounded-full" /> -->
@@ -137,7 +137,7 @@
         "mo:text-b2 text-b3 text-fgs3": variant === "v1"
       })}
     >
-      {formatTime($userPreferences, new Date(session.end))}
+      {formatTime($userPreferences, new Date(session.endUnix))}
     </div>
   </div>
   <div

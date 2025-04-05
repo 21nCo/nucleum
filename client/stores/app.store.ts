@@ -147,7 +147,14 @@ export const appConstants = {
   tempColorSchemes
 };
 
-const resourceSpecificSearchParams = ["edit", /-type$/, "popAt"];
+const resourceSpecificSearchParams = [
+  "edit",
+  /-type$/,
+  "popAt",
+  "tab",
+  "fsplitAt",
+  "fullAt"
+];
 
 export const appStore = initAppStore({
   product: Product.NUCLEUS,
@@ -394,7 +401,7 @@ function initAppStore(seed: IAppStore) {
         ? import.meta.env?.VITE_HOST
         : window.location.hostname;
     const redirect = ctx.isEmbed
-      ? (import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host)
+      ? import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host
       : window.location.origin;
     // const origin = window.location.origin;
     const guestPartForState = guest ?? (await getDapId()) ?? "";

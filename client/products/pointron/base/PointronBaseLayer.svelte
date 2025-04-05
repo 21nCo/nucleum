@@ -25,6 +25,7 @@
   import AppSplitView from "$lib/client/layout/AppSplitView.svelte";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
+  import { nestedGoalCorrection } from "./fallbacks";
   let isLiteMode = $context.isEmbed && $context.isSheet;
   let interactionMode: InteractionMode;
   let isHideLeftNavBar: boolean = refreshSidebarState();
@@ -82,9 +83,17 @@
       appStore.runAction(PointronEvent.SESSION_FINISHED);
     }
   }
+
+  async function onReady() {
+    await runFallbacks();
+  }
+
+  async function runFallbacks() {
+    await nestedGoalCorrection();
+  }
 </script>
 
-<UserBaseLayer>
+<UserBaseLayer on:ready={onReady}>
   {#if $appLoadingState.isBaseLoaded && $appLoadingState.isLocalLoaded}
     {#if $appStore.interactionMode === InteractionMode.COMMAND_ONLY && $context.embed !== Embed.HANDSET}
       <CommandModePage>

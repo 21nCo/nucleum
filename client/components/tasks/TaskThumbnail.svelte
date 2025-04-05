@@ -25,6 +25,8 @@
   import AbsoluteTimeRangePopoverV2 from "$lib/client/elements/datetime/absolute/AbsoluteTimeRangePopoverV2.svelte";
   import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
   import { generateMiniRandomId } from "$lib/shared/utils/crypto.utils";
+  import { goalStore } from "../goals/goal.store";
+  import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
   const dispatch = createEventDispatcher();
   export let item: ITaskThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
@@ -38,12 +40,15 @@
   let isDatePickerOpen = false;
   let isShowDatePickerOnCw = false;
   $: isOverdue =
-    !item.isChecked && item.date && compareDates(item.date, new Date(), "<");
+    !item.isChecked &&
+    item.dateUnix &&
+    compareDates(new Date(item.dateUnix), new Date(), "<");
 
   const instanceId = generateMiniRandomId();
 
-  function onTaskChanges(event: CustomEvent) {
+  async function onTaskChanges(event: CustomEvent) {
     const record = event.detail.params?.record;
+    console.log("record", record);
     if ("isChecked" in record && record.isChecked !== item.isChecked) {
       item.isChecked = record.isChecked;
       if (!item.isChecked) {
@@ -51,6 +56,9 @@
       } else {
         item.completedAt = new Date();
       }
+    } else if ("goalId" in record && record.goalId !== item.goalId) {
+      item.goalId = record.goalId;
+      item.goal = await goalStore.select(record.goalId);
     }
   }
 
@@ -62,10 +70,10 @@
   }
 
   async function onDateChange(val: Date) {
-    item.date = val;
+    item.dateUnix = resolveUnixTimestamp(val);
     await taskStore.modify(
       item.id,
-      { date: val },
+      { dateUnix: item.dateUnix },
       {
         context: accessPoint
       }
@@ -143,7 +151,7 @@
           isRenderAsModalForCW: true,
           componentProps: {
             isDatePickerMode: true,
-            selectedDate: item.date,
+            selectedDate: new Date(item.dateUnix),
             isCWPopoverContext: true,
             onDateChange: (val) => {
               onDateChange(val);
@@ -161,7 +169,7 @@
       ></div>
     {/if}
     <div class="flex flex-wrap gap-2 justify-end">
-      {#if item.date && !isHovering}
+      {#if item.dateUnix && !isHovering}
         <button
           class={cn("text-b3 userdata", {
             "text-ars1": isOverdue,
@@ -171,19 +179,20 @@
             isShowDatePickerOnCw = true;
           }}
         >
-          Due: {formatDate(item.date)}
+          Due: {formatDate(new Date(item.dateUnix))}
         </button>
       {/if}
       {#if item.completedAt && !isHovering && !$view.isConstrainedWidth}
         {@const isCompletedBeforeDue =
-          item.date && compareDates(item.completedAt, item.date, "<=")}
-        {#if item.date}
+          item.dateUnix &&
+          compareDates(item.completedAt, new Date(item.dateUnix), "<=")}
+        {#if item.dateUnix}
           <span class="text-b3 text-fgs3 userdata"> | </span>
         {/if}
         <span
           class={cn("text-b3 text-ags1 userdata", {
             "text-ags1": isCompletedBeforeDue,
-            "text-ars1": !isCompletedBeforeDue && item.date
+            "text-ars1": !isCompletedBeforeDue && item.dateUnix
           })}
         >
           Completed: {formatDate(item.completedAt)}
@@ -194,7 +203,7 @@
     {#if isHovering || isDatePickerOpen}
       <div class="flex gap-2 shrink-0">
         <DatePicker
-          date={item.date}
+          date={new Date(item.dateUnix)}
           id={instanceId}
           placeholder="Set date"
           on:change={(e) => {

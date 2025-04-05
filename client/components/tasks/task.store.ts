@@ -23,13 +23,18 @@ import { getUtcSafeDay } from "$lib/client/elements/datetime/datetime.utils";
 import { Product } from "$lib/client/types/product.type";
 import { get } from "svelte/store";
 import view from "$lib/client/stores/view.store";
+import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
 class TaskStore extends ResourceStore<ITask> {
   constructor() {
     super(Resource.task);
   }
 
   selectMany(params?: IResourceSelectParams, additionalParams?: any) {
-    const properties = ["*", "goalId.* as goal", ...(params?.properties ?? [])];
+    const expandedProps = ["*", "goalId.* as goal"];
+    const properties = [
+      ...(additionalParams?.isPreventExpansion ? [] : expandedProps),
+      ...(params?.properties ?? [])
+    ];
     params = {
       ...(params ?? {}),
       properties
@@ -47,7 +52,9 @@ class TaskStore extends ResourceStore<ITask> {
       label: form.label,
       isChecked: form.isChecked ?? false,
       estimated: form.estimated,
-      date: form.date ? getUtcSafeDay(form.date) : undefined,
+      dateUnix: form.dateUnix
+        ? resolveUnixTimestamp(getUtcSafeDay(new Date(form.dateUnix)))
+        : undefined,
       goalId: form.goalId
     };
     appStore.addToRecents({
@@ -102,7 +109,7 @@ class TaskActions {
   editGoal = {
     value: "editGoal",
     icon: "ph:circle-light",
-    label: "Edit associated goal",
+    label: "Edit task's goal",
     callback: async () => {
       appStore.runAction(Action.EDIT_TASK_GOAL, {
         componentParams: {

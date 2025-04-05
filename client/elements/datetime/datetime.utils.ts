@@ -1,4 +1,5 @@
 import { TimeScale } from "$lib/client/types/time.type";
+import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
 
 export const activeScales = [
   TimeScale.YEARS,
@@ -42,8 +43,16 @@ export function getUtcSafeDay(date: Date): Date {
   } else {
     offsetDate.setMinutes(offsetDate.getMinutes() + timezoneOffset);
   }
-  console.log({ offsetDate });
   return offsetDate;
+}
+
+export function getTimePeriodFilterForDay(day: Date) {
+  const localDay = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+  const end = new Date(localDay.getTime() + 24 * 60 * 60 * 1000);
+  return {
+    greaterThanOrEqual: resolveUnixTimestamp(localDay),
+    lessThanOrEqual: resolveUnixTimestamp(end)
+  };
 }
 
 export function calculateTimeSpan(

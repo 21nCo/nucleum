@@ -11,7 +11,18 @@ interface ITaskBase extends IMemotronItemBase {
    * Estimated time in seconds
    */
   estimated?: number;
+  /**
+   * @deprecated - use {@link dateUnix} instead
+   */
   date?: Date;
+  /**
+   * The unix timestamp of the date
+   */
+  dateUnix?: number;
+  /**
+   * The time in minutes since midnight
+   */
+  minutes?: number;
   completedAt?: Date;
 }
 
