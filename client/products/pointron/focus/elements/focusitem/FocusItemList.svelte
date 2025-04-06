@@ -57,14 +57,20 @@
         }
       },
       {
-        isIncludeSubItems: true
+        isIncludeSubItems: true,
+        isExpand: true
       }
     );
-    tasks = await taskStore.selectMany({
-      filters: {
-        id: $focusItemsStore.items.map((x) => x.id.toString())
+    tasks = await taskStore.selectMany(
+      {
+        filters: {
+          id: $focusItemsStore.items.map((x) => x.id.toString())
+        }
+      },
+      {
+        isExpand: true
       }
-    });
+    );
     isRefreshing = false;
   }
 

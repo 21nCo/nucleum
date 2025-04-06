@@ -23,8 +23,7 @@
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
-  import { getTimePeriodFilterForDay } from "$lib/client/elements/datetime/datetime.utils";
+  import { resolveTimePeriodFilterForDay } from "$lib/client/elements/datetime/datetime.utils";
 
   export let date: Date = new Date();
 
@@ -42,15 +41,20 @@
   });
   async function refresh() {
     isRefreshing = true;
-    const dayFilter = getTimePeriodFilterForDay(date);
-    const result = await sessionStore.selectMany({
-      filters: {
-        startUnix: dayFilter
+    const dayFilter = resolveTimePeriodFilterForDay(date);
+    const result = await sessionStore.selectMany(
+      {
+        filters: {
+          startUnix: dayFilter
+        },
+        orderBy: {
+          startUnix: "asc"
+        }
       },
-      orderBy: {
-        startUnix: "asc"
+      {
+        isExpand: true
       }
-    });
+    );
     console.log({ result });
     if (isValidArrayWithData(result)) {
       sessions = result.map((session: ISessionThumb) => ({

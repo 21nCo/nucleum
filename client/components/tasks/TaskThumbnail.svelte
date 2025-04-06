@@ -48,13 +48,11 @@
 
   async function onTaskChanges(event: CustomEvent) {
     const record = event.detail.params?.record;
-    console.log("record", record);
-    if ("isChecked" in record && record.isChecked !== item.isChecked) {
-      item.isChecked = record.isChecked;
-      if (!item.isChecked) {
-        item.completedAt = undefined;
+    if ("isChecked" in record) {
+      if (!record.isChecked) {
+        item.completedAtUnix = undefined;
       } else {
-        item.completedAt = new Date();
+        item.completedAtUnix = resolveUnixTimestamp();
       }
     } else if ("goalId" in record && record.goalId !== item.goalId) {
       item.goalId = record.goalId;
@@ -151,7 +149,7 @@
           isRenderAsModalForCW: true,
           componentProps: {
             isDatePickerMode: true,
-            selectedDate: new Date(item.dateUnix),
+            selectedDate: item.dateUnix ? new Date(item.dateUnix) : undefined,
             isCWPopoverContext: true,
             onDateChange: (val) => {
               onDateChange(val);
@@ -168,7 +166,7 @@
         }}
       ></div>
     {/if}
-    <div class="flex flex-wrap gap-2 justify-end">
+    <div class="flex flex-col items-end">
       {#if item.dateUnix && !isHovering}
         <button
           class={cn("text-b3 userdata", {
@@ -179,23 +177,24 @@
             isShowDatePickerOnCw = true;
           }}
         >
-          Due: {formatDate(new Date(item.dateUnix))}
+          Due: {formatDate(item.dateUnix)}
         </button>
       {/if}
-      {#if item.completedAt && !isHovering && !$view.isConstrainedWidth}
+      {#if item.completedAtUnix && !isHovering && !$view.isConstrainedWidth}
         {@const isCompletedBeforeDue =
           item.dateUnix &&
-          compareDates(item.completedAt, new Date(item.dateUnix), "<=")}
-        {#if item.dateUnix}
-          <span class="text-b3 text-fgs3 userdata"> | </span>
-        {/if}
+          compareDates(
+            new Date(item.completedAtUnix),
+            new Date(item.dateUnix),
+            "<="
+          )}
         <span
           class={cn("text-b3 text-ags1 userdata", {
             "text-ags1": isCompletedBeforeDue,
             "text-ars1": !isCompletedBeforeDue && item.dateUnix
           })}
         >
-          Completed: {formatDate(item.completedAt)}
+          Completed: {formatDate(item.completedAtUnix)}
         </span>
       {/if}
     </div>
@@ -203,7 +202,7 @@
     {#if isHovering || isDatePickerOpen}
       <div class="flex gap-2 shrink-0">
         <DatePicker
-          date={new Date(item.dateUnix)}
+          date={item.dateUnix ? new Date(item.dateUnix) : undefined}
           id={instanceId}
           placeholder="Set date"
           on:change={(e) => {

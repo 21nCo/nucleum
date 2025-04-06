@@ -37,6 +37,7 @@ import { AlertType } from "$lib/client/types/notification.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import type {
   IRecordId,
+  IResourceSelectAdditionalParams,
   IResourceSelectParams
 } from "$lib/client/types/data.type";
 import { logger } from "$lib/client/components/debug/logger.client";
@@ -737,14 +738,14 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
    * @returns
    */
   private async _stopCurrentFocusItem(
-    props: { isPersist?: boolean; isSessionFinish?: boolean } = {
+    props: { isPersist?: boolean; isSessionFinish?: boolean; end?: number } = {
       isPersist: false
     }
   ) {
     let session = this.get();
     let currentFocus = get(currentFocusItem);
     if (!currentFocus) return;
-    let end = new Date().getTime();
+    let end = props?.end ?? new Date().getTime();
     await focusItemsStore.appendFocusBlock(currentFocus.id, {
       start: currentFocus.start,
       end
@@ -848,7 +849,8 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       const now = new Date().getTime();
       if (currentFocus)
         await this._stopCurrentFocusItem({
-          isSessionFinish: true
+          isSessionFinish: true,
+          end: now
         });
       // let lastBlock = n.intervals?.pop();
       // if (lastBlock) {
@@ -858,7 +860,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       // n.blocks = [...n.blocks, { start: now, duration: 0, progress: 1 }];
       // session.state = SessionState.FINISHED;
       // session.isSessionRunning = false;
-      sessionStore.finishFocus();
+      sessionStore.finishFocus({ end: now });
     } catch (err) {
       logger.error({ at: "finishSession", error: err });
     } finally {
@@ -1036,11 +1038,16 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     let currentFocus = get(currentFocusItem);
     let focusItems = focusItemsStore.get();
     if (!isQuickStart && focusItems.items.length > 0) {
-      currentFocus = {
-        id: focusItems.items[0].id,
-        start: new Date().getTime()
-      };
-      currentFocusItem.set(currentFocus);
+      const item = focusItems.items.find(
+        (x) => !x.tasks || x.tasks.length === 0
+      );
+      if (item) {
+        currentFocus = {
+          id: item.id,
+          start: new Date().getTime()
+        };
+        currentFocusItem.set(currentFocus);
+      }
     }
     this.modify(
       {
@@ -1176,15 +1183,18 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
             id: item.id.toString()
           }
         },
-        { isIncludeSubItems: true }
+        { isIncludeSubItems: true, isExpand: true }
       );
       return goal?.[0];
     } else if (resourceType === Resource.task) {
-      const task = await taskStore.selectMany({
-        filters: {
-          id: item.id.toString()
-        }
-      });
+      const task = await taskStore.selectMany(
+        {
+          filters: {
+            id: item.id.toString()
+          }
+        },
+        { isExpand: true }
+      );
       return task?.[0];
     }
   }
@@ -1311,10 +1321,16 @@ class SessionStore extends ResourceStore<ISession> {
     super(Resource.session);
   }
 
-  selectMany(params?: IResourceSelectParams, additionalParams?: any) {
-    const properties = [
+  selectMany(
+    params?: IResourceSelectParams,
+    additionalParams?: IResourceSelectAdditionalParams
+  ) {
+    const expandedProps = [
       "*",
-      "select *, (select * from $parent.parent) as parent from (select value id from $parent.items) as expandedItems",
+      "select *, (select * from $parent.parent) as parent from (select value id from $parent.items) as expandedItems"
+    ];
+    const properties = [
+      ...(additionalParams?.isExpand ? expandedProps : []),
       ...(params?.properties ?? [])
     ];
     params = {
@@ -1330,14 +1346,14 @@ class SessionStore extends ResourceStore<ISession> {
    * @param focusItemStore
    * @param isClose
    */
-  finishFocus() {
+  finishFocus(params?: { end?: number }) {
     const activeSessionVal = activeSession.get();
     const focusItemStore = focusItemsStore.get();
     const plannedEndTime = resolvePlannedEndTime(activeSessionVal);
     const endTime =
       plannedEndTime && new Date().getTime() > plannedEndTime.getTime()
         ? plannedEndTime
-        : new Date();
+        : new Date(params?.end ?? new Date().getTime());
 
     const session: OmitForCaptureWithId<ISession> = {
       elapsed: activeSessionVal.totalElapsed,

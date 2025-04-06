@@ -11,13 +11,13 @@
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { resourceAction } from "../../flux/resourceStores/resource.utils";
-  import FloatingButton from "$lib/client/elements/button/FloatingButton.svelte";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { PersistenceActionType } from "$lib/client/types/data.type";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";
   import { LoadingAnimationType } from "$lib/client/types/feedback.type";
+  import { resolveTimePeriodFilterForDay } from "$lib/client/elements/datetime/datetime.utils";
   export let date: Date;
   let isRefreshing = false;
   let tasks: ITaskThumb[] = [];
@@ -34,7 +34,7 @@
   async function loadTasks() {
     tasks = await new SearchStore(Resource.task).select({
       filters: {
-        date
+        dateUnix: resolveTimePeriodFilterForDay(date)
       }
     });
   }
@@ -52,7 +52,13 @@
     const params = event.detail?.params;
     if (params?.action === PersistenceActionType.INSERT) {
       refreshTimeline();
+    } else if (
+      params?.action === PersistenceActionType.MERGE &&
+      params?.record?.dateUnix
+    ) {
+      refreshTimeline();
     }
+    //TODO - add for bulk merge case
   }
 </script>
 

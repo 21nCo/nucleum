@@ -27,6 +27,7 @@
   import appearance from "$lib/client/stores/appearance.store";
   import { Product } from "$lib/client/types/product.type";
   import type { IActiveGoal } from "./goal.type";
+  import GoalAnalytics from "./GoalAnalytics.svelte";
 
   export let id: string;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -78,11 +79,11 @@
         icon: resolveResourceIcon(Resource.task),
         badge: goal?.tasks?.length
       },
-      // {
-      //   label: "Analytics",
-      //   value: "analytics",
-      //   icon: "ph:chart-line-up-light"
-      // },
+      {
+        label: "Analytics",
+        value: "analytics",
+        icon: "ph:chart-line-up-light"
+      },
       {
         label: "History",
         value: "history",
@@ -223,6 +224,8 @@
             <GoalHistory {goal} />
           {:else if selectedPanel === "tasks"}
             <GoalTasks id={$goal.id} />
+          {:else if selectedPanel === "analytics"}
+            <GoalAnalytics id={$goal.id} />
           {:else if selectedPanel === "properties"}
             <div class="flex w-full justify-center">
               <div class="w-96">

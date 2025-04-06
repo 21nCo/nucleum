@@ -23,7 +23,15 @@ interface ITaskBase extends IMemotronItemBase {
    * The time in minutes since midnight
    */
   minutes?: number;
+  /**
+   * @deprecated - use {@link completedAtUnix} instead
+   * The date the task was completed
+   */
   completedAt?: Date;
+  /**
+   * The unix timestamp of the completed date
+   */
+  completedAtUnix?: number;
 }
 
 export interface ITask extends ITaskBase {

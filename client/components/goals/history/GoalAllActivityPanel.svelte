@@ -167,7 +167,7 @@
     <div class="flex flex-col gap-3 overflow-y-auto">
       {#each accessLogs as accessLog}
         <button
-          class={cn("flex items-center gap-2 p-2 rounded-lg", {
+          class={cn("flex items-center justify-between gap-2 p-2 rounded-lg", {
             "cursor-pointer hover:bg-bgs2": accessLog.type === "focus"
           })}
           on:click={() => {

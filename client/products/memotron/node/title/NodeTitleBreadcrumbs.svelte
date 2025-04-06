@@ -28,6 +28,7 @@
     let parentItems = [];
     if (mdParent) {
       parentItems = await nodeStore.selectMany({
+        properties: ["label", "id", "body"],
         filters: {
           id: mdParent?.map((x) => x.toString())
         }

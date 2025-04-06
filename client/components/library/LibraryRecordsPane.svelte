@@ -2,17 +2,9 @@
   import Records from "$lib/client/components/record/Records.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import {
-    Arrangement,
-    Orientation,
-    Placement
-  } from "$lib/client/types/direction.enum";
+  import { Arrangement, Orientation } from "$lib/client/types/direction.enum";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import {
-    OptionSelectorStyle,
-    type ISelectItem
-  } from "$lib/client/types/select.type";
   import { appStore } from "$lib/client/stores/app.store";
   import {
     ResourceAccessMode,
@@ -40,7 +32,6 @@
   import { debouncer } from "$lib/client/utils/utils";
   import {
     PersistenceActionType,
-    SearchType,
     type IMutationParamsv2,
     type IResourceSelectOrderBy
   } from "$lib/client/types/data.type";
@@ -53,10 +44,7 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import InlineSyncingFeedback from "$lib/client/elements/feedback/InlineSyncingFeedback.svelte";
   import { enumToString } from "$lib/shared/utils/text.utils";
-  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { resolveMultiSelectStore } from "../flux/resourceStores/resource.store";
   import { toasts } from "$lib/client/stores/notification.store";
   import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
@@ -74,6 +62,7 @@
   import {
     availableResources,
     isSameResource,
+    removeDuplicatesFilter,
     resourceAction
   } from "../flux/resourceStores/resource.utils";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
@@ -215,7 +204,8 @@
         limit: 50,
         offset: isPagination ? data.length : 0
       });
-      if (isPagination) data = [...data, ...newData];
+      if (isPagination)
+        data = [...data, ...newData]?.filter(removeDuplicatesFilter);
       else data = [...newData];
       clearTimeout(refreshResetTimeout);
       refreshResetTimeout = setTimeout(() => {
@@ -554,7 +544,9 @@
         use:intersection={{
           rootMargin: "100px",
           callback: () => {
-            refresh(true);
+            if (data.length > 0 && data.length < totalCountAfterFilter) {
+              refresh(true);
+            }
           }
         }}
       >

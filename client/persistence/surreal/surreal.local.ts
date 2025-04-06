@@ -606,7 +606,8 @@ export class SurrealPersistence implements IPersistence {
       await this.awaiter("selectMany_" + resource);
       const query = resolveSelectManyQuery(resource, params);
       const instance = generateMiniRandomId();
-      if (resource === Resource.session) {
+      const logResources: Resource[] = [];
+      if (logResources.includes(resource)) {
         logger.log({
           at: "SurrealPersistence.selectMany - query",
           resource,
@@ -618,11 +619,11 @@ export class SurrealPersistence implements IPersistence {
         );
       }
       const result = await this.instance?.queryRaw(query, params);
-      if (resource === Resource.session) {
+      if (logResources.includes(resource)) {
         console.timeEnd(
           `SurrealPersistence.selectMany - ${resource} - ${instance}`
         );
-        logger.debug({
+        logger.log({
           at: "SurrealPersistence.selectMany - result",
           resource,
           result,

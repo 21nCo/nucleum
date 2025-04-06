@@ -11,6 +11,7 @@ export function resourceAction(resource: Resource, action: ResourceActionType) {
 }
 
 export function determineResourceType(id: IRecordId): Resource {
+  if (!id) return Resource.unknown;
   if (typeof id !== "string") return id.tb as Resource;
   const parts = id.split(":");
   if (parts.length > 1) return parts[0] as Resource;

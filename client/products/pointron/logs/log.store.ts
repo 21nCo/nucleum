@@ -18,7 +18,10 @@ import { BlockType } from "$lib/client/types/pointron/session.type";
 import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 import type { OmitForCaptureWithId } from "$lib/client/components/flux/resourceStores/resource.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
-import type { IResourceSelectParams } from "$lib/client/types/data.type";
+import type {
+  IResourceSelectParams,
+  IResourceSelectAdditionalParams
+} from "$lib/client/types/data.type";
 import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
 import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
 class SessionLogStore extends ResourceStore<ISessionLog> {
@@ -26,16 +29,19 @@ class SessionLogStore extends ResourceStore<ISessionLog> {
     super(Resource.sessionLog);
   }
 
-  selectMany(params?: IResourceSelectParams, additionalParams?: any) {
+  selectMany(
+    params?: IResourceSelectParams,
+    additionalParams?: IResourceSelectAdditionalParams
+  ) {
     const expandedProps = [
       "*",
       "goalId.* as goal",
-      "(select * from $parent.goalId.parent) as topLevelGoal",
+      // "(select * from $parent.goalId.parent) as topLevelGoal",
       "sessionId.* as session"
     ];
 
     const properties = [
-      ...(additionalParams?.isPreventExpansion ? [] : expandedProps),
+      ...(additionalParams?.isExpand ? expandedProps : []),
       ...(params?.properties ?? [])
     ];
     params = {

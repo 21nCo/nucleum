@@ -504,6 +504,8 @@ function generateWhereClause(
         conditions.push(
           `${key} NOT IN [${value.notIn.map(formatValue).join(", ")}]`
         );
+      } else if ("contains" in value) {
+        conditions.push(`${key} CONTAINS ${formatValue(value.contains)}`);
       }
     } else if (typeof value === "boolean") {
       if (value === true) {

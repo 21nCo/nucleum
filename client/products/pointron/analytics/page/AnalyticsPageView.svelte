@@ -47,24 +47,24 @@
   async function refreshData() {
     isLoading = true;
     console.time("refreshData");
-    goals = await goalStore.selectMany({}, { isIncludeSubItems: true });
+    goals = await goalStore.selectMany(
+      {},
+      { isIncludeSubItems: true, isExpand: true }
+    );
     if (!timeRangeForPage) return;
-    logs = await sessionLogStore.selectMany(
-      {
-        properties: ["id", "startUnix", "goalId", "focus", "breakTime"],
-        filters: {
-          startUnix: {
-            greaterThanOrEqual: timeRangeForPage.begin - 24 * 60 * 60,
-            lessThanOrEqual: timeRangeForPage.end + 24 * 60 * 60
-          }
-        },
-        orderBy: {
-          startUnix: "desc"
+    logs = await sessionLogStore.selectMany({
+      properties: ["id", "startUnix", "goalId", "focus", "breakTime"],
+      filters: {
+        startUnix: {
+          greaterThanOrEqual: timeRangeForPage.begin - 24 * 60 * 60,
+          lessThanOrEqual: timeRangeForPage.end + 24 * 60 * 60
         }
       },
-      { isPreventExpansion: true }
-    );
-    console.log({ goals, logs });
+      orderBy: {
+        startUnix: "desc"
+      }
+    });
+    // console.log({ goals, logs });
     console.timeEnd("refreshData");
     isLoading = false;
   }
@@ -103,7 +103,6 @@
           previousPeriods[card.id] = resolveUnixTimestamp(timePeriod);
         });
       }
-      console.log({ previousPeriods });
       timeRangeForPage = {
         begin: Math.min(
           ...Object.values(cardsTimePeriods).map((x) => x.begin),
@@ -118,7 +117,11 @@
       });
     }
   }
-  $: console.log({ config, cardsTimePeriods, timeRangeForPage });
+
+  function onReload() {
+    refreshConfig();
+    refreshData();
+  }
 </script>
 
 {#if config}
@@ -137,6 +140,7 @@
         timePeriod={cardsTimePeriods[card.id]}
         position={{ index, total: config.cards.length }}
         pageId={id}
+        on:reload={onReload}
         on:removed={() => refreshConfig()}
       />
     {/each}

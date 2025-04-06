@@ -12,7 +12,7 @@
 
 <CustomColorPropagator color={goal.color}>
   <button
-    class={cn("flex items-center gap-1 text-ccs1", {
+    class={cn("flex items-center gap-1 text-ccs1 w-full", {
       "text-b3 cursor-default": !isCreateContext
     })}
     on:click
@@ -24,6 +24,8 @@
         class="text-ccs1"
       />
     {/if}
-    {goal.label}
+    <div class="text-left truncate flex-1 min-w-0">
+      {goal.label}
+    </div>
   </button>
 </CustomColorPropagator>

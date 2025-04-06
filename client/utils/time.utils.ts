@@ -541,7 +541,7 @@ export function incrementTime(
 }
 
 export function formatDate(
-  date: Date,
+  date: Date | number,
   format:
     | "iso"
     | "iso-short"
@@ -552,6 +552,7 @@ export function formatDate(
     | "mmm-yyyy"
     | "yyyy" = "verbose"
 ) {
+  if (typeof date === "number") date = new Date(date);
   if (format === "iso" || format === "iso-short") {
     let year = date.getFullYear();
     let month = (1 + date.getMonth()).toString().padStart(2, "0");

@@ -5,11 +5,7 @@
   import { isInEditMode } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
   import { Size } from "$lib/client/types/size.enum";
-  import {
-    determinePreviousTimePeriod,
-    determineTimePeriodv2,
-    timePeriodLabel
-  } from "$lib/client/utils/time.utils";
+  import { determinePreviousTimePeriod } from "$lib/client/utils/time.utils";
   import { cn } from "$lib/client/utils/ui.utils";
   import {
     AnalyticsCardType,
@@ -18,14 +14,13 @@
     type IAnalyticsLabelColor
   } from "../analytics.types";
   import { analyticsConfigStore } from "../analytics.store";
-  import { createEventDispatcher, onMount } from "svelte";
+  import { createEventDispatcher } from "svelte";
   import CardSelector from "./CardSelector.svelte";
   import { InputStyle } from "$lib/client/types/input.type";
   import GroupingAndFilters from "./GroupingAndFilters.svelte";
   import CardResolver from "./CardResolver.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import type { IRecordId } from "$lib/client/types/data.type";
-  import { sessionLogStore } from "../../logs/log.store";
   import type { ISessionLog } from "../../logs/log.type";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import {
@@ -34,13 +29,13 @@
   } from "$lib/client/components/flux/resourceStores/resource.utils";
   import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
   import { resolveGoalColor } from "$lib/client/components/goals/goal.utils";
-  import account from "$lib/client/stores/account.store";
-  import { toasts } from "$lib/client/stores/notification.store";
   import { ErrorMessage } from "$lib/client/components/error/error.type";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
   import type { ITimePeriodResolved } from "$lib/client/types/time.type";
   import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
+  import { logger } from "$lib/client/components/debug/logger.client";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   export let card: IAnalyticsCard;
   export let position: { index: number; total: number };
   export let pageId: string;
@@ -54,8 +49,8 @@
   let parentBgIndex = $view.isPortrait ? 1 : 2;
   const dispatch = createEventDispatcher();
   let isRefreshing = false;
+  let refreshId = new Date().getTime();
   let errorMessage: string = ErrorMessage.DEFAULT;
-  const dev_isUseCloud = false;
   $: isCarbonChart =
     card.type === AnalyticsCardType.PIE ||
     card.type === AnalyticsCardType.DONUT ||
@@ -75,7 +70,7 @@
       ...card,
       period: e.detail
     });
-    refresh();
+    dispatch("reload");
   }
 
   function onCardTypeChange(e: CustomEvent) {
@@ -142,12 +137,6 @@
         (log) =>
           log.startUnix >= correctedBegin && log.startUnix <= correctedEnd
       );
-      console.log({
-        filteredLogs,
-        timePeriod,
-        correctedBegin,
-        tzStore: $tzStore
-      });
       const processedLogs: AnalyticsDataRecord[] = filteredLogs.map(
         (log: ISessionLog) => {
           const goal = log.goalId ? resolveGoalFromId(log.goalId) : undefined;
@@ -228,9 +217,13 @@
         });
       }
       goalColors = colors;
+      refreshId = new Date().getTime();
       isRefreshing = false;
     } catch (error) {
-      console.error("Error resolving analytics data:", error);
+      logger.error({
+        at: "AnalyticsCardView.refresh",
+        error
+      });
       isRefreshing = false;
     }
   }
@@ -308,6 +301,7 @@
             <CardSelector
               bind:selected={card.type}
               on:select={onCardTypeChange}
+              accessPoint={ResourceAccessPoint.ANALYTICS}
             />
           </span>
         </span>
@@ -354,13 +348,24 @@
           ? "height: calc(100% - 6rem)"
           : ""}
     >
-      {#if $isInEditMode}
-        <div
-          class={cn("w-full", {
-            "h-full": !$view.isPortrait || ($view.isPortrait && !isCarbonChart),
-            "h-4/5": $view.isPortrait && isCarbonChart
-          })}
-        >
+      {#key refreshId}
+        {#if $isInEditMode}
+          <div
+            class={cn("w-full", {
+              "h-full":
+                !$view.isPortrait || ($view.isPortrait && !isCarbonChart),
+              "h-4/5": $view.isPortrait && isCarbonChart
+            })}
+          >
+            <CardResolver
+              {card}
+              {data}
+              {goalColors}
+              {previousTimePeriodData}
+              {parentBgIndex}
+            />
+          </div>
+        {:else}
           <CardResolver
             {card}
             {data}
@@ -368,16 +373,8 @@
             {previousTimePeriodData}
             {parentBgIndex}
           />
-        </div>
-      {:else}
-        <CardResolver
-          {card}
-          {data}
-          {goalColors}
-          {previousTimePeriodData}
-          {parentBgIndex}
-        />
-      {/if}
+        {/if}
+      {/key}
     </div>
   {/if}
 </div>

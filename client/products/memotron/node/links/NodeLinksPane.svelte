@@ -167,12 +167,16 @@
       return;
     }
     _links = $node.links;
-    const result = await nodeStore.selectMany({
-      filters: {
-        id: _links.map((x) => x.linkedTo.toString()),
-        ...activeResourceFilterV2
+    const result = await nodeStore.selectMany(
+      {
+        filters: {
+          id: _links.map((x) => x.linkedTo.toString())
+        }
+      },
+      {
+        isExpand: true
       }
-    });
+    );
     if (!result || result.length == 0) {
       all = [];
       return;
@@ -193,11 +197,16 @@
         }
       });
       if (!isValidArrayWithData(result)) return [];
-      const nodes = await nodeStore.selectMany({
-        filters: {
-          id: result.map((x: any) => x.out.toString())
+      const nodes = await nodeStore.selectMany(
+        {
+          filters: {
+            id: result.map((x: any) => x.out.toString())
+          }
+        },
+        {
+          isExpand: true
         }
-      });
+      );
       if (!isValidArrayWithData(nodes)) return [];
       outgoingMentions = result.map((x: any) => ({
         link: {

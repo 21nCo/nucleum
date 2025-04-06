@@ -119,7 +119,7 @@ export type IManualSessionLogForm = {
   startDate: Date;
   endTime: string;
   endDate: Date;
-  goalId: string;
+  goalId: IRecordId;
   duration: number;
   notes?: IMarkdown;
 };

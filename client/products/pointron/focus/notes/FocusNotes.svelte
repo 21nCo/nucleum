@@ -12,7 +12,7 @@
   parentBackgroundIndex={parentBgIndex}
   params={{
     placeholder,
-    actions: ["copy"],
+    actions: isHideTitle ? [] : ["copy"],
     title: isHideTitle ? undefined : "Notes",
     isReadOnly: false,
     canUseSlashShortcut: false

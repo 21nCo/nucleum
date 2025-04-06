@@ -38,17 +38,6 @@
     <div class="flex flex-col gap-6 w-full">
       {#each logs as log}
         <div class="flex items-center justify-between w-full">
-          {#if log.task}
-            <button
-              on:click={(e) => {
-                e.stopPropagation();
-                appStore.resourceClickHandler(e, log.task.id);
-              }}
-              class="text-b2 notouch:hover:underline"
-            >
-              {log.task.label}
-            </button>
-          {/if}
           <div class="flex flex-col gap-2">
             <div class="flex h-1 w-48">
               {#if log.focus}
@@ -80,6 +69,17 @@
               {/if}
             </div>
           </div>
+          {#if log.task}
+            <button
+              on:click={(e) => {
+                e.stopPropagation();
+                appStore.resourceClickHandler(e, log.task.id);
+              }}
+              class="text-b2 notouch:hover:underline"
+            >
+              {log.task.label}
+            </button>
+          {/if}
         </div>
       {/each}
     </div>

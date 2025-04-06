@@ -1,12 +1,16 @@
 <script lang="ts">
+  import { resolveTimePeriodFilterForDay } from "$lib/client/elements/datetime/datetime.utils";
   import OverviewCardsPulse from "$lib/client/elements/feedback/animations/DashboardPulse/OverviewCardsPulse.svelte";
   import MetricItem from "$lib/client/products/pointron/analytics/cards/metrics/MetricItem.svelte";
+  import AnalyticsChartStandalone from "$lib/client/products/pointron/analytics/page/AnalyticsChartStandalone.svelte";
   import { sessionLogStore } from "$lib/client/products/pointron/logs/log.store";
   import type { ISessionLog } from "$lib/client/products/pointron/logs/log.type";
   import account from "$lib/client/stores/account.store";
+  import { TimeScale } from "$lib/client/types/time.type";
   import { onMount } from "svelte";
 
   export let date: Date;
+  export let scale: TimeScale = TimeScale.DAYS;
   let data: ISessionLog[] = [];
   let previousTimePeriodData: ISessionLog[] = [];
   let isRefreshing = false;
@@ -36,7 +40,7 @@
       sessionLogStore.selectMany(
         {
           filters: {
-            start: date
+            startUnix: resolveTimePeriodFilterForDay(date)
           }
         },
         {
@@ -46,10 +50,8 @@
       sessionLogStore.selectMany(
         {
           filters: {
-            start: new Date(
-              date.getFullYear(),
-              date.getMonth(),
-              date.getDate() - 1
+            startUnix: resolveTimePeriodFilterForDay(
+              new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1)
             )
           }
         },
@@ -65,11 +67,22 @@
 {#if isRefreshing}
   <OverviewCardsPulse />
 {:else}
-  <div
-    class="w-full h-full flex flex-wrap justify-start items-start content-start dp:gap-4 gap-3"
-  >
-    <MetricItem type="total" value={total} previousValue={previousTotal} />
-    <MetricItem type="focus" value={totalFocus} previousValue={previousFocus} />
-    <MetricItem type="break" value={totalBreak} previousValue={previousBreak} />
+  <div class="flex flex-col gap-4 h-full w-full">
+    <div
+      class="w-full flex flex-wrap justify-start items-start content-start dp:gap-4 gap-3"
+    >
+      <MetricItem type="total" value={total} previousValue={previousTotal} />
+      <MetricItem
+        type="focus"
+        value={totalFocus}
+        previousValue={previousFocus}
+      />
+      <MetricItem
+        type="break"
+        value={totalBreak}
+        previousValue={previousBreak}
+      />
+    </div>
+    <AnalyticsChartStandalone {date} {scale} />
   </div>
 {/if}

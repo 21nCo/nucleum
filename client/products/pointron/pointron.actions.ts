@@ -699,6 +699,7 @@ export const pointronActions: IAction[] = [
               }
             );
             const sessionLogs = await sessionLogStore.selectMany({
+              properties: ["id"],
               filters: {
                 sessionId: params?.componentParams?.id?.toString()
               }

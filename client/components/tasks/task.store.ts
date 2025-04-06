@@ -2,6 +2,7 @@ import { Resource } from "$lib/client/components/flux/resourceStores/resource.en
 import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
 import {
   type IRecordId,
+  type IResourceSelectAdditionalParams,
   type IResourceSelectParams
 } from "$lib/client/types/data.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
@@ -29,10 +30,13 @@ class TaskStore extends ResourceStore<ITask> {
     super(Resource.task);
   }
 
-  selectMany(params?: IResourceSelectParams, additionalParams?: any) {
+  selectMany(
+    params?: IResourceSelectParams,
+    additionalParams?: IResourceSelectAdditionalParams
+  ) {
     const expandedProps = ["*", "goalId.* as goal"];
     const properties = [
-      ...(additionalParams?.isPreventExpansion ? [] : expandedProps),
+      ...(additionalParams?.isExpand ? expandedProps : []),
       ...(params?.properties ?? [])
     ];
     params = {
@@ -75,7 +79,7 @@ class TaskStore extends ResourceStore<ITask> {
       id,
       {
         isChecked: newVal,
-        completedAt: newVal ? new Date() : undefined
+        completedAtUnix: newVal ? resolveUnixTimestamp() : undefined
       },
       {
         context: params?.context
@@ -139,7 +143,9 @@ export function resolveTaskContextMenu(
   const product = get(appStore).product;
   const viewStore = get(view);
   let primaryItems: IContextMenuItem[] = [
-    resourceActions.select(accessPoint, params?.accessPointId),
+    ...(accessPoint !== ResourceAccessPoint.CALENDAR
+      ? [resourceActions.select(accessPoint, params?.accessPointId)]
+      : []),
     ...(product === Product.POINTRON || product === Product.NUCLEUS
       ? [taskActions.editGoal]
       : []),

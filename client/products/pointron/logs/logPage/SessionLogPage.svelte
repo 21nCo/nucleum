@@ -58,14 +58,20 @@
           }
         },
         {
-          isIncludeSubItems: true
+          isIncludeSubItems: true,
+          isExpand: true
         }
       );
-      tasks = await taskStore.selectMany({
-        filters: {
-          id: log.items.map((x) => x.id)
+      tasks = await taskStore.selectMany(
+        {
+          filters: {
+            id: log.items.map((x) => x.id)
+          }
+        },
+        {
+          isExpand: true
         }
-      });
+      );
     }
     isLoadingState = false;
   }
@@ -80,14 +86,14 @@
       <FullScreenCloseButton {accessMode} />
     {/if}
     <LogIntervalBar {log} />
-    {#if isValidDataString(log?.plannedEnd) && !isSameDateTime( new Date(log.end), new Date(log.plannedEnd), { isIgnoreSeconds: true } ) && new Date(log.end).getTime() < new Date(log.plannedEnd).getTime()}
+    {#if log?.plannedEndUnix && !isSameDateTime( new Date(log.endUnix), new Date(log.plannedEndUnix), { isIgnoreSeconds: true } ) && new Date(log.endUnix).getTime() < new Date(log.plannedEndUnix).getTime()}
       <InlineInfoBanner>
         <span>
           This Session was planned to end at <b>
-            {formatTime($userPreferences, new Date(log.plannedEnd))}</b
+            {formatTime($userPreferences, new Date(log.plannedEndUnix))}</b
           >
           but was finished early at
-          <b>{formatTime($userPreferences, new Date(log.end))}.</b>
+          <b>{formatTime($userPreferences, new Date(log.endUnix))}.</b>
         </span>
       </InlineInfoBanner>
     {/if}

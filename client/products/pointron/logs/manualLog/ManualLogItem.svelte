@@ -31,6 +31,15 @@
     PanelSwitcherStyle
   } from "$lib/client/types/switcher.enum";
   import Divider from "$lib/client/elements/Divider.svelte";
+  import type { IGoal } from "$lib/client/components/goals/goal.type";
+  import { goalStore } from "$lib/client/components/goals/goal.store";
+  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
+  import { resolveGoalColor } from "$lib/client/components/goals/goal.utils";
+  import {
+    removeDuplicatesFilter,
+    resourceInList
+  } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import view from "$lib/client/stores/view.store";
   export let item: IManualSessionLogForm;
 
   let previousStartDate: Date = item.startDate;
@@ -46,8 +55,10 @@
   let defaultTime = Date.now();
   let selectedMethod: "duration" | "startEnd" = "duration";
   const searchStore = new SearchStore(Resource.goal);
+  let recentGoals: IGoal[] = [];
 
   onMount(() => {
+    resolveRecentGoals();
     onQuickDurationSelectDelegate(selectedQuickAddItem, true);
     setTimeout(() => {
       if (inputRef) inputRef.focus();
@@ -57,6 +68,27 @@
     };
   });
 
+  async function resolveRecentGoals() {
+    const state = uiState.getState(UIState.manualLogRecentGoals);
+    if (state) {
+      const result = await goalStore.selectMany(
+        {
+          filters: {
+            id: state
+          }
+        },
+        {
+          isExpand: true
+        }
+      );
+      if (result) {
+        recentGoals = state
+          .map((x) => result.find(resourceInList(x)))
+          .slice(0, $view.isConstrainedWidth ? 3 : 5);
+      }
+    }
+  }
+
   function resolveQuickAddSelection() {
     const state = uiState.getState(UIState.manualLogQuickDuration, {
       isProductScoped: true,
@@ -65,11 +97,21 @@
     return state ?? $pointronPreferences?.manualEntryQuickDurations?.[0] ?? 10;
   }
 
-  function onGoalSelect(event: any) {
-    selectedGoal = event?.detail?.item;
-    item.goalId = selectedGoal.id;
+  function onGoalSelect(goal: IGoal) {
+    selectedGoal = goal;
+    addToRecentGoals(goal);
+    item.goalId = goal.id;
     label = "";
     performValidationChecks();
+  }
+
+  function addToRecentGoals(goal: IGoal) {
+    uiState.setState(
+      UIState.manualLogRecentGoals,
+      [goal.id, ...(uiState.getState(UIState.manualLogRecentGoals) ?? [])]
+        .filter(removeDuplicatesFilter)
+        .slice(0, 5)
+    );
   }
 
   function onQuickDurationSelected(event: any) {
@@ -92,6 +134,7 @@
 
   function onGoalClicked() {
     selectedGoal = undefined;
+    resolveRecentGoals();
     setTimeout(() => {
       inputRef.focus();
     }, 100);
@@ -261,7 +304,7 @@
     </div>
   {/if}
 
-  <div class="flex flex-col gap-2 px-4 xl:px-4">
+  <div class="flex flex-col gap-4 px-4 xl:px-4">
     {#if selectedGoal}
       <div
         class="flex justify-start w-full py-2 border border-bgs4 px-2 rounded-md"
@@ -278,7 +321,7 @@
       <TextSearchInput
         on:focus
         on:blur
-        on:select={onGoalSelect}
+        on:select={(e) => onGoalSelect(e?.detail?.item)}
         bind:value={label}
         bind:this={inputRef}
         searchResultComponent={GoalSearchResultItem}
@@ -286,6 +329,22 @@
         style={InputStyle.BORDERED}
         placeholder="Start typing to select goal"
       />
+      {#if recentGoals && recentGoals.length > 0}
+        <div class="flex items-center flex-wrap gap-3">
+          <span class="text-b2 text-fgs3"> Recently used: </span>
+          {#each recentGoals as goal}
+            <CustomColorPropagator
+              color={resolveGoalColor(goal)}
+              class="flex items-center gap-2 border border-ccs1 rounded-md px-2 py-1 text-ccs1 bg-ccs5 hover:bg-ccs4"
+              on:click={() => {
+                onGoalSelect(goal);
+              }}
+            >
+              {goal.label}
+            </CustomColorPropagator>
+          {/each}
+        </div>
+      {/if}
     {/if}
   </div>
   <div class="flex flex-col gap-6">

@@ -3,6 +3,7 @@ import { ResourceStore } from "$lib/client/components/flux/resourceStores/resour
 import {
   StoreDataType,
   type IRecordId,
+  type IResourceSelectAdditionalParams,
   type IResourceSelectParams
 } from "$lib/client/types/data.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
@@ -37,10 +38,13 @@ class GoalStore extends ResourceStore<IGoal> {
     super(Resource.goal);
   }
 
-  selectMany(params?: IResourceSelectParams, additionalParams?: any) {
+  selectMany(
+    params?: IResourceSelectParams,
+    additionalParams?: IResourceSelectAdditionalParams
+  ) {
     const expandedProps = ["*", "(select * from $parent.parent) as parent"];
     const properties = [
-      ...(additionalParams?.isPreventExpansion ? [] : expandedProps),
+      ...(additionalParams?.isExpand ? expandedProps : []),
       ...(params?.properties ?? [])
     ];
     const filters = {
@@ -49,10 +53,12 @@ class GoalStore extends ResourceStore<IGoal> {
         params?.filters && "type" in params.filters && params?.filters?.type
           ? params.filters.type?.toUpperCase()
           : undefined,
-      parent:
-        params?.search ||
-        additionalParams?.isIncludeSubItems ||
-        params?.filters?.isStarred
+      parent: params?.filters?.parent
+        ? params?.filters?.parent
+        : params?.search ||
+            additionalParams?.isIncludeSubItems ||
+            params?.filters?.isStarred ||
+            params?.filters?.id
           ? undefined
           : false
     };

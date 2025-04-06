@@ -46,7 +46,10 @@
   import { toasts } from "$lib/client/stores/notification.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { resourceAction } from "../flux/resourceStores/resource.utils";
+  import {
+    removeDuplicatesFilter,
+    resourceAction
+  } from "../flux/resourceStores/resource.utils";
   import { ButtonVariant, ButtonStyle } from "$lib/client/types/button.type";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
@@ -149,7 +152,8 @@
           return x.date && compareDates(x.date, new Date(), "<");
         });
       }
-      if (params?.isPagination) tasks = [...tasks, ...result];
+      if (params?.isPagination)
+        tasks = [...tasks, ...result].filter(removeDuplicatesFilter);
       else tasks = [...result];
     } else {
       tasks = [];
