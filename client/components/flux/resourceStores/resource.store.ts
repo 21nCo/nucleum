@@ -46,6 +46,7 @@ import { isSameResource, resourceInList } from "./resource.utils";
 import { GlobalEvent } from "$lib/client/types/event.enum";
 import { appStore } from "$lib/client/stores/app.store";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+import { AppSearchParam } from "$lib/client/types/appStore.type";
 // import { appStore } from "$lib/client/stores/app.store";
 
 export const activeResources = new Map<string, ActiveResourceStore<any, any>>();
@@ -146,7 +147,9 @@ export class ActiveResourceStore<
     return this.update((prev) => ({ ...prev, isInReadOnlyMode: val }));
   }
   toggleEditMode(val: boolean) {
-    appStore.toggleSearchParam(val ? { edit: "true" } : ["edit"]);
+    appStore.toggleSearchParam(
+      val ? { [AppSearchParam.EDIT]: true } : [AppSearchParam.EDIT]
+    );
     return this.update((prev) => ({ ...prev, isInEditMode: val }));
   }
   toggleLock(val: boolean) {

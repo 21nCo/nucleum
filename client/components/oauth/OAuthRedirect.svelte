@@ -11,7 +11,7 @@
   import { logger } from "../debug/logger.client";
   import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
   import { clientStorage } from "$lib/client/persistence/persistence.utils";
-
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
   let debugMessage = "debug";
   $: {
     if (debugMessage) {
@@ -20,8 +20,8 @@
   }
   onMount(async () => {
     try {
-      let codeQueryParam = $page.url.searchParams.get("code");
-      let token = $page.url.searchParams.get("token");
+      let codeQueryParam = $page.url.searchParams.get(AppSearchParam.CODE);
+      let token = $page.url.searchParams.get(AppSearchParam.TOKEN);
       if (token) {
         debugMessage = "token present";
         handleOAuthCompletion({ token });

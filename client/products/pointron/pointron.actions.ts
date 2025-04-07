@@ -402,6 +402,7 @@ export const pointronActions: IAction[] = [
     modalParams: {
       title: "Focus Settings",
       layout: {
+        size: Size.lg,
         primaryAction: {
           label: "Done"
         }

@@ -33,7 +33,10 @@
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
-  import { determineTimePeriodv2 } from "$lib/client/utils/time.utils";
+  import {
+    determineTimePeriodv2,
+    resolveUpperRelativeTimePeriodTitle
+  } from "$lib/client/utils/time.utils";
   import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import { Size } from "$lib/client/types/size.enum";
@@ -214,6 +217,14 @@
       <div class="flex items-center justify-between gap-4 w-full">
         {#if !$view.isConstrainedWidth}
           <Text content={"Focus analytics"} style={TextStyle.PANEL_HEADING} />
+        {/if}
+        {#if periodValue.type === TimePeriodType.UPPER_RELATIVE && resolvedTimePeriod}
+          <span class="text-b2 text-fgs2">
+            {resolveUpperRelativeTimePeriodTitle(
+              scale ?? TimeScale.DAYS,
+              periodValue.param
+            )}
+          </span>
         {/if}
         <div class="flex items-center gap-2 justify-between cw:flex-1">
           <!-- TODO - add absolute date range picker -->

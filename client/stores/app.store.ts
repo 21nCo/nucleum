@@ -1,6 +1,9 @@
 import { get, writable } from "svelte/store";
 import { AppSkin } from "$lib/client/types/appearance.type";
-import type { IAppStore } from "$lib/client/types/appStore.type";
+import {
+  AppSearchParam,
+  type IAppStore
+} from "$lib/client/types/appStore.type";
 import type { DragAndDrop } from "$lib/client/types/draganddrop.type";
 import { DragStatus } from "$lib/client/types/dragstatus.enum";
 import blankJson from "$lib/client/data/blank.json";
@@ -147,13 +150,13 @@ export const appConstants = {
   tempColorSchemes
 };
 
-const resourceSpecificSearchParams = [
-  "edit",
+const recordSpecificSearchParams = [
   /-type$/,
-  "popAt",
-  "tab",
-  "fsplitAt",
-  "fullAt"
+  /-tab$/,
+  AppSearchParam.EDIT,
+  AppSearchParam.POP_AT,
+  AppSearchParam.FSPLIT_AT,
+  AppSearchParam.FULL_AT
 ];
 
 export const appStore = initAppStore({
@@ -624,7 +627,7 @@ function initAppStore(seed: IAppStore) {
 
     if (!params?.searchParams) {
       url =
-        toggleSearchParam(resourceSpecificSearchParams, {
+        toggleSearchParam(recordSpecificSearchParams, {
           isPreventRefresh: true,
           url
         }) ?? url;
@@ -719,7 +722,7 @@ function initAppStore(seed: IAppStore) {
     inlineRestoreId?: IRecordId;
   }) => {
     const url =
-      toggleSearchParam(resourceSpecificSearchParams, {
+      toggleSearchParam(recordSpecificSearchParams, {
         isPreventRefresh: true
       }) ?? new URL(window.location.href);
     if (props?.accessMode) {

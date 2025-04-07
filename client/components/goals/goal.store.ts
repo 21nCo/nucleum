@@ -32,6 +32,7 @@ import context from "$lib/client/stores/context.store";
 import { Embed } from "$lib/client/types/context.type";
 import view from "$lib/client/stores/view.store";
 import { collectionStore } from "../collection/collection.store";
+import { AppSearchParam } from "$lib/client/types/appStore.type";
 
 class GoalStore extends ResourceStore<IGoal> {
   constructor() {
@@ -130,7 +131,7 @@ class GoalStore extends ResourceStore<IGoal> {
     });
     appStore.openResource(id, ResourceAccessMode.POP, {
       searchParams: {
-        edit: "true"
+        [AppSearchParam.EDIT]: true
       }
     });
   }

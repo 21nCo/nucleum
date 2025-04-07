@@ -28,7 +28,7 @@
   import { Product } from "$lib/client/types/product.type";
   import type { IActiveGoal } from "./goal.type";
   import GoalAnalytics from "./GoalAnalytics.svelte";
-
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
   export let id: string;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   export let accessMode: ResourceAccessMode = ResourceAccessMode.POP;
@@ -46,12 +46,12 @@
   let selectedPanel = isConstrainedWidth ? "info" : "subgoals";
 
   onMount(() => {
-    const editSearchParam = $page.url.searchParams.get("edit");
+    const editSearchParam = $page.url.searchParams.get(AppSearchParam.EDIT);
     goal.init(accessMode, {
       isInEditMode: editSearchParam === "true"
     });
     const pageSub = page.subscribe((page) => {
-      const tab = page.url.searchParams.get("tab");
+      const tab = resolveTabParam();
       if (tab) {
         selectedPanel = tab;
       }
@@ -61,6 +61,13 @@
       pageSub();
     };
   });
+
+  function resolveTabParam() {
+    if (!$goal) return;
+    return $page.url.searchParams.get(
+      `${$goal.id.toString().slice(-5)}-${AppSearchParam.TAB}`
+    );
+  }
 
   function resolvePanelSwitcherItems(
     goal: IActiveGoal,
@@ -126,7 +133,7 @@
         ...items.filter((x) => !orderedItems.includes(x))
       ];
     }
-    const tab = $page.url.searchParams.get("tab");
+    const tab = resolveTabParam();
     if (tab) {
       selectedPanel = tab;
     } else {
@@ -193,7 +200,8 @@
             on:rearrange={rearrangePanels}
             on:switch={(e) => {
               appStore.toggleSearchParam({
-                tab: e.detail
+                [`${$goal.id.toString().slice(-5)}-${AppSearchParam.TAB}`]:
+                  e.detail
               });
             }}
           >

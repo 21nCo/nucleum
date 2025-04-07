@@ -12,6 +12,7 @@
   import account from "$lib/client/stores/account.store";
   import { PlanType } from "$lib/client/components/subscription/userPlan.type";
   import { resolveTrialDaysLeft } from "$lib/client/components/subscription/userPlan.utils";
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
   export let isRounded = false;
   $: trialDaysLeft =
     $account.plan?.plan === PlanType.TRIAL
@@ -53,7 +54,7 @@
           on:click={() =>
             appStore.runAction(Action.SETTINGS, {
               searchParams: {
-                setting: Action.USER_BILLING
+                [AppSearchParam.SETTING]: Action.USER_BILLING
               }
             })}
         >

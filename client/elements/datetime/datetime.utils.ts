@@ -163,11 +163,11 @@ export function resolveRelativeTimePeriods(scale: TimeScale) {
         {
           type: TimePeriodType.RELATIVE,
           param: -12
+        },
+        {
+          type: TimePeriodType.UPPER_RELATIVE,
+          param: 0
         }
-        // {
-        //   type: TimePeriodType.UPPER_RELATIVE,
-        //   param: 0
-        // },
         // {
         //   type: TimePeriodType.UPPER_RELATIVE,
         //   param: -1

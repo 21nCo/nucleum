@@ -25,6 +25,9 @@
   import PropertiesPane from "../../collection/properties/PropertiesPane.svelte";
   import { Resource } from "../../flux/resourceStores/resource.enum";
   import { debouncer } from "$lib/client/utils/utils";
+  import { SessionUIContext } from "$lib/client/types/pointron/session.type";
+  import ControlBar from "$lib/client/products/pointron/focus/elements/controls/ControlBar.svelte";
+  import FocusPlayerTimeText from "$lib/client/products/pointron/focus/player/FocusPlayerTimeText.svelte";
   export let goal: IActiveGoalStore;
   export let isConstrainedWidth = false;
   const dispatch = createEventDispatcher();
@@ -87,7 +90,12 @@
   </div>
   <RecordStatusBanner resource={goal} />
   {#if isCurrentlyFocusing}
-    Currently focusing...
+    <div
+      class="flex items-center w-full justify-between gap-4 border border-brs3 p-3 rounded-md"
+    >
+      <FocusPlayerTimeText context={SessionUIContext.GOAL_PAGE} />
+      <ControlBar context={SessionUIContext.PIP} />
+    </div>
   {/if}
   {#if !$goal.isInEditMode}
     <div class="flex flex-col gap-1">

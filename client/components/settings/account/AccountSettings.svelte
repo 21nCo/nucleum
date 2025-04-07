@@ -38,6 +38,7 @@
   import { formatDate } from "$lib/client/utils/time.utils";
   import RestorePurchaseAction from "../../subscription/RestorePurchaseAction.svelte";
   import view from "$lib/client/stores/view.store";
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
   let name = "";
   let emailParts: EmailParts | undefined = undefined;
   let isEditing = false;
@@ -240,7 +241,7 @@
             icon="ph:wallet-light"
             on:click={() => {
               appStore.toggleSearchParam({
-                setting: Action.USER_BILLING
+                [AppSearchParam.SETTING]: Action.USER_BILLING
               });
             }}
           />

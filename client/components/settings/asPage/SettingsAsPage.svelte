@@ -5,7 +5,8 @@
   import { page } from "$app/stores";
   import view from "$lib/client/stores/view.store";
   import SettingsAsModal from "../SettingsAsModal.svelte";
-  $: route = $page.url.searchParams.get("setting");
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
+  $: route = $page.url.searchParams.get(AppSearchParam.SETTING);
 </script>
 
 {#if $view.isConstrainedWidth}

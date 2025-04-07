@@ -74,6 +74,7 @@
   import type { SubType } from "./library.type";
   import { isCustomLibrary } from "./library.utils";
   import LinkTagsControlPanel from "$lib/client/products/memotron/linking/LinkTagsControlPanel.svelte";
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
   const dispatch = createEventDispatcher();
 
   export let resource: Resource;
@@ -113,13 +114,13 @@
   onMount(async () => {
     if (isCustom) return;
     pageSub = page.subscribe(async (p) => {
-      const subResourceParam = p.url.searchParams.get("type");
+      const subResourceParam = p.url.searchParams.get(AppSearchParam.TYPE);
       let isRefreshNeeded = false;
       if (subResourceParam && subResourceParam !== selectedSubType) {
         selectedSubType = (subResourceParam as SubType) ?? "all";
         isRefreshNeeded = true;
       }
-      if (p.url.searchParams.get("starred")) {
+      if (p.url.searchParams.get(AppSearchParam.STARRED)) {
         isStarFilterSelected = true;
         isRefreshNeeded = true;
       } else if (isStarFilterSelected) {
@@ -127,7 +128,7 @@
         isRefreshNeeded = true;
       }
 
-      if (p.url.searchParams.get("archived")) {
+      if (p.url.searchParams.get(AppSearchParam.ARCHIVED)) {
         isArchivedFilterSelected = true;
         isRefreshNeeded = true;
       } else if (isArchivedFilterSelected) {

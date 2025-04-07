@@ -28,6 +28,7 @@ import { LinkType } from "$lib/client/products/memotron/node/node.type";
 import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
 import { toasts } from "$lib/client/stores/notification.store";
 import { Action } from "$lib/client/types/action.enum";
+import { AppSearchParam } from "$lib/client/types/appStore.type";
 
 export class ResourceActions<T extends IMemotronItemBase> {
   constructor(
@@ -172,7 +173,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
               : ResourceAccessMode.POP,
             {
               searchParams: {
-                edit: true
+                [AppSearchParam.EDIT]: true
               }
             }
           );

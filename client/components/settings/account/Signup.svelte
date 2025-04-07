@@ -14,10 +14,10 @@
   import { clientStorage } from "$lib/client/persistence/persistence.utils";
   import { isTokenExpired } from "$lib/client/utils/account.utils";
   import PoliciesFooter from "$lib/client/elements/PoliciesFooter.svelte";
-
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
   let isSignup = true;
   let message: string | undefined = undefined;
-  let messageParam = $page.url.searchParams.get("msg");
+  let messageParam = $page.url.searchParams.get(AppSearchParam.MSG);
   if (messageParam) {
     if (messageParam === "deleted") {
       message = "Your account has been deleted.";
@@ -30,7 +30,9 @@
     }
   }
   onMount(async () => {
-    const isLoginFromExtensionParam = $page.url.searchParams.get("ext");
+    const isLoginFromExtensionParam = $page.url.searchParams.get(
+      AppSearchParam.EXT
+    );
     if (isLoginFromExtensionParam) {
       clientStorage.setForSession(ClientStorageKey.IS_EXTENSION_LOGIN, true);
     }

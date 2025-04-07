@@ -83,6 +83,7 @@
   import { Action } from "$lib/client/types/action.enum";
   import InlineSearchBar from "$lib/client/elements/InlineSearchBar.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
 
   export let id: string = "";
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -287,7 +288,7 @@
     logger.log({ at: "onViewSwitch", selectedViewId });
     const view = loadActiveView();
     if (!view) return;
-    appStore.toggleSearchParam({ view: view.id?.toString() });
+    appStore.toggleSearchParam({ [AppSearchParam.VIEW]: view.id?.toString() });
     await refresh({ isNewView: true });
   }
 
@@ -471,11 +472,13 @@
     } else if (e.detail === "createNew" || e.detail === "createMultiple") {
       if (e.detail === "createMultiple") {
         appStore.toggleSearchParam({
-          link: $collection.id.toString(),
-          bulk: "true"
+          [AppSearchParam.LINK]: $collection.id.toString(),
+          [AppSearchParam.BULK]: true
         });
       } else {
-        appStore.toggleSearchParam({ link: $collection.id.toString() });
+        appStore.toggleSearchParam({
+          [AppSearchParam.LINK]: $collection.id.toString()
+        });
       }
       setTimeout(() => {
         //TODO - collection resource type instead of node

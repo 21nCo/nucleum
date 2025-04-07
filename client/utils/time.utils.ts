@@ -182,6 +182,28 @@ export function timePeriodLabel(period: TimePeriod) {
   }
 }
 
+export function resolveUpperRelativeTimePeriodTitle(
+  scale: TimeScale,
+  value: number
+) {
+  if (scale === TimeScale.DAYS && value === 0)
+    return `${new Date().toLocaleDateString("default", {
+      month: "long",
+      year: "numeric"
+    })}`;
+  else if (scale === TimeScale.DAYS && value === -1) {
+    const lastMonth = new Date();
+    lastMonth.setMonth(lastMonth.getMonth() - 1);
+    return `${lastMonth.toLocaleDateString("default", {
+      month: "long",
+      year: "numeric"
+    })}`;
+  } else if (scale === TimeScale.MONTHS)
+    return `${new Date().toLocaleDateString("default", {
+      year: "numeric"
+    })}`;
+}
+
 export function determinePreviousTimePeriod(period: TimePeriod) {
   const val = determineTimePeriodv2(period);
   let previous = val.begin;

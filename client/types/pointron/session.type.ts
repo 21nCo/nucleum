@@ -121,7 +121,8 @@ export enum SessionUIContext {
   ZEN_ON_DESKTOP = "ZEN_ON_DESKTOP",
   THIN_ON_DESKTOP = "THIN_ON_DESKTOP",
   FOCUS_PLAYER = "FOCUS_PLAYER",
-  PIP = "PIP"
+  PIP = "PIP",
+  GOAL_PAGE = "GOAL_PAGE"
 }
 
 export interface IFocusItemsStore extends IObservableStoreSubject {

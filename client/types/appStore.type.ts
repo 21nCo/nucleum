@@ -88,3 +88,31 @@ export type IAppData = {
     twitterCard?: string;
   };
 };
+
+export enum AppSearchParam {
+  EDIT = "edit",
+  TYPE = "type",
+  /**
+   * Should be used only with some prefix like recordId etc... Otherwise it will conflict with ResourceAccessMode.TAB
+   */
+  TAB = "tab",
+  VIEW = "view",
+  LINK = "link",
+  BULK = "bulk",
+  MODE = "mode",
+  CLIPBOARD = "clipboard",
+  RESOURCE = "resource",
+  STARRED = "starred",
+  ARCHIVED = "archived",
+  DATE = "date",
+  SETTING = "setting",
+  CODE = "code",
+  TOKEN = "token",
+  MSG = "msg",
+  EXT = "ext",
+  PROVIDER = "provider",
+  GUEST = "guest",
+  POP_AT = "popAt",
+  FSPLIT_AT = "fsplitAt",
+  FULL_AT = "fullAt"
+}

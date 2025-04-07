@@ -1,6 +1,9 @@
 <script lang="ts">
   import { appStore } from "$lib/client/stores/app.store";
-  import type { IAppStore } from "$lib/client/types/appStore.type";
+  import {
+    AppSearchParam,
+    type IAppStore
+  } from "$lib/client/types/appStore.type";
   import { onMount } from "svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
   import CpThumbnailList from "./SettingsList.svelte";
@@ -37,7 +40,7 @@
     <NavigationHeader
       label={$appStore.currentComponent?.label ?? ""}
       backCallback={() => {
-        appStore.toggleSearchParam(["setting"]);
+        appStore.toggleSearchParam([AppSearchParam.SETTING]);
       }}
     />
     <div class="flex flex-col flex-grow">
@@ -54,7 +57,7 @@
         <ProfileCpSection
           on:click={() =>
             appStore.toggleSearchParam({
-              setting: "account"
+              [AppSearchParam.SETTING]: "account"
             })}
         />
         {#if cpConfiguration}

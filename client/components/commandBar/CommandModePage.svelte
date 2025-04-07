@@ -21,10 +21,11 @@
   import Tabs from "$lib/client/layout/tabs/Tabs.svelte";
   import { page } from "$app/stores";
   import PagePainterV2 from "$lib/client/layout/paint/PagePainterV2.svelte";
+  import { ResourceAccessMode } from "../flux/resourceStores/resource.type";
 
   let isCmdHome = true;
 
-  $: activeTab = $page.url.searchParams.get("tab");
+  $: activeTab = $page.url.searchParams.get(ResourceAccessMode.TAB);
 </script>
 
 <div class="flex flex-col w-full h-full">
@@ -34,7 +35,7 @@
       {activeTab}
       on:home={(e) => {
         isCmdHome = e.detail;
-        if (isCmdHome) appStore.toggleSearchParam(["tab"]);
+        if (isCmdHome) appStore.toggleSearchParam([ResourceAccessMode.TAB]);
       }}
     />
   </div>
