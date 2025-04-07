@@ -18,6 +18,10 @@ export interface IPointronPreferences extends IObservableStoreSubject {
   extendDuration: number;
   presets: SessionComposition[];
   isEnableAutoStartInterval: boolean;
+  /**
+   * Whether to automatically activate Picture-in-Picture (PiP) on focus start
+   */
+  isEnableAutoPiP: boolean;
   isIncludeBreakInAnalytics: boolean;
   timerMode: TimerMode;
   breakReminder: number;

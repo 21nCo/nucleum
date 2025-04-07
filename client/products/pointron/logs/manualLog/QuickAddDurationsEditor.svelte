@@ -15,14 +15,14 @@
 
   export let values: number[] | undefined = undefined;
   export let label: InputLabel = {
-    label: "Quick duration options",
+    label: "Manual logs - Quick durations",
     tooltip: {
-      body: "Quick duration options for manual time entries (in minutes). Add multiple values to create quick selection options."
+      body: "Quick duration options for manual time entries. Use these to quickly add durations to your manual logs."
     },
     orientation: Orientation.Vertical
   };
   export let placeholder: string | undefined = undefined;
-  let parentBgIndex: number = 2;
+  let parentBgIndex: number = 1;
 
   const dispatch = createEventDispatcher();
   let currentValue: number = 0;
@@ -61,7 +61,7 @@
   }
 </script>
 
-<div class="bg-bgs2 p-3 rounded-md">
+<div class="p-3 border border-brs3 rounded-md">
   <FormControlLabelWrapper props={label}>
     <div class="flex flex-col gap-4 w-full">
       <div class="flex items-center gap-4">

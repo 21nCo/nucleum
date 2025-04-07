@@ -1026,9 +1026,11 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
 
   async startSession(isQuickStart: boolean = false) {
     this.onComposeComplete(false);
-    //TODO - if auto open enabled
     if (isQuickStart) player.showMini(PointronAction.FOCUS_PLAYER);
     else fullScreen.show(PointronAction.FULL_SCREEN_FOCUS);
+    if (get(pointronPreferences).isEnableAutoPiP) {
+      player.togglePip(PointronAction.FOCUS_PLAYER);
+    }
 
     if (!get(context).isEmbed && Notification.permission !== "granted") {
       Notification.requestPermission();
