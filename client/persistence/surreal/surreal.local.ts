@@ -37,11 +37,24 @@ import { compareVersions } from "$lib/shared/utils/utils";
 import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
 import { GlobalEvent } from "$lib/client/types/event.enum";
 import { generateMiniRandomId } from "$lib/shared/utils/crypto.utils";
+import { Product } from "$lib/client/types/product.type";
 
 const loadSurrealDB = async () => {
   const Surreal = await import("@surrealdb/wasm");
   return Surreal.surrealdbWasmEngines;
 };
+
+function resolveDatabaseId(product: Product) {
+  if (!product) return "nativeone";
+  switch (product) {
+    case Product.POINTRON:
+      return "pointone";
+    case Product.MEMOTRON:
+      return "nativeone";
+    default:
+      return "nativeone";
+  }
+}
 
 export class SurrealPersistence implements IPersistence {
   instance: Surreal | undefined = undefined;
@@ -95,11 +108,13 @@ export class SurrealPersistence implements IPersistence {
     });
     this.userId = user;
     try {
-      logger.log({
+      const databaseId = resolveDatabaseId(params.product as Product);
+      logger.info({
         at: "surreal.persistence.initialize",
-        user
+        params,
+        databaseId
       });
-      await this.instance.connect("indxdb://nativeone");
+      await this.instance.connect(`indxdb://${databaseId}`);
       await this.instance.use({ namespace: "user", database: this.userId });
 
       // await this.logInfo();

@@ -288,7 +288,8 @@
       {
         ...params,
         appVersion: $appStore.version + "." + $appStore.build,
-        remoteOnlyStores: [...remoteOnlyStores]
+        remoteOnlyStores: [...remoteOnlyStores],
+        product: $appStore.product
       }
     );
   }

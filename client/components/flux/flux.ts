@@ -80,6 +80,7 @@ class Flux {
     persistence: IPersistence,
     params: {
       dapId: string;
+      product: string;
       userId?: string;
       appVersion?: string;
       remoteOnlyStores?: IStore[];
@@ -112,6 +113,7 @@ class Flux {
    */
   private initializePersistence(params: {
     dapId: string;
+    product: string;
     userId?: string;
     appVersion?: string;
   }) {
@@ -1286,6 +1288,7 @@ export async function initFlux(
   persistence: IPersistence,
   params: {
     dapId: string;
+    product: string;
     userId?: string;
     appVersion?: string;
     remoteOnlyStores?: IStore[];

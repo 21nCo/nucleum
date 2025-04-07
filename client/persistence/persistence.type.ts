@@ -106,6 +106,7 @@ export enum RemotePersistenceProvider {
 
 export interface IPersistenceInitParams {
   dapId: string;
+  product: string;
   userId?: string;
   dbo?: string[];
   appVersion?: string;
