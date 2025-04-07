@@ -480,7 +480,9 @@ function initAppStore(seed: IAppStore) {
    * @returns
    */
   const toggleSearchParam = (
-    params: Record<string, string | boolean | number> | (string | RegExp)[],
+    params:
+      | Record<string, string | boolean | number | null>
+      | (string | RegExp)[],
     additional?: {
       isPreventRefresh?: boolean;
       url?: URL;
@@ -504,7 +506,8 @@ function initAppStore(seed: IAppStore) {
     }
     if (typeof params !== "object") return;
     Object.entries(params).forEach(([key, value]) => {
-      url.searchParams.set(key, value.toString());
+      if (value === null) url.searchParams.delete(key);
+      else url.searchParams.set(key, value.toString());
     });
     if (!additional?.isPreventRefresh) appStore.gotoPath(url.href);
     return url;

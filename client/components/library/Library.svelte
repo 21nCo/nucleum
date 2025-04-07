@@ -181,7 +181,9 @@
       on:select={(e) => {
         appStore.toggleSearchParam({
           resource: e.detail,
-          type: "all"
+          type: "all",
+          starred: null,
+          archived: null
         });
         syncFeedbackRef?.refresh(e.detail);
       }}

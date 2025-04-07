@@ -110,19 +110,26 @@ class TaskActions {
     };
   }
 
-  editGoal = {
-    value: "editGoal",
-    icon: "ph:circle-light",
-    label: "Edit task's goal",
-    callback: async () => {
-      appStore.runAction(Action.EDIT_TASK_GOAL, {
-        componentParams: {
-          taskId: this.task.id,
-          context: this.accessPoint
-        }
-      });
-    }
-  };
+  editGoal() {
+    return {
+      value: "editGoal",
+      icon: "ph:circle-light",
+      label:
+        this.accessPoint === ResourceAccessPoint.GOAL
+          ? "Move to another goal"
+          : this.task.goalId
+            ? "Change goal"
+            : "Assign goal",
+      callback: async () => {
+        appStore.runAction(Action.EDIT_TASK_GOAL, {
+          componentParams: {
+            taskId: this.task.id,
+            context: this.accessPoint
+          }
+        });
+      }
+    };
+  }
 
   editDate = {
     value: "editDate",
@@ -147,7 +154,7 @@ export function resolveTaskContextMenu(
       ? [resourceActions.select(accessPoint, params?.accessPointId)]
       : []),
     ...(product === Product.POINTRON || product === Product.NUCLEUS
-      ? [taskActions.editGoal]
+      ? [taskActions.editGoal()]
       : []),
     ...(viewStore.isConstrainedWidth ? [taskActions.editDate] : []),
     taskActions.toggle()
