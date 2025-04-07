@@ -1,6 +1,7 @@
 import { get, writable } from "svelte/store";
 import {
   activeResourceFilter,
+  archivedResourceFilter,
   debouncer,
   generateUID
 } from "../../../utils/utils";
@@ -14,7 +15,8 @@ import {
   CacheStrategy,
   type IMutationParamsv2,
   type IResourceSelectParams,
-  type IRecordId
+  type IRecordId,
+  type IResourceSelectAdditionalParams
 } from "../../../types/data.type";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { prefixTable } from "../../../../shared/utils/text.utils";
@@ -43,6 +45,7 @@ import { logger } from "../../debug/logger.client";
 import { isSameResource, resourceInList } from "./resource.utils";
 import { GlobalEvent } from "$lib/client/types/event.enum";
 import { appStore } from "$lib/client/stores/app.store";
+import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 // import { appStore } from "$lib/client/stores/app.store";
 
 export const activeResources = new Map<string, ActiveResourceStore<any, any>>();
@@ -575,11 +578,13 @@ export class ResourceStore<T extends IResource> implements IStore {
 
   get() {}
 
-  selectMany(params?: IResourceSelectParams, additionalParams?: any) {
+  async selectMany(
+    params?: IResourceSelectParams,
+    additionalParams?: IResourceSelectAdditionalParams
+  ) {
     const filters = {
-      trashInformation: false,
       ...(params?.filters ?? {}),
-      isArchived: params?.filters?.isArchived ?? false
+      isArchived: params?.filters?.isArchived ?? undefined
     };
     params = {
       ...params,
@@ -594,10 +599,15 @@ export class ResourceStore<T extends IResource> implements IStore {
         }
       });
     }
-    return flux.selectMany(this.id, params, {
+
+    const result = await flux.selectMany(this.id, params, {
       isCloudOnlyResource:
         this.isCloudOnlyResource ?? additionalParams?.isUseCloud
     });
+    if (!result || !isValidArrayWithData(result)) return result;
+    else if (params?.filters?.isArchived)
+      return result.filter(archivedResourceFilter);
+    else return result.filter(activeResourceFilter);
   }
 
   select(resourceId: IRecordId, properties?: string[]) {

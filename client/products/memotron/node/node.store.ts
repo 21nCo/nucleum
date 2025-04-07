@@ -43,6 +43,7 @@ import { logger } from "$lib/client/components/debug/logger.client";
 import { collectionStore } from "$lib/client/components/collection/collection.store";
 import type {
   IRecordId,
+  IResourceSelectAdditionalParams,
   IResourceSelectParams
 } from "$lib/client/types/data.type";
 import type { IToggleItem } from "$lib/client/elements/toggle/toggle.type";
@@ -77,12 +78,18 @@ class NodeStore extends ResourceStore<INode> {
     });
   }
 
-  selectMany(params?: IResourceSelectParams, additionalParams?: any) {
-    const properties = [
+  selectMany(
+    params?: IResourceSelectParams,
+    additionalParams?: IResourceSelectAdditionalParams
+  ) {
+    const expandedProps = [
       "*",
       "parent.* as parent",
       "file.* as file",
-      "search::highlight('**', '**', 2, false) AS bodySearch",
+      "search::highlight('**', '**', 2, false) AS bodySearch"
+    ];
+    const properties = [
+      ...(additionalParams?.isExpand ? expandedProps : []),
       ...(params?.properties ?? [])
     ];
     const isContentTypePresent =

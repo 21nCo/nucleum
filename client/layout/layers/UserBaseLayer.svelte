@@ -118,11 +118,15 @@
 
     safeRequestIdleCallback(async () => {
       if (userDataState?.paginateResources) {
+        toasts.showProgress("paginate", "Syncing in the background");
         await flux.paginateResources(userDataState.paginateResources, 100);
         dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
+        toasts.closeProgress("paginate");
       } else if (userDataState?.counts && !isDebug) {
+        toasts.showProgress("reconcile", "Syncing in the background");
         await flux.reconcile({ counts: userDataState.counts });
         dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
+        toasts.closeProgress("reconcile");
       }
       await recentsStore.refresh(searcheableResources);
       await syncAccountPaidPlanFromExternalProvider();

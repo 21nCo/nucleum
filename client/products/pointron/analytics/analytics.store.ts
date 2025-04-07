@@ -21,6 +21,7 @@ import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 import { sessionLogStore } from "../logs/log.store";
 import type { IRecordId } from "$lib/client/types/data.type";
 import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
+import { resolveTimePeriodFilterForDay } from "$lib/client/elements/datetime/datetime.utils";
 
 export const selectedPageId = writable<string>();
 const analyticsConfigStoreId = Resource.pointAnalyticsConfig;
@@ -200,9 +201,10 @@ class FocusAggregates {
     goalIds?: IRecordId[];
     goalId?: IRecordId;
   }) {
+    const dayFilter = resolveTimePeriodFilterForDay(params.day);
     const logs = await sessionLogStore.selectMany({
       filters: {
-        start: params.day,
+        startUnix: dayFilter,
         goalId: params.goalIds ?? params.goalId?.toString()
       }
     });

@@ -212,6 +212,7 @@ export function resolveSessionTimeSplit(x: ISession) {
   let sessionTime = { focus: 0, brek: 0 };
   if (
     (x.type === SessionType.COUNTUP || x.type === SessionType.MANUAL_ENTRY) &&
+    x.start &&
     new Date(x.start).getTime() < new Date("2024-08-22").getTime()
   ) {
     sessionTime = resolveSessionTimeLegacy(x);

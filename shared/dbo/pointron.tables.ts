@@ -5,14 +5,26 @@ function sessionLogSchemaless() {
   return [def];
 }
 
+function indices() {
+  const sessionLogIndexStartTs = `DEFINE INDEX OVERWRITE sessionLogIndexStartTs ON TABLE sessionLog COLUMNS startTs;`;
+  const sessionLogIndexStart = `DEFINE INDEX OVERWRITE sessionLogIndexStart ON TABLE sessionLog COLUMNS start;`;
+  const sessionLogIndexCreatedAt = `DEFINE INDEX OVERWRITE sessionLogIndexCreatedAt ON TABLE sessionLog COLUMNS createdAt;`;
+  return [
+    sessionLogIndexStartTs,
+    sessionLogIndexStart,
+    sessionLogIndexCreatedAt
+  ];
+}
+
 function sessionLog() {
-  const def = `DEFINE TABLE IF NOT EXISTS sessionLog SCHEMAFULL;
+  const def = `DEFINE TABLE OVERWRITE sessionLog SCHEMAFULL;
 DEFINE FIELD IF NOT EXISTS createdBy on TABLE sessionLog TYPE option<record<user>>;
 DEFINE FIELD IF NOT EXISTS modifiedBy on TABLE sessionLog TYPE option<record<user>>;
 DEFINE FIELD IF NOT EXISTS createdAt on TABLE sessionLog TYPE datetime;
 DEFINE FIELD IF NOT EXISTS modifiedAt on TABLE sessionLog TYPE datetime;
 DEFINE FIELD IF NOT EXISTS start on TABLE sessionLog TYPE datetime;
-DEFINE FIELD IF NOT EXISTS end on TABLE sessionLog TYPE datetime;
+DEFINE FIELD OVERWRITE end on TABLE sessionLog TYPE option<datetime>;
+DEFINE FIELD IF NOT EXISTS startTs on TABLE sessionLog TYPE number;
 DEFINE FIELD IF NOT EXISTS focus on TABLE sessionLog TYPE number;
 DEFINE FIELD IF NOT EXISTS breakTime on TABLE sessionLog TYPE number;
 DEFINE FIELD IF NOT EXISTS goalId on TABLE sessionLog TYPE option<record<goal>>;

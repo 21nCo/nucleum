@@ -58,7 +58,7 @@
         <div class="flex gap-2">
           <ProfilePicture />
           <div class="flex flex-col justify-center items-start">
-            <div class="text-h5">
+            <div class="text-h5 text-left">
               {isValidString($userPreferences.name) ||
                 isValidString($account.userInfo?.nickName) ||
                 "App user"}

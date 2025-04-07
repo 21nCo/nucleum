@@ -4,9 +4,10 @@
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import { Size } from "$lib/client/types/size.enum";
+  import GoalAllActivityPanel from "./GoalAllActivityPanel.svelte";
   import GoalFocusSessions from "./GoalFocusSessions.svelte";
   export let goal: IActiveGoalStore;
-  let selectedOption = "focus";
+  let selectedOption = "all";
   let isIncludeSubGoals = false;
 </script>
 
@@ -15,14 +16,14 @@
     <OptionSelector
       options={[
         {
+          label: "All",
+          icon: "ph:asterisk-light",
+          value: "all"
+        },
+        {
           label: "Focus sessions",
           icon: "ph:circle-light",
           value: "focus"
-        },
-        {
-          label: "All activity",
-          icon: "ph:clock-counter-clockwise-light",
-          value: "activity"
         }
       ]}
       size={Size.sm}
@@ -40,8 +41,7 @@
     {#key isIncludeSubGoals}
       <GoalFocusSessions id={$goal.id} {isIncludeSubGoals} />
     {/key}
-  {:else if selectedOption === "activity"}
-    <ComingSoonView />
-    <!-- TODO -->
+  {:else if selectedOption === "all"}
+    <GoalAllActivityPanel goalId={$goal.id} createdAt={$goal.createdAt} />
   {/if}
 </div>

@@ -5,7 +5,7 @@ import type { IObservableStoreSubject, IRecordId } from "./data.type";
 import type { TranscriptionModel } from "../products/memotron/taco/taco.types";
 export type IUserGlobalPreferences = IObservableStoreSubject & {
   name: string;
-  profilePicture: IRecordId | undefined;
+  profilePicture?: IRecordId | undefined;
   // theme: AppSkin;
   // colorScheme: ColorScheme;
   appearance: UserAppearanceSettings;

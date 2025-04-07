@@ -84,11 +84,16 @@
   }
 
   async function onGoalChanges() {
-    const goal = await goalStore.selectMany({
-      filters: {
-        id: item.id
+    const goal = await goalStore.selectMany(
+      {
+        filters: {
+          id: item.id
+        }
+      },
+      {
+        isExpand: true
       }
-    });
+    );
     if (goal?.[0]) {
       item = { ...goal[0], focus: item.focus };
     }

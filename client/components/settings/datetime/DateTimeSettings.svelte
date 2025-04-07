@@ -47,8 +47,8 @@
   });
 </script>
 
-<div class="flex flex-col max-w-lg w-full gap-4">
-  <MultiselectDropdown
+<div class="flex flex-col max-w-lg w-full gap-6">
+  <!-- <MultiselectDropdown
     label={{
       ...labelProps,
       label: "Time scales",
@@ -59,33 +59,37 @@
     options={timescaleOptions}
     bind:selected={$userPreferences.timeScales}
     style={InputStyle.BORDERED}
-  />
+  /> -->
   {#if timeZoneDropdownItems && timeZoneDropdownItems.length > 0}
-    <div>
-      <DropDown
-        label={{
-          ...labelProps,
-          label: "Timezone",
-          tooltip: {
-            body: "The timezone used to calculate your daily target and streak."
-          }
-        }}
-        style={InputStyle.BORDERED}
-        items={timeZoneDropdownItems}
-        on:select={(e) => {
-          const zone = timeZones.find((z) => z.label === e.detail);
-          if (zone) userPreferences.setTimeZone(zone.offset * 60, zone.label);
-        }}
-        bind:value={selectedTimezone}
-      />
+    <div class="flex flex-col gap-2">
+      <div>
+        <DropDown
+          label={{
+            ...labelProps,
+            label: "Timezone",
+            tooltip: {
+              body: "The timezone used to calculate your daily target and streak."
+            }
+          }}
+          style={InputStyle.BORDERED}
+          items={timeZoneDropdownItems}
+          on:select={(e) => {
+            const zone = timeZones.find((z) => z.label === e.detail);
+            if (zone) userPreferences.setTimeZone(zone.offset * 60, zone.label);
+          }}
+          bind:value={selectedTimezone}
+        />
+      </div>
+      <div>
+        <Button
+          label="Auto detect time zone"
+          icon="sync"
+          style={ButtonStyle.PLAIN}
+          size={Size.sm}
+          on:click={() => userPreferences.setTimeZone()}
+        />
+      </div>
     </div>
-    <Button
-      label="Auto detect time zone"
-      icon="sync"
-      style={ButtonStyle.PLAIN}
-      size={Size.sm}
-      on:click={() => userPreferences.setTimeZone()}
-    />
   {/if}
   <TimeSelector
     label="Day starts at"

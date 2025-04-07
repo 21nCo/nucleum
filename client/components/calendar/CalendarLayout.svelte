@@ -30,13 +30,13 @@
 
 <div class="flex flex-col h-full w-full">
   <div class="p-4 border-b border-brs3 flex items-center gap-4">
-    <PanelSwitcher
+    <!-- <PanelSwitcher
       items={panelOptions}
       bind:value={panel}
       style={PanelSwitcherStyle.TRAIN}
       size={Size.sm}
       on:switch={onPanelSwitch}
-    />
+    /> -->
     <slot name="header" />
   </div>
   <div class="flex-1 min-h-0">

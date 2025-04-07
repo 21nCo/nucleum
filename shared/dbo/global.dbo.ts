@@ -2,7 +2,6 @@
  * Global dbo definitions used by the client apps.
  */
 export const globalDbo = {
-  "fn::global::resource::fetch": fetchResource(),
   "fn::global::utils::resolveUrlParts::v2": resolveUrlPartsV2(),
   "fn::user::time::date::v4": userDatev4()
 };

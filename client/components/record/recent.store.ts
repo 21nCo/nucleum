@@ -118,12 +118,17 @@ export class RecentsStore extends ObservableStore<IRecentsStore> {
     const resourceStore = [...localCacheableStores, ...remoteOnlyStores].find(
       (store) => store.id === resource
     ) as ResourceStore<any>;
-    const result = await resourceStore?.selectMany({
-      orderBy: {
-        modifiedAt: "desc"
+    const result = await resourceStore?.selectMany(
+      {
+        orderBy: {
+          modifiedAt: "desc"
+        },
+        limit: this.LIMIT
       },
-      limit: this.LIMIT
-    });
+      {
+        isExpand: true
+      }
+    );
     logger.log({ at: "recentResources", result });
     return result;
   }

@@ -11,9 +11,9 @@ import {
 import { get } from "svelte/store";
 import { KeyValueStore } from "../flux/resourceStores/kv.store";
 import { Resource } from "../flux/resourceStores/resource.enum";
-import { flux } from "$lib/client/components/flux/flux";
-import { PersistenceActionType } from "$lib/client/types/data.type";
 import { TranscriptionModel } from "$lib/client/products/memotron/taco/taco.types";
+import { tzStore } from "./timezone/tz.store";
+import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
 
 // const userPreferencesId = Item.globalPreferences;
 const defaultColorSchemeId = "colorscheme:cleantidylightblue";
@@ -69,7 +69,6 @@ class UserPreferencesStore extends KeyValueStore<IUserGlobalPreferences> {
     });
   }
   loader(data: IUserGlobalPreferences) {
-    if (!data.uiStates) data.uiStates = seedUserPreferences.uiStates;
     if (!data.avatarPicker)
       data.avatarPicker = seedUserPreferences.avatarPicker;
     if (!data.annotations) data.annotations = seedUserPreferences.annotations;
@@ -104,21 +103,12 @@ class UserPreferencesStore extends KeyValueStore<IUserGlobalPreferences> {
       offset = val.offset;
       label = val.label;
     }
-    //TODO - use flux instead of persistence
-    await flux?.mutation(Resource.tz, {
-      action: PersistenceActionType.INSERT,
-      records: [
-        {
-          offset,
-          date: new Date().toISOString(),
-          label: label ?? ""
-        }
-      ]
+    await tzStore.create({
+      offset,
+      date: new Date().toISOString(),
+      dateUnix: resolveUnixTimestamp(),
+      label: label ?? ""
     });
-    //   await persistance.create(
-    //     { offset, date: new Date().toISOString(), label: label ?? "" },
-    //     Resource.tz
-    //   );
     return this._setTimezone(offset, label);
   }
 

@@ -9,6 +9,8 @@
   import DropDown from "../../dropdown/DropDown.svelte";
   import { InputStyle } from "$lib/client/types/input.type";
   import { Orientation } from "$lib/client/types/direction.enum";
+  import { resolveRelativeTimePeriodOptions } from "../datetime.utils";
+  import type { ISelectItem } from "$lib/client/types/select.type";
   const dispatch = createEventDispatcher();
   export let scale: TimeScale;
   export let value: RelativeTimePeriodValue;
@@ -22,103 +24,13 @@
   //       : scale === TimeScale.MONTHS
   //         ? [0, -1, -3, -6, -12]
   //         : [0, -1, -2, -3];
-  let segments: {
-    type: TimePeriodType.RELATIVE | TimePeriodType.UPPER_RELATIVE;
-    param: number;
-  }[] = [];
-  $: segments = resolveOptions(scale) as {
-    type: TimePeriodType.RELATIVE | TimePeriodType.UPPER_RELATIVE;
-    param: number;
-  }[];
-
-  function resolveOptions(scale: TimeScale) {
-    switch (scale) {
-      case TimeScale.DAYS:
-        return [
-          { type: TimePeriodType.RELATIVE, param: 0 },
-          {
-            type: TimePeriodType.RELATIVE,
-            param: -1
-          },
-          {
-            type: TimePeriodType.UPPER_RELATIVE,
-            param: 0
-          },
-          {
-            type: TimePeriodType.UPPER_RELATIVE,
-            param: -1
-          },
-          {
-            type: TimePeriodType.RELATIVE,
-            param: -7
-          },
-          {
-            type: TimePeriodType.RELATIVE,
-            param: -14
-          },
-          {
-            type: TimePeriodType.RELATIVE,
-            param: -30
-          }
-        ];
-      case TimeScale.MONTHS:
-        return [
-          { type: TimePeriodType.RELATIVE, param: 0 },
-          {
-            type: TimePeriodType.RELATIVE,
-            param: -1
-          },
-          {
-            type: TimePeriodType.UPPER_RELATIVE,
-            param: 0
-          },
-          {
-            type: TimePeriodType.UPPER_RELATIVE,
-            param: -1
-          },
-          {
-            type: TimePeriodType.RELATIVE,
-            param: -3
-          },
-          {
-            type: TimePeriodType.RELATIVE,
-            param: -6
-          },
-          {
-            type: TimePeriodType.RELATIVE,
-            param: -12
-          }
-        ];
-      default:
-        return [
-          { type: TimePeriodType.RELATIVE, param: 0 },
-          {
-            type: TimePeriodType.RELATIVE,
-            param: -1
-          },
-          {
-            type: TimePeriodType.RELATIVE,
-            param: -2
-          },
-          {
-            type: TimePeriodType.RELATIVE,
-            param: -3
-          }
-        ];
-    }
-  }
+  let segments: ISelectItem[] = [];
+  $: segments = resolveRelativeTimePeriodOptions(scale);
 </script>
 
 {#key segments}
   <DropDown
-    items={segments.map((item) => ({
-      label:
-        timePeriodLabel({
-          scale: scale,
-          value: item
-        }) ?? "",
-      value: `${item.type}#${item.param}`
-    }))}
+    items={segments}
     bind:value={dropDownValue}
     style={InputStyle.BORDERED}
     label={{ label: "Choose time period", orientation: Orientation.Vertical }}

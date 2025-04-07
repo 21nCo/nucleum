@@ -20,6 +20,7 @@
   import TaskThumbnailGoalLabel from "./TaskThumbnailGoalLabel.svelte";
   import { Product } from "$lib/client/types/product.type";
   import { appStore } from "$lib/client/stores/app.store";
+  import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
   export let date: Date | undefined = undefined;
   export let goalId: IRecordId | undefined = undefined;
   const action = resourceAction(Resource.task, ResourceActionType.CREATE);
@@ -44,7 +45,7 @@
     return taskStore.save(
       {
         label,
-        date,
+        dateUnix: resolveUnixTimestamp(date),
         goalId: goalId ?? goal?.id,
         isChecked: false
       },

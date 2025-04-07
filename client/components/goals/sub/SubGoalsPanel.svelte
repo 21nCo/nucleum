@@ -4,14 +4,17 @@
     type DragDropEvent
   } from "$lib/client/actions/rearrange.action";
   import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
+  import Text from "$lib/client/elements/text/Text.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import type { IRecordId } from "$lib/client/types/data.type";
   import { InputStyle } from "$lib/client/types/input.type";
+  import { TextStyle } from "$lib/client/types/text.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import {
     activeResourceFilter,
     archivedResourceFilter
   } from "$lib/client/utils/utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { ResourceAccessMode } from "../../flux/resourceStores/resource.type";
   import {
     resourceInList,
@@ -25,6 +28,7 @@
   import SubGoalItem from "./SubGoalItem.svelte";
   import SubGoalsLayoutSwitcher from "./SubGoalsLayoutSwitcher.svelte";
   export let goal: IActiveGoalStore;
+  let isExpandArchiveSubGoals = false;
   $: _subGoals = [
     ...($goal.children
       ? $goal.children.filter(activeResourceFilter).map((t) => ({
@@ -67,8 +71,21 @@
   }
 
   async function resolveSubGoals(id: IRecordId) {
-    const result: IGoal = await goalStore.select(id);
-    if (result) return result.children;
+    const result = await goalStore.selectMany(
+      {
+        properties: ["(select * from $parent.children) as children"],
+        filters: {
+          id: id.toString()
+        }
+      },
+      {
+        isIncludeSubItems: true
+      }
+    );
+    if (!result || !isValidArrayWithData(result)) return [];
+    const children = result[0].children;
+    if (children)
+      return children?.filter(activeResourceFilter)?.map((t) => t.id) ?? [];
     else return [];
   }
 
@@ -114,7 +131,7 @@
     />
   </div>
   <div
-    class={cn("flex flex-col p-4 userdata", {
+    class={cn("flex flex-col cw:px-2 p-4 userdata", {
       "gap-6": $goal.subGoalsLayout === SubGoalsLayout.STEPS,
       "gap-2": $goal.subGoalsLayout === SubGoalsLayout.DEFAULT
     })}
@@ -158,7 +175,40 @@
   </div>
 {/if}
 {#if archiveSubgoalsCount}
-  <div class="flex items-center justify-center gap-2 w-full text-b3 text-fgs3">
-    + {archiveSubgoalsCount} archived sub goals
+  <div class="flex w-full justify-center">
+    <button
+      class={cn(
+        "flex items-center justify-center gap-2 text-b3 text-fgs3 rounded-md p-2",
+        {
+          "notouch:hover:bg-bgs2 active:bg-bgs2": !isExpandArchiveSubGoals,
+          "bg-bgs2": isExpandArchiveSubGoals
+        }
+      )}
+      on:click={() => {
+        isExpandArchiveSubGoals = !isExpandArchiveSubGoals;
+      }}
+    >
+      + {archiveSubgoalsCount} archived sub goals
+    </button>
   </div>
+
+  {#if isExpandArchiveSubGoals}
+    {@const archiveSubGoals = $goal.children?.filter(archivedResourceFilter)}
+    {#if archiveSubGoals && isValidArrayWithData(archiveSubGoals)}
+      <div class="flex flex-col gap-2 p-4">
+        <Text content="Archived sub goals" style={TextStyle.SECTION_HEADING} />
+        <div class="flex flex-col userdata">
+          {#each archiveSubGoals as child}
+            <!-- <SubGoalItem {child} /> -->
+            <SubGoalItem
+              subGoal={child}
+              on:click={() => {
+                onSubGoalClick(child.id);
+              }}
+            />
+          {/each}
+        </div>
+      </div>
+    {/if}
+  {/if}
 {/if}

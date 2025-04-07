@@ -56,6 +56,7 @@ export function resolveDboUpdateQuery(dbo: string[]) {
 }
 
 /**
+ * @deprecated use {@link time.utils.resolveUnixTimestamp} instead
  * This is uniform with Surreal time::unix() - for cache invalidation etc
  * @returns current timestamp in unix
  */
@@ -503,6 +504,8 @@ function generateWhereClause(
         conditions.push(
           `${key} NOT IN [${value.notIn.map(formatValue).join(", ")}]`
         );
+      } else if ("contains" in value) {
+        conditions.push(`${key} CONTAINS ${formatValue(value.contains)}`);
       }
     } else if (typeof value === "boolean") {
       if (value === true) {
@@ -544,7 +547,7 @@ function generateWhereClause(
       operator = IResourceFilterOperator.EQUALS,
       groupBy = IResourceFilterDateGrouping.DAY
     } = params ?? {};
-    return `(${key} is not NONE AND time::group(fn::user::time::date::v4(${key}),"${groupBy}") ${resolveOperator(
+    return `(${key} is not NONE AND time::group(${key},"${groupBy}") ${resolveOperator(
       operator
     )} time::group("${resolveDateInUtc(value)}","${groupBy}"))`;
 

@@ -6,7 +6,10 @@
     ISessionThumb
   } from "$lib/client/products/pointron/logs/log.type";
   import type { IRecordId } from "$lib/client/types/data.type";
-  import { isValidArray } from "$lib/shared/utils/obj.utils";
+  import {
+    isValidArray,
+    isValidArrayWithData
+  } from "$lib/shared/utils/obj.utils";
   import { onMount } from "svelte";
   import { goalStore } from "../goal.store";
   import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
@@ -21,19 +24,26 @@
 
   async function refresh() {
     isLoading = true;
+    let subGoals: IRecordId[] = [];
     if (isIncludeSubGoals) {
-      const subGoals = await goalStore.selectMany({
-        search: {
-          properties: ["parent"],
-          query: id.toString()
+      const subGoalsResult = await goalStore.selectMany({
+        properties: ["id"],
+        filters: {
+          parent: {
+            contains: id.toString()
+          }
         }
       });
-      console.log({ subGoals });
+      if (isValidArrayWithData(subGoalsResult)) {
+        subGoals = subGoalsResult.map((goal: { id: IRecordId }) =>
+          goal.id.toString()
+        );
+      }
     }
     const result = await sessionLogStore.selectMany({
       properties: ["*", "taskId.* as task"],
       filters: {
-        goalId: id.toString()
+        goalId: [...subGoals, id.toString()]
       }
     });
     if (isValidArray(result)) {
@@ -60,7 +70,7 @@
     const groups = new Map<string, ISessionThumb[]>();
 
     sessions.forEach((session) => {
-      const date = new Date(session.start).toLocaleDateString();
+      const date = new Date(session.startUnix).toLocaleDateString();
       if (!groups.has(date)) {
         groups.set(date, []);
       }
@@ -69,7 +79,8 @@
 
     groups.forEach((logs) => {
       logs.sort(
-        (a, b) => new Date(b.start).getTime() - new Date(a.start).getTime()
+        (a, b) =>
+          new Date(b.startUnix).getTime() - new Date(a.startUnix).getTime()
       );
     });
     return Array.from(groups.entries()).sort(

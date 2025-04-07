@@ -16,8 +16,7 @@ class CollectionCountStore extends ObservableStore<ICollectionCountStore> {
   async initialize() {
     try {
       const collections = await collectionStore.selectMany({
-        properties: ["id"],
-        filters: { ...activeResourceFilterV2 }
+        properties: ["id"]
       });
       let links = await linker.selectMany({
         properties: ["in.* as node", "out"],

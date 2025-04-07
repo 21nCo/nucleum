@@ -20,6 +20,9 @@ import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.sto
 import { ResourceFIRStore } from "$lib/client/components/flux/resourceStores/resource.store";
 import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 
+/**
+ * @deprecated
+ */
 export const swipeLabel = writable("");
 export const lastImportTime = writable<number>(Date.now());
 function generateSeedPresets(): SessionComposition[] {
@@ -209,6 +212,16 @@ class PointronPreferencesStore extends KeyValueStore<IPointronPreferences> {
     let m = this.get();
     m.presets.push(preset);
     return this.modify({ presets: m.presets });
+  }
+
+  async setSeedManualEntryQuickDurations() {
+    return this.modify({
+      manualEntryQuickDurations: [10, 15, 30, 60, 120]
+    });
+  }
+
+  async updateManualEntryQuickDurations(durations: number[]) {
+    return this.modify({ manualEntryQuickDurations: durations });
   }
 }
 

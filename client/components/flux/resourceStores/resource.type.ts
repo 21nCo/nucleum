@@ -190,7 +190,11 @@ export enum ResourceAccessPoint {
   /**
    * The resource is being accessed from calendar
    */
-  CALENDAR = "calendar"
+  CALENDAR = "calendar",
+  /**
+   * The resource is being accessed from analytics
+   */
+  ANALYTICS = "analytics"
 }
 
 export enum ResourceAccessPointState {

@@ -20,6 +20,11 @@
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import { sessionStore } from "../focus/session.store";
   import { resolveSessionTimeSplit } from "../pointron.utils";
+  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { resolveTimePeriodFilterForDay } from "$lib/client/elements/datetime/datetime.utils";
+
   export let date: Date = new Date();
 
   export let context: "journal" | "logs" = "logs";
@@ -36,14 +41,21 @@
   });
   async function refresh() {
     isRefreshing = true;
-    const result = await sessionStore.selectMany({
-      filters: {
-        start: date
+    const dayFilter = resolveTimePeriodFilterForDay(date);
+    const result = await sessionStore.selectMany(
+      {
+        filters: {
+          startUnix: dayFilter
+        },
+        orderBy: {
+          startUnix: "asc"
+        }
       },
-      orderBy: {
-        start: "asc"
+      {
+        isExpand: true
       }
-    });
+    );
+    console.log({ result });
     if (isValidArrayWithData(result)) {
       sessions = result.map((session: ISessionThumb) => ({
         ...session,
@@ -66,6 +78,10 @@
       breakTime += x.splits.brek;
     });
     return { focus, break: breakTime };
+  }
+
+  function onChangesSubscription(event: any) {
+    refresh();
   }
 </script>
 
@@ -171,3 +187,12 @@
     {/if}
   </div>
 {/if}
+
+<ComponentBaseLayer
+  subscribeToResource={new Set([Resource.session])}
+  subscribeToContext={new Set([
+    PointronAction.DELETE_SESSION,
+    PointronAction.MANUAL_FOCUS_ENTRY
+  ])}
+  on:change={onChangesSubscription}
+/>

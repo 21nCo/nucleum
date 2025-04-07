@@ -6,7 +6,6 @@
   import IntervalBarItem from "$lib/client/products/pointron/focus/elements/intervalbar/IntervalBarItem.svelte";
   import type { ISessionInterval } from "$lib/client/types/pointron/session.type";
   import MoreBarsInfo from "../../focus/elements/intervalbar/MoreBarsInfo.svelte";
-  import { isValidDataString } from "$lib/shared/utils/text.utils";
   export let log: any;
   let blocks = log.blocks;
   $: visibleLimit = $view.isPortrait ? 6 : 12;
@@ -22,7 +21,7 @@
 
 <div class="flex items-center gap-4 w-full">
   <div class="text-fgs2 min-w-fit {$view.isPortrait && 'text-b3'}">
-    {formatTime($userPreferences, new Date(log.start))}
+    {formatTime($userPreferences, new Date(log.startUnix))}
   </div>
   <div class="flex flex-row items-center gap-3 w-full">
     {#each blocks as bar}
@@ -39,9 +38,6 @@
     {/if}
   </div>
   <div class="text-fgs2 min-w-fit {$view.isPortrait && 'text-b3'}">
-    {formatTime(
-      $userPreferences,
-      new Date(isValidDataString(log.plannedEnd) ? log.plannedEnd : log.end)
-    )}
+    {formatTime($userPreferences, new Date(log.plannedEndUnix ?? log.endUnix))}
   </div>
 </div>

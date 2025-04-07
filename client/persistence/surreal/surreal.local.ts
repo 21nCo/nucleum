@@ -36,6 +36,7 @@ import { LogType } from "$lib/client/components/debug/debug.type";
 import { compareVersions } from "$lib/shared/utils/utils";
 import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
 import { GlobalEvent } from "$lib/client/types/event.enum";
+import { generateMiniRandomId } from "$lib/shared/utils/crypto.utils";
 
 const loadSurrealDB = async () => {
   const Surreal = await import("@surrealdb/wasm");
@@ -604,18 +605,24 @@ export class SurrealPersistence implements IPersistence {
     try {
       await this.awaiter("selectMany_" + resource);
       const query = resolveSelectManyQuery(resource, params);
-      if (resource !== Resource.mutation) {
+      const instance = generateMiniRandomId();
+      const logResources: Resource[] = [];
+      if (logResources.includes(resource)) {
         logger.log({
           at: "SurrealPersistence.selectMany - query",
           resource,
           query,
           params
         });
-        // console.time(`SurrealPersistence.selectMany - ${resource}`);
+        console.time(
+          `SurrealPersistence.selectMany - ${resource} - ${instance}`
+        );
       }
       const result = await this.instance?.queryRaw(query, params);
-      if (resource !== Resource.mutation) {
-        // console.timeEnd(`SurrealPersistence.selectMany - ${resource}`);
+      if (logResources.includes(resource)) {
+        console.timeEnd(
+          `SurrealPersistence.selectMany - ${resource} - ${instance}`
+        );
         logger.log({
           at: "SurrealPersistence.selectMany - result",
           resource,

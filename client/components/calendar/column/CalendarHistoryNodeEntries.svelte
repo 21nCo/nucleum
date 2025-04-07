@@ -14,11 +14,16 @@
 
   async function refresh(date: Date) {
     date = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    const result = await nodeStore.selectMany({
-      filters: {
-        createdAt: date
+    const result = await nodeStore.selectMany(
+      {
+        filters: {
+          createdAt: date
+        }
+      },
+      {
+        isExpand: true
       }
-    });
+    );
     if (isValidArrayWithData(result)) {
       data = [...result].sort((a, b) => b.createdAt - a.createdAt);
     }

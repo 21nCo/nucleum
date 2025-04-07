@@ -42,6 +42,7 @@
    * Bar style rendered over a bg shade to give TRAIN style but with bars
    */
   export let isBgBar: boolean = false;
+  export let isRearrangeableByDefault: boolean = false;
   let _items: ISelectItem[];
   $: _items = items.every((x) => typeof x === "string")
     ? items.map((x) => ({ label: x, value: x }))
@@ -142,6 +143,7 @@
             {parentBgIndex}
             {isShowNumberShortcut}
             {index}
+            {isRearrangeableByDefault}
             bind:triggerItemEdit
             isActive={value === item.value}
             isDisabled={isDisableEnabled && value !== item.value}

@@ -27,11 +27,16 @@
           b.body.subType === NodeType.TASK_AS_EMBED
       )
       .map((b) => b.body.id);
-    const tasksResult = await taskStore.selectMany({
-      filters: {
-        id: taskIds
+    const tasksResult = await taskStore.selectMany(
+      {
+        filters: {
+          id: taskIds
+        }
+      },
+      {
+        isExpand: true
       }
-    });
+    );
     if (isValidArrayWithData(tasksResult)) {
       tasks = [...tasksResult];
     }

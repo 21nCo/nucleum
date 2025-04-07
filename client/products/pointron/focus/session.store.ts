@@ -37,6 +37,7 @@ import { AlertType } from "$lib/client/types/notification.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import type {
   IRecordId,
+  IResourceSelectAdditionalParams,
   IResourceSelectParams
 } from "$lib/client/types/data.type";
 import { logger } from "$lib/client/components/debug/logger.client";
@@ -64,6 +65,7 @@ import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 import type { OmitForCaptureWithId } from "$lib/client/components/flux/resourceStores/resource.type";
 import { taskStore } from "$lib/client/components/tasks/task.store";
 import { GoalType } from "$lib/client/components/goals/goal.type";
+import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
 
 /** @deprecated */
 export const todayFocusStore = initTodayFocus();
@@ -736,14 +738,14 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
    * @returns
    */
   private async _stopCurrentFocusItem(
-    props: { isPersist?: boolean; isSessionFinish?: boolean } = {
+    props: { isPersist?: boolean; isSessionFinish?: boolean; end?: number } = {
       isPersist: false
     }
   ) {
     let session = this.get();
     let currentFocus = get(currentFocusItem);
     if (!currentFocus) return;
-    let end = new Date().getTime();
+    let end = props?.end ?? new Date().getTime();
     await focusItemsStore.appendFocusBlock(currentFocus.id, {
       start: currentFocus.start,
       end
@@ -847,7 +849,8 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       const now = new Date().getTime();
       if (currentFocus)
         await this._stopCurrentFocusItem({
-          isSessionFinish: true
+          isSessionFinish: true,
+          end: now
         });
       // let lastBlock = n.intervals?.pop();
       // if (lastBlock) {
@@ -857,7 +860,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       // n.blocks = [...n.blocks, { start: now, duration: 0, progress: 1 }];
       // session.state = SessionState.FINISHED;
       // session.isSessionRunning = false;
-      sessionStore.finishFocus();
+      sessionStore.finishFocus({ end: now });
     } catch (err) {
       logger.error({ at: "finishSession", error: err });
     } finally {
@@ -1023,9 +1026,11 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
 
   async startSession(isQuickStart: boolean = false) {
     this.onComposeComplete(false);
-    //TODO - if auto open enabled
     if (isQuickStart) player.showMini(PointronAction.FOCUS_PLAYER);
     else fullScreen.show(PointronAction.FULL_SCREEN_FOCUS);
+    if (get(pointronPreferences).isEnableAutoPiP) {
+      player.togglePip(PointronAction.FOCUS_PLAYER);
+    }
 
     if (!get(context).isEmbed && Notification.permission !== "granted") {
       Notification.requestPermission();
@@ -1035,11 +1040,16 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     let currentFocus = get(currentFocusItem);
     let focusItems = focusItemsStore.get();
     if (!isQuickStart && focusItems.items.length > 0) {
-      currentFocus = {
-        id: focusItems.items[0].id,
-        start: new Date().getTime()
-      };
-      currentFocusItem.set(currentFocus);
+      const item = focusItems.items.find(
+        (x) => !x.tasks || x.tasks.length === 0
+      );
+      if (item) {
+        currentFocus = {
+          id: item.id,
+          start: new Date().getTime()
+        };
+        currentFocusItem.set(currentFocus);
+      }
     }
     this.modify(
       {
@@ -1175,15 +1185,18 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
             id: item.id.toString()
           }
         },
-        { isIncludeSubItems: true }
+        { isIncludeSubItems: true, isExpand: true }
       );
       return goal?.[0];
     } else if (resourceType === Resource.task) {
-      const task = await taskStore.selectMany({
-        filters: {
-          id: item.id.toString()
-        }
-      });
+      const task = await taskStore.selectMany(
+        {
+          filters: {
+            id: item.id.toString()
+          }
+        },
+        { isExpand: true }
+      );
       return task?.[0];
     }
   }
@@ -1310,10 +1323,16 @@ class SessionStore extends ResourceStore<ISession> {
     super(Resource.session);
   }
 
-  selectMany(params?: IResourceSelectParams, additionalParams?: any) {
-    const properties = [
+  selectMany(
+    params?: IResourceSelectParams,
+    additionalParams?: IResourceSelectAdditionalParams
+  ) {
+    const expandedProps = [
       "*",
-      "select *, (select * from $parent.parent) as parent from (select value id from $parent.items) as expandedItems",
+      "select *, (select * from $parent.parent) as parent from (select value id from $parent.items) as expandedItems"
+    ];
+    const properties = [
+      ...(additionalParams?.isExpand ? expandedProps : []),
       ...(params?.properties ?? [])
     ];
     params = {
@@ -1329,24 +1348,30 @@ class SessionStore extends ResourceStore<ISession> {
    * @param focusItemStore
    * @param isClose
    */
-  finishFocus() {
+  finishFocus(params?: { end?: number }) {
     const activeSessionVal = activeSession.get();
     const focusItemStore = focusItemsStore.get();
     const plannedEndTime = resolvePlannedEndTime(activeSessionVal);
     const endTime =
       plannedEndTime && new Date().getTime() > plannedEndTime.getTime()
         ? plannedEndTime
-        : new Date();
+        : new Date(params?.end ?? new Date().getTime());
 
     const session: OmitForCaptureWithId<ISession> = {
       elapsed: activeSessionVal.totalElapsed,
       extended: activeSessionVal.totalExtended,
-      start: activeSessionVal.start?.toISOString() ?? "",
-      end: endTime.toISOString(),
+      // start: activeSessionVal.start?.toISOString() ?? "",
+      startUnix: activeSessionVal.start
+        ? resolveUnixTimestamp(activeSessionVal.start)
+        : 0,
+      // end: endTime.toISOString(),
+      endUnix: resolveUnixTimestamp(endTime),
+      plannedEndUnix: plannedEndTime
+        ? resolveUnixTimestamp(plannedEndTime)
+        : undefined,
       id:
         activeSessionVal.currentSessionId ??
         generateResourceId(Resource.session),
-      plannedEnd: plannedEndTime?.toISOString(),
       type: activeSessionVal.type,
       blocks: [
         ...activeSessionVal.intervals,
@@ -1393,8 +1418,10 @@ class SessionStore extends ResourceStore<ISession> {
     if (remainingTime > 0) {
       logs.push({
         id: generateResourceId(Resource.sessionLog),
-        start: new Date(session.start).toISOString(),
-        end: new Date(session.end).toISOString(),
+        // start: new Date(session.start).toISOString(),
+        // end: new Date(session.end).toISOString(),
+        startUnix: session.startUnix,
+        endUnix: session.endUnix,
         sessionId: session.id,
         focus: remainingTime,
         breakTime: 0
@@ -1433,16 +1460,15 @@ class SessionStore extends ResourceStore<ISession> {
       });
       return {
         id: generateResourceId(Resource.sessionLog),
-        start: new Date(block.start).toISOString(),
-        end: new Date(block.end).toISOString(),
+        // start: new Date(block.start).toISOString(),
+        // end: new Date(block.end).toISOString(),
+        startUnix: resolveUnixTimestamp(new Date(block.start)),
+        endUnix: resolveUnixTimestamp(new Date(block.end)),
         sessionId: session.id,
         goalId,
         taskId,
         focus,
         breakTime
-        //TODO - check the need for the below
-        // tzOffset: get(userPreferences).timeZoneOffset,
-        // targets: get(pointronPreferences).horizonTargets
       };
     }
   }

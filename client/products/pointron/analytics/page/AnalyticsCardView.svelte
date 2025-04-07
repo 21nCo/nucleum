@@ -5,11 +5,7 @@
   import { isInEditMode } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
   import { Size } from "$lib/client/types/size.enum";
-  import {
-    determinePreviousTimePeriod,
-    determineTimePeriodv2,
-    timePeriodLabel
-  } from "$lib/client/utils/time.utils";
+  import { determinePreviousTimePeriod } from "$lib/client/utils/time.utils";
   import { cn } from "$lib/client/utils/ui.utils";
   import {
     AnalyticsCardType,
@@ -18,15 +14,14 @@
     type IAnalyticsLabelColor
   } from "../analytics.types";
   import { analyticsConfigStore } from "../analytics.store";
-  import { createEventDispatcher, onMount } from "svelte";
+  import { createEventDispatcher } from "svelte";
   import CardSelector from "./CardSelector.svelte";
   import { InputStyle } from "$lib/client/types/input.type";
   import GroupingAndFilters from "./GroupingAndFilters.svelte";
   import CardResolver from "./CardResolver.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import type { IRecordId } from "$lib/client/types/data.type";
-  import { sessionLogStore } from "../../logs/log.store";
-  import type { ISessionLogThumb } from "../../logs/log.type";
+  import type { ISessionLog } from "../../logs/log.type";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import {
     removeDuplicatesFilter,
@@ -34,34 +29,37 @@
   } from "$lib/client/components/flux/resourceStores/resource.utils";
   import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
   import { resolveGoalColor } from "$lib/client/components/goals/goal.utils";
-  import account from "$lib/client/stores/account.store";
-  import { toasts } from "$lib/client/stores/notification.store";
   import { ErrorMessage } from "$lib/client/components/error/error.type";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
+  import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
+  import type { ITimePeriodResolved } from "$lib/client/types/time.type";
+  import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
+  import { logger } from "$lib/client/components/debug/logger.client";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   export let card: IAnalyticsCard;
   export let position: { index: number; total: number };
   export let pageId: string;
   export let goals: IGoalThumb[] = [];
+  export let logs: ISessionLog[] = [];
+  export let timePeriod: ITimePeriodResolved;
+  export let isPageLoaded = false;
   let data: AnalyticsDataRecord[];
   let previousTimePeriodData: AnalyticsDataRecord[] = [];
   let goalColors: IAnalyticsLabelColor[] = [];
   let parentBgIndex = $view.isPortrait ? 1 : 2;
   const dispatch = createEventDispatcher();
   let isRefreshing = false;
+  let refreshId = new Date().getTime();
   let errorMessage: string = ErrorMessage.DEFAULT;
-  const dev_isUseCloud = false;
-
-  $: timePeriod = card.period?.value ? timePeriodLabel(card.period) : "";
   $: isCarbonChart =
     card.type === AnalyticsCardType.PIE ||
     card.type === AnalyticsCardType.DONUT ||
     card.type === AnalyticsCardType.AREA ||
     card.type === AnalyticsCardType.LINE;
 
-  onMount(() => {
+  $: if (isPageLoaded) {
     refresh();
-  });
-
+  }
   function onRemoveClick() {
     analyticsConfigStore.removeCard(pageId, card.id);
     dispatch("removed", card);
@@ -72,7 +70,7 @@
       ...card,
       period: e.detail
     });
-    refresh();
+    dispatch("reload");
   }
 
   function onCardTypeChange(e: CustomEvent) {
@@ -112,7 +110,6 @@
         isRefreshing = false;
         return;
       }
-      const timePeriod = determineTimePeriodv2(card.period);
       if (
         !timePeriod.begin ||
         !timePeriod.end ||
@@ -123,48 +120,41 @@
         isRefreshing = false;
         return;
       }
-      const filters = {
-        start: {
-          type: "date",
-          greaterThanOrEqual: timePeriod.begin,
-          lessThanOrEqual: timePeriod.end
-        }
-      };
 
-      // Fetch session logs for this time period
-      console.time(`logs query - ${card.id}`);
-      const isUseCloud = dev_isUseCloud && account.isCloudUserAndOnline();
-      let logs = await sessionLogStore.selectMany(
+      const correctedBegin = tzStore.resolveTimezoneCorrectedTimestamp(
+        timePeriod.begin,
         {
-          filters
-        },
-        {
-          isUseCloud
+          tzRecords: $tzStore
         }
       );
-      console.timeEnd(`logs query - ${card.id}`);
-      // console.log({ logs });
-      if (!logs && isUseCloud) {
-        logs = await sessionLogStore.selectMany({
-          filters
-        });
-      }
-      if (!logs) {
-        toasts.error(ErrorMessage.DEFAULT);
-        return;
-      }
-      const processedLogs: AnalyticsDataRecord[] = logs.map(
-        (log: ISessionLogThumb) => ({
-          brek: log.breakTime || 0,
-          focus: log.focus || 0,
-          goal: log.goal ? log.goal.label || "Unknown Goal" : "No Goal",
-          goalId: log.goalId || "",
-          start: log.start,
-          topLevelGoal:
-            resolveGoalFromId(log.goal?.parent?.[0])?.label ??
-            log.goal?.label ??
-            "Unknown"
-        })
+      const correctedEnd = tzStore.resolveTimezoneCorrectedTimestamp(
+        timePeriod.end,
+        {
+          tzRecords: $tzStore
+        }
+      );
+      const filteredLogs = logs.filter(
+        (log) =>
+          log.startUnix >= correctedBegin && log.startUnix <= correctedEnd
+      );
+      const processedLogs: AnalyticsDataRecord[] = filteredLogs.map(
+        (log: ISessionLog) => {
+          const goal = log.goalId ? resolveGoalFromId(log.goalId) : undefined;
+          const tzCorrectedStart = tzStore.resolveTimezoneCorrectedTimestamp(
+            log.startUnix,
+            {
+              tzRecords: $tzStore
+            }
+          );
+          return {
+            brek: log.breakTime || 0,
+            focus: log.focus || 0,
+            goal: goal ? goal.label || "Unknown Goal" : "No Goal",
+            goalId: log.goalId || "",
+            start: new Date(tzCorrectedStart),
+            topLevelGoal: goal?.parent?.[0]?.label ?? "Unknown"
+          };
+        }
       );
 
       data = processedLogs;
@@ -177,31 +167,35 @@
       ) {
         const previousPeriod = determinePreviousTimePeriod(card.period);
         if (previousPeriod) {
-          const previousFilters = {
-            start: {
-              type: "date",
-              greaterThanOrEqual: previousPeriod,
-              lessThanOrEqual: timePeriod.begin
-            }
-          };
-
-          const previousLogs = await sessionLogStore.selectMany({
-            filters: previousFilters,
-            orderBy: { start: "asc" }
-          });
-
-          const processedPreviousLogs = previousLogs.map(
-            (log: ISessionLogThumb) => ({
+          const correctedPreviousBegin =
+            tzStore.resolveTimezoneCorrectedTimestamp(
+              resolveUnixTimestamp(previousPeriod),
+              {
+                tzRecords: $tzStore
+              }
+            );
+          const previousLogs = logs.filter(
+            (log) =>
+              log.startUnix >= correctedPreviousBegin &&
+              log.startUnix <= correctedBegin
+          );
+          const processedPreviousLogs = previousLogs.map((log: ISessionLog) => {
+            const goal = log.goalId ? resolveGoalFromId(log.goalId) : undefined;
+            const tzCorrectedStart = tzStore.resolveTimezoneCorrectedTimestamp(
+              log.startUnix,
+              {
+                tzRecords: $tzStore
+              }
+            );
+            return {
               brek: log.breakTime || 0,
               focus: log.focus || 0,
-              goal: log.goal ? log.goal.label || "Unknown Goal" : "No Goal",
+              goal: goal ? goal.label || "Unknown Goal" : "No Goal",
               goalId: log.goalId || "",
-              start: log.start,
-              topLevelGoal: log.goalId
-                ? log.goalLabel || "Unknown Goal"
-                : "No Goal"
-            })
-          );
+              start: new Date(tzCorrectedStart),
+              topLevelGoal: goal?.parent?.[0]?.label ?? "Unknown"
+            };
+          });
 
           previousTimePeriodData = processedPreviousLogs;
           goalIds.push(...processedPreviousLogs.map((x: any) => x.goalId));
@@ -223,9 +217,13 @@
         });
       }
       goalColors = colors;
+      refreshId = new Date().getTime();
       isRefreshing = false;
     } catch (error) {
-      console.error("Error resolving analytics data:", error);
+      logger.error({
+        at: "AnalyticsCardView.refresh",
+        error
+      });
       isRefreshing = false;
     }
   }
@@ -303,6 +301,7 @@
             <CardSelector
               bind:selected={card.type}
               on:select={onCardTypeChange}
+              accessPoint={ResourceAccessPoint.ANALYTICS}
             />
           </span>
         </span>
@@ -312,17 +311,17 @@
         <span class="font-medium">
           {card.type === AnalyticsCardType.TARGETS
             ? "Targets"
-            : card.label ?? timePeriod}
+            : card.label ?? timePeriod.title}
         </span>
         {#if card.type != AnalyticsCardType.TARGETS && card.label}
           <span class="text-fgs2 text-b2">
-            {timePeriod}
+            {timePeriod.title}
           </span>
         {/if}
       </div>
     {/if}
   </header>
-  {#if isRefreshing}
+  {#if isRefreshing || !isPageLoaded}
     <div class="animate-pulse flex flex-col gap-3 py-1">
       <div class="h-8 w-full bg-bgs3 bg-opacity-50 rounded-md"></div>
       <div class="h-4 w-1/2 bg-bgs3 bg-opacity-50 rounded-md"></div>
@@ -349,13 +348,24 @@
           ? "height: calc(100% - 6rem)"
           : ""}
     >
-      {#if $isInEditMode}
-        <div
-          class={cn("w-full", {
-            "h-full": !$view.isPortrait || ($view.isPortrait && !isCarbonChart),
-            "h-4/5": $view.isPortrait && isCarbonChart
-          })}
-        >
+      {#key refreshId}
+        {#if $isInEditMode}
+          <div
+            class={cn("w-full", {
+              "h-full":
+                !$view.isPortrait || ($view.isPortrait && !isCarbonChart),
+              "h-4/5": $view.isPortrait && isCarbonChart
+            })}
+          >
+            <CardResolver
+              {card}
+              {data}
+              {goalColors}
+              {previousTimePeriodData}
+              {parentBgIndex}
+            />
+          </div>
+        {:else}
           <CardResolver
             {card}
             {data}
@@ -363,16 +373,8 @@
             {previousTimePeriodData}
             {parentBgIndex}
           />
-        </div>
-      {:else}
-        <CardResolver
-          {card}
-          {data}
-          {goalColors}
-          {previousTimePeriodData}
-          {parentBgIndex}
-        />
-      {/if}
+        {/if}
+      {/key}
     </div>
   {/if}
 </div>

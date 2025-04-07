@@ -8,6 +8,7 @@ import {
 import moment from "moment-timezone";
 import type { UserDate } from "$lib/client/types/userDate.type";
 import type { IUserGlobalPreferences } from "$lib/client/types/preferences.type";
+import { Size } from "../types/size.enum";
 
 const months = [
   "Jan",
@@ -55,20 +56,54 @@ export function formatTime(
 export function formatSeconds(
   seconds: number,
   format: TimeFormat = TimeFormat.VERBOSE,
-  isAlwaysShowSecs: boolean = false
+  params?: {
+    isAlwaysShowSecs?: boolean;
+    verboseTextSize?: Size.sm | Size.md | Size.lg;
+  }
 ) {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = Math.floor(seconds % 60);
   if (format === TimeFormat.VERBOSE) {
-    if (hours > 0)
+    const size = params?.verboseTextSize ?? Size.sm;
+    const minutesLabel =
+      size === Size.sm
+        ? "m"
+        : size === Size.md
+          ? "min"
+          : minutes > 1
+            ? "minutes"
+            : "minute";
+    const secondsLabel =
+      size === Size.sm
+        ? "s"
+        : size === Size.md
+          ? "sec"
+          : secs > 1
+            ? "seconds"
+            : "second";
+    const hoursLabel =
+      size === Size.sm
+        ? "h"
+        : size === Size.md
+          ? "hr"
+          : hours > 1
+            ? "hours"
+            : "hour";
+    if (hours > 0) {
       return (
-        `${hours}h` +
-        (minutes > 0 ? ` ${minutes}m` : "") +
-        (+secs > 0 && isAlwaysShowSecs ? ` ${secs}s` : "")
+        `${hours} ${hoursLabel}` +
+        (minutes > 0 ? ` ${minutes} ${minutesLabel}` : "") +
+        (+secs > 0 && params?.isAlwaysShowSecs
+          ? ` ${secs} ${secondsLabel}`
+          : "")
       );
-    else if (minutes > 0) return `${minutes}m` + (+secs > 0 ? ` ${secs}s` : "");
-    else return `${secs}s`;
+    } else if (minutes > 0) {
+      return (
+        `${minutes} ${minutesLabel}` +
+        (+secs > 0 ? ` ${secs} ${secondsLabel}` : "")
+      );
+    } else return `${secs} ${secondsLabel}`;
   } else if (format === TimeFormat.CLOCK) {
     const hh = hours.toString().padStart(2, "0");
     const mm = minutes.toString().padStart(2, "0");
@@ -273,7 +308,11 @@ export function determineTimePeriod(period: TimePeriod) {
   return { begin, end, title };
 }
 
-export function determineTimePeriodv2(period: TimePeriod) {
+export function determineTimePeriodv2(period: TimePeriod): {
+  begin: Date;
+  end: Date;
+  title: string;
+} {
   let begin = new Date();
   let end = new Date();
   let title = timePeriodLabel(period);
@@ -502,7 +541,7 @@ export function incrementTime(
 }
 
 export function formatDate(
-  date: Date,
+  date: Date | number,
   format:
     | "iso"
     | "iso-short"
@@ -513,6 +552,7 @@ export function formatDate(
     | "mmm-yyyy"
     | "yyyy" = "verbose"
 ) {
+  if (typeof date === "number") date = new Date(date);
   if (format === "iso" || format === "iso-short") {
     let year = date.getFullYear();
     let month = (1 + date.getMonth()).toString().padStart(2, "0");
