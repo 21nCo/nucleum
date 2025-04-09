@@ -265,7 +265,7 @@ export const headingNodeTypes = [
 ];
 
 export const canHaveTraces = [
-  NodeType.NODULAR_MARKDOWN,
+  // NodeType.NODULAR_MARKDOWN,
   NodeType.PDF,
   NodeType.WEB_PAGE,
   NodeType.TWITTER_PROFILE,

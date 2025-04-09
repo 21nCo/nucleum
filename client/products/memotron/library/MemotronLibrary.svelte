@@ -3,11 +3,4 @@
   import Library from "$lib/client/components/library/Library.svelte";
 </script>
 
-<Library
-  resources={[
-    Resource.node,
-    Resource.task,
-    Resource.collection,
-    Resource.relation
-  ]}
-/>
+<Library resources={[Resource.node, Resource.collection, Resource.relation]} />

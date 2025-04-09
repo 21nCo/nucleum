@@ -1,7 +1,11 @@
 <script lang="ts">
   import VerticalSwitcher from "$lib/client/elements/switcher/VerticalSwitcher.svelte";
   import { Placement } from "$lib/client/types/direction.enum";
-  import { NodeRightPaneType } from "$lib/client/products/memotron/node/node.type";
+  import {
+    canHaveTraces,
+    NodeRightPaneType,
+    NodeType
+  } from "$lib/client/products/memotron/node/node.type";
   import { VerticalSwitcherStyle } from "$lib/client/types/switcher.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import type { IActiveNodeStore } from "../node.store";
@@ -15,9 +19,14 @@
   let verticalSwitcherItems: ISelectItem[] = [
     { value: NodeRightPaneType.OUTLINE, icon: "ph:text-align-left-light" },
     { value: NodeRightPaneType.PROPERTIES, icon: "ph:shapes-light" },
-    { value: NodeRightPaneType.LINKS, icon: "ph:link-light" },
-    { value: NodeRightPaneType.TRACES, icon: "ph:bookmark-simple-light" }
+    { value: NodeRightPaneType.LINKS, icon: "ph:link-light" }
   ];
+  if (canHaveTraces.includes($node?.contentType ?? NodeType.UNKNOWN)) {
+    verticalSwitcherItems.push({
+      value: NodeRightPaneType.TRACES,
+      icon: "ph:bookmark-simple-light"
+    });
+  }
 
   pane = isRightPanelCollapsed
     ? NodeRightPaneType.NONE
