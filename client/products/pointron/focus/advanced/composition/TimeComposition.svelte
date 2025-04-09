@@ -74,17 +74,19 @@
         </div>
       </div> -->
       <ComposeTotalsText composition={$activeSession.composition} />
-      <div class="flex w-full justify-center">
-        <PanelSwitcher
-          style={PanelSwitcherStyle.TRAIN}
-          size={Size.sm}
-          parentBgIndex={parentBackgroundIndex}
-          items={["Presets", "Custom"]}
-          value={selectedMode === 0 ? "Presets" : "Custom"}
-          on:switch={onModeSwitch}
-        />
-        <!-- <AdvancedFocusModeSwitcher bind:selectedMode /> -->
-      </div>
+      {#if $activeSession.composition.type !== SessionCompositionType.END_TIME_FIXED}
+        <div class="flex w-full justify-center">
+          <PanelSwitcher
+            style={PanelSwitcherStyle.TRAIN}
+            size={Size.sm}
+            parentBgIndex={parentBackgroundIndex}
+            items={["Presets", "Custom"]}
+            value={selectedMode === 0 ? "Presets" : "Custom"}
+            on:switch={onModeSwitch}
+          />
+          <!-- <AdvancedFocusModeSwitcher bind:selectedMode /> -->
+        </div>
+      {/if}
     </div>
     {#if selectedMode == 0}
       <PresetPicker
@@ -95,13 +97,13 @@
       <!-- TODO -->
       <div class="py-8 flex flex-col items-center gap-4">
         <div class="flex flex-col gap-2 items-center">
-          <Icon icon="clock" />
+          <Icon icon="ph:clock-light" />
           <div class="text-fgs2">End time selected.</div>
         </div>
         <Button
-          label="cancel"
+          label="Clear"
           size={Size.sm}
-          icon="cross"
+          icon="ph:x-light"
           on:click={() => {
             activeSession.resetComposition();
           }}

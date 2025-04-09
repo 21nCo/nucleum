@@ -10,12 +10,14 @@
 </script>
 
 <label
-  class={cn("flex gap-2 items-center", {
+  class={cn("flex gap-2 items-center max-w-full", {
     "cursor-pointer": isCursorPointer
   })}
   for={forId}
 >
-  <div class="text-fgs2 text-b2 min-w-fit whitespace-nowrap text-left">
+  <div
+    class="text-fgs2 text-b2 min-w-fit whitespace-nowrap text-left text-wrap"
+  >
     {props.label}
   </div>
   {#if props.tooltip && props.tooltip.body}

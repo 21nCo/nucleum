@@ -39,6 +39,7 @@
   import RestorePurchaseAction from "../../subscription/RestorePurchaseAction.svelte";
   import view from "$lib/client/stores/view.store";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
+  import { Product } from "$lib/client/types/product.type";
   let name = "";
   let emailParts: EmailParts | undefined = undefined;
   let isEditing = false;
@@ -131,23 +132,27 @@
     <div
       class="flex flex-col items-center justify-center bg-bgs2 bg-opacity-50 rounded-md gap-4 w-1/3 mo:w-full p-4"
     >
+      {#if $appStore.product === Product.MEMOTRON || $appStore.product === Product.NUCLEUS}
+        <div
+          class={cn("flex w-full justify-center items-center")}
+          use:fileDrop={{
+            accept: ".jpg,.png,.jpeg,.svg",
+            multiple: false,
+            disabled: !isEditing,
+            onDrop: handleDrop
+          }}
+        >
+          <ProfilePicture
+            context="account-settings"
+            {isEditing}
+            isLoading={isSaveInProgress}
+            fileId={profilePicture}
+          />
+        </div>
+      {/if}
       <div
-        class={cn("flex w-full justify-center items-center")}
-        use:fileDrop={{
-          accept: ".jpg,.png,.jpeg,.svg",
-          multiple: false,
-          disabled: !isEditing,
-          onDrop: handleDrop
-        }}
+        class="flex flex-col min-h-12 items-center justify-center gap-1 w-full"
       >
-        <ProfilePicture
-          context="account-settings"
-          {isEditing}
-          isLoading={isSaveInProgress}
-          fileId={profilePicture}
-        />
-      </div>
-      <div class="flex flex-col min-h-12 items-center gap-1 w-full">
         {#if isEditing}
           <TextInput bind:value={name} on:enter={onSave} />
         {:else}

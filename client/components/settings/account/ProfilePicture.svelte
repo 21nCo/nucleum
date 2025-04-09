@@ -8,6 +8,8 @@
   import FileView from "../../files/FileView.svelte";
   import type { IRecordId } from "$lib/client/types/data.type";
   import { userPreferences } from "../userPreferences.store";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { Product } from "$lib/client/types/product.type";
   export let context: "cmd-page" | "cp-profile" | "account-settings" =
     "cp-profile";
   export let fileId: IRecordId | undefined = undefined;
@@ -16,9 +18,15 @@
   let initials: string | undefined = undefined;
   let profilePictureUrl: string | undefined = undefined;
   const Emojis: string[] = ["🚀", "😁", "✌️", "👓", "⭐️", "🔥", "⚽️", "🛵"];
+
   function pickRandomEmoji() {
     return Emojis[Math.floor(Math.random() * Emojis.length)];
   }
+
+  $: renderFileBasedProfilePicture =
+    $appStore.product === Product.MEMOTRON ||
+    $appStore.product === Product.NUCLEUS;
+
   onMount(async () => {
     await refresh($account);
     const unsubscribeAccount = account.subscribe(async (x) => {
@@ -32,8 +40,9 @@
       if (unsubscribeUserPreferences) unsubscribeUserPreferences();
     };
   });
+
   async function refresh(x: any) {
-    if (fileId) return;
+    if (fileId && renderFileBasedProfilePicture) return;
     if (isValidString(x.userInfo?.profilePictureUrl)) {
       try {
         let response = await fetch(x.userInfo?.profilePictureUrl!, {
@@ -72,7 +81,7 @@
 >
   {#if isLoading}
     <Icon icon="svg-spinners:90-ring-with-bg" />
-  {:else if fileId}
+  {:else if fileId && renderFileBasedProfilePicture}
     <FileView
       id={fileId}
       isLazyLoad={false}

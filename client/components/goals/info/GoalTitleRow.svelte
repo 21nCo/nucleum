@@ -71,7 +71,7 @@
             <TextInput
               bind:this={inputRef}
               bind:value={labelEditVal}
-              placeholder="Enter task name"
+              placeholder="Enter goal name"
               width="w-full"
               parentBackgroundIndex={2}
               on:debouncedChange={handleLabelChange}

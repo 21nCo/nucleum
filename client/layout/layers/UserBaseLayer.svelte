@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
   import { GlobalEvent } from "$lib/client/types/event.enum";
-  import { detectTimeZone } from "$lib/client/utils/time.utils";
+  import { detectTimeZone, wait } from "$lib/client/utils/time.utils";
   import { Persistence } from "$lib/client/persistence/persistence";
   import view from "$lib/client/stores/view.store";
   import account from "$lib/client/stores/account.store";
@@ -72,13 +72,14 @@
       message: "Syncing your data from cloud..."
     },
     cloneDown: {
-      message: "Setting things up..."
+      message: "First login detected. Syncing your data..."
     }
   };
 
   let loadingMessage: {
     message: string;
     subMessage?: string;
+    duration?: number;
   } = {
     message: ""
   };
@@ -106,27 +107,29 @@
     let userDataState: any;
     if (initState !== undefined)
       userDataState = await initializeEssentialUserData(initState);
+    if (userDataState?.paginateResources) {
+      // loadingMessage.duration = userDataState.paginateResources.length * 2;
+      //TODO - calculate estimated time to paginate using total length of records for each resource and resource type
+      await flux.paginateResources(userDataState.paginateResources, 100);
+    }
     $appLoadingState.isBaseLoaded = true;
-    const promises = [
+    await Promise.all([
       recentsStore.refresh(searcheableResources),
       initializeUserConfig()
-    ];
-    await Promise.all(promises);
-
+    ]);
     dispatch("ready");
     console.timeEnd("init");
 
     safeRequestIdleCallback(async () => {
-      if (userDataState?.paginateResources) {
-        toasts.showProgress("paginate", "Syncing in the background");
-        await flux.paginateResources(userDataState.paginateResources, 100);
-        dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
-        toasts.closeProgress("paginate");
-      } else if (userDataState?.counts && !isDebug) {
-        toasts.showProgress("reconcile", "Syncing in the background");
+      if (userDataState?.counts && !isDebug) {
+        if (!$view.isConstrainedWidth) {
+          toasts.showProgress("reconcile", "Syncing in the background");
+        }
         await flux.reconcile({ counts: userDataState.counts });
         dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
-        toasts.closeProgress("reconcile");
+        if (!$view.isConstrainedWidth) {
+          toasts.closeProgress("reconcile");
+        }
       }
       await recentsStore.refresh(searcheableResources);
       await syncAccountPaidPlanFromExternalProvider();
@@ -409,6 +412,9 @@
     if (detail.subMessage !== undefined) {
       loadingMessage.subMessage = detail.subMessage;
     }
+    if (detail.duration !== undefined) {
+      loadingMessage.duration = detail.duration;
+    }
   }
 
   function handleAddToRecents(event: any) {
@@ -520,6 +526,7 @@
     <AppLoadingView
       message={loadingMessage.message}
       subMessage={loadingMessage.subMessage}
+      duration={loadingMessage.duration}
     />
   {:else if error}
     <PageError />

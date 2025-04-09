@@ -4,8 +4,11 @@
   import SubAtomLogo from "$lib/client/branding/SubAtomLogo.svelte";
   import PageLoadingAnimation from "$lib/client/elements/feedback/animations/PageLoadingAnimation.svelte";
   import context from "$lib/client/stores/context.store";
+  import ProgressBar from "$lib/client/elements/ProgressBar.svelte";
+  import { Size } from "$lib/client/types/size.enum";
   export let message: string | undefined = undefined;
   export let subMessage: string | undefined = undefined;
+  export let duration: number | undefined = undefined;
 </script>
 
 <div
@@ -20,7 +23,7 @@
         Loading...
       </div>
     {:else}
-      <div class="flex flex-col gap-2 items-center">
+      <div class="flex flex-col gap-4 items-center">
         <SubAtomLogo />
         {#if message}
           <div class="font-medium px-4 text-center text-fgs2 text-b2">
@@ -30,6 +33,11 @@
         {#if subMessage}
           <div class="px-4 text-center text-fgs3 text-b3">
             {subMessage}
+          </div>
+        {/if}
+        {#if duration !== undefined}
+          <div class="w-60">
+            <ProgressBar {duration} size={Size.md} />
           </div>
         {/if}
       </div>

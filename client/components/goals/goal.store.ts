@@ -189,7 +189,7 @@ export class ActiveGoalStore extends CollectibleStore<IActiveGoal, GoalStore> {
 
   async init(
     accessMode: ResourceAccessMode,
-    params?: { isInEditMode?: boolean }
+    params?: { isInEditMode?: boolean; linkSearchParam?: string }
   ) {
     logger.log({ at: "ActiveGoalStore.init", id: this.id });
     try {
@@ -240,6 +240,9 @@ export class ActiveGoalStore extends CollectibleStore<IActiveGoal, GoalStore> {
         type: Resource.goal,
         timestamp: new Date()
       });
+      if (params?.linkSearchParam) {
+        this.linkCollection(params.linkSearchParam);
+      }
     } catch (e) {
       console.error("error in init goal store", {
         id: this.id,
@@ -339,7 +342,9 @@ export function resolveGoalContextMenu(
     group: "open",
     items: [
       resourceActions.openAsTab(),
-      resourceActions.openAsSplit(),
+      ...(accessPoint !== ResourceAccessPoint.SELF
+        ? [resourceActions.openAsSplit()]
+        : []),
       resourceActions.openAsFull()
     ]
   };

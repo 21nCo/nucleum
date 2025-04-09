@@ -34,6 +34,7 @@
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import { resolveGoalColor } from "$lib/client/components/goals/goal.utils";
   import { createEventDispatcher } from "svelte";
+  import { toasts } from "$lib/client/stores/notification.store";
   const dispatch = createEventDispatcher();
 
   export let focusItem: IFocusItem;
@@ -82,8 +83,14 @@
       ($activeSession.isSessionRunning &&
         $activeSession.type === SessionType.PREDEFINED_INTERVALS &&
         $activeSession.state === SessionState.BREAK_RUNNING)
-    )
-      return;
+    ) {
+      if ($activeSession.state === SessionState.BREAK_RUNNING) {
+        toasts.error("Cannot start working on an item while break is running", {
+          title: "Break running"
+        });
+        return;
+      }
+    }
     if ($activeSession.isSessionRunning) {
       if (isInprogress) {
         await activeSession.stopCurrentFocusItem();

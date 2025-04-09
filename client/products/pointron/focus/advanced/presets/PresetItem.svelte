@@ -32,7 +32,7 @@
   }
 </script>
 
-{#if preset.focusDuration}
+{#if preset.focusDuration || (preset.totalDuration && preset.type === SessionCompositionType.TOTAL_DURATION)}
   <HoverableElement
     type="button"
     bind:isHovering

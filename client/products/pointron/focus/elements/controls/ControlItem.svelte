@@ -65,8 +65,7 @@
           isBreakReminderMode
       },
       context !== SessionUIContext.FOCUS_PLAYER && {
-        "bg-ass1": control === Control.BREAK,
-        "bg-bgs4": control === Control.ABANDON,
+        "bg-ass1": control === Control.BREAK || control === Control.ABANDON,
         "bg-ags1": control === Control.RESUME,
         "bg-aps1":
           control === Control.START ||

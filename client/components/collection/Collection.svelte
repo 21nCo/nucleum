@@ -466,7 +466,8 @@
       appStore.runAction(Action.ADD_ITEM_TO_COLLECTION, {
         componentParams: {
           label: `Add to &nbsp; **${$collection.label}**`,
-          id: $collection.id
+          id: $collection.id,
+          resource: $collection.resource
         }
       });
     } else if (e.detail === "createNew" || e.detail === "createMultiple") {
@@ -482,7 +483,8 @@
       }
       setTimeout(() => {
         //TODO - collection resource type instead of node
-        appStore.runResourceAction(Resource.node, ResourceActionType.CREATE);
+        const resource = $collection.resource ?? Resource.node;
+        appStore.runResourceAction(resource, ResourceActionType.CREATE);
       }, 10);
     }
   }

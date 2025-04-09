@@ -68,6 +68,10 @@
   import { intersection } from "$lib/client/actions/intersection.action";
   import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
+  import {
+    resolveTimePeriodFilterForDay,
+    resolveTimePeriodFilterForMonth
+  } from "$lib/client/elements/datetime/datetime.utils";
   export let goalId: IRecordId | undefined = undefined;
   export let collectionId: IRecordId | undefined = undefined;
   export let accessPoint: ResourceAccessPoint | undefined = undefined;
@@ -183,29 +187,24 @@
     if (goalId) {
       filters = { ...filters, goalId: goalId.toString() };
     }
-    filters = { ...filters, date: resolveDateFilter() };
+    let dateFilter: any = undefined;
     if (selectedSubType === TaskSubTypeForSwitcher.BY_DATE) {
-      filters = { ...filters, date: selectedDate };
+      dateFilter = resolveTimePeriodFilterForDay(selectedDate);
     } else if (selectedSubType === TaskSubTypeForSwitcher.BY_MONTH) {
-      filters = {
-        ...filters,
-        date: {
-          type: "date",
-          groupBy: IResourceFilterDateGrouping.MONTH,
-          equals: selectedDate
-        }
-      };
+      dateFilter = resolveTimePeriodFilterForMonth(selectedDate);
+    } else {
+      dateFilter = resolveDateFilter();
     }
-    return filters;
+    return { ...filters, dateUnix: dateFilter };
 
     function resolveDateFilter() {
       if (dueDateFilter === TaskDueDateFilter.ALL) return undefined;
-      else if (dueDateFilter === TaskDueDateFilter.OVERDUE)
-        return {
-          type: "date",
-          lessThan: new Date()
-        };
-      else if (dueDateFilter === TaskDueDateFilter.WITHOUT_DUE_DATE)
+      else if (dueDateFilter === TaskDueDateFilter.OVERDUE) {
+        const day = new Date();
+        return resolveUnixTimestamp(
+          new Date(day.getFullYear(), day.getMonth(), day.getDate())
+        );
+      } else if (dueDateFilter === TaskDueDateFilter.WITHOUT_DUE_DATE)
         return false;
     }
   }

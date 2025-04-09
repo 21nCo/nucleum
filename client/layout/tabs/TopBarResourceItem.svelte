@@ -20,6 +20,7 @@
   import ComponentBaseLayer from "../layers/ComponentBaseLayer.svelte";
   import { rearrangeOnAxis } from "$lib/client/actions/rearrange.action";
   import { createEventDispatcher } from "svelte";
+  import { isValidString } from "$lib/shared/utils/text.utils";
   const dispatch = createEventDispatcher();
   export let item: IRecordId;
   let resource: any;
@@ -93,7 +94,7 @@
     {:else if action?.resourceLabelRenderer && resource}
       <svelte:component this={action.resourceLabelRenderer} item={resource} />
     {:else}
-      {resource?.label ?? "Untitled"}
+      {isValidString(resource?.label) ? resource?.label : "Untitled"}
     {/if}
   </div>
   {#if isHovering}

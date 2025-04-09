@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Size } from "../../types/size.enum";
   import { cn } from "../../utils/ui.utils";
-  export let size: Size.sm | Size.md | Size.lg | Size.xl = Size.md;
+  export let size: Size.sm | Size.md | Size.lg | Size.xl | Size.xs = Size.md;
 </script>
 
 <div
@@ -9,6 +9,7 @@
     "pb-80": size === Size.xl,
     "pb-60": size === Size.lg,
     "pb-40": size === Size.md,
-    "pb-20": size === Size.sm
+    "pb-20": size === Size.sm,
+    "pb-10": size === Size.xs
   })}
 />

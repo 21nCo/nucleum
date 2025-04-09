@@ -1,5 +1,4 @@
 import StorageSettings from "$lib/client/products/pointron/settings/data/StorageSettings.svelte";
-import SessionSettings from "$lib/client/products/pointron/settings/SessionSettings.svelte";
 import WidgetSettings from "$lib/client/products/pointron/settings/WidgetSettings.svelte";
 import TrackingSettings from "$lib/client/products/pointron/settings/targets/TrackingSettings.svelte";
 import Focus from "$lib/client/products/pointron/focus/Focus.svelte";
@@ -11,9 +10,7 @@ import {
   type IActionFnParams
 } from "$lib/client/types/action.type";
 import Journal from "$lib/client/products/pointron/journal/Journal.svelte";
-import AddTagModal from "$lib/client/products/pointron/tag/AddTagModal.svelte";
 import ImportAppData from "$lib/client/products/pointron/settings/ImportAppData/ImportAppData.svelte";
-import TagsList from "$lib/client/products/pointron/settings/tags/TagsList.svelte";
 import EditPresetView from "$lib/client/products/pointron/focus/advanced/presets/EditPresetModal.svelte";
 import PointronOnboarding from "$lib/client/products/pointron/base/PointronOnboarding.svelte";
 import ComposeByEndTimeModal from "$lib/client/products/pointron/focus/advanced/composition/ComposeByEndTimeModal.svelte";
@@ -21,8 +18,6 @@ import ComposeModal from "$lib/client/products/pointron/focus/advanced/compositi
 import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
 import PresetSaveConfirmationModal from "$lib/client/products/pointron/focus/advanced/presets/PresetSaveConfirmationModal.svelte";
 import SessionFinishedModal from "$lib/client/products/pointron/focus/elements/SessionFinishedModal.svelte";
-import EditTagModal from "$lib/client/products/pointron/tag/EditTagModal.svelte";
-import AnalyticsSettings from "$lib/client/products/pointron/settings/AnalyticsSettings.svelte";
 import Think from "$lib/client/products/pointron/focus/Think.svelte";
 import BackgroundMusic from "$lib/client/products/pointron/focus/backgroundMusic/BackgroundMusic.svelte";
 import { Size } from "$lib/client/types/size.enum";
@@ -260,32 +255,6 @@ export const pointronActions: IAction[] = [
     }
   },
   {
-    action: PointronAction.ADD_TAG,
-    component: AddTagModal,
-    type: ActionType.MODAL,
-    label: "Add Tag",
-    modalParams: {
-      title: "Add Tag",
-      isShowAsSheet: false,
-      layout: {
-        size: Size.xs
-      }
-    }
-  },
-  {
-    action: PointronAction.EDIT_TAG,
-    type: ActionType.MODAL,
-    isMeta: true,
-    component: EditTagModal,
-    modalParams: {
-      title: "Edit Tag",
-      isShowAsSheet: false,
-      layout: {
-        size: Size.xs
-      }
-    }
-  },
-  {
     action: PointronAction.IMPORT_APP_DATA,
     component: ImportAppData,
     type: ActionType.MODAL,
@@ -332,25 +301,9 @@ export const pointronActions: IAction[] = [
     icon: "history"
   },
   {
-    action: PointronAction.TAGS,
-    component: TagsList,
-    path: "cp/tags",
-    label: "Edit Tags",
-    icon: "tag",
-    type: ActionType.MODAL,
-    modalParams: {
-      title: "Edit Tags",
-      isShowAsSheet: false,
-      layout: {
-        secondaryAction: {
-          label: "Done"
-        }
-      }
-    }
-  },
-  {
     action: "journal",
     component: Journal,
+    isInactive: true,
     icon: "journal",
     label: "Journal",
     type: ActionType.PAGE
@@ -390,30 +343,11 @@ export const pointronActions: IAction[] = [
   //   label: "Goals"
   // },
   {
-    action: PointronAction.SESSION_SETTINGS_MODAL,
-    get cmdLabel() {
-      return this.modalParams?.title;
-    },
-    label: "Focus",
-    path: "cp/session",
-    icon: "ph:circle-light",
-    type: ActionType.MODAL,
-    component: SessionSettings,
-    modalParams: {
-      title: "Focus Settings",
-      layout: {
-        size: Size.lg,
-        primaryAction: {
-          label: "Done"
-        }
-      }
-    }
-  },
-  {
     action: "alerts",
     cmdLabel: "Alert Settings",
     label: "Alerts",
     path: "cp/alerts",
+    isInactive: true,
     icon: "bell",
     type: ActionType.PAGE,
     component: ComingSoonView
@@ -437,6 +371,7 @@ export const pointronActions: IAction[] = [
     get cmdLabel() {
       return this.modalParams?.title;
     },
+    isInactive: true,
     label: "Import / Export",
     path: "cp/importexport",
     icon: "data",
@@ -499,25 +434,12 @@ export const pointronActions: IAction[] = [
     },
     label: "Targets",
     path: "cp/targets",
+    isInactive: true,
     icon: "fire",
     type: ActionType.MODAL,
     component: TrackingSettings,
     modalParams: {
       title: "Target Settings"
-    }
-  },
-  {
-    action: "analytics-settings",
-    get cmdLabel() {
-      return this.modalParams?.title;
-    },
-    label: "Analytics",
-    path: "cp/analytic-settings",
-    icon: "ph:chart-line-up-light",
-    type: ActionType.MODAL,
-    component: AnalyticsSettings,
-    modalParams: {
-      title: "Analytics Settings"
     }
   },
   {
@@ -531,6 +453,7 @@ export const pointronActions: IAction[] = [
     action: PointronAction.BACKGROUND_MUSIC,
     label: "Background music",
     type: ActionType.MODAL,
+    isInactive: true,
     preCondition: isSessionRunningPreCondition,
     component: BackgroundMusic,
     modalParams: {

@@ -57,6 +57,15 @@ export function resolveTimePeriodFilterForDay(day: Date) {
   };
 }
 
+export function resolveTimePeriodFilterForMonth(day: Date) {
+  const localDay = new Date(day.getFullYear(), day.getMonth(), 1);
+  const end = new Date(localDay.getFullYear(), localDay.getMonth() + 1, 0);
+  return {
+    greaterThanOrEqual: resolveUnixTimestamp(localDay),
+    lessThanOrEqual: resolveUnixTimestamp(end)
+  };
+}
+
 export function calculateTimeSpan(
   start: Date,
   end: Date,

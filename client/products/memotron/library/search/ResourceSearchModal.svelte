@@ -46,11 +46,13 @@
       value: Resource.everything,
       icon: "ph:asterisk-light"
     },
-    ...searcheableResources.map((x) => ({
-      label: properCase(x),
-      value: x,
-      icon: resolveResourceIcon(x)
-    }))
+    ...searcheableResources
+      .filter((x) => !($view.isConstrainedWidth && x === Resource.task))
+      .map((x) => ({
+        label: properCase(x),
+        value: x,
+        icon: resolveResourceIcon(x)
+      }))
   ];
   onMount(async () => {
     inputRef?.focus();

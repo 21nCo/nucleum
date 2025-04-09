@@ -78,7 +78,7 @@
   {/if}
   <Button
     icon="settings"
-    tooltip="Session settings"
+    tooltip="Focus settings"
     {...buttonProps}
     on:click={() => {
       appStore.runAction(PointronAction.SESSION_SETTINGS_MODAL);

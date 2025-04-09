@@ -2,7 +2,9 @@
   import type { SessionComposition } from "$lib/client/types/pointron/sessionComposition.type";
   import PresetItem from "./PresetItem.svelte";
   import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
-  import { createEventDispatcher } from "svelte";
+  import { createEventDispatcher, onMount } from "svelte";
+  import { activeSession } from "../../session.store";
+  import { compareObjects } from "$lib/shared/utils/obj.utils";
   const dispatch = createEventDispatcher();
   export let parentBackgroundIndex = 1;
   export let isExpandedVariant: boolean = true;
@@ -11,13 +13,32 @@
   let selectedPreset: SessionComposition;
   function presetClickHandler(event: any) {
     selectedPreset = event.detail.preset;
-    selectedPresetIndex = $pointronPreferences.presets.indexOf(selectedPreset!);
+    selectedPresetIndex = resolveSelectedPresetIndex(selectedPreset);
     if (!isInEditMode) {
       dispatch("select", { preset: event.detail.preset });
       return;
     }
     // showEditor(selectedPreset.id);
     dispatch("edit", selectedPreset);
+  }
+
+  onMount(() => {
+    if (!isInEditMode) {
+      const index = resolveSelectedPresetIndex($activeSession.composition);
+      if (index !== -1) {
+        const isUnaltered = compareObjects(
+          $activeSession.composition,
+          $pointronPreferences.presets[index]
+        );
+        if (isUnaltered) {
+          selectedPresetIndex = index;
+        }
+      }
+    }
+  });
+
+  function resolveSelectedPresetIndex(preset: SessionComposition) {
+    return $pointronPreferences.presets.findIndex((x) => x.id === preset.id);
   }
 </script>
 
@@ -27,9 +48,9 @@
     "flex-row gap-2 overflow-x-auto": !isExpandedVariant
   })}
 > -->
-{#each $pointronPreferences.presets as preset, index}
+{#each $pointronPreferences.presets as preset, index (preset.id)}
   <PresetItem
-    {preset}
+    preset={{ ...preset }}
     {parentBackgroundIndex}
     {isInEditMode}
     {isExpandedVariant}

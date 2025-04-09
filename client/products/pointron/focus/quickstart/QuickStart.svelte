@@ -122,7 +122,7 @@
       bind:query={searchInput}
       isPadded={true}
       on:search={onSearch}
-      placeholder="Search for a goal"
+      placeholder="Search for any goal to quick focus"
     />
     <!-- <div class="mo:p-0 px-3">
       <TagsContainer
@@ -169,6 +169,9 @@
         isPreventMinWidth={true}
         on:click={() => (isInEditMode = !isInEditMode)}
       />
+    </div>
+    <div class="flex justify-center text-b2 text-fgs3">
+      {$context.isTouchDevice ? "Tap" : "Click"} on a goal to start focusing
     </div>
     <ScrollViewBottomSpacer />
   {:else}

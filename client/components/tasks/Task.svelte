@@ -9,15 +9,18 @@
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { Resource } from "../flux/resourceStores/resource.enum";
   import { recentsStore } from "../record/recent.store";
+  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
 
   export let id: IRecordId;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
+  let isRefreshing = false;
   let task: ITaskThumb | undefined = undefined;
 
   onMount(async () => {
     await refresh();
   });
   async function refresh() {
+    isRefreshing = true;
     const result = await taskStore.selectMany(
       {
         filters: {
@@ -35,10 +38,15 @@
         timestamp: new Date()
       });
     }
+    isRefreshing = false;
   }
 </script>
 
-{#if task}
+{#if isRefreshing}
+  <div class="w-80 h-20">
+    <EmptyStatusView isLoadingState={isRefreshing} />
+  </div>
+{:else if task}
   <div class="my-auto userdata ph-no-capture">
     <TaskThumbnail item={task} {accessPoint} />
   </div>

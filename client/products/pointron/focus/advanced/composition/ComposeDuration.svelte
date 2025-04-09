@@ -31,13 +31,7 @@
   export let isShowSave: boolean = false;
   let isTargetFocus: boolean =
     composition.type === SessionCompositionType.TARGET_FOCUS;
-  $: if (isTargetFocus) {
-    composition.type = SessionCompositionType.TARGET_FOCUS;
-  } else {
-    if (composition.type == SessionCompositionType.TARGET_FOCUS) {
-      composition.type = SessionCompositionType.TOTAL_DURATION;
-    }
-  }
+
   let selectedType: string =
     composition.type === SessionCompositionType.POMODORO
       ? "Pomodoro"
@@ -196,7 +190,7 @@
             <DurationInput
               bind:value={composition.focusDuration}
               label={{
-                label: "Focus duration",
+                label: "Focus target duration",
                 orientation: Orientation.Vertical
               }}
               on:change
@@ -207,8 +201,17 @@
             label={{
               label: "Adjust end time until target is reached",
               tooltip: {
-                body: "If you take breaks in between, the end time will be auto adjusted until you reach the target duration entered above. Turn this off to keep the end time fixed."
+                body: "Once you start the session, if you take breaks in between, the end time will be auto adjusted until you reach the target duration entered above. Turn this off to keep the end time fixed."
               }
+            }}
+            on:change={(e) => {
+              if (e?.detail) {
+                composition.type = SessionCompositionType.TARGET_FOCUS;
+                composition.focusDuration = composition.totalDuration;
+              } else {
+                composition.type = SessionCompositionType.TOTAL_DURATION;
+              }
+              dispatch("change", composition);
             }}
           />
           <Divider />

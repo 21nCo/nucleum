@@ -19,7 +19,11 @@
   import FocusItem from "../../focus/elements/focusitem/FocusItem.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import { formatTime, isSameDateTime } from "$lib/client/utils/time.utils";
+  import {
+    formatDatetime,
+    formatTime,
+    isSameDateTime
+  } from "$lib/client/utils/time.utils";
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   import { sessionStore } from "../../focus/session.store";
   import type { ITaskThumb } from "$lib/client/components/tasks/task.type";
@@ -29,6 +33,7 @@
   import { goalStore } from "$lib/client/components/goals/goal.store";
   import { taskStore } from "$lib/client/components/tasks/task.store";
   import view from "$lib/client/stores/view.store";
+  import { SessionType } from "../log.type";
 
   export let id: string;
   export let log: any = undefined;
@@ -96,6 +101,12 @@
           <b>{formatTime($userPreferences, new Date(log.endUnix))}.</b>
         </span>
       </InlineInfoBanner>
+    {/if}
+    {#if log.type === SessionType.MANUAL_ENTRY && log.modifiedAt}
+      <span class="text-fgs2 text-b2">
+        This session was created from a manual entry at
+        <b>{formatDatetime($userPreferences, new Date(log.modifiedAt))}</b>
+      </span>
     {/if}
     <div class="flex flex-col gap-6 w-full flex-grow items-center">
       <div>

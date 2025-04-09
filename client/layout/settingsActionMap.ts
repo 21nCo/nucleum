@@ -17,6 +17,9 @@ import { Embed, OperatingSystem } from "../types/context.type";
 import SyncSettings from "../components/settings/sync/SyncSettings.svelte";
 import TacoSettings from "../components/settings/taco/TacoSettings.svelte";
 import { UserDataMode } from "../types/account.type";
+import AnalyticsSettings from "../products/pointron/settings/AnalyticsSettings.svelte";
+import { PointronAction } from "../types/pointron/pointronAction.enum";
+import SessionSettings from "../products/pointron/settings/SessionSettings.svelte";
 
 const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
   {
@@ -68,6 +71,40 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
       layout: {
         size: Size.lg
       }
+    }
+  },
+  {
+    action: PointronAction.SESSION_SETTINGS_MODAL,
+    get cmdLabel() {
+      return this.modalParams?.title;
+    },
+    label: "Focus",
+    path: "cp/session",
+    icon: "ph:circle-light",
+    type: ActionType.MODAL,
+    component: SessionSettings,
+    modalParams: {
+      title: "Focus Settings",
+      layout: {
+        size: Size.lg,
+        primaryAction: {
+          label: "Done"
+        }
+      }
+    }
+  },
+  {
+    action: "analytics-settings",
+    get cmdLabel() {
+      return this.modalParams?.title;
+    },
+    label: "Analytics",
+    path: "cp/analytic-settings",
+    icon: "ph:chart-line-up-light",
+    type: ActionType.MODAL,
+    component: AnalyticsSettings,
+    modalParams: {
+      title: "Analytics Settings"
     }
   },
   {

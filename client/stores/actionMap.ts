@@ -602,6 +602,7 @@ export const globalActions: IAction[] = [
     component: ResourceBrowser,
     label: "Tags",
     icon: "ph:tag-light",
+    isInactive: true,
     type: ActionType.PAGE,
     componentParams: {
       resource: Resource.tag
@@ -610,22 +611,22 @@ export const globalActions: IAction[] = [
   {
     action: Action.ADD_ITEM_TO_COLLECTION,
     type: ActionType.SEARCH_CMD,
-    cmdLabel: "Add node to collection",
+    cmdLabel: "Add to collection",
     isMeta: true,
     searchActionParams: {
-      placeholder: "select a node",
+      placeholder: "select an item to add to this collection",
       searchResultComponent: LinkSearchResultItem,
       searchCallback: async (query: string, componentParams?: any) => {
-        //TODO - resource.type based on collection resource type
-        const searchStore = new SearchStore(Resource.node);
+        const resource = componentParams?.resource ?? Resource.node;
+        const searchStore = new SearchStore(resource);
         if (isValidString(query)) {
           return searchStore.select({
-            resource: Resource.node,
+            resource,
             searchQuery: query,
             limit: 50
           });
         } else {
-          return recentsStore.resolve({ type: Resource.node });
+          return recentsStore.resolve({ type: resource });
         }
       },
       callback: async (id: string, label?: string, componentParams?: any) => {

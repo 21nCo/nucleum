@@ -29,6 +29,8 @@
   import type { IActiveGoal } from "./goal.type";
   import GoalAnalytics from "./GoalAnalytics.svelte";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
+  import type { IRecordId } from "$lib/client/types/data.type";
+  import { toasts } from "$lib/client/stores/notification.store";
   export let id: string;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   export let accessMode: ResourceAccessMode = ResourceAccessMode.POP;
@@ -47,8 +49,10 @@
 
   onMount(() => {
     const editSearchParam = $page.url.searchParams.get(AppSearchParam.EDIT);
+    const linkSearchParam = $page.url.searchParams.get(AppSearchParam.LINK);
     goal.init(accessMode, {
-      isInEditMode: editSearchParam === "true"
+      isInEditMode: editSearchParam === "true",
+      linkSearchParam: linkSearchParam ?? undefined
     });
     const pageSub = page.subscribe((page) => {
       const tab = resolveTabParam();

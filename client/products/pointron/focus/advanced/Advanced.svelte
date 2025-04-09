@@ -18,7 +18,7 @@
 
 <div class="relative flex flex-col w-full h-full p-4">
   <div class="flex justify-between w-full">
-    <Text style={TextStyle.PANEL_HEADING} content="Advanced" />
+    <Text style={TextStyle.PANEL_HEADING} content="Advanced focus" />
     <!-- <TopBarActions {isExpandedMode} /> -->
   </div>
   {#if !isExpandedMode}
