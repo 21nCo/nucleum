@@ -18,11 +18,16 @@
     await refresh();
   });
   async function refresh() {
-    const result = await taskStore.selectMany({
-      filters: {
-        id: id?.toString()
+    const result = await taskStore.selectMany(
+      {
+        filters: {
+          id: id?.toString()
+        }
+      },
+      {
+        isExpand: true
       }
-    });
+    );
     if (isValidArrayWithData(result)) {
       task = result[0];
       recentsStore.add(task, {

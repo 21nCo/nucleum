@@ -55,7 +55,9 @@
     const groups = new Map<string, ITaskThumb[]>();
 
     tasks.forEach((task) => {
-      const dateKey = task.date ? formatDate(task.date)! : "No Date";
+      const dateKey = task.dateUnix
+        ? formatDate(new Date(task.dateUnix))!
+        : "No Date";
       if (!groups.has(dateKey)) {
         groups.set(dateKey, []);
       }

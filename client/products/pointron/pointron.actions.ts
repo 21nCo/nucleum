@@ -186,7 +186,7 @@ export const pointronActions: IAction[] = [
   },
   //TODO - Disabling sheet due to issues with stores not being present.
   {
-    action: PointronAction.MANUAL_FOCUS_ENTRY_POP,
+    action: PointronAction.MANUAL_FOCUS_ENTRY,
     component: ManualLogPane,
     get label() {
       return this.modalParams?.title;
@@ -394,13 +394,15 @@ export const pointronActions: IAction[] = [
     get cmdLabel() {
       return this.modalParams?.title;
     },
-    label: "Session",
+    label: "Focus",
     path: "cp/session",
+    icon: "ph:circle-light",
     type: ActionType.MODAL,
     component: SessionSettings,
     modalParams: {
-      title: "Session Settings",
+      title: "Focus Settings",
       layout: {
+        size: Size.lg,
         primaryAction: {
           label: "Done"
         }
@@ -511,7 +513,7 @@ export const pointronActions: IAction[] = [
     },
     label: "Analytics",
     path: "cp/analytic-settings",
-    icon: "chart",
+    icon: "ph:chart-line-up-light",
     type: ActionType.MODAL,
     component: AnalyticsSettings,
     modalParams: {
@@ -692,9 +694,13 @@ export const pointronActions: IAction[] = [
           variant: ButtonVariant.DANGER,
           callback: async () => {
             const response = await sessionStore.delete(
-              params?.componentParams?.id
+              params?.componentParams?.id,
+              {
+                context: PointronAction.DELETE_SESSION
+              }
             );
             const sessionLogs = await sessionLogStore.selectMany({
+              properties: ["id"],
               filters: {
                 sessionId: params?.componentParams?.id?.toString()
               }

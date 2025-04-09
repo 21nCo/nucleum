@@ -31,6 +31,7 @@ import { flux } from "$lib/client/components/flux/flux";
 import {
   StoreDataType,
   type IRecordId,
+  type IResourceSelectAdditionalParams,
   type IResourceSelectParams
 } from "$lib/client/types/data.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
@@ -68,11 +69,14 @@ class CollectionStore extends ResourceStore<ICollection> {
     this.collectibleResource = resolveCollectionResource(get(appStore).product);
   }
 
-  selectMany(params?: IResourceSelectParams, additionalParams?: any) {
+  selectMany(
+    params?: IResourceSelectParams,
+    additionalParams?: IResourceSelectAdditionalParams
+  ) {
     this.refreshCollectibleResource();
+    const expandedProps = ["*", "typeToExtend.* as typeToExtend"];
     const properties = [
-      "*",
-      "typeToExtend.* as typeToExtend",
+      ...(additionalParams?.isExpand ? expandedProps : []),
       ...(params?.properties ?? [])
     ];
     const filters = {
@@ -187,17 +191,20 @@ class CollectionStore extends ResourceStore<ICollection> {
         }
       ];
     }
-    const result = await this.selectMany({
-      properties: [
-        "*",
-        "typeToExtend.* as typeToExtend",
-        "(select * from $parent.properties) as properties",
-        "(select * from $parent.typeToExtend.properties) as extendProperties"
-      ],
-      filters: {
-        id: collections.map((x) => x.toString())
+    const result = await this.selectMany(
+      {
+        properties: [
+          "(select * from $parent.properties) as properties",
+          "(select * from $parent.typeToExtend.properties) as extendProperties"
+        ],
+        filters: {
+          id: collections.map((x) => x.toString())
+        }
+      },
+      {
+        isExpand: true
       }
-    });
+    );
     logger.log({ at: "resolveTypes", result });
     if (!result || !Array.isArray(result)) return types;
     types = result.filter((x) => x.type === CollectionType.TYPED);

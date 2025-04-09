@@ -19,6 +19,7 @@
   import { performApiCall } from "$lib/client/utils/network.utils";
   import { Action } from "$lib/client/types/action.enum";
   import { ButtonStyle } from "$lib/client/types/button.type";
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
   export let isSignup = false;
   let email = "";
   let pass = "";
@@ -31,7 +32,9 @@
     postMessageToParent(EmbedMessage.MOUNT);
     const isSignupQueryParam = $page.url.searchParams.get("signup");
     if (isSignupQueryParam && isSignupQueryParam === "true") isSignup = true;
-    const isLoginFromExtensionParam = $page.url.searchParams.get("ext");
+    const isLoginFromExtensionParam = $page.url.searchParams.get(
+      AppSearchParam.EXT
+    );
     if (isLoginFromExtensionParam && isLoginFromExtensionParam === "true") {
       isLoginFromExtension = true;
       console.log("isLoginFromExtension", isLoginFromExtension);

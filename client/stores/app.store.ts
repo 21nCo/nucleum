@@ -1,6 +1,9 @@
 import { get, writable } from "svelte/store";
 import { AppSkin } from "$lib/client/types/appearance.type";
-import type { IAppStore } from "$lib/client/types/appStore.type";
+import {
+  AppSearchParam,
+  type IAppStore
+} from "$lib/client/types/appStore.type";
 import type { DragAndDrop } from "$lib/client/types/draganddrop.type";
 import { DragStatus } from "$lib/client/types/dragstatus.enum";
 import blankJson from "$lib/client/data/blank.json";
@@ -147,7 +150,14 @@ export const appConstants = {
   tempColorSchemes
 };
 
-const resourceSpecificSearchParams = ["edit", /-type$/, "popAt"];
+const recordSpecificSearchParams = [
+  /-type$/,
+  /-tab$/,
+  AppSearchParam.EDIT,
+  AppSearchParam.POP_AT,
+  AppSearchParam.FSPLIT_AT,
+  AppSearchParam.FULL_AT
+];
 
 export const appStore = initAppStore({
   product: Product.NUCLEUS,
@@ -394,7 +404,7 @@ function initAppStore(seed: IAppStore) {
         ? import.meta.env?.VITE_HOST
         : window.location.hostname;
     const redirect = ctx.isEmbed
-      ? (import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host)
+      ? import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host
       : window.location.origin;
     // const origin = window.location.origin;
     const guestPartForState = guest ?? (await getDapId()) ?? "";
@@ -473,7 +483,9 @@ function initAppStore(seed: IAppStore) {
    * @returns
    */
   const toggleSearchParam = (
-    params: Record<string, string | boolean | number> | (string | RegExp)[],
+    params:
+      | Record<string, string | boolean | number | null>
+      | (string | RegExp)[],
     additional?: {
       isPreventRefresh?: boolean;
       url?: URL;
@@ -497,7 +509,8 @@ function initAppStore(seed: IAppStore) {
     }
     if (typeof params !== "object") return;
     Object.entries(params).forEach(([key, value]) => {
-      url.searchParams.set(key, value.toString());
+      if (value === null) url.searchParams.delete(key);
+      else url.searchParams.set(key, value.toString());
     });
     if (!additional?.isPreventRefresh) appStore.gotoPath(url.href);
     return url;
@@ -614,7 +627,7 @@ function initAppStore(seed: IAppStore) {
 
     if (!params?.searchParams) {
       url =
-        toggleSearchParam(resourceSpecificSearchParams, {
+        toggleSearchParam(recordSpecificSearchParams, {
           isPreventRefresh: true,
           url
         }) ?? url;
@@ -709,7 +722,7 @@ function initAppStore(seed: IAppStore) {
     inlineRestoreId?: IRecordId;
   }) => {
     const url =
-      toggleSearchParam(resourceSpecificSearchParams, {
+      toggleSearchParam(recordSpecificSearchParams, {
         isPreventRefresh: true
       }) ?? new URL(window.location.href);
     if (props?.accessMode) {

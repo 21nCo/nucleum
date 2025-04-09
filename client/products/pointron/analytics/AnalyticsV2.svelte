@@ -17,17 +17,22 @@
   import {
     onAddPageClicked,
     onPagelabelChange,
-    onRemovePageClicked
+    onRemovePageClicked,
+    onPageRearrange
   } from "./analytics.utils";
   import context from "$lib/client/stores/context.store";
   import { Embed } from "$lib/client/types/context.type";
   import { postToParent } from "$lib/client/utils/embed.utils";
   import { confirmationNotification } from "$lib/client/stores/notification.store";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import { uiStateDerived } from "$lib/client/stores/uiState/uiState.store";
+  import {
+    uiState,
+    uiStateDerived
+  } from "$lib/client/stores/uiState/uiState.store";
   import { isTextElement } from "$lib/client/utils/browser.utils";
+  import { UIState } from "$lib/client/stores/uiState/uiState.type";
 
-  $selectedPageId = $analyticsConfigStore.pages[0]?.id;
+  $selectedPageId = resolvePageSelection();
   onMount(async () => {
     if ($context.embed == Embed.HANDSET) {
       postToParent({ bg: 2 });
@@ -42,6 +47,21 @@
           return { label: page.label, value: page.id };
         })
       : [];
+
+  function onPageSwitch(e: CustomEvent<string>) {
+    uiState.setState(UIState.analyticsPage, e.detail, {
+      isProductScoped: true,
+      isDeviceScoped: true
+    });
+  }
+
+  function resolvePageSelection() {
+    const pageState = uiState.getState(UIState.analyticsPage, {
+      isProductScoped: true,
+      isDeviceScoped: true
+    });
+    return pageState ?? $analyticsConfigStore.pages[0]?.id;
+  }
 </script>
 
 <div class="flex flex-col w-full h-full mo:bg-bgs2">
@@ -92,9 +112,11 @@
               isInEditMode={$isInEditMode}
               isShowNumberShortcut={$uiStateDerived.isShowHotKeyHints}
               bind:value={$selectedPageId}
+              on:switch={onPageSwitch}
               on:add={onAddPageClicked}
               on:remove={onRemovePageClicked}
               on:debouncedChange={onPagelabelChange}
+              on:rearrange={onPageRearrange}
             />
           </div>
           <div class="flex items-center gap-2 ml-auto">

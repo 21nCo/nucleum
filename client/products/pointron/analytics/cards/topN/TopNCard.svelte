@@ -11,7 +11,7 @@
   import { isValidString } from "$lib/shared/utils/text.utils";
   import {
     AnalyticsCardGrouping,
-    type AnalyticsCard,
+    type IAnalyticsCard,
     type AnalyticsDataRecord,
     type TopNCardDataRecord
   } from "../../analytics.types";
@@ -19,7 +19,7 @@
   import PreviousValueColumnCell from "./PreviousValueColumnCell.svelte";
   import ValueColumnCell from "./ValueColumnCell.svelte";
 
-  export let card: AnalyticsCard;
+  export let card: IAnalyticsCard;
   export let data: AnalyticsDataRecord[];
   export let previousTimePeriodData: AnalyticsDataRecord[] = [];
   export let goalColors: { label: string; color: number }[] = [];
@@ -28,9 +28,7 @@
   calculate();
 
   function resolveKey(record: AnalyticsDataRecord) {
-    return card.grouping === AnalyticsCardGrouping.TOP_LEVEL_GOALS
-      ? record.topLevelGoal
-      : record.goal;
+    return card.isGroupByTopLevelGoals ? record.topLevelGoal : record.goal;
   }
 
   function resolveGoalColor(goal: string) {

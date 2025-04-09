@@ -26,7 +26,6 @@ import type {
   ResourceStore
 } from "$lib/client/components/flux/resourceStores/resource.store";
 import { appStore } from "$lib/client/stores/app.store";
-import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
 import { linker } from "$lib/client/products/memotron/linking/link.store";
 import {
   highlightSearchQuery,
@@ -41,6 +40,7 @@ import { Action } from "$lib/client/types/action.enum";
 import { localCacheableStores, remoteOnlyStores } from "$local/localStoresMap";
 import { searcheableResources } from "$local/local";
 import { taskStore } from "../tasks/task.store";
+import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
 
 export const MAX_FILE_SIZE_MB = 100;
 
@@ -233,7 +233,8 @@ export class SearchStore {
             }
             this.setResourceStore(resource);
             const result = await this.resourceStore?.selectMany(selectParams, {
-              isIncludeSubItems: params.isIncludeSubItems
+              isIncludeSubItems: params.isIncludeSubItems,
+              isExpand: true
             });
             return Array.isArray(result) ? result : [];
           })
@@ -242,7 +243,8 @@ export class SearchStore {
     } else {
       this.setResourceStore(this.resource);
       data = await this.resourceStore?.selectMany(selectParams, {
-        isIncludeSubItems: params.isIncludeSubItems
+        isIncludeSubItems: params.isIncludeSubItems,
+        isExpand: true
       });
     }
     if (isValidArray(data)) {
@@ -714,7 +716,7 @@ export class BulkEditor {
               items,
               {
                 isChecked: true,
-                completedAt: new Date()
+                completedAtUnix: resolveUnixTimestamp()
               },
               additionalParams
             );

@@ -6,7 +6,10 @@
   import ComponentResolver from "$lib/client/layout/paint/ComponentResolver.svelte";
   import type { IAction } from "$lib/client/types/action.type";
   import { onMount } from "svelte";
-  import type { IAppStore } from "$lib/client/types/appStore.type";
+  import {
+    AppSearchParam,
+    type IAppStore
+  } from "$lib/client/types/appStore.type";
   import { appStore } from "$lib/client/stores/app.store";
   import { isValidArray, sortArrayByOrder } from "$lib/shared/utils/obj.utils";
   import ProfileCpSection from "./account/ProfileCPSection.svelte";
@@ -60,7 +63,7 @@
       parentBackgroundIndex={2}
       on:click={() => {
         appStore.toggleSearchParam({
-          setting: Action.ACCOUNT
+          [AppSearchParam.SETTING]: Action.ACCOUNT
         });
       }}
     />
@@ -90,7 +93,7 @@
                     width="w-40"
                     on:click={() => {
                       appStore.toggleSearchParam({
-                        setting: item
+                        [AppSearchParam.SETTING]: item
                       });
                     }}
                   />

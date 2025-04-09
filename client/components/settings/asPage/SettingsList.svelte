@@ -5,6 +5,7 @@
   import SettingThumbnail from "../SettingThumbnail.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { ActionType } from "$lib/client/types/action.type";
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
   export let items: string[] = [];
   export let sectionName: string;
   export let orientation: Orientation = Orientation.Horizontal;
@@ -19,7 +20,7 @@
     // else appStore.gotoPath("/cp/" + item);
     else
       appStore.toggleSearchParam({
-        setting: item
+        [AppSearchParam.SETTING]: item
       });
   }
 </script>

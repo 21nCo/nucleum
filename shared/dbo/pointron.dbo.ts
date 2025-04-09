@@ -186,7 +186,7 @@ function analyticsGoalV3() {
 }
 
 function pointronExport() {
-  const def = `define function fn::pointron::export(){
+  const def = `define function if not exists fn::pointron::export(){
     let $kv = select * from kv;
     let $tz = select * from tz;
     let $targets = select * from PointTarget;
@@ -200,7 +200,7 @@ function pointronExport() {
 }
 
 function pointronImport() {
-  const def = `define function fn::pointron::import($tags: any, $goals: any, $targets: any, $kv: any, $tz: any, $fileName: string){
+  const def = `define function if not exists fn::pointron::import($tags: any, $goals: any, $targets: any, $kv: any, $tz: any, $fileName: string){
     let $import = array::first(create import set created = time::now(), app = 'pointron', source= 'self', fileName= $fileName);
     let $insertedTags = insert into PointTag select *, $import.id as importId from $tags;
     let $insertedGoals = insert into PointGoal select *, $import.id as importId from $goals;
@@ -213,7 +213,7 @@ function pointronImport() {
 }
 
 function pointronImportChunk() {
-  const def = `define function fn::pointron::importChunk($sessions: any, $logs: any, $importId: record){
+  const def = `define function if not exists fn::pointron::importChunk($sessions: any, $logs: any, $importId: record){
     let $insertedSessions = insert into PointSession select *, $importId as importId from $sessions;
     let $insertedLogs = insert into PointLog select *, $importId as importId from $logs;
     return {importId: $importId, insertedSessions: $insertedSessions, insertedLogs: $insertedLogs}
@@ -222,7 +222,7 @@ function pointronImportChunk() {
 }
 
 function pointronRevertImport() {
-  const def = `define function fn::pointron::revertImport($importId: record){
+  const def = `define function if not exists fn::pointron::revertImport($importId: record){
     delete from PointLog where importId = $importId;
     delete from PointGoal where importId = $importId;
     delete from PointSession where importId = $importId;

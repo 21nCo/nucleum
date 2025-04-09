@@ -40,6 +40,7 @@ export function resolveDboUpdateQuery(dbo: string[]) {
     ...pointronDboDefinitions,
     ...memotronDboDefinitions
   };
+  dbo = [...dbo, ...Object.keys(globalDbo)];
 
   const updates = dbo
     .map((dependency) => functions[dependency])
@@ -55,6 +56,7 @@ export function resolveDboUpdateQuery(dbo: string[]) {
 }
 
 /**
+ * @deprecated use {@link time.utils.resolveUnixTimestamp} instead
  * This is uniform with Surreal time::unix() - for cache invalidation etc
  * @returns current timestamp in unix
  */
@@ -502,6 +504,8 @@ function generateWhereClause(
         conditions.push(
           `${key} NOT IN [${value.notIn.map(formatValue).join(", ")}]`
         );
+      } else if ("contains" in value) {
+        conditions.push(`${key} CONTAINS ${formatValue(value.contains)}`);
       }
     } else if (typeof value === "boolean") {
       if (value === true) {

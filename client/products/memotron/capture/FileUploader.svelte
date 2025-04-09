@@ -21,6 +21,7 @@
   import { resolveMultipleFilesData } from "./capture.utils";
   import { createEventDispatcher } from "svelte";
   import { clipboard, type IActiveCaptureStore } from "./capture.store";
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
   export let captureStore: IActiveCaptureStore;
   const dispatch = createEventDispatcher();
 
@@ -114,7 +115,7 @@
     });
     appStore.runAction(MemotronAction.CAPTURE_SECONDARY, {
       searchParams: {
-        clipboard: true
+        [AppSearchParam.CLIPBOARD]: true
       },
       componentParams: {
         captureId: $captureStore.id

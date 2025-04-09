@@ -34,6 +34,7 @@
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
   import { generateResourceId } from "$lib/shared/utils/surreal.utils";
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
   export let event: ClipboardEvent;
   let id = generateResourceId(Resource.capture);
   let captureStore: IActiveCaptureStore = ActiveCaptureStore.resolve(id);
@@ -177,7 +178,7 @@
       resourceAction(Resource.node, ResourceActionType.CREATE),
       {
         searchParams: {
-          clipboard: true
+          [AppSearchParam.CLIPBOARD]: true
         },
         componentParams: {
           captureId: id

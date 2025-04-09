@@ -31,24 +31,13 @@
     class="flex-1 flex flex-col items-start gap-3 p-4 rounded bg-bgs2 hover:bg-bgs3 transition-colors h-fit justify-between"
   >
     <div class="text-b2 font-medium">
-      {formatTime(new Date(session.start))} - {formatTime(
-        new Date(session.end)
+      {formatTime(new Date(session.startUnix))} - {formatTime(
+        new Date(session.endUnix)
       )}
     </div>
     <div class="flex flex-col gap-6 w-full">
       {#each logs as log}
         <div class="flex items-center justify-between w-full">
-          {#if log.task}
-            <button
-              on:click={(e) => {
-                e.stopPropagation();
-                appStore.resourceClickHandler(e, log.task.id);
-              }}
-              class="text-b2 notouch:hover:underline"
-            >
-              {log.task.label}
-            </button>
-          {/if}
           <div class="flex flex-col gap-2">
             <div class="flex h-1 w-48">
               {#if log.focus}
@@ -80,6 +69,17 @@
               {/if}
             </div>
           </div>
+          {#if log.task}
+            <button
+              on:click={(e) => {
+                e.stopPropagation();
+                appStore.resourceClickHandler(e, log.task.id);
+              }}
+              class="text-b2 notouch:hover:underline"
+            >
+              {log.task.label}
+            </button>
+          {/if}
         </div>
       {/each}
     </div>

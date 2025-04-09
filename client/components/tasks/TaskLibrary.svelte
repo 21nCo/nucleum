@@ -46,7 +46,10 @@
   import { toasts } from "$lib/client/stores/notification.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { resourceAction } from "../flux/resourceStores/resource.utils";
+  import {
+    removeDuplicatesFilter,
+    resourceAction
+  } from "../flux/resourceStores/resource.utils";
   import { ButtonVariant, ButtonStyle } from "$lib/client/types/button.type";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
@@ -63,7 +66,8 @@
   import { OptionSelectorStyle } from "$lib/client/types/select.type";
   import { LoadingAnimationType } from "$lib/client/types/feedback.type";
   import { intersection } from "$lib/client/actions/intersection.action";
-
+  import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
   export let goalId: IRecordId | undefined = undefined;
   export let collectionId: IRecordId | undefined = undefined;
   export let accessPoint: ResourceAccessPoint | undefined = undefined;
@@ -98,8 +102,8 @@
 
     const pageSub = page.subscribe(async (p) => {
       const subResourceParam = goalId
-        ? p.url.searchParams.get(`${instance}-type`)
-        : p.url.searchParams.get("type");
+        ? p.url.searchParams.get(`${instance}-${AppSearchParam.TYPE}`)
+        : p.url.searchParams.get(AppSearchParam.TYPE);
       let isRefreshNeeded = false;
       if (subResourceParam && subResourceParam !== selectedSubType) {
         selectedSubType = (subResourceParam as SubType) ?? "all";
@@ -108,7 +112,7 @@
         isRefreshNeeded = true;
       }
 
-      if (p.url.searchParams.get("archived")) {
+      if (p.url.searchParams.get(AppSearchParam.ARCHIVED)) {
         isArchivedFilterSelected = true;
         isRefreshNeeded = true;
       } else if (isArchivedFilterSelected) {
@@ -123,7 +127,10 @@
     };
   });
 
-  async function refresh(params?: { isPagination?: boolean }) {
+  async function refresh(params?: {
+    isPagination?: boolean;
+    scrollToDate?: boolean;
+  }) {
     if (!params?.isPagination) {
       isRefreshing = true;
       tasks = [];
@@ -149,12 +156,14 @@
           return x.date && compareDates(x.date, new Date(), "<");
         });
       }
-      if (params?.isPagination) tasks = [...tasks, ...result];
+      if (params?.isPagination)
+        tasks = [...tasks, ...result].filter(removeDuplicatesFilter);
       else tasks = [...result];
     } else {
       tasks = [];
     }
     isRefreshing = false;
+    if (params?.scrollToDate) scrollToDate();
   }
 
   function resolveBaseFilters() {
@@ -217,7 +226,7 @@
     if (!label) return;
     const task = await taskStore.save({
       label,
-      date: resolveDateForNewTask(),
+      dateUnix: resolveUnixTimestamp(resolveDateForNewTask()),
       isChecked: false,
       goalId: goalId,
       collection: collectionId
@@ -261,6 +270,16 @@
     if (goalId) return goalId.toString();
     else if (collectionId) return collectionId.toString();
     return undefined;
+  }
+
+  function scrollToDate() {
+    try {
+      setTimeout(() => {
+        if (taskRecordsRef) taskRecordsRef.scrollToDate(selectedDate);
+      }, 100);
+    } catch (e) {
+      console.error("Failed to scroll to date", e);
+    }
   }
 </script>
 
@@ -310,12 +329,14 @@
         label={{ label: "Hide completed tasks" }}
         on:change={() => refresh()}
       />
-      <SwitchInput
-        bind:checked={isHideGoalTasksFilterSelected}
-        isExpanded={true}
-        label={{ label: "Hide tasks with a goal" }}
-        on:change={() => refresh()}
-      />
+      {#if !goalId}
+        <SwitchInput
+          bind:checked={isHideGoalTasksFilterSelected}
+          isExpanded={true}
+          label={{ label: "Hide tasks with a goal" }}
+          on:change={() => refresh()}
+        />
+      {/if}
     </div>
   {/if}
 
@@ -336,8 +357,7 @@
               onDateChange: (val) => {
                 selectedDate = val;
                 viewDate = selectedDate;
-                taskRecordsRef?.scrollToDate(selectedDate);
-                refresh();
+                refresh({ scrollToDate: true });
                 hidePopover();
               }
             }
@@ -364,8 +384,7 @@
         on:change={(e) => {
           selectedDate = e.detail;
           viewDate = selectedDate;
-          refresh();
-          taskRecordsRef?.scrollToDate(selectedDate);
+          refresh({ scrollToDate: true });
         }}
       />
     </div>

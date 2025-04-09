@@ -3,6 +3,7 @@ import { ResourceStore } from "$lib/client/components/flux/resourceStores/resour
 import {
   StoreDataType,
   type IRecordId,
+  type IResourceSelectAdditionalParams,
   type IResourceSelectParams
 } from "$lib/client/types/data.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
@@ -31,16 +32,20 @@ import context from "$lib/client/stores/context.store";
 import { Embed } from "$lib/client/types/context.type";
 import view from "$lib/client/stores/view.store";
 import { collectionStore } from "../collection/collection.store";
+import { AppSearchParam } from "$lib/client/types/appStore.type";
 
 class GoalStore extends ResourceStore<IGoal> {
   constructor() {
     super(Resource.goal);
   }
 
-  selectMany(params?: IResourceSelectParams, additionalParams?: any) {
+  selectMany(
+    params?: IResourceSelectParams,
+    additionalParams?: IResourceSelectAdditionalParams
+  ) {
+    const expandedProps = ["*", "(select * from $parent.parent) as parent"];
     const properties = [
-      "*",
-      "(select * from $parent.parent) as parent",
+      ...(additionalParams?.isExpand ? expandedProps : []),
       ...(params?.properties ?? [])
     ];
     const filters = {
@@ -49,10 +54,12 @@ class GoalStore extends ResourceStore<IGoal> {
         params?.filters && "type" in params.filters && params?.filters?.type
           ? params.filters.type?.toUpperCase()
           : undefined,
-      parent:
-        params?.search ||
-        additionalParams?.isIncludeSubItems ||
-        params?.filters?.isStarred
+      parent: params?.filters?.parent
+        ? params?.filters?.parent
+        : params?.search ||
+            additionalParams?.isIncludeSubItems ||
+            params?.filters?.isStarred ||
+            params?.filters?.id
           ? undefined
           : false
     };
@@ -124,7 +131,7 @@ class GoalStore extends ResourceStore<IGoal> {
     });
     appStore.openResource(id, ResourceAccessMode.POP, {
       searchParams: {
-        edit: "true"
+        [AppSearchParam.EDIT]: true
       }
     });
   }

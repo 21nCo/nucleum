@@ -22,14 +22,14 @@
   import {
     AnalyticsCardGrouping,
     AnalyticsCardType,
-    type AnalyticsCard,
+    type IAnalyticsCard,
     type AnalyticsDataRecord,
     type ChartDataRecord,
     type IAnalyticsLabelColor
   } from "../analytics.types";
   import { cn } from "$lib/client/utils/ui.utils";
   import view from "$lib/client/stores/view.store";
-  export let chart: AnalyticsCard;
+  export let chart: IAnalyticsCard;
   export let rawData: AnalyticsDataRecord[];
   export let goalColors: IAnalyticsLabelColor[];
   let data: ChartDataRecord[];
@@ -107,7 +107,7 @@
         group:
           r.goal === null
             ? "Other"
-            : chart.grouping === AnalyticsCardGrouping.TOP_LEVEL_GOALS
+            : chart.isGroupByTopLevelGoals
               ? r.topLevelGoal
               : r.goal,
         key:

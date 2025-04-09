@@ -12,6 +12,10 @@ export type IAction = {
    * If true, the action will not be shown in command bar.
    */
   isMeta?: boolean;
+  /**
+   * @deprecated -
+   * TODO - check the need for this
+   */
   path?: string;
   /**
    * function to be called when the action is triggered if the type is {@link ActionType.FUNCTION}

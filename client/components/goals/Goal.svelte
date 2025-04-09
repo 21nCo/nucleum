@@ -25,7 +25,10 @@
   import PropertiesPane from "../collection/properties/PropertiesPane.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import appearance from "$lib/client/stores/appearance.store";
-
+  import { Product } from "$lib/client/types/product.type";
+  import type { IActiveGoal } from "./goal.type";
+  import GoalAnalytics from "./GoalAnalytics.svelte";
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
   export let id: string;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   export let accessMode: ResourceAccessMode = ResourceAccessMode.POP;
@@ -33,42 +36,61 @@
   let containerWidth = 0;
   let goal: IActiveGoalStore = ActiveGoalStore.resolve(id);
   let isReady = false;
-
   $: isConstrainedWidth =
     $view.isConstrainedWidth ||
     $goal?.accessMode === ResourceAccessMode.SPLIT ||
     $goal?.accessMode === ResourceAccessMode.FSPLIT ||
     containerWidth < 800;
+  $: tabs = resolvePanelSwitcherItems($goal, isConstrainedWidth);
 
   let selectedPanel = isConstrainedWidth ? "info" : "subgoals";
 
-  onMount(async () => {
-    const editSearchParam = $page.url.searchParams.get("edit");
+  onMount(() => {
+    const editSearchParam = $page.url.searchParams.get(AppSearchParam.EDIT);
     goal.init(accessMode, {
       isInEditMode: editSearchParam === "true"
     });
+    const pageSub = page.subscribe((page) => {
+      const tab = resolveTabParam();
+      if (tab) {
+        selectedPanel = tab;
+      }
+    });
     isReady = true;
+    return () => {
+      pageSub();
+    };
   });
 
-  function resolvePanelSwitcherItems(isConstrainedWidth: boolean) {
-    const items = [
+  function resolveTabParam() {
+    if (!$goal) return;
+    return $page.url.searchParams.get(
+      `${$goal.id.toString().slice(-5)}-${AppSearchParam.TAB}`
+    );
+  }
+
+  function resolvePanelSwitcherItems(
+    goal: IActiveGoal,
+    isConstrainedWidth: boolean
+  ) {
+    let items = [
       {
         label: "Sub goals",
         value: "subgoals",
         icon: resolveResourceIcon(Resource.goal),
-        badge: $goal.children?.length
+        badge: goal?.children?.length
       },
       {
         label: "Tasks",
-        value: "todos",
+        value: "tasks",
         icon: resolveResourceIcon(Resource.task),
-        badge: $goal.tasks?.length
+        badge: goal?.tasks?.length
       },
-      // {
-      //   label: "Analytics",
-      //   value: "analytics",
-      //   icon: "ph:chart-line-up-light"
-      // },
+      {
+        label: "Analytics",
+        value: "analytics",
+        icon: "ph:chart-line-up-light"
+      },
       {
         label: "History",
         value: "history",
@@ -82,19 +104,56 @@
         icon: "ph:info-light"
       });
     }
-    if ($goal.types && $goal.types.length > 0) {
+    if (goal?.types && goal?.types?.length > 0) {
       items.push({
         label: "Properties",
         value: "properties",
         icon: "ph:shapes-light"
       });
     }
-    selectedPanel = items[0].value;
+    if ($appStore.product === Product.NUCLEUS) {
+      items.push({
+        label: "Links",
+        value: "links",
+        icon: "ph:link-light"
+      });
+    }
+    if (goal?.tabsOrder) {
+      const orderedItems = goal.tabsOrder
+        .map((x) => {
+          const item = items.find((y) => y.value === x);
+          if (item) {
+            return item;
+          }
+          return null;
+        })
+        .filter((x) => x !== null);
+      items = [
+        ...orderedItems,
+        ...items.filter((x) => !orderedItems.includes(x))
+      ];
+    }
+    const tab = resolveTabParam();
+    if (tab) {
+      selectedPanel = tab;
+    } else {
+      selectedPanel = items[0].value;
+    }
     return items;
   }
 
   function showAllProperties() {
     selectedPanel = "properties";
+  }
+
+  async function rearrangePanels(e: CustomEvent) {
+    if (!Array.isArray(e.detail)) {
+      return;
+    }
+    const items = e.detail;
+    await goal.modify({
+      tabsOrder: items
+    });
   }
 </script>
 
@@ -131,12 +190,20 @@
             <GoalTitleRow {goal} isConstrainedWidth={true} />
           {/if}
           <PanelSwitcher
-            items={resolvePanelSwitcherItems(isConstrainedWidth)}
+            items={tabs}
             style={PanelSwitcherStyle.BAR}
-            bind:value={selectedPanel}
+            value={selectedPanel}
             isExpandToFullWidth={true}
             parentBgIndex={2}
             isBgBar={true}
+            isRearrangeableByDefault={true}
+            on:rearrange={rearrangePanels}
+            on:switch={(e) => {
+              appStore.toggleSearchParam({
+                [`${$goal.id.toString().slice(-5)}-${AppSearchParam.TAB}`]:
+                  e.detail
+              });
+            }}
           >
             <div slot="right">
               {#if $goal.accessMode === ResourceAccessMode.FULL}
@@ -163,8 +230,10 @@
             <SubGoalsPanel {goal} />
           {:else if selectedPanel === "history"}
             <GoalHistory {goal} />
-          {:else if selectedPanel === "todos"}
+          {:else if selectedPanel === "tasks"}
             <GoalTasks id={$goal.id} />
+          {:else if selectedPanel === "analytics"}
+            <GoalAnalytics id={$goal.id} />
           {:else if selectedPanel === "properties"}
             <div class="flex w-full justify-center">
               <div class="w-96">

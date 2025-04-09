@@ -29,6 +29,7 @@
     BarStyle,
     PanelSwitcherStyle
   } from "$lib/client/types/switcher.enum";
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
   export let resource: Resource;
   export let isConstrainedWidth: boolean = $view.isConstrainedWidth;
   export let accessPoint: ResourceAccessPoint;
@@ -141,11 +142,11 @@
   function onSelect(val: SubType) {
     if (subContext) {
       appStore.toggleSearchParam({
-        [`${subContext}-type`]: val.toLowerCase()
+        [`${subContext}-${AppSearchParam.TYPE}`]: val.toLowerCase()
       });
     } else {
       appStore.toggleSearchParam({
-        type: val.toLowerCase()
+        [AppSearchParam.TYPE]: val.toLowerCase()
       });
     }
   }
@@ -160,7 +161,7 @@
     on:select={(e) => {
       if (!e?.detail) return;
       appStore.toggleSearchParam({
-        type: e.detail.toLowerCase()
+        [AppSearchParam.TYPE]: e.detail.toLowerCase()
       });
     }}
   />
@@ -214,10 +215,10 @@
             on:change={() => {
               if (isStarFilterSelected) {
                 appStore.toggleSearchParam({
-                  starred: isStarFilterSelected
+                  [AppSearchParam.STARRED]: isStarFilterSelected
                 });
               } else {
-                appStore.toggleSearchParam(["starred"]);
+                appStore.toggleSearchParam([AppSearchParam.STARRED]);
               }
             }}
           />
@@ -230,10 +231,10 @@
             on:change={() => {
               if (isArchivedFilterSelected) {
                 appStore.toggleSearchParam({
-                  archived: isArchivedFilterSelected
+                  [AppSearchParam.ARCHIVED]: isArchivedFilterSelected
                 });
               } else {
-                appStore.toggleSearchParam(["archived"]);
+                appStore.toggleSearchParam([AppSearchParam.ARCHIVED]);
               }
             }}
             bgSize={Size.sm}

@@ -3,27 +3,35 @@ import type { TimePeriod } from "$lib/client/types/time.type";
 
 export type IAnalyticsConfigStore = IObservableStoreSubject & {
   pages: AnalyticsPage[];
-  isIncludeBreakInAnalytics: boolean;
 };
-
 export type AnalyticsPage = {
   id: string;
   label: string;
-  cards: AnalyticsCard[];
+  cards: IAnalyticsCard[];
 };
 
-export type AnalyticsCard = {
+export type IAnalyticsCard = {
   id: string;
   label?: string;
-  grouping: AnalyticsCardGrouping;
-  filter: string[];
+  /**
+   * @deprecated
+   */
+  grouping?: AnalyticsCardGrouping;
+  /**
+   * @deprecated
+   */
+  filter?: string[];
   type: AnalyticsCardType;
   period: TimePeriod;
+  isGroupByTopLevelGoals?: boolean;
 };
 
 export enum AnalyticsCardGrouping {
   DEFAULT = "DEFAULT",
   TOP_LEVEL_GOALS = "TOP_LEVEL_GOALS",
+  /**
+   * @deprecated
+   */
   TAGS = "TAGS"
 }
 

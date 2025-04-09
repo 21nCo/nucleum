@@ -2,6 +2,7 @@ import { Resource } from "$lib/client/components/flux/resourceStores/resource.en
 import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
 import {
   type IRecordId,
+  type IResourceSelectAdditionalParams,
   type IResourceSelectParams
 } from "$lib/client/types/data.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
@@ -23,13 +24,21 @@ import { getUtcSafeDay } from "$lib/client/elements/datetime/datetime.utils";
 import { Product } from "$lib/client/types/product.type";
 import { get } from "svelte/store";
 import view from "$lib/client/stores/view.store";
+import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
 class TaskStore extends ResourceStore<ITask> {
   constructor() {
     super(Resource.task);
   }
 
-  selectMany(params?: IResourceSelectParams, additionalParams?: any) {
-    const properties = ["*", "goalId.* as goal", ...(params?.properties ?? [])];
+  selectMany(
+    params?: IResourceSelectParams,
+    additionalParams?: IResourceSelectAdditionalParams
+  ) {
+    const expandedProps = ["*", "goalId.* as goal"];
+    const properties = [
+      ...(additionalParams?.isExpand ? expandedProps : []),
+      ...(params?.properties ?? [])
+    ];
     params = {
       ...(params ?? {}),
       properties
@@ -47,7 +56,9 @@ class TaskStore extends ResourceStore<ITask> {
       label: form.label,
       isChecked: form.isChecked ?? false,
       estimated: form.estimated,
-      date: form.date ? getUtcSafeDay(form.date) : undefined,
+      dateUnix: form.dateUnix
+        ? resolveUnixTimestamp(getUtcSafeDay(new Date(form.dateUnix)))
+        : undefined,
       goalId: form.goalId
     };
     appStore.addToRecents({
@@ -68,7 +79,7 @@ class TaskStore extends ResourceStore<ITask> {
       id,
       {
         isChecked: newVal,
-        completedAt: newVal ? new Date() : undefined
+        completedAtUnix: newVal ? resolveUnixTimestamp() : undefined
       },
       {
         context: params?.context
@@ -99,19 +110,26 @@ class TaskActions {
     };
   }
 
-  editGoal = {
-    value: "editGoal",
-    icon: "ph:circle-light",
-    label: "Edit associated goal",
-    callback: async () => {
-      appStore.runAction(Action.EDIT_TASK_GOAL, {
-        componentParams: {
-          taskId: this.task.id,
-          context: this.accessPoint
-        }
-      });
-    }
-  };
+  editGoal() {
+    return {
+      value: "editGoal",
+      icon: "ph:circle-light",
+      label:
+        this.accessPoint === ResourceAccessPoint.GOAL
+          ? "Move to another goal"
+          : this.task.goalId
+            ? "Change goal"
+            : "Assign goal",
+      callback: async () => {
+        appStore.runAction(Action.EDIT_TASK_GOAL, {
+          componentParams: {
+            taskId: this.task.id,
+            context: this.accessPoint
+          }
+        });
+      }
+    };
+  }
 
   editDate = {
     value: "editDate",
@@ -132,9 +150,11 @@ export function resolveTaskContextMenu(
   const product = get(appStore).product;
   const viewStore = get(view);
   let primaryItems: IContextMenuItem[] = [
-    resourceActions.select(accessPoint, params?.accessPointId),
+    ...(accessPoint !== ResourceAccessPoint.CALENDAR
+      ? [resourceActions.select(accessPoint, params?.accessPointId)]
+      : []),
     ...(product === Product.POINTRON || product === Product.NUCLEUS
-      ? [taskActions.editGoal]
+      ? [taskActions.editGoal()]
       : []),
     ...(viewStore.isConstrainedWidth ? [taskActions.editDate] : []),
     taskActions.toggle()

@@ -46,6 +46,12 @@ export type RelativeTimePeriodValue = {
   param: number;
 };
 
+export type ITimePeriodResolved = {
+  begin: number;
+  end: number;
+  title: string;
+};
+
 export enum TimeFormat {
   VERBOSE = "verbose",
   CLOCK = "clock"

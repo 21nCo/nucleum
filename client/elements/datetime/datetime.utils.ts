@@ -1,4 +1,7 @@
-import { TimeScale } from "$lib/client/types/time.type";
+import type { ISelectItem } from "$lib/client/types/select.type";
+import { TimePeriodType, TimeScale } from "$lib/client/types/time.type";
+import { timePeriodLabel } from "$lib/client/utils/time.utils";
+import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
 
 export const activeScales = [
   TimeScale.YEARS,
@@ -42,8 +45,16 @@ export function getUtcSafeDay(date: Date): Date {
   } else {
     offsetDate.setMinutes(offsetDate.getMinutes() + timezoneOffset);
   }
-  console.log({ offsetDate });
   return offsetDate;
+}
+
+export function resolveTimePeriodFilterForDay(day: Date) {
+  const localDay = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+  const end = new Date(localDay.getTime() + 24 * 60 * 60 * 1000);
+  return {
+    greaterThanOrEqual: resolveUnixTimestamp(localDay),
+    lessThanOrEqual: resolveUnixTimestamp(end)
+  };
 }
 
 export function calculateTimeSpan(
@@ -90,4 +101,97 @@ export function resolveDefaultSpanScale(
   );
 
   return selectedScale?.scale || scales[scales.length - 1];
+}
+
+export function resolveRelativeTimePeriodOptions(
+  scale: TimeScale
+): ISelectItem[] {
+  return resolveRelativeTimePeriods(scale).map((x) => ({
+    label: timePeriodLabel({
+      scale: scale,
+      value: x
+    }),
+    value: `${x.type}#${x.param}`
+  }));
+}
+
+export function resolveRelativeTimePeriods(scale: TimeScale) {
+  switch (scale) {
+    case TimeScale.DAYS:
+      return [
+        { type: TimePeriodType.RELATIVE, param: 0 },
+        {
+          type: TimePeriodType.RELATIVE,
+          param: -1
+        },
+        {
+          type: TimePeriodType.RELATIVE,
+          param: -7
+        },
+        {
+          type: TimePeriodType.RELATIVE,
+          param: -14
+        },
+        {
+          type: TimePeriodType.RELATIVE,
+          param: -30
+        },
+        {
+          type: TimePeriodType.UPPER_RELATIVE,
+          param: 0
+        },
+        {
+          type: TimePeriodType.UPPER_RELATIVE,
+          param: -1
+        }
+      ];
+    case TimeScale.MONTHS:
+      return [
+        { type: TimePeriodType.RELATIVE, param: 0 },
+        {
+          type: TimePeriodType.RELATIVE,
+          param: -1
+        },
+        {
+          type: TimePeriodType.RELATIVE,
+          param: -3
+        },
+        {
+          type: TimePeriodType.RELATIVE,
+          param: -6
+        },
+        {
+          type: TimePeriodType.RELATIVE,
+          param: -12
+        },
+        {
+          type: TimePeriodType.UPPER_RELATIVE,
+          param: 0
+        }
+        // {
+        //   type: TimePeriodType.UPPER_RELATIVE,
+        //   param: -1
+        // }
+      ];
+    default:
+      return [
+        { type: TimePeriodType.RELATIVE, param: 0 },
+        {
+          type: TimePeriodType.RELATIVE,
+          param: -1
+        },
+        {
+          type: TimePeriodType.RELATIVE,
+          param: -2
+        },
+        {
+          type: TimePeriodType.RELATIVE,
+          param: -3
+        },
+        {
+          type: TimePeriodType.RELATIVE,
+          param: -6
+        }
+      ];
+  }
 }

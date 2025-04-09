@@ -142,12 +142,12 @@
 
   function dispatchDateChange(val: Date) {
     dispatch("change", val);
-    onDateChange(val);
+    if (onDateChange) onDateChange(val);
   }
 
   function dispatchRangeChange(val: { start: string; end: string }) {
     dispatch("rangePicked", val);
-    onRangeChange(val);
+    if (onRangeChange) onRangeChange(val);
   }
 
   function isDateInRange(date: dayjs.Dayjs): boolean {

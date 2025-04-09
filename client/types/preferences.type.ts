@@ -6,7 +6,7 @@ import type { TranscriptionModel } from "../components/taco/taco";
 
 export type IUserGlobalPreferences = IObservableStoreSubject & {
   name: string;
-  profilePicture: IRecordId | undefined;
+  profilePicture?: IRecordId | undefined;
   // theme: AppSkin;
   // colorScheme: ColorScheme;
   appearance: UserAppearanceSettings;

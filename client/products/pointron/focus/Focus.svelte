@@ -25,6 +25,7 @@
   import { appStore } from "$lib/client/stores/app.store";
   import QuickStartLayoutToggle from "./quickstart/actions/QuickStartLayoutToggle.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
   let mode: number = 0;
   let isInlineEnabled: boolean = true;
   let addManualLogButton: IButtonParams = {
@@ -45,13 +46,13 @@
   };
 
   onMount(async () => {
-    let queryParamMode = $page.url.searchParams.get("mode");
+    let queryParamMode = $page.url.searchParams.get(AppSearchParam.MODE);
     if (queryParamMode) {
       mode = +queryParamMode;
     }
   });
   async function onManualLogClicked() {
-    appStore.runAction(PointronAction.MANUAL_FOCUS_ENTRY_POP);
+    appStore.runAction(PointronAction.MANUAL_FOCUS_ENTRY);
   }
   async function onStartSessionClicked() {
     await activeSession.startSession();

@@ -66,6 +66,7 @@
   import { debouncer } from "$lib/client/utils/utils";
   import CaptureDraftsAction from "./draftSelector/CaptureDraftsAction.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
   export let captureId: IRecordId = generateResourceId(Resource.capture);
   export let isWindowDnD = false;
   let bulkQueryParam: string | null = null;
@@ -117,9 +118,11 @@
     if (captureType !== CaptureType.MARKDOWN && !isWindowDnD) {
       reset();
     }
-    linkQueryParam = $page.url.searchParams.get("link");
-    bulkQueryParam = $page.url.searchParams.get("bulk");
-    const clipBoardQueryParam = $page.url.searchParams.get("clipboard");
+    linkQueryParam = $page.url.searchParams.get(AppSearchParam.LINK);
+    bulkQueryParam = $page.url.searchParams.get(AppSearchParam.BULK);
+    const clipBoardQueryParam = $page.url.searchParams.get(
+      AppSearchParam.CLIPBOARD
+    );
     logger.log({
       at: "Capture.svelte - mount",
       linkQueryParam,
@@ -142,7 +145,11 @@
   onDestroy(() => {
     subs.forEach((x) => x());
     setTimeout(() => {
-      appStore.toggleSearchParam(["link", "bulk", "clipboard"]);
+      appStore.toggleSearchParam([
+        AppSearchParam.LINK,
+        AppSearchParam.BULK,
+        AppSearchParam.CLIPBOARD
+      ]);
     }, 100);
   });
 

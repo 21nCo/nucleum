@@ -34,6 +34,7 @@
   import ResourceBrowser from "./resourceBrowser/ResourceBrowser.svelte";
   import { Product } from "$lib/client/types/product.type";
   import { isHideCreateAction } from "./library.utils";
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
 
   export let resources: Resource[] = [];
 
@@ -95,7 +96,7 @@
 
   onMount(() => {
     const pageSub = page.subscribe(async (p) => {
-      const resourceParam = p.url.searchParams.get("resource");
+      const resourceParam = p.url.searchParams.get(AppSearchParam.RESOURCE);
       if (resourceParam && resourceParam !== selectedResource) {
         selectedResource =
           (resourceParam as Resource) ?? selectedResource ?? Resource.node;
@@ -180,8 +181,10 @@
       bind:this={resourceSwitcherRef}
       on:select={(e) => {
         appStore.toggleSearchParam({
-          resource: e.detail,
-          type: "all"
+          [AppSearchParam.RESOURCE]: e.detail,
+          [AppSearchParam.TYPE]: "all",
+          [AppSearchParam.STARRED]: null,
+          [AppSearchParam.ARCHIVED]: null
         });
         syncFeedbackRef?.refresh(e.detail);
       }}
@@ -223,7 +226,7 @@
       isLibraryNavContext={true}
       on:back={() => {
         selectedResource = Resource.unknown;
-        appStore.toggleSearchParam(["resource"]);
+        appStore.toggleSearchParam([AppSearchParam.RESOURCE]);
       }}
     />
   </div>

@@ -11,6 +11,7 @@
   export let value: number;
   export let label: InputLabel | undefined = undefined;
   export let placeholder: string | undefined = undefined;
+  export let isExpanded: boolean = false;
   const dispatch = createEventDispatcher();
   let inputRef: any;
 
@@ -66,7 +67,9 @@
   <div
     class={label?.orientation === Orientation.Vertical
       ? "max-w--md"
-      : "max-w-[16rem]"}
+      : isExpanded
+        ? "w-full"
+        : "max-w-[16rem]"}
   >
     <div class="text-center text-base self-center w-full">
       <div class="flex flex-col gap-1 w-full">

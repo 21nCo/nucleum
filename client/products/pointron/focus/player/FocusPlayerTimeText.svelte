@@ -39,10 +39,14 @@
     {:else if currentTask?.label && $activeSession.state === SessionState.FOCUS_RUNNING}
       <div
         class={cn("text-left truncate text-b2 dp:text-base", {
-          "text-ccs1": context === SessionUIContext.PIP
+          "text-ccs1":
+            context === SessionUIContext.PIP ||
+            context === SessionUIContext.GOAL_PAGE
         })}
       >
-        {currentTask?.label ?? ""}
+        {context === SessionUIContext.GOAL_PAGE
+          ? "Focusing now..."
+          : currentTask?.label ?? ""}
       </div>
     {:else}
       <SessionStatusLabel

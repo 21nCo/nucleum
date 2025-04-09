@@ -2,7 +2,7 @@
   import AnalyticsChart from "./AnalyticsChart.svelte";
   import {
     AnalyticsCardType,
-    type AnalyticsCard,
+    type IAnalyticsCard,
     type AnalyticsDataRecord,
     type IAnalyticsLabelColor
   } from "../analytics.types";
@@ -11,7 +11,7 @@
   import TargetGuages from "../targets/TargetGuages.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import view from "$lib/client/stores/view.store";
-  export let card: AnalyticsCard;
+  export let card: IAnalyticsCard;
   export let data: AnalyticsDataRecord[];
   export let parentBgIndex: number = 1;
   export let previousTimePeriodData: AnalyticsDataRecord[] = [];

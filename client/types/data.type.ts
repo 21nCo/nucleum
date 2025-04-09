@@ -316,6 +316,7 @@ export type IResourceFilterValue =
       greaterThanOrEqual?: IPrimitiveDbDataType;
       lessThanOrEqual?: IPrimitiveDbDataType;
       notIn?: IPrimitiveDbDataType[];
+      contains?: IPrimitiveDbDataType;
     };
 
 export enum IResourceFilterOperator {
@@ -487,4 +488,26 @@ export type IMutationAdditionalParams = {
    * Whether the resource is cloud only. If true, the mutation will be directly relayed to the cloud and not saved locally.
    */
   isCloudOnlyResource?: boolean;
+};
+
+export type IResourceSelectAdditionalParams = {
+  /**
+   * Whether to use cloud to select. Local will be used if not provided.
+   */
+  isUseCloud?: boolean;
+  /**
+   * @deprecated - use isExpand instead
+   * Whether to prevent expansion of the resource. When set to true, joins will not be performed.
+   */
+  isPreventExpansion?: boolean;
+  /**
+   * Whether to expand the resource. When set to true, joins will be performed.
+   */
+  isExpand?: boolean;
+  /**
+   * Whether to include sub items of the resource.
+   *
+   * Ex: goal -> sub goals
+   */
+  isIncludeSubItems?: boolean;
 };

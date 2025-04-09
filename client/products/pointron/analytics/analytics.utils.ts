@@ -15,7 +15,7 @@ import {
   AnalyticsCardGrouping,
   AnalyticsCardType,
   type AnalyticsPage,
-  type AnalyticsCard
+  type IAnalyticsCard
 } from "./analytics.types";
 import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 
@@ -28,20 +28,16 @@ export function onRemovePageClicked(e: CustomEvent<string>) {
     const pages = get(analyticsConfigStore).pages;
     const index = pages.findIndex((page) => page.id !== id);
     if (index !== -1) {
-      let event = new CustomEvent("pageSwitch", {
-        detail: pages[index]?.id
-      });
-      onPageSwitch(event);
+      selectedPageId.set(
+        get(analyticsConfigStore).pages.find(
+          (page) => page.id === pages[index]?.id
+        )?.id as string
+      );
     } else selectedPageId.set(null);
   }
   analyticsConfigStore.removePage(e.detail);
 }
-export function onPageSwitch(e: CustomEvent<string>) {
-  selectedPageId.set(
-    get(analyticsConfigStore).pages.find((page) => page.id === e.detail)
-      ?.id as string
-  );
-}
+
 export function onPagelabelChange(
   e: CustomEvent<{ value: string; label: string }>
 ) {
@@ -67,7 +63,7 @@ export function generateParamsForCharts(timePeriods: TimePeriod[]) {
   return params;
 }
 
-export function generateParamsForCards(cards: AnalyticsCard[]) {
+export function generateParamsForCards(cards: IAnalyticsCard[]) {
   let params: any[] = [];
   cards.forEach((card) => {
     let dates = determineTimePeriodv2(card.period);
@@ -84,6 +80,12 @@ export function generateParamsForCards(cards: AnalyticsCard[]) {
     });
   });
   return params;
+}
+
+export function onPageRearrange(e: CustomEvent) {
+  const ids = e.detail;
+  if (!Array.isArray(ids)) return;
+  analyticsConfigStore.rearrangePages(ids);
 }
 
 export function generateAnalyticsSeedPages() {
@@ -355,8 +357,6 @@ export function generateAnalyticsSeedPage(): AnalyticsPage {
     cards: [
       {
         id: generateSimpleRandomId(),
-        grouping: AnalyticsCardGrouping.DEFAULT,
-        filter: [],
         type: AnalyticsCardType.DONUT,
         period: {
           scale: TimeScale.DAYS,
@@ -368,8 +368,6 @@ export function generateAnalyticsSeedPage(): AnalyticsPage {
       },
       {
         id: generateSimpleRandomId(),
-        grouping: AnalyticsCardGrouping.DEFAULT,
-        filter: [],
         type: AnalyticsCardType.TOP_N,
         period: {
           scale: TimeScale.DAYS,
@@ -381,8 +379,6 @@ export function generateAnalyticsSeedPage(): AnalyticsPage {
       },
       {
         id: generateSimpleRandomId(),
-        grouping: AnalyticsCardGrouping.DEFAULT,
-        filter: [],
         type: AnalyticsCardType.BAR,
         period: {
           scale: TimeScale.DAYS,

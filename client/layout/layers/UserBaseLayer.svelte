@@ -118,11 +118,15 @@
 
     safeRequestIdleCallback(async () => {
       if (userDataState?.paginateResources) {
+        toasts.showProgress("paginate", "Syncing in the background");
         await flux.paginateResources(userDataState.paginateResources, 100);
         dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
+        toasts.closeProgress("paginate");
       } else if (userDataState?.counts && !isDebug) {
+        toasts.showProgress("reconcile", "Syncing in the background");
         await flux.reconcile({ counts: userDataState.counts });
         dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
+        toasts.closeProgress("reconcile");
       }
       await recentsStore.refresh(searcheableResources);
       await syncAccountPaidPlanFromExternalProvider();
@@ -147,6 +151,10 @@
     const timeZone = detectTimeZone();
     if (!timeZone || !$userPreferences) return;
     if ($userPreferences.timeZoneOffset !== timeZone.offset * 60) {
+      logger.info({
+        at: "refreshTimeZone - timezone change detected",
+        timeZone
+      });
       return userPreferences.setTimeZone(timeZone.offset * 60, timeZone.label);
     }
   }
@@ -257,7 +265,6 @@
         userId: $account.userId,
         dapId: dapId!
       });
-      //TODO - check for placement of this and duplicate check with refreshTimeZone
       await flux.seed();
       logger.log({
         at: "UserBaseLayer.initializeData - cloud",
@@ -281,7 +288,8 @@
       {
         ...params,
         appVersion: $appStore.version + "." + $appStore.build,
-        remoteOnlyStores: [...remoteOnlyStores]
+        remoteOnlyStores: [...remoteOnlyStores],
+        product: $appStore.product
       }
     );
   }

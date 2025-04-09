@@ -58,8 +58,7 @@ export const SUBSCRIPTION_PLANS: IPlan[] = [
     features: [
       {
         icon: "ph:arrows-left-right-light",
-        label:
-          "Unlimited cloud sync for Memotron, Pointron *(more coming soon)*"
+        label: "Unlimited cloud sync for Memotron, Pointron"
       },
       // {
       //   icon: "ph:lock-light",
@@ -71,7 +70,12 @@ export const SUBSCRIPTION_PLANS: IPlan[] = [
       },
       {
         icon: "ph:sparkle-light",
-        label: "Early access to Nucleus - the everything productivity app"
+        label:
+          "Access to Nucleus - the everything productivity app *(coming soon)*"
+      },
+      {
+        icon: "ph:brain-light",
+        label: "Access to MCP server *(coming soon)*"
       },
       {
         icon: "ph:clock-light",

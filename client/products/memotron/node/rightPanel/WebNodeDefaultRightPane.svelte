@@ -40,12 +40,16 @@
 
   async function refreshLinks() {
     if (!$node.links) return;
-    const result = await nodeStore.selectMany({
-      filters: {
-        id: $node.links.map((x) => x.linkedTo.toString()),
-        ...activeResourceFilterV2
+    const result = await nodeStore.selectMany(
+      {
+        filters: {
+          id: $node.links.map((x) => x.linkedTo.toString())
+        }
+      },
+      {
+        isExpand: true
       }
-    });
+    );
     if (!result || result.length == 0) {
       links = [];
       return;
