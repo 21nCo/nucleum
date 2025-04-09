@@ -67,8 +67,9 @@
       case Product.POINTRON:
         return [tempTasksPanel, overview, history];
       case Product.MEMOTRON:
+        return [notes, history];
       case Product.NUCLEUS:
-        return [tempTasksPanel, notes, history];
+        return [tempTasksPanel, notes, overview, history];
       default:
         return [timeline, overview, history];
     }
