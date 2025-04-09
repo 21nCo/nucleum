@@ -40,8 +40,8 @@
           value: "clips",
           label: "Highlights",
           icon: "bookmark"
-        },
-        tasks
+        }
+        // tasks
       ];
     } else if (contentType === NodeType.WEB_PAGE) {
       return [
@@ -49,8 +49,8 @@
           value: "clips",
           label: "Clips",
           icon: "bookmark"
-        },
-        tasks
+        }
+        // tasks
       ];
     } else if (contentType === NodeType.TWITTER_PROFILE) {
       return [
@@ -58,8 +58,8 @@
           value: "clips",
           label: "Tweets",
           icon: "ph:x-logo"
-        },
-        tasks
+        }
+        // tasks
       ];
     } else if (contentType === NodeType.YOUTUBE_VIDEO) {
       return [
@@ -67,8 +67,8 @@
           value: "clips",
           label: "Clips",
           icon: "ph:youtube-logo"
-        },
-        tasks
+        }
+        // tasks
       ];
     } else if (contentType === NodeType.KINDLE_BOOK) {
       return [
@@ -76,8 +76,8 @@
           value: "clips",
           label: "Highlights",
           icon: "bookmark"
-        },
-        tasks
+        }
+        // tasks
       ];
     } else if (contentType === NodeType.NODULAR_MARKDOWN) {
       return [tasks, comments];

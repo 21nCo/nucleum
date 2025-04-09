@@ -4,9 +4,9 @@ import { postToParent } from "$lib/client/utils/embed.utils";
 import { wait } from "$lib/client/utils/time.utils";
 import type { IEmbedChannel, IEmbedChannelData } from "./embed.type";
 
-class EmbedChannelStore extends ObservableStore<IEmbedChannel> {
+class EmbedBridge extends ObservableStore<IEmbedChannel> {
   constructor() {
-    super("embedChannel");
+    super("embedBridge");
     this.set({ data: [] });
   }
 
@@ -47,4 +47,4 @@ class EmbedChannelStore extends ObservableStore<IEmbedChannel> {
   }
 }
 
-export const embedChannel = new EmbedChannelStore();
+export const embedBridge = new EmbedBridge();

@@ -30,12 +30,12 @@ let embedSection: IBlockBrowserSection = {
       type: NodeType.COLLECTION_AS_EMBED,
       icon: "ph:brackets-round-light"
     },
-    {
-      label: "Task",
-      description: "Embed Task block",
-      type: NodeType.TASK_AS_EMBED,
-      icon: "ph:check-square-light"
-    },
+    // {
+    //   label: "Task",
+    //   description: "Embed Task block",
+    //   type: NodeType.TASK_AS_EMBED,
+    //   icon: "ph:check-square-light"
+    // },
     {
       label: "Web text clip",
       description: "Embed web text clip",

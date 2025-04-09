@@ -24,8 +24,6 @@
   import { logger } from "$lib/client/components/debug/logger.client";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
-  import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
-  // import { read_audio } from "@xenova/transformers";
   import { appStore } from "$lib/client/stores/app.store";
   import { Action } from "$lib/client/types/action.enum";
   import view from "$lib/client/stores/view.store";
@@ -35,7 +33,11 @@
   import context from "$lib/client/stores/context.store";
   import { OperatingSystem } from "$lib/client/types/context.type";
   import { read_audio } from "@huggingface/transformers";
-  import { TacoActions, TranscriptionModel } from "../taco/taco.types";
+  import {
+    Taco,
+    TranscriptionModel,
+    type TranscriptionStatus
+  } from "$lib/client/components/taco/taco";
   import FileView from "$lib/client/components/files/FileView.svelte";
   import { isRecordId } from "$lib/client/components/flux/resourceStores/resource.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
@@ -60,9 +62,11 @@
     | PlayActionState.PAUSEPREVIEWING
     | PlayActionState.RESUMEPREVIEWING = PlayActionState.RESUMEPREVIEWING;
   let isError: boolean = false;
+  let transcriptionProgress: number = 0;
+  let transcriptionStatus: TranscriptionStatus | null = null;
 
   $: isTranscribeEnabled =
-    $userPreferences.localAI.audioTranscription &&
+    // $userPreferences.localAI.audioTranscription &&
     accessPoint === ResourceAccessPoint.SELF;
 
   $: isTranscribeAvailable = $context.os !== OperatingSystem.IOS;
@@ -78,7 +82,7 @@
   // ];
   let accuracy: DropdownItem[] = [
     {
-      value: TranscriptionModel.TINy_EN,
+      value: TranscriptionModel.TINY_EN,
       label: "Moderate (Fast Response time)"
     },
     {
@@ -98,75 +102,97 @@
   let model: TranscriptionModel = $userPreferences.lastUsedTranscriptionModel;
 
   /**
-   * To Transcribe the audio, shows necessary feedback on transcription start, end and also on error.
-   * Auto Refreshes the page the dispplay the content once transcription is completed
-   * TODO - move to store, lambda url - env
+   * Initiates audio transcription using iOS ML service
    */
-  async function onTranscribe(): Promise<string | null> {
+  async function initiateTranscription() {
     isDisabled = true;
-    let result: string | null = null;
+    let jobId: string | null = null;
     try {
       logger.debug({
-        at: "AudioContent.svelte - onTranscribe",
-        url,
-        model
+        at: "AudioContent.svelte - initiateTranscription",
+        url
       });
-      // const result = await Transcriber.transcribe(url, model);
+
       const audioData = await read_audio(url, 16000);
-      tacoWorker.postMessage({
-        action: TacoActions.GET_TRANSCRIPTION,
-        params: {
-          audioData: audioData,
-          model: TranscriptionModel.DISTILL_SMALL_EN
-        }
-      });
-      result = await new Promise((resolve, reject) => {
-        tacoWorker.onmessage = (e) => {
-          resolve(e.data);
-        };
-      });
+      const taco = Taco.getInstance();
+      jobId = await taco.initiateTranscriptionUsingML(audioData);
+
       logger.debug({
-        at: "AudioContent.svelte - onTranscribe",
-        result
+        at: "AudioContent.svelte - initiateTranscription",
+        jobId
       });
-      const resp = await nodeStore.modify(nodeId, {
-        body: { transcription: result, initTranscription: false }
+
+      // Save job ID to node
+      await nodeStore.modify(nodeId, {
+        body: { transcriptionJobId: jobId, initTranscription: true }
       });
+
+      // Start polling for status
+      pollTranscriptionStatus(jobId);
     } catch (error) {
-      console.error("Network or JSON parsing error:", error);
+      console.error("Transcription error:", error);
       isError = true;
       setTimeout(() => (isError = false), 3000);
       isDisabled = false;
-    } finally {
-      isDisabled = false;
-      return result;
     }
   }
 
   /**
-   * Converts the audio to markdown. IF trnscript already exists, it uses that instead of re-transcribing. It retranscibes in situations where the model Accuracy has been swithced
+   * Polls for transcription status and updates UI
    */
-  async function convertToMarkdown() {
-    let transcript: string | null;
-    // if (
-    //   (body?.transcription || body?.mdBlocks) &&
-    //   $userPreferences.lastUsedTranscriptionModel === model
-    // ) {
-    //   alert(
-    //     "Retranscription runs only when model is changed, using retranscipt button on same model has no effect"
-    //   );
-    //   transcript = body.transcription;
-    // } else
-    transcript = await onTranscribe();
-    if (!transcript || typeof transcript !== "string") return;
-    label = body?.initTranscription == false ? "Retranscribe" : "Transcribe";
-    $userPreferences.lastUsedTranscriptionModel = model;
-    const mdBlocks = Audio2MD.convertAudioToMarkdown(transcript);
-    const resp = await nodeStore.modify(nodeId, {
-      body: { mdBlocks }
-    });
-    dispatch("refresh");
+  async function pollTranscriptionStatus(jobId: string) {
+    try {
+      const taco = Taco.getInstance();
+      const status = await taco.checkTranscriptionStatus(jobId);
+      transcriptionStatus = status;
+
+      if (status.status === "completed" && status.transcription) {
+        // Convert to markdown
+        const mdBlocks = Audio2MD.convertAudioToMarkdown(status.transcription);
+
+        // Save transcription and markdown to node
+        await nodeStore.modify(nodeId, {
+          body: {
+            transcription: status.transcription,
+            mdBlocks,
+            initTranscription: false,
+            transcriptionJobId: null
+          }
+        });
+        isDisabled = false;
+        label = "Retranscribe";
+        $userPreferences.lastUsedTranscriptionModel = model;
+        dispatch("refresh");
+      } else if (status.status === "failed") {
+        isError = true;
+        setTimeout(() => (isError = false), 3000);
+        isDisabled = false;
+      } else if (status.status === "processing") {
+        transcriptionProgress = status.progress || 0;
+        // Continue polling
+        setTimeout(() => pollTranscriptionStatus(jobId), 1000);
+      }
+    } catch (error) {
+      console.error("Status check error:", error);
+      isError = true;
+      setTimeout(() => (isError = false), 3000);
+      isDisabled = false;
+    }
   }
+
+  /**
+   * Converts the audio to markdown. If transcript already exists, it uses that instead of re-transcribing.
+   */
+  async function transcribe() {
+    try {
+      await initiateTranscription();
+    } catch (error) {
+      console.error("Markdown conversion error:", error);
+      isError = true;
+      setTimeout(() => (isError = false), 3000);
+    }
+  }
+
   /**
    * @description Creates wavesurfer instance for preview and uses timeline plugin to add timeline to the interactive visualization.
    */
@@ -202,6 +228,11 @@
     createWaveSurferForPreview();
     isDisabled = body?.initTranscription == true ? true : false;
     label = body?.initTranscription == false ? "Retranscribe" : "Transcribe";
+
+    // If there's an ongoing transcription job, start polling
+    if (body?.transcriptionJobId) {
+      pollTranscriptionStatus(body.transcriptionJobId);
+    }
   });
   onDestroy(() => {
     if (wavesurferPreview) {
@@ -293,7 +324,7 @@
       <!-- TODO - reenable transcription after iOS crash issue fix -->
       {#if isTranscribeEnabled && isTranscribeAvailable}
         <Button
-          on:click={convertToMarkdown}
+          on:click={transcribe}
           {isDisabled}
           icon="document-text"
           {label}
@@ -334,7 +365,13 @@
         {#if body?.initTranscription == true || isDisabled}
           <div class="flex items-center justify-center gap-2 p-2 w-full">
             <Icon icon="svg-spinners:3-dots-fade" />
-            <span class="text-fgs3">Transcribing...</span>
+            <span class="text-fgs3">
+              {#if transcriptionStatus?.status === "processing"}
+                Transcribing... {transcriptionProgress}%
+              {:else}
+                Transcribing...
+              {/if}
+            </span>
           </div>
         {:else if body?.mdBlocks !== undefined}
           <NodularMarkdown
@@ -358,7 +395,7 @@
             class="w-full h-full flex flex-col gap-2 justify-center items-center text-fgs3"
           >
             <span> Not transcribed yet. Please transcribe to view. </span>
-            {#if !$userPreferences.localAI.audioTranscription}
+            <!-- {#if !$userPreferences.localAI.audioTranscription}
               <div class="flex flex-col gap-2 text-b2">
                 Please make sure to enable Audio transcription from AI settings
                 to transcribe your audio.
@@ -378,7 +415,7 @@
                   />
                 </div>
               </div>
-            {/if}
+            {/if} -->
           </span>
         {/if}
       </div>

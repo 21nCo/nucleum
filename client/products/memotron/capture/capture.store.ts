@@ -87,7 +87,7 @@ import {
   ResourceStore
 } from "$lib/client/components/flux/resourceStores/resource.store";
 import { CollectibleStore } from "$lib/client/components/collection/collectible.store";
-import { embedChannel } from "$lib/client/components/embed/embed.store";
+import { embedBridge } from "$lib/client/components/embed/embed.store";
 import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
@@ -902,7 +902,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
   async resolveLocation() {
     const ctx = get(context);
     if (ctx.isEmbed) {
-      const locationResult = await embedChannel.fetch(
+      const locationResult = await embedBridge.fetch(
         generateMiniRandomId(),
         EmbedMessage.LOCATION,
         {}
