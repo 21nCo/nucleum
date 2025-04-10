@@ -130,7 +130,11 @@
         <div class="flex items-baseline gap-2">
           {#if discountedPrice}
             <span class="cw:text-h1 text-h1 font-semibold text-ags1">
-              ${discountedPrice}
+              {#if period === BillingCycle.YEARLY}
+                ${discountedPrice * 12}
+              {:else}
+                ${discountedPrice}
+              {/if}
             </span>
           {/if}
           <span
@@ -140,13 +144,17 @@
             })}
           >
             {#if period === BillingCycle.YEARLY}
-              ${actualPrice.toFixed(2)}
+              ${actualPrice * 12}
             {:else}
               ${actualPrice}
             {/if}
           </span>
           <span class="text-sm text-fgs2">
-            {period === BillingCycle.LIFETIME ? "one-time" : "/month"}
+            {period === BillingCycle.LIFETIME
+              ? "one-time"
+              : period === BillingCycle.YEARLY
+                ? "/year"
+                : "/month"}
           </span>
         </div>
       </div>
@@ -228,14 +236,14 @@
     </div>
     <div class="mt-2 mx-auto text-b3 text-fgs2">
       {#if period === BillingCycle.YEARLY}
-        Pay <b>
+        That's <b>
           {#if discountedPrice}
-            ${discountedPrice * 12}
+            ${discountedPrice}
           {:else}
-            ${actualPrice * 12}
+            ${actualPrice.toFixed(2)}
           {/if}
         </b>
-        today for a full year
+        per month billed yearly
       {:else if period === BillingCycle.LIFETIME}
         Get lifetime for the price of just 3 years!
       {/if}
