@@ -46,16 +46,6 @@
   let syncFeedbackRef: InlineSyncingFeedback;
   let recordsPaneRef: LibraryRecordsPane;
 
-  const resourceList: IResourceSwitchItem[] = resolveResourceSwitcher();
-
-  let _resources: IResourceSwitchItem[] = [];
-
-  $: _resources = resources.map((x) => {
-    const resource = resourceList.find((y) => y.value === x);
-    if (!resource) return { label: x, value: x, icon: "ph:circle-light" };
-    return resource;
-  });
-
   $: floatingButton =
     $view.isConstrainedWidth && selectedResource === Resource.unknown
       ? [
@@ -175,7 +165,7 @@
   {/if}
   <div class="flex mo:py-3 py-5 w-full h-fit shrink-0">
     <ResourceSwitcher
-      options={_resources}
+      {resources}
       selected={selectedResource}
       isShowCount={true}
       bind:this={resourceSwitcherRef}

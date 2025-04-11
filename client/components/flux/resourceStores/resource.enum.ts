@@ -64,10 +64,12 @@ export enum Resource {
   pointAnalyticsConfig = "pointAnalyticsConfig",
   quickFocusItems = "quickFocusItems",
   task = "task",
-  habit = "habit",
   session = "session",
   sessionLog = "sessionLog",
   sessionFocusItems = "sessionFocusItems",
+
+  //Nucleus
+  place = "place",
   //Memotron
   vector = "vector",
   node = "node",
@@ -90,6 +92,10 @@ export enum Resource {
   clipperToolbarState = "clipperToolbarState",
   clipperSync = "clipperSync",
 
+  //Selftron
+  habit = "habit",
+  quest = "quest",
+
   //Feedtron
   feed = "feed",
   source = "source",
@@ -99,5 +105,8 @@ export enum Resource {
 
   //Finatron
   account = "account",
-  transaction = "transaction"
+  transaction = "transaction",
+
+  //Fellotron
+  fellow = "fellow"
 }

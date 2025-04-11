@@ -175,6 +175,8 @@ export function resolveResourceIcon(resource: Resource) {
       return "ph:calendar-light";
     case Resource.habit:
       return "ph:caret-circle-up-light";
+    case Resource.quest:
+      return "ph:question-light";
     case Resource.session:
       return "ph:clock-light";
     case Resource.thing:
@@ -187,6 +189,10 @@ export function resolveResourceIcon(resource: Resource) {
       return "ph:bank-light";
     case Resource.transaction:
       return "ph:arrows-left-right-light";
+    case Resource.fellow:
+      return "ph:user-light";
+    case Resource.place:
+      return "ph:map-pin-light";
     default:
       return "ph:question-fill";
   }
@@ -208,6 +214,7 @@ export function resolveResourceSwitcher(): IResourceSwitchItem[] {
     Resource.goal,
     Resource.task,
     Resource.habit,
+    Resource.quest,
     Resource.session,
     Resource.node,
     Resource.relation,
@@ -215,7 +222,9 @@ export function resolveResourceSwitcher(): IResourceSwitchItem[] {
     Resource.feed,
     Resource.source,
     Resource.account,
-    Resource.transaction
+    Resource.transaction,
+    Resource.fellow,
+    Resource.place
   ];
 
   return resources.map((resource) => ({

@@ -54,7 +54,7 @@ export function extractProduct(host: string) {
   }
 
   const straightFormatMatch = host.match(
-    /^(.+)\.([^.]+)\.(com|io|org|run|app|xyz)$/
+    /^(.+)\.([^.]+)\.(com|io|org|run|app|xyz|to)$/
   );
   if (straightFormatMatch) {
     return {
