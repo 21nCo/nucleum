@@ -19,10 +19,12 @@ export async function handleOAuthRedirection(
   let domain = "";
   try {
     const domainPart = body.state.split(":")[1];
+    let isSchemeRedirect = false;
     if (domainPart) {
       if (domainPart.includes("localredirect")) {
         domain = "tauri://localhost/index.html";
       } else if (domainPart.includes("schemeredirect")) {
+        isSchemeRedirect = true;
         const schemeData = domainPart.split("_")?.[0]?.split(".");
         domain = schemeData?.[1] + "://oauthsignin";
       } else {
@@ -33,14 +35,11 @@ export async function handleOAuthRedirection(
     console.log({ result, domainPart, domain, body });
     let redirectUrl = domain ?? "http://bla.ink";
     if (result?.token && domain) {
-      redirectUrl =
-        domain +
-        "?token=" +
-        result.token +
-        "&provider=" +
-        provider +
-        "&signup=" +
-        result.isSignup;
+      redirectUrl = domain + "?token=" + result.token;
+      if (!isSchemeRedirect) {
+        redirectUrl =
+          redirectUrl + "&provider=" + provider + "&signup=" + result.isSignup;
+      }
     } else if (result?.error) {
       redirectUrl = domain + "/error?error=" + result.error;
     }
