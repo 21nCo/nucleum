@@ -404,17 +404,18 @@ function initAppStore(seed: IAppStore) {
       ctx.isEmbed || dev || window.location.hostname === "localhost"
         ? import.meta.env?.VITE_HOST
         : window.location.hostname;
-    const redirect = ctx.isEmbed
-      ? import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host
-      : window.location.origin;
-    // const origin = window.location.origin;
+
     const guestPartForState = guest ?? (await getDapId()) ?? "";
     const domainPartForState =
       ctx.os === OperatingSystem.MACOS &&
       ctx.isEmbed &&
       provider === IdentityProvider.Apple
-        ? "localredirect." + host
-        : host;
+        ? `localredirect_${host}`
+        : ctx.isEmbed &&
+            (ctx.os === OperatingSystem.IOS || ctx.os === OperatingSystem.MACOS)
+          ? `schemeredirect.${app.product.toLowerCase()}_${host}`
+          : host;
+    const state = guestPartForState + ":" + domainPartForState;
     let url =
       config.authorise_url +
       "?client_id=" +
@@ -424,16 +425,17 @@ function initAppStore(seed: IAppStore) {
       "&response_type=" +
       (config.response_type ?? "code") +
       "&state=" +
-      guestPartForState +
-      ":" +
-      domainPartForState +
+      state +
       "&prompt=select_account";
     let redirectUri = "";
     if (config.response_mode === "form_post") {
       url += "&response_mode=form_post";
     }
     if (config.isRedirectToClient) {
-      redirectUri = redirect + "/oauth/" + config.oauth_slug;
+      const clientRedirect = ctx.isEmbed
+        ? import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host
+        : window.location.origin;
+      redirectUri = clientRedirect + "/oauth/" + config.oauth_slug;
     } else {
       redirectUri =
         import.meta.env?.VITE_API_URL + "/oauth/" + config.oauth_slug;
@@ -457,8 +459,8 @@ function initAppStore(seed: IAppStore) {
       }
 
       if (
-        ctx.os === OperatingSystem.MACOS ||
-        ctx.os === OperatingSystem.WINDOWS
+        config.isUseAuthClient &&
+        (ctx.os === OperatingSystem.MACOS || ctx.os === OperatingSystem.WINDOWS)
       ) {
         const host =
           dev || app.isDebugMode
@@ -466,7 +468,10 @@ function initAppStore(seed: IAppStore) {
             : `https://${import.meta.env?.VITE_HOST}`;
         url = `${host}/embed?provider=${config.oauth_slug}&guest=${guestPartForState}`;
       }
-      openLink(url, ctx.os === OperatingSystem.IOS);
+      openLink(
+        url,
+        ctx.os === OperatingSystem.IOS || ctx.os === OperatingSystem.MACOS
+      );
     } else {
       goto(url);
     }

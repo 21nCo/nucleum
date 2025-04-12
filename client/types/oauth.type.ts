@@ -47,4 +47,5 @@ export type OAuthProviderConfig = {
   response_mode?: "form_post" | "query";
   code_challenge_method?: "plain" | "S256";
   isRedirectToClient?: boolean;
+  isUseAuthClient?: boolean;
 };

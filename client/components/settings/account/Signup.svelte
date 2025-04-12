@@ -89,7 +89,14 @@
         </div>
       {/if}
     </div>
-    <AccountForm {isSignup} />
+    {#if $appStore.appData.auth?.isInviteOnly}
+      <div class="font-medium px-4 text-center text-ass1 text-b2 -mb-4">
+        This product is invite only. Please use the invite link to sign up.
+      </div>
+    {:else}
+      <AccountForm {isSignup} />
+    {/if}
+
     {#if isSignup}
       <PoliciesFooter pretext="By signing up, you agree to our" />
     {/if}

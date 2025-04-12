@@ -71,8 +71,11 @@ export async function processOAuthRedirection(
   if (!body.state) return;
   const guestPart = body.state.split(":")[0];
   const domainPart = body.state.split(":")[1];
-  if (domainPart.includes("localredirect.")) {
-    app = domainPart.split("localredirect.")[1];
+  if (
+    domainPart.includes("localredirect") ||
+    domainPart.includes("schemeredirect")
+  ) {
+    app = domainPart.split("_")[1];
   } else {
     app = domainPart;
   }

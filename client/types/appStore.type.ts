@@ -48,6 +48,9 @@ export type IAppData = {
   isShowCaptureOnMobile?: boolean;
   leftPanelFooter?: string;
   bottomRightAction?: string;
+  auth?: {
+    isInviteOnly?: boolean;
+  };
   /**
    * @deprecated
    */

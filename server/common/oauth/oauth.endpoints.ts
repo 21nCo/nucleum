@@ -20,8 +20,11 @@ export async function handleOAuthRedirection(
   try {
     const domainPart = body.state.split(":")[1];
     if (domainPart) {
-      if (domainPart.includes("localredirect.")) {
+      if (domainPart.includes("localredirect")) {
         domain = "tauri://localhost/index.html";
+      } else if (domainPart.includes("schemeredirect")) {
+        const schemeData = domainPart.split("_")?.[0]?.split(".");
+        domain = schemeData?.[1] + "://oauthsignin";
       } else {
         domain = "https://" + domainPart + "/oauth";
       }
