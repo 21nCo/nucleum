@@ -12,7 +12,7 @@
 </script>
 
 <div
-  class="w-full h-full bg-bgs1 flex items-center justify-center fixed z-[200]"
+  class="w-screen h-screen bg-bgs1 flex items-center justify-center fixed z-[200]"
 >
   <div class="flex items-center justify-center">
     {#if $context.isSheet}
@@ -23,21 +23,27 @@
         Loading...
       </div>
     {:else}
-      <div class="flex flex-col gap-4 items-center">
+      <div class="relative flex flex-col gap-4 items-center">
         <SubAtomLogo />
-        {#if message}
-          <div class="font-medium px-4 text-center text-fgs2 text-b2">
-            {message}
-          </div>
-        {/if}
-        {#if subMessage}
-          <div class="px-4 text-center text-fgs3 text-b3">
-            {subMessage}
-          </div>
-        {/if}
-        {#if duration !== undefined}
-          <div class="w-60">
-            <ProgressBar {duration} size={Size.md} />
+        {#if duration !== undefined || message || subMessage}
+          <div
+            class="absolute top-full w-fit flex flex-col gap-3 items-center whitespace-nowrap pt-4"
+          >
+            {#if duration !== undefined}
+              <div class="w-60">
+                <ProgressBar {duration} size={Size.md} />
+              </div>
+            {/if}
+            {#if message}
+              <div class="font-medium px-4 text-center text-fgs2 text-b2">
+                {message}
+              </div>
+            {/if}
+            {#if subMessage}
+              <div class="px-4 text-center text-fgs3 text-b3">
+                {subMessage}
+              </div>
+            {/if}
           </div>
         {/if}
       </div>

@@ -75,6 +75,7 @@ import { taskStore } from "../components/tasks/task.store";
 import Task from "../components/tasks/Task.svelte";
 import ResourceSearchModal from "../products/memotron/library/search/ResourceSearchModal.svelte";
 import DummyCollection from "../components/collection/DummyCollection.svelte";
+import AppLoadingView from "../layout/paint/AppLoadingView.svelte";
 
 export const globalActions: IAction[] = [
   {
@@ -959,6 +960,19 @@ export const globalActions: IAction[] = [
         ignoreSafeArea: true,
         isShowCantileverClose: true
       }
+    }
+  },
+  {
+    action: "appLoading",
+    isMeta: true,
+    label: "Test app loading",
+    type: ActionType.PAGE,
+    isMenuHidden: true,
+    component: AppLoadingView,
+    componentParams: {
+      message: "First login detected. Copying data from database",
+      subMessage: "Please wait...",
+      duration: 50
     }
   }
 ];

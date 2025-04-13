@@ -36,7 +36,6 @@
   onMount(async () => {
     initializeData();
     $appLoadingState.isLocalLoaded = true;
-    postMessageToParent(EmbedMessage.MOUNT);
   });
   async function handleVisibilityChange() {
     if (document?.hidden) {

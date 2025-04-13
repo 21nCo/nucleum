@@ -7,10 +7,7 @@
   import account from "$lib/client/stores/account.store";
   import { appLoadingState, appStore } from "$lib/client/stores/app.store";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import {
-    confirmationNotification,
-    toasts
-  } from "$lib/client/stores/notification.store";
+  import { toasts } from "$lib/client/stores/notification.store";
   import context from "$lib/client/stores/context.store";
   import DebugLayer from "./debug/DebugLayer.svelte";
   import ModalLayer from "./ModalLayer.svelte";
@@ -62,6 +59,8 @@
   import modalEvent from "$lib/client/components/modal/modal.store";
   import { PaymentProvider } from "$lib/shared/types/plan.type";
   import { embedBridge } from "$lib/client/components/embed/embed.store";
+  import { postMessageToParent } from "$lib/client/utils/embed.utils";
+  import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
 
   const loadingMessages = {
     cloneUp: {
@@ -90,6 +89,7 @@
   const isDebug = import.meta.env?.DEV;
 
   onMount(async () => {
+    postMessageToParent(EmbedMessage.MOUNT);
     if ((<any>window).Intercom)
       (<any>window).Intercom("update", {
         hide_default_launcher: true
