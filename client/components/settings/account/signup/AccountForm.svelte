@@ -21,6 +21,7 @@
   import { ButtonStyle } from "$lib/client/types/button.type";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
   export let isSignup = false;
+  export let currentProgress: string | undefined = undefined;
   let email = "";
   let pass = "";
   let nickName = "";
@@ -206,7 +207,7 @@
   {/if}
   <div class="flex flex-col gap-8 justify-center self-center w-80">
     {#if isValidArrayWithData($appStore?.appData?.oAuthConfig)}
-      <OAuthButtons />
+      <OAuthButtons bind:currentProgress />
     {/if}
     {#if !isLoginFromExtension}
       <Button

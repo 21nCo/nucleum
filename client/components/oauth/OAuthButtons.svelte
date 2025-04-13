@@ -4,7 +4,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { properCase } from "$lib/shared/utils/text.utils";
-  let progress = "";
+  export let currentProgress: string | undefined = undefined;
 </script>
 
 <svelte:head>
@@ -30,11 +30,11 @@
           : provider.oauth_slug + "-signin"}
         isExpandToFullWidth={true}
         icon={provider.oauth_slug}
-        isLoading={progress === provider.oauth_slug}
+        isLoading={currentProgress === provider.oauth_slug}
         label={"Continue with " + properCase(provider.oauth_slug)}
         on:click={async () => {
           // if (provider.oauth_slug === "apple") return;
-          progress = provider.oauth_slug;
+          currentProgress = provider.oauth_slug;
           await appStore.initiateOAuth2Flow(provider.provider);
         }}
       />

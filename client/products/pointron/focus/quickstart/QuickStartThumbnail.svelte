@@ -116,8 +116,10 @@
         {
           "px-3": isActive || isInEditMode,
           "bg-ccs1": isActive && !isInEditMode,
-          "bg-bgs2 hover:bg-bgs3 pr-3": !isActive && !isInEditMode,
-          "border-[1.5px] border-dashed border-ccs1 hover:bg-bgs2": isInEditMode
+          "bg-bgs2 notouch:hover:bg-bgs3 active:bg-bgs3 pr-3":
+            !isActive && !isInEditMode,
+          "border-[1.5px] border-dashed border-ccs1 notouch:hover:bg-bgs2 active:bg-bgs2":
+            isInEditMode
         }
       )}
       color={item.color}
@@ -203,7 +205,7 @@
       {
         "bg-ccs1 border border-ccs1": isActive && !isInEditMode,
         "bg-ccs4 dark:bg-ccs3 border border-ccs2": !isActive && !isInEditMode,
-        "border-[1.5px] border-dashed border-ccs1 dark:border-ccs2 hover:bg-bgs2":
+        "border-[1.5px] border-dashed border-ccs1 dark:border-ccs2 notouch:hover:bg-bgs2 active:bg-bgs2":
           isInEditMode
       }
     )}
