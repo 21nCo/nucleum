@@ -17,10 +17,11 @@
   import { runVectorGeneration } from "$lib/client/products/memotron/taco/taco.store";
   import { appStore } from "$lib/client/stores/app.store";
   import { deleteItemsFromCache } from "$lib/client/products/memotron/taco/taco.utils";
+  import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
+  import Badge from "$lib/client/elements/text/Badge.svelte";
 
   export let isCmdBarLaunch: boolean = false;
 
-  const mainLabel = `We will download AI models to your device so that you can use AI for free and offline.`;
   let progress = 0;
   let label: string;
   let isDisabled: boolean = false;
@@ -87,55 +88,81 @@
       });
     }
   }
+
+  function resolveMethodOptions(type: string) {
+    const noneOption = { label: "None", value: "none" };
+    const localOption = (size: string) => ({
+      label: `Local AI (${size})`,
+      value: "local",
+      badge: "Requires desktop app"
+    });
+    const customModelOption = {
+      label: `Custom - using API key`,
+      value: "custom",
+      badge: "soon",
+      isDisabled: true
+    };
+    const cloudOption = {
+      label: "Cloud AI - using credits",
+      value: "cloud",
+      badge: "soon",
+      isDisabled: true
+    };
+    switch (type) {
+      case "audio-transcription":
+        return [noneOption, localOption("~ 1 GB"), cloudOption];
+      case "summarizers":
+        return [
+          noneOption,
+          localOption("~ 2 GB"),
+          customModelOption,
+          cloudOption
+        ];
+      case "agent":
+        return [noneOption, customModelOption];
+      default:
+        return [noneOption];
+    }
+  }
 </script>
 
-<div class="flex flex-col justify-between h-full gap-8">
+<div class="flex flex-col h-full w-full gap-8">
+  <span class="flex w-full justify-center items-center gap-2 text-b3">
+    <Badge text="soon" size={Size.sm} />
+    <span class="text-fgs3">
+      Cloud AI credits, custom models and API keys will be available soon
+    </span>
+  </span>
   <div class="flex flex-col gap-4">
-    <div class="text-fgs2 text-b2 min-w-fit text-left">
-      {mainLabel}
-    </div>
-    <InlineInfoBanner
-      content="Local AI is still in **experimental mode**. Please turn off AI models if you face any issues"
-      icon="ph:warning-light"
+    <DropDown
+      items={resolveMethodOptions("audio-transcription")}
+      label={{
+        label: "Audio transcription",
+        tooltip: {
+          body: "Choose the method you want to use for generating audio transcriptions."
+        }
+      }}
+      isDisableSearch={true}
     />
-    <!-- <SwitchInput
-      size={Size.sm}
-      {isDisabled}
-      bind:checked={$userPreferences.localAI.semanticSearch}
-      on:change={onSemanticSearchToggle}
-      isExpanded={true}
+    <!-- <DropDown
+      items={resolveMethodOptions("summarizers")}
       label={{
-        label: "Semantic Search - 250MB",
+        label: "Summarizers",
         tooltip: {
-          body: "Enable this to search for semantically relevant content in the search bar."
+          body: "Choose the method you want to use for summarizing text."
         }
       }}
-    /> -->
-    <SwitchInput
-      size={Size.sm}
-      {isDisabled}
-      bind:checked={$userPreferences.localAI.audioTranscription}
-      on:change={onAudioTranscriptionToggle}
-      isExpanded={true}
-      label={{
-        label: "Audio Transcription - 380MB",
-        tooltip: {
-          body: "Enable this to transcribe audio files and convert them to text and to enable Audio to Markdown"
-        }
-      }}
+      isDisableSearch={true}
     />
-    <!-- <SwitchInput
-      size={Size.sm}
-      {isDisabled}
-      bind:checked={$userPreferences.localAI.markdownQAChat}
-      on:change={onQuestionAnsweringToggle}
-      isExpanded={true}
+    <DropDown
+      items={resolveMethodOptions("agent")}
       label={{
-        label: "Markdown Q & A  - 250MB",
+        label: "Agent mode",
         tooltip: {
-          body: "Enable this to use AI to answer questions pertaining to markdown."
+          body: "Choose the method you want to use for summarizing text."
         }
       }}
+      isDisableSearch={true}
     /> -->
     {#if isDisabled}
       <span class="text-fgs3 text-b2">
@@ -155,7 +182,7 @@
         }}
       />
     {/if}
-    {#if isCmdBarLaunch}
+    <!-- {#if isCmdBarLaunch}
       <p class="text-fgs2 text-b2 text-left">
         Note: You won't be able to Dismiss or perform any other action while the
         model download is in progress.
@@ -176,6 +203,6 @@
         content="Please do not close this popup while the model download is in progress."
         type={InfoTextType.WARNING}
       />
-    {/if}
+    {/if} -->
   </footer>
 </div>

@@ -112,10 +112,8 @@
         at: "AudioContent.svelte - initiateTranscription",
         url
       });
-
-      const audioData = await read_audio(url, 16000);
       const taco = Taco.getInstance();
-      jobId = await taco.initiateTranscriptionUsingML(audioData);
+      jobId = await taco.initiateTranscriptionUsingCoreML(url);
 
       logger.debug({
         at: "AudioContent.svelte - initiateTranscription",

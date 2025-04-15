@@ -131,24 +131,18 @@ export class Taco {
    * @param audioData - The audio data to transcribe (Float32Array)
    * @returns Promise<string> - The job ID for tracking transcription progress
    */
-  public async initiateTranscriptionUsingML(
-    audioData: Float32Array
-  ): Promise<string> {
+  public async initiateTranscriptionUsingCoreML(url: string): Promise<string> {
     try {
       logger.debug({
         at: "Taco.initiateTranscriptionUsingML",
-        audioDataSize: audioData.length
+        url
       });
-
-      // Convert Float32Array to WAV format
-      const wavBuffer = this.convertToWav(audioData);
-      const audioBlob = new Blob([wavBuffer], { type: "audio/wav" });
 
       // Send audio data to iOS and get job ID
       const jobId = await embedBridge.fetch(
         generateMiniRandomId(),
         EmbedMessage.TRANSCRIBE_AUDIO,
-        { audio: audioBlob }
+        { url }
       );
 
       if (!jobId) {
