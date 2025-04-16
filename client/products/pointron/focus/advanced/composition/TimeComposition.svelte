@@ -19,10 +19,12 @@
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { deepCopy } from "$lib/shared/utils/obj.utils";
   import { logger } from "$lib/client/components/debug/logger.client";
-  export let isExpandedMode: boolean = true;
+  import { cn } from "$lib/client/utils/ui.utils";
+
+  export let parentBgIndex: number = 1;
   let selectedMode: number = refreshAdvancedModeState();
   let selectedDynamicDuration: number = 0;
-  $: parentBackgroundIndex = isExpandedMode ? 1 : 2;
+  let isSliderVariant: boolean = false;
   function onDynamicSliderChange(event: any) {
     if (
       $activeSession.isSessionRunning ||
@@ -60,26 +62,25 @@
 </script>
 
 <div
-  class="relative flex flex-col items-center rounded-lg w-full justify-start gap-4 {isExpandedMode &&
-    'flex-grow'}"
+  class={cn(
+    "relative flex flex-col items-center rounded-lg w-full justify-start gap-4",
+    {
+      "flex-grow": isSliderVariant
+    }
+  )}
 >
-  {#if isExpandedMode}
+  {#if !isSliderVariant}
     <div class="flex flex-col items-center w-full gap-4 dp:gap-8">
-      <!-- <div class="relative flex justify-center gap-2 w-full max-w-[28rem]">
-        <div class="w-full">
-          <Slider
-            {parentBackgroundIndex}
-            on:time-change={onDynamicSliderChange}
-          />
-        </div>
-      </div> -->
-      <ComposeTotalsText composition={$activeSession.composition} />
+      <ComposeTotalsText
+        composition={$activeSession.composition}
+        {parentBgIndex}
+      />
       {#if $activeSession.composition.type !== SessionCompositionType.END_TIME_FIXED}
         <div class="flex w-full justify-center">
           <PanelSwitcher
             style={PanelSwitcherStyle.TRAIN}
             size={Size.sm}
-            parentBgIndex={parentBackgroundIndex}
+            {parentBgIndex}
             items={["Presets", "Custom"]}
             value={selectedMode === 0 ? "Presets" : "Custom"}
             on:switch={onModeSwitch}
@@ -89,10 +90,7 @@
       {/if}
     </div>
     {#if selectedMode == 0}
-      <PresetPicker
-        isExpandedVariant={isExpandedMode}
-        {parentBackgroundIndex}
-      />
+      <PresetPicker parentBackgroundIndex={parentBgIndex} />
     {:else if $activeSession.composition.type === SessionCompositionType.END_TIME_FIXED}
       <!-- TODO -->
       <div class="py-8 flex flex-col items-center gap-4">
@@ -111,6 +109,7 @@
       </div>
     {:else}
       <ComposeDuration
+        {parentBgIndex}
         bind:composition={$activeSession.composition}
         on:change={onCompositionChanges}
         isShowSave={true}
@@ -120,14 +119,11 @@
     <div class="flex flex-col px-4 gap-8">
       <div class="h-32">
         {#if selectedMode == 0}
-          <PresetPicker
-            isExpandedVariant={isExpandedMode}
-            {parentBackgroundIndex}
-          />
+          <PresetPicker parentBackgroundIndex={parentBgIndex} />
         {:else}
           <div class="relative flex flex-col gap-2 max-w-[19rem]">
             <Slider
-              {parentBackgroundIndex}
+              parentBackgroundIndex={parentBgIndex}
               on:time-change={onDynamicSliderChange}
             />
             <div class="flex justify-center w-full">

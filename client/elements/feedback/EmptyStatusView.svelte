@@ -14,6 +14,7 @@
   import ComingSoon from "$lib/client/illustrations/pixelsmarket/ComingSoon.svelte";
   import QuickFocusItemsGridPulse from "./animations/thumbnailPulse/QuickFocusItemsGridPulse.svelte";
   import QuickFocusItemPulse from "./animations/thumbnailPulse/QuickFocusItemPulse.svelte";
+  import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
   export let mainText: string | undefined = undefined;
   export let subText: string | undefined = undefined;
   export let size: Size.sm | Size.md | Size.lg = Size.md;
@@ -28,7 +29,12 @@
   export let parentBgIndex: number = 1;
 </script>
 
-<div class="flex flex-col w-full h-full justify-center items-center gap-6 px-2">
+<div
+  class={cn("flex flex-col w-full h-full justify-center items-center px-2", {
+    "gap-6": size !== Size.sm,
+    "gap-3": size === Size.sm
+  })}
+>
   {#if isLoadingState && loadingAnimation === LoadingAnimationType.SPINNER}
     <div class="text-fgs3 text-b3 flex flex-col gap-4 items-center">
       <!-- <InlineLoadingAnimation /> -->
@@ -68,12 +74,14 @@
       <EmptyStatus {size} />
     {/if}
     <div class="flex flex-col gap-0.5 items-center">
-      <div>{mainText ?? (isSearchContext ? "No results found." : "")}</div>
+      <div class="text-center">
+        {mainText ?? (isSearchContext ? "No results found." : "")}
+      </div>
       <div class="text-fgs3 text-center text-b3">
         {#if $$slots.subtext}
           <slot name="subtext" />
         {:else}
-          {subText ?? ""}
+          {@html renderMdAsHtml(subText ?? "")}
         {/if}
       </div>
       {#if actionText}

@@ -159,7 +159,7 @@
 
 <div
   class={cn("flex flex-col w-full h-full gap-6 pb-48 overflow-auto", {
-    "pt-6": isInEditMode
+    "pt-6": isInEditMode && $focusItemsStore.items.length > 0
   })}
 >
   {#if ($focusItemsStore.items?.length === 0 && !isInEditMode && $activeSession.isSessionRunning) || isRefreshing}

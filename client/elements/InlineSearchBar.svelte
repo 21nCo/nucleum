@@ -45,7 +45,7 @@
   }
 
   function propagate() {
-    dispatch("search");
+    dispatch("search", query);
   }
 
   const debouncedSearch = debouncer(propagate, 500);
@@ -82,6 +82,7 @@
       dispatch("search");
     }}
     on:change={debouncedSearch}
+    on:enter
   />
   <slot>
     {#if $uiStateDerived.isShowHotKeyHints}

@@ -76,6 +76,7 @@ import Task from "../components/tasks/Task.svelte";
 import ResourceSearchModal from "../products/memotron/library/search/ResourceSearchModal.svelte";
 import DummyCollection from "../components/collection/DummyCollection.svelte";
 import AppLoadingView from "../layout/paint/AppLoadingView.svelte";
+import SimpleDigitalClock from "../products/pointron/clocks/SimpleDigitalClock.svelte";
 
 export const globalActions: IAction[] = [
   {
@@ -974,5 +975,11 @@ export const globalActions: IAction[] = [
       subMessage: "Please wait...",
       duration: 50
     }
+  },
+  {
+    action: "simpleDigitalClock",
+    type: ActionType.PAGE,
+    isMeta: true,
+    component: SimpleDigitalClock
   }
 ];

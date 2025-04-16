@@ -25,6 +25,7 @@ export enum UIState {
   analyticsPage = "analyticsPage",
   manualLogQuickDuration = "manualLogQuickDuration",
   manualLogRecentGoals = "manualLogRecentGoals",
+  manualLogDurationMethod = "manualLogDurationMethod",
   //Memotron
   /**
    * List of recently used capture shortcuts on capture page

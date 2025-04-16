@@ -113,6 +113,8 @@
         title="Quick Focus"
         floatingButton={addManualLogButton}
         titleStyle={TextStyle.PANEL_HEADING}
+        isProminentDivider={true}
+        extraLargeScreenComponent="simpleDigitalClock"
       >
         <slot name="nonpadded" slot="nonpadded">
           <QuickStart />

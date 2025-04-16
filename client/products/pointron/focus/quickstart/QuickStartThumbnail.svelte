@@ -23,6 +23,8 @@
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { createEventDispatcher } from "svelte";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   const dispatch = createEventDispatcher();
 
   export let item: Pick<IGoalThumb, "id" | "label" | "color" | "parent"> & {
@@ -56,8 +58,11 @@
       parentLabels = item.parent.map((x: any) => x.label) ?? [];
   });
 
-  async function toggleSession() {
-    if (isInEditMode) return;
+  async function toggleSession(e: MouseEvent) {
+    if (isInEditMode || e.altKey) {
+      appStore.openResource(item.id, ResourceAccessMode.POP);
+      return;
+    }
     if (isActive) {
       isFinishingState = true;
       await activeSession.finishSession({ isClose: true });
@@ -204,7 +209,10 @@
       "relative flex rounded-md h-[4.3rem] p-2 transition-ease userdata",
       {
         "bg-ccs1 border border-ccs1": isActive && !isInEditMode,
-        "bg-ccs4 dark:bg-ccs3 border border-ccs2": !isActive && !isInEditMode,
+        "bg-ccs4 dark:bg-ccs3 border border-ccs2":
+          !isActive && !isInEditMode && item.color,
+        "bg-bgs2/60 border border-brs3":
+          !isActive && !isInEditMode && !item.color,
         "border-[1.5px] border-dashed border-ccs1 dark:border-ccs2 notouch:hover:bg-bgs2 active:bg-bgs2":
           isInEditMode
       }

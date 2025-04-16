@@ -67,9 +67,14 @@ export function bg(
   parentBackgroundIndex: number = 1,
   isActive: boolean = false
 ) {
-  return isActive
-    ? `bg-bgs${parentBackgroundIndex + 2}`
-    : `bg-bgs${parentBackgroundIndex + 1}`;
+  const index = Math.floor(parentBackgroundIndex);
+  const resultIndex = isActive ? index + 2 : index + 1;
+  const cls = `bg-bgs${resultIndex}`;
+  if (parentBackgroundIndex % 1 === 0 || resultIndex > 1) {
+    return cls;
+  } else {
+    return cls + "/" + Math.round((parentBackgroundIndex % 1) * 100);
+  }
 }
 /**
  * Active background utility function

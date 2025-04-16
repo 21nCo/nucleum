@@ -29,6 +29,7 @@
   const dispatch = createEventDispatcher();
   export let composition: SessionComposition;
   export let isShowSave: boolean = false;
+  export let parentBgIndex: number = 1;
   let isTargetFocus: boolean =
     composition.type === SessionCompositionType.TARGET_FOCUS;
 
@@ -114,6 +115,7 @@
     style={PanelSwitcherStyle.BAR}
     isExpandToFullWidth={isShowSave}
     barStyle={BarStyle.EXACT}
+    {parentBgIndex}
     on:switch={() => {
       if (selectedType === "Pomodoro") {
         composition.type = SessionCompositionType.POMODORO;
@@ -140,7 +142,7 @@
     <slot name="right" slot="right">
       {#if isShowSave}
         <Button
-          icon="bookmark"
+          icon="ph:bookmark-simple-light"
           on:click={() => {
             appStore.runAction(PointronAction.SAVE_PRESET_MODAL);
           }}

@@ -31,14 +31,18 @@
   import { LoadingAnimationType } from "$lib/client/types/feedback.type";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import type { IRecordId } from "$lib/client/types/data.type";
+  import Icon from "$lib/client/elements/Icon.svelte";
+  import QuickStartThumbnailList from "./QuickStartThumbnailList.svelte";
 
   let isLoadingState = false;
-  let searchInput = "";
+  let searchQuery = "";
   let layout = Layout.LIST;
   let isInEditMode = false;
   let searchStore: SearchStore = new SearchStore(Resource.goal);
   restoreLayoutState();
   let items: IGoalThumb[] = [];
+  let searchPinnedItems: IGoalThumb[] = [];
+  let searchUnpinnedItems: IGoalThumb[] = [];
 
   onMount(() => {
     refresh();
@@ -90,39 +94,61 @@
   }
 
   async function onSearch(event: any) {
-    if (!searchInput) {
-      refresh();
+    const val = event.detail;
+    if (!val) {
+      searchQuery = "";
+      refresh({ isPreventLoadingPulse: true });
+      searchPinnedItems = [];
+      searchUnpinnedItems = [];
       return;
     }
+    isLoadingState = true;
+    searchQuery = val;
     const result = await searchStore.select({
-      searchQuery: searchInput,
+      searchQuery,
       filters: {
         isPinnedForQuickFocus: undefined
       },
       isIncludeSubItems: true
     });
     if (isValidArray(result)) {
-      items = result.map((x: any) => ({
+      const allItems = result.map((x: any) => ({
         ...x,
         color: resolveGoalColor(x)
       }));
+      searchPinnedItems = allItems.filter((x: any) => x.isPinnedForQuickFocus);
+      searchUnpinnedItems = allItems.filter(
+        (x: any) => !x.isPinnedForQuickFocus
+      );
     }
+    isLoadingState = false;
   }
 
-  function onUnpin(e: CustomEvent<IRecordId>) {
-    items = items.filter((x) => !isSameResource(x.id, e.detail));
+  function createNewGoal() {
+    appStore.runAction(
+      resourceAction(Resource.goal, ResourceActionType.CREATE),
+      {
+        componentParams: {
+          isQuickFocus: true,
+          context: PointronAction.PIN_TO_QUICK_FOCUS,
+          label: searchQuery,
+          isPreventOpenAfterCreate: true
+        }
+      }
+    );
   }
 </script>
 
 <div class="flex flex-col flex-grow gap-4 w-full">
   {#if $context.embed === Embed.HANDSET}
-    <QuickStartCombinedTagsBar bind:searchInput on:searchSort />
+    <QuickStartCombinedTagsBar bind:searchInput={searchQuery} on:searchSort />
   {:else}
     <InlineSearchBar
-      bind:query={searchInput}
+      query={searchQuery}
       isPadded={true}
       on:search={onSearch}
-      placeholder="Search for any goal to quick focus"
+      placeholder="Search a goal to quick focus"
+      on:enter={createNewGoal}
     />
     <!-- <div class="mo:p-0 px-3">
       <TagsContainer
@@ -131,26 +157,27 @@
       />
     </div> -->
   {/if}
-  {#if !isLoadingState && items.length > 0}
-    <div
-      class={cn("w-full px-4", {
-        "flex flex-col gap-3": layout === Layout.LIST,
-        "grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))]":
-          layout != Layout.LIST,
-        "gap-2": layout != Layout.LIST && !isInEditMode,
-        "gap-5 pt-4": isInEditMode
-      })}
-    >
-      {#each items as item, index (item)}
-        <QuickStartThumbnail
-          {item}
+  {#if !isLoadingState && ((items.length > 0 && !searchQuery) || (searchQuery && (searchPinnedItems.length > 0 || searchUnpinnedItems.length > 0)))}
+    {#if searchQuery}
+      <div class="flex flex-col gap-12">
+        <QuickStartThumbnailList
+          items={searchPinnedItems}
           {layout}
           {isInEditMode}
-          on:unpin={onUnpin}
+          title="Pinned"
+          emptyStatusText={`No pinned goals found with "${searchQuery}"`}
         />
-      {/each}
-    </div>
-
+        <QuickStartThumbnailList
+          items={searchUnpinnedItems}
+          {layout}
+          {isInEditMode}
+          title="Other goals"
+          emptyStatusText={`No other goals found with "${searchQuery}"`}
+        />
+      </div>
+    {:else}
+      <QuickStartThumbnailList {items} {layout} {isInEditMode} />
+    {/if}
     <div class="flex flex--col gap-2 w-full justify-center items-center">
       {#if isInEditMode}
         <Button
@@ -170,9 +197,12 @@
         on:click={() => (isInEditMode = !isInEditMode)}
       />
     </div>
-    <div class="flex justify-center text-b2 text-fgs3">
-      {$context.isTouchDevice ? "Tap" : "Click"} on a goal to start focusing
-    </div>
+    {#if !isInEditMode}
+      <div class="flex justify-center text-b2 text-fgs3 gap-1">
+        <Icon icon="ph:info-light" size={Size.sm} />
+        {$context.isTouchDevice ? "Tap" : "Click"} on a goal to start focusing
+      </div>
+    {/if}
     <ScrollViewBottomSpacer />
   {:else}
     <EmptyStatusView
@@ -182,20 +212,14 @@
       loadingAnimation={layout !== Layout.LIST
         ? LoadingAnimationType.QUICK_FOCUS_ITEMS_GRID_PULSE
         : LoadingAnimationType.FOCUS_ITEMS_PULSE}
-      mainText={"No pinned goals found"}
-      subText="Please create a new goal or pin an existing one to the quick focus section."
+      mainText={searchQuery
+        ? `No goals found for "${searchQuery}"`
+        : "No pinned goals found"}
+      subText={searchQuery
+        ? "Press **Enter** to create a new goal & pin it here"
+        : "Please create a new goal or pin an existing one to the quick focus section."}
       actionText={"Create new goal"}
-      on:click={() => {
-        appStore.runAction(
-          resourceAction(Resource.goal, ResourceActionType.CREATE),
-          {
-            componentParams: {
-              isQuickFocus: true,
-              context: PointronAction.PIN_TO_QUICK_FOCUS
-            }
-          }
-        );
-      }}
+      on:click={createNewGoal}
     />
   {/if}
 </div>

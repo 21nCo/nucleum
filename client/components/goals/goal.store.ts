@@ -33,6 +33,7 @@ import { Embed } from "$lib/client/types/context.type";
 import view from "$lib/client/stores/view.store";
 import { collectionStore } from "../collection/collection.store";
 import { AppSearchParam } from "$lib/client/types/appStore.type";
+import { toasts } from "$lib/client/stores/notification.store";
 
 class GoalStore extends ResourceStore<IGoal> {
   constructor() {
@@ -118,17 +119,26 @@ class GoalStore extends ResourceStore<IGoal> {
     return this.create([resource, ...subGoals], additionalParams);
   }
 
-  async createNew(params?: { isQuickFocus?: boolean; context?: string }) {
+  async createNew(params?: {
+    isQuickFocus?: boolean;
+    context?: string;
+    label?: string;
+    isPreventOpenAfterCreate?: boolean;
+  }) {
     const id = generateResourceId(Resource.goal);
     const goal: OmitForCaptureWithId<IGoal> = {
       id,
-      label: "",
+      label: params?.label ?? "",
       isPinnedForQuickFocus: params?.isQuickFocus,
       type: GoalType.INDEFINITE
     };
-    await this.create([goal], {
+    const result = await this.create([goal], {
       context: params?.context
     });
+    if (result) {
+      toasts.success("New goal created successfully");
+    }
+    if (params?.isPreventOpenAfterCreate) return;
     appStore.openResource(id, ResourceAccessMode.POP, {
       searchParams: {
         [AppSearchParam.EDIT]: true

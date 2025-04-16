@@ -9,7 +9,6 @@
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
-  import Button from "$lib/client/elements/button/Button.svelte";
   import { onMount } from "svelte";
   import { appEvents } from "$lib/client/stores/notification.store";
   import { GlobalEvent } from "$lib/client/types/event.enum";
@@ -19,6 +18,7 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { InteractionMode } from "$lib/client/components/settings/interactionMode/interactionMode.type";
   import { tooltip } from "$lib/client/actions/popover.action";
+  import ComponentResolver from "./ComponentResolver.svelte";
   const dispatch = createEventDispatcher();
 
   export let title: string | undefined = undefined;
@@ -32,6 +32,8 @@
    * If true, the panel will be expanded by default and there will be no right slot for record view.
    */
   export let isExpanded: boolean = false;
+  export let isProminentDivider: boolean = false;
+  export let extraLargeScreenComponent: string | undefined = undefined;
 
   onMount(() => {
     const unsubscribe = appEvents.subscribe((e) => {
@@ -51,6 +53,8 @@
     !$view.isConstrainedWidth &&
     $appStore.interactionMode !== InteractionMode.COMMAND_ONLY &&
     $appStore.interactionMode !== InteractionMode.AGENT;
+
+  $: isExtraLargeScreen = $view.landscapiness > 1.7 && $view.scale > 1.8;
 </script>
 
 <div class="flex w-full h-full">
@@ -137,8 +141,24 @@
       orientation={Orientation.Vertical}
       colorStrength={ColorStrength.Normal}
     />
-    <div class="relative flex flex-grow h-full">
+    {#if isProminentDivider}
+      <div class="w-0.5 bg-bgs2"></div>
+      <Divider
+        orientation={Orientation.Vertical}
+        colorStrength={ColorStrength.Normal}
+      />
+    {/if}
+    <div
+      class={cn("relative flex flex-grow h-full", {
+        "max-w-6xl": extraLargeScreenComponent
+      })}
+    >
       <slot name="right" />
     </div>
+    {#if isExtraLargeScreen && extraLargeScreenComponent}
+      <div class="flex h-full flex-grow">
+        <ComponentResolver path={extraLargeScreenComponent} />
+      </div>
+    {/if}
   {/if}
 </div>

@@ -4,6 +4,7 @@
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { focusItemsStore } from "$lib/client/products/pointron/focus/session.store";
   import { appStore } from "$lib/client/stores/app.store";
+  export let parentBgIndex = 1;
 
   $: focusItemsCount = focusItemsStore.resolveCount($focusItemsStore.items);
 </script>
@@ -13,10 +14,10 @@
 >
   <div class="flex flex-col gap-4 dp:gap-8 w-full flex-grow">
     <IntervalBar />
-    <TimeComposition isExpandedMode={true} />
+    <TimeComposition {parentBgIndex} />
   </div>
   <button
-    class="flex flex-col items-center gap-1 pb-40"
+    class="flex flex-col items-center gap-1 cw:pb-40 pb-16"
     on:click={() => appStore.runAction(PointronAction.SHOW_FOCUSITEMS_MODAL)}
   >
     <span class="underline-dotted">

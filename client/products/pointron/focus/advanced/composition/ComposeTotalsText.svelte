@@ -6,9 +6,11 @@
   } from "$lib/client/types/pointron/sessionComposition.type";
   import { getTotalsFromComposition } from "$lib/client/products/pointron/pointron.utils";
   import { formatSeconds } from "$lib/client/utils/time.utils";
+  import { bg, cn } from "$lib/client/utils/ui.utils";
   // export let totals: { duration: number; focus: number; brek: number };
   // export let compositionType: SessionCompositionType;
   export let composition: SessionComposition;
+  export let parentBgIndex: number = 1;
   // export let breakType: BreakCompositionType;
   $: totals = getTotalsFromComposition({
     composition
@@ -16,7 +18,10 @@
 </script>
 
 <div
-  class="flex w-full justify-around opacity-90 text-fgs2 text-b3 sm:text-b2 py-2 rounded-md bg-bgs2"
+  class={cn(
+    "flex w-full justify-around opacity-90 text-fgs2 text-b3 sm:text-b2 py-2 rounded-md",
+    bg(parentBgIndex)
+  )}
 >
   <div class="flex justify-start gap-1">
     Total: <span class="min-w-[2rem]">

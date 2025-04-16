@@ -8,7 +8,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { appStore } from "$lib/client/stores/app.store";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-  export let isExpandedVariant: boolean = false;
+  export let isExpandedVariant: boolean = true;
   let isInEditMode: boolean = false;
   let selectedPresetIndex: number = $activeSession.composition
     ? $pointronPreferences.presets.indexOf($activeSession.composition)

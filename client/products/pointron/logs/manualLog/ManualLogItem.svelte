@@ -53,7 +53,11 @@
   let selectedQuickAddItem: number = resolveQuickAddSelection();
   let error: string = "";
   let defaultTime = Date.now();
-  let selectedMethod: "duration" | "startEnd" = "duration";
+  let selectedMethod: "duration" | "startEnd" =
+    uiState.getState(UIState.manualLogDurationMethod, {
+      isProductScoped: true,
+      isDeviceScoped: true
+    }) ?? "duration";
   const searchStore = new SearchStore(Resource.goal);
   let recentGoals: IGoal[] = [];
 
@@ -359,6 +363,12 @@
         isExpandToFullWidth={true}
         size={Size.sm}
         bind:value={selectedMethod}
+        on:switch={() => {
+          uiState.setState(UIState.manualLogDurationMethod, selectedMethod, {
+            isProductScoped: true,
+            isDeviceScoped: true
+          });
+        }}
       />
     </div>
 

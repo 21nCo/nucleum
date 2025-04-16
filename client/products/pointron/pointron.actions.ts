@@ -122,8 +122,8 @@ export const pointronActions: IAction[] = [
     type: ActionType.MODAL,
     isMeta: true,
     modalParams: {
+      title: "Save as preset",
       layout: {
-        size: Size.xs,
         primaryAction: {
           label: "Save Preset",
           callback: () => activeSession.saveCurrentCompositionAsPreset()
