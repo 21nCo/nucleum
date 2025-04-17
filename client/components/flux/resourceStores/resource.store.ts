@@ -1,6 +1,7 @@
 import { get, writable } from "svelte/store";
 import {
   activeResourceFilter,
+  activeResourceFilterIgnoreParentInactive,
   archivedResourceFilter,
   debouncer,
   generateUID
@@ -414,16 +415,19 @@ export class ResourceStore<T extends IResource> implements IStore {
   }
 
   async trash(id: IRecordId, additionalParams?: IResourceMutationParams) {
-    return this.modify(
-      id,
-      {
-        trashInformation: {
-          deletedBy: this.currentUserId,
-          deletedAt: new Date().toISOString()
-        }
-      } as Partial<T>,
-      additionalParams
-    );
+    return Promise.all([
+      this.modify(
+        id,
+        {
+          trashInformation: {
+            deletedBy: this.currentUserId,
+            deletedAt: new Date().toISOString()
+          }
+        } as Partial<T>,
+        additionalParams
+      ),
+      this.onTrash([id])
+    ]);
   }
 
   async bulkModify(
@@ -484,33 +488,62 @@ export class ResourceStore<T extends IResource> implements IStore {
       additionalParams
     );
   }
+
   archive(id: IRecordId, additionalParams?: IResourceMutationParams) {
-    return this.modify(
-      id,
-      {
-        isArchived: true
-      } as Partial<T>,
-      additionalParams
-    );
+    return Promise.all([
+      this.modify(
+        id,
+        {
+          isArchived: true
+        } as Partial<T>,
+        additionalParams
+      ),
+      this.onArchive([id])
+    ]);
   }
+
   unarchive(id: IRecordId, additionalParams?: IResourceMutationParams) {
-    return this.modify(
-      id,
-      {
-        isArchived: false
-      } as Partial<T>,
-      additionalParams
-    );
+    return Promise.all([
+      this.modify(
+        id,
+        {
+          isArchived: false
+        } as Partial<T>,
+        additionalParams
+      ),
+      this.onUnarchive([id])
+    ]);
   }
+
   restore(id: IRecordId, additionalParams?: IResourceMutationParams) {
-    return this.modify(
-      id,
-      {
-        trashInformation: undefined
-      } as Partial<T>,
-      additionalParams
-    );
+    return Promise.all([
+      this.modify(
+        id,
+        {
+          trashInformation: undefined
+        } as Partial<T>,
+        additionalParams
+      ),
+      this.onRestore([id])
+    ]);
   }
+
+  onArchive(ids: IRecordId[]) {
+    //will be implemented by derived stores to handle sub items archive
+  }
+
+  onUnarchive(ids: IRecordId[]) {
+    //will be implemented by derived stores to handle sub items unarchive
+  }
+
+  onTrash(ids: IRecordId[]) {
+    //will be implemented by derived stores to handle sub items trash
+  }
+
+  onRestore(ids: IRecordId[]) {
+    //will be implemented by derived stores to handle sub items restore
+  }
+
   toggleLock(
     id: IRecordId,
     isLocked: boolean,
@@ -607,9 +640,16 @@ export class ResourceStore<T extends IResource> implements IStore {
       isCloudOnlyResource:
         this.isCloudOnlyResource ?? additionalParams?.isUseCloud
     });
-    if (!result || !isValidArrayWithData(result)) return result;
+    if (
+      !result ||
+      !isValidArrayWithData(result) ||
+      additionalParams?.isIncludeInactiveItems
+    )
+      return result;
     else if (params?.filters?.isArchived)
       return result.filter(archivedResourceFilter);
+    else if (additionalParams?.isIgnoreParentInactive)
+      return result.filter(activeResourceFilterIgnoreParentInactive);
     else return result.filter(activeResourceFilter);
   }
 

@@ -76,6 +76,7 @@
   export let collectionId: IRecordId | undefined = undefined;
   export let accessPoint: ResourceAccessPoint | undefined = undefined;
   export let parentBgIndex: number = 1;
+  export let isPreventAddNew: boolean = false;
   const instance = generateMiniRandomId();
   let tasks: ITaskThumb[] = [];
   let searchStore = new SearchStore(Resource.task);
@@ -148,7 +149,8 @@
         selectedSubType !== TaskSubTypeForSwitcher.BY_DATE
           ? 50
           : undefined,
-      offset: params?.isPagination ? tasks.length : undefined
+      offset: params?.isPagination ? tasks.length : undefined,
+      isIgnoreParentInactive: goalId ? true : false
     });
     if (isValidArray(result)) {
       //TODO - for by_month case + overdue - the date filter has 2 conditions with AND operator - below is temporary fix until complex filters are implemented
@@ -163,7 +165,7 @@
       if (params?.isPagination)
         tasks = [...tasks, ...result].filter(removeDuplicatesFilter);
       else tasks = [...result];
-    } else {
+    } else if (!params?.isPagination) {
       tasks = [];
     }
     isRefreshing = false;
@@ -401,30 +403,32 @@
     placeholder={"Search tasks"}
     style={InputStyle.FILLED}
   >
-    <Button
-      icon="ph:plus-light"
-      type={ButtonVariant.PRIMARY}
-      style={$view.isConstrainedWidth ? ButtonStyle.OUTLINED : undefined}
-      size={Size.md}
-      label={!$view.isConstrainedWidth ? "Create" : undefined}
-      isPreventMinWidth={true}
-      on:click={() => {
-        appStore.runAction(
-          resourceAction(Resource.task, ResourceActionType.CREATE),
-          {
-            componentParams: {
-              date:
-                selectedSubType === TaskSubTypeForSwitcher.BY_DATE ||
-                selectedSubType === TaskSubTypeForSwitcher.BY_MONTH
-                  ? selectedDate
-                  : undefined,
-              goalId: goalId,
-              collectionId: collectionId
+    {#if !isPreventAddNew}
+      <Button
+        icon="ph:plus-light"
+        type={ButtonVariant.PRIMARY}
+        style={$view.isConstrainedWidth ? ButtonStyle.OUTLINED : undefined}
+        size={Size.md}
+        label={!$view.isConstrainedWidth ? "Create" : undefined}
+        isPreventMinWidth={true}
+        on:click={() => {
+          appStore.runAction(
+            resourceAction(Resource.task, ResourceActionType.CREATE),
+            {
+              componentParams: {
+                date:
+                  selectedSubType === TaskSubTypeForSwitcher.BY_DATE ||
+                  selectedSubType === TaskSubTypeForSwitcher.BY_MONTH
+                    ? selectedDate
+                    : undefined,
+                goalId: goalId,
+                collectionId: collectionId
+              }
             }
-          }
-        );
-      }}
-    />
+          );
+        }}
+      />
+    {/if}
   </InlineSearchBar>
   <div class="cw:px-0 px-4 w-full">
     <InlineSyncingFeedback resource={Resource.task} isFullWidthVariant={true} />
@@ -468,8 +472,10 @@
       mainText="No tasks found"
       subText={searchQuery !== ""
         ? "Try different search criteria or create a new task."
-        : "Create a task to get started."}
-      actionText="Create new task"
+        : !isPreventAddNew
+          ? "Create a task to get started."
+          : "You can't add tasks to this goal when it is archived/deleted."}
+      actionText={!isPreventAddNew ? "Create new task" : undefined}
       on:click={() => {
         appStore.runAction(
           resourceAction(Resource.task, ResourceActionType.CREATE)

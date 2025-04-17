@@ -271,15 +271,19 @@ export function debouncer(func: any, timeout: number) {
 }
 
 export const activeResourceFilter = (x: any) =>
+  !x.isArchived && !x.trashInformation && !x.isParentInactive;
+
+export const activeResourceFilterIgnoreParentInactive = (x: any) =>
   !x.isArchived && !x.trashInformation;
 
 export const activeResourceFilterV2 = {
   isArchived: false,
-  trashInformation: false
+  trashInformation: false,
+  isParentInactive: false
 };
 
 export const archivedResourceFilter = (x: any) =>
-  x.isArchived && !x.trashInformation;
+  x.isArchived && !x.trashInformation && !x.isParentInactive;
 
 export const nonTrashFilter = (x: any) => !x.trashInformation;
 

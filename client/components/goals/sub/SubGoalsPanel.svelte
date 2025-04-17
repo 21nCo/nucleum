@@ -4,14 +4,14 @@
     type DragDropEvent
   } from "$lib/client/actions/rearrange.action";
   import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
+  import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import type { IRecordId } from "$lib/client/types/data.type";
-  import { InputStyle } from "$lib/client/types/input.type";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import {
-    activeResourceFilter,
+    activeResourceFilterIgnoreParentInactive,
     archivedResourceFilter
   } from "$lib/client/utils/utils";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
@@ -28,18 +28,25 @@
   import SubGoalItem from "./SubGoalItem.svelte";
   import SubGoalsLayoutSwitcher from "./SubGoalsLayoutSwitcher.svelte";
   export let goal: IActiveGoalStore;
+  export let isActiveResource: boolean = true;
   let isExpandArchiveSubGoals = false;
   $: _subGoals = [
     ...($goal.children
-      ? $goal.children.filter(activeResourceFilter).map((t) => ({
-          ...t,
-          icon: resolveGoalStatusIcon(t.status)
-        }))
+      ? $goal.children
+          .filter(activeResourceFilterIgnoreParentInactive)
+          .map((t) => ({
+            ...t,
+            icon: resolveGoalStatusIcon(t.status)
+          }))
       : []),
-    $goal.subGoalsLayout !== SubGoalsLayout.DEFAULT && {
-      label: undefined,
-      type: "add"
-    }
+    ...($goal.subGoalsLayout === SubGoalsLayout.STEPS && isActiveResource
+      ? [
+          {
+            label: undefined,
+            type: "add"
+          }
+        ]
+      : [])
   ];
   $: archiveSubgoalsCount = $goal.children?.filter(
     archivedResourceFilter
@@ -85,7 +92,11 @@
     if (!result || !isValidArrayWithData(result)) return [];
     const children = result[0].children;
     if (children)
-      return children?.filter(activeResourceFilter)?.map((t) => t.id) ?? [];
+      return (
+        children
+          ?.filter(activeResourceFilterIgnoreParentInactive)
+          ?.map((t) => t.id) ?? []
+      );
     else return [];
   }
 
@@ -123,6 +134,14 @@
   }
 </script>
 
+{#if !isActiveResource}
+  <div class="flex w-full pt-2 pb-4 justify-center">
+    <InlineInfoBanner
+      content="You can't add subgoals to this goal when it is archived/deleted/inactive."
+      icon="ph:warning-light"
+    />
+  </div>
+{/if}
 {#if $goal.children}
   <div class="flex items-center justify-end gap-2 w-full">
     <SubGoalsLayoutSwitcher
@@ -148,7 +167,7 @@
         contentCallback={resolveContent}
         childrenCallback={resolveSubGoals}
         style={NestedListStyle.OUTLINED}
-        isShowAddTextInput={true}
+        isShowAddTextInput={isActiveResource}
         on:click={(e) => {
           if (e.detail) {
             onSubGoalClick(e.detail);

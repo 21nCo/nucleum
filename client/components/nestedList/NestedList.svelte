@@ -14,7 +14,6 @@
   export let childrenCallback: (id: string) => Promise<IRecordId[]>;
   export let style: NestedListStyle = NestedListStyle.DEFAULT;
   export let isExpandOnClickAnywhere: boolean = false;
-  export let isShowAddButton: boolean = false;
   export let isShowAddTextInput: boolean = false;
   export let addPlaceholder: string = "Add new item";
   let addTextInputValue: string = "";
@@ -28,33 +27,35 @@
   }
 </script>
 
-{#if isValidArrayWithData(items)}
+{#if isValidArrayWithData(items) || isShowAddTextInput}
   <div
     class={cn("flex flex-col w-full h-full", {
       "border border-brs3 rounded-md": style === NestedListStyle.OUTLINED
     })}
   >
-    {#each items as item, index (item)}
-      <NestedListItem
-        id={item}
-        {index}
-        totalLength={items.length}
-        {style}
-        {contentCallback}
-        {childrenCallback}
-        {isExpandOnClickAnywhere}
-        {isShowAddTextInput}
-        {expandedItem}
-        on:click
-        on:addSub
-        on:expand={(e) => {
-          if (e.detail) expandedItem = e.detail;
-        }}
-      />
-      {#if style === NestedListStyle.OUTLINED && index !== items.length - 1}
-        <Divider />
-      {/if}
-    {/each}
+    {#if isValidArrayWithData(items)}
+      {#each items as item, index (item)}
+        <NestedListItem
+          id={item}
+          {index}
+          totalLength={items.length}
+          {style}
+          {contentCallback}
+          {childrenCallback}
+          {isExpandOnClickAnywhere}
+          {isShowAddTextInput}
+          {expandedItem}
+          on:click
+          on:addSub
+          on:expand={(e) => {
+            if (e.detail) expandedItem = e.detail;
+          }}
+        />
+        {#if style === NestedListStyle.OUTLINED && index !== items.length - 1}
+          <Divider />
+        {/if}
+      {/each}
+    {/if}
     {#if isShowAddTextInput}
       <div class="flex p-3">
         <TextInput

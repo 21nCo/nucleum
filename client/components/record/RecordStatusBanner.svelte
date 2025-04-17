@@ -10,7 +10,7 @@
   export let resource: ActiveResourceStore<any, any>;
 </script>
 
-{#if $resource.trashInformation || $resource.isArchived || $resource.isLocked || $resource.isInReadOnlyMode}
+{#if $resource.trashInformation || $resource.isArchived || $resource.isLocked || $resource.isInReadOnlyMode || $resource.isParentInactive}
   <div class="flex flex-col gap-4">
     {#if $resource.trashInformation}
       <InlineInfoBanner
@@ -43,6 +43,13 @@
             return resource.unarchive();
           }
         }}
+      />
+    {/if}
+    {#if $resource.isParentInactive}
+      <InlineInfoBanner
+        type={InfoTextType.INFO}
+        icon="ph:x-light"
+        content={`This resource is inactive because its parent is either archived or deleted`}
       />
     {/if}
     {#if $resource.isLocked}

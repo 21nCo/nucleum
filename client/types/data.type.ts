@@ -510,4 +510,13 @@ export type IResourceSelectAdditionalParams = {
    * Ex: goal -> sub goals
    */
   isIncludeSubItems?: boolean;
+
+  /**
+   * Whether to include inactive items i.e. archived and trashed items.
+   */
+  isIncludeInactiveItems?: boolean;
+  /**
+   * Whether to ignore parent inactive status of the resource.
+   */
+  isIgnoreParentInactive?: boolean;
 };

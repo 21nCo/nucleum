@@ -197,6 +197,7 @@ export class SearchStore {
     searchType?: SearchType;
     semanticSearchTopK?: number | undefined;
     isIncludeSubItems?: boolean;
+    isIgnoreParentInactive?: boolean;
   }) {
     this.resource = params.resource ?? this.resource;
     logger.log({
@@ -234,7 +235,8 @@ export class SearchStore {
             this.setResourceStore(resource);
             const result = await this.resourceStore?.selectMany(selectParams, {
               isIncludeSubItems: params.isIncludeSubItems,
-              isExpand: true
+              isExpand: true,
+              isIgnoreParentInactive: params.isIgnoreParentInactive
             });
             return Array.isArray(result) ? result : [];
           })
@@ -244,6 +246,7 @@ export class SearchStore {
       this.setResourceStore(this.resource);
       data = await this.resourceStore?.selectMany(selectParams, {
         isIncludeSubItems: params.isIncludeSubItems,
+        isIgnoreParentInactive: params.isIgnoreParentInactive,
         isExpand: true
       });
     }

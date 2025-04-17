@@ -101,13 +101,15 @@ export class ResourceActions<T extends IMemotronItemBase> {
       value: this.resource.isArchived ? "unarchive" : "archive",
       icon: "ph:archive-light",
       callback: async () => {
-        this.resource.isArchived
-          ? this.store.unarchive(this.resource.id, {
-              context: this.accessPoint
-            })
-          : this.store.archive(this.resource.id, {
-              context: this.accessPoint
-            });
+        if (this.resource.isArchived) {
+          this.store.unarchive(this.resource.id, {
+            context: this.accessPoint
+          });
+        } else {
+          this.store.archive(this.resource.id, {
+            context: this.accessPoint
+          });
+        }
       }
     };
   }
@@ -116,13 +118,15 @@ export class ResourceActions<T extends IMemotronItemBase> {
       value: this.resource.trashInformation ? "restore" : "delete",
       icon: "ph:trash-light",
       callback: async () => {
-        this.resource.trashInformation
-          ? this.store.restore(this.resource.id, {
-              context: this.accessPoint
-            })
-          : this.store.trash(this.resource.id, {
-              context: this.accessPoint
-            });
+        if (this.resource.trashInformation) {
+          this.store.restore(this.resource.id, {
+            context: this.accessPoint
+          });
+        } else {
+          this.store.trash(this.resource.id, {
+            context: this.accessPoint
+          });
+        }
       }
     };
   }

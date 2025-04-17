@@ -36,6 +36,7 @@ import { collectionStore } from "../collection/collection.store";
 import { AppSearchParam } from "$lib/client/types/appStore.type";
 import { toasts } from "$lib/client/stores/notification.store";
 import { resourceAction } from "../flux/resourceStores/resource.utils";
+import { taskStore } from "../tasks/task.store";
 
 class GoalStore extends ResourceStore<IGoal> {
   constructor() {
@@ -191,6 +192,83 @@ class GoalStore extends ResourceStore<IGoal> {
       subGoal,
       goalData.children
     );
+  }
+
+  private async resolveDependencies(ids: IRecordId[]) {
+    const subGoalsResult = await Promise.all([
+      ...ids.map((id) =>
+        super.selectMany(
+          {
+            properties: ["id"],
+            filters: {
+              parent: {
+                contains: id.toString()
+              }
+            }
+          },
+          {
+            isIncludeInactiveItems: true
+          }
+        )
+      )
+    ]);
+    const subGoals = subGoalsResult.flat();
+    const tasks = await taskStore.selectMany(
+      {
+        properties: ["id"],
+        filters: {
+          goalId: [
+            ...ids.map((id) => id.toString()),
+            ...(subGoals?.map((g) => g.id.toString()) ?? [])
+          ]
+        }
+      },
+      {
+        isIncludeInactiveItems: true
+      }
+    );
+    return [tasks, subGoals];
+  }
+
+  async onArchive(ids: IRecordId[]) {
+    const [tasks, subGoals] = await this.resolveDependencies(ids);
+    if (subGoals?.length) {
+      await this.bulkModify(
+        subGoals.map((g: IGoal) => g.id),
+        { isParentInactive: true }
+      );
+    }
+    if (tasks?.length) {
+      await taskStore.bulkModify(
+        tasks.map((task: { id: IRecordId }) => task.id),
+        { isParentInactive: true }
+      );
+    }
+  }
+
+  async onUnarchive(ids: IRecordId[]) {
+    const [tasks, subGoals] = await this.resolveDependencies(ids);
+    if (subGoals?.length) {
+      await this.bulkModify(
+        subGoals.map((g: IGoal) => g.id),
+        { isParentInactive: false }
+      );
+    }
+
+    if (tasks?.length) {
+      await taskStore.bulkModify(
+        tasks.map((task: { id: IRecordId }) => task.id),
+        { isParentInactive: false }
+      );
+    }
+  }
+
+  async onTrash(ids: IRecordId[]) {
+    return this.onArchive(ids);
+  }
+
+  async onRestore(ids: IRecordId[]) {
+    return this.onUnarchive(ids);
   }
 }
 

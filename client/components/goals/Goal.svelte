@@ -38,6 +38,8 @@
   let containerWidth = 0;
   let goal: IActiveGoalStore = ActiveGoalStore.resolve(id);
   let isReady = false;
+  $: isActiveResource =
+    !$goal?.isArchived && !$goal?.trashInformation && !$goal?.isParentInactive;
   $: isConstrainedWidth =
     $view.isConstrainedWidth ||
     $goal?.accessMode === ResourceAccessMode.SPLIT ||
@@ -231,11 +233,11 @@
               on:showAllProperties={showAllProperties}
             />
           {:else if selectedPanel === "subgoals"}
-            <SubGoalsPanel {goal} />
+            <SubGoalsPanel {goal} {isActiveResource} />
           {:else if selectedPanel === "history"}
             <GoalHistory {goal} />
           {:else if selectedPanel === "tasks"}
-            <GoalTasks id={$goal.id} />
+            <GoalTasks id={$goal.id} {isActiveResource} />
           {:else if selectedPanel === "analytics"}
             <GoalAnalytics id={$goal.id} />
           {:else if selectedPanel === "properties"}
