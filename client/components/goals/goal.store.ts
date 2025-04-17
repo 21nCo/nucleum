@@ -12,7 +12,8 @@ import type { IActiveGoal, IGoal } from "./goal.type";
 import { GoalType } from "./goal.type";
 import {
   ResourceAccessMode,
-  ResourceAccessPoint
+  ResourceAccessPoint,
+  ResourceActionType
 } from "../flux/resourceStores/resource.type";
 import type {
   OmitForCapture,
@@ -34,6 +35,7 @@ import view from "$lib/client/stores/view.store";
 import { collectionStore } from "../collection/collection.store";
 import { AppSearchParam } from "$lib/client/types/appStore.type";
 import { toasts } from "$lib/client/stores/notification.store";
+import { resourceAction } from "../flux/resourceStores/resource.utils";
 
 class GoalStore extends ResourceStore<IGoal> {
   constructor() {
@@ -133,7 +135,9 @@ class GoalStore extends ResourceStore<IGoal> {
       type: GoalType.INDEFINITE
     };
     const result = await this.create([goal], {
-      context: params?.context
+      context:
+        params?.context ??
+        resourceAction(Resource.goal, ResourceActionType.CREATE)
     });
     if (result) {
       toasts.success("New goal created successfully");

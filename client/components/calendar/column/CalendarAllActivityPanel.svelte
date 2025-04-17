@@ -15,6 +15,7 @@
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { searcheableResources } from "$local/local";
   import { Product } from "$lib/client/types/product.type";
+  import { resolveTimePeriodFilterForDay } from "$lib/client/elements/datetime/datetime.utils";
 
   export let date: Date;
   let isLoading: boolean = false;
@@ -65,11 +66,12 @@
         $appStore.product === Product.POINTRON ||
         $appStore.product === Product.NUCLEUS
       ) {
+        const dayFilter = resolveTimePeriodFilterForDay(date);
         const focusSessionsResult = await new SearchStore(
           Resource.session
         ).select({
           filters: {
-            start: date
+            startUnix: dayFilter
           }
         });
         if (isValidArrayWithData(focusSessionsResult)) {
@@ -77,7 +79,7 @@
             ...focusSessionsResult.map((session: any) => ({
               action: `○ Focus`,
               resourceLabel: formatSeconds(session.elapsed),
-              timestamp: new Date(session.start),
+              timestamp: new Date(session.startUnix),
               resourceId: [session.id]
             }))
           );

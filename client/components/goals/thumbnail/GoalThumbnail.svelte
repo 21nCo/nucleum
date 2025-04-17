@@ -19,6 +19,7 @@
   import { resolveIfCurrentFocusItem } from "$lib/client/products/pointron/focus/session.utils";
 
   import GoalThumbnailSub from "./GoalThumbnailSub.svelte";
+  import GoalThumbnailTitle from "./GoalThumbnailTitle.svelte";
   export let item: IGoalThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let size: Size.sm | Size.md = Size.md;
@@ -62,7 +63,7 @@
         class={cn(
           "relative flex flex-col w-full border rounded-md truncate",
           {
-            "bg-ccs3 border border-ccs1": isCurrentlyFocusing
+            "bg-ccs4 border border-ccs1": isCurrentlyFocusing
           },
           !isCurrentlyFocusing && {
             "bg-ccs5 notouch:hover:bg-ccs4 active:bg-ccs4 border-ccs2":
@@ -74,38 +75,9 @@
         )}
       >
         <button class="flex w-full items-center h-16 truncate" on:click>
-          <div class="flex items-center gap-3 p-3 w-full">
-            <div class="flex items-center gap-2">
-              <Icon
-                icon={resolveGoalTypeIcon(item.type)}
-                class={cn({
-                  "text-ccs1": item.color
-                })}
-              />
-              <!-- {#if item.isCompleted}
-              <Icon icon="ph:check-circle-fill" class="text-green-500" />
-            {/if} -->
-            </div>
-
-            <div class="flex flex-col gap-1 flex-grow">
-              <div class="flex items-center gap-2">
-                <span class="text-b2 font-medium truncate"
-                  >{item.label ? item.label : "Untitled"}</span
-                >
-                <RecordStarStatusFeedback isStarred={item.isStarred} />
-                <!-- {#if item.startDate || item.endDate}
-                <span class="text-b3 text-fgs3">
-                  {#if item.startDate}
-                    {formatDatetime($userPreferences, item.startDate)}
-                  {/if}
-                  {#if item.endDate}
-                    - {formatDatetime($userPreferences, item.endDate)}
-                  {/if}
-                </span>
-              {/if} -->
-              </div>
-              <GoalThumbnailSub {item} />
-            </div>
+          <div class="flex flex-col gap-1 p-3 w-full">
+            <GoalThumbnailTitle {item} {isCurrentlyFocusing} />
+            <GoalThumbnailSub {item} {isCurrentlyFocusing} />
           </div>
         </button>
       </div>
@@ -117,20 +89,10 @@
         {size}
         isHidePreview={true}
       >
-        <div slot="bottom" class="flex flex-col w-full">
+        <div slot="bottom" class="flex flex-col w-full min-h-12">
           <div class="flex flex-col gap-2">
-            <div class="flex items-center gap-2">
-              <Icon
-                icon={resolveGoalTypeIcon(item.type)}
-                class={cn({
-                  "text-ccs1": item.color
-                })}
-              />
-              <span class="text-b2 font-medium truncate text-left"
-                >{item.label ? item.label : "Untitled"}</span
-              >
-            </div>
-            <GoalThumbnailSub {item} />
+            <GoalThumbnailTitle {item} {isCurrentlyFocusing} />
+            <GoalThumbnailSub {item} {isCurrentlyFocusing} />
           </div>
         </div>
       </ResourceGridThumbnail>

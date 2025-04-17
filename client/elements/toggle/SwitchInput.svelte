@@ -35,7 +35,11 @@
     }}
   >
     <Switch bind:on={checked} {size} on:change {isDisabled} />
-    <FormControlLabel props={label} isCursorPointer={true} />
+    <FormControlLabel
+      props={label}
+      isCursorPointer={true}
+      isWrapText={isExpanded}
+    />
   </button>
 {:else}
   <InputBaseElement {style} {label}>

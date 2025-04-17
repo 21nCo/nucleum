@@ -22,6 +22,7 @@ import { sessionLogStore } from "../logs/log.store";
 import type { IRecordId } from "$lib/client/types/data.type";
 import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { resolveTimePeriodFilterForDay } from "$lib/client/elements/datetime/datetime.utils";
+import { toasts } from "$lib/client/stores/notification.store";
 
 export const selectedPageId = writable<string>();
 const analyticsConfigStoreId = Resource.pointAnalyticsConfig;
@@ -77,6 +78,10 @@ class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
     let state = this.get();
     const page = state.pages.find((p) => p.id === pageId);
     if (!page) return;
+    if (page.cards.length >= 10) {
+      toasts.error("You can only have up to 10 cards on a page");
+      return;
+    }
     page.cards.push({
       id: generateSimpleRandomId(),
       type: AnalyticsCardType.PIE,

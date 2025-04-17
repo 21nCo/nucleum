@@ -68,7 +68,7 @@
   }
 </script>
 
-<div class="w-96 h-40 flex flex-col justify-between gap-2">
+<div class="cw:w-full w-96 h-40 flex flex-col justify-between gap-2">
   {#if isShowGoalPicker}
     <TextSearchInput
       bind:value={goalSearchQuery}

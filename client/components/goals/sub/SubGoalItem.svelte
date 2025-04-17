@@ -57,6 +57,7 @@
         style={InputStyle.PLAIN}
         isShowSaveControl={newSubGoalLabel !== ""}
         on:enter={onSave}
+        on:cancel={() => (newSubGoalLabel = "")}
         on:save={onSave}
       />
     {/if}
@@ -78,6 +79,7 @@
         isShowSaveControl={newSubGoalLabel !== ""}
         on:enter={onSave}
         on:save={onSave}
+        on:cancel={() => (newSubGoalLabel = "")}
       />
     {/if}
   </button>

@@ -246,9 +246,11 @@
   style={!$view.isPortrait
     ? position.total === 1
       ? "height: calc(100vh - 8rem);"
-      : $isInEditMode
-        ? "height: calc(60vh - 2.85rem);"
-        : "height: calc(50vh - 2.85rem);"
+      : $view.height < 900
+        ? "height: calc(70vh - 2.85rem);"
+        : $isInEditMode
+          ? "height: calc(60vh - 2.85rem);"
+          : "height: calc(50vh - 2.85rem);"
     : ""}
 >
   <header

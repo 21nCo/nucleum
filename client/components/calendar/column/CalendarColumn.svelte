@@ -39,26 +39,31 @@
   function resolvePanels(product: Product) {
     const timeline = {
       label: "Timeline",
+      tooltip: "Timeline",
       value: CalendarColumnPanel.Timeline,
       icon: "ph:clock-light"
     };
     const history = {
       label: "History",
+      tooltip: "History",
       value: CalendarColumnPanel.History,
       icon: "ph:clock-counter-clockwise-light"
     };
     const overview = {
       label: "Overview",
+      tooltip: "Overview",
       value: CalendarColumnPanel.Overview,
       icon: "heroicons:rectangle-group"
     };
     const notes = {
       label: "Notes",
+      tooltip: "Notes",
       value: CalendarColumnPanel.Notes,
       icon: "ph:note-light"
     };
     const tempTasksPanel = {
       label: "Tasks",
+      tooltip: "Tasks",
       value: CalendarColumnPanel.Tasks,
       icon: "ph:check-square-light"
     };

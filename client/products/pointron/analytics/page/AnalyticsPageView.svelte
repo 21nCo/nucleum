@@ -126,8 +126,8 @@
 
 {#if config}
   <div
-    class={cn("flex h-full max-h-full p-2", {
-      "flex-col gap-3 overflow-auto": $view.isPortrait,
+    class={cn("flex h-full max-h-full p-2 overflow-auto", {
+      "flex-col gap-3": $view.isPortrait,
       "flex-wrap gap-2": !$view.isPortrait
     })}
   >
@@ -148,13 +148,19 @@
       <div>
         <button
           class={cn(
-            "border-2 border-dotted border-brs3 hover:bg-bgs2 rounded-md grow flex flex-col gap-1 justify-center items-center",
+            "border-2 border-dotted border-fgs4 hover:bg-bgs2 rounded-md grow flex flex-col gap-1 justify-center items-center",
             {
               "w-full": $view.isPortrait,
               "w-60": !$view.isPortrait
             }
           )}
-          style="height: calc(50vh - 2.85rem)"
+          style={!$view.isPortrait
+            ? config.cards.length === 1
+              ? "height: calc(100vh - 8rem);"
+              : $view.height < 900
+                ? "height: calc(70vh - 2.85rem);"
+                : "height: calc(60vh - 2.85rem);"
+            : ""}
           on:click={addCard}
         >
           <Icon icon="plus-circled" />

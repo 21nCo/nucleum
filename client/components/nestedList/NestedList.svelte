@@ -56,7 +56,7 @@
       {/if}
     {/each}
     {#if isShowAddTextInput}
-      <div class="flex p-2">
+      <div class="flex p-3">
         <TextInput
           bind:value={addTextInputValue}
           style={InputStyle.PLAIN}
@@ -64,6 +64,7 @@
           placeholder={addPlaceholder}
           isShowSaveControl={addTextInputValue !== ""}
           on:save={onAdd}
+          on:cancel={() => (addTextInputValue = "")}
           on:enter={onAdd}
         />
       </div>

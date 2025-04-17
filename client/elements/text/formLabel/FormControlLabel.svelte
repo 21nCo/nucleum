@@ -7,6 +7,7 @@
   export let props: InputLabel;
   export let forId: string = "";
   export let isCursorPointer: boolean = false;
+  export let isWrapText: boolean = false;
 </script>
 
 <label
@@ -16,7 +17,9 @@
   for={forId}
 >
   <div
-    class="text-fgs2 text-b2 min-w-fit whitespace-nowrap text-left text-wrap"
+    class={cn("text-fgs2 text-b2 min-w-fit whitespace-nowrap text-left", {
+      "text-wrap": isWrapText
+    })}
   >
     {props.label}
   </div>
