@@ -13,6 +13,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import { logger } from "../debug/logger.client";
   import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
+  import { KeyboardKey, ModifierKey } from "$lib/client/types/keyboard.type";
   const dispatch = createEventDispatcher();
   export let action: string;
   export let isShowClose: boolean = false;
@@ -27,8 +28,8 @@
       const frontModal = resolveModalOnFront();
       logger.log({ frontModalId: frontModal?.id, action, event: x.event });
       if (!frontModal || action != frontModal?.id) return;
-      if (x.event === GlobalEvent.ENTER) {
-        onPrimaryClick();
+      if (x.event === GlobalEvent.ENTER && x.value.metaKey === true) {
+        onPrimaryClick(x.value);
       }
     });
     return () => {
@@ -41,11 +42,11 @@
     if (isDelegateClose) dispatch("close", from);
     else modalEvent.hide(action);
   }
-  async function onPrimaryClick() {
+  async function onPrimaryClick(event?: any) {
     logger.log({ at: "onPrimaryClick", action });
     isPrimaryActionInProgress = true;
     let result;
-    if (primaryAction?.callback) result = await primaryAction?.callback();
+    if (primaryAction?.callback) result = await primaryAction?.callback(event);
     isPrimaryActionInProgress = false;
     if (result && result.error) {
       error = result.error;
@@ -82,7 +83,10 @@
         size={primaryAction.size ?? Size.md}
         on:click={onPrimaryClick}
         label={primaryAction.label}
-        shortcut={GlobalEvent.ENTER}
+        shortcut={primaryAction.shortcut ?? {
+          key: KeyboardKey.ENTER,
+          modifiers: [ModifierKey.META]
+        }}
       />
     {/if}
     {#if secondaryAction}

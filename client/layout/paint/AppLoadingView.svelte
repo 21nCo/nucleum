@@ -6,6 +6,7 @@
   import context from "$lib/client/stores/context.store";
   import ProgressBar from "$lib/client/elements/ProgressBar.svelte";
   import { Size } from "$lib/client/types/size.enum";
+  import { fade } from "svelte/transition";
   export let message: string | undefined = undefined;
   export let subMessage: string | undefined = undefined;
   export let duration: number | undefined = undefined;
@@ -28,6 +29,7 @@
         {#if duration !== undefined || message || subMessage}
           <div
             class="absolute top-full w-fit flex flex-col gap-3 items-center whitespace-nowrap pt-4"
+            in:fade={{ duration: 300 }}
           >
             {#if duration !== undefined}
               <div class="w-60">

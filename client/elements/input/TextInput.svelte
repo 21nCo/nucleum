@@ -87,7 +87,7 @@
 
   function handleKeyUp(event: any) {
     if (event.key === "Enter") {
-      dispatch("enter", { value });
+      dispatch("enter", { value, event });
     } else if (event.key === "Escape") {
       inputRef.blur();
       dispatch("blur");

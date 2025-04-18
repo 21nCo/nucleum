@@ -28,6 +28,7 @@
   import { SessionUIContext } from "$lib/client/types/pointron/session.type";
   import ControlBar from "$lib/client/products/pointron/focus/elements/controls/ControlBar.svelte";
   import FocusPlayerTimeText from "$lib/client/products/pointron/focus/player/FocusPlayerTimeText.svelte";
+  import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   export let goal: IActiveGoalStore;
   export let isConstrainedWidth = false;
   const dispatch = createEventDispatcher();
@@ -105,6 +106,12 @@
         on:change={handleStatusChange}
       />
     </div>
+    {#if $goal.status === GoalStatus.COMPLETED}
+      <InlineInfoBanner
+        icon="ph:check-circle-fill"
+        content="This goal is marked as completed. It will not appear in focus items search results."
+      />
+    {/if}
   {/if}
   {#if $goal.type === GoalType.DEFINITE}
     <TimelineCard {goal} />

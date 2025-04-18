@@ -11,6 +11,9 @@
   import Badge from "../text/Badge.svelte";
   import { hoverable } from "$lib/client/actions/hover.action";
   import { tooltip as tooltipAction } from "$lib/client/actions/popover.action";
+  import { uiStateDerived } from "$lib/client/stores/uiState/uiState.store";
+  import ShortcutText from "../text/ShortcutText.svelte";
+  import type { IKeyboardShortcut } from "$lib/client/components/shortcuts/shortcut.type";
   export let parentBgIndex: number = 1;
   export let label: string | undefined = undefined;
   export let className: string = "";
@@ -39,7 +42,7 @@
   export let id: string = "";
   let buttonRef: any;
   export let isHovering: boolean = false;
-  export let shortcut: string | undefined = undefined;
+  export let shortcut: string | IKeyboardShortcut | undefined = undefined;
   export let badge: string | undefined = undefined;
   $: isIconOnlyButton = !label && !$$slots.default;
 </script>
@@ -155,7 +158,7 @@
       <div class="min-w-fit whitespace-nowrap">
         {label}
       </div>
-      <!-- {#if $uiStateDerived?.isShowHotKeyHints && shortcut && $context.embed !== Embed.HANDSET}
+      {#if $uiStateDerived?.isShowHotKeyHints && shortcut && $context.embed !== Embed.HANDSET}
         <ShortcutText
           {shortcut}
           parentBgIndex={style === ButtonStyle.PLAIN
@@ -163,8 +166,10 @@
             : style === ButtonStyle.OUTLINED
               ? parentBgIndex + 1
               : undefined}
+          isAccentOutlined={style === ButtonStyle.OUTLINED &&
+            type === ButtonVariant.PRIMARY}
         />
-      {/if} -->
+      {/if}
       {#if badge}
         <Badge text={badge} />
       {/if}

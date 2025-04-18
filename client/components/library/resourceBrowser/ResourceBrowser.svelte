@@ -27,6 +27,8 @@
     resolveResourceTooltip
   } from "../library.utils";
   import FormLabelTooltip from "$lib/client/elements/text/formLabel/FormLabelTooltip.svelte";
+  import { shortcutsConfig } from "../../shortcuts/shortcuts.config";
+  import ComponentShortcutListener from "../../shortcuts/ComponentShortcutListener.svelte";
   export let resource: Resource;
   export let isLibraryNavContext: boolean = false;
   $: isExpanded = isCustomLibrary(resource);
@@ -52,6 +54,7 @@
           label: "Create " + resource,
           callback: addAction,
           icon: "plus",
+          shortcut: shortcutsConfig.create,
           variant: ButtonVariant.PRIMARY
         };
 
@@ -115,3 +118,11 @@
     {/if}
   </slot>
 </Panel>
+<ComponentShortcutListener
+  shortcuts={[
+    {
+      shortcut: shortcutsConfig.create,
+      callback: addAction
+    }
+  ]}
+/>

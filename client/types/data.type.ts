@@ -317,6 +317,7 @@ export type IResourceFilterValue =
       lessThanOrEqual?: IPrimitiveDbDataType;
       notIn?: IPrimitiveDbDataType[];
       contains?: IPrimitiveDbDataType;
+      notEquals?: IPrimitiveDbDataType;
     };
 
 export enum IResourceFilterOperator {

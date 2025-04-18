@@ -18,6 +18,9 @@
   import { Size } from "$lib/client/types/size.enum";
   import { LoadingAnimationType } from "$lib/client/types/feedback.type";
   import { resolveTimePeriodFilterForDay } from "$lib/client/elements/datetime/datetime.utils";
+  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { shortcutsConfig } from "../../shortcuts/shortcuts.config";
+  import ComponentShortcutListener from "../../shortcuts/ComponentShortcutListener.svelte";
   export let date: Date;
   let isRefreshing = false;
   let tasks: ITaskThumb[] = [];
@@ -81,11 +84,13 @@
         icon="ph:plus-light"
         label="Create new task"
         size={Size.sm}
+        shortcut={shortcutsConfig.create}
         type={ButtonVariant.PRIMARY}
         style={ButtonStyle.OUTLINED}
         on:click={handleCreateTask}
       />
     </div>
+    <ScrollViewBottomSpacer />
     <!-- <FloatingButton
       params={[
         {
@@ -109,4 +114,12 @@
     refreshTimeline();
   }}
   on:change={onResourceMutation}
+/>
+<ComponentShortcutListener
+  shortcuts={[
+    {
+      shortcut: shortcutsConfig.create,
+      callback: handleCreateTask
+    }
+  ]}
 />

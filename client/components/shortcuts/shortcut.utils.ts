@@ -2,14 +2,15 @@ import { ModifierKey } from "$lib/client/types/keyboard.type";
 import { OperatingSystem } from "$lib/client/types/context.type";
 import { logger } from "$lib/client/components/debug/logger.client";
 
-export function resolveShortcutText(
-  key: string,
-  modifiers: ModifierKey[],
-  os: OperatingSystem
-) {
+export function resolveShortcutText(params: {
+  key: string;
+  os: OperatingSystem;
+  modifiers?: ModifierKey[];
+}) {
+  const { key, modifiers, os } = params;
   let modifierLabels: string[] = [];
   logger.log({ key, modifiers, os });
-  if (modifiers.length > 0) {
+  if (modifiers && modifiers.length > 0) {
     modifierLabels = modifiers.map((x) => {
       if (x === ModifierKey.META) {
         if (os === OperatingSystem.MACOS || os === OperatingSystem.IOS) {

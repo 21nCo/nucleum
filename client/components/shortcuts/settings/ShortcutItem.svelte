@@ -12,11 +12,11 @@
   const dispatch = createEventDispatcher();
   export let action: string;
   export let shortcut: IKeyboardShortcut;
-  let existingValue = resolveShortcutText(
-    shortcut.key,
-    shortcut.modifiers,
-    $context.os
-  );
+  let existingValue = resolveShortcutText({
+    key: shortcut.key,
+    modifiers: shortcut.modifiers,
+    os: $context.os
+  });
   let isConfigurationInProgress: boolean = false;
   let value: string = existingValue;
   let key: string;
@@ -78,7 +78,11 @@
     }
     if (Object.values(ModifierKey).every((key) => key !== event.key)) {
       key = event.key;
-      value = resolveShortcutText(key, modifiers, $context.os);
+      value = resolveShortcutText({
+        key,
+        modifiers,
+        os: $context.os
+      });
       isValidConfiguration();
     }
     event.stopPropagation();

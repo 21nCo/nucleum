@@ -19,7 +19,7 @@
 </script>
 
 <div
-  class={cn("flex w-full rounded-md gap-4 p-4 text-b2", {
+  class={cn("flex items-start w-full rounded-md gap-3 p-4 text-b2", {
     [bg(parentBgIndex)]:
       type === InfoTextType.INFO || type === InfoTextType.TIP,
     "bg-ars2 text-ars1": type === InfoTextType.ERROR,

@@ -25,6 +25,7 @@
   import { createEventDispatcher } from "svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
+  import context from "$lib/client/stores/context.store";
   const dispatch = createEventDispatcher();
 
   export let item: Pick<IGoalThumb, "id" | "label" | "color" | "parent"> & {
@@ -103,6 +104,13 @@
       item = { ...goal[0], focus: item.focus };
     }
   }
+
+  function onTitleClick(e: MouseEvent) {
+    if (!$context.isEmbed) {
+      appStore.openResource(item.id, ResourceAccessMode.POP);
+      e.stopPropagation();
+    }
+  }
 </script>
 
 {#if layout === Layout.LIST}
@@ -165,9 +173,12 @@
             <!-- {#if !isActive}
               <div class="w-2 h-2 bg-ccs1 rounded-full"></div>
             {/if} -->
-            <div class="truncate">
+            <button
+              class="truncate notouch:hover:underline focus:underline"
+              on:click={onTitleClick}
+            >
               {item.label ? item.label : "Untitled"}
-            </div>
+            </button>
           </div>
         </div>
       </div>
@@ -220,7 +231,7 @@
     color={item.color}
     on:click={toggleSession}
   >
-    <button
+    <div
       use:hoverable={{
         onHover: (val) => {
           isHovering = val;
@@ -230,9 +241,12 @@
     >
       <div class="flex gap-2 items-center">
         <div class="flex flex-col items-start">
-          <div class="text-left text-b2 truncate w-40 md:w-40">
+          <button
+            class="text-left text-b2 truncate w-40 md:w-40 notouch:hover:underline focus:underline"
+            on:click={onTitleClick}
+          >
             {item.label ? item.label : "Untitled"}
-          </div>
+          </button>
         </div>
       </div>
       {#if isActive && $currentFocusItem}
@@ -257,7 +271,7 @@
                 : "Not focused today"}
         </div>
       {/if}
-    </button>
+    </div>
     {#if isInEditMode}
       <UnpinAction on:click={unPin} />
     {/if}

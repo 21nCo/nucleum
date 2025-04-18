@@ -20,6 +20,8 @@ import { UserDataMode } from "../types/account.type";
 import AnalyticsSettings from "../products/pointron/settings/AnalyticsSettings.svelte";
 import { PointronAction } from "../types/pointron/pointronAction.enum";
 import SessionSettings from "../products/pointron/settings/SessionSettings.svelte";
+import ModSettings from "../components/settings/mod/ModSettings.svelte";
+import DeveloperSettings from "../components/settings/developer/DeveloperSettings.svelte";
 
 const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
   {
@@ -28,9 +30,21 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
     component: AccountSettings
   },
   {
-    action: Action.LOCAL_AI_SETTINGS,
+    action: Action.MOD,
+    label: "Plug My Own Database",
+    icon: "ph:database-light",
+    component: ModSettings
+  },
+  {
+    action: Action.DEVELOPER,
+    label: "Developer",
+    icon: "ph:code-light",
+    component: DeveloperSettings
+  },
+  {
+    action: Action.ARTIFICIAL_INTELLIGENCE,
     cmdLabel: [{ variant: "aiSettings", label: "AI Settings" }],
-    label: "AI Settings",
+    label: "Artificial Intelligence",
     icon: "ph:head-circuit-light",
     component: TacoSettings,
     hideContext: [OperatingSystem.IOS],

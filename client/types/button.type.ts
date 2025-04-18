@@ -1,5 +1,5 @@
 import type { Size } from "./size.enum";
-
+import type { IKeyboardShortcut } from "$lib/client/components/shortcuts/shortcut.type";
 export enum ButtonStyle {
   DEFAULT = "default",
   PLAIN = "plain",
@@ -9,13 +9,13 @@ export enum ButtonStyle {
 export type IButtonParams = {
   label?: string;
   icon?: string;
-  callback?: () => Promise<any>;
+  callback?: (event?: any) => Promise<any>;
   action?: string;
   size?: Size.xs | Size.sm | Size.md | Size.lg;
   variant?: ButtonVariant;
   style?: ButtonStyle;
   parentBgIndex?: number;
-  shortcut?: string;
+  shortcut?: string | IKeyboardShortcut;
   isPreventMinWidth?: boolean;
   popoverAction?: any;
 };

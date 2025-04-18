@@ -28,6 +28,7 @@
       "border--r border-r-brs2": !isRounded
     }
   )}
+  tabindex="-1"
 >
   <div
     class={cn(

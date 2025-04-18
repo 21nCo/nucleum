@@ -5,12 +5,17 @@
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import { ButtonStyle } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";
-  import { createEventDispatcher } from "svelte";
+  import { createEventDispatcher, onMount } from "svelte";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { SearchType } from "$lib/client/types/data.type";
   import { InputStyle } from "$lib/client/types/input.type";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
+  import type { IEvent } from "$lib/client/types/event.type";
+  import { appEvents } from "$lib/client/stores/notification.store";
+  import { GlobalEvent } from "$lib/client/types/event.enum";
+  import { uiStateDerived } from "$lib/client/stores/uiState/uiState.store";
+  import ShortcutText from "$lib/client/elements/text/ShortcutText.svelte";
   const dispatch = createEventDispatcher();
   export let resource: Resource;
   export let searchQuery: string = "";
@@ -19,6 +24,20 @@
   let isFiltersVisible: boolean = false;
   let isSearchFocused: boolean = false;
   let dev_enableSemanticSearch: boolean = false;
+  let searchInputRef: HTMLInputElement;
+  onMount(() => {
+    const appEventSub = appEvents.subscribe((x: IEvent) => {
+      if (x.event === GlobalEvent.ACTIVATE_SEARCH_BOX) {
+        requestAnimationFrame(() => {
+          searchInputRef?.focus();
+        });
+      }
+    });
+    return () => {
+      appEventSub();
+    };
+  });
+
   function onKeydown(event: any) {}
   function onKeyup(event: any) {
     refresh();
@@ -34,6 +53,7 @@
       id="librarysearchbox"
       class="text-h2 w-full bg-transparent focus:outline-none focus:border-none"
       type="text"
+      bind:this={searchInputRef}
       bind:value={searchQuery}
       on:keydown={onKeydown}
       on:keyup={onKeyup}
@@ -42,6 +62,14 @@
       placeholder={"Search " + resource + "s"}
     />
     <div class="flex items-center gap-2">
+      {#if $uiStateDerived.isShowHotKeyHints}
+        <span>
+          <ShortcutText
+            shortcut={GlobalEvent.ACTIVATE_SEARCH_BOX}
+            parentBgIndex={0}
+          />
+        </span>
+      {/if}
       {#if dev_enableSemanticSearch && $userPreferences.localAI.semanticSearch && (selectedSubType === "nodular_markdown" || selectedSubType === "all")}
         <SwitchInput
           label={{ label: "Semantic", orientation: Orientation.Horizontal }}

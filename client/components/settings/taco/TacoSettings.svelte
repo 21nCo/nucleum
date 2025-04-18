@@ -102,21 +102,26 @@
       badge: "soon",
       isDisabled: true
     };
-    const cloudOption = {
-      label: "Cloud AI - using credits",
+    const managedOption = {
+      label: "Managed AI - using credits",
       value: "cloud",
       badge: "soon",
       isDisabled: true
     };
     switch (type) {
       case "audio-transcription":
-        return [noneOption, localOption("~ 1 GB"), cloudOption];
+        return [
+          noneOption,
+          localOption("~ 1 GB"),
+          managedOption,
+          customModelOption
+        ];
       case "summarizers":
         return [
           noneOption,
           localOption("~ 2 GB"),
           customModelOption,
-          cloudOption
+          managedOption
         ];
       case "agent":
         return [noneOption, customModelOption];
@@ -130,7 +135,8 @@
   <span class="flex w-full justify-center items-center gap-2 text-b3">
     <Badge text="soon" size={Size.sm} />
     <span class="text-fgs3">
-      Cloud AI credits, custom models and API keys will be available soon
+      Managed AI credits, custom integration using API keys will be available
+      soon
     </span>
   </span>
   <div class="flex flex-col gap-4">

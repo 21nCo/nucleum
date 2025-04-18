@@ -10,6 +10,7 @@ import { logger } from "../debug/logger.client";
 import { resolveModifiers } from "./shortcut.utils";
 import context from "$lib/client/stores/context.store";
 import { OperatingSystem } from "$lib/client/types/context.type";
+import { shortcutsConfig } from "./shortcuts.config";
 
 export type KeyboardShortcutsStoreType = InstanceType<typeof KeyboardShortcuts>;
 
@@ -21,32 +22,7 @@ class KeyboardShortcuts extends KeyValueStore<IKeyboardShortcutsStore> {
     return this.modify({ [action]: shortcut });
   }
   fecthKeyMap(): (IKeyboardShortcut & { action: string })[] {
-    let defaultKeyMap = get(appStore)?.appData?.shortcuts;
-    // const tempKeyMap = {
-    //   TOGGLE_SIDEBAR: {
-    //     key: "q"
-    //   },
-    //   focus: {
-    //     key: "f"
-    //   },
-    //   goal: {
-    //     key: "g"
-    //   },
-    //   analytics: {
-    //     key: "a"
-    //   },
-    //   journal: {
-    //     key: "j"
-    //   },
-    //   START_FOCUS_SESSION: {
-    //     key: "s",
-    //     modifiers: ["Shift"]
-    //   },
-    //   FINISH_FOCUS_SESSION: {
-    //     key: "f",
-    //     modifiers: ["Shift"]
-    //   }
-    // };
+    let defaultKeyMap = shortcutsConfig;
     const ctx = get(context);
     if (ctx.os === OperatingSystem.WINDOWS) {
       defaultKeyMap = JSON.parse(
@@ -57,6 +33,7 @@ class KeyboardShortcuts extends KeyValueStore<IKeyboardShortcutsStore> {
       .map(([action, shortcut]) => ({
         action,
         key: shortcut?.key,
+        code: shortcut?.code,
         modifiers: shortcut?.modifiers
       }))
       .filter((x: any) => x.key);
@@ -75,19 +52,40 @@ class KeyboardShortcuts extends KeyValueStore<IKeyboardShortcutsStore> {
    */
   resolveShortcut(event: KeyboardEvent) {
     if (!event?.key) return { shortcut: undefined, modifiers: [] };
-    const key = event.key;
     const modifiers = resolveModifiers(event);
     const keyMap = this.fecthKeyMap();
     const shortcut = keyMap.find((s: any) => {
-      if (s.key.toLowerCase() !== key.toLowerCase()) return false;
-      if (s.modifiers && s.modifiers.length !== modifiers.length) return false;
-      return (
-        (s.modifiers && s.modifiers.every((m: any) => modifiers.includes(m))) ||
-        (!s.modifiers && modifiers.length === 0)
-      );
+      return this.checkShortcut(event, s);
     });
-    logger.log({ key, modifiers, shortcut, keyMap });
+    logger.log({ event, modifiers, shortcut, keyMap });
     return { shortcut, modifiers };
+  }
+
+  checkShortcut(event: KeyboardEvent, shortcut: string | IKeyboardShortcut) {
+    try {
+      if (typeof shortcut === "string") {
+        const keyMap = this.fecthKeyMap();
+        const result = keyMap.find((s: any) => s.action === shortcut);
+        if (!result) return false;
+        shortcut = result;
+      }
+      const { key, code, modifiers } = shortcut;
+      const eventKey = event.key;
+      const eventCode = event.code;
+      const eventModifiers = resolveModifiers(event);
+      if (code && code.toLowerCase() !== eventCode.toLowerCase()) return false;
+      else if (!code && key.toLowerCase() !== eventKey.toLowerCase())
+        return false;
+      if (modifiers && modifiers.length !== eventModifiers.length) return false;
+      return (
+        (modifiers &&
+          modifiers.every((m: any) => eventModifiers.includes(m))) ||
+        (!modifiers && eventModifiers.length === 0)
+      );
+    } catch (error) {
+      logger.error({ error, shortcut, event });
+      return false;
+    }
   }
 }
 

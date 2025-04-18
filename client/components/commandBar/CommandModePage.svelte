@@ -47,10 +47,12 @@
     <div
       class="flex flex-col dp:flex-row gap-6 w-full flex-1 min-h-0 justify-center items-center p-4 tp:p-8 dp:p-16"
     >
-      <div class="dp:w-1/2 dp:h-full flex flex-col gap-6 dp:justify-center">
+      <div
+        class="dp:w-1/2 dp:h-full flex flex-col gap-6 dp:justify-center items-start"
+      >
         <ProfilePicture context="cmd-page" />
         <button
-          class="flex flex-col gap-1"
+          class="flex flex-col gap-1 items-start"
           on:click={() => {
             appStore.runAction(Action.SETTINGS);
           }}

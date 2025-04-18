@@ -35,6 +35,8 @@
   import { Product } from "$lib/client/types/product.type";
   import { isHideCreateAction } from "./library.utils";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
+  import { shortcutsConfig } from "../shortcuts/shortcuts.config";
+  import ComponentShortcutListener from "../shortcuts/ComponentShortcutListener.svelte";
 
   export let resources: Resource[] = [];
 
@@ -81,6 +83,7 @@
             },
             icon: "ph:plus-light",
             variant: ButtonVariant.PRIMARY,
+            shortcut: shortcutsConfig.create,
             style: ButtonStyle.DEFAULT
           };
 
@@ -230,3 +233,12 @@
     {/key}
   </div>
 </Panel>
+
+<ComponentShortcutListener
+  shortcuts={[
+    {
+      shortcut: shortcutsConfig.create,
+      callback: onCreateResource
+    }
+  ]}
+/>

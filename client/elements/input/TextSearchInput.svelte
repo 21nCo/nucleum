@@ -177,6 +177,7 @@
           "min-w-10 flex-1": isChipsMode
         }
       )}
+      tabindex="0"
       bind:value
       on:change|stopPropagation
       on:keydown={(event) => {

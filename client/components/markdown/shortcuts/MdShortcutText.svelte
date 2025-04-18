@@ -90,11 +90,11 @@
     if (!shortcut.modifiers) {
       return shortcut.key;
     }
-    return resolveShortcutText(
-      shortcut.key,
-      shortcut.modifiers ?? [],
-      $context.os
-    );
+    return resolveShortcutText({
+      key: shortcut.key,
+      modifiers: shortcut.modifiers,
+      os: $context.os
+    });
   }
 </script>
 

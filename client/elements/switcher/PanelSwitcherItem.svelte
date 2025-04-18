@@ -11,6 +11,7 @@
   import type { ISelectItem } from "$lib/client/types/select.type";
   import PanelSwitcherItemLabel from "./PanelSwitcherItemLabel.svelte";
   import { rearrangeOnAxis } from "$lib/client/actions/rearrange.action";
+  import { scrollIntoViewOnFocus } from "$lib/client/actions/scroll.action";
   const dispatch = createEventDispatcher();
   export let item: ISelectItem;
   export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
@@ -62,6 +63,7 @@
     })}
     on:click={onClick}
     disabled={isDisabled}
+    use:scrollIntoViewOnFocus
     use:rearrangeOnAxis={{
       enabled: isInEditMode || isRearrangeableByDefault,
       onRearrange: handleRearrange,

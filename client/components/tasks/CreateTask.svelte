@@ -21,6 +21,11 @@
   import { Product } from "$lib/client/types/product.type";
   import { appStore } from "$lib/client/stores/app.store";
   import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
+  import ShortcutText from "$lib/client/elements/text/ShortcutText.svelte";
+  import { ModifierKey } from "$lib/client/types/keyboard.type";
+  import { toasts } from "$lib/client/stores/notification.store";
+  import context from "$lib/client/stores/context.store";
+  import { Embed } from "$lib/client/types/context.type";
   export let date: Date | undefined = undefined;
   export let goalId: IRecordId | undefined = undefined;
   const action = resourceAction(Resource.task, ResourceActionType.CREATE);
@@ -41,8 +46,8 @@
     }
   });
 
-  async function handleCreate() {
-    return taskStore.save(
+  async function handleCreate(event?: any) {
+    const result = await taskStore.save(
       {
         label,
         dateUnix: resolveUnixTimestamp(date),
@@ -53,11 +58,19 @@
         context: action
       }
     );
+    if (result) {
+      if (event instanceof KeyboardEvent && event.shiftKey === true) {
+        toasts.success("Task created successfully");
+        label = "";
+        return;
+      }
+    }
+    return result;
   }
 
-  async function handleCreateOnEnter() {
-    await handleCreate();
-    modalEvent.hide(action);
+  async function handleCreateOnEnter(e: any) {
+    const result = await handleCreate(e.detail.event);
+    if (result) modalEvent.hide(action);
   }
 
   function searchGoalCallback(query: string) {
@@ -68,60 +81,78 @@
   }
 </script>
 
-<div class="cw:w-full w-96 h-40 flex flex-col justify-between gap-2">
-  {#if isShowGoalPicker}
-    <TextSearchInput
-      bind:value={goalSearchQuery}
-      bind:this={goalSearchInput}
-      searchCallback={searchGoalCallback}
-      placeholder="Assign to a goal"
-      icon="ph:plus-light"
-      on:select={(e) => {
-        goal = e.detail.item;
-        isShowGoalPicker = false;
-      }}
-      style={InputStyle.PLAIN}
-    />
-  {:else if goal}
-    <TaskThumbnailGoalLabel
-      {goal}
-      on:click={() => {
-        isShowGoalPicker = true;
-      }}
-      isCreateContext={true}
-    />
-  {/if}
-  <div class="flex items-center gap-2">
-    <TextInput
-      bind:value={label}
-      bind:this={inputRef}
-      size={Size.lg}
-      on:mount={() => {
-        inputRef?.focus();
-      }}
-      placeholder="Enter task name"
-      style={InputStyle.PLAIN}
-      on:enter={handleCreateOnEnter}
-    />
-    <span class="flex items-center gap-1 whitespace-nowrap">
-      <DatePicker
-        bind:date
+<div class="cw:w-full w-96 h-60 flex flex-col justify-between gap-2">
+  <div class="flex flex-col gap-2">
+    {#if isShowGoalPicker}
+      <TextSearchInput
+        bind:value={goalSearchQuery}
+        bind:this={goalSearchInput}
+        searchCallback={searchGoalCallback}
+        placeholder="Assign to a goal"
+        icon="ph:plus-light"
+        on:select={(e) => {
+          goal = e.detail.item;
+          isShowGoalPicker = false;
+        }}
         style={InputStyle.PLAIN}
-        variant={date ? "inline-with-icon" : "icon-only"}
       />
-    </span>
+    {:else if goal}
+      <TaskThumbnailGoalLabel
+        {goal}
+        on:click={() => {
+          isShowGoalPicker = true;
+        }}
+        isCreateContext={true}
+      />
+    {/if}
+    <div class="flex items-center gap-2">
+      <TextInput
+        bind:value={label}
+        bind:this={inputRef}
+        size={Size.lg}
+        on:mount={() => {
+          inputRef?.focus();
+        }}
+        placeholder="Enter task name"
+        style={InputStyle.PLAIN}
+        on:enter={handleCreateOnEnter}
+      />
+      <span class="flex items-center gap-1 whitespace-nowrap">
+        <DatePicker
+          bind:date
+          style={InputStyle.PLAIN}
+          variant={date ? "inline-with-icon" : "icon-only"}
+        />
+      </span>
+    </div>
   </div>
-
-  <ModalFooter
-    {action}
-    primaryAction={{
-      label: "Create",
-      icon: "ph:arrow-right-light",
-      callback: handleCreate
-    }}
-    secondaryAction={{
-      label: "Cancel",
-      icon: "ph:x-light"
-    }}
-  />
+  <div class="flex flex-col gap-2">
+    {#if $context.embed !== Embed.HANDSET}
+      <div class="text-b3 text-fgs3 flex gap-1 justify-center">
+        <span>Press</span>
+        <ShortcutText
+          parentBgIndex={1}
+          shortcut={{
+            key: "Enter",
+            modifiers: [ModifierKey.SHIFT]
+          }}
+        />
+        <span>to save this task and create another</span>
+      </div>
+    {/if}
+    <ModalFooter
+      {action}
+      primaryAction={{
+        label: "Create",
+        icon: "ph:arrow-right-light",
+        callback: handleCreate,
+        size: Size.sm
+      }}
+      secondaryAction={{
+        label: "Cancel",
+        icon: "ph:x-light",
+        size: Size.sm
+      }}
+    />
+  </div>
 </div>

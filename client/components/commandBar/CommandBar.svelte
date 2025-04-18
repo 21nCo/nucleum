@@ -146,7 +146,11 @@
             Press <b>Enter</b> to run
           {:else if isFullPageContext && !isFocusing}
             Press
-            {resolveShortcutText("Space", [], $context.os)} to focus
+            {resolveShortcutText({
+              key: "Space",
+              os: $context.os
+            })}
+            for commands
           {:else if isFullPageContext && isFocusing}
             Press <b>Esc</b> to close
           {:else}

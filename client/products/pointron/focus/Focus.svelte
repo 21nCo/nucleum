@@ -26,14 +26,22 @@
   import QuickStartLayoutToggle from "./quickstart/actions/QuickStartLayoutToggle.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
+  import ComponentShortcutListener from "$lib/client/components/shortcuts/ComponentShortcutListener.svelte";
   let mode: number = 0;
   let isInlineEnabled: boolean = true;
+  const manualLogHotKey = {
+    key: "m"
+  };
+  const focusToggleHotKey = {
+    key: "f"
+  };
   let addManualLogButton: IButtonParams = {
     label: "Add manual log",
     callback: onManualLogClicked,
     icon: "clock",
     variant: ButtonVariant.PRIMARY,
     parentBgIndex: $view.isPortrait ? 1 : 3,
+    shortcut: manualLogHotKey,
     style: $view.isPortrait ? ButtonStyle.DEFAULT : ButtonStyle.OUTLINED
   };
   let startSessionButton: IButtonParams = {
@@ -42,7 +50,7 @@
     icon: "play",
     variant: ButtonVariant.PRIMARY,
     style: ButtonStyle.DEFAULT,
-    shortcut: PointronAction.START_FOCUS_SESSION
+    shortcut: focusToggleHotKey
   };
 
   onMount(async () => {
@@ -136,3 +144,17 @@
     {/if}
   </div>
 {/if}
+<ComponentShortcutListener
+  shortcuts={[
+    {
+      shortcut: manualLogHotKey,
+      callback: onManualLogClicked
+    },
+    {
+      shortcut: focusToggleHotKey,
+      callback: () => {
+        appStore.runAction(PointronAction.TOGGLE_FOCUS_SESSION);
+      }
+    }
+  ]}
+/>

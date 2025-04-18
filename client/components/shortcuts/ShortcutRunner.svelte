@@ -5,19 +5,18 @@
   import { appEvents } from "$lib/client/stores/notification.store";
   import { GlobalEvent } from "$lib/client/types/event.enum";
   import { KeyboardKey } from "$lib/client/types/keyboard.type";
-  import { resolveModifiers } from "./shortcut.utils";
   import { logger } from "$lib/client/components/debug/logger.client";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { Action } from "$lib/client/types/action.enum";
   import { InteractionMode } from "../settings/interactionMode/interactionMode.type";
 
-  function handleSystemShortcuts(event: KeyboardEvent) {
-    logger.log({ at: "handleSystemShortcuts", key: event.key });
-    if (event.key === KeyboardKey.ESCAPE || event.key === KeyboardKey.ENTER) {
-      appEvents.publish(event.key.toString() as GlobalEvent);
-      return true;
-    }
+  function checkIfSystemShortcut(event: KeyboardEvent) {
+    return (
+      event.key === KeyboardKey.ESCAPE ||
+      (event.key === KeyboardKey.ENTER && event.metaKey === true)
+    );
   }
+
   /**
    * Listens to keyboard events and runs the shortcut if the event is a shortcut.
    *
@@ -30,24 +29,23 @@
   const shortcutListener = (event: KeyboardEvent) => {
     const target = event.target || event.srcElement;
     const isTextInputSource = isTextElement(target);
+    const isSystemShortcut = checkIfSystemShortcut(event);
+    if (isSystemShortcut) {
+      appEvents.publish(event.key.toString() as GlobalEvent, event);
+      return;
+    }
+    if (isTextInputSource) return;
     const { shortcut, modifiers } = keyboardShortcuts.resolveShortcut(event);
     logger.log({
       at: "shortcutListener",
-      event,
       isTextInputSource,
-      target,
+      isSystemShortcut,
       shortcut,
-      modifiers
+      modifiers,
+      target,
+      event
     });
-    if (
-      isTextInputSource &&
-      (event.key === KeyboardKey.ENTER ||
-        (modifiers.length === 0 &&
-          ![KeyboardKey.ESCAPE].includes(event.key as KeyboardKey)))
-    )
-      return;
-    const isSystemShortcut = handleSystemShortcuts(event);
-    if (isSystemShortcut || !shortcut) return;
+    if (!shortcut) return;
     const interactionMode = uiState.getState(Action.MODE_OF_INTERACTION, {
       isProductScoped: true
     });

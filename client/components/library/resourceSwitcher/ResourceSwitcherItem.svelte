@@ -123,7 +123,8 @@
       "outline-transparent bg-bgs2 border-brs3": true,
       "text-fgs2": !$view.isConstrainedWidth,
       "text-fgs1": $view.isConstrainedWidth,
-      "hover:bg-bgs3 hover:text-fgs1": !item.isDisabled
+      "notouch:hover:bg-bgs3 active:bg-bgs3 focus:bg-bgs3 hover:text-fgs1":
+        !item.isDisabled
     }
   )}
   on:click

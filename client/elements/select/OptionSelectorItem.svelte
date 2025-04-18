@@ -39,7 +39,8 @@
           (style === OptionSelectorStyle.TRAIN ||
             style === OptionSelectorStyle.ICON),
         "opacity-80 cursor-not-allowed": item.isDisabled,
-        "notouch:hover:bg-bgs2 active:bg-bgs2": !isActive
+        "notouch:hover:bg-bgs2 active:bg-bgs2 focus:bg-bgs2 focus:outline-bgs2":
+          !isActive
       },
       style === OptionSelectorStyle.ICON && {
         "border border-aps2 bg-aps3": isActive,

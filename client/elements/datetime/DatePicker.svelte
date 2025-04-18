@@ -122,7 +122,7 @@
     </div>
   </FormElement>
 {:else if variant == "inline" || variant == "icon-only" || variant === "inline-with-icon"}
-  <div
+  <button
     class={cn("relative flex items-center gap-1 justify-center", {
       "p-1 hover:bg-bgs2 rounded-md": variant === "icon-only"
     })}
@@ -150,7 +150,7 @@
     {#if variant === "inline" || variant === "inline-with-icon"}
       {date ? formatDate(date) : placeholder}
     {/if}
-  </div>
+  </button>
 {:else}
   <div class="relative">
     <input

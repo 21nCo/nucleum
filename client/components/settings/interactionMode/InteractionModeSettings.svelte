@@ -93,9 +93,9 @@
   {#if selectedMode === InteractionMode.KEYBOARD_CENTRIC}
     <SwitchInput
       label={{
-        label: "Show more shortcut hints",
+        label: "Show all hot key and shortcut hints",
         tooltip: {
-          body: "More shortcut hints will be shown at relevant places throughout the app. You can turn off this setting anytime. _Note:_ Some shortcut hints will always be shown."
+          body: "All hot key and shortcut hints will be shown at relevant places throughout the app. You can turn off this setting anytime. **Note:** Some shortcut hints will always be shown."
         }
       }}
       isExpanded={true}
@@ -116,7 +116,7 @@
       label={{
         label: "Hide App menu bar on hot key",
         tooltip: {
-          body: "Completely hides the app menu bar on usage of hot key ` **Q** ` overriding default behavior of minimizing."
+          body: "Completely hides the app menu bar on usage of hot key **Q** overriding default behavior of minimizing."
         }
       }}
       isExpanded={true}

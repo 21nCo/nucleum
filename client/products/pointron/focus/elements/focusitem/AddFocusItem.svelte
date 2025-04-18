@@ -10,6 +10,7 @@
   import { SearchStore } from "$lib/client/components/record/record.store";
   import FocusItemSearchResultItem from "./FocusItemSearchResultItem.svelte";
   import { createEventDispatcher } from "svelte";
+  import { GoalStatus } from "$lib/client/components/goals/goal.type";
   let label: string = "";
   let inputRef: any;
   let searchStore = new SearchStore();
@@ -48,6 +49,11 @@
     const goals = await searchStore.select({
       resource: Resource.goal,
       searchQuery,
+      filters: {
+        status: {
+          notEquals: GoalStatus.COMPLETED
+        }
+      },
       isIncludeSubItems: true
     });
     const tasks = await searchStore.select({

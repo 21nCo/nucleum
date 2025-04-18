@@ -31,7 +31,10 @@
     PanelSwitcherStyle
   } from "$lib/client/types/switcher.enum";
   import Divider from "$lib/client/elements/Divider.svelte";
-  import type { IGoal } from "$lib/client/components/goals/goal.type";
+  import {
+    GoalStatus,
+    type IGoal
+  } from "$lib/client/components/goals/goal.type";
   import { goalStore } from "$lib/client/components/goals/goal.store";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import { resolveGoalColor } from "$lib/client/components/goals/goal.utils";
@@ -285,7 +288,12 @@
   async function searchCallback(searchQuery: string) {
     const result = await searchStore.select({
       searchQuery,
-      isIncludeSubItems: true
+      isIncludeSubItems: true,
+      filters: {
+        status: {
+          notEquals: GoalStatus.COMPLETED
+        }
+      }
     });
     return result;
   }

@@ -1,7 +1,6 @@
 <script lang="ts">
   import { InputStyle } from "$lib/client/types/input.type";
   import TextInput from "./input/TextInput.svelte";
-  import Button from "./button/Button.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { createEventDispatcher, onMount, tick } from "svelte";
   import { uiStateDerived } from "../stores/uiState/uiState.store";

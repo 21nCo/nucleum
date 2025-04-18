@@ -79,6 +79,7 @@
           class={cn(
             "flex justify-between items-center w-full px-4 pt-2 overflow-auto min-h-fit mo:min-h-14"
           )}
+          tabindex={isShowBackButton ? 0 : -1}
           on:click={() => {
             if (isShowBackButton) dispatch("back");
           }}
@@ -99,19 +100,19 @@
           </div>
           <slot name="toprightactions">
             {#if isShowCollapseButton}
-              <div
+              <button
                 class="flex items-center text-fgs3 p-1 hover:bg-bgs2 rounded-md"
                 use:tooltip={{
                   text: "Collapse panel"
                 }}
+                on:click={() => (isCollapsed = true)}
               >
                 <Icon
                   icon="ph:caret-left-light"
                   class="text-fgs3"
                   size={Size.lg}
-                  on:click={() => (isCollapsed = true)}
                 />
-              </div>
+              </button>
             {/if}
           </slot>
         </button>

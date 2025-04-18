@@ -7,22 +7,30 @@
   import { bg, cn } from "$lib/client/utils/ui.utils";
   import { onMount } from "svelte";
   import Icon from "../Icon.svelte";
-  export let shortcut: string;
+  import type { IKeyboardShortcut } from "$lib/client/components/shortcuts/shortcut.type";
+  import { KeyboardKey } from "$lib/client/types/keyboard.type";
+  export let shortcut: string | IKeyboardShortcut;
   export let parentBgIndex: number | undefined = undefined;
   export let isPlainText: boolean = false;
+  export let isAccentOutlined: boolean = false;
+  let detail: IKeyboardShortcut | undefined = undefined;
+
   $: text = resolveText(shortcut);
-  function resolveText(shortcut: string | undefined) {
+  function resolveText(shortcut: string | IKeyboardShortcut | undefined) {
     if (!shortcut) return;
-    if (shortcut === GlobalEvent.ESCAPE) return "Esc";
-    else if (shortcut === GlobalEvent.ENTER) return "↵";
-    const keyMap = keyboardShortcuts.fecthKeyMap();
-    const shortcutDetail = keyMap.find((x) => x.action === shortcut);
-    if (!shortcutDetail) return;
-    let text = resolveShortcutText(
-      shortcutDetail.key,
-      shortcutDetail.modifiers,
-      $context.os
-    );
+    if (typeof shortcut === "string") {
+      if (shortcut === GlobalEvent.ESCAPE) return "Esc";
+      const keyMap = keyboardShortcuts.fecthKeyMap();
+      detail = keyMap.find((x) => x.action === shortcut);
+    } else {
+      detail = shortcut as IKeyboardShortcut;
+    }
+    if (!detail) return;
+    let text = resolveShortcutText({
+      key: detail.key,
+      modifiers: detail.modifiers,
+      os: $context.os
+    });
     return text;
   }
   onMount(() => {
@@ -38,19 +46,22 @@
 
 <span
   class={cn(
-    "flex justify-center items-center whitespace-nowrap rounded-md px-1.5 py-[1px]",
+    "flex justify-center items-center whitespace-nowrap rounded-md px-1.5 py-[1px] text-b4",
     {
-      "text-b4": isPlainText,
-      "border text-b5": !isPlainText
+      border: !isPlainText,
+      "border-ccs2": isAccentOutlined
     },
-    !isPlainText && {
-      [bg(parentBgIndex)]: parentBgIndex !== undefined,
-      "text-fgs3 border-brs3": parentBgIndex !== undefined,
-      "border-abg": parentBgIndex === undefined
-    }
+    !isPlainText &&
+      !isAccentOutlined && {
+        [bg(parentBgIndex)]: parentBgIndex !== undefined,
+        "text-fgs3 border-brs3": parentBgIndex !== undefined,
+        "border-abg": parentBgIndex === undefined
+      }
   )}
 >
-  {#if shortcut === GlobalEvent.ENTER}
+  {text?.replace("ENTER", "") ?? ""}
+  {#if detail?.key === KeyboardKey.ENTER}
+    &nbsp;
     <Icon
       icon="arrow-turn-down-left"
       size={Size.xs}
@@ -59,7 +70,5 @@
         "stroke-abg": parentBgIndex === undefined
       })}
     />
-  {:else}
-    {text}
   {/if}
 </span>
