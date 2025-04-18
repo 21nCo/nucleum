@@ -54,6 +54,7 @@ import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
 import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
 import {
   determineResourceType,
+  isRecordId,
   isSameResource,
   resourceInList
 } from "$lib/client/components/flux/resourceStores/resource.utils";
@@ -66,6 +67,9 @@ import type { OmitForCaptureWithId } from "$lib/client/components/flux/resourceS
 import { taskStore } from "$lib/client/components/tasks/task.store";
 import { GoalType } from "$lib/client/components/goals/goal.type";
 import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
+import { uiState } from "$lib/client/stores/uiState/uiState.store";
+import { UIState } from "$lib/client/stores/uiState/uiState.type";
+import { removeDuplicatesFilter } from "$lib/client/components/flux/resourceStores/resource.utils";
 
 /** @deprecated */
 export const todayFocusStore = initTodayFocus();
@@ -1226,6 +1230,38 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
     );
   }
 
+  async refreshRecents(items: { id: IRecordId; startUnix: number }[]) {
+    console.time("refreshRecents");
+    const goalsResult = await goalStore.selectMany({
+      filters: {
+        id: items.map((x) => x.id.toString())
+      }
+    });
+    const tasksResult = await taskStore.selectMany(
+      {
+        filters: {
+          id: items.map((x) => x.id.toString())
+        }
+      },
+      {
+        isExpand: true
+      }
+    );
+    console.timeEnd("refreshRecents");
+    console.log({ items, goalsResult, tasksResult });
+    const newRecents = items.map((x) => {
+      const goal = goalsResult.find(resourceInList(x.id));
+      const task = tasksResult.find(resourceInList(x.id));
+      return {
+        id: x.id,
+        item: goal ?? task,
+        startUnix: x.startUnix
+      };
+    });
+    console.log({ newRecents });
+    this.modify({ recents: newRecents });
+  }
+
   async addNewTask(label: string, goalId?: IRecordId) {
     let id = generateResourceId(Resource.task);
     await this.addTask(id, goalId);
@@ -1342,6 +1378,23 @@ class SessionStore extends ResourceStore<ISession> {
     return super.selectMany(params, additionalParams);
   }
 
+  addToRecentFocusItems(logs: OmitForCaptureWithId<ISessionLog>[]) {
+    const newEntries = logs.map((log) => ({
+      id: isRecordId(log.taskId) ? log.taskId : log.goalId,
+      startUnix: log.startUnix
+    }));
+    console.log({ logs, newEntries });
+    const newVal = [
+      ...newEntries,
+      ...(uiState.getState(UIState.recentFocusItems) ?? [])
+    ]
+      .filter(removeDuplicatesFilter)
+      .slice(0, 15);
+    console.log({ newVal });
+    uiState.setState(UIState.recentFocusItems, newVal);
+    focusItemsStore.refreshRecents(newVal);
+  }
+
   /**
    * Saves focus logs to the database. This function is called when user finishes a focus session delegated from active session store.
    * @param activeSession
@@ -1431,6 +1484,7 @@ class SessionStore extends ResourceStore<ISession> {
     sessionLogStore.create(logs, {
       context: PointronAction.FINISH_FOCUS_SESSION
     });
+    this.addToRecentFocusItems(logs);
 
     function resolvePlannedEndTime(session: IActiveSessionStore) {
       if (session.type == SessionType.COUNTUP) {

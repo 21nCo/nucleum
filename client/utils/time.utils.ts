@@ -508,10 +508,20 @@ export function formatUserDate(
   return `${yy}-${mm}-${dd}`;
 }
 
-export function formatDateRelativeToToday(date: UserDate) {
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const inputDate = new Date(date.year, date.month, date.day);
+export function formatDateRelativeToToday(date: UserDate | Date | number) {
+  let inputDate: Date;
+  let today: Date = new Date();
+  let isArchiveFormat: boolean = false;
+  if (typeof date === "number") {
+    inputDate = new Date(date);
+  } else if (date instanceof Date) {
+    inputDate = date;
+  } else {
+    isArchiveFormat = true;
+    const now = new Date();
+    today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    inputDate = new Date(date.year, date.month, date.day);
+  }
 
   const dayDifference = Math.round(
     (+inputDate - +today) / (1000 * 60 * 60 * 24)
@@ -533,7 +543,10 @@ export function formatDateRelativeToToday(date: UserDate) {
   } else if (dayDifference <= -2 && dayDifference >= -6) {
     return `Last ${dayNames[inputDate.getDay()]}`;
   } else {
-    return formatUserDate(date);
+    if (isArchiveFormat) {
+      return formatUserDate(date as UserDate);
+    }
+    return formatDate(inputDate);
   }
 }
 

@@ -173,12 +173,9 @@
             <!-- {#if !isActive}
               <div class="w-2 h-2 bg-ccs1 rounded-full"></div>
             {/if} -->
-            <button
-              class="truncate notouch:hover:underline focus:underline"
-              on:click={onTitleClick}
-            >
+            <div class="truncate">
               {item.label ? item.label : "Untitled"}
-            </button>
+            </div>
           </div>
         </div>
       </div>
@@ -241,12 +238,9 @@
     >
       <div class="flex gap-2 items-center">
         <div class="flex flex-col items-start">
-          <button
-            class="text-left text-b2 truncate w-40 md:w-40 notouch:hover:underline focus:underline"
-            on:click={onTitleClick}
-          >
+          <div class="text-left text-b2 truncate w-40 md:w-40">
             {item.label ? item.label : "Untitled"}
-          </button>
+          </div>
         </div>
       </div>
       {#if isActive && $currentFocusItem}

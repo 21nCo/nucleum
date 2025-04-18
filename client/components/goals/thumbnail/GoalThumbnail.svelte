@@ -20,6 +20,7 @@
 
   import GoalThumbnailSub from "./GoalThumbnailSub.svelte";
   import GoalThumbnailTitle from "./GoalThumbnailTitle.svelte";
+  import FocusItemPickOverlay from "$lib/client/products/pointron/focus/elements/focusitem/FocusItemPickOverlay.svelte";
   export let item: IGoalThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let size: Size.sm | Size.md = Size.md;
@@ -79,6 +80,9 @@
             <GoalThumbnailTitle {item} {isCurrentlyFocusing} />
             <GoalThumbnailSub {item} {isCurrentlyFocusing} />
           </div>
+          {#if accessPoint === ResourceAccessPoint.PICKER}
+            <FocusItemPickOverlay {isHovering} {item} />
+          {/if}
         </button>
       </div>
     {:else if arrangement === Arrangement.GRID}

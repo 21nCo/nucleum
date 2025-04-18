@@ -172,7 +172,7 @@ export enum ResourceAccessPoint {
   CAPTURE = "capture",
   CLIPPER = "clipper",
   /**
-   * Any pickers like cover picker etc.
+   * Any pickers like cover picker, focus items picker etc.
    */
   PICKER = "picker",
   /**

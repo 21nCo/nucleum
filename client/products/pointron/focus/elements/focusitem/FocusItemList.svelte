@@ -26,12 +26,27 @@
   import { LoadingAnimationType } from "$lib/client/types/feedback.type";
   import { fullScreen } from "$lib/client/components/modal/modal.store";
   import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
+  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
+  import {
+    BarStyle,
+    PanelSwitcherStyle
+  } from "$lib/client/types/switcher.enum";
+  import Records from "$lib/client/components/record/Records.svelte";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import Text from "$lib/client/elements/text/Text.svelte";
+  import { TextStyle } from "$lib/client/types/text.enum";
+  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import CalendarColumnTasksPanel from "$lib/client/components/calendar/column/CalendarColumnTasksPanel.svelte";
   export let isInEditMode: boolean = false;
   let isFocusingAddGoal: boolean = false;
   let focusItems: IFocusItem[] = [];
   let goals: IGoalThumb[] = [];
   let tasks: ITaskThumb[] = [];
   let isRefreshing: boolean = false;
+  let selectedPickFromPanel: "recents" | "calendar" =
+    uiState.getState(UIState.focusItemsPickFromPanel) ?? "recents";
 
   function onBlur() {
     isFocusingAddGoal = false;
@@ -204,6 +219,50 @@
           on:createTask={onCreateStandaloneTask}
         />
       </div>
+    </div>
+  {/if}
+  {#if isInEditMode && !isRefreshing}
+    <div class="flex flex-col gap-4 w-full pt-12">
+      <div class="flex items-center gap-2">
+        <div class="flex-grow">
+          <Text content="Pick from" style={TextStyle.PANEL_HEADING_SMALL} />
+        </div>
+        <PanelSwitcher
+          items={[
+            {
+              label: "Recently focused",
+              value: "recents"
+            },
+            {
+              label: "Today's tasks",
+              value: "calendar"
+            }
+          ]}
+          bind:value={selectedPickFromPanel}
+          style={PanelSwitcherStyle.BAR}
+          barStyle={BarStyle.DOT}
+          size={Size.xs}
+          on:switch={() => {
+            uiState.setState(
+              UIState.focusItemsPickFromPanel,
+              selectedPickFromPanel
+            );
+          }}
+        />
+      </div>
+      {#if selectedPickFromPanel === "recents" && $focusItemsStore.recents && $focusItemsStore.recents.length > 0}
+        <Records
+          data={$focusItemsStore.recents.map((x) => x.item).slice(0, 5)}
+          resource={Resource.everything}
+          accessPoint={ResourceAccessPoint.PICKER}
+          isPreventDefault={true}
+        />
+      {:else if selectedPickFromPanel === "calendar"}
+        <CalendarColumnTasksPanel
+          date={new Date()}
+          accessPoint={ResourceAccessPoint.PICKER}
+        />
+      {/if}
     </div>
   {/if}
 </div>

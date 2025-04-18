@@ -26,6 +26,8 @@ export enum UIState {
   manualLogQuickDuration = "manualLogQuickDuration",
   manualLogRecentGoals = "manualLogRecentGoals",
   manualLogDurationMethod = "manualLogDurationMethod",
+  recentFocusItems = "recentFocusItems",
+  focusItemsPickFromPanel = "focusItemsPickFromPanel",
   //Memotron
   /**
    * List of recently used capture shortcuts on capture page

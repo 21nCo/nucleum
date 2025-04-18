@@ -22,6 +22,7 @@
   import { shortcutsConfig } from "../../shortcuts/shortcuts.config";
   import ComponentShortcutListener from "../../shortcuts/ComponentShortcutListener.svelte";
   export let date: Date;
+  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.CALENDAR;
   let isRefreshing = false;
   let tasks: ITaskThumb[] = [];
   onMount(async () => {
@@ -77,7 +78,7 @@
     />
   {:else}
     <div class="overflow-auto py-3">
-      <TaskRecords data={tasks} accessPoint={ResourceAccessPoint.CALENDAR} />
+      <TaskRecords data={tasks} {accessPoint} />
     </div>
     <div class="flex justify-center items-center">
       <Button

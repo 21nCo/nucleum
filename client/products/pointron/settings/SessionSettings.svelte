@@ -38,7 +38,7 @@
       label={{
         label: "Default break reminder",
         tooltip: {
-          body: "The maximum duration of an interval after which you will be notified to take a break. This does not apply if you start session using presets"
+          body: "The maximum duration of an interval after which you will be notified to take a break. This does not apply if you start focus using presets"
         },
         orientation: Orientation.Vertical
       }}

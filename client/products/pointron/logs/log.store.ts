@@ -24,6 +24,7 @@ import type {
 } from "$lib/client/types/data.type";
 import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
 import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
+
 class SessionLogStore extends ResourceStore<ISessionLog> {
   constructor() {
     super(Resource.sessionLog);
@@ -175,6 +176,7 @@ class ManualLogStore extends ObservableStore<ISessionLogStore> {
     await sessionStore.create(sessionEntries, {
       context: PointronAction.MANUAL_FOCUS_ENTRY
     });
+    sessionStore.addToRecentFocusItems(logEntries);
     this.reset();
     toasts.success("Manual log added successfully");
     return true;

@@ -17,13 +17,12 @@
 </script>
 
 <div class="relative flex flex-col w-full h-full p-4 bg--bgs2/40">
-  <div class="flex justify-between w-full">
+  <div class="flex w-full gap-1 items-center">
     <Text style={TextStyle.PANEL_HEADING} content="Advanced focus" />
     <FormLabelTooltip
-      icon="ph:question-light"
+      icon="ph:info"
       info={{
-        body: "Use advanced focus to start a focus session with more granular control. \n 1. Start by adding goals/tasks that you want to focus. \n 2. Then, set the duration using presets or custom duration. \n 3. Finally, click on **Start session** to begin.",
-        size: Size.lg
+        body: "Use advanced focus to start a focus session with more granular control. \n 1. Start by adding goals/tasks that you want to focus. \n 2. Then, set the duration/intervals using presets or custom methods. \n 3. Finally, click on **Start focus** to begin."
       }}
     />
   </div>

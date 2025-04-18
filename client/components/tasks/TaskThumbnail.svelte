@@ -27,6 +27,7 @@
   import { generateMiniRandomId } from "$lib/shared/utils/crypto.utils";
   import { goalStore } from "../goals/goal.store";
   import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
+  import FocusItemPickOverlay from "$lib/client/products/pointron/focus/elements/focusitem/FocusItemPickOverlay.svelte";
   const dispatch = createEventDispatcher();
   export let item: ITaskThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
@@ -169,66 +170,70 @@
         }}
       ></div>
     {/if}
-    <div class="flex flex-col items-end">
-      {#if item.dateUnix && !isHovering}
-        <button
-          class={cn("text-b3 userdata", {
-            "text-ars1": isOverdue,
-            "text-fgs3": !isOverdue
-          })}
-          on:click|stopPropagation={() => {
-            isShowDatePickerOnCw = true;
-          }}
-        >
-          Due: {formatDate(item.dateUnix)}
-        </button>
-      {/if}
-      {#if item.completedAtUnix && !isHovering && !$view.isConstrainedWidth}
-        {@const isCompletedBeforeDue =
-          item.dateUnix &&
-          compareDates(
-            new Date(item.completedAtUnix),
-            new Date(item.dateUnix),
-            "<="
-          )}
-        <span
-          class={cn("text-b3 text-ags1 userdata", {
-            "text-ags1": isCompletedBeforeDue,
-            "text-ars1": !isCompletedBeforeDue && item.dateUnix
-          })}
-        >
-          Completed: {formatDate(item.completedAtUnix)}
-        </span>
-      {/if}
-    </div>
-
-    {#if isHovering || isDatePickerOpen}
-      <div class="flex gap-2 shrink-0">
-        <DatePicker
-          date={item.dateUnix ? new Date(item.dateUnix) : undefined}
-          id={instanceId}
-          placeholder="Set date"
-          on:change={(e) => {
-            onDateChange(e.detail);
-          }}
-          on:opened={() => {
-            isDatePickerOpen = true;
-          }}
-          on:closed={() => {
-            isDatePickerOpen = false;
-          }}
-        />
+    {#if accessPoint !== ResourceAccessPoint.PICKER}
+      <div class="flex flex-col items-end">
+        {#if item.dateUnix && !isHovering}
+          <button
+            class={cn("text-b3 userdata", {
+              "text-ars1": isOverdue,
+              "text-fgs3": !isOverdue
+            })}
+            on:click|stopPropagation={() => {
+              isShowDatePickerOnCw = true;
+            }}
+          >
+            Due: {formatDate(item.dateUnix)}
+          </button>
+        {/if}
+        {#if item.completedAtUnix && !isHovering && !$view.isConstrainedWidth}
+          {@const isCompletedBeforeDue =
+            item.dateUnix &&
+            compareDates(
+              new Date(item.completedAtUnix),
+              new Date(item.dateUnix),
+              "<="
+            )}
+          <span
+            class={cn("text-b3 text-ags1 userdata", {
+              "text-ags1": isCompletedBeforeDue,
+              "text-ars1": !isCompletedBeforeDue && item.dateUnix
+            })}
+          >
+            Completed: {formatDate(item.completedAtUnix)}
+          </span>
+        {/if}
       </div>
+
+      {#if isHovering || isDatePickerOpen}
+        <div class="flex gap-2 shrink-0">
+          <DatePicker
+            date={item.dateUnix ? new Date(item.dateUnix) : undefined}
+            id={instanceId}
+            placeholder="Set date"
+            on:change={(e) => {
+              onDateChange(e.detail);
+            }}
+            on:opened={() => {
+              isDatePickerOpen = true;
+            }}
+            on:closed={() => {
+              isDatePickerOpen = false;
+            }}
+          />
+        </div>
+      {/if}
+      <ResourceThumbnailContextMenu
+        bind:item
+        {accessPoint}
+        {accessPointId}
+        {arrangement}
+        {isApplyCustomColor}
+        on:action={onContextMenuAction}
+        isInline={true}
+      />
+    {:else if accessPoint === ResourceAccessPoint.PICKER}
+      <FocusItemPickOverlay {isHovering} {item} />
     {/if}
-    <ResourceThumbnailContextMenu
-      bind:item
-      {accessPoint}
-      {accessPointId}
-      {arrangement}
-      {isApplyCustomColor}
-      on:action={onContextMenuAction}
-      isInline={true}
-    />
   </div>
 </ResourceThumbnailBase>
 <ComponentBaseLayer

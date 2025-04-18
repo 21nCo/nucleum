@@ -1,7 +1,10 @@
 <script lang="ts">
   import Notifications from "./Notifications.svelte";
   import { onMount } from "svelte";
-  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
+  import {
+    activeSession,
+    focusItemsStore
+  } from "$lib/client/products/pointron/focus/session.store";
   import { appLoadingState, appStore } from "$lib/client/stores/app.store";
   import { scheduledNotifications } from "$lib/client/stores/notification.store";
 
@@ -41,9 +44,11 @@
       uiStateSub();
     };
   });
+
   function refreshSidebarState() {
     return uiState.getState(UIState.isHideLeftNavBar);
   }
+
   async function initializeData() {
     if (isLiteMode) return;
     if ($activeSession?.isSessionRunning) {
@@ -51,11 +56,13 @@
     }
     refreshInteractionModeState();
   }
+
   function refreshInteractionModeState() {
     interactionMode = uiState.getState(Action.MODE_OF_INTERACTION, {
       isProductScoped: true
     });
   }
+
   async function handleVisibilityChange() {
     if (document?.hidden) {
       const registration = await navigator?.serviceWorker?.ready;
@@ -86,6 +93,10 @@
 
   async function onReady() {
     await runFallbacks();
+    const state = uiState.getState(UIState.recentFocusItems);
+    if (state) {
+      await focusItemsStore.refreshRecents(state);
+    }
   }
 
   async function runFallbacks() {

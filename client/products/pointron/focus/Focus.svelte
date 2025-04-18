@@ -45,7 +45,7 @@
     style: $view.isPortrait ? ButtonStyle.DEFAULT : ButtonStyle.OUTLINED
   };
   let startSessionButton: IButtonParams = {
-    label: "Start session",
+    label: "Start focus",
     callback: onStartSessionClicked,
     icon: "play",
     variant: ButtonVariant.PRIMARY,
