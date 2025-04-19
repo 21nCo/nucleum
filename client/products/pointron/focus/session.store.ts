@@ -1028,6 +1028,13 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     }
   }
 
+  /**
+   *
+   * 1 ms buffer is added to currentFocus start to avoid task time calculation issue for predefined interval sessions. (The first item is not being shown with time incremented)
+   *
+   * @param isQuickStart
+   * @returns
+   */
   async startSession(isQuickStart: boolean = false) {
     this.onComposeComplete(false);
     if (isQuickStart) player.showMini(PointronAction.FOCUS_PLAYER);
@@ -1050,7 +1057,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       if (item) {
         currentFocus = {
           id: item.id,
-          start: new Date().getTime()
+          start: new Date().getTime() + 1
         };
         currentFocusItem.set(currentFocus);
       }
