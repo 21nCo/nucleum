@@ -83,7 +83,8 @@
     });
   }
 
-  async function unPin() {
+  async function unPin(e: any) {
+    e.stopPropagation();
     await goalStore.modify(item.id, { isPinnedForQuickFocus: false });
     toasts.success(`Goal **${item.label}** unpinned from quick focus`);
     dispatch("unpin", item.id);

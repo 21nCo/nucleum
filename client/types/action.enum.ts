@@ -7,7 +7,7 @@ export enum Action {
   HELP = "HELP",
   SETTINGS = "cp",
   ACCOUNT = "account",
-  MOD = "mod",
+  PYOD = "mod",
   DEVELOPER = "developer",
   USER_PLAN = "USER_PLAN",
   USER_BILLING = "USER_BILLING",

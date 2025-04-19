@@ -217,7 +217,7 @@
         : "No pinned goals found"}
       subText={searchQuery
         ? "Press **Enter** to create a new goal & pin it here"
-        : "Please create a new goal or pin an existing one to the quick focus section."}
+        : "Please create a new goal or pin an existing one"}
       actionText={"Create new goal"}
       on:click={createNewGoal}
     />

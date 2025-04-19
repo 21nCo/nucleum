@@ -3,6 +3,6 @@
 </script>
 
 <ComingSoonView
-  mainText="Plug My Own Database (MOD)"
+  mainText="Plug Your Own Database (PYOD)"
   subText="Ability to plug your own database to our apps will be available soon. Small one time payment for lifetime access."
 />

@@ -77,7 +77,7 @@
           isHideCreateAction(selectedResource)
         ? undefined
         : {
-            label: "Create new " + selectedResource,
+            label: "New " + selectedResource,
             callback: async () => {
               onCreateResource();
             },

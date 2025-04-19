@@ -4,6 +4,7 @@
     lastActiveGoalIdForEditing,
     activeSession
   } from "$lib/client/products/pointron/focus/session.store";
+  import { setContext } from "svelte";
   import FocusItem from "./FocusItem.svelte";
   import AddFocusItem from "./AddFocusItem.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
@@ -47,6 +48,10 @@
   let isRefreshing: boolean = false;
   let selectedPickFromPanel: "recents" | "calendar" =
     uiState.getState(UIState.focusItemsPickFromPanel) ?? "recents";
+
+  setContext("focus-item-context", {
+    refreshList: () => refresh({ isShowLoadingPulse: true })
+  });
 
   function onBlur() {
     isFocusingAddGoal = false;
@@ -186,6 +191,8 @@
         mainText="No focus items added."
         subText="Toggle edit mode to add focus items."
       />
+      <!-- TODO - input is added to avoid flickering issue on extra wide screens. Without this, causing layout shift when refreshing -->
+      <input />
     </div>
   {:else if $focusItemsStore.items?.length > 0 && focusItems.length > 0}
     {#each focusItems as focusItem, index (focusItem.id)}

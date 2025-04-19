@@ -151,8 +151,8 @@ export function timePeriodLabel(period: TimePeriod) {
       if (scale === TimeScale.DAYS && value.type === TimePeriodType.RELATIVE)
         return "Today";
       else if (value.type === TimePeriodType.UPPER_RELATIVE) {
-        if (scale === TimeScale.DAYS) return "Days of This Month";
-        else if (scale === TimeScale.MONTHS) return "Months of This Year";
+        if (scale === TimeScale.DAYS) return "This Month";
+        else if (scale === TimeScale.MONTHS) return "This Year";
       } else return `This ${scale.slice(0, scale.length - 1).toLowerCase()}`;
     } else if (value.param === 1) {
       if (scale === TimeScale.DAYS && value.type === TimePeriodType.RELATIVE)
@@ -162,8 +162,8 @@ export function timePeriodLabel(period: TimePeriod) {
       if (scale === TimeScale.DAYS && value.type === TimePeriodType.RELATIVE)
         return "Yesterday";
       else if (value.type === TimePeriodType.UPPER_RELATIVE) {
-        if (scale === TimeScale.DAYS) return "Days of Last Month";
-        else if (scale === TimeScale.MONTHS) return "Months of Last Year";
+        if (scale === TimeScale.DAYS) return "Last Month";
+        else if (scale === TimeScale.MONTHS) return "Last Year";
       } else return `Last ${scale.toLowerCase().slice(0, scale.length - 1)}`;
     } else if (value.param < 0) {
       return `Last ${Math.abs(value.param)} ${scale.toLowerCase()}`;

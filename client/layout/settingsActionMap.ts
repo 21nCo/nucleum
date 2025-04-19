@@ -30,8 +30,8 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
     component: AccountSettings
   },
   {
-    action: Action.MOD,
-    label: "Plug My Own Database",
+    action: Action.PYOD,
+    label: "Plug Your Own Database",
     icon: "ph:database-light",
     component: ModSettings
   },

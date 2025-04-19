@@ -83,7 +83,7 @@
     <div class="flex justify-center items-center">
       <Button
         icon="ph:plus-light"
-        label="Create new task"
+        label="New task"
         size={Size.sm}
         shortcut={shortcutsConfig.create}
         type={ButtonVariant.PRIMARY}
