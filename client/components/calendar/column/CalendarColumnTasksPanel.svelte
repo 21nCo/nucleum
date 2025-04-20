@@ -12,7 +12,10 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { resourceAction } from "../../flux/resourceStores/resource.utils";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import { PersistenceActionType } from "$lib/client/types/data.type";
+  import {
+    PersistenceActionType,
+    RemovalProperty
+  } from "$lib/client/types/data.type";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";
@@ -58,7 +61,10 @@
       refreshTimeline();
     } else if (
       params?.action === PersistenceActionType.MERGE &&
-      params?.record?.dateUnix
+      (params?.record?.dateUnix ||
+        Object.values(RemovalProperty).some(
+          (x) => params?.record[x] !== undefined
+        ))
     ) {
       refreshTimeline();
     }

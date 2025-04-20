@@ -35,7 +35,7 @@
       "flex flex-col pt-4 gap-8 items-center justify-between overflow-auto w-full bg-bgs2",
       {
         "rounded-lg border-none": isRounded,
-        "border-r border-brs2": !isRounded
+        "border-r border-bgs4": !isRounded
       }
     )}
     style={isRounded ? "height: calc(100% - 1rem);" : "height:100%"}

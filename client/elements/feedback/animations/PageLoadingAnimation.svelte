@@ -11,12 +11,7 @@
 
   $: circleFill = variant === "panel-refresh" ? "fill-fgs3" : "fill-fgs1";
   $: svgBorder = variant === "panel-refresh" ? "border-fgs3" : "border-fgs1";
-  $: width =
-    variant === "panel-refresh"
-      ? 20
-      : $view.isPortrait
-        ? $view.width / 15
-        : $view.width / 40;
+  $: width = variant === "panel-refresh" ? 20 : 25;
   $: if (cssRoot) {
     margin = width / 2;
     margin = width / 2;

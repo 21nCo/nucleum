@@ -43,10 +43,12 @@
   export let logs: ISessionLog[] = [];
   export let timePeriod: ITimePeriodResolved;
   export let isPageLoaded = false;
+  export let parentBgIndex: number = 1;
+  export let heightAdjuster: string = "2.85rem";
+  let cardBgIndex: number = parentBgIndex - 1;
   let data: AnalyticsDataRecord[];
   let previousTimePeriodData: AnalyticsDataRecord[] = [];
   let goalColors: IAnalyticsLabelColor[] = [];
-  let parentBgIndex = $view.isPortrait ? 1 : 2;
   const dispatch = createEventDispatcher();
   let isRefreshing = false;
   let refreshId = new Date().getTime();
@@ -230,10 +232,10 @@
 </script>
 
 <div
-  class={cn("flex flex-col grow border border-brs2 rounded-md mo:bg-bgs1", {
+  class={cn("flex flex-col grow border border-brs2 rounded-md bg-bgs1", {
     "w-full h-96 p-2": $view.isPortrait,
     "h-[32rem]": $view.isPortrait && $isInEditMode,
-    "min-w-1/2 w-1/2 2k:min-w-min 2k:w-3/10 p-4 bg-bgs2": !$view.isPortrait,
+    "min-w-1/2 w-1/2 2k:min-w-min 2k:w-3/10 p-4 bg-bgs1": !$view.isPortrait,
     "w-4/5": position.total === 1 && !$view.isPortrait,
     "w-1/3":
       !$view.isPortrait &&
@@ -247,10 +249,10 @@
     ? position.total === 1
       ? "height: calc(100vh - 8rem);"
       : $view.height < 900
-        ? "height: calc(70vh - 2.85rem);"
+        ? `height: calc(70vh - ${heightAdjuster});`
         : $isInEditMode
-          ? "height: calc(60vh - 2.85rem);"
-          : "height: calc(50vh - 2.85rem);"
+          ? `height: calc(60vh - ${heightAdjuster});`
+          : `height: calc(50vh - ${heightAdjuster});`
     : ""}
 >
   <header
@@ -274,12 +276,16 @@
             on:debouncedChange={onCardLabelChange}
           />
           <span class="flex gap-2 items-center">
-            <GroupingAndFilters {card} {onGroupByChange} {parentBgIndex} />
+            <GroupingAndFilters
+              {card}
+              {onGroupByChange}
+              parentBgIndex={cardBgIndex}
+            />
             <Button
               icon="cross-circled"
               tooltip={$view.isPortrait ? "Remove" : ""}
               label={$view.isPortrait ? "" : "Remove"}
-              {parentBgIndex}
+              parentBgIndex={cardBgIndex}
               isPreventMinWidth={true}
               type={ButtonVariant.DANGER}
               style={$view.isPortrait
@@ -334,7 +340,7 @@
         size={Size.sm}
         mainText={errorMessage}
         actionText="Remove card"
-        {parentBgIndex}
+        parentBgIndex={cardBgIndex}
         on:click={onRemoveClick}
       />
     </div>
@@ -364,7 +370,7 @@
               {data}
               {goalColors}
               {previousTimePeriodData}
-              {parentBgIndex}
+              parentBgIndex={cardBgIndex}
             />
           </div>
         {:else}
@@ -373,7 +379,7 @@
             {data}
             {goalColors}
             {previousTimePeriodData}
-            {parentBgIndex}
+            parentBgIndex={cardBgIndex}
           />
         {/if}
       {/key}

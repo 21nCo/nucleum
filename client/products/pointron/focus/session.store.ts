@@ -1255,17 +1255,17 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
       }
     );
     console.timeEnd("refreshRecents");
-    console.log({ items, goalsResult, tasksResult });
-    const newRecents = items.map((x) => {
-      const goal = goalsResult.find(resourceInList(x.id));
-      const task = tasksResult.find(resourceInList(x.id));
-      return {
-        id: x.id,
-        item: goal ?? task,
-        startUnix: x.startUnix
-      };
-    });
-    console.log({ newRecents });
+    const newRecents = items
+      .map((x) => {
+        const goal = goalsResult.find(resourceInList(x.id));
+        const task = tasksResult.find(resourceInList(x.id));
+        return {
+          id: x.id,
+          item: goal ?? task,
+          startUnix: x.startUnix
+        };
+      })
+      .filter((k) => k.id && k.item);
     this.modify({ recents: newRecents });
   }
 

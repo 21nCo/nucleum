@@ -31,7 +31,9 @@
   } from "$lib/client/stores/uiState/uiState.store";
   import { isTextElement } from "$lib/client/utils/browser.utils";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import { bg, cn } from "$lib/client/utils/ui.utils";
 
+  const bgIndex = 2;
   $selectedPageId = resolvePageSelection();
   onMount(async () => {
     if ($context.embed == Embed.HANDSET) {
@@ -64,7 +66,7 @@
   }
 </script>
 
-<div class="flex flex-col w-full h-full mo:bg-bgs2">
+<div class={cn("flex flex-col w-full h-full", bg(bgIndex - 1))}>
   <div
     class="flex gap-8 w-full items-center justify-between px-4 portrait:py-2 pt-4 pb-2"
   >
@@ -88,7 +90,7 @@
               <Button
                 class="min-w-fit"
                 size={Size.xs}
-                parentBgIndex={2}
+                parentBgIndex={bgIndex}
                 icon="pencil-square"
                 style={ButtonStyle.OUTLINED}
                 on:click={() =>
@@ -110,6 +112,7 @@
               isExpandToFullWidth={true}
               isEnableAnimationForTitle={false}
               isInEditMode={$isInEditMode}
+              parentBgIndex={bgIndex}
               isShowNumberShortcut={$uiStateDerived.isShowHotKeyHints}
               bind:value={$selectedPageId}
               on:switch={onPageSwitch}
@@ -151,7 +154,7 @@
   </div>
   {#key $selectedPageId}
     {#if $selectedPageId}
-      <AnalyticsPageView id={$selectedPageId} />
+      <AnalyticsPageView id={$selectedPageId} parentBgIndex={bgIndex} />
     {:else}
       <EmptyStatusView
         subText="Please click on a view to see Analytic cards or click on edit to manage views"

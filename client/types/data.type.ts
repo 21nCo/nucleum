@@ -521,3 +521,8 @@ export type IResourceSelectAdditionalParams = {
    */
   isIgnoreParentInactive?: boolean;
 };
+
+export enum RemovalProperty {
+  IS_ARCHIVED = "isArchived",
+  TRASH_INFORMATION = "trashInformation"
+}

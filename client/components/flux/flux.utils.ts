@@ -1,5 +1,6 @@
 import {
   PersistenceActionType,
+  RemovalProperty,
   type IMutation,
   type IRecordId
 } from "$lib/client/types/data.type";
@@ -30,12 +31,12 @@ export function resolveMutationAction(mutation: IMutation): string {
   const mutationAction = mutation.params.action;
   const mutationChangedProperties = mutation.params.record;
   if (mutationAction === PersistenceActionType.MERGE) {
-    if ("isArchived" in mutationChangedProperties) {
+    if (RemovalProperty.IS_ARCHIVED in mutationChangedProperties) {
       return mutationChangedProperties.isArchived
         ? "🗃️ Archived"
         : "↵ Unarchived";
     }
-    if ("trashInformation" in mutationChangedProperties) {
+    if (RemovalProperty.TRASH_INFORMATION in mutationChangedProperties) {
       return mutationChangedProperties.trashInformation &&
         mutationChangedProperties.trashInformation !== "$NONE"
         ? "⌫ Deleted"

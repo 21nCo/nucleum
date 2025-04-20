@@ -8,6 +8,7 @@
   import { UserDataMode } from "$lib/client/types/account.type";
   import {
     PersistenceActionType,
+    RemovalProperty,
     type IRecordId
   } from "$lib/client/types/data.type";
   import { createEventDispatcher, onDestroy, onMount } from "svelte";
@@ -42,6 +43,11 @@
    * Performs sync down action on mount if the user is a cloud user and if this flag is set to true
    */
   export let syncDownOnMount = false;
+
+  /**
+   * If true, only removal properties like `isArchived` or `trashInformation` will be subscribed to for merge action.
+   */
+  export let isSubscribeToRemovalPropertiesOnly = false;
 
   function visibilityChangeListener() {
     dispatch("appear");
@@ -84,16 +90,24 @@
       dispatch("change", data);
       return;
     }
-    const excludeProperties = ["isArchived", "trashInformation"];
-    const isExcludedPropertyCase =
+
+    const isRemovalPropertyCase =
       !subscribeToRecords &&
       mutation?.action === PersistenceActionType.MERGE &&
-      excludeProperties.some((x) => mutation?.record[x] !== undefined);
-    if (isExcludedPropertyCase) {
+      Object.values(RemovalProperty).some(
+        (x) => mutation?.record[x] !== undefined
+      );
+    if (isRemovalPropertyCase) {
       dispatch("change", data);
       return;
     }
-    if (subscribeToContext && subscribeToContext.has(data.context)) {
+    if (
+      subscribeToContext &&
+      subscribeToContext.has(data.context) &&
+      (!isSubscribeToRemovalPropertiesOnly ||
+        (isSubscribeToRemovalPropertiesOnly &&
+          mutation?.action !== PersistenceActionType.MERGE))
+    ) {
       dispatch("change", data);
     }
   }

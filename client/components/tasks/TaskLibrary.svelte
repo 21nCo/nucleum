@@ -504,6 +504,7 @@
     resolveAccessPoint(),
     resourceAction(Resource.task, ResourceActionType.CREATE)
   ])}
+  isSubscribeToRemovalPropertiesOnly={true}
   on:syncDown={() => {
     refresh();
   }}

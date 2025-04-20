@@ -443,13 +443,6 @@ export const pointronActions: IAction[] = [
     }
   },
   {
-    action: "test",
-    label: "Test",
-    path: "test",
-    type: ActionType.PAGE,
-    isMeta: true
-  },
-  {
     action: PointronAction.BACKGROUND_MUSIC,
     label: "Background music",
     type: ActionType.MODAL,

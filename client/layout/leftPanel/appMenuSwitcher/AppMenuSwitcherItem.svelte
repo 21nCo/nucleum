@@ -12,8 +12,16 @@
   import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
   import { uiStateDerived } from "$lib/client/stores/uiState/uiState.store";
   import { keyboardShortcuts } from "$lib/client/components/shortcuts/shortcuts.store";
-  import { tooltip } from "$lib/client/actions/popover.action";
+  import { popover, tooltip } from "$lib/client/actions/popover.action";
   import { hoverable } from "$lib/client/actions/hover.action";
+  import ContextMenu from "$lib/client/elements/contextMenu/ContextMenu.svelte";
+  import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
+  import { appMenuStore } from "$lib/client/stores/appMenu/appMenu.store";
+  import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { isHideCreateAction } from "$lib/client/components/library/library.utils";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   const dispatch = createEventDispatcher();
   export let item: IAction;
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
@@ -29,6 +37,7 @@
     layoutContext === LayoutContext.DEFAULT ||
     layoutContext === LayoutContext.THIN_WITH_LABEL;
   let buttonRef: HTMLElement;
+  let popRef: HTMLButtonElement;
   let pad: number;
   let rive: any;
   let isOutlineStyle: boolean = false;
@@ -72,9 +81,60 @@
     }
     return Size.sm;
   }
+
+  function resolveContextMenu() {
+    const resource = item?.componentParams?.resource ?? Resource.unknown;
+    const pinAction = {
+      label: "Unpin from App menu",
+      value: "pin",
+      icon: "ph:minus-circle-light",
+      callback: async () => {
+        appMenuStore.removeUserMenuItem(
+          resourceAction(resource, ResourceActionType.BROWSE)
+        );
+        popRef.dispatchEvent(new CustomEvent("hide"));
+      }
+    };
+    const createAction = {
+      label: "Create new",
+      value: "create",
+      icon: "plus",
+      callback: async () => {
+        appStore.runAction(resourceAction(resource, ResourceActionType.CREATE));
+        popRef.dispatchEvent(new CustomEvent("hide"));
+      }
+    };
+    if (isHideCreateAction(resource)) {
+      return [
+        {
+          group: "all",
+          items: [pinAction]
+        }
+      ];
+    }
+    return [
+      {
+        group: "all",
+        items: [pinAction, createAction]
+      }
+    ];
+  }
+
+  function resolvePopover() {
+    if (!item?.componentParams?.resource) return {};
+    return {
+      placement: Placement.BottomCenter,
+      content: ContextMenu,
+      triggerMethod: [PopoverTriggerMethod.RIGHT_CLICK],
+      componentProps: { menuResolver: resolveContextMenu },
+      id: "resourceSwitcherContextMenu",
+      groupId: "resourceSwitcherContextMenuGroup"
+    };
+  }
 </script>
 
 <button
+  bind:this={popRef}
   use:tooltip={{
     text: tooltipText ?? "",
     direction: Placement.Right
@@ -103,6 +163,7 @@
       isHovering = isHoveringParam;
     }
   }}
+  use:popover={resolvePopover()}
 >
   <div
     class={cn("flex gap-1", {

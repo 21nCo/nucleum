@@ -28,6 +28,12 @@
   import { goalStore } from "../goals/goal.store";
   import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
   import FocusItemPickOverlay from "$lib/client/products/pointron/focus/elements/focusitem/FocusItemPickOverlay.svelte";
+  import {
+    currentFocusItem,
+    focusItemsStore
+  } from "$lib/client/products/pointron/focus/session.store";
+  import { resolveIfCurrentFocusItem } from "$lib/client/products/pointron/focus/session.utils";
+  import { movingBorder } from "$lib/client/actions/movingBorder.action";
   const dispatch = createEventDispatcher();
   export let item: ITaskThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
@@ -44,6 +50,12 @@
     !item.isChecked &&
     item.dateUnix &&
     compareDates(new Date(item.dateUnix), new Date(), "<");
+
+  $: isCurrentlyFocusing = resolveIfCurrentFocusItem(
+    $focusItemsStore,
+    item.id,
+    $currentFocusItem
+  );
 
   const instanceId = generateMiniRandomId();
 
@@ -95,10 +107,19 @@
       "flex gap-2 items-center pr-1 pl-3 py-2 cw:h-16 h-14 rounded-md",
       {
         "m-4 min-w-[30rem]": accessPoint === ResourceAccessPoint.SELF,
-        "bg-bgs2/50 hover:bg-bgs2 border border-brs2":
-          accessPoint !== ResourceAccessPoint.SELF
+        "bg-bgs2/50 hover:bg-bgs2 border":
+          accessPoint !== ResourceAccessPoint.SELF,
+        "border-aps1": isCurrentlyFocusing,
+        "border-brs2":
+          !isCurrentlyFocusing && accessPoint !== ResourceAccessPoint.SELF
       }
     )}
+    use:movingBorder={{
+      speed: 4000,
+      borderWidth: "2px",
+      borderColor: "aps2",
+      enabled: isCurrentlyFocusing
+    }}
     use:hoverable={{
       onHover: (value) => {
         isHovering = value;

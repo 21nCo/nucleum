@@ -17,7 +17,8 @@ import {
   type IMutationParamsv2,
   type IResourceSelectParams,
   type IRecordId,
-  type IResourceSelectAdditionalParams
+  type IResourceSelectAdditionalParams,
+  type IResourceSelectFilters
 } from "../../../types/data.type";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { prefixTable } from "../../../../shared/utils/text.utils";
@@ -614,14 +615,31 @@ export class ResourceStore<T extends IResource> implements IStore {
 
   get() {}
 
+  /**
+   *
+   * Post filters for active resource is applied if limit is not set. This is to improve query performance for large datasets. Use post filters when limit or offset is present is causing pagination count issues.
+   *
+   * @param params
+   * @param additionalParams
+   * @returns
+   */
   async selectMany(
     params?: IResourceSelectParams,
     additionalParams?: IResourceSelectAdditionalParams
   ) {
-    const filters = {
-      ...(params?.filters ?? {}),
-      isArchived: params?.filters?.isArchived ?? undefined
-    };
+    let filters: IResourceSelectFilters;
+    if (params?.limit) {
+      filters = {
+        trashInformation: false,
+        ...(params?.filters ?? {}),
+        isArchived: params?.filters?.isArchived ?? false
+      };
+    } else {
+      filters = {
+        ...(params?.filters ?? {}),
+        isArchived: params?.filters?.isArchived ?? undefined
+      };
+    }
     params = {
       ...params,
       filters
@@ -643,7 +661,8 @@ export class ResourceStore<T extends IResource> implements IStore {
     if (
       !result ||
       !isValidArrayWithData(result) ||
-      additionalParams?.isIncludeInactiveItems
+      additionalParams?.isIncludeInactiveItems ||
+      params?.limit
     )
       return result;
     else if (params?.filters?.isArchived)

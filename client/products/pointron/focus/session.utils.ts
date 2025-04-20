@@ -188,10 +188,14 @@ export function resolveIfCurrentFocusItem(
   currentFocusItem?: ICurrentFocusItem
 ) {
   if (!currentFocusItem) return false;
-  const resourceType = determineResourceType(currentFocusItem.id);
-  if (resourceType === Resource.goal) {
+  const resourceTypeOfCurrentFocus = determineResourceType(currentFocusItem.id);
+  const resourceTypeOfItem = determineResourceType(id);
+  if (
+    resourceTypeOfCurrentFocus === Resource.goal ||
+    resourceTypeOfItem === Resource.task
+  ) {
     return isSameResource(id, currentFocusItem);
-  } else if (resourceType === Resource.task) {
+  } else if (resourceTypeOfCurrentFocus === Resource.task) {
     const correspondingGoal = focusItems.items.find((x) =>
       x.tasks?.some(resourceInList(currentFocusItem))
     );

@@ -7,7 +7,7 @@
     type PanelSwitcherEditModeOptions
   } from "$lib/client/types/switcher.enum";
   import { createEventDispatcher } from "svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { bg, cn } from "$lib/client/utils/ui.utils";
   import type { ISelectItem } from "$lib/client/types/select.type";
   import PanelSwitcherItemLabel from "./PanelSwitcherItemLabel.svelte";
   import { rearrangeOnAxis } from "$lib/client/actions/rearrange.action";
@@ -97,6 +97,7 @@
         {isDisabled}
         {isShowNumberShortcut}
         {index}
+        {parentBgIndex}
         bind:triggerItemEdit
         on:remove
         on:change
@@ -140,13 +141,19 @@
       {isDisabled}
       {isShowNumberShortcut}
       {index}
+      {parentBgIndex}
       bind:triggerItemEdit
       on:remove
       on:change
       on:debouncedChange
     />
     {#if isActive}
-      <div class="absolute h-2 w-full bg-bgs1 -bottom-1 left-0" />
+      <div
+        class={cn(
+          "absolute h-2 w-full -bottom-1 left-0",
+          bg(parentBgIndex - 1)
+        )}
+      />
     {/if}
   </button>
 {:else if style === PanelSwitcherStyle.DOT}
@@ -196,6 +203,7 @@
         {isDisabled}
         {isShowNumberShortcut}
         {index}
+        {parentBgIndex}
         bind:triggerItemEdit
         on:remove
         on:change

@@ -77,6 +77,7 @@ import ResourceSearchModal from "../products/memotron/library/search/ResourceSea
 import DummyCollection from "../components/collection/DummyCollection.svelte";
 import AppLoadingView from "../layout/paint/AppLoadingView.svelte";
 import SimpleDigitalClock from "../products/pointron/clocks/SimpleDigitalClock.svelte";
+import Test from "../components/Test.svelte";
 
 export const globalActions: IAction[] = [
   {
@@ -981,5 +982,11 @@ export const globalActions: IAction[] = [
     type: ActionType.PAGE,
     isMeta: true,
     component: SimpleDigitalClock
+  },
+  {
+    action: "test",
+    type: ActionType.PAGE,
+    isMeta: true,
+    component: Test
   }
 ];

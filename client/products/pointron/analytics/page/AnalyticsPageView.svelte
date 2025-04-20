@@ -1,7 +1,7 @@
 <script lang="ts">
   import { isInEditMode } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { bg, cn } from "$lib/client/utils/ui.utils";
   import { analyticsConfigStore } from "../analytics.store";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
@@ -23,12 +23,20 @@
   import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
   import { logger } from "$lib/client/components/debug/logger.client";
   export let id: string;
+  export let parentBgIndex: number = 1;
   let goals: IGoalThumb[] = [];
   let logs: ISessionLog[] = [];
   let isLoading = true;
   let config: AnalyticsPage | undefined;
   let cardsTimePeriods: { [key: string]: ITimePeriodResolved } = {};
   let timeRangeForPage: { begin: number; end: number } | undefined;
+
+  /**
+   * calculation: (bottom 1 rem + gap between cards (0.5 rem) + top 0.5 rem + 4.2 rem (analytics page header height)) / 2
+   *
+   * This is to determine the card height so that cards fit exactly in the view. See {@link AnalyticsCardView} where 50vh - heightAdjuster is used.
+   */
+  const heightAdjuster = "3.1rem";
 
   async function addCard() {
     analyticsConfigStore.addCard(id);
@@ -126,7 +134,7 @@
 
 {#if config}
   <div
-    class={cn("flex h-full max-h-full p-2 overflow-auto", {
+    class={cn("flex h-full max-h-full px-4 pb-4 pt-2 overflow-auto", {
       "flex-col gap-3": $view.isPortrait,
       "flex-wrap gap-2": !$view.isPortrait
     })}
@@ -140,6 +148,8 @@
         timePeriod={cardsTimePeriods[card.id]}
         position={{ index, total: config.cards.length }}
         pageId={id}
+        {parentBgIndex}
+        {heightAdjuster}
         on:reload={onReload}
         on:removed={() => refreshConfig()}
       />
@@ -148,7 +158,8 @@
       <div>
         <button
           class={cn(
-            "border-2 border-dotted border-fgs4 hover:bg-bgs2 rounded-md grow flex flex-col gap-1 justify-center items-center",
+            "border-2 border-dotted border-fgs4 rounded-md grow flex flex-col gap-1 justify-center items-center",
+            `hover:${bg(parentBgIndex)}`,
             {
               "w-full": $view.isPortrait,
               "w-60": !$view.isPortrait
@@ -158,8 +169,8 @@
             ? config.cards.length === 1
               ? "height: calc(100vh - 8rem);"
               : $view.height < 900
-                ? "height: calc(70vh - 2.85rem);"
-                : "height: calc(60vh - 2.85rem);"
+                ? `height: calc(70vh - ${heightAdjuster});`
+                : `height: calc(60vh - ${heightAdjuster});`
             : ""}
           on:click={addCard}
         >

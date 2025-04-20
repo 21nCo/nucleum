@@ -430,6 +430,7 @@ export class SearchStore {
         subType,
         additionalFilters
       });
+      this.resource = resource;
       if (resource === Resource.node) {
         const result = await flux.selectMany(resource, {
           properties: ["count()"],
@@ -452,22 +453,29 @@ export class SearchStore {
         resource === Resource.relation
       ) {
         if (resource === Resource.relation) resource = Resource.linkTag;
-        const result = await flux.selectMany(resource, {
+        this.setResourceStore(this.resource);
+        const selectParams = {
           properties: ["count()"],
           filters: {
             ...activeResourceFilterV2,
-            ...additionalFilters,
+            ...(additionalFilters ?? {}),
             ...(resource === Resource.collection && this.collectibleResource
               ? {
                   resource: this.collectibleResource
                 }
               : {}),
             isArchived: additionalFilters?.isArchived ?? false,
-            type: subType ? [subType] : undefined,
-            parent: resource === Resource.goal ? false : undefined
+            type:
+              subType && resource === Resource.goal
+                ? subType
+                : subType
+                  ? [subType]
+                  : undefined
           },
           groupBy: ["all"]
-        });
+        };
+        const result = await this.resourceStore?.selectMany(selectParams);
+        // const resultOld = await flux.selectMany(resource, selectParams);
         return result?.[0]?.count;
       }
     } catch (e) {

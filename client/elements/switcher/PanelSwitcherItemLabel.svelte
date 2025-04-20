@@ -10,7 +10,7 @@
   import type { ISelectItem } from "$lib/client/types/select.type";
   import Popover from "../popover/Popover.svelte";
   import TextInput from "../input/TextInput.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { bg, cn } from "$lib/client/utils/ui.utils";
   import AddNewButton from "../button/AddNewButton.svelte";
   import { tooltip } from "$lib/client/actions/popover.action";
   import { isValidString } from "$lib/shared/utils/text.utils";
@@ -27,6 +27,7 @@
   export let triggerItemEdit: string | null = null;
   export let isShowNumberShortcut: boolean = false;
   export let index: number = 0;
+  export let parentBgIndex: number = 1;
   $: isAddNewItem = item.value === "$add";
   let labelEditPopoverRef: any;
   let inputRef: any;
@@ -133,12 +134,19 @@
       </span>
       {#if item.badge}
         <span class="ml-2">
-          <Badge {size} text={item.badge} isApplyCustomColor={isActive} />
+          <Badge
+            {size}
+            text={item.badge}
+            isApplyCustomColor={isActive}
+            {parentBgIndex}
+          />
         </span>
       {/if}
     </div>
-    {#if isShowNumberShortcut}
-      <span class="text-b4 text-fgs3 w-4 h-4 bg-bgs2 rounded-md">
+    {#if isShowNumberShortcut && index < 9}
+      <span
+        class={cn("text-b4 text-fgs3 w-4 h-4 rounded-md", bg(parentBgIndex))}
+      >
         {index + 1}
       </span>
     {/if}

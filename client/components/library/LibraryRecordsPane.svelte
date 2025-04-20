@@ -32,6 +32,7 @@
   import { debouncer } from "$lib/client/utils/utils";
   import {
     PersistenceActionType,
+    RemovalProperty,
     type IMutationParamsv2,
     type IResourceSelectOrderBy
   } from "$lib/client/types/data.type";
@@ -336,10 +337,9 @@
       resource,
       ...mutation
     });
-    const recordsRemovedCases = ["isArchived", "trashInformation"];
     if (
       mutation.action === PersistenceActionType.MERGE &&
-      recordsRemovedCases.some((x) => mutation.record[x])
+      Object.values(RemovalProperty).some((x) => mutation.record[x])
     ) {
       const id = mutation.record.id;
       refreshTotalRecordsCount();
