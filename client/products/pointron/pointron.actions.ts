@@ -122,16 +122,7 @@ export const pointronActions: IAction[] = [
     type: ActionType.MODAL,
     isMeta: true,
     modalParams: {
-      title: "Save as preset",
-      layout: {
-        primaryAction: {
-          label: "Save Preset",
-          callback: () => activeSession.saveCurrentCompositionAsPreset()
-        },
-        secondaryAction: {
-          label: "Cancel"
-        }
-      }
+      title: "Save as preset"
     }
   },
   {

@@ -20,6 +20,7 @@
   export let style: OptionSelectorStyle = OptionSelectorStyle.TRAIN;
   export let iconOrientation: Orientation = Orientation.Horizontal;
   export let isShowExpandFeedbackOnActive = false;
+  export let isExpandOnActiveForIcon = false;
 </script>
 
 {#if style === OptionSelectorStyle.TRAIN || style === OptionSelectorStyle.OUTLINE || style === OptionSelectorStyle.ICON}
@@ -45,7 +46,7 @@
       style === OptionSelectorStyle.ICON && {
         "border border-aps2 bg-aps3": isActive,
         "p-1.5": size === Size.lg,
-        "p-1": size === Size.md || size === Size.sm
+        "py-1 px-1.5": size === Size.md || size === Size.sm
       },
       style !== OptionSelectorStyle.ICON && {
         "border border-aps1 bg-aps3 hover:bg--aps2": isActive,
@@ -66,8 +67,12 @@
     )}
     on:click
     use:tooltip={{
-      disabled: !item.tooltip,
-      text: item.tooltip,
+      disabled:
+        (style !== OptionSelectorStyle.ICON && !item.tooltip) ||
+        (isExpandOnActiveForIcon &&
+          isActive &&
+          style === OptionSelectorStyle.ICON),
+      text: item.tooltip ?? item.label,
       delay: 1000,
       isLarger: true,
       isAllowTextWrap: true
@@ -107,7 +112,7 @@
         truncateLength={20}
         tooltip={item.tooltip}
       /> -->
-      {#if style !== OptionSelectorStyle.ICON}
+      {#if style !== OptionSelectorStyle.ICON || (isExpandOnActiveForIcon && isActive)}
         <div>
           {properCase(item.label ?? item.value.toString())}
         </div>

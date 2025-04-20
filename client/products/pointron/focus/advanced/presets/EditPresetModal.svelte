@@ -1,6 +1,5 @@
 <script lang="ts">
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import { generateUID } from "$lib/client/utils/utils";
   import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
   import {
     SessionCompositionType,
@@ -16,11 +15,17 @@
   import ComposeTotalsText from "../composition/ComposeTotalsText.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
   import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
+  import { goalStore } from "$lib/client/components/goals/goal.store";
+  import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
+  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  import PresetGoalsSelector from "./PresetGoalsSelector.svelte";
+
   export let id: string;
   let composition: SessionComposition;
+  let selectedGoals: IGoalThumb[] = [];
 
   let seedPreset: SessionComposition = {
-    id: generateUID(),
+    id: generateSimpleRandomId(),
     numberOfFocusRounds: 2,
     focusDuration: 28 * 60,
     breakDuration: 2 * 60,
@@ -28,19 +33,37 @@
     totalDuration: 0,
     breakType: BreakCompositionType.PREDEFINED,
     numberOfBreaks: 1,
-    breakReminder: $pointronPreferences.breakReminder
+    breakReminder: $pointronPreferences.breakReminder,
+    goals: []
   };
 
-  onMount(() => {
+  onMount(async () => {
     if (id) {
       composition = deepCopy(
         $pointronPreferences.presets.find((x) => x.id === id)!
       );
+      if (composition.goals?.length) {
+        const goals = await goalStore.selectMany(
+          {
+            filters: {
+              id: composition.goals
+            }
+          },
+          {
+            isExpand: true
+          }
+        );
+        if (goals) {
+          selectedGoals = goals;
+        }
+      }
     } else {
       composition = deepCopy(seedPreset);
     }
   });
+
   async function saveHandler() {
+    composition.goals = selectedGoals.map((g) => g.id);
     if (id) {
       pointronPreferences.updatePreset(composition);
     } else {
@@ -48,6 +71,7 @@
     }
     return true;
   }
+
   async function deleteHandler() {
     if (composition && composition.id)
       pointronPreferences.removePreset(composition.id);
@@ -68,6 +92,7 @@
         bind:composition
         on:change={() => (composition = composition)}
       />
+      <PresetGoalsSelector bind:selectedGoals />
     </div>
     <ModalFooter
       action={PointronAction.EDIT_PRESET}

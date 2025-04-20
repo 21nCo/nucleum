@@ -14,14 +14,13 @@
   import { abg, cn } from "$lib/client/utils/ui.utils";
   import Button from "$lib/client/elements/button/Button.svelte";
   import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";
-  import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   const dispatch = createEventDispatcher();
   export let preset: SessionComposition;
   export let isActive: boolean = false;
   export let parentBackgroundIndex = 1;
   export let isExpandedVariant: boolean = false;
   export let isInEditMode: boolean = false;
-  let isHovering: boolean = false;
+  // let isHovering: boolean = false;
   $: totals = getTotalsFromComposition({ composition: preset });
   function handleClick() {
     dispatch("click", { preset });
@@ -33,9 +32,7 @@
 </script>
 
 {#if preset.focusDuration || (preset.totalDuration && preset.type === SessionCompositionType.TOTAL_DURATION)}
-  <HoverableElement
-    type="button"
-    bind:isHovering
+  <button
     class={cn(
       "relative flex items-center gap-2 px-2 2k:px-3 py-4 rounded-md userdata",
       {
@@ -49,7 +46,7 @@
     )}
     on:click={handleClick}
   >
-    <span class="flex gap-1 h-full min-w-0 flex-1">
+    <span class="flex items-center gap-1 h-full min-w-0 flex-1">
       <Icon
         icon={preset.type === SessionCompositionType.POMODORO
           ? "pomodoro"
@@ -71,6 +68,13 @@
           {formatSeconds(totals.duration)}
         {/if}
       </span>
+      {#if preset.goals && preset.goals.length > 0}
+        <span
+          class="text-b3 border border-brs3 rounded-md px-1 ml-1 whitespace-nowrap"
+        >
+          {preset.goals.length} goal{preset.goals.length > 1 ? "s" : ""}
+        </span>
+      {/if}
     </span>
     <span class="flex justify--end items-center h-full shrink-0">
       <PresetDurationText
@@ -81,9 +85,9 @@
       />
     </span>
 
-    {#if isInEditMode && isExpandedVariant && isHovering}
+    {#if isInEditMode && isExpandedVariant}
       <span
-        class="absolute right-0 h-full flex items-center bg-gradient-to-l from-bgs2 via-bgs2 to-transparent pr-3 pl-10 rounded-md"
+        class="absolute right-0 h-full flex items-center bg-gradient-to-l from-bgs1 via-bgs1 to-transparent pr-3 pl-10 rounded-md"
       >
         <Button
           icon="ph:trash-light"
@@ -92,5 +96,5 @@
         />
       </span>
     {/if}
-  </HoverableElement>
+  </button>
 {/if}

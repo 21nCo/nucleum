@@ -63,10 +63,7 @@
 
 <div
   class={cn(
-    "relative flex flex-col items-center rounded-lg w-full justify-start gap-4",
-    {
-      "flex-grow": isSliderVariant
-    }
+    "relative flex flex-col items-center rounded-lg w-full justify-start gap-4 flex-grow"
   )}
 >
   {#if !isSliderVariant}

@@ -1119,6 +1119,9 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
   async onPresetSelection(preset: SessionComposition) {
     this.modify({ composition: preset }, { isPersist: false });
     this.onComposeComplete();
+    if (preset.goals?.length) {
+      await focusItemsStore.resetToPresetGoals(preset.goals);
+    }
   }
 
   async resetComposition() {
@@ -1136,14 +1139,15 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     this.onComposeComplete();
   }
 
-  async saveCurrentCompositionAsPreset() {
+  async saveCurrentCompositionAsPreset(goals: IRecordId[] = []) {
     let n = this.get();
     if (!n.composition) return;
     const name = get(newPresetLabel);
     return pointronPreferences.addPreset({
       ...n.composition,
       name,
-      id: generateSimpleRandomId()
+      id: generateSimpleRandomId(),
+      goals
     });
   }
 
@@ -1311,6 +1315,13 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
     n.items.push({ id, tasks: [], blocks: [] });
     this.modify(n);
     lastActiveGoalIdForEditing.set(id);
+  }
+  async resetToPresetGoals(ids: IRecordId[]) {
+    let n = this.get();
+    n.items = ids.map((id) => ({ id, tasks: [], blocks: [] }));
+    this.modify(n);
+    lastActiveGoalIdForEditing.set(ids[0]);
+    appEvents.publish(PointronEvent.REFRESH_FOCUSITEMS);
   }
 
   async appendFocusBlock(id: IRecordId, block: { start: number; end: number }) {

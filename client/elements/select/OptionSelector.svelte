@@ -23,6 +23,7 @@
   export let iconOrientation: Orientation = Orientation.Horizontal;
   export let isPreventWrap: boolean = false;
   export let isShowExpandFeedbackOnActive = false;
+  export let isExpandOnActiveForIcon = false;
   let classList: string = "flex w-full";
   if (selected === undefined) selected = options[0]?.value;
 </script>
@@ -70,6 +71,7 @@
           {size}
           {style}
           {isShowExpandFeedbackOnActive}
+          {isExpandOnActiveForIcon}
           {iconOrientation}
           isActive={selected === item.value}
           on:click={() => {

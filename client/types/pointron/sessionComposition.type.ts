@@ -1,4 +1,5 @@
 import type { TimeUnit } from "$lib/client/types/time.type";
+import type { IRecordId } from "$lib/client/types/data.type";
 
 export type SessionComposition = {
   id: string;
@@ -13,6 +14,7 @@ export type SessionComposition = {
   units?: TimeUnit;
   name?: string;
   numberOfFocusRounds?: number;
+  goals?: IRecordId[];
 };
 
 export enum SessionCompositionType {

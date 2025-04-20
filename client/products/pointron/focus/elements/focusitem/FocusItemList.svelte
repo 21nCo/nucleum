@@ -107,7 +107,10 @@
       }
     });
     appEventSub = appEvents.subscribe((x) => {
-      if (x.event === PointronEvent.SESSION_CLOSED) {
+      if (
+        x.event === PointronEvent.SESSION_CLOSED ||
+        x.event === PointronEvent.REFRESH_FOCUSITEMS
+      ) {
         refresh({ isShowLoadingPulse: true });
       }
     });

@@ -22,7 +22,7 @@
   let yearViewRef: YearView;
   let weekViewRef: WeekView;
   let visibleWeekDates: Date[] | undefined;
-  let width = resolveSavedWidthSelection() ?? 380;
+  let width = resolveSavedWidthSelection() ?? 450;
   function resolveSavedScaleSelection() {
     const scaleState = uiState.getState(UIState.calendarScale, {
       isDeviceScoped: true
@@ -123,7 +123,7 @@
     </div>
     {#if !$view.isConstrainedWidth}
       <div
-        class="relative w-96 dp:w-[28rem] p-3 border-l border-brs3"
+        class="relative w-[28rem] p-3 border-l border-brs3"
         style={`min-width: ${width}px; width: ${width}px; max-width: ${width}px;`}
         use:resizable={{
           // enabled: !$context.isTouchDevice,

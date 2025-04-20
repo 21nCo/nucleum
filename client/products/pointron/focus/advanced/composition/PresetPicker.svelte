@@ -4,7 +4,7 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import Presets from "../presets/Presets.svelte";
-  import { ButtonStyle } from "$lib/client/types/button.type";
+  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import { appStore } from "$lib/client/stores/app.store";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
@@ -55,26 +55,30 @@
       <Button
         parentBgIndex={parentBackgroundIndex}
         on:click={onAddNewClicked}
+        type={ButtonVariant.PRIMARY}
         style={ButtonStyle.OUTLINED}
         size={Size.sm}
         label="Add new preset"
         icon="plus"
       />
     {/if}
-    <div class="flex flex-col gap-2 py-3">
+    <div
+      class={cn("flex flex-col gap-2 py-3", {
+        "pt-12": isInEditMode
+      })}
+    >
       {#if isExpandedVariant}
         <Button
           size={Size.sm}
-          style={ButtonStyle.PLAIN}
-          isUnderlined={true}
+          isPreventMinWidth={true}
           on:click={() => {
             isInEditMode = !isInEditMode;
           }}
-          >{isInEditMode ? "close editor" : "edit presets"}
+          >{isInEditMode ? "Close editor" : "Edit"}
         </Button>
       {:else}
         <button
-          class="text-fgs3 text-b2 underline"
+          class="text-fgs3 text-b2 underline notouch:hover:text-aps1"
           on:click={() => {
             isInEditMode = !isInEditMode;
           }}>{isInEditMode ? "close editor" : "edit"}</button
@@ -82,7 +86,7 @@
       {/if}
       {#if isInEditMode}
         <div class="flex w-full justify-center text-fgs4 text-b3">
-          Tap to edit
+          Tap the preset to edit
         </div>
       {/if}
     </div>
