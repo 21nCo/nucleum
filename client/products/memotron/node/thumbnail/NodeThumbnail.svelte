@@ -116,7 +116,7 @@
           isApplyCustomColor,
         "border-transparent notouch:hover:border-brs3 active:border-brs3 px-1":
           !isApplyCustomColor,
-        "bg-bgs2 bg-opacity-50 px-2":
+        "bg-bgs2 px-2":
           !isApplyCustomColor &&
           (accessPoint === ResourceAccessPoint.LIBRARY ||
             accessPoint === ResourceAccessPoint.NODE_LINKS ||

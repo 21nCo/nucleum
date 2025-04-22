@@ -399,9 +399,7 @@
     </div>
   {/key}
 {:else if isLoading}
-  <div
-    class="flex items-center justify-center w-full h-80 bg-bgs2 bg-opacity-50"
-  >
+  <div class="flex items-center justify-center w-full h-80 bg-bgs2">
     <Icon icon="svg-spinners:3-dots-fade" size={Size.xl} />
   </div>
 {:else}

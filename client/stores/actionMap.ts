@@ -78,6 +78,9 @@ import DummyCollection from "../components/collection/DummyCollection.svelte";
 import AppLoadingView from "../layout/paint/AppLoadingView.svelte";
 import SimpleDigitalClock from "../products/pointron/clocks/SimpleDigitalClock.svelte";
 import Test from "../components/Test.svelte";
+import SampleCalendarItemThumbnail from "../components/calendar/column/timeline/SampleCalendarItemThumbnail.svelte";
+import FocusCalendarEntryThumbnail from "../components/calendar/column/timeline/focusEntry/FocusCalendarEntryThumbnail.svelte";
+import CalendarDayModal from "../components/calendar/column/CalendarDayModal.svelte";
 
 export const globalActions: IAction[] = [
   {
@@ -988,5 +991,29 @@ export const globalActions: IAction[] = [
     type: ActionType.PAGE,
     isMeta: true,
     component: Test
+  },
+  {
+    action: "sampleCalendarItemThumbnail",
+    type: ActionType.INLINE,
+    isMeta: true,
+    component: SampleCalendarItemThumbnail
+  },
+  {
+    action: "focusTimelineEntry",
+    type: ActionType.INLINE,
+    isMeta: true,
+    component: FocusCalendarEntryThumbnail
+  },
+  {
+    action: Action.CALENDAR_DAY,
+    type: ActionType.MODAL,
+    isMeta: true,
+    component: CalendarDayModal,
+    modalParams: {
+      layout: {
+        size: Size.lg,
+        orientation: Orientation.Horizontal
+      }
+    }
   }
 ];

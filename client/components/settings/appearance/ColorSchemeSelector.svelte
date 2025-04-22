@@ -34,8 +34,8 @@
   {#if filteredColorSchemes && filteredColorSchemes.length > 0}
     <div
       class={cn("flex flex-wrap text-b2 mt-2", {
-        "gap-6": size === Size.md,
-        "gap-4": size === Size.sm
+        "gap-4": size === Size.md,
+        "gap-3": size === Size.sm
       })}
     >
       {#each filteredColorSchemes as colorScheme (colorScheme.id)}

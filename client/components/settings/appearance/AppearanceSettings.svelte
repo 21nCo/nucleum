@@ -90,6 +90,7 @@
       theme={$appearance.userThemeSetting}
       selectedSchemeId={$appearance.colorScheme.id}
       on:select={saveColorScheme}
+      size={Size.sm}
     />
   {:else}
     <div class="flex flex-col gap-8">
@@ -97,6 +98,7 @@
         <ColorSchemeSelector
           label="Light color scheme"
           theme={Theme.LIGHT}
+          size={Size.sm}
           selectedSchemeId={$appearance.lightColorSchemeId}
           on:select={saveColorScheme}
         />
@@ -105,6 +107,7 @@
         <ColorSchemeSelector
           label="Dark color scheme"
           theme={Theme.DARK}
+          size={Size.sm}
           selectedSchemeId={$appearance.darkColorSchemeId}
           on:select={saveColorScheme}
         />

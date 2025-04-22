@@ -28,3 +28,27 @@ export enum CalendarHistoryTab {
    */
   ACTIVITY = "activity"
 }
+
+export enum CalendarExpansionMode {
+  /**
+   * Journal will expand i.e. overview, notes will be on the right and will take the available width when width is large
+   */
+  JOURNAL = "journal",
+  /**
+   * Timeline will expand i.e. timeline will take the available width when width is large gradually becoming horizontal sub splits from vertical subs stack
+   */
+  TIMELINE = "timeline"
+}
+
+export enum CalendarColumnLayout {
+  FULL = "full",
+  SPLIT = "split",
+  TABS = "tabs"
+}
+
+export type CalendarTimelineEntry = {
+  startUnix: number;
+  endUnix: number;
+  item: any;
+  component?: string;
+};

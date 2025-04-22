@@ -38,5 +38,6 @@ export enum Action {
   ADD_ITEM_TO_COLLECTION = "add-item-to-collection",
   LIBRARY = "library",
   BULK_LINK = "bulk-link",
-  EDIT_TASK_GOAL = "edit-task-goal"
+  EDIT_TASK_GOAL = "edit-task-goal",
+  CALENDAR_DAY = "calendar-day"
 }

@@ -94,7 +94,7 @@
           "bg-ars1": type === ButtonVariant.DANGER,
           "border border-transparent hover:border-brs3":
             type === ButtonVariant.SECONDARY,
-          [bg(parentBgIndex)]: type === ButtonVariant.SECONDARY
+          [bg(parentBgIndex + 1)]: type === ButtonVariant.SECONDARY
         }
       ],
     style === ButtonStyle.OUTLINED && [

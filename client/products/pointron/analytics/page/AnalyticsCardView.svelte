@@ -331,8 +331,8 @@
   </header>
   {#if isRefreshing || !isPageLoaded}
     <div class="animate-pulse flex flex-col gap-3 py-1">
-      <div class="h-8 w-full bg-bgs3 bg-opacity-50 rounded-md"></div>
-      <div class="h-4 w-1/2 bg-bgs3 bg-opacity-50 rounded-md"></div>
+      <div class="h-8 w-full bg-bgs3 rounded-md"></div>
+      <div class="h-4 w-1/2 bg-bgs3 rounded-md"></div>
     </div>
   {:else if !data}
     <div class="flex w-full h-full justify-center items-center">

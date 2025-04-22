@@ -912,8 +912,7 @@
     },
     $mdStore.params?.isNodular &&
       !$mdStore.params?.isReadOnly && {
-        "bg-bgs2 bg-opacity-50 !border-brs1":
-          isHovering && !isFocusing && !isSelected,
+        "bg-bgs2 !border-brs1": isHovering && !isFocusing && !isSelected,
         "bg-aps2 !border-aps1": isSelected
       }
   )}

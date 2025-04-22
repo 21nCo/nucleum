@@ -130,7 +130,7 @@
   </div> -->
   <div class="flex mo:flex-col gap-4 w-full">
     <div
-      class="flex flex-col items-center justify-center bg-bgs2 bg-opacity-50 rounded-md gap-4 w-1/3 mo:w-full p-4"
+      class="flex flex-col items-center justify-center bg-bgs2 rounded-md gap-4 w-1/3 mo:w-full p-4"
     >
       {#if $appStore.product === Product.MEMOTRON || $appStore.product === Product.NUCLEUS}
         <div

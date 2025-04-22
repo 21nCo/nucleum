@@ -27,10 +27,11 @@
       {#each $pointronPreferences.manualEntryQuickDurations as item (item)}
         <button
           class={cn(
-            "px-4 cw:py-1.5 py-2 rounded-md min-w-fit grow text-b2",
+            "px-4 cw:py-1.5 py-2 rounded-md min-w-fit grow text-b2 border",
             abg(item === selectedItem, 1),
             {
-              "hover:bg-bgs3": item != selectedItem
+              "border-transparent": item === selectedItem,
+              "border-brs2 hover:bg-bgs3": item != selectedItem
             }
           )}
           on:click={() => {

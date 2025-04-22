@@ -190,7 +190,7 @@
 {:else}
   <div
     class={cn(
-      "flex flex-col items-center justify-center w-full bg-bgs2 bg-opacity-50 rounded-md border border-dashed border-brs3 placeholder",
+      "flex flex-col items-center justify-center w-full bg-bgs2 bg-opacity-70 rounded-md border border-dashed border-brs3 placeholder",
       {
         "mo:h-40 h-52": subType,
         "mo:h-60 h-72": !subType

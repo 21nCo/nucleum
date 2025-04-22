@@ -103,17 +103,13 @@
   isPreventDefaultContextMenu={true}
 >
   <div
-    class={cn(
-      "flex gap-2 items-center pr-1 pl-3 py-2 cw:h-16 h-14 rounded-md",
-      {
-        "m-4 min-w-[30rem]": accessPoint === ResourceAccessPoint.SELF,
-        "bg-bgs2/50 hover:bg-bgs2 border":
-          accessPoint !== ResourceAccessPoint.SELF,
-        "border-aps1": isCurrentlyFocusing,
-        "border-brs2":
-          !isCurrentlyFocusing && accessPoint !== ResourceAccessPoint.SELF
-      }
-    )}
+    class={cn("flex gap-2 items-center pr-1 pl-3 py-2 h-16 h--14 rounded-md", {
+      "m-4 min-w-[30rem]": accessPoint === ResourceAccessPoint.SELF,
+      "bg-bgs2 hover:bg-bgs2 border": accessPoint !== ResourceAccessPoint.SELF,
+      "border-aps1": isCurrentlyFocusing,
+      "border-brs2":
+        !isCurrentlyFocusing && accessPoint !== ResourceAccessPoint.SELF
+    })}
     use:movingBorder={{
       speed: 4000,
       borderWidth: "2px",

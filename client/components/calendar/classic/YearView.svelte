@@ -121,6 +121,7 @@
         const yearHeight = containerRef.scrollHeight / years.length;
         const centerIndex = Math.floor(INITIAL_RANGE / 2);
         containerRef.scrollTop = yearHeight * centerIndex;
+        //TODO - scroll to month if month is not visible in the viewport
       });
       return;
     }
@@ -179,7 +180,21 @@
     navigateToYear(targetYear);
   }
 
-  export function navigateToYear(targetYear: number) {
+  export function scrollToDate(date: Date) {
+    const targetYear = date.getFullYear();
+    navigateToYear(targetYear, {
+      month: date.getMonth(),
+      day: date.getDate()
+    });
+  }
+
+  export function navigateToYear(
+    targetYear: number,
+    props?: {
+      month?: number;
+      day?: number;
+    }
+  ) {
     if (!years.some((y) => y.year === targetYear)) {
       years = loadInitialYears(targetYear);
     }
@@ -187,8 +202,8 @@
     isExplicitNavigation = true;
     selectedDate = new Date(
       targetYear,
-      selectedDate.getMonth(),
-      selectedDate.getDate()
+      props?.month ?? selectedDate.getMonth(),
+      props?.day ?? selectedDate.getDate()
     );
     scrollToYear(targetYear);
     dispatch("yearChange", { year: targetYear });

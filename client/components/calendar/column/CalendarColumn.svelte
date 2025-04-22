@@ -1,38 +1,50 @@
 <script lang="ts">
-  import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
-  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
+  import { resizeListener } from "$lib/client/actions/resize.action";
+  import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
+  import Text from "$lib/client/elements/text/Text.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
   import { Product } from "$lib/client/types/product.type";
-  import { OptionSelectorStyle } from "$lib/client/types/select.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import {
-    BarStyle,
-    PanelSwitcherStyle
-  } from "$lib/client/types/switcher.enum";
+  import { TextStyle } from "$lib/client/types/text.enum";
   import { TimeScaleUnit } from "$lib/client/types/time.type";
-  import { formatDate } from "$lib/client/utils/time.utils";
-  import { enumToString } from "$lib/shared/utils/text.utils";
-  import { CalendarColumnPanel } from "../calendar.type";
-  import CalendarColumnTasksPanel from "./CalendarColumnTasksPanel.svelte";
-  import CalendarHistoryPanel from "./CalendarHistoryPanel.svelte";
-  import CalendarNotesPanel from "./CalendarNotesPanel.svelte";
-  import CalendarOverviewPanel from "./overview/CalendarOverviewPanel.svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
+  import { createEventDispatcher } from "svelte";
+  import {
+    CalendarColumnLayout,
+    CalendarColumnPanel,
+    CalendarExpansionMode
+  } from "../calendar.type";
+  import CalendarColumnPanelResolver from "./CalendarColumnPanelResolver.svelte";
+  import CalendarColumnPanelSelector from "./CalendarColumnPanelSelector.svelte";
+  import CalendarColumnTimeline from "./timeline/CalendarColumnTimeline.svelte";
+  const dispatch = createEventDispatcher();
   export let scale: TimeScaleUnit;
   export let date: Date;
+  export let expansionMode: CalendarExpansionMode =
+    CalendarExpansionMode.JOURNAL;
+  export let isShowTitleBar: boolean = false;
+  export let isRewind: boolean = false;
   let selectedPanel: CalendarColumnPanel = resolvePanelSelection();
-  let timelinePanelSubItem: string = "tasks";
+
   function resolvePanelSelection() {
     const panelState = uiState.getState(UIState.calendarColumnPanel, {
       isDeviceScoped: true,
       isProductScoped: true
     });
-    return panelState ?? CalendarColumnPanel.Tasks;
+    return panelState ?? CalendarColumnPanel.Timeline;
   }
-  $: panels = resolvePanels($appStore.product);
-  $: timelinePanelSubItems = resolveTimelinePanelSubItems($appStore.product);
+
+  let containerWidth = 0;
+
+  $: layout =
+    containerWidth > 1200
+      ? CalendarColumnLayout.FULL
+      : containerWidth > 700
+        ? CalendarColumnLayout.SPLIT
+        : CalendarColumnLayout.TABS;
+
+  $: panels = resolvePanels($appStore.product, layout);
 
   /**
    * Notes on timeline:
@@ -42,7 +54,7 @@
    * - Timeline will move out of panel switcher when enough width is available for the calendar column
    * @param product
    */
-  function resolvePanels(product: Product) {
+  function resolvePanels(product: Product, layout: CalendarColumnLayout) {
     const timeline = {
       label: "Default",
       // tooltip: "Timeline",
@@ -74,107 +86,89 @@
       value: CalendarColumnPanel.Tasks,
       icon: "ph:check-square-light"
     };
-
+    let items = [overview];
     switch (product) {
       case Product.POINTRON:
-        return [timeline, overview];
+        items = [overview];
+        break;
       case Product.MEMOTRON:
-        return [timeline, notes];
       case Product.NUCLEUS:
-        return [timeline, notes, overview];
+        items = [notes, overview];
+        break;
       default:
-        return [timeline, overview];
+        items = [overview];
     }
+    if (layout === CalendarColumnLayout.TABS) {
+      items = [timeline, ...items];
+    }
+    if (items.length === 1) {
+      selectedPanel = items[0].value;
+    }
+    return items;
   }
 
-  function onPanelSelection(e: CustomEvent) {
-    if (!e.detail) return;
-    uiState.setState(UIState.calendarColumnPanel, e.detail, {
-      isDeviceScoped: true,
-      isProductScoped: true
-    });
-  }
-
-  function resolveTimelinePanelSubItems(product: Product) {
-    const timeline = {
-      label: "Timeline",
-      value: "timeline"
-    };
-    const allDay = {
-      label: "All day",
-      value: "allday"
-    };
-    const tasks = {
-      label: "Tasks",
-      value: "tasks"
-    };
-    switch (product) {
-      case Product.POINTRON:
-        return [timeline, tasks];
-      case Product.NUCLEUS:
-        return [timeline, allDay];
-      case Product.MEMOTRON:
-        return [];
-      default:
-        return [timeline];
-    }
+  function handleDateChange(e: CustomEvent<Date>) {
+    dispatch("dateChange", e.detail);
   }
 </script>
 
-<div class="flex flex-col h-full w-full">
-  <div class="flex items-center justify-between">
-    <div class="flex items-center gap-2">
-      <div class="text-h4 font-medium text-fgs3">
-        {formatDate(date)}
-      </div>
-      <!-- |
-      <div class="text-b2 text-fgs3">
-        {enumToString(selectedPanel)}
+<div
+  class={cn("flex flex-col gap-4 pb-4 h-full w-full", {
+    "px-4 pb-4 pt-2": layout !== CalendarColumnLayout.TABS,
+    "p-4": layout === CalendarColumnLayout.TABS
+  })}
+  use:resizeListener={(e) => {
+    containerWidth = e.width;
+  }}
+>
+  {#if layout === CalendarColumnLayout.TABS || isShowTitleBar}
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="text-h4 font-medium text-fgs3">
+          <!-- {formatDate(date)} -->
+          <DatePicker bind:date on:change={handleDateChange} />
+        </div>
+        <!-- |
+    <div class="text-b2 text-fgs3">
+      {enumToString(selectedPanel)}
       </div> -->
+      </div>
+      <CalendarColumnPanelSelector bind:selectedPanel {layout} {panels} />
     </div>
-    <div>
-      <OptionSelector
-        options={panels}
-        bind:selected={selectedPanel}
-        style={panels.length > 2
-          ? OptionSelectorStyle.ICON
-          : OptionSelectorStyle.TRAIN}
-        size={Size.sm}
-        on:select={onPanelSelection}
-        isExpandOnActiveForIcon={true}
-      />
-    </div>
-  </div>
-  <div class="flex flex-grow w-full py-4">
-    {#if selectedPanel === CalendarColumnPanel.Timeline}
-      <div class="flex flex-col gap-3 w-full">
-        {#if timelinePanelSubItems.length > 0}
-          <PanelSwitcher
-            items={timelinePanelSubItems}
-            bind:value={timelinePanelSubItem}
-            style={PanelSwitcherStyle.BAR}
-            barStyle={BarStyle.DOT}
-            size={Size.sm}
+  {/if}
+  <div class="flex gap-6 flex-grow w-full">
+    {#key date}
+      {#if (layout === CalendarColumnLayout.TABS && selectedPanel === CalendarColumnPanel.Timeline) || (layout !== CalendarColumnLayout.TABS && expansionMode === CalendarExpansionMode.JOURNAL)}
+        <CalendarColumnTimeline {date} isExpandable={false} {layout} />
+      {/if}
+      {#if layout !== CalendarColumnLayout.TABS}
+        <div class="flex flex-col gap-4 flex-grow pt-2">
+          {#if panels.length === 1}
+            <Text
+              content={selectedPanel}
+              style={TextStyle.PANEL_HEADING_SMALL}
+            />
+          {:else}
+            <CalendarColumnPanelSelector bind:selectedPanel {layout} {panels} />
+          {/if}
+          <CalendarColumnPanelResolver
+            {selectedPanel}
+            {date}
+            {scale}
+            {isRewind}
           />
-        {/if}
-        {#if timelinePanelSubItem === "tasks"}
-          <CalendarColumnTasksPanel {date} />
-        {:else if timelinePanelSubItem === "allday"}
-          <!-- render both tasks, events on top of each other -->
-        {:else if timelinePanelSubItem === "timeline"}
-          <!-- render timeline -->
-        {/if}
-      </div>
-    {:else if selectedPanel === CalendarColumnPanel.History}
-      <CalendarHistoryPanel {date} />
-    {:else if selectedPanel === CalendarColumnPanel.Overview}
-      <CalendarOverviewPanel {date} />
-    {:else if selectedPanel === CalendarColumnPanel.Notes}
-      <CalendarNotesPanel {date} {scale} />
-    {:else}
-      <div class="my-auto">
-        <ComingSoonView />
-      </div>
-    {/if}
+        </div>
+      {:else}
+        <CalendarColumnPanelResolver
+          {selectedPanel}
+          {date}
+          {scale}
+          {isRewind}
+        />
+      {/if}
+      {#if layout !== CalendarColumnLayout.TABS && expansionMode === CalendarExpansionMode.TIMELINE}
+        <CalendarColumnTimeline {date} isExpandable={true} {layout} />
+      {/if}
+    {/key}
   </div>
 </div>

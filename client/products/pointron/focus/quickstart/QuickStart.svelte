@@ -193,16 +193,11 @@
       <Button
         label={isInEditMode ? "Close editor" : "Edit"}
         size={Size.sm}
+        style={ButtonStyle.OUTLINED}
         isPreventMinWidth={true}
         on:click={() => (isInEditMode = !isInEditMode)}
       />
     </div>
-    {#if !isInEditMode}
-      <div class="flex justify-center text-b2 text-fgs3 gap-1">
-        <Icon icon="ph:info-light" size={Size.sm} />
-        {$context.isTouchDevice ? "Tap" : "Click"} on a goal to start focusing
-      </div>
-    {/if}
     <ScrollViewBottomSpacer />
   {:else}
     <EmptyStatusView

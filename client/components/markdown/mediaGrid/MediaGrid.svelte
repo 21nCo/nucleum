@@ -814,7 +814,7 @@
       {#if items.length == 0}
         <button
           on:drop={handleFileUpload}
-          class="absolute text-fgs3 w-full h-full bg-opacity-50 bg-bgs2 border border-brs3 border-dashed flex items-center justify-center rounded-md"
+          class="absolute text-fgs3 w-full h-full bg-bgs2 border border-brs3 border-dashed flex items-center justify-center rounded-md"
         >
           <span>Drop and drop media files here</span>
         </button>

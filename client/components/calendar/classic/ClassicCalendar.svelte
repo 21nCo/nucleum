@@ -14,6 +14,7 @@
   import { resizable } from "$lib/client/actions/resize.action";
   import context from "$lib/client/stores/context.store";
   import { debouncer } from "$lib/client/utils/utils";
+  import { cn } from "$lib/client/utils/ui.utils";
   export let panel: CalendarLayout = CalendarLayout.Classic;
 
   let selectedDate = new Date();
@@ -109,8 +110,6 @@
           on:monthChange={handleMonthChange}
           on:visibleDatesChange={handleVisibleDatesChange}
         />
-      {:else if selectedView === TimeScaleUnit.DAY}
-        <DayView {selectedDate} {events} />
       {:else if selectedView === TimeScaleUnit.YEAR}
         <YearView
           bind:this={yearViewRef}
@@ -121,10 +120,15 @@
         />
       {/if}
     </div>
-    {#if !$view.isConstrainedWidth}
+    {#if (selectedView !== TimeScaleUnit.WEEK && !$view.isConstrainedWidth) || selectedView === TimeScaleUnit.DAY}
       <div
-        class="relative w-[28rem] p-3 border-l border-brs3"
-        style={`min-width: ${width}px; width: ${width}px; max-width: ${width}px;`}
+        class={cn("relative border-l border-brs3", {
+          "w-[28rem]": selectedView !== TimeScaleUnit.DAY,
+          "w-full": selectedView === TimeScaleUnit.DAY
+        })}
+        style={selectedView !== TimeScaleUnit.DAY
+          ? `min-width: ${width}px; width: ${width}px; max-width: ${width}px;`
+          : ""}
         use:resizable={{
           // enabled: !$context.isTouchDevice,
           enabled: true,
@@ -135,7 +139,20 @@
         }}
       >
         {#key selectedDate}
-          <CalendarColumn scale={TimeScaleUnit.DAY} date={selectedDate} />
+          <CalendarColumn
+            scale={TimeScaleUnit.DAY}
+            date={selectedDate}
+            on:dateChange={(e) => {
+              if (e.detail) {
+                if (selectedView === TimeScaleUnit.YEAR) {
+                  yearViewRef?.scrollToDate(e.detail);
+                } else if (selectedView === TimeScaleUnit.WEEK) {
+                  //TODO
+                  // weekViewRef?.scrollToToday();
+                }
+              }
+            }}
+          />
         {/key}
       </div>
     {/if}

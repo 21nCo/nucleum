@@ -195,7 +195,7 @@
         subText="Toggle edit mode to add focus items."
       />
       <!-- TODO - input is added to avoid flickering issue on extra wide screens. Without this, causing layout shift when refreshing -->
-      <input />
+      <input class="bg-none opacity-0" />
     </div>
   {:else if $focusItemsStore.items?.length > 0 && focusItems.length > 0}
     {#each focusItems as focusItem, index (focusItem.id)}

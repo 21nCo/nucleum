@@ -35,7 +35,7 @@
 <ResourceThumbnailBase bind:item {accessPoint} {arrangement}>
   {#if arrangement === Arrangement.LIST}
     <button
-      class="flex items-center h-16 gap-3 w-full rounded-md bg-bgs2 bg-opacity-50 border border-transparent hover:border-bgs2 p-3"
+      class="flex items-center h-16 gap-3 w-full rounded-md bg-bgs2 border border-transparent hover:border-bgs2 p-3"
       on:click
     >
       <CollectionThumbnailAvatar {item} size={Size.lg} />

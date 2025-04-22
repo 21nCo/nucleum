@@ -144,8 +144,13 @@
           {weekDates[0].getDate()} - {monthNames[weekDates[6].getMonth()]}
           {weekDates[6].getDate()}, {currentYear}
         {/if}
-      {:else}
+      {:else if selectedView === TimeScaleUnit.MONTH}
         {currentMonth} {currentYear}
+      {:else}
+        <!-- TODO Date picker -->
+        {selectedDate.getDate()}
+        {currentMonth}
+        {currentYear}
       {/if}
     </h2>
   </div>
@@ -162,9 +167,7 @@
       items={[
         {
           label: "Day",
-          value: TimeScaleUnit.DAY,
-          isDisabled: true,
-          badge: "planned"
+          value: TimeScaleUnit.DAY
         },
         {
           label: "Week",

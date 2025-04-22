@@ -33,10 +33,10 @@
 <button
   on:click
   class={cn(
-    "relative flex flex-col items-center mx-2 hover:bg-bgs3 rounded-md",
+    "relative flex flex-col items-center mx-2 rounded-md border border-brs3",
     {
       "bg-bgs3": isActive,
-      "bg-bgs2": !isActive,
+      "bg-bgs2 hover:bg-bgs1": !isActive,
       "p-2 text-b3 gap-1.5 w-20": size == Size.sm,
       "p-3 max-w-[7rem] text-b2 gap-2 grow": size == Size.md
     }

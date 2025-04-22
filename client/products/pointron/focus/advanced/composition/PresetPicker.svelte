@@ -70,6 +70,7 @@
       {#if isExpandedVariant}
         <Button
           size={Size.sm}
+          style={ButtonStyle.OUTLINED}
           isPreventMinWidth={true}
           on:click={() => {
             isInEditMode = !isInEditMode;

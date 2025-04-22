@@ -175,6 +175,8 @@ const phosphorIcons = [
   "gradient",
   "list",
   "magnifying-glass",
+  "magnifying-glass-minus",
+  "magnifying-glass-plus",
   "microphone",
   "pause",
   "play",

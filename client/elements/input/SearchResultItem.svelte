@@ -12,7 +12,7 @@
   bind:this={itemRef}
   on:click
   class={cn("p-2 w-full hover:bg-bgs2 flex items-start", {
-    "bg-bgs2 bg-opacity-70 font-medium": isActive,
+    "bg-bgs2 font-medium": isActive,
     "min-h-[2.5rem] h-10": !$$slots.default
   })}
 >
