@@ -545,7 +545,8 @@
 {/if}
 <Intercom />
 {#if $account.plan?.plan === PlanType.NUCLEUS && !$view.isConstrainedWidth}
-  <ZohoSalesIq />
+  <!-- TODO - dynamic show of chat from help section for nucleus users - this is interfering with focus player, zoom controls on calendar timeline etc -->
+  <!-- <ZohoSalesIq /> -->
 {/if}
 
 <svelte:window

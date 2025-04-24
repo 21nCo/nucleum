@@ -93,7 +93,7 @@
         "text-fgs3": item.isDisabled
       })}
     >
-      {#if item.icon && typeof item.icon === "string"}
+      {#if item.icon && typeof item.icon === "string" && !(item.icon.includes("text:") && isActive)}
         <Icon
           icon={item.icon}
           isFilled={isActive}

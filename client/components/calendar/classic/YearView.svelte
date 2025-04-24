@@ -3,9 +3,11 @@
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import { compareDates, isSameDay } from "$lib/client/utils/time.utils";
+  import CalendarTileIndicator from "./indicator/CalendarTileIndicator.svelte";
+  import type { ICalendarIndicatorData } from "../calendar.type";
 
   export let selectedDate: Date;
-  export let events: Array<any> = [];
+  export let indicatorData: ICalendarIndicatorData[] = [];
 
   const dispatch = createEventDispatcher();
 
@@ -286,21 +288,32 @@
                   {@const isSelected = isSameDay(selectedDate, date)}
                   {@const isCurrentDay = isToday(date)}
                   <button
-                    class={cn("py-1 rounded-md border", {
-                      "text-fgs4 border-transparent":
-                        isPastDate(date) && !isSelected,
-                      "text-ass1 font-medium border-ass1 notouch:hover:bg-ass2 active:bg-ass2":
-                        isCurrentDay && !isSelected,
-                      "text-fgs2 hover:text-fgs1 border-transparent notouch:hover:bg-bgs2 active:bg-bgs2":
-                        !isCurrentDay && !isSelected,
-                      "bg-aps1 text-abg border-transparent": isSelected
-                    })}
+                    class={cn(
+                      "py-1 rounded-md border flex flex-col items-center justify-center h-9 w-9",
+                      {
+                        "text-fgs4 border-transparent":
+                          isPastDate(date) && !isSelected,
+                        "text-ass1 font-medium border-ass1 notouch:hover:bg-ass2 active:bg-ass2":
+                          isCurrentDay && !isSelected,
+                        "text-fgs2 hover:text-fgs1 border-transparent notouch:hover:bg-bgs2 active:bg-bgs2":
+                          !isCurrentDay && !isSelected,
+                        "bg-aps1 text-abg border-transparent": isSelected
+                      }
+                    )}
                     on:click={() => {
                       selectedDate = date;
                       dispatch("dateChange", { date });
                     }}
                   >
                     {date.getDate()}
+                    {#if indicatorData.length > 0}
+                      <CalendarTileIndicator
+                        {date}
+                        data={indicatorData}
+                        isActive={isSelected}
+                        view="year"
+                      />
+                    {/if}
                   </button>
                 {:else}
                   <div class="py-0.5 text-fgs4"></div>

@@ -260,13 +260,25 @@
           }}
         />
       </div>
-      {#if selectedPickFromPanel === "recents" && $focusItemsStore.recents && $focusItemsStore.recents.length > 0}
-        <Records
-          data={$focusItemsStore.recents.map((x) => x.item).slice(0, 5)}
-          resource={Resource.everything}
-          accessPoint={ResourceAccessPoint.PICKER}
-          isPreventDefault={true}
-        />
+      {#if selectedPickFromPanel === "recents"}
+        {#if $focusItemsStore.recents && $focusItemsStore.recents.length > 10}
+          <Records
+            data={$focusItemsStore.recents.map((x) => x.item).slice(0, 5)}
+            resource={Resource.everything}
+            accessPoint={ResourceAccessPoint.PICKER}
+            isPreventDefault={true}
+          />
+        {:else}
+          <div class="flex pt-12">
+            <EmptyStatusView
+              size={Size.sm}
+              isLoadingState={isRefreshing}
+              loadingAnimation={LoadingAnimationType.FOCUS_ITEMS_PULSE}
+              mainText="No recents found."
+              subText="Recent focus items will appear here as you complete few focus sessions."
+            />
+          </div>
+        {/if}
       {:else if selectedPickFromPanel === "calendar"}
         <CalendarColumnTasksPanel
           date={new Date()}

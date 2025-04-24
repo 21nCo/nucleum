@@ -119,6 +119,9 @@
     {:else}
       <Panel
         title="Quick Focus"
+        info={{
+          body: "Tap on a goal to start a focus session."
+        }}
         floatingButton={addManualLogButton}
         titleStyle={TextStyle.PANEL_HEADING}
         isProminentDivider={true}

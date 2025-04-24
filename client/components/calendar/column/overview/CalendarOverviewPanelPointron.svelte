@@ -74,7 +74,6 @@
 {:else}
   <div class="flex flex-col gap-4 h-full w-full">
     <div class="flex flex-col gap-4">
-      <Text content="Today" style={TextStyle.SECTION_HEADING} />
       <div
         class="w-full flex flex-wrap justify-start items-start content-start dp:gap-4 gap-3"
       >

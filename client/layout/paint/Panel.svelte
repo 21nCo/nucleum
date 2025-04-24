@@ -19,6 +19,8 @@
   import { InteractionMode } from "$lib/client/components/settings/interactionMode/interactionMode.type";
   import { tooltip } from "$lib/client/actions/popover.action";
   import ComponentResolver from "./ComponentResolver.svelte";
+  import type { InputLabelInfoToolTip } from "$lib/client/types/input.type";
+  import FormLabelTooltip from "$lib/client/elements/text/formLabel/FormLabelTooltip.svelte";
   const dispatch = createEventDispatcher();
 
   export let title: string | undefined = undefined;
@@ -34,6 +36,7 @@
   export let isExpanded: boolean = false;
   export let isProminentDivider: boolean = false;
   export let extraLargeScreenComponent: string | undefined = undefined;
+  export let info: InputLabelInfoToolTip | undefined = undefined;
 
   onMount(() => {
     const unsubscribe = appEvents.subscribe((e) => {
@@ -97,6 +100,9 @@
               />
             {/if}
             <Text style={titleStyle} content={title || ""} />
+            {#if info}
+              <FormLabelTooltip {info} />
+            {/if}
           </div>
           <slot name="toprightactions">
             {#if isShowCollapseButton}

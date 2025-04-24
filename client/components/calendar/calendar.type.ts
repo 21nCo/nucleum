@@ -1,7 +1,9 @@
+import type { Resource } from "../flux/resourceStores/resource.enum";
+
 export enum CalendarLayout {
   Classic = "classic",
   Bird = "bird",
-  Journal = "journal"
+  Heatmap = "heatmap"
 }
 
 export enum CalendarColumnPanel {
@@ -41,8 +43,17 @@ export enum CalendarExpansionMode {
 }
 
 export enum CalendarColumnLayout {
+  /**
+   * Timeline or overview expands to take full width
+   */
   FULL = "full",
+  /**
+   * Timeline will be separated from rest of the panels
+   */
   SPLIT = "split",
+  /**
+   * All column panels will be shown as tabs
+   */
   TABS = "tabs"
 }
 
@@ -51,4 +62,10 @@ export type CalendarTimelineEntry = {
   endUnix: number;
   item: any;
   component?: string;
+};
+
+export type ICalendarIndicatorData = {
+  resource: Resource;
+  data: any[];
+  color?: string;
 };
