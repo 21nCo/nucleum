@@ -1,18 +1,11 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { isProductPage } from "./store/shared.store";
-
   export let title: string;
+  export let subtitle: string | undefined = undefined;
 </script>
 
-<p
-  class={cn(
-    "max-w-full",
-    !$isProductPage &&
-      "w-[800px] mo:w-[342px] text-center text-[72px] mo:text-[29px] font-black leading-[98px] mo:leading-10",
-    $isProductPage &&
-      "w-[900px] mo:w-[342px] text-center text-[62px] mo:text-[24px] font-black leading-[85px] mo:leading-7"
-  )}
->
-  {title}
-</p>
+<div class="flex flex-col gap-3 items-center">
+  <p class="text-4xl font-medium">{title}</p>
+  {#if subtitle}
+    <p class="text-base">{subtitle}</p>
+  {/if}
+</div>

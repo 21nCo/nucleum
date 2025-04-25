@@ -4,8 +4,7 @@
 
   export let icon: string | null = null;
   export let size: Size | "5xl" = Size.lg;
-  let className: string = "";
-  export { className as class };
+  export let isRenderRaw: boolean = false;
   const tailwindSizes: any = {
     xxs: "w-2 h-2",
     xs: "w-3 h-3",
@@ -21,12 +20,18 @@
   }
 </script>
 
-{#if icon}
-  <i on:click on:keypress class={cn(tailwindSizes[size], className)}>
+{#if icon && !isRenderRaw}
+  <button on:click class={cn(tailwindSizes[size])}>
     {#await importIcon(icon)}
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" />
     {:then mod}
       {@html mod.default}
-    {/await}</i
-  >
+    {/await}
+  </button>
+{:else if icon && isRenderRaw}
+  {#await importIcon(icon)}
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" />
+  {:then mod}
+    {@html mod.default}
+  {/await}
 {/if}

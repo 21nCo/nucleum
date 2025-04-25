@@ -5,27 +5,24 @@
   // import AnalyticsLayer from "../layout/layers/analytics/AnalyticsLayer.svelte";
   import MetadataLayer from "../layout/layers/MetadataLayer.svelte";
   import appearance from "$lib/client/stores/appearance.store";
+  import DynamicMetadataLayer from "../layout/layers/DynamicMetadataLayer.svelte";
+  import type { IMetadata } from "../layout/metadata.type";
+  export let metadata: IMetadata;
+  export let bgColor: string = "bg-bgs1";
 </script>
 
 <div
   class={cn(
-    "dark text-base text-fgs1 bg-bgs1 relative w-screen h-screen flex",
+    "dark text-base text-fgs1 relative w-screen h-screen flex",
     $appearance.theme,
-    $appearance.colorScheme?.tailwindSelector
+    $appearance.colorScheme?.tailwindSelector,
+    bgColor
   )}
 >
+  <DynamicMetadataLayer {metadata} />
   <MetadataLayer />
   <!-- <AnalyticsLayer isLanding={true} /> -->
   <ThemeLayer>
     <slot />
   </ThemeLayer>
 </div>
-
-<style>
-  @font-face {
-    font-family: "Shared";
-    src: url("/fonts/Share.ttf") format("truetype");
-    font-weight: normal;
-    font-style: normal;
-  }
-</style>

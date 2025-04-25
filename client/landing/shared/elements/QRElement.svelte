@@ -4,7 +4,7 @@
 
   export let url: string = "https://21n.org";
   export let enableHover: boolean = true;
-  export let width: number = 122;
+  export let width: number = 72;
 
   let canvas: HTMLCanvasElement;
   export let isHovering: boolean = false;

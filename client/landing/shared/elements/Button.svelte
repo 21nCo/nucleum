@@ -11,8 +11,6 @@
   export let icon = "";
   export let QRURL: string | null = null;
   export let iconPosition: "start" | "end" = "end";
-  let className: string = "";
-  export { className as class };
   export let isHovering: boolean = false;
   export let enableHover: boolean = true;
   function handleHover() {
@@ -29,14 +27,13 @@
   on:mouseenter={handleHover}
   on:mouseleave={handleLeave}
   class={cn(
-    "box-border flex items-center justify-center gap-3 rounded-lg font-medium mo:text-[16px] leading--[33px] mo:leading--[22px]",
-    className,
+    "box-border flex items-center justify-center gap-3 rounded-full mo:text-[16px] leading--[33px] mo:leading--[22px]",
     {
       "bg-fgs1 hover:bg-fgs2 text-bgs1": type === "primary",
-      "bg-bgs3 hover:bg-bgs4 text-fgs1 leading-7": type === "secondary",
-      "text-[20px] h-[72px] px-[60px] tp:w-[360px] dp:w-[360px] mo:h-14 mo:px-[28px]":
-        !isShort,
-      "text-[18px] h-11 px-6": isShort,
+      "border border-fgs2 hover:bg-bgs4 text-fgs1 leading-7":
+        type === "secondary",
+      "text-base h-10 px-4": !isShort,
+      "text-b2 h-8 px-3": isShort,
       "flex-row-reverse": iconPosition === "start"
     }
   )}

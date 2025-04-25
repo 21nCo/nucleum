@@ -40,7 +40,7 @@
     <div class="flex items-center w-full">
       <h1
         class={cn(
-          "text-[30px] mo:text-[20px] leading-10 mo:leading-7 font-extrabold text-left"
+          "text-[20px] leading-10 mo:leading-7 font-extrabold text-left"
         )}
       >
         {title}
@@ -49,11 +49,7 @@
   {/if}
   {#if item?.description}
     {@const description = item.description}
-    <p
-      class={cn(
-        "text-[20px] mo:text-[14px] leading-[28px] mo:leading-5 font-normal text-left mo:w-[290px]"
-      )}
-    >
+    <p class={cn("text-left mo:w-[290px]")}>
       {description}
     </p>
   {/if}

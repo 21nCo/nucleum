@@ -109,7 +109,9 @@ module.exports = {
         b2: "0.9rem",
         b3: "0.8rem",
         b4: "0.7rem",
-        b5: "0.6rem"
+        b5: "0.6rem",
+        lbase: "17px",
+        lb2: "0.95rem"
       },
       spacing: {
         // 12-grid system

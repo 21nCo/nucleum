@@ -50,7 +50,7 @@
   <button
     {id}
     class={cn(
-      "w-[115px] h-full flex flex-col items-center justify-center p-4 text-center text-fgs4 text-opacity-80 text-base leading-5 ml-[1px] border-brs2 hover:border-brs3",
+      "w-[115px] h-full flex flex-col items-center justify-center p-4 text-center text-fgs2 text-opacity-80 text-base leading-5 ml-[1px] border-brs2 hover:border-brs3",
       className,
       {
         "border-l": label == PanelName.PRODUCTS,
@@ -67,12 +67,12 @@
   >
     {#if isInteractive}
       {#if isHovered}
-        <SvgIcon {icon} size={Size.lg} class="mb-2" />
+        <SvgIcon {icon} size={Size.lg} />
       {/if}
       {#if isHovered}
         {description ?? label}
       {:else if label === "21n"}
-        <SvgIcon icon="21n-temp" size={Size.xl} class="mb-2" />
+        <SvgIcon icon="21n-temp" size={Size.xl} />
       {:else}
         {label}
       {/if}

@@ -1,5 +1,6 @@
 import type { IAction } from "$lib/client/types/action.type";
 import type { InteractionMode } from "../components/settings/interactionMode/interactionMode.type";
+import type { IMetadata } from "../layout/metadata.type";
 import type { Product } from "./product.type";
 export type IAppStore = {
   product: Product;
@@ -83,13 +84,7 @@ export type IAppData = {
     privacy?: string;
     [key: string]: string | undefined;
   };
-  meta?: {
-    description?: string;
-    keywords?: string;
-    url?: string;
-    image?: string;
-    twitterCard?: string;
-  };
+  meta?: IMetadata;
 };
 
 export enum AppSearchParam {

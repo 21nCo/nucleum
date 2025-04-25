@@ -1,45 +1,31 @@
 <script lang="ts">
-  import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
-  import { clientStorage } from "$lib/client/persistence/persistence.utils";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { onMount } from "svelte";
-  let product = "";
-  onMount(async () => {
-    product = (await clientStorage.get(ClientStorageKey.PRODUCT)) ?? "";
-  });
+  import type { IMetadata } from "../metadata.type";
+  export let metadata: IMetadata = {
+    title: "",
+    description: "",
+    keywords: "",
+    url: "",
+    image: "",
+    twitterCard: ""
+  };
 </script>
 
 <svelte:head>
-  <title>{$appStore?.appData?.name ?? product ?? "Blank"}</title>
-  <meta
-    name="description"
-    content={$appStore?.appData?.meta?.description ?? ""}
-  />
-  <meta name="keywords" content={$appStore?.appData?.meta?.keywords ?? ""} />
+  <title>{metadata?.title ?? "21n"}</title>
+  <meta name="description" content={metadata?.description ?? ""} />
+  <meta name="keywords" content={metadata?.keywords ?? ""} />
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
-  <meta property="og:url" content={$appStore?.appData?.meta?.url ?? ""} />
-  <meta property="og:title" content={$appStore?.appData?.name ?? ""} />
-  <meta
-    property="og:description"
-    content={$appStore?.appData?.meta?.description ?? ""}
-  />
-  <meta property="og:image" content={$appStore?.appData?.meta?.image ?? ""} />
+  <meta property="og:url" content={metadata?.url ?? ""} />
+  <meta property="og:title" content={metadata?.title ?? ""} />
+  <meta property="og:description" content={metadata?.description ?? ""} />
+  <meta property="og:image" content={metadata?.image ?? ""} />
 
   <!-- Twitter -->
-  <meta
-    property="twitter:card"
-    content={$appStore?.appData?.meta?.twitterCard ?? ""}
-  />
-  <meta property="twitter:url" content={$appStore?.appData?.meta?.url ?? ""} />
-  <meta property="twitter:title" content={$appStore?.appData?.name ?? ""} />
-  <meta
-    property="twitter:description"
-    content={$appStore?.appData?.meta?.description ?? ""}
-  />
-  <meta
-    property="twitter:image"
-    content={$appStore?.appData?.meta?.image ?? ""}
-  />
+  <meta property="twitter:card" content={metadata?.twitterCard ?? ""} />
+  <meta property="twitter:url" content={metadata?.url ?? ""} />
+  <meta property="twitter:title" content={metadata?.title ?? ""} />
+  <meta property="twitter:description" content={metadata?.description ?? ""} />
+  <meta property="twitter:image" content={metadata?.image ?? ""} />
 </svelte:head>

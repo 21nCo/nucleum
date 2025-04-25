@@ -1,13 +1,17 @@
 <script lang="ts">
+  import BottomCta from "../shared/bottomCta/BottomCta.svelte";
   import HeroVideo from "../shared/elements/HeroVideo.svelte";
+  import FeaturesExample from "../shared/features/FeaturesExample.svelte";
   import HeroSection from "../shared/HeroSection.svelte";
+  import HighlightsExample from "../shared/highlights/HighlightsExample.svelte";
   import type { IHeroInputs, ITileItem } from "../shared/Landing.types";
+  import TestimonialsExample from "../shared/testimonials/TestimonialsExample.svelte";
   import IrregularTileItemsSection from "../shared/tile/IrregularTileItemsSection.svelte";
   let heroInputs: IHeroInputs = {
     tagline: "Your focus haven",
-    description: "Track time, achieve goals and form habits like never before.",
+    description: "Track time, achieve goals and focus like never before.",
     btn1: {
-      label: "Download mobile app",
+      label: "Download for Mac",
       iosDownloadUrl:
         "https://apps.apple.com/in/app/pointron-focus-time-tracker/id6469411284",
       androidDownloadUrl:
@@ -66,17 +70,27 @@
   ];
 </script>
 
-<HeroSection {heroInputs} />
-<!-- <HeroVideo
+<div class="flex flex-col gap-40">
+  <HeroSection {heroInputs} />
+  <!-- <HeroVideo
   videoUrl="https://youtu.be/CguXo8YQnm4"
   thumbnailUrl="https://img.youtube.com/vi/CguXo8YQnm4/maxresdefault.jpg"
-/> -->
-<IrregularTileItemsSection
-  items={features}
-  title="Navigating your productivity"
-/>
-<!-- <span
+  /> -->
+  <HighlightsExample />
+  <FeaturesExample />
+  <TestimonialsExample />
+  <BottomCta
+    body="Start using Pointron to simplify time tracking and take control of your productivity journey. Empower yourself to work smarter, not harder"
+    primaryAction={{ label: "Download for Mac", href: "https://pointron.app" }}
+    secondaryAction={{
+      label: "See all downloads",
+      href: "https://docs.pointron.app/downloads"
+    }}
+  />
+  <div></div>
+  <!-- <span
   class="flex text-h3 text-aps1 w-full h-full bg-bgs1 justify-center items-center"
->
+  >
   Pointron
-</span> -->
+  </span> -->
+</div>

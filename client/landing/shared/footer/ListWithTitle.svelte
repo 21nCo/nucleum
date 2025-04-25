@@ -11,21 +11,19 @@
   );
 </script>
 
-<div class="flex flex-col gap-4">
+<div class="flex flex-col gap-3 text-b2 2k:text-lb2">
   {#each items as item}
     {#if item.title && item.href}
       <a
         class={cn(
-          "block text-fgs1 text-[16px] tp:text-[20px] font-medium leading-[28px] hover:text-aps1",
+          "block text-fgs2 hover:text-aps1",
           currentPath.includes(item.title.toLowerCase()) &&
             "pointer-events-none opacity-30"
         )}
         href={item.href}>{item.title}</a
       >
     {:else}
-      <p
-        class="text-fgs3 mo:text-[14px] tp:text-base underline font-normal leading-[22px] mt-4"
-      >
+      <p class="text-fgs1 font-semibold">
         {item.title}
       </p>
     {/if}
