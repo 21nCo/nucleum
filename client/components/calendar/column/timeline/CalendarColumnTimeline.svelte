@@ -118,7 +118,7 @@
     <!-- render both tasks, events on top of each other -->
   {:else if timelinePanelSubItem === "timeline"}
     <div class="flex flex-col flex-grow">
-      <DayTimeline {date} data={timelineEntries} />
+      <DayTimeline {date} data={timelineEntries} {isRefreshing} />
     </div>
   {/if}
 </div>

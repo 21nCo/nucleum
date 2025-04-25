@@ -2,39 +2,47 @@
   import { onMount, onDestroy } from "svelte";
   import dayjs from "dayjs";
   import DayTimelineEntry from "./DayTimelineEntry.svelte";
-  import type { CalendarTimelineEntry } from "../../../calendar.type";
+  import { type CalendarTimelineEntry } from "../../../calendar.type";
   import { formatTime } from "$lib/client/utils/time.utils";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import Icon from "$lib/client/elements/Icon.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { ButtonStyle } from "$lib/client/types/button.type";
+  import { cn } from "$lib/client/utils/ui.utils";
+  import { player } from "$lib/client/components/modal/modal.store";
+  import RefreshingOverlayFeedback from "$lib/client/elements/feedback/RefreshingOverlayFeedback.svelte";
 
   export let date: Date = new Date();
   export let data: Array<CalendarTimelineEntry> = [];
+  export let isRefreshing: boolean = false;
 
   let container: HTMLElement;
   $: isToday = dayjs(date).isSame(dayjs(), "day");
+  $: isFocusing =
+    isToday &&
+    document.getElementById("focusData")?.getAttribute("data-focus-active") ===
+      "true";
+  const BASE_HOUR_HEIGHT = 80;
   let scale = 1;
-  let hourHeight = 60; // pixels per hour at scale=1
+  let hourHeight = BASE_HOUR_HEIGHT;
 
   // Time markers
   let hours = Array.from({ length: 24 }, (_, i) => i);
 
   // Handle zoom
   function zoomIn() {
-    scale = Math.min(3, scale + 0.1);
-    hourHeight = 60 * scale;
+    scale = Math.min(2.5, scale + 0.1);
+    hourHeight = BASE_HOUR_HEIGHT * scale;
   }
 
   function zoomOut() {
-    scale = Math.max(0.5, scale - 0.1);
-    hourHeight = 60 * scale;
+    scale = Math.max(0.4, scale - 0.1);
+    hourHeight = BASE_HOUR_HEIGHT * scale;
   }
 
   function resetZoom() {
     scale = 1;
-    hourHeight = 60;
+    hourHeight = BASE_HOUR_HEIGHT;
   }
 
   // Update time
@@ -267,6 +275,9 @@
   class="flex flex-col w-full h-full overflow-hidden bg-bgs1 relative"
   bind:this={container}
 >
+  {#if isRefreshing}
+    <RefreshingOverlayFeedback />
+  {/if}
   <div
     class="timeline-container flex flex-col w-full h-full overflow-y-auto relative pt-4"
     style="--hour-height: {hourHeight}px;"
@@ -307,7 +318,7 @@
 
       {#if isToday && nowPosition >= 0}
         <div
-          class="now-line absolute w-full border-t border-aps1 z-10 flex items-center"
+          class="now-line absolute w-full border-t border-aps1 z-20 flex items-center"
           style="top: {nowPosition}px;"
         >
           <div
@@ -320,6 +331,14 @@
         >
           {formatTime($userPreferences, now)}
         </div>
+        {#if isFocusing}
+          <div
+            class="absolute z-20 text-abg text-b3 flex justify-end rounded-md px-2 right-0 whitespace-nowrap bg-aps1"
+            style="top: {nowPosition - 10}px;"
+          >
+            Focusing now...
+          </div>
+        {/if}
       {/if}
 
       {#each entries as entry}
@@ -329,7 +348,13 @@
   </div>
 
   <div
-    class="absolute bottom-4 right-4 flex gap-2 z-20 bg-bgs3 rounded-md border border-brs3"
+    class={cn(
+      "absolute right-3 flex gap-2 z-20 bg-bgs3 rounded-md border border-brs3",
+      {
+        "bottom-24": $player.isMiniOn && !$player.isPipOn,
+        "bottom-4": !$player.isMiniOn || $player.isPipOn
+      }
+    )}
   >
     {#if scale !== 1}
       <div class="px-2 flex items-center justify-center">

@@ -23,3 +23,10 @@
     <title>Pointron - Your focus haven</title>
   {/if}
 </svelte:head>
+
+<div
+  id="focusData"
+  data-focus-active={$activeSession.isSessionRunning}
+  data-focus-time-elapsed={$activeSession.timeElapsed}
+  data-focus-state={$activeSession.state}
+></div>

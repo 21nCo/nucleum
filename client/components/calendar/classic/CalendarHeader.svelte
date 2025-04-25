@@ -10,11 +10,46 @@
   import { TimeScaleUnit } from "$lib/client/types/time.type";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
+  import { OptionSelectorStyle } from "$lib/client/types/select.type";
+  import view from "$lib/client/stores/view.store";
+  import { CalendarLayout } from "../calendar.type";
+  import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
+  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
   const dispatch = createEventDispatcher();
 
   export let selectedDate: Date;
   export let selectedView: TimeScaleUnit = TimeScaleUnit.MONTH;
   export let visibleWeekDates: Date[] | undefined = undefined;
+  export let isRefreshing: boolean = false;
+
+  const switchOptions = [
+    {
+      label: "Day",
+      icon: "text:D",
+      value: TimeScaleUnit.DAY
+    },
+    // {
+    //   label: "Week",
+    //   icon: "text:W",
+    //   value: TimeScaleUnit.WEEK
+    // },
+    {
+      label: "Month",
+      icon: "text:M",
+      value: TimeScaleUnit.MONTH
+    },
+    {
+      label: "Year",
+      icon: "text:Y",
+      value: TimeScaleUnit.YEAR
+    }
+    // {
+    //   label: "Heatmap",
+    //   icon: "text:H",
+    //   value: CalendarLayout.Heatmap
+    // }
+  ];
 
   const monthNames = [
     "January",
@@ -148,42 +183,46 @@
         {currentMonth} {currentYear}
       {:else}
         <!-- TODO Date picker -->
-        {selectedDate.getDate()}
+        <!-- {selectedDate.getDate()}
         {currentMonth}
-        {currentYear}
+        {currentYear} -->
+        <DatePicker bind:date={selectedDate} />
       {/if}
     </h2>
+    {#if isRefreshing}
+      <Icon icon="svg-spinners:180-ring-with-bg" size={Size.sm} />
+    {/if}
   </div>
   <div class="flex items-center gap-2">
     <Button
       type={ButtonVariant.SECONDARY}
-      style={ButtonStyle.DEFAULT}
+      style={ButtonStyle.OUTLINED}
       size={Size.sm}
       label="Go to today"
       isPreventMinWidth={true}
       on:click={goToToday}
     />
-    <DropDown
-      items={[
-        {
-          label: "Day",
-          value: TimeScaleUnit.DAY
-        },
-        {
-          label: "Week",
-          value: TimeScaleUnit.WEEK,
-          isDisabled: true,
-          badge: "planned"
-        },
-        { label: "Month", value: TimeScaleUnit.MONTH },
-        { label: "Year", value: TimeScaleUnit.YEAR }
-      ]}
-      value={selectedView}
-      isDisableSearch={true}
-      width="min-w-32"
-      size={Size.sm}
-      isEnforceWidth={true}
-      on:select={onScaleSelection}
-    />
+    {#if $view.isConstrainedWidth}
+      <DropDown
+        items={switchOptions}
+        value={selectedView}
+        isDisableSearch={true}
+        width="min-w-32"
+        size={Size.sm}
+        isEnforceWidth={true}
+        on:select={onScaleSelection}
+      />
+    {:else}
+      <OptionSelector
+        options={switchOptions}
+        selected={selectedView}
+        size={Size.sm}
+        isExpandOnActiveForIcon={true}
+        style={OptionSelectorStyle.ICON}
+        on:select={onScaleSelection}
+      />
+    {/if}
+    <!-- <Toggle icon="ph:sliders-light" bgSize={Size.sm} />
+    <Toggle icon="ph:question-light" bgSize={Size.sm} /> -->
   </div>
 </header>

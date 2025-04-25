@@ -24,6 +24,7 @@
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { resolveTimePeriodFilterForDay } from "$lib/client/elements/datetime/datetime.utils";
+  import { generateSummary } from "../focus/session.utils";
 
   export let date: Date = new Date();
 
@@ -64,20 +65,6 @@
       summary = generateSummary(sessions);
     }
     isRefreshing = false;
-  }
-
-  function generateSummary(
-    logs: (ISessionThumb & {
-      splits: { focus: number; brek: number };
-    })[]
-  ): DaySummary {
-    let focus = 0;
-    let breakTime = 0;
-    logs.forEach((x) => {
-      focus += x.splits.focus;
-      breakTime += x.splits.brek;
-    });
-    return { focus, break: breakTime };
   }
 
   function onChangesSubscription(event: any) {

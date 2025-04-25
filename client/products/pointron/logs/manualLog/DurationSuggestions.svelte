@@ -8,6 +8,10 @@
   import { TimeFormat } from "$lib/client/types/time.type";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import Button from "$lib/client/elements/button/Button.svelte";
+  import { ButtonStyle } from "$lib/client/types/button.type";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   const dispatch = createEventDispatcher();
   export let selectedItem: number = 0;
   onMount(() => {
@@ -22,7 +26,19 @@
 
 {#if $pointronPreferences?.manualEntryQuickDurations && $pointronPreferences.manualEntryQuickDurations.length > 0}
   <div class="flex-col items-start flex w-full gap-2">
-    <FormControlLabel props={{ label: "Choose quick duration" }} />
+    <div class="flex items-center gap-2 w-full">
+      <FormControlLabel props={{ label: "Choose quick duration" }} />
+      -
+      <Button
+        label="edit"
+        style={ButtonStyle.PLAIN}
+        size={Size.xs}
+        isUnderlined={true}
+        on:click={() => {
+          appStore.runAction(PointronAction.SESSION_SETTINGS_MODAL);
+        }}
+      />
+    </div>
     <div class="w-full grid cw:grid-cols-2 grid-cols-3 dp:grid-cols-4 gap-2">
       {#each $pointronPreferences.manualEntryQuickDurations as item (item)}
         <button

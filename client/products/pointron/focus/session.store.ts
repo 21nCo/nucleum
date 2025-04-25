@@ -1276,7 +1276,15 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
   async addNewTask(label: string, goalId?: IRecordId) {
     let id = generateResourceId(Resource.task);
     await this.addTask(id, goalId);
-    return taskStore.save({ label, isChecked: false, goalId: goalId }, { id });
+    return taskStore.save(
+      {
+        label,
+        isChecked: false,
+        goalId: goalId,
+        dateUnix: new Date().getTime()
+      },
+      { id }
+    );
   }
 
   async addTask(id: IRecordId, goalId?: IRecordId) {

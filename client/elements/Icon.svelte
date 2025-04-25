@@ -257,7 +257,7 @@
     icon: string | undefined,
     isFilled: boolean
   ) {
-    if (!icon || !icon.includes(":")) {
+    if (!icon || !icon.includes(":") || icon.includes("text:")) {
       return undefined;
     }
     let renderedIcon = icon;
@@ -358,6 +358,26 @@
     />
       </div> -->
     {/if}
+  {:else if icon?.includes("text:")}
+    {@const sizeClass =
+      size === Size.xxl
+        ? "w-12 h-12"
+        : size === Size.xl
+          ? "w-7 h-7"
+          : size === Size.lg
+            ? "w-6 h-6"
+            : size === Size.md
+              ? "w-5 h-5"
+              : "w-4 h-4"}
+    <span
+      class={cn(
+        _classList,
+        "iconifysvg flex items-center justify-center",
+        sizeClass
+      )}
+    >
+      {icon.split("text:")[1]}
+    </span>
   {:else if icon}
     <svg
       xmlns="http://www.w3.org/2000/svg"

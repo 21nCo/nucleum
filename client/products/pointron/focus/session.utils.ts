@@ -12,6 +12,7 @@ import {
   type ISessionInterval
 } from "$lib/client/types/pointron/session.type";
 import { sortArrayByOrder } from "$lib/shared/utils/obj.utils";
+import type { DaySummary, ISessionThumb } from "../logs/log.type";
 
 export function transformFocusItemsV1(rawItems: any[]) {
   let items: any[] = [];
@@ -203,4 +204,18 @@ export function resolveIfCurrentFocusItem(
       return isSameResource(correspondingGoal.id, id);
     }
   }
+}
+
+export function generateSummary(
+  logs: (ISessionThumb & {
+    splits: { focus: number; brek: number };
+  })[]
+): DaySummary {
+  let focus = 0;
+  let breakTime = 0;
+  logs.forEach((x) => {
+    focus += x.splits.focus;
+    breakTime += x.splits.brek;
+  });
+  return { focus, break: breakTime };
 }

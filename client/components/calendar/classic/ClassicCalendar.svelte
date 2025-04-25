@@ -10,11 +10,21 @@
   import { TimeScaleUnit } from "$lib/client/types/time.type";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
-  import { CalendarLayout } from "../calendar.type";
+  import {
+    CalendarLayout,
+    type ICalendarIndicatorData
+  } from "../calendar.type";
   import { resizable } from "$lib/client/actions/resize.action";
   import context from "$lib/client/stores/context.store";
   import { debouncer } from "$lib/client/utils/utils";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { Resource } from "../../flux/resourceStores/resource.enum";
+  import { SearchStore } from "../../record/record.store";
+  import {
+    resolveTimePeriodFilterForMonth,
+    resolveTimePeriodFilterForYear
+  } from "$lib/client/elements/datetime/datetime.utils";
+  import { compareObjects } from "$lib/shared/utils/obj.utils";
   export let panel: CalendarLayout = CalendarLayout.Classic;
 
   let selectedDate = new Date();
@@ -24,6 +34,12 @@
   let weekViewRef: WeekView;
   let visibleWeekDates: Date[] | undefined;
   let width = resolveSavedWidthSelection() ?? 450;
+  let indicatorData: ICalendarIndicatorData[] = [];
+  let currentDateFilterForIndicatorData: any = {};
+  let isRefreshing = false;
+  $: if (selectedDate) {
+    refreshIndicatorData(selectedDate);
+  }
   function resolveSavedScaleSelection() {
     const scaleState = uiState.getState(UIState.calendarScale, {
       isDeviceScoped: true
@@ -66,6 +82,58 @@
       isProductScoped: true
     });
   }, 1000);
+
+  async function refreshIndicatorData(date: Date) {
+    //TODO - resources for indicatores from settings
+    const resourcesForIndicators = [Resource.task, Resource.session];
+    const dateFilter =
+      selectedView === TimeScaleUnit.MONTH
+        ? resolveTimePeriodFilterForMonth(date)
+        : selectedView === TimeScaleUnit.YEAR
+          ? resolveTimePeriodFilterForYear(date)
+          : {};
+    if (compareObjects(currentDateFilterForIndicatorData, dateFilter)) {
+      return;
+    }
+    isRefreshing = true;
+    indicatorData = [];
+    currentDateFilterForIndicatorData = dateFilter;
+    const promises = resourcesForIndicators.map((resource) => {
+      let filters: any = {};
+      if (resource === Resource.task) {
+        filters = {
+          dateUnix: dateFilter
+        };
+      } else if (resource === Resource.session) {
+        filters = {
+          startUnix: dateFilter
+        };
+      }
+      return new SearchStore(resource).select({
+        filters
+      });
+    });
+    const results = await Promise.all(promises);
+    results.forEach((result, index) => {
+      const resource = resourcesForIndicators[index];
+      indicatorData[index] = {
+        resource,
+        data: result,
+        color: resolveColor(resource)
+      };
+    });
+    isRefreshing = false;
+  }
+
+  function resolveColor(resource: Resource) {
+    switch (resource) {
+      case Resource.task:
+        return "fgs4";
+      case Resource.sessionLog:
+      case Resource.session:
+        return "aps1";
+    }
+  }
 </script>
 
 <CalendarLayoutView bind:panel>
@@ -74,6 +142,7 @@
       bind:selectedDate
       bind:selectedView
       {visibleWeekDates}
+      {isRefreshing}
       on:goToToday={() => {
         if (selectedView === TimeScaleUnit.YEAR) {
           yearViewRef?.scrollToToday();
@@ -101,7 +170,7 @@
     <!-- <CalendarSidebar {events} /> -->
     <div class="flex-1 overflow-auto">
       {#if selectedView === TimeScaleUnit.MONTH}
-        <MonthView bind:selectedDate {events} on:dateSelect />
+        <MonthView bind:selectedDate {indicatorData} on:dateSelect />
       {:else if selectedView === TimeScaleUnit.WEEK}
         <WeekView
           bind:this={weekViewRef}
@@ -114,7 +183,7 @@
         <YearView
           bind:this={yearViewRef}
           bind:selectedDate
-          {events}
+          {indicatorData}
           on:yearChange={handleYearChange}
           on:dateSelect
         />

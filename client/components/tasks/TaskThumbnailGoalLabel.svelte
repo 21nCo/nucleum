@@ -9,25 +9,27 @@
   import context from "$lib/client/stores/context.store";
   import { appStore } from "$lib/client/stores/app.store";
   import { ResourceAccessMode } from "../flux/resourceStores/resource.type";
+  import { createEventDispatcher } from "svelte";
   export let goal: IGoal;
   export let isCreateContext: boolean = false;
+  export let isPreventDefault: boolean = false;
+  const dispatch = createEventDispatcher();
 
   function onGoalClick(e: MouseEvent) {
-    if (!$context.isEmbed) {
+    if (!$context.isEmbed && !isPreventDefault) {
       appStore.openResource(goal.id, ResourceAccessMode.POP);
       e.stopPropagation();
     }
+    dispatch("click");
   }
 </script>
 
 <CustomColorPropagator color={goal.color}>
   <button
-    class={cn(
-      "flex items-center gap-1 text-ccs1 w-full notouch:hover:underline focus:underline",
-      {
-        "text-b3 cursor-default": !isCreateContext
-      }
-    )}
+    class={cn("flex items-center gap-1 text-ccs1 w-full", {
+      "text-b3 cursor-default": !isCreateContext,
+      "notouch:hover:underline focus:underline": !isPreventDefault
+    })}
     on:click={onGoalClick}
   >
     {#if isCreateContext}

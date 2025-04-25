@@ -99,6 +99,7 @@
     {:else if goal}
       <TaskThumbnailGoalLabel
         {goal}
+        isPreventDefault={true}
         on:click={() => {
           isShowGoalPicker = true;
         }}

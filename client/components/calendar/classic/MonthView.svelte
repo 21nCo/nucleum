@@ -2,9 +2,11 @@
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import { createEventDispatcher } from "svelte";
+  import type { ICalendarIndicatorData } from "../calendar.type";
+  import CalendarTileIndicator from "./indicator/CalendarTileIndicator.svelte";
 
   export let selectedDate: Date;
-  export let events: any[] = [];
+  export let indicatorData: ICalendarIndicatorData[] = [];
 
   const dispatch = createEventDispatcher();
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -78,41 +80,47 @@
       {@const isSelected = day.toDateString() === selectedDate.toDateString()}
       {@const isNotCurrentMonth = day.getMonth() !== selectedDate.getMonth()}
       <button
-        class={cn("p-2 border-b border-r border-brs3 relative group flex", {
-          "bg-bgs2/50": isNotCurrentMonth,
-          "notouch:hover:bg-bgs2": !isToday && !isSelected,
-          "bg-ass3 text-ass1 notouch:hover:bg-ass2": isToday && !isSelected,
-          "bg-aps3 text-aps1": isSelected
-        })}
+        class={cn(
+          "p-2 border-b border-r border-brs3 relative group flex flex-col items-start",
+          {
+            "bg-bgs2/50": isNotCurrentMonth,
+            "notouch:hover:bg-bgs2": !isToday && !isSelected,
+            "bg-ass3 text-ass1 notouch:hover:bg-ass2": isToday && !isSelected,
+            "bg-aps3 text-aps1": isSelected
+          }
+        )}
         on:click={() => {
           selectedDate = day;
           dispatch("dateSelect", day);
         }}
       >
-        <span
-          class={cn(
-            "text-b2 text-left w-7 h-7 rounded-full flex items-center justify-center",
-            {
-              "text-fgs3": isNotCurrentMonth,
-              "bg-aps1 text-abg": isSelected,
-              "bg-ass1 text-abg": isToday && !isSelected
-            }
-          )}
-        >
-          {day.getDate()}
+        <span class="flex items-center justify-center">
+          <span
+            class={cn(
+              "text-b2 text-left w-7 h-7 rounded-full flex items-center justify-center",
+              {
+                "text-fgs3": isNotCurrentMonth,
+                "bg-aps1 text-abg": isSelected,
+                "bg-ass1 text-abg": isToday && !isSelected
+              }
+            )}
+          >
+            {day.getDate()}
+          </span>
+          {#if isToday}
+            <span class="text-b3 p-1"> Today </span>
+          {/if}
         </span>
-        {#if isToday}
-          <span class="text-b3 p-1"> Today </span>
+        {#if indicatorData.length > 0}
+          <div class="pl-1 pt-1">
+            <CalendarTileIndicator
+              date={day}
+              isActive={isSelected}
+              data={indicatorData}
+              view="month"
+            />
+          </div>
         {/if}
-        <div class="mt-1 space-y-1">
-          {#each events.filter((event) => event.date.toDateString() === day.toDateString()) as event}
-            <div
-              class="text-b4 p-1 rounded bg-aps3 text-aps1 userdata ph-no-capture"
-            >
-              {event.title}
-            </div>
-          {/each}
-        </div>
       </button>
     {/each}
   </div>
