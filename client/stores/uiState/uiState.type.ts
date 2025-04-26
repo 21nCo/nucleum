@@ -37,5 +37,7 @@ export enum UIState {
   calendarScale = "calendarScale",
   classicCalendarColumnWidth = "classicCalendarColumnWidth",
   calendarColumnPanel = "calendarColumnPanel",
-  calendarHistoryTab = "calendarHistoryTab"
+  calendarHistoryTab = "calendarHistoryTab",
+  calendarDayTimelineScale = "calendarDayTimelineScale",
+  calendarDayTimelinePanelSelection = "calendarDayTimelinePanelSelection"
 }

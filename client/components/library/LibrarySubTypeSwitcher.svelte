@@ -30,6 +30,7 @@
     PanelSwitcherStyle
   } from "$lib/client/types/switcher.enum";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
+  import { page } from "$app/stores";
   export let resource: Resource;
   export let isConstrainedWidth: boolean = $view.isConstrainedWidth;
   export let accessPoint: ResourceAccessPoint;
@@ -53,8 +54,16 @@
   let subTypeCounts: { count: number; type: NodeType | CollectionType }[] = [];
   let isExpandableSubTypes: boolean = false;
   let isExpandSubTypes: boolean = false;
-  let isStarFilterSelected: boolean = false;
-  let isArchivedFilterSelected: boolean = false;
+  let isStarFilterSelected: boolean = $page.url.searchParams.get(
+    AppSearchParam.STARRED
+  )
+    ? true
+    : false;
+  let isArchivedFilterSelected: boolean = $page.url.searchParams.get(
+    AppSearchParam.ARCHIVED
+  )
+    ? true
+    : false;
   let allSubTypes: ISelectItem[] = [];
   let renderedSubTypes: ISelectItem[] = [allSubTypeSwitcherItem];
   let searchStore = new SearchStore();
@@ -188,17 +197,37 @@
           }}
         />
       {:else}
-        <OptionSelector
-          style={OptionSelectorStyle.OUTLINE}
-          size={Size.sm}
-          options={renderedSubTypes}
-          selected={selectedSubType}
-          isPreventWrap={isExpandableSubTypes && !isExpandSubTypes}
-          on:select={(e) => {
-            if (!e?.detail) return;
-            onSelect(e.detail);
-          }}
-        />
+        <div class="flex gap-2 items-center h-full">
+          {#if !isNonStarrable}
+            <Toggle
+              bind:on={isStarFilterSelected}
+              icon="ph:star-light"
+              tooltip="Show starred items"
+              bgSize={Size.sm}
+              on:change={() => {
+                if (isStarFilterSelected) {
+                  appStore.toggleSearchParam({
+                    [AppSearchParam.STARRED]: isStarFilterSelected
+                  });
+                } else {
+                  appStore.toggleSearchParam([AppSearchParam.STARRED]);
+                }
+              }}
+            />
+            <Divider orientation={Orientation.Vertical} />
+          {/if}
+          <OptionSelector
+            style={OptionSelectorStyle.OUTLINE}
+            size={Size.sm}
+            options={renderedSubTypes}
+            selected={selectedSubType}
+            isPreventWrap={isExpandableSubTypes && !isExpandSubTypes}
+            on:select={(e) => {
+              if (!e?.detail) return;
+              onSelect(e.detail);
+            }}
+          />
+        </div>
       {/if}
     </div>
     {#if !isExpandSubTypes}
@@ -206,23 +235,6 @@
     {/if}
     <div class="flex gap-1">
       {#if !isExpandSubTypes}
-        {#if !isNonStarrable}
-          <Toggle
-            bind:on={isStarFilterSelected}
-            icon="ph:star-light"
-            tooltip="Show starred items"
-            bgSize={Size.sm}
-            on:change={() => {
-              if (isStarFilterSelected) {
-                appStore.toggleSearchParam({
-                  [AppSearchParam.STARRED]: isStarFilterSelected
-                });
-              } else {
-                appStore.toggleSearchParam([AppSearchParam.STARRED]);
-              }
-            }}
-          />
-        {/if}
         {#if !isNonArchivable}
           <Toggle
             bind:on={isArchivedFilterSelected}

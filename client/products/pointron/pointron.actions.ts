@@ -128,10 +128,9 @@ export const pointronActions: IAction[] = [
   {
     action: Resource.session,
     component: SessionLogPage,
-    type: ActionType.MODAL,
+    type: ActionType.RESOURCE,
     isMeta: true,
     modalParams: {
-      title: "Session details",
       layout: {
         size: Size.lg,
         isShowCantileverClose: true,
@@ -555,22 +554,6 @@ export const pointronActions: IAction[] = [
         callback: () => {
           return Promise.resolve(activeSession.close());
         }
-      }
-    }
-  },
-  // TODO - disabling sheet - as causing issues with stores not being present
-  {
-    action: PointronAction.CREATE_EDIT_GOAL,
-    get label() {
-      return this.modalParams?.title;
-    },
-    type: ActionType.MODAL,
-    component: CreateGoal,
-    modalParams: {
-      title: "Create a new goal",
-      isShowAsSheet: false,
-      layout: {
-        size: Size.lg
       }
     }
   },

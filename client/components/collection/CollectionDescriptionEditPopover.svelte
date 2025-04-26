@@ -12,7 +12,7 @@
         type: AlertType;
         message: string;
       }
-    | "" = "";
+    | undefined = undefined;
 
   async function onDescriptionChange(e: CustomEvent<any>) {
     status = {
@@ -49,5 +49,5 @@
     rows={4}
     on:debouncedChange={onDescriptionChange}
   />
-  <InlineFeedbackText bind:feedback={status} />
+  <InlineFeedbackText bind:feedback={status} isRenderEmptyHeight={true} />
 </div>

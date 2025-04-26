@@ -344,7 +344,7 @@
   {#if selectedSubType === TaskSubTypeForSwitcher.BY_DATE || selectedSubType === TaskSubTypeForSwitcher.BY_MONTH}
     <div class="flex flex-col gap-6 border border-brs2 rounded-md p-4">
       <div class="flex justify-center w-full gap-2 px-2">
-        <div
+        <button
           class="text-h3 w-fit flex items-center gap-2 text-aps1 font-medium"
           bind:this={dateSelectionPopoverRef}
           use:popover={{
@@ -373,7 +373,7 @@
                   isSameDay(viewDate, selectedDate))
               ? formatDate(viewDate, "mmm-yyyy")
               : formatDate(viewDate, "yyyy")}
-        </div>
+        </button>
       </div>
       <DatePickerRow
         isDateMode={selectedSubType === TaskSubTypeForSwitcher.BY_DATE}

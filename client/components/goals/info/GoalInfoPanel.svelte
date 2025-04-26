@@ -29,8 +29,14 @@
   import ControlBar from "$lib/client/products/pointron/focus/elements/controls/ControlBar.svelte";
   import FocusPlayerTimeText from "$lib/client/products/pointron/focus/player/FocusPlayerTimeText.svelte";
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
+  import InlineFeedbackText from "$lib/client/extensions/clipper/InlineFeedbackText.svelte";
+  import {
+    AlertType,
+    type IInlineStatus
+  } from "$lib/client/types/notification.type";
   export let goal: IActiveGoalStore;
   export let isConstrainedWidth = false;
+  export let status: IInlineStatus | undefined = undefined;
   const dispatch = createEventDispatcher();
   function handleStatusChange(e: CustomEvent<GoalStatus>) {
     $goal.status = e.detail;
@@ -43,6 +49,10 @@
     resolveIfCurrentFocusItem($focusItemsStore, goal.id, $currentFocusItem);
 
   async function onDescriptionChange(e: CustomEvent) {
+    status = {
+      message: "Saving...",
+      type: AlertType.PROGRESS
+    };
     const desc = e.detail?.md;
     if (!desc) return;
     debouncedDescriptionPersist(desc);
@@ -52,6 +62,10 @@
     goal.modify({
       description: desc
     });
+    status = {
+      message: "Description saved",
+      type: AlertType.SUCCESS
+    };
   }, 1000);
 </script>
 
@@ -67,13 +81,13 @@
   </button>
 {/if}
 <div
-  class={cn("relative flex flex-col gap-6 h-full", {
-    "rounded-md p-3 h-full": isConstrainedWidth
+  class={cn("relative flex flex-col gap-6 ", {
+    "rounded-md p-3": isConstrainedWidth
   })}
 >
   <div class="flex flex-col gap-2">
     {#if !isConstrainedWidth}
-      <GoalTitleRow {goal} />
+      <GoalTitleRow {goal} bind:status />
     {/if}
     <div class="flex flex-col gap-1">
       {#if isConstrainedWidth}
@@ -81,8 +95,8 @@
       {/if}
       {#if $goal.isInEditMode}
         <div class="grid grid-cols-2 gap-2 h-20 my-4">
-          <GoalInfoEditControl {goal} control="color" />
-          <GoalInfoEditControl {goal} control="type" />
+          <GoalInfoEditControl {goal} control="color" bind:status />
+          <GoalInfoEditControl {goal} control="type" bind:status />
         </div>
       {:else}
         <GoalCollectionsRow {goal} />
@@ -144,6 +158,7 @@
       }}
     />
   {/if}
+  <InlineFeedbackText bind:feedback={status} />
   <div class="text-fgs3 text-b3 mx-auto mt-auto userdata">
     Created: {formatDatetime($userPreferences, $goal.createdAt)}
   </div>

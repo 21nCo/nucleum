@@ -1,5 +1,6 @@
 <script lang="ts">
   import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
+  import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import LogsPane from "$lib/client/products/pointron/logs/LogsPane.svelte";
   import { appStore } from "$lib/client/stores/app.store";
@@ -61,13 +62,20 @@
 </script>
 
 <div class="flex flex-col h-full w-full gap-4">
-  <OptionSelector
-    options={tabs}
-    isPreventWrap={true}
-    bind:selected={tab}
-    on:select={onTabSelection}
-    size={Size.sm}
-  />
+  <div class="flex gap-3 items-center cw:justify-between w-full">
+    <div class="">
+      <DatePicker bind:date variant="inline-with-icon" />
+    </div>
+    <div>
+      <OptionSelector
+        options={tabs}
+        isPreventWrap={true}
+        bind:selected={tab}
+        on:select={onTabSelection}
+        size={Size.sm}
+      />
+    </div>
+  </div>
   <div class="flex flex-grow w-full">
     {#if tab === CalendarHistoryTab.ALL}
       <CalendarAllActivityPanel {date} />

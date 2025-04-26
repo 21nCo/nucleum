@@ -16,6 +16,7 @@
   export let panels: ISelectItem[];
   export let selectedPanel: CalendarColumnPanel;
   export let layout: CalendarColumnLayout;
+  export let isCwContext: boolean = false;
 
   function onPanelSelection(e: CustomEvent) {
     if (!e.detail) return;
@@ -31,7 +32,7 @@
     <OptionSelector
       options={panels}
       bind:selected={selectedPanel}
-      style={panels.length > 2
+      style={panels.length > 2 || isCwContext
         ? OptionSelectorStyle.ICON
         : OptionSelectorStyle.TRAIN}
       size={Size.sm}

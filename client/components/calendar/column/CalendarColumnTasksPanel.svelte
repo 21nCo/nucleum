@@ -79,6 +79,7 @@
       mainText="No tasks found"
       subText="Choose a different date or create a task"
       actionText="Create task"
+      actionShortcut={shortcutsConfig.create}
       on:click={handleCreateTask}
       loadingAnimation={LoadingAnimationType.FOCUS_ITEMS_PULSE}
     />

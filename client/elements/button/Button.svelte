@@ -94,7 +94,8 @@
           "bg-ars1": type === ButtonVariant.DANGER,
           "border border-transparent hover:border-brs3":
             type === ButtonVariant.SECONDARY,
-          [bg(parentBgIndex + 1)]: type === ButtonVariant.SECONDARY
+          [bg(parentBgIndex + 1)]: type === ButtonVariant.SECONDARY,
+          [`hover:${bg(parentBgIndex + 2)}`]: type === ButtonVariant.SECONDARY
         }
       ],
     style === ButtonStyle.OUTLINED && [
@@ -161,6 +162,7 @@
       {#if $uiStateDerived?.isShowHotKeyHints && shortcut && $context.embed !== Embed.HANDSET}
         <ShortcutText
           {shortcut}
+          {size}
           parentBgIndex={style === ButtonStyle.PLAIN
             ? parentBgIndex
             : style === ButtonStyle.OUTLINED

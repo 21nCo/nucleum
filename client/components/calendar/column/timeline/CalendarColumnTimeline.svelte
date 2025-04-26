@@ -19,18 +19,31 @@
   import type { ISessionThumb } from "$lib/client/products/pointron/logs/log.type";
   import { resolveSessionTimeSplit } from "$lib/client/products/pointron/pointron.utils";
   import DayTimeline from "./daytimeline/DayTimeline.svelte";
+  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
+  import Button from "$lib/client/elements/button/Button.svelte";
+  import { Action } from "$lib/client/types/action.enum";
+  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import { UIState } from "$lib/client/stores/uiState/uiState.type";
 
   export let date: Date;
   export let isExpandable: boolean = false;
   export let layout: CalendarColumnLayout;
   let switcherSize: Size.md | Size.lg =
     layout === CalendarColumnLayout.TABS ? Size.md : Size.lg;
-  let timelinePanelSubItem: string = "timeline";
+  let timelinePanelSubItem: string = resolveTimlinePanelSelection();
   let isRefreshing: boolean = false;
   let timelineEntries: CalendarTimelineEntry[] = [];
   $: timelinePanelSubItems = resolveTimelinePanelSubItems($appStore.product);
   $: dateString = date.toISOString().split("T")[0];
   $: if (dateString) refreshTimelineEntries();
+
+  function resolveTimlinePanelSelection() {
+    return (
+      uiState.getState(UIState.calendarDayTimelinePanelSelection, {
+        isDeviceScoped: true
+      }) ?? "timeline"
+    );
+  }
 
   function resolveTimelinePanelSubItems(product: Product) {
     const timeline = {
@@ -93,6 +106,12 @@
       }));
     }
   }
+
+  function onTimelinePanelSwitch(e: CustomEvent<string>) {
+    uiState.setState(UIState.calendarDayTimelinePanelSelection, e.detail, {
+      isDeviceScoped: true
+    });
+  }
 </script>
 
 <div
@@ -110,7 +129,23 @@
       style={PanelSwitcherStyle.BAR}
       barStyle={BarStyle.DOT}
       size={switcherSize}
-    />
+      isExpandToFullWidth={true}
+      on:switch={onTimelinePanelSwitch}
+    >
+      <div slot="right">
+        <Button
+          icon="ph:clock-counter-clockwise-light"
+          tooltip="History"
+          on:click={() => {
+            appStore.runAction(Action.HISTORY, {
+              componentParams: {
+                date
+              }
+            });
+          }}
+        />
+      </div>
+    </PanelSwitcher>
   {/if}
   {#if timelinePanelSubItem === "tasks"}
     <CalendarColumnTasksPanel {date} />
@@ -118,7 +153,7 @@
     <!-- render both tasks, events on top of each other -->
   {:else if timelinePanelSubItem === "timeline"}
     <div class="flex flex-col flex-grow">
-      <DayTimeline {date} data={timelineEntries} {isRefreshing} />
+      <DayTimeline {date} data={timelineEntries} {isRefreshing} {layout} />
     </div>
   {/if}
 </div>

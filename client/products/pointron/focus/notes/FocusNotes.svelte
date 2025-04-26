@@ -18,4 +18,7 @@
     canUseSlashShortcut: false
   }}
   on:change
-/>
+  on:debouncedChange
+>
+  <slot name="title" slot="title"></slot>
+</Markdown>

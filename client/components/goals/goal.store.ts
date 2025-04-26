@@ -289,7 +289,7 @@ export class ActiveGoalStore extends CollectibleStore<IActiveGoal, GoalStore> {
         "*",
         "(select * from $parent.children) as children",
         "(select * from $parent.parent) as parent",
-        "(select * from task where goal is $parent.id) as tasks",
+        "(select id from task where goalId is $parent.id) as tasks",
         "->link.* as outlinks",
         "<-link.* as inlinks"
       ]);

@@ -9,6 +9,7 @@ import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import { logger } from "$lib/client/components/debug/logger.client";
 import type { ITask } from "./task.type";
 import {
+  ResourceAccessMode,
   ResourceAccessPoint,
   type OmitForCapture,
   type OmitForCaptureWithId
@@ -131,6 +132,17 @@ class TaskActions {
     };
   }
 
+  openTask() {
+    return {
+      value: "openTask",
+      icon: "ph:arrow-up-right-light",
+      label: "Open task",
+      callback: async () => {
+        appStore.openResource(this.task.id, ResourceAccessMode.POP);
+      }
+    };
+  }
+
   editDate = {
     value: "editDate",
     icon: "ph:calendar-blank-light",
@@ -150,6 +162,9 @@ export function resolveTaskContextMenu(
   const product = get(appStore).product;
   const viewStore = get(view);
   let primaryItems: IContextMenuItem[] = [
+    ...(accessPoint !== ResourceAccessPoint.SELF
+      ? [taskActions.openTask()]
+      : []),
     ...(accessPoint !== ResourceAccessPoint.CALENDAR
       ? [resourceActions.select(accessPoint, params?.accessPointId)]
       : []),

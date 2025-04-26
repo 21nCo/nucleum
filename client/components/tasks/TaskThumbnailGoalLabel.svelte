@@ -10,13 +10,13 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { ResourceAccessMode } from "../flux/resourceStores/resource.type";
   import { createEventDispatcher } from "svelte";
+  import Button from "$lib/client/elements/button/Button.svelte";
   export let goal: IGoal;
   export let isCreateContext: boolean = false;
-  export let isPreventDefault: boolean = false;
   const dispatch = createEventDispatcher();
 
   function onGoalClick(e: MouseEvent) {
-    if (!$context.isEmbed && !isPreventDefault) {
+    if (!$context.isEmbed && !isCreateContext) {
       appStore.openResource(goal.id, ResourceAccessMode.POP);
       e.stopPropagation();
     }
@@ -24,23 +24,30 @@
   }
 </script>
 
-<CustomColorPropagator color={goal.color}>
-  <button
-    class={cn("flex items-center gap-1 text-ccs1 w-full", {
-      "text-b3 cursor-default": !isCreateContext,
-      "notouch:hover:underline focus:underline": !isPreventDefault
-    })}
-    on:click={onGoalClick}
-  >
+<CustomColorPropagator
+  color={goal.color}
+  class={cn("flex items-center gap-1 text-ccs1 w-full", {
+    "text-b3 cursor-default notouch:hover:underline focus:underline":
+      !isCreateContext
+  })}
+  on:click={onGoalClick}
+>
+  {#if isCreateContext}
+    <Icon
+      icon={resolveResourceIcon(Resource.goal)}
+      size={Size.sm}
+      class="text-ccs1"
+    />
+  {/if}
+  <div class="flex items-center gap-1 text-left truncate flex-1 min-w-0">
+    {goal.label}
     {#if isCreateContext}
-      <Icon
-        icon={resolveResourceIcon(Resource.goal)}
+      <Button
+        icon="ph:x-light"
+        tooltip="Clear goal"
         size={Size.sm}
-        class="text-ccs1"
+        parentBgIndex={2}
       />
     {/if}
-    <div class="text-left truncate flex-1 min-w-0">
-      {goal.label}
-    </div>
-  </button>
+  </div>
 </CustomColorPropagator>

@@ -1248,24 +1248,13 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
         id: items.map((x) => x.id.toString())
       }
     });
-    const tasksResult = await taskStore.selectMany(
-      {
-        filters: {
-          id: items.map((x) => x.id.toString())
-        }
-      },
-      {
-        isExpand: true
-      }
-    );
     console.timeEnd("refreshRecents");
     const newRecents = items
       .map((x) => {
         const goal = goalsResult.find(resourceInList(x.id));
-        const task = tasksResult.find(resourceInList(x.id));
         return {
           id: x.id,
-          item: goal ?? task,
+          item: goal,
           startUnix: x.startUnix
         };
       })
@@ -1405,18 +1394,18 @@ class SessionStore extends ResourceStore<ISession> {
   }
 
   addToRecentFocusItems(logs: OmitForCaptureWithId<ISessionLog>[]) {
-    const newEntries = logs.map((log) => ({
-      id: isRecordId(log.taskId) ? log.taskId : log.goalId,
-      startUnix: log.startUnix
-    }));
-    console.log({ logs, newEntries });
+    const newEntries = logs
+      .filter((x) => x.goalId && !x.taskId)
+      .map((log) => ({
+        id: log.goalId,
+        startUnix: log.startUnix
+      }));
     const newVal = [
       ...newEntries,
       ...(uiState.getState(UIState.recentFocusItems) ?? [])
     ]
       .filter(removeDuplicatesFilter)
       .slice(0, 15);
-    console.log({ newVal });
     uiState.setState(UIState.recentFocusItems, newVal);
     focusItemsStore.refreshRecents(newVal);
   }

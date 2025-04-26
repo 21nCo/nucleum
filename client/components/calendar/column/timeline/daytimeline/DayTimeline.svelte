@@ -2,7 +2,10 @@
   import { onMount, onDestroy } from "svelte";
   import dayjs from "dayjs";
   import DayTimelineEntry from "./DayTimelineEntry.svelte";
-  import { type CalendarTimelineEntry } from "../../../calendar.type";
+  import {
+    CalendarColumnLayout,
+    type CalendarTimelineEntry
+  } from "../../../calendar.type";
   import { formatTime } from "$lib/client/utils/time.utils";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import Button from "$lib/client/elements/button/Button.svelte";
@@ -11,9 +14,11 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { player } from "$lib/client/components/modal/modal.store";
   import RefreshingOverlayFeedback from "$lib/client/elements/feedback/RefreshingOverlayFeedback.svelte";
-
+  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import { UIState } from "$lib/client/stores/uiState/uiState.type";
   export let date: Date = new Date();
   export let data: Array<CalendarTimelineEntry> = [];
+  export let layout: CalendarColumnLayout;
   export let isRefreshing: boolean = false;
 
   let container: HTMLElement;
@@ -22,27 +27,46 @@
     isToday &&
     document.getElementById("focusData")?.getAttribute("data-focus-active") ===
       "true";
+  $: isAdjustBottomPadding =
+    $player.isMiniOn &&
+    !$player.isPipOn &&
+    (!layout || layout === CalendarColumnLayout.TABS);
   const BASE_HOUR_HEIGHT = 80;
-  let scale = 1;
-  let hourHeight = BASE_HOUR_HEIGHT;
+  let scale = resolveInitialScale();
+  let hourHeight = BASE_HOUR_HEIGHT * scale;
 
   // Time markers
   let hours = Array.from({ length: 24 }, (_, i) => i);
+
+  function resolveInitialScale() {
+    const scale = uiState.getState(UIState.calendarDayTimelineScale, {
+      isDeviceScoped: true
+    });
+    return scale ?? 1;
+  }
+  function persistScaleState() {
+    uiState.setState(UIState.calendarDayTimelineScale, scale, {
+      isDeviceScoped: true
+    });
+  }
 
   // Handle zoom
   function zoomIn() {
     scale = Math.min(2.5, scale + 0.1);
     hourHeight = BASE_HOUR_HEIGHT * scale;
+    persistScaleState();
   }
 
   function zoomOut() {
     scale = Math.max(0.4, scale - 0.1);
     hourHeight = BASE_HOUR_HEIGHT * scale;
+    persistScaleState();
   }
 
   function resetZoom() {
     scale = 1;
     hourHeight = BASE_HOUR_HEIGHT;
+    persistScaleState();
   }
 
   // Update time
@@ -293,7 +317,7 @@
       {/each}
     </div> -->
     <div
-      class="border-l absolute left-16"
+      class="border-l border-brs3 absolute left-16"
       style="height: {24 * hourHeight}px;"
     ></div>
     <div
@@ -351,8 +375,8 @@
     class={cn(
       "absolute right-3 flex gap-2 z-20 bg-bgs3 rounded-md border border-brs3",
       {
-        "bottom-24": $player.isMiniOn && !$player.isPipOn,
-        "bottom-4": !$player.isMiniOn || $player.isPipOn
+        "bottom-24": isAdjustBottomPadding,
+        "bottom-4": !isAdjustBottomPadding
       }
     )}
   >

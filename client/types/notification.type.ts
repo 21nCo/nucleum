@@ -42,3 +42,8 @@ export enum AlertType {
   INFO = "INFO",
   PROGRESS = "PROGRESS"
 }
+
+export type IInlineStatus = {
+  message: string;
+  type: AlertType;
+};

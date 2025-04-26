@@ -42,6 +42,11 @@ export const shortcutsConfig: Record<string, IKeyboardShortcut> = {
     key: "Enter",
     modifiers: [ModifierKey.META]
   },
+  TOGGLE_FOCUS_SESSION: {
+    key: "Space",
+    code: "Space",
+    modifiers: [ModifierKey.META]
+  },
   "global-search": {
     key: "k",
     modifiers: [ModifierKey.META]

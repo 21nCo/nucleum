@@ -28,6 +28,7 @@ export enum Action {
   EXTENSTION_LOGIN = "ext_login",
   EXTENSTION_UNINSTALL = "EXTENSTION_UNINSTALL",
   MARKDOWN_SHORTCUTS = "MARKDOWN_SHORTCUTS",
+  HOT_KEYS = "HOT_KEYS",
   COVER_PICKER = "COVER_PICKER",
   SYNC_SETTINGS = "sync",
   ARTIFICIAL_INTELLIGENCE = "ai",
@@ -39,5 +40,6 @@ export enum Action {
   LIBRARY = "library",
   BULK_LINK = "bulk-link",
   EDIT_TASK_GOAL = "edit-task-goal",
-  CALENDAR_DAY = "calendar-day"
+  CALENDAR_DAY = "calendar-day",
+  HISTORY = "history"
 }

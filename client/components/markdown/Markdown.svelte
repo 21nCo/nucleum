@@ -157,10 +157,12 @@
   on:keydown={onKeyDown}
 >
   <div class="flex justify-between">
-    <div>
-      {#if params?.title}
-        <Text content={params.title} style={TextStyle.PANEL_HEADING} />
-      {/if}
+    <div class="flex gap-2 items-center">
+      <slot name="title">
+        {#if params?.title}
+          <Text content={params.title} style={TextStyle.PANEL_HEADING} />
+        {/if}
+      </slot>
     </div>
     <div class="absolute flex gap-2 top-0 right-0 z-40">
       {#if params?.actions?.includes("copy")}

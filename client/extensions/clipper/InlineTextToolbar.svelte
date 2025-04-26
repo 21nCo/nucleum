@@ -191,6 +191,6 @@
     />
   {/if}
   {#if feedback}
-    <InlineFeedbackText bind:feedback />
+    <InlineFeedbackText bind:feedback isRenderEmptyHeight={true} />
   {/if}
 </div>

@@ -70,7 +70,7 @@
             "fill-abg": isActive && !isOutlineStyle
           })}
         />
-        <div>{component.label}</div>
+        <div class="text-b2">{component.label}</div>
       </div>
     {/if}
   </button>

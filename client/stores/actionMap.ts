@@ -81,6 +81,8 @@ import Test from "../components/Test.svelte";
 import SampleCalendarItemThumbnail from "../components/calendar/column/timeline/SampleCalendarItemThumbnail.svelte";
 import FocusCalendarEntryThumbnail from "../components/calendar/column/timeline/focusEntry/FocusCalendarEntryThumbnail.svelte";
 import CalendarDayModal from "../components/calendar/column/CalendarDayModal.svelte";
+import HotKeys from "../components/markdown/shortcuts/HotKeys.svelte";
+import HistoryModal from "../components/calendar/HistoryModal.svelte";
 
 export const globalActions: IAction[] = [
   {
@@ -388,9 +390,12 @@ export const globalActions: IAction[] = [
   {
     action: "report",
     label: "Report an issue",
+    cmdLabel: [
+      { variant: "report", label: "Report an issue" },
+      { variant: "feedback", label: "Give feedback" }
+    ],
     icon: "ph:flag-light",
-    type: ActionType.MODAL,
-    isInactive: true
+    type: ActionType.LINK
   },
   {
     action: Action.MOBILE_TOAST,
@@ -492,6 +497,18 @@ export const globalActions: IAction[] = [
     type: ActionType.MODAL,
     modalParams: {
       title: "Markdown shortcuts",
+      layout: {
+        size: Size.lg
+      }
+    }
+  },
+  {
+    action: Action.HOT_KEYS,
+    label: "See hot key shortcuts",
+    component: HotKeys,
+    type: ActionType.MODAL,
+    modalParams: {
+      title: "Hot key shortcuts",
       layout: {
         size: Size.lg
       }
@@ -720,7 +737,7 @@ export const globalActions: IAction[] = [
   },
   {
     action: resourceAction(Resource.goal, ResourceActionType.CREATE),
-    cmdLabel: "Create a new goal",
+    label: "Create a new goal",
     type: ActionType.FUNCTION,
     fn: async (props?: IActionFnParams) => {
       await goalStore.createNew(props?.componentParams);
@@ -728,7 +745,7 @@ export const globalActions: IAction[] = [
   },
   {
     action: resourceAction(Resource.task, ResourceActionType.CREATE),
-    cmdLabel: "Create a new task",
+    label: "Create a new task",
     type: ActionType.MODAL,
     component: CreateTask,
     modalParams: {
@@ -1010,6 +1027,21 @@ export const globalActions: IAction[] = [
     isMeta: true,
     component: CalendarDayModal,
     modalParams: {
+      title: "Day review",
+      layout: {
+        size: Size.xl,
+        orientation: Orientation.Horizontal
+      }
+    }
+  },
+  {
+    action: Action.HISTORY,
+    label: "History",
+    icon: "ph:clock-counter-clockwise-light",
+    type: ActionType.MODAL,
+    component: HistoryModal,
+    modalParams: {
+      title: "History",
       layout: {
         size: Size.lg,
         orientation: Orientation.Horizontal

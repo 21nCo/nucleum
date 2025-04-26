@@ -26,7 +26,14 @@
   />
   <div class="flex flex-grow w-full">
     {#key selectedDate}
-      <CalendarColumn scale={TimeScaleUnit.DAY} date={selectedDate} />
+      <CalendarColumn
+        scale={TimeScaleUnit.DAY}
+        date={selectedDate}
+        isCwContext={true}
+        on:dateChange={(e) => {
+          if (e.detail) selectedDate = e.detail;
+        }}
+      />
     {/key}
   </div>
 </div>

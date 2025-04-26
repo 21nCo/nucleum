@@ -56,7 +56,7 @@
       appStore.runAction(PointronAction.THINK_MODE);
     }}
   />
-  {#if $activeSession.type != SessionType.PREDEFINED_INTERVALS}
+  {#if $activeSession.type !== SessionType.PREDEFINED_INTERVALS}
     <Button
       icon="cross-circled"
       tooltip="Abandon focus session"
@@ -76,14 +76,6 @@
       }}
     />
   {/if}
-  <Button
-    icon="settings"
-    tooltip="Focus settings"
-    {...buttonProps}
-    on:click={() => {
-      appStore.runAction(PointronAction.SESSION_SETTINGS_MODAL);
-    }}
-  />
   <Button
     icon={isInFullScreen ? "collapse" : "full-screen"}
     tooltip={isInFullScreen ? "Exit full screen" : "Full screen"}

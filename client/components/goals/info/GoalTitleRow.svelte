@@ -14,8 +14,13 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { ResourceAccessPoint } from "../../flux/resourceStores/resource.type";
   import RecordStarStatusFeedback from "../../record/RecordStarStatusFeedback.svelte";
+  import {
+    AlertType,
+    type IInlineStatus
+  } from "$lib/client/types/notification.type";
   export let goal: IActiveGoalStore;
   export let isConstrainedWidth = false;
+  export let status: IInlineStatus | undefined = undefined;
   let labelEditVal = $goal.label;
   let inputRef: TextInput;
   function resolveBreadcrumbs() {
@@ -32,10 +37,25 @@
     return parentItems;
   }
 
-  function handleLabelChange(e: CustomEvent<string>) {
-    goal.modify({
+  async function handleLabelChange(e: CustomEvent<string>) {
+    status = {
+      message: "Saving...",
+      type: AlertType.PROGRESS
+    };
+    const result = await goal.modify({
       label: e.detail
     });
+    if (!result || result.error) {
+      status = {
+        message: "Failed to save goal name",
+        type: AlertType.ERROR
+      };
+    } else {
+      status = {
+        message: "Goal name saved",
+        type: AlertType.SUCCESS
+      };
+    }
   }
 
   function handleLabelSave(e: any) {

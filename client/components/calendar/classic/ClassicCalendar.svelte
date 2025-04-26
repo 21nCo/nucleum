@@ -37,7 +37,7 @@
   let indicatorData: ICalendarIndicatorData[] = [];
   let currentDateFilterForIndicatorData: any = {};
   let isRefreshing = false;
-  $: if (selectedDate) {
+  $: if (selectedDate && selectedView !== TimeScaleUnit.DAY) {
     refreshIndicatorData(selectedDate);
   }
   function resolveSavedScaleSelection() {
@@ -200,7 +200,9 @@
           : ""}
         use:resizable={{
           // enabled: !$context.isTouchDevice,
-          enabled: true,
+          enabled:
+            selectedView === TimeScaleUnit.MONTH ||
+            selectedView === TimeScaleUnit.YEAR,
           minWidth: 380,
           maxWidth: 800,
           edges: ["left"],

@@ -315,5 +315,8 @@
       {/if}
     {/if}
   {/if}
-  <InlineFeedbackText bind:feedback={$feedbackPane.feedback} />
+  <InlineFeedbackText
+    bind:feedback={$feedbackPane.feedback}
+    isRenderEmptyHeight={true}
+  />
 </FeedbackPaneBase>

@@ -13,6 +13,7 @@
   export let parentBgIndex: number | undefined = undefined;
   export let isPlainText: boolean = false;
   export let isAccentOutlined: boolean = false;
+  export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
   let detail: IKeyboardShortcut | undefined = undefined;
 
   $: text = resolveText(shortcut);
@@ -46,10 +47,12 @@
 
 <span
   class={cn(
-    "flex justify-center items-center whitespace-nowrap rounded-md px-1.5 py-[1px] text-b4",
+    "flex justify-center items-center whitespace-nowrap rounded-md",
     {
       border: !isPlainText,
-      "border-ccs2": isAccentOutlined
+      "border-ccs2": isAccentOutlined,
+      "px-1.5 py-[1px] text-b4": size === Size.md || size === Size.lg,
+      "px-1 py-[0.5px] text-b5": size === Size.xs || size === Size.sm
     },
     !isPlainText &&
       !isAccentOutlined && {

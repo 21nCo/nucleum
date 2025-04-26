@@ -110,6 +110,7 @@
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
 
   $: isCustom = isCustomLibrary(resource);
+  $: hasChildren = [Resource.node, Resource.goal].includes(resource);
 
   let pageSub: any;
   onMount(async () => {
@@ -276,7 +277,8 @@
     if (!data || !data.length) return;
     let prefix = "Showing " + data.length + " ";
     const label = resolveResourceLabel();
-    if (isStarFilterSelected) return `${prefix} ⭐️ staaarrrrrrrrrred ${label}`;
+    if (isStarFilterSelected)
+      return `${prefix} ⭐️ staaarrrrrred ${label} ${hasChildren ? "including sub " + label : ""}`;
     else if (searchQuery)
       return `${prefix} ${label} containing "${searchQuery}"`;
     else return `Showing ${data.length} of ${totalCount ?? "Unknown"} ${label}`;

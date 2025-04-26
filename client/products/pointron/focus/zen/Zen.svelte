@@ -24,7 +24,7 @@
   let layout: number = 1;
   let isShowTimeLeftOnMobile: boolean = false;
 
-  $: isExtraLargeScreen = $view.landscapiness > 1.5 && $view.scale > 1.5;
+  $: isExtraLargeScreen = $view.landscapiness > 1.7 && $view.scale > 1.8;
 </script>
 
 <!-- {#snippet focusItemsHeading()}
@@ -125,8 +125,7 @@
       </div>
     {/if}
     {#if isExtraLargeScreen}
-      <div class="w-1/4 p-4 bg-bgs2">
-        <!-- <SimpleDigitalClock /> -->
+      <div class="w-1/4 p-4">
         <SessionNotes />
       </div>
     {/if}

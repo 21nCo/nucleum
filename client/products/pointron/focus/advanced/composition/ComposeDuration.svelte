@@ -107,7 +107,7 @@
   }
 </script>
 
-<div class="flex flex-col items-center flex-grow w-full my-2 gap-8">
+<div class="flex flex-col items-center flex-grow w-full my-2 gap-4">
   <PanelSwitcher
     items={["Countup", "Countdown", "Pomodoro"]}
     size={Size.sm}

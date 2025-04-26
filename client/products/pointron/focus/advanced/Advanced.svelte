@@ -16,7 +16,7 @@
     ($view.landscapiness > 1.4 && $view.scale > 1) || $view.scale > 1.3;
 </script>
 
-<div class="relative flex flex-col w-full h-full p-4 bg--bgs2/40">
+<div class="relative flex flex-col w-full h-full p-4 pb-2 bg--bgs2/40">
   <div class="flex w-full gap-1 items-center">
     <Text style={TextStyle.PANEL_HEADING} content="Advanced focus" />
     <FormLabelTooltip

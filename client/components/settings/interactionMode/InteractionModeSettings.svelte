@@ -116,7 +116,7 @@
       label={{
         label: "Hide App menu bar on hot key",
         tooltip: {
-          body: "Completely hides the app menu bar on usage of hot key **Q** overriding default behavior of minimizing."
+          body: "Completely hides the app menu bar on usage of the hot key **Q**."
         }
       }}
       isExpanded={true}

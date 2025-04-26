@@ -50,7 +50,7 @@
     icon: "play",
     variant: ButtonVariant.PRIMARY,
     style: ButtonStyle.DEFAULT,
-    shortcut: focusToggleHotKey
+    shortcut: PointronAction.TOGGLE_FOCUS_SESSION
   };
 
   onMount(async () => {
@@ -125,7 +125,9 @@
         floatingButton={addManualLogButton}
         titleStyle={TextStyle.PANEL_HEADING}
         isProminentDivider={true}
-        extraLargeScreenComponent="simpleDigitalClock"
+        extraLargeScreenComponent={$activeSession.isSessionRunning
+          ? undefined
+          : "simpleDigitalClock"}
       >
         <slot name="nonpadded" slot="nonpadded">
           <QuickStart />

@@ -2,7 +2,10 @@
   import type { ITaskThumb } from "./task.type";
   import { Arrangement } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import {
+    ResourceAccessMode,
+    ResourceAccessPoint
+  } from "$lib/client/components/flux/resourceStores/resource.type";
   import ResourceThumbnailBase from "../record/thumbnail/ResourceThumbnailBase.svelte";
   import { compareDates, formatDate } from "$lib/client/utils/time.utils";
   import TaskCheckbox from "./TaskCheckbox.svelte";
@@ -34,6 +37,8 @@
   } from "$lib/client/products/pointron/focus/session.store";
   import { resolveIfCurrentFocusItem } from "$lib/client/products/pointron/focus/session.utils";
   import { movingBorder } from "$lib/client/actions/movingBorder.action";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { ButtonStyle } from "$lib/client/types/button.type";
   const dispatch = createEventDispatcher();
   export let item: ITaskThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
@@ -70,6 +75,15 @@
     } else if ("goalId" in record && record.goalId !== item.goalId) {
       item.goalId = record.goalId;
       item.goal = await goalStore.select(record.goalId);
+    } else if ("label" in record && record.label !== item.label) {
+      item.label = record.label;
+    } else if ("dateUnix" in record && record.dateUnix !== item.dateUnix) {
+      item.dateUnix = record.dateUnix;
+    } else if (
+      "completedAtUnix" in record &&
+      record.completedAtUnix !== item.completedAtUnix
+    ) {
+      item.completedAtUnix = record.completedAtUnix;
     }
   }
 
@@ -221,7 +235,7 @@
         {/if}
       </div>
 
-      {#if isHovering || isDatePickerOpen}
+      {#if isDatePickerOpen}
         <div class="flex gap-2 shrink-0">
           <DatePicker
             date={item.dateUnix ? new Date(item.dateUnix) : undefined}
@@ -238,6 +252,19 @@
             }}
           />
         </div>
+      {/if}
+      {#if isHovering}
+        <Button
+          icon="ph:arrows-out-light"
+          parentBgIndex={2}
+          label="Open"
+          size={Size.sm}
+          style={ButtonStyle.OUTLINED}
+          isPreventMinWidth={true}
+          on:click={() => {
+            appStore.openResource(item.id, ResourceAccessMode.POP);
+          }}
+        />
       {/if}
       <ResourceThumbnailContextMenu
         bind:item

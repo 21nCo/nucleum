@@ -5,6 +5,7 @@
     resourceInList
   } from "$lib/client/components/flux/resourceStores/resource.utils";
   import Button from "$lib/client/elements/button/Button.svelte";
+  import Icon from "$lib/client/elements/Icon.svelte";
   import context from "$lib/client/stores/context.store";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";
@@ -53,9 +54,12 @@
     )?.startUnix}
     <span class="text-b3 text-fgs3">
       {#if $focusItemsStore.items.some(resourceInList(item.id))}
-        Added
+        <div class="flex gap-1 items-center">
+          <Icon icon="ph:check-circle-fill" size={Size.sm} />
+          <span> Added to focus items </span>
+        </div>
       {:else if startUnix}
-        Focused {formatDateRelativeToToday(startUnix)}
+        Focused {formatDateRelativeToToday(startUnix)?.toLowerCase()}
       {/if}
     </span>
   {/if}

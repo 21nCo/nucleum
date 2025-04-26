@@ -25,6 +25,8 @@
     CalendarExpansionMode.JOURNAL;
   export let isShowTitleBar: boolean = false;
   export let isRewind: boolean = false;
+  export let isCwContext: boolean = false;
+
   let selectedPanel: CalendarColumnPanel = resolvePanelSelection();
 
   function resolvePanelSelection() {
@@ -115,7 +117,7 @@
 <div
   class={cn("flex flex-col gap-4 pb-4 h-full w-full", {
     "px-4 pb-4 pt-2": layout !== CalendarColumnLayout.TABS,
-    "p-4": layout === CalendarColumnLayout.TABS
+    "p-4": layout === CalendarColumnLayout.TABS && !isCwContext
   })}
   use:resizeListener={(e) => {
     containerWidth = e.width;
@@ -126,14 +128,23 @@
       <div class="flex items-center gap-2">
         <div class="text-h4 font-medium text-fgs3">
           <!-- {formatDate(date)} -->
-          <DatePicker bind:date on:change={handleDateChange} />
+          <DatePicker
+            bind:date
+            on:change={handleDateChange}
+            variant={isCwContext ? "inline" : "wide"}
+          />
         </div>
         <!-- |
     <div class="text-b2 text-fgs3">
       {enumToString(selectedPanel)}
       </div> -->
       </div>
-      <CalendarColumnPanelSelector bind:selectedPanel {layout} {panels} />
+      <CalendarColumnPanelSelector
+        bind:selectedPanel
+        {layout}
+        {panels}
+        {isCwContext}
+      />
     </div>
   {/if}
   <div class="flex gap-6 flex-grow w-full">
@@ -149,7 +160,12 @@
               style={TextStyle.PANEL_HEADING_SMALL}
             />
           {:else}
-            <CalendarColumnPanelSelector bind:selectedPanel {layout} {panels} />
+            <CalendarColumnPanelSelector
+              bind:selectedPanel
+              {layout}
+              {panels}
+              {isCwContext}
+            />
           {/if}
           <CalendarColumnPanelResolver
             {selectedPanel}

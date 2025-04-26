@@ -15,6 +15,7 @@
   import QuickFocusItemsGridPulse from "./animations/thumbnailPulse/QuickFocusItemsGridPulse.svelte";
   import QuickFocusItemPulse from "./animations/thumbnailPulse/QuickFocusItemPulse.svelte";
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
+  import type { IKeyboardShortcut } from "$lib/client/components/shortcuts/shortcut.type";
   export let mainText: string | undefined = undefined;
   export let subText: string | undefined = undefined;
   export let size: Size.sm | Size.md | Size.lg = Size.md;
@@ -22,6 +23,7 @@
   export let isSearchContext: boolean = false;
   export let isNotAvailableContext: boolean = false;
   export let actionText: string | undefined = undefined;
+  export let actionShortcut: string | IKeyboardShortcut | undefined = undefined;
   export let loadingText: string | undefined = undefined;
   export let loadingAnimation: LoadingAnimationType =
     LoadingAnimationType.SPINNER;
@@ -86,7 +88,13 @@
       </div>
       {#if actionText}
         <div class="mt-4">
-          <Button label={actionText} size={Size.xs} on:click {parentBgIndex} />
+          <Button
+            label={actionText}
+            size={Size.xs}
+            on:click
+            {parentBgIndex}
+            shortcut={actionShortcut}
+          />
         </div>
       {/if}
     </div>

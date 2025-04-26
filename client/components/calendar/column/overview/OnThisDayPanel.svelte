@@ -188,7 +188,7 @@
   {:else}
     {#if lastMonthData.length > 0 && lastMonthDate}
       <HistoricalMetrics
-        title="1 Month Ago"
+        title="1 Month ago"
         date={lastMonthDate}
         totalFocus={lastMonthFocusHours}
       />
@@ -196,7 +196,7 @@
 
     {#if lastYearData.length > 0 && lastYearDate}
       <HistoricalMetrics
-        title="1 Year Ago"
+        title="1 Year ago"
         date={lastYearDate}
         totalFocus={lastYearFocusHours}
       />
@@ -204,7 +204,7 @@
 
     {#if twoYearsAgoData.length > 0 && twoYearsAgoDate}
       <HistoricalMetrics
-        title="2 Years Ago"
+        title="2 Years ago"
         date={twoYearsAgoDate}
         totalFocus={twoYearsAgoFocusHours}
       />

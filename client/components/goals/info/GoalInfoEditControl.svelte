@@ -2,15 +2,36 @@
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import ColorPickerMini from "$lib/client/elements/colorPicker/ColorPickerMini.svelte";
   import type { IActiveGoalStore } from "../goal.store";
+  import {
+    AlertType,
+    type IInlineStatus
+  } from "$lib/client/types/notification.type";
   import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
   import { resolveGoalSubTypesForSwitcher } from "../goal.utils";
   import { InputStyle } from "$lib/client/types/input.type";
+  import type { GoalType } from "../goal.type";
   export let goal: IActiveGoalStore;
   export let control: "color" | "type";
-  function handleColorChange(e: number | string) {
-    goal.modify({
+  export let status: IInlineStatus | undefined = undefined;
+  async function handleColorChange(e: number | string) {
+    status = {
+      message: "Updating color...",
+      type: AlertType.PROGRESS
+    };
+    const result = await goal.modify({
       color: +e
     });
+    if (!result || result.error) {
+      status = {
+        type: AlertType.ERROR,
+        message: "Failed to update goal color"
+      };
+      return;
+    }
+    status = {
+      message: "Color updated",
+      type: AlertType.SUCCESS
+    };
   }
 
   function resolveLabel(control: "color" | "type") {
@@ -18,6 +39,27 @@
       return "Color";
     }
     return "Type";
+  }
+
+  async function handleTypeChange(e: CustomEvent<GoalType>) {
+    status = {
+      message: "Updating type...",
+      type: AlertType.PROGRESS
+    };
+    const result = await goal.modify({
+      type: e.detail
+    });
+    if (!result || result.error) {
+      status = {
+        type: AlertType.ERROR,
+        message: "Failed to update goal type"
+      };
+      return;
+    }
+    status = {
+      message: "Type updated",
+      type: AlertType.SUCCESS
+    };
   }
 </script>
 
@@ -39,11 +81,7 @@
           value={$goal.type}
           isDisableSearch={true}
           style={InputStyle.PLAIN}
-          on:select={(e) => {
-            goal.modify({
-              type: e.detail
-            });
-          }}
+          on:select={handleTypeChange}
         />
       </div>
     {/if}

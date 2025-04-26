@@ -261,7 +261,7 @@
         />
       </div>
       {#if selectedPickFromPanel === "recents"}
-        {#if $focusItemsStore.recents && $focusItemsStore.recents.length > 10}
+        {#if $focusItemsStore.recents && $focusItemsStore.recents.length > 0}
           <Records
             data={$focusItemsStore.recents.map((x) => x.item).slice(0, 5)}
             resource={Resource.everything}

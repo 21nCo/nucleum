@@ -16,7 +16,12 @@
   }
 </script>
 
-<div class={cn("flex min-w-10 w-fit items-center")}>
+<div
+  class={cn("flex min-w-10 items-center", {
+    "w-full": isOverflowItem,
+    "w-fit": !isOverflowItem
+  })}
+>
   <button
     on:click
     on:keydown={handleKeyDown}

@@ -44,23 +44,21 @@
         class="flex-shrink-0"
         use:popover={{
           content: BreadcrumbsOverflowPopover,
-          triggerMethod: [
-            PopoverTriggerMethod.CLICK,
-            PopoverTriggerMethod.HOVER
-          ],
+          triggerMethod: [PopoverTriggerMethod.CLICK],
           componentProps: {
-            items: items.slice(1, -2)
+            items: items.slice(1, -1),
+            replaceId: items[items.length - 1].id
           }
         }}
       >
         <span class="px-2 rounded-md hover:bg-bgs2"> .... </span>
         <span class="px-2 opacity-50">/</span>
       </button>
-      {#each items.slice(-2) as item, index}
+      {#each items.slice(-1) as item, index}
         <BreadcrumbItem
           label={item.label}
           isDisabled={item.disabled}
-          isLast={index === 1}
+          isLast={index === 0}
           on:click={(e) => {
             onClick(e, item);
           }}

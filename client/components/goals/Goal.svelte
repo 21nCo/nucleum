@@ -29,12 +29,11 @@
   import type { IActiveGoal } from "./goal.type";
   import GoalAnalytics from "./GoalAnalytics.svelte";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import { toasts } from "$lib/client/stores/notification.store";
+  import { type IInlineStatus } from "$lib/client/types/notification.type";
   export let id: string;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   export let accessMode: ResourceAccessMode = ResourceAccessMode.POP;
-
+  export let status: IInlineStatus | undefined = undefined;
   let containerWidth = 0;
   let goal: IActiveGoalStore = ActiveGoalStore.resolve(id);
   let isReady = false;
@@ -149,7 +148,7 @@
   }
 
   function showAllProperties() {
-    selectedPanel = "properties";
+    setTab("properties");
   }
 
   async function rearrangePanels(e: CustomEvent) {
@@ -159,6 +158,12 @@
     const items = e.detail;
     await goal.modify({
       tabsOrder: items
+    });
+  }
+
+  function setTab(tab: string) {
+    appStore.toggleSearchParam({
+      [`${$goal.id.toString().slice(-5)}-${AppSearchParam.TAB}`]: tab
     });
   }
 </script>
@@ -185,7 +190,11 @@
         <aside
           class="flex flex-col gap-4 bg--bgs2 border border-brs3 rounded-lg p-4 w-96 2k:w-[30rem]"
         >
-          <GoalInfoPanel {goal} on:showAllProperties={showAllProperties} />
+          <GoalInfoPanel
+            {goal}
+            on:showAllProperties={showAllProperties}
+            bind:status
+          />
         </aside>
       {/if}
       <main class="flex flex-col gap-4 flex-1 overflow-auto">
@@ -193,7 +202,7 @@
           class="flex flex-col w-full overflow-auto gap-3 bg-bgs2 rounded-lg border border-brs3 shrink-0"
         >
           {#if isConstrainedWidth}
-            <GoalTitleRow {goal} isConstrainedWidth={true} />
+            <GoalTitleRow {goal} isConstrainedWidth={true} bind:status />
           {/if}
           <PanelSwitcher
             items={tabs}
@@ -205,10 +214,7 @@
             isRearrangeableByDefault={true}
             on:rearrange={rearrangePanels}
             on:switch={(e) => {
-              appStore.toggleSearchParam({
-                [`${$goal.id.toString().slice(-5)}-${AppSearchParam.TAB}`]:
-                  e.detail
-              });
+              setTab(e.detail);
             }}
           >
             <div slot="right">
@@ -230,6 +236,7 @@
             <GoalInfoPanel
               {goal}
               {isConstrainedWidth}
+              bind:status
               on:showAllProperties={showAllProperties}
             />
           {:else if selectedPanel === "subgoals"}

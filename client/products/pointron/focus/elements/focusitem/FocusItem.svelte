@@ -126,8 +126,8 @@
       >
         <div
           class={cn("text-left px-3 pt-3 font-medium truncate min-w-0 flex-1", {
-            "text-ccs1": goal.color,
-            "text-fgs2": !goal.color
+            "text-ccs1": color,
+            "text-fgs2": !color
           })}
         >
           <div>

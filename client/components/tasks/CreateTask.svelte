@@ -62,6 +62,9 @@
       if (event instanceof KeyboardEvent && event.shiftKey === true) {
         toasts.success("Task created successfully");
         label = "";
+        isShowGoalPicker = true;
+        goalId = undefined;
+        goal = undefined;
         return;
       }
     }
@@ -99,7 +102,6 @@
     {:else if goal}
       <TaskThumbnailGoalLabel
         {goal}
-        isPreventDefault={true}
         on:click={() => {
           isShowGoalPicker = true;
         }}

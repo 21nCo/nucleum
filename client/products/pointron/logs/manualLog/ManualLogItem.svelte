@@ -321,13 +321,14 @@
       <div
         class="flex justify-start w-full py-2 border border-bgs4 px-2 rounded-md"
       >
-        <button
-          class="flex justify-between items-center w-full"
+        <CustomColorPropagator
+          color={resolveGoalColor(selectedGoal)}
+          class="flex justify-between items-center w-full text-ccs1"
           on:click={onGoalClicked}
         >
           {selectedGoal.label}
-          <Icon icon="chevdown" />
-        </button>
+          <Button icon="ph:x-light" />
+        </CustomColorPropagator>
       </div>
     {:else}
       <TextSearchInput

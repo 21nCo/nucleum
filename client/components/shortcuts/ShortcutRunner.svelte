@@ -34,7 +34,7 @@
       appEvents.publish(event.key.toString() as GlobalEvent, event);
       return;
     }
-    if (isTextInputSource) return;
+    if (isTextInputSource && event.metaKey === false) return;
     const { shortcut, modifiers } = keyboardShortcuts.resolveShortcut(event);
     logger.log({
       at: "shortcutListener",

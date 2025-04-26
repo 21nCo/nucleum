@@ -43,6 +43,7 @@
     if (sessionsData) {
       focusSessions = sessionsData.data.filter(
         (x) =>
+          x &&
           x.startUnix >= dayFilter.greaterThanOrEqual &&
           x.startUnix <= dayFilter.lessThanOrEqual
       );

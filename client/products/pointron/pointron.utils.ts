@@ -198,7 +198,7 @@ function generateIntervals(composition: SessionComposition) {
 export function resolveSessionSplitFromIntervals(
   intervals: ISessionInterval[]
 ) {
-  intervals = intervals.filter((x) => x.progress > 0);
+  intervals = intervals.filter((x) => x && x.progress > 0);
   let focus = intervals
     .filter((x) => x.type === BlockType.FOCUS)
     .reduce((acc, curr) => acc + curr.duration * curr.progress, 0);

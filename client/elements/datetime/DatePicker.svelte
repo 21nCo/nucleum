@@ -80,7 +80,7 @@
   </InputBaseElement> -->
 
   <FormElement {style} {label} isFocused={isPopoverVisible}>
-    <div
+    <button
       class={cn("flex items-center gap-2 p-2 w-full", {
         "justify-center": variant == "wide-center",
         "justify-start": variant == "wide"
@@ -119,7 +119,7 @@
       {:else}
         <span class="text-fgs2 text-b2">{placeholder}</span>
       {/if}
-    </div>
+    </button>
   </FormElement>
 {:else if variant == "inline" || variant == "icon-only" || variant === "inline-with-icon"}
   <button
