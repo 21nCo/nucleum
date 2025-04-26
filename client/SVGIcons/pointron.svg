@@ -1,7 +1,11 @@
-<svg width="100%" height="100%" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
-<!-- <rect width="38" height="38" rx="0.351852" fill="white"/> -->
-<path d="M19.0004 9.55322C24.2188 9.55322 28.4492 13.7836 28.4492 19.002" stroke="currentColor" stroke-width="2.51968"/>
-<path d="M9.55078 19.002C9.55078 13.7836 13.7812 9.55322 18.9996 9.55322" stroke="currentColor" stroke-width="2.51968"/>
-<path d="M19.0006 28.449C13.7821 28.449 9.55176 24.2186 9.55176 19.0002" stroke="currentColor" stroke-width="2.51968"/>
-<path d="M28.4492 19.0002C28.4492 24.2186 24.2188 28.449 19.0004 28.449" stroke="currentColor" stroke-width="2.51968"/>
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 4.57422C16.1017 4.57422 19.4268 7.8993 19.4268 12.001" stroke="#333333"
+        stroke-width="2" />
+    <path d="M4.57324 12.001C4.57324 7.8993 7.89832 4.57422 12 4.57422" stroke="#333333"
+        stroke-width="2" />
+    <path d="M11.9998 19.4277C7.89808 19.4277 4.573 16.1027 4.573 12.001" stroke="#333333"
+        stroke-width="2" />
+    <path d="M19.4265 12.001C19.4265 16.1027 16.1014 19.4277 11.9997 19.4277" stroke="#333333"
+        stroke-width="2" />
 </svg>
+    

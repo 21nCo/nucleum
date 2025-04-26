@@ -44,6 +44,7 @@ export type ITileItem = {
 export type IListItem = {
   title: string;
   href?: string;
+  icon?: string;
 };
 
 export enum PanelName {
@@ -61,4 +62,27 @@ export type IFooter = {
   youtubeUrl?: string;
   discordUrl?: string;
   linkedinUrl?: string;
+};
+
+export type IHighlight = {
+  icon: string;
+  title: string;
+  desc: string;
+  visualRenderComponent: string;
+  isVisualAtBottom?: boolean;
+};
+
+export type IFeature = {
+  animationUrl: string;
+  feature: string;
+  title: string;
+  desc: string;
+  visualRenderComponent: string;
+  tutorialUrl?: string;
+};
+
+export type ITestimonial = {
+  name: string;
+  body: string;
+  source: string;
 };

@@ -8,14 +8,14 @@
 </script>
 
 <div
-  class={cn("h-[36px] mt-6 max-w-fit p-0", className)}
+  class={cn("max-w-fit p-0", className)}
   role="button"
   tabindex="0"
   on:click
   on:keypress
 >
   <p
-    class="text-[16px] tp:text-[20px] font-medium leading-[20px] text-center border-b border-fgs3 border-dashed"
+    class="text-[16px] font-medium text-center border-b border-fgs3 border-dashed hover:text-aps1"
   >
     {label}
   </p>

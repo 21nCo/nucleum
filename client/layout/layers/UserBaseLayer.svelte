@@ -538,7 +538,12 @@
   <DebugLayer />
 {/if}
 {#if $appLoadingState.isBaseLoaded}
-  <DynamicMetadataLayer />
+  <DynamicMetadataLayer
+    metadata={{
+      title: $appStore?.appData?.name ?? $appStore?.product,
+      ...$appStore?.appData?.meta
+    }}
+  />
   <ModalLayer />
   <ShortcutRunner />
   <CacheLayer />

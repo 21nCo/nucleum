@@ -1,16 +1,17 @@
 <script lang="ts">
   import { cn } from "$lib/client/utils/ui.utils";
-
   export let backgroundImage: string = "";
-  let className: string = "";
-  export { className as class };
+  export let expansion: "horizontal" | "vertical" | undefined = undefined;
 </script>
 
 <div
   class={cn(
-    "relative flex flex-col w-full max-w-[390px] min-h-[356px] 2k:max-w-[450px] rounded-[20px] p-7 bg-bgs2",
-    className,
-    backgroundImage ? "bg-cover" : ""
+    "relative flex flex-col rounded-xl p-6 bg-bgs1 gap-6 grow",
+    backgroundImage ? "bg-cover" : "",
+    {
+      "h-[196px] min-h-[180px]": expansion !== "vertical",
+      "min-w-[330px]": expansion !== "horizontal"
+    }
   )}
   style="background-image: url('{backgroundImage}');background-size:cover;"
 >

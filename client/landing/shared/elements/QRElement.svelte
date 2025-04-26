@@ -1,10 +1,10 @@
 <script lang="ts">
   import { paintQRCode } from "$lib/client/utils/ui.utils";
   import { onMount } from "svelte";
-
-  export let url: string = "https://21n.org";
+  import { companyWebsite } from "$lib/client/landing/shared/store/shared.store";
+  export let url: string = companyWebsite;
   export let enableHover: boolean = true;
-  export let width: number = 122;
+  export let width: number = 72;
 
   let canvas: HTMLCanvasElement;
   export let isHovering: boolean = false;

@@ -2,17 +2,20 @@
   import BlankLandingLayout from "$lib/client/landing/shared/BlankLandingLayout.svelte";
   import appearance from "$lib/client/stores/appearance.store";
   import type { IFooter } from "../shared/Landing.types";
-
+  import type { IMetadata } from "$lib/client/layout/metadata.type";
   let topNavBarValues: any = {
     icon: "pointron",
     title: "Pointron",
     items: [
-      { label: "Discord", href: "https://discord.com/invite/9HJqKYTZKg" },
-      { label: "Roadmap", href: "https://docs.pointron.app/pointron/roadmap" }
-      // { label: "Pricing", href: "/pricing" }
+      { label: "Pricing", href: "/pricing" },
+      {
+        label: "Docs",
+        href: "https://docs.pointron.app/"
+      },
+      { label: "Discord", href: "https://discord.com/invite/9HJqKYTZKg" }
     ],
     cta: {
-      label: "Access Web",
+      label: "Go to web app",
       href: "https://web.pointron.app"
     }
   };
@@ -25,6 +28,13 @@
     roadmapUrl: "https://docs.pointron.app/pointron/roadmap",
     changelogUrl: "https://docs.pointron.app/changelog/pointron/new"
   };
+  let metadata: IMetadata = {
+    title: "Pointron",
+    description:
+      "Pointron is a focus time tracker that helps you stay focused and productive.",
+    keywords: "pointron, focus, time, tracker, productivity",
+    url: "https://pointron.app"
+  };
 </script>
 
 <!-- {#if import.meta.env.DEV}
@@ -35,6 +45,11 @@
   </div>
 {/if} -->
 
-<BlankLandingLayout {topNavBarValues} {footerValues} isProduct={true}>
+<BlankLandingLayout
+  {topNavBarValues}
+  {footerValues}
+  isProduct={true}
+  {metadata}
+>
   <slot />
 </BlankLandingLayout>

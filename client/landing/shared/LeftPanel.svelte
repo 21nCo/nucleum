@@ -2,6 +2,7 @@
   import { addAnimateClass } from "$lib/client/utils/ui.utils";
   import { PanelName } from "./Landing.types";
   import PanelButton from "./elements/PanelButton.svelte";
+  import { companyWebsite } from "$lib/client/landing/shared/store/shared.store";
   export let isProduct: boolean = false;
   const id: string = "left-panel";
 </script>
@@ -15,6 +16,6 @@
   on:click={async () => {
     if (!isProduct) return;
     await addAnimateClass("animate-bounce-l", id);
-    window.location.href = "https://21n.org/";
+    window.location.href = companyWebsite;
   }}
 />
