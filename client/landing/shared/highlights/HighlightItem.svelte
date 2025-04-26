@@ -3,7 +3,7 @@
   import SVGIcon from "$lib/client/elements/SVGIcon.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import type { IHighlight } from "../Landing.types";
-  import VisualComponentMap from "./VisualComponentMap.svelte";
+  import VisualRender from "../VisualRender.svelte";
   export let highlight: IHighlight;
   export let isFullWidth: boolean = false;
 </script>
@@ -27,6 +27,6 @@
   </div>
 
   <div class="flex-1 flex justify-center items-center">
-    <VisualComponentMap name={highlight.visualRenderComponent} />
+    <VisualRender name={highlight.visualRenderComponent} />
   </div>
 </div>

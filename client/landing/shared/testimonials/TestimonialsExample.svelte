@@ -58,6 +58,6 @@
 
 <Testimonials
   {testimonials}
-  title="Friends of Pointron"
-  subtitle="See what our users are saying"
+  title="Join the community"
+  subtitle="Discover what our community has to say about their Pointron experience."
 />

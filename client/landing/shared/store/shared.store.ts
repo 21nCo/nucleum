@@ -4,6 +4,14 @@ import { GlobalEvent } from "$lib/client/types/event.enum";
 import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
 
 const staticUrl = import.meta.env.VITE_STATIC_URL;
+export const companyName = "Phinative soft private limited";
+export const companyAddress = "Hyderabad, India";
+export const companyEmail = "contact@21n.org";
+export const companyPhone = "+91 9985563939";
+export const companyWebsite = "https://21n.org";
+export const whitePaperUrl = "https://papers.21n.org/soft";
+export const discordUrl = "https://21n.org/community";
+export const twitterUrl = "https://x.com/21nOrg";
 
 export const currentProductsStore = readable<ITileItem[]>([
   {

@@ -15,9 +15,12 @@
   import { Theme } from "$lib/client/types/appearance.type";
   import QrElement from "../elements/QRElement.svelte";
   import {
+    companyName,
+    companyWebsite,
     isProductPage,
     isProductsPanelOpen,
-    landing
+    landing,
+    whitePaperUrl
   } from "../store/shared.store";
   import ButtonAsLink from "../ButtonAsLink.svelte";
   export let products: IListItem[];
@@ -71,9 +74,9 @@
   ];
   let joinUs = {
     title: "Read our white paper",
-    href: "https://tally.so/r/wLzN8j",
+    href: whitePaperUrl,
     description:
-      "Discover 21n’s vision for a sustainable, connected future driven by innovation, collaboration, and a commitment to people and the planet."
+      "Discover our mission to enable human progress by building technology with triple bottom line at its core."
   };
 
   let ourStory = {
@@ -200,15 +203,20 @@
     class="w-full rounded-xl flex mo:flex-col mo:gap-y-4 items-center bg-bgs1 px-7 py-4 mo:px-0 mo:py-4 min-w-0 flex-1 text-b2 2k:text-lb2"
   >
     {#if !$view.isPortrait}
-      <p>
+      <div class="flex items-center gap-2 text-fgs3">
         {#if $isProductPage}
-          <span>Built at</span>
+          <span class="-mb-0.5">Built at</span>
         {/if}
-        21n
-      </p>
-      &nbsp;|&nbsp;HQ: Hyderabad, India
+        <SvgIcon
+          icon="21n-temp"
+          size={Size.xl}
+          on:click={() => {
+            window.location.href = companyWebsite;
+          }}
+        />
+      </div>
     {/if}
-    <div class="mx-auto flex gap-5 mo:gap-3">
+    <div class="flex mx-auto gap-5 mo:gap-3">
       {#each socials as social, index}
         <button
           style="--bg-color:{social.isHovered
@@ -230,6 +238,6 @@
         </button>
       {/each}
     </div>
-    <p class="">Blank labs private limited</p>
+    <p class="text-fgs3">{companyName}</p>
   </div>
 </div>

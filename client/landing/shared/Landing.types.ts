@@ -73,10 +73,12 @@ export type IHighlight = {
 };
 
 export type IFeature = {
+  animationUrl: string;
   feature: string;
   title: string;
   desc: string;
   visualRenderComponent: string;
+  tutorialUrl?: string;
 };
 
 export type ITestimonial = {
