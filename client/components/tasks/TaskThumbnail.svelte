@@ -69,8 +69,10 @@
     const record = event.detail.params?.record;
     if ("isChecked" in record) {
       if (!record.isChecked) {
+        item.isChecked = false;
         item.completedAtUnix = undefined;
       } else {
+        item.isChecked = true;
         item.completedAtUnix = resolveUnixTimestamp();
       }
     } else if ("goalId" in record && record.goalId !== item.goalId) {

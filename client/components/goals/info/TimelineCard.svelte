@@ -49,7 +49,7 @@
 <div
   class="flex flex-col gap-4 rounded-md border border-brs3 px-3 py-4 userdata"
 >
-  <div class="flex gap-2 justify-between w-full text-fgs3 text-b2 underline">
+  <div class="flex gap-2 justify-between w-full text-fgs3 text-b2">
     <DatePicker
       date={startDate}
       style={InputStyle.PLAIN}

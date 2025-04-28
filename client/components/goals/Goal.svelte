@@ -30,6 +30,7 @@
   import GoalAnalytics from "./GoalAnalytics.svelte";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
   import { type IInlineStatus } from "$lib/client/types/notification.type";
+  import { logger } from "../debug/logger.client";
   export let id: string;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   export let accessMode: ResourceAccessMode = ResourceAccessMode.POP;
@@ -47,31 +48,43 @@
   $: tabs = resolvePanelSwitcherItems($goal, isConstrainedWidth);
 
   let selectedPanel = isConstrainedWidth ? "info" : "subgoals";
+  initialize();
 
   onMount(() => {
-    const editSearchParam = $page.url.searchParams.get(AppSearchParam.EDIT);
-    const linkSearchParam = $page.url.searchParams.get(AppSearchParam.LINK);
-    goal.init(accessMode, {
-      isInEditMode: editSearchParam === "true",
-      linkSearchParam: linkSearchParam ?? undefined
-    });
     const pageSub = page.subscribe((page) => {
       const tab = resolveTabParam();
       if (tab) {
         selectedPanel = tab;
       }
     });
-    isReady = true;
     return () => {
       pageSub();
     };
   });
 
+  async function initialize() {
+    const editSearchParam = $page.url.searchParams.get(AppSearchParam.EDIT);
+    const linkSearchParam = $page.url.searchParams.get(AppSearchParam.LINK);
+    await goal.init(accessMode, {
+      isInEditMode: editSearchParam === "true",
+      linkSearchParam: linkSearchParam ?? undefined
+    });
+    isReady = true;
+  }
+
   function resolveTabParam() {
-    if (!$goal) return;
-    return $page.url.searchParams.get(
-      `${$goal.id.toString().slice(-5)}-${AppSearchParam.TAB}`
-    );
+    try {
+      if (!$goal) return;
+      return $page.url.searchParams.get(
+        `${$goal.id.toString().slice(-5)}-${AppSearchParam.TAB}`
+      );
+    } catch (error) {
+      logger.error({
+        at: "Goal.svelte",
+        error,
+        goalId: $goal?.id
+      });
+    }
   }
 
   function resolvePanelSwitcherItems(

@@ -186,7 +186,7 @@
         <!-- {selectedDate.getDate()}
         {currentMonth}
         {currentYear} -->
-        <DatePicker bind:date={selectedDate} />
+        <DatePicker bind:date={selectedDate} variant="inline" />
       {/if}
     </h2>
     {#if isRefreshing}

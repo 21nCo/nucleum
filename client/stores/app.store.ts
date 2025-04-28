@@ -157,7 +157,8 @@ const recordSpecificSearchParams = [
   AppSearchParam.POP_AT,
   AppSearchParam.FSPLIT_AT,
   AppSearchParam.FULL_AT,
-  AppSearchParam.LINK
+  AppSearchParam.LINK,
+  AppSearchParam.DATE
 ];
 
 export const appStore = initAppStore({

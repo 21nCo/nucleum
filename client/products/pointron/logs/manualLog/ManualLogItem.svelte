@@ -43,6 +43,7 @@
     resourceInList
   } from "$lib/client/components/flux/resourceStores/resource.utils";
   import view from "$lib/client/stores/view.store";
+  import { cn } from "$lib/client/utils/ui.utils";
   export let item: IManualSessionLogForm;
 
   let previousStartDate: Date = item.startDate;
@@ -300,7 +301,13 @@
 </script>
 
 <div
-  class="relative flex flex-col gap-12 border border-brs2 py-8 xl:py-6 rounded-md w-full"
+  class={cn(
+    "relative flex flex-col border border-brs2 py-8 xl:py-6 rounded-md w-full",
+    {
+      "gap-12": !error,
+      "gap-4": error
+    }
+  )}
 >
   {#if $manualLogStore.manualLogs.length > 1}
     <div class="absolute bg-bgs1 right-1 -top-3">
@@ -360,6 +367,9 @@
       {/if}
     {/if}
   </div>
+  {#if error}
+    <InlineErrorMessage isDissappear={false} bind:error />
+  {/if}
   <div class="flex flex-col gap-6">
     <div class="flex justify-start">
       <PanelSwitcher
@@ -428,7 +438,4 @@
       />
     </div>
   </div>
-  {#if error}
-    <InlineErrorMessage isDissappear={false} bind:error />
-  {/if}
 </div>

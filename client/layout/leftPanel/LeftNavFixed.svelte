@@ -20,7 +20,7 @@
       : undefined;
 </script>
 
-<button
+<div
   class={cn(
     "leftnav flex justify-center items-center h-full w-[5.5rem] min-w-[5.5rem]",
     {
@@ -28,7 +28,6 @@
       "border--r border-r-brs2": !isRounded
     }
   )}
-  tabindex="-1"
 >
   <div
     class={cn(
@@ -89,4 +88,4 @@
       <LeftBottomBar isInThinMode={true} {isRounded} size={Size.lg} />
     </div>
   </div>
-</button>
+</div>

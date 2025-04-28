@@ -1,7 +1,9 @@
 <script lang="ts">
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { Action } from "$lib/client/types/action.enum";
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
   import { TimeFormat } from "$lib/client/types/time.type";
   import { formatDate, formatSeconds } from "$lib/client/utils/time.utils";
 
@@ -14,8 +16,8 @@
 <button
   class="flex flex-col items-center h-60 w-48 rounded-xl bg-bgs2 shadow-lg overflow-hidden flex-1 min-w-48"
   on:click={() => {
-    appStore.runAction(Action.CALENDAR_DAY, {
-      componentParams: { date }
+    appStore.openResource(Action.CALENDAR_DAY, ResourceAccessMode.POP, {
+      searchParams: { [AppSearchParam.DATE]: date.toISOString() }
     });
   }}
 >

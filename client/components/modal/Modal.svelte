@@ -201,7 +201,7 @@
       {:else}
         <div
           id={id + "-modal"}
-          class={cn("bg-bgs1 mo:w-full mo:h-full max-h-full", {
+          class={cn("bg-bgs1 mo:w-full mo:h-full max-h-full cursor-default", {
             ...resolveSizeClasses(),
             "mo:rounded-none rounded-md": size !== Size.full
           })}

@@ -1,3 +1,4 @@
+import type { Resource } from "../components/flux/resourceStores/resource.enum";
 import type { ResourceAccessMode } from "../components/flux/resourceStores/resource.type";
 import type { UserDataMode } from "./account.type";
 import { Embed, OperatingSystem, type IAppContext } from "./context.type";
@@ -99,6 +100,10 @@ export type IAction = {
     placeholder?: string | ((params?: any) => string);
     searchResultComponent?: any;
     callback: (id: string, label?: string, componentParams?: any) => void;
+    /**
+     * Resource type of search results if already pre-known.
+     */
+    searchResourceType?: Resource;
   };
   /**
    * Contexts in which the action will be hidden.

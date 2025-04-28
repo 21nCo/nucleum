@@ -302,6 +302,7 @@ export class ActiveGoalStore extends CollectibleStore<IActiveGoal, GoalStore> {
           modifiedAt: new Date().toISOString(),
           createdAt: new Date().toISOString(),
           accessMode,
+          ...(params?.isInEditMode && { isInEditMode: true }),
           isPageLoading: false
         });
         return;
