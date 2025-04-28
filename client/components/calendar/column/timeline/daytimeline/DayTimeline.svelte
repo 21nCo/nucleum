@@ -318,7 +318,7 @@
     </div> -->
     <div
       class="border-l border-brs3 absolute left-16"
-      style="height: {24 * hourHeight}px;"
+      style="height: {25 * hourHeight}px;"
     ></div>
     <div
       class="timeline-content relative pb-4"
@@ -336,7 +336,7 @@
               new Date(new Date().setHours(hour, 0, 0, 0))
             )}
           </span>
-          <div class="hour-marker grow border-t border-bgs3"></div>
+          <div class="hour-marker grow border-t border-brs2"></div>
         </div>
       {/each}
 

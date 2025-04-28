@@ -10,8 +10,8 @@
 </script>
 
 <div class="flex flex-col gap-6 w-full p-4">
-  <Text style={TextStyle.PAGE_HEADING_SUBTLE} content="Calendar" />
-  <DatePickerRow
+  <!-- <Text style={TextStyle.PAGE_HEADING_SUBTLE} content="Calendar" /> -->
+  <!-- <DatePickerRow
     density={Size.lg}
     isDateMode={true}
     date={selectedDate}
@@ -23,7 +23,7 @@
       selectedDate = e.detail;
       viewDate = selectedDate;
     }}
-  />
+  /> -->
   <div class="flex flex-grow w-full">
     {#key selectedDate}
       <CalendarColumn
