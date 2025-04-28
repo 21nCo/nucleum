@@ -413,7 +413,7 @@ function initAppStore(seed: IAppStore) {
         ? `localredirect.${host}`
         : ctx.isEmbed &&
             (ctx.os === OperatingSystem.IOS || ctx.os === OperatingSystem.MACOS)
-          ? `schemeredirect_${app.product.toLowerCase()}.${host}`
+          ? `${app.product.toLowerCase()}_schemeredirect.${host}`
           : host;
     const state = guestPartForState + ":" + domainPartForState;
     let url =
