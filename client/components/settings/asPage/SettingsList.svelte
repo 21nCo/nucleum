@@ -25,7 +25,7 @@
   }
 </script>
 
-<div class="flex flex-col gap-2 bg-bgs2 rounded-lg mx-4">
+<div class="flex flex-col gap-2 bg-bgs1 rounded-lg mx-4">
   {#if sectionName}
     <div class="pl-4 pt-4">
       <Text style={TextStyle.SECTION_HEADING} content={sectionName} />
@@ -42,7 +42,7 @@
           {orientation}
           action={item}
           setActiveByPath={true}
-          parentBackgroundIndex={2}
+          parentBackgroundIndex={1}
           isShowDivider={true}
           isRoundedTop={!sectionName}
           isRoundedBottom={index === items.length - 1}

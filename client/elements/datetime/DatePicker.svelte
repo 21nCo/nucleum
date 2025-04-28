@@ -124,7 +124,8 @@
 {:else if variant == "inline" || variant == "icon-only" || variant === "inline-with-icon"}
   <button
     class={cn("relative flex items-center gap-1 justify-center", {
-      "p-1 hover:bg-bgs2 rounded-md": variant === "icon-only"
+      "p-1 hover:bg-bgs2 rounded-md": variant === "icon-only",
+      "underline-dotted": variant === "inline"
     })}
     bind:this={ref}
     use:popover={{

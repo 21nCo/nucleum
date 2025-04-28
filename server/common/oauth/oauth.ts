@@ -75,7 +75,7 @@ export async function processOAuthRedirection(
     domainPart.includes("localredirect") ||
     domainPart.includes("schemeredirect")
   ) {
-    app = domainPart.split("_")[1];
+    app = domainPart.split(".")[1];
   } else {
     app = domainPart;
   }

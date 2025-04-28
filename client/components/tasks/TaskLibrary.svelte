@@ -21,6 +21,7 @@
   import TaskRecords from "./TaskRecords.svelte";
   import {
     IResourceFilterDateGrouping,
+    RemovalProperty,
     type IRecordId
   } from "$lib/client/types/data.type";
   import InlineSearchBar from "$lib/client/elements/InlineSearchBar.svelte";
@@ -501,10 +502,15 @@
   syncDownOnMount={true}
   subscribeToResource={new Set([Resource.task])}
   subscribeToContext={new Set([
+    ResourceAccessPoint.SELF,
     resolveAccessPoint(),
     resourceAction(Resource.task, ResourceActionType.CREATE)
   ])}
-  isSubscribeToRemovalPropertiesOnly={true}
+  subScriptionPropsForMergeAction={[
+    RemovalProperty.IS_ARCHIVED,
+    RemovalProperty.TRASH_INFORMATION,
+    "dateUnix"
+  ]}
   on:syncDown={() => {
     refresh();
   }}

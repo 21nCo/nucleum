@@ -49,7 +49,7 @@
   <ModalLayout path={action.action} params={action.modalParams ?? {}}>
     <svelte:component this={action?.component} {...params} />
   </ModalLayout>
-{:else if action}
+{:else if action?.component}
   <svelte:component this={action?.component} {...params} />
 {:else}
   <PageError />

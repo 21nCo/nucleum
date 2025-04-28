@@ -199,37 +199,44 @@
       {/if}
       <main class="flex flex-col gap-4 flex-1 overflow-auto">
         <div
-          class="flex flex-col w-full overflow-auto gap-3 bg-bgs2 rounded-lg border border-brs3 shrink-0"
+          class="relative flex flex-col w-full overflow-auto gap-3 bg-bgs2 rounded-lg border border-brs3 shrink-0"
         >
           {#if isConstrainedWidth}
             <GoalTitleRow {goal} isConstrainedWidth={true} bind:status />
           {/if}
-          <PanelSwitcher
-            items={tabs}
-            style={PanelSwitcherStyle.BAR}
-            value={selectedPanel}
-            isExpandToFullWidth={true}
-            parentBgIndex={2}
-            isBgBar={true}
-            isRearrangeableByDefault={true}
-            on:rearrange={rearrangePanels}
-            on:switch={(e) => {
-              setTab(e.detail);
-            }}
-          >
-            <div slot="right">
-              {#if $goal.accessMode === ResourceAccessMode.FULL}
-                <Button
-                  icon="ph:x-light"
-                  tooltip="Close full screen"
-                  parentBgIndex={2}
-                  on:click={() => {
-                    appStore.closeResource({ id: $goal.id });
-                  }}
-                />
-              {/if}
-            </div>
-          </PanelSwitcher>
+          <div class="relative">
+            <PanelSwitcher
+              items={tabs}
+              style={PanelSwitcherStyle.BAR}
+              value={selectedPanel}
+              isExpandToFullWidth={true}
+              parentBgIndex={2}
+              isBgBar={true}
+              isRearrangeableByDefault={true}
+              on:rearrange={rearrangePanels}
+              on:switch={(e) => {
+                setTab(e.detail);
+              }}
+            >
+              <div slot="right">
+                {#if $goal.accessMode === ResourceAccessMode.FULL}
+                  <Button
+                    icon="ph:x-light"
+                    tooltip="Close full screen"
+                    parentBgIndex={2}
+                    on:click={() => {
+                      appStore.closeResource({ id: $goal.id });
+                    }}
+                  />
+                {/if}
+              </div>
+            </PanelSwitcher>
+            {#if isConstrainedWidth}
+              <div
+                class="w-10 bg-gradient-to-r from-bgs2/20 to-bgs2 absolute right-0 top-0 h-full"
+              />
+            {/if}
+          </div>
         </div>
         <div class="flex-1 overflow-auto">
           {#if selectedPanel === "info"}

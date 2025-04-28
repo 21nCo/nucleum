@@ -34,7 +34,7 @@
         "gap-5 pt-4": isInEditMode
       })}
     >
-      {#each items as item, index (item)}
+      {#each items as item, index (item.id)}
         <QuickStartThumbnail
           {item}
           {layout}

@@ -35,7 +35,7 @@
         )}
         on:click={() => appStore.runAction(Action.SETTINGS)}
       >
-        <Icon icon="ph:gear-six-light" isAccentBgContext={isCpActive} {size} />
+        <Icon icon="ph:gear-fine-light" isAccentBgContext={isCpActive} {size} />
       </button>
       <button
         class={cn(

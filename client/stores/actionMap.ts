@@ -72,7 +72,8 @@ import { goalStore } from "../components/goals/goal.store";
 import CreateTask from "../components/tasks/CreateTask.svelte";
 import GoalSearchResultItem from "../components/goals/GoalSearchResultItem.svelte";
 import { taskStore } from "../components/tasks/task.store";
-import Task from "../components/tasks/Task.svelte";
+// import Task from "../components/tasks/Task.svelte";
+import Task from "../components/tasks/DummyTask.svelte";
 import ResourceSearchModal from "../products/memotron/library/search/ResourceSearchModal.svelte";
 import DummyCollection from "../components/collection/DummyCollection.svelte";
 import AppLoadingView from "../layout/paint/AppLoadingView.svelte";
@@ -757,7 +758,7 @@ export const globalActions: IAction[] = [
   {
     action: Resource.task,
     isMeta: true,
-    type: ActionType.MODAL,
+    type: ActionType.RESOURCE,
     component: Task,
     modalParams: {
       layout: {

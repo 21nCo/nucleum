@@ -6,7 +6,7 @@
   } from "$lib/client/types/appStore.type";
   import { onMount } from "svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
-  import CpThumbnailList from "./SettingsList.svelte";
+  import SettingsList from "./SettingsList.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
   import ProfileCpSection from "../account/ProfileCPSection.svelte";
@@ -48,7 +48,7 @@
     </div>
   </div>
 {:else if isCpHome || !$view.isPortrait}
-  <div class="flex w-full h-full">
+  <div class="flex w-full h-full bg-bgs2">
     <Panel title="Settings">
       <div
         slot="nonpadded"
@@ -59,10 +59,11 @@
             appStore.toggleSearchParam({
               [AppSearchParam.SETTING]: "account"
             })}
+          parentBackgroundIndex={0}
         />
         {#if cpConfiguration}
           {#each cpConfiguration as item}
-            <CpThumbnailList
+            <SettingsList
               sectionName={item.isHideTitle ? "" : item.section}
               items={item.children}
               orientation={item.orientation

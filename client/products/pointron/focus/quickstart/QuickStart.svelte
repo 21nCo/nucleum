@@ -124,7 +124,7 @@
     isLoadingState = false;
   }
 
-  function createNewGoal() {
+  function createNewGoal(isPreventOpenAfterCreate: boolean = true) {
     appStore.runAction(
       resourceAction(Resource.goal, ResourceActionType.CREATE),
       {
@@ -132,7 +132,7 @@
           isQuickFocus: true,
           context: PointronAction.PIN_TO_QUICK_FOCUS,
           label: searchQuery,
-          isPreventOpenAfterCreate: true
+          isPreventOpenAfterCreate
         }
       }
     );
@@ -148,7 +148,7 @@
       isPadded={true}
       on:search={onSearch}
       placeholder="Search a goal to quick focus"
-      on:enter={createNewGoal}
+      on:enter={() => createNewGoal()}
     />
     <!-- <div class="mo:p-0 px-3">
       <TagsContainer
@@ -214,7 +214,7 @@
         ? "Press **Enter** to create a new goal & pin it here"
         : "Please create a new goal or pin an existing one"}
       actionText={"Create new goal"}
-      on:click={createNewGoal}
+      on:click={() => createNewGoal(false)}
     />
   {/if}
 </div>

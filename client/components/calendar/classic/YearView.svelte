@@ -287,18 +287,21 @@
                 {#if date}
                   {@const isSelected = isSameDay(selectedDate, date)}
                   {@const isCurrentDay = isToday(date)}
+                  {@const isPastDay = isPastDate(date)}
                   <button
                     class={cn(
                       "py-1 rounded-md border flex flex-col items-center justify-center h-9 w-9",
                       {
-                        "text-fgs4 border-transparent":
-                          isPastDate(date) && !isSelected,
+                        "bg-aps1 text-abg border-transparent": isSelected,
                         "text-ass1 font-medium border-ass1 notouch:hover:bg-ass2 active:bg-ass2":
-                          isCurrentDay && !isSelected,
-                        "text-fgs2 hover:text-fgs1 border-transparent notouch:hover:bg-bgs2 active:bg-bgs2":
-                          !isCurrentDay && !isSelected,
-                        "bg-aps1 text-abg border-transparent": isSelected
-                      }
+                          isCurrentDay && !isSelected
+                      },
+                      !isSelected &&
+                        !isCurrentDay && {
+                          "hover:text-fgs1 border-transparent notouch:hover:bg-bgs2 active:bg-bgs2": true,
+                          "text-fgs2 border-transparent": isPastDay,
+                          "text-fgs3": !isPastDay
+                        }
                     )}
                     on:click={() => {
                       selectedDate = date;

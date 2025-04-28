@@ -51,6 +51,7 @@
   let isHovering = false;
   let isDatePickerOpen = false;
   let isShowDatePickerOnCw = false;
+  const dev_isEnableBorderAnimation = false;
   $: isOverdue =
     !item.isChecked &&
     item.dateUnix &&
@@ -128,7 +129,7 @@
       speed: 4000,
       borderWidth: "2px",
       borderColor: "aps2",
-      enabled: isCurrentlyFocusing
+      enabled: isCurrentlyFocusing && dev_isEnableBorderAnimation
     }}
     use:hoverable={{
       onHover: (value) => {

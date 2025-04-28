@@ -50,8 +50,15 @@
         />
       </div>
       {#if trialDaysLeft && trialDaysLeft < 15}
+        {@const isTrialExpired = trialDaysLeft <= 0}
         <button
-          class="flex flex-col gap-1 justify-center items-center bg-aps2 border border-aps1 rounded-md p-1.5 mx-1.5"
+          class={cn(
+            "flex flex-col gap-1 justify-center items-center border rounded-md p-1.5 mx-1.5",
+            {
+              "bg-ars2 border-ars1": isTrialExpired,
+              "bg-aps2 border-aps1": !isTrialExpired
+            }
+          )}
           on:click={() =>
             appStore.runAction(Action.SETTINGS, {
               searchParams: {
@@ -61,7 +68,11 @@
         >
           <span class="text-b2"> Trial </span>
           <span class="text-b4">
-            {trialDaysLeft} days left
+            {#if !isTrialExpired}
+              {trialDaysLeft} {trialDaysLeft === 1 ? "day" : "days"} left
+            {:else}
+              expired
+            {/if}
           </span>
         </button>
       {/if}

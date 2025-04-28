@@ -56,19 +56,7 @@
   }
 
   function onResourceMutation(event: CustomEvent) {
-    const params = event.detail?.params;
-    if (params?.action === PersistenceActionType.INSERT) {
-      refreshTimeline();
-    } else if (
-      params?.action === PersistenceActionType.MERGE &&
-      (params?.record?.dateUnix ||
-        Object.values(RemovalProperty).some(
-          (x) => params?.record[x] !== undefined
-        ))
-    ) {
-      refreshTimeline();
-    }
-    //TODO - add for bulk merge case
+    refreshTimeline();
   }
 </script>
 
@@ -116,8 +104,14 @@
   subscribeToResource={new Set([Resource.task])}
   subscribeToContext={new Set([
     ResourceAccessPoint.CALENDAR,
+    ResourceAccessPoint.SELF,
     resourceAction(Resource.task, ResourceActionType.CREATE)
   ])}
+  subScriptionPropsForMergeAction={[
+    RemovalProperty.IS_ARCHIVED,
+    RemovalProperty.TRASH_INFORMATION,
+    "dateUnix"
+  ]}
   on:syncDown={() => {
     refreshTimeline();
   }}
