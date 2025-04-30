@@ -1,6 +1,6 @@
 <script lang="ts">
   import BlankLandingLayout from "$lib/client/landing/shared/BlankLandingLayout.svelte";
-  import type { IFooter } from "../shared/Landing.types";
+  import type { IFooter } from "../shared/landing.type";
 
   const topNavBarValues = {
     icon: "21n-temp",

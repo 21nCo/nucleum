@@ -2,7 +2,7 @@
   import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
   import view from "$lib/client/stores/view.store";
   import { onMount } from "svelte";
-  import type { ITileItem } from "../Landing.types";
+  import type { ITileItem } from "../landing.type";
   import PanelButton from "../elements/PanelButton.svelte";
   import { isProductsPanelOpen } from "../store/shared.store";
   import TileItem from "./TileItem.svelte";
@@ -28,9 +28,7 @@
   <div class="flex flex-col gap-5 w-full pt-10 px-10 mo:px-6">
     <!-- {#if $view.isPortrait} -->
     <div class="flex pb-4">
-      <p class="text-[17px] tp:text-[28px] leading-6 font-extrabold">
-        Products from 21n
-      </p>
+      <p class="text-h3 font-medium">Products from 21n</p>
       {#if $view.isPortrait}
         <SvgIcon
           icon="close"
@@ -45,11 +43,6 @@
     <!-- {/if} -->
     <div class="flex flex-col gap-20 pb-10 overflow-y-scroll">
       <div class="flex flex-col gap-3">
-        <p
-          class="text-fgs2 text-[21px] mo:text-[15px] leading-[28px] mo:leading-5 font-medium"
-        >
-          Apps
-        </p>
         <div class="grid grid-cols-2 gap-6">
           {#each currentProducts as product}
             <TileItem
@@ -61,11 +54,7 @@
         </div>
       </div>
       <div class="flex flex-col gap-3">
-        <p
-          class="text-fgs2 text-[21px] mo:text-[15px] leading-[28px] mo:leading-5 font-medium"
-        >
-          Upcoming
-        </p>
+        <p class="text-fgs2 text-h4 font-medium">Upcoming</p>
         <div class="grid grid-cols-2 gap-3">
           {#each upcomingProducts as product}
             <TileItem item={product} isPanelView={true} />

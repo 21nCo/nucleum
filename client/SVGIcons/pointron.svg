@@ -1,11 +1,4 @@
 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M12 4.57422C16.1017 4.57422 19.4268 7.8993 19.4268 12.001" stroke="#333333"
-        stroke-width="2" />
-    <path d="M4.57324 12.001C4.57324 7.8993 7.89832 4.57422 12 4.57422" stroke="#333333"
-        stroke-width="2" />
-    <path d="M11.9998 19.4277C7.89808 19.4277 4.573 16.1027 4.573 12.001" stroke="#333333"
-        stroke-width="2" />
-    <path d="M19.4265 12.001C19.4265 16.1027 16.1014 19.4277 11.9997 19.4277" stroke="#333333"
-        stroke-width="2" />
+    <circle cx="12" cy="12" r="7.50418" class="stroke-fgs1" stroke-width="1.99163" />
 </svg>
     

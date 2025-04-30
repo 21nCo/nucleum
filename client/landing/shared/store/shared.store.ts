@@ -1,17 +1,22 @@
 import { readable, writable } from "svelte/store";
-import type { ITileItem } from "../Landing.types";
+import type {
+  ILandingProductUrls,
+  ILandingStoreSubject,
+  ITileItem
+} from "../landing.type";
 import { GlobalEvent } from "$lib/client/types/event.enum";
 import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
 
 const staticUrl = import.meta.env.VITE_STATIC_URL;
-export const companyName = "Phinative soft private limited";
+export const companyName = "Phinative soft pvt ltd.";
 export const companyAddress = "Hyderabad, India";
 export const companyEmail = "contact@21n.org";
 export const companyPhone = "+91 9985563939";
 export const companyWebsite = "https://21n.org";
 export const whitePaperUrl = "https://papers.21n.org/soft";
-export const discordUrl = "https://21n.org/community";
+export const discordUrl = "https://discord.com/invite/9HJqKYTZKg";
 export const twitterUrl = "https://x.com/21nOrg";
+export const youtubeUrl = "https://www.youtube.com/@21nOrg";
 
 export const currentProductsStore = readable<ITileItem[]>([
   {
@@ -121,10 +126,20 @@ export const isProductsPanelOpen = writable<Boolean>(false);
 export const isProductPage = writable<Boolean>(false);
 
 class LandingStore {
+  protected subject = writable<ILandingStoreSubject>();
+  subscribe = this.subject.subscribe;
+  update = this.subject.update;
+
+  load(urls: ILandingProductUrls) {
+    this.subject.set({ urls });
+  }
+
   openLink(url: string) {
     if (!url) return;
     if (!url.includes("http")) {
-      dispatchCustomEvent(GlobalEvent.CUSTOM_NAVIGATION, { path: url });
+      // dispatchCustomEvent(GlobalEvent.CUSTOM_NAVIGATION, { path: url });
+      // window.location.href = url;
+      window.open(url, "_self");
       return;
     }
 

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import type { ITileItem } from "../Landing.types";
+  import type { ITileItem } from "../landing.type";
   import Section from "../Section.svelte";
   import Title from "../Title.svelte";
   import Button from "../elements/Button.svelte";

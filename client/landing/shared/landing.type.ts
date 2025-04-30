@@ -1,27 +1,21 @@
 export type ITopNavBar = {
   title?: string;
   icon: string;
-  items: { label: string; href: string }[];
-  cta?: { label: string; href: string };
+  items: ITopNavBarItem[];
+  cta?: IButton;
 };
 
-export type IHeroBtn1 = {
+export type ITopNavBarItem = {
   label: string;
-  iosDownloadUrl: string;
-  androidDownloadUrl: string;
+  href: string;
+  expandRender?: string;
 };
 
-export type IHeroBtn2 = {
-  label: string;
-  macDownloadUrl: string;
-  windowsDownloadUrl: string;
-  icon: string;
-};
 export type IHeroInputs = {
   tagline: string;
   description?: string;
-  btn1?: IHeroBtn1;
-  btn2?: IHeroBtn2;
+  primaryButton?: IButton;
+  secondaryButton?: IButton;
   earlyAccessUrl?: string;
 };
 
@@ -85,4 +79,39 @@ export type ITestimonial = {
   name: string;
   body: string;
   source: string;
+  link?: string;
+};
+
+export type IFaq = {
+  title: string;
+  body: string;
+};
+
+export type IButton = {
+  type: "primary" | "secondary";
+  isDownloadButton?: boolean;
+  label?: string;
+  href?: string;
+  icon?: string;
+};
+
+export type ILandingStoreSubject = {
+  isProductsPanelOpen?: boolean;
+  isProductPage?: boolean;
+  urls: ILandingProductUrls;
+};
+
+export type ILandingProductUrls = {
+  web?: string;
+  features?: string;
+  tutorials?: string;
+  faqs?: string;
+  changelog?: string;
+  roadmap?: string;
+  downloads?: {
+    all?: string;
+    windows?: string;
+    ios?: string;
+    android?: string;
+  };
 };

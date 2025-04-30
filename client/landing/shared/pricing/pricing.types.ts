@@ -13,7 +13,6 @@ export interface PricingPlan {
   isPopular?: boolean;
   features: PricingFeature[];
   ctaText: string;
-  ctaLink: string;
   timeUnit?: string;
 }
 

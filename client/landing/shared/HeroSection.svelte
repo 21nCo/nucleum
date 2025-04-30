@@ -3,7 +3,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import ButtonAsLink from "./ButtonAsLink.svelte";
   import DayAndNightToggle from "./DayAndNightToggle.svelte";
-  import type { IHeroInputs } from "./Landing.types";
+  import type { IHeroInputs } from "./landing.type";
   import Button from "./elements/Button.svelte";
   import HeroBackground from "./hero/HeroBackground.svelte";
   import Pulldown from "./play/Pulldown.svelte";
@@ -13,7 +13,7 @@
   export { className as class };
 </script>
 
-<div class="relative flex justify-center h-[80vh] w-full overflow-clip">
+<div class="relative flex justify-center h-[45vh] w-full overflow-clip">
   <!-- <HeroBackground /> -->
   <div
     class="w-[1110px] 2k:w-[1500px] max-w-full flex flex-col gap-8 justify-center items-center"
@@ -57,21 +57,13 @@
       <DayAndNightToggle
         class="absolute bottom-12 flex w-full justify-center"
       />
-    {:else if heroInputs.btn1 && heroInputs.btn2}
+    {:else if heroInputs.primaryButton}
       {@const type = $view.isPortrait ? "primary" : "secondary"}
-      <div
-        class="flex w-[1110px] mo:w-[342px] max-w-full justify-center gap-16 relative z-10"
-      >
-        <Button
-          label={heroInputs.btn1.label}
-          on:click={() => {
-            const url = heroInputs?.btn1?.iosDownloadUrl;
-            console.log(url);
-            if (url) {
-              window.location.href = url;
-            }
-          }}
-        />
+      <div class="flex flex-col items-center gap-4">
+        <div>
+          <Button {...heroInputs.primaryButton} />
+        </div>
+        <span class="text-fgs3 text-b2">Available on web, iOS and macOS.</span>
       </div>
     {:else if isComingSoon}
       <!-- <EarlyAccess version="V3" url={heroInputs.earlyAccessUrl} /> -->

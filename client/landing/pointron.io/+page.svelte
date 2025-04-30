@@ -3,27 +3,22 @@
   import HeroVideo from "../shared/elements/HeroVideo.svelte";
   import FeaturesExample from "../shared/features/FeaturesExample.svelte";
   import HeroSection from "../shared/HeroSection.svelte";
-  import HighlightsExample from "../shared/highlights/HighlightsExample.svelte";
-  import type { IHeroInputs, ITileItem } from "../shared/Landing.types";
-  import TestimonialsExample from "../shared/testimonials/TestimonialsExample.svelte";
-  import IrregularTileItemsSection from "../shared/tile/IrregularTileItemsSection.svelte";
+  import Highlights from "../shared/highlights/Highlights.svelte";
+  import type {
+    IHeroInputs,
+    IHighlight,
+    ITestimonial,
+    ITileItem
+  } from "../shared/landing.type";
+  import Testimonials from "../shared/testimonials/Testimonials.svelte";
+  import { landing } from "../shared/store/shared.store";
+  import HeroVideoV2 from "../shared/elements/HeroVideoV2.svelte";
   let heroInputs: IHeroInputs = {
     tagline: "Your focus haven",
     description: "Track time, achieve goals and focus like never before.",
-    btn1: {
-      label: "Download for Mac",
-      iosDownloadUrl:
-        "https://apps.apple.com/in/app/pointron-focus-time-tracker/id6469411284",
-      androidDownloadUrl:
-        "https://apps.apple.com/in/app/pointron-focus-time-tracker/id6469411284"
-    },
-    btn2: {
-      label: "Download desktop app",
-      icon: "download",
-      macDownloadUrl:
-        "https://apps.apple.com/in/app/pointron-focus-time-tracker/id6469411284",
-      windowsDownloadUrl:
-        "https://apps.apple.com/in/app/pointron-focus-time-tracker/id6469411284"
+    primaryButton: {
+      isDownloadButton: true,
+      type: "primary"
     }
   };
 
@@ -68,29 +63,107 @@
       image: staticUrl + "/pointron/landing/personalization.gif"
     }
   ];
+
+  const highlights: IHighlight[] = [
+    {
+      icon: "powerfulwheel",
+      title: "Unbelievably powerful",
+      desc: "Unlock next-level productivity with a powerhouse of features designed to get things done",
+      visualRenderComponent: "CollectionsGraph"
+    },
+    // {
+    //   icon: "brain",
+    //   title: "AI native",
+    //   desc: "Seamlessly integrate your data and harness cutting-edge AI with our custom MCP server",
+    //   visualRenderComponent: "ainative",
+    //   isVisualAtBottom: true
+    // },
+    {
+      icon: "offline",
+      title: "Offline",
+      desc: "No cloud required. If your OS runs, so does this",
+      visualRenderComponent: "NetworkIcon",
+      isVisualAtBottom: true
+    },
+    // {
+    //   icon: "zerotrust",
+    //   title: "Zero-trust security & ownership",
+    //   desc: "If you opt for managed cloud sync, your data is encrypted from start to finish - only you can access it. Even better, you can host your data on your preferred servers or run locally.",
+    //   visualRenderComponent: "security",
+    //   isVisualAtBottom: true
+    // },
+    {
+      icon: "infinity",
+      title: "Built to last",
+      desc: "No exits. No acquisitions. We're not building for an exit. We're building for you",
+      visualRenderComponent: "last"
+    },
+    {
+      icon: "touch",
+      title: "Surprisingly intuitive",
+      desc: "A clean, elegant interface that makes powerful features feel effortless",
+      visualRenderComponent: "UIVisual",
+      isVisualAtBottom: true
+    }
+  ];
+
+  const testimonials: ITestimonial[] = [
+    {
+      name: "TheoxPratham",
+      body: "Loved the concept and the work that has been put in it to make it the best focus app.",
+      source: "App store"
+    },
+    {
+      name: "Artak",
+      body: "I absolutely love it and use it everyday.",
+      source: "Discord"
+    },
+    {
+      name: "VirgilCaffier",
+      body: "Your time is precious! What's the best way to not waste it? The one I'm currently using is Pointron!",
+      source: "X",
+      link: "https://x.com/VirgilCaffier/status/1661031751387602946"
+    },
+    {
+      name: "NellyisDev",
+      body: "I really love the app.",
+      source: "Discord"
+    }
+  ];
+
+  const deviceImages = [
+    // staticUrl + "/pointron/bottomCta/tab.png",
+    // staticUrl + "/pointron/bottomCta/laptop.png",
+    // staticUrl + "/pointron/bottomCta/phone.png",
+    "tab.png",
+    "laptop.png",
+    "phone.png"
+  ];
 </script>
 
-<div class="flex flex-col gap-40">
-  <HeroSection {heroInputs} />
-  <!-- <HeroVideo
-  videoUrl="https://youtu.be/CguXo8YQnm4"
-  thumbnailUrl="https://img.youtube.com/vi/CguXo8YQnm4/maxresdefault.jpg"
-  /> -->
-  <HighlightsExample />
-  <FeaturesExample />
-  <TestimonialsExample />
-  <BottomCta
-    body="Start using Pointron to simplify time tracking and take control of your productivity journey. Empower yourself to work smarter, not harder"
-    primaryAction={{ label: "Download for Mac", href: "https://pointron.app" }}
-    secondaryAction={{
-      label: "See all downloads",
-      href: "https://docs.pointron.app/downloads"
-    }}
-  />
-  <div></div>
-  <!-- <span
-  class="flex text-h3 text-aps1 w-full h-full bg-bgs1 justify-center items-center"
-  >
-  Pointron
-  </span> -->
-</div>
+<HeroSection {heroInputs} />
+<!-- <HeroVideo
+  videoUrl="https://www.youtube.com/embed/SeWdndc7y4A?si=xnr1BZSPhT5dAybc"
+/> -->
+<HeroVideoV2
+  url="https://www.youtube.com/embed/SeWdndc7y4A?si=xnr1BZSPhT5dAybc"
+  {deviceImages}
+/>
+<Highlights {highlights} />
+<FeaturesExample />
+<Testimonials
+  {testimonials}
+  title="Join the community"
+  subtitle="Discover what our community has to say about their Pointron experience."
+/>
+<BottomCta
+  {deviceImages}
+  body="Start using Pointron to simplify time tracking and take control of your productivity journey. Empower yourself to work smarter, not harder"
+  primaryAction={{ isDownloadButton: true, type: "primary" }}
+  secondaryAction={{
+    label: "See all downloads",
+    icon: "arrowright",
+    href: $landing.urls.downloads?.all,
+    type: "secondary"
+  }}
+/>

@@ -4,7 +4,7 @@
   import view from "$lib/client/stores/view.store";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
-  import type { ITileItem } from "../Landing.types";
+  import type { ITileItem } from "../landing.type";
 
   export let item: ITileItem;
   export let isEnableBackground: Boolean = false;

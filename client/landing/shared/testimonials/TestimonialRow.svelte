@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ITestimonial } from "../Landing.types";
+  import type { ITestimonial } from "../landing.type";
   import TestimonialItem from "./TestimonialItem.svelte";
   import { onMount, onDestroy } from "svelte";
 

@@ -2,7 +2,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import SVGIcon from "$lib/client/elements/SVGIcon.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import type { IHighlight } from "../Landing.types";
+  import type { IHighlight } from "../landing.type";
   import VisualRender from "../VisualRender.svelte";
   export let highlight: IHighlight;
   export let isFullWidth: boolean = false;

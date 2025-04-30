@@ -1,6 +1,6 @@
 <script lang="ts">
   import { cn } from "$lib/client/utils/ui.utils";
-  import type { IFeature } from "../Landing.types";
+  import type { IFeature } from "../landing.type";
   import Title from "../Title.svelte";
   import FeatureItem from "./FeatureItem.svelte";
   export let title: string = "";

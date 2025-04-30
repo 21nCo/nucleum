@@ -4,14 +4,14 @@
   import LeftPanel from "./LeftPanel.svelte";
   import TopNavBar from "./navbar/TopNavBar.svelte";
   import { addAnimateClass, cn } from "$lib/client/utils/ui.utils";
-  import type { IFooter, IListItem, ITopNavBar } from "./Landing.types";
+  import type { IFooter, IListItem, ITopNavBar } from "./landing.type";
   import { onMount } from "svelte";
   import view from "$lib/client/stores/view.store";
   import { currentProductsStore, isProductPage } from "./store/shared.store";
   import Footer from "./footer/Footer.svelte";
   import { afterNavigate } from "$app/navigation";
   import type { IMetadata } from "$lib/client/layout/metadata.type";
-  let id: string = "centre-panel";
+  let id: string = "main";
   let centralContainerRef: HTMLDivElement;
   export let topNavBarValues: ITopNavBar;
   export let isComingSoon: boolean = false;
@@ -70,7 +70,9 @@
     <TopNavBar {topNavBarValues} {scrollY} />
     <div class="flex w-full justify-center">
       <div
-        class={cn("w-full max-w-[1240px] mo:min-w-[320px] flex flex-col px-8")}
+        class={cn(
+          "w-full max-w-[1240px] mo:min-w-[320px] flex flex-col gap-40 px-8"
+        )}
       >
         <slot />
         {#if !isComingSoon}

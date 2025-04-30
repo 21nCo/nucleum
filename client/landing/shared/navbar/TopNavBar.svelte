@@ -3,7 +3,7 @@
   import view from "$lib/client/stores/view.store";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
-  import type { ITopNavBar } from "../Landing.types";
+  import type { ITopNavBar } from "../landing.type";
   import Button from "../elements/Button.svelte";
   import { isProductPage, isProductsPanelOpen } from "../store/shared.store";
   import DayAndNightToggle from "../DayAndNightToggle.svelte";
@@ -45,7 +45,7 @@
 
 <div
   class={cn(
-    "flex w-full items-center justify-center bg-bgs2 mo:pt-3 mo:pb-2 lp:border-b border-brs2",
+    "flex w-full items-center justify-center bg-bgs2 mo:pt-3 mo:pb-2 lp:border-b border-brs3",
     {
       "py-3": $isProductPage,
       "py-4": !$isProductPage

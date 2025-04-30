@@ -2,7 +2,7 @@
   import view from "$lib/client/stores/view.store";
   import { cn } from "$lib/client/utils/ui.utils";
   import Button from "../elements/Button.svelte";
-  import type { ITestimonial } from "../Landing.types";
+  import type { ITestimonial } from "../landing.type";
   import { discordUrl, twitterUrl } from "../store/shared.store";
   import Title from "../Title.svelte";
   import TestimonialItem from "./TestimonialItem.svelte";
@@ -38,10 +38,11 @@
       />
     </div>
   {/if}
-  <div class="flex justify-center items-center gap-4">
+  <div class="flex flex-wrap justify-center items-center gap-4">
     <Button
       label="Join our Discord"
       type="secondary"
+      icon="discord"
       on:click={() => {
         window.location.href = discord;
       }}
@@ -49,15 +50,16 @@
     <Button
       label="Follow us on X"
       type="secondary"
+      icon="twitter"
       on:click={() => {
         window.location.href = twitter;
       }}
     />
   </div>
   <div
-    class="w-20 bg-gradient-to-r from-bgs2/20 to-bgs2 absolute right-0 top-0 h-full"
+    class="mo:hidden w-20 bg-gradient-to-r from-bgs2/20 to-bgs2 absolute right-0 top-0 h-full"
   ></div>
   <div
-    class="w-20 bg-gradient-to-l from-bgs2/20 to-bgs2 absolute left-0 top-0 h-full"
+    class="mo:hidden w-20 bg-gradient-to-l from-bgs2/20 to-bgs2 absolute left-0 top-0 h-full"
   ></div>
 </div>

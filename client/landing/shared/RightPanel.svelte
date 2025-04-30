@@ -3,7 +3,7 @@
   import appearance from "$lib/client/stores/appearance.store";
   import view from "$lib/client/stores/view.store";
   import { addAnimateClass, bounce, cn } from "$lib/client/utils/ui.utils";
-  import type { ITileItem } from "./Landing.types";
+  import type { ITileItem } from "./landing.type";
   import PanelButton from "./elements/PanelButton.svelte";
   import {
     currentProductsStore,

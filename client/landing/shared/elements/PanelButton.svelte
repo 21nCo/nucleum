@@ -4,7 +4,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import { onMount } from "svelte";
-  import { PanelName } from "../Landing.types";
+  import { PanelName } from "../landing.type";
   import DayAndNightToggle from "../DayAndNightToggle.svelte";
   import { hoverable } from "$lib/client/actions/hover.action";
   import appearance from "$lib/client/stores/appearance.store";
@@ -50,7 +50,7 @@
   <button
     {id}
     class={cn(
-      "w-[115px] h-full flex flex-col items-center justify-center p-4 text-center text-fgs2 text-opacity-80 text-base leading-5 ml-[1px] border-brs2 hover:border-brs3",
+      "w-[115px] h-full flex flex-col items-center justify-center p-4 text-center text-fgs2 text-opacity-80 text-base leading-5 ml-[1px] border-brs3",
       className,
       {
         "border-l": label == PanelName.PRODUCTS,

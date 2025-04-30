@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import type { IFooter, IListItem, ITileItem } from "../Landing.types";
+  import type { IFooter, IListItem, ITileItem } from "../landing.type";
   import Section from "../Section.svelte";
   import Button from "../elements/Button.svelte";
   import Box from "./Box.svelte";
@@ -49,25 +49,25 @@
   let socials = [
     {
       href: footerValues.twitterUrl ?? "https://x.com/21nOrg",
-      icon: "x",
+      icon: "xfooter",
       primary: "hsla(0, 0%, 0%, 1)",
       isHovered: false
     },
     {
       href: footerValues.discordUrl ?? "https://discord.com/invite/9HJqKYTZKg",
-      icon: "discord",
+      icon: "discordfooter",
       primary: "hsla(235, 86%, 65%, 1)",
       isHovered: false
     },
     {
       href: footerValues.youtubeUrl ?? "https://www.youtube.com/@blankfellow",
-      icon: "youtube",
+      icon: "youtubefooter",
       primary: "hsla(0, 100%, 50%, 1)",
       isHovered: false
     },
     {
       href: footerValues.linkedinUrl ?? "https://www.linkedin.com/company/21n",
-      icon: "linkedin",
+      icon: "linkedinfooter",
       primary: "hsla(200, 100%, 35%, 1)",
       isHovered: false
     }

@@ -7,8 +7,18 @@
   import appearance from "$lib/client/stores/appearance.store";
   import DynamicMetadataLayer from "../layout/layers/DynamicMetadataLayer.svelte";
   import type { IMetadata } from "../layout/metadata.type";
+  import context from "../stores/context.store";
+  import { detectSystemOS, detectTouchDevice } from "../utils/browser.utils";
   export let metadata: IMetadata;
   export let bgColor: string = "bg-bgs1";
+  setContext();
+
+  function setContext() {
+    let browserAgent = navigator?.userAgent;
+    $context.os = detectSystemOS();
+    $context.isTouchDevice = detectTouchDevice();
+    $context.protocol = window.location.protocol;
+  }
 </script>
 
 <div

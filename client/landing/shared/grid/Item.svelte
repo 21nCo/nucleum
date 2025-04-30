@@ -3,7 +3,7 @@
   import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
-  import type { IGridItem } from "../Landing.types";
+  import type { IGridItem } from "../landing.type";
   import { landing } from "../store/shared.store";
 
   export let item: IGridItem;

@@ -2,17 +2,17 @@
   import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
   let isVideoPlaying = false;
   export let videoUrl: string;
-  export let thumbnailUrl: string;
+  export let thumbnailUrl: string | undefined = undefined;
   function playVideo() {
     isVideoPlaying = true;
   }
 </script>
 
-<div class="flex w-full justify-center -mt-[80px] dp:-mt-[100px] max-w-full">
+<div class="flex w-full justify-center -mt-[80px] dp:-mt-[240px] max-w-full">
   <div
-    class="relative w-[1046px] mo:w-[343px] h-[590px] mo:h-[194px] rounded-xl max-w-full m-4 border-[16px] border-bgs2 outline outline-bgs1 shadow-lg"
+    class="relative dp:w-[60vw] 2k:w-[80vw] max-w-[1500px] mo:w-[343px] h-[50vh] mo:h-[194px] rounded-xl m-4 border-[16px] border-bgs2 outline outline-bgs1 shadow-lg"
   >
-    {#if !isVideoPlaying}
+    {#if !isVideoPlaying && thumbnailUrl}
       <img
         src={thumbnailUrl}
         alt="Video Thumbnail"

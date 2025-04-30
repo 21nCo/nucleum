@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { IListItem } from "../Landing.types";
+  import type { IListItem } from "../landing.type";
   import SVGIcon from "$lib/client/elements/SVGIcon.svelte";
   import { Size } from "$lib/client/types/size.enum";
   export let item: IListItem;

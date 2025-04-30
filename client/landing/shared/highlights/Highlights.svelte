@@ -1,7 +1,7 @@
 <script lang="ts">
   import { cn } from "$lib/client/utils/ui.utils";
   import HighlightItem from "./HighlightItem.svelte";
-  import type { IHighlight } from "../Landing.types";
+  import type { IHighlight } from "../landing.type";
   import Title from "../Title.svelte";
 
   export let highlights: IHighlight[] = [];

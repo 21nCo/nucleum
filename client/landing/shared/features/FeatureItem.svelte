@@ -1,17 +1,17 @@
 <script lang="ts">
   import { cn } from "$lib/client/utils/ui.utils";
-  import type { IFeature } from "../Landing.types";
+  import type { IFeature } from "../landing.type";
   import VisualRender from "../VisualRender.svelte";
   export let feature: IFeature;
   export let isReversed: boolean = false;
 </script>
 
 <div
-  class={cn("flex gap-32 h-[30rem] w-full", {
+  class={cn("flex mo:flex-col gap-32 h-[30rem] mo:h-auto w-full", {
     "flex-row-reverse": isReversed
   })}
 >
-  <div class="h-full w-[30rem]">
+  <div class="h-full w-[30rem] mo:w-full">
     <img
       src={feature.animationUrl}
       alt={feature.title}

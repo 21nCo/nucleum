@@ -1,6 +1,6 @@
 <script lang="ts">
   import { addAnimateClass } from "$lib/client/utils/ui.utils";
-  import { PanelName } from "./Landing.types";
+  import { PanelName } from "./landing.type";
   import PanelButton from "./elements/PanelButton.svelte";
   import { companyWebsite } from "$lib/client/landing/shared/store/shared.store";
   export let isProduct: boolean = false;

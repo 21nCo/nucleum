@@ -1,11 +1,11 @@
 <script lang="ts">
   import Highlights from "./Highlights.svelte";
-  import type { IHighlight } from "../Landing.types";
+  import type { IHighlight } from "../landing.type";
 
   // Example highlights data
   const highlights: IHighlight[] = [
     {
-      icon: "star",
+      icon: "powerfulwheel",
       title: "Unbelievably powerful",
       desc: "Unlock next-level productivity with a powerhouse of features designed to get things done",
       visualRenderComponent: "CollectionsGraph"
@@ -18,14 +18,14 @@
       isVisualAtBottom: true
     },
     {
-      icon: "cloud",
+      icon: "offline",
       title: "Offline",
       desc: "No cloud required. If your OS runs, so does this",
       visualRenderComponent: "NetworkIcon",
       isVisualAtBottom: true
     },
     {
-      icon: "lock",
+      icon: "zerotrust",
       title: "Zero-trust security & ownership",
       desc: "If you opt for managed cloud sync, your data is encrypted from start to finish - only you can access it. Even better, you can host your data on your preferred servers or run locally.",
       visualRenderComponent: "security",
@@ -38,7 +38,7 @@
       visualRenderComponent: "last"
     },
     {
-      icon: "hand-touch",
+      icon: "touch",
       title: "Surprisingly intuitive",
       desc: "A clean, elegant interface that makes powerful features feel effortless",
       visualRenderComponent: "UIVisual",

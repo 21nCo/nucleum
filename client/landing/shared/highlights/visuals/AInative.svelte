@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { IListItem } from "../../Landing.types";
+  import type { IListItem } from "../../landing.type";
   import List from "../../list/List.svelte";
 
   const items: IListItem[] = [

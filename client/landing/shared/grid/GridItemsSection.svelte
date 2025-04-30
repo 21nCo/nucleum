@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { IGridItem } from "../Landing.types";
+  import type { IGridItem } from "../landing.type";
   import Section from "../Section.svelte";
   import Item from "./Item.svelte";
   import Title from "../Title.svelte";

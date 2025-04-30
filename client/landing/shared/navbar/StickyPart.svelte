@@ -1,7 +1,7 @@
 <script lang="ts">
   import { cn } from "$lib/client/utils/ui.utils";
   import { fly } from "svelte/transition";
-  import type { ITopNavBar } from "../Landing.types";
+  import type { ITopNavBar } from "../landing.type";
   import NavBarCta from "./NavBarCta.svelte";
   import NavBarLogo from "./NavBarLogo.svelte";
   import NavMenu from "./NavMenu.svelte";

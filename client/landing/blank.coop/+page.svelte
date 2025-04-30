@@ -8,7 +8,7 @@
     IGridItem,
     ITileItem,
     IListItem
-  } from "../shared/Landing.types";
+  } from "../shared/landing.type";
   import {
     currentProductsStore,
     upcomingProductsStore,

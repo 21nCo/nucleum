@@ -4,8 +4,8 @@
 </script>
 
 <div class="flex flex-col gap-3 items-center">
-  <p class="text-4xl font-medium">{title}</p>
+  <p class="mo:text-h1 text-4xl font-medium text-center">{title}</p>
   {#if subtitle}
-    <p class="text-base">{subtitle}</p>
+    <p class="text-base mo:text-b2 text-center">{subtitle}</p>
   {/if}
 </div>

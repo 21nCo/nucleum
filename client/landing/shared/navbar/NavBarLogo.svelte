@@ -1,6 +1,6 @@
 <script lang="ts">
   import { cn } from "$lib/client/utils/ui.utils";
-  import type { ITopNavBar } from "../Landing.types";
+  import type { ITopNavBar } from "../landing.type";
   export let topNavBarValues: ITopNavBar;
   import view from "$lib/client/stores/view.store";
   import SvgIcon from "$lib/client/elements/SVGIcon.svelte";

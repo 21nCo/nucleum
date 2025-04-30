@@ -2,4 +2,6 @@
   import ErrorStatusPane from "$lib/client/elements/feedback/ErrorStatusPane.svelte";
 </script>
 
-<ErrorStatusPane error="404" />
+<div class="mo:min-h-[90vh] min-h-[50vh] flex justify-center items-center">
+  <ErrorStatusPane error="404" />
+</div>

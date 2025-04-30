@@ -2,7 +2,7 @@
   import { upcomingProductsStore } from "../shared/store/shared.store";
   import HeroSection from "../shared/HeroSection.svelte";
   import HeroVideo from "../shared/elements/HeroVideo.svelte";
-  import type { IHeroInputs, ITileItem } from "../shared/Landing.types";
+  import type { IHeroInputs, ITileItem } from "../shared/landing.type";
   import IrregularTileItemsSection from "../shared/tile/IrregularTileItemsSection.svelte";
 
   let heroData: any;
@@ -18,14 +18,14 @@
     tagline: "Your memory atlas.",
     description:
       "Memotron is a digital memory and thinking tool that is unbelievably powerful, insanely reliable, and surprisingly intuitive. Transform the way you learn, think and create.",
-    btn1: {
+    primaryButton: {
       label: "Download mobile app",
       iosDownloadUrl:
         "https://apps.apple.com/in/app/memotron-your-memory-atlas/id6737236940",
       androidDownloadUrl:
         "https://play.google.com/store/apps/details?id=io.memotron.app.twa"
     },
-    btn2: {
+    secondaryButton: {
       label: "Get started",
       icon: "arrow-NW",
       macDownloadUrl: "https://web.memotron.app",

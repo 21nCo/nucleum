@@ -1,6 +1,6 @@
 <script lang="ts">
   import Testimonials from "./Testimonials.svelte";
-  import type { ITestimonial } from "../Landing.types";
+  import type { ITestimonial } from "../landing.type";
 
   const testimonials: ITestimonial[] = [
     {

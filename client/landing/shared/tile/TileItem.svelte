@@ -4,7 +4,7 @@
   import view from "$lib/client/stores/view.store";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
-  import type { ITileItem } from "../Landing.types";
+  import type { ITileItem } from "../landing.type";
 
   export let item: ITileItem;
   export let isPanelView: Boolean = false;
@@ -54,8 +54,7 @@
         class={cn(
           !isPanelView &&
             "text-[30px] mo:text-[20px] leading-10 mo:leading-7 font-extrabold",
-          isPanelView &&
-            "text-[22px] mo:text-[16px] leading-8 mo:leading-5 font-extrabold"
+          isPanelView && "text-h4 font-bold"
         )}
       >
         {title}
@@ -96,8 +95,7 @@
       class={cn(
         !isPanelView &&
           "text-[20px] mo:text-[14px] leading-[28px] mo:leading-5 font-normal text-left mo:w-[290px]",
-        isPanelView &&
-          "text-base mo:text-[14px] leading-[22px] mo:leading-5 font-normal text-left"
+        isPanelView && "text-lb2 text-fgs2 text-left"
       )}
     >
       {description}

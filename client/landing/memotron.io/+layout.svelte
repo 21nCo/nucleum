@@ -1,6 +1,6 @@
 <script lang="ts">
   import BlankLandingLayout from "../shared/BlankLandingLayout.svelte";
-  import type { IFooter } from "../shared/Landing.types";
+  import type { IFooter } from "../shared/landing.type";
   let topNavBarValues: any = {
     icon: "memotron",
     title: "Memotron",

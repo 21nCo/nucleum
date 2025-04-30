@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Orientation } from "$lib/client/types/direction.enum";
-  import type { IListItem } from "../../Landing.types";
+  import type { IListItem } from "../../landing.type";
   import List from "../../list/List.svelte";
 
   const items: IListItem[] = [

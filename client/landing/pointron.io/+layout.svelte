@@ -1,22 +1,46 @@
 <script lang="ts">
   import BlankLandingLayout from "$lib/client/landing/shared/BlankLandingLayout.svelte";
-  import appearance from "$lib/client/stores/appearance.store";
-  import type { IFooter } from "../shared/Landing.types";
+  import type {
+    IFooter,
+    ILandingProductUrls,
+    ITopNavBar
+  } from "../shared/landing.type";
   import type { IMetadata } from "$lib/client/layout/metadata.type";
-  let topNavBarValues: any = {
+  import {
+    discordUrl,
+    landing,
+    youtubeUrl
+  } from "../shared/store/shared.store";
+
+  const urls: ILandingProductUrls = {
+    web: "https://web.pointron.app",
+    features: "https://docs.pointron.app/pointron/features",
+    tutorials: youtubeUrl,
+    faqs: "https://docs.pointron.app/pointron/faqs",
+    changelog: "https://docs.pointron.app/changelog/pointron/new",
+    roadmap: "https://docs.pointron.app/pointron/roadmap",
+    downloads: {
+      all: "https://docs.pointron.app/pointron/installation",
+      ios: "https://apps.apple.com/in/app/pointron-focus-time-tracker/id6469411284"
+    }
+  };
+  let topNavBarValues: ITopNavBar = {
     icon: "pointron",
     title: "Pointron",
     items: [
-      { label: "Pricing", href: "/pricing" },
       {
-        label: "Docs",
-        href: "https://docs.pointron.app/"
+        label: "Resources",
+        href: "https://docs.pointron.app/",
+        expandRender: "resources"
       },
-      { label: "Discord", href: "https://discord.com/invite/9HJqKYTZKg" }
+      // { label: "Compare", href: "/compare", expandRender: "compare" },
+      { label: "Pricing", href: "pricing" },
+      { label: "Discord", href: discordUrl }
     ],
     cta: {
       label: "Go to web app",
-      href: "https://web.pointron.app"
+      href: "https://web.pointron.app",
+      type: "primary"
     }
   };
   let footerValues: IFooter = {
@@ -24,9 +48,9 @@
       "https://apps.apple.com/in/app/pointron-focus-time-tracker/id6469411284",
     twitterUrl: "https://x.com/pointronApp",
     docsUrl: "https://docs.pointron.app",
-    youtubeUrl: "https://www.youtube.com/@21nOrg",
-    roadmapUrl: "https://docs.pointron.app/pointron/roadmap",
-    changelogUrl: "https://docs.pointron.app/changelog/pointron/new"
+    youtubeUrl: youtubeUrl,
+    roadmapUrl: urls.roadmap,
+    changelogUrl: urls.changelog
   };
   let metadata: IMetadata = {
     title: "Pointron",
@@ -35,6 +59,7 @@
     keywords: "pointron, focus, time, tracker, productivity",
     url: "https://pointron.app"
   };
+  landing.load(urls);
 </script>
 
 <!-- {#if import.meta.env.DEV}

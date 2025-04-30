@@ -36,9 +36,10 @@
     </div>
 
     <div class="w-full text-center mt-6">
-      Educators and students - <a href="#" class="text-aps1 hover:underline"
-        >email for special discount</a
-      >
+      Educators & students - please <a
+        href="mailto:hello@21n.org"
+        class="text-aps1 hover:underline">email us</a
+      > for special discount
     </div>
   </div>
 </Section>
