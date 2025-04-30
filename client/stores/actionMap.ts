@@ -52,7 +52,7 @@ import PropertyConfig from "$lib/client/components/collection/properties/propert
 import { logger } from "../components/debug/logger.client";
 import { toasts } from "./notification.store";
 import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
-import LinkSearchResultItem from "$lib/client/products/memotron/common/linkbox/LinkSearchResultItem.svelte";
+import LinkSearchResultItem from "$lib/client/products/memotron/common/linkbox/LinkSearchResultItemDummy.svelte";
 import { SearchStore } from "../components/record/record.store";
 import { recentsStore } from "../components/record/recent.store";
 import { isValidString } from "$lib/shared/utils/text.utils";
@@ -72,7 +72,8 @@ import { goalStore } from "../components/goals/goal.store";
 import CreateTask from "../components/tasks/CreateTask.svelte";
 import GoalSearchResultItem from "../components/goals/GoalSearchResultItem.svelte";
 import { taskStore } from "../components/tasks/task.store";
-import Task from "../components/tasks/Task.svelte";
+// import Task from "../components/tasks/Task.svelte";
+import Task from "../components/tasks/DummyTask.svelte";
 import ResourceSearchModal from "../products/memotron/library/search/ResourceSearchModal.svelte";
 import DummyCollection from "../components/collection/DummyCollection.svelte";
 import AppLoadingView from "../layout/paint/AppLoadingView.svelte";
@@ -757,7 +758,7 @@ export const globalActions: IAction[] = [
   {
     action: Resource.task,
     isMeta: true,
-    type: ActionType.MODAL,
+    type: ActionType.RESOURCE,
     component: Task,
     modalParams: {
       layout: {
@@ -1023,14 +1024,15 @@ export const globalActions: IAction[] = [
   },
   {
     action: Action.CALENDAR_DAY,
-    type: ActionType.MODAL,
+    type: ActionType.RESOURCE,
     isMeta: true,
     component: CalendarDayModal,
     modalParams: {
       title: "Day review",
       layout: {
         size: Size.xl,
-        orientation: Orientation.Horizontal
+        orientation: Orientation.Horizontal,
+        isShowCantileverClose: true
       }
     }
   },
@@ -1038,13 +1040,14 @@ export const globalActions: IAction[] = [
     action: Action.HISTORY,
     label: "History",
     icon: "ph:clock-counter-clockwise-light",
-    type: ActionType.MODAL,
+    type: ActionType.RESOURCE,
     component: HistoryModal,
     modalParams: {
       title: "History",
       layout: {
         size: Size.lg,
-        orientation: Orientation.Horizontal
+        orientation: Orientation.Horizontal,
+        isShowCantileverClose: true
       }
     }
   }

@@ -157,7 +157,8 @@ const recordSpecificSearchParams = [
   AppSearchParam.POP_AT,
   AppSearchParam.FSPLIT_AT,
   AppSearchParam.FULL_AT,
-  AppSearchParam.LINK
+  AppSearchParam.LINK,
+  AppSearchParam.DATE
 ];
 
 export const appStore = initAppStore({
@@ -177,10 +178,9 @@ function initAppStore(seed: IAppStore) {
 
   const resolveComponentFromPath = (path: string) => {
     const actions = get(appStore).actions;
-    let component = actions.find((x) => x.path == path);
+    let component = actions.find((x) => x.path === path);
     if (component) return component;
-    component = actions.find((x) => x.action == path);
-    if (component) return component;
+    component = actions.find((x) => x.action === path);
     if (component) return component;
     return null;
   };
@@ -410,10 +410,10 @@ function initAppStore(seed: IAppStore) {
       ctx.os === OperatingSystem.MACOS &&
       ctx.isEmbed &&
       provider === IdentityProvider.Apple
-        ? `localredirect_${host}`
+        ? `localredirect.${host}`
         : ctx.isEmbed &&
             (ctx.os === OperatingSystem.IOS || ctx.os === OperatingSystem.MACOS)
-          ? `schemeredirect.${app.product.toLowerCase()}_${host}`
+          ? `${app.product.toLowerCase()}_schemeredirect.${host}`
           : host;
     const state = guestPartForState + ":" + domainPartForState;
     let url =

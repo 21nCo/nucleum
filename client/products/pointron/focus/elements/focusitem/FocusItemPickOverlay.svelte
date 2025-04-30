@@ -33,10 +33,10 @@
   }
 </script>
 
-<div class="flex items-center gap-2 px-2">
+<div class="flex items-center gap-2 px-2 absolute inset-y-0 right-0 bg-bgs2">
   {#if isHovering || $context.isTouchDevice}
     {#if $focusItemsStore.items.some(resourceInList(item.id))}
-      <span class="text-b3 text-fgs3"> Added </span>
+      <span class="text-b3 text-fgs3"> Already added </span>
     {:else}
       <Button
         label="Add"

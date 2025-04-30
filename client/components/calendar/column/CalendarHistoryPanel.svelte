@@ -1,4 +1,5 @@
 <script lang="ts">
+  import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
   import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
   import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
@@ -6,8 +7,10 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import view from "$lib/client/stores/view.store";
   import { Product } from "$lib/client/types/product.type";
   import { Size } from "$lib/client/types/size.enum";
+  import { ResourceAccessMode } from "../../flux/resourceStores/resource.type";
   import { CalendarHistoryTab } from "../calendar.type";
   import CalendarAllActivityPanel from "./CalendarAllActivityPanel.svelte";
   import CalendarHistoryNodeEntries from "./CalendarHistoryNodeEntries.svelte";
@@ -86,3 +89,6 @@
     {/if}
   </div>
 </div>
+{#if $view.isConstrainedWidth}
+  <FullScreenCloseButton accessMode={ResourceAccessMode.POP} />
+{/if}

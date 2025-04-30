@@ -87,5 +87,6 @@ export interface ITrialPlan {
 export enum TrialPlanType {
   ONE_YEAR = "1year",
   FOUR_MONTHS = "4mo",
-  ONE_MONTH = "1mo"
+  ONE_MONTH = "1mo",
+  TWO_WEEKS = "2w"
 }

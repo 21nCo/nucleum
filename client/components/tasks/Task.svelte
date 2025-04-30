@@ -7,8 +7,6 @@
   } from "../flux/resourceStores/resource.type";
   import { taskStore } from "./task.store";
   import type { ITaskThumb } from "./task.type";
-
-  import TaskThumbnail from "./TaskThumbnail.svelte";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { Resource } from "../flux/resourceStores/resource.enum";
   import { recentsStore } from "../record/recent.store";
@@ -47,12 +45,13 @@
     $appStore.product === Product.POINTRON ||
     $appStore.product === Product.NUCLEUS;
   let goalSearchQuery = "";
-  let goalSearchInput: TextSearchInput | undefined = undefined;
   let goal: IGoal | undefined = undefined;
   const searchStore = new SearchStore(Resource.goal);
+
   onMount(async () => {
     await refresh();
   });
+
   async function refresh() {
     isRefreshing = true;
     const result = await taskStore.selectMany(
@@ -215,7 +214,7 @@
   }
 </script>
 
-<div class="flex p-4 mo:w-full w-[32rem] h-[28rem]">
+<div class="flex p-4 mo:w-full mo:h-full w-[32rem] h-[28rem]">
   {#if isRefreshing}
     <EmptyStatusView isLoadingState={isRefreshing} />
   {:else if task}
@@ -227,7 +226,6 @@
           {#if isShowGoalPicker}
             <TextSearchInput
               bind:value={goalSearchQuery}
-              bind:this={goalSearchInput}
               searchCallback={goalSearchGoalCallback}
               placeholder="Assign to a goal"
               icon="ph:plus-light"
@@ -247,6 +245,11 @@
               bind:isChecked={task.isChecked}
               size={Size.lg}
               {accessPoint}
+              on:toggle={() => {
+                if (task?.isChecked) {
+                  completedDate = new Date();
+                }
+              }}
             />
             <TextInput
               bind:value={task.label}

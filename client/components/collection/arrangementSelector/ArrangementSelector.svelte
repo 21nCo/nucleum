@@ -78,6 +78,7 @@
       isHideThumbnailPreview,
       isHideThumbnailTitle,
       allArrangements,
+      resource,
       onArrangementChange,
       onDensityChange,
       onPreviewSettingChange,

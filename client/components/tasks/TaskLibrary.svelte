@@ -21,6 +21,7 @@
   import TaskRecords from "./TaskRecords.svelte";
   import {
     IResourceFilterDateGrouping,
+    RemovalProperty,
     type IRecordId
   } from "$lib/client/types/data.type";
   import InlineSearchBar from "$lib/client/elements/InlineSearchBar.svelte";
@@ -154,12 +155,11 @@
     });
     if (isValidArray(result)) {
       //TODO - for by_month case + overdue - the date filter has 2 conditions with AND operator - below is temporary fix until complex filters are implemented
-      if (
-        selectedSubType === TaskSubTypeForSwitcher.BY_MONTH &&
-        dueDateFilter === TaskDueDateFilter.OVERDUE
-      ) {
+      if (dueDateFilter === TaskDueDateFilter.OVERDUE) {
         result = result.filter((x: any) => {
-          return x.date && compareDates(x.date, new Date(), "<");
+          return (
+            x.dateUnix && compareDates(new Date(x.dateUnix), new Date(), "<")
+          );
         });
       }
       if (params?.isPagination)
@@ -202,10 +202,10 @@
     function resolveDateFilter() {
       if (dueDateFilter === TaskDueDateFilter.ALL) return undefined;
       else if (dueDateFilter === TaskDueDateFilter.OVERDUE) {
-        const day = new Date();
-        return resolveUnixTimestamp(
-          new Date(day.getFullYear(), day.getMonth(), day.getDate())
-        );
+        const dayFilter = resolveTimePeriodFilterForDay(new Date());
+        return {
+          lessThanOrEqual: dayFilter.greaterThanOrEqual
+        };
       } else if (dueDateFilter === TaskDueDateFilter.WITHOUT_DUE_DATE)
         return false;
     }
@@ -501,10 +501,15 @@
   syncDownOnMount={true}
   subscribeToResource={new Set([Resource.task])}
   subscribeToContext={new Set([
+    ResourceAccessPoint.SELF,
     resolveAccessPoint(),
     resourceAction(Resource.task, ResourceActionType.CREATE)
   ])}
-  isSubscribeToRemovalPropertiesOnly={true}
+  subScriptionPropsForMergeAction={[
+    RemovalProperty.IS_ARCHIVED,
+    RemovalProperty.TRASH_INFORMATION,
+    "dateUnix"
+  ]}
   on:syncDown={() => {
     refresh();
   }}

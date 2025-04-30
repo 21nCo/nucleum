@@ -9,6 +9,7 @@
   export let parentBackgroundIndex = 1;
   export let isExpandedVariant: boolean = true;
   export let isInEditMode: boolean = false;
+  export let isSettingsContext: boolean = false;
   let selectedPresetIndex: number = -1;
   let selectedPreset: SessionComposition;
   function presetClickHandler(event: any) {
@@ -54,6 +55,7 @@
     {parentBackgroundIndex}
     {isInEditMode}
     {isExpandedVariant}
+    {isSettingsContext}
     isActive={selectedPresetIndex === index && !isInEditMode}
     on:click={presetClickHandler}
   />

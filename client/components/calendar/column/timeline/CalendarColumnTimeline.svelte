@@ -24,6 +24,8 @@
   import { Action } from "$lib/client/types/action.enum";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
 
   export let date: Date;
   export let isExpandable: boolean = false;
@@ -137,10 +139,8 @@
           icon="ph:clock-counter-clockwise-light"
           tooltip="History"
           on:click={() => {
-            appStore.runAction(Action.HISTORY, {
-              componentParams: {
-                date
-              }
+            appStore.openResource(Action.HISTORY, ResourceAccessMode.POP, {
+              searchParams: { [AppSearchParam.DATE]: date.toISOString() }
             });
           }}
         />

@@ -203,7 +203,7 @@
           enabled:
             selectedView === TimeScaleUnit.MONTH ||
             selectedView === TimeScaleUnit.YEAR,
-          minWidth: 380,
+          minWidth: 430,
           maxWidth: 800,
           edges: ["left"],
           onResize: onResize

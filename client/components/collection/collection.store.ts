@@ -637,6 +637,23 @@ export function resolveCollectionContextMenu(
       ...commonGroups
     ];
   } else if (collection.type === CollectionType.TYPED) {
+    const captureToggle = {
+      value: "captureshortcut",
+      icon: "ph:arrow-up-right-light",
+      label: "Capture shortcut",
+      type: ContextMenuType.SWITCH,
+      initialValue: collection.isCaptureShortcutEnabled,
+      callback: async (checked) => {
+        console.log({ checked });
+        const result = await collectionStore.modify(collection.id, {
+          isCaptureShortcutEnabled: checked
+        });
+        if (result) {
+          toasts.success("Capture shortcut updated");
+        }
+        return result;
+      }
+    };
     return [
       {
         group: "all",
@@ -664,23 +681,9 @@ export function resolveCollectionContextMenu(
               return result;
             }
           },
-          {
-            value: "captureshortcut",
-            icon: "ph:arrow-up-right-light",
-            label: "Capture shortcut",
-            type: ContextMenuType.SWITCH,
-            initialValue: collection.isCaptureShortcutEnabled,
-            callback: async (checked) => {
-              console.log({ checked });
-              const result = await collectionStore.modify(collection.id, {
-                isCaptureShortcutEnabled: checked
-              });
-              if (result) {
-                toasts.success("Capture shortcut updated");
-              }
-              return result;
-            }
-          },
+          ...(!collection.resource || collection.resource === Resource.node
+            ? [captureToggle]
+            : []),
           {
             value: "editProperties",
             icon: "ph:cube-light",

@@ -156,8 +156,8 @@ async function bootstrapUserAccount(authHeader: any, body: any) {
     userId: user:${id},
     plan: "trial",
     trialPlan: {
-    plan: "1mo",
-    expiry: d"${new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()}",
+    plan: "2w",
+    expiry: d"${new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()}",
     },
     discount: {
       first: 35,

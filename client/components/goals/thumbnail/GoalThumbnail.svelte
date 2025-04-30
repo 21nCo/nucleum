@@ -78,7 +78,7 @@
         <button class="flex w-full items-center h-16 truncate" on:click>
           <div class="flex flex-col gap-1 p-3 w-full">
             <GoalThumbnailTitle {item} {isCurrentlyFocusing} />
-            <GoalThumbnailSub {item} {isCurrentlyFocusing} />
+            <GoalThumbnailSub {item} {isCurrentlyFocusing} {accessPoint} />
           </div>
           {#if accessPoint === ResourceAccessPoint.PICKER}
             <FocusItemPickOverlay {isHovering} {item} />
@@ -96,7 +96,7 @@
         <div slot="bottom" class="flex flex-col w-full min-h-12">
           <div class="flex flex-col gap-2">
             <GoalThumbnailTitle {item} {isCurrentlyFocusing} />
-            <GoalThumbnailSub {item} {isCurrentlyFocusing} />
+            <GoalThumbnailSub {item} {isCurrentlyFocusing} {accessPoint} />
           </div>
         </div>
       </ResourceGridThumbnail>

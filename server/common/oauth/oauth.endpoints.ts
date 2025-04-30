@@ -25,8 +25,8 @@ export async function handleOAuthRedirection(
         domain = "tauri://localhost/index.html";
       } else if (domainPart.includes("schemeredirect")) {
         isSchemeRedirect = true;
-        const schemeData = domainPart.split("_")?.[0]?.split(".");
-        domain = schemeData?.[1] + "://oauthsignin";
+        const schemeData = domainPart.split("_schemeredirect.")?.[0];
+        domain = schemeData + "://oauthsignin";
       } else {
         domain = "https://" + domainPart + "/oauth";
       }

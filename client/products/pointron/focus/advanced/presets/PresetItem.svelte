@@ -20,6 +20,8 @@
   export let parentBackgroundIndex = 1;
   export let isExpandedVariant: boolean = false;
   export let isInEditMode: boolean = false;
+  export let isSettingsContext: boolean = false;
+
   // let isHovering: boolean = false;
   $: totals = getTotalsFromComposition({ composition: preset });
   function handleClick() {
@@ -37,11 +39,12 @@
       "relative flex items-center gap-2 px-2 2k:px-3 py-4 rounded-md userdata",
       {
         [abg(isActive, parentBackgroundIndex)]: !isInEditMode,
-        "w-full max-w-md": isExpandedVariant,
+        "w-full": isExpandedVariant,
         "w-36 min-w-[9rem] h-10": !isExpandedVariant,
         "hover:bg-bgs3": !isActive && !isInEditMode,
         "border border-brs2": !isInEditMode,
-        "border border-dashed border-fgs2 hover:bg-bgs2": isInEditMode
+        "border border-dashed border-fgs2 hover:bg-bgs2": isInEditMode,
+        "max-w-md": isExpandedVariant && !isSettingsContext
       }
     )}
     on:click={handleClick}
@@ -87,7 +90,10 @@
 
     {#if isInEditMode && isExpandedVariant}
       <span
-        class="absolute right-0 h-full flex items-center bg-gradient-to-l from-bgs1 via-bgs1 to-transparent pr-3 pl-10 rounded-md"
+        class={cn("h-full flex items-center rounded-md", {
+          "absolute right-0 bg-gradient-to-l from-bgs1 via-bgs1 to-transparent pr-3 pl-10":
+            !isSettingsContext
+        })}
       >
         <Button
           icon="ph:trash-light"

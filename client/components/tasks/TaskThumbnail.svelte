@@ -51,6 +51,7 @@
   let isHovering = false;
   let isDatePickerOpen = false;
   let isShowDatePickerOnCw = false;
+  const dev_isEnableBorderAnimation = false;
   $: isOverdue =
     !item.isChecked &&
     item.dateUnix &&
@@ -68,8 +69,10 @@
     const record = event.detail.params?.record;
     if ("isChecked" in record) {
       if (!record.isChecked) {
+        item.isChecked = false;
         item.completedAtUnix = undefined;
       } else {
+        item.isChecked = true;
         item.completedAtUnix = resolveUnixTimestamp();
       }
     } else if ("goalId" in record && record.goalId !== item.goalId) {
@@ -128,7 +131,7 @@
       speed: 4000,
       borderWidth: "2px",
       borderColor: "aps2",
-      enabled: isCurrentlyFocusing
+      enabled: isCurrentlyFocusing && dev_isEnableBorderAnimation
     }}
     use:hoverable={{
       onHover: (value) => {

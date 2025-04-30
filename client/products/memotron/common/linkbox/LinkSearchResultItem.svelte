@@ -1,7 +1,7 @@
 <script lang="ts">
   import { cn } from "$lib/client/utils/ui.utils";
   import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { properCase } from "$lib/shared/utils/text.utils";
+  import { isValidString, properCase } from "$lib/shared/utils/text.utils";
   import NodeTitleBreadcrumbs from "$lib/client/products/memotron/node/title/NodeTitleBreadcrumbs.svelte";
   import {
     headingNodeTypes,
@@ -18,8 +18,7 @@
   import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
   export let item: INode | ICollectionThumb | IGoalThumb;
   export let isHideResourceType: boolean = false;
-
-  $: resourceType = determineResourceType(item.id);
+  export let resourceType: Resource = determineResourceType(item.id);
 </script>
 
 <!-- TODO - improve search results - to show image preview, tweet preview, etc -->
@@ -61,11 +60,11 @@
       <GoalSearchResultItem {item} />
     {:else}
       <div class="flex text-left">
-        {item.label}
+        {isValidString(item.label) ? item.label : "Untitled"}
       </div>
     {/if}
   </span>
-  {#if !isHideResourceType}
+  {#if !isHideResourceType && isValidString(resourceType)}
     <span class="text-b3 text-fgs3 border border-brs2 rounded-md px-2 py-0.5"
       >{properCase(resourceType)}</span
     >

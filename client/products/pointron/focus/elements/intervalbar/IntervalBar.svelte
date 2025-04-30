@@ -25,10 +25,10 @@
       return bar.duration;
     }
   }
-  $: visibleLimit =
-    $view.isPortrait || context === SessionUIContext.THIN_ON_DESKTOP ? 4 : 10;
+  $: visibleLimit = $view.isPortrait ? 4 : 10;
   $: isHideSomeBars = $activeSession.intervals.length > visibleLimit;
   $: visibleBars = resolveVisibleBars($activeSession.intervals);
+
   function resolveVisibleBars(blocks: ISessionInterval[]) {
     // console.log({
     //   context,

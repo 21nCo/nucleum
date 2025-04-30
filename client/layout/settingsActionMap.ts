@@ -196,7 +196,7 @@ export function getSettingsAsPages(): IAction[] {
       action: Action.SETTINGS,
       type: ActionType.PAGE,
       label: "Settings",
-      icon: "settings",
+      icon: "ph:gear-fine-light",
       component: SettingsAsPage
     });
 }
@@ -215,7 +215,7 @@ export function getSettingsAsModal(): IAction[] {
       action: Action.SETTINGS,
       type: ActionType.MODAL,
       label: "Settings",
-      icon: "settings",
+      icon: "ph:gear-fine-light",
       isRenderAsPageInPortrait: true,
       component: SettingsAsPage,
       modalParams: {

@@ -94,7 +94,7 @@
     const goal = await goalStore.selectMany(
       {
         filters: {
-          id: item.id
+          id: item.id?.toString()
         }
       },
       {

@@ -78,7 +78,7 @@
 </script>
 
 {#if isValidArrayWithData(results)}
-  {#each results as result, index}
+  {#each results as result, index (result.id)}
     <ResultItem
       isActive={selectedIndex === index}
       on:click={() => {
@@ -97,9 +97,11 @@
         <!-- <span class="flex min-w-0 flex-1">
       <TextWithHoverTooltip text={result.label} class="truncate" />
     </span> -->
-        <div class="bg-bgs2 rounded-md text-b3 text-fgs2 px-2 py-1">
-          {action.searchActionParams?.itemLabel}
-        </div>
+        {#if action.searchActionParams?.searchResourceType}
+          <div class="bg-bgs2 rounded-md text-b3 text-fgs2 px-2 py-1">
+            {action.searchActionParams?.searchResourceType}
+          </div>
+        {/if}
       {/if}
     </ResultItem>
   {/each}

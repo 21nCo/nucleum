@@ -32,8 +32,8 @@
       : `${leftOffset}px`;
 </script>
 
-<div
-  class="event-item absolute bg-bgs2 rounded-md border-l-4 border-aps1 truncate"
+<button
+  class="event-item absolute bg-bgs2 rounded-md border-l-4 border-aps1 truncate flex"
   style="top: {entry.top}px; height: {entry.height}px; width: {width}; left: {left};"
   use:resizeListener={(el) => {
     height = el.height;
@@ -54,7 +54,7 @@
       <div class="text-fgs1 text-b3">{entry.item.label ?? "Untitled"}</div>
     </div>
   {/if}
-</div>
+</button>
 
 <style>
   .event-item {

@@ -28,7 +28,7 @@
     class={cn(
       "relative rounded-md min-w-fit whitespace-nowrap border",
       {
-        "flex justify-center rounded-[5.5px]":
+        "flex justify-center items-center rounded-[5.5px]":
           style === OptionSelectorStyle.ICON,
         "flex grow justify-center":
           style === OptionSelectorStyle.TRAIN ||

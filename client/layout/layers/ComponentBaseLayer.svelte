@@ -45,9 +45,9 @@
   export let syncDownOnMount = false;
 
   /**
-   * If true, only removal properties like `isArchived` or `trashInformation` will be subscribed to for merge action.
+   * If set, only the properties in this array will be subscribed to for merge action.
    */
-  export let isSubscribeToRemovalPropertiesOnly = false;
+  export let subScriptionPropsForMergeAction: string[] | undefined = undefined;
 
   function visibilityChangeListener() {
     dispatch("appear");
@@ -94,7 +94,7 @@
     const isRemovalPropertyCase =
       !subscribeToRecords &&
       mutation?.action === PersistenceActionType.MERGE &&
-      Object.values(RemovalProperty).some(
+      subScriptionPropsForMergeAction?.some(
         (x) => mutation?.record[x] !== undefined
       );
     if (isRemovalPropertyCase) {
@@ -104,8 +104,8 @@
     if (
       subscribeToContext &&
       subscribeToContext.has(data.context) &&
-      (!isSubscribeToRemovalPropertiesOnly ||
-        (isSubscribeToRemovalPropertiesOnly &&
+      (!subScriptionPropsForMergeAction ||
+        (subScriptionPropsForMergeAction &&
           mutation?.action !== PersistenceActionType.MERGE))
     ) {
       dispatch("change", data);
