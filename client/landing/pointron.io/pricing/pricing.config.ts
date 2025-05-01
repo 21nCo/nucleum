@@ -18,7 +18,7 @@ const syncPlan: PricingPlan = {
   id: "sync",
   icon: "pointron-sync-plan",
   title: "Pointron sync",
-  subtitle: "Real-time sync across all devices for Pointron",
+  subtitle: "Real-time sync across all devices",
   price: { monthly: 7, yearly: 60, lifetime: 225 },
   features: [
     { text: "Unlimited cloud sync" },
@@ -32,7 +32,7 @@ const nucleusPlan: PricingPlan = {
   id: "nucleus",
   icon: "nucleus-plan",
   title: "Nucleus",
-  subtitle: "Everything productivity - single plan",
+  subtitle: "Everything productivity, single plan",
   price: { monthly: 15, yearly: 144, lifetime: 450 },
   features: [
     { text: "Unlimited cloud sync for Memotron, Pointron" },

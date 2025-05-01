@@ -7,7 +7,7 @@
   import type { PricingPlan, PricingToggleOption } from "./pricing.types";
 
   export let plans: PricingPlan[] = [];
-  export let title = "Pick a plan";
+  export let title = "Pricing";
   export let earlyAdopterMessage =
     "Become an early adopter - Sign up now and get 35% off your first yearly or lifetime plan!";
   let unit: PricingToggleOption = "yearly";

@@ -37,7 +37,7 @@
         {/each}
       </div>
       <button
-        class="absolute inset-0 flex items-center justify-center z-50 text-fgs1 hover:scale-110 transition-all ease-out duration-200"
+        class="absolute inset-0 flex items-center justify-center z-40 text-fgs1 hover:scale-110 transition-all ease-out duration-200"
         on:click={() => (isVideoPlaying = true)}
       >
         <SvgIcon icon="play" isRenderRaw={true} />

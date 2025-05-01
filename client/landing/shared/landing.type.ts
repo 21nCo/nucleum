@@ -67,7 +67,7 @@ export type IHighlight = {
 };
 
 export type IFeature = {
-  animationUrl: string;
+  image: string;
   feature: string;
   title: string;
   desc: string;

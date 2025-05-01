@@ -5,6 +5,7 @@
   import NavBarExpandPopover from "./NavBarExpandPopover.svelte";
   import { landing } from "../store/shared.store";
   export let topNavBarValues: ITopNavBar;
+  export let isStickedContext: boolean = false;
 </script>
 
 {#each topNavBarValues.items as item}
@@ -21,9 +22,13 @@
       }}
       class="flex items-center gap-1"
     >
-      <NavMenuItem {item} />
+      <NavMenuItem {item} {isStickedContext} />
     </button>
   {:else}
-    <NavMenuItem {item} on:click={() => landing.openLink(item.href)} />
+    <NavMenuItem
+      {item}
+      {isStickedContext}
+      on:click={() => landing.openLink(item.href)}
+    />
   {/if}
 {/each}

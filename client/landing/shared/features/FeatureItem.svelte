@@ -1,4 +1,5 @@
 <script lang="ts">
+  import view from "$lib/client/stores/view.store";
   import { cn } from "$lib/client/utils/ui.utils";
   import type { IFeature } from "../landing.type";
   import VisualRender from "../VisualRender.svelte";
@@ -7,28 +8,34 @@
 </script>
 
 <div
-  class={cn("flex mo:flex-col gap-32 h-[30rem] mo:h-auto w-full", {
+  class={cn("flex mo:flex-col gap-32 h-[36rem] mo:h-auto w-full", {
     "flex-row-reverse": isReversed
   })}
 >
-  <div class="h-full w-[30rem] mo:w-full">
-    <img
-      src={feature.animationUrl}
-      alt={feature.title}
-      class="h-full object-contain"
-    />
-  </div>
+  {#if !$view.isConstrainedWidth}
+    <div
+      class="h-full w-2/3 min-w-[20rem] dp:min-w-[30rem] mo:w-full bg-bgs1 rounded-t-xl flex justify-center overflow-clip relative"
+    >
+      <img
+        src={feature.image}
+        alt={feature.title}
+        class="absolute top-12 inset-x-0 object-contain px-12"
+      />
+    </div>
+  {/if}
   <div class="flex flex-col gap-4">
     <div
       class={cn("text-lb2 text-left", {
-        "text-ags1": isReversed,
-        "text-aps1": !isReversed
+        "text-aps1": isReversed,
+        "text-ags1": !isReversed
       })}
     >
       {feature.feature}
     </div>
     <div class="flex flex-col gap-5">
-      <h3 class="text-xl font-medium text-left">{feature.title}</h3>
+      <h3 class="text-[36px] mo:text-h2 font-medium text-left">
+        {feature.title}
+      </h3>
       <p class="text-lbase text-fgs2 text-left">{feature.desc}</p>
       <div class="flex justify-center items-center">
         <VisualRender name={feature.visualRenderComponent} />

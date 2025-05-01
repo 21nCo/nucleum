@@ -26,7 +26,12 @@
     <p class="text-lb2 text-fgs2 text-left">{highlight.desc}</p>
   </div>
 
-  <div class="flex-1 flex justify-center items-center">
+  <div
+    class={cn("flex-1 flex items-center", {
+      "justify-center": highlight.isVisualAtBottom,
+      "justify-end": !highlight.isVisualAtBottom
+    })}
+  >
     <VisualRender name={highlight.visualRenderComponent} />
   </div>
 </div>

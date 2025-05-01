@@ -36,6 +36,10 @@
         testimonials={testimonials.slice(5, 10)}
         transitionDirection="right"
       />
+      <!-- <TestimonialRow
+        testimonials={testimonials.slice(10, 15)}
+        transitionDirection="left"
+      /> -->
     </div>
   {/if}
   <div class="flex flex-wrap justify-center items-center gap-4">

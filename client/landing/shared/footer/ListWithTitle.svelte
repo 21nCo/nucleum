@@ -4,22 +4,17 @@
 
   export let items: IListItem[];
   const currentPath = typeof window !== "undefined" ? window.location.href : "";
-  console.log(
-    currentPath,
-    items[0].title,
-    currentPath.includes(items[0].title.toLowerCase())
-  );
 </script>
 
 <div class="flex flex-col gap-3 text-b2 2k:text-lb2">
   {#each items as item}
     {#if item.title && item.href}
       <a
-        class={cn(
-          "block text-fgs2 hover:text-aps1",
-          currentPath.includes(item.title.toLowerCase()) &&
-            "pointer-events-none opacity-30"
-        )}
+        class={cn("block text-fgs2 hover:text-aps1", {
+          "pointer-events-none opacity-30": currentPath.includes(
+            item.title.toLowerCase()
+          )
+        })}
         href={item.href}>{item.title}</a
       >
     {:else}

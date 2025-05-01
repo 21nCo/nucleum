@@ -32,7 +32,10 @@
   ];
 </script>
 
-<PricingSection plans={pricingPlans} />
+<PricingSection
+  plans={pricingPlans}
+  title="Pick the plan that's right for you"
+/>
 <FaQs faqs={faqItems} />
 <BottomCta
   title="Design your day. Define your path."

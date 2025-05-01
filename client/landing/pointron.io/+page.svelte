@@ -5,6 +5,7 @@
   import HeroSection from "../shared/HeroSection.svelte";
   import Highlights from "../shared/highlights/Highlights.svelte";
   import type {
+    IFeature,
     IHeroInputs,
     IHighlight,
     ITestimonial,
@@ -13,6 +14,7 @@
   import Testimonials from "../shared/testimonials/Testimonials.svelte";
   import { landing } from "../shared/store/shared.store";
   import HeroVideoV2 from "../shared/elements/HeroVideoV2.svelte";
+  import Features from "../shared/features/Features.svelte";
   let heroInputs: IHeroInputs = {
     tagline: "Your focus haven",
     description: "Track time, achieve goals and focus like never before.",
@@ -24,7 +26,7 @@
 
   const staticUrl = import.meta.env.VITE_STATIC_URL;
 
-  let features: ITileItem[] = [
+  let featuresOld: ITileItem[] = [
     {
       title: "Powerful ways to focus",
       description:
@@ -68,8 +70,8 @@
     {
       icon: "powerfulwheel",
       title: "Unbelievably powerful",
-      desc: "Unlock next-level productivity with a powerhouse of features designed to get things done",
-      visualRenderComponent: "CollectionsGraph"
+      desc: "Unlock next-level of focus, time and goal tracking with a powerhouse of features.",
+      visualRenderComponent: "pointronFeatures"
     },
     // {
     //   icon: "brain",
@@ -80,9 +82,9 @@
     // },
     {
       icon: "offline",
-      title: "Offline",
-      desc: "No cloud required. If your OS runs, so does this",
-      visualRenderComponent: "NetworkIcon",
+      title: "Offline version",
+      desc: "No cloud required. If your OS runs, so does the app.",
+      visualRenderComponent: "continueOffline",
       isVisualAtBottom: true
     },
     // {
@@ -92,18 +94,19 @@
     //   visualRenderComponent: "security",
     //   isVisualAtBottom: true
     // },
-    {
-      icon: "infinity",
-      title: "Built to last",
-      desc: "No exits. No acquisitions. We're not building for an exit. We're building for you",
-      visualRenderComponent: "last"
-    },
+
     {
       icon: "touch",
       title: "Surprisingly intuitive",
-      desc: "A clean, elegant interface that makes powerful features feel effortless",
-      visualRenderComponent: "UIVisual",
+      desc: "Power doesn't always have to be intimidating. Give us a try.",
+      visualRenderComponent: "",
       isVisualAtBottom: true
+    },
+    {
+      icon: "infinity",
+      title: "Built to last",
+      desc: "No exits. No acquisitions. We're not building for an exit. We're building for you.",
+      visualRenderComponent: "last"
     }
   ];
 
@@ -111,23 +114,24 @@
     {
       name: "TheoxPratham",
       body: "Loved the concept and the work that has been put in it to make it the best focus app.",
-      source: "App store"
+      source: "appstore",
+      link: "https://apps.apple.com/in/app/pointron-focus-time-tracker/id6469411284?platform=iphone"
     },
     {
       name: "Artak",
       body: "I absolutely love it and use it everyday.",
-      source: "Discord"
+      source: "discord"
     },
     {
       name: "VirgilCaffier",
       body: "Your time is precious! What's the best way to not waste it? The one I'm currently using is Pointron!",
-      source: "X",
+      source: "twitter",
       link: "https://x.com/VirgilCaffier/status/1661031751387602946"
     },
     {
       name: "NellyisDev",
       body: "I really love the app.",
-      source: "Discord"
+      source: "discord"
     }
   ];
 
@@ -139,6 +143,31 @@
     "laptop.png",
     "phone.png"
   ];
+
+  const features: IFeature[] = [
+    {
+      image: "phone.png",
+      feature: "Advanced focus",
+      title: "Focus in more powerful ways",
+      desc: "Focus the way you work with customisable focus sessions and break reminders.",
+      visualRenderComponent: "focusFeature"
+    },
+    {
+      image: "goalsFeature.png",
+      feature: "Goals & Tasks",
+      title: "Infinite goal nesting, tasks at atomic level",
+      desc: "Create and track goals granularly using deep nesting and create tasks on atomic level.",
+      visualRenderComponent: "goalsFeature"
+    },
+    {
+      image: "analyticsFeature.png",
+      feature: "Calendar, Analytics & more",
+      title: "Powerhouse of features",
+      desc: "Track your progress using Analytics, calendar and more.",
+      visualRenderComponent: "analyticsFeature"
+      // tutorialUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    }
+  ];
 </script>
 
 <HeroSection {heroInputs} />
@@ -149,8 +178,16 @@
   url="https://www.youtube.com/embed/SeWdndc7y4A?si=xnr1BZSPhT5dAybc"
   {deviceImages}
 />
-<Highlights {highlights} />
-<FeaturesExample />
+<Highlights
+  {highlights}
+  title="Exceptional throughout"
+  subtitle="From interface to infrastructure, user need alignment is at the core of our approach"
+/>
+<Features
+  {features}
+  title="Explore focus in a whole new way"
+  subtitle="Thoughtfully crafted, one feature at a time"
+/>
 <Testimonials
   {testimonials}
   title="Join the community"

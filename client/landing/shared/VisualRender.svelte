@@ -6,7 +6,11 @@
   import Security from "./highlights/visuals/SecurityVisual.svelte";
   import UIVisual from "./highlights/visuals/UIVisual.svelte";
   import CollectionsGraph from "./highlights/visuals/CollectionsGraph.svelte";
-
+  import PointronFeatures from "./highlights/visuals/PointronFeatures.svelte";
+  import ContinueOffline from "./highlights/visuals/ContinueOffline.svelte";
+  import FocusFeature from "./features/visuals/FocusFeature.svelte";
+  import AnalyticsFeature from "./features/visuals/AnalyticsFeature.svelte";
+  import GoalsFeature from "./features/visuals/GoalsFeature.svelte";
   export let name: string;
 
   const componentMap: Record<string, any> = {
@@ -16,7 +20,12 @@
     NetworkIcon: NetworkIcon,
     security: Security,
     UIVisual: UIVisual,
-    CollectionsGraph: CollectionsGraph
+    CollectionsGraph: CollectionsGraph,
+    pointronFeatures: PointronFeatures,
+    continueOffline: ContinueOffline,
+    focusFeature: FocusFeature,
+    goalsFeature: GoalsFeature,
+    analyticsFeature: AnalyticsFeature
   };
 </script>
 

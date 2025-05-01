@@ -8,69 +8,72 @@
 
   let animationContainer: HTMLElement;
   let animationActive = false;
-  let animationSpeed = 40; // pixels per second (adjust as needed)
+  let isPaused = false;
+  /** Speed of animation in pixels per second */
+  let animationSpeed = 40;
   let lastTimestamp: number;
   let animationFrameId: number;
 
+  /**
+   * Handles the continuous animation of testimonials in an infinite scroll pattern.
+   * Calculates proper movement based on elapsed time and manages the illusion of
+   * an infinite list by repositioning elements when they move out of view.
+   *
+   * For left direction:
+   * - Moves elements from left to right
+   * - When first element moves out of view, it's appended to the end
+   *
+   * For right direction:
+   * - Moves elements from right to left
+   * - Pre-emptively moves last element to front before gap would appear
+   * - Adjusts position to maintain visual continuity
+   *
+   * @param timestamp - Current animation frame timestamp provided by requestAnimationFrame
+   */
   function animate(timestamp: number) {
     if (!lastTimestamp) lastTimestamp = timestamp;
     const elapsed = timestamp - lastTimestamp;
     lastTimestamp = timestamp;
 
-    if (animationActive && animationContainer) {
-      // Calculate movement based on elapsed time and direction
+    if (animationActive && animationContainer && !isPaused) {
       const pixelsToMove = (elapsed / 1000) * animationSpeed;
       const movement =
         transitionDirection === "left" ? -pixelsToMove : pixelsToMove;
 
-      // Get dimensions
       const itemWidth = animationContainer.firstElementChild?.clientWidth || 0;
       const gapWidth = 24; // 6 * 4px (gap-6 = 1.5rem = 24px)
       const singleItemTotalWidth = itemWidth + gapWidth;
 
-      // Current position
       const currentPosition = parseFloat(
         animationContainer.style.transform.replace(/[^\d.-]/g, "") || "0"
       );
       let newPosition = currentPosition + movement;
 
-      // Special handling for right-to-left animation to avoid gaps
       if (transitionDirection === "right" && newPosition > 0) {
-        // For right direction, we need to pre-emptively move the last item to the beginning
-        // before it becomes visible (showing a gap)
         const lastChild = animationContainer.lastElementChild;
         if (lastChild) {
-          // Remove transition temporarily to avoid visual glitch
           animationContainer.style.transition = "none";
-          // Move last item to front
           animationContainer.insertBefore(
             lastChild,
             animationContainer.firstElementChild
           );
-          // Adjust position to compensate for the moved item
           newPosition = newPosition - singleItemTotalWidth;
           animationContainer.style.transform = `translateX(${newPosition}px)`;
-          // Force reflow
           void animationContainer.offsetHeight;
-          // Restore transition
           animationContainer.style.transition = "";
         }
       } else {
-        // Apply the transform for normal movement
         animationContainer.style.transform = `translateX(${newPosition}px)`;
       }
 
-      // Check if we need to loop the animation for left-to-right
       if (
         transitionDirection === "left" &&
         Math.abs(newPosition) >= singleItemTotalWidth
       ) {
-        // Move the first item to the end
         const firstChild = animationContainer.firstElementChild;
         if (firstChild) {
           animationContainer.appendChild(firstChild);
         }
-        // Reset position to create illusion of infinite scroll
         animationContainer.style.transform = `translateX(${newPosition + singleItemTotalWidth}px)`;
       }
     }
@@ -78,10 +81,25 @@
     animationFrameId = requestAnimationFrame(animate);
   }
 
+  function handleMouseEnter() {
+    isPaused = true;
+  }
+
+  function handleMouseLeave() {
+    isPaused = false;
+  }
+
+  /**
+   * Sets up the testimonial carousel animation on component mount.
+   * For right-to-left animation, prepares the container by:
+   * - Moving items from end to beginning for proper initial positioning
+   * - Setting initial negative offset for visual continuity
+   * - The offset ensures proper items are in view when animation starts
+   *
+   * For both directions, starts the animation loop.
+   */
   onMount(() => {
-    // If direction is right, we need to prepare the container
     if (transitionDirection === "right") {
-      // Move some items from the end to the beginning to start with correct items in view
       for (let i = 0; i < Math.min(4, testimonials.length); i++) {
         if (animationContainer && animationContainer.lastElementChild) {
           animationContainer.insertBefore(
@@ -90,10 +108,9 @@
           );
         }
       }
-      // Start with a negative offset so items appear in the right position
       const itemWidth = animationContainer.firstElementChild?.clientWidth || 0;
-      const gapWidth = 24; // gap-6
-      const offset = -(itemWidth + gapWidth) * 3; // Offset by 3 items
+      const gapWidth = 24;
+      const offset = -(itemWidth + gapWidth) * 3;
       animationContainer.style.transform = `translateX(${offset}px)`;
     }
 
@@ -101,6 +118,10 @@
     animationFrameId = requestAnimationFrame(animate);
   });
 
+  /**
+   * Cleans up animation resources when component is destroyed.
+   * Stops the animation loop by canceling the animation frame request.
+   */
   onDestroy(() => {
     animationActive = false;
     if (animationFrameId) {
@@ -113,6 +134,8 @@
   <div
     bind:this={animationContainer}
     class="flex gap-6 transition-transform duration-0"
+    on:mouseenter={handleMouseEnter}
+    on:mouseleave={handleMouseLeave}
   >
     {#each testimonials as testimonial}
       <TestimonialItem {testimonial} />

@@ -4,6 +4,9 @@
   import type { IHighlight } from "../landing.type";
   import Title from "../Title.svelte";
 
+  export let title: string = "Details that matter";
+  export let subtitle: string =
+    "We believe true quality is built one detail at a time";
   export let highlights: IHighlight[] = [];
 
   function isShorterHighlight(num: number) {
@@ -15,17 +18,14 @@
 
 <div class={cn("w-full flex flex-col gap-20 mo:gap-10")}>
   <div class="flex flex-col justify-center items-center">
-    <Title
-      title="Details that matter"
-      subtitle="We believe true quality is built one detail at a time"
-    />
+    <Title {title} {subtitle} />
   </div>
   <div class="grid grid-cols-3 mo:grid-cols-1 gap-6 mo:gap-10 w-full">
     {#each highlights as highlight, i}
       {#if i === highlights.length - 1 && highlights.length % 2 !== 0}
         <!-- Last item and odd number of items - make it full width -->
         <div class="col-span-3 mo:col-span-1">
-          <HighlightItem {highlight} isFullWidth={true} isReversed={false} />
+          <HighlightItem {highlight} isFullWidth={true} />
         </div>
       {:else}
         {@const isShorter = isShorterHighlight(i + 1)}

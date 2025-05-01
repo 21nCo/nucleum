@@ -8,23 +8,28 @@
   const resources = [
     {
       label: "Features",
-      icon: "features",
+      icon: "docs",
       href: urls?.features
     },
     {
       label: "Tutorials",
-      icon: "tutorials",
+      icon: "youtube",
       href: urls?.tutorials
     },
     {
       label: "FAQs",
-      icon: "faqs",
+      icon: "question",
       href: urls?.faqs
     },
     {
       label: "Changelog",
       icon: "changelog",
       href: urls?.changelog
+    },
+    {
+      label: "Roadmap",
+      icon: "map",
+      href: urls?.roadmap
     }
   ];
 </script>
@@ -35,13 +40,11 @@
   >
     {#each resources as item}
       <button
-        class="flex flex-col justify-center items-center gap-2 bg-bgs1 rounded-md hover:bg-bgs2 border border-brs3"
+        class="flex flex-col justify-center items-center p-2 gap-1 bg-bgs1 rounded-md hover:bg-bgs2 border border-brs3"
         on:click={() => landing.openLink(item.href ?? "")}
       >
-        <!-- <SvgIcon icon={item.icon} /> -->
-        <div>
-          {item.label}
-        </div>
+        <SvgIcon icon={item.icon} />
+        <div class="text-b2 text-fgs2">{item.label}</div>
       </button>
     {/each}
   </div>

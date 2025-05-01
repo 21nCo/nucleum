@@ -107,7 +107,7 @@
         image.includes("laptop")
       )}
       <div
-        class="flex gap-2 relative mo:min-h-40 min-h-[490px] w-full"
+        class="flex gap-2 relative mo:min-h-40 min-h-[490px] 2k:min-h-[700px] w-full"
         bind:this={deviceImagesContainer}
       >
         <div class={cn("relative inset-x-0 bottom-0 w-[60vw] mx-auto")}>

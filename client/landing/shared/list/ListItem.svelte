@@ -7,7 +7,7 @@
 
 <div class="flex items-center gap-2 text-lb2">
   {#if item.icon}
-    <SVGIcon icon={item.icon} size={Size.lg} />
+    <SVGIcon icon={item.icon} size={Size.lg} isRenderRaw={true} />
   {/if}
   <p>{item.title}</p>
 </div>

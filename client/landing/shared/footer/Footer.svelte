@@ -136,7 +136,7 @@
     });
   }
   const combinedLI = [
-    { title: "Infomration" },
+    { title: "Information" },
     joinUs,
     ourStory,
     ...information.slice(1),

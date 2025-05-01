@@ -12,7 +12,7 @@
   <div class="flex flex-col justify-center items-center">
     <Title {title} {subtitle} />
   </div>
-  <div class="flex flex-col gap-32 mo:gap-10 w-full">
+  <div class="flex flex-col gap-32 mo:gap-20 w-full">
     {#each features as feature, i}
       <div>
         <FeatureItem {feature} isReversed={i % 2 !== 0} />

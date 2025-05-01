@@ -29,7 +29,7 @@
     </div>
   {/if}
   <div class="flex items-center justify-center gap-2 h-full w-full px-6">
-    <NavMenu {topNavBarValues} />
+    <NavMenu {topNavBarValues} isStickedContext={isStickied} />
   </div>
   {#if isShowCta}
     <div class="w-fit" in:fly={{ x: 10, duration: 500 }}>
