@@ -5,7 +5,9 @@
   export { className as class };
 </script>
 
-<div class={cn("w-full h-full flex items-center justify-center", className)}>
+<div
+  class={cn("w-full h-full flex items-center justify-center -mt-10", className)}
+>
   <svg
     width="240"
     height="180"

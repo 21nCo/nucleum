@@ -84,7 +84,6 @@
       icon: "offline",
       title: "Offline version",
       desc: "No cloud required. If your OS runs, so does the app.",
-      visualRenderComponent: "continueOffline",
       isVisualAtBottom: true
     },
     // {
@@ -99,7 +98,6 @@
       icon: "touch",
       title: "Surprisingly intuitive",
       desc: "Power doesn't always have to be intimidating. Give us a try.",
-      visualRenderComponent: "",
       isVisualAtBottom: true
     },
     {

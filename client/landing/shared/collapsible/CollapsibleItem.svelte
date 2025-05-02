@@ -2,6 +2,7 @@
   import { fly } from "svelte/transition";
   import { cubicOut } from "svelte/easing";
   import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
+  import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
 
   export let title: string = "";
   export let body: string = "";
@@ -38,7 +39,9 @@
         transition:fly={{ y: -20, duration: 200, easing: cubicOut }}
         class="pb-4 text-fgs2"
       >
-        <p class="text-lb2 text-fgs2 max-w-3xl">{body}</p>
+        <p class="text-lb2 text-fgs2 max-w-3xl">
+          {@html renderMdAsHtml(body)}
+        </p>
       </div>
     {/if}
   </div>

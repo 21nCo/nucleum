@@ -18,12 +18,16 @@
       body: "All features are available on offline version of the app without any limitations or restrictions whatsoever."
     },
     {
+      title: "Is there any chance of price increase in the future?",
+      body: "No, there won't be any. In fact, we will be reducing the price of the plans in the future if more users start using the app. This is because of our preference for cost-based pricing over [value-based](https://www.madx.digital/glossary/value-based-pricing) (profit maximization) pricing to keep the costs low for you."
+    },
+    {
       title: "Can I cancel once I subscribe?",
       body: "Yes, you can cancel within grace period for yearly and lifetime plans. The grace period is 14 days for yearly plans and 1 month for lifetime plans. We do not have any hidden fees or contracts. Kindly email us at hello@21n.org if you have any questions."
     },
     {
       title: "Who owns Pointron?",
-      body: "Pointron is owned and built by 21n.org - 21st century native organization. Go to 21n.org to learn more about us."
+      body: "Pointron is owned and built by 21n - 21st century native organization. Go to [21n.org](https://21n.org) to learn more about us."
     },
     {
       title: "What happens to my data if Pointron is shutdown for some reason?",

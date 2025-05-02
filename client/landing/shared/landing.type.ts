@@ -62,7 +62,7 @@ export type IHighlight = {
   icon: string;
   title: string;
   desc: string;
-  visualRenderComponent: string;
+  visualRenderComponent?: string;
   isVisualAtBottom?: boolean;
 };
 

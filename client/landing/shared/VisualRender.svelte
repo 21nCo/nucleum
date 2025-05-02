@@ -11,6 +11,7 @@
   import FocusFeature from "./features/visuals/FocusFeature.svelte";
   import AnalyticsFeature from "./features/visuals/AnalyticsFeature.svelte";
   import GoalsFeature from "./features/visuals/GoalsFeature.svelte";
+  import PointronIntuitive from "./highlights/visuals/PointronIntuitive.svelte";
   export let name: string;
 
   const componentMap: Record<string, any> = {
@@ -25,7 +26,8 @@
     continueOffline: ContinueOffline,
     focusFeature: FocusFeature,
     goalsFeature: GoalsFeature,
-    analyticsFeature: AnalyticsFeature
+    analyticsFeature: AnalyticsFeature,
+    pointronIntuitive: PointronIntuitive
   };
 </script>
 
