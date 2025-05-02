@@ -11,6 +11,7 @@
   import Footer from "./footer/Footer.svelte";
   import { afterNavigate } from "$app/navigation";
   import type { IMetadata } from "$lib/client/layout/metadata.type";
+  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
   let id: string = "main";
   let centralContainerRef: HTMLDivElement;
   export let topNavBarValues: ITopNavBar;
@@ -19,6 +20,7 @@
   export let footerValues: IFooter;
   export let metadata: IMetadata;
   let scrollY: number = 0;
+  let isShowLoadingOverlay: boolean = true;
   let transformedProducts: IListItem[] = [
     { title: "Our products" },
     ...$currentProductsStore?.map((product) => ({
@@ -37,6 +39,9 @@
   onMount(async () => {
     isProductPage.set(isProduct);
     view?.refresh(window.innerWidth, window.innerHeight);
+    setTimeout(() => {
+      isShowLoadingOverlay = false;
+    }, 500);
     // if (window.location.pathname === "/" || window.location.pathname === "")
     //   addEntryAnimation(id);
   });
@@ -66,6 +71,14 @@
     Tailwind Selector: {$appearance.colorScheme?.tailwindSelector}
   </div>
 {/if} -->
+
+  {#if isShowLoadingOverlay}
+    <div
+      class="bg-bgs2 fixed w-screen h-screen z-[100] flex justify-center items-center"
+    >
+      <SvgIcon icon={topNavBarValues.icon} isRenderRaw={true} />
+    </div>
+  {/if}
   {#if isShowGrid}
     <LeftPanel {isProduct} />
   {/if}
