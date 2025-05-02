@@ -307,7 +307,9 @@ export function getGeoLocation() {
 }
 
 export function detectTouchDevice() {
-  return window.matchMedia("(hover: none)").matches;
+  if (typeof window !== "undefined")
+    return window.matchMedia("(hover: none)").matches;
+  return false;
 }
 
 export function resolveHoverState(event: MouseEvent | FocusEvent) {

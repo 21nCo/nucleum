@@ -63,14 +63,6 @@
   landing.load(urls);
 </script>
 
-<!-- {#if import.meta.env.DEV}
-  <div class="fixed bottom-0 right-0 bg-bgs1 text-fgs1 p-2 text-xs z-50">
-    Theme: {$appearance.theme}<br />
-    Color Scheme: {$appearance.colorScheme?.id}<br />
-    Tailwind Selector: {$appearance.colorScheme?.tailwindSelector}
-  </div>
-{/if} -->
-
 <BlankLandingLayout
   {topNavBarValues}
   {footerValues}

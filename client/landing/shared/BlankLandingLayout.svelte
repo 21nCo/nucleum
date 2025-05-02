@@ -33,6 +33,7 @@
     if (isProduct) addAnimateClass("animate-open-left", id);
     else addAnimateClass("animate-open-right", id);
   }
+
   onMount(async () => {
     isProductPage.set(isProduct);
     view?.refresh(window.innerWidth, window.innerHeight);
@@ -58,6 +59,13 @@
 </script>
 
 <LandingBaseLayer {metadata} bgColor="bg-bgs2">
+  <!-- {#if import.meta.env.DEV}
+  <div class="fixed bottom-0 right-0 bg-bgs1 text-fgs1 p-2 text-xs z-50">
+    Theme: {$appearance.theme}<br />
+    Color Scheme: {$appearance.colorScheme?.id}<br />
+    Tailwind Selector: {$appearance.colorScheme?.tailwindSelector}
+  </div>
+{/if} -->
   {#if isShowGrid}
     <LeftPanel {isProduct} />
   {/if}

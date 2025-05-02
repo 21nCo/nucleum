@@ -16,7 +16,9 @@
     let browserAgent = navigator?.userAgent;
     $context.os = detectSystemOS();
     $context.isTouchDevice = detectTouchDevice();
-    $context.protocol = window.location.protocol;
+    if (typeof window !== "undefined") {
+      $context.protocol = window.location.protocol;
+    }
   }
 </script>
 

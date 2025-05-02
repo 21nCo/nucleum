@@ -91,6 +91,7 @@ class ViewStore extends ObservableStore<IViewStore> {
     super("view");
     if (typeof window !== "undefined")
       this.refresh(window.innerWidth, window.innerHeight);
+    else this.refresh(1080, 900);
   }
 
   reset(view: IViewStore) {
