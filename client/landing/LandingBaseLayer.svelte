@@ -1,5 +1,4 @@
 <script lang="ts">
-  import "../app.css";
   import { cn } from "$lib/client/utils/ui.utils";
   import ThemeLayer from "../layout/layers/themeLayer/ThemeLayer.svelte";
   // import AnalyticsLayer from "../layout/layers/analytics/AnalyticsLayer.svelte";

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import "$lib/client/app.css";
   import BlankLandingLayout from "$lib/client/landing/shared/BlankLandingLayout.svelte";
   import type {
     IFooter,
