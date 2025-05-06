@@ -173,7 +173,7 @@
   videoUrl="https://www.youtube.com/embed/SeWdndc7y4A?si=xnr1BZSPhT5dAybc"
 /> -->
 <HeroVideoV2
-  url="https://www.youtube.com/embed/SeWdndc7y4A?si=xnr1BZSPhT5dAybc"
+  url="https://www.youtube.com/embed/5lnABLu3YXs?si=u1iuwtfGYBWLraqP"
   {deviceImages}
 />
 <Highlights
