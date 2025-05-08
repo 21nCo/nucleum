@@ -29,8 +29,7 @@ import {
   sessionLogStore
 } from "$lib/client/products/pointron/logs/log.store";
 import {
-  pointronPreferences,
-  tagStore
+  pointronPreferences
 } from "$lib/client/products/pointron/pointron.store";
 
 export const nucleusCacheableStores: IStore[] = [
@@ -49,7 +48,6 @@ export const nucleusCacheableStores: IStore[] = [
   pointronPreferences,
   focusItemsStore,
   activeSession,
-  tagStore,
   manualLogStore,
   focusHeatmapStore,
   sessionLogStore,

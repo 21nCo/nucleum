@@ -18,7 +18,7 @@ import { GlobalEvent } from "../types/event.enum";
 
 const defaultLightColorSchemeId = "colorscheme:clean_tidyblue_light";
 // const defaultDarkColorSchemeId = "colorscheme:clean_tidyblue_dark";
-const defaultDarkColorSchemeId = import.meta.env.VITE_IS_LANDING
+const defaultDarkColorSchemeId = import.meta.env?.VITE_IS_LANDING
   ? "colorscheme:clean_tidyoxide_dark"
   : "colorscheme:clean_tidyblue_dark";
 const seedAppearance: AppearanceStore = {

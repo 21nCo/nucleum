@@ -1267,7 +1267,7 @@
     color: gray;
   }
   [contenteditable]::selection {
-    background-color: rgba(var(--colors-aps1), 0.3);
+    background-color: rgb(var(--colors-aps2));
   }
   #customcaret {
     position: fixed;

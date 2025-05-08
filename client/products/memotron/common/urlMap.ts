@@ -46,10 +46,12 @@ export const minimalMetadataPages = [
 
 export const memotronUrlsList = [
   /^https:\/\/(?:.*\.)?memotron\.io(?:\/.*)?$/,
+  /^https:\/\/(?:.*\.)?memotron\.app(?:\/.*)?$/,
   /^https:\/\/(?:.*\.)?tidigit\.dev(?:\/.*)?$/
 ];
 export const unavailableUrlsList = [
   /^https:\/\/app\.memotron\.io(?:\/.*)?$/,
+  /^https:\/\/web\.memotron\.app(?:\/.*)?$/,
   /^https:\/\/memotron\.tidigit\.dev(?:\/.*)?$/,
   /^https:\/\/pointron\.tidigit\.dev(?:\/.*)?$/,
   /^https?:\/\/localhost(?::[0-9]+)?(?:\/.*)?$/,
@@ -58,8 +60,15 @@ export const unavailableUrlsList = [
  
 ];
 
+export const blankUrls = [
+  /^chrome:\/\/newtab\//,
+  /^about:newtab$/,
+  /^about:blank$/
+];
+
 export const sidePanelUnavailableUrlsList = [
   ...unavailableUrlsList,
+  ...blankUrls,
   /^https:\/\/(?:www\.)?(twitter\.com|x\.com)\/([a-zA-Z0-9_]+)\/status\/(\d+)\/?$/,
   /^https:\/\/(?:.*\.)?amazon\.[a-z]{2,3}(?:\/.*)?$/,
   /^https:\/\/(?:.*\.)?twitter\.[a-z]{2,3}(?:\/.*)?$/,

@@ -7,7 +7,7 @@ import { formatDate } from "$lib/client/utils/time.utils";
 import { enumToString } from "$lib/shared/utils/text.utils";
 import { BillingCycle, PlanType, type IPlan } from "./userPlan.type";
 
-const plans = import.meta.env.VITE_PLANS;
+const plans = import.meta?.env?.VITE_PLANS;
 let rates: number[] = [7, 60, 200, 15, 144, 450];
 if (plans) {
   rates = plans.split(",").map((rate: string) => parseInt(rate));

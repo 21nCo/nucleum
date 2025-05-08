@@ -3,17 +3,12 @@ import {
   activeResourceFilter,
   activeResourceFilterIgnoreParentInactive,
   archivedResourceFilter,
-  debouncer,
-  generateUID
+  debouncer
 } from "../../../utils/utils";
 import {
   PersistenceActionType,
   StoreDataType,
   type IStore,
-  type IMutationQueueParams,
-  type IObservableStoreSubject,
-  type IObservableStore,
-  CacheStrategy,
   type IMutationParamsv2,
   type IResourceSelectParams,
   type IRecordId,
@@ -21,8 +16,6 @@ import {
   type IResourceSelectFilters
 } from "../../../types/data.type";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { prefixTable } from "../../../../shared/utils/text.utils";
-import { dataManager } from "$lib/client/persistence/dataManager";
 import { ObservableStore } from "../../../stores/client.store";
 import { resolveCurrentUserId } from "../../../utils/account.utils";
 import type {
@@ -30,7 +23,6 @@ import type {
   IMultiSelectStore,
   IResource,
   IResourceMutationParams,
-  ITrashInformation,
   OmitForCapture,
   OmitForCaptureWithId
 } from "./resource.type";
@@ -46,10 +38,9 @@ import { toasts } from "$lib/client/stores/notification.store";
 import { logger } from "../../debug/logger.client";
 import { isSameResource, resourceInList } from "./resource.utils";
 import { GlobalEvent } from "$lib/client/types/event.enum";
-import { appStore } from "$lib/client/stores/app.store";
+// import { appStore } from "$lib/client/stores/app.store";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { AppSearchParam } from "$lib/client/types/appStore.type";
-// import { appStore } from "$lib/client/stores/app.store";
 
 export const activeResources = new Map<string, ActiveResourceStore<any, any>>();
 
@@ -148,10 +139,16 @@ export class ActiveResourceStore<
   toggleReadMode(val: boolean) {
     return this.update((prev) => ({ ...prev, isInReadOnlyMode: val }));
   }
+  /**
+   * Removed dependency on appStore to avoid circular dependency issues on Clipper extension.
+   * @param val 
+   * @returns 
+   */
   toggleEditMode(val: boolean) {
-    appStore.toggleSearchParam(
-      val ? { [AppSearchParam.EDIT]: true } : [AppSearchParam.EDIT]
-    );
+    // appStore.toggleSearchParam(
+    //   val ? { [AppSearchParam.EDIT]: true } : [AppSearchParam.EDIT]
+    // );
+    dispatchCustomEvent(GlobalEvent.TOGGLE_SEARCH_PARAM, val ? { [AppSearchParam.EDIT]: true } : [AppSearchParam.EDIT]);
     return this.update((prev) => ({ ...prev, isInEditMode: val }));
   }
   toggleLock(val: boolean) {
@@ -735,159 +732,5 @@ export class ResourceStore<T extends IResource> implements IStore {
     } else {
       toasts.error("Something went wrong. Please try again.");
     }
-  }
-}
-
-/**
- * @deprecated - use ResourceStore with inMemory set to true
- * Extensible FIR resource store.
- */
-export class ResourceFIRStore<
-    T extends { id: string } & {
-      trashInformation?: ITrashInformation;
-    },
-    S extends IObservableStoreSubject & {
-      items: T[];
-      filtered?: T[];
-    } = IObservableStoreSubject & {
-      items: T[];
-      filtered?: T[];
-    }
-  >
-  extends ObservableStore<S>
-  implements IObservableStore<S>
-{
-  id: Resource;
-  defaultFilter?: (items: T[]) => T[] | undefined;
-  currentUserId?: string;
-  constructor(
-    item: Resource,
-    defaultFilter?: (items: T[]) => T[],
-    params?: Pick<
-      IStore,
-      "refreshOnAppear" | "refreshQuery" | "dboDependencies"
-    >
-  ) {
-    super(item, StoreDataType.FIR, params);
-    this.id = item;
-    this.mutatingResources = [item];
-    this.defaultFilter = defaultFilter;
-    resolveCurrentUserId().then((x) => {
-      this.currentUserId = x;
-    });
-    dataManager.retrieveCache(this.id).then((x: S | null) => {
-      if (!x) {
-        const initialState = this.createInitialState();
-        this._set(initialState);
-        this.cache();
-      } else {
-        x.filtered = this.defaultFilter ? this.defaultFilter(x.items) : x.items;
-        this._set(x);
-      }
-    });
-  }
-  private createInitialState(): S {
-    const baseState: IObservableStoreSubject = {
-      isRefreshing: false,
-      isPageRefreshing: false
-    };
-    return {
-      ...baseState,
-      items: [] as T[],
-      filtered: [] as T[]
-    } as S;
-  }
-  private async _mutation(action: PersistenceActionType, record: string | T) {
-    const data = typeof record === "string" ? { id: record } : record;
-    return dataManager.performMutation(this.id, data, { action });
-  }
-  loader(data: S) {
-    data.filtered = this.defaultFilter
-      ? this.defaultFilter(data.items)
-      : data.items;
-    // data.filtered = data.items;
-    this._set(data);
-    this.cache();
-  }
-
-  async search(query: string) {
-    if (!query) return;
-    return this.get()
-      .items.filter(activeResourceFilter)
-      .filter(
-        (x) =>
-          hasLabel(x) && x.label.toLowerCase().includes(query.toLowerCase())
-      );
-
-    function hasLabel<T>(x: T): x is T & { label: string } {
-      return (
-        typeof x === "object" &&
-        x !== null &&
-        "label" in x &&
-        typeof (x as any).label === "string"
-      );
-    }
-  }
-  async create(data: Omit<T, "id">, id?: string) {
-    const newId = id ?? prefixTable(generateUID(), this.id);
-    const newItem = { ...data, id: newId } as T;
-    this._mutation(PersistenceActionType.CREATE, newItem);
-    this.update((x: S) => {
-      x.items.push(newItem);
-      return x;
-    });
-    this.cache();
-    return true;
-  }
-  async modify(item: Partial<T>) {
-    this.update((x: S) => {
-      const current = x.items.find((x) => x.id == item.id);
-      x.items = x.items.filter((t) => t.id != item.id);
-      x.items.push({ ...current, ...item } as T);
-      return x;
-    });
-    this.cache();
-    return this._mutation(PersistenceActionType.MERGE, item as T);
-  }
-  async delete(id: string) {
-    const item = {
-      id,
-      trashInformation: {
-        deletedAt: new Date().toISOString(),
-        deletedBy: this.currentUserId
-      }
-    };
-    const result = await this._mutation(PersistanceActionType.MERGE, item as T);
-    // console.log("delete result", result, id);
-    this.update((x: S) => {
-      x.items = x.items.filter((t) => t.id != id);
-      x.filtered = this.defaultFilter ? this.defaultFilter(x.items) : x.items;
-      return x;
-    });
-    this.cache();
-    return result;
-  }
-  async trash(id: string) {
-    let item = this.get().items.find((x) => x.id == id);
-    if (!item) return;
-    item = {
-      ...item,
-      trashInformation: {
-        deletedAt: new Date().toISOString(),
-        deletedBy: this.currentUserId
-      },
-      modifiedBy: this.currentUserId,
-      modifiedAt: new Date().toISOString()
-    };
-    this._mutation(PersistenceActionType.MERGE, { ...item, id });
-    this.update((x: S) => {
-      x.items = x.items.filter((t) => t.id != id);
-      return x;
-    });
-    this.cache();
-  }
-
-  cache() {
-    //
   }
 }

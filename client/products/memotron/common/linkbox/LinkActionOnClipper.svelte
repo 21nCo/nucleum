@@ -3,17 +3,19 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import { createEventDispatcher } from "svelte";
   import { Size } from "$lib/client/types/size.enum";
+  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
+  import Tag from "$lib/client/elements/text/Tag.svelte";
   const dispatch = createEventDispatcher();
   export let links: string[];
   export let isLinkboxOpened: boolean = false;
 </script>
 
-<button
+<!-- <button
   class={cn(
-    "flex gap-1 items-center justify-center px-2 py-0.5 rounded-md text-b3",
+    "flex gap-1 items-center justify-center px-2 py-1 rounded-md text-b3",
     abg(isLinkboxOpened),
     {
-      "bg-bgs2 border border-transparent hover:border-brs2": !isLinkboxOpened
+      "bg-bgs3 border border-transparent hover:border-brs3": !isLinkboxOpened
     }
   )}
   on:click|stopPropagation={() => {
@@ -40,4 +42,13 @@
       {links.length}
     </span>
   {/if}
-</button>
+</button> -->
+<Tag
+  label="Links"
+  icon="ph:link-light"
+  isActive={isLinkboxOpened}
+  count={links.length}
+  isShowExpandFeedbackOnActive={true}
+  isRemovable={false}
+  on:click={() => (isLinkboxOpened = !isLinkboxOpened)}
+/>

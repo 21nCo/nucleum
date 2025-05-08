@@ -41,9 +41,16 @@ export enum ClipperExtensionEvent {
   /**
    * Event to trigger refreshing of a clip from content script to side panel when the clip is mutated from content script.
    */
-  REFRESH_CLIP = "REFRESH_CLIP"
+  REFRESH_CLIP = "REFRESH_CLIP",
+  /**
+   * Event to trigger minimizing of toolbar from side panel to content script.
+   */
+  MINIMIZE_TOOLBAR = "MINIMIZE_TOOLBAR",
+  /**
+   * Event to trigger closing of toolbar from side panel to content script.
+   */
+  TOGGLE_TOOLBAR_VISIBILITY = "TOGGLE_TOOLBAR_VISIBILITY"
 }
-
 export enum ClipperElementIdentifier {
   MAIN_TWEET_POST = "memotron-clipper-main-tweet-post"
 }

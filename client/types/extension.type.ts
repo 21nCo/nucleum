@@ -44,7 +44,15 @@ export enum ExtensionEvent {
   /**
    * Triggered by flux from background script to side panel and content script so that operations like reloading in memory stores can be performed.
    */
-  API_CALL = "api_call"
+  API_CALL = "api_call",
+  /**
+   * Triggered by background script to notify content script that side panel is opened.
+   */
+  SIDEPANEL_OPENED = "sidepanel_opened",
+  /**
+   * Triggered by background script to notify content script that side panel is closed.
+   */
+  SIDEPANEL_CLOSED = "sidepanel_closed"
 }
 
 export type TabBaseData = {

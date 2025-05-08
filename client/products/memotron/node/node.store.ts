@@ -27,7 +27,8 @@ import {
 import { formatDate } from "$lib/client/utils/time.utils";
 import {
   ResourceAccessMode,
-  ResourceAccessPoint
+  ResourceAccessPoint,
+  ResourceActionType
 } from "$lib/client/components/flux/resourceStores/resource.type";
 import { ResourceActions } from "$lib/client/components/record/resource.actions";
 import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
@@ -675,12 +676,30 @@ class NodeActions {
     callback: async () => {}
   };
   trashFromClipper = {
-    value: "delete",
+    value: ResourceActionType.DELETE,
     icon: "ph:trash-light",
     callback: async () => {}
   };
+  editNotesOnClipper = {
+    value: ResourceActionType.EDIT_NOTES,
+    label: "Edit notes",
+    icon: "ph:note-light",
+    callback: async () => {}
+  };
+  editLinksOnClipper = {
+    value: ResourceActionType.EDIT_LINKS,
+    label: "Edit links",
+    icon: "ph:link-light",
+    callback: async () => {}
+  };
+  editTitleOnClipper = {
+    value: ResourceActionType.EDIT_TITLE,
+    label: "Edit title",
+    icon: "ph:text-light",
+    callback: async () => {}
+  };
   goToResourceFromClipper = {
-    value: "openInApp",
+    value: ResourceActionType.OPEN,
     label: "Open in app",
     icon: "ph:arrow-up-right-light",
     callback: async () => {}
@@ -723,6 +742,9 @@ export function resolveNodeContextMenu(
       {
         group: "all",
         items: [
+          nodeActions.editNotesOnClipper,
+          nodeActions.editLinksOnClipper,
+          nodeActions.editTitleOnClipper,
           nodeActions.goToResourceFromClipper,
           nodeActions.trashFromClipper
         ]

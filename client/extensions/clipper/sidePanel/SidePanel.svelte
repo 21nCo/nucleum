@@ -33,24 +33,56 @@
   } from "$lib/client/components/flux/fluxExtentionMediator";
   import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import {
+    blankUrls,
     memotronUrlsList,
     sidePanelUnavailableUrlsList
   } from "$lib/client/products/memotron/common/urlMap";
   import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  let mode: "Clips" | "Capture" | "Notes" = "Clips";
+  import { Placement } from "$lib/client/types/direction.enum";
+  import type { ISelectItem } from "$lib/client/types/select.type";
+  import InlineFeedbackText from "../InlineFeedbackText.svelte";
+  import {
+    AlertType,
+    type IInlineStatus
+  } from "$lib/client/types/notification.type";
+  import { cn } from "$lib/client/utils/ui.utils";
+  import { fly } from "svelte/transition";
+  import { Product } from "$lib/client/types/product.type";
+  let mode: "clips" | "notes" | "history" = "clips";
   let title = "";
   let isPageSaved = false;
   let clips: IClip[] = [];
   let notes = "";
-  let feedback = "";
+  let feedback: IInlineStatus | undefined = undefined;
   let isLoggedIn = false;
   let refreshId: number = new Date().getTime();
   let isNotAvailable = false;
   let isMemotronPage = false;
+  let isNewTabPage = false;
+  let isToolbarHidden = false;
+  const tooltipOptions = {
+    placement: Placement.Top
+  };
 
+  const panels: ISelectItem[] = [
+    {
+      label: "Clips",
+      value: "clips"
+    },
+    {
+      label: "Page notes",
+      value: "notes"
+    }
+    // {
+    //   label: "History",
+    //   value: "history"
+    // }
+  ];
   const channel = getPort("channel");
+  const port = chrome.runtime.connect({ name: "sidePanel" });
+
   const stores = [linkTagStore];
   async function onSavePageClick() {
     const page = await relayToContentScript({
@@ -59,7 +91,8 @@
   }
   const messageListener = (message: any, sender: any, sendResponse: any) => {
     if (message.event === ExtensionEvent.PAGE_STATE) {
-      refreshState(message.data);
+      refreshState(message.data.page);
+      isToolbarHidden = message.data.toolbar.isHidden;
       sendResponse({ status: "success", message: "State refreshed" });
     } else if (message.event === ClipperExtensionEvent.CLIPS_CHANGED) {
       //TODO testing
@@ -73,6 +106,13 @@
       loadInMemoryStore(message.data?.resource);
     } else if (message.event === ExtensionEvent.TOKEN_NOT_FOUND) {
       isLoggedIn = false;
+    } else if (message.event === ExtensionEvent.TAB_UPDATE) {
+      relayToContentScript({ event: ExtensionEvent.SIDEPANEL_OPENED });
+      const tab = message.tab;
+      if (tab.url && blankUrls.some((x) => x.test(tab.url))) {
+        handleNewTabCase(tab);
+        return;
+      }
     }
     return true;
   };
@@ -82,6 +122,7 @@
   }
 
   onMount(async () => {
+    sendPing();
     channel.onMessage.addListener(onChannelMessage);
     if (messageListener) {
       chrome.runtime.onMessage.addListener(messageListener);
@@ -89,10 +130,17 @@
     logger.log({ at: "onMount - SidePanel" });
     const tab = await chrome.storage.local.get("tab");
     title = tab.tab.title;
-    const page = await relayToContentScript({
+    if (tab.tab.url && blankUrls.some((x) => x.test(tab.tab.url))) {
+      handleNewTabCase(tab.tab);
+      return;
+    }
+    const state = await relayToContentScript({
       event: ExtensionEvent.PAGE_STATE
     });
-    refreshState(page);
+    refreshState(state.page);
+    if (state.toolbar) {
+      isToolbarHidden = state.toolbar.isHidden;
+    }
     await onBootup();
   });
 
@@ -101,11 +149,25 @@
     if (messageListener) {
       chrome.runtime.onMessage.removeListener(messageListener);
     }
+    port?.disconnect();
   });
+
+  function sendPing() {
+    port?.postMessage({ action: "ping" });
+  }
+
+  function handleNewTabCase(tab: chrome.tabs.Tab) {
+    isNewTabPage = true;
+    refreshState({
+      url: tab.url,
+      title: tab.title,
+      notes: ""
+    });
+  }
 
   //TODO - maintain a store with the data.
   async function refreshState(data: any) {
-    logger.debug({ at: "SidePanel - refreshState", data });
+    logger.log({ at: "SidePanel - refreshState", data });
     if (!data) return;
     if (data.id) isPageSaved = true;
     else isPageSaved = false;
@@ -120,6 +182,7 @@
       isMemotronPage = memotronUrlsList.some((x) => x.test(data.url));
     }
     const token = await resolveToken();
+    logger.log({ at: "SidePanel - refreshState", token });
     if (token) {
       if (!$account) account.init();
       isLoggedIn = true;
@@ -130,7 +193,10 @@
   }
 
   async function onNotesChange(e: CustomEvent) {
-    feedback = "Saving...";
+    feedback = {
+      type: AlertType.PROGRESS,
+      message: "Saving..."
+    };
     const result = await relayToContentScript({
       event: ClipperExtensionEvent.MUTATION_RELAY,
       data: {
@@ -138,9 +204,19 @@
         notes
       }
     });
+    if (!result || result.error) {
+      feedback = {
+        message: result?.error ?? "Notes saving failed",
+        type: AlertType.ERROR
+      };
+      return;
+    }
     setTimeout(() => {
-      feedback = "Notes saved!";
-    }, 1000);
+      feedback = {
+        type: AlertType.SUCCESS,
+        message: "Notes saved!"
+      };
+    }, 100);
   }
 
   async function loadInMemoryStore(resource: Resource) {
@@ -158,11 +234,33 @@
     logger.log({ at: "SidePanel - onBootup" });
     await loadInMemoryStores(stores);
   }
+
+  function resolveEmptyStatusViewParams() {
+    if (isNewTabPage) {
+      return {
+        mainText: "New taabbbb!",
+        subText: "Start browsing to save clips."
+      };
+    } else if (isMemotronPage) {
+      return {
+        mainText: "Hello from the other side of Memotron👋.",
+        subText: ""
+      };
+    } else {
+      return {
+        mainText: "Clips cannot be shown here for this web page.",
+        subText:
+          "Some web pages are not supported for clipping / showing clips in the side panel.",
+        isNotAvailableContext: true
+      };
+    }
+  }
 </script>
 
 <!-- svelte-ignore missing-declaration -->
 <ExtensionBaseLayer
   id="sidePanel"
+  product={{ product: Product.MEMOTRON, env: "live" }}
   stores={[nodeStore, collectionStore, webpage, linker]}
 >
   <div class="w-full h-screen">
@@ -190,37 +288,62 @@
             {/if}
           </span>
         </header>
+        {#if isToolbarHidden}
+          <div
+            class="flex justify-between items-center mx-3 p-2 border border-dashed border-fgs4 rounded-md"
+            transition:fly={{ y: -10, duration: 300 }}
+          >
+            <span> Toolbar is hidden </span>
+            <Button
+              label="Show toolbar"
+              icon="ph:eye-light"
+              size={Size.sm}
+              isPreventMinWidth={true}
+              on:click={() => {
+                relayToContentScript({
+                  event: ClipperExtensionEvent.TOGGLE_TOOLBAR_VISIBILITY
+                });
+              }}
+            />
+          </div>
+        {/if}
         <PanelSwitcher
-          items={["Clips", "Notes"]}
+          items={panels}
           bind:value={mode}
           style={PanelSwitcherStyle.BAR}
           isExpandToFullWidth={true}
         >
           <div slot="right" class="flex text-b3 text-fgs2">
-            {feedback}
+            <!-- {feedback} -->
+            <InlineFeedbackText bind:feedback />
           </div>
         </PanelSwitcher>
         <div class="flex w-full flex-1 overflow-y-auto">
-          {#if mode === "Clips"}
+          {#if mode === "clips"}
             <div class="flex flex-col gap-2 p-4 h-full w-full">
               {#key clips}
                 <ClipsPane {clips} {isMemotronPage} />
               {/key}
             </div>
-          {:else if mode === "Notes"}
+          {:else if mode === "notes"}
             <div
-              class="flex w-full justify-center bg-bgs2 rounded-md px-2 py-1"
+              class={cn("flex w-full justify-center rounded-md mx-2 p-2", {
+                "bg-bgs2": isPageSaved
+              })}
             >
               {#if isPageSaved}
                 {#key refreshId}
                   <InlineMarkdownTextInput
                     placeholder="Add notes"
                     bind:content={notes}
-                    on:change={onNotesChange}
+                    on:debouncedChange={onNotesChange}
                   />
                 {/key}
               {:else}
-                <span> Save page to add notes. </span>
+                <EmptyStatusView
+                  mainText="Page not saved yet."
+                  subText="Save this page to add notes or refresh the page to try again."
+                />
               {/if}
             </div>
           {:else}
@@ -229,13 +352,7 @@
         </div>
       {:else if isNotAvailable}
         <div class="flex w-full flex-1">
-          <EmptyStatusView
-            mainText={isMemotronPage
-              ? "Hello from the other side of Memotron👋."
-              : "Clips cannot be shown here for this web page."}
-            subText="Some web pages are not supported for clipping / showing clips in the side panel."
-            isNotAvailableContext={true}
-          />
+          <EmptyStatusView {...resolveEmptyStatusViewParams()} />
         </div>
       {:else}
         <div class="flex w-full flex-1">
@@ -256,8 +373,24 @@
         class="h-14 border-t border-t-brs3 flex justify-between items-center px-3"
       >
         <span class="flex items-center gap-2">
+          <!-- <Button
+            tooltip="Settings"
+            {tooltipOptions}
+            icon="ph:gear-fine-light"
+            size={Size.sm}
+            style={ButtonStyle.OUTLINED}
+          /> -->
+          <Button
+            tooltip="Go to app"
+            {tooltipOptions}
+            icon="ph:hexagon-light"
+            size={Size.sm}
+            style={ButtonStyle.OUTLINED}
+            on:click={() => openAppPath("")}
+          />
           <Button
             tooltip="Help and support"
+            {tooltipOptions}
             icon="ph:question-light"
             size={Size.sm}
             style={ButtonStyle.OUTLINED}
@@ -265,16 +398,10 @@
               window.open("https://discord.com/invite/9HJqKYTZKg", "_blank");
             }}
           />
-          <Button
-            tooltip="Go to app"
-            icon="ph:hexagon-light"
-            size={Size.sm}
-            style={ButtonStyle.OUTLINED}
-            on:click={() => openAppPath("")}
-          />
           {#if isLoggedIn}
             <Button
-              tooltip="logout"
+              tooltip="Logout"
+              {tooltipOptions}
               icon="ph:sign-out-light"
               size={Size.sm}
               type={ButtonVariant.DANGER}

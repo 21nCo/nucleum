@@ -43,7 +43,8 @@ export enum GlobalEvent {
   RELOAD_RESOURCE = "reloadResource",
   SEARCH_RESULT_KEYUP = "searchresultkeyup",
   SEARCH_RESULT_KEYDOWN = "searchresultkeydown",
-  ADD_TO_RECENTS = "addToRecents"
+  ADD_TO_RECENTS = "addToRecents",
+  TOGGLE_SEARCH_PARAM = "toggleSearchParam"
 }
 
 export enum PlayActionState {

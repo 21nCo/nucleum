@@ -160,8 +160,8 @@
       toasts.error("Something went wrong. Please try again later.");
     }
   }
-  function resolveEmptyStateLabel(context: string) {
-    switch (context) {
+  function resolveEmptyStateLabel(ctxParam: string) {
+    switch (ctxParam) {
       case "nodepageCollectionsLane":
         return `No results found. Press **Enter** to create a new collection`;
       case "nodelinkspane":

@@ -68,6 +68,7 @@ const phosphorIcons = [
   "check-circle",
   "dots-nine",
   "dots-three-vertical",
+  "dots-three",
   "dots-six-vertical",
   "dots-six-vertical-bold",
   "dots-six",

@@ -18,6 +18,7 @@
   import { ButtonVariant } from "$lib/client/types/button.type";
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
   import { Size } from "$lib/client/types/size.enum";
+  import { Orientation } from "$lib/client/types/direction.enum";
 
   export let id: string | null = null;
   export let selectedHighlighterId: string | null = null;
@@ -125,13 +126,13 @@
 </script>
 
 <div
-  class="shadow-md border border-brs2 bg-bgs1 rounded-md flex flex-col justify-center items-center px-4 py-3 gap-3 max-w-fit w-96"
+  class="shadow-md border border-brs2 bg-bgs1 rounded-md flex flex-col justify-center items-center px-4 py-3 gap-3 max-w-fit w-[26rem]"
 >
   <div class="flex justify-center items-center gap-3">
     <!-- TODO test colors change from pdf annotator changes -->
     <HighlightColors bind:selected={selectedHighlighterId} on:color />
     {#if id}
-      <Divider />
+      <Divider orientation={Orientation.Vertical} />
       <!-- <Button
         icon={isLinkboxOpened ? "link-arrow-down" : "link-arrow-left"}
         type={isLinkboxOpened ? ButtonVariant.PRIMARY : ButtonVariant.SECONDARY}
@@ -149,7 +150,7 @@
         }}
       />
       <Button
-        icon="ph:trash-light"
+        icon="ph:trash"
         tooltip="Delete clip"
         type={ButtonVariant.DANGER}
         on:click={async () => {

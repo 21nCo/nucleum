@@ -38,22 +38,25 @@
   import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
   import { onDestroy, onMount } from "svelte";
   import { toolbarUnavailableUrlsList } from "$lib/client/products/memotron/common/urlMap";
+  import type { IHighlighter } from "$lib/client/products/memotron/common/highlighters/highlight.type";
+  import { Product } from "$lib/client/types/product.type";
 
   export let id: string;
-  let textClipperRef: any;
+  let textClipperRef: TextClipper;
   let extensionBaseRef: ExtensionBaseLayer;
   let isSnipActive: boolean = false;
   let loginState: number | null = null;
   let isDisableClipper = true;
   let isLoggedIn: boolean = false;
   let isDraggingToolbar: boolean = false;
+  let isSidePanelOpen: boolean = false;
 
   $: isDisableClipper = toolbarUnavailableUrlsList.some((regex) => {
     return regex.test(window.location.href);
   });
 
   $: contentType = resolveContentTypeForUrl($webpage.url);
-  function onActivateColor(e) {
+  function onActivateColor(e: CustomEvent<IHighlighter | number>) {
     textClipperRef.onActivateColor(e);
   }
 
@@ -128,6 +131,10 @@
         result = await webpage.updateClipProperty(data.clipId, data.property, {
           isFromSidePanel: true
         });
+      } else if (data.action === "label") {
+        result = await webpage.updateClipLabel(data.clipId, data.label, {
+          isFromSidePanel: true
+        });
       }
       if (data.clipId && result) {
         const clip = $webpage.clips?.find(resourceInList(data.clipId));
@@ -159,6 +166,7 @@
       try {
         switch (message.event) {
           case ExtensionEvent.TAB_UPDATE:
+            isSidePanelOpen = false;
             const token = await extensionBaseRef.onTabUpdate();
             if (token) isLoggedIn = true;
             if (!isLoggedIn) {
@@ -195,7 +203,10 @@
               };
             }
             await webpage.refresh();
-            return $webpage;
+            return {
+              page: $webpage,
+              toolbar: $toolbarState
+            };
 
           case ClipperExtensionEvent.SAVE_WEBPAGE:
             if (!isLoggedIn) {
@@ -212,12 +223,28 @@
             isSnipActive = true;
             return { status: "success", message: "Screenshot taken" };
 
+          case ClipperExtensionEvent.MINIMIZE_TOOLBAR:
+            toolbarState.toggle();
+            return { status: "success", message: "Toolbar minimized" };
+
+          case ClipperExtensionEvent.TOGGLE_TOOLBAR_VISIBILITY:
+            toolbarState.toggleVisibility();
+            return { status: "success", message: "Toolbar closed" };
+
           case ClipperExtensionEvent.MUTATION_RELAY:
             const result = await onMutationRelayFromSidePanel(message.data);
             return result;
           case ExtensionEvent.MUTATION:
             await extensionBaseRef.loadInMemoryStore(message.data?.resource);
             return { status: "success", message: "In memory store reloaded" };
+
+          case ExtensionEvent.SIDEPANEL_OPENED:
+            isSidePanelOpen = true;
+            return { status: "success", message: "Side panel opened" };
+
+          case ExtensionEvent.SIDEPANEL_CLOSED:
+            isSidePanelOpen = false;
+            return { status: "success", message: "Side panel closed" };
         }
       } catch (error) {
         console.error("Error handling message:", error);
@@ -249,6 +276,7 @@
   bind:this={extensionBaseRef}
   bind:isLoggedIn
   {id}
+  product={{ product: Product.MEMOTRON, env: "live" }}
   stores={[
     nodeStore,
     collectionStore,
@@ -263,17 +291,18 @@
   on:login={(e) => setLoginState(e.detail.code)}
 >
   {#if !isDisableClipper}
-    {#if !$toolbarState?.isOpen}
+    {#if !$toolbarState?.isOpen && !$toolbarState?.isHidden}
       <ToolbarOpener
         on:click={() => {
           toolbarState.toggle(true);
           clientStorage.remove(ClientStorageKey.GUEST_TOOLBAR_STATE);
         }}
       />
-    {:else}
+    {:else if !$toolbarState?.isHidden}
       {#if isLoggedIn}
         <Toolbar
           {contentType}
+          {isSidePanelOpen}
           bind:isSnipActive
           bind:isDragging={isDraggingToolbar}
           on:color={onActivateColor}
@@ -287,6 +316,9 @@
           }}
           on:summarize
           on:collapse={() => toolbarState.toggle(false)}
+          on:close={() => {
+            toolbarState.toggleVisibility(true);
+          }}
         />
       {/if}
       <!-- <div out:fade={{ duration: 150 }}> -->

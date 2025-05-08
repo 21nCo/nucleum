@@ -23,8 +23,9 @@
 </script>
 
 <div
-  class={cn("flex items-center flex-1 min-w-0 gap-2 h-12", {
-    "max-w-fit": !node.isInEditMode
+  class={cn("flex items-center flex-1 min-w-0 gap-2", {
+    "max-w-fit": !node.isInEditMode,
+    "h-12": accessPoint !== ResourceAccessPoint.CLIPPER
   })}
 >
   {#if !node.focusedBlock}
@@ -53,19 +54,20 @@
         size={Size.xl}
         bind:value={node.label}
         bind:this={textInputRef}
-        placeholder="Node title"
+        placeholder="Enter title"
         width="w-full"
         on:mount={() => {
           textInputRef?.focus();
           keyboardEditorRef?.focus();
         }}
-        on:debouncedChange={onLabelChange}
         isPreserveKeyboardToolbar={isKeyboardEditorMounted}
         isShowSaveControl={true}
         on:enter={() => {
+          dispatch("labelChange", node.label);
           dispatch("editModeChange", false);
         }}
         on:save={() => {
+          dispatch("labelChange", node.label);
           dispatch("editModeChange", false);
         }}
         on:cancel={() => {

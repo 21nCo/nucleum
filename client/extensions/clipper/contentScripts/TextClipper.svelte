@@ -26,6 +26,7 @@
   import { relayToSidePanel } from "$lib/client/utils/extension.utils";
   import { activeResourceFilter } from "$lib/client/utils/utils";
   import { isRecordId } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import InlineFeedbackText from "../InlineFeedbackText.svelte";
 
   let isShowInlineToolbar: boolean = false;
   let popoverPosition: { top: number; left: number } = { top: 0, left: 0 };
@@ -35,6 +36,7 @@
   let selectedClipId: string = "";
   let inlineToolbarFeedback: { message: string; type: AlertType } | string = "";
   let renderedHighlights: string[] = [];
+  let isShowInProgress: boolean = false;
   onMount(() => {
     chrome.runtime.onMessage.addListener(messageListener);
     const sub = appEvents.subscribe((x) => {
@@ -96,11 +98,13 @@
       };
       if (selection?.toString().length > 0) {
         if (activeHighlighter) {
+          isShowInProgress = true;
           await highlightSelectedText(selection, activeHighlighter);
           selectedClip = {
             id: selectedClipId,
             highlighterId: activeHighlighter.id ?? ""
           };
+          isShowInProgress = false;
         }
         isShowInlineToolbar = true;
       } else {
@@ -328,18 +332,27 @@
   }
 </script>
 
-{#if isShowInlineToolbar}
+{#if isShowInlineToolbar || isShowInProgress}
   <div
     style="position:fixed; top:{popoverPosition.top}px; left:{popoverPosition.left}px"
   >
-    <InlineTextToolbar
-      on:color={(e) => {
-        onInlineColorSelection(e, selectedClip);
-      }}
-      bind:feedback={inlineToolbarFeedback}
-      selectedHighlighterId={selectedClip?.highlighterId ?? ""}
-      id={selectedClip?.id}
-    />
+    {#if isShowInlineToolbar}
+      <InlineTextToolbar
+        on:color={(e) => {
+          onInlineColorSelection(e, selectedClip);
+        }}
+        bind:feedback={inlineToolbarFeedback}
+        selectedHighlighterId={selectedClip?.highlighterId ?? ""}
+        id={selectedClip?.id}
+      />
+    {:else if isShowInProgress}
+      <div class="p-3 rounded-md bg-bgs1 border border-brs3">
+        <InlineFeedbackText
+          feedback={{ message: "Clipping...", type: AlertType.PROGRESS }}
+          isRenderEmptyHeight={true}
+        />
+      </div>
+    {/if}
   </div>
 {/if}
 

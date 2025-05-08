@@ -8,16 +8,12 @@ import {
   type SessionComposition,
   BreakCompositionType
 } from "$lib/client/types/pointron/sessionComposition.type";
-import { toasts } from "$lib/client/stores/notification.store";
 import { ChartType } from "$lib/client/types/analytics.type";
 import { TimePeriodType, TimeScale } from "$lib/client/types/time.type";
 import { objIsEmpty, shallowDiff } from "$lib/shared/utils/obj.utils";
 import { Layout } from "$lib/client/types/layout.type";
-import type { ITag } from "$lib/client/types/pointron/tag.type";
-import { StoreDataType } from "$lib/client/types/data.type";
 import type { IPointronPreferences } from "$lib/client/types/pointron/pointronPreferences.type";
 import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
-import { ResourceFIRStore } from "$lib/client/components/flux/resourceStores/resource.store";
 import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 
 /**
@@ -323,29 +319,6 @@ export const seedTasks = [
   { label: "third task", estimate: 35, workedFor: 45, checked: false }
 ];
 
-class TagStore extends ResourceFIRStore<ITag> {
-  constructor() {
-    super(Resource.PointTag);
-  }
-  loader(data: any) {
-    if (data) super.loader({ items: data });
-  }
-  async modify(item: ITag) {
-    super.modify(item);
-    toasts.success("Tag updated successfully");
-    return true;
-  }
-  async create(data: Omit<ITag, "id">, id?: string) {
-    super.create(data, id);
-    toasts.success("Tag created successfully");
-    return true;
-  }
-  async delete(id: string) {
-    super.delete(id);
-    toasts.success("Tag deleted successfully");
-  }
-}
-export const tagStore = new TagStore();
 
 export const backgroundSoundStore = initBackgroundSoundStore();
 

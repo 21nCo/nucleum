@@ -18,6 +18,6 @@
   <WebClipPreview
     node={clip}
     truncateLength={200}
-    accessPoint={ResourceAccessPoint.BROWSER}
+    accessPoint={ResourceAccessPoint.CLIPPER}
   />
 </div>

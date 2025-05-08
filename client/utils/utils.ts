@@ -1,19 +1,7 @@
-import { onDestroy } from "svelte";
 import type { UserDate } from "$lib/client/types/userDate.type";
 import { FileSizeMeasurement } from "$lib/client/types/fileSizeMeasurement.enum";
 import { ActionType } from "$lib/client/types/action.type";
 import { isValidArrayWithData } from "../../shared/utils/obj.utils";
-
-export function onInterval(
-  callback: () => void,
-  milliseconds: number | undefined
-) {
-  const interval = setInterval(callback, milliseconds);
-  onDestroy(() => {
-    clearInterval(interval);
-  });
-  //return interval;
-}
 
 /**
  * @deprecated - use lib/shared/crypto.utils instead

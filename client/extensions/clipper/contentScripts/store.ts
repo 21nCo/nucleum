@@ -94,7 +94,12 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       return n;
     });
     appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
-    relayToSidePanel({ event: ExtensionEvent.PAGE_STATE, data: this.get() });
+    relayToSidePanel({
+      event: ExtensionEvent.PAGE_STATE, data: {
+        page: this.get(),
+        toolbar: toolbarState.get()
+      }
+    });
   }
 
   /**
@@ -116,7 +121,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     logger.debug({ at: "refresh", result });
     const page =
       result && Array.isArray(result) && result.length > 0
-        ? result.find((r: IWebPage) => r.url === this.get().url)
+        ? result.filter(activeResourceFilter).find((r: IWebPage) => r.url === this.get().url)
         : null;
 
     logger.debug({ at: "refresh", url: this.get().url, page, result });
@@ -202,9 +207,18 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       n.id = id;
       return n;
     });
-    relayToSidePanel({ event: ExtensionEvent.PAGE_STATE, data: node });
+    relayToSidePanel({
+      event: ExtensionEvent.PAGE_STATE, data: {
+        page: node,
+        toolbar: toolbarState.get()
+      }
+    });
     return response;
 
+    /**
+     * Disabling capturing of screenshot as it is adding latency to page save action.
+     * @returns 
+     */
     async function extractData() {
       if (params?.contentType === NodeType.YOUTUBE_VIDEO) {
         return extractYoutubeVideoData();
@@ -225,9 +239,12 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
         });
         return extractMinimalTabData();
       }
-      const ssFile = await screenshotWebpage();
+      // const ssFile = await screenshotWebpage();
       const tab = await extractFullTabData();
-      tab.metadata = { ...tab.metadata, screenshotFile: ssFile.id };
+      tab.metadata = {
+        ...tab.metadata,
+        //screenshotFile: ssFile.id
+      };
       return tab;
 
       async function screenshotWebpage() {
@@ -627,6 +644,30 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     return response;
   }
 
+  async updateClipLabel(id: IRecordId, label: string, params?: {
+    isFromSidePanel?: boolean
+  }) {
+    const response = await nodeStore.modify(id, { label });
+    if (!response) return;
+    this.update((n) => {
+      n.clips = n.clips?.map((c) => {
+        if (isSameResource(c, id)) {
+          c.label = label;
+          return c;
+        }
+        return c;
+      });
+      return n;
+    });
+    if (!params?.isFromSidePanel) {
+      relayToSidePanel({
+        event: ClipperExtensionEvent.REFRESH_CLIP,
+        data: { clipId: id, clip: this.get().clips?.find(resourceInList(id)) }
+      });
+    }
+    return response;
+  }
+
   async updatePageProperty(property: INodePropertyValue) {
     const webpage = this.get();
     if (!webpage.id) return;
@@ -770,7 +811,14 @@ export const feedbackPane = new FeedbackPaneStore();
 
 class ClipperToolbarState extends KeyValueStore<
   {
+    /**
+     * Whether the toolbar is open or collapsed
+     */
     isOpen: boolean;
+    /**
+     * Whether the toolbar is hidden
+     */
+    isHidden?: boolean;
     position: Placement.Right | Placement.Left | Placement.Bottom;
   } & IObservableStoreSubject
 > {
@@ -783,6 +831,7 @@ class ClipperToolbarState extends KeyValueStore<
       }
     );
   }
+
   toggle(isOpen?: boolean) {
     if (isOpen === undefined) {
       isOpen = !this.get().isOpen;
@@ -794,6 +843,17 @@ class ClipperToolbarState extends KeyValueStore<
       }, 100);
     }
   }
+
+  toggleVisibility(isHidden?: boolean) {
+    if (isHidden === undefined) {
+      isHidden = !this.get().isHidden;
+    }
+    this.modify({ isHidden });
+    setTimeout(() => {
+      webpage.refresh();
+    }, 100);
+  }
+
   changePosition(
     position: Placement.Right | Placement.Left | Placement.Bottom
   ) {

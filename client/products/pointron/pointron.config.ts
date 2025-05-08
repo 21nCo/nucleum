@@ -11,8 +11,7 @@ import {
   sessionLogStore
 } from "$lib/client/products/pointron/logs/log.store";
 import {
-  pointronPreferences,
-  tagStore
+  pointronPreferences
 } from "$lib/client/products/pointron/pointron.store";
 import type { IStore } from "$lib/client/types/data.type";
 import {
@@ -29,7 +28,6 @@ export const pointronCacheableStores: IStore[] = [
   pointronPreferences,
   focusItemsStore,
   activeSession,
-  tagStore,
   manualLogStore,
   focusHeatmapStore,
   sessionLogStore,

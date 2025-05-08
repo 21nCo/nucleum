@@ -36,10 +36,12 @@
   // import spritePhFill from "data-text:/assets/icons/sprite-ph-fill.svg";
   // import spritePhLight from "data-text:/assets/icons/sprite-ph-light.svg";
   import { resolveIconSvgSheetText } from "./iconSvgSheetTextResolver";
+  import { appStore } from "../stores/app.store";
   const dispatch = createEventDispatcher();
   export let id: string;
   export let stores: IStore[] = [];
   export let isLoggedIn: boolean = false;
+  export let product: { product: string; env: string };
   $: product = extractProduct(window.location.hostname);
   $: isSelfPage =
     product.product === "memotron" || process.env.NODE_ENV === "development";
@@ -60,6 +62,7 @@
   });
 
   onMount(async () => {
+    appStore.initializeProductInformation(product);
     window.addEventListener(
       "message",
       async function (event) {

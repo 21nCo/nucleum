@@ -11,8 +11,6 @@
 
   $: product = extractProduct(window.location.hostname);
   $: isSelfPage = product.product === "memotron";
-
-  $: console.log({ product, isSelfPage, code });
 </script>
 
 <FeedbackPaneBase {isWithoutToolbarContext}>

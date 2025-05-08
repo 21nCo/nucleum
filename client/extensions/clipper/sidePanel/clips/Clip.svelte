@@ -31,11 +31,18 @@
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import ResourceThumbnailContextMenu from "$lib/client/components/record/thumbnail/ResourceThumbnailContextMenu.svelte";
   import { Arrangement } from "$lib/client/types/direction.enum";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import {
+    ResourceAccessPoint,
+    ResourceActionType
+  } from "$lib/client/components/flux/resourceStores/resource.type";
+  import NodeTitle from "$lib/client/products/memotron/node/title/NodeTitle.svelte";
+  import { fly } from "svelte/transition";
 
   const dispatch = createEventDispatcher();
 
-  export let clip: IVideoTimestampClip | ITextClip | IWebScreenshotClip;
+  export let clip: (IVideoTimestampClip | ITextClip | IWebScreenshotClip) & {
+    isInEditMode?: boolean;
+  };
   let isLinkboxOpened: boolean = false;
   let isNotesOpened: boolean = false;
   let feedback: string | { message: string; type: AlertType } = "";
@@ -80,7 +87,6 @@
         notes
       }
     });
-    console.log({ at: "Clip - onNotesChange", result });
     if (!result || result.error) {
       feedback = {
         message: result?.error ?? "Notes saving failed",
@@ -195,10 +201,38 @@
     };
     if (result.clip.properties) clip.properties = result.clip.properties;
   }
+
+  async function onLabelChanges(e: CustomEvent) {
+    if (!e.detail || e.detail === undefined) return;
+    feedback = {
+      message: "Syncing changes...",
+      type: AlertType.PROGRESS
+    };
+    const result = await relayToContentScript({
+      event: ClipperExtensionEvent.MUTATION_RELAY,
+      data: {
+        action: "label",
+        clipId: clip.id,
+        label: e.detail
+      }
+    });
+    if (!result || result.error) {
+      feedback = {
+        message: result?.error ?? "Title update failed",
+        type: AlertType.ERROR
+      };
+      return;
+    }
+    feedback = {
+      message: "Title updated!",
+      type: AlertType.SUCCESS
+    };
+    if (result.clip.label) clip.label = result.clip.label;
+  }
 </script>
 
 <button
-  class="relative flex flex-col gap-2 border border-brs2 rounded-md p-3 hover:border-brs3"
+  class="relative flex flex-col gap-6 border border-brs2 rounded-md p-3 hover:border-brs3"
   use:hoverable={{
     onHover: (e) => {
       isHovered = e;
@@ -210,23 +244,58 @@
       {#key clip.body.highlighterId}
         <TextClip {clip} on:click={onClick} on:keydown />
       {/key}
+    </div>
+  {:else if clip.contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP && "timestamp" in clip.body}
+    <button class="flex gap-4" on:click={onClick}>
+      <FileView
+        id={clip.body.thumbnail}
+        class="thumbnail w-32 h-[72px] rounded-md"
+      />
+      <div class="flex flex-col gap-1 items-start justify-between">
+        <div class="flex w-full">
+          <NodeTitle
+            node={clip}
+            accessPoint={ResourceAccessPoint.CLIPPER}
+            on:labelChange={onLabelChanges}
+            on:editModeChange={(e) => {
+              clip.isInEditMode = e.detail;
+            }}
+          />
+        </div>
+        <div class="text-b3 text-fgs3">
+          {formatSeconds(clip.body.timestamp, TimeFormat.CLOCK)}
+        </div>
+      </div>
+    </button>
+  {/if}
+  <div class="flex flex-col gap-2">
+    {#if clip.contentType !== NodeType.YOUTUBE_TIMESTAMP_CLIP}
+      <div class="flex w-full">
+        <NodeTitle
+          node={clip}
+          accessPoint={ResourceAccessPoint.CLIPPER}
+          on:labelChange={onLabelChanges}
+          on:editModeChange={(e) => {
+            clip.isInEditMode = e.detail;
+          }}
+        />
+      </div>
+    {/if}
+    <div class="flex flex-col gap-2 w-full">
       <div
         class="flex gap-1 justify-between bg-bgs1 rounded-md px-1 h-8 items-center"
       >
-        <span class="text-b4 text-fgs2">
-          {formatDatetime($userPreferences, clip.createdAt)}
+        <span class="text-b3 text-fgs3 text-left">
+          {#if isHovered}
+            &nbsp;
+          {:else}
+            <span in:fly={{ y: 10, duration: 200 }}>
+              {formatDatetime($userPreferences, clip.createdAt)}
+            </span>
+          {/if}
         </span>
-        {#if isHovered || clip?.notes || clip?.links.length || isLinkboxOpened || isNotesOpened}
-          <span class="flex gap-1 items-center">
-            {#if isHovered || clip?.links.length || isLinkboxOpened}
-              <LinkActionOnClipper
-                links={clip?.links}
-                bind:isLinkboxOpened
-                on:change={(e) => {
-                  if (e.detail) isNotesOpened = false;
-                }}
-              />
-            {/if}
+        <span class="flex gap-1 items-center">
+          {#if isHovered || clip?.notes || clip?.links.length || isLinkboxOpened || isNotesOpened}
             {#if isHovered || clip?.notes || isNotesOpened}
               <Toggle
                 icon={clip?.notes ? "ph:note-light" : "ph:note-blank-light"}
@@ -238,79 +307,68 @@
                 }}
               />
             {/if}
-          </span>
-        {/if}
-      </div>
-    </div>
-  {:else if clip.contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP && "timestamp" in clip.body}
-    <button class="flex gap-4 justify-center items-center" on:click={onClick}>
-      <FileView
-        id={clip.body.thumbnail}
-        class="thumbnail w-32 h-[72px] rounded-md"
-      />
-      <div class="flex flex-col gap-1 items-start justify-between">
-        <div class="font-medium text-h5">
-          {formatSeconds(clip.body.timestamp, TimeFormat.CLOCK)}
-        </div>
-        <div class="flex gap-1 items-center">
-          <LinkActionOnClipper
-            links={clip?.links}
-            bind:isLinkboxOpened
-            on:change={(e) => {
-              if (e.detail) isNotesOpened = false;
-            }}
-          />
-          <Toggle
-            icon={clip?.notes ? "ph:note-light" : "ph:note-blank-light"}
-            tooltip={clip?.notes ? "View notes" : "Add notes"}
-            bind:on={isNotesOpened}
+            {#if isHovered || clip?.links.length || isLinkboxOpened}
+              <LinkActionOnClipper
+                links={clip?.links}
+                bind:isLinkboxOpened
+                on:change={(e) => {
+                  if (e.detail) isNotesOpened = false;
+                }}
+              />
+            {/if}
+          {/if}
+          <ResourceThumbnailContextMenu
+            item={clip}
+            arrangement={Arrangement.GRID}
+            isInline={true}
+            accessPoint={ResourceAccessPoint.CLIPPER}
             bgSize={Size.sm}
-            on:change={(e) => {
-              if (e.detail) isLinkboxOpened = false;
+            icon="ph:dots-three-outline-light"
+            on:action={(e) => {
+              const action = e?.detail?.action;
+              if (action === ResourceActionType.DELETE) {
+                onDelete();
+              } else if (action === ResourceActionType.OPEN) {
+                // onOpenInApp();
+                openAppPath(`library?pop=${clip.id}`);
+              } else if (action === ResourceActionType.EDIT_NOTES) {
+                isNotesOpened = true;
+                isLinkboxOpened = false;
+              } else if (action === ResourceActionType.EDIT_LINKS) {
+                isLinkboxOpened = true;
+                isNotesOpened = false;
+              } else if (action === ResourceActionType.EDIT_TITLE) {
+                clip.isInEditMode = true;
+                isNotesOpened = false;
+                isLinkboxOpened = false;
+              }
             }}
           />
-        </div>
+        </span>
       </div>
-    </button>
-  {/if}
-  {#if isLinkboxOpened}
-    <LinkBoxOnClipper on:link={onLinkAction} />
-    <LinkItems
-      links={clip?.links}
-      nodeId={clip.id}
-      propertyValues={clip?.properties}
-      isWrapItems={true}
-      isExpandable={true}
-      on:click
-      on:unlink={(e) => onLinkAction(e, "unlink")}
-      on:propertyChange={onPropertyChanges}
-    />
-  {/if}
-  {#if isNotesOpened}
-    <InlineMarkdownTextInput
-      placeholder="Add notes"
-      bind:content={notes}
-      on:debouncedChange={onNotesChange}
-    />
-  {/if}
-  {#if feedback}
-    <InlineFeedbackText bind:feedback isRenderEmptyHeight={true} />
-  {/if}
-  {#if isHovered}
-    <ResourceThumbnailContextMenu
-      item={clip}
-      arrangement={Arrangement.GRID}
-      accessPoint={ResourceAccessPoint.CLIPPER}
-      size={Size.sm}
-      on:action={(e) => {
-        const action = e?.detail?.action;
-        if (action === "delete") {
-          onDelete();
-        } else if (action === "openInApp") {
-          // onOpenInApp();
-          openAppPath(`library?pop=${clip.id}`);
-        }
-      }}
-    />
-  {/if}
+      {#if isLinkboxOpened}
+        <LinkBoxOnClipper on:link={onLinkAction} />
+        <LinkItems
+          links={clip?.links}
+          nodeId={clip.id}
+          propertyValues={clip?.properties}
+          isWrapItems={true}
+          isExpandable={true}
+          on:click
+          on:unlink={(e) => onLinkAction(e, "unlink")}
+          on:propertyChange={onPropertyChanges}
+        />
+      {/if}
+      {#if isNotesOpened}
+        <InlineMarkdownTextInput
+          placeholder="Add notes"
+          bind:content={notes}
+          on:debouncedChange={onNotesChange}
+        />
+      {/if}
+      {#if feedback}
+        <InlineFeedbackText bind:feedback isRenderEmptyHeight={true} />
+      {/if}
+    </div>
+  </div>
 </button>

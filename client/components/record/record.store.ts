@@ -3,7 +3,7 @@ import {
   NodeType,
   rootNodeTypeList
 } from "$lib/client/products/memotron/node/node.type";
-import { activeResourceFilterV2 } from "$lib/client/utils/utils";
+import { activeResourceFilter, activeResourceFilterV2 } from "$lib/client/utils/utils";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { isValidString } from "$lib/shared/utils/text.utils";
 import {
@@ -415,7 +415,7 @@ export class SearchStore {
         }
       });
     }
-    return [...(nodes ?? []), ...(collections ?? [])];
+    return [...(nodes ?? []), ...(collections ?? [])].filter(activeResourceFilter)
   }
 
   async resolveCount(

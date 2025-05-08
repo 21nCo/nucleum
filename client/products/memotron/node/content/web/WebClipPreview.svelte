@@ -17,10 +17,9 @@
 </script>
 
 <div
-  class={cn("w-full h-full flex justify-center items-center", {
-    "max-h-32":
-      accessPoint !== ResourceAccessPoint.SELF &&
-      node.contentType !== NodeType.WEB_SCREENSHOT_CLIP
+  class={cn("w-full h-full flex items-center", {
+    "max-h-32": accessPoint !== ResourceAccessPoint.SELF,
+    "justify-center": accessPoint === ResourceAccessPoint.SELF
   })}
 >
   {#if node.contentType === NodeType.TEXT_CLIP || node.contentType === NodeType.KINDLE_HIGHLIGHT}
@@ -31,6 +30,12 @@
       class="absolute inset-0 w-full rounded-t-md object-contain h-full"
       src={node.body.s3Url}
     /> -->
-    <FileView id={node.body.file} class="h-full w-full !object-contain" />
+    <FileView
+      id={node.body.file}
+      class={cn("h-full w-full", {
+        "object-cover rounded-md": accessPoint === ResourceAccessPoint.CLIPPER,
+        "!object-contain": accessPoint !== ResourceAccessPoint.CLIPPER
+      })}
+    />
   {/if}
 </div>

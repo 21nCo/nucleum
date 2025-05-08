@@ -259,6 +259,10 @@
     }
   }
 
+  function handleToggleSearchParam(event: any) {
+    appStore.toggleSearchParam(event.detail);
+  }
+
   function updateOnlineStatus() {
     $context.isInOfflineMode = !navigator.onLine;
   }
@@ -274,6 +278,10 @@
       handleCustomNavigation
     );
     window.addEventListener(GlobalEvent.CUSTOM_ALERT, handleCustomAlert);
+    window.addEventListener(
+      GlobalEvent.TOGGLE_SEARCH_PARAM,
+      handleToggleSearchParam
+    );
     window.onpopstate = () => {
       appStore.setCurrentPath(document.location.pathname);
     };
@@ -298,6 +306,10 @@
       handleCustomNavigation
     );
     window.removeEventListener(GlobalEvent.CUSTOM_ALERT, handleCustomAlert);
+    window.removeEventListener(
+      GlobalEvent.TOGGLE_SEARCH_PARAM,
+      handleToggleSearchParam
+    );
     window.onpopstate = null;
     window.removeEventListener("online", updateOnlineStatus);
     window.removeEventListener("offline", updateOnlineStatus);

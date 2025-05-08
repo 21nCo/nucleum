@@ -116,7 +116,16 @@ export enum ResourceActionType {
   EDIT = "edit",
   DELETE = "delete",
   ARCHIVE = "archive",
-  RESTORE = "restore"
+  RESTORE = "restore",
+  SHARE = "share",
+  EXPORT = "export",
+  FOCUS = "focus",
+  PIN = "pin",
+  UNPIN = "unpin",
+  EDIT_TITLE = "editTitle",
+  EDIT_LINKS = "editLinks",
+  EDIT_NOTES = "editNotes",
+  EDIT_COVER = "editCover"
 }
 
 /**

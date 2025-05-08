@@ -7,13 +7,10 @@ import {
 } from "../types/notification.type";
 import { postMessageToParent } from "$lib/client/utils/embed.utils";
 import { EmbedMessage } from "../types/embedMessage.enum";
-import view from "$lib/client/stores/view.store";
 import { GlobalEvent } from "../types/event.enum";
 import type { IEvent } from "../types/event.type";
 import type { Event } from "../types/event.enum";
-import { appStore } from "./app.store";
 import { ObservableStore } from "./client.store";
-import { Action } from "../types/action.enum";
 import { logger } from "../components/debug/logger.client";
 import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 import { ErrorMessage } from "../components/error/error.type";

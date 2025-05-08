@@ -23,8 +23,9 @@
   export let isHidePreview: boolean = false;
   export let isApplyCustomColor: boolean = false;
   export let size: Size.sm | Size.md | Size.lg = Size.md;
+  export let bgSize: Size.sm | Size.md | Size.lg = Size.md;
   export let isInline: boolean = false;
-
+  export let icon: string = "ph:dots-three-vertical";
   function onAction(e: CustomEvent<string>) {
     if (e.detail === "star") item.isStarred = !item.isStarred;
     dispatch("action", { action: e.detail, id: item.id });
@@ -86,10 +87,11 @@
         id="resourceThumbnailContextMenu"
         menuResolver={() => resolveContextMenu(item, accessPoint)}
         {size}
-        actionSize={size}
+        actionSize={bgSize ?? size}
         on:action={onAction}
         position={Placement.BottomCenter}
         isRenderAsSibling={true}
+        {icon}
       />
     </div>
   </div>
