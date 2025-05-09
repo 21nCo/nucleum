@@ -93,15 +93,15 @@
       source: "discord"
     },
     {
+      name: "NellyisDev",
+      body: "Pointron is a great app that helps me track my day, understand how I spend my time, and plan to be more efficient so I get more done, faster.",
+      source: "discord"
+    },
+    {
       name: "VirgilCaffier",
       body: "Your time is precious! What's the best way to not waste it? The one I'm currently using is Pointron!",
       source: "twitter",
       link: "https://x.com/VirgilCaffier/status/1661031751387602946"
-    },
-    {
-      name: "NellyisDev",
-      body: "Pointron is a great app that helps me track my day, understand how I spend my time, and plan to be more efficient so I get more done, faster. It’s essential for anyone who struggles with planning or procrastination!",
-      source: "discord"
     }
   ];
 

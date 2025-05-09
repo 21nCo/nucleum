@@ -25,5 +25,7 @@
     <!-- <p class="text-lb2 text-fgs2 text-left">{testimonial.source}</p> -->
     <SvgIcon icon={testimonial.source} isRenderRaw={true} />
   </div>
-  <p class="text-lb2 text-fgs2 text-left">{testimonial.body}</p>
+  <p class="text-lb2 text-fgs2 text-left text-wrap truncate">
+    {testimonial.body}
+  </p>
 </button>
