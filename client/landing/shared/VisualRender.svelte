@@ -12,6 +12,11 @@
   import AnalyticsFeature from "./features/visuals/AnalyticsFeature.svelte";
   import GoalsFeature from "./features/visuals/GoalsFeature.svelte";
   import PointronIntuitive from "./highlights/visuals/PointronIntuitive.svelte";
+  import MemotronFeaturesRadial from "./highlights/visuals/MemotronFeaturesRadial.svelte";
+  import CaptureFeature from "./features/visuals/CaptureFeature.svelte";
+  import ClipFeature from "./features/visuals/ClipFeature.svelte";
+  import SynthesizeFeature from "./features/visuals/SynthesizeFeature.svelte";
+  import OrganizeFeature from "./features/visuals/OrganizeFeature.svelte";
   export let name: string;
 
   const componentMap: Record<string, any> = {
@@ -26,8 +31,13 @@
     continueOffline: ContinueOffline,
     focusFeature: FocusFeature,
     goalsFeature: GoalsFeature,
+    captureFeature: CaptureFeature,
+    clipFeature: ClipFeature,
+    organizeFeature: OrganizeFeature,
+    synthesizeFeature: SynthesizeFeature,
     analyticsFeature: AnalyticsFeature,
-    pointronIntuitive: PointronIntuitive
+    pointronIntuitive: PointronIntuitive,
+    memotronFeaturesRadial: MemotronFeaturesRadial
   };
 </script>
 

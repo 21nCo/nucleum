@@ -12,19 +12,22 @@
     ITileItem
   } from "../shared/landing.type";
   import Testimonials from "../shared/testimonials/Testimonials.svelte";
-  import { landing } from "../shared/store/shared.store";
+  import { landing, staticUrl } from "../shared/store/shared.store";
   import HeroVideoV2 from "../shared/elements/HeroVideoV2.svelte";
   import Features from "../shared/features/Features.svelte";
+  import { highlights } from "../shared/highlights/highlights.data";
   let heroInputs: IHeroInputs = {
     tagline: "Your focus haven",
     description: "Track time, achieve goals and focus like never before.",
     primaryButton: {
       isDownloadButton: true,
       type: "primary"
-    }
+    },
+    availabilityString: "Available on web, iOS and macOS."
   };
 
-  const staticUrl = import.meta.env.VITE_STATIC_URL;
+  const heroVideoFrameUrl =
+    staticUrl + "/images/landing/videoFrames/Frame-10.png";
 
   let featuresOld: ITileItem[] = [
     {
@@ -66,46 +69,15 @@
     }
   ];
 
-  const highlights: IHighlight[] = [
+  const pointronHighlights: IHighlight[] = [
     {
-      icon: "powerfulwheel",
-      title: "Unbelievably powerful",
+      ...highlights.powerful,
       desc: "Unlock next-level of focus, time and goal tracking with a powerhouse of features.",
       visualRenderComponent: "pointronFeatures"
     },
-    // {
-    //   icon: "brain",
-    //   title: "AI native",
-    //   desc: "Seamlessly integrate your data and harness cutting-edge AI with our custom MCP server",
-    //   visualRenderComponent: "ainative",
-    //   isVisualAtBottom: true
-    // },
-    {
-      icon: "offline",
-      title: "Offline version",
-      desc: "No cloud required. If your OS runs, so does the app.",
-      isVisualAtBottom: true
-    },
-    // {
-    //   icon: "zerotrust",
-    //   title: "Zero-trust security & ownership",
-    //   desc: "If you opt for managed cloud sync, your data is encrypted from start to finish - only you can access it. Even better, you can host your data on your preferred servers or run locally.",
-    //   visualRenderComponent: "security",
-    //   isVisualAtBottom: true
-    // },
-
-    {
-      icon: "touch",
-      title: "Surprisingly intuitive",
-      desc: "Power doesn't always have to be intimidating. Give us a try.",
-      isVisualAtBottom: true
-    },
-    {
-      icon: "infinity",
-      title: "Built to last",
-      desc: "No exits. No acquisitions. We're not building for an exit. We're building for you.",
-      visualRenderComponent: "last"
-    }
+    highlights.offline,
+    highlights.intuitive,
+    highlights.laast
   ];
 
   const testimonials: ITestimonial[] = [
@@ -128,7 +100,7 @@
     },
     {
       name: "NellyisDev",
-      body: "I really love the app.",
+      body: "Pointron is a great app that helps me track my day, understand how I spend my time, and plan to be more efficient so I get more done, faster. It’s essential for anyone who struggles with planning or procrastination!",
       source: "discord"
     }
   ];
@@ -175,9 +147,10 @@
 <HeroVideoV2
   url="https://www.youtube.com/embed/5lnABLu3YXs?si=u1iuwtfGYBWLraqP"
   {deviceImages}
+  frameImage={heroVideoFrameUrl}
 />
 <Highlights
-  {highlights}
+  highlights={pointronHighlights}
   title="Exceptional throughout"
   subtitle="From interface to infrastructure, user need alignment is at the core of our approach"
 />

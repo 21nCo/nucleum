@@ -3,6 +3,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   export let url: string;
   export let deviceImages: string[];
+  export let frameImage: string;
   let isVideoPlaying = false;
   let laptopImageSrc = deviceImages.find((image) => image.includes("laptop"));
 </script>
@@ -12,7 +13,7 @@
     <!-- thumbnail -->
     <div class="relative overflow-clip rounded-xl min-h-fit w-[812px]">
       <img
-        src="./Frame-10.png"
+        src={frameImage}
         alt="Thumbnail"
         class="absolute object-cover h-full w-full"
       />

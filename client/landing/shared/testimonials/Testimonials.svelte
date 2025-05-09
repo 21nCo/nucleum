@@ -3,7 +3,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import Button from "../elements/Button.svelte";
   import type { ITestimonial } from "../landing.type";
-  import { discordUrl, twitterUrl } from "../store/shared.store";
+  import { discordUrl, landing, twitterUrl } from "../store/shared.store";
   import Title from "../Title.svelte";
   import TestimonialItem from "./TestimonialItem.svelte";
   import TestimonialRow from "./TestimonialRow.svelte";
@@ -11,7 +11,7 @@
   export let subtitle: string = "What our users are saying";
   export let testimonials: ITestimonial[] = [];
   export let discord: string = discordUrl;
-  export let twitter: string = twitterUrl;
+  export let twitter: string = $landing.urls.socials?.twitter ?? twitterUrl;
 </script>
 
 <div class="w-full flex flex-col gap-20 mo:gap-10 overflow-x-hidden relative">

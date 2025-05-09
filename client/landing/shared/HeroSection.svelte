@@ -10,7 +10,6 @@
   import { isProductPage, isProductsPanelOpen } from "./store/shared.store";
   export let isComingSoon = false;
   export let heroInputs: IHeroInputs;
-  export { className as class };
 </script>
 
 <div class="relative flex justify-center h-[45vh] w-full overflow-clip">
@@ -63,7 +62,11 @@
         <div>
           <Button {...heroInputs.primaryButton} />
         </div>
-        <span class="text-fgs3 text-b2">Available on web, iOS and macOS.</span>
+        {#if heroInputs.availabilityString}
+          <span class="text-fgs3 text-b2 text-center"
+            >{heroInputs.availabilityString}</span
+          >
+        {/if}
       </div>
     {:else if isComingSoon}
       <!-- <EarlyAccess version="V3" url={heroInputs.earlyAccessUrl} /> -->

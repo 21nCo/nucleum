@@ -17,6 +17,7 @@ export type IHeroInputs = {
   primaryButton?: IButton;
   secondaryButton?: IButton;
   earlyAccessUrl?: string;
+  availabilityString?: string;
 };
 
 export type IGridItem = {
@@ -113,5 +114,10 @@ export type ILandingProductUrls = {
     windows?: string;
     ios?: string;
     android?: string;
+    extension?: string;
+  };
+  socials?: {
+    twitter?: string;
+    reddit?: string;
   };
 };

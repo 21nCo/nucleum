@@ -3,8 +3,8 @@ import { freePlan, nucleusPlan } from "../../shared/pricing/pricing.data";
 
 const syncPlan: PricingPlan = {
   id: "sync",
-  icon: "pointron-sync-plan",
-  title: "Pointron sync",
+  icon: "memotron-sync-plan",
+  title: "Memotron sync",
   subtitle: "Real-time sync across all devices",
   price: { monthly: 7, yearly: 60, lifetime: 225 },
   features: [

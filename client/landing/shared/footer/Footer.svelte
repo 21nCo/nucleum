@@ -176,10 +176,10 @@
           </Box>
           <Box>
             <ListWithTitle items={products} />
-            <ButtonAsLink
+            <!-- <ButtonAsLink
               label="See all products"
               on:click={() => ($isProductsPanelOpen = true)}
-            />
+            /> -->
           </Box>
         </div>
 

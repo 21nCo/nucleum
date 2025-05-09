@@ -23,6 +23,9 @@
     downloads: {
       all: "https://docs.pointron.app/pointron/installation",
       ios: "https://apps.apple.com/in/app/pointron-focus-time-tracker/id6469411284"
+    },
+    socials: {
+      twitter: "https://x.com/pointronApp"
     }
   };
   let topNavBarValues: ITopNavBar = {
@@ -47,7 +50,7 @@
   let footerValues: IFooter = {
     appStoreUrl:
       "https://apps.apple.com/in/app/pointron-focus-time-tracker/id6469411284",
-    twitterUrl: "https://x.com/pointronApp",
+    twitterUrl: urls.socials?.twitter,
     docsUrl: "https://docs.pointron.app",
     youtubeUrl: youtubeUrl,
     roadmapUrl: urls.roadmap,
