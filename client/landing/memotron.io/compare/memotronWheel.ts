@@ -2,6 +2,7 @@ import type {
   ContemporaryDetail,
   FeatureWheelGroup
 } from "$lib/client/types/featureWheel.type";
+import { Contemporary } from "$lib/client/components/featureWheel/comparer.type";
 
 export const memotronWheel: FeatureWheelGroup[] = [
   {
@@ -13,11 +14,17 @@ export const memotronWheel: FeatureWheelGroup[] = [
         label: "Intuitiveness",
         contemporaries: [
           {
-            label: ["Notion", "Capacities", "Heptabase", "Tana", "Anytype"],
+            label: [
+              Contemporary.Notion,
+              Contemporary.Capacities,
+              Contemporary.Heptabase,
+              Contemporary.Tana,
+              Contemporary.Anytype
+            ],
             value: 0.5
           },
           {
-            label: "Apple Notes",
+            label: Contemporary.AppleNotes,
             value: 0.7
           }
         ],
@@ -37,14 +44,14 @@ export const memotronWheel: FeatureWheelGroup[] = [
         contemporaries: [
           {
             label: [
-              "Obsidian",
-              "Notion",
-              "Capacities",
-              "Heptabase",
-              "Roam",
-              "Tana",
-              "Anytype",
-              "Remnote"
+              Contemporary.Obsidian,
+              Contemporary.Notion,
+              Contemporary.Capacities,
+              Contemporary.Heptabase,
+              Contemporary.Roam,
+              Contemporary.Tana,
+              Contemporary.Anytype,
+              Contemporary.Remnote
             ],
             value: 0.8
           }
@@ -56,7 +63,7 @@ export const memotronWheel: FeatureWheelGroup[] = [
         label: "Pdf",
         contemporaries: [
           {
-            label: "Remnote",
+            label: Contemporary.Remnote,
             value: 0.7
           }
         ],
@@ -71,7 +78,7 @@ export const memotronWheel: FeatureWheelGroup[] = [
         label: "Advanced Md",
         contemporaries: [
           {
-            label: ["Notion", "Capacities"],
+            label: [Contemporary.Notion, Contemporary.Capacities],
             value: 0.7
           }
         ],
@@ -82,7 +89,7 @@ export const memotronWheel: FeatureWheelGroup[] = [
         label: "Traces",
         contemporaries: [
           {
-            label: ["Notion", "Capacities"],
+            label: [Contemporary.Notion, Contemporary.Capacities],
             value: 0.7
           }
         ],
@@ -92,7 +99,7 @@ export const memotronWheel: FeatureWheelGroup[] = [
         label: "Metadata",
         contemporaries: [
           {
-            label: ["Notion", "Capacities"],
+            label: [Contemporary.Notion, Contemporary.Capacities],
             value: 0.4
           }
         ],
@@ -116,11 +123,11 @@ export const memotronWheel: FeatureWheelGroup[] = [
         label: "Outlining",
         contemporaries: [
           {
-            label: "Remnote",
+            label: Contemporary.Remnote,
             value: 0.7
           },
           {
-            label: "Dynalist",
+            label: Contemporary.Dynalist,
             value: 0.5
           }
         ],
@@ -146,12 +153,12 @@ export const memotronWheel: FeatureWheelGroup[] = [
         label: "Kindle highlights",
         contemporaries: [
           {
-            label: ["Remnote"],
+            label: [Contemporary.Remnote],
             value: 0.6
           },
           {
-            label: ["Notion"],
-            value: 0.5
+            label: [Contemporary.Notion],
+            value: 0.3
           }
         ],
         progress: 0.8
@@ -186,11 +193,16 @@ export const memotronWheel: FeatureWheelGroup[] = [
         label: "Typed",
         contemporaries: [
           {
-            label: ["Capacities", "Heptabase", "Tana", "Anytype"],
+            label: [
+              Contemporary.Capacities,
+              Contemporary.Heptabase,
+              Contemporary.Tana,
+              Contemporary.Anytype
+            ],
             value: 0.7
           },
           {
-            label: "Notion",
+            label: Contemporary.Notion,
             value: 0.5
           }
         ],
@@ -201,14 +213,14 @@ export const memotronWheel: FeatureWheelGroup[] = [
         contemporaries: [
           {
             label: [
-              "Obsidian",
-              "Notion",
-              "Capacities",
-              "Heptabase",
-              "Roam",
-              "Tana",
-              "Anytype",
-              "Remnote"
+              Contemporary.Obsidian,
+              Contemporary.Notion,
+              Contemporary.Capacities,
+              Contemporary.Heptabase,
+              Contemporary.Roam,
+              Contemporary.Tana,
+              Contemporary.Anytype,
+              Contemporary.Remnote
             ],
             value: 0.8
           }
@@ -237,11 +249,11 @@ export const memotronWheel: FeatureWheelGroup[] = [
         label: "Combination",
         contemporaries: [
           {
-            label: "Clickup docs",
+            label: Contemporary.ClickupDocs,
             value: 0.4
           },
           {
-            label: "Gitbook",
+            label: Contemporary.Gitbook,
             value: 0.6
           }
         ],
@@ -251,7 +263,7 @@ export const memotronWheel: FeatureWheelGroup[] = [
         label: "Table",
         contemporaries: [
           {
-            label: "Notion",
+            label: Contemporary.Notion,
             value: 0.7
           }
         ],
@@ -298,7 +310,7 @@ export const memotronWheel: FeatureWheelGroup[] = [
         label: "Serendipity",
         contemporaries: [
           {
-            label: "Ideaflow",
+            label: Contemporary.Ideaflow,
             value: 0.5
           }
         ],
@@ -329,43 +341,43 @@ export const memotronWheel: FeatureWheelGroup[] = [
 
 export const contemporariesMasterList: ContemporaryDetail[] = [
   {
-    label: "obsidian",
+    label: Contemporary.Obsidian,
     url: "https://obsidian.md"
   },
   {
-    label: "notion",
+    label: Contemporary.Notion,
     url: "https://notion.so"
   },
   {
-    label: "capacities",
+    label: Contemporary.Capacities,
     url: "https://capacities.app"
   },
   {
-    label: "heptabase",
+    label: Contemporary.Heptabase,
     url: "https://heptabase.com"
   },
   {
-    label: "roam",
+    label: Contemporary.Roam,
     url: "https://roamresearch.com"
   },
   {
-    label: "tana",
+    label: Contemporary.Tana,
     url: "https://tana.ai"
   },
   {
-    label: "anytype",
+    label: Contemporary.Anytype,
     url: "https://anytype.io"
   },
   {
-    label: "remnote",
+    label: Contemporary.Remnote,
     url: "https://remnote.io"
   },
   {
-    label: "dynalist",
+    label: Contemporary.Dynalist,
     url: "https://dynalist.io"
   },
   {
-    label: "ideaflow",
+    label: Contemporary.Ideaflow,
     url: "https://ideaflow.io"
   }
 ];

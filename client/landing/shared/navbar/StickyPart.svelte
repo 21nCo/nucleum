@@ -11,13 +11,16 @@
   export let topNavBarValues: ITopNavBar;
   export let isStickied: boolean = false;
   export let isShowCta: boolean = false;
+  export let isPreventSticky: boolean = false;
 </script>
 
 <div
   class={cn(
-    "fixed inset-x-0 top-0 mx-auto w-fit h-12 mt-3 border border-brs2 rounded-full z-50 flex items-center px-2",
+    "inset-x-0 top-0 mx-auto w-fit h-12 mt-3 border border-brs2 rounded-full z-50 flex items-center px-2",
     {
-      "border-brs3 shadow-lg bg-bgs1": isStickied,
+      fixed: !isPreventSticky,
+      absolute: isPreventSticky,
+      "border-brs3 shadow-lg bg-bgs1": !isPreventSticky && isStickied,
       "border-transparent": !isStickied
     }
   )}

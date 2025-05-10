@@ -1,5 +1,5 @@
 <script lang="ts">
-  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
+  // import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import {
     FeatureWheelMode,
     type FeatureWheelGroup,
@@ -8,16 +8,16 @@
   import SubAtomLogo from "$lib/client/branding/SubAtomLogo.svelte";
   import { properCase } from "$lib/shared/utils/text.utils";
   import FeatureWheel from "../featureWheel/FeatureWheel.svelte";
-  import { memotronWheel } from "./memotronWheel";
+  import { memotronWheel } from "../../landing/memotron.io/compare/memotronWheel";
   import { onMount } from "svelte";
   import { page } from "$app/stores";
-  import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
+  // import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
   import { OptionSelectorStyle } from "$lib/client/types/select.type";
   export let isShowInfoPanel = true;
   export let mode = FeatureWheelMode.DEFAULT;
   export let product: string = "memotron";
-  export let features: FeatureWheelGroup[];
-  export let filteredFeatures: FeatureWheelGroup[];
+  let features: FeatureWheelGroup[];
+  let filteredFeatures: FeatureWheelGroup[];
   let productContemporaries: string[];
   let contemporaryToCompare: string = "";
   onMount(() => {
@@ -116,7 +116,7 @@
         </span>
       </div>
       <div class="flex flex-col w-full">
-        <OptionSelector
+        <!-- <OptionSelector
           labelProps={{ label: "Mode" }}
           options={[
             { value: FeatureWheelMode.DEFAULT },
@@ -128,9 +128,9 @@
           ]}
           style={OptionSelectorStyle.CHECK_CIRCLE}
           bind:selected={mode}
-        />
+        /> -->
       </div>
-      {#if mode === FeatureWheelMode.CONTEMPORARY}
+      <!-- {#if mode === FeatureWheelMode.CONTEMPORARY}
         <DropDown
           label={{ label: "Compare with contemporary" }}
           parentBackgroundIndex={2}
@@ -143,7 +143,7 @@
             refreshFilter();
           }}
         />
-      {/if}
+      {/if} -->
     </div>
   {/if}
   {#if product && filteredFeatures}

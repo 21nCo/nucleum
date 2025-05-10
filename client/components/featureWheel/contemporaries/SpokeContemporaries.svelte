@@ -23,7 +23,7 @@
   y={yCoordAdjusted}
   class="w-6 min-w-fit h-[3rem]"
 >
-  {#if Array.isArray(contemporary.label)}
+  {#if Array.isArray(contemporary.label) && contemporary.label.length > 1}
     <button
       on:click={() => {
         isClicked = !isClicked;
@@ -34,10 +34,12 @@
       on:mouseout={toggleHoveringState}
       on:focus={toggleHoveringState}
       on:blur={toggleHoveringState}
-      class="flex bg-bgs2 rounded-md px-1 py-0.5 text-[0.33rem]"
+      class="flex bg-bgs2 rounded-md px-1 py-0.5 text-[0.33rem] border border-brs3"
     >
-      +{contemporary.label.length}
+      {contemporary.label.length}+
     </button>
+  {:else if Array.isArray(contemporary.label)}
+    <Contemporary {width} label={contemporary.label[0]} />
   {:else}
     <Contemporary {width} label={contemporary.label} />
   {/if}

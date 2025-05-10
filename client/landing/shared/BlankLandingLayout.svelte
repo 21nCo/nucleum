@@ -30,6 +30,7 @@
   ];
 
   $: isShowGrid = scrollY < 70;
+  $: isComparePage = window.location.pathname.includes("compare");
 
   function addEntryAnimation(id: string) {
     if (isProduct) addAnimateClass("animate-open-left", id);
@@ -88,15 +89,15 @@
     bind:this={centralContainerRef}
     on:scroll={handleScroll}
   >
-    <TopNavBar {topNavBarValues} {scrollY} />
+    <TopNavBar {topNavBarValues} {scrollY} isPreventSticky={isComparePage} />
     <div class="flex w-full justify-center">
       <div
-        class={cn(
-          "w-full max-w-[1240px] mo:min-w-[320px] flex flex-col gap-40 px-8"
-        )}
+        class={cn("w-full  flex flex-col gap-40 px-8", {
+          "max-w-[1240px] mo:min-w-[320px]": !isComparePage
+        })}
       >
         <slot />
-        {#if !isComingSoon}
+        {#if !isComingSoon && !isComparePage}
           <Footer products={transformedProducts} {footerValues} />
         {/if}
       </div>

@@ -1,14 +1,19 @@
 <script lang="ts">
-  import type { FeatureWheelSpoke } from "$lib/client/types/featureWheel.type";
+  import {
+    FeatureWheelMode,
+    type FeatureWheelSpoke
+  } from "$lib/client/types/featureWheel.type";
   import { Size } from "$lib/client/types/size.enum";
+  import { cn } from "$lib/client/utils/ui.utils";
   export let spoke: FeatureWheelSpoke;
+  export let mode: FeatureWheelMode;
   export let xCoord: number;
   export let yCoord: number;
   export let size: Size = Size.md;
   $: widthFactor = size === Size.lg ? 8 : size === Size.md ? 7 : 5;
 </script>
 
-{#if spoke.isProminent || spoke.isNovel}
+{#if mode !== FeatureWheelMode.COMPARER && (spoke.isProminent || spoke.isNovel)}
   <rect
     x={xCoord -
       (spoke.label.length <= 8 ? 25 : spoke.label.length * (widthFactor / 2))}
@@ -24,13 +29,11 @@
   y={yCoord}
   text-anchor="middle"
   dominant-baseline="middle"
-  class="font-thin fill-fgs1 {size === Size.lg
-    ? 'text-b2'
-    : size === Size.md
-      ? 'text-b3'
-      : size === Size.sm
-        ? 'text-[0.5rem]'
-        : 'text-[0.4rem]'}"
+  class={cn("fill-fgs2 cursor-pointer hover:fill-aps1 hover:font-medium", {
+    "text-b2": size === Size.lg,
+    "text-b3": size === Size.md,
+    "text-[0.5rem]": size === Size.sm
+  })}
 >
   {spoke.label}
 </text>

@@ -1,3 +1,5 @@
+import type { Contemporary } from "../components/featureWheel/comparer.type";
+
 export type FeatureWheel = {
   groups: FeatureWheelGroup[];
   product: string;
@@ -6,7 +8,7 @@ export type FeatureWheel = {
 export enum FeatureWheelMode {
   DEFAULT = "default",
   PROGRESS = "progress",
-  CONTEMPORARY = "contemporary"
+  COMPARER = "comparer"
 }
 
 export type FeatureWheelGroup = {
@@ -31,11 +33,11 @@ export type FeatureWheelSpoke = {
 };
 
 export type FeatureWheelContemporary = {
-  label: string | string[];
+  label: Contemporary | Contemporary[];
   value: number;
 };
 
 export type ContemporaryDetail = {
-  label: string;
+  label: Contemporary;
   url: string;
 };

@@ -14,15 +14,15 @@
   } from "../shared/store/shared.store";
 
   const urls: ILandingProductUrls = {
-    web: "https://web.pointron.app",
-    features: "https://docs.pointron.app/pointron/features",
+    web: "https://web.memotron.app",
+    features: "https://docs.memotron.app/memotron/features",
     tutorials: youtubeUrl,
-    faqs: "https://docs.pointron.app/pointron/faqs",
-    changelog: "https://docs.pointron.app/changelog/pointron/new",
-    roadmap: "https://docs.pointron.app/pointron/roadmap",
+    faqs: "https://docs.memotron.app/memotron/faqs",
+    changelog: "https://docs.memotron.app/changelog/memotron/new",
+    roadmap: "https://docs.memotron.app/memotron/roadmap",
     downloads: {
-      all: "https://docs.pointron.app/pointron/installation",
-      ios: "https://apps.apple.com/in/app/pointron-focus-time-tracker/id6469411284",
+      all: "https://docs.memotron.app/memotron/installation",
+      ios: "https://apps.apple.com/in/app/memotron-your-memory-atlas/id6737236940",
       extension:
         "https://chromewebstore.google.com/detail/memotron-web-clipper/fgghopffkfdhckbcghodnlbplkagokcn"
     },
@@ -42,6 +42,7 @@
         expandRender: "resources"
       },
       { label: "Pricing", href: "pricing" },
+      { label: "Compare", href: "compare" },
       { label: "Extension", href: urls.downloads?.extension ?? "" },
       { label: "Discord", href: discordUrl }
     ],
@@ -52,8 +53,7 @@
     }
   };
   let footerValues: IFooter = {
-    appStoreUrl:
-      "https://apps.apple.com/in/app/memotron-your-memory-atlas/id6737236940",
+    appStoreUrl: urls.downloads?.ios,
     twitterUrl: urls.socials?.twitter,
     docsUrl: "https://docs.memotron.app",
     youtubeUrl: youtubeUrl,

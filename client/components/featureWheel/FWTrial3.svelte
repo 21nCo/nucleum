@@ -13,7 +13,7 @@
   import { deepCopy } from "$lib/shared/utils/obj.utils";
   import GroupLabel from "./GroupLabel.svelte";
   export let wheel: FeatureWheel;
-  export let mode: FeatureWheelMode = FeatureWheelMode.CONTEMPORARY;
+  export let mode: FeatureWheelMode = FeatureWheelMode.COMPARER;
   let groups: FeatureWheelGroup[];
   let categoryColoringStyle: "bg" | "spoke";
   let groupInFocus: string = "";
@@ -39,8 +39,7 @@
     }
     console.log("groups", groups);
     categoryColoringStyle =
-      mode === FeatureWheelMode.PROGRESS ||
-      mode === FeatureWheelMode.CONTEMPORARY
+      mode === FeatureWheelMode.PROGRESS || mode === FeatureWheelMode.COMPARER
         ? "spoke"
         : "bg";
     if (categoryColoringStyle === "bg" && groups.length > 1) {
@@ -133,7 +132,7 @@
         class={categoryColoringStyle != "bg"
           ? "stroke-fgs2 fill-none"
           : "stroke-fgs3"}
-        stroke-width="2"
+        stroke-width="1.5"
         fill={categoryColoringStyle === "bg" && groups.length === 1
           ? group.color
           : ""}
@@ -171,7 +170,7 @@
         stroke={group.color && categoryColoringStyle === "spoke"
           ? `${group.color}`
           : ""}
-        stroke-width={mode === FeatureWheelMode.CONTEMPORARY ? 0.6 : 0.8}
+        stroke-width={mode === FeatureWheelMode.COMPARER ? 0.6 : 0.8}
         stroke-dasharray={spoke.isDivider ? "6 6" : ""}
         shape-rendering="geometricPrecision"
       />
@@ -208,7 +207,7 @@
             progress={spoke.progress}
           />
         {/if}
-      {:else if mode === FeatureWheelMode.CONTEMPORARY && spoke.contemporaries.length > 0}
+      {:else if mode === FeatureWheelMode.COMPARER && spoke.contemporaries.length > 0}
         {#each spoke.contemporaries as contemporary}
           <SpokeContemporaries
             xCoord={radius *
@@ -226,6 +225,7 @@
         {/each}
       {/if}
       <SpokeLabel
+        {mode}
         {size}
         {spoke}
         xCoord={(radius + groupAngles[i] * spokeLabelXDisplacementFactor) *
