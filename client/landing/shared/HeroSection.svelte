@@ -12,7 +12,9 @@
   export let heroInputs: IHeroInputs;
 </script>
 
-<div class="relative flex justify-center h-[45vh] w-full overflow-clip">
+<div
+  class="relative flex justify-center min-h-[400px] 2k:min-h-[500px] w-full overflow-clip"
+>
   <!-- <HeroBackground /> -->
   <div
     class="w-[1110px] 2k:w-[1500px] max-w-full flex flex-col gap-8 justify-center items-center"

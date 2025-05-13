@@ -298,7 +298,7 @@ export const resizable: Action<HTMLElement, ResizableOptions> = (
 };
 
 export function resizeListener(
-  node: HTMLElement,
+  node: HTMLElement | SVGElement,
   callback: (dimensions: { width: number; height: number }) => void
 ) {
   const resizeObserver = new ResizeObserver((entries) => {

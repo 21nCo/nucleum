@@ -1,15 +1,17 @@
 <script lang="ts">
   import {
     FeatureWheelMode,
-    type FeatureWheelSpoke
+    type IFeatureWheelSpoke
   } from "$lib/client/types/featureWheel.type";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
-  export let spoke: FeatureWheelSpoke;
+  export let spoke: IFeatureWheelSpoke;
   export let mode: FeatureWheelMode;
   export let xCoord: number;
   export let yCoord: number;
   export let size: Size = Size.md;
+  export let isActive: boolean = false;
+  export let groupColor: string = "fgs2";
   $: widthFactor = size === Size.lg ? 8 : size === Size.md ? 7 : 5;
 </script>
 
@@ -24,16 +26,28 @@
     stroke-width="0.4"
   />
 {/if}
+
 <text
   x={xCoord}
   y={yCoord}
-  text-anchor="middle"
+  text-anchor={Math.abs(yCoord) > 200 ? "middle" : xCoord > 0 ? "start" : "end"}
   dominant-baseline="middle"
-  class={cn("fill-fgs2 cursor-pointer hover:fill-aps1 hover:font-medium", {
+  role="button"
+  tabindex="0"
+  class={cn("cursor-pointer select-none focus:outline-none", {
+    "fill-aps1 font-medium": isActive,
+    "hover:fill-aps1 hover:font-medium": !isActive,
+    "fill-fgs2": !isActive && !groupColor,
     "text-b2": size === Size.lg,
-    "text-b3": size === Size.md,
-    "text-[0.5rem]": size === Size.sm
+    "text-[10px]": size === Size.md,
+    "text-[8px]": size === Size.sm
   })}
+  fill={groupColor ? groupColor : ""}
+  on:click
+  on:keydown={(e) =>
+    e.key === "Enter" &&
+    e.target &&
+    e.target.dispatchEvent(new MouseEvent("click"))}
 >
   {spoke.label}
 </text>

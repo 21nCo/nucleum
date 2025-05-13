@@ -29,7 +29,7 @@
     }))
   ];
 
-  $: isShowGrid = scrollY < 70;
+  $: isShowGrid = !isComparePage && scrollY < 70;
   $: isComparePage = window.location.pathname.includes("compare");
 
   function addEntryAnimation(id: string) {
@@ -85,15 +85,16 @@
   {/if}
   <div
     {id}
-    class="w-full overflow-y-auto"
+    class="flex flex-col w-full h-full overflow-y-auto"
     bind:this={centralContainerRef}
     on:scroll={handleScroll}
   >
     <TopNavBar {topNavBarValues} {scrollY} isPreventSticky={isComparePage} />
-    <div class="flex w-full justify-center">
+    <div class="flex w-full justify-center flex-1 min-h-0">
       <div
-        class={cn("w-full  flex flex-col gap-40 px-8", {
-          "max-w-[1240px] mo:min-w-[320px]": !isComparePage
+        class={cn("w-full flex flex-col", {
+          "max-w-[1240px] mo:min-w-[320px] gap-40 px-8": !isComparePage,
+          "flex-1 min-h-0": isComparePage
         })}
       >
         <slot />

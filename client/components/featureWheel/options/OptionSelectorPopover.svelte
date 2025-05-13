@@ -7,13 +7,24 @@
     ISelectValue
   } from "$lib/client/types/select.type";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
 
   export let title: string;
   export let options: ISelectItem[] = [];
   export let selected: ISelectValue[] | undefined = undefined;
   export let isUseExternalLogoForIcon: boolean = false;
+  export let onSelect: (selected: ISelectValue[]) => void = () => {};
+
+  let searchTerm = "";
+  $: filteredOptions = searchTerm
+    ? options.filter(
+        (option) =>
+          option.label?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          option.value
+            .toString()
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())
+      )
+    : options;
 </script>
 
 <div
@@ -36,8 +47,16 @@
       {/if}
     </span>
   </div>
+  <div>
+    <input
+      type="text"
+      bind:value={searchTerm}
+      placeholder="Search..."
+      class="w-full p-2 rounded-md border border-brs3 bg-bgs1 focus:outline-none focus:border-aps1"
+    />
+  </div>
   <div class="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-3">
-    {#each options as option}
+    {#each filteredOptions as option}
       <button
         class={cn(
           "flex flex-col min-h-16 items-center justify-center gap-2 p-2 rounded-md border",
@@ -52,7 +71,7 @@
           } else {
             selected = [...(selected ?? []), option.value];
           }
-          dispatch("select", selected);
+          onSelect(selected);
         }}
       >
         {#if isUseExternalLogoForIcon && typeof option.icon === "string"}

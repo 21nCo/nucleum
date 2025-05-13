@@ -24,6 +24,7 @@
   import Remnote from "./logos/Remnote.svelte";
   import Dynalist from "./logos/Dynalist.svelte";
   import Ideaflow from "./logos/Ideaflow.svelte";
+  import Default from "./logos/Default.svelte";
   export let provider: IdentityProvider | string;
   export let width = 20;
   let selected: any = Link;
@@ -45,7 +46,7 @@
     else if (provider === IdentityProvider.Youtube) selected = Youtube;
     else if (provider === IdentityProvider.Medium) selected = Medium;
     else if (provider === IdentityProvider.Spotify) selected = Spotify;
-    else selected = Link;
+    else selected = Default;
   }
   // $: console.log({ provider });
 </script>

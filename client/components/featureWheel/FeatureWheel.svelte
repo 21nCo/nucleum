@@ -1,76 +1,155 @@
 <script lang="ts">
-  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
-  import type {
+  import {
     FeatureWheelMode,
-    FeatureWheel
+    type IContemporary,
+    type IFeatureWheel,
+    type IFeatureWheelGroup,
+    type IFwCategory,
+    type IFwFeature
   } from "$lib/client/types/featureWheel.type";
-  import FwTrial3 from "./FWTrial3.svelte";
-  import { popover } from "$lib/client/actions/popover.action";
-  import OptionSelectorPopover from "./optionSelector/OptionSelectorPopover.svelte";
-  import { properCase } from "$lib/shared/utils/text.utils";
+  import Wheel from "./wheel/Wheel.svelte";
+  import FwOptionsPanel from "./options/FwOptionsPanel.svelte";
+  import FwSidePanel from "./sidePanel/FwSidePanel.svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
+  export let product: string;
+  export let title: string | undefined = undefined;
+  export let features: IFwFeature[];
+  export let categories: IFwCategory[];
+  export let contemporaries: IContemporary[];
   export let mode: FeatureWheelMode;
-  export let wheel: FeatureWheel;
-  export let groups: string[] | undefined = undefined;
-  export let selectedSpoke: string | undefined = undefined;
-  $: contemporariesList = wheel.groups
-    .map((group) => group.spokes)
-    .flat()
-    .map((spoke) => spoke.contemporaries)
-    .flat()
-    .map((item) => (typeof item.label === "string" ? [item.label] : item.label))
-    .flat()
-    .filter((item) => item !== undefined)
-    .filter((item, index, self) => self.indexOf(item) === index);
-  $: console.log({ wheel, contemporariesList });
+  let wheel: IFeatureWheel;
+  let selectedCategories: string[] | undefined = undefined;
+  let selectedFeatures: string[] | undefined = undefined;
+  /**
+   * Selected contemporaries to be compared with
+   */
+  let selectedCompare: string[] | undefined = undefined;
+  /**
+   * Feature that is clicked to view
+   */
+  let featureView: string | undefined = undefined;
+  let refreshId: number = new Date().getTime();
+  let isShowSidePanel: boolean = false;
+  refreshWheel();
+
+  function refreshWheel() {
+    const groups: IFeatureWheelGroup[] = [];
+    let filteredCategories = categories;
+    if (selectedCategories && selectedCategories.length > 0) {
+      filteredCategories = categories?.filter((category) =>
+        selectedCategories?.includes(category.label)
+      );
+    }
+    for (const category of filteredCategories) {
+      const group: IFeatureWheelGroup = {
+        label: category.label,
+        color: category.color,
+        spokes: features
+          .filter(
+            (feature) =>
+              feature.category === category.label &&
+              (mode === FeatureWheelMode.COMPARER
+                ? !feature.isPlanned && !feature.isHideForComparer
+                : true)
+          )
+          .map((feature) => ({
+            label: feature.label,
+            contemporaries:
+              selectedCompare && selectedCompare.length > 0
+                ? feature.contemporaries.filter((contemporary) => {
+                    return selectedCompare?.includes(contemporary.label);
+                  })
+                : feature.contemporaries
+          }))
+      };
+      groups.push(group);
+    }
+    wheel = {
+      product,
+      groups
+    };
+    refreshId = new Date().getTime();
+  }
 </script>
 
-<div class="flex flex-col gap-8 w-full flex-1 max-h-[100vh] p-3">
+<div class="flex gap-8 w-full flex-1 min-h-0 p-3">
   <div
-    class="sticky top-0 flex justify-between items-center bg-bgs1 rounded-md border border-brs3 p-4 h-16 w-full"
+    class={cn("flex h-full", {
+      "flex-col gap-6 w-1/2": isShowSidePanel,
+      "gap-3 w-full justify-center items-center": !isShowSidePanel
+    })}
   >
-    <div>Wholesome chart</div>
-    <div class="flex gap-2">
-      <button
-        use:popover={{
-          content: OptionSelectorPopover,
-          isRenderAsSibling: true,
-          offsetInPx: 12,
-          componentProps: {
-            title: "Filter by category",
-            options: wheel.groups.map((group) => ({
-              label: group.label,
-              value: group.label
-            }))
-          }
-        }}
-      >
-        Filter by category
-      </button>
-      <button
-        use:popover={{
-          content: OptionSelectorPopover,
-          isRenderAsSibling: true,
-          offsetInPx: 12,
-          componentProps: {
-            title: "Compare with",
-            options: contemporariesList.map((item) => ({
-              label: properCase(item),
-              value: item,
-              icon: item
-            })),
-            isUseExternalLogoForIcon: true
-          }
-        }}
-      >
-        Compare with
-      </button>
-    </div>
-    <button
-      class="flex items-center text-b3 text-fgs2 p-2 rounded-md hover:bg-bgs2"
+    <div
+      class={cn({
+        "w-1/4 max-w-96 h-full": !isShowSidePanel,
+        "h-fit w-full": isShowSidePanel
+      })}
     >
-      <SvgIcon icon="question" />
-      How to use
-    </button>
+      <FwOptionsPanel
+        {mode}
+        {title}
+        {categories}
+        {features}
+        {contemporaries}
+        isHorizontal={isShowSidePanel}
+        bind:selectedCategories
+        bind:selectedFeatures
+        bind:selectedCompare
+        on:change={(e) => {
+          refreshWheel();
+        }}
+        on:howToUse={(e) => {
+          featureView = "howToUse";
+          isShowSidePanel = true;
+        }}
+        on:report={(e) => {
+          isShowSidePanel = true;
+        }}
+      />
+    </div>
+    <div
+      class={cn({
+        "h-full flex-1": !isShowSidePanel,
+        "h-[70%] 2k:h-[80%] w-full": isShowSidePanel
+      })}
+    >
+      {#if wheel}
+        {#key refreshId}
+          <Wheel
+            {mode}
+            {wheel}
+            selectedSpoke={featureView}
+            on:spokeClick={(e) => {
+              const spoke = e.detail;
+              if (spoke === featureView) {
+                featureView = undefined;
+                // isShowSidePanel = false;
+                return;
+              }
+              isShowSidePanel = true;
+              featureView = spoke;
+            }}
+          />
+        {/key}
+      {/if}
+    </div>
   </div>
-  <FwTrial3 {mode} {wheel} />
+  {#if isShowSidePanel}
+    {#key featureView}
+      <FwSidePanel
+        {product}
+        {features}
+        {categories}
+        {contemporaries}
+        {featureView}
+        {selectedCompare}
+        {selectedCategories}
+        {selectedFeatures}
+        on:close={() => {
+          isShowSidePanel = false;
+          featureView = undefined;
+        }}
+      />
+    {/key}
+  {/if}
 </div>

@@ -1,15 +1,22 @@
 export enum Contemporary {
-  Obsidian = "obsidian",
   Notion = "notion",
+  Obsidian = "obsidian",
   Capacities = "capacities",
-  Heptabase = "heptabase",
   Roam = "roam",
-  Tana = "tana",
-  Anytype = "anytype",
   Remnote = "remnote",
+  Anytype = "anytype",
+  Tana = "tana",
+  Heptabase = "heptabase",
+  Logseq = "logseq",
   Dynalist = "dynalist",
   Ideaflow = "ideaflow",
   AppleNotes = "apple notes",
   ClickupDocs = "clickup docs",
-  Gitbook = "gitbook"
+  Gitbook = "gitbook",
+  AudioPen = "audioPen",
+  Liner = "liner",
+  Mymind = "mymind",
+  Pocket = "pocket",
+  Instapaper = "instapaper",
+  Raindrop = "raindrop"
 }

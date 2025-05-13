@@ -2,14 +2,14 @@
   import SubAtomLogo from "$lib/client/branding/SubAtomLogo.svelte";
   import {
     FeatureWheelMode,
-    type FeatureWheelGroup,
-    type FeatureWheelSpoke
+    type IFeatureWheelGroup,
+    type IFeatureWheelSpoke
   } from "$lib/client/types/featureWheel.type";
   export let mode: FeatureWheelMode = FeatureWheelMode.DEFAULT;
   let categoryColoringStyle: "bg" | "spoke" =
     mode === FeatureWheelMode.PROGRESS ? "spoke" : "bg";
   let radius = 270;
-  let spokesTwo: FeatureWheelGroup[] = [
+  let spokesTwo: IFeatureWheelGroup[] = [
     {
       label: "Capture",
       color: "",
@@ -43,7 +43,7 @@
     }
   ];
 
-  const emptyDividerSpoke: FeatureWheelSpoke = {
+  const emptyDividerSpoke: IFeatureWheelSpoke = {
     label: "",
     contemporaries: [],
     isDivider: true

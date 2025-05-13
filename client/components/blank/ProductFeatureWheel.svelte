@@ -2,8 +2,8 @@
   // import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import {
     FeatureWheelMode,
-    type FeatureWheelGroup,
-    type FeatureWheelContemporary
+    type IFeatureWheelGroup,
+    type IFeatureWheelContemporary
   } from "$lib/client/types/featureWheel.type";
   import SubAtomLogo from "$lib/client/branding/SubAtomLogo.svelte";
   import { properCase } from "$lib/shared/utils/text.utils";
@@ -16,8 +16,8 @@
   export let isShowInfoPanel = true;
   export let mode = FeatureWheelMode.DEFAULT;
   export let product: string = "memotron";
-  let features: FeatureWheelGroup[];
-  let filteredFeatures: FeatureWheelGroup[];
+  let features: IFeatureWheelGroup[];
+  let filteredFeatures: IFeatureWheelGroup[];
   let productContemporaries: string[];
   let contemporaryToCompare: string = "";
   onMount(() => {
@@ -48,14 +48,12 @@
             return group.spokes
               .map((spoke) => {
                 return spoke.contemporaries.map((contemporary) => {
-                  if (typeof contemporary.label === "string") {
-                    return [contemporary.label];
-                  } else return [...contemporary.label];
+                  return contemporary.label;
                 });
               })
-              .flat(2);
+              .flat();
           })
-          .flat(2)
+          .flat()
       )
     ];
     refreshFilter();
@@ -74,21 +72,9 @@
           return {
             ...spoke,
             contemporaries: spoke.contemporaries.reduce(
-              (acc: FeatureWheelContemporary[], contemporary) => {
-                if (
-                  (typeof contemporary.label === "string" &&
-                    contemporary.label === contemporaryToCompare) ||
-                  contemporary.label.includes(contemporaryToCompare)
-                ) {
-                  acc.push(
-                    typeof contemporary.label === "string" &&
-                      contemporary.label === contemporaryToCompare
-                      ? contemporary
-                      : {
-                          ...contemporary,
-                          label: contemporaryToCompare
-                        }
-                  );
+              (acc: IFeatureWheelContemporary[], contemporary) => {
+                if (contemporary.label === contemporaryToCompare) {
+                  acc.push(contemporary);
                 }
                 return acc;
               },
@@ -149,7 +135,13 @@
   {#if product && filteredFeatures}
     <div class="flex flex-col grow h-full bg-bgs1">
       {#key filteredFeatures}
-        <FeatureWheel {mode} wheel={{ product, groups: filteredFeatures }} />
+        <FeatureWheel
+          {mode}
+          {product}
+          features={[]}
+          categories={[]}
+          contemporaries={[]}
+        />
       {/key}
       <div class="flex justify-center w-full pb-12"></div>
     </div>

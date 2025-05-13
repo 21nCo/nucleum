@@ -1,61 +1,72 @@
 <script lang="ts">
-  import type { FeatureWheelContemporary } from "$lib/client/types/featureWheel.type";
-  import { resolveHoverState } from "$lib/client/utils/browser.utils";
-  import Contemporary from "./Contemporary.svelte";
-  export let xCoord: number;
-  export let yCoord: number;
-  export let contemporary: FeatureWheelContemporary;
-  export const width = 12;
-  let isHovering = false;
-  let isClicked = false;
-  const toggleHoveringState = (event: MouseEvent | FocusEvent) => {
-    isHovering = resolveHoverState(event);
-  };
-  /**
-   * Adjust the x and y coordinates to center the line by offseting the width and height - as by default the logo's top left corner is placed at the x and y coordinates.
-   */
-  $: xCoordAdjusted = xCoord - width / 2;
-  $: yCoordAdjusted = yCoord - width / 2;
+  import type {
+    IFeatureWheelContemporary,
+    IFeatureWheelSpoke
+  } from "$lib/client/types/featureWheel.type";
+  import type { Size } from "$lib/client/types/size.enum";
+  import SpokeContemporaryItem from "./SpokeContemporaryItem.svelte";
+  export let size: Size;
+  export let spoke: IFeatureWheelSpoke;
+  export let contemporaries: IFeatureWheelContemporary[];
+  export let radius: number;
+  export let startAngles: number[];
+  export let groupAngles: number[];
+  export let i: number;
+  export let j: number;
+  export let groupSpokeLength: number;
+  // Group contemporaries by their value
+  $: contemporaryGroups = contemporaries.reduce((groups, contemporary) => {
+    const value = contemporary.value;
+    const existingGroup = groups.find((g) => g[0].value === value);
+    if (existingGroup) {
+      existingGroup.push(contemporary);
+    } else {
+      groups.push([contemporary]);
+    }
+    return groups;
+  }, [] as IFeatureWheelContemporary[][]);
+
+  // Single contemporaries are those that have unique values
+  $: singleContemporaries = contemporaryGroups
+    .filter((group) => group.length === 1)
+    .map((group) => group[0]);
+
+  // Groups are those with multiple contemporaries sharing same value
+  $: groupedContemporaries = contemporaryGroups.filter(
+    (group) => group.length > 1
+  );
+  $: console.log({ singleContemporaries, groupedContemporaries });
+
+  function resolveYCoord(contemporary: IFeatureWheelContemporary) {
+    return (
+      radius *
+      (1 - (contemporary.value ?? 0)) *
+      Math.sin(startAngles[i] + (j / groupSpokeLength) * groupAngles[i])
+    );
+  }
+
+  function resolveXCoord(contemporary: IFeatureWheelContemporary) {
+    return (
+      radius *
+      (1 - (contemporary.value ?? 0)) *
+      Math.cos(startAngles[i] + (j / groupSpokeLength) * groupAngles[i])
+    );
+  }
 </script>
 
-<foreignObject
-  x={xCoordAdjusted}
-  y={yCoordAdjusted}
-  class="w-6 min-w-fit h-[3rem]"
->
-  {#if Array.isArray(contemporary.label) && contemporary.label.length > 1}
-    <button
-      on:click={() => {
-        isClicked = !isClicked;
-        if (!isClicked) isHovering = false;
-        // runAction(AppEvent.CMD);
-      }}
-      on:mouseover={toggleHoveringState}
-      on:mouseout={toggleHoveringState}
-      on:focus={toggleHoveringState}
-      on:blur={toggleHoveringState}
-      class="flex bg-bgs2 rounded-md px-1 py-0.5 text-[0.33rem] border border-brs3"
-    >
-      {contemporary.label.length}+
-    </button>
-  {:else if Array.isArray(contemporary.label)}
-    <Contemporary {width} label={contemporary.label[0]} />
-  {:else}
-    <Contemporary {width} label={contemporary.label} />
-  {/if}
-</foreignObject>
-
-<foreignObject
-  x={xCoordAdjusted}
-  y={yCoordAdjusted}
-  class="w-72 min-w-fit h-[4.5rem]"
->
-  {#if isHovering || isClicked}
-    <div class="flex gap-2 bg-bgs2 rounded-md px-3 py-2">
-      {#each contemporary.label as item (item)}
-        <Contemporary {width} label={item} />
-        <!-- <span class="text-b5">{item}</span> -->
-      {/each}
-    </div>
-  {/if}
-</foreignObject>
+{#each singleContemporaries as contemporary}
+  <SpokeContemporaryItem
+    {size}
+    xCoord={resolveXCoord(contemporary)}
+    yCoord={resolveYCoord(contemporary)}
+    {contemporary}
+  />
+{/each}
+{#each groupedContemporaries as contemporary}
+  <SpokeContemporaryItem
+    {size}
+    xCoord={resolveXCoord(contemporary[0])}
+    yCoord={resolveYCoord(contemporary[0])}
+    group={contemporary}
+  />
+{/each}

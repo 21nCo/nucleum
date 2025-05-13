@@ -8,7 +8,7 @@
   let laptopImageSrc = deviceImages.find((image) => image.includes("laptop"));
 </script>
 
-<div class="-mt-48 flex justify-center mo:min-h-40 min-h-[438px] w-full">
+<div class="-mt-32 flex justify-center mo:min-h-40 min-h-[438px] w-full">
   {#if !isVideoPlaying}
     <!-- thumbnail -->
     <div class="relative overflow-clip rounded-xl min-h-fit w-[812px]">
