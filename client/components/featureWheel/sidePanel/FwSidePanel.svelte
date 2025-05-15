@@ -27,7 +27,7 @@
 </script>
 
 <div
-  class="flex flex-col gap-8 flex-1 w-1/2 min-w-1/2 bg-bgs1 rounded-md p-4 dp:p-6 2k:p-8"
+  class="flex flex-col gap-8 flex-1 w-1/2 min-w-1/2 bg-bgs2 rounded-md p-4 dp:p-6 2k:p-8"
 >
   <div class="flex w-full justify-between">
     <div class="flex text-h4 text-fgs2">
@@ -40,9 +40,12 @@
       {:else if selectedFeatures?.length === 1}
         {selectedFeatures[0]}
       {:else if selectedCompare?.length === 1}
+        {@const contemporary = contemporaries.find(
+          (c) => c.label === selectedCompare[0]
+        )}
         <div class="flex items-center gap-1">
           <span> Comparision with </span>
-          <ExternalLogo provider={selectedCompare[0]} />
+          <ExternalLogo provider={contemporary} />
           {properCase(selectedCompare[0])}
         </div>
       {:else}

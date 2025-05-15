@@ -25,8 +25,27 @@
   import Dynalist from "./logos/Dynalist.svelte";
   import Ideaflow from "./logos/Ideaflow.svelte";
   import Default from "./logos/Default.svelte";
-  export let provider: IdentityProvider | string;
+  import type { IContemporary } from "$lib/client/types/featureWheel.type";
+  import Icon from "$lib/client/elements/Icon.svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
+  import Mymind from "./logos/Mymind.svelte";
+  import Anytype from "./logos/Anytype.svelte";
+  import Liner from "./logos/Liner.svelte";
+  import Lazy from "./logos/Lazy.svelte";
+  import Audiopen from "./logos/Audiopen.svelte";
+  import Logseq from "./logos/Logseq.svelte";
+  import Tana from "./logos/Tana.svelte";
+  import Scrintal from "./logos/Scrintal.svelte";
+  import Pocket from "./logos/Pocket.svelte";
+  import Instapaper from "./logos/Instapaper.svelte";
+  import TheBrain from "./logos/TheBrain.svelte";
+  import ViennaScribe from "./logos/ViennaScribe.svelte";
+  import MilaNote from "./logos/MilaNote.svelte";
+  import Noted from "./logos/Noted.svelte";
+  export let provider: IdentityProvider | string | IContemporary;
   export let width = 20;
+  let className = "";
+  export { className as class };
   let selected: any = Link;
   $: {
     if (provider === IdentityProvider.GenericLink) selected = Link;
@@ -48,44 +67,79 @@
     else if (provider === IdentityProvider.Spotify) selected = Spotify;
     else selected = Default;
   }
+  $: icon =
+    typeof provider === "string"
+      ? provider
+      : provider.icon || provider.label.toLowerCase();
   // $: console.log({ provider });
 </script>
 
-<!-- <span class="text-b5">{provider}</span> -->
-<svg
-  {width}
-  height={width}
-  xmlns="http://www.w3.org/2000/svg"
-  version="1.1"
-  xmlns:xlink="http://www.w3.org/1999/xlink"
-  x="0"
-  y="0"
-  viewBox="0 0 512 512"
-  style="enable-background:new 0 0 512 512"
-  xml:space="preserve"
-  class="flex justify-center items-center"
-  id={provider}
->
-  <!-- TODO - later load logos from link dynamically -->
-  {#if provider === "obsidian"}
-    <Obsidian />
-  {:else if provider === "notion"}
-    <Notion />
-  {:else if provider === "capacities"}
-    <Capacities />
-  {:else if provider === "roam"}
-    <RoamResearch />
-  {:else if provider === "remnote"}
-    <Remnote />
-  {:else if provider === "dynalist"}
-    <Dynalist />
-  {:else if provider === "ideaflow"}
-    <Ideaflow />
-  {:else if provider === "tana"}
-    <Notion />
-  {:else if provider === "heptabase"}
-    <Heptabase />
-  {:else}
-    <svelte:component this={selected} />
-  {/if}
-</svg>
+{#if icon.includes(":")}
+  <Icon {icon} class={className} />
+{:else}
+  <svg
+    {width}
+    height={width}
+    xmlns="http://www.w3.org/2000/svg"
+    version="1.1"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    x="0"
+    y="0"
+    viewBox="0 0 512 512"
+    style="enable-background:new 0 0 512 512"
+    xml:space="preserve"
+    class={cn("flex justify-center items-center", className)}
+    id={icon}
+  >
+    <!-- TODO - later load logos from link dynamically -->
+    {#if icon === "obsidian"}
+      <Obsidian />
+    {:else if icon === "notion"}
+      <Notion />
+    {:else if icon === "capacities"}
+      <Capacities />
+    {:else if icon === "roam"}
+      <RoamResearch />
+    {:else if icon === "remnote"}
+      <Remnote />
+    {:else if icon === "dynalist"}
+      <Dynalist />
+    {:else if icon === "ideaflow"}
+      <Ideaflow />
+    {:else if icon === "heptabase"}
+      <Heptabase />
+    {:else if icon === "mymind"}
+      <Mymind />
+    {:else if icon === "anytype"}
+      <Anytype />
+    {:else if icon === "liner"}
+      <Liner />
+    {:else if icon === "lazy"}
+      <Lazy />
+    {:else if icon === "audiopen"}
+      <Audiopen />
+    {:else if icon === "logseq"}
+      <Logseq />
+    {:else if icon === "tana"}
+      <Tana />
+    {:else if icon === "scrintal"}
+      <Scrintal />
+    {:else if icon === "pocket"}
+      <Pocket />
+    {:else if icon === "instapaper"}
+      <Instapaper />
+    {:else if icon === "raindrop"}
+      <!-- <Raindrop /> -->
+    {:else if icon === "thebrain"}
+      <TheBrain />
+    {:else if icon === "viennascribe"}
+      <ViennaScribe />
+    {:else if icon === "milanote"}
+      <MilaNote />
+    {:else if icon === "noted"}
+      <Noted />
+    {:else}
+      <svelte:component this={selected} />
+    {/if}
+  </svg>
+{/if}

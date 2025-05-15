@@ -63,14 +63,21 @@ export type IFeatureWheelSpoke = {
   isHideForComparer?: boolean;
 };
 
-export type IFeatureWheelContemporary = {
+export type IContemporaryBase = {
   label: Contemporary;
+  /**
+   * Additional way to specify the icon if the label.toLowerCase() is not
+   * the same as the icon name - in cases like label having spaces or special characters
+   */
+  icon?: string;
+};
+
+export type IFeatureWheelContemporary = IContemporaryBase & {
   value: number;
   notes?: string;
 };
 
-export type IContemporary = {
-  label: Contemporary;
+export type IContemporary = IContemporaryBase & {
   url: string;
   /**
    * Price in USD per month billed annually

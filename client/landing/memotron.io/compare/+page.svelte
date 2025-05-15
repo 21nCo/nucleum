@@ -9,7 +9,7 @@
 
 <FeatureWheelComparer
   product="memotron"
-  title="Memotron comparision wheel"
+  title="Memotron wholesome wheel"
   {features}
   {categories}
   {contemporaries}

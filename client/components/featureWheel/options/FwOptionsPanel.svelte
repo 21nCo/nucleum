@@ -50,7 +50,7 @@
 
 <div
   class={cn(
-    "flex  gap-6 items-center justify-between bg-bgs1 rounded-md border border-brs3 p-4",
+    "flex  gap-6 items-center justify-between bg-bgs2 rounded-md border border-brs3 p-4",
     {
       "flex-row w-full h-fit": isHorizontal,
       "flex-col min-w-fit h-full": !isHorizontal
@@ -80,7 +80,7 @@
               options: contemporaries.map((item) => ({
                 label: properCase(item.label),
                 value: item.label,
-                icon: item.label
+                icon: item.icon ?? item.label.toLowerCase()
               })),
               isUseExternalLogoForIcon: true,
               onSelect: (selected) => {
@@ -96,7 +96,12 @@
           <div class="flex items-center gap-2 h-6">
             {#if selectedCompare && selectedCompare.length > 0}
               {#each selectedCompare as item}
-                <ExternalLogo provider={item} />
+                {@const contemporary = contemporaries.find(
+                  (c) => c.label === item
+                )}
+                {#if contemporary}
+                  <ExternalLogo provider={contemporary} />
+                {/if}
                 {#if selectedCompare.length === 1}
                   <span>
                     {properCase(item)}

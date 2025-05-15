@@ -9,7 +9,7 @@
   export let group: IFeatureWheelContemporary[] = [];
   export let contemporary: IFeatureWheelContemporary | undefined = undefined;
   export let size: Size = Size.md;
-  $: width = size === Size.sm ? 12 : size === Size.md ? 16 : 20;
+  $: width = size === Size.sm ? 13 : size === Size.md ? 16 : 20;
   let isHovering = false;
   let isClicked = false;
   const dev_isEnableExpandForGroup = false;
@@ -46,7 +46,7 @@
       {group.length}
     </button>
   {:else if contemporary}
-    <Contemporary {width} label={contemporary.label} />
+    <Contemporary {width} {contemporary} />
   {/if}
 </foreignObject>
 
@@ -58,7 +58,7 @@
   >
     <div class="flex gap-2 bg-bgs1 rounded-md px-3 py-2">
       {#each group as item}
-        <Contemporary {width} label={item.label} />
+        <Contemporary {width} contemporary={item} />
       {/each}
     </div>
   </foreignObject>

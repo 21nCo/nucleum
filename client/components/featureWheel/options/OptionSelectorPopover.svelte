@@ -55,7 +55,9 @@
       class="w-full p-2 rounded-md border border-brs3 bg-bgs1 focus:outline-none focus:border-aps1"
     />
   </div>
-  <div class="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-3">
+  <div
+    class="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-3 overflow-y-auto max-h-[30rem]"
+  >
     {#each filteredOptions as option}
       <button
         class={cn(
@@ -75,11 +77,15 @@
         }}
       >
         {#if isUseExternalLogoForIcon && typeof option.icon === "string"}
-          <ExternalLogo provider={option.icon} />
+          <ExternalLogo
+            provider={option.icon}
+            width={32}
+            class="border border-brs3 rounded-full"
+          />
         {:else if typeof option.icon === "string"}
           <SvgIcon icon={option.icon} />
         {/if}
-        <span>{option.label ?? option.value}</span>
+        <span class="text-b2 text-fgs2">{option.label ?? option.value}</span>
       </button>
     {/each}
   </div>

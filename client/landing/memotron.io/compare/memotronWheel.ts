@@ -22,13 +22,13 @@ enum MemotronFeatureCategory {
 }
 
 export const categories: IFwCategory[] = [
-  { label: MemotronFeatureCategory.Capture, color: "#45B7D1" },
-  { label: MemotronFeatureCategory.Content, color: "#4ECDC4" },
-  { label: MemotronFeatureCategory.Clipping, color: "#96CEB4" },
-  { label: MemotronFeatureCategory.Curation, color: "#FFEEAD" },
-  { label: MemotronFeatureCategory.Taco, color: "#9B59B6" },
-  { label: MemotronFeatureCategory.Views, color: "#D4A5A5" },
-  { label: MemotronFeatureCategory.App, color: "#e2af4a" }
+  { label: MemotronFeatureCategory.Capture, color: "#2A8CAB" },
+  { label: MemotronFeatureCategory.Content, color: "#1E9B92" },
+  { label: MemotronFeatureCategory.Clipping, color: "#4E9973" },
+  { label: MemotronFeatureCategory.Curation, color: "#D4A534" },
+  { label: MemotronFeatureCategory.Taco, color: "#7E49A1" },
+  { label: MemotronFeatureCategory.Views, color: "#AA6A6A" },
+  { label: MemotronFeatureCategory.App, color: "#C87F1E" }
   // { label: MemotronFeatureCategory.Retrospection, color: "#4287f5" }
 ];
 
@@ -440,6 +440,21 @@ export const features: IFwFeature[] = [
     ]
   },
   {
+    label: "Tweet clipping",
+    category: MemotronFeatureCategory.Clipping,
+    progress: 0.75,
+    description: "Clipping tweets",
+    contemporaries: []
+  },
+  {
+    label: "Other socials clipping",
+    category: MemotronFeatureCategory.Clipping,
+    progress: 0,
+    isPlanned: true,
+    description: "Clipping other social posts like Linkedin, Reddit, etc.",
+    contemporaries: []
+  },
+  {
     label: "Clip from mobile",
     category: MemotronFeatureCategory.Clipping,
     progress: 0.1,
@@ -456,8 +471,8 @@ export const features: IFwFeature[] = [
       "Import and organization of Kindle highlights and notes with book metadata",
     contemporaries: [
       {
-        label: Contemporary.Remnote,
-        value: 0.6
+        label: Contemporary.Readwise,
+        value: 0.8
       },
       {
         label: Contemporary.Notion,
@@ -691,6 +706,14 @@ export const features: IFwFeature[] = [
       {
         label: Contemporary.AudioPen,
         value: 0.8
+      },
+      {
+        label: Contemporary.ViennaScribe,
+        value: 0.5
+      },
+      {
+        label: Contemporary.Noted,
+        value: 0.7
       }
     ]
   },
@@ -885,411 +908,6 @@ export const features: IFwFeature[] = [
   }
 ];
 
-/**
- * @deprecated - use {@link features} and {@link categories} instead
- */
-export const memotronWheel: IFeatureWheelGroup[] = [
-  {
-    label: "App",
-    color: "",
-    spokes: [
-      { label: "Openess", contemporaries: [], progress: 1, isProminent: true },
-      {
-        label: "Intuitiveness",
-        contemporaries: [
-          {
-            label: Contemporary.Notion,
-            value: 0.5
-          },
-          {
-            label: Contemporary.Capacities,
-            value: 0.5
-          },
-          {
-            label: Contemporary.Heptabase,
-            value: 0.5
-          },
-          {
-            label: Contemporary.Tana,
-            value: 0.5
-          },
-          {
-            label: Contemporary.Anytype,
-            value: 0.5
-          },
-          {
-            label: Contemporary.AppleNotes,
-            value: 0.7
-          }
-        ],
-        progress: 0.4
-      },
-      { label: "Accessibility", contemporaries: [], progress: 0.5 },
-      { label: "Interoperability", contemporaries: [], progress: 0.1 },
-      { label: "Offlinability", contemporaries: [], progress: 0.5 }
-    ]
-  },
-  {
-    label: "Content",
-    color: "",
-    spokes: [
-      {
-        label: "Markdown",
-        contemporaries: [
-          {
-            label: Contemporary.Obsidian,
-            value: 0.8
-          },
-          {
-            label: Contemporary.Notion,
-            value: 0.8
-          },
-          {
-            label: Contemporary.Capacities,
-            value: 0.8
-          },
-          {
-            label: Contemporary.Heptabase,
-            value: 0.8
-          },
-          {
-            label: Contemporary.Roam,
-            value: 0.8
-          },
-          {
-            label: Contemporary.Tana,
-            value: 0.8
-          },
-          {
-            label: Contemporary.Anytype,
-            value: 0.8
-          },
-          {
-            label: Contemporary.Remnote,
-            value: 0.8
-          }
-        ],
-        progress: 0.35,
-        isProminent: true
-      },
-      {
-        label: "Pdf",
-        contemporaries: [
-          {
-            label: Contemporary.Remnote,
-            value: 0.7
-          }
-        ],
-        progress: 0.8
-      },
-      {
-        label: "Audio",
-        contemporaries: [],
-        progress: 0.7
-      },
-      {
-        label: "Advanced Md",
-        contemporaries: [
-          {
-            label: Contemporary.Notion,
-            value: 0.7
-          },
-          {
-            label: Contemporary.Capacities,
-            value: 0.7
-          }
-        ],
-        isNovel: true,
-        progress: 0.3
-      },
-      {
-        label: "Traces",
-        contemporaries: [
-          {
-            label: Contemporary.Notion,
-            value: 0.7
-          },
-          {
-            label: Contemporary.Capacities,
-            value: 0.7
-          }
-        ],
-        progress: 0
-      },
-      {
-        label: "Metadata",
-        contemporaries: [
-          {
-            label: Contemporary.Notion,
-            value: 0.4
-          },
-          {
-            label: Contemporary.Capacities,
-            value: 0.4
-          }
-        ],
-        progress: 0
-      }
-    ]
-  },
-  {
-    label: "Capture",
-    color: "#ae83d4",
-    spokes: [
-      { label: "Seamless capture", contemporaries: [], progress: 0.4 },
-      {
-        label: "Type capture",
-        contemporaries: [],
-        isNovel: true,
-        progress: 0.8
-      },
-      { label: "Camera capture", contemporaries: [], progress: 0 },
-      {
-        label: "Outlining",
-        contemporaries: [
-          {
-            label: Contemporary.Remnote,
-            value: 0.7
-          },
-          {
-            label: Contemporary.Dynalist,
-            value: 0.5
-          }
-        ],
-        progress: 0
-      },
-      { label: "Sketch capture", contemporaries: [], progress: 0 },
-      {
-        label: "Adv. audio capture",
-        contemporaries: [],
-        progress: 0,
-        isNovel: true
-      }
-    ]
-  },
-  {
-    label: "Clipping",
-    color: "#e66a97",
-    spokes: [
-      { label: "Clip from web", contemporaries: [], progress: 0.7 },
-      { label: "Youtube clipping", contemporaries: [], progress: 0.7 },
-      { label: "Clip from mobile", contemporaries: [], progress: 0.1 },
-      {
-        label: "Kindle highlights",
-        contemporaries: [
-          {
-            label: Contemporary.Remnote,
-            value: 0.6
-          },
-          {
-            label: Contemporary.Notion,
-            value: 0.3
-          }
-        ],
-        progress: 0.8
-      },
-      {
-        label: "Clip from desktop",
-        contemporaries: [],
-        progress: 0
-      },
-      { label: "Audible highlights", contemporaries: [], progress: 0 },
-      { label: "Scribd highlights", contemporaries: [], progress: 0 },
-      { label: "Spotify highlights", contemporaries: [], progress: 0 }
-    ]
-  },
-  {
-    label: "Curation",
-    color: "#c94",
-    spokes: [
-      {
-        label: "Nodularity",
-        contemporaries: [],
-        progress: 0.8,
-        isNovel: true
-      },
-      {
-        label: "Forelinking",
-        contemporaries: [],
-        progress: 0.7,
-        isNovel: true
-      },
-      {
-        label: "Typed",
-        contemporaries: [
-          {
-            label: Contemporary.Capacities,
-            value: 0.7
-          },
-          {
-            label: Contemporary.Heptabase,
-            value: 0.7
-          },
-          {
-            label: Contemporary.Tana,
-            value: 0.7
-          },
-          {
-            label: Contemporary.Anytype,
-            value: 0.7
-          },
-          {
-            label: Contemporary.Notion,
-            value: 0.5
-          }
-        ],
-        progress: 0.5
-      },
-      {
-        label: "Backlinking",
-        contemporaries: [
-          {
-            label: Contemporary.Obsidian,
-            value: 0.8
-          },
-          {
-            label: Contemporary.Notion,
-            value: 0.8
-          },
-          {
-            label: Contemporary.Capacities,
-            value: 0.8
-          },
-          {
-            label: Contemporary.Heptabase,
-            value: 0.8
-          },
-          {
-            label: Contemporary.Roam,
-            value: 0.8
-          },
-          {
-            label: Contemporary.Tana,
-            value: 0.8
-          },
-          {
-            label: Contemporary.Anytype,
-            value: 0.8
-          },
-          {
-            label: Contemporary.Remnote,
-            value: 0.8
-          }
-        ],
-        progress: 0.7
-      },
-      {
-        label: "Query",
-        contemporaries: [],
-        progress: 0
-      },
-      {
-        label: "Flash cards",
-        contemporaries: [],
-        progress: 0
-      }
-    ]
-  },
-  {
-    label: "Views",
-    color: "#c9409a",
-    spokes: [
-      { label: "Board", contemporaries: [], progress: 0.6 },
-      { label: "Bird", contemporaries: [], isNovel: true, progress: 0.1 },
-      {
-        label: "Combination",
-        contemporaries: [
-          {
-            label: Contemporary.ClickupDocs,
-            value: 0.4
-          },
-          {
-            label: Contemporary.Gitbook,
-            value: 0.6
-          }
-        ],
-        progress: 0.15
-      },
-      {
-        label: "Table",
-        contemporaries: [
-          {
-            label: Contemporary.Notion,
-            value: 0.7
-          }
-        ],
-        progress: 0.15
-      },
-      {
-        label: "Calendar",
-        contemporaries: [],
-        isNovel: true,
-        progress: 0.3
-      },
-      {
-        label: "Space",
-        contemporaries: [],
-        isNovel: true,
-        progress: 0
-      }
-    ]
-  },
-  {
-    label: "TACO",
-    color: "#32a852",
-    spokes: [
-      { label: "NL Search", contemporaries: [], isNovel: true, progress: 0 },
-      {
-        label: "Forelink suggestions",
-        contemporaries: [],
-        isNovel: true,
-        progress: 0
-      },
-      {
-        label: "Voice interaction",
-        contemporaries: [],
-        isNovel: true,
-        progress: 0
-      },
-      {
-        label: "Auto summarizer",
-        contemporaries: [],
-        isNovel: true,
-        progress: 0
-      },
-      {
-        label: "Serendipity",
-        contemporaries: [
-          {
-            label: Contemporary.Ideaflow,
-            value: 0.5
-          }
-        ],
-        progress: 0
-      },
-      {
-        label: "Text editing AI",
-        contemporaries: [],
-        progress: 0
-      }
-    ]
-  },
-  {
-    label: "Journal",
-    color: "#4287f5",
-    spokes: [
-      { label: "Calendar", contemporaries: [], progress: 0.4, isNovel: true },
-      { label: "Rewind", contemporaries: [], progress: 0, isNovel: true },
-      {
-        label: "Time machine",
-        contemporaries: [],
-        progress: 0,
-        isNovel: true
-      }
-    ]
-  }
-];
-
 export const contemporaries: IContemporary[] = [
   {
     label: Contemporary.Obsidian,
@@ -1331,16 +949,12 @@ export const contemporaries: IContemporary[] = [
     url: "https://capacities.app"
   },
   {
+    label: Contemporary.Evernote,
+    url: ""
+  },
+  {
     label: Contemporary.Roam,
     url: "https://roamresearch.com"
-  },
-  {
-    label: Contemporary.Heptabase,
-    url: "https://heptabase.com"
-  },
-  {
-    label: Contemporary.Tana,
-    url: "https://tana.ai"
   },
   {
     label: Contemporary.Anytype,
@@ -1351,16 +965,49 @@ export const contemporaries: IContemporary[] = [
     label: Contemporary.Remnote,
     url: "https://remnote.io"
   },
-  {
-    label: Contemporary.Dynalist,
-    url: "https://dynalist.io"
-  },
-  {
-    label: Contemporary.Ideaflow,
-    url: "https://ideaflow.io"
-  },
+
   {
     label: Contemporary.Logseq,
+    url: ""
+  },
+  {
+    label: Contemporary.Heptabase,
+    url: "https://heptabase.com"
+  },
+  {
+    label: Contemporary.Craft,
+    url: ""
+  },
+  {
+    label: Contemporary.Tana,
+    url: "https://tana.ai"
+  },
+  {
+    label: Contemporary.Affine,
+    url: ""
+  },
+  {
+    label: Contemporary.TheBrain,
+    url: ""
+  },
+  {
+    label: Contemporary.Supernotes,
+    url: ""
+  },
+  {
+    label: Contemporary.Walling,
+    url: ""
+  },
+  {
+    label: Contemporary.Mem,
+    url: ""
+  },
+  {
+    label: Contemporary.XMind,
+    url: ""
+  },
+  {
+    label: Contemporary.Readwise,
     url: ""
   },
   {
@@ -1385,6 +1032,63 @@ export const contemporaries: IContemporary[] = [
   },
   {
     label: Contemporary.AudioPen,
+    url: ""
+  },
+  {
+    label: Contemporary.ViennaScribe,
+    icon: "viennascribe",
+    url: ""
+  },
+  {
+    label: Contemporary.MilaNote,
+    url: ""
+  },
+  {
+    label: Contemporary.Noted,
+    url: ""
+  },
+  {
+    label: Contemporary.Bear,
+    url: ""
+  },
+  {
+    label: Contemporary.Scrivener,
+    url: ""
+  },
+  {
+    label: Contemporary.Ulysses,
+    url: ""
+  },
+  {
+    label: Contemporary.Drafts,
+    url: ""
+  },
+  {
+    label: Contemporary.AppFlowy,
+    url: ""
+  },
+  {
+    label: Contemporary.Scrintal,
+    url: ""
+  },
+  {
+    label: Contemporary.Scapple,
+    url: ""
+  },
+  {
+    label: Contemporary.Scriv,
+    url: ""
+  },
+  {
+    label: Contemporary.Dynalist,
+    url: "https://dynalist.io"
+  },
+  {
+    label: Contemporary.Ideaflow,
+    url: "https://ideaflow.io"
+  },
+  {
+    label: Contemporary.Fabric,
     url: ""
   }
 ];

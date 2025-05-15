@@ -5,7 +5,7 @@
   export let content: string | undefined = undefined;
 </script>
 
-<div class="flex flex-col gap-2 p-4 bg-bgs2 rounded-md">
+<div class="flex flex-col gap-2 p-4 bg-bgs1 rounded-md">
   <div class="text-h5 font-medium">{title}</div>
   <slot>
     {#if content}

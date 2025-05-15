@@ -114,10 +114,7 @@
           </span>
         </th>
         {#each filteredContemporaries as contemporary}
-          <TableHeader
-            label={properCase(contemporary.label)}
-            provider={contemporary.label.toLowerCase()}
-          />
+          <TableHeader {contemporary} />
         {/each}
       </tr>
     </thead>

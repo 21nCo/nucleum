@@ -145,9 +145,9 @@
           cy="0"
           r={radius}
           class={categoryColoringStyle != "bg"
-            ? "stroke-fgs2 fill-none"
+            ? "stroke-fgs3 fill-none"
             : "stroke-fgs3"}
-          stroke-width="0.5"
+          stroke-width="0.3"
           stroke-dasharray={mode === FeatureWheelMode.COMPARER ? "3 3" : ""}
           fill={categoryColoringStyle === "bg" && groups.length === 1
             ? group.color

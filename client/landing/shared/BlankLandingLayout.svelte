@@ -64,7 +64,7 @@
   }
 </script>
 
-<LandingBaseLayer {metadata} bgColor="bg-bgs2">
+<LandingBaseLayer {metadata} bgColor={isComparePage ? "bg-bgs1" : "bg-bgs2"}>
   <!-- {#if import.meta.env.DEV}
   <div class="fixed bottom-0 right-0 bg-bgs1 text-fgs1 p-2 text-xs z-50">
     Theme: {$appearance.theme}<br />

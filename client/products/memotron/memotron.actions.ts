@@ -7,7 +7,6 @@ import Journal from "$lib/client/products/memotron/journal/Journal.svelte";
 import JournalModalViewer from "$lib/client/products/memotron/journal/JournalModalViewer.svelte";
 import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
 import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
-import ProductFeatureWheel from "$lib/client/components/blank/ProductFeatureWheel.svelte";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import MemotronLibrary from "$lib/client/products/memotron/library/MemotronLibrary.svelte";
 import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
@@ -30,6 +29,7 @@ import MemotronDataSettings from "./settings/MemotronDataSettings.svelte";
 import { Embed } from "$lib/client/types/context.type";
 import ResourceBrowser from "$lib/client/components/library/resourceBrowser/ResourceBrowser.svelte";
 import { MemotronEvent } from "./memotron.type";
+import FeatureWheel from "$lib/client/components/featureWheel/FeatureWheel.svelte";
 
 export const memotronActions: IAction[] = [
   {
@@ -211,7 +211,7 @@ export const memotronActions: IAction[] = [
     type: ActionType.PAGE,
     isMenuHidden: true,
     isMeta: true,
-    component: ProductFeatureWheel,
+    component: FeatureWheel,
     modalParams: {
       layout: {
         size: Size.full,

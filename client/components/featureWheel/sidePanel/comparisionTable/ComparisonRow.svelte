@@ -14,7 +14,7 @@
 
 <tr>
   <td class="border border-bgs3 p-2 flex items-center gap-2">
-    <ExternalLogo provider={contemporary.label.toLowerCase()} />
+    <ExternalLogo provider={contemporary} />
     {properCase(contemporary.label)}</td
   >
   {#if additionalProperties}
