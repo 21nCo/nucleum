@@ -237,7 +237,7 @@
       })}
     >
       {#if bottomMessage}
-        <span class="text-b3 text-fgs3">
+        <span class="text-b3 text-fgs3 text-left">
           {@html renderMdAsHtml(bottomMessage)}
         </span>
       {/if}

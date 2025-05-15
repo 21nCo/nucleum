@@ -57,7 +57,7 @@ export const leftThresholdCrossedStore = writable("");
 export const isTouchDevice = writable(false);
 
 export const appStoreShuffleEmojis = writable(shuffleEmojis);
-export const intercomId = import.meta.env?.VITE_INTERCOM_ID ?? "esh1m4xq";
+export const intercomId = import.meta.env?.VITE_INTERCOM_ID ?? "t4qp4qlr";
 export const selectedTimePeriod = writable<Date>(new Date());
 
 /**
@@ -433,7 +433,7 @@ function initAppStore(seed: IAppStore) {
     }
     if (config.isRedirectToClient) {
       const clientRedirect = ctx.isEmbed
-        ? import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host
+        ? (import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host)
         : window.location.origin;
       redirectUri = clientRedirect + "/oauth/" + config.oauth_slug;
     } else {

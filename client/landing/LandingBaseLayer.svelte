@@ -8,6 +8,7 @@
   import type { IMetadata } from "../layout/metadata.type";
   import context from "../stores/context.store";
   import { detectSystemOS, detectTouchDevice } from "../utils/browser.utils";
+  import PosthogTelemetry from "../layout/layers/analytics/PosthogTelemetry.svelte";
   export let metadata: IMetadata;
   export let bgColor: string = "bg-bgs1";
   setContext();
@@ -32,6 +33,7 @@
 >
   <DynamicMetadataLayer {metadata} />
   <MetadataLayer />
+  <PosthogTelemetry />
   <!-- <AnalyticsLayer isLanding={true} /> -->
   <ThemeLayer>
     <slot />

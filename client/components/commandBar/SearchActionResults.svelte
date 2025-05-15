@@ -8,9 +8,10 @@
   import type { IResource } from "../flux/resourceStores/resource.type";
   import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";
   import { flux } from "$lib/client/components/flux/flux";
-  import GoalSearchThumbnail from "$lib/client/products/pointron/goals/thumbnails/GoalSearchThumbnail.svelte";
   import { debouncer } from "$lib/client/utils/utils";
   import { logger } from "../debug/logger.client";
+  import BreadcrumbMini from "$lib/client/elements/breadcrumb/BreadcrumbMini.svelte";
+
   const dispatch = createEventDispatcher();
   export let action: IAction;
   export let componentParams: any = undefined;
@@ -93,7 +94,18 @@
           item={result}
         />
       {:else}
-        <GoalSearchThumbnail item={result} />
+        <div class="flex flex-col w-full items-start">
+          {#if result.parent?.hierarchy}
+            <BreadcrumbMini
+              hierarchy={result.parent.hierarchy.map((x) => x.label)}
+            />
+          {/if}
+          <TextWithHoverTooltip
+            text={result.label}
+            class="text-left truncate w-full max-w-full"
+          />
+        </div>
+
         <!-- <span class="flex min-w-0 flex-1">
       <TextWithHoverTooltip text={result.label} class="truncate" />
     </span> -->

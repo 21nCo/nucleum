@@ -11,6 +11,9 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { formatDate } from "$lib/client/utils/time.utils";
   import { Size } from "$lib/client/types/size.enum";
+  import { Action } from "$lib/client/types/action.enum";
+  import account from "$lib/client/stores/account.store";
+  import { PlanType } from "../subscription/userPlan.type";
   let pageAction: IAction | null = null;
   let updatedDate: string | undefined = resolveUpdatedDate();
   $: config = $appStore?.appData?.help;
@@ -63,7 +66,7 @@
         </span>
       </div>
       <div class="flex flex-col gap-12 w-full flex-grow overflow-auto py-6">
-        {#each config as section}
+        {#each config as section, sectionIndex}
           {#if !section.isInactive}
             <div class="flex flex-col gap-2 items-start">
               {#if section.section != "main"}
@@ -73,6 +76,16 @@
                 </div>
               {/if}
               <div class="flex flex-wrap gap-3">
+                {#if sectionIndex === 0 && $account.plan?.plan === PlanType.NUCLEUS}
+                  <SettingThumbnail
+                    orientation={Orientation.Vertical}
+                    action={"chat"}
+                    width="w-40"
+                    on:click={() => {
+                      runAction("chat");
+                    }}
+                  />
+                {/if}
                 {#if section.children}
                   {#each section.children as item}
                     <SettingThumbnail

@@ -3,6 +3,9 @@
   import posthog from "posthog-js";
   onMount(() => {
     initializePosthog(import.meta.env.VITE_POSTHOG_PROJECT_KEY);
+    return () => {
+      posthog.reset();
+    };
   });
 
   function initializePosthog(projectKey: string) {

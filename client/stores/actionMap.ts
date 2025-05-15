@@ -196,7 +196,7 @@ export const globalActions: IAction[] = [
     label: "Chat with us",
     icon: "ph:chats-light",
     type: ActionType.FUNCTION,
-    isInactive: true,
+    isMeta: true,
     fn: async () => {
       modalEvent.hide(Action.HELP);
       modalEvent.hide(Action.SETTINGS);

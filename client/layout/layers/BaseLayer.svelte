@@ -26,7 +26,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import appearance from "$lib/client/stores/appearance.store";
   import MetadataLayer from "./MetadataLayer.svelte";
-  import EmbedTelemetry from "./analytics/EmbedTelemetry.svelte";
+  import PosthogTelemetry from "./analytics/PosthogTelemetry.svelte";
   import productData from "$lib/product.json";
   import { getSettingsAsModal } from "../settingsActionMap";
   import { globalActions } from "$lib/client/stores/actionMap";
@@ -197,6 +197,33 @@
       await account.signOut();
     }
   }
+
+  function handleUnhandledRejection(event: any) {
+    logger.error({
+      at: "GlobalPromiseErrorHandler",
+      error: event.reason,
+      message: event.reason?.message || "Unhandled Promise Rejection"
+    });
+    event.preventDefault();
+  }
+
+  function setupGlobalErrorHandler() {
+    // For synchronous errors
+    window.onerror = (message, source, lineno, colno, error) => {
+      logger.error({
+        at: "GlobalErrorHandler",
+        error: error,
+        message,
+        source,
+        lineno,
+        colno
+      });
+
+      // Return true to prevent the error from bubbling up and crashing the app
+      return true;
+    };
+  }
+
   function handleCustomNavigation(event: any) {
     logger.log({
       at: "handleCustomNavigation",
@@ -273,6 +300,8 @@
   }
 
   function addWindowEventListeners() {
+    // setupGlobalErrorHandler();
+    // window.addEventListener("unhandledrejection", handleUnhandledRejection);
     window.addEventListener(
       GlobalEvent.CUSTOM_NAVIGATION,
       handleCustomNavigation
@@ -301,6 +330,7 @@
     // }
   }
   function removeWindowEventListeners() {
+    // window.removeEventListener("unhandledrejection", handleUnhandledRejection);
     window.removeEventListener(
       GlobalEvent.CUSTOM_NAVIGATION,
       handleCustomNavigation
@@ -351,7 +381,7 @@
     ></span>
   </ThemeLayer>
 </div>
-<EmbedTelemetry />
+<PosthogTelemetry />
 <svelte:document on:visibilitychange={visibilityChangeListener} />
 
 <style>

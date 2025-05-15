@@ -8,7 +8,7 @@
   export let isCurrentlyFocusing: boolean = false;
 </script>
 
-<div class="flex items-center gap-1.5">
+<div class="flex items-center gap-1.5 userdata">
   {#if item.status === GoalStatus.COMPLETED}
     <Icon icon="ph:check-circle-fill" class="text-ccs1" />
   {:else}

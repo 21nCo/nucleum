@@ -49,6 +49,9 @@ class Logger {
   }
   error(message: any) {
     this._log(message, LogType.ERROR);
+    throw new Error("Error in logger" + JSON.stringify(message), {
+      cause: message
+    });
   }
   debug(message: any) {
     this._console(message, LogType.DEBUG);
