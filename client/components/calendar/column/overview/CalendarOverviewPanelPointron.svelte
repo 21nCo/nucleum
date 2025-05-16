@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { resolveTimePeriodFilterForDay } from "$lib/client/elements/datetime/datetime.utils";
   import OverviewCardsPulse from "$lib/client/elements/feedback/animations/DashboardPulse/OverviewCardsPulse.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import MetricItem from "$lib/client/products/pointron/analytics/cards/metrics/MetricItem.svelte";
@@ -12,6 +11,7 @@
   import { onMount } from "svelte";
   import OnThisDayPanel from "./OnThisDayPanel.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
 
   export let date: Date;
   export let scale: TimeScale = TimeScale.DAYS;
@@ -45,7 +45,7 @@
       sessionLogStore.selectMany(
         {
           filters: {
-            startUnix: resolveTimePeriodFilterForDay(date)
+            startUnix: tzStore.resolveTimePeriodFilterForDay(date)
           }
         },
         {
@@ -55,7 +55,7 @@
       sessionLogStore.selectMany(
         {
           filters: {
-            startUnix: resolveTimePeriodFilterForDay(
+            startUnix: tzStore.resolveTimePeriodFilterForDay(
               new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1)
             )
           }

@@ -20,11 +20,10 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { Resource } from "../../flux/resourceStores/resource.enum";
   import { SearchStore } from "../../record/record.store";
-  import {
-    resolveTimePeriodFilterForMonth,
-    resolveTimePeriodFilterForYear
-  } from "$lib/client/elements/datetime/datetime.utils";
   import { compareObjects } from "$lib/shared/utils/obj.utils";
+  import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { Product } from "$lib/client/types/product.type";
   export let panel: CalendarLayout = CalendarLayout.Classic;
 
   let selectedDate = new Date();
@@ -85,12 +84,13 @@
 
   async function refreshIndicatorData(date: Date) {
     //TODO - resources for indicatores from settings
+    if ($appStore.product !== Product.POINTRON) return;
     const resourcesForIndicators = [Resource.task, Resource.session];
     const dateFilter =
       selectedView === TimeScaleUnit.MONTH
-        ? resolveTimePeriodFilterForMonth(date)
+        ? tzStore.resolveTimePeriodFilterForMonth(date)
         : selectedView === TimeScaleUnit.YEAR
-          ? resolveTimePeriodFilterForYear(date)
+          ? tzStore.resolveTimePeriodFilterForYear(date)
           : {};
     if (compareObjects(currentDateFilterForIndicatorData, dateFilter)) {
       return;

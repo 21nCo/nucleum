@@ -13,7 +13,7 @@
     CalendarColumnLayout,
     type CalendarTimelineEntry
   } from "../../calendar.type";
-  import { resolveTimePeriodFilterForDay } from "$lib/client/elements/datetime/datetime.utils";
+  import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
   import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import type { ISessionThumb } from "$lib/client/products/pointron/logs/log.type";
@@ -82,7 +82,7 @@
   }
 
   async function refreshFocusEntries() {
-    const dayFilter = resolveTimePeriodFilterForDay(date);
+    const dayFilter = tzStore.resolveTimePeriodFilterForDay(date);
     const result = await sessionStore.selectMany(
       {
         filters: {

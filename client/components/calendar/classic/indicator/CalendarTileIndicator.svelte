@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import type { ITaskThumb } from "$lib/client/components/tasks/task.type";
-  import { resolveTimePeriodFilterForDay } from "$lib/client/elements/datetime/datetime.utils";
+  import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
   import type {
     DaySummary,
     ISessionLogThumb,
@@ -25,7 +25,7 @@
     splits: { focus: number; brek: number };
   })[] = [];
   let summary: DaySummary = { focus: 0, break: 0 };
-  $: dayFilter = resolveTimePeriodFilterForDay(date);
+  $: dayFilter = tzStore.resolveTimePeriodFilterForDay(date);
   onMount(() => {
     resolveData();
   });

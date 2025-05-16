@@ -15,7 +15,7 @@
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { searcheableResources } from "$local/local";
   import { Product } from "$lib/client/types/product.type";
-  import { resolveTimePeriodFilterForDay } from "$lib/client/elements/datetime/datetime.utils";
+  import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
 
   export let date: Date;
   let isLoading: boolean = false;
@@ -66,7 +66,7 @@
         $appStore.product === Product.POINTRON ||
         $appStore.product === Product.NUCLEUS
       ) {
-        const dayFilter = resolveTimePeriodFilterForDay(date);
+        const dayFilter = tzStore.resolveTimePeriodFilterForDay(date);
         const focusSessionsResult = await new SearchStore(
           Resource.session
         ).select({

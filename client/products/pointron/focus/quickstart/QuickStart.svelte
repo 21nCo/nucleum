@@ -70,8 +70,7 @@
       searchQuery: "",
       isIncludeSubItems: true
     });
-    const focusData = await focusAggregates.aggregateFocusForADay({
-      day: new Date(),
+    const focusData = await focusAggregates.aggregateFocusForCurrentDay({
       goalIds: result.map((x: any) => x.id)
     });
     if (isValidArray(result)) {

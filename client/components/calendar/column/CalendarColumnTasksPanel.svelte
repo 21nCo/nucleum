@@ -20,7 +20,7 @@
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";
   import { LoadingAnimationType } from "$lib/client/types/feedback.type";
-  import { resolveTimePeriodFilterForDay } from "$lib/client/elements/datetime/datetime.utils";
+  import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { shortcutsConfig } from "../../shortcuts/shortcuts.config";
   import ComponentShortcutListener from "../../shortcuts/ComponentShortcutListener.svelte";
@@ -41,7 +41,7 @@
   async function loadTasks() {
     tasks = await new SearchStore(Resource.task).select({
       filters: {
-        dateUnix: resolveTimePeriodFilterForDay(date)
+        dateUnix: tzStore.resolveTimePeriodFilterForDay(date)
       }
     });
   }

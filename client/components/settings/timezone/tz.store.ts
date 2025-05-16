@@ -1,12 +1,89 @@
 import { ResourceStore } from "../../flux/resourceStores/resource.store";
 import { Resource } from "../../flux/resourceStores/resource.enum";
 import type { ITimezone } from "./tz.type";
+import { TimeScale, type TimePeriod } from "$lib/client/types/time.type";
+import { determineTimePeriodv2 } from "$lib/client/utils/time.utils";
+import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
 
 class TimezoneStore extends ResourceStore<ITimezone> {
   constructor() {
     super(Resource.tz, {
       isInMemory: true
     });
+  }
+
+  resolveTimePeriodFilterForDay(day: Date) {
+    const localDay = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+    const end = new Date(localDay.getTime() + 24 * 60 * 60 * 1000);
+    return this.resolveCorrectedTimePeriodFilter({
+      begin: resolveUnixTimestamp(localDay),
+      end: resolveUnixTimestamp(end)
+    });
+  }
+
+  resolveTimePeriodFilterForMonth(day: Date) {
+    const localDay = new Date(day.getFullYear(), day.getMonth(), 1);
+    const end = new Date(localDay.getFullYear(), localDay.getMonth() + 1, 0);
+    return this.resolveCorrectedTimePeriodFilter({
+      begin: resolveUnixTimestamp(localDay),
+      end: resolveUnixTimestamp(end)
+    });
+  }
+
+  resolveTimePeriodFilterForYear(day: Date) {
+    const localDay = new Date(day.getFullYear(), 0, 1);
+    const end = new Date(day.getFullYear(), 11, 31);
+    return this.resolveCorrectedTimePeriodFilter({
+      begin: resolveUnixTimestamp(localDay),
+      end: resolveUnixTimestamp(end)
+    });
+  }
+
+  private resolveCorrectedTimePeriodFilter(period: {
+    begin: number;
+    end: number;
+  }) {
+    const corrected = this.resolveTimePeriodCorrectedByTz(period);
+    return {
+      greaterThanOrEqual: corrected.begin,
+      lessThanOrEqual: corrected.end
+    };
+  }
+  /**
+   * Resolves the timezone corrected time period
+   * @param period - The period to resolve
+   * @param params - The parameters
+   * @returns The timezone corrected time period
+   */
+  resolveTimePeriodCorrectedByTz(
+    period: { begin: number; end: number } | TimePeriod,
+    params?: {
+      tzRecords?: ITimezone[];
+    }
+  ) {
+    let begin = 0;
+    let end = 0;
+    let resolvedTimePeriod: any;
+    if ("value" in period) {
+      resolvedTimePeriod = determineTimePeriodv2(period);
+      begin = resolveUnixTimestamp(resolvedTimePeriod.begin);
+      end = resolveUnixTimestamp(resolvedTimePeriod.end);
+    } else {
+      begin = period.begin;
+      end = period.end;
+    }
+    const correctedBegin = this.resolveTimezoneCorrectedTimestamp(
+      begin,
+      params
+    );
+    const correctedEnd = this.resolveTimezoneCorrectedTimestamp(end, params);
+    return {
+      begin,
+      end,
+      resolvedTimePeriod,
+      correctedBegin,
+      correctedEnd
+    };
   }
 
   /**

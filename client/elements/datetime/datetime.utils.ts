@@ -48,6 +48,11 @@ export function getUtcSafeDay(date: Date): Date {
   return offsetDate;
 }
 
+/**
+ * @deprecated - use tzStore.resolveTimePeriodFilterForDay instead
+ * @param day
+ * @returns
+ */
 export function resolveTimePeriodFilterForDay(day: Date) {
   const localDay = new Date(day.getFullYear(), day.getMonth(), day.getDate());
   const end = new Date(localDay.getTime() + 24 * 60 * 60 * 1000);
@@ -57,6 +62,11 @@ export function resolveTimePeriodFilterForDay(day: Date) {
   };
 }
 
+/**
+ * @deprecated - use tzStore.resolveTimePeriodFilterForMonth instead
+ * @param day
+ * @returns
+ */
 export function resolveTimePeriodFilterForMonth(day: Date) {
   const localDay = new Date(day.getFullYear(), day.getMonth(), 1);
   const end = new Date(localDay.getFullYear(), localDay.getMonth() + 1, 0);
@@ -66,6 +76,11 @@ export function resolveTimePeriodFilterForMonth(day: Date) {
   };
 }
 
+/**
+ * @deprecated - use tzStore.resolveTimePeriodFilterForYear instead
+ * @param day
+ * @returns
+ */
 export function resolveTimePeriodFilterForYear(day: Date) {
   const localDay = new Date(day.getFullYear(), 0, 1);
   const end = new Date(day.getFullYear(), 11, 31);

@@ -77,8 +77,7 @@
   }
 
   async function refreshFocus() {
-    todayFocusDuration = await focusAggregates.aggregateFocusForADay({
-      day: new Date(),
+    todayFocusDuration = await focusAggregates.aggregateFocusForCurrentDay({
       goalId: item.id
     });
   }

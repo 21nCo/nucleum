@@ -48,7 +48,7 @@
           on:click={() => appStore.runAction(Action.GLOBAL_SEARCH)}
         />
       </div>
-      {#if trialDaysLeft && trialDaysLeft < 15}
+      {#if trialDaysLeft !== undefined && trialDaysLeft !== null && trialDaysLeft < 15}
         {@const isTrialExpired = trialDaysLeft <= 0}
         <button
           class={cn(

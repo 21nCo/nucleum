@@ -122,23 +122,19 @@
         isRefreshing = false;
         return;
       }
-
-      const correctedBegin = tzStore.resolveTimezoneCorrectedTimestamp(
-        timePeriod.begin,
+      const correctedTimePeriod = tzStore.resolveTimePeriodCorrectedByTz(
         {
-          tzRecords: $tzStore
-        }
-      );
-      const correctedEnd = tzStore.resolveTimezoneCorrectedTimestamp(
-        timePeriod.end,
-        {
-          tzRecords: $tzStore
-        }
+          begin: timePeriod.begin,
+          end: timePeriod.end
+        },
+        { tzRecords: $tzStore }
       );
       const filteredLogs = logs.filter(
         (log) =>
-          log.startUnix >= correctedBegin && log.startUnix <= correctedEnd
+          log.startUnix >= correctedTimePeriod.begin &&
+          log.startUnix <= correctedTimePeriod.end
       );
+
       const processedLogs: AnalyticsDataRecord[] = filteredLogs.map(
         (log: ISessionLog) => {
           const goal = log.goalId ? resolveGoalFromId(log.goalId) : undefined;
@@ -179,7 +175,7 @@
           const previousLogs = logs.filter(
             (log) =>
               log.startUnix >= correctedPreviousBegin &&
-              log.startUnix <= correctedBegin
+              log.startUnix <= correctedTimePeriod.begin
           );
           const processedPreviousLogs = previousLogs.map((log: ISessionLog) => {
             const goal = log.goalId ? resolveGoalFromId(log.goalId) : undefined;

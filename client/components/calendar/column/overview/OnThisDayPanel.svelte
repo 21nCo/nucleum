@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { resolveTimePeriodFilterForDay } from "$lib/client/elements/datetime/datetime.utils";
+  import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { sessionLogStore } from "$lib/client/products/pointron/logs/log.store";
   import type { ISessionLog } from "$lib/client/products/pointron/logs/log.type";
@@ -115,7 +115,7 @@
         sessionLogStore.selectMany(
           {
             filters: {
-              startUnix: resolveTimePeriodFilterForDay(lastMonthDate)
+              startUnix: tzStore.resolveTimePeriodFilterForDay(lastMonthDate)
             }
           },
           {
@@ -133,7 +133,7 @@
         sessionLogStore.selectMany(
           {
             filters: {
-              startUnix: resolveTimePeriodFilterForDay(lastYearDate)
+              startUnix: tzStore.resolveTimePeriodFilterForDay(lastYearDate)
             }
           },
           {
@@ -151,7 +151,7 @@
         sessionLogStore.selectMany(
           {
             filters: {
-              startUnix: resolveTimePeriodFilterForDay(twoYearsAgoDate)
+              startUnix: tzStore.resolveTimePeriodFilterForDay(twoYearsAgoDate)
             }
           },
           {

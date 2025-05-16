@@ -23,7 +23,7 @@
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { resolveTimePeriodFilterForDay } from "$lib/client/elements/datetime/datetime.utils";
+  import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
   import { generateSummary } from "../focus/session.utils";
 
   export let date: Date = new Date();
@@ -42,7 +42,7 @@
   });
   async function refresh() {
     isRefreshing = true;
-    const dayFilter = resolveTimePeriodFilterForDay(date);
+    const dayFilter = tzStore.resolveTimePeriodFilterForDay(date);
     const result = await sessionStore.selectMany(
       {
         filters: {

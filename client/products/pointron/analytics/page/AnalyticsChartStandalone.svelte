@@ -12,10 +12,7 @@
   } from "$lib/client/types/time.type";
   import CardSelector from "./CardSelector.svelte";
   import { sessionLogStore } from "../../logs/log.store";
-  import {
-    resolveRelativeTimePeriodOptions,
-    resolveTimePeriodFilterForDay
-  } from "$lib/client/elements/datetime/datetime.utils";
+  import { resolveRelativeTimePeriodOptions } from "$lib/client/elements/datetime/datetime.utils";
   import { onMount } from "svelte";
   import type { ISessionLog } from "../../logs/log.type";
   import type { IRecordId } from "$lib/client/types/data.type";
@@ -104,27 +101,19 @@
       );
       let startFilter = {};
       if (date) {
-        startFilter = resolveTimePeriodFilterForDay(date);
+        startFilter = tzStore.resolveTimePeriodFilterForDay(date);
       } else {
-        resolvedTimePeriod = determineTimePeriodv2({
-          scale: scale ?? TimeScale.DAYS,
-          value: periodValue
-        });
-        const correctedBegin = tzStore.resolveTimezoneCorrectedTimestamp(
-          resolveUnixTimestamp(resolvedTimePeriod.begin),
+        const result = tzStore.resolveTimePeriodCorrectedByTz(
           {
-            tzRecords: $tzStore
-          }
+            scale: scale ?? TimeScale.DAYS,
+            value: periodValue
+          },
+          { tzRecords: $tzStore }
         );
-        const correctedEnd = tzStore.resolveTimezoneCorrectedTimestamp(
-          resolveUnixTimestamp(resolvedTimePeriod.end),
-          {
-            tzRecords: $tzStore
-          }
-        );
+        resolvedTimePeriod = result.resolvedTimePeriod;
         startFilter = {
-          greaterThanOrEqual: correctedBegin,
-          lessThanOrEqual: correctedEnd
+          greaterThanOrEqual: result.correctedBegin,
+          lessThanOrEqual: result.correctedEnd
         };
       }
       let goalIds: IRecordId[] = [];

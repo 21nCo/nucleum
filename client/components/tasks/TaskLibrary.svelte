@@ -69,10 +69,7 @@
   import { intersection } from "$lib/client/actions/intersection.action";
   import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
-  import {
-    resolveTimePeriodFilterForDay,
-    resolveTimePeriodFilterForMonth
-  } from "$lib/client/elements/datetime/datetime.utils";
+  import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
   export let goalId: IRecordId | undefined = undefined;
   export let collectionId: IRecordId | undefined = undefined;
   export let accessPoint: ResourceAccessPoint | undefined = undefined;
@@ -191,9 +188,9 @@
     }
     let dateFilter: any = undefined;
     if (selectedSubType === TaskSubTypeForSwitcher.BY_DATE) {
-      dateFilter = resolveTimePeriodFilterForDay(selectedDate);
+      dateFilter = tzStore.resolveTimePeriodFilterForDay(selectedDate);
     } else if (selectedSubType === TaskSubTypeForSwitcher.BY_MONTH) {
-      dateFilter = resolveTimePeriodFilterForMonth(selectedDate);
+      dateFilter = tzStore.resolveTimePeriodFilterForMonth(selectedDate);
     } else {
       dateFilter = resolveDateFilter();
     }
@@ -202,7 +199,7 @@
     function resolveDateFilter() {
       if (dueDateFilter === TaskDueDateFilter.ALL) return undefined;
       else if (dueDateFilter === TaskDueDateFilter.OVERDUE) {
-        const dayFilter = resolveTimePeriodFilterForDay(new Date());
+        const dayFilter = tzStore.resolveTimePeriodFilterForDay(new Date());
         return {
           lessThanOrEqual: dayFilter.greaterThanOrEqual
         };

@@ -21,7 +21,7 @@ import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 import { sessionLogStore } from "../logs/log.store";
 import type { IRecordId } from "$lib/client/types/data.type";
 import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
-import { resolveTimePeriodFilterForDay } from "$lib/client/elements/datetime/datetime.utils";
+import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
 import { toasts } from "$lib/client/stores/notification.store";
 
 export const selectedPageId = writable<string>();
@@ -201,12 +201,16 @@ function initAnalyticsPageStore(config: AnalyticsPage) {
 }
 
 class FocusAggregates {
-  async aggregateFocusForADay(params: {
-    day: Date;
+  /**
+   *
+   * @param params
+   * @returns
+   */
+  async aggregateFocusForCurrentDay(params: {
     goalIds?: IRecordId[];
     goalId?: IRecordId;
   }) {
-    const dayFilter = resolveTimePeriodFilterForDay(params.day);
+    const dayFilter = tzStore.resolveTimePeriodFilterForDay(new Date());
     const logs = await sessionLogStore.selectMany({
       filters: {
         startUnix: dayFilter,

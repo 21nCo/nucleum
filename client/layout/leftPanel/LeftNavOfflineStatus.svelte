@@ -11,7 +11,7 @@
 
 {#if $account.dataMode === UserDataMode.LOCAL || $context.isInOfflineMode}
   <button
-    class={cn("text-fgs3 bg-bgs3 rounded-md px-2 py-1 my-1", {
+    class={cn("text-ass1 bg-ass2/30 rounded-md px-2 py-1 my-1", {
       "text-b4": isInThinMode,
       "text-b3": !isInThinMode
     })}
