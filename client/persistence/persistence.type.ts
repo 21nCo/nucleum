@@ -60,6 +60,8 @@ export interface IPersistence {
    */
   initialize(params: IPersistenceInitParams): Promise<number>;
 
+  reinitialize(): Promise<boolean>;
+
   terminate(): Promise<boolean>;
 
   mutation<T extends IResource | IMetaResource>(

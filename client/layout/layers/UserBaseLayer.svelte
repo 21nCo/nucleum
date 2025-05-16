@@ -182,6 +182,7 @@
       }
       if (isExtensionEnvironment() || isDebug) return;
       performAppUpdateCheck();
+      await flux.reinitializeIfRequired();
     } catch (e) {
       logger.error({ at: "onAppear", error: e });
     }

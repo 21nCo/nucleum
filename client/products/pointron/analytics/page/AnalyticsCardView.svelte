@@ -222,10 +222,12 @@
       refreshId = new Date().getTime();
       isRefreshing = false;
     } catch (error) {
-      logger.error({
-        at: "AnalyticsCardView.refresh",
+      logger.error(
+        {
+          at: "AnalyticsCardView.refresh"
+        },
         error
-      });
+      );
       isRefreshing = false;
     }
   }
@@ -319,7 +321,7 @@
         <span class="font-medium">
           {card.type === AnalyticsCardType.TARGETS
             ? "Targets"
-            : card.label ?? timePeriod.title}
+            : (card.label ?? timePeriod.title)}
         </span>
         {#if card.type != AnalyticsCardType.TARGETS && card.label}
           <span class="text-fgs2 text-b2">

@@ -59,6 +59,7 @@ function resolveDatabaseId(product: Product) {
 export class SurrealPersistence implements IPersistence {
   instance: Surreal | undefined = undefined;
   userId: string = "";
+  product: Product = Product.NUCLEUS;
   private isProcessingOperation: boolean = false;
   private processId: string = "";
   private waitingTimeElapsed: number = 0;
@@ -107,16 +108,13 @@ export class SurrealPersistence implements IPersistence {
       });
     });
     this.userId = user;
+    this.product = params.product as Product;
     try {
-      const databaseId = resolveDatabaseId(params.product as Product);
       logger.info({
         at: "surreal.persistence.initialize",
-        params,
-        databaseId
+        params
       });
-      await this.instance.connect(`indxdb://${databaseId}`);
-      await this.instance.use({ namespace: "user", database: this.userId });
-
+      await this.connectToDatabase();
       // await this.logInfo();
       // await this.testQuery();
       const localLog: ILocal = await this.select("kv:local");
@@ -149,6 +147,44 @@ export class SurrealPersistence implements IPersistence {
       logger.error({ at: "surreal.persistence.initialize", err });
       return -1;
     }
+  }
+
+  private async connectToDatabase() {
+    const databaseId = resolveDatabaseId(this.product as Product);
+    await this.instance?.connect(`indxdb://${databaseId}`);
+    await this.instance?.use({ namespace: "user", database: this.userId });
+  }
+
+  async reinitialize() {
+    logger.debug({ at: "surreal.persistence.reinitialize" });
+    let engines;
+    try {
+      engines = await loadSurrealDB();
+      // engines = await loadSurrealDBFromRemotev5(
+      //   import.meta.env.VITE_STATIC_URL + "/surreal.zip"
+      // );
+      logger.info({ at: "surreal.persistence.reinitialize - wasm loaded" });
+    } catch (e) {
+      logger.error({
+        at: "surreal.persistence.reinitialize - wasm load error",
+        error: e,
+        location: window.location.toString(),
+        protocol: window.location.protocol
+      });
+    }
+    if (!engines) return false;
+    this.instance = new Surreal({
+      engines: engines({
+        strict: false,
+        capabilities: {
+          guest_access: true,
+          functions: true,
+          network_targets: true
+        }
+      })
+    });
+    await this.connectToDatabase();
+    return true;
   }
 
   terminate() {

@@ -47,10 +47,10 @@ class Logger {
   info(message: any) {
     this._log(message, LogType.INFO);
   }
-  error(message: any) {
+  error(message: any, error?: any) {
     this._log(message, LogType.ERROR);
-    throw new Error("Error in logger" + JSON.stringify(message), {
-      cause: message
+    throw new Error("Error: " + JSON.stringify(message), {
+      cause: error ?? message.error
     });
   }
   debug(message: any) {

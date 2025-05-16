@@ -637,6 +637,7 @@ class Flux {
           error: "fluxerror",
           message: "Something went wrong. Please try again."
         });
+        await this.persistence.reinitialize();
         this.isSyncUpPending = false;
         return;
       }
@@ -1188,6 +1189,16 @@ class Flux {
         .map((x) => x.id) ?? [])
     ] as Resource[];
     return resources;
+  }
+
+  async reinitializeIfRequired() {
+    const local = await this.resolveLocal();
+    if (!local) {
+      logger.info({
+        at: "flux.reinitializeIfRequired - local not found - reinitializing"
+      });
+      await this.persistence.reinitialize();
+    }
   }
 
   /**
