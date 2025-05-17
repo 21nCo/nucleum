@@ -25,6 +25,10 @@ export const SUBSCRIPTION_PLANS: IPlan[] = [
     },
     features: [
       {
+        icon: "ph:check-circle-light",
+        label: "All core features"
+      },
+      {
         icon: "ph:arrows-left-right-light",
         label: "Unlimited cloud sync"
       },
@@ -39,10 +43,6 @@ export const SUBSCRIPTION_PLANS: IPlan[] = [
       {
         icon: "ph:at-light",
         label: "Email and community support"
-      },
-      {
-        icon: "ph:hand-heart-light",
-        label: "Support our mission *(21n.org)*"
       }
     ]
   },
@@ -57,6 +57,10 @@ export const SUBSCRIPTION_PLANS: IPlan[] = [
     },
     features: [
       {
+        icon: "ph:check-circle-light",
+        label: "All core features"
+      },
+      {
         icon: "ph:arrows-left-right-light",
         label: "Unlimited cloud sync for Memotron, Pointron"
       },
@@ -66,17 +70,16 @@ export const SUBSCRIPTION_PLANS: IPlan[] = [
       // },
       {
         icon: "ph:database-light",
-        label: "100 GB of media storage *(add-on for more)*"
+        label: "100 GB of media storage (add-on for more)"
       },
       {
         icon: "ph:sparkle-light",
-        label:
-          "Access to Nucleus - the everything productivity app *(coming soon)*"
+        label: "Access to [Nucleus](https://nucleus.to) (Web beta)"
       },
-      {
-        icon: "ph:brain-light",
-        label: "Access to MCP server *(coming soon)*"
-      },
+      // {
+      //   icon: "ph:brain-light",
+      //   label: "Access to MCP server *(coming soon)*"
+      // },
       {
         icon: "ph:clock-light",
         label: "Early access to new products, features"
@@ -87,7 +90,7 @@ export const SUBSCRIPTION_PLANS: IPlan[] = [
       },
       {
         icon: "ph:hand-heart-light",
-        label: "Support our mission *(21n.org)*"
+        label: "Support our [mission](https://21n.org)"
       }
     ],
     isPopular: true

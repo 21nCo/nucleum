@@ -12,6 +12,7 @@
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { view } from "$lib/client/stores/view.store";
+  import TypefaceSelector from "$lib/client/components/settings/appearance/TypefaceSelector.svelte";
   export let parentBackgroundIndex: number = 1;
   let selectedSkinIndex: number = 0;
   let selectedTheme: Theme;
@@ -46,6 +47,10 @@
   function switchTheme(e: any) {
     appearance.modifyUserThemeSetting(selectedTheme);
   }
+  function onTypefaceChange(e: CustomEvent) {
+    const selectedTypeface = e.detail;
+    appearance.setTypeface(selectedTypeface);
+  }
 
   //TODO - use change event on switchInput instead
   $: appearance.modifySyncWithSystem($appearance.isSyncWithSystem);
@@ -60,6 +65,13 @@
     on:switch={onSkinChange}
     bind:selectedIndex={selectedSkinIndex}
   /> -->
+  <TypefaceSelector
+    label={{ label: "Font", orientation: Orientation.Vertical }}
+    value={$userPreferences.appearance.typeface || "Sora"}
+    on:select={onTypefaceChange}
+    size={Size.sm}
+    {parentBackgroundIndex}
+  />
   <SwitchInput
     bind:checked={$appearance.isSyncWithSystem}
     on:change={switchTheme}
@@ -133,6 +145,7 @@
 setting on your device."
     />
   {/if}
+
   {#if !$view.isConstrainedWidth}
     <SwitchInput
       bind:checked={$userPreferences.appearance.isBlurredBgForPopups}

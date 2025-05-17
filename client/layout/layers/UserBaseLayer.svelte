@@ -61,6 +61,7 @@
   import { embedBridge } from "$lib/client/components/embed/embed.store";
   import { postMessageToParent } from "$lib/client/utils/embed.utils";
   import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
+  import Icon from "$lib/client/elements/Icon.svelte";
 
   const loadingMessages = {
     cloneUp: {
@@ -242,7 +243,7 @@
         isLiteMode,
         account: $account
       });
-      if (!isLiteMode && !isDebug) {
+      if (!isLiteMode && !isDebug && !$context.isInOfflineMode) {
         await refreshAppStaticData();
       }
       const dapId = await getDapId();
@@ -519,6 +520,19 @@
   });
 </script>
 
+{#if ($view.isPortrait && $account.dataMode !== UserDataMode.LOCAL && $context.isInOfflineMode) || (!$view.isPortrait && $account.dataMode === UserDataMode.LOCAL && !$context.isEmbed)}
+  <div
+    class="flex gap-2 w-full p-2 bg-ass2/30 text-ass1 items-center justify-center text-b2"
+  >
+    <Icon icon="ph:wifi-slash" class="text-ass1" />
+    {#if $account.dataMode === UserDataMode.LOCAL}
+      You are using offline mode on a browser. Please use Desktop/mobile app to
+      avoid loss of data or signup as cloud user.
+    {:else}
+      You are using offline mode.
+    {/if}
+  </div>
+{/if}
 {#if $appStore?.appData?.isAnalyticsEnabled && $account?.dataMode === UserDataMode.CLOUD && !$context.isInOfflineMode}
   <AnalyticsLayer />
 {/if}

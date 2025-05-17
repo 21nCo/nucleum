@@ -298,6 +298,9 @@ const phosphorIcons = [
   "push-pin-slash",
   "push-pin-simple-slash",
   "alarm",
+  "wifi-high",
+  "wifi-x",
+  "wifi-slash",
 
   //Charts
   "chart-bar",

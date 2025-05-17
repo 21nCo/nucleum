@@ -161,8 +161,8 @@
       const isInOfflineMode = await clientStorage.get(
         ClientStorageKey.OFFLINE_MODE
       );
-      if (isInOfflineMode)
-        $context.isInOfflineMode = isInOfflineMode === "true";
+      $context.isInOfflineMode =
+        isInOfflineMode === "true" || !navigator.onLine;
       const isInLowDataMode = await clientStorage.get(
         ClientStorageKey.LOW_DATA_MODE
       );
@@ -383,6 +383,14 @@
 </div>
 <PosthogTelemetry />
 <svelte:document on:visibilitychange={visibilityChangeListener} />
+<!-- Fallback for md links click handling -->
+<svelte:window
+  on:click={(e) => {
+    if (e?.target?.tagName === "PLACEHOLDER" && e?.target?.dataset?.href) {
+      appStore.openLink(e.target.dataset.href);
+    }
+  }}
+/>
 
 <style>
   /**

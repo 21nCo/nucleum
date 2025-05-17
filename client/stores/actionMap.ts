@@ -726,11 +726,11 @@ export const globalActions: IAction[] = [
           }
         },
         secondaryAction: {
-          label: "I need some more time",
-          icon: "ph:clock-light",
+          label: "Chat with us",
+          icon: "ph:chat-centered-dots-light",
           variant: ButtonVariant.SECONDARY,
           callback: async () => {
-            modalEvent.hide(Action.INACTIVE_PLAN);
+            appStore.runAction("chat");
           }
         }
       }

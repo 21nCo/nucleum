@@ -17,7 +17,9 @@
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import context from "$lib/client/stores/context.store";
   import ThemeLayer from "$lib/client/layout/layers/themeLayer/ThemeLayer.svelte";
-  import appearance from "$lib/client/stores/appearance.store";
+  import appearance, {
+    fallBackTypefaceString
+  } from "$lib/client/stores/appearance.store";
   import IntervalBar from "../elements/intervalbar/IntervalBar.svelte";
   import { fullScreen, player } from "$lib/client/components/modal/modal.store";
   import { logger } from "$lib/client/components/debug/logger.client";
@@ -162,7 +164,7 @@
       "bg-ars1 animate--pulse animate-pulse-subtle":
         isBreakReminderMode && isPipShown
     })}
-    style="font-family: {$appearance.typeface ?? 'Avenir'};"
+    style="font-family: {$appearance.typeface ?? fallBackTypefaceString};"
   >
     <ThemeLayer extensionContext={isPipShown ? "focusplayer" : undefined}>
       <div class="flex flex-col gap-1 w-full">

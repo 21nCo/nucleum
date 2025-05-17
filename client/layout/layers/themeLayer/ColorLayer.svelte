@@ -9,7 +9,7 @@
 </script>
 
 <div
-  class="flex w-full h-full"
+  class="flex flex-col w-full h-full"
   style:--fgwhenaccentbg={isActiveFgFg
     ? currentColors.fgs1
     : currentColors.bgs1}

@@ -53,6 +53,7 @@
     footerRef.close();
   }
   function handleClose(accessMode?: ResourceAccessMode) {
+    if (params.isDismissable === false) return;
     if (path === Action.CONFIRMATION) confirmationNotification.reset();
     else if (resource)
       appStore.closeResource({

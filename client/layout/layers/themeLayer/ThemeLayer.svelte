@@ -3,10 +3,13 @@
   import view from "$lib/client/stores/view.store";
   import { AppSkin } from "$lib/client/types/appearance.type";
   import { postToParent } from "$lib/client/utils/embed.utils";
-  import appearance from "$lib/client/stores/appearance.store";
+  import appearance, {
+    fallBackTypefaceString
+  } from "$lib/client/stores/appearance.store";
   import ColorLayer from "./ColorLayer.svelte";
   import GlassSkin from "./GlassSkin.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
+  import "@fontsource-variable/space-grotesk";
   import "@fontsource-variable/hanken-grotesk";
   import "@fontsource/noto-color-emoji";
   // Do not remove this import as it is required for the global css propagation in case of custom colors are absent - ex: PanelSwitcher
@@ -80,7 +83,8 @@
    * Note: most of the colors are reassigned to new object instead of posting $appearance.colorScheme directly as the original json contains keys which are not accepted by the iOS app.
    */
   function refreshTailwind() {
-    fontFamily = $appearance.typeface ?? "Avenir";
+    fontFamily = $appearance.typeface ?? "Space Grotesk";
+    fontFamily = fontFamily + ", " + fallBackTypefaceString;
     if (extensionContext && ref) {
       ref.style.setProperty("--fontFamily-sans-0", fontFamily);
       ref.style.fontFamily = fontFamily;
@@ -126,15 +130,20 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Teachers:ital,wght@0,400..800;1,400..800&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&family=Parkinsans:wght@300..800&family=Sora:wght@100..800&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Teachers:ital,wght@0,400..800;1,400..800&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
     rel="stylesheet"
   />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 </svelte:head>
 <!--Note: The font weight and tracking correction is for H Grotesk typeface -->
 <div
   bind:this={ref}
   id="ntheme"
-  class={cn("flex h-full w-full font--[350] tracking-[0.01em]", {
+  class={cn("flex h-full w-full", {
+    "tracking-[0.01em]": $appearance?.typeface === "Hanken Grotesk",
+    "font-[350]": $appearance?.typeface === "Sora",
     glassy: $appearance?.skin == AppSkin.Glassy,
     dark: $appearance?.colorScheme?.isDark
   })}
@@ -146,13 +155,16 @@
 </div>
 
 <style>
-  #ntheme {
+  /* TODO  - clipper case - the need for below typeface settings  */
+  /* #ntheme {
     font-family:
+      Sora,
+      Space Grotesk,
       Hanken Grotesk,
       system-ui,
       -apple-system,
       sans-serif !important;
-  }
+  } */
   /* .glass {
     background-image: url(back.png);
   } */

@@ -1,6 +1,6 @@
 import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
 
-export const spriteVersion = 21;
+export const spriteVersion = 22;
 export const extensionSprites = new Map<string, string>();
 
 export function cleanExtensionSprites() {

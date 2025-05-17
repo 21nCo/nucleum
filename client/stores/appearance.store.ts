@@ -21,6 +21,10 @@ const defaultLightColorSchemeId = "colorscheme:clean_tidyblue_light";
 const defaultDarkColorSchemeId = import.meta.env?.VITE_IS_LANDING
   ? "colorscheme:clean_tidyoxide_dark"
   : "colorscheme:clean_tidyblue_dark";
+
+export const fallBackTypefaceString =
+  "Space Grotesk, Hanken Grotesk, Hanken Grotesk Variable, Nunito, Teachers, Montserrat, Proxima Nova,  Poppins, Noto Sans";
+
 const seedAppearance: AppearanceStore = {
   id: Resource.appearance,
   dataType: StoreDataType.NA,
@@ -31,8 +35,7 @@ const seedAppearance: AppearanceStore = {
   systemTheme: Theme.LIGHT,
   accessibilitySizingFactor: 1,
   isFixedLeftNav: false,
-  typeface:
-    " Hanken Grotesk, Hanken Grotesk Variable, Nunito, Teachers, Montserrat, Proxima Nova,  Poppins, Noto Sans ",
+  typeface: "Sora",
   //BlinkMacSystemFont
   lightColorSchemeId: defaultLightColorSchemeId,
   darkColorSchemeId: defaultDarkColorSchemeId,
@@ -43,7 +46,6 @@ const seedAppearance: AppearanceStore = {
 const cachedAppearance = retrieveLocally(
   Resource.appearance
 ) as AppearanceStore;
-if (cachedAppearance) cachedAppearance.typeface = seedAppearance.typeface;
 export const appearance = initAppearanceStore();
 
 function initAppearanceStore() {
@@ -59,6 +61,7 @@ function initAppearanceStore() {
     dispatchCustomEvent(GlobalEvent.PERSIST_APPEARANCE_USER, {
       skin: store.skin,
       theme: store.theme,
+      typeface: store.typeface,
       isSyncWithSystem: store.isSyncWithSystem,
       lightColorSchemeId: store.lightColorSchemeId,
       darkColorSchemeId: store.darkColorSchemeId,
@@ -199,6 +202,17 @@ function initAppearanceStore() {
     setLeftNavFixed: (isFixed: boolean) => {
       update((a) => {
         const modified = { ...a, isFixedLeftNav: isFixed };
+        persist(modified);
+        return modified;
+      });
+    },
+
+    setTypeface: (typeface: string) => {
+      update((a) => {
+        const modified = {
+          ...a,
+          typeface
+        };
         persist(modified);
         return modified;
       });
