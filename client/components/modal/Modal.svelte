@@ -201,9 +201,12 @@
       {:else}
         <div
           id={id + "-modal"}
-          class={cn("bg-bgs1 mo:w-full mo:h-full max-h-full cursor-default", {
+          class={cn("bg-bgs1 max-h-full cursor-default", {
             ...resolveSizeClasses(),
-            "mo:rounded-none rounded-md": size !== Size.full
+            "rounded-md": size !== Size.full,
+            "mo:rounded-none": size !== Size.full && size !== Size.xs,
+            "mo:w-9/10": size === Size.xs,
+            "mo:w-full mo:h-full": size !== Size.xs
           })}
         >
           <ColorLayer>

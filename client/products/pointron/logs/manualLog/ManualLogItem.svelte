@@ -326,7 +326,7 @@
   <div class="flex flex-col gap-4 px-4 xl:px-4">
     {#if selectedGoal}
       <div
-        class="flex justify-start w-full py-2 border border-bgs4 px-2 rounded-md"
+        class="flex justify-start w-full py-2 border border-bgs4 px-2 rounded-md userdata"
       >
         <CustomColorPropagator
           color={resolveGoalColor(selectedGoal)}
@@ -355,7 +355,7 @@
           {#each recentGoals as goal}
             <CustomColorPropagator
               color={resolveGoalColor(goal)}
-              class="flex items-center gap-2 border border-ccs1 rounded-md px-2 py-1 text-ccs1 bg-ccs5 hover:bg-ccs4"
+              class="flex items-center gap-2 border border-ccs1 rounded-md px-2 py-1 text-ccs1 bg-ccs5 hover:bg-ccs4 userdata"
               on:click={() => {
                 onGoalSelect(goal);
               }}

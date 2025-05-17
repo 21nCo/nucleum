@@ -114,7 +114,7 @@
       <ModalHeader
         title={params.title}
         on:close={() => handleClose()}
-        isShowClose={$context.embed === Embed.HANDSET
+        isShowClose={$context.embed === Embed.HANDSET && size !== Size.xs
           ? true
           : params.layout?.isShowClose}
       />

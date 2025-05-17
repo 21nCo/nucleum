@@ -1,13 +1,16 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
   import { GlobalEvent } from "$lib/client/types/event.enum";
-  import { detectTimeZone, wait } from "$lib/client/utils/time.utils";
+  import { detectTimeZone } from "$lib/client/utils/time.utils";
   import { Persistence } from "$lib/client/persistence/persistence";
   import view from "$lib/client/stores/view.store";
   import account from "$lib/client/stores/account.store";
   import { appLoadingState, appStore } from "$lib/client/stores/app.store";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import { toasts } from "$lib/client/stores/notification.store";
+  import {
+    confirmationNotification,
+    toasts
+  } from "$lib/client/stores/notification.store";
   import context from "$lib/client/stores/context.store";
   import DebugLayer from "./debug/DebugLayer.svelte";
   import ModalLayer from "./ModalLayer.svelte";
@@ -31,7 +34,6 @@
   import AppLoadingView from "../paint/AppLoadingView.svelte";
   import DynamicMetadataLayer from "./DynamicMetadataLayer.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
-  import { LogType } from "$lib/client/components/debug/debug.type";
   import { flux, initFlux } from "$lib/client/components/flux/flux";
   import {
     UserDataMode,
@@ -41,7 +43,6 @@
   import { getDapId } from "$lib/client/persistence/persistence.utils";
   import PageError from "$lib/client/components/error/PageError.svelte";
   import { SurrealPersistence } from "$lib/client/persistence/surreal/surreal.local";
-  import { Embed } from "$lib/client/types/context.type";
   import posthog from "posthog-js";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
@@ -49,11 +50,7 @@
   import { recentsStore } from "$lib/client/components/record/recent.store";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { Action } from "$lib/client/types/action.enum";
-  import ZohoSalesIq from "./support/ZohoSalesIQ.svelte";
-  import {
-    BillingCycle,
-    PlanType
-  } from "$lib/client/components/subscription/userPlan.type";
+  import { BillingCycle } from "$lib/client/components/subscription/userPlan.type";
   import { fileEmbedChannel } from "$lib/client/components/files/fileEmbedChannel.store";
   import { ErrorMessage } from "$lib/client/components/error/error.type";
   import modalEvent from "$lib/client/components/modal/modal.store";
@@ -62,6 +59,8 @@
   import { postMessageToParent } from "$lib/client/utils/embed.utils";
   import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
   import Icon from "$lib/client/elements/Icon.svelte";
+  import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
+  import { OperatingSystem } from "$lib/client/types/context.type";
 
   const loadingMessages = {
     cloneUp: {
@@ -152,6 +151,9 @@
    * @param isSignup - If the user is signing up
    */
   function refreshTimeZone() {
+    if (!$tzStore || (Array.isArray($tzStore) && $tzStore.length === 0)) {
+      userPreferences.setTimeZone();
+    }
     const timeZone = detectTimeZone();
     if (!timeZone || !$userPreferences) return;
     if ($userPreferences.timeZoneOffset !== timeZone.offset * 60) {
@@ -196,8 +198,37 @@
     const versionOnClient = $appStore.version;
     await refreshAppStaticData();
     const latestVersion = resolveLatestVersion();
-    if (versionOnClient !== latestVersion) {
-      if (!$context.isEmbed) {
+    if (latestVersion && versionOnClient !== latestVersion) {
+      if ($context.isEmbed) {
+        confirmationNotification.notify({
+          title: `App update available (v${latestVersion}) 🎉`,
+          message: "Please update the app to continue.",
+          type: AlertType.INFO,
+          confirmAction: {
+            label: "Update",
+            callback: async () => {
+              if (
+                $context.os === OperatingSystem.IOS ||
+                $context.os === OperatingSystem.MACOS
+              ) {
+                return appStore.openLink(
+                  $appStore.appData?.urls?.appStore ??
+                    $appStore.appData?.urls?.docs ??
+                    ""
+                );
+              } else if ($context.os === OperatingSystem.WINDOWS) {
+                return appStore.openLink(
+                  $appStore.appData?.urls?.microsoftStore ?? ""
+                );
+              } else if ($context.os === OperatingSystem.ANDROID) {
+                return appStore.openLink(
+                  $appStore.appData?.urls?.playStore ?? ""
+                );
+              }
+            }
+          }
+        });
+      } else {
         toasts.trigger({
           id: "appUpdateAvailable",
           title: `App update available (v${latestVersion}) 🎉`,
@@ -210,7 +241,7 @@
       }
     }
     logger.info({
-      at: "operformAppUpdateCheck",
+      at: "performAppUpdateCheck",
       versionOnClient,
       latestVersion
     });
@@ -564,10 +595,6 @@
   <CacheLayer />
 {/if}
 <Intercom />
-{#if $account.plan?.plan === PlanType.NUCLEUS && !$view.isConstrainedWidth}
-  <!-- TODO - dynamic show of chat from help section for nucleus users - this is interfering with focus player, zoom controls on calendar timeline etc -->
-  <!-- <ZohoSalesIq /> -->
-{/if}
 
 <svelte:window
   on:resize={windowResizeListener}

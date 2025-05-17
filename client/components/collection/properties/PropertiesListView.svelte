@@ -104,7 +104,7 @@
 {#if properties && properties.length > 0}
   <div
     class={cn(
-      "w-full",
+      "w-full userdata",
       !isRenderAsColumn &&
         !$view.isConstrainedWidth &&
         resource === Resource.node && {

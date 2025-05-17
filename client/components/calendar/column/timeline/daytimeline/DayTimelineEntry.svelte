@@ -33,7 +33,7 @@
 </script>
 
 <button
-  class="event-item absolute bg-bgs2 rounded-md border-l-4 border-aps1 truncate flex"
+  class="event-item absolute bg-bgs2 rounded-md border-l-4 border-aps1 truncate flex userdata"
   style="top: {entry.top}px; height: {entry.height}px; width: {width}; left: {left};"
   use:resizeListener={(el) => {
     height = el.height;

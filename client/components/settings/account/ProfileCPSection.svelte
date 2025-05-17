@@ -57,7 +57,7 @@
       <div class="flex justify-between w-full px-3">
         <div class="flex gap-2">
           <ProfilePicture />
-          <div class="flex flex-col justify-center items-start">
+          <div class="flex flex-col justify-center items-start userdata">
             <div class="text-h5 text-left">
               {isValidString($userPreferences.name) ||
                 isValidString($account.userInfo?.nickName) ||

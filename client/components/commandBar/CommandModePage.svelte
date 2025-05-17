@@ -57,7 +57,7 @@
             appStore.runAction(Action.SETTINGS);
           }}
         >
-          <div class="text-xl text-fgs2">
+          <div class="text-xl text-fgs2 userdata">
             Hi {$account.userInfo?.nickName}!
           </div>
           <div class="text-fgs3">

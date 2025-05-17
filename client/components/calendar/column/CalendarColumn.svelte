@@ -18,6 +18,8 @@
   import CalendarColumnPanelResolver from "./CalendarColumnPanelResolver.svelte";
   import CalendarColumnPanelSelector from "./CalendarColumnPanelSelector.svelte";
   import CalendarColumnTimeline from "./timeline/CalendarColumnTimeline.svelte";
+  import Divider from "$lib/client/elements/Divider.svelte";
+  import { Orientation } from "$lib/client/types/direction.enum";
   const dispatch = createEventDispatcher();
   export let scale: TimeScaleUnit;
   export let date: Date;
@@ -153,6 +155,7 @@
         <CalendarColumnTimeline {date} isExpandable={false} {layout} />
       {/if}
       {#if layout !== CalendarColumnLayout.TABS}
+        <Divider orientation={Orientation.Vertical} />
         <div class="flex flex-col gap-4 flex-grow pt-2">
           {#if panels.length === 1}
             <Text

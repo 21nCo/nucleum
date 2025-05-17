@@ -8,7 +8,7 @@
 
 <CustomColorPropagator
   color={item.color}
-  class="flex flex-col w-full items-start text-ccs1 text-left"
+  class="flex flex-col w-full items-start text-ccs1 text-left userdata"
 >
   {#if parentLabels}
     <BreadcrumbMini hierarchy={parentLabels} />

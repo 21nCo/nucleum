@@ -28,7 +28,6 @@ import {
   toasts,
   confirmationNotification
 } from "$lib/client/stores/notification.store";
-import CreateGoal from "$lib/client/products/pointron/goals/create/CreateGoal.svelte";
 import FocusItemsModal from "$lib/client/products/pointron/focus/advanced/FocusItemsModal.svelte";
 import BreakReminderModal from "$lib/client/products/pointron/focus/elements/BreakReminderModal.svelte";
 import PredefinedIntervalNotifierOverlay from "$lib/client/products/pointron/focus/elements/PredefinedIntervalNotifierOverlay.svelte";

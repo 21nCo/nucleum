@@ -35,8 +35,7 @@ const seedAppearance: AppearanceStore = {
   systemTheme: Theme.LIGHT,
   accessibilitySizingFactor: 1,
   isFixedLeftNav: false,
-  typeface: "Sora",
-  //BlinkMacSystemFont
+  typeface: "Space Grotesk",
   lightColorSchemeId: defaultLightColorSchemeId,
   darkColorSchemeId: defaultDarkColorSchemeId,
   colorScheme:
@@ -46,6 +45,9 @@ const seedAppearance: AppearanceStore = {
 const cachedAppearance = retrieveLocally(
   Resource.appearance
 ) as AppearanceStore;
+if (cachedAppearance?.typeface?.includes(",")) {
+  cachedAppearance.typeface = seedAppearance.typeface;
+}
 export const appearance = initAppearanceStore();
 
 function initAppearanceStore() {

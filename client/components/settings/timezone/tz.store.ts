@@ -1,7 +1,7 @@
 import { ResourceStore } from "../../flux/resourceStores/resource.store";
 import { Resource } from "../../flux/resourceStores/resource.enum";
 import type { ITimezone } from "./tz.type";
-import { TimeScale, type TimePeriod } from "$lib/client/types/time.type";
+import type { TimePeriod } from "$lib/client/types/time.type";
 import { determineTimePeriodv2 } from "$lib/client/utils/time.utils";
 import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
 

@@ -26,7 +26,7 @@
     class="mo:w-full mo:px-4 w-[40rem] h-full flex flex-col mo:gap-10 gap-20 justify-center"
   >
     <div class="flex flex-col gap-2">
-      <div class="text-xl text-fgs3">
+      <div class="text-xl text-fgs3 userdata">
         Hi {$account.userInfo?.nickName ?? "there"}!
       </div>
       <div class="text-b2 text-fgs3">

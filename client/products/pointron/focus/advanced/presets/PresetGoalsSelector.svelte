@@ -66,7 +66,7 @@
     placeholder="Start typing to search for goals"
   />
   {#if selectedGoals.length > 0}
-    <div class="flex items-center flex-wrap gap-3">
+    <div class="flex items-center flex-wrap gap-3 userdata">
       {#each selectedGoals as goal}
         <CustomColorPropagator
           color={resolveGoalColor(goal)}

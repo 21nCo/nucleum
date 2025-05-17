@@ -3,8 +3,6 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { quickFocusItemStore } from "../../../goals/goal.store";
-  import TagsContainer from "../../../goals/TagsContainer.svelte";
   import QuickStartLayoutToggle from "./QuickStartLayoutToggle.svelte";
   export let searchInput = "";
   let isShowSearchBar = false;
@@ -35,12 +33,6 @@
         on:click={() => {
           isShowSearchBar = true;
         }}
-      />
-    </div>
-    <div class="flex-1 min-w-0">
-      <TagsContainer
-        bind:selectedTagId={$quickFocusItemStore.selectedTagId}
-        on:select
       />
     </div>
     <div class="flex justify-center shrink-0">

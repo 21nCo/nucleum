@@ -111,7 +111,7 @@
                   isSameResource(l.linkedTo, linkedNode)
                 )}
                 <button
-                  class="flex flex-col gap-1 p-3 rounded-md bg-bgs2 hover:bg-bgs3 border border-brs3 text-left w-full"
+                  class="flex flex-col gap-1 p-3 rounded-md bg-bgs2 hover:bg-bgs3 border border-brs3 text-left w-full userdata"
                   on:click={(e) => handleNodeClick(linkedNode.id.toString(), e)}
                 >
                   <div class="text-b2 text-fgs1">

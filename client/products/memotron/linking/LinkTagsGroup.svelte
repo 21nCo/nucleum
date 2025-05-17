@@ -66,10 +66,13 @@
 </script>
 
 <div
-  class={cn("flex flex-col items-start gap-3 border rounded-md p-4 w-full", {
-    "border-brs2": !isHovered || isWithoutGroup,
-    "border-brs3": isHovered && !isWithoutGroup
-  })}
+  class={cn(
+    "flex flex-col items-start gap-3 border rounded-md p-4 w-full userdata",
+    {
+      "border-brs2": !isHovered || isWithoutGroup,
+      "border-brs3": isHovered && !isWithoutGroup
+    }
+  )}
   use:hoverable={{
     onHover: (e) => (isHovered = e)
   }}

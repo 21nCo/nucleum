@@ -52,7 +52,7 @@
     {@const startUnix = $focusItemsStore.recents?.find(
       resourceInList(item.id)
     )?.startUnix}
-    <span class="text-b3 text-fgs3">
+    <span class="text-b3 text-fgs3 userdata">
       {#if $focusItemsStore.items.some(resourceInList(item.id))}
         <div class="flex gap-1 items-center">
           <Icon icon="ph:check-circle-fill" size={Size.sm} />

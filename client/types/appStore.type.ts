@@ -65,6 +65,9 @@ export type IAppData = {
    */
   env?: Record<string, any>;
   urls: {
+    appStore?: string;
+    microsoftStore?: string;
+    playStore?: string;
     discord: string;
     soft: string;
     landing?: string;

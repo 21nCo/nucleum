@@ -25,7 +25,7 @@
   }
 </script>
 
-<div class="flex gap-2 flex-wrap">
+<div class="flex gap-2 flex-wrap userdata">
   {#each _tags as tag}
     <Tag
       label={tag.label}

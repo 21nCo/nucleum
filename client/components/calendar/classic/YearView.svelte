@@ -303,6 +303,7 @@
                           "text-fgs3": !isPastDay
                         }
                     )}
+                    style="font-family: 'Hanken Grotesk', sans-serif;"
                     on:click={() => {
                       selectedDate = date;
                       dispatch("dateChange", { date });
