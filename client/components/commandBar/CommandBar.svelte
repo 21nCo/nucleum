@@ -23,6 +23,7 @@
   import { KeyboardKey, ModifierKey } from "$lib/client/types/keyboard.type";
   import KeyboardToolbar from "$lib/client/elements/keyboardToolbar/KeyboardToolbar.svelte";
   import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
+
   export let command: string | undefined = undefined;
   export let commandType: ActionType | undefined = undefined;
   export let componentParams: any = undefined;
@@ -140,17 +141,21 @@
     {#if !$view.isConstrainedWidth && $context.embed !== Embed.HANDSET}
       <div class="mr-4">
         <div
-          class="px-2 flex justify-center items-center gap-2 bg-bgs3 rounded-md py-1 text-b3 text-fgs3 min-w-fit w-fit"
+          class={cn(
+            "px-2 flex justify-center items-center gap-2 rounded-md py-1 text-b3 text-fgs3 min-w-fit w-fit",
+            {
+              "bg-bgs3": !(isFullPageContext && !isFocusing)
+            }
+          )}
         >
           {#if value}
             Press <b>Enter</b> to run
           {:else if isFullPageContext && !isFocusing}
-            Press
-            {resolveShortcutText({
+            <!-- {resolveShortcutText({
               key: "Space",
               os: $context.os
-            })}
-            for commands
+            })} -->
+            <ShortcutText shortcut={Action.CMD} parentBgIndex={1} />
           {:else if isFullPageContext && isFocusing}
             Press <b>Esc</b> to close
           {:else}

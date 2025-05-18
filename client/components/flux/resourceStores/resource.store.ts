@@ -38,7 +38,6 @@ import { toasts } from "$lib/client/stores/notification.store";
 import { logger } from "../../debug/logger.client";
 import { isSameResource, resourceInList } from "./resource.utils";
 import { GlobalEvent } from "$lib/client/types/event.enum";
-// import { appStore } from "$lib/client/stores/app.store";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { AppSearchParam } from "$lib/client/types/appStore.type";
 
@@ -141,14 +140,14 @@ export class ActiveResourceStore<
   }
   /**
    * Removed dependency on appStore to avoid circular dependency issues on Clipper extension.
-   * @param val 
-   * @returns 
+   * @param val
+   * @returns
    */
   toggleEditMode(val: boolean) {
-    // appStore.toggleSearchParam(
-    //   val ? { [AppSearchParam.EDIT]: true } : [AppSearchParam.EDIT]
-    // );
-    dispatchCustomEvent(GlobalEvent.TOGGLE_SEARCH_PARAM, val ? { [AppSearchParam.EDIT]: true } : [AppSearchParam.EDIT]);
+    dispatchCustomEvent(
+      GlobalEvent.TOGGLE_SEARCH_PARAM,
+      val ? { [AppSearchParam.EDIT]: true } : [AppSearchParam.EDIT]
+    );
     return this.update((prev) => ({ ...prev, isInEditMode: val }));
   }
   toggleLock(val: boolean) {

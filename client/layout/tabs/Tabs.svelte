@@ -34,7 +34,7 @@
 
 {#if (pinnedItems?.length > 0 || isShowHome) && !isInFocusMode}
   <div
-    class="flex gap-3 justify-between items-center w-full h--12 bg-bgs2 py--2 pr-4 userdata"
+    class="flex gap-3 justify-between items-center w-full h--12 bg-bgs2 py--2 pr-4 border-b border-brs3 userdata"
   >
     <span class="flex gap--2 grow">
       {#if isShowHome}

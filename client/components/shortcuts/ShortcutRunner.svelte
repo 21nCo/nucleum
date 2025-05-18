@@ -9,6 +9,7 @@
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { Action } from "$lib/client/types/action.enum";
   import { InteractionMode } from "../settings/interactionMode/interactionMode.type";
+  import { ResourceAccessMode } from "../flux/resourceStores/resource.type";
 
   function checkIfSystemShortcut(event: KeyboardEvent) {
     return (
@@ -52,8 +53,11 @@
     if (
       interactionMode === InteractionMode.COMMAND_ONLY &&
       shortcut.action === Action.CMD
-    )
+    ) {
+      appStore.toggleSearchParam([ResourceAccessMode.TAB]);
+      event.preventDefault();
       return;
+    }
     appStore.runAction(shortcut.action);
     event.stopPropagation();
     event.preventDefault();

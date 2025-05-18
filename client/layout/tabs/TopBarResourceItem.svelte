@@ -60,62 +60,64 @@
   }
 </script>
 
-<button
-  use:popover={{
-    placement: Placement.BottomCenter,
-    content: ContextMenu,
-    triggerMethod: [PopoverTriggerMethod.RIGHT_CLICK],
-    componentProps: { menuResolver: resolveContextMenu },
-    id: "topBarContextMenu",
-    groupId: "topBarContextMenuGroup"
-  }}
-  use:hoverable={{
-    onHover: (e) => (isHovering = e)
-  }}
-  use:rearrangeOnAxis={{
-    enabled: true,
-    onRearrange: handleRearrange,
-    onRearranged: handleRearranged,
-    threshold: 30
-  }}
-  class={cn(
-    "relative flex items-center rounded--full border-x border-r-brs3 border-l-transparent text-b2 gap-2 px-6 py-2 max-w-48 min-w-20",
-    // abg(isActive, 1),
-    {
-      "hover:bg-bgs3": !isActive,
-      "bg-bgs1": isActive
-    }
-  )}
-  on:click
->
-  <div class="truncate text-b3">
-    {#if !resource}
-      <span class="w-32"> loading... </span>
-    {:else if action?.resourceLabelRenderer && resource}
-      <svelte:component this={action.resourceLabelRenderer} item={resource} />
-    {:else}
-      {isValidString(resource?.label) ? resource?.label : "Untitled"}
-    {/if}
-  </div>
-  {#if isHovering}
-    <button
-      class={cn(
-        "absolute right-0 h-full rounded--full bg-gradient-to-l  to-transparent pl-10",
-        {
-          "from-bgs3 via-bgs3": !isActive,
-          "from-bgs1 via-bgs1": isActive
-        }
-      )}
-    >
+<div class="p-1 border-x border-r-brs3 border-l-transparent">
+  <button
+    use:popover={{
+      placement: Placement.BottomCenter,
+      content: ContextMenu,
+      triggerMethod: [PopoverTriggerMethod.RIGHT_CLICK],
+      componentProps: { menuResolver: resolveContextMenu },
+      id: "topBarContextMenu",
+      groupId: "topBarContextMenuGroup"
+    }}
+    use:hoverable={{
+      onHover: (e) => (isHovering = e)
+    }}
+    use:rearrangeOnAxis={{
+      enabled: true,
+      onRearrange: handleRearrange,
+      onRearranged: handleRearranged,
+      threshold: 30
+    }}
+    class={cn(
+      "relative flex items-center rounded-md text-b2 gap-2 px-6 py-2 max-w-48 min-w-20",
+      // abg(isActive, 1),
+      {
+        "hover:bg-bgs3": !isActive,
+        "bg-bgs1": isActive
+      }
+    )}
+    on:click
+  >
+    <div class="truncate text-b3">
+      {#if !resource}
+        <span class="w-32"> loading... </span>
+      {:else if action?.resourceLabelRenderer && resource}
+        <svelte:component this={action.resourceLabelRenderer} item={resource} />
+      {:else}
+        {isValidString(resource?.label) ? resource?.label : "Untitled"}
+      {/if}
+    </div>
+    {#if isHovering}
       <button
-        on:click={() => tabs.remove(item)}
-        class="h-full flex justify-center items-center pr-2"
+        class={cn(
+          "absolute right-0 h-full rounded-r-md bg-gradient-to-l  to-transparent pl-10",
+          {
+            "from-bgs3 via-bgs3": !isActive,
+            "from-bgs1 via-bgs1": isActive
+          }
+        )}
       >
-        <Icon icon="ph:x" size={Size.sm} class="stroke-fgs2" />
+        <button
+          on:click={() => tabs.remove(item)}
+          class="h-full flex justify-center items-center pr-2"
+        >
+          <Icon icon="ph:x" size={Size.sm} class="stroke-fgs2" />
+        </button>
       </button>
-    </button>
-  {/if}
-</button>
+    {/if}
+  </button>
+</div>
 
 <ComponentBaseLayer
   subscribeToResource={new Set([resourceType])}
