@@ -8,7 +8,10 @@
   import AvatarRenderer from "$lib/client/elements/avatarPicker/AvatarRenderer.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
+  import {
+    ResourceAccessPoint,
+    ResourceActionType
+  } from "$lib/client/components/flux/resourceStores/resource.type";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { appMenuStore } from "$lib/client/stores/appMenu/appMenu.store";
   import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
@@ -29,6 +32,7 @@
   let isHovering: boolean = false;
   let count: number = 0;
   let popRef: HTMLButtonElement;
+  const resource = item.value as Resource;
 
   onMount(async () => {
     await refresh();
@@ -40,16 +44,14 @@
 
   async function refreshCount() {
     if (!isShowCount) return;
-    count = await new SearchStore().resolveCount(item.value as Resource);
+    count = await new SearchStore().resolveCount(resource);
   }
 
   function resolveContextMenu() {
     const isCurrentResourcePinned = $appMenuStore[
       $appStore.product
-    ]?.user?.includes(
-      resourceAction(item.value as Resource, ResourceActionType.BROWSE)
-    );
-    if (item.value === Resource.combination) {
+    ]?.user?.includes(resourceAction(resource, ResourceActionType.BROWSE));
+    if (resource === Resource.combination) {
       return [];
     }
     const pinAction = {
@@ -63,11 +65,11 @@
       callback: async () => {
         if (!isCurrentResourcePinned)
           appMenuStore.addUserMenuItem(
-            resourceAction(item.value as Resource, ResourceActionType.BROWSE)
+            resourceAction(resource, ResourceActionType.BROWSE)
           );
         else
           appMenuStore.removeUserMenuItem(
-            resourceAction(item.value as Resource, ResourceActionType.BROWSE)
+            resourceAction(resource, ResourceActionType.BROWSE)
           );
         popRef.dispatchEvent(new CustomEvent("hide"));
       }
@@ -77,13 +79,11 @@
       value: "create",
       icon: "plus",
       callback: async () => {
-        appStore.runAction(
-          resourceAction(item.value as Resource, ResourceActionType.CREATE)
-        );
+        appStore.runAction(resourceAction(resource, ResourceActionType.CREATE));
         popRef.dispatchEvent(new CustomEvent("hide"));
       }
     };
-    if (isHideCreateAction(item.value as Resource)) {
+    if (isHideCreateAction(resource)) {
       return [
         {
           group: "all",
@@ -188,7 +188,16 @@
 </button>
 
 <ComponentBaseLayer
+  subscribeToResource={new Set([resource])}
+  subscribeToContext={new Set([
+    ResourceAccessPoint.LIBRARY,
+    resourceAction(resource, ResourceActionType.CREATE)
+  ])}
+  subScriptionPropsForMergeAction={[]}
   on:syncDown={() => {
+    refresh();
+  }}
+  on:change={() => {
     refresh();
   }}
 />

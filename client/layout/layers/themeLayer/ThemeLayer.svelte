@@ -139,7 +139,7 @@
 <!--Note: The font weight and tracking correction is for H Grotesk typeface -->
 <div
   bind:this={ref}
-  id="ntheme"
+  id={extensionContext ? "nthemeclipper" : "ntheme"}
   class={cn("flex h-full w-full", {
     "tracking-[0.01em]": $appearance?.typeface === "Hanken Grotesk",
     "font-[350]": $appearance?.typeface === "Sora",
@@ -155,15 +155,16 @@
 
 <style>
   /* TODO  - clipper case - the need for below typeface settings  */
-  /* #ntheme {
+
+  #nthemeclipper {
     font-family:
-      Sora,
       Space Grotesk,
+      Sora,
       Hanken Grotesk,
       system-ui,
       -apple-system,
       sans-serif !important;
-  } */
+  }
   /* .glass {
     background-image: url(back.png);
   } */

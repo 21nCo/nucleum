@@ -30,6 +30,7 @@
           $activeSession.timeRemainingToTakeBreak != undefined &&
           $activeSession.timeRemainingToTakeBreak < 0
       })}
+      style="font-family: 'Hanken Grotesk'"
     >
       {formatSeconds(
         $activeSession.isSessionRunning

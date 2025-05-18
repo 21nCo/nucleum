@@ -1,13 +1,10 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import QuickStartThumbnail from "./QuickStartThumbnail.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import QuickStartCombinedTagsBar from "./actions/QuickStartCombinedTagsBar.svelte";
   import { Layout } from "$lib/client/types/layout.type";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { appStore } from "$lib/client/stores/app.store";
-  import { cn } from "$lib/client/utils/ui.utils";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
@@ -20,7 +17,6 @@
   import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
   import { isValidArray } from "$lib/shared/utils/obj.utils";
   import {
-    isSameResource,
     resourceAction,
     resourceInList
   } from "$lib/client/components/flux/resourceStores/resource.utils";
@@ -30,9 +26,9 @@
   import { focusAggregates } from "../../analytics/analytics.store";
   import { LoadingAnimationType } from "$lib/client/types/feedback.type";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import Icon from "$lib/client/elements/Icon.svelte";
   import QuickStartThumbnailList from "./QuickStartThumbnailList.svelte";
+  import view from "$lib/client/stores/view.store";
+  import QuickStartLayoutToggle from "./actions/QuickStartLayoutToggle.svelte";
 
   let isLoadingState = false;
   let searchQuery = "";
@@ -139,23 +135,22 @@
 </script>
 
 <div class="flex flex-col flex-grow gap-4 w-full">
-  {#if $context.embed === Embed.HANDSET}
-    <QuickStartCombinedTagsBar bind:searchInput={searchQuery} on:searchSort />
-  {:else}
-    <InlineSearchBar
-      query={searchQuery}
-      isPadded={true}
-      on:search={onSearch}
-      placeholder="Search a goal to quick focus"
-      on:enter={() => createNewGoal()}
-    />
-    <!-- <div class="mo:p-0 px-3">
-      <TagsContainer
-        bind:selectedTagId={$quickFocusItemStore.selectedTagId}
-        on:select={onTagSelect}
-      />
-    </div> -->
-  {/if}
+  <InlineSearchBar
+    query={searchQuery}
+    isPadded={true}
+    on:search={onSearch}
+    placeholder="Search a goal to quick focus"
+    on:enter={() => createNewGoal()}
+    padding={$context.embed === Embed.HANDSET || $view.isConstrainedWidth
+      ? "pl-4 pr-2"
+      : undefined}
+  >
+    {#if $context.embed === Embed.HANDSET || $view.isConstrainedWidth}
+      <div class="flex justify-center shrink-0">
+        <QuickStartLayoutToggle />
+      </div>
+    {/if}
+  </InlineSearchBar>
   {#if !isLoadingState && ((items.length > 0 && !searchQuery) || (searchQuery && (searchPinnedItems.length > 0 || searchUnpinnedItems.length > 0)))}
     {#if searchQuery}
       <div class="flex flex-col gap-12">
@@ -229,12 +224,3 @@
     refresh({ isPreventLoadingPulse: true });
   }}
 />
-
-<style>
-  .animate-spin {
-    display: block;
-    position: absolute;
-    top: 4%;
-    left: 48%;
-  }
-</style>

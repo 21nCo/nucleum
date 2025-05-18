@@ -12,7 +12,11 @@
   import PlanFeatureList from "./elements/PlanFeatureList.svelte";
   import { Action } from "$lib/client/types/action.enum";
   import { BillingCycle, PlanType } from "./userPlan.type";
-  import { PlanStatus, type IUserPlan } from "$lib/client/types/account.type";
+  import {
+    PlanStatus,
+    UserDataMode,
+    type IUserPlan
+  } from "$lib/client/types/account.type";
   import { PaymentProvider } from "$lib/shared/types/plan.type";
   import RestorePurchaseAction from "./RestorePurchaseAction.svelte";
   import context from "$lib/client/stores/context.store";
@@ -85,70 +89,76 @@
   }
 </script>
 
-<div class="flex flex-col gap-4 items-center w-full h-full">
-  <div class="flex flex-col gap-8 bg-bgs2 cw:p-4 p-8 rounded-md w-full">
-    <div class="flex flex-col gap-2">
-      <p class="text-h3 text-fgs2">{resolvePlanLabel($account.plan)}</p>
-      <div class="flex flex-wrap justify-between gap-2">
-        <p class="text-sm text-fgs3">
-          {#if renewalDate && $account.plan?.status === PlanStatus.ACTIVE}
-            Next payment: <b>
-              {formatDate(renewalDate)}
-            </b>
-          {:else if renewalDate && $account.plan?.status === PlanStatus.CANCELLED}
-            Expires: {formatDate(renewalDate)}
-          {/if}
-        </p>
-        {#if $account.plan?.provider && $account.plan?.provider !== PaymentProvider.SELF}
-          <p class="text-sm text-fgs3">
-            Purchased through: <b>
-              {resolveProviderLabel($account.plan?.provider)}
-            </b>
-          </p>
-        {/if}
-      </div>
-    </div>
-    {#if $account.plan?.plan === PlanType.TRIAL}
+{#if $account.dataMode === UserDataMode.LOCAL}
+  <div class="flex w-full rounded-md bg-bgs2 p-4">
+    You are using the app in offline mode. Please signup as a cloud user to see
+    billing details.
+  </div>
+{:else}
+  <div class="flex flex-col gap-4 items-center w-full h-full">
+    <div class="flex flex-col gap-8 bg-bgs2 cw:p-4 p-8 rounded-md w-full">
       <div class="flex flex-col gap-2">
-        <div>
-          <Button
-            icon="ph:sparkle-light"
-            label="Upgrade"
-            type={ButtonVariant.PRIMARY}
-            on:click={() => {
-              appStore.runAction(Action.USER_PLAN);
-            }}
-          />
+        <p class="text-h3 text-fgs2">{resolvePlanLabel($account.plan)}</p>
+        <div class="flex flex-wrap justify-between gap-2">
+          <p class="text-sm text-fgs3">
+            {#if renewalDate && $account.plan?.status === PlanStatus.ACTIVE}
+              Next payment: <b>
+                {formatDate(renewalDate)}
+              </b>
+            {:else if renewalDate && $account.plan?.status === PlanStatus.CANCELLED}
+              Expires: {formatDate(renewalDate)}
+            {/if}
+          </p>
+          {#if $account.plan?.provider && $account.plan?.provider !== PaymentProvider.SELF}
+            <p class="text-sm text-fgs3">
+              Purchased through: <b>
+                {resolveProviderLabel($account.plan?.provider)}
+              </b>
+            </p>
+          {/if}
         </div>
-        <DiscountBanner isPreventDiscounting={isAppleContext} />
       </div>
-    {:else if $account.plan}
-      <div class="text-left">
-        <h2 class="text-lg text-fgs1 mb-3">What's included:</h2>
-        <PlanFeatureList features={currentPlanFeatures} />
-      </div>
+      {#if $account.plan?.plan === PlanType.TRIAL}
+        <div class="flex flex-col gap-2">
+          <div>
+            <Button
+              icon="ph:sparkle-light"
+              label="Upgrade"
+              type={ButtonVariant.PRIMARY}
+              on:click={() => {
+                appStore.runAction(Action.USER_PLAN);
+              }}
+            />
+          </div>
+          <DiscountBanner isPreventDiscounting={isAppleContext} />
+        </div>
+      {:else if $account.plan}
+        <div class="text-left">
+          <h2 class="text-lg text-fgs1 mb-3">What's included:</h2>
+          <PlanFeatureList features={currentPlanFeatures} />
+        </div>
 
-      <div class="flex gap-2">
-        {#if $account.plan.status === PlanStatus.REFUNDED}
-          <Button
-            icon="ph:arrow-counter-clockwise-light"
-            label="Reactivate"
-            type={ButtonVariant.PRIMARY}
-            on:click={() => {
-              appStore.runAction(Action.USER_PLAN);
-            }}
-          />
-        {:else if canCancel}
-          <Button
-            type={ButtonVariant.DANGER}
-            style={ButtonStyle.OUTLINED}
-            icon="ph:x-light"
-            label="Cancel Subscription"
-            on:click={() => {
-              appStore.runAction(Action.USER_PLAN_CANCELATION);
-            }}
-          />
-          <!-- {#if $account.plan?.cycle !== BillingCycle.LIFETIME}
+        <div class="flex gap-2">
+          {#if $account.plan.status === PlanStatus.REFUNDED}
+            <Button
+              icon="ph:arrow-counter-clockwise-light"
+              label="Reactivate"
+              type={ButtonVariant.PRIMARY}
+              on:click={() => {
+                appStore.runAction(Action.USER_PLAN);
+              }}
+            />
+          {:else if canCancel}
+            <Button
+              type={ButtonVariant.DANGER}
+              style={ButtonStyle.OUTLINED}
+              icon="ph:x-light"
+              label="Cancel Subscription"
+              on:click={() => {
+                appStore.runAction(Action.USER_PLAN_CANCELATION);
+              }}
+            />
+            <!-- {#if $account.plan?.cycle !== BillingCycle.LIFETIME}
             <Button
               icon="ph:arrow-right-light"
               parentBgIndex={2}
@@ -158,33 +168,34 @@
               }}
             />
           {/if} -->
-        {/if}
+          {/if}
+        </div>
+      {/if}
+      {#if !canCancel && $account.plan?.cycle === BillingCycle.LIFETIME && (!$account.plan?.provider || $account.plan?.provider === PaymentProvider.SELF)}
+        For cancellation of lifetime plan, please contact us via email.
+      {:else if !canCancel}
+        <InlineInfoBanner
+          content={resolveCannotCancelContent()}
+          parentBgIndex={2}
+          type={InfoTextType.INFO}
+        />
+      {:else if $account.plan?.plan === PlanType.TRIAL}
+        <InlineInfoBanner
+          content="You will need a subscription to continue using **cloud sync**. Sign up as an offline user instead to use the app for free."
+          parentBgIndex={2}
+          type={InfoTextType.INFO}
+        />
+      {/if}
+      <div class="flex justify-between flex-wrap gap-2">
+        <div class="text-b2 text-fgs2">
+          Have questions? Reach us at
+          <a href="mailto:hello@21n.org" class="text-aps1 hover:underline"
+            >hello@21n.org</a
+          >
+        </div>
+        <RestorePurchaseAction />
       </div>
-    {/if}
-    {#if !canCancel && $account.plan?.cycle === BillingCycle.LIFETIME && (!$account.plan?.provider || $account.plan?.provider === PaymentProvider.SELF)}
-      For cancellation of lifetime plan, please contact us via email.
-    {:else if !canCancel}
-      <InlineInfoBanner
-        content={resolveCannotCancelContent()}
-        parentBgIndex={2}
-        type={InfoTextType.INFO}
-      />
-    {:else if $account.plan?.plan === PlanType.TRIAL}
-      <InlineInfoBanner
-        content="You will need a subscription to continue using **cloud sync**. Sign up as an offline user instead to use the app for free."
-        parentBgIndex={2}
-        type={InfoTextType.INFO}
-      />
-    {/if}
-    <div class="flex justify-between flex-wrap gap-2">
-      <div class="text-b2 text-fgs2">
-        Have questions? Reach us at
-        <a href="mailto:hello@21n.org" class="text-aps1 hover:underline"
-          >hello@21n.org</a
-        >
-      </div>
-      <RestorePurchaseAction />
+      <PoliciesFooter pretext="By subscribing, you agree to our" />
     </div>
-    <PoliciesFooter pretext="By subscribing, you agree to our" />
   </div>
-</div>
+{/if}
