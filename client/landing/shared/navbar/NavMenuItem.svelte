@@ -22,6 +22,8 @@
   on:click
   >{item.label}
   {#if item.expandRender}
-    <SvgIcon icon="chevdown" isRenderRaw={true} />
+    <span class="w-3">
+      <SvgIcon icon="chevdown" isRenderRaw={true} />
+    </span>
   {/if}
 </button>

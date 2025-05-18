@@ -20,7 +20,7 @@
   export let footerValues: IFooter;
   export let metadata: IMetadata;
   let scrollY: number = 0;
-  let isShowLoadingOverlay: boolean = true;
+  let isShowLoadingOverlay: boolean = false;
   let transformedProducts: IListItem[] = [
     { title: "Our products" },
     ...$currentProductsStore?.map((product) => ({

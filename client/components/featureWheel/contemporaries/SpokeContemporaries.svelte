@@ -35,7 +35,6 @@
   $: groupedContemporaries = contemporaryGroups.filter(
     (group) => group.length > 1
   );
-  $: console.log({ singleContemporaries, groupedContemporaries });
 
   function resolveYCoord(contemporary: IFeatureWheelContemporary) {
     return (
@@ -57,6 +56,7 @@
 {#each singleContemporaries as contemporary}
   <SpokeContemporaryItem
     {size}
+    on:contemporary
     xCoord={resolveXCoord(contemporary)}
     yCoord={resolveYCoord(contemporary)}
     {contemporary}
@@ -65,6 +65,7 @@
 {#each groupedContemporaries as contemporary}
   <SpokeContemporaryItem
     {size}
+    on:contemporary
     xCoord={resolveXCoord(contemporary[0])}
     yCoord={resolveYCoord(contemporary[0])}
     group={contemporary}

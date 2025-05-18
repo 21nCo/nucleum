@@ -25,7 +25,7 @@
 
 <div class="flex flex-col gap-2">
   <div class="text-h5 font-medium">Comparison</div>
-  <table class="w-full border-collapse">
+  <table class="w-full border-collapse table-fixed">
     <thead>
       <tr class="bg-bgs2">
         <HeaderTitle icon="ph:squares-four-light" label="App" />
@@ -34,6 +34,10 @@
             <HeaderTitle icon="ph:question-light" label={property} />
           {/each}
         {/if}
+        <HeaderTitle
+          icon="ph:dollar-sign-light"
+          label="Price (per month USD)"
+        />
         <HeaderTitle icon="ph:star-light" label="Rating" />
         <HeaderTitle icon="ph:question-light" label="Notes" />
       </tr>
@@ -53,11 +57,18 @@
         {/each}
       {:else}
         <tr>
-          <td colspan="3" class="border border-bgs3 p-2 text-center"
+          <td
+            colspan="3"
+            class="border border-bgs3 p-2 py-4 text-center text-fgs3 text-b3"
             >No comparison data available</td
           >
         </tr>
       {/if}
     </tbody>
   </table>
+  {#if feature.category !== "App"}
+    <span class="text-fgs2 text-b2">
+      All apps that aren't listed in the above table don't have this feature.
+    </span>
+  {/if}
 </div>

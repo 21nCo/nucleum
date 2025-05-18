@@ -28,7 +28,9 @@
         : $view.isPortrait
           ? "relative top-5"
           : ""}
-    <SvgIcon {icon} {size} isRenderRaw={true} />
+    <span class="w-6">
+      <SvgIcon {icon} {size} isRenderRaw={true} />
+    </span>
   {/if}
   <div class="flex flex-col">
     <!-- {#if $view.isPortrait}

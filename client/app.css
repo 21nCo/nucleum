@@ -24,10 +24,10 @@
 
 
 @layer base {
-  /* @font-face {
-        font-family: 'HkGrotesk';
-        src: url('fonts/HKGrotesk-Medium.otf');
-    } */
+  @font-face {
+        font-family: 'Space Grotesk';
+        src: url('fonts/SpaceGrotesk.ttf');
+    }
 
   /* Hide scrollbar for IOS webview and other scenarios */
   ::-webkit-scrollbar {

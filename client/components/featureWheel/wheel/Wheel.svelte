@@ -240,6 +240,12 @@
             {i}
             {j}
             groupSpokeLength={group.spokes.length}
+            on:contemporary={(e) => {
+              dispatch("contemporary", {
+                spoke: spoke.label,
+                contemporaries: e.detail
+              });
+            }}
           />
         {/if}
         <SpokeLabel

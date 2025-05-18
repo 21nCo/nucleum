@@ -173,7 +173,7 @@
   </div>
   {#if !isHorizontal}
     <div class="flex flex-col gap-6 w-full">
-      {#if selectedCompare}
+      {#if selectedCompare && selectedCompare.length > 0}
         <div class="flex justify-center">
           <Button
             type="secondary"
@@ -186,7 +186,7 @@
       {/if}
       <div class="flex justify-center">
         <button
-          class="flex items-center gap-1 text-b3 text-fgs2 p-2 rounded-md hover:bg-bgs2"
+          class="flex items-center gap-1 text-b3 text-fgs2 p-2 rounded-md hover:bg-bgs3"
           on:click={() => {
             dispatch("howToUse");
           }}

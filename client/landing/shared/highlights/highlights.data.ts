@@ -2,7 +2,7 @@ import type { IHighlight } from "../landing.type";
 
 export const highlights: { [key: string]: IHighlight } = {
   powerful: {
-    icon: "powerfulwheel",
+    icon: "ph:lightning",
     title: "Unbelievably powerful",
     desc: "Unlock next-level of focus, time and goal tracking with a powerhouse of features.",
     visualRenderComponent: "pointronFeatures"
@@ -25,6 +25,17 @@ export const highlights: { [key: string]: IHighlight } = {
     title: "Zero-trust security & ownership",
     desc: "If you opt for managed cloud sync, your data is encrypted from start to finish - only you can access it. Even better, you can host your data on your preferred servers or run locally.",
     visualRenderComponent: "security",
+    isVisualAtBottom: true
+  },
+  wholesome: {
+    icon: "powerfulwheel",
+    title: "Wholesome & thoughtful",
+    desc: "Finally, a place where everything feels coherent"
+  },
+  reliable: {
+    icon: "ph:fire",
+    title: "Insanely reliable",
+    desc: "Perform actions in micro seconds not seconds",
     isVisualAtBottom: true
   },
   intuitive: {

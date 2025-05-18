@@ -14,22 +14,21 @@ enum MemotronFeatureCategory {
   Clipping = "Clipping",
   Curation = "Curation",
   Views = "Views",
+  /**
+   * @deprecated - use other categories instead
+   */
   Taco = "AI",
-  Retrospection = "Retrospection",
-  Processing = "Processing",
-  Retrieval = "Retrieval",
-  Synthesis = "Synthesis"
+  RetrievalAndSynthesis = "Synthesis"
 }
 
 export const categories: IFwCategory[] = [
   { label: MemotronFeatureCategory.Capture, color: "#2A8CAB" },
-  { label: MemotronFeatureCategory.Content, color: "#1E9B92" },
   { label: MemotronFeatureCategory.Clipping, color: "#4E9973" },
+  { label: MemotronFeatureCategory.Content, color: "#1E9B92" },
   { label: MemotronFeatureCategory.Curation, color: "#D4A534" },
-  { label: MemotronFeatureCategory.Taco, color: "#7E49A1" },
+  { label: MemotronFeatureCategory.RetrievalAndSynthesis, color: "#7E49A1" },
   { label: MemotronFeatureCategory.Views, color: "#AA6A6A" },
-  { label: MemotronFeatureCategory.App, color: "#C87F1E" }
-  // { label: MemotronFeatureCategory.Retrospection, color: "#4287f5" }
+  { label: MemotronFeatureCategory.App, color: "#4287f5" }
 ];
 
 export const features: IFwFeature[] = [
@@ -37,6 +36,8 @@ export const features: IFwFeature[] = [
   {
     label: "Source",
     category: MemotronFeatureCategory.App,
+    image: "/phone.png",
+    learnMoreLink: "https://docs.memotron.app/memotron/source",
     progress: 1,
     isProminent: true,
     description:
@@ -120,6 +121,16 @@ export const features: IFwFeature[] = [
     isPlanned: true,
     description:
       "Inclusive design supporting various accessibility needs like screen readers and keyboard navigation",
+    contemporaries: []
+  },
+  {
+    label: "Agent mode",
+    category: MemotronFeatureCategory.App,
+    progress: 0,
+    isPlanned: true,
+    isNovel: true,
+    description:
+      "Voice commands and dictation for hands-free interaction with your knowledge base",
     contemporaries: []
   },
   {
@@ -236,6 +247,18 @@ export const features: IFwFeature[] = [
       {
         label: Contemporary.Remnote,
         value: 0.8
+      },
+      {
+        label: Contemporary.Bear,
+        value: 0.8
+      },
+      {
+        label: Contemporary.Heptabase,
+        value: 0.8
+      },
+      {
+        label: Contemporary.Mymind,
+        value: 0.8
       }
     ]
   },
@@ -243,8 +266,7 @@ export const features: IFwFeature[] = [
     label: "Pdf",
     category: MemotronFeatureCategory.Content,
     progress: 0.8,
-    description:
-      "Native PDF viewing, annotation, highlighting, and note-taking capabilities",
+    description: "Native PDF viewing, and annotation capabilities",
     contemporaries: [
       {
         label: Contemporary.Remnote,
@@ -257,8 +279,21 @@ export const features: IFwFeature[] = [
     category: MemotronFeatureCategory.Content,
     progress: 0.75,
     description:
-      "Audio file support with playback, annotation, and transcription capabilities",
-    contemporaries: []
+      "Audio file support with playback and transcription capabilities.",
+    contemporaries: [
+      {
+        label: Contemporary.AudioPen,
+        value: 0.8
+      },
+      {
+        label: Contemporary.ViennaScribe,
+        value: 0.5
+      },
+      {
+        label: Contemporary.Noted,
+        value: 0.7
+      }
+    ]
   },
   {
     label: "Advanced Md",
@@ -321,10 +356,56 @@ export const features: IFwFeature[] = [
     label: "Seamless capture",
     category: MemotronFeatureCategory.Capture,
     progress: 0.4,
-    isPlanned: true,
     isHideForComparer: true,
     description:
-      "Quick and frictionless information capture from any context or device",
+      "Quick and frictionless information capture from any context and device.",
+    contemporaries: []
+  },
+  {
+    label: "Text capture",
+    category: MemotronFeatureCategory.Capture,
+    progress: 0.8,
+    description: "Ability to quickly capture text.",
+    ratingCriteria: [
+      {
+        label: "Quick and frictionless"
+      }
+    ],
+    contemporaries: [
+      {
+        label: Contemporary.Obsidian,
+        value: 0.8
+      },
+      {
+        label: Contemporary.Notion,
+        value: 0.8
+      }
+    ]
+  },
+  {
+    label: "Camera capture",
+    category: MemotronFeatureCategory.Capture,
+    progress: 0.8,
+    description:
+      "Ability to quickly capture image or video using the camera of the device.",
+    ratingCriteria: [
+      {
+        label:
+          "Quick and frictionless - as seamless as using Instagram or other photo based social platforms"
+      }
+    ],
+    contemporaries: []
+  },
+  {
+    label: "Audio capture",
+    category: MemotronFeatureCategory.Capture,
+    progress: 0.8,
+    description: "Ability to quickly capture information using voice recording",
+    ratingCriteria: [
+      {
+        label: "Quick and frictionless"
+      }
+    ],
     contemporaries: []
   },
   {
@@ -333,42 +414,16 @@ export const features: IFwFeature[] = [
     progress: 0.8,
     isNovel: true,
     description:
-      "Structured capture with predefined templates and formats for different content types",
-    contemporaries: []
-  },
-  {
-    label: "Audio capture",
-    category: MemotronFeatureCategory.Capture,
-    progress: 0.8,
-    description:
-      "Voice recording with automatic transcription and organization capabilities",
-    contemporaries: []
-  },
-  {
-    label: "Camera capture",
-    category: MemotronFeatureCategory.Capture,
-    progress: 0.8,
-    description:
-      "Image capture with OCR and automatic organization into your knowledge base",
-    contemporaries: []
-  },
-  {
-    label: "Outlining",
-    category: MemotronFeatureCategory.Capture,
-    progress: 0,
-    isPlanned: true,
-    description:
-      "Hierarchical outlining tools for structured thinking and organization",
-    contemporaries: [
+      "Capturing new information using types which enables capturing of properties, adding to the collection while capturing.",
+    ratingCriteria: [
       {
-        label: Contemporary.Remnote,
-        value: 0.7
+        label: "Quick and frictionless"
       },
       {
-        label: Contemporary.Dynalist,
-        value: 0.5
+        label: "Ability to capture properties of various types"
       }
-    ]
+    ],
+    contemporaries: []
   },
   {
     label: "Sketch capture",
@@ -376,7 +431,7 @@ export const features: IFwFeature[] = [
     progress: 0,
     isPlanned: true,
     description:
-      "Drawing and sketching capabilities with digital pen support and organization",
+      "Ability to quickly capture thoughts or ideas using sketching.",
     contemporaries: []
   },
 
@@ -387,6 +442,29 @@ export const features: IFwFeature[] = [
     progress: 0.8,
     description:
       "Web content clipping with browser extensions and mobile apps for saving articles and pages",
+    ratingCriteria: [
+      {
+        label: "Quick and frictionless saving of any web page"
+      },
+      {
+        label: "Ability to highlight and save text from any web page"
+      },
+      {
+        label:
+          "Ability to have text highlights persisted on the web page when returning to the page"
+      },
+      {
+        label:
+          "Ability to view all the highlights made on a web page and the ability to scroll to that part of the page upon clicking"
+      },
+      {
+        label: "Ability to screenshot on a web page"
+      },
+      {
+        label:
+          "Ability to add additional notes to the web page or the highlights"
+      }
+    ],
     contemporaries: [
       {
         label: Contemporary.Obsidian,
@@ -432,6 +510,21 @@ export const features: IFwFeature[] = [
     progress: 0.75,
     description:
       "YouTube video clipping with timestamp marking and transcription capabilities",
+    ratingCriteria: [
+      {
+        label: "Quick and frictionless saving of any YouTube video"
+      },
+      {
+        label: "Ability to highlight points in the video and save them"
+      },
+      {
+        label: "Ability to add additional notes to the video"
+      },
+      {
+        label:
+          "Ability to view the list of highlights made on the video and jump to that part of the video upon clicking"
+      }
+    ],
     contemporaries: [
       {
         label: Contemporary.Liner,
@@ -444,6 +537,14 @@ export const features: IFwFeature[] = [
     category: MemotronFeatureCategory.Clipping,
     progress: 0.75,
     description: "Clipping tweets",
+    ratingCriteria: [
+      {
+        label: "Ability to save tweets from Twitter"
+      },
+      {
+        label: "Ability to add additional notes to the tweet"
+      }
+    ],
     contemporaries: []
   },
   {
@@ -464,11 +565,28 @@ export const features: IFwFeature[] = [
     contemporaries: []
   },
   {
+    label: "Clip from desktop",
+    category: MemotronFeatureCategory.Clipping,
+    progress: 0.1,
+    isPlanned: true,
+    description:
+      "Desktop screen clipping and snipping tools for capturing any content on your computer when the app is not active",
+    contemporaries: []
+  },
+  {
     label: "Kindle highlights",
     category: MemotronFeatureCategory.Clipping,
     progress: 0.8,
     description:
       "Import and organization of Kindle highlights and notes with book metadata",
+    ratingCriteria: [
+      {
+        label: "Ability to import highlights and notes from Kindle"
+      },
+      {
+        label: "Ability to add additional notes to the highlights"
+      }
+    ],
     contemporaries: [
       {
         label: Contemporary.Readwise,
@@ -481,30 +599,12 @@ export const features: IFwFeature[] = [
     ]
   },
   {
-    label: "Clip from desktop",
-    category: MemotronFeatureCategory.Clipping,
-    progress: 0,
-    isPlanned: true,
-    description:
-      "Desktop screen clipping and snipping tools for capturing any content on your computer",
-    contemporaries: []
-  },
-  {
     label: "Audible highlights",
     category: MemotronFeatureCategory.Clipping,
     progress: 0,
     isPlanned: true,
     description:
       "Import and organization of Audible highlights and notes with audiobook metadata",
-    contemporaries: []
-  },
-  {
-    label: "Scribd highlights",
-    category: MemotronFeatureCategory.Clipping,
-    progress: 0,
-    isPlanned: true,
-    description:
-      "Import and organization of Scribd highlights and notes with document metadata",
     contemporaries: []
   },
   {
@@ -524,7 +624,7 @@ export const features: IFwFeature[] = [
     progress: 0.8,
     isNovel: true,
     description:
-      "One-click curation process for content from various sources into your knowledge system",
+      "Ability to curate new information at source by simply linking to the the destination of the information",
     contemporaries: []
   },
   {
@@ -533,26 +633,34 @@ export const features: IFwFeature[] = [
     progress: 0.8,
     isNovel: true,
     description:
-      "Atomized content organization with interconnected nodes for flexible knowledge structures",
+      "Ability to associate new information to an exact location in a markdown node i.e. headings and sub headings.",
     contemporaries: []
   },
   {
     label: "Types/Objects",
     category: MemotronFeatureCategory.Curation,
+    image: "/clipFeature.png",
+    learnMoreLink: "https://docs.memotron.app/memotron/types",
     progress: 0.75,
     description:
-      "Structured data with custom types, properties, and relations for organized knowledge",
+      "Structured data with custom avatars, properties, and relations for organized knowledge",
+    ratingCriteria: [
+      {
+        label:
+          "Ability to create objects/types with a title, avatar and properties"
+      },
+      {
+        label:
+          "Ability to have variety of property types to save and organize information including but not limited to text, number, date, rating, select, checkbox, etc."
+      }
+    ],
     contemporaries: [
       {
         label: Contemporary.Capacities,
         value: 0.7
       },
       {
-        label: Contemporary.Heptabase,
-        value: 0.7
-      },
-      {
-        label: Contemporary.Tana,
+        label: Contemporary.Notion,
         value: 0.7
       },
       {
@@ -560,8 +668,12 @@ export const features: IFwFeature[] = [
         value: 0.7
       },
       {
-        label: Contemporary.Notion,
+        label: Contemporary.Tana,
         value: 0.5
+      },
+      {
+        label: Contemporary.Obsidian,
+        value: 0.4
       }
     ]
   },
@@ -571,6 +683,11 @@ export const features: IFwFeature[] = [
     progress: 0.75,
     description:
       "Automatic and manual backlink creation to discover connections between content pieces",
+    ratingCriteria: [
+      {
+        label: "Ability to create and view backlinks to other nodes"
+      }
+    ],
     contemporaries: [
       {
         label: Contemporary.Obsidian,
@@ -616,12 +733,13 @@ export const features: IFwFeature[] = [
     contemporaries: []
   },
   {
-    label: "Flash cards",
+    label: "Forelink suggestions",
     category: MemotronFeatureCategory.Curation,
     progress: 0,
     isPlanned: true,
+    isNovel: true,
     description:
-      "Spaced repetition and flashcard system for learning and memorization of important knowledge",
+      "AI-suggested connections between content based on semantic similarity and relationships",
     contemporaries: []
   },
 
@@ -632,7 +750,20 @@ export const features: IFwFeature[] = [
     progress: 0.75,
     description:
       "Kanban-style board view for visual organization and workflow management",
-    contemporaries: []
+    ratingCriteria: [
+      {
+        label: "Ability to create and view boards"
+      },
+      {
+        label: "Ability to add cards to the board"
+      }
+    ],
+    contemporaries: [
+      {
+        label: Contemporary.Notion,
+        value: 0.8
+      }
+    ]
   },
   {
     label: "Bird view",
@@ -641,7 +772,26 @@ export const features: IFwFeature[] = [
     isNovel: true,
     description:
       "High-level overview visualization of your entire knowledge base and its connections",
-    contemporaries: []
+    ratingCriteria: [
+      {
+        label:
+          "Ability to view entire knowledge base at once using graph or other similar high level views"
+      }
+    ],
+    contemporaries: [
+      {
+        label: Contemporary.Obsidian,
+        value: 0.8
+      },
+      {
+        label: Contemporary.Roam,
+        value: 0.7
+      },
+      {
+        label: Contemporary.Heptabase,
+        value: 0.55
+      }
+    ]
   },
   {
     label: "Combination",
@@ -682,74 +832,61 @@ export const features: IFwFeature[] = [
     isNovel: true,
     description:
       "Time-based visualization of content with chronological organization capabilities",
-    contemporaries: []
-  },
-  {
-    label: "Space",
-    category: MemotronFeatureCategory.Views,
-    progress: 0,
-    isPlanned: true,
-    isNovel: true,
-    description:
-      "Spatial canvas for free-form organization and visualization of knowledge connections",
+    ratingCriteria: [
+      {
+        label: "Ability to take notes on a specific date"
+      },
+      {
+        label:
+          "Ability to take notes on higher time periods like month, year etc for planning and retrospection purposes"
+      },
+      {
+        label:
+          "Ability to view information captured or clipped on taken on a particular day"
+      },
+      {
+        label:
+          "Ability to switch between time scales like day, week, month, year to gain better perspective"
+      },
+      {
+        label:
+          "Retrospection feature by connecting dots with similar days years ago, high level overview etc"
+      }
+      // {
+      //   label:
+      //     "Ability to view time periods like days, weeks, months etc as stacked columns for easy planning"
+      // }
+      // {
+      //   label: "Ability to view heatmap of activity for easier retrospection"
+      // }
+    ],
     contemporaries: []
   },
 
-  // AI features
+  // Retrieval and synthesis features
   {
-    label: "Audio transcription",
-    category: MemotronFeatureCategory.Taco,
-    progress: 0.75,
-    description:
-      "AI-powered transcription of audio recordings with speaker detection and organizational features",
+    label: "Search",
+    category: MemotronFeatureCategory.RetrievalAndSynthesis,
+    progress: 0.8,
+    description: "Search for content in the knowledge base",
     contemporaries: [
       {
-        label: Contemporary.AudioPen,
+        label: Contemporary.Obsidian,
         value: 0.8
       },
       {
-        label: Contemporary.ViennaScribe,
-        value: 0.5
+        label: Contemporary.Notion,
+        value: 0.8
       },
       {
-        label: Contemporary.Noted,
-        value: 0.7
+        label: Contemporary.Capacities,
+        value: 0.8
       }
     ]
   },
   {
-    label: "NL Search",
-    category: MemotronFeatureCategory.Taco,
-    progress: 0,
-    isPlanned: true,
-    isNovel: true,
-    description:
-      "Natural language search capabilities for finding content using conversational queries",
-    contemporaries: []
-  },
-  {
-    label: "Forelink suggestions",
-    category: MemotronFeatureCategory.Taco,
-    progress: 0,
-    isPlanned: true,
-    isNovel: true,
-    description:
-      "AI-suggested connections between content based on semantic similarity and relationships",
-    contemporaries: []
-  },
-  {
-    label: "Voice interaction",
-    category: MemotronFeatureCategory.Taco,
-    progress: 0,
-    isPlanned: true,
-    isNovel: true,
-    description:
-      "Voice commands and dictation for hands-free interaction with your knowledge base",
-    contemporaries: []
-  },
-  {
-    label: "Auto summarizer",
-    category: MemotronFeatureCategory.Taco,
+    label: "Summarizer",
+    category: MemotronFeatureCategory.RetrievalAndSynthesis,
     progress: 0,
     isPlanned: true,
     isNovel: true,
@@ -759,7 +896,7 @@ export const features: IFwFeature[] = [
   },
   {
     label: "Serendipity",
-    category: MemotronFeatureCategory.Taco,
+    category: MemotronFeatureCategory.RetrievalAndSynthesis,
     progress: 0,
     isPlanned: true,
     description:
@@ -772,38 +909,8 @@ export const features: IFwFeature[] = [
     ]
   },
   {
-    label: "Text editing AI",
-    category: MemotronFeatureCategory.Taco,
-    progress: 0,
-    isPlanned: true,
-    description:
-      "AI-powered assistance for writing, editing, and refining text content",
-    contemporaries: []
-  },
-
-  // Retrospection features
-  {
-    label: "Heatmap",
-    category: MemotronFeatureCategory.Retrospection,
-    progress: 0.4,
-    isPlanned: true,
-    description:
-      "Visual representation of activity and engagement patterns across your knowledge base",
-    contemporaries: []
-  },
-  {
-    label: "Rewind",
-    category: MemotronFeatureCategory.Retrospection,
-    progress: 0,
-    isPlanned: true,
-    isNovel: true,
-    description:
-      "Timeline-based exploration of past versions and evolution of your knowledge base",
-    contemporaries: []
-  },
-  {
     label: "Time machine",
-    category: MemotronFeatureCategory.Retrospection,
+    category: MemotronFeatureCategory.RetrievalAndSynthesis,
     progress: 0,
     isPlanned: true,
     isNovel: true,
@@ -812,8 +919,8 @@ export const features: IFwFeature[] = [
     contemporaries: []
   },
   {
-    label: "Processing",
-    category: MemotronFeatureCategory.Processing,
+    label: "AI editing and processing",
+    category: MemotronFeatureCategory.Content,
     progress: 0.7,
     isPlanned: true,
     description:
@@ -843,10 +950,11 @@ export const features: IFwFeature[] = [
   },
   {
     label: "Semantic search",
-    category: MemotronFeatureCategory.Retrieval,
-    progress: 0.8,
+    category: MemotronFeatureCategory.RetrievalAndSynthesis,
+    progress: 0,
+    isPlanned: true,
     description:
-      "Concept and meaning-based search powered by advanced embedding models",
+      "Concept and meaning-based search powered by advanced embedding models. Natural language search capabilities for finding content using conversational queries",
     contemporaries: [
       {
         label: Contemporary.Obsidian,
@@ -863,8 +971,8 @@ export const features: IFwFeature[] = [
     ]
   },
   {
-    label: "API integration",
-    category: MemotronFeatureCategory.Synthesis,
+    label: "Public API",
+    category: MemotronFeatureCategory.RetrievalAndSynthesis,
     progress: 0.5,
     isPlanned: true,
     description:
@@ -893,12 +1001,21 @@ export const features: IFwFeature[] = [
     ]
   },
   {
-    label: "Spaced repetition",
-    category: MemotronFeatureCategory.Synthesis,
+    label: "MCP server",
+    category: MemotronFeatureCategory.RetrievalAndSynthesis,
+    progress: 0,
+    isPlanned: true,
+    description:
+      "MCP server to support retrieval and synthesis of knowledge via AI agents",
+    contemporaries: []
+  },
+  {
+    label: "Flash cards",
+    category: MemotronFeatureCategory.RetrievalAndSynthesis,
     progress: 0.25,
     isPlanned: true,
     description:
-      "AI-driven spaced repetition for optimal knowledge retention and recall",
+      "Spaced repetition and flashcard system for learning and memorization of important knowledge",
     contemporaries: [
       {
         label: Contemporary.Remnote,

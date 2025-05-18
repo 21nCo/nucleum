@@ -36,6 +36,8 @@
   <PosthogTelemetry />
   <!-- <AnalyticsLayer isLanding={true} /> -->
   <ThemeLayer>
-    <slot />
+    <div class="flex w-full h-full">
+      <slot />
+    </div>
   </ThemeLayer>
 </div>

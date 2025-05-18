@@ -14,6 +14,8 @@ export type IListContentItem = {
 export type IFwFeature = IFeatureWheelSpoke & {
   category: string;
   description: string;
+  image?: string;
+  learnMoreLink?: string;
   ratingCriteria?: IListContentItem[];
   /**
    * Additional notes like upcoming sub features for our product

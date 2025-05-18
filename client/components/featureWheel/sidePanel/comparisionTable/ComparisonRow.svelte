@@ -7,6 +7,7 @@
     IContemporary,
     IFeatureWheelContemporary
   } from "$lib/client/types/featureWheel.type";
+  import { objIsEmpty } from "$lib/shared/utils/obj.utils";
   export let contemporary: IFeatureWheelContemporary;
   export let contemporaryDetail: IContemporary;
   export let additionalProperties: string[] = [];
@@ -14,7 +15,11 @@
 
 <tr>
   <td class="border border-bgs3 p-2 flex items-center gap-2">
-    <ExternalLogo provider={contemporary} />
+    <ExternalLogo
+      provider={objIsEmpty(contemporaryDetail)
+        ? contemporary
+        : contemporaryDetail}
+    />
     {properCase(contemporary.label)}</td
   >
   {#if additionalProperties}
@@ -24,6 +29,9 @@
       </td>
     {/each}
   {/if}
+  <td class="border border-bgs3 p-2">
+    {contemporaryDetail.price ?? "-"}
+  </td>
   <td class="border border-bgs3 p-2">
     <RatingCell value={contemporary.value} />
   </td>

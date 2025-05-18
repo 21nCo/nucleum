@@ -29,13 +29,21 @@
 
   const memotronHighlights: IHighlight[] = [
     {
-      ...highlights.powerful,
-      desc: "Unlock next-level of personal knowledge management with a powerhouse of features.",
+      ...highlights.wholesome,
+      desc: "Finally, a place where everything personal knowledge management feels coherent.",
       visualRenderComponent: "memotronFeaturesRadial"
     },
-    highlights.offline,
+    {
+      ...highlights.powerful,
+      desc: "Unlock next-level of your digital memory with a powerhouse of features.",
+      visualRenderComponent: ""
+    },
+    // highlights.ainative,
+    // highlights.zerotrust,
     highlights.intuitive,
-    highlights.laast
+    highlights.laast,
+    highlights.offline,
+    highlights.reliable
   ];
   const mainMemotronVideoUrl = "https://www.youtube.com/watch?v=SeWdndc7y4A";
   const testimonials: ITestimonial[] = [

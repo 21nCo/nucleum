@@ -30,6 +30,7 @@
   let featureView: string | undefined = undefined;
   let refreshId: number = new Date().getTime();
   let isShowSidePanel: boolean = false;
+  let isShowGoBack: boolean = false;
   refreshWheel();
 
   function refreshWheel() {
@@ -61,6 +62,14 @@
                   })
                 : feature.contemporaries
           }))
+          .map((spoke) => ({
+            ...spoke,
+            contemporaries: spoke.contemporaries.map((contemporary) => ({
+              ...contemporary,
+              icon: contemporaries.find((c) => c.label === contemporary.label)
+                ?.icon
+            }))
+          }))
       };
       groups.push(group);
     }
@@ -69,6 +78,18 @@
       groups
     };
     refreshId = new Date().getTime();
+  }
+
+  function onFeatureClick(spoke: string) {
+    if (spoke === featureView) {
+      featureView = undefined;
+      if (!selectedCompare || selectedCompare.length < 1) {
+        isShowSidePanel = false;
+      }
+      return;
+    }
+    isShowSidePanel = true;
+    featureView = spoke;
   }
 </script>
 
@@ -121,13 +142,11 @@
             selectedSpoke={featureView}
             on:spokeClick={(e) => {
               const spoke = e.detail;
-              if (spoke === featureView) {
-                featureView = undefined;
-                // isShowSidePanel = false;
-                return;
-              }
-              isShowSidePanel = true;
-              featureView = spoke;
+              onFeatureClick(spoke);
+            }}
+            on:contemporary={(e) => {
+              if (!e.detail.spoke) return;
+              onFeatureClick(e.detail.spoke);
             }}
           />
         {/key}
@@ -145,8 +164,17 @@
         {selectedCompare}
         {selectedCategories}
         {selectedFeatures}
+        {isShowGoBack}
         on:close={() => {
           isShowSidePanel = false;
+          featureView = undefined;
+        }}
+        on:feature={(e) => {
+          featureView = e.detail;
+          isShowGoBack = true;
+        }}
+        on:goBack={() => {
+          isShowGoBack = false;
           featureView = undefined;
         }}
       />

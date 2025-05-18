@@ -4,6 +4,8 @@
   import { resolveHoverState } from "$lib/client/utils/browser.utils";
   import { cn } from "$lib/client/utils/ui.utils";
   import Contemporary from "./Contemporary.svelte";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
   export let xCoord: number;
   export let yCoord: number;
   export let group: IFeatureWheelContemporary[] = [];
@@ -36,6 +38,7 @@
       on:click={() => {
         isClicked = !isClicked;
         if (!isClicked) isHovering = false;
+        dispatch("contemporary", group);
       }}
       on:mouseover={toggleHoveringState}
       on:mouseout={toggleHoveringState}
@@ -46,7 +49,14 @@
       {group.length}
     </button>
   {:else if contemporary}
-    <Contemporary {width} {contemporary} />
+    <button
+      on:click={() => {
+        dispatch("contemporary", contemporary);
+      }}
+      class="flex"
+    >
+      <Contemporary {width} {contemporary} />
+    </button>
   {/if}
 </foreignObject>
 

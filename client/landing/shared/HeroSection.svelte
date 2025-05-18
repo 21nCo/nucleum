@@ -30,7 +30,6 @@
               $isProductPage,
             "mo:text-[36px] mo:leading-[50px] mo:w-[342px]": !$isProductPage
           })}
-          style="font-family: 'Avenir', 'Shared', sans-serif;"
         >
           {title}
         </div>

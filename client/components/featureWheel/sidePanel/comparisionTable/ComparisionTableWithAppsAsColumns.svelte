@@ -11,6 +11,8 @@
   import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
   import NotesCell from "./NotesCell.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
   export let product: string;
   export let features: IFwFeature[] = [];
   export let categories: IFwCategory[] = [];
@@ -103,7 +105,7 @@
       </label>
     </div>
   </div>
-  <table class="w-full border-collapse">
+  <table class="w-full border-collapse table-fixed">
     <thead>
       <tr class="bg-bgs2">
         <th class="border border-bgs3 p-2 text-left">Feature</th>
@@ -146,7 +148,7 @@
       {#each categoryLabels as categoryLabel}
         <tr>
           <td
-            class="border border-bgs3 p-2 font-medium bg-bgs2"
+            class="border border-bgs3 p-2 font-bold bg-bgs3"
             colspan={filteredContemporaries.length + 2}
           >
             {categoryLabel}
@@ -155,7 +157,12 @@
 
         {#each groupedFeatures[categoryLabel] as feature}
           <tr>
-            <td class="border border-bgs3 p-2">{feature.label}</td>
+            <td
+              class="border border-bgs3 p-2 cursor-pointer hover:text-aps1"
+              on:click={() => {
+                dispatch("feature", feature.label);
+              }}>{feature.label}</td
+            >
             <td class="border border-bgs3 p-2 font-medium">
               {#if feature.isPlanned}
                 <span class="text-aps2">Planned</span>

@@ -18,7 +18,7 @@
   let fontFamily: string = "Avenir";
   let defaultRootFontSize: number = 16;
   let rootFontSize: number = defaultRootFontSize + 0.6 * $view?.scale;
-  let ref: any;
+  let ref: HTMLDivElement;
   onMount(() => {
     refreshTheme();
     const appearanceSub = appearance.subscribe(() => {
@@ -86,8 +86,9 @@
     fontFamily = $appearance.typeface ?? "Space Grotesk";
     fontFamily = fontFamily + ", " + fallBackTypefaceString;
     if (extensionContext && ref) {
-      ref.style.setProperty("--fontFamily-sans-0", fontFamily);
-      ref.style.fontFamily = fontFamily;
+      const element = ref as unknown as HTMLElement;
+      element.style.setProperty("--fontFamily-sans-0", fontFamily);
+      element.style.fontFamily = fontFamily;
       return;
     }
     document.documentElement.style.setProperty(
@@ -133,10 +134,8 @@
     href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&family=Parkinsans:wght@300..800&family=Sora:wght@100..800&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Teachers:ital,wght@0,400..800;1,400..800&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
     rel="stylesheet"
   />
-
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 </svelte:head>
+
 <!--Note: The font weight and tracking correction is for H Grotesk typeface -->
 <div
   bind:this={ref}

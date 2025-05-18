@@ -13,6 +13,7 @@
   import TextCard from "./card/TextCard.svelte";
   import CardListContent from "./card/CardListContent.svelte";
   import ComparisionTableWithAppsAsColumns from "./comparisionTable/ComparisionTableWithAppsAsColumns.svelte";
+  import Icon from "$lib/client/elements/Icon.svelte";
 
   export let product: string;
   export let features: IFwFeature[] = [];
@@ -22,6 +23,7 @@
   export let selectedCompare: string[] | undefined = undefined;
   export let selectedCategories: string[] | undefined = undefined;
   export let selectedFeatures: string[] | undefined = undefined;
+  export let isShowGoBack: boolean = false;
   $: isHowToUse = featureView === "howToUse";
   const dispatch = createEventDispatcher();
 </script>
@@ -29,6 +31,17 @@
 <div
   class="flex flex-col gap-8 flex-1 w-1/2 min-w-1/2 bg-bgs2 rounded-md p-4 dp:p-6 2k:p-8"
 >
+  {#if isShowGoBack}
+    <button
+      class="flex items-center gap-2 justify-start"
+      on:click={() => {
+        dispatch("goBack");
+      }}
+    >
+      <Icon icon="ph:arrow-left-light" />
+      Go back
+    </button>
+  {/if}
   <div class="flex w-full justify-between">
     <div class="flex text-h4 text-fgs2">
       {#if isHowToUse}
@@ -69,6 +82,8 @@
           <TextCard
             title="What is {feature.label}?"
             content={feature.description}
+            image={feature.image}
+            learnMoreLink={feature.learnMoreLink}
           />
           {#if feature.ratingCriteria}
             <TextCard title="Our rating criteria">
@@ -92,6 +107,7 @@
         {selectedCompare}
         {selectedFeatures}
         {selectedCategories}
+        on:feature
       />
       {#if selectedCompare.length === 1}
         {@const contemporary = contemporaries.find(
