@@ -16,6 +16,7 @@
   import { resolveSessionTimeSplit } from "$lib/client/products/pointron/pointron.utils";
   import { generateSummary } from "$lib/client/products/pointron/focus/session.utils";
   import { formatSeconds } from "$lib/client/utils/time.utils";
+  import { logger } from "$lib/client/components/debug/logger.client";
   export let date: Date;
   export let data: ICalendarIndicatorData[] = [];
   export let view: "year" | "month" = "year";
@@ -30,30 +31,34 @@
     resolveData();
   });
   function resolveData() {
-    const tasksData = data.find((x) => x.resource === Resource.task);
-    if (tasksData) {
-      tasks = tasksData.data.filter(
-        (x) =>
-          x.dateUnix >= dayFilter.greaterThanOrEqual &&
-          x.dateUnix <= dayFilter.lessThanOrEqual
-      );
-      // console.log({ tasks, ...dayFilter, date });
-    }
-    const sessionsData = data.find((x) => x.resource === Resource.session);
-    if (sessionsData) {
-      focusSessions = sessionsData.data.filter(
-        (x) =>
-          x &&
-          x.startUnix >= dayFilter.greaterThanOrEqual &&
-          x.startUnix <= dayFilter.lessThanOrEqual
-      );
+    try {
+      const tasksData = data.find((x) => x.resource === Resource.task);
+      if (tasksData) {
+        tasks = tasksData.data.filter(
+          (x) =>
+            x.dateUnix >= dayFilter.greaterThanOrEqual &&
+            x.dateUnix <= dayFilter.lessThanOrEqual
+        );
+        // console.log({ tasks, ...dayFilter, date });
+      }
+      const sessionsData = data.find((x) => x.resource === Resource.session);
+      if (sessionsData) {
+        focusSessions = sessionsData.data.filter(
+          (x) =>
+            x &&
+            x.startUnix >= dayFilter.greaterThanOrEqual &&
+            x.startUnix <= dayFilter.lessThanOrEqual
+        );
 
-      focusSessions = focusSessions.map((session: ISessionThumb) => ({
-        ...session,
-        splits: resolveSessionTimeSplit(session)
-      }));
-      summary = generateSummary(focusSessions);
-      // console.log({ focusSessions, summary, ...dayFilter, date, data });
+        focusSessions = focusSessions.map((session: ISessionThumb) => ({
+          ...session,
+          splits: resolveSessionTimeSplit(session)
+        }));
+        summary = generateSummary(focusSessions);
+        // console.log({ focusSessions, summary, ...dayFilter, date, data });
+      }
+    } catch (e) {
+      logger.error({ at: "CalendarTileIndicator.resolveData", date, error: e });
     }
   }
 

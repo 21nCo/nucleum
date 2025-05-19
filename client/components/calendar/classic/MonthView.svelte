@@ -85,7 +85,8 @@
           {
             "bg-bgs2/50": isNotCurrentMonth,
             "notouch:hover:bg-bgs2": !isToday && !isSelected,
-            "bg-ass3 text-ass1 notouch:hover:bg-ass2": isToday && !isSelected,
+            "bg-ass3 text-ass1 notouch:hover:bg-ass2/10":
+              isToday && !isSelected,
             "bg-aps3 text-aps1": isSelected
           }
         )}

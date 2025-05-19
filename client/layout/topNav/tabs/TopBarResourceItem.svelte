@@ -17,7 +17,7 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import ComponentBaseLayer from "../layers/ComponentBaseLayer.svelte";
+  import ComponentBaseLayer from "../../layers/ComponentBaseLayer.svelte";
   import { rearrangeOnAxis } from "$lib/client/actions/rearrange.action";
   import { createEventDispatcher } from "svelte";
   import { isValidString } from "$lib/shared/utils/text.utils";
@@ -80,7 +80,7 @@
       threshold: 30
     }}
     class={cn(
-      "relative flex items-center rounded-md text-b2 gap-2 px-6 py-2 max-w-48 min-w-20",
+      "relative flex items-center rounded-md text-b2 gap-2 px-6 py-1.5 max-w-48 min-w-20 truncate",
       // abg(isActive, 1),
       {
         "hover:bg-bgs3": !isActive,

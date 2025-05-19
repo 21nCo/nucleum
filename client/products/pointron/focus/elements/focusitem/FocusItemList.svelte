@@ -266,7 +266,6 @@
             data={$focusItemsStore.recents.map((x) => x.item).slice(0, 5)}
             resource={Resource.everything}
             accessPoint={ResourceAccessPoint.PICKER}
-            isPreventDefault={true}
           />
         {:else}
           <div class="flex pt-12">

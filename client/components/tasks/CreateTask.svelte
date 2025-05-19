@@ -38,7 +38,6 @@
   let goalSearchInput: TextSearchInput | undefined;
   let searchStore = new SearchStore(Resource.goal);
   let goal: IGoal | undefined = undefined;
-
   onMount(async () => {
     if (goalId) {
       goal = await goalStore.select(goalId);
@@ -50,7 +49,7 @@
     const result = await taskStore.save(
       {
         label,
-        dateUnix: resolveUnixTimestamp(date),
+        dateUnix: date ? resolveUnixTimestamp(date) : undefined,
         goalId: goalId ?? goal?.id,
         isChecked: false
       },
@@ -84,43 +83,51 @@
   }
 </script>
 
-<div class="cw:w-full w-96 h-60 flex flex-col justify-between gap-2">
-  <div class="flex flex-col gap-2">
+<div
+  class="cw:w-full w-[32rem] h-auto min-h-[16rem] flex flex-col justify-between gap-4 p-4 rounded-lg bg-bgs1"
+>
+  <div class="flex flex-col gap-3">
     {#if isShowGoalPicker}
-      <TextSearchInput
-        bind:value={goalSearchQuery}
-        bind:this={goalSearchInput}
-        searchCallback={searchGoalCallback}
-        placeholder="Assign to a goal"
-        icon="ph:plus-light"
-        on:select={(e) => {
-          goal = e.detail.item;
-          isShowGoalPicker = false;
-        }}
-        style={InputStyle.PLAIN}
-      />
+      <div class="transition-all duration-200">
+        <TextSearchInput
+          bind:value={goalSearchQuery}
+          bind:this={goalSearchInput}
+          searchCallback={searchGoalCallback}
+          placeholder="Assign to a goal"
+          icon="ph:plus-light"
+          on:select={(e) => {
+            goal = e.detail.item;
+            isShowGoalPicker = false;
+          }}
+          style={InputStyle.PLAIN}
+        />
+      </div>
     {:else if goal}
-      <TaskThumbnailGoalLabel
-        {goal}
-        on:click={() => {
-          isShowGoalPicker = true;
-        }}
-        isCreateContext={true}
-      />
+      <div class="transition-all duration-200">
+        <TaskThumbnailGoalLabel
+          {goal}
+          on:click={() => {
+            isShowGoalPicker = true;
+          }}
+          isCreateContext={true}
+        />
+      </div>
     {/if}
-    <div class="flex items-center gap-2">
-      <TextInput
-        bind:value={label}
-        bind:this={inputRef}
-        size={Size.lg}
-        on:mount={() => {
-          inputRef?.focus();
-        }}
-        placeholder="Enter task name"
-        style={InputStyle.PLAIN}
-        on:enter={handleCreateOnEnter}
-      />
-      <span class="flex items-center gap-1 whitespace-nowrap">
+    <div class="flex items-center gap-3">
+      <div class="flex-1">
+        <TextInput
+          bind:value={label}
+          bind:this={inputRef}
+          size={Size.lg}
+          on:mount={() => {
+            inputRef?.focus();
+          }}
+          placeholder="Enter task name"
+          style={InputStyle.PLAIN}
+          on:enter={handleCreateOnEnter}
+        />
+      </div>
+      <span class="flex items-center shrink-0">
         <DatePicker
           bind:date
           style={InputStyle.PLAIN}
@@ -129,9 +136,9 @@
       </span>
     </div>
   </div>
-  <div class="flex flex-col gap-2">
+  <div class="flex flex-col gap-3 mt-2">
     {#if $context.embed !== Embed.HANDSET}
-      <div class="text-b3 text-fgs3 flex gap-1 justify-center">
+      <div class="text-b3 text-fgs3 flex gap-1 justify-center py-1">
         <span>Press</span>
         <ShortcutText
           parentBgIndex={1}

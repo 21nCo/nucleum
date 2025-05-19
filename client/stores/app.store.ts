@@ -38,7 +38,7 @@ import { logger } from "../components/debug/logger.client";
 import { Size } from "../types/size.enum";
 import type { IRecordId } from "../types/data.type";
 import account from "./account.store";
-import { tabs } from "../layout/tabs/tabs.store";
+import { tabs } from "../layout/topNav/tabs/tabs.store";
 import { resourceAction } from "../components/flux/resourceStores/resource.utils";
 import { Product } from "../types/product.type";
 
@@ -433,7 +433,7 @@ function initAppStore(seed: IAppStore) {
     }
     if (config.isRedirectToClient) {
       const clientRedirect = ctx.isEmbed
-        ? (import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host)
+        ? import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host
         : window.location.origin;
       redirectUri = clientRedirect + "/oauth/" + config.oauth_slug;
     } else {

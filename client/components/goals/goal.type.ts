@@ -37,9 +37,16 @@ export interface IGoalBase extends IMemotronItemBase {
   isPinnedForQuickFocus?: boolean;
   properties?: ICollectionItemPropertyValue[];
   /**
-   * Order of tabs on goal page.
+   * @deprecated - use uiState.tabsOrder instead
    */
   tabsOrder?: string[];
+  uiState?: {
+    /**
+     * Order of tabs on goal page.
+     */
+    tabsOrder?: string[];
+    isHideCompleted?: boolean;
+  };
 }
 
 export interface IGoal extends IGoalBase {

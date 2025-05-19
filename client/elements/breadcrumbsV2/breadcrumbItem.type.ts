@@ -4,4 +4,5 @@ export type IBreadcrumbItem = {
   resourceId?: string;
   disabled?: boolean;
   isCollapse?: boolean;
+  id?: string;
 };

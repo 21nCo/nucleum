@@ -16,6 +16,10 @@
   import QuickFocusItemPulse from "./animations/thumbnailPulse/QuickFocusItemPulse.svelte";
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
   import type { IKeyboardShortcut } from "$lib/client/components/shortcuts/shortcut.type";
+  import InboxZero from "$lib/client/illustrations/InboxZero.svelte";
+  import Travel from "$lib/client/illustrations/Travel.svelte";
+  import Check from "$lib/client/illustrations/Check.svelte";
+  import Globe from "$lib/client/illustrations/Globe.svelte";
   export let mainText: string | undefined = undefined;
   export let subText: string | undefined = undefined;
   export let size: Size.sm | Size.md | Size.lg = Size.md;
@@ -29,6 +33,7 @@
     LoadingAnimationType.SPINNER;
   export let pulseCount: number = 0;
   export let parentBgIndex: number = 1;
+  export let emptyIllustration: string | undefined = undefined;
 </script>
 
 <div
@@ -69,6 +74,14 @@
       </div>
     {:else if isNotAvailableContext}
       <ComingSoon width={200} />
+    {:else if emptyIllustration === "inboxZero"}
+      <InboxZero />
+    {:else if emptyIllustration === "travel"}
+      <Travel />
+    {:else if emptyIllustration === "check"}
+      <Check />
+    {:else if emptyIllustration === "globe"}
+      <Globe />
     {:else if size === Size.sm}
       <EmptyStatusInbox width={40} />
       <!-- <EmptyStatus size={Size.sm} /> -->
@@ -86,6 +99,7 @@
           {@html renderMdAsHtml(subText ?? "")}
         {/if}
       </div>
+      <slot />
       {#if actionText}
         <div class="mt-4">
           <Button

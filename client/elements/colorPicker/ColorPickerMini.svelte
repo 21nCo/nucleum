@@ -7,9 +7,11 @@
   import ColorPickerPopover from "./ColorPickerPopover.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
-  export let hue: number;
-  export let changeCallback: (value: number | string) => void;
-  export let onDebouncedChangeCallback: (value: number | string) => void;
+  export let hue: number | undefined = undefined;
+  export let changeCallback: (value: number | string) => void = () => {};
+  export let onDebouncedChangeCallback: (
+    value: number | string
+  ) => void = () => {};
   export let width: string | undefined = undefined;
   let saturation = 50;
   let lightness = 50;
@@ -34,23 +36,37 @@
 <CustomColorPropagator color={hue}>
   <div
     class={cn(
-      "flex items-center justify-center border border-brs3 bg-ccs1",
+      "flex gap-1 items-center justify-center border border-brs3",
       width,
       {
         "w-8 h-8 rounded-full": !width,
-        "rounded-md h-full": width
+        "rounded-md h-full": width,
+        "bg-ccs1": hue !== undefined,
+        "bg-bgs2": hue === undefined
       }
     )}
     use:popover={{
       content: ColorPickerPopover,
       componentProps: {
-        hue,
+        hue: hue ?? 0,
         onChangeCallback: onChange,
         onDebouncedChangeCallback,
         isShowPreview: false
       }
     }}
   >
-    <Icon icon="ph:paint-brush-light" class="text-cbg" size={Size.sm} />
+    <Icon
+      icon="ph:paint-brush-light"
+      class={hue !== undefined ? "text-cbg" : "text-fgs3"}
+      size={Size.sm}
+    />
+    <span
+      class={cn("text-b2", {
+        "text-cbg": hue !== undefined,
+        "text-fgs3": hue === undefined
+      })}
+    >
+      Set color</span
+    >
   </div>
 </CustomColorPropagator>

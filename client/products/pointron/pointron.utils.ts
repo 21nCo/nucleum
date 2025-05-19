@@ -230,10 +230,10 @@ export function resolveSessionTimeLegacy(session: ISession) {
     return { focus: session.elapsed, brek: 0 };
   } else if (session.type === SessionType.COUNTUP) {
     let focus = session.blocks
-      .filter((x) => x.type === BlockType.FOCUS)
+      .filter((x) => x?.type === BlockType.FOCUS)
       .reduce((acc, curr) => acc + (curr.end - curr.start), 0);
     let brek = session.blocks
-      .filter((x) => x.type === BlockType.BREAK)
+      .filter((x) => x?.type === BlockType.BREAK)
       .reduce((acc, curr) => acc + (curr.end - curr.start), 0);
     return { focus: focus / 1000, brek: brek / 1000 };
   } else {

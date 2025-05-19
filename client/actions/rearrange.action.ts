@@ -150,7 +150,7 @@ function isResizeHandle(element: HTMLElement): boolean {
   );
 }
 
-interface DragDropOptions {
+export interface DragDropOptions {
   listId: string;
   draggedOverClass: string;
   dragImage?: string;

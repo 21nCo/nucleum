@@ -2,12 +2,10 @@
   import { tooltip } from "$lib/client/actions/popover.action";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import modalEvent from "$lib/client/components/modal/modal.store";
-  import { tabs } from "$lib/client/layout/tabs/tabs.store";
   import { appStore } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
+  import { ButtonVariant } from "$lib/client/types/button.type";
   import { Placement } from "$lib/client/types/direction.enum";
-  import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import Icon from "../Icon.svelte";
   export let path: string | undefined = undefined;

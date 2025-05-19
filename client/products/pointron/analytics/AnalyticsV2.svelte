@@ -74,7 +74,7 @@
       {#if $view.isPortrait}
         <div class="flex flex-col gap-3 w-full">
           <div class="flex justify-between w-full">
-            <Text style={TextStyle.PAGE_HEADING_SUBTLE} content="Analytics" />
+            <Text style={TextStyle.PAGE_HEADING_SUBTLE} content="Overview" />
             <EditModeToggle />
           </div>
           <div class="flex w-full gap-2 items-center">
@@ -106,7 +106,7 @@
         <div class="flex overflow-hidden w-full">
           <div class="overflow-x-auto w-full">
             <PanelSwitcher
-              title="Analytics"
+              title="Overview"
               items={pages}
               style={PanelSwitcherStyle.SNAKE}
               isExpandToFullWidth={true}

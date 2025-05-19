@@ -64,7 +64,13 @@
 </script>
 
 {#if content}
-  <button on:click={onclick} class="relative flex flex-col w-full">
+  <button
+    on:click={onclick}
+    class="relative flex flex-col w-full border border-transparent"
+    data-id={id}
+    data-index={index}
+    draggable={true}
+  >
     <CustomColorPropagator
       color={content.color}
       class={cn("flex gap-4 w-full p-3 justify-center mo:py-4", {

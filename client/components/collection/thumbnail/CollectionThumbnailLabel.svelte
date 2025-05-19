@@ -1,10 +1,12 @@
 <script lang="ts">
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
+  import RecordStarStatusFeedback from "../../record/RecordStarStatusFeedback.svelte";
   import type { ICollectionThumb } from "../collection.type";
   import CollectionThumbnailAvatar from "./CollectionThumbnailAvatar.svelte";
   export let item: ICollectionThumb;
   export let isShowFallbackIcons: boolean = false;
   export let isShowAvatar: boolean = true;
+  export let isShowStarStatus: boolean = false;
 
   function resolveEmptyLabel() {
     //TODO - based on resource type
@@ -25,4 +27,7 @@
       {resolveEmptyLabel()}
     {/if}
   </span>
+  {#if isShowStarStatus}
+    <RecordStarStatusFeedback isStarred={item.isStarred} />
+  {/if}
 </span>

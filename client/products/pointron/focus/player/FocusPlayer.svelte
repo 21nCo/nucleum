@@ -164,7 +164,9 @@
       "bg-ars1 animate--pulse animate-pulse-subtle":
         isBreakReminderMode && isPipShown
     })}
-    style="font-family: {$appearance.typeface ?? fallBackTypefaceString};"
+    style={isPipShown
+      ? "font-family: {$appearance.typeface ?? fallBackTypefaceString};"
+      : ""}
   >
     <ThemeLayer extensionContext={isPipShown ? "focusplayer" : undefined}>
       <div class="flex flex-col gap-1 w-full">

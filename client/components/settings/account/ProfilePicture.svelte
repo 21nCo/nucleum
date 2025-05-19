@@ -10,8 +10,11 @@
   import { userPreferences } from "../userPreferences.store";
   import { appStore } from "$lib/client/stores/app.store";
   import { Product } from "$lib/client/types/product.type";
-  export let context: "cmd-page" | "cp-profile" | "account-settings" =
-    "cp-profile";
+  export let context:
+    | "cmd-page"
+    | "cp-profile"
+    | "account-settings"
+    | "topbar" = "cp-profile";
   export let fileId: IRecordId | undefined = undefined;
   export let isEditing = false;
   export let isLoading = false;
@@ -71,6 +74,7 @@
 
 <button
   class={cn(" flex justify-center items-center bg-bgs3", {
+    "rounded-full w-8 h-8": context === "topbar",
     "rounded-full w-16 h-16": context === "cp-profile",
     "rounded-md w-20 h-20": context === "cmd-page",
     "rounded-md w-full border-4": context === "account-settings",
@@ -87,11 +91,16 @@
       isLazyLoad={false}
       class={cn("object-cover w-full h-full", {
         "rounded-md": context === "cmd-page" || context === "account-settings",
-        "rounded-full": context === "cp-profile"
+        "rounded-full": context === "cp-profile" || context === "topbar"
       })}
     />
   {:else if initials}
-    <div class="text-h3 text-fgs3 min-h-24 flex items-center justify-center">
+    <div
+      class={cn("text-fgs3 min-h-24 flex items-center justify-center", {
+        "text-h3": context !== "topbar",
+        "text-b2": context === "topbar"
+      })}
+    >
       {initials}
     </div>
   {:else if profilePictureUrl}

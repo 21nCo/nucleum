@@ -98,7 +98,7 @@
             !isExpandToFullWidth &&
             !isInversePlacement,
           "items-center justify-around gap-6": style === PanelSwitcherStyle.DOT,
-          "border-brs3": style === PanelSwitcherStyle.TRAIN,
+          "border-brs3 p-0.5": style === PanelSwitcherStyle.TRAIN,
           "rounded-full border-2":
             style === PanelSwitcherStyle.TRAIN &&
             (size === Size.md || size === Size.lg),

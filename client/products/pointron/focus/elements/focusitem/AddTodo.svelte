@@ -42,7 +42,8 @@
     return searchStore.select({
       searchQuery: search,
       filters: {
-        goalId: goalId.toString()
+        goalId: goalId.toString(),
+        isChecked: false
       }
     });
   }

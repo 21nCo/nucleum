@@ -1243,11 +1243,16 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
 
   async refreshRecents(items: { id: IRecordId; startUnix: number }[]) {
     console.time("refreshRecents");
-    const goalsResult = await goalStore.selectMany({
-      filters: {
-        id: items.map((x) => x.id.toString())
+    const goalsResult = await goalStore.selectMany(
+      {
+        filters: {
+          id: items.map((x) => x.id.toString())
+        }
+      },
+      {
+        isExpand: true
       }
-    });
+    );
     console.timeEnd("refreshRecents");
     const newRecents = items
       .map((x) => {

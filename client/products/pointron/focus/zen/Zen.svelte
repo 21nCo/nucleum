@@ -20,10 +20,15 @@
   import SessionNotes from "../notes/SessionNotes.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import { fullScreen } from "$lib/client/components/modal/modal.store";
+  import { page } from "$app/stores";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   export let isInline: boolean = false;
   let layout: number = 1;
   let isShowTimeLeftOnMobile: boolean = false;
-
+  $: fullScreenFocusIsEnabled =
+    $page?.url?.searchParams?.get(ResourceAccessMode.FULL) ===
+    PointronAction.FULL_SCREEN_FOCUS;
   $: isExtraLargeScreen = $view.landscapiness > 1.7 && $view.scale > 1.8;
 </script>
 
@@ -124,7 +129,7 @@
         </div>
       </div>
     {/if}
-    {#if isExtraLargeScreen}
+    {#if isExtraLargeScreen && ((isInline && !fullScreenFocusIsEnabled) || !isInline)}
       <div class="w-1/4 p-4">
         <SessionNotes />
       </div>

@@ -1,11 +1,13 @@
 <script lang="ts">
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import {
     determineResourceType,
     resourceInList
   } from "$lib/client/components/flux/resourceStores/resource.utils";
   import Button from "$lib/client/elements/button/Button.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
+  import { appStore } from "$lib/client/stores/app.store";
   import context from "$lib/client/stores/context.store";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";
@@ -35,16 +37,27 @@
 
 <div class="flex items-center gap-2 px-2 absolute inset-y-0 right-0 bg-bgs2">
   {#if isHovering || $context.isTouchDevice}
+    {#if resourceType === Resource.task}
+      <Button
+        icon="ph:arrows-out-light"
+        tooltip="Open task"
+        size={Size.sm}
+        style={ButtonStyle.OUTLINED}
+        parentBgIndex={2}
+        on:click={() => {
+          appStore.openResource(item.id, ResourceAccessMode.POP);
+        }}
+      />
+    {/if}
     {#if $focusItemsStore.items.some(resourceInList(item.id))}
       <span class="text-b3 text-fgs3"> Already added </span>
     {:else}
       <Button
-        label="Add"
         icon="ph:plus-light"
+        tooltip="Add to focus items"
         type={ButtonVariant.PRIMARY}
         style={ButtonStyle.OUTLINED}
         size={Size.sm}
-        isPreventMinWidth={true}
         on:click={onAdd}
       />
     {/if}

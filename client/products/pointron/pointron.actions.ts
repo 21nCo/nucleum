@@ -322,7 +322,7 @@ export const pointronActions: IAction[] = [
     type: ActionType.PAGE,
     // icon: "ph:presentation-chart-light",
     icon: "ph:chart-line-up-light",
-    label: "Analytics"
+    label: "Overview"
   },
   // {
   //   action: "goal",

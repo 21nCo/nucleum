@@ -142,7 +142,8 @@
   id={extensionContext ? "nthemeclipper" : "ntheme"}
   class={cn("flex h-full w-full", {
     "tracking-[0.01em]": $appearance?.typeface === "Hanken Grotesk",
-    "font-[350]": $appearance?.typeface === "Sora",
+    "font-[300]": $appearance?.typeface === "Sora",
+    "font-[350]": $appearance?.typeface === "Space Grotesk",
     glassy: $appearance?.skin == AppSkin.Glassy,
     dark: $appearance?.colorScheme?.isDark
   })}

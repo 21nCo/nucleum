@@ -3,11 +3,14 @@
     reorderList,
     type DragDropEvent
   } from "$lib/client/actions/rearrange.action";
+  import Button from "$lib/client/elements/button/Button.svelte";
   import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { appStore } from "$lib/client/stores/app.store";
+  import { ButtonStyle } from "$lib/client/types/button.type";
   import type { IRecordId } from "$lib/client/types/data.type";
+  import { Size } from "$lib/client/types/size.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import {
@@ -23,17 +26,23 @@
   import NestedList from "../../nestedList/NestedList.svelte";
   import { NestedListStyle } from "../../nestedList/nestedList.type";
   import { goalStore, type IActiveGoalStore } from "../goal.store";
-  import { SubGoalsLayout, type IGoal } from "../goal.type";
+  import { GoalStatus, SubGoalsLayout, type IGoal } from "../goal.type";
   import { resolveGoalStatusIcon } from "../goal.utils";
   import SubGoalItem from "./SubGoalItem.svelte";
   import SubGoalsLayoutSwitcher from "./SubGoalsLayoutSwitcher.svelte";
   export let goal: IActiveGoalStore;
   export let isActiveResource: boolean = true;
   let isExpandArchiveSubGoals = false;
+  let isHideCompleted = $goal.uiState?.isHideCompleted ?? false;
   $: _subGoals = [
     ...($goal.children
       ? $goal.children
           .filter(activeResourceFilterIgnoreParentInactive)
+          .filter(
+            isHideCompleted
+              ? (t) => t.status !== GoalStatus.COMPLETED
+              : (t) => t
+          )
           .map((t) => ({
             ...t,
             icon: resolveGoalStatusIcon(t.status)
@@ -115,6 +124,7 @@
   async function onReorderSubGoals(event: DragDropEvent) {
     const { fromId, toId } = event;
     if (!fromId || !toId || fromId === toId || !$goal.children) return;
+    $goal.children = shiftResourceInArray($goal.children, fromId, toId);
     _subGoals = shiftResourceInArray(_subGoals, fromId, toId);
     const subGoals = _subGoals.map((t) => t.id).filter((id) => id);
     await goal.modify(
@@ -132,6 +142,16 @@
       subGoalsLayout: $goal.subGoalsLayout
     });
   }
+
+  function onHideCompletedChange(e: any) {
+    isHideCompleted = !isHideCompleted;
+    goal.modify({
+      uiState: {
+        ...($goal.uiState ?? {}),
+        isHideCompleted
+      }
+    });
+  }
 </script>
 
 {#if !isActiveResource}
@@ -143,7 +163,16 @@
   </div>
 {/if}
 {#if $goal.children}
-  <div class="flex items-center justify-end gap-2 w-full">
+  <div class="flex items-center justify-end gap-4 w-full">
+    {#if $goal.subGoalsLayout !== SubGoalsLayout.STEPS}
+      <Button
+        icon={isHideCompleted ? "ph:eye-light" : "ph:eye-slash-light"}
+        label={isHideCompleted ? "Show completed" : "Hide completed"}
+        size={Size.sm}
+        style={ButtonStyle.PLAIN}
+        on:click={onHideCompletedChange}
+      />
+    {/if}
     <SubGoalsLayoutSwitcher
       bind:layout={$goal.subGoalsLayout}
       on:select={onSubGoalsMethodChange}
@@ -156,7 +185,7 @@
     })}
     use:reorderList={{
       listId: "subGoals",
-      draggedOverClass: "!border-aps1",
+      draggedOverClass: "!border-ccs1",
       onDrop: onReorderSubGoals,
       dragImage: "dragimage"
     }}

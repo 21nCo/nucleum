@@ -1,7 +1,6 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
   import Panel from "$lib/client/layout/paint/Panel.svelte";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
+  import { ButtonVariant } from "$lib/client/types/button.type";
   import { Arrangement } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { appStore } from "$lib/client/stores/app.store";
@@ -26,7 +25,6 @@
     isHideCreateAction,
     resolveResourceTooltip
   } from "../library.utils";
-  import FormLabelTooltip from "$lib/client/elements/text/formLabel/FormLabelTooltip.svelte";
   import { shortcutsConfig } from "../../shortcuts/shortcuts.config";
   import ComponentShortcutListener from "../../shortcuts/ComponentShortcutListener.svelte";
   export let resource: Resource;
@@ -79,6 +77,7 @@
     title={resource + "s"}
     {isExpanded}
     on:back
+    info={tooltip ? { body: tooltip } : undefined}
     isShowBackButton={isLibraryNavContext}
   >
     <div
@@ -106,17 +105,6 @@
           />
         {/if}
       {/key}
-    </slot>
-    <slot slot="toprightactions" name="toprightactions">
-      {#if tooltip}
-        <FormLabelTooltip
-          icon="ph:question-light"
-          info={{
-            body: "Use relations to maintain relationship information between nodes.",
-            size: Size.lg
-          }}
-        />
-      {/if}
     </slot>
   </Panel>
 {/key}

@@ -113,7 +113,7 @@
           }}
         >
           <div class="flex items-center gap-2 w-full">
-            <h1 class="text-left text-h4 lp:text-h3 font-medium text-ccs1">
+            <h1 class="text-left text-h4 lp:text-h3 font-medium text-ccs1-fgs1">
               {$goal.label ? $goal.label : "Untitled"}
             </h1>
             <RecordStarStatusFeedback isStarred={$goal.isStarred} />

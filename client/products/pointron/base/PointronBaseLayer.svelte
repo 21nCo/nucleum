@@ -24,11 +24,11 @@
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
   import SessionTitle from "./SessionTitle.svelte";
   import LeftNav from "$lib/client/layout/leftPanel/LeftNav.svelte";
-  import Tabs from "$lib/client/layout/tabs/Tabs.svelte";
   import AppSplitView from "$lib/client/layout/AppSplitView.svelte";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
   import { nestedGoalCorrection } from "./fallbacks";
+  import TopNav from "$lib/client/layout/topNav/TopNav.svelte";
   let isLiteMode = $context.isEmbed && $context.isSheet;
   let interactionMode: InteractionMode;
   let isHideLeftNavBar: boolean = refreshSidebarState();
@@ -122,7 +122,7 @@
               : 'flex-grow'}"
           >
             {#if !$view.isPortrait}
-              <Tabs />
+              <TopNav />
             {/if}
             <div class="w-full flex-grow">
               <AppSplitView>

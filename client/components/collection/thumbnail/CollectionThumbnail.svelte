@@ -40,7 +40,11 @@
     >
       <CollectionThumbnailAvatar {item} size={Size.lg} />
       <div class="flex flex-col gap-1 flex-grow">
-        <CollectionThumbnailLabel {item} isShowAvatar={false} />
+        <CollectionThumbnailLabel
+          {item}
+          isShowAvatar={false}
+          isShowStarStatus={accessPoint !== ResourceAccessPoint.BROWSER}
+        />
         {#if item.description}
           <span class="text-b3 text-fgs3 truncate text-left">
             {item.description}

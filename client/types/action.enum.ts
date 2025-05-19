@@ -41,5 +41,6 @@ export enum Action {
   BULK_LINK = "bulk-link",
   EDIT_TASK_GOAL = "edit-task-goal",
   CALENDAR_DAY = "calendar-day",
-  HISTORY = "history"
+  HISTORY = "history",
+  CREDITS = "credits"
 }

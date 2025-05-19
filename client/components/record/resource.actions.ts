@@ -22,7 +22,7 @@ import {
   type IContextMenuItem
 } from "$lib/client/types/select.type";
 import type { IRecordId } from "$lib/client/types/data.type";
-import { tabs } from "$lib/client/layout/tabs/tabs.store";
+import { tabs } from "$lib/client/layout/topNav/tabs/tabs.store";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { LinkType } from "$lib/client/products/memotron/node/node.type";
 import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";

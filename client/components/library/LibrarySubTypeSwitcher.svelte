@@ -131,9 +131,9 @@
 
     function resolveSubItems(resource: Resource) {
       const items: ISelectItem[] = [allSubTypeSwitcherItem];
-      if (isConstrainedWidth) {
-        items.push(starredSubTypeSwitcherItem);
-      }
+      // if (isConstrainedWidth) {
+      //   items.push(starredSubTypeSwitcherItem);
+      // }
       if (isConstrainedWidth && isExpandableSubTypes) return items;
       if (resource === Resource.node) {
         items.push(...nodeSubTypesForSwitcher);

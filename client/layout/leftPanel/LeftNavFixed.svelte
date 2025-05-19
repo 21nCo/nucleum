@@ -4,20 +4,11 @@
   import { Size } from "$lib/client/types/size.enum";
   import LeftBottomBar from "./LeftBottomBar.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
-  import LeftNavCommandAction from "./LeftNavCommandAction.svelte";
   import LeftNavOfflineStatus from "./LeftNavOfflineStatus.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { Action } from "$lib/client/types/action.enum";
-  import account from "$lib/client/stores/account.store";
-  import { PlanType } from "$lib/client/components/subscription/userPlan.type";
-  import { resolveTrialDaysLeft } from "$lib/client/components/subscription/userPlan.utils";
-  import { AppSearchParam } from "$lib/client/types/appStore.type";
+  import SubAtomLogo from "$lib/client/branding/SubAtomLogo.svelte";
+  import TrailLeftIndicator from "../topNav/TrailLeftIndicator.svelte";
+  import { Orientation } from "$lib/client/types/direction.enum";
   export let isRounded = false;
-  $: trialDaysLeft =
-    $account.plan?.plan === PlanType.TRIAL
-      ? resolveTrialDaysLeft($account.plan)
-      : undefined;
 </script>
 
 <div
@@ -40,41 +31,16 @@
     style={isRounded ? "height: calc(100% - 1rem);" : "height:100%"}
   >
     <div class="w-full flex flex-col gap-8 overflow-auto">
-      <div class="w-full flex justify-center">
-        <Button
+      <div class="w-full flex justify-center opacity-30">
+        <!-- <Button
           icon="ph:magnifying-glass-light"
           parentBgIndex={2}
           size={Size.lg}
           on:click={() => appStore.runAction(Action.GLOBAL_SEARCH)}
-        />
+        /> -->
+        <SubAtomLogo />
       </div>
-      {#if trialDaysLeft !== undefined && trialDaysLeft !== null && trialDaysLeft < 15}
-        {@const isTrialExpired = trialDaysLeft <= 0}
-        <button
-          class={cn(
-            "flex flex-col gap-1 justify-center items-center border rounded-md p-1.5 mx-1.5",
-            {
-              "bg-ars2 border-ars1": isTrialExpired,
-              "bg-aps2 border-aps1": !isTrialExpired
-            }
-          )}
-          on:click={() =>
-            appStore.runAction(Action.SETTINGS, {
-              searchParams: {
-                [AppSearchParam.SETTING]: Action.USER_BILLING
-              }
-            })}
-        >
-          <span class="text-b2"> Trial </span>
-          <span class="text-b4">
-            {#if !isTrialExpired}
-              {trialDaysLeft} {trialDaysLeft === 1 ? "day" : "days"} left
-            {:else}
-              expired
-            {/if}
-          </span>
-        </button>
-      {/if}
+      <!-- <TrailLeftIndicator orientation={Orientation.Vertical} /> -->
       <div class="flex flex-col gap-8 items-center w-full p-2 overflow-auto">
         <AppMenuSwitcher
           parentBackgroundIndex={1}
@@ -84,7 +50,7 @@
     </div>
     <div class="w-full flex flex-col gap-2 items-center">
       <LeftNavOfflineStatus isInThinMode={true} />
-      <LeftNavCommandAction isInThinMode={true} size={Size.lg} />
+      <!-- <LeftNavCommandAction isInThinMode={true} size={Size.lg} /> -->
       <LeftBottomBar isInThinMode={true} {isRounded} size={Size.lg} />
     </div>
   </div>

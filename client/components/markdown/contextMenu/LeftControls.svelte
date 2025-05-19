@@ -30,7 +30,7 @@
   import { Action } from "$lib/client/types/action.enum";
   import { MemotronEvent } from "$lib/client/products/memotron/memotron.type";
   import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
-  import { tabs } from "$lib/client/layout/tabs/tabs.store";
+  import { tabs } from "$lib/client/layout/topNav/tabs/tabs.store";
   import { popover, tooltip } from "$lib/client/actions/popover.action";
   import ContextMenu from "$lib/client/elements/contextMenu/ContextMenu.svelte";
   import { hoverable } from "$lib/client/actions/hover.action";

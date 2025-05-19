@@ -1,76 +1,94 @@
 <script lang="ts">
-  import { page } from "$app/stores";
-  import Icon from "$lib/client/elements/Icon.svelte";
+  import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { onMount } from "svelte";
-  import TopNavItem from "./TopNavItem.svelte";
-  import account from "$lib/client/stores/account.store";
+  import type { IRecordId } from "$lib/client/types/data.type";
   import Button from "$lib/client/elements/button/Button.svelte";
-  //TODO - remove dependency on localEvent
-  import { GatheryEvent } from "$lib/client/types/gathery/gatheryEvent.enum";
-  import { spaceInContext } from "$lib/client/products/gathery/space.store";
+  import { ButtonStyle } from "$lib/client/types/button.type";
   import { appStore } from "$lib/client/stores/app.store";
-  export let items: string[];
-  let selected: string = items[0];
-  let isCollapsed: boolean = false;
+  import { Action } from "$lib/client/types/action.enum";
+  import ProfilePicture from "$lib/client/components/settings/account/ProfilePicture.svelte";
+  import ShortcutText from "$lib/client/elements/text/ShortcutText.svelte";
+  import Tabs from "./tabs/Tabs.svelte";
+  import { tabs } from "./tabs/tabs.store";
+  import TrailLeftIndicator from "./TrailLeftIndicator.svelte";
+  import { fly } from "svelte/transition";
+  // import FocusPlayer from "$lib/client/products/pointron/focus/player/FocusPlayer.svelte";
+  let isInFocusMode = false;
+  let pinnedItems: IRecordId[] = tabs.get() ?? [];
 
+  function handleFocusMode(e: CustomEvent<boolean>) {
+    if (typeof e.detail === "boolean") {
+      isInFocusMode = e.detail;
+    }
+  }
   onMount(() => {
-    const pageSub = page.subscribe((x) => {
-      const item = items.find((y) => y === x.params?.route);
-      if (item) selected = item;
+    const unsubscribe = uiState.subscribe((x) => {
+      pinnedItems = tabs.get() ?? [];
     });
     return () => {
-      pageSub();
+      if (unsubscribe) unsubscribe();
     };
   });
 </script>
 
-<div
-  class="fixed z-50 right-0 bottom-0 flex justify-end bg-bgs1 pb-4 px-4 h-16"
->
-  <div class="flex items-center gap-6 rounded-full bg-bgs2 px-4">
-    {#if !isCollapsed}
-      <div class="flex items-center px-4">
-        <Button
-          label={$spaceInContext?.label ?? "none selected"}
-          on:click={() => appStore.runAction(GatheryEvent.SPACE_BROWSER)}
-        />
-        &nbsp;&nbsp;⏐&nbsp;&nbsp;
-        <!-- <span class="text-fgs2 text-b2">
-          {$account.userInfo?.nickName || "Guest"}</span
-        > -->
-      </div>
-      {#each items as item}
-        <TopNavItem
-          {item}
-          isActive={selected === item}
-          on:click={() => {
-            selected = item;
-            appStore.runAction(item);
-          }}
-        />
-      {/each}
-      <!-- <PanelSwitcher
-        {items}
-        bind:selected
-        style={PanelSwitcherStyle.TRAIN}
-        on:switch={handleSwitch}
-      /> -->
-      <!-- <Icon icon="settings" on:click={() => runAction(AppEvent.SETTINGS)} />
-      <Icon icon="help" on:click={() => runAction(AppEvent.HELP)} /> -->
-    {:else}
-      <TopNavItem
-        item={selected}
-        isActive={false}
-        isShowLabel={true}
-        on:click={() => appStore.runAction(selected)}
-      />
+{#if !isInFocusMode}
+  <div
+    class="flex gap-3 justify-between items-center w-full h-11 max-h-11 min-h-11 bg-bgs2 pr-4 border-b border-brs3 userdata"
+  >
+    <Tabs {pinnedItems} />
+    {#if pinnedItems.length < 1}
+      <button
+        class="flex items-center justify-between w-96 bg-bgs3 hover:bg-bgs4 rounded-full px-3 py-1 text-b2 text-fgs2"
+        transition:fly={{
+          duration: 300,
+          x: 40
+        }}
+        on:click={() => appStore.runAction(Action.GLOBAL_SEARCH)}
+      >
+        <span>Search</span>
+        <ShortcutText shortcut={Action.GLOBAL_SEARCH} parentBgIndex={2} />
+      </button>
     {/if}
-
-    <Icon
-      icon={isCollapsed ? "chevdoubleleft" : "chevdoubleright"}
-      on:click={() => {
-        isCollapsed = !isCollapsed;
-      }}
-    />
+    <div class="flex items-center gap-3">
+      {#if pinnedItems.length > 0}
+        <div
+          transition:fly={{
+            duration: 300,
+            x: -60
+          }}
+        >
+          <Button
+            icon="ph:magnifying-glass"
+            tooltip="Search"
+            style={ButtonStyle.PLAIN}
+            parentBgIndex={2}
+            on:click={() => appStore.runAction(Action.GLOBAL_SEARCH)}
+          />
+        </div>
+      {/if}
+      <Button
+        icon="ph:terminal"
+        tooltip="Command bar"
+        style={ButtonStyle.PLAIN}
+        parentBgIndex={2}
+        on:click={() => appStore.runAction(Action.CMD)}
+      />
+      <Button
+        icon="ph:question"
+        tooltip="Help"
+        style={ButtonStyle.PLAIN}
+        parentBgIndex={2}
+        on:click={() => appStore.runAction(Action.HELP)}
+      />
+      <!-- <FocusPlayer /> -->
+      <TrailLeftIndicator />
+      <button
+        class="flex items-center gap-2"
+        on:click={() => appStore.runAction(Action.SETTINGS)}
+      >
+        <ProfilePicture context="topbar" />
+      </button>
+    </div>
   </div>
-</div>
+{/if}
+<svelte:window on:focusMode={handleFocusMode} />

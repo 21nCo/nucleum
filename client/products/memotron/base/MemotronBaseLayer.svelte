@@ -14,7 +14,6 @@
   import view from "$lib/client/stores/view.store";
   import AppSplitView from "$lib/client/layout/AppSplitView.svelte";
   import MemotronNotifications from "./MemotronNotifications.svelte";
-  import Tabs from "$lib/client/layout/tabs/Tabs.svelte";
   import UserBaseLayer from "$lib/client/layout/layers/UserBaseLayer.svelte";
   import { MemotronAction } from "../memotronAction.enum";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
@@ -30,6 +29,7 @@
   } from "./fallbacks";
   import LeftNav from "$lib/client/layout/leftPanel/LeftNav.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
+  import TopNav from "$lib/client/layout/topNav/TopNav.svelte";
   let isLiteMode = $context.isEmbed && $context.isSheet;
   let isHideLeftNavBar: boolean = refreshSidebarState();
 
@@ -131,7 +131,7 @@
               : 'flex-grow'}"
           >
             {#if !$view.isPortrait}
-              <Tabs />
+              <TopNav />
             {/if}
             <div class="w-full flex-grow">
               <AppSplitView>

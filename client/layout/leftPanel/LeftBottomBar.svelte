@@ -14,7 +14,7 @@
 
 <div
   class={cn("w-full bg-bgs3", {
-    "h-28": isInThinMode && size === Size.lg,
+    "h-16": isInThinMode && size === Size.lg,
     "h-24": isInThinMode && size === Size.md,
     "h-12": !isInThinMode
   })}
@@ -37,7 +37,7 @@
       >
         <Icon icon="ph:gear-fine-light" isAccentBgContext={isCpActive} {size} />
       </button>
-      <button
+      <!-- <button
         class={cn(
           "flex h-full w-full justify-center px-2 items-center gap-1 hover:bg-bgs4",
           {
@@ -53,7 +53,7 @@
         {#if !isInThinMode}
           <span class="text-b3 text-fgs2">Help</span>
         {/if}
-      </button>
+      </button> -->
     </div>
   {:else}
     <!-- else content here -->

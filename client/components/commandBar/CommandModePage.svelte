@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import Button from "$lib/client/elements/button/Button.svelte";
   import Divider from "$lib/client/elements/Divider.svelte";
   import ComponentResolver from "$lib/client/layout/paint/ComponentResolver.svelte";
@@ -18,11 +18,29 @@
   import { InteractionMode } from "../settings/interactionMode/interactionMode.type";
   import CommandBar from "./CommandBar.svelte";
   import ShortcutText from "$lib/client/elements/text/ShortcutText.svelte";
-  import Tabs from "$lib/client/layout/tabs/Tabs.svelte";
+  import Tabs from "$lib/client/layout/topNav/tabs/Tabs.svelte";
   import { page } from "$app/stores";
   import PagePainterV2 from "$lib/client/layout/paint/PagePainterV2.svelte";
   import { ResourceAccessMode } from "../flux/resourceStores/resource.type";
+  import { onMount } from "svelte";
+  import { tabs } from "$lib/client/layout/topNav/tabs/tabs.store";
+  import type { IRecordId } from "$lib/client/types/data.type";
+  let isInFocusMode = false;
+  let pinnedItems: IRecordId[] = tabs.get() ?? [];
 
+  function handleFocusMode(e: CustomEvent<boolean>) {
+    if (typeof e.detail === "boolean") {
+      isInFocusMode = e.detail;
+    }
+  }
+  onMount(() => {
+    const unsubscribe = uiState.subscribe((x) => {
+      pinnedItems = tabs.get() ?? [];
+    });
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  });
   let isCmdHome = true;
 
   $: activeTab = $page.url.searchParams.get(ResourceAccessMode.TAB);
@@ -31,6 +49,7 @@
 <div class="flex flex-col w-full h-full">
   <div>
     <Tabs
+      {pinnedItems}
       isShowHome={true}
       {activeTab}
       on:home={(e) => {

@@ -24,13 +24,27 @@
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { shortcutsConfig } from "../../shortcuts/shortcuts.config";
   import ComponentShortcutListener from "../../shortcuts/ComponentShortcutListener.svelte";
+  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import { UIState } from "$lib/client/stores/uiState/uiState.type";
   export let date: Date;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.CALENDAR;
   let isRefreshing = false;
   let tasks: ITaskThumb[] = [];
+  let completedTasksCount = 0;
+  let showCompletedTasks = refreshShowCompletedTasksState();
   onMount(async () => {
     await refreshTimeline();
   });
+  const inboxZeroIllustrations = ["inboxZero", "travel", "check", "globe"];
+
+  function refreshShowCompletedTasksState() {
+    return (
+      uiState.getState(UIState.showCompletedCalendarTasks, {
+        isProductScoped: true,
+        isDeviceScoped: true
+      }) ?? false
+    );
+  }
 
   async function refreshTimeline() {
     isRefreshing = true;
@@ -39,11 +53,21 @@
   }
 
   async function loadTasks() {
-    tasks = await new SearchStore(Resource.task).select({
+    const allTasks = await new SearchStore(Resource.task).select({
       filters: {
         dateUnix: tzStore.resolveTimePeriodFilterForDay(date)
       }
     });
+
+    completedTasksCount = allTasks.filter(
+      (task: ITaskThumb) => task.isChecked
+    ).length;
+
+    if (showCompletedTasks) {
+      tasks = allTasks;
+    } else {
+      tasks = allTasks.filter((task: ITaskThumb) => !task.isChecked);
+    }
   }
 
   async function handleCreateTask() {
@@ -58,24 +82,65 @@
   function onResourceMutation(event: CustomEvent) {
     refreshTimeline();
   }
+
+  function toggleCompletedTasks() {
+    showCompletedTasks = !showCompletedTasks;
+    uiState.setState(UIState.showCompletedCalendarTasks, showCompletedTasks, {
+      isProductScoped: true,
+      isDeviceScoped: true
+    });
+    loadTasks();
+  }
 </script>
 
 <div class="relative w-full h-full">
   {#if isRefreshing || tasks.length === 0}
     <EmptyStatusView
       isLoadingState={isRefreshing}
-      mainText="No tasks found"
-      subText="Choose a different date or create a task"
+      mainText={completedTasksCount > 0 ? "Inbox zero" : "No tasks found"}
+      subText={completedTasksCount > 0
+        ? "You completed all your tasks!"
+        : "Choose a different date or create a task"}
       actionText="Create task"
       actionShortcut={shortcutsConfig.create}
       on:click={handleCreateTask}
       loadingAnimation={LoadingAnimationType.FOCUS_ITEMS_PULSE}
-    />
+      emptyIllustration={completedTasksCount > 0
+        ? inboxZeroIllustrations[Math.floor(Math.random() * 4)]
+        : undefined}
+    >
+      {#if completedTasksCount > 0}
+        <div class="my-4">
+          <Button
+            icon={showCompletedTasks ? "ph:eye-slash-light" : ""}
+            label={showCompletedTasks
+              ? "Hide completed"
+              : `Completed (${completedTasksCount})`}
+            size={Size.sm}
+            type={ButtonVariant.SECONDARY}
+            style={ButtonStyle.PLAIN}
+            on:click={toggleCompletedTasks}
+          />
+        </div>
+      {/if}
+    </EmptyStatusView>
   {:else}
     <div class="overflow-auto py-3">
       <TaskRecords data={tasks} {accessPoint} />
     </div>
-    <div class="flex justify-center items-center">
+    <div class="flex flex-col justify-center items-center gap-6">
+      {#if completedTasksCount > 0}
+        <Button
+          icon={showCompletedTasks ? "ph:eye-slash-light" : ""}
+          label={showCompletedTasks
+            ? "Hide completed"
+            : `Completed (${completedTasksCount})`}
+          size={Size.sm}
+          type={ButtonVariant.SECONDARY}
+          style={ButtonStyle.PLAIN}
+          on:click={toggleCompletedTasks}
+        />
+      {/if}
       <Button
         icon="ph:plus-light"
         label="New task"
@@ -110,7 +175,8 @@
   subScriptionPropsForMergeAction={[
     RemovalProperty.IS_ARCHIVED,
     RemovalProperty.TRASH_INFORMATION,
-    "dateUnix"
+    "dateUnix",
+    "isChecked"
   ]}
   on:syncDown={() => {
     refreshTimeline();

@@ -17,20 +17,22 @@
 </script>
 
 <div
-  class={cn("flex min-w-10 items-center", {
+  class={cn("flex items-center", {
     "w-full": isOverflowItem,
-    "w-fit": !isOverflowItem
+    "flex-shrink-0": !isLast && !isOverflowItem,
+    "min-w-0 w-full": isLast && !isOverflowItem
   })}
 >
   <button
     on:click
     on:keydown={handleKeyDown}
     id="breadcrumb-item-label"
-    class={cn("cursor-pointer text-b2 truncate min-w-10 w-full text-left", {
+    class={cn("cursor-pointer text-b2 truncate text-left", {
       "opacity-50 cursor-not-allowed": isDisabled,
-      "text-ccs1": isLast,
+      "text-ccs1 w-full": isLast,
+      "max-w-[150px]": !isLast && !isOverflowItem,
       "hover:underline": !isLast && !isOverflowItem,
-      "hover:bg-bgs3 rounded-md p-2": isOverflowItem
+      "hover:bg-bgs3 rounded-md p-2 w-full": isOverflowItem
     })}
     use:tooltip={{
       text: label,

@@ -5,13 +5,10 @@
   import ResourceGridThumbnail from "../../record/thumbnail/ResourceGridThumbnail.svelte";
   import ResourceThumbnailBase from "../../record/thumbnail/ResourceThumbnailBase.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
-  import Icon from "$lib/client/elements/Icon.svelte";
   import { type IGoalThumb } from "../goal.type";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { resolveGoalTypeIcon } from "../goal.utils";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
-  import RecordStarStatusFeedback from "../../record/RecordStarStatusFeedback.svelte";
   import {
     currentFocusItem,
     focusItemsStore
@@ -21,6 +18,7 @@
   import GoalThumbnailSub from "./GoalThumbnailSub.svelte";
   import GoalThumbnailTitle from "./GoalThumbnailTitle.svelte";
   import FocusItemPickOverlay from "$lib/client/products/pointron/focus/elements/focusitem/FocusItemPickOverlay.svelte";
+  import { resolveGoalColor } from "../goal.utils";
   export let item: IGoalThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let size: Size.sm | Size.md = Size.md;
@@ -29,7 +27,7 @@
   export let isApplyCustomColor: boolean = false;
   export let isDraggable: boolean = false;
   export let refreshId: number = new Date().getTime();
-
+  $: color = resolveGoalColor(item);
   $: isCurrentlyFocusing = resolveIfCurrentFocusItem(
     $focusItemsStore,
     item.id,
@@ -58,7 +56,7 @@
   bind:isHovering
   on:action
 >
-  <CustomColorPropagator color={item.color}>
+  <CustomColorPropagator {color}>
     {#if arrangement === Arrangement.LIST}
       <div
         class={cn(
@@ -77,7 +75,12 @@
       >
         <button class="flex w-full items-center h-16 truncate" on:click>
           <div class="flex flex-col gap-1 p-3 w-full">
-            <GoalThumbnailTitle {item} {isCurrentlyFocusing} />
+            <GoalThumbnailTitle
+              {item}
+              {isCurrentlyFocusing}
+              {color}
+              isShowStarStatus={accessPoint !== ResourceAccessPoint.BROWSER}
+            />
             <GoalThumbnailSub {item} {isCurrentlyFocusing} {accessPoint} />
           </div>
           {#if accessPoint === ResourceAccessPoint.PICKER}
@@ -95,7 +98,12 @@
       >
         <div slot="bottom" class="flex flex-col w-full min-h-12">
           <div class="flex flex-col gap-2">
-            <GoalThumbnailTitle {item} {isCurrentlyFocusing} />
+            <GoalThumbnailTitle
+              {item}
+              {isCurrentlyFocusing}
+              {color}
+              isShowStarStatus={accessPoint !== ResourceAccessPoint.BROWSER}
+            />
             <GoalThumbnailSub {item} {isCurrentlyFocusing} {accessPoint} />
           </div>
         </div>

@@ -136,8 +136,8 @@
         icon: "ph:link-light"
       });
     }
-    if (goal?.tabsOrder) {
-      const orderedItems = goal.tabsOrder
+    if (goal?.uiState?.tabsOrder) {
+      const orderedItems = goal.uiState.tabsOrder
         .map((x) => {
           const item = items.find((y) => y.value === x);
           if (item) {
@@ -170,7 +170,10 @@
     }
     const items = e.detail;
     await goal.modify({
-      tabsOrder: items
+      uiState: {
+        ...($goal.uiState ?? {}),
+        tabsOrder: items
+      }
     });
   }
 

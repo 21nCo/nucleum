@@ -10,7 +10,15 @@
   import FocusNotes from "./FocusNotes.svelte";
 
   let feedback: IInlineStatus | undefined = undefined;
+  const mountTs = new Date().getTime();
+
+  /**
+   * Preventing the feedback on mount to avoid flickering
+   * @param e
+   */
   async function onChange(e: any) {
+    const elapsed = new Date().getTime() - mountTs;
+    if (elapsed < 2000) return;
     feedback = {
       type: AlertType.PROGRESS,
       message: "Saving..."

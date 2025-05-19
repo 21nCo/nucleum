@@ -67,6 +67,7 @@
     {size}
     {placeholder}
     {style}
+    parentBackgroundIndex={parentBgIndex}
     isRounded={true}
     height="h-10"
     icon={style === InputStyle.PLAIN ? undefined : "ph:magnifying-glass-light"}
@@ -82,15 +83,16 @@
     }}
     on:change={debouncedSearch}
     on:enter
-  />
-  <slot>
-    {#if $uiStateDerived.isShowHotKeyHints}
-      <span>
-        <ShortcutText
-          shortcut={GlobalEvent.ACTIVATE_SEARCH_BOX}
-          {parentBgIndex}
-        />
-      </span>
-    {/if}
-  </slot>
+  >
+    <slot>
+      {#if $uiStateDerived.isShowHotKeyHints}
+        <span>
+          <ShortcutText
+            shortcut={GlobalEvent.ACTIVATE_SEARCH_BOX}
+            {parentBgIndex}
+          />
+        </span>
+      {/if}
+    </slot>
+  </TextInput>
 </div>

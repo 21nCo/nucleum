@@ -6,6 +6,8 @@
   import { resolveGoalTypeIcon } from "../goal.utils";
   export let item: IGoalThumb;
   export let isCurrentlyFocusing: boolean = false;
+  export let color: number | undefined = undefined;
+  export let isShowStarStatus: boolean = false;
 </script>
 
 <div class="flex items-center gap-1.5 userdata">
@@ -15,7 +17,7 @@
     <Icon
       icon={resolveGoalTypeIcon(item.type)}
       class={cn({
-        "text-ccs1": item.color
+        "text-ccs1": color
       })}
     />
   {/if}
@@ -26,7 +28,9 @@
           "text-ccs1": isCurrentlyFocusing
         })}>{item.label ? item.label : "Untitled"}</span
       >
-      <RecordStarStatusFeedback isStarred={item.isStarred} />
+      {#if isShowStarStatus}
+        <RecordStarStatusFeedback isStarred={item.isStarred} />
+      {/if}
     </div>
   </div>
 </div>

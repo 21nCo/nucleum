@@ -7,6 +7,7 @@
   import BreadcrumbsOverflowPopover from "./BreadcrumbsOverflowPopover.svelte";
   import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { cn } from "$lib/client/utils/ui.utils";
   const dispatch = createEventDispatcher();
   export let items: IBreadcrumbItem[] = [];
   /**
@@ -32,14 +33,16 @@
 </script>
 
 {#if items?.length > 0}
-  <div class="flex w-full remove-scrollbar rounded-md items-center">
+  <div class="flex w-full items-center">
     {#if items.length > 3}
-      <BreadcrumbItem
-        label={items[0].label}
-        on:click={(e) => {
-          onClick(e, items[0]);
-        }}
-      />
+      <div class="flex-shrink-0">
+        <BreadcrumbItem
+          label={items[0].label}
+          on:click={(e) => {
+            onClick(e, items[0]);
+          }}
+        />
+      </div>
       <button
         class="flex-shrink-0"
         use:popover={{
@@ -54,26 +57,34 @@
         <span class="px-2 rounded-md hover:bg-bgs2"> .... </span>
         <span class="px-2 opacity-50">/</span>
       </button>
-      {#each items.slice(-1) as item, index}
-        <BreadcrumbItem
-          label={item.label}
-          isDisabled={item.disabled}
-          isLast={index === 0}
-          on:click={(e) => {
-            onClick(e, item);
-          }}
-        />
-      {/each}
+      <div class="flex-1 min-w-0 overflow-hidden">
+        {#each items.slice(-1) as item, index}
+          <BreadcrumbItem
+            label={item.label}
+            isDisabled={item.disabled}
+            isLast={index === 0}
+            on:click={(e) => {
+              onClick(e, item);
+            }}
+          />
+        {/each}
+      </div>
     {:else}
       {#each items as item, index (item)}
-        <BreadcrumbItem
-          label={item.label}
-          isDisabled={item.disabled}
-          isLast={index === items.length - 1}
-          on:click={(e) => {
-            onClick(e, item);
-          }}
-        />
+        <div
+          class={cn("flex-shrink-0", {
+            "flex-1 min-w-0": index === items.length - 1
+          })}
+        >
+          <BreadcrumbItem
+            label={item.label}
+            isDisabled={item.disabled}
+            isLast={index === items.length - 1}
+            on:click={(e) => {
+              onClick(e, item);
+            }}
+          />
+        </div>
       {/each}
     {/if}
   </div>

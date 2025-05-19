@@ -23,14 +23,13 @@
   <div class="flex flex-col items-center gap-1">
     <SessionStatusLabel size={$view.isPortrait ? Size.sm : Size.md} />
     <div
-      class={cn("flex justify-center", {
+      class={cn("flex justify-center tabular-nums slashed-zero", {
         "text-5xl dp:text-7xl font-bold": size === Size.sm,
         "text-7xl dp:text-9xl font-black": size !== Size.sm,
         "text-ars1":
           $activeSession.timeRemainingToTakeBreak != undefined &&
           $activeSession.timeRemainingToTakeBreak < 0
       })}
-      style="font-family: 'Hanken Grotesk'"
     >
       {formatSeconds(
         $activeSession.isSessionRunning
@@ -42,7 +41,7 @@
   </div>
   <div
     class={cn(
-      "flex justify-evenly rounded-md py-3 w-full mo:text-b3 text-b2 dp:text-base text-wrap",
+      "flex justify-evenly rounded-md py-3 w-full mo:text-b3 text-b2 dp:text-base text-wrap tabular-nums",
       bg(parentBackgroundIndex)
     )}
   >

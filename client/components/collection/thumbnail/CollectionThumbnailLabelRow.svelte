@@ -32,7 +32,9 @@
     })}
   >
     <CollectionThumbnailLabel {item} />
-    <RecordStarStatusFeedback isStarred={item.isStarred} />
+    {#if accessPoint !== ResourceAccessPoint.BROWSER}
+      <RecordStarStatusFeedback isStarred={item.isStarred} />
+    {/if}
   </div>
   {#if arrangement === Arrangement.LIST && accessPoint === ResourceAccessPoint.BROWSER && accessPointState === ResourceAccessPointState.DEFAULT}
     <CollectionNodeCount {item} />

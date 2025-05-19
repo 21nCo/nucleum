@@ -273,13 +273,14 @@
       </div>
       <div
         class="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-x-16 gap-y-12"
+        style="font-family: 'Hanken Grotesk'"
       >
         {#each months as { days, monthIndex }}
           <div class="flex flex-col min-w-[240px]">
             <div class="mb-1 ml-3 font-medium text-fgs1 text-h5">
               {monthNames[monthIndex]}
             </div>
-            <div class="grid grid-cols-7 text-center text-b2">
+            <div class="grid grid-cols-7 gap-x-1 text-center text-b2">
               {#each weekDays as day}
                 <div class="text-fgs4 mb-1 text-b4">{day}</div>
               {/each}
@@ -290,7 +291,7 @@
                   {@const isPastDay = isPastDate(date)}
                   <button
                     class={cn(
-                      "py-1 rounded-md border flex flex-col items-center justify-center h-9 w-9",
+                      "py-1 rounded-md border flex flex-col items-center justify-center h-9 max-w-9",
                       {
                         "bg-aps1 text-abg border-transparent": isSelected,
                         "text-ass1 font-medium border-ass1 notouch:hover:bg-ass2 active:bg-ass2":
@@ -303,7 +304,6 @@
                           "text-fgs3": !isPastDay
                         }
                     )}
-                    style="font-family: 'Hanken Grotesk', sans-serif;"
                     on:click={() => {
                       selectedDate = date;
                       dispatch("dateChange", { date });

@@ -81,6 +81,9 @@
   :global(.text-ccs1) {
     color: var(--customcolor, rgb(var(--colors-aps1)));
   }
+  :global(.text-ccs1-fgs1) {
+    color: var(--customcolor, rgb(var(--colors-fgs1)));
+  }
   :global(.text-ccs2) {
     color: var(--customcolorshadetwo, rgb(var(--colors-aps2)));
   }

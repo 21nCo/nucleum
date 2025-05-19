@@ -274,6 +274,7 @@
           {/if}
         </div>
       {/if}
+      <slot />
     {/if}
   </InputBaseElement>
 {/if}

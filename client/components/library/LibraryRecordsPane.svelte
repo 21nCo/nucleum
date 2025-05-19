@@ -76,6 +76,8 @@
   import { isCustomLibrary } from "./library.utils";
   import LinkTagsControlPanel from "$lib/client/products/memotron/linking/LinkTagsControlPanel.svelte";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
+  import Text from "$lib/client/elements/text/Text.svelte";
+  import { TextStyle } from "$lib/client/types/text.enum";
   const dispatch = createEventDispatcher();
 
   export let resource: Resource;
@@ -89,6 +91,7 @@
   let isStarFilterSelected: boolean = false;
   let isArchivedFilterSelected: boolean = false;
   let data: any[] = [];
+  let starredData: any[] = [];
   let searchStore = new SearchStore();
   let QAsearchStore = new SearchStore();
   // QAsearchStore.searchType = SearchType.SEMANTIC;
@@ -207,6 +210,15 @@
         limit: 50,
         offset: isPagination ? data.length : 0
       });
+      if (isConstrainedWidth && !searchQuery) {
+        starredData = await searchStore.select({
+          resource,
+          filters: {
+            ...filters,
+            isStarred: true
+          }
+        });
+      }
       if (isPagination)
         data = [...data, ...newData]?.filter(removeDuplicatesFilter);
       else data = [...newData];
@@ -249,7 +261,9 @@
       isStarred:
         isStarFilterSelected || selectedSubType === "starred"
           ? true
-          : undefined,
+          : isConstrainedWidth && !searchQuery
+            ? false
+            : undefined,
       isArchived: isArchivedFilterSelected ? true : undefined
     };
   }
@@ -347,6 +361,34 @@
       refreshTotalRecordsCount();
       await refreshFilteredRecordsCount();
       if (id) data = data.filter((x) => !isSameResource(x.id, id));
+      if (id)
+        starredData = starredData.filter((x) => !isSameResource(x.id, id));
+      return;
+    }
+    if (
+      isConstrainedWidth &&
+      !searchQuery &&
+      mutation.action === PersistenceActionType.MERGE &&
+      "isStarred" in mutation.record
+    ) {
+      const id = mutation.record.id;
+      if (!id) return;
+      if (
+        mutation.record.isStarred &&
+        !starredData.find((x) => isSameResource(x.id, id))
+      ) {
+        const item = data.find((x) => isSameResource(x.id, id));
+        if (item) {
+          starredData = [...starredData, item];
+          data = data.filter((x) => !isSameResource(x.id, id));
+          totalCountAfterFilter = totalCountAfterFilter - 1;
+        }
+      } else {
+        const item = starredData.find((x) => isSameResource(x.id, id));
+        starredData = starredData.filter((x) => !isSameResource(x.id, id));
+        data = [...data, item];
+        totalCountAfterFilter = totalCountAfterFilter + 1;
+      }
       return;
     }
     if (mutation.action === PersistenceActionType.MERGE) return;
@@ -523,6 +565,28 @@
   {/if}
   <div class="flex flex-col gap-4 px-4 overflow-auto grow">
     <InlineSyncingFeedback {resource} isFullWidthVariant={true} />
+    {#if isConstrainedWidth && !searchQuery && starredData.length > 0}
+      <div class="flex flex-col gap-2">
+        <Text content="Starred" style={TextStyle.SECTION_HEADING} />
+        <Records
+          data={starredData}
+          {accessPoint}
+          {accessPointState}
+          {resource}
+          defaultAccessMode={accessPoint === ResourceAccessPoint.LIBRARY ||
+          $view.isConstrainedWidth
+            ? ResourceAccessMode.POP
+            : ResourceAccessMode.INLINE}
+          size={$view.isConstrainedWidth ? Size.sm : Size.md}
+          arrangement={resolveArrangement(arrangement)}
+        />
+        {#if data.length > 0}
+          <div class="mt-4 -mb-2">
+            <Text content="Other" style={TextStyle.SECTION_HEADING} />
+          </div>
+        {/if}
+      </div>
+    {/if}
     {#if isRefreshing}
       <LibraryLoadingPulse {isConstrainedWidth} {arrangement} />
     {:else if data && data.length > 0}
@@ -555,12 +619,12 @@
       >
         {#if isRefreshingTotalCount}
           <Icon icon="svg-spinners:3-dots-fade" />
-        {:else}
+        {:else if !isConstrainedWidth}
           {resolveFooterMessage(data, totalCountAfterFilter) ?? ""}
         {/if}
       </div>
       <ScrollViewBottomSpacer />
-    {:else}
+    {:else if data.length === 0 && starredData.length === 0}
       <EmptyStatusView
         size={Size.lg}
         {...resolveEmptyStateMessage()}

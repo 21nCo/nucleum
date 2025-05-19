@@ -84,8 +84,23 @@ import FocusCalendarEntryThumbnail from "../components/calendar/column/timeline/
 import CalendarDayModal from "../components/calendar/column/CalendarDayModal.svelte";
 import HotKeys from "../components/markdown/shortcuts/HotKeys.svelte";
 import HistoryModal from "../components/calendar/HistoryModal.svelte";
+import Credits from "$lib/client/components/help/Credits.svelte";
 
 export const globalActions: IAction[] = [
+  {
+    action: Action.CREDITS,
+    label: "Credits",
+    icon: "ph:heart-light",
+    type: ActionType.MODAL,
+    component: Credits,
+    modalParams: {
+      title: "Credits & Appreciation",
+      layout: {
+        size: Size.lg,
+        orientation: Orientation.Horizontal
+      }
+    }
+  },
   {
     action: "404",
     type: ActionType.PAGE,
@@ -314,22 +329,6 @@ export const globalActions: IAction[] = [
     label: "Instagram",
     icon: "ph:instagram-logo-light",
     type: ActionType.LINK
-  },
-  {
-    action: "credits",
-    get label() {
-      return this.modalParams?.title;
-    },
-    icon: "face-smile",
-    isInactive: true,
-    type: ActionType.MODAL,
-    contentType: ContentType.SPACE_DOC,
-    modalParams: {
-      title: "Credits",
-      layout: {
-        size: Size.lg
-      }
-    }
   },
   {
     action: "git",
