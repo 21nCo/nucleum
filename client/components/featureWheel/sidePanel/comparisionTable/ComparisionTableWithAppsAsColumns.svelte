@@ -12,6 +12,8 @@
   import NotesCell from "./NotesCell.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { createEventDispatcher } from "svelte";
+  import Badge from "$lib/client/elements/text/Badge.svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
   const dispatch = createEventDispatcher();
   export let product: string;
   export let features: IFwFeature[] = [];
@@ -90,27 +92,27 @@
       <label class="flex items-center gap-2 cursor-pointer">
         <input
           type="checkbox"
-          bind:checked={showPlannedFeatures}
-          class="w-4 h-4"
-        />
-        <span class="text-fgs2 text-sm">Show planned features</span>
-      </label>
-      <label class="flex items-center gap-2 cursor-pointer">
-        <input
-          type="checkbox"
           bind:checked={showJustAvailability}
           class="w-4 h-4"
         />
         <span class="text-fgs2 text-sm">Hide rating</span>
       </label>
+      <label class="flex items-center gap-2 cursor-pointer">
+        <input
+          type="checkbox"
+          bind:checked={showPlannedFeatures}
+          class="w-4 h-4"
+        />
+        <span class="text-fgs2 text-sm">Include planned features</span>
+      </label>
     </div>
   </div>
   <table class="w-full border-collapse table-fixed">
     <thead>
-      <tr class="bg-bgs2">
-        <th class="border border-bgs3 p-2 text-left">Feature</th>
-        <th class="border border-bgs3 p-2 text-left text-aps1 font-medium">
-          <span class="flex items-center gap-1">
+      <tr class="bg-bgs3/80">
+        <th class="border border-brs3 p-2 text-left font-medium">Feature</th>
+        <th class="border border-brs3 p-2 text-left">
+          <span class="flex items-center gap-1 font-medium">
             <SvgIcon icon={product} />
             {properCase(product)}
           </span>
@@ -122,21 +124,20 @@
     </thead>
     <tbody>
       <!-- First render general comparison properties -->
-      <tr>
-        <td class="border border-bgs3 p-2">Price (USD/month billed annually)</td
-        >
-        <td class="border border-bgs3 p-2">Free</td>
+      <tr class="text-b2">
+        <td class="border border-brs3 p-2">Price *</td>
+        <td class="border border-brs3 p-2">Free</td>
         {#each filteredContemporaries as contemporary}
-          <td class="border border-bgs3 p-2">
+          <td class="border border-brs3 p-2">
             {contemporary.price ? `$${contemporary.price}` : "Free"}
           </td>
         {/each}
       </tr>
-      <tr>
-        <td class="border border-bgs3 p-2">Source type</td>
-        <td class="border border-bgs3 p-2">SOURCE AVAILABLE</td>
+      <tr class="text-b2">
+        <td class="border border-brs3 p-2">Source type</td>
+        <td class="border border-brs3 p-2">SOURCE AVAILABLE</td>
         {#each filteredContemporaries as contemporary}
-          <td class="border border-bgs3 p-2">
+          <td class="border border-brs3 p-2">
             {contemporary.sourcingType
               ? contemporary.sourcingType.replace(/_/g, " ")
               : "-"}
@@ -148,7 +149,7 @@
       {#each categoryLabels as categoryLabel}
         <tr>
           <td
-            class="border border-bgs3 p-2 font-bold bg-bgs3"
+            class="border border-brs3 p-2 text-fgs3 bg-bgs2"
             colspan={filteredContemporaries.length + 2}
           >
             {categoryLabel}
@@ -156,22 +157,29 @@
         </tr>
 
         {#each groupedFeatures[categoryLabel] as feature}
-          <tr>
+          <tr class="text-b2">
             <td
-              class="border border-bgs3 p-2 cursor-pointer hover:text-aps1"
+              class={cn(
+                "border border-brs3 p-2 cursor-pointer hover:text-aps1",
+                {
+                  "text-fgs3": feature.isPlanned
+                }
+              )}
               on:click={() => {
                 dispatch("feature", feature.label);
               }}>{feature.label}</td
             >
-            <td class="border border-bgs3 p-2 font-medium">
+            <td class="border border-brs3 p-2 font-medium">
               {#if feature.isPlanned}
-                <span class="text-aps2">Planned</span>
+                <div class="flex text-aps1">
+                  <Badge text="Planned" />
+                </div>
               {:else}
                 <RatingCell value={1} {showJustAvailability} />
               {/if}
             </td>
             {#each filteredContemporaries as contemporary}
-              <td class="border border-bgs3 p-2">
+              <td class="border border-brs3 p-2">
                 {#if getContemporaryRating(feature, contemporary.label) !== undefined}
                   <div class="flex items-center gap-2">
                     <RatingCell
@@ -187,6 +195,7 @@
                           feature,
                           contemporary.label
                         )}
+                        isShort={true}
                       />
                     {/if}
                   </div>
@@ -200,4 +209,5 @@
       {/each}
     </tbody>
   </table>
+  <span class="text-fgs2 text-b2"> * Price is per month billed annually. </span>
 </div>

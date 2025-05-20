@@ -7,6 +7,6 @@
 <th class="border border-bgs3 p-2 text-left">
   <div class="flex items-center gap-1">
     <ExternalLogo provider={contemporary} />
-    <span class="font-light">{contemporary.label}</span>
+    <span class="font-medium">{contemporary.label}</span>
   </div>
 </th>

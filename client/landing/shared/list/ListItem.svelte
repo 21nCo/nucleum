@@ -5,9 +5,14 @@
   export let item: IListItem;
 </script>
 
-<div class="flex items-center gap-2 text-lb2">
+<div class="flex items-center gap-1.5 text-lb2">
   {#if item.icon}
-    <SVGIcon icon={item.icon} size={Size.lg} isRenderRaw={true} />
+    <SVGIcon
+      icon={item.icon}
+      size={Size.lg}
+      phIconSize={Size.md}
+      isRenderRaw={true}
+    />
   {/if}
   <p>{item.title}</p>
 </div>

@@ -20,6 +20,7 @@
   let wheel: IFeatureWheel;
   let selectedCategories: string[] | undefined = undefined;
   let selectedFeatures: string[] | undefined = undefined;
+  let includePlannedFeatures: boolean = false;
   /**
    * Selected contemporaries to be compared with
    */
@@ -50,10 +51,12 @@
             (feature) =>
               feature.category === category.label &&
               (mode === FeatureWheelMode.COMPARER
-                ? !feature.isPlanned && !feature.isHideForComparer
+                ? (includePlannedFeatures || !feature.isPlanned) &&
+                  !feature.isHideForComparer
                 : true)
           )
           .map((feature) => ({
+            ...feature,
             label: feature.label,
             contemporaries:
               selectedCompare && selectedCompare.length > 0
@@ -116,6 +119,7 @@
         bind:selectedCategories
         bind:selectedFeatures
         bind:selectedCompare
+        bind:includePlannedFeatures
         on:change={(e) => {
           refreshWheel();
         }}
@@ -141,8 +145,13 @@
             {wheel}
             selectedSpoke={featureView}
             on:spokeClick={(e) => {
-              const spoke = e.detail;
-              onFeatureClick(spoke);
+              const detail = e.detail;
+              if (detail.spoke.includes("+")) {
+                selectedCategories = [detail.group];
+                refreshWheel();
+              } else {
+                onFeatureClick(detail.spoke);
+              }
             }}
             on:contemporary={(e) => {
               if (!e.detail.spoke) return;

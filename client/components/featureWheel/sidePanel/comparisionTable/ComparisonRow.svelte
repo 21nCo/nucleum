@@ -14,7 +14,7 @@
 </script>
 
 <tr>
-  <td class="border border-bgs3 p-2 flex items-center gap-2">
+  <td class="border-b border-l border-brs3 p-2 flex items-center gap-2">
     <ExternalLogo
       provider={objIsEmpty(contemporaryDetail)
         ? contemporary
@@ -24,18 +24,18 @@
   >
   {#if additionalProperties}
     {#each additionalProperties as property}
-      <td class="border border-bgs3 p-2">
+      <td class="border border-brs3 p-2">
         {contemporaryDetail[property]}
       </td>
     {/each}
   {/if}
-  <td class="border border-bgs3 p-2">
+  <td class="border border-brs3 p-2">
     {contemporaryDetail.price ?? "-"}
   </td>
-  <td class="border border-bgs3 p-2">
+  <td class="border border-brs3 p-2">
     <RatingCell value={contemporary.value} />
   </td>
-  <td class="border border-bgs3 p-2">
+  <td class="border border-brs3 p-2">
     <NotesCell notes={contemporary.notes} />
   </td>
 </tr>
