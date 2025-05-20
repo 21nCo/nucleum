@@ -32,11 +32,11 @@
   let timeRangeForPage: { begin: number; end: number } | undefined;
 
   /**
-   * calculation: (bottom 1 rem + gap between cards (0.5 rem) + top 0.5 rem + 4.2 rem (analytics page header height)) / 2
+   * calculation: (bottom 1 rem + gap between cards (0.5 rem) + top 0.5 rem + 4.2 rem (analytics page header height) + 2.75rem (top nav height)) / 2
    *
    * This is to determine the card height so that cards fit exactly in the view. See {@link AnalyticsCardView} where 50vh - heightAdjuster is used.
    */
-  const heightAdjuster = "3.1rem";
+  const heightAdjuster = "4.475rem";
 
   async function addCard() {
     analyticsConfigStore.addCard(id);

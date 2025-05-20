@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tooltip } from "$lib/client/actions/popover.action";
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
   import RecordStarStatusFeedback from "../../record/RecordStarStatusFeedback.svelte";
   import type { ICollectionThumb } from "../collection.type";
@@ -18,7 +19,13 @@
   {#if isShowAvatar}
     <CollectionThumbnailAvatar {item} {isShowFallbackIcons} />
   {/if}
-  <span class="text-left truncate font--medium userdata">
+  <span
+    class="text-left truncate font--medium userdata"
+    use:tooltip={{
+      text: item.label,
+      isEnableOnlyOnTruncate: true
+    }}
+  >
     {#if item.labelSearch}
       {@html renderMdAsHtml(item.labelSearch)}
     {:else if item.label}

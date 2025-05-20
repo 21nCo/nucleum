@@ -68,7 +68,7 @@
 
 <div class={cn("flex flex-col w-full h-full", bg(bgIndex - 1))}>
   <div
-    class="flex gap-8 w-full items-center justify-between px-4 portrait:py-2 pt-4 pb-2"
+    class="flex gap-8 w-full items-center justify-between portrait:py-2 pt-4 pb-2"
   >
     <div class="flex gap-6 items-center flex-grow">
       {#if $view.isPortrait}
@@ -108,7 +108,7 @@
             <PanelSwitcher
               title="Overview"
               items={pages}
-              style={PanelSwitcherStyle.SNAKE}
+              style={PanelSwitcherStyle.BAR}
               isExpandToFullWidth={true}
               isEnableAnimationForTitle={false}
               isInEditMode={$isInEditMode}
@@ -120,33 +120,40 @@
               on:remove={onRemovePageClicked}
               on:debouncedChange={onPagelabelChange}
               on:rearrange={onPageRearrange}
-            />
-          </div>
-          <div class="flex items-center gap-2 ml-auto">
-            {#if $isInEditMode}
-              <Button
-                icon="sync"
-                label="reset"
-                isPreventMinWidth={true}
-                size={Size.xs}
-                on:click={() => {
-                  confirmationNotification.notify({
-                    title: "Reset analytics",
-                    message:
-                      "Are you sure you want to reset analytics? This will remove all pages and cards.",
-                    confirmAction: {
-                      label: "Reset",
-                      variant: ButtonVariant.DANGER,
-                      callback: async () => {
-                        await analyticsConfigStore.reset();
-                        return true;
-                      }
-                    }
-                  });
-                }}
-              />
-            {/if}
-            <EditModeToggle />
+            >
+              <div class="pl-4" slot="left">
+                <Text
+                  content="Overview"
+                  style={TextStyle.PANEL_HEADING_SMALL}
+                />
+              </div>
+              <div class="flex items-center gap-2" slot="right">
+                {#if $isInEditMode}
+                  <Button
+                    icon="sync"
+                    label="reset"
+                    isPreventMinWidth={true}
+                    size={Size.xs}
+                    on:click={() => {
+                      confirmationNotification.notify({
+                        title: "Reset analytics",
+                        message:
+                          "Are you sure you want to reset analytics? This will remove all pages and cards.",
+                        confirmAction: {
+                          label: "Reset",
+                          variant: ButtonVariant.DANGER,
+                          callback: async () => {
+                            await analyticsConfigStore.reset();
+                            return true;
+                          }
+                        }
+                      });
+                    }}
+                  />
+                {/if}
+                <EditModeToggle />
+              </div>
+            </PanelSwitcher>
           </div>
         </div>
       {/if}
