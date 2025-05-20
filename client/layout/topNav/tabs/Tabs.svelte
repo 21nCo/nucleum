@@ -13,8 +13,8 @@
   export let activeTab: string | null = null;
 </script>
 
-<span
-  class={cn("flex gap--2", {
+<div
+  class={cn("flex gap--2 pr-8 h-full items-center overflow-x-auto", {
     grow: pinnedItems.length > 0
   })}
 >
@@ -52,4 +52,4 @@
       }}
     />
   {/each}
-</span>
+</div>

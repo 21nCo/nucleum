@@ -21,8 +21,10 @@
   import { rearrangeOnAxis } from "$lib/client/actions/rearrange.action";
   import { createEventDispatcher } from "svelte";
   import { isValidString } from "$lib/shared/utils/text.utils";
+  import Button from "$lib/client/elements/button/Button.svelte";
   const dispatch = createEventDispatcher();
   export let item: IRecordId;
+  export let isInterimTab: boolean = false;
   let resource: any;
   let action: any;
   let isHovering: boolean = false;
@@ -80,9 +82,11 @@
       threshold: 30
     }}
     class={cn(
-      "relative flex items-center rounded-md text-b2 gap-2 px-6 py-1.5 max-w-48 min-w-20 truncate",
+      "relative flex items-center rounded-md text-b2 gap-2 max-w-48 min-w-20 truncate",
       // abg(isActive, 1),
       {
+        "px-4 py-1.5": !isInterimTab,
+        "px-2 py-0.5 border border-dashed border-fgs4": isInterimTab,
         "hover:bg-bgs3": !isActive,
         "bg-bgs1": isActive
       }
@@ -98,7 +102,29 @@
         {isValidString(resource?.label) ? resource?.label : "Untitled"}
       {/if}
     </div>
-    {#if isHovering}
+    {#if isInterimTab}
+      <div class="flex items-center">
+        <Button
+          icon="ph:push-pin-light"
+          tooltip="Pin to tabs"
+          size={Size.sm}
+          parentBgIndex={2}
+          on:click={() => {
+            tabs.open(item);
+          }}
+        />
+        <Button
+          icon="ph:x-light"
+          tooltip="Close"
+          size={Size.sm}
+          parentBgIndex={2}
+          on:click={() => {
+            dispatch("close");
+          }}
+        />
+      </div>
+    {/if}
+    {#if isHovering && !isInterimTab}
       <button
         class={cn(
           "absolute right-0 h-full rounded-r-md bg-gradient-to-l  to-transparent pl-10",

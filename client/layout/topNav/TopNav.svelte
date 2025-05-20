@@ -12,15 +12,23 @@
   import { tabs } from "./tabs/tabs.store";
   import TrailLeftIndicator from "./TrailLeftIndicator.svelte";
   import { fly } from "svelte/transition";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { page } from "$app/stores";
+  import TopBarResourceItem from "./tabs/TopBarResourceItem.svelte";
   // import FocusPlayer from "$lib/client/products/pointron/focus/player/FocusPlayer.svelte";
   let isInFocusMode = false;
   let pinnedItems: IRecordId[] = tabs.get() ?? [];
+
+  $: currentTab = $page.url.searchParams.get(ResourceAccessMode.TAB);
+  $: isInterimTab =
+    currentTab && !pinnedItems.some((x) => x.toString() === currentTab);
 
   function handleFocusMode(e: CustomEvent<boolean>) {
     if (typeof e.detail === "boolean") {
       isInFocusMode = e.detail;
     }
   }
+
   onMount(() => {
     const unsubscribe = uiState.subscribe((x) => {
       pinnedItems = tabs.get() ?? [];
@@ -35,10 +43,23 @@
   <div
     class="flex gap-3 justify-between items-center w-full h-11 max-h-11 min-h-11 bg-bgs2 pr-4 border-b border-brs3 userdata"
   >
-    <Tabs {pinnedItems} />
-    {#if pinnedItems.length < 1}
+    {#if pinnedItems.length > 0}
+      <div class="relative h-full overflow-x-auto">
+        <Tabs {pinnedItems} />
+        <div
+          class="absolute right-0 top-0 bottom-0 flex items-center pointer-events-none"
+        >
+          <div
+            class="h-full w-6 flex items-center justify-end bg-gradient-to-r from-transparent via-bgs2/50 to-bgs2 px-2"
+          ></div>
+        </div>
+      </div>
+    {:else}
+      <div class="w-1 h-full"></div>
+    {/if}
+    {#if pinnedItems.length === 0 && !isInterimTab}
       <button
-        class="flex items-center justify-between w-96 bg-bgs3 hover:bg-bgs4 rounded-full px-3 py-1 text-b2 text-fgs2"
+        class="flex items-center justify-between w-96 bg-bgs3 hover:bg-bgs4 rounded-full px-3 py-1 mx-3 text-b2 text-fgs2"
         transition:fly={{
           duration: 300,
           x: 40
@@ -50,7 +71,19 @@
       </button>
     {/if}
     <div class="flex items-center gap-3">
-      {#if pinnedItems.length > 0}
+      {#if isInterimTab && currentTab}
+        {#key currentTab}
+          <TopBarResourceItem
+            item={currentTab}
+            on:click
+            isInterimTab
+            on:close={() => {
+              appStore.gotoPath("/");
+            }}
+          />
+        {/key}
+      {/if}
+      {#if pinnedItems.length > 0 || isInterimTab}
         <div
           transition:fly={{
             duration: 300,

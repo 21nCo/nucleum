@@ -301,6 +301,8 @@ const phosphorIcons = [
   "wifi-high",
   "wifi-x",
   "wifi-slash",
+  "key",
+  "keyhole",
 
   //Charts
   "chart-bar",
@@ -504,4 +506,7 @@ export const phIcons = {
     (icon) => icon + "-light"
   ),
   fill: [...phosphorIcons, ...phosphorRatingIcons].map((icon) => icon + "-fill")
+  // duotone: [...phosphorIcons, ...phosphorRatingIcons].map(
+  //   (icon) => icon + "-duotone"
+  // )
 };

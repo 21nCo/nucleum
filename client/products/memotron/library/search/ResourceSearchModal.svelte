@@ -28,7 +28,12 @@
   import { appStore } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
   import { searcheableResources } from "$local/local";
-  import { resolveResourceIcon } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import {
+    determineResourceType,
+    resolveResourceIcon
+  } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { tabs } from "$lib/client/layout/topNav/tabs/tabs.store";
+  import { isInlineAvailable } from "$lib/client/components/library/library.utils";
 
   let resource: Resource = Resource.everything;
   let isFiltersVisible: boolean = false;
@@ -49,7 +54,7 @@
     ...searcheableResources
       .filter((x) => !($view.isConstrainedWidth && x === Resource.task))
       .map((x) => ({
-        label: properCase(x),
+        label: properCase(x) + "s",
         value: x,
         icon: resolveResourceIcon(x)
       }))
@@ -93,6 +98,14 @@
   const debouncedSearch = debouncer(refresh, 500);
 
   function onSelect(e: CustomEvent) {
+    const clickAccessMode = appStore.determineClickAccessMode(e.detail.event);
+    if (!clickAccessMode) {
+      const resourceType = determineResourceType(e.detail.item.id);
+      if (isInlineAvailable(resourceType)) {
+        tabs.activate(e.detail.item.id);
+        return;
+      }
+    }
     appStore.resourceClickHandler(e.detail.event, e.detail.item.id);
   }
 </script>

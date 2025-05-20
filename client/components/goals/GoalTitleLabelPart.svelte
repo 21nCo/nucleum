@@ -4,7 +4,7 @@
   export let item: IGoalThumb;
 </script>
 
-<div>
+<div class="flex items-center gap-2 min-w-0">
   <span class="text-left truncate userdata">
     {isValidString(item.label) ? item.label : "Untitled"}
   </span>

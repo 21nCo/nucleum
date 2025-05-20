@@ -4,6 +4,10 @@ export function isCustomLibrary(resource: Resource) {
   return [Resource.relation, Resource.task].includes(resource);
 }
 
+export function isInlineAvailable(resource: Resource) {
+  return ![Resource.relation, Resource.task].includes(resource);
+}
+
 export function isHideCreateAction(resource: Resource) {
   return [Resource.relation].includes(resource);
 }

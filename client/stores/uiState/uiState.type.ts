@@ -14,6 +14,10 @@ export enum UIState {
    * Completely hides the left app navigation bar on hot key shortcut or minimize toggle
    */
   COMPLETELY_HIDE_LEFT_NAV_BAR = "COMPLETELY_HIDE_LEFT_NAV_BAR",
+  /**
+   * Hides the labels in the app menu items
+   */
+  hideLeftNavMenuLabels = "hideLeftNavMenuLabels",
   arrangement = "arrangement",
 
   //Pointron

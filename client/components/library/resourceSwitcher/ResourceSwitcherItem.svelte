@@ -48,9 +48,8 @@
   }
 
   function resolveContextMenu() {
-    const isCurrentResourcePinned = $appMenuStore[
-      $appStore.product
-    ]?.user?.includes(resourceAction(resource, ResourceActionType.BROWSE));
+    const isCurrentResourcePinned =
+      $appMenuStore[$appStore.product]?.user?.includes(resource);
     if (resource === Resource.combination) {
       return [];
     }
@@ -63,14 +62,8 @@
         ? "ph:minus-circle-light"
         : "ph:push-pin-light",
       callback: async () => {
-        if (!isCurrentResourcePinned)
-          appMenuStore.addUserMenuItem(
-            resourceAction(resource, ResourceActionType.BROWSE)
-          );
-        else
-          appMenuStore.removeUserMenuItem(
-            resourceAction(resource, ResourceActionType.BROWSE)
-          );
+        if (!isCurrentResourcePinned) appMenuStore.addUserMenuItem(resource);
+        else appMenuStore.removeUserMenuItem(resource);
         popRef.dispatchEvent(new CustomEvent("hide"));
       }
     };

@@ -10,7 +10,11 @@
   import { Placement } from "$lib/client/types/direction.enum";
   import { abg, cn } from "$lib/client/utils/ui.utils";
   import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
-  import { uiStateDerived } from "$lib/client/stores/uiState/uiState.store";
+  import {
+    uiState,
+    uiStateDerived
+  } from "$lib/client/stores/uiState/uiState.store";
+  import { UIState } from "$lib/client/stores/uiState/uiState.type";
   import { keyboardShortcuts } from "$lib/client/components/shortcuts/shortcuts.store";
   import { popover, tooltip } from "$lib/client/actions/popover.action";
   import { hoverable } from "$lib/client/actions/hover.action";
@@ -32,10 +36,32 @@
   $: isActive =
     $page.params.route?.includes(item.path ?? item.action) ||
     $page.route.id?.includes(item.path ?? item.action);
+
+  let hideMenuLabels = false;
+
+  onMount(() => {
+    uiStateDerived.refreshShortcutHintsState();
+    refreshHideMenuLabels();
+    const unsubscribe = uiState.subscribe(() => {
+      refreshHideMenuLabels();
+    });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  });
+
+  function refreshHideMenuLabels() {
+    hideMenuLabels =
+      uiState.getState(UIState.hideLeftNavMenuLabels, {
+        isProductScoped: true
+      }) || false;
+  }
+
   $: isShowLabel =
     layoutContext === LayoutContext.PORTRAIT ||
     layoutContext === LayoutContext.DEFAULT ||
-    layoutContext === LayoutContext.THIN_WITH_LABEL;
+    (layoutContext === LayoutContext.THIN_WITH_LABEL && !hideMenuLabels);
   let buttonRef: HTMLElement;
   let popRef: HTMLButtonElement;
   let pad: number;
@@ -47,10 +73,10 @@
     pad = rawPad > 30 ? 30 : rawPad;
   }
   $: tooltipText =
-    layoutContext === LayoutContext.THIN ? item.label : undefined;
-  onMount(() => {
-    uiStateDerived.refreshShortcutHintsState();
-  });
+    layoutContext === LayoutContext.THIN ||
+    (layoutContext === LayoutContext.THIN_WITH_LABEL && !isShowLabel)
+      ? item.label
+      : undefined;
 
   function onClick() {
     postMessageToParent(EmbedMessage.MENU_ITEM_SELECTED);
@@ -89,9 +115,7 @@
       value: "pin",
       icon: "ph:minus-circle-light",
       callback: async () => {
-        appMenuStore.removeUserMenuItem(
-          resourceAction(resource, ResourceActionType.BROWSE)
-        );
+        appMenuStore.removeUserMenuItem(resource);
         popRef.dispatchEvent(new CustomEvent("hide"));
       }
     };
@@ -153,7 +177,7 @@
       "w-12 flex-col gap-1 rounded-lg":
         isShowLabel && layoutContext === LayoutContext.PORTRAIT,
       "gap-2 rounded-lg p-2 h-9": layoutContext === LayoutContext.DEFAULT,
-      "px-4 py-3 rounded-full": !isShowLabel,
+      "px-2 py-1": !isShowLabel,
       "justify-between": isShowHotKeyHint
     }
   )}
@@ -170,12 +194,15 @@
       "flex-col items-center":
         layoutContext === LayoutContext.PORTRAIT ||
         layoutContext === LayoutContext.THIN_WITH_LABEL,
-      "w-full py-2 rounded-md hover:bg-bgs3 border":
-        layoutContext === LayoutContext.THIN_WITH_LABEL,
+      "w-full py-2 rounded-md": layoutContext === LayoutContext.THIN_WITH_LABEL,
+      "hover:bg-bgs3 border":
+        layoutContext === LayoutContext.THIN_WITH_LABEL && isShowLabel,
       "border-transparent":
         layoutContext === LayoutContext.THIN_WITH_LABEL && !isActive,
       "bg-bgs3 border-brs3":
-        layoutContext === LayoutContext.THIN_WITH_LABEL && isActive
+        layoutContext === LayoutContext.THIN_WITH_LABEL &&
+        isActive &&
+        isShowLabel
     })}
   >
     {#if item.icon}
@@ -186,6 +213,10 @@
       >
         <Icon
           icon={item.icon}
+          isFilled={isActive ||
+            (!isActive &&
+              layoutContext === LayoutContext.THIN_WITH_LABEL &&
+              isHovering)}
           size={resolveIconSize(layoutContext)}
           class={cn(
             (layoutContext === LayoutContext.DEFAULT ||
@@ -201,13 +232,12 @@
                 !isActive &&
                 layoutContext === LayoutContext.THIN_WITH_LABEL &&
                 !isHovering,
-              "fill-fgs1":
+              "text-fgs3":
                 !isActive &&
                 layoutContext === LayoutContext.THIN_WITH_LABEL &&
                 isHovering
             }
           )}
-          isFilled={isActive}
         />
         {#if layoutContext === LayoutContext.THIN}
           <div
