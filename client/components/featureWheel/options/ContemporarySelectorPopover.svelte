@@ -2,6 +2,7 @@
   import ExternalLogo from "$lib/client/branding/external/ExternalLogo.svelte";
   import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
   import Button from "$lib/client/landing/shared/elements/Button.svelte";
+  import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
   import type {
     ISelectItem,
     ISelectValue
@@ -13,8 +14,12 @@
   export let selected: ISelectValue[] | undefined = undefined;
   export let isUseExternalLogoForIcon: boolean = false;
   export let onSelect: (selected: ISelectValue[]) => void = () => {};
+  export let onSeeComparisonReport: () => void = () => {};
 
   let searchTerm = "";
+  let errorMessage: string | null = null;
+  const MAX_SELECTIONS = 3;
+
   $: filteredOptions = searchTerm
     ? options.filter(
         (option) =>
@@ -37,11 +42,21 @@
     <span class="text-b3 text-fgs2 flex gap-2">
       {#if selected && selected.length > 0}
         <Button
-          label="Clear selection"
+          label="See report"
+          type="primary"
+          isShort={true}
+          on:click={() => {
+            onSeeComparisonReport();
+          }}
+        />
+        <Button
+          label="Clear"
           type="secondary"
           isShort={true}
           on:click={() => {
             selected = undefined;
+            onSelect(selected ?? []);
+            errorMessage = null;
           }}
         />
       {/if}
@@ -55,6 +70,9 @@
       class="w-full p-2 rounded-md border border-brs3 bg-bgs1 focus:outline-none focus:border-aps1"
     />
   </div>
+  {#if errorMessage}
+    <InlineErrorMessage bind:error={errorMessage} />
+  {/if}
   <div
     class="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-3 overflow-y-auto max-h-[30rem]"
   >
@@ -70,10 +88,13 @@
         on:click={() => {
           if (selected?.includes(option.value)) {
             selected = selected?.filter((value) => value !== option.value);
+            errorMessage = null;
+          } else if ((selected ?? []).length >= MAX_SELECTIONS) {
+            errorMessage = `You can only select up to ${MAX_SELECTIONS} items`;
           } else {
             selected = [...(selected ?? []), option.value];
           }
-          onSelect(selected);
+          onSelect(selected ?? []);
         }}
       >
         {#if isUseExternalLogoForIcon && typeof option.icon === "string"}

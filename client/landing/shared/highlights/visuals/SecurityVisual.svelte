@@ -6,15 +6,15 @@
   const items: IListItem[] = [
     {
       title: "End-to-end encryption",
-      icon: "lock"
+      icon: "ph:lock-light"
     },
     {
       title: "Plug your own database",
-      icon: "database"
+      icon: "ph:database-light"
     },
     {
       title: "Offline version",
-      icon: "offline"
+      icon: "ph:mountains-light"
     }
   ];
 </script>

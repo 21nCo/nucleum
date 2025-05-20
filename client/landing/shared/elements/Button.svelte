@@ -112,7 +112,7 @@
     "box-border flex items-center justify-center gap-2 rounded-full mo:text-[16px] leading--[33px] mo:leading--[22px]",
     {
       "bg-fgs1 hover:bg-fgs2 text-bgs1": type === "primary",
-      "border border-fgs2 hover:bg-bgs4 text-fgs1 leading-7":
+      "border border-fgs2 hover:bg-bgs3 text-fgs1 leading-7":
         type === "secondary",
       "text-base h-10 px-4": !isShort,
       "text-b2 h-8 px-3": isShort,

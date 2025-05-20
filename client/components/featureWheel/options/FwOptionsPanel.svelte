@@ -11,7 +11,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import Badge from "$lib/client/elements/text/Badge.svelte";
   import ExternalLogo from "$lib/client/branding/external/ExternalLogo.svelte";
-  import OptionSelectorPopover from "./OptionSelectorPopover.svelte";
+  import ContemporarySelectorPopover from "./ContemporarySelectorPopover.svelte";
   import { createEventDispatcher } from "svelte";
   import FwCategoryLegend from "./FwCategoryLegend.svelte";
   import FeatureSelectorPopover from "./FeatureSelectorPopover.svelte";
@@ -26,17 +26,19 @@
   export let selectedCategories: string[] | undefined = undefined;
   export let selectedFeatures: string[] | undefined = undefined;
   export let selectedCompare: string[] | undefined = undefined;
+  export let includePlannedFeatures: boolean = false;
   export let isHorizontal = false;
   let isFeatureSelectorOpen = false;
   let isCompareWithSelectorOpen = false;
   const dev_IsEnableFeatureSelector = false;
-  $: contemporariesList = features
-    .map((feature) => feature.contemporaries)
-    .flat()
-    .map((item) => (typeof item.label === "string" ? [item.label] : item.label))
-    .flat()
-    .filter((item) => item !== undefined)
-    .filter((item, index, self) => self.indexOf(item) === index);
+  let ref: HTMLButtonElement | null = null;
+  // $: contemporariesList = features
+  //   .map((feature) => feature.contemporaries)
+  //   .flat()
+  //   .map((item) => (typeof item.label === "string" ? [item.label] : item.label))
+  //   .flat()
+  //   .filter((item) => item !== undefined)
+  //   .filter((item, index, self) => self.indexOf(item) === index);
 
   function resolveSelectorClass(isOpen: boolean) {
     return cn(
@@ -46,11 +48,17 @@
       }
     );
   }
+
+  function hidePopover() {
+    if (ref) {
+      ref.dispatchEvent(new CustomEvent("hide"));
+    }
+  }
 </script>
 
 <div
   class={cn(
-    "flex  gap-6 items-center justify-between bg-bgs2 rounded-md border border-brs3 p-4",
+    "flex  gap-6 items-center justify-between bg-bgs1 rounded-md border border-brs3 p-4",
     {
       "flex-row w-full h-fit": isHorizontal,
       "flex-col min-w-fit h-full": !isHorizontal
@@ -69,9 +77,10 @@
       <div class="flex flex-col gap-2">
         <div class="text-b2 text-fgs3">Compare with</div>
         <button
+          bind:this={ref}
           class={resolveSelectorClass(isCompareWithSelectorOpen)}
           use:popover={{
-            content: OptionSelectorPopover,
+            content: ContemporarySelectorPopover,
             isRenderAsSibling: true,
             offsetInPx: 12,
             componentProps: {
@@ -86,11 +95,15 @@
               onSelect: (selected) => {
                 selectedCompare = selected;
                 dispatch("change", selected);
+              },
+              onSeeComparisonReport: () => {
+                hidePopover();
+                dispatch("report");
               }
             }
           }}
           on:change={(e) => {
-            isCompareWithSelectorOpen = e.detail?.open;
+            isCompareWithSelectorOpen = e.detail?.open || false;
           }}
         >
           <div class="flex items-center gap-2 h-6">
@@ -140,6 +153,7 @@
           <div class="text-b2 text-fgs3">Filter features</div>
           <button
             class={resolveSelectorClass(isFeatureSelectorOpen)}
+            bind:this={ref}
             use:popover={{
               content: FeatureSelectorPopover,
               isRenderAsSibling: true,
@@ -156,7 +170,7 @@
               }
             }}
             on:change={(e) => {
-              isFeatureSelectorOpen = e.detail?.open;
+              isFeatureSelectorOpen = e.detail?.open || false;
             }}
           >
             <div class="flex items-center gap-2">
@@ -172,7 +186,7 @@
     </div>
   </div>
   {#if !isHorizontal}
-    <div class="flex flex-col gap-6 w-full">
+    <div class="flex flex-col gap-4 w-full">
       {#if selectedCompare && selectedCompare.length > 0}
         <div class="flex justify-center">
           <Button
@@ -184,6 +198,19 @@
           />
         </div>
       {/if}
+      <div class="flex justify-center">
+        <label
+          class="flex items-center gap-2 text-b3 text-fgs2 p-2 rounded-md hover:bg-bgs3 cursor-pointer"
+        >
+          <input
+            type="checkbox"
+            bind:checked={includePlannedFeatures}
+            on:change={() => dispatch("change", includePlannedFeatures)}
+            class="accent-aps1"
+          />
+          <span>Include planned features</span>
+        </label>
+      </div>
       <div class="flex justify-center">
         <button
           class="flex items-center gap-1 text-b3 text-fgs2 p-2 rounded-md hover:bg-bgs3"

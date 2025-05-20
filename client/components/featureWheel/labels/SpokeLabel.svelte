@@ -40,7 +40,8 @@
     "fill-fgs2": !isActive && !groupColor,
     "text-b2": size === Size.lg,
     "text-[10px]": size === Size.md,
-    "text-[8px]": size === Size.sm
+    "text-[8px]": size === Size.sm,
+    "opacity-60": spoke.isPlanned
   })}
   fill={groupColor ? groupColor : ""}
   on:click
@@ -49,5 +50,8 @@
     e.target &&
     e.target.dispatchEvent(new MouseEvent("click"))}
 >
+  {#if spoke.isPlanned}
+    ◌&nbsp;
+  {/if}
   {spoke.label}
 </text>

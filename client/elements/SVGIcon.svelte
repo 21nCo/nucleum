@@ -1,9 +1,17 @@
 <script lang="ts">
   import { Size } from "../types/size.enum";
   import { cn } from "../utils/ui.utils";
+  import Icon from "./Icon.svelte";
 
   export let icon: string | null = null;
   export let size: Size | "5xl" = Size.lg;
+  export let phIconSize:
+    | Size.xs
+    | Size.sm
+    | Size.md
+    | Size.lg
+    | Size.xl
+    | Size.xxl = Size.sm;
   export let isRenderRaw: boolean = false;
   const tailwindSizes: any = {
     xxs: "w-2 h-2",
@@ -20,7 +28,9 @@
   }
 </script>
 
-{#if icon && !isRenderRaw}
+{#if icon?.includes("ph:")}
+  <Icon {icon} size={phIconSize} />
+{:else if icon && !isRenderRaw}
   <button on:click class={cn(tailwindSizes[size])}>
     {#await importIcon(icon)}
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" />
