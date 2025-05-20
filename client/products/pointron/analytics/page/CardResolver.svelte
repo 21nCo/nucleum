@@ -21,7 +21,9 @@
 {#if card.type === AnalyticsCardType.PIE || card.type === AnalyticsCardType.DONUT || card.type === AnalyticsCardType.AREA || card.type === AnalyticsCardType.LINE || card.type === AnalyticsCardType.BAR}
   <AnalyticsChart chart={card} rawData={data} {goalColors} />
 {:else}
-  <div class="flex self-start w-full h-full p-3 overflow-auto userdata">
+  <div
+    class="flex self-start w-full h-full mo:p-0.5 p-3 overflow-auto userdata"
+  >
     {#if card.type === AnalyticsCardType.TOP_N}
       <TopNCard {card} {data} {goalColors} {previousTimePeriodData} />
     {:else if card.type === AnalyticsCardType.TARGETS}

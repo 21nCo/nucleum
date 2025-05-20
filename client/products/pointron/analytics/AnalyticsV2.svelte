@@ -68,7 +68,7 @@
 
 <div class={cn("flex flex-col w-full h-full", bg(bgIndex - 1))}>
   <div
-    class="flex gap-8 w-full items-center justify-between portrait:py-2 pt-4 pb-2"
+    class="flex gap-8 w-full items-center justify-between portrait:px-4 portrait:py-2 pt-4 pb-2"
   >
     <div class="flex gap-6 items-center flex-grow">
       {#if $view.isPortrait}
