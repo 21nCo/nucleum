@@ -15,6 +15,7 @@
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import { page } from "$app/stores";
   import TopBarResourceItem from "./tabs/TopBarResourceItem.svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
   // import FocusPlayer from "$lib/client/products/pointron/focus/player/FocusPlayer.svelte";
   let isInFocusMode = false;
   let pinnedItems: IRecordId[] = tabs.get() ?? [];
@@ -41,7 +42,14 @@
 
 {#if !isInFocusMode}
   <div
-    class="flex gap-3 justify-between items-center w-full h-11 max-h-11 min-h-11 bg-bgs2 pr-4 border-b border-brs3 userdata"
+    class={cn(
+      "w-full h-11 max-h-11 min-h-11 bg-bgs2 pr-4 border-b border-brs3 userdata",
+      {
+        "flex gap-3 justify-between items-center":
+          pinnedItems.length > 0 || isInterimTab,
+        "grid grid-cols-3": pinnedItems.length === 0 && !isInterimTab
+      }
+    )}
   >
     {#if pinnedItems.length > 0}
       <div class="relative h-full overflow-x-auto">
@@ -58,19 +66,21 @@
       <div class="w-1 h-full"></div>
     {/if}
     {#if pinnedItems.length === 0 && !isInterimTab}
-      <button
-        class="flex items-center justify-between w-96 bg-bgs3 hover:bg-bgs4 rounded-full px-3 py-1 mx-3 text-b2 text-fgs2"
-        transition:fly={{
-          duration: 300,
-          x: 40
-        }}
-        on:click={() => appStore.runAction(Action.GLOBAL_SEARCH)}
-      >
-        <span>Search</span>
-        <ShortcutText shortcut={Action.GLOBAL_SEARCH} parentBgIndex={2} />
-      </button>
+      <div class="flex items-center justify-center">
+        <button
+          class="flex items-center justify-between w-96 bg-bgs3 hover:bg-bgs4 rounded-full px-3 py-1 mx-3 text-b2 text-fgs2"
+          transition:fly={{
+            duration: 300,
+            x: 40
+          }}
+          on:click={() => appStore.runAction(Action.GLOBAL_SEARCH)}
+        >
+          <span>Search</span>
+          <ShortcutText shortcut={Action.GLOBAL_SEARCH} parentBgIndex={2} />
+        </button>
+      </div>
     {/if}
-    <div class="flex items-center gap-3">
+    <div class="flex items-center justify-end gap-3">
       {#if isInterimTab && currentTab}
         {#key currentTab}
           <TopBarResourceItem

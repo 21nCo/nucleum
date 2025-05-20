@@ -250,10 +250,10 @@ export const memotronActions: IAction[] = [
     component: MemotronHome
   },
   {
-    action: "graph",
+    action: "overview",
     type: ActionType.PAGE,
-    label: "Graph",
-    icon: "ph:graph-light",
+    label: "Overview",
+    icon: "ph:squares-four-light",
     component: GlobalGraph
   },
   {
