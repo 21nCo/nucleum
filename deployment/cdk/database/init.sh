@@ -66,6 +66,9 @@ curl -sSf https://install.surrealdb.com | sh || log_error "Failed to install Sur
 # sudo pm2 startup || log_error "Failed to setup PM2 startup"
 # sudo pm2 save || log_error "Failed to save PM2 startup"
 
+# Create the surrealpvc directory
+sudo mkdir -p /data/surrealpvc || log_error "Failed to create /data/surrealpvc directory"
+
 
 # Grant permissions to ec2-user for /data/surrealpvc
 echo "Setting permissions for /data/surrealpvc..."
