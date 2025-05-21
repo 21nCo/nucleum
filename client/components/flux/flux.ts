@@ -234,7 +234,16 @@ class Flux {
     additionalParams: IMutationAdditionalParams = {}
   ) {
     let response;
-    logger.info({ at: "flux.mutation", resource, params });
+    logger.info({
+      at: "flux.mutation",
+      resource,
+      params: {
+        action: params.action,
+        recordCount:
+          "records" in params ? (params.records?.length ?? "NA") : "NA",
+        record: "record" in params ? params.record : "NA"
+      }
+    });
     try {
       if (!additionalParams?.isCloudOnlyResource || this.isLocalMode) {
         response = await this.persistence.mutation(resource, params);
@@ -283,10 +292,11 @@ class Flux {
     logger.info({
       at: "flux.mutation - result",
       resource,
-      response,
       action: params.action,
-      records: params.records,
-      record: params.record ?? params.records?.[0]
+      recordCount:
+        "records" in params ? (params.records?.length ?? "NA") : "NA",
+      record: "record" in params ? params.record : "NA",
+      response
     });
     return response;
   }
@@ -466,7 +476,7 @@ class Flux {
       ...data,
       id: `kv:${storeId}`
     };
-    logger.log({ at: "kvMerge", storeId, data, record });
+    logger.info({ at: "kvMerge", storeId, record });
     const result = await this.persistence.mutation(Resource.kv, {
       record,
       action: PersistenceActionType.MERGE
@@ -653,13 +663,22 @@ class Flux {
           dapId
         });
       } else {
-        const { mutations, lastSyncUp } = await this.resolveItemsForSyncUp();
+        let { mutations, lastSyncUp, lastSyncUpMutations } =
+          await this.resolveItemsForSyncUp();
         if (!mutations || mutations.length === 0) {
           this.isSyncUpPending = false;
           return;
         }
-        logger.info({ at: "flux.sync", mutations, lastSyncUp });
+        logger.info({
+          at: "flux.sync",
+          mutationsLength: mutations.length,
+          lastSyncUp,
+          mutations: mutations.map((x) => x.id)
+        });
         const resources = this.resolveSyncResources();
+        mutations = mutations.filter(
+          (x) => !lastSyncUpMutations.includes(x.id.toString())
+        );
         response = await this.performSync(SyncMethod.SYNC_UP, {
           mutations,
           lastSyncDown,
@@ -670,7 +689,10 @@ class Flux {
           await this.persistence.mutation(Resource.kv, {
             record: {
               id: "kv:local",
-              lastSyncUp: mutations[mutations.length - 1].timestamp
+              lastSyncUp: mutations[mutations.length - 1].timestamp,
+              previousSyncUp: local?.lastSyncUp,
+              lastSyncUpMutations: mutations.map((x) => x.id.toString()),
+              lastSyncUpCompletedAt: new Date().getTime()
             },
             action: PersistenceActionType.MERGE
           });
@@ -692,21 +714,20 @@ class Flux {
     // const lastSyncedAt = await clientStorage.get(ClientStorageKey.LAST_SYNC_UP);
     const local = await this.resolveLocal();
     if (!local) return { mutations: [], lastSyncUp: 0 };
-    const lastSyncUp =
-      local?.lastSyncUp ?? new Date().getTime() - 1000 * 60 * 60 * 24;
     const dapId = await this.resolveDapId(local);
     logger.log({
       at: "flux.resolveItemsForSyncUp",
-      lastSyncUp,
       local,
       dapId
     });
+    const previousSyncUp =
+      local?.previousSyncUp ?? new Date().getTime() - 1000 * 60 * 60 * 24;
     let mutations: IMutation[] = await this.persistence.selectMany(
       Resource.mutation,
       {
         filters: {
           timestamp: {
-            greaterThan: +lastSyncUp
+            greaterThan: +previousSyncUp
           }
         },
         limit: 100,
@@ -716,8 +737,13 @@ class Flux {
       }
     );
     mutations = mutations.map((x) => ({ ...x, dapId }));
-    logger.log({ at: "flux.resolveItemsForSyncUp", lastSyncUp, mutations });
-    return { mutations, lastSyncUp };
+    logger.log({ at: "flux.resolveItemsForSyncUp", previousSyncUp, mutations });
+    return {
+      mutations,
+      previousSyncUp,
+      lastSyncUp: local?.lastSyncUp ?? previousSyncUp,
+      lastSyncUpMutations: local?.lastSyncUpMutations
+    };
   }
 
   async search(storeId: string, query: string) {
