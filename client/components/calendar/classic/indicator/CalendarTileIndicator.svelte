@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import {
+    MetaResource,
+    Resource
+  } from "$lib/client/components/flux/resourceStores/resource.enum";
   import type { ITaskThumb } from "$lib/client/components/tasks/task.type";
   import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
   import type {
@@ -17,6 +20,8 @@
   import { generateSummary } from "$lib/client/products/pointron/focus/session.utils";
   import { formatSeconds } from "$lib/client/utils/time.utils";
   import { logger } from "$lib/client/components/debug/logger.client";
+  import { Product } from "$lib/client/types/product.type";
+  import { appStore } from "$lib/client/stores/app.store";
   export let date: Date;
   export let data: ICalendarIndicatorData[] = [];
   export let view: "year" | "month" = "year";
@@ -25,12 +30,27 @@
   let focusSessions: (ISessionThumb & {
     splits: { focus: number; brek: number };
   })[] = [];
+  let nodes: any[] = [];
+  let calendarNotes: any[] = [];
   let summary: DaySummary = { focus: 0, break: 0 };
   $: dayFilter = tzStore.resolveTimePeriodFilterForDay(date);
   onMount(() => {
     resolveData();
   });
+
   function resolveData() {
+    const product = $appStore.product;
+    if (product === Product.POINTRON) {
+      resolvePointronData();
+    } else if (product === Product.MEMOTRON) {
+      resolveMemotronData();
+    } else if (product === Product.NUCLEUS) {
+      resolvePointronData();
+      resolveMemotronData();
+    }
+  }
+
+  function resolvePointronData() {
     try {
       const tasksData = data.find((x) => x.resource === Resource.task);
       if (tasksData) {
@@ -56,6 +76,31 @@
         }));
         summary = generateSummary(focusSessions);
         // console.log({ focusSessions, summary, ...dayFilter, date, data });
+      }
+    } catch (e) {
+      logger.error({ at: "CalendarTileIndicator.resolveData", date, error: e });
+    }
+  }
+
+  function resolveMemotronData() {
+    try {
+      const nodesData = data.find((x) => x.resource === Resource.node);
+      if (nodesData) {
+        nodes = nodesData.data.filter(
+          (x) =>
+            new Date(x.createdAt).getTime() >= dayFilter.greaterThanOrEqual &&
+            new Date(x.createdAt).getTime() <= dayFilter.lessThanOrEqual
+        );
+      }
+      const calendarNotesData = data.find(
+        (x) => x.resource === MetaResource.calendarNotes
+      );
+      if (calendarNotesData) {
+        calendarNotes = calendarNotesData.data.filter(
+          (x) =>
+            new Date(x.date).getTime() >= dayFilter.greaterThanOrEqual &&
+            new Date(x.date).getTime() <= dayFilter.lessThanOrEqual
+        );
       }
     } catch (e) {
       logger.error({ at: "CalendarTileIndicator.resolveData", date, error: e });
@@ -89,6 +134,20 @@
         {isActive}
       />
     {/if}
+    {#if nodes.length > 0}
+      <MonthTileIndicator
+        text={`${nodes.length} node${nodes.length > 1 ? "s" : ""}`}
+        color={getColor(Resource.node)}
+        {isActive}
+      />
+    {/if}
+    {#if calendarNotes.length > 0}
+      <MonthTileIndicator
+        text="Day notes"
+        color={getColor(Resource.node)}
+        {isActive}
+      />
+    {/if}
   </div>
 {:else}
   <div class="flex items-center justify-center gap-0.5">
@@ -97,6 +156,9 @@
     {/if}
     {#if focusSessions.length > 0}
       <YearTileIndicatorDot color={getColor(Resource.session)} {isActive} />
+    {/if}
+    {#if nodes.length > 0 || calendarNotes.length > 0}
+      <YearTileIndicatorDot color={getColor(Resource.node)} {isActive} />
     {/if}
   </div>
 {/if}

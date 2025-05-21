@@ -109,7 +109,10 @@ class NodeStore extends ResourceStore<INode> {
           ? undefined
           : false,
       metaType:
-        isValidString(params?.search?.query) || isMetaTypePresent || isIdPresent
+        isValidString(params?.search?.query) ||
+        isMetaTypePresent ||
+        isIdPresent ||
+        additionalParams?.isIncludeMetaItems
           ? undefined
           : false,
       ...(params?.filters ?? {}),

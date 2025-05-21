@@ -83,6 +83,10 @@ type INodeInterface<
   text?: string;
   config?: any;
   metaType?: NodeMetaType;
+  /**
+   * Used with meta types like Calendar notes as createdAt or modifiedAt can be different from date of the calendar notes.
+   */
+  date?: Date;
 };
 
 export type ILink = IMemotronItemBase & {

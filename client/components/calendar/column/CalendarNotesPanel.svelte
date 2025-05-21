@@ -15,6 +15,7 @@
   import { setContext } from "svelte";
   import { ResourceAccessMode } from "../../flux/resourceStores/resource.type";
   import { resolveCalendarNotesId } from "../calendar.utils";
+  import { getUtcSafeDay } from "$lib/client/elements/datetime/datetime.utils";
 
   export let date: Date;
   export let scale: TimeScaleUnit;
@@ -33,6 +34,7 @@
           label: "Calendar Notes - " + formatDate(date, scale),
           body: "",
           metaType: NodeMetaType.CALENDAR_NOTES,
+          date: getUtcSafeDay(date),
           children: []
         }
       ]);

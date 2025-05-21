@@ -124,17 +124,6 @@ export const memotronActions: IAction[] = [
     }
   },
   {
-    action: MemotronAction.HISTORY,
-    component: ComingSoonView,
-    type: ActionType.MODAL,
-    modalParams: {
-      layout: {
-        size: Size.xl,
-        ignoreSafeArea: true
-      }
-    }
-  },
-  {
     action: Resource.node,
     component: Node,
     label: "Node",

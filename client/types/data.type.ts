@@ -520,6 +520,11 @@ export type IResourceSelectAdditionalParams = {
    * Whether to ignore parent inactive status of the resource.
    */
   isIgnoreParentInactive?: boolean;
+
+  /**
+   * Whether to include meta items of the resource.
+   */
+  isIncludeMetaItems?: boolean;
 };
 
 export enum RemovalProperty {

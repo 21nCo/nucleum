@@ -303,6 +303,11 @@ const phosphorIcons = [
   "wifi-slash",
   "key",
   "keyhole",
+  "perspective",
+  "picture-in-picture",
+  "paper-plane",
+  "paper-plane-right",
+  "paper-plane-tilt",
 
   //Charts
   "chart-bar",

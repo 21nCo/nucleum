@@ -110,3 +110,10 @@ export enum Resource {
   //Fellotron
   fellow = "fellow"
 }
+
+/**
+ * For system purposes only. Example: rendering indicators in Calendar etc. Not stores in the database.
+ */
+export enum MetaResource {
+  calendarNotes = "calendarNotes"
+}
