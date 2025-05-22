@@ -7,10 +7,11 @@
   import { Size } from "$lib/client/types/size.enum";
   import type { ActiveResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
+  import { isShowStatusBanner } from "$lib/client/components/flux/resourceStores/resource.utils";
   export let resource: ActiveResourceStore<any, any>;
 </script>
 
-{#if $resource.trashInformation || $resource.isArchived || $resource.isLocked || $resource.isInReadOnlyMode || $resource.isParentInactive}
+{#if isShowStatusBanner($resource)}
   <div class="flex flex-col gap-4">
     {#if $resource.trashInformation}
       <InlineInfoBanner

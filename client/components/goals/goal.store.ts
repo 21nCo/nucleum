@@ -230,45 +230,36 @@ class GoalStore extends ResourceStore<IGoal> {
     return [tasks, subGoals];
   }
 
-  async onArchive(ids: IRecordId[]) {
+  private async onParentChange(ids: IRecordId[], status: boolean) {
     const [tasks, subGoals] = await this.resolveDependencies(ids);
     if (subGoals?.length) {
       await this.bulkModify(
         subGoals.map((g: IGoal) => g.id),
-        { isParentInactive: true }
+        { isParentInactive: status }
       );
     }
     if (tasks?.length) {
       await taskStore.bulkModify(
         tasks.map((task: { id: IRecordId }) => task.id),
-        { isParentInactive: true }
+        { isParentInactive: status }
       );
     }
+  }
+
+  async onArchive(ids: IRecordId[]) {
+    return this.onParentChange(ids, true);
   }
 
   async onUnarchive(ids: IRecordId[]) {
-    const [tasks, subGoals] = await this.resolveDependencies(ids);
-    if (subGoals?.length) {
-      await this.bulkModify(
-        subGoals.map((g: IGoal) => g.id),
-        { isParentInactive: false }
-      );
-    }
-
-    if (tasks?.length) {
-      await taskStore.bulkModify(
-        tasks.map((task: { id: IRecordId }) => task.id),
-        { isParentInactive: false }
-      );
-    }
+    return this.onParentChange(ids, false);
   }
 
   async onTrash(ids: IRecordId[]) {
-    return this.onArchive(ids);
+    return this.onParentChange(ids, true);
   }
 
   async onRestore(ids: IRecordId[]) {
-    return this.onUnarchive(ids);
+    return this.onParentChange(ids, false);
   }
 }
 

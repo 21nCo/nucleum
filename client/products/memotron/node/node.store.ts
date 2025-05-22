@@ -2,7 +2,6 @@ import { Resource } from "$lib/client/components/flux/resourceStores/resource.en
 import {
   LinkType,
   type IActiveNode,
-  type INodePropertyValue,
   type INode,
   NodeType,
   NodeRightPaneType,
@@ -16,13 +15,11 @@ import {
 } from "$lib/client/products/memotron/node/node.type";
 import {
   activeResources,
-  ActiveResourceStore,
   ResourceStore
 } from "$lib/client/components/flux/resourceStores/resource.store";
 import {
-  activeResourceFilter,
-  debouncer,
-  generateUID
+  activeResourceFilterIgnoreParentInactive,
+  debouncer
 } from "$lib/client/utils/utils";
 import { formatDate } from "$lib/client/utils/time.utils";
 import {
@@ -62,7 +59,6 @@ import { Embed } from "$lib/client/types/context.type";
 import { TacoActions } from "../taco/taco.types";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { generateResourceId } from "$lib/shared/utils/surreal.utils";
-import { toasts } from "$lib/client/stores/notification.store";
 import { fileStore } from "$lib/client/components/files/file.store";
 import { recursivelyExtractAllChildrenIntoArray } from "$lib/client/components/markdown/markdown.utils";
 import view from "$lib/client/stores/view.store";
@@ -188,6 +184,65 @@ class NodeStore extends ResourceStore<INode> {
     if (file) {
       return fileStore.download(file);
     }
+  }
+
+  private async resolveDependencies(ids: IRecordId[]) {
+    const childrenResult = await super.selectMany(
+      {
+        properties: ["id"],
+        filters: {
+          parent: ids.map((id) => id.toString())
+        }
+      },
+      {
+        isIncludeInactiveItems: true
+      }
+    );
+
+    const mdChildrenResult = await Promise.all([
+      ...ids.map((id) =>
+        super.selectMany(
+          {
+            properties: ["id"],
+            filters: {
+              parent: {
+                contains: id.toString()
+              }
+            }
+          },
+          {
+            isIncludeInactiveItems: true
+          }
+        )
+      )
+    ]);
+    return [...(childrenResult ?? []), ...(mdChildrenResult ?? [])];
+  }
+
+  private async onParentChange(ids: IRecordId[], status: boolean) {
+    const children = await this.resolveDependencies(ids);
+    if (children?.length) {
+      await this.bulkModify(
+        children.map((g: INode) => g.id),
+        { isParentInactive: status }
+      );
+    }
+  }
+
+  async onArchive(ids: IRecordId[]) {
+    return this.onParentChange(ids, true);
+  }
+
+  async onUnarchive(ids: IRecordId[]) {
+    return this.onParentChange(ids, false);
+  }
+
+  async onTrash(ids: IRecordId[]) {
+    return this.onParentChange(ids, true);
+  }
+
+  async onRestore(ids: IRecordId[]) {
+    return this.onParentChange(ids, false);
   }
 }
 
@@ -321,7 +376,9 @@ export class ActiveNodeStore extends CollectibleStore<IActiveNode, NodeStore> {
       const node = await this.resourceStore.fetch(this.id);
       if (node) {
         if (node.clips && isValidArrayWithData(node.clips)) {
-          node.clips = node.clips.filter(activeResourceFilter);
+          node.clips = node.clips.filter(
+            activeResourceFilterIgnoreParentInactive
+          );
         }
         if (
           node.contentType === NodeType.YOUTUBE_VIDEO &&

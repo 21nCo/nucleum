@@ -29,6 +29,7 @@
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { isShowStatusBanner } from "$lib/client/components/flux/resourceStores/resource.utils";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let isHovering: boolean = false;
@@ -73,9 +74,9 @@
         $node.accessMode === ResourceAccessMode.SLIDESHOW
     })}
   >
-    {#if $node.isArchived || $node.trashInformation}
+    {#if isShowStatusBanner($node)}
       <div
-        class={cn("bg-bgs2 rounded-md p-4 border border-brs2 shadow-md", {
+        class={cn("rounded-md border border-brs2 shadow-md", {
           "absolute z-10 bottom-full mb-2 w-[98%]":
             $node.accessMode === ResourceAccessMode.POP ||
             $node.accessMode === ResourceAccessMode.INLINE,

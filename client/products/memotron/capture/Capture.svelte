@@ -51,7 +51,6 @@
   import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
   import { appEvents } from "$lib/client/stores/notification.store";
   import type { IEvent } from "$lib/client/types/event.type";
-  import { MemotronEvent } from "../memotron.type";
   import Tag from "$lib/client/elements/text/Tag.svelte";
   import { Orientation, Placement } from "$lib/client/types/direction.enum";
   import type { IRecordId } from "$lib/client/types/data.type";
@@ -67,6 +66,8 @@
   import CaptureDraftsAction from "./draftSelector/CaptureDraftsAction.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
+  import { KeyboardKey, ModifierKey } from "$lib/client/types/keyboard.type";
+  import { GlobalEvent } from "$lib/client/types/event.enum";
   export let captureId: IRecordId = generateResourceId(Resource.capture);
   export let isWindowDnD = false;
   let bulkQueryParam: string | null = null;
@@ -110,7 +111,7 @@
 
   onMount(async () => {
     const appEventSub = appEvents.subscribe((x: IEvent) => {
-      if (x.event === MemotronEvent.SAVE_CAPTURE_SHORTCUT) {
+      if (x.event === GlobalEvent.ENTER && x.value.metaKey === true) {
         onSave();
       }
     });
@@ -504,7 +505,7 @@
                   style={InputStyle.PLAIN}
                   id="capture-title"
                   isExperimentalMdInput={true}
-                  placeholder="Untitled"
+                  placeholder="Title"
                   isPreventDefaultOnEnter={true}
                   on:change={refreshEmptyState}
                   on:debouncedChange={persistLabel}
@@ -564,6 +565,10 @@
                   size={Size.sm}
                   style={ButtonStyle.OUTLINED}
                   isPreventMinWidth={true}
+                  shortcut={{
+                    key: KeyboardKey.ENTER,
+                    modifiers: [ModifierKey.META]
+                  }}
                   icon="ph:floppy-disk"
                   on:click={onSave}
                 />

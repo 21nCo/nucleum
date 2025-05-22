@@ -289,11 +289,5 @@ export const memotronActions: IAction[] = [
         orientation: Orientation.Horizontal
       }
     }
-  },
-  {
-    action: MemotronEvent.SAVE_CAPTURE_SHORTCUT,
-    label: "Save capture shortcut",
-    isMeta: true,
-    type: ActionType.EVENT
   }
 ];
