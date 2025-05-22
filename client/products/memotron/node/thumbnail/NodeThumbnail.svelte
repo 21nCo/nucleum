@@ -63,11 +63,11 @@
   $: hasFullFileDetails = filePreview?.url || filePreview?.data;
   $: urlPreview = resolveUrlPreview(item);
   $: contentPreview = resolveContentPreview(item);
-  $: isClip =
+  $: isTextClip =
     item.contentType === NodeType.TEXT_CLIP ||
     item.contentType === NodeType.KINDLE_HIGHLIGHT;
   $: isFullExpand =
-    isClip ||
+    isTextClip ||
     item.contentType === NodeType.TWEET ||
     accessPoint === ResourceAccessPoint.NODE_TRACES;
   $: isShouldContainImage = resolveIfImageShouldContain(item.contentType);
@@ -125,11 +125,14 @@
       })}
     >
       <button
-        class={cn("flex w-full items-center border- rounded--md truncate", {
-          "h-16": !visibleProps || visibleProps.length === 0
-          // "bg-ccs5 hover:bg-ccs4 border-ccs2": isApplyCustomColor,
-          // "bg-bgs2 border-brs3 hover:border-fgs4": !isApplyCustomColor
-        })}
+        class={cn(
+          "flex w-full items-center border- rounded--md truncate",
+          !isFullExpand && {
+            "h-16": !visibleProps || visibleProps.length === 0
+            // "bg-ccs5 hover:bg-ccs4 border-ccs2": isApplyCustomColor,
+            // "bg-bgs2 border-brs3 hover:border-fgs4": !isApplyCustomColor
+          }
+        )}
         on:click
       >
         {#if item.contentType !== NodeType.NODULAR_MARKDOWN && !headingNodeTypes.includes(item.contentType)}
@@ -185,7 +188,7 @@
               >
                 {#if item.contentType === NodeType.TWEET && contentPreview}
                   <NodeThumbnailTweetPreview text={contentPreview} />
-                {:else if isClip && contentPreview}
+                {:else if isTextClip && contentPreview}
                   <TextClipPreview node={item} {contentPreview} {accessPoint} />
                 {:else if contentPreview}
                   <span class="text-fgs3 userdata">
@@ -283,7 +286,7 @@
             <NodeThumbnailPdfPreview url={_url} />
           {:else}
             <div class="h-full overflow-clip text-b2">
-              {#if isClip && contentPreview}
+              {#if isTextClip && contentPreview}
                 <TextClipPreview node={item} {contentPreview} {accessPoint} />
               {:else if item.contentType === NodeType.AUDIO && _url}
                 <NodeThumbnailAudioPreview url={_url} />
@@ -365,7 +368,7 @@
       <div
         class="h-auto p-2 overflow-clip text-wrap max-h-48 text-left text-b3"
       >
-        {#if isClip}
+        {#if isTextClip}
           <TextClipPreview node={item} {contentPreview} {accessPoint} />
         {:else if item.contentType === NodeType.TWEET}
           <span class="text-fgs3">

@@ -852,7 +852,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       return { ...x, from: rootId };
     });
     const blockLinks = val.links?.filter((x) => x.from !== "root");
-    logger.log({ at: "CaptureStore.saveLinks", rootLinks, blockLinks, val });
+    logger.debug({ at: "CaptureStore.saveLinks", rootLinks, blockLinks, val });
     if (!isValidArrayWithData(rootLinks) && !isValidArrayWithData(blockLinks))
       return;
     const links = [...(rootLinks ?? []), ...(blockLinks ?? [])].map((x) => {
