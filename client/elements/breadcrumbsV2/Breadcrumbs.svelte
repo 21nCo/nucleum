@@ -14,6 +14,7 @@
    * Delegates click event when set to `true` instead of defaulting to resource click handler
    */
   export let isPreventDefault: boolean = false;
+  export let limit: number = 3;
 
   function onClick(e: MouseEvent, item: IBreadcrumbItem) {
     if (isPreventDefault) {
@@ -34,7 +35,7 @@
 
 {#if items?.length > 0}
   <div class="flex w-full items-center">
-    {#if items.length > 3}
+    {#if items.length > limit}
       <div class="flex-shrink-0">
         <BreadcrumbItem
           label={items[0].label}

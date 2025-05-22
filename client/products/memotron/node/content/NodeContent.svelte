@@ -32,6 +32,7 @@
   import type { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import view from "$lib/client/stores/view.store";
   import context from "$lib/client/stores/context.store";
+  import { resolveHeadingParent } from "../node.utils";
 
   export let node: IActiveNodeStore;
   export let mdId: string;
@@ -174,13 +175,25 @@
         );
       }
       previousRootStructure = deepCopy(e.detail.root);
-      if (!e.detail.children) return;
-      e.detail.children
+      const structure = e.detail.children;
+      const scopedParent =
+        $node.contentType === NodeType.NODULAR_MARKDOWN
+          ? [$node.id]
+          : Array.isArray($node.mdParent)
+            ? $node.mdParent
+            : [];
+      if (!structure) return;
+      structure
         .filter((x: INodeStructure) => x.factor <= hierarchyFactorLimit)
         .forEach((child: INodeStructure) => {
+          const parent = resolveHeadingParent(
+            child.id,
+            structure,
+            scopedParent
+          );
           node.updateBlock(
             child.id,
-            { children: child.children },
+            { children: child.children, mdParent: parent },
             {
               isDebounced: true,
               debounceKey: "children"

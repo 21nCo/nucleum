@@ -62,6 +62,10 @@ type INodeInterface<
   properties?: ICollectionItemPropertyValue[];
   parent?: IRecordId;
   /**
+   * Parent hierarchy for markdown heading nodes
+   */
+  mdParent?: IRecordId[];
+  /**
    * The context in which the node was created i.e. whether nodes like AUDIO or IMAGE or PDF created independantly or from within a markdown as block. Also, for clips, whether the parent is created independently or as a supplementary when a text clip or tweet is created.
    * This helps in determining what to show as individual items in library, resource browser or on a timeline and similar scenarios.
    *

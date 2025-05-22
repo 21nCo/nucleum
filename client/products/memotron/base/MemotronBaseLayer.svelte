@@ -25,6 +25,7 @@
   import {
     clipTextSearchFallback,
     collectionResourceBackPropagation,
+    headingNodeParentBackPropagation,
     lowResThumbnailsBackPropagation
   } from "./fallbacks";
   import LeftNav from "$lib/client/layout/leftPanel/LeftNav.svelte";
@@ -100,6 +101,7 @@
     try {
       await clipTextSearchFallback();
       await collectionResourceBackPropagation();
+      await headingNodeParentBackPropagation();
       if (!$context.isEmbed) {
         toasts.showProgress("update", "Updating the app");
         await lowResThumbnailsBackPropagation();

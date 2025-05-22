@@ -83,6 +83,7 @@ class NodeStore extends ResourceStore<INode> {
       "*",
       "parent.* as parent",
       "file.* as file",
+      "(select * from $parent.mdParent) as mdParent",
       "search::highlight('**', '**', 2, false) AS bodySearch"
     ];
     const properties = [

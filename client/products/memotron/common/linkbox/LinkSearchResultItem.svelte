@@ -2,12 +2,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { isValidString, properCase } from "$lib/shared/utils/text.utils";
-  import NodeTitleBreadcrumbs from "$lib/client/products/memotron/node/title/NodeTitleBreadcrumbs.svelte";
-  import {
-    headingNodeTypes,
-    NodeType,
-    type INode
-  } from "$lib/client/products/memotron/node/node.type";
+  import { type INode } from "$lib/client/products/memotron/node/node.type";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import CollectionTitleLabelPart from "$lib/client/components/collection/thumbnail/CollectionThumbnailLabel.svelte";
@@ -37,10 +32,6 @@
     })}
   >
     {#if resourceType === Resource.node}
-      <!-- TODO need for breadcrumbs - Notes: Not required - as search results has heading as label directly for heading nodes & also below query is casuing heavy latency due to sub queries involved in breadcrumbs -->
-      <!-- {#if headingNodeTypes.includes(item.contentType)}
-        <NodeTitleBreadcrumbs id={item.id} on:click isSubtleContext={true} />
-      {/if} -->
       <div class="flex gap-2 w-full truncate">
         <NodeTitleLabelPart
           {item}
