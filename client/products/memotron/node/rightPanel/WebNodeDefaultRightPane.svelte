@@ -114,7 +114,7 @@
       <span class="flex flex-row justify-between items-center w-full">
         <span class="flex flex-row gap-1 items-center">
           <Text content="Links" style={TextStyle.SECTION_HEADING} />
-          <Badge text={links?.length || 0} />
+          <Badge text={$node.links?.length || 0} />
         </span>
         <span>
           <Button

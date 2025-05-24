@@ -11,7 +11,8 @@ import {
   type IWebPage,
   type IAudioMetadata,
   type IImageMetadata,
-  type IImageNode
+  type IImageNode,
+  headingNodeTypes
 } from "$lib/client/products/memotron/node/node.type";
 import {
   CaptureType,
@@ -24,7 +25,8 @@ import { toasts } from "$lib/client/stores/notification.store";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import {
   generateMarkdownText,
-  getMarkdownSymbolPrepended
+  getMarkdownSymbolPrepended,
+  resolveHeadingParent
 } from "$lib/client/products/memotron/node/node.utils";
 import {
   hierarchyFactorLimit,
@@ -423,7 +425,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       },
       properties: params?.isEmbedContext ? [] : captureStore.properties,
       creationContext: params?.isEmbedContext
-        ? params?.creationContext ?? this.get().nodeId
+        ? (params?.creationContext ?? this.get().nodeId)
         : undefined
     } as IMediaNode;
     const result = await nodeStore.create([node], {
@@ -567,7 +569,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         metadata,
         properties: params?.isEmbedContext ? [] : captureStore.properties,
         creationContext: params?.isEmbedContext
-          ? params?.creationContext ?? this.get().nodeId
+          ? (params?.creationContext ?? this.get().nodeId)
           : undefined
       } as IMediaNode;
       nodes.push(node);
@@ -629,7 +631,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       },
       properties: captureStore.properties,
       creationContext: params?.isEmbedContext
-        ? params?.creationContext ?? this.get().nodeId
+        ? (params?.creationContext ?? this.get().nodeId)
         : undefined,
       label: `Audio Recording - ${new Date().toLocaleString()}`,
       body: {
@@ -744,7 +746,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       label: text.split("://").pop(),
       url: text,
       creationContext: params?.isEmbedContext
-        ? params?.creationContext ?? this.get().nodeId
+        ? (params?.creationContext ?? this.get().nodeId)
         : undefined,
       body: {
         hash: "",
@@ -850,7 +852,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       return { ...x, from: rootId };
     });
     const blockLinks = val.links?.filter((x) => x.from !== "root");
-    logger.log({ at: "CaptureStore.saveLinks", rootLinks, blockLinks, val });
+    logger.debug({ at: "CaptureStore.saveLinks", rootLinks, blockLinks, val });
     if (!isValidArrayWithData(rootLinks) && !isValidArrayWithData(blockLinks))
       return;
     const links = [...(rootLinks ?? []), ...(blockLinks ?? [])].map((x) => {
@@ -1040,6 +1042,15 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         const correspondingContent = val.body.blocks.find(
           (b) => b.id === block.id
         );
+        let parent = undefined;
+        if (
+          correspondingContent?.contentType &&
+          headingNodeTypes.includes(correspondingContent.contentType)
+        ) {
+          parent = resolveHeadingParent(block.id, val.childrenWithStructure, [
+            id
+          ]);
+        }
         //TODO - links for each block
         let mdText = "";
         let vectorInsertionresult: any;
@@ -1101,7 +1112,8 @@ export class ActiveCaptureStore extends ActiveResourceStore<
               : null,
           metadata: correspondingContent?.metadata,
           creationContext: id,
-          children: block.children
+          children: block.children,
+          mdParent: parent
         });
       }
       console.timeEnd("children");

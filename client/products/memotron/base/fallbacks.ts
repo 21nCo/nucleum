@@ -1,11 +1,14 @@
 import { logger } from "$lib/client/components/debug/logger.client";
 import { flux } from "$lib/client/components/flux/flux";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import account from "$lib/client/stores/account.store";
-import { PersistenceActionType } from "$lib/client/types/data.type";
+import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
+import {
+  PersistenceActionType,
+  type IRecordId
+} from "$lib/client/types/data.type";
 import { compressImageToTargetSize } from "$lib/client/utils/ui.utils";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-import { headingNodeTypes, NodeType } from "../node/node.type";
+import { headingNodeTypes, NodeType, type INode } from "../node/node.type";
 
 export async function clipTextSearchFallback() {
   try {
@@ -127,5 +130,55 @@ export async function collectionResourceBackPropagation() {
       at: "collectionResourceBackPropagation - completed ",
       count: collections.length
     });
+  }
+}
+
+export async function headingNodeParentBackPropagation() {
+  try {
+    const nodes = await flux.selectMany(Resource.node, {
+      filters: {
+        contentType: [...headingNodeTypes, NodeType.NODULAR_MARKDOWN]
+      }
+    });
+    if (!nodes || !isValidArrayWithData(nodes)) return;
+    const headingNodes = nodes.filter(
+      (node: INode) => node.contentType !== NodeType.NODULAR_MARKDOWN
+    );
+    if (!headingNodes.some((x: INode) => !x.mdParent)) return;
+    let modifiedNodes: { id: IRecordId; mdParent: IRecordId[] }[] = [];
+    let sortedHeadingNodes: INode[] = [];
+    [
+      NodeType.HEADING1,
+      NodeType.HEADING2,
+      NodeType.HEADING3,
+      NodeType.HEADING4,
+      NodeType.HEADING5
+    ].forEach((x: NodeType) => {
+      const current = headingNodes.filter((y: INode) => y.contentType === x);
+      sortedHeadingNodes.push(...current);
+    });
+    sortedHeadingNodes.forEach((x: INode) => {
+      const parent = nodes.find((y: INode) =>
+        y.children?.some(resourceInList(x))
+      );
+      if (parent) {
+        const hierarchy = modifiedNodes.find(resourceInList(parent));
+        modifiedNodes.push({
+          id: x.id,
+          mdParent: [...(hierarchy?.mdParent ?? []), parent.id]
+        });
+      }
+    });
+    if (!modifiedNodes || !modifiedNodes.length) return;
+    logger.info({ at: "headingNodeParentBackPropagation", modifiedNodes });
+    const promises = modifiedNodes.map((x: any) => {
+      return flux.mutation(Resource.node, {
+        action: PersistenceActionType.MERGE,
+        record: x
+      });
+    });
+    await Promise.all(promises);
+  } catch (error) {
+    logger.error({ at: "headingNodeParentBackPropagation", error });
   }
 }

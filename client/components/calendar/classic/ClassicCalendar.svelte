@@ -18,12 +18,16 @@
   import context from "$lib/client/stores/context.store";
   import { debouncer } from "$lib/client/utils/utils";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { Resource } from "../../flux/resourceStores/resource.enum";
+  import {
+    MetaResource,
+    Resource
+  } from "../../flux/resourceStores/resource.enum";
   import { SearchStore } from "../../record/record.store";
   import { compareObjects } from "$lib/shared/utils/obj.utils";
   import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
   import { appStore } from "$lib/client/stores/app.store";
   import { Product } from "$lib/client/types/product.type";
+  import { NodeMetaType } from "$lib/client/products/memotron/node/node.type";
   export let panel: CalendarLayout = CalendarLayout.Classic;
 
   let selectedDate = new Date();
@@ -82,11 +86,30 @@
     });
   }, 1000);
 
+  function resolveResourcesForIndicators(): (Resource | MetaResource)[] {
+    const product = $appStore.product;
+    switch (product) {
+      case Product.POINTRON:
+        return [Resource.task, Resource.session];
+      case Product.MEMOTRON:
+        return [Resource.node, MetaResource.calendarNotes];
+      case Product.NUCLEUS:
+        return [
+          Resource.task,
+          Resource.session,
+          Resource.node,
+          MetaResource.calendarNotes
+        ];
+      default:
+        return [];
+    }
+  }
+
   async function refreshIndicatorData(date: Date) {
-    //TODO - resources for indicatores from settings
-    if ($appStore.product !== Product.POINTRON) return;
-    const resourcesForIndicators = [Resource.task, Resource.session];
-    const dateFilter =
+    console.time("refreshIndicatorData");
+    const resourcesForIndicators = resolveResourcesForIndicators();
+    if (resourcesForIndicators.length === 0) return;
+    const dateFilter: any =
       selectedView === TimeScaleUnit.MONTH
         ? tzStore.resolveTimePeriodFilterForMonth(date)
         : selectedView === TimeScaleUnit.YEAR
@@ -100,17 +123,50 @@
     currentDateFilterForIndicatorData = dateFilter;
     const promises = resourcesForIndicators.map((resource) => {
       let filters: any = {};
+      let properties: string[] = ["id", "modifiedAt"];
       if (resource === Resource.task) {
+        properties.push("dateUnix");
         filters = {
           dateUnix: dateFilter
         };
       } else if (resource === Resource.session) {
+        properties.push("startUnix");
         filters = {
           startUnix: dateFilter
         };
+      } else if (resource === Resource.node) {
+        properties.push("createdAt");
+        filters = {
+          createdAt: {
+            type: "date",
+            greaterThanOrEqual: new Date(
+              dateFilter.greaterThanOrEqual
+            ).toISOString(),
+            lessThanOrEqual: new Date(dateFilter.lessThanOrEqual).toISOString()
+          }
+        };
+      } else if (resource === MetaResource.calendarNotes) {
+        properties.push("metaType", "date");
+        filters = {
+          metaType: NodeMetaType.CALENDAR_NOTES,
+          date: {
+            type: "date",
+            greaterThanOrEqual: new Date(
+              dateFilter.greaterThanOrEqual
+            ).toISOString(),
+            lessThanOrEqual: new Date(dateFilter.lessThanOrEqual).toISOString()
+          }
+        };
       }
-      return new SearchStore(resource).select({
-        filters
+      const searchResource =
+        resource === MetaResource.calendarNotes
+          ? Resource.node
+          : (resource as Resource);
+      return new SearchStore(searchResource).select({
+        properties,
+        filters,
+        isExpand: false,
+        isIncludeMetaItems: resource === MetaResource.calendarNotes
       });
     });
     const results = await Promise.all(promises);
@@ -122,15 +178,19 @@
         color: resolveColor(resource)
       };
     });
+    console.timeEnd("refreshIndicatorData");
     isRefreshing = false;
   }
 
-  function resolveColor(resource: Resource) {
+  function resolveColor(resource: Resource | MetaResource) {
     switch (resource) {
       case Resource.task:
         return "fgs4";
       case Resource.sessionLog:
       case Resource.session:
+        return "aps1";
+      case Resource.node:
+      case MetaResource.calendarNotes:
         return "aps1";
     }
   }

@@ -70,7 +70,8 @@
       size={Size.xs}
       class={cn({
         "stroke-fgs3": parentBgIndex !== undefined,
-        "stroke-abg": parentBgIndex === undefined
+        "stroke-abg": parentBgIndex === undefined && !isAccentOutlined,
+        "stroke-aps1": parentBgIndex === undefined && isAccentOutlined
       })}
     />
   {/if}

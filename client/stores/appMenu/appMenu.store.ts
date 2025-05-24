@@ -39,6 +39,20 @@ class AppMenuStore extends KeyValueStore<IAppMenuStore> {
     );
     this.seed = this.get();
   }
+
+  setUserMenuItems(items: string[]) {
+    const current = this.get();
+    const context = get(appStore).product;
+    logger.log({ context: "setting user app menu items", current });
+    this.modify({
+      ...current,
+      [context]: {
+        ...current[context],
+        user: items
+      }
+    });
+  }
+
   addUserMenuItem(item: string) {
     const current = this.get();
     const context = get(appStore).product;

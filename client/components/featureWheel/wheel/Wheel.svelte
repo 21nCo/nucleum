@@ -51,7 +51,6 @@
     if (groupInFocus) {
       groups = groups.filter((group) => group.label === groupInFocus);
     }
-    console.log("groups", groups);
     categoryColoringStyle =
       mode === FeatureWheelMode.PROGRESS || mode === FeatureWheelMode.COMPARER
         ? "spoke"
@@ -78,7 +77,7 @@
       0
     );
     let limitingSpokeCount =
-      totalSpokes >= 30 ? 4 : totalSpokes >= 20 ? 5 : totalSpokes > 10 ? 6 : 8;
+      totalSpokes >= 30 ? 3 : totalSpokes >= 20 ? 4 : totalSpokes > 10 ? 5 : 20;
     if (totalSpokes > limitingSpokeCount && groups.length > 1) {
       groups = groups.map((group) => {
         if (group.spokes.length > limitingSpokeCount) {
@@ -109,7 +108,7 @@
     radius = totalSpokes > 1 ? 220 : 180;
     innerRadius = radius * innerRadiusFactor;
     middleRadius = radius * middleRadiusFactor;
-    // spokeLabelXDisplacementFactor = totalSpokes * 1.3;
+    spokeLabelXDisplacementFactor = totalSpokes * 0.3;
   }
 
   function toggleGroupFocus(group: string) {
@@ -255,7 +254,7 @@
           groupColor={group.color}
           isActive={selectedSpoke?.toLowerCase() === spoke.label.toLowerCase()}
           on:click={() => {
-            dispatch("spokeClick", spoke.label);
+            dispatch("spokeClick", { spoke: spoke.label, group: group.label });
           }}
           xCoord={(radius + groupAngles[i] * spokeLabelXDisplacementFactor) *
             Math.cos(

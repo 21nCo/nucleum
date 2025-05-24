@@ -16,8 +16,8 @@ export const highlights: { [key: string]: IHighlight } = {
   },
   offline: {
     icon: "offline",
-    title: "Offline version",
-    desc: "No cloud required. If your OS runs, so does the app.",
+    title: "Full offline version",
+    desc: "No cloud or signup required. If your OS runs, so does the app.",
     isVisualAtBottom: true
   },
   zerotrust: {

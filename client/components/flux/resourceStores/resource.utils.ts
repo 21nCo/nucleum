@@ -238,3 +238,14 @@ export function resolveResourceSwitcher(): IResourceSwitchItem[] {
     badge: !availableResources.includes(resource) ? "Planned" : undefined
   }));
 }
+
+export function isShowStatusBanner(resource: any) {
+  if (!resource) return false;
+  return (
+    resource.isArchived ||
+    resource.trashInformation ||
+    resource.isParentInactive ||
+    resource.isLocked ||
+    resource.isInReadOnlyMode
+  );
+}

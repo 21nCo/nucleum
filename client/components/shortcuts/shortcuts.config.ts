@@ -38,10 +38,6 @@ export const shortcutsConfig: Record<string, IKeyboardShortcut> = {
     key: "Space",
     code: "Space"
   },
-  SAVE_CAPTURE_SHORTCUT: {
-    key: "Enter",
-    modifiers: [ModifierKey.META]
-  },
   TOGGLE_FOCUS_SESSION: {
     key: "Space",
     code: "Space",

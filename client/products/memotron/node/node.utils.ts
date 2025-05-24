@@ -13,7 +13,8 @@ import {
   type ITextClipBody,
   type IVideoTimestampClipBody,
   type ITwitterProfile,
-  type INodeThumb
+  type INodeThumb,
+  type INodeStructure
 } from "$lib/client/products/memotron/node/node.type";
 import { getGeoLocation } from "$lib/client/utils/browser.utils";
 import { logger } from "$lib/client/components/debug/logger.client";
@@ -23,6 +24,7 @@ import { isRecordId } from "$lib/client/components/flux/resourceStores/resource.
 import type { IFile } from "$lib/client/components/files/file.type";
 import { resolveUrlData } from "./url.utils";
 import { isValidUrl } from "$lib/shared/utils/utils";
+import type { IRecordId } from "$lib/client/types/data.type";
 
 export function resolveContentPreview(node: INode) {
   const { body, contentType, metadata } = node;
@@ -428,4 +430,36 @@ export function resolveNodeSubTypesForSwitcher() {
     };
   });
   return nodeTypes;
+}
+
+export function resolveHeadingParent(
+  id: IRecordId,
+  structure: INodeStructure[],
+  scopedParent: IRecordId[]
+) {
+  try {
+    const hierarchy = structure
+      .slice(
+        0,
+        structure.findIndex((x) => x.id === id)
+      )
+      .filter((x) => {
+        const currentFactor = structure.find((s) => s.id === id)?.factor;
+        return currentFactor !== undefined && x.factor < currentFactor;
+      })
+      .reverse()
+      .reduce((acc, curr) => {
+        const existingForFactor = acc.find((x) => x.factor === curr.factor);
+        if (!existingForFactor) {
+          acc.push(curr);
+        }
+        return acc;
+      }, [] as INodeStructure[])
+      .sort((a, b) => a.factor - b.factor)
+      .map((x) => x.id);
+    return [...scopedParent, ...hierarchy];
+  } catch (e) {
+    logger.error({ at: "resolveHeadingParent", e });
+    return scopedParent;
+  }
 }

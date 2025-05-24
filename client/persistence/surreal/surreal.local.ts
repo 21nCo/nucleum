@@ -659,7 +659,7 @@ export class SurrealPersistence implements IPersistence {
       const instance = generateMiniRandomId();
       const logResources: Resource[] = [];
       if (logResources.includes(resource)) {
-        logger.log({
+        logger.debug({
           at: "SurrealPersistence.selectMany - query",
           resource,
           query,
@@ -674,7 +674,7 @@ export class SurrealPersistence implements IPersistence {
         console.timeEnd(
           `SurrealPersistence.selectMany - ${resource} - ${instance}`
         );
-        logger.log({
+        logger.debug({
           at: "SurrealPersistence.selectMany - result",
           resource,
           result,

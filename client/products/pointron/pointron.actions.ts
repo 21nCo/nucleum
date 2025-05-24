@@ -317,11 +317,12 @@ export const pointronActions: IAction[] = [
     label: "Focus"
   },
   {
-    action: "analytics",
+    action: "overview",
     component: AnalyticsV2,
     type: ActionType.PAGE,
     // icon: "ph:presentation-chart-light",
-    icon: "ph:chart-line-up-light",
+    // icon: "ph:chart-line-up-light",
+    icon: "ph:squares-four-light",
     label: "Overview"
   },
   // {

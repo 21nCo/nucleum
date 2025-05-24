@@ -82,14 +82,30 @@
       "inline-block": style !== PanelSwitcherStyle.BAR || !isExpandToFullWidth
     })}
   >
+    {#if title || $$slots.left}
+      <span class="mo:mr-3 mr-6" transition:conditionalTransition>
+        <slot name="left">
+          <Text content={title} style={TextStyle.PANEL_HEADING_SMALL} />
+        </slot>
+      </span>
+    {/if}
     <div
       bind:this={child}
       class={cn(
-        "flex min-w-fit items-center",
+        "flex items-center",
         bg(
           style === PanelSwitcherStyle.TRAIN ? parentBgIndex : parentBgIndex - 1
         ),
         {
+          "overflow-x-auto mr-auto":
+            (style === PanelSwitcherStyle.BAR ||
+              style === PanelSwitcherStyle.SNAKE) &&
+            isExpandToFullWidth,
+          "min-w-fit": !(
+            (style === PanelSwitcherStyle.BAR ||
+              style === PanelSwitcherStyle.SNAKE) &&
+            isExpandToFullWidth
+          ),
           "border-b border-brs3":
             ((style === PanelSwitcherStyle.BAR &&
               barStyle != BarStyle.UNDER &&
@@ -110,13 +126,6 @@
         }
       )}
     >
-      {#if title || $$slots.left}
-        <span class="mo:mr-3 mr-6" transition:conditionalTransition>
-          <slot name="left">
-            <Text content={title} style={TextStyle.PANEL_HEADING_SMALL} />
-          </slot>
-        </span>
-      {/if}
       {#if isRenderAsDropdown}
         <div class="flex pl-2">
           <DropDown

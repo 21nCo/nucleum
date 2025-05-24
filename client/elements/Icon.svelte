@@ -285,6 +285,8 @@
         sheet = "sprite-ph-fill";
       } else if (icon.endsWith("-thin")) {
         sheet = "sprite-ph-thin";
+      } else if (icon.endsWith("-duotone")) {
+        sheet = "sprite-ph-duotone";
       } else {
         sheet = "sprite-ph-base";
       }

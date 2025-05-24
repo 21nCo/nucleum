@@ -3,7 +3,10 @@ import {
   NodeType,
   rootNodeTypeList
 } from "$lib/client/products/memotron/node/node.type";
-import { activeResourceFilter, activeResourceFilterV2 } from "$lib/client/utils/utils";
+import {
+  activeResourceFilter,
+  activeResourceFilterV2
+} from "$lib/client/utils/utils";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { isValidString } from "$lib/shared/utils/text.utils";
 import {
@@ -198,6 +201,9 @@ export class SearchStore {
     semanticSearchTopK?: number | undefined;
     isIncludeSubItems?: boolean;
     isIgnoreParentInactive?: boolean;
+    isExpand?: boolean;
+    properties?: string[];
+    isIncludeMetaItems?: boolean;
   }) {
     this.resource = params.resource ?? this.resource;
     logger.log({
@@ -206,7 +212,7 @@ export class SearchStore {
     });
     let data: any;
     const selectParams = {
-      properties: [labelSearchProp],
+      properties: params.properties ?? [labelSearchProp],
       filters: params.filters,
       search: isValidString(params.searchQuery)
         ? {
@@ -235,8 +241,9 @@ export class SearchStore {
             this.setResourceStore(resource);
             const result = await this.resourceStore?.selectMany(selectParams, {
               isIncludeSubItems: params.isIncludeSubItems,
-              isExpand: true,
-              isIgnoreParentInactive: params.isIgnoreParentInactive
+              isExpand: params.isExpand ?? true,
+              isIgnoreParentInactive: params.isIgnoreParentInactive,
+              isIncludeMetaItems: params.isIncludeMetaItems
             });
             return Array.isArray(result) ? result : [];
           })
@@ -247,7 +254,8 @@ export class SearchStore {
       data = await this.resourceStore?.selectMany(selectParams, {
         isIncludeSubItems: params.isIncludeSubItems,
         isIgnoreParentInactive: params.isIgnoreParentInactive,
-        isExpand: true
+        isExpand: params.isExpand ?? true,
+        isIncludeMetaItems: params.isIncludeMetaItems
       });
     }
     if (isValidArray(data)) {
@@ -415,7 +423,9 @@ export class SearchStore {
         }
       });
     }
-    return [...(nodes ?? []), ...(collections ?? [])].filter(activeResourceFilter)
+    return [...(nodes ?? []), ...(collections ?? [])].filter(
+      activeResourceFilter
+    );
   }
 
   async resolveCount(

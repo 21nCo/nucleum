@@ -26,10 +26,6 @@ export type IFwFeature = IFeatureWheelSpoke & {
    * Properties of contemporaries to be shown in the comparison table
    */
   comparisionProperties?: string[];
-  /**
-   * Indicates if the feature is planned but not yet implemented
-   */
-  isPlanned?: boolean;
 };
 
 export type IFeatureWheel = {
@@ -63,6 +59,10 @@ export type IFeatureWheelSpoke = {
   isProminent?: boolean;
   isNovel?: boolean;
   isHideForComparer?: boolean;
+  /**
+   * Indicates if the feature is planned but not yet implemented
+   */
+  isPlanned?: boolean;
 };
 
 export type IContemporaryBase = {

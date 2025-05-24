@@ -75,8 +75,8 @@
       label: "Overview",
       // tooltip: "Overview",
       value: CalendarColumnPanel.Overview,
-      icon: "heroicons:rectangle-group"
-      // icon: "ph:globe-light"
+      // icon: "heroicons:rectangle-group"
+      icon: "ph:squares-four-light"
     };
     const notes = {
       label: "Notes",
@@ -96,6 +96,8 @@
         items = [overview];
         break;
       case Product.MEMOTRON:
+        items = [notes];
+        break;
       case Product.NUCLEUS:
         items = [notes, overview];
         break;

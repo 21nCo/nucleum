@@ -124,17 +124,6 @@ export const memotronActions: IAction[] = [
     }
   },
   {
-    action: MemotronAction.HISTORY,
-    component: ComingSoonView,
-    type: ActionType.MODAL,
-    modalParams: {
-      layout: {
-        size: Size.xl,
-        ignoreSafeArea: true
-      }
-    }
-  },
-  {
     action: Resource.node,
     component: Node,
     label: "Node",
@@ -250,10 +239,10 @@ export const memotronActions: IAction[] = [
     component: MemotronHome
   },
   {
-    action: "graph",
+    action: "overview",
     type: ActionType.PAGE,
-    label: "Graph",
-    icon: "ph:graph-light",
+    label: "Overview",
+    icon: "ph:squares-four-light",
     component: GlobalGraph
   },
   {
@@ -300,11 +289,5 @@ export const memotronActions: IAction[] = [
         orientation: Orientation.Horizontal
       }
     }
-  },
-  {
-    action: MemotronEvent.SAVE_CAPTURE_SHORTCUT,
-    label: "Save capture shortcut",
-    isMeta: true,
-    type: ActionType.EVENT
   }
 ];

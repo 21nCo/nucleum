@@ -1,4 +1,7 @@
-import type { Resource } from "../flux/resourceStores/resource.enum";
+import type {
+  MetaResource,
+  Resource
+} from "../flux/resourceStores/resource.enum";
 
 export enum CalendarLayout {
   Classic = "classic",
@@ -65,7 +68,7 @@ export type CalendarTimelineEntry = {
 };
 
 export type ICalendarIndicatorData = {
-  resource: Resource;
+  resource: Resource | MetaResource;
   data: any[];
   color?: string;
 };

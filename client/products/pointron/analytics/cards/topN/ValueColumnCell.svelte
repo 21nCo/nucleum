@@ -10,7 +10,7 @@
   <span class="min-w-fit text-b3 dp:text-b2 2k:text-base">
     {formatSeconds(row.value)}
   </span>
-  {#if $view.isPortrait}
+  <!-- {#if $view.isPortrait}
     <PreviousValueColumnCell {row} />
-  {/if}
+  {/if} -->
 </span>

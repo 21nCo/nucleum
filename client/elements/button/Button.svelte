@@ -165,7 +165,7 @@
           {size}
           parentBgIndex={style === ButtonStyle.PLAIN
             ? parentBgIndex
-            : style === ButtonStyle.OUTLINED
+            : style === ButtonStyle.OUTLINED && type !== ButtonVariant.PRIMARY
               ? parentBgIndex + 1
               : undefined}
           isAccentOutlined={style === ButtonStyle.OUTLINED &&

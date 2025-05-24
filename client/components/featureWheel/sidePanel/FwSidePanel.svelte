@@ -14,6 +14,9 @@
   import CardListContent from "./card/CardListContent.svelte";
   import ComparisionTableWithAppsAsColumns from "./comparisionTable/ComparisionTableWithAppsAsColumns.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
+  import { Size } from "$lib/client/types/size.enum";
+  import Badge from "$lib/client/elements/text/Badge.svelte";
+  import HowToUse from "./HowToUse.svelte";
 
   export let product: string;
   export let features: IFwFeature[] = [];
@@ -25,11 +28,14 @@
   export let selectedFeatures: string[] | undefined = undefined;
   export let isShowGoBack: boolean = false;
   $: isHowToUse = featureView === "howToUse";
+  $: feature = featureView
+    ? features.find((f) => f.label === featureView)
+    : undefined;
   const dispatch = createEventDispatcher();
 </script>
 
 <div
-  class="flex flex-col gap-8 flex-1 w-1/2 min-w-1/2 bg-bgs2 rounded-md p-4 dp:p-6 2k:p-8"
+  class="flex flex-col gap-8 flex-1 w-1/2 min-w-1/2 bg-bgs1 rounded-md p-4 dp:p-6 2k:p-8"
 >
   {#if isShowGoBack}
     <button
@@ -48,6 +54,11 @@
         How to use this wheel?
       {:else if featureView}
         {featureView}
+        {#if feature?.isPlanned}
+          <div class="flex items-center p-1">
+            <Badge text="Planned" />
+          </div>
+        {/if}
         <!-- {:else if selectedCategories?.length === 1}
         {selectedCategories[0]} -->
       {:else if selectedFeatures?.length === 1}
@@ -58,7 +69,9 @@
         )}
         <div class="flex items-center gap-1">
           <span> Comparision with </span>
-          <ExternalLogo provider={contemporary} />
+          {#if contemporary}
+            <ExternalLogo provider={contemporary} />
+          {/if}
           {properCase(selectedCompare[0])}
         </div>
       {:else}
@@ -71,33 +84,32 @@
         dispatch("close");
       }}
     >
-      <SvgIcon icon="close" />
+      <SvgIcon icon="ph:x" phIconSize={Size.lg} />
     </button>
   </div>
   <div class="overflow-y-auto flex flex-col gap-8">
-    {#if featureView}
-      {@const feature = features.find((f) => f.label === featureView)}
-      {#if feature}
-        <div class="flex flex-col gap-4 dp:gap-6 2k:gap-8">
-          <TextCard
-            title="What is {feature.label}?"
-            content={feature.description}
-            image={feature.image}
-            learnMoreLink={feature.learnMoreLink}
-          />
-          {#if feature.ratingCriteria}
-            <TextCard title="Our rating criteria">
-              <CardListContent items={feature.ratingCriteria} />
-            </TextCard>
-          {/if}
-          <div class="flex flex-col gap-2">
+    {#if featureView && feature}
+      <div class="flex flex-col gap-4 dp:gap-6 2k:gap-8">
+        <TextCard
+          title="What is {feature.label}?"
+          content={feature.description}
+          image={feature.image}
+          learnMoreLink={feature.learnMoreLink}
+        />
+        {#if feature.ratingCriteria}
+          <TextCard title="Our rating criteria">
+            <CardListContent items={feature.ratingCriteria} />
+          </TextCard>
+        {/if}
+        <div class="flex flex-col gap-2">
+          {#key selectedCompare?.length}
             <ComparisonTable {feature} {selectedCompare} {contemporaries} />
-          </div>
-          {#if feature.notes}
-            <TextCard title="Additional information" content={feature.notes} />
-          {/if}
+          {/key}
         </div>
-      {/if}
+        {#if feature.notes}
+          <TextCard title="Additional information" content={feature.notes} />
+        {/if}
+      </div>
     {:else if selectedCompare}
       <ComparisionTableWithAppsAsColumns
         {product}
@@ -140,6 +152,8 @@
           {/if}
         </div>
       {/if}
+    {:else if isHowToUse}
+      <HowToUse />
     {/if}
   </div>
 </div>

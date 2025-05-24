@@ -42,6 +42,7 @@
   function resolveTimlinePanelSelection() {
     return (
       uiState.getState(UIState.calendarDayTimelinePanelSelection, {
+        isProductScoped: true,
         isDeviceScoped: true
       }) ?? "timeline"
     );
@@ -66,7 +67,7 @@
       case Product.NUCLEUS:
         return [timeline, allDay];
       case Product.MEMOTRON:
-        return [];
+        return [timeline];
       default:
         return [timeline];
     }
@@ -111,6 +112,7 @@
 
   function onTimelinePanelSwitch(e: CustomEvent<string>) {
     uiState.setState(UIState.calendarDayTimelinePanelSelection, e.detail, {
+      isProductScoped: true,
       isDeviceScoped: true
     });
   }

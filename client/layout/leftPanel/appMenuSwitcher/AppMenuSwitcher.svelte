@@ -16,6 +16,9 @@
   import { OperatingSystem } from "$lib/client/types/context.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import AppMenuSwitcherItemGroup from "./AppMenuSwitcherItemGroup.svelte";
+  import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
   export let parentBackgroundIndex: number;
@@ -45,6 +48,9 @@
     }
     let userPinnedMenu: string[] = [];
     if (!$view.isConstrainedWidth) userPinnedMenu = x[app]?.user ?? [];
+    userPinnedMenu = userPinnedMenu
+      .filter((x) => x && !x.includes("browse"))
+      .map((x) => resourceAction(x as Resource, ResourceActionType.BROWSE));
     const contextualMenu = [...defaultMenu, ...userPinnedMenu];
     // console.log({ contextualMenu });
     if (layoutContext === LayoutContext.PORTRAIT) {
@@ -63,7 +69,9 @@
       }
     });
     defaultPages = allPages.filter((x) => defaultMenu.includes(x.action));
-    userPinnedPages = allPages.filter((x) => userPinnedMenu.includes(x.action));
+    userPinnedPages = allPages
+      .filter((x) => userPinnedMenu.includes(x.action))
+      .filter((x) => x);
     if (layoutContext != LayoutContext.PORTRAIT) {
     }
     let currentPath = window?.location?.pathname?.replace("/", "");

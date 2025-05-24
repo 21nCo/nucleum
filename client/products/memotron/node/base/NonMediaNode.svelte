@@ -147,20 +147,21 @@
               })}
             >
               {#if headingNodeTypes.includes($node.contentType)}
-                <!-- {#key $node.mdParent.map((x) => x.toString()).join(".")} -->
-                <header class="flex w-full px-12 py-4">
-                  <NodeTitleBreadcrumbs
-                    id={$node.id}
-                    currentLabel={$node.label}
-                    on:click={(e) => {
-                      node.eventStore.set({
-                        event: e.detail.event,
-                        id: e.detail.item.resourceId
-                      });
-                    }}
-                  />
-                </header>
-                <!-- {/key} -->
+                {#key $node.mdParent?.map((x) => x.toString())?.join(".")}
+                  <header class="flex w-full px-12 py-4">
+                    <NodeTitleBreadcrumbs
+                      id={$node.id}
+                      mdParent={$node.mdParent}
+                      currentLabel={$node.label}
+                      on:click={(e) => {
+                        node.eventStore.set({
+                          event: e.detail.event,
+                          id: e.detail.item.resourceId
+                        });
+                      }}
+                    />
+                  </header>
+                {/key}
               {/if}
               <main
                 class="relative flex flex-col gap-6 mo:pr-0 h-full w-full overflow-auto"

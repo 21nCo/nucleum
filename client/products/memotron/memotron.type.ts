@@ -16,6 +16,5 @@ export interface TrashInformation {
 }
 
 export enum MemotronEvent {
-  BLOCK_HOVER = "blockHover",
-  SAVE_CAPTURE_SHORTCUT = "SAVE_CAPTURE_SHORTCUT"
+  BLOCK_HOVER = "blockHover"
 }

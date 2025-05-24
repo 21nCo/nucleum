@@ -19,7 +19,7 @@
   {@const isTrialExpired = trialDaysLeft <= 0}
   <button
     class={cn(
-      "flex gap-1 justify-center items-center border rounded-md  mx-1.5",
+      "flex gap-1 justify-center items-center border rounded-md  mx-1.5 whitespace-nowrap",
       {
         "flex-col p-1.5": orientation === Orientation.Vertical,
         "px-1.5 py-0.5": orientation === Orientation.Horizontal,

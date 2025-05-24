@@ -38,11 +38,11 @@
       desc: "Unlock next-level of your digital memory with a powerhouse of features.",
       visualRenderComponent: ""
     },
-    // highlights.ainative,
-    // highlights.zerotrust,
     highlights.intuitive,
-    highlights.laast,
+    // highlights.zerotrust,
+    // highlights.ainative,
     highlights.offline,
+    highlights.laast,
     highlights.reliable
   ];
   const mainMemotronVideoUrl = "https://www.youtube.com/watch?v=SeWdndc7y4A";
