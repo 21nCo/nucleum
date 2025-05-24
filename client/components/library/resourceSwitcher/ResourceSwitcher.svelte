@@ -26,7 +26,16 @@
     return resource;
   });
 
-  let sections = [Product.NUCLEUS, Product.POINTRON, Product.MEMOTRON];
+  let sections = [
+    Product.NUCLEUS,
+    Product.POINTRON,
+    Product.MEMOTRON,
+    Product.SELFTRON,
+    Product.FEEDTRON,
+    Product.HOMETRON,
+    Product.FINATRON,
+    Product.FELLOTRON
+  ];
   if (selected === undefined) selected = options[0]?.value;
   export async function refresh(resource: Resource) {
     await refs[resource]?.refresh();
@@ -36,7 +45,7 @@
     let resources = [];
     switch (section) {
       case Product.NUCLEUS:
-        resources = [Resource.collection, Resource.combination];
+        resources = [Resource.collection, Resource.combination, Resource.event];
         break;
       case Product.POINTRON:
         resources = [Resource.goal, Resource.task];
@@ -45,7 +54,7 @@
         resources = [Resource.node, Resource.relation];
         break;
       case Product.SELFTRON:
-        resources = [Resource.habit, Resource.quest];
+        resources = [Resource.habit, Resource.quest, Resource.input];
         break;
       case Product.FEEDTRON:
         resources = [Resource.source, Resource.feed];

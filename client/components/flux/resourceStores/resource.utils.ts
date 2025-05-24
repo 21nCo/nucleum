@@ -193,6 +193,8 @@ export function resolveResourceIcon(resource: Resource) {
       return "ph:user-light";
     case Resource.place:
       return "ph:map-pin-light";
+    case Resource.input:
+      return "ph:arrow-down-left-light";
     default:
       return "ph:question-fill";
   }
@@ -224,7 +226,8 @@ export function resolveResourceSwitcher(): IResourceSwitchItem[] {
     Resource.account,
     Resource.transaction,
     Resource.fellow,
-    Resource.place
+    Resource.place,
+    Resource.input
   ];
 
   return resources.map((resource) => ({

@@ -68,27 +68,35 @@ export enum Resource {
   sessionLog = "sessionLog",
   sessionFocusItems = "sessionFocusItems",
 
-  //Nucleus
+  //Global
+  collection = "collection",
+  property = "property",
+  view = "view",
+  combination = "combination",
+  file = "file",
   place = "place",
+  input = "input",
+
   //Memotron
+  /**
+   * @deprecated - use {@link collection} instead
+   */
+  curation = "curation",
+  nodelinks = "nodelinks",
+  capture = "capture",
+  /**
+   * @deprecated - use {@link collection} instead
+   */
+  type = "type",
   vector = "vector",
   node = "node",
   relation = "relation",
-  curation = "curation",
-  type = "type",
-  property = "property",
-  collection = "collection",
-  combination = "combination",
-  nodelinks = "nodelinks",
-  capture = "capture",
-  view = "view",
-  file = "file",
-  highlight = "highlight",
   link = "link",
   linkTag = "linkTag",
   markdownSettings = "markdownSettings",
 
   //Memotron clipper
+  highlight = "highlight",
   clipperToolbarState = "clipperToolbarState",
   clipperSync = "clipperSync",
 
