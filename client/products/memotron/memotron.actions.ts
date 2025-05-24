@@ -3,8 +3,6 @@ import { Orientation } from "$lib/client/types/direction.enum";
 import { Size } from "$lib/client/types/size.enum";
 import Capture from "$lib/client/products/memotron/capture/Capture.svelte";
 import Node from "$lib/client/products/memotron/node/Node.svelte";
-import Journal from "$lib/client/products/memotron/journal/Journal.svelte";
-import JournalModalViewer from "$lib/client/products/memotron/journal/JournalModalViewer.svelte";
 import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
 import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
@@ -99,19 +97,6 @@ export const memotronActions: IAction[] = [
     }
   },
   {
-    action: MemotronAction.JOURNAL_MODAL_VIEWER,
-    component: JournalModalViewer,
-    type: ActionType.MODAL,
-    isInactive: true,
-    modalParams: {
-      layout: {
-        size: Size.full,
-        orientation: Orientation.Horizontal,
-        ignoreSafeArea: true
-      }
-    }
-  },
-  {
     action: MemotronAction.SERENDIPITY,
     component: ComingSoonView,
     type: ActionType.MODAL,
@@ -156,14 +141,6 @@ export const memotronActions: IAction[] = [
     action: Resource.combination,
     type: ActionType.MODAL,
     component: ComingSoonView
-  },
-  {
-    action: "journal",
-    type: ActionType.PAGE,
-    label: "Journal",
-    isInactive: true,
-    icon: "calendar-days",
-    component: Journal
   },
   {
     action: MemotronAction.LIBRARY,

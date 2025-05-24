@@ -9,10 +9,8 @@ import { flux } from "../flux/flux";
 import { rootNodeTypeList } from "$lib/client/products/memotron/node/node.type";
 import { activeResourceFilterV2 } from "$lib/client/utils/utils";
 import { logger } from "../debug/logger.client";
-import { accessLogStore } from "../accessLogging/accesslog.store";
-import { localCacheableStores, remoteOnlyStores } from "$local/localStoresMap";
-import type { ResourceStore } from "../flux/resourceStores/resource.store";
 import { searcheableResources } from "$local/local";
+import { resolveResourceStore } from "../flux/resourceStores/store.resolver";
 
 export class RecentsStore extends ObservableStore<IRecentsStore> {
   private readonly LIMIT = 20;
@@ -115,9 +113,7 @@ export class RecentsStore extends ObservableStore<IRecentsStore> {
   }
 
   private async recentResources(resource: Resource) {
-    const resourceStore = [...localCacheableStores, ...remoteOnlyStores].find(
-      (store) => store.id === resource
-    ) as ResourceStore<any>;
+    const resourceStore = resolveResourceStore(resource);
     const result = await resourceStore?.selectMany(
       {
         orderBy: {

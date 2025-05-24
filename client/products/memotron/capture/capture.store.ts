@@ -6,7 +6,6 @@ import {
   type INodeItemCaptured,
   type IMediaNode,
   type INodeThumb,
-  type INodePropertyValue,
   type IMediaGridItem,
   type IWebPage,
   type IAudioMetadata,
@@ -46,6 +45,7 @@ import type { IRecordId } from "$lib/client/types/data.type";
 import {
   CollectionType,
   type ICollection,
+  type ICollectionItemPropertyValue,
   type ICollectionThumb
 } from "$lib/client/components/collection/collection.type";
 import {
@@ -77,7 +77,6 @@ import { getImageColorsFromFile } from "$lib/client/utils/ui.utils";
 import { parseBuffer } from "music-metadata";
 import ExifReader from "exifreader";
 import { getDeviceInfo, getGeoLocation } from "$lib/client/utils/browser.utils";
-import { textIsCode } from "$lib/shared/utils/text.utils";
 import {
   extractRootStructure,
   extractStructureForChildren,
@@ -88,7 +87,6 @@ import {
   ActiveResourceStore,
   ResourceStore
 } from "$lib/client/components/flux/resourceStores/resource.store";
-import { CollectibleStore } from "$lib/client/components/collection/collectible.store";
 import { embedBridge } from "$lib/client/components/embed/embed.store";
 import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
 
@@ -411,6 +409,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     if (!response) return;
     if (!response[0].id) return;
     const id = generateResourceId(Resource.node);
+    const collections = params?.isEmbedContext ? [] : this.resolveCollections();
     const fileId = response[0].id;
     const metadata = (await this.parseMetadata(file)) ?? {};
     if (!metadata?.location) metadata.location = await this.resolveLocation();
@@ -420,14 +419,16 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       contentType,
       file: fileId,
       label: file.name,
+      body: {},
       metadata: {
         ...metadata
       },
       properties: params?.isEmbedContext ? [] : captureStore.properties,
+      collections,
       creationContext: params?.isEmbedContext
         ? (params?.creationContext ?? this.get().nodeId)
         : undefined
-    } as IMediaNode;
+    } as OmitForCapture<IMediaNode>;
     const result = await nodeStore.create([node], {
       context: captureAction
     });
@@ -460,6 +461,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     const structure = extractStructureForChildren(blocks);
     const rootStructure = extractRootStructure(structure, hierarchyFactorLimit);
     const id = generateResourceId(Resource.node);
+    const collections = this.resolveCollections();
     const rootBlocks = blocks.filter((b) =>
       rootStructure.some(resourceInList(b))
     );
@@ -471,11 +473,19 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       body: "",
       text: mdText,
       children: rootStructure.map((x: any) => x.id),
-      contentType: NodeType.NODULAR_MARKDOWN
+      contentType: NodeType.NODULAR_MARKDOWN,
+      collections
     };
     let remainingResources: INodeItemCaptured[] = [];
     for (const block of structure) {
       const correspondingContent = blocks.find(resourceInList(block));
+      let parent = undefined;
+      if (
+        correspondingContent?.contentType &&
+        headingNodeTypes.includes(correspondingContent.contentType)
+      ) {
+        parent = resolveHeadingParent(block.id, structure, [id]);
+      }
       let mdText = "";
       if (block.children && block.children.length > 0) {
         const childrenNodes = blocks.filter((b) =>
@@ -490,7 +500,8 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         label: correspondingContent?.label,
         text: mdText,
         creationContext: id,
-        children: block.children
+        children: block.children,
+        mdParent: parent
       });
     }
     const result: any = await nodeStore.create([root, ...remainingResources], {
@@ -529,6 +540,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     let nodes: OmitForCapture<IMediaNode>[] = [];
     let mdNodesResult: any[] = [];
     const captureStore = this.get();
+    const collections = params?.isEmbedContext ? [] : this.resolveCollections();
     for (const [index, item] of files.entries()) {
       if (params?.uploadProgressId) {
         const progressElement = document.getElementById(
@@ -565,13 +577,15 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         id,
         contentType: item.contentType,
         file: fileId,
+        body: {},
         label: item.file.name,
         metadata,
+        collections,
         properties: params?.isEmbedContext ? [] : captureStore.properties,
         creationContext: params?.isEmbedContext
           ? (params?.creationContext ?? this.get().nodeId)
           : undefined
-      } as IMediaNode;
+      } as OmitForCapture<IMediaNode>;
       nodes.push(node);
     }
     const mediaNodesResult = await nodeStore.create(nodes, {
@@ -587,7 +601,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     return result;
   }
   // TODO - check for persistance need here
-  updateProperty = async (property: INodePropertyValue) => {
+  updateProperty = async (property: ICollectionItemPropertyValue) => {
     let properties = this.get().properties ?? [];
     properties = properties.filter((x) => !isSameResource(x, property));
     this.update((prev) => ({ ...prev, properties: [...properties, property] }));
@@ -605,6 +619,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
   ) {
     const contentType = "audio/mp3";
     const id = generateResourceId(Resource.node);
+    const collections = this.resolveCollections();
     const fileName = generateSimpleRandomId();
     const result = await account.uploadFileV2(
       contentType,
@@ -629,6 +644,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         location,
         ...metadata
       },
+      collections,
       properties: captureStore.properties,
       creationContext: params?.isEmbedContext
         ? (params?.creationContext ?? this.get().nodeId)
@@ -691,6 +707,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     const deviceInfo = await getDeviceInfo();
     const location = await this.resolveLocation();
     const captureStore = this.get();
+    const collections = this.resolveCollections();
     const node: OmitForCapture<IImageNode> = {
       id,
       contentType: NodeType.IMAGE,
@@ -698,6 +715,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       label: `Image Capture - ${new Date().toLocaleString()}`,
       body: {},
       properties: captureStore.properties,
+      collections,
       metadata: {
         ...metadata,
         location,
@@ -865,17 +883,6 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         tags: x.tags
       };
     });
-    const typedCollections = val.links
-      ?.filter((x) => x.from === "root" && x.toSubType === CollectionType.TYPED)
-      .map((x) => x.to);
-    // await nodeStore.refreshNodeAvatar(rootId, {
-    //   collections: typedCollections
-    // });
-    const collectibleStore = new CollectibleStore({ id: rootId }, nodeStore);
-    await collectibleStore.refreshAvatar(rootId, {
-      collections: typedCollections
-    });
-
     logger.log({ at: "CaptureStore.save", rootLinks, blockLinks, links });
     return linker.linkMany(links);
   }
@@ -901,7 +908,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     return linker.linkMany(links);
   }
 
-  async resolveLocation() {
+  private async resolveLocation() {
     const ctx = get(context);
     if (ctx.isEmbed) {
       const locationResult = await embedBridge.fetch(
@@ -946,14 +953,17 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     logger.log({ at: "CaptureStore.saveMarkdownCapture", val, metadata });
     // const id = prefixTable(generateRandomId(), Resource.node);
     const id = val.nodeId ?? generateResourceId(Resource.node);
+    const collections = this.resolveCollections();
     let root: INodeItemCaptured = {
       id,
       label: val.label ?? "",
       properties: val.properties,
       body: "",
       contentType: NodeType.NODULAR_MARKDOWN,
-      metadata
+      metadata,
+      collections
     };
+
     let remainingResources: INodeItemCaptured[] = [];
     if ("blocks" in val.body) {
       let data;
@@ -1127,5 +1137,23 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     runVectorGeneration();
     console.timeEnd("saveMarkdownCapture");
     return result;
+  }
+
+  private resolveCollections() {
+    try {
+      const val = this.get();
+      const collections = val.links
+        ?.filter(
+          (x) =>
+            x.from === "root" &&
+            (x.toType === Resource.collection ||
+              determineResourceType(x.to) === Resource.collection)
+        )
+        .map((x) => x.to);
+      return collections ?? [];
+    } catch (e) {
+      logger.error({ at: "CaptureStore.resolveCollections", error: e });
+      return [];
+    }
   }
 }

@@ -99,7 +99,7 @@ export type IAction = {
     itemLabel?: string;
     placeholder?: string | ((params?: any) => string);
     searchResultComponent?: any;
-    callback: (id: string, label?: string, componentParams?: any) => void;
+    callback: (item: any, componentParams?: any) => void;
     /**
      * Resource type of search results if already pre-known.
      */

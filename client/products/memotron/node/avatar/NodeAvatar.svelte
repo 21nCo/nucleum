@@ -5,37 +5,40 @@
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import { onMount } from "svelte";
-  import type { ICollectionExpanded } from "../../collection/collection.type";
-  import { nodeStore } from "../node.store";
-  import { type INode, NodeType, webNodeTypeList } from "../node.type";
+  import {
+    type IActiveNode,
+    type INode,
+    NodeType,
+    webNodeTypeList
+  } from "../node.type";
   import { resolveFileIcon, resolveNodeIcon } from "../node.utils";
   import NodeFavicon from "./NodeFavicon.svelte";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  export let types: ICollectionExpanded[] | undefined = undefined;
-  export let node: INode | undefined = undefined;
+  import { resolveAvatar } from "$lib/client/components/collection/collection.utils";
+  export let node: INode | IActiveNode | undefined = undefined;
   export let size: Size.sm | Size.md | Size.lg | number = Size.md;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   let _avatars: IAvatar[] | undefined = undefined;
-
-  $: if (types && types.length > 0) {
-    //TODO:  new ICollectibleStore changes
-    // _avatars = nodeStore.resolveAvatar(types);
-  } else if (types?.length === 0) {
-    _avatars = [];
-  }
 
   onMount(() => {
     refreshAvatar();
   });
 
   function refreshAvatar() {
-    if (node && node.avatar) {
+    if (!node) return;
+    if (node.avatar) {
       _avatars = node.avatar;
-    } else if (types) {
-      //TODO:   new ICollectibleStore changes
-      // _avatars = nodeStore.resolveAvatar(types);
+    } else if (node.types) {
+      _avatars = resolveAvatar(node.types);
+    } else if (node.collections) {
+      // TODO - resolve avatars from in memory typed collections cache
     }
   }
+  // $: console.log({
+  //   at: "NodeAvatar",
+  //   node,
+  //   _avatars
+  // });
 </script>
 
 {#if _avatars && _avatars.length > 0}

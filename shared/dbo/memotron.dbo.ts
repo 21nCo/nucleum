@@ -5,7 +5,8 @@ import { userDatev4 } from "./global.dbo";
  */
 export const memotronDboDefinitions = {
   "fn::memotron::node::fetch": nodeFetch(),
-  "fn::memotron::timeline": timeline()
+  "fn::memotron::node::children": nodeChildren(),
+  "fn::memotron::node::parent": nodeParent()
 };
 
 function nodeFetch() {

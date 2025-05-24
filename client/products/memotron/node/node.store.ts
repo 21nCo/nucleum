@@ -71,7 +71,11 @@ class NodeStore extends ResourceStore<INode> {
   searchStore: any;
   constructor() {
     super(Resource.node, {
-      dboDependencies: ["fn::memotron::node::fetch", "fn::memotron::timeline"]
+      dboDependencies: [
+        "fn::memotron::node::fetch",
+        "fn::memotron::node::children",
+        "fn::memotron::node::parent"
+      ]
     });
   }
 
@@ -134,15 +138,6 @@ class NodeStore extends ResourceStore<INode> {
     }
   }
 
-  async fetchTimeline(date: Date) {
-    const query = `fn::memotron::timeline($date)`;
-    const response = await flux.selectByQuery(query, {
-      date: formatDate(date, "iso")
-    });
-    logger.log({ at: "fetch timeline", response });
-    return response;
-  }
-
   /**
    *
    *
@@ -152,9 +147,15 @@ class NodeStore extends ResourceStore<INode> {
    * @returns
    */
   async fetch(nodeId: IRecordId) {
-    const query = `fn::memotron::node::fetch(${nodeId})`;
-    const response = await flux.selectByQuery(query);
-    logger.log({ at: "fetch node", response });
+    // const query = `fn::memotron::node::fetch(${nodeId})`;
+    // const response = await flux.selectByQuery(query);
+    const response = await super.select(nodeId, [
+      "*",
+      "parent.* as parent",
+      "file.* as file",
+      "(fn::memotron::node::children($parent.children)) as children"
+    ]);
+    logger.debug({ at: "fetch node", response });
     return response;
   }
 
@@ -373,8 +374,12 @@ export class ActiveNodeStore extends CollectibleStore<IActiveNode, NodeStore> {
   }
   init = async (accessMode: ResourceAccessMode) => {
     logger.log({ at: "ActiveNodeStore.init", id: this.id });
+    console.time("ActiveNodeStore.init");
     try {
+      console.time("ActiveNodeStore.init.fetch");
       const node = await this.resourceStore.fetch(this.id);
+      console.timeEnd("ActiveNodeStore.init.fetch");
+      console.log({ at: "ActiveNodeStore.init", node });
       if (node) {
         if (node.clips && isValidArrayWithData(node.clips)) {
           node.clips = node.clips.filter(
@@ -397,46 +402,49 @@ export class ActiveNodeStore extends CollectibleStore<IActiveNode, NodeStore> {
           });
         }
       }
-      const rawLinks =
-        node.links.length > 0
-          ? node.links
-          : [...node.outlinks, ...node.inlinks];
-      const links: INodeLinkThumb[] = rawLinks
-        .filter((x: INodeLink) => {
-          return (
-            (x.in.toString() === this.id && x.out.tb === Resource.node) ||
-            (x.out.toString() === this.id && x.in.tb === Resource.node)
+      if (node.links) {
+        const rawLinks =
+          node.links.length > 0
+            ? node.links
+            : [...node.outlinks, ...node.inlinks];
+        const links: INodeLinkThumb[] = rawLinks
+          .filter((x: INodeLink) => {
+            return (
+              (x.in.toString() === this.id && x.out.tb === Resource.node) ||
+              (x.out.toString() === this.id && x.in.tb === Resource.node)
+            );
+          })
+          .map((x: INodeLink) => {
+            const id = x.in.toString() === this.id ? x.out : x.in;
+            return {
+              linkedTo: id,
+              linkType: x.linkType,
+              id: x.id,
+              tags: x.tags,
+              direction: x.in.toString() === this.id ? "outgoing" : "incoming"
+            } as INodeLinkThumb;
+          });
+        const collections: IRecordId[] = rawLinks
+          .filter(
+            (x: INodeLink) =>
+              x.out.tb === Resource.collection ||
+              x.in.tb === Resource.collection
+          )
+          .map((x: INodeLink) =>
+            x.out.tb === Resource.collection ? x.out : x.in
           );
-        })
-        .map((x: INodeLink) => {
-          const id = x.in.toString() === this.id ? x.out : x.in;
-          return {
-            linkedTo: id,
-            linkType: x.linkType,
-            id: x.id,
-            tags: x.tags,
-            direction: x.in.toString() === this.id ? "outgoing" : "incoming"
-          } as INodeLinkThumb;
+        console.log({
+          at: "ActiveNodeStore.fetch",
+          node,
+          rawLinks,
+          links,
+          collections
         });
-      const collections: IRecordId[] = rawLinks
-        .filter(
-          (x: INodeLink) =>
-            x.out.tb === Resource.collection || x.in.tb === Resource.collection
-        )
-        .map((x: INodeLink) =>
-          x.out.tb === Resource.collection ? x.out : x.in
-        );
-      console.log({
-        at: "ActiveNodeStore.fetch",
-        node,
-        rawLinks,
-        links,
-        collections
-      });
-      const types = await collectionStore.resolveTypes(collections);
-      const avatar = await this.refreshAvatar(this.id, {
-        types
-      });
+      }
+      const types = await collectionStore.resolveTypes(node.collections ?? []);
+      // const avatar = await this.refreshAvatar(this.id, {
+      //   types
+      // });
       let blocks: INode[] = [];
       if (
         node.contentType === NodeType.NODULAR_MARKDOWN ||
@@ -446,12 +454,13 @@ export class ActiveNodeStore extends CollectibleStore<IActiveNode, NodeStore> {
       }
       this.update((n) => {
         n.types = types;
-        n.links = links;
-        n.collections = collections;
+        // n.links = links;
+        // n.collections = collections;
         n.blocks = blocks;
-        n.avatar = avatar;
+        // n.avatar = avatar;
         return n;
       });
+      console.timeEnd("ActiveNodeStore.init");
     } catch (e) {
       logger.error({ at: "node.store fetch", e });
     }

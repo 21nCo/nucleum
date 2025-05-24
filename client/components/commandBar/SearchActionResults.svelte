@@ -54,11 +54,7 @@
   export function select() {
     const selectedItem = results[selectedIndex];
     if (!selectedItem.id) return;
-    action.searchActionParams?.callback(
-      selectedItem.id.toString(),
-      selectedItem.label,
-      componentParams
-    );
+    action.searchActionParams?.callback(selectedItem, componentParams);
     dispatch("close");
   }
   export function moveSelection(direction: "up" | "down") {

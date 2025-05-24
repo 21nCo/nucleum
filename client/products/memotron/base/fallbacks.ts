@@ -1,7 +1,12 @@
 import { logger } from "$lib/client/components/debug/logger.client";
 import { flux } from "$lib/client/components/flux/flux";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
+import {
+  determineResourceType,
+  isSameResource,
+  removeDuplicatesFilter,
+  resourceInList
+} from "$lib/client/components/flux/resourceStores/resource.utils";
 import {
   PersistenceActionType,
   type IRecordId
@@ -133,6 +138,9 @@ export async function collectionResourceBackPropagation() {
   }
 }
 
+/**
+ * Changes made during v0.59.x - adding mdParent to heading nodes for faster parent hierarchy lookup during searches, thumbnails, etc
+ */
 export async function headingNodeParentBackPropagation() {
   try {
     const nodes = await flux.selectMany(Resource.node, {
@@ -141,11 +149,17 @@ export async function headingNodeParentBackPropagation() {
       }
     });
     if (!nodes || !isValidArrayWithData(nodes)) return;
-    const headingNodes = nodes.filter(
-      (node: INode) => node.contentType !== NodeType.NODULAR_MARKDOWN
+    const headingNodesWithoutParent = nodes.filter(
+      (node: INode) =>
+        node.contentType !== NodeType.NODULAR_MARKDOWN && !node.mdParent
     );
-    if (!headingNodes.some((x: INode) => !x.mdParent)) return;
+    logger.info({
+      at: "headingNodeParentBackPropagation",
+      headingNodesWithoutParent
+    });
+    if (!headingNodesWithoutParent || !headingNodesWithoutParent.length) return;
     let modifiedNodes: { id: IRecordId; mdParent: IRecordId[] }[] = [];
+    let orphanNodes: IRecordId[] = [];
     let sortedHeadingNodes: INode[] = [];
     [
       NodeType.HEADING1,
@@ -154,7 +168,9 @@ export async function headingNodeParentBackPropagation() {
       NodeType.HEADING4,
       NodeType.HEADING5
     ].forEach((x: NodeType) => {
-      const current = headingNodes.filter((y: INode) => y.contentType === x);
+      const current = headingNodesWithoutParent.filter(
+        (y: INode) => y.contentType === x
+      );
       sortedHeadingNodes.push(...current);
     });
     sortedHeadingNodes.forEach((x: INode) => {
@@ -167,10 +183,25 @@ export async function headingNodeParentBackPropagation() {
           id: x.id,
           mdParent: [...(hierarchy?.mdParent ?? []), parent.id]
         });
+      } else {
+        orphanNodes.push(x.id);
       }
     });
+    logger.info({
+      at: "headingNodeParentBackPropagation",
+      orphanNodes: orphanNodes.length,
+      modifiedNodes: modifiedNodes.length
+    });
+    if (orphanNodes.length > 0) {
+      await flux.mutation(Resource.node, {
+        action: PersistenceActionType.BULK_MERGE,
+        records: orphanNodes.map((x) => ({
+          id: x,
+          mdParent: []
+        }))
+      });
+    }
     if (!modifiedNodes || !modifiedNodes.length) return;
-    logger.info({ at: "headingNodeParentBackPropagation", modifiedNodes });
     const promises = modifiedNodes.map((x: any) => {
       return flux.mutation(Resource.node, {
         action: PersistenceActionType.MERGE,
@@ -180,5 +211,65 @@ export async function headingNodeParentBackPropagation() {
     await Promise.all(promises);
   } catch (error) {
     logger.error({ at: "headingNodeParentBackPropagation", error });
+  }
+}
+
+/**
+ * Changes made during v0.59.x - adding collections list to records - for faster collections lookup during searches, thumbnails, etc - for avatar, settings
+ */
+export async function collectionsListOnRecords() {
+  const nodes = await flux.selectMany(Resource.node, {
+    properties: ["id", "avatar"]
+  });
+  console.log({ at: "collectionsListOnRecords", nodes });
+  const nodesWithAvatars = nodes.filter((x) => x.avatar);
+  console.log({ at: "collectionsListOnRecords", nodesWithAvatars });
+
+  await flux.mutation(Resource.node, {
+    action: PersistenceActionType.BULK_MERGE,
+    records: nodesWithAvatars.map((x) => ({
+      id: x.id,
+      avatar: undefined
+    }))
+  });
+
+  const collections = await flux.selectMany(Resource.collection, {
+    properties: ["id"]
+  });
+
+  const records = await flux.selectMany(Resource.link, {
+    properties: ["in.* as in", "*"],
+    filters: {
+      out: collections.map((x) => x.id.toString())
+    }
+  });
+  console.log({ at: "collectionsListOnRecords", collections, records });
+  if (records && isValidArrayWithData(records)) {
+    const filteredRecords = records.filter((x) => {
+      return determineResourceType(x.in?.id) === Resource.node;
+    });
+    const uniqueNodes = filteredRecords
+      .map((x) => x.in)
+      .filter(removeDuplicatesFilter)
+      .filter((y) => !y.collections);
+    console.log({ at: "collectionsListOnRecords", uniqueNodes });
+    if (!uniqueNodes || !uniqueNodes.length) return;
+    let promises: Promise<any>[] = [];
+    uniqueNodes.forEach((x) => {
+      const collections = filteredRecords
+        ?.filter((y) => isSameResource(y.in, x))
+        ?.map((y) => y.out);
+      console.log({ at: "collectionsListOnRecords", x, collections });
+      promises.push(
+        flux.mutation(Resource.node, {
+          action: PersistenceActionType.MERGE,
+          record: {
+            id: x.id,
+            collections: collections
+          }
+        })
+      );
+    });
+    await Promise.all(promises);
   }
 }

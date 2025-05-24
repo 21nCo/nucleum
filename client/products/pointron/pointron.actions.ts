@@ -464,9 +464,9 @@ export const pointronActions: IAction[] = [
         });
         return result;
       },
-      callback: async (id: string, label?: string) => {
+      callback: async (item: any) => {
         const result = await goalStore.modify(
-          id,
+          item.id,
           {
             isPinnedForQuickFocus: true
           },
@@ -474,7 +474,8 @@ export const pointronActions: IAction[] = [
             context: PointronAction.PIN_TO_QUICK_FOCUS
           }
         );
-        if (result) toasts.success(`Goal **${label}** pinned to quick focus`);
+        if (result)
+          toasts.success(`Goal **${item.label}** pinned to quick focus`);
         else toasts.error("Failed to pin goal to quick focus");
       }
     }
@@ -493,9 +494,9 @@ export const pointronActions: IAction[] = [
         return result;
       },
       placeholder: "Select a goal to focus",
-      callback: (id: string, label?: string) => {
-        console.log("search action selected id:", { id });
-        activeSession.quickStart(id);
+      callback: (item: any) => {
+        console.log("search action selected id:", { id: item.id });
+        activeSession.quickStart(item.id);
       }
     }
   },

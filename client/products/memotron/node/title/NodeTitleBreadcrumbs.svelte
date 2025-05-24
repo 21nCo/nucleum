@@ -83,6 +83,7 @@
     <BreadcrumbMini
       hierarchy={breadcrumbs?.map((x) => x.label)}
       on:click={onBreadcrumbClick}
+      truncateLength={30}
     />
   {:else}
     <Breadcrumbs

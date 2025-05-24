@@ -85,6 +85,7 @@ import CalendarDayModal from "../components/calendar/column/CalendarDayModal.sve
 import HotKeys from "../components/markdown/shortcuts/HotKeys.svelte";
 import HistoryModal from "../components/calendar/HistoryModal.svelte";
 import Credits from "$lib/client/components/help/Credits.svelte";
+import { resolveResourceStore } from "../components/flux/resourceStores/store.resolver";
 
 export const globalActions: IAction[] = [
   {
@@ -652,19 +653,23 @@ export const globalActions: IAction[] = [
           return recentsStore.resolve({ type: resource });
         }
       },
-      callback: async (id: string, label?: string, componentParams?: any) => {
+      callback: async (item: any, componentParams?: any) => {
         try {
           if (!componentParams?.id) {
             toasts.error();
             return;
           }
-          const result = await linker.link(id, componentParams.id, {
+          const result = await linker.link(item.id, componentParams.id, {
             context: componentParams.id.toString()
+          });
+          const store = resolveResourceStore(componentParams?.resource);
+          await store.modify(item.id, {
+            collections: [...(item.collections ?? []), componentParams.id]
           });
           logger.log({
             at: "addNodeToCollection",
-            id,
-            label,
+            id: item.id,
+            label: item.label,
             componentParams,
             result
           });
@@ -672,7 +677,7 @@ export const globalActions: IAction[] = [
             toasts.error();
             return;
           }
-          toasts.success(`**${label}** added to collection`);
+          toasts.success(`**${item.label}** added to collection`);
         } catch (e) {
           logger.error({ at: "addNodeToCollection", error: e });
           if (e instanceof ResourceError) {
@@ -818,11 +823,11 @@ export const globalActions: IAction[] = [
           limit: 50
         });
       },
-      callback: async (id: string, label?: string, componentParams?: any) => {
+      callback: async (item: any, componentParams?: any) => {
         await taskStore.modify(
           componentParams.taskId,
           {
-            goalId: id
+            goalId: item.id
           },
           {
             context: componentParams?.context
@@ -895,8 +900,7 @@ export const globalActions: IAction[] = [
       },
       searchResultComponent: LinkSearchResultItem,
       callback: async (
-        id: string,
-        label?: string,
+        item: any,
         componentParams?: {
           multiSelectStore?: IMultiSelectStore;
           items?: IRecordId[];
@@ -912,7 +916,7 @@ export const globalActions: IAction[] = [
             });
             return;
           }
-          const resourceType = determineResourceType(id);
+          const resourceType = determineResourceType(item.id);
           toasts.showProgress(
             "bulklink",
             resourceType === Resource.collection
@@ -921,15 +925,31 @@ export const globalActions: IAction[] = [
           );
           const result = await linker.bulkLink(
             items,
-            id,
+            item.id,
             resourceType,
             context?.accessPoint
           );
+          if (resourceType === Resource.collection) {
+            const itemType = determineResourceType(items[0]);
+            const store = resolveResourceStore(itemType);
+            const toModify = await store.selectMany({
+              filters: {
+                id: items.map((x) => x.toString())
+              }
+            });
+            await Promise.all(
+              toModify.map((x: any) =>
+                store.modify(x.id, {
+                  collections: [...(x.collections ?? []), item.id]
+                })
+              )
+            );
+          }
           logger.log({
             at: "bulkLink",
-            id,
+            id: item.id,
             resourceType,
-            label,
+            label: item.label,
             items,
             result
           });
@@ -944,7 +964,7 @@ export const globalActions: IAction[] = [
             toasts.success(
               `**${items.length}** ${
                 items.length > 1 ? "items" : "item"
-              } added to collection ${label ? `**${label}**` : ""}`,
+              } added to collection ${item.label ? `**${item.label}**` : ""}`,
               {
                 closeProgressId: "bulklink"
               }
@@ -953,7 +973,7 @@ export const globalActions: IAction[] = [
             toasts.success(
               `**${items.length}** ${
                 items.length > 1 ? "items" : "item"
-              } linked to node ${label ? `**${label}**` : ""}`,
+              } linked to node ${item.label ? `**${item.label}**` : ""}`,
               {
                 closeProgressId: "bulklink"
               }

@@ -18,4 +18,18 @@
       }
     });
   }
+
+  function handleError(error: any) {
+    try {
+      posthog.captureException(
+        error.detail?.message
+          ? JSON.stringify(error.detail.message)
+          : (error.detail?.error ?? error.detail?.message?.error ?? "Error")
+      );
+    } catch (e) {
+      console.error("Error capturing error", e);
+    }
+  }
 </script>
+
+<svelte:window on:errorLog={handleError} />

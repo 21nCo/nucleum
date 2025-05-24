@@ -26,6 +26,7 @@
     clipTextSearchFallback,
     collectionResourceBackPropagation,
     headingNodeParentBackPropagation,
+    collectionsListOnRecords,
     lowResThumbnailsBackPropagation
   } from "./fallbacks";
   import LeftNav from "$lib/client/layout/leftPanel/LeftNav.svelte";
@@ -33,6 +34,7 @@
   import TopNav from "$lib/client/layout/topNav/TopNav.svelte";
   let isLiteMode = $context.isEmbed && $context.isSheet;
   let isHideLeftNavBar: boolean = refreshSidebarState();
+  const isDebug = import.meta.env?.DEV;
 
   onMount(async () => {
     initializeData();
@@ -95,13 +97,14 @@
     }
   }
   async function onUserBaseLayerReady() {
-    await runFallbacks();
+    if (!isDebug) await runFallbacks();
   }
   async function runFallbacks() {
     try {
       await clipTextSearchFallback();
       await collectionResourceBackPropagation();
       await headingNodeParentBackPropagation();
+      await collectionsListOnRecords();
       if (!$context.isEmbed) {
         toasts.showProgress("update", "Updating the app");
         await lowResThumbnailsBackPropagation();

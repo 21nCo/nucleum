@@ -325,6 +325,13 @@ export class ResourceActions<T extends IMemotronItemBase> {
           isIncludeReverseDirection: !isCollection,
           context: contextId.toString()
         });
+        if (isCollection) {
+          this.store.modify(this.resource.id, {
+            collections: this.resource.collections?.filter(
+              (x) => !isSameResource(x, contextId)
+            )
+          });
+        }
       }
     };
   }

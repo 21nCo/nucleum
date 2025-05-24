@@ -49,9 +49,16 @@ class Logger {
   }
   error(message: any, error?: any) {
     this._log(message, LogType.ERROR);
-    throw new Error("Error: " + JSON.stringify(message), {
-      cause: error ?? message.error
-    });
+    if (typeof window !== undefined) {
+      window.dispatchEvent(
+        new CustomEvent("errorLog", {
+          detail: {
+            error,
+            message
+          }
+        })
+      );
+    }
   }
   debug(message: any) {
     this._console(message, LogType.DEBUG);

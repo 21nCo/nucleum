@@ -34,16 +34,20 @@ import {
   highlightSearchQuery,
   searchSort
 } from "$lib/client/products/memotron/memotron.utils";
-import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
+import {
+  determineResourceType,
+  isSameResource,
+  resourceInList
+} from "$lib/client/components/flux/resourceStores/resource.utils";
 import { recentsStore } from "./recent.store";
 import { get } from "svelte/store";
 import { resolveCollectionResource } from "../collection/collection.utils";
 import { goalStore } from "../goals/goal.store";
 import { Action } from "$lib/client/types/action.enum";
-import { localCacheableStores, remoteOnlyStores } from "$local/localStoresMap";
 import { searcheableResources } from "$local/local";
 import { taskStore } from "../tasks/task.store";
 import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
+import { resolveResourceStore } from "../flux/resourceStores/store.resolver";
 
 export const MAX_FILE_SIZE_MB = 100;
 
@@ -77,9 +81,7 @@ export class SearchStore {
   }
 
   setResourceStore(resource: Resource) {
-    this.resourceStore = [...localCacheableStores, ...remoteOnlyStores].find(
-      (store) => store.id === resource
-    ) as ResourceStore<any>;
+    this.resourceStore = resolveResourceStore(resource);
   }
 
   levenshteinDistance(a: string, b: string): number {
@@ -534,6 +536,28 @@ export class BulkEditor {
     this.multiSelectStore = multiSelectStore;
   }
 
+  async bulkUnlink(items: IRecordId[], accessPointId: IRecordId) {
+    const result = await linker.bulkUnlinkForDirect(items, accessPointId);
+    const resourceType = determineResourceType(items[0]);
+    const resourceStore = resolveResourceStore(resourceType);
+    if (resourceStore) {
+      const expandedItems = await resourceStore.selectMany({
+        filters: {
+          id: items.map((x) => x.toString())
+        }
+      });
+      const promises = expandedItems.map((i: any) => {
+        resourceStore.modify(i.id, {
+          collections: i.collections?.filter(
+            (x: IRecordId) => !isSameResource(x, accessPointId)
+          )
+        });
+      });
+      await Promise.all(promises);
+    }
+    return result;
+  }
+
   async run(action: string) {
     let isResetItems = false;
     try {
@@ -558,10 +582,7 @@ export class BulkEditor {
               toasts.error("Something went wrong. Please try again later.");
               return;
             }
-            const result = await linker.bulkUnlinkForDirect(
-              items,
-              accessPointId
-            );
+            const result = await this.bulkUnlink(items, accessPointId);
             logger.debug({ at: "BulkEditor.run unlink", result });
             onSuccess(action, items.length, Resource.node);
             break;

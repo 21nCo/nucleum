@@ -13,7 +13,7 @@ import { Resource } from "$lib/client/components/flux/resourceStores/resource.en
 import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
 import { AlertType } from "$lib/client/types/notification.type";
 import { objIsEmpty, shallowDiff } from "$lib/shared/utils/obj.utils";
-import { activeResourceFilter} from "$lib/client/utils/utils";
+import { activeResourceFilter } from "$lib/client/utils/utils";
 import { removeHighlight } from "./highlightV4";
 import {
   SyncStatus,
@@ -64,8 +64,14 @@ import {
   resourceInList
 } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { ResourceError } from "$lib/client/components/error/errors";
-import { ErrorMessage, ResourceErrorCode } from "$lib/client/components/error/error.type";
-import { fetchYouTubeMetadata, resolveUrlData } from "$lib/client/products/memotron/node/url.utils";
+import {
+  ErrorMessage,
+  ResourceErrorCode
+} from "$lib/client/components/error/error.type";
+import {
+  fetchYouTubeMetadata,
+  resolveUrlData
+} from "$lib/client/products/memotron/node/url.utils";
 import { Persistence } from "$lib/client/persistence/persistence";
 
 class WebpageStore extends ObservableStore<IWebpageStore> {
@@ -95,7 +101,8 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     });
     appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
     relayToSidePanel({
-      event: ExtensionEvent.PAGE_STATE, data: {
+      event: ExtensionEvent.PAGE_STATE,
+      data: {
         page: this.get(),
         toolbar: toolbarState.get()
       }
@@ -121,7 +128,9 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     logger.debug({ at: "refresh", result });
     const page =
       result && Array.isArray(result) && result.length > 0
-        ? result.filter(activeResourceFilter).find((r: IWebPage) => r.url === this.get().url)
+        ? result
+            .filter(activeResourceFilter)
+            .find((r: IWebPage) => r.url === this.get().url)
         : null;
 
     logger.debug({ at: "refresh", url: this.get().url, page, result });
@@ -190,15 +199,15 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
    * @returns
    */
   async savePage(params?: {
-    creationContext?: IRecordId,
-    contentType?: NodeType
+    creationContext?: IRecordId;
+    contentType?: NodeType;
   }) {
     let data: OmitForCapture<IWebPage> = await extractData();
     const id = generateResourceId(Resource.node);
     const node = {
       id,
       ...data,
-      creationContext: params?.creationContext,
+      creationContext: params?.creationContext
     };
     const response = await nodeStore.create([node]);
     if (!response) return;
@@ -208,7 +217,8 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       return n;
     });
     relayToSidePanel({
-      event: ExtensionEvent.PAGE_STATE, data: {
+      event: ExtensionEvent.PAGE_STATE,
+      data: {
         page: node,
         toolbar: toolbarState.get()
       }
@@ -217,13 +227,15 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
 
     /**
      * Disabling capturing of screenshot as it is adding latency to page save action.
-     * @returns 
+     * @returns
      */
     async function extractData() {
       if (params?.contentType === NodeType.YOUTUBE_VIDEO) {
         return extractYoutubeVideoData();
-      } else if (params?.contentType === NodeType.YOUTUBE_CHANNEL) { 
-        const urlData = await new Persistence().retrieveUrlData(window.location.href);
+      } else if (params?.contentType === NodeType.YOUTUBE_CHANNEL) {
+        const urlData = await new Persistence().retrieveUrlData(
+          window.location.href
+        );
         if (urlData?.parsedData) {
           return urlData.parsedData;
         } else {
@@ -242,7 +254,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       // const ssFile = await screenshotWebpage();
       const tab = await extractFullTabData();
       tab.metadata = {
-        ...tab.metadata,
+        ...tab.metadata
         //screenshotFile: ssFile.id
       };
       return tab;
@@ -432,10 +444,23 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       const response = await linker.link(webpage.id, to);
       if (!response)
         return { message: "Linking failed", type: AlertType.ERROR };
-      this.update((n) => {
-        n.links = [...(n.links ?? []), to];
-        return n;
-      });
+      const resourceType = determineResourceType(to);
+      if (resourceType === Resource.collection) {
+        const collections = [...(webpage.collections ?? []), to];
+        this.update((n) => {
+          n.links = [...(n.links ?? []), to];
+          n.collections = collections;
+          return n;
+        });
+        await nodeStore.modify(webpage.id, {
+          collections
+        });
+      } else {
+        this.update((n) => {
+          n.links = [...(n.links ?? []), to];
+          return n;
+        });
+      }
       return { message: "Linked!", type: AlertType.SUCCESS };
     } catch (e) {
       logger.error(e);
@@ -454,73 +479,146 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     const response = await linker.unlink(webpage.id, to);
     if (!response)
       return { message: "Unlinking failed", type: AlertType.ERROR };
-    this.update((n) => {
-      n.links = n.links?.filter((l) => l.toString() !== to.toString());
-      return n;
-    });
+    const resourceType = determineResourceType(to);
+    if (resourceType === Resource.collection) {
+      const collections = webpage.collections?.filter(
+        (c) => !isSameResource(c, to)
+      );
+      this.update((n) => {
+        n.collections = collections;
+        n.links = n.links?.filter((l) => !isSameResource(l, to));
+        return n;
+      });
+    } else {
+      this.update((n) => {
+        n.links = n.links?.filter((l) => !isSameResource(l, to));
+        return n;
+      });
+    }
     return { message: "Unlinked!", type: AlertType.SUCCESS };
   }
 
-  async linkClip(from: IRecordId, to: IRecordId, params?: {
-    isFromSidePanel?: boolean
-  }) {
+  async linkClip(
+    from: IRecordId,
+    to: IRecordId,
+    params?: {
+      isFromSidePanel?: boolean;
+    }
+  ) {
     const webpage = this.get();
     const clip = webpage?.clips?.find(resourceInList(from));
     if (!clip)
       throw new ResourceError("Clip not found", ResourceErrorCode.NOT_FOUND);
     const isAlreadyLinked = clip.links?.some(resourceInList(to));
     if (isAlreadyLinked)
-      throw new ResourceError("Already linked", ResourceErrorCode.ALREADY_EXISTS);
+      throw new ResourceError(
+        "Already linked",
+        ResourceErrorCode.ALREADY_EXISTS
+      );
     const response = await linker.link(from, to);
     if (!response || response.error)
-      throw new ResourceError(response?.error ?? "Linking failed", ResourceErrorCode.INTERNAL_ERROR);
-    this.update((n) => {
-      n.clips = n.clips?.map((c) => {
-        if (isSameResource(c, from)) {
-          c.links = [...(c.links ?? []), to];
-        }
-        return c;
+      throw new ResourceError(
+        response?.error ?? "Linking failed",
+        ResourceErrorCode.INTERNAL_ERROR
+      );
+    const resourceType = determineResourceType(to);
+    if (resourceType === Resource.collection) {
+      const collections = [...(clip.collections ?? []), to];
+      this.update((n) => {
+        n.clips = n.clips?.map((c) => {
+          if (isSameResource(c, from)) {
+            c.collections = collections;
+            c.links = [...(c.links ?? []), to];
+            return c;
+          }
+          return c;
+        });
+        return n;
       });
-      return n;
-    });
+      await nodeStore.modify(clip.id, {
+        collections
+      });
+    } else {
+      this.update((n) => {
+        n.clips = n.clips?.map((c) => {
+          if (isSameResource(c, from)) {
+            c.links = [...(c.links ?? []), to];
+          }
+          return c;
+        });
+        return n;
+      });
+    }
     appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
     if (!params?.isFromSidePanel) {
       relayToSidePanel({
         event: ClipperExtensionEvent.REFRESH_CLIP,
-        data: { clipId: from, clip: this.get().clips?.find(resourceInList(from)) }
+        data: {
+          clipId: from,
+          clip: this.get().clips?.find(resourceInList(from))
+        }
       });
     }
     return response;
   }
 
-  async removeLinkForClip(from: IRecordId, to: IRecordId, params?: {
-    isFromSidePanel?: boolean
-  }) {
+  async removeLinkForClip(
+    from: IRecordId,
+    to: IRecordId,
+    params?: {
+      isFromSidePanel?: boolean;
+    }
+  ) {
     const response = await linker.unlink(from, to);
     if (!response)
       return { message: "Unlinking failed", type: AlertType.ERROR };
-    this.update((n) => {
-      n.clips = n.clips?.map((c) => {
-        if (c.id.toString() === from.toString()) {
-          c.links = c.links?.filter((l) => l.toString() !== to.toString());
-        }
-        return c;
+    const resourceType = determineResourceType(to);
+    if (resourceType === Resource.collection) {
+      const clip = this.get().clips?.find(resourceInList(from));
+      if (!clip) return;
+      const collections = clip.collections?.filter(
+        (c) => !isSameResource(c, to)
+      );
+      this.update((n) => {
+        n.clips = n.clips?.map((c) => {
+          if (isSameResource(c, from)) {
+            c.collections = collections;
+            c.links = c.links?.filter((l) => !isSameResource(l, to));
+          }
+          return c;
+        });
+        return n;
       });
-      return n;
-    });
+    } else {
+      this.update((n) => {
+        n.clips = n.clips?.map((c) => {
+          if (isSameResource(c, from)) {
+            c.links = c.links?.filter((l) => !isSameResource(l, to));
+          }
+          return c;
+        });
+        return n;
+      });
+    }
     appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
     if (!params?.isFromSidePanel) {
       relayToSidePanel({
         event: ClipperExtensionEvent.REFRESH_CLIP,
-        data: { clipId: from, clip: this.get().clips?.find(resourceInList(from)) }
+        data: {
+          clipId: from,
+          clip: this.get().clips?.find(resourceInList(from))
+        }
       });
     }
     return { message: "Unlinked!", type: AlertType.SUCCESS };
   }
 
-  async removeClip(id: string, params?: {
-    isFromSidePanel?: boolean
-  }) {
+  async removeClip(
+    id: string,
+    params?: {
+      isFromSidePanel?: boolean;
+    }
+  ) {
     const response = await nodeStore.trash(id);
     console.log({ response });
     if (!response)
@@ -615,9 +713,13 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     return response;
   }
 
-  async persistClipNotes(id: IRecordId, notes: string, params?: {
-    isFromSidePanel?: boolean
-  }) {
+  async persistClipNotes(
+    id: IRecordId,
+    notes: string,
+    params?: {
+      isFromSidePanel?: boolean;
+    }
+  ) {
     const webpage = this.get();
     if (!webpage?.clips) return;
     const clip = webpage.clips?.find(resourceInList(id));
@@ -644,9 +746,13 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     return response;
   }
 
-  async updateClipLabel(id: IRecordId, label: string, params?: {
-    isFromSidePanel?: boolean
-  }) {
+  async updateClipLabel(
+    id: IRecordId,
+    label: string,
+    params?: {
+      isFromSidePanel?: boolean;
+    }
+  ) {
     const response = await nodeStore.modify(id, { label });
     if (!response) return;
     this.update((n) => {
@@ -684,9 +790,13 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     return response;
   }
 
-  async updateClipProperty(id: IRecordId, property: INodePropertyValue, params?: {
-    isFromSidePanel?: boolean
-  }) {
+  async updateClipProperty(
+    id: IRecordId,
+    property: INodePropertyValue,
+    params?: {
+      isFromSidePanel?: boolean;
+    }
+  ) {
     logger.log({
       at: "updateClipProperty",
       id,
@@ -721,16 +831,10 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     return response;
   }
 
-  private updateProperties(
-    id: IRecordId,
-    properties: INodePropertyValue[]
-  ) {
-    return nodeStore.modify(
-      id,
-      {
-        properties: [...properties]
-      }
-    );
+  private updateProperties(id: IRecordId, properties: INodePropertyValue[]) {
+    return nodeStore.modify(id, {
+      properties: [...properties]
+    });
   }
 }
 export const webpage = new WebpageStore();
@@ -766,7 +870,7 @@ class FeedbackPaneStore extends ObservableStore<IFeedbackPaneStore> {
 
   /**
    * Sets saving status with single message and prevents auto close.
-   * @param text 
+   * @param text
    */
   onPageSaveStart(text: string) {
     this.update((n) => {
@@ -793,7 +897,10 @@ class FeedbackPaneStore extends ObservableStore<IFeedbackPaneStore> {
     });
   }
 
-  setErrorFeedback(params?: { message?: string, isPreventAutoClose?: boolean }) {
+  setErrorFeedback(params?: {
+    message?: string;
+    isPreventAutoClose?: boolean;
+  }) {
     this.update((n) => {
       n.feedback = {
         message: params?.message ?? ErrorMessage.DEFAULT,

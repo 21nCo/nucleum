@@ -44,7 +44,7 @@
 >
   <div
     class={cn(
-      "flex flex-col pt-4 gap-8 items-center justify-between overflow-auto w-full bg-bgs2",
+      "flex flex-col gap-8 items-center justify-between overflow-auto w-full bg-bgs2",
       {
         "rounded-lg border-none": isRounded,
         "border-r border-bgs4": !isRounded
@@ -53,7 +53,9 @@
     style={isRounded ? "height: calc(100% - 1rem);" : "height:100%"}
   >
     <div class="w-full flex flex-col gap-8 overflow-auto">
-      <div class="w-full flex justify-center opacity-30">
+      <div
+        class="w-full flex justify-center opacity-30 hover:opacity-100 transition-opacity duration-200 py-2"
+      >
         <!-- <Button
           icon="ph:magnifying-glass-light"
           parentBgIndex={2}

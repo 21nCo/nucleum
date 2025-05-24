@@ -3,7 +3,6 @@
   import { Size } from "$lib/client/types/size.enum";
   import type { INode } from "../../node/node.type";
   import NodeTitleLabelPart from "../title/NodeTitleLabelPart.svelte";
-  import NodeAvatar from "../avatar/NodeAvatar.svelte";
   import { hoverable } from "$lib/client/actions/hover.action";
   import { cn } from "$lib/client/utils/ui.utils";
   import { appStore } from "$lib/client/stores/app.store";
@@ -50,7 +49,6 @@
       </span>
     </button>
   {:else}
-    <!-- <NodeAvatar {node} size={Size.sm} /> -->
     <div class="flex-1 min-w-0">
       <div class={cn("flex text-left truncate w-full text-b2 font--medium")}>
         <NodeTitleLabelPart item={node} {accessPoint} />

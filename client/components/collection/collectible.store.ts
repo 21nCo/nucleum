@@ -10,7 +10,7 @@ import type {
 } from "./collection.type";
 import { logger } from "../debug/logger.client";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-import type { IAvatar } from "$lib/client/types/avatar.type";
+import { resolveAvatar } from "./collection.utils";
 
 export class CollectibleStore<
   T extends {
@@ -25,10 +25,10 @@ export class CollectibleStore<
     const resource = this.get();
     const result = await linker.link(src ?? resource.id, id);
     if (result) {
-      this.update((n) => ({
-        ...n,
-        collections: [...(n.collections ?? []), id]
-      }));
+      const collections = [...(resource.collections ?? []), id];
+      this.modify({
+        collections
+      } as Partial<T>);
       await this.refreshTypes();
     }
     return result;
@@ -37,10 +37,9 @@ export class CollectibleStore<
   async unlinkCollection(id: IRecordId, src?: IRecordId) {
     const resource = this.get();
     await linker.unlink(src ?? resource.id, id);
-    this.update((n) => ({
-      ...n,
-      collections: n.collections?.filter((x) => !isSameResource(x, id))
-    }));
+    this.modify({
+      collections: resource.collections?.filter((x) => !isSameResource(x, id))
+    } as Partial<T>);
     await this.refreshTypes();
   }
 
@@ -52,12 +51,18 @@ export class CollectibleStore<
       return;
     }
     const types = await collectionStore.resolveTypes(collections);
-    const avatar = await this.refreshAvatar(self.id, {
-      types
-    });
-    this.update((n) => ({ ...n, types, avatar }));
+    // const avatar = await this.refreshAvatar(self.id, {
+    //   types
+    // });
+    this.update((n) => ({ ...n, types }));
   }
 
+  /**
+   * @deprecated - using collections array at record source instead to avoid duplicate avatar, other type inherited settings for nodes, goals etc.
+   * @param id
+   * @param params
+   * @returns
+   */
   async refreshAvatar(
     id: IRecordId,
     params: {
@@ -74,25 +79,11 @@ export class CollectibleStore<
       types = await collectionStore.resolveTypes(params.collections);
     }
     if (!types || !isValidArrayWithData(types)) return;
-    const avatar = this.resolveAvatar(types);
+    const avatar = resolveAvatar(types);
     this.resourceStore.modifyAsSystem(id, {
       avatar
     });
     return avatar;
-  }
-
-  private resolveAvatar(types: ICollectionExpanded[]) {
-    const avatars = types
-      ?.flatMap((x) => [x.avatar])
-      .filter((a) => a) as IAvatar[];
-    const baseAvatars = types
-      ?.flatMap((x) => [x.typeToExtend?.avatar])
-      .filter((a) => a) as IAvatar[];
-    if (baseAvatars.length > 0) {
-      return baseAvatars;
-    } else {
-      return avatars;
-    }
   }
 
   updateProperty = async (property: ICollectionItemPropertyValue) => {

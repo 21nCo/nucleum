@@ -177,7 +177,7 @@
                       })}
                     >
                       <NodeAvatar
-                        types={$node.types}
+                        node={$node}
                         accessPoint={ResourceAccessPoint.SELF}
                         size={40}
                       />
@@ -194,7 +194,7 @@
                   >
                     {#if isStickied && $node.types}
                       <NodeAvatar
-                        types={$node.types}
+                        node={$node}
                         accessPoint={ResourceAccessPoint.SELF}
                         size={Size.sm}
                       />

@@ -2,18 +2,17 @@ import type {
   IObservableStoreSubject,
   IRecordId
 } from "$lib/client/types/data.type";
-import type {
-  IClip,
-  INodePropertyValue
-} from "$lib/client/products/memotron/node/node.type";
+import type { IClip } from "$lib/client/products/memotron/node/node.type";
 import type { AlertType } from "$lib/client/types/notification.type";
+import type { ICollectionItemPropertyValue } from "$lib/client/components/collection/collection.type";
 export interface IWebpageStore extends IObservableStoreSubject {
   url: string;
   title: string;
   id?: IRecordId;
   clips?: (IClip & { links: any[] })[];
   links?: string[];
-  properties?: INodePropertyValue[];
+  collections?: IRecordId[];
+  properties?: ICollectionItemPropertyValue[];
   notes?: string;
   relationships?: { node: string; relation: string }[];
 }

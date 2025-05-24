@@ -677,7 +677,7 @@ class Flux {
         });
         const resources = this.resolveSyncResources();
         mutations = mutations.filter(
-          (x) => !lastSyncUpMutations.includes(x.id.toString())
+          (x) => !lastSyncUpMutations?.includes(x.id.toString())
         );
         response = await this.performSync(SyncMethod.SYNC_UP, {
           mutations,
@@ -730,7 +730,7 @@ class Flux {
             greaterThan: +previousSyncUp
           }
         },
-        limit: 100,
+        limit: 50,
         orderBy: {
           timestamp: "asc"
         }

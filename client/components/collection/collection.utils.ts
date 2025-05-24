@@ -1,4 +1,8 @@
-import { CollectionType, type ICollectionItem } from "./collection.type";
+import {
+  CollectionType,
+  type ICollectionExpanded,
+  type ICollectionItem
+} from "./collection.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 import type { IProperty } from "./properties/property.type";
 import { PropertyType } from "./properties/property.type";
@@ -13,6 +17,7 @@ import {
 import type { ISelectItem } from "$lib/client/types/select.type";
 import { Resource } from "../flux/resourceStores/resource.enum";
 import { Product } from "$lib/client/types/product.type";
+import type { IAvatar } from "$lib/client/types/avatar.type";
 
 export const UNASSIGNED_VALUE = "unassigned";
 export const UNASSIGNED_LABEL = "Unassigned";
@@ -169,5 +174,19 @@ export function resolveCollectionResource(product: Product): Resource[] {
       return [Resource.node, Resource.goal];
     default:
       return [];
+  }
+}
+
+export function resolveAvatar(types: ICollectionExpanded[]) {
+  const avatars = types
+    ?.flatMap((x) => [x.avatar])
+    .filter((a) => a) as IAvatar[];
+  const baseAvatars = types
+    ?.flatMap((x) => [x.typeToExtend?.avatar])
+    .filter((a) => a) as IAvatar[];
+  if (baseAvatars.length > 0) {
+    return baseAvatars;
+  } else {
+    return avatars;
   }
 }
