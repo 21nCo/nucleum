@@ -19,7 +19,6 @@
   import type { IRecordId } from "$lib/client/types/data.type";
   import TaskThumbnailGoalLabel from "./TaskThumbnailGoalLabel.svelte";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import { Resource } from "../flux/resourceStores/resource.enum";
   import Icon from "$lib/client/elements/Icon.svelte";
   import ResourceThumbnailContextMenu from "../record/thumbnail/ResourceThumbnailContextMenu.svelte";
   import view from "$lib/client/stores/view.store";
@@ -283,8 +282,4 @@
     {/if}
   </div>
 </ResourceThumbnailBase>
-<ComponentBaseLayer
-  subscribeToResource={new Set([Resource.task])}
-  subscribeToRecords={[item.id]}
-  on:change={onTaskChanges}
-/>
+<ComponentBaseLayer subscribeToRecords={[item.id]} on:change={onTaskChanges} />

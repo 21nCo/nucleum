@@ -15,7 +15,7 @@ import {
 } from "$lib/client/products/pointron/pointron.utils";
 import { get, writable } from "svelte/store";
 import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
-import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
+import { pointronPreferences } from "../pointron.store";
 import {
   SessionCompositionType,
   type SessionComposition,
@@ -287,8 +287,8 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     function scheduleBreakReminderNotification(isNotified: boolean = false) {
       let breakReminderSetting =
         session.composition.breakType === BreakCompositionType.REMINDER
-          ? session.composition?.breakReminder ??
-            get(pointronPreferences)?.breakReminder
+          ? (session.composition?.breakReminder ??
+            get(pointronPreferences)?.breakReminder)
           : undefined;
       if (!breakReminderSetting) return isNotified;
       timeRemainingToTakeBreak = breakReminderSetting - session.timeElapsed;
@@ -627,7 +627,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
         ...currentLastBar,
         duration: currentLastBar.start
           ? (new Date().getTime() - currentLastBar.start) / 1000
-          : currentLastBar.duration ?? 0 + params.timeElapsed
+          : (currentLastBar.duration ?? 0 + params.timeElapsed)
       };
       return { intervals: [...session.intervals, lastBar], isContinueSession };
     }
@@ -1466,9 +1466,9 @@ class SessionStore extends ResourceStore<ISession> {
       const goalId =
         resourceType === Resource.goal
           ? item.id
-          : focusItemStore.items.find((x) =>
+          : (focusItemStore.items.find((x) =>
               x.tasks?.some(resourceInList(item.id))
-            )?.id ?? "";
+            )?.id ?? "");
       const taskId = resourceType === Resource.task ? item.id : "";
       if (item.blocks && item.blocks.length > 0) {
         logs.push(

@@ -2,7 +2,9 @@
   import { hoverable } from "$lib/client/actions/hover.action";
   import { tooltip } from "$lib/client/actions/popover.action";
   import { logger } from "$lib/client/components/debug/logger.client";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import { resolveResource } from "$lib/client/components/record/record.store";
+  import NodeAvatar from "$lib/client/products/memotron/node/avatar/NodeAvatar.svelte";
   import { resolveNodeLabelString } from "$lib/client/products/memotron/node/node.utils";
   import { isValidString } from "$lib/shared/utils/text.utils";
   import { onMount } from "svelte";
@@ -47,7 +49,14 @@
       <span style="font--size: 0.85rem;"> &rarr; </span>
     {:else} -->
     <span style="font--size: 1.1rem; vertical-align: 0.06em;">
-      {#if isHovering}
+      {#if resource?.collections && resource.collections.length > 0}
+        <span class="inline-block">
+          <NodeAvatar
+            node={resource}
+            accessPoint={ResourceAccessPoint.MARKDOWN_MENTION}
+          />
+        </span>
+      {:else if isHovering}
         &#11042;
       {:else}
         &#11041;

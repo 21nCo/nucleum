@@ -25,8 +25,14 @@ export async function delegateToFlux(method: IFluxMethod) {
     switch (method.method) {
       case FluxMethod.CLONE_DOWN:
         const result = await flux.initializeEssentialDataForCloudUser();
-        if (typeof result === "object" && result?.ifrCloneResult?.paginateResources) {
-          await flux.paginateResources(result.ifrCloneResult.paginateResources, 100);
+        if (
+          typeof result === "object" &&
+          result?.ifrCloneResult?.paginateResources
+        ) {
+          await flux.paginateResources(
+            result.ifrCloneResult.paginateResources,
+            100
+          );
         }
         return result;
       case FluxMethod.SYNC_DOWN:

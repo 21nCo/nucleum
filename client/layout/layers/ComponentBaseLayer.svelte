@@ -1,14 +1,16 @@
 <script lang="ts">
   import { flux } from "$lib/client/components/flux/flux";
   import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import {
+    isSameResource,
+    resourceInList
+  } from "$lib/client/components/flux/resourceStores/resource.utils";
   import account from "$lib/client/stores/account.store";
   import { appStore } from "$lib/client/stores/app.store";
   import context from "$lib/client/stores/context.store";
   import { UserDataMode } from "$lib/client/types/account.type";
   import {
     PersistenceActionType,
-    RemovalProperty,
     type IRecordId
   } from "$lib/client/types/data.type";
   import { createEventDispatcher, onDestroy, onMount } from "svelte";
@@ -22,7 +24,7 @@
 
   /**
    * Required for change subscriptions.
-   * Works along with {@link subscribeToContext} and {@link subscribeToRecords} for further filtering of change events.
+   * Works along with {@link subscribeToContext} for further filtering of change events.
    *
    * Resources to subscribe to - a change event will be dispatched if any mutation happens to these resources from anywhere else in the app so that derived or dependant stores can be reloaded or pages/components can be refreshed
    *
@@ -30,14 +32,20 @@
   export let subscribeToResource: Set<Resource> = new Set();
 
   /**
-   * Context in which the change event should trigger for given {@link subscribeToResource} resources
+   * Change event will only trigger if the specified record is mutated. If undefined, change event will trigger as per {@link subscribeToResource} and {@link subscribeToContext} combination. {@link subscribeToResource} is not required if this is set.
+   * Note: only Merge actions will be triggered for record based subscriptions
+   */
+  export let subscribeToRecords: IRecordId[] | undefined = undefined;
+
+  /**
+   * Context in which the change event should trigger for given {@link subscribeToResource} resources. If not set, change event will trigger for all contexts for the given resources.
    */
   export let subscribeToContext: Set<string> | undefined = undefined;
 
   /**
-   * change event will only trigger if the specified resource is mutated. If undefined, change event will trigger as per {@link subscribeToResource} and {@link subscribeToContext}
+   * If set, only the properties in this array will be subscribed to for merge action. If empty array is passed, Merge action will not be subscribed to. If not set, merge action will be subscribed to all properties.
    */
-  export let subscribeToRecords: IRecordId[] | undefined = undefined;
+  export let subscriptionPropsForMergeAction: string[] | undefined = undefined;
 
   /**
    * Performs sync down action on mount if the user is a cloud user and if this flag is set to true
@@ -45,9 +53,9 @@
   export let syncDownOnMount = false;
 
   /**
-   * If set, only the properties in this array will be subscribed to for merge action.
+   * If set, the change event will be dispatched if the cache update event is triggered for the given key
    */
-  export let subScriptionPropsForMergeAction: string[] | undefined = undefined;
+  export let subscribeToCacheUpdate: string[] | undefined = undefined;
 
   function visibilityChangeListener() {
     dispatch("appear");
@@ -80,34 +88,54 @@
   ) {
     const data = e.detail;
     const mutation = data.params;
-    if (!data || !mutation || !subscribeToResource.has(data.resource)) return;
+    if (!data || !mutation) return;
     // console.log({ at: "onMutation", data, mutation });
-    if (
-      subscribeToRecords &&
-      mutation?.action === PersistenceActionType.MERGE &&
-      subscribeToRecords.some((x) => isSameResource(mutation?.record?.id, x))
-    ) {
-      dispatch("change", data);
-      return;
-    }
 
-    const isRemovalPropertyCase =
-      !subscribeToRecords &&
-      mutation?.action === PersistenceActionType.MERGE &&
-      subScriptionPropsForMergeAction?.some(
-        (x) => mutation?.record[x] !== undefined
-      );
-    if (isRemovalPropertyCase) {
-      dispatch("change", data);
+    const isMergeAction = [
+      PersistenceActionType.MERGE,
+      PersistenceActionType.BULK_MERGE
+    ].includes(mutation?.action);
+
+    if (subscribeToRecords && isMergeAction) {
+      const isPresentInMerge =
+        mutation?.action === PersistenceActionType.MERGE &&
+        subscribeToRecords.some((x) => isSameResource(mutation?.record?.id, x));
+      const isPresentInBulkMerge =
+        mutation?.action === PersistenceActionType.BULK_MERGE &&
+        subscribeToRecords.some((x) =>
+          mutation?.records?.some(resourceInList(x))
+        );
+      if (isPresentInMerge || isPresentInBulkMerge) {
+        dispatch("change", data);
+      }
       return;
     }
+    if (!subscribeToResource.has(data.resource)) return;
+    if (subscribeToContext && !subscribeToContext.has(data.context)) return;
+
     if (
-      subscribeToContext &&
-      subscribeToContext.has(data.context) &&
-      (!subScriptionPropsForMergeAction ||
-        (subScriptionPropsForMergeAction &&
-          mutation?.action !== PersistenceActionType.MERGE))
+      (isMergeAction && subscriptionPropsForMergeAction === undefined) ||
+      !isMergeAction
     ) {
+      dispatch("change", data);
+    }
+    if (
+      subscriptionPropsForMergeAction &&
+      subscriptionPropsForMergeAction.length === 0
+    )
+      return;
+
+    const isSubscribedMergePropCase = subscriptionPropsForMergeAction?.some(
+      (x) => mutation?.record?.[x] !== undefined
+    );
+    if (isSubscribedMergePropCase) {
+      dispatch("change", data);
+    }
+  }
+
+  function onCacheUpdate(e: CustomEvent<{ key: string }>) {
+    const data = e.detail;
+    if (subscribeToCacheUpdate && subscribeToCacheUpdate.includes(data.key)) {
       dispatch("change", data);
     }
   }
@@ -116,5 +144,6 @@
 <svelte:window
   on:focus={visibilityChangeListener}
   on:syncDown
+  on:cacheUpdate={onCacheUpdate}
   on:mutation={onMutation}
 />

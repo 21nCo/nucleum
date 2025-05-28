@@ -148,6 +148,10 @@
   .stroke-logo-light {
     stroke: #ffffff;
   }
+
+  .default-typeface {
+    font-family: "Hanken Grotesk", sans-serif;
+  }
 }
 
 @layer utilities {

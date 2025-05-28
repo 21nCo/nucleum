@@ -161,7 +161,6 @@
     refreshViewsLane();
     isReady = true;
     await refresh({ isNewView: true });
-    await collection.refreshTotalNodeCount();
   });
 
   async function resolvePropertyList() {
@@ -649,7 +648,7 @@
                 bind:query={searchQuery}
                 style={InputStyle.FILLED}
                 on:search={onSearch}
-                placeholder={`Search this collection (${$collection.totalNodeCount ?? 0} items)`}
+                placeholder={`Search this collection (${$collection.totalItemCount ?? 0} items)`}
               >
                 {#if !$collection.isInEditMode}
                   <AddResourceAction on:add={onAddResource} variant="minimal" />

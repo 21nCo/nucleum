@@ -12,9 +12,11 @@ import {
   ResourceAccessMode,
   ResourceActionType
 } from "$lib/client/components/flux/resourceStores/resource.type";
-import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
+import {
+  resourceAction,
+  resourceCacheComponentKey
+} from "$lib/client/components/flux/resourceStores/resource.utils";
 import PasteConfirmationModal from "./capture/PasteConfirmationModal.svelte";
-import LinkTagsControlPanel from "./linking/LinkTagsControlPanel.svelte";
 import Chat from "$lib/client/products/memotron/taco/Chat.svelte";
 import CaptureDnD from "./capture/CaptureDnD.svelte";
 import MemotronHome from "./home/MemotronHome.svelte";
@@ -23,11 +25,9 @@ import NodeTitleLabelPart from "./node/title/NodeTitleLabelPart.svelte";
 import MemotronGreenUse from "./base/MemotronGreenUse.svelte";
 import GlobalGraph from "./graph/GlobalGraph.svelte";
 import CalloutSettings from "$lib/client/components/markdown/callout/CalloutSettings.svelte";
-import MemotronDataSettings from "./settings/MemotronDataSettings.svelte";
-import { Embed } from "$lib/client/types/context.type";
 import ResourceBrowser from "$lib/client/components/library/resourceBrowser/ResourceBrowser.svelte";
-import { MemotronEvent } from "./memotron.type";
 import FeatureWheel from "$lib/client/components/featureWheel/FeatureWheel.svelte";
+import ResourceCache from "$lib/client/components/record/ResourceCache.svelte";
 
 export const memotronActions: IAction[] = [
   {
@@ -253,18 +253,19 @@ export const memotronActions: IAction[] = [
     }
   },
   {
-    action: MemotronAction.DATA_SETTINGS,
-    type: ActionType.MODAL,
-    label: "Data Settings",
-    icon: "ph:database-light",
-    component: MemotronDataSettings,
-    hideContext: [Embed.HANDSET],
-    modalParams: {
-      title: "Data Settings",
-      layout: {
-        size: Size.lg,
-        orientation: Orientation.Horizontal
-      }
+    action: resourceCacheComponentKey(Resource.node),
+    type: ActionType.CACHE,
+    component: ResourceCache,
+    componentParams: {
+      resource: Resource.node
+    }
+  },
+  {
+    action: resourceCacheComponentKey(Resource.relation),
+    type: ActionType.CACHE,
+    component: ResourceCache,
+    componentParams: {
+      resource: Resource.relation
     }
   }
 ];

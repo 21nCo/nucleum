@@ -371,10 +371,16 @@ class Flux {
   async select(
     resourceId: IRecordId,
     properties?: string[],
-    additionalParams?: { isCloudOnlyResource?: boolean }
+    additionalParams?: { isCloudOnlyResource?: boolean; signal?: AbortSignal }
   ) {
     try {
       logger.log({ at: "flux.select", resourceId });
+
+      // Check if operation was aborted
+      if (additionalParams?.signal?.aborted) {
+        throw new Error("Operation aborted");
+      }
+
       const isOffline = await determineIfOffline();
       if (
         !this.isLocalMode &&
@@ -383,10 +389,14 @@ class Flux {
       ) {
         return this.remoteRelay({
           method: FluxMethod.SELECT,
-          args: { resourceId, properties }
+          args: { resourceId, properties, signal: additionalParams?.signal }
         });
       }
-      const result = await this.persistence.select(resourceId, properties);
+      const result = await this.persistence.select(
+        resourceId,
+        properties,
+        additionalParams?.signal
+      );
       logger.log({ at: "flux.select - result", result });
       return result;
     } catch (e) {
@@ -404,7 +414,7 @@ class Flux {
   async selectMany(
     resource: Resource,
     params?: IResourceSelectParams,
-    additionalParams?: { isCloudOnlyResource?: boolean }
+    additionalParams?: { isCloudOnlyResource?: boolean; signal?: AbortSignal }
   ) {
     try {
       logger.log({
@@ -413,6 +423,12 @@ class Flux {
         params,
         additionalParams
       });
+
+      // Check if operation was aborted
+      if (additionalParams?.signal?.aborted) {
+        throw new Error("Operation aborted");
+      }
+
       const isOffline = await determineIfOffline();
       if (
         !this.isLocalMode &&
@@ -447,11 +463,19 @@ class Flux {
         }
         const result = await this.remoteRelay({
           method: FluxMethod.SELECT_MANY,
-          args: { resource, params }
+          args: {
+            resource,
+            params: params,
+            signal: additionalParams?.signal
+          }
         });
         return interceptSurrealResponse(result, "flux.selectMany");
       }
-      const result = await this.persistence.selectMany(resource, params);
+      const result = await this.persistence.selectMany(
+        resource,
+        params,
+        additionalParams?.signal
+      );
       logger.log({ at: "flux.selectMany - result", resource, params, result });
       return result;
     } catch (e) {

@@ -94,6 +94,15 @@ class NodeStore extends ResourceStore<INode> {
       ...(additionalParams?.isExpand ? expandedProps : []),
       ...(params?.properties ?? [])
     ];
+    if (additionalParams?.isQueryAsIs) {
+      return super.selectMany(
+        {
+          ...(params ?? {}),
+          properties
+        },
+        additionalParams
+      );
+    }
     const isContentTypePresent =
       params?.filters &&
       "contentType" in params?.filters &&
@@ -381,18 +390,6 @@ export class ActiveNodeStore extends CollectibleStore<IActiveNode, NodeStore> {
       console.timeEnd("ActiveNodeStore.init.fetch");
       console.log({ at: "ActiveNodeStore.init", node });
       if (node) {
-        if (node.clips && isValidArrayWithData(node.clips)) {
-          node.clips = node.clips.filter(
-            activeResourceFilterIgnoreParentInactive
-          );
-        }
-        if (
-          node.contentType === NodeType.YOUTUBE_VIDEO &&
-          node.clips &&
-          Array.isArray(node.clips)
-        ) {
-          node.clips.sort((a, b) => a.body.timestamp - b.body.timestamp);
-        }
         this.set({ ...node, accessMode });
         if (!node.metaType) {
           appStore.addToRecents({
@@ -402,11 +399,41 @@ export class ActiveNodeStore extends CollectibleStore<IActiveNode, NodeStore> {
           });
         }
       }
-      if (node.links) {
-        const rawLinks =
-          node.links.length > 0
-            ? node.links
-            : [...node.outlinks, ...node.inlinks];
+      const types = await collectionStore.resolveTypes(node.collections ?? []);
+      let blocks: INode[] = [];
+      if (
+        node.contentType === NodeType.NODULAR_MARKDOWN ||
+        headingNodeTypes.includes(node.contentType)
+      ) {
+        blocks = recursivelyExtractAllChildrenIntoArray(node) as INode[];
+      }
+      this.update((n) => {
+        n.types = types;
+        n.blocks = blocks;
+        return n;
+      });
+      console.timeEnd("ActiveNodeStore.init");
+    } catch (e) {
+      logger.error({ at: "node.store fetch", e });
+    }
+  };
+
+  afterInit = async () => {
+    try {
+      const node = this.get();
+      console.time("ActiveNodeStore.afterInit - links");
+      const linksResult = await nodeStore.selectMany({
+        properties: ["array::concat(->link.*, <-link.*) as links"],
+        // properties: ["->link.* as outlinks", "<-link.* as inlinks"],
+        filters: {
+          id: this.id.toString()
+        }
+      });
+      console.timeEnd("ActiveNodeStore.afterInit - links");
+      if (linksResult && isValidArrayWithData(linksResult)) {
+        const data = linksResult[0]?.links;
+        const rawLinks = [...(data ?? [])];
+        // const rawLinks = [...(data?.outlinks ?? []), ...(data?.inlinks ?? [])];
         const links: INodeLinkThumb[] = rawLinks
           .filter((x: INodeLink) => {
             return (
@@ -424,45 +451,35 @@ export class ActiveNodeStore extends CollectibleStore<IActiveNode, NodeStore> {
               direction: x.in.toString() === this.id ? "outgoing" : "incoming"
             } as INodeLinkThumb;
           });
-        const collections: IRecordId[] = rawLinks
-          .filter(
-            (x: INodeLink) =>
-              x.out.tb === Resource.collection ||
-              x.in.tb === Resource.collection
-          )
-          .map((x: INodeLink) =>
-            x.out.tb === Resource.collection ? x.out : x.in
-          );
-        console.log({
-          at: "ActiveNodeStore.fetch",
-          node,
-          rawLinks,
-          links,
-          collections
+        this.update((n) => {
+          n.links = links;
+          return n;
         });
       }
-      const types = await collectionStore.resolveTypes(node.collections ?? []);
-      // const avatar = await this.refreshAvatar(this.id, {
-      //   types
-      // });
-      let blocks: INode[] = [];
-      if (
-        node.contentType === NodeType.NODULAR_MARKDOWN ||
-        headingNodeTypes.includes(node.contentType)
-      ) {
-        blocks = recursivelyExtractAllChildrenIntoArray(node) as INode[];
+      if (canHaveTraces.includes(node.contentType)) {
+        const result = await this.resourceStore.selectMany({
+          filters: {
+            parent: this.id.toString()
+          }
+        });
+        let clips: any[] = [];
+        if (result && isValidArrayWithData(result)) {
+          clips = result.filter(activeResourceFilterIgnoreParentInactive);
+        }
+        if (
+          node.contentType === NodeType.YOUTUBE_VIDEO &&
+          clips &&
+          Array.isArray(clips)
+        ) {
+          clips.sort((a, b) => a.body.timestamp - b.body.timestamp);
+        }
+        this.update((n) => {
+          n.clips = clips;
+          return n;
+        });
       }
-      this.update((n) => {
-        n.types = types;
-        // n.links = links;
-        // n.collections = collections;
-        n.blocks = blocks;
-        // n.avatar = avatar;
-        return n;
-      });
-      console.timeEnd("ActiveNodeStore.init");
     } catch (e) {
-      logger.error({ at: "node.store fetch", e });
+      logger.error({ at: "ActiveNodeStore.afterInit", error: e });
     }
   };
 

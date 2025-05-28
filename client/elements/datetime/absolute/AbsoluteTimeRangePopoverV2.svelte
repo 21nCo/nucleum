@@ -375,7 +375,7 @@
     </div>
   </div>
 
-  <div class="flex flex-col w-full">
+  <div class="flex flex-col w-full default-typeface">
     <table class="w-full text-b3 border-separate border-spacing-0">
       <thead>
         <tr>

@@ -13,9 +13,9 @@
   import { ResourceAccessMode } from "../../flux/resourceStores/resource.type";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { searcheableResources } from "$local/local";
   import { Product } from "$lib/client/types/product.type";
   import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
+  import { resolveProductResources } from "../../flux/resourceStores/resource.utils";
 
   export let date: Date;
   let isLoading: boolean = false;
@@ -33,12 +33,13 @@
     try {
       isLoading = true;
       date = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const resources = resolveProductResources($appStore.product);
       const mutations = await flux.selectMany(
         Resource.mutation,
         {
           filters: {
             action: ["create", "delete"],
-            resource: [...searcheableResources],
+            resource: [...(resources ?? [])],
             timestamp: {
               greaterThanOrEqual: date.getTime(),
               lessThanOrEqual: date.getTime() + 24 * 60 * 60 * 1000

@@ -38,7 +38,6 @@
   import { isValidString } from "$lib/shared/utils/text.utils";
   import ImagePreview from "../content/ImagePreview.svelte";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import NodeThumbnailTwitterProfilePreview from "./NodeThumbnailTwitterProfilePreview.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   export let item: INodeThumb;
@@ -414,8 +413,4 @@
   </slot>
 </ResourceThumbnailBase>
 
-<ComponentBaseLayer
-  subscribeToResource={new Set([Resource.node])}
-  subscribeToRecords={[item.id]}
-  on:change={onNodeChange}
-/>
+<ComponentBaseLayer subscribeToRecords={[item.id]} on:change={onNodeChange} />

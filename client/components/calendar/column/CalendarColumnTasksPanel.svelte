@@ -167,12 +167,7 @@
 </div>
 <ComponentBaseLayer
   subscribeToResource={new Set([Resource.task])}
-  subscribeToContext={new Set([
-    ResourceAccessPoint.CALENDAR,
-    ResourceAccessPoint.SELF,
-    resourceAction(Resource.task, ResourceActionType.CREATE)
-  ])}
-  subScriptionPropsForMergeAction={[
+  subscriptionPropsForMergeAction={[
     RemovalProperty.IS_ARCHIVED,
     RemovalProperty.TRASH_INFORMATION,
     "dateUnix",

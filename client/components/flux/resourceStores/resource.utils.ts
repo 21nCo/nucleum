@@ -5,9 +5,49 @@ import { RecordId } from "surrealdb";
 import { logger } from "../../debug/logger.client";
 import { properCase } from "$lib/shared/utils/text.utils";
 import type { IResourceSwitchItem } from "$lib/client/types/select.type";
+import { Product } from "$lib/client/types/product.type";
 
 export function resourceAction(resource: Resource, action: ResourceActionType) {
   return `${resource}_${action}`;
+}
+
+export function resourceCacheComponentKey(resource: Resource) {
+  return `${resource}-cache`;
+}
+
+export function resourceCacheKey(resource: Resource, key: string) {
+  return `${resource}-${key}`;
+}
+
+export function resolveProductResources(
+  product: Product,
+  context: "search" | "cache" | "library" | undefined = undefined
+) {
+  switch (product) {
+    case Product.POINTRON:
+      return [Resource.goal, Resource.task, Resource.collection];
+    case Product.MEMOTRON:
+      if (context === "search") return [Resource.node, Resource.collection];
+      else return [Resource.node, Resource.collection, Resource.relation];
+    case Product.NUCLEUS:
+      if (context === "search")
+        return [
+          Resource.node,
+          Resource.goal,
+          Resource.task,
+          Resource.collection,
+          Resource.combination
+        ];
+      else
+        return [
+          Resource.node,
+          Resource.goal,
+          Resource.task,
+          Resource.collection,
+          Resource.combination,
+          Resource.relation
+        ];
+  }
 }
 
 export function determineResourceType(id: IRecordId): Resource {

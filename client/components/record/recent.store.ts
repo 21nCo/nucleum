@@ -1,16 +1,18 @@
-import { isSameResource } from "../flux/resourceStores/resource.utils";
+import {
+  isSameResource,
+  resolveProductResources
+} from "../flux/resourceStores/resource.utils";
 import { ObservableStore } from "$lib/client/stores/client.store";
 import type { IRecordId } from "$lib/client/types/data.type";
 import { Resource } from "../flux/resourceStores/resource.enum";
 import { resourceInList } from "../flux/resourceStores/resource.utils";
 import type { IRecentsStore } from "./record.type";
 import { headingNodeTypes } from "$lib/client/products/memotron/node/node.type";
-import { flux } from "../flux/flux";
 import { rootNodeTypeList } from "$lib/client/products/memotron/node/node.type";
-import { activeResourceFilterV2 } from "$lib/client/utils/utils";
 import { logger } from "../debug/logger.client";
-import { searcheableResources } from "$local/local";
 import { resolveResourceStore } from "../flux/resourceStores/store.resolver";
+import { appStore } from "$lib/client/stores/app.store";
+import { get } from "svelte/store";
 
 export class RecentsStore extends ObservableStore<IRecentsStore> {
   private readonly LIMIT = 20;
@@ -81,41 +83,30 @@ export class RecentsStore extends ObservableStore<IRecentsStore> {
   private async recents(resource?: Resource) {
     let data: any[] = [];
     if (resource === Resource.everything) {
-      const nodes = await this.recentNodes();
-      for (const resource of searcheableResources) {
+      const resources = resolveProductResources(get(appStore).product);
+      if (!resources) return [];
+      for (const resource of resources) {
         const resourceData = await this.recentResources(resource);
-        data = [...nodes, ...(resourceData ?? [])];
+        data = [...data, ...(resourceData ?? [])];
       }
-    } else if (resource === Resource.node) {
-      data = await this.recentNodes();
     } else if (resource) {
       data = (await this.recentResources(resource)) ?? [];
     }
     return data;
   }
 
-  private async recentNodes() {
-    const result = await flux.selectMany(Resource.node, {
-      properties: ["*", "parent.* as parent"],
-      filters: {
-        contentType: rootNodeTypeList.concat(headingNodeTypes),
-        ...activeResourceFilterV2,
-        creationContext: false,
-        metaType: false
-      },
-      orderBy: {
-        modifiedAt: "desc"
-      },
-      limit: this.LIMIT
-    });
-    logger.log({ at: "recentNodes", result });
-    return result;
-  }
-
   private async recentResources(resource: Resource) {
     const resourceStore = resolveResourceStore(resource);
     const result = await resourceStore?.selectMany(
       {
+        ...(resource === Resource.node
+          ? {
+              filters: {
+                contentType: rootNodeTypeList.concat(headingNodeTypes),
+                metaType: false
+              }
+            }
+          : {}),
         orderBy: {
           modifiedAt: "desc"
         },

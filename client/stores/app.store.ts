@@ -433,7 +433,7 @@ function initAppStore(seed: IAppStore) {
     }
     if (config.isRedirectToClient) {
       const clientRedirect = ctx.isEmbed
-        ? import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host
+        ? (import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host)
         : window.location.origin;
       redirectUri = clientRedirect + "/oauth/" + config.oauth_slug;
     } else {

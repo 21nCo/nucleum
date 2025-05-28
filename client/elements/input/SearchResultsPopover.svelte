@@ -13,6 +13,8 @@
   import { logger } from "$lib/client/components/debug/logger.client";
   import Icon from "../Icon.svelte";
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
   export let searchStoreId: string | undefined = undefined;
   export let searchCallback: Function | undefined = undefined;
   export let searchResultComponent: any = undefined;
@@ -51,6 +53,18 @@
   function onSearchResultSelection(item: SearchItem, e?: MouseEvent) {
     dispatch("select", { item, event: e });
     if (onSelect) onSelect({ detail: { item, event: e } });
+    if (item.id) {
+      const type = determineResourceType(item.id);
+      appStore.addToRecents({
+        record: {
+          ...item,
+          bodySearch: undefined,
+          labelSearch: undefined
+        },
+        type,
+        timestamp: new Date()
+      });
+    }
     hide();
   }
   function resetSearch() {

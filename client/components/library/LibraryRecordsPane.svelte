@@ -64,12 +64,11 @@
     availableResources,
     isSameResource,
     removeDuplicatesFilter,
-    resourceAction
+    resourceAction,
+    resourceCacheKey
   } from "../flux/resourceStores/resource.utils";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { createEventDispatcher } from "svelte";
-  import { collectionCountStore } from "../collection/collectionCount.store";
-
   import TaskLibrary from "../tasks/TaskLibrary.svelte";
   import LibrarySubTypeSwitcher from "./LibrarySubTypeSwitcher.svelte";
   import type { SubType } from "./library.type";
@@ -78,7 +77,14 @@
   import { AppSearchParam } from "$lib/client/types/appStore.type";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
+  import { cache } from "$lib/client/layout/layers/cache/cache.store";
+  import { CacheKey } from "$lib/client/layout/layers/cache/cache.type";
   const dispatch = createEventDispatcher();
+
+  enum CacheSubKey {
+    DATA = "data",
+    STARRED = "starred"
+  }
 
   export let resource: Resource;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.LIBRARY;
@@ -105,6 +111,7 @@
   let searchInputRef: InlineSearchBar;
   let isRefineShown = false;
   let subTypeSwitcherRef: LibrarySubTypeSwitcher;
+  let abortController: AbortController | null = null;
 
   $: multiSelectContext = {
     resource,
@@ -118,6 +125,7 @@
   let pageSub: any;
   onMount(async () => {
     if (isCustom) return;
+    abortController = new AbortController();
     pageSub = page.subscribe(async (p) => {
       const subResourceParam = p.url.searchParams.get(AppSearchParam.TYPE);
       let isRefreshNeeded = false;
@@ -142,14 +150,16 @@
       }
       if (isRefreshNeeded) await refresh();
     });
-    if (resource === Resource.collection) {
-      await collectionCountStore.initialize();
-    }
     refresh();
   });
 
   onDestroy(() => {
     if (pageSub) pageSub();
+    // Abort any ongoing operations when component unmounts
+    if (abortController) {
+      abortController.abort();
+      abortController = null;
+    }
   });
 
   function onSelectAll() {
@@ -167,7 +177,7 @@
 
   async function refreshFilteredRecordsCount() {
     const filters = resolveFilters();
-    await _refreshFiltersRecordsCount(filters);
+    await _refreshFilteredRecordsTotalCount(filters);
   }
 
   function refreshTotalRecordsCount() {
@@ -176,12 +186,21 @@
 
   async function refresh(isPagination?: boolean) {
     if (isCustom) return;
+
+    // Abort any previous operation and create new controller
+    if (abortController) {
+      abortController.abort();
+    }
+    abortController = new AbortController();
+    const signal = abortController.signal;
+
     logger.log({
       at: "LibraryRecordsPane - refresh",
       isPagination,
       resource,
       selectedSubType
     });
+    console.time("LibraryRecordsPane - refresh");
     if (!availableResourcesSet.has(resource)) {
       data = [];
       return;
@@ -191,6 +210,10 @@
       data = [];
     }
     try {
+      const cacheKey = resourceCacheKey(
+        resource,
+        CacheKey.LIBRARY_DEFAULT_RECORDS
+      );
       let orderBy: IResourceSelectOrderBy | undefined;
       let semanticSearchTopK: number | undefined;
       // if (searchStore.searchType == SearchType.SEMANTIC) {
@@ -200,6 +223,21 @@
       //   };
       // }
       subTypeSwitcherRef?.refresh();
+      const isDefaultLoad = resolveIfDefaultLoad();
+      if (!isPagination && isDefaultLoad) {
+        const cachedData = cache.retrieve(cacheKey);
+        if (cachedData) {
+          isRefreshing = false;
+          data = cachedData[CacheSubKey.DATA];
+          starredData = cachedData[CacheSubKey.STARRED];
+        }
+        const cachedTotalCount = cache.retrieve(
+          resourceCacheKey(resource, CacheKey.COUNT)
+        );
+        if (cachedTotalCount) {
+          totalCountAfterFilter = cachedTotalCount;
+        }
+      }
       const filters = resolveFilters();
       const newData = await searchStore.select({
         resource,
@@ -208,33 +246,59 @@
         orderBy,
         semanticSearchTopK,
         limit: 50,
-        offset: isPagination ? data.length : 0
+        offset: isPagination ? data.length : 0,
+        signal
       });
+      if (isPagination)
+        data = [...data, ...newData]?.filter(removeDuplicatesFilter);
+      else {
+        data = [...newData];
+        if (isDefaultLoad)
+          cache.replaceUsingSubKey(cacheKey, CacheSubKey.DATA, data);
+      }
       if (isConstrainedWidth && !searchQuery) {
         starredData = await searchStore.select({
           resource,
           filters: {
             ...filters,
             isStarred: true
-          }
+          },
+          signal
         });
+        if (isDefaultLoad)
+          cache.replaceUsingSubKey(cacheKey, CacheSubKey.STARRED, starredData);
       }
-      if (isPagination)
-        data = [...data, ...newData]?.filter(removeDuplicatesFilter);
-      else data = [...newData];
       clearTimeout(refreshResetTimeout);
       refreshResetTimeout = setTimeout(() => {
         isRefreshing = false;
       }, 1);
-      await _refreshFiltersRecordsCount(filters);
+      await _refreshFilteredRecordsTotalCount(filters);
+      console.timeEnd("LibraryRecordsPane - refresh");
     } catch (e) {
       isRefreshing = false;
-      logger.error({ at: "Library - refresh", e });
+      // Don't log error if it was just an abort
+      if (e instanceof Error && e.message === "Operation aborted") {
+        logger.log({ at: "Library - refresh - aborted", e });
+      } else {
+        logger.error({ at: "Library - refresh", e });
+      }
     }
   }
 
   function isGenericSubType() {
     return ["all", "starred", "recents"].includes(selectedSubType);
+  }
+
+  /**
+   * Resolves if the current load is a default load i.e. no filters applied and the first load that happens after the page is loaded.
+   */
+  function resolveIfDefaultLoad() {
+    return (
+      selectedSubType === "all" &&
+      !searchQuery &&
+      !isStarFilterSelected &&
+      !isArchivedFilterSelected
+    );
   }
 
   function resolveFilters() {
@@ -268,19 +332,29 @@
     };
   }
 
-  async function _refreshFiltersRecordsCount(filters: any) {
+  async function _refreshFilteredRecordsTotalCount(filters: any) {
     try {
+      // Check if operation was aborted before starting
+      if (abortController?.signal?.aborted) {
+        return;
+      }
+
       isRefreshingTotalCount = true;
-      totalCountAfterFilter = await searchStore.resolveCount(
+      totalCountAfterFilter = await searchStore.resolveCount({
         resource,
-        !isGenericSubType()
+        subType: !isGenericSubType()
           ? (selectedSubType.toUpperCase() as NodeType | CollectionType)
           : undefined,
-        filters
-      );
+        filters,
+        signal: abortController?.signal
+      });
+      isRefreshingTotalCount = false;
     } catch (e) {
-      logger.error({ at: "Library - refreshTotalCounts", e });
-    } finally {
+      if (e instanceof Error && e.message === "Operation aborted") {
+        logger.log({ at: "Library - refreshTotalCounts - aborted", e });
+      } else {
+        logger.error({ at: "Library - refreshTotalCounts", e });
+      }
       isRefreshingTotalCount = false;
     }
   }
@@ -607,7 +681,7 @@
         />
       </div>
       <div
-        class="flex w-full justify-center text-b2 text-fgs3"
+        class="flex w-full justify-center text-b2 text-fgs3 default-typeface"
         use:intersection={{
           rootMargin: "100px",
           callback: () => {
@@ -666,12 +740,7 @@
 <ComponentBaseLayer
   syncDownOnMount={true}
   subscribeToResource={new Set([resource])}
-  subscribeToContext={new Set([
-    accessPoint,
-    resourceAction(resource, ResourceActionType.CREATE)
-  ])}
   on:syncDown={() => {
-    console.log("syncDown - library - refreshing");
     refresh();
   }}
   on:change={onResourceMutation}

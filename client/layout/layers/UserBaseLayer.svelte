@@ -17,12 +17,11 @@
   import AnalyticsLayer from "./analytics/AnalyticsLayer.svelte";
   import ShortcutRunner from "../../components/shortcuts/ShortcutRunner.svelte";
   import Intercom from "./Intercom.svelte";
-  import CacheLayer from "./CacheLayer.svelte";
+  import SyncLayer from "./SyncLayer.svelte";
   import {
     localCacheableStores,
     remoteOnlyStores
   } from "$local/localStoresMap";
-  import { searcheableResources } from "$local/local";
   import {
     dispatchCustomEvent,
     isExtensionEnvironment,
@@ -43,6 +42,7 @@
   import { getDapId } from "$lib/client/persistence/persistence.utils";
   import PageError from "$lib/client/components/error/PageError.svelte";
   import { SurrealPersistence } from "$lib/client/persistence/surreal/surreal.local";
+  import { SignalDBPersistence } from "$lib/client/persistence/signaldb/signaldb.local";
   import posthog from "posthog-js";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
@@ -61,6 +61,9 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
   import { OperatingSystem } from "$lib/client/types/context.type";
+  import InMemoryCache from "./cache/InMemoryCache.svelte";
+  import { resolveProductResources } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import UserLayout from "./UserLayout.svelte";
 
   const loadingMessages = {
     cloneUp: {
@@ -87,6 +90,8 @@
   let dev_isDisableSyncOnAppear = false;
   let subs: any[] = [];
   const isDebug = import.meta.env?.DEV;
+  $: searcheableResources =
+    resolveProductResources($appStore.product, "search") ?? [];
 
   onMount(async () => {
     postMessageToParent(EmbedMessage.MOUNT);
@@ -317,17 +322,26 @@
   }
 
   async function initializeFlux(params: { dapId: string; userId?: string }) {
-    return initFlux(
-      [...cacheableStores, ...localCacheableStores],
-      PersistenceProvider.SURREAL_SURREAL,
-      new SurrealPersistence(),
-      {
-        ...params,
-        appVersion: $appStore.version + "." + $appStore.build,
-        remoteOnlyStores: [...remoteOnlyStores],
-        product: $appStore.product
+    const initParams = {
+      ...params,
+      appVersion: $appStore.version + "." + $appStore.build,
+      remoteOnlyStores: [...remoteOnlyStores],
+      product: $appStore.product
+    };
+    const stores = [...cacheableStores, ...localCacheableStores];
+    const provider: PersistenceProvider = PersistenceProvider.SURREAL_SURREAL;
+    return initFlux(stores, provider, resolveLocalPersistence(), initParams);
+
+    function resolveLocalPersistence() {
+      switch (provider) {
+        case PersistenceProvider.SURREAL_SURREAL:
+          return new SurrealPersistence();
+        case PersistenceProvider.SIGNAL_SURREAL:
+          return new SignalDBPersistence();
+        default:
+          return new SurrealPersistence();
       }
-    );
+    }
   }
 
   async function initializeEssentialUserData(initState: number): Promise<
@@ -577,7 +591,9 @@
   {:else if error}
     <PageError />
   {:else}
-    <slot />
+    <UserLayout>
+      <slot />
+    </UserLayout>
   {/if}
 </div>
 {#if $appStore.isDebugMode}
@@ -592,7 +608,10 @@
   />
   <ModalLayer />
   <ShortcutRunner />
-  <CacheLayer />
+  <SyncLayer />
+  {#if $appLoadingState.isLocalLoaded}
+    <InMemoryCache />
+  {/if}
 {/if}
 <Intercom />
 

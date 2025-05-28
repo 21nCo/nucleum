@@ -27,6 +27,7 @@ import BookACall from "../components/cx/BookACall.svelte";
 import MdShortcuts from "../components/markdown/shortcuts/MdShortcuts.svelte";
 import CoverPicker from "../elements/coverPicker/CoverPicker.svelte";
 import SurrealLocalViewer from "../components/debug/SurrealLocalViewer.svelte";
+import SignalDBViewer from "../components/debug/SignalDBViewer.svelte";
 import PrivacyPolicy from "../landing/shared/PrivacyPolicy.svelte";
 import { Embed } from "../types/context.type";
 import {
@@ -37,7 +38,8 @@ import {
 import {
   determineResourceType,
   resolveResourceIcon,
-  resourceAction
+  resourceAction,
+  resourceCacheComponentKey
 } from "../components/flux/resourceStores/resource.utils";
 import { Resource } from "../components/flux/resourceStores/resource.enum";
 import CreateCollection from "$lib/client/components/collection/CreateCollection.svelte";
@@ -86,6 +88,8 @@ import HotKeys from "../components/markdown/shortcuts/HotKeys.svelte";
 import HistoryModal from "../components/calendar/HistoryModal.svelte";
 import Credits from "$lib/client/components/help/Credits.svelte";
 import { resolveResourceStore } from "../components/flux/resourceStores/store.resolver";
+import CollectionCache from "../components/collection/CollectionCache.svelte";
+import DataSettings from "../components/settings/DataSettings.svelte";
 
 export const globalActions: IAction[] = [
   {
@@ -529,6 +533,18 @@ export const globalActions: IAction[] = [
   {
     action: "surreal-local",
     component: SurrealLocalViewer,
+    isMeta: true,
+    type: ActionType.MODAL,
+    modalParams: {
+      layout: {
+        size: Size.xxl,
+        orientation: Orientation.Horizontal
+      }
+    }
+  },
+  {
+    action: "signaldb-console",
+    component: SignalDBViewer,
     isMeta: true,
     type: ActionType.MODAL,
     modalParams: {
@@ -1067,6 +1083,26 @@ export const globalActions: IAction[] = [
         size: Size.lg,
         orientation: Orientation.Horizontal,
         isShowCantileverClose: true
+      }
+    }
+  },
+  {
+    action: resourceCacheComponentKey(Resource.collection),
+    type: ActionType.CACHE,
+    component: CollectionCache
+  },
+  {
+    action: Action.DATA_SETTINGS,
+    type: ActionType.MODAL,
+    label: "Data Settings",
+    icon: "ph:database-light",
+    component: DataSettings,
+    hideContext: [Embed.HANDSET],
+    modalParams: {
+      title: "Data Settings",
+      layout: {
+        size: Size.lg,
+        orientation: Orientation.Horizontal
       }
     }
   }

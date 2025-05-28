@@ -33,6 +33,7 @@
     nodeContext.parent = $node?.parent;
     nodeContext.contentType = $node?.contentType;
     isLoading = false;
+    await node.afterInit();
   }
 
   function contextEventListener(message: any) {}

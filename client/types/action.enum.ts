@@ -42,5 +42,6 @@ export enum Action {
   EDIT_TASK_GOAL = "edit-task-goal",
   CALENDAR_DAY = "calendar-day",
   HISTORY = "history",
-  CREDITS = "credits"
+  CREDITS = "credits",
+  DATA_SETTINGS = "data-settings"
 }

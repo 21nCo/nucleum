@@ -31,6 +31,11 @@
   } from "$lib/client/types/switcher.enum";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
   import { page } from "$app/stores";
+  import { resourceCacheKey } from "../flux/resourceStores/resource.utils";
+  import { cache } from "$lib/client/layout/layers/cache/cache.store";
+  import { CacheKey } from "$lib/client/layout/layers/cache/cache.type";
+  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  import { fade } from "svelte/transition";
   export let resource: Resource;
   export let isConstrainedWidth: boolean = $view.isConstrainedWidth;
   export let accessPoint: ResourceAccessPoint;
@@ -81,6 +86,15 @@
   });
 
   function resolveBaseFilters() {
+    if (
+      !(
+        isStarFilterSelected ||
+        selectedSubType === "starred" ||
+        isArchivedFilterSelected
+      )
+    ) {
+      return;
+    }
     return {
       isStarred:
         isStarFilterSelected || selectedSubType === "starred"
@@ -92,17 +106,23 @@
 
   async function refreshSubTypeSwitcher() {
     try {
-      const filters = resolveBaseFilters();
       allSubTypes = resolveSubItems(resource);
       if (isConstrainedWidth) {
         renderedSubTypes = [...allSubTypes];
         return;
       }
       if (isExpandableSubTypes) {
-        subTypeCounts = await searchStore.resolveSubTypeCounts(
-          resource,
-          filters
-        );
+        const filters = resolveBaseFilters();
+        if (!filters) {
+          subTypeCounts = cache.retrieve(
+            resourceCacheKey(resource, CacheKey.SUB_TYPE_COUNTS)
+          );
+        } else {
+          subTypeCounts = await searchStore.resolveSubTypeCounts(
+            resource,
+            filters
+          );
+        }
         if (isValidArrayWithData(subTypeCounts)) {
           allSubTypes = allSubTypes.map((x) => {
             let count = subTypeCounts.find(
@@ -179,6 +199,7 @@
     class={cn("flex gap-2 min-h-fit w-full", {
       "px-4": accessPoint === ResourceAccessPoint.LIBRARY
     })}
+    in:fade={{ duration: 200 }}
   >
     <div class="flex-1 min-w-0">
       {#if resource === Resource.task}
@@ -216,17 +237,19 @@
             />
             <Divider orientation={Orientation.Vertical} />
           {/if}
-          <OptionSelector
-            style={OptionSelectorStyle.OUTLINE}
-            size={Size.sm}
-            options={renderedSubTypes}
-            selected={selectedSubType}
-            isPreventWrap={isExpandableSubTypes && !isExpandSubTypes}
-            on:select={(e) => {
-              if (!e?.detail) return;
-              onSelect(e.detail);
-            }}
-          />
+          <div class="flex-1 min-w-0">
+            <OptionSelector
+              style={OptionSelectorStyle.OUTLINE}
+              size={Size.sm}
+              options={renderedSubTypes}
+              selected={selectedSubType}
+              isPreventWrap={isExpandableSubTypes && !isExpandSubTypes}
+              on:select={(e) => {
+                if (!e?.detail) return;
+                onSelect(e.detail);
+              }}
+            />
+          </div>
         </div>
       {/if}
     </div>
@@ -267,4 +290,13 @@
       {/if}
     </div>
   </div>
+{/if}
+
+{#if isExpandableSubTypes}
+  <ComponentBaseLayer
+    subscribeToCacheUpdate={[
+      resourceCacheKey(resource, CacheKey.SUB_TYPE_COUNTS)
+    ]}
+    on:change={refreshSubTypeSwitcher}
+  />
 {/if}

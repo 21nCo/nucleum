@@ -154,36 +154,41 @@ class FileStore extends ResourceStore<IFile> {
       isUseThumbnailIfAvailable?: boolean;
     }
   ): Promise<IFile | undefined> {
-    logger.log({ at: "fileStore - refresh", file });
-    if (!file) return;
-    if (isRecordId(file)) {
-      const _file = await this.select(file as IRecordId);
-      if (!_file) return;
-      file = _file;
+    try {
+      logger.log({ at: "fileStore - refresh", file });
+      if (!file) return;
+      if (isRecordId(file)) {
+        const _file = await this.select(file as IRecordId);
+        if (!_file) return;
+        file = _file;
+      }
+      if (
+        params?.isUseThumbnailIfAvailable &&
+        typeof file === "object" &&
+        "thumbnailData" in file &&
+        file.thumbnailData
+      ) {
+        return {
+          ...file,
+          thumbnailUrl: URL.createObjectURL(
+            new Blob([file.thumbnailData], { type: "image/jpeg" })
+          )
+        };
+      }
+      if (typeof file === "object" && "data" in file && file.data) {
+        return {
+          ...file,
+          url: URL.createObjectURL(new Blob([file.data], { type: file.type }))
+        };
+      }
+      const response = await this.updateUrlIfExpired(file, params);
+      if (!response) return;
+      file = { ...response };
+      return file;
+    } catch (error) {
+      logger.error({ at: "fileStore - refresh", error });
+      return;
     }
-    if (
-      params?.isUseThumbnailIfAvailable &&
-      typeof file === "object" &&
-      "thumbnailData" in file &&
-      file.thumbnailData
-    ) {
-      return {
-        ...file,
-        thumbnailUrl: URL.createObjectURL(
-          new Blob([file.thumbnailData], { type: "image/jpeg" })
-        )
-      };
-    }
-    if (typeof file === "object" && "data" in file && file.data) {
-      return {
-        ...file,
-        url: URL.createObjectURL(new Blob([file.data], { type: file.type }))
-      };
-    }
-    const response = await this.updateUrlIfExpired(file, params);
-    if (!response) return;
-    file = { ...response };
-    return file;
   }
 }
 

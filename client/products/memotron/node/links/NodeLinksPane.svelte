@@ -49,6 +49,7 @@
     ResourceErrorCode
   } from "$lib/client/components/error/error.type";
   import { ResourceError } from "$lib/client/components/error/errors";
+  import { LoadingAnimationType } from "$lib/client/types/feedback.type";
   export let node: IActiveNodeStore;
   $: multiSelectContext = {
     resource: Resource.node,
@@ -74,9 +75,9 @@
   let isShowLinkSuggestions = false;
   let dev_linkTagFilter: "and" | "or" = "and";
   let selectedMentionDirection: "incoming" | "outgoing" = "incoming";
+  let isRefreshing = false;
 
-  onMount(async () => {
-    await refresh();
+  onMount(() => {
     const unsubscribe = node.subscribe(async (x) => {
       let currentFocus = previousFocus;
       if (!x.focusedBlock) currentFocus = x.id;
@@ -167,6 +168,7 @@
       return;
     }
     _links = $node.links;
+    isRefreshing = true;
     const result = await nodeStore.selectMany(
       {
         filters: {
@@ -186,6 +188,7 @@
       node: x
     }));
     applyFilters();
+    isRefreshing = false;
   }
 
   async function refreshOutgoingMentions() {
@@ -417,7 +420,7 @@
       <ErrorStatusPane error={fetchError} />
     {:else if isShowLinkSuggestions}
       <ComingSoonView mainText="Link suggestions" subText="Coming soon..." />
-    {:else if filtered.length > 0}
+    {:else if filtered.length > 0 && !isRefreshing}
       <div class="flex flex-col flex-grow w-full">
         <LinkThumbnailItems
           links={filtered}
@@ -432,6 +435,8 @@
     {:else}
       <EmptyStatusView
         isSearchContext={true}
+        isLoadingState={isRefreshing}
+        loadingAnimation={LoadingAnimationType.FOCUS_ITEMS_PULSE}
         mainText={selectedLinkType === LinkType.SUGGESTION
           ? "No suggestions found."
           : "No results found."}

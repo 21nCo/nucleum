@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, tick, onDestroy } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import { page } from "$app/stores";
   import { goto } from "$app/navigation";
   import { GlobalEvent } from "$lib/client/types/event.enum";
@@ -39,6 +39,7 @@
 
   onMount(async () => {
     try {
+      postToParent({ bg: 1 });
       await bootup();
     } catch (e) {
       logger.error({ at: "BaseLayer.onMount", error: e });
@@ -71,7 +72,6 @@
     function runCurrentTime() {
       clearInterval(timer);
       timer = setInterval(() => {
-        tick();
         $currentTime = new Date();
       }, 1000);
     }

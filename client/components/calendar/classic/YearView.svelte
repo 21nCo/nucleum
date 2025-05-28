@@ -272,8 +272,7 @@
         <h2 class="text-h2 font-bold ml-3">{year}</h2>
       </div>
       <div
-        class="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-x-16 gap-y-12"
-        style="font-family: 'Hanken Grotesk'"
+        class="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-x-16 gap-y-12 default-typeface"
       >
         {#each months as { days, monthIndex }}
           <div class="flex flex-col min-w-[240px]">

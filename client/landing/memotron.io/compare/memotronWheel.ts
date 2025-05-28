@@ -263,10 +263,45 @@ export const features: IFwFeature[] = [
     ]
   },
   {
+    label: "Advanced Md",
+    category: MemotronFeatureCategory.Content,
+    progress: 0.3,
+    isPlanned: true,
+    isNovel: true,
+    description:
+      "Extended Markdown features including custom blocks, embeds, and interactive elements",
+    ratingCriteria: [
+      {
+        label: "Support for layout blocks like tables"
+      },
+      {
+        label: "Support for embeds"
+      }
+    ],
+    contemporaries: [
+      {
+        label: Contemporary.Notion,
+        value: 0.8
+      },
+      {
+        label: Contemporary.Capacities,
+        value: 0.8
+      }
+    ]
+  },
+  {
     label: "Pdf",
     category: MemotronFeatureCategory.Content,
     progress: 0.8,
     description: "Native PDF viewing, and annotation capabilities",
+    ratingCriteria: [
+      {
+        label: "Native PDF viewing"
+      },
+      {
+        label: "Annotation capabilities"
+      }
+    ],
     contemporaries: [
       {
         label: Contemporary.Remnote,
@@ -280,6 +315,14 @@ export const features: IFwFeature[] = [
     progress: 0.75,
     description:
       "Audio file support with playback and transcription capabilities.",
+    ratingCriteria: [
+      {
+        label: "Native audio playback"
+      },
+      {
+        label: "Transcription capabilities"
+      }
+    ],
     contemporaries: [
       {
         label: Contemporary.AudioPen,
@@ -296,31 +339,75 @@ export const features: IFwFeature[] = [
     ]
   },
   {
-    label: "Advanced Md",
+    label: "AI editing and processing",
     category: MemotronFeatureCategory.Content,
-    progress: 0.3,
+    progress: 0.7,
     isPlanned: true,
-    isNovel: true,
     description:
-      "Extended Markdown features including custom blocks, embeds, and interactive elements",
+      "AI assisted content creation and ideation with state-of-the-art language models",
     contemporaries: [
       {
         label: Contemporary.Notion,
-        value: 0.8
+        value: 0.5
       },
       {
         label: Contemporary.Capacities,
-        value: 0.8
+        value: 0.5
+      },
+      {
+        label: Contemporary.Heptabase,
+        value: 0.5
+      },
+      {
+        label: Contemporary.Tana,
+        value: 0.5
+      },
+      {
+        label: Contemporary.Anytype,
+        value: 0.5
       }
     ]
   },
   {
-    label: "Traces",
+    label: "Version control",
     category: MemotronFeatureCategory.Content,
     progress: 0,
     isPlanned: true,
     description:
       "Ability to track and visualize the evolution of content over time",
+    ratingCriteria: [
+      {
+        label: "Ability to see history"
+      },
+      {
+        label: "Ability to mark versions in history, rollback, duplicate etc"
+      },
+      {
+        label: "Ability to fork content and have variants of content"
+      }
+    ],
+    contemporaries: [
+      {
+        label: Contemporary.Notion,
+        value: 0.7
+      },
+      {
+        label: Contemporary.Capacities,
+        value: 0.7
+      }
+    ]
+  },
+  {
+    label: "Comments",
+    category: MemotronFeatureCategory.Content,
+    progress: 0,
+    isPlanned: true,
+    description: "Ability to comment on content",
+    ratingCriteria: [
+      {
+        label: "Ability to comment on content"
+      }
+    ],
     contemporaries: [
       {
         label: Contemporary.Notion,
@@ -339,6 +426,12 @@ export const features: IFwFeature[] = [
     isPlanned: true,
     description:
       "Rich metadata support for content organization, tagging, and property-based filtering",
+    ratingCriteria: [
+      {
+        label:
+          "Rich metadata especially for media nodes like images, audio, etc"
+      }
+    ],
     contemporaries: [
       {
         label: Contemporary.Notion,
@@ -637,6 +730,14 @@ export const features: IFwFeature[] = [
     contemporaries: []
   },
   {
+    label: "Simple collections/tags",
+    category: MemotronFeatureCategory.Curation,
+    progress: 0.8,
+    isNovel: true,
+    description: "Ability to collect information into simple collections/tags",
+    contemporaries: []
+  },
+  {
     label: "Types/Objects",
     category: MemotronFeatureCategory.Curation,
     image: "/clipFeature.png",
@@ -745,87 +846,6 @@ export const features: IFwFeature[] = [
 
   // Views features
   {
-    label: "Board view",
-    category: MemotronFeatureCategory.Views,
-    progress: 0.75,
-    description:
-      "Kanban-style board view for visual organization and workflow management",
-    ratingCriteria: [
-      {
-        label: "Ability to create and view boards"
-      },
-      {
-        label: "Ability to add cards to the board"
-      }
-    ],
-    contemporaries: [
-      {
-        label: Contemporary.Notion,
-        value: 0.8
-      }
-    ]
-  },
-  {
-    label: "Bird view",
-    category: MemotronFeatureCategory.Views,
-    progress: 0.75,
-    isNovel: true,
-    description:
-      "High-level overview visualization of your entire knowledge base and its connections",
-    ratingCriteria: [
-      {
-        label:
-          "Ability to view entire knowledge base at once using graph or other similar high level views"
-      }
-    ],
-    contemporaries: [
-      {
-        label: Contemporary.Obsidian,
-        value: 0.8
-      },
-      {
-        label: Contemporary.Roam,
-        value: 0.7
-      },
-      {
-        label: Contemporary.Heptabase,
-        value: 0.55
-      }
-    ]
-  },
-  {
-    label: "Combination",
-    category: MemotronFeatureCategory.Views,
-    progress: 0.15,
-    isPlanned: true,
-    description:
-      "Customizable combination of different view types for flexible information display",
-    contemporaries: [
-      {
-        label: Contemporary.ClickupDocs,
-        value: 0.4
-      },
-      {
-        label: Contemporary.Gitbook,
-        value: 0.6
-      }
-    ]
-  },
-  {
-    label: "Table",
-    category: MemotronFeatureCategory.Views,
-    progress: 0.15,
-    isPlanned: true,
-    description:
-      "Structured table view with sorting, filtering, and customizable columns",
-    contemporaries: [
-      {
-        label: Contemporary.Notion,
-        value: 0.7
-      }
-    ]
-  },
-  {
     label: "Calendar",
     category: MemotronFeatureCategory.Views,
     progress: 0.75,
@@ -862,6 +882,104 @@ export const features: IFwFeature[] = [
     ],
     contemporaries: []
   },
+  {
+    label: "Graph view",
+    category: MemotronFeatureCategory.Views,
+    progress: 0.75,
+    description: "Graph view for visual organization and workflow management",
+    ratingCriteria: [
+      {
+        label: "Ability to view the entire knowledge base as a graph"
+      }
+    ],
+    contemporaries: [
+      {
+        label: Contemporary.Obsidian,
+        value: 0.8
+      }
+    ]
+  },
+  {
+    label: "Bird view",
+    category: MemotronFeatureCategory.Views,
+    progress: 0.75,
+    isNovel: true,
+    description:
+      "High-level overview visualization of your entire knowledge base and its connections",
+    ratingCriteria: [
+      {
+        label:
+          "Ability to view entire knowledge base at once using graph or other similar high level views"
+      }
+    ],
+    contemporaries: [
+      {
+        label: Contemporary.Obsidian,
+        value: 0.8
+      },
+      {
+        label: Contemporary.Roam,
+        value: 0.7
+      },
+      {
+        label: Contemporary.Heptabase,
+        value: 0.55
+      }
+    ]
+  },
+  {
+    label: "Board view",
+    category: MemotronFeatureCategory.Views,
+    progress: 0.75,
+    description:
+      "Kanban-style board view for visual organization and workflow management",
+    ratingCriteria: [
+      {
+        label: "Ability to create and view boards"
+      },
+      {
+        label: "Ability to add cards to the board"
+      }
+    ],
+    contemporaries: [
+      {
+        label: Contemporary.Notion,
+        value: 0.8
+      }
+    ]
+  },
+  {
+    label: "Table",
+    category: MemotronFeatureCategory.Views,
+    progress: 0.15,
+    isPlanned: true,
+    description:
+      "Structured table view with sorting, filtering, and customizable columns",
+    contemporaries: [
+      {
+        label: Contemporary.Notion,
+        value: 0.7
+      }
+    ]
+  },
+  {
+    label: "Combination",
+    category: MemotronFeatureCategory.Views,
+    progress: 0.15,
+    isPlanned: true,
+    description:
+      "Customizable combination of different view types for flexible information display",
+    contemporaries: [
+      {
+        label: Contemporary.ClickupDocs,
+        value: 0.4
+      },
+      {
+        label: Contemporary.Gitbook,
+        value: 0.6
+      }
+    ]
+  },
 
   // Retrieval and synthesis features
   {
@@ -881,6 +999,28 @@ export const features: IFwFeature[] = [
       {
         label: Contemporary.Capacities,
         value: 0.8
+      }
+    ]
+  },
+  {
+    label: "Semantic search",
+    category: MemotronFeatureCategory.RetrievalAndSynthesis,
+    progress: 0,
+    isPlanned: true,
+    description:
+      "Concept and meaning-based search powered by advanced embedding models. Natural language search capabilities for finding content using conversational queries",
+    contemporaries: [
+      {
+        label: Contemporary.Obsidian,
+        value: 0.6
+      },
+      {
+        label: Contemporary.Notion,
+        value: 0.6
+      },
+      {
+        label: Contemporary.Capacities,
+        value: 0.6
       }
     ]
   },
@@ -917,58 +1057,6 @@ export const features: IFwFeature[] = [
     description:
       "Advanced time-travel functionality to view and interact with your knowledge base at any point in time",
     contemporaries: []
-  },
-  {
-    label: "AI editing and processing",
-    category: MemotronFeatureCategory.Content,
-    progress: 0.7,
-    isPlanned: true,
-    description:
-      "AI assisted content creation and ideation with state-of-the-art language models",
-    contemporaries: [
-      {
-        label: Contemporary.Notion,
-        value: 0.5
-      },
-      {
-        label: Contemporary.Capacities,
-        value: 0.5
-      },
-      {
-        label: Contemporary.Heptabase,
-        value: 0.5
-      },
-      {
-        label: Contemporary.Tana,
-        value: 0.5
-      },
-      {
-        label: Contemporary.Anytype,
-        value: 0.5
-      }
-    ]
-  },
-  {
-    label: "Semantic search",
-    category: MemotronFeatureCategory.RetrievalAndSynthesis,
-    progress: 0,
-    isPlanned: true,
-    description:
-      "Concept and meaning-based search powered by advanced embedding models. Natural language search capabilities for finding content using conversational queries",
-    contemporaries: [
-      {
-        label: Contemporary.Obsidian,
-        value: 0.6
-      },
-      {
-        label: Contemporary.Notion,
-        value: 0.6
-      },
-      {
-        label: Contemporary.Capacities,
-        value: 0.6
-      }
-    ]
   },
   {
     label: "Public API",

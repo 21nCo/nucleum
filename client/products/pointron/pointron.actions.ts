@@ -59,6 +59,8 @@ import { SearchStore } from "$lib/client/components/record/record.store";
 import { goalStore } from "$lib/client/components/goals/goal.store";
 import GoalSearchResultItem from "$lib/client/components/goals/GoalSearchResultItem.svelte";
 import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
+import { resourceCacheComponentKey } from "$lib/client/components/flux/resourceStores/resource.utils";
+import ResourceCache from "$lib/client/components/record/ResourceCache.svelte";
 
 const isSessionRunningPreCondition = () => get(activeSession).isSessionRunning;
 
@@ -639,6 +641,22 @@ export const pointronActions: IAction[] = [
         size: Size.lg,
         orientation: Orientation.Horizontal
       }
+    }
+  },
+  {
+    action: resourceCacheComponentKey(Resource.goal),
+    type: ActionType.CACHE,
+    component: ResourceCache,
+    componentParams: {
+      resource: Resource.goal
+    }
+  },
+  {
+    action: resourceCacheComponentKey(Resource.task),
+    type: ActionType.CACHE,
+    component: ResourceCache,
+    componentParams: {
+      resource: Resource.task
     }
   }
 ];

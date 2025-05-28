@@ -7,7 +7,10 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import AvatarRenderer from "$lib/client/elements/avatarPicker/AvatarRenderer.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import {
+    resourceAction,
+    resourceCacheKey
+  } from "$lib/client/components/flux/resourceStores/resource.utils";
   import {
     ResourceAccessPoint,
     ResourceActionType
@@ -19,11 +22,11 @@
   import { popover } from "$lib/client/actions/popover.action";
   import ContextMenu from "$lib/client/elements/contextMenu/ContextMenu.svelte";
   import Badge from "$lib/client/elements/text/Badge.svelte";
-  import { onMount } from "svelte";
-  import { SearchStore } from "$lib/client/components/record/record.store";
   import view from "$lib/client/stores/view.store";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { isHideCreateAction } from "../library.utils";
+  import { cache } from "$lib/client/layout/layers/cache/cache.store";
+  import { CacheKey } from "$lib/client/layout/layers/cache/cache.type";
 
   export let item: IResourceSwitchItem;
   export let isActive: boolean = false;
@@ -33,18 +36,13 @@
   let count: number = 0;
   let popRef: HTMLButtonElement;
   const resource = item.value as Resource;
+  const cacheKey = resourceCacheKey(resource, CacheKey.COUNT);
 
-  onMount(async () => {
-    await refresh();
-  });
+  refreshCount();
 
-  export async function refresh() {
-    await refreshCount();
-  }
-
-  async function refreshCount() {
+  function refreshCount() {
     if (!isShowCount) return;
-    count = await new SearchStore().resolveCount(resource);
+    count = cache.retrieve(cacheKey) || 0;
   }
 
   function resolveContextMenu() {
@@ -154,7 +152,7 @@
     </div>
   {/if} -->
   {#if isShowCount && count > 0}
-    <span class="absolute right-0 top-0 m-3 leading-none">
+    <span class="absolute right-0 top-0 m-3 leading-none default-typeface">
       <span
         class={cn("text-h4", { "text-aps1": isActive, "text-fgs3": !isActive })}
       >
@@ -181,16 +179,8 @@
 </button>
 
 <ComponentBaseLayer
-  subscribeToResource={new Set([resource])}
-  subscribeToContext={new Set([
-    ResourceAccessPoint.LIBRARY,
-    resourceAction(resource, ResourceActionType.CREATE)
-  ])}
-  subScriptionPropsForMergeAction={[]}
-  on:syncDown={() => {
-    refresh();
-  }}
+  subscribeToCacheUpdate={[cacheKey]}
   on:change={() => {
-    refresh();
+    refreshCount();
   }}
 />

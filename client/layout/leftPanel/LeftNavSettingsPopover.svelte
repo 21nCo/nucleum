@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { searcheableResources } from "$lib/../src/local";
   import { appMenuStore } from "$lib/client/stores/appMenu/appMenu.store";
   import { appStore } from "$lib/client/stores/app.store";
   import { createEventDispatcher } from "svelte";
@@ -10,7 +9,10 @@
     reorderList,
     type DragDropEvent
   } from "$lib/client/actions/rearrange.action";
-  import { shiftResourceInArray } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import {
+    resolveProductResources,
+    shiftResourceInArray
+  } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { cn } from "$lib/client/utils/ui.utils";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
@@ -38,8 +40,9 @@
 
   function initResources(): void {
     const app = $appStore.product;
+    const resourceList = resolveProductResources(app);
     userPinnedItems = appMenuStore.get()[app]?.user || [];
-    resources = searcheableResources.map((resource) => {
+    resources = (resourceList ?? []).map((resource) => {
       const isPinned = userPinnedItems.includes(resource);
       return {
         id: resource,

@@ -6,6 +6,7 @@
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import account from "$lib/client/stores/account.store";
+  import { appStore } from "$lib/client/stores/app.store";
   import context from "$lib/client/stores/context.store";
   import {
     confirmationNotification,
@@ -23,13 +24,14 @@
     isBackupInProgress = true;
     try {
       const data = await flux.export();
-      const fileName = `memotron-backup-${formatDate(new Date())}.json`;
+      const product = $appStore.product;
+      const fileName = `${product}-backup-${formatDate(new Date())}.json`;
       const blob = new Blob([JSON.stringify(data)], {
         type: "application/json"
       });
       fileStore.downloadFromBlob(blob, {
         fileName: fileName,
-        fileNameForEmbed: "memotron_backup",
+        fileNameForEmbed: `${product}_backup`,
         contentType: "application/json",
         isHandleEmbedCase: true
       });

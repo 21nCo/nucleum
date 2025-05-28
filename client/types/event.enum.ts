@@ -44,7 +44,8 @@ export enum GlobalEvent {
   SEARCH_RESULT_KEYUP = "searchresultkeyup",
   SEARCH_RESULT_KEYDOWN = "searchresultkeydown",
   ADD_TO_RECENTS = "addToRecents",
-  TOGGLE_SEARCH_PARAM = "toggleSearchParam"
+  TOGGLE_SEARCH_PARAM = "toggleSearchParam",
+  CACHE_UPDATE = "cacheUpdate"
 }
 
 export enum PlayActionState {

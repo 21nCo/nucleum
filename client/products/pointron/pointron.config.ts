@@ -10,14 +10,10 @@ import {
   manualLogStore,
   sessionLogStore
 } from "$lib/client/products/pointron/logs/log.store";
-import {
-  pointronPreferences
-} from "$lib/client/products/pointron/pointron.store";
+import { pointronPreferences } from "./pointron.store";
 import type { IStore } from "$lib/client/types/data.type";
-import {
-  collectionStore,
-  viewStore
-} from "$lib/client/components/collection/collection.store";
+import { collectionStore } from "$lib/client/components/collection/collection.store";
+import { viewStore } from "$lib/client/components/collection/view.store";
 import { goalStore } from "$lib/client/components/goals/goal.store";
 import { taskStore } from "$lib/client/components/tasks/task.store";
 import { linker } from "../memotron/linking/link.store";

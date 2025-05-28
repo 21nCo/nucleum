@@ -192,21 +192,6 @@ class Linker extends ResourceStore<INodeLink> {
     );
   }
 
-  /**
-   * Queries links along with other node properties for a list of nodes.
-   * @param nodes
-   * @returns
-   */
-  async getLinksForNodes(nodes: IRecordId[]) {
-    const result = await flux.selectMany(Resource.node, {
-      properties: ["*", "array::concat(->link.*, <-link.*) as links"],
-      filters: {
-        id: nodes.map((x) => x.toString())
-      }
-    });
-    return result;
-  }
-
   get() {}
 }
 

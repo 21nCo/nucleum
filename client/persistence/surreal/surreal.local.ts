@@ -62,7 +62,13 @@ export class SurrealPersistence implements IPersistence {
   product: Product = Product.NUCLEUS;
   private isProcessingOperation: boolean = false;
   private processId: string = "";
-  private waitingTimeElapsed: number = 0;
+  private operationQueue: Array<{
+    processId: string;
+    resolve: () => void;
+    reject: (reason?: any) => void;
+    timestamp: number;
+    signal?: AbortSignal;
+  }> = [];
   constructor() {}
 
   /**
@@ -188,6 +194,7 @@ export class SurrealPersistence implements IPersistence {
   }
 
   terminate() {
+    this.clearQueue();
     return this.instance?.close() ?? Promise.resolve(true);
   }
 
@@ -198,7 +205,7 @@ export class SurrealPersistence implements IPersistence {
         params?.appVersion
       }", isLocalMode: ${!params?.userId}, dapId: "${params?.dapId}" };`
     );
-    this.isProcessingOperation = false;
+    this.finishOperation();
   }
 
   private async updateAppVersion(version: string) {
@@ -206,7 +213,7 @@ export class SurrealPersistence implements IPersistence {
     const result = await this.instance?.query(
       `UPDATE kv:local SET version = "${version}";`
     );
-    this.isProcessingOperation = false;
+    this.finishOperation();
   }
 
   private async logInfo() {
@@ -217,7 +224,7 @@ export class SurrealPersistence implements IPersistence {
       userId: this.userId,
       info
     });
-    this.isProcessingOperation = false;
+    this.finishOperation();
   }
   private async testQuery() {
     await this.awaiter();
@@ -233,7 +240,7 @@ export class SurrealPersistence implements IPersistence {
       },
       LogType.DEBUG
     );
-    this.isProcessingOperation = false;
+    this.finishOperation();
   }
 
   async mutation<T extends IResource | IMetaResource>(
@@ -279,7 +286,7 @@ export class SurrealPersistence implements IPersistence {
     try {
       await this.awaiter();
       dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
-        message: `Updating the app. This might take a while.`,
+        message: `Updating the app...`,
         subMessage: ""
       });
       const dependencies = params?.dbo;
@@ -296,32 +303,98 @@ export class SurrealPersistence implements IPersistence {
         subMessage: "",
         isFinished: true
       });
-      this.isProcessingOperation = false;
+      this.finishOperation();
     }
   }
 
   /**
    * Using this to prevent multiple operations on the database at the same time which is causing errors.
+   * Implements a FIFO queue system to ensure operations are processed in order.
    * @returns
    */
-  private awaiter(processId?: string) {
+  private awaiter(processId?: string, signal?: AbortSignal): Promise<void> {
     return new Promise((resolve, reject) => {
-      const interval = setInterval(() => {
-        this.waitingTimeElapsed += 100;
-        if (!this.isProcessingOperation || this.waitingTimeElapsed > 4000) {
-          clearInterval(interval);
-          this.isProcessingOperation = true;
-          this.processId = processId ?? "unknown";
-          logger.log({
-            at: "awaiter - starting process",
-            processId: this.processId,
-            waitingTimeElapsed: this.waitingTimeElapsed
-          });
-          this.waitingTimeElapsed = 0;
-          resolve(true);
-        }
-      }, 100);
+      // Check if signal is already aborted
+      if (signal?.aborted) {
+        reject(new Error("Operation aborted"));
+        return;
+      }
+
+      const operation = {
+        processId: processId ?? "unknown",
+        resolve,
+        reject,
+        timestamp: Date.now(),
+        signal
+      };
+
+      // Add abort listener if signal is provided
+      if (signal) {
+        const abortHandler = () => {
+          // Remove from queue if still waiting
+          const index = this.operationQueue.indexOf(operation);
+          if (index !== -1) {
+            this.operationQueue.splice(index, 1);
+            reject(new Error("Operation aborted"));
+          }
+          signal.removeEventListener("abort", abortHandler);
+        };
+        signal.addEventListener("abort", abortHandler);
+      }
+
+      this.operationQueue.push(operation);
+      this.processQueue();
     });
+  }
+
+  /**
+   * Processes the operation queue in FIFO order
+   */
+  private processQueue() {
+    if (this.isProcessingOperation || this.operationQueue.length === 0) {
+      return;
+    }
+
+    const operation = this.operationQueue.shift()!;
+
+    // Check if operation is aborted before processing
+    if (operation.signal?.aborted) {
+      operation.reject(new Error("Operation aborted"));
+      this.processQueue(); // Continue with next operation
+      return;
+    }
+
+    this.isProcessingOperation = true;
+    this.processId = operation.processId;
+
+    logger.log({
+      at: "awaiter - starting process",
+      processId: this.processId,
+      queueLength: this.operationQueue.length,
+      waitTime: Date.now() - operation.timestamp
+    });
+
+    operation.resolve();
+  }
+
+  /**
+   * Finishes the current operation and processes the next one in the queue
+   */
+  private finishOperation() {
+    this.isProcessingOperation = false;
+    this.processQueue(); // Process next operation in queue
+  }
+
+  /**
+   * Clears the operation queue (useful for cleanup or error recovery)
+   */
+  private clearQueue() {
+    logger.debug({
+      at: "clearQueue",
+      queueLength: this.operationQueue.length
+    });
+    this.operationQueue = [];
+    this.isProcessingOperation = false;
   }
 
   /**
@@ -360,7 +433,7 @@ export class SurrealPersistence implements IPersistence {
       if (resource === Resource.file && records[0].data) {
         result = await this.instance?.insert<T>(resource, records);
         logger.log({ at: "SurrealPersistence.insert", resource, result });
-        this.isProcessingOperation = false;
+        this.finishOperation();
         return result ?? null;
       } else if (resource === Resource.link) {
         result = await this._insert(resource, records, { isRelation: true });
@@ -405,7 +478,10 @@ export class SurrealPersistence implements IPersistence {
       for (const record of records) {
         let recordId;
         try {
-          const { query, id } = resolveUpsertQuery(resource, record);
+          const { query, id } = resolveUpsertQuery(
+            resource as Resource,
+            record
+          );
           recordId = id;
           await this.instance?.query(query);
         } catch (e) {
@@ -425,7 +501,7 @@ export class SurrealPersistence implements IPersistence {
     } catch (e: any) {
       logger.error({ at: "SurrealPersistence.upsert", message: e.message });
     } finally {
-      this.isProcessingOperation = false;
+      this.finishOperation();
     }
   }
 
@@ -435,13 +511,13 @@ export class SurrealPersistence implements IPersistence {
     params?: { isUpsert?: boolean; isRelation?: boolean }
   ) {
     try {
-      const query = resolveInsertQuery(resource, records, params);
+      const query = resolveInsertQuery(resource as Resource, records, params);
       const result = await this.instance?.query(query);
       return result;
     } catch (e) {
       logger.error({ at: "SurrealPersistence.bulkInsert", e });
     } finally {
-      this.isProcessingOperation = false;
+      this.finishOperation();
     }
     return null;
   }
@@ -497,7 +573,7 @@ export class SurrealPersistence implements IPersistence {
         (!result[0] || (Array.isArray(result[0]) && result[0].length === 0))
       ) {
         const resource = record.id.toString().split(":")[0];
-        const insertQuery = resolveInsertQuery(resource, [record]);
+        const insertQuery = resolveInsertQuery(resource as Resource, [record]);
         logger.log({
           at: "SurrealPersistence.merge - record not present, fallback to insert",
           record,
@@ -514,7 +590,7 @@ export class SurrealPersistence implements IPersistence {
     } catch (e: any) {
       logger.error({ at: "SurrealPersistence.merge", message: e.message });
     } finally {
-      this.isProcessingOperation = false;
+      this.finishOperation();
       logger.log({
         at: "SurrealPersistence.merge - finally",
         isProcessingOperation: this.isProcessingOperation
@@ -543,7 +619,7 @@ export class SurrealPersistence implements IPersistence {
     } catch (e) {
       logger.error({ at: "SurrealPersistence.delete", e });
     } finally {
-      this.isProcessingOperation = false;
+      this.finishOperation();
     }
     return null;
   }
@@ -563,7 +639,7 @@ export class SurrealPersistence implements IPersistence {
     } catch (e) {
       logger.error({ at: "SurrealPersistence.delete", e });
     } finally {
-      this.isProcessingOperation = false;
+      this.finishOperation();
     }
     return null;
   }
@@ -585,7 +661,7 @@ export class SurrealPersistence implements IPersistence {
   async bulkEditTemp<T extends IResource | IMetaResource>(
     resource: Resource,
     records: T[]
-  ): Promise<any> | undefined {
+  ): Promise<any> {
     try {
       await this.awaiter("bulkEditTemp_" + resource);
       const query = resolveBulkMergeQuery(resource, records);
@@ -605,7 +681,7 @@ export class SurrealPersistence implements IPersistence {
     } catch (e) {
       logger.error({ at: "SurrealPersistence.bulkEditTemp", e });
     } finally {
-      this.isProcessingOperation = false;
+      this.finishOperation();
     }
     return undefined;
   }
@@ -621,7 +697,7 @@ export class SurrealPersistence implements IPersistence {
     } catch (e) {
       logger.error({ at: "SurrealPersistence.query", e });
     } finally {
-      this.isProcessingOperation = false;
+      this.finishOperation();
     }
     return null;
   }
@@ -632,35 +708,119 @@ export class SurrealPersistence implements IPersistence {
    *
    * @param resourceId
    * @param properties
+   * @param signal
    * @returns
    */
-  async select(resourceId: IRecordId, properties?: string[]): Promise<any> {
+  async select(
+    resourceId: IRecordId,
+    properties?: string[],
+    signal?: AbortSignal
+  ): Promise<any> {
     try {
-      await this.awaiter("select_" + resourceId);
+      // Check if operation was aborted before starting
+      if (signal?.aborted) {
+        throw new Error("Operation aborted");
+      }
+
+      await this.awaiter("select_" + resourceId, signal);
+
+      // Check if operation was aborted after awaiter
+      if (signal?.aborted) {
+        throw new Error("Operation aborted");
+      }
+
       const query = resolveSelectQuery(resourceId, properties);
-      logger.log({ at: "SurrealPersistence.select", query, resourceId });
-      const result = await this.instance?.query_raw(query);
+      const logResource: Resource = Resource.everything;
+      if (resourceId.toString().includes(logResource)) {
+        logger.debug({ at: "SurrealPersistence.select", query, resourceId });
+        console.time(
+          `SurrealPersistence.select - ${logResource} - ${resourceId}`
+        );
+      }
+      const result = await this.queryRawWithSignal(query, undefined, signal);
+      if (resourceId.toString().includes(logResource)) {
+        console.timeEnd(
+          `SurrealPersistence.select - ${logResource} - ${resourceId}`
+        );
+        logger.debug({ at: "SurrealPersistence.select - result", result });
+      }
       return interceptSurrealResponse(result);
     } catch (e: any) {
+      if (e instanceof Error && e.message === "Operation aborted") {
+        logger.log({ at: "SurrealPersistence.select - aborted", e });
+        throw e;
+      }
       logger.error({ at: "SurrealPersistence.select", message: e.message });
     } finally {
-      this.isProcessingOperation = false;
+      this.finishOperation();
     }
     return null;
   }
 
+  /**
+   * Wraps queryRaw with abort signal support using Promise.race
+   * @param query - The query to execute
+   * @param params - Query parameters
+   * @param signal - AbortSignal to cancel the operation
+   * @returns Promise that resolves with query result or rejects if aborted
+   */
+  private async queryRawWithSignal(
+    query: string,
+    params?: any,
+    signal?: AbortSignal
+  ): Promise<any> {
+    if (!this.instance) {
+      throw new Error("Database instance not available");
+    }
+
+    // If no signal provided, just execute normally
+    if (!signal) {
+      return this.instance.queryRaw(query, params);
+    }
+
+    // If already aborted, reject immediately
+    if (signal.aborted) {
+      throw new Error("Operation aborted");
+    }
+
+    // Create abort promise that rejects when signal is aborted
+    const abortPromise = new Promise((_, reject) => {
+      const abortHandler = () => {
+        signal.removeEventListener("abort", abortHandler);
+        reject(new Error("Operation aborted"));
+      };
+      signal.addEventListener("abort", abortHandler);
+    });
+
+    // Race between the query and abort signal
+    return Promise.race([this.instance.queryRaw(query, params), abortPromise]);
+  }
+
   async selectMany(
     resource: Resource,
-    params?: IResourceSelectParams
+    params?: IResourceSelectParams,
+    signal?: AbortSignal
   ): Promise<any> {
     try {
-      await this.awaiter("selectMany_" + resource);
+      // Check if operation was aborted before starting
+      if (signal?.aborted) {
+        throw new Error("Operation aborted");
+      }
+
+      await this.awaiter("selectMany_" + resource, signal);
+
+      // Check if operation was aborted after awaiter
+      if (signal?.aborted) {
+        throw new Error("Operation aborted");
+      }
+
       const query = resolveSelectManyQuery(resource, params);
       const instance = generateMiniRandomId();
       const logResources: Resource[] = [];
       if (logResources.includes(resource)) {
         logger.debug({
           at: "SurrealPersistence.selectMany - query",
+          aborted: signal?.aborted,
           resource,
           query,
           params
@@ -669,13 +829,14 @@ export class SurrealPersistence implements IPersistence {
           `SurrealPersistence.selectMany - ${resource} - ${instance}`
         );
       }
-      const result = await this.instance?.queryRaw(query, params);
+      const result = await this.queryRawWithSignal(query, params, signal);
       if (logResources.includes(resource)) {
         console.timeEnd(
           `SurrealPersistence.selectMany - ${resource} - ${instance}`
         );
         logger.debug({
           at: "SurrealPersistence.selectMany - result",
+          aborted: signal?.aborted,
           resource,
           result,
           query,
@@ -684,9 +845,17 @@ export class SurrealPersistence implements IPersistence {
       }
       return interceptSurrealResponse(result);
     } catch (e: any) {
-      logger.error({ at: "SurrealPersistence.selectMany", message: e.message });
+      if (e instanceof Error && e.message === "Operation aborted") {
+        logger.log({ at: "SurrealPersistence.selectMany - aborted", e });
+        // throw e;
+      } else {
+        logger.error({
+          at: "SurrealPersistence.selectMany",
+          message: e.message
+        });
+      }
     } finally {
-      this.isProcessingOperation = false;
+      this.finishOperation();
     }
     return null;
   }

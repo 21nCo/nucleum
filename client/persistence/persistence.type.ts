@@ -48,7 +48,11 @@ export enum ClientStorageKey {
   /**
    * Clipper extension toolbar state for guest users.
    */
-  GUEST_TOOLBAR_STATE = "guestToolbarState"
+  GUEST_TOOLBAR_STATE = "guestToolbarState",
+  /**
+   * Tracks which fallback functions have been run to prevent re-execution
+   */
+  FALLBACKS_RUN_STATUS = "fallbacksRunStatus"
 }
 
 export interface IPersistence {
@@ -73,12 +77,14 @@ export interface IPersistence {
 
   selectMany(
     resource: Resource,
-    params?: IResourceSelectParams
+    params?: IResourceSelectParams,
+    signal?: AbortSignal
   ): Promise<any> | undefined;
 
   select(
     resourceId: IRecordId,
-    properties?: string[]
+    properties?: string[],
+    signal?: AbortSignal
   ): Promise<any> | undefined;
 }
 

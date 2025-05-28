@@ -98,7 +98,7 @@
         <span class="flex items-center justify-center">
           <span
             class={cn(
-              "text-b2 text-left w-7 h-7 rounded-full flex items-center justify-center",
+              "text-b2 text-left w-7 h-7 rounded-full flex items-center justify-center default-typeface",
               {
                 "text-fgs3": isNotCurrentMonth,
                 "bg-aps1 text-abg": isSelected,

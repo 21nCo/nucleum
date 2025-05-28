@@ -68,11 +68,7 @@
     })}
     on:click
   >
-    <NodeAvatar
-      node={item}
-      size={accessPoint === ResourceAccessPoint.SELF ? Size.md : Size.sm}
-      {accessPoint}
-    />
+    <NodeAvatar node={item} {accessPoint} />
     {#if item.labelSearch}
       <span>
         {@html renderMdAsHtml(item.labelSearch)}

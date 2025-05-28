@@ -1,27 +1,11 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import { appLoadingState, appStore } from "$lib/client/stores/app.store";
-  import {
-    scheduledNotifications,
-    toasts
-  } from "$lib/client/stores/notification.store";
-  import {
-    postMessageToParent,
-    postToParent
-  } from "$lib/client/utils/embed.utils";
-  import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
+  import { toasts } from "$lib/client/stores/notification.store";
   import context from "$lib/client/stores/context.store";
-  import view from "$lib/client/stores/view.store";
-  import AppSplitView from "$lib/client/layout/AppSplitView.svelte";
   import MemotronNotifications from "./MemotronNotifications.svelte";
   import UserBaseLayer from "$lib/client/layout/layers/UserBaseLayer.svelte";
   import { MemotronAction } from "../memotronAction.enum";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { InteractionMode } from "$lib/client/components/settings/interactionMode/interactionMode.type";
-  import { Embed } from "$lib/client/types/context.type";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
-  import CommandModePage from "$lib/client/components/commandBar/CommandModePage.svelte";
   import {
     clipTextSearchFallback,
     collectionResourceBackPropagation,
@@ -29,43 +13,13 @@
     collectionsListOnRecords,
     lowResThumbnailsBackPropagation
   } from "./fallbacks";
-  import LeftNav from "$lib/client/layout/leftPanel/LeftNav.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
-  import TopNav from "$lib/client/layout/topNav/TopNav.svelte";
-  let isLiteMode = $context.isEmbed && $context.isSheet;
-  let isHideLeftNavBar: boolean = refreshSidebarState();
-  const isDebug = import.meta.env?.DEV;
+  import { FallbackTracker } from "$lib/client/utils/fallbackTracker.utils";
+  import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
+  import { GlobalEvent } from "$lib/client/types/event.enum";
 
-  onMount(async () => {
-    initializeData();
-    $appLoadingState.isLocalLoaded = true;
-  });
-  async function handleVisibilityChange() {
-    if (document?.hidden) {
-      const registration = await navigator?.serviceWorker?.ready;
-      if ($scheduledNotifications.length > 0) {
-        registration?.active?.postMessage({
-          type: "SCHEDULE_NOTIFICATIONS",
-          notifications: $scheduledNotifications
-        });
-        postToParent({
-          notifications: $scheduledNotifications
-        });
-      }
-    } else {
-      postMessageToParent(EmbedMessage.CLEAR_NOTIFICATIONS);
-      $scheduledNotifications = [];
-      navigator?.serviceWorker?.controller?.postMessage({
-        type: "CLEAR_NOTIFICATIONS"
-      });
-    }
-  }
-  async function initializeData() {
-    if (isLiteMode) return;
-  }
-  function refreshSidebarState() {
-    return uiState.getState(UIState.isHideLeftNavBar);
-  }
+  let isLiteMode = $context.isEmbed && $context.isSheet;
+  const isDebug = false; //import.meta.env?.DEV;
 
   function handlePaste(event: ClipboardEvent) {
     if (!$appStore.isDnDPageActive) {
@@ -97,64 +51,59 @@
     }
   }
   async function onUserBaseLayerReady() {
+    if (isLiteMode) return;
     if (!isDebug) await runFallbacks();
+    $appLoadingState.isLocalLoaded = true;
   }
+
   async function runFallbacks() {
     try {
-      await clipTextSearchFallback();
-      await collectionResourceBackPropagation();
-      await headingNodeParentBackPropagation();
-      await collectionsListOnRecords();
+      dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
+        message: "Updating the app...",
+        subMessage: ""
+      });
+      await FallbackTracker.runIfNotCompleted(
+        "clipTextSearchFallback",
+        clipTextSearchFallback
+      );
+      await FallbackTracker.runIfNotCompleted(
+        "collectionResourceBackPropagation",
+        collectionResourceBackPropagation
+      );
+      await FallbackTracker.runIfNotCompleted(
+        "headingNodeParentBackPropagation",
+        headingNodeParentBackPropagation
+      );
+      await FallbackTracker.runIfNotCompleted(
+        "collectionsListOnRecords",
+        collectionsListOnRecords
+      );
       if (!$context.isEmbed) {
         toasts.showProgress("update", "Updating the app");
-        await lowResThumbnailsBackPropagation();
+        await FallbackTracker.runIfNotCompleted(
+          "lowResThumbnailsBackPropagation",
+          lowResThumbnailsBackPropagation
+        );
       }
       // await migrateTo0_56_0();
     } catch (error) {
-      logger.error({ at: "lowResThumbnailsBackPropagation", error });
+      logger.error({ at: "runFallbacks", error });
     } finally {
       toasts.closeProgress("update");
+      dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
+        message: "Update completed.",
+        subMessage: "",
+        isFinished: true
+      });
     }
   }
 </script>
 
 <UserBaseLayer on:ready={onUserBaseLayerReady}>
-  {#if $appLoadingState.isBaseLoaded && $appLoadingState.isLocalLoaded}
-    {#if $appStore.interactionMode === InteractionMode.COMMAND_ONLY && $context.embed !== Embed.HANDSET}
-      <CommandModePage>
-        <slot />
-      </CommandModePage>
-    {:else}
-      <div class="flex flex-col w-full h-full">
-        <div class="flex w-full flex-grow">
-          {#if !isHideLeftNavBar || $appStore.interactionMode === InteractionMode.DEFAULT || $context.embed === Embed.HANDSET}
-            <LeftNav variant="fixed" />
-          {/if}
-          <div
-            class="flex flex-col h-full {$view.isPortrait
-              ? 'w-full'
-              : 'flex-grow'}"
-          >
-            {#if !$view.isPortrait}
-              <TopNav />
-            {/if}
-            <div class="w-full flex-grow">
-              <AppSplitView>
-                <slot name="main" slot="main">
-                  <slot />
-                </slot>
-              </AppSplitView>
-            </div>
-          </div>
-          <!-- <RightPanel /> -->
-        </div>
-      </div>
-    {/if}
-  {/if}
+  <slot />
   <MemotronNotifications />
 </UserBaseLayer>
 <svelte:document
-  on:visibilitychange={handleVisibilityChange}
   on:dragenter={handleDragEnter}
   on:dragleave={handleDragLeave}
 />

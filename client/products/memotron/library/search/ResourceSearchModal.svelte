@@ -27,9 +27,9 @@
   import LinkSearchResultItem from "../../common/linkbox/LinkSearchResultItem.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
-  import { searcheableResources } from "$local/local";
   import {
     determineResourceType,
+    resolveProductResources,
     resolveResourceIcon
   } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { tabs } from "$lib/client/layout/topNav/tabs/tabs.store";
@@ -45,13 +45,14 @@
   let isRefreshing: boolean = false;
   let searchResultsPopover: SearchResultsPopover;
   let dev_enableSemanticSearch: boolean = false;
+  const resources = resolveProductResources($appStore.product, "search");
   const switchItems = [
     {
       label: "Everything",
       value: Resource.everything,
       icon: "ph:asterisk-light"
     },
-    ...searcheableResources
+    ...(resources ?? [])
       .filter((x) => !($view.isConstrainedWidth && x === Resource.task))
       .map((x) => ({
         label: properCase(x) + "s",

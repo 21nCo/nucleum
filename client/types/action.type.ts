@@ -170,7 +170,11 @@ export enum ActionType {
   /**
    * Action will be opened as a resource.
    */
-  RESOURCE = "RESOURCE"
+  RESOURCE = "RESOURCE",
+  /**
+   * Component specifically for caching.
+   */
+  CACHE = "CACHE"
 }
 
 /**

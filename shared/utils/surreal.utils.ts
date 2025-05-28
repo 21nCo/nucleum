@@ -507,7 +507,7 @@ function generateWhereClause(
       } else if ("contains" in value) {
         conditions.push(`${key} CONTAINS ${formatValue(value.contains)}`);
       } else if ("notEquals" in value) {
-        conditions.push(`${key} != ${formatValue(value.notEquals)}`);
+        conditions.push(`${key} IS NOT ${formatValue(value.notEquals)}`);
       }
     } else if (typeof value === "boolean") {
       if (value === true) {

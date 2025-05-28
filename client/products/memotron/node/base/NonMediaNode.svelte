@@ -115,6 +115,7 @@
     if (selectedView === NodeView.CONTENT) {
       await node.init($node.accessMode);
       refreshId = new Date().getTime();
+      await node.afterInit();
     }
   }
 </script>
@@ -169,7 +170,7 @@
               >
                 {#if !$node.focusedBlock}
                   <div class="min-h-20" />
-                  {#if $node.types}
+                  {#if $node.types && $node.types.length > 0}
                     <span
                       class={cn("flex mo:mx-0 mx-12 -mb-6", {
                         "opacity-0": isStickied,
@@ -179,7 +180,7 @@
                       <NodeAvatar
                         node={$node}
                         accessPoint={ResourceAccessPoint.SELF}
-                        size={40}
+                        isExpandedContext={true}
                       />
                     </span>
                   {/if}
@@ -192,11 +193,10 @@
                       }
                     )}
                   >
-                    {#if isStickied && $node.types}
+                    {#if isStickied && $node.types && $node.types.length > 0}
                       <NodeAvatar
                         node={$node}
                         accessPoint={ResourceAccessPoint.SELF}
-                        size={Size.sm}
                       />
                     {/if}
                     {#if !isReadOnlyMode}

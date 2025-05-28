@@ -41,7 +41,7 @@ export type IActiveCollection = IActiveResource &
   ICollectionExpanded & {
     isViewDataLoading: boolean;
     isPageLoading: boolean;
-    totalNodeCount: number;
+    totalItemCount: number;
     views: ICollectionViewWithData[];
   };
 

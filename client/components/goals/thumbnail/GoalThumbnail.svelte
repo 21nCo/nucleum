@@ -7,7 +7,6 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { type IGoalThumb } from "../goal.type";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import {
     currentFocusItem,
@@ -112,8 +111,4 @@
   </CustomColorPropagator>
 </ResourceThumbnailBase>
 
-<ComponentBaseLayer
-  subscribeToResource={new Set([Resource.goal])}
-  subscribeToRecords={[item.id]}
-  on:change={onGoalChanges}
-/>
+<ComponentBaseLayer subscribeToRecords={[item.id]} on:change={onGoalChanges} />

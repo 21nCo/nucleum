@@ -10,7 +10,10 @@ import {
 } from "./browser.utils";
 import { clientStorage } from "../persistence/persistence.utils";
 import { detectTimeZone } from "./time.utils";
-import { relayToBackgroundScript, relayToContentScript } from "./extension.utils";
+import {
+  relayToBackgroundScript,
+  relayToContentScript
+} from "./extension.utils";
 import { ExtensionEvent } from "../types/extension.type";
 import { relayToSidePanel } from "./extension.utils";
 

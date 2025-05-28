@@ -2,7 +2,6 @@
   import CalendarHeader from "./CalendarHeader.svelte";
   import MonthView from "./MonthView.svelte";
   import WeekView from "./WeekView.svelte";
-  import DayView from "./DayView.svelte";
   import YearView from "./YearView.svelte";
   import CalendarLayoutView from "../CalendarLayout.svelte";
   import view from "$lib/client/stores/view.store";
@@ -15,7 +14,6 @@
     type ICalendarIndicatorData
   } from "../calendar.type";
   import { resizable } from "$lib/client/actions/resize.action";
-  import context from "$lib/client/stores/context.store";
   import { debouncer } from "$lib/client/utils/utils";
   import { cn } from "$lib/client/utils/ui.utils";
   import {
@@ -28,6 +26,8 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { Product } from "$lib/client/types/product.type";
   import { NodeMetaType } from "$lib/client/products/memotron/node/node.type";
+  import { cache } from "$lib/client/layout/layers/cache/cache.store";
+  import { CacheKey } from "$lib/client/layout/layers/cache/cache.type";
   export let panel: CalendarLayout = CalendarLayout.Classic;
 
   let selectedDate = new Date();
@@ -118,8 +118,14 @@
     if (compareObjects(currentDateFilterForIndicatorData, dateFilter)) {
       return;
     }
-    isRefreshing = true;
-    indicatorData = [];
+    const cachedData = cache.retrieve(CacheKey.CALENDAR_CACHE);
+    const dateFilterCached = cachedData?.[selectedView]?.dateFilter;
+    if (dateFilterCached && compareObjects(dateFilterCached, dateFilter)) {
+      indicatorData = cachedData[selectedView].indicatorData;
+    } else {
+      indicatorData = [];
+      isRefreshing = true;
+    }
     currentDateFilterForIndicatorData = dateFilter;
     const promises = resourcesForIndicators.map((resource) => {
       let filters: any = {};
@@ -179,6 +185,10 @@
       };
     });
     console.timeEnd("refreshIndicatorData");
+    cache.replaceUsingSubKey(CacheKey.CALENDAR_CACHE, selectedView, {
+      dateFilter,
+      indicatorData
+    });
     isRefreshing = false;
   }
 

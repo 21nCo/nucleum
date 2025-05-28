@@ -207,7 +207,6 @@
   </div>
 </div>
 <ComponentBaseLayer
-  subscribeToResource={new Set([Resource.collection])}
   subscribeToRecords={$item.types?.map((x) => x.id) ?? []}
   on:change={refreshTypeData}
 />

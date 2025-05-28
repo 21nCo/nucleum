@@ -50,11 +50,13 @@ export type IFluxMethod =
 interface IFluxSelectManyArgs {
   resource: Resource;
   params?: IResourceSelectParams;
+  signal?: AbortSignal;
 }
 
 interface IFluxSelectArgs {
   resourceId: IRecordId;
   properties?: string[];
+  signal?: AbortSignal;
 }
 
 interface IFluxMutationArgs<T> {

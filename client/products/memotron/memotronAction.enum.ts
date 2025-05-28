@@ -29,6 +29,5 @@ export enum MemotronAction {
    */
   BULK_LINK = "bulk-link",
   OPEN_CHAT = "open-chat",
-  CALLOUT_SETTINGS = "edit-callout-settings",
-  DATA_SETTINGS = "data-settings"
+  CALLOUT_SETTINGS = "edit-callout-settings"
 }

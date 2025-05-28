@@ -525,6 +525,15 @@ export type IResourceSelectAdditionalParams = {
    * Whether to include meta items of the resource.
    */
   isIncludeMetaItems?: boolean;
+
+  /**
+   * When this is set to true, the query will be executed as is without any filter editing by the resource store.
+   */
+  isQueryAsIs?: boolean;
+  /**
+   * AbortSignal to cancel the operation when the component unmounts
+   */
+  signal?: AbortSignal;
 };
 
 export enum RemovalProperty {

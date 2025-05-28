@@ -15,5 +15,5 @@
   {#if icon}
     <Icon {icon} size={Size.sm} class="stroke-fgs3" />
   {/if}
-  <span class="text-b3 text-fgs2">{fullLabel}</span>
+  <span class="text-b3 text-fgs2 default-typeface">{fullLabel}</span>
 </span>

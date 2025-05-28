@@ -21,7 +21,6 @@
   import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { focusAggregates } from "../../analytics/analytics.store";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { createEventDispatcher } from "svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
@@ -271,8 +270,4 @@
     {/if}
   </CustomColorPropagator>
 {/if}
-<ComponentBaseLayer
-  subscribeToResource={new Set([Resource.goal])}
-  subscribeToRecords={[item.id]}
-  on:change={onGoalChanges}
-/>
+<ComponentBaseLayer subscribeToRecords={[item.id]} on:change={onGoalChanges} />

@@ -14,7 +14,6 @@
   import CollectionPropertyCount from "../counts/CollectionPropertyCount.svelte";
   import CollectionNodeCount from "../counts/CollectionItemCount.svelte";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import CollectionThumbnailLabel from "./CollectionThumbnailLabel.svelte";
   import CollectionThumbnailAvatar from "./CollectionThumbnailAvatar.svelte";
   export let item: ICollectionThumb;
@@ -77,7 +76,6 @@
 </ResourceThumbnailBase>
 
 <ComponentBaseLayer
-  subscribeToResource={new Set([Resource.collection])}
   subscribeToRecords={[item.id]}
   on:change={onCollectionChange}
 />

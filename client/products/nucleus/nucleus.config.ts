@@ -1,7 +1,5 @@
-import {
-  collectionStore,
-  viewStore
-} from "$lib/client/components/collection/collection.store";
+import { collectionStore } from "$lib/client/components/collection/collection.store";
+import { viewStore } from "$lib/client/components/collection/view.store";
 import {
   nodeStore,
   vectorResourceStore
@@ -28,9 +26,7 @@ import {
   manualLogStore,
   sessionLogStore
 } from "$lib/client/products/pointron/logs/log.store";
-import {
-  pointronPreferences
-} from "$lib/client/products/pointron/pointron.store";
+import { pointronPreferences } from "../pointron/pointron.store";
 
 export const nucleusCacheableStores: IStore[] = [
   nodeStore,
@@ -52,12 +48,8 @@ export const nucleusCacheableStores: IStore[] = [
   focusHeatmapStore,
   sessionLogStore,
   sessionStore,
-  collectionStore,
-  viewStore,
   goalStore,
-  taskStore,
-  linker,
-  propertyStore
+  taskStore
 ];
 
 export const nucleusRemoteOnlyStores: IStore[] = [

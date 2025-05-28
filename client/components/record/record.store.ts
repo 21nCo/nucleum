@@ -37,6 +37,7 @@ import {
 import {
   determineResourceType,
   isSameResource,
+  resolveProductResources,
   resourceInList
 } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { recentsStore } from "./recent.store";
@@ -44,7 +45,6 @@ import { get } from "svelte/store";
 import { resolveCollectionResource } from "../collection/collection.utils";
 import { goalStore } from "../goals/goal.store";
 import { Action } from "$lib/client/types/action.enum";
-import { searcheableResources } from "$local/local";
 import { taskStore } from "../tasks/task.store";
 import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
 import { resolveResourceStore } from "../flux/resourceStores/store.resolver";
@@ -71,10 +71,17 @@ export class SearchStore {
   resource: Resource = Resource.everything;
   dev_isUseIndexSearch: boolean = false;
   collectibleResource: Resource[] | undefined;
+  searcheableResources: Resource[] | undefined;
   resourceStore: ResourceStore<any> | undefined;
+  /**
+   * Test run for pre filtering by loading all records first into memory - then querying only the filtered records for expansion like joins.
+   */
+  isPreFilterBeforeExpand: boolean = false;
   constructor(resource: Resource = Resource.everything) {
     this.resource = resource;
-    this.collectibleResource = resolveCollectionResource(get(appStore).product);
+    const product = get(appStore).product;
+    this.searcheableResources = resolveProductResources(product);
+    this.collectibleResource = resolveCollectionResource(product);
     if (resource !== Resource.everything) {
       this.setResourceStore(resource);
     }
@@ -206,15 +213,22 @@ export class SearchStore {
     isExpand?: boolean;
     properties?: string[];
     isIncludeMetaItems?: boolean;
+    signal?: AbortSignal;
   }) {
     this.resource = params.resource ?? this.resource;
     logger.log({
       at: "SearchStore.refresh",
       params
     });
+
+    // Check if operation was aborted before starting
+    if (params.signal?.aborted) {
+      throw new Error("Operation aborted");
+    }
+
     let data: any;
     const selectParams = {
-      properties: params.properties ?? [labelSearchProp],
+      properties: params.properties ?? [labelSearchProp, "modifiedAt"],
       filters: params.filters,
       search: isValidString(params.searchQuery)
         ? {
@@ -228,12 +242,18 @@ export class SearchStore {
         modifiedAt: "desc"
       },
       searchType: params.searchType,
-      semanticSearchTopK: params.semanticSearchTopK
+      semanticSearchTopK: params.semanticSearchTopK,
+      signal: params.signal
     };
-    if (this.resource === Resource.everything) {
+    if (this.resource === Resource.everything && this.searcheableResources) {
       data = (
         await Promise.all(
-          searcheableResources.map(async (resource) => {
+          this.searcheableResources.map(async (resource) => {
+            // Check if operation was aborted before each resource
+            if (params.signal?.aborted) {
+              throw new Error("Operation aborted");
+            }
+
             if (isValidString(params.searchQuery)) {
               selectParams.search = {
                 query: params.searchQuery!,
@@ -245,7 +265,8 @@ export class SearchStore {
               isIncludeSubItems: params.isIncludeSubItems,
               isExpand: params.isExpand ?? true,
               isIgnoreParentInactive: params.isIgnoreParentInactive,
-              isIncludeMetaItems: params.isIncludeMetaItems
+              isIncludeMetaItems: params.isIncludeMetaItems,
+              signal: params.signal
             });
             return Array.isArray(result) ? result : [];
           })
@@ -253,12 +274,66 @@ export class SearchStore {
       ).flat();
     } else {
       this.setResourceStore(this.resource);
-      data = await this.resourceStore?.selectMany(selectParams, {
-        isIncludeSubItems: params.isIncludeSubItems,
-        isIgnoreParentInactive: params.isIgnoreParentInactive,
-        isExpand: params.isExpand ?? true,
-        isIncludeMetaItems: params.isIncludeMetaItems
-      });
+      if (this.isPreFilterBeforeExpand && this.resource === Resource.node) {
+        // Check if operation was aborted before first query
+        if (params.signal?.aborted) {
+          throw new Error("Operation aborted");
+        }
+
+        const allRecords = await this.resourceStore?.selectMany(
+          {
+            properties: [
+              "id",
+              "isArchived",
+              "trashInformation",
+              "contentType",
+              "isStarred"
+            ]
+          },
+          {
+            isQueryAsIs: true,
+            signal: params.signal
+          }
+        );
+
+        // Check if operation was aborted after first query
+        if (params.signal?.aborted) {
+          throw new Error("Operation aborted");
+        }
+
+        const activeRecords = allRecords
+          .filter((x: any) => rootNodeTypeList.includes(x.contentType))
+          .filter((x: any) =>
+            params.filters?.isStarred ? x.isStarred === true : true
+          )
+          .filter((x: any) => {
+            if (params.filters?.isArchived) {
+              return x.isArchived === true;
+            }
+            return true;
+          })
+          .slice(params.offset ?? 0, params.offset + (params.limit ?? 50));
+        data = await this.resourceStore?.selectMany(
+          {
+            filters: {
+              id: activeRecords.map((x) => x.id?.toString())
+            }
+          },
+          {
+            isQueryAsIs: true,
+            isExpand: true,
+            signal: params.signal
+          }
+        );
+      } else {
+        data = await this.resourceStore?.selectMany(selectParams, {
+          isIncludeSubItems: params.isIncludeSubItems,
+          isIgnoreParentInactive: params.isIgnoreParentInactive,
+          isExpand: params.isExpand ?? true,
+          isIncludeMetaItems: params.isIncludeMetaItems,
+          signal: params.signal
+        });
+      }
     }
     if (isValidArray(data)) {
       if (isValidString(params.searchQuery)) {
@@ -430,32 +505,44 @@ export class SearchStore {
     );
   }
 
-  async resolveCount(
-    resource: Resource,
-    subType?: NodeType | CollectionType,
-    additionalFilters?: any
-  ) {
+  async resolveCount(params?: {
+    resource?: Resource;
+    subType?: NodeType | CollectionType;
+    filters?: IResourceSelectFilters;
+    signal?: AbortSignal;
+  }) {
     try {
+      // Check if operation was aborted before starting
+      if (params?.signal?.aborted) {
+        throw new Error("Operation aborted");
+      }
+
       logger.log({
         at: "resolveCount",
-        resource,
-        subType,
-        additionalFilters
+        params
       });
-      this.resource = resource;
+      let resource = params?.resource ?? this.resource;
       if (resource === Resource.node) {
-        const result = await flux.selectMany(resource, {
-          properties: ["count()"],
-          filters: {
-            ...activeResourceFilterV2,
-            ...additionalFilters,
-            isArchived: additionalFilters?.isArchived ?? false,
-            contentType: subType ? [subType] : [...rootNodeTypeList],
-            metaType: false,
-            creationContext: subType ? undefined : false
+        const result = await flux.selectMany(
+          resource,
+          {
+            properties: ["count()"],
+            filters: {
+              ...activeResourceFilterV2,
+              ...(params?.filters ?? {}),
+              isArchived: params?.filters?.isArchived ?? false,
+              contentType: params?.subType
+                ? [params.subType]
+                : [...rootNodeTypeList],
+              metaType: false,
+              creationContext: params?.subType ? undefined : false
+            },
+            groupBy: ["all"]
           },
-          groupBy: ["all"]
-        });
+          {
+            signal: params?.signal
+          }
+        );
         return result?.[0]?.count;
       } else if (
         resource === Resource.collection ||
@@ -465,58 +552,86 @@ export class SearchStore {
         resource === Resource.relation
       ) {
         if (resource === Resource.relation) resource = Resource.linkTag;
-        this.setResourceStore(this.resource);
+        this.setResourceStore(resource);
         const selectParams = {
           properties: ["count()"],
           filters: {
             ...activeResourceFilterV2,
-            ...(additionalFilters ?? {}),
+            ...(params?.filters ?? {}),
             ...(resource === Resource.collection && this.collectibleResource
               ? {
                   resource: this.collectibleResource
                 }
               : {}),
-            isArchived: additionalFilters?.isArchived ?? false,
+            isArchived: params?.filters?.isArchived ?? false,
             type:
-              subType && resource === Resource.goal
-                ? subType
-                : subType
-                  ? [subType]
+              params?.subType && resource === Resource.goal
+                ? params.subType
+                : params?.subType
+                  ? [params.subType]
                   : undefined
           },
           groupBy: ["all"]
         };
-        const result = await this.resourceStore?.selectMany(selectParams);
+        const result = await this.resourceStore?.selectMany(selectParams, {
+          signal: params?.signal
+        });
+        console.log({
+          at: "SearchStore.resolveCount",
+          resource,
+          result,
+          resourceStore: this.resourceStore
+        });
         // const resultOld = await flux.selectMany(resource, selectParams);
         return result?.[0]?.count;
       }
     } catch (e) {
+      if (e instanceof Error && e.message === "Operation aborted") {
+        logger.log({ at: "resolveCount - aborted", e });
+        throw e;
+      }
       logger.error({ at: "resolveCount", error: e });
       return 0;
     }
   }
 
-  resolveSubTypeCounts(resource: Resource, additionalFilters?: any) {
+  resolveSubTypeCounts(
+    resource: Resource,
+    additionalFilters?: any,
+    signal?: AbortSignal
+  ) {
     try {
       if (resource === Resource.node) {
-        return flux.selectMany(resource, {
-          properties: ["count()", "contentType as type"],
-          filters: {
-            ...activeResourceFilterV2,
-            ...additionalFilters
+        return flux.selectMany(
+          resource,
+          {
+            properties: ["count()", "contentType as type"],
+            filters: {
+              ...activeResourceFilterV2,
+              ...additionalFilters
+            },
+            groupBy: ["type"]
           },
-          groupBy: ["type"]
-        });
+          {
+            signal
+          }
+        );
       } else if (
         resource === Resource.collection ||
         resource === Resource.combination ||
         resource === Resource.task
       ) {
-        return flux.selectMany(resource, {
-          properties: ["count()", "type"],
-          filters: { ...activeResourceFilterV2, ...additionalFilters },
-          groupBy: ["type"]
-        });
+        return flux.selectMany(
+          resource,
+          {
+            properties: ["count()", "type"],
+            filters: { ...activeResourceFilterV2, ...additionalFilters },
+            groupBy: ["type"]
+          },
+          {
+            signal
+          }
+        );
       }
     } catch (e) {
       logger.error({ at: "resolveSubTypeCounts", error: e });

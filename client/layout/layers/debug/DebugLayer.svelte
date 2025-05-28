@@ -15,6 +15,7 @@
   import { dataManager } from "$lib/client/persistence/dataManager";
   import account from "$lib/client/stores/account.store";
   import { Action } from "$lib/client/types/action.enum";
+  import { FallbackTracker } from "$lib/client/utils/fallbackTracker.utils";
   export let isShowAsPage: boolean = false;
   let isShowDebugOverlay: boolean = false;
   let environment: string = $appStore.env;
@@ -22,7 +23,10 @@
   let isDboUpdateInProgress: boolean = false;
   let storageQuota: number | undefined;
   let storageUsage: number | undefined;
+  let fallbackStatuses: any = {};
+  let isShowFallbacks: boolean = false;
   checkStorage();
+  loadFallbackStatuses();
   function checkStorage() {
     try {
       navigator.storage.estimate().then((estimate) => {
@@ -36,6 +40,22 @@
   }
   function clearCache() {
     account.signOut();
+  }
+  async function loadFallbackStatuses() {
+    try {
+      fallbackStatuses = await FallbackTracker.getAll();
+    } catch (error) {
+      console.error("Failed to load fallback statuses:", error);
+      fallbackStatuses = {};
+    }
+  }
+  async function resetAllFallbacks() {
+    try {
+      await FallbackTracker.resetAll();
+      await loadFallbackStatuses();
+    } catch (error) {
+      console.error("Failed to reset fallbacks:", error);
+    }
   }
 </script>
 
@@ -96,6 +116,40 @@
       label="Storage used"
       value={storageUsage ? `${(storageUsage / 1000000).toFixed(2)} MB` : "NA"}
     />
+    <Divider colorStrength={ColorStrength.Strong} />
+    <div class="flex flex-col gap-1">
+      <div class="flex items-center gap-2">
+        <span class="text-sm font-semibold">Fallback Status</span>
+        <Button
+          size={Size.xs}
+          icon="refresh"
+          on:click={loadFallbackStatuses}
+          label="Refresh"
+        />
+        <Button
+          size={Size.xs}
+          type={ButtonVariant.DANGER}
+          style={ButtonStyle.OUTLINED}
+          icon="trash"
+          on:click={resetAllFallbacks}
+          label="Reset All"
+        />
+      </div>
+      {#if Object.keys(fallbackStatuses).length > 0}
+        <div class="text-xs max-h-32 overflow-y-auto">
+          {#each Object.entries(fallbackStatuses) as [name, status]}
+            <div
+              class="flex justify-between items-center py-1 border-b border-brs1"
+            >
+              <span class="truncate">{name}</span>
+              <span class="text-green-500 text-xs">✓</span>
+            </div>
+          {/each}
+        </div>
+      {:else}
+        <span class="text-xs text-fgs2">No fallbacks run yet</span>
+      {/if}
+    </div>
     <div class="flex flex-wrap gap-2 w-full justify-center items-center">
       <Button
         type={ButtonVariant.PRIMARY}
@@ -104,6 +158,14 @@
         }}
         icon="ph:terminal"
         label="Surreal console"
+      />
+      <Button
+        type={ButtonVariant.PRIMARY}
+        on:click={() => {
+          appStore.runAction("signaldb-console");
+        }}
+        icon="ph:terminal"
+        label="SignalDB console"
       />
       <Button
         icon="play"

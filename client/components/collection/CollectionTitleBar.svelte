@@ -234,7 +234,7 @@
         rightPartWidth = e.width;
       }}
     >
-      {#if !$collection.isInEditMode && $collection.totalNodeCount}
+      {#if !$collection.isInEditMode && $collection.totalItemCount}
         {@const isMiniSearch = rightPartWidth < 530}
         <div
           class={cn("flex rounded-full", {
@@ -248,7 +248,7 @@
           {#if isMiniSearch && !isSearchFocused}
             <Button
               icon="ph:magnifying-glass"
-              tooltip={resolveSearchPlaceholder($collection.totalNodeCount)}
+              tooltip={resolveSearchPlaceholder($collection.totalItemCount)}
               on:click={() => {
                 isSearchFocused = true;
                 setTimeout(() => {
@@ -262,7 +262,7 @@
               bind:value={searchQuery}
               bind:this={searchBoxRef}
               icon="ph:magnifying-glass"
-              placeholder={resolveSearchPlaceholder($collection.totalNodeCount)}
+              placeholder={resolveSearchPlaceholder($collection.totalItemCount)}
               on:focus={() => (isSearchFocused = true)}
               on:blur={() => (isSearchFocused = false)}
               on:input={onSearchQueryChange}

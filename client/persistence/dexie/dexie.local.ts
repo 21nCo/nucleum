@@ -316,13 +316,25 @@ export class DexiePersistence implements IPersistence {
 
   async selectMany(
     resource: Resource,
-    params?: IResourceSelectParams
+    params?: IResourceSelectParams,
+    signal?: AbortSignal
   ): Promise<any> | undefined {
+    // Check if operation was aborted before starting
+    if (signal?.aborted) {
+      throw new Error("Operation aborted");
+    }
+
     const query = this.translateToDexieQuery(
       this.instance?.table(resource),
       params
     );
     if (!query) return;
+
+    // Check if operation was aborted before executing query
+    if (signal?.aborted) {
+      throw new Error("Operation aborted");
+    }
+
     const result = await query;
     logger.log({
       at: "DexiePersistence.selectMany",
@@ -339,8 +351,14 @@ export class DexiePersistence implements IPersistence {
 
   select(
     resourceId: IRecordId,
-    properties?: string[]
+    properties?: string[],
+    signal?: AbortSignal
   ): Promise<any> | undefined {
+    // Check if operation was aborted before starting
+    if (signal?.aborted) {
+      throw new Error("Operation aborted");
+    }
+
     const resource = this.resolveResource(resourceId);
     // const id = this.resolveId(resourceId);
     const id = resourceId.toString();

@@ -28,7 +28,8 @@
     class={cn("flex flex-col h-full", {
       "w-full": isHideResourceType,
       "mo:w--4/5 w--3/4 min-w-0 flex-1": !isHideResourceType,
-      italic: !isHideResourceType && resourceType === Resource.collection
+      "font--mono italic":
+        !isHideResourceType && resourceType === Resource.collection
     })}
   >
     {#if resourceType === Resource.node}

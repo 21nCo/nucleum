@@ -48,13 +48,13 @@ import {
   resourceAction,
   resourceInList
 } from "$lib/client/components/flux/resourceStores/resource.utils";
-import { activeResourceFilterV2 } from "$lib/client/utils/utils";
 import { toasts } from "$lib/client/stores/notification.store";
 import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
 import { GlobalEvent } from "$lib/client/types/event.enum";
 import { Embed } from "$lib/client/types/context.type";
 import { appStore } from "$lib/client/stores/app.store";
 import { resolveCollectionResource } from "./collection.utils";
+import { viewStore } from "./view.store";
 
 class CollectionStore extends ResourceStore<ICollection> {
   collectibleResource: Resource[] | undefined;
@@ -79,6 +79,15 @@ class CollectionStore extends ResourceStore<ICollection> {
       ...(additionalParams?.isExpand ? expandedProps : []),
       ...(params?.properties ?? [])
     ];
+    if (additionalParams?.isQueryAsIs) {
+      return super.selectMany(
+        {
+          ...(params ?? {}),
+          properties
+        },
+        additionalParams
+      );
+    }
     const filters = {
       ...(params?.filters ?? {}),
       type:
@@ -218,29 +227,6 @@ class CollectionStore extends ResourceStore<ICollection> {
       }
     });
   }
-
-  /**
-   * TODO - use collection resource type instead of node directly
-   * @param collectionId
-   * @returns
-   */
-  async resolveItemsCount(collectionId: IRecordId) {
-    const links = await flux.selectMany(Resource.link, {
-      filters: {
-        out: collectionId.toString()
-      }
-    });
-    const nodes = await flux.selectMany(Resource.node, {
-      properties: ["id"],
-      filters: {
-        id: links.map((x) => x.in),
-        ...activeResourceFilterV2
-      }
-    });
-    if (nodes && Array.isArray(nodes)) {
-      return nodes.length;
-    }
-  }
 }
 
 export const collectionStore = new CollectionStore();
@@ -347,18 +333,6 @@ export class ActiveCollectionStore extends ActiveResourceStore<
     }
   }
 
-  async refreshTotalNodeCount() {
-    console.time("ActiveCollectionStore.refreshTotalNodeCount");
-    const totalNodeCount = await collectionStore.resolveItemsCount(this.id);
-    if (totalNodeCount) {
-      this.update((val) => {
-        val.totalNodeCount = totalNodeCount;
-        return val;
-      });
-    }
-    console.timeEnd("ActiveCollectionStore.refreshTotalNodeCount");
-  }
-
   async createView(viewToDuplicate?: IRecordId) {
     let viewToBeDuplicated: ICollectionView | undefined;
     let view: OmitForCapture<ICollectionView> | undefined;
@@ -455,7 +429,7 @@ export class ActiveCollectionStore extends ActiveResourceStore<
         view,
         response
       });
-      if (!response || !isValidArrayWithData(response)) {
+      if (!response || !isValidArrayWithData(response.items)) {
         this.update((val: IActiveCollection) => {
           val.isViewDataLoading = false;
           return val;
@@ -464,7 +438,8 @@ export class ActiveCollectionStore extends ActiveResourceStore<
       }
       this.update((val: IActiveCollection) => {
         val.isViewDataLoading = false;
-        view.data = [...response];
+        view.data = [...response.items];
+        val.totalItemCount = response.totalCount;
         return val;
       });
       return true;
@@ -507,61 +482,6 @@ export class ActiveCollectionStore extends ActiveResourceStore<
     return result;
   }
 }
-
-class CollectionViewStore extends ResourceStore<ICollectionView> {
-  constructor() {
-    super(Resource.view, {
-      dataType: StoreDataType.FIR
-    });
-  }
-  /**
-   * fetch node ids from link table where out is collection id for simple and typed collections
-   *
-   * for query collection direct querying node table based on filters
-   *
-   * use view filters and node ids to fetch nodes
-   * @param viewId
-   * @param collectionId
-   * @returns
-   */
-  async fetchViewData(
-    collectionId: IRecordId,
-    params?: {
-      view?: ICollectionView;
-      resource?: Resource;
-    }
-  ) {
-    const { view, resource } = params ?? {};
-    const items = await flux.selectMany(Resource.link, {
-      filters: {
-        out: collectionId.toString()
-      }
-    });
-    const ids = items.map((x) => x.in);
-    if (!resource || resource === Resource.node) {
-      const nodes = await flux.selectMany(Resource.node, {
-        properties: ["*", "parent.* as parent", "file.* as file"],
-        filters: {
-          id: ids,
-          ...activeResourceFilterV2
-        },
-        orderBy: {
-          modifiedAt: "desc"
-        }
-      });
-      return nodes;
-    } else if (resource === Resource.goal) {
-      const goals = await flux.selectMany(Resource.goal, {
-        filters: {
-          id: ids
-        }
-      });
-      return goals;
-    }
-  }
-}
-
-export const viewStore = new CollectionViewStore();
 
 export const collectionLayoutOptions = [
   {

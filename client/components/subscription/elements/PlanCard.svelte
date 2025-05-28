@@ -129,7 +129,9 @@
       <div>
         <div class="flex items-baseline gap-2">
           {#if discountedPrice}
-            <span class="cw:text-h1 text-h1 font-semibold text-ags1">
+            <span
+              class="cw:text-h1 text-h1 font-semibold text-ags1 default-typeface"
+            >
               {#if period === BillingCycle.YEARLY}
                 ${discountedPrice * 12}
               {:else}
@@ -138,7 +140,7 @@
             </span>
           {/if}
           <span
-            class={cn("cw:text-h1 font-semibold", {
+            class={cn("cw:text-h1 font-semibold default-typeface", {
               "line-through text-fgs3 text-h3": discountedPrice,
               "text-fgs1 text-h1": !discountedPrice
             })}
@@ -234,7 +236,7 @@
         />
       {/if}
     </div>
-    <div class="mt-2 mx-auto text-b3 text-fgs2">
+    <div class="mt-2 mx-auto text-b3 text-fgs2 default-typeface">
       {#if period === BillingCycle.YEARLY}
         That's <b>
           {#if discountedPrice}

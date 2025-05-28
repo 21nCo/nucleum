@@ -2,6 +2,7 @@ import { get, writable } from "svelte/store";
 import {
   activeResourceFilter,
   activeResourceFilterIgnoreParentInactive,
+  activeResourceFilterV2,
   archivedResourceFilter,
   debouncer
 } from "../../../utils/utils";
@@ -626,7 +627,7 @@ export class ResourceStore<T extends IResource> implements IStore {
     let filters: IResourceSelectFilters;
     if (params?.limit) {
       filters = {
-        trashInformation: false,
+        ...activeResourceFilterV2,
         ...(params?.filters ?? {}),
         isArchived: params?.filters?.isArchived ?? false
       };
@@ -645,14 +646,16 @@ export class ResourceStore<T extends IResource> implements IStore {
         method: FluxMethod.SELECT_MANY,
         args: {
           resource: this.id,
-          params
+          params,
+          signal: additionalParams?.signal
         }
       });
     }
 
     const result = await flux.selectMany(this.id, params, {
       isCloudOnlyResource:
-        this.isCloudOnlyResource ?? additionalParams?.isUseCloud
+        this.isCloudOnlyResource ?? additionalParams?.isUseCloud,
+      signal: additionalParams?.signal
     });
     if (
       !result ||
@@ -668,18 +671,20 @@ export class ResourceStore<T extends IResource> implements IStore {
     else return result.filter(activeResourceFilter);
   }
 
-  select(resourceId: IRecordId, properties?: string[]) {
+  select(resourceId: IRecordId, properties?: string[], signal?: AbortSignal) {
     if (this.isExtensionEnvironment) {
       return extensionFlux({
         method: FluxMethod.SELECT,
         args: {
           resourceId,
-          properties
+          properties,
+          signal
         }
       });
     }
     return flux.select(resourceId, properties, {
-      isCloudOnlyResource: this.isCloudOnlyResource
+      isCloudOnlyResource: this.isCloudOnlyResource,
+      signal
     });
   }
 

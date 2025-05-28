@@ -1,7 +1,5 @@
-import {
-  collectionStore,
-  viewStore
-} from "$lib/client/components/collection/collection.store";
+import { collectionStore } from "$lib/client/components/collection/collection.store";
+import { viewStore } from "$lib/client/components/collection/view.store";
 import {
   nodeStore,
   vectorResourceStore

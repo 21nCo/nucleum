@@ -146,7 +146,6 @@
 </div>
 
 <ComponentBaseLayer
-  subscribeToResource={new Set([resourceType])}
   subscribeToRecords={[item]}
   on:change={(e) => {
     const record = e?.detail?.params?.record;

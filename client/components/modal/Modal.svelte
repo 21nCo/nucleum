@@ -145,7 +145,7 @@
         isShowOverlay &&
           !isUseDialog &&
           !isInFocusMode && {
-            "bg-black bg-opacity-60":
+            "bg-black bg-opacity-70":
               !$userPreferences.appearance.isBlurredBgForPopups,
             "backdrop-blur-2xl backdrop-opacity--80 backdrop-brightness--50 backdrop-grayscale bg-fgs4 bg-opacity-50 backdrop-saturate--50":
               $userPreferences.appearance.isBlurredBgForPopups

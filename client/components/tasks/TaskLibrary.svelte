@@ -494,12 +494,7 @@
 <ComponentBaseLayer
   syncDownOnMount={true}
   subscribeToResource={new Set([Resource.task])}
-  subscribeToContext={new Set([
-    ResourceAccessPoint.SELF,
-    resolveAccessPoint(),
-    resourceAction(Resource.task, ResourceActionType.CREATE)
-  ])}
-  subScriptionPropsForMergeAction={[
+  subscriptionPropsForMergeAction={[
     RemovalProperty.IS_ARCHIVED,
     RemovalProperty.TRASH_INFORMATION,
     "dateUnix"

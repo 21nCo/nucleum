@@ -174,6 +174,8 @@ export enum ResourceAccessPoint {
    * The resource is being accessed from the markdown embed
    */
   MARKDOWN_EMBED = "markdownembed",
+
+  MARKDOWN_MENTION = "markdownmention",
   /**
    * The resource is being accessed from the combination
    */
