@@ -108,7 +108,6 @@
 
     console.time("init");
     const initState = await initializeDatabase();
-    refreshAppMenuDefaults(false);
     let userDataState: any;
     if (initState !== undefined)
       userDataState = await initializeEssentialUserData(initState);
@@ -383,7 +382,6 @@
       setAnalyticsUserIdentity();
       await account.ping();
     }
-    refreshAppMenuDefaults();
     console.timeEnd("initializeUserConfig");
     function setAnalyticsUserIdentity() {
       if (!$account.userInfo) return;
@@ -391,19 +389,6 @@
         region: $account.userInfo.region
       });
     }
-  }
-
-  function refreshAppMenuDefaults(isPersist?: boolean) {
-    const defaultAppMenu = $appStore.appData?.appMenu ?? [];
-    const defaultAppMenuMobile = $appStore.appData?.appMenuMobile ?? [];
-    const appMenuDefaults = {
-      all: defaultAppMenu,
-      mobile: defaultAppMenuMobile
-    };
-    appMenuStore.setDefaults(
-      appMenuDefaults,
-      isPersist ?? $account.dataMode === UserDataMode.CLOUD
-    );
   }
 
   /**

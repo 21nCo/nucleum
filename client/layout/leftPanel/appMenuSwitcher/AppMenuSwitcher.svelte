@@ -42,9 +42,9 @@
     allPages = [];
     let items = [];
     const app = $appStore.product;
-    let defaultMenu = x[app]?.default ?? [];
+    let defaultMenu = $appStore.appData?.appMenu ?? [];
     if ($view.isConstrainedWidth || $context.os === OperatingSystem.IOS) {
-      defaultMenu = x[app]?.mobile ?? [];
+      defaultMenu = $appStore.appData?.appMenuMobile ?? [];
     }
     let userPinnedMenu: string[] = [];
     if (!$view.isConstrainedWidth) userPinnedMenu = x[app]?.user ?? [];

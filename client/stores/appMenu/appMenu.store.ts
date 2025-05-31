@@ -9,36 +9,6 @@ class AppMenuStore extends KeyValueStore<IAppMenuStore> {
   constructor() {
     super(Resource.appMenu, {});
   }
-  setDefaults(
-    data: {
-      all: string[];
-      mobile: string[];
-    },
-    isPersist: boolean = false
-  ) {
-    const current = this.get();
-    const context = get(appStore).product;
-    logger.log({
-      context: "setting app menu defaults",
-      current,
-      ctx: context,
-      data
-    });
-    this.modify(
-      {
-        ...current,
-        [context]: {
-          default: data.all,
-          mobile: data.mobile,
-          user: current[context]?.user ?? []
-        }
-      },
-      {
-        isPersist
-      }
-    );
-    this.seed = this.get();
-  }
 
   setUserMenuItems(items: string[]) {
     const current = this.get();
