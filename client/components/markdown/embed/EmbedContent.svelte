@@ -348,7 +348,7 @@
                     if (_mediaBlock?.file) {
                       fileStore.download(_mediaBlock.file);
                     }
-                    e.detail.stopPropagation();
+                    e.stopPropagation();
                   }}
                 />
               {/if}
@@ -362,7 +362,7 @@
                     if (_mediaBlock?.url) {
                       appStore.openLink(_mediaBlock.url);
                     }
-                    e.detail.stopPropagation();
+                    e.stopPropagation();
                   }}
                 />
               {/if}

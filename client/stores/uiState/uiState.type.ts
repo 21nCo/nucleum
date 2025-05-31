@@ -9,7 +9,7 @@ export enum UIState {
    */
   isInThinMode = "isInThinMode",
   isHideLeftNavBar = "isHideLeftNavBar",
-  SHOW_MORE_SHORTCUT_HINTS = "SHOW_MORE_SHORTCUT_HINTS",
+  HIDE_SHORTCUT_HINTS = "HIDE_SHORTCUT_HINTS",
   /**
    * Completely hides the left app navigation bar on hot key shortcut or minimize toggle
    */
@@ -37,6 +37,7 @@ export enum UIState {
    * List of recently used capture shortcuts on capture page
    */
   captureShortcutRecents = "captureShortcutRecents",
+  memotronOverviewPanel = "memotronOverviewPanel",
   calendarLayout = "calendarLayout",
   calendarScale = "calendarScale",
   classicCalendarColumnWidth = "classicCalendarColumnWidth",

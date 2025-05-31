@@ -205,7 +205,11 @@ export enum ResourceAccessPoint {
   /**
    * The resource is being accessed from analytics
    */
-  ANALYTICS = "analytics"
+  ANALYTICS = "analytics",
+  /**
+   * The resource is being accessed from the map
+   */
+  MAP = "map"
 }
 
 export enum ResourceAccessPointState {

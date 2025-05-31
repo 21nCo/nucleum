@@ -48,7 +48,7 @@
             body: "Remove"
           },
           action: (row: any) => {
-            data = data.filter((d) => d.id !== row.id);
+            data = data?.filter((d) => d.id !== row.id);
           }
         };
       case TableCellDefaultAction.SELECT_ROW:

@@ -9,6 +9,7 @@
   import { OperatingSystem } from "$lib/client/types/context.type";
   import context from "$lib/client/stores/context.store";
   import { resolveShortcutText, resolveModifiers } from "../shortcut.utils";
+  import { tooltip } from "$lib/client/actions/popover.action";
   const dispatch = createEventDispatcher();
   export let action: string;
   export let shortcut: IKeyboardShortcut;
@@ -121,17 +122,17 @@
     key = "";
     modifiers = [];
   }
-  function resetToOldValue(event: CustomEvent | KeyboardEvent) {
+  function resetToOldValue(event: MouseEvent | KeyboardEvent) {
     isConfigurationInProgress = false;
     value = existingValue;
-    if (event.detail instanceof PointerEvent) event.detail?.stopPropagation();
+    if (event instanceof MouseEvent) event.stopPropagation();
   }
-  function accept(event: CustomEvent | KeyboardEvent) {
+  function accept(event: CustomEvent | KeyboardEvent | MouseEvent) {
     if (isValidConfiguration()) {
       isConfigurationInProgress = false;
       saveShortcut();
     }
-    if (event.detail instanceof PointerEvent) event.detail?.stopPropagation();
+    if (event instanceof MouseEvent) event.stopPropagation();
   }
 </script>
 
@@ -149,6 +150,10 @@
           reset();
           inputRef.focus();
         }
+      }}
+      use:tooltip={{
+        disabled: isConfigurationInProgress,
+        text: "Record shortcut"
       }}
     >
       <input
@@ -177,7 +182,7 @@
               }
               reset();
               inputRef.focus();
-              event.detail.stopPropagation();
+              event.stopPropagation();
             }}
           />
           <Button

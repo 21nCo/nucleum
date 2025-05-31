@@ -8,6 +8,8 @@
   import Popover from "../popover/Popover.svelte";
   import { createEventPropagator } from "$lib/client/components/events/event.utils";
   import { popover } from "$lib/client/actions/popover.action";
+  import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
+  import { hoverable } from "$lib/client/actions/hover.action";
   const dispatch = createEventDispatcher();
   export let item: IContextMenuItem;
   export let size: Size.sm | Size.md | Size.lg = Size.md;
@@ -30,44 +32,11 @@
   // });
 </script>
 
-<!-- <Popover
-  bind:this={popoverRef}
-  bind:isPopoverVisible
-  triggerClass={cn(
-    "flex items-center gap-2.5 justify-between hover:bg-bgs3 rounded-md",
-    {
-      "p-1.5": size === Size.sm,
-      "p-2": size === Size.md,
-      "px-3 py-2": size === Size.lg,
-      "bg-bgs3": isPopoverVisible
-    }
-  )}
-  options={{
-    placement: Placement.Right,
-    offsetInPx: 12,
-    groupId: "contextMenuPopoverSecondaryScreen",
-    isOnlyOneVisiblePerGroup: true
-  }}
->
-  <ContextMenuItem {item} />
-  <slot name="popover" slot="popover">
-    <svelte:component
-      this={item.secondStepComponent?.component}
-      {...item.secondStepComponent?.props}
-      on:select={(e) => {
-        if (item.callback) item.callback(e.detail);
-        dispatch("select", item);
-        dispatch("action", item.value);
-        popoverRef.hide();
-      }}
-    />
-  </slot>
-</Popover> -->
-
 <button
   use:popover={{
     placement: Placement.Right,
     offsetInPx: 12,
+    triggerMethod: [PopoverTriggerMethod.HOVER, PopoverTriggerMethod.CLICK],
     content: item.secondStepComponent?.component,
     componentProps: {
       onSelect: (e) => {
@@ -79,13 +48,14 @@
       ...item.secondStepComponent?.props
     },
     groupId: "contextMenuPopoverSecondaryScreen",
-    id: "contextMenuPopoverSecondaryScreen" + Math.random()
+    id: "contextMenuPopoverSecondaryScreen",
+    classForHoverDismissal: "contextmenuitem"
   }}
   on:change={(e) => {
     isPopoverVisible = e.detail?.open;
   }}
   class={cn(
-    "flex items-center gap-2.5 justify-between hover:bg-bgs3 rounded-md",
+    "contextmenuitem flex items-center gap-2.5 justify-between hover:bg-bgs3 rounded-md",
     {
       "p-1.5": size === Size.sm,
       "p-2": size === Size.md,
@@ -93,6 +63,7 @@
       "bg-bgs3": isPopoverVisible
     }
   )}
+  data-context-menu-item-id={item.value}
 >
   <ContextMenuItemBase {item} />
 </button>

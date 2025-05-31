@@ -14,6 +14,7 @@
   import LinkThumbnailItems from "../links/LinkThumbnailItems.svelte";
   import { nodeStore, type IActiveNodeStore } from "../node.store";
   import {
+    canHaveTraces,
     NodeRightPaneType,
     NodeType,
     type INode,
@@ -21,9 +22,9 @@
   } from "../node.type";
   import { appStore } from "$lib/client/stores/app.store";
   import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { activeResourceFilterV2 } from "$lib/client/utils/utils";
   import { focusById } from "$lib/client/actions/focusById.action";
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  import RightPaneOverviewMetricCard from "./RightPaneOverviewMetricCard.svelte";
 
   export let node: IActiveNodeStore;
   export let pane: NodeRightPaneType | undefined = undefined;
@@ -69,19 +70,39 @@
   class="flex flex-col gap-4 justify-center items-start w-full h-full p-2 dp:p-3"
 >
   <Text content="Overview" style={TextStyle.PANEL_HEADING_SMALL} />
+
+  {#if canHaveTraces.includes($node.contentType)}
+    <div
+      class="flex flex-row justify-around items-center w-full border border-brs3 rounded-md px-2 py-0.5"
+    >
+      <RightPaneOverviewMetricCard
+        label="Links"
+        icon="ph:link-simple-light"
+        value={$node.links?.length || 0}
+        on:click={() => (pane = NodeRightPaneType.LINKS)}
+      />
+      <RightPaneOverviewMetricCard
+        label="Clips"
+        icon="heroicons:bookmark"
+        value={$node.clips?.length || 0}
+        on:click={() => (pane = NodeRightPaneType.TRACES)}
+      />
+    </div>
+  {/if}
+
   {#if $node.clips?.length > 0}
     <div class="flex flex-col gap-4 items-start w-full h-1/3 min-h-0">
       <span class="flex flex-row justify-between items-center w-full">
         <span class="flex flex-row gap-1 items-center">
           <Text content="Clips" style={TextStyle.SECTION_HEADING} />
-          <Badge text={$node.clips?.length || 0} />
+          <Badge text={$node.clips?.length || 0} size={Size.sm} />
         </span>
-        {#if $node.clips?.length > 3}
+        {#if $node.clips?.length > 2}
           <span>
             <Button
-              size={Size.sm}
-              label="View all clips"
-              isUnderlined={true}
+              size={Size.xs}
+              icon="ph:arrow-right-light"
+              label="View all"
               style={ButtonStyle.PLAIN}
               on:click={() => (pane = NodeRightPaneType.TRACES)}
             />
@@ -114,13 +135,13 @@
       <span class="flex flex-row justify-between items-center w-full">
         <span class="flex flex-row gap-1 items-center">
           <Text content="Links" style={TextStyle.SECTION_HEADING} />
-          <Badge text={$node.links?.length || 0} />
+          <Badge text={$node.links?.length || 0} size={Size.sm} />
         </span>
         <span>
           <Button
-            size={Size.sm}
-            label="See all links"
-            isUnderlined={true}
+            size={Size.xs}
+            icon="ph:arrow-right-light"
+            label="View all"
             style={ButtonStyle.PLAIN}
             on:click={() => (pane = NodeRightPaneType.LINKS)}
           />

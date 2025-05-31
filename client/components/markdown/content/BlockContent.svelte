@@ -14,6 +14,7 @@
   import CodeContent from "./CodeContent.svelte";
   import ListContent from "../lists/ListContent.svelte";
   import HeadingContent from "./HeadingContent.svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
   export let mdStore: MdStoreType;
   export let block: IBlock;
   /**
@@ -24,7 +25,12 @@
   export let isFocusing: boolean = false;
 </script>
 
-<div class="relative flex-grow w-full">
+<div
+  class={cn("relative w-full", {
+    "h-fit": block.contentType === NodeType.EMBED,
+    "flex-grow": block.contentType !== NodeType.EMBED
+  })}
+>
   {#if block.contentType === NodeType.DIVIDER}
     <div class="h-px bg-brs3 my-4"></div>
   {:else if block.contentType === NodeType.DOUBLE_DIVIDER}

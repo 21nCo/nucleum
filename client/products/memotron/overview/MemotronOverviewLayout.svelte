@@ -1,0 +1,83 @@
+<script lang="ts">
+  import { Size } from "$lib/client/types/size.enum";
+  import view from "$lib/client/stores/view.store";
+  import { resizeListener } from "$lib/client/actions/resize.action";
+  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
+  import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
+  import {
+    uiState,
+    uiStateDerived
+  } from "$lib/client/stores/uiState/uiState.store";
+  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import { MemotronOverviewPanel } from "./overview.type";
+
+  export let isConstrainedWidth = false;
+  let selectedPanel: MemotronOverviewPanel =
+    resolveSavedState() ?? MemotronOverviewPanel.GRAPH;
+
+  let containerWidth = 0;
+  $: isConstrainedWidth = containerWidth < 1000 || $view.isConstrainedWidth;
+
+  function resolveSavedState() {
+    const savedPanel = uiState.getState(UIState.memotronOverviewPanel, {
+      isDeviceScoped: true
+    });
+    if (
+      savedPanel &&
+      Object.values(MemotronOverviewPanel).includes(savedPanel)
+    ) {
+      return savedPanel;
+    }
+  }
+
+  function onPanelSwitch(event: CustomEvent) {
+    if (
+      !event.detail ||
+      !Object.values(MemotronOverviewPanel).includes(event.detail)
+    )
+      return;
+    uiState.setState(UIState.memotronOverviewPanel, event.detail, {
+      isDeviceScoped: true
+    });
+  }
+</script>
+
+<div class="relative w-full h-full flex flex-col justify-center items-center">
+  <div
+    class="flex justify-between items-end gap-4 rounded-md h-14 w-full"
+    use:resizeListener={(e) => {
+      containerWidth = e.width;
+    }}
+  >
+    <PanelSwitcher
+      items={[
+        {
+          label: "Graph",
+          value: MemotronOverviewPanel.GRAPH,
+          icon: "ph:graph-light"
+        },
+        {
+          label: "Map",
+          value: MemotronOverviewPanel.MAP,
+          icon: "ph:map-pin-light"
+        }
+      ]}
+      style={PanelSwitcherStyle.BAR}
+      title="Overview"
+      parentBgIndex={1}
+      isExpandToFullWidth={true}
+      isShowNumberShortcut={$uiStateDerived.isShowHotKeyHints}
+      size={Size.sm}
+      bind:value={selectedPanel}
+      on:switch={onPanelSwitch}
+      isEnableTitleAction={true}
+    >
+      <span slot="right">
+        <slot name="right" />
+      </span>
+    </PanelSwitcher>
+  </div>
+  <div class="relative w-full h-full">
+    <slot />
+  </div>
+</div>

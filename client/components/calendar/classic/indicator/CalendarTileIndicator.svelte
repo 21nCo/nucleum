@@ -143,7 +143,7 @@
     {/if}
     {#if calendarNotes.length > 0}
       <MonthTileIndicator
-        text="Day notes"
+        text="Notes"
         color={getColor(Resource.node)}
         {isActive}
       />

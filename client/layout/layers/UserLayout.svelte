@@ -58,7 +58,7 @@
   {:else}
     <div class="flex flex-col w-full h-full">
       <div class="flex w-full flex-grow">
-        {#if !isHideLeftNavBar || $appStore.interactionMode === InteractionMode.DEFAULT || $context.embed === Embed.HANDSET}
+        {#if !isHideLeftNavBar || $context.embed === Embed.HANDSET}
           <LeftNav variant="fixed" />
         {/if}
         <div

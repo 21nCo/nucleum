@@ -819,12 +819,13 @@
       isFirstLine,
       isLastLine,
       caretOffset,
+      totalOffset,
       totalLength,
       isMultilined,
       lineFactor
     };
 
-    function getCaretCharacterOffsetWithin(element) {
+    function getCaretCharacterOffsetWithin(element: any) {
       let caretOffset = 0;
       const doc = element.ownerDocument || element.document;
       const win = doc.defaultView || doc.parentWindow;
@@ -848,10 +849,10 @@
       return caretOffset;
     }
 
-    function getLineStartOffset(element, caretOffset) {
+    function getLineStartOffset(element: any, caretOffset: number) {
       const text = element.textContent;
       let lineStart = caretOffset;
-      while (lineStart > 0 && text[lineStart - 1] !== "\n") {
+      while (lineStart > 0 && text && text[lineStart - 1] !== "\n") {
         lineStart--;
       }
       return caretOffset - lineStart;

@@ -472,23 +472,6 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
     return newBlock;
   }
 
-  /**
-   *
-   *
-   * TODO - Move the content to the previous block, delete the current block and focus the previous block
-   *
-   * @param block
-   */
-  backspaceWithContent(block: IBlockInterface) {
-    const { id, content } = block;
-    this.update((n) => {
-      const contextIndex = n.blocks.findIndex((b) => b.id === id);
-      // n.blocks[contextIndex - 1].body =
-      //   n.blocks[contextIndex - 1].body + content;
-      // return n;
-    });
-  }
-
   focusBlock(id: IRecordId, params?: { xOffset?: number; isBottom?: boolean }) {
     this.focus.set({ id, params });
   }

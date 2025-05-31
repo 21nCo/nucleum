@@ -329,7 +329,9 @@
           class="flex gap-2 items-start absolute w-full"
           style="top: {hour * hourHeight}px;"
         >
-          <span class="text-fgs4 text-b3 w-14 h-4 -mt-2 flex justify-end">
+          <span
+            class="text-fgs4 text-b3 w-14 h-4 -mt-2 flex justify-end default-typeface tabular-nums"
+          >
             <!-- {hour}:00 -->
             {formatTime(
               $userPreferences,
@@ -350,7 +352,7 @@
           ></div>
         </div>
         <div
-          class="absolute text-aps1 text-b3 w-14 flex justify-end bg-gradient-to-t from-bgs1 via-bgs1 to-transparent rounded-md px-2 pt-2 left-2 whitespace-nowrap"
+          class="absolute text-aps1 text-b3 w-14 flex justify-end bg-gradient-to-t from-bgs1 via-bgs1 to-transparent rounded-md px-2 pt-2 left-2 whitespace-nowrap default-typeface tabular-nums"
           style="top: {nowPosition - 26}px;"
         >
           {formatTime($userPreferences, now)}

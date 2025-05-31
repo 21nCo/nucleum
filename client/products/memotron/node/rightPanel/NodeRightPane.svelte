@@ -11,6 +11,9 @@
   import type { IActiveNodeStore } from "../node.store";
   import type { ISelectItem } from "$lib/client/types/select.type";
   import NodeRightPanelContent from "./NodeRightPaneContent.svelte";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let mdId: string;
   export let nodePageVariant: "v1" | "v2" = "v2";
@@ -21,6 +24,7 @@
     { value: NodeRightPaneType.PROPERTIES, icon: "ph:shapes-light" },
     { value: NodeRightPaneType.LINKS, icon: "ph:link-light" }
   ];
+
   if (canHaveTraces.includes($node?.contentType ?? NodeType.UNKNOWN)) {
     verticalSwitcherItems.push({
       value: NodeRightPaneType.TRACES,
@@ -28,9 +32,13 @@
     });
   }
 
+  $: isValidPane =
+    !isRightPanelCollapsed && pane && pane !== NodeRightPaneType.NONE;
+
   pane = isRightPanelCollapsed
     ? NodeRightPaneType.NONE
     : verticalSwitcherItems[0].label;
+
   function onRightPanelSwitch(e: CustomEvent) {
     if (pane === e.detail) {
       isRightPanelCollapsed = true;
@@ -39,33 +47,48 @@
       isRightPanelCollapsed = false;
       pane = e.detail;
     }
+    dispatch("switch", { isRightPanelCollapsed, pane });
+  }
+
+  function resolveVerticalSwitcherItems(links: any[]) {
+    return verticalSwitcherItems.map((item) => {
+      if (item.value === NodeRightPaneType.LINKS) {
+        return { ...item, badge: links?.length ?? 0 };
+      }
+      return item;
+    });
   }
 </script>
 
 <aside
   class={cn("flex justify--end gap-2 h-full overflow-auto shrink-0", {
     "mr-2 mb-2 bg-bgs2 rounded-md": nodePageVariant === "v1",
-    "max-w-[28rem] w-[28rem] min-w-[28rem]": !isRightPanelCollapsed && pane
+    "max-w-[28rem] w-[28rem]":
+      $node.accessMode !== ResourceAccessMode.FULL && isValidPane,
+    "min-w-[28rem]": isValidPane,
+    "w-full": $node.accessMode === ResourceAccessMode.FULL
   })}
 >
   <div
     class={cn("flex flex-col justify-between items-center", {
-      " border-r border-r-brs2": !isRightPanelCollapsed && pane
+      " border-r border-r-brs2": isValidPane
     })}
   >
     <VerticalSwitcher
-      items={verticalSwitcherItems}
+      items={resolveVerticalSwitcherItems($node.links)}
       itemProps={{
-        activeStatusPlacement: Placement.Left,
+        activeStatusPlacement: isValidPane ? Placement.Right : Placement.Left,
         isHideLabel: true
       }}
       isHideBar={isRightPanelCollapsed}
       selected={pane}
-      style={VerticalSwitcherStyle.DOT}
+      style={isValidPane
+        ? VerticalSwitcherStyle.GRADIENT
+        : VerticalSwitcherStyle.DOT}
       on:switch={onRightPanelSwitch}
     />
   </div>
-  {#if !isRightPanelCollapsed && pane && pane !== NodeRightPaneType.NONE}
+  {#if isValidPane}
     <NodeRightPanelContent {node} {mdId} {pane} on:close />
   {/if}
 </aside>

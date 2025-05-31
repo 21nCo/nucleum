@@ -21,8 +21,7 @@
     if (!shortcut) return;
     if (typeof shortcut === "string") {
       if (shortcut === GlobalEvent.ESCAPE) return "Esc";
-      const keyMap = keyboardShortcuts.fecthKeyMap();
-      detail = keyMap.find((x) => x.action === shortcut);
+      detail = keyboardShortcuts.resolveShortcutForAction(shortcut);
     } else {
       detail = shortcut as IKeyboardShortcut;
     }
@@ -70,8 +69,8 @@
       size={Size.xs}
       class={cn({
         "stroke-fgs3": parentBgIndex !== undefined,
-        "stroke-abg": parentBgIndex === undefined && !isAccentOutlined,
-        "stroke-aps1": parentBgIndex === undefined && isAccentOutlined
+        "fill-abg stroke-abg": parentBgIndex === undefined && !isAccentOutlined,
+        "fill-aps1 stroke-aps1": parentBgIndex === undefined && isAccentOutlined
       })}
     />
   {/if}

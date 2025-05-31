@@ -13,9 +13,13 @@
   import type { TimeScaleUnit } from "$lib/client/types/time.type";
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   import { setContext } from "svelte";
-  import { ResourceAccessMode } from "../../flux/resourceStores/resource.type";
+  import {
+    ResourceAccessMode,
+    ResourceAccessPoint
+  } from "../../flux/resourceStores/resource.type";
   import { resolveCalendarNotesId } from "../calendar.utils";
   import { getUtcSafeDay } from "$lib/client/elements/datetime/datetime.utils";
+  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
 
   export let date: Date;
   export let scale: TimeScaleUnit;
@@ -40,7 +44,10 @@
       ]);
     }
     node = ActiveNodeStore.resolve(id);
-    await node.init(ResourceAccessMode.INLINE);
+    await node.init({
+      accessMode: ResourceAccessMode.INLINE,
+      accessPoint: ResourceAccessPoint.CALENDAR
+    });
     nodeContext.id = id;
     isLoading = false;
   }
@@ -68,3 +75,5 @@
 {:else}
   <NodeContent {node} {mdId} />
 {/if}
+
+<ComponentBaseLayer hasDragAndDrop={true} />

@@ -51,7 +51,7 @@
     isFilled={on && !isPreventFillOnActive}
     class={cn({
       "fill-aps1": on,
-      "stroke-fgs1": !on
+      "stroke-fgs2": !on
     })}
     on:click
   />

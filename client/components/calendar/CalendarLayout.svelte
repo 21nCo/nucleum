@@ -6,17 +6,18 @@
   import { CalendarLayout } from "./calendar.type";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import Text from "$lib/client/elements/text/Text.svelte";
+  import { TextStyle } from "$lib/client/types/text.enum";
   export let panel: CalendarLayout = CalendarLayout.Classic;
 
   const panelOptions: ISelectItem[] = [
     { value: CalendarLayout.Classic, label: "Classic" },
-    { value: CalendarLayout.Journal, label: "Journal" }
-    // {
-    //   value: CalendarLayout.Bird,
-    //   label: "Bird",
-    //   badge: "planned",
-    //   isDisabled: true
-    // }
+    {
+      value: CalendarLayout.Bird,
+      label: "Bird",
+      badge: "planned",
+      isDisabled: true
+    }
   ];
 
   function onPanelSwitch(event: CustomEvent) {
@@ -29,7 +30,8 @@
 </script>
 
 <div class="flex flex-col h-full w-full">
-  <div class="p-4 border-b border-brs3 flex items-center gap-4">
+  <div class="px-4 h-14 border-b border-brs3 flex items-center gap-4">
+    <!-- <Text content="Calendar" style={TextStyle.PANEL_HEADING_SMALL} /> -->
     <!-- <PanelSwitcher
       items={panelOptions}
       bind:value={panel}

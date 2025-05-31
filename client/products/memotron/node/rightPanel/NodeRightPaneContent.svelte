@@ -32,7 +32,9 @@
       pane === NodeRightPaneType.LINKS);
 </script>
 
-<div class="flex flex-col h-full w-full overflow-y-auto items-start gap-3 p-4">
+<div
+  class="flex flex-col h-full w-full overflow-y-auto items-start gap-3 cw:py-4 cw:px-0 p-4"
+>
   <div class="w-full flex items-center justify-between gap-2">
     <Text content={properCase(pane)} style={TextStyle.PANEL_HEADING_SMALL} />
     {#if _isShowClose}

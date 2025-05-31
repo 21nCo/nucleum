@@ -109,7 +109,8 @@
         {size}
         isFilled={isActive}
         class={cn({
-          "fill-ccs1": isActive
+          "fill-cbg": isActive && style === PanelSwitcherStyle.TRAIN,
+          "fill-ccs1": isActive && style !== PanelSwitcherStyle.TRAIN
         })}
       />
     {/if}
@@ -144,11 +145,17 @@
       {/if}
     </div>
     {#if isShowNumberShortcut && index < 9}
-      <span
+      <Badge
+        size={Size.xs}
+        text={index + 1}
+        isApplyCustomColor={isActive}
+        {parentBgIndex}
+      />
+      <!-- <span
         class={cn("text-b4 text-fgs3 w-4 h-4 rounded-md", bg(parentBgIndex))}
       >
         {index + 1}
-      </span>
+      </span> -->
     {/if}
   </span>
 {/if}

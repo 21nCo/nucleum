@@ -24,7 +24,8 @@
     <span class="text-fgs3 text-b3">{label}</span>
     <slot>
       {#if value}
-        <span class="text-fgs1 text-b2 text-right">{valueFormatter(value)}</span
+        <span class="text-fgs1 text-b2 text-right default-typeface"
+          >{valueFormatter(value)}</span
         >
       {/if}
     </slot>

@@ -20,12 +20,10 @@
       isProductScoped: true
     }
   );
-  let isShortcutHintsEnabled = uiState.getState(
-    UIState.SHOW_MORE_SHORTCUT_HINTS,
-    {
-      isProductScoped: true
-    }
-  );
+  let isShortcutHintsEnabled = uiState.getState(UIState.HIDE_SHORTCUT_HINTS, {
+    isDeviceScoped: true,
+    isProductScoped: true
+  });
   let isCompletelyHideLeftNavBar = uiState.getState(
     UIState.COMPLETELY_HIDE_LEFT_NAV_BAR,
     {
@@ -35,11 +33,11 @@
   function resolveInfo(mode: InteractionMode) {
     switch (mode) {
       case InteractionMode.DEFAULT:
-        return "Default mode will try to blend all modes of interaction.";
+        return "Default mode will try to blend all modes of interaction. You can use keyboard shortcuts, command bar, hot keys and even agent when its available.";
       case InteractionMode.KEYBOARD_CENTRIC:
         return "In **keyboard centric mode**, additional hot keys will be enabled and shortcut hints will be shown if enabled. We have designed this mode to maximize keyboard usage eliminating the need to use trackpad or mouse.";
       case InteractionMode.COMMAND_ONLY:
-        return "**Command only mode** is taking keyboard centric mode to next level. Everything will be hidden and can be accessed on-demand using commands.";
+        return "**Command only mode** is taking keyboard utilization and minimalization to next level. Everything will be hidden and can be accessed on-demand using commands.";
       case InteractionMode.AGENT:
         return "For a complete **hands-free experience**, turn on this mode and let the AI agent take care of the rest. This mode will be available soon...";
     }
@@ -59,7 +57,7 @@
     labelProps={{
       label: "Preferred mode of interaction",
       tooltip: {
-        body: "We will try to change the design of the app based your preferred mode of interaction."
+        body: "We will change the design of the app based your preferred mode of interaction."
       },
       orientation: Orientation.Vertical
     }}
@@ -67,13 +65,8 @@
     options={[
       {
         value: InteractionMode.DEFAULT,
-        icon: "ph:circle-dashed-light"
-      },
-      {
-        value: InteractionMode.KEYBOARD_CENTRIC,
-        label: "Keyboard centric",
-        icon: "ph:keyboard-light",
-        tooltip: resolveInfo(InteractionMode.KEYBOARD_CENTRIC)
+        icon: "ph:circle-dashed-light",
+        tooltip: resolveInfo(InteractionMode.DEFAULT)
       },
       {
         value: InteractionMode.COMMAND_ONLY,
@@ -90,18 +83,19 @@
       }
     ]}
   />
-  {#if selectedMode === InteractionMode.KEYBOARD_CENTRIC}
+  {#if selectedMode === InteractionMode.DEFAULT}
     <SwitchInput
       label={{
-        label: "Show all hot key and shortcut hints",
+        label: "Hide all hot key and shortcut hints",
         tooltip: {
-          body: "All hot key and shortcut hints will be shown at relevant places throughout the app. You can turn off this setting anytime. **Note:** Some shortcut hints will always be shown."
+          body: "All hot key and shortcut hints will be hidden at relevant places throughout the app."
         }
       }}
       isExpanded={true}
       bind:checked={isShortcutHintsEnabled}
       on:change={(e) => {
-        uiState.setState(UIState.SHOW_MORE_SHORTCUT_HINTS, e.detail, {
+        uiState.setState(UIState.HIDE_SHORTCUT_HINTS, e.detail, {
+          isDeviceScoped: true,
           isProductScoped: true
         });
       }}
@@ -116,7 +110,7 @@
       label={{
         label: "Hide App menu bar on hot key",
         tooltip: {
-          body: "Completely hides the app menu bar on usage of the hot key **Q**."
+          body: "Completely hides the app menu bar on usage of the hot key **Q**. By default, it minimizes the app menu bar."
         }
       }}
       isExpanded={true}

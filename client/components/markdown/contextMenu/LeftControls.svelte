@@ -35,6 +35,8 @@
   import ContextMenu from "$lib/client/elements/contextMenu/ContextMenu.svelte";
   import { hoverable } from "$lib/client/actions/hover.action";
   import { nodeStore } from "$lib/client/products/memotron/node/node.store";
+  import { formatDate, formatDatetime } from "$lib/client/utils/time.utils";
+  import { userPreferences } from "../../settings/userPreferences.store";
   const dispatch = createEventDispatcher();
   export let block: IBlock;
   export let isFocusing: boolean = false;
@@ -371,7 +373,7 @@
 
 <div
   class={cn("h-full w-full flex justify-center rounded-l-md border", {
-    "bg-bgs2 border-brs2": isHovering,
+    "bg-bgs3 border-brs2": isHovering,
     "border-transparent": !isHovering
   })}
   use:popover={{
@@ -382,6 +384,9 @@
       menuResolver: () => resolveContextMenu(block, isSoleBlock),
       size: Size.lg,
       heading: "Options",
+      bottomRender: block.modifiedAt
+        ? `<div class="flex justify-center py-1 items-center text-b3 text-fgs3 default-typeface">Last modified: ${formatDatetime($userPreferences, block.modifiedAt)}</div>`
+        : "",
       onSelect: (e) => {
         hideContextMenu();
       }

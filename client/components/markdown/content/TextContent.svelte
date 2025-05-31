@@ -605,55 +605,54 @@
     }
   ) {
     if (event.key !== "Backspace") return false;
+
     logger.log({
       at: "handleBackspace",
       ...params?.inBlockPosition,
-      text
+      text,
+      textLength: text?.length
     });
-    if (params?.type === "keyup") {
+
+    // Only interfere with backspace when user is at the absolute beginning of the block
+    // This means: on first line AND at offset 0 from start of line AND at position 0 in total text
+    const position = params?.inBlockPosition;
+    const isAtVeryStart =
+      position?.isFirstLine &&
+      position?.caretOffset === 0 &&
+      position?.totalOffset === 0;
+
+    if (!isAtVeryStart) {
+      // Let normal backspace behavior happen for all other cases
       return false;
-      if (
-        !(params?.caretPosition === 0 && params?.inBlockPosition?.isFirstLine)
-      )
-        return false;
-      if (text !== "" && contentType === NodeType.SIMPLE_TEXT) {
-        mdStore.backspaceWithContent(id);
-        event.preventDefault();
-      } else if (text !== "") {
-        //TODO - event.preventDefault() is not preventing from the backspace event to happen - but moving this to keydown event is not reliable as caretPosition is not reliable in keydown event - This unintended case only happens when backspaced from one charater offset in the front.
-        // convert(NodeType.SIMPLE_TEXT);
-        // event.preventDefault();
-      }
-      return true;
     }
+
+    // Now handle special block-level backspace operations
     if (
       !text &&
       contentType === NodeType.SIMPLE_TEXT &&
       !isFirstBlockAndIsEmpty
     ) {
-      performDelete();
+      // Empty simple text block (not the first) - delete it
+      relay(BlockAction.DELETE);
       event.preventDefault();
       return true;
-    } else if (
-      contentType !== NodeType.SIMPLE_TEXT &&
-      (params?.inBlockPosition?.caretOffset === 0 || !text)
-    ) {
+    }
+
+    if (contentType !== NodeType.SIMPLE_TEXT) {
+      // Any non-simple-text block at start - convert to simple text
       convert(NodeType.SIMPLE_TEXT);
       event.preventDefault();
       return true;
-    } else if (
-      contentType === NodeType.SIMPLE_TEXT &&
-      text &&
-      params?.inBlockPosition?.caretOffset === 0
-    ) {
+    }
+
+    if (text && contentType === NodeType.SIMPLE_TEXT) {
+      // Non-empty simple text block at start - merge with previous block
       relay(BlockAction.BACKSPACE_WITH_CONTENT);
       event.preventDefault();
       return true;
     }
 
-    function performDelete() {
-      relay(BlockAction.DELETE);
-    }
+    return false;
   }
 
   function assignPlaceholder() {

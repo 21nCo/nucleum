@@ -172,7 +172,6 @@ const phosphorIcons = [
   "clock-afternoon",
   "clock-clockwise",
   "clock-counter-clockwise",
-  "git-fork",
   "gradient",
   "list",
   "magnifying-glass",
@@ -229,7 +228,6 @@ const phosphorIcons = [
   "cursor-click",
   "sign-out",
   "sign-in",
-  "git-branch",
   "target",
   "smiley",
   "thumbs-up",
@@ -308,6 +306,13 @@ const phosphorIcons = [
   "paper-plane",
   "paper-plane-right",
   "paper-plane-tilt",
+
+  //Git
+  "git-fork",
+  "git-branch",
+  "git-commit",
+  "git-merge",
+  "git-diff",
 
   //Charts
   "chart-bar",
@@ -458,7 +463,12 @@ const simpleIcons = ["wikipedia", "googledocs", "abstract", "mixpanel"];
 
 const svgSpinnersIcons = ["90-ring-with-bg", "3-dots-fade", "180-ring-with-bg"];
 
-const heroiconsIcons = ["cog", "rectangle-group", "rectangle-stack"];
+const heroiconsIcons = [
+  "cog",
+  "rectangle-group",
+  "rectangle-stack",
+  "bookmark"
+];
 const heroiconsSolid = heroiconsIcons.map((icon) => icon + "-solid");
 
 const letsIconsIcons = ["color-picker", "color-mode-light"];
@@ -483,9 +493,11 @@ const fluentEmojiIcons = [
   "potted-plant"
 ];
 
-const tablerIcons = ["keyboard-show"];
+const tablerIcons = ["keyboard-show", "hexagon-plus"];
 
 const uilIcons = ["keyboard-hide"];
+
+const mynaUiIcons = ["plus-hexagon", "git-commit", "git-merge", "git-branch"];
 
 export const iconSets = {
   hugeicons: hugeiconsIcons,
@@ -502,7 +514,8 @@ export const iconSets = {
   fluent: fluentIcons,
   "fluent-emoji": fluentEmojiIcons,
   tabler: tablerIcons,
-  uil: uilIcons
+  uil: uilIcons,
+  mynaui: mynaUiIcons
 };
 
 export const phIcons = {

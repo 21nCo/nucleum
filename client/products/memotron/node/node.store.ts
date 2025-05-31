@@ -115,7 +115,9 @@ class NodeStore extends ResourceStore<INode> {
       params?.filters && "id" in params?.filters && params?.filters?.id;
     const filters = {
       creationContext:
-        isValidString(params?.search?.query) || isContentTypePresent
+        isValidString(params?.search?.query) ||
+        isContentTypePresent ||
+        isIdPresent
           ? undefined
           : false,
       metaType:
@@ -128,7 +130,7 @@ class NodeStore extends ResourceStore<INode> {
       ...(params?.filters ?? {}),
       contentType: isContentTypePresent
         ? resolveContentTypeParam(params?.filters?.contentType)
-        : params?.search?.query
+        : params?.search?.query || isIdPresent
           ? undefined
           : rootNodeTypeList
     };
@@ -381,7 +383,10 @@ export class ActiveNodeStore extends CollectibleStore<IActiveNode, NodeStore> {
     let val = this.debouncers.get(id);
     return val!;
   }
-  init = async (accessMode: ResourceAccessMode) => {
+  init = async (params: {
+    accessMode: ResourceAccessMode;
+    accessPoint: ResourceAccessPoint;
+  }) => {
     logger.log({ at: "ActiveNodeStore.init", id: this.id });
     console.time("ActiveNodeStore.init");
     try {
@@ -389,23 +394,32 @@ export class ActiveNodeStore extends CollectibleStore<IActiveNode, NodeStore> {
       const node = await this.resourceStore.fetch(this.id);
       console.timeEnd("ActiveNodeStore.init.fetch");
       console.log({ at: "ActiveNodeStore.init", node });
-      if (node) {
-        this.set({ ...node, accessMode });
-        if (!node.metaType) {
-          appStore.addToRecents({
-            record: node,
-            type: Resource.node,
-            timestamp: new Date()
-          });
-        }
+      if (!node || !node.id) {
+        return {
+          error: "Node not found"
+        };
       }
-      const types = await collectionStore.resolveTypes(node.collections ?? []);
+      this.set({ ...node, accessMode: params.accessMode });
+      if (
+        params.accessPoint === ResourceAccessPoint.CALENDAR ||
+        !node.metaType
+      ) {
+        appStore.addToRecents({
+          record: node,
+          type: Resource.node,
+          timestamp: new Date()
+        });
+      }
       let blocks: INode[] = [];
       if (
         node.contentType === NodeType.NODULAR_MARKDOWN ||
         headingNodeTypes.includes(node.contentType)
       ) {
         blocks = recursivelyExtractAllChildrenIntoArray(node) as INode[];
+      }
+      let types: any[] = [];
+      if (params.accessPoint !== ResourceAccessPoint.CALENDAR) {
+        types = await collectionStore.resolveTypes(node.collections ?? []);
       }
       this.update((n) => {
         n.types = types;
@@ -686,12 +700,6 @@ function initActiveNodeEventStore(id: string) {
 }
 
 const nodeStaticActions = {
-  linksPane: {
-    value: NodeRightPaneType.LINKS,
-    icon: "ph:link-light",
-    label: "Show links",
-    tooltip: "Show links"
-  },
   metadataPane: {
     value: NodeRightPaneType.METADATA,
     icon: "ph:file-light",
@@ -704,23 +712,11 @@ const nodeStaticActions = {
     label: "Show properties",
     tooltip: "Show properties"
   },
-  sideNotesPane: {
-    value: NodeRightPaneType.SIDENOTES,
-    icon: "ph:note-light",
-    label: "Side notes",
-    tooltip: "Side notes"
-  },
   historyPane: {
     value: NodeRightPaneType.HISTORY,
     icon: "ph:clock-countdown-light",
     label: "Show history",
     tooltip: "Show history"
-  },
-  tracesPane: {
-    value: NodeRightPaneType.TRACES,
-    icon: "ph:bookmark-simple-light",
-    label: "Show traces",
-    tooltip: "Show traces"
   },
   showForks: {
     value: "forks",
@@ -791,6 +787,41 @@ class NodeActions {
     icon: "ph:arrow-up-right-light",
     callback: async () => {}
   };
+
+  sideNotesPane() {
+    return {
+      value: NodeRightPaneType.SIDENOTES,
+      icon: this.node.notes ? "ph:note-light" : "ph:note-blank-light",
+      label: "Side notes",
+      tooltip: "Side notes"
+    };
+  }
+
+  linksPane() {
+    return {
+      value: NodeRightPaneType.LINKS,
+      icon: "ph:link-light",
+      label: "Show links",
+      tooltip: "Show links",
+      count:
+        this.node.links && this.node.links.length > 0
+          ? this.node.links?.length
+          : undefined
+    };
+  }
+
+  tracesPane() {
+    return {
+      value: NodeRightPaneType.TRACES,
+      icon: "heroicons:bookmark",
+      label: "Show traces",
+      tooltip: "Show traces",
+      count:
+        this.node.clips && this.node.clips.length > 0
+          ? this.node.clips?.length
+          : undefined
+    };
+  }
 
   toggleFullWidth() {
     return {
@@ -943,9 +974,9 @@ export function resolveNodeContextMenu(
         items: [
           resourceActions.star(),
           resourceActions.edit(accessPoint),
-          nodeStaticActions.tracesPane,
-          nodeStaticActions.linksPane,
-          nodeStaticActions.sideNotesPane,
+          nodeActions.tracesPane(),
+          nodeActions.linksPane(),
+          nodeActions.sideNotesPane(),
           nodeStaticActions.propertiesPane,
           nodeStaticActions.metadataPane
         ]
@@ -960,7 +991,7 @@ export function resolveNodeContextMenu(
         items: [
           resourceActions.star(),
           resourceActions.edit(accessPoint),
-          nodeStaticActions.linksPane,
+          nodeActions.linksPane(),
           nodeStaticActions.metadataPane
         ]
       },
@@ -973,8 +1004,8 @@ export function resolveNodeContextMenu(
         group: "all",
         items: [
           resourceActions.star(),
-          nodeStaticActions.linksPane,
-          nodeStaticActions.sideNotesPane,
+          nodeActions.linksPane(),
+          nodeActions.sideNotesPane(),
           nodeStaticActions.propertiesPane,
           nodeStaticActions.metadataPane
         ]
@@ -1023,39 +1054,44 @@ export function resolveNodeContextMenu(
 }
 
 export function resolveVisibleActions(
-  contentType: NodeType,
+  node: INode,
   params?: {
     accessMode?: ResourceAccessMode;
     isConstrainedWidth?: boolean;
   }
 ): IToggleItem[] {
+  const nodeActions = new NodeActions(
+    node,
+    nodeStore,
+    ResourceAccessPoint.SELF
+  );
   if (
-    (contentType === NodeType.NODULAR_MARKDOWN ||
-      headingNodeTypes.includes(contentType)) &&
+    (node.contentType === NodeType.NODULAR_MARKDOWN ||
+      headingNodeTypes.includes(node.contentType)) &&
     !params?.isConstrainedWidth
   ) {
     return [
-      nodeStaticActions.sideNotesPane
+      nodeActions.sideNotesPane()
       // nodeActions.showForks
     ];
   } else if (
-    (contentType === NodeType.NODULAR_MARKDOWN ||
-      headingNodeTypes.includes(contentType)) &&
+    (node.contentType === NodeType.NODULAR_MARKDOWN ||
+      headingNodeTypes.includes(node.contentType)) &&
     params?.isConstrainedWidth
   ) {
     return [
-      nodeStaticActions.linksPane,
+      nodeActions.linksPane(),
       nodeStaticActions.propertiesPane,
-      nodeStaticActions.sideNotesPane
+      nodeActions.sideNotesPane()
     ];
   }
   const baseActions: IToggleItem[] = [
-    nodeStaticActions.linksPane,
+    nodeActions.linksPane(),
     nodeStaticActions.propertiesPane,
-    nodeStaticActions.sideNotesPane
+    nodeActions.sideNotesPane()
   ];
-  if (canHaveTraces.includes(contentType) && !params?.isConstrainedWidth) {
-    baseActions.push(nodeStaticActions.tracesPane);
+  if (canHaveTraces.includes(node.contentType) && !params?.isConstrainedWidth) {
+    baseActions.push(nodeActions.tracesPane());
   }
   return baseActions;
 }

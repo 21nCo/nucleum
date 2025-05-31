@@ -76,18 +76,18 @@ export function isSameResource(
       if ("tb" in item1 && "tb" in item2) {
         return item1.tb === item2.tb && item1.id === item2.id;
       } else if ("tb" in item1) {
-        return item1.toString() === item2.id.toString();
+        return item1.toString() === item2.id?.toString();
       } else if ("tb" in item2) {
-        return item1.id.toString() === item2.toString();
+        return item1.id?.toString() === item2.toString();
       } else if (item1.id && item2.id) {
         return item1.id.toString() === item2.id.toString();
       }
     } else if (typeof item1 === "string" && typeof item2 !== "string") {
       if ("tb" in item2) return item2.toString() === item1;
-      return item2.id.toString() === item1;
+      return item2.id?.toString() === item1;
     } else if (typeof item2 === "string" && typeof item1 !== "string") {
       if ("tb" in item1) return item1.toString() === item2;
-      return item1.id.toString() === item2;
+      return item1.id?.toString() === item2;
     }
     return false;
   } catch (e) {

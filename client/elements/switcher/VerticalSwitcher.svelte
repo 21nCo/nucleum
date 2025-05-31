@@ -30,11 +30,14 @@
   class={cn("flex flex-col h-full w-full", {
     "items-start": itemProps.activeStatusPlacement === Placement.Left,
     "items-end": itemProps.activeStatusPlacement === Placement.Right,
-    "gap-3": style === VerticalSwitcherStyle.DOT,
+    "gap-3":
+      style === VerticalSwitcherStyle.DOT ||
+      (labelOrientation === Orientation.Vertical &&
+        style === VerticalSwitcherStyle.GRADIENT),
     "justify-center": labelOrientation === Orientation.Vertical
   })}
 >
-  {#each items as item}
+  {#each items as item (item.value)}
     <VerticalSwitcherItem
       {item}
       {parentBgIndex}

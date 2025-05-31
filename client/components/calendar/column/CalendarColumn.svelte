@@ -75,8 +75,8 @@
       label: "Overview",
       // tooltip: "Overview",
       value: CalendarColumnPanel.Overview,
-      // icon: "heroicons:rectangle-group"
-      icon: "ph:squares-four-light"
+      icon: "heroicons:rectangle-group"
+      // icon: "ph:squares-four-light"
     };
     const notes = {
       label: "Notes",

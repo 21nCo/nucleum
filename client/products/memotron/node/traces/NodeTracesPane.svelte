@@ -39,7 +39,7 @@
         {
           value: "clips",
           label: "Highlights",
-          icon: "bookmark"
+          icon: "heroicons:bookmark"
         }
         // tasks
       ];
@@ -48,7 +48,7 @@
         {
           value: "clips",
           label: "Clips",
-          icon: "bookmark"
+          icon: "heroicons:bookmark"
         }
         // tasks
       ];
@@ -75,7 +75,7 @@
         {
           value: "clips",
           label: "Highlights",
-          icon: "bookmark"
+          icon: "heroicons:bookmark"
         }
         // tasks
       ];

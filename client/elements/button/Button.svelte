@@ -10,10 +10,12 @@
   import { Embed } from "$lib/client/types/context.type";
   import Badge from "../text/Badge.svelte";
   import { hoverable } from "$lib/client/actions/hover.action";
-  import { tooltip as tooltipAction } from "$lib/client/actions/popover.action";
+  import { popover } from "$lib/client/actions/popover.action";
   import { uiStateDerived } from "$lib/client/stores/uiState/uiState.store";
   import ShortcutText from "../text/ShortcutText.svelte";
   import type { IKeyboardShortcut } from "$lib/client/components/shortcuts/shortcut.type";
+  import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
+  import ButtonTooltip from "./ButtonTooltip.svelte";
   export let parentBgIndex: number = 1;
   export let label: string | undefined = undefined;
   export let className: string = "";
@@ -29,7 +31,7 @@
   export let tooltip: string | undefined = undefined;
   export let isPreventMinWidth: boolean = false;
   export let tooltipOptions: IPopoverRenderBaseParams = {
-    placement: Placement.Bottom,
+    placement: Placement.BottomCenter,
     offsetInPx: 4,
     isSpanToTriggerWidth: false,
     isUseAbsolutePositioning: false
@@ -114,10 +116,19 @@
   on:click
   on:mousedown
   bind:this={buttonRef}
-  use:tooltipAction={{
-    text: tooltip,
-    direction: tooltipOptions.placement,
-    offsetInPx: tooltipOptions.offsetInPx
+  use:popover={{
+    content: tooltip ? ButtonTooltip : "",
+    triggerMethod: tooltip ? [PopoverTriggerMethod.HOVER] : [],
+    placement: tooltipOptions.placement,
+    offsetInPx: tooltipOptions.offsetInPx,
+    componentProps: tooltip
+      ? {
+          tooltip,
+          shortcut,
+          size,
+          parentBgIndex
+        }
+      : {}
   }}
   disabled={isDisabled || isLoading}
 >

@@ -1,34 +1,34 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import { nodeStore } from "../node.store";
   import type { INode, INodeLinkThumb, INodeThumb } from "../node.type";
-  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import {
+    isSameResource,
+    resourceInList
+  } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { formatDate } from "$lib/client/utils/time.utils";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { resolveNodeLabelString } from "../node.utils";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { logger } from "$lib/client/components/debug/logger.client";
   import { appStore } from "$lib/client/stores/app.store";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { linkTagStore } from "../../linking/link.store";
+  import { linkTagLabelMapper } from "../../linking/link.utils";
 
   export let node: INode;
   let isLoading = false;
   let linkedNodes: INodeThumb[] = [];
   let groups: { date: string; nodes: INodeThumb[] }[] = [];
 
-  onMount(async () => {
-    await loadTimelineData();
-  });
+  $: tags = $linkTagStore?.map(linkTagLabelMapper) || [];
 
-  async function loadTimelineData() {
+  async function loadTimelineData(links: INodeLinkThumb[] | undefined) {
     try {
       isLoading = true;
-      if (!node.links?.length) {
+      if (!links || links.length === 0) {
         linkedNodes = [];
         return;
       }
-
       linkedNodes = await nodeStore.selectMany({
         properties: [
           "id",
@@ -41,7 +41,7 @@
           "createdAt"
         ],
         filters: {
-          id: node.links.map((x: INodeLinkThumb) => x.linkedTo.toString())
+          id: links.map((x: INodeLinkThumb) => x.linkedTo.toString())
         }
       });
       linkedNodes.sort((a, b) => {
@@ -83,14 +83,14 @@
 </script>
 
 <div class="flex flex-col w-full h-full overflow-auto px-4 dp:px-12">
-  {#if isLoading}
+  {#await loadTimelineData(node?.links)}
     <EmptyStatusView
       size={Size.sm}
       isLoadingState={true}
       mainText="Loading timeline"
       subText="Please wait while we load the timeline data"
     />
-  {:else if isValidArrayWithData(linkedNodes)}
+  {:then}
     <div class="flex flex-col gap-8 relative pl-6">
       <div class="absolute left-[6px] -top-2 bottom-0 w-[2px] bg-bgs4" />
       {#each groups as group, index}
@@ -102,7 +102,9 @@
             <div class="w-[8px] h-[8px] rounded-full bg-fgs3" />
           </div>
           <div class="flex flex-col gap-1.5 flex-grow">
-            <div class="text-b3 text-fgs3 h-[24px] flex items-center">
+            <div
+              class="text-b3 text-fgs3 h-[24px] flex items-center default-typeface"
+            >
               {group.date}
             </div>
             <div class="flex flex-col gap-2">
@@ -123,7 +125,7 @@
                         <span
                           class="text-b3 text-fgs3 bg-bgs3 px-2 py-0.5 rounded"
                         >
-                          {tag.label}
+                          {tags.find(resourceInList(tag))?.label ?? ""}
                         </span>
                       {/each}
                     </div>
@@ -138,11 +140,5 @@
         {/if}
       {/each}
     </div>
-  {:else}
-    <EmptyStatusView
-      size={Size.sm}
-      mainText="No linked nodes"
-      subText="This node has no linked nodes to display in the timeline"
-    />
-  {/if}
+  {/await}
 </div>

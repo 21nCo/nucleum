@@ -7,6 +7,9 @@
   import { bg, cn } from "$lib/client/utils/ui.utils";
   import type { ISelectItem } from "$lib/client/types/select.type";
   import HoverableElement from "../HoverableElement.svelte";
+  import Badge from "../text/Badge.svelte";
+  import { hoverable } from "$lib/client/actions/hover.action";
+  import { tooltip } from "$lib/client/actions/popover.action";
   export let item: ISelectItem;
   export let style: VerticalSwitcherStyle = VerticalSwitcherStyle.BAR;
   export let labelOrientation: Orientation = Orientation.Vertical;
@@ -35,15 +38,17 @@
     activeStatusPlacement === Placement.Left
   ) {
     activeClasses =
-      "border-l-2 border-l-bgs2 bg-gradient-to-l from-transparent to-bgs2";
-    inactiveClasses = "border-l-2 border-l-bgs2 text-fgs3";
+      "border-l--2 border-l-bgs2 bg-gradient-to-l from-transparent to-aps3";
+    inactiveClasses =
+      "border-l--2 border-l-bgs2 text-fgs3 hover:bg-gradient-to-l from-transparent to-bgs3";
   } else if (
     style === VerticalSwitcherStyle.GRADIENT &&
     activeStatusPlacement === Placement.Right
   ) {
     activeClasses =
-      "border-r-2 border-r-bgs2 bg-gradient-to-r from-transparent to-bgs2";
-    inactiveClasses = "border-r-2 border-r-bgs2 text-fgs3";
+      "border-r--2 border-r-bgs2 bg-gradient-to-r from-transparent to-aps3";
+    inactiveClasses =
+      "border-r--2 border-r-bgs2 text-fgs3 hover:bg-gradient-to-r from-transparent to-bgs3";
   } else if (
     style === VerticalSwitcherStyle.BAR_V2 &&
     activeStatusPlacement === Placement.Right
@@ -108,17 +113,25 @@
     {/if}
   </HoverableElement>
 {:else if style === VerticalSwitcherStyle.DOT && labelOrientation === Orientation.Vertical}
-  <HoverableElement
-    type="button"
+  <button
     class={cn("relative flex flex-col items-center", sizeClasses)}
-    {...commonVerticalLabelOptions}
+    use:tooltip={{
+      text: commonVerticalLabelOptions.tooltip,
+      direction:
+        commonVerticalLabelOptions.tooltipOptions?.placement ?? Placement.Left
+    }}
+    use:hoverable={{
+      onHover: (isHoveredParam) => {
+        isHovered = isHoveredParam;
+      }
+    }}
     on:click
   >
     {#if item.icon && typeof item.icon === "string"}
       <Icon
         icon={item.icon}
         {size}
-        isFilled={isActive}
+        isFilled={isActive || isHovered}
         class={cn({
           "fill-aps1": isActive,
           "stroke-fgs3": !isActive
@@ -138,7 +151,12 @@
         <span class="h-1 w-1 bg-aps1 rounded-full" />
       </div>
     {/if}
-  </HoverableElement>
+    {#if item.badge}
+      <div class="absolute bottom-2 right-1">
+        <Badge text={item.badge} size={Size.sm} />
+      </div>
+    {/if}
+  </button>
 {:else if labelOrientation === Orientation.Vertical}
   <div
     class={cn({
@@ -160,16 +178,16 @@
         "bg-aps1": style === VerticalSwitcherStyle.BG && isActive
       })}
       {...commonVerticalLabelOptions}
+      bind:isHovering={isHovered}
       on:click
     >
       {#if item.icon && typeof item.icon === "string"}
         <Icon
           icon={item.icon}
           {size}
-          isFilled={isActive}
+          isFilled={isActive || isHovered}
           class={cn({
-            "fill-fgs1": isActive && style === VerticalSwitcherStyle.GRADIENT,
-            "fill-aps1": isActive && style === VerticalSwitcherStyle.BG,
+            "fill-aps1": isActive,
             "stroke-fgs3": !isActive
           })}
         />
@@ -179,6 +197,11 @@
         <span class="w-min whitespace-nowrap {isActive ? 'font-medium' : ''}"
           >{properCase(item?.label ?? item?.value?.toString())}</span
         >
+      {/if}
+      {#if item.badge}
+        <div class="absolute bottom-2 right-1">
+          <Badge text={item.badge} size={Size.sm} />
+        </div>
       {/if}
     </HoverableElement>
   </div>

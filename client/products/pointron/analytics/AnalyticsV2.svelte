@@ -169,14 +169,3 @@
     {/if}
   {/key}
 </div>
-
-<svelte:document
-  on:keydown={(event) => {
-    let index;
-    const isTextInputSource = isTextElement(event.target);
-    if (isTextInputSource) return;
-    if (event.code.includes("Digit")) index = +event.key;
-    if (!index) return;
-    selectedPageId.set($analyticsConfigStore.pages[index - 1]?.id ?? "");
-  }}
-/>

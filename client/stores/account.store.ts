@@ -42,6 +42,7 @@ import { dispatchCustomEvent } from "../utils/browser.utils";
 import { GlobalEvent } from "../types/event.enum";
 import context from "./context.store";
 import { compressImageToTargetSize } from "../utils/ui.utils";
+import { convertHeicToPng } from "../utils/ui.utils";
 import { generateImagePreviewFromPdf } from "../utils/pdf.utils";
 import { Action } from "../types/action.enum";
 
@@ -451,13 +452,41 @@ class AccountStore extends ObservableStore<
       fileName = fileName
         .replace(/\s+/g, "_")
         .replace(/[()@#$%&*!?<>{}[\]\\\/\^~`+=;:]/g, "_");
+
+      // Convert HEIC files to PNG
+      const isHeicFile = fileName.toLowerCase().endsWith(".heic");
+      if (isHeicFile) {
+        try {
+          const { convertedBlob, convertedFileName } =
+            await convertHeicToPng(blob);
+          blob = convertedBlob;
+          contentType = "image/png";
+          fileName = fileName.replace(/\.heic$/i, ".png");
+          logger.log({
+            at: "uploadFileV2",
+            message: "Converted HEIC to PNG",
+            originalFileName: fileName,
+            newContentType: contentType
+          });
+        } catch (error) {
+          logger.error({
+            at: "uploadFileV2",
+            error,
+            message: "HEIC conversion failed"
+          });
+          throw new Error(
+            "Failed to convert HEIC file. Please try a different format."
+          );
+        }
+      }
+
       let thumbnailBlob: Blob | undefined = params.thumbnailBlob;
       if (params.isGenerateThumbnail && !thumbnailBlob) {
         if (contentType.includes("image")) {
           thumbnailBlob = await compressImageToTargetSize(blob);
         } else if (contentType.includes("pdf")) {
           const result = await generateImagePreviewFromPdf(blob);
-          if (result) thumbnailBlob = result;
+          if (result) thumbnailBlob = result as Blob;
         }
       }
       if (account.dataMode === UserDataMode.LOCAL || params.isPreventSync) {

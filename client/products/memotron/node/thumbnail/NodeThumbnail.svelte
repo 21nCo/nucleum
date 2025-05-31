@@ -205,7 +205,7 @@
           </div>
         {/if}
         {#if !isFullExpand}
-          <div class="flex flex-col gap-0.5 items-start p-2">
+          <div class="flex flex-col gap-2 items-start p-2">
             {#key refreshId}
               <NodeThumbnailTitle
                 node={item}
@@ -213,7 +213,7 @@
                 {accessPoint}
               />
             {/key}
-            <div class="text-b3 text-fgs3">
+            <div class="text-b4 text-fgs3 default-typeface">
               {#if accessPoint === ResourceAccessPoint.CALENDAR}
                 {formatTime($userPreferences, item.createdAt)}
               {:else}

@@ -305,7 +305,7 @@
 </script>
 
 <div
-  class="relative flex p-1 gap-1 border border-brs3"
+  class="relative flex p-1 gap-1 border border-brs3 default-typeface"
   bind:clientHeight={containerHeight}
 >
   {#if mode == Modes.MONTHS || mode == Modes.DAYS || mode == Modes.ZONES}

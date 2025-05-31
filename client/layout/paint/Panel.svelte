@@ -21,6 +21,7 @@
   import ComponentResolver from "./ComponentResolver.svelte";
   import type { InputLabelInfoToolTip } from "$lib/client/types/input.type";
   import FormLabelTooltip from "$lib/client/elements/text/formLabel/FormLabelTooltip.svelte";
+  import { fly } from "svelte/transition";
   const dispatch = createEventDispatcher();
 
   export let title: string | undefined = undefined;
@@ -37,11 +38,13 @@
   export let isProminentDivider: boolean = false;
   export let extraLargeScreenComponent: string | undefined = undefined;
   export let info: InputLabelInfoToolTip | undefined = undefined;
+  let isExplicitlyCollapsed = false;
 
   onMount(() => {
     const unsubscribe = appEvents.subscribe((e) => {
       if (e.event === GlobalEvent.APP_MENU_SWITCHED) {
         isCollapsed = false;
+        isExplicitlyCollapsed = false;
       }
     });
     return () => {
@@ -76,6 +79,7 @@
             "w-[28rem] min-w-[28rem]": panelSize === Size.lg
           }
       )}
+      in:fly={{ x: -10 }}
     >
       {#if !isNavActivated && (title || isShowCollapseButton)}
         <button
@@ -111,7 +115,10 @@
                 use:tooltip={{
                   text: "Collapse panel"
                 }}
-                on:click={() => (isCollapsed = true)}
+                on:click={() => {
+                  isCollapsed = true;
+                  isExplicitlyCollapsed = true;
+                }}
               >
                 <Icon
                   icon="ph:caret-left-light"
@@ -169,3 +176,10 @@
     {/if}
   {/if}
 </div>
+<svelte:window
+  on:collapsePanel={() => (isCollapsed = $view.display !== Display.TK && true)}
+  on:expandPanel={() => {
+    if (isExplicitlyCollapsed) return;
+    isCollapsed = false;
+  }}
+/>

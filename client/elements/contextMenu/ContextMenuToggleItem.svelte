@@ -27,8 +27,9 @@
       isHovering = e;
     }
   }}
+  data-context-menu-item-id={item.value}
   class={cn(
-    "flex flex-col items-center justify-center rounded-md border flex-1",
+    "contextmenuitem flex flex-col items-center justify-center rounded-md border flex-1",
     {
       "min-h-8 min-w-8": size === Size.sm,
       "min-h-10 min-w-10": size === Size.md,

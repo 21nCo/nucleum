@@ -13,9 +13,7 @@
   const dispatch = createEventDispatcher();
   export let item: IContextMenuItem;
   export let checked: boolean = item.initialValue ?? false;
-  function isRedAccent(item: IContextMenuItem) {
-    return item.value.toString().toLowerCase() === "delete";
-  }
+  export let isRedAccent: boolean = false;
 
   export function toggle() {
     if (item.type === ContextMenuType.SWITCH) {
@@ -32,13 +30,13 @@
       size={Size.sm}
       icon={item.icon}
       class={cn({
-        "stroke-ars1": isRedAccent(item)
+        "stroke-ars1": isRedAccent
       })}
     />
   {/if}
   <span
     class={cn("min-w-fit whitespace-nowrap", {
-      "text-ars1": isRedAccent(item)
+      "text-ars1": isRedAccent
     })}>{item.label ?? properCase(enumToString(item.value.toString()))}</span
   >
 </span>

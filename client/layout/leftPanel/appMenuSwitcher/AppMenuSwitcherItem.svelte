@@ -32,7 +32,7 @@
   export let parentBackgroundIndex: number;
   $: isShowHotKeyHint =
     $uiStateDerived?.isShowHotKeyHints &&
-    layoutContext === LayoutContext.DEFAULT;
+    (layoutContext === LayoutContext.DEFAULT || hideMenuLabels);
   $: isActive =
     $page.params.route?.includes(item.path ?? item.action) ||
     $page.route.id?.includes(item.path ?? item.action);
@@ -54,7 +54,8 @@
   function refreshHideMenuLabels() {
     hideMenuLabels =
       uiState.getState(UIState.hideLeftNavMenuLabels, {
-        isProductScoped: true
+        isProductScoped: true,
+        isDeviceScoped: true
       }) || false;
   }
 
@@ -75,7 +76,7 @@
   $: tooltipText =
     layoutContext === LayoutContext.THIN ||
     (layoutContext === LayoutContext.THIN_WITH_LABEL && !isShowLabel)
-      ? item.label
+      ? `${item.label} ${resolveHotKey() ? `[**${resolveHotKey()?.toUpperCase()}**]` : ""}`
       : undefined;
 
   function onClick() {
@@ -89,8 +90,7 @@
   }
 
   function resolveHotKey() {
-    const keyMap = keyboardShortcuts.fecthKeyMap();
-    const shortcut = keyMap.find((x) => x.action === item.action);
+    const shortcut = keyboardShortcuts.resolveShortcutForAction(item.action);
     if (!shortcut) return;
     return shortcut.key;
   }
@@ -230,7 +230,8 @@
               "fill-aps1": isActive,
               "fill-fgs2":
                 !isActive &&
-                layoutContext === LayoutContext.THIN_WITH_LABEL &&
+                (layoutContext === LayoutContext.THIN_WITH_LABEL ||
+                  layoutContext === LayoutContext.PORTRAIT) &&
                 !isHovering,
               "text-fgs3":
                 !isActive &&
@@ -274,7 +275,7 @@
       </div>
     {/if}
   </div>
-  {#if isShowHotKeyHint}
+  {#if isShowHotKeyHint && layoutContext === LayoutContext.DEFAULT}
     {@const hotKey = resolveHotKey()}
     {#if hotKey}
       <span

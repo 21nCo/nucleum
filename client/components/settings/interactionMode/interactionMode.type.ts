@@ -1,5 +1,8 @@
 export enum InteractionMode {
   DEFAULT = "DEFAULT",
+  /**
+   * @deprecated - merged into default
+   */
   KEYBOARD_CENTRIC = "KEYBOARD_CENTRIC",
   COMMAND_ONLY = "COMMAND_ONLY",
   /**

@@ -30,15 +30,19 @@
 {:else if item.secondStepComponent?.component}
   <ContextMenuItemWithSecondary {item} {size} on:select on:action />
 {:else}
+  {@const isRedAccent = item.value?.toString()?.toLowerCase() === "delete"}
   <button
     class={cn(
-      "flex items-center gap-2.5 justify-between notouch:hover:bg-bgs3 active:bg-bgs3 rounded-md truncate",
+      "contextmenuitem flex items-center gap-2.5 justify-between rounded-md truncate",
       {
         "p-1.5": size === Size.sm,
         "p-2": size === Size.md,
-        "px-3 py-2": size === Size.lg
+        "px-3 py-2": size === Size.lg,
+        "notouch:hover:bg-bgs3 active:bg-bgs3": !isRedAccent,
+        "notouch:hover:bg-ars3 active:bg-ars3": isRedAccent
       }
     )}
+    data-context-menu-item-id={item.value}
     on:click={(e) => {
       if (item.type === ContextMenuType.SWITCH) {
         if (contextMenuItemRef) contextMenuItemRef.toggle();
@@ -53,6 +57,7 @@
     <ContextMenuItemBase
       {item}
       bind:this={contextMenuItemRef}
+      {isRedAccent}
       on:change={(e) => {
         if (item.callback) item.callback(e.detail);
       }}

@@ -11,13 +11,13 @@
     ISelectItem,
     ISelectValue
   } from "$lib/client/types/select.type";
-  import Text from "../text/Text.svelte";
-  import { TextStyle } from "$lib/client/types/text.enum";
   import { fly } from "svelte/transition";
   import { moveItemInArray } from "$lib/shared/utils/obj.utils";
   import view from "$lib/client/stores/view.store";
   import DropDown from "../dropdown/DropDown.svelte";
   import { InputStyle } from "$lib/client/types/input.type";
+  import { isTextElement } from "$lib/client/utils/browser.utils";
+  import { logger } from "$lib/client/components/debug/logger.client";
   const dispatch = createEventDispatcher();
   export let items: ISelectItem[] | string[];
   export let value: ISelectValue | undefined = undefined;
@@ -43,7 +43,10 @@
    */
   export let isBgBar: boolean = false;
   export let isRearrangeableByDefault: boolean = false;
+  export let isEnableTitleAction: boolean = false;
+  export let isPreventNumberShortcut: boolean = false;
   let _items: ISelectItem[];
+  const titleValue = "$title";
   $: _items = items.every((x) => typeof x === "string")
     ? items.map((x) => ({ label: x, value: x }))
     : items;
@@ -83,9 +86,28 @@
     })}
   >
     {#if title || $$slots.left}
-      <span class="mo:mr-3 mr-6" transition:conditionalTransition>
+      <span class="mo:mr-3 mx-3" transition:conditionalTransition>
         <slot name="left">
-          <Text content={title} style={TextStyle.PANEL_HEADING_SMALL} />
+          <button
+            class={cn(
+              "text-h4 font-medium bg-none rounded-md px-2 py-0.5",
+              {
+                "cursor-default": !isEnableTitleAction
+              },
+              isEnableTitleAction && {
+                "text-aps1 bg-aps3": value === titleValue,
+                "text-fgs2 hover:bg-bgs2": value !== titleValue
+              }
+            )}
+            on:click={() => {
+              if (isEnableTitleAction) {
+                value = titleValue;
+                dispatch("switch", titleValue);
+              }
+            }}
+          >
+            {title}
+          </button>
         </slot>
       </span>
     {/if}
@@ -193,7 +215,7 @@
       {/if}
     </div>
     {#if $$slots.right}
-      <span class="ml-6">
+      <span class="mx-4">
         <slot name="right">
           <span>no content</span>
         </slot>
@@ -201,3 +223,27 @@
     {/if}
   </div>
 {/key}
+<svelte:document
+  on:keydown={(event) => {
+    try {
+      let index;
+      if (event.code.includes("Digit")) index = +event.key;
+      const isMetaShiftCombination = event.metaKey && event.shiftKey;
+      if (isPreventNumberShortcut && !isMetaShiftCombination) return;
+      const isTextInputSource = isTextElement(event.target);
+      if (isTextInputSource && !isMetaShiftCombination) return;
+      if (index === 0 && isEnableTitleAction) {
+        value = titleValue;
+        dispatch("switch", titleValue);
+        return;
+      }
+      if (!index) return;
+      const val = _items[index - 1]?.value;
+      if (!val) return;
+      value = val;
+      dispatch("switch", val);
+    } catch (error) {
+      logger.error({ at: "PanelSwitcher - number shortcut listener", error });
+    }
+  }}
+/>

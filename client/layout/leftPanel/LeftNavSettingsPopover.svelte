@@ -20,6 +20,7 @@
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
   import { properCase } from "$lib/shared/utils/text.utils";
+  import ComponentBaseLayer from "../layers/ComponentBaseLayer.svelte";
 
   const dispatch = createEventDispatcher();
 
@@ -33,7 +34,8 @@
   let userPinnedItems: string[] = [];
   let hideMenuLabels =
     uiState.getState(UIState.hideLeftNavMenuLabels, {
-      isProductScoped: true
+      isProductScoped: true,
+      isDeviceScoped: true
     }) || false;
 
   initResources();
@@ -68,7 +70,8 @@
   function handleToggleMenuLabels(e: CustomEvent): void {
     hideMenuLabels = e.detail;
     uiState.setState(UIState.hideLeftNavMenuLabels, hideMenuLabels, {
-      isProductScoped: true
+      isProductScoped: true,
+      isDeviceScoped: true
     });
     dispatch("update");
   }
@@ -146,3 +149,5 @@
     {/if}
   </div>
 </div>
+
+<ComponentBaseLayer hasDragAndDrop={true} />

@@ -5,8 +5,7 @@ import type {
 
 export enum CalendarLayout {
   Classic = "classic",
-  Bird = "bird",
-  Heatmap = "heatmap"
+  Bird = "bird"
 }
 
 export enum CalendarColumnPanel {

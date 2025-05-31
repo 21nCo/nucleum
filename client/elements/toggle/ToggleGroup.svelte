@@ -27,6 +27,7 @@
       {size}
       {bgSize}
       {parentBgIndex}
+      count={item.count}
       on={selected === item.value}
       tooltip={item.tooltip ?? enumToString(item.value)}
       on:change={(e) => {

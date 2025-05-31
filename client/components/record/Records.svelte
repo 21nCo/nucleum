@@ -159,7 +159,7 @@
         {/if}
       {/each}
       {#if isShowLoadingPulseAtTheEnd}
-        <LibraryLoadingPulse {resource} isTail={true} />
+        <LibraryLoadingPulse {resource} {arrangement} isTail={true} />
       {/if}
     </div>
   {/if}

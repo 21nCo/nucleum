@@ -79,6 +79,7 @@
 
   onMount(() => {
     const unsubscribe = node.subscribe(async (x) => {
+      if (!x.links) return;
       let currentFocus = previousFocus;
       if (!x.focusedBlock) currentFocus = x.id;
       else currentFocus = x.focusedBlock;
@@ -216,6 +217,7 @@
           linkedTo: x.out,
           linkType: LinkType.MENTION,
           id: x.id,
+          tags: x.tags,
           direction: "outgoing"
         },
         node: nodes.find((y: any) => isSameResource(y.id, x.out))

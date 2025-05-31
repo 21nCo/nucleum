@@ -3,7 +3,7 @@ import { readFile, unlink, writeFile } from "fs/promises";
 import { locate } from "@iconify/json";
 import { iconSets, phIcons } from "./icons-list";
 
-const version = 23;
+const version = 28;
 const isExtension = false;
 
 const spriteContentStart =
@@ -73,9 +73,19 @@ function addIconsToSprite(
   for (const iconName of iconNames) {
     const iconData = getIconData(set, iconName);
     if (iconData) {
+      let iconBody = iconData.body;
+
+      // Replace stroke-width with 1 for heroicons and mynaui icon sets
+      if (setName === "heroicons" || setName === "mynaui") {
+        iconBody = iconBody.replace(
+          /stroke-width="[^"]*"/g,
+          'stroke-width="1.2"'
+        );
+      }
+
       spriteContent += `
         <symbol id="${setName}:${iconName}" viewBox="0 0 ${iconData.width} ${iconData.height}">
-          ${iconData.body}
+          ${iconBody}
         </symbol>
       `;
     }

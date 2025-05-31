@@ -18,10 +18,12 @@ class KeyboardShortcuts extends KeyValueStore<IKeyboardShortcutsStore> {
   constructor() {
     super(Resource.keyboardShortcuts, {});
   }
+
   saveShortcut(action: string, shortcut: IKeyboardShortcut) {
     return this.modify({ [action]: shortcut });
   }
-  fecthKeyMap(): (IKeyboardShortcut & { action: string })[] {
+
+  fetchKeyMap(): (IKeyboardShortcut & { action: string })[] {
     let defaultKeyMap = shortcutsConfig;
     const ctx = get(context);
     if (ctx.os === OperatingSystem.WINDOWS) {
@@ -38,11 +40,18 @@ class KeyboardShortcuts extends KeyValueStore<IKeyboardShortcutsStore> {
       }))
       .filter((x: any) => x.key);
   }
+
   fetchConfiguratbleShortcuts() {
     const configurableShortcuts = get(appStore)?.appData?.configurableShortcuts;
-    return this.fecthKeyMap().filter((x) =>
+    return this.fetchKeyMap().filter((x) =>
       configurableShortcuts?.includes(x.action)
     );
+  }
+
+  resolveShortcutForAction(action: string) {
+    const keyMap = this.fetchKeyMap();
+    const shortcut = keyMap.find((s: any) => s.action === action);
+    return shortcut;
   }
 
   /**
@@ -53,7 +62,7 @@ class KeyboardShortcuts extends KeyValueStore<IKeyboardShortcutsStore> {
   resolveShortcut(event: KeyboardEvent) {
     if (!event?.key) return { shortcut: undefined, modifiers: [] };
     const modifiers = resolveModifiers(event);
-    const keyMap = this.fecthKeyMap();
+    const keyMap = this.fetchKeyMap();
     const shortcut = keyMap.find((s: any) => {
       return this.checkShortcut(event, s);
     });
@@ -64,7 +73,7 @@ class KeyboardShortcuts extends KeyValueStore<IKeyboardShortcutsStore> {
   checkShortcut(event: KeyboardEvent, shortcut: string | IKeyboardShortcut) {
     try {
       if (typeof shortcut === "string") {
-        const keyMap = this.fecthKeyMap();
+        const keyMap = this.fetchKeyMap();
         const result = keyMap.find((s: any) => s.action === shortcut);
         if (!result) return false;
         shortcut = result;

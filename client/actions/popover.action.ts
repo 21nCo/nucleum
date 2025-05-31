@@ -297,6 +297,10 @@ interface PopoverParams {
    * If set to true, the popover will be rendered as a sibling of the trigger element. By default, popovers are rendered in popovers container to avoid z-index issues with other elements in the DOM.
    */
   isRenderAsSibling?: boolean;
+  /**
+   * When set, the popover will hide when hovering over any DOM element with this class name and will not hide on hovering out of the trigger element
+   */
+  classForHoverDismissal?: string;
 }
 
 export function popover(node: HTMLElement, params: PopoverParams) {
@@ -313,7 +317,8 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     componentProps = {},
     groupId = "popover",
     id = "popover",
-    isRenderAsSibling = false
+    isRenderAsSibling = false,
+    classForHoverDismissal = ""
   } = params;
 
   let isShown = false;
@@ -325,8 +330,13 @@ export function popover(node: HTMLElement, params: PopoverParams) {
 
   async function createPopover(): Promise<void> {
     popoverElement = document.createElement("div");
-    popoverElement.className =
-      "fixed shadow-lg rounded-md overflow-hidden popover";
+    if (isRenderAsModalForCW && window.innerWidth < 800) {
+      popoverElement.className =
+        "fixed rounded-t-md overflow-hidden popover cw-modal pb-8 bg-bgs1";
+    } else {
+      popoverElement.className =
+        "fixed shadow-lg rounded-md overflow-hidden popover";
+    }
     popoverElement.style.zIndex = "50";
     popoverElement.id = id;
     popoverElement.setAttribute("data-group-id", groupId);
@@ -351,6 +361,13 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     await tick();
   }
 
+  /**
+   *
+   *
+   * For isRenderAsModalForCW, the popover will be rendered at the bottom of the screen as bottom sheet on mobile devices. Removed 12px margin so that the popover takes the entire width to resemble native sheets.
+   *
+   * @returns
+   */
   function positionPopover(): void {
     if (!popoverElement) return;
 
@@ -369,13 +386,15 @@ export function popover(node: HTMLElement, params: PopoverParams) {
         "opacity 0.2s cubic-bezier(0.23, 1, 0.32, 1)";
       document.body.appendChild(cwModalOverlay);
 
-      const finalTop = window.innerHeight - popRect.height - 42;
+      // const finalTop = window.innerHeight - popRect.height - 42;
+      const finalTop = window.innerHeight - popRect.height;
       popoverElement.style.position = "fixed";
       popoverElement.style.transition =
         "all 0.2s cubic-bezier(0.23, 1, 0.32, 1)";
       popoverElement.style.left = `0px`;
-      popoverElement.style.width = `${documentWidth - 24}px`;
-      popoverElement.style.margin = "12px";
+      // popoverElement.style.margin = "12px";
+      // popoverElement.style.width = `${documentWidth - 24}px`;
+      popoverElement.style.width = "100%";
       popoverElement.style.opacity = "0";
       popoverElement.style.zIndex = "70";
 
@@ -761,6 +780,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     ) {
       if (
         isShown &&
+        !classForHoverDismissal &&
         !(
           triggerMethod.includes(PopoverTriggerMethod.CLICK) &&
           lastTriggeredBy === PopoverTriggerMethod.CLICK
@@ -783,6 +803,23 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     }
     node.addEventListener("hide", hidePopover);
     node.addEventListener("show", showPopover);
+
+    if (classForHoverDismissal) {
+      document.addEventListener("mouseenter", handleClassHoverDismissal, true);
+    }
+  }
+
+  function handleClassHoverDismissal(event: MouseEvent): void {
+    if (!isShown || !classForHoverDismissal) return;
+
+    const target = event.target as Element;
+    if (
+      target &&
+      target.classList &&
+      target.classList.contains(classForHoverDismissal)
+    ) {
+      hidePopover("class hover dismissal");
+    }
   }
 
   function removeEventListeners(): void {
@@ -798,6 +835,14 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     }
     node.removeEventListener("hide", hidePopover);
     node.removeEventListener("show", showPopover);
+
+    if (classForHoverDismissal) {
+      document.removeEventListener(
+        "mouseenter",
+        handleClassHoverDismissal,
+        true
+      );
+    }
   }
 
   setupEventListeners();
@@ -821,7 +866,8 @@ export function popover(node: HTMLElement, params: PopoverParams) {
         id = "popover",
         isRenderAsSibling = false,
         isRenderAsModalForCW = false,
-        cwModalPosition = Placement.Bottom
+        cwModalPosition = Placement.Bottom,
+        classForHoverDismissal = ""
       } = newParams);
       //TODO - troubleshoot the root casue. Temporary fix added for date picker popover when rendered as bottom on mobile is adding many overlays on update trigger.
       if (popoverElement && !isRenderAsModalForCW) {

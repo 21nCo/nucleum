@@ -98,8 +98,12 @@
   }
   const debouncedSearch = debouncer(refresh, 500);
 
-  function onSelect(e: CustomEvent) {
-    const clickAccessMode = appStore.determineClickAccessMode(e.detail.event);
+  function onSelect(
+    e: CustomEvent<{ item: any; event: MouseEvent | undefined }>
+  ) {
+    const clickAccessMode = e.detail.event
+      ? appStore.determineClickAccessMode(e.detail.event)
+      : undefined;
     if (!clickAccessMode) {
       const resourceType = determineResourceType(e.detail.item.id);
       if (isInlineAvailable(resourceType)) {

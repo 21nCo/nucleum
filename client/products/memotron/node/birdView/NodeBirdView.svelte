@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import {
     isSameResource,
     removeDuplicatesFilter,
@@ -8,7 +7,6 @@
   import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
   import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
-  import Switch from "$lib/client/elements/toggle/Switch.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { Size } from "$lib/client/types/size.enum";
   import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
@@ -19,14 +17,11 @@
   import {
     LinkType,
     NodeRightPaneType,
-    NodeType,
     webNodeTypeList,
     type INode
   } from "../node.type";
-  import NodeRightPane from "../rightPanel/NodeRightPane.svelte";
   import type { DropdownItem } from "$lib/client/types/dropdownItem.type";
   import type { ILinkTag } from "../../linking/link.type";
-  import { onMount } from "svelte";
   import { enumToString } from "$lib/shared/utils/text.utils";
   import type { IRecordId } from "$lib/client/types/data.type";
   import view from "$lib/client/stores/view.store";
@@ -41,10 +36,12 @@
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
   import { toasts } from "$lib/client/stores/notification.store";
   import NodeTimelineView from "../timeline/NodeTimelineView.svelte";
+  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
+  import { NodeBirdViewMode } from "./birdView.type";
   export let node: IActiveNodeStore;
   export let rightPane: NodeRightPaneType | undefined = undefined;
   let linkedNodes: INode[];
-  let selectedView = "Graph";
+  let selectedView = NodeBirdViewMode.Graph;
   let depth = 1;
   let graphRef: NodeGraph;
   let isAutoGrouping = true;
@@ -115,12 +112,7 @@
     }
   }
 
-  onMount(async () => {
-    await loadLinkedNodesData();
-    await refreshGraphData();
-  });
-
-  async function loadLinkedNodesData() {
+  async function loadLinkedNodesData(links: any[]) {
     try {
       linkedNodes = await nodeStore.selectMany({
         properties: [
@@ -133,7 +125,7 @@
           "url"
         ],
         filters: {
-          id: $node.links?.map((x) => x.linkedTo.toString())
+          id: links?.map((x) => x.linkedTo.toString())
         }
       });
     } catch (error) {
@@ -143,9 +135,13 @@
 
   /**
    * TODO - filters
+   *
+   * Note: removed no relation category altogether since this is not looking visually appealing when no other link tags are present. Even if other link tags are present, not having `no relation` category is not looking visually appealing.
    */
-  async function refreshGraphData() {
+  async function refreshGraphData(links: any[], depth: number) {
     try {
+      if (!links) return;
+      await loadLinkedNodesData(links);
       if (isAutoGrouping) {
         let linkTagsInUse = new Set<string>();
         let nodes: {
@@ -160,13 +156,13 @@
           );
           let combo = null;
           if (link?.tags?.length === 0) {
-            combo = "no tag";
+            // combo = "no relation";
           } else {
             const linkTags = tags.filter((x) =>
               link?.tags?.some(resourceInList(x))
             );
             if (linkTags.length === 0) {
-              combo = "no tag";
+              // combo = "no relation";
             } else if (linkTags.length === 1) {
               combo = linkTags[0].label;
             } else {
@@ -358,22 +354,26 @@
 </script>
 
 <div class="flex flex-col gap-3 w-full flex-grow p-3">
-  <div
-    class="flex w-full justify-between bg-bgs2 border border-brs3 rounded-md px-4 py-3"
-  >
+  <div class="flex w-full justify-between bg-bgs2 rounded-md p-2">
     <div class="flex items-center gap-4">
       {#if $view.isConstrainedWidth}
         <div class="w-32">
           <DropDown
             items={[
               {
-                value: "Graph"
+                value: NodeBirdViewMode.Graph,
+                label: "Graph",
+                icon: "ph:graph-light"
               },
               {
-                value: "Fuzzy"
+                value: NodeBirdViewMode.Timeline,
+                label: "Timeline",
+                icon: "mynaui:git-merge"
               },
               {
-                value: "Serendipity"
+                value: NodeBirdViewMode.Serendipity,
+                label: "Serendipity",
+                icon: "ph:sparkle-light"
               }
             ]}
             bind:value={selectedView}
@@ -383,9 +383,26 @@
         </div>
       {:else}
         <PanelSwitcher
-          items={["Graph", "Timeline", "Serendipity"]}
+          items={[
+            {
+              value: NodeBirdViewMode.Graph,
+              label: "Graph",
+              icon: "ph:graph-light"
+            },
+            {
+              value: NodeBirdViewMode.Timeline,
+              label: "Timeline",
+              icon: "mynaui:git-merge"
+            },
+            {
+              value: NodeBirdViewMode.Serendipity,
+              label: "Serendipity",
+              icon: "ph:sparkle-light"
+            }
+          ]}
           size={Size.sm}
           style={PanelSwitcherStyle.TRAIN}
+          isShowNumberShortcut={true}
           bind:value={selectedView}
         />
       {/if}
@@ -435,19 +452,20 @@
           <span>Auto grouping</span>
         </div> -->
       </div>
-
-      <div class="min-w-fit">
-        <DropDown
-          items={depthOptions}
-          isDisableSearch={true}
-          bind:value={depth}
-          size={Size.sm}
-          on:select={async () => {
-            await refreshGraphData();
-            graphRef?.rerender();
-          }}
-        />
-      </div>
+      {#if selectedView === NodeBirdViewMode.Graph}
+        <div class="min-w-fit">
+          <DropDown
+            items={depthOptions}
+            isDisableSearch={true}
+            bind:value={depth}
+            size={Size.sm}
+            on:select={async () => {
+              await refreshGraphData($node.links, depth);
+              graphRef?.rerender();
+            }}
+          />
+        </div>
+      {/if}
       <Toggle
         icon="ph:link-light"
         tooltip="See all links"
@@ -464,16 +482,22 @@
   </div>
   <div class="flex w-full flex-1 min-h-0">
     <div class="flex-1 h-full min-w-0">
-      {#if selectedView === "Graph"}
-        <NodeGraph
-          bind:this={graphRef}
-          layout={depth === 1 ? "dendrogram-1" : "radial-2"}
-          data={graphData}
-          nodeId={$node.id.toString()}
-          on:select={onNodeSelect}
-          on:canvasClick={closeSplitResource}
-        />
-      {:else if selectedView === "Timeline"}
+      {#if selectedView === NodeBirdViewMode.Graph}
+        {#await refreshGraphData($node.links, depth)}
+          <div class="flex-1 h-full min-w-0">
+            <EmptyStatusView isLoadingState={true} />
+          </div>
+        {:then}
+          <NodeGraph
+            bind:this={graphRef}
+            layout={depth === 1 ? "dendrogram-1" : "radial-2"}
+            data={graphData}
+            nodeId={$node.id.toString()}
+            on:select={onNodeSelect}
+            on:canvasClick={closeSplitResource}
+          />
+        {/await}
+      {:else if selectedView === NodeBirdViewMode.Timeline}
         <NodeTimelineView node={$node} />
       {:else}
         <ComingSoonView

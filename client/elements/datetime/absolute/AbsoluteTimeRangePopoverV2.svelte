@@ -280,7 +280,7 @@
 
 <button
   class={cn(
-    "flex flex-col gap-4 p-4 text-fgs3 rounded-md shadow-lg border border-brs2",
+    "flex flex-col gap-4 p-4 text-fgs3 cw:rounded-none rounded-md cw:shadow-none shadow-lg cw:border-none border border-brs2",
     {
       [bg(parentBgIndex)]: true,
       "w-[20rem]": !isCWPopoverContext,

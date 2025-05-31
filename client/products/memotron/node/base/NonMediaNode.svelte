@@ -32,6 +32,8 @@
   import context from "$lib/client/stores/context.store";
   import { Embed } from "$lib/client/types/context.type";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
+  import { GlobalEvent } from "$lib/client/types/event.enum";
 
   export let node: IActiveNodeStore;
   export let selectedView: NodeView = NodeView.CONTENT;
@@ -104,16 +106,35 @@
   function closeRightPane() {
     rightPane = NodeRightPaneType.NONE;
     isRightPanelCollapsed = true;
+    onRightPaneSwitch();
+  }
+
+  function _openRightPane(pane: NodeRightPaneType) {
+    rightPane = pane;
+    isRightPanelCollapsed = false;
+    onRightPaneSwitch();
+  }
+
+  function onRightPaneSwitch() {
+    if ($node.accessMode !== ResourceAccessMode.INLINE) return;
+    if (isRightPanelCollapsed) {
+      dispatchCustomEvent(GlobalEvent.EXPAND_PANEL, {});
+    } else {
+      dispatchCustomEvent(GlobalEvent.COLLAPSE_PANEL, {});
+    }
   }
 
   function openRightPane(e: CustomEvent<NodeRightPaneType>) {
-    rightPane = e.detail;
-    isRightPanelCollapsed = false;
+    _openRightPane(e.detail);
   }
+
   async function onViewSwitch(e: CustomEvent<NodeView>) {
     selectedView = e.detail;
     if (selectedView === NodeView.CONTENT) {
-      await node.init($node.accessMode);
+      await node.init({
+        accessMode: $node.accessMode,
+        accessPoint: ResourceAccessPoint.SELF
+      });
       refreshId = new Date().getTime();
       await node.afterInit();
     }
@@ -238,8 +259,7 @@
                     resource={Resource.node}
                     isVisibleProps={true}
                     on:showAll={() => {
-                      rightPane = NodeRightPaneType.PROPERTIES;
-                      isRightPanelCollapsed = false;
+                      _openRightPane(NodeRightPaneType.PROPERTIES);
                     }}
                   />
                 {/if}
@@ -262,6 +282,7 @@
               bind:isRightPanelCollapsed
               bind:pane={rightPane}
               on:close={closeRightPane}
+              on:switch={onRightPaneSwitch}
             />
           {:else if $node.isInFocusMode && !isConstrainedWidth}
             <div class="flex max-w-sm">

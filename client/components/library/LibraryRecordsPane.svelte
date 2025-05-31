@@ -107,7 +107,6 @@
   let isRefreshingTotalCount: boolean = false;
   let availableResourcesSet: Set<Resource> = new Set(availableResources);
   let refreshResetTimeout: any;
-  let isSearchExpanded = false;
   let searchInputRef: InlineSearchBar;
   let isRefineShown = false;
   let subTypeSwitcherRef: LibrarySubTypeSwitcher;
@@ -499,42 +498,15 @@
   {/if}
 {:else}
   {#if isConstrainedWidth}
-    {#if isSearchExpanded}
+    <div class="flex items-center w-full gap-2 px-2 h-12 min-h-12">
       <InlineSearchBar
         bind:this={searchInputRef}
         bind:query={searchQuery}
-        padding="px-4"
+        padding="px-2"
         on:search={() => refresh()}
         placeholder={"Search " + resource + "s"}
         style={InputStyle.FILLED}
       >
-        <Button
-          icon="ph:x-circle-light"
-          tooltip="Close search"
-          size={Size.lg}
-          on:click={() => (isSearchExpanded = !isSearchExpanded)}
-        />
-      </InlineSearchBar>
-    {:else}
-      <div class="flex items-center w-full gap-2 px-2 h-12 min-h-12">
-        <Button
-          icon="ph:magnifying-glass-light"
-          size={Size.lg}
-          on:click={async () => {
-            isSearchExpanded = !isSearchExpanded;
-            await tick();
-            searchInputRef?.focus();
-          }}
-        />
-        <div class="flex-1 min-w-0" in:fade>
-          <LibrarySubTypeSwitcher
-            {resource}
-            {isConstrainedWidth}
-            {accessPoint}
-            {selectedSubType}
-            bind:this={subTypeSwitcherRef}
-          />
-        </div>
         <Toggle
           bind:on={isRefineShown}
           icon="ph:sliders-horizontal-light"
@@ -542,13 +514,14 @@
           size={Size.lg}
           bgSize={Size.sm}
         />
-      </div>
-      {#if isRefineShown}
-        <div
-          class="flex flex-col gap-4 mx-3 p-3 bg-bgs2 rounded-md"
-          in:fly={{ y: -20, duration: 300 }}
-        >
-          <!-- <div class="flex gap-4 items-center">
+      </InlineSearchBar>
+    </div>
+    {#if isRefineShown}
+      <div
+        class="flex flex-col gap-4 mx-3 p-3 bg-bgs2 rounded-md"
+        in:fly={{ y: -20, duration: 300 }}
+      >
+        <!-- <div class="flex gap-4 items-center">
             <Button
               icon="funnel"
               style={ButtonStyle.OUTLINED}
@@ -565,53 +538,52 @@
             />
           </div> -->
 
-          <DropDown
-            label={{
-              label: "Arrangement",
-              orientation: Orientation.Horizontal
-            }}
-            items={[
-              {
-                label: "List",
-                icon: "ph:list-light",
-                value: Arrangement.LIST
-              },
-              {
-                label: "Grid",
-                icon: "ph:squares-four-light",
-                value: Arrangement.GRID
-              }
-            ]}
-            width="w-40"
-            isDisableSearch={true}
-            size={Size.sm}
-            value={arrangement ?? undefined}
-            on:select={(e) => {
-              if (!e?.detail) return;
-              const newArrangement = e.detail;
-              uiState.setResourceState(
-                resource,
-                ResourceAccessPoint.BROWSER,
-                UIState.arrangement,
-                newArrangement
-              );
-              arrangement = newArrangement;
-            }}
-          />
-          <SwitchInput
-            bind:checked={isArchivedFilterSelected}
-            isExpanded={true}
-            label={{ label: "Show archived items only" }}
-            on:change={() => refresh()}
-          />
-          <div class="flex gap-2 items-center w-full justify-center">
-            <Badge text="soon" />
-            <span class="text-b3 text-fgs3">
-              Filters & sorting will be available soon
-            </span>
-          </div>
+        <DropDown
+          label={{
+            label: "Arrangement",
+            orientation: Orientation.Horizontal
+          }}
+          items={[
+            {
+              label: "List",
+              icon: "ph:list-light",
+              value: Arrangement.LIST
+            },
+            {
+              label: "Grid",
+              icon: "ph:squares-four-light",
+              value: Arrangement.GRID
+            }
+          ]}
+          width="w-40"
+          isDisableSearch={true}
+          size={Size.sm}
+          value={arrangement ?? undefined}
+          on:select={(e) => {
+            if (!e?.detail) return;
+            const newArrangement = e.detail;
+            uiState.setResourceState(
+              resource,
+              ResourceAccessPoint.BROWSER,
+              UIState.arrangement,
+              newArrangement
+            );
+            arrangement = newArrangement;
+          }}
+        />
+        <SwitchInput
+          bind:checked={isArchivedFilterSelected}
+          isExpanded={true}
+          label={{ label: "Show archived items only" }}
+          on:change={() => refresh()}
+        />
+        <div class="flex gap-2 items-center w-full justify-center">
+          <Badge text="soon" />
+          <span class="text-b3 text-fgs3">
+            Filters & sorting will be available soon
+          </span>
         </div>
-      {/if}
+      </div>
     {/if}
   {:else}
     <LibrarySearchBox
@@ -639,7 +611,7 @@
   {/if}
   <div class="flex flex-col gap-4 px-4 overflow-auto grow">
     <InlineSyncingFeedback {resource} isFullWidthVariant={true} />
-    {#if isConstrainedWidth && !searchQuery && starredData.length > 0}
+    {#if isConstrainedWidth && !searchQuery && starredData && starredData.length > 0}
       <div class="flex flex-col gap-2">
         <Text content="Starred" style={TextStyle.SECTION_HEADING} />
         <Records
@@ -698,7 +670,7 @@
         {/if}
       </div>
       <ScrollViewBottomSpacer />
-    {:else if data.length === 0 && starredData.length === 0}
+    {:else if data.length === 0 && (starredData.length === 0 || searchQuery)}
       <EmptyStatusView
         size={Size.lg}
         {...resolveEmptyStateMessage()}

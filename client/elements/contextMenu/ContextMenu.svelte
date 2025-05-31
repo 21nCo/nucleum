@@ -17,6 +17,7 @@
   export let onSelect: (item: IContextMenuItem) => void = () => {};
   export let parentBgIndex: number = 1;
   export let isFullWidth: boolean = false;
+  export let bottomRender: string | undefined = undefined;
   let menu: IContextMenuGroup[] = [];
 
   onMount(() => {
@@ -28,10 +29,11 @@
 
 <div
   class={cn(
-    "flex flex-col gap-1 p-1 border border-brs2 rounded-md",
+    "flex flex-col gap-1 p-1 rounded-md",
     bg(parentBgIndex),
     {
       "w-full": isFullWidth,
+      "border border-brs2": !isFullWidth,
       "text-b3": size === Size.sm,
       "text-b2": size === Size.md || size === Size.lg || size === Size.xl
     },
@@ -75,4 +77,7 @@
       <Divider colorStrength={ColorStrength.Strong} />
     {/if}
   {/each}
+  {#if bottomRender}
+    {@html bottomRender}
+  {/if}
 </div>

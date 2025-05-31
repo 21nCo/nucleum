@@ -35,8 +35,8 @@
   import { Product } from "$lib/client/types/product.type";
   import { isHideCreateAction } from "./library.utils";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
-  import { shortcutsConfig } from "../shortcuts/shortcuts.config";
   import ComponentShortcutListener from "../shortcuts/ComponentShortcutListener.svelte";
+  import { keyboardShortcuts } from "../shortcuts/shortcuts.store";
 
   export let resources: Resource[] = [];
 
@@ -47,6 +47,7 @@
   let availableResourcesSet: Set<Resource> = new Set(availableResources);
   let syncFeedbackRef: InlineSyncingFeedback;
   let recordsPaneRef: LibraryRecordsPane;
+  const createShortcut = keyboardShortcuts?.resolveShortcutForAction("create");
 
   $: floatingButton =
     $view.isConstrainedWidth && selectedResource === Resource.unknown
@@ -65,6 +66,7 @@
               placement: Placement.TopCenter,
               isRenderAsModalForCW: true,
               componentProps: {
+                parentBgIndex: 0,
                 isFullWidth: $view.isConstrainedWidth,
                 menuResolver: resolveCreateResourceMenu,
                 size: Size.lg
@@ -83,7 +85,7 @@
             },
             icon: "ph:plus-light",
             variant: ButtonVariant.PRIMARY,
-            shortcut: shortcutsConfig.create,
+            shortcut: createShortcut,
             style: ButtonStyle.DEFAULT
           };
 
@@ -116,7 +118,7 @@
         resources = [Resource.task, Resource.goal, Resource.collection];
         break;
       case Product.MEMOTRON:
-        resources = [Resource.node, Resource.task, Resource.collection];
+        resources = [Resource.node, Resource.collection];
         break;
       case Product.NUCLEUS:
         resources = [
@@ -143,6 +145,7 @@
     return [
       {
         group: "all",
+        isToggleGroup: $view.isConstrainedWidth,
         items
       }
     ];
@@ -234,11 +237,13 @@
   </div>
 </Panel>
 
-<ComponentShortcutListener
-  shortcuts={[
-    {
-      shortcut: shortcutsConfig.create,
-      callback: onCreateResource
-    }
-  ]}
-/>
+{#if createShortcut}
+  <ComponentShortcutListener
+    shortcuts={[
+      {
+        shortcut: createShortcut,
+        callback: onCreateResource
+      }
+    ]}
+  />
+{/if}

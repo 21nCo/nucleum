@@ -110,7 +110,7 @@
             }}
           />
           {#if !isConstrainedWidth && !$node.isInEditMode}
-            <div class="text-b3 text-fgs3 whitespace-nowrap">
+            <div class="text-b3 text-fgs3 whitespace-nowrap default-typeface">
               {formatDatetime($userPreferences, $node.createdAt)}
             </div>
           {/if}
@@ -127,7 +127,7 @@
             />
             <ToggleGroup
               selected={bottomAction}
-              items={resolveVisibleActions($node.contentType, {
+              items={resolveVisibleActions($node, {
                 accessMode: $node.accessMode,
                 isConstrainedWidth
               })}

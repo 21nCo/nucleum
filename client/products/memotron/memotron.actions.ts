@@ -23,11 +23,11 @@ import MemotronHome from "./home/MemotronHome.svelte";
 import MemotronOnboarding from "./base/MemotronOnboarding.svelte";
 import NodeTitleLabelPart from "./node/title/NodeTitleLabelPart.svelte";
 import MemotronGreenUse from "./base/MemotronGreenUse.svelte";
-import GlobalGraph from "./graph/GlobalGraph.svelte";
 import CalloutSettings from "$lib/client/components/markdown/callout/CalloutSettings.svelte";
 import ResourceBrowser from "$lib/client/components/library/resourceBrowser/ResourceBrowser.svelte";
 import FeatureWheel from "$lib/client/components/featureWheel/FeatureWheel.svelte";
 import ResourceCache from "$lib/client/components/record/ResourceCache.svelte";
+import MemotronOverview from "./overview/MemotronOverview.svelte";
 
 export const memotronActions: IAction[] = [
   {
@@ -50,7 +50,8 @@ export const memotronActions: IAction[] = [
     action: resourceAction(Resource.node, ResourceActionType.CREATE),
     component: Capture,
     label: "Capture",
-    icon: "ph:plus-circle-light",
+    // icon: "ph:plus-circle-light",
+    icon: "mynaui:plus-hexagon",
     type: ActionType.RESOURCE,
     accessMode: ResourceAccessMode.POP,
     // isRenderAsPageInPortrait: true,
@@ -219,8 +220,9 @@ export const memotronActions: IAction[] = [
     action: "overview",
     type: ActionType.PAGE,
     label: "Overview",
-    icon: "ph:squares-four-light",
-    component: GlobalGraph
+    // icon: "ph:squares-four-light",
+    icon: "heroicons:rectangle-group",
+    component: MemotronOverview
   },
   {
     action: "onboarding",

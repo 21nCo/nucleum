@@ -13,7 +13,7 @@
     offsetInPx: 4,
     isSpanToTriggerWidth: false,
     isUseAbsolutePositioning: false,
-    delay: 800
+    delay: 400
   };
   let classList: string = "";
   let styles: string = "";
@@ -48,7 +48,7 @@
             isUseAbsolutePositioning:
               tooltipOptions.isUseAbsolutePositioning ?? false
           });
-        }, tooltipOptions.delay ?? 800);
+        }, tooltipOptions.delay ?? 400);
     } else {
       if (toolTipTimeout) clearTimeout(toolTipTimeout);
       hideToolTip();

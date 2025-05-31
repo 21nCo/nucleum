@@ -21,7 +21,7 @@
   import { CaptureType, type ICaptureLink } from "./capture.type";
   import FileUploader from "./FileUploader.svelte";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import { onDestroy, onMount } from "svelte";
+  import { onDestroy, onMount, setContext } from "svelte";
   import { page } from "$app/stores";
   import { logger } from "$lib/client/components/debug/logger.client";
   import {
@@ -70,6 +70,11 @@
   import { GlobalEvent } from "$lib/client/types/event.enum";
   export let captureId: IRecordId = generateResourceId(Resource.capture);
   export let isWindowDnD = false;
+  const captureContext = {
+    id: captureId
+  };
+  setContext("capture", captureContext);
+
   let bulkQueryParam: string | null = null;
   let linkQueryParam: string | null = null;
   let captureStore: IActiveCaptureStore;

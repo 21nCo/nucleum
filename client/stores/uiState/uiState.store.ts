@@ -119,24 +119,27 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
   }
 
   toggleSidebar() {
-    const interactionMode = this.getState(Action.MODE_OF_INTERACTION, {
-      isProductScoped: true
-    });
-    if (interactionMode === InteractionMode.KEYBOARD_CENTRIC) {
-      const isCompletelyHideLeftNavBar = this.getState(
-        UIState.COMPLETELY_HIDE_LEFT_NAV_BAR,
-        {
-          isProductScoped: true
-        }
-      );
-      if (isCompletelyHideLeftNavBar) {
-        const currentState = this.getState(UIState.isHideLeftNavBar);
-        this.setState(UIState.isHideLeftNavBar, !currentState);
-        return;
+    const isCompletelyHideLeftNavBar = this.getState(
+      UIState.COMPLETELY_HIDE_LEFT_NAV_BAR,
+      {
+        isProductScoped: true
       }
+    );
+    if (isCompletelyHideLeftNavBar) {
+      const currentState = this.getState(UIState.isHideLeftNavBar);
+      this.setState(UIState.isHideLeftNavBar, !currentState);
+      return;
     }
     const val = this.getState(UIState.isInThinMode);
     this.setState(UIState.isInThinMode, !val);
+    const labelsVal = this.getState(UIState.hideLeftNavMenuLabels, {
+      isProductScoped: true,
+      isDeviceScoped: true
+    });
+    this.setState(UIState.hideLeftNavMenuLabels, !labelsVal, {
+      isProductScoped: true,
+      isDeviceScoped: true
+    });
   }
 }
 
@@ -157,12 +160,10 @@ class UIDerivedState extends ObservableStore<{ isShowHotKeyHints: boolean }> {
   }
 
   refreshShortcutHintsState() {
-    const modeOfInteraction = uiState.getState(Action.MODE_OF_INTERACTION, {
-      isProductScoped: true
-    });
-    const isShortcutHintsEnabled = uiState.getState(
-      UIState.SHOW_MORE_SHORTCUT_HINTS,
+    const isShortcutHintsDisabled = uiState.getState(
+      UIState.HIDE_SHORTCUT_HINTS,
       {
+        isDeviceScoped: true,
         isProductScoped: true
       }
     );
@@ -170,10 +171,7 @@ class UIDerivedState extends ObservableStore<{ isShowHotKeyHints: boolean }> {
     this.update((x) => {
       return {
         ...x,
-        isShowHotKeyHints:
-          modeOfInteraction === InteractionMode.KEYBOARD_CENTRIC &&
-          isShortcutHintsEnabled &&
-          embed !== Embed.HANDSET
+        isShowHotKeyHints: !isShortcutHintsDisabled && embed !== Embed.HANDSET
       };
     });
   }

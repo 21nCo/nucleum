@@ -250,12 +250,19 @@ export function resolveIfImageShouldContain(contentType: NodeType) {
   return contentType === NodeType.KINDLE_BOOK;
 }
 
-export function resolveNodeLabelString(item: INodeThumb) {
-  if (item.label) return item.label;
+export function resolveNodeLabelString(item: INodeThumb): string {
+  if (item?.label && typeof item.label === "string") return item.label;
   const label = resolveNodeLabel(item);
   if (typeof label === "string") return label;
-  if ("text" in label) return label.text;
-  return "";
+  if (
+    label &&
+    typeof label === "object" &&
+    "text" in label &&
+    typeof label.text === "string"
+  ) {
+    return label.text;
+  }
+  return "Untitled";
 }
 
 export function resolveNodeLabel(item: INodeThumb) {
@@ -325,7 +332,7 @@ export function resolveNodeLabel(item: INodeThumb) {
   }
 
   function resolveVideoTimeStampStr(body: IVideoTimestampClipBody) {
-    if (!body) return;
+    if (!body || typeof body.timestamp !== "number") return "00:00";
     return formatSeconds(body.timestamp, TimeFormat.CLOCK);
   }
 }

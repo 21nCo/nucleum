@@ -76,7 +76,7 @@
       {/if}
     </button>
   {/if}
-  {#if (isHovering && accessPoint !== ResourceAccessPoint.PICKER && !isPreventDefaultContextMenu) || (isAlwaysShowContextMenuOnTouchDevice && $context.isTouchDevice)}
+  {#if (isHovering && accessPoint !== ResourceAccessPoint.PICKER && accessPoint !== ResourceAccessPoint.MAP && !isPreventDefaultContextMenu) || (isAlwaysShowContextMenuOnTouchDevice && $context.isTouchDevice)}
     <ResourceThumbnailContextMenu
       bind:item
       {accessPoint}

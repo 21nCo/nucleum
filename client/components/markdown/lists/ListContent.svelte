@@ -63,11 +63,11 @@
 </script>
 
 <div
-  class="flex gap-2 items-center"
+  class="flex gap-1.5 items-center"
   style={`padding-left: ${body.indent ? body.indent * 1.5 : 0}rem`}
 >
   {#if contentType === NodeType.ORDERED_LIST}
-    <div class="flex justify-center items-center self-start text-fgs1 py-2">
+    <div class="flex items-center self-start text-fgs1 py-2 tabular-nums w-6">
       {#if !body.indent || body.indent % 3 === 0}
         {body.order ?? 1}.
       {:else if body.indent % 3 === 1}

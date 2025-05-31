@@ -114,6 +114,7 @@
         ]}
         style={PanelSwitcherStyle.BAR}
         barStyle={BarStyle.DOT}
+        isPreventNumberShortcut={true}
         on:switch={(e) => {
           dispatch("view", e.detail);
         }}
@@ -126,7 +127,7 @@
         bind:this={toggleGroupRef}
         selected={selectedToggleAction}
         parentBgIndex={bgIndex}
-        items={resolveVisibleActions($node.contentType, {
+        items={resolveVisibleActions($node, {
           accessMode: $node.accessMode,
           isConstrainedWidth
         })}

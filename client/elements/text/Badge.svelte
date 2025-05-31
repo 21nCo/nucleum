@@ -23,9 +23,9 @@
         "border-transparent": isAccentColor,
         [bg(parentBgIndex)]: !isApplyCustomColor && !isAccentColor,
         "border-brs3": !isApplyCustomColor && !isAccentColor,
-        "min-w-5 min-h-5 text-b3": size === Size.md,
-        "min-w-4 min-h-4 text-b4": size === Size.sm,
-        "min-w-3 min-h-3 text-b5": size === Size.xs
+        "min-w-5 min-h-5 w-5 h-5 text-b3": size === Size.md,
+        "min-w-4 min-h-4 w-4 h-4 text-b4": size === Size.sm,
+        "min-w-3.5 min-h-3.5 w-3.5 h-3.5 text-b4": size === Size.xs
       }
     )}
   >

@@ -2,7 +2,10 @@
   import { page } from "$app/stores";
   import { hoverable } from "$lib/client/actions/hover.action";
   import { popover } from "$lib/client/actions/popover.action";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
+  import {
+    ResourceAccessMode,
+    ResourceAccessPoint
+  } from "$lib/client/components/flux/resourceStores/resource.type";
   import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
   import ContextMenu from "$lib/client/elements/contextMenu/ContextMenu.svelte";
   import { resolveResource } from "$lib/client/components/record/record.store";
@@ -97,7 +100,11 @@
       {#if !resource}
         <span class="w-32"> loading... </span>
       {:else if action?.resourceLabelRenderer && resource}
-        <svelte:component this={action.resourceLabelRenderer} item={resource} />
+        <svelte:component
+          this={action.resourceLabelRenderer}
+          item={resource}
+          accessPoint={ResourceAccessPoint.TABS}
+        />
       {:else}
         {isValidString(resource?.label) ? resource?.label : "Untitled"}
       {/if}

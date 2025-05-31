@@ -5,6 +5,7 @@
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import { resolveResource } from "$lib/client/components/record/record.store";
   import NodeAvatar from "$lib/client/products/memotron/node/avatar/NodeAvatar.svelte";
+  import { webNodeTypeList } from "$lib/client/products/memotron/node/node.type";
   import { resolveNodeLabelString } from "$lib/client/products/memotron/node/node.utils";
   import { isValidString } from "$lib/shared/utils/text.utils";
   import { onMount } from "svelte";
@@ -14,6 +15,10 @@
   let resource: any;
   let isLoading: boolean = true;
   let isHovering: boolean = false;
+
+  $: hasAvatar =
+    (resource?.collections && resource.collections.length > 0) ||
+    webNodeTypeList.includes(resource?.contentType);
 
   onMount(async () => {
     try {
@@ -48,9 +53,13 @@
     <!-- {#if isHovering}
       <span style="font--size: 0.85rem;"> &rarr; </span>
     {:else} -->
-    <span style="font--size: 1.1rem; vertical-align: 0.06em;">
-      {#if resource?.collections && resource.collections.length > 0}
-        <span class="inline-block">
+    <span
+      style={hasAvatar
+        ? "vertical-align: -0.1em;"
+        : "font--size: 1.1rem; vertical-align: 0.06em;"}
+    >
+      {#if hasAvatar}
+        <span class="inline-block h-4 w-4">
           <NodeAvatar
             node={resource}
             accessPoint={ResourceAccessPoint.MARKDOWN_MENTION}

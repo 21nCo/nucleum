@@ -104,6 +104,7 @@
             icon="ph:magnifying-glass"
             tooltip="Search"
             style={ButtonStyle.PLAIN}
+            shortcut={Action.GLOBAL_SEARCH}
             parentBgIndex={2}
             on:click={() => appStore.runAction(Action.GLOBAL_SEARCH)}
           />
@@ -113,6 +114,7 @@
         icon="ph:terminal"
         tooltip="Command bar"
         style={ButtonStyle.PLAIN}
+        shortcut={Action.CMD}
         parentBgIndex={2}
         on:click={() => appStore.runAction(Action.CMD)}
       />
@@ -126,7 +128,7 @@
       <!-- <FocusPlayer /> -->
       <TrailLeftIndicator />
       <button
-        class="flex items-center gap-2"
+        class="flex items-center gap-2 rounded-full overflow-hidden hover:outline hover:outline-brs3 border border-transparent"
         on:click={() => appStore.runAction(Action.SETTINGS)}
       >
         <ProfilePicture context="topbar" />

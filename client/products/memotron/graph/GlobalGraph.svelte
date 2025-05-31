@@ -8,8 +8,7 @@
   import { removeDuplicatesFilter } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { appStore } from "$lib/client/stores/app.store";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { resolveNodeLabel, resolveNodeLabelString } from "../node/node.utils";
-  import NodeAvatar from "../node/avatar/NodeAvatar.svelte";
+  import { resolveNodeLabelString } from "../node/node.utils";
   import NodeTitleLabelPart from "../node/title/NodeTitleLabelPart.svelte";
   import { activeResourceFilterV2 } from "$lib/client/utils/utils";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
@@ -17,10 +16,9 @@
   import Divider from "$lib/client/elements/Divider.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { ColorStrength } from "$lib/client/types/appearance.type";
-  import view from "$lib/client/stores/view.store";
-  import { resizeListener } from "$lib/client/actions/resize.action";
   import { logger } from "$lib/client/components/debug/logger.client";
   import type { IRecordId } from "$lib/client/types/data.type";
+  import MemotronOverviewLayout from "../overview/MemotronOverviewLayout.svelte";
 
   let data: { nodes: any[]; edges: any[] } = { nodes: [], edges: [] };
   let isRendered = false;
@@ -30,8 +28,7 @@
   let _edges: any[] = [];
   let graphRef: GlobalGraphUsingG6;
   let splitResource: IRecordId | undefined = undefined;
-  let containerWidth = 0;
-  $: isConstrainedWidth = containerWidth < 1000 || $view.isConstrainedWidth;
+  let isConstrainedWidth = false;
 
   onMount(async () => {
     await fetchData();
@@ -57,7 +54,7 @@
         }));
       const allNodesList = Array.from(
         new Set(edges.map((link: any) => [link.source, link.target]).flat())
-      );
+      ) as string[];
       const nodesWithLinks = await nodeStore.selectMany({
         properties: [
           "id",
@@ -87,21 +84,21 @@
           ...activeResourceFilterV2
         }
       });
-      // console.log({ nodesWithLinks, allRootNodes, links });
       const nodes = [...nodesWithLinks, ...allRootNodes];
       _nodes = nodes
         .map((node: any) => {
+          const nodeLabel = resolveNodeLabelString(node) || "";
           return {
             id: node.id.toString(),
-            label: resolveNodeLabelString(node),
+            label: nodeLabel,
             innerHTML: renderComponentToString(node),
-            innerHTMLTest: `<div>${node.label}</div>`,
+            innerHTMLTest: `<div>${node.label || "Untitled"}</div>`,
             type: "circle"
           };
         })
         .filter(removeDuplicatesFilter);
       _edges = edges
-        .filter((x) => {
+        .filter((x: any) => {
           return (
             x.source &&
             x.target &&
@@ -177,9 +174,7 @@
   }
 </script>
 
-<div
-  class="relative w-full h-full flex flex-col justify-center items-center p-3"
->
+<MemotronOverviewLayout bind:isConstrainedWidth>
   {#if !isRendered}
     <div
       class="absolute z-10 inset-0 w-full h-full flex justify-center items-center bg-bgs1"
@@ -187,38 +182,30 @@
       <EmptyStatusView isLoadingState={isLoading} mainText="Not enough data." />
     </div>
   {/if}
-  {#if data.nodes.length > 0}
-    <div
-      class="flex justify-between items-center gap-4 bg-bgs2 rounded-md h-12 w-full px-6"
-      use:resizeListener={(e) => {
-        containerWidth = e.width;
-      }}
-    >
-      <span class="flex gap-3 items-center whitespace-nowrap"> Graph </span>
-      <span class="flex items-center gap-3 text-fgs3 text-b3 h-full">
-        {#if !isConstrainedWidth}
-          <span>
-            {data.nodes.length} nodes
-          </span>
-          <span>
-            {data.edges.length} connections
-          </span>
-          <Divider
-            orientation={Orientation.Vertical}
-            colorStrength={ColorStrength.Strong}
-          />
-        {/if}
-        <SwitchInput
-          label={{ label: "Hide orphans" }}
-          size={Size.sm}
-          bind:checked={isHideOrphans}
-          on:change={() => {
-            applyFilters();
-            graphRef?.rerender();
-          }}
-        />
+  <span class="flex items-center gap-3 text-fgs3 text-b3 h-full" slot="right">
+    {#if !isConstrainedWidth && data.nodes.length > 0}
+      <span>
+        {data.nodes.length} nodes
       </span>
-    </div>
+      <span>
+        {data.edges.length} connections
+      </span>
+      <Divider
+        orientation={Orientation.Vertical}
+        colorStrength={ColorStrength.Strong}
+      />
+    {/if}
+    <SwitchInput
+      label={{ label: "Hide orphans" }}
+      size={Size.sm}
+      bind:checked={isHideOrphans}
+      on:change={() => {
+        applyFilters();
+        graphRef?.rerender();
+      }}
+    />
+  </span>
+  {#if data.nodes.length > 0}
     <GlobalGraphUsingG6
       bind:this={graphRef}
       {data}
@@ -228,4 +215,4 @@
       layout="d3-force"
     />
   {/if}
-</div>
+</MemotronOverviewLayout>

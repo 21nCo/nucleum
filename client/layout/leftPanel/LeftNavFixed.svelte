@@ -18,13 +18,15 @@
   import { onMount } from "svelte";
   export let isRounded = false;
   let isHideMenuLabels = uiState.getState(UIState.hideLeftNavMenuLabels, {
-    isProductScoped: true
+    isProductScoped: true,
+    isDeviceScoped: true
   });
 
   onMount(() => {
     const unsubscribe = uiState.subscribe(() => {
       isHideMenuLabels = uiState.getState(UIState.hideLeftNavMenuLabels, {
-        isProductScoped: true
+        isProductScoped: true,
+        isDeviceScoped: true
       });
     });
 

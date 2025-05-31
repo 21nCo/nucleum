@@ -210,3 +210,8 @@
   subscribeToRecords={$item.types?.map((x) => x.id) ?? []}
   on:change={refreshTypeData}
 />
+<ComponentBaseLayer
+  subscribeToRecords={[item.id]}
+  subscriptionPropsForMergeAction={["collections"]}
+  on:change={refreshTypeData}
+/>

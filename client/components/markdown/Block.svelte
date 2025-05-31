@@ -102,9 +102,13 @@
   const markdownContext = getContext<any>("markdown");
   const nodeContext = getContext<any>("node");
   const contentContext = getContext<any>("content");
+  const captureContext = getContext<any>("capture");
   let captureStore: IActiveCaptureStore | undefined;
-  $: if (nodeContext?.id) {
-    captureStore = ActiveCaptureStore.resolve(nodeContext?.id + "capture");
+  $: if (nodeContext?.id || captureContext?.id) {
+    const id = nodeContext?.id
+      ? nodeContext?.id + "capture"
+      : captureContext?.id;
+    captureStore = ActiveCaptureStore.resolve(id);
   }
 
   const blockContext = {
@@ -242,8 +246,9 @@
   }
 
   async function handleGoToExternalLink() {
-    if (!block.body?.id) return;
-    const node = await nodeStore.select(block.body.id);
+    if (!block.body || typeof block.body !== "object" || !("id" in block.body))
+      return;
+    const node = await nodeStore.select((block.body as any).id);
     if (!node || !node.url) return;
     appStore.openLink(node.url);
   }
@@ -343,7 +348,10 @@
     else if (nonSimpleTextNodeTypeList.includes(blockObj.contentType))
       return (blockObj.body as INonSimpleTextBlockBody).text;
     else if (headingNodeTypes.includes(blockObj.contentType)) {
-      return blockObj.label ?? blockObj.body;
+      return (
+        blockObj.label ??
+        (typeof blockObj.body === "string" ? blockObj.body : undefined)
+      );
     }
   }
 
@@ -383,11 +391,13 @@
         currentBlockText &&
         plainText &&
         data?.caretPosition &&
-        data?.caretPosition.caretOffset < plainText.length
+        typeof data.caretPosition.totalOffset === "number" &&
+        data.caretPosition.totalOffset > 0 &&
+        data.caretPosition.totalOffset < plainText.length
       ) {
         const { before, after } = splitMarkdownAtPlainOffset(
           currentBlockText,
-          data?.caretPosition.caretOffset
+          data.caretPosition.totalOffset
         );
         newText = after;
         const preText = before;
@@ -514,7 +524,7 @@
         block.id,
         currentBody,
         action,
-        currentOrder
+        currentOrder ?? 0
       );
       if (changedBlocks && changedBlocks.length > 0) {
         changedBlocks.forEach((b) => {
@@ -694,7 +704,9 @@
       progressState = undefined;
     } catch (e) {
       logger.error({ at: "handlePaste", error: e });
-      toasts.error(e.message ?? "Failed to paste. Please try again.");
+      toasts.error(
+        (e as Error).message ?? "Failed to paste. Please try again."
+      );
       progressState = undefined;
     }
   }

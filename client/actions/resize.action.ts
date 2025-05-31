@@ -35,6 +35,8 @@ export const resizable: Action<HTMLElement, ResizableOptions> = (
   let handles: HTMLDivElement[] = [];
   let hitAreas: HTMLDivElement[] = [];
   let overlay: HTMLDivElement | null = null;
+  let hoverTimeouts: Map<Edge, number> = new Map();
+  let isAnyHandleVisible = false;
 
   function createHitArea(edge: Edge) {
     const hitArea = document.createElement("div");
@@ -77,7 +79,6 @@ export const resizable: Action<HTMLElement, ResizableOptions> = (
 
     node.appendChild(hitArea);
 
-    // Add mousedown event to hit areas to enable resizing from them
     hitArea.addEventListener("mousedown", (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -86,18 +87,37 @@ export const resizable: Action<HTMLElement, ResizableOptions> = (
 
     const handle = handles.find((h) => h.dataset.edge === edge);
     if (handle) {
-      hitArea.addEventListener("mouseenter", () => {
-        if (enabled) {
+      const showHandle = () => {
+        if (enabled && !resizing) {
+          clearTimeout(hoverTimeouts.get(edge));
           hitArea.style.backgroundColor = "rgba(0, 200, 0, 0.05)";
           handle.style.display = "block";
+          isAnyHandleVisible = true;
         }
-      });
-      hitArea.addEventListener("mouseleave", () => {
-        if (!resizing && enabled) {
-          hitArea.style.backgroundColor = "rgba(0, 0, 0, 0)";
-          handle.style.display = "none";
+      };
+
+      const hideHandle = () => {
+        if (enabled && !resizing) {
+          const timeoutId = window.setTimeout(() => {
+            const isStillHovering =
+              hitArea.matches(":hover") || handle.matches(":hover");
+            if (!isStillHovering) {
+              hitArea.style.backgroundColor = "rgba(0, 0, 0, 0)";
+              handle.style.display = "none";
+              checkIfAllHandlesHidden();
+            }
+          }, 100);
+          hoverTimeouts.set(edge, timeoutId);
         }
+      };
+
+      hitArea.addEventListener("mouseenter", showHandle);
+      hitArea.addEventListener("mouseleave", hideHandle);
+
+      handle.addEventListener("mouseenter", () => {
+        clearTimeout(hoverTimeouts.get(edge));
       });
+      handle.addEventListener("mouseleave", hideHandle);
     } else {
       console.warn(`No handle found for edge: ${edge}`);
     }
@@ -111,6 +131,19 @@ export const resizable: Action<HTMLElement, ResizableOptions> = (
     handle.style.display = "none";
     handle.dataset.edge = edge;
     handle.style.zIndex = "30";
+
+    // Set the appropriate cursor for the handle
+    switch (edge) {
+      case "left":
+      case "right":
+        handle.style.cursor = "col-resize";
+        break;
+      case "top":
+      case "bottom":
+        handle.style.cursor = "row-resize";
+        break;
+    }
+
     node.appendChild(handle);
 
     handle.addEventListener("mousedown", (e) => {
@@ -230,11 +263,17 @@ export const resizable: Action<HTMLElement, ResizableOptions> = (
       const edge = hitArea.dataset.edge as Edge;
       const handle = handles.find((h) => h.dataset.edge === edge);
 
-      if (handle && !hitArea.matches(":hover") && enabled) {
-        handle.style.display = "none";
+      if (handle && enabled) {
+        const isStillHovering =
+          hitArea.matches(":hover") || handle.matches(":hover");
+        if (!isStillHovering) {
+          handle.style.display = "none";
+          hitArea.style.backgroundColor = "rgba(0, 0, 0, 0)";
+        }
       }
     });
 
+    checkIfAllHandlesHidden();
     removeOverlay();
   }
 
@@ -253,10 +292,16 @@ export const resizable: Action<HTMLElement, ResizableOptions> = (
   }
 
   function removeHandles() {
+    hoverTimeouts.forEach((timeoutId) => {
+      clearTimeout(timeoutId);
+    });
+    hoverTimeouts.clear();
+
     handles.forEach((handle) => handle.remove());
     handles = [];
     hitAreas.forEach((area) => area.remove());
     hitAreas = [];
+    isAnyHandleVisible = false;
   }
 
   function updateHandles() {
@@ -265,6 +310,13 @@ export const resizable: Action<HTMLElement, ResizableOptions> = (
     } else {
       removeHandles();
     }
+  }
+
+  function checkIfAllHandlesHidden() {
+    const anyVisible = handles.some(
+      (handle) => handle.style.display === "block"
+    );
+    isAnyHandleVisible = anyVisible;
   }
 
   updateHandles();

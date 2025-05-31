@@ -20,6 +20,8 @@
   import Travel from "$lib/client/illustrations/Travel.svelte";
   import Check from "$lib/client/illustrations/Check.svelte";
   import Globe from "$lib/client/illustrations/Globe.svelte";
+  import MatchNotFound from "$lib/client/illustrations/MatchNotFound.svelte";
+  import PageNotFoundIllustration from "$lib/client/illustrations/PageNotFoundIllustration.svelte";
   export let mainText: string | undefined = undefined;
   export let subText: string | undefined = undefined;
   export let size: Size.sm | Size.md | Size.lg = Size.md;
@@ -63,6 +65,7 @@
     <QuickFocusItemPulse />
   {:else}
     {#if isSearchContext}
+      {@const random = Math.random()}
       <div
         class={cn({
           "h-20 w-20": size === Size.sm,
@@ -70,7 +73,13 @@
           "h-40 w-40": size === Size.lg
         })}
       >
-        <NoResultsIllustration />
+        {#if random < 0.33}
+          <NoResultsIllustration />
+        {:else if random < 0.66}
+          <MatchNotFound />
+        {:else}
+          <PageNotFoundIllustration />
+        {/if}
       </div>
     {:else if isNotAvailableContext}
       <ComingSoon width={200} />

@@ -45,7 +45,9 @@ export enum GlobalEvent {
   SEARCH_RESULT_KEYDOWN = "searchresultkeydown",
   ADD_TO_RECENTS = "addToRecents",
   TOGGLE_SEARCH_PARAM = "toggleSearchParam",
-  CACHE_UPDATE = "cacheUpdate"
+  CACHE_UPDATE = "cacheUpdate",
+  COLLAPSE_PANEL = "collapsePanel",
+  EXPAND_PANEL = "expandPanel"
 }
 
 export enum PlayActionState {

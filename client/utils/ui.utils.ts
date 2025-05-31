@@ -513,3 +513,26 @@ export function base64ToBlob(base64: string, contentType: string): Blob {
   const byteArray = new Uint8Array(byteNumbers);
   return new Blob([byteArray], { type: contentType });
 }
+
+export async function convertHeicToPng(heicBlob: Blob): Promise<{
+  convertedBlob: Blob;
+  convertedFileName: string;
+}> {
+  try {
+    const heic2any = await import("heic2any");
+
+    const convertedBlob = (await heic2any.default({
+      blob: heicBlob,
+      toType: "image/png",
+      quality: 1.0
+    })) as Blob;
+
+    return {
+      convertedBlob,
+      convertedFileName: "converted"
+    };
+  } catch (error) {
+    console.error("Error converting HEIC to PNG:", error);
+    throw new Error("Failed to convert HEIC file");
+  }
+}

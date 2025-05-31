@@ -158,7 +158,9 @@ const recordSpecificSearchParams = [
   AppSearchParam.FSPLIT_AT,
   AppSearchParam.FULL_AT,
   AppSearchParam.LINK,
-  AppSearchParam.DATE
+  AppSearchParam.DATE,
+  AppSearchParam.SETTING,
+  ResourceAccessMode.FSPLIT
 ];
 
 export const appStore = initAppStore({
@@ -650,6 +652,16 @@ function initAppStore(seed: IAppStore) {
     );
   };
 
+  /**
+   * Clears all tooltips from the DOM. This is to avoid an issue where clicking on a mention in markdown when the tooltip is activated is not removing the tooltip properly on navigation to that mention node page.
+   */
+  const clearAllTooltips = () => {
+    const tooltipsContainer = document.getElementById("tooltips");
+    if (tooltipsContainer) {
+      tooltipsContainer.innerHTML = "";
+    }
+  };
+
   const resourceClickHandlerForGraph = (
     id: IRecordId,
     event: MouseEvent,
@@ -692,7 +704,7 @@ function initAppStore(seed: IAppStore) {
    * @returns
    */
   const resourceClickHandler = (
-    event: MouseEvent,
+    event: MouseEvent | undefined,
     id: IRecordId,
     params?: {
       defaultTo?: ResourceAccessMode;
@@ -895,7 +907,8 @@ function initAppStore(seed: IAppStore) {
     isOverlay,
     closeResource,
     goBack,
-    goForward
+    goForward,
+    clearAllTooltips
   };
 }
 

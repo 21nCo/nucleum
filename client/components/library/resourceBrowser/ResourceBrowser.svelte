@@ -25,20 +25,22 @@
     isHideCreateAction,
     resolveResourceTooltip
   } from "../library.utils";
-  import { shortcutsConfig } from "../../shortcuts/shortcuts.config";
+  import { keyboardShortcuts } from "../../shortcuts/shortcuts.store";
   import ComponentShortcutListener from "../../shortcuts/ComponentShortcutListener.svelte";
   export let resource: Resource;
   export let isLibraryNavContext: boolean = false;
-  $: isExpanded = isCustomLibrary(resource);
-  $: tooltip = resolveResourceTooltip(resource);
   let searchQuery: string = "";
   let id: string | null = null;
   let arrangement: Arrangement =
-    uiState.getResourceState(
+    uiState?.getResourceState(
       resource,
       ResourceAccessPoint.BROWSER,
       UIState.arrangement
     ) ?? Arrangement.LIST;
+  const createShortcut = keyboardShortcuts?.resolveShortcutForAction("create");
+
+  $: isExpanded = isCustomLibrary(resource);
+  $: tooltip = resolveResourceTooltip(resource);
   $: id = $page.url.searchParams.get(ResourceAccessMode.INLINE);
   $: multiSelectContext = {
     resource,
@@ -52,7 +54,7 @@
           label: "New " + resource,
           callback: addAction,
           icon: "ph:plus-light",
-          shortcut: shortcutsConfig.create,
+          shortcut: createShortcut,
           variant: ButtonVariant.PRIMARY
         };
 
@@ -108,11 +110,14 @@
     </slot>
   </Panel>
 {/key}
-<ComponentShortcutListener
-  shortcuts={[
-    {
-      shortcut: shortcutsConfig.create,
-      callback: addAction
-    }
-  ]}
-/>
+
+{#if createShortcut}
+  <ComponentShortcutListener
+    shortcuts={[
+      {
+        shortcut: createShortcut,
+        callback: addAction
+      }
+    ]}
+  />
+{/if}

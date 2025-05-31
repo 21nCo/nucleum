@@ -1,7 +1,10 @@
 <script lang="ts">
   import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
   import { ActiveNodeStore, type IActiveNodeStore } from "./node.store";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
+  import {
+    ResourceAccessMode,
+    ResourceAccessPoint
+  } from "$lib/client/components/flux/resourceStores/resource.type";
   import { mediaNodeTypeList, webNodeTypeList } from "./node.type";
   import MediaNode from "./base/MediaNode.svelte";
   import NonMediaNode from "./base/NonMediaNode.svelte";
@@ -10,6 +13,8 @@
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { debouncer } from "$lib/client/utils/utils";
   import { logger } from "$lib/client/components/debug/logger.client";
+  import { appStore } from "$lib/client/stores/app.store";
+  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
 
   export let id: string;
   export let accessMode: ResourceAccessMode;
@@ -22,14 +27,22 @@
   // $: if (id) node = resolveActiveNodeStore(id);
   $: if (id) node = ActiveNodeStore.resolve(id);
   let isLoading = false;
+  let error: any;
   $: if (id && (isFromSplitView || !isRenderSplitView)) {
     initialize();
   }
+  appStore.clearAllTooltips();
 
   async function initialize(ctx?: string) {
     logger.log({ at: "Node.initialize", id, ctx });
     isLoading = true;
-    await node.init(accessMode);
+    const result = await node.init({
+      accessMode,
+      accessPoint: ResourceAccessPoint.SELF
+    });
+    if (result && "error" in result) {
+      error = result.error;
+    }
     nodeContext.parent = $node?.parent;
     nodeContext.contentType = $node?.contentType;
     isLoading = false;
@@ -52,7 +65,9 @@
   const debouncedInitialize = debouncer(initialize, 1500);
 </script>
 
-{#if $node && !isLoading}
+{#if error}
+  <EmptyStatusView mainText={error} isSearchContext={true} />
+{:else if $node && !isLoading}
   {#if [...mediaNodeTypeList, ...webNodeTypeList].includes($node.contentType)}
     <MediaNode {node} />
   {:else}

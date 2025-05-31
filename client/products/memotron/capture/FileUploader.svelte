@@ -31,8 +31,8 @@
     ".jpeg",
     ".webp",
     ".gif",
-    ".svg"
-    // ".heic"
+    ".svg",
+    ".heic"
   ];
   const videoFileTypes = [".mp4", ".mov"];
   const audioFileTypes = [".wav", ".mp3"];
@@ -128,7 +128,7 @@
   {#if isSaveInProgress && !isValidMultipleFiles}
     <EmptyStatusView
       isLoadingState={true}
-      loadingText="Uploading and saving..."
+      loadingText="Processing and uploading..."
     />
   {:else}
     <div
@@ -155,7 +155,7 @@
         <div class="flex flex-col items-center gap-2">
           {#if isSaveInProgress}
             <div class="flex items-center gap-1">
-              <span class="text-fgs3 text-b3">Uploading..</span>
+              <span class="text-fgs3 text-b3">Processing and uploading...</span>
               <span id={uploadProgressElementId} class="text-fgs3 text-b3"
               ></span>
             </div>
