@@ -48,7 +48,7 @@
 <!-- TODO - svelte 5 snippets for PanelSwitcherItemLabel multiple references -->
 {#if style === PanelSwitcherStyle.BAR}
   <button
-    class={cn("relative group flex bg-transparent", {
+    class={cn("relative group flex bg-transparent h-full", {
       "px-4":
         (size === Size.md || size === Size.lg) &&
         barStyle === BarStyle.OVERFLOW &&
@@ -80,8 +80,8 @@
         "text-h4": size === Size.lg,
         "text-fgs3": !isActive,
         "text-ccs1": isActive && !isInEditMode,
-        "py-2": barStyle === BarStyle.EXACT,
-        "border-b-2": barStyle === BarStyle.EXACT && !isInversePlacement,
+        "h-full": barStyle === BarStyle.EXACT,
+        "border-b-2 pt-1": barStyle === BarStyle.EXACT && !isInversePlacement,
         "border-t-2": barStyle === BarStyle.EXACT && isInversePlacement,
         "border-ccs1": isActive && barStyle === BarStyle.EXACT,
         "border-transparent": !isActive && barStyle === BarStyle.EXACT

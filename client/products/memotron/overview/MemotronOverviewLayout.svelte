@@ -44,7 +44,7 @@
 
 <div class="relative w-full h-full flex flex-col justify-center items-center">
   <div
-    class="flex justify-between items-end gap-4 rounded-md h-14 w-full"
+    class="flex justify-between items-end gap-4 rounded-md w-full"
     use:resizeListener={(e) => {
       containerWidth = e.width;
     }}

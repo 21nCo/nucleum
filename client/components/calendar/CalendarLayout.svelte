@@ -30,16 +30,21 @@
 </script>
 
 <div class="flex flex-col h-full w-full">
-  <div class="px-4 h-14 border-b border-brs3 flex items-center gap-4">
+  <div class="flex items-center gap-4">
     <!-- <Text content="Calendar" style={TextStyle.PANEL_HEADING_SMALL} /> -->
-    <!-- <PanelSwitcher
+    <PanelSwitcher
       items={panelOptions}
       bind:value={panel}
-      style={PanelSwitcherStyle.TRAIN}
+      style={PanelSwitcherStyle.BAR}
+      isExpandToFullWidth={true}
+      title="Calendar"
       size={Size.sm}
       on:switch={onPanelSwitch}
-    /> -->
-    <slot name="header" />
+    >
+      <div slot="right">
+        <slot name="header" />
+      </div>
+    </PanelSwitcher>
   </div>
   <div class="flex-1 min-h-0">
     <slot />

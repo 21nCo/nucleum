@@ -7,6 +7,7 @@ export enum TimeScale {
 }
 
 export enum TimeScaleUnit {
+  PART = "PART",
   DAY = "DAY",
   WEEK = "WEEK",
   MONTH = "MONTH",

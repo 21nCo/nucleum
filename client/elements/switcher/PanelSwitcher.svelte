@@ -18,6 +18,7 @@
   import { InputStyle } from "$lib/client/types/input.type";
   import { isTextElement } from "$lib/client/utils/browser.utils";
   import { logger } from "$lib/client/components/debug/logger.client";
+  import Icon from "../Icon.svelte";
   const dispatch = createEventDispatcher();
   export let items: ISelectItem[] | string[];
   export let value: ISelectValue | undefined = undefined;
@@ -68,31 +69,41 @@
 {#key isInEditMode}
   <div
     bind:this={parent}
-    class={cn("relative panel-switcher flex items-center shrink-0", {
-      "overflow-x-auto":
-        !isRenderAsDropdown && style !== PanelSwitcherStyle.SNAKE,
-      "w-full justify-between px-2":
-        (style === PanelSwitcherStyle.BAR ||
-          style === PanelSwitcherStyle.SNAKE) &&
-        isExpandToFullWidth,
-      "border-b border-brs3":
-        ((style === PanelSwitcherStyle.BAR &&
-          barStyle != BarStyle.UNDER &&
-          barStyle != BarStyle.DOT) ||
-          style === PanelSwitcherStyle.SNAKE) &&
-        isExpandToFullWidth &&
-        !isBgBar,
-      "inline-block": style !== PanelSwitcherStyle.BAR || !isExpandToFullWidth
-    })}
+    class={cn(
+      "relative panel-switcher flex items-center shrink-0",
+      {
+        "overflow-x-auto":
+          !isRenderAsDropdown && style !== PanelSwitcherStyle.SNAKE,
+        "h-12": style === PanelSwitcherStyle.BAR && !isExpandToFullWidth,
+        "border-b border-brs3":
+          ((style === PanelSwitcherStyle.BAR &&
+            barStyle != BarStyle.UNDER &&
+            barStyle != BarStyle.DOT) ||
+            style === PanelSwitcherStyle.SNAKE) &&
+          isExpandToFullWidth &&
+          !isBgBar,
+        "inline-block": style !== PanelSwitcherStyle.BAR || !isExpandToFullWidth
+      },
+      (style === PanelSwitcherStyle.BAR ||
+        style === PanelSwitcherStyle.SNAKE) &&
+        isExpandToFullWidth && {
+          "w-full justify-between": true,
+          "px-3 h-12": !isEnableTitleAction,
+          "h-[3.2rem]": isEnableTitleAction
+        }
+    )}
   >
     {#if title || $$slots.left}
-      <span class="mo:mr-3 mx-3" transition:conditionalTransition>
+      <div class="flex mo:mr-3 h-full" transition:conditionalTransition>
         <slot name="left">
           <button
             class={cn(
-              "text-h4 font-medium bg-none rounded-md px-2 py-0.5",
+              "flex items-center gap-2",
               {
-                "cursor-default": !isEnableTitleAction
+                "cursor-default text-h4 font-medium px-2 py-0.5":
+                  !isEnableTitleAction,
+                "text-h5 px-8 bg--bgs2 border-r border-brs3":
+                  isEnableTitleAction
               },
               isEnableTitleAction && {
                 "text-aps1 bg-aps3": value === titleValue,
@@ -106,10 +117,19 @@
               }
             }}
           >
+            {#if isEnableTitleAction}
+              <Icon
+                icon="ph:house-light"
+                class={cn({
+                  "text-aps1": value === titleValue
+                })}
+                size={Size.sm}
+              />
+            {/if}
             {title}
           </button>
         </slot>
-      </span>
+      </div>
     {/if}
     <div
       bind:this={child}
@@ -119,7 +139,7 @@
           style === PanelSwitcherStyle.TRAIN ? parentBgIndex : parentBgIndex - 1
         ),
         {
-          "overflow-x-auto mr-auto":
+          "overflow-x-auto mr-auto h-full":
             (style === PanelSwitcherStyle.BAR ||
               style === PanelSwitcherStyle.SNAKE) &&
             isExpandToFullWidth,
@@ -215,7 +235,12 @@
       {/if}
     </div>
     {#if $$slots.right}
-      <span class="mx-4">
+      <span
+        class={cn({
+          "mx-4": isEnableTitleAction,
+          "ml-4": !isEnableTitleAction
+        })}
+      >
         <slot name="right">
           <span>no content</span>
         </slot>
