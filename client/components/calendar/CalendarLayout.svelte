@@ -30,7 +30,9 @@
 </script>
 
 <div class="flex flex-col h-full w-full">
-  <div class="flex items-center gap-4 border-b border-brs3 h-[3.2rem] px-4">
+  <div
+    class="flex items-center gap-4 border-b border-brs3 h-[3.2rem] 2k:h-14 px-4"
+  >
     <Text content="Calendar" style={TextStyle.PANEL_HEADING_SMALL} />
     <!-- <PanelSwitcher
       items={panelOptions}

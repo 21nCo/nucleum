@@ -11,6 +11,10 @@ export const shortcutsConfig: Record<string, IKeyboardShortcut> = {
   focus: {
     key: "f"
   },
+  focusModal: {
+    key: "f",
+    modifiers: [ModifierKey.SHIFT]
+  },
   graph: {
     key: "g"
   },

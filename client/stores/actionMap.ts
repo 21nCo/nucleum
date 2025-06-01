@@ -472,8 +472,14 @@ export const globalActions: IAction[] = [
   {
     action: "troubleshoot",
     label: "Troubleshoot",
-    type: ActionType.PAGE,
-    component: DebugPage
+    type: ActionType.MODAL,
+    component: DebugPage,
+    modalParams: {
+      layout: {
+        size: Size.xxl,
+        orientation: Orientation.Horizontal
+      }
+    }
   },
   {
     action: "bootstrap",
@@ -602,7 +608,7 @@ export const globalActions: IAction[] = [
     component: CreateCombination,
     label: "Create a new combination",
     type: ActionType.MODAL,
-    // isInactive: true,
+    isInactive: true,
     modalParams: {
       title: "Create a new combination",
       layout: {

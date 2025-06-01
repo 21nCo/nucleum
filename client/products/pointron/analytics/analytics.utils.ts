@@ -91,7 +91,7 @@ export function onPageRearrange(e: CustomEvent) {
 export function generateAnalyticsSeedPages() {
   const page1 = {
     id: generateSimpleRandomId(),
-    label: "Overview",
+    label: "All",
     cards: [
       {
         id: generateSimpleRandomId(),

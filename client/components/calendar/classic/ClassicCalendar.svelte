@@ -136,7 +136,7 @@
           dateUnix: dateFilter
         };
       } else if (resource === Resource.session) {
-        properties.push("startUnix");
+        properties.push("startUnix", "blocks", "start");
         filters = {
           startUnix: dateFilter
         };

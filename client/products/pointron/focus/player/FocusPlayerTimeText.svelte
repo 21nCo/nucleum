@@ -55,7 +55,7 @@
       />
     {/if}
   </div>
-  <div class="font-semibold text-h2 leading-tight">
+  <div class="font-semibold text-h2 leading-tight tabular-nums">
     {formatSeconds($activeSession.timeElapsed, TimeFormat.CLOCK)}
   </div>
 </div>

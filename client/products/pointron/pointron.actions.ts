@@ -319,6 +319,21 @@ export const pointronActions: IAction[] = [
     label: "Focus"
   },
   {
+    action: PointronAction.FOCUS_MODAL,
+    component: Focus,
+    icon: "ph:circle-light",
+    type: ActionType.MODAL,
+    isMeta: true,
+    label: "Focus",
+    modalParams: {
+      layout: {
+        size: Size.xxl,
+        orientation: Orientation.Horizontal,
+        ignoreSafeArea: true
+      }
+    }
+  },
+  {
     action: "overview",
     component: AnalyticsV2,
     type: ActionType.PAGE,

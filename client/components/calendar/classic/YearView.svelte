@@ -290,7 +290,7 @@
                   {@const isPastDay = isPastDate(date)}
                   <button
                     class={cn(
-                      "py-1 rounded-md border flex flex-col items-center justify-center h-9 max-w-9",
+                      "py-1 rounded-md border flex flex-col items-center h-9 max-w-9",
                       {
                         "bg-aps1 text-abg border-transparent": isSelected,
                         "text-ass1 font-medium border-ass1 notouch:hover:bg-ass2 active:bg-ass2":

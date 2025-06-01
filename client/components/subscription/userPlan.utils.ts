@@ -175,6 +175,15 @@ export function determineIfPlanIsActive(plan: IUserPlan) {
   return true;
 }
 
+export function determineIfActiveSubscriber(plan: IUserPlan) {
+  const isActive = determineIfPlanIsActive(plan);
+  if (!isActive) return false;
+  if (plan.plan === PlanType.CLOUD_SYNC || plan.plan === PlanType.NUCLEUS) {
+    return true;
+  }
+  return false;
+}
+
 export function determineIfSubscriptionExpired(plan: IUserPlan) {
   if (plan.cycle === BillingCycle.LIFETIME)
     return {

@@ -67,7 +67,9 @@
             : 'flex-grow'}"
         >
           {#if !$view.isPortrait}
-            <TopNav />
+            <TopNav>
+              <slot name="topnav" slot="topnav" />
+            </TopNav>
           {/if}
           <div class="w-full flex-grow">
             <AppSplitView>

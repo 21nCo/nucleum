@@ -11,6 +11,8 @@
   import { ResourceAccessMode } from "../flux/resourceStores/resource.type";
   import { createEventDispatcher } from "svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
+  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  import { logger } from "../debug/logger.client";
   export let goal: IGoal;
   export let isCreateContext: boolean = false;
   const dispatch = createEventDispatcher();
@@ -21,6 +23,20 @@
       e.stopPropagation();
     }
     dispatch("click");
+  }
+
+  function onGoalChange(e: CustomEvent) {
+    try {
+      const record = e?.detail?.params?.record;
+      if (!record) return;
+      if ("label" in record && record.label !== goal.label) {
+        goal.label = record.label;
+      } else if ("color" in record && record.color !== goal.color) {
+        goal.color = record.color;
+      }
+    } catch (error) {
+      logger.error({ at: "TaskThumbnailGoalLabel.onGoalChange", error });
+    }
   }
 </script>
 
@@ -40,7 +56,9 @@
     />
   {/if}
   <div class="flex items-center gap-1 text-left truncate flex-1 min-w-0">
-    {goal.label}
+    <div class="truncate">
+      {goal.label}
+    </div>
     {#if isCreateContext}
       <Button
         icon="ph:x-light"
@@ -51,3 +69,4 @@
     {/if}
   </div>
 </CustomColorPropagator>
+<ComponentBaseLayer subscribeToRecords={[goal.id]} on:change={onGoalChange} />

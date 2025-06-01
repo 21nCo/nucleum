@@ -577,6 +577,7 @@
     <PageError />
   {:else}
     <UserLayout>
+      <slot slot="topnav" name="topnav" />
       <slot />
     </UserLayout>
   {/if}

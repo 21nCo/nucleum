@@ -11,7 +11,7 @@
   import { Resource } from "../flux/resourceStores/resource.enum";
   import { ResourceActionType } from "../flux/resourceStores/resource.type";
   import { resourceAction } from "../flux/resourceStores/resource.utils";
-  import type { IGoal } from "../goals/goal.type";
+  import { GoalStatus, type IGoal } from "../goals/goal.type";
   import modalEvent from "../modal/modal.store";
   import ModalFooter from "../modal/ModalFooter.svelte";
   import { SearchStore } from "../record/record.store";
@@ -26,6 +26,7 @@
   import { toasts } from "$lib/client/stores/notification.store";
   import context from "$lib/client/stores/context.store";
   import { Embed } from "$lib/client/types/context.type";
+  import GoalSearchResultItem from "../goals/GoalSearchResultItem.svelte";
   export let date: Date | undefined = undefined;
   export let goalId: IRecordId | undefined = undefined;
   const action = resourceAction(Resource.task, ResourceActionType.CREATE);
@@ -78,7 +79,12 @@
   function searchGoalCallback(query: string) {
     return searchStore.select({
       searchQuery: query,
-      limit: 30
+      limit: 30,
+      filters: {
+        status: {
+          notEquals: GoalStatus.COMPLETED
+        }
+      }
     });
   }
 </script>
@@ -93,8 +99,8 @@
           bind:value={goalSearchQuery}
           bind:this={goalSearchInput}
           searchCallback={searchGoalCallback}
+          searchResultComponent={GoalSearchResultItem}
           placeholder="Assign to a goal"
-          icon="ph:plus-light"
           on:select={(e) => {
             goal = e.detail.item;
             isShowGoalPicker = false;

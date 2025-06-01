@@ -10,7 +10,10 @@
   import { Size } from "$lib/client/types/size.enum";
   import view from "$lib/client/stores/view.store";
   import { Display } from "$lib/client/types/view.type";
-  import { fullScreen, player } from "$lib/client/components/modal/modal.store";
+  import modalEvent, {
+    fullScreen,
+    player
+  } from "$lib/client/components/modal/modal.store";
   export let isInFullScreen: boolean = false;
   export let parentBgIndex: number = 1;
   const buttonProps: {
@@ -31,6 +34,7 @@
   };
   function onFullScreenToggle() {
     if (!isInFullScreen) {
+      modalEvent.hide(PointronAction.FOCUS_MODAL);
       fullScreen.show(PointronAction.FULL_SCREEN_FOCUS);
     } else {
       fullScreen.hide();

@@ -166,9 +166,7 @@
               <BreadcrumbMini hierarchy={parentLabels} slice={2} />
             </div>
           {/key}
-          <div
-            class="font-medium text-left flex items-center gap-2 actualQSContent w-full"
-          >
+          <div class="text-left flex items-center gap-2 actualQSContent w-full">
             <!-- {#if !isActive}
               <div class="w-2 h-2 bg-ccs1 rounded-full"></div>
             {/if} -->

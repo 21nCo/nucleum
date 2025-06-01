@@ -65,7 +65,7 @@ import { goalStore } from "$lib/client/components/goals/goal.store";
 import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 import type { OmitForCaptureWithId } from "$lib/client/components/flux/resourceStores/resource.type";
 import { taskStore } from "$lib/client/components/tasks/task.store";
-import { GoalType } from "$lib/client/components/goals/goal.type";
+import { GoalStatus, GoalType } from "$lib/client/components/goals/goal.type";
 import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
 import { uiState } from "$lib/client/stores/uiState/uiState.store";
 import { UIState } from "$lib/client/stores/uiState/uiState.type";
@@ -287,8 +287,8 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     function scheduleBreakReminderNotification(isNotified: boolean = false) {
       let breakReminderSetting =
         session.composition.breakType === BreakCompositionType.REMINDER
-          ? (session.composition?.breakReminder ??
-            get(pointronPreferences)?.breakReminder)
+          ? session.composition?.breakReminder ??
+            get(pointronPreferences)?.breakReminder
           : undefined;
       if (!breakReminderSetting) return isNotified;
       timeRemainingToTakeBreak = breakReminderSetting - session.timeElapsed;
@@ -627,7 +627,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
         ...currentLastBar,
         duration: currentLastBar.start
           ? (new Date().getTime() - currentLastBar.start) / 1000
-          : (currentLastBar.duration ?? 0 + params.timeElapsed)
+          : currentLastBar.duration ?? 0 + params.timeElapsed
       };
       return { intervals: [...session.intervals, lastBar], isContinueSession };
     }
@@ -1246,7 +1246,10 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
     const goalsResult = await goalStore.selectMany(
       {
         filters: {
-          id: items.map((x) => x.id.toString())
+          id: items.map((x) => x.id.toString()),
+          status: {
+            notEquals: GoalStatus.COMPLETED
+          }
         }
       },
       {
@@ -1257,13 +1260,14 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
     const newRecents = items
       .map((x) => {
         const goal = goalsResult.find(resourceInList(x.id));
+        if (!goal) return;
         return {
           id: x.id,
           item: goal,
           startUnix: x.startUnix
         };
       })
-      .filter((k) => k.id && k.item);
+      .filter((k) => k && k.id && k.item);
     this.modify({ recents: newRecents });
   }
 
@@ -1370,6 +1374,60 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
     //TODO - don't count goals with tasks as focus item
     return items.length;
   }
+
+  async rearrangeFocusItems(fromId: IRecordId, toId: IRecordId) {
+    let n = this.get();
+    if (
+      !fromId ||
+      !toId ||
+      !n.items.some(resourceInList(fromId)) ||
+      !n.items.some(resourceInList(toId))
+    ) {
+      return;
+    }
+    const items = [...n.items];
+    const fromIndex = items.findIndex((item) =>
+      isSameResource(item.id, fromId)
+    );
+    const toIndex = items.findIndex((item) => isSameResource(item.id, toId));
+    const [movedItem] = items.splice(fromIndex, 1);
+    items.splice(toIndex, 0, movedItem);
+    console.log({ items, fromIndex, toIndex });
+    this.modify({ items });
+  }
+
+  async rearrangeTasksInGoal(
+    goalId: IRecordId,
+    fromId: IRecordId,
+    toId: IRecordId
+  ) {
+    let n = this.get();
+    const goalItem = n.items.find(resourceInList(goalId));
+    if (!goalItem || !goalItem.tasks || goalItem.tasks.length === 0) {
+      return;
+    }
+    const fromIndex = goalItem.tasks.findIndex(resourceInList(fromId));
+    const toIndex = goalItem.tasks.findIndex(resourceInList(toId));
+    if (
+      fromIndex < 0 ||
+      toIndex < 0 ||
+      fromIndex >= goalItem.tasks.length ||
+      toIndex >= goalItem.tasks.length
+    ) {
+      return;
+    }
+    const tasks = [...goalItem.tasks];
+    const [movedTask] = tasks.splice(fromIndex, 1);
+    tasks.splice(toIndex, 0, movedTask);
+
+    const items = n.items.map((item) => {
+      if (isSameResource(item.id, goalId)) {
+        return { ...item, tasks };
+      }
+      return item;
+    });
+    this.modify({ items });
+  }
 }
 
 export const focusItemsStore = new FocusItemsStore();
@@ -1466,9 +1524,9 @@ class SessionStore extends ResourceStore<ISession> {
       const goalId =
         resourceType === Resource.goal
           ? item.id
-          : (focusItemStore.items.find((x) =>
+          : focusItemStore.items.find((x) =>
               x.tasks?.some(resourceInList(item.id))
-            )?.id ?? "");
+            )?.id ?? "";
       const taskId = resourceType === Resource.task ? item.id : "";
       if (item.blocks && item.blocks.length > 0) {
         logs.push(

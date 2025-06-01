@@ -1,5 +1,4 @@
 <script lang="ts">
-  import view from "$lib/client/stores/view.store";
   import {
     focusItemsStore,
     activeSession,
@@ -26,7 +25,8 @@
   import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
   import {
     isSameResource,
-    resourceInList
+    resourceInList,
+    shiftResourceInArray
   } from "$lib/client/components/flux/resourceStores/resource.utils";
   import FocusTask from "./FocusTask.svelte";
   import type { ITaskThumb } from "$lib/client/components/tasks/task.type";
@@ -35,6 +35,8 @@
   import { resolveGoalColor } from "$lib/client/components/goals/goal.utils";
   import { createEventDispatcher } from "svelte";
   import { toasts } from "$lib/client/stores/notification.store";
+  import { reorderList } from "$lib/client/actions/rearrange.action";
+  import Icon from "$lib/client/elements/Icon.svelte";
   const dispatch = createEventDispatcher();
 
   export let focusItem: IFocusItem;
@@ -43,7 +45,14 @@
   export let isFocusAddTask: boolean = false;
   export let isInEditMode: boolean = false;
   export let contxt: "current" | "history" = "current";
+  /**
+   * Needed if the contxt param is "history"
+   */
   export let intervals: ISessionInterval[] = [];
+  /**
+   * Needed if the contxt param is "history"
+   */
+  export let focusItemsList: IFocusItem[] = [];
   $: goal = goals.find(resourceInList(focusItem.id));
   $: color = resolveGoalColor(goal);
   $: tasksUnderGoal = resolveTaskFocusItems(focusItem);
@@ -52,8 +61,6 @@
   let isInprogress: boolean = false;
   let addTaskInputRef: any;
   // let workedTime: number = 0;
-  let isDragEnabled: boolean;
-  $: isDragEnabled = $view.isPortrait ? false : true;
   $: isInprogress =
     ($currentFocusItem && isSameResource(focusItem, $currentFocusItem)) ??
     false;
@@ -88,8 +95,8 @@
         toasts.error("Cannot start working on an item while break is running", {
           title: "Break running"
         });
-        return;
       }
+      return;
     }
     if ($activeSession.isSessionRunning) {
       if (isInprogress) {
@@ -104,17 +111,33 @@
   }
 
   function resolveTaskFocusItems(focusItem: IFocusItem) {
-    return $focusItemsStore.items.filter((x) =>
-      focusItem.tasks?.some(resourceInList(x.id))
-    );
+    if (contxt === "current") {
+      return (
+        focusItem.tasks
+          ?.map((taskId) => $focusItemsStore.items.find(resourceInList(taskId)))
+          .filter(Boolean) ?? []
+      );
+    } else {
+      return (
+        focusItem.tasks
+          ?.map((taskId) => focusItemsList.find(resourceInList(taskId)))
+          .filter(Boolean) ?? []
+      );
+    }
+  }
+
+  function onReorderTasks(event: any) {
+    const { fromId, toId } = event;
+    if (!goal || !focusItem.tasks) return;
+    tasksUnderGoal = shiftResourceInArray(tasksUnderGoal, fromId, toId);
+    focusItemsStore.rearrangeTasksInGoal(focusItem.id, fromId, toId);
   }
 </script>
 
 <div
-  draggable={isDragEnabled &&
-    contxt === "current" &&
-    (!$activeSession.isSessionRunning || isInEditMode)}
-  class="flex flex-col gap-4 w-full userdata"
+  class={cn("flex flex-col gap-4 w-full userdata", {
+    "cursor-move": isInEditMode
+  })}
 >
   {#if (goal && (!$activeSession.isSessionRunning || isInEditMode) && contxt === "current") || (goal && tasksUnderGoal.length > 0)}
     <CustomColorPropagator
@@ -122,12 +145,18 @@
       class="relative flex items-center gap-2 w-full"
     >
       <div
-        class="flex flex-col gap-2 w-full pb-2 border border-brs3 rounded-md"
+        class="relative flex flex-col gap-2 w-full pb-2 border border-brs3 rounded-md"
       >
+        {#if isInEditMode}
+          <span class="absolute left-2 top-3">
+            <Icon icon="ph:dots-six-vertical" class="text-fgs2" />
+          </span>
+        {/if}
         <div
           class={cn("text-left px-3 pt-3 font-medium truncate min-w-0 flex-1", {
             "text-ccs1": color,
-            "text-fgs2": !color
+            "text-fgs2": !color,
+            "pl-8": isInEditMode
           })}
         >
           <div>
@@ -149,22 +178,39 @@
         </div>
         <div class="px-2">
           {#if tasksUnderGoal && tasksUnderGoal.length > 0}
-            {#each tasksUnderGoal as taskFocusItem, index (taskFocusItem)}
-              {@const task = tasks.find(resourceInList(taskFocusItem.id))}
-              {#if task}
-                <FocusTask
-                  focusItem={taskFocusItem}
-                  {task}
-                  {intervals}
-                  {isInEditMode}
-                  context={contxt}
-                  on:remove
-                />
-              {/if}
-              {#if index < tasksUnderGoal.length - 1}
-                <div class="mx-1 border-b border-bgs2" />
-              {/if}
-            {/each}
+            <div
+              use:reorderList={{
+                listId: `focus-tasks-${focusItem.id}`,
+                draggedOverClass: "outline outline-ass1",
+                dragImage: "dragimage",
+                onDrop: onReorderTasks
+              }}
+            >
+              {#each tasksUnderGoal as taskFocusItem, index (taskFocusItem)}
+                {@const task = tasks.find(resourceInList(taskFocusItem.id))}
+                {#if task}
+                  <div
+                    data-index={index}
+                    data-id={taskFocusItem.id}
+                    draggable={(contxt === "current" &&
+                      !$activeSession.isSessionRunning) ||
+                      isInEditMode}
+                  >
+                    <FocusTask
+                      focusItem={taskFocusItem}
+                      {task}
+                      {intervals}
+                      {isInEditMode}
+                      context={contxt}
+                      on:remove
+                    />
+                  </div>
+                {/if}
+                {#if index < tasksUnderGoal.length - 1}
+                  <div class="mx-1 border-b border-bgs2" />
+                {/if}
+              {/each}
+            </div>
           {/if}
           {#if (contxt === "current" && !$activeSession.isSessionRunning) || isInEditMode}
             <div class="mx-1 border-b border-bgs2" />
@@ -185,9 +231,8 @@
             icon="minus-circled"
             size={Size.xs}
             type={ButtonVariant.DANGER}
-            style={ButtonStyle.OUTLINED}
             isPreventMinWidth={true}
-            label="Remove"
+            tooltip="Remove"
             on:click={onRemoveClicked}
           />
         </div>
@@ -195,8 +240,9 @@
     </CustomColorPropagator>
   {:else if goal}
     <CustomColorPropagator
+      type="button"
       class={cn(
-        "flex  gap-4 items-center border border-brs3 w-full p-3 rounded-md",
+        "flex h-16 gap-4 items-center border border-brs3 w-full p-3 rounded-md",
         {
           "bg-ccs1 border-ccs1": isInprogress,
           "text-ccs1": !isInprogress

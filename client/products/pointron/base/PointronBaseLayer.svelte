@@ -18,6 +18,7 @@
   import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
   import { nestedGoalCorrection } from "./fallbacks";
   import { FallbackTracker } from "$lib/client/utils/fallbackTracker.utils";
+  import FocusTopNavWidget from "../focus/player/FocusTopNavWidget.svelte";
 
   let isLiteMode = $context.isEmbed && $context.isSheet;
   const isDebug = import.meta.env?.DEV;
@@ -64,6 +65,9 @@
 </script>
 
 <UserBaseLayer on:ready={onReady}>
+  <div slot="topnav">
+    <FocusTopNavWidget />
+  </div>
   <slot />
   <SessionTitle />
   <Notifications />

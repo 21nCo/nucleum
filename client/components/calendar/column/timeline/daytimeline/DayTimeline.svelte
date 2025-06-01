@@ -16,6 +16,8 @@
   import RefreshingOverlayFeedback from "$lib/client/elements/feedback/RefreshingOverlayFeedback.svelte";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   export let date: Date = new Date();
   export let data: Array<CalendarTimelineEntry> = [];
   export let layout: CalendarColumnLayout;
@@ -358,12 +360,15 @@
           {formatTime($userPreferences, now)}
         </div>
         {#if isFocusing}
-          <div
+          <button
             class="absolute z-20 text-abg text-b3 flex justify-end rounded-md px-2 right-0 whitespace-nowrap bg-aps1"
             style="top: {nowPosition - 10}px;"
+            on:click={() => {
+              appStore.runAction(PointronAction.FOCUS_MODAL);
+            }}
           >
             Focusing now...
-          </div>
+          </button>
         {/if}
       {/if}
 

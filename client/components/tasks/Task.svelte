@@ -32,6 +32,14 @@
   import { SearchStore } from "../record/record.store";
   import { Product } from "$lib/client/types/product.type";
   import { goalStore } from "../goals/goal.store";
+  import { resolveIfCurrentFocusItem } from "$lib/client/products/pointron/focus/session.utils";
+  import {
+    currentFocusItem,
+    focusItemsStore
+  } from "$lib/client/products/pointron/focus/session.store";
+  import Icon from "$lib/client/elements/Icon.svelte";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
+  import RecordTrashBanner from "../record/RecordTrashBanner.svelte";
 
   export let id: IRecordId;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -47,6 +55,12 @@
   let goalSearchQuery = "";
   let goal: IGoal | undefined = undefined;
   const searchStore = new SearchStore(Resource.goal);
+
+  $: isCurrentlyFocusing = resolveIfCurrentFocusItem(
+    $focusItemsStore,
+    id,
+    $currentFocusItem
+  );
 
   onMount(async () => {
     await refresh();
@@ -284,8 +298,32 @@
             />
           {/if}
         </div>
+        {#if isCurrentlyFocusing}
+          <button
+            on:click={() => {
+              appStore.gotoPath(PointronAction.FOCUS);
+            }}
+            class="flex items-center gap-1 text-b3 text-aps1"
+          >
+            <Icon
+              icon="ph:hourglass-simple-light"
+              size={Size.sm}
+              class="text-aps1"
+            />
+            <span> Currently focusing... </span>
+          </button>
+        {/if}
+        {#if task.trashInformation}
+          <RecordTrashBanner
+            deletedAt={task.trashInformation.deletedAt}
+            on:restore={() => {
+              taskStore.restore(id, {
+                context: accessPoint
+              });
+            }}
+          />
+        {/if}
       </div>
-
       <div class="flex flex-col gap-3 justify-center w-full">
         <InlineFeedbackText feedback={status} />
         <div class="flex gap-2 justify-center w-full">
@@ -294,6 +332,11 @@
             label="Delete"
             style={ButtonStyle.OUTLINED}
             type={ButtonVariant.DANGER}
+            on:click={() => {
+              taskStore.trash(id, {
+                context: accessPoint
+              });
+            }}
           />
           <Button
             icon="ph:x-circle-light"

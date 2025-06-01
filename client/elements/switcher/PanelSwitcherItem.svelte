@@ -53,9 +53,10 @@
         (size === Size.md || size === Size.lg) &&
         barStyle === BarStyle.OVERFLOW &&
         !item.icon,
-      "px-3": size === Size.sm || (barStyle != BarStyle.OVERFLOW && !item.icon),
+      "px-4 ":
+        size === Size.sm || (barStyle !== BarStyle.OVERFLOW && !item.icon),
       "px-5": size !== Size.sm && item.icon,
-      "px-2": size === Size.xs,
+      "px-3": size === Size.xs,
       "py-2": barStyle != BarStyle.EXACT,
       "border-b-2": barStyle === BarStyle.OVERFLOW,
       "border-ccs1": isActive && barStyle === BarStyle.OVERFLOW,

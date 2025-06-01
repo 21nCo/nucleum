@@ -14,7 +14,8 @@
   import { onDestroy, onMount } from "svelte";
   import {
     isSameResource,
-    resourceInList
+    resourceInList,
+    shiftResourceInArray
   } from "$lib/client/components/flux/resourceStores/resource.utils";
   import type { ITaskThumb } from "$lib/client/components/tasks/task.type";
   import type { IFocusItem } from "$lib/client/types/pointron/session.type";
@@ -40,6 +41,7 @@
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
   import CalendarColumnTasksPanel from "$lib/client/components/calendar/column/CalendarColumnTasksPanel.svelte";
+  import { reorderList } from "$lib/client/actions/rearrange.action";
   export let isInEditMode: boolean = false;
   let isFocusingAddGoal: boolean = false;
   let focusItems: IFocusItem[] = [];
@@ -96,6 +98,7 @@
 
   let fullScreenSub: () => void;
   let appEventSub: () => void;
+
   onMount(async () => {
     while (!focusItemsStore.isInitialized) {
       await new Promise((resolve) => setTimeout(resolve, 500));
@@ -114,6 +117,10 @@
         refresh({ isShowLoadingPulse: true });
       }
     });
+    const state = uiState.getState(UIState.recentFocusItems);
+    if (state) {
+      await focusItemsStore.refreshRecents(state);
+    }
   });
 
   onDestroy(() => {
@@ -178,11 +185,19 @@
     await focusItemsStore.addNewTask(label);
     refresh();
   }
+
+  function onReorderFocusItems(event: any) {
+    const { fromId, toId } = event;
+    focusItemsStore.rearrangeFocusItems(fromId, toId);
+    focusItems = shiftResourceInArray(focusItems, fromId, toId);
+  }
 </script>
 
 <div
-  class={cn("flex flex-col w-full h-full gap-6 pb-48 overflow-auto", {
-    "pt-6": isInEditMode && $focusItemsStore.items.length > 0
+  class={cn("flex flex-col w-full h-full pb-48 overflow-auto", {
+    "pt-6": isInEditMode && $focusItemsStore.items.length > 0,
+    "gap-6": isInEditMode,
+    "gap-4": !isInEditMode
   })}
 >
   {#if ($focusItemsStore.items?.length === 0 && !isInEditMode && $activeSession.isSessionRunning) || isRefreshing}
@@ -198,20 +213,39 @@
       <input class="bg-none opacity-0" />
     </div>
   {:else if $focusItemsStore.items?.length > 0 && focusItems.length > 0}
-    {#each focusItems as focusItem, index (focusItem.id)}
-      <FocusItem
-        {isInEditMode}
-        {focusItem}
-        {tasks}
-        {goals}
-        on:createNew={onCreateNewGoalTask}
-        on:select={onSelect}
-        on:remove={onRemove}
-        isFocusAddTask={$lastActiveGoalIdForEditing
-          ? $lastActiveGoalIdForEditing === focusItem.id
-          : index === $focusItemsStore.items.length - 1}
-      />
-    {/each}
+    <div
+      use:reorderList={{
+        listId: "focusItems",
+        draggedOverClass: "outline outline-aps1",
+        dragImage: "dragimage",
+        onDrop: onReorderFocusItems
+      }}
+      class={cn("flex flex-col", {
+        "gap-6": isInEditMode,
+        "gap-4": !isInEditMode
+      })}
+    >
+      {#each focusItems as focusItem, index (focusItem.id)}
+        <div
+          data-index={index}
+          data-id={focusItem.id}
+          draggable={!$activeSession.isSessionRunning || isInEditMode}
+        >
+          <FocusItem
+            {isInEditMode}
+            {focusItem}
+            {tasks}
+            {goals}
+            on:createNew={onCreateNewGoalTask}
+            on:select={onSelect}
+            on:remove={onRemove}
+            isFocusAddTask={$lastActiveGoalIdForEditing
+              ? $lastActiveGoalIdForEditing === focusItem.id
+              : index === $focusItemsStore.items.length - 1}
+          />
+        </div>
+      {/each}
+    </div>
   {/if}
 
   {#if !isRefreshing && (!$activeSession.isSessionRunning || isInEditMode)}
@@ -240,7 +274,7 @@
         <PanelSwitcher
           items={[
             {
-              label: "Recently focused",
+              label: "Recents",
               value: "recents"
             },
             {

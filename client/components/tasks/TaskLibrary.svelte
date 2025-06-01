@@ -387,26 +387,25 @@
       />
     </div>
   {/if}
-  <InlineSearchBar
-    bind:this={searchInputRef}
-    bind:query={searchQuery}
-    on:search={() => refresh()}
-    padding={cn({
-      "px-4":
-        !$view.isConstrainedWidth &&
-        (accessPoint === ResourceAccessPoint.LIBRARY ||
-          accessPoint === ResourceAccessPoint.BROWSER)
-    })}
-    placeholder={"Search tasks"}
-    style={InputStyle.FILLED}
-  >
-    {#if !isPreventAddNew}
+  <div class="flex gap-2 items-center">
+    <InlineSearchBar
+      bind:this={searchInputRef}
+      bind:query={searchQuery}
+      on:search={() => refresh()}
+      padding={cn({
+        "pl-4":
+          !$view.isConstrainedWidth &&
+          accessPoint === ResourceAccessPoint.LIBRARY
+      })}
+      placeholder={"Search tasks"}
+      style={InputStyle.FILLED}
+    />
+    {#if !isPreventAddNew && !$view.isConstrainedWidth && accessPoint === ResourceAccessPoint.LIBRARY}
       <Button
         icon="ph:plus-light"
         type={ButtonVariant.PRIMARY}
-        style={$view.isConstrainedWidth ? ButtonStyle.OUTLINED : undefined}
+        style={ButtonStyle.OUTLINED}
         size={Size.md}
-        label={!$view.isConstrainedWidth ? "Create" : undefined}
         isPreventMinWidth={true}
         on:click={() => {
           appStore.runAction(
@@ -426,7 +425,7 @@
         }}
       />
     {/if}
-  </InlineSearchBar>
+  </div>
   <div class="cw:px-0 px-4 w-full">
     <InlineSyncingFeedback resource={Resource.task} isFullWidthVariant={true} />
   </div>

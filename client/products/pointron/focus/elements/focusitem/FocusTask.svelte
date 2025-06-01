@@ -41,8 +41,6 @@
   let isInprogress: boolean = false;
   let labelInputElement: any;
   let labelEntry: string;
-  let isDragEnabled: boolean;
-  $: isDragEnabled = $view.isPortrait ? false : true;
   let scrollToTask: any = null;
   $: workedTime =
     context === "history" && focusItem.worked
@@ -131,22 +129,25 @@
 </script>
 
 <div
-  draggable={isDragEnabled &&
-    ((context === "current" && !$activeSession.isSessionRunning) ||
-      isInEditMode)}
   class={cn("flex gap-2 items-center w-full", {
     "border border-brs3 rounded-md": isStandalone
   })}
 >
   <button
     class={cn(
-      "w-full flex gap-2 items-center justify-between px-4 h-12 rounded-md ",
+      "relative w-full flex gap-2 items-center justify-between px-4 h-12 rounded-md ",
       {
-        "bg-ccs1 border-ccs1": isInprogress
+        "bg-ccs1 border-ccs1": isInprogress,
+        "pl-8": isInEditMode
       }
     )}
     on:click={clickHandler}
   >
+    {#if isInEditMode}
+      <span class="absolute left-2 top-3">
+        <Icon icon="ph:dots-six-vertical" class="text-fgs2" />
+      </span>
+    {/if}
     <div
       class="flex gap-2 flex-grow justify-start items-center truncate {task.isChecked &&
         'line-through'}"

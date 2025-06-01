@@ -100,7 +100,7 @@
         isExpandToFullWidth && {
           "w-full justify-between px-1": true,
           "h-12": !isEnableTitleAction,
-          "h-[3.2rem]": isEnableTitleAction
+          "h-[3.2rem] 2k:h-14": isEnableTitleAction
         }
       )}
     >

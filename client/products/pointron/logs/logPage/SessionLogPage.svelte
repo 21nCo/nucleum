@@ -34,55 +34,73 @@
   import { taskStore } from "$lib/client/components/tasks/task.store";
   import view from "$lib/client/stores/view.store";
   import { SessionType } from "../log.type";
+  import type { IFocusItem } from "$lib/client/types/pointron/session.type";
+  import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { logger } from "$lib/client/components/debug/logger.client";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 
   export let id: string;
   export let log: any = undefined;
   export let accessMode: ResourceAccessMode = ResourceAccessMode.POP;
   let selectedTab: "Summary" | "Notes" = "Summary";
   let isLoadingState: boolean = false;
-
+  let focusItems: IFocusItem[] = [];
   let goals: IGoalThumb[] = [];
   let tasks: ITaskThumb[] = [];
 
-  onMount(async () => {
-    await refreshv2();
-  });
-
   async function refreshv2() {
-    isLoadingState = true;
-    const response = await sessionStore.select(id);
-    if (response && response.id) {
-      log = response;
-    }
-    console.log({ response });
-    if (log.items) {
-      goals = await goalStore.selectMany(
-        {
-          filters: {
-            id: log.items.map((x) => x.id)
+    try {
+      isLoadingState = true;
+      const response = await sessionStore.select(id);
+      if (response && response.id) {
+        log = response;
+        const tasksWithGoal = log.items
+          ?.map((x: any) => x.tasks)
+          ?.flat()
+          ?.filter((x: any) => x);
+        focusItems = log.items.filter(
+          (x: any) => !tasksWithGoal.some(resourceInList(x))
+        );
+      }
+      if (log.items) {
+        goals = await goalStore.selectMany(
+          {
+            filters: {
+              id: log.items.map((x: any) => x.id.toString())
+            }
+          },
+          {
+            isIncludeSubItems: true,
+            isExpand: true
           }
-        },
-        {
-          isIncludeSubItems: true,
-          isExpand: true
-        }
-      );
-      tasks = await taskStore.selectMany(
-        {
-          filters: {
-            id: log.items.map((x) => x.id)
+        );
+        tasks = await taskStore.selectMany(
+          {
+            filters: {
+              id: log.items.map((x: any) => x.id.toString())
+            }
+          },
+          {
+            isExpand: true
           }
-        },
-        {
-          isExpand: true
-        }
-      );
+        );
+      }
+      isLoadingState = false;
+    } catch (error) {
+      logger.error({ at: "SessionLogPage", error });
+    } finally {
+      isLoadingState = false;
     }
-    isLoadingState = false;
   }
 </script>
 
-{#if log}
+{#await refreshv2()}
+  <EmptyStatusView
+    {isLoadingState}
+    mainText="Session log not found"
+    loadingText="Loading..."
+  />
+{:then}
   <div class="flex flex-col gap-4 flex-grow w-full items-center p-4 userdata">
     {#if accessMode === ResourceAccessMode.SPLIT || accessMode === ResourceAccessMode.FSPLIT || $view.isConstrainedWidth}
       <div class="flex gap-4 w-full justify-between">
@@ -139,11 +157,12 @@
             <Text content="Focus items" style={TextStyle.SECTION_HEADING} />
             <div class="flex flex-col gap-2 h-full w-full pb-40">
               {#if log.items.length > 0}
-                {#each log.items as item (item.id)}
+                {#each focusItems as item (item.id)}
                   <FocusItem
                     focusItem={item}
                     {goals}
                     {tasks}
+                    focusItemsList={log.items}
                     intervals={log.blocks}
                     contxt="history"
                   />
@@ -161,7 +180,7 @@
       {/if}
     </div>
     <ModalFooter
-      action={PointronAction.SESSION_LOG_MODAL}
+      action={Resource.session + "-resource"}
       primaryAction={{
         label: "Delete session",
         icon: "ph:trash-light",
@@ -174,10 +193,4 @@
       }}
     />
   </div>
-{:else}
-  <EmptyStatusView
-    {isLoadingState}
-    mainText="Session log not found"
-    loadingText="Loading..."
-  />
-{/if}
+{/await}

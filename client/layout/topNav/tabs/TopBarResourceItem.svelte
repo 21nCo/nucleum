@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import { hoverable } from "$lib/client/actions/hover.action";
-  import { popover } from "$lib/client/actions/popover.action";
+  import { popover, tooltip } from "$lib/client/actions/popover.action";
   import {
     ResourceAccessMode,
     ResourceAccessPoint
@@ -142,7 +142,13 @@
         )}
       >
         <button
-          on:click={() => tabs.remove(item)}
+          on:click={() => {
+            tabs.remove(item);
+            appStore.goBack();
+          }}
+          use:tooltip={{
+            text: "Close"
+          }}
           class="h-full flex justify-center items-center pr-2"
         >
           <Icon icon="ph:x" size={Size.sm} class="stroke-fgs2" />

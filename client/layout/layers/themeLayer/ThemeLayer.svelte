@@ -136,14 +136,14 @@
   />
 </svelte:head>
 
-<!--Note: The font weight and tracking correction is for H Grotesk typeface -->
+<!--Note: The font weight and tracking corrections are applied for each typeface. Space Grotesk is falling back to next available typeface if font-normal (or 400) is used. For some reason, 401 and beyond is working fine. -->
 <div
   bind:this={ref}
   id={extensionContext ? "nthemeclipper" : "ntheme"}
   class={cn("flex h-full w-full", {
     "tracking-[0.01em]": $appearance?.typeface === "Hanken Grotesk",
-    "font-[300]": $appearance?.typeface === "Sora",
-    "font-[350]": $appearance?.typeface === "Space Grotesk",
+    "font-[350]": $appearance?.typeface === "Sora",
+    "font-[401]": $appearance?.typeface === "Space Grotesk",
     glassy: $appearance?.skin == AppSkin.Glassy,
     dark: $appearance?.colorScheme?.isDark
   })}

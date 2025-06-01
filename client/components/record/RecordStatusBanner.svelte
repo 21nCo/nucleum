@@ -8,26 +8,17 @@
   import type { ActiveResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
   import { isShowStatusBanner } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import RecordTrashBanner from "./RecordTrashBanner.svelte";
   export let resource: ActiveResourceStore<any, any>;
 </script>
 
 {#if isShowStatusBanner($resource)}
-  <div class="flex flex-col gap-4">
+  <div class="flex flex-col gap-4 default-typeface">
     {#if $resource.trashInformation}
-      <InlineInfoBanner
-        type={InfoTextType.ERROR}
-        icon="ph:trash-light"
-        content={"This resource was moved to trash on: *" +
-          formatDatetime(
-            $userPreferences,
-            new Date($resource.trashInformation.deletedAt)
-          ) +
-          "*"}
-        action={{
-          label: "Restore",
-          callback: async () => {
-            return resource.restore();
-          }
+      <RecordTrashBanner
+        deletedAt={$resource.trashInformation.deletedAt}
+        on:restore={() => {
+          resource.restore();
         }}
       />
     {/if}

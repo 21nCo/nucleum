@@ -81,7 +81,7 @@
 
   <FormElement {style} {label} isFocused={isPopoverVisible}>
     <button
-      class={cn("flex items-center gap-2 p-2 w-full", {
+      class={cn("flex items-center gap-2 p-2 w-full default-typeface", {
         "justify-center": variant == "wide-center",
         "justify-start": variant == "wide"
       })}
@@ -123,10 +123,13 @@
   </FormElement>
 {:else if variant == "inline" || variant == "icon-only" || variant === "inline-with-icon"}
   <button
-    class={cn("relative flex items-center gap-1 justify-center", {
-      "p-1 hover:bg-bgs2 rounded-md": variant === "icon-only",
-      "underline-dotted": variant === "inline"
-    })}
+    class={cn(
+      "relative flex items-center gap-1 justify-center default-typeface",
+      {
+        "p-1 hover:bg-bgs2 rounded-md": variant === "icon-only",
+        "underline-dotted": variant === "inline"
+      }
+    )}
     bind:this={ref}
     use:popover={{
       content: AbsoluteTimeRangePopoverV2,

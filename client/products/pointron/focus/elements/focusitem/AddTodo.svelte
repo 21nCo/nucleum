@@ -81,21 +81,23 @@
   />
   <div class=" flex justify-end items-center">
     {#if label}
-      <div class="flex gap-2">
+      <div class="flex gap-2 items-center">
         {#if label}
           <Button
             on:click={createNew}
             size={Size.xs}
-            label="⮐ add"
+            icon="ph:plus-light"
+            label="add"
             isPreventMinWidth={true}
           />
         {/if}
         <Button
           on:click={reset}
-          icon="cross"
+          icon="ph:x-light"
+          size={Size.xs}
           tooltip="Clear"
           tooltipOptions={{
-            placement: Placement.Left
+            placement: Placement.BottomCenter
           }}
         />
       </div>

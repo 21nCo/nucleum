@@ -31,6 +31,7 @@
   import { AppSearchParam } from "$lib/client/types/appStore.type";
   import { type IInlineStatus } from "$lib/client/types/notification.type";
   import { logger } from "../debug/logger.client";
+  import { Size } from "$lib/client/types/size.enum";
   export let id: string;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   export let accessMode: ResourceAccessMode = ResourceAccessMode.POP;
@@ -228,6 +229,7 @@
               isExpandToFullWidth={true}
               parentBgIndex={2}
               isBgBar={true}
+              size={Size.sm}
               isRearrangeableByDefault={true}
               on:rearrange={rearrangePanels}
               on:switch={(e) => {

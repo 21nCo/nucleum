@@ -150,7 +150,7 @@
   }
 
   .default-typeface {
-    font-family: "Hanken Grotesk", sans-serif;
+    font-family:  "Hanken Grotesk", system-ui, sans-serif;
   }
 }
 

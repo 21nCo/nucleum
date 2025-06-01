@@ -135,7 +135,7 @@
 </script>
 
 <div
-  class={cn("flex w-full rounded-l-md border p-2", {
+  class={cn("flex w-full rounded-l-md border p-2 default-typeface", {
     "border-brs3": !isFocusing,
     "border-aps1": isFocusing
   })}

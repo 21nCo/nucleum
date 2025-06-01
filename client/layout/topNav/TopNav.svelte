@@ -16,13 +16,22 @@
   import { page } from "$app/stores";
   import TopBarResourceItem from "./tabs/TopBarResourceItem.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
-  // import FocusPlayer from "$lib/client/products/pointron/focus/player/FocusPlayer.svelte";
+  import { determineIfActiveSubscriber } from "$lib/client/components/subscription/userPlan.utils";
+  import account from "$lib/client/stores/account.store";
+  import { UserDataMode } from "$lib/client/types/account.type";
+  import { tooltip } from "$lib/client/actions/popover.action";
+
   let isInFocusMode = false;
   let pinnedItems: IRecordId[] = tabs.get() ?? [];
 
   $: currentTab = $page.url.searchParams.get(ResourceAccessMode.TAB);
   $: isInterimTab =
     currentTab && !pinnedItems.some((x) => x.toString() === currentTab);
+
+  $: isSubscriber =
+    $account?.plan && $account?.dataMode === UserDataMode.CLOUD
+      ? determineIfActiveSubscriber($account.plan)
+      : false;
 
   function handleFocusMode(e: CustomEvent<boolean>) {
     if (typeof e.detail === "boolean") {
@@ -43,7 +52,7 @@
 {#if !isInFocusMode}
   <div
     class={cn(
-      "w-full h-11 max-h-11 min-h-11 bg-bgs2 pr-4 border-b border-brs3 userdata",
+      "w-full h-11 max-h-11 min-h-11 2k:h-12 2k:max-h-12 2k:min-h-12 bg-bgs2 pr-4 border-b border-brs3 userdata",
       {
         "flex gap-3 justify-between items-center":
           pinnedItems.length > 0 || isInterimTab,
@@ -110,6 +119,7 @@
           />
         </div>
       {/if}
+      <slot name="topnav" />
       <Button
         icon="ph:terminal"
         tooltip="Command bar"
@@ -128,7 +138,16 @@
       <!-- <FocusPlayer /> -->
       <TrailLeftIndicator />
       <button
-        class="flex items-center gap-2 rounded-full overflow-hidden hover:outline hover:outline-brs3 border border-transparent"
+        class={cn(
+          "flex items-center gap-2 rounded-full overflow-hidden border border-transparent",
+          {
+            "outline outline-ags1 hover:outline-ags2": isSubscriber,
+            "hover:outline hover:outline-brs3": !isSubscriber
+          }
+        )}
+        use:tooltip={{
+          text: "Account"
+        }}
         on:click={() => appStore.runAction(Action.SETTINGS)}
       >
         <ProfilePicture context="topbar" />
