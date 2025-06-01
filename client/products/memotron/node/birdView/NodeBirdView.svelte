@@ -400,7 +400,6 @@
               icon: "ph:sparkle-light"
             }
           ]}
-          size={Size.sm}
           style={PanelSwitcherStyle.TRAIN}
           isShowNumberShortcut={true}
           bind:value={selectedView}

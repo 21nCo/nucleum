@@ -50,11 +50,10 @@
             value: PropertyTypeMode.AUTO
           }
         ]}
-        size={Size.xs}
+        size={Size.sm}
         style={PanelSwitcherStyle.TRAIN}
         bind:value={mode}
         on:switch={(e) => {
-          console.log(e);
           refreshGroups();
         }}
       />

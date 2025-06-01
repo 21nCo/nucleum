@@ -19,7 +19,7 @@
   export let item: ISelectItem;
   export let isInEditMode: boolean = false;
   export let isDisabled: boolean = false;
-  export let size = Size.md;
+  export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
   export let style: PanelSwitcherStyle = PanelSwitcherStyle.BAR;
   export let editModeOptions: PanelSwitcherEditModeOptions | undefined =
     undefined;

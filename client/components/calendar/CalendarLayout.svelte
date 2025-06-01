@@ -14,9 +14,9 @@
     { value: CalendarLayout.Classic, label: "Classic" },
     {
       value: CalendarLayout.Bird,
-      label: "Bird",
-      badge: "planned",
-      isDisabled: true
+      label: "Bird view"
+      // badge: "planned",
+      // isDisabled: true
     }
   ];
 
@@ -30,21 +30,15 @@
 </script>
 
 <div class="flex flex-col h-full w-full">
-  <div class="flex items-center gap-4">
-    <!-- <Text content="Calendar" style={TextStyle.PANEL_HEADING_SMALL} /> -->
-    <PanelSwitcher
+  <div class="flex items-center gap-4 border-b border-brs3 h-[3.2rem] px-4">
+    <Text content="Calendar" style={TextStyle.PANEL_HEADING_SMALL} />
+    <!-- <PanelSwitcher
       items={panelOptions}
       bind:value={panel}
-      style={PanelSwitcherStyle.BAR}
-      isExpandToFullWidth={true}
-      title="Calendar"
-      size={Size.sm}
+      style={PanelSwitcherStyle.TRAIN}
       on:switch={onPanelSwitch}
-    >
-      <div slot="right">
-        <slot name="header" />
-      </div>
-    </PanelSwitcher>
+    /> -->
+    <slot name="header" />
   </div>
   <div class="flex-1 min-h-0">
     <slot />

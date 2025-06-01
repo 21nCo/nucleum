@@ -499,7 +499,7 @@
       {:else}
         <PanelSwitcher
           items={["Icon", "Emoji"]}
-          size={Size.xs}
+          size={Size.sm}
           style={PanelSwitcherStyle.TRAIN}
           value={mode == AvatarType.ICON ? "Icon" : "Emoji"}
           on:switch={handleModeSwitch}

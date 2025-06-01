@@ -26,26 +26,9 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {
-  args: {
-    style: PanelSwitcherStyle.DEFAULT
-  }
-};
 export const Bar: Story = {
   args: {
     style: PanelSwitcherStyle.BAR
-  }
-};
-
-export const Dot: Story = {
-  args: {
-    style: PanelSwitcherStyle.DOT
-  }
-};
-
-export const BarWithBg: Story = {
-  args: {
-    style: PanelSwitcherStyle.BAR_WITH_BG
   }
 };
 

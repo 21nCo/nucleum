@@ -17,7 +17,7 @@
   export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
   export let isActive: boolean = false;
   export let isDisabled: boolean = false;
-  export let style: PanelSwitcherStyle = PanelSwitcherStyle.DEFAULT;
+  export let style: PanelSwitcherStyle;
   export let isInEditMode: boolean = false;
   export let barStyle: BarStyle = BarStyle.EXACT;
   export let editModeOptions: PanelSwitcherEditModeOptions | undefined =
@@ -155,61 +155,5 @@
         )}
       />
     {/if}
-  </button>
-{:else if style === PanelSwitcherStyle.DOT}
-  <button class="relative min-w-fit" on:click disabled={isDisabled}>
-    <div
-      class="{size === Size.sm
-        ? 'text-b2'
-        : size === Size.md
-          ? 'text-base'
-          : $view.isPortrait
-            ? 'text-h4'
-            : 'text-h3'} {isActive ? 'text-ccs1' : 'text-fgs3'}"
-    >
-      {item.label}
-    </div>
-    {#if isActive}
-      <div
-        class="absolute opacity-80 w-1 h-1 -bottom-1 rounded-full bg-ccs1"
-        style="left: 40%;"
-      />
-    {/if}
-  </button>
-{:else if style === PanelSwitcherStyle.TRAIN}
-  <button
-    class={cn("relative min-w-fit", {
-      "rounded-full px-6 py-3": size === Size.md,
-      "rounded-[5px] px-3 py-1.5 w-24": size === Size.sm,
-      "rounded-[5px] px-2 py-0.5 w-16": size === Size.xs,
-      "bg-ccs1 text-abg": isActive,
-      [`hover:${bg(parentBgIndex + 1)}`]: !isActive
-    })}
-    on:click={onClick}
-    disabled={isDisabled}
-  >
-    <div
-      class={cn("flex gap-1 justify-center items-center", {
-        "text-base font-medium": size === Size.md && $view.isPortrait,
-        "text-b2": size === Size.sm || size === Size.xs
-      })}
-    >
-      <PanelSwitcherItemLabel
-        {item}
-        {isInEditMode}
-        {editModeOptions}
-        {size}
-        {style}
-        {isActive}
-        {isDisabled}
-        {isShowNumberShortcut}
-        {index}
-        {parentBgIndex}
-        bind:triggerItemEdit
-        on:remove
-        on:change
-        on:debouncedChange
-      />
-    </div>
   </button>
 {/if}

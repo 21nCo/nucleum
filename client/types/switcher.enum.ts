@@ -6,13 +6,7 @@ export enum SwitcherStyle {
 }
 
 export enum PanelSwitcherStyle {
-  DEFAULT,
   BAR,
-  /**
-   * @deprecated - use BAR with barStyle as DOT instead
-   */
-  DOT,
-  BAR_WITH_BG,
   TRAIN,
   SNAKE
 }

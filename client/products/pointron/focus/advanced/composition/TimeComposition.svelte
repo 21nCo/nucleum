@@ -76,7 +76,6 @@
         <div class="flex w-full justify-center">
           <PanelSwitcher
             style={PanelSwitcherStyle.TRAIN}
-            size={Size.sm}
             {parentBgIndex}
             items={["Presets", "Custom"]}
             value={selectedMode === 0 ? "Presets" : "Custom"}

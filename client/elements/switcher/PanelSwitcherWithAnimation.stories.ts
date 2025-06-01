@@ -17,37 +17,11 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {
-  args: {
-    items: ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"],
-    selected: "Item 2",
-    style: PanelSwitcherStyle.DEFAULT,
-    interval: 4000
-  }
-};
 export const Bar: Story = {
   args: {
     items: ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"],
     selected: "Item 2",
     style: PanelSwitcherStyle.BAR,
-    interval: 4000
-  }
-};
-
-export const Dot: Story = {
-  args: {
-    items: ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"],
-    selected: "Item 2",
-    style: PanelSwitcherStyle.DOT,
-    interval: 4000
-  }
-};
-
-export const BarWithBg: Story = {
-  args: {
-    items: ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"],
-    selected: "Item 2",
-    style: PanelSwitcherStyle.BAR_WITH_BG,
     interval: 4000
   }
 };

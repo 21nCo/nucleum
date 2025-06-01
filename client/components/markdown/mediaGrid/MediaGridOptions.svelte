@@ -46,7 +46,7 @@
     ]}
     value={config.type}
     style={PanelSwitcherStyle.TRAIN}
-    size={Size.xs}
+    size={Size.sm}
     on:switch={(e) => {
       sortItems(e.detail);
       config.type = e.detail;

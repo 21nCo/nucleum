@@ -29,7 +29,6 @@
     uiState,
     uiStateDerived
   } from "$lib/client/stores/uiState/uiState.store";
-  import { isTextElement } from "$lib/client/utils/browser.utils";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
   import { bg, cn } from "$lib/client/utils/ui.utils";
 
@@ -68,7 +67,7 @@
 
 <div class={cn("flex flex-col w-full h-full", bg(bgIndex - 1))}>
   <div
-    class="flex gap-8 w-full items-center justify-between portrait:px-4 portrait:py-2 pt-4 pb-2"
+    class="flex gap-8 w-full items-center justify-between portrait:px-4 portrait:py-2 portrait:pt-4 portrait:pb-2"
   >
     <div class="flex gap-6 items-center flex-grow">
       {#if $view.isPortrait}
@@ -114,6 +113,8 @@
               isInEditMode={$isInEditMode}
               parentBgIndex={bgIndex}
               isShowNumberShortcut={$uiStateDerived.isShowHotKeyHints}
+              isEnableTitleAction={true}
+              tempTitleWithActionDisabled={true}
               bind:value={$selectedPageId}
               on:switch={onPageSwitch}
               on:add={onAddPageClicked}
@@ -121,13 +122,7 @@
               on:debouncedChange={onPagelabelChange}
               on:rearrange={onPageRearrange}
             >
-              <div class="pl-4" slot="left">
-                <Text
-                  content="Overview"
-                  style={TextStyle.PANEL_HEADING_SMALL}
-                />
-              </div>
-              <div class="flex items-center gap-2" slot="right">
+              <div class="flex items-center gap-2 mr-3" slot="right">
                 {#if $isInEditMode}
                   <Button
                     icon="sync"

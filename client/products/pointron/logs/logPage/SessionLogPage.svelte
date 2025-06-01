@@ -113,7 +113,6 @@
         <PanelSwitcher
           items={["Summary", "Notes"]}
           style={PanelSwitcherStyle.TRAIN}
-          size={Size.sm}
           bind:value={selectedTab}
         />
       </div>
