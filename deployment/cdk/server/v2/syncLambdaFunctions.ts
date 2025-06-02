@@ -114,6 +114,31 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
       new gateway.LambdaIntegration(reconcileFunction)
     );
 
+    // Grant DynamoDB permissions to all lambda functions
+    const lambdaFunctions = [
+      syncUpFunction,
+      syncDownFunction,
+      cloneUpFunction,
+      cloneDownFunction,
+      paginateFunction,
+      reconcileFunction
+    ];
+
+    if (props.dynamoTables) {
+      console.log(
+        "Granting DynamoDB permissions to sync functions for tables:",
+        props.dynamoTables.map((table) => ({
+          tableName: table.tableName,
+          tableArn: table.tableArn
+        }))
+      );
+      props.dynamoTables.forEach((table) => {
+        lambdaFunctions.forEach((func) => {
+          table.grantReadWriteData(func);
+        });
+      });
+    }
+
     for (const resource of [
       syncUpResource,
       syncDownResource,

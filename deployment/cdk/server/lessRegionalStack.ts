@@ -22,6 +22,7 @@ import {
 import { Code, Function, Runtime } from "aws-cdk-lib/aws-lambda";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
 import { Bucket, IBucket } from "aws-cdk-lib/aws-s3";
+import { Table, ITable } from "aws-cdk-lib/aws-dynamodb";
 import {
   ARecord,
   CfnHealthCheck,
@@ -66,6 +67,7 @@ export class ServerlessRegionalStack extends NestedStack {
     this.regionDomainName = this.env.tidyregion + "-" + this.domainName;
     this.certificate = resolveAcmCertificate(this, props.zone, this.env.domain);
     const fileBuckets = this.resolveFilesBucket();
+    const dynamoTables = this.resolveDynamoTables();
     this.generateApi();
     const lambaProps: CustomLambdaNestedStackProps = {
       ...props,
@@ -82,7 +84,8 @@ export class ServerlessRegionalStack extends NestedStack {
     const lambdaPropsV2: CustomLambdaNestedStackPropsV2 = {
       ...props,
       api: v2Resource,
-      lambdaEnvVars
+      lambdaEnvVars,
+      dynamoTables
     };
     new SyncLambdaFunctions(this, "V2SyncStack", lambdaPropsV2);
     new AccountLambdaFunctionsV2(this, "V2AccountStack", lambdaPropsV2);
@@ -199,5 +202,19 @@ export class ServerlessRegionalStack extends NestedStack {
       );
     });
     return fileBuckets;
+  }
+
+  resolveDynamoTables() {
+    let dynamoTables: ITable[] = [];
+    this.env.allRegionList.forEach((region) => {
+      dynamoTables.push(
+        Table.fromTableArn(
+          this,
+          `userDynamoTable-${region}`,
+          `arn:aws:dynamodb:${region}:${this.account}:table/${this.env.lambdaEnv.DYNAMODB_TABLE_PREFIX}-${region}`
+        )
+      );
+    });
+    return dynamoTables;
   }
 }

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { syncUp } from ".";
-import { resolveSyncDownQuery } from "../sync.utils";
+import { resolveSyncDownQuery } from "../legacy/sync.utils";
 import { performQueryOnBehalfOfUser } from "../../user/user";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { ISyncUpBody } from "$lib/shared/types/sync.type";

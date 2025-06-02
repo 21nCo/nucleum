@@ -1,5 +1,6 @@
-import { Agent } from "../account/account.type";
+import { Agent } from "../../account/account.type";
 import {
+  commonQueryReplacements,
   resolveInsertQuery,
   resolveMutationQueryV2
 } from "$lib/shared/utils/surreal.utils";
@@ -7,17 +8,19 @@ import {
   ICloneDownBody,
   ICloneDownPaginateBody,
   ICloneUpBody,
+  IReconcileBody,
   ISyncDownBody,
   ISyncUpBody,
   SyncMethod
 } from "$lib/shared/types/sync.type";
-import { performQueryOnBehalfOfUser } from "../user/user";
+import { performQueryOnBehalfOfUser } from "../../user/user";
 import {
   resolveCountQuery,
-  resolveSyncDownQuery,
   resolveCloneDownQuery,
-  resolveCloneDownPaginateQuery
+  resolveCloneDownPaginateQuery,
+  resolveSyncDownQueryForV3
 } from "./sync.utils";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 
 /**
  * Syncs the user data from clients to the database
@@ -25,7 +28,7 @@ import {
  * @param method
  * @returns
  */
-export async function syncV2(
+export async function syncV3(
   body:
     | ISyncUpBody
     | ISyncDownBody
@@ -35,7 +38,7 @@ export async function syncV2(
   agent: Agent,
   method: SyncMethod
 ) {
-  console.log({ at: "syncV2", body, agent, method });
+  console.log({ at: "syncV3", body, agent, method });
   try {
     let result;
     switch (method) {
@@ -54,23 +57,30 @@ export async function syncV2(
       case SyncMethod.CLONE_DOWN_PAGINATE:
         result = await cloneDownPaginate(body as ICloneDownPaginateBody, agent);
         break;
+      case SyncMethod.RECONCILE:
+        result = await reconcile(body as IReconcileBody, agent);
+        break;
       default:
         return { error: "Invalid sync method" };
     }
+    console.log({ at: "syncV3 - result", result, body, method });
     return result;
   } catch (e) {
-    console.error({ at: "syncV2 - error", error: e });
+    console.error({ at: "syncV3 - error", error: e });
     return { error: "Sync failed" };
   }
 }
-
 export async function syncUp(body: ISyncUpBody, agent: Agent) {
   try {
     const { mutations, lastSyncDown, resources, dapId } = body;
     if (!mutations || !Array.isArray(mutations) || mutations.length < 1) {
       return { error: "No mutations to sync" };
     }
-    const fetchBackQuery = resolveSyncDownQuery(lastSyncDown, resources, dapId);
+    const fetchBackQuery = resolveSyncDownQueryForV3(
+      lastSyncDown,
+      resources,
+      dapId
+    );
     let response;
     if (
       mutations.length < 20 &&
@@ -137,7 +147,11 @@ export async function syncDown(body: ISyncDownBody, agent: Agent) {
     const { lastSyncDown, resources, dapId } = body;
     if (!resources || resources?.length < 1)
       return { error: "No resources found" };
-    const fetchBackQuery = resolveSyncDownQuery(lastSyncDown, resources, dapId);
+    const fetchBackQuery = resolveSyncDownQueryForV3(
+      lastSyncDown,
+      resources,
+      dapId
+    );
     const countQuery = resolveCountQuery(resources);
     const fullQuery = `${fetchBackQuery}; ${countQuery};`;
     if (!fullQuery) return { error: "transaction failed" };
@@ -200,5 +214,54 @@ export async function cloneDownPaginate(
   } catch (e) {
     console.error({ at: "cloneDownPaginate - error", error: e });
     return { error: "Sync failed" };
+  }
+}
+
+export async function reconcile(body: IReconcileBody, agent: Agent) {
+  try {
+    const { resources, isExtension } = body;
+    for (const resource of resources) {
+      switch (resource) {
+        case Resource.node:
+          await runReconciliationForNodeResource();
+          break;
+      }
+    }
+    return { success: true };
+  } catch (e) {
+    console.error({ at: "reconcile - error", error: e });
+    return { error: "Sync failed" };
+  }
+
+  async function runReconciliationForNodeResource() {
+    try {
+      const query = "select value id from node where contentType is NONE";
+      const response = await performQueryOnBehalfOfUser(query, agent);
+      if (
+        response &&
+        Array.isArray(response) &&
+        response.length > 0 &&
+        response[0].result
+      ) {
+        const badData = response[0].result;
+        // console.log({
+        //   at: "reconcile - badData",
+        //   agentId: agent.id,
+        //   badData: JSON.stringify(badData)
+        // });
+        const deleteQuery = commonQueryReplacements(
+          `DELETE FROM node where id in ${JSON.stringify(badData)}`
+        );
+        // console.log({ at: "reconcile - deleteQuery", deleteQuery });
+        const deleteResponse = await performQueryOnBehalfOfUser(
+          deleteQuery,
+          agent
+        );
+        // console.log({ at: "reconcile - deleteResponse", deleteResponse });
+      }
+    } catch (e) {
+      console.error({ at: "reconcile - node - error", error: e });
+      return { error: "Sync failed" };
+    }
   }
 }
