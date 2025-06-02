@@ -12,8 +12,15 @@ import { IMutation, PersistenceActionType } from "$lib/client/types/data.type";
 import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
 import { ISyncProvider } from "./types";
 import { resolveProviderRegionCode } from "$lib/deployment/deploy.utils";
-
-const AWS = require("aws-sdk");
+import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import {
+  BatchWriteCommand,
+  QueryCommand,
+  GetCommand,
+  DeleteCommand
+} from "@aws-sdk/lib-dynamodb";
+import { Select } from "@aws-sdk/client-dynamodb";
 
 /**
  * DynamoDB Sync Provider using Single Table Design Pattern
@@ -53,7 +60,7 @@ interface DynamoDBItem {
 export class DynamoDBSyncProvider implements ISyncProvider {
   private config: DynamoDBConfig;
 
-  private getDynamoClient(agent: Agent): AWS.DynamoDB.DocumentClient {
+  private getDynamoClient(agent: Agent): DynamoDBDocumentClient {
     let region = "us-east-1";
     const prefix = process.env.DYNAMODB_TABLE_PREFIX || "user";
     if (agent?.region) {
@@ -64,9 +71,9 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       tableName: prefix + "-" + region,
       region
     };
-    return new AWS.DynamoDB.DocumentClient({
-      region
-    });
+
+    const client = new DynamoDBClient({ region });
+    return DynamoDBDocumentClient.from(client);
   }
 
   async syncUp(body: ISyncUpBody, agent: Agent): Promise<any> {
@@ -126,7 +133,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
             }
           };
 
-          await dynamoClient.batchWrite(params).promise();
+          await dynamoClient.send(new BatchWriteCommand(params));
         }
       }
 
@@ -175,7 +182,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
           Limit: 100
         };
 
-        const result = await dynamoClient.query(params).promise();
+        const result = await dynamoClient.send(new QueryCommand(params));
         return { resource, result };
       });
 
@@ -206,9 +213,9 @@ export class DynamoDBSyncProvider implements ISyncProvider {
                   }
                 };
 
-                const recordResult = await dynamoClient
-                  .get(recordParams)
-                  .promise();
+                const recordResult = await dynamoClient.send(
+                  new GetCommand(recordParams)
+                );
                 if (recordResult.Item && recordResult.Item.data) {
                   records.push(recordResult.Item.data);
                 }
@@ -278,7 +285,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
           }
         };
 
-        const result = await dynamoClient.batchWrite(params).promise();
+        const result = await dynamoClient.send(new BatchWriteCommand(params));
         responses.push(result);
       }
 
@@ -310,7 +317,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
           ScanIndexForward: true
         };
 
-        const result = await dynamoClient.query(params).promise();
+        const result = await dynamoClient.send(new QueryCommand(params));
 
         if (result.Items) {
           const resourceData = result.Items.map((item) => {
@@ -361,7 +368,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
         params.Limit = offset + limit;
       }
 
-      const result = await dynamoClient.query(params).promise();
+      const result = await dynamoClient.send(new QueryCommand(params));
 
       if (result.Items) {
         let items = result.Items;
@@ -432,7 +439,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
         }
       };
 
-      const result = await dynamoClient.query(params).promise();
+      const result = await dynamoClient.send(new QueryCommand(params));
 
       if (result.Items && result.Items.length > 0) {
         // Delete bad nodes in batches
@@ -454,7 +461,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
             }
           };
 
-          await dynamoClient.batchWrite(deleteParams).promise();
+          await dynamoClient.send(new BatchWriteCommand(deleteParams));
         }
       }
     } catch (e) {
@@ -467,7 +474,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
     mutation: IMutation,
     spaceId: string,
     userId: string,
-    dynamoClient: AWS.DynamoDB.DocumentClient
+    dynamoClient: DynamoDBDocumentClient
   ): Promise<DynamoDBItem | null> {
     try {
       const { resource, resourceId, action, params } = mutation;
@@ -515,7 +522,9 @@ export class DynamoDBSyncProvider implements ISyncProvider {
                 }
               };
 
-              const existing = await dynamoClient.get(existingParams).promise();
+              const existing = await dynamoClient.send(
+                new GetCommand(existingParams)
+              );
               if (existing.Item) {
                 item.data = { ...existing.Item.data, ...params.record };
               } else {
@@ -534,7 +543,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
               }
             };
 
-            await dynamoClient.delete(deleteParams).promise();
+            await dynamoClient.send(new DeleteCommand(deleteParams));
             return null;
         }
 
@@ -551,7 +560,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
   private async getResourceCounts(
     resources: Resource[],
     spaceId: string,
-    dynamoClient: AWS.DynamoDB.DocumentClient
+    dynamoClient: DynamoDBDocumentClient
   ): Promise<any[]> {
     const counts = [];
 
@@ -563,10 +572,10 @@ export class DynamoDBSyncProvider implements ISyncProvider {
           ExpressionAttributeValues: {
             ":pk": `${spaceId}#${resource}`
           },
-          Select: "COUNT"
+          Select: Select.COUNT
         };
 
-        const result = await dynamoClient.query(params).promise();
+        const result = await dynamoClient.send(new QueryCommand(params));
         const countObj: any = {};
         countObj[resource] = result.Count || 0;
         counts.push(countObj);
