@@ -5,7 +5,7 @@ import {
   resolveInsertQuery,
   resolveMutationQueryV2
 } from "$lib/shared/utils/surreal.utils";
-import { performQueryOnBehalfOfUser } from "../user/user";
+import { performQueryOnBehalfOfUser } from "../../user/user";
 
 /**
  * Syncs the user data from clients to the database

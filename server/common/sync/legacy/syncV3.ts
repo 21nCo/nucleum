@@ -1,4 +1,4 @@
-import { Agent } from "../account/account.type";
+import { Agent } from "../../account/account.type";
 import {
   commonQueryReplacements,
   resolveInsertQuery,
@@ -13,7 +13,7 @@ import {
   ISyncUpBody,
   SyncMethod
 } from "$lib/shared/types/sync.type";
-import { performQueryOnBehalfOfUser } from "../user/user";
+import { performQueryOnBehalfOfUser } from "../../user/user";
 import {
   resolveCountQuery,
   resolveCloneDownQuery,
