@@ -4,7 +4,7 @@ import {
   resolveCloneDownPaginateQuery,
   resolveCloneDownQuery,
   resolveSyncDownQuery
-} from "../sync/sync.utils";
+} from "../sync/legacy/sync.utils";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 describe("performQueryOnBehalfOfUser", () => {
   it("should execute a query on behalf of an agent", async () => {

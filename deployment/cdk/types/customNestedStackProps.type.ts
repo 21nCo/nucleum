@@ -8,6 +8,7 @@ import {
 } from "./env.type";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as gateway from "aws-cdk-lib/aws-apigateway";
+import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 
 export interface CustomNestedStackProps extends cdk.NestedStackProps {
   zone: route53.IHostedZone;
@@ -27,6 +28,7 @@ export interface CustomLambdaNestedStackProps extends CustomNestedStackProps {
 export interface CustomLambdaNestedStackPropsV2 extends CustomNestedStackProps {
   api: gateway.Resource;
   lambdaEnvVars: ILambdaEnvironmentVariables;
+  dynamoTables?: dynamodb.ITable[];
 }
 
 export interface CustomDatabaseNestedStackProps extends cdk.NestedStackProps {

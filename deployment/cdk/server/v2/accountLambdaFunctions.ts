@@ -10,6 +10,7 @@ import { CustomLambdaNestedStackPropsV2 } from "../../types/customNestedStackPro
 import { defaults } from "../../config";
 import { generateFunctionName } from "../../cdk.utils";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
+
 export class AccountLambdaFunctions extends cdk.NestedStack {
   constructor(
     scope: Construct,
@@ -35,6 +36,24 @@ export class AccountLambdaFunctions extends cdk.NestedStack {
       ...nodeRuntimeFunctionProps
     });
     pingResource.addMethod("POST", new gateway.LambdaIntegration(pingFunction));
+
+    // Grant DynamoDB permissions to all lambda functions
+    const lambdaFunctions = [pingFunction];
+
+    if (props.dynamoTables) {
+      console.log(
+        "Granting DynamoDB permissions to account functions for tables:",
+        props.dynamoTables.map((table) => ({
+          tableName: table.tableName,
+          tableArn: table.tableArn
+        }))
+      );
+      props.dynamoTables.forEach((table) => {
+        lambdaFunctions.forEach((func) => {
+          table.grantReadWriteData(func);
+        });
+      });
+    }
 
     for (const resource of [pingResource]) {
       resource.addMethod(
