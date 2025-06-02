@@ -18,14 +18,14 @@ export class SyncProviderFactory {
         process.env.SYNC_PROVIDER?.toLowerCase() as SyncProvider;
 
       switch (providerType) {
-        case SyncProvider.DYNAMODB:
-          console.log("Using DynamoDB sync provider");
-          this.instance = new DynamoDBSyncProvider();
-          break;
         case SyncProvider.SURREAL:
-        default:
           console.log("Using Surreal sync provider");
           this.instance = new SurrealSyncProvider();
+          break;
+        case SyncProvider.DYNAMODB:
+        default:
+          console.log("Using DynamoDB sync provider");
+          this.instance = new DynamoDBSyncProvider();
           break;
       }
     }
