@@ -7,7 +7,6 @@ import {
   LinkType,
   type INodeLink
 } from "$lib/client/products/memotron/node/node.type";
-import { flux } from "$lib/client/components/flux/flux";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { activeResourceFilter } from "$lib/client/utils/utils";
 import { get } from "svelte/store";

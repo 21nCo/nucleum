@@ -407,7 +407,11 @@ export class ActiveCollectionStore extends ActiveResourceStore<
    * @param viewId
    * @returns
    */
-  async loadViewData(viewId: IRecordId, isFirstLoad: boolean = false) {
+  async loadViewData(
+    viewId: IRecordId,
+    resourceStore: ResourceStore<any>,
+    isFirstLoad: boolean = false
+  ) {
     try {
       logger.log({ at: "ActiveCollectionStore.loadViewData", viewId });
       if (!viewId) return;
@@ -419,10 +423,14 @@ export class ActiveCollectionStore extends ActiveResourceStore<
         return val;
       });
       console.time("ActiveCollectionStore.loadViewData - fetchViewData");
-      const response = await viewStore.fetchViewData(collection.id, {
-        view,
-        resource: collection.resource
-      });
+      const response = await viewStore.fetchViewData(
+        collection.id,
+        resourceStore,
+        {
+          view,
+          resource: collection.resource
+        }
+      );
       console.timeEnd("ActiveCollectionStore.loadViewData - fetchViewData");
       logger.log({
         at: "ActiveCollectionStore.loadViewData - response",

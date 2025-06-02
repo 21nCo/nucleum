@@ -3,8 +3,6 @@ import { ResourceStore } from "$lib/client/components/flux/resourceStores/resour
 import { type ICollectionView } from "$lib/client/components/collection/collection.type";
 import { flux } from "$lib/client/components/flux/flux";
 import { StoreDataType, type IRecordId } from "$lib/client/types/data.type";
-import { goalStore } from "../goals/goal.store";
-import { nodeStore } from "$lib/client/products/memotron/node/node.store";
 
 class CollectionViewStore extends ResourceStore<ICollectionView> {
   constructor() {
@@ -24,6 +22,7 @@ class CollectionViewStore extends ResourceStore<ICollectionView> {
    */
   async fetchViewData(
     collectionId: IRecordId,
+    resourceStore: ResourceStore<any>,
     params?: {
       view?: ICollectionView;
       resource?: Resource;
@@ -37,7 +36,6 @@ class CollectionViewStore extends ResourceStore<ICollectionView> {
     });
     const ids = items.map((x: any) => x.in).filter((x: any) => x);
     //TODO - other view filters will be applied here - if filters are present - totalCount should be queried separately without expansion of the items and only with active status filter.
-    const resourceStore = resolveItemStore(resource ?? Resource.node);
     if (!resource || resource === Resource.node) {
       const nodes = await resourceStore.selectMany(
         {
@@ -66,17 +64,6 @@ class CollectionViewStore extends ResourceStore<ICollectionView> {
       );
       return { items: goals, totalCount: goals.length };
     }
-  }
-}
-
-function resolveItemStore(resource: Resource) {
-  switch (resource) {
-    case Resource.node:
-      return nodeStore;
-    case Resource.goal:
-      return goalStore;
-    default:
-      return nodeStore;
   }
 }
 

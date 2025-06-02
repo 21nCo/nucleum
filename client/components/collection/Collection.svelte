@@ -84,6 +84,7 @@
   import InlineSearchBar from "$lib/client/elements/InlineSearchBar.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
+  import { resolveResourceStore } from "../flux/resourceStores/store.resolver";
 
   export let id: string = "";
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -331,7 +332,14 @@
   ) {
     if (!activeView) return;
     const tabBy = activeView.tabBy;
-    await collection.loadViewData(activeView.id, props.isNewView);
+    const resourceStore = resolveResourceStore(
+      $collection.resource ?? Resource.node
+    );
+    await collection.loadViewData(
+      activeView.id,
+      resourceStore,
+      props.isNewView
+    );
     loadActiveView();
     if (!activeView) return;
     logger.log({ at: "refresh", activeView, searchQuery });
