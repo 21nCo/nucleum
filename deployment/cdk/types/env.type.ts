@@ -6,6 +6,7 @@ export type IEnvironment = IBaseEnvironmentVariables & {
 export type ILambdaEnvironmentVariables = {
   ENV: string;
   DOMAIN: string;
+  SYNC_PROVIDER: string;
   DB_USER: string;
   DB_PASS: string;
   ADMIN_NS: string;
