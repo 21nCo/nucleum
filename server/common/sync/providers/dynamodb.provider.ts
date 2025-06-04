@@ -18,7 +18,8 @@ import {
   BatchWriteCommand,
   QueryCommand,
   GetCommand,
-  DeleteCommand
+  DeleteCommand,
+  UpdateCommand
 } from "@aws-sdk/lib-dynamodb";
 import { Select } from "@aws-sdk/client-dynamodb";
 
@@ -35,8 +36,9 @@ import { Select } from "@aws-sdk/client-dynamodb";
  * 3. Get mutations for a resource since timestamp: PK = "userId#mutation#resource", SK > "timestamp#"
  *
  * Data Organization:
- * - Actual resource data: userId#{resource} | {resourceId}
- * - Mutations: userId#mutation#{resource} | {timestamp}#{mutationId}
+ * - Actual resource data: userId#{resource} | {resourceId} - resource attributes spread as top-level fields
+ * - Mutations: userId#mutation#{resource} | {timestamp}#{mutationId} - mutation data spread as top-level fields
+ * - System attributes: PK, SK, userId, action, timestamp, dapId, TTL are reserved
  * - TTL: Mutations auto-expire after 30 days
  *
  */
@@ -53,8 +55,8 @@ interface DynamoDBItem {
   action?: ResourceActionType;
   timestamp?: number;
   dapId?: string;
-  data?: any;
   TTL?: number; // For automatic deletion of old records
+  [key: string]: any; // Allow for spread resource attributes
 }
 
 export class DynamoDBSyncProvider implements ISyncProvider {
@@ -102,9 +104,8 @@ export class DynamoDBSyncProvider implements ISyncProvider {
             userId,
             action: mutation.action,
             timestamp: mutation.timestamp,
-            dapId: mutation.dapId,
-            data: mutation,
-            TTL: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60 // 30 days TTL
+            dapId,
+            ...mutation // Spread mutation data as top-level attributes
           };
 
           putRequests.push({
@@ -192,7 +193,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       for (const { resource, result } of queryResults) {
         if (result.Items) {
           for (const item of result.Items) {
-            mutations.push(item.data);
+            mutations.push(this.getResourceData(item));
 
             if (item.timestamp > latestTimestamp) {
               latestTimestamp = item.timestamp;
@@ -200,7 +201,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
 
             // Fetch actual records for non-delete mutations
             if (item.action !== ResourceActionType.DELETE) {
-              const mutation = item.data;
+              const mutation = this.getResourceData(item);
               const recordIds = Array.isArray(mutation.resourceId)
                 ? mutation.resourceId
                 : [mutation.resourceId];
@@ -216,13 +217,13 @@ export class DynamoDBSyncProvider implements ISyncProvider {
                 const recordResult = await dynamoClient.send(
                   new GetCommand(recordParams)
                 );
-                if (recordResult.Item && recordResult.Item.data) {
-                  records.push(recordResult.Item.data);
+                if (recordResult.Item) {
+                  records.push(this.getResourceData(recordResult.Item));
                 }
               }
             } else {
               // Add to deleted array
-              deleted.push(item.data);
+              deleted.push(this.getResourceData(item));
             }
           }
         }
@@ -271,7 +272,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
             timestamp: record.modifiedAt
               ? new Date(record.modifiedAt).getTime()
               : Date.now(),
-            data: record
+            ...record // Spread record data as top-level attributes
           };
 
           return {
@@ -322,11 +323,11 @@ export class DynamoDBSyncProvider implements ISyncProvider {
         if (result.Items) {
           const resourceData = result.Items.map((item) => {
             if (isExtension) {
-              return item.data;
+              return this.getResourceData(item);
             } else {
               // Add the DynamoDB item id for non-extension clients
               return {
-                ...item.data,
+                ...this.getResourceData(item),
                 id: item.SK
               };
             }
@@ -380,10 +381,10 @@ export class DynamoDBSyncProvider implements ISyncProvider {
 
         const resourceData = items.map((item) => {
           if (isExtension) {
-            return item.data;
+            return this.getResourceData(item);
           } else {
             return {
-              ...item.data,
+              ...this.getResourceData(item),
               id: item.SK
             };
           }
@@ -429,10 +430,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
         TableName: this.config.tableName,
         KeyConditionExpression: "PK = :pk",
         FilterExpression:
-          "attribute_not_exists(#data.contentType) OR #data.contentType = :none",
-        ExpressionAttributeNames: {
-          "#data": "data"
-        },
+          "attribute_not_exists(contentType) OR contentType = :none",
         ExpressionAttributeValues: {
           ":pk": `${spaceId}#${Resource.node}`,
           ":none": null
@@ -502,33 +500,55 @@ export class DynamoDBSyncProvider implements ISyncProvider {
               const record =
                 records.find((r: any) => r.id === rId) || records[0];
               if (record) {
-                item.data = record;
+                Object.assign(item, record); // Spread record data as top-level attributes
               }
             } else if (
               params.action === PersistenceActionType.REPLACE &&
               "record" in params
             ) {
-              item.data = params.record;
+              Object.assign(item, params.record); // Spread record data as top-level attributes
             } else if (
               params.action === PersistenceActionType.MERGE &&
               "record" in params
             ) {
-              // For merge, we need to get existing record and merge
-              const existingParams = {
+              // Use atomic update instead of GET + PUT
+              const updateExpressions = [];
+              const expressionAttributeNames: Record<string, string> = {};
+              const expressionAttributeValues: Record<string, any> = {};
+
+              // Build update expression for each field in the record
+              Object.keys(params.record).forEach((key, index) => {
+                const attrName = `#attr${index}`;
+                const attrValue = `:val${index}`;
+                expressionAttributeNames[attrName] = key; // Direct attribute name, not nested under data
+                expressionAttributeValues[attrValue] = params.record[key];
+                updateExpressions.push(`${attrName} = ${attrValue}`);
+              });
+
+              const updateParams = {
                 TableName: this.config.tableName,
                 Key: {
                   PK: item.PK,
                   SK: item.SK
-                }
+                },
+                UpdateExpression: `SET ${updateExpressions.join(", ")}`,
+                ExpressionAttributeNames: expressionAttributeNames,
+                ExpressionAttributeValues: expressionAttributeValues,
+                // Ensure the item exists before updating, or create it with the merge data
+                ConditionExpression:
+                  "attribute_exists(PK) OR attribute_not_exists(PK)"
               };
 
-              const existing = await dynamoClient.send(
-                new GetCommand(existingParams)
-              );
-              if (existing.Item) {
-                item.data = { ...existing.Item.data, ...params.record };
-              } else {
-                item.data = params.record;
+              try {
+                await dynamoClient.send(new UpdateCommand(updateParams));
+                return null; // No item to return for batch write since we've already updated
+              } catch (error: any) {
+                if (error.name === "ConditionalCheckFailedException") {
+                  // Item doesn't exist, create it with the merge data
+                  Object.assign(item, params.record); // Spread record data as top-level attributes
+                } else {
+                  throw error;
+                }
               }
             }
             break;
@@ -588,5 +608,18 @@ export class DynamoDBSyncProvider implements ISyncProvider {
     }
 
     return counts;
+  }
+
+  // Helper function to extract system attributes from an item
+  private getSystemAttributes(item: any): Partial<DynamoDBItem> {
+    const { PK, SK, userId, action, timestamp, dapId, TTL } = item;
+    return { PK, SK, userId, action, timestamp, dapId, TTL };
+  }
+
+  // Helper function to extract resource data (excluding system attributes)
+  private getResourceData(item: any): any {
+    const { PK, SK, userId, action, timestamp, dapId, TTL, ...resourceData } =
+      item;
+    return resourceData;
   }
 }
