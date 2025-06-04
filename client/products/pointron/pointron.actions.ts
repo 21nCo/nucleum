@@ -59,8 +59,21 @@ import { SearchStore } from "$lib/client/components/record/record.store";
 import { goalStore } from "$lib/client/components/goals/goal.store";
 import GoalSearchResultItem from "$lib/client/components/goals/GoalSearchResultItem.svelte";
 import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
-import { resourceCacheComponentKey } from "$lib/client/components/flux/resourceStores/resource.utils";
+import {
+  resolveResourceIcon,
+  resourceAction,
+  resourceCacheComponentKey
+} from "$lib/client/components/flux/resourceStores/resource.utils";
 import ResourceCache from "$lib/client/components/record/ResourceCache.svelte";
+import ResourceBrowser from "$lib/client/components/library/resourceBrowser/ResourceBrowser.svelte";
+import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
+import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
+//TODO - use dummy task if this causes any issues - like earlier
+import Task from "$lib/client/components/tasks/Task.svelte";
+import CreateTask from "$lib/client/components/tasks/CreateTask.svelte";
+import { taskStore } from "$lib/client/components/tasks/task.store";
+import Goal from "$lib/client/components/goals/Goal.svelte";
+import GoalTitleLabelPart from "$lib/client/components/goals/GoalTitleLabelPart.svelte";
 
 const isSessionRunningPreCondition = () => get(activeSession).isSessionRunning;
 
@@ -673,5 +686,102 @@ export const pointronActions: IAction[] = [
     componentParams: {
       resource: Resource.task
     }
+  },
+  {
+    action: resourceAction(Resource.goal, ResourceActionType.BROWSE),
+    component: ResourceBrowser,
+    label: "Goals",
+    icon: resolveResourceIcon(Resource.goal),
+    type: ActionType.PAGE,
+    componentParams: {
+      resource: Resource.goal
+    },
+    loadingComponent: NodeLoadingPulse
+  },
+  {
+    action: resourceAction(Resource.goal, ResourceActionType.CREATE),
+    label: "Create a new goal",
+    type: ActionType.FUNCTION,
+    fn: async (props?: IActionFnParams) => {
+      await goalStore.createNew(props?.componentParams);
+    }
+  },
+  {
+    action: Resource.goal,
+    type: ActionType.MODAL,
+    component: Goal,
+    resourceLabelRenderer: GoalTitleLabelPart,
+    modalParams: {
+      layout: {
+        size: Size.xxl,
+        orientation: Orientation.Horizontal,
+        ignoreSafeArea: true,
+        isShowCantileverClose: true,
+        isShowBackButton: true
+      }
+    }
+  },
+  {
+    action: Action.EDIT_TASK_GOAL,
+    type: ActionType.SEARCH_CMD,
+    cmdLabel: "Edit goal for task",
+    isMeta: true,
+    searchActionParams: {
+      placeholder: "select a goal",
+      searchResultComponent: GoalSearchResultItem,
+      searchCallback: async (query: string, componentParams?: any) => {
+        return new SearchStore(Resource.goal).select({
+          resource: Resource.goal,
+          searchQuery: query,
+          limit: 50
+        });
+      },
+      callback: async (item: any, componentParams?: any) => {
+        await taskStore.modify(
+          componentParams.taskId,
+          {
+            goalId: item.id
+          },
+          {
+            context: componentParams?.context
+          }
+        );
+        toasts.success(`Goal updated for task`);
+      }
+    }
+  },
+  {
+    action: resourceAction(Resource.task, ResourceActionType.CREATE),
+    label: "Create a new task",
+    type: ActionType.MODAL,
+    component: CreateTask,
+    modalParams: {
+      layout: {
+        isDynamicSize: true
+      }
+    }
+  },
+  {
+    action: Resource.task,
+    isMeta: true,
+    type: ActionType.RESOURCE,
+    component: Task,
+    modalParams: {
+      layout: {
+        isDynamicSize: true,
+        ignoreSafeArea: true
+      }
+    }
+  },
+  {
+    action: resourceAction(Resource.task, ResourceActionType.BROWSE),
+    component: ResourceBrowser,
+    label: "Tasks",
+    icon: resolveResourceIcon(Resource.task),
+    type: ActionType.PAGE,
+    componentParams: {
+      resource: Resource.task
+    },
+    loadingComponent: NodeLoadingPulse
   }
 ];

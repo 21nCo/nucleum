@@ -11,7 +11,9 @@
   let contextMenuRef: HTMLElement;
 
   function hideContextMenu() {
-    contextMenuRef.dispatchEvent(new CustomEvent("hide"));
+    if (contextMenuRef) {
+      contextMenuRef.dispatchEvent(new CustomEvent("hide"));
+    }
   }
 </script>
 

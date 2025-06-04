@@ -14,9 +14,10 @@
 
 {#if variant === "v1" && info}
   <div
-    class={cn("text-left text-b2 shadow-md rounded-md p-4 text-wrap", {
-      "h-48 bg-bgs2 text-fgs2 border border-brs3": $view.isConstrainedWidth,
-      "bg-fgs2 text-bgs1 min-w-[25rem] max-w-sm": !$view.isConstrainedWidth
+    class={cn("text-left text-b2 rounded-md p-4 text-wrap", {
+      "h-48 text-fgs2": $view.isConstrainedWidth,
+      "bg-fgs2 text-bgs1 shadow-md min-w-[25rem] max-w-sm":
+        !$view.isConstrainedWidth
     })}
   >
     <div class="flex flex-col gap-2">

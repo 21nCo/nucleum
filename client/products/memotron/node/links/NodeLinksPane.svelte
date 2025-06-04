@@ -182,6 +182,7 @@
     );
     if (!result || result.length == 0) {
       all = [];
+      isRefreshing = false;
       return;
     }
     all = result.map((x: INode) => ({
@@ -441,7 +442,7 @@
         loadingAnimation={LoadingAnimationType.FOCUS_ITEMS_PULSE}
         mainText={selectedLinkType === LinkType.SUGGESTION
           ? "No suggestions found."
-          : "No results found."}
+          : "No links found."}
         subText={selectedLinkType === LinkType.SUGGESTION
           ? "Come back later to see link suggestions"
           : "Try different filters or add links."}

@@ -22,7 +22,7 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import { logger } from "$lib/client/components/debug/logger.client";
-  import { setContext } from "svelte";
+  import { setContext, getContext } from "svelte";
   import { BlockAction } from "$lib/client/components/markdown/md.type";
   import { wordCounter } from "$lib/client/actions/counter.action";
   import { generateResourceId } from "$lib/client/components/flux/flux.utils";
@@ -41,6 +41,14 @@
   let refreshId: number | undefined = undefined;
   let markdownRef: any;
   let dev_isEnableBottomDivider: boolean = false;
+
+  const calendarContentContext = getContext<any>("calendar-content");
+
+  function propagateSavingFeedback(event: string, data: any = {}) {
+    if (calendarContentContext?.publish) {
+      calendarContentContext.publish(event, data);
+    }
+  }
 
   async function handleEvent(event: string, data: any) {
     logger.log({
@@ -122,7 +130,9 @@
   }
 
   onDestroy(() => {
-    focusEventSub();
+    if (focusEventSub && typeof focusEventSub === "function") {
+      focusEventSub();
+    }
   });
 
   function refreshCounts(e: any) {
@@ -136,6 +146,9 @@
     const block = e.detail.block;
     if (!block.source && !block.id) return;
     const id = block.id ?? block.source;
+
+    propagateSavingFeedback("start");
+
     if ("body" in block) {
       node.updateBlock(
         id,
@@ -157,6 +170,10 @@
     } else if ("metadata" in block) {
       node.updateBlock(id, { metadata: block.metadata });
     }
+
+    setTimeout(() => {
+      propagateSavingFeedback("success");
+    }, 600);
   }
 
   function onReStructure(e: CustomEvent) {
@@ -165,6 +182,8 @@
       const differences = shallowDiff(previousRootStructure, e.detail.root);
       // console.log({ at: "NodeContent - onReStructure", differences });
       if (isValidArrayWithData(differences)) {
+        propagateSavingFeedback("start");
+
         node.updateBlock(
           $node.id,
           { children: e.detail.root },
@@ -173,6 +192,10 @@
             debounceKey: "children"
           }
         );
+
+        setTimeout(() => {
+          propagateSavingFeedback("success");
+        }, 600);
       }
       previousRootStructure = deepCopy(e.detail.root);
       const structure = e.detail.children;
@@ -205,6 +228,7 @@
         at: "NodeContent - onReStructure - error",
         error: e
       });
+      propagateSavingFeedback("error");
     }
   }
 

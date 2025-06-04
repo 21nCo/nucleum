@@ -46,6 +46,7 @@
     {data}
     arrangement={Arrangement.LIST}
     accessPoint={ResourceAccessPoint.CALENDAR}
+    isShowBottomSpacer={true}
   />
 {:else}
   <EmptyStatusView mainText="No history entries" isLoadingState={isLoading} />

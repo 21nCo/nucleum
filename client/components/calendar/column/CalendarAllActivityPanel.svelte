@@ -16,6 +16,7 @@
   import { Product } from "$lib/client/types/product.type";
   import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
   import { resolveProductResources } from "../../flux/resourceStores/resource.utils";
+  import { rootNodeTypeList } from "$lib/client/products/memotron/node/node.type";
 
   export let date: Date;
   let isLoading: boolean = false;
@@ -23,7 +24,7 @@
     action: string;
     timestamp: Date;
     resourceLabel?: string;
-    resourceId?: IRecordId;
+    resourceId?: IRecordId | IRecordId[];
   }[] = [];
   $: if (date) {
     refresh(date);
@@ -34,7 +35,7 @@
       isLoading = true;
       date = new Date(date.getFullYear(), date.getMonth(), date.getDate());
       const resources = resolveProductResources($appStore.product);
-      const mutations = await flux.selectMany(
+      const mutations: IMutation[] = await flux.selectMany(
         Resource.mutation,
         {
           filters: {
@@ -52,7 +53,7 @@
       );
       if (isValidArrayWithData(mutations)) {
         logs = [
-          ...mutations.map((mutation: IMutation) => {
+          ...mutations.filter(rootNodeFilter).map((mutation: IMutation) => {
             const label = resolveMutationLabel(mutation);
             return {
               action: label.action,
@@ -93,6 +94,22 @@
       isLoading = false;
     }
   }
+
+  function rootNodeFilter(x: IMutation) {
+    if (!x.resourceId) return false;
+    if (x.resource !== Resource.node) return true;
+    if (
+      Array.isArray(x.resourceId) &&
+      x.resourceId.length === 1 &&
+      "records" in x.params &&
+      x.params.records.length === 1
+    ) {
+      const record = x.params.records[0];
+      if (!record) return false;
+      return rootNodeTypeList.includes(record.contentType);
+    }
+    return true;
+  }
 </script>
 
 {#if isLoading || logs.length === 0}
@@ -107,9 +124,13 @@
       <button
         class="flex flex-row items-start gap-2 p-2 hover:bg-bgs2 rounded-md"
         on:click={() => {
-          if (log.resourceId) {
-            appStore.openResource(log.resourceId[0], ResourceAccessMode.POP);
+          let id = log.resourceId;
+          if (!id) return;
+          if (Array.isArray(id)) {
+            id = id[0];
           }
+          if (!id) return;
+          appStore.openResource(id, ResourceAccessMode.POP);
         }}
       >
         <span class="text-b3 text-fgs3 whitespace-nowrap"

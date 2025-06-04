@@ -59,9 +59,7 @@
   {/if}
   <button
     class={cn("flex gap-1 items-center truncate userdata", {
-      "text-h5": accessPoint === ResourceAccessPoint.SEARCH_RESULT,
       "text-b2":
-        accessPoint !== ResourceAccessPoint.SEARCH_RESULT &&
         accessPoint !== ResourceAccessPoint.TABS &&
         accessPoint !== ResourceAccessPoint.SELF,
       "text-fgs2": accessPoint === ResourceAccessPoint.MARKDOWN_EMBED,

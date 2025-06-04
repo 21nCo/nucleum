@@ -66,7 +66,8 @@
     "max-w-[28rem] w-[28rem]":
       $node.accessMode !== ResourceAccessMode.FULL && isValidPane,
     "min-w-[28rem]": isValidPane,
-    "w-full": $node.accessMode === ResourceAccessMode.FULL
+    "w-full":
+      $node.accessMode === ResourceAccessMode.FULL && !$node.config?.isWidened
   })}
 >
   <div

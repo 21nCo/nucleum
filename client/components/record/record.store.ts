@@ -17,7 +17,10 @@ import {
 } from "$lib/client/types/data.type";
 import { flux } from "$lib/client/components/flux/flux";
 import { logger } from "$lib/client/components/debug/logger.client";
-import { isValidArray } from "$lib/shared/utils/obj.utils";
+import {
+  isValidArray,
+  isValidArrayWithData
+} from "$lib/shared/utils/obj.utils";
 import { toasts } from "$lib/client/stores/notification.store";
 import { extensionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
 import { FluxMethod } from "$lib/client/components/flux/flux.type";
@@ -375,6 +378,7 @@ export class SearchStore {
     }
   ) {
     logger.log({ at: "searchForLinking", query, params });
+    console.time("searchForLinking");
     if (!isValidString(query)) {
       let items = [];
       if (params?.resource) {
@@ -424,13 +428,38 @@ export class SearchStore {
               query
             }
           : undefined,
-        limit: isValidString(query) ? 200 : 50,
+        limit: isValidString(query) ? 100 : 50,
         orderBy: !isValidString(query)
           ? {
               modifiedAt: "desc"
             }
           : undefined
       });
+      if (nodes && isValidArrayWithData(nodes)) {
+        try {
+          const parentIds = nodes.map((x) => x.mdParent ?? [])?.flat();
+          const parentItems = await nodeStore.selectMany({
+            properties: ["label", "id", "body"],
+            filters: {
+              contentType: [...headingNodeTypes, NodeType.NODULAR_MARKDOWN],
+              id: parentIds?.map((x) => x.toString())
+            }
+          });
+          nodes = nodes.map((x) => {
+            if (!x.mdParent) return x;
+            const parent = x.mdParent.map((y) => {
+              const parentItem = parentItems.find(resourceInList(y));
+              return parentItem;
+            });
+            return {
+              ...x,
+              mdParent: parent
+            };
+          });
+        } catch (e) {
+          logger.error({ at: "searchForLinking - parentItems", error: e });
+        }
+      }
     }
     let collections = [];
     if (params?.resource === Resource.collection || !params?.resource) {
@@ -459,6 +488,7 @@ export class SearchStore {
     if (params?.exclude) {
       data = data.filter((x) => !params.exclude.some(resourceInList(x.id)));
     }
+    console.timeEnd("searchForLinking");
     return data;
   }
 

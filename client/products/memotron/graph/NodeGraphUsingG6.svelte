@@ -56,7 +56,7 @@
           // badgeFill: currentColors["fgs1"],
           fill:
             node.fill ??
-            (isCurrentNode ? currentColors["aps1"] : currentColors["fgs3"]),
+            (isCurrentNode ? currentColors["aps1"] : currentColors["fgs4"]),
           labelText: truncateString(node.label ?? "", 40),
           labelFill: isCurrentNode
             ? currentColors["aps1"]

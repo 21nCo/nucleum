@@ -48,6 +48,7 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
     icon: "ph:head-circuit-light",
     component: TacoSettings,
     hideContext: [OperatingSystem.IOS],
+    isInactive: true,
     modalParams: {
       title: "AI Settings",
       layout: {

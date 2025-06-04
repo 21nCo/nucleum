@@ -49,7 +49,6 @@ import { linker } from "../products/memotron/linking/link.store";
 import { ResourceError } from "$lib/client/components/error/errors";
 import { ResourceErrorCode } from "$lib/client/components/error/error.type";
 import CollectionTitleLabelPart from "$lib/client/components/collection/thumbnail/CollectionThumbnailLabel.svelte";
-import Collection from "$lib/client/components/collection/Collection.svelte";
 import PropertyConfig from "$lib/client/components/collection/properties/propertyConfig/PropertyConfig.svelte";
 import { logger } from "../components/debug/logger.client";
 import { toasts } from "./notification.store";
@@ -62,22 +61,14 @@ import ResourceBrowser from "../components/library/resourceBrowser/ResourceBrows
 import UserPlan from "../components/subscription/UserPlan.svelte";
 import InactivePlan from "../components/subscription/InactivePlan.svelte";
 import { ButtonVariant } from "../types/button.type";
-import Goal from "../components/goals/Goal.svelte";
-import GoalTitleLabelPart from "../components/goals/GoalTitleLabelPart.svelte";
 import PaymentRedirect from "../components/subscription/PaymentRedirect.svelte";
 import PlanOnboarding from "../components/subscription/PlanOnboarding.svelte";
 import type { IRecordId } from "$lib/client/types/data.type";
 import UserBilling from "../components/subscription/UserBilling.svelte";
 import UserPlanCancellation from "../components/subscription/UserPlanCancellation.svelte";
 import DocusaurusEmbed from "../components/cx/docusaurus/DocusaurusEmbed.svelte";
-import { goalStore } from "../components/goals/goal.store";
-import CreateTask from "../components/tasks/CreateTask.svelte";
-import GoalSearchResultItem from "../components/goals/GoalSearchResultItem.svelte";
-import { taskStore } from "../components/tasks/task.store";
-// import Task from "../components/tasks/Task.svelte";
-import Task from "../components/tasks/DummyTask.svelte";
 import ResourceSearchModal from "../products/memotron/library/search/ResourceSearchModal.svelte";
-import DummyCollection from "../components/collection/DummyCollection.svelte";
+import Collection from "../components/collection/DummyCollection.svelte";
 import AppLoadingView from "../layout/paint/AppLoadingView.svelte";
 import SimpleDigitalClock from "../products/pointron/clocks/SimpleDigitalClock.svelte";
 import Test from "../components/Test.svelte";
@@ -620,7 +611,7 @@ export const globalActions: IAction[] = [
   {
     action: Resource.collection,
     type: ActionType.MODAL,
-    component: DummyCollection,
+    component: Collection,
     resourceLabelRenderer: CollectionTitleLabelPart,
     modalParams: {
       layout: {
@@ -759,103 +750,6 @@ export const globalActions: IAction[] = [
             appStore.runAction("chat");
           }
         }
-      }
-    }
-  },
-  {
-    action: resourceAction(Resource.goal, ResourceActionType.CREATE),
-    label: "Create a new goal",
-    type: ActionType.FUNCTION,
-    fn: async (props?: IActionFnParams) => {
-      await goalStore.createNew(props?.componentParams);
-    }
-  },
-  {
-    action: resourceAction(Resource.task, ResourceActionType.CREATE),
-    label: "Create a new task",
-    type: ActionType.MODAL,
-    component: CreateTask,
-    modalParams: {
-      layout: {
-        isDynamicSize: true
-      }
-    }
-  },
-  {
-    action: Resource.task,
-    isMeta: true,
-    type: ActionType.RESOURCE,
-    component: Task,
-    modalParams: {
-      layout: {
-        isDynamicSize: true,
-        ignoreSafeArea: true
-      }
-    }
-  },
-  {
-    action: Resource.goal,
-    type: ActionType.MODAL,
-    component: Goal,
-    resourceLabelRenderer: GoalTitleLabelPart,
-    modalParams: {
-      layout: {
-        size: Size.xxl,
-        orientation: Orientation.Horizontal,
-        ignoreSafeArea: true,
-        isShowCantileverClose: true,
-        isShowBackButton: true
-      }
-    }
-  },
-  {
-    action: resourceAction(Resource.goal, ResourceActionType.BROWSE),
-    component: ResourceBrowser,
-    label: "Goals",
-    icon: resolveResourceIcon(Resource.goal),
-    type: ActionType.PAGE,
-    componentParams: {
-      resource: Resource.goal
-    },
-    loadingComponent: NodeLoadingPulse
-  },
-  {
-    action: resourceAction(Resource.task, ResourceActionType.BROWSE),
-    component: ResourceBrowser,
-    label: "Tasks",
-    icon: resolveResourceIcon(Resource.task),
-    type: ActionType.PAGE,
-    componentParams: {
-      resource: Resource.task
-    },
-    loadingComponent: NodeLoadingPulse
-  },
-  {
-    action: Action.EDIT_TASK_GOAL,
-    type: ActionType.SEARCH_CMD,
-    cmdLabel: "Edit goal for task",
-    isMeta: true,
-    searchActionParams: {
-      placeholder: "select a goal",
-      searchResultComponent: GoalSearchResultItem,
-      searchCallback: async (query: string, componentParams?: any) => {
-        return new SearchStore(Resource.goal).select({
-          resource: Resource.goal,
-          searchQuery: query,
-          limit: 50
-        });
-      },
-      callback: async (item: any, componentParams?: any) => {
-        await taskStore.modify(
-          componentParams.taskId,
-          {
-            goalId: item.id
-          },
-          {
-            context: componentParams?.context
-          }
-        );
-        toasts.success(`Goal updated for task`);
       }
     }
   },

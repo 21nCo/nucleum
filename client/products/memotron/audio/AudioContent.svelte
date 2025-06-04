@@ -69,7 +69,7 @@
     // $userPreferences.localAI.audioTranscription &&
     accessPoint === ResourceAccessPoint.SELF;
 
-  $: isTranscribeAvailable = $context.os !== OperatingSystem.IOS;
+  const isTranscribeAvailable = false;
 
   let isConvertToMarkdown: boolean = false;
   // let modelOptions: string[] = [
@@ -334,7 +334,7 @@
     <div
       class="flex flex-col w-full flex-1 items-center gap-6 border border-brs2 rounded-md bg-bgs2 bg-opacity-30 py-4"
     >
-      <div class="flex w-full justify-between gap-3 mo:px-2 px-10">
+      <div class="flex w-full justify-between gap-3 mo:px-2 px-3">
         <Text content="Transcription" style={TextStyle.PANEL_HEADING_SMALL} />
         <!-- {#if !$view.isConstrainedWidth}
           <DropDown
@@ -385,8 +385,9 @@
           <span
             class="flex w-full justify-center text-fgs3 text-center text-b2 px-2"
           >
-            Local AI Transcription is not available on mobile devices including
-            iOS and iPadOS yet. Please use desktop to transcribe your audio.
+            We have rolled back audio transcription in favor of a more
+            performant implementation. This new version of audio transcription
+            will be available on iOS and macOS in the next update.
           </span>
         {:else}
           <span

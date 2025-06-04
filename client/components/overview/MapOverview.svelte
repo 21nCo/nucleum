@@ -17,10 +17,10 @@
   }
 
   export let data: MapDataPoint[] = [];
+  export let isShowHeatmap = false;
 
   let mapContainer: HTMLDivElement;
   let map: maplibregl.Map;
-  let viewMode: "circles" | "heatmap" = "circles";
 
   onMount(() => {
     initializeMap();
@@ -33,7 +33,7 @@
   });
 
   $: if (map && data) {
-    updateMapData();
+    updateMapData(isShowHeatmap);
   }
 
   function initializeMap() {
@@ -47,7 +47,7 @@
 
       map.on("load", () => {
         try {
-          updateMapData();
+          updateMapData(isShowHeatmap);
         } catch (error) {
           console.error("Error updating map data on load:", error);
         }
@@ -57,7 +57,7 @@
     }
   }
 
-  function updateMapData() {
+  function updateMapData(isShowHeatmap: boolean) {
     try {
       if (!map || !data || data.length === 0) return;
 
@@ -109,7 +109,7 @@
         data: geojsonData
       });
 
-      if (viewMode === "heatmap") {
+      if (isShowHeatmap) {
         map.addLayer({
           id: "heatmap-layer",
           type: "heatmap",
@@ -292,24 +292,10 @@
       console.error("Error updating map data:", error);
     }
   }
-
-  function toggleViewMode() {
-    viewMode = viewMode === "circles" ? "heatmap" : "circles";
-    updateMapData();
-  }
 </script>
 
-<div class="relative w-full h-full min-h-[400px]">
+<div class="relative w-full h-full min-h-[400px] rounded-md overflow-hidden">
   <div bind:this={mapContainer} class="w-full h-full"></div>
-
-  <div class="absolute top-4 right-4 z-10">
-    <button
-      on:click={toggleViewMode}
-      class="bg-bgs1 text-fgs1 px-3 py-2 text-b2 rounded-lg shadow-md hover:bg-bgs2 transition-colors"
-    >
-      {viewMode === "circles" ? "Show Heatmap" : "Show Circles"}
-    </button>
-  </div>
 </div>
 
 <style>

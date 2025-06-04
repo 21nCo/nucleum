@@ -65,7 +65,7 @@
       value: CalendarColumnPanel.Timeline,
       icon: "ph:clock-light"
     };
-    const history = {
+    const tempHistory = {
       label: "History",
       // tooltip: "History",
       value: CalendarColumnPanel.History,
@@ -96,7 +96,7 @@
         items = [overview];
         break;
       case Product.MEMOTRON:
-        items = [notes];
+        items = [notes, tempHistory];
         break;
       case Product.NUCLEUS:
         items = [notes, overview];
@@ -104,7 +104,7 @@
       default:
         items = [overview];
     }
-    if (layout === CalendarColumnLayout.TABS) {
+    if (layout === CalendarColumnLayout.TABS && product !== Product.MEMOTRON) {
       items = [timeline, ...items];
     }
     if (items.length === 1) {
@@ -152,7 +152,7 @@
     </div>
   {/if}
   <div class="flex gap-6 flex-grow w-full">
-    {#key date}
+    {#key date.toISOString()}
       {#if (layout === CalendarColumnLayout.TABS && selectedPanel === CalendarColumnPanel.Timeline) || (layout !== CalendarColumnLayout.TABS && expansionMode === CalendarExpansionMode.JOURNAL)}
         <CalendarColumnTimeline {date} isExpandable={false} {layout} />
       {/if}

@@ -38,7 +38,7 @@
   >
     <PanelSwitcherItemLabel
       {item}
-      {size}
+      size={size === Size.lg ? Size.md : Size.sm}
       style={PanelSwitcherStyle.TRAIN}
       {isActive}
       {isDisabled}

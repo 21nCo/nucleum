@@ -313,8 +313,10 @@ export class ActiveNodeStore extends CollectibleStore<IActiveNode, NodeStore> {
         parentValue = currentNode.label ?? currentNode.body;
       else parentValue = getMarkdownSymbolPrepended(currentNode);
       const mdText = generateMarkdownText(childrenNodes);
+      const dev_isEnableVectorGenOnSave = false;
       try {
         if (
+          dev_isEnableVectorGenOnSave &&
           get(userPreferences).localAI.semanticSearch &&
           get(context).embed !== Embed.HANDSET
         ) {
@@ -393,7 +395,6 @@ export class ActiveNodeStore extends CollectibleStore<IActiveNode, NodeStore> {
       console.time("ActiveNodeStore.init.fetch");
       const node = await this.resourceStore.fetch(this.id);
       console.timeEnd("ActiveNodeStore.init.fetch");
-      console.log({ at: "ActiveNodeStore.init", node });
       if (!node || !node.id) {
         return {
           error: "Node not found"

@@ -66,7 +66,6 @@
         break;
       case "nodelinkspane":
         popoverOptions = {
-          offsetInPx: 12,
           placement: Placement.BottomCenter
         };
         placeholder = "Start searching to add a direct link";

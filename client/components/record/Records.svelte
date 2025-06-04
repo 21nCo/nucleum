@@ -25,6 +25,7 @@
   import TaskRecords from "../tasks/TaskRecords.svelte";
   import type { IGoalThumb } from "../goals/goal.type";
   import type { ITaskThumb } from "../tasks/task.type";
+  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   const dispatch = createEventDispatcher();
   export let data: (
     | INodeThumb
@@ -43,6 +44,7 @@
   export let isPreventDefault = false;
   export let width: number = 290;
   export let isShowLoadingPulseAtTheEnd: boolean = false;
+  export let isShowBottomSpacer: boolean = false;
   let parentBgIndex = 1;
   $: multiSelectContext = {
     resource,
@@ -160,6 +162,9 @@
       {/each}
       {#if isShowLoadingPulseAtTheEnd}
         <LibraryLoadingPulse {resource} {arrangement} isTail={true} />
+      {/if}
+      {#if isShowBottomSpacer}
+        <ScrollViewBottomSpacer />
       {/if}
     </div>
   {/if}

@@ -479,12 +479,17 @@ class Flux {
       logger.log({ at: "flux.selectMany - result", resource, params, result });
       return result;
     } catch (e) {
-      logger.error({
-        at: "flux.select",
-        resource,
-        params,
-        error: e
-      });
+      if (e instanceof Error && e.message === "Operation aborted") {
+        logger.log({ at: "flux.selectMany - aborted", e });
+        throw e;
+      } else {
+        logger.error({
+          at: "flux.select",
+          resource,
+          params,
+          error: e
+        });
+      }
     }
   }
 

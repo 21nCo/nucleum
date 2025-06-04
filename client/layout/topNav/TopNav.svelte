@@ -52,7 +52,7 @@
 {#if !isInFocusMode}
   <div
     class={cn(
-      "w-full h-11 max-h-11 min-h-11 2k:h-12 2k:max-h-12 2k:min-h-12 bg-bgs2 pr-4 border-b border-brs3 userdata",
+      "w-full lp:h-10 lp:max-h-10 lp:min-h-10 h-11 max-h-11 min-h-11 2k:h-12 2k:max-h-12 2k:min-h-12 bg-bgs2 pr-4 border-b border-brs3 userdata",
       {
         "flex gap-3 justify-between items-center":
           pinnedItems.length > 0 || isInterimTab,
@@ -77,7 +77,7 @@
     {#if pinnedItems.length === 0 && !isInterimTab}
       <div class="flex items-center justify-center">
         <button
-          class="flex items-center justify-between w-96 bg-bgs3 hover:bg-bgs4 rounded-full px-3 py-1 mx-3 text-b2 text-fgs2"
+          class="flex items-center justify-between w-96 bg-bgs3 hover:bg-bgs4 rounded-md px-3 py-1 mx-3 text-b2 text-fgs2"
           transition:fly={{
             duration: 300,
             x: 40

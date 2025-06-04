@@ -98,8 +98,8 @@
             !isBgBar
         },
         isExpandToFullWidth && {
-          "w-full justify-between px-1": true,
-          "h-12": !isEnableTitleAction,
+          "w-full justify-between": true,
+          "h-12 px-1": !isEnableTitleAction,
           "h-[3.2rem] 2k:h-14": isEnableTitleAction
         }
       )}

@@ -10,6 +10,7 @@
   export let feedback: IInlineStatus | string | undefined = undefined;
   export let isRenderEmptyHeight = false;
   export let isAutoDissappear: boolean = true;
+  export let size: Size.md | Size.sm = Size.md;
   let timer: any;
   $: if (feedback && isAutoDissappear) {
     clearTimeout(timer);
@@ -21,12 +22,14 @@
 
 {#if feedback}
   <div
-    class={cn("flex items-center gap-1 w-full justify-center text-b2 h-4", {
+    class={cn("flex items-center gap-1 w-full justify-center h-4", {
       "text-fgs3": typeof feedback === "string",
       "text-ags1":
         typeof feedback != "string" && feedback?.type === AlertType.SUCCESS,
       "text-ars1":
-        typeof feedback != "string" && feedback?.type === AlertType.ERROR
+        typeof feedback != "string" && feedback?.type === AlertType.ERROR,
+      "text-b2": size === Size.md,
+      "text-b3": size === Size.sm
     })}
   >
     {#if typeof feedback === "object"}

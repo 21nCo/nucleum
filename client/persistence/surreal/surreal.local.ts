@@ -847,7 +847,7 @@ export class SurrealPersistence implements IPersistence {
     } catch (e: any) {
       if (e instanceof Error && e.message === "Operation aborted") {
         logger.log({ at: "SurrealPersistence.selectMany - aborted", e });
-        // throw e;
+        throw e;
       } else {
         logger.error({
           at: "SurrealPersistence.selectMany",

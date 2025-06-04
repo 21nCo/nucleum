@@ -67,7 +67,7 @@
   }
 </script>
 
-{#if _avatars && _avatars.length > 0}
+{#if _avatars && _avatars.length > 0 && !_avatars[0].file}
   <span class="flex justify-center items-center">
     <!-- {#each _avatars as avatar, index (avatar)}
       <div
@@ -82,7 +82,7 @@
   </span>
 {:else if node && webNodeTypeList.includes(node.contentType)}
   <NodeFavicon {node} {size} />
-{:else if node && node.contentType === NodeType.FILE}
+{:else if node && node.contentType === NodeType.FILE && accessPoint !== ResourceAccessPoint.SEARCH_RESULT}
   <Icon icon={resolveFileIcon(node.file)} {size} />
 {:else if node && node.contentType}
   <Icon icon={resolveNodeIcon(node.contentType)} {size} />

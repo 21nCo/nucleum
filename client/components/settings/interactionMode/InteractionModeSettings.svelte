@@ -7,6 +7,7 @@
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import view from "$lib/client/stores/view.store";
   import { Action } from "$lib/client/types/action.enum";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { OptionSelectorStyle } from "$lib/client/types/select.type";
@@ -53,7 +54,7 @@
   <OptionSelector
     bind:selected={selectedMode}
     style={OptionSelectorStyle.OUTLINE}
-    size={Size.md}
+    size={$view.isConstrainedWidth ? Size.sm : Size.md}
     labelProps={{
       label: "Preferred mode of interaction",
       tooltip: {

@@ -63,7 +63,6 @@
     ];
   }
   function onKeydown(event: KeyboardEvent) {
-    console.log({ event });
     if (event.key === KeyboardKey.ESCAPE) {
       isConfigurationInProgress = false;
       resetToOldValue(event);
@@ -138,7 +137,7 @@
 
 {#if actionDetails}
   <div class="flex items-center justify-between gap-8 w-full">
-    <span>
+    <span class="text-b2 whitespace-nowrap">
       {actionDetails?.label}
     </span>
     <button

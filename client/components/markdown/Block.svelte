@@ -634,6 +634,7 @@
         throw new Error(data?.error ?? "Failed to paste. Please try again.");
       }
       if (data.multipleFiles) {
+        progressState = "Uploading";
         await insertMultipleFiles(data.multipleFiles);
         progressState = undefined;
         return;
@@ -641,6 +642,7 @@
       let newBlock: Pick<IBlock, "contentType" | "body"> | undefined;
       let fileEmbed: any;
       if (data.file) {
+        progressState = "Uploading";
         fileEmbed = await captureStore?.saveFile(data.file, data.contentType, {
           isEmbedContext: true,
           creationContext: nodeContext?.id ?? undefined

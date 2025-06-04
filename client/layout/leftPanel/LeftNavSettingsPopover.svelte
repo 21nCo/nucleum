@@ -21,6 +21,8 @@
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
   import { properCase } from "$lib/shared/utils/text.utils";
   import ComponentBaseLayer from "../layers/ComponentBaseLayer.svelte";
+  import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
+  import { InfoTextType } from "$lib/client/types/text.type";
 
   const dispatch = createEventDispatcher();
 
@@ -77,7 +79,7 @@
   }
 </script>
 
-<div class="w-80 bg-bgs1 p-3 flex flex-col gap-6 border border-brs2 rounded-md">
+<div class="w-96 bg-bgs1 p-3 flex flex-col gap-6 border border-brs2 rounded-md">
   <Text content="Menu settings" style={TextStyle.PANEL_HEADING_SMALL} />
   <SwitchInput
     label={{ label: "Hide menu labels" }}
@@ -147,6 +149,12 @@
     {:else}
       <p class="text-fgs3">No resources available</p>
     {/if}
+    <div class="mt-3">
+      <InlineInfoBanner
+        content="Use hot key Q to show/hide labels"
+        type={InfoTextType.TIP}
+      />
+    </div>
   </div>
 </div>
 

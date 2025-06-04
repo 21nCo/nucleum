@@ -15,6 +15,7 @@
   import CalendarAllActivityPanel from "./CalendarAllActivityPanel.svelte";
   import CalendarHistoryNodeEntries from "./CalendarHistoryNodeEntries.svelte";
   export let date: Date;
+  export let isInline: boolean = false;
   let tab: CalendarHistoryTab = resolveTabSelection();
   $: tabs = resolveTabs($appStore.product);
 
@@ -66,9 +67,11 @@
 
 <div class="flex flex-col h-full w-full gap-4">
   <div class="flex gap-3 items-center cw:justify-between w-full">
-    <div class="">
-      <DatePicker bind:date variant="inline-with-icon" />
-    </div>
+    {#if !isInline}
+      <div class="">
+        <DatePicker bind:date variant="inline-with-icon" />
+      </div>
+    {/if}
     <div>
       <OptionSelector
         options={tabs}
@@ -89,6 +92,6 @@
     {/if}
   </div>
 </div>
-{#if $view.isConstrainedWidth}
+{#if !isInline && $view.isConstrainedWidth}
   <FullScreenCloseButton accessMode={ResourceAccessMode.POP} />
 {/if}

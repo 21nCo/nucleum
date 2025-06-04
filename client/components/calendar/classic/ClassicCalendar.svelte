@@ -28,6 +28,7 @@
   import { NodeMetaType } from "$lib/client/products/memotron/node/node.type";
   import { cache } from "$lib/client/layout/layers/cache/cache.store";
   import { CacheKey } from "$lib/client/layout/layers/cache/cache.type";
+  import MemotronTempCalendarColumn from "../column/MemotronTempCalendarColumn.svelte";
   export let panel: CalendarLayout = CalendarLayout.Classic;
 
   let selectedDate = new Date();
@@ -44,6 +45,7 @@
     refreshIndicatorData(selectedDate);
   }
   function resolveSavedScaleSelection() {
+    if ($appStore.product === Product.MEMOTRON) return TimeScaleUnit.YEAR;
     const scaleState = uiState.getState(UIState.calendarScale, {
       isDeviceScoped: true
     });
@@ -274,26 +276,30 @@
             selectedView === TimeScaleUnit.MONTH ||
             selectedView === TimeScaleUnit.YEAR,
           minWidth: 430,
-          maxWidth: 800,
+          maxWidth: 1000,
           edges: ["left"],
           onResize: onResize
         }}
       >
-        {#key selectedDate}
-          <CalendarColumn
-            scale={TimeScaleUnit.DAY}
-            date={selectedDate}
-            on:dateChange={(e) => {
-              if (e.detail) {
-                if (selectedView === TimeScaleUnit.YEAR) {
-                  yearViewRef?.scrollToDate(e.detail);
-                } else if (selectedView === TimeScaleUnit.WEEK) {
-                  //TODO
-                  // weekViewRef?.scrollToToday();
+        {#key selectedDate.toISOString()}
+          {#if $appStore.product === Product.MEMOTRON}
+            <MemotronTempCalendarColumn date={selectedDate} />
+          {:else}
+            <CalendarColumn
+              scale={TimeScaleUnit.DAY}
+              date={selectedDate}
+              on:dateChange={(e) => {
+                if (e.detail) {
+                  if (selectedView === TimeScaleUnit.YEAR) {
+                    yearViewRef?.scrollToDate(e.detail);
+                  } else if (selectedView === TimeScaleUnit.WEEK) {
+                    //TODO
+                    // weekViewRef?.scrollToToday();
+                  }
                 }
-              }
-            }}
-          />
+              }}
+            />
+          {/if}
         {/key}
       </div>
     {/if}

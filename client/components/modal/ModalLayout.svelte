@@ -94,8 +94,9 @@
 {:else}
   <div
     class={cn(
-      "relative modal flex flex-col items-center justify-between w-full h-full dark:border border-brs3 rounded-md",
+      "relative modal flex flex-col items-center justify-between w-full h-full  rounded-md",
       {
+        "dark:border border-brs3": !isInFocusMode,
         "gap-4": !params.layout?.ignoreSafeArea && size === Size.xs,
         "gap-4 lg:gap-6": !params.layout?.ignoreSafeArea && size !== Size.xs,
         "pt-6": !params.title && !params.layout?.ignoreSafeArea

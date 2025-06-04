@@ -71,10 +71,11 @@
       bind:value={selectedPanel}
       on:switch={onPanelSwitch}
       isEnableTitleAction={true}
+      tempTitleWithActionDisabled={true}
     >
-      <span slot="right">
+      <div slot="right" class="mr-3">
         <slot name="right" />
-      </span>
+      </div>
     </PanelSwitcher>
   </div>
   <div class="relative w-full h-full">

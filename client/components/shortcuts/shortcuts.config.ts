@@ -18,8 +18,8 @@ export const shortcutsConfig: Record<string, IKeyboardShortcut> = {
   graph: {
     key: "g"
   },
-  analytics: {
-    key: "a"
+  overview: {
+    key: "o"
   },
   create: {
     key: "n"

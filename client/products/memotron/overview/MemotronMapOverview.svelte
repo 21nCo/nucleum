@@ -6,6 +6,8 @@
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
   import type { INode } from "../node/node.type";
+  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
+  import { Size } from "$lib/client/types/size.enum";
 
   interface MapDataPoint {
     id: string;
@@ -21,7 +23,7 @@
   let mapData: MapDataPoint[] = [];
   let isLoading = false;
   let isConstrainedWidth = false;
-
+  let isShowHeatmap = false;
   onMount(async () => {
     await fetchLocationData();
   });
@@ -66,9 +68,14 @@
 <MemotronOverviewLayout bind:isConstrainedWidth>
   <span class="flex items-center gap-3 text-fgs3 text-b3 h-full" slot="right">
     {#if !isConstrainedWidth && mapData.length > 0}
-      <span>
+      <!-- <span>
         {mapData.length} locations
-      </span>
+      </span> -->
+      <SwitchInput
+        label={{ label: "Show as heatmap" }}
+        size={Size.sm}
+        bind:checked={isShowHeatmap}
+      />
     {/if}
   </span>
 
@@ -88,8 +95,8 @@
       />
     </div>
   {:else}
-    <div class="rounded-md overflow-hidden mt-1 w-full h-full">
-      <MapOverview data={mapData} />
+    <div class="rounded-md overflow-hidden p-2 w-full h-full">
+      <MapOverview data={mapData} {isShowHeatmap} />
     </div>
   {/if}
 </MemotronOverviewLayout>

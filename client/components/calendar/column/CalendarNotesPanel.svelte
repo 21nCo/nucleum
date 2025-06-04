@@ -20,11 +20,11 @@
   import { resolveCalendarNotesId } from "../calendar.utils";
   import { getUtcSafeDay } from "$lib/client/elements/datetime/datetime.utils";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  import { LoadingAnimationType } from "$lib/client/types/feedback.type";
 
   export let date: Date;
   export let scale: TimeScaleUnit;
   let mdId = generateSimpleRandomId();
-  let isLoading = true;
   let node: IActiveNodeStore;
 
   async function initialize() {
@@ -49,7 +49,6 @@
       accessPoint: ResourceAccessPoint.CALENDAR
     });
     nodeContext.id = id;
-    isLoading = false;
   }
 
   const nodeContext = {
@@ -66,14 +65,17 @@
       day: "numeric"
     });
   }
-
-  initialize();
 </script>
 
-{#if isLoading}
-  <EmptyStatusView isLoadingState={true} />
-{:else}
+{#await initialize()}
+  <EmptyStatusView
+    isLoadingState={true}
+    loadingAnimation={LoadingAnimationType.PAGE_PULSE}
+  />
+{:then _}
   <NodeContent {node} {mdId} />
-{/if}
+{:catch _}
+  <EmptyStatusView mainText="Error loading calendar notes" />
+{/await}
 
 <ComponentBaseLayer hasDragAndDrop={true} />

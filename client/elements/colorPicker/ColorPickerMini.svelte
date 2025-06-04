@@ -60,13 +60,15 @@
       class={hue !== undefined ? "text-cbg" : "text-fgs3"}
       size={Size.sm}
     />
-    <span
-      class={cn("text-b2", {
-        "text-cbg": hue !== undefined,
-        "text-fgs3": hue === undefined
-      })}
-    >
-      Set color</span
-    >
+    {#if width}
+      <span
+        class={cn("text-b2", {
+          "text-cbg": hue !== undefined,
+          "text-fgs3": hue === undefined
+        })}
+      >
+        Set color</span
+      >
+    {/if}
   </div>
 </CustomColorPropagator>

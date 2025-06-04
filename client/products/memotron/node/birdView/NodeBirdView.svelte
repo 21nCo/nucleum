@@ -393,12 +393,12 @@
               value: NodeBirdViewMode.Timeline,
               label: "Timeline",
               icon: "mynaui:git-merge"
-            },
-            {
-              value: NodeBirdViewMode.Serendipity,
-              label: "Serendipity",
-              icon: "ph:sparkle-light"
             }
+            // {
+            //   value: NodeBirdViewMode.Serendipity,
+            //   label: "Serendipity",
+            //   icon: "ph:sparkle-light"
+            // }
           ]}
           style={PanelSwitcherStyle.TRAIN}
           isShowNumberShortcut={true}

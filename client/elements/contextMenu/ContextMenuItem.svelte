@@ -25,6 +25,7 @@
     {parentBgIndex}
     on:change={(e) => {
       if (item.callback) item.callback(e.detail);
+      dispatch("select", item);
     }}
   />
 {:else if item.secondStepComponent?.component}

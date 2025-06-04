@@ -16,6 +16,8 @@
   import { CalendarLayout } from "../calendar.type";
   import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { Product } from "$lib/client/types/product.type";
   const dispatch = createEventDispatcher();
 
   export let selectedDate: Date;
@@ -202,25 +204,27 @@
       isPreventMinWidth={true}
       on:click={goToToday}
     />
-    {#if $view.isConstrainedWidth}
-      <DropDown
-        items={switchOptions}
-        value={selectedView}
-        isDisableSearch={true}
-        width="min-w-32"
-        size={Size.sm}
-        isEnforceWidth={true}
-        on:select={onScaleSelection}
-      />
-    {:else}
-      <OptionSelector
-        options={switchOptions}
-        selected={selectedView}
-        size={Size.sm}
-        isExpandOnActiveForIcon={true}
-        style={OptionSelectorStyle.ICON}
-        on:select={onScaleSelection}
-      />
+    {#if $appStore.product !== Product.MEMOTRON}
+      {#if $view.isConstrainedWidth}
+        <DropDown
+          items={switchOptions}
+          value={selectedView}
+          isDisableSearch={true}
+          width="min-w-32"
+          size={Size.sm}
+          isEnforceWidth={true}
+          on:select={onScaleSelection}
+        />
+      {:else}
+        <OptionSelector
+          options={switchOptions}
+          selected={selectedView}
+          size={Size.sm}
+          isExpandOnActiveForIcon={true}
+          style={OptionSelectorStyle.ICON}
+          on:select={onScaleSelection}
+        />
+      {/if}
     {/if}
     <!-- <Toggle icon="ph:sliders-light" bgSize={Size.sm} />
     <Toggle icon="ph:question-light" bgSize={Size.sm} /> -->

@@ -144,7 +144,9 @@
         <button
           on:click={() => {
             tabs.remove(item);
-            appStore.goBack();
+            if (isActive) {
+              appStore.goBack();
+            }
           }}
           use:tooltip={{
             text: "Close"

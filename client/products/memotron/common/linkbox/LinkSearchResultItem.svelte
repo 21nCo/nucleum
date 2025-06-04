@@ -33,7 +33,7 @@
     })}
   >
     {#if resourceType === Resource.node}
-      <div class="flex gap-2 w-full truncate">
+      <div class="flex gap-2 w-full truncate text-b2">
         <NodeTitleLabelPart
           {item}
           accessPoint={ResourceAccessPoint.SEARCH_RESULT}

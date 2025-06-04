@@ -11,7 +11,7 @@
 </script>
 
 {#if selectedPanel === CalendarColumnPanel.History}
-  <CalendarHistoryPanel {date} />
+  <CalendarHistoryPanel {date} isInline={true} />
 {:else if selectedPanel === CalendarColumnPanel.Overview}
   <CalendarOverviewPanel {date} {isRewind} />
 {:else if selectedPanel === CalendarColumnPanel.Notes}
