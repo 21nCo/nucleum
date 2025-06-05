@@ -40,7 +40,7 @@ export const seedUserPreferences: IUserGlobalPreferences = {
     darkColorSchemeId: defaultDarkColorSchemeId,
     isBlurredBgForPopups: false,
     isFixedLeftNav: false,
-    typeface: "Space Grotesk"
+    typeface: "Sen"
   },
   avatarPicker: {
     skinIndex: 0,

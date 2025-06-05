@@ -301,6 +301,10 @@ interface PopoverParams {
    * When set, the popover will hide when hovering over any DOM element with this class name and will not hide on hovering out of the trigger element
    */
   classForHoverDismissal?: string;
+  /**
+   * If set to true, the popover will be rendered in the secondary popovers container.
+   */
+  isSecondary?: boolean;
 }
 
 export function popover(node: HTMLElement, params: PopoverParams) {
@@ -318,7 +322,8 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     groupId = "popover",
     id = "popover",
     isRenderAsSibling = false,
-    classForHoverDismissal = ""
+    classForHoverDismissal = "",
+    isSecondary = false
   } = params;
 
   let isShown = false;
@@ -326,6 +331,9 @@ export function popover(node: HTMLElement, params: PopoverParams) {
   let popoverContainer =
     document.getElementById("popovers") ??
     node?.getRootNode()?.getElementById("popovers");
+  let secondaryPopoverContainer =
+    document.getElementById("secondary-popovers") ??
+    node?.getRootNode()?.getElementById("secondary-popovers");
   let cwModalOverlay: HTMLDivElement | null = null;
 
   async function createPopover(): Promise<void> {
@@ -340,11 +348,14 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     popoverElement.style.zIndex = "50";
     popoverElement.id = id;
     popoverElement.setAttribute("data-group-id", groupId);
-
+    const container = isSecondary
+      ? secondaryPopoverContainer
+      : popoverContainer;
     if (isRenderAsSibling && node.parentNode) {
       node.parentNode.insertBefore(popoverElement, node.nextSibling);
-    } else if (popoverContainer) {
-      popoverContainer?.appendChild(popoverElement);
+    } else if (container) {
+      container.innerHTML = "";
+      container?.appendChild(popoverElement);
     }
 
     if (typeof content === "string") {
@@ -644,7 +655,8 @@ export function popover(node: HTMLElement, params: PopoverParams) {
 
   async function showPopover(e?: any): Promise<void> {
     try {
-      if (!popoverElement) await createPopover();
+      const element = document.getElementById(id);
+      if (!element) await createPopover();
       positionPopover();
       isShown = true;
       triggerChangeEvent();
@@ -657,10 +669,17 @@ export function popover(node: HTMLElement, params: PopoverParams) {
   function hidePopover(e?: any): void {
     // console.log("hidePopover", e);
     if (popoverElement) {
-      if (isRenderAsSibling && node.parentNode) {
-        node.parentNode.removeChild(popoverElement);
-      } else {
-        popoverContainer?.removeChild(popoverElement);
+      try {
+        if (isRenderAsSibling && node.parentNode) {
+          node.parentNode.removeChild(popoverElement);
+        } else {
+          (isSecondary
+            ? secondaryPopoverContainer
+            : popoverContainer
+          )?.removeChild(popoverElement);
+        }
+      } catch (e) {
+        console.error("hidePopover", e);
       }
       popoverElement = null;
       if (component) {
@@ -867,7 +886,8 @@ export function popover(node: HTMLElement, params: PopoverParams) {
         isRenderAsSibling = false,
         isRenderAsModalForCW = false,
         cwModalPosition = Placement.Bottom,
-        classForHoverDismissal = ""
+        classForHoverDismissal = "",
+        isSecondary = false
       } = newParams);
       //TODO - troubleshoot the root casue. Temporary fix added for date picker popover when rendered as bottom on mobile is adding many overlays on update trigger.
       if (popoverElement && !isRenderAsModalForCW) {

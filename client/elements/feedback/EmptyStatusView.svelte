@@ -3,7 +3,6 @@
   import EmptyStatusInbox from "../../illustrations/EmptyStatusInbox.svelte";
   import { LoadingAnimationType } from "../../types/feedback.type";
   import { Size } from "../../types/size.enum";
-  import PageLoadingAnimation from "./animations/PageLoadingAnimation.svelte";
   import Button from "../button/Button.svelte";
   import PageLoadingPulse from "./animations/PageLoadingPulse.svelte";
   import LogsLoadingPulse from "./animations/LogsPulse/LogsLoadingPulse.svelte";

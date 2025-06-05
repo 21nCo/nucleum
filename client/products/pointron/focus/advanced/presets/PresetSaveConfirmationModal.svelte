@@ -1,7 +1,6 @@
 <script lang="ts">
   import {
     activeSession,
-    newPresetLabel,
     focusItemsStore
   } from "$lib/client/products/pointron/focus/session.store";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
@@ -16,6 +15,7 @@
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
 
   let selectedGoals: IGoalThumb[] = [];
+  let newPresetLabel = "";
 
   onMount(async () => {
     const currentFocusItems = $focusItemsStore.items;
@@ -38,20 +38,25 @@
   });
 
   async function savePreset() {
-    return activeSession.saveCurrentCompositionAsPreset(
-      selectedGoals.map((g) => g.id)
-    );
+    return activeSession.saveCurrentCompositionAsPreset({
+      goals: selectedGoals.map((g) => g.id),
+      name: newPresetLabel
+    });
   }
 </script>
 
 <div class="flex justify-center">
   <PresetItem
-    preset={{ ...$activeSession.composition }}
+    preset={{
+      ...$activeSession.composition,
+      name: newPresetLabel,
+      goals: selectedGoals.map((g) => g.id)
+    }}
     isExpandedVariant={true}
   />
 </div>
 <TextInput
-  bind:value={$newPresetLabel}
+  bind:value={newPresetLabel}
   placeholder="Preset name or leave empty"
   label={{ label: "Preset name", orientation: Orientation.Vertical }}
 />

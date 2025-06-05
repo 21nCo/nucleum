@@ -53,5 +53,6 @@
   }}
   data-syncfeedback="true"
   data-syncstatus=""
+  class="absolute"
 >
 </span>

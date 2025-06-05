@@ -145,7 +145,13 @@
   >
     {#if isInEditMode}
       <span class="absolute left-2 top-3">
-        <Icon icon="ph:dots-six-vertical" class="text-fgs2" />
+        <Icon
+          icon="ph:dots-six-vertical"
+          class={cn({
+            "text-cbg": isInprogress,
+            "text-fgs2": !isInprogress
+          })}
+        />
       </span>
     {/if}
     <div

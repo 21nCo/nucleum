@@ -56,7 +56,7 @@
         "w-12 h-12 hover:bg-opacity-80": context === SessionUIContext.PIP
       },
       context === SessionUIContext.FOCUS_PLAYER && {
-        "w-10 h-10 dp:w-12 dp:h-12 border": true,
+        "w-10 h-10 dp:w-12 dp:h-12 border hover:border-2": true,
         "border-cbg":
           $activeSession.state == SessionState.FOCUS_RUNNING &&
           !isBreakReminderMode,

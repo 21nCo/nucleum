@@ -195,7 +195,7 @@
         on:close={() => {
           isShowCoverPicker = false;
         }}
-        on:select={(e) => {
+        on:change={(e) => {
           coverPhoto = e.detail;
         }}
       />

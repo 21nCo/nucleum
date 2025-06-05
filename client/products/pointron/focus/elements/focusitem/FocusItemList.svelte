@@ -2,7 +2,8 @@
   import {
     focusItemsStore,
     lastActiveGoalIdForEditing,
-    activeSession
+    activeSession,
+    currentFocusItem
   } from "$lib/client/products/pointron/focus/session.store";
   import { setContext } from "svelte";
   import FocusItem from "./FocusItem.svelte";
@@ -14,6 +15,7 @@
   import { onDestroy, onMount } from "svelte";
   import {
     isSameResource,
+    removeDuplicatesFilter,
     resourceInList,
     shiftResourceInArray
   } from "$lib/client/components/flux/resourceStores/resource.utils";
@@ -69,9 +71,11 @@
       .map((x) => x.tasks)
       .flat()
       .filter((x) => x);
-    focusItems = $focusItemsStore.items.filter(
-      (x) => !tasksWithGoal.some(resourceInList(x))
-    );
+    focusItems = [
+      ...($focusItemsStore.items.filter(
+        (x) => !tasksWithGoal.some(resourceInList(x))
+      ) ?? [])
+    ];
     goals = await goalStore.selectMany(
       {
         filters: {
@@ -162,15 +166,21 @@
     tasks = [...tasks, task];
     focusItems = focusItems.map((x) => {
       if (goalId && isSameResource(x.id, goalId)) {
-        return { ...x, tasks: [...(x.tasks ?? []), task.id] };
+        return {
+          ...x,
+          tasks: [...(x.tasks ?? []), task.id].filter(removeDuplicatesFilter)
+        };
       }
       return x;
     });
   }
 
-  function onRemove(event: any) {
+  async function onRemove(event: any) {
     const id = event.detail;
     focusItemsStore.removeFocusItem(id);
+    if ($currentFocusItem && isSameResource($currentFocusItem, id)) {
+      await activeSession.stopCurrentFocusItem();
+    }
     refresh();
   }
 

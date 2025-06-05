@@ -33,6 +33,7 @@
   import context from "$lib/client/stores/context.store";
   import MarkdownkeyboardToolbar from "./toolbar/MarkdownkeyboardToolbar.svelte";
   import { debouncer } from "$lib/client/utils/utils";
+  import { toasts } from "$lib/client/stores/notification.store";
 
   /**
    * Propagates the event to the parent component.
@@ -175,6 +176,7 @@
             on:click={() => {
               const markdownAsText = generateMarkdownText($mdStore.blocks);
               navigator.clipboard.writeText(markdownAsText);
+              toasts.success("Copied to clipboard");
             }}
           />
         </div>
@@ -190,6 +192,7 @@
             on:click={() => {
               const rawMdJson = JSON.stringify($mdStore.blocks);
               navigator.clipboard.writeText(rawMdJson);
+              toasts.success("Copied to clipboard");
             }}
           />
         </div>

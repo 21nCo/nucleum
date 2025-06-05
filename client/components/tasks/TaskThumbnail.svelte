@@ -262,15 +262,25 @@
         </div>
       {/if}
       {#if isHovering}
+        {@const isInlineContext =
+          accessPoint === ResourceAccessPoint.BROWSER &&
+          !$view.isConstrainedWidth}
         <Button
-          icon="ph:arrows-out-light"
+          icon={isInlineContext
+            ? "ph:arrow-right-light"
+            : "ph:arrows-out-light"}
           parentBgIndex={2}
           label="Open"
           size={Size.sm}
           style={ButtonStyle.OUTLINED}
           isPreventMinWidth={true}
           on:click={() => {
-            appStore.openResource(item.id, ResourceAccessMode.POP);
+            appStore.openResource(
+              item.id,
+              isInlineContext
+                ? ResourceAccessMode.INLINE
+                : ResourceAccessMode.POP
+            );
           }}
         />
       {/if}

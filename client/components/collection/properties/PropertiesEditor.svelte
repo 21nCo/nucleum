@@ -55,6 +55,7 @@
   import { resolvePropertyDefaultConfig } from "./property.utils";
   import { objIsEmpty } from "$lib/shared/utils/obj.utils";
   import CollectionTitleLabelPart from "../thumbnail/CollectionThumbnailLabel.svelte";
+  import { Product } from "$lib/client/types/product.type";
   export let id: IRecordId | undefined = undefined;
   let collection: IActiveCollectionStore | undefined = id
     ? ActiveCollectionStore.resolve(id)
@@ -97,11 +98,16 @@
       width: 0.5,
       type: TableCellType.TOGGLE,
       tooltip: {
-        body: "Selecting this will make the property always visible on the node page. Otherwise, it will be present in properties panel.",
+        body: "Selecting this will make the property always visible on the node/goal page. Otherwise, it will be present in properties panel.",
         size: Size.xs
       }
-    },
-    {
+    }
+  ];
+  if (
+    $appStore.product === Product.MEMOTRON ||
+    $appStore.product === Product.NUCLEUS
+  ) {
+    columns.push({
       label: "Capture",
       key: "isShowOnCapture",
       width: 0.4,
@@ -111,8 +117,8 @@
         size: Size.xs
       },
       disabledCriteria: (row: any) => !manualPropertyTypes.includes(row.type)
-    }
-  ];
+    });
+  }
   let isTypeExtension: boolean = $propertyEditorStore?.typeToExtend
     ? true
     : false;

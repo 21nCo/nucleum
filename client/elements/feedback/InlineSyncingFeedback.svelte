@@ -10,6 +10,7 @@
   export let resource: Resource;
   export let isFullWidthVariant: boolean = false;
   export let text: string = "Syncing...";
+  export let padding: string = "";
   let isSyncing: boolean = false;
   let syncStatusPropagatorRef: SyncStatusPropagator | null = null;
 
@@ -19,7 +20,7 @@
 </script>
 
 <span
-  class={cn("flex items-center gap-2 text-aps1", {
+  class={cn("flex items-center gap-2 text-aps1", padding, {
     "w-full justify-center py-2 bg-aps3 rounded-md": isFullWidthVariant
   })}
   class:hidden={!isSyncing}

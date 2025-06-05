@@ -57,7 +57,7 @@
   {/if}
   <div class="flex items-center gap-1 text-left truncate flex-1 min-w-0">
     <div class="truncate">
-      {goal.label}
+      {goal.label || "Untitled"}
     </div>
     {#if isCreateContext}
       <Button

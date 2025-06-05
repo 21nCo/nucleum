@@ -1,6 +1,7 @@
 <script lang="ts">
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   import type { IRecordId } from "$lib/client/types/data.type";
+  import { ResourceAccessPoint } from "../../flux/resourceStores/resource.type";
   import TaskLibrary from "../../tasks/TaskLibrary.svelte";
 
   export let id: IRecordId;
@@ -15,4 +16,8 @@
     />
   </div>
 {/if}
-<TaskLibrary goalId={id} isPreventAddNew={!isActiveResource} />
+<TaskLibrary
+  goalId={id}
+  isPreventAddNew={!isActiveResource}
+  accessPoint={ResourceAccessPoint.GOAL}
+/>

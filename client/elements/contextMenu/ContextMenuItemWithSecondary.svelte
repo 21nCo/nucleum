@@ -38,6 +38,7 @@
     offsetInPx: 12,
     triggerMethod: [PopoverTriggerMethod.HOVER, PopoverTriggerMethod.CLICK],
     content: item.secondStepComponent?.component,
+    isSecondary: true,
     componentProps: {
       onSelect: (e) => {
         dispatch("select", e);

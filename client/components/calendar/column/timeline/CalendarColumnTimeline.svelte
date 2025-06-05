@@ -26,6 +26,8 @@
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
+  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 
   export let date: Date;
   export let isExpandable: boolean = false;
@@ -159,3 +161,8 @@
     </div>
   {/if}
 </div>
+
+<ComponentBaseLayer
+  subscribeToResource={new Set([Resource.session])}
+  on:change={refreshTimelineEntries}
+/>

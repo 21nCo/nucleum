@@ -40,9 +40,11 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import RecordTrashBanner from "../record/RecordTrashBanner.svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
 
   export let id: IRecordId;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
+  export let accessMode: ResourceAccessMode = ResourceAccessMode.POP;
   let isRefreshing = false;
   let status: IInlineStatus | undefined = undefined;
   let task: ITaskThumb | undefined = undefined;
@@ -228,7 +230,12 @@
   }
 </script>
 
-<div class="flex p-4 mo:w-full mo:h-full w-[32rem] h-[28rem]">
+<div
+  class={cn("flex p-4 mo:w-full mo:h-full h-[28rem]", {
+    "w-[32rem]": accessMode !== ResourceAccessMode.INLINE,
+    "w-full": accessMode === ResourceAccessMode.INLINE
+  })}
+>
   {#if isRefreshing}
     <EmptyStatusView isLoadingState={isRefreshing} />
   {:else if task}

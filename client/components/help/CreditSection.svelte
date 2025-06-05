@@ -6,6 +6,7 @@
   export let items: Array<{
     name: string;
     description: string;
+    creator: string;
     link: string;
   }>;
 </script>
@@ -20,8 +21,9 @@
         rel="noopener noreferrer"
         class="flex flex-col p-4 rounded-lg bg-bgs2 hover:bg-bgs3 transition-colors duration-200 border border-bgs3"
       >
-        <div class="font-medium text-b2 text-fgs1">{item.name}</div>
-        <div class="text-b3 text-fgs3">{item.description}</div>
+        <div class="font-medium text-base text-fgs1">{item.name}</div>
+        <div class="text-b3 text-fgs3">{item.creator}</div>
+        <div class="text-b3 text-fgs3 mt-4">{item.description}</div>
       </a>
     {/each}
   </div>

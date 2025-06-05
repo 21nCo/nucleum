@@ -25,12 +25,20 @@
   import { logger } from "$lib/client/components/debug/logger.client";
   import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { resolveGoalColor } from "$lib/client/components/goals/goal.utils";
+  import { hoverable } from "$lib/client/actions/hover.action";
+  import { tooltip } from "$lib/client/actions/popover.action";
+  import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
+  import type { ITaskThumb } from "$lib/client/components/tasks/task.type";
   let playerContainerRef: any;
   let playerRef: HTMLElement | null = document.getElementById("focusplayer");
   let playerContainer: HTMLElement | null =
     document.getElementById("playercontainer");
   let isPipShown = false;
-  let currentGoal: any;
+  let hoverState = {
+    caretHovering: false,
+    pipHovering: false
+  };
+  let curentFocusItemExpanded: ITaskThumb | IGoalThumb | undefined = undefined;
   $: isBreakReminderMode =
     $activeSession.timeRemainingToTakeBreak != undefined &&
     $activeSession.timeRemainingToTakeBreak < 0;
@@ -119,11 +127,22 @@
       }
     });
     const currentFocusItemSub = currentFocusItem.subscribe(async (x) => {
-      if (x && !isSameResource(currentGoal, x)) {
-        currentGoal = await activeSession.resolveCurrentFocusItemData({
-          item: x,
-          isReturnGoalIfTask: true
-        });
+      if (
+        (x &&
+          curentFocusItemExpanded &&
+          !isSameResource(curentFocusItemExpanded, x)) ||
+        !x ||
+        (x && !curentFocusItemExpanded)
+      ) {
+        if (x) {
+          curentFocusItemExpanded =
+            await activeSession.resolveCurrentFocusItemData({
+              item: x,
+              isReturnGoalIfTask: true
+            });
+        } else {
+          curentFocusItemExpanded = undefined;
+        }
       }
     });
     const sub = player.subscribe((x) => {
@@ -172,7 +191,12 @@
       <div class="flex flex-col gap-1 w-full">
         <CustomColorPropagator
           type="button"
-          color={resolveGoalColor(currentGoal?.goal ?? currentGoal)}
+          color={curentFocusItemExpanded &&
+            resolveGoalColor(
+              "goal" in curentFocusItemExpanded
+                ? curentFocusItemExpanded.goal
+                : curentFocusItemExpanded
+            )}
           class={cn(
             "flex gap-2 h-full justify-between items-center px-4 py-2",
             isPipShown && {
@@ -221,10 +245,19 @@
                     on:click|stopPropagation={(event) => {
                       player.togglePip(PointronAction.FOCUS_PLAYER);
                     }}
+                    use:hoverable={{
+                      onHover: (v) => {
+                        hoverState.pipHovering = v;
+                      }
+                    }}
+                    use:tooltip={{
+                      text: "Picture in Picture"
+                    }}
                   >
                     <Icon
-                      icon="pip"
+                      icon="ph:picture-in-picture-light"
                       isTabbable={true}
+                      isFilled={hoverState.pipHovering}
                       class={cn({
                         "stroke-cbg":
                           $activeSession.state === SessionState.FOCUS_RUNNING &&
@@ -236,20 +269,32 @@
                     />
                   </button>
                 {/if}
-
-                <Icon
-                  icon="chevup"
-                  on:click={clickHandler}
-                  isTabbable={true}
-                  class={cn({
-                    "stroke-cbg":
-                      $activeSession.state === SessionState.FOCUS_RUNNING &&
-                      !isBreakReminderMode,
-                    "stroke-abg":
-                      isBreakReminderMode ||
-                      $activeSession.state != SessionState.FOCUS_RUNNING
-                  })}
-                />
+                <div
+                  class="flex justify-center items-center"
+                  use:hoverable={{
+                    onHover: (v) => {
+                      hoverState.caretHovering = v;
+                    }
+                  }}
+                  use:tooltip={{
+                    text: "Full screen"
+                  }}
+                >
+                  <Icon
+                    icon="ph:caret-up-light"
+                    on:click={clickHandler}
+                    isTabbable={true}
+                    isFilled={hoverState.caretHovering}
+                    class={cn({
+                      "stroke-cbg":
+                        $activeSession.state === SessionState.FOCUS_RUNNING &&
+                        !isBreakReminderMode,
+                      "stroke-abg":
+                        isBreakReminderMode ||
+                        $activeSession.state != SessionState.FOCUS_RUNNING
+                    })}
+                  />
+                </div>
               {/if}
             </div>
           {/if}

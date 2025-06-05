@@ -26,6 +26,8 @@
   import UnsplashPicker from "./UnsplashPicker.svelte";
   import CoverPickerFromLibrary from "./CoverPickerFromLibrary.svelte";
   import { isRecordId } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { Product } from "$lib/client/types/product.type";
 
   const dispatch = createEventDispatcher();
 
@@ -39,6 +41,10 @@
 
   export let orientation: Orientation = Orientation.Vertical;
   export let value: IRecordId | undefined = undefined;
+
+  $: isFileUploadAvailable =
+    $appStore.product === Product.MEMOTRON ||
+    $appStore.product === Product.NUCLEUS;
 
   let selectedMethod: Method = Method.COLOR;
   let _value: string | undefined = transformValue(value);
@@ -103,6 +109,44 @@
     }
     isUploadInProgress = false;
   }
+
+  function resolvePanelSwitcherItems(isFileUploadAvailable: boolean) {
+    const baseItems = [
+      {
+        label: "Color",
+        value: Method.COLOR,
+        //   icon: "mage:color-picker"
+        icon: "lets-icons:color-picker"
+      },
+      {
+        label: "Gradient",
+        value: Method.GRADIENT,
+        //   icon: "carbon:color-switch"
+        icon: "lets-icons:color-mode-light"
+      },
+      {
+        label: "Unsplash",
+        value: Method.UNSPLASH,
+        icon: "fa6-brands:unsplash"
+      },
+      {
+        label: "AI",
+        value: Method.AI,
+        icon: "ph:magic-wand-light",
+        isDisabled: true,
+        badge: "soon"
+      }
+    ];
+    if (!isFileUploadAvailable) {
+      return baseItems;
+    }
+    const fromLibary = {
+      label: "Library",
+      value: Method.LIBRARY,
+      icon: "ph:globe-light"
+    };
+    return [...baseItems.slice(0, 3), fromLibary, ...baseItems.slice(3)];
+  }
 </script>
 
 <div class="flex flex-col gap-6 w-full h-full p-6">
@@ -115,46 +159,48 @@
       "flex-col": orientation === Orientation.Vertical
     })}
   >
-    <div
-      class={cn({
-        "h-full w-80": orientation === Orientation.Horizontal,
-        "w-full py-8 h-40": orientation === Orientation.Vertical
-      })}
-    >
+    {#if isFileUploadAvailable}
       <div
-        class="flex flex-col gap-3 items-center justify-center h-full w-full bg-bgs2 rounded-md border border-brs3 border-dashed"
-        use:fileDrop={{
-          accept: ".jpg,.png,.pdf",
-          multiple: true,
-          maxSize: 15 * 1024 * 1024,
-          onDrop: handleDrop
-        }}
+        class={cn({
+          "h-full w-80": orientation === Orientation.Horizontal,
+          "w-full py-8 h-40": orientation === Orientation.Vertical
+        })}
       >
-        {#if isUploadInProgress}
-          <span class="flex items-center gap-2 text-fgs1">
-            <Icon icon="svg-spinners:90-ring-with-bg" class="stroke-fgs1" />
-            <span>Uploading...</span>
-          </span>
-        {:else if typeof _value !== "string" && _value?.tb === Resource.file}
-          <div class="flex w-full h-full items-center gap-2">
-            <div class="flex w-40 h-full">
-              {#key _value}
-                <FileView
-                  id={_value}
-                  isLazyLoad={false}
-                  type={FileType.IMAGE}
-                  class={cn("h-full w-full rounded-l-md object-cover", {})}
-                />
-              {/key}
+        <div
+          class="flex flex-col gap-3 items-center justify-center h-full w-full bg-bgs2 rounded-md border border-brs3 border-dashed"
+          use:fileDrop={{
+            accept: ".jpg,.png,.pdf",
+            multiple: true,
+            maxSize: 15 * 1024 * 1024,
+            onDrop: handleDrop
+          }}
+        >
+          {#if isUploadInProgress}
+            <span class="flex items-center gap-2 text-fgs1">
+              <Icon icon="svg-spinners:90-ring-with-bg" class="stroke-fgs1" />
+              <span>Uploading...</span>
+            </span>
+          {:else if typeof _value !== "string" && _value?.tb === Resource.file}
+            <div class="flex w-full h-full items-center gap-2">
+              <div class="flex w-40 h-full">
+                {#key _value}
+                  <FileView
+                    id={_value}
+                    isLazyLoad={false}
+                    type={FileType.IMAGE}
+                    class={cn("h-full w-full rounded-l-md object-cover", {})}
+                  />
+                {/key}
+              </div>
+              <span class="text-fgs1">Click to replace</span>
             </div>
-            <span class="text-fgs1">Click to replace</span>
-          </div>
-        {:else}
-          <span class="text-fgs1">Drag and drop / click to upload</span>
-          <span class="text-fgs3 text-b3">or choose from below</span>
-        {/if}
+          {:else}
+            <span class="text-fgs1">Drag and drop / click to upload</span>
+            <span class="text-fgs3 text-b3">or choose from below</span>
+          {/if}
+        </div>
       </div>
-    </div>
+    {/if}
     <div
       class={cn("flex flex-col gap-4 flex-1 overflow-auto", {
         "w-full": orientation === Orientation.Vertical,
@@ -164,37 +210,7 @@
       <PanelSwitcher
         barStyle={BarStyle.EXACT}
         bind:value={selectedMethod}
-        items={[
-          {
-            label: "Color",
-            value: Method.COLOR,
-            //   icon: "mage:color-picker"
-            icon: "lets-icons:color-picker"
-          },
-          {
-            label: "Gradient",
-            value: Method.GRADIENT,
-            //   icon: "carbon:color-switch"
-            icon: "lets-icons:color-mode-light"
-          },
-          {
-            label: "Library",
-            value: Method.LIBRARY,
-            icon: "ph:globe-light"
-          },
-          {
-            label: "Unsplash",
-            value: Method.UNSPLASH,
-            icon: "fa6-brands:unsplash"
-          },
-          {
-            label: "AI",
-            value: Method.AI,
-            icon: "ph:magic-wand-light",
-            isDisabled: true,
-            badge: "soon"
-          }
-        ]}
+        items={resolvePanelSwitcherItems(isFileUploadAvailable)}
         style={PanelSwitcherStyle.BAR}
         isExpandToFullWidth={true}
         on:switch={(e) => {

@@ -283,9 +283,8 @@
 
 <div
   class={cn("flex flex-col w-full h-full gap-4", {
-    "p-4":
-      accessPoint === ResourceAccessPoint.LIBRARY ||
-      accessPoint === ResourceAccessPoint.BROWSER
+    "p-4": accessPoint === ResourceAccessPoint.LIBRARY,
+    "px-4": accessPoint === ResourceAccessPoint.BROWSER
   })}
 >
   <LibrarySubTypeSwitcher
@@ -400,7 +399,7 @@
       placeholder={"Search tasks"}
       style={InputStyle.FILLED}
     />
-    {#if !isPreventAddNew && !$view.isConstrainedWidth && accessPoint === ResourceAccessPoint.LIBRARY}
+    {#if !isPreventAddNew && ((!$view.isConstrainedWidth && accessPoint === ResourceAccessPoint.LIBRARY) || accessPoint === ResourceAccessPoint.GOAL)}
       <Button
         icon="ph:plus-light"
         type={ButtonVariant.PRIMARY}
@@ -426,9 +425,12 @@
       />
     {/if}
   </div>
-  <div class="cw:px-0 px-4 w-full">
-    <InlineSyncingFeedback resource={Resource.task} isFullWidthVariant={true} />
-  </div>
+
+  <InlineSyncingFeedback
+    resource={Resource.task}
+    isFullWidthVariant={true}
+    padding="cw:px-0 px-4"
+  />
 
   {#if tasks && tasks.length > 0}
     <div

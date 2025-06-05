@@ -20,11 +20,7 @@
   import { resolveMultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
   import LibraryRecordsPane from "../LibraryRecordsPane.svelte";
-  import {
-    isCustomLibrary,
-    isHideCreateAction,
-    resolveResourceTooltip
-  } from "../library.utils";
+  import { isHideCreateAction, resolveResourceTooltip } from "../library.utils";
   import { keyboardShortcuts } from "../../shortcuts/shortcuts.store";
   import ComponentShortcutListener from "../../shortcuts/ComponentShortcutListener.svelte";
   export let resource: Resource;
@@ -39,7 +35,6 @@
     ) ?? Arrangement.LIST;
   const createShortcut = keyboardShortcuts?.resolveShortcutForAction("create");
 
-  $: isExpanded = isCustomLibrary(resource);
   $: tooltip = resolveResourceTooltip(resource);
   $: id = $page.url.searchParams.get(ResourceAccessMode.INLINE);
   $: multiSelectContext = {
@@ -71,16 +66,27 @@
       }
     });
   };
+
+  function determineExpansionType(resource: Resource) {
+    if (resource === Resource.relation) return true;
+    return false;
+  }
+
+  function determineSize(resource: Resource) {
+    if (resource === Resource.task) return Size.xl;
+    return Size.md;
+  }
 </script>
 
 {#key resource}
   <Panel
     {floatingButton}
     title={resource + "s"}
-    {isExpanded}
+    isExpanded={determineExpansionType(resource)}
     on:back
     info={tooltip ? { body: tooltip } : undefined}
     isShowBackButton={isLibraryNavContext}
+    panelSize={determineSize(resource)}
   >
     <div
       class="relative flex flex-col gap-4 h-full overflow-auto py-3"

@@ -201,7 +201,7 @@ export function resolveResourceIcon(resource: Resource) {
     case Resource.relation:
       return "ph:link-simple-horizontal-light";
     case Resource.goal:
-      return "ph:circle-light";
+      return "ph:target-light";
     case Resource.task:
       // return "ph:check-circle-light";
       return "ph:check-square-light";

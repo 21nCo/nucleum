@@ -186,7 +186,7 @@
                 onDrop: onReorderTasks
               }}
             >
-              {#each tasksUnderGoal as taskFocusItem, index (taskFocusItem)}
+              {#each tasksUnderGoal as taskFocusItem, index (taskFocusItem.id)}
                 {@const task = tasks.find(resourceInList(taskFocusItem.id))}
                 {#if task}
                   <div
@@ -231,6 +231,7 @@
             icon="minus-circled"
             size={Size.xs}
             type={ButtonVariant.DANGER}
+            style={ButtonStyle.OUTLINED}
             isPreventMinWidth={true}
             tooltip="Remove"
             on:click={onRemoveClicked}

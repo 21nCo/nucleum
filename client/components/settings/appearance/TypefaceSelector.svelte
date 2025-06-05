@@ -20,7 +20,8 @@
   };
 
   const fontOptions: FontOption[] = [
-    { label: "Space Grotesk", value: "Space Grotesk", badge: "Default" },
+    { label: "Sen", value: "Sen", badge: "Default" },
+    { label: "Space Grotesk", value: "Space Grotesk" },
     { label: "Hanken Grotesk", value: "Hanken Grotesk" },
     { label: "Sora", value: "Sora" },
     { label: "Inter", value: "Inter" },

@@ -45,6 +45,7 @@
     $view.isConstrainedWidth ||
     $goal?.accessMode === ResourceAccessMode.SPLIT ||
     $goal?.accessMode === ResourceAccessMode.FSPLIT ||
+    $goal?.accessMode === ResourceAccessMode.INLINE ||
     containerWidth < 800;
   $: tabs = resolvePanelSwitcherItems($goal, isConstrainedWidth);
 
@@ -205,7 +206,7 @@
     >
       {#if !isConstrainedWidth}
         <aside
-          class="flex flex-col gap-4 bg--bgs2 border border-brs3 rounded-lg p-4 w-96 2k:w-[30rem]"
+          class="flex flex-col gap-4 bg--bgs2 border border-brs3 rounded-lg p-4 w-96 2k:w-[30rem] overflow-auto"
         >
           <GoalInfoPanel
             {goal}

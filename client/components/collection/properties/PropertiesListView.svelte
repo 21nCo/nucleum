@@ -119,9 +119,13 @@
         !isRenderAsColumn && {
           border: true,
           "border-brs3":
-            isCollapsed || isCollapserHovered || resource === Resource.goal,
+            isCollapsed ||
+            isCollapserHovered ||
+            (resource === Resource.goal && !$view.isConstrainedWidth),
           "border-transparent":
-            !isCollapsed && !isCollapserHovered && resource !== Resource.goal
+            !isCollapsed &&
+            !isCollapserHovered &&
+            !(resource === Resource.goal && !$view.isConstrainedWidth)
         }
       )}
     >

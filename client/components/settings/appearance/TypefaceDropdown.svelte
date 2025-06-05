@@ -29,7 +29,8 @@
         {
           "bg-bgs2": font.value === selectedValue,
           "hover:bg-bgs2": font.value !== selectedValue,
-          "text-sm": size === Size.sm
+          "text-b2": size === Size.sm,
+          "font-[401]": font.value === "Space Grotesk"
         }
       )}
       style="font-family: '{font.value}'"

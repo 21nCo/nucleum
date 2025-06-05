@@ -135,6 +135,7 @@ export interface IFocusItemsStore extends IObservableStoreSubject {
    */
   tasks?: IFocusTask[];
   items: IFocusItem[];
+  removedItems?: IFocusItem[];
   recents?: {
     id: IRecordId;
     item: any;

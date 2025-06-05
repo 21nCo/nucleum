@@ -91,6 +91,9 @@ function initTodayFocus() {
   };
 }
 
+/**
+ * @deprecated - use preset name from preset item instead
+ */
 export const newPresetLabel = writable<string>("");
 
 export const currentFocusItem = writable<ICurrentFocusItem | undefined>(
@@ -287,8 +290,8 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     function scheduleBreakReminderNotification(isNotified: boolean = false) {
       let breakReminderSetting =
         session.composition.breakType === BreakCompositionType.REMINDER
-          ? session.composition?.breakReminder ??
-            get(pointronPreferences)?.breakReminder
+          ? (session.composition?.breakReminder ??
+            get(pointronPreferences)?.breakReminder)
           : undefined;
       if (!breakReminderSetting) return isNotified;
       timeRemainingToTakeBreak = breakReminderSetting - session.timeElapsed;
@@ -627,7 +630,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
         ...currentLastBar,
         duration: currentLastBar.start
           ? (new Date().getTime() - currentLastBar.start) / 1000
-          : currentLastBar.duration ?? 0 + params.timeElapsed
+          : (currentLastBar.duration ?? 0 + params.timeElapsed)
       };
       return { intervals: [...session.intervals, lastBar], isContinueSession };
     }
@@ -1139,16 +1142,20 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     this.onComposeComplete();
   }
 
-  async saveCurrentCompositionAsPreset(goals: IRecordId[] = []) {
+  async saveCurrentCompositionAsPreset(params: {
+    goals: IRecordId[];
+    name: string;
+  }) {
     let n = this.get();
     if (!n.composition) return;
-    const name = get(newPresetLabel);
-    return pointronPreferences.addPreset({
+    const result = await pointronPreferences.addPreset({
       ...n.composition,
-      name,
+      name: params.name,
       id: generateSimpleRandomId(),
-      goals
+      goals: params.goals
     });
+    toasts.success("Preset saved successfully");
+    return result;
   }
 
   /**
@@ -1224,7 +1231,8 @@ export const lastActiveGoalIdForEditing = writable<IRecordId | undefined>(
 );
 
 const seedFocusItemsStore: IFocusItemsStore = {
-  items: []
+  items: [],
+  removedItems: []
 };
 
 class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
@@ -1234,7 +1242,7 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
   reset(isPersist: boolean = false) {
     logger.log({ context: "focus items store - reset" });
     this.modify(
-      { items: [] },
+      { items: [], removedItems: [] },
       {
         isPersist
       }
@@ -1287,11 +1295,32 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
 
   async addTask(id: IRecordId, goalId?: IRecordId) {
     let n = this.get();
-    if (goalId && !n.items.some(resourceInList(goalId))) {
-      n.items.push({ id: goalId, tasks: [], blocks: [] });
-    }
     if (n.items.some(resourceInList(id)))
       throw new Error("Task already exists");
+    let blocks:
+      | {
+          start: number;
+          end: number;
+        }[]
+      | undefined = undefined;
+    const removedTask = n.removedItems?.find(resourceInList(id));
+    if (removedTask) {
+      n.removedItems =
+        n.removedItems?.filter((item) => !isSameResource(item, id)) ?? [];
+      blocks = removedTask.blocks ?? [];
+    }
+
+    if (goalId && !n.items.some(resourceInList(goalId))) {
+      const removedGoal = n.removedItems?.find(resourceInList(goalId));
+      if (removedGoal) {
+        n.removedItems =
+          n.removedItems?.filter((item) => !isSameResource(item, goalId)) ?? [];
+        n.items.push({ ...removedGoal, tasks: [] });
+      } else {
+        n.items.push({ id: goalId, tasks: [], blocks: [] });
+      }
+    }
+
     this.modify({
       items: [
         ...(n.items.map((x: IFocusItem) => {
@@ -1302,7 +1331,7 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
         {
           id,
           tasks: [],
-          blocks: []
+          blocks: [...(blocks ?? [])]
         }
       ]
     });
@@ -1318,7 +1347,15 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
   async addGoal(id: IRecordId) {
     let n = this.get();
     if (n.items.some(resourceInList(id))) return;
-    n.items.push({ id, tasks: [], blocks: [] });
+
+    const removedGoal = n.removedItems?.find(resourceInList(id));
+    if (removedGoal) {
+      n.removedItems =
+        n.removedItems?.filter((item) => !isSameResource(item, id)) ?? [];
+      n.items.push(removedGoal);
+    } else {
+      n.items.push({ id, tasks: [], blocks: [] });
+    }
     this.modify(n);
     lastActiveGoalIdForEditing.set(id);
   }
@@ -1347,6 +1384,15 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
     if (!n || n.items.length === 0) return;
     const removedItem = n.items.find((item) => isSameResource(item.id, id));
     if (!removedItem) return;
+
+    if (!n.removedItems) n.removedItems = [];
+    const itemsToRemove = n.items.filter(
+      (item) =>
+        isSameResource(item.id, id) ||
+        removedItem.tasks?.some(resourceInList(item.id))
+    );
+    n.removedItems.push(...itemsToRemove);
+
     n.items = n.items.filter(
       (item) =>
         !isSameResource(item.id, id) &&
@@ -1359,6 +1405,7 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
       }
       return item;
     });
+
     this.modify(n);
   }
 
@@ -1519,14 +1566,19 @@ class SessionStore extends ResourceStore<ISession> {
     };
     const logs: OmitForCaptureWithId<ISessionLog>[] = [];
 
-    focusItemStore.items.forEach((item: IFocusItem) => {
+    // Process both active items and removed items to preserve all focus data
+    const allItems = [
+      ...focusItemStore.items,
+      ...(focusItemStore.removedItems ?? [])
+    ];
+
+    allItems.forEach((item: IFocusItem) => {
       const resourceType = determineResourceType(item.id);
       const goalId =
         resourceType === Resource.goal
           ? item.id
-          : focusItemStore.items.find((x) =>
-              x.tasks?.some(resourceInList(item.id))
-            )?.id ?? "";
+          : (allItems.find((x) => x.tasks?.some(resourceInList(item.id)))?.id ??
+            "");
       const taskId = resourceType === Resource.task ? item.id : "";
       if (item.blocks && item.blocks.length > 0) {
         logs.push(

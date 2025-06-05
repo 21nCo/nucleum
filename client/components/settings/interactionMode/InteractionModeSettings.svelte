@@ -21,6 +21,14 @@
       isProductScoped: true
     }
   );
+
+  // Auto-change from deprecated KEYBOARD_CENTRIC to DEFAULT
+  if (selectedMode === InteractionMode.KEYBOARD_CENTRIC) {
+    selectedMode = InteractionMode.DEFAULT;
+    uiState.setState(Action.MODE_OF_INTERACTION, selectedMode, {
+      isProductScoped: true
+    });
+  }
   let isShortcutHintsEnabled = uiState.getState(UIState.HIDE_SHORTCUT_HINTS, {
     isDeviceScoped: true,
     isProductScoped: true

@@ -28,7 +28,7 @@
   export let titleStyle: TextStyle = TextStyle.PAGE_HEADING_SUBTLE;
   export let floatingButton: IButtonParams | IButtonParams[] | undefined =
     undefined;
-  export let panelSize: Size.sm | Size.md | Size.lg = Size.md;
+  export let panelSize: Size.sm | Size.md | Size.lg | Size.xl = Size.md;
   export let isNavActivated: boolean = false;
   export let isShowBackButton: boolean = false;
   /**
@@ -57,6 +57,7 @@
   $: isShowCollapseButton =
     $view.display !== Display.TK &&
     !$view.isConstrainedWidth &&
+    panelSize !== Size.xl &&
     $appStore.interactionMode !== InteractionMode.COMMAND_ONLY &&
     $appStore.interactionMode !== InteractionMode.AGENT;
 
@@ -76,7 +77,8 @@
             "w-[20rem] min-w-[20rem]": panelSize === Size.sm,
             "w-[24rem] min-w-[24rem] 2k:w-[28rem] 2k:min-w-[28rem]":
               panelSize === Size.md,
-            "w-[28rem] min-w-[28rem]": panelSize === Size.lg
+            "w-[28rem] min-w-[28rem]": panelSize === Size.lg,
+            "w-1/2 min-w-1/2": panelSize === Size.xl
           }
       )}
       in:fly={{ x: -10 }}
@@ -109,7 +111,7 @@
             {/if}
           </div>
           <slot name="toprightactions">
-            {#if isShowCollapseButton}
+            {#if !isExpanded && isShowCollapseButton}
               <button
                 class="flex items-center text-fgs3 p-1 hover:bg-bgs2 rounded-md"
                 use:tooltip={{

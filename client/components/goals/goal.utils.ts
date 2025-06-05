@@ -6,7 +6,7 @@ export function resolveGoalTypeIcon(type: GoalType) {
     case GoalType.INDEFINITE:
       return "ph:infinity-light";
     case GoalType.DEFINITE:
-      return "ph:target-light";
+      return "ph:timer-light";
   }
 }
 

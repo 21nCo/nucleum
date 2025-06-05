@@ -46,7 +46,7 @@
 >
   <div
     class={cn(
-      "flex flex-col gap-8 items-center justify-between overflow-auto w-full bg-bgs2",
+      "flex flex-col items-center justify-between overflow-auto w-full bg-bgs2",
       {
         "rounded-lg border-none": isRounded,
         "border-r border-bgs4": !isRounded

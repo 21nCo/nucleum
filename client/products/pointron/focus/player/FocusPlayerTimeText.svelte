@@ -12,20 +12,34 @@
   import { onMount } from "svelte";
   import SessionStatusLabel from "../elements/sessionTimeText/SessionStatusLabel.svelte";
   import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  import type { IRecordId } from "$lib/client/types/data.type";
   export let context: SessionUIContext = SessionUIContext.DEFAULT;
-  let currentTask: any;
+  let currentTask: { id: IRecordId; label: string } | undefined = undefined;
   onMount(() => {
     const sub = currentFocusItem.subscribe(async (s) => {
-      if (s && !isSameResource(currentTask, s)) {
-        currentTask = await activeSession.resolveCurrentFocusItemData({
-          item: s
-        });
+      if (
+        (s && currentTask && !isSameResource(currentTask, s)) ||
+        !s ||
+        (s && !currentTask)
+      ) {
+        refreshCurrentTask();
       }
     });
     return () => {
       sub();
     };
   });
+  async function refreshCurrentTask() {
+    const focusItem = $currentFocusItem;
+    if (focusItem) {
+      currentTask = await activeSession.resolveCurrentFocusItemData({
+        item: focusItem
+      });
+    } else {
+      currentTask = undefined;
+    }
+  }
 
   $: isBreakReminderMode =
     $activeSession.timeRemainingToTakeBreak != undefined &&
@@ -46,7 +60,7 @@
       >
         {context === SessionUIContext.GOAL_PAGE
           ? "Focusing now..."
-          : currentTask?.label ?? ""}
+          : (currentTask?.label ?? "")}
       </div>
     {:else}
       <SessionStatusLabel
@@ -59,3 +73,9 @@
     {formatSeconds($activeSession.timeElapsed, TimeFormat.CLOCK)}
   </div>
 </div>
+{#if currentTask}
+  <ComponentBaseLayer
+    subscribeToRecords={[currentTask?.id]}
+    on:change={() => refreshCurrentTask()}
+  />
+{/if}
