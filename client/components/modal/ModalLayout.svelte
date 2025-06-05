@@ -23,6 +23,7 @@
   import { tooltip } from "$lib/client/actions/popover.action";
   import { Placement } from "$lib/client/types/direction.enum";
   import { ResourceAccessMode } from "../flux/resourceStores/resource.type";
+  import view from "$lib/client/stores/view.store";
 
   export let path: string;
   export let resource: string | undefined = undefined;
@@ -96,7 +97,7 @@
     class={cn(
       "relative modal flex flex-col items-center justify-between w-full h-full  rounded-md",
       {
-        "dark:border border-brs3": !isInFocusMode,
+        "dark:border border-brs3": !isInFocusMode && !$view.isConstrainedWidth,
         "gap-4": !params.layout?.ignoreSafeArea && size === Size.xs,
         "gap-4 lg:gap-6": !params.layout?.ignoreSafeArea && size !== Size.xs,
         "pt-6": !params.title && !params.layout?.ignoreSafeArea
