@@ -337,7 +337,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
   }
   link(): IContextMenuItem {
     return {
-      label: "Link or Add to collection",
+      label: "Add a link",
       value: "link",
       icon: "ph:link-light",
       callback: async () => {

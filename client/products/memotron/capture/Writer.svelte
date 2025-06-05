@@ -77,6 +77,9 @@
         on:action={(e) => {
           dispatch("change", e.detail);
         }}
+        on:restructure={(e) => {
+          dispatch("change", e.detail);
+        }}
       />
     </div>
     <!-- TODO - add condition for if headings present or if mentions present -->

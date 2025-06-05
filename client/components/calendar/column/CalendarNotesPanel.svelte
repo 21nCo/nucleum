@@ -68,10 +68,12 @@
 </script>
 
 {#await initialize()}
-  <EmptyStatusView
-    isLoadingState={true}
-    loadingAnimation={LoadingAnimationType.PAGE_PULSE}
-  />
+  <div class="flex items-center justify-center h-full mo:px-0 px-10 pt-6">
+    <EmptyStatusView
+      isLoadingState={true}
+      loadingAnimation={LoadingAnimationType.PAGE_PULSE}
+    />
+  </div>
 {:then _}
   <NodeContent {node} {mdId} />
 {:catch _}

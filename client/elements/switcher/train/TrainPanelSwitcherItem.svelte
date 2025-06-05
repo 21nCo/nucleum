@@ -20,7 +20,7 @@
 </script>
 
 <button
-  class={cn("relative min-w-fit", {
+  class={cn("relative min-w-fit w-fit", {
     "rounded-full px-6 py-2": size === Size.lg,
     "rounded-[5px] px-3 py-1 w-24": size === Size.md,
     "rounded-[5px] px-3 py-1 w-16": size === Size.sm,

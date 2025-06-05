@@ -945,6 +945,7 @@ export function resolveNodeContextMenu(
     let primaryItems = [
       resourceActions.select(accessPoint, params?.accessPointId),
       resourceActions.star(),
+      resourceActions.addToCollection(),
       resourceActions.link(),
       resourceActions.edit(accessPoint),
       resourceActions.copyLink()

@@ -325,7 +325,10 @@
   }
 
   function refreshEmptyState(e?: CustomEvent) {
-    logger.log({ at: "Capture.svelte - refreshEmptyState", e });
+    logger.log({
+      at: "Capture.svelte - refreshEmptyState",
+      e
+    });
     if (isWindowDnD) {
       isEmptyState = false;
       return;
@@ -449,9 +452,15 @@
     );
   }
 
+  /**
+   * Note: Timeout is added to refreshEmptyState as the the captureStore.body is not populated immediately in case of pasting something into capture.
+   * @param e
+   */
   function onContentChange(e: CustomEvent) {
-    refreshEmptyState();
     debouncedPersist();
+    setTimeout(() => {
+      refreshEmptyState();
+    }, 100);
   }
 
   const debouncedPersist = debouncer(persist, 1000);
