@@ -47,9 +47,13 @@
 
   const dispatch = createEventDispatcher();
   const nodeContext = getContext<any>("node");
+  const captureContext = getContext<any>("capture");
   let captureStore: IActiveCaptureStore | undefined;
-  $: if (nodeContext?.id) {
-    captureStore = ActiveCaptureStore.resolve(nodeContext?.id + "capture");
+  $: if (nodeContext?.id || captureContext?.id) {
+    const id = nodeContext?.id
+      ? nodeContext?.id + "capture"
+      : captureContext?.id;
+    captureStore = ActiveCaptureStore.resolve(id);
   }
   const contentContext = getContext<any>("content");
   export let id: IRecordId;
