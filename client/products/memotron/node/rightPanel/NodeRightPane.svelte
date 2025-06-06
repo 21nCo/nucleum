@@ -13,6 +13,8 @@
   import NodeRightPanelContent from "./NodeRightPaneContent.svelte";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import { createEventDispatcher } from "svelte";
+  import view from "$lib/client/stores/view.store";
+  import { Display } from "$lib/client/types/view.type";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let mdId: string;
@@ -67,7 +69,10 @@
       $node.accessMode !== ResourceAccessMode.FULL && isValidPane,
     "min-w-[28rem]": isValidPane,
     "w-full":
-      $node.accessMode === ResourceAccessMode.FULL && !$node.config?.isWidened
+      $node.accessMode === ResourceAccessMode.FULL &&
+      !$node.config?.isWidened &&
+      isValidPane &&
+      $view.display === Display.TK
   })}
 >
   <div

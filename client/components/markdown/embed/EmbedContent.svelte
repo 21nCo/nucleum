@@ -233,7 +233,9 @@
         class={cn("flex w-full", {
           // "min-h-[40rem] h-[40rem]": _mediaBlock.contentType === NodeType.PDF,
           "flex-grow justify-center": isResizable,
-          "h-auto max-h-[20rem]": !isResizable,
+          "h-auto max-h-[20rem]":
+            !isResizable &&
+            ![NodeType.TWEET].includes(_mediaBlock?.contentType),
           "overflow-auto": _mediaBlock?.contentType === NodeType.GIST
         })}
       >

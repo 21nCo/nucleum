@@ -9,6 +9,8 @@
   import { MediaGridType } from "$lib/client/products/memotron/node/node.type";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import Button from "$lib/client/elements/button/Button.svelte";
+  import InlineFeedbackText from "$lib/client/extensions/clipper/InlineFeedbackText.svelte";
+  import { AlertType } from "$lib/client/types/notification.type";
 
   export let config: any;
   export let handleFileUpload;
@@ -17,6 +19,7 @@
   export let chevDown;
   export let handleNewImageLoad;
   export let columnArray;
+  export let isUploadInProgress;
   let maxLength = 500;
 
   let isGapSliderEnabled: Boolean = false;
@@ -52,14 +55,23 @@
       config.type = e.detail;
     }}
   />
+  <UploadButton
+    on:input={handleFileUpload}
+    type={ButtonVariant.SECONDARY}
+    size={Size.sm}
+    accept="image/*,audio/*,video/*,application/pdf"
+  />
+  <div>
+    {#if isUploadInProgress}
+      <InlineFeedbackText
+        feedback={{
+          type: AlertType.PROGRESS,
+          message: "Uploading..."
+        }}
+      />
+    {/if}
+  </div>
   {#if config.isHovered}
-    <UploadButton
-      on:input={handleFileUpload}
-      type={ButtonVariant.SECONDARY}
-      size={Size.sm}
-      accept="image/*,audio/*,video/*,application/pdf"
-    />
-
     <!-- <input
             type="text"
             placeholder="Type URL"

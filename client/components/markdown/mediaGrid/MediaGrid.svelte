@@ -51,6 +51,7 @@
   export let block: IMediaGridNode;
   export let mdStore: MdStoreType;
   export let files: IFile[] = [];
+  let isUploadInProgress: boolean = false;
 
   if (block.body == "") {
     block.body = {};
@@ -128,17 +129,24 @@
           autoItems.length - 1 == autoGridNewItemIndex
             ? autoItems.length - 2
             : autoItems.length - 1;
-        autoItems[autoGridNewItemIndex].style.height =
-          `${autoItems[i]?.clientHeight}px`;
-        dropHereHeight = autoItems[i]?.clientHeight;
+        if (
+          autoItems[autoGridNewItemIndex] &&
+          autoItems[autoGridNewItemIndex].style
+        ) {
+          autoItems[autoGridNewItemIndex].style.height =
+            `${autoItems[i]?.clientHeight}px`;
+          dropHereHeight = autoItems[i]?.clientHeight;
+        }
       }
       autoItems.forEach((item) => {
-        item.style.height = `360px`;
+        if (item && item.style) item.style.height = `360px`;
       });
       while (autoGrid.scrollHeight > autoGrid.clientHeight) {
         autoItems.forEach((item) => {
-          item.style.height = `${item.clientHeight - 10}px`;
-          dropHereHeight = item.clientHeight;
+          if (item && item.style) {
+            item.style.height = `${item.clientHeight - 10}px`;
+            dropHereHeight = item.clientHeight;
+          }
         });
       }
     } else {
@@ -440,6 +448,7 @@
     columnIndex: number | undefined = undefined
   ) {
     preventDefault(e);
+    isUploadInProgress = true;
     let columnNo: number, index: number;
     if (
       column == undefined ||
@@ -465,7 +474,10 @@
        */
       if (dt?.files[0]) file = dt.files[0];
       else if (e?.target?.files[0]) file = e.target.files[0];
-      else return;
+      else {
+        isUploadInProgress = false;
+        return;
+      }
       fileRecord = await uploadToS3(file);
     }
     console.log("fileRecord", fileRecord);
@@ -503,6 +515,7 @@
       else sortItems(MediaGridType.COLUMNS);
       updateColumnArray(columnNo);
     }, 3000);
+    isUploadInProgress = false;
   }
   /**
    * Used whenever an item need to be moved in reverse direction, either from right to left in auto mode or bottom to top in column mode.
@@ -814,7 +827,13 @@
       {#if items.length == 0}
         <button
           on:drop={handleFileUpload}
-          class="absolute text-fgs3 w-full h-full bg-bgs2 border border-brs3 border-dashed flex items-center justify-center rounded-md"
+          class={cn(
+            "absolute text-fgs3 w-full h-full border border-brs3 border-dashed flex items-center justify-center rounded-md",
+            {
+              "bg-bgs2": !config.isAutoHighlighted,
+              "bg-bgs4": config.isAutoHighlighted
+            }
+          )}
         >
           <span>Drop and drop media files here</span>
         </button>
@@ -886,6 +905,7 @@
       {handleFileUpload}
       {handleNewImageLoad}
       {sortItems}
+      {isUploadInProgress}
       bind:config
       {columnArray}
       on:delete={onDelete}
