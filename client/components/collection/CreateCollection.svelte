@@ -198,6 +198,9 @@
         on:change={(e) => {
           coverPhoto = e.detail;
         }}
+        on:select={(e) => {
+          coverPhoto = e.detail;
+        }}
       />
     </div>
   {:else}

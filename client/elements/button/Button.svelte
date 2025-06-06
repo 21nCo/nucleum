@@ -121,6 +121,8 @@
     triggerMethod: tooltip ? [PopoverTriggerMethod.HOVER] : [],
     placement: tooltipOptions.placement,
     offsetInPx: tooltipOptions.offsetInPx,
+    isSecondary: true,
+    id: `button-tooltip-popover-${id || "default"}`,
     componentProps: tooltip
       ? {
           tooltip,

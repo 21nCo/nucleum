@@ -60,6 +60,7 @@
   bind:this={popoverRef}
   use:popover={{
     content: TimeUnitDropdownPopover,
+    id: "time-unit-dropdown-popover",
     componentProps: {
       units,
       currentTimeUnit,

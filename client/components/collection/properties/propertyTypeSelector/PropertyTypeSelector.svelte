@@ -96,6 +96,7 @@
   use:popover={{
     content: PropertyTypeSelectorPopover,
     placement: Placement.Right,
+    id: `property-type-selector-popover-${row.id || "default"}`,
     componentProps: {
       groups,
       options,

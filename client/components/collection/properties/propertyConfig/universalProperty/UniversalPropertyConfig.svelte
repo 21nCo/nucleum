@@ -42,6 +42,7 @@
   use:popover={{
     content: UniversalPropertyConfigPopover,
     isSpanToTriggerWidth: true,
+    id: `universal-property-config-popover-${property.id || "default"}`,
     componentProps: {
       config: property.config,
       onChange: (e) => {

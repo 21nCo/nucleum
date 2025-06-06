@@ -40,6 +40,7 @@
       bind:this={popoverRef}
       use:popover={{
         content: RatingAvatarPicker,
+        id: `rating-property-config-popover-${property.id || "default"}`,
         componentProps: {
           onAvatarSelect,
           onSizeSelect,

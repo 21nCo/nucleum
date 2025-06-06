@@ -31,6 +31,7 @@
       : [PopoverTriggerMethod.CLICK, PopoverTriggerMethod.HOVER],
     placement: info.placement ?? Placement.Right,
     isRenderAsModalForCW: true,
+    id: "form-label-tooltip-popover",
     componentProps: {
       info,
       onClose: closeTooltip

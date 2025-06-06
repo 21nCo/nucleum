@@ -333,7 +333,7 @@
         on:click={() => navigateYear(1)}
       />
     </div>
-    {#if !isSameDay(selectedDate, new Date())}
+    <!-- {#if !isSameDay(selectedDate, new Date())}
       <Button
         icon="calendar"
         label="Today"
@@ -343,7 +343,7 @@
           selectedYear = today.year();
         }}
       />
-    {/if}
+    {/if} -->
   </div>
 
   <div class="grid grid-rows-2 gap-1">

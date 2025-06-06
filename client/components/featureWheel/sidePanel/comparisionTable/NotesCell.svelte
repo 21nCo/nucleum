@@ -21,6 +21,7 @@
       isRenderAsSibling: true,
       offsetInPx: 12,
       placement: Placement.Left,
+      id: "notes-cell-popover",
       componentProps: {
         notes
       }

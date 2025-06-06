@@ -51,6 +51,7 @@
       content: AvatarPicker,
       isRenderAsModalForCW: true,
       cwModalPosition: Placement.Top,
+      id: "avatar-picker-popover",
       componentProps: {
         avatarClickCallback: handleAvatarEmitted,
         deleteCallback: handleDeleteEmitted,

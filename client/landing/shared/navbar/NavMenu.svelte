@@ -16,6 +16,7 @@
         content: NavBarExpandPopover,
         isRenderAsSibling: true,
         offsetInPx: 12,
+        id: `nav-menu-popover-${item.label.toLowerCase().replace(/\s+/g, "-")}`,
         componentProps: {
           type: item.expandRender
         }

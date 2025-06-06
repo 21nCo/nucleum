@@ -33,6 +33,7 @@
     content: param.popoverAction?.content,
     placement: param.popoverAction?.placement,
     isRenderAsModalForCW: param.popoverAction?.isRenderAsModalForCW,
+    id: `floating-button-popover-${index}`,
     componentProps: {
       ...param.popoverAction?.componentProps,
       onSelect: (e) => {

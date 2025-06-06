@@ -51,6 +51,7 @@
         content: DraftsPopover,
         placement: Placement.TopCenter,
         isRenderAsModalForCW: true,
+        id: "capture-drafts-popover",
         componentProps: {
           drafts,
           onClose: hidePopover,

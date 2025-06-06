@@ -40,6 +40,7 @@
       use:popover={{
         content: SelectOptionsEditor,
         placement: Placement.BottomCenter,
+        id: `select-property-config-popover-${property.id || "default"}`,
         componentProps: {
           config: property.config,
           defaultOptionId: property.default,

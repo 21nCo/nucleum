@@ -43,6 +43,7 @@
       use:popover={{
         placement: Placement.BottomCenter,
         content: TimeScaleSelector,
+        id: "time-span-scale-popover",
         componentProps: {
           scales: availableScales,
           onSelect: handleScaleSelect

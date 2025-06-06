@@ -16,6 +16,7 @@
     content: GroupingAndFiltersPopover,
     placement: Placement.BottomRight,
     isRenderAsModalForCW: true,
+    id: "analytics-grouping-filters-popover",
     componentProps: {
       isGroupByTopLevelGoals: card.isGroupByTopLevelGoals,
       onGroupByChange

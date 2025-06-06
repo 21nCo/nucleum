@@ -47,6 +47,7 @@
     )}
     use:popover={{
       content: ColorPickerPopover,
+      id: "color-picker-mini-popover",
       componentProps: {
         hue: hue ?? 0,
         onChangeCallback: onChange,

@@ -72,6 +72,7 @@
   bind:this={ref}
   use:popover={{
     content: ArrangementSelectorPopover,
+    id: "arrangement-selector-popover",
     componentProps: {
       density,
       arrangement,

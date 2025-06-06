@@ -77,6 +77,7 @@
       content: TypefaceDropdown,
       placement: Placement.BottomCenter,
       isSpanToTriggerWidth: true,
+      id: "typeface-selector-popover",
       componentProps: {
         fontOptions,
         selectedValue: selectedFont.value,

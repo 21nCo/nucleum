@@ -49,6 +49,7 @@
         use:popover={{
           content: BreadcrumbsOverflowPopover,
           triggerMethod: [PopoverTriggerMethod.CLICK],
+          id: "breadcrumbs-overflow-popover",
           componentProps: {
             items: items.slice(1, -1),
             replaceId: items[items.length - 1].id

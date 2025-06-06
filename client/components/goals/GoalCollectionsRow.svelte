@@ -114,6 +114,7 @@
         content: LinkSearch,
         isRenderAsModalForCW: true,
         cwModalPosition: Placement.Top,
+        id: "goal-collections-row-popover",
         componentProps: {
           onSelectCallback: onSelect,
           searchQuery: "",

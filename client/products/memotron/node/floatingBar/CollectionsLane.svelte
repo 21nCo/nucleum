@@ -120,6 +120,7 @@
         content: LinkSearch,
         isRenderAsModalForCW: true,
         cwModalPosition: Placement.Top,
+        id: "collections-lane-popover",
         componentProps: {
           onSelectCallback: onSelect,
           searchQuery: "",
