@@ -31,7 +31,7 @@ import {
   IHostedZone,
   RecordTarget
 } from "aws-cdk-lib/aws-route53";
-import { PointronLambdaFunctions } from "./pointronLambdaFunctions";
+// import { PointronLambdaFunctions } from "./pointronLambdaFunctions";
 import { SyncLambdaFunctions } from "./v2/syncLambdaFunctions";
 import { AccountLambdaFunctions as AccountLambdaFunctionsV2 } from "./v2/accountLambdaFunctions";
 import { PlanLambdaFunctions } from "./v2/planLambdaFunctions";
@@ -75,7 +75,7 @@ export class ServerlessRegionalStack extends NestedStack {
       lambdaEnvVars
     };
     new UtilsLambdaFunctions(this, "UtilsStack", lambaProps);
-    new PointronLambdaFunctions(this, "PointronStack", lambaProps, fileBuckets);
+    // new PointronLambdaFunctions(this, "PointronStack", lambaProps, fileBuckets);
     new AccountLambdaFunctions(this, "AccountStack", lambaProps);
     new SpacesLambdaFunctions(this, "SpacesStack", lambaProps);
 
