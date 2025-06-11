@@ -32,7 +32,7 @@ export class SurrealDatabaseProvider implements IDatabaseProvider {
     const timestamp = new Date().toISOString();
     const query = `select id from user:${userId}; create activity set userId = user:${userId}, timestamp = "${timestamp}", context = ${JSON.stringify(
       context
-    )}, activity = "${context.activity}";`;
+    )}, activity = "${context.activity ?? "unknown"}";`;
     return performQueryOnMasterDb(query);
   }
 
@@ -274,7 +274,7 @@ export class SurrealDatabaseProvider implements IDatabaseProvider {
     const query = resolvePlanQuery(userId);
     const result = await performQueryOnMasterDb(query);
     if (result?.[0]?.result?.[0]) {
-      return result[0].result[0];
+      return result[0].result;
     } else {
       return result?.[0]?.result;
     }

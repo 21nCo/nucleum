@@ -405,10 +405,12 @@ export class DynamoDBDatabaseProvider implements IDatabaseProvider {
     );
     const result = await Promise.all([user, userPlan]);
     if (result[0] && result[1]) {
-      return {
-        ...result[0],
-        userPlan: result[1].Item
-      };
+      return [
+        {
+          ...result[0],
+          userPlan: result[1].Item
+        }
+      ];
     }
     return null;
   }
