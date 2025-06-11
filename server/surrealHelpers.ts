@@ -9,7 +9,7 @@ import { DatabaseError } from "./common/errors";
 import {
   Agent,
   DatabaseQueryParams,
-  CONTEXT,
+  CONTEXT
 } from "./common/account/account.type";
 
 // }
@@ -22,8 +22,8 @@ export async function performQuery(body: any) {
       Authorization: "Basic " + process.env.VITE_AUTH,
       Accept: "application/json",
       NS: process.env.USER_NS ?? "",
-      DB: process.env.SURREAL_USER_DB ?? "",
-    },
+      DB: process.env.SURREAL_USER_DB ?? ""
+    }
   });
   return await response.json();
 }
@@ -31,7 +31,7 @@ export async function performQueryOnMasterDb(query: any) {
   return performRootQuery({
     query,
     dbType: CONTEXT.ADMIN,
-    instance: "db." + process.env.DOMAIN,
+    instance: "db." + process.env.DOMAIN
   });
 }
 
@@ -47,7 +47,7 @@ export async function performQueryOnRegionalDb(
     query,
     instance,
     dbType: props.context ?? CONTEXT.USER,
-    db: props.db,
+    db: props.db
   });
 }
 
@@ -64,7 +64,7 @@ export async function performAgentProxyQuery(query: any, agent: Agent) {
   return performQueryOnRegionalDb(query, {
     context: agent.context ? (agent.context as CONTEXT) : CONTEXT.USER,
     db: agent.db,
-    region: agent.region,
+    region: agent.region
   });
 }
 
@@ -86,10 +86,11 @@ async function performRootQuery(params: DatabaseQueryParams) {
     headers.append("DB", db);
     const body = `USE NAMESPACE ${namespace}; USE DATABASE ${db}; ${params.query}`;
     let endPoint = "https://" + params.instance + "/sql";
+    console.log({ endPoint, body });
     const response = await fetch(endPoint, {
       method: "POST",
       body,
-      headers,
+      headers
     });
     // const json = await response.text();
     // console.log({ json });

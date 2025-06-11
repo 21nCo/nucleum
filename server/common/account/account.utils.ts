@@ -1,12 +1,6 @@
-export function frameNonSensitiveUserInfo(userInfo: {
-  id: any;
-  emailParts: any;
-  nickName: any;
-  profilePictureUrl: any;
-  joinDate: any;
-  region: string;
-  isBootstrapped: boolean;
-}) {
+import { IUserProfileInfo } from "$lib/shared/types/account.type";
+
+export function frameNonSensitiveUserInfo(userInfo: IUserProfileInfo) {
   const {
     id,
     emailParts,

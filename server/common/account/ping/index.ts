@@ -1,10 +1,8 @@
-import { performQueryOnMasterDb } from "$lib/server/surrealHelpers";
+import { DatabaseProviderFactory } from "$lib/server/database/providers";
 
 export async function ping(userId: string, context: any) {
-  const timestamp = new Date().toISOString();
-  const query = `select id, userPlan.* as userPlan from user:${userId}; create activity set userId = user:${userId}, timestamp = "${timestamp}", context = ${JSON.stringify(
-    context
-  )}`;
-  const response = await performQueryOnMasterDb(query);
-  return response;
+  const provider = DatabaseProviderFactory.getProvider();
+  const userPlanResponse = await provider.getUserAndPlan(userId);
+  const logResponse = await provider.log(userId, context);
+  return [{ result: [userPlanResponse] }, logResponse];
 }

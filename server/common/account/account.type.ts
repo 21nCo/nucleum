@@ -35,3 +35,7 @@ export enum MemberRole {
   ADMIN = "admin",
   MEMBER = "member"
 }
+
+export type IActivity = {
+  activity: string;
+};

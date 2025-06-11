@@ -13,6 +13,9 @@ export type UserAccount = {
   sessionType: UserSessionType;
 };
 
+/**
+ * @deprecated - use IUserProfileInfo instead from shared.types
+ */
 export type UserInformation = {
   id: string;
   email: string;
