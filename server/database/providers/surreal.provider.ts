@@ -20,8 +20,14 @@ import {
 } from "$lib/server/surrealHelpers";
 import { performQueryOnBehalfOfUser } from "$lib/server/common/user/user";
 import { resolvePlanQuery } from "$lib/server/common/plan/plan.utils";
+import { SyncProvider } from "$lib/server/common/sync/providers";
 
 export class SurrealDatabaseProvider implements IDatabaseProvider {
+  private isSurrealSyncProvider: boolean;
+  constructor() {
+    this.isSurrealSyncProvider =
+      process.env.SYNC_PROVIDER?.toLowerCase() === SyncProvider.SURREAL;
+  }
   /**
    * Logs user activity with timestamp and context
    * @param userId - The ID of the user performing the activity
@@ -113,6 +119,9 @@ export class SurrealDatabaseProvider implements IDatabaseProvider {
     id: string,
     params: { scope: CONTEXT; host: string; region?: string }
   ) {
+    if (!this.isSurrealSyncProvider) {
+      return;
+    }
     const ns =
       params.scope === CONTEXT.USER
         ? process.env.USER_NS ?? "user"
@@ -195,10 +204,12 @@ export class SurrealDatabaseProvider implements IDatabaseProvider {
   async deleteUser(agent: Agent): Promise<any> {
     const query = `DELETE user WHERE meta::id(id) = "${agent.id}";`;
     const dbRemovalQuery = `USE NAMESPACE ${process.env.USER_NS}; REMOVE DATABASE ${agent.id};`;
-    await performQueryOnRegionalDb(dbRemovalQuery, {
-      region: agent.region,
-      db: agent.id
-    });
+    if (this.isSurrealSyncProvider) {
+      await performQueryOnRegionalDb(dbRemovalQuery, {
+        region: agent.region,
+        db: agent.id
+      });
+    }
     return performQueryOnMasterDb(query);
   }
 
