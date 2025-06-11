@@ -266,13 +266,13 @@ export class SurrealDatabaseProvider implements IDatabaseProvider {
    * @returns Promise resolving to the created user plan
    */
   async createUserPlan(planData: UserPlanCreateData): Promise<any> {
-    const query = `create userPlan content {
-      id: userPlan:${planData.id},
-      userId: user:${planData.userId},
-      plan: "${planData.plan}",
-      trialPlan: ${JSON.stringify(planData.trialPlan)},
-      discount: ${JSON.stringify(planData.discount)},
-    }`;
+    const query = `create userPlan content { id: userPlan:${
+      planData.id
+    }, userId: user:${planData.userId}, plan: "${
+      planData.plan
+    }", trialPlan: ${JSON.stringify(
+      planData.trialPlan
+    )}, discount: ${JSON.stringify(planData.discount)}}`;
     return performQueryOnMasterDb(query);
   }
 

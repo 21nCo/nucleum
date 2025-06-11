@@ -165,7 +165,7 @@ async function bootstrapUserAccount(authHeader: any, body: any) {
   console.log("userPlan response", { userPlanResponse });
   const response = await provider.bootstrapUser(id, {
     region,
-    userPlanId: `userPlan:${userPlanId}`
+    userPlanId
   });
   if (!response) throw new DatabaseError("Bootstrapping failed");
   return await generateToken(id, response, { isTrusted: true });
