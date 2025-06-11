@@ -18,14 +18,14 @@ export class DatabaseProviderFactory {
         process.env.DB_PROVIDER?.toLowerCase() as DatabaseProvider;
 
       switch (providerType) {
-        case DatabaseProvider.SURREAL:
-          console.log("Using Surreal database provider");
-          this.instance = new SurrealDatabaseProvider();
-          break;
         case DatabaseProvider.DYNAMODB:
-        default:
           console.log("Using DynamoDB database provider");
           this.instance = new DynamoDBDatabaseProvider();
+          break;
+        case DatabaseProvider.SURREAL:
+        default:
+          console.log("Using Surreal database provider");
+          this.instance = new SurrealDatabaseProvider();
           break;
       }
     }
