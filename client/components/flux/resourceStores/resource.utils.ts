@@ -242,11 +242,14 @@ export function resolveResourceIcon(resource: Resource) {
 
 export const availableResources = [
   Resource.collection,
+  Resource.combination,
   Resource.node,
   Resource.relation,
   Resource.goal,
   Resource.task
 ];
+
+export const betaResources = [Resource.combination];
 
 export function resolveResourceSwitcher(): IResourceSwitchItem[] {
   const resources = [
@@ -275,7 +278,11 @@ export function resolveResourceSwitcher(): IResourceSwitchItem[] {
     value: resource,
     icon: resolveResourceIcon(resource),
     isDisabled: !availableResources.includes(resource),
-    badge: !availableResources.includes(resource) ? "Planned" : undefined
+    badge: !availableResources.includes(resource)
+      ? "Planned"
+      : betaResources.includes(resource)
+        ? "New"
+        : undefined
   }));
 }
 

@@ -44,7 +44,6 @@ import {
 import { Resource } from "../components/flux/resourceStores/resource.enum";
 import CreateCollection from "$lib/client/components/collection/CreateCollection.svelte";
 import PropertiesEditor from "$lib/client/components/collection/properties/PropertiesEditor.svelte";
-import CreateCombination from "$lib/client/components/combination/CreateCombination.svelte";
 import { linker } from "../products/memotron/linking/link.store";
 import { ResourceError } from "$lib/client/components/error/errors";
 import { ResourceErrorCode } from "$lib/client/components/error/error.type";
@@ -590,20 +589,6 @@ export const globalActions: IAction[] = [
     modalParams: {
       layout: {
         size: Size.xxl,
-        orientation: Orientation.Horizontal
-      }
-    }
-  },
-  {
-    action: resourceAction(Resource.combination, ResourceActionType.CREATE),
-    component: CreateCombination,
-    label: "Create a new combination",
-    type: ActionType.MODAL,
-    isInactive: true,
-    modalParams: {
-      title: "Create a new combination",
-      layout: {
-        size: Size.md,
         orientation: Orientation.Horizontal
       }
     }

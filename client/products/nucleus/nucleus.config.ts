@@ -27,8 +27,10 @@ import {
   sessionLogStore
 } from "$lib/client/products/pointron/logs/log.store";
 import { pointronPreferences } from "../pointron/pointron.store";
+import { combinationStore } from "$lib/client/components/combination/combination.store";
 
 export const nucleusCacheableStores: IStore[] = [
+  combinationStore,
   nodeStore,
   goalStore,
   taskStore,

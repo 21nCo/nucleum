@@ -140,11 +140,6 @@ export const memotronActions: IAction[] = [
     }
   },
   {
-    action: Resource.combination,
-    type: ActionType.MODAL,
-    component: ComingSoonView
-  },
-  {
     action: MemotronAction.LIBRARY,
     label: "Library",
     icon: "ph:stack-light",

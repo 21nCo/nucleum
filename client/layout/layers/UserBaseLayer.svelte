@@ -566,7 +566,7 @@
 {#if $appStore?.appData?.isAnalyticsEnabled && $account?.dataMode === UserDataMode.CLOUD && !$context.isInOfflineMode}
   <AnalyticsLayer />
 {/if}
-<div class="flex h-screen w-screen">
+<div class="flex flex-grow w-screen">
   {#if !$appLoadingState.isBaseLoaded || !$appLoadingState.isLocalLoaded || isAppLoading}
     <AppLoadingView
       message={loadingMessage.message}

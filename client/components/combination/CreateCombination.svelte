@@ -8,13 +8,17 @@
   import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
   import { toasts } from "$lib/client/stores/notification.store";
   import { Orientation } from "$lib/client/types/direction.enum";
-  import type { ISelectItem } from "$lib/client/types/select.type";
+  import type {
+    ISelectItem,
+    ISelectValue
+  } from "$lib/client/types/select.type";
   import { combinationStore } from "./combination.store";
   import { CombinationType } from "./combination.type";
 
   let name = "";
   let type: CombinationType = CombinationType.SIDENAV;
   let error: string | undefined = undefined;
+
   const typeOptions: ISelectItem[] = [
     {
       label: "Side nav",
@@ -52,7 +56,7 @@
       return;
     }
     const result = await combinationStore.create({
-      name,
+      label: name,
       type
     });
     if (result && result.length > 0) {
