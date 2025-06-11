@@ -1,8 +1,16 @@
 import { Agent } from "$lib/server/common/account/account.type";
 import { ICloneDownBody } from "$lib/shared/types/sync.type";
-import { SyncProviderFactory } from "../providers";
+import { SyncProvider, SyncProviderFactory } from "../providers";
 
 export async function cloneDown(body: ICloneDownBody, agent: Agent) {
   const provider = SyncProviderFactory.getProvider();
-  return await provider.cloneDown(body, agent);
+  const result = await provider.cloneDown(body, agent);
+  if (provider.name === SyncProvider.SURREAL || !Array.isArray(result)) {
+    return result;
+  }
+  return result?.map((x) => {
+    return {
+      result: x
+    };
+  });
 }

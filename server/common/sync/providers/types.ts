@@ -18,6 +18,7 @@ export interface ISyncProviderConfig {
 }
 
 export interface ISyncProvider {
+  name: SyncProvider;
   // Core sync operations
   syncUp(body: ISyncUpBody, agent: Agent): Promise<any>;
   syncDown(body: ISyncDownBody, agent: Agent): Promise<any>;

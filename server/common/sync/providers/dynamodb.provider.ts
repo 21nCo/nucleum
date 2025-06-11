@@ -10,7 +10,7 @@ import {
 } from "$lib/shared/types/sync.type";
 import { IMutation, PersistenceActionType } from "$lib/client/types/data.type";
 import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
-import { ISyncProvider } from "./types";
+import { ISyncProvider, SyncProvider } from "./types";
 import { resolveProviderRegionCode } from "$lib/deployment/deploy.utils";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
@@ -60,6 +60,7 @@ interface DynamoDBItem {
 }
 
 export class DynamoDBSyncProvider implements ISyncProvider {
+  name: SyncProvider = SyncProvider.DYNAMODB;
   private config: DynamoDBConfig;
 
   private getDynamoClient(agent: Agent): DynamoDBDocumentClient {
@@ -67,7 +68,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
     const prefix = process.env.DYNAMODB_TABLE_PREFIX || "user";
     if (agent?.region) {
       region = resolveProviderRegionCode(agent.region, "aws");
-      console.log("resolved region:", { region, agentRegion: agent.region });
+      // console.log("resolved region:", { region, agentRegion: agent.region });
     }
     this.config = {
       tableName: prefix + "-" + region,
@@ -370,7 +371,6 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       }
 
       const result = await dynamoClient.send(new QueryCommand(params));
-
       if (result.Items) {
         let items = result.Items;
 

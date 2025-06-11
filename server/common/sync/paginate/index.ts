@@ -1,6 +1,6 @@
 import { Agent } from "$lib/server/common/account/account.type";
 import { ICloneDownPaginateBody } from "$lib/shared/types/sync.type";
-import { SyncProviderFactory } from "../providers";
+import { SyncProvider, SyncProviderFactory } from "../providers";
 
 /**
  * TODO - Implement streaming or download via S3 if too many records - as AWS Lambda has a limit of 6MB for response size
@@ -10,5 +10,13 @@ import { SyncProviderFactory } from "../providers";
  */
 export async function paginate(body: ICloneDownPaginateBody, agent: Agent) {
   const provider = SyncProviderFactory.getProvider();
-  return await provider.paginate(body, agent);
+  const result = await provider.paginate(body, agent);
+  if (provider.name === SyncProvider.SURREAL || !Array.isArray(result)) {
+    return result;
+  }
+  return [
+    {
+      result: result
+    }
+  ];
 }

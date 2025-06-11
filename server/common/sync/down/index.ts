@@ -1,8 +1,19 @@
 import { Agent } from "$lib/server/common/account/account.type";
 import { ISyncDownBody } from "$lib/shared/types/sync.type";
-import { SyncProviderFactory } from "../providers";
+import { SyncProvider, SyncProviderFactory } from "../providers";
 
 export async function syncDown(body: ISyncDownBody, agent: Agent) {
   const provider = SyncProviderFactory.getProvider();
-  return await provider.syncDown(body, agent);
+  const result = await provider.syncDown(body, agent);
+  if (provider.name === SyncProvider.SURREAL || result.error) {
+    return result;
+  }
+  return [
+    {
+      result
+    },
+    ...(result.counts || []).map((count) => ({
+      result: count
+    }))
+  ];
 }

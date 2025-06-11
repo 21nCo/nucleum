@@ -9,7 +9,7 @@ import {
   IReconcileBody
 } from "$lib/shared/types/sync.type";
 import { IMutation } from "$lib/client/types/data.type";
-import { ISyncProvider } from "./types";
+import { ISyncProvider, SyncProvider } from "./types";
 import { performQueryOnBehalfOfUser } from "../../user/user";
 import {
   resolveMutationQueryV2,
@@ -18,6 +18,7 @@ import {
 } from "$lib/shared/utils/surreal.utils";
 
 export class SurrealSyncProvider implements ISyncProvider {
+  name: SyncProvider = SyncProvider.SURREAL;
   async syncUp(body: ISyncUpBody, agent: Agent): Promise<any> {
     try {
       const { mutations, lastSyncDown, resources, dapId } = body;
