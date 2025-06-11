@@ -3,8 +3,9 @@ import { ActionType, type IAction } from "$lib/client/types/action.type";
 import { memotronActions } from "$lib/client/products/memotron/memotron.actions";
 import { pointronActions } from "$lib/client/products/pointron/pointron.actions";
 import NucleusLibrary from "./NucleusLibrary.svelte";
+import NucleusOverview from "./overview/NucleusOverview.svelte";
 
-const actionsToFilterInSub = [Action.LIBRARY];
+const actionsToFilterInSub = [Action.LIBRARY, Action.OVERVIEW];
 
 export const nucleusActions: IAction[] = [
   ...memotronActions.filter(
@@ -18,6 +19,13 @@ export const nucleusActions: IAction[] = [
     label: "Library",
     icon: "ph:stack-light",
     component: NucleusLibrary,
+    type: ActionType.PAGE
+  },
+  {
+    action: Action.OVERVIEW,
+    label: "Overview",
+    icon: "heroicons:rectangle-group",
+    component: NucleusOverview,
     type: ActionType.PAGE
   }
 ];

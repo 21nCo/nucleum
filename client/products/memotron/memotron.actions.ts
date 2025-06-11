@@ -28,6 +28,7 @@ import ResourceBrowser from "$lib/client/components/library/resourceBrowser/Reso
 import FeatureWheel from "$lib/client/components/featureWheel/FeatureWheel.svelte";
 import ResourceCache from "$lib/client/components/record/ResourceCache.svelte";
 import MemotronOverview from "./overview/MemotronOverview.svelte";
+import { Action } from "$lib/client/types/action.enum";
 
 export const memotronActions: IAction[] = [
   {
@@ -217,7 +218,7 @@ export const memotronActions: IAction[] = [
     component: MemotronHome
   },
   {
-    action: "overview",
+    action: Action.OVERVIEW,
     type: ActionType.PAGE,
     label: "Overview",
     // icon: "ph:squares-four-light",

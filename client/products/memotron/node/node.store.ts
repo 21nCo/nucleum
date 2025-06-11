@@ -233,12 +233,14 @@ class NodeStore extends ResourceStore<INode> {
   }
 
   private async onParentChange(ids: IRecordId[], status: boolean) {
-    const children = await this.resolveDependencies(ids);
-    if (children?.length) {
-      await this.bulkModify(
-        children.map((g: INode) => g.id),
-        { isParentInactive: status }
-      );
+    try {
+      const children = await this.resolveDependencies(ids);
+      if (!children || children.length === 0) return;
+      const childrenIds = children.map((g: INode) => g.id)?.filter(Boolean);
+      if (!childrenIds || childrenIds.length === 0) return;
+      await this.bulkModify(childrenIds, { isParentInactive: status });
+    } catch (e) {
+      logger.error({ at: "onParentChange - node store", error: e });
     }
   }
 

@@ -8,6 +8,8 @@
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { Product } from "$lib/client/types/product.type";
   export let panel: CalendarLayout = CalendarLayout.Classic;
 
   const panelOptions: ISelectItem[] = [
@@ -33,13 +35,16 @@
   <div
     class="flex items-center gap-4 border-b border-brs3 h-[3.2rem] 2k:h-14 px-4"
   >
-    <Text content="Calendar" style={TextStyle.PANEL_HEADING_SMALL} />
-    <!-- <PanelSwitcher
-      items={panelOptions}
-      bind:value={panel}
-      style={PanelSwitcherStyle.TRAIN}
-      on:switch={onPanelSwitch}
-    /> -->
+    {#if $appStore.product === Product.NUCLEUS}
+      <PanelSwitcher
+        items={panelOptions}
+        bind:value={panel}
+        style={PanelSwitcherStyle.TRAIN}
+        on:switch={onPanelSwitch}
+      />
+    {:else}
+      <Text content="Calendar" style={TextStyle.PANEL_HEADING_SMALL} />
+    {/if}
     <slot name="header" />
   </div>
   <div class="flex-1 min-h-0">

@@ -26,7 +26,85 @@
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
   >
-    {#if subatom === "pointron"}
+    {#if subatom === "nucleus"}
+      <path
+        d="M288.977 131.9204C272.068 122.1392 252.436 116.541 231.497 116.541C168.0077 116.541 116.5391 168.0096 116.5391 231.499C116.5391 266.712 132.3712 298.227 157.3055 319.315M185.1947 336.752C199.36 342.993 215.024 346.458 231.497 346.458C294.987 346.458 346.456 294.989 346.456 231.499C346.456 199.826 333.647 171.1449 312.926 150.3528"
+        class="stroke-logo-dark dark:stroke-logo-light"
+        stroke-width="11.125"
+        stroke-linecap="round"
+      />
+      <circle
+        cx="231.499"
+        cy="231.509"
+        r="51.0926"
+        class="stroke-logo-dark dark:stroke-logo-light"
+        stroke-width="11.125"
+      />
+      <circle
+        cx="231.117"
+        cy="231.121"
+        r="18.4963"
+        class="stroke-logo-dark dark:stroke-logo-light"
+        stroke-width="11.125"
+      />
+      <circle
+        cx="231.49"
+        cy="231.504"
+        r="83.0255"
+        class="stroke-logo-dark dark:stroke-logo-light"
+        stroke-width="11.125"
+      />
+      <circle
+        cx="313.033"
+        cy="116.4905"
+        r="10.1276"
+        class="stroke-logo-dark dark:stroke-logo-light"
+        stroke-width="5.52414"
+      />
+      <circle
+        cx="333.48"
+        cy="140.6455"
+        r="5.5625"
+        class="fill-logo-dark dark:fill-logo-light"
+      />
+      <circle
+        cx="114.6875"
+        cy="151.7705"
+        r="5.5625"
+        class="fill-logo-dark dark:fill-logo-light"
+      />
+      <circle
+        cx="107.26953"
+        cy="185.1455"
+        r="5.5625"
+        class="fill-logo-dark dark:fill-logo-light"
+      />
+      <circle
+        cx="107.26953"
+        cy="311.229"
+        r="5.5625"
+        class="fill-logo-dark dark:fill-logo-light"
+      />
+      <circle
+        cx="155.4805"
+        cy="352.021"
+        r="5.5625"
+        class="fill-logo-dark dark:fill-logo-light"
+      />
+      <circle
+        cx="281.562"
+        cy="107.27051"
+        r="5.5625"
+        class="fill-logo-dark dark:fill-logo-light"
+      />
+      <circle
+        cx="120.1006"
+        cy="340.987"
+        r="15.6517"
+        class="stroke-logo-dark dark:stroke-logo-light"
+        stroke-width="5.52414"
+      />
+    {:else if subatom === "pointron"}
       <circle
         cx="232"
         cy="230"

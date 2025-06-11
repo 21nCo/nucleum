@@ -20,6 +20,9 @@ export enum UIState {
   hideLeftNavMenuLabels = "hideLeftNavMenuLabels",
   arrangement = "arrangement",
 
+  //Nucleus
+  nucleusOverviewPanel = "nucleusOverviewPanel",
+
   //Pointron
   quickFocusLayout = "quickFocusLayout",
   quickFocusTag = "quickFocusTag",

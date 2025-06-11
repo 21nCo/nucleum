@@ -347,7 +347,7 @@ export const pointronActions: IAction[] = [
     }
   },
   {
-    action: "overview",
+    action: Action.OVERVIEW,
     component: AnalyticsV2,
     type: ActionType.PAGE,
     // icon: "ph:presentation-chart-light",
