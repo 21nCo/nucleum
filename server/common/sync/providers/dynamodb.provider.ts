@@ -90,15 +90,14 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       }
 
       const spaceId = agent.db;
-      const userId = agent.id;
-      const responses = [];
+      const userId = agent.id?.includes("user:")
+        ? agent.id
+        : `user:${agent.id}`;
 
-      // Process mutations in batches (DynamoDB batch limit is 25)
       const batchSize = 25;
       for (let i = 0; i < mutations.length; i += batchSize) {
         const batch = mutations.slice(i, i + batchSize);
 
-        // Store mutations in the mutations partition
         const mutationPromises = batch.map(async (mutation) => {
           const recordId = Array.isArray(mutation.resourceId)
             ? mutation.resourceId[0]
@@ -565,7 +564,8 @@ export class DynamoDBSyncProvider implements ISyncProvider {
         PK: `${spaceId}#${resource}`,
         spaceId,
         userId,
-        modifiedAtUnix: mutation.timestamp
+        modifiedAtUnix: mutation.timestamp,
+        GSI1SK: resource
       };
       switch (action) {
         case ResourceActionType.CREATE:
@@ -831,7 +831,71 @@ export class DynamoDBSyncProvider implements ISyncProvider {
     return results;
   }
 
+  /**
+   * Gets resource counts using GSI query for better performance than individual resource queries.
+   * Uses a single GSI query to fetch all items for a space and counts them in memory.
+   * Falls back to individual queries if GSI query fails.
+   */
   private async getResourceCounts(
+    resources: Resource[],
+    spaceId: string,
+    dynamoClient: DynamoDBDocumentClient
+  ): Promise<any[]> {
+    try {
+      const params: any = {
+        TableName: this.config.tableName,
+        IndexName: "GSI1",
+        KeyConditionExpression: "spaceId = :spaceId",
+        ExpressionAttributeValues: {
+          ":spaceId": spaceId
+        },
+        Select: "ALL_ATTRIBUTES" as const
+      };
+
+      const resourceCounts: { [key: string]: number } = {};
+      resources.forEach((resource) => {
+        resourceCounts[resource] = 0;
+      });
+
+      let lastEvaluatedKey;
+      do {
+        if (lastEvaluatedKey) {
+          params.ExclusiveStartKey = lastEvaluatedKey;
+        }
+        const result = await dynamoClient.send(new QueryCommand(params));
+        if (result.Items) {
+          for (const item of result.Items) {
+            const pkParts = item.PK.split("#");
+            if (pkParts.length >= 2) {
+              const resource = pkParts[1];
+              if (
+                resource !== "mutation" &&
+                resourceCounts.hasOwnProperty(resource)
+              ) {
+                resourceCounts[resource]++;
+              }
+            }
+          }
+        }
+        lastEvaluatedKey = result.LastEvaluatedKey;
+      } while (lastEvaluatedKey);
+
+      return resources.map((resource) => {
+        const countObj: any = {};
+        countObj[resource] = resourceCounts[resource];
+        return countObj;
+      });
+    } catch (e) {
+      console.error({ at: "getResourceCounts - error", error: e });
+      return this.getResourceCountsFallback(resources, spaceId, dynamoClient);
+    }
+  }
+
+  /**
+   * Fallback method using individual queries per resource.
+   * Used when GSI query approach fails.
+   */
+  private async getResourceCountsFallback(
     resources: Resource[],
     spaceId: string,
     dynamoClient: DynamoDBDocumentClient
@@ -844,7 +908,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
           ExpressionAttributeValues: {
             ":pk": `${spaceId}#${resource}`
           },
-          Select: Select.COUNT
+          Select: "COUNT" as const
         };
 
         const result = await dynamoClient.send(new QueryCommand(params));

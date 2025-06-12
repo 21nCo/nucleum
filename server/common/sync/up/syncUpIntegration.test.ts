@@ -346,12 +346,14 @@ describe("SyncUp Integration Tests", () => {
           dapId: "test-dap-syncup-dynamo",
           params: {
             action: PersistenceActionType.INSERT,
-            record: {
-              id: "node:dynamo-syncup-test-3",
-              title: "New DynamoDB SyncUp Test Node 3",
-              content: "Created via syncUp",
-              modifiedAt: new Date().toISOString()
-            }
+            records: [
+              {
+                id: "node:dynamo-syncup-test-3",
+                title: "New DynamoDB SyncUp Test Node 3",
+                content: "Created via syncUp",
+                modifiedAt: new Date().toISOString()
+              }
+            ]
           }
         })
       ];

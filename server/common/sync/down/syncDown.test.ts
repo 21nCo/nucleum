@@ -27,7 +27,8 @@ describe("syncDown", () => {
       "goal",
       "task",
       "link",
-      "property"
+      "property",
+      "node"
     ];
     const body: ISyncDownBody = {
       lastSyncDown: 1749725051517,
