@@ -17,10 +17,22 @@ describe("syncDown", () => {
   });
 
   it.only("should sync down records for given resources - specific case", async () => {
+    const manyResources = [
+      "kv",
+      "tz",
+      "sessionLog",
+      "session",
+      "collection",
+      "view",
+      "goal",
+      "task",
+      "link",
+      "property"
+    ];
     const body: ISyncDownBody = {
-      lastSyncDown: 1749725839610,
-      resources: [Resource.goal],
-      dapId: "mbkj0kl02uahds1xus2a4new"
+      lastSyncDown: 1749725051517,
+      resources: manyResources as Resource[],
+      dapId: "mbrr87k9y8a7r3cj8xllkgvo"
     };
 
     const result = await syncDown(body, global.testEnv.agent);

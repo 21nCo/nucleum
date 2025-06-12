@@ -105,7 +105,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
             : mutation.resourceId;
 
           const mutationItem: DynamoDBItem = {
-            PK: `${spaceId}#mutation#${mutation.resource}`,
+            PK: `${spaceId}#mutation`,
             SK: `${mutation.timestamp}#${mutation.id}`,
             GSI1SK: `mutation#${recordId}`,
             spaceId,
@@ -186,58 +186,55 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       const deleted: any[] = [];
       let latestTimestamp = lastSyncDown;
       console.time("syncDown-mutations");
-      const queryPromises = resources.map(async (resource) => {
-        const params = {
-          TableName: this.config.tableName,
-          KeyConditionExpression: "PK = :pk AND SK > :lastSync",
-          FilterExpression: "dapId <> :dapId",
-          ExpressionAttributeValues: {
-            ":pk": `${spaceId}#mutation#${resource}`,
-            ":lastSync": `${lastSyncDown}#`,
-            ":dapId": dapId
-          },
-          ScanIndexForward: false, // Sort descending by timestamp
-          Limit: 100
-        };
+      const params = {
+        TableName: this.config.tableName,
+        KeyConditionExpression: "PK = :pk AND SK > :lastSync",
+        ExpressionAttributeValues: {
+          ":pk": `${spaceId}#mutation`,
+          ":lastSync": `${lastSyncDown}#`
+        },
+        ScanIndexForward: false // Sort descending by timestamp
+      };
 
-        const result = await dynamoClient.send(new QueryCommand(params));
-        return { resource, result };
-      });
-
-      const queryResults = await Promise.all(queryPromises);
+      const allMutationsResult = await dynamoClient.send(
+        new QueryCommand(params)
+      );
       console.timeEnd("syncDown-mutations");
+
       console.time("syncDown-records");
       const recordKeysToFetch: { key: { PK: string; SK: string } }[] = [];
+      const resourcesSet = new Set(resources);
 
-      for (const { resource, result } of queryResults) {
-        if (result.Items) {
-          for (const item of result.Items) {
-            mutations.push(this.getResourceData(item));
-
-            if (item.timestamp > latestTimestamp) {
-              latestTimestamp = item.timestamp;
+      if (allMutationsResult.Items) {
+        for (const item of allMutationsResult.Items) {
+          if (!resourcesSet.has(item.resource)) {
+            continue;
+          }
+          if (item.dapId && item.dapId === dapId) {
+            continue;
+          }
+          mutations.push(this.getResourceData(item));
+          if (item.timestamp > latestTimestamp) {
+            latestTimestamp = item.timestamp;
+          }
+          if (item.action !== ResourceActionType.DELETE) {
+            const mutation = this.getResourceData(item);
+            const recordIds = Array.isArray(mutation.resourceId)
+              ? mutation.resourceId
+              : [mutation.resourceId];
+            for (const recordId of recordIds) {
+              recordKeysToFetch.push({
+                key: {
+                  PK: `${spaceId}#${item.resource}`,
+                  SK: recordId
+                }
+              });
             }
-
-            if (item.action !== ResourceActionType.DELETE) {
-              const mutation = this.getResourceData(item);
-              const recordIds = Array.isArray(mutation.resourceId)
-                ? mutation.resourceId
-                : [mutation.resourceId];
-              for (const recordId of recordIds) {
-                recordKeysToFetch.push({
-                  key: {
-                    PK: `${spaceId}#${resource}`,
-                    SK: recordId
-                  }
-                });
-              }
-            } else {
-              deleted.push(this.getResourceData(item));
-            }
+          } else {
+            deleted.push(this.getResourceData(item));
           }
         }
       }
-
       if (recordKeysToFetch.length > 0) {
         const batchedRecords = await this.batchGetItems(
           recordKeysToFetch.map((item) => item.key),
@@ -246,6 +243,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
         records.push(...batchedRecords);
       }
       console.timeEnd("syncDown-records");
+
       console.time("syncDown-counts");
       const counts = await this.getResourceCounts(
         resources,
