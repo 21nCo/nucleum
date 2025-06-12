@@ -16,6 +16,7 @@ import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   BatchWriteCommand,
+  BatchGetCommand,
   QueryCommand,
   GetCommand,
   DeleteCommand,
@@ -26,20 +27,21 @@ import { Select } from "@aws-sdk/client-dynamodb";
 /**
  * DynamoDB Sync Provider using Single Table Design Pattern
  *
- * Table Structure:
- * - PK (Partition Key): userId#{resource} for resources, userId#mutation#{resource} for mutations
- * - SK (Sort Key): {resourceId} for actual resources, {timestamp}#{mutationId} for mutations
+ *
  *
  * Access Patterns:
- * 1. Get all resources of a type for a user: PK = "userId#resource"
- * 2. Get specific resource: PK = "userId#resource", SK = "resourceId"
- * 3. Get mutations for a resource since timestamp: PK = "userId#mutation#resource", SK > "timestamp#"
+ * 1.  Clone down - resource records (Get all records of a resource type for a user/space): PK = "{spaceId}#{resource}"
  *
- * Data Organization:
- * - Actual resource data: userId#{resource} | {resourceId} - resource attributes spread as top-level fields
- * - Mutations: userId#mutation#{resource} | {timestamp}#{mutationId} - mutation data spread as top-level fields
- * - System attributes: PK, SK, userId, action, timestamp, dapId, TTL are reserved
- * - TTL: Mutations auto-expire after 30 days
+ * 2. Sync down - mutation records
+ * 2a. Get mutations for given resource since timestamp: PK = "{spaceId}#mutation#{resource}", SK > "{timestamp}#"
+ * 2b. Get specific resource record : PK = "{spaceId}#{resource}", SK = "{recordId}"
+ *
+ * 3. Paginate - resource records (Get records of a resource with offset and limit): PK = "{spaceId}#{resource}", Limit
+ *
+ * 4. Relay - mutation records (Get all mutations for a specific record): GSI1PK (spaceId) = "{spaceId}", GSI1SK = "mutation#{recordId}"
+ *
+ * 5. Delete user - everything (Get everything for a user/space): GSI1PK (spaceId) = "{spaceId}"
+ *
  *
  */
 
@@ -55,7 +57,7 @@ interface DynamoDBItem {
   action?: ResourceActionType;
   timestamp?: number;
   dapId?: string;
-  TTL?: number; // For automatic deletion of old records
+  TTL?: number; // For automatic deletion of old records if applicable
   [key: string]: any; // Allow for spread resource attributes
 }
 
@@ -95,53 +97,66 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       const batchSize = 25;
       for (let i = 0; i < mutations.length; i += batchSize) {
         const batch = mutations.slice(i, i + batchSize);
-        const putRequests = [];
 
         // Store mutations in the mutations partition
-        for (const mutation of batch) {
+        const mutationPromises = batch.map(async (mutation) => {
+          const recordId = Array.isArray(mutation.resourceId)
+            ? mutation.resourceId[0]
+            : mutation.resourceId;
+
           const mutationItem: DynamoDBItem = {
             PK: `${spaceId}#mutation#${mutation.resource}`,
             SK: `${mutation.timestamp}#${mutation.id}`,
+            GSI1SK: `mutation#${recordId}`,
+            spaceId,
             userId,
-            action: mutation.action,
-            timestamp: mutation.timestamp,
             dapId,
-            ...mutation // Spread mutation data as top-level attributes
+            ...mutation
           };
 
-          putRequests.push({
-            PutRequest: { Item: mutationItem }
-          });
-
-          // Apply the mutation to the actual resource
-          const mutationItems = await this.applyMutationToResource(
+          const records = await this.applyMutationToResource(
             mutation,
             spaceId,
             userId,
             dynamoClient
           );
-          if (mutationItems.length > 0) {
-            mutationItems.forEach((item) => {
-              putRequests.push({
-                PutRequest: { Item: item }
-              });
+
+          return {
+            mutationItem,
+            records
+          };
+        });
+
+        const mutationResults = await Promise.all(mutationPromises);
+
+        const allPutItems = [];
+        for (const { mutationItem, records } of mutationResults) {
+          allPutItems.push({ PutRequest: { Item: mutationItem } });
+
+          if (records.length > 0) {
+            records.forEach((item) => {
+              allPutItems.push({ PutRequest: { Item: item } });
             });
           }
         }
 
-        // Batch write to DynamoDB
-        if (putRequests.length > 0) {
-          const params = {
-            RequestItems: {
-              [this.config.tableName]: putRequests
-            }
-          };
+        const writeBatchSize = 25;
+        console.time("syncUp-writeBatch");
+        for (let j = 0; j < allPutItems.length; j += writeBatchSize) {
+          const writeBatch = allPutItems.slice(j, j + writeBatchSize);
 
-          await dynamoClient.send(new BatchWriteCommand(params));
+          if (writeBatch.length > 0) {
+            const params = {
+              RequestItems: {
+                [this.config.tableName]: writeBatch
+              }
+            };
+
+            await dynamoClient.send(new BatchWriteCommand(params));
+          }
         }
+        console.timeEnd("syncUp-writeBatch");
       }
-
-      // Fetch updated records based on lastSyncDown
       const syncDownResponse = await this.syncDown(
         {
           lastSyncDown,
@@ -170,8 +185,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       const records: any[] = [];
       const deleted: any[] = [];
       let latestTimestamp = lastSyncDown;
-
-      // Query mutations for each resource since lastSyncDown - run in parallel
+      console.time("syncDown-mutations");
       const queryPromises = resources.map(async (resource) => {
         const params = {
           TableName: this.config.tableName,
@@ -191,8 +205,10 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       });
 
       const queryResults = await Promise.all(queryPromises);
+      console.timeEnd("syncDown-mutations");
+      console.time("syncDown-records");
+      const recordKeysToFetch: { key: { PK: string; SK: string } }[] = [];
 
-      // Process results from all queries
       for (const { resource, result } of queryResults) {
         if (result.Items) {
           for (const item of result.Items) {
@@ -202,43 +218,41 @@ export class DynamoDBSyncProvider implements ISyncProvider {
               latestTimestamp = item.timestamp;
             }
 
-            // Fetch actual records for non-delete mutations
             if (item.action !== ResourceActionType.DELETE) {
               const mutation = this.getResourceData(item);
               const recordIds = Array.isArray(mutation.resourceId)
                 ? mutation.resourceId
                 : [mutation.resourceId];
               for (const recordId of recordIds) {
-                const recordParams = {
-                  TableName: this.config.tableName,
-                  Key: {
+                recordKeysToFetch.push({
+                  key: {
                     PK: `${spaceId}#${resource}`,
                     SK: recordId
                   }
-                };
-
-                const recordResult = await dynamoClient.send(
-                  new GetCommand(recordParams)
-                );
-                if (recordResult.Item) {
-                  records.push(this.getResourceData(recordResult.Item));
-                }
+                });
               }
             } else {
-              // Add to deleted array
               deleted.push(this.getResourceData(item));
             }
           }
         }
       }
 
-      // Get resource counts
+      if (recordKeysToFetch.length > 0) {
+        const batchedRecords = await this.batchGetItems(
+          recordKeysToFetch.map((item) => item.key),
+          dynamoClient
+        );
+        records.push(...batchedRecords);
+      }
+      console.timeEnd("syncDown-records");
+      console.time("syncDown-counts");
       const counts = await this.getResourceCounts(
         resources,
         spaceId,
         dynamoClient
       );
-
+      console.timeEnd("syncDown-counts");
       return {
         latestTimestamp:
           latestTimestamp > lastSyncDown
@@ -261,21 +275,24 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       const spaceId = agent.db;
       const userId = agent.id;
 
-      // Batch write records (DynamoDB batch limit is 25)
       const batchSize = 25;
       const responses = [];
+      const commonAttributes = {
+        PK: `${spaceId}#${resource}`,
+        spaceId,
+        userId
+      };
 
       for (let i = 0; i < records.length; i += batchSize) {
         const batch = records.slice(i, i + batchSize);
         const putRequests = batch.map((record) => {
           const item: DynamoDBItem = {
-            PK: `${spaceId}#${resource}`,
+            ...commonAttributes,
             SK: record.id,
-            userId,
-            timestamp: record.modifiedAt
+            modifiedAtUnix: record.modifiedAt
               ? new Date(record.modifiedAt).getTime()
               : Date.now(),
-            ...record // Spread record data as top-level attributes
+            ...record
           };
 
           return {
@@ -308,27 +325,42 @@ export class DynamoDBSyncProvider implements ISyncProvider {
 
       const limit = body.limit || 500;
       const spaceId = agent.db;
+
+      const queryPromises = resources.map(async (resource) => {
+        try {
+          const params = {
+            TableName: this.config.tableName,
+            KeyConditionExpression: "PK = :pk",
+            ExpressionAttributeValues: {
+              ":pk": `${spaceId}#${resource}`
+            },
+            Limit: limit,
+            ScanIndexForward: true
+          };
+
+          const result = await dynamoClient.send(new QueryCommand(params));
+          return { resource, result, error: null };
+        } catch (error) {
+          console.error(`Error querying resource ${resource}:`, error);
+          return { resource, result: null, error: error.message };
+        }
+      });
+
+      const queryResults = await Promise.all(queryPromises);
+
       const results = [];
+      for (const { resource, result, error } of queryResults) {
+        if (error) {
+          console.error(`Failed to fetch resource ${resource}: ${error}`);
+          results.push([]);
+          continue;
+        }
 
-      for (const resource of resources) {
-        const params = {
-          TableName: this.config.tableName,
-          KeyConditionExpression: "PK = :pk",
-          ExpressionAttributeValues: {
-            ":pk": `${spaceId}#${resource}`
-          },
-          Limit: limit,
-          ScanIndexForward: true
-        };
-
-        const result = await dynamoClient.send(new QueryCommand(params));
-
-        if (result.Items) {
+        if (result?.Items) {
           const resourceData = result.Items.map((item) => {
             if (isExtension) {
               return this.getResourceData(item);
             } else {
-              // Add the DynamoDB item id for non-extension clients
               return {
                 ...this.getResourceData(item),
                 id: item.SK
@@ -354,45 +386,97 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       const { resource, offset, limit, isExtension } = body;
       const spaceId = agent.db;
 
-      // For DynamoDB, we'll use the LastEvaluatedKey for pagination
-      // The offset here will be used as the starting key if provided
-      const params: any = {
-        TableName: this.config.tableName,
-        KeyConditionExpression: "PK = :pk",
-        ExpressionAttributeValues: {
-          ":pk": `${spaceId}#${resource}`
-        },
-        Limit: limit,
-        ScanIndexForward: true
-      };
+      // For small offsets, use the existing approach
+      if (offset <= 100) {
+        const params: any = {
+          TableName: this.config.tableName,
+          KeyConditionExpression: "PK = :pk",
+          ExpressionAttributeValues: {
+            ":pk": `${spaceId}#${resource}`
+          },
+          Limit: offset + limit,
+          ScanIndexForward: true
+        };
 
-      // If offset is provided, we need to find the starting point
-      // For simplicity, we'll scan and skip records (not optimal for large datasets)
-      if (offset > 0) {
-        params.Limit = offset + limit;
-      }
+        const result = await dynamoClient.send(new QueryCommand(params));
+        if (result.Items) {
+          let items = result.Items.slice(offset);
 
-      const result = await dynamoClient.send(new QueryCommand(params));
-      if (result.Items) {
-        let items = result.Items;
+          const resourceData = items.map((item) => {
+            if (isExtension) {
+              return this.getResourceData(item);
+            } else {
+              return {
+                ...this.getResourceData(item),
+                id: item.SK
+              };
+            }
+          });
 
-        // Skip offset records if needed
-        if (offset > 0) {
-          items = items.slice(offset);
+          return resourceData;
+        }
+      } else {
+        // For large offsets, use multiple queries with ExclusiveStartKey
+        let currentOffset = 0;
+        let lastEvaluatedKey = undefined;
+
+        // Skip to the desired offset
+        while (currentOffset < offset) {
+          const skipParams: any = {
+            TableName: this.config.tableName,
+            KeyConditionExpression: "PK = :pk",
+            ExpressionAttributeValues: {
+              ":pk": `${spaceId}#${resource}`
+            },
+            Limit: Math.min(100, offset - currentOffset),
+            ScanIndexForward: true
+          };
+
+          if (lastEvaluatedKey) {
+            skipParams.ExclusiveStartKey = lastEvaluatedKey;
+          }
+
+          const skipResult = await dynamoClient.send(
+            new QueryCommand(skipParams)
+          );
+          currentOffset += skipResult.Count || 0;
+          lastEvaluatedKey = skipResult.LastEvaluatedKey;
+
+          if (!lastEvaluatedKey) break; // No more items
         }
 
-        const resourceData = items.map((item) => {
-          if (isExtension) {
-            return this.getResourceData(item);
-          } else {
-            return {
-              ...this.getResourceData(item),
-              id: item.SK
-            };
-          }
-        });
+        // Now get the actual page
+        if (lastEvaluatedKey || currentOffset === offset) {
+          const params: any = {
+            TableName: this.config.tableName,
+            KeyConditionExpression: "PK = :pk",
+            ExpressionAttributeValues: {
+              ":pk": `${spaceId}#${resource}`
+            },
+            Limit: limit,
+            ScanIndexForward: true
+          };
 
-        return resourceData;
+          if (lastEvaluatedKey) {
+            params.ExclusiveStartKey = lastEvaluatedKey;
+          }
+
+          const result = await dynamoClient.send(new QueryCommand(params));
+          if (result.Items) {
+            const resourceData = result.Items.map((item) => {
+              if (isExtension) {
+                return this.getResourceData(item);
+              } else {
+                return {
+                  ...this.getResourceData(item),
+                  id: item.SK
+                };
+              }
+            });
+
+            return resourceData;
+          }
+        }
       }
 
       return [];
@@ -481,6 +565,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       const items: DynamoDBItem[] = [];
       const commonAttributes = {
         PK: `${spaceId}#${resource}`,
+        spaceId,
         userId,
         modifiedAtUnix: mutation.timestamp
       };
@@ -682,14 +767,78 @@ export class DynamoDBSyncProvider implements ISyncProvider {
     }
   }
 
+  /**
+   * Efficiently batch get multiple items using BatchGetCommand instead of individual GetCommand calls.
+   * Handles DynamoDB's 100-item limit per batch and retries unprocessed keys.
+   */
+  private async batchGetItems(
+    keys: { PK: string; SK: string }[],
+    dynamoClient: DynamoDBDocumentClient
+  ): Promise<any[]> {
+    const results: any[] = [];
+    const batchSize = 100;
+    const seen = new Set<string>();
+    const uniqueKeys = keys.filter((key) => {
+      const keyString = `${key.PK}#${key.SK}`;
+      if (seen.has(keyString)) {
+        return false;
+      }
+      seen.add(keyString);
+      return true;
+    });
+
+    try {
+      for (let i = 0; i < uniqueKeys.length; i += batchSize) {
+        const batchKeys = uniqueKeys.slice(i, i + batchSize);
+
+        const params = {
+          RequestItems: {
+            [this.config.tableName]: {
+              Keys: batchKeys
+            }
+          }
+        };
+
+        const result = await dynamoClient.send(new BatchGetCommand(params));
+
+        if (result.Responses && result.Responses[this.config.tableName]) {
+          for (const item of result.Responses[this.config.tableName]) {
+            results.push(this.getResourceData(item));
+          }
+        }
+
+        if (
+          result.UnprocessedKeys &&
+          Object.keys(result.UnprocessedKeys).length > 0
+        ) {
+          console.warn(
+            "Unprocessed keys in batch get operation:",
+            result.UnprocessedKeys
+          );
+          const unprocessedKeys =
+            result.UnprocessedKeys[this.config.tableName]?.Keys || [];
+          if (unprocessedKeys.length > 0) {
+            const retryResults = await this.batchGetItems(
+              unprocessedKeys as { PK: string; SK: string }[],
+              dynamoClient
+            );
+            results.push(...retryResults);
+          }
+        }
+      }
+    } catch (e) {
+      console.error({ at: "batchGetItems - error", error: e });
+    }
+
+    return results;
+  }
+
   private async getResourceCounts(
     resources: Resource[],
     spaceId: string,
     dynamoClient: DynamoDBDocumentClient
   ): Promise<any[]> {
-    const counts = [];
-
-    for (const resource of resources) {
+    const countPromises = resources.map(async (resource) => {
       try {
         const params = {
           TableName: this.config.tableName,
@@ -703,28 +852,33 @@ export class DynamoDBSyncProvider implements ISyncProvider {
         const result = await dynamoClient.send(new QueryCommand(params));
         const countObj: any = {};
         countObj[resource] = result.Count || 0;
-        counts.push(countObj);
+        return countObj;
       } catch (e) {
         console.error({ at: "getResourceCounts - error", error: e, resource });
         const countObj: any = {};
         countObj[resource] = 0;
-        counts.push(countObj);
+        return countObj;
       }
-    }
+    });
 
-    return counts;
+    return Promise.all(countPromises);
   }
 
-  // Helper function to extract system attributes from an item
-  private getSystemAttributes(item: any): Partial<DynamoDBItem> {
-    const { PK, SK, userId, action, timestamp, dapId, TTL } = item;
-    return { PK, SK, userId, action, timestamp, dapId, TTL };
-  }
-
-  // Helper function to extract resource data (excluding system attributes)
   private getResourceData(item: any): any {
-    const { PK, SK, userId, action, timestamp, dapId, TTL, ...resourceData } =
-      item;
+    const {
+      PK,
+      SK,
+      userId,
+      spaceId,
+      GSI1PK,
+      GSI1SK,
+      action,
+      timestamp,
+      dapId,
+      TTL,
+      modifiedAtUnix,
+      ...resourceData
+    } = item;
     return resourceData;
   }
 }
