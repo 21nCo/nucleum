@@ -114,15 +114,17 @@ export class DynamoDBSyncProvider implements ISyncProvider {
           });
 
           // Apply the mutation to the actual resource
-          const resourceMutationItem = await this.applyMutationToResource(
+          const mutationItems = await this.applyMutationToResource(
             mutation,
             spaceId,
             userId,
             dynamoClient
           );
-          if (resourceMutationItem) {
-            putRequests.push({
-              PutRequest: { Item: resourceMutationItem }
+          if (mutationItems.length > 0) {
+            mutationItems.forEach((item) => {
+              putRequests.push({
+                PutRequest: { Item: item }
+              });
             });
           }
         }
@@ -473,108 +475,211 @@ export class DynamoDBSyncProvider implements ISyncProvider {
     spaceId: string,
     userId: string,
     dynamoClient: DynamoDBDocumentClient
-  ): Promise<DynamoDBItem | null> {
+  ): Promise<DynamoDBItem[]> {
     try {
       const { resource, resourceId, action, params } = mutation;
-
-      if (!resourceId) return null;
-
-      const resourceIds = Array.isArray(resourceId) ? resourceId : [resourceId];
-
-      for (const rId of resourceIds) {
-        const item: DynamoDBItem = {
-          PK: `${spaceId}#${resource}`,
-          SK: rId.toString(),
-          userId,
-          timestamp: mutation.timestamp
-        };
-
-        switch (action) {
-          case ResourceActionType.CREATE:
-          case ResourceActionType.EDIT:
-            if (
-              params.action === PersistenceActionType.INSERT ||
-              params.action === PersistenceActionType.BULK_INSERT
-            ) {
-              const records = "records" in params ? params.records : [];
-              const record =
-                records.find((r: any) => r.id === rId) || records[0];
-              if (record) {
-                Object.assign(item, record); // Spread record data as top-level attributes
-              }
-            } else if (
-              params.action === PersistenceActionType.REPLACE &&
-              "record" in params
-            ) {
-              Object.assign(item, params.record); // Spread record data as top-level attributes
-            } else if (
-              params.action === PersistenceActionType.MERGE &&
-              "record" in params
-            ) {
-              // Use atomic update instead of GET + PUT
-              const updateExpressions = [];
-              const expressionAttributeNames: Record<string, string> = {};
-              const expressionAttributeValues: Record<string, any> = {};
-
-              // Build update expression for each field in the record
-              Object.keys(params.record).forEach((key, index) => {
-                const attrName = `#attr${index}`;
-                const attrValue = `:val${index}`;
-                expressionAttributeNames[attrName] = key; // Direct attribute name, not nested under data
-                expressionAttributeValues[attrValue] = params.record[key];
-                updateExpressions.push(`${attrName} = ${attrValue}`);
-              });
-
-              const updateParams = {
-                TableName: this.config.tableName,
-                Key: {
-                  PK: item.PK,
-                  SK: item.SK
-                },
-                UpdateExpression: `SET ${updateExpressions.join(", ")}`,
-                ExpressionAttributeNames: expressionAttributeNames,
-                ExpressionAttributeValues: expressionAttributeValues,
-                // Ensure the item exists before updating, or create it with the merge data
-                ConditionExpression:
-                  "attribute_exists(PK) OR attribute_not_exists(PK)"
+      const items: DynamoDBItem[] = [];
+      const commonAttributes = {
+        PK: `${spaceId}#${resource}`,
+        userId,
+        modifiedAtUnix: mutation.timestamp
+      };
+      switch (action) {
+        case ResourceActionType.CREATE:
+        case ResourceActionType.EDIT:
+          if (
+            params.action === PersistenceActionType.INSERT ||
+            params.action === PersistenceActionType.BULK_INSERT
+          ) {
+            const records = "records" in params ? params.records : [];
+            for (const record of records) {
+              const item: DynamoDBItem = {
+                ...commonAttributes,
+                ...record,
+                SK: record.id.toString()
               };
+              items.push(item);
+            }
+          } else if (
+            params.action === PersistenceActionType.REPLACE &&
+            "record" in params
+          ) {
+            if (!resourceId) return [];
+            const resourceIds = Array.isArray(resourceId)
+              ? resourceId
+              : [resourceId];
 
-              try {
-                await dynamoClient.send(new UpdateCommand(updateParams));
-                return null; // No item to return for batch write since we've already updated
-              } catch (error: any) {
-                if (error.name === "ConditionalCheckFailedException") {
-                  // Item doesn't exist, create it with the merge data
-                  Object.assign(item, params.record); // Spread record data as top-level attributes
-                } else {
-                  throw error;
-                }
+            for (const rId of resourceIds) {
+              const item: DynamoDBItem = {
+                ...commonAttributes,
+                ...params.record,
+                SK: rId.toString()
+              };
+              items.push(item);
+            }
+          } else if (
+            params.action === PersistenceActionType.MERGE &&
+            "record" in params
+          ) {
+            if (!resourceId) return [];
+            const resourceIds = Array.isArray(resourceId)
+              ? resourceId
+              : [resourceId];
+
+            for (const rId of resourceIds) {
+              const mergeResult = await this.performMergeOperation(
+                params.record,
+                rId.toString(),
+                commonAttributes.PK,
+                commonAttributes,
+                dynamoClient
+              );
+              if (mergeResult) {
+                items.push(mergeResult);
               }
             }
-            break;
+          } else if (
+            params.action === PersistenceActionType.BULK_MERGE &&
+            "records" in params
+          ) {
+            const records = params.records;
+            if (!records || records.length < 1) return [];
+            for (const record of records) {
+              if (!record.id) continue;
+              const { id, ...mergeData } = record;
 
-          case ResourceActionType.DELETE:
-            // For delete, we remove the item
-            const deleteParams = {
-              TableName: this.config.tableName,
-              Key: {
-                PK: item.PK,
-                SK: item.SK
+              const mergeResult = await this.performMergeOperation(
+                mergeData,
+                id.toString(),
+                commonAttributes.PK,
+                commonAttributes,
+                dynamoClient
+              );
+              if (mergeResult) {
+                items.push(mergeResult);
               }
-            };
+            }
+          }
+          break;
 
-            await dynamoClient.send(new DeleteCommand(deleteParams));
-            return null;
-        }
+        case ResourceActionType.DELETE:
+          if (params.action === PersistenceActionType.DELETE) {
+            if (!resourceId) return [];
+            const resourceIds = Array.isArray(resourceId)
+              ? resourceId
+              : [resourceId];
 
-        return item;
+            for (const rId of resourceIds) {
+              const deleteParams = {
+                TableName: this.config.tableName,
+                Key: {
+                  PK: `${spaceId}#${resource}`,
+                  SK: rId.toString()
+                }
+              };
+              await dynamoClient.send(new DeleteCommand(deleteParams));
+            }
+          } else if (params.action === PersistenceActionType.BULK_DELETE) {
+            const recordIds = "recordIds" in params ? params.recordIds : [];
+            if (!recordIds || recordIds.length < 1) return [];
+            const batchSize = 25;
+            for (let i = 0; i < recordIds.length; i += batchSize) {
+              const batch = recordIds.slice(i, i + batchSize);
+              const deleteRequests = batch.map((id) => ({
+                DeleteRequest: {
+                  Key: {
+                    PK: `${spaceId}#${resource}`,
+                    SK: id.toString()
+                  }
+                }
+              }));
+
+              const deleteParams = {
+                RequestItems: {
+                  [this.config.tableName]: deleteRequests
+                }
+              };
+
+              await dynamoClient.send(new BatchWriteCommand(deleteParams));
+            }
+          }
+          break;
       }
+
+      // Handle CUSTOM mutations at the params level
+      if (params.action === PersistenceActionType.CUSTOM) {
+        // Handle CUSTOM operation - for now, log that it's not implemented
+        // In the future, this could execute custom DynamoDB operations
+        console.warn(
+          "CUSTOM mutations are not yet implemented for DynamoDB provider"
+        );
+      }
+
+      return items;
     } catch (e) {
       console.error({ at: "applyMutationToResource - error", error: e });
+      return [];
+    }
+  }
+
+  /**
+   * Helper method to perform merge operations, abstracting common logic between MERGE and BULK_MERGE
+   */
+  private async performMergeOperation(
+    mergeData: Record<string, any>,
+    sortKey: string,
+    partitionKey: string,
+    fallbackAttributes: Record<string, any>,
+    dynamoClient: DynamoDBDocumentClient
+  ): Promise<DynamoDBItem | null> {
+    try {
+      const updateExpressions = [];
+      const expressionAttributeNames: Record<string, string> = {};
+      const expressionAttributeValues: Record<string, any> = {};
+
+      // Build update expression for each field in the record
+      Object.keys(mergeData).forEach((key, index) => {
+        const attrName = `#attr${index}`;
+        const attrValue = `:val${index}`;
+        expressionAttributeNames[attrName] = key;
+        expressionAttributeValues[attrValue] = mergeData[key];
+        updateExpressions.push(`${attrName} = ${attrValue}`);
+      });
+
+      const updateParams = {
+        TableName: this.config.tableName,
+        Key: {
+          PK: partitionKey,
+          SK: sortKey
+        },
+        UpdateExpression: `SET ${updateExpressions.join(", ")}`,
+        ExpressionAttributeNames: expressionAttributeNames,
+        ExpressionAttributeValues: expressionAttributeValues,
+        ConditionExpression: "attribute_exists(PK) OR attribute_not_exists(PK)"
+      };
+
+      try {
+        await dynamoClient.send(new UpdateCommand(updateParams));
+        return null; // No item to add to batch when update succeeds
+      } catch (error: any) {
+        if (error.name === "ConditionalCheckFailedException") {
+          // Item doesn't exist, create it with the merge data
+          const item: DynamoDBItem = {
+            PK: partitionKey,
+            SK: sortKey,
+            userId: fallbackAttributes.userId || "",
+            ...fallbackAttributes,
+            ...mergeData
+          };
+          return item;
+        } else {
+          throw error;
+        }
+      }
+    } catch (e) {
+      console.error({ at: "performMergeOperation - error", error: e });
       return null;
     }
-
-    return null;
   }
 
   private async getResourceCounts(

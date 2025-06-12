@@ -16,6 +16,18 @@ describe("syncDown", () => {
     expect(result).toBeDefined();
   });
 
+  it.only("should sync down records for given resources - specific case", async () => {
+    const body: ISyncDownBody = {
+      lastSyncDown: 1749711774393,
+      resources: [Resource.task],
+      dapId: "mbt125nauguy4v0g5dpq5usl"
+    };
+
+    const result = await syncDown(body, global.testEnv.agent);
+    console.log({ result: JSON.stringify(result) });
+    expect(result).toBeDefined();
+  });
+
   it("should handle errors gracefully", async () => {
     const body: ISyncDownBody = {
       lastSyncDown: Date.now(),
