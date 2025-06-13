@@ -81,6 +81,10 @@ export class DynamoDBSyncProvider implements ISyncProvider {
     return DynamoDBDocumentClient.from(client);
   }
 
+  private resolveUserId(agent: Agent): string {
+    return agent.id?.includes("user:") ? agent.id : `user:${agent.id}`;
+  }
+
   async syncUp(body: ISyncUpBody, agent: Agent): Promise<any> {
     try {
       const dynamoClient = this.getDynamoClient(agent);
@@ -90,9 +94,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       }
 
       const spaceId = agent.db;
-      const userId = agent.id?.includes("user:")
-        ? agent.id
-        : `user:${agent.id}`;
+      const userId = this.resolveUserId(agent);
 
       const batchSize = 25;
       for (let i = 0; i < mutations.length; i += batchSize) {
@@ -270,7 +272,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       const dynamoClient = this.getDynamoClient(agent);
       const { resource, records } = body;
       const spaceId = agent.db;
-      const userId = agent.id;
+      const userId = this.resolveUserId(agent);
 
       const batchSize = 25;
       const responses = [];
@@ -280,6 +282,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
         userId
       };
 
+      console.time("cloneUp-batch");
       for (let i = 0; i < records.length; i += batchSize) {
         const batch = records.slice(i, i + batchSize);
         const putRequests = batch.map((record) => {
@@ -306,7 +309,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
         const result = await dynamoClient.send(new BatchWriteCommand(params));
         responses.push(result);
       }
-
+      console.timeEnd("cloneUp-batch");
       return responses;
     } catch (e) {
       console.error({ at: "DynamoDB cloneUp - error", error: e });
@@ -322,7 +325,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
 
       const limit = body.limit || 500;
       const spaceId = agent.db;
-
+      console.time("cloneDown-query");
       const queryPromises = resources.map(async (resource) => {
         try {
           const params = {
@@ -344,7 +347,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       });
 
       const queryResults = await Promise.all(queryPromises);
-
+      console.timeEnd("cloneDown-query");
       const results = [];
       for (const { resource, result, error } of queryResults) {
         if (error) {
@@ -369,7 +372,6 @@ export class DynamoDBSyncProvider implements ISyncProvider {
           results.push([]);
         }
       }
-
       return results;
     } catch (e) {
       console.error({ at: "DynamoDB cloneDown - error", error: e });
@@ -832,70 +834,10 @@ export class DynamoDBSyncProvider implements ISyncProvider {
   }
 
   /**
-   * Gets resource counts using GSI query for better performance than individual resource queries.
-   * Uses a single GSI query to fetch all items for a space and counts them in memory.
-   * Falls back to individual queries if GSI query fails.
+   * Gets resource counts using efficient COUNT queries per resource.
+   * Uses DynamoDB's built-in COUNT feature for optimal performance.
    */
   private async getResourceCounts(
-    resources: Resource[],
-    spaceId: string,
-    dynamoClient: DynamoDBDocumentClient
-  ): Promise<any[]> {
-    try {
-      const params: any = {
-        TableName: this.config.tableName,
-        IndexName: "GSI1",
-        KeyConditionExpression: "spaceId = :spaceId",
-        ExpressionAttributeValues: {
-          ":spaceId": spaceId
-        },
-        Select: "ALL_ATTRIBUTES" as const
-      };
-
-      const resourceCounts: { [key: string]: number } = {};
-      resources.forEach((resource) => {
-        resourceCounts[resource] = 0;
-      });
-
-      let lastEvaluatedKey;
-      do {
-        if (lastEvaluatedKey) {
-          params.ExclusiveStartKey = lastEvaluatedKey;
-        }
-        const result = await dynamoClient.send(new QueryCommand(params));
-        if (result.Items) {
-          for (const item of result.Items) {
-            const pkParts = item.PK.split("#");
-            if (pkParts.length >= 2) {
-              const resource = pkParts[1];
-              if (
-                resource !== "mutation" &&
-                resourceCounts.hasOwnProperty(resource)
-              ) {
-                resourceCounts[resource]++;
-              }
-            }
-          }
-        }
-        lastEvaluatedKey = result.LastEvaluatedKey;
-      } while (lastEvaluatedKey);
-
-      return resources.map((resource) => {
-        const countObj: any = {};
-        countObj[resource] = resourceCounts[resource];
-        return countObj;
-      });
-    } catch (e) {
-      console.error({ at: "getResourceCounts - error", error: e });
-      return this.getResourceCountsFallback(resources, spaceId, dynamoClient);
-    }
-  }
-
-  /**
-   * Fallback method using individual queries per resource.
-   * Used when GSI query approach fails.
-   */
-  private async getResourceCountsFallback(
     resources: Resource[],
     spaceId: string,
     dynamoClient: DynamoDBDocumentClient
