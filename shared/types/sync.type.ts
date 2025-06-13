@@ -39,6 +39,7 @@ export type ICloneDownPaginateBody = {
   isExtension: boolean;
   offset: number;
   limit: number;
+  cursor?: string; // Optional cursor for efficient pagination
 };
 
 export type IReconcileBody = {

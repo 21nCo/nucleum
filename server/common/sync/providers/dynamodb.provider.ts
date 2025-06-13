@@ -385,21 +385,158 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       const { resource, offset, limit, isExtension } = body;
       const spaceId = agent.db;
 
-      // For small offsets, use the existing approach
-      if (offset <= 100) {
-        const params: any = {
+      // Check if a cursor is provided in the body (for cursor-based pagination)
+      const cursor = (body as any).cursor;
+
+      const params: any = {
+        TableName: this.config.tableName,
+        KeyConditionExpression: "PK = :pk",
+        ExpressionAttributeValues: {
+          ":pk": `${spaceId}#${resource}`
+        },
+        Limit: limit,
+        ScanIndexForward: true
+      };
+
+      // If cursor is provided, use it for efficient pagination
+      if (cursor) {
+        try {
+          params.ExclusiveStartKey = JSON.parse(cursor);
+        } catch (e) {
+          console.error("Invalid cursor provided:", cursor);
+          return { error: "Invalid cursor" };
+        }
+      } else if (offset && offset > 0) {
+        // Fallback to offset-based pagination but optimized
+        if (offset <= 1000) {
+          // For reasonable offsets, use a single large query
+          params.Limit = offset + limit;
+          const result = await dynamoClient.send(new QueryCommand(params));
+
+          if (result.Items && result.Items.length > offset) {
+            const items = result.Items.slice(offset, offset + limit);
+            const resourceData = items.map((item) => {
+              if (isExtension) {
+                return this.getResourceData(item);
+              } else {
+                return {
+                  ...this.getResourceData(item),
+                  id: item.SK
+                };
+              }
+            });
+
+            // Include next cursor for efficient pagination
+            const nextCursor =
+              result.Items.length >= offset + limit
+                ? JSON.stringify({
+                    PK: result.Items[offset + limit - 1].PK,
+                    SK: result.Items[offset + limit - 1].SK
+                  })
+                : null;
+
+            return {
+              data: resourceData,
+              nextCursor,
+              hasMore: result.Items.length >= offset + limit
+            };
+          }
+        } else {
+          // For very large offsets, use optimized chunking
+          return await this.paginateWithOptimizedChunking(
+            dynamoClient,
+            spaceId,
+            resource,
+            offset,
+            limit,
+            isExtension
+          );
+        }
+      }
+
+      // Direct query without offset
+      const result = await dynamoClient.send(new QueryCommand(params));
+
+      if (result.Items) {
+        const resourceData = result.Items.map((item) => {
+          if (isExtension) {
+            return this.getResourceData(item);
+          } else {
+            return {
+              ...this.getResourceData(item),
+              id: item.SK
+            };
+          }
+        });
+
+        // Include next cursor for efficient pagination
+        const nextCursor = result.LastEvaluatedKey
+          ? JSON.stringify(result.LastEvaluatedKey)
+          : null;
+
+        return {
+          data: resourceData,
+          nextCursor,
+          hasMore: !!result.LastEvaluatedKey
+        };
+      }
+
+      return { data: [], nextCursor: null, hasMore: false };
+    } catch (e) {
+      console.error({ at: "DynamoDB cloneDownPaginate - error", error: e });
+      return { error: "Sync failed" };
+    }
+  }
+
+  private async paginateWithOptimizedChunking(
+    dynamoClient: DynamoDBDocumentClient,
+    spaceId: string,
+    resource: string,
+    offset: number,
+    limit: number,
+    isExtension: boolean
+  ): Promise<any> {
+    try {
+      // Use larger chunks to reduce the number of queries
+      const chunkSize = 1000;
+      let currentOffset = 0;
+      let lastEvaluatedKey = undefined;
+
+      // Skip to the desired offset with larger chunks
+      while (currentOffset < offset) {
+        const remainingSkip = offset - currentOffset;
+        const queryLimit = Math.min(chunkSize, remainingSkip + limit);
+
+        const skipParams: any = {
           TableName: this.config.tableName,
           KeyConditionExpression: "PK = :pk",
           ExpressionAttributeValues: {
             ":pk": `${spaceId}#${resource}`
           },
-          Limit: offset + limit,
+          Limit: queryLimit,
           ScanIndexForward: true
         };
 
-        const result = await dynamoClient.send(new QueryCommand(params));
-        if (result.Items) {
-          let items = result.Items.slice(offset);
+        if (lastEvaluatedKey) {
+          skipParams.ExclusiveStartKey = lastEvaluatedKey;
+        }
+
+        const skipResult = await dynamoClient.send(
+          new QueryCommand(skipParams)
+        );
+
+        if (!skipResult.Items || skipResult.Items.length === 0) {
+          return { data: [], nextCursor: null, hasMore: false };
+        }
+
+        currentOffset += skipResult.Count || 0;
+        lastEvaluatedKey = skipResult.LastEvaluatedKey;
+
+        // If we've covered the offset and have enough items for the limit
+        if (currentOffset >= offset + limit) {
+          const startIndex = skipResult.Items.length - (currentOffset - offset);
+          const endIndex = startIndex + limit;
+          const items = skipResult.Items.slice(startIndex, endIndex);
 
           const resourceData = items.map((item) => {
             if (isExtension) {
@@ -412,76 +549,60 @@ export class DynamoDBSyncProvider implements ISyncProvider {
             }
           });
 
-          return resourceData;
-        }
-      } else {
-        // For large offsets, use multiple queries with ExclusiveStartKey
-        let currentOffset = 0;
-        let lastEvaluatedKey = undefined;
-
-        // Skip to the desired offset
-        while (currentOffset < offset) {
-          const skipParams: any = {
-            TableName: this.config.tableName,
-            KeyConditionExpression: "PK = :pk",
-            ExpressionAttributeValues: {
-              ":pk": `${spaceId}#${resource}`
-            },
-            Limit: Math.min(100, offset - currentOffset),
-            ScanIndexForward: true
+          const nextCursor = lastEvaluatedKey
+            ? JSON.stringify(lastEvaluatedKey)
+            : null;
+          return {
+            data: resourceData,
+            nextCursor,
+            hasMore: !!lastEvaluatedKey
           };
-
-          if (lastEvaluatedKey) {
-            skipParams.ExclusiveStartKey = lastEvaluatedKey;
-          }
-
-          const skipResult = await dynamoClient.send(
-            new QueryCommand(skipParams)
-          );
-          currentOffset += skipResult.Count || 0;
-          lastEvaluatedKey = skipResult.LastEvaluatedKey;
-
-          if (!lastEvaluatedKey) break; // No more items
         }
 
-        // Now get the actual page
-        if (lastEvaluatedKey || currentOffset === offset) {
-          const params: any = {
-            TableName: this.config.tableName,
-            KeyConditionExpression: "PK = :pk",
-            ExpressionAttributeValues: {
-              ":pk": `${spaceId}#${resource}`
-            },
-            Limit: limit,
-            ScanIndexForward: true
+        if (!lastEvaluatedKey) break;
+      }
+
+      // If we need more items after skipping
+      if (currentOffset >= offset && lastEvaluatedKey) {
+        const finalParams: any = {
+          TableName: this.config.tableName,
+          KeyConditionExpression: "PK = :pk",
+          ExpressionAttributeValues: {
+            ":pk": `${spaceId}#${resource}`
+          },
+          Limit: limit,
+          ScanIndexForward: true,
+          ExclusiveStartKey: lastEvaluatedKey
+        };
+
+        const result = await dynamoClient.send(new QueryCommand(finalParams));
+        if (result.Items) {
+          const resourceData = result.Items.map((item) => {
+            if (isExtension) {
+              return this.getResourceData(item);
+            } else {
+              return {
+                ...this.getResourceData(item),
+                id: item.SK
+              };
+            }
+          });
+
+          const nextCursor = result.LastEvaluatedKey
+            ? JSON.stringify(result.LastEvaluatedKey)
+            : null;
+          return {
+            data: resourceData,
+            nextCursor,
+            hasMore: !!result.LastEvaluatedKey
           };
-
-          if (lastEvaluatedKey) {
-            params.ExclusiveStartKey = lastEvaluatedKey;
-          }
-
-          const result = await dynamoClient.send(new QueryCommand(params));
-          if (result.Items) {
-            const resourceData = result.Items.map((item) => {
-              if (isExtension) {
-                return this.getResourceData(item);
-              } else {
-                return {
-                  ...this.getResourceData(item),
-                  id: item.SK
-                };
-              }
-            });
-
-            return resourceData;
-          }
         }
       }
 
-      return [];
+      return { data: [], nextCursor: null, hasMore: false };
     } catch (e) {
-      console.error({ at: "DynamoDB cloneDownPaginate - error", error: e });
-      return { error: "Sync failed" };
+      console.error({ at: "paginateWithOptimizedChunking - error", error: e });
+      return { data: [], nextCursor: null, hasMore: false };
     }
   }
 
