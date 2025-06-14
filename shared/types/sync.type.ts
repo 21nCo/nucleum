@@ -34,11 +34,6 @@ export type ICloneDownBody = {
   isExtension: boolean;
 };
 
-export type ICloneDownv2Body = {
-  resources: Resource[];
-  isExtension: boolean;
-};
-
 export type ICloneDownPaginateBody = {
   resource: Resource;
   isExtension: boolean;

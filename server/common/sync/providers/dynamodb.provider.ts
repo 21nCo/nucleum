@@ -7,7 +7,6 @@ import {
   ICloneDownBody,
   ICloneDownPaginateBody,
   IReconcileBody,
-  ICloneDownv2Body,
   ICloneDownPaginatev2Body
 } from "$lib/shared/types/sync.type";
 import { IMutation, PersistenceActionType } from "$lib/client/types/data.type";
@@ -391,112 +390,94 @@ export class DynamoDBSyncProvider implements ISyncProvider {
     }
   }
 
-  async cloneDownv2(body: ICloneDownv2Body, agent: Agent): Promise<any> {
+  async cloneDownv2(body: ICloneDownBody, agent: Agent): Promise<any> {
     try {
       const dynamoClient = this.getDynamoClient(agent);
       const { resources, isExtension } = body;
       if (resources?.length < 1) return { error: "No resources found" };
 
       const spaceId = agent.db;
-      const maxResponseSize = 1024 * 1024 * 1.5; // 1.5MB limit to be safe
-      let currentResponseSize = 0;
+      const limit = body.limit || 300;
 
       console.time("cloneDownv2-query");
 
-      // Initialize results structure for all resources
-      const results = new Array(resources.length).fill(null).map(() => []);
+      // Simple parallel queries like original cloneDown
+      const queryPromises = resources.map(async (resource) => {
+        try {
+          const params = {
+            TableName: this.config.tableArn,
+            KeyConditionExpression: "PK = :pk",
+            ExpressionAttributeValues: {
+              ":pk": `${spaceId}#${resource}`
+            },
+            Limit: limit,
+            ScanIndexForward: true
+          };
+
+          const result = await dynamoClient.send(new QueryCommand(params));
+          return {
+            resource,
+            result,
+            error: null,
+            nextCursor: result.LastEvaluatedKey
+              ? JSON.stringify(result.LastEvaluatedKey)
+              : null,
+            hasMore: !!result.LastEvaluatedKey
+          };
+        } catch (error) {
+          console.error(`Error querying resource ${resource}:`, error);
+          return {
+            resource,
+            result: null,
+            error: error.message,
+            nextCursor: null,
+            hasMore: false
+          };
+        }
+      });
+
+      const queryResults = await Promise.all(queryPromises);
+      console.timeEnd("cloneDownv2-query");
+
+      const results = [];
       const cursors: Record<string, string | null> = {};
       let hasMoreData = false;
 
-      // Calculate fair allocation per resource
-      const baseAllocationPerResource = Math.floor(
-        maxResponseSize / resources.length
-      );
-      const minAllocationPerResource = Math.min(
-        baseAllocationPerResource,
-        50000
-      ); // 50KB minimum
-
-      // Round-robin querying to ensure fair distribution
-      let activeResources = [...resources];
-      const resourceIndexMap = new Map(
-        resources.map((resource, index) => [resource, index])
-      );
-
-      while (
-        activeResources.length > 0 &&
-        currentResponseSize < maxResponseSize * 0.8
-      ) {
-        const remainingBudget = maxResponseSize - currentResponseSize;
-        const budgetPerResource = Math.max(
-          minAllocationPerResource,
-          Math.floor(remainingBudget / activeResources.length)
-        );
-
-        const newlyFinishedResources: string[] = [];
-
-        // Process each active resource in parallel for this round
-        const roundPromises = activeResources.map(async (resource) => {
-          const existingCursor = cursors[resource] || null;
-
-          return this.queryResourceWithSizeLimit(
-            dynamoClient,
-            spaceId,
-            resource,
-            existingCursor,
-            isExtension,
-            budgetPerResource
-          );
-        });
-
-        const roundResults = await Promise.all(roundPromises);
-
-        // Process results from this round
-        for (let i = 0; i < activeResources.length; i++) {
-          const resource = activeResources[i];
-          const resourceResult = roundResults[i];
-          const resourceIndex = resourceIndexMap.get(resource)!;
-
-          if (resourceResult.error) {
-            console.error(
-              `Failed to fetch resource ${resource}: ${resourceResult.error}`
-            );
-            cursors[resource] = null;
-            newlyFinishedResources.push(resource);
-            continue;
-          }
-
-          // Append new data to existing results
-          results[resourceIndex].push(...resourceResult.data);
-          cursors[resource] = resourceResult.nextCursor;
-          currentResponseSize += resourceResult.estimatedSize;
-
-          if (resourceResult.hasMore) {
-            hasMoreData = true;
-          } else {
-            // Resource is complete, remove from active list
-            newlyFinishedResources.push(resource);
-          }
+      for (const {
+        resource,
+        result,
+        error,
+        nextCursor,
+        hasMore
+      } of queryResults) {
+        if (error) {
+          console.error(`Failed to fetch resource ${resource}: ${error}`);
+          results.push([]);
+          cursors[resource] = null;
+          continue;
         }
 
-        // Remove completed resources from active list
-        activeResources = activeResources.filter(
-          (resource) => !newlyFinishedResources.includes(resource)
-        );
+        if (result?.Items) {
+          const resourceData = result.Items.map((item) => {
+            if (isExtension) {
+              return this.getResourceData(item);
+            } else {
+              return {
+                ...this.getResourceData(item),
+                id: item.SK
+              };
+            }
+          });
+          results.push(resourceData);
+        } else {
+          results.push([]);
+        }
 
-        // Break if we're approaching size limit
-        if (currentResponseSize >= maxResponseSize * 0.8) {
+        cursors[resource] = nextCursor;
+        if (hasMore) {
           hasMoreData = true;
-          break;
         }
       }
-
-      // For any remaining active resources, mark them as having more data
-      if (activeResources.length > 0) {
-        hasMoreData = true;
-      }
-
-      console.timeEnd("cloneDownv2-query");
 
       return {
         data: results,
@@ -673,15 +654,13 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       }
 
       const spaceId = agent.db;
-      const maxResponseSize = 1024 * 1024 * 1.5; // 1.5MB limit to be safe
 
-      const result = await this.queryResourceWithSizeLimit(
+      const result = await this.queryResourceWithCursor(
         dynamoClient,
         spaceId,
         resource,
         cursor,
-        isExtension,
-        maxResponseSize
+        isExtension
       );
 
       console.timeEnd("paginatev2");
@@ -1209,113 +1188,71 @@ export class DynamoDBSyncProvider implements ISyncProvider {
   }
 
   /**
-   * Common method to query a resource with size limit considerations
-   * Used by both cloneDownv2 and paginatev2
+   * Simplified method to query a resource with cursor
+   * Used by paginatev2
    */
-  private async queryResourceWithSizeLimit(
+  private async queryResourceWithCursor(
     dynamoClient: DynamoDBDocumentClient,
     spaceId: string,
     resource: string,
     cursor: string | null,
-    isExtension: boolean,
-    maxSize: number
+    isExtension: boolean
   ): Promise<{
     data: any[];
     nextCursor: string | null;
     hasMore: boolean;
-    estimatedSize: number;
     error?: string;
   }> {
     try {
-      const data: any[] = [];
-      let currentSize = 0;
-      let lastEvaluatedKey = cursor ? JSON.parse(cursor) : undefined;
-      let hasMore = false;
+      const params: any = {
+        TableName: this.config.tableArn,
+        KeyConditionExpression: "PK = :pk",
+        ExpressionAttributeValues: {
+          ":pk": `${spaceId}#${resource}`
+        },
+        ScanIndexForward: true
+      };
 
-      // Use adaptive querying - start with larger batches and adjust based on response size
-      let currentLimit = 1000;
-      const minLimit = 100;
-
-      while (currentSize < maxSize * 0.8) {
-        // Leave 20% buffer
-        const params: any = {
-          TableName: this.config.tableArn,
-          KeyConditionExpression: "PK = :pk",
-          ExpressionAttributeValues: {
-            ":pk": `${spaceId}#${resource}`
-          },
-          Limit: currentLimit,
-          ScanIndexForward: true
-        };
-
-        if (lastEvaluatedKey) {
-          params.ExclusiveStartKey = lastEvaluatedKey;
-        }
-
-        const result = await dynamoClient.send(new QueryCommand(params));
-
-        if (!result.Items || result.Items.length === 0) {
-          break;
-        }
-
-        // Process items and estimate size
-        const processedItems = result.Items.map((item) => {
-          if (isExtension) {
-            return this.getResourceData(item);
-          } else {
-            return {
-              ...this.getResourceData(item),
-              id: item.SK
-            };
-          }
-        });
-
-        // Rough size estimation (JSON stringified size)
-        const batchSize = JSON.stringify(processedItems).length;
-
-        // If adding this batch would exceed limit, break
-        if (currentSize + batchSize > maxSize) {
-          hasMore = true;
-          break;
-        }
-
-        data.push(...processedItems);
-        currentSize += batchSize;
-        lastEvaluatedKey = result.LastEvaluatedKey;
-
-        if (!result.LastEvaluatedKey) {
-          // No more data available
-          break;
-        }
-
-        // Adjust limit based on item size for better performance
-        const avgItemSize = batchSize / result.Items.length;
-        const remainingSize = maxSize - currentSize;
-        const estimatedRemainingItems = Math.floor(remainingSize / avgItemSize);
-        currentLimit = Math.max(
-          minLimit,
-          Math.min(1000, estimatedRemainingItems)
-        );
-
-        hasMore = !!result.LastEvaluatedKey;
+      if (cursor) {
+        params.ExclusiveStartKey = JSON.parse(cursor);
       }
 
-      const nextCursor =
-        hasMore && lastEvaluatedKey ? JSON.stringify(lastEvaluatedKey) : null;
+      const result = await dynamoClient.send(new QueryCommand(params));
+
+      if (!result.Items || result.Items.length === 0) {
+        return {
+          data: [],
+          nextCursor: null,
+          hasMore: false
+        };
+      }
+
+      const processedItems = result.Items.map((item) => {
+        if (isExtension) {
+          return this.getResourceData(item);
+        } else {
+          return {
+            ...this.getResourceData(item),
+            id: item.SK
+          };
+        }
+      });
+
+      const nextCursor = result.LastEvaluatedKey
+        ? JSON.stringify(result.LastEvaluatedKey)
+        : null;
 
       return {
-        data,
+        data: processedItems,
         nextCursor,
-        hasMore,
-        estimatedSize: currentSize
+        hasMore: !!result.LastEvaluatedKey
       };
     } catch (e) {
-      console.error({ at: "queryResourceWithSizeLimit - error", error: e });
+      console.error({ at: "queryResourceWithCursor - error", error: e });
       return {
         data: [],
         nextCursor: null,
         hasMore: false,
-        estimatedSize: 0,
         error: e instanceof Error ? e.message : "Unknown error"
       };
     }
