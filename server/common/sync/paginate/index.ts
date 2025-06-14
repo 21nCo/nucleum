@@ -11,12 +11,13 @@ import { SyncProvider, SyncProviderFactory } from "../providers";
 export async function paginate(body: ICloneDownPaginateBody, agent: Agent) {
   const provider = SyncProviderFactory.getProvider();
   const result = await provider.paginate(body, agent);
-  if (provider.name === SyncProvider.SURREAL || !Array.isArray(result)) {
+  if (provider.name === SyncProvider.SURREAL || !result.data) {
     return result;
   }
   return [
     {
-      result: result
+      result: result.data,
+      ...result
     }
   ];
 }
