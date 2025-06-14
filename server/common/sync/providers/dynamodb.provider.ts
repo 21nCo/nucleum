@@ -47,6 +47,7 @@ import { Select } from "@aws-sdk/client-dynamodb";
 
 interface DynamoDBConfig {
   tableName: string;
+  tableArn: string;
   region: string;
 }
 
@@ -68,12 +69,20 @@ export class DynamoDBSyncProvider implements ISyncProvider {
   private getDynamoClient(agent: Agent): DynamoDBDocumentClient {
     let region = "us-east-1";
     const prefix = process.env.DYNAMODB_TABLE_PREFIX || "user";
+    const dynamoAccount =
+      process.env.DYNAMODB_ACCOUNT_ID || process.env.AWS_ACCOUNT_ID;
+
     if (agent?.region) {
       region = resolveProviderRegionCode(agent.region, "aws");
       // console.log("resolved region:", { region, agentRegion: agent.region });
     }
+
+    const tableName = `${prefix}-${region}`;
+    const tableArn = `arn:aws:dynamodb:${region}:${dynamoAccount}:table/${tableName}`;
+
     this.config = {
-      tableName: prefix + "-" + region,
+      tableName,
+      tableArn,
       region
     };
 
@@ -149,7 +158,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
           if (writeBatch.length > 0) {
             const params = {
               RequestItems: {
-                [this.config.tableName]: writeBatch
+                [this.config.tableArn]: writeBatch
               }
             };
 
@@ -188,7 +197,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       let latestTimestamp = lastSyncDown;
       console.time("syncDown-mutations");
       const params = {
-        TableName: this.config.tableName,
+        TableName: this.config.tableArn,
         KeyConditionExpression: "PK = :pk AND SK > :lastSync",
         ExpressionAttributeValues: {
           ":pk": `${spaceId}#mutation`,
@@ -302,7 +311,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
 
         const params = {
           RequestItems: {
-            [this.config.tableName]: putRequests
+            [this.config.tableArn]: putRequests
           }
         };
 
@@ -329,7 +338,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       const queryPromises = resources.map(async (resource) => {
         try {
           const params = {
-            TableName: this.config.tableName,
+            TableName: this.config.tableArn,
             KeyConditionExpression: "PK = :pk",
             ExpressionAttributeValues: {
               ":pk": `${spaceId}#${resource}`
@@ -389,7 +398,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       const cursor = (body as any).cursor;
 
       const params: any = {
-        TableName: this.config.tableName,
+        TableName: this.config.tableArn,
         KeyConditionExpression: "PK = :pk",
         ExpressionAttributeValues: {
           ":pk": `${spaceId}#${resource}`
@@ -508,7 +517,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
         const queryLimit = Math.min(chunkSize, remainingSkip + limit);
 
         const skipParams: any = {
-          TableName: this.config.tableName,
+          TableName: this.config.tableArn,
           KeyConditionExpression: "PK = :pk",
           ExpressionAttributeValues: {
             ":pk": `${spaceId}#${resource}`
@@ -565,7 +574,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       // If we need more items after skipping
       if (currentOffset >= offset && lastEvaluatedKey) {
         const finalParams: any = {
-          TableName: this.config.tableName,
+          TableName: this.config.tableArn,
           KeyConditionExpression: "PK = :pk",
           ExpressionAttributeValues: {
             ":pk": `${spaceId}#${resource}`
@@ -633,7 +642,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
 
       // Query all nodes for this user
       const params = {
-        TableName: this.config.tableName,
+        TableName: this.config.tableArn,
         KeyConditionExpression: "PK = :pk",
         FilterExpression:
           "attribute_not_exists(contentType) OR contentType = :none",
@@ -661,7 +670,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
 
           const deleteParams = {
             RequestItems: {
-              [this.config.tableName]: deleteRequests
+              [this.config.tableArn]: deleteRequests
             }
           };
 
@@ -777,7 +786,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
 
             for (const rId of resourceIds) {
               const deleteParams = {
-                TableName: this.config.tableName,
+                TableName: this.config.tableArn,
                 Key: {
                   PK: `${spaceId}#${resource}`,
                   SK: rId.toString()
@@ -802,7 +811,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
 
               const deleteParams = {
                 RequestItems: {
-                  [this.config.tableName]: deleteRequests
+                  [this.config.tableArn]: deleteRequests
                 }
               };
 
@@ -853,7 +862,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       });
 
       const updateParams = {
-        TableName: this.config.tableName,
+        TableName: this.config.tableArn,
         Key: {
           PK: partitionKey,
           SK: sortKey
@@ -914,7 +923,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
 
         const params = {
           RequestItems: {
-            [this.config.tableName]: {
+            [this.config.tableArn]: {
               Keys: batchKeys
             }
           }
@@ -922,8 +931,8 @@ export class DynamoDBSyncProvider implements ISyncProvider {
 
         const result = await dynamoClient.send(new BatchGetCommand(params));
 
-        if (result.Responses && result.Responses[this.config.tableName]) {
-          for (const item of result.Responses[this.config.tableName]) {
+        if (result.Responses && result.Responses[this.config.tableArn]) {
+          for (const item of result.Responses[this.config.tableArn]) {
             results.push(this.getResourceData(item));
           }
         }
@@ -937,7 +946,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
             result.UnprocessedKeys
           );
           const unprocessedKeys =
-            result.UnprocessedKeys[this.config.tableName]?.Keys || [];
+            result.UnprocessedKeys[this.config.tableArn]?.Keys || [];
           if (unprocessedKeys.length > 0) {
             const retryResults = await this.batchGetItems(
               unprocessedKeys as { PK: string; SK: string }[],
@@ -966,7 +975,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
     const countPromises = resources.map(async (resource) => {
       try {
         const params = {
-          TableName: this.config.tableName,
+          TableName: this.config.tableArn,
           KeyConditionExpression: "PK = :pk",
           ExpressionAttributeValues: {
             ":pk": `${spaceId}#${resource}`

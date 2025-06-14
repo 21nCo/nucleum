@@ -57,7 +57,9 @@ export class ServerlessRegionalStack extends NestedStack {
     let lambdaEnvVars = {
       ...this.env.lambdaEnv,
       USE_THIRDPARTY_AUTH_METHOD: "true",
-      URL_EXPIRATION_TIME: "300"
+      URL_EXPIRATION_TIME: "300",
+      DYNAMODB_ACCOUNT_ID:
+        this.env.lambdaEnv.DYNAMODB_ACCOUNT_ID || this.account
     };
     console.log("initializing ServerlessRegionalStack - ", {
       region: this.region,
@@ -67,7 +69,7 @@ export class ServerlessRegionalStack extends NestedStack {
     this.regionDomainName = this.env.tidyregion + "-" + this.domainName;
     this.certificate = resolveAcmCertificate(this, props.zone, this.env.domain);
     const fileBuckets = this.resolveFilesBucket();
-    const dynamoTables = this.resolveDynamoTables();
+    // const dynamoTables = this.resolveDynamoTables();
     this.generateApi();
     const lambaProps: CustomLambdaNestedStackProps = {
       ...props,
@@ -84,8 +86,8 @@ export class ServerlessRegionalStack extends NestedStack {
     const lambdaPropsV2: CustomLambdaNestedStackPropsV2 = {
       ...props,
       api: v2Resource,
-      lambdaEnvVars,
-      dynamoTables
+      lambdaEnvVars
+      // dynamoTables
     };
     new SyncLambdaFunctions(this, "V2SyncStack", lambdaPropsV2);
     new AccountLambdaFunctionsV2(this, "V2AccountStack", lambdaPropsV2);

@@ -52,6 +52,7 @@ interface IDynamoBaseAttributes {
 
 interface DynamoDBConfig {
   tableName: string;
+  tableArn: string;
   region: string;
 }
 
@@ -62,9 +63,13 @@ export class DynamoDBDatabaseProvider implements IDatabaseProvider {
   constructor() {
     const region = process.env.AWS_REGION || "us-east-1";
     const tableName = process.env.MASTER_DB_TABLE_NAME || "master";
+    const dynamoAccount =
+      process.env.DYNAMODB_ACCOUNT_ID || process.env.AWS_ACCOUNT_ID;
+    const tableArn = `arn:aws:dynamodb:${region}:${dynamoAccount}:table/${tableName}`;
 
     this.config = {
       tableName,
+      tableArn,
       region
     };
 
@@ -92,7 +97,7 @@ export class DynamoDBDatabaseProvider implements IDatabaseProvider {
 
     return this.client.send(
       new PutCommand({
-        TableName: this.config.tableName,
+        TableName: this.config.tableArn,
         Item: activityItem
       })
     );
@@ -150,7 +155,7 @@ export class DynamoDBDatabaseProvider implements IDatabaseProvider {
 
     await this.client.send(
       new PutCommand({
-        TableName: this.config.tableName,
+        TableName: this.config.tableArn,
         Item: userItem
       })
     );
@@ -191,7 +196,7 @@ export class DynamoDBDatabaseProvider implements IDatabaseProvider {
 
     const result = await this.client.send(
       new QueryCommand({
-        TableName: this.config.tableName,
+        TableName: this.config.tableArn,
         IndexName: "GSI1",
         KeyConditionExpression: "GSI1PK = :pk",
         ExpressionAttributeValues: {
@@ -205,7 +210,7 @@ export class DynamoDBDatabaseProvider implements IDatabaseProvider {
     const userId = result.Items[0].GSI1SK;
     const userResult = await this.client.send(
       new GetCommand({
-        TableName: this.config.tableName,
+        TableName: this.config.tableArn,
         Key: {
           PK: `user#${userId}`,
           SK: "profile"
@@ -223,7 +228,7 @@ export class DynamoDBDatabaseProvider implements IDatabaseProvider {
   async getUserById(userId: string): Promise<any> {
     const result = await this.client.send(
       new GetCommand({
-        TableName: this.config.tableName,
+        TableName: this.config.tableArn,
         Key: {
           PK: `user#${userId}`,
           SK: "profile"
@@ -257,7 +262,7 @@ export class DynamoDBDatabaseProvider implements IDatabaseProvider {
 
     await this.client.send(
       new UpdateCommand({
-        TableName: this.config.tableName,
+        TableName: this.config.tableArn,
         Key: {
           PK: `user#${userId}`,
           SK: "profile"
@@ -279,7 +284,7 @@ export class DynamoDBDatabaseProvider implements IDatabaseProvider {
   async deleteUser(agent: Agent): Promise<any> {
     const result = await this.client.send(
       new DeleteCommand({
-        TableName: this.config.tableName,
+        TableName: this.config.tableArn,
         Key: {
           PK: `user#${agent.id}`,
           SK: "profile"
@@ -317,7 +322,7 @@ export class DynamoDBDatabaseProvider implements IDatabaseProvider {
   async checkBetaList(email: string, app: string): Promise<any> {
     const result = await this.client.send(
       new QueryCommand({
-        TableName: this.config.tableName,
+        TableName: this.config.tableArn,
         KeyConditionExpression: "PK = :pk AND SK = :sk",
         ExpressionAttributeValues: {
           ":pk": `betaList#${app}`,
@@ -347,7 +352,7 @@ export class DynamoDBDatabaseProvider implements IDatabaseProvider {
     await Promise.all([
       this.client.send(
         new PutCommand({
-          TableName: this.config.tableName,
+          TableName: this.config.tableArn,
           Item: guestItem
         })
       ),
@@ -379,7 +384,7 @@ export class DynamoDBDatabaseProvider implements IDatabaseProvider {
 
     await this.client.send(
       new PutCommand({
-        TableName: this.config.tableName,
+        TableName: this.config.tableArn,
         Item: userPlanItem
       })
     );
@@ -396,7 +401,7 @@ export class DynamoDBDatabaseProvider implements IDatabaseProvider {
     const user = this.getUserById(userId);
     const userPlan = this.client.send(
       new GetCommand({
-        TableName: this.config.tableName,
+        TableName: this.config.tableArn,
         Key: {
           PK: `user#${userId}`,
           SK: "userPlan"
@@ -425,7 +430,7 @@ export class DynamoDBDatabaseProvider implements IDatabaseProvider {
   ): Promise<IProductConfig | undefined> {
     const result = await this.client.send(
       new GetCommand({
-        TableName: this.config.tableName,
+        TableName: this.config.tableArn,
         Key: {
           PK: `product#${productId}`,
           SK: "config"
@@ -466,7 +471,7 @@ export class DynamoDBDatabaseProvider implements IDatabaseProvider {
 
     await this.client.send(
       new PutCommand({
-        TableName: this.config.tableName,
+        TableName: this.config.tableArn,
         Item: spaceItem
       })
     );
@@ -483,7 +488,7 @@ export class DynamoDBDatabaseProvider implements IDatabaseProvider {
   async getSpaceUser(spaceId: string, userId: string): Promise<any> {
     const result = await this.client.send(
       new GetCommand({
-        TableName: this.config.tableName,
+        TableName: this.config.tableArn,
         Key: {
           PK: `spaceUser#${spaceId}#${userId}`,
           SK: "membership"
@@ -502,7 +507,7 @@ export class DynamoDBDatabaseProvider implements IDatabaseProvider {
   async getUserSpaces(userId: string): Promise<any> {
     const result = await this.client.send(
       new QueryCommand({
-        TableName: this.config.tableName,
+        TableName: this.config.tableArn,
         IndexName: "GSI1",
         KeyConditionExpression: "GSI1PK = :pk",
         ExpressionAttributeValues: {
@@ -523,7 +528,7 @@ export class DynamoDBDatabaseProvider implements IDatabaseProvider {
   async getDbDefinitions(app: string, lastChangeId: number): Promise<any> {
     const result = await this.client.send(
       new QueryCommand({
-        TableName: this.config.tableName,
+        TableName: this.config.tableArn,
         KeyConditionExpression: "PK = :pk AND SK > :lastChange",
         ExpressionAttributeValues: {
           ":pk": `dbDef#${app.toLowerCase()}`,

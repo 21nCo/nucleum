@@ -31,6 +31,7 @@ export type ILambdaEnvironmentVariables = {
   FILE_BUCKET_PREFIX: string;
   TEMP_BUCKET_PREFIX: string;
   DYNAMODB_TABLE_PREFIX: string;
+  DYNAMODB_ACCOUNT_ID?: string;
   USE_THIRDPARTY_AUTH_METHOD?: string;
   URL_EXPIRATION_TIME?: string;
   URL_EXPIRATION_TIME_GET?: string;
