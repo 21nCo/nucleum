@@ -5,7 +5,9 @@ import {
   ICloneUpBody,
   ICloneDownBody,
   ICloneDownPaginateBody,
-  IReconcileBody
+  IReconcileBody,
+  ICloneDownv2Body,
+  ICloneDownPaginatev2Body
 } from "$lib/shared/types/sync.type";
 
 export enum SyncProvider {
@@ -26,9 +28,11 @@ export interface ISyncProvider {
   // Clone operations
   cloneUp(body: ICloneUpBody, agent: Agent): Promise<any>;
   cloneDown(body: ICloneDownBody, agent: Agent): Promise<any>;
+  cloneDownv2(body: ICloneDownv2Body, agent: Agent): Promise<any>;
 
   // Pagination
   paginate(body: ICloneDownPaginateBody, agent: Agent): Promise<any>;
+  paginatev2(body: ICloneDownPaginatev2Body, agent: Agent): Promise<any>;
 
   // Reconciliation
   reconcile(body: IReconcileBody, agent: Agent): Promise<any>;

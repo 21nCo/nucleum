@@ -6,7 +6,9 @@ import {
   ICloneUpBody,
   ICloneDownBody,
   ICloneDownPaginateBody,
-  IReconcileBody
+  IReconcileBody,
+  ICloneDownv2Body,
+  ICloneDownPaginatev2Body
 } from "$lib/shared/types/sync.type";
 import { IMutation, PersistenceActionType } from "$lib/client/types/data.type";
 import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
@@ -20,7 +22,8 @@ import {
   QueryCommand,
   GetCommand,
   DeleteCommand,
-  UpdateCommand
+  UpdateCommand,
+  PutCommand
 } from "@aws-sdk/lib-dynamodb";
 import { Select } from "@aws-sdk/client-dynamodb";
 
@@ -82,7 +85,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
 
     this.config = {
       tableName,
-      tableArn,
+      tableArn: dynamoAccount ? tableArn : tableName,
       region
     };
 
@@ -388,14 +391,142 @@ export class DynamoDBSyncProvider implements ISyncProvider {
     }
   }
 
+  async cloneDownv2(body: ICloneDownv2Body, agent: Agent): Promise<any> {
+    try {
+      const dynamoClient = this.getDynamoClient(agent);
+      const { resources, isExtension } = body;
+      if (resources?.length < 1) return { error: "No resources found" };
+
+      const spaceId = agent.db;
+      const maxResponseSize = 1024 * 1024 * 1.5; // 1.5MB limit to be safe
+      let currentResponseSize = 0;
+
+      console.time("cloneDownv2-query");
+
+      // Initialize results structure for all resources
+      const results = new Array(resources.length).fill(null).map(() => []);
+      const cursors: Record<string, string | null> = {};
+      let hasMoreData = false;
+
+      // Calculate fair allocation per resource
+      const baseAllocationPerResource = Math.floor(
+        maxResponseSize / resources.length
+      );
+      const minAllocationPerResource = Math.min(
+        baseAllocationPerResource,
+        50000
+      ); // 50KB minimum
+
+      // Round-robin querying to ensure fair distribution
+      let activeResources = [...resources];
+      const resourceIndexMap = new Map(
+        resources.map((resource, index) => [resource, index])
+      );
+
+      while (
+        activeResources.length > 0 &&
+        currentResponseSize < maxResponseSize * 0.8
+      ) {
+        const remainingBudget = maxResponseSize - currentResponseSize;
+        const budgetPerResource = Math.max(
+          minAllocationPerResource,
+          Math.floor(remainingBudget / activeResources.length)
+        );
+
+        const newlyFinishedResources: string[] = [];
+
+        // Process each active resource in parallel for this round
+        const roundPromises = activeResources.map(async (resource) => {
+          const existingCursor = cursors[resource] || null;
+
+          return this.queryResourceWithSizeLimit(
+            dynamoClient,
+            spaceId,
+            resource,
+            existingCursor,
+            isExtension,
+            budgetPerResource
+          );
+        });
+
+        const roundResults = await Promise.all(roundPromises);
+
+        // Process results from this round
+        for (let i = 0; i < activeResources.length; i++) {
+          const resource = activeResources[i];
+          const resourceResult = roundResults[i];
+          const resourceIndex = resourceIndexMap.get(resource)!;
+
+          if (resourceResult.error) {
+            console.error(
+              `Failed to fetch resource ${resource}: ${resourceResult.error}`
+            );
+            cursors[resource] = null;
+            newlyFinishedResources.push(resource);
+            continue;
+          }
+
+          // Append new data to existing results
+          results[resourceIndex].push(...resourceResult.data);
+          cursors[resource] = resourceResult.nextCursor;
+          currentResponseSize += resourceResult.estimatedSize;
+
+          if (resourceResult.hasMore) {
+            hasMoreData = true;
+          } else {
+            // Resource is complete, remove from active list
+            newlyFinishedResources.push(resource);
+          }
+        }
+
+        // Remove completed resources from active list
+        activeResources = activeResources.filter(
+          (resource) => !newlyFinishedResources.includes(resource)
+        );
+
+        // Break if we're approaching size limit
+        if (currentResponseSize >= maxResponseSize * 0.8) {
+          hasMoreData = true;
+          break;
+        }
+      }
+
+      // For any remaining active resources, mark them as having more data
+      if (activeResources.length > 0) {
+        hasMoreData = true;
+      }
+
+      console.timeEnd("cloneDownv2-query");
+
+      return {
+        data: results,
+        cursors: hasMoreData ? cursors : null,
+        hasMore: hasMoreData
+      };
+    } catch (e) {
+      console.error({ at: "DynamoDB cloneDownv2 - error", error: e });
+      return { error: "Sync failed" };
+    }
+  }
+
   async paginate(body: ICloneDownPaginateBody, agent: Agent): Promise<any> {
     try {
+      console.time("paginate");
       const dynamoClient = this.getDynamoClient(agent);
       const { resource, offset, limit, isExtension } = body;
       const spaceId = agent.db;
 
       // Check if a cursor is provided in the body (for cursor-based pagination)
-      const cursor = (body as any).cursor;
+      let cursor = (body as any).cursor;
+
+      // If no cursor provided, try to retrieve saved cursor from DynamoDB
+      if (!cursor) {
+        cursor = await this.retrieveSavedCursor(
+          spaceId,
+          resource,
+          dynamoClient
+        );
+      }
 
       const params: any = {
         TableName: this.config.tableArn,
@@ -421,7 +552,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
           // For reasonable offsets, use a single large query
           params.Limit = offset + limit;
           const result = await dynamoClient.send(new QueryCommand(params));
-
+          console.timeEnd("paginate");
           if (result.Items && result.Items.length > offset) {
             const items = result.Items.slice(offset, offset + limit);
             const resourceData = items.map((item) => {
@@ -444,10 +575,21 @@ export class DynamoDBSyncProvider implements ISyncProvider {
                   })
                 : null;
 
+            const hasMore = result.Items.length >= offset + limit;
+
+            // Save or delete cursor position in DynamoDB
+            await this.managePaginationCursor(
+              spaceId,
+              resource,
+              nextCursor,
+              hasMore,
+              dynamoClient
+            );
+
             return {
               data: resourceData,
               nextCursor,
-              hasMore: result.Items.length >= offset + limit
+              hasMore
             };
           }
         } else {
@@ -483,12 +625,33 @@ export class DynamoDBSyncProvider implements ISyncProvider {
           ? JSON.stringify(result.LastEvaluatedKey)
           : null;
 
+        const hasMore = !!result.LastEvaluatedKey;
+
+        // Save or delete cursor position in DynamoDB
+        await this.managePaginationCursor(
+          spaceId,
+          resource,
+          nextCursor,
+          hasMore,
+          dynamoClient
+        );
+        console.timeEnd("paginate");
+
         return {
           data: resourceData,
           nextCursor,
-          hasMore: !!result.LastEvaluatedKey
+          hasMore
         };
       }
+
+      // No items found, delete any existing cursor
+      await this.managePaginationCursor(
+        spaceId,
+        resource,
+        null,
+        false,
+        dynamoClient
+      );
 
       return { data: [], nextCursor: null, hasMore: false };
     } catch (e) {
@@ -497,121 +660,44 @@ export class DynamoDBSyncProvider implements ISyncProvider {
     }
   }
 
-  private async paginateWithOptimizedChunking(
-    dynamoClient: DynamoDBDocumentClient,
-    spaceId: string,
-    resource: string,
-    offset: number,
-    limit: number,
-    isExtension: boolean
-  ): Promise<any> {
+  async paginatev2(body: ICloneDownPaginatev2Body, agent: Agent): Promise<any> {
     try {
-      // Use larger chunks to reduce the number of queries
-      const chunkSize = 1000;
-      let currentOffset = 0;
-      let lastEvaluatedKey = undefined;
+      console.time("paginatev2");
+      const dynamoClient = this.getDynamoClient(agent);
+      const { resource, isExtension } = body;
+      const cursor = (body as any).cursor;
 
-      // Skip to the desired offset with larger chunks
-      while (currentOffset < offset) {
-        const remainingSkip = offset - currentOffset;
-        const queryLimit = Math.min(chunkSize, remainingSkip + limit);
-
-        const skipParams: any = {
-          TableName: this.config.tableArn,
-          KeyConditionExpression: "PK = :pk",
-          ExpressionAttributeValues: {
-            ":pk": `${spaceId}#${resource}`
-          },
-          Limit: queryLimit,
-          ScanIndexForward: true
-        };
-
-        if (lastEvaluatedKey) {
-          skipParams.ExclusiveStartKey = lastEvaluatedKey;
-        }
-
-        const skipResult = await dynamoClient.send(
-          new QueryCommand(skipParams)
-        );
-
-        if (!skipResult.Items || skipResult.Items.length === 0) {
-          return { data: [], nextCursor: null, hasMore: false };
-        }
-
-        currentOffset += skipResult.Count || 0;
-        lastEvaluatedKey = skipResult.LastEvaluatedKey;
-
-        // If we've covered the offset and have enough items for the limit
-        if (currentOffset >= offset + limit) {
-          const startIndex = skipResult.Items.length - (currentOffset - offset);
-          const endIndex = startIndex + limit;
-          const items = skipResult.Items.slice(startIndex, endIndex);
-
-          const resourceData = items.map((item) => {
-            if (isExtension) {
-              return this.getResourceData(item);
-            } else {
-              return {
-                ...this.getResourceData(item),
-                id: item.SK
-              };
-            }
-          });
-
-          const nextCursor = lastEvaluatedKey
-            ? JSON.stringify(lastEvaluatedKey)
-            : null;
-          return {
-            data: resourceData,
-            nextCursor,
-            hasMore: !!lastEvaluatedKey
-          };
-        }
-
-        if (!lastEvaluatedKey) break;
+      if (!cursor) {
+        console.timeEnd("paginatev2");
+        return { error: "Cursor is required for paginatev2" };
       }
 
-      // If we need more items after skipping
-      if (currentOffset >= offset && lastEvaluatedKey) {
-        const finalParams: any = {
-          TableName: this.config.tableArn,
-          KeyConditionExpression: "PK = :pk",
-          ExpressionAttributeValues: {
-            ":pk": `${spaceId}#${resource}`
-          },
-          Limit: limit,
-          ScanIndexForward: true,
-          ExclusiveStartKey: lastEvaluatedKey
-        };
+      const spaceId = agent.db;
+      const maxResponseSize = 1024 * 1024 * 1.5; // 1.5MB limit to be safe
 
-        const result = await dynamoClient.send(new QueryCommand(finalParams));
-        if (result.Items) {
-          const resourceData = result.Items.map((item) => {
-            if (isExtension) {
-              return this.getResourceData(item);
-            } else {
-              return {
-                ...this.getResourceData(item),
-                id: item.SK
-              };
-            }
-          });
+      const result = await this.queryResourceWithSizeLimit(
+        dynamoClient,
+        spaceId,
+        resource,
+        cursor,
+        isExtension,
+        maxResponseSize
+      );
 
-          const nextCursor = result.LastEvaluatedKey
-            ? JSON.stringify(result.LastEvaluatedKey)
-            : null;
-          return {
-            data: resourceData,
-            nextCursor,
-            hasMore: !!result.LastEvaluatedKey
-          };
-        }
+      console.timeEnd("paginatev2");
+
+      if (result.error) {
+        return { error: result.error };
       }
 
-      return { data: [], nextCursor: null, hasMore: false };
+      return {
+        data: result.data,
+        nextCursor: result.nextCursor,
+        hasMore: result.hasMore
+      };
     } catch (e) {
-      console.error({ at: "paginateWithOptimizedChunking - error", error: e });
-      return { data: [], nextCursor: null, hasMore: false };
+      console.error({ at: "DynamoDB paginatev2 - error", error: e });
+      return { error: "Sync failed" };
     }
   }
 
@@ -1014,5 +1100,375 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       ...resourceData
     } = item;
     return resourceData;
+  }
+
+  /**
+   * Retrieves a saved pagination cursor from DynamoDB and checks if it's expired
+   * Deletes the cursor if it's older than 30 minutes
+   */
+  private async retrieveSavedCursor(
+    spaceId: string,
+    resource: string,
+    dynamoClient: DynamoDBDocumentClient
+  ): Promise<string | null> {
+    try {
+      const savedCursorParams = {
+        TableName: this.config.tableArn,
+        Key: {
+          PK: `${spaceId}#${resource}#paginatecursor`,
+          SK: "cursor"
+        }
+      };
+
+      const savedCursorResult = await dynamoClient.send(
+        new GetCommand(savedCursorParams)
+      );
+
+      if (savedCursorResult.Item && savedCursorResult.Item.cursorData) {
+        const cursorAge = Date.now() - (savedCursorResult.Item.updatedAt || 0);
+        const thirtyMinutesInMs = 30 * 60 * 1000;
+
+        if (cursorAge > thirtyMinutesInMs) {
+          await this.deletePaginationCursor(spaceId, resource, dynamoClient);
+          console.log("Deleted expired pagination cursor");
+          return null;
+        } else {
+          return savedCursorResult.Item.cursorData;
+        }
+      }
+
+      return null;
+    } catch (e) {
+      console.warn("Failed to retrieve saved cursor:", e);
+      return null;
+    }
+  }
+
+  /**
+   * Deletes a pagination cursor from DynamoDB
+   */
+  private async deletePaginationCursor(
+    spaceId: string,
+    resource: string,
+    dynamoClient: DynamoDBDocumentClient
+  ): Promise<void> {
+    try {
+      const deleteParams = {
+        TableName: this.config.tableArn,
+        Key: {
+          PK: `${spaceId}#${resource}#paginatecursor`,
+          SK: "cursor"
+        }
+      };
+
+      await dynamoClient.send(new DeleteCommand(deleteParams));
+    } catch (e) {
+      console.warn("Failed to delete pagination cursor:", e);
+    }
+  }
+
+  /**
+   * Manages pagination cursor persistence in DynamoDB
+   * Saves cursor when there are more records, deletes when pagination is complete
+   */
+  private async managePaginationCursor(
+    spaceId: string,
+    resource: string,
+    nextCursor: string | null,
+    hasMore: boolean,
+    dynamoClient: DynamoDBDocumentClient
+  ): Promise<void> {
+    try {
+      const cursorPK = `${spaceId}#${resource}#paginatecursor`;
+      const cursorSK = "cursor";
+
+      if (hasMore && nextCursor) {
+        // Save cursor for next pagination request
+        const cursorItem = {
+          PK: cursorPK,
+          SK: cursorSK,
+          cursorData: nextCursor,
+          spaceId,
+          resource,
+          updatedAt: Date.now()
+        };
+
+        const putParams = {
+          TableName: this.config.tableArn,
+          Item: cursorItem
+        };
+
+        await dynamoClient.send(new PutCommand(putParams));
+      } else {
+        // Delete cursor when pagination is complete
+        await this.deletePaginationCursor(spaceId, resource, dynamoClient);
+      }
+    } catch (e) {
+      console.warn("Failed to manage pagination cursor:", e);
+    }
+  }
+
+  /**
+   * Common method to query a resource with size limit considerations
+   * Used by both cloneDownv2 and paginatev2
+   */
+  private async queryResourceWithSizeLimit(
+    dynamoClient: DynamoDBDocumentClient,
+    spaceId: string,
+    resource: string,
+    cursor: string | null,
+    isExtension: boolean,
+    maxSize: number
+  ): Promise<{
+    data: any[];
+    nextCursor: string | null;
+    hasMore: boolean;
+    estimatedSize: number;
+    error?: string;
+  }> {
+    try {
+      const data: any[] = [];
+      let currentSize = 0;
+      let lastEvaluatedKey = cursor ? JSON.parse(cursor) : undefined;
+      let hasMore = false;
+
+      // Use adaptive querying - start with larger batches and adjust based on response size
+      let currentLimit = 1000;
+      const minLimit = 100;
+
+      while (currentSize < maxSize * 0.8) {
+        // Leave 20% buffer
+        const params: any = {
+          TableName: this.config.tableArn,
+          KeyConditionExpression: "PK = :pk",
+          ExpressionAttributeValues: {
+            ":pk": `${spaceId}#${resource}`
+          },
+          Limit: currentLimit,
+          ScanIndexForward: true
+        };
+
+        if (lastEvaluatedKey) {
+          params.ExclusiveStartKey = lastEvaluatedKey;
+        }
+
+        const result = await dynamoClient.send(new QueryCommand(params));
+
+        if (!result.Items || result.Items.length === 0) {
+          break;
+        }
+
+        // Process items and estimate size
+        const processedItems = result.Items.map((item) => {
+          if (isExtension) {
+            return this.getResourceData(item);
+          } else {
+            return {
+              ...this.getResourceData(item),
+              id: item.SK
+            };
+          }
+        });
+
+        // Rough size estimation (JSON stringified size)
+        const batchSize = JSON.stringify(processedItems).length;
+
+        // If adding this batch would exceed limit, break
+        if (currentSize + batchSize > maxSize) {
+          hasMore = true;
+          break;
+        }
+
+        data.push(...processedItems);
+        currentSize += batchSize;
+        lastEvaluatedKey = result.LastEvaluatedKey;
+
+        if (!result.LastEvaluatedKey) {
+          // No more data available
+          break;
+        }
+
+        // Adjust limit based on item size for better performance
+        const avgItemSize = batchSize / result.Items.length;
+        const remainingSize = maxSize - currentSize;
+        const estimatedRemainingItems = Math.floor(remainingSize / avgItemSize);
+        currentLimit = Math.max(
+          minLimit,
+          Math.min(1000, estimatedRemainingItems)
+        );
+
+        hasMore = !!result.LastEvaluatedKey;
+      }
+
+      const nextCursor =
+        hasMore && lastEvaluatedKey ? JSON.stringify(lastEvaluatedKey) : null;
+
+      return {
+        data,
+        nextCursor,
+        hasMore,
+        estimatedSize: currentSize
+      };
+    } catch (e) {
+      console.error({ at: "queryResourceWithSizeLimit - error", error: e });
+      return {
+        data: [],
+        nextCursor: null,
+        hasMore: false,
+        estimatedSize: 0,
+        error: e instanceof Error ? e.message : "Unknown error"
+      };
+    }
+  }
+
+  private async paginateWithOptimizedChunking(
+    dynamoClient: DynamoDBDocumentClient,
+    spaceId: string,
+    resource: string,
+    offset: number,
+    limit: number,
+    isExtension: boolean
+  ): Promise<any> {
+    try {
+      // Use larger chunks to reduce the number of queries
+      const chunkSize = 1000;
+      let currentOffset = 0;
+      let lastEvaluatedKey = undefined;
+
+      // Skip to the desired offset with larger chunks
+      while (currentOffset < offset) {
+        const remainingSkip = offset - currentOffset;
+        const queryLimit = Math.min(chunkSize, remainingSkip + limit);
+
+        const skipParams: any = {
+          TableName: this.config.tableArn,
+          KeyConditionExpression: "PK = :pk",
+          ExpressionAttributeValues: {
+            ":pk": `${spaceId}#${resource}`
+          },
+          Limit: queryLimit,
+          ScanIndexForward: true
+        };
+
+        if (lastEvaluatedKey) {
+          skipParams.ExclusiveStartKey = lastEvaluatedKey;
+        }
+
+        const skipResult = await dynamoClient.send(
+          new QueryCommand(skipParams)
+        );
+
+        if (!skipResult.Items || skipResult.Items.length === 0) {
+          return { data: [], nextCursor: null, hasMore: false };
+        }
+
+        currentOffset += skipResult.Count || 0;
+        lastEvaluatedKey = skipResult.LastEvaluatedKey;
+
+        // If we've covered the offset and have enough items for the limit
+        if (currentOffset >= offset + limit) {
+          const startIndex = skipResult.Items.length - (currentOffset - offset);
+          const endIndex = startIndex + limit;
+          const items = skipResult.Items.slice(startIndex, endIndex);
+
+          const resourceData = items.map((item) => {
+            if (isExtension) {
+              return this.getResourceData(item);
+            } else {
+              return {
+                ...this.getResourceData(item),
+                id: item.SK
+              };
+            }
+          });
+
+          const nextCursor = lastEvaluatedKey
+            ? JSON.stringify(lastEvaluatedKey)
+            : null;
+
+          const hasMore = !!lastEvaluatedKey;
+
+          // Save or delete cursor position in DynamoDB
+          await this.managePaginationCursor(
+            spaceId,
+            resource,
+            nextCursor,
+            hasMore,
+            dynamoClient
+          );
+
+          return {
+            data: resourceData,
+            nextCursor,
+            hasMore
+          };
+        }
+
+        if (!lastEvaluatedKey) break;
+      }
+
+      // If we need more items after skipping
+      if (currentOffset >= offset && lastEvaluatedKey) {
+        const finalParams: any = {
+          TableName: this.config.tableArn,
+          KeyConditionExpression: "PK = :pk",
+          ExpressionAttributeValues: {
+            ":pk": `${spaceId}#${resource}`
+          },
+          Limit: limit,
+          ScanIndexForward: true,
+          ExclusiveStartKey: lastEvaluatedKey
+        };
+
+        const result = await dynamoClient.send(new QueryCommand(finalParams));
+        if (result.Items) {
+          const resourceData = result.Items.map((item) => {
+            if (isExtension) {
+              return this.getResourceData(item);
+            } else {
+              return {
+                ...this.getResourceData(item),
+                id: item.SK
+              };
+            }
+          });
+
+          const nextCursor = result.LastEvaluatedKey
+            ? JSON.stringify(result.LastEvaluatedKey)
+            : null;
+
+          const hasMore = !!result.LastEvaluatedKey;
+
+          // Save or delete cursor position in DynamoDB
+          await this.managePaginationCursor(
+            spaceId,
+            resource,
+            nextCursor,
+            hasMore,
+            dynamoClient
+          );
+
+          return {
+            data: resourceData,
+            nextCursor,
+            hasMore
+          };
+        }
+      }
+
+      // No more items, delete any existing cursor
+      await this.managePaginationCursor(
+        spaceId,
+        resource,
+        null,
+        false,
+        dynamoClient
+      );
+
+      return { data: [], nextCursor: null, hasMore: false };
+    } catch (e) {
+      console.error({ at: "paginateWithOptimizedChunking - error", error: e });
+      return { data: [], nextCursor: null, hasMore: false };
+    }
   }
 }

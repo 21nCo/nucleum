@@ -43,7 +43,9 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
     const syncDownRole = createSyncRole("SyncDownFunctionRole");
     const cloneUpRole = createSyncRole("CloneUpFunctionRole");
     const cloneDownRole = createSyncRole("CloneDownFunctionRole");
+    const cloneDownV2Role = createSyncRole("CloneDownv2FunctionRole");
     const paginateRole = createSyncRole("PaginateFunctionRole");
+    const paginateV2Role = createSyncRole("Paginatev2FunctionRole");
     const reconcileRole = createSyncRole("ReconcileFunctionRole");
 
     const syncEndpoint = props.api.addResource("sync");
@@ -107,6 +109,28 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
       new gateway.LambdaIntegration(cloneDownFunction)
     );
 
+    const cloneDownV2Resource = syncEndpoint.addResource("clonedownv2");
+    const cloneDownV2Function = new lambda.Function(
+      this,
+      "CloneDownV2Function",
+      {
+        handler: "index.handler",
+        functionName: generateFunctionName(
+          "cloneDownV2Function",
+          props.environment
+        ),
+        code: lambda.Code.fromAsset(
+          path.join(__dirname, basePath + "clonedownv2/dist")
+        ),
+        ...nodeRuntimeFunctionProps,
+        role: cloneDownV2Role
+      }
+    );
+    cloneDownV2Resource.addMethod(
+      "POST",
+      new gateway.LambdaIntegration(cloneDownV2Function)
+    );
+
     const paginateResource = syncEndpoint.addResource("paginate");
     const paginateFunction = new lambda.Function(this, "PaginateFunction", {
       handler: "index.handler",
@@ -120,6 +144,24 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
     paginateResource.addMethod(
       "POST",
       new gateway.LambdaIntegration(paginateFunction)
+    );
+
+    const paginateV2Resource = syncEndpoint.addResource("paginatev2");
+    const paginateV2Function = new lambda.Function(this, "PaginateV2Function", {
+      handler: "index.handler",
+      functionName: generateFunctionName(
+        "paginateV2Function",
+        props.environment
+      ),
+      code: lambda.Code.fromAsset(
+        path.join(__dirname, basePath + "paginatev2/dist")
+      ),
+      ...nodeRuntimeFunctionProps,
+      role: paginateV2Role
+    });
+    paginateV2Resource.addMethod(
+      "POST",
+      new gateway.LambdaIntegration(paginateV2Function)
     );
 
     const reconcileResource = syncEndpoint.addResource("reconcile");
@@ -146,7 +188,9 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
       syncDownFunction,
       cloneUpFunction,
       cloneDownFunction,
+      cloneDownV2Function,
       paginateFunction,
+      paginateV2Function,
       reconcileFunction
     ];
 
@@ -170,7 +214,9 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
       syncDownResource,
       cloneUpResource,
       cloneDownResource,
+      cloneDownV2Resource,
       paginateResource,
+      paginateV2Resource,
       reconcileResource
     ]) {
       resource.addMethod(
