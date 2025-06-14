@@ -31,9 +31,9 @@ describe("syncDown", () => {
       "node"
     ];
     const body: ISyncDownBody = {
-      lastSyncDown: 1749725051517,
+      lastSyncDown: 1749909902543,
       resources: manyResources as Resource[],
-      dapId: "mbrr87k9y8a7r3cj8xllkgvo"
+      dapId: "mbw9cykh2augefrr04ydrl91"
     };
 
     const result = await syncDown(body, global.testEnv.agent);

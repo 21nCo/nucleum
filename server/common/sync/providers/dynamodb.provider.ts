@@ -96,6 +96,18 @@ export class DynamoDBSyncProvider implements ISyncProvider {
     return agent.id?.includes("user:") ? agent.id : `user:${agent.id}`;
   }
 
+  /**
+   * Syncs mutations from client to DynamoDB with proper timestamp ordering.
+   *
+   * Ensures data consistency by:
+   * 1. Sorting all mutations by timestamp before processing
+   * 2. Processing mutations for the same record sequentially to prevent race conditions
+   * 3. Processing different records in parallel for optimal performance
+   *
+   * @param body - Contains mutations array, lastSyncDown timestamp, resources, and dapId
+   * @param agent - Agent information containing database and region details
+   * @returns Promise resolving to syncDown response or error
+   */
   async syncUp(body: ISyncUpBody, agent: Agent): Promise<any> {
     try {
       const dynamoClient = this.getDynamoClient(agent);
@@ -107,39 +119,71 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       const spaceId = agent.db;
       const userId = this.resolveUserId(agent);
 
-      const batchSize = 25;
-      for (let i = 0; i < mutations.length; i += batchSize) {
-        const batch = mutations.slice(i, i + batchSize);
+      // Sort mutations by timestamp to ensure proper ordering
+      const sortedMutations = mutations.sort(
+        (a, b) => a.timestamp - b.timestamp
+      );
 
-        const mutationPromises = batch.map(async (mutation) => {
+      const batchSize = 25;
+      for (let i = 0; i < sortedMutations.length; i += batchSize) {
+        const batch = sortedMutations.slice(i, i + batchSize);
+
+        // Group mutations by recordId to process them sequentially for the same record
+        const mutationsByRecord = new Map<string, typeof batch>();
+
+        for (const mutation of batch) {
           const recordId = Array.isArray(mutation.resourceId)
             ? mutation.resourceId[0]
             : mutation.resourceId;
+          const recordKey = `${mutation.resource}#${recordId}`;
 
-          const mutationItem: DynamoDBItem = {
-            PK: `${spaceId}#mutation`,
-            SK: `${mutation.timestamp}#${mutation.id}`,
-            GSI1SK: `mutation#${recordId}`,
-            spaceId,
-            userId,
-            dapId,
-            ...mutation
-          };
+          if (!mutationsByRecord.has(recordKey)) {
+            mutationsByRecord.set(recordKey, []);
+          }
+          mutationsByRecord.get(recordKey)!.push(mutation);
+        }
 
-          const records = await this.applyMutationToResource(
-            mutation,
-            spaceId,
-            userId,
-            dynamoClient
-          );
+        // Process mutations for each record sequentially, but different records in parallel
+        const recordPromises = Array.from(mutationsByRecord.entries()).map(
+          async ([recordKey, recordMutations]) => {
+            const mutationResults = [];
 
-          return {
-            mutationItem,
-            records
-          };
-        });
+            // Process mutations for this specific record sequentially
+            for (const mutation of recordMutations) {
+              const recordId = Array.isArray(mutation.resourceId)
+                ? mutation.resourceId[0]
+                : mutation.resourceId;
 
-        const mutationResults = await Promise.all(mutationPromises);
+              const mutationItem: DynamoDBItem = {
+                PK: `${spaceId}#mutation`,
+                SK: `${mutation.timestamp}#${mutation.id}`,
+                GSI1SK: `mutation#${recordId}`,
+                spaceId,
+                userId,
+                dapId,
+                ...mutation
+              };
+
+              const records = await this.applyMutationToResource(
+                mutation,
+                spaceId,
+                userId,
+                dynamoClient
+              );
+
+              mutationResults.push({
+                mutationItem,
+                records
+              });
+            }
+
+            return mutationResults;
+          }
+        );
+
+        // Wait for all records to be processed (records in parallel, mutations per record sequential)
+        const allRecordResults = await Promise.all(recordPromises);
+        const mutationResults = allRecordResults.flat();
 
         const allPutItems = [];
         for (const { mutationItem, records } of mutationResults) {
@@ -185,6 +229,13 @@ export class DynamoDBSyncProvider implements ISyncProvider {
     }
   }
 
+  /**
+   * notes:
+   * + 1 is added to lastSyncDown to avoid fetching the same mutations with same timestamp of lastSyncDown again since lexicographical ordering is used
+   * @param body
+   * @param agent
+   * @returns
+   */
   async syncDown(body: ISyncDownBody, agent: Agent): Promise<any> {
     try {
       const dynamoClient = this.getDynamoClient(agent);
@@ -203,7 +254,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
         KeyConditionExpression: "PK = :pk AND SK > :lastSync",
         ExpressionAttributeValues: {
           ":pk": `${spaceId}#mutation`,
-          ":lastSync": `${lastSyncDown}#`
+          ":lastSync": `${lastSyncDown + 1}#`
         },
         ScanIndexForward: false // Sort descending by timestamp
       };
