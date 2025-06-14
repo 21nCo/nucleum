@@ -10,6 +10,7 @@ import { CustomLambdaNestedStackPropsV2 } from "../../types/customNestedStackPro
 import { defaults } from "../../config";
 import { generateFunctionName } from "../../cdk.utils";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
+import { Role, ServicePrincipal, ManagedPolicy } from "aws-cdk-lib/aws-iam";
 
 export class SyncLambdaFunctions extends cdk.NestedStack {
   constructor(
@@ -26,6 +27,25 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
       logRetention: RetentionDays.THREE_DAYS
     };
 
+    const createSyncRole = (roleName: string) => {
+      return new Role(this, roleName, {
+        roleName: `${props.environment.environment}-${props.environment.region}-${roleName}`,
+        assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+        managedPolicies: [
+          ManagedPolicy.fromAwsManagedPolicyName(
+            "service-role/AWSLambdaBasicExecutionRole"
+          )
+        ]
+      });
+    };
+
+    const syncUpRole = createSyncRole("SyncUpFunctionRole");
+    const syncDownRole = createSyncRole("SyncDownFunctionRole");
+    const cloneUpRole = createSyncRole("CloneUpFunctionRole");
+    const cloneDownRole = createSyncRole("CloneDownFunctionRole");
+    const paginateRole = createSyncRole("PaginateFunctionRole");
+    const reconcileRole = createSyncRole("ReconcileFunctionRole");
+
     const syncEndpoint = props.api.addResource("sync");
 
     const syncUpResource = syncEndpoint.addResource("up");
@@ -33,7 +53,8 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
       handler: "index.handler",
       functionName: generateFunctionName("syncUpFunction", props.environment),
       code: lambda.Code.fromAsset(path.join(__dirname, basePath + "up/dist")),
-      ...nodeRuntimeFunctionProps
+      ...nodeRuntimeFunctionProps,
+      role: syncUpRole
     });
     syncUpResource.addMethod(
       "POST",
@@ -45,7 +66,8 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
       handler: "index.handler",
       functionName: generateFunctionName("syncDownFunction", props.environment),
       code: lambda.Code.fromAsset(path.join(__dirname, basePath + "down/dist")),
-      ...nodeRuntimeFunctionProps
+      ...nodeRuntimeFunctionProps,
+      role: syncDownRole
     });
     syncDownResource.addMethod(
       "POST",
@@ -59,7 +81,8 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
       code: lambda.Code.fromAsset(
         path.join(__dirname, basePath + "cloneup/dist")
       ),
-      ...nodeRuntimeFunctionProps
+      ...nodeRuntimeFunctionProps,
+      role: cloneUpRole
     });
     cloneUpResource.addMethod(
       "POST",
@@ -76,7 +99,8 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
       code: lambda.Code.fromAsset(
         path.join(__dirname, basePath + "clonedown/dist")
       ),
-      ...nodeRuntimeFunctionProps
+      ...nodeRuntimeFunctionProps,
+      role: cloneDownRole
     });
     cloneDownResource.addMethod(
       "POST",
@@ -90,7 +114,8 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
       code: lambda.Code.fromAsset(
         path.join(__dirname, basePath + "paginate/dist")
       ),
-      ...nodeRuntimeFunctionProps
+      ...nodeRuntimeFunctionProps,
+      role: paginateRole
     });
     paginateResource.addMethod(
       "POST",
@@ -107,7 +132,8 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
       code: lambda.Code.fromAsset(
         path.join(__dirname, basePath + "reconcile/dist")
       ),
-      ...nodeRuntimeFunctionProps
+      ...nodeRuntimeFunctionProps,
+      role: reconcileRole
     });
     reconcileResource.addMethod(
       "POST",
