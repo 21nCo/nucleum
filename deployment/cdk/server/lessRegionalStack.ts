@@ -69,7 +69,7 @@ export class ServerlessRegionalStack extends NestedStack {
     this.regionDomainName = this.env.tidyregion + "-" + this.domainName;
     this.certificate = resolveAcmCertificate(this, props.zone, this.env.domain);
     const fileBuckets = this.resolveFilesBucket();
-    // const dynamoTables = this.resolveDynamoTables();
+    const dynamoTables = this.resolveDynamoTables();
     this.generateApi();
     const lambaProps: CustomLambdaNestedStackProps = {
       ...props,
@@ -86,8 +86,8 @@ export class ServerlessRegionalStack extends NestedStack {
     const lambdaPropsV2: CustomLambdaNestedStackPropsV2 = {
       ...props,
       api: v2Resource,
-      lambdaEnvVars
-      // dynamoTables
+      lambdaEnvVars,
+      dynamoTables
     };
     new SyncLambdaFunctions(this, "V2SyncStack", lambdaPropsV2);
     new AccountLambdaFunctionsV2(this, "V2AccountStack", lambdaPropsV2);
@@ -208,12 +208,15 @@ export class ServerlessRegionalStack extends NestedStack {
 
   resolveDynamoTables() {
     let dynamoTables: ITable[] = [];
+    const dynamoAccount =
+      this.env.lambdaEnv.DYNAMODB_ACCOUNT_ID || this.account;
+
     this.env.allRegionList.forEach((region) => {
       dynamoTables.push(
         Table.fromTableArn(
           this,
           `userDynamoTable-${region}`,
-          `arn:aws:dynamodb:${region}:${this.account}:table/${this.env.lambdaEnv.DYNAMODB_TABLE_PREFIX}-${region}`
+          `arn:aws:dynamodb:${region}:${dynamoAccount}:table/${this.env.lambdaEnv.DYNAMODB_TABLE_PREFIX}-${region}`
         )
       );
     });
