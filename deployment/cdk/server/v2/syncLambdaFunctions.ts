@@ -10,7 +10,12 @@ import { CustomLambdaNestedStackPropsV2 } from "../../types/customNestedStackPro
 import { defaults } from "../../config";
 import { generateFunctionName } from "../../cdk.utils";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
-import { Role, ServicePrincipal, ManagedPolicy } from "aws-cdk-lib/aws-iam";
+import {
+  Role,
+  ServicePrincipal,
+  ManagedPolicy,
+  PolicyStatement
+} from "aws-cdk-lib/aws-iam";
 
 export class SyncLambdaFunctions extends cdk.NestedStack {
   constructor(
@@ -205,6 +210,21 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
       props.dynamoTables.forEach((table) => {
         lambdaFunctions.forEach((func) => {
           table.grantReadWriteData(func);
+          func.addToRolePolicy(
+            new PolicyStatement({
+              actions: [
+                "dynamodb:Query",
+                "dynamodb:Scan",
+                "dynamodb:GetItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:BatchGetItem",
+                "dynamodb:BatchWriteItem"
+              ],
+              resources: [`${table.tableArn}/index/*`]
+            })
+          );
         });
       });
     }

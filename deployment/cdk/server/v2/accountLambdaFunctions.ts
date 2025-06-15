@@ -10,7 +10,12 @@ import { CustomLambdaNestedStackPropsV2 } from "../../types/customNestedStackPro
 import { defaults } from "../../config";
 import { generateFunctionName } from "../../cdk.utils";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
-import { Role, ServicePrincipal, ManagedPolicy } from "aws-cdk-lib/aws-iam";
+import {
+  Role,
+  ServicePrincipal,
+  ManagedPolicy,
+  PolicyStatement
+} from "aws-cdk-lib/aws-iam";
 
 export class AccountLambdaFunctions extends cdk.NestedStack {
   constructor(
@@ -67,8 +72,6 @@ export class AccountLambdaFunctions extends cdk.NestedStack {
       new gateway.LambdaIntegration(relayFunction)
     );
 
-    // Grant DynamoDB permissions to lambda functions
-    const lambdaFunctions = [pingFunction];
     const relayLambdaFunctions = [relayFunction];
 
     if (props.dynamoTables) {
@@ -80,17 +83,26 @@ export class AccountLambdaFunctions extends cdk.NestedStack {
         }))
       );
 
-      // Grant permissions to regular account functions
-      props.dynamoTables.forEach((table) => {
-        lambdaFunctions.forEach((func) => {
-          table.grantReadWriteData(func);
-        });
-      });
-
-      // Grant permissions to relay function (which needs DynamoDB access for sync operations)
       props.dynamoTables.forEach((table) => {
         relayLambdaFunctions.forEach((func) => {
           table.grantReadWriteData(func);
+
+          // Add explicit permissions for Global Secondary Indexes (GSIs)
+          func.addToRolePolicy(
+            new PolicyStatement({
+              actions: [
+                "dynamodb:Query",
+                "dynamodb:Scan",
+                "dynamodb:GetItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:BatchGetItem",
+                "dynamodb:BatchWriteItem"
+              ],
+              resources: [`${table.tableArn}/index/*`]
+            })
+          );
         });
       });
     }
