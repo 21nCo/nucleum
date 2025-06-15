@@ -1,5 +1,7 @@
-# Tidy web library
+# Tidigit (Tidy digital kit)
+This is an open source library that's powering tools built at 21n including but not limited to the below:
+1. [Memotron](https://memotron.app)
+2. [Pointron](https://pointron.app)
+3. [Nuclues](https://nucleus.to)
 
-This is a shared library for web development at Blank, initiated under Tidy Digital Kit (Tidigit) project.
-
-To use, please clone into a frontend client or backend repository and refer to the files in sub folders of this repository.
+More tools coming soon...
