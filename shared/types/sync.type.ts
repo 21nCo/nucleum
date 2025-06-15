@@ -44,6 +44,12 @@ export type ICloneDownPaginateBody = {
   cursor?: string; // Optional cursor for efficient pagination
 };
 
+export type ICloneDownPaginatev2Body = {
+  resource: Resource;
+  isExtension: boolean;
+  cursor?: string;
+};
+
 export type IReconcileBody = {
   resources: Resource[];
   isExtension?: boolean;

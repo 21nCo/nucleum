@@ -18,6 +18,7 @@ beforeAll(async () => {
   process.env.ADMIN_NS = "admin";
   process.env.NODE_ENV = "dev";
   process.env.TOKEN_NAME = "tokenone";
+  // process.env.DYNAMODB_ACCOUNT_ID = "01749869285239";
   global.testEnv = {
     ...environment,
     cleanup: async () => {

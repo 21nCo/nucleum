@@ -1,3 +1,5 @@
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { IRecordId, IResourceSelectParams } from "$lib/client/types/data.type";
 import { Agent } from "$lib/server/common/account/account.type";
 import {
   ISyncUpBody,
@@ -5,7 +7,8 @@ import {
   ICloneUpBody,
   ICloneDownBody,
   ICloneDownPaginateBody,
-  IReconcileBody
+  IReconcileBody,
+  ICloneDownPaginatev2Body
 } from "$lib/shared/types/sync.type";
 
 export enum SyncProvider {
@@ -26,10 +29,24 @@ export interface ISyncProvider {
   // Clone operations
   cloneUp(body: ICloneUpBody, agent: Agent): Promise<any>;
   cloneDown(body: ICloneDownBody, agent: Agent): Promise<any>;
+  cloneDownv2(body: ICloneDownBody, agent: Agent): Promise<any>;
 
   // Pagination
   paginate(body: ICloneDownPaginateBody, agent: Agent): Promise<any>;
+  paginatev2(body: ICloneDownPaginatev2Body, agent: Agent): Promise<any>;
 
   // Reconciliation
   reconcile(body: IReconcileBody, agent: Agent): Promise<any>;
+
+  selectMany(
+    agent: Agent,
+    resource: Resource,
+    params?: IResourceSelectParams
+  ): Promise<any>;
+
+  select(
+    agent: Agent,
+    resourceId: IRecordId,
+    properties?: string[]
+  ): Promise<any>;
 }

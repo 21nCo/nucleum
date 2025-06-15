@@ -14,3 +14,9 @@ export async function cloneDown(body: ICloneDownBody, agent: Agent) {
     };
   });
 }
+
+export async function cloneDownv2(body: ICloneDownBody, agent: Agent) {
+  const provider = SyncProviderFactory.getProvider();
+  const result = await provider.cloneDownv2(body, agent);
+  return result;
+}

@@ -10,6 +10,12 @@ import { CustomLambdaNestedStackPropsV2 } from "../../types/customNestedStackPro
 import { defaults } from "../../config";
 import { generateFunctionName } from "../../cdk.utils";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
+import {
+  Role,
+  ServicePrincipal,
+  ManagedPolicy,
+  PolicyStatement
+} from "aws-cdk-lib/aws-iam";
 
 export class AccountLambdaFunctions extends cdk.NestedStack {
   constructor(
@@ -26,6 +32,20 @@ export class AccountLambdaFunctions extends cdk.NestedStack {
       logRetention: RetentionDays.THREE_DAYS
     };
 
+    const createAccountRole = (roleName: string) => {
+      return new Role(this, roleName, {
+        roleName: `${props.environment.environment}-${props.environment.region}-${roleName}`,
+        assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+        managedPolicies: [
+          ManagedPolicy.fromAwsManagedPolicyName(
+            "service-role/AWSLambdaBasicExecutionRole"
+          )
+        ]
+      });
+    };
+
+    const relayRole = createAccountRole("RelayFunctionRole");
+
     const accountEndpoint = props.api.addResource("account");
 
     const pingResource = accountEndpoint.addResource("ping");
@@ -37,8 +57,22 @@ export class AccountLambdaFunctions extends cdk.NestedStack {
     });
     pingResource.addMethod("POST", new gateway.LambdaIntegration(pingFunction));
 
-    // Grant DynamoDB permissions to all lambda functions
-    const lambdaFunctions = [pingFunction];
+    const relayResource = accountEndpoint.addResource("relay");
+    const relayFunction = new lambda.Function(this, "RelayFunctionv2", {
+      handler: "index.handler",
+      functionName: generateFunctionName("relayFunctionv2", props.environment),
+      code: lambda.Code.fromAsset(
+        path.join(__dirname, basePath + "relay/dist")
+      ),
+      ...nodeRuntimeFunctionProps,
+      role: relayRole
+    });
+    relayResource.addMethod(
+      "POST",
+      new gateway.LambdaIntegration(relayFunction)
+    );
+
+    const relayLambdaFunctions = [relayFunction];
 
     if (props.dynamoTables) {
       console.log(
@@ -48,14 +82,32 @@ export class AccountLambdaFunctions extends cdk.NestedStack {
           tableArn: table.tableArn
         }))
       );
+
       props.dynamoTables.forEach((table) => {
-        lambdaFunctions.forEach((func) => {
+        relayLambdaFunctions.forEach((func) => {
           table.grantReadWriteData(func);
+
+          // Add explicit permissions for Global Secondary Indexes (GSIs)
+          func.addToRolePolicy(
+            new PolicyStatement({
+              actions: [
+                "dynamodb:Query",
+                "dynamodb:Scan",
+                "dynamodb:GetItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:BatchGetItem",
+                "dynamodb:BatchWriteItem"
+              ],
+              resources: [`${table.tableArn}/index/*`]
+            })
+          );
         });
       });
     }
 
-    for (const resource of [pingResource]) {
+    for (const resource of [pingResource, relayResource]) {
       resource.addMethod(
         "OPTIONS",
         new gateway.MockIntegration(defaults.mockIntegration),

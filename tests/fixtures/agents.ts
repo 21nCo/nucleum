@@ -2,8 +2,8 @@ import { CONTEXT } from "$lib/server/common/account/account.type";
 
 export const mockAgents = {
   dev: {
-    id: "mbrr87k9y8a7r3cj8xllkgvo",
-    db: "mbrr87k9y8a7r3cj8xllkgvo",
+    id: "mbueob5pbkuhu09k1lgbvt9u",
+    db: "mbueob5pbkuhu09k1lgbvt9u",
     ns: "user",
     tk: "tokenone",
     region: "insouth",
