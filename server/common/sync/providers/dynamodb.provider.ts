@@ -198,6 +198,25 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       const dynamoClient = this.getDynamoClient(agent);
       const spaceId = agent.db;
 
+      if (resource === Resource.mutation || resource === Resource.accessLog) {
+        const recordId = params.filters?.resourceId;
+        const queryParams: any = {
+          TableName: this.config.tableArn,
+          KeyConditionExpression: "spaceId = :pk AND GSI1SK = :sk",
+          IndexName: "GSI1",
+          ExpressionAttributeValues: {
+            ":pk": spaceId,
+            ":sk":
+              resource === Resource.mutation
+                ? `mutation#${recordId}`
+                : `accessLog#${recordId}`
+          },
+          ScanIndexForward: true // Default to ascending order
+        };
+        const result = await dynamoClient.send(new QueryCommand(queryParams));
+        return result.Items;
+      }
+
       const queryParams: any = {
         TableName: this.config.tableArn,
         KeyConditionExpression: "PK = :pk",
@@ -567,7 +586,9 @@ export class DynamoDBSyncProvider implements ISyncProvider {
               const mutationItem: DynamoDBItem = {
                 PK: `${spaceId}#mutation`,
                 SK: `${mutation.timestamp}#${mutation.id}`,
-                GSI1SK: `mutation#${recordId}`,
+                GSI1SK: this.resolveGSI1SK(Resource.mutation, {
+                  resourceId: recordId
+                }),
                 spaceId,
                 userId,
                 dapId,
@@ -829,16 +850,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
         }
 
         if (result?.Items) {
-          const resourceData = result.Items.map((item) => {
-            if (isExtension) {
-              return this.getResourceData(item);
-            } else {
-              return {
-                ...this.getResourceData(item),
-                id: item.SK
-              };
-            }
-          });
+          const resourceData = this.mapResourceData(result.Items, isExtension);
           results.push(resourceData);
         } else {
           results.push([]);
@@ -919,16 +931,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
         }
 
         if (result?.Items) {
-          const resourceData = result.Items.map((item) => {
-            if (isExtension) {
-              return this.getResourceData(item);
-            } else {
-              return {
-                ...this.getResourceData(item),
-                id: item.SK
-              };
-            }
-          });
+          const resourceData = this.mapResourceData(result.Items, isExtension);
           results.push(resourceData);
         } else {
           results.push([]);
@@ -997,16 +1000,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
           console.timeEnd("paginate");
           if (result.Items && result.Items.length > offset) {
             const items = result.Items.slice(offset, offset + limit);
-            const resourceData = items.map((item) => {
-              if (isExtension) {
-                return this.getResourceData(item);
-              } else {
-                return {
-                  ...this.getResourceData(item),
-                  id: item.SK
-                };
-              }
-            });
+            const resourceData = this.mapResourceData(items, isExtension);
 
             // Include next cursor for efficient pagination
             const nextCursor =
@@ -1051,16 +1045,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       const result = await dynamoClient.send(new QueryCommand(params));
 
       if (result.Items) {
-        const resourceData = result.Items.map((item) => {
-          if (isExtension) {
-            return this.getResourceData(item);
-          } else {
-            return {
-              ...this.getResourceData(item),
-              id: item.SK
-            };
-          }
-        });
+        const resourceData = this.mapResourceData(result.Items, isExtension);
 
         // Include next cursor for efficient pagination
         const nextCursor = result.LastEvaluatedKey
@@ -1237,7 +1222,8 @@ export class DynamoDBSyncProvider implements ISyncProvider {
               const item: DynamoDBItem = {
                 ...commonAttributes,
                 ...record,
-                SK: record.id.toString()
+                SK: record.id.toString(),
+                GSI1SK: this.resolveGSI1SK(resource as Resource, record)
               };
               items.push(item);
             }
@@ -1360,6 +1346,31 @@ export class DynamoDBSyncProvider implements ISyncProvider {
     } catch (e) {
       console.error({ at: "applyMutationToResource - error", error: e });
       return [];
+    }
+  }
+
+  private resolveGSI1SK(resource: Resource, record: any) {
+    switch (resource) {
+      case Resource.mutation:
+        return `mutation#${record.resourceId}`;
+      case Resource.accessLog:
+        return `accessLog#${record.resourceId}`;
+      case Resource.node:
+        return `node#${record.contentType}`;
+      case Resource.goal:
+        return `goal#${record.type}`;
+      case Resource.task:
+        return `task#${record.type}`;
+      case Resource.collection:
+        return `collection#${record.type}#${record.resource}`;
+      case Resource.file:
+        return `fileType#${record.type}`;
+      case Resource.link:
+        return `link#${record.out}`;
+      case Resource.property:
+        return `property#${record.type}`;
+      default:
+        return resource;
     }
   }
 
@@ -1542,6 +1553,15 @@ export class DynamoDBSyncProvider implements ISyncProvider {
     return resourceData;
   }
 
+  private mapResourceData(records: any[], isExtension: boolean) {
+    return records.map((record) => {
+      return {
+        ...this.getResourceData(record),
+        id: isExtension ? record.SK : record.SK.split(":")[1]
+      };
+    });
+  }
+
   /**
    * Retrieves a saved pagination cursor from DynamoDB and checks if it's expired
    * Deletes the cursor if it's older than 30 minutes
@@ -1678,7 +1698,9 @@ export class DynamoDBSyncProvider implements ISyncProvider {
         params.ExclusiveStartKey = JSON.parse(cursor);
       }
 
+      console.time("queryResourceWithCursor");
       const result = await dynamoClient.send(new QueryCommand(params));
+      console.timeEnd("queryResourceWithCursor");
 
       if (!result.Items || result.Items.length === 0) {
         return {
@@ -1687,17 +1709,9 @@ export class DynamoDBSyncProvider implements ISyncProvider {
           hasMore: false
         };
       }
-
-      const processedItems = result.Items.map((item) => {
-        if (isExtension) {
-          return this.getResourceData(item);
-        } else {
-          return {
-            ...this.getResourceData(item),
-            id: item.SK
-          };
-        }
-      });
+      console.time("map");
+      const processedItems = this.mapResourceData(result.Items, isExtension);
+      console.timeEnd("map");
 
       const nextCursor = result.LastEvaluatedKey
         ? JSON.stringify(result.LastEvaluatedKey)
@@ -1769,16 +1783,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
           const endIndex = startIndex + limit;
           const items = skipResult.Items.slice(startIndex, endIndex);
 
-          const resourceData = items.map((item) => {
-            if (isExtension) {
-              return this.getResourceData(item);
-            } else {
-              return {
-                ...this.getResourceData(item),
-                id: item.SK
-              };
-            }
-          });
+          const resourceData = this.mapResourceData(items, isExtension);
 
           const nextCursor = lastEvaluatedKey
             ? JSON.stringify(lastEvaluatedKey)
@@ -1820,16 +1825,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
 
         const result = await dynamoClient.send(new QueryCommand(finalParams));
         if (result.Items) {
-          const resourceData = result.Items.map((item) => {
-            if (isExtension) {
-              return this.getResourceData(item);
-            } else {
-              return {
-                ...this.getResourceData(item),
-                id: item.SK
-              };
-            }
-          });
+          const resourceData = this.mapResourceData(result.Items, isExtension);
 
           const nextCursor = result.LastEvaluatedKey
             ? JSON.stringify(result.LastEvaluatedKey)
