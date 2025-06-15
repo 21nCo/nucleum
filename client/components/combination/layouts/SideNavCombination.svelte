@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { ActiveCombinationStore } from "../combination.store";
+  import type { ICombinationItem } from "../combination.type";
   import {
     ResourceAccessMode,
     ResourceAccessPoint
@@ -20,13 +21,14 @@
   import { popover } from "$lib/client/actions/popover.action";
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import type { ISelectItem } from "$lib/client/types/select.type";
-  import { reorderList } from "$lib/client/actions/rearrange.action";
   import { resizable } from "$lib/client/actions/resize.action";
   import { onMount } from "svelte";
   import ResourceResolver from "$lib/client/layout/paint/ResourceResolver.svelte";
   import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
   import { resolveCombinationContextMenu } from "../combination.store";
   import { Placement } from "$lib/client/types/direction.enum";
+  import SideNavItem from "../SideNavItem.svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
 
   export let combination: ActiveCombinationStore;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -64,14 +66,51 @@
 
   let isEditingTitle = false;
   let titleValue = $combination?.label || "";
-  let items: any[] = [];
+  let items: ICombinationItem[] = [];
+  let itemResourceData: Map<IRecordId, any> = new Map();
   let selectedItemId: IRecordId | null = null;
   let sideNavWidth = 320;
   let sideNavElement: HTMLElement;
+  let expandedItems: Set<IRecordId> = new Set();
 
   const DEFAULT_WIDTH = 320;
   const MIN_WIDTH = 200;
   const MAX_WIDTH = 600;
+
+  async function loadResourceData(
+    combinationItems: ICombinationItem[]
+  ): Promise<void> {
+    const allIds = extractAllIds(combinationItems);
+    if (allIds.length === 0) return;
+
+    try {
+      const searchStore = new SearchStore();
+      const results = await searchStore.select({
+        filters: { id: allIds }
+      });
+
+      if (results) {
+        itemResourceData.clear();
+        results.forEach((resource: any) => {
+          itemResourceData.set(resource.id.toString(), resource);
+        });
+        itemResourceData = itemResourceData;
+      }
+    } catch (e) {
+      console.error("Error loading resource data:", e);
+    }
+  }
+
+  function extractAllIds(items: ICombinationItem[]): IRecordId[] {
+    const ids: IRecordId[] = [];
+    items.forEach((item) => {
+      ids.push(item.id);
+      if (item.children) {
+        ids.push(...extractAllIds(item.children));
+      }
+    });
+    return ids;
+  }
 
   async function loadItems() {
     if (!$combination?.items || $combination.items.length === 0) {
@@ -79,27 +118,8 @@
       return;
     }
 
-    try {
-      const searchStore = new SearchStore();
-      const results = await searchStore.select({
-        filters: {
-          id: $combination.items
-        }
-      });
-
-      if (results) {
-        items = results.sort((a: any, b: any) => {
-          const aIndex = $combination.items?.indexOf(a.id) ?? -1;
-          const bIndex = $combination.items?.indexOf(b.id) ?? -1;
-          return aIndex - bIndex;
-        });
-      } else {
-        items = [];
-      }
-    } catch (e) {
-      console.error("Error loading items:", e);
-      items = [];
-    }
+    items = $combination.items;
+    await loadResourceData(items);
   }
 
   async function onTitleEdit() {
@@ -118,18 +138,83 @@
     });
   }
 
-  function onCreateNew(resource: any) {
-    appStore.runResourceAction(resource as Resource, ResourceActionType.CREATE);
+  function onCreateNew(resource: Resource) {
+    appStore.runResourceAction(resource, ResourceActionType.CREATE);
   }
 
-  async function onRemoveItem(itemId: IRecordId) {
+  async function updateItems(newItems: ICombinationItem[]) {
+    await combination.modify({ items: newItems });
+    await loadItems();
+  }
+
+  function findItemById(
+    items: ICombinationItem[],
+    id: IRecordId
+  ): ICombinationItem | null {
+    for (const item of items) {
+      if (item.id === id) return item;
+      if (item.children) {
+        const found = findItemById(item.children, id);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
+  function removeItemById(
+    items: ICombinationItem[],
+    id: IRecordId
+  ): ICombinationItem[] {
+    return items.filter((item) => {
+      if (item.id === id) return false;
+      if (item.children) {
+        item.children = removeItemById(item.children, id);
+      }
+      return true;
+    });
+  }
+
+  function updateItemLabel(
+    items: ICombinationItem[],
+    id: IRecordId,
+    label: string
+  ): ICombinationItem[] {
+    return items.map((item) => {
+      if (item.id === id) {
+        return { ...item, customLabel: label };
+      }
+      if (item.children) {
+        return { ...item, children: updateItemLabel(item.children, id, label) };
+      }
+      return item;
+    });
+  }
+
+  function addSubItem(
+    items: ICombinationItem[],
+    parentId: IRecordId,
+    newItem: ICombinationItem
+  ): ICombinationItem[] {
+    return items.map((item) => {
+      if (item.id === parentId) {
+        const children = item.children || [];
+        return { ...item, children: [...children, newItem] };
+      }
+      if (item.children) {
+        return {
+          ...item,
+          children: addSubItem(item.children, parentId, newItem)
+        };
+      }
+      return item;
+    });
+  }
+
+  async function onRemoveItem(id: IRecordId) {
     try {
-      const updatedItems = ($combination.items || []).filter(
-        (id: IRecordId) => id !== itemId
-      );
-      await combination.modify({ items: updatedItems });
-      await loadItems();
-      if (selectedItemId === itemId) {
+      const newItems = removeItemById(items, id);
+      await updateItems(newItems);
+      if (selectedItemId === id) {
         selectedItemId = null;
       }
       toasts.success("Item removed");
@@ -138,20 +223,31 @@
     }
   }
 
-  async function onReorderItems(fromIndex: number, toIndex: number) {
-    if (!$combination.items) return;
-
-    const newItems = [...$combination.items];
-    const [movedItem] = newItems.splice(fromIndex, 1);
-    newItems.splice(toIndex, 0, movedItem);
-
-    await combination.modify({ items: newItems });
-    await loadItems();
+  async function onUpdateLabel(event: CustomEvent) {
+    try {
+      const { id, label } = event.detail;
+      const newItems = updateItemLabel(items, id, label);
+      await updateItems(newItems);
+      toasts.success("Label updated");
+    } catch (e) {
+      toasts.error("Failed to update label");
+    }
   }
 
-  function onItemClick(itemId: IRecordId) {
-    selectedItemId = itemId;
-    appStore.openResource(itemId, ResourceAccessMode.INLINE);
+  function onItemSelect(event: CustomEvent) {
+    const id = event.detail;
+    selectedItemId = id;
+    appStore.openResource(id, ResourceAccessMode.INLINE);
+  }
+
+  function onItemExpand(event: CustomEvent) {
+    const { id, expanded } = event.detail;
+    if (expanded) {
+      expandedItems.add(id);
+    } else {
+      expandedItems.delete(id);
+    }
+    expandedItems = expandedItems;
   }
 
   async function saveSideNavConfig() {
@@ -182,10 +278,7 @@
     titleValue = $combination?.label || "";
   }
 
-  $: if ($combination) {
-    loadItems();
-    titleValue = $combination?.label || "";
-  }
+  $: console.log({ items, itemResourceData });
 </script>
 
 <div class="flex h-full w-full bg-bgs1">
@@ -256,8 +349,7 @@
                 options: resourceOptions,
                 labelProps: { label: "Select resource type" },
                 selected: Resource.node,
-                onSelect: (resource) => onCreateNew(resource),
-                class: "w-48 bg-bgs1 border border-brs2 shadow-lg rounded-lg"
+                onSelect: onCreateNew
               }
             }}
           >
@@ -278,58 +370,20 @@
         <div class="p-4 text-center text-fgs3 text-b3">No items added yet</div>
       {:else}
         <div class="p-2">
-          <div
-            use:reorderList={{
-              listId: "combination-items",
-              draggedOverClass: "dragged-over",
-              onDrop: (e) => {
-                const { from, to } = e;
-                if ($combination?.isInEditMode) {
-                  onReorderItems(from, to);
-                }
-              }
-            }}
-          >
-            {#each items as item, index (item.id)}
-              <div
-                class="flex items-center justify-between p-2 rounded-md hover:bg-bgs3 group transition-colors"
-                class:bg-aps1={selectedItemId === item.id}
-                class:text-white={selectedItemId === item.id}
-                data-item-id={item.id}
-              >
-                <button
-                  class="flex-1 text-left text-b3 truncate transition-colors"
-                  class:text-fgs2={selectedItemId !== item.id}
-                  class:text-white={selectedItemId === item.id}
-                  on:click={() => onItemClick(item.id)}
-                >
-                  <div class="flex items-center gap-2">
-                    <Icon
-                      icon={item.type === "node"
-                        ? "ph:article-light"
-                        : item.type === "goal"
-                          ? "ph:target-light"
-                          : item.type === "task"
-                            ? "ph:check-square-light"
-                            : "ph:brackets-round-light"}
-                      size={Size.xs}
-                    />
-                    <span>{item.label || "Untitled"}</span>
-                  </div>
-                </button>
-                {#if $combination?.isInEditMode}
-                  <button
-                    class="opacity-0 group-hover:opacity-100 hover:text-red-500 transition-all"
-                    class:text-fgs3={selectedItemId !== item.id}
-                    class:text-white={selectedItemId === item.id}
-                    on:click={() => onRemoveItem(item.id)}
-                  >
-                    <Icon icon="ph:x-light" size={Size.sm} />
-                  </button>
-                {/if}
-              </div>
-            {/each}
-          </div>
+          {#each items as item (item.id)}
+            <SideNavItem
+              {item}
+              {selectedItemId}
+              isInEditMode={$combination?.isInEditMode || false}
+              level={0}
+              expanded={expandedItems.has(item.id)}
+              itemResourceDataMap={itemResourceData}
+              on:select={onItemSelect}
+              on:expand={onItemExpand}
+              on:updateLabel={onUpdateLabel}
+              on:remove={(e) => onRemoveItem(e.detail)}
+            />
+          {/each}
         </div>
       {/if}
     </div>

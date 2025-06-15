@@ -8,6 +8,8 @@
   } from "$lib/client/components/flux/resourceStores/resource.type";
   import { onMount } from "svelte";
   import SideNavCombination from "./layouts/SideNavCombination.svelte";
+  import CanvasLayoutCombination from "./layouts/CanvasLayoutCombination.svelte";
+  import MindmapLayoutCombination from "./layouts/MindmapLayoutCombination.svelte";
 
   export let id: string;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -28,6 +30,10 @@
   </div>
 {:else if $combination.type === CombinationType.SIDENAV}
   <SideNavCombination {combination} {accessPoint} {accessMode} />
+{:else if $combination.type === CombinationType.WHITEBOARD}
+  <CanvasLayoutCombination {combination} {accessPoint} {accessMode} />
+{:else if $combination.type === CombinationType.MINDMAP}
+  <MindmapLayoutCombination {combination} {accessPoint} {accessMode} />
 {:else}
   <div class="flex items-center justify-center w-full h-full">
     <div class="text-fgs3">

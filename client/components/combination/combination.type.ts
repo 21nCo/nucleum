@@ -2,11 +2,37 @@ import type { IActiveResource } from "$lib/client/components/flux/resourceStores
 import type { IMemotronItemBase } from "$lib/client/products/memotron/memotron.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 
+export interface ICombinationItem {
+  id: IRecordId;
+  customLabel?: string;
+  children?: ICombinationItem[];
+  position?: {
+    x: number;
+    y: number;
+    z?: number;
+  };
+  size?: {
+    width: number;
+    height: number;
+  };
+  style?: {
+    backgroundColor?: string;
+    borderColor?: string;
+    borderWidth?: number;
+    borderRadius?: number;
+  };
+}
+
 type ICombinationBase = IMemotronItemBase & {
   type: CombinationType;
-  items?: IRecordId[];
+  items?: ICombinationItem[];
   config?: {
     sideNavWidth?: number;
+    canvasScale?: number;
+    canvasOffset?: { x: number; y: number };
+    mindmapScale?: number;
+    mindmapOffset?: { x: number; y: number };
+    expandedNodes?: string[];
     [key: string]: any;
   };
 };
@@ -14,6 +40,8 @@ type ICombinationBase = IMemotronItemBase & {
 export type ICombination = ICombinationBase;
 
 export type IActiveCombination = IActiveResource & ICombination;
+
+export type ICombinationThumb = ICombinationBase;
 
 export enum CombinationType {
   SIDENAV = "sidenav",

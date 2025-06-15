@@ -4,7 +4,11 @@ import {
   ResourceStore,
   activeResources
 } from "$lib/client/components/flux/resourceStores/resource.store";
-import type { IRecordId } from "$lib/client/types/data.type";
+import type {
+  IRecordId,
+  IResourceSelectAdditionalParams,
+  IResourceSelectParams
+} from "$lib/client/types/data.type";
 import type { IActiveCombination, ICombination } from "./combination.type";
 import {
   ResourceAccessMode,
@@ -15,10 +19,47 @@ import {
   type IContextMenuItem
 } from "$lib/client/types/select.type";
 import { ResourceActions } from "$lib/client/components/record/resource.actions";
+import context from "$lib/client/stores/context.store";
+import { get } from "svelte/store";
+import { Embed } from "$lib/client/types/context.type";
 
 class CombinationStore extends ResourceStore<ICombination> {
   constructor() {
     super(Resource.combination);
+  }
+  selectMany(
+    params?: IResourceSelectParams,
+    additionalParams?: IResourceSelectAdditionalParams
+  ) {
+    const expandedProps = ["*"];
+    const properties = [
+      ...(additionalParams?.isExpand ? expandedProps : []),
+      ...(params?.properties ?? [])
+    ];
+    if (additionalParams?.isQueryAsIs) {
+      return super.selectMany(
+        {
+          ...(params ?? {}),
+          properties
+        },
+        additionalParams
+      );
+    }
+    const filters = {
+      ...(params?.filters ?? {}),
+      type:
+        params?.filters && "type" in params.filters && params?.filters?.type
+          ? typeof params.filters.type === "string"
+            ? params.filters.type.toUpperCase()
+            : params.filters.type
+          : undefined
+    };
+    params = {
+      ...(params ?? {}),
+      properties,
+      filters
+    };
+    return super.selectMany(params, additionalParams);
   }
 }
 
@@ -64,19 +105,53 @@ export function resolveCombinationContextMenu(
     combinationStore,
     accessPoint
   );
+  const ctx = get(context);
+
+  let commonGroups: { group: string; items: IContextMenuItem[] }[] = [];
+  if (ctx.isEmbed && ctx.embed === Embed.HANDSET) {
+    commonGroups = [
+      {
+        group: "more",
+        items: [resourceActions.archive(), resourceActions.trash()]
+      }
+    ];
+  } else {
+    commonGroups = [
+      {
+        group: "open",
+        items: [resourceActions.openAsTab(), resourceActions.openAsFull()]
+      },
+      {
+        group: "more",
+        items: [resourceActions.archive(), resourceActions.trash()]
+      }
+    ];
+  }
+
+  if (accessPoint != ResourceAccessPoint.SELF) {
+    return [
+      {
+        group: "all",
+        items: [
+          resourceActions.star(),
+          resourceActions.select(accessPoint),
+          resourceActions.edit(accessPoint),
+          resourceActions.copyLink()
+        ]
+      },
+      ...commonGroups
+    ];
+  }
 
   return [
     {
       group: "primary",
       items: [
-        resourceActions.edit(accessPoint),
         resourceActions.star(),
+        resourceActions.edit(accessPoint),
         resourceActions.copyLink()
       ]
     },
-    {
-      group: "more",
-      items: [resourceActions.archive(), resourceActions.trash()]
-    }
+    ...commonGroups
   ];
 }

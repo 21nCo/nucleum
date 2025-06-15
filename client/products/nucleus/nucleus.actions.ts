@@ -18,6 +18,8 @@ import { toasts } from "$lib/client/stores/notification.store";
 import { resolveResourceStore } from "$lib/client/components/flux/resourceStores/store.resolver";
 import { logger } from "$lib/client/components/debug/logger.client";
 import Combination from "$lib/client/components/combination/Combination.svelte";
+import ResourceBrowser from "$lib/client/components/library/resourceBrowser/ResourceBrowser.svelte";
+import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
 
 const actionsToFilterInSub = [Action.LIBRARY, Action.OVERVIEW];
 
@@ -57,6 +59,17 @@ export const nucleusActions: IAction[] = [
     }
   },
   {
+    action: resourceAction(Resource.combination, ResourceActionType.BROWSE),
+    component: ResourceBrowser,
+    label: "Combinations",
+    icon: "ph:bounding-box-light",
+    type: ActionType.PAGE,
+    componentParams: {
+      resource: Resource.combination
+    },
+    loadingComponent: NodeLoadingPulse
+  },
+  {
     action: Action.ADD_ITEM_TO_COMBINATION,
     type: ActionType.SEARCH_CMD,
     cmdLabel: "Add to combination",
@@ -90,7 +103,8 @@ export const nucleusActions: IAction[] = [
             return;
           }
 
-          const updatedItems = [...(combination.items || []), item.id];
+          const newItem = { id: item.id };
+          const updatedItems = [...(combination.items || []), newItem];
           const result = await combinationStore.modify(componentParams.id, {
             items: updatedItems
           });

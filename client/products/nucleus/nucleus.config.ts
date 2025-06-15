@@ -31,17 +31,21 @@ import { combinationStore } from "$lib/client/components/combination/combination
 
 export const nucleusCacheableStores: IStore[] = [
   combinationStore,
-  nodeStore,
-  goalStore,
-  taskStore,
   collectionStore,
   propertyStore,
   viewStore,
-  captureStore,
   fileStore,
   linker,
-  linkTagStore,
+
+  // Memotron
+  captureStore,
+  nodeStore,
   markdownSettings,
+  linkTagStore,
+
+  // Pointron
+  goalStore,
+  taskStore,
   analyticsConfigStore,
   pointronPreferences,
   focusItemsStore,
@@ -49,9 +53,7 @@ export const nucleusCacheableStores: IStore[] = [
   manualLogStore,
   focusHeatmapStore,
   sessionLogStore,
-  sessionStore,
-  goalStore,
-  taskStore
+  sessionStore
 ];
 
 export const nucleusRemoteOnlyStores: IStore[] = [

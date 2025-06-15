@@ -23,8 +23,10 @@
   import GoalThumbnail from "../goals/thumbnail/GoalThumbnail.svelte";
   import TaskThumbnail from "../tasks/TaskThumbnail.svelte";
   import TaskRecords from "../tasks/TaskRecords.svelte";
+  import CombinationThumbnail from "../combination/thumbnail/CombinationThumbnail.svelte";
   import type { IGoalThumb } from "../goals/goal.type";
   import type { ITaskThumb } from "../tasks/task.type";
+  import type { ICombinationThumb } from "../combination/combination.type";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   const dispatch = createEventDispatcher();
   export let data: (
@@ -33,6 +35,7 @@
     | IFile
     | IGoalThumb
     | ITaskThumb
+    | ICombinationThumb
   )[] = [];
   export let resource: Resource = Resource.node;
   export let arrangement: Arrangement = Arrangement.LIST;
@@ -52,6 +55,7 @@
   };
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
   function onClick(e: MouseEvent, item: any) {
+    console.log("onClick", item);
     if (isPreventDefault) {
       dispatch("click", item);
       return;
@@ -109,6 +113,14 @@
             />
           {:else if resourceType === Resource.task}
             <TaskThumbnail {item} {accessPoint} {arrangement} {parentBgIndex} />
+          {:else if resourceType === Resource.combination}
+            <CombinationThumbnail
+              {item}
+              {accessPoint}
+              {parentBgIndex}
+              {arrangement}
+              on:click={(e) => onClick(e, item)}
+            />
           {:else}
             <div
               class="h-72 w-80 border border-brs3 rounded-md hover:border-aps1 grow"
@@ -146,6 +158,14 @@
             {size}
             {accessPoint}
             {accessPointState}
+            {arrangement}
+            on:click={(e) => onClick(e, item)}
+          />
+        {:else if resource === Resource.combination}
+          <CombinationThumbnail
+            {item}
+            {accessPoint}
+            {parentBgIndex}
             {arrangement}
             on:click={(e) => onClick(e, item)}
           />

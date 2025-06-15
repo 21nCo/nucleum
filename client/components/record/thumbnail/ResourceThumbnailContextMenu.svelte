@@ -13,6 +13,7 @@
   import { resolveGoalContextMenu } from "$lib/client/components/goals/goal.store";
   import { resolveTaskContextMenu } from "../../tasks/task.store";
   import context from "$lib/client/stores/context.store";
+  import { resolveCombinationContextMenu } from "../../combination/combination.store";
 
   const dispatch = createEventDispatcher();
   export let item: any;
@@ -43,6 +44,8 @@
       return resolveGoalContextMenu(item, accessPoint);
     } else if (resourceType === Resource.task) {
       return resolveTaskContextMenu(item, accessPoint, { accessPointId });
+    } else if (resourceType === Resource.combination) {
+      return resolveCombinationContextMenu(item, accessPoint);
     } else {
       return [];
     }
