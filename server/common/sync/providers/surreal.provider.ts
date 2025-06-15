@@ -6,19 +6,44 @@ import {
   ICloneUpBody,
   ICloneDownBody,
   ICloneDownPaginateBody,
-  IReconcileBody
+  IReconcileBody,
+  ICloneDownPaginatev2Body
 } from "$lib/shared/types/sync.type";
-import { IMutation } from "$lib/client/types/data.type";
+import {
+  IMutation,
+  IRecordId,
+  IResourceSelectParams
+} from "$lib/client/types/data.type";
 import { ISyncProvider, SyncProvider } from "./types";
 import { performQueryOnBehalfOfUser } from "../../user/user";
 import {
   resolveMutationQueryV2,
   resolveInsertQuery as surrealResolveInsertQuery,
-  commonQueryReplacements
+  commonQueryReplacements,
+  resolveSelectManyQuery,
+  resolveSelectQuery
 } from "$lib/shared/utils/surreal.utils";
 
 export class SurrealSyncProvider implements ISyncProvider {
   name: SyncProvider = SyncProvider.SURREAL;
+
+  selectMany(agent: Agent, resource: Resource, params?: IResourceSelectParams) {
+    const query = resolveSelectManyQuery(resource, params);
+    return performQueryOnBehalfOfUser(query, agent);
+  }
+
+  select(agent: Agent, resourceId: IRecordId, properties?: string[]) {
+    const query = resolveSelectQuery(resourceId, properties);
+    return performQueryOnBehalfOfUser(query, agent);
+  }
+
+  cloneDownv2(body: ICloneDownBody, agent: Agent): Promise<any> {
+    throw new Error("Method not implemented.");
+  }
+  paginatev2(body: ICloneDownPaginatev2Body, agent: Agent): Promise<any> {
+    throw new Error("Method not implemented.");
+  }
+
   async syncUp(body: ISyncUpBody, agent: Agent): Promise<any> {
     try {
       const { mutations, lastSyncDown, resources, dapId } = body;

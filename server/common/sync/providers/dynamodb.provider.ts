@@ -9,7 +9,11 @@ import {
   IReconcileBody,
   ICloneDownPaginatev2Body
 } from "$lib/shared/types/sync.type";
-import { IMutation, PersistenceActionType } from "$lib/client/types/data.type";
+import {
+  IMutation,
+  IResourceSelectParams,
+  PersistenceActionType
+} from "$lib/client/types/data.type";
 import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
 import { ISyncProvider, SyncProvider } from "./types";
 import { resolveProviderRegionCode } from "$lib/deployment/deploy.utils";
@@ -94,6 +98,412 @@ export class DynamoDBSyncProvider implements ISyncProvider {
 
   private resolveUserId(agent: Agent): string {
     return agent.id?.includes("user:") ? agent.id : `user:${agent.id}`;
+  }
+
+  /**
+   * Gets a single record by resourceId from DynamoDB.
+   * Maps properties to select only specific attributes if specified.
+   *
+   * @param agent - Agent information containing database and region details
+   * @param resourceId - The ID of the record to retrieve
+   * @param properties - Optional array of properties to select
+   * @returns Promise resolving to the record data or null if not found
+   */
+  async select(
+    agent: Agent,
+    resourceId: any,
+    properties?: string[]
+  ): Promise<any> {
+    try {
+      const dynamoClient = this.getDynamoClient(agent);
+      const spaceId = agent.db;
+
+      // Parse resourceId to get resource and record ID
+      // Expected format: "resource:recordId" or just "recordId" if resource is implied
+      let resource: string;
+      let recordId: string;
+
+      if (typeof resourceId === "string" && resourceId.includes(":")) {
+        [resource, recordId] = resourceId.split(":", 2);
+      } else {
+        // If no resource prefix, we need to infer it from context or throw error
+        throw new Error(
+          "Resource type must be specified in resourceId (format: resource:id)"
+        );
+      }
+
+      const params: any = {
+        TableName: this.config.tableArn,
+        Key: {
+          PK: `${spaceId}#${resource}`,
+          SK: recordId
+        }
+      };
+
+      // If specific properties are requested, use ProjectionExpression
+      if (properties && properties.length > 0) {
+        // Add required system properties to ensure we can process the response
+        const systemProperties = ["PK", "SK", "spaceId", "userId"];
+        const allProperties = [
+          ...new Set([...properties, ...systemProperties])
+        ];
+
+        params.ProjectionExpression = allProperties.join(", ");
+      }
+
+      const result = await dynamoClient.send(new GetCommand(params));
+
+      if (result.Item) {
+        const processedItem = this.getResourceData(result.Item);
+
+        // If specific properties were requested, filter the response
+        if (properties && properties.length > 0) {
+          const filteredItem: any = { id: result.Item.SK };
+          properties.forEach((prop) => {
+            if (processedItem.hasOwnProperty(prop)) {
+              filteredItem[prop] = processedItem[prop];
+            }
+          });
+          return filteredItem;
+        }
+
+        return {
+          ...processedItem,
+          id: result.Item.SK
+        };
+      }
+
+      return null;
+    } catch (e) {
+      console.error({ at: "DynamoDB select - error", error: e });
+      return null;
+    }
+  }
+
+  /**
+   * Queries multiple records from a resource table in DynamoDB with optional filtering, pagination, and sorting.
+   * Supports search functionality and various filter conditions.
+   *
+   * @param agent - Agent information containing database and region details
+   * @param resource - The resource type to query
+   * @param params - Optional parameters for filtering, pagination, sorting, etc.
+   * @returns Promise resolving to array of matching records
+   */
+  async selectMany(
+    agent: Agent,
+    resource: Resource,
+    params?: IResourceSelectParams
+  ): Promise<any> {
+    try {
+      const dynamoClient = this.getDynamoClient(agent);
+      const spaceId = agent.db;
+
+      const queryParams: any = {
+        TableName: this.config.tableArn,
+        KeyConditionExpression: "PK = :pk",
+        ExpressionAttributeValues: {
+          ":pk": `${spaceId}#${resource}`
+        },
+        ScanIndexForward: true // Default to ascending order
+      };
+
+      // Handle specific properties selection
+      if (params?.properties && params.properties.length > 0) {
+        const systemProperties = ["PK", "SK", "spaceId", "userId"];
+        const allProperties = [
+          ...new Set([...params.properties, ...systemProperties])
+        ];
+        queryParams.ProjectionExpression = allProperties.join(", ");
+      }
+
+      // Handle omitted properties
+      if (params?.omit && params.omit.length > 0) {
+        // Note: DynamoDB doesn't have direct OMIT functionality like Surreal
+        // We'll need to handle this in post-processing
+      }
+
+      // Handle filtering
+      if (params?.filters || params?.search || params?.whereClause) {
+        const filterConditions = this.buildFilterExpression(
+          params,
+          queryParams
+        );
+        if (filterConditions) {
+          queryParams.FilterExpression = filterConditions;
+        }
+      }
+
+      // Handle ordering
+      if (params?.orderBy) {
+        const orderByKeys = Object.keys(params.orderBy);
+        if (orderByKeys.length > 0) {
+          const firstKey = orderByKeys[0];
+          const direction = params.orderBy[firstKey];
+
+          // For DynamoDB, we can only sort by SK within a partition
+          // For other attributes, we'll need to sort after retrieval
+          if (firstKey === "id" || firstKey === "SK") {
+            queryParams.ScanIndexForward = direction === "asc";
+          }
+          // Note: Complex sorting on other attributes will be handled post-query
+        }
+      }
+
+      // Handle pagination
+      if (params?.limit) {
+        queryParams.Limit = params.limit;
+      }
+
+      // Handle offset (Note: DynamoDB doesn't support OFFSET directly)
+      // For offset, we'll need to implement cursor-based pagination or fetch and skip
+      if (params?.offset && params.offset > 0) {
+        // For now, we'll fetch more records and slice them (not efficient for large offsets)
+        queryParams.Limit = (params.limit || 100) + params.offset;
+      }
+
+      const result = await dynamoClient.send(new QueryCommand(queryParams));
+
+      if (!result.Items || result.Items.length === 0) {
+        return [];
+      }
+
+      let processedItems = result.Items.map((item) => {
+        const resourceData = this.getResourceData(item);
+        return {
+          ...resourceData,
+          id: item.SK
+        };
+      });
+
+      // Handle offset by slicing results (inefficient for large offsets)
+      if (params?.offset && params.offset > 0) {
+        processedItems = processedItems.slice(params.offset);
+        if (params?.limit) {
+          processedItems = processedItems.slice(0, params.limit);
+        }
+      }
+
+      // Handle complex sorting that couldn't be done at query level
+      if (params?.orderBy) {
+        const sortKeys = Object.keys(params.orderBy);
+        if (
+          sortKeys.length > 0 &&
+          !(
+            sortKeys.length === 1 &&
+            (sortKeys[0] === "id" || sortKeys[0] === "SK")
+          )
+        ) {
+          processedItems.sort((a, b) => {
+            for (const key of sortKeys) {
+              const direction = params.orderBy![key];
+              const aVal = a[key];
+              const bVal = b[key];
+
+              if (aVal < bVal) return direction === "asc" ? -1 : 1;
+              if (aVal > bVal) return direction === "asc" ? 1 : -1;
+            }
+            return 0;
+          });
+        }
+      }
+
+      // Handle property omission
+      if (params?.omit && params.omit.length > 0) {
+        processedItems = processedItems.map((item) => {
+          const filteredItem = { ...item };
+          params.omit!.forEach((prop) => {
+            delete filteredItem[prop];
+          });
+          return filteredItem;
+        });
+      }
+
+      // Handle property selection filtering (if not done via ProjectionExpression)
+      if (params?.properties && params.properties.length > 0) {
+        processedItems = processedItems.map((item) => {
+          const filteredItem: any = { id: item.id };
+          params.properties!.forEach((prop) => {
+            if (item.hasOwnProperty(prop)) {
+              filteredItem[prop] = item[prop];
+            }
+          });
+          return filteredItem;
+        });
+      }
+
+      return processedItems;
+    } catch (e) {
+      console.error({ at: "DynamoDB selectMany - error", error: e });
+      return [];
+    }
+  }
+
+  /**
+   * Helper method to build DynamoDB FilterExpression from IResourceSelectParams
+   * Handles various filter types including search, basic filters, and whereClause
+   */
+  private buildFilterExpression(
+    params: IResourceSelectParams,
+    queryParams: any
+  ): string | null {
+    const conditions: string[] = [];
+    let attributeNameCounter = 0;
+    let attributeValueCounter = 0;
+
+    // Initialize ExpressionAttributeNames and ExpressionAttributeValues if not already present
+    if (!queryParams.ExpressionAttributeNames) {
+      queryParams.ExpressionAttributeNames = {};
+    }
+    if (!queryParams.ExpressionAttributeValues) {
+      queryParams.ExpressionAttributeValues = {
+        ":pk": queryParams.ExpressionAttributeValues[":pk"]
+      };
+    }
+
+    // Handle search functionality
+    if (
+      params.search &&
+      params.search.properties &&
+      params.search.properties.length > 0
+    ) {
+      const searchConditions: string[] = [];
+      const searchQuery = params.search.query.toLowerCase();
+
+      params.search.properties.forEach((property) => {
+        const attrName = `#searchAttr${attributeNameCounter++}`;
+        const attrValue = `:searchVal${attributeValueCounter++}`;
+
+        queryParams.ExpressionAttributeNames[attrName] = property;
+        queryParams.ExpressionAttributeValues[attrValue] = searchQuery;
+
+        // Use contains for text search (case-insensitive approximation)
+        searchConditions.push(`contains(${attrName}, ${attrValue})`);
+      });
+
+      if (searchConditions.length > 0) {
+        conditions.push(`(${searchConditions.join(" OR ")})`);
+      }
+    }
+
+    // Handle basic filters
+    if (
+      params.filters &&
+      typeof params.filters === "object" &&
+      !("filters" in params.filters)
+    ) {
+      // Simple key-value filters
+      Object.entries(params.filters).forEach(([key, value]) => {
+        const attrName = `#filterAttr${attributeNameCounter++}`;
+        queryParams.ExpressionAttributeNames[attrName] = key;
+
+        if (Array.isArray(value)) {
+          // IN condition
+          const valueRefs = value.map((_, index) => {
+            const attrValue = `:filterVal${attributeValueCounter++}`;
+            queryParams.ExpressionAttributeValues[attrValue] = value[index];
+            return attrValue;
+          });
+          conditions.push(`${attrName} IN (${valueRefs.join(", ")})`);
+        } else if (
+          typeof value === "object" &&
+          value !== null &&
+          value !== undefined
+        ) {
+          // Handle complex filter conditions
+          this.handleComplexFilter(
+            key,
+            value,
+            conditions,
+            queryParams,
+            attributeNameCounter,
+            attributeValueCounter
+          );
+        } else if (typeof value === "boolean") {
+          if (value === true) {
+            const attrValue = `:filterVal${attributeValueCounter++}`;
+            queryParams.ExpressionAttributeValues[attrValue] = true;
+            conditions.push(`${attrName} = ${attrValue}`);
+          } else {
+            // For false, check if attribute is false, null, or doesn't exist
+            const attrValue = `:filterVal${attributeValueCounter++}`;
+            queryParams.ExpressionAttributeValues[attrValue] = false;
+            conditions.push(
+              `(${attrName} = ${attrValue} OR attribute_not_exists(${attrName}))`
+            );
+          }
+        } else if (value !== undefined) {
+          const attrValue = `:filterVal${attributeValueCounter++}`;
+          queryParams.ExpressionAttributeValues[attrValue] = value;
+          conditions.push(`${attrName} = ${attrValue}`);
+        }
+      });
+    }
+
+    // Handle whereClause (raw filter conditions)
+    if (params.whereClause) {
+      if (typeof params.whereClause === "string") {
+        conditions.push(params.whereClause);
+      } else if (Array.isArray(params.whereClause)) {
+        conditions.push(...params.whereClause);
+      }
+    }
+
+    return conditions.length > 0 ? conditions.join(" AND ") : null;
+  }
+
+  /**
+   * Helper method to handle complex filter conditions (greater than, less than, etc.)
+   */
+  private handleComplexFilter(
+    key: string,
+    value: any,
+    conditions: string[],
+    queryParams: any,
+    attributeNameCounter: number,
+    attributeValueCounter: number
+  ): void {
+    const attrName = `#filterAttr${attributeNameCounter}`;
+    queryParams.ExpressionAttributeNames[attrName] = key;
+
+    if ("greaterThan" in value) {
+      const attrValue = `:filterVal${attributeValueCounter++}`;
+      queryParams.ExpressionAttributeValues[attrValue] = value.greaterThan;
+      conditions.push(`${attrName} > ${attrValue}`);
+    }
+    if ("lessThan" in value) {
+      const attrValue = `:filterVal${attributeValueCounter++}`;
+      queryParams.ExpressionAttributeValues[attrValue] = value.lessThan;
+      conditions.push(`${attrName} < ${attrValue}`);
+    }
+    if ("greaterThanOrEqual" in value) {
+      const attrValue = `:filterVal${attributeValueCounter++}`;
+      queryParams.ExpressionAttributeValues[attrValue] =
+        value.greaterThanOrEqual;
+      conditions.push(`${attrName} >= ${attrValue}`);
+    }
+    if ("lessThanOrEqual" in value) {
+      const attrValue = `:filterVal${attributeValueCounter++}`;
+      queryParams.ExpressionAttributeValues[attrValue] = value.lessThanOrEqual;
+      conditions.push(`${attrName} <= ${attrValue}`);
+    }
+    if ("notIn" in value && Array.isArray(value.notIn)) {
+      const valueRefs = value.notIn.map((val: any, index: number) => {
+        const attrValue = `:filterVal${attributeValueCounter++}`;
+        queryParams.ExpressionAttributeValues[attrValue] = val;
+        return attrValue;
+      });
+      conditions.push(`NOT (${attrName} IN (${valueRefs.join(", ")}))`);
+    }
+    if ("contains" in value) {
+      const attrValue = `:filterVal${attributeValueCounter++}`;
+      queryParams.ExpressionAttributeValues[attrValue] = value.contains;
+      conditions.push(`contains(${attrName}, ${attrValue})`);
+    }
+    if ("notEquals" in value) {
+      const attrValue = `:filterVal${attributeValueCounter++}`;
+      queryParams.ExpressionAttributeValues[attrValue] = value.notEquals;
+      conditions.push(`${attrName} <> ${attrValue}`);
+    }
   }
 
   /**
