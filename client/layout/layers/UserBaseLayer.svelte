@@ -115,6 +115,8 @@
       // loadingMessage.duration = userDataState.paginateResources.length * 2;
       //TODO - calculate estimated time to paginate using total length of records for each resource and resource type
       await flux.paginateResources(userDataState.paginateResources, 100);
+    } else if (userDataState?.cursors) {
+      await flux.paginateResourcesV2(userDataState.cursors);
     }
     $appLoadingState.isBaseLoaded = true;
     await Promise.all([
@@ -348,6 +350,7 @@
         paginateResources?: any;
         counts?: any;
       }
+    | { cursors?: any }
     | undefined
   > {
     if ($account.dataMode === UserDataMode.LOCAL) {
@@ -363,10 +366,14 @@
     } else if ($account.sessionType === UserSessionType.RETURNING) {
       if (initState === 0) {
         loadingMessage = loadingMessages.cloneDown;
-        const result = await flux.initializeEssentialDataForCloudUser();
-        if (typeof result === "object" && result?.ifrCloneResult) {
-          return result.ifrCloneResult;
+        const result = await flux.initializeEssentialDataForCloudUserV2();
+        if (typeof result === "object" && result?.cursors) {
+          return result;
         }
+        // const result = await flux.initializeEssentialDataForCloudUser();
+        // if (typeof result === "object" && result?.ifrCloneResult) {
+        //   return result.ifrCloneResult;
+        // }
       } else {
         loadingMessage = loadingMessages.syncDown;
         return flux.initialSyncDown();

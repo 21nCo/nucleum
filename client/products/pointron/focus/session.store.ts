@@ -1239,6 +1239,13 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
   constructor() {
     super(Resource.sessionFocusItems, { ...seedFocusItemsStore });
   }
+
+  loader(data: IFocusItemsStore) {
+    if (!data.items) data.items = [];
+    if (!data.removedItems) data.removedItems = [];
+    super.loader(data);
+  }
+
   reset(isPersist: boolean = false) {
     logger.log({ context: "focus items store - reset" });
     this.modify(

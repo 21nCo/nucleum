@@ -71,7 +71,7 @@
 
 {#if $goal.isInEditMode}
   <button
-    class="flex gap-1 w-full h-12 bg-ass1 text-abg items-center justify-center rounded-md hover:brightness-110"
+    class="flex gap-1 w-full h-12 min-h-12 bg-ass1 text-abg items-center justify-center rounded-md hover:brightness-110"
     on:click={() => {
       goal.toggleEditMode(false);
     }}
