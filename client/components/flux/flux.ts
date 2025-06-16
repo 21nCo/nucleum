@@ -197,9 +197,8 @@ class Flux {
         .filter((x) => x.dataType === StoreDataType.KVO)
         .map((x) => {
           const k = x as IObservableStore<any>;
-          return { id: k.id, ...k.seed };
+          return { id: `kv:${k.id}`, ...k.seed };
         });
-      data = [...data, { id: "mutationMap" }];
       await this.seed();
       const params: IInsertMutation<any> = {
         records: data,
@@ -996,48 +995,55 @@ class Flux {
       isReconciliation?: boolean;
     }
   ) {
-    console.time(`cloneDown - ${resource}`);
-    if (!this.isExtensionEnvironment && resource !== Resource.kv) {
-      // dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
-      //   subMessage: `Syncing ${resource}s...`
-      // });
-    }
-    if (resource === Resource.kv) {
-      records = records.filter((x: any) => !x.id.toString().includes("local"));
-    }
-    const mutationResult = await this.persistence.mutation(
-      resource as Resource,
-      {
-        records,
-        action:
-          params?.isReconciliation ||
-          resource === Resource.kv ||
-          resource === Resource.link
-            ? PersistenceActionType.INSERT
-            : PersistenceActionType.BULK_INSERT
+    try {
+      console.time(`cloneDown - ${resource}`);
+      if (!this.isExtensionEnvironment && resource !== Resource.kv) {
+        // dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
+        //   subMessage: `Syncing ${resource}s...`
+        // });
       }
-    );
-    logger.log({
-      at: "flux.cloneDown - result",
-      resource,
-      records,
-      mutationResult
-    });
-    if (!mutationResult) {
-      const fallbackResult = await this.persistence.mutation(
+      if (resource === Resource.kv) {
+        records = records.filter(
+          (x: any) => x.id && !x.id?.toString()?.includes("local")
+        );
+      }
+      const mutationResult = await this.persistence.mutation(
         resource as Resource,
         {
           records,
-          action: PersistenceActionType.INSERT
+          action:
+            params?.isReconciliation ||
+            resource === Resource.kv ||
+            resource === Resource.link
+              ? PersistenceActionType.INSERT
+              : PersistenceActionType.BULK_INSERT
         }
       );
       logger.log({
-        at: "flux.cloneDown - fallbackResult",
+        at: "flux.cloneDown - result",
         resource,
-        fallbackResult
+        records,
+        mutationResult
       });
+      if (!mutationResult) {
+        const fallbackResult = await this.persistence.mutation(
+          resource as Resource,
+          {
+            records,
+            action: PersistenceActionType.INSERT
+          }
+        );
+        logger.log({
+          at: "flux.cloneDown - fallbackResult",
+          resource,
+          fallbackResult
+        });
+      }
+      console.timeEnd(`cloneDown - ${resource}`);
+    } catch (e) {
+      logger.error({ at: "flux.processCloneDown", error: e });
+      console.timeEnd(`cloneDown - ${resource}`);
     }
-    console.timeEnd(`cloneDown - ${resource}`);
   }
 
   private async cloneDownV2(
@@ -1186,11 +1192,15 @@ class Flux {
       resourcesForReconciliation
     });
     if (resourcesForReconciliation.length > 0) {
-      const result = await this.cloneDown(resourcesForReconciliation, {
+      logger.info({
+        at: "flux.reconcile - reconciliation started",
+        resourcesForReconciliation
+      });
+      const result = await this.cloneDownV2(resourcesForReconciliation, {
         isReconciliation: true
       });
-      if (result?.paginateResources) {
-        await this.paginateResources(result.paginateResources);
+      if (result?.cursors) {
+        await this.paginateResourcesV2(result.cursors);
       }
       if (!params?.reCloneAll) {
         this.performSync(SyncMethod.RECONCILE, {
@@ -1266,13 +1276,16 @@ class Flux {
 
   async paginateResourcesV2(cursors: { [key: string]: string }) {
     for (let resource of Object.keys(cursors)) {
+      const cursor = cursors[resource];
+      if (!cursor) continue;
       this.propagateSyncStatus(resource as Resource);
-      await this.paginateResourceV2(resource as Resource, cursors[resource]);
+      await this.paginateResourceV2(resource as Resource, cursor);
       this.propagateSyncStatus(resource as Resource, true);
     }
   }
 
   async paginateResourceV2(resource: Resource, cursor: string) {
+    if (!cursor) return;
     this.propagateSyncStatus(resource);
     const result = await this.performSync(SyncMethod.CLONE_DOWN_PAGINATE_V2, {
       resource,

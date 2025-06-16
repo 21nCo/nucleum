@@ -190,7 +190,7 @@ class AccountStore extends ObservableStore<
         message: `Deleting account...`
       });
       const result = await performApiCall(
-        "account/n/deleteAccount",
+        "v2/account/deleteAccount",
         "POST",
         {}
       );
