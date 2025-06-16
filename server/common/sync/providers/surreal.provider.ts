@@ -44,6 +44,10 @@ export class SurrealSyncProvider implements ISyncProvider {
     throw new Error("Method not implemented.");
   }
 
+  async deleteUser(agent: Agent): Promise<any> {
+    throw new Error("Method not implemented.");
+  }
+
   async syncUp(body: ISyncUpBody, agent: Agent): Promise<any> {
     try {
       const { mutations, lastSyncDown, resources, dapId } = body;

@@ -49,4 +49,6 @@ export interface ISyncProvider {
     resourceId: IRecordId,
     properties?: string[]
   ): Promise<any>;
+
+  deleteUser(agent: Agent): Promise<any>;
 }

@@ -10,6 +10,7 @@ import {
 } from "../errors";
 import { getEmailParts } from "./account.utils";
 import { generateRandomIdv2 } from "$lib/shared/utils/crypto.utils";
+import { SyncProviderFactory } from "../sync/providers";
 
 export async function signup(data: any, isOAuth = false) {
   console.log("signup", { data, isOAuth });
@@ -177,5 +178,7 @@ export async function deleteUserAccount(body: any, agent: Agent) {
   await log(agent.id, { ...context, activity: "deleteAccount" });
   const provider = DatabaseProviderFactory.getProvider();
   const response = await provider.deleteUser(agent);
+  const syncProvider = SyncProviderFactory.getProvider();
+  await syncProvider.deleteUser(agent);
   return response;
 }

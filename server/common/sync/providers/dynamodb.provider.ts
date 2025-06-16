@@ -23,6 +23,7 @@ import {
   BatchWriteCommand,
   BatchGetCommand,
   QueryCommand,
+  ScanCommand,
   GetCommand,
   DeleteCommand,
   UpdateCommand,
@@ -98,6 +99,43 @@ export class DynamoDBSyncProvider implements ISyncProvider {
 
   private resolveUserId(agent: Agent): string {
     return agent.id?.includes("user:") ? agent.id : `user:${agent.id}`;
+  }
+
+  /**
+   * Deletes all records for a user/space from DynamoDB.
+   * Uses GSI1 with spaceId as partition key for efficient deletion.
+   * Falls back to scanning with PK prefix filter if GSI1 approach fails.
+   *
+   * @param agent - Agent information containing database and region details
+   * @returns Promise resolving to deletion result with success status and count
+   */
+  async deleteUser(agent: Agent): Promise<any> {
+    try {
+      const dynamoClient = this.getDynamoClient(agent);
+      const spaceId = agent.db;
+
+      try {
+        const deletedCount = await this.deleteUserViaGSI1(
+          spaceId,
+          dynamoClient
+        );
+        console.log({ at: "DynamoDB deleteUser", deletedCount, spaceId });
+        return { success: true, deletedCount, method: "GSI1" };
+      } catch (gsi1Error) {
+        console.warn("GSI1 deletion failed, trying PK prefix scan:", gsi1Error);
+        const deletedCount = await this.deleteUserViaPKScan(
+          spaceId,
+          dynamoClient
+        );
+        return { success: true, deletedCount, method: "PKScan" };
+      }
+    } catch (e) {
+      console.error({ at: "DynamoDB deleteUser - error", error: e });
+      return {
+        error: "Delete user failed",
+        details: e instanceof Error ? e.message : "Unknown error"
+      };
+    }
   }
 
   /**
@@ -772,7 +810,8 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       const commonAttributes = {
         PK: `${spaceId}#${resource}`,
         spaceId,
-        userId
+        userId,
+        GSI1SK: resource
       };
 
       console.time("cloneUp-batch");
@@ -781,11 +820,12 @@ export class DynamoDBSyncProvider implements ISyncProvider {
         const putRequests = batch.map((record) => {
           const item: DynamoDBItem = {
             ...commonAttributes,
-            SK: record.id,
+            ...record,
+            SK: record.id.toString(),
+            GSI1SK: this.resolveGSI1SK(resource as Resource, record),
             modifiedAtUnix: record.modifiedAt
               ? new Date(record.modifiedAt).getTime()
-              : Date.now(),
-            ...record
+              : Date.now()
           };
 
           return {
@@ -1356,19 +1396,19 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       case Resource.accessLog:
         return `accessLog#${record.resourceId}`;
       case Resource.node:
-        return `node#${record.contentType}`;
+        return `node#${record.contentType ?? ""}`;
       case Resource.goal:
-        return `goal#${record.type}`;
+        return `goal#${record.type ?? ""}`;
       case Resource.task:
-        return `task#${record.type}`;
+        return `task#${record.type ?? ""}`;
       case Resource.collection:
         return `collection#${record.type}#${record.resource}`;
       case Resource.file:
-        return `fileType#${record.type}`;
+        return `fileType#${record.type ?? ""}`;
       case Resource.link:
-        return `link#${record.out}`;
+        return `link#${record.out ?? ""}`;
       case Resource.property:
-        return `property#${record.type}`;
+        return `property#${record.type ?? ""}`;
       default:
         return resource;
     }
@@ -1864,5 +1904,147 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       console.error({ at: "paginateWithOptimizedChunking - error", error: e });
       return { data: [], nextCursor: null, hasMore: false };
     }
+  }
+
+  /**
+   * Deletes all user records using GSI1 index with spaceId as partition key.
+   * This is the most efficient approach if GSI1 is properly configured.
+   *
+   * @param spaceId - The space/user ID to delete all records for
+   * @param dynamoClient - DynamoDB document client
+   * @returns Promise resolving to the number of deleted records
+   */
+  private async deleteUserViaGSI1(
+    spaceId: string,
+    dynamoClient: DynamoDBDocumentClient
+  ): Promise<number> {
+    const queryParams: any = {
+      TableName: this.config.tableArn,
+      IndexName: "GSI1",
+      KeyConditionExpression: "spaceId = :spaceId",
+      ExpressionAttributeValues: {
+        ":spaceId": spaceId
+      }
+    };
+
+    let allItems: any[] = [];
+    let lastEvaluatedKey = undefined;
+
+    // Query all items for this spaceId using GSI1
+    do {
+      if (lastEvaluatedKey) {
+        queryParams.ExclusiveStartKey = lastEvaluatedKey;
+      }
+
+      const result = await dynamoClient.send(new QueryCommand(queryParams));
+
+      if (result.Items && result.Items.length > 0) {
+        allItems.push(...result.Items);
+      }
+
+      lastEvaluatedKey = result.LastEvaluatedKey;
+    } while (lastEvaluatedKey);
+
+    if (allItems.length === 0) {
+      return 0;
+    }
+
+    // Delete items in batches
+    const batchSize = 25; // DynamoDB batch write limit
+    let deletedCount = 0;
+
+    for (let i = 0; i < allItems.length; i += batchSize) {
+      const batch = allItems.slice(i, i + batchSize);
+      const deleteRequests = batch.map((item) => ({
+        DeleteRequest: {
+          Key: {
+            PK: item.PK,
+            SK: item.SK
+          }
+        }
+      }));
+
+      const deleteParams = {
+        RequestItems: {
+          [this.config.tableArn]: deleteRequests
+        }
+      };
+
+      await dynamoClient.send(new BatchWriteCommand(deleteParams));
+      deletedCount += deleteRequests.length;
+    }
+
+    return deletedCount;
+  }
+
+  /**
+   * Deletes all user records by scanning table with PK prefix filter.
+   * This is a fallback approach when GSI1 is not available or fails.
+   * Note: This approach is less efficient as it requires scanning the entire table.
+   *
+   * @param spaceId - The space/user ID to delete all records for
+   * @param dynamoClient - DynamoDB document client
+   * @returns Promise resolving to the number of deleted records
+   */
+  private async deleteUserViaPKScan(
+    spaceId: string,
+    dynamoClient: DynamoDBDocumentClient
+  ): Promise<number> {
+    const scanParams: any = {
+      TableName: this.config.tableArn,
+      FilterExpression: "begins_with(PK, :pkPrefix)",
+      ExpressionAttributeValues: {
+        ":pkPrefix": `${spaceId}#`
+      }
+    };
+
+    let allItems: any[] = [];
+    let lastEvaluatedKey = undefined;
+
+    // Scan all items with PK starting with spaceId
+    do {
+      if (lastEvaluatedKey) {
+        scanParams.ExclusiveStartKey = lastEvaluatedKey;
+      }
+
+      const result = await dynamoClient.send(new ScanCommand(scanParams));
+
+      if (result.Items && result.Items.length > 0) {
+        allItems.push(...result.Items);
+      }
+
+      lastEvaluatedKey = result.LastEvaluatedKey;
+    } while (lastEvaluatedKey);
+
+    if (allItems.length === 0) {
+      return 0;
+    }
+
+    // Delete items in batches
+    const batchSize = 25;
+    let deletedCount = 0;
+
+    for (let i = 0; i < allItems.length; i += batchSize) {
+      const batch = allItems.slice(i, i + batchSize);
+      const deleteRequests = batch.map((item) => ({
+        DeleteRequest: {
+          Key: {
+            PK: item.PK,
+            SK: item.SK
+          }
+        }
+      }));
+
+      const deleteParams = {
+        RequestItems: {
+          [this.config.tableArn]: deleteRequests
+        }
+      };
+
+      await dynamoClient.send(new BatchWriteCommand(deleteParams));
+      deletedCount += deleteRequests.length;
+    }
+
+    return deletedCount;
   }
 }

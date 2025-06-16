@@ -45,6 +45,7 @@ export class AccountLambdaFunctions extends cdk.NestedStack {
     };
 
     const relayRole = createAccountRole("RelayFunctionRole");
+    const deleteAccountRole = createAccountRole("DeleteAccountFunctionRole");
 
     const accountEndpoint = props.api.addResource("account");
 
@@ -72,7 +73,29 @@ export class AccountLambdaFunctions extends cdk.NestedStack {
       new gateway.LambdaIntegration(relayFunction)
     );
 
-    const relayLambdaFunctions = [relayFunction];
+    const deleteAccountResource = accountEndpoint.addResource("deleteAccount");
+    const deleteAccountFunction = new lambda.Function(
+      this,
+      "DeleteAccountFunctionv2",
+      {
+        handler: "index.handler",
+        functionName: generateFunctionName(
+          "deleteAccountFunctionv2",
+          props.environment
+        ),
+        code: lambda.Code.fromAsset(
+          path.join(__dirname, basePath + "deleteAccount/dist")
+        ),
+        ...nodeRuntimeFunctionProps,
+        role: deleteAccountRole
+      }
+    );
+    deleteAccountResource.addMethod(
+      "POST",
+      new gateway.LambdaIntegration(deleteAccountFunction)
+    );
+
+    const accountLambdaFunctions = [relayFunction, deleteAccountFunction];
 
     if (props.dynamoTables) {
       console.log(
@@ -84,7 +107,7 @@ export class AccountLambdaFunctions extends cdk.NestedStack {
       );
 
       props.dynamoTables.forEach((table) => {
-        relayLambdaFunctions.forEach((func) => {
+        accountLambdaFunctions.forEach((func) => {
           table.grantReadWriteData(func);
 
           // Add explicit permissions for Global Secondary Indexes (GSIs)
@@ -107,7 +130,11 @@ export class AccountLambdaFunctions extends cdk.NestedStack {
       });
     }
 
-    for (const resource of [pingResource, relayResource]) {
+    for (const resource of [
+      pingResource,
+      relayResource,
+      deleteAccountResource
+    ]) {
       resource.addMethod(
         "OPTIONS",
         new gateway.MockIntegration(defaults.mockIntegration),
