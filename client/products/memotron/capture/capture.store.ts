@@ -858,6 +858,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         accessMode: ResourceAccessMode.POP
       });
     }
+    this.update((prev) => ({ ...prev, isAvoidSaveLeaks: true }));
     await this.deletePermanently();
     // this.modify({ ...generateSeedStore() }, { isPersist: false });
   }

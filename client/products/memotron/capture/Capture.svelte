@@ -115,9 +115,9 @@
   }
 
   onMount(async () => {
-    const appEventSub = appEvents.subscribe((x: IEvent) => {
+    const appEventSub = appEvents.subscribe(async (x: IEvent) => {
       if (x.event === GlobalEvent.ENTER && x.value.metaKey === true) {
-        onSave();
+        await onSave();
       }
     });
     subs.push(appEventSub);
@@ -446,6 +446,7 @@
   }
 
   function persistLabel() {
+    if (isSaving) return;
     captureStore.modify(
       { label: $captureStore.label },
       { isPreventBackPropagation: true }
@@ -457,6 +458,7 @@
    * @param e
    */
   function onContentChange(e: CustomEvent) {
+    if (isSaving) return;
     debouncedPersist();
     setTimeout(() => {
       refreshEmptyState();
@@ -465,8 +467,12 @@
 
   const debouncedPersist = debouncer(persist, 1000);
 
+  /**
+   * Notes: isAvoidSaveLeaks is used to prevent save after delete action of capture. This is happening when using shortcut to save which is in turn triggering keyboard events -> onContentChange -> persist or persistLabel.
+   */
   function persist() {
     const val = $captureStore;
+    if (isSaving || $captureStore.isAvoidSaveLeaks) return;
     captureStore.modify({ ...val }, { isPreventBackPropagation: true });
   }
 </script>

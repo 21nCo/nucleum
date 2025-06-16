@@ -82,7 +82,8 @@
   ];
 
   $: isResizable =
-    (_mediaBlock?.contentType &&
+    (!$mdStore.params?.isReadOnly &&
+      _mediaBlock?.contentType &&
       resizableTypes.includes(_mediaBlock?.contentType) &&
       !body?.isHidePreview) ??
     false;
@@ -283,7 +284,8 @@
             "flex w-full justify-between items-center gap-2 rounded-md",
             {
               "h-16 px-3": !isShowPreview,
-              "bg-bgs2": !isShowPreview && !isHovering,
+              "bg-bgs2":
+                !isShowPreview && (!isHovering || $mdStore.params?.isReadOnly),
               "h-20": isShowPreview
             }
           )}
@@ -323,15 +325,17 @@
           </div>
           {#if isHovering}
             <div class="flex gap-2 items-center shrink-0">
-              <Button
-                icon="ph:pencil-simple-light"
-                tooltip="Edit title"
-                size={Size.sm}
-                style={ButtonStyle.OUTLINED}
-                on:click={(e) => {
-                  onEditTitle(e.detail);
-                }}
-              />
+              {#if !$mdStore.params?.isReadOnly}
+                <Button
+                  icon="ph:pencil-simple-light"
+                  tooltip="Edit title"
+                  size={Size.sm}
+                  style={ButtonStyle.OUTLINED}
+                  on:click={(e) => {
+                    onEditTitle(e.detail);
+                  }}
+                />
+              {/if}
               {#if _mediaBlock?.contentType !== NodeType.FILE}
                 <Button
                   icon="ph:circle-light"
@@ -372,16 +376,18 @@
                   }}
                 />
               {/if}
-              <Button
-                icon="ph:trash-light"
-                tooltip="Delete"
-                size={Size.sm}
-                type={ButtonVariant.DANGER}
-                style={ButtonStyle.OUTLINED}
-                on:click={() => {
-                  dispatch("delete");
-                }}
-              />
+              {#if !$mdStore.params?.isReadOnly}
+                <Button
+                  icon="ph:trash-light"
+                  tooltip="Delete"
+                  size={Size.sm}
+                  type={ButtonVariant.DANGER}
+                  style={ButtonStyle.OUTLINED}
+                  on:click={() => {
+                    dispatch("delete");
+                  }}
+                />
+              {/if}
             </div>
           {/if}
         </button>

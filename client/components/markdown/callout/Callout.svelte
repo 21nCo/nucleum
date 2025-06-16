@@ -55,13 +55,13 @@
     class={cn(
       "flex flex-col justify-center items-center px-2 border rounded-md h-10",
       {
-        "border-ccs3": isHovering,
-        "border-transparent": !isHovering
+        "border-ccs3": isHovering && !$mdStore.params?.isReadOnly,
+        "border-transparent": !isHovering || $mdStore.params?.isReadOnly
       }
     )}
     bind:this={ref}
     use:popover={{
-      content: CalloutSelector,
+      content: $mdStore.params?.isReadOnly ? null : CalloutSelector,
       componentProps: {
         selected: _callout,
         onSelect: (callout) => {
