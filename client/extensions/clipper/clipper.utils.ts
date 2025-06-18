@@ -224,6 +224,7 @@ function extractBrowserDetails() {
 
 export function resolveUrl(url?: string) {
   if (!url) url = window.location.href;
+  url = url.split('#')[0];
   if (url.includes("youtube.com")) {
     return url.split("&")[0];
   }
@@ -251,7 +252,7 @@ function resolveOgData(doc?: Document) {
 }
 
 export function resolveContentTypeString(contentType: NodeType | null) {
-  if (!contentType) return "webpage";
+  if (!contentType) return "web page";
   else if (contentType === NodeType.WEB_SCREENSHOT_CLIP) return "screenshot";
   else return enumToString(contentType);
 }

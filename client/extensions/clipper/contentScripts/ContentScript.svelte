@@ -7,29 +7,19 @@
   } from "$lib/client/extensions/clipper/clipper.utils";
   import { ExtensionEvent } from "$lib/client/types/extension.type";
   import FeedbackPane from "$lib/client/extensions/clipper/feedbackPane/FeedbackPane.svelte";
-  import ClipperShortcuts from "$lib/client/extensions/clipper/ClipperShortcuts.svelte";
-  import { nodeStore } from "$lib/client/products/memotron/node/node.store";
-  import { collectionStore } from "$lib/client/components/collection/collection.store";
   import Toolbar from "$lib/client/extensions/clipper/toolbar/Toolbar.svelte";
   import TextClipper from "$lib/client/extensions/clipper/contentScripts/TextClipper.svelte";
   import { webpage, toolbarState, feedbackPane, syncStore } from "./store";
   import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
   import ExtensionBaseLayer from "$lib/client/extensions/ExtensionBaseLayer.svelte";
-  import {
-    linker,
-    linkTagStore
-  } from "$lib/client/products/memotron/linking/link.store";
   import ScreenShot from "./ScreenShot.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
   import { enumToString } from "$lib/shared/utils/text.utils";
   import { NodeType } from "$lib/client/products/memotron/node/node.type";
-  import { highlightStore } from "$lib/client/products/memotron/common/highlighters/highlight.store";
   import { AlertType } from "$lib/client/types/notification.type";
   import SyncPane from "../syncPane/SyncPane.svelte";
   import LoginNotification from "../feedbackPane/LoginNotification.svelte";
   import { relayToBackgroundScript } from "$lib/client/utils/extension.utils";
-  import { fileStore } from "$lib/client/components/files/file.store";
-  import { propertyStore } from "$lib/client/components/collection/properties/property.store";
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { ResourceError } from "$lib/client/components/error/errors";
   import { Placement } from "$lib/client/types/direction.enum";
@@ -40,6 +30,8 @@
   import { toolbarUnavailableUrlsList } from "$lib/client/products/memotron/common/urlMap";
   import type { IHighlighter } from "$lib/client/products/memotron/common/highlighters/highlight.type";
   import { Product } from "$lib/client/types/product.type";
+  import { clipperCacheableStores } from "../clipper.config";
+  import ClipperInMemoryCache from "../ClipperInMemoryCache.svelte";
 
   export let id: string;
   let textClipperRef: TextClipper;
@@ -50,11 +42,12 @@
   let isLoggedIn: boolean = false;
   let isDraggingToolbar: boolean = false;
   let isSidePanelOpen: boolean = false;
+  let isBaseMounted: boolean = false;
+  let feedbackPaneRef: FeedbackPane;
 
   $: isDisableClipper = toolbarUnavailableUrlsList.some((regex) => {
     return regex.test(window.location.href);
   });
-
   $: contentType = resolveContentTypeForUrl($webpage.url);
   function onActivateColor(e: CustomEvent<IHighlighter | number>) {
     textClipperRef.onActivateColor(e);
@@ -70,6 +63,14 @@
 
   async function onSaveClick() {
     try {
+      if (
+        isDisableClipper ||
+        !isLoggedIn ||
+        !isBaseMounted ||
+        !$toolbarState?.isOpen ||
+        $toolbarState?.isHidden
+      )
+        return;
       const contentTypeStr = enumToString(contentType);
       feedbackPane.onPageSaveStart(`Saving ${contentTypeStr}...`);
       if ($webpage.id) {
@@ -216,7 +217,12 @@
                 message: "You are not logged in"
               };
             }
-            await onSaveClick();
+            if ($webpage.id) {
+              feedbackPane.onPageSaveSuccess("Page already saved!");
+              feedbackPane.toggle({ isUserInitiated: true });
+            } else {
+              await onSaveClick();
+            }
             return { status: "success", message: "Page saved" };
 
           case ClipperExtensionEvent.TAKE_SCREENSHOT_SHORTCUT:
@@ -226,6 +232,24 @@
           case ClipperExtensionEvent.MINIMIZE_TOOLBAR:
             toolbarState.toggle();
             return { status: "success", message: "Toolbar minimized" };
+
+          case ClipperExtensionEvent.ACTIVATE_LINK_BOX:
+            if (!$webpage.id) {
+              feedbackPane.setErrorFeedback({
+                message: "Please save the page first.",
+                isPreventAutoClose: false
+              });
+              $feedbackPane.isShowStatusOnly = true;
+              feedbackPane.toggle();
+              return;
+            }
+            if (!$feedbackPane.isShown) {
+              feedbackPane.toggle({ isUserInitiated: true });
+            }
+            setTimeout(() => {
+              feedbackPaneRef?.focusLinkBox();
+            }, 100);
+            return { status: "success", message: "Link box activated" };
 
           case ClipperExtensionEvent.TOGGLE_TOOLBAR_VISIBILITY:
             toolbarState.toggleVisibility();
@@ -277,18 +301,11 @@
   bind:isLoggedIn
   {id}
   product={{ product: Product.MEMOTRON, env: "live" }}
-  stores={[
-    nodeStore,
-    collectionStore,
-    propertyStore,
-    linkTagStore,
-    toolbarState,
-    webpage,
-    linker,
-    highlightStore,
-    fileStore
-  ]}
+  stores={[...clipperCacheableStores]}
   on:login={(e) => setLoginState(e.detail.code)}
+  on:mount={() => {
+    isBaseMounted = true;
+  }}
 >
   {#if !isDisableClipper}
     {#if !$toolbarState?.isOpen && !$toolbarState?.isHidden}
@@ -312,7 +329,7 @@
               message: "Page saved!",
               type: AlertType.SUCCESS
             };
-            feedbackPane.toggle();
+            feedbackPane.toggle({ isUserInitiated: true });
           }}
           on:summarize
           on:collapse={() => toolbarState.toggle(false)}
@@ -340,7 +357,7 @@
           }}
         />
       {:else if $feedbackPane.isShown}
-        <FeedbackPane />
+        <FeedbackPane bind:this={feedbackPaneRef} />
       {:else if $syncStore.isShowSyncPane}
         <SyncPane />
       {/if}
@@ -372,10 +389,14 @@
     {/if}
   {/if}
 
-  <ClipperShortcuts
+  <!-- Not needed as shortcuts are listened from extension command API -->
+  <!-- <ClipperShortcuts
     on:save={onSaveClick}
     on:collapse={() => {
       toolbarState.toggle();
     }}
-  />
+  /> -->
+  {#if isBaseMounted}
+    <ClipperInMemoryCache />
+  {/if}
 </ExtensionBaseLayer>

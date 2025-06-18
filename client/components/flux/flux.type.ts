@@ -10,6 +10,7 @@ import type { Resource } from "./resourceStores/resource.enum";
 export enum FluxMethod {
   CLONE_DOWN = "cloneDown",
   SYNC_DOWN = "syncDown",
+  RECONCILE = "reconcile",
   INIT_FLUX = "initFlux",
   SELECT_MANY = "selectMany",
   SELECT = "select",
@@ -43,9 +44,19 @@ export type IFluxMethod =
       method: FluxMethod.CLONE_DOWN | FluxMethod.SYNC_DOWN;
     }
   | {
+      method: FluxMethod.RECONCILE;
+      args: IFluxReconcileArgs;
+    }
+  | {
       method: FluxMethod.SEARCH;
       args: IFluxSearchArgs;
     };
+
+interface IFluxReconcileArgs {
+  counts: {
+    [key: string]: number;
+  };
+}
 
 interface IFluxSelectManyArgs {
   resource: Resource;

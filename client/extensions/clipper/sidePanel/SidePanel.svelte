@@ -14,20 +14,17 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import { nodeStore } from "$lib/client/products/memotron/node/node.store";
-  import { collectionStore } from "$lib/client/components/collection/collection.store";
-  import { webpage } from "../contentScripts/store";
-  import {
-    linker,
-    linkTagStore
-  } from "$lib/client/products/memotron/linking/link.store";
   import account from "$lib/client/stores/account.store";
   import { resolveToken } from "$lib/client/utils/account.utils";
   import { getPort } from "@plasmohq/messaging/port";
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
-  import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
+  import {
+    BarStyle,
+    PanelSwitcherStyle
+  } from "$lib/client/types/switcher.enum";
   import InlineMarkdownTextInput from "$lib/client/components/markdown/content/InlineMarkdownTextInput.svelte";
   import {
+    extensionFlux,
     loadInMemoryResourceStore,
     loadInMemoryStores
   } from "$lib/client/components/flux/fluxExtentionMediator";
@@ -41,7 +38,10 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { Placement } from "$lib/client/types/direction.enum";
-  import type { ISelectItem } from "$lib/client/types/select.type";
+  import {
+    OptionSelectorStyle,
+    type ISelectItem
+  } from "$lib/client/types/select.type";
   import InlineFeedbackText from "../InlineFeedbackText.svelte";
   import {
     AlertType,
@@ -50,6 +50,14 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { fly } from "svelte/transition";
   import { Product } from "$lib/client/types/product.type";
+  import ExtensionHelp from "../../shared/ExtensionHelp.svelte";
+  import { FluxMethod } from "$lib/client/components/flux/flux.type";
+  import { clipperCacheableStores } from "../clipper.config";
+  import ClipperInMemoryCache from "../ClipperInMemoryCache.svelte";
+  import SidePanelCollections from "./collectionsOnClipper/SidePanelCollections.svelte";
+  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
+
+  let mainPanel: "page" | "collections" = "page";
   let mode: "clips" | "notes" | "history" = "clips";
   let title = "";
   let isPageSaved = false;
@@ -62,28 +70,50 @@
   let isMemotronPage = false;
   let isNewTabPage = false;
   let isToolbarHidden = false;
+  let isMounted = false;
+  let isShowHelp = false;
+  let isResyncing = false;
   const tooltipOptions = {
-    placement: Placement.Top
+    placement: Placement.TopCenter
   };
+  const mainPanels: ISelectItem[] = [
+    {
+      label: "Current page",
+      value: "page"
+    },
+    {
+      label: "Collections",
+      value: "collections",
+      badge: "beta"
+    }
+  ];
 
   const panels: ISelectItem[] = [
+    // {
+    //   label: "Ask",
+    //   value: "ask",
+    //   icon: "ph:sparkle-light"
+    // },
     {
       label: "Clips",
-      value: "clips"
+      value: "clips",
+      icon: "heroicons:bookmark"
     },
     {
       label: "Page notes",
-      value: "notes"
+      value: "notes",
+      icon: "ph:note-light"
     }
     // {
     //   label: "History",
-    //   value: "history"
+    //   value: "history",
+    //   icon: "ph:clock-light"
     // }
   ];
   const channel = getPort("channel");
   const port = chrome.runtime.connect({ name: "sidePanel" });
 
-  const stores = [linkTagStore];
+  const stores = [...clipperCacheableStores];
   async function onSavePageClick() {
     const page = await relayToContentScript({
       event: ClipperExtensionEvent.SAVE_WEBPAGE
@@ -103,7 +133,7 @@
       onBootup();
     } else if (message.event === ExtensionEvent.MUTATION) {
       console.log({ at: "SidePanel - RELOAD_INMEMORY_STORE", message });
-      loadInMemoryStore(message.data?.resource);
+      loadInMemoryResourceStoreDelegate(message.data?.resource);
     } else if (message.event === ExtensionEvent.TOKEN_NOT_FOUND) {
       isLoggedIn = false;
     } else if (message.event === ExtensionEvent.TAB_UPDATE) {
@@ -219,9 +249,9 @@
     }, 100);
   }
 
-  async function loadInMemoryStore(resource: Resource) {
+  async function loadInMemoryResourceStoreDelegate(resource: Resource) {
     logger.log({
-      at: "SidePanel.loadInMemoryStore",
+      at: "SidePanel.loadInMemoryResourceStoreDelegate",
       resource
     });
     if (!resource) return;
@@ -255,186 +285,250 @@
       };
     }
   }
+
+  async function resync() {
+    isResyncing = true;
+    const result = await extensionFlux({
+      method: FluxMethod.SYNC_DOWN
+    });
+    if (result?.counts) {
+      await extensionFlux({
+        method: FluxMethod.RECONCILE,
+        args: { counts: result.counts }
+      });
+    }
+    isResyncing = false;
+  }
 </script>
 
 <!-- svelte-ignore missing-declaration -->
 <ExtensionBaseLayer
   id="sidePanel"
+  on:mount={() => (isMounted = true)}
   product={{ product: Product.MEMOTRON, env: "live" }}
-  stores={[nodeStore, collectionStore, webpage, linker]}
+  {stores}
 >
-  <div class="w-full h-screen">
-    <div class="flex flex-col gap-4 w-full h-full bg-bgs1 text-b2 text-fgs1">
-      {#if isLoggedIn && !isNotAvailable}
-        <header
-          class="flex w-full justify-between items-center p-3 border-b border-brs3 shadow-sm"
-        >
-          <span class=" max-w-8/12 truncate">{title}</span>
-          <span>
-            {#if isPageSaved}
-              <div
-                class="min-w-fit bg-bgs2 border rounded-md px-3 py-1.5 border-brs3 flex items-center gap-2"
-              >
-                <Icon icon="ph:check-light" size={Size.sm} />
-                <span>Saved</span>
-              </div>
-            {:else}
-              <button
-                class="min-w-fit bg-aps1 text-bgs1 px-3 py-1.5 rounded-md"
-                on:click={onSavePageClick}
-              >
-                Save page</button
-              >
-            {/if}
-          </span>
-        </header>
-        {#if isToolbarHidden}
-          <div
-            class="flex justify-between items-center mx-3 p-2 border border-dashed border-fgs4 rounded-md"
-            transition:fly={{ y: -10, duration: 300 }}
-          >
-            <span> Toolbar is hidden </span>
-            <Button
-              label="Show toolbar"
-              icon="ph:eye-light"
-              size={Size.sm}
-              isPreventMinWidth={true}
-              on:click={() => {
-                relayToContentScript({
-                  event: ClipperExtensionEvent.TOGGLE_TOOLBAR_VISIBILITY
-                });
-              }}
-            />
-          </div>
-        {/if}
-        <PanelSwitcher
-          items={panels}
-          bind:value={mode}
-          style={PanelSwitcherStyle.BAR}
-          isExpandToFullWidth={true}
-        >
-          <div slot="right" class="flex text-b3 text-fgs2">
-            <!-- {feedback} -->
-            <InlineFeedbackText bind:feedback />
-          </div>
-        </PanelSwitcher>
-        <div class="flex w-full flex-1 overflow-y-auto">
-          {#if mode === "clips"}
-            <div class="flex flex-col gap-2 p-4 h-full w-full">
-              {#key clips}
-                <ClipsPane {clips} {isMemotronPage} />
-              {/key}
-            </div>
-          {:else if mode === "notes"}
+  {#if isMounted}
+    <ClipperInMemoryCache />
+    <div class="w-full h-screen">
+      <div class="flex flex-col w-full h-full bg-bgs1 text-b2 text-fgs1 pt-1">
+        {#if isResyncing}
+          <EmptyStatusView
+            isLoadingState={true}
+            loadingText="Resyncing data..."
+          />
+        {:else if isShowHelp}
+          <ExtensionHelp
+            on:close={() => (isShowHelp = false)}
+            on:resync={resync}
+          />
+        {:else if isLoggedIn && !isNotAvailable}
+          <PanelSwitcher
+            items={mainPanels}
+            bind:value={mainPanel}
+            style={PanelSwitcherStyle.BAR}
+            isExpandToFullWidth={true}
+          />
+          {#if isToolbarHidden}
             <div
-              class={cn("flex w-full justify-center rounded-md mx-2 p-2", {
-                "bg-bgs2": isPageSaved
-              })}
+              class="flex justify-between items-center mx-3 p-2 border border-dashed border-fgs4 rounded-md"
+              transition:fly={{ y: -10, duration: 300 }}
             >
-              {#if isPageSaved}
-                {#key refreshId}
-                  <InlineMarkdownTextInput
-                    placeholder="Add notes"
-                    bind:content={notes}
-                    on:debouncedChange={onNotesChange}
+              <span> Toolbar is hidden </span>
+              <Button
+                label="Show toolbar"
+                icon="ph:eye-light"
+                size={Size.sm}
+                isPreventMinWidth={true}
+                on:click={() => {
+                  relayToContentScript({
+                    event: ClipperExtensionEvent.TOGGLE_TOOLBAR_VISIBILITY
+                  });
+                }}
+              />
+            </div>
+          {/if}
+          {#if mainPanel === "page"}
+            <header
+              class="flex w-full justify-between items-center min-h-16 h-16 px-3 bg-bgs2 border-b border-brs3"
+            >
+              <span class=" max-w-8/12 truncate">{title}</span>
+              <span>
+                {#if isPageSaved}
+                  <div
+                    class="min-w-fit bg-bgs2 border rounded-md px-3 py-1.5 border-brs3 flex items-center gap-2"
+                  >
+                    <Icon icon="ph:check-light" size={Size.sm} />
+                    <span>Saved</span>
+                  </div>
+                {:else}
+                  <button
+                    class="min-w-fit bg-aps1 text-bgs1 px-3 py-1.5 rounded-md"
+                    on:click={onSavePageClick}
+                  >
+                    Save page</button
+                  >
+                {/if}
+              </span>
+            </header>
+            <div class="flex w-full justify-center py-4">
+              <!-- <PanelSwitcher
+                items={panels}
+                bind:value={mode}
+                style={PanelSwitcherStyle.TRAIN}
+                size={Size.sm}
+                barStyle={BarStyle.DOT}
+                isExpandToFullWidth={true}
+              >
+                <div slot="right" class="flex text-b3 text-fgs2">
+
+                </div>
+                </PanelSwitcher> -->
+              <div class="flex w-full px-3 gap-2">
+                <div>
+                  <OptionSelector
+                    options={panels}
+                    bind:selected={mode}
+                    style={OptionSelectorStyle.ICON}
+                    size={Size.sm}
+                    isExpandOnActiveForIcon={true}
                   />
-                {/key}
+                </div>
+                <!-- TODO - later when all options are present - move this feedback to the bottom of the page and remove div wrapper around option selector to make it full width -->
+                <div
+                  class="h-full flex items-center whitespace-nowrap text-b3 text-fgs2"
+                >
+                  <InlineFeedbackText bind:feedback />
+                </div>
+              </div>
+            </div>
+            <div class="flex w-full flex-1 overflow-y-auto">
+              {#if mode === "clips"}
+                <div class="flex flex-col gap-2 p-4 h-full w-full">
+                  {#key clips}
+                    <ClipsPane {clips} {isMemotronPage} />
+                  {/key}
+                </div>
+              {:else if mode === "notes"}
+                <div
+                  class={cn("flex w-full justify-center rounded-md mx-2 p-2", {
+                    "bg-bgs2": isPageSaved
+                  })}
+                >
+                  {#if isPageSaved}
+                    {#key refreshId}
+                      <InlineMarkdownTextInput
+                        placeholder="Add notes"
+                        bind:content={notes}
+                        on:debouncedChange={onNotesChange}
+                      />
+                    {/key}
+                  {:else}
+                    <EmptyStatusView
+                      mainText="Page not saved yet."
+                      subText="Save this page to add notes or refresh the page to try again."
+                    />
+                  {/if}
+                </div>
               {:else}
-                <EmptyStatusView
-                  mainText="Page not saved yet."
-                  subText="Save this page to add notes or refresh the page to try again."
-                />
+                <!-- TODO -->
               {/if}
             </div>
-          {:else}
-            <!-- TODO -->
+          {:else if mainPanel === "collections"}
+            <div
+              class="flex flex-col w-full h-full items-center justify-center"
+            >
+              <SidePanelCollections />
+            </div>
           {/if}
-        </div>
-      {:else if isNotAvailable}
-        <div class="flex w-full flex-1">
-          <EmptyStatusView {...resolveEmptyStatusViewParams()} />
-        </div>
-      {:else}
-        <div class="flex w-full flex-1">
-          <div
-            class="flex flex-col h-full w-full justify-center items-center gap-4"
-          >
-            <span> Please login to continue. </span>
-            <Button
-              label="Login"
-              icon="ph:sign-in-light"
-              type={ButtonVariant.PRIMARY}
-              on:click={() => openAppPath("signup?ext=true")}
-            />
+        {:else if isNotAvailable}
+          <div class="flex w-full flex-1">
+            <EmptyStatusView {...resolveEmptyStatusViewParams()} />
           </div>
-        </div>
-      {/if}
-      <footer
-        class="h-14 border-t border-t-brs3 flex justify-between items-center px-3"
-      >
-        <span class="flex items-center gap-2">
-          <!-- <Button
+        {:else}
+          <div class="flex w-full flex-1">
+            <div
+              class="flex flex-col h-full w-full justify-center items-center gap-4"
+            >
+              <span> Please login to continue. </span>
+              <Button
+                label="Login"
+                icon="ph:sign-in-light"
+                type={ButtonVariant.PRIMARY}
+                on:click={() => openAppPath("signup?ext=true")}
+              />
+            </div>
+          </div>
+        {/if}
+        <footer
+          class="h-14 border-t border-t-brs3 flex justify-between items-center px-3"
+        >
+          <span class="flex items-center gap-2">
+            <!-- <Button
             tooltip="Settings"
             {tooltipOptions}
             icon="ph:gear-fine-light"
             size={Size.sm}
             style={ButtonStyle.OUTLINED}
           /> -->
-          <Button
-            tooltip="Go to app"
-            {tooltipOptions}
-            icon="ph:hexagon-light"
-            size={Size.sm}
-            style={ButtonStyle.OUTLINED}
-            on:click={() => openAppPath("")}
-          />
-          <Button
-            tooltip="Help and support"
-            {tooltipOptions}
-            icon="ph:question-light"
-            size={Size.sm}
-            style={ButtonStyle.OUTLINED}
-            on:click={() => {
-              window.open("https://discord.com/invite/9HJqKYTZKg", "_blank");
-            }}
-          />
-          {#if isLoggedIn}
             <Button
-              tooltip="Logout"
+              tooltip="Go to app"
               {tooltipOptions}
-              icon="ph:sign-out-light"
+              icon="ph:hexagon-light"
               size={Size.sm}
-              type={ButtonVariant.DANGER}
               style={ButtonStyle.OUTLINED}
-              on:click={() => {
-                account.signOut();
-                clips = [];
-                isPageSaved = false;
-                relayToContentScript({
-                  event: ExtensionEvent.LOGOUT
-                });
-                isLoggedIn = false;
-              }}
+              on:click={() => openAppPath("")}
             />
-          {:else if !isLoggedIn}
             <Button
-              tooltip="Login"
-              icon="ph:sign-in-light"
-              type={ButtonVariant.PRIMARY}
+              tooltip="Help center"
+              {tooltipOptions}
+              icon="ph:question-light"
               size={Size.sm}
+              type={isShowHelp
+                ? ButtonVariant.PRIMARY
+                : ButtonVariant.SECONDARY}
               style={ButtonStyle.OUTLINED}
-              on:click={() => openAppPath("signup?ext=true")}
+              on:click={() => (isShowHelp = !isShowHelp)}
             />
-          {/if}
-        </span>
-        {#if isLoggedIn}
-          <span>
-            {$account?.userInfo?.nickName ?? "Unknown user"}
+            {#if isLoggedIn}
+              <Button
+                tooltip="Logout"
+                {tooltipOptions}
+                icon="ph:sign-out-light"
+                id="logout"
+                size={Size.sm}
+                type={ButtonVariant.DANGER}
+                style={ButtonStyle.OUTLINED}
+                on:click={() => {
+                  account.signOut();
+                  clips = [];
+                  isPageSaved = false;
+                  relayToContentScript({
+                    event: ExtensionEvent.LOGOUT
+                  });
+                  isLoggedIn = false;
+                }}
+              />
+            {:else if !isLoggedIn}
+              <Button
+                tooltip="Login"
+                icon="ph:sign-in-light"
+                type={ButtonVariant.PRIMARY}
+                size={Size.sm}
+                style={ButtonStyle.OUTLINED}
+                on:click={() => openAppPath("signup?ext=true")}
+              />
+            {/if}
           </span>
-        {:else}
-          <span> Not logged in. </span>
-        {/if}
-      </footer>
+          {#if isLoggedIn}
+            <span>
+              {$account?.userInfo?.nickName ?? "Unknown user"}
+            </span>
+          {:else}
+            <span> Not logged in. </span>
+          {/if}
+        </footer>
+      </div>
     </div>
-  </div>
+  {/if}
 </ExtensionBaseLayer>

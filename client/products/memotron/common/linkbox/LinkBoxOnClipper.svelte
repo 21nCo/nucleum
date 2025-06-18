@@ -5,11 +5,17 @@
   import LinkSearch from "./LinkSearch.svelte";
   const dispatch = createEventDispatcher();
   let searchQuery: string;
+  let searchRef: LinkSearch;
+
+  export function focus() {
+    searchRef?.focus();
+  }
 </script>
 
 <LinkSearch
   ctx="clipper"
   bind:searchQuery
+  bind:this={searchRef}
   resultsPlacement={$toolbarState.position === Placement.Bottom
     ? Placement.TopCenter
     : Placement.BottomCenter}
@@ -17,4 +23,5 @@
     if (e.detail?.item?.id) dispatch("link", e.detail?.item?.id);
     searchQuery = "";
   }}
+  on:focus
 />

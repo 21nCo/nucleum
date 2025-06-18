@@ -24,19 +24,22 @@ export async function delegateToFlux(method: IFluxMethod) {
     }
     switch (method.method) {
       case FluxMethod.CLONE_DOWN:
-        const result = await flux.initializeEssentialDataForCloudUser();
+        const result = await flux.initializeEssentialDataForCloudUserV2();
         if (
           typeof result === "object" &&
-          result?.ifrCloneResult?.paginateResources
+          result?.cursors
         ) {
-          await flux.paginateResources(
-            result.ifrCloneResult.paginateResources,
-            100
+          await flux.paginateResourcesV2(
+            result.cursors
           );
         }
         return result;
       case FluxMethod.SYNC_DOWN:
         return flux?.syncDown();
+      case FluxMethod.RECONCILE:
+        return flux?.reconcile({
+          counts: method.args.counts
+        });
       case FluxMethod.INIT_FLUX:
         return initFlux(
           method.args.stores,

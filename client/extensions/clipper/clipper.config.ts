@@ -8,15 +8,20 @@ import { fileStore } from "$lib/client/components/files/file.store";
 import { linkTagStore } from "$lib/client/products/memotron/linking/link.store";
 import { accessLogStore } from "$lib/client/components/accessLogging/accesslog.store";
 import { markdownSettings } from "$lib/client/components/markdown/markdown.settings";
+import { toolbarState, webpage } from "./contentScripts/store";
+import { highlightStore } from "$lib/client/products/memotron/common/highlighters/highlight.store";
 
 export const clipperCacheableStores: IStore[] = [
   nodeStore,
   collectionStore,
   propertyStore,
-  viewStore,
-  fileStore,
-  linker,
   linkTagStore,
+  toolbarState,
+  webpage,
+  linker,
+  highlightStore,
+  fileStore,
+  viewStore,
   markdownSettings
 ];
 

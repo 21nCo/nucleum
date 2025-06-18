@@ -52,6 +52,8 @@ export const memotronUrlsList = [
 export const unavailableUrlsList = [
   /^https:\/\/app\.memotron\.io(?:\/.*)?$/,
   /^https:\/\/web\.memotron\.app(?:\/.*)?$/,
+  /^https:\/\/pre\.memotron\.app(?:\/.*)?$/,
+  /^https:\/\/dev\.memotron\.app(?:\/.*)?$/,
   /^https:\/\/memotron\.tidigit\.dev(?:\/.*)?$/,
   /^https:\/\/pointron\.tidigit\.dev(?:\/.*)?$/,
   /^https?:\/\/localhost(?::[0-9]+)?(?:\/.*)?$/,

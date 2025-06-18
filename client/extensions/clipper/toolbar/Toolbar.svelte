@@ -131,24 +131,29 @@
     {#if $webpage?.id}
       <button
         class="flex border border-transparent outline-dotted outline-fgs2 hover:outline-aps1 rounded-full"
+        use:tooltip={{
+          text: "This page is already saved. Click to link",
+          direction: Placement.Left
+        }}
+        on:click={() => {
+          dispatch("saved");
+        }}
       >
-        <Icon
-          icon="check-circle"
-          on:click={() => {
-            dispatch("saved");
-          }}
-          class="fill-fgs2"
-        />
+        <Icon icon="check-circle" class="fill-fgs2" />
       </button>
     {:else}
-      <Button
-        icon="plus"
-        tooltip={`Save ${enumToString(contentType)} **(Ctrl + J)**`}
-        {...buttonParams}
+      <button
         on:click={() => {
           dispatch("save");
         }}
-      />
+        use:tooltip={{
+          text: `**Save ${enumToString(contentType)}** (Cmd/Ctrl + J)`,
+          direction: Placement.Left
+        }}
+        class="p-1 hover:bg-bgs2 rounded-md flex justify-center items-center"
+      >
+        <Icon icon="ph:plus-circle-light" class="text-fgs2" />
+      </button>
     {/if}
   {:else if $syncStore.id}
     <!-- <Button
@@ -169,7 +174,7 @@
   {/if}
   <Toggle
     icon="ph:crop-light"
-    tooltip="Snip **(Ctrl + I)**"
+    tooltip="**Snip** (Cmd/Ctrl + Shift + I)"
     bgSize={Size.sm}
     bind:on={isSnipActive}
     {tooltipOptions}
@@ -266,7 +271,7 @@
       dispatch("collapse");
     }}
     use:tooltip={{
-      text: "Minimize toolbar **(Alt + M)**",
+      text: "**Minimize toolbar** (Alt + M)",
       direction: Placement.Left
     }}
     class="p-1 hover:bg-bgs2 rounded-md flex justify-center items-center"
@@ -278,7 +283,7 @@
       dispatch("close");
     }}
     use:tooltip={{
-      text: "Hide toolbar **(Alt + X)**",
+      text: "**Hide toolbar** (Alt + X)",
       direction: Placement.Left
     }}
     class="p-1 hover:bg-bgs2 rounded-md flex justify-center items-center"

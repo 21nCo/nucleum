@@ -849,9 +849,10 @@ class FeedbackPaneStore extends ObservableStore<IFeedbackPaneStore> {
       return { isShown: false, feedback: "", focusedClip: null };
     });
   }
-  toggle() {
+  toggle(params?: { isUserInitiated?: boolean }) {
     this.update((n) => {
       n.isShown = !n.isShown;
+      n.isUserInitiated = params?.isUserInitiated ?? false;
       return n;
     });
   }

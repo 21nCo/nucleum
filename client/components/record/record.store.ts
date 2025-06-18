@@ -40,6 +40,7 @@ import {
 import {
   determineResourceType,
   isSameResource,
+  removeDuplicatesFilter,
   resolveProductResources,
   resourceInList
 } from "$lib/client/components/flux/resourceStores/resource.utils";
@@ -51,6 +52,8 @@ import { Action } from "$lib/client/types/action.enum";
 import { taskStore } from "../tasks/task.store";
 import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
 import { resolveResourceStore } from "../flux/resourceStores/store.resolver";
+import { clientStorage } from "$lib/client/persistence/persistence.utils";
+import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
 
 export const MAX_FILE_SIZE_MB = 100;
 
@@ -508,7 +511,8 @@ export class SearchStore {
                   properties: ["body", "label"],
                   query
                 }
-              : undefined
+              : undefined,
+            limit: 100
           }
         }
       });
@@ -525,14 +529,34 @@ export class SearchStore {
                   properties: ["label"],
                   query
                 }
-              : undefined
+              : undefined,
+            limit: 100
           }
         }
       });
     }
-    return [...(nodes ?? []), ...(collections ?? [])].filter(
-      activeResourceFilter
-    );
+    let recentItemsArray = [];
+    if (!isValidString(query)) {
+      try {
+        const recentItems = await clientStorage.get(ClientStorageKey.RECENTS);
+        recentItemsArray = recentItems ? JSON.parse(recentItems) : [];
+        if (recentItemsArray.length > 0 && resource) {
+          recentItemsArray = recentItemsArray.filter(
+            (x: any) => {
+              const itemResourceType = determineResourceType(x.id);
+              return itemResourceType === resource;
+            }
+          );
+        }
+      } catch (e) {
+        logger.error({ at: "searchForLinkingOnExtension - recentItems", error: e });
+      }
+    }
+    return [
+      ...recentItemsArray,
+      ...(nodes ?? []),
+      ...(collections ?? [])
+    ].filter(activeResourceFilter).filter(removeDuplicatesFilter)
   }
 
   async resolveCount(params?: {

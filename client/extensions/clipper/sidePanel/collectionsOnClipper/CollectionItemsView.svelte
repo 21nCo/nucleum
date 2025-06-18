@@ -1,0 +1,84 @@
+<script lang="ts">
+  import { createEventDispatcher } from "svelte";
+  import AvatarRenderer from "$lib/client/elements/avatarPicker/AvatarRenderer.svelte";
+  import Icon from "$lib/client/elements/Icon.svelte";
+  import { Size } from "$lib/client/types/size.enum";
+  import { CollectionType } from "$lib/client/components/collection/collection.type";
+  import WebpageItem from "./WebpageItem.svelte";
+  import type { CollectionData, CollectionItem } from "./types";
+
+  export let selectedCollection: CollectionData;
+  export let collectionItems: CollectionItem[];
+  export let isLoadingItems: boolean;
+
+  const dispatch = createEventDispatcher<{
+    back: void;
+  }>();
+
+  function getCollectionIcon(collection: CollectionData): string | null {
+    if (collection.type === CollectionType.TYPED && collection.avatar) {
+      return null;
+    } else if (collection.type === CollectionType.QUERY) {
+      return "ph:at";
+    } else {
+      return "ph:circles-four";
+    }
+  }
+
+  function handleBackClick() {
+    dispatch("back");
+  }
+</script>
+
+<div
+  class="flex items-center gap-3 min-h-16 h-16 px-3 border-b border-bgs3 bg-bgs2"
+>
+  <button
+    on:click={handleBackClick}
+    class="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-bgs3 transition-colors"
+  >
+    <Icon icon="ph:arrow-left" size={Size.sm} />
+  </button>
+  <div class="flex items-center gap-2 flex-1">
+    {#if selectedCollection.type === CollectionType.TYPED && selectedCollection.avatar}
+      <AvatarRenderer avatar={selectedCollection.avatar} size={Size.sm} />
+    {:else}
+      <Icon
+        icon={getCollectionIcon(selectedCollection) ?? "ph:circles-four"}
+        size={Size.sm}
+      />
+    {/if}
+    <div>
+      <div class="font-medium text-fgs1 text-b2">
+        {selectedCollection.label}
+      </div>
+      <div class="text-fgs3 text-b3">
+        {collectionItems.length} web page{collectionItems.length !== 1
+          ? "s"
+          : ""}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="flex-1 overflow-y-auto">
+  {#if isLoadingItems}
+    <div class="flex items-center justify-center py-8">
+      <div
+        class="animate-spin rounded-full h-5 w-5 border-b-2 border-aps1"
+      ></div>
+      <span class="ml-2 text-b2 text-fgs2">Loading items...</span>
+    </div>
+  {:else if collectionItems.length === 0}
+    <div class="flex flex-col items-center justify-center py-8 text-fgs2">
+      <Icon icon="ph:globe" size={Size.lg} />
+      <p class="mt-2 text-b2">No webpages found</p>
+    </div>
+  {:else}
+    <div class="p-2">
+      {#each collectionItems as item (item.id)}
+        <WebpageItem {item} />
+      {/each}
+    </div>
+  {/if}
+</div>

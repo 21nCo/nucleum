@@ -204,6 +204,7 @@
   on:select={onSelect}
   on:hide={onHide}
   on:empty-enter={onEmptyEnter}
+  on:focus
   searchCallback={onsearch}
   {placeholder}
   isShowPopoverOnFocus={true}

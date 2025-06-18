@@ -23,6 +23,7 @@
   import { logger } from "$lib/client/components/debug/logger.client";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { ResourceError } from "$lib/client/components/error/errors";
+
   let notes: string =
     ($feedbackPane.focusedClip
       ? $feedbackPane.focusedClip.notes
@@ -33,6 +34,15 @@
   let isHovering = false;
   let now = Date.now();
   let isPropsExpanded = false;
+  let notesRef: InlineMarkdownTextInput;
+  let linkBoxRef: LinkBoxOnClipper;
+
+  export function focusNotes() {
+    notesRef?.focus({ xOffset: 0, isBottom: true });
+  }
+  export function focusLinkBox() {
+    linkBoxRef?.focus();
+  }
 
   $: contentTypeStr = resolveContentTypeString(
     $feedbackPane.focusedClip?.contentType
@@ -63,7 +73,7 @@
 
   async function onNotesChange(e: CustomEvent) {
     $feedbackPane.feedback = {
-      message: "Saving...",
+      message: "Saving notes...",
       type: AlertType.PROGRESS
     };
     let response;
@@ -111,7 +121,11 @@
 
   function restartCloseTimer() {
     clearTimeout(closeTimer);
-    if (isHovering || $feedbackPane.isPreventAutoClose) {
+    if (
+      isHovering ||
+      $feedbackPane.isPreventAutoClose ||
+      $feedbackPane.isUserInitiated
+    ) {
       return;
     }
     closeActionTimestamp = Date.now();
@@ -245,17 +259,17 @@
         <!-- <span class="text-fgs3 text-b2"> Link this page </span> -->
         <FormControlLabel
           props={{
-            label: `Link this ${contentTypeStr}`,
-            tooltip: {
-              body: `Link this ${contentTypeStr} to a node or add it to a collection by searching and clicking`,
-              isUseAbsolutePositioning: true,
-              placement: Placement.TopCenter
-            }
+            label: `Link this ${contentTypeStr}`
+            // tooltip: {
+            //   body: `Link this ${contentTypeStr} to a node or add it to a collection by searching and clicking`,
+            //   isUseAbsolutePositioning: true,
+            //   placement: Placement.TopCenter
+            // }
           }}
         />
         <span class="h-6 w-6 flex justify-center items-center">
-          {#if isHovering}
-            <Button icon="cross-circled" on:click={closePane} />
+          {#if isHovering || $feedbackPane.isUserInitiated}
+            <Button icon="cross-circled" tooltip="Close" on:click={closePane} />
           {:else if $feedbackPane.isShown && countdown > 0 && !Number.isNaN(countdown)}
             <!-- TODO closing animation circle -->
             <span
@@ -266,7 +280,13 @@
           {/if}
         </span>
       </div>
-      <LinkBoxOnClipper on:link={onLink} />
+      <LinkBoxOnClipper
+        on:link={onLink}
+        bind:this={linkBoxRef}
+        on:focus={() => {
+          $feedbackPane.isUserInitiated = true;
+        }}
+      />
       <LinkItems
         links={linkItems}
         {propertyValues}
@@ -285,12 +305,10 @@
         <InlineMarkdownTextInput
           placeholder="Add notes"
           bind:content={notes}
+          bind:this={notesRef}
           on:debouncedChange={onNotesChange}
           on:focus={() => {
-            $feedbackPane.isPreventAutoClose = true;
-          }}
-          on:blur={() => {
-            $feedbackPane.isPreventAutoClose = false;
+            $feedbackPane.isUserInitiated = true;
           }}
         />
       </div>
