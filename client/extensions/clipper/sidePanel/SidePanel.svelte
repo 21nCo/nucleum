@@ -356,6 +356,9 @@
             bind:value={mainPanel}
             style={PanelSwitcherStyle.BAR}
             isExpandToFullWidth={true}
+            on:switch={() => {
+              refreshSyncStatus();
+            }}
           />
           {#if isBootupSyncInProgress}
             <div class="flex w-full justify-center items-center p-3">

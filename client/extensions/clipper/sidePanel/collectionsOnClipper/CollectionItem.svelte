@@ -12,16 +12,6 @@
     click: CollectionData;
   }>();
 
-  function getCollectionIcon(collection: CollectionData): string | null {
-    if (collection.type === CollectionType.TYPED && collection.avatar) {
-      return null;
-    } else if (collection.type === CollectionType.QUERY) {
-      return "ph:at";
-    } else {
-      return "ph:circles-four";
-    }
-  }
-
   function handleClick() {
     dispatch("click", collection);
   }
@@ -38,7 +28,7 @@
     {#if collection.type === CollectionType.TYPED && collection.avatar}
       <AvatarRenderer avatar={collection.avatar} size={Size.md} />
     {:else}
-      <Icon icon={getCollectionIcon(collection) ?? "ph:brackets-round-light"} />
+      <Icon icon="ph:brackets-round-light" />
     {/if}
   </div>
 
