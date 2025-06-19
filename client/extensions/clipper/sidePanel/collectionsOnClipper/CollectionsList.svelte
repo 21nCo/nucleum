@@ -19,12 +19,6 @@
   }
 </script>
 
-<div
-  class="h-16 min-h-16 flex items-center justify-center border-b border-bgs3 bg-bgs2"
->
-  <p class="text-fgs3 text-b3">Collections that has web page nodes.</p>
-</div>
-
 <div class="flex-1 overflow-y-auto">
   {#if isLoading}
     <div class="flex items-center justify-center py-8">

@@ -44,7 +44,7 @@
 
   <div class="flex-1 min-w-0">
     <div
-      class="font-medium text-fgs1 text-b2 group-hover:text-aps1 transition-colors"
+      class="font-medium text-fgs2 text-b2 group-hover:text-fgs1 transition-colors"
     >
       {collection.label}
     </div>

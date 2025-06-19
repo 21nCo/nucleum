@@ -60,12 +60,14 @@
   let mainPanel: "page" | "collections" = "page";
   let mode: "clips" | "notes" | "history" = "clips";
   let title = "";
+  let currentUrl = "";
   let isPageSaved = false;
   let clips: IClip[] = [];
   let notes = "";
   let feedback: IInlineStatus | undefined = undefined;
   let isLoggedIn = false;
   let refreshId: number = new Date().getTime();
+  let collectionRefreshId = new Date().getTime();
   let isNotAvailable = false;
   let isMemotronPage = false;
   let isNewTabPage = false;
@@ -83,8 +85,7 @@
     },
     {
       label: "Collections",
-      value: "collections",
-      badge: "beta"
+      value: "collections"
     }
   ];
 
@@ -126,9 +127,15 @@
       sendResponse({ status: "success", message: "State refreshed" });
     } else if (message.event === ClipperExtensionEvent.CLIPS_CHANGED) {
       //TODO testing
-      logger.debug({ at: "onMessage - Clips changed", message });
+      logger.log({ at: "onMessage - Clips changed", message });
       clips = message.data;
       sendResponse({ status: "success", message: "Clips updated" });
+    } else if (
+      message.event === ClipperExtensionEvent.ON_COLLECTION_LINK_CHANGES
+    ) {
+      logger.log({ at: "onMessage - Collection link changes", message });
+      collectionRefreshId = new Date().getTime();
+      sendResponse({ status: "success", message: "Collection link changes" });
     } else if (message.event === ExtensionEvent.BOOTUP) {
       onBootup();
     } else if (message.event === ExtensionEvent.MUTATION) {
@@ -160,6 +167,7 @@
     logger.log({ at: "onMount - SidePanel" });
     const tab = await chrome.storage.local.get("tab");
     title = tab.tab.title;
+    currentUrl = tab.tab.url;
     if (tab.tab.url && blankUrls.some((x) => x.test(tab.tab.url))) {
       handleNewTabCase(tab.tab);
       return;
@@ -206,6 +214,7 @@
     if (data.notes) notes = data.notes;
     else notes = "";
     if (data.url) {
+      currentUrl = data.url;
       isNotAvailable = sidePanelUnavailableUrlsList.some((x) =>
         x.test(data.url)
       );
@@ -438,7 +447,9 @@
             <div
               class="flex flex-col w-full h-full items-center justify-center"
             >
-              <SidePanelCollections />
+              {#key collectionRefreshId}
+                <SidePanelCollections {currentUrl} />
+              {/key}
             </div>
           {/if}
         {:else if isNotAvailable}

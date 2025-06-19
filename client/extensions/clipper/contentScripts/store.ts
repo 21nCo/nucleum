@@ -455,6 +455,13 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
         await nodeStore.modify(webpage.id, {
           collections
         });
+        relayToSidePanel({
+          event: ClipperExtensionEvent.ON_COLLECTION_LINK_CHANGES,
+          data: {
+            from: webpage.id,
+            to
+          }
+        });
       } else {
         this.update((n) => {
           n.links = [...(n.links ?? []), to];
@@ -488,6 +495,13 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
         n.collections = collections;
         n.links = n.links?.filter((l) => !isSameResource(l, to));
         return n;
+      });
+      relayToSidePanel({
+        event: ClipperExtensionEvent.ON_COLLECTION_LINK_CHANGES,
+        data: {
+          from: webpage.id,
+          to
+        }
       });
     } else {
       this.update((n) => {
@@ -558,6 +572,15 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
           clip: this.get().clips?.find(resourceInList(from))
         }
       });
+      if(resourceType === Resource.collection){
+        relayToSidePanel({
+          event: ClipperExtensionEvent.ON_COLLECTION_LINK_CHANGES,
+          data: {
+            from,
+            to
+          }
+        });
+      }
     }
     return response;
   }
@@ -609,6 +632,15 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
           clip: this.get().clips?.find(resourceInList(from))
         }
       });
+      if(resourceType === Resource.collection){
+        relayToSidePanel({
+          event: ClipperExtensionEvent.ON_COLLECTION_LINK_CHANGES,
+          data: {
+            from,
+            to
+          }
+        });
+      }
     }
     return { message: "Unlinked!", type: AlertType.SUCCESS };
   }

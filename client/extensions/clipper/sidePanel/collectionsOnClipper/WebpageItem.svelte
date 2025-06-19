@@ -1,9 +1,13 @@
 <script lang="ts">
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
+  import { cn } from "$lib/client/utils/ui.utils";
   import type { CollectionItem } from "./types";
 
   export let item: CollectionItem;
+  export let currentUrl: string;
+
+  $: isActive = currentUrl === item.url;
 
   function getFaviconUrl(url?: string): string | null {
     if (!url) return null;
@@ -24,7 +28,13 @@
 </script>
 
 <button
-  class="flex items-start w-full gap-3 p-3 rounded-lg hover:bg-bgs2 cursor-pointer group"
+  class={cn(
+    "flex items-start w-full gap-3 p-3 rounded-lg cursor-pointer group border",
+    {
+      "bg-aps3 border-aps1": isActive,
+      "hover:bg-bgs2 border-transparent": !isActive
+    }
+  )}
   on:click={(e) => {
     if (!item.url) return;
     if (e.metaKey || e.ctrlKey) {
@@ -48,7 +58,14 @@
   </div>
   <div class="flex flex-col items-start flex-1 min-w-0">
     <div
-      class="text-left font-medium text-fgs1 text-b2 line-clamp-1 group-hover:text-aps1 transition-colors"
+      class={cn(
+        "text-left font-medium text-b2 line-clamp-1 transition-colors",
+        {
+          "text-fgs2 group-hover:text-fgs1": !isActive,
+          "text-aps1": isActive,
+          "text-fgs3": !isActive && !item.url
+        }
+      )}
     >
       {item.label}
     </div>

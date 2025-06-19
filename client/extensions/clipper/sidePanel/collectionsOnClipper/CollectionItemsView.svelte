@@ -6,10 +6,12 @@
   import { CollectionType } from "$lib/client/components/collection/collection.type";
   import WebpageItem from "./WebpageItem.svelte";
   import type { CollectionData, CollectionItem } from "./types";
+  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
 
   export let selectedCollection: CollectionData;
   export let collectionItems: CollectionItem[];
   export let isLoadingItems: boolean;
+  export let currentUrl: string;
 
   const dispatch = createEventDispatcher<{
     back: void;
@@ -70,14 +72,14 @@
       <span class="ml-2 text-b2 text-fgs2">Loading items...</span>
     </div>
   {:else if collectionItems.length === 0}
-    <div class="flex flex-col items-center justify-center py-8 text-fgs2">
-      <Icon icon="ph:globe" size={Size.lg} />
-      <p class="mt-2 text-b2">No webpages found</p>
-    </div>
+    <EmptyStatusView
+      mainText="No webpage nodes found"
+      subText="Link a webpage to this collection from toolbar to view it here"
+    />
   {:else}
     <div class="p-2">
       {#each collectionItems as item (item.id)}
-        <WebpageItem {item} />
+        <WebpageItem {item} {currentUrl} />
       {/each}
     </div>
   {/if}

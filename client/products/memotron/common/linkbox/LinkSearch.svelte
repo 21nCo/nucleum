@@ -39,6 +39,8 @@
   let icon: string = "";
   let label: InputLabel | undefined = undefined;
   let searchInputRef: TextSearchInput;
+  let isCreationInProgress = false;
+
   resolveOptions(ctx);
 
   export function focus() {
@@ -130,6 +132,7 @@
     e: CustomEvent<{ event: KeyboardEvent; value: string }>
   ) {
     if (!e.detail.event || !e.detail.value) return;
+    isCreationInProgress = true;
     let result: any;
     if (
       ctx === "nodepageCollectionsLane" ||
@@ -143,7 +146,8 @@
       result = await collectionStore.save({
         label: val,
         type: CollectionType.UNTYPED,
-        defaultLayout: CollectionLayout.BOARD
+        defaultLayout: CollectionLayout.BOARD,
+        resource: ctx === "clipper" ? Resource.node : undefined
       });
     } else {
       result = await nodeStore.create({
@@ -158,19 +162,31 @@
     } else {
       toasts.error("Something went wrong. Please try again later.");
     }
+    isCreationInProgress = false;
   }
-  function resolveEmptyStateLabel(ctxParam: string) {
-    switch (ctxParam) {
-      case "nodepageCollectionsLane":
-        return `No results found. Press **Enter** to create a new collection`;
-      case "nodelinkspane":
-        return `No results found. Press **Enter** to create a new node`;
-      default:
-        return $context.isTouchDevice
-          ? `No results found. Press **Enter** to create a new node`
-          : `No results found. Press **Enter** to create a new node or **Shift + Enter** to create a new collection`;
+
+  function resolveEmptyStateLabel(
+    ctxParam: string,
+    searchQuery: string,
+    isSaving: boolean
+  ) {
+    if (isSaving) {
+      return `Creating...`;
+    }
+    if (
+      ctxParam === "nodepageCollectionsLane" ||
+      searchQuery?.startsWith("@")
+    ) {
+      return `No collections found. Press **Enter** to create a new collection`;
+    } else if (ctxParam === "nodelinkspane") {
+      return `No nodes found. Press **Enter** to create a new node`;
+    } else {
+      return $context.isTouchDevice
+        ? `No results found. Press **Enter** to create a new node`
+        : `No results found. Press **Enter** to create a new node or **Shift + Enter** to create a new collection`;
     }
   }
+
   function resolveBottomMessage(context: string) {
     switch (context) {
       case "capture":
@@ -200,7 +216,11 @@
       ctx === "nodepageCollectionsLane" || ctx === "nodelinkspane"
   }}
   {popoverOptions}
-  emptyStateLabel={resolveEmptyStateLabel(ctx)}
+  emptyStateLabel={resolveEmptyStateLabel(
+    ctx,
+    searchQuery,
+    isCreationInProgress
+  )}
   on:select={onSelect}
   on:hide={onHide}
   on:empty-enter={onEmptyEnter}
