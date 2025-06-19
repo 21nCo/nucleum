@@ -1,4 +1,5 @@
 import { CollectionType } from "$lib/client/components/collection/collection.type";
+import type { NodeType } from "$lib/client/products/memotron/node/node.type";
 
 export interface CollectionData {
   id: string;
@@ -6,6 +7,7 @@ export interface CollectionData {
   avatar?: any;
   type: CollectionType;
   itemCount: number;
+  lastModified?: Date;
 }
 
 export interface CollectionItem {
@@ -13,4 +15,7 @@ export interface CollectionItem {
   label: string;
   url?: string;
   metadata?: any;
+  contentType: NodeType;
+  parent?: string;
+  body?: any;
 } 

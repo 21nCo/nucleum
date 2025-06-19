@@ -184,11 +184,6 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     const webpage = this.get();
     logger.debug({ at: "onContextChange", tab, url, webpage });
     toolbarState.refresh();
-    //TODO - check the need for this - causing refresh to not happen when tab switch - if coming back to same tab again
-    // if (url === webpage.url) {
-    //   relayToSidePanel({ event: ExtensionEvent.PAGE_STATE, data: this.get() });
-    //   return;
-    // }
     this.set({ url, clips: [], title: tab.title ?? window.document.title });
     feedbackPane.reset();
     this.refresh();

@@ -56,7 +56,11 @@ export enum ClientStorageKey {
   /**
    * Used to store recent items for the clipper extension.
    */
-  RECENTS = "recents"
+  RECENTS = "recents",
+  /**
+   * Used to track the bootup status of the extension.
+   */
+  EXTENSION_BOOTUP = "extensionBootup"
 }
 
 export interface IPersistence {

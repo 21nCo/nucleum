@@ -7,6 +7,9 @@
   import WebpageItem from "./WebpageItem.svelte";
   import type { CollectionData, CollectionItem } from "./types";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
+  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import Button from "$lib/client/elements/button/Button.svelte";
+  import { openAppPath } from "$lib/client/utils/extension.utils";
 
   export let selectedCollection: CollectionData;
   export let collectionItems: CollectionItem[];
@@ -30,17 +33,21 @@
   function handleBackClick() {
     dispatch("back");
   }
+
+  function handleOpenInAppClick() {
+    openAppPath(`library?pop=${selectedCollection.id}`);
+  }
 </script>
 
 <div
-  class="flex items-center gap-3 min-h-16 h-16 px-3 border-b border-bgs3 bg-bgs2"
+  class="flex items-center gap-2 min-h-16 h-16 px-3 border-b border-bgs3 bg-bgs2"
 >
-  <button
+  <Button
+    icon="ph:caret-left-light"
+    tooltip="Back"
+    parentBgIndex={2}
     on:click={handleBackClick}
-    class="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-bgs3 transition-colors"
-  >
-    <Icon icon="ph:arrow-left" size={Size.sm} />
-  </button>
+  />
   <div class="flex items-center gap-2 flex-1">
     {#if selectedCollection.type === CollectionType.TYPED && selectedCollection.avatar}
       <AvatarRenderer avatar={selectedCollection.avatar} size={Size.sm} />
@@ -61,6 +68,12 @@
       </div>
     </div>
   </div>
+  <Button
+    icon="ph:arrow-square-out-light"
+    tooltip="Open in app"
+    parentBgIndex={2}
+    on:click={handleOpenInAppClick}
+  />
 </div>
 
 <div class="flex-1 overflow-y-auto">
@@ -77,10 +90,11 @@
       subText="Link a webpage to this collection from toolbar to view it here"
     />
   {:else}
-    <div class="p-2">
+    <div class="space-y-2 p-3">
       {#each collectionItems as item (item.id)}
         <WebpageItem {item} {currentUrl} />
       {/each}
+      <ScrollViewBottomSpacer />
     </div>
   {/if}
 </div>

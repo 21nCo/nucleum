@@ -108,7 +108,7 @@
 
   async function onMutationRelayFromSidePanel(data: any) {
     try {
-      logger.debug({ at: "onMutationRelayFromSidePanel", data });
+      logger.log({ at: "onMutationRelayFromSidePanel", data });
       let result;
       if (data.action === "link") {
         result = await webpage.linkClip(data.clipId, data.linkTo, {
@@ -195,7 +195,7 @@
             webpage.reset();
             return { status: "success", message: "Logged out" };
 
-          case ExtensionEvent.PAGE_STATE:
+          case ExtensionEvent.PAGE_STATE_TRIGGER:
             if (!isLoggedIn) {
               setLoginState(-3);
               return {
@@ -315,7 +315,7 @@
           clientStorage.remove(ClientStorageKey.GUEST_TOOLBAR_STATE);
         }}
       />
-    {:else if !$toolbarState?.isHidden}
+    {:else if $toolbarState?.isHidden !== true}
       {#if isLoggedIn}
         <Toolbar
           {contentType}

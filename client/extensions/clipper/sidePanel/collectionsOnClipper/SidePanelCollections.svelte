@@ -85,21 +85,44 @@
             const webContentNodeIds =
               await getWebContentNodeIds(collectionLinks);
 
+            const lastModified =
+              collectionLinks.length > 0
+                ? new Date(
+                    Math.max(
+                      ...collectionLinks.map((link: any) =>
+                        new Date(
+                          link.modifiedAt || link.createdAt || 0
+                        ).getTime()
+                      )
+                    )
+                  )
+                : undefined;
+
             return {
               id: collection.id.toString(),
               label: collection.label || "Untitled Collection",
               avatar: collection.avatar,
               type: collection.type || CollectionType.UNTYPED,
-              itemCount: webContentNodeIds.length
+              itemCount: webContentNodeIds.length,
+              lastModified
             };
           })
       );
 
-      collections = isHideEmptyCollections
+      const filteredCollections = isHideEmptyCollections
         ? collectionsWithCounts.filter(
             (collection: CollectionData) => collection.itemCount > 0
           )
         : collectionsWithCounts;
+
+      collections = filteredCollections.sort(
+        (a: CollectionData, b: CollectionData) => {
+          if (!a.lastModified && !b.lastModified) return 0;
+          if (!a.lastModified) return 1;
+          if (!b.lastModified) return -1;
+          return b.lastModified.getTime() - a.lastModified.getTime();
+        }
+      );
     } catch (err) {
       console.error("Error loading collections:", err);
       error = "Failed to load collections";
@@ -149,7 +172,6 @@
       });
 
       const nodeIds = (allLinks || []).map((link: any) => link.in.toString());
-
       if (nodeIds.length === 0) {
         collectionItems = [];
         return;
@@ -175,10 +197,8 @@
       });
 
       collectionItems = sortedNodes.map((node: any) => ({
-        id: node.id.toString(),
-        label: node.label || "Untitled",
-        url: node.url,
-        metadata: node.metadata
+        ...node,
+        id: node.id.toString()
       }));
     } catch (err) {
       console.error("Error loading collection items:", err);
@@ -219,7 +239,7 @@
   }
 </script>
 
-<div class="flex flex-col w-full h-full bg-bgs1">
+<div class="flex flex-col w-full flex-1 overflow-y-auto">
   {#await loadCollections()}
     <EmptyStatusView isLoadingState={true} />
   {:then}
@@ -285,6 +305,11 @@
         on:collectionClick={handleCollectionClick}
       />
     {/if}
+  {:catch}
+    <EmptyStatusView
+      mainText="Failed to load collections"
+      subText="Please refresh the page to try again."
+    />
   {/await}
 </div>
 

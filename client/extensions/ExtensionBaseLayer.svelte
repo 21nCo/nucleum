@@ -37,6 +37,7 @@
   // import spritePhLight from "data-text:/assets/icons/sprite-ph-light.svg";
   import { resolveIconSvgSheetText } from "./iconSvgSheetTextResolver";
   import { appStore } from "../stores/app.store";
+  import { removeDuplicatesFilter } from "../components/flux/resourceStores/resource.utils";
 
   const dispatch = createEventDispatcher();
   export let id: string;
@@ -163,6 +164,9 @@
         }
       );
       logger.log({ at: "initFlux", initResult });
+      await clientStorage.set(ClientStorageKey.EXTENSION_BOOTUP, {
+        inProgress: true
+      });
       if (initResult === 0) {
         await extensionFlux({ method: FluxMethod.CLONE_DOWN });
       } else {
@@ -171,6 +175,9 @@
         });
       }
       await loadInMemoryStores(stores);
+      await clientStorage.set(ClientStorageKey.EXTENSION_BOOTUP, {
+        inProgress: false
+      });
       relayToSidePanel({
         event: ExtensionEvent.BOOTUP
       });
@@ -252,11 +259,12 @@
   async function handleAddToRecents(event: any) {
     try {
       const { record, type, timestamp } = event.detail;
+      if (!record || !record.id) return;
       const currentRecents = await clientStorage.get(ClientStorageKey.RECENTS);
       const newRecents = [
-        record,
+        { ...record, id: record.id.toString() },
         ...(currentRecents ? JSON.parse(currentRecents) : [])
-      ];
+      ].filter(removeDuplicatesFilter);
       await clientStorage.set(
         ClientStorageKey.RECENTS,
         newRecents.slice(0, 10)
@@ -267,6 +275,10 @@
         error: e
       });
     }
+  }
+
+  function onFocus() {
+    onTabUpdate();
   }
 </script>
 
@@ -288,3 +300,4 @@
 <ExtensionThemeBase {id}>
   <slot />
 </ExtensionThemeBase>
+<svelte:window on:focus={onFocus} />

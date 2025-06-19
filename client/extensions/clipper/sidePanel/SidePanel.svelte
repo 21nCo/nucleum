@@ -28,7 +28,7 @@
     loadInMemoryResourceStore,
     loadInMemoryStores
   } from "$lib/client/components/flux/fluxExtentionMediator";
-  import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import {
     blankUrls,
     memotronUrlsList,
@@ -56,6 +56,9 @@
   import ClipperInMemoryCache from "../ClipperInMemoryCache.svelte";
   import SidePanelCollections from "./collectionsOnClipper/SidePanelCollections.svelte";
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
+  import { clientStorage } from "$lib/client/persistence/persistence.utils";
+  import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
+  import InlineSyncingFeedbackBase from "$lib/client/elements/feedback/InlineSyncingFeedbackBase.svelte";
 
   let mainPanel: "page" | "collections" = "page";
   let mode: "clips" | "notes" | "history" = "clips";
@@ -75,6 +78,8 @@
   let isMounted = false;
   let isShowHelp = false;
   let isResyncing = false;
+  let isBootupSyncInProgress = false;
+
   const tooltipOptions = {
     placement: Placement.TopCenter
   };
@@ -122,6 +127,7 @@
   }
   const messageListener = (message: any, sender: any, sendResponse: any) => {
     if (message.event === ExtensionEvent.PAGE_STATE) {
+      logger.log({ at: "onMessage - PAGE_STATE", message });
       refreshState(message.data.page);
       isToolbarHidden = message.data.toolbar.isHidden;
       sendResponse({ status: "success", message: "State refreshed" });
@@ -137,9 +143,10 @@
       collectionRefreshId = new Date().getTime();
       sendResponse({ status: "success", message: "Collection link changes" });
     } else if (message.event === ExtensionEvent.BOOTUP) {
+      logger.log({ at: "onMessage - BOOTUP", message });
       onBootup();
     } else if (message.event === ExtensionEvent.MUTATION) {
-      console.log({ at: "SidePanel - RELOAD_INMEMORY_STORE", message });
+      logger.log({ at: "SidePanel - RELOAD_INMEMORY_STORE", message });
       loadInMemoryResourceStoreDelegate(message.data?.resource);
     } else if (message.event === ExtensionEvent.TOKEN_NOT_FOUND) {
       isLoggedIn = false;
@@ -171,13 +178,6 @@
     if (tab.tab.url && blankUrls.some((x) => x.test(tab.tab.url))) {
       handleNewTabCase(tab.tab);
       return;
-    }
-    const state = await relayToContentScript({
-      event: ExtensionEvent.PAGE_STATE
-    });
-    refreshState(state.page);
-    if (state.toolbar) {
-      isToolbarHidden = state.toolbar.isHidden;
     }
     await onBootup();
   });
@@ -229,6 +229,7 @@
       isLoggedIn = false;
     }
     refreshId = new Date().getTime();
+    await refreshSyncStatus();
   }
 
   async function onNotesChange(e: CustomEvent) {
@@ -271,7 +272,25 @@
 
   async function onBootup() {
     logger.log({ at: "SidePanel - onBootup" });
+    await relayToContentScript({
+      event: ExtensionEvent.PAGE_STATE_TRIGGER
+    });
     await loadInMemoryStores(stores);
+    await refreshSyncStatus();
+  }
+
+  async function refreshSyncStatus() {
+    try {
+      const bootupStatus = await clientStorage.get(
+        ClientStorageKey.EXTENSION_BOOTUP
+      );
+      const parsed = bootupStatus
+        ? JSON.parse(bootupStatus)
+        : { inProgress: false };
+      isBootupSyncInProgress = parsed.inProgress;
+    } catch (e) {
+      logger.error({ at: "SidePanel - refreshSyncStatus", error: e });
+    }
   }
 
   function resolveEmptyStatusViewParams() {
@@ -331,33 +350,43 @@
             on:close={() => (isShowHelp = false)}
             on:resync={resync}
           />
-        {:else if isLoggedIn && !isNotAvailable}
+        {:else if isLoggedIn}
           <PanelSwitcher
             items={mainPanels}
             bind:value={mainPanel}
             style={PanelSwitcherStyle.BAR}
             isExpandToFullWidth={true}
           />
-          {#if isToolbarHidden}
-            <div
-              class="flex justify-between items-center mx-3 p-2 border border-dashed border-fgs4 rounded-md"
-              transition:fly={{ y: -10, duration: 300 }}
-            >
-              <span> Toolbar is hidden </span>
-              <Button
-                label="Show toolbar"
-                icon="ph:eye-light"
-                size={Size.sm}
-                isPreventMinWidth={true}
-                on:click={() => {
-                  relayToContentScript({
-                    event: ClipperExtensionEvent.TOGGLE_TOOLBAR_VISIBILITY
-                  });
-                }}
+          {#if isBootupSyncInProgress}
+            <div class="flex w-full justify-center items-center p-3">
+              <InlineSyncingFeedbackBase
+                isSyncing={true}
+                isFullWidthVariant={true}
               />
             </div>
           {/if}
-          {#if mainPanel === "page"}
+          {#if isToolbarHidden}
+            <div class="flex bg-bgs2 p-3 w-full">
+              <div
+                class="flex justify-between items-center w-full p-2 border border-dashed border-fgs4 rounded-md"
+                transition:fly={{ y: -10, duration: 300 }}
+              >
+                <span> Toolbar is hidden </span>
+                <Button
+                  label="Show toolbar"
+                  icon="ph:eye-light"
+                  size={Size.sm}
+                  isPreventMinWidth={true}
+                  on:click={() => {
+                    relayToContentScript({
+                      event: ClipperExtensionEvent.TOGGLE_TOOLBAR_VISIBILITY
+                    });
+                  }}
+                />
+              </div>
+            </div>
+          {/if}
+          {#if mainPanel === "page" && !isNotAvailable}
             <header
               class="flex w-full justify-between items-center min-h-16 h-16 px-3 bg-bgs2 border-b border-brs3"
             >
@@ -445,17 +474,17 @@
             </div>
           {:else if mainPanel === "collections"}
             <div
-              class="flex flex-col w-full h-full items-center justify-center"
+              class="flex flex-col w-full flex-grow items-center justify-center"
             >
               {#key collectionRefreshId}
                 <SidePanelCollections {currentUrl} />
               {/key}
             </div>
+          {:else if isNotAvailable}
+            <div class="flex w-full flex-1">
+              <EmptyStatusView {...resolveEmptyStatusViewParams()} />
+            </div>
           {/if}
-        {:else if isNotAvailable}
-          <div class="flex w-full flex-1">
-            <EmptyStatusView {...resolveEmptyStatusViewParams()} />
-          </div>
         {:else}
           <div class="flex w-full flex-1">
             <div

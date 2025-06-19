@@ -787,7 +787,7 @@ class NodeActions {
   goToResourceFromClipper = {
     value: ResourceActionType.OPEN,
     label: "Open in app",
-    icon: "ph:arrow-up-right-light",
+    icon: "ph:arrow-square-out-light",
     callback: async () => {}
   };
 

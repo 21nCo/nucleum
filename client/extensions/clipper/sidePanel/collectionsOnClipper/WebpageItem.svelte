@@ -1,5 +1,6 @@
 <script lang="ts">
   import Icon from "$lib/client/elements/Icon.svelte";
+  import { NodeType } from "$lib/client/products/memotron/node/node.type";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import type { CollectionItem } from "./types";
@@ -56,25 +57,38 @@
       <Icon icon="ph:globe" size={Size.sm} />
     {/if}
   </div>
-  <div class="flex flex-col items-start flex-1 min-w-0">
-    <div
-      class={cn(
-        "text-left font-medium text-b2 line-clamp-1 transition-colors",
-        {
-          "text-fgs2 group-hover:text-fgs1": !isActive,
-          "text-aps1": isActive,
-          "text-fgs3": !isActive && !item.url
-        }
-      )}
-    >
-      {item.label}
+  {#if item.contentType === NodeType.TWEET}
+    <div class="flex flex-col items-start w-full">
+      <span class="text-left text-b2 line-clamp-3">
+        {item.body.content ?? "No text available"}
+      </span>
+      {#if item.parent}
+        <div class="text-fgs3 text-b3 mt-1 truncate">
+          @{item.parent.split("twitterProfile_")[1]}
+        </div>
+      {/if}
     </div>
-    {#if item.url}
-      <div class="text-fgs3 text-b3 mt-1 truncate">
-        {new URL(item.url).hostname}
+  {:else}
+    <div class="flex flex-col items-start flex-1 min-w-0">
+      <div
+        class={cn(
+          "text-left font-medium text-b2 line-clamp-1 transition-colors",
+          {
+            "text-fgs2 group-hover:text-fgs1": !isActive,
+            "text-aps1": isActive,
+            "text-fgs3": !isActive && !item.url
+          }
+        )}
+      >
+        {item.label}
       </div>
-    {/if}
-  </div>
+      {#if item.url}
+        <div class="text-fgs3 text-b3 mt-1 truncate">
+          {new URL(item.url).hostname}
+        </div>
+      {/if}
+    </div>
+  {/if}
 </button>
 
 <style>

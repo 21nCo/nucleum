@@ -5,6 +5,7 @@
   import CollectionItem from "./CollectionItem.svelte";
   import type { CollectionData } from "./types";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
+  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
 
   export let collections: CollectionData[];
   export let isLoading: boolean;
@@ -45,10 +46,11 @@
       </p>
     </div> -->
   {:else}
-    <div class="p-2">
+    <div class="p-3 space-y-1">
       {#each collections as collection (collection.id)}
         <CollectionItem {collection} on:click={handleCollectionClick} />
       {/each}
+      <ScrollViewBottomSpacer />
     </div>
   {/if}
 </div>
