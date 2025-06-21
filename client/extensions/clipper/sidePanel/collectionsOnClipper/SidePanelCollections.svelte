@@ -19,6 +19,8 @@
   import { Size } from "$lib/client/types/size.enum";
   import NewCollectionWizard from "./NewCollectionWizard.svelte";
   import { collectionStore } from "$lib/client/components/collection/collection.store";
+  import { logger } from "$lib/client/components/debug/logger.client";
+  import ErrorStatusPane from "$lib/client/elements/feedback/ErrorStatusPane.svelte";
 
   export let currentUrl: string;
 
@@ -27,7 +29,6 @@
   let collectionItems: CollectionItem[] = [];
   let isLoading = true;
   let isLoadingItems = false;
-  let error: string | undefined = undefined;
   let isHideEmptyCollections = true;
   let isShowNewCollectionWizard = false;
   let newCollectionLabel: string | undefined = undefined;
@@ -55,8 +56,6 @@
   async function loadCollections() {
     try {
       isLoading = true;
-      error = undefined;
-
       const allCollections = await extensionFlux({
         method: FluxMethod.SELECT_MANY,
         args: {
@@ -76,6 +75,9 @@
       const collectionsWithCounts = await Promise.all(
         (allCollections || [])
           .filter(activeResourceFilter)
+          .filter(
+            (collection: ICollection) => collection.resource === Resource.node
+          )
           .map(async (collection: ICollection) => {
             const collectionLinks = (allLinks || []).filter(
               (link: any) =>
@@ -124,8 +126,11 @@
         }
       );
     } catch (err) {
-      console.error("Error loading collections:", err);
-      error = "Failed to load collections";
+      logger.error({
+        at: "SidePanelCollections.loadCollections",
+        err
+      });
+      throw err;
     } finally {
       isLoading = false;
     }
@@ -300,24 +305,13 @@
       {/if}
       <CollectionsList
         {collections}
-        {isLoading}
-        {error}
         on:collectionClick={handleCollectionClick}
       />
     {/if}
   {:catch}
-    <EmptyStatusView
-      mainText="Failed to load collections"
-      subText="Please refresh the page to try again."
+    <ErrorStatusPane
+      error="Failed to load collections"
+      subText="Please reload the page to try again."
     />
   {/await}
 </div>
-
-<style>
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-</style>

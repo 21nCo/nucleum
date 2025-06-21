@@ -51,7 +51,7 @@
     {:else if resourceType === Resource.goal}
       <GoalSearchResultItem {item} />
     {:else}
-      <div class="flex text-left">
+      <div class="flex text-left line-clamp-1 truncate">
         {isValidString(item.label) ? item.label : "Untitled"}
       </div>
     {/if}

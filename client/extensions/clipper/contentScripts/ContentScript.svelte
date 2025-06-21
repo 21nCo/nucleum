@@ -3,7 +3,8 @@
   import {
     extractTweetFromTweeetPage,
     extractTwitterProfile,
-    resolveContentTypeForUrl
+    resolveContentTypeForUrl,
+    resolveContentTypeString
   } from "$lib/client/extensions/clipper/clipper.utils";
   import { ExtensionEvent } from "$lib/client/types/extension.type";
   import FeedbackPane from "$lib/client/extensions/clipper/feedbackPane/FeedbackPane.svelte";
@@ -14,7 +15,6 @@
   import ExtensionBaseLayer from "$lib/client/extensions/ExtensionBaseLayer.svelte";
   import ScreenShot from "./ScreenShot.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
-  import { enumToString } from "$lib/shared/utils/text.utils";
   import { NodeType } from "$lib/client/products/memotron/node/node.type";
   import { AlertType } from "$lib/client/types/notification.type";
   import SyncPane from "../syncPane/SyncPane.svelte";
@@ -49,6 +49,7 @@
     return regex.test(window.location.href);
   });
   $: contentType = resolveContentTypeForUrl($webpage.url);
+  $: contentTypeStr = resolveContentTypeString(contentType);
   function onActivateColor(e: CustomEvent<IHighlighter | number>) {
     textClipperRef.onActivateColor(e);
   }
@@ -71,8 +72,7 @@
         $toolbarState?.isHidden
       )
         return;
-      const contentTypeStr = enumToString(contentType);
-      feedbackPane.onPageSaveStart(`Saving ${contentTypeStr}...`);
+      feedbackPane.onPageSaveStart(`Saving ${contentTypeStr.toLowerCase()}...`);
       if ($webpage.id) {
         feedbackPane.setErrorFeedback({
           message: "Page already saved.",
@@ -123,7 +123,9 @@
           isFromSidePanel: true
         });
       } else if (data.action === "webpageNotes") {
-        result = await webpage.persistPageNotes(data.notes);
+        result = await webpage.persistPageNotes(data.notes, {
+          isFromSidePanel: true
+        });
       } else if (data.action === "delete") {
         result = await webpage.removeClip(data.clipId, {
           isFromSidePanel: true
@@ -326,7 +328,7 @@
           on:save={onSaveClick}
           on:saved={() => {
             $feedbackPane.feedback = {
-              message: "Page saved!",
+              message: `${contentTypeStr} already saved!`,
               type: AlertType.SUCCESS
             };
             feedbackPane.toggle({ isUserInitiated: true });
@@ -357,7 +359,10 @@
           }}
         />
       {:else if $feedbackPane.isShown}
-        <FeedbackPane bind:this={feedbackPaneRef} />
+        <FeedbackPane
+          bind:this={feedbackPaneRef}
+          pageContentType={contentType}
+        />
       {:else if $syncStore.isShowSyncPane}
         <SyncPane />
       {/if}

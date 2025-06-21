@@ -392,11 +392,34 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       if (isFromTweetPage) n.id = tweet.id;
       return n;
     });
-    feedbackPane.focus(tweet, {
-      message: "Tweet saved!",
-      type: AlertType.SUCCESS
-    });
+    if (isFromTweetPage) { 
+      relayToSidePanel({
+        event: ExtensionEvent.PAGE_STATE,
+        data: {
+          page: this.get(),
+          toolbar: toolbarState.get()
+        }
+      });
+    } else {
+      feedbackPane.focus(tweet, {
+        message: "Tweet saved!",
+        type: AlertType.SUCCESS
+      });
+    }
     return tweetNode;
+  }
+
+  focus(url: string, message: string | { message: string; type: AlertType }) {
+    logger.log({ at: "focus", url, message });
+    const webpage = this.get();
+    if (webpage.url === url) {
+      feedbackPane.toggle({ isUserInitiated: true });
+    } else {
+      const clip = webpage.clips?.find((c) => c.url === url);
+      if (clip) {
+        feedbackPane.focus(clip, message);
+      }
+    }
   }
 
   /**
@@ -728,7 +751,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     }
   }
 
-  async persistPageNotes(notes: string) {
+  async persistPageNotes(notes: string, params?: { isFromSidePanel?: boolean }) {
     const webpage = this.get();
     if (!webpage.id) return;
     const response = await this._persistNotes(webpage.id, notes);
@@ -737,6 +760,15 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       n.notes = notes;
       return n;
     });
+    if (!params?.isFromSidePanel) {
+      relayToSidePanel({
+        event: ExtensionEvent.PAGE_STATE,
+        data: {
+          page: this.get(),
+          toolbar: toolbarState.get()
+        }
+      }); 
+    }
     return response;
   }
 

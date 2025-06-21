@@ -59,7 +59,11 @@
   import { clientStorage } from "$lib/client/persistence/persistence.utils";
   import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
   import InlineSyncingFeedbackBase from "$lib/client/elements/feedback/InlineSyncingFeedbackBase.svelte";
-
+  import { SidePanelPageType } from "./sidePanel.type";
+  import {
+    resolveContentTypeForUrl,
+    resolveContentTypeString
+  } from "../clipper.utils";
   let mainPanel: "page" | "collections" = "page";
   let mode: "clips" | "notes" | "history" = "clips";
   let title = "";
@@ -71,14 +75,16 @@
   let isLoggedIn = false;
   let refreshId: number = new Date().getTime();
   let collectionRefreshId = new Date().getTime();
-  let isNotAvailable = false;
-  let isMemotronPage = false;
-  let isNewTabPage = false;
+  let isBlankPage = false;
+  let pageType: SidePanelPageType = SidePanelPageType.DEFAULT;
   let isToolbarHidden = false;
   let isMounted = false;
   let isShowHelp = false;
   let isResyncing = false;
   let isBootupSyncInProgress = false;
+
+  $: contentType = resolveContentTypeForUrl(currentUrl);
+  $: contentTypeStr = resolveContentTypeString(contentType);
 
   const tooltipOptions = {
     placement: Placement.TopCenter
@@ -129,6 +135,7 @@
     if (message.event === ExtensionEvent.PAGE_STATE) {
       logger.log({ at: "onMessage - PAGE_STATE", message });
       refreshState(message.data.page);
+      refreshSyncStatus();
       isToolbarHidden = message.data.toolbar.isHidden;
       sendResponse({ status: "success", message: "State refreshed" });
     } else if (message.event === ClipperExtensionEvent.CLIPS_CHANGED) {
@@ -156,6 +163,8 @@
       if (tab.url && blankUrls.some((x) => x.test(tab.url))) {
         handleNewTabCase(tab);
         return;
+      } else {
+        isBlankPage = false;
       }
     }
     return true;
@@ -195,12 +204,13 @@
   }
 
   function handleNewTabCase(tab: chrome.tabs.Tab) {
-    isNewTabPage = true;
+    isBlankPage = true;
     refreshState({
       url: tab.url,
       title: tab.title,
       notes: ""
     });
+    refreshSyncStatus();
   }
 
   //TODO - maintain a store with the data.
@@ -215,10 +225,16 @@
     else notes = "";
     if (data.url) {
       currentUrl = data.url;
-      isNotAvailable = sidePanelUnavailableUrlsList.some((x) =>
+      const isNotAvailable = sidePanelUnavailableUrlsList.some((x) =>
         x.test(data.url)
       );
-      isMemotronPage = memotronUrlsList.some((x) => x.test(data.url));
+      if (memotronUrlsList.some((x) => x.test(data.url))) {
+        pageType = SidePanelPageType.MEMOTRON;
+      } else if (isNotAvailable) {
+        pageType = SidePanelPageType.UNSUPPORTED;
+      } else {
+        pageType = SidePanelPageType.DEFAULT;
+      }
     }
     const token = await resolveToken();
     logger.log({ at: "SidePanel - refreshState", token });
@@ -229,7 +245,6 @@
       isLoggedIn = false;
     }
     refreshId = new Date().getTime();
-    await refreshSyncStatus();
   }
 
   async function onNotesChange(e: CustomEvent) {
@@ -287,19 +302,23 @@
       const parsed = bootupStatus
         ? JSON.parse(bootupStatus)
         : { inProgress: false };
+      console.log({ bootupStatus, parsed });
       isBootupSyncInProgress = parsed.inProgress;
     } catch (e) {
       logger.error({ at: "SidePanel - refreshSyncStatus", error: e });
     }
   }
 
-  function resolveEmptyStatusViewParams() {
-    if (isNewTabPage) {
+  function resolveEmptyStatusViewParams(
+    pageTypeValue: SidePanelPageType,
+    isBlankPageValue: boolean
+  ) {
+    if (isBlankPageValue) {
       return {
         mainText: "New taabbbb!",
         subText: "Start browsing to save clips."
       };
-    } else if (isMemotronPage) {
+    } else if (pageTypeValue === SidePanelPageType.MEMOTRON) {
       return {
         mainText: "Hello from the other side of Memotron👋.",
         subText: ""
@@ -389,31 +408,34 @@
               </div>
             </div>
           {/if}
-          {#if mainPanel === "page" && !isNotAvailable}
+          {#if mainPanel === "page"}
             <header
-              class="flex w-full justify-between items-center min-h-16 h-16 px-3 bg-bgs2 border-b border-brs3"
+              class="flex w-full justify-between items-center min-h-16 h-16 px-3 bg-bgs2 border-b border-brs3 gap-1"
             >
               <span class=" max-w-8/12 truncate">{title}</span>
-              <span>
-                {#if isPageSaved}
-                  <div
-                    class="min-w-fit bg-bgs2 border rounded-md px-3 py-1.5 border-brs3 flex items-center gap-2"
-                  >
-                    <Icon icon="ph:check-light" size={Size.sm} />
-                    <span>Saved</span>
-                  </div>
-                {:else}
-                  <button
-                    class="min-w-fit bg-aps1 text-bgs1 px-3 py-1.5 rounded-md"
-                    on:click={onSavePageClick}
-                  >
-                    Save page</button
-                  >
-                {/if}
-              </span>
+              {#if !isBlankPage}
+                <span>
+                  {#if isPageSaved}
+                    <div
+                      class="min-w-fit bg-bgs2 border rounded-md px-3 py-1.5 border-brs3 flex items-center gap-2"
+                    >
+                      <Icon icon="ph:check-light" size={Size.sm} />
+                      <span>Saved</span>
+                    </div>
+                  {:else}
+                    <button
+                      class="min-w-fit bg-aps1 text-bgs1 px-3 py-1.5 rounded-md whitespace-nowrap"
+                      on:click={onSavePageClick}
+                    >
+                      Save {contentTypeStr.toLowerCase()}</button
+                    >
+                  {/if}
+                </span>
+              {/if}
             </header>
-            <div class="flex w-full justify-center py-4">
-              <!-- <PanelSwitcher
+            {#if !isBlankPage}
+              <div class="flex w-full justify-center py-4">
+                <!-- <PanelSwitcher
                 items={panels}
                 bind:value={mode}
                 style={PanelSwitcherStyle.TRAIN}
@@ -425,36 +447,43 @@
 
                 </div>
                 </PanelSwitcher> -->
-              <div class="flex w-full px-3 gap-2">
-                <div>
-                  <OptionSelector
-                    options={panels}
-                    bind:selected={mode}
-                    style={OptionSelectorStyle.ICON}
-                    size={Size.sm}
-                    isExpandOnActiveForIcon={true}
-                  />
-                </div>
-                <!-- TODO - later when all options are present - move this feedback to the bottom of the page and remove div wrapper around option selector to make it full width -->
-                <div
-                  class="h-full flex items-center whitespace-nowrap text-b3 text-fgs2"
-                >
-                  <InlineFeedbackText bind:feedback />
+                <div class="flex w-full px-3 gap-2">
+                  <div>
+                    <OptionSelector
+                      options={panels}
+                      bind:selected={mode}
+                      style={OptionSelectorStyle.ICON}
+                      size={Size.sm}
+                      isExpandOnActiveForIcon={true}
+                    />
+                  </div>
+                  <!-- TODO - later when all options are present - move this feedback to the bottom of the page and remove div wrapper around option selector to make it full width -->
+                  <div
+                    class="h-full flex items-center whitespace-nowrap text-b3 text-fgs2"
+                  >
+                    <InlineFeedbackText bind:feedback />
+                  </div>
                 </div>
               </div>
-            </div>
+            {/if}
             <div class="flex w-full flex-1 overflow-y-auto">
-              {#if mode === "clips"}
+              {#if mode === "clips" && pageType !== SidePanelPageType.UNSUPPORTED}
                 <div class="flex flex-col gap-2 p-4 h-full w-full">
                   {#key clips}
-                    <ClipsPane {clips} {isMemotronPage} />
+                    <ClipsPane
+                      {clips}
+                      isMemotronPage={pageType === SidePanelPageType.MEMOTRON}
+                    />
                   {/key}
                 </div>
               {:else if mode === "notes"}
                 <div
-                  class={cn("flex w-full justify-center rounded-md mx-2 p-2", {
-                    "bg-bgs2": isPageSaved
-                  })}
+                  class={cn(
+                    "flex w-full justify-center rounded-md mx-2 mb-2 p-2 overflow-y-auto",
+                    {
+                      "bg-bgs2": isPageSaved
+                    }
+                  )}
                 >
                   {#if isPageSaved}
                     {#key refreshId}
@@ -471,6 +500,12 @@
                     />
                   {/if}
                 </div>
+              {:else if pageType === SidePanelPageType.UNSUPPORTED}
+                <div class="flex w-full flex-1">
+                  <EmptyStatusView
+                    {...resolveEmptyStatusViewParams(pageType, isBlankPage)}
+                  />
+                </div>
               {:else}
                 <!-- TODO -->
               {/if}
@@ -482,10 +517,6 @@
               {#key collectionRefreshId}
                 <SidePanelCollections {currentUrl} />
               {/key}
-            </div>
-          {:else if isNotAvailable}
-            <div class="flex w-full flex-1">
-              <EmptyStatusView {...resolveEmptyStatusViewParams()} />
             </div>
           {/if}
         {:else}
@@ -504,7 +535,7 @@
           </div>
         {/if}
         <footer
-          class="h-14 border-t border-t-brs3 flex justify-between items-center px-3"
+          class="h-14 min-h-14 border-t border-t-brs3 flex justify-between items-center px-3"
         >
           <span class="flex items-center gap-2">
             <!-- <Button
@@ -575,3 +606,8 @@
     </div>
   {/if}
 </ExtensionBaseLayer>
+<svelte:window
+  on:focus={() => {
+    refreshSyncStatus();
+  }}
+/>

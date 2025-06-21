@@ -37,7 +37,10 @@
   // import spritePhLight from "data-text:/assets/icons/sprite-ph-light.svg";
   import { resolveIconSvgSheetText } from "./iconSvgSheetTextResolver";
   import { appStore } from "../stores/app.store";
-  import { removeDuplicatesFilter } from "../components/flux/resourceStores/resource.utils";
+  import {
+    isRecordId,
+    removeDuplicatesFilter
+  } from "../components/flux/resourceStores/resource.utils";
 
   const dispatch = createEventDispatcher();
   export let id: string;
@@ -264,7 +267,9 @@
       const newRecents = [
         { ...record, id: record.id.toString() },
         ...(currentRecents ? JSON.parse(currentRecents) : [])
-      ].filter(removeDuplicatesFilter);
+      ]
+        .filter(removeDuplicatesFilter)
+        .filter((x: any) => isRecordId(x.id));
       await clientStorage.set(
         ClientStorageKey.RECENTS,
         newRecents.slice(0, 10)

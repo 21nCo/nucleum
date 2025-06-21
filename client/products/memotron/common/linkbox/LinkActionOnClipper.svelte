@@ -47,7 +47,7 @@
   label="Links"
   icon="ph:link-light"
   isActive={isLinkboxOpened}
-  count={links.length}
+  count={links?.length ?? 0}
   isShowExpandFeedbackOnActive={true}
   isRemovable={false}
   on:click={() => (isLinkboxOpened = !isLinkboxOpened)}

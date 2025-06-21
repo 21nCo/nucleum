@@ -497,6 +497,7 @@ export class SearchStore {
 
   async searchForLinkingOnExtension(query: string, resource?: Resource) {
     let nodes = [];
+    const isValidSearchQuery = isValidString(query)
     if (resource === Resource.node || !resource) {
       nodes = await extensionFlux({
         method: FluxMethod.SELECT_MANY,
@@ -506,9 +507,9 @@ export class SearchStore {
             filters: {
               contentType: [...rootNodeTypeList, ...headingNodeTypes]
             },
-            search: isValidString(query)
+            search: isValidSearchQuery
               ? {
-                  properties: ["body", "label"],
+                  properties: ["body", "label","text"],
                   query
                 }
               : undefined,
@@ -524,7 +525,7 @@ export class SearchStore {
         args: {
           resource: Resource.collection,
           params: {
-            search: isValidString(query)
+            search: isValidSearchQuery
               ? {
                   properties: ["label"],
                   query
@@ -536,7 +537,7 @@ export class SearchStore {
       });
     }
     let recentItemsArray = [];
-    if (!isValidString(query)) {
+    if (!isValidSearchQuery) {
       try {
         const recentItems = await clientStorage.get(ClientStorageKey.RECENTS);
         recentItemsArray = recentItems ? JSON.parse(recentItems) : [];

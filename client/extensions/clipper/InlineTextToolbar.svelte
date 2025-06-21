@@ -19,6 +19,7 @@
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { Orientation } from "$lib/client/types/direction.enum";
+  import { cn } from "$lib/client/utils/ui.utils";
 
   export let id: string | null = null;
   export let selectedHighlighterId: string | null = null;
@@ -126,7 +127,12 @@
 </script>
 
 <div
-  class="shadow-md border border-brs2 bg-bgs1 rounded-md flex flex-col justify-center items-center px-4 py-3 gap-3 max-w-fit w-[26rem]"
+  class={cn(
+    "shadow-md border border-brs2 bg-bgs1 rounded-md flex flex-col justify-center items-center px-4 py-3 gap-3 max-w-fit w-[26rem]",
+    {
+      "max-h-[20rem]": isNotesOpened
+    }
+  )}
 >
   <div class="flex justify-center items-center gap-3">
     <!-- TODO test colors change from pdf annotator changes -->
@@ -185,11 +191,13 @@
   {/if}
   {#if isNotesOpened}
     <!--TODO: Fix on:input event not accounting the last character -->
-    <InlineMarkdownTextInput
-      placeholder="Add notes"
-      bind:content={notes}
-      on:change={debouncedNotesChange}
-    />
+    <div class="w-full overflow-y-auto">
+      <InlineMarkdownTextInput
+        placeholder="Add notes"
+        bind:content={notes}
+        on:change={debouncedNotesChange}
+      />
+    </div>
   {/if}
   {#if feedback}
     <InlineFeedbackText bind:feedback isRenderEmptyHeight={true} />

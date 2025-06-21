@@ -16,7 +16,7 @@
       {subText ?? "Please try again later."}
     </div>
   </div>
-  <div class="text-b2 text-fgs3 mt-auto pb-8">
+  <div class="text-b3 text-fgs3 mt-auto pb-8 px-2 text-center">
     Please contact us at <a
       class="text-aps1 font-medium"
       href="mailto:hello@21n.org">hello@21n.org</a

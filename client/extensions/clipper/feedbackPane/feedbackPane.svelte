@@ -24,6 +24,8 @@
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { ResourceError } from "$lib/client/components/error/errors";
 
+  export let pageContentType: NodeType | undefined = undefined;
+
   let notes: string =
     ($feedbackPane.focusedClip
       ? $feedbackPane.focusedClip.notes
@@ -45,7 +47,7 @@
   }
 
   $: contentTypeStr = resolveContentTypeString(
-    $feedbackPane.focusedClip?.contentType
+    $feedbackPane.focusedClip?.contentType ?? pageContentType ?? null
   );
 
   $: linkItems = resolveLinkItems($webpage.links, $feedbackPane.focusedClip);
@@ -259,7 +261,7 @@
         <!-- <span class="text-fgs3 text-b2"> Link this page </span> -->
         <FormControlLabel
           props={{
-            label: `Link this ${contentTypeStr}`
+            label: `Link this ${contentTypeStr.toLowerCase()}`
             // tooltip: {
             //   body: `Link this ${contentTypeStr} to a node or add it to a collection by searching and clicking`,
             //   isUseAbsolutePositioning: true,
@@ -300,7 +302,9 @@
       />
     </div>
     {#if !isPropsExpanded}
-      <div class="flex w-full justify-center bg-bgs2 rounded-md px-2 py-1">
+      <div
+        class="flex w-full justify-center bg-bgs2 rounded-md px-2 py-1 overflow-y-auto"
+      >
         <!-- Fix placeholder color issue -->
         <InlineMarkdownTextInput
           placeholder="Add notes"

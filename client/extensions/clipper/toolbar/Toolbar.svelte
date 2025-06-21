@@ -13,7 +13,6 @@
     saveOnlyPages,
     screenShotOnlyPages
   } from "$lib/client/products/memotron/common/urlMap";
-  import { enumToString } from "$lib/shared/utils/text.utils";
   import { NodeType } from "$lib/client/products/memotron/node/node.type";
   import { highlightStore } from "$lib/client/products/memotron/common/highlighters/highlight.store";
   import { ExtensionEvent } from "$lib/client/types/extension.type";
@@ -21,6 +20,8 @@
   import { fly, scale } from "svelte/transition";
   import { tooltip } from "$lib/client/actions/popover.action";
   import { hoverable } from "$lib/client/actions/hover.action";
+  import { resolveContentTypeString } from "../clipper.utils";
+
   const dispatch = createEventDispatcher();
   export let activeHighlighter: string | null = null;
   export let isSnipActive: boolean = false;
@@ -30,6 +31,7 @@
   let isHovering = false;
   let isSidePanelAvailable = true;
   let isAutoHighlighterExpanded = false;
+  $: contentTypeStr = resolveContentTypeString(contentType);
   $: isScreenShotOnly = screenShotOnlyPages.some((regex) =>
     regex.test($webpage.url)
   );
@@ -147,12 +149,12 @@
           dispatch("save");
         }}
         use:tooltip={{
-          text: `**Save ${enumToString(contentType)}** (Cmd/Ctrl + J)`,
+          text: `**Save ${contentTypeStr.toLowerCase()}** (Cmd/Ctrl + J)`,
           direction: Placement.Left
         }}
         class="p-1 hover:bg-bgs2 rounded-md flex justify-center items-center"
       >
-        <Icon icon="ph:plus-circle-light" class="text-fgs2" />
+        <Icon icon="mynaui:plus-hexagon" class="text-fgs2" />
       </button>
     {/if}
   {:else if $syncStore.id}

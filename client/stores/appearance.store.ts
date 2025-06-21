@@ -23,7 +23,7 @@ const defaultDarkColorSchemeId = import.meta.env?.VITE_IS_LANDING
   : "colorscheme:clean_tidyblue_dark";
 
 export const fallBackTypefaceString =
-  "Sen, Space Grotesk, Hanken Grotesk, Hanken Grotesk Variable, Nunito, Teachers, Montserrat, Proxima Nova,  Poppins, Noto Sans";
+  "Sen, Sen Variable, Space Grotesk, Hanken Grotesk, Hanken Grotesk Variable, Nunito, Teachers, Montserrat, Proxima Nova,  Poppins, Noto Sans";
 
 const seedAppearance: AppearanceStore = {
   id: Resource.appearance,

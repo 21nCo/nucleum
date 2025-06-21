@@ -11,6 +11,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import "@fontsource-variable/space-grotesk";
   import "@fontsource-variable/hanken-grotesk";
+  import "@fontsource-variable/sen";
   import "@fontsource/noto-color-emoji";
   // Do not remove this import as it is required for the global css propagation in case of custom colors are absent - ex: PanelSwitcher
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
@@ -159,6 +160,7 @@
 
   #nthemeclipper {
     font-family:
+      SenVariable,
       Sen,
       Space Grotesk,
       Sora,

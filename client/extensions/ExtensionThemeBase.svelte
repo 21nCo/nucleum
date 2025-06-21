@@ -2,6 +2,10 @@
   import { appearance } from "$lib/client/stores/appearance.store";
   import ThemeLayer from "$lib/client/layout/layers/themeLayer/ThemeLayer.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
+  import fontUrl from "data-url:~/assets/fonts/SenVariable.ttf";
+
+  const fontFace = new FontFace("SenVariable", `url(${fontUrl})`);
+  document.fonts.add(fontFace);
   export let id: string;
 </script>
 

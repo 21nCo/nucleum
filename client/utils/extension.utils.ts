@@ -79,14 +79,31 @@ export async function relayToBackgroundScript(message: {
       message,
       chromeRuntimeId: chrome.runtime.id
     });
-    const response = await sendToBackground({
+    
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => {
+        reject(new Error("Background script communication timeout after 5 seconds"));
+      }, 5000);
+    });
+    
+    const backgroundPromise = sendToBackground({
       name: message.event,
       body: message.data,
       extensionId: chrome.runtime.id
     });
+    
+    const response = await Promise.race([backgroundPromise, timeoutPromise]);
+    
+    logger.log({
+      at: "relayToBackgroundScript - response",
+      response
+    });
     return response;
   } catch (error) {
-    console.log("Error sending message to background:", error);
+    logger.error({
+      at: "relayToBackgroundScript - error",
+      error
+    });
     throw error;
   }
 }
