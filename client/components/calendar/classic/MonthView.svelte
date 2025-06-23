@@ -7,6 +7,7 @@
 
   export let selectedDate: Date;
   export let indicatorData: ICalendarIndicatorData[] = [];
+  export let indicatorRefreshId: number = 0;
 
   const dispatch = createEventDispatcher();
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -113,14 +114,16 @@
           {/if}
         </span>
         {#if indicatorData.length > 0}
-          <div class="pl-1 pt-1">
-            <CalendarTileIndicator
-              date={day}
-              isActive={isSelected}
-              data={indicatorData}
-              view="month"
-            />
-          </div>
+          {#key indicatorRefreshId}
+            <div class="pl-1 pt-1">
+              <CalendarTileIndicator
+                date={day}
+                isActive={isSelected}
+                data={indicatorData}
+                view="month"
+              />
+            </div>
+          {/key}
         {/if}
       </button>
     {/each}

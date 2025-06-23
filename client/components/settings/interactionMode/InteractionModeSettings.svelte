@@ -6,7 +6,10 @@
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
   import view from "$lib/client/stores/view.store";
   import { Action } from "$lib/client/types/action.enum";
   import { Orientation } from "$lib/client/types/direction.enum";
@@ -18,7 +21,7 @@
   let selectedMode: InteractionMode = uiState.getState(
     Action.MODE_OF_INTERACTION,
     {
-      isProductScoped: true
+      scope: UIStateScope.PRODUCT
     }
   );
 
@@ -26,17 +29,16 @@
   if (selectedMode === InteractionMode.KEYBOARD_CENTRIC) {
     selectedMode = InteractionMode.DEFAULT;
     uiState.setState(Action.MODE_OF_INTERACTION, selectedMode, {
-      isProductScoped: true
+      scope: UIStateScope.PRODUCT
     });
   }
-  let isShortcutHintsEnabled = uiState.getState(UIState.HIDE_SHORTCUT_HINTS, {
-    isDeviceScoped: true,
-    isProductScoped: true
+  let isShortcutHintsEnabled = uiState.getState(UIState.hideShortcutHints, {
+    scope: UIStateScope.DEVICE
   });
   let isCompletelyHideLeftNavBar = uiState.getState(
-    UIState.COMPLETELY_HIDE_LEFT_NAV_BAR,
+    UIState.completelyHideLeftNavBar,
     {
-      isProductScoped: true
+      scope: UIStateScope.PRODUCT
     }
   );
   function resolveInfo(mode: InteractionMode) {
@@ -53,7 +55,7 @@
   }
   function onInteractionModeSelect() {
     uiState.setState(Action.MODE_OF_INTERACTION, selectedMode, {
-      isProductScoped: true
+      scope: UIStateScope.PRODUCT
     });
   }
 </script>
@@ -103,17 +105,16 @@
       isExpanded={true}
       bind:checked={isShortcutHintsEnabled}
       on:change={(e) => {
-        uiState.setState(UIState.HIDE_SHORTCUT_HINTS, e.detail, {
-          isDeviceScoped: true,
-          isProductScoped: true
+        uiState.setState(UIState.hideShortcutHints, e.detail, {
+          scope: UIStateScope.DEVICE
         });
       }}
     />
     <SwitchInput
       bind:checked={isCompletelyHideLeftNavBar}
       on:change={(e) => {
-        uiState.setState(UIState.COMPLETELY_HIDE_LEFT_NAV_BAR, e.detail, {
-          isProductScoped: true
+        uiState.setState(UIState.completelyHideLeftNavBar, e.detail, {
+          scope: UIStateScope.PRODUCT
         });
       }}
       label={{

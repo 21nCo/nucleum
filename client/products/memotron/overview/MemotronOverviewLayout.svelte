@@ -8,7 +8,10 @@
     uiState,
     uiStateDerived
   } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
   import { MemotronOverviewPanel } from "./overview.type";
 
   export let isConstrainedWidth = false;
@@ -20,7 +23,7 @@
 
   function resolveSavedState() {
     const savedPanel = uiState.getState(UIState.memotronOverviewPanel, {
-      isDeviceScoped: true
+      scope: UIStateScope.DEVICE
     });
     if (
       savedPanel &&
@@ -37,7 +40,7 @@
     )
       return;
     uiState.setState(UIState.memotronOverviewPanel, event.detail, {
-      isDeviceScoped: true
+      scope: UIStateScope.DEVICE
     });
   }
 </script>

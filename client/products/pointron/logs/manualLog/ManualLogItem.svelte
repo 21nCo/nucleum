@@ -24,7 +24,10 @@
   import { SearchStore } from "$lib/client/components/record/record.store";
   import GoalSearchResultItem from "$lib/client/components/goals/GoalSearchResultItem.svelte";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
   import {
     BarStyle,
@@ -59,8 +62,7 @@
   let defaultTime = Date.now();
   let selectedMethod: "duration" | "startEnd" =
     uiState.getState(UIState.manualLogDurationMethod, {
-      isProductScoped: true,
-      isDeviceScoped: true
+      scope: UIStateScope.DEVICE
     }) ?? "duration";
   const searchStore = new SearchStore(Resource.goal);
   let recentGoals: IGoal[] = [];
@@ -99,8 +101,7 @@
 
   function resolveQuickAddSelection() {
     const state = uiState.getState(UIState.manualLogQuickDuration, {
-      isProductScoped: true,
-      isDeviceScoped: true
+      scope: UIStateScope.DEVICE
     });
     return state ?? $pointronPreferences?.manualEntryQuickDurations?.[0] ?? 10;
   }
@@ -384,8 +385,7 @@
         bind:value={selectedMethod}
         on:switch={() => {
           uiState.setState(UIState.manualLogDurationMethod, selectedMethod, {
-            isProductScoped: true,
-            isDeviceScoped: true
+            scope: UIStateScope.DEVICE
           });
         }}
       />

@@ -6,7 +6,10 @@
   import LogsPane from "$lib/client/products/pointron/logs/LogsPane.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
   import view from "$lib/client/stores/view.store";
   import { Product } from "$lib/client/types/product.type";
   import { Size } from "$lib/client/types/size.enum";
@@ -21,8 +24,7 @@
 
   function resolveTabSelection() {
     const tabState = uiState.getState(UIState.calendarHistoryTab, {
-      isDeviceScoped: true,
-      isProductScoped: true
+      scope: UIStateScope.DEVICE
     });
     return tabState ?? CalendarHistoryTab.ALL;
   }
@@ -30,8 +32,7 @@
   function onTabSelection(e: CustomEvent) {
     if (!e.detail) return;
     uiState.setState(UIState.calendarHistoryTab, e.detail, {
-      isDeviceScoped: true,
-      isProductScoped: true
+      scope: UIStateScope.DEVICE
     });
   }
 

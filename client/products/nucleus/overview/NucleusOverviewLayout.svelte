@@ -8,7 +8,10 @@
     uiState,
     uiStateDerived
   } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
   import { OverviewPanel } from "./overview.type";
 
   export let isConstrainedWidth = false;
@@ -19,7 +22,7 @@
 
   function resolveSavedState() {
     const savedPanel = uiState.getState(UIState.nucleusOverviewPanel, {
-      isDeviceScoped: true
+      scope: UIStateScope.DEVICE
     });
     if (savedPanel && Object.values(OverviewPanel).includes(savedPanel)) {
       return savedPanel;
@@ -30,14 +33,14 @@
     if (!event.detail || !Object.values(OverviewPanel).includes(event.detail))
       return;
     uiState.setState(UIState.nucleusOverviewPanel, event.detail, {
-      isDeviceScoped: true
+      scope: UIStateScope.DEVICE
     });
   }
 </script>
 
 <div class="relative w-full h-full flex flex-col justify-center items-center">
   <div
-    class="flex justify-between items-end gap-4 rounded-md w-full"
+    class="flex justify-between items-end gap-4 rounded-md w-full bg-bgs2"
     use:resizeListener={(e) => {
       containerWidth = e.width;
     }}
@@ -53,21 +56,21 @@
           label: "Memory",
           value: OverviewPanel.MEMORY,
           icon: "ph:hexagon-light"
-        },
-        {
-          label: "Self",
-          value: OverviewPanel.SELF,
-          icon: "ph:heart-light"
-        },
-        {
-          label: "Finance",
-          value: OverviewPanel.FINANCE,
-          icon: "ph:bank-light"
         }
+        // {
+        //   label: "Self",
+        //   value: OverviewPanel.SELF,
+        //   icon: "ph:heart-light"
+        // },
+        // {
+        //   label: "Finance",
+        //   value: OverviewPanel.FINANCE,
+        //   icon: "ph:bank-light"
+        // }
       ]}
       style={PanelSwitcherStyle.BAR}
       title="Overview"
-      parentBgIndex={1}
+      parentBgIndex={2}
       isExpandToFullWidth={true}
       isShowNumberShortcut={$uiStateDerived.isShowHotKeyHints}
       size={Size.sm}

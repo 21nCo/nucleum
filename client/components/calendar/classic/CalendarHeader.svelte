@@ -9,7 +9,10 @@
   import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
   import { TimeScaleUnit } from "$lib/client/types/time.type";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import { OptionSelectorStyle } from "$lib/client/types/select.type";
   import view from "$lib/client/stores/view.store";
@@ -24,6 +27,8 @@
   export let selectedView: TimeScaleUnit = TimeScaleUnit.MONTH;
   export let visibleWeekDates: Date[] | undefined = undefined;
   export let isRefreshing: boolean = false;
+  export let parentBgIndex: number = 2;
+  let dev_isEnableSettings: boolean = false;
 
   const switchOptions = [
     {
@@ -142,30 +147,53 @@
   function onScaleSelection(e: CustomEvent) {
     if (!e.detail) return;
     selectedView = e.detail;
-    uiState.setState(UIState.calendarScale, selectedView, {
-      isDeviceScoped: true
+    uiState.setState(UIState.classicCalendarScale, selectedView, {
+      scope: UIStateScope.DAP
     });
+    dispatch("scaleSelection", selectedView);
   }
 </script>
 
-<header class="flex items-center justify-between w-full sticky top-0 z-10">
-  <div class="flex items-center gap-4">
-    <div class="flex gap-1">
-      <Button
-        type={ButtonVariant.SECONDARY}
-        style={ButtonStyle.OUTLINED}
-        icon="ph:caret-left-light"
-        size={Size.sm}
-        on:click={goToPrevious}
-      />
-      <Button
-        type={ButtonVariant.SECONDARY}
-        style={ButtonStyle.OUTLINED}
-        icon="ph:caret-right-light"
-        size={Size.sm}
-        on:click={goToNext}
-      />
+<header class="grid grid-cols-3 w-full sticky top-0 z-10">
+  <div class="flex items-center gap-2">
+    <div>
+      {#if $appStore.product !== Product.MEMOTRON}
+        {#if $view.isConstrainedWidth}
+          <DropDown
+            items={switchOptions}
+            value={selectedView}
+            isDisableSearch={true}
+            width="min-w-32"
+            size={Size.sm}
+            isEnforceWidth={true}
+            on:select={onScaleSelection}
+          />
+        {:else}
+          <OptionSelector
+            options={switchOptions}
+            selected={selectedView}
+            size={Size.sm}
+            {parentBgIndex}
+            isExpandOnActiveForIcon={true}
+            style={OptionSelectorStyle.ICON}
+            on:select={onScaleSelection}
+          />
+        {/if}
+      {/if}
     </div>
+    {#if isRefreshing}
+      <Icon icon="svg-spinners:180-ring-with-bg" size={Size.sm} />
+    {/if}
+  </div>
+  <div class="flex items-center gap-4">
+    <Button
+      type={ButtonVariant.SECONDARY}
+      style={ButtonStyle.DEFAULT}
+      icon="ph:caret-left-light"
+      size={Size.sm}
+      {parentBgIndex}
+      on:click={goToPrevious}
+    />
     <h2 class="text-h4">
       {#if selectedView === TimeScaleUnit.YEAR}
         {currentYear}
@@ -186,47 +214,32 @@
       {:else}
         <!-- TODO Date picker -->
         <!-- {selectedDate.getDate()}
-        {currentMonth}
-        {currentYear} -->
+          {currentMonth}
+          {currentYear} -->
         <DatePicker bind:date={selectedDate} variant="inline" />
       {/if}
     </h2>
-    {#if isRefreshing}
-      <Icon icon="svg-spinners:180-ring-with-bg" size={Size.sm} />
-    {/if}
+    <Button
+      type={ButtonVariant.SECONDARY}
+      style={ButtonStyle.DEFAULT}
+      icon="ph:caret-right-light"
+      size={Size.sm}
+      {parentBgIndex}
+      on:click={goToNext}
+    />
   </div>
-  <div class="flex items-center gap-2">
+  <div class="flex items-center gap-2 justify-end">
     <Button
       type={ButtonVariant.SECONDARY}
       style={ButtonStyle.OUTLINED}
       size={Size.sm}
       label="Go to today"
       isPreventMinWidth={true}
+      {parentBgIndex}
       on:click={goToToday}
     />
-    {#if $appStore.product !== Product.MEMOTRON}
-      {#if $view.isConstrainedWidth}
-        <DropDown
-          items={switchOptions}
-          value={selectedView}
-          isDisableSearch={true}
-          width="min-w-32"
-          size={Size.sm}
-          isEnforceWidth={true}
-          on:select={onScaleSelection}
-        />
-      {:else}
-        <OptionSelector
-          options={switchOptions}
-          selected={selectedView}
-          size={Size.sm}
-          isExpandOnActiveForIcon={true}
-          style={OptionSelectorStyle.ICON}
-          on:select={onScaleSelection}
-        />
-      {/if}
+    {#if dev_isEnableSettings}
+      <Toggle icon="ph:sliders-light" bgSize={Size.sm} parentBgIndex={2} />
     {/if}
-    <!-- <Toggle icon="ph:sliders-light" bgSize={Size.sm} />
-    <Toggle icon="ph:question-light" bgSize={Size.sm} /> -->
   </div>
 </header>

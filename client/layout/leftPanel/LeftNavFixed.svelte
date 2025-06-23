@@ -14,19 +14,20 @@
   import { Placement } from "$lib/client/types/direction.enum";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
   import { onMount } from "svelte";
   export let isRounded = false;
   let isHideMenuLabels = uiState.getState(UIState.hideLeftNavMenuLabels, {
-    isProductScoped: true,
-    isDeviceScoped: true
+    scope: UIStateScope.DAP
   });
 
   onMount(() => {
     const unsubscribe = uiState.subscribe(() => {
       isHideMenuLabels = uiState.getState(UIState.hideLeftNavMenuLabels, {
-        isProductScoped: true,
-        isDeviceScoped: true
+        scope: UIStateScope.DAP
       });
     });
 

@@ -4,7 +4,10 @@
   import Text from "$lib/client/elements/text/Text.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
   import { Product } from "$lib/client/types/product.type";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { TimeScaleUnit } from "$lib/client/types/time.type";
@@ -33,8 +36,7 @@
 
   function resolvePanelSelection() {
     const panelState = uiState.getState(UIState.calendarColumnPanel, {
-      isDeviceScoped: true,
-      isProductScoped: true
+      scope: UIStateScope.DEVICE
     });
     return panelState ?? CalendarColumnPanel.Timeline;
   }

@@ -29,7 +29,10 @@
     uiState,
     uiStateDerived
   } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
   import { bg, cn } from "$lib/client/utils/ui.utils";
 
   const bgIndex = 2;
@@ -51,15 +54,13 @@
 
   function onPageSwitch(e: CustomEvent<string>) {
     uiState.setState(UIState.analyticsPage, e.detail, {
-      isProductScoped: true,
-      isDeviceScoped: true
+      scope: UIStateScope.DEVICE
     });
   }
 
   function resolvePageSelection() {
     const pageState = uiState.getState(UIState.analyticsPage, {
-      isProductScoped: true,
-      isDeviceScoped: true
+      scope: UIStateScope.DEVICE
     });
     return pageState ?? $analyticsConfigStore.pages[0]?.id;
   }

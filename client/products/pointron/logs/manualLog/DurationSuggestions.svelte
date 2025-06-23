@@ -6,7 +6,10 @@
   import { abg, cn } from "$lib/client/utils/ui.utils";
   import { Size } from "$lib/client/types/size.enum";
   import { TimeFormat } from "$lib/client/types/time.type";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonStyle } from "$lib/client/types/button.type";
@@ -53,8 +56,7 @@
           on:click={() => {
             selectedItem = item;
             uiState.setState(UIState.manualLogQuickDuration, item, {
-              isProductScoped: true,
-              isDeviceScoped: true
+              scope: UIStateScope.DEVICE
             });
             dispatch("select", item);
           }}

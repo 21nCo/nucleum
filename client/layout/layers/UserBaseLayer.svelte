@@ -64,6 +64,8 @@
   import InMemoryCache from "./cache/InMemoryCache.svelte";
   import { resolveProductResources } from "$lib/client/components/flux/resourceStores/resource.utils";
   import UserLayout from "./UserLayout.svelte";
+  import { compareVersions } from "$lib/shared/utils/utils";
+  import { UIStateScope } from "$lib/client/stores/uiState/uiState.type";
 
   const loadingMessages = {
     cloneUp: {
@@ -145,7 +147,7 @@
 
   function refreshUIStateDerived() {
     const interactionMode = uiState.getState(Action.MODE_OF_INTERACTION, {
-      isProductScoped: true
+      scope: UIStateScope.PRODUCT
     });
     $appStore.interactionMode = interactionMode;
   }
@@ -204,7 +206,8 @@
     const versionOnClient = $appStore.version;
     await refreshAppStaticData();
     const latestVersion = resolveLatestVersion();
-    if (latestVersion && versionOnClient !== latestVersion) {
+    const comparer = compareVersions(latestVersion, versionOnClient);
+    if (latestVersion && comparer > 0) {
       if ($context.isEmbed) {
         confirmationNotification.notify({
           title: `App update available (v${latestVersion}) 🎉`,
@@ -249,7 +252,8 @@
     logger.info({
       at: "performAppUpdateCheck",
       versionOnClient,
-      latestVersion
+      latestVersion,
+      comparer
     });
 
     function resolveLatestVersion() {

@@ -8,6 +8,7 @@
   import CalendarLayoutView from "../CalendarLayout.svelte";
 
   export let panel: CalendarLayout = CalendarLayout.Bird;
+  let scale: TimeScaleUnit = TimeScaleUnit.DAY;
 
   const switchOptions = [
     {
@@ -43,11 +44,13 @@
     <OptionSelector
       options={switchOptions}
       size={Size.sm}
+      bind:selected={scale}
+      parentBgIndex={2}
       isExpandOnActiveForIcon={true}
       style={OptionSelectorStyle.ICON}
     />
   </slot>
   <div class="w-full h-full max-h-full">
-    <Birdview />
+    <Birdview mode={scale} />
   </div>
 </CalendarLayoutView>

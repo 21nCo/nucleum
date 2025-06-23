@@ -1,6 +1,7 @@
 import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
 import { appStore } from "$lib/client/stores/app.store";
 import { uiState } from "$lib/client/stores/uiState/uiState.store";
+import { UIStateScope } from "$lib/client/stores/uiState/uiState.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 
 class TabStore {
@@ -31,12 +32,12 @@ class TabStore {
 
   get() {
     return uiState.getState(ResourceAccessPoint.TABS, {
-      isProductScoped: true
+      scope: UIStateScope.PRODUCT
     });
   }
   rearrange(ids: IRecordId[]) {
     return uiState.setState(ResourceAccessPoint.TABS, ids, {
-      isProductScoped: true
+      scope: UIStateScope.PRODUCT
     });
   }
 }

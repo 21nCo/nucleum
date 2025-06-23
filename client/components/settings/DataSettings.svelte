@@ -16,9 +16,11 @@
   import { TextStyle } from "$lib/client/types/text.enum";
   import { InfoTextType } from "$lib/client/types/text.type";
   import { formatDate } from "$lib/client/utils/time.utils";
+  import { logger } from "../debug/logger.client";
 
   let isBackupInProgress: boolean = false;
   let isRestoreInProgress: boolean = false;
+  let isResyncInProgress: boolean = false;
 
   async function handleBackup() {
     isBackupInProgress = true;
@@ -85,6 +87,23 @@
       }
     });
   }
+
+  async function handleResync() {
+    try {
+      isResyncInProgress = true;
+      const result = await flux.syncDown();
+      if (result?.counts) {
+        await flux.reconcile({
+          counts: result.counts
+        });
+      }
+      isResyncInProgress = false;
+    } catch (e) {
+      logger.error({ at: "handleResync", error: e });
+    } finally {
+      isResyncInProgress = false;
+    }
+  }
 </script>
 
 <main class="flex flex-col gap-12 text-left">
@@ -124,13 +143,20 @@
     <Text content="More" style={TextStyle.SECTION_HEADING} />
     <div class="flex items-center gap-4">
       <Button
-        label="Reload"
+        label="Resync data"
         icon="ph:arrow-counter-clockwise-light"
-        on:click={() => window.location.reload()}
+        isLoading={isResyncInProgress}
+        on:click={handleResync}
       />
+      {#if !$context.isEmbed}
+        <Button
+          label="Reload"
+          icon="ph:arrow-counter-clockwise-light"
+          on:click={() => window.location.reload()}
+        />
+      {/if}
       <Button
         label="Clear local cache"
-        tooltip="This will clear all data from your local cache and log you out. You will have to re-sync the data from the cloud."
         icon="ph:trash-light"
         on:click={handleClear}
         type={ButtonVariant.DANGER}

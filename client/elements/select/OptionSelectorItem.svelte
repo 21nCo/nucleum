@@ -21,9 +21,11 @@
   export let iconOrientation: Orientation = Orientation.Horizontal;
   export let isShowExpandFeedbackOnActive = false;
   export let isExpandOnActiveForIcon = false;
+  export let parentBgIndex: number = 1;
 </script>
 
 {#if style === OptionSelectorStyle.TRAIN || style === OptionSelectorStyle.OUTLINE || style === OptionSelectorStyle.ICON}
+  {@const bgShade = `bg-bgs${parentBgIndex + 1}`}
   <button
     class={cn(
       "relative rounded-md min-w-fit whitespace-nowrap border",
@@ -40,7 +42,7 @@
           (style === OptionSelectorStyle.TRAIN ||
             style === OptionSelectorStyle.ICON),
         "opacity-80 cursor-not-allowed": item.isDisabled,
-        "notouch:hover:bg-bgs2 active:bg-bgs2 focus:bg-bgs2 focus:outline-bgs2":
+        [`notouch:hover:${bgShade} active:${bgShade} focus:${bgShade} focus:outline-${bgShade}`]:
           !isActive
       },
       style === OptionSelectorStyle.ICON && {
@@ -87,7 +89,7 @@
           iconOrientation === Orientation.Horizontal ||
           (size === Size.sm && iconOrientation === Orientation.Vertical),
         "portrait:text-base portrait:font-medium": size === Size.md,
-        "text-b2": size === Size.sm,
+        "text-b3": size === Size.sm,
         "text-base": size === Size.lg,
         "text-aps1": isActive,
         "text-fgs3": item.isDisabled

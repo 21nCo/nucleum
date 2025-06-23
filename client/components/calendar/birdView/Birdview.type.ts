@@ -5,10 +5,11 @@ export enum Itemtype {
 }
 
 export enum Modes {
-  ZONES = "Zones",
-  DAYS = "Days",
-  MONTHS = "Months",
-  YEARS = "Years"
+  ZONES = "PART",
+  DAYS = "DAY",
+  WEEKS = "WEEK",
+  MONTHS = "MONTH",
+  YEARS = "YEAR"
 }
 
 export type ProgrammedHorizontalWheelEvent = {

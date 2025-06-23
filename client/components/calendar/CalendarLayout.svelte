@@ -5,7 +5,10 @@
   import type { ISelectItem } from "$lib/client/types/select.type";
   import { CalendarLayout } from "./calendar.type";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { appStore } from "$lib/client/stores/app.store";
@@ -16,30 +19,32 @@
     { value: CalendarLayout.Classic, label: "Classic" },
     {
       value: CalendarLayout.Bird,
-      label: "Bird view"
+      label: "Columns"
       // badge: "planned",
       // isDisabled: true
     }
   ];
+  const dev_enableBirdView = false;
 
   function onPanelSwitch(event: CustomEvent) {
     if (!event.detail || !Object.values(CalendarLayout).includes(event.detail))
       return;
     uiState.setState(UIState.calendarLayout, event.detail, {
-      isDeviceScoped: true
+      scope: UIStateScope.DAP
     });
   }
 </script>
 
 <div class="flex flex-col h-full w-full">
   <div
-    class="flex items-center gap-4 border-b border-brs3 h-[3.2rem] 2k:h-14 px-4"
+    class="flex items-center gap-4 border-b border-brs3 h-[3.2rem] 2k:h-14 px-4 bg-bgs2"
   >
-    {#if $appStore.product === Product.NUCLEUS}
+    {#if $appStore.product === Product.NUCLEUS && dev_enableBirdView}
       <PanelSwitcher
         items={panelOptions}
         bind:value={panel}
         style={PanelSwitcherStyle.TRAIN}
+        size={Size.sm}
         on:switch={onPanelSwitch}
       />
     {:else}

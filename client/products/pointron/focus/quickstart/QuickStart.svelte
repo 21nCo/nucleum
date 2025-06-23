@@ -7,7 +7,10 @@
   import { appStore } from "$lib/client/stores/app.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import InlineSearchBar from "$lib/client/elements/InlineSearchBar.svelte";
   import context from "$lib/client/stores/context.store";
@@ -52,7 +55,7 @@
 
   function restoreLayoutState() {
     const layoutState = uiState.getState(UIState.quickFocusLayout, {
-      isDeviceScoped: true
+      scope: UIStateScope.DEVICE
     });
     layout = layoutState ?? Layout.LIST;
   }

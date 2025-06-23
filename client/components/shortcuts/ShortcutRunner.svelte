@@ -10,6 +10,7 @@
   import { Action } from "$lib/client/types/action.enum";
   import { InteractionMode } from "../settings/interactionMode/interactionMode.type";
   import { ResourceAccessMode } from "../flux/resourceStores/resource.type";
+  import { UIStateScope } from "$lib/client/stores/uiState/uiState.type";
 
   function checkIfSystemShortcut(event: KeyboardEvent) {
     return (
@@ -48,7 +49,7 @@
     });
     if (!shortcut) return;
     const interactionMode = uiState.getState(Action.MODE_OF_INTERACTION, {
-      isProductScoped: true
+      scope: UIStateScope.PRODUCT
     });
     if (
       interactionMode === InteractionMode.COMMAND_ONLY &&

@@ -15,7 +15,10 @@
   import ComposeTotalsText from "./ComposeTotalsText.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { deepCopy } from "$lib/shared/utils/obj.utils";
   import { logger } from "$lib/client/components/debug/logger.client";
@@ -45,7 +48,7 @@
     console.log({ event });
     selectedMode = event.detail === "Presets" ? 0 : 1;
     uiState.setState(UIState.focusAdvancedComposeMode, selectedMode, {
-      isDeviceScoped: true
+      scope: UIStateScope.DEVICE
     });
   }
   onMount(() => {
@@ -56,7 +59,7 @@
 
   function refreshAdvancedModeState() {
     return uiState.getState(UIState.focusAdvancedComposeMode, {
-      isDeviceScoped: true
+      scope: UIStateScope.DEVICE
     });
   }
 </script>

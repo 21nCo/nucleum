@@ -25,6 +25,10 @@
   import { onMount } from "svelte";
   import { tabs } from "$lib/client/layout/topNav/tabs/tabs.store";
   import type { IRecordId } from "$lib/client/types/data.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
   let isInFocusMode = false;
   let pinnedItems: IRecordId[] = tabs.get() ?? [];
 
@@ -119,7 +123,7 @@
               Action.MODE_OF_INTERACTION,
               InteractionMode.DEFAULT,
               {
-                isProductScoped: true
+                scope: UIStateScope.PRODUCT
               }
             );
           }}

@@ -226,7 +226,7 @@ export class SearchStore {
       at: "SearchStore.refresh",
       params
     });
-
+    console.time("record.store.ts - select - " + this.resource);
     // Check if operation was aborted before starting
     if (params.signal?.aborted) {
       throw new Error("Operation aborted");
@@ -341,6 +341,7 @@ export class SearchStore {
         });
       }
     }
+    console.timeEnd("record.store.ts - select - " + this.resource);
     if (isValidArray(data)) {
       if (isValidString(params.searchQuery)) {
         if (!this.dev_isUseIndexSearch)
@@ -497,7 +498,7 @@ export class SearchStore {
 
   async searchForLinkingOnExtension(query: string, resource?: Resource) {
     let nodes = [];
-    const isValidSearchQuery = isValidString(query)
+    const isValidSearchQuery = isValidString(query);
     if (resource === Resource.node || !resource) {
       nodes = await extensionFlux({
         method: FluxMethod.SELECT_MANY,
@@ -509,7 +510,7 @@ export class SearchStore {
             },
             search: isValidSearchQuery
               ? {
-                  properties: ["body", "label","text"],
+                  properties: ["body", "label", "text"],
                   query
                 }
               : undefined,
@@ -542,22 +543,21 @@ export class SearchStore {
         const recentItems = await clientStorage.get(ClientStorageKey.RECENTS);
         recentItemsArray = recentItems ? JSON.parse(recentItems) : [];
         if (recentItemsArray.length > 0 && resource) {
-          recentItemsArray = recentItemsArray.filter(
-            (x: any) => {
-              const itemResourceType = determineResourceType(x.id);
-              return itemResourceType === resource;
-            }
-          );
+          recentItemsArray = recentItemsArray.filter((x: any) => {
+            const itemResourceType = determineResourceType(x.id);
+            return itemResourceType === resource;
+          });
         }
       } catch (e) {
-        logger.error({ at: "searchForLinkingOnExtension - recentItems", error: e });
+        logger.error({
+          at: "searchForLinkingOnExtension - recentItems",
+          error: e
+        });
       }
     }
-    return [
-      ...recentItemsArray,
-      ...(nodes ?? []),
-      ...(collections ?? [])
-    ].filter(activeResourceFilter).filter(removeDuplicatesFilter)
+    return [...recentItemsArray, ...(nodes ?? []), ...(collections ?? [])]
+      .filter(activeResourceFilter)
+      .filter(removeDuplicatesFilter);
   }
 
   async resolveCount(params?: {
@@ -663,7 +663,8 @@ export class SearchStore {
             properties: ["count()", "contentType as type"],
             filters: {
               ...activeResourceFilterV2,
-              ...additionalFilters
+              ...additionalFilters,
+              metaType: false
             },
             groupBy: ["type"]
           },

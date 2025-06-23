@@ -11,7 +11,10 @@
   import { postMessageToParent } from "$lib/client/utils/embed.utils";
   import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import context from "$lib/client/stores/context.store";
 
@@ -73,7 +76,7 @@
 
   function onFinish() {
     uiState.setState(UIState.isOnboardingComplete, true, {
-      isProductScoped: true
+      scope: UIStateScope.PRODUCT
     });
     appStore.gotoPath("/");
     if (!$context.isEmbed) appStore.runAction(PointronAction.IMPORT_ONBOARDING);

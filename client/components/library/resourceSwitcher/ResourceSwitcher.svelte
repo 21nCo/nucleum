@@ -29,12 +29,12 @@
   let sections = [
     Product.NUCLEUS,
     Product.POINTRON,
-    Product.MEMOTRON,
-    Product.SELFTRON,
-    Product.FEEDTRON,
-    Product.HOMETRON,
-    Product.FINATRON,
-    Product.FELLOTRON
+    Product.MEMOTRON
+    // Product.SELFTRON
+    // Product.FEEDTRON,
+    // Product.HOMETRON,
+    // Product.FINATRON,
+    // Product.FELLOTRON
   ];
   if (selected === undefined) selected = options[0]?.value;
   export async function refresh(resource: Resource) {
@@ -45,7 +45,11 @@
     let resources = [];
     switch (section) {
       case Product.NUCLEUS:
-        resources = [Resource.collection, Resource.combination, Resource.event];
+        resources = [
+          Resource.collection
+          // Resource.combination,
+          // Resource.event
+        ];
         break;
       case Product.POINTRON:
         resources = [Resource.goal, Resource.task];

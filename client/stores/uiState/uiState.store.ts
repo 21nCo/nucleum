@@ -7,7 +7,12 @@ import { appStore } from "../app.store";
 import { ObservableStore } from "../client.store";
 import { Action } from "../../types/action.enum";
 import { InteractionMode } from "../../components/settings/interactionMode/interactionMode.type";
-import { UIState, type IUIStateStore } from "./uiState.type";
+import {
+  UIState,
+  UIStateScope,
+  type IUIStateParams,
+  type IUIStateStore
+} from "./uiState.type";
 import context from "../context.store";
 import { Embed } from "$lib/client/types/context.type";
 import type { IRecordId } from "$lib/client/types/data.type";
@@ -19,50 +24,72 @@ import {
 
 class UiStateStore extends KeyValueStore<IUIStateStore> {
   constructor() {
-    super(Resource.uiState, {});
+    super(Resource.uiState, {
+      $local: {}
+    });
   }
-  private resolveKey(
-    keyParam: string,
-    params?: {
-      isProductScoped?: boolean;
-      isDeviceScoped?: boolean;
-    }
-  ) {
+  private resolveKey(keyParam: string, params?: IUIStateParams) {
     let key: string = keyParam;
     const product = get(appStore).product;
-    const device = get(context).embed;
-    if (params?.isProductScoped) {
-      key = `${product}-${key}`;
-    } else if (params?.isDeviceScoped) {
-      key = `${device}-${key}`;
-    } else if (params?.isProductScoped && params?.isDeviceScoped) {
-      key = `${product}-${device}-${key}`;
+    const ctx = get(context);
+    let prefix = "";
+    if (params?.scope === UIStateScope.DEVICE) {
+      prefix = `${product}-${ctx.embed}`;
+    } else if (params?.scope === UIStateScope.PRODUCT) {
+      prefix = product;
     }
+    if (prefix) {
+      key = `${prefix}-${key}`;
+    }
+    if (params?.subVariables) {
+      params.subVariables.forEach((subVariable) => {
+        key = `${key}_${subVariable}`;
+      });
+    }
+    key = key.toLowerCase();
     return key;
   }
 
   setState(
     keyParam: Action | UIState | ResourceAccessPoint,
     value: any,
-    params?: {
-      isProductScoped?: boolean;
-      isDeviceScoped?: boolean;
-    }
+    params?: IUIStateParams
   ) {
     const key = this.resolveKey(keyParam, params);
-    this.modify({ [key]: value });
-    logger.log({ context: "uiState.store - setState", key, value });
+    if (params?.scope === UIStateScope.DAP) {
+      if (typeof window !== "undefined") {
+        const savedState = window.localStorage.getItem("uiState");
+        const savedStateObj = savedState ? JSON.parse(savedState) : {};
+        savedStateObj[key] = value;
+        window.localStorage.setItem("uiState", JSON.stringify(savedStateObj));
+        this.update((x) => {
+          return {
+            ...x,
+            $local: {
+              ...x.$local,
+              [key]: value
+            }
+          };
+        });
+      }
+    } else {
+      this.modify({ [key]: value });
+      logger.log({ context: "uiState.store - setState", key, value });
+    }
     uiStateDerived.refreshState();
   }
 
   getState(
     keyParam: Action | UIState | ResourceAccessPoint,
-    params?: {
-      isProductScoped?: boolean;
-      isDeviceScoped?: boolean;
-    }
+    params?: IUIStateParams
   ) {
     const key = this.resolveKey(keyParam, params);
+    if (params?.scope === UIStateScope.DAP) {
+      const savedState = window.localStorage.getItem("uiState");
+      if (!savedState) return undefined;
+      const savedStateObj = JSON.parse(savedState);
+      return savedStateObj[key] ?? undefined;
+    }
     return this.get()[key];
   }
 
@@ -88,7 +115,7 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
 
   addResourceToTabs(id: IRecordId) {
     const current = this.getState(ResourceAccessPoint.TABS, {
-      isProductScoped: true
+      scope: UIStateScope.PRODUCT
     });
     if (current?.includes(id.toString())) {
       toasts.error("Resource already present in top bar");
@@ -98,30 +125,30 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
       ResourceAccessPoint.TABS,
       [...(current ?? []), id.toString()],
       {
-        isProductScoped: true
+        scope: UIStateScope.PRODUCT
       }
     );
   }
 
   removeResourceFromTabs(id: IRecordId) {
     const current = this.getState(ResourceAccessPoint.TABS, {
-      isProductScoped: true
+      scope: UIStateScope.PRODUCT
     });
     if (!current?.some(resourceInList(id))) return;
     this.setState(
       ResourceAccessPoint.TABS,
       current.filter((x: IRecordId) => !isSameResource(x, id)),
       {
-        isProductScoped: true
+        scope: UIStateScope.PRODUCT
       }
     );
   }
 
   toggleSidebar() {
     const isCompletelyHideLeftNavBar = this.getState(
-      UIState.COMPLETELY_HIDE_LEFT_NAV_BAR,
+      UIState.completelyHideLeftNavBar,
       {
-        isProductScoped: true
+        scope: UIStateScope.PRODUCT
       }
     );
     if (isCompletelyHideLeftNavBar) {
@@ -132,12 +159,10 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
     const val = this.getState(UIState.isInThinMode);
     this.setState(UIState.isInThinMode, !val);
     const labelsVal = this.getState(UIState.hideLeftNavMenuLabels, {
-      isProductScoped: true,
-      isDeviceScoped: true
+      scope: UIStateScope.DAP
     });
     this.setState(UIState.hideLeftNavMenuLabels, !labelsVal, {
-      isProductScoped: true,
-      isDeviceScoped: true
+      scope: UIStateScope.DAP
     });
   }
 }
@@ -160,10 +185,9 @@ class UIDerivedState extends ObservableStore<{ isShowHotKeyHints: boolean }> {
 
   refreshShortcutHintsState() {
     const isShortcutHintsDisabled = uiState.getState(
-      UIState.HIDE_SHORTCUT_HINTS,
+      UIState.hideShortcutHints,
       {
-        isDeviceScoped: true,
-        isProductScoped: true
+        scope: UIStateScope.DEVICE
       }
     );
     const embed = get(context).embed;

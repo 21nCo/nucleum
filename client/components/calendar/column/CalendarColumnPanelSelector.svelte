@@ -2,7 +2,10 @@
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
   import {
     OptionSelectorStyle,
     type ISelectItem
@@ -21,8 +24,7 @@
   function onPanelSelection(e: CustomEvent) {
     if (!e.detail) return;
     uiState.setState(UIState.calendarColumnPanel, e.detail, {
-      isDeviceScoped: true,
-      isProductScoped: true
+      scope: UIStateScope.DEVICE
     });
   }
 </script>

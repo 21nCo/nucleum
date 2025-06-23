@@ -401,7 +401,11 @@
     let label = "items";
     if (resource === Resource.everything) label = "item";
     else if (selectedSubType && selectedSubType !== "all") {
-      label = ` ${enumToString(selectedSubType).toLowerCase()} ${resource}`;
+      let txt = enumToString(selectedSubType).toLowerCase();
+      if (selectedSubType === NodeType.NODULAR_MARKDOWN.toLowerCase()) {
+        txt = "markdown";
+      }
+      label = ` ${txt} ${resource}`;
     } else label = resource;
     return label + ((data && data.length > 1) || isPlural ? "s" : "");
   }

@@ -3,15 +3,21 @@
   import ClassicCalendar from "./classic/ClassicCalendar.svelte";
   import { CalendarLayout } from "./calendar.type";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
   import view from "$lib/client/stores/view.store";
   import CalendarCw from "./CalendarCW.svelte";
   export let panel: CalendarLayout = resolvePanelSelection();
 
   function resolvePanelSelection() {
     const layoutState = uiState.getState(UIState.calendarLayout, {
-      isDeviceScoped: true
+      scope: UIStateScope.DAP
     });
+    if (layoutState === CalendarLayout.Bird) {
+      return CalendarLayout.Classic;
+    }
     return layoutState ?? CalendarLayout.Classic;
   }
 </script>

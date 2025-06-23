@@ -54,7 +54,11 @@ import { FluxMethod, type IFluxMethod } from "./flux.type";
 import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
 import { TacoActions } from "$lib/client/products/memotron/taco/taco.types";
 import { interceptSurrealResponse } from "$lib/client/utils/utils";
-import { determineResourceType } from "./resourceStores/resource.utils";
+import {
+  determineResourceType,
+  isRecordId,
+  removeDuplicatesFilter
+} from "./resourceStores/resource.utils";
 
 class Flux {
   static _instance: Flux | null = null;
@@ -1006,6 +1010,15 @@ class Flux {
         records = records.filter(
           (x: any) => x.id && !x.id?.toString()?.includes("local")
         );
+      } else if (resource === Resource.link) {
+        records = records
+          .map((x: any) => ({
+            ...x,
+            in: x.in.toString(),
+            out: x.out.toString()
+          }))
+          .filter((x: any) => isRecordId(x.in) && isRecordId(x.out))
+          .filter(removeDuplicatesFilter);
       }
       const mutationResult = await this.persistence.mutation(
         resource as Resource,

@@ -18,7 +18,10 @@
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
   import { properCase } from "$lib/shared/utils/text.utils";
   import ComponentBaseLayer from "../layers/ComponentBaseLayer.svelte";
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
@@ -36,8 +39,7 @@
   let userPinnedItems: string[] = [];
   let hideMenuLabels =
     uiState.getState(UIState.hideLeftNavMenuLabels, {
-      isProductScoped: true,
-      isDeviceScoped: true
+      scope: UIStateScope.DAP
     }) || false;
 
   initResources();
@@ -72,8 +74,7 @@
   function handleToggleMenuLabels(e: CustomEvent): void {
     hideMenuLabels = e.detail;
     uiState.setState(UIState.hideLeftNavMenuLabels, hideMenuLabels, {
-      isProductScoped: true,
-      isDeviceScoped: true
+      scope: UIStateScope.DAP
     });
     dispatch("update");
   }

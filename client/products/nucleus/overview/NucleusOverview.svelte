@@ -1,7 +1,10 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
   import { OverviewPanel } from "./overview.type";
   import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
   import NucleusOverviewLayout from "./NucleusOverviewLayout.svelte";
@@ -10,7 +13,7 @@
 
   function resolveSavedState() {
     const savedPanel = uiState.getState(UIState.nucleusOverviewPanel, {
-      isDeviceScoped: true
+      scope: UIStateScope.DEVICE
     });
     if (savedPanel && Object.values(OverviewPanel).includes(savedPanel)) {
       return savedPanel;

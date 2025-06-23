@@ -8,6 +8,7 @@
 
   export let selectedDate: Date;
   export let indicatorData: ICalendarIndicatorData[] = [];
+  export let indicatorRefreshId: number = 0;
 
   const dispatch = createEventDispatcher();
 
@@ -310,12 +311,14 @@
                   >
                     {date.getDate()}
                     {#if indicatorData.length > 0}
-                      <CalendarTileIndicator
-                        {date}
-                        data={indicatorData}
-                        isActive={isSelected}
-                        view="year"
-                      />
+                      {#key indicatorRefreshId}
+                        <CalendarTileIndicator
+                          {date}
+                          data={indicatorData}
+                          isActive={isSelected}
+                          view="year"
+                        />
+                      {/key}
                     {/if}
                   </button>
                 {:else}
