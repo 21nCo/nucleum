@@ -182,9 +182,9 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       if (properties && properties.length > 0) {
         // Add required system properties to ensure we can process the response
         const systemProperties = ["PK", "SK", "spaceId", "userId"];
-        const allProperties = [
-          ...new Set([...properties, ...systemProperties])
-        ];
+        const allProperties = Array.from(
+          new Set([...properties, ...systemProperties])
+        );
 
         params.ProjectionExpression = allProperties.join(", ");
       }
@@ -237,7 +237,18 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       const spaceId = agent.db;
 
       if (resource === Resource.mutation || resource === Resource.accessLog) {
-        const recordId = params.filters?.resourceId;
+        // For mutations and accessLog, we need a specific resourceId to query by GSI1SK
+        // This should be passed via basic filters
+        const recordId =
+          params?.filters && "resourceId" in params.filters
+            ? params.filters.resourceId
+            : null;
+
+        if (!recordId) {
+          console.warn(`${resource} queries require a resourceId in filters`);
+          return [];
+        }
+
         const queryParams: any = {
           TableName: this.config.tableArn,
           KeyConditionExpression: "spaceId = :pk AND GSI1SK = :sk",
@@ -252,7 +263,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
           ScanIndexForward: true // Default to ascending order
         };
         const result = await dynamoClient.send(new QueryCommand(queryParams));
-        return result.Items;
+        return result.Items || [];
       }
 
       const queryParams: any = {
@@ -267,9 +278,9 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       // Handle specific properties selection
       if (params?.properties && params.properties.length > 0) {
         const systemProperties = ["PK", "SK", "spaceId", "userId"];
-        const allProperties = [
-          ...new Set([...params.properties, ...systemProperties])
-        ];
+        const allProperties = Array.from(
+          new Set([...params.properties, ...systemProperties])
+        );
         queryParams.ProjectionExpression = allProperties.join(", ");
       }
 
@@ -655,15 +666,38 @@ export class DynamoDBSyncProvider implements ISyncProvider {
         const mutationResults = allRecordResults.flat();
 
         const allPutItems = [];
+        const resourceItemMap = new Map<string, any>();
         for (const { mutationItem, records } of mutationResults) {
           allPutItems.push({ PutRequest: { Item: mutationItem } });
 
           if (records.length > 0) {
             records.forEach((item) => {
-              allPutItems.push({ PutRequest: { Item: item } });
+              const itemKey = `${item.PK}#${item.SK}`;
+              const existingItem = resourceItemMap.get(itemKey);
+              if (existingItem) {
+                const mergedItem = {
+                  ...existingItem.PutRequest.Item,
+                  ...item,
+                  PK: item.PK,
+                  SK: item.SK,
+                  spaceId: item.spaceId,
+                  userId: item.userId,
+                  modifiedAtUnix: Math.max(
+                    existingItem.PutRequest.Item.modifiedAtUnix || 0,
+                    item.modifiedAtUnix || 0
+                  )
+                };
+                resourceItemMap.set(itemKey, {
+                  PutRequest: { Item: mergedItem }
+                });
+              } else {
+                resourceItemMap.set(itemKey, { PutRequest: { Item: item } });
+              }
             });
           }
         }
+
+        allPutItems.push(...Array.from(resourceItemMap.values()));
 
         const writeBatchSize = 25;
         console.time("syncUp-writeBatch");
@@ -1447,7 +1481,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
         UpdateExpression: `SET ${updateExpressions.join(", ")}`,
         ExpressionAttributeNames: expressionAttributeNames,
         ExpressionAttributeValues: expressionAttributeValues,
-        ConditionExpression: "attribute_exists(PK) OR attribute_not_exists(PK)"
+        ConditionExpression: "attribute_exists(PK)"
       };
 
       try {
