@@ -41,4 +41,29 @@ describe("DynamoDB Provider - Relay Resource", () => {
     expect(result).toBeDefined();
     expect(Array.isArray(result)).toBe(true);
   });
+
+  it.only("should query mutation resource with filters", async () => {
+    const result = await relay(
+      {
+        method: FluxMethod.SELECT_MANY,
+        args: {
+          resource: Resource.mutation,
+          params: {
+            filters: {
+              action: ["create", "delete"],
+              resource: ["node", "collection", "tz"],
+              timestamp: {
+                greaterThanOrEqual: 1750703400000,
+                lessThanOrEqual: 1750789800000
+              }
+            }
+          }
+        }
+      },
+      global.testEnv.agent
+    );
+    console.log({ result });
+    expect(result).toBeDefined();
+    expect(Array.isArray(result)).toBe(true);
+  });
 });

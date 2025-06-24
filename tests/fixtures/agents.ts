@@ -2,17 +2,17 @@ import { CONTEXT } from "$lib/server/common/account/account.type";
 
 export const mockAgents = {
   dev: {
-    id: "mbueob5pbkuhu09k1lgbvt9u",
-    db: "mbueob5pbkuhu09k1lgbvt9u",
+    id: "mc0lsom5c7jd8e7gkyu7g4kw",
+    db: "mc0lsom5c7jd8e7gkyu7g4kw",
     ns: "user",
     tk: "tokenone",
     region: "insouth",
     iat: 1733282501,
     exp: 1735874501,
-    audience: "memotron.tidigit.dev",
-    issuer: "tidigit.dev",
-    aud: "memotron.tidigit.dev",
-    iss: "tidigit.dev",
+    audience: "dev.memotron.app",
+    issuer: "21n.dev",
+    aud: "dev.memotron.app",
+    iss: "21n.dev",
     context: CONTEXT.USER
   },
   pre: {

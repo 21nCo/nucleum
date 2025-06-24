@@ -92,7 +92,6 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       tableArn: dynamoAccount ? tableArn : tableName,
       region
     };
-
     const client = new DynamoDBClient({ region });
     return DynamoDBDocumentClient.from(client);
   }
@@ -236,18 +235,13 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       const dynamoClient = this.getDynamoClient(agent);
       const spaceId = agent.db;
 
-      if (resource === Resource.mutation || resource === Resource.accessLog) {
-        // For mutations and accessLog, we need a specific resourceId to query by GSI1SK
-        // This should be passed via basic filters
-        const recordId =
-          params?.filters && "resourceId" in params.filters
-            ? params.filters.resourceId
-            : null;
-
-        if (!recordId) {
-          console.warn(`${resource} queries require a resourceId in filters`);
-          return [];
-        }
+      if (
+        (resource === Resource.mutation || resource === Resource.accessLog) &&
+        params?.filters &&
+        "resourceId" in params.filters &&
+        params.filters.resourceId
+      ) {
+        const recordId = params.filters.resourceId;
 
         const queryParams: any = {
           TableName: this.config.tableArn,
@@ -264,6 +258,45 @@ export class DynamoDBSyncProvider implements ISyncProvider {
         };
         const result = await dynamoClient.send(new QueryCommand(queryParams));
         return result.Items || [];
+      } else if (
+        resource === Resource.mutation &&
+        params?.filters &&
+        "timestamp" in params.filters &&
+        params.filters.timestamp
+      ) {
+        const queryParams: any = {
+          TableName: this.config.tableArn,
+          KeyConditionExpression: "PK = :pk",
+          ExpressionAttributeValues: {
+            ":pk": `${spaceId}#${resource}`
+          },
+          ScanIndexForward: true
+        };
+        const timestampFilter = params.filters.timestamp;
+        if (timestampFilter) {
+          queryParams.KeyConditionExpression =
+            "PK = :pk AND SK BETWEEN :sk AND :sk2";
+          queryParams.ExpressionAttributeValues = {
+            ":pk": `${spaceId}#${resource}`,
+            ":sk": `${timestampFilter.greaterThanOrEqual}`,
+            ":sk2": `${timestampFilter.lessThanOrEqual}`
+          };
+        }
+        const result = await dynamoClient.send(new QueryCommand(queryParams));
+        let items = result.Items || [];
+        if (items && items.length > 0) {
+          if (params?.filters?.action) {
+            items = items.filter((item) =>
+              params.filters.action.includes(item.action)
+            );
+          }
+          if (params?.filters?.resource) {
+            items = items.filter((item) =>
+              params.filters.resource.includes(item.resource)
+            );
+          }
+        }
+        return items;
       }
 
       const queryParams: any = {
