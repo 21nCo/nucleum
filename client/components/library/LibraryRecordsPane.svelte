@@ -676,7 +676,7 @@
         {/if}
       </div>
       <ScrollViewBottomSpacer />
-    {:else if data.length === 0 && ((starredData && starredData.length === 0) || searchQuery)}
+    {:else if data.length === 0 && ((starredData && starredData.length === 0) || !starredData || searchQuery)}
       <EmptyStatusView
         size={Size.lg}
         {...resolveEmptyStateMessage()}

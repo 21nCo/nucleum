@@ -16,9 +16,10 @@
   import SessionTitle from "./SessionTitle.svelte";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
-  import { nestedGoalCorrection } from "./fallbacks";
+  import { collectionsListOnRecords, nestedGoalCorrection } from "./fallbacks";
   import { FallbackTracker } from "$lib/client/utils/fallbackTracker.utils";
   import FocusTopNavWidget from "../focus/player/FocusTopNavWidget.svelte";
+  import { logger } from "$lib/client/components/debug/logger.client";
 
   let isLiteMode = $context.isEmbed && $context.isSheet;
   const isDebug = import.meta.env?.DEV;
@@ -57,10 +58,18 @@
   }
 
   async function runFallbacks() {
-    await FallbackTracker.runIfNotCompleted(
-      "nestedGoalCorrection",
-      nestedGoalCorrection
-    );
+    try {
+      await FallbackTracker.runIfNotCompleted(
+        "nestedGoalCorrection",
+        nestedGoalCorrection
+      );
+      await FallbackTracker.runIfNotCompleted(
+        "collectionsListOnRecords",
+        collectionsListOnRecords
+      );
+    } catch (e) {
+      logger.error({ at: "runFallbacks", error: e });
+    }
   }
 </script>
 

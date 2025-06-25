@@ -68,18 +68,22 @@
       "gap-1 text-b4 dp:text-b3": size === Size.xs,
       "p-1.5 rounded-md": isIconOnlyButton,
       [bg(parentBgIndex)]:
-        isHovering && isIconOnlyButton && style != ButtonStyle.PLAIN,
-      "text-fgs2 hover:text-aps1": style === ButtonStyle.PLAIN,
+        isHovering && isIconOnlyButton && style !== ButtonStyle.PLAIN,
       "underline-dotted hover:underline-dotted-primary":
         style === ButtonStyle.PLAIN && isUnderlined
     },
-    style != ButtonStyle.PLAIN &&
+    style === ButtonStyle.PLAIN && {
+      "text-fgs2 hover:text-aps1": type === ButtonVariant.SECONDARY,
+      "text-aps1 hover:brightness-110": type === ButtonVariant.PRIMARY,
+      "text-ars1 hover:brightness-110": type === ButtonVariant.DANGER
+    },
+    style !== ButtonStyle.PLAIN &&
       !isPreventMinWidth &&
       !isIconOnlyButton && {
         "min-w-32": size === Size.lg || size === Size.md || size === Size.sm,
         "min-w-fit": size === Size.xs
       },
-    style != ButtonStyle.PLAIN &&
+    style !== ButtonStyle.PLAIN &&
       !isIconOnlyButton && {
         "shadow--md": true,
         "h-12 py-4 px-6": size === Size.lg,

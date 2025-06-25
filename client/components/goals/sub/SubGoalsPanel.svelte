@@ -61,8 +61,8 @@
     archivedResourceFilter
   ).length;
 
-  function onSubGoalClick(id: IRecordId) {
-    appStore.openResource(id, ResourceAccessMode.POP, {
+  function onSubGoalClick(id: IRecordId, event?: MouseEvent) {
+    appStore.resourceClickHandler(event, id, {
       replaceId: $goal.id
     });
   }
@@ -199,7 +199,7 @@
         isShowAddTextInput={isActiveResource}
         on:click={(e) => {
           if (e.detail) {
-            onSubGoalClick(e.detail);
+            onSubGoalClick(e.detail.id, e.detail.event);
           }
         }}
         on:add={onAddSubGoal}
@@ -213,8 +213,8 @@
           {index}
           totalLength={_subGoals.length}
           method={$goal.subGoalsLayout}
-          on:click={() => {
-            onSubGoalClick(subGoal.id);
+          on:click={(e) => {
+            onSubGoalClick(subGoal.id, e);
           }}
           on:add={onAddSubGoal}
         />
@@ -250,8 +250,8 @@
             <!-- <SubGoalItem {child} /> -->
             <SubGoalItem
               subGoal={child}
-              on:click={() => {
-                onSubGoalClick(child.id);
+              on:click={(e) => {
+                onSubGoalClick(child.id, e);
               }}
             />
           {/each}

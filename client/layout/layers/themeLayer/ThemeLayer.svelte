@@ -27,8 +27,6 @@
   let accessibilitySizingFactor =
     $userPreferences?.accessibilitySizingFactor ?? 1;
 
-  $: console.log({ appearance: $appearance });
-
   onMount(() => {
     refreshTailwind();
     const userPreferencesSub = userPreferences.subscribe((x) => {

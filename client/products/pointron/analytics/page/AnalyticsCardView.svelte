@@ -131,8 +131,8 @@
       );
       const filteredLogs = logs.filter(
         (log) =>
-          log.startUnix >= correctedTimePeriod.begin &&
-          log.startUnix <= correctedTimePeriod.end
+          log.startUnix >= correctedTimePeriod.correctedBegin &&
+          log.startUnix <= correctedTimePeriod.correctedEnd
       );
 
       const processedLogs: AnalyticsDataRecord[] = filteredLogs.map(
@@ -317,7 +317,7 @@
         <span class="font-medium">
           {card.type === AnalyticsCardType.TARGETS
             ? "Targets"
-            : (card.label ?? timePeriod.title)}
+            : card.label ?? timePeriod.title}
         </span>
         {#if card.type != AnalyticsCardType.TARGETS && card.label}
           <span class="text-fgs2 text-b2">

@@ -153,7 +153,12 @@
     currentDateFilterForIndicatorData = dateFilter;
     const promises = filteredResourcesForIndicators.map((resource) => {
       let filters: any = {};
-      let properties: string[] = ["id", "modifiedAt"];
+      let properties: string[] = [
+        "id",
+        "modifiedAt",
+        "trashInformation",
+        "isArchived"
+      ];
       if (resource === Resource.task) {
         properties.push("dateUnix");
         filters = {

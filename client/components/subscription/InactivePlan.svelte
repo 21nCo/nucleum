@@ -5,7 +5,8 @@
   import account from "$lib/client/stores/account.store";
   import { appStore } from "$lib/client/stores/app.store";
   import { Action } from "$lib/client/types/action.enum";
-  import { ButtonStyle } from "$lib/client/types/button.type";
+  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
+  import { Size } from "$lib/client/types/size.enum";
   import { formatDate } from "$lib/client/utils/time.utils";
   import { properCase } from "$lib/shared/utils/text.utils";
   import modalEvent from "../modal/modal.store";
@@ -97,10 +98,19 @@
           {/each}
         </ul>
       </div>
-      <div class="flex flex-col gap-3">
-        <p class="text-sm text-fgs3">Choose a plan that works best for you</p>
-      </div>
     {/if}
-    <RestorePurchaseAction />
+    <div class="flex justify-center gap-8">
+      <RestorePurchaseAction />
+      <Button
+        label="Logout"
+        icon="ph:sign-out-light"
+        size={Size.sm}
+        style={ButtonStyle.PLAIN}
+        type={ButtonVariant.DANGER}
+        on:click={async () => {
+          await account.signOut();
+        }}
+      />
+    </div>
   </div>
 </div>

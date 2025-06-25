@@ -435,7 +435,7 @@ function initAppStore(seed: IAppStore) {
     }
     if (config.isRedirectToClient) {
       const clientRedirect = ctx.isEmbed
-        ? (import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host)
+        ? import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host
         : window.location.origin;
       redirectUri = clientRedirect + "/oauth/" + config.oauth_slug;
     } else {
@@ -621,7 +621,8 @@ function initAppStore(seed: IAppStore) {
       timestamp: timestamp.toISOString()
     });
     if (accessMode === ResourceAccessMode.TAB) {
-      tabs.open(id);
+      if (params?.replaceId) tabs.replace(id, params.replaceId);
+      else tabs.open(id);
       return;
     } else if (accessMode === ResourceAccessMode.TAB_IN_BACKGROUND) {
       tabs.addInBackground(id);

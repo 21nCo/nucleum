@@ -43,7 +43,10 @@
       if (!$view.isPortrait) isCollapsed = !isCollapsed;
     }
     e.stopPropagation();
-    dispatch("click", id);
+    dispatch("click", {
+      id,
+      event: e
+    });
   }
   function onchevclick(e: MouseEvent) {
     isCollapsed = !isCollapsed;

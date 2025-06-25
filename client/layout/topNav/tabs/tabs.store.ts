@@ -11,6 +11,16 @@ class TabStore {
     this.activate(id);
   }
 
+  replace(id: IRecordId, replaceId: IRecordId) {
+    if (!id || !replaceId) return;
+    const tabs = this.get();
+    if (tabs.includes(replaceId)) {
+      this.remove(replaceId);
+      uiState.addResourceToTabs(id);
+    }
+    this.activate(id);
+  }
+
   addInBackground(id: IRecordId) {
     if (!id) return;
     uiState.addResourceToTabs(id);
