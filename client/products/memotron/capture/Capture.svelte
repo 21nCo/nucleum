@@ -446,7 +446,7 @@
   }
 
   function persistLabel() {
-    if (isSaving) return;
+    if (isSaving || $captureStore.isAvoidSaveLeaks) return;
     captureStore.modify(
       { label: $captureStore.label },
       { isPreventBackPropagation: true }

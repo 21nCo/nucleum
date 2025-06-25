@@ -295,4 +295,9 @@ export type IResourceMutationParams = IMutationAdditionalParams & {
    * The key to be used for debouncing the mutation
    */
   debounceKey?: string;
+
+  /**
+   * Whether the mutation should be modified as a system i.e. modifiedBy and modifiedAt are not set - with the properties passed and persists the change. If an active resource is present, it will be updated with the new properties unless isPreventBackPropagation is true.
+   */
+  isModifyAsSystem?: boolean;
 };

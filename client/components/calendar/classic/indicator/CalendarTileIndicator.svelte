@@ -10,7 +10,6 @@
     ISessionLogThumb,
     ISessionThumb
   } from "$lib/client/products/pointron/logs/log.type";
-  import { onMount } from "svelte";
   import type { ICalendarIndicatorData } from "../../calendar.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import YearTileIndicatorDot from "./YearTileIndicatorDot.svelte";
@@ -22,10 +21,13 @@
   import { logger } from "$lib/client/components/debug/logger.client";
   import { Product } from "$lib/client/types/product.type";
   import { appStore } from "$lib/client/stores/app.store";
+
   export let date: Date;
   export let data: ICalendarIndicatorData[] = [];
   export let view: "year" | "month" = "year";
   export let isActive: boolean = false;
+  export let indicatorRefreshId: number = 0;
+
   let tasks: ITaskThumb[] = [];
   let focusSessions: (ISessionThumb & {
     splits: { focus: number; brek: number };
@@ -34,9 +36,9 @@
   let calendarNotes: any[] = [];
   let summary: DaySummary = { focus: 0, break: 0 };
   $: dayFilter = tzStore.resolveTimePeriodFilterForDay(date);
-  onMount(() => {
+  $: if (indicatorRefreshId > 0) {
     resolveData();
-  });
+  }
 
   function resolveData() {
     const product = $appStore.product;
@@ -99,7 +101,8 @@
         calendarNotes = calendarNotesData.data.filter(
           (x) =>
             new Date(x.date).getTime() >= dayFilter.greaterThanOrEqual &&
-            new Date(x.date).getTime() <= dayFilter.lessThanOrEqual
+            new Date(x.date).getTime() <= dayFilter.lessThanOrEqual &&
+            x.text
         );
       }
     } catch (e) {

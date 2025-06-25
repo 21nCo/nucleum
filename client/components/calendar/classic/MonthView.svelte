@@ -114,16 +114,15 @@
           {/if}
         </span>
         {#if indicatorData.length > 0}
-          {#key indicatorRefreshId}
-            <div class="pl-1 pt-1">
-              <CalendarTileIndicator
-                date={day}
-                isActive={isSelected}
-                data={indicatorData}
-                view="month"
-              />
-            </div>
-          {/key}
+          <div class="pl-1 pt-1">
+            <CalendarTileIndicator
+              date={day}
+              isActive={isSelected}
+              data={indicatorData}
+              {indicatorRefreshId}
+              view="month"
+            />
+          </div>
         {/if}
       </button>
     {/each}

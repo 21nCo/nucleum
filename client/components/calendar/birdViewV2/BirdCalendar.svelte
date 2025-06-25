@@ -40,7 +40,7 @@
 </script>
 
 <CalendarLayoutView bind:panel>
-  <slot name="header" slot="header">
+  <slot name="header-left-options" slot="header-left-options">
     <OptionSelector
       options={switchOptions}
       size={Size.sm}

@@ -9,6 +9,7 @@
   import { Orientation } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { userPreferences } from "../userPreferences.store";
   export let theme: Theme = Theme.LIGHT;
   export let label: string = "Color scheme";
   export let size: Size.sm | Size.md = Size.md;
@@ -18,7 +19,7 @@
   $: if (theme) refreshColorSchemes();
   function refreshColorSchemes(e: any = undefined) {
     filteredColorSchemes = appConstants.colorSchemes?.filter(
-      (x) => x.theme == $appearance.skin
+      (x) => x.theme == $userPreferences?.appearance?.skin
     );
     filteredColorSchemes = filteredColorSchemes?.filter((x: ColorScheme) => {
       return (

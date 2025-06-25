@@ -15,15 +15,43 @@
   import "@fontsource/noto-color-emoji";
   // Do not remove this import as it is required for the global css propagation in case of custom colors are absent - ex: PanelSwitcher
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
+
   export let extensionContext: string | undefined = undefined;
   let fontFamily: string = "Avenir";
   let defaultRootFontSize: number = 16;
   let rootFontSize: number = defaultRootFontSize + 0.6 * $view?.scale;
   let ref: HTMLDivElement;
+  const defaultTypeface = "Sen";
+  let typeface = $userPreferences?.appearance?.typeface ?? defaultTypeface;
+  let accessibilitySizingFactor =
+    $userPreferences?.accessibilitySizingFactor ?? 1;
+
+  $: console.log({ appearance: $appearance });
+
   onMount(() => {
-    refreshTheme();
+    refreshTailwind();
+    const userPreferencesSub = userPreferences.subscribe((x) => {
+      if (!userPreferences.isInitialized) return;
+      if (x.appearance.typeface !== typeface) {
+        typeface = x.appearance.typeface ?? defaultTypeface;
+        refreshTailwind();
+      }
+      if (x.accessibilitySizingFactor !== accessibilitySizingFactor) {
+        accessibilitySizingFactor = x.accessibilitySizingFactor ?? 1;
+        refreshSizing();
+      }
+      if (
+        $appearance.lightColorSchemeId !== x.appearance.lightColorSchemeId ||
+        $appearance.darkColorSchemeId !== x.appearance.darkColorSchemeId ||
+        $appearance.userThemeSetting !== x.appearance.userThemeSetting ||
+        $appearance.isSyncWithSystem !== x.appearance.isSyncWithSystem
+      ) {
+        appearance.syncAppearanceFromCloud(x.appearance);
+      }
+    });
     const appearanceSub = appearance.subscribe(() => {
-      refreshTheme();
+      refreshTailwind();
     });
     const darkModeMediaQuery = window.matchMedia(
       "(prefers-color-scheme: dark)"
@@ -34,13 +62,10 @@
     });
     return () => {
       appearanceSub();
+      userPreferencesSub();
     };
   });
 
-  function refreshTheme() {
-    refreshSizing();
-    refreshTailwind();
-  }
   /**
    *
    *
@@ -49,19 +74,14 @@
    *
    */
   function refreshSizing() {
-    if (
-      $appearance?.accessibilitySizingFactor === undefined ||
-      $appearance?.accessibilitySizingFactor === null
-    )
-      return;
-    if ($appearance.accessibilitySizingFactor == 0) {
+    if (accessibilitySizingFactor == 0) {
       if ($view.scale > 0.55) defaultRootFontSize = 14;
       else defaultRootFontSize = 12;
-    } else if ($appearance.accessibilitySizingFactor == 1) {
+    } else if (accessibilitySizingFactor == 1) {
       if ($view.scale > 0.55) defaultRootFontSize = 16;
       else if ($view.scale > 0.45) defaultRootFontSize = 14;
       else defaultRootFontSize = 13;
-    } else if ($appearance.accessibilitySizingFactor == 2) {
+    } else if (accessibilitySizingFactor == 2) {
       if ($view.scale > 0.55) defaultRootFontSize = 18;
       else defaultRootFontSize = 16;
     }
@@ -84,8 +104,7 @@
    * Note: most of the colors are reassigned to new object instead of posting $appearance.colorScheme directly as the original json contains keys which are not accepted by the iOS app.
    */
   function refreshTailwind() {
-    fontFamily = $appearance.typeface ?? "Sen";
-    fontFamily = fontFamily + ", " + fallBackTypefaceString;
+    fontFamily = typeface + ", " + fallBackTypefaceString;
     if (extensionContext && ref) {
       const element = ref as unknown as HTMLElement;
       element.style.setProperty("--fontFamily-sans-0", fontFamily);
@@ -142,10 +161,10 @@
   bind:this={ref}
   id={extensionContext ? "nthemeclipper" : "ntheme"}
   class={cn("flex h-full w-full", {
-    "tracking-[0.01em]": $appearance?.typeface === "Hanken Grotesk",
-    "font-[350]": $appearance?.typeface === "Sora",
-    "font-[401]": $appearance?.typeface === "Space Grotesk",
-    glassy: $appearance?.skin == AppSkin.Glassy,
+    "tracking-[0.01em]": typeface === "Hanken Grotesk",
+    "font-[350]": typeface === "Sora",
+    "font-[401]": typeface === "Space Grotesk",
+    glassy: $userPreferences?.appearance?.skin == AppSkin.Glassy,
     dark: $appearance?.colorScheme?.isDark
   })}
 >

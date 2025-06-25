@@ -23,6 +23,7 @@
   import { logger } from "$lib/client/components/debug/logger.client";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { ResourceError } from "$lib/client/components/error/errors";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
 
   export let pageContentType: NodeType | undefined = undefined;
 
@@ -331,7 +332,9 @@
           class="text-b2 p-1 border border-brs2 rounded-md overflow-clip max-h-40"
         >
           <NodeThumbnailTweetPreview
-            text={$feedbackPane.focusedClip.body.content}
+            text={$feedbackPane.focusedClip.body.content ??
+              $feedbackPane.focusedClip.text}
+            accessPoint={ResourceAccessPoint.CLIPPER}
           />
         </span>
       {/if}

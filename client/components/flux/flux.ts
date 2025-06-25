@@ -59,6 +59,7 @@ import {
   isRecordId,
   removeDuplicatesFilter
 } from "./resourceStores/resource.utils";
+import { postToParent } from "$lib/client/utils/embed.utils";
 
 class Flux {
   static _instance: Flux | null = null;
@@ -231,6 +232,10 @@ class Flux {
     }
   }
 
+  sendReloadRequestToEmbed() {
+    postToParent({ reload: true });
+  }
+
   async mutation<T extends IResource>(
     resource: Resource,
     params: IMutationParamsv2<T>,
@@ -249,7 +254,36 @@ class Flux {
     });
     try {
       if (!additionalParams?.isCloudOnlyResource || this.isLocalMode) {
-        response = await this.persistence.mutation(resource, params);
+        const mutationPromise = this.persistence.mutation(resource, params);
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => {
+            reject(
+              new Error(
+                "Mutation timeout: Operation took longer than 4 seconds"
+              )
+            );
+          }, 4000);
+        });
+
+        try {
+          response = await Promise.race([mutationPromise, timeoutPromise]);
+        } catch (error) {
+          if (
+            error instanceof Error &&
+            error.message.includes("Mutation timeout")
+          ) {
+            this.sendReloadRequestToEmbed();
+            logger.error({
+              at: "flux.mutation - timeout",
+              resource,
+              params,
+              error
+            });
+            throw error;
+          } else {
+            throw error;
+          }
+        }
       }
       let mutation: IMutation;
       if (
@@ -680,6 +714,7 @@ class Flux {
           message: "Something went wrong. Please try again."
         });
         await this.persistence.reinitialize();
+        this.sendReloadRequestToEmbed();
         this.isSyncUpPending = false;
         return;
       }

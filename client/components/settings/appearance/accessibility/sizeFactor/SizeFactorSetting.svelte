@@ -7,7 +7,6 @@
   let selectedFactor: number = 1;
   function onChange(event: any) {
     $userPreferences.accessibilitySizingFactor = Number(event.detail.factor);
-    $appearance.accessibilitySizingFactor = Number(event.detail.factor);
   }
   onMount(() => {
     selectedFactor = $userPreferences.accessibilitySizingFactor;

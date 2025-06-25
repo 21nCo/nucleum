@@ -38,7 +38,12 @@
     const panelState = uiState.getState(UIState.calendarColumnPanel, {
       scope: UIStateScope.DEVICE
     });
-    return panelState ?? CalendarColumnPanel.Timeline;
+    return (
+      panelState ??
+      ($appStore.product === Product.MEMOTRON
+        ? CalendarColumnPanel.Notes
+        : CalendarColumnPanel.Timeline)
+    );
   }
 
   let containerWidth = 0;

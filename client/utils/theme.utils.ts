@@ -194,6 +194,7 @@ export function resolveIfActiveFgFg(
   bgColorHue: number | undefined,
   appearance: AppearanceStore
 ) {
+  if (!appearance.colorScheme) return false;
   if (
     "isNeverFgFg" in appearance.colorScheme &&
     appearance.colorScheme.isNeverFgFg

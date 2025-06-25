@@ -11,9 +11,9 @@
   }
 </script>
 
-<div class="h-full w-full flex items-center justify-center">
+<div class="h-full w-full flex items-center justify-center overflow-y-auto">
   <button
-    class="bg-bgs2 rounded-md p-2 w-full h-full flex"
+    class="bg-bgs2 rounded-md p-2 w-full h-full flex overflow-y-auto"
     use:focusById={inputId}
   >
     <InlineMarkdownTextInput

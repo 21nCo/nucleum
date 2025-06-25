@@ -34,10 +34,10 @@ export const seedUserPreferences: IUserGlobalPreferences = {
   lastUsedTranscriptionModel: TranscriptionModel.TINy_EN,
   appearance: {
     skin: AppSkin.Clean,
-    theme: Theme.LIGHT,
     isSyncWithSystem: true,
     lightColorSchemeId: defaultColorSchemeId,
     darkColorSchemeId: defaultDarkColorSchemeId,
+    userThemeSetting: Theme.LIGHT,
     isBlurredBgForPopups: false,
     isFixedLeftNav: false,
     typeface: "Sen"
@@ -69,6 +69,7 @@ class UserPreferencesStore extends KeyValueStore<IUserGlobalPreferences> {
       dboDependencies: []
     });
   }
+
   loader(data: IUserGlobalPreferences) {
     if (!data.avatarPicker)
       data.avatarPicker = seedUserPreferences.avatarPicker;
@@ -80,8 +81,9 @@ class UserPreferencesStore extends KeyValueStore<IUserGlobalPreferences> {
     const val = {
       ...data
     };
-    this.modify(val, { isPersist: false });
+    super.loader(val);
   }
+
   setAppearance(x: UserAppearanceSettings) {
     const n = get(this.subject);
     const appearance = { ...n.appearance, ...x };

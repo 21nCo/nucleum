@@ -11,7 +11,6 @@
   import { onMount, createEventDispatcher } from "svelte";
   import { truncateString } from "$lib/shared/utils/text.utils";
   import appearance from "$lib/client/stores/appearance.store";
-  import { retrieveCurrentColors } from "$lib/client/utils/theme.utils";
   import { resizeListener } from "$lib/client/actions/resize.action";
   const dispatch = createEventDispatcher();
 
@@ -28,7 +27,7 @@
     edges: [],
     combos: []
   };
-  const currentColors: any = retrieveCurrentColors($appearance);
+  const currentColors: any = $appearance.colorScheme.colors;
   onMount(() => {
     preProcessData();
     renderGraph();

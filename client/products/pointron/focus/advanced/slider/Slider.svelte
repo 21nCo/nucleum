@@ -9,6 +9,7 @@
   import { AppSkin } from "$lib/client/types/appearance.type";
   import appearance from "$lib/client/stores/appearance.store";
   import { SessionType } from "$lib/client/products/pointron/logs/log.type";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
 
   export let parentBackgroundIndex: number | undefined = 1;
   export let isShowTextBoxByDefault: boolean = false;
@@ -16,6 +17,7 @@
   let inputTextBox: any;
   let isPreventReverseEvent: boolean = false;
   let reverseEventTimeout: any;
+  $: skin = $userPreferences?.appearance?.skin;
   // export let id: any = "dynamic-slider";
   // export let min = 0;
   // export let max = 200;
@@ -763,7 +765,7 @@
         <!-- Above bottom-[2px] value should be same as time-stop__label's value -->
         <!-- Left side of the current time white box(black overlay) -->
         <button
-          class="w-10 h-4 {$appearance.skin === AppSkin.Clean
+          class="w-10 h-4 {skin === AppSkin.Clean
             ? 'bg-gradient-to-r from-transparent ' +
               (parentBackgroundIndex === 1
                 ? 'via-bgs1/50 to-bgs1'
@@ -781,7 +783,7 @@
         </button>
         <!-- Right side of the current time white box(black overlay) -->
         <button
-          class="w-10 h-4 {$appearance.skin === AppSkin.Clean
+          class="w-10 h-4 {skin === AppSkin.Clean
             ? 'bg-gradient-to-l from-transparent ' +
               (parentBackgroundIndex === 1
                 ? 'via-bgs1/50 to-bgs1'
@@ -793,15 +795,13 @@
 
       <!-- Below are the two overlays which are causing that blurry effect on the extremes of the timer-->
       <div
-        class="absolute w-[10%] h-full left-0 top-0 {$appearance.skin ===
-        AppSkin.Clean
+        class="absolute w-[10%] h-full left-0 top-0 {skin === AppSkin.Clean
           ? 'bg-gradient-to-l from-transparent ' +
             (parentBackgroundIndex === 1 ? 'to-bgs1' : 'to-bgs2')
           : ''}"
       />
       <div
-        class="absolute w-[10%] h-full right-0 top-0 {$appearance.skin ===
-        AppSkin.Clean
+        class="absolute w-[10%] h-full right-0 top-0 {skin === AppSkin.Clean
           ? 'bg-gradient-to-r from-transparent ' +
             (parentBackgroundIndex === 1 ? 'to-bgs1' : 'to-bgs2')
           : ''}"

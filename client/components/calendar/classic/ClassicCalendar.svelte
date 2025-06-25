@@ -33,6 +33,8 @@
   import { CacheKey } from "$lib/client/layout/layers/cache/cache.type";
   import MemotronTempCalendarColumn from "../column/MemotronTempCalendarColumn.svelte";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  import ClassicCalendarHeaderLeftOptions from "./ClassicCalendarHeaderLeftOptions.svelte";
+  import { onMount } from "svelte";
   export let panel: CalendarLayout = CalendarLayout.Classic;
 
   let selectedDate = new Date();
@@ -46,9 +48,13 @@
   let indicatorRefreshId: number = new Date().getTime();
   let currentDateFilterForIndicatorData: any = {};
   let isRefreshing = false;
-  $: if (selectedDate && selectedView !== TimeScaleUnit.DAY) {
-    refreshIndicatorData(selectedDate);
-  }
+
+  onMount(() => {
+    setTimeout(() => {
+      refreshIndicatorData(selectedDate);
+    }, 500);
+  });
+
   function resolveSavedScaleSelection() {
     if ($appStore.product === Product.MEMOTRON) return TimeScaleUnit.YEAR;
     const scaleState = uiState.getState(UIState.classicCalendarScale, {
@@ -116,6 +122,7 @@
     date: Date,
     resource?: (Resource | MetaResource)[]
   ) {
+    if (selectedView === TimeScaleUnit.DAY) return;
     console.time("refreshIndicatorData");
     const resourcesForIndicators = resolveResourcesForIndicators();
     if (resourcesForIndicators.length === 0) return;
@@ -169,7 +176,7 @@
           }
         };
       } else if (resource === MetaResource.calendarNotes) {
-        properties.push("metaType", "date");
+        properties.push("metaType", "date", "text");
         filters = {
           metaType: NodeMetaType.CALENDAR_NOTES,
           date: {
@@ -231,13 +238,18 @@
 </script>
 
 <CalendarLayoutView bind:panel>
+  <slot name="header-left-options" slot="header-left-options">
+    <ClassicCalendarHeaderLeftOptions
+      bind:selectedView
+      {isRefreshing}
+      on:scaleSelection={handleScaleSelection}
+    />
+  </slot>
   <slot name="header" slot="header">
     <CalendarHeader
       bind:selectedDate
       bind:selectedView
       {visibleWeekDates}
-      {isRefreshing}
-      on:scaleSelection={handleScaleSelection}
       on:goToToday={() => {
         if (selectedView === TimeScaleUnit.YEAR) {
           yearViewRef?.scrollToToday();
@@ -261,6 +273,7 @@
       }}
     />
   </slot>
+
   <div class="flex h-full">
     <!-- <CalendarSidebar {events} /> -->
     <div class="flex-1 overflow-auto">

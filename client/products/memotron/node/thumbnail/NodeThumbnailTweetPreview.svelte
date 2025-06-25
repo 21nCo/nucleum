@@ -1,13 +1,24 @@
 <script lang="ts">
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import { cn } from "$lib/client/utils/ui.utils";
   export let text: string;
   export let isVertical: boolean = false;
+  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
+  export let isFullExpand: boolean = false;
 </script>
 
 <p
-  class={cn({
-    "flex flex-col": isVertical
-  })}
+  class={cn(
+    {
+      "flex flex-col": isVertical
+    },
+    !isFullExpand && {
+      "line-clamp-3":
+        accessPoint !== ResourceAccessPoint.SELF &&
+        accessPoint !== ResourceAccessPoint.NODE_TRACES,
+      "line-clamp-5": accessPoint === ResourceAccessPoint.NODE_TRACES
+    }
+  )}
 >
   <svg
     xmlns="http://www.w3.org/2000/svg"

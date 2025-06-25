@@ -183,7 +183,7 @@
         >
           {#each properties as property (property.id)}
             <PropertyItem
-              value={values.find(resourceInList(property))?.value}
+              value={values?.find(resourceInList(property))?.value}
               {property}
               {item}
               isPropertiesPaneContext={isRenderAsColumn}

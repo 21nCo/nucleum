@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
+  import { createEventDispatcher, onMount } from "svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import { compareDates, isSameDay } from "$lib/client/utils/time.utils";
@@ -35,6 +35,13 @@
   let scrollTimeout: ReturnType<typeof setTimeout> | undefined;
   let containerRef: HTMLDivElement;
   let isExplicitNavigation = false;
+
+  onMount(() => {
+    setTimeout(
+      () => scrollToYear(selectedDate.getFullYear(), selectedDate.getMonth()),
+      500
+    );
+  });
 
   function getDaysInMonth(year: number, month: number) {
     const firstDay = new Date(year, month, 1);
@@ -111,31 +118,33 @@
     }
   }
 
-  function scrollToYear(year: number) {
+  function scrollToYear(year: number, month?: number) {
     if (!containerRef) return;
-
     const yearIndex = years.findIndex((y) => y.year === year);
+    const isScrollToYear =
+      containerRef?.clientWidth > 900 || month === undefined;
     if (yearIndex === -1) {
       const newYears = loadInitialYears(year);
       years = newYears;
-
       requestAnimationFrame(() => {
-        if (!containerRef) return;
-        const yearHeight = containerRef.scrollHeight / years.length;
-        const centerIndex = Math.floor(INITIAL_RANGE / 2);
-        containerRef.scrollTop = yearHeight * centerIndex;
-        //TODO - scroll to month if month is not visible in the viewport
+        _scroll();
       });
       return;
     }
+    _scroll();
 
-    const yearHeight = containerRef.scrollHeight / years.length;
-    const targetScroll = yearHeight * yearIndex;
-
-    containerRef.scrollTo({
-      top: targetScroll,
-      behavior: "smooth"
-    });
+    function _scroll() {
+      const targetId = isScrollToYear
+        ? `year-${year}`
+        : `month-${year}-${month}`;
+      const targetElement = document.getElementById(targetId);
+      if (targetElement) {
+        targetElement.scrollIntoView({
+          behavior: "smooth",
+          block: isScrollToYear ? "start" : "center"
+        });
+      }
+    }
   }
 
   function onScroll(e: Event) {
@@ -208,7 +217,7 @@
       props?.month ?? selectedDate.getMonth(),
       props?.day ?? selectedDate.getDate()
     );
-    scrollToYear(targetYear);
+    scrollToYear(targetYear, selectedDate.getMonth());
     dispatch("yearChange", { year: targetYear });
     isExplicitNavigation = false;
   }
@@ -241,7 +250,7 @@
 
   $: {
     if (containerRef && selectedDate && isExplicitNavigation) {
-      scrollToYear(selectedDate.getFullYear());
+      scrollToYear(selectedDate.getFullYear(), selectedDate.getMonth());
     }
   }
 
@@ -268,7 +277,7 @@
   on:scroll={onScroll}
 >
   {#each years as { year, months }}
-    <div class="px-6 py-4">
+    <div class="px-6 py-4" id="year-{year}">
       <div class="mb-4">
         <h2 class="text-h2 font-bold ml-3">{year}</h2>
       </div>
@@ -276,7 +285,10 @@
         class="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-x-16 gap-y-12 default-typeface"
       >
         {#each months as { days, monthIndex }}
-          <div class="flex flex-col min-w-[240px]">
+          <div
+            class="flex flex-col min-w-[240px]"
+            id="month-{year}-{monthIndex}"
+          >
             <div class="mb-1 ml-3 font-medium text-fgs1 text-h5">
               {monthNames[monthIndex]}
             </div>
@@ -311,14 +323,13 @@
                   >
                     {date.getDate()}
                     {#if indicatorData.length > 0}
-                      {#key indicatorRefreshId}
-                        <CalendarTileIndicator
-                          {date}
-                          data={indicatorData}
-                          isActive={isSelected}
-                          view="year"
-                        />
-                      {/key}
+                      <CalendarTileIndicator
+                        {date}
+                        {indicatorRefreshId}
+                        data={indicatorData}
+                        isActive={isSelected}
+                        view="year"
+                      />
                     {/if}
                   </button>
                 {:else}

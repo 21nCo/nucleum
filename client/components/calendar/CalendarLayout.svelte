@@ -39,18 +39,23 @@
   <div
     class="flex items-center gap-4 border-b border-brs3 h-[3.2rem] 2k:h-14 px-4 bg-bgs2"
   >
-    {#if $appStore.product === Product.NUCLEUS && dev_enableBirdView}
-      <PanelSwitcher
-        items={panelOptions}
-        bind:value={panel}
-        style={PanelSwitcherStyle.TRAIN}
-        size={Size.sm}
-        on:switch={onPanelSwitch}
-      />
-    {:else}
-      <Text content="Calendar" style={TextStyle.PANEL_HEADING_SMALL} />
-    {/if}
-    <slot name="header" />
+    <header class="grid grid-cols-3 w-full sticky top-0 z-10">
+      <div class="flex items-center gap-4">
+        {#if $appStore.product === Product.NUCLEUS && dev_enableBirdView}
+          <PanelSwitcher
+            items={panelOptions}
+            bind:value={panel}
+            style={PanelSwitcherStyle.TRAIN}
+            size={Size.sm}
+            on:switch={onPanelSwitch}
+          />
+        {:else}
+          <Text content="Calendar" style={TextStyle.PANEL_HEADING_SMALL} />
+        {/if}
+        <slot name="header-left-options" />
+      </div>
+      <slot name="header" />
+    </header>
   </div>
   <div class="flex-1 min-h-0">
     <slot />

@@ -28,14 +28,10 @@ export const fallBackTypefaceString =
 const seedAppearance: AppearanceStore = {
   id: Resource.appearance,
   dataType: StoreDataType.NA,
-  skin: AppSkin.Clean,
   theme: Theme.LIGHT,
   isSyncWithSystem: true,
   userThemeSetting: Theme.LIGHT,
   systemTheme: Theme.LIGHT,
-  accessibilitySizingFactor: 1,
-  isFixedLeftNav: false,
-  typeface: "Sen",
   lightColorSchemeId: defaultLightColorSchemeId,
   darkColorSchemeId: defaultDarkColorSchemeId,
   colorScheme:
@@ -45,15 +41,15 @@ const seedAppearance: AppearanceStore = {
 const cachedAppearance = retrieveLocally(
   Resource.appearance
 ) as AppearanceStore;
-if (cachedAppearance?.typeface?.includes(",")) {
-  cachedAppearance.typeface = seedAppearance.typeface;
-}
+
 export const appearance = initAppearanceStore();
 
 function initAppearanceStore() {
-  const { subscribe, set, update } = writable<AppearanceStore>(
-    cachedAppearance ?? seedAppearance
-  );
+  const defaultData = {
+    ...seedAppearance,
+    ...(cachedAppearance ?? {})
+  };
+  const { subscribe, set, update } = writable<AppearanceStore>(defaultData);
 
   const cache = (store: AppearanceStore) => {
     persistLocally(Resource.appearance, store);
@@ -61,13 +57,10 @@ function initAppearanceStore() {
 
   const persist = (store: AppearanceStore) => {
     dispatchCustomEvent(GlobalEvent.PERSIST_APPEARANCE_USER, {
-      skin: store.skin,
-      theme: store.theme,
-      typeface: store.typeface,
       isSyncWithSystem: store.isSyncWithSystem,
-      lightColorSchemeId: store.lightColorSchemeId,
-      darkColorSchemeId: store.darkColorSchemeId,
-      isFixedLeftNav: store.isFixedLeftNav
+      lightColorSchemeId: store.lightColorSchemeId.toString(),
+      darkColorSchemeId: store.darkColorSchemeId.toString(),
+      userThemeSetting: store.userThemeSetting
     });
     cache(store);
   };
@@ -110,8 +103,17 @@ function initAppearanceStore() {
     update,
     syncAppearanceFromCloud: (x: UserAppearanceSettings) => {
       update((a) => {
-        const cs = colorSchemes.find((cs) => cs.id == x.lightColorSchemeId);
-        const modified = { ...a, ...x, colorScheme: cs as ColorScheme };
+        let modified = {
+          ...a,
+          lightColorSchemeId: x.lightColorSchemeId.toString(),
+          darkColorSchemeId: x.darkColorSchemeId.toString(),
+          isSyncWithSystem: x.isSyncWithSystem,
+          userThemeSetting: x.userThemeSetting
+        };
+        const currentTheme = modified.isSyncWithSystem
+          ? modified.systemTheme
+          : modified.userThemeSetting;
+        modified = switchTheme(currentTheme, modified);
         cache(modified);
         return modified;
       });
@@ -196,14 +198,6 @@ function initAppearanceStore() {
     switchTheme: (theme: Theme) => {
       update((a) => {
         const modified = switchTheme(theme, a);
-        persist(modified);
-        return modified;
-      });
-    },
-
-    setLeftNavFixed: (isFixed: boolean) => {
-      update((a) => {
-        const modified = { ...a, isFixedLeftNav: isFixed };
         persist(modified);
         return modified;
       });

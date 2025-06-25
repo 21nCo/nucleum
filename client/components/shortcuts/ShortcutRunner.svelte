@@ -11,6 +11,8 @@
   import { InteractionMode } from "../settings/interactionMode/interactionMode.type";
   import { ResourceAccessMode } from "../flux/resourceStores/resource.type";
   import { UIStateScope } from "$lib/client/stores/uiState/uiState.type";
+  import context from "$lib/client/stores/context.store";
+  import { Embed } from "$lib/client/types/context.type";
 
   function checkIfSystemShortcut(event: KeyboardEvent) {
     return (
@@ -29,6 +31,7 @@
    * @param event
    */
   const shortcutListener = (event: KeyboardEvent) => {
+    if ($context.embed === Embed.HANDSET) return;
     const target = event.target || event.srcElement;
     const isTextInputSource = isTextElement(target);
     const isSystemShortcut = checkIfSystemShortcut(event);

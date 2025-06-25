@@ -16,13 +16,14 @@
   import Divider from "$lib/client/elements/Divider.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
   import Extras from "../elements/controls/Extras.svelte";
-  import appearance from "$lib/client/stores/appearance.store";
   import SessionNotes from "../notes/SessionNotes.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import { fullScreen } from "$lib/client/components/modal/modal.store";
   import { page } from "$app/stores";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
+
   export let isInline: boolean = false;
   let layout: number = 1;
   let isShowTimeLeftOnMobile: boolean = false;
@@ -83,7 +84,8 @@
 {:else if layout == 1}
   {@const parentBgIndex = isInline && !$activeSession.isQuickStartOn ? 1 : 2}
   <div
-    class="flex w-full h-full {$appearance.skin === AppSkin.Glassy
+    class="flex w-full h-full {$userPreferences?.appearance?.skin ===
+    AppSkin.Glassy
       ? 'glassthick'
       : ''}"
     aria-roledescription="zen mode"
