@@ -63,6 +63,7 @@ export class SurrealPersistence implements IPersistence {
   product: Product = Product.NUCLEUS;
   private isProcessingOperation: boolean = false;
   private processId: string = "";
+  private isReloadRequested: boolean = false;
   private operationQueue: Array<{
     processId: string;
     resolve: () => void;
@@ -399,6 +400,12 @@ export class SurrealPersistence implements IPersistence {
   }
 
   sendReloadRequestToEmbed() {
+    console.log(
+      "sendReloadRequestToEmbed - surreal.local.ts",
+      this.isReloadRequested
+    );
+    if (this.isReloadRequested) return;
+    this.isReloadRequested = true;
     postToParent({ reload: true });
   }
 
@@ -411,11 +418,12 @@ export class SurrealPersistence implements IPersistence {
         reject(
           new Error("Query timeout: Operation took longer than 4 seconds")
         );
-      }, 4000);
+      }, 6000);
     });
 
     try {
       response = await Promise.race([queryPromise, timeoutPromise]);
+      return response;
     } catch (error) {
       if (error instanceof Error && error.message.includes("Query timeout")) {
         this.sendReloadRequestToEmbed();
