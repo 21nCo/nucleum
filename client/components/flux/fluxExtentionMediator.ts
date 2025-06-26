@@ -35,7 +35,9 @@ export async function delegateToFlux(method: IFluxMethod) {
         }
         return result;
       case FluxMethod.SYNC_DOWN:
-        return flux?.syncDown();
+        return flux?.syncDown({
+          isReturnCount: method.args?.isReturnCount ?? false
+        });
       case FluxMethod.RECONCILE:
         return flux?.reconcile({
           counts: method.args.counts

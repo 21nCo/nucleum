@@ -336,7 +336,10 @@
   async function resync() {
     isResyncing = true;
     const result = await extensionFlux({
-      method: FluxMethod.SYNC_DOWN
+      method: FluxMethod.SYNC_DOWN,
+      args: {
+        isReturnCount: true
+      }
     });
     if (result?.counts) {
       await extensionFlux({

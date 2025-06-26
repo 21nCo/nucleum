@@ -41,8 +41,12 @@ export type IFluxMethod =
       args: IFluxKVMergeArgs;
     }
   | {
-      method: FluxMethod.CLONE_DOWN | FluxMethod.SYNC_DOWN;
-    }
+      method: FluxMethod.CLONE_DOWN;
+  }
+  | {
+    method: FluxMethod.SYNC_DOWN;
+    args: IFluxSyncDownArgs;
+  }
   | {
       method: FluxMethod.RECONCILE;
       args: IFluxReconcileArgs;
@@ -56,6 +60,10 @@ interface IFluxReconcileArgs {
   counts: {
     [key: string]: number;
   };
+}
+
+interface IFluxSyncDownArgs {
+  isReturnCount?: boolean;
 }
 
 interface IFluxSelectManyArgs {

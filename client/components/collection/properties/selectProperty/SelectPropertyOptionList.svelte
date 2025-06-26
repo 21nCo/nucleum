@@ -18,7 +18,7 @@
       return options.filter((x) => x.groupId === groupId);
     } else {
       groupLabel = "Ungrouped";
-      return options.filter((x) => !x.groupId);
+      return options.filter((x) => !x.groupId || x.groupId === "$NONE");
     }
   }
 </script>
