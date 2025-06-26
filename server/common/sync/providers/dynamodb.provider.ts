@@ -775,7 +775,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
   async syncDown(body: ISyncDownBody, agent: Agent): Promise<any> {
     try {
       const dynamoClient = this.getDynamoClient(agent);
-      const { lastSyncDown, resources, dapId } = body;
+      const { lastSyncDown, resources, dapId, isReturnCount } = body;
       if (!resources || resources?.length < 1)
         return { error: "No resources found" };
 
@@ -844,11 +844,9 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       console.timeEnd("syncDown-records");
 
       console.time("syncDown-counts");
-      const counts = await this.getResourceCounts(
-        resources,
-        spaceId,
-        dynamoClient
-      );
+      const counts = isReturnCount
+        ? await this.getResourceCounts(resources, spaceId, dynamoClient)
+        : null;
       console.timeEnd("syncDown-counts");
       return {
         latestTimestamp:
@@ -1609,7 +1607,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
 
   /**
    * Gets resource counts using efficient COUNT queries per resource.
-   * Uses DynamoDB's built-in COUNT feature for optimal performance.
+   * Uses DynamoDB's built-in COUNT feature with proper pagination handling for large datasets.
    */
   private async getResourceCounts(
     resources: Resource[],
@@ -1618,18 +1616,30 @@ export class DynamoDBSyncProvider implements ISyncProvider {
   ): Promise<any[]> {
     const countPromises = resources.map(async (resource) => {
       try {
-        const params = {
-          TableName: this.config.tableArn,
-          KeyConditionExpression: "PK = :pk",
-          ExpressionAttributeValues: {
-            ":pk": `${spaceId}#${resource}`
-          },
-          Select: "COUNT" as const
-        };
+        let totalCount = 0;
+        let lastEvaluatedKey = undefined;
 
-        const result = await dynamoClient.send(new QueryCommand(params));
+        do {
+          const params: any = {
+            TableName: this.config.tableArn,
+            KeyConditionExpression: "PK = :pk",
+            ExpressionAttributeValues: {
+              ":pk": `${spaceId}#${resource}`
+            },
+            Select: "COUNT" as const
+          };
+
+          if (lastEvaluatedKey) {
+            params.ExclusiveStartKey = lastEvaluatedKey;
+          }
+
+          const result = await dynamoClient.send(new QueryCommand(params));
+          totalCount += result.Count || 0;
+          lastEvaluatedKey = result.LastEvaluatedKey;
+        } while (lastEvaluatedKey);
+
         const countObj: any = {};
-        countObj[resource] = result.Count || 0;
+        countObj[resource] = totalCount;
         return countObj;
       } catch (e) {
         console.error({ at: "getResourceCounts - error", error: e, resource });

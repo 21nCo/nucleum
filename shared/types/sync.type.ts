@@ -23,6 +23,7 @@ export type ISyncDownBody = {
   lastSyncDown: number;
   resources: Resource[];
   dapId: string;
+  isReturnCount?: boolean;
 };
 
 export type ICloneUpBody = {
