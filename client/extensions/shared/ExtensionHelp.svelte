@@ -77,7 +77,7 @@
     <a href="mailto:hello@21n.org" class="text-aps1">hello@21n.org</a>
   </div>
   <div class="flex flex-col items-center gap-1 mt-auto text-fgs3 text-b3">
-    <div>Memotron web clipper v0.56.6</div>
+    <div>Memotron web clipper v0.57.1</div>
     <div>Last updated: June 2025</div>
   </div>
 </div>
