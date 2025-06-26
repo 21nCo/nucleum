@@ -29,6 +29,7 @@
 
   onMount(() => {
     refreshTailwind();
+    refreshSizing();
     const userPreferencesSub = userPreferences.subscribe((x) => {
       if (!userPreferences.isInitialized) return;
       if (x.appearance.typeface !== typeface) {

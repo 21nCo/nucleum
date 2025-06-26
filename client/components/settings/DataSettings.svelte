@@ -91,7 +91,7 @@
   async function handleResync() {
     try {
       isResyncInProgress = true;
-      const result = await flux.syncDown();
+      const result = await flux.syncDown({ isReturnCount: true });
       if (result?.counts) {
         await flux.reconcile({
           counts: result.counts

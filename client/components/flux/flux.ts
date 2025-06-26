@@ -248,7 +248,7 @@ class Flux {
       params: {
         action: params.action,
         recordCount:
-          "records" in params ? (params.records?.length ?? "NA") : "NA",
+          "records" in params ? params.records?.length ?? "NA" : "NA",
         record: "record" in params ? params.record : "NA"
       }
     });
@@ -330,8 +330,7 @@ class Flux {
       at: "flux.mutation - result",
       resource,
       action: params.action,
-      recordCount:
-        "records" in params ? (params.records?.length ?? "NA") : "NA",
+      recordCount: "records" in params ? params.records?.length ?? "NA" : "NA",
       record: "record" in params ? params.record : "NA",
       response
     });
@@ -611,7 +610,7 @@ class Flux {
           response[0].result
         ) {
           const syncDownData = response[0].result;
-          const countsRawData = response.slice(1).map((x) => x.result);
+          const countsRawData = response.slice(1)?.map((x) => x.result) ?? [];
           let counts: { [key: string]: number } = {};
           countsRawData.forEach((element) => {
             counts = { ...counts, ...element };
@@ -842,7 +841,11 @@ class Flux {
   /**
    * Syncs down from cloud to local.
    */
-  async syncDown(params?: { isInitialSyncdown?: boolean; src?: string }) {
+  async syncDown(params?: {
+    isInitialSyncdown?: boolean;
+    src?: string;
+    isReturnCount?: boolean;
+  }) {
     logger.log({ at: "flux.syncDown", params });
     try {
       if (await determineIfOffline()) return;
@@ -856,7 +859,8 @@ class Flux {
       const result = await this.performSync(SyncMethod.SYNC_DOWN, {
         lastSyncDown,
         resources,
-        dapId
+        dapId,
+        isReturnCount: params?.isReturnCount
       });
       this.isSyncDownPending = false;
       logger.log({ at: "flux.syncDown - result", result });
@@ -1199,7 +1203,10 @@ class Flux {
   async initialSyncDown() {
     try {
       this.propagateSyncStatus(Resource.everything);
-      const result = await this.syncDown({ isInitialSyncdown: true });
+      const result = await this.syncDown({
+        isInitialSyncdown: true,
+        isReturnCount: true
+      });
       await this.loadInMemoryStores();
       this.propagateSyncStatus(Resource.everything, true);
       return result;
