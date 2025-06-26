@@ -59,9 +59,10 @@
         }
       })
       .then((data) => {
-        const recents = uiState
-          .getState(UIState.captureShortcutRecents)
-          ?.map((x) => x.toString());
+        const recents =
+          uiState
+            .getState(UIState.captureShortcutRecents)
+            ?.map((x) => x.toString()) ?? [];
         const _types = data
           .filter((x) => !x.resource || x.resource === Resource.node)
           .map((type: any) => ({

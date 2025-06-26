@@ -46,7 +46,6 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
         key = `${key}_${subVariable}`;
       });
     }
-    key = key.toLowerCase();
     return key;
   }
 

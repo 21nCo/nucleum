@@ -248,42 +248,13 @@ class Flux {
       params: {
         action: params.action,
         recordCount:
-          "records" in params ? params.records?.length ?? "NA" : "NA",
+          "records" in params ? (params.records?.length ?? "NA") : "NA",
         record: "record" in params ? params.record : "NA"
       }
     });
     try {
       if (!additionalParams?.isCloudOnlyResource || this.isLocalMode) {
-        const mutationPromise = this.persistence.mutation(resource, params);
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => {
-            reject(
-              new Error(
-                "Mutation timeout: Operation took longer than 4 seconds"
-              )
-            );
-          }, 4000);
-        });
-
-        try {
-          response = await Promise.race([mutationPromise, timeoutPromise]);
-        } catch (error) {
-          if (
-            error instanceof Error &&
-            error.message.includes("Mutation timeout")
-          ) {
-            this.sendReloadRequestToEmbed();
-            logger.error({
-              at: "flux.mutation - timeout",
-              resource,
-              params,
-              error
-            });
-            throw error;
-          } else {
-            throw error;
-          }
-        }
+        response = await this.persistence.mutation(resource, params);
       }
       let mutation: IMutation;
       if (
@@ -330,7 +301,8 @@ class Flux {
       at: "flux.mutation - result",
       resource,
       action: params.action,
-      recordCount: "records" in params ? params.records?.length ?? "NA" : "NA",
+      recordCount:
+        "records" in params ? (params.records?.length ?? "NA") : "NA",
       record: "record" in params ? params.record : "NA",
       response
     });
