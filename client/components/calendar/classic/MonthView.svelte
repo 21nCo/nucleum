@@ -93,7 +93,7 @@
         )}
         on:click={() => {
           selectedDate = day;
-          dispatch("dateSelect", day);
+          dispatch("dateChange", day);
         }}
       >
         <span class="flex items-center justify-center">

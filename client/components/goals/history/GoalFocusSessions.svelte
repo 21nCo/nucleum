@@ -103,9 +103,10 @@
         <div class="flex flex-col gap-6">
           <div class="flex items-center gap-2">
             <div class="w-3 h-3 rounded-full bg-bgs4 relative z-10" />
-            <div class="text-h4 font-medium text-fgs3">
+            <div class="text-b2 text-fgs3">
               {new Date(date).toLocaleDateString("en-US", {
-                weekday: "long",
+                year: "numeric",
+                weekday: "short",
                 month: "long",
                 day: "numeric"
               })}

@@ -72,15 +72,19 @@
   }
 
   function handleYearChange(event: CustomEvent) {
-    selectedDate = new Date(
-      event.detail.year,
-      selectedDate.getMonth(),
-      selectedDate.getDate()
+    if (!event.detail) return;
+    setDate(
+      new Date(
+        event.detail.year,
+        selectedDate.getMonth(),
+        selectedDate.getDate()
+      )
     );
   }
 
   function handleMonthChange(event: CustomEvent) {
-    selectedDate = event.detail;
+    if (!event.detail) return;
+    setDate(event.detail);
   }
 
   function handleVisibleDatesChange(event: CustomEvent) {
@@ -240,6 +244,15 @@
     selectedView = event.detail;
     width = resolveSavedWidthSelection(selectedView);
   }
+
+  function setDate(date: Date) {
+    selectedDate = date;
+    onDateChange();
+  }
+
+  function onDateChange() {
+    refreshIndicatorData(selectedDate);
+  }
 </script>
 
 <CalendarLayoutView bind:panel>
@@ -255,6 +268,7 @@
       bind:selectedDate
       bind:selectedView
       {visibleWeekDates}
+      on:dateChange={onDateChange}
       on:goToToday={() => {
         if (selectedView === TimeScaleUnit.YEAR) {
           yearViewRef?.scrollToToday();
@@ -287,7 +301,8 @@
           bind:selectedDate
           {indicatorData}
           {indicatorRefreshId}
-          on:dateSelect
+          on:monthChange={handleMonthChange}
+          on:dateChange={onDateChange}
         />
       {:else if selectedView === TimeScaleUnit.WEEK}
         <WeekView
@@ -304,7 +319,7 @@
           {indicatorData}
           {indicatorRefreshId}
           on:yearChange={handleYearChange}
-          on:dateSelect
+          on:dateChange={onDateChange}
         />
       {/if}
     </div>
@@ -339,6 +354,8 @@
                 if (e.detail) {
                   if (selectedView === TimeScaleUnit.YEAR) {
                     yearViewRef?.scrollToDate(e.detail);
+                  } else if (selectedView === TimeScaleUnit.MONTH) {
+                    setDate(e.detail);
                   } else if (selectedView === TimeScaleUnit.WEEK) {
                     //TODO
                     // weekViewRef?.scrollToToday();

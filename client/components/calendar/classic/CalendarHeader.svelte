@@ -47,6 +47,7 @@
           break;
       }
       selectedDate = date;
+      dispatch("dateChange");
     }
   }
 
@@ -67,6 +68,7 @@
           break;
       }
       selectedDate = date;
+      dispatch("dateChange");
     }
   }
 
@@ -82,6 +84,7 @@
       selectedDate = new Date();
     } else {
       selectedDate = new Date();
+      dispatch("dateChange");
     }
   }
 
