@@ -20,6 +20,7 @@
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { logger } from "$lib/client/components/debug/logger.client";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  import { isValidAvatar } from "$lib/client/elements/avatarPicker/avatar.utils";
   export let node: INode | IActiveNode | undefined = undefined;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   export let isExpandedContext: boolean = false;
@@ -61,6 +62,10 @@
         );
         _avatars = resolveAvatar(types);
       }
+      _avatars =
+        typeof _avatars === "object"
+          ? _avatars?.filter(Boolean)?.filter(isValidAvatar)
+          : [];
     } catch (e) {
       logger.error({ at: "NodeAvatar - refreshAvatar", e });
     }
