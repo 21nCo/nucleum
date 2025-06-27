@@ -23,6 +23,7 @@
   export let type: ChartType;
   export let data: any;
   export let additionalOptions: any;
+
   let isShow: boolean = false;
   let stackedBarChartRef: any;
   let defaultOptions: ChartOptions = {
@@ -126,7 +127,7 @@
         },
         ...additionalOptions
       };
-    } else if (type === ChartType.STACKEDAREA) {
+    } else if (type === ChartType.STACKEDAREA || type === ChartType.AREA) {
       options = {
         ...defaultOptions,
         ...additionalOptions,
@@ -170,6 +171,11 @@
             value: currentColors?.aps1!
           }
         }
+      };
+    } else {
+      options = {
+        ...defaultOptions,
+        ...additionalOptions
       };
     }
   }

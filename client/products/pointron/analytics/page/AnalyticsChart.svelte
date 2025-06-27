@@ -206,9 +206,6 @@
         }
       }
     }
-
-    //if (chart.period.scale == TimeScale.DAYS)
-    //console.log({ chart, data, options });
   }
 </script>
 
