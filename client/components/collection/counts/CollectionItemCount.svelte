@@ -22,7 +22,8 @@
 
   function resolveLabel() {
     if (!isShowLabel) return undefined;
-    return nodeCount === 1 ? "item" : "items";
+    const label = item.resource ?? "item";
+    return nodeCount === 1 ? label : `${label}s`;
   }
 </script>
 

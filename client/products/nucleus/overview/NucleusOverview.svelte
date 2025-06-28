@@ -8,6 +8,8 @@
   import { OverviewPanel } from "./overview.type";
   import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
   import NucleusOverviewLayout from "./NucleusOverviewLayout.svelte";
+  import AnalyticsV2 from "../../pointron/analytics/AnalyticsV2.svelte";
+  import MemotronOverview from "../../memotron/overview/MemotronOverview.svelte";
 
   let selectedPanel: OverviewPanel = resolveSavedState() ?? OverviewPanel.FOCUS;
 
@@ -28,13 +30,13 @@
 </script>
 
 <NucleusOverviewLayout>
-  <ComingSoonView />
-
   {#if selectedPanel === OverviewPanel.TITLE}
-    <!--  -->
+    <ComingSoonView />
   {:else if selectedPanel === OverviewPanel.FOCUS}
-    <!-- -->
+    <div class="w-full h-[90vh]">
+      <AnalyticsV2 />
+    </div>
   {:else if selectedPanel === OverviewPanel.MEMORY}
-    <!-- -->
+    <MemotronOverview />
   {/if}
 </NucleusOverviewLayout>

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from "$app/stores";
+  import { PlanType } from "$lib/client/components/subscription/userPlan.type";
   import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
   import { clientStorage } from "$lib/client/persistence/persistence.utils";
   import account, { isRefreshingToken } from "$lib/client/stores/account.store";
@@ -12,6 +13,7 @@
     UserDataMode,
     UserSessionType
   } from "$lib/client/types/account.type";
+  import { Product } from "$lib/client/types/product.type";
   import { postTokenToExtension } from "$lib/client/utils/embed.utils";
   import { wait } from "$lib/client/utils/time.utils";
   import { onMount } from "svelte";
@@ -46,6 +48,16 @@
         // appStore.runAction(Action.EXTENSTION_LOGIN);
         appStore.gotoPath("/ext/login");
         return;
+      }
+      if (
+        $account?.dataMode === UserDataMode.CLOUD &&
+        $appStore.product === Product.NUCLEUS
+      ) {
+        await account.ping({ isLightMode: true });
+        if ($account.plan?.plan !== PlanType.NUCLEUS) {
+          appStore.gotoPath("/error/access-denied");
+          return;
+        }
       }
     }
     isLoggedIn = result;

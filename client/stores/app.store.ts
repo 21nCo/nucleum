@@ -297,7 +297,7 @@ function initAppStore(seed: IAppStore) {
     }
   ) => {
     let action = resolveAction(slug);
-    logger.log({ at: "runAction", action, slug });
+    logger.log({ at: "runAction", action, slug, params });
     if (!action) {
       gotoPath("404");
       return;
@@ -435,7 +435,7 @@ function initAppStore(seed: IAppStore) {
     }
     if (config.isRedirectToClient) {
       const clientRedirect = ctx.isEmbed
-        ? import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host
+        ? (import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host)
         : window.location.origin;
       redirectUri = clientRedirect + "/oauth/" + config.oauth_slug;
     } else {
@@ -884,8 +884,12 @@ function initAppStore(seed: IAppStore) {
         return n;
       });
     },
-    runResourceAction: (resource: Resource, action: ResourceActionType) => {
-      return runAction(resourceAction(resource, action));
+    runResourceAction: (
+      resource: Resource,
+      action: ResourceActionType,
+      params?: any
+    ) => {
+      return runAction(resourceAction(resource, action), params);
     },
     addToRecents: (data: { record: any; type: Resource; timestamp: Date }) => {
       dispatchCustomEvent(GlobalEvent.ADD_TO_RECENTS, data);

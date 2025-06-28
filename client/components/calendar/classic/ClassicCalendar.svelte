@@ -35,6 +35,7 @@
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import ClassicCalendarHeaderLeftOptions from "./ClassicCalendarHeaderLeftOptions.svelte";
   import { onMount } from "svelte";
+  import { Display } from "$lib/client/types/view.type";
   export let panel: CalendarLayout = CalendarLayout.Classic;
 
   let selectedDate = new Date();
@@ -338,7 +339,7 @@
             selectedView === TimeScaleUnit.MONTH ||
             selectedView === TimeScaleUnit.YEAR,
           minWidth: 430,
-          maxWidth: 1000,
+          maxWidth: $view.display === Display.TK ? 1400 : 1000,
           edges: ["left"],
           onResize: onResize
         }}
