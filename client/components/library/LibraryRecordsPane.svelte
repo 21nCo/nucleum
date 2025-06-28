@@ -401,7 +401,11 @@
     let label = "items";
     if (resource === Resource.everything) label = "item";
     else if (selectedSubType && selectedSubType !== "all") {
-      label = ` ${enumToString(selectedSubType).toLowerCase()} ${resource}`;
+      let txt = enumToString(selectedSubType).toLowerCase();
+      if (selectedSubType === NodeType.NODULAR_MARKDOWN.toLowerCase()) {
+        txt = "markdown";
+      }
+      label = ` ${txt} ${resource}`;
     } else label = resource;
     return label + ((data && data.length > 1) || isPlural ? "s" : "");
   }
@@ -672,7 +676,7 @@
         {/if}
       </div>
       <ScrollViewBottomSpacer />
-    {:else if data.length === 0 && ((starredData && starredData.length === 0) || searchQuery)}
+    {:else if data.length === 0 && ((starredData && starredData.length === 0) || !starredData || searchQuery)}
       <EmptyStatusView
         size={Size.lg}
         {...resolveEmptyStateMessage()}

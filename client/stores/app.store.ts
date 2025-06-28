@@ -297,7 +297,7 @@ function initAppStore(seed: IAppStore) {
     }
   ) => {
     let action = resolveAction(slug);
-    logger.log({ at: "runAction", action, slug });
+    logger.log({ at: "runAction", action, slug, params });
     if (!action) {
       gotoPath("404");
       return;
@@ -621,7 +621,8 @@ function initAppStore(seed: IAppStore) {
       timestamp: timestamp.toISOString()
     });
     if (accessMode === ResourceAccessMode.TAB) {
-      tabs.open(id);
+      if (params?.replaceId) tabs.replace(id, params.replaceId);
+      else tabs.open(id);
       return;
     } else if (accessMode === ResourceAccessMode.TAB_IN_BACKGROUND) {
       tabs.addInBackground(id);
@@ -883,8 +884,12 @@ function initAppStore(seed: IAppStore) {
         return n;
       });
     },
-    runResourceAction: (resource: Resource, action: ResourceActionType) => {
-      return runAction(resourceAction(resource, action));
+    runResourceAction: (
+      resource: Resource,
+      action: ResourceActionType,
+      params?: any
+    ) => {
+      return runAction(resourceAction(resource, action), params);
     },
     addToRecents: (data: { record: any; type: Resource; timestamp: Date }) => {
       dispatchCustomEvent(GlobalEvent.ADD_TO_RECENTS, data);

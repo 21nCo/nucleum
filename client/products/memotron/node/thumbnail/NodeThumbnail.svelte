@@ -186,7 +186,10 @@
                 })}
               >
                 {#if item.contentType === NodeType.TWEET && contentPreview}
-                  <NodeThumbnailTweetPreview text={contentPreview} />
+                  <NodeThumbnailTweetPreview
+                    text={contentPreview}
+                    {accessPoint}
+                  />
                 {:else if isTextClip && contentPreview}
                   <TextClipPreview node={item} {contentPreview} {accessPoint} />
                 {:else if contentPreview}
@@ -371,7 +374,11 @@
           <TextClipPreview node={item} {contentPreview} {accessPoint} />
         {:else if item.contentType === NodeType.TWEET}
           <span class="text-fgs3">
-            <NodeThumbnailTweetPreview text={contentPreview} />
+            <NodeThumbnailTweetPreview
+              text={contentPreview}
+              {accessPoint}
+              isFullExpand={true}
+            />
           </span>
         {:else}
           <span class="text-fgs3 userdata">

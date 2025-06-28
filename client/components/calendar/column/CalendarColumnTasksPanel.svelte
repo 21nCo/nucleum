@@ -25,7 +25,10 @@
   import { shortcutsConfig } from "../../shortcuts/shortcuts.config";
   import ComponentShortcutListener from "../../shortcuts/ComponentShortcutListener.svelte";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
   export let date: Date;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.CALENDAR;
   let isRefreshing = false;
@@ -40,8 +43,7 @@
   function refreshShowCompletedTasksState() {
     return (
       uiState.getState(UIState.showCompletedCalendarTasks, {
-        isProductScoped: true,
-        isDeviceScoped: true
+        scope: UIStateScope.DEVICE
       }) ?? false
     );
   }
@@ -86,8 +88,7 @@
   function toggleCompletedTasks() {
     showCompletedTasks = !showCompletedTasks;
     uiState.setState(UIState.showCompletedCalendarTasks, showCompletedTasks, {
-      isProductScoped: true,
-      isDeviceScoped: true
+      scope: UIStateScope.DEVICE
     });
     loadTasks();
   }

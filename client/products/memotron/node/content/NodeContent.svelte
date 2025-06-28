@@ -32,7 +32,8 @@
   import type { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import view from "$lib/client/stores/view.store";
   import context from "$lib/client/stores/context.store";
-  import { resolveHeadingParent } from "../node.utils";
+  import { generateMarkdownText, resolveHeadingParent } from "../node.utils";
+  import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
 
   export let node: IActiveNodeStore;
   export let mdId: string;
@@ -158,6 +159,29 @@
           debounceKey: "body"
         }
       );
+      if (e.detail?.childrenWithStructure && e.detail?.md?.blocks) {
+        const parent = e.detail.childrenWithStructure.find((x: any) =>
+          x.children.some(resourceInList(id))
+        );
+        const childrenIds = parent?.children ?? e.detail.root;
+        if (childrenIds) {
+          const childrenNodes: any[] = e.detail.md.blocks.filter((x: any) =>
+            childrenIds.some(resourceInList(x.id))
+          );
+          const mdText = generateMarkdownText(childrenNodes);
+          const parentId = parent?.id ?? $node?.id;
+          if (parentId) {
+            node.updateBlock(
+              parentId,
+              { text: mdText },
+              {
+                isDebounced: true,
+                debounceKey: "text"
+              }
+            );
+          }
+        }
+      }
     } else if ("label" in block) {
       node.updateBlock(
         id,

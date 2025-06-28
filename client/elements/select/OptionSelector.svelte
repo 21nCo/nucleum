@@ -17,7 +17,7 @@
   export let options: ISelectItem[];
   export let labelProps: InputLabel | undefined = undefined;
   export let selected: ISelectValue | undefined = undefined;
-  export let parentBackgroundIndex: number = 1;
+  export let parentBgIndex: number = 1;
   export let size: Size.lg | Size.md | Size.sm = Size.md;
   export let style: OptionSelectorStyle = OptionSelectorStyle.OUTLINE;
   export let iconOrientation: Orientation = Orientation.Horizontal;
@@ -70,6 +70,7 @@
           {item}
           {size}
           {style}
+          {parentBgIndex}
           {isShowExpandFeedbackOnActive}
           {isExpandOnActiveForIcon}
           {iconOrientation}

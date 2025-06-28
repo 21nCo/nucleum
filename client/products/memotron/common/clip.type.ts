@@ -49,7 +49,15 @@ export enum ClipperExtensionEvent {
   /**
    * Event to trigger closing of toolbar from side panel to content script.
    */
-  TOGGLE_TOOLBAR_VISIBILITY = "TOGGLE_TOOLBAR_VISIBILITY"
+  TOGGLE_TOOLBAR_VISIBILITY = "TOGGLE_TOOLBAR_VISIBILITY",
+  /**
+   * Event to trigger activating of link box.
+   */
+  ACTIVATE_LINK_BOX = "ACTIVATE_LINK_BOX",
+  /**
+   * Event to trigger when link is added. Side panel listens to this event to refresh the collection items view.
+   */
+  ON_COLLECTION_LINK_CHANGES = "ON_COLLECTION_LINK_CHANGES"
 }
 export enum ClipperElementIdentifier {
   MAIN_TWEET_POST = "memotron-clipper-main-tweet-post"

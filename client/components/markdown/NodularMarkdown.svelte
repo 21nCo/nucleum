@@ -236,7 +236,12 @@
     logger.log({ at: "onBlockChanges", event });
     const detail = event.detail;
     propagateChanges(detail.md);
-    dispatch("change", { md, block: detail });
+    dispatch("change", {
+      md,
+      block: detail,
+      root: rootStructure,
+      childrenWithStructure
+    });
   }
   /**
    * Resolves the anchor block when a heading is focused.

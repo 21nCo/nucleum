@@ -4,7 +4,6 @@
   import { properCase } from "$lib/shared/utils/text.utils";
   import { fade, scale } from "svelte/transition";
   import Icon from "../Icon.svelte";
-  import { easeBackOut } from "d3";
   import {
     OptionSelectorStyle,
     type ISelectItem
@@ -14,6 +13,7 @@
   import TextWithHoverTooltip from "../text/TextWithHoverTooltip.svelte";
   import Badge from "../text/Badge.svelte";
   import { tooltip } from "$lib/client/actions/popover.action";
+  import { backOut } from "svelte/easing";
   export let item: ISelectItem;
   export let size: Size.lg | Size.md | Size.sm = Size.md;
   export let isActive: boolean = false;
@@ -21,9 +21,11 @@
   export let iconOrientation: Orientation = Orientation.Horizontal;
   export let isShowExpandFeedbackOnActive = false;
   export let isExpandOnActiveForIcon = false;
+  export let parentBgIndex: number = 1;
 </script>
 
 {#if style === OptionSelectorStyle.TRAIN || style === OptionSelectorStyle.OUTLINE || style === OptionSelectorStyle.ICON}
+  {@const bgShade = `bg-bgs${parentBgIndex + 1}`}
   <button
     class={cn(
       "relative rounded-md min-w-fit whitespace-nowrap border",
@@ -40,7 +42,7 @@
           (style === OptionSelectorStyle.TRAIN ||
             style === OptionSelectorStyle.ICON),
         "opacity-80 cursor-not-allowed": item.isDisabled,
-        "notouch:hover:bg-bgs2 active:bg-bgs2 focus:bg-bgs2 focus:outline-bgs2":
+        [`notouch:hover:${bgShade} active:${bgShade} focus:${bgShade} focus:outline-${bgShade}`]:
           !isActive
       },
       style === OptionSelectorStyle.ICON && {
@@ -87,7 +89,7 @@
           iconOrientation === Orientation.Horizontal ||
           (size === Size.sm && iconOrientation === Orientation.Vertical),
         "portrait:text-base portrait:font-medium": size === Size.md,
-        "text-b2": size === Size.sm,
+        "text-b3": size === Size.sm,
         "text-base": size === Size.lg,
         "text-aps1": isActive,
         "text-fgs3": item.isDisabled
@@ -153,7 +155,7 @@
       {#if isActive}
         <div
           class="w-[0.7rem] h-[0.7rem] bg-aps1 rounded-full"
-          in:scale={{ duration: 200, easing: easeBackOut }}
+          in:scale={{ duration: 200, easing: backOut }}
         />
       {/if}
     </div>

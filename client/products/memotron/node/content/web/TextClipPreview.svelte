@@ -43,7 +43,11 @@
 
 <div
   class={cn("rounded-md text-wrap text-left userdata", {
-    "m-4 p-4 bg--bgs2": accessPoint === ResourceAccessPoint.SELF
+    "m-4 p-4 bg--bgs2": accessPoint === ResourceAccessPoint.SELF,
+    "line-clamp-3":
+      accessPoint !== ResourceAccessPoint.SELF &&
+      accessPoint !== ResourceAccessPoint.NODE_TRACES,
+    "line-clamp-5": accessPoint === ResourceAccessPoint.NODE_TRACES
   })}
 >
   <span

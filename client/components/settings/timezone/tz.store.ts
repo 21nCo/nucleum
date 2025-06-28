@@ -98,8 +98,9 @@ class TimezoneStore extends ResourceStore<ITimezone> {
       tzRecords?: ITimezone[];
     }
   ) {
-    const tzRecords = params?.tzRecords ?? this.get();
+    let tzRecords = params?.tzRecords ?? this.get();
     if (!tzRecords) return timestamp;
+    tzRecords = tzRecords.filter((x) => x.dateUnix);
     const tzStoreSorted = tzRecords.sort((a, b) => b.dateUnix - a.dateUnix);
     const currentTzOffset = tzStoreSorted[0]?.offset;
     let timezoneOffset = tzStoreSorted.find((x) => x.dateUnix < timestamp);

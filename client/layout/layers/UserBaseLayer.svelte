@@ -64,6 +64,8 @@
   import InMemoryCache from "./cache/InMemoryCache.svelte";
   import { resolveProductResources } from "$lib/client/components/flux/resourceStores/resource.utils";
   import UserLayout from "./UserLayout.svelte";
+  import { compareVersions } from "$lib/shared/utils/utils";
+  import { UIStateScope } from "$lib/client/stores/uiState/uiState.type";
 
   const loadingMessages = {
     cloneUp: {
@@ -115,6 +117,8 @@
       // loadingMessage.duration = userDataState.paginateResources.length * 2;
       //TODO - calculate estimated time to paginate using total length of records for each resource and resource type
       await flux.paginateResources(userDataState.paginateResources, 100);
+    } else if (userDataState?.cursors) {
+      await flux.paginateResourcesV2(userDataState.cursors);
     }
     $appLoadingState.isBaseLoaded = true;
     await Promise.all([
@@ -143,7 +147,7 @@
 
   function refreshUIStateDerived() {
     const interactionMode = uiState.getState(Action.MODE_OF_INTERACTION, {
-      isProductScoped: true
+      scope: UIStateScope.PRODUCT
     });
     $appStore.interactionMode = interactionMode;
   }
@@ -202,7 +206,8 @@
     const versionOnClient = $appStore.version;
     await refreshAppStaticData();
     const latestVersion = resolveLatestVersion();
-    if (latestVersion && versionOnClient !== latestVersion) {
+    const comparer = compareVersions(latestVersion, versionOnClient);
+    if (latestVersion && comparer > 0) {
       if ($context.isEmbed) {
         confirmationNotification.notify({
           title: `App update available (v${latestVersion}) 🎉`,
@@ -247,7 +252,8 @@
     logger.info({
       at: "performAppUpdateCheck",
       versionOnClient,
-      latestVersion
+      latestVersion,
+      comparer
     });
 
     function resolveLatestVersion() {
@@ -348,6 +354,7 @@
         paginateResources?: any;
         counts?: any;
       }
+    | { cursors?: any }
     | undefined
   > {
     if ($account.dataMode === UserDataMode.LOCAL) {
@@ -363,10 +370,14 @@
     } else if ($account.sessionType === UserSessionType.RETURNING) {
       if (initState === 0) {
         loadingMessage = loadingMessages.cloneDown;
-        const result = await flux.initializeEssentialDataForCloudUser();
-        if (typeof result === "object" && result?.ifrCloneResult) {
-          return result.ifrCloneResult;
+        const result = await flux.initializeEssentialDataForCloudUserV2();
+        if (typeof result === "object" && result?.cursors) {
+          return result;
         }
+        // const result = await flux.initializeEssentialDataForCloudUser();
+        // if (typeof result === "object" && result?.ifrCloneResult) {
+        //   return result.ifrCloneResult;
+        // }
       } else {
         loadingMessage = loadingMessages.syncDown;
         return flux.initialSyncDown();

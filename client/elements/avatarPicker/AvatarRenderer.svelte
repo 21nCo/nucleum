@@ -42,55 +42,58 @@
   }
 </script>
 
-{#if "file" in avatar && avatar.file}
-  <FileView
-    id={avatar.file}
-    class={cn(isHoverEnabled && "hover:scale-[1.2] transition-transform", {
-      "w-4 h-4": size === Size.sm,
-      "w-6 h-6": size === Size.md,
-      "w-8 h-8": size === Size.lg,
-      [`w-[${size}px] h-[${size}px]`]: typeof size === "number"
-    })}
-  />
-  <!-- <img
+{#if avatar && typeof avatar === "object"}
+  {#if "file" in avatar && avatar.file && avatar.file !== "$NONE"}
+    <FileView
+      id={avatar.file}
+      class={cn(isHoverEnabled && "hover:scale-[1.2] transition-transform", {
+        "w-4 h-4": size === Size.sm,
+        "w-6 h-6": size === Size.md,
+        "w-8 h-8": size === Size.lg,
+        [`w-[${size}px] h-[${size}px]`]: typeof size === "number"
+      })}
+    />
+    <!-- <img
     src={avatar.file}
     alt={avatar.name}
     class={cn(isHoverEnabled && "hover:scale-[1.2] transition-transform")}
   /> -->
-{:else if "code" in avatar && avatar.code}
-  {#if avatar.type === AvatarType.ICON}
-    {#if dev_iOSTempRatingFallback}
-      <Icon icon={avatar.isFilled ? "ph:star-fill" : "ph:star"} />
-    {:else}
+  {:else if "code" in avatar && avatar.code && avatar.code !== "$NONE"}
+    {#if avatar.type === AvatarType.ICON}
+      {#if dev_iOSTempRatingFallback}
+        <Icon icon={avatar.isFilled ? "ph:star-fill" : "ph:star"} />
+      {:else}
+        <span
+          class={cn(
+            "material-symbols-rounded",
+            isHoverEnabled && "hover:scale-[1.2] transition-transform"
+            // avatar.color === "bw" && "text-fgs2"
+          )}
+          style:font-variation-settings={`'FILL' ${
+            avatar?.isFilled ? 1 : 0
+          }, 'wght' 400, 'GRAD' 0, 'opsz' 20`}
+          style:color={avatar?.color !== "bw" ? avatar?.color : ""}
+          style:font-size={fontSize}
+        >
+          {@html avatar.code}
+        </span>
+      {/if}
+    {:else if avatar.type === AvatarType.EMOJI && avatar.code}
       <span
         class={cn(
-          "material-symbols-rounded",
+          $context.os !== OperatingSystem.IOS &&
+            $context.os !== OperatingSystem.MACOS &&
+            "noto-color-emoji-mod",
           isHoverEnabled && "hover:scale-[1.2] transition-transform"
-          // avatar.color === "bw" && "text-fgs2"
         )}
-        style:font-variation-settings={`'FILL' ${
-          avatar?.isFilled ? 1 : 0
-        }, 'wght' 400, 'GRAD' 0, 'opsz' 20`}
-        style:color={avatar?.color !== "bw" ? avatar?.color : ""}
-        style:font-size={fontSize}
+        style="font-size: {fontSize};"
       >
         {@html avatar.code}
       </span>
     {/if}
-  {:else if avatar.type === AvatarType.EMOJI && avatar.code}
-    <span
-      class={cn(
-        $context.os !== OperatingSystem.IOS &&
-          $context.os !== OperatingSystem.MACOS &&
-          "noto-color-emoji-mod",
-        isHoverEnabled && "hover:scale-[1.2] transition-transform"
-      )}
-      style="font-size: {fontSize};"
-    >
-      {@html avatar.code}
-    </span>
   {/if}
 {/if}
+
 <svelte:head>
   <link
     href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji+Compat&display=swap"

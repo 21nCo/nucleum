@@ -22,14 +22,13 @@
       return;
     }
     if (item.path) appStore.gotoPath(item.path);
-    else if (item.resourceId)
-      appStore.openResource(item.resourceId, ResourceAccessMode.POP, {
-        replaceId: items[items.length - 1].id
+    else if (item.resourceId) {
+      const lastItem = items[items.length - 1];
+      const replaceId = lastItem.id ?? lastItem.resourceId;
+      appStore.resourceClickHandler(e, item.resourceId, {
+        replaceId
       });
-    // appStore.gotoResource(
-    //   item.resourceId.split(":")[0] as Resource,
-    //   item.resourceId
-    // );
+    }
   }
 </script>
 

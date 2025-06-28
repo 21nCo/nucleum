@@ -351,13 +351,18 @@ export class ResourceStore<T extends IResource> implements IStore {
     properties: Partial<T>,
     additionalParams?: IResourceMutationParams
   ) {
-    if (!this.currentUserId || typeof this.currentUserId != "string") {
+    if (
+      !additionalParams?.isModifyAsSystem &&
+      (!this.currentUserId || typeof this.currentUserId != "string")
+    ) {
       this.currentUserId = await resolveCurrentUserId();
     }
-    const modificationProps = {
-      modifiedBy: this.currentUserId,
-      modifiedAt: new Date().toISOString()
-    };
+    const modificationProps = additionalParams?.isModifyAsSystem
+      ? {}
+      : {
+          modifiedBy: this.currentUserId,
+          modifiedAt: new Date().toISOString()
+        };
     const activeResource = activeResources.get(id.toString());
     if (activeResource && !additionalParams?.isPreventBackPropagation) {
       activeResource.update((prev: T) => ({
@@ -381,6 +386,8 @@ export class ResourceStore<T extends IResource> implements IStore {
   }
 
   /**
+   * @deprecated - use modify instead with isModifyAsSystem: true in additionalParams
+   *
    * Modifies the resource with given id as a system i.e. modifiedBy and modifiedAt are not set - with the properties passed and persists the change. If an active resource is present, it will be updated with the new properties.
    * @param id id of the resource to be updated
    * @param properties properties to be updated

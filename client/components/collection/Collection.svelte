@@ -478,20 +478,22 @@
         }
       });
     } else if (e.detail === "createNew" || e.detail === "createMultiple") {
+      let params = {};
       if (e.detail === "createMultiple") {
-        appStore.toggleSearchParam({
+        params = {
           [AppSearchParam.LINK]: $collection.id.toString(),
           [AppSearchParam.BULK]: true
-        });
+        };
       } else {
-        appStore.toggleSearchParam({
+        params = {
           [AppSearchParam.LINK]: $collection.id.toString()
-        });
+        };
       }
       setTimeout(() => {
-        //TODO - collection resource type instead of node
         const resource = $collection.resource ?? Resource.node;
-        appStore.runResourceAction(resource, ResourceActionType.CREATE);
+        appStore.runResourceAction(resource, ResourceActionType.CREATE, {
+          searchParams: params
+        });
       }, 10);
     }
   }

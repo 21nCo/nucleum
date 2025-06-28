@@ -4,7 +4,7 @@ import { IMutation, PersistenceActionType } from "$lib/client/types/data.type";
 
 export function createMutation(overrides = {}): IMutation {
   return {
-    id: `test-${Date.now()}`,
+    id: `test-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`,
     timestamp: Date.now(),
     ...overrides
   };

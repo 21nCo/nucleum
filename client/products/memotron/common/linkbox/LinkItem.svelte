@@ -86,7 +86,7 @@
   }
 </script>
 
-{#if item?.label}
+{#if item?.label || item?.text}
   <div
     use:popover={{
       content: ContextMenu,
@@ -110,7 +110,7 @@
   >
     <Tag
       {id}
-      label={item?.label}
+      label={item?.label || item?.text}
       {parentBgIndex}
       {isActive}
       isShowExpandFeedbackOnActive={true}

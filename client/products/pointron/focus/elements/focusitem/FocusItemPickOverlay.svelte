@@ -31,11 +31,9 @@
 
   $: isAdded = $focusItemsStore.items.some(resourceInList(item.id));
 
-  $: isInprogress = resolveIfCurrentFocusItem(
-    $focusItemsStore,
-    item.id,
-    $currentFocusItem
-  );
+  $: isInprogress =
+    $activeSession.isSessionRunning &&
+    resolveIfCurrentFocusItem($focusItemsStore, item.id, $currentFocusItem);
 
   async function onAdd(e: any) {
     e.stopPropagation();

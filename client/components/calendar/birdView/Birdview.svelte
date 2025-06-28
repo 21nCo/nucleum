@@ -51,7 +51,7 @@
   let thresholdCrossed = false;
   let cursorDirection: "right" | "left" | "bidirectional" | "default" =
     "default";
-  let mode: Modes = Modes.DAYS;
+  export let mode: Modes = Modes.DAYS;
   const zones = [
     "6am-9am",
     "9am-12pm",
@@ -826,7 +826,7 @@
     class="absolute w-full p-4 bottom-0 flex items-center justify-center pointer-events-none"
   >
     <div class="pointer-events-auto">
-      <PanelSwitcher
+      <!-- <PanelSwitcher
         style={PanelSwitcherStyle.TRAIN}
         items={Object.values(Modes)}
         size={Size.sm}
@@ -836,7 +836,7 @@
           await tick();
           goToToday();
         }}
-      />
+      /> -->
     </div>
   </div>
 </div>

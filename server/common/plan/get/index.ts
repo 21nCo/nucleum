@@ -1,8 +1,7 @@
-import { performQueryOnMasterDb } from "$lib/server/surrealHelpers";
-import { resolvePlanQuery } from "../plan.utils";
+import { DatabaseProviderFactory } from "$lib/server/database/providers";
 
 export async function get(userId: string) {
-  const query = resolvePlanQuery(userId);
-  const response = await performQueryOnMasterDb(query);
-  return response;
+  const provider = DatabaseProviderFactory.getProvider();
+  const response = await provider.getUserAndPlan(userId);
+  return [{ result: response }];
 }

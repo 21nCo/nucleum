@@ -57,7 +57,9 @@ export class ServerlessRegionalStack extends NestedStack {
     let lambdaEnvVars = {
       ...this.env.lambdaEnv,
       USE_THIRDPARTY_AUTH_METHOD: "true",
-      URL_EXPIRATION_TIME: "300"
+      URL_EXPIRATION_TIME: "300",
+      DYNAMODB_ACCOUNT_ID:
+        this.env.lambdaEnv.DYNAMODB_ACCOUNT_ID || this.account
     };
     console.log("initializing ServerlessRegionalStack - ", {
       region: this.region,
@@ -206,12 +208,15 @@ export class ServerlessRegionalStack extends NestedStack {
 
   resolveDynamoTables() {
     let dynamoTables: ITable[] = [];
+    const dynamoAccount =
+      this.env.lambdaEnv.DYNAMODB_ACCOUNT_ID || this.account;
+
     this.env.allRegionList.forEach((region) => {
       dynamoTables.push(
         Table.fromTableArn(
           this,
           `userDynamoTable-${region}`,
-          `arn:aws:dynamodb:${region}:${this.account}:table/${this.env.lambdaEnv.DYNAMODB_TABLE_PREFIX}-${region}`
+          `arn:aws:dynamodb:${region}:${dynamoAccount}:table/${this.env.lambdaEnv.DYNAMODB_TABLE_PREFIX}-${region}`
         )
       );
     });

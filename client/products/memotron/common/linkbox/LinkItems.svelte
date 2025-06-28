@@ -122,7 +122,8 @@
         id={item}
         {parentBgIndex}
         {accessPoint}
-        isAlwaysShowRemove={accessPoint === ResourceAccessPoint.CAPTURE}
+        isAlwaysShowRemove={accessPoint === ResourceAccessPoint.CAPTURE ||
+          accessPoint === ResourceAccessPoint.CLIPPER}
         isRemovable={!isReadOnlyMode &&
           (accessPoint !== ResourceAccessPoint.SELF ||
             (accessPoint === ResourceAccessPoint.SELF &&

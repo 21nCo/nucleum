@@ -190,7 +190,7 @@ class AccountStore extends ObservableStore<
         message: `Deleting account...`
       });
       const result = await performApiCall(
-        "account/n/deleteAccount",
+        "v2/account/deleteAccount",
         "POST",
         {}
       );
@@ -221,7 +221,7 @@ class AccountStore extends ObservableStore<
     }
   }
 
-  async ping() {
+  async ping(params?: { isLightMode?: boolean }) {
     this.postToEmbed();
     const isOffline = await determineIfOffline();
     if (isOffline) return;
@@ -245,7 +245,9 @@ class AccountStore extends ObservableStore<
         n.plan = user.userPlan;
         return n;
       });
-      await this.handlePlanStatus(user.userPlan);
+      if (!params?.isLightMode) {
+        await this.handlePlanStatus(user.userPlan);
+      }
     }
     return response;
   }

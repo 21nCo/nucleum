@@ -9,7 +9,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { getContext, onMount } from "svelte";
+  import { getContext } from "svelte";
   import Resources from "../../../../components/record/Records.svelte";
   import LinkThumbnailItems from "../links/LinkThumbnailItems.svelte";
   import { nodeStore, type IActiveNodeStore } from "../node.store";
@@ -25,6 +25,7 @@
   import { focusById } from "$lib/client/actions/focusById.action";
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   import RightPaneOverviewMetricCard from "./RightPaneOverviewMetricCard.svelte";
+  import Icon from "$lib/client/elements/Icon.svelte";
 
   export let node: IActiveNodeStore;
   export let pane: NodeRightPaneType | undefined = undefined;
@@ -35,16 +36,12 @@
     if ($node.notes) node.modify({ notes: $node.notes });
   }
 
-  onMount(async () => {
-    await refreshLinks();
-  });
-
-  async function refreshLinks() {
-    if (!$node.links) return;
+  async function refreshLinks(linksParam: INodeLinkThumb[] | undefined) {
+    if (!linksParam) return;
     const result = await nodeStore.selectMany(
       {
         filters: {
-          id: $node.links.map((x) => x.linkedTo.toString())
+          id: linksParam.map((x) => x.linkedTo.toString())
         }
       },
       {
@@ -56,7 +53,7 @@
       return;
     }
     links = result.slice(0, 2).map((x: INode) => ({
-      link: $node.links?.find((y) => isSameResource(y.linkedTo, x.id)),
+      link: linksParam?.find((y) => isSameResource(y.linkedTo, x.id)),
       node: x
     }));
   }
@@ -148,24 +145,28 @@
         </span>
       </span>
       <div class="w-full min-h-32 flex flex-col gap-3 overflow-auto">
-        {#if links && links.length > 0}
-          <LinkThumbnailItems
-            {links}
-            accessPointId={node.id}
-            on:click={onLinkClick}
-            accessPoint={ResourceAccessPoint.DEFAULT_RIGHT_PANE_LINKS}
-          />
-        {:else}
-          <span
-            class="flex w-full justify-center items-center text-fgs3 text-b3 h-1/2"
-          >
-            No links found
-          </span>
-        {/if}
+        {#await refreshLinks($node.links)}
+          <Icon icon="svg-spinners:3-dots-fade" />
+        {:then}
+          {#if links && links.length > 0}
+            <LinkThumbnailItems
+              {links}
+              accessPointId={node.id}
+              on:click={onLinkClick}
+              accessPoint={ResourceAccessPoint.DEFAULT_RIGHT_PANE_LINKS}
+            />
+          {:else}
+            <span
+              class="flex w-full justify-center items-center text-fgs3 text-b3 h-1/2"
+            >
+              No links found
+            </span>
+          {/if}
+        {/await}
       </div>
     </div>
   {/if}
-  <div class="flex flex-col gap-2 items-start w-full flex-1">
+  <div class="flex flex-col gap-2 items-start w-full flex-1 min-h-0 max-h-1/2">
     <span class="flex flex-row justify-between items-center w-full">
       <span class="flex flex-row gap-1 items-center">
         <Text content="Side notes" style={TextStyle.SECTION_HEADING} />
@@ -179,7 +180,7 @@
       </span>
     </span>
     <button
-      class="flex w-full flex-1 bg-bgs2 bg-opacity-60 rounded-md p-4"
+      class="flex w-full flex-1 bg-bgs2 bg-opacity-60 rounded-md p-4 overflow-y-auto"
       use:focusById={notesInputId}
     >
       <InlineMarkdownTextInput

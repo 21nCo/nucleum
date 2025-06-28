@@ -54,7 +54,12 @@ import { FluxMethod, type IFluxMethod } from "./flux.type";
 import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
 import { TacoActions } from "$lib/client/products/memotron/taco/taco.types";
 import { interceptSurrealResponse } from "$lib/client/utils/utils";
-import { determineResourceType } from "./resourceStores/resource.utils";
+import {
+  determineResourceType,
+  isRecordId,
+  removeDuplicatesFilter
+} from "./resourceStores/resource.utils";
+import { postToParent } from "$lib/client/utils/embed.utils";
 
 class Flux {
   static _instance: Flux | null = null;
@@ -197,9 +202,8 @@ class Flux {
         .filter((x) => x.dataType === StoreDataType.KVO)
         .map((x) => {
           const k = x as IObservableStore<any>;
-          return { id: k.id, ...k.seed };
+          return { id: `kv:${k.id}`, ...k.seed };
         });
-      data = [...data, { id: "mutationMap" }];
       await this.seed();
       const params: IInsertMutation<any> = {
         records: data,
@@ -226,6 +230,10 @@ class Flux {
     } catch (e) {
       logger.error({ at: "flux.seed", error: e });
     }
+  }
+
+  sendReloadRequestToEmbed() {
+    postToParent({ reload: true });
   }
 
   async mutation<T extends IResource>(
@@ -574,7 +582,7 @@ class Flux {
           response[0].result
         ) {
           const syncDownData = response[0].result;
-          const countsRawData = response.slice(1).map((x) => x.result);
+          const countsRawData = response.slice(1)?.map((x) => x.result) ?? [];
           let counts: { [key: string]: number } = {};
           countsRawData.forEach((element) => {
             counts = { ...counts, ...element };
@@ -591,11 +599,11 @@ class Flux {
 
   async remoteRelay(body: IFluxMethod) {
     try {
-      const result = await performApiCall(`relay`, "POST", body);
+      const result = await performApiCall("v2/account/relay", "POST", body);
       if (result?.ok) {
         const response = await result.json();
         logger.log({ at: "flux.remoteRelay", body, response });
-        return response;
+        return [{ result: response }];
       }
     } catch (e) {
       logger.error({ at: "flux.remoteRelay", body, error: e });
@@ -677,6 +685,7 @@ class Flux {
           message: "Something went wrong. Please try again."
         });
         await this.persistence.reinitialize();
+        this.sendReloadRequestToEmbed();
         this.isSyncUpPending = false;
         return;
       }
@@ -804,7 +813,11 @@ class Flux {
   /**
    * Syncs down from cloud to local.
    */
-  async syncDown(params?: { isInitialSyncdown?: boolean; src?: string }) {
+  async syncDown(params?: {
+    isInitialSyncdown?: boolean;
+    src?: string;
+    isReturnCount?: boolean;
+  }) {
     logger.log({ at: "flux.syncDown", params });
     try {
       if (await determineIfOffline()) return;
@@ -818,7 +831,8 @@ class Flux {
       const result = await this.performSync(SyncMethod.SYNC_DOWN, {
         lastSyncDown,
         resources,
-        dapId
+        dapId,
+        isReturnCount: params?.isReturnCount
       });
       this.isSyncDownPending = false;
       logger.log({ at: "flux.syncDown - result", result });
@@ -970,50 +984,9 @@ class Flux {
         if (records.length === _limit) {
           needsPagination.push(resource);
         }
-        console.time(`cloneDown - ${resource}`);
-        if (!this.isExtensionEnvironment && resource !== Resource.kv) {
-          // dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
-          //   subMessage: `Syncing ${resource}s...`
-          // });
-        }
-        if (resource === Resource.kv) {
-          records = records.filter(
-            (x: any) => !x.id.toString().includes("local")
-          );
-        }
-        const mutationResult = await this.persistence.mutation(
-          resource as Resource,
-          {
-            records,
-            action:
-              params?.isReconciliation ||
-              resource === Resource.kv ||
-              resource === Resource.link
-                ? PersistenceActionType.INSERT
-                : PersistenceActionType.BULK_INSERT
-          }
-        );
-        logger.log({
-          at: "flux.cloneDown - result",
-          resource,
-          records,
-          mutationResult
+        await this.processCloneDown(resource, records, {
+          isReconciliation: params?.isReconciliation
         });
-        if (!mutationResult) {
-          const fallbackResult = await this.persistence.mutation(
-            resource as Resource,
-            {
-              records,
-              action: PersistenceActionType.INSERT
-            }
-          );
-          logger.log({
-            at: "flux.cloneDown - fallbackResult",
-            resource,
-            fallbackResult
-          });
-        }
-        console.timeEnd(`cloneDown - ${resource}`);
       }
       console.log("needsPagination", needsPagination);
       return { paginateResources: needsPagination };
@@ -1030,6 +1003,103 @@ class Flux {
     }
   }
 
+  private async processCloneDown(
+    resource: Resource,
+    records: any,
+    params: {
+      isReconciliation?: boolean;
+    }
+  ) {
+    try {
+      console.time(`cloneDown - ${resource}`);
+      if (!this.isExtensionEnvironment && resource !== Resource.kv) {
+        // dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
+        //   subMessage: `Syncing ${resource}s...`
+        // });
+      }
+      if (resource === Resource.kv) {
+        records = records.filter(
+          (x: any) => x.id && !x.id?.toString()?.includes("local")
+        );
+      } else if (resource === Resource.link) {
+        records = records
+          .map((x: any) => ({
+            ...x,
+            in: x.in.toString(),
+            out: x.out.toString()
+          }))
+          .filter((x: any) => isRecordId(x.in) && isRecordId(x.out))
+          .filter(removeDuplicatesFilter);
+      }
+      const mutationResult = await this.persistence.mutation(
+        resource as Resource,
+        {
+          records,
+          action:
+            params?.isReconciliation ||
+            resource === Resource.kv ||
+            resource === Resource.link
+              ? PersistenceActionType.INSERT
+              : PersistenceActionType.BULK_INSERT
+        }
+      );
+      logger.log({
+        at: "flux.cloneDown - result",
+        resource,
+        records,
+        mutationResult
+      });
+      if (!mutationResult) {
+        const fallbackResult = await this.persistence.mutation(
+          resource as Resource,
+          {
+            records,
+            action: PersistenceActionType.INSERT
+          }
+        );
+        logger.log({
+          at: "flux.cloneDown - fallbackResult",
+          resource,
+          fallbackResult
+        });
+      }
+      console.timeEnd(`cloneDown - ${resource}`);
+    } catch (e) {
+      logger.error({ at: "flux.processCloneDown", error: e });
+      console.timeEnd(`cloneDown - ${resource}`);
+    }
+  }
+
+  private async cloneDownV2(
+    resources: Resource[],
+    params?: {
+      isReconciliation?: boolean;
+      limit?: number;
+    }
+  ): Promise<{ cursors?: any } | undefined> {
+    logger.log({ at: "flux.cloneDownv2", resources });
+    try {
+      if (!resources || resources.length === 0 || (await determineIfOffline()))
+        return;
+      const _limit = params?.limit ?? this.cloneDownLimit;
+      const result = await this.performSync(SyncMethod.CLONE_DOWN_V2, {
+        resources,
+        limit: _limit,
+        isExtension: this.isExtensionEnvironment
+      });
+      for (let [index, resource] of resources.entries()) {
+        const records = result.data[resource] ?? result.data[index];
+        if (!records || !isValidArrayWithData(records)) continue;
+        await this.processCloneDown(resource, records, {
+          isReconciliation: params?.isReconciliation
+        });
+      }
+      return result;
+    } catch (e) {
+      logger.error({ at: "flux.cloneDownv2", error: e });
+    }
+  }
+
   /**
    * Initializes essential data for cloud user. This is called for a fresh login of a returning cloud user.
    * 1. Clones down all finite resources
@@ -1037,6 +1107,7 @@ class Flux {
    */
   async initializeEssentialDataForCloudUser() {
     try {
+      logger.info({ at: "flux.initializeEssentialDataForCloudUser" });
       this.propagateSyncStatus(Resource.everything);
       const resources = this.resolveFIRResources();
       const result = await this.cloneDown(resources, {
@@ -1050,16 +1121,7 @@ class Flux {
       const ifrResult = await this.cloneDown(ifrResources, {
         limit: 100
       });
-      await this.loadInMemoryStores();
-      await this.persistence.mutation(Resource.kv, {
-        record: {
-          id: "kv:local",
-          lastSyncDown: new Date().getTime(),
-          lastSyncUp: new Date().getTime()
-        },
-        action: PersistenceActionType.MERGE
-      });
-      this.propagateSyncStatus(Resource.everything, true);
+      await this.afterInitialize();
       return {
         finiteCloneResult: result,
         ifrCloneResult: ifrResult
@@ -1070,13 +1132,53 @@ class Flux {
     }
   }
 
+  async initializeEssentialDataForCloudUserV2() {
+    try {
+      logger.info({ at: "flux.initializeEssentialDataForCloudUserV2" });
+      this.propagateSyncStatus(Resource.everything);
+      const resources = this.resolveFIRResources();
+      const result = await this.cloneDownV2(resources, {
+        limit: 1000
+      });
+      if (!result) return false;
+      if (result.cursors) {
+        await this.paginateResourcesV2(result.cursors);
+      }
+      const ifrResources = this.resolveIFRBootResources();
+      const ifrResult = await this.cloneDownV2(ifrResources, {
+        limit: 100
+      });
+      await this.afterInitialize();
+      return ifrResult;
+    } catch (e) {
+      logger.error({ at: "flux.cloneDownEssentials", error: e });
+      this.propagateSyncStatus(Resource.everything, true);
+    }
+  }
+
+  private async afterInitialize() {
+    await this.loadInMemoryStores();
+    await this.persistence.mutation(Resource.kv, {
+      record: {
+        id: "kv:local",
+        lastSyncDown: new Date().getTime(),
+        lastSyncUp: new Date().getTime()
+      },
+      action: PersistenceActionType.MERGE
+    });
+    this.propagateSyncStatus(Resource.everything, true);
+  }
+
   /**
    * Performs initial sync down for a returning cloud user on app load.
    */
   async initialSyncDown() {
     try {
       this.propagateSyncStatus(Resource.everything);
-      const result = await this.syncDown({ isInitialSyncdown: true });
+      const result = await this.syncDown({
+        isInitialSyncdown: true,
+        isReturnCount: true
+      });
       await this.loadInMemoryStores();
       this.propagateSyncStatus(Resource.everything, true);
       return result;
@@ -1117,11 +1219,15 @@ class Flux {
       resourcesForReconciliation
     });
     if (resourcesForReconciliation.length > 0) {
-      const result = await this.cloneDown(resourcesForReconciliation, {
+      logger.info({
+        at: "flux.reconcile - reconciliation started",
+        resourcesForReconciliation
+      });
+      const result = await this.cloneDownV2(resourcesForReconciliation, {
         isReconciliation: true
       });
-      if (result?.paginateResources) {
-        await this.paginateResources(result.paginateResources);
+      if (result?.cursors) {
+        await this.paginateResourcesV2(result.cursors);
       }
       if (!params?.reCloneAll) {
         this.performSync(SyncMethod.RECONCILE, {
@@ -1158,6 +1264,7 @@ class Flux {
       this.propagateSyncStatus(resource, true);
     }
   }
+
   async paginateResource(resource: Resource, offset: number, limit: number) {
     this.propagateSyncStatus(resource);
     const result = await this.performSync(SyncMethod.CLONE_DOWN_PAGINATE, {
@@ -1190,6 +1297,49 @@ class Flux {
       }
       if (records.length === limit) {
         await this.paginateResource(resource, offset + limit, limit);
+      }
+    }
+  }
+
+  async paginateResourcesV2(cursors: { [key: string]: string }) {
+    for (let resource of Object.keys(cursors)) {
+      const cursor = cursors[resource];
+      if (!cursor) continue;
+      this.propagateSyncStatus(resource as Resource);
+      await this.paginateResourceV2(resource as Resource, cursor);
+      this.propagateSyncStatus(resource as Resource, true);
+    }
+  }
+
+  async paginateResourceV2(resource: Resource, cursor: string) {
+    if (!cursor) return;
+    this.propagateSyncStatus(resource);
+    const result = await this.performSync(SyncMethod.CLONE_DOWN_PAGINATE_V2, {
+      resource,
+      isExtension: this.isExtensionEnvironment,
+      cursor
+    });
+
+    if (isValidArrayWithData(result.data)) {
+      const records = result.data;
+      const mutationResult = await this.persistence.mutation(
+        resource as Resource,
+        {
+          records,
+          action:
+            resource === Resource.kv || resource === Resource.link
+              ? PersistenceActionType.INSERT
+              : PersistenceActionType.BULK_INSERT
+        }
+      );
+      if (!mutationResult) {
+        await this.persistence.mutation(resource as Resource, {
+          records,
+          action: PersistenceActionType.INSERT
+        });
+      }
+      if (result.nextCursor) {
+        await this.paginateResourceV2(resource, result.nextCursor);
       }
     }
   }

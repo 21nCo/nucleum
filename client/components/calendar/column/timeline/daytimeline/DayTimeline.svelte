@@ -15,7 +15,10 @@
   import { player } from "$lib/client/components/modal/modal.store";
   import RefreshingOverlayFeedback from "$lib/client/elements/feedback/RefreshingOverlayFeedback.svelte";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
   import { appStore } from "$lib/client/stores/app.store";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   export let date: Date = new Date();
@@ -42,13 +45,13 @@
 
   function resolveInitialScale() {
     const scale = uiState.getState(UIState.calendarDayTimelineScale, {
-      isDeviceScoped: true
+      scope: UIStateScope.DAP
     });
     return scale ?? 1;
   }
   function persistScaleState() {
     uiState.setState(UIState.calendarDayTimelineScale, scale, {
-      isDeviceScoped: true
+      scope: UIStateScope.DAP
     });
   }
 

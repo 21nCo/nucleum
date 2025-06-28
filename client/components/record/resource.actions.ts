@@ -29,6 +29,7 @@ import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enu
 import { toasts } from "$lib/client/stores/notification.store";
 import { Action } from "$lib/client/types/action.enum";
 import { AppSearchParam } from "$lib/client/types/appStore.type";
+import { UIStateScope } from "$lib/client/stores/uiState/uiState.type";
 
 export class ResourceActions<T extends IMemotronItemBase> {
   constructor(
@@ -237,7 +238,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
   }
   openAsTab(): IContextMenuItem {
     const tabData = uiState.getState(ResourceAccessPoint.TABS, {
-      isProductScoped: true
+      scope: UIStateScope.PRODUCT
     });
     const isAlreadyPinned = tabData?.some(resourceInList(this.resource.id));
     return {

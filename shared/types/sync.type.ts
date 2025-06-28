@@ -6,7 +6,9 @@ export enum SyncMethod {
   SYNC_DOWN = "down",
   CLONE_UP = "cloneup",
   CLONE_DOWN = "clonedown",
+  CLONE_DOWN_V2 = "clonedownv2",
   CLONE_DOWN_PAGINATE = "paginate",
+  CLONE_DOWN_PAGINATE_V2 = "paginatev2",
   RECONCILE = "reconcile"
 }
 
@@ -21,6 +23,7 @@ export type ISyncDownBody = {
   lastSyncDown: number;
   resources: Resource[];
   dapId: string;
+  isReturnCount?: boolean;
 };
 
 export type ICloneUpBody = {
@@ -39,6 +42,13 @@ export type ICloneDownPaginateBody = {
   isExtension: boolean;
   offset: number;
   limit: number;
+  cursor?: string; // Optional cursor for efficient pagination
+};
+
+export type ICloneDownPaginatev2Body = {
+  resource: Resource;
+  isExtension: boolean;
+  cursor?: string;
 };
 
 export type IReconcileBody = {

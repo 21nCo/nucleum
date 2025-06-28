@@ -23,7 +23,10 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import { Action } from "$lib/client/types/action.enum";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
@@ -44,8 +47,7 @@
   function resolveTimlinePanelSelection() {
     return (
       uiState.getState(UIState.calendarDayTimelinePanelSelection, {
-        isProductScoped: true,
-        isDeviceScoped: true
+        scope: UIStateScope.DEVICE
       }) ?? "timeline"
     );
   }
@@ -67,7 +69,7 @@
       case Product.POINTRON:
         return [timeline, tasks];
       case Product.NUCLEUS:
-        return [timeline, allDay];
+        return [timeline, tasks];
       case Product.MEMOTRON:
         return [timeline];
       default:
@@ -114,8 +116,7 @@
 
   function onTimelinePanelSwitch(e: CustomEvent<string>) {
     uiState.setState(UIState.calendarDayTimelinePanelSelection, e.detail, {
-      isProductScoped: true,
-      isDeviceScoped: true
+      scope: UIStateScope.DEVICE
     });
   }
 </script>

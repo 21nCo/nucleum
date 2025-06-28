@@ -6,7 +6,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import PreviousValueColumnCell from "../topN/PreviousValueColumnCell.svelte";
   export let value: number;
-  export let previousValue: number;
+  export let previousValue: number | undefined = undefined;
   export let type: "total" | "focus" | "break" = "total";
 </script>
 
@@ -35,6 +35,8 @@
     >
       {formatSeconds(value, TimeFormat.VERBOSE)}
     </div>
-    <PreviousValueColumnCell row={{ value, previousValue }} />
+    {#if previousValue}
+      <PreviousValueColumnCell row={{ value, previousValue }} />
+    {/if}
   </div>
 </div>

@@ -184,11 +184,6 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     const webpage = this.get();
     logger.debug({ at: "onContextChange", tab, url, webpage });
     toolbarState.refresh();
-    //TODO - check the need for this - causing refresh to not happen when tab switch - if coming back to same tab again
-    // if (url === webpage.url) {
-    //   relayToSidePanel({ event: ExtensionEvent.PAGE_STATE, data: this.get() });
-    //   return;
-    // }
     this.set({ url, clips: [], title: tab.title ?? window.document.title });
     feedbackPane.reset();
     this.refresh();
@@ -397,11 +392,34 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       if (isFromTweetPage) n.id = tweet.id;
       return n;
     });
-    feedbackPane.focus(tweet, {
-      message: "Tweet saved!",
-      type: AlertType.SUCCESS
-    });
+    if (isFromTweetPage) { 
+      relayToSidePanel({
+        event: ExtensionEvent.PAGE_STATE,
+        data: {
+          page: this.get(),
+          toolbar: toolbarState.get()
+        }
+      });
+    } else {
+      feedbackPane.focus(tweet, {
+        message: "Tweet saved!",
+        type: AlertType.SUCCESS
+      });
+    }
     return tweetNode;
+  }
+
+  focus(url: string, message: string | { message: string; type: AlertType }) {
+    logger.log({ at: "focus", url, message });
+    const webpage = this.get();
+    if (webpage.url === url) {
+      feedbackPane.toggle({ isUserInitiated: true });
+    } else {
+      const clip = webpage.clips?.find((c) => c.url === url);
+      if (clip) {
+        feedbackPane.focus(clip, message);
+      }
+    }
   }
 
   /**
@@ -455,6 +473,13 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
         await nodeStore.modify(webpage.id, {
           collections
         });
+        relayToSidePanel({
+          event: ClipperExtensionEvent.ON_COLLECTION_LINK_CHANGES,
+          data: {
+            from: webpage.id,
+            to
+          }
+        });
       } else {
         this.update((n) => {
           n.links = [...(n.links ?? []), to];
@@ -488,6 +513,13 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
         n.collections = collections;
         n.links = n.links?.filter((l) => !isSameResource(l, to));
         return n;
+      });
+      relayToSidePanel({
+        event: ClipperExtensionEvent.ON_COLLECTION_LINK_CHANGES,
+        data: {
+          from: webpage.id,
+          to
+        }
       });
     } else {
       this.update((n) => {
@@ -558,6 +590,15 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
           clip: this.get().clips?.find(resourceInList(from))
         }
       });
+      if(resourceType === Resource.collection){
+        relayToSidePanel({
+          event: ClipperExtensionEvent.ON_COLLECTION_LINK_CHANGES,
+          data: {
+            from,
+            to
+          }
+        });
+      }
     }
     return response;
   }
@@ -609,6 +650,15 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
           clip: this.get().clips?.find(resourceInList(from))
         }
       });
+      if(resourceType === Resource.collection){
+        relayToSidePanel({
+          event: ClipperExtensionEvent.ON_COLLECTION_LINK_CHANGES,
+          data: {
+            from,
+            to
+          }
+        });
+      }
     }
     return { message: "Unlinked!", type: AlertType.SUCCESS };
   }
@@ -701,7 +751,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     }
   }
 
-  async persistPageNotes(notes: string) {
+  async persistPageNotes(notes: string, params?: { isFromSidePanel?: boolean }) {
     const webpage = this.get();
     if (!webpage.id) return;
     const response = await this._persistNotes(webpage.id, notes);
@@ -710,6 +760,15 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       n.notes = notes;
       return n;
     });
+    if (!params?.isFromSidePanel) {
+      relayToSidePanel({
+        event: ExtensionEvent.PAGE_STATE,
+        data: {
+          page: this.get(),
+          toolbar: toolbarState.get()
+        }
+      }); 
+    }
     return response;
   }
 
@@ -849,9 +908,10 @@ class FeedbackPaneStore extends ObservableStore<IFeedbackPaneStore> {
       return { isShown: false, feedback: "", focusedClip: null };
     });
   }
-  toggle() {
+  toggle(params?: { isUserInitiated?: boolean }) {
     this.update((n) => {
       n.isShown = !n.isShown;
+      n.isUserInitiated = params?.isUserInitiated ?? false;
       return n;
     });
   }

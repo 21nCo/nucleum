@@ -1,16 +1,21 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
   import { OverviewPanel } from "./overview.type";
   import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
   import NucleusOverviewLayout from "./NucleusOverviewLayout.svelte";
+  import AnalyticsV2 from "../../pointron/analytics/AnalyticsV2.svelte";
+  import MemotronOverview from "../../memotron/overview/MemotronOverview.svelte";
 
   let selectedPanel: OverviewPanel = resolveSavedState() ?? OverviewPanel.FOCUS;
 
   function resolveSavedState() {
     const savedPanel = uiState.getState(UIState.nucleusOverviewPanel, {
-      isDeviceScoped: true
+      scope: UIStateScope.DEVICE
     });
     if (savedPanel && Object.values(OverviewPanel).includes(savedPanel)) {
       return savedPanel;
@@ -25,13 +30,13 @@
 </script>
 
 <NucleusOverviewLayout>
-  <ComingSoonView />
-
   {#if selectedPanel === OverviewPanel.TITLE}
-    <!--  -->
+    <ComingSoonView />
   {:else if selectedPanel === OverviewPanel.FOCUS}
-    <!-- -->
+    <div class="w-full h-[90vh]">
+      <AnalyticsV2 />
+    </div>
   {:else if selectedPanel === OverviewPanel.MEMORY}
-    <!-- -->
+    <MemotronOverview />
   {/if}
 </NucleusOverviewLayout>

@@ -15,13 +15,16 @@
   import { focusHeatmapStore } from "./journal.store";
   import TodayButton from "$lib/client/elements/button/TodayButton.svelte";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
   import { setContext } from "svelte";
 
   function handleEvent(data: any) {
     if (data.type === "year-selection") {
       uiState.setState(UIState.journalYearSelection, data.year, {
-        isDeviceScoped: true
+        scope: UIStateScope.DEVICE
       });
     }
   }
@@ -36,7 +39,7 @@
   }
   refresh();
   const selectedHeatmapYear = uiState.getState(UIState.journalYearSelection, {
-    isDeviceScoped: true
+    scope: UIStateScope.DEVICE
   });
 </script>
 

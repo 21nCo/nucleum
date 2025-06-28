@@ -343,14 +343,18 @@
               taskStore.trash(id, {
                 context: accessPoint
               });
+              appStore.closeResource({
+                accessMode: accessMode
+              });
             }}
           />
+
           <Button
             icon="ph:x-circle-light"
             label="Close"
             on:click={() => {
               appStore.closeResource({
-                accessMode: ResourceAccessMode.POP
+                accessMode: accessMode
               });
             }}
           />

@@ -8,7 +8,10 @@
   import CalendarColumn from "../column/CalendarColumn.svelte";
   import { TimeScaleUnit } from "$lib/client/types/time.type";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
   import {
     CalendarLayout,
     type ICalendarIndicatorData
@@ -29,6 +32,10 @@
   import { cache } from "$lib/client/layout/layers/cache/cache.store";
   import { CacheKey } from "$lib/client/layout/layers/cache/cache.type";
   import MemotronTempCalendarColumn from "../column/MemotronTempCalendarColumn.svelte";
+  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  import ClassicCalendarHeaderLeftOptions from "./ClassicCalendarHeaderLeftOptions.svelte";
+  import { onMount } from "svelte";
+  import { Display } from "$lib/client/types/view.type";
   export let panel: CalendarLayout = CalendarLayout.Classic;
 
   let selectedDate = new Date();
@@ -37,39 +44,48 @@
   let yearViewRef: YearView;
   let weekViewRef: WeekView;
   let visibleWeekDates: Date[] | undefined;
-  let width = resolveSavedWidthSelection() ?? 450;
+  let width = resolveSavedWidthSelection(selectedView);
   let indicatorData: ICalendarIndicatorData[] = [];
+  let indicatorRefreshId: number = new Date().getTime();
   let currentDateFilterForIndicatorData: any = {};
   let isRefreshing = false;
-  $: if (selectedDate && selectedView !== TimeScaleUnit.DAY) {
-    refreshIndicatorData(selectedDate);
-  }
+
+  onMount(() => {
+    setTimeout(() => {
+      refreshIndicatorData(selectedDate);
+    }, 500);
+  });
+
   function resolveSavedScaleSelection() {
     if ($appStore.product === Product.MEMOTRON) return TimeScaleUnit.YEAR;
-    const scaleState = uiState.getState(UIState.calendarScale, {
-      isDeviceScoped: true
+    const scaleState = uiState.getState(UIState.classicCalendarScale, {
+      scope: UIStateScope.DAP
     });
     return scaleState ?? TimeScaleUnit.YEAR;
   }
 
-  function resolveSavedWidthSelection() {
+  function resolveSavedWidthSelection(view: TimeScaleUnit) {
     const widthState = uiState.getState(UIState.classicCalendarColumnWidth, {
-      isDeviceScoped: true,
-      isProductScoped: true
+      scope: UIStateScope.DAP,
+      subVariables: [view.toString()]
     });
-    return widthState;
+    return widthState ?? 450;
   }
 
   function handleYearChange(event: CustomEvent) {
-    selectedDate = new Date(
-      event.detail.year,
-      selectedDate.getMonth(),
-      selectedDate.getDate()
+    if (!event.detail) return;
+    setDate(
+      new Date(
+        event.detail.year,
+        selectedDate.getMonth(),
+        selectedDate.getDate()
+      )
     );
   }
 
   function handleMonthChange(event: CustomEvent) {
-    selectedDate = event.detail;
+    if (!event.detail) return;
+    setDate(event.detail);
   }
 
   function handleVisibleDatesChange(event: CustomEvent) {
@@ -83,8 +99,8 @@
 
   const debouncedResizePersist = debouncer((width: number) => {
     uiState.setState(UIState.classicCalendarColumnWidth, width, {
-      isDeviceScoped: true,
-      isProductScoped: true
+      scope: UIStateScope.DAP,
+      subVariables: [selectedView.toString()]
     });
   }, 1000);
 
@@ -107,17 +123,28 @@
     }
   }
 
-  async function refreshIndicatorData(date: Date) {
+  async function refreshIndicatorData(
+    date: Date,
+    resource?: (Resource | MetaResource)[]
+  ) {
+    if (selectedView === TimeScaleUnit.DAY) return;
     console.time("refreshIndicatorData");
     const resourcesForIndicators = resolveResourcesForIndicators();
     if (resourcesForIndicators.length === 0) return;
+    const filteredResourcesForIndicators = resource
+      ? resourcesForIndicators.filter((r) => resource.includes(r))
+      : resourcesForIndicators;
+    if (filteredResourcesForIndicators.length === 0) return;
     const dateFilter: any =
       selectedView === TimeScaleUnit.MONTH
         ? tzStore.resolveTimePeriodFilterForMonth(date)
         : selectedView === TimeScaleUnit.YEAR
           ? tzStore.resolveTimePeriodFilterForYear(date)
           : {};
-    if (compareObjects(currentDateFilterForIndicatorData, dateFilter)) {
+    if (
+      compareObjects(currentDateFilterForIndicatorData, dateFilter) &&
+      (!resource || resource.length === 0)
+    ) {
       return;
     }
     const cachedData = cache.retrieve(CacheKey.CALENDAR_CACHE);
@@ -129,9 +156,14 @@
       isRefreshing = true;
     }
     currentDateFilterForIndicatorData = dateFilter;
-    const promises = resourcesForIndicators.map((resource) => {
+    const promises = filteredResourcesForIndicators.map((resource) => {
       let filters: any = {};
-      let properties: string[] = ["id", "modifiedAt"];
+      let properties: string[] = [
+        "id",
+        "modifiedAt",
+        "trashInformation",
+        "isArchived"
+      ];
       if (resource === Resource.task) {
         properties.push("dateUnix");
         filters = {
@@ -154,7 +186,7 @@
           }
         };
       } else if (resource === MetaResource.calendarNotes) {
-        properties.push("metaType", "date");
+        properties.push("metaType", "date", "text");
         filters = {
           metaType: NodeMetaType.CALENDAR_NOTES,
           date: {
@@ -179,13 +211,15 @@
     });
     const results = await Promise.all(promises);
     results.forEach((result, index) => {
-      const resource = resourcesForIndicators[index];
-      indicatorData[index] = {
+      const resource = filteredResourcesForIndicators[index];
+      indicatorData = indicatorData.filter((x) => x.resource !== resource);
+      indicatorData.push({
         resource,
         data: result,
         color: resolveColor(resource)
-      };
+      });
     });
+    indicatorRefreshId = new Date().getTime();
     console.timeEnd("refreshIndicatorData");
     cache.replaceUsingSubKey(CacheKey.CALENDAR_CACHE, selectedView, {
       dateFilter,
@@ -206,15 +240,36 @@
         return "aps1";
     }
   }
+
+  function handleScaleSelection(event: CustomEvent) {
+    selectedView = event.detail;
+    width = resolveSavedWidthSelection(selectedView);
+  }
+
+  function setDate(date: Date) {
+    selectedDate = date;
+    onDateChange();
+  }
+
+  function onDateChange() {
+    refreshIndicatorData(selectedDate);
+  }
 </script>
 
 <CalendarLayoutView bind:panel>
+  <slot name="header-left-options" slot="header-left-options">
+    <ClassicCalendarHeaderLeftOptions
+      bind:selectedView
+      {isRefreshing}
+      on:scaleSelection={handleScaleSelection}
+    />
+  </slot>
   <slot name="header" slot="header">
     <CalendarHeader
       bind:selectedDate
       bind:selectedView
       {visibleWeekDates}
-      {isRefreshing}
+      on:dateChange={onDateChange}
       on:goToToday={() => {
         if (selectedView === TimeScaleUnit.YEAR) {
           yearViewRef?.scrollToToday();
@@ -238,11 +293,18 @@
       }}
     />
   </slot>
+
   <div class="flex h-full">
     <!-- <CalendarSidebar {events} /> -->
     <div class="flex-1 overflow-auto">
       {#if selectedView === TimeScaleUnit.MONTH}
-        <MonthView bind:selectedDate {indicatorData} on:dateSelect />
+        <MonthView
+          bind:selectedDate
+          {indicatorData}
+          {indicatorRefreshId}
+          on:monthChange={handleMonthChange}
+          on:dateChange={onDateChange}
+        />
       {:else if selectedView === TimeScaleUnit.WEEK}
         <WeekView
           bind:this={weekViewRef}
@@ -256,8 +318,9 @@
           bind:this={yearViewRef}
           bind:selectedDate
           {indicatorData}
+          {indicatorRefreshId}
           on:yearChange={handleYearChange}
-          on:dateSelect
+          on:dateChange={onDateChange}
         />
       {/if}
     </div>
@@ -276,7 +339,7 @@
             selectedView === TimeScaleUnit.MONTH ||
             selectedView === TimeScaleUnit.YEAR,
           minWidth: 430,
-          maxWidth: 1000,
+          maxWidth: $view.display === Display.TK ? 1400 : 1000,
           edges: ["left"],
           onResize: onResize
         }}
@@ -292,6 +355,8 @@
                 if (e.detail) {
                   if (selectedView === TimeScaleUnit.YEAR) {
                     yearViewRef?.scrollToDate(e.detail);
+                  } else if (selectedView === TimeScaleUnit.MONTH) {
+                    setDate(e.detail);
                   } else if (selectedView === TimeScaleUnit.WEEK) {
                     //TODO
                     // weekViewRef?.scrollToToday();
@@ -305,3 +370,30 @@
     {/if}
   </div>
 </CalendarLayoutView>
+<ComponentBaseLayer
+  subscribeToResource={new Set([Resource.task])}
+  on:change={() => {
+    setTimeout(() => {
+      refreshIndicatorData(selectedDate, [Resource.task]);
+    }, 500);
+  }}
+/>
+<ComponentBaseLayer
+  subscribeToResource={new Set([Resource.session])}
+  on:change={() => {
+    setTimeout(() => {
+      refreshIndicatorData(selectedDate, [Resource.session]);
+    }, 500);
+  }}
+/>
+<ComponentBaseLayer
+  subscribeToResource={new Set([Resource.node])}
+  on:change={() => {
+    setTimeout(() => {
+      refreshIndicatorData(selectedDate, [
+        Resource.node,
+        MetaResource.calendarNotes
+      ]);
+    }, 500);
+  }}
+/>

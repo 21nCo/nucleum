@@ -17,11 +17,13 @@ beforeAll(async () => {
   process.env.ADMIN_DB_NAME = "admin";
   process.env.ADMIN_NS = "admin";
   process.env.NODE_ENV = "dev";
+  process.env.TOKEN_NAME = "tokenone";
+  // process.env.DYNAMODB_ACCOUNT_ID = "012509421685";
   global.testEnv = {
     ...environment,
     cleanup: async () => {
       // Environment-specific cleanup
-    },
+    }
   };
 });
 

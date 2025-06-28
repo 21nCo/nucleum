@@ -3,7 +3,7 @@ import { mockAgents } from "./fixtures";
 export const environments = {
   dev: {
     agent: mockAgents.dev,
-    domain: "tidigit.dev"
+    domain: "21n.dev"
   },
   pre: {
     agent: mockAgents.pre,

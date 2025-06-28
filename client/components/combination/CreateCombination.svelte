@@ -28,25 +28,29 @@
     {
       label: "Canvas",
       icon: "ph:chalkboard-simple-light",
-      value: CombinationType.WHITEBOARD
+      value: CombinationType.WHITEBOARD,
+      isDisabled: true,
+      badge: "planned"
     },
-    {
-      label: "Mind map",
-      icon: "ph:tree-view-light",
-      value: CombinationType.MINDMAP
-    },
+    // {
+    //   label: "Mind map",
+    //   icon: "ph:tree-view-light",
+    //   value: CombinationType.MINDMAP
+    // },
     {
       label: "Timeline",
       icon: "ph:calendar-blank-light",
-      value: CombinationType.TIMELINE
-    },
-    {
-      label: "Wall",
-      icon: "widget",
-      value: CombinationType.WALL,
+      value: CombinationType.TIMELINE,
       isDisabled: true,
       badge: "planned"
     }
+    // {
+    //   label: "Wall",
+    //   icon: "widget",
+    //   value: CombinationType.WALL,
+    //   isDisabled: true,
+    //   badge: "planned"
+    // }
   ];
 
   async function onSave() {

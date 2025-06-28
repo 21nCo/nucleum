@@ -1,8 +1,9 @@
 import { Agent } from "../account/account.type";
 import { log } from "$lib/server/logger";
-import { performQueryOnMasterDb } from "$lib/server/surrealHelpers";
+import { DatabaseProviderFactory } from "$lib/server/database/providers";
 import { frameNonSensitiveUserInfo } from "../account/account.utils";
 import { generateUserToken, validateToken } from "./auth.utils";
+import { IUserProfileInfo } from "$lib/shared/types/account.type";
 
 export function authorize(props: { token: string; host?: string }) {
   try {
@@ -25,24 +26,23 @@ export function authorize(props: { token: string; host?: string }) {
 export async function refreshToken(body: any, agent: Agent) {
   const { context } = body;
   const { id } = agent;
-  const query = `LET $user = SELECT * FROM user WHERE meta::id(id) is "${id}"; IF count($user) == 1 THEN (SELECT * FROM $user) ELSE (RETURN count($user)) END`;
-  const response = await performQueryOnMasterDb(query);
-  if (response?.[1]?.result?.[0]) {
-    const userInfo = response[1].result[0];
-    const userId = userInfo.id.split("user:")[1];
+  const provider = DatabaseProviderFactory.getProvider();
+  const response = await provider.getUserById(id);
+  if (response && !Array.isArray(response) && response.id) {
+    const userId = response.id.split("user:")[1];
     await log(userId, { id, activity: "refreshToken" });
-    return await generateToken(userId, userInfo, {
+    return await generateToken(userId, response, {
       isTrusted: true,
       host: context?.host
     });
   } else {
-    return response?.[1].result;
+    return response;
   }
 }
 
 export async function generateToken(
-  userId,
-  userInfo,
+  userId: string,
+  userInfo: IUserProfileInfo,
   params: { isTrusted?: boolean; isSignup?: boolean; host?: string } = {
     isTrusted: false,
     isSignup: false,

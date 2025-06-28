@@ -29,10 +29,15 @@
     uiState,
     uiStateDerived
   } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
   import { bg, cn } from "$lib/client/utils/ui.utils";
+  import { Product } from "$lib/client/types/product.type";
 
   const bgIndex = 2;
+  const isNucleusContext = $appStore.product === Product.NUCLEUS;
   $selectedPageId = resolvePageSelection();
   onMount(async () => {
     if ($context.embed == Embed.HANDSET) {
@@ -51,15 +56,13 @@
 
   function onPageSwitch(e: CustomEvent<string>) {
     uiState.setState(UIState.analyticsPage, e.detail, {
-      isProductScoped: true,
-      isDeviceScoped: true
+      scope: UIStateScope.DEVICE
     });
   }
 
   function resolvePageSelection() {
     const pageState = uiState.getState(UIState.analyticsPage, {
-      isProductScoped: true,
-      isDeviceScoped: true
+      scope: UIStateScope.DEVICE
     });
     return pageState ?? $analyticsConfigStore.pages[0]?.id;
   }
@@ -103,16 +106,22 @@
         </div>
       {:else}
         <div class="flex overflow-hidden w-full">
-          <div class="overflow-x-auto w-full">
+          <div
+            class={cn("overflow-x-auto w-full", {
+              "px-4": isNucleusContext
+            })}
+          >
             <PanelSwitcher
-              title="Overview"
+              title={isNucleusContext ? "Focus analytics" : "Overview"}
               items={pages}
               style={PanelSwitcherStyle.BAR}
               isExpandToFullWidth={true}
               isEnableAnimationForTitle={false}
               isInEditMode={$isInEditMode}
               parentBgIndex={bgIndex}
-              isShowNumberShortcut={$uiStateDerived.isShowHotKeyHints}
+              isShowNumberShortcut={!isNucleusContext &&
+                $uiStateDerived.isShowHotKeyHints}
+              isPreventNumberShortcut={isNucleusContext}
               isEnableTitleAction={true}
               tempTitleWithActionDisabled={true}
               bind:value={$selectedPageId}

@@ -1,12 +1,23 @@
 import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
 import { appStore } from "$lib/client/stores/app.store";
 import { uiState } from "$lib/client/stores/uiState/uiState.store";
+import { UIStateScope } from "$lib/client/stores/uiState/uiState.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 
 class TabStore {
   open(id: IRecordId) {
     if (!id) return;
     uiState.addResourceToTabs(id);
+    this.activate(id);
+  }
+
+  replace(id: IRecordId, replaceId: IRecordId) {
+    if (!id || !replaceId) return;
+    const tabs = this.get();
+    if (tabs.includes(replaceId)) {
+      this.remove(replaceId);
+      uiState.addResourceToTabs(id);
+    }
     this.activate(id);
   }
 
@@ -31,12 +42,12 @@ class TabStore {
 
   get() {
     return uiState.getState(ResourceAccessPoint.TABS, {
-      isProductScoped: true
+      scope: UIStateScope.PRODUCT
     });
   }
   rearrange(ids: IRecordId[]) {
     return uiState.setState(ResourceAccessPoint.TABS, ids, {
-      isProductScoped: true
+      scope: UIStateScope.PRODUCT
     });
   }
 }

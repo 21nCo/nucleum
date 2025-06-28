@@ -17,9 +17,13 @@ export enum ExtensionEvent {
    */
   TOGGLE_SIDEPANEL = "TOGGLE_SIDEPANEL",
   /**
-   * An event to exchange the state of the page - typically sent from side panel and relayed to conent script or published from content script.
+   * An event to exchange the state of the page - published from content script.
    */
   PAGE_STATE = "PAGE_STATE",
+  /**
+   * An event to trigger the state of the page - typically sent from side panel and relayed to conent script so that content script can publish the state using {@link ExtensionEvent.PAGE_STATE} event.
+   */
+  PAGE_STATE_TRIGGER = "PAGE_STATE_TRIGGER",
   /**
    * @deprecated - use UPLOAD_FILE instead
    */

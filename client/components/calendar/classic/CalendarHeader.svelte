@@ -1,57 +1,19 @@
 <script lang="ts">
   import { Size } from "$lib/client/types/size.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import { createEventDispatcher } from "svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
   import { ButtonStyle } from "$lib/client/types/button.type";
-  import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
   import { TimeScaleUnit } from "$lib/client/types/time.type";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
-  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import { OptionSelectorStyle } from "$lib/client/types/select.type";
-  import view from "$lib/client/stores/view.store";
-  import { CalendarLayout } from "../calendar.type";
   import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { Product } from "$lib/client/types/product.type";
   const dispatch = createEventDispatcher();
 
   export let selectedDate: Date;
   export let selectedView: TimeScaleUnit = TimeScaleUnit.MONTH;
   export let visibleWeekDates: Date[] | undefined = undefined;
-  export let isRefreshing: boolean = false;
-
-  const switchOptions = [
-    {
-      label: "Day",
-      icon: "text:D",
-      value: TimeScaleUnit.DAY
-    },
-    // {
-    //   label: "Week",
-    //   icon: "text:W",
-    //   value: TimeScaleUnit.WEEK
-    // },
-    {
-      label: "Month",
-      icon: "text:M",
-      value: TimeScaleUnit.MONTH
-    },
-    {
-      label: "Year",
-      icon: "text:Y",
-      value: TimeScaleUnit.YEAR
-    }
-    // {
-    //   label: "Heatmap",
-    //   icon: "text:H",
-    //   value: CalendarLayout.Heatmap
-    // }
-  ];
+  export let parentBgIndex: number = 2;
+  let dev_isEnableSettings: boolean = false;
 
   const monthNames = [
     "January",
@@ -85,6 +47,7 @@
           break;
       }
       selectedDate = date;
+      dispatch("dateChange");
     }
   }
 
@@ -105,6 +68,7 @@
           break;
       }
       selectedDate = date;
+      dispatch("dateChange");
     }
   }
 
@@ -120,6 +84,7 @@
       selectedDate = new Date();
     } else {
       selectedDate = new Date();
+      dispatch("dateChange");
     }
   }
 
@@ -138,95 +103,62 @@
   $: weekDates = getWeekDates(selectedDate);
   $: currentMonth = monthNames[selectedDate.getMonth()];
   $: currentYear = selectedDate.getFullYear();
-
-  function onScaleSelection(e: CustomEvent) {
-    if (!e.detail) return;
-    selectedView = e.detail;
-    uiState.setState(UIState.calendarScale, selectedView, {
-      isDeviceScoped: true
-    });
-  }
 </script>
 
-<header class="flex items-center justify-between w-full sticky top-0 z-10">
-  <div class="flex items-center gap-4">
-    <div class="flex gap-1">
-      <Button
-        type={ButtonVariant.SECONDARY}
-        style={ButtonStyle.OUTLINED}
-        icon="ph:caret-left-light"
-        size={Size.sm}
-        on:click={goToPrevious}
-      />
-      <Button
-        type={ButtonVariant.SECONDARY}
-        style={ButtonStyle.OUTLINED}
-        icon="ph:caret-right-light"
-        size={Size.sm}
-        on:click={goToNext}
-      />
-    </div>
-    <h2 class="text-h4">
-      {#if selectedView === TimeScaleUnit.YEAR}
-        {currentYear}
-      {:else if selectedView === TimeScaleUnit.WEEK}
-        {#if visibleWeekDates && visibleWeekDates.length >= 7}
-          {monthNames[visibleWeekDates[0].getMonth()]}
-          {visibleWeekDates[0].getDate()} - {monthNames[
-            visibleWeekDates[6].getMonth()
-          ]}
-          {visibleWeekDates[6].getDate()}, {visibleWeekDates[6].getFullYear()}
-        {:else}
-          {monthNames[weekDates[0].getMonth()]}
-          {weekDates[0].getDate()} - {monthNames[weekDates[6].getMonth()]}
-          {weekDates[6].getDate()}, {currentYear}
-        {/if}
-      {:else if selectedView === TimeScaleUnit.MONTH}
-        {currentMonth} {currentYear}
+<div class="flex items-center gap-4 justify-center">
+  <Button
+    type={ButtonVariant.SECONDARY}
+    style={ButtonStyle.DEFAULT}
+    icon="ph:caret-left-light"
+    size={Size.sm}
+    {parentBgIndex}
+    on:click={goToPrevious}
+  />
+  <h2 class="text-h4">
+    {#if selectedView === TimeScaleUnit.YEAR}
+      {currentYear}
+    {:else if selectedView === TimeScaleUnit.WEEK}
+      {#if visibleWeekDates && visibleWeekDates.length >= 7}
+        {monthNames[visibleWeekDates[0].getMonth()]}
+        {visibleWeekDates[0].getDate()} - {monthNames[
+          visibleWeekDates[6].getMonth()
+        ]}
+        {visibleWeekDates[6].getDate()}, {visibleWeekDates[6].getFullYear()}
       {:else}
-        <!-- TODO Date picker -->
-        <!-- {selectedDate.getDate()}
-        {currentMonth}
-        {currentYear} -->
-        <DatePicker bind:date={selectedDate} variant="inline" />
+        {monthNames[weekDates[0].getMonth()]}
+        {weekDates[0].getDate()} - {monthNames[weekDates[6].getMonth()]}
+        {weekDates[6].getDate()}, {currentYear}
       {/if}
-    </h2>
-    {#if isRefreshing}
-      <Icon icon="svg-spinners:180-ring-with-bg" size={Size.sm} />
+    {:else if selectedView === TimeScaleUnit.MONTH}
+      {currentMonth} {currentYear}
+    {:else}
+      <!-- TODO Date picker -->
+      <!-- {selectedDate.getDate()}
+          {currentMonth}
+          {currentYear} -->
+      <DatePicker bind:date={selectedDate} variant="inline" />
     {/if}
-  </div>
-  <div class="flex items-center gap-2">
-    <Button
-      type={ButtonVariant.SECONDARY}
-      style={ButtonStyle.OUTLINED}
-      size={Size.sm}
-      label="Go to today"
-      isPreventMinWidth={true}
-      on:click={goToToday}
-    />
-    {#if $appStore.product !== Product.MEMOTRON}
-      {#if $view.isConstrainedWidth}
-        <DropDown
-          items={switchOptions}
-          value={selectedView}
-          isDisableSearch={true}
-          width="min-w-32"
-          size={Size.sm}
-          isEnforceWidth={true}
-          on:select={onScaleSelection}
-        />
-      {:else}
-        <OptionSelector
-          options={switchOptions}
-          selected={selectedView}
-          size={Size.sm}
-          isExpandOnActiveForIcon={true}
-          style={OptionSelectorStyle.ICON}
-          on:select={onScaleSelection}
-        />
-      {/if}
-    {/if}
-    <!-- <Toggle icon="ph:sliders-light" bgSize={Size.sm} />
-    <Toggle icon="ph:question-light" bgSize={Size.sm} /> -->
-  </div>
-</header>
+  </h2>
+  <Button
+    type={ButtonVariant.SECONDARY}
+    style={ButtonStyle.DEFAULT}
+    icon="ph:caret-right-light"
+    size={Size.sm}
+    {parentBgIndex}
+    on:click={goToNext}
+  />
+</div>
+<div class="flex items-center gap-2 justify-end">
+  <Button
+    type={ButtonVariant.SECONDARY}
+    style={ButtonStyle.OUTLINED}
+    size={Size.sm}
+    label="Go to today"
+    isPreventMinWidth={true}
+    {parentBgIndex}
+    on:click={goToToday}
+  />
+  {#if dev_isEnableSettings}
+    <Toggle icon="ph:sliders-light" bgSize={Size.sm} parentBgIndex={2} />
+  {/if}
+</div>

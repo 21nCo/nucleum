@@ -113,7 +113,10 @@
         key:
           chart.type == AnalyticsCardType.BAR
             ? resolveXValueForStackedBarChart(new Date(r.start))
-            : r.start,
+            : chart.type == AnalyticsCardType.LINE ||
+                chart.type === AnalyticsCardType.AREA
+              ? new Date(r.start.setHours(0, 0, 0, 0))
+              : r.start,
         value: +(+focus / (60 * 60)).toFixed(2)
       };
     });
@@ -203,9 +206,6 @@
         }
       }
     }
-
-    //if (chart.period.scale == TimeScale.DAYS)
-    //console.log({ chart, data, options });
   }
 </script>
 

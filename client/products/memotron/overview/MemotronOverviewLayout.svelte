@@ -8,19 +8,26 @@
     uiState,
     uiStateDerived
   } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
   import { MemotronOverviewPanel } from "./overview.type";
+  import { Product } from "$lib/client/types/product.type";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { cn } from "$lib/client/utils/ui.utils";
 
   export let isConstrainedWidth = false;
   let selectedPanel: MemotronOverviewPanel =
     resolveSavedState() ?? MemotronOverviewPanel.GRAPH;
+  const isNucleusContext = $appStore.product === Product.NUCLEUS;
 
   let containerWidth = 0;
   $: isConstrainedWidth = containerWidth < 1000 || $view.isConstrainedWidth;
 
   function resolveSavedState() {
     const savedPanel = uiState.getState(UIState.memotronOverviewPanel, {
-      isDeviceScoped: true
+      scope: UIStateScope.DEVICE
     });
     if (
       savedPanel &&
@@ -37,14 +44,19 @@
     )
       return;
     uiState.setState(UIState.memotronOverviewPanel, event.detail, {
-      isDeviceScoped: true
+      scope: UIStateScope.DEVICE
     });
   }
 </script>
 
 <div class="relative w-full h-full flex flex-col justify-center items-center">
   <div
-    class="flex justify-between items-end gap-4 rounded-md w-full"
+    class={cn(
+      "flex justify-between items-end gap-4 rounded-md w-full bg-bgs2",
+      {
+        "px-4": isNucleusContext
+      }
+    )}
     use:resizeListener={(e) => {
       containerWidth = e.width;
     }}
@@ -63,10 +75,12 @@
         }
       ]}
       style={PanelSwitcherStyle.BAR}
-      title="Overview"
-      parentBgIndex={1}
+      title={isNucleusContext ? "Memory" : "Overview"}
+      parentBgIndex={2}
       isExpandToFullWidth={true}
-      isShowNumberShortcut={$uiStateDerived.isShowHotKeyHints}
+      isShowNumberShortcut={!isNucleusContext &&
+        $uiStateDerived.isShowHotKeyHints}
+      isPreventNumberShortcut={isNucleusContext}
       size={Size.sm}
       bind:value={selectedPanel}
       on:switch={onPanelSwitch}

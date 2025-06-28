@@ -245,9 +245,10 @@
           <OptionSelector
             options={collectibleResources.map((resource) => ({
               value: resource,
+              label: `${resource}s`,
               icon: resolveResourceIcon(resource)
             }))}
-            style={OptionSelectorStyle.TRAIN}
+            style={OptionSelectorStyle.CHECK_CIRCLE}
             size={Size.sm}
             bind:selected={resource}
             labelProps={{

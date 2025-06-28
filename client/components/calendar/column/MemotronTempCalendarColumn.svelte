@@ -60,7 +60,7 @@
   setContext("calendar-content", calendarContentContext);
 </script>
 
-<div class="flex flex-col gap-2">
+<div class="flex flex-col gap-2 h-full flex-grow w-full">
   <div class="flex justify-between px-12 pt-3">
     <div class="flex items-center gap-2 whitespace-nowrap">
       <Text content={formatDate(date)} style={TextStyle.PANEL_HEADING_SMALL} />
@@ -77,7 +77,7 @@
       }}
     />
   </div>
-  <div class="px-1">
+  <div class="px-1 flex-grow">
     <CalendarNotesPanel {date} scale={TimeScaleUnit.DAY} />
   </div>
 </div>

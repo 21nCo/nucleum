@@ -52,7 +52,15 @@ export enum ClientStorageKey {
   /**
    * Tracks which fallback functions have been run to prevent re-execution
    */
-  FALLBACKS_RUN_STATUS = "fallbacksRunStatus"
+  FALLBACKS_RUN_STATUS = "fallbacksRunStatus",
+  /**
+   * Used to store recent items for the clipper extension.
+   */
+  RECENTS = "recents",
+  /**
+   * Used to track the bootup status of the extension.
+   */
+  EXTENSION_BOOTUP = "extensionBootup"
 }
 
 export interface IPersistence {

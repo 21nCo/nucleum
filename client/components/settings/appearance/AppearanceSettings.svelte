@@ -19,20 +19,22 @@
   let selectedTempSchemeIndex: number = 0;
   onMount(() => {
     selectedSkinIndex = appConstants.themes.findIndex(
-      (x) => x == $appearance.skin
+      (x) => x == $userPreferences?.appearance?.skin
     );
     selectedTheme = $appearance.userThemeSetting;
-    $appearance.skin = AppSkin.Clean;
+    if ($userPreferences.appearance.skin !== AppSkin.Clean) {
+      $userPreferences.appearance.skin = AppSkin.Clean;
+    }
   });
   function saveColorScheme(e: CustomEvent) {
     appearance.setColorScheme(e.detail);
     //todo showChangesFeedback();
   }
   function saveSkin() {
-    $appearance.skin =
+    $userPreferences.appearance.skin =
       selectedSkinIndex != undefined
         ? appConstants.themes[selectedSkinIndex]
-        : $appearance.skin;
+        : $userPreferences.appearance.skin;
     //showChangesFeedback();
   }
   function onSkinChange(e: any) {
@@ -83,7 +85,7 @@
       }
     }}
   />
-  {#if $appearance.skin === AppSkin.Clean && !$appearance.isSyncWithSystem}
+  {#if $userPreferences?.appearance?.skin === AppSkin.Clean && !$appearance.isSyncWithSystem}
     <OptionSelector
       labelProps={{ label: "Theme", orientation: Orientation.Vertical }}
       options={[
@@ -94,7 +96,7 @@
       on:select={switchTheme}
       bind:selected={selectedTheme}
     />
-  {:else if $appearance.skin === AppSkin.Glassy}
+  {:else if $userPreferences?.appearance?.skin === AppSkin.Glassy}
     <div class="text-b3 text-fgs2">{`[ Experimental theme ]`}</div>
   {/if}
   {#if !$appearance.isSyncWithSystem}
@@ -154,19 +156,6 @@ setting on your device."
         label: "Blurred background for popups",
         tooltip: {
           body: "Enable this to blur the background of popups."
-        }
-      }}
-    />
-  {/if}
-  {#if $appStore.isDebugMode}
-    <SwitchInput
-      checked={$appearance.isFixedLeftNav}
-      isExpanded={true}
-      on:change={(e) => appearance.setLeftNavFixed(e.detail)}
-      label={{
-        label: "Fixed app menu bar",
-        tooltip: {
-          body: "Enable this to fix the app menu bar to the left side of the screen. This defaults the app menu bar to collapsed state, removes expand button and adds labels to the app menu items."
         }
       }}
     />

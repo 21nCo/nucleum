@@ -1,5 +1,4 @@
-import { initializeDatabase } from "../common/account";
-import { performQueryOnMasterDb } from "../surrealHelpers";
+import { DatabaseProviderFactory } from "$lib/server/database/providers";
 import { generateSpaceToken } from "../common/auth/auth.utils";
 import {
   Agent,
@@ -20,10 +19,10 @@ export function runSpaceAction(body: any, agent: Agent) {
 
 async function createSpace(body: any, agent: Agent) {
   const { name, context } = body;
-  const query = `return fn::admin::space::create("${name}", "user:${agent.id}")`;
-  const response = await performQueryOnMasterDb(query);
+  const provider = DatabaseProviderFactory.getProvider();
+  const response = await provider.createSpace(name, agent.id);
   const id = response[0].result[0].id.split("space:")[1];
-  await initializeDatabase(id, {
+  await provider.initializeUserDb(id, {
     scope: CONTEXT.SPACE,
     host: context.host
   });
@@ -38,8 +37,8 @@ async function createSpace(body: any, agent: Agent) {
 
 async function switchSpace(body: any, agent: Agent) {
   const { id } = body;
-  const query = `return fn::admin::space::fetchUser("space:${id}", "user:${agent.id}")`;
-  const response = await performQueryOnMasterDb(query);
+  const provider = DatabaseProviderFactory.getProvider();
+  const response = await provider.getSpaceUser(id, agent.id);
   const relation = response[0].result.relation;
   //TODO - send region for token generation
   if (relation.role === MemberRole.ADMIN) {
@@ -57,7 +56,7 @@ async function switchSpace(body: any, agent: Agent) {
 }
 
 async function getAllSpaces(body: any, agent: Agent) {
-  const query = `return fn::admin::user::fetchSpaces("user:${agent.id}")`;
-  const response = await performQueryOnMasterDb(query);
+  const provider = DatabaseProviderFactory.getProvider();
+  const response = await provider.getUserSpaces(agent.id);
   return response[0].result;
 }

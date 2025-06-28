@@ -246,13 +246,15 @@
       {/key}
     </div>
   {:else if clip.contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP && "timestamp" in clip.body}
-    <button class="flex gap-4" on:click={onClick}>
+    <button class="flex gap-4 w-full" on:click={onClick}>
       <FileView
         id={clip.body.thumbnail}
         class="thumbnail w-32 h-[72px] rounded-md"
       />
-      <div class="flex flex-col gap-1 items-start justify-between">
-        <div class="flex w-full">
+      <div
+        class="flex flex-col gap-1 items-start justify-between flex-1 min-w-0"
+      >
+        <div class="flex w-full truncate overflow-x-auto">
           <NodeTitle
             node={clip}
             accessPoint={ResourceAccessPoint.CLIPPER}
@@ -270,7 +272,7 @@
   {/if}
   <div class="flex flex-col gap-2">
     {#if clip.contentType !== NodeType.YOUTUBE_TIMESTAMP_CLIP}
-      <div class="flex w-full">
+      <div class="flex w-full truncate overflow-x-auto">
         <NodeTitle
           node={clip}
           accessPoint={ResourceAccessPoint.CLIPPER}

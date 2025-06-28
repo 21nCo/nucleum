@@ -82,7 +82,20 @@
   }
 
   onMount(() => {
+    const unsubscribe = page.subscribe((p) => {
+      if (p.url.searchParams.get(AppSearchParam.STARRED)) {
+        isStarFilterSelected = true;
+      } else {
+        isStarFilterSelected = false;
+      }
+      if (p.url.searchParams.get(AppSearchParam.ARCHIVED)) {
+        isArchivedFilterSelected = true;
+      } else {
+        isArchivedFilterSelected = false;
+      }
+    });
     refreshSubTypeSwitcher();
+    return () => unsubscribe();
   });
 
   function resolveBaseFilters() {

@@ -2,11 +2,15 @@
   import { cn } from "$lib/client/utils/ui.utils";
   export let color: string;
   export let isActive: boolean = false;
+  export let isBorderedVariant: boolean = false;
 </script>
 
 <div
-  class={cn(" rounded-full", `bg-${color}`, {
+  class={cn(" rounded-full", {
     "w-1.5 h-1.5 border-[0.5px] border-brs2": isActive,
-    "w-1 h-1": !isActive
+    "w-1 h-1": !isActive,
+    [`bg-${color}`]: !isBorderedVariant,
+    border: isBorderedVariant,
+    [`border-${color}`]: !isActive && isBorderedVariant
   })}
 ></div>

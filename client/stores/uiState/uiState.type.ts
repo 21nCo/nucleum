@@ -1,5 +1,8 @@
 export type IUIStateStore = {
   [key: string]: any;
+  $local: {
+    [key: string]: any;
+  };
 };
 
 export enum UIState {
@@ -9,11 +12,11 @@ export enum UIState {
    */
   isInThinMode = "isInThinMode",
   isHideLeftNavBar = "isHideLeftNavBar",
-  HIDE_SHORTCUT_HINTS = "HIDE_SHORTCUT_HINTS",
+  hideShortcutHints = "hideShortcutHints",
   /**
    * Completely hides the left app navigation bar on hot key shortcut or minimize toggle
    */
-  COMPLETELY_HIDE_LEFT_NAV_BAR = "COMPLETELY_HIDE_LEFT_NAV_BAR",
+  completelyHideLeftNavBar = "completelyHideLeftNavBar",
   /**
    * Hides the labels in the app menu items
    */
@@ -42,7 +45,7 @@ export enum UIState {
   captureShortcutRecents = "captureShortcutRecents",
   memotronOverviewPanel = "memotronOverviewPanel",
   calendarLayout = "calendarLayout",
-  calendarScale = "calendarScale",
+  classicCalendarScale = "classicCalendarScale",
   classicCalendarColumnWidth = "classicCalendarColumnWidth",
   calendarColumnPanel = "calendarColumnPanel",
   calendarHistoryTab = "calendarHistoryTab",
@@ -50,3 +53,29 @@ export enum UIState {
   calendarDayTimelinePanelSelection = "calendarDayTimelinePanelSelection",
   showCompletedCalendarTasks = "showCompletedCalendarTasks"
 }
+
+export enum UIStateScope {
+  DEFAULT = "DEFAULT",
+  PRODUCT = "PRODUCT",
+  DEVICE = "DEVICE",
+  /**
+   * Unique to a given device access point. This will be useful to store state per access point enabling flows like having bigger and smaller screens within desktop device type.
+   */
+  DAP = "DAP"
+}
+
+export type IUIStateParams = {
+  scope?: UIStateScope;
+  /**
+   * sub variables to further scope the state along with key and main scope.
+   */
+  subVariables?: string[];
+  /**
+   * @deprecated - use scope instead
+   */
+  isProductScoped?: boolean;
+  /**
+   * @deprecated - use scope instead
+   */
+  isDeviceScoped?: boolean;
+};

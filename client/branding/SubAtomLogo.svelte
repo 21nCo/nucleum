@@ -28,6 +28,34 @@
   >
     {#if subatom === "nucleus"}
       <path
+        d="M287.977 130.92C271.068 121.139 251.436 115.541 230.497 115.541C167.008 115.541 115.539 167.01 115.539 230.499C115.539 265.712 131.371 297.227 156.305 318.315M184.195 335.752C198.36 341.993 214.024 345.458 230.497 345.458C293.987 345.458 345.456 293.989 345.456 230.499C345.456 198.826 332.647 170.145 311.926 149.353"
+        class="stroke-logo-dark dark:stroke-logo-light"
+        stroke-width="11.125"
+        stroke-linecap="round"
+      />
+      <circle
+        cx="230.499"
+        cy="230.509"
+        r="51.0926"
+        class="stroke-logo-dark dark:stroke-logo-light"
+        stroke-width="11.125"
+      />
+      <circle
+        cx="230.119"
+        cy="230.121"
+        r="18.4963"
+        class="stroke-logo-dark dark:stroke-logo-light"
+        stroke-width="11.125"
+      />
+      <circle
+        cx="230.491"
+        cy="230.504"
+        r="83.0255"
+        class="stroke-logo-dark dark:stroke-logo-light"
+        stroke-width="11.125"
+      />
+    {:else if subatom === "nucleus1"}
+      <path
         d="M288.977 131.9204C272.068 122.1392 252.436 116.541 231.497 116.541C168.0077 116.541 116.5391 168.0096 116.5391 231.499C116.5391 266.712 132.3712 298.227 157.3055 319.315M185.1947 336.752C199.36 342.993 215.024 346.458 231.497 346.458C294.987 346.458 346.456 294.989 346.456 231.499C346.456 199.826 333.647 171.1449 312.926 150.3528"
         class="stroke-logo-dark dark:stroke-logo-light"
         stroke-width="11.125"

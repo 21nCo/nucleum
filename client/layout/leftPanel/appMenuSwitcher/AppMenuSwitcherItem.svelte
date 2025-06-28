@@ -14,7 +14,10 @@
     uiState,
     uiStateDerived
   } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
   import { keyboardShortcuts } from "$lib/client/components/shortcuts/shortcuts.store";
   import { popover, tooltip } from "$lib/client/actions/popover.action";
   import { hoverable } from "$lib/client/actions/hover.action";
@@ -54,8 +57,7 @@
   function refreshHideMenuLabels() {
     hideMenuLabels =
       uiState.getState(UIState.hideLeftNavMenuLabels, {
-        isProductScoped: true,
-        isDeviceScoped: true
+        scope: UIStateScope.DAP
       }) || false;
   }
 

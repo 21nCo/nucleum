@@ -74,10 +74,7 @@
         "headingNodeParentBackPropagation",
         headingNodeParentBackPropagation
       );
-      await FallbackTracker.runIfNotCompleted(
-        "collectionsListOnRecords",
-        collectionsListOnRecords
-      );
+      await collectionsListOnRecords();
       if (!$context.isEmbed) {
         toasts.showProgress("update", "Updating the app");
         await FallbackTracker.runIfNotCompleted(

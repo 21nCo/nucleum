@@ -45,6 +45,7 @@ import {
 import context from "$lib/client/stores/context.store";
 import { get } from "svelte/store";
 import {
+  isRecordId,
   resourceAction,
   resourceInList
 } from "$lib/client/components/flux/resourceStores/resource.utils";
@@ -171,7 +172,7 @@ class CollectionStore extends ResourceStore<ICollection> {
       if (!result || result.type !== CollectionType.TYPED) return [];
       if (!result.properties && !result.typeToExtend) return [result];
       let typeToExtend: ICollection | undefined;
-      if (result.typeToExtend) {
+      if (isRecordId(result.typeToExtend)) {
         typeToExtend = await this.select(result.typeToExtend);
       }
       const properties = await propertyStore.selectMany({

@@ -1,11 +1,10 @@
 import { extractProduct } from "$lib/shared/utils/utils";
-import { performQueryOnMasterDb } from "./surrealHelpers";
+import { DatabaseProviderFactory } from "$lib/server/database/providers";
 
 export async function retrieveAppConfig(app: string) {
   const product = extractProduct(app);
-  const query = `select * from product:${product.product}`;
-  const queryResponseJson = await performQueryOnMasterDb(query);
-  const result = queryResponseJson[0].result[0];
+  const provider = DatabaseProviderFactory.getProvider();
+  const result = await provider.getProductConfig(product.product);
   let appData = {
     ...result,
     env: product.env,
@@ -25,22 +24,15 @@ export async function retrieveAppConfig(app: string) {
 export async function saveSubscription(body: any) {
   try {
     const { email, app, context } = body;
-    let createQuery = "";
     const product = extractProduct(app);
-    const userResponseJson = await performQueryOnMasterDb(
-      `select value meta::id(id) from user where email = "${email}" or emailhash = crypto::md5("${email}"); 
-      select value meta::id(id) from product where urls.landing = "${app}";`
-    );
-    if (userResponseJson[1].result.length < 1) {
-      return { error: "Product not found" };
-    }
-    if (userResponseJson[0].result.length > 0) {
-      let userId = userResponseJson[0].result[0];
-      createQuery = `relate product:${product.product}->subscribedBy->user:${userId} set context = "${context}", subscribedAt = time::now();`;
-    } else {
-      createQuery = `let $user = create user set createdAt = time::now(), email = "${email}"; relate product:${product.product}->subscribedBy->$user set context = "${context}", subscribedAt = time::now();`;
-    }
-    let result = await performQueryOnMasterDb(createQuery);
+    const subscriptionData = {
+      email,
+      app,
+      context,
+      productId: product.product
+    };
+    const provider = DatabaseProviderFactory.getProvider();
+    let result = await provider.createSubscription(subscriptionData);
     console.log({ result, one: result?.[0]?.result });
     return result?.[0]?.result?.[0]?.subscribedAt;
   } catch (error) {

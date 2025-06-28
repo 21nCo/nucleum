@@ -294,6 +294,15 @@ export class ActiveNodeStore extends CollectibleStore<IActiveNode, NodeStore> {
     super(node, nodeStore);
     this.eventStore = resolveActiveNodeEventStore(node.toString());
   }
+
+  /**
+   *
+   * For changes to children structure - using isModifyAsSystem: true in additionalParams - since when structure changes are happeneing - currently structure is being updated for all heading nodes in the markdown and therefore all of the heading nodes are being perceived as recents in recentStore due to modifiedAt being updated.
+   *
+   * @param id
+   * @param changedProps
+   * @returns
+   */
   updateBlockPropagator = async (
     id: IRecordId,
     changedProps: { body?: string; children?: string[] }
@@ -374,7 +383,8 @@ export class ActiveNodeStore extends CollectibleStore<IActiveNode, NodeStore> {
         id,
         { ...changedProps, text: mdText },
         {
-          isPreventBackPropagation: true
+          isPreventBackPropagation: true,
+          isModifyAsSystem: true
         }
       );
     }
@@ -787,7 +797,7 @@ class NodeActions {
   goToResourceFromClipper = {
     value: ResourceActionType.OPEN,
     label: "Open in app",
-    icon: "ph:arrow-up-right-light",
+    icon: "ph:arrow-square-out-light",
     callback: async () => {}
   };
 

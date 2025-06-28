@@ -4,6 +4,7 @@
   import { properCase } from "$lib/shared/utils/text.utils";
   import { cn } from "$lib/client/utils/ui.utils";
   import { Size } from "$lib/client/types/size.enum";
+  import { userPreferences } from "../userPreferences.store";
   export let colorScheme: ColorScheme;
   export let isActive: boolean;
   export let size: Size.sm | Size.md = Size.md;
@@ -19,7 +20,7 @@
   $: _colors = resolveColors(colorScheme);
 
   function resolveColors(scheme: ColorScheme) {
-    if ($appearance.skin == AppSkin.Glassy) {
+    if ($userPreferences?.appearance?.skin == AppSkin.Glassy) {
       return scheme.colors;
     }
     const colors = getColors(scheme);
@@ -42,7 +43,7 @@
     }
   )}
 >
-  {#if _colors && $appearance.skin != AppSkin.Glassy}
+  {#if _colors && $userPreferences?.appearance?.skin != AppSkin.Glassy}
     <div class="flex w-full shadow-sm">
       {#each _colors as color, colorIndex}
         <div

@@ -75,11 +75,21 @@ function addIconsToSprite(
     if (iconData) {
       let iconBody = iconData.body;
 
-      // Replace stroke-width with 1 for heroicons and mynaui icon sets
-      if (setName === "heroicons" || setName === "mynaui") {
+      if (
+        setName === "heroicons" ||
+        setName === "mynaui"
+      ) {
         iconBody = iconBody.replace(
           /stroke-width="[^"]*"/g,
           'stroke-width="1.2"'
+        );
+      }
+      if (
+        setName === "hugeicons"
+      ) {
+        iconBody = iconBody.replace(
+          /stroke-width="[^"]*"/g,
+          'stroke-width="1"'
         );
       }
 

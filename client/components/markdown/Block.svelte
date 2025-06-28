@@ -392,15 +392,21 @@
         plainText &&
         data?.caretPosition &&
         typeof data.caretPosition.totalOffset === "number" &&
-        data.caretPosition.totalOffset > 0 &&
+        data.caretPosition.totalOffset >= 0 &&
         data.caretPosition.totalOffset < plainText.length
       ) {
-        const { before, after } = splitMarkdownAtPlainOffset(
-          currentBlockText,
-          data.caretPosition.totalOffset
-        );
-        newText = after;
-        const preText = before;
+        let preText = "";
+        if (data.caretPosition.totalOffset === 0) {
+          newText = currentBlockText;
+          preText = "";
+        } else {
+          const { before, after } = splitMarkdownAtPlainOffset(
+            currentBlockText,
+            data.caretPosition.totalOffset
+          );
+          newText = after;
+          preText = before;
+        }
         const modifiedBody = editBlockText(block, preText);
         if (headingNodeTypes.includes(block.contentType)) {
           block.label = modifiedBody as string;

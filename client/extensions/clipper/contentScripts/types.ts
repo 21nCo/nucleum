@@ -35,6 +35,10 @@ export interface IFeedbackPaneStore extends IObservableStoreSubject {
   focusedClip: IClip | null;
   isPreventAutoClose?: boolean;
   isShowStatusOnly?: boolean;
+  /**
+   * Whether the feedback pane is user initiated. Used to prevent auto close.
+   */
+  isUserInitiated?: boolean;
 }
 
 export interface ISyncStore extends IObservableStoreSubject {

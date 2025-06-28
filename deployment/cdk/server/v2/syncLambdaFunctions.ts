@@ -10,6 +10,12 @@ import { CustomLambdaNestedStackPropsV2 } from "../../types/customNestedStackPro
 import { defaults } from "../../config";
 import { generateFunctionName } from "../../cdk.utils";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
+import {
+  Role,
+  ServicePrincipal,
+  ManagedPolicy,
+  PolicyStatement
+} from "aws-cdk-lib/aws-iam";
 
 export class SyncLambdaFunctions extends cdk.NestedStack {
   constructor(
@@ -26,6 +32,27 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
       logRetention: RetentionDays.THREE_DAYS
     };
 
+    const createSyncRole = (roleName: string) => {
+      return new Role(this, roleName, {
+        roleName: `${props.environment.environment}-${props.environment.region}-${roleName}`,
+        assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+        managedPolicies: [
+          ManagedPolicy.fromAwsManagedPolicyName(
+            "service-role/AWSLambdaBasicExecutionRole"
+          )
+        ]
+      });
+    };
+
+    const syncUpRole = createSyncRole("SyncUpFunctionRole");
+    const syncDownRole = createSyncRole("SyncDownFunctionRole");
+    const cloneUpRole = createSyncRole("CloneUpFunctionRole");
+    const cloneDownRole = createSyncRole("CloneDownFunctionRole");
+    const cloneDownV2Role = createSyncRole("CloneDownv2FunctionRole");
+    const paginateRole = createSyncRole("PaginateFunctionRole");
+    const paginateV2Role = createSyncRole("Paginatev2FunctionRole");
+    const reconcileRole = createSyncRole("ReconcileFunctionRole");
+
     const syncEndpoint = props.api.addResource("sync");
 
     const syncUpResource = syncEndpoint.addResource("up");
@@ -33,7 +60,8 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
       handler: "index.handler",
       functionName: generateFunctionName("syncUpFunction", props.environment),
       code: lambda.Code.fromAsset(path.join(__dirname, basePath + "up/dist")),
-      ...nodeRuntimeFunctionProps
+      ...nodeRuntimeFunctionProps,
+      role: syncUpRole
     });
     syncUpResource.addMethod(
       "POST",
@@ -45,7 +73,8 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
       handler: "index.handler",
       functionName: generateFunctionName("syncDownFunction", props.environment),
       code: lambda.Code.fromAsset(path.join(__dirname, basePath + "down/dist")),
-      ...nodeRuntimeFunctionProps
+      ...nodeRuntimeFunctionProps,
+      role: syncDownRole
     });
     syncDownResource.addMethod(
       "POST",
@@ -59,7 +88,8 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
       code: lambda.Code.fromAsset(
         path.join(__dirname, basePath + "cloneup/dist")
       ),
-      ...nodeRuntimeFunctionProps
+      ...nodeRuntimeFunctionProps,
+      role: cloneUpRole
     });
     cloneUpResource.addMethod(
       "POST",
@@ -76,11 +106,34 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
       code: lambda.Code.fromAsset(
         path.join(__dirname, basePath + "clonedown/dist")
       ),
-      ...nodeRuntimeFunctionProps
+      ...nodeRuntimeFunctionProps,
+      role: cloneDownRole
     });
     cloneDownResource.addMethod(
       "POST",
       new gateway.LambdaIntegration(cloneDownFunction)
+    );
+
+    const cloneDownV2Resource = syncEndpoint.addResource("clonedownv2");
+    const cloneDownV2Function = new lambda.Function(
+      this,
+      "CloneDownV2Function",
+      {
+        handler: "index.handler",
+        functionName: generateFunctionName(
+          "cloneDownV2Function",
+          props.environment
+        ),
+        code: lambda.Code.fromAsset(
+          path.join(__dirname, basePath + "clonedownv2/dist")
+        ),
+        ...nodeRuntimeFunctionProps,
+        role: cloneDownV2Role
+      }
+    );
+    cloneDownV2Resource.addMethod(
+      "POST",
+      new gateway.LambdaIntegration(cloneDownV2Function)
     );
 
     const paginateResource = syncEndpoint.addResource("paginate");
@@ -90,11 +143,30 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
       code: lambda.Code.fromAsset(
         path.join(__dirname, basePath + "paginate/dist")
       ),
-      ...nodeRuntimeFunctionProps
+      ...nodeRuntimeFunctionProps,
+      role: paginateRole
     });
     paginateResource.addMethod(
       "POST",
       new gateway.LambdaIntegration(paginateFunction)
+    );
+
+    const paginateV2Resource = syncEndpoint.addResource("paginatev2");
+    const paginateV2Function = new lambda.Function(this, "PaginateV2Function", {
+      handler: "index.handler",
+      functionName: generateFunctionName(
+        "paginateV2Function",
+        props.environment
+      ),
+      code: lambda.Code.fromAsset(
+        path.join(__dirname, basePath + "paginatev2/dist")
+      ),
+      ...nodeRuntimeFunctionProps,
+      role: paginateV2Role
+    });
+    paginateV2Resource.addMethod(
+      "POST",
+      new gateway.LambdaIntegration(paginateV2Function)
     );
 
     const reconcileResource = syncEndpoint.addResource("reconcile");
@@ -107,7 +179,8 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
       code: lambda.Code.fromAsset(
         path.join(__dirname, basePath + "reconcile/dist")
       ),
-      ...nodeRuntimeFunctionProps
+      ...nodeRuntimeFunctionProps,
+      role: reconcileRole
     });
     reconcileResource.addMethod(
       "POST",
@@ -120,7 +193,9 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
       syncDownFunction,
       cloneUpFunction,
       cloneDownFunction,
+      cloneDownV2Function,
       paginateFunction,
+      paginateV2Function,
       reconcileFunction
     ];
 
@@ -135,6 +210,21 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
       props.dynamoTables.forEach((table) => {
         lambdaFunctions.forEach((func) => {
           table.grantReadWriteData(func);
+          func.addToRolePolicy(
+            new PolicyStatement({
+              actions: [
+                "dynamodb:Query",
+                "dynamodb:Scan",
+                "dynamodb:GetItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:BatchGetItem",
+                "dynamodb:BatchWriteItem"
+              ],
+              resources: [`${table.tableArn}/index/*`]
+            })
+          );
         });
       });
     }
@@ -144,7 +234,9 @@ export class SyncLambdaFunctions extends cdk.NestedStack {
       syncDownResource,
       cloneUpResource,
       cloneDownResource,
+      cloneDownV2Resource,
       paginateResource,
+      paginateV2Resource,
       reconcileResource
     ]) {
       resource.addMethod(

@@ -404,9 +404,14 @@ export function resolveFileIcon(file: IFile) {
   return "ph:file-light";
 }
 
+/**
+ * Disabling for tweets for now as the favicon is not present in tweet node metadata anymore.
+ * @param node
+ * @returns
+ */
 export function resolveNodeGraphFill(node: INode) {
   if (
-    node.contentType === NodeType.TWEET ||
+    // node.contentType === NodeType.TWEET ||
     node.contentType === NodeType.TWITTER_PROFILE
   )
     return "black";

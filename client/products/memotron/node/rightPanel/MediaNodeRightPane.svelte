@@ -14,9 +14,9 @@
 
 <aside
   class={cn(
-    "flex flex-col h-full gap-4 justify-center items-center mo:w-full min-w-96 w-3/10 w--80 2k:w--96",
+    "flex flex-col h-full gap-4 justify-center items-center mo:w-full cw:min-w-full min-w-96 w-3/10 w--80 2k:w--96",
     {
-      "w-full": isConstrainedWidth
+      "w-full px-3": isConstrainedWidth
     }
   )}
 >

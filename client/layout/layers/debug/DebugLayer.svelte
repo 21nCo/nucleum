@@ -16,6 +16,7 @@
   import account from "$lib/client/stores/account.store";
   import { Action } from "$lib/client/types/action.enum";
   import { FallbackTracker } from "$lib/client/utils/fallbackTracker.utils";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   export let isShowAsPage: boolean = false;
   let isShowDebugOverlay: boolean = false;
   let environment: string = $appStore.env;
@@ -97,14 +98,17 @@
     />
     <DebugInfoItem label="Scale" value={$view.scale.toFixed(2)} />
     <DebugInfoItem label="Display" value={$view.display} />
-    <DebugInfoItem label="Skin" value={$appearance.skin} />
+    <DebugInfoItem label="Skin" value={$userPreferences?.appearance?.skin} />
     <DebugInfoItem
       label="Theme & Color scheme"
       value={$appearance.theme +
         "  " +
         $appearance.colorScheme.tailwindSelector}
     />
-    <DebugInfoItem label="Typeface" value={$appearance.typeface} />
+    <DebugInfoItem
+      label="Typeface"
+      value={$userPreferences?.appearance?.typeface}
+    />
     <DebugInfoItem label="Portrait mode" value={$view.isPortrait} />
     <DebugInfoItem
       label="Storage quota"

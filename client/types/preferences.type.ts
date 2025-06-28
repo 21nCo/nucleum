@@ -55,10 +55,10 @@ export type IUserGlobalPreferences = IObservableStoreSubject & {
 
 export type UserAppearanceSettings = {
   skin: AppSkin;
-  theme: Theme;
   isSyncWithSystem: boolean;
   lightColorSchemeId: string;
   darkColorSchemeId: string;
+  userThemeSetting: Theme;
   isBlurredBgForPopups?: boolean;
   isFixedLeftNav?: boolean;
   typeface?: string;

@@ -35,8 +35,8 @@ export function resolveProductResources(
           Resource.node,
           Resource.goal,
           Resource.task,
-          Resource.collection,
-          Resource.combination
+          Resource.collection
+          // Resource.combination
         ];
       else
         return [
@@ -44,7 +44,7 @@ export function resolveProductResources(
           Resource.goal,
           Resource.task,
           Resource.collection,
-          Resource.combination,
+          // Resource.combination,
           Resource.relation
         ];
   }

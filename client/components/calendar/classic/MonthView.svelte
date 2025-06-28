@@ -7,6 +7,7 @@
 
   export let selectedDate: Date;
   export let indicatorData: ICalendarIndicatorData[] = [];
+  export let indicatorRefreshId: number = 0;
 
   const dispatch = createEventDispatcher();
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -92,7 +93,7 @@
         )}
         on:click={() => {
           selectedDate = day;
-          dispatch("dateSelect", day);
+          dispatch("dateChange", day);
         }}
       >
         <span class="flex items-center justify-center">
@@ -118,6 +119,7 @@
               date={day}
               isActive={isSelected}
               data={indicatorData}
+              {indicatorRefreshId}
               view="month"
             />
           </div>

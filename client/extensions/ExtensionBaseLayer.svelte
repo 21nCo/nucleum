@@ -37,6 +37,11 @@
   // import spritePhLight from "data-text:/assets/icons/sprite-ph-light.svg";
   import { resolveIconSvgSheetText } from "./iconSvgSheetTextResolver";
   import { appStore } from "../stores/app.store";
+  import {
+    isRecordId,
+    removeDuplicatesFilter
+  } from "../components/flux/resourceStores/resource.utils";
+
   const dispatch = createEventDispatcher();
   export let id: string;
   export let stores: IStore[] = [];
@@ -62,7 +67,9 @@
   });
 
   onMount(async () => {
+    dispatch("mount");
     appStore.initializeProductInformation(product);
+    addEventListeners();
     window.addEventListener(
       "message",
       async function (event) {
@@ -90,7 +97,16 @@
 
   onDestroy(() => {
     cleanExtensionSprites();
+    removeEventListeners();
   });
+
+  function addEventListeners() {
+    window.addEventListener("addToRecents", handleAddToRecents);
+  }
+
+  function removeEventListeners() {
+    window.removeEventListener("addToRecents", handleAddToRecents);
+  }
 
   async function refreshUserSession() {
     const dapId = await getDapId();
@@ -151,12 +167,20 @@
         }
       );
       logger.log({ at: "initFlux", initResult });
+      await clientStorage.set(ClientStorageKey.EXTENSION_BOOTUP, {
+        inProgress: true
+      });
       if (initResult === 0) {
         await extensionFlux({ method: FluxMethod.CLONE_DOWN });
       } else {
-        await extensionFlux({ method: FluxMethod.SYNC_DOWN });
+        await extensionFlux({
+          method: FluxMethod.SYNC_DOWN
+        });
       }
       await loadInMemoryStores(stores);
+      await clientStorage.set(ClientStorageKey.EXTENSION_BOOTUP, {
+        inProgress: false
+      });
       relayToSidePanel({
         event: ExtensionEvent.BOOTUP
       });
@@ -234,6 +258,33 @@
       });
     }
   }
+
+  async function handleAddToRecents(event: any) {
+    try {
+      const { record, type, timestamp } = event.detail;
+      if (!record || !record.id) return;
+      const currentRecents = await clientStorage.get(ClientStorageKey.RECENTS);
+      const newRecents = [
+        { ...record, id: record.id.toString() },
+        ...(currentRecents ? JSON.parse(currentRecents) : [])
+      ]
+        .filter(removeDuplicatesFilter)
+        .filter((x: any) => isRecordId(x.id));
+      await clientStorage.set(
+        ClientStorageKey.RECENTS,
+        newRecents.slice(0, 10)
+      );
+    } catch (e) {
+      logger.error({
+        at: "ExtensionBaseLayer.handleAddToRecents",
+        error: e
+      });
+    }
+  }
+
+  function onFocus() {
+    onTabUpdate();
+  }
 </script>
 
 <!-- <div
@@ -254,3 +305,4 @@
 <ExtensionThemeBase {id}>
   <slot />
 </ExtensionThemeBase>
+<svelte:window on:focus={onFocus} />

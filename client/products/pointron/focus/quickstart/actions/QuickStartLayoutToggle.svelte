@@ -1,7 +1,10 @@
 <script>
   import Button from "$lib/client/elements/button/Button.svelte";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
   import { Layout } from "$lib/client/types/layout.type";
   import { Size } from "$lib/client/types/size.enum";
   import { onMount } from "svelte";
@@ -16,7 +19,7 @@
   });
   function refreshLayoutState() {
     const layoutState = uiState.getState(UIState.quickFocusLayout, {
-      isDeviceScoped: true
+      scope: UIStateScope.DEVICE
     });
     return layoutState ?? Layout.LIST;
   }
@@ -30,7 +33,7 @@
       UIState.quickFocusLayout,
       layout === Layout.LIST || !layout ? Layout.GRID : Layout.LIST,
       {
-        isDeviceScoped: true
+        scope: UIStateScope.DEVICE
       }
     );
   }}

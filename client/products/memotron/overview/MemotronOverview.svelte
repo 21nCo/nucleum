@@ -3,7 +3,10 @@
   import GlobalGraph from "../graph/GlobalGraph.svelte";
   import MemotronMapOverview from "./MemotronMapOverview.svelte";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
   import MemotronDefaultOverview from "./MemotronDefaultOverview.svelte";
   import { MemotronOverviewPanel } from "./overview.type";
 
@@ -12,7 +15,7 @@
 
   function resolveSavedState() {
     const savedPanel = uiState.getState(UIState.memotronOverviewPanel, {
-      isDeviceScoped: true
+      scope: UIStateScope.DEVICE
     });
     if (
       savedPanel &&

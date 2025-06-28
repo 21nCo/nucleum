@@ -74,7 +74,10 @@ export enum Theme {
 }
 
 export type AppearanceStore = IStore & {
-  skin: AppSkin;
+  /**
+   * @deprecated Use userPreferences.appearance.skin directly instead
+   */
+  skin?: AppSkin;
   theme: Theme;
   colorScheme: ColorScheme;
   lightColorSchemeId: string;
@@ -82,9 +85,14 @@ export type AppearanceStore = IStore & {
   userThemeSetting: Theme;
   isSyncWithSystem: boolean;
   systemTheme: Theme;
-  typeface: string;
+  /**
+   * @deprecated Use userPreferences.appearance.typeface directly instead
+   */
+  typeface?: string;
+  /**
+   * @deprecated Use userPreferences.accessibilitySizingFactor directly instead
+   */
   accessibilitySizingFactor: number;
-  isFixedLeftNav?: boolean;
 };
 
 export enum Color {

@@ -30,7 +30,7 @@
     Product.NUCLEUS,
     Product.POINTRON,
     Product.MEMOTRON
-    // Product.SELFTRON,
+    // Product.SELFTRON
     // Product.FEEDTRON,
     // Product.HOMETRON,
     // Product.FINATRON,
