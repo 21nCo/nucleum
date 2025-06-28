@@ -161,7 +161,11 @@
       <YearTileIndicatorDot color={getColor(Resource.session)} {isActive} />
     {/if}
     {#if nodes.length > 0 || calendarNotes.length > 0}
-      <YearTileIndicatorDot color={getColor(Resource.node)} {isActive} />
+      <YearTileIndicatorDot
+        color={getColor(Resource.node)}
+        {isActive}
+        isBorderedVariant={true}
+      />
     {/if}
   </div>
 {/if}
