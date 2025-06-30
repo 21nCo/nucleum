@@ -1,9 +1,11 @@
-<script>
+<script lang="ts">
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   import { TimeFormat } from "$lib/client/types/time.type";
 
   import { formatSeconds } from "$lib/client/utils/time.utils";
   import { activeSession } from "../focus/session.store";
+  import { Product } from "$lib/client/types/product.type";
+  export let ctx: Product = Product.NUCLEUS;
 </script>
 
 <svelte:head>
@@ -16,11 +18,15 @@
           $activeSession.timeElapsed,
           TimeFormat.CLOCK
         )}
-        - Pointron
+        - {ctx === Product.POINTRON ? "Pointron" : "Nucleus"}
       </title>
     {/key}
   {:else}
-    <title>Pointron - Your focus haven</title>
+    <title>
+      {ctx === Product.POINTRON
+        ? "Pointron - Your focus haven"
+        : "Nucleus - Your digital harmony"}
+    </title>
   {/if}
 </svelte:head>
 

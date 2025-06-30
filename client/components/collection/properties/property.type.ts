@@ -168,7 +168,9 @@ export enum UniversalPropertyType {
   TIMEZONE = "timezone",
   WEATHER = "weather",
   MOOD_LOG = "mood-log",
-  REACTION = "reaction"
+  REACTION = "reaction",
+  DAY_OF_WEEK = "day-of-week",
+  MONTH = "month"
 }
 
 export const textPropertyTypes = [

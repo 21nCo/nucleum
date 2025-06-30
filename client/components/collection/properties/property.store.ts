@@ -187,6 +187,16 @@ export const universalPropertyOptions = [
     label: "Timezone",
     icon: "ph:clock-light",
     value: UniversalPropertyType.TIMEZONE
+  },
+  {
+    label: "Day of week",
+    icon: "ph:calendar-light",
+    value: UniversalPropertyType.DAY_OF_WEEK
+  },
+  {
+    label: "Month",
+    icon: "ph:calendar-light",
+    value: UniversalPropertyType.MONTH
   }
 ];
 

@@ -141,6 +141,7 @@ export type IAction = {
 
 export type IActionFnParams = {
   componentParams?: any;
+  searchParams?: Record<string, string | boolean | number>;
   view?: IViewStore;
   context?: IAppContext;
 };

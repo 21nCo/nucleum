@@ -9,7 +9,12 @@
   import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
-  import FocusTopNavWidget from "../../pointron/focus/player/FocusTopNavWidget.svelte";
+  import FocusTopNavWidget from "$lib/client/products/pointron/focus/player/FocusTopNavWidget.svelte";
+  import PointronNotifications from "$lib/client/products/pointron/base/Notifications.svelte";
+  import MemotronNotifications from "$lib/client/products/memotron/base/MemotronNotifications.svelte";
+  import BackgroundSoundPlayer from "$lib/client/products/pointron/focus/backgroundMusic/BackgroundSoundPlayer.svelte";
+  import SessionTitle from "../../pointron/base/SessionTitle.svelte";
+  import MemoryBase from "../../memotron/base/MemoryBase.svelte";
 
   let isLiteMode = $context.isEmbed && $context.isSheet;
   const isDebug = import.meta.env?.DEV;
@@ -58,5 +63,10 @@
     />
   </div>
   <slot />
+  <PointronNotifications />
+  <MemotronNotifications />
+  <BackgroundSoundPlayer />
+  <SessionTitle />
 </UserBaseLayer>
 <svelte:window on:focus={onAppear} />
+<MemoryBase />

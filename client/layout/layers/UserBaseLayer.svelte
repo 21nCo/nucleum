@@ -66,6 +66,7 @@
   import UserLayout from "./UserLayout.svelte";
   import { compareVersions } from "$lib/shared/utils/utils";
   import { UIStateScope } from "$lib/client/stores/uiState/uiState.type";
+  import { RxDBPersistence } from "$lib/client/persistence/rxdb/rxdb.local";
 
   const loadingMessages = {
     cloneUp: {
@@ -334,15 +335,17 @@
       product: $appStore.product
     };
     const stores = [...cacheableStores, ...localCacheableStores];
-    const provider: PersistenceProvider = PersistenceProvider.SURREAL_SURREAL;
+    const provider: PersistenceProvider = PersistenceProvider.SURREAL;
     return initFlux(stores, provider, resolveLocalPersistence(), initParams);
 
     function resolveLocalPersistence() {
       switch (provider) {
-        case PersistenceProvider.SURREAL_SURREAL:
+        case PersistenceProvider.SURREAL:
           return new SurrealPersistence();
-        case PersistenceProvider.SIGNAL_SURREAL:
+        case PersistenceProvider.SIGNALDB:
           return new SignalDBPersistence();
+        case PersistenceProvider.RXDB:
+          return new RxDBPersistence();
         default:
           return new SurrealPersistence();
       }

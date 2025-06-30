@@ -46,6 +46,11 @@ export class DexiePersistence implements IPersistence {
     return 0;
   }
 
+  async reinitialize() {
+    await this.terminate();
+    return true;
+  }
+
   async terminate() {
     await this.instance?.close();
     this.instance = undefined;

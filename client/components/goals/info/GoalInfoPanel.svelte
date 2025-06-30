@@ -34,6 +34,8 @@
     AlertType,
     type IInlineStatus
   } from "$lib/client/types/notification.type";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   export let goal: IActiveGoalStore;
   export let isConstrainedWidth = false;
   export let status: IInlineStatus | undefined = undefined;
@@ -105,12 +107,15 @@
   </div>
   <RecordStatusBanner resource={goal} />
   {#if isCurrentlyFocusing}
-    <div
-      class="flex items-center w-full justify-between gap-4 border border-brs3 p-3 rounded-md"
+    <button
+      class="flex items-center w-full justify-between gap-4 border border-brs3 p-3 rounded-md hover:bg-bgs2"
+      on:click={() => {
+        appStore.runAction(PointronAction.FOCUS);
+      }}
     >
       <FocusPlayerTimeText context={SessionUIContext.GOAL_PAGE} />
       <ControlBar context={SessionUIContext.PIP} />
-    </div>
+    </button>
   {/if}
   {#if !$goal.isInEditMode}
     <div class="flex flex-col gap-1">

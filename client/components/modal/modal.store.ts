@@ -97,7 +97,10 @@ class FullScreenStore extends ObservableStore<
     logger.log({ at: "fullscreen.show", path });
     this.set({ path });
     // appStore.runAction(path);
-    appStore.toggleSearchParam({ [ResourceAccessMode.FULL]: path });
+    appStore.toggleSearchParam({
+      [ResourceAccessMode.FULL]: path,
+      [ResourceAccessMode.POP]: null
+    });
   }
 
   /**

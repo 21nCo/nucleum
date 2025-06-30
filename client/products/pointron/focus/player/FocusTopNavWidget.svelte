@@ -9,9 +9,12 @@
   import { tooltip } from "$lib/client/actions/popover.action";
   import { cn } from "$lib/client/utils/ui.utils";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
-
+  import { Product } from "$lib/client/types/product.type";
+  export let ctx: Product = Product.NUCLEUS;
+  const action =
+    ctx === Product.NUCLEUS ? PointronAction.FOCUS : PointronAction.FOCUS_MODAL;
   function handleClick() {
-    appStore.runAction(PointronAction.FOCUS_MODAL);
+    appStore.runAction(action);
   }
 </script>
 
@@ -38,7 +41,7 @@
     icon="ph:circle"
     tooltip="Focus"
     style={ButtonStyle.PLAIN}
-    shortcut={PointronAction.FOCUS_MODAL}
+    shortcut={action}
     parentBgIndex={2}
     on:click={handleClick}
   />
