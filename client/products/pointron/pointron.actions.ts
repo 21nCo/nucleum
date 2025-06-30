@@ -74,6 +74,7 @@ import CreateTask from "$lib/client/components/tasks/CreateTask.svelte";
 import { taskStore } from "$lib/client/components/tasks/task.store";
 import Goal from "$lib/client/components/goals/Goal.svelte";
 import GoalTitleLabelPart from "$lib/client/components/goals/GoalTitleLabelPart.svelte";
+import { AppSearchParam } from "$lib/client/types/appStore.type";
 
 const isSessionRunningPreCondition = () => get(activeSession).isSessionRunning;
 
@@ -335,14 +336,15 @@ export const pointronActions: IAction[] = [
     action: PointronAction.FOCUS_MODAL,
     component: Focus,
     icon: "ph:circle-light",
-    type: ActionType.MODAL,
+    type: ActionType.RESOURCE,
     isMeta: true,
     label: "Focus",
     modalParams: {
       layout: {
         size: Size.xxl,
         orientation: Orientation.Horizontal,
-        ignoreSafeArea: true
+        ignoreSafeArea: true,
+        isShowCantileverClose: true
       }
     }
   },
@@ -703,7 +705,10 @@ export const pointronActions: IAction[] = [
     label: "Create a new goal",
     type: ActionType.FUNCTION,
     fn: async (props?: IActionFnParams) => {
-      await goalStore.createNew(props?.componentParams);
+      await goalStore.createNew({
+        ...props?.componentParams,
+        linkSearchParam: props?.searchParams?.[AppSearchParam.LINK]
+      });
     }
   },
   {

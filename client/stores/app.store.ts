@@ -318,6 +318,7 @@ function initAppStore(seed: IAppStore) {
       if (!action.fn) return;
       return action.fn({
         componentParams: params?.componentParams,
+        searchParams: params?.searchParams,
         view: viewData,
         context: ctx
       });
@@ -602,7 +603,7 @@ function initAppStore(seed: IAppStore) {
     accessMode: ResourceAccessMode = ResourceAccessMode.INLINE,
     params?: {
       replaceId?: IRecordId;
-      searchParams?: Record<string, string | boolean | number>;
+      searchParams?: Record<string, string | boolean | number | null>;
     }
   ) => {
     if (!id) return;

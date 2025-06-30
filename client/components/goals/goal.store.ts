@@ -127,6 +127,7 @@ class GoalStore extends ResourceStore<IGoal> {
     context?: string;
     label?: string;
     isPreventOpenAfterCreate?: boolean;
+    linkSearchParam?: string;
   }) {
     const id = generateResourceId(Resource.goal);
     const goal: OmitForCaptureWithId<IGoal> = {
@@ -146,7 +147,8 @@ class GoalStore extends ResourceStore<IGoal> {
     if (params?.isPreventOpenAfterCreate) return;
     appStore.openResource(id, ResourceAccessMode.POP, {
       searchParams: {
-        [AppSearchParam.EDIT]: true
+        [AppSearchParam.EDIT]: true,
+        [AppSearchParam.LINK]: params?.linkSearchParam ?? null
       }
     });
   }

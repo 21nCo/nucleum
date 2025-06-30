@@ -46,7 +46,7 @@ export function mapPropertyValues(
     const nodeProperty = nodeProperties?.find(resourceInList(property));
     return {
       id: property.id,
-      value: nodeProperty?.value ?? resolvePropertyDefaultValue(property)
+      value: nodeProperty?.value ?? resolvePropertyDefaultValue(property.type)
     };
   });
 }
@@ -278,6 +278,88 @@ const reactionOptions = [
   }
 ];
 
+const dayOfWeekOptions: IPropertyConfigOption[] = [
+  {
+    id: "sun",
+    label: "Sunday"
+  },
+  {
+    id: "mon",
+    label: "Monday"
+  },
+  {
+    id: "tue",
+    label: "Tuesday"
+  },
+  {
+    id: "wed",
+    label: "Wednesday"
+  },
+  {
+    id: "thu",
+    label: "Thursday"
+  },
+  {
+    id: "fri",
+    label: "Friday"
+  },
+  {
+    id: "sat",
+    label: "Saturday"
+  }
+];
+
+const monthOptions: IPropertyConfigOption[] = [
+  {
+    id: "jan",
+    label: "January"
+  },
+  {
+    id: "feb",
+    label: "February"
+  },
+  {
+    id: "mar",
+    label: "March"
+  },
+  {
+    id: "apr",
+    label: "April"
+  },
+  {
+    id: "may",
+    label: "May"
+  },
+  {
+    id: "jun",
+    label: "June"
+  },
+  {
+    id: "jul",
+    label: "July"
+  },
+  {
+    id: "aug",
+    label: "August"
+  },
+  {
+    id: "sep",
+    label: "September"
+  },
+  {
+    id: "oct",
+    label: "October"
+  },
+  {
+    id: "nov",
+    label: "November"
+  },
+  {
+    id: "dec",
+    label: "December"
+  }
+];
+
 export function resolveUniversalPropertyOptions(
   type: UniversalPropertyType
 ): IPropertyConfigOption[] {
@@ -298,6 +380,10 @@ export function resolveUniversalPropertyOptions(
       return moodOptions;
     case UniversalPropertyType.REACTION:
       return reactionOptions;
+    case UniversalPropertyType.DAY_OF_WEEK:
+      return dayOfWeekOptions;
+    case UniversalPropertyType.MONTH:
+      return monthOptions;
     default:
       return [];
   }

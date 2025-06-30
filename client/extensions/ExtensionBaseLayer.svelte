@@ -160,7 +160,7 @@
       const dapId = await getDapId();
       const initResult = await initExtensionFlux(
         stores,
-        PersistenceProvider.DEXIE_SURREAL,
+        PersistenceProvider.DEXIE,
         {
           dapId,
           userId: currentUserId

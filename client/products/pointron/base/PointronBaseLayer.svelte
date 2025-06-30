@@ -20,6 +20,7 @@
   import { FallbackTracker } from "$lib/client/utils/fallbackTracker.utils";
   import FocusTopNavWidget from "../focus/player/FocusTopNavWidget.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
+  import { Product } from "$lib/client/types/product.type";
 
   let isLiteMode = $context.isEmbed && $context.isSheet;
   const isDebug = import.meta.env?.DEV;
@@ -75,10 +76,10 @@
 
 <UserBaseLayer on:ready={onReady}>
   <div slot="topnav">
-    <FocusTopNavWidget />
+    <FocusTopNavWidget ctx={Product.POINTRON} />
   </div>
   <slot />
-  <SessionTitle />
+  <SessionTitle ctx={Product.POINTRON} />
   <Notifications />
   <BackgroundSoundPlayer />
 </UserBaseLayer>

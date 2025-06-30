@@ -34,9 +34,6 @@ import {
 } from "$lib/client/utils/browser.utils";
 import { getDapId } from "$lib/client/persistence/persistence.utils";
 import { generateRandomId } from "$lib/shared/utils/crypto.utils";
-import type { ISurrealDatabase } from "$lib/client/types/db.type";
-import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
-
 import { resolveCurrentUserId } from "$lib/client/utils/account.utils";
 import { GlobalEvent } from "$lib/client/types/event.enum";
 import {
@@ -67,8 +64,6 @@ class Flux {
   remoteOnlyStores: IStore[] = [];
   provider!: PersistenceProvider;
   persistence!: IPersistence;
-  // syncer!: ISyncHandler;
-  remote!: ISurrealDatabase;
   private isLocalMode: boolean = false;
   private isExtensionEnvironment: boolean = false;
   private isSyncDownPending: boolean = false;
@@ -98,15 +93,6 @@ class Flux {
     Flux._instance.persistence = persistence;
     Flux._instance.stores = stores;
     Flux._instance.remoteOnlyStores = params.remoteOnlyStores ?? [];
-    switch (provider) {
-      case PersistenceProvider.SURREAL_SURREAL:
-      case PersistenceProvider.DEXIE_SURREAL:
-        Flux._instance.remote = new SurrealDatabase();
-        // Flux._instance.syncer = new SurrealSync(Flux._instance.remote);
-        break;
-      default:
-        break;
-    }
     logger.log({ at: "flux.initialized", instance: Flux._instance });
     return Flux._instance.initializePersistence(params);
   }
@@ -501,10 +487,13 @@ class Flux {
     }
   }
 
+  /**
+   * @deprecated - use select instead
+   * @param query
+   * @param params
+   * @returns
+   */
   async selectByQuery(query: string, params?: any) {
-    if (this.provider === PersistenceProvider.DEXIE_SURREAL) {
-      return this.remote.query(query, params);
-    }
     return this.persistence.query(query, params);
   }
 

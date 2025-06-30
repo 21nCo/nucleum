@@ -102,16 +102,21 @@ export interface IPersistence {
  */
 export enum PersistenceProvider {
   /**
-   * Using surreal-wasm as indexedDb provider with surreal as remote database provider.
+   * Using surreal-wasm which abstracts indexedDb.
    */
-  SURREAL_SURREAL = "SURREAL_SURREAL",
+  SURREAL = "SURREAL",
   /**
-   * Using dexie as indexedDb provider with surreal as remote database provider.
+   * Using dexie.js which abstracts indexedDb.
    */
-  DEXIE_SURREAL = "DEXIE_SURREAL",
-  SIGNAL_SURREAL = "SIGNAL_SURREAL",
-  DEXIE_POSTGRES = "DEXIE_POSTGRES",
-  SCYLLA = "scylla"
+  DEXIE = "DEXIE",
+  /**
+   * SignalDB has multiple persistence layers - IndexedDb, OPFS
+   */
+  SIGNALDB = "SIGNALDB",
+  /**
+   * RxDb supports many persistence layers and also replication
+   */
+  RXDB = "RXDB"
 }
 
 export enum RemotePersistenceProvider {

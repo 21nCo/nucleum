@@ -4,6 +4,7 @@ import { memotronActions } from "$lib/client/products/memotron/memotron.actions"
 import { pointronActions } from "$lib/client/products/pointron/pointron.actions";
 import NucleusLibrary from "./NucleusLibrary.svelte";
 import NucleusOverview from "./overview/NucleusOverview.svelte";
+import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
 import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
@@ -21,7 +22,16 @@ import Combination from "$lib/client/components/combination/Combination.svelte";
 import ResourceBrowser from "$lib/client/components/library/resourceBrowser/ResourceBrowser.svelte";
 import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
 
-const actionsToFilterInSub = [Action.LIBRARY, Action.OVERVIEW];
+const actionsToFilterInSub = [
+  Action.LIBRARY,
+  Action.OVERVIEW,
+  PointronAction.FOCUS,
+  PointronAction.FOCUS_MODAL
+];
+
+const focusModal = pointronActions.find(
+  (action) => action.action === PointronAction.FOCUS_MODAL
+);
 
 export const nucleusActions: IAction[] = [
   ...memotronActions.filter(
@@ -30,6 +40,11 @@ export const nucleusActions: IAction[] = [
   ...pointronActions.filter(
     (action) => !actionsToFilterInSub.includes(action.action as Action)
   ),
+  {
+    type: ActionType.MODAL,
+    ...(focusModal ? focusModal : {}),
+    action: PointronAction.FOCUS
+  },
   {
     action: Action.LIBRARY,
     label: "Library",
