@@ -78,7 +78,7 @@
     try {
       if (!$goal) return;
       return $page.url.searchParams.get(
-        `${$goal.id.toString().slice(-5)}-${AppSearchParam.TAB}`
+        appStore.resolveRecordSpecificSearchParam($goal.id, AppSearchParam.TAB)
       );
     } catch (error) {
       logger.error({
@@ -180,8 +180,8 @@
   }
 
   function setTab(tab: string) {
-    appStore.toggleSearchParam({
-      [`${$goal.id.toString().slice(-5)}-${AppSearchParam.TAB}`]: tab
+    appStore.toggleSearchParamRecordSpecific($goal.id, {
+      [AppSearchParam.TAB]: tab
     });
   }
 </script>

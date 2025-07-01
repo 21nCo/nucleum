@@ -1012,7 +1012,7 @@ export function resolveNodeContextMenu(
       mediaShareAndExportGroup,
       ...commonGroups
     ];
-  } else if (params?.nodeView === NodeView.BIRD_VIEW) {
+  } else if (params?.nodeView === NodeView.BIRD) {
     return [
       {
         group: "all",

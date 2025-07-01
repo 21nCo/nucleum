@@ -17,6 +17,7 @@
   import {
     LinkType,
     NodeRightPaneType,
+    NodeView,
     webNodeTypeList,
     type INode
   } from "../node.type";
@@ -38,13 +39,20 @@
   import NodeTimelineView from "../timeline/NodeTimelineView.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { NodeBirdViewMode } from "./birdView.type";
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
+  import { page } from "$app/stores";
   export let node: IActiveNodeStore;
   export let rightPane: NodeRightPaneType | undefined = undefined;
   let linkedNodes: INode[];
   let selectedView = NodeBirdViewMode.Graph;
-  let depth = 1;
+  let depth = $page.url?.searchParams?.get(AppSearchParam.DEPTH)
+    ? parseInt($page.url?.searchParams?.get(AppSearchParam.DEPTH) ?? "1")
+    : 1;
   let graphRef: NodeGraph;
   let isAutoGrouping = true;
+  let isTraverseMode =
+    $page.url?.searchParams?.get(AppSearchParam.TRAVERSE) === "true";
+  let combos: any[] = [];
   let graphData: {
     nodes: any[];
     edges: any[];
@@ -206,7 +214,7 @@
 
         const uniqueLinkTags = Array.from(linkTagsInUse);
 
-        let combos = uniqueLinkTags
+        combos = uniqueLinkTags
           .map((x) => {
             return {
               id: x,
@@ -327,11 +335,33 @@
     return { nodes: allNodes, edges };
   }
 
-  function onNodeSelect(e: CustomEvent) {
+  async function onNodeSelect(e: CustomEvent) {
     const event = e.detail;
     const newResource = event.target.id;
     logger.log({ at: "onNodeSelect", event, newResource, splitResource });
     if (!newResource) return;
+
+    if (
+      isTraverseMode &&
+      !event.altKey &&
+      !event.shiftKey &&
+      !event.ctrlKey &&
+      !event.metaKey
+    ) {
+      appStore.resourceClickHandler(undefined, newResource, {
+        replaceId: $node.id.toString(),
+        searchParams: {
+          [appStore.resolveRecordSpecificSearchParam(
+            newResource,
+            AppSearchParam.NODE_VIEW
+          )]: NodeView.BIRD,
+          [AppSearchParam.DEPTH]: depth,
+          [AppSearchParam.TRAVERSE]: isTraverseMode
+        }
+      });
+      return;
+    }
+
     if (newResource === $node.id.toString()) {
       if (rightPane === NodeRightPaneType.LINKS) rightPane = undefined;
       else rightPane = NodeRightPaneType.LINKS;
@@ -346,6 +376,7 @@
       replaceId: $node.id
     });
   }
+
   function closeSplitResource() {
     if (!splitResource) return;
     appStore.closeResource({ id: splitResource });
@@ -456,15 +487,36 @@
           <DropDown
             items={depthOptions}
             isDisableSearch={true}
-            bind:value={depth}
+            value={depth}
             size={Size.sm}
-            on:select={async () => {
+            on:select={async (e) => {
+              depth = e.detail;
+              appStore.toggleSearchParam({
+                [AppSearchParam.DEPTH]: depth
+              });
               await refreshGraphData($node.links, depth);
               graphRef?.rerender();
             }}
           />
         </div>
       {/if}
+      <Toggle
+        icon="ph:flow-arrow-light"
+        tooltip={isTraverseMode
+          ? "Switch to normal mode"
+          : "Switch to traverse mode"}
+        parentBgIndex={2}
+        on={isTraverseMode}
+        on:change={(e) => {
+          isTraverseMode = e.detail;
+          appStore.toggleSearchParam({
+            [AppSearchParam.TRAVERSE]: isTraverseMode
+          });
+          setTimeout(() => {
+            graphRef?.rerender();
+          }, 100);
+        }}
+      />
       <Toggle
         icon="ph:link-light"
         tooltip="See all links"
@@ -489,7 +541,9 @@
         {:then}
           <NodeGraph
             bind:this={graphRef}
-            layout={depth === 1 ? "dendrogram-1" : "radial-2"}
+            layout={depth === 1 && !isTraverseMode
+              ? "dendrogram-1"
+              : "radial-2"}
             data={graphData}
             nodeId={$node.id.toString()}
             on:select={onNodeSelect}

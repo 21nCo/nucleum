@@ -16,6 +16,10 @@
     graphRef?.rerender();
   }
 
+  export function softUpdate(newData: { nodes?: any[]; edges?: any[] }) {
+    graphRef?.softUpdate(newData);
+  }
+
   function onRender() {
     isRendered = true;
   }

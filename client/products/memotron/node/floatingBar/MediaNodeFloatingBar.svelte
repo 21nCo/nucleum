@@ -30,6 +30,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { isShowStatusBanner } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let isHovering: boolean = false;
@@ -120,9 +121,13 @@
             <Toggle
               icon="ph:bird-light"
               tooltip="Bird view"
-              on={nodeView === NodeView.BIRD_VIEW}
+              on={nodeView === NodeView.BIRD}
               on:change={(e) => {
-                dispatch(NodeView.BIRD_VIEW, e.detail);
+                appStore.toggleSearchParamRecordSpecific($node.id, {
+                  [AppSearchParam.NODE_VIEW]: e.detail
+                    ? NodeView.BIRD
+                    : NodeView.CONTENT
+                });
               }}
             />
             <ToggleGroup

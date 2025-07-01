@@ -34,6 +34,8 @@
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
   import { GlobalEvent } from "$lib/client/types/event.enum";
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
+  import { appStore } from "$lib/client/stores/app.store";
 
   export let node: IActiveNodeStore;
   export let selectedView: NodeView = NodeView.CONTENT;
@@ -130,6 +132,9 @@
 
   async function onViewSwitch(e: CustomEvent<NodeView>) {
     selectedView = e.detail;
+    appStore.toggleSearchParamRecordSpecific($node.id, {
+      [AppSearchParam.NODE_VIEW]: selectedView
+    });
     if (selectedView === NodeView.CONTENT) {
       await node.init({
         accessMode: $node.accessMode,

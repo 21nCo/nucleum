@@ -513,3 +513,16 @@ export function resolveSelectPropertySelection(
   }
   return value;
 }
+
+const highVolumeUniversalTypes = [
+  UniversalPropertyType.COUNTRY,
+  UniversalPropertyType.LANGUAGE,
+  UniversalPropertyType.CURRENCY,
+  UniversalPropertyType.TIMEZONE
+];
+
+export function isHighVolumeUniversalType(
+  type: UniversalPropertyType
+): boolean {
+  return highVolumeUniversalTypes.includes(type);
+}

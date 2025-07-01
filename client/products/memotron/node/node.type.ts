@@ -898,6 +898,6 @@ export type INodeThumb = INode & {
 };
 
 export enum NodeView {
-  CONTENT = "write",
-  BIRD_VIEW = "birdView"
+  CONTENT = "content",
+  BIRD = "bird"
 }

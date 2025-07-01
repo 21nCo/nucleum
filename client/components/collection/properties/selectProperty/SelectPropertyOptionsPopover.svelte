@@ -5,22 +5,34 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import {
     type ISelectPropertyConfig,
+    type IUniversalPropertyConfig,
     type IPropertyConfigOption,
-    PropertyType
+    PropertyType,
+    UniversalPropertyType
   } from "../property.type";
   import SelectOptionsEditor from "../propertyConfig/selectProperty/SelectOptionsEditor.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { logger } from "$lib/client/components/debug/logger.client";
   import SelectPropertyOptionList from "./SelectPropertyOptionList.svelte";
   import type { IRecordId } from "$lib/client/types/data.type";
-  import { resolveSelectPropertySelection } from "../property.utils";
+  import {
+    resolveSelectPropertySelection,
+    isHighVolumeUniversalType,
+    resolveUniversalPropertyOptions
+  } from "../property.utils";
+  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
+
   export let property: {
     id: IRecordId;
     type:
       | PropertyType.SINGLE_SELECT
       | PropertyType.MULTI_SELECT
       | PropertyType.UNIVERSAL;
-    config: ISelectPropertyConfig;
+    config: ISelectPropertyConfig | IUniversalPropertyConfig;
     default: any;
   };
   export let isMultiSelect: boolean;
@@ -30,20 +42,127 @@
   export let onConfigChange: (config: any) => void;
   let searchInputRef: any;
   let search: string = "";
-  let originalConfig: ISelectPropertyConfig | undefined;
-  let options: IPropertyConfigOption[] = property.config?.options ?? [];
+  let originalConfig:
+    | ISelectPropertyConfig
+    | IUniversalPropertyConfig
+    | undefined;
   let isEditing: boolean = false;
 
+  $: universalType =
+    property.type === PropertyType.UNIVERSAL
+      ? (property.config as IUniversalPropertyConfig)?.type
+      : undefined;
+
+  $: allUniversalOptions =
+    property.type === PropertyType.UNIVERSAL && universalType
+      ? resolveUniversalPropertyOptions(universalType)
+      : [];
+
+  $: regularOptions =
+    property.type !== PropertyType.UNIVERSAL
+      ? ((property.config as ISelectPropertyConfig)?.options ?? [])
+      : [];
+
+  $: selectConfig =
+    property.type !== PropertyType.UNIVERSAL
+      ? (property.config as ISelectPropertyConfig)
+      : undefined;
+
+  $: isHighVolumeType =
+    property.type === PropertyType.UNIVERSAL &&
+    universalType &&
+    isHighVolumeUniversalType(universalType);
+
+  function getRecentlySelectedOptions(type: UniversalPropertyType): string[] {
+    if (!isHighVolumeUniversalType(type)) return [];
+
+    const recent = uiState.getState(UIState.universalPropertyRecents, {
+      scope: UIStateScope.PRODUCT,
+      subVariables: [type]
+    });
+    return recent || [];
+  }
+
+  function addToRecentlySelectedOptions(
+    type: UniversalPropertyType,
+    optionId: string
+  ): void {
+    if (!isHighVolumeUniversalType(type)) return;
+    const current = getRecentlySelectedOptions(type);
+
+    const filtered = current.filter((id) => id !== optionId);
+    const updated = [optionId, ...filtered].slice(0, 5);
+
+    uiState.setState(UIState.universalPropertyRecents, updated, {
+      scope: UIStateScope.PRODUCT,
+      subVariables: [type]
+    });
+  }
+
+  function getOptionsWithRecents(
+    type: UniversalPropertyType,
+    allOptions: IPropertyConfigOption[],
+    search?: string
+  ): {
+    recentOptions: IPropertyConfigOption[];
+    filteredOptions: IPropertyConfigOption[];
+  } {
+    if (!isHighVolumeUniversalType(type)) {
+      const filtered = search
+        ? allOptions.filter((option) =>
+            option.label?.toLowerCase()?.includes(search.toLowerCase())
+          )
+        : allOptions;
+      return { recentOptions: [], filteredOptions: filtered };
+    }
+
+    const recentIds = getRecentlySelectedOptions(type);
+    const recentOptions = recentIds
+      .map((id) => allOptions.find((option) => option.id === id))
+      .filter(Boolean) as IPropertyConfigOption[];
+
+    const filteredOptions = allOptions.filter((option) => {
+      const matchesSearch =
+        !search || option.label?.toLowerCase()?.includes(search.toLowerCase());
+      const isNotRecent = !recentIds.includes(option.id);
+      return matchesSearch && isNotRecent;
+    });
+
+    const filteredRecentOptions = search
+      ? recentOptions.filter((option) =>
+          option.label?.toLowerCase()?.includes(search.toLowerCase())
+        )
+      : recentOptions;
+
+    return { recentOptions: filteredRecentOptions, filteredOptions };
+  }
+
+  $: ({ recentOptions, filteredOptions } =
+    property.type === PropertyType.UNIVERSAL && universalType
+      ? getOptionsWithRecents(universalType, allUniversalOptions, search)
+      : { recentOptions: [], filteredOptions: [] });
   $: options =
-    property.config?.options?.filter((x) =>
-      x.label?.toLowerCase()?.includes(search.toLowerCase())
-    ) ?? [];
+    property.type === PropertyType.UNIVERSAL
+      ? filteredOptions
+      : regularOptions.filter((x) =>
+          x.label?.toLowerCase()?.includes(search.toLowerCase())
+        );
 
   function onselect(e: CustomEvent<string>) {
     const val = e.detail;
     value = resolveSelectPropertySelection(value, val, { isMultiSelect });
+
+    if (
+      property.type === PropertyType.UNIVERSAL &&
+      universalType &&
+      isHighVolumeUniversalType(universalType)
+    ) {
+      addToRecentlySelectedOptions(universalType, val);
+    }
+
     onSelect(value);
   }
+
   function onenter(e: any) {
     if (
       property.type === PropertyType.UNIVERSAL ||
@@ -79,10 +198,10 @@
 </script>
 
 <div class="flex flex-col h--full w-full max-h-96 h-96 bg-bgs2">
-  {#if isEditing && property.config}
+  {#if isEditing && selectConfig && property.type !== PropertyType.UNIVERSAL}
     <div class="flex w-full flex-grow">
       <SelectOptionsEditor
-        bind:config={property.config}
+        bind:config={selectConfig}
         parentBgIndex={2}
         bind:defaultOptionId={property.default}
       />
@@ -102,7 +221,18 @@
     </div>
     <div class="flex flex-col gap-6 w-full flex-grow styledscroll">
       {#key search}
-        {#if property.config?.groups && isValidArrayWithData(property.config?.groups)}
+        {#if isHighVolumeType && recentOptions.length > 0}
+          <SelectPropertyOptionList
+            options={recentOptions}
+            {value}
+            {isMultiSelect}
+            isPreventTagStyle={property.type === PropertyType.UNIVERSAL}
+            groupLabel="Recently used"
+            on:select={onselect}
+          />
+        {/if}
+
+        {#if property.config && "groups" in property.config && property.config?.groups && isValidArrayWithData(property.config?.groups)}
           {#each property.config?.groups as group}
             <SelectPropertyOptionList
               groupId={group.id}
@@ -120,13 +250,22 @@
           {value}
           {isMultiSelect}
           isPreventTagStyle={property.type === PropertyType.UNIVERSAL}
-          isPreventDefaultGroupLabel={!property.config?.groups ||
-            property.config?.groups.length === 0}
+          isPreventDefaultGroupLabel={!(
+            property.config &&
+            "groups" in property.config &&
+            property.config?.groups
+          ) ||
+            (property.config &&
+              "groups" in property.config &&
+              property.config?.groups?.length === 0)}
           on:select={onselect}
         />
-        {#if search && !options.length}
+        {#if search && !options.length && (!isHighVolumeType || !recentOptions.length)}
           <div class="text-b2 text-fgs3 px-3 py-2">
-            No results found. Press Enter to create new
+            No results found.
+            {#if property.type !== PropertyType.UNIVERSAL}
+              Press Enter to create new
+            {/if}
           </div>
         {/if}
       {/key}
@@ -147,7 +286,9 @@
             style={ButtonStyle.PLAIN}
             size={Size.xs}
             on:click={() => {
-              property.config = originalConfig;
+              if (originalConfig) {
+                property.config = originalConfig;
+              }
               isEditing = false;
             }}
           />

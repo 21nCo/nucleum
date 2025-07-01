@@ -38,6 +38,7 @@ const phosphorIcons = [
   "arrow-square-out",
   "arrow-square-in",
   "arrow-square-up-right",
+  "flow-arrow",
 
   //Carets
   "caret-down",

@@ -10,12 +10,12 @@
   import NodeBirdView from "../birdView/NodeBirdView.svelte";
   import { resizeListener } from "$lib/client/actions/resize.action";
   export let node: IActiveNodeStore;
+  export let nodeView: NodeView = NodeView.CONTENT;
 
   let isShowFloatingBar: boolean = true;
   let isHoveringOnFloatingBar: boolean = false;
   let timeoutId: any;
   let panelAction: NodeRightPaneType | undefined = undefined;
-  let nodeView: NodeView = NodeView.CONTENT;
   let containerWidth = 0;
   $: isConstrainedWidth =
     containerWidth < 1000 ||
@@ -32,9 +32,6 @@
       isShowFloatingBar = false;
     }, 1500);
   }
-  function onBirdViewToggle(e: CustomEvent) {
-    nodeView = e.detail ? NodeView.BIRD_VIEW : NodeView.CONTENT;
-  }
 </script>
 
 {#if $node}
@@ -44,7 +41,7 @@
       containerWidth = e.width;
     }}
   >
-    {#if nodeView === NodeView.BIRD_VIEW}
+    {#if nodeView === NodeView.BIRD}
       <NodeBirdView {node} bind:rightPane={panelAction} />
     {:else}
       <MediaContent {node} bind:rightPane={panelAction} {isConstrainedWidth} />
@@ -58,7 +55,6 @@
         on:fullscreen={() => {
           appStore.toggleFullScreen($node.accessMode, $node.id);
         }}
-        on:birdView={onBirdViewToggle}
         bind:bottomAction={panelAction}
       />
     {/if}

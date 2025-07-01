@@ -198,11 +198,10 @@ export function determineIfSubscriptionExpired(plan: IUserPlan) {
     const renewalDate = plan.renewalDate
       ? new Date(plan.renewalDate)
       : new Date(
-          purchaseDate?.getTime() ??
-            0 +
-              (plan.cycle === BillingCycle.MONTHLY
-                ? 31 * 24 * 60 * 60 * 1000
-                : 365 * 24 * 60 * 60 * 1000)
+          (purchaseDate?.getTime() ?? 0) +
+            (plan.cycle === BillingCycle.MONTHLY
+              ? 31 * 24 * 60 * 60 * 1000
+              : 365 * 24 * 60 * 60 * 1000)
         );
     const isExpired =
       renewalDate.getTime() + 24 * 60 * 60 * 1000 < new Date().getTime();

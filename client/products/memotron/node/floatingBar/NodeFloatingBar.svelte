@@ -72,7 +72,7 @@
             },
             {
               label: "Bird view",
-              value: NodeView.BIRD_VIEW
+              value: NodeView.BIRD
             }
           ]}
           style={InputStyle.PLAIN}
@@ -109,7 +109,7 @@
           },
           {
             label: "Bird view",
-            value: NodeView.BIRD_VIEW
+            value: NodeView.BIRD
           }
         ]}
         style={PanelSwitcherStyle.BAR}

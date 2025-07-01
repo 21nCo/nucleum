@@ -5,7 +5,7 @@
     ResourceAccessMode,
     ResourceAccessPoint
   } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { mediaNodeTypeList, webNodeTypeList } from "./node.type";
+  import { mediaNodeTypeList, NodeView, webNodeTypeList } from "./node.type";
   import MediaNode from "./base/MediaNode.svelte";
   import NonMediaNode from "./base/NonMediaNode.svelte";
   import { onDestroy, setContext } from "svelte";
@@ -15,11 +15,21 @@
   import { logger } from "$lib/client/components/debug/logger.client";
   import { appStore } from "$lib/client/stores/app.store";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
+  import { page } from "$app/stores";
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
 
   export let id: string;
   export let accessMode: ResourceAccessMode;
 
   export let isFromSplitView: boolean = false;
+  let view: NodeView = NodeView.CONTENT;
+  const nodeViewParam = appStore.resolveRecordSpecificSearchParam(
+    id,
+    AppSearchParam.NODE_VIEW
+  );
+  $: if ($page.url?.searchParams?.get(nodeViewParam)) {
+    view = $page.url?.searchParams?.get(nodeViewParam) as NodeView;
+  }
   let isRenderSplitView = false;
   // $: isRenderSplitView =
   //   !isFromSplitView && $view.width > 1500 && $view.scale > 1.5;
@@ -69,9 +79,9 @@
   <EmptyStatusView mainText={error} isSearchContext={true} />
 {:else if $node && !isLoading}
   {#if [...mediaNodeTypeList, ...webNodeTypeList].includes($node.contentType)}
-    <MediaNode {node} />
+    <MediaNode {node} nodeView={view} />
   {:else}
-    <NonMediaNode {node} />
+    <NonMediaNode {node} selectedView={view} />
   {/if}
 {:else}
   <div class="w-full h-full pt-4 mo:px-4 px-20">

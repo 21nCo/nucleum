@@ -115,5 +115,9 @@ export enum AppSearchParam {
   GUEST = "guest",
   POP_AT = "popAt",
   FSPLIT_AT = "fsplitAt",
-  FULL_AT = "fullAt"
+  SPLIT_AT = "splitAt",
+  FULL_AT = "fullAt",
+  DEPTH = "depth",
+  TRAVERSE = "traverse",
+  NODE_VIEW = "nodeView"
 }

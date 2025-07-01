@@ -111,7 +111,8 @@
               config:
                 property.type === PropertyType.UNIVERSAL
                   ? {
-                      options
+                      options,
+                      type: property.config?.type
                     }
                   : property.config,
               default: property.default

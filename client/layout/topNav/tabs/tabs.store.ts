@@ -1,4 +1,5 @@
 import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { appStore } from "$lib/client/stores/app.store";
 import { uiState } from "$lib/client/stores/uiState/uiState.store";
 import { UIStateScope } from "$lib/client/stores/uiState/uiState.type";
@@ -14,7 +15,7 @@ class TabStore {
   replace(id: IRecordId, replaceId: IRecordId) {
     if (!id || !replaceId) return;
     const tabs = this.get();
-    if (tabs.includes(replaceId)) {
+    if (tabs.some(resourceInList(replaceId))) {
       this.remove(replaceId);
       uiState.addResourceToTabs(id);
     }
