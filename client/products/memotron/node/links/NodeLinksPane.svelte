@@ -452,7 +452,6 @@
   {#if $multiSelectStore.length > 0}
     <BottomFloat class="!mb-3" zIndex="z-30">
       <BulkEditBar
-        isConstrainedWidth={true}
         context={multiSelectContext}
         subContext={selectedLinkType}
         on:selectAll={onSelectAll}

@@ -500,35 +500,39 @@
           />
         </div>
       {/if}
-      <Toggle
-        icon="ph:flow-arrow-light"
-        tooltip={isTraverseMode
-          ? "Switch to normal mode"
-          : "Switch to traverse mode"}
-        parentBgIndex={2}
-        on={isTraverseMode}
-        on:change={(e) => {
-          isTraverseMode = e.detail;
-          appStore.toggleSearchParam({
-            [AppSearchParam.TRAVERSE]: isTraverseMode
-          });
-          setTimeout(() => {
-            graphRef?.rerender();
-          }, 100);
-        }}
-      />
-      <Toggle
-        icon="ph:link-light"
-        tooltip="See all links"
-        parentBgIndex={2}
-        on:change={(e) => {
-          if (e.detail) {
-            rightPane = NodeRightPaneType.LINKS;
-          } else if (rightPane === NodeRightPaneType.LINKS) {
-            rightPane = undefined;
-          }
-        }}
-      />
+      <div class="flex gap-2 items-center">
+        {#if selectedView === NodeBirdViewMode.Graph}
+          <Toggle
+            icon="ph:flow-arrow-light"
+            tooltip={isTraverseMode
+              ? "Switch to normal mode"
+              : "Switch to traverse mode"}
+            parentBgIndex={2}
+            on={isTraverseMode}
+            on:change={(e) => {
+              isTraverseMode = e.detail;
+              appStore.toggleSearchParam({
+                [AppSearchParam.TRAVERSE]: isTraverseMode
+              });
+              setTimeout(() => {
+                graphRef?.rerender();
+              }, 100);
+            }}
+          />
+        {/if}
+        <Toggle
+          icon="ph:link-light"
+          tooltip="See all links"
+          parentBgIndex={2}
+          on:change={(e) => {
+            if (e.detail) {
+              rightPane = NodeRightPaneType.LINKS;
+            } else if (rightPane === NodeRightPaneType.LINKS) {
+              rightPane = undefined;
+            }
+          }}
+        />
+      </div>
     </div>
   </div>
   <div class="flex w-full flex-1 min-h-0">

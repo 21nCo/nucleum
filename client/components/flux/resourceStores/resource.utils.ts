@@ -1,5 +1,5 @@
 import { Resource } from "./resource.enum";
-import type { ResourceAccessPoint, ResourceActionType } from "./resource.type";
+import { ResourceActionType, type ResourceAccessPoint } from "./resource.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 import { RecordId } from "surrealdb";
 import { logger } from "../../debug/logger.client";
@@ -288,4 +288,49 @@ export function isShowStatusBanner(resource: any) {
     resource.isLocked ||
     resource.isInReadOnlyMode
   );
+}
+
+export function resolveResourceActionIcon(action: ResourceActionType) {
+  switch (action) {
+    case ResourceActionType.ARCHIVE:
+      return "ph:archive-light";
+    case ResourceActionType.UNARCHIVE:
+      return "ph:archive-light";
+    case ResourceActionType.DELETE:
+      return "ph:trash-light";
+    case ResourceActionType.RESTORE:
+      return "ph:trash-light";
+    case ResourceActionType.STAR:
+      return "ph:star-light";
+    case ResourceActionType.UNSTAR:
+      return "ph:star-light";
+    case ResourceActionType.ADD_TO:
+      return "ph:plus-light";
+    case ResourceActionType.REMOVE_FROM:
+      return "ph:minus-circle-light";
+    case ResourceActionType.LINK:
+      return "ph:link-light";
+    case ResourceActionType.UNLINK:
+      return "ph:link-break-light";
+    case ResourceActionType.EDIT:
+      return "ph:pencil-simple-light";
+    case ResourceActionType.DUPLICATE:
+      return "ph:copy-light";
+    case ResourceActionType.COPY_LINK:
+      return "ph:clipboard-light";
+    case ResourceActionType.COPY_CONTENTS:
+      return "copy";
+    case ResourceActionType.TOGGLE_READ_MODE:
+      return "ph:book-open-light";
+    case ResourceActionType.TOGGLE_FOCUS_MODE:
+      return "ph:focus-light";
+    case ResourceActionType.LOCK:
+      return "ph:lock-light";
+    case ResourceActionType.UNLOCK:
+      return "ph:lock-open-light";
+    case ResourceActionType.CONVERT:
+      return "ph:arrows-clockwise-light";
+    default:
+      return "ph:question-light";
+  }
 }

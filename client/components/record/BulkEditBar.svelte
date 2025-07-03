@@ -2,6 +2,7 @@
   import { resolveMultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
   import {
     ResourceAccessPoint,
+    ResourceActionType,
     type IMultiSelectContext
   } from "$lib/client/components/flux/resourceStores/resource.type";
   import Button from "$lib/client/elements/button/Button.svelte";
@@ -13,10 +14,20 @@
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import appearance from "$lib/client/stores/appearance.store";
   import { Theme } from "$lib/client/types/appearance.type";
+  import { resolveResourceActionIcon } from "../flux/resourceStores/resource.utils";
+  import { enumToString } from "$lib/shared/utils/text.utils";
   const dispatch = createEventDispatcher();
   export let context: IMultiSelectContext;
   export let subContext: string = "";
-  export let isConstrainedWidth: boolean = false;
+  export let isExpandedMode: boolean = false;
+  type Action = {
+    action: string;
+    label: string;
+    icon: string;
+  };
+  let actions: Action[] = [];
+  let rightActions: Action[] = [];
+
   const isHideStar = [Resource.task, Resource.session].includes(
     context.resource
   );
@@ -34,173 +45,155 @@
     style: ButtonStyle.OUTLINED,
     isPreventMinWidth: true
   };
-  $: buttonProps = isConstrainedWidth ? miniButtonProps : expandedButtonProps;
+  $: buttonProps = isExpandedMode ? expandedButtonProps : miniButtonProps;
   $: selector =
     $appearance?.colorScheme?.tailwindSelector?.replace("light", "dark") ?? "";
   $: parentBgIndex = $appearance.theme === Theme.LIGHT ? 1 : 3;
+
+  const selectAllAction = {
+    action: "selectAll",
+    label: "Select all",
+    icon: "ph:check-circle-light"
+  };
+  const clearSelectionAction = {
+    action: "clearSelection",
+    label: "Clear selection",
+    icon: "ph:x-circle-light"
+  };
+  const linkAction = {
+    action: ResourceActionType.LINK,
+    label: "Link to node",
+    get icon() {
+      return resolveResourceActionIcon(this.action);
+    }
+  };
+  const linkBoxAction = {
+    action: "linkbox",
+    label: "Link to node or Add to collection",
+    icon: resolveResourceActionIcon(ResourceActionType.LINK)
+  };
+  const collectAction = {
+    action: "collect",
+    label: "Add to collection",
+    icon: resolveResourceActionIcon(ResourceActionType.ADD_TO)
+  };
+  const uncollectAction = {
+    action: ResourceActionType.UNLINK,
+    label: "Remove from collection",
+    icon: resolveResourceActionIcon(ResourceActionType.REMOVE_FROM)
+  };
+  const completeAction = {
+    action: "complete",
+    label: "Mark as completed",
+    icon: "ph:check-square-light"
+  };
+  const convertAction = {
+    action: ResourceActionType.CONVERT,
+    label: "Turn into",
+    icon: resolveResourceActionIcon(ResourceActionType.CONVERT)
+  };
+
+  function resolveAction(action: ResourceActionType) {
+    return {
+      action,
+      label: enumToString(action),
+      icon: resolveResourceActionIcon(action)
+    };
+  }
+
+  resolveItems();
+
+  function resolveItems() {
+    if (
+      context.accessPoint === ResourceAccessPoint.NODE_LINKS &&
+      subContext === LinkType.DIRECT
+    ) {
+      actions.push(resolveAction(ResourceActionType.UNLINK));
+    } else if (context.accessPoint === ResourceAccessPoint.COLLECTION) {
+      actions.push(uncollectAction);
+    } else if (
+      context.accessPoint === ResourceAccessPoint.BROWSER ||
+      context.accessPoint === ResourceAccessPoint.LIBRARY
+    ) {
+      if (context.resource === Resource.node) {
+        if (isExpandedMode) actions.push(linkAction, collectAction);
+        else actions.push(linkBoxAction);
+      } else if (context.resource === Resource.task) {
+        actions.push(completeAction);
+      }
+      if (subContext.includes("starred")) {
+        actions.push(resolveAction(ResourceActionType.UNSTAR));
+      } else if (!isHideStar) {
+        actions.push(resolveAction(ResourceActionType.STAR));
+      }
+      if (subContext.includes("archived")) {
+        actions.push(resolveAction(ResourceActionType.UNARCHIVE));
+      } else if (!isHideArchive) {
+        actions.push(resolveAction(ResourceActionType.ARCHIVE));
+      }
+      actions.push(resolveAction(ResourceActionType.DELETE));
+    } else if (context.accessPoint === ResourceAccessPoint.MARKDOWN) {
+      actions.push(
+        // convertAction,
+        resolveAction(ResourceActionType.COPY_CONTENTS),
+        resolveAction(ResourceActionType.DUPLICATE),
+        resolveAction(ResourceActionType.DELETE)
+      );
+    }
+
+    rightActions.push(selectAllAction, clearSelectionAction);
+  }
 </script>
 
 <!-- TODO - invert color layer with corresponding opposite light/dark color scheme -->
 <div
   class={cn(
-    "flex gap-3 justify-between items-center bg-bgs1 dark:bg-bgs3 text-fgs1 border border-brs3 shadow-md rounded-md overflow-auto",
+    "grid grid-cols-[auto_1fr_auto] gap-3 items-center bg-bgs1 dark:bg-bgs3 text-fgs1 border border-brs3 shadow-md rounded-md overflow-auto",
     {
       [selector]: $appearance.theme === Theme.LIGHT,
-      "w-full mx-2 px-4 py-2 text-b2": isConstrainedWidth,
-      "w-full mx-8 px-6 py-3": !isConstrainedWidth
+      "w-full mx-2 px-4 py-2 text-b2": isExpandedMode,
+      "w-full mx-8 px-6 py-3": !isExpandedMode
     }
   )}
 >
   <span class="flex whitespace-nowrap">
     Selected: {$multiSelectStore.length}
   </span>
-  <span class="flex gap-2">
-    {#if context.accessPoint === ResourceAccessPoint.NODE_LINKS && subContext === LinkType.DIRECT}
+  <span class="flex gap-2 overflow-x-auto">
+    {#each actions as action}
       <Button
-        tooltip="Unlink"
-        icon="ph:link-break-light"
+        label={isExpandedMode ? action.label : undefined}
+        tooltip={isExpandedMode ? undefined : action.label}
+        icon={action.icon}
+        type={action.label === "Delete"
+          ? ButtonVariant.DANGER
+          : ButtonVariant.SECONDARY}
         {parentBgIndex}
         {...buttonProps}
         on:click={() => {
-          dispatch("action", "unlink");
+          dispatch("action", action.action);
         }}
       />
-    {:else if context.accessPoint === ResourceAccessPoint.COLLECTION}
-      <Button
-        label={isConstrainedWidth ? undefined : "Remove from collection"}
-        tooltip={isConstrainedWidth ? "Remove from collection" : undefined}
-        icon="ph:minus-circle-light"
-        {parentBgIndex}
-        {...buttonProps}
-        on:click={() => {
-          dispatch("action", "unlink");
-        }}
-      />
-    {:else if context.accessPoint === ResourceAccessPoint.BROWSER || context.accessPoint === ResourceAccessPoint.LIBRARY}
-      {#if context.resource === Resource.node}
-        {#if isConstrainedWidth}
-          <Button
-            tooltip="Link to node or Add to collection"
-            icon="ph:link-light"
-            {parentBgIndex}
-            {...miniButtonProps}
-            on:click={() => {
-              dispatch("action", "linkbox");
-            }}
-          />
-        {:else}
-          <Button
-            label="Link to node"
-            icon="ph:link-light"
-            {parentBgIndex}
-            {...expandedButtonProps}
-            on:click={() => {
-              dispatch("action", "link");
-            }}
-          />
-          <Button
-            label="Add to collection"
-            icon="ph:plus-light"
-            {parentBgIndex}
-            {...expandedButtonProps}
-            on:click={() => {
-              dispatch("action", "collect");
-            }}
-          />
-        {/if}
-      {/if}
-      {#if context.resource === Resource.task}
-        <Button
-          label="Mark as completed"
-          icon="ph:check-square-light"
-          {parentBgIndex}
-          {...expandedButtonProps}
-          on:click={() => {
-            dispatch("action", "complete");
-          }}
-        />
-      {/if}
-      {#if subContext.includes("starred")}
-        <Button
-          label={isConstrainedWidth ? undefined : "Unstar"}
-          tooltip={isConstrainedWidth ? "Unstar" : undefined}
-          icon="star"
-          {...buttonProps}
-          on:click={() => {
-            dispatch("action", "unstar");
-          }}
-        />
-      {:else if !isHideStar}
-        <Button
-          label={isConstrainedWidth ? undefined : "Star"}
-          tooltip={isConstrainedWidth ? "Star" : undefined}
-          icon="star"
-          {parentBgIndex}
-          {...buttonProps}
-          on:click={() => {
-            dispatch("action", "star");
-          }}
-        />
-      {/if}
-    {/if}
-
-    {#if subContext.includes("archived")}
-      <Button
-        label={isConstrainedWidth ? undefined : "Unarchive"}
-        tooltip={isConstrainedWidth ? "Unarchive" : undefined}
-        icon="archive"
-        {parentBgIndex}
-        {...buttonProps}
-        on:click={() => {
-          dispatch("action", "unarchive");
-        }}
-      />
-    {:else if !isHideArchive}
-      <Button
-        label={isConstrainedWidth ? undefined : "Archive"}
-        tooltip={isConstrainedWidth ? "Archive" : undefined}
-        icon="archive"
-        {parentBgIndex}
-        {...buttonProps}
-        on:click={() => {
-          dispatch("action", "archive");
-        }}
-      />
-    {/if}
-    <Button
-      label={isConstrainedWidth ? undefined : "Delete"}
-      tooltip={isConstrainedWidth ? "Delete" : undefined}
-      icon="trash"
-      {parentBgIndex}
-      {...buttonProps}
-      type={ButtonVariant.DANGER}
-      on:click={() => {
-        dispatch("action", "delete");
-      }}
-    />
+    {/each}
   </span>
-  <span class="flex gap-2 items-center">
-    <Button
-      label={isConstrainedWidth ? undefined : "Select all"}
-      tooltip={isConstrainedWidth ? "Select all" : undefined}
-      {parentBgIndex}
-      {...buttonProps}
-      style={ButtonStyle.DEFAULT}
-      icon="check-circle"
-      on:click={() => {
-        dispatch("selectAll");
-      }}
-    />
-    <Button
-      label={isConstrainedWidth ? undefined : "Clear selection"}
-      tooltip={isConstrainedWidth ? "Clear selection" : undefined}
-      icon={isConstrainedWidth ? "cross" : "cross-circled"}
-      {parentBgIndex}
-      {...buttonProps}
-      style={ButtonStyle.DEFAULT}
-      on:click={() => {
-        $multiSelectStore = [];
-      }}
-    />
+  <span class="flex gap-2 items-center justify-end">
+    {#each rightActions as action}
+      <Button
+        label={isExpandedMode ? action.label : undefined}
+        tooltip={isExpandedMode ? undefined : action.label}
+        icon={action.icon}
+        {parentBgIndex}
+        {...buttonProps}
+        on:click={() => {
+          if (action.action === "selectAll") {
+            dispatch("selectAll");
+          } else if (action.action === "clearSelection") {
+            $multiSelectStore = [];
+          } else {
+            dispatch("action", action.action);
+          }
+        }}
+      />
+    {/each}
   </span>
 </div>

@@ -22,7 +22,8 @@
   import NodeBirdView from "../birdView/NodeBirdView.svelte";
   import {
     ResourceAccessMode,
-    ResourceAccessPoint
+    ResourceAccessPoint,
+    ResourceActionType
   } from "$lib/client/components/flux/resourceStores/resource.type";
   import { resizeListener } from "$lib/client/actions/resize.action";
   import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
@@ -148,6 +149,7 @@
 
 <div
   class="relative w-full h-full flex flex-col bg-bgs1 rounded-md"
+  id="nodecontainer-{mdId}"
   use:resizeListener={(e) => {
     containerWidth = e.width;
   }}
@@ -332,7 +334,7 @@
             on:none={(e) => {
               if (e.detail === rightPane) {
                 closeRightPane();
-              } else if (e.detail === "readMode") {
+              } else if (e.detail === ResourceActionType.TOGGLE_READ_MODE) {
                 nodeStore.toggleReadMode($node.id, false);
               }
             }}

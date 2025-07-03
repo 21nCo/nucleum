@@ -482,8 +482,8 @@
 {#if $multiSelectStore.length > 0}
   <BottomFloat zIndex="z-30">
     <BulkEditBar
-      isConstrainedWidth={$view.isConstrainedWidth ||
-        accessPoint === ResourceAccessPoint.BROWSER}
+      isExpandedMode={!$view.isConstrainedWidth &&
+        accessPoint !== ResourceAccessPoint.BROWSER}
       context={multiSelectContext}
       subContext={selectedSubType +
         (isArchivedFilterSelected ? "archived" : "")}

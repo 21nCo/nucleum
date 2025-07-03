@@ -77,6 +77,7 @@
     ActiveCaptureStore,
     type IActiveCaptureStore
   } from "$lib/client/products/memotron/capture/capture.store";
+  import Check from "$lib/client/icons/Check.svelte";
 
   const dispatch = createEventDispatcher();
 
@@ -84,6 +85,8 @@
   export let mdStore: MdStoreType;
   export let index: number;
   export let isSelected: boolean = false;
+  export let isRearrangeBlockInSelectionMode: boolean = false;
+  export let isInSelectionMode: boolean = false;
   let isHovering: boolean = false;
   let isFocusing: boolean = false;
   let contentRefreshId: number = new Date().getTime();
@@ -933,11 +936,14 @@
     $mdStore.params?.isNodular &&
       !$mdStore.params?.isReadOnly && {
         "bg-bgs2 !border-brs1": isHovering && !isFocusing && !isSelected,
-        "bg-aps2 !border-aps1": isSelected
+        "bg-bgs2 !border-bgs1": isSelected
       }
   )}
-  draggable={!$mdStore.params?.isReadOnly && !isFocusing}
+  draggable={!$mdStore.params?.isReadOnly &&
+    !isFocusing &&
+    (!isInSelectionMode || isRearrangeBlockInSelectionMode)}
   data-index={index}
+  id={`md-block-${block.id}`}
   data-id={block.id}
   data-content={block.contentType}
   data-node={block.id}
@@ -971,7 +977,32 @@
   }}
 >
   {#if isLeftControlsEnabled}
-    {#if $mdStore.params?.isReadOnly}
+    {#if isInSelectionMode}
+      <button
+        class="flex items-center justify-center"
+        on:click={() => {
+          dispatch("select");
+        }}
+      >
+        {#if isRearrangeBlockInSelectionMode}
+          <div
+            class="flex"
+            use:tooltip={{
+              text: "Drag to rearrange selected blocks",
+              direction: Placement.Bottom,
+              delay: 500
+            }}
+          >
+            <Icon icon="ph:arrows-out-cardinal-light" />
+          </div>
+        {:else}
+          <Icon
+            icon={isSelected ? "ph:check-circle-fill" : "ph:circle-light"}
+            class={isSelected ? "" : "text-fgs4/50"}
+          />
+        {/if}
+      </button>
+    {:else if $mdStore.params?.isReadOnly}
       {#if isNodularizable}
         <div
           class="flex items-center justify-end"
@@ -1000,6 +1031,7 @@
         isBlockHovering={isHovering}
         on:nodularize
         on:action={onContextMenuAction}
+        on:popoverVisibility
       />
     {/if}
   {/if}
@@ -1028,7 +1060,7 @@
       </div>
     {/if}
   </div>
-  {#if !$mdStore.params?.isReadOnly && $mdStore.params?.isNodular}
+  {#if !$mdStore.params?.isReadOnly && $mdStore.params?.isNodular && !isInSelectionMode}
     <div class="flex items-center justify-center">
       {#if isHovering && !isFocusing && !isSoleBlock && [...simpleTextNodeTypeList, ...headingNodeTypes, ...listNodeTypes, NodeType.DIVIDER, NodeType.DOUBLE_DIVIDER].includes(block.contentType)}
         <Button

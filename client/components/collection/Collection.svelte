@@ -839,7 +839,7 @@
   {#if $multiSelectStore.length > 0}
     <BottomFloat zIndex="z-30">
       <BulkEditBar
-        {isConstrainedWidth}
+        isExpandedMode={!isConstrainedWidth}
         context={multiSelectContext}
         on:selectAll={onSelectAll}
         on:action={onBulkAction}
