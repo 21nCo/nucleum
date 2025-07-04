@@ -471,7 +471,8 @@ const heroiconsIcons = [
   "cog",
   "rectangle-group",
   "rectangle-stack",
-  "bookmark"
+  "bookmark",
+  "copy"
 ];
 const heroiconsSolid = heroiconsIcons.map((icon) => icon + "-solid");
 

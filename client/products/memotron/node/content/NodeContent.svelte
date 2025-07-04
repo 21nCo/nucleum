@@ -335,6 +335,7 @@
     async function onDuplicate(e: CustomEvent) {
       logger.log({ at: "NodeContent - onDuplicate", ...e.detail });
       const block = e.detail;
+      if (!block.id) return;
       const result = await node.createBlock(block.id, block.contentType, {
         body: block.body
       });

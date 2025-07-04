@@ -79,6 +79,7 @@
   import { TextStyle } from "$lib/client/types/text.enum";
   import { cache } from "$lib/client/layout/layers/cache/cache.store";
   import { CacheKey } from "$lib/client/layout/layers/cache/cache.type";
+  import { dragSelection } from "$lib/client/actions/dragSelection.action";
   const dispatch = createEventDispatcher();
 
   enum CacheSubKey {
@@ -111,6 +112,7 @@
   let isRefineShown = false;
   let subTypeSwitcherRef: LibrarySubTypeSwitcher;
   let abortController: AbortController | null = null;
+  let isInSelectionMode = false;
 
   $: multiSelectContext = {
     resource,
@@ -615,7 +617,10 @@
       bind:this={subTypeSwitcherRef}
     />
   {/if}
-  <div class="flex flex-col gap-4 px-4 overflow-auto grow">
+  <div
+    class="flex flex-col gap-4 px-4 overflow-auto grow"
+    id="records-container"
+  >
     <InlineSyncingFeedback {resource} isFullWidthVariant={true} />
     {#if isConstrainedWidth && !searchQuery && starredData && starredData.length > 0}
       <div class="flex flex-col gap-2">
@@ -642,7 +647,22 @@
     {#if isRefreshing}
       <LibraryLoadingPulse {isConstrainedWidth} {arrangement} />
     {:else if data && data.length > 0}
-      <div>
+      <div
+        use:dragSelection={{
+          selectableSelector: "div[id^='thumbnail-']",
+          containerId: "records-container",
+          onSelectionChange: (elements, ids) => {
+            if (isInSelectionMode) {
+              $multiSelectStore = [
+                ...new Set([...($multiSelectStore ?? []), ...ids])
+              ];
+            } else {
+              isInSelectionMode = true;
+              $multiSelectStore = ids;
+            }
+          }
+        }}
+      >
         <Records
           {data}
           {accessPoint}
@@ -702,8 +722,8 @@
   {#if $multiSelectStore.length > 0}
     <BottomFloat zIndex="z-30">
       <BulkEditBar
-        isConstrainedWidth={$view.isConstrainedWidth ||
-          accessPoint === ResourceAccessPoint.BROWSER}
+        isExpandedMode={!$view.isConstrainedWidth &&
+          accessPoint !== ResourceAccessPoint.BROWSER}
         context={multiSelectContext}
         subContext={selectedSubType +
           (isStarFilterSelected ? "starred" : "") +

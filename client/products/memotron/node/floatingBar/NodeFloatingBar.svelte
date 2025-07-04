@@ -1,7 +1,8 @@
 <script lang="ts">
   import {
     ResourceAccessMode,
-    ResourceAccessPoint
+    ResourceAccessPoint,
+    ResourceActionType
   } from "$lib/client/components/flux/resourceStores/resource.type";
   import Button from "$lib/client/elements/button/Button.svelte";
   import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
@@ -139,7 +140,7 @@
             e.detail === NodeRightPaneType.PROPERTIES
           ) {
             dispatch("panel", e.detail);
-          } else if (e.detail === "readMode") {
+          } else if (e.detail === ResourceActionType.TOGGLE_READ_MODE) {
             nodeStore.toggleReadMode($node.id, true);
           }
         }}
