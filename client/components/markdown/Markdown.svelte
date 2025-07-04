@@ -180,6 +180,11 @@
     if ($multiSelectStore.length === 0 || !toId) {
       return;
     }
+    if (
+      $multiSelectStore.some((selectedId) => selectedId === toId.toString())
+    ) {
+      return;
+    }
     const selectedBlocks = $mdStore.blocks.filter((block) =>
       $multiSelectStore.some((selectedId) => block.id.toString() === selectedId)
     );
@@ -336,7 +341,6 @@
   <div
     id="mdContent"
     class="grow w-full relative"
-    bind:this={mdContentElement}
     use:reorderList={{
       listId: "markdown",
       draggedOverClass: "!border-b-aps1 !rounded-none",

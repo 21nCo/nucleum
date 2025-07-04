@@ -151,8 +151,8 @@
     "grid grid-cols-[auto_1fr_auto] gap-3 items-center bg-bgs1 dark:bg-bgs3 text-fgs1 border border-brs3 shadow-md rounded-md overflow-auto",
     {
       [selector]: $appearance.theme === Theme.LIGHT,
-      "w-full mx-2 px-4 py-2 text-b2": isExpandedMode,
-      "w-full mx-8 px-6 py-3": !isExpandedMode
+      "w-full mx-2 px-4 py-2 text-b2": !isExpandedMode,
+      "w-full mx-8 px-6 py-3": isExpandedMode
     }
   )}
 >

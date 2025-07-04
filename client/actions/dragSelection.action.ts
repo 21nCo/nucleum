@@ -150,6 +150,8 @@ export function dragSelection(node: HTMLElement, config: DragSelectionConfig) {
   }
 
   function handleMouseDown(event: MouseEvent) {
+    if (!event.target) return;
+
     const clickedElement = event.target as HTMLElement;
     if (clickedElement.closest(selectableSelector)) return;
 
