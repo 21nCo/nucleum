@@ -1,5 +1,6 @@
 <script lang="ts">
   import {
+    PanelSwitcherActiveItemStrength,
     PanelSwitcherStyle,
     type PanelSwitcherEditModeOptions
   } from "$lib/client/types/switcher.enum";
@@ -28,6 +29,8 @@
   export let isShowNumberShortcut: boolean = false;
   export let index: number = 0;
   export let parentBgIndex: number = 1;
+  export let activeItemStrength: PanelSwitcherActiveItemStrength =
+    PanelSwitcherActiveItemStrength.DEFAULT;
   $: isAddNewItem = item.value === "$add";
   let labelEditPopoverRef: any;
   let inputRef: any;
@@ -108,10 +111,23 @@
         icon={item.icon}
         {size}
         isFilled={isActive}
-        class={cn({
-          "fill-cbg": isActive && style === PanelSwitcherStyle.TRAIN,
-          "fill-ccs1": isActive && style !== PanelSwitcherStyle.TRAIN
-        })}
+        class={cn(
+          "transition-colors",
+          {
+            "text-ccs1": isActive && style !== PanelSwitcherStyle.TRAIN,
+            "text-fgs2 group-hover:text-fgs1":
+              !isActive &&
+              style === PanelSwitcherStyle.TRAIN &&
+              activeItemStrength === PanelSwitcherActiveItemStrength.DEFAULT
+          },
+          style === PanelSwitcherStyle.TRAIN &&
+            isActive && {
+              "text-cbg":
+                activeItemStrength === PanelSwitcherActiveItemStrength.STRONG,
+              "text-ccs1":
+                activeItemStrength === PanelSwitcherActiveItemStrength.DEFAULT
+            }
+        )}
       />
     {/if}
     <div
@@ -120,7 +136,10 @@
         !isActive && {
           "group-hover:text-fgs2":
             style === PanelSwitcherStyle.BAR ||
-            style === PanelSwitcherStyle.SNAKE
+            style === PanelSwitcherStyle.SNAKE,
+          "text-fgs2 group-hover:text-fgs1":
+            style === PanelSwitcherStyle.TRAIN &&
+            activeItemStrength === PanelSwitcherActiveItemStrength.DEFAULT
         }
       )}
     >

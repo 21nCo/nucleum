@@ -93,6 +93,8 @@ const phosphorIcons = [
   "file-doc",
   "file-ppt",
   "file-xls",
+  "file-text",
+  "file-audio",
 
   // Actions
   "crop",
@@ -244,7 +246,6 @@ const phosphorIcons = [
   "list-numbers",
   "tree-view",
   "timer",
-  "file",
   "math-operations",
   "check-square",
   "check-square-offset",
@@ -282,6 +283,7 @@ const phosphorIcons = [
   "currency-circle-dollar",
   "note-blank",
   "clipboard",
+  "clipboard-text",
   "command",
   "sidebar",
   "chalkboard-simple",
@@ -310,6 +312,9 @@ const phosphorIcons = [
   "paper-plane",
   "paper-plane-right",
   "paper-plane-tilt",
+  "waveform",
+  "waveform-slash",
+  "wave-sine",
 
   //Git
   "git-fork",
@@ -533,3 +538,5 @@ export const phIcons = {
   //   (icon) => icon + "-duotone"
   // )
 };
+
+export const bundleNumber = 30;

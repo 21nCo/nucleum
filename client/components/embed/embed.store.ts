@@ -2,17 +2,17 @@ import { ObservableStore } from "$lib/client/stores/client.store";
 import type { EmbedMessage } from "$lib/client/types/embedMessage.enum";
 import { postToParent } from "$lib/client/utils/embed.utils";
 import { wait } from "$lib/client/utils/time.utils";
-import type { IEmbedChannel, IEmbedChannelData } from "./embed.type";
+import type { IEmbedChannel } from "./embed.type";
 
 class EmbedBridge extends ObservableStore<IEmbedChannel> {
   constructor() {
     super("embedBridge");
-    this.set({ data: [] });
+    this.set({});
   }
 
   async fetch(id: string, type: EmbedMessage, body: any) {
     const store = this.get();
-    let item = store.data.find((d: IEmbedChannelData) => d.id === id);
+    let item = store[id];
     if (item) return item.data;
 
     postToParent({
@@ -26,7 +26,7 @@ class EmbedBridge extends ObservableStore<IEmbedChannel> {
         throw new Error("Timeout waiting for data");
       }
       const store = this.get();
-      item = store.data.find((d: IEmbedChannelData) => d.id === id);
+      item = store[id];
       if (item) {
         isDataReceived = true;
         break;
@@ -41,9 +41,8 @@ class EmbedBridge extends ObservableStore<IEmbedChannel> {
 
   setData(id: string, type: EmbedMessage, data: any) {
     const store = this.get();
-    const dataItems = store.data.filter((d: IEmbedChannelData) => d.id !== id);
-    dataItems.push({ id, type, data });
-    this.set({ data: dataItems });
+    store[id] = { type, data };
+    this.set(store);
   }
 }
 

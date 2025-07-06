@@ -7,12 +7,19 @@
     ISelectValue
   } from "$lib/client/types/select.type";
   import TrainPanelSwitcherItem from "./TrainPanelSwitcherItem.svelte";
+  import { PanelSwitcherActiveItemStrength } from "$lib/client/types/switcher.enum";
   const dispatch = createEventDispatcher();
   export let items: ISelectItem[];
   export let value: ISelectValue | undefined = undefined;
   export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
   export let isDisableEnabled: boolean = false;
   export let parentBgIndex: number = 1;
+  export let activeItemStrength: PanelSwitcherActiveItemStrength =
+    PanelSwitcherActiveItemStrength.DEFAULT;
+  const effectiveParentBgIndex =
+    activeItemStrength === PanelSwitcherActiveItemStrength.STRONG
+      ? parentBgIndex
+      : parentBgIndex - 1;
 </script>
 
 <div
@@ -22,11 +29,11 @@
 >
   <div
     class={cn(
-      "flex items-center min-w-fit border-brs3 p-0.5",
-      bg(parentBgIndex),
+      "flex items-center min-w-fit border border-brs3 p-0.5",
+      bg(effectiveParentBgIndex),
       {
-        "rounded-full border": size === Size.lg,
-        "rounded-md border": size !== Size.lg
+        "rounded-full": size === Size.lg,
+        "rounded-md": size !== Size.lg
       }
     )}
   >
@@ -34,8 +41,9 @@
       <TrainPanelSwitcherItem
         {item}
         {size}
-        {parentBgIndex}
+        parentBgIndex={effectiveParentBgIndex}
         {index}
+        {activeItemStrength}
         isActive={value === item.value}
         isDisabled={isDisableEnabled && value !== item.value}
         on:click={() => {

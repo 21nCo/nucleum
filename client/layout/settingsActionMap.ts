@@ -47,14 +47,11 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
     label: "Artificial Intelligence",
     icon: "ph:head-circuit-light",
     component: TacoSettings,
-    hideContext: [OperatingSystem.IOS],
-    isInactive: true,
     modalParams: {
-      title: "AI Settings",
+      title: "Artificial Intelligence",
       layout: {
         size: Size.lg
-      },
-      isDismissable: false
+      }
     }
   },
   {

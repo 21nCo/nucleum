@@ -16,8 +16,8 @@ import { tzStore } from "./timezone/tz.store";
 import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
 
 // const userPreferencesId = Item.globalPreferences;
-const defaultColorSchemeId = "colorscheme:cleantidylightblue";
-const defaultDarkColorSchemeId = "colorscheme:cleantidydarkblue";
+const defaultColorSchemeId = "colorscheme:clean_tidyblue_light";
+const defaultDarkColorSchemeId = "colorscheme:clean_tidyblue_dark";
 
 export const seedUserPreferences: IUserGlobalPreferences = {
   name: "",
@@ -31,7 +31,7 @@ export const seedUserPreferences: IUserGlobalPreferences = {
   timeZoneOffset: new Date().getTimezoneOffset() * 60,
   timeZoneLabel: detectTimeZone()?.label ?? "UTC",
   isAnonymousAnalyticsEnabled: true,
-  lastUsedTranscriptionModel: TranscriptionModel.TINy_EN,
+  lastUsedTranscriptionModel: TranscriptionModel.TINY_EN,
   appearance: {
     skin: AppSkin.Clean,
     isSyncWithSystem: true,

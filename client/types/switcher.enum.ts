@@ -51,6 +51,11 @@ export enum BarStyle {
   OVERFLOW = "OVERFLOW"
 }
 
+export enum PanelSwitcherActiveItemStrength {
+  DEFAULT,
+  STRONG
+}
+
 export type PanelSwitcherEditModeOptions = {
   removeTooltip?: string;
   addText?: string;
