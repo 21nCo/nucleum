@@ -1,7 +1,10 @@
 <script lang="ts">
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
+  import {
+    PanelSwitcherActiveItemStrength,
+    PanelSwitcherStyle
+  } from "$lib/client/types/switcher.enum";
   import type { ISelectItem } from "$lib/client/types/select.type";
   import { CalendarLayout } from "./calendar.type";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
@@ -24,7 +27,7 @@
       // isDisabled: true
     }
   ];
-  const dev_enableBirdView = false;
+  const dev_enableBirdView = import.meta.env?.DEV;
 
   function onPanelSwitch(event: CustomEvent) {
     if (!event.detail || !Object.values(CalendarLayout).includes(event.detail))
@@ -47,6 +50,7 @@
             bind:value={panel}
             style={PanelSwitcherStyle.TRAIN}
             size={Size.sm}
+            activeItemStrength={PanelSwitcherActiveItemStrength.STRONG}
             on:switch={onPanelSwitch}
           />
         {:else}

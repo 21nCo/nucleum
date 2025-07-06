@@ -1,6 +1,7 @@
 <script lang="ts">
   import {
     BarStyle,
+    PanelSwitcherActiveItemStrength,
     PanelSwitcherStyle
   } from "$lib/client/types/switcher.enum";
   import { createEventDispatcher, onMount } from "svelte";
@@ -32,6 +33,8 @@
   export let isEnableAnimationForTitle: boolean = false;
   export let title: string = "";
   export let barStyle: BarStyle = BarStyle.EXACT;
+  export let activeItemStrength: PanelSwitcherActiveItemStrength =
+    PanelSwitcherActiveItemStrength.DEFAULT;
   /**
    * Shows the bars or train upside down
    */
@@ -69,15 +72,31 @@
   }
 </script>
 
-{#if style === PanelSwitcherStyle.TRAIN}
+{#if style === PanelSwitcherStyle.TRAIN && !isRenderAsDropdown}
   <TrainPanelSwitcher
     items={_items}
     bind:value
     {size}
     {isDisableEnabled}
     {parentBgIndex}
+    {activeItemStrength}
     on:switch
   />
+{:else if isRenderAsDropdown}
+  <div class="flex">
+    <DropDown
+      items={_items}
+      style={InputStyle.PLAIN}
+      width="min-w-32"
+      popoverWidth="min-w-fit"
+      isDisableSearch={true}
+      isEnforceWidth={true}
+      on:select={(e) => {
+        value = e.detail;
+        dispatch("switch", e.detail);
+      }}
+    />
+  </div>
 {:else}
   {#key isInEditMode}
     <div
@@ -159,56 +178,39 @@
             !isInversePlacement
         })}
       >
-        {#if isRenderAsDropdown}
-          <div class="flex pl-2">
-            <DropDown
-              items={_items}
-              style={InputStyle.PLAIN}
-              width="min-w-32"
-              isDisableSearch={true}
-              isEnforceWidth={true}
-              on:select={(e) => {
-                value = e.detail;
-                dispatch("switch", e.detail);
-              }}
-            />
-          </div>
-        {:else}
-          {#each _items as item, index (item.value)}
-            <PanelSwitcherItem
-              {item}
-              {size}
-              {style}
-              isInEditMode={_items.length > 1 && isInEditMode}
-              {barStyle}
-              {isInversePlacement}
-              {parentBgIndex}
-              {isShowNumberShortcut}
-              {index}
-              {isRearrangeableByDefault}
-              bind:triggerItemEdit
-              isActive={value === item.value}
-              isDisabled={isDisableEnabled && value !== item.value}
-              on:click={() => {
-                value = item.value;
-                dispatch("switch", item.value);
-              }}
-              on:rearrange={(e) => {
-                _items = moveItemInArray(_items, index, e.detail > 0 ? 1 : -1);
-              }}
-              on:rearranged={(e) => {
-                dispatch(
-                  "rearrange",
-                  _items.map((x) => x.value)
-                );
-              }}
-              on:change
-              on:debouncedChange
-              on:remove
-            />
-          {/each}
-        {/if}
-
+        {#each _items as item, index (item.value)}
+          <PanelSwitcherItem
+            {item}
+            {size}
+            {style}
+            isInEditMode={_items.length > 1 && isInEditMode}
+            {barStyle}
+            {isInversePlacement}
+            {parentBgIndex}
+            {isShowNumberShortcut}
+            {index}
+            {isRearrangeableByDefault}
+            bind:triggerItemEdit
+            isActive={value === item.value}
+            isDisabled={isDisableEnabled && value !== item.value}
+            on:click={() => {
+              value = item.value;
+              dispatch("switch", item.value);
+            }}
+            on:rearrange={(e) => {
+              _items = moveItemInArray(_items, index, e.detail > 0 ? 1 : -1);
+            }}
+            on:rearranged={(e) => {
+              dispatch(
+                "rearrange",
+                _items.map((x) => x.value)
+              );
+            }}
+            on:change
+            on:debouncedChange
+            on:remove
+          />
+        {/each}
         {#if isInEditMode && !$view.isConstrainedWidth}
           <PanelSwitcherItem
             item={{ label: addText ?? "Add", value: "$add" }}

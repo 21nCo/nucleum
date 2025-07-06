@@ -1,9 +1,9 @@
 import { getIconData } from "@iconify/utils";
 import { readFile, unlink, writeFile } from "fs/promises";
 import { locate } from "@iconify/json";
-import { iconSets, phIcons } from "./icons-list";
+import { bundleNumber, iconSets, phIcons } from "./icons-list";
 
-const version = 29;
+const version = bundleNumber;
 const isExtension = false;
 
 const spriteContentStart =

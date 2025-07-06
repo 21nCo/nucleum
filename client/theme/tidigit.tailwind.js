@@ -235,6 +235,7 @@ module.exports = {
         "cs_tidigit_dark_green",
         "cs_tidigit_dark_apple",
         "cs_tidigit_dark_oxide",
+        "cs_tidigit_dark_purple",
         "cs_solarized_light",
         "cs_solarized_dark",
         "border-brs1",

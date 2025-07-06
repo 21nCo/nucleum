@@ -9,7 +9,10 @@
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { Size } from "$lib/client/types/size.enum";
-  import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
+  import {
+    PanelSwitcherActiveItemStrength,
+    PanelSwitcherStyle
+  } from "$lib/client/types/switcher.enum";
   import NodeGraph from "../../graph/NodeGraph.svelte";
   import { linker, linkTagStore } from "../../linking/link.store";
   import { linkTagLabelMapper } from "../../linking/link.utils";
@@ -432,6 +435,7 @@
             // }
           ]}
           style={PanelSwitcherStyle.TRAIN}
+          activeItemStrength={PanelSwitcherActiveItemStrength.STRONG}
           isShowNumberShortcut={true}
           bind:value={selectedView}
         />

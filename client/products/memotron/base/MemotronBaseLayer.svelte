@@ -18,7 +18,7 @@
   import MemoryBase from "./MemoryBase.svelte";
 
   let isLiteMode = $context.isEmbed && $context.isSheet;
-  const isDebug = false; //import.meta.env?.DEV;
+  const isDebug = import.meta.env?.DEV;
 
   async function onUserBaseLayerReady() {
     if (isLiteMode) return;

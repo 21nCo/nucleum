@@ -6,6 +6,7 @@ export enum Resource {
    */
   everything = "everything",
   globalPreferences = "globalPreferences",
+  preferences = "preferences",
   TailwindTheme = "TailwindTheme",
   appData = "appData",
   space = "space",

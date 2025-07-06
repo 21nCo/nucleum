@@ -89,6 +89,7 @@ import {
 } from "$lib/client/components/flux/resourceStores/resource.store";
 import { embedBridge } from "$lib/client/components/embed/embed.store";
 import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
+import { convertWebMToWav } from "$lib/client/utils/audio.utils";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 const captureAction = resourceAction(Resource.node, ResourceActionType.CREATE);
@@ -617,14 +618,15 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       thumbnailBlob?: Blob;
     }
   ) {
-    const contentType = "audio/mp3";
+    const contentType = "audio/wav";
+    const wavData = await convertWebMToWav(data);
     const id = generateResourceId(Resource.node);
     const collections = this.resolveCollections();
     const fileName = generateSimpleRandomId();
     const result = await account.uploadFileV2(
       contentType,
-      `${fileName}.mp3`,
-      data,
+      `${fileName}.wav`,
+      wavData,
       {
         thumbnailBlob: params?.thumbnailBlob
       }
@@ -633,7 +635,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     const fileId = result[0].id;
     const location = await this.resolveLocation();
     const metadata = await this.parseMetadata(
-      new File([data], `${fileName}.mp3`, { type: contentType })
+      new File([wavData], `${fileName}.wav`, { type: contentType })
     );
     const captureStore = this.get();
     const node: OmitForCapture<IMediaNode> = {

@@ -81,7 +81,7 @@
         {/if}
       </div>
     {:else if isNotAvailableContext}
-      <ComingSoon width={200} />
+      <ComingSoon width={size === Size.sm ? 120 : 200} />
     {:else if emptyIllustration === "inboxZero"}
       <InboxZero />
     {:else if emptyIllustration === "travel"}

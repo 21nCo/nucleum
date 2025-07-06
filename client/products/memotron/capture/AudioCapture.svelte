@@ -1,6 +1,6 @@
 <script lang="ts">
   import Button from "$lib/client/elements/button/Button.svelte";
-  import { ButtonVariant } from "$lib/client/types/button.type";
+  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { PlayActionState } from "$lib/client/types/event.enum";
   import { TimeFormat } from "$lib/client/types/time.type";
   import { formatSeconds } from "$lib/client/utils/time.utils";
@@ -14,6 +14,9 @@
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import type { IRecordId } from "$lib/client/types/data.type";
   import type { IActiveCaptureStore } from "./capture.store";
+  import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
+  import { Size } from "$lib/client/types/size.enum";
   const dispatch = createEventDispatcher();
   export let captureStore: IActiveCaptureStore;
   export let isSaveInProgress: boolean = false;
@@ -27,6 +30,7 @@
   let wavesurfer: WaveSurfer;
   let record: RecordPlugin;
   let isShowPreview = false;
+  let error: string | undefined = undefined;
   const currentColors: any = retrieveCurrentColors($appearance);
   /**
    * @description Start recording audio, if already recording or previewing, it will reset the recording states and wavesurfer instances
@@ -156,35 +160,42 @@
 </script>
 
 <div class="flex flex-col h-full justify-center w-11/12 gap-8">
-  {#if isShowPreview}
-    <div
-      class:hidden={recordingState === PlayActionState.STOPPED ||
-        recordingState === PlayActionState.PREVIEWING}
-      class="flex flex-col items-center justify-center gap-4 w-full flex-1"
-    >
-      <div class="flex w-full h-7/10 max-h-96">
-        <div
-          id="audioCaptureLiveVisualizer"
-          class="w-6/12 mt-4"
-          style={recordingState !== PlayActionState.RUNNING &&
-          recordingState !== PlayActionState.PAUSED
-            ? ""
-            : "border-right:2px solid " + currentColors["aps1"]}
-        />
+  <div class="flex min-h-64">
+    {#if isShowPreview}
+      <div
+        class:hidden={recordingState === PlayActionState.STOPPED ||
+          recordingState === PlayActionState.PREVIEWING}
+        class="flex flex-col items-center justify-center gap-4 w-full flex-1"
+      >
+        <div class="flex w-full h-7/10 max-h-96">
+          <div
+            id="audioCaptureLiveVisualizer"
+            class="w-6/12 mt-4"
+            style={recordingState !== PlayActionState.RUNNING &&
+            recordingState !== PlayActionState.PAUSED
+              ? ""
+              : "border-right:2px solid " + currentColors["aps1"]}
+          />
+        </div>
+        <p class="text-h1 font-bold text-fgs2 text-center">
+          {formatSeconds(recordingDuration, TimeFormat.CLOCK)}
+        </p>
       </div>
-      <p class="text-h1 font-bold text-fgs2 text-center">
-        {formatSeconds(recordingDuration, TimeFormat.CLOCK)}
-      </p>
-    </div>
-  {/if}
-  {#if $view.isConstrainedWidth}
-    <div class="flex w-full justify-center gap-6">
+    {/if}
+  </div>
+  {#if $view.isConstrainedWidth || recordingState === PlayActionState.NOT_STARTED}
+    <div
+      class={cn("flex w-full justify-center gap-6", {
+        "flex-col": recordingState === PlayActionState.NOT_STARTED
+      })}
+    >
       {#if recordingState === PlayActionState.NOT_STARTED}
         <PlayerControl
           on:click={startRecording}
           icon="ph:microphone-light"
           type={ButtonVariant.PRIMARY}
           label="Start"
+          size={Size.lg}
         />
       {:else if recordingState === PlayActionState.RUNNING}
         <!-- <PlayerControl
@@ -223,20 +234,21 @@
           dispatch("cancel");
         }}
         icon="ph:x-light"
+        size={recordingState === PlayActionState.NOT_STARTED
+          ? Size.sm
+          : Size.md}
         type={ButtonVariant.DANGER}
-        label="Cancel"
+        style={recordingState === PlayActionState.NOT_STARTED
+          ? ButtonStyle.OUTLINED
+          : ButtonStyle.DEFAULT}
+        label={recordingState === PlayActionState.NOT_STARTED
+          ? undefined
+          : "Cancel"}
       />
     </div>
   {:else}
     <div class="flex w-full justify-center gap-6">
-      {#if recordingState === PlayActionState.NOT_STARTED}
-        <Button
-          on:click={startRecording}
-          icon="ph:microphone-light"
-          type={ButtonVariant.PRIMARY}
-          label="Start recording"
-        />
-      {:else if recordingState === PlayActionState.RUNNING}
+      {#if recordingState === PlayActionState.RUNNING}
         <!-- <Button
           on:click={startRecording}
           icon="ph:arrow-clockwise-light"
@@ -277,5 +289,8 @@
         label="Cancel"
       />
     </div>
+  {/if}
+  {#if error}
+    <InlineErrorMessage bind:error />
   {/if}
 </div>
