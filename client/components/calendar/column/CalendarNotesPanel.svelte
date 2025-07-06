@@ -66,7 +66,9 @@
 {:then _}
   <NodeContent {node} {mdId} />
 {:catch _}
-  <EmptyStatusView mainText="Error loading calendar notes" />
+  <EmptyStatusView
+    mainText="Error loading calendar notes. Please try again after sometime."
+  />
 {/await}
 
 <ComponentBaseLayer hasDragAndDrop={true} />

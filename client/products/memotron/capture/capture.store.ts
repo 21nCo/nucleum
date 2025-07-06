@@ -1262,20 +1262,20 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       return result;
 
       function formatDate(date: Date, scale: TimeScaleUnit) {
-        if (scale === TimeScaleUnit.DAY) {
+        if (scale === TimeScaleUnit.YEAR) {
           return date.toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric"
+            year: "numeric"
           });
         } else if (scale === TimeScaleUnit.MONTH) {
           return date.toLocaleDateString("en-US", {
             year: "numeric",
             month: "long"
           });
-        } else if (scale === TimeScaleUnit.YEAR) {
+        } else {
           return date.toLocaleDateString("en-US", {
-            year: "numeric"
+            year: "numeric",
+            month: "long",
+            day: "numeric"
           });
         }
       }
@@ -1284,6 +1284,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         at: "CaptureStore.saveCalendarNotes",
         error: e
       });
+      throw e;
     }
   }
 
