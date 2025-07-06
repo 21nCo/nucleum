@@ -10,7 +10,8 @@ import type {
   NodeType,
   ListType,
   SimpleTextNodeType,
-  ListNodeType
+  ListNodeType,
+  INodeStructure
 } from "../../products/memotron/node/node.type";
 import type { IResourceBase } from "../flux/resourceStores/resource.type";
 
@@ -242,3 +243,10 @@ export type IEscapeShortcut = {
   isRegex?: boolean;
   isChecked?: boolean;
 };
+
+export interface IMarkdownTemplate {
+  body: IMarkdown;
+  childrenWithStructure: INodeStructure[];
+  rootStructure: string[];
+  text?: string;
+}

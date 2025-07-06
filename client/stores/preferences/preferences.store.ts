@@ -38,7 +38,7 @@ class PreferencesStore extends KeyValueStore<IPreferencesStore> {
     logger.log({ context: "preferences.store - setPreference", key, value });
   }
 
-  resolve(keyParam: Preference | string, params?: IPreferencesParams) {
+  resolve(keyParam: Preference | string, params?: IPreferencesParams): unknown {
     const key = this.resolveKey(keyParam, params);
     return this.get()[key];
   }
