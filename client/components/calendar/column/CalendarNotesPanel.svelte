@@ -20,7 +20,7 @@
   import { preferences } from "$lib/client/stores/preferences/preferences.store";
   import { ActiveCaptureStore } from "$lib/client/products/memotron/capture/capture.store";
   import { Preference } from "$lib/client/stores/preferences/preferences.type";
-  import type { IMarkdownTemplate } from "../../markdown/md.type";
+  import type { IMarkdownTemplate } from "$lib/client/components/markdown/md.type";
   export let date: Date;
   export let scale: TimeScaleUnit;
   let mdId = generateSimpleRandomId();

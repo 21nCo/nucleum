@@ -26,8 +26,8 @@
     const savedTemplate = preferences.resolve(Preference.NOTES_TEMPLATE, {
       subVariables: [editingTemplate ?? ""]
     });
-    if (savedTemplate) {
-      return { ...savedTemplate };
+    if (savedTemplate && typeof savedTemplate === "object") {
+      return { ...savedTemplate } as IMarkdownTemplate;
     }
     const newBlockId = generateResourceId(Resource.node);
     return {
@@ -64,6 +64,14 @@
     toasts.success("Notes template saved");
     editingTemplate = null;
     return Promise.resolve(true);
+  }
+
+  function resolveDescription(scale: TimeScaleUnit) {
+    return (
+      preferences.resolve(Preference.NOTES_TEMPLATE, {
+        subVariables: [scale]
+      }) as IMarkdownTemplate | undefined
+    )?.text;
   }
 </script>
 
@@ -116,9 +124,7 @@
         <div class="flex flex-wrap w-full gap-3">
           <CalendarNotesTemplateCard
             scale={TimeScaleUnit.DAY}
-            description={preferences.resolve(Preference.NOTES_TEMPLATE, {
-              subVariables: [TimeScaleUnit.DAY]
-            })?.text}
+            description={resolveDescription(TimeScaleUnit.DAY)}
             onEdit={() => editTemplate(TimeScaleUnit.DAY)}
           />
           <CalendarNotesTemplateCard

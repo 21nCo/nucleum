@@ -248,4 +248,5 @@ export interface IMarkdownTemplate {
   body: IMarkdown;
   childrenWithStructure: INodeStructure[];
   rootStructure: string[];
+  text?: string;
 }
