@@ -11,7 +11,9 @@ import {
   type IAudioMetadata,
   type IImageMetadata,
   type IImageNode,
-  headingNodeTypes
+  headingNodeTypes,
+  NodeMetaType,
+  type INodeStructure
 } from "$lib/client/products/memotron/node/node.type";
 import {
   CaptureType,
@@ -90,6 +92,10 @@ import {
 import { embedBridge } from "$lib/client/components/embed/embed.store";
 import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
 import { convertWebMToWav } from "$lib/client/utils/audio.utils";
+import { TimeScaleUnit } from "$lib/client/types/time.type";
+import { resolveCalendarNotesId } from "$lib/client/components/calendar/calendar.utils";
+import { getUtcSafeDay } from "$lib/client/elements/datetime/datetime.utils";
+import type { IMarkdownTemplate } from "$lib/client/components/markdown/md.type";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 const captureAction = resourceAction(Resource.node, ResourceActionType.CREATE);
@@ -1140,6 +1146,145 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     runVectorGeneration();
     console.timeEnd("saveMarkdownCapture");
     return result;
+  }
+
+  async saveCalendarNotes(params: {
+    date: Date;
+    scale: TimeScaleUnit;
+    template?: IMarkdownTemplate;
+  }) {
+    try {
+      let blocks: IBlock[] = [];
+      let rootStructure: IRecordId[] = [];
+      let childrenWithStructure: INodeStructure[] = [];
+      const template = params.template;
+
+      if (template) {
+        const idMapping = new Map<string, IRecordId>();
+        if ("blocks" in template.body) {
+          template.body.blocks.forEach((block) => {
+            idMapping.set(
+              block.id.toString(),
+              generateResourceId(Resource.node)
+            );
+          });
+        }
+        const replaceIds = (ids: IRecordId[] | undefined): IRecordId[] => {
+          if (!ids) return [];
+          return ids.map((id) => idMapping.get(id.toString()) || id);
+        };
+
+        blocks =
+          template.body.blocks?.map((block) => ({
+            ...block,
+            id: idMapping.get(block.id.toString()) || block.id
+          })) || [];
+
+        rootStructure = replaceIds(template.rootStructure);
+
+        childrenWithStructure = template.childrenWithStructure.map((block) => ({
+          ...block,
+          id: idMapping.get(block.id.toString()) || block.id,
+          children: replaceIds(block.children)
+        }));
+      }
+
+      let location = await this.resolveLocation();
+      let metadata = {
+        location
+      };
+      logger.log({
+        at: "CaptureStore.saveCalendarNotes",
+        val: template,
+        metadata
+      });
+      const id = resolveCalendarNotesId(params.date, params.scale);
+      let root: INodeItemCaptured = {
+        id,
+        contentType: NodeType.NODULAR_MARKDOWN,
+        label: `Calendar ${params.scale.toLowerCase()} notes - ${formatDate(params.date, params.scale)}`,
+        body: "",
+        metaType: NodeMetaType.CALENDAR_NOTES,
+        date: getUtcSafeDay(params.date),
+        children: []
+      };
+
+      let remainingResources: INodeItemCaptured[] = [];
+      if (blocks.length > 0) {
+        let mdText = "";
+        if (rootStructure.length > 0) {
+          const rootBlocks = blocks.filter((b) =>
+            rootStructure.some(resourceInList(b))
+          );
+          mdText = generateMarkdownText(rootBlocks);
+        }
+        root = {
+          ...root,
+          children: rootStructure,
+          text: mdText
+        };
+
+        for (let block of childrenWithStructure) {
+          const correspondingContent = blocks.find((b) => b.id === block.id);
+          let parent = undefined;
+          if (
+            correspondingContent?.contentType &&
+            headingNodeTypes.includes(correspondingContent.contentType)
+          ) {
+            parent = resolveHeadingParent(block.id, childrenWithStructure, [
+              id
+            ]);
+          }
+          let mdText = "";
+          if (block.children && block.children.length > 0) {
+            const childrenNodes = blocks.filter((b) =>
+              block.children?.includes(b.id)
+            );
+            mdText = generateMarkdownText(childrenNodes);
+          }
+          remainingResources.push({
+            id: block.id,
+            contentType: correspondingContent?.contentType,
+            body: correspondingContent?.body,
+            label: correspondingContent?.label,
+            text: mdText,
+            metadata: correspondingContent?.metadata,
+            creationContext: id,
+            children: block.children,
+            mdParent: parent
+          });
+        }
+      }
+
+      let result: any = await nodeStore.create([root, ...remainingResources], {
+        context: captureAction
+      });
+      return result;
+
+      function formatDate(date: Date, scale: TimeScaleUnit) {
+        if (scale === TimeScaleUnit.DAY) {
+          return date.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric"
+          });
+        } else if (scale === TimeScaleUnit.MONTH) {
+          return date.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long"
+          });
+        } else if (scale === TimeScaleUnit.YEAR) {
+          return date.toLocaleDateString("en-US", {
+            year: "numeric"
+          });
+        }
+      }
+    } catch (e) {
+      logger.error({
+        at: "CaptureStore.saveCalendarNotes",
+        error: e
+      });
+    }
   }
 
   private resolveCollections() {

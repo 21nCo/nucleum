@@ -8,7 +8,8 @@ export enum Preference {
   TRANSCRIPTION_METHOD = "transcriptionMethod",
   TRANSCRIPTION_MODEL = "transcriptionModel",
   AUTO_TRANSCRIBE = "autoTranscribe",
-  TRANSCRIPTION_LANGUAGE = "transcriptionLanguage"
+  TRANSCRIPTION_LANGUAGE = "transcriptionLanguage",
+  NOTES_TEMPLATE = "notesTemplate"
 }
 
 export enum PreferencesScope {

@@ -16,8 +16,12 @@
   import { TextStyle } from "$lib/client/types/text.enum";
   import { appStore } from "$lib/client/stores/app.store";
   import { Product } from "$lib/client/types/product.type";
+  import Button from "$lib/client/elements/button/Button.svelte";
+  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
+  import { createEventDispatcher } from "svelte";
+  import { Action } from "$lib/client/types/action.enum";
   export let panel: CalendarLayout = CalendarLayout.Classic;
-
+  const dispatch = createEventDispatcher();
   const panelOptions: ISelectItem[] = [
     { value: CalendarLayout.Classic, label: "Classic" },
     {
@@ -59,6 +63,35 @@
         <slot name="header-left-options" />
       </div>
       <slot name="header" />
+      <div class="flex gap-2 justify-end items-center">
+        <slot name="header-right-options" />
+        <Button
+          type={ButtonVariant.PRIMARY}
+          style={ButtonStyle.OUTLINED}
+          size={Size.sm}
+          label="Go to today"
+          isPreventMinWidth={true}
+          parentBgIndex={2}
+          on:click={() => {
+            dispatch("goToToday");
+          }}
+        />
+        <Button
+          type={ButtonVariant.SECONDARY}
+          style={ButtonStyle.OUTLINED}
+          size={Size.sm}
+          icon="ph:sliders-light"
+          tooltip="Calendar settings"
+          parentBgIndex={2}
+          on:click={() => {
+            appStore.runAction(Action.CALENDAR_SETTINGS, {
+              componentParams: {
+                panel
+              }
+            });
+          }}
+        />
+      </div>
     </header>
   </div>
   <div class="flex-1 min-h-0">

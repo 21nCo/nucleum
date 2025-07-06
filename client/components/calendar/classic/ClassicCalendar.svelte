@@ -256,7 +256,25 @@
   }
 </script>
 
-<CalendarLayoutView bind:panel>
+<CalendarLayoutView
+  bind:panel
+  on:goToToday={() => {
+    if (
+      selectedView === TimeScaleUnit.YEAR ||
+      selectedView === TimeScaleUnit.WEEK
+    ) {
+      if (selectedView === TimeScaleUnit.YEAR) {
+        yearViewRef?.scrollToToday();
+      } else if (selectedView === TimeScaleUnit.WEEK) {
+        weekViewRef?.scrollToToday();
+      }
+      selectedDate = new Date();
+    } else {
+      selectedDate = new Date();
+      onDateChange();
+    }
+  }}
+>
   <slot name="header-left-options" slot="header-left-options">
     <ClassicCalendarHeaderLeftOptions
       bind:selectedView
@@ -270,13 +288,6 @@
       bind:selectedView
       {visibleWeekDates}
       on:dateChange={onDateChange}
-      on:goToToday={() => {
-        if (selectedView === TimeScaleUnit.YEAR) {
-          yearViewRef?.scrollToToday();
-        } else if (selectedView === TimeScaleUnit.WEEK) {
-          weekViewRef?.scrollToToday();
-        }
-      }}
       on:goToPrevious={() => {
         if (selectedView === TimeScaleUnit.YEAR) {
           yearViewRef?.navigatePrevYear();
