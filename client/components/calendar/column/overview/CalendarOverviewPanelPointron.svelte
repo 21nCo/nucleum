@@ -23,19 +23,6 @@
   let isRefreshing = false;
   let dev_isUseCloud = false;
 
-  $: totalFocus = data.reduce((acc, curr) => acc + (curr.focus ?? 0), 0);
-  $: totalBreak = data.reduce((acc, curr) => acc + (curr.breakTime ?? 0), 0);
-  $: total = totalFocus + totalBreak;
-  $: previousFocus = previousTimePeriodData.reduce(
-    (acc, curr) => acc + (curr.focus ?? 0),
-    0
-  );
-  $: previousBreak = previousTimePeriodData.reduce(
-    (acc, curr) => acc + (curr.breakTime ?? 0),
-    0
-  );
-  $: previousTotal = previousFocus + previousBreak;
-
   async function refresh() {
     isRefreshing = true;
     const isUseCloud = dev_isUseCloud && account.isCloudUserAndOnline();
@@ -73,12 +60,29 @@
     loadingAnimation={LoadingAnimationType.OVERVIEW_CARDS_PULSE}
   />
 {:then}
+  {@const totalFocus = data.reduce((acc, curr) => acc + (curr.focus ?? 0), 0)}
+  {@const totalBreak = data.reduce(
+    (acc, curr) => acc + (curr.breakTime ?? 0),
+    0
+  )}
+  {@const previousFocus = previousTimePeriodData.reduce(
+    (acc, curr) => acc + (curr.focus ?? 0),
+    0
+  )}
+  {@const previousBreak = previousTimePeriodData.reduce(
+    (acc, curr) => acc + (curr.breakTime ?? 0),
+    0
+  )}
   <div class="flex flex-col gap-4 h-full w-full">
     <div class="flex flex-col gap-4">
       <div
         class="w-full flex flex-wrap justify-start items-start content-start dp:gap-4 gap-3"
       >
-        <MetricItem type="total" value={total} previousValue={previousTotal} />
+        <MetricItem
+          type="total"
+          value={totalFocus + totalBreak}
+          previousValue={previousFocus + previousBreak}
+        />
         <MetricItem
           type="focus"
           value={totalFocus}
