@@ -131,10 +131,6 @@
             scale={TimeScaleUnit.MONTH}
             onEdit={() => editTemplate(TimeScaleUnit.MONTH)}
           />
-          <CalendarNotesTemplateCard
-            scale={TimeScaleUnit.YEAR}
-            onEdit={() => editTemplate(TimeScaleUnit.YEAR)}
-          />
         </div>
       </div>
     </div>

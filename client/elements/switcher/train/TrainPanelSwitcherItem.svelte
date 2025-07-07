@@ -36,10 +36,15 @@
       "bg-ccs3 text-ccs1":
         isActive &&
         activeItemStrength === PanelSwitcherActiveItemStrength.DEFAULT,
+      "bg-bgs1 text-fgs1":
+        isActive &&
+        activeItemStrength === PanelSwitcherActiveItemStrength.SUBTLE,
       "bg-ccs1 text-abg":
         isActive &&
         activeItemStrength === PanelSwitcherActiveItemStrength.STRONG,
-      [`hover:${bg(parentBgIndex + 1)}`]: !isActive
+      [`hover:${bg(parentBgIndex + 1)}`]:
+        !isActive &&
+        activeItemStrength !== PanelSwitcherActiveItemStrength.SUBTLE
     },
     dev_isApplyBorderForDefaultActive &&
       activeItemStrength === PanelSwitcherActiveItemStrength.DEFAULT && {

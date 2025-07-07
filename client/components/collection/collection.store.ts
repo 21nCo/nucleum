@@ -113,21 +113,24 @@ class CollectionStore extends ResourceStore<ICollection> {
     form: Partial<ICollection> & { defaultLayout: CollectionLayout },
     additionalParams?: {
       context?: string;
+      isIgnorePropertyEditor?: boolean;
     }
   ) {
     this.refreshCollectibleResource();
     const id = generateResourceId(Resource.collection);
-    const propertyEditor = propertyEditorStore.get();
+    const propertyEditor = additionalParams?.isIgnorePropertyEditor
+      ? null
+      : propertyEditorStore.get();
     logger.log({ at: "CollectionStore.save", propertyEditor, form });
     let properties: OmitForCaptureWithId<IProperty>[] =
-      propertyEditor.properties;
+      propertyEditor?.properties ?? [];
     const record: OmitForCapture<ICollection> = {
       ...form,
       id,
       views: [],
       properties: [],
       defaultLayout: undefined,
-      typeToExtend: propertyEditor.typeToExtend?.id ?? undefined,
+      typeToExtend: propertyEditor?.typeToExtend?.id ?? undefined,
       type: form.type ?? CollectionType.UNTYPED,
       resource: form.resource ?? this.collectibleResource?.[0]
     };

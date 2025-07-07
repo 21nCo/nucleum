@@ -8,7 +8,6 @@
   } from "$lib/client/products/memotron/node/node.store";
   import { NodeType } from "$lib/client/products/memotron/node/node.type";
   import type { TimeScaleUnit } from "$lib/client/types/time.type";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   import { setContext } from "svelte";
   import {
     ResourceAccessMode,
@@ -23,7 +22,7 @@
   import type { IMarkdownTemplate } from "$lib/client/components/markdown/md.type";
   export let date: Date;
   export let scale: TimeScaleUnit;
-  let mdId = generateSimpleRandomId();
+  export let mdId: string;
   let node: IActiveNodeStore;
   const captureStore = ActiveCaptureStore.resolve(mdId);
 

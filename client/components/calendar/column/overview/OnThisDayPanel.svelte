@@ -176,7 +176,7 @@
   {#if isRefreshing}
     <EmptyStatusView
       isLoadingState={true}
-      loadingAnimation={LoadingAnimationType.DASHBOARD_PULSE}
+      loadingAnimation={LoadingAnimationType.ON_THIS_DAY_PULSE}
       loadingText="Loading historical data"
     />
   {:else if !hasData}

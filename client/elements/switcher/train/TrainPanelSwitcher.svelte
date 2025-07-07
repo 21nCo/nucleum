@@ -19,7 +19,9 @@
   const effectiveParentBgIndex =
     activeItemStrength === PanelSwitcherActiveItemStrength.STRONG
       ? parentBgIndex
-      : parentBgIndex - 1;
+      : activeItemStrength === PanelSwitcherActiveItemStrength.SUBTLE
+        ? parentBgIndex + 1
+        : parentBgIndex - 1;
 </script>
 
 <div
@@ -28,14 +30,13 @@
   )}
 >
   <div
-    class={cn(
-      "flex items-center min-w-fit border border-brs3 p-0.5",
-      bg(effectiveParentBgIndex),
-      {
-        "rounded-full": size === Size.lg,
-        "rounded-md": size !== Size.lg
-      }
-    )}
+    class={cn("flex items-center min-w-fit", bg(effectiveParentBgIndex), {
+      "border border-brs3 p-0.5":
+        activeItemStrength !== PanelSwitcherActiveItemStrength.SUBTLE,
+      "p-1": activeItemStrength === PanelSwitcherActiveItemStrength.SUBTLE,
+      "rounded-full": size === Size.lg,
+      "rounded-md": size !== Size.lg
+    })}
   >
     {#each items as item, index (item.value)}
       <TrainPanelSwitcherItem

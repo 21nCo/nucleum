@@ -143,12 +143,17 @@
       if (val.startsWith("@")) {
         val = val.slice(1);
       }
-      result = await collectionStore.save({
-        label: val,
-        type: CollectionType.UNTYPED,
-        defaultLayout: CollectionLayout.BOARD,
-        resource: ctx === "clipper" ? Resource.node : undefined
-      });
+      result = await collectionStore.save(
+        {
+          label: val,
+          type: CollectionType.UNTYPED,
+          defaultLayout: CollectionLayout.BOARD,
+          resource: ctx === "clipper" ? Resource.node : undefined
+        },
+        {
+          isIgnorePropertyEditor: true
+        }
+      );
     } else {
       result = await nodeStore.create({
         label: e.detail.value,

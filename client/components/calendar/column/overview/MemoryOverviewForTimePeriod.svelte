@@ -16,6 +16,7 @@
   import MetricCard from "$lib/client/components/calendar/column/overview/MetricCard.svelte";
   import { Action } from "$lib/client/types/action.enum";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
+  import { LoadingAnimationType } from "$lib/client/types/feedback.type";
 
   export let date: Date;
   export let scale: TimeScale = TimeScale.DAYS;
@@ -117,7 +118,11 @@
 </script>
 
 {#await fetchMemoryData()}
-  <EmptyStatusView isLoadingState={true} mainText="Loading memories..." />
+  <EmptyStatusView
+    isLoadingState={true}
+    mainText="Loading memories..."
+    loadingAnimation={LoadingAnimationType.OVERVIEW_CARDS_PULSE}
+  />
 {:then { today, previousYears }}
   {#if today.nodes.length === 0 && today.links.length === 0 && previousYears.length === 0}
     <EmptyStatusView
@@ -183,8 +188,8 @@
           {/each}
         {:else}
           <EmptyStatusView
-            mainText="No nodes found"
-            subText={`No nodes found for this day in previous years`}
+            mainText="No memories found"
+            subText={`No memories found for this day in previous years`}
           />
         {/if}
       </div>

@@ -8,6 +8,7 @@
   export let date: Date;
   export let scale: TimeScaleUnit;
   export let isRewind: boolean = false;
+  export let mdId: string;
 </script>
 
 {#if selectedPanel === CalendarColumnPanel.History}
@@ -15,5 +16,5 @@
 {:else if selectedPanel === CalendarColumnPanel.Overview}
   <CalendarOverviewPanel {date} {isRewind} />
 {:else if selectedPanel === CalendarColumnPanel.Notes}
-  <CalendarNotesPanel {date} {scale} />
+  <CalendarNotesPanel {date} {scale} {mdId} />
 {/if}

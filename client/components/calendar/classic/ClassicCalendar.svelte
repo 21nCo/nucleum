@@ -36,6 +36,8 @@
   import ClassicCalendarHeaderLeftOptions from "./ClassicCalendarHeaderLeftOptions.svelte";
   import { onMount } from "svelte";
   import { Display } from "$lib/client/types/view.type";
+  import { logger } from "../../debug/logger.client";
+  import { RemovalProperty } from "$lib/client/types/data.type";
   export let panel: CalendarLayout = CalendarLayout.Classic;
 
   let selectedDate = new Date();
@@ -123,109 +125,122 @@
     }
   }
 
+  let isRefreshOperationInProgress = false;
   async function refreshIndicatorData(
     date: Date,
     resource?: (Resource | MetaResource)[]
   ) {
-    if (selectedView === TimeScaleUnit.DAY) return;
-    console.time("refreshIndicatorData");
-    const resourcesForIndicators = resolveResourcesForIndicators();
-    if (resourcesForIndicators.length === 0) return;
-    const filteredResourcesForIndicators = resource
-      ? resourcesForIndicators.filter((r) => resource.includes(r))
-      : resourcesForIndicators;
-    if (filteredResourcesForIndicators.length === 0) return;
-    const dateFilter: any =
-      selectedView === TimeScaleUnit.MONTH
-        ? tzStore.resolveTimePeriodFilterForMonth(date)
-        : selectedView === TimeScaleUnit.YEAR
-          ? tzStore.resolveTimePeriodFilterForYear(date)
-          : {};
-    if (
-      compareObjects(currentDateFilterForIndicatorData, dateFilter) &&
-      (!resource || resource.length === 0)
-    ) {
-      return;
-    }
-    const cachedData = cache.retrieve(CacheKey.CALENDAR_CACHE);
-    const dateFilterCached = cachedData?.[selectedView]?.dateFilter;
-    if (dateFilterCached && compareObjects(dateFilterCached, dateFilter)) {
-      indicatorData = cachedData[selectedView].indicatorData;
-    } else {
-      indicatorData = [];
-      isRefreshing = true;
-    }
-    currentDateFilterForIndicatorData = dateFilter;
-    const promises = filteredResourcesForIndicators.map((resource) => {
-      let filters: any = {};
-      let properties: string[] = [
-        "id",
-        "modifiedAt",
-        "trashInformation",
-        "isArchived"
-      ];
-      if (resource === Resource.task) {
-        properties.push("dateUnix");
-        filters = {
-          dateUnix: dateFilter
-        };
-      } else if (resource === Resource.session) {
-        properties.push("startUnix", "blocks", "start");
-        filters = {
-          startUnix: dateFilter
-        };
-      } else if (resource === Resource.node) {
-        properties.push("createdAt");
-        filters = {
-          createdAt: {
-            type: "date",
-            greaterThanOrEqual: new Date(
-              dateFilter.greaterThanOrEqual
-            ).toISOString(),
-            lessThanOrEqual: new Date(dateFilter.lessThanOrEqual).toISOString()
-          }
-        };
-      } else if (resource === MetaResource.calendarNotes) {
-        properties.push("metaType", "date", "text");
-        filters = {
-          metaType: NodeMetaType.CALENDAR_NOTES,
-          date: {
-            type: "date",
-            greaterThanOrEqual: new Date(
-              dateFilter.greaterThanOrEqual
-            ).toISOString(),
-            lessThanOrEqual: new Date(dateFilter.lessThanOrEqual).toISOString()
-          }
-        };
+    try {
+      if (selectedView === TimeScaleUnit.DAY || isRefreshOperationInProgress)
+        return;
+      console.time("refreshIndicatorData");
+      isRefreshOperationInProgress = true;
+      const resourcesForIndicators = resolveResourcesForIndicators();
+      if (resourcesForIndicators.length === 0) return;
+      const filteredResourcesForIndicators = resource
+        ? resourcesForIndicators.filter((r) => resource.includes(r))
+        : resourcesForIndicators;
+      if (filteredResourcesForIndicators.length === 0) return;
+      const dateFilter: any =
+        selectedView === TimeScaleUnit.MONTH
+          ? tzStore.resolveTimePeriodFilterForMonth(date)
+          : selectedView === TimeScaleUnit.YEAR
+            ? tzStore.resolveTimePeriodFilterForYear(date)
+            : {};
+      if (
+        compareObjects(currentDateFilterForIndicatorData, dateFilter) &&
+        (!resource || resource.length === 0)
+      ) {
+        return;
       }
-      const searchResource =
-        resource === MetaResource.calendarNotes
-          ? Resource.node
-          : (resource as Resource);
-      return new SearchStore(searchResource).select({
-        properties,
-        filters,
-        isExpand: false,
-        isIncludeMetaItems: resource === MetaResource.calendarNotes
+      const cachedData = cache.retrieve(CacheKey.CALENDAR_CACHE);
+      const dateFilterCached = cachedData?.[selectedView]?.dateFilter;
+      if (dateFilterCached && compareObjects(dateFilterCached, dateFilter)) {
+        indicatorData = cachedData[selectedView].indicatorData;
+      } else {
+        indicatorData = [];
+        isRefreshing = true;
+      }
+      currentDateFilterForIndicatorData = dateFilter;
+      const promises = filteredResourcesForIndicators.map((resource) => {
+        let filters: any = {};
+        let properties: string[] = [
+          "id",
+          "modifiedAt",
+          "trashInformation",
+          "isArchived"
+        ];
+        if (resource === Resource.task) {
+          properties.push("dateUnix");
+          filters = {
+            dateUnix: dateFilter
+          };
+        } else if (resource === Resource.session) {
+          properties.push("startUnix", "blocks", "start");
+          filters = {
+            startUnix: dateFilter
+          };
+        } else if (resource === Resource.node) {
+          properties.push("createdAt");
+          filters = {
+            createdAt: {
+              type: "date",
+              greaterThanOrEqual: new Date(
+                dateFilter.greaterThanOrEqual
+              ).toISOString(),
+              lessThanOrEqual: new Date(
+                dateFilter.lessThanOrEqual
+              ).toISOString()
+            }
+          };
+        } else if (resource === MetaResource.calendarNotes) {
+          properties.push("metaType", "date", "text");
+          filters = {
+            metaType: NodeMetaType.CALENDAR_NOTES,
+            date: {
+              type: "date",
+              greaterThanOrEqual: new Date(
+                dateFilter.greaterThanOrEqual
+              ).toISOString(),
+              lessThanOrEqual: new Date(
+                dateFilter.lessThanOrEqual
+              ).toISOString()
+            }
+          };
+        }
+        const searchResource =
+          resource === MetaResource.calendarNotes
+            ? Resource.node
+            : (resource as Resource);
+        return new SearchStore(searchResource).select({
+          properties,
+          filters,
+          isExpand: false,
+          isIncludeMetaItems: resource === MetaResource.calendarNotes
+        });
       });
-    });
-    const results = await Promise.all(promises);
-    results.forEach((result, index) => {
-      const resource = filteredResourcesForIndicators[index];
-      indicatorData = indicatorData.filter((x) => x.resource !== resource);
-      indicatorData.push({
-        resource,
-        data: result,
-        color: resolveColor(resource)
+      const results = await Promise.all(promises);
+      results.forEach((result, index) => {
+        const resource = filteredResourcesForIndicators[index];
+        indicatorData = indicatorData.filter((x) => x.resource !== resource);
+        indicatorData.push({
+          resource,
+          data: result,
+          color: resolveColor(resource)
+        });
       });
-    });
-    indicatorRefreshId = new Date().getTime();
-    console.timeEnd("refreshIndicatorData");
-    cache.replaceUsingSubKey(CacheKey.CALENDAR_CACHE, selectedView, {
-      dateFilter,
-      indicatorData
-    });
-    isRefreshing = false;
+      indicatorRefreshId = new Date().getTime();
+      console.timeEnd("refreshIndicatorData");
+      cache.replaceUsingSubKey(CacheKey.CALENDAR_CACHE, selectedView, {
+        dateFilter,
+        indicatorData
+      });
+      isRefreshing = false;
+    } catch (error) {
+      logger.error("refreshIndicatorData", error);
+    } finally {
+      isRefreshOperationInProgress = false;
+    }
   }
 
   function resolveColor(resource: Resource | MetaResource) {
@@ -383,6 +398,12 @@
 </CalendarLayoutView>
 <ComponentBaseLayer
   subscribeToResource={new Set([Resource.task])}
+  subscriptionPropsForMergeAction={[
+    RemovalProperty.IS_ARCHIVED,
+    RemovalProperty.TRASH_INFORMATION,
+    "dateUnix",
+    "isChecked"
+  ]}
   on:change={() => {
     setTimeout(() => {
       refreshIndicatorData(selectedDate, [Resource.task]);
@@ -399,6 +420,11 @@
 />
 <ComponentBaseLayer
   subscribeToResource={new Set([Resource.node])}
+  subscriptionPropsForMergeAction={[
+    RemovalProperty.IS_ARCHIVED,
+    RemovalProperty.TRASH_INFORMATION,
+    "text"
+  ]}
   on:change={() => {
     setTimeout(() => {
       refreshIndicatorData(selectedDate, [

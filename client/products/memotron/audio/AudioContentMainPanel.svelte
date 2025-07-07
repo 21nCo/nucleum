@@ -16,7 +16,10 @@
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
   import { toasts } from "$lib/client/stores/notification.store";
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
-  import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
+  import {
+    PanelSwitcherActiveItemStrength,
+    PanelSwitcherStyle
+  } from "$lib/client/types/switcher.enum";
   import { AudioView } from "./audio.type";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { Action } from "$lib/client/types/action.enum";
@@ -152,6 +155,7 @@
         items={resolveViewItems()}
         bind:value={selectedView}
         style={PanelSwitcherStyle.TRAIN}
+        activeItemStrength={PanelSwitcherActiveItemStrength.SUBTLE}
         size={Size.sm}
         isRenderDropdownForCW={true}
       />

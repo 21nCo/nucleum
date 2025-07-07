@@ -201,17 +201,6 @@ function initAppearanceStore() {
         persist(modified);
         return modified;
       });
-    },
-
-    setTypeface: (typeface: string) => {
-      update((a) => {
-        const modified = {
-          ...a,
-          typeface
-        };
-        persist(modified);
-        return modified;
-      });
     }
   };
 }

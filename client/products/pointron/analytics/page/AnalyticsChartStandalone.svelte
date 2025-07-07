@@ -50,6 +50,9 @@
   import { fly } from "svelte/transition";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import view from "$lib/client/stores/view.store";
+  import { LoadingAnimationType } from "$lib/client/types/feedback.type";
+  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.CALENDAR;
   export let date: Date | undefined = undefined;
   export let scale: TimeScale | undefined = undefined;
@@ -286,7 +289,10 @@
     })}
   >
     {#if isRefreshing}
-      <EmptyStatusView isLoadingState={isRefreshing} />
+      <EmptyStatusView
+        isLoadingState={isRefreshing}
+        loadingAnimation={LoadingAnimationType.ANALYTICS_CHART_PULSE}
+      />
     {:else}
       {#key chartType}
         <AnalyticsChart
@@ -305,3 +311,9 @@
     {/if}
   </div>
 </div>
+<ComponentBaseLayer
+  subscribeToResource={new Set([Resource.sessionLog])}
+  on:change={() => {
+    refresh();
+  }}
+/>
