@@ -364,7 +364,7 @@
       {#each MONTHS.slice(6) as month, i}
         <button
           class={cn(
-            "px-1.5 py-1 rounded-md text-b3 transition-colors",
+            "px-1.5 py-1 rounded-md text-b3 font-light transition-colors",
             i + 6 === selectedMonth ? abg() : "hover:bg-bgs2"
           )}
           on:click={() => selectMonth(i + 7)}
@@ -382,7 +382,9 @@
           {#each DAYS as day}
             <td>
               <div class="flex w-full p-1 justify-center">
-                <p class="text-center text-[10px] text-fgs2">{day}</p>
+                <p class="text-center text-b4 text-fgs3">
+                  {day}
+                </p>
               </div>
             </td>
           {/each}

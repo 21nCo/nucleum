@@ -149,7 +149,7 @@
 
 <div
   class="relative w-full h-full flex flex-col bg-bgs1 rounded-md"
-  id="nodecontainer-{mdId}"
+  id="mdcontainer-{mdId}"
   use:resizeListener={(e) => {
     containerWidth = e.width;
   }}

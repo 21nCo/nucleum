@@ -6,9 +6,11 @@
   import Birdview from "../birdView/Birdview.svelte";
   import { CalendarLayout } from "../calendar.type";
   import CalendarLayoutView from "../CalendarLayout.svelte";
+  import CalendarHeader from "../classic/CalendarHeader.svelte";
 
   export let panel: CalendarLayout = CalendarLayout.Bird;
   let scale: TimeScaleUnit = TimeScaleUnit.DAY;
+  let selectedDate: Date = new Date();
 
   const switchOptions = [
     {
@@ -48,6 +50,15 @@
       parentBgIndex={2}
       isExpandOnActiveForIcon={true}
       style={OptionSelectorStyle.ICON}
+    />
+  </slot>
+  <slot name="header" slot="header">
+    <CalendarHeader
+      bind:selectedDate
+      bind:selectedView={scale}
+      on:dateChange
+      on:goToPrevious={() => {}}
+      on:goToNext={() => {}}
     />
   </slot>
   <div class="w-full h-full max-h-full">

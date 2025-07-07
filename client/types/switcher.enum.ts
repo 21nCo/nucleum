@@ -53,6 +53,7 @@ export enum BarStyle {
 
 export enum PanelSwitcherActiveItemStrength {
   DEFAULT,
+  SUBTLE,
   STRONG
 }
 

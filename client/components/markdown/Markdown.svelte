@@ -46,6 +46,7 @@
   import { generateResourceId } from "../flux/flux.utils";
   import { ErrorMessage } from "../error/error.type";
   import view from "$lib/client/stores/view.store";
+  import { resizeListener } from "$lib/client/actions/resize.action";
 
   /**
    * Propagates the event to the parent component.
@@ -84,14 +85,14 @@
   export let id: string | undefined = undefined;
   let mdId: string = id ?? generateSimpleRandomId();
   const mdStore = getMdStore(mdId);
-  const containerId = `nodecontainer-${mdId}`;
+  const containerId = `mdcontainer-${mdId}`;
   mdStore.load(md, { isPreventFocus: params?.isPreventFocusOnLoad });
   $: if (params) mdStore?.setParams(params);
   // $: console.log("blocks", $mdStore.blocks);
   let keyboardToolbarPanelSelection: string | undefined = undefined;
   let keyboardToolbarRef: MarkdownkeyboardToolbar | undefined = undefined;
   let focusedBlock: IRecordId | undefined = undefined;
-
+  let containerWidth: number = 0;
   let isInSelectionMode = false;
   let isSelectionConsecutive = false;
   $: multiSelectContext = {
@@ -295,6 +296,9 @@
   id="markDown-{mdId}"
   class="relative flex flex-col justify-start items-start text-start w-full h-full"
   on:keydown={onKeyDown}
+  use:resizeListener={(e) => {
+    containerWidth = e.width;
+  }}
 >
   <div class="flex justify-between">
     <div class="flex gap-2 items-center">
@@ -432,7 +436,7 @@
 {#if $multiSelectStore.length > 0}
   <BottomFloat zIndex="z-30" {containerId}>
     <BulkEditBar
-      isExpandedMode={!$view.isConstrainedWidth}
+      isExpandedMode={containerWidth > 800}
       context={multiSelectContext}
       on:action={(e) => onBulkAction(e.detail)}
       on:actionWithContext={(e) =>

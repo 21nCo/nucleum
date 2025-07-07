@@ -269,6 +269,14 @@
     const today = new Date();
     return compareDates(date, today, "<");
   }
+
+  function resolveIfFutureMonth(year: number, monthIndex: number) {
+    const today = new Date();
+    return (
+      year > today.getFullYear() ||
+      (monthIndex > today.getMonth() && year === today.getFullYear())
+    );
+  }
 </script>
 
 <div
@@ -277,19 +285,25 @@
   on:scroll={onScroll}
 >
   {#each years as { year, months }}
-    <div class="px-6 py-4" id="year-{year}">
-      <div class="mb-4">
+    <div class="px-6 py-3" id="year-{year}">
+      <div class="mb-2">
         <h2 class="text-h2 font-bold ml-3">{year}</h2>
       </div>
       <div
         class="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-x-16 gap-y-12 default-typeface"
       >
         {#each months as { days, monthIndex }}
+          {@const isFutureMonth = resolveIfFutureMonth(year, monthIndex)}
           <div
             class="flex flex-col min-w-[240px]"
             id="month-{year}-{monthIndex}"
           >
-            <div class="mb-1 ml-3 font-medium text-fgs1 text-h5">
+            <div
+              class={cn("mb-1 ml-3 font-medium text-fgs1 text-h5", {
+                "text-fgs3": isFutureMonth,
+                "text-fgs1": !isFutureMonth
+              })}
+            >
               {monthNames[monthIndex]}
             </div>
             <div class="grid grid-cols-7 gap-x-1 text-center text-b2">
@@ -312,7 +326,7 @@
                       !isSelected &&
                         !isCurrentDay && {
                           "hover:text-fgs1 border-transparent notouch:hover:bg-bgs2 active:bg-bgs2": true,
-                          "text-fgs2 border-transparent": isPastDay,
+                          "text-fgs1 border-transparent": isPastDay,
                           "text-fgs3": !isPastDay
                         }
                     )}

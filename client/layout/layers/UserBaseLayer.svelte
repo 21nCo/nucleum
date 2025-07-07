@@ -67,6 +67,7 @@
   import { compareVersions } from "$lib/shared/utils/utils";
   import { UIStateScope } from "$lib/client/stores/uiState/uiState.type";
   import { RxDBPersistence } from "$lib/client/persistence/rxdb/rxdb.local";
+  import { cn } from "$lib/client/utils/ui.utils";
 
   const loadingMessages = {
     cloneUp: {
@@ -95,6 +96,13 @@
   const isDebug = import.meta.env?.DEV;
   $: searcheableResources =
     resolveProductResources($appStore.product, "search") ?? [];
+  $: isOfflineBannerIsShown =
+    ($view.isPortrait &&
+      $account.dataMode !== UserDataMode.LOCAL &&
+      $context.isInOfflineMode) ||
+    (!$view.isPortrait &&
+      $account.dataMode === UserDataMode.LOCAL &&
+      !$context.isEmbed);
 
   onMount(async () => {
     postMessageToParent(EmbedMessage.MOUNT);
@@ -564,7 +572,7 @@
   });
 </script>
 
-{#if ($view.isPortrait && $account.dataMode !== UserDataMode.LOCAL && $context.isInOfflineMode) || (!$view.isPortrait && $account.dataMode === UserDataMode.LOCAL && !$context.isEmbed)}
+{#if isOfflineBannerIsShown}
   <div
     class="flex gap-2 w-full p-2 bg-ass2/30 text-ass1 items-center justify-center text-b2"
   >
@@ -580,7 +588,12 @@
 {#if $appStore?.appData?.isAnalyticsEnabled && $account?.dataMode === UserDataMode.CLOUD && !$context.isInOfflineMode}
   <AnalyticsLayer />
 {/if}
-<div class="flex h-screen w-screen">
+<div
+  class={cn("flex w-screen", {
+    "h-screen": !isOfflineBannerIsShown,
+    "flex-grow": isOfflineBannerIsShown
+  })}
+>
   {#if !$appLoadingState.isBaseLoaded || !$appLoadingState.isLocalLoaded || isAppLoading}
     <AppLoadingView
       message={loadingMessage.message}

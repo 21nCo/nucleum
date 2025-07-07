@@ -51,7 +51,7 @@
   }
   function onTypefaceChange(e: CustomEvent) {
     const selectedTypeface = e.detail;
-    appearance.setTypeface(selectedTypeface);
+    $userPreferences.appearance.typeface = selectedTypeface;
   }
 
   //TODO - use change event on switchInput instead

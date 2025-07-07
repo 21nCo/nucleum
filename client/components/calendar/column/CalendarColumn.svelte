@@ -23,6 +23,7 @@
   import CalendarColumnTimeline from "./timeline/CalendarColumnTimeline.svelte";
   import Divider from "$lib/client/elements/Divider.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
+  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   const dispatch = createEventDispatcher();
   export let scale: TimeScaleUnit;
   export let date: Date;
@@ -31,6 +32,7 @@
   export let isShowTitleBar: boolean = false;
   export let isRewind: boolean = false;
   export let isCwContext: boolean = false;
+  let mdId = generateSimpleRandomId();
 
   let selectedPanel: CalendarColumnPanel = resolvePanelSelection();
 
@@ -49,9 +51,9 @@
   let containerWidth = 0;
 
   $: layout =
-    containerWidth > 1200
+    containerWidth > 1400
       ? CalendarColumnLayout.FULL
-      : containerWidth > 700
+      : containerWidth > 900
         ? CalendarColumnLayout.SPLIT
         : CalendarColumnLayout.TABS;
 
@@ -130,6 +132,7 @@
     "px-4 pb-4 pt-2": layout !== CalendarColumnLayout.TABS,
     "p-4": layout === CalendarColumnLayout.TABS && !isCwContext
   })}
+  id="mdcontainer-{mdId}"
   use:resizeListener={(e) => {
     containerWidth = e.width;
   }}
@@ -180,6 +183,7 @@
             />
           {/if}
           <CalendarColumnPanelResolver
+            {mdId}
             {selectedPanel}
             {date}
             {scale}
@@ -188,6 +192,7 @@
         </div>
       {:else}
         <CalendarColumnPanelResolver
+          {mdId}
           {selectedPanel}
           {date}
           {scale}

@@ -12,7 +12,7 @@
     scale === TimeScaleUnit.DAY
       ? "Daily notes"
       : scale === TimeScaleUnit.MONTH
-        ? "Monthly notes"
+        ? "Monthly & yearly notes"
         : "Yearly notes";
   const defaultDescription =
     scale === TimeScaleUnit.DAY

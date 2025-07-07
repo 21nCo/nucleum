@@ -12,9 +12,10 @@
   } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
   import {
-    BarStyle,
+    PanelSwitcherActiveItemStrength,
     PanelSwitcherStyle
   } from "$lib/client/types/switcher.enum";
+  import { cn } from "$lib/client/utils/ui.utils";
   import { CalendarColumnLayout, CalendarColumnPanel } from "../calendar.type";
   export let panels: ISelectItem[];
   export let selectedPanel: CalendarColumnPanel;
@@ -29,7 +30,11 @@
   }
 </script>
 
-<div>
+<div
+  class={cn({
+    "w-full flex justify-center": layout !== CalendarColumnLayout.TABS
+  })}
+>
   {#if layout === CalendarColumnLayout.TABS}
     <OptionSelector
       options={panels}
@@ -45,9 +50,9 @@
     <PanelSwitcher
       items={panels}
       bind:value={selectedPanel}
-      style={PanelSwitcherStyle.BAR}
-      barStyle={BarStyle.DOT}
+      style={PanelSwitcherStyle.TRAIN}
       size={Size.sm}
+      activeItemStrength={PanelSwitcherActiveItemStrength.SUBTLE}
     />
   {/if}
 </div>

@@ -114,12 +114,17 @@
         class={cn(
           "transition-colors",
           {
-            "text-ccs1": isActive && style !== PanelSwitcherStyle.TRAIN,
-            "text-fgs2 group-hover:text-fgs1":
-              !isActive &&
-              style === PanelSwitcherStyle.TRAIN &&
-              activeItemStrength === PanelSwitcherActiveItemStrength.DEFAULT
+            "text-ccs1": isActive && style !== PanelSwitcherStyle.TRAIN
           },
+          style === PanelSwitcherStyle.TRAIN &&
+            !isActive && {
+              "group-hover:text-fgs1":
+                activeItemStrength !== PanelSwitcherActiveItemStrength.STRONG,
+              "text-fgs2":
+                activeItemStrength === PanelSwitcherActiveItemStrength.DEFAULT,
+              "text-fgs3":
+                activeItemStrength === PanelSwitcherActiveItemStrength.SUBTLE
+            },
           style === PanelSwitcherStyle.TRAIN &&
             isActive && {
               "text-cbg":
@@ -136,11 +141,17 @@
         !isActive && {
           "group-hover:text-fgs2":
             style === PanelSwitcherStyle.BAR ||
-            style === PanelSwitcherStyle.SNAKE,
-          "text-fgs2 group-hover:text-fgs1":
-            style === PanelSwitcherStyle.TRAIN &&
-            activeItemStrength === PanelSwitcherActiveItemStrength.DEFAULT
-        }
+            style === PanelSwitcherStyle.SNAKE
+        },
+        !isActive &&
+          style === PanelSwitcherStyle.TRAIN && {
+            "group-hover:text-fgs1":
+              activeItemStrength !== PanelSwitcherActiveItemStrength.STRONG,
+            "text-fgs2":
+              activeItemStrength === PanelSwitcherActiveItemStrength.DEFAULT,
+            "text-fgs3":
+              activeItemStrength === PanelSwitcherActiveItemStrength.SUBTLE
+          }
       )}
     >
       <span

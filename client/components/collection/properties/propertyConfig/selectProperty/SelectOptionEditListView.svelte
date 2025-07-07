@@ -23,9 +23,9 @@
     group: IPropertyConfigOptionGroup | undefined
   ) {
     if (group) {
-      return options.filter((x) => x.groupId === group.id);
+      return options?.filter((x) => x.groupId === group.id) ?? [];
     } else {
-      return options.filter((x) => !x.groupId);
+      return options?.filter((x) => !x.groupId) ?? [];
     }
   }
 

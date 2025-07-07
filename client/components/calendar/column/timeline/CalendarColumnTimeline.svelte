@@ -124,8 +124,9 @@
 <div
   class={cn("flex flex-col gap-3", {
     "flex-grow": isExpandable,
-    "w-1/2 max-w-2xl shrink-0":
-      !isExpandable && layout !== CalendarColumnLayout.TABS,
+    "max-w-2xl": layout === CalendarColumnLayout.FULL,
+    "lp:max-w-sm 2k:max-w-lg": layout === CalendarColumnLayout.SPLIT,
+    "w-1/2 shrink-0": !isExpandable && layout !== CalendarColumnLayout.TABS,
     "w-full": !isExpandable && layout === CalendarColumnLayout.TABS
   })}
 >
