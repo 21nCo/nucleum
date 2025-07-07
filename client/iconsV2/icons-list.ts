@@ -507,7 +507,14 @@ const tablerIcons = ["keyboard-show", "hexagon-plus"];
 
 const uilIcons = ["keyboard-hide"];
 
-const mynaUiIcons = ["plus-hexagon", "git-commit", "git-merge", "git-branch"];
+const mynaUiIcons = [
+  "plus-hexagon",
+  "git-commit",
+  "git-merge",
+  "git-branch",
+  "brand-pocket",
+  "brand-pocket-solid"
+];
 
 export const iconSets = {
   hugeicons: hugeiconsIcons,

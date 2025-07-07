@@ -21,6 +21,7 @@ export enum Resource {
   mutation = "mutation",
   event = "event",
   tag = "tag",
+  import = "import",
   /**
    * @deprecated - use {@link task} instead
    */
