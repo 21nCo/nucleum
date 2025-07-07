@@ -1,6 +1,5 @@
 <script lang="ts">
   import Text from "$lib/client/elements/text/Text.svelte";
-  import MetricItem from "$lib/client/products/pointron/analytics/cards/metrics/MetricItem.svelte";
   import AnalyticsChartStandalone from "$lib/client/products/pointron/analytics/page/AnalyticsChartStandalone.svelte";
   import { sessionLogStore } from "$lib/client/products/pointron/logs/log.store";
   import type { ISessionLog } from "$lib/client/products/pointron/logs/log.type";
@@ -14,6 +13,7 @@
   import { LoadingAnimationType } from "$lib/client/types/feedback.type";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import FocusMetricCards from "./FocusMetricCards.svelte";
 
   export let date: Date;
   export let scale: TimeScale = TimeScale.DAYS;
@@ -60,40 +60,9 @@
     loadingAnimation={LoadingAnimationType.OVERVIEW_CARDS_PULSE}
   />
 {:then}
-  {@const totalFocus = data.reduce((acc, curr) => acc + (curr.focus ?? 0), 0)}
-  {@const totalBreak = data.reduce(
-    (acc, curr) => acc + (curr.breakTime ?? 0),
-    0
-  )}
-  {@const previousFocus = previousTimePeriodData.reduce(
-    (acc, curr) => acc + (curr.focus ?? 0),
-    0
-  )}
-  {@const previousBreak = previousTimePeriodData.reduce(
-    (acc, curr) => acc + (curr.breakTime ?? 0),
-    0
-  )}
   <div class="flex flex-col gap-4 h-full w-full">
     <div class="flex flex-col gap-4">
-      <div
-        class="w-full flex flex-wrap justify-start items-start content-start dp:gap-4 gap-3"
-      >
-        <MetricItem
-          type="total"
-          value={totalFocus + totalBreak}
-          previousValue={previousFocus + previousBreak}
-        />
-        <MetricItem
-          type="focus"
-          value={totalFocus}
-          previousValue={previousFocus}
-        />
-        <MetricItem
-          type="break"
-          value={totalBreak}
-          previousValue={previousBreak}
-        />
-      </div>
+      <FocusMetricCards {data} {previousTimePeriodData} />
       <AnalyticsChartStandalone {date} {scale} />
     </div>
     {#if !isRewind}
