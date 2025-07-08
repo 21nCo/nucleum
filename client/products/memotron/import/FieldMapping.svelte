@@ -29,7 +29,7 @@
   }
 </script>
 
-<div class="p-4 border border-brs2 rounded-lg">
+<div class="p-4 border border-brs2 rounded-lg flex-grow flex flex-col w-full">
   <div class="mb-4">
     <h3 class="text-b2 font-medium mb-2">Configure field mapping</h3>
     <p class="text-fgs2 text-b3">
@@ -37,7 +37,7 @@
     </p>
   </div>
 
-  <div class="space-y-4">
+  <div class="space-y-4 flex-grow w-full">
     {#each Object.entries(fieldMappingConfig) as [fieldKey, fieldConfig]}
       <div class="p-3 border border-brs3 rounded-md bg-bgs2">
         <div class="mb-2">

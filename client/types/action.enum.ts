@@ -45,5 +45,6 @@ export enum Action {
   HISTORY = "history",
   CREDITS = "credits",
   DATA_SETTINGS = "data-settings",
-  CALENDAR_SETTINGS = "calendar-settings"
+  CALENDAR_SETTINGS = "calendar-settings",
+  IMPORT_FROM_OTHER_APPS = "import-from-other-apps"
 }

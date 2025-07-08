@@ -15,11 +15,11 @@ import { generateResourceId } from "$lib/shared/utils/surreal.utils";
 import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
 import { GlobalEvent } from "$lib/client/types/event.enum";
 import { logger } from "$lib/client/components/debug/logger.client";
-import type {
-  OmitForCapture,
-  OmitForCaptureWithId
-} from "$lib/client/components/flux/resourceStores/resource.type";
+import type { OmitForCaptureWithId } from "$lib/client/components/flux/resourceStores/resource.type";
 import { viewStore } from "$lib/client/components/collection/view.store";
+import { performApiCall } from "$lib/client/utils/network.utils";
+import { UserDataMode } from "$lib/client/types/account.type";
+import account from "$lib/client/stores/account.store";
 
 export class PocketImporter {
   private processedUrls: Map<string, string> = new Map();
@@ -66,18 +66,18 @@ export class PocketImporter {
         totalCreated += collectionCount;
         collectionsCreated += collectionFiles.length;
       }
-      await this.updateProgress(0.25);
+      this.updateProgress(0.25);
       const csvCount = await this.createNodesFromCsvFiles(csvFiles);
       totalCreated += csvCount;
-      await this.updateProgress(0.5);
+      this.updateProgress(0.75);
       if (this.itemsInPocketCollections.length > 0) {
         await this.createNodes(this.itemsInPocketCollections);
       }
       await this.addLinks();
-      await this.updateProgress(0.75);
+      this.updateProgress(0.85);
       const annotationCount =
         await this.createAnnotationsFromFiles(annotationFiles);
-      await this.updateProgress(0.9);
+      this.updateProgress(0.95);
       totalCreated += annotationCount;
       if (this.fieldMappings.tags !== "ignore") {
         const collectionType =
@@ -237,12 +237,51 @@ export class PocketImporter {
   }
 
   private async createNodes(nodes: any[]) {
-    console.log({ nodes });
+    try {
+      const accountStore = account.get();
+      if (accountStore.dataMode === UserDataMode.CLOUD) {
+        const response = await performApiCall("utils/n/run", "POST", {
+          urls: nodes.map((node) => node.url),
+          action: "get-multiple-webpage-metadata"
+        });
+        const responseJson = await response.json();
+        if (Array.isArray(responseJson)) {
+          for (const node of nodes) {
+            const responseNode = responseJson.find(
+              (responseNode) => responseNode.url === node.url
+            );
+            if (responseNode && !responseNode.error) {
+              const desc =
+                responseNode.description ?? responseNode.ogDescription;
+              const title = responseNode.title ?? responseNode.ogTitle;
+              node.body.description = desc ?? node.body.description;
+              if (!node.url.includes("www.youtube.com")) {
+                node.label = title ?? node.label;
+              }
+              node.metadata = {
+                ...(node.metadata ?? {}),
+                ogTitle: responseNode.ogTitle,
+                ogDescription: responseNode.ogDescription,
+                ogImage: responseNode.ogImage,
+                faviconLink: responseNode.faviconUrl,
+                themeColor: responseNode.themeColor,
+                language: responseNode.language ?? responseNode.ogLocale,
+                author: responseNode.author,
+                canonicalUrl: responseNode.canonicalUrl,
+                title: responseNode.title,
+                description: responseNode.description
+              };
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error getting multiple webpage metadata:", error);
+    }
     const createdNodes = await nodeStore.create(nodes as any);
     return createdNodes;
   }
   private async createCollections(collections: any[]) {
-    console.log({ collections });
     let collectionsToCreate: OmitForCaptureWithId<ICollection>[] = [];
     let views: OmitForCaptureWithId<ICollectionView>[] = [];
     for (const collection of collections) {
@@ -282,9 +321,20 @@ export class PocketImporter {
     csvFiles: { fileName: string; data: any[] }[]
   ) {
     let totalCreated = 0;
+    const totalRecords = csvFiles.reduce(
+      (sum, csvFile) => sum + (csvFile.data?.length || 0),
+      0
+    );
+    let processedRecords = 0;
     for (const csvFile of csvFiles) {
       if (Array.isArray(csvFile.data)) {
-        totalCreated += await this.createNodesFromRecords(csvFile.data);
+        const created = await this.createNodesFromRecords(
+          csvFile.data,
+          totalRecords,
+          processedRecords
+        );
+        totalCreated += created;
+        processedRecords += csvFile.data.length;
       }
     }
     return totalCreated;
@@ -341,7 +391,9 @@ export class PocketImporter {
             },
             importId: this.importId,
             metadata: {
-              originalNote: item.note
+              noteOnImport: item.note,
+              titleOnImport: item.title,
+              excerptOnImport: item.excerpt
             },
             createdAt: new Date(collection.createdAt),
             notes: item.note || "",
@@ -396,9 +448,11 @@ export class PocketImporter {
                 },
                 importId: this.importId,
                 metadata: {
-                  sourceUrl: annotation.url,
-                  sourceTitle: annotation.title,
-                  highlightCreatedAt: highlight.created_at
+                  sourceUrlOnImport: annotation.url,
+                  sourceTitleOnImport: annotation.title,
+                  createdAtOnImport: highlight.created_at,
+                  textOnImport: highlight.quote,
+                  titleOnImport: highlight.title
                 },
                 createdAt: new Date(highlight.created_at * 1000),
                 parent: parentId,
@@ -433,9 +487,14 @@ export class PocketImporter {
     return collectionIds;
   }
 
-  private async createNodesFromRecords(records: any[]) {
+  private async createNodesFromRecords(
+    records: any[],
+    totalRecords: number,
+    processedRecords: number
+  ) {
     const batchSize = 50;
     let totalCreated = 0;
+    let currentProcessed = processedRecords;
 
     for (let i = 0; i < records.length; i += batchSize) {
       const batch = records.slice(i, i + batchSize);
@@ -470,9 +529,9 @@ export class PocketImporter {
               ...existingNode,
               metadata: {
                 ...existingNode.metadata,
-                originalTags: record.tags,
-                originalStatus: record.status,
-                originalTimestamp: record.timestamp
+                tagsOnImport: record.tags,
+                statusOnImport: record.status,
+                timestampOnImport: record.timestamp
               }
             };
             this.itemsInPocketCollections = this.itemsInPocketCollections.map(
@@ -495,14 +554,14 @@ export class PocketImporter {
           url,
           label: record.title,
           body: {
-            hash: btoa(record.url),
-            description: ""
+            hash: btoa(record.url)
           },
           importId: this.importId,
           metadata: {
-            originalTags: record.tags,
-            originalStatus: record.status,
-            originalTimestamp: record.timestamp
+            tagsOnImport: record.tags,
+            statusOnImport: record.status,
+            timestampOnImport: record.timestamp,
+            titleOnImport: record.title
           },
           createdAt: record.timestamp,
           parent: undefined,
@@ -515,18 +574,10 @@ export class PocketImporter {
         nodes = nodes.filter(Boolean);
         await this.createNodes(nodes as any);
         totalCreated += nodes.length;
+        currentProcessed += batch.length;
 
-        // TODO - progress setting
-        // if (tempFileList) {
-        //   const progress = Math.min(
-        //     90,
-        //     Math.floor((totalCreated / records.length) * 90)
-        //   );
-        //   tempFileList = tempFileList.map((item) => ({
-        //     ...item,
-        //     uploadProgress: progress
-        //   }));
-        // }
+        const progress = 0.25 + (currentProcessed / totalRecords) * 0.5;
+        this.updateProgress(progress);
       } catch (error) {
         console.error("Error creating batch of nodes:", error);
         throw error;

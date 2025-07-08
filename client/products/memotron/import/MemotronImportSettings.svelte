@@ -28,7 +28,15 @@
   import { collectionStore } from "$lib/client/components/collection/collection.store";
   import { linker } from "../linking/link.store";
 
-  let importHistoryData: ImportHistoryItem[] = [];
+  let importHistoryData: (Omit<
+    ImportHistoryItem,
+    "source" | "totalRecords" | "status"
+  > & {
+    source: string;
+    totalRecords: string;
+    status: string;
+    createdAt: string;
+  })[] = [];
 
   function handleDeleteImportEntry(importId: string) {
     confirmationNotification.notify({
@@ -45,7 +53,10 @@
 
   async function revertImport(importId: string) {
     try {
-      const imports = preferences.resolve(Preference.IMPORT_HISTORY) || [];
+      const imports =
+        (preferences.resolve(
+          Preference.IMPORT_HISTORY
+        ) as ImportHistoryItem[]) || [];
       const importRecord = imports.find(resourceInList(importId));
       if (!importRecord) {
         toasts.error("Import record not found");
@@ -139,7 +150,9 @@
   ];
 
   function refreshImportHistory() {
-    const imports = preferences.resolve(Preference.IMPORT_HISTORY) || [];
+    const imports =
+      (preferences.resolve(Preference.IMPORT_HISTORY) as ImportHistoryItem[]) ||
+      [];
     console.log({ imports });
     importHistoryData = imports
       .filter(removeDuplicatesFilter)
@@ -151,6 +164,9 @@
         ...item,
         createdAt: new Date(item.createdAt).toLocaleString(),
         source: properCase(enumToString(item.source)),
+        totalRecords: item.totalRecords
+          ? `${item.totalRecords.nodes}${item.totalRecords.collections ? ` + ${item.totalRecords.collections} collections` : ""}`
+          : "N/A",
         status:
           item.status === "SUCCESS"
             ? "✅ Success"

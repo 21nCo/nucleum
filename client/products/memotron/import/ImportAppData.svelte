@@ -24,6 +24,7 @@
   import FieldMapping from "./FieldMapping.svelte";
   import type { FieldMappingConfig } from "./data.type";
   import { PocketImporter } from "./pocket.importer";
+  import { Action } from "$lib/client/types/action.enum";
 
   export let importSource: ImportSource = ImportSource.POCKET;
 
@@ -300,7 +301,7 @@
   function onClose() {
     resetFileInput();
     modalEvent.hide(MemotronAction.IMPORT_APP_DATA);
-    modalEvent.hide(MemotronAction.IMPORT_FROM_OTHER_APPS);
+    modalEvent.hide(Action.IMPORT_FROM_OTHER_APPS);
   }
 
   function getSizeString(sizeInBytes: number) {
@@ -534,18 +535,20 @@
         {/key}
       </div>
     </div>
-    <div class="flex flex-col items-center gap-2 w-full">
-      <div
-        class="text-fgs2 mr-auto dp:mt-4 w-full cw:text-b3 cw:text-left text-b2"
-      >
-        {#key config.steps[activeStepIndex].description}
-          {@html renderMdAsHtml(
-            config.steps[activeStepIndex].description || ""
-          )}
-        {/key}
-      </div>
+    <div class="flex flex-col items-center gap-2 w-full flex-grow">
+      {#if config.steps[activeStepIndex].description}
+        <div
+          class="text-fgs2 mr-auto dp:mt-4 w-full cw:text-b3 cw:text-left text-b2"
+        >
+          {#key config.steps[activeStepIndex].description}
+            {@html renderMdAsHtml(
+              config.steps[activeStepIndex].description || ""
+            )}
+          {/key}
+        </div>
+      {/if}
       {#if config.fieldMappingConfig}
-        <div class="w-full mt-4">
+        <div class="w-full mt-4 h-full overflow-y-auto">
           <FieldMapping
             fieldMappingConfig={config.fieldMappingConfig}
             bind:fieldMappings

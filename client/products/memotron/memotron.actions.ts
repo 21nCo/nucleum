@@ -277,19 +277,31 @@ export const memotronActions: IAction[] = [
     action: MemotronAction.IMPORT_APP_DATA,
     isMeta: true,
     type: ActionType.MODAL,
-    component: ImportAppData
-  },
-  {
-    action: MemotronAction.IMPORT_FROM_OTHER_APPS,
-    label: "Import into Memotron",
-    type: ActionType.MODAL,
-    component: MemotronImportSettings,
+    component: ImportAppData,
     modalParams: {
       layout: {
         size: Size.lg,
         orientation: Orientation.Horizontal,
-        isShowCantileverClose: true,
-        isShowBackButton: true
+        isShowCantileverClose: true
+      }
+    }
+  },
+  {
+    action: Action.IMPORT_FROM_OTHER_APPS,
+    label: "Import from other apps",
+    cmdLabel: [
+      {
+        label: "Import from Pocket",
+        variant: "importFromPocket"
+      }
+    ],
+    type: ActionType.MODAL,
+    component: MemotronImportSettings,
+    modalParams: {
+      layout: {
+        size: Size.xl,
+        orientation: Orientation.Horizontal,
+        isShowCantileverClose: true
       }
     }
   }

@@ -30,6 +30,5 @@ export enum MemotronAction {
   BULK_LINK = "bulk-link",
   OPEN_CHAT = "open-chat",
   CALLOUT_SETTINGS = "edit-callout-settings",
-  IMPORT_FROM_OTHER_APPS = "import-from-other-apps",
   IMPORT_APP_DATA = "import-app-data"
 }
