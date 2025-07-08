@@ -289,12 +289,6 @@ export const memotronActions: IAction[] = [
   {
     action: Action.IMPORT_FROM_OTHER_APPS,
     label: "Import from other apps",
-    cmdLabel: [
-      {
-        label: "Import from Pocket",
-        variant: "importFromPocket"
-      }
-    ],
     type: ActionType.MODAL,
     component: MemotronImportSettings,
     modalParams: {

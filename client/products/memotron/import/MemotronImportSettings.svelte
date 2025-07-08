@@ -62,7 +62,6 @@
         toasts.error("Import record not found");
         return;
       }
-      console.log({ importRecord });
       if (importRecord.status === "REVERTED") {
         toasts.error("Import already reverted");
         return;
@@ -153,7 +152,6 @@
     const imports =
       (preferences.resolve(Preference.IMPORT_HISTORY) as ImportHistoryItem[]) ||
       [];
-    console.log({ imports });
     importHistoryData = imports
       .filter(removeDuplicatesFilter)
       .sort(

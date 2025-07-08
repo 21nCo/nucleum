@@ -191,7 +191,16 @@ export class PocketImporter {
 
   private parseCsv(csvText: string) {
     const lines = csvText.split("\n").filter((line) => line.trim());
-    const headers = lines[0].split(",").map((h) => h.replace(/"/g, "").trim());
+
+    if (lines.length === 0) {
+      return [];
+    }
+
+    const headers = this.parseCsvLine(lines[0]).map((h) => h.trim());
+
+    if (headers.length === 0) {
+      return [];
+    }
 
     const urlIndex = headers.findIndex((h) => h.toLowerCase().includes("url"));
     const titleIndex = headers.findIndex(
@@ -214,14 +223,15 @@ export class PocketImporter {
     const records = [];
 
     for (let i = 1; i < lines.length; i++) {
-      const columns = lines[i].split(",");
+      const columns = this.parseCsvLine(lines[i]);
       if (columns.length < 2) continue;
 
-      const url = columns[urlIndex]?.replace(/"/g, "").trim();
-      const title = columns[titleIndex]?.replace(/"/g, "").trim();
-      const tags = columns[tagsIndex]?.replace(/"/g, "").trim();
-      const timestamp = columns[timeIndex]?.replace(/"/g, "").trim();
-      const status = columns[statusIndex]?.replace(/"/g, "").trim();
+      const url = this.safeGetColumn(columns, urlIndex);
+      const title = this.safeGetColumn(columns, titleIndex);
+      const tags = this.safeGetColumn(columns, tagsIndex);
+      const timestamp = this.safeGetColumn(columns, timeIndex);
+      const status = this.safeGetColumn(columns, statusIndex);
+
       if (url && url.startsWith("http")) {
         records.push({
           url,
@@ -234,6 +244,45 @@ export class PocketImporter {
     }
 
     return records;
+  }
+
+  private parseCsvLine(line: string): string[] {
+    const result: string[] = [];
+    let current = "";
+    let inQuotes = false;
+    let i = 0;
+
+    while (i < line.length) {
+      const char = line[i];
+      const nextChar = line[i + 1];
+
+      if (char === '"') {
+        if (inQuotes && nextChar === '"') {
+          current += '"';
+          i += 2;
+        } else {
+          inQuotes = !inQuotes;
+          i++;
+        }
+      } else if (char === "," && !inQuotes) {
+        result.push(current.trim());
+        current = "";
+        i++;
+      } else {
+        current += char;
+        i++;
+      }
+    }
+
+    result.push(current.trim());
+    return result.map((field) => field.replace(/^"(.*)"$/, "$1"));
+  }
+
+  private safeGetColumn(columns: string[], index: number): string {
+    if (index === -1 || index >= columns.length) {
+      return "";
+    }
+    return columns[index]?.trim() || "";
   }
 
   private async createNodes(nodes: any[]) {
