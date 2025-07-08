@@ -46,7 +46,6 @@
   import posthog from "posthog-js";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
-  import { initializeTaco } from "$lib/client/products/memotron/taco/taco.store";
   import { recentsStore } from "$lib/client/components/record/recent.store";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { Action } from "$lib/client/types/action.enum";
@@ -151,7 +150,6 @@
       }
       await recentsStore.refresh(searcheableResources);
       await syncAccountPaidPlanFromExternalProvider();
-      initializeTaco();
     });
   });
 
