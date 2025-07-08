@@ -220,7 +220,7 @@
       />
       {#if !$context.isEmbed}
         <InlineInfoBanner
-          content="At the moment, this feature is only available on iOS and macOS apps."
+          content="At the moment, this feature is only available on iOS app."
           type={InfoTextType.INFO}
         />
       {/if}
