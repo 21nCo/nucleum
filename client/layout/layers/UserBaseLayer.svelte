@@ -86,6 +86,7 @@
     message: string;
     subMessage?: string;
     duration?: number;
+    percentage?: number;
   } = {
     message: ""
   };
@@ -469,6 +470,9 @@
     if (detail.duration !== undefined) {
       loadingMessage.duration = detail.duration;
     }
+    if (detail.percentage !== undefined) {
+      loadingMessage.percentage = detail.percentage;
+    }
   }
 
   function handleAddToRecents(event: any) {
@@ -599,6 +603,7 @@
       message={loadingMessage.message}
       subMessage={loadingMessage.subMessage}
       duration={loadingMessage.duration}
+      percentage={loadingMessage.percentage}
     />
   {:else if error}
     <PageError />

@@ -151,7 +151,7 @@
   async function resolveWaveFormBlob() {
     try {
       const blob = await wavesurfer.exportImage("image/jpeg", 0.5, "blob");
-      return blob[1];
+      return blob[1] ?? blob[0];
     } catch (error) {
       console.error("Failed to generate waveform:", error);
       return undefined;

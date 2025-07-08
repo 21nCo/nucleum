@@ -232,7 +232,9 @@
   </div>
   <div class="flex w-full flex-1 overflow-auto">
     {#if errorMessage}
-      <InlineErrorMessage error={errorMessage} isDissappear={false} />
+      <div class="w-full px-3 text-center">
+        <InlineErrorMessage error={errorMessage} isDissappear={false} />
+      </div>
     {:else if selectedView === AudioView.MARKDOWN}
       {#if !body?.mdBlocks}
         <EmptyStatusView
