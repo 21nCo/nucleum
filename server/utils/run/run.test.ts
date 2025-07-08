@@ -291,7 +291,7 @@ describe("performUtilRunAction", () => {
         expect(result[0].message).toBeDefined();
       }, 15000);
 
-      it.only("should process URLs concurrently for better performance", async () => {
+      it("should process URLs concurrently for better performance", async () => {
         const urls = [
           // "https://example.com",
           // "https://httpbin.org",
@@ -353,11 +353,10 @@ describe("performUtilRunAction", () => {
           { action: "get-multiple-webpage-metadata", urls },
           {}
         )) as MetadataResponse[];
-        console.log({ result });
         const endTime = Date.now();
 
         expect(Array.isArray(result)).toBe(true);
-        expect(result).toHaveLength(3);
+        expect(result).toHaveLength(urls.length);
 
         // All requests should complete successfully
         result.forEach((metadata, index) => {

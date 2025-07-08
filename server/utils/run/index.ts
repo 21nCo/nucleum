@@ -70,7 +70,7 @@ async function unsplashDownload(body: any) {
 }
 
 async function getMultipleWebpageMetadata(urls: string[]) {
-  const BATCH_SIZE = 5;
+  const BATCH_SIZE = 10;
   const results: any[] = [];
 
   for (let i = 0; i < urls.length; i += BATCH_SIZE) {
