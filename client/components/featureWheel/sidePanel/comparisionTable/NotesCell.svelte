@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { popover } from "$lib/client/actions/popover.action";
+  import { bottomModal } from "$lib/client/components/bottomModal/bottomModal.store";
   import Icon from "$lib/client/elements/Icon.svelte";
-  import { Placement } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
-  import NotesPopover from "./NotesPopover.svelte";
-
+  import type { IContemporary } from "$lib/client/types/featureWheel.type";
+  import { properCase } from "$lib/shared/utils/text.utils";
   export let notes: string | undefined = undefined;
   export let isShort: boolean = false;
+  export let contemporary: IContemporary;
 </script>
 
 {#if notes}
@@ -16,15 +16,11 @@
       "underline-dotted": !isShort,
       "flex justify-center items-center": isShort
     })}
-    use:popover={{
-      content: NotesPopover,
-      isRenderAsSibling: true,
-      offsetInPx: 12,
-      placement: Placement.Left,
-      id: "notes-cell-popover",
-      componentProps: {
-        notes
-      }
+    on:click={() => {
+      bottomModal.open("notes", {
+        notes,
+        title: `Notes for ${properCase(contemporary.label)}`
+      });
     }}
   >
     {#if isShort}

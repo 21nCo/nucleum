@@ -4,6 +4,9 @@
 
   export let icon: string;
   export let label: string;
+  if (label === "sourcingType") {
+    label = "Source code";
+  }
 </script>
 
 <th class="border border-brs3 p-2 text-left">

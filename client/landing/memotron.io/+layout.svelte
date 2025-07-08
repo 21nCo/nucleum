@@ -46,11 +46,19 @@
       { label: "Extension", href: urls.downloads?.extension ?? "" },
       { label: "Discord", href: discordUrl }
     ],
-    cta: {
-      label: "Go to web app",
-      href: "https://web.memotron.app",
-      type: "primary"
-    }
+    cta: [
+      {
+        label: "",
+        href: "https://github.com/21nOrg/tidigit",
+        icon: "ph:github-logo-light",
+        type: "secondary"
+      },
+      {
+        label: "Go to web app",
+        href: "https://web.memotron.app",
+        type: "primary"
+      }
+    ]
   };
   let footerValues: IFooter = {
     appStoreUrl: urls.downloads?.ios,

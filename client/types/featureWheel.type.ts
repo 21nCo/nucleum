@@ -18,8 +18,8 @@ export type IFwFeature = IFeatureWheelSpoke & {
   learnMoreLink?: string;
   ratingCriteria?: IListContentItem[];
   /**
-   * Additional notes like upcoming sub features for our product
-   * or other relevant information
+   * Notes on how our product excels at this feature, additional notes like
+   * upcoming sub features for our product or other relevant information
    */
   notes?: string;
   /**
@@ -47,6 +47,7 @@ export type IFeatureWheelGroup = {
 
 export type IFeatureWheelSpoke = {
   label: string;
+  shortLabel?: string;
   /**
    * Contemporaries are the products that has this feature
    */
@@ -97,5 +98,6 @@ export type IContemporary = IContemporaryBase & {
 export enum SourcingType {
   OPEN = "OPEN",
   SOURCE_AVAILABLE = "SOURCE_AVAILABLE",
+  PARTIAL = "PARTIAL",
   CLOSED = "CLOSED"
 }

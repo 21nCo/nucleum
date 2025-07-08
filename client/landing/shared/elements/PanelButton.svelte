@@ -50,7 +50,7 @@
   <button
     {id}
     class={cn(
-      "w-[115px] h-full flex flex-col items-center justify-center p-4 text-center text-fgs2 text-opacity-80 text-base leading-5 ml-[1px] border-brs3",
+      "w-[100px] h-full flex flex-col items-center justify-center p-4 text-center text-fgs2 text-opacity-80 text-base leading-5 ml-[1px] border-brs3",
       className,
       {
         "border-l": label == PanelName.PRODUCTS,

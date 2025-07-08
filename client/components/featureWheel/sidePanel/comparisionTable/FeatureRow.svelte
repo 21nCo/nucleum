@@ -36,7 +36,10 @@
         <div class="flex items-center gap-2">
           <RatingCell value={getContemporaryRating(contemporary.label) ?? 0} />
           {#if getContemporaryNotes(contemporary.label)}
-            <NotesCell notes={getContemporaryNotes(contemporary.label)} />
+            <NotesCell
+              notes={getContemporaryNotes(contemporary.label)}
+              {contemporary}
+            />
           {/if}
         </div>
       {:else}

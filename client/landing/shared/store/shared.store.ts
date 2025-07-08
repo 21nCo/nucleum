@@ -4,8 +4,6 @@ import type {
   ILandingStoreSubject,
   ITileItem
 } from "../landing.type";
-import { GlobalEvent } from "$lib/client/types/event.enum";
-import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
 
 export const staticUrl = import.meta.env.VITE_STATIC_URL;
 export const companyName = "Phinative soft pvt ltd.";

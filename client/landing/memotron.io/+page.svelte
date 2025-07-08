@@ -30,20 +30,20 @@
   const memotronHighlights: IHighlight[] = [
     {
       ...highlights.wholesome,
-      desc: "Finally, a place where everything personal knowledge management feels coherent.",
+      desc: "Finally, a place where personal knowledge management feels complete.",
       visualRenderComponent: "memotronFeaturesRadial"
     },
+    highlights.reliable,
     {
       ...highlights.powerful,
       desc: "Unlock next-level of your digital memory with a powerhouse of features.",
       visualRenderComponent: ""
     },
-    highlights.intuitive,
-    // highlights.zerotrust,
-    // highlights.ainative,
+    highlights.zerotrust,
+    highlights.ainative,
     highlights.offline,
-    highlights.laast,
-    highlights.reliable
+    highlights.intuitive,
+    highlights.laast
   ];
   const mainMemotronVideoUrl = "https://www.youtube.com/watch?v=SeWdndc7y4A";
   const testimonials: ITestimonial[] = [

@@ -48,6 +48,12 @@
   }
   let socials = [
     {
+      href: footerValues.gitUrl ?? "https://github.com/21nOrg",
+      icon: "gitfooter",
+      primary: "hsla(0, 0%, 0%, 1)",
+      isHovered: false
+    },
+    {
       href: footerValues.twitterUrl ?? "https://x.com/21nOrg",
       icon: "xfooter",
       primary: "hsla(0, 0%, 0%, 1)",
