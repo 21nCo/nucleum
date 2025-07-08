@@ -244,7 +244,7 @@ describe("performUtilRunAction", () => {
         expect(result[2].error).toBeUndefined();
       }, 15000);
 
-      it.only("should extract comprehensive metadata from a rich webpage", async () => {
+      it("should extract comprehensive metadata from a rich webpage", async () => {
         const siteUrl = "https://github.com";
         const result = (await performUtilRunAction(
           {
@@ -291,11 +291,61 @@ describe("performUtilRunAction", () => {
         expect(result[0].message).toBeDefined();
       }, 15000);
 
-      it("should process URLs concurrently for better performance", async () => {
+      it.only("should process URLs concurrently for better performance", async () => {
         const urls = [
-          "https://example.com",
-          "https://httpbin.org",
-          "https://jsonplaceholder.typicode.com"
+          // "https://example.com",
+          // "https://httpbin.org",
+          // "https://jsonplaceholder.typicode.com"
+          "https://en.wikipedia.org/wiki/Sanskrit",
+          "https://en.wikipedia.org/wiki/Pareto_principle",
+          "https://en.wikipedia.org/wiki/Tragedy_of_the_commons",
+          "https://en.wikipedia.org/wiki/Color_temperature",
+          "https://en.wikipedia.org/wiki/Fundamental_interaction",
+          "https://en.wikipedia.org/wiki/OPEC",
+          "https://en.wikipedia.org/wiki/Solar_cell",
+          "https://en.wikipedia.org/wiki/Nikola_Tesla",
+          "https://en.wikipedia.org/wiki/Muscle_contraction",
+          "https://en.wikipedia.org/wiki/Indo-European_languages",
+          "https://en.wikipedia.org/wiki/Ayodhya",
+          "https://en.wikipedia.org/wiki/Semiconductor",
+          "https://en.wikipedia.org/wiki/Nostradamus",
+          "https://en.wikipedia.org/wiki/Direct_current",
+          "https://en.wikipedia.org/wiki/Metaphysics",
+          "https://en.wikipedia.org/wiki/Light-emitting_diode",
+          "https://en.wikipedia.org/wiki/Fl%C3%A2neur",
+          "https://en.wikipedia.org/wiki/Leadership_in_Energy_and_Environmental_Design",
+          "https://en.wikipedia.org/wiki/Taliban",
+          "https://en.wikipedia.org/wiki/Anthropology",
+          "https://en.wikipedia.org/wiki/Adenosine_triphosphate",
+          "https://en.wikipedia.org/wiki/Endive",
+          "https://en.wikipedia.org/wiki/Alternating_current",
+          "https://en.wikipedia.org/wiki/Street_photography",
+          "https://en.wikipedia.org/wiki/Partition_of_India",
+          "https://en.wikipedia.org/wiki/Proto-Indo-European_language",
+          "https://en.wikipedia.org/wiki/Thermal_radiation",
+          "https://en.wikipedia.org/wiki/Spaced_repetition",
+          "https://en.wikipedia.org/wiki/Fat",
+          "https://en.wikipedia.org/wiki/OECD",
+          "https://en.wikipedia.org/wiki/Napster",
+          "https://en.wikipedia.org/wiki/Sustainability",
+          "https://en.wikipedia.org/wiki/Indian_Navy",
+          "https://en.wikipedia.org/wiki/Lithium-ion_battery",
+          "https://en.wikipedia.org/wiki/Oregano",
+          "https://en.wikipedia.org/wiki/The_Emergency_(India)",
+          "https://en.wikipedia.org/wiki/Fluorescence",
+          "https://en.wikipedia.org/wiki/Uniting_for_Consensus",
+          "https://en.wikipedia.org/wiki/Petroleum",
+          "https://en.wikipedia.org/wiki/Al-Qaeda",
+          "https://en.wikipedia.org/wiki/Voltage",
+          "https://en.wikipedia.org/wiki/Shaivism",
+          "https://en.wikipedia.org/wiki/Fused_quartz",
+          "https://en.wikipedia.org/wiki/Narendra_Modi",
+          "https://en.wikipedia.org/wiki/Commonwealth_of_Nations",
+          "https://en.wikipedia.org/wiki/Texas_sharpshooter_fallacy",
+          "https://en.wikipedia.org/wiki/Turkic_peoples",
+          "https://en.wikipedia.org/wiki/Age_of_Discovery",
+          "https://en.wikipedia.org/wiki/Kargil_War",
+          "https://en.wikipedia.org/wiki/Incandescent_light_bulb"
         ];
 
         const startTime = Date.now();
@@ -303,6 +353,7 @@ describe("performUtilRunAction", () => {
           { action: "get-multiple-webpage-metadata", urls },
           {}
         )) as MetadataResponse[];
+        console.log({ result });
         const endTime = Date.now();
 
         expect(Array.isArray(result)).toBe(true);

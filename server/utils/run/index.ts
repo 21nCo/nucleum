@@ -70,53 +70,94 @@ async function unsplashDownload(body: any) {
 }
 
 async function getMultipleWebpageMetadata(urls: string[]) {
-  const results = await Promise.allSettled(
-    urls.map(async (url) => {
-      try {
-        if (!isValidUrl(url)) {
-          return { url, error: "Invalid URL" };
+  const BATCH_SIZE = 5;
+  const results: any[] = [];
+
+  for (let i = 0; i < urls.length; i += BATCH_SIZE) {
+    const batch = urls.slice(i, i + BATCH_SIZE);
+
+    const batchResults = await Promise.allSettled(
+      batch.map(async (url) => {
+        try {
+          if (!isValidUrl(url)) {
+            return { url, error: "Invalid URL" };
+          }
+
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+          const response = await fetch(url, {
+            signal: controller.signal,
+            headers: {
+              "User-Agent": "Mozilla/5.0 (compatible; MetadataBot/1.0)"
+            }
+          });
+
+          clearTimeout(timeoutId);
+
+          if (!response.ok) {
+            return { url, error: `HTTP ${response.status}` };
+          }
+
+          const html = await response.text();
+          const metadata = extractMetadataFromHtml(html, url);
+
+          return { url, ...metadata };
+        } catch (error) {
+          if (error.name === "AbortError") {
+            return { url, error: "Request timeout" };
+          }
+          return { url, error: "Failed to fetch URL", message: error.message };
         }
+      })
+    );
 
-        const response = await fetch(url);
-        const html = await response.text();
-        const metadata = extractMetadataFromHtml(html, url);
-
-        return { url, ...metadata };
-      } catch (error) {
-        return { url, error: "Failed to fetch URL", message: error };
+    const processedBatchResults = batchResults.map((result) => {
+      if (result.status === "fulfilled") {
+        return result.value;
+      } else {
+        return { error: "Promise rejected", reason: result.reason };
       }
-    })
-  );
+    });
 
-  return results.map((result) => {
-    if (result.status === "fulfilled") {
-      return result.value;
-    } else {
-      return { error: "Promise rejected", reason: result.reason };
+    results.push(...processedBatchResults);
+
+    if (i + BATCH_SIZE < urls.length) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
-  });
+  }
+
+  return results;
 }
 
 function extractMetadataFromHtml(html: string, baseUrl: string) {
   const metadata: any = {};
 
-  const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+  const titleMatch = html.match(/<title[^>]*>\s*([^<]{1,200}?)\s*<\/title>/i);
   metadata.title = titleMatch ? titleMatch[1].trim() : null;
 
-  const faviconMatches = [
-    html.match(
-      /<link[^>]*rel=["'](?:shortcut )?icon["'][^>]*href=["']([^"']*)["']/i
-    ),
-    html.match(
-      /<link[^>]*href=["']([^"']*)["'][^>]*rel=["'](?:shortcut )?icon["']/i
-    )
+  let faviconUrl = null;
+  const faviconPatterns = [
+    /<link[^>]*rel=["'](?:shortcut\s+)?icon["'][^>]*href=["']([^"']{1,500})["']/i,
+    /<link[^>]*href=["']([^"']{1,500})["'][^>]*rel=["'](?:shortcut\s+)?icon["']/i
   ];
-  const faviconMatch = faviconMatches.find((match) => match);
-  if (faviconMatch) {
-    const faviconUrl = faviconMatch[1];
-    metadata.faviconUrl = faviconUrl.startsWith("http")
-      ? faviconUrl
-      : new URL(faviconUrl, baseUrl).href;
+
+  for (const pattern of faviconPatterns) {
+    const match = html.match(pattern);
+    if (match) {
+      faviconUrl = match[1];
+      break;
+    }
+  }
+
+  if (faviconUrl) {
+    try {
+      metadata.faviconUrl = faviconUrl.startsWith("http")
+        ? faviconUrl
+        : new URL(faviconUrl, baseUrl).href;
+    } catch {
+      metadata.faviconUrl = null;
+    }
   } else {
     try {
       const baseURL = new URL(baseUrl);
@@ -126,65 +167,58 @@ function extractMetadataFromHtml(html: string, baseUrl: string) {
     }
   }
 
-  const ogTags =
-    html.match(
-      /<meta[^>]*property=["']og:([^"']*)["'][^>]*content=["']([^"']*)["'][^>]*>/gi
-    ) || [];
-  ogTags.forEach((tag) => {
-    const propertyMatch = tag.match(/property=["']og:([^"']*)["']/i);
-    const contentMatch = tag.match(/content=["']([^"']*)["']/i);
-    if (propertyMatch && contentMatch) {
-      const property = propertyMatch[1];
-      const content = contentMatch[1];
+  const ogPattern =
+    /<meta[^>]*property=["']og:([^"']+)["'][^>]*content=["']([^"']{0,500})["'][^>]*>/gi;
+  let ogMatch;
+  while ((ogMatch = ogPattern.exec(html)) !== null) {
+    const property = ogMatch[1];
+    const content = ogMatch[2];
+    if (property && content) {
       metadata[`og${property.charAt(0).toUpperCase() + property.slice(1)}`] =
         content;
     }
-  });
+    if (ogPattern.lastIndex === 0) break;
+  }
 
-  const metaTags = [
+  const metaTagsConfig = [
     { name: "description", key: "description" },
     { name: "keywords", key: "keywords" },
     { name: "author", key: "author" },
-    { name: "viewport", key: "viewport" },
     { name: "theme-color", key: "themeColor" },
-    { name: "application-name", key: "applicationName" },
-    { name: "apple-mobile-web-app-title", key: "appleMobileWebAppTitle" }
+    { name: "application-name", key: "applicationName" }
   ];
 
-  metaTags.forEach(({ name, key }) => {
-    const metaMatch = html.match(
-      new RegExp(
-        `<meta[^>]*name=["']${name}["'][^>]*content=["']([^"']*)["']`,
-        "i"
-      )
+  for (const { name, key } of metaTagsConfig) {
+    const pattern = new RegExp(
+      `<meta[^>]*name=["']${name}["'][^>]*content=["']([^"']{0,500})["']`,
+      "i"
     );
-    if (metaMatch) {
-      metadata[key] = metaMatch[1];
+    const match = html.match(pattern);
+    if (match && match[1]) {
+      metadata[key] = match[1];
     }
-  });
+  }
 
-  const twitterTags =
-    html.match(
-      /<meta[^>]*name=["']twitter:([^"']*)["'][^>]*content=["']([^"']*)["'][^>]*>/gi
-    ) || [];
-  twitterTags.forEach((tag) => {
-    const nameMatch = tag.match(/name=["']twitter:([^"']*)["']/i);
-    const contentMatch = tag.match(/content=["']([^"']*)["']/i);
-    if (nameMatch && contentMatch) {
-      const property = nameMatch[1];
-      const content = contentMatch[1];
+  const twitterPattern =
+    /<meta[^>]*name=["']twitter:([^"']+)["'][^>]*content=["']([^"']{0,500})["'][^>]*>/gi;
+  let twitterMatch;
+  while ((twitterMatch = twitterPattern.exec(html)) !== null) {
+    const property = twitterMatch[1];
+    const content = twitterMatch[2];
+    if (property && content) {
       metadata[
         `twitter${property.charAt(0).toUpperCase() + property.slice(1)}`
       ] = content;
     }
-  });
+    if (twitterPattern.lastIndex === 0) break;
+  }
 
   const canonicalMatch = html.match(
-    /<link[^>]*rel=["']canonical["'][^>]*href=["']([^"']*)["']/i
+    /<link[^>]*rel=["']canonical["'][^>]*href=["']([^"']{1,500})["']/i
   );
   metadata.canonicalUrl = canonicalMatch ? canonicalMatch[1] : null;
 
-  const langMatch = html.match(/<html[^>]*lang=["']([^"']*)["']/i);
+  const langMatch = html.match(/<html[^>]*lang=["']([^"']{1,20})["']/i);
   metadata.language = langMatch ? langMatch[1] : null;
 
   return metadata;
