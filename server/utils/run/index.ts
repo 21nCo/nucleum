@@ -84,7 +84,7 @@ async function getMultipleWebpageMetadata(urls: string[]) {
           }
 
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 10000);
+          const timeoutId = setTimeout(() => controller.abort(), 3000);
 
           const response = await fetch(url, {
             signal: controller.signal,

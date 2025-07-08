@@ -58,7 +58,7 @@ export class UtilsLambdaFunctions extends NestedStack {
     const runNodeFunction = new Function(this, "runUtilsFunction", {
       functionName: generateFunctionName("runUtilsFunction", props.environment),
       handler: "run.handler",
-      memorySize: 512,
+      memorySize: 256,
       ...nodeRuntimeFunctionProps
     });
     const runNodeResource = utilsNodeResource.addResource("run");
