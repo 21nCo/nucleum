@@ -15,20 +15,29 @@
   import { Display } from "$lib/client/types/view.type";
   import { enumToString, properCase } from "$lib/shared/utils/text.utils";
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
-  import { nodeStore } from "../node/node.store";
-  import { NodeType } from "../node/node.type";
   import { generateResourceId } from "$lib/shared/utils/surreal.utils";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { sanitizeAndResolve } from "../node/url.utils";
   import { preferences } from "$lib/client/stores/preferences/preferences.store";
   import { MemotronAction } from "../memotronAction.enum";
   import { Preference } from "$lib/client/stores/preferences/preferences.type";
-  import JSZip from "jszip";
+  import { cn } from "$lib/client/utils/ui.utils";
+  import FieldMapping from "./FieldMapping.svelte";
+  import type { FieldMappingConfig } from "./data.type";
+  import { PocketImporter } from "./pocket.importer";
 
   export let importSource: ImportSource = ImportSource.POCKET;
 
   let inputRef: HTMLInputElement;
   let activeStepIndex: number = 0;
+  let isShowSummary: boolean = false;
+  let importResult: {
+    success: boolean;
+    totalCreated: number;
+    totalRecords: number;
+    collectionsCreated: number;
+    fileName: string;
+    errorMessage?: string;
+  } | null = null;
 
   let locallyUploadedFiles: FileList | null = null;
   let tempFileList:
@@ -45,6 +54,19 @@
 
   let isEverythingUploaded: boolean = false;
   let isUploading: boolean = false;
+  let fieldMappings: Record<string, string> = {};
+
+  function initializeFieldMappings() {
+    if (config.fieldMappingConfig) {
+      fieldMappings = Object.keys(config.fieldMappingConfig).reduce(
+        (acc, key) => {
+          acc[key] = config.fieldMappingConfig![key].defaultValue;
+          return acc;
+        },
+        {} as Record<string, string>
+      );
+    }
+  }
 
   const importSourceConfig = {
     [ImportSource.POCKET]: {
@@ -53,18 +75,52 @@
       acceptedFiles: ".zip",
       maxSizeText: "10MB",
       maxFileSize: 10000000,
+      allowMultipleFiles: false,
+      fieldMappingConfig: {
+        saves: {
+          label: "Pocket Saves",
+          description: "Your saved articles and links",
+          options: [{ value: "nodes", label: "Web Page Nodes" }],
+          defaultValue: "nodes"
+        },
+        tags: {
+          label: "Pocket tags",
+          description: "Tags associated with your saves",
+          options: [
+            { value: "ignore", label: "Don't import" },
+            {
+              value: "simple_collections",
+              label: "Simple collections"
+            },
+            {
+              value: "typed_collections",
+              label: "Typed collections"
+            }
+          ],
+          defaultValue: "simple_collections"
+        },
+        collections: {
+          label: "Pocket collections",
+          description: "Any user created collections in Pocket",
+          options: [
+            { value: "ignore", label: "Don't import" },
+            { value: "simple_collections", label: "Simple collections" },
+            { value: "typed_collections", label: "Typed collections" }
+          ],
+          defaultValue: "simple_collections"
+        }
+      } as FieldMappingConfig,
       steps: [
         {
           subTitle: "Let us guide you through importing data from Pocket",
           description:
-            "Step 1: Prepare your data in a ZIP file containing CSV files from your Pocket export. The ZIP can contain multiple CSV files.",
+            "Step 1: Go to [https://getpocket.com/export](https://getpocket.com/export) and sign in. Then click on **Export CSV file** button. You will receive an email with a link to download a zip file. Download the zip file and upload in the next step.",
           type: StepType.NON_INTERACTIVE
         },
         {
-          subTitle: "Let us guide you through importing data from Pocket",
-          description:
-            "Step 2: Ensure your ZIP file contains CSV files with bookmark data. Each CSV file will be processed using the existing CSV parsing functionality.",
-          type: StepType.NON_INTERACTIVE
+          subTitle:
+            "Choose how different types of data from Pocket should be mapped in Memotron.",
+          type: StepType.FIELD_MAPPING
         },
         {
           subTitle:
@@ -74,59 +130,23 @@
         }
       ]
     }
-    // Example: Different sources can have different file formats and acceptance patterns
-    // [ImportSource.CHROME_BOOKMARKS]: {
-    //   name: "Chrome Bookmarks",
-    //   fileFormats: ["CSV", "JSON"],
-    //   acceptedFiles: ".zip,.csv,.json",
-    //   maxSizeText: "25MB",
-    //   maxFileSize: 25000000, // 25MB in bytes
-    //   steps: [...]
-    // },
-    // [ImportSource.NOTION_EXPORT]: {
-    //   name: "Notion",
-    //   fileFormats: ["Markdown", "CSV"],
-    //   acceptedFiles: ".zip,.md",
-    //   maxSizeText: "50MB",
-    //   maxFileSize: 50000000, // 50MB in bytes
-    //   steps: [...]
-    // }
   };
 
-  function getImportConfig(source: ImportSource) {
-    return (
-      importSourceConfig[source] || importSourceConfig[ImportSource.POCKET]
-    );
-  }
+  const config = importSourceConfig[importSource];
+  const accept = config.acceptedFiles;
 
-  function getImportSteps(source: ImportSource) {
-    return getImportConfig(source).steps;
-  }
-
-  function getImportSourceName(source: ImportSource) {
-    return getImportConfig(source).name;
-  }
-
-  function getAcceptedFileTypes(source: ImportSource) {
-    return getImportConfig(source).acceptedFiles;
-  }
-
-  function getFileFormatNote(source: ImportSource) {
-    const config = getImportConfig(source);
+  function getFileFormatNote() {
     const formatsText = config.fileFormats.join(", ");
     return `File format: ${formatsText} (in ZIP), max size: ${config.maxSizeText}`;
   }
-
-  // Reactive values based on import source
-  $: accept = getAcceptedFileTypes(importSource);
-  $: note = getFileFormatNote(importSource);
+  const note = getFileFormatNote();
 
   function onJumpToUpload() {
-    activeStepIndex = getImportSteps(importSource)?.length - 1;
+    activeStepIndex = config.steps.length - 1;
   }
 
   function onNext() {
-    if (activeStepIndex < getImportSteps(importSource)?.length - 1) {
+    if (activeStepIndex < config.steps.length - 1) {
       activeStepIndex++;
     }
   }
@@ -170,174 +190,6 @@
     }, 500);
   }
 
-  function parsePocketCSV(csvText: string) {
-    const lines = csvText.split("\n").filter((line) => line.trim());
-    const headers = lines[0].split(",").map((h) => h.replace(/"/g, "").trim());
-
-    const urlIndex = headers.findIndex((h) => h.toLowerCase().includes("url"));
-    const titleIndex = headers.findIndex(
-      (h) =>
-        h.toLowerCase().includes("title") || h.toLowerCase().includes("name")
-    );
-    const tagsIndex = headers.findIndex((h) =>
-      h.toLowerCase().includes("tags")
-    );
-    const timeIndex = headers.findIndex(
-      (h) =>
-        h.toLowerCase().includes("time_added") ||
-        h.toLowerCase().includes("date") ||
-        h.toLowerCase().includes("created_at")
-    );
-    const statusIndex = headers.findIndex((h) =>
-      h.toLowerCase().includes("status")
-    );
-
-    const records = [];
-
-    for (let i = 1; i < lines.length; i++) {
-      const columns = lines[i].split(",");
-      if (columns.length < 2) continue;
-
-      const url = columns[urlIndex]?.replace(/"/g, "").trim();
-      const title = columns[titleIndex]?.replace(/"/g, "").trim();
-      const tags = columns[tagsIndex]?.replace(/"/g, "").trim();
-      const timestamp = columns[timeIndex]?.replace(/"/g, "").trim();
-      const status = columns[statusIndex]?.replace(/"/g, "").trim();
-      if (url && url.startsWith("http")) {
-        records.push({
-          url,
-          title: title || url,
-          tags: tags ? tags.split(",").map((t) => t.trim()) : [],
-          timestamp: timestamp ? new Date(+timestamp * 1000) : new Date(),
-          status: status ? status.toLowerCase() : "unread"
-        });
-      }
-    }
-
-    return records;
-  }
-
-  function parseCSVBySource(csvText: string, source: ImportSource) {
-    switch (source) {
-      case ImportSource.POCKET:
-        return parsePocketCSV(csvText);
-      // Example: Add other sources here as needed
-      // case ImportSource.CHROME_BOOKMARKS:
-      //   return parseChromeBookmarksCSV(csvText);
-      // case ImportSource.FIREFOX_BOOKMARKS:
-      //   return parseFirefoxBookmarksCSV(csvText);
-      // case ImportSource.SAFARI_BOOKMARKS:
-      //   return parseSafariBookmarksCSV(csvText);
-      default:
-        // Fallback to Pocket format for unknown sources
-        return parsePocketCSV(csvText);
-    }
-  }
-
-  async function processZipFile(file: File) {
-    try {
-      const zip = new JSZip();
-      const zipContent = await zip.loadAsync(file);
-
-      const csvFiles: { fileName: string; data: any[] }[] = [];
-
-      // Process each file in the ZIP, looking for CSV files
-      for (const [relativePath, zipEntry] of Object.entries(zipContent.files)) {
-        if (zipEntry.dir) continue; // Skip directories
-
-        const fileName = zipEntry.name.toLowerCase();
-
-        // Only process CSV files
-        if (fileName.endsWith(".csv")) {
-          const fileContent = await zipEntry.async("string");
-          const records = parseCSVBySource(fileContent, importSource);
-          csvFiles.push({ fileName: zipEntry.name, data: records });
-        }
-      }
-
-      return csvFiles;
-    } catch (error) {
-      console.error("Error processing ZIP file:", error);
-      throw new Error(
-        `Failed to process ZIP file: ${error instanceof Error ? error.message : "Unknown error"}`
-      );
-    }
-  }
-
-  async function createNodesFromCsvFiles(
-    csvFiles: { fileName: string; data: any[] }[],
-    importId: string
-  ) {
-    let totalCreated = 0;
-
-    // Process all CSV files found in the ZIP
-    for (const csvFile of csvFiles) {
-      if (Array.isArray(csvFile.data)) {
-        totalCreated += await createNodesFromRecords(csvFile.data, importId);
-      }
-    }
-
-    return totalCreated;
-  }
-
-  async function createNodesFromRecords(records: any[], importId: string) {
-    const batchSize = 50;
-    let totalCreated = 0;
-
-    for (let i = 0; i < records.length; i += batchSize) {
-      const batch = records.slice(i, i + batchSize);
-      const nodes = batch.map((record) => {
-        const sanitized = sanitizeAndResolve(record.url);
-        const contentType =
-          typeof sanitized === "object"
-            ? sanitized.contentType
-            : NodeType.WEB_PAGE;
-        const url = typeof sanitized === "object" ? sanitized.url : sanitized;
-
-        return {
-          contentType,
-          url,
-          label: record.title,
-          body: {
-            hash: btoa(record.url),
-            description: ""
-          },
-          importId,
-          metadata: {
-            originalTags: record.tags,
-            originalStatus: record.status,
-            originalTimestamp: record.timestamp
-          },
-          createdAt: record.timestamp,
-          parent: undefined,
-          text: ""
-        };
-      });
-
-      try {
-        console.log({ nodes });
-        // await nodeStore.create(nodes);
-        totalCreated += nodes.length;
-
-        if (tempFileList) {
-          const progress = Math.min(
-            90,
-            Math.floor((totalCreated / records.length) * 90)
-          );
-          tempFileList = tempFileList.map((item) => ({
-            ...item,
-            uploadProgress: progress
-          }));
-        }
-      } catch (error) {
-        console.error("Error creating batch of nodes:", error);
-        throw error;
-      }
-    }
-
-    return totalCreated;
-  }
-
   async function saveImportHistory(importItem: ImportHistoryItem) {
     let imports: ImportHistoryItem[] =
       (preferences.resolve(Preference.IMPORT_HISTORY) as ImportHistoryItem[]) ||
@@ -358,7 +210,6 @@
     }
 
     const file = tempFileList[0].file;
-    const importId = generateResourceId(Resource.import).toString();
 
     isUploading = true;
     tempFileList = tempFileList.map((item) => ({
@@ -367,50 +218,66 @@
       uploadProgress: 10
     }));
     keepIncreasingProgress();
+    const importId = generateResourceId(Resource.import).toString();
 
     try {
       let totalCreated = 0;
       let totalRecords = 0;
-
-      if (file.name.toLowerCase().endsWith(".zip")) {
-        // Handle ZIP file
-        const extractedFiles = await processZipFile(file);
-        totalRecords = extractedFiles.reduce(
-          (sum, csvFile) => sum + csvFile.data.length,
-          0
-        );
-
+      let collectionsCreated = 0;
+      if (
+        importSource === ImportSource.POCKET &&
+        file.name.toLowerCase().endsWith(".zip")
+      ) {
         const importItem: ImportHistoryItem = {
           id: importId,
           source: importSource,
           fileName: file.name,
           createdAt: new Date().toISOString(),
-          totalRecords,
           status: "IN_PROGRESS"
         };
-
         await saveImportHistory(importItem);
-        totalCreated = await createNodesFromCsvFiles(extractedFiles, importId);
+        const pocketImporter = new PocketImporter(fieldMappings, importId);
+        const result = await pocketImporter.run(file);
+        totalCreated = result?.totalCreated ?? 0;
+        totalRecords = result?.totalRecords ?? 0;
+        collectionsCreated = result?.collectionsCreated ?? 0;
       } else {
         throw new Error("Please select a supported file type");
       }
-
+      importResult = {
+        success: true,
+        totalCreated,
+        totalRecords,
+        collectionsCreated,
+        fileName: file.name
+      };
       const importItem: ImportHistoryItem = {
         id: importId,
         source: importSource,
         fileName: file.name,
         createdAt: new Date().toISOString(),
-        totalRecords: totalCreated,
+        totalRecords: {
+          nodes: totalCreated,
+          collections: collectionsCreated
+        },
         status: "SUCCESS"
       };
       await saveImportHistory(importItem);
 
       isEverythingUploaded = true;
       toasts.success(
-        `Successfully imported ${totalCreated} items from ${getImportSourceName(importSource)} archive`
+        `Successfully imported ${totalCreated} items from ${config.name} archive`
       );
     } catch (error) {
       console.error("Error during import:", error);
+      importResult = {
+        success: false,
+        totalCreated: 0,
+        totalRecords: 0,
+        collectionsCreated: 0,
+        fileName: file.name,
+        errorMessage: error instanceof Error ? error.message : String(error)
+      };
       toasts.error(
         "Failed to import file: " +
           (error instanceof Error ? error.message : String(error))
@@ -421,17 +288,18 @@
         source: importSource,
         fileName: file.name,
         createdAt: new Date().toISOString(),
-        totalRecords: 0,
         status: "FAILED"
       };
       await saveImportHistory(failedImportItem);
     } finally {
       isUploading = false;
+      isShowSummary = true;
     }
   }
 
   function onClose() {
     resetFileInput();
+    modalEvent.hide(MemotronAction.IMPORT_APP_DATA);
     modalEvent.hide(MemotronAction.IMPORT_FROM_OTHER_APPS);
   }
 
@@ -454,8 +322,6 @@
   }
 
   function isFileValid(file: File) {
-    const config = getImportConfig(importSource);
-
     if (file.size > config.maxFileSize) {
       alert(`File size should be less than ${config.maxSizeText}`);
       return false;
@@ -463,7 +329,7 @@
 
     // Check file type based on import source configuration
     const fileName = file.name.toLowerCase();
-    const acceptedTypes = getAcceptedFileTypes(importSource).split(",");
+    const acceptedTypes = config.acceptedFiles.split(",");
     const isValidType = acceptedTypes.some((type) =>
       fileName.endsWith(type.trim())
     );
@@ -530,7 +396,7 @@
   }
 
   function resolveTitle(importSource: ImportSource) {
-    return `Import from ${getImportSourceName(importSource)}`;
+    return `Import from ${config.name}`;
   }
 
   function resolveImageSrc(importSource: ImportSource, index: number) {
@@ -543,6 +409,15 @@
           ".png"
       : "/images/blank.png";
   }
+
+  function handleFieldMappingChange(
+    event: CustomEvent<{ field: string; value: string }>
+  ) {
+    const { field, value } = event.detail;
+    fieldMappings[field] = value;
+  }
+
+  initializeFieldMappings();
 </script>
 
 <div class="flex flex-col gap-4 justify-between w-full h-full">
@@ -560,35 +435,86 @@
       </div>
     </div>
   {/if}
-  {#if getImportSteps(importSource)[activeStepIndex].type === StepType.NON_INTERACTIVE}
-    <div class="flex flex-col items-center gap-2">
-      <div class={`font-normal ${$view.isPortrait ? `text-b1` : `text-h4 `}`}>
+  {#if isShowSummary}
+    <div class="flex flex-col items-center gap-4 w-full">
+      <div class="font-normal cw:text-base text-h4">
         {resolveTitle(importSource)}
       </div>
-      <div
-        class={`font-normal w-full ${$view.isPortrait ? `text-b4` : `text-b3`}`}
-      >
-        {#key getImportSteps(importSource)[activeStepIndex].subTitle}
-          {@html renderMdAsHtml(
-            getImportSteps(importSource)[activeStepIndex].subTitle
-          )}
+      <div class="font-normal w-full cw:text-b3 text-b2">Import Summary</div>
+    </div>
+    <div class="flex flex-col gap-4 w-full max-w-lg mx-auto">
+      {#if importResult}
+        <div class="bg-bgs2 rounded-lg p-4">
+          <div class="flex items-center gap-2 mb-3">
+            {#if importResult.success}
+              <Icon icon="ph:check-circle-light" class="text-ags1" />
+              <span class="font-medium text-ags1">Import Successful</span>
+            {:else}
+              <Icon icon="ph:x-circle-light" class="text-ars1" />
+              <span class="font-medium text-ars1">Import Failed</span>
+            {/if}
+          </div>
+
+          <div class="space-y-2 text-b2">
+            <div class="flex justify-between">
+              <span class="text-fgs2">File:</span>
+              <span class="font-medium">{importResult.fileName}</span>
+            </div>
+
+            {#if importResult.success}
+              <div class="flex justify-between">
+                <span class="text-fgs2">Nodes Created:</span>
+                <span class="font-medium">{importResult.totalCreated}</span>
+              </div>
+
+              {#if importResult.collectionsCreated > 0}
+                <div class="flex justify-between">
+                  <span class="text-fgs2">Collections Created:</span>
+                  <span class="font-medium"
+                    >{importResult.collectionsCreated}</span
+                  >
+                </div>
+              {/if}
+
+              <div class="flex justify-between">
+                <span class="text-fgs2">Total Records Processed:</span>
+                <span class="font-medium">{importResult.totalRecords}</span>
+              </div>
+            {:else}
+              <div class="bg-bgs3 border border-red-200 rounded p-3 mt-2">
+                <div class="text-red-500 text-b3">
+                  <strong>Error:</strong>
+                  {importResult.errorMessage || "Unknown error occurred"}
+                </div>
+              </div>
+            {/if}
+          </div>
+        </div>
+      {/if}
+    </div>
+  {:else if config.steps[activeStepIndex].type === StepType.NON_INTERACTIVE}
+    <div class="flex flex-col items-center gap-2">
+      <div class="font-normal cw:text-base text-h4">
+        {resolveTitle(importSource)}
+      </div>
+      <div class="font-normal w-full cw:text-b3 text-b2">
+        {#key config.steps[activeStepIndex].subTitle}
+          {@html renderMdAsHtml(config.steps[activeStepIndex].subTitle)}
         {/key}
       </div>
     </div>
     <div class="flex flex-col items-center gap-2 w-full">
       <div
-        class={`text-fgs2 mr-auto dp:mt-4 w-full ${
-          $view.isPortrait ? `text-left text-b4` : `text-b2`
-        }`}
+        class="text-fgs2 mr-auto dp:mt-4 w-full cw:text-b3 cw:text-left text-b2"
       >
-        {#key getImportSteps(importSource)[activeStepIndex].description}
+        {#key config.steps[activeStepIndex].description}
           {@html renderMdAsHtml(
-            getImportSteps(importSource)[activeStepIndex].description
+            config.steps[activeStepIndex].description || ""
           )}
         {/key}
       </div>
       <div
-        class={`rounded-xl overflow-auto object-contain mt-4  flex items-center justify-center mo:w-full w-4/5`}
+        class="rounded-xl overflow-auto object-contain mt-4 flex items-center justify-center mo:w-full w-4/5"
       >
         <img
           class="w-full"
@@ -597,81 +523,116 @@
         />
       </div>
     </div>
-  {:else if getImportSteps(importSource)[activeStepIndex].type === StepType.UPLOAD}
+  {:else if config.steps[activeStepIndex].type === StepType.FIELD_MAPPING}
     <div class="flex flex-col items-center gap-2 w-full">
-      <div class={`font-normal ${$view.isPortrait ? `text-b1` : `text-h4 `}`}>
+      <div class="font-normal cw:text-base text-h4">
         {resolveTitle(importSource)}
       </div>
-      <div class={`font-normal ${$view.isPortrait ? `text-b4` : `text-b3`}`}>
-        {#key getImportSteps(importSource)[activeStepIndex].subTitle}
-          {@html renderMdAsHtml(
-            getImportSteps(importSource)[activeStepIndex].subTitle
-          )}
+      <div class="font-normal w-full cw:text-b3 text-b2">
+        {#key config.steps[activeStepIndex].subTitle}
+          {@html renderMdAsHtml(config.steps[activeStepIndex].subTitle)}
         {/key}
       </div>
     </div>
     <div class="flex flex-col items-center gap-2 w-full">
       <div
-        class={`text-fgs2 mr-auto ${
-          $view.isPortrait
-            ? `text-left text-b4`
-            : `flex justify-center text-b2 w-full`
-        }`}
+        class="text-fgs2 mr-auto dp:mt-4 w-full cw:text-b3 cw:text-left text-b2"
       >
-        {#key getImportSteps(importSource)[activeStepIndex].description}
+        {#key config.steps[activeStepIndex].description}
           {@html renderMdAsHtml(
-            getImportSteps(importSource)[activeStepIndex].description
+            config.steps[activeStepIndex].description || ""
           )}
         {/key}
       </div>
-      <div
-        class={`rounded-xl border-dashed p-4 overflow-auto mt-4 border  flex items-center justify-center ${
-          $view.isPortrait ? `w-full` : `w-[530px]`
-        } ${tempFileList?.length ? `border-aps1` : `h-[290px] border-bgs4`}`}
-      >
+      {#if config.fieldMappingConfig}
+        <div class="w-full mt-4">
+          <FieldMapping
+            fieldMappingConfig={config.fieldMappingConfig}
+            bind:fieldMappings
+            on:mappingChange={handleFieldMappingChange}
+          />
+        </div>
+      {/if}
+    </div>
+  {:else if config.steps[activeStepIndex].type === StepType.UPLOAD}
+    <div class="flex flex-col items-center gap-2 w-full">
+      <div class="font-normal cw:text-b3 text-b2">
+        {resolveTitle(importSource)}
+      </div>
+      <div class="font-normal cw:text-b3 text-b2">
+        {#key config.steps[activeStepIndex].subTitle}
+          {@html renderMdAsHtml(config.steps[activeStepIndex].subTitle || "")}
+        {/key}
+      </div>
+    </div>
+    <div class="flex flex-col items-center gap-2 w-full">
+      {#if !tempFileList || tempFileList.length === 0 || (tempFileList?.length > 0 && config.allowMultipleFiles)}
         <div
-          class={`flex items-center ${
-            tempFileList?.length && !$view.isPortrait
-              ? `gap-3`
-              : `flex-col gap-2 `
-          }`}
+          class={cn(
+            "text-fgs2 mr-auto",
+            $view.isPortrait
+              ? "text-left text-b4"
+              : "flex justify-center text-b2 w-full"
+          )}
         >
-          <Icon icon="upload" />
+          {#key config.steps[activeStepIndex].description}
+            {@html renderMdAsHtml(
+              config.steps[activeStepIndex].description || ""
+            )}
+          {/key}
+        </div>
+        <div
+          class={cn(
+            "rounded-xl border-dashed p-4 overflow-auto mt-4 border flex items-center justify-center",
+            $view.isPortrait ? "w-full" : "w-[530px]",
+            tempFileList?.length ? "border-fgs3" : "h-[290px] border-bgs4"
+          )}
+        >
           <div
-            class={`flex-col ${
+            class={`flex items-center ${
               tempFileList?.length && !$view.isPortrait
-                ? `text-left`
-                : `text-center`
+                ? `gap-3`
+                : `flex-col gap-2 `
             }`}
           >
-            <div class={`${$view.isPortrait ? `text-b4` : `text-b2`}`}>
-              Browse ZIP file or drag and drop here
-            </div>
+            <Icon icon="upload" />
             <div
-              class={`text-fgs3 ${tempFileList?.length ? `` : `mb-4`} 
-                   ${$view.isPortrait ? `text-b4` : `text-b2`}`}
+              class={cn("flex-col", {
+                "text-left": tempFileList?.length && !$view.isPortrait,
+                "text-center": !tempFileList?.length || $view.isPortrait
+              })}
             >
-              {note}
+              <div class="cw:text-b3 text-b2">
+                Browse {accept} file or drag and drop here
+              </div>
+              <div
+                class={cn("text-fgs3 cw:text-b3 text-b2", {
+                  "mb-4": !tempFileList?.length,
+                  "text-b4": $view.isPortrait
+                })}
+              >
+                {note}
+              </div>
             </div>
+            <input
+              multiple={false}
+              bind:files={locallyUploadedFiles}
+              class="hidden"
+              {accept}
+              bind:this={inputRef}
+              type="file"
+            />
+            <Button
+              size={Size.sm}
+              on:click={() => {
+                inputRef.click();
+              }}
+            >
+              Browse
+            </Button>
           </div>
-          <input
-            multiple={false}
-            bind:files={locallyUploadedFiles}
-            class="hidden"
-            {accept}
-            bind:this={inputRef}
-            type="file"
-          />
-          <Button
-            size={Size.sm}
-            on:click={() => {
-              inputRef.click();
-            }}
-          >
-            Browse ZIP
-          </Button>
         </div>
-      </div>
+      {/if}
     </div>
     {#if tempFileList?.length}
       <div class="flex w-full justify-center">
@@ -691,11 +652,12 @@
   {/if}
   {#if !tempFileList?.length}
     <div class="navigation-dots flex gap-3 w-full justify-center">
-      {#each getImportSteps(importSource) as step, index}
+      {#each config.steps as step, index}
         <button
-          class={`navigation-dot w-2 h-2 rounded-full  ${
-            activeStepIndex === index ? "bg-aps1" : "bg-fgs2"
-          }`}
+          class={cn("navigation-dot w-2 h-2 rounded-full", {
+            "bg-aps1": activeStepIndex === index,
+            "bg-fgs2": activeStepIndex !== index
+          })}
           on:click={() => {
             activeStepIndex = index;
           }}
@@ -705,7 +667,7 @@
   {/if}
   <footer>
     <Divider />
-    {#if activeStepIndex === getImportSteps(importSource)?.length - 1 && isEverythingUploaded}
+    {#if activeStepIndex === config.steps.length - 1 && isEverythingUploaded}
       <div class="p-4">
         Import completed successfully! Your data has been imported and converted
         to web page nodes.
@@ -713,7 +675,7 @@
     {/if}
     <div class="flex mo:px-3 mo:py-2 p-4">
       {#if $view.isPortrait}
-        {#if activeStepIndex !== getImportSteps(importSource)?.length - 1}
+        {#if activeStepIndex !== config.steps.length - 1}
           <Button size={Size.sm} on:click={onJumpToUpload}
             >Jump to upload</Button
           >
@@ -724,31 +686,31 @@
         <Button size={Size.sm} on:click={onBack}>Back</Button>
       {/if}
       <div class="ml-auto flex gap-3">
-        {#if !$view.isPortrait}
-          {#if activeStepIndex !== getImportSteps(importSource)?.length - 1}
+        {#if !$view.isPortrait && !config.fieldMappingConfig}
+          {#if activeStepIndex !== config.steps.length - 1}
             <Button size={Size.sm} on:click={onJumpToUpload}
               >Jump to upload</Button
             >
-          {:else if activeStepIndex === getImportSteps(importSource)?.length - 1}
+          {:else if activeStepIndex === config.steps.length - 1}
             <Button size={Size.sm} on:click={onClose}>Cancel</Button>
           {/if}
         {/if}
 
-        {#if activeStepIndex !== getImportSteps(importSource)?.length - 1}
+        {#if activeStepIndex !== config.steps.length - 1}
           <Button
             size={Size.sm}
             on:click={onNext}
             type={ButtonVariant.PRIMARY}
             style={ButtonStyle.OUTLINED}>Next</Button
           >
-        {:else if activeStepIndex === getImportSteps(importSource)?.length - 1 && !isEverythingUploaded}
+        {:else if activeStepIndex === config.steps.length - 1 && !isEverythingUploaded}
           <Button
             isLoading={isUploading}
             size={Size.sm}
             on:click={onUpload}
             type={ButtonVariant.PRIMARY}>Import</Button
           >
-        {:else if activeStepIndex === getImportSteps(importSource)?.length - 1 && isEverythingUploaded}
+        {:else if activeStepIndex === config.steps.length - 1 && isEverythingUploaded}
           <Button size={Size.sm} on:click={onClose}>Done</Button>
         {/if}
       </div>

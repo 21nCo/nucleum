@@ -158,17 +158,21 @@ class Linker extends ResourceStore<INodeLink> {
     items: IRecordId[],
     to: IRecordId,
     toType: Resource,
-    context?: ResourceAccessPoint
+    params?: {
+      context?: ResourceAccessPoint;
+      importId?: string;
+    }
   ) {
     const links = items.map((item) => {
       return {
         in: item,
         out: to,
         toType,
-        linkType: LinkType.DIRECT
+        linkType: LinkType.DIRECT,
+        ...(params?.importId ? { importId: params.importId } : {})
       };
     });
-    const response = await this.linkMany(links, context);
+    const response = await this.linkMany(links, params?.context);
     logger.log({ at: "bulkLink", items, to, response });
     return response;
   }

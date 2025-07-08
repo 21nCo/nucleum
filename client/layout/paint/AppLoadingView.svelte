@@ -10,6 +10,7 @@
   export let message: string | undefined = undefined;
   export let subMessage: string | undefined = undefined;
   export let duration: number | undefined = undefined;
+  export let percentage: number | undefined = undefined;
 </script>
 
 <div
@@ -31,9 +32,9 @@
             class="absolute top-full w-fit flex flex-col gap-3 items-center whitespace-nowrap pt-4"
             in:fade={{ duration: 300 }}
           >
-            {#if duration !== undefined}
+            {#if duration !== undefined || percentage !== undefined}
               <div class="w-60">
-                <ProgressBar {duration} size={Size.md} />
+                <ProgressBar {duration} size={Size.sm} {percentage} />
               </div>
             {/if}
             {#if message}

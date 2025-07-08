@@ -4,7 +4,8 @@ export enum ImportSource {
 
 export enum StepType {
   UPLOAD = "UPLOAD",
-  NON_INTERACTIVE = "NON_INTERACTIVE"
+  NON_INTERACTIVE = "NON_INTERACTIVE",
+  FIELD_MAPPING = "FIELD_MAPPING"
 }
 
 export interface ImportHistoryItem {
@@ -12,6 +13,24 @@ export interface ImportHistoryItem {
   source: ImportSource;
   fileName: string;
   createdAt: string;
-  totalRecords: number;
-  status: "SUCCESS" | "FAILED" | "IN_PROGRESS";
+  totalRecords?: {
+    nodes: number;
+    collections?: number;
+  };
+  status: "SUCCESS" | "FAILED" | "IN_PROGRESS" | "REVERTED";
 }
+
+export interface FieldMappingValue {
+  value: string;
+  label: string;
+  description?: string;
+}
+
+export interface FieldMappingField {
+  label: string;
+  description?: string;
+  options: FieldMappingValue[];
+  defaultValue: string;
+}
+
+export type FieldMappingConfig = Record<string, FieldMappingField>;

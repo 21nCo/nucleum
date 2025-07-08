@@ -9,8 +9,7 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { ImportSource } from "./data.type";
   import { MemotronAction } from "../memotronAction.enum";
-  import { enumToString, properCase } from "$lib/shared/utils/text.utils";
-  import Icon from "$lib/client/elements/Icon.svelte";
+  import ExternalLogo from "$lib/client/branding/external/ExternalLogo.svelte";
 
   const dispatch = createEventDispatcher();
 
@@ -19,7 +18,7 @@
       source: ImportSource.POCKET,
       name: "Pocket",
       description: "Import your saved bookmarks from Pocket as web page nodes",
-      icon: "mynaui:brand-pocket-solid",
+      icon: "pocket",
       formats: ".zip file",
       isAvailable: true
     }
@@ -30,10 +29,6 @@
       componentParams: { importSource: source }
     });
     dispatch("importTriggered", { source });
-  }
-
-  function onImportComplete() {
-    dispatch("importComplete");
   }
 </script>
 
@@ -49,7 +44,7 @@
           <div
             class="w-8 h-8 bg-bgs3 rounded-lg flex items-center justify-center"
           >
-            <Icon icon={importApp.icon} size={Size.sm} />
+            <ExternalLogo provider={importApp.icon} />
           </div>
           <div class="flex-1">
             <div class="text-b2 text-fgs1 font-medium">{importApp.name}</div>

@@ -840,12 +840,9 @@ export const globalActions: IAction[] = [
               ? "Adding to collection"
               : "Linking to node"
           );
-          const result = await linker.bulkLink(
-            items,
-            item.id,
-            resourceType,
-            context?.accessPoint
-          );
+          const result = await linker.bulkLink(items, item.id, resourceType, {
+            context: context?.accessPoint
+          });
           if (resourceType === Resource.collection) {
             const itemType = determineResourceType(items[0]);
             const store = resolveResourceStore(itemType);
