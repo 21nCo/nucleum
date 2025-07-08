@@ -10,6 +10,11 @@ export async function performUtilRunAction(body: any, user: any) {
         return { error: "URL not specified" };
       }
       return getWebpage(body.url);
+    } else if (body.action === "get-multiple-webpage-metadata") {
+      if (!body.urls || !Array.isArray(body.urls)) {
+        return { error: "URLs array not specified" };
+      }
+      return getMultipleWebpageMetadata(body.urls);
     } else if (body.action === "unsplash-browse") {
       return unsplashBrowse(body);
     } else if (body.action === "unsplash-download") {
@@ -48,8 +53,8 @@ async function unsplashBrowse(body: any) {
 
   const response = await fetch(endpoint, {
     headers: {
-      Authorization: `Client-ID ${process.env.UNSPLASH_ACCESS_KEY}`,
-    },
+      Authorization: `Client-ID ${process.env.UNSPLASH_ACCESS_KEY}`
+    }
   });
 
   const data = await response.json();
@@ -62,6 +67,127 @@ async function unsplashDownload(body: any) {
   const response = await fetch(url + `?client_id=${clientId}`);
   const data = await response.json();
   return data;
+}
+
+async function getMultipleWebpageMetadata(urls: string[]) {
+  const results = await Promise.allSettled(
+    urls.map(async (url) => {
+      try {
+        if (!isValidUrl(url)) {
+          return { url, error: "Invalid URL" };
+        }
+
+        const response = await fetch(url);
+        const html = await response.text();
+        const metadata = extractMetadataFromHtml(html, url);
+
+        return { url, ...metadata };
+      } catch (error) {
+        return { url, error: "Failed to fetch URL", message: error };
+      }
+    })
+  );
+
+  return results.map((result) => {
+    if (result.status === "fulfilled") {
+      return result.value;
+    } else {
+      return { error: "Promise rejected", reason: result.reason };
+    }
+  });
+}
+
+function extractMetadataFromHtml(html: string, baseUrl: string) {
+  const metadata: any = {};
+
+  const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+  metadata.title = titleMatch ? titleMatch[1].trim() : null;
+
+  const faviconMatches = [
+    html.match(
+      /<link[^>]*rel=["'](?:shortcut )?icon["'][^>]*href=["']([^"']*)["']/i
+    ),
+    html.match(
+      /<link[^>]*href=["']([^"']*)["'][^>]*rel=["'](?:shortcut )?icon["']/i
+    )
+  ];
+  const faviconMatch = faviconMatches.find((match) => match);
+  if (faviconMatch) {
+    const faviconUrl = faviconMatch[1];
+    metadata.faviconUrl = faviconUrl.startsWith("http")
+      ? faviconUrl
+      : new URL(faviconUrl, baseUrl).href;
+  } else {
+    try {
+      const baseURL = new URL(baseUrl);
+      metadata.faviconUrl = `${baseURL.protocol}//${baseURL.host}/favicon.ico`;
+    } catch {
+      metadata.faviconUrl = null;
+    }
+  }
+
+  const ogTags =
+    html.match(
+      /<meta[^>]*property=["']og:([^"']*)["'][^>]*content=["']([^"']*)["'][^>]*>/gi
+    ) || [];
+  ogTags.forEach((tag) => {
+    const propertyMatch = tag.match(/property=["']og:([^"']*)["']/i);
+    const contentMatch = tag.match(/content=["']([^"']*)["']/i);
+    if (propertyMatch && contentMatch) {
+      const property = propertyMatch[1];
+      const content = contentMatch[1];
+      metadata[`og${property.charAt(0).toUpperCase() + property.slice(1)}`] =
+        content;
+    }
+  });
+
+  const metaTags = [
+    { name: "description", key: "description" },
+    { name: "keywords", key: "keywords" },
+    { name: "author", key: "author" },
+    { name: "viewport", key: "viewport" },
+    { name: "theme-color", key: "themeColor" },
+    { name: "application-name", key: "applicationName" },
+    { name: "apple-mobile-web-app-title", key: "appleMobileWebAppTitle" }
+  ];
+
+  metaTags.forEach(({ name, key }) => {
+    const metaMatch = html.match(
+      new RegExp(
+        `<meta[^>]*name=["']${name}["'][^>]*content=["']([^"']*)["']`,
+        "i"
+      )
+    );
+    if (metaMatch) {
+      metadata[key] = metaMatch[1];
+    }
+  });
+
+  const twitterTags =
+    html.match(
+      /<meta[^>]*name=["']twitter:([^"']*)["'][^>]*content=["']([^"']*)["'][^>]*>/gi
+    ) || [];
+  twitterTags.forEach((tag) => {
+    const nameMatch = tag.match(/name=["']twitter:([^"']*)["']/i);
+    const contentMatch = tag.match(/content=["']([^"']*)["']/i);
+    if (nameMatch && contentMatch) {
+      const property = nameMatch[1];
+      const content = contentMatch[1];
+      metadata[
+        `twitter${property.charAt(0).toUpperCase() + property.slice(1)}`
+      ] = content;
+    }
+  });
+
+  const canonicalMatch = html.match(
+    /<link[^>]*rel=["']canonical["'][^>]*href=["']([^"']*)["']/i
+  );
+  metadata.canonicalUrl = canonicalMatch ? canonicalMatch[1] : null;
+
+  const langMatch = html.match(/<html[^>]*lang=["']([^"']*)["']/i);
+  metadata.language = langMatch ? langMatch[1] : null;
+
+  return metadata;
 }
 
 function captureScreenshot(text: string) {
