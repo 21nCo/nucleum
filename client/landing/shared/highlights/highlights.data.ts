@@ -10,7 +10,7 @@ export const highlights: { [key: string]: IHighlight } = {
   ainative: {
     icon: "brain",
     title: "AI native",
-    desc: "Seamlessly integrate your data and harness cutting-edge AI with our custom MCP server",
+    desc: "Just the right amount of AI at the right place.",
     visualRenderComponent: "ainative",
     isVisualAtBottom: true
   },

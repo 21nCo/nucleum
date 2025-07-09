@@ -33,15 +33,15 @@
       desc: "Finally, a place where personal knowledge management feels complete.",
       visualRenderComponent: "memotronFeaturesRadial"
     },
-    highlights.reliable,
+    // highlights.reliable,
     {
       ...highlights.powerful,
       desc: "Unlock next-level of your digital memory with a powerhouse of features.",
       visualRenderComponent: ""
     },
+    highlights.offline,
     highlights.zerotrust,
     highlights.ainative,
-    highlights.offline,
     highlights.intuitive,
     highlights.laast
   ];
