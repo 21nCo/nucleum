@@ -45,7 +45,6 @@
   import { resolveMultiSelectStore } from "../flux/resourceStores/resource.store";
   import { generateResourceId } from "../flux/flux.utils";
   import { ErrorMessage } from "../error/error.type";
-  import view from "$lib/client/stores/view.store";
   import { resizeListener } from "$lib/client/actions/resize.action";
 
   /**
@@ -290,6 +289,10 @@
       });
     }
   }
+
+  function selectAll() {
+    $multiSelectStore = $mdStore.blocks.map((b) => b.id.toString());
+  }
 </script>
 
 <button
@@ -441,9 +444,7 @@
       on:action={(e) => onBulkAction(e.detail)}
       on:actionWithContext={(e) =>
         onBulkAction(e.detail.action, e.detail.context)}
-      on:selectAll={() => {
-        $multiSelectStore = $mdStore.blocks.map((b) => b.id.toString());
-      }}
+      on:selectAll={selectAll}
     />
   </BottomFloat>
 {/if}

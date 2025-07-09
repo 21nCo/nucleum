@@ -314,7 +314,7 @@
                   ? "Please click on transcribe to start the transcription."
                   : isOverDurationLimit
                     ? "Transcription is currently not available for audio longer than 15 minutes"
-                    : "Transcription is not available on this platform yet. Please use the transcription feature from iOS app."}
+                    : "Transcription is not available on this platform yet. Please use the transcription feature from iOS or macOS app."}
                 actionText={isTranscribeAvailable ? "Transcribe" : undefined}
                 size={Size.sm}
                 isNotAvailableContext={!isTranscribeAvailable}

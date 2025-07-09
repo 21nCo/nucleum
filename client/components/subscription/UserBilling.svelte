@@ -25,6 +25,7 @@
   import { InfoTextType } from "$lib/client/types/text.type";
   import DiscountBanner from "./elements/DiscountBanner.svelte";
   import PoliciesFooter from "$lib/client/elements/PoliciesFooter.svelte";
+  import { Size } from "$lib/client/types/size.enum";
 
   let currentPlanFeatures: Array<{ icon: string; label: string }> = [];
   $: renewalDate = $account.plan
@@ -184,6 +185,7 @@
           content="You will need a subscription to continue using **cloud sync**. Sign up as an offline user instead to use the app for free."
           parentBgIndex={2}
           type={InfoTextType.INFO}
+          size={Size.sm}
         />
       {/if}
       <div class="flex justify-between flex-wrap gap-2">

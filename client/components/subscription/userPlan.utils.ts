@@ -30,7 +30,11 @@ export const SUBSCRIPTION_PLANS: IPlan[] = [
       },
       {
         icon: "ph:arrows-left-right-light",
-        label: "Unlimited cloud sync"
+        label: "Sync across all devices"
+      },
+      {
+        icon: "ph:file-light",
+        label: "Unlimited storage for small files (< 25 MB)"
       },
       // {
       //   icon: "ph:lock-light",
@@ -38,7 +42,7 @@ export const SUBSCRIPTION_PLANS: IPlan[] = [
       // },
       {
         icon: "ph:database-light",
-        label: "20 GB of media storage (add-on for more)"
+        label: "20 GB of included large file storage"
       },
       {
         icon: "ph:at-light",
@@ -58,23 +62,15 @@ export const SUBSCRIPTION_PLANS: IPlan[] = [
     features: [
       {
         icon: "ph:check-circle-light",
-        label: "All core features"
+        label: "Everything in Sync plan"
       },
-      {
-        icon: "ph:arrows-left-right-light",
-        label: "Unlimited cloud sync for Memotron, Pointron"
-      },
-      // {
-      //   icon: "ph:lock-light",
-      //   label: "End-to-end encryption"
-      // },
       {
         icon: "ph:database-light",
-        label: "100 GB of media storage (add-on for more)"
+        label: "100 GB of included large file storage"
       },
       {
         icon: "ph:sparkle-light",
-        label: "Access to [Nucleus](https://nucleus.to) (Web beta)"
+        label: "Access to [Nucleus](https://nucleus.to) (Web app)"
       },
       // {
       //   icon: "ph:brain-light",

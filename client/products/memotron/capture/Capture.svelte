@@ -508,7 +508,10 @@
   />
 {:else}
   {#key $captureStore.refreshId}
-    <div class="w-full h-full flex justify-center">
+    <div
+      class="w-full h-full flex justify-center"
+      id={`mdcontainer-${$captureStore.id}`}
+    >
       <div class="w-full max-w-5xl h-full flex flex-col p-4 bg-bgs1">
         {#if captureType !== CaptureType.AUDIO && captureType !== CaptureType.CAMERA && captureType !== CaptureType.UPLOAD}
           <header

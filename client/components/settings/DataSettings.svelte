@@ -15,6 +15,7 @@
   import { Action } from "$lib/client/types/action.enum";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import { Product } from "$lib/client/types/product.type";
+  import { Size } from "$lib/client/types/size.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { InfoTextType } from "$lib/client/types/text.type";
   import { formatDate } from "$lib/client/utils/time.utils";
@@ -130,15 +131,16 @@
     </div>
     <InlineInfoBanner
       type={InfoTextType.WARNING}
+      size={Size.sm}
       content="Note: At the moment, Restore only works on new accounts. It might fail if old conflicting data is present."
     />
   </section>
   <section class="flex flex-col gap-4">
     <Text content="Import and export" style={TextStyle.SECTION_HEADING} />
-    <span class="text-b2 text-fgs3">
-      We value your privacy and data. We also want to make Memotron as
-      interoperable as possible. We will be releasing these features on priority
-      soon.
+    <span class="text-b2 text-fgs2">
+      We enormously value your privacy and data. We want to make Memotron as
+      interoperable and sustainable as possible. We will keep extending our
+      support to import/export data from other apps.
     </span>
     <div>
       {#if $appStore.product !== Product.POINTRON}

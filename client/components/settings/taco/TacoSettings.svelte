@@ -2,12 +2,9 @@
   import ProgressBar from "$lib/client/elements/ProgressBar.svelte";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
-  import { Action } from "$lib/client/types/action.enum";
   import { Size } from "$lib/client/types/size.enum";
-  import modalEvent from "../../modal/modal.store";
   import { userPreferences } from "../userPreferences.store";
   import Button from "$lib/client/elements/button/Button.svelte";
-  import { ButtonVariant } from "$lib/client/types/button.type";
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   import { InfoTextType } from "$lib/client/types/text.type";
   import {
@@ -18,7 +15,6 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { deleteItemsFromCache } from "$lib/client/products/memotron/taco/taco.utils";
   import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
-  import Badge from "$lib/client/elements/text/Badge.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
@@ -157,13 +153,6 @@
 </script>
 
 <div class="flex flex-col h-full w-full gap-8">
-  <span class="flex w-full justify-center items-center gap-2 text-b3">
-    <Badge text="soon" size={Size.sm} />
-    <span class="text-fgs3">
-      Managed AI credits, custom integration using API keys will be available
-      soon
-    </span>
-  </span>
   <div class="flex flex-col gap-8">
     <div class="flex flex-col gap-4 bg-bgs2 rounded-md p-3 pb-6">
       <Text content="Audio transcription" style={TextStyle.SECTION_HEADING} />
@@ -220,8 +209,9 @@
       />
       {#if !$context.isEmbed}
         <InlineInfoBanner
-          content="At the moment, this feature is only available on iOS app."
+          content="On-device AI is only available on iOS and macOS apps."
           type={InfoTextType.INFO}
+          size={Size.sm}
         />
       {/if}
       {#if transcriptionModelDownloadId}
