@@ -2,7 +2,7 @@ export type ITopNavBar = {
   title?: string;
   icon: string;
   items: ITopNavBarItem[];
-  cta?: IButton;
+  cta?: IButton[];
 };
 
 export type ITopNavBarItem = {
@@ -57,6 +57,7 @@ export type IFooter = {
   youtubeUrl?: string;
   discordUrl?: string;
   linkedinUrl?: string;
+  gitUrl?: string;
 };
 
 export type IHighlight = {

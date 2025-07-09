@@ -9,6 +9,7 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import FooterInfo from "./FooterInfo.svelte";
 
   export let feature: IFwFeature;
   export let contemporaries: IContemporary[] = [];
@@ -37,7 +38,7 @@
             <HeaderTitle icon="ph:question-light" label={property} />
           {/each}
         {/if}
-        <HeaderTitle icon="ph:dollar-sign-light" label="Price *" />
+        <HeaderTitle icon="ph:currency-dollar-light" label="Price *" />
         <HeaderTitle icon="ph:star-light" label="Rating" />
         <HeaderTitle icon="ph:question-light" label="Notes" />
       </tr>
@@ -58,7 +59,7 @@
       {:else}
         <tr>
           <td
-            colspan="3"
+            colspan="4"
             class="border border-brs3 p-2 py-4 text-center text-fgs3 text-b3"
             >No comparison data available</td
           >
@@ -66,18 +67,17 @@
       {/if}
     </tbody>
   </table>
-  <span class="text-fgs2 text-b2"> * Price is per month billed annually. </span>
-  {#if feature.category !== "App"}
-    <div class="flex gap-2 items-start">
-      <div class="mt-0.5">
-        <Icon icon="ph:info-light" size={Size.sm} class="text-fgs2" />
-      </div>
-      <span class="text-fgs2 text-b2">
-        If you don't see an app in the table, it means either that app doesn't
-        have the feature being discussed, or it didn't match the filters you
-        selected.
-      </span>
+  <FooterInfo />
+  <div class="flex gap-2 items-start mt-8">
+    <div class="mt-0.5">
+      <Icon icon="ph:question-light" size={Size.sm} class="text-fgs2" />
     </div>
-  {/if}
+    <span class="text-fgs2 text-b3">
+      If you don't see an app in the table, it may be because the app doesn't
+      have the feature being discussed. Or it didn't match the filters you
+      selected. Or we haven't completed our research and benchmarking for that
+      app yet.
+    </span>
+  </div>
   <ScrollViewBottomSpacer />
 </div>

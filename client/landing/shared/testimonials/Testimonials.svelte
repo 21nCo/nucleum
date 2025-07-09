@@ -14,7 +14,7 @@
   export let twitter: string = $landing.urls.socials?.twitter ?? twitterUrl;
 </script>
 
-<div class="w-full flex flex-col gap-20 mo:gap-10 overflow-x-hidden relative">
+<div class="w-full flex flex-col gap-20 mo:gap-10 overflow--x-hidden relative">
   <div class="flex flex-col justify-center items-center">
     <Title {title} {subtitle} />
   </div>

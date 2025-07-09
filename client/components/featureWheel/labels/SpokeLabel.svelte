@@ -53,5 +53,5 @@
   {#if spoke.isPlanned}
     ◌&nbsp;
   {/if}
-  {spoke.label}
+  {spoke.shortLabel || spoke.label}
 </text>

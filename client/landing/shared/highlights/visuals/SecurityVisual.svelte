@@ -5,17 +5,21 @@
 
   const items: IListItem[] = [
     {
-      title: "End-to-end encryption",
-      icon: "ph:lock-light"
+      title: "Open source",
+      icon: "ph:code-light"
     },
+    // {
+    //   title: "End-to-end encryption",
+    //   icon: "ph:lock-light"
+    // },
     {
-      title: "Plug your own database",
-      icon: "ph:database-light"
-    },
-    {
-      title: "Offline version",
+      title: "Offline-only version",
       icon: "ph:mountains-light"
     }
+    // {
+    //   title: "Plug your own database",
+    //   icon: "ph:database-light"
+    // }
   ];
 </script>
 

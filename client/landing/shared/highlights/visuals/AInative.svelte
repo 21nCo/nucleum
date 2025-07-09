@@ -5,13 +5,13 @@
 
   const items: IListItem[] = [
     {
-      title: "Local AI",
+      title: "On-device AI",
       icon: "ph:wifi-slash-light"
     },
-    {
-      title: "Bring your own keys",
-      icon: "ph:person-simple-snowboard-light"
-    },
+    // {
+    //   title: "Bring your own keys",
+    //   icon: "ph:person-simple-snowboard-light"
+    // },
     {
       title: "MCP server (soon)",
       icon: "ph:rocket-light"

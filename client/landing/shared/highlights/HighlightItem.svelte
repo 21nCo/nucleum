@@ -13,7 +13,8 @@
   class={cn(
     "flex mo:gap-6 bg-bgs1 mo:h-fit h-64 rounded-xl pt-6 pl-6 mo:flex-col mo:text-center overflow-hidden",
     {
-      "flex-col gap-4 pr-6": highlight.isVisualAtBottom,
+      "flex-col gap-4 pr-6":
+        highlight.isVisualAtBottom || !highlight.visualRenderComponent,
       "gap-8": !highlight.isVisualAtBottom,
       "w-full": isFullWidth
     }

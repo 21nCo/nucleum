@@ -2,7 +2,7 @@ import type { IHighlight } from "../landing.type";
 
 export const highlights: { [key: string]: IHighlight } = {
   powerful: {
-    icon: "ph:lightning",
+    icon: "ph:fire",
     title: "Unbelievably powerful",
     desc: "Unlock next-level of focus, time and goal tracking with a powerhouse of features.",
     visualRenderComponent: "pointronFeatures"
@@ -10,32 +10,32 @@ export const highlights: { [key: string]: IHighlight } = {
   ainative: {
     icon: "brain",
     title: "AI native",
-    desc: "Seamlessly integrate your data and harness cutting-edge AI with our custom MCP server",
+    desc: "Just the right amount of AI at the right place.",
     visualRenderComponent: "ainative",
     isVisualAtBottom: true
   },
   offline: {
     icon: "offline",
-    title: "Full offline version",
-    desc: "No cloud or signup required. If your OS runs, so does the app.",
+    title: "Full offline support",
+    desc: "Signup as an offline-only user or go offline anytime as a cloud user.",
     isVisualAtBottom: true
   },
   zerotrust: {
     icon: "zerotrust",
     title: "Zero-trust security & ownership",
-    desc: "If you opt for managed cloud sync, your data is encrypted from start to finish - only you can access it. Even better, you can host your data on your preferred servers or run locally.",
+    desc: "To start with, the app is open source. If you opt for managed cloud sync, your data is end-to-end encrypted. Even better, you can use offline-only version.",
     visualRenderComponent: "security",
     isVisualAtBottom: true
   },
   wholesome: {
     icon: "powerfulwheel",
-    title: "Wholesome & thoughtful",
-    desc: "Finally, a place where everything feels coherent"
+    title: "Thoughtful & wholesome",
+    desc: "Finally, a place where everything feels complete"
   },
   reliable: {
-    icon: "ph:fire",
+    icon: "ph:lightning",
     title: "Insanely reliable",
-    desc: "Perform actions in micro seconds not seconds",
+    desc: "Try finding an action that takes more than 1/2 a second. We will wait for you.",
     isVisualAtBottom: true
   },
   intuitive: {

@@ -126,5 +126,7 @@
   {:else if QRURL && !$view.isPortrait}
     <QrElement bind:isHovering bind:enableHover url={QRURL} width={48} />
   {/if}
-  <span class="text-nowrap">{label}</span>
+  {#if label}
+    <span class="text-nowrap">{label}</span>
+  {/if}
 </button>
