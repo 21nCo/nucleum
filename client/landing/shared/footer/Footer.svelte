@@ -66,7 +66,7 @@
       isHovered: false
     },
     {
-      href: footerValues.youtubeUrl ?? "https://www.youtube.com/@blankfellow",
+      href: footerValues.youtubeUrl ?? "https://www.youtube.com/@21nOrg",
       icon: "youtubefooter",
       primary: "hsla(0, 100%, 50%, 1)",
       isHovered: false
