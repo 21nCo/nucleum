@@ -17,9 +17,9 @@
       <div class="flex flex-col gap-7 w-full max-w-3xl">
         <div class="bg-bgs2 rounded-[20px] p-7 flex flex-col gap-4 w-full">
           <div class="">
-            We are a small independent team based in Hyderabad, India. We are on
-            a mission to build great products, transform the way we do business
-            and treat our planet well while doing so.
+            We are a lean independent team based in Hyderabad, India. We are on
+            a mission to build impressive products with triple bottom line as
+            our core.
           </div>
           <div>
             <div

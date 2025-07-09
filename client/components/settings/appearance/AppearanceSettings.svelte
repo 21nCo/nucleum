@@ -143,8 +143,8 @@
 
   {#if $appearance.isSyncWithSystem}
     <InlineInfoBanner
-      content="Dark and light themes will be switched automatically according to the system
-setting on your device."
+      content="Dark and light themes will be switched automatically according to the system setting on your device."
+      size={Size.sm}
     />
   {/if}
 

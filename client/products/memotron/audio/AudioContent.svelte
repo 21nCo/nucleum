@@ -56,7 +56,7 @@
 
   $: isTranscribeAvailable =
     accessPoint === ResourceAccessPoint.SELF &&
-    $context.os === OperatingSystem.IOS &&
+    $context.isEmbed &&
     !!metadata?.duration &&
     metadata?.duration <= 15 * 60;
 

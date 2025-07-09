@@ -52,11 +52,9 @@
   import { onDestroy, onMount, tick } from "svelte";
   import { page } from "$app/stores";
   import InlineSearchBar from "$lib/client/elements/InlineSearchBar.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
   import { InputStyle } from "$lib/client/types/input.type";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
-  import Badge from "$lib/client/elements/text/Badge.svelte";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
   import { fade, fly } from "svelte/transition";
@@ -585,12 +583,6 @@
           label={{ label: "Show archived items only" }}
           on:change={() => refresh()}
         />
-        <div class="flex gap-2 items-center w-full justify-center">
-          <Badge text="soon" />
-          <span class="text-b3 text-fgs3">
-            Filters & sorting will be available soon
-          </span>
-        </div>
       </div>
     {/if}
   {:else}
