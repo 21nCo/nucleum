@@ -8,10 +8,10 @@
       title: "Open source",
       icon: "ph:code-light"
     },
-    // {
-    //   title: "End-to-end encryption",
-    //   icon: "ph:lock-light"
-    // },
+    {
+      title: "End-to-end encryption (soon)",
+      icon: "ph:lock-light"
+    },
     {
       title: "Offline-only version",
       icon: "ph:mountains-light"
