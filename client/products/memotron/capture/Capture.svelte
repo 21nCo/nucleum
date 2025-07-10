@@ -694,7 +694,7 @@
           {/if}
         </main>
 
-        {#if isEmptyState && $view.isConstrainedWidth}
+        {#if $view.isConstrainedWidth && (isEmptyState || captureType === CaptureType.AUDIO)}
           <div
             class="w-full flex justify-center mb-5"
             in:fly={{ y: -100, duration: 250 }}
