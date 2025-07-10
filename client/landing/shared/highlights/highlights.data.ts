@@ -30,7 +30,8 @@ export const highlights: { [key: string]: IHighlight } = {
   wholesome: {
     icon: "powerfulwheel",
     title: "Thoughtful & wholesome",
-    desc: "Finally, a place where everything feels complete"
+    desc: "Finally, a place where everything feels complete",
+    isJustifyEndOnCw: true
   },
   reliable: {
     icon: "ph:lightning",

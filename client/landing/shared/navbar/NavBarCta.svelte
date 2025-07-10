@@ -5,7 +5,7 @@
 </script>
 
 {#if cta.length > 0}
-  <div class="flex gap-1.5 items-center">
+  <div class="flex gap-3 items-center">
     {#each cta as ctaItem}
       <Button
         label={ctaItem.label}
