@@ -5,6 +5,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import type { ITileItem } from "../landing.type";
+  import { landing } from "../store/shared.store";
 
   export let item: ITileItem;
   export let isEnableBackground: Boolean = false;
@@ -21,7 +22,7 @@
   }
   function onClick() {
     if (item.href) {
-      window.open(item.href, "_self");
+      landing.openLink(item.href);
     }
   }
 </script>

@@ -12,9 +12,7 @@
         isShort={true}
         icon={ctaItem.icon}
         type={ctaItem.type}
-        on:click={() => {
-          window.location.href = ctaItem.href ?? "";
-        }}
+        href={ctaItem.href ?? ""}
       />
     {/each}
   </div>

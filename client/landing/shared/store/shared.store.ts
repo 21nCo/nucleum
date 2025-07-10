@@ -132,16 +132,16 @@ class LandingStore {
     this.subject.set({ urls });
   }
 
-  openLink(url: string) {
-    if (!url) return;
+  openLink(url: string, params?: { target?: string }) {
+    if (!url || typeof window === "undefined") return;
     if (!url.includes("http")) {
       // dispatchCustomEvent(GlobalEvent.CUSTOM_NAVIGATION, { path: url });
       // window.location.href = url;
-      window.open(url, "_self");
+      window.open(url, params?.target || "_self");
       return;
     }
 
-    let win = window?.open(url, "_blank");
+    let win = window?.open(url, params?.target || "_blank");
     if (win) {
       win.focus();
     }
