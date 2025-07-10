@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import LandingThemeLayer from "./LandingThemeLayer.svelte";
   // import AnalyticsLayer from "../layout/layers/analytics/AnalyticsLayer.svelte";
@@ -12,7 +13,10 @@
   import BottomModal from "../components/bottomModal/BottomModal.svelte";
   export let metadata: IMetadata;
   export let bgColor: string = "bg-bgs1";
-  setContext();
+
+  onMount(() => {
+    setContext();
+  });
 
   function setContext() {
     let browserAgent = navigator?.userAgent;
