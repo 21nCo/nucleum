@@ -23,13 +23,15 @@
     xxl: "w-10 h-10",
     "5xl": "w-16 h-full"
   };
+  export let isAccentBg: boolean = false;
+
   function importIcon(icon: string) {
     return import(`../SVGIcons/${icon}.svg?raw`);
   }
 </script>
 
 {#if icon?.includes("ph:")}
-  <Icon {icon} size={phIconSize} />
+  <Icon {icon} size={phIconSize} class={isAccentBg ? "text-abg" : ""} />
 {:else if icon && !isRenderRaw}
   <button on:click class={cn(tailwindSizes[size])}>
     {#await importIcon(icon)}

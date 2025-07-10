@@ -26,7 +26,12 @@
   )}
 >
   {#if isShowCta}
-    <div class="flex gap-4 w-fit h-full" in:fly={{ x: -10, duration: 500 }}>
+    <div
+      class={cn("flex gap-4 w-fit h-full", {
+        "pl-2": !topNavBarValues.title
+      })}
+      in:fly={{ x: -10, duration: 500 }}
+    >
       <NavBarLogo {topNavBarValues} size={Size.sm} />
       <Divider orientation={Orientation.Vertical} />
     </div>

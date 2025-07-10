@@ -38,7 +38,7 @@
         !isNight && "left-0 animate-bounce-l"
       )}
     ></div>
-    <SvgIcon icon="sun" size={Size.sm} class="z-10" />
-    <SvgIcon icon="moon" size={Size.sm} class="z-10" />
+    <SvgIcon icon="ph:sun" size={Size.sm} />
+    <SvgIcon icon="ph:moon" size={Size.sm} />
   </button>
 </div>

@@ -6,15 +6,20 @@ import type {
 } from "../landing.type";
 
 export const staticUrl = import.meta.env.VITE_STATIC_URL;
-export const companyName = "Phinative soft pvt ltd.";
-export const companyAddress = "Hyderabad, India";
-export const companyEmail = "contact@21n.org";
-export const companyPhone = "+91 9985563939";
-export const companyWebsite = "https://21n.org";
-export const whitePaperUrl = "https://papers.21n.org/soft";
-export const discordUrl = "https://discord.com/invite/9HJqKYTZKg";
-export const twitterUrl = "https://x.com/21nOrg";
-export const youtubeUrl = "https://www.youtube.com/@21nOrg";
+export const org = {
+  website: "https://21n.org",
+  phone: "+91 9985563939",
+  email: "contact@21n.org",
+  address: "Hyderabad, India",
+  incorporation: "Phinative soft pvt ltd.",
+  discord: "https://discord.com/invite/9HJqKYTZKg",
+  twitter: "https://x.com/21nOrg",
+  youtube: "https://www.youtube.com/@21nOrg",
+  blog: "https://blog.21n.org",
+  docs: "https://docs.21n.org",
+  whitepaper: "https://papers.21n.org/soft",
+  github: "https://github.com/21nOrg"
+};
 
 export const currentProductsStore = readable<ITileItem[]>([
   {

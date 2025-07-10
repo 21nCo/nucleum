@@ -31,9 +31,9 @@
   class={cn(
     "relative flex flex-col items-start justify-start",
     !isPanelView &&
-      "relative gap-3 portrait:min-w-[340px] tp:!min-w-[380px] w--[498px] h-[471px] mo:h-[292px] bg-bgs2 px-7 pt-7 rounded-2xl hover:bg-bgs3",
+      "relative portrait:min-w-[340px] tp:!min-w-[380px] w--[498px] h-[471px] mo:h-[292px] bg-bgs1 px-7 pt-7 rounded-2xl border border-transparent hover:border-brs3",
     isPanelView &&
-      "relative min-w-[161px] max-w-[260px] rounded-xl px-[14px] tp:px-5 pt-[14px] tp:pt-5 gap-2",
+      "relative min-w-[161px] max-w-[260px] rounded-xl px-[14px] tp:px-5 pt-[14px] tp:pt-5",
     isPanelView &&
       isEnableBackground &&
       "bg-bgs2 hover:bg-bgs3 h-[256px] mo:h-[197px]",
@@ -52,8 +52,7 @@
     <div class="flex items-center w-full">
       <h1
         class={cn(
-          !isPanelView &&
-            "text-[30px] mo:text-[20px] leading-10 mo:leading-7 font-extrabold",
+          !isPanelView && "text-h2 cw:text-h4 font-medium",
           isPanelView && "text-h4 font-bold"
         )}
       >
@@ -63,7 +62,7 @@
         <div class="ml-auto">
           <span
             class={cn(
-              "text-[20px] font-normal leading-[28px] p-2 opacity-0 underline underline-offset-4",
+              "cw:text-lb2 p-2 opacity-0 underline underline-offset-4",
               isHovered && "animate-fadeIn"
             )}>{item.href?.split("://")[1]}</span
           >
@@ -73,15 +72,18 @@
                 icon="arrow-NW"
                 size={$view.isPortrait ? Size.xxs : Size.xs}
               /></i
-            ><i class={cn("inline-flex", isHovered && "animate-fadeOut")}>
+            ><i
+              class={cn(
+                "inline-flex",
+                isHovered && "animate-fadeOut",
+                "absolute top-[-10px]",
+                $view.isPortrait && "left-[-8px]",
+                !isPanelView && "left-[-10px]"
+              )}
+            >
               <SvgIcon
                 icon="circle"
                 size={$view.isPortrait ? Size.lg : Size.xl}
-                class={cn(
-                  "absolute top-[-10px]",
-                  $view.isPortrait && "left-[-8px]",
-                  !isPanelView && "left-[-10px]"
-                )}
               /></i
             >
           </div>
@@ -93,9 +95,10 @@
     {@const description = item.description}
     <p
       class={cn(
+        "text-lb2 text-fgs2",
         !isPanelView &&
           "text-[20px] mo:text-[14px] leading-[28px] mo:leading-5 font-normal text-left mo:w-[290px]",
-        isPanelView && "text-lb2 text-fgs2 text-left"
+        isPanelView && "text-left"
       )}
     >
       {description}
@@ -109,7 +112,7 @@
       class={cn(
         "absolute mo:h-[35%] object-contain bottom-1 right-1",
         isPanelView && "h-[43%]",
-        !isPanelView && "h-[65%]"
+        !isPanelView && "h-[55%]"
       )}
     />
   {/if}

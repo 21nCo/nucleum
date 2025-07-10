@@ -1,10 +1,7 @@
 <script lang="ts">
   import { addAnimateClass } from "$lib/client/utils/ui.utils";
   import PanelButton from "./elements/PanelButton.svelte";
-  import {
-    companyWebsite,
-    landing
-  } from "$lib/client/landing/shared/store/shared.store";
+  import { org, landing } from "$lib/client/landing/shared/store/shared.store";
   export let isProduct: boolean = false;
   const id: string = "left-panel";
 </script>
@@ -18,6 +15,6 @@
   on:click={async () => {
     if (!isProduct) return;
     await addAnimateClass("animate-bounce-l", id);
-    landing.openLink(companyWebsite, { target: "_self" });
+    landing.openLink(org.website, { target: "_self" });
   }}
 />

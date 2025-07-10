@@ -9,6 +9,7 @@ export type ITopNavBarItem = {
   label: string;
   href: string;
   expandRender?: string;
+  callback?: () => void;
 };
 
 export type IHeroInputs = {
@@ -58,6 +59,7 @@ export type IFooter = {
   discordUrl?: string;
   linkedinUrl?: string;
   gitUrl?: string;
+  blogUrl?: string;
 };
 
 export type IHighlight = {
