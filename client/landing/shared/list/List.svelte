@@ -9,7 +9,7 @@
 
 <div class="w-full flex items-center">
   <div
-    class={cn("flex", {
+    class={cn("flex cw:flex-col", {
       "flex-col gap-2": orientation === Orientation.Vertical,
       "gap-8": orientation === Orientation.Horizontal
     })}

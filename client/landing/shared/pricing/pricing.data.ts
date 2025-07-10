@@ -21,11 +21,11 @@ export const nucleusPlan: PricingPlan = {
   subtitle: "Everything productivity, single plan",
   price: { monthly: 15, yearly: 144, lifetime: 450 },
   features: [
-    { text: "Unlimited cloud sync for Memotron, Pointron" },
-    { text: "Access to Nucleus (web beta)" },
-    { text: "100 GB of media storage" },
+    { text: "Everything in sync plan" },
+    { text: "Access to Nucleus (web)" },
+    { text: "100 GB of included large file storage" },
     { text: "Early access to new features" },
-    { text: "Priority support" },
+    { text: "Priority chat support" },
     { text: "Support our mission" }
   ],
   ctaText: "Get started for free"
@@ -39,8 +39,7 @@ export const databasePlan: PricingPlan = {
   price: 40,
   unit: "lifetime",
   features: [
-    { text: "Unlimited cloud sync for Memotron, Pointron" },
-    { text: "100 GB of media storage" },
+    { text: "All features without limits" },
     {
       text: "Access to Nucleus - the everything productivity app"
     },
