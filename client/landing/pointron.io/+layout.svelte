@@ -41,15 +41,22 @@
       { label: "Pricing", href: "pricing" },
       { label: "Discord", href: discordUrl }
     ],
-    cta: {
-      label: "Go to web app",
-      href: "https://web.pointron.app",
-      type: "primary"
-    }
+    cta: [
+      {
+        label: "",
+        href: "https://github.com/21nOrg/tidigit",
+        icon: "ph:github-logo-light",
+        type: "secondary"
+      },
+      {
+        label: "Go to web app",
+        href: "https://web.pointron.app",
+        type: "primary"
+      }
+    ]
   };
   let footerValues: IFooter = {
-    appStoreUrl:
-      "https://apps.apple.com/in/app/pointron-focus-time-tracker/id6469411284",
+    appStoreUrl: urls.downloads?.ios,
     twitterUrl: urls.socials?.twitter,
     docsUrl: "https://docs.pointron.app",
     youtubeUrl: youtubeUrl,
