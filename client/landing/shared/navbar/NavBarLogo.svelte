@@ -5,13 +5,15 @@
   import view from "$lib/client/stores/view.store";
   import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import { isProductPage } from "../store/shared.store";
+  import { isProductPage, landing } from "../store/shared.store";
   export let size: Size.sm | Size.md = Size.md;
 </script>
 
 <button
   class="flex items-center gap-1"
-  on:click={() => (window.location.href = "/")}
+  on:click={() => {
+    landing.openLink("/");
+  }}
 >
   {#if topNavBarValues.icon}
     {@const icon = topNavBarValues.icon}

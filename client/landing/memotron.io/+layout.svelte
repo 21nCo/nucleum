@@ -71,9 +71,11 @@
   let metadata: IMetadata = {
     title: "Memotron",
     description:
-      "Memotron is a memory atlas that helps you remember everything.",
-    keywords: "memotron, memory, atlas, remember",
-    url: "https://memotron.app"
+      "Memotron is a memory atlas that helps you remember everything. Personal knowledge management redefined.",
+    keywords:
+      "memotron, memory, atlas, remember, knowledge management, PKM, NCCL PKM system",
+    url: "https://memotron.app",
+    image: "https://cdn.21n.co/memotron/ogImage.png"
   };
   landing.load(urls);
 </script>

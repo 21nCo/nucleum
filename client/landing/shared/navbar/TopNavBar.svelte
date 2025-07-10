@@ -40,7 +40,9 @@
   onMount(() => {
     setIcon();
     // Initialize isStickied based on initial scroll position
-    isStickied = window.scrollY > 50;
+    if (typeof window !== "undefined") {
+      isStickied = window.scrollY > 50;
+    }
   });
 </script>
 

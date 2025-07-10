@@ -1,6 +1,5 @@
 <script lang="ts">
   import view from "$lib/client/stores/view.store";
-  import { cn } from "$lib/client/utils/ui.utils";
   import Button from "../elements/Button.svelte";
   import type { ITestimonial } from "../landing.type";
   import { discordUrl, landing, twitterUrl } from "../store/shared.store";
@@ -47,17 +46,13 @@
       label="Join our Discord"
       type="secondary"
       icon="discord"
-      on:click={() => {
-        window.location.href = discord;
-      }}
+      href={discord}
     />
     <Button
       label="Follow us on X"
       type="secondary"
       icon="twitter"
-      on:click={() => {
-        window.location.href = twitter;
-      }}
+      href={twitter}
     />
   </div>
   <div

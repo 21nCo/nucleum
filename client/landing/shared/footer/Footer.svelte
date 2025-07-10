@@ -217,7 +217,7 @@
           icon="21n-temp"
           size={Size.xl}
           on:click={() => {
-            window.location.href = companyWebsite;
+            landing.openLink(companyWebsite);
           }}
         />
       </div>
