@@ -20,16 +20,29 @@
   };
 
   const fontOptions: FontOption[] = [
-    { label: "Sen", value: "Sen", badge: "Default" },
-    { label: "Space Grotesk", value: "Space Grotesk" },
+    { label: "AR One Sans", value: "AR One Sans" },
+    { label: "Didact Gothic", value: "Didact Gothic" },
+    { label: "Fredoka", value: "Fredoka" },
     { label: "Hanken Grotesk", value: "Hanken Grotesk" },
-    { label: "Sora", value: "Sora" },
-    { label: "Inter", value: "Inter" },
-    { label: "Poppins", value: "Poppins" },
+    { label: "Lexend", value: "Lexend" },
+    { label: "Maven Pro", value: "Maven Pro" },
     { label: "Montserrat", value: "Montserrat" },
     { label: "Noto Sans", value: "Noto Sans" },
     { label: "Nunito", value: "Nunito" },
-    { label: "Teachers", value: "Teachers" }
+    { label: "Outfit", value: "Outfit" },
+    { label: "Oxygen", value: "Oxygen" },
+    { label: "Parkinsans", value: "Parkinsans" },
+    { label: "Poppins", value: "Poppins" },
+    { label: "Quicksand", value: "Quicksand" },
+    { label: "Questrial", value: "Questrial" },
+    { label: "Recursive", value: "Recursive" },
+    { label: "Red Hat Text", value: "Red Hat Text" },
+    { label: "Sen", value: "Sen", badge: "Default" },
+    { label: "Sora", value: "Sora" },
+    { label: "Space Grotesk", value: "Space Grotesk" },
+    { label: "Teachers", value: "Teachers" },
+    { label: "Varela", value: "Varela" },
+    { label: "Varela Round", value: "Varela Round" }
   ];
 
   const dispatch = createEventDispatcher();

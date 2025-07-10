@@ -228,23 +228,18 @@
           label="Finish"
         />
       {/if}
-      <PlayerControl
-        on:click={() => {
-          cleanup();
-          dispatch("cancel");
-        }}
-        icon="ph:x-light"
-        size={recordingState === PlayActionState.NOT_STARTED
-          ? Size.sm
-          : Size.md}
-        type={ButtonVariant.DANGER}
-        style={recordingState === PlayActionState.NOT_STARTED
-          ? ButtonStyle.OUTLINED
-          : ButtonStyle.DEFAULT}
-        label={recordingState === PlayActionState.NOT_STARTED
-          ? undefined
-          : "Cancel"}
-      />
+      {#if !$view.isConstrainedWidth && recordingState === PlayActionState.NOT_STARTED}
+        <PlayerControl
+          on:click={() => {
+            cleanup();
+            dispatch("cancel");
+          }}
+          icon="ph:x-light"
+          size={Size.sm}
+          type={ButtonVariant.DANGER}
+          style={ButtonStyle.OUTLINED}
+        />
+      {/if}
     </div>
   {:else}
     <div class="flex w-full justify-center gap-6">
@@ -286,6 +281,7 @@
         }}
         icon="ph:x-light"
         type={ButtonVariant.DANGER}
+        style={ButtonStyle.OUTLINED}
         label="Cancel"
       />
     </div>
