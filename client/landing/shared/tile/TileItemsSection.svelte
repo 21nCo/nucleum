@@ -74,10 +74,6 @@
       label="See all products"
       icon="ph:arrow-right"
       on:click={() => {
-        document.body.scrollTo({
-          top: 0,
-          behavior: "smooth"
-        });
         setTimeout(() => {
           $isProductsPanelOpen = true;
         }, 100);
