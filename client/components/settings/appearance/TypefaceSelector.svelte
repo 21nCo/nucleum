@@ -50,7 +50,9 @@
   let isOpen = false;
   let triggerRef: HTMLButtonElement;
   let selectedFont =
-    fontOptions.find((font) => font.value === value) || fontOptions[0];
+    fontOptions.find((font) => font.value === value) ||
+    fontOptions.find((font) => font.badge === "Default") ||
+    fontOptions[0];
 
   function handleFontSelect(selectedValue: string) {
     const font = fontOptions.find((f) => f.value === selectedValue);
