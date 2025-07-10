@@ -41,16 +41,14 @@
     {/if}
     {#if item?.title}
       {@const title = item.title}
-      <h1
-        class="text-[28px] mo:text-[20px] leading-10 mo:leading-7 font-extrabold text-left"
-      >
+      <h1 class="text-h3 cw:text-h5 font-medium text-left">
         {title}
       </h1>
     {/if}
   </div>
   {#if item?.description}
     {@const description = item.description}
-    <p class="text-[18px] mo:text-base text-left mo:text-justify text-fgs4">
+    <p class="text-fgs2 text-lb2 text-left mo:text-justify">
       {description}
     </p>
   {/if}

@@ -29,7 +29,13 @@
     <NavMenuItem
       {item}
       {isStickedContext}
-      on:click={() => landing.openLink(item.href)}
+      on:click={() => {
+        if (item.callback) {
+          item.callback();
+        } else {
+          landing.openLink(item.href);
+        }
+      }}
     />
   {/if}
 {/each}
