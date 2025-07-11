@@ -29,7 +29,6 @@
   export let date: Date;
   export let expansionMode: CalendarExpansionMode =
     CalendarExpansionMode.JOURNAL;
-  export let isShowTitleBar: boolean = false;
   export let isRewind: boolean = false;
   export let isCwContext: boolean = false;
   let mdId = generateSimpleRandomId();
@@ -50,14 +49,19 @@
 
   let containerWidth = 0;
 
-  $: layout =
-    containerWidth > 1400
-      ? CalendarColumnLayout.FULL
-      : containerWidth > 900
-        ? CalendarColumnLayout.SPLIT
-        : CalendarColumnLayout.TABS;
+  $: layout = resolveLayout(containerWidth);
 
   $: panels = resolvePanels($appStore.product, layout);
+
+  function resolveLayout(width: number) {
+    if (width > 1400) {
+      return CalendarColumnLayout.FULL;
+    } else if (width > 900) {
+      return CalendarColumnLayout.SPLIT;
+    } else {
+      return CalendarColumnLayout.TABS;
+    }
+  }
 
   /**
    * Notes on timeline:
@@ -128,7 +132,7 @@
 </script>
 
 <div
-  class={cn("flex flex-col gap-4 pb-4 h-full w-full", {
+  class={cn("flex flex-col gap-3 pb-4 h-full w-full", {
     "px-4 pb-4 pt-2": layout !== CalendarColumnLayout.TABS,
     "p-4": layout === CalendarColumnLayout.TABS && !isCwContext
   })}
@@ -137,16 +141,12 @@
     containerWidth = e.width;
   }}
 >
-  {#if layout === CalendarColumnLayout.TABS || isShowTitleBar}
+  {#if layout === CalendarColumnLayout.TABS}
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-2">
         <div class="text-h4 font-medium text-fgs3">
           <!-- {formatDate(date)} -->
-          <DatePicker
-            bind:date
-            on:change={handleDateChange}
-            variant={isCwContext ? "inline" : "wide"}
-          />
+          <DatePicker bind:date on:change={handleDateChange} variant="inline" />
         </div>
         <!-- |
     <div class="text-b2 text-fgs3">
@@ -161,10 +161,15 @@
       />
     </div>
   {/if}
-  <div class="flex gap-6 flex-grow w-full">
+  <div class="flex gap-4 flex-grow w-full">
     {#key date.toISOString()}
       {#if (layout === CalendarColumnLayout.TABS && selectedPanel === CalendarColumnPanel.Timeline) || (layout !== CalendarColumnLayout.TABS && expansionMode === CalendarExpansionMode.JOURNAL)}
-        <CalendarColumnTimeline {date} isExpandable={false} {layout} />
+        <CalendarColumnTimeline
+          {date}
+          isExpandable={false}
+          {layout}
+          on:dateChange={handleDateChange}
+        />
       {/if}
       {#if layout !== CalendarColumnLayout.TABS}
         <Divider orientation={Orientation.Vertical} />
@@ -200,7 +205,12 @@
         />
       {/if}
       {#if layout !== CalendarColumnLayout.TABS && expansionMode === CalendarExpansionMode.TIMELINE}
-        <CalendarColumnTimeline {date} isExpandable={true} {layout} />
+        <CalendarColumnTimeline
+          {date}
+          isExpandable={true}
+          {layout}
+          on:dateChange={handleDateChange}
+        />
       {/if}
     {/key}
   </div>

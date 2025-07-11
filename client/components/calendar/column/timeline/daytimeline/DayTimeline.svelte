@@ -21,6 +21,7 @@
   } from "$lib/client/stores/uiState/uiState.type";
   import { appStore } from "$lib/client/stores/app.store";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
+  import { Product } from "$lib/client/types/product.type";
   export let date: Date = new Date();
   export let data: Array<CalendarTimelineEntry> = [];
   export let layout: CalendarColumnLayout;
@@ -367,7 +368,11 @@
             class="absolute z-20 text-abg text-b3 flex justify-end rounded-md px-2 right-0 whitespace-nowrap bg-aps1"
             style="top: {nowPosition - 10}px;"
             on:click={() => {
-              appStore.runAction(PointronAction.FOCUS_MODAL);
+              const action =
+                $appStore.product === Product.POINTRON
+                  ? PointronAction.FOCUS_MODAL
+                  : PointronAction.FOCUS;
+              appStore.runAction(action);
             }}
           >
             Focusing now...

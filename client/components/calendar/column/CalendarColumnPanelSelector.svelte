@@ -53,6 +53,7 @@
       style={PanelSwitcherStyle.TRAIN}
       size={Size.sm}
       activeItemStrength={PanelSwitcherActiveItemStrength.SUBTLE}
+      on:switch={onPanelSelection}
     />
   {/if}
 </div>

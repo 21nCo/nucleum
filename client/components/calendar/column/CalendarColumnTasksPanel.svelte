@@ -94,7 +94,7 @@
   }
 </script>
 
-<div class="relative w-full h-full">
+<div class="relative w-full h-full overflow-y-auto">
   {#if isRefreshing || tasks.length === 0}
     <EmptyStatusView
       isLoadingState={isRefreshing}

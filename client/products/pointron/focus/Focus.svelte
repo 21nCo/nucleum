@@ -27,6 +27,8 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
   import ComponentShortcutListener from "$lib/client/components/shortcuts/ComponentShortcutListener.svelte";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
+  export let accessMode: ResourceAccessMode = ResourceAccessMode.INLINE;
   let mode: number = 0;
   let isInlineEnabled: boolean = true;
   const manualLogHotKey = {
@@ -125,7 +127,8 @@
         floatingButton={addManualLogButton}
         titleStyle={TextStyle.PANEL_HEADING}
         isProminentDivider={true}
-        extraLargeScreenComponent={$activeSession.isSessionRunning
+        extraLargeScreenComponent={$activeSession.isSessionRunning ||
+        accessMode === ResourceAccessMode.POP
           ? undefined
           : "simpleDigitalClock"}
       >

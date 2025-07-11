@@ -59,7 +59,13 @@
     : items;
   $: isRenderAsDropdown = $view.isConstrainedWidth && isRenderDropdownForCW;
   onMount(() => {
-    if (value === undefined) value = _items[0]?.value;
+    if (
+      value === undefined ||
+      items.find((x) =>
+        typeof x === "string" ? x === value : x.value === value
+      ) === undefined
+    )
+      value = _items[0]?.value;
   });
 
   let parent: any;

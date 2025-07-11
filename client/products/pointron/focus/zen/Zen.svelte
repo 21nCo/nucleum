@@ -132,7 +132,7 @@
       </div>
     {/if}
     {#if isExtraLargeScreen && ((isInline && !fullScreenFocusIsEnabled) || !isInline)}
-      <div class="w-1/4 p-4">
+      <div class="w-1/4 2k:min-w-96 p-4">
         <SessionNotes />
       </div>
     {/if}
