@@ -8,6 +8,7 @@ export enum PointronAction {
   EDIT_TAG = "EDIT_TAG",
   IMPORT_APP_DATA = "IMPORT_APP_DATA",
   CONVERT_TO_SUBGOAL = "CONVERT_TO_SUBGOAL",
+  CONVERT_TO_ROOT_GOAL = "CONVERT_TO_ROOT_GOAL",
   DELETE_GOAL = "DELETE_GOAL",
   EDIT_PRESET = "EDIT_PRESET",
   GOALS_UPDATED = "GOALS_UPDATED",
@@ -42,5 +43,6 @@ export enum PointronAction {
    * The onboarding modal which shows on user signup.
    */
   IMPORT_ONBOARDING = "importonboarding",
-  IMPORT_EXPORT = "importexportpage"
+  IMPORT_EXPORT = "importexportpage",
+  SELECT_PARENT_GOAL = "selectParentGoal"
 }

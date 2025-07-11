@@ -132,6 +132,7 @@ export enum ResourceActionType {
   LINK = "link",
   UNLINK = "unlink",
   ADD_TO = "ADD_TO",
+  MOVE = "move",
   CONVERT = "convert",
   REMOVE_FROM = "REMOVE_FROM",
   EDIT_TITLE = "EDIT_TITLE",
