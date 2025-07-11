@@ -1098,6 +1098,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       if (correspondingGoal) {
         return isSameResource(correspondingGoal.id, id);
       }
+      return false;
     }
   }
 
@@ -1117,7 +1118,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     await focusItemsStore.addTask(taskId, goalId);
     const session = this.get();
     if (!session.isSessionRunning) {
-      this.startSession();
+      await this.startSession();
     }
     await this.startTask(taskId);
   }
