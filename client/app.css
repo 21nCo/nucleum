@@ -91,16 +91,11 @@
 
   input::placeholder {
     font-weight: 350;
-    /* Use lighter if Avenir typeface */
-    /* font-weight: lighter; */
-    /* font-style: italic; */
     color: rgba(var(--colors-fgs2), 0.5);
   }
 
   textarea::placeholder {
     font-weight: 350;
-    /* Use lighter if Avenir typeface */
-    /* font-weight: lighter; */
     color: rgba(var(--colors-fgs2), 0.5);
   }
 

@@ -32,10 +32,9 @@
   import { SearchStore } from "../record/record.store";
   import { Product } from "$lib/client/types/product.type";
   import { goalStore } from "../goals/goal.store";
-  import { resolveIfCurrentFocusItem } from "$lib/client/products/pointron/focus/session.utils";
   import {
-    currentFocusItem,
-    focusItemsStore
+    activeSession,
+    currentFocusItem
   } from "$lib/client/products/pointron/focus/session.store";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
@@ -45,6 +44,7 @@
   export let id: IRecordId;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   export let accessMode: ResourceAccessMode = ResourceAccessMode.POP;
+  export let accessPointId: IRecordId | undefined = undefined;
   let isRefreshing = false;
   let status: IInlineStatus | undefined = undefined;
   let task: ITaskThumb | undefined = undefined;
@@ -58,8 +58,7 @@
   let goal: IGoal | undefined = undefined;
   const searchStore = new SearchStore(Resource.goal);
 
-  $: isCurrentlyFocusing = resolveIfCurrentFocusItem(
-    $focusItemsStore,
+  $: isCurrentlyFocusing = activeSession.isCurrentFocusItem(
     id,
     $currentFocusItem
   );
@@ -353,9 +352,16 @@
             icon="ph:x-circle-light"
             label="Close"
             on:click={() => {
-              appStore.closeResource({
-                accessMode: accessMode
-              });
+              if (accessPoint === ResourceAccessPoint.GOAL) {
+                if (accessPointId)
+                  appStore.toggleSearchParamRecordSpecific(accessPointId, [
+                    "task"
+                  ]);
+              } else {
+                appStore.closeResource({
+                  accessMode: accessMode
+                });
+              }
             }}
           />
         </div>

@@ -183,6 +183,13 @@ export function resolveTaskFocus(
   }
 }
 
+/**
+ * @deprecated - use activeSession.isCurrentFocusItem(id) instead
+ * @param focusItems
+ * @param id
+ * @param currentFocusItem
+ * @returns
+ */
 export function resolveIfCurrentFocusItem(
   focusItems: IFocusItemsStore,
   id: IRecordId,

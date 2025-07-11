@@ -61,6 +61,10 @@
     archivedResourceFilter
   ).length;
 
+  $: completedSubgoalsCount = $goal.children?.filter(
+    (t) => t.status === GoalStatus.COMPLETED
+  ).length;
+
   function onSubGoalClick(id: IRecordId, event?: MouseEvent) {
     appStore.resourceClickHandler(event, id, {
       replaceId: $goal.id
@@ -167,7 +171,7 @@
     {#if $goal.subGoalsLayout !== SubGoalsLayout.STEPS}
       <Button
         icon={isHideCompleted ? "ph:eye-light" : "ph:eye-slash-light"}
-        label={isHideCompleted ? "Show completed" : "Hide completed"}
+        label={`${isHideCompleted ? "Show" : "Hide"} completed (${completedSubgoalsCount})`}
         size={Size.sm}
         style={ButtonStyle.PLAIN}
         on:click={onHideCompletedChange}

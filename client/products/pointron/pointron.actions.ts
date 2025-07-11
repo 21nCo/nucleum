@@ -527,7 +527,6 @@ export const pointronActions: IAction[] = [
       },
       placeholder: "Select a goal to focus",
       callback: (item: any) => {
-        console.log("search action selected id:", { id: item.id });
         activeSession.quickStart(item.id);
       }
     }

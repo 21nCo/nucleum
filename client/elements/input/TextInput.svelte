@@ -37,6 +37,7 @@
   export let height: string = style === InputStyle.PLAIN ? "" : "h-11";
   export let isPreventKeyboardToolbar: boolean = false;
   export let isPreserveKeyboardToolbar: boolean = false;
+  export let isAccentBackground: boolean = false;
   let isFocused: boolean = false;
   export async function focus() {
     await tick();
@@ -225,7 +226,8 @@
           {id}
           class={cn(inputClasses, {
             "h-7": hasControls,
-            "h-12 text-h3": size === Size.lg
+            "h-12 text-h3": size === Size.lg,
+            "placeholder:text-bgs3 placeholder:opacity-70": isAccentBackground
           })}
           bind:value
           on:paste|stopPropagation

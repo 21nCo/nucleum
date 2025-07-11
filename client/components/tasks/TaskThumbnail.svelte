@@ -31,13 +31,12 @@
   import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
   import FocusItemPickOverlay from "$lib/client/products/pointron/focus/elements/focusitem/FocusItemPickOverlay.svelte";
   import {
-    currentFocusItem,
-    focusItemsStore
+    activeSession,
+    currentFocusItem
   } from "$lib/client/products/pointron/focus/session.store";
-  import { resolveIfCurrentFocusItem } from "$lib/client/products/pointron/focus/session.utils";
   import { movingBorder } from "$lib/client/actions/movingBorder.action";
   import { appStore } from "$lib/client/stores/app.store";
-  import { ButtonStyle } from "$lib/client/types/button.type";
+  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   const dispatch = createEventDispatcher();
   export let item: ITaskThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
@@ -56,8 +55,7 @@
     item.dateUnix &&
     compareDates(new Date(item.dateUnix), new Date(), "<");
 
-  $: isCurrentlyFocusing = resolveIfCurrentFocusItem(
-    $focusItemsStore,
+  $: isCurrentlyFocusing = activeSession.isCurrentFocusItem(
     item.id,
     $currentFocusItem
   );
@@ -263,18 +261,38 @@
       {/if}
       {#if isHovering}
         {@const isInlineContext =
-          accessPoint === ResourceAccessPoint.BROWSER &&
+          (accessPoint === ResourceAccessPoint.BROWSER ||
+            accessPoint === ResourceAccessPoint.GOAL) &&
           !$view.isConstrainedWidth}
+        {#if !isCurrentlyFocusing}
+          <Button
+            icon="ph:circle-light"
+            tooltip="Focus now"
+            size={Size.sm}
+            type={ButtonVariant.PRIMARY}
+            style={ButtonStyle.OUTLINED}
+            on:click={() => {
+              activeSession.focusTask(item.id, item.goalId);
+            }}
+          />
+        {/if}
         <Button
           icon={isInlineContext
             ? "ph:arrow-right-light"
             : "ph:arrows-out-light"}
           parentBgIndex={2}
-          label="Open"
+          tooltip="Open"
           size={Size.sm}
           style={ButtonStyle.OUTLINED}
           isPreventMinWidth={true}
           on:click={() => {
+            if (accessPoint === ResourceAccessPoint.GOAL) {
+              if (accessPointId)
+                appStore.toggleSearchParamRecordSpecific(accessPointId, {
+                  task: item.id.toString()
+                });
+              return;
+            }
             appStore.openResource(
               item.id,
               isInlineContext

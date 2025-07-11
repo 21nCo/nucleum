@@ -54,6 +54,7 @@
       control={Control.START}
       isProminent={true}
       on:click={controlClickHandler}
+      {...controlItemProps}
     />
   {:else if $activeSession.type === SessionType.PREDEFINED_INTERVALS}
     <ControlItem
