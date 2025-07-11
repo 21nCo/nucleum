@@ -1,6 +1,5 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
-  import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import { compareDates, isSameDay } from "$lib/client/utils/time.utils";
   import CalendarTileIndicator from "./indicator/CalendarTileIndicator.svelte";
@@ -342,7 +341,6 @@
                         {indicatorRefreshId}
                         data={indicatorData}
                         isActive={isSelected}
-                        view="year"
                       />
                     {/if}
                   </button>

@@ -1,9 +1,12 @@
 <script lang="ts">
-  import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import { createEventDispatcher } from "svelte";
-  import type { ICalendarIndicatorData } from "../calendar.type";
+  import {
+    CalendarTileIndicatorDisplayType,
+    type ICalendarIndicatorData
+  } from "../calendar.type";
   import CalendarTileIndicator from "./indicator/CalendarTileIndicator.svelte";
+  import { resizeListener } from "$lib/client/actions/resize.action";
 
   export let selectedDate: Date;
   export let indicatorData: ICalendarIndicatorData[] = [];
@@ -14,7 +17,8 @@
 
   let isScrolling = false;
   let scrollTimeout: NodeJS.Timeout;
-
+  let containerWidth: number = 0;
+  $: isConstrainedWidth = containerWidth < 600;
   function handleWheel(event: WheelEvent) {
     if (isScrolling) return;
 
@@ -66,7 +70,13 @@
   $: today = new Date();
 </script>
 
-<div class="flex-1 overflow-auto h-full" on:wheel={handleWheel}>
+<div
+  class="flex-1 overflow-auto h-full"
+  on:wheel={handleWheel}
+  use:resizeListener={(e) => {
+    containerWidth = e.width;
+  }}
+>
   <div class="grid grid-cols-7 h-full grid-rows-[auto_1fr_1fr_1fr_1fr_1fr_1fr]">
     {#each weekDays as day}
       <div
@@ -109,7 +119,7 @@
           >
             {day.getDate()}
           </span>
-          {#if isToday}
+          {#if isToday && !isConstrainedWidth}
             <span class="text-b3 p-1"> Today </span>
           {/if}
         </span>
@@ -120,7 +130,9 @@
               isActive={isSelected}
               data={indicatorData}
               {indicatorRefreshId}
-              view="month"
+              type={isConstrainedWidth
+                ? CalendarTileIndicatorDisplayType.DOTS
+                : CalendarTileIndicatorDisplayType.METRICS}
             />
           </div>
         {/if}

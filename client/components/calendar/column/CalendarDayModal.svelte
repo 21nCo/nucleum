@@ -13,7 +13,6 @@
 <CalendarColumn
   {date}
   {scale}
-  isShowTitleBar={true}
   isRewind={true}
   isCwContext={$view.isConstrainedWidth}
 />

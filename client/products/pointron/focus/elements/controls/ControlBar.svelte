@@ -9,8 +9,11 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { SessionUIContext } from "$lib/client/types/pointron/session.type";
   export let context: SessionUIContext = SessionUIContext.DEFAULT;
+  let isOperationInProgress = false;
   $: controlItemProps = { context };
   async function controlClickHandler(event: any) {
+    if (isOperationInProgress) return;
+    isOperationInProgress = true;
     let control = event.detail.control;
     if (control === Control.START) {
       await activeSession.startSession();
@@ -31,6 +34,7 @@
     } else {
       $activeSession.state = SessionState.NOT_STARTED;
     }
+    isOperationInProgress = false;
   }
 </script>
 

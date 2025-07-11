@@ -374,7 +374,7 @@
       {/each}
     </div>
   </div>
-
+  <Divider />
   <div class="flex flex-col w-full default-typeface">
     <table class="w-full text-b3 border-separate border-spacing-0">
       <thead>
