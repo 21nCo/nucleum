@@ -14,27 +14,30 @@
   async function controlClickHandler(event: any) {
     if (isOperationInProgress) return;
     isOperationInProgress = true;
-    let control = event.detail.control;
-    if (control === Control.START) {
-      await activeSession.startSession();
-    } else if (control === Control.BREAK) {
-      await activeSession.startBreak();
-    } else if (control === Control.FINISH) {
-      if ($activeSession.state === SessionState.TIME_IS_UP) {
-        await activeSession.finishSession();
+    try {
+      let control = event.detail.control;
+      if (control === Control.START) {
+        await activeSession.startSession();
+      } else if (control === Control.BREAK) {
+        await activeSession.startBreak();
+      } else if (control === Control.FINISH) {
+        if ($activeSession.state === SessionState.TIME_IS_UP) {
+          await activeSession.finishSession();
+        } else {
+          await activeSession.finishSession();
+        }
+      } else if (control === Control.RESUME || control === Control.SKIPBREAK) {
+        await activeSession.resumeSession();
+      } else if (control === Control.EXTEND) {
+        await activeSession.extendSession();
+      } else if (control === Control.ABANDON) {
+        appStore.runAction(PointronAction.ABANDON_SESSION);
       } else {
-        await activeSession.finishSession();
+        $activeSession.state = SessionState.NOT_STARTED;
       }
-    } else if (control === Control.RESUME || control === Control.SKIPBREAK) {
-      await activeSession.resumeSession();
-    } else if (control === Control.EXTEND) {
-      await activeSession.extendSession();
-    } else if (control === Control.ABANDON) {
-      appStore.runAction(PointronAction.ABANDON_SESSION);
-    } else {
-      $activeSession.state = SessionState.NOT_STARTED;
+    } finally {
+      isOperationInProgress = false;
     }
-    isOperationInProgress = false;
   }
 </script>
 
