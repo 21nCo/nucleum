@@ -60,9 +60,11 @@ import { goalStore } from "$lib/client/components/goals/goal.store";
 import GoalSearchResultItem from "$lib/client/components/goals/GoalSearchResultItem.svelte";
 import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
 import {
+  isSameResource,
   resolveResourceIcon,
   resourceAction,
-  resourceCacheComponentKey
+  resourceCacheComponentKey,
+  resourceInList
 } from "$lib/client/components/flux/resourceStores/resource.utils";
 import ResourceCache from "$lib/client/components/record/ResourceCache.svelte";
 import ResourceBrowser from "$lib/client/components/library/resourceBrowser/ResourceBrowser.svelte";
@@ -75,6 +77,7 @@ import { taskStore } from "$lib/client/components/tasks/task.store";
 import Goal from "$lib/client/components/goals/Goal.svelte";
 import GoalTitleLabelPart from "$lib/client/components/goals/GoalTitleLabelPart.svelte";
 import { AppSearchParam } from "$lib/client/types/appStore.type";
+import type { IGoal } from "$lib/client/components/goals/goal.type";
 
 const isSessionRunningPreCondition = () => get(activeSession).isSessionRunning;
 
@@ -787,5 +790,33 @@ export const pointronActions: IAction[] = [
       resource: Resource.task
     },
     loadingComponent: NodeLoadingPulse
+  },
+  {
+    action: PointronAction.SELECT_PARENT_GOAL,
+    isMeta: true,
+    cmdLabel: "Select parent goal",
+    type: ActionType.SEARCH_CMD,
+    searchActionParams: {
+      searchResultComponent: GoalSearchResultItem,
+      searchCallback: async (searchQuery: string, componentParams?: any) => {
+        const result = await new SearchStore(Resource.goal).select({
+          searchQuery,
+          isIncludeSubItems: true
+        });
+        return result.filter(
+          (goal: IGoal) =>
+            !goal.parent?.some(resourceInList(componentParams.src)) &&
+            !isSameResource(goal, componentParams.src)
+        );
+      },
+      placeholder: "Select a goal",
+      callback: (item: any, componentParams?: any) => {
+        if (componentParams.action === PointronAction.CONVERT_TO_SUBGOAL) {
+          goalStore.convertToSubGoal(componentParams.src, item);
+        } else if (componentParams.action === ResourceActionType.MOVE) {
+          goalStore.moveSubgoal(componentParams.src, item);
+        }
+      }
+    }
   }
 ];

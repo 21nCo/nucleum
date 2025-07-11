@@ -32,6 +32,7 @@
   import { type IInlineStatus } from "$lib/client/types/notification.type";
   import { logger } from "../debug/logger.client";
   import { Size } from "$lib/client/types/size.enum";
+  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   export let id: string;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   export let accessMode: ResourceAccessMode = ResourceAccessMode.POP;
@@ -285,3 +286,20 @@
     </div>
   {/if}
 </CustomColorPropagator>
+<ComponentBaseLayer
+  subscribeToRecords={[id]}
+  on:change={(e) => {
+    try {
+      if ("parent" in e.detail.params.record) {
+        isReady = false;
+        initialize();
+      }
+    } catch (error) {
+      logger.error({
+        at: "Goal.svelte - change subscription error",
+        error,
+        goalId: $goal?.id
+      });
+    }
+  }}
+/>

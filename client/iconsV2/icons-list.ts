@@ -13,7 +13,6 @@ const phosphorIcons = [
   "arrow-elbow-down-left",
   "arrow-elbow-right-up",
   "arrow-elbow-left-up",
-  "arrow-bend-down-left",
   "arrows-left-right",
   "arrows-out",
   "arrows-out-simple",
@@ -39,6 +38,19 @@ const phosphorIcons = [
   "arrow-square-in",
   "arrow-square-up-right",
   "flow-arrow",
+  "arrow-fat-up",
+  "arrow-fat-down",
+  "arrow-fat-line-up",
+  "arrow-fat-line-down",
+  "arrow-fat-lines-up",
+  "arrow-fat-lines-down",
+  "arrow-bend-down-left",
+  "arrow-bend-down-right",
+  "arrow-bend-up-right",
+  "arrow-bend-up-left",
+  "arrow-bend-left-up",
+  "arrow-bend-right-up",
+  "arrow-bend-double-up-right",
 
   //Carets
   "caret-down",
@@ -368,8 +380,6 @@ export const phosphorRatingIcons = [
 
   "thumbs-up",
   "thumbs-down",
-  "arrow-fat-up",
-  "arrow-fat-down",
   "plus-circle",
   "minus-circle",
 
@@ -546,4 +556,4 @@ export const phIcons = {
   // )
 };
 
-export const bundleNumber = 31;
+export const bundleNumber = 32;

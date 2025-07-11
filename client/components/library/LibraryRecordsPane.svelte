@@ -414,6 +414,10 @@
    *
    * For nodes, filters nodes if has isArchived or trashInformation i.e. deleted or archived irrespective of whether its a root node or md block node as md blocks are anyways not present in data. Currently does full refresh for unarchive or undelete which is optimal if the nodes are root nodes.
    *
+   *
+   * For goal merge - children is being listened to handle the cases of conversion of goal to sub goal and sub goal to a root goal etc.
+   *
+   *
    * TODO - undo delete for block nodes case in markdown node - to avoid flickering in the background when editing a markdown node in modal.
    * @param e
    */
@@ -425,7 +429,7 @@
   ) {
     const resource = e.detail.resource;
     const mutation = e.detail.params;
-    logger.debug({
+    logger.log({
       at: "LibraryRecordsPane - onResourceMutation",
       resource,
       ...mutation
@@ -468,7 +472,12 @@
       }
       return;
     }
-    if (mutation.action === PersistenceActionType.MERGE) return;
+    if (
+      mutation.action === PersistenceActionType.MERGE &&
+      resource === Resource.goal
+    ) {
+      if (!("children" in mutation.record)) return;
+    } else if (mutation.action === PersistenceActionType.MERGE) return;
 
     if (
       resource === Resource.node &&
