@@ -172,9 +172,10 @@
           on:debouncedChange={onLabelChange}
           bind:this={labelInputElement}
           bind:value={labelEntry}
-          placeholder="Task label can't be empty"
+          placeholder="Enter task label"
           style={InputStyle.PLAIN}
           size={Size.md}
+          isAccentBackground={isInprogress}
         />
       {:else}
         <div class="text-b2" bind:this={scrollToTask}>{task.label}</div>

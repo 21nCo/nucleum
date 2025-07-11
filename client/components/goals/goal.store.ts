@@ -358,9 +358,7 @@ class GoalActions {
     label: "Focus now",
     icon: "ph:circle-light",
     callback: async () => {
-      if (get(activeSession).isSessionRunning)
-        await activeSession.finishSession({ isQuickStartSwitch: true });
-      await activeSession.quickStart(this.goal.id);
+      await activeSession.focusGoal(this.goal.id);
     }
   };
 
@@ -436,15 +434,20 @@ export function resolveGoalContextMenu(
   };
   const ctx = get(context);
   const viewStore = get(view);
+  const isCurrentlyFocusing = activeSession.isCurrentFocusItem(goal.id);
+  const focusGroup = {
+    group: "focus",
+    items: [
+      ...(isCurrentlyFocusing ? [] : [goalActions.focusNow]),
+      goalActions.pinToQuickFocus()
+    ]
+  };
   return [
     {
       group: "primary",
       items: [...primaryItems]
     },
-    {
-      group: "focus",
-      items: [goalActions.focusNow, goalActions.pinToQuickFocus()]
-    },
+    focusGroup,
     ...((ctx.isEmbed && ctx.embed === Embed.HANDSET) ||
     viewStore.isConstrainedWidth
       ? []

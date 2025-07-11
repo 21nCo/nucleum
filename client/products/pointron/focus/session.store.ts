@@ -1080,11 +1080,55 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     return true;
   }
 
+  isCurrentFocusItem(id: IRecordId, currentFocusItemParam?: ICurrentFocusItem) {
+    if (!this.get().isSessionRunning) return false;
+    const currentFocus = currentFocusItemParam ?? get(currentFocusItem);
+    if (!currentFocus) return false;
+    const resourceTypeOfCurrentFocus = determineResourceType(currentFocus.id);
+    const resourceTypeOfItem = determineResourceType(id);
+    if (
+      resourceTypeOfCurrentFocus === Resource.goal ||
+      resourceTypeOfItem === Resource.task
+    ) {
+      return isSameResource(id, currentFocus);
+    } else if (resourceTypeOfCurrentFocus === Resource.task) {
+      const correspondingGoal = get(focusItemsStore).items.find((x) =>
+        x.tasks?.some(resourceInList(currentFocus))
+      );
+      if (correspondingGoal) {
+        return isSameResource(correspondingGoal.id, id);
+      }
+    }
+  }
+
+  async focusGoal(goalId: IRecordId) {
+    if (this.isCurrentFocusItem(goalId)) return;
+    const session = this.get();
+    if (session.isSessionRunning && !session.isQuickStartOn) {
+      await focusItemsStore.addGoal(goalId);
+      await this.startTask(goalId);
+    } else {
+      await this.quickStart(goalId);
+    }
+  }
+
+  async focusTask(taskId: IRecordId, goalId?: IRecordId) {
+    if (this.isCurrentFocusItem(taskId)) return;
+    await focusItemsStore.addTask(taskId, goalId);
+    const session = this.get();
+    if (!session.isSessionRunning) {
+      this.startSession();
+    }
+    await this.startTask(taskId);
+  }
+
   /**
    * Starts a quick start session for a given goal.
    * @param goalId
    */
   async quickStart(goalId: IRecordId) {
+    if (this.get().isSessionRunning)
+      await activeSession.finishSession({ isQuickStartSwitch: true });
     let n = this.reset();
     focusItemsStore.reset();
     try {

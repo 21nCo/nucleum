@@ -97,7 +97,7 @@
             "hover:bg-bgs3": children?.length > 0
           })}
         >
-          {#if content.icon && (!isIconHovering || children?.length < 1)}
+          {#if content.icon && children?.length < 1}
             <Icon
               icon={content.icon}
               class={cn({

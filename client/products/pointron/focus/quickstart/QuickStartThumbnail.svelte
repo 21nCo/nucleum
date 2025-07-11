@@ -69,8 +69,6 @@
       await refreshFocus();
       isFinishingState = false;
     } else {
-      if ($activeSession.isSessionRunning)
-        await activeSession.finishSession({ isQuickStartSwitch: true });
       await activeSession.quickStart(item.id);
     }
   }

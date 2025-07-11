@@ -11,8 +11,7 @@
   import RecordStatusBanner from "../../record/RecordStatusBanner.svelte";
   import {
     activeSession,
-    currentFocusItem,
-    focusItemsStore
+    currentFocusItem
   } from "$lib/client/products/pointron/focus/session.store";
   import type { IMarkdown } from "$lib/client/components/markdown/md.type";
   import { isEmptyMd } from "../../markdown/markdown.utils";
@@ -21,7 +20,6 @@
   import { Size } from "$lib/client/types/size.enum";
   import { formatDatetime } from "$lib/client/utils/time.utils";
   import { userPreferences } from "../../settings/userPreferences.store";
-  import { resolveIfCurrentFocusItem } from "$lib/client/products/pointron/focus/session.utils";
   import PropertiesPane from "../../collection/properties/PropertiesPane.svelte";
   import { Resource } from "../../flux/resourceStores/resource.enum";
   import { debouncer } from "$lib/client/utils/utils";
@@ -46,9 +44,10 @@
       status: e.detail
     });
   }
-  $: isCurrentlyFocusing =
-    $activeSession.isSessionRunning &&
-    resolveIfCurrentFocusItem($focusItemsStore, goal.id, $currentFocusItem);
+  $: isCurrentlyFocusing = activeSession.isCurrentFocusItem(
+    goal.id,
+    $currentFocusItem
+  );
 
   async function onDescriptionChange(e: CustomEvent) {
     status = {

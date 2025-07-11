@@ -47,6 +47,7 @@
   } from "$lib/client/components/flux/resourceStores/resource.utils";
   import view from "$lib/client/stores/view.store";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   export let item: IManualSessionLogForm;
 
   let previousStartDate: Date = item.startDate;
@@ -91,7 +92,7 @@
           isExpand: true
         }
       );
-      if (result) {
+      if (isValidArrayWithData(result)) {
         recentGoals = state
           .map((x) => result.find(resourceInList(x)))
           .slice(0, $view.isConstrainedWidth ? 3 : 5);

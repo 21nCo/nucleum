@@ -18,7 +18,6 @@
     focusItemsStore
   } from "../../session.store";
   import { getContext } from "svelte";
-  import { resolveIfCurrentFocusItem } from "../../session.utils";
 
   type FocusItemContext = {
     refreshList: () => Promise<void>;
@@ -31,9 +30,10 @@
 
   $: isAdded = $focusItemsStore.items.some(resourceInList(item.id));
 
-  $: isInprogress =
-    $activeSession.isSessionRunning &&
-    resolveIfCurrentFocusItem($focusItemsStore, item.id, $currentFocusItem);
+  $: isInprogress = activeSession.isCurrentFocusItem(
+    item.id,
+    $currentFocusItem
+  );
 
   async function onAdd(e: any) {
     e.stopPropagation();
@@ -46,12 +46,14 @@
   }
 
   async function onStartFocusing(e: any) {
-    onAdd(e);
-    if (!$activeSession.isSessionRunning) {
-      await activeSession.startSession();
+    e.stopPropagation();
+    if (resourceType === Resource.task) {
+      await activeSession.focusTask(item.id, item.goalId);
+    } else if (resourceType === Resource.goal) {
+      await activeSession.focusGoal(item.id);
     }
     isInEditMode.toggle(false);
-    await activeSession.startTask(item.id);
+    refreshList();
   }
 </script>
 
