@@ -7,7 +7,6 @@ import type { IRecordId } from "$lib/client/types/data.type";
 import { Resource } from "../flux/resourceStores/resource.enum";
 import { resourceInList } from "../flux/resourceStores/resource.utils";
 import type { IRecentsStore } from "./record.type";
-import { headingNodeTypes } from "$lib/client/products/memotron/node/node.type";
 import { rootNodeTypeList } from "$lib/client/products/memotron/node/node.type";
 import { logger } from "../debug/logger.client";
 import { resolveResourceStore } from "../flux/resourceStores/store.resolver";
@@ -99,14 +98,6 @@ export class RecentsStore extends ObservableStore<IRecentsStore> {
     const resourceStore = resolveResourceStore(resource);
     const result = await resourceStore?.selectMany(
       {
-        ...(resource === Resource.node
-          ? {
-              filters: {
-                contentType: rootNodeTypeList.concat(headingNodeTypes),
-                metaType: false
-              }
-            }
-          : {}),
         orderBy: {
           modifiedAt: "desc"
         },

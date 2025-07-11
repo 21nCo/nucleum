@@ -150,7 +150,14 @@ export function dragSelection(node: HTMLElement, config: DragSelectionConfig) {
   }
 
   function handleMouseDown(event: MouseEvent) {
-    if (!event.target) return;
+    if (
+      !event.target ||
+      event.target instanceof HTMLInputElement ||
+      event.target instanceof HTMLTextAreaElement ||
+      (event.target instanceof HTMLElement &&
+        event.target.classList.contains("inline-markdown"))
+    )
+      return;
 
     const clickedElement = event.target as HTMLElement;
     if (clickedElement.closest(selectableSelector)) return;
