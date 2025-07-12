@@ -16,6 +16,10 @@
   import { Theme } from "$lib/client/types/appearance.type";
   import { resolveResourceActionIcon } from "../flux/resourceStores/resource.utils";
   import { enumToString } from "$lib/shared/utils/text.utils";
+  import { isSameDay } from "$lib/client/utils/time.utils";
+  import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
+  import { tooltip } from "$lib/client/actions/popover.action";
+
   const dispatch = createEventDispatcher();
   export let context: IMultiSelectContext;
   export let subContext: string = "";
@@ -87,6 +91,16 @@
     label: "Mark as completed",
     icon: "ph:check-square-light"
   };
+  const moveToToday = {
+    action: "moveToToday",
+    label: "Move to today",
+    icon: "ph:arrow-bend-up-right-light"
+  };
+  const setDate = {
+    action: "setDate",
+    label: "Set date",
+    icon: "ph:calendar-blank-light"
+  };
   const convertAction = {
     action: ResourceActionType.CONVERT,
     label: "Turn into",
@@ -139,9 +153,33 @@
         resolveAction(ResourceActionType.DUPLICATE),
         resolveAction(ResourceActionType.DELETE)
       );
+    } else if (
+      context.resource === Resource.task &&
+      (context.accessPoint === ResourceAccessPoint.CALENDAR ||
+        context.accessPoint === ResourceAccessPoint.GOAL)
+    ) {
+      actions.push(completeAction);
+      actions.push(setDate);
+      if (context.accessPoint === ResourceAccessPoint.CALENDAR) {
+        const date = new Date(subContext);
+        const isToday = isSameDay(date, new Date());
+        if (!isToday) actions.push(moveToToday);
+      }
+      actions.push(resolveAction(ResourceActionType.DELETE));
     }
 
     rightActions.push(selectAllAction, clearSelectionAction);
+  }
+
+  function resolveCountLabel(count: number) {
+    if (count === 0) return 0;
+    const itemLabel =
+      context.resource === Resource.node &&
+      context.accessPoint === ResourceAccessPoint.MARKDOWN
+        ? "block"
+        : context.resource;
+    if (count === 1) return `1 ${itemLabel}`;
+    return `${count} ${itemLabel}s`;
   }
 </script>
 
@@ -157,23 +195,43 @@
   )}
 >
   <span class="flex whitespace-nowrap">
-    Selected: {$multiSelectStore.length}
+    Selected: {resolveCountLabel($multiSelectStore.length)}
   </span>
   <span class="flex gap-2 overflow-x-auto">
     {#each actions as action}
-      <Button
-        label={isExpandedMode ? action.label : undefined}
-        tooltip={isExpandedMode ? undefined : action.label}
-        icon={action.icon}
-        type={action.label === "Delete"
-          ? ButtonVariant.DANGER
-          : ButtonVariant.SECONDARY}
-        {parentBgIndex}
-        {...buttonProps}
-        on:click={() => {
-          dispatch("action", action.action);
-        }}
-      />
+      {#if action.action === "setDate"}
+        <div
+          use:tooltip={{
+            text: "Set date"
+          }}
+        >
+          <DatePicker
+            variant="icon-only"
+            on:change={(e) => {
+              dispatch("action", {
+                action: action.action,
+                data: e.detail
+              });
+            }}
+          />
+        </div>
+      {:else}
+        <Button
+          label={isExpandedMode ? action.label : undefined}
+          tooltip={isExpandedMode ? undefined : action.label}
+          icon={action.icon}
+          type={action.label === "Delete"
+            ? ButtonVariant.DANGER
+            : ButtonVariant.SECONDARY}
+          {parentBgIndex}
+          {...buttonProps}
+          on:click={() => {
+            dispatch("action", {
+              action: action.action
+            });
+          }}
+        />
+      {/if}
     {/each}
   </span>
   <span class="flex gap-2 items-center justify-end">
@@ -190,7 +248,9 @@
           } else if (action.action === "clearSelection") {
             $multiSelectStore = [];
           } else {
-            dispatch("action", action.action);
+            dispatch("action", {
+              action: action.action
+            });
           }
         }}
       />

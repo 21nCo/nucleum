@@ -25,6 +25,7 @@
     | "inline-with-icon"
     | "use-time-period-picker" = "wide";
   export let id: string = "";
+  export let size: Size.sm | Size.md | Size.lg = Size.md;
   let ref: any;
   /**
    * @deprecated
@@ -126,7 +127,10 @@
     class={cn(
       "relative flex items-center gap-1 justify-center default-typeface",
       {
-        "p-1 hover:bg-bgs2 rounded-md": variant === "icon-only",
+        "flex items-center justify-center border border-brs3 rounded-md hover:bg-bgs2":
+          variant === "icon-only",
+        "p-1": variant === "icon-only" && size === Size.sm,
+        "p-1.5": variant === "icon-only" && size !== Size.sm,
         "underline-dotted": variant === "inline"
       }
     )}
@@ -145,6 +149,14 @@
           dispatch("change", val);
           hidePopover();
         }
+      }
+    }}
+    on:change={(e) => {
+      isPopoverVisible = e.detail?.open;
+      if (isPopoverVisible) {
+        dispatch("opened");
+      } else {
+        dispatch("closed");
       }
     }}
   >

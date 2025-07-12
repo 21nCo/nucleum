@@ -89,7 +89,7 @@
     const data = e.detail;
     const mutation = data.params;
     if (!data || !mutation) return;
-    // console.log({ at: "onMutation", data, mutation });
+    //console.log({ at: "onMutation", data, mutation });
 
     const isMergeAction = [
       PersistenceActionType.MERGE,
@@ -125,9 +125,13 @@
     )
       return;
 
-    const isSubscribedMergePropCase = subscriptionPropsForMergeAction?.some(
-      (x) => mutation?.record?.[x] !== undefined
-    );
+    const isSubscribedMergePropCase =
+      subscriptionPropsForMergeAction?.some(
+        (x) => mutation?.record?.[x] !== undefined
+      ) ||
+      subscriptionPropsForMergeAction?.some((x) =>
+        mutation?.records?.some((y: unknown) => y?.[x] !== undefined)
+      );
     if (isSubscribedMergePropCase) {
       dispatch("change", data);
     }

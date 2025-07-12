@@ -177,9 +177,7 @@ export function resolveTaskContextMenu(
     ...(accessPoint !== ResourceAccessPoint.SELF
       ? [taskActions.openTask()]
       : []),
-    ...(accessPoint !== ResourceAccessPoint.CALENDAR
-      ? [resourceActions.select(accessPoint, params?.accessPointId)]
-      : []),
+    resourceActions.select(accessPoint, params?.accessPointId),
     ...(product === Product.POINTRON || product === Product.NUCLEUS
       ? [taskActions.editGoal()]
       : []),

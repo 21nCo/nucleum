@@ -7,7 +7,10 @@
   import AdvancedFocusModeSwitcher from "../modeSwitcher/AdvancedFocusModeSwitcher.svelte";
   import ComposeDuration from "./ComposeDuration.svelte";
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
-  import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
+  import {
+    PanelSwitcherActiveItemStrength,
+    PanelSwitcherStyle
+  } from "$lib/client/types/switcher.enum";
   import PresetPicker from "./PresetPicker.svelte";
   import { onMount } from "svelte";
   import { SessionCompositionType } from "$lib/client/types/pointron/sessionComposition.type";
@@ -83,6 +86,7 @@
             items={["Presets", "Custom"]}
             value={selectedMode === 0 ? "Presets" : "Custom"}
             on:switch={onModeSwitch}
+            activeItemStrength={PanelSwitcherActiveItemStrength.SUBTLE}
           />
           <!-- <AdvancedFocusModeSwitcher bind:selectedMode /> -->
         </div>

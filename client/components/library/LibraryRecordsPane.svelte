@@ -165,10 +165,12 @@
     $multiSelectStore = data.map((x) => x.id);
   }
 
-  async function onBulkAction(e: CustomEvent<string>) {
+  async function onBulkAction(
+    e: CustomEvent<{ action: string; data?: unknown }>
+  ) {
     try {
       const editor = new BulkEditor(resource, multiSelectStore);
-      await editor.run(e.detail);
+      await editor.run(e.detail.action, e.detail.data);
     } catch (e) {
       toasts.error("Failed to perform bulk action");
     }

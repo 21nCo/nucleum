@@ -513,10 +513,12 @@
     }
   }
 
-  async function onBulkAction(e: CustomEvent<string>) {
+  async function onBulkAction(
+    e: CustomEvent<{ action: string; data?: unknown }>
+  ) {
     try {
       const editor = new BulkEditor(Resource.node, multiSelectStore);
-      const result = await editor.run(e.detail);
+      const result = await editor.run(e.detail.action, e.detail.data);
       if (result) {
         await refresh();
       }

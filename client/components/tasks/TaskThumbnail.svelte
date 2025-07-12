@@ -23,7 +23,7 @@
   import ResourceThumbnailContextMenu from "../record/thumbnail/ResourceThumbnailContextMenu.svelte";
   import view from "$lib/client/stores/view.store";
   import { createEventDispatcher } from "svelte";
-  import { popover } from "$lib/client/actions/popover.action";
+  import { popover, tooltip } from "$lib/client/actions/popover.action";
   import AbsoluteTimeRangePopoverV2 from "$lib/client/elements/datetime/absolute/AbsoluteTimeRangePopoverV2.svelte";
   import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
   import { generateMiniRandomId } from "$lib/shared/utils/crypto.utils";
@@ -37,6 +37,8 @@
   import { movingBorder } from "$lib/client/actions/movingBorder.action";
   import { appStore } from "$lib/client/stores/app.store";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
+  import { Resource } from "../flux/resourceStores/resource.enum";
+  import { resolveMultiSelectStore } from "../flux/resourceStores/resource.store";
   const dispatch = createEventDispatcher();
   export let item: ITaskThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
@@ -59,6 +61,13 @@
     item.id,
     $currentFocusItem
   );
+
+  $: multiSelectContext = {
+    resource: Resource.task,
+    accessPoint,
+    accessPointId
+  };
+  $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
 
   const instanceId = generateMiniRandomId();
 
@@ -138,7 +147,8 @@
   >
     <div
       class={cn("flex", {
-        "self-start": item.goal && accessPoint !== ResourceAccessPoint.GOAL
+        "self-start": item.goal && accessPoint !== ResourceAccessPoint.GOAL,
+        "opacity-0": $multiSelectStore.length > 0
       })}
     >
       <TaskCheckbox
@@ -209,17 +219,14 @@
     {#if accessPoint !== ResourceAccessPoint.PICKER}
       <div class="flex flex-col items-end">
         {#if item.dateUnix && !isHovering && !isCurrentlyFocusing}
-          <button
+          <div
             class={cn("text-b3 userdata", {
               "text-ars1": isOverdue,
               "text-fgs3": !isOverdue
             })}
-            on:click|stopPropagation={() => {
-              isShowDatePickerOnCw = true;
-            }}
           >
             Due: {formatDate(item.dateUnix)}
-          </button>
+          </div>
         {/if}
 
         {#if item.completedAtUnix && !isHovering && !$view.isConstrainedWidth}
@@ -241,25 +248,7 @@
         {/if}
       </div>
 
-      {#if isDatePickerOpen}
-        <div class="flex gap-2 shrink-0">
-          <DatePicker
-            date={item.dateUnix ? new Date(item.dateUnix) : undefined}
-            id={instanceId}
-            placeholder="Set date"
-            on:change={(e) => {
-              onDateChange(e.detail);
-            }}
-            on:opened={() => {
-              isDatePickerOpen = true;
-            }}
-            on:closed={() => {
-              isDatePickerOpen = false;
-            }}
-          />
-        </div>
-      {/if}
-      {#if isHovering}
+      {#if isHovering || isDatePickerOpen}
         {@const isInlineContext =
           (accessPoint === ResourceAccessPoint.BROWSER ||
             accessPoint === ResourceAccessPoint.GOAL) &&
@@ -276,6 +265,29 @@
             }}
           />
         {/if}
+        <div
+          class="flex gap-2 shrink-0"
+          use:tooltip={{
+            text: "Set date",
+            delay: 0
+          }}
+        >
+          <DatePicker
+            date={item.dateUnix ? new Date(item.dateUnix) : undefined}
+            id={instanceId}
+            variant="icon-only"
+            size={Size.sm}
+            on:change={(e) => {
+              onDateChange(e.detail);
+            }}
+            on:opened={() => {
+              isDatePickerOpen = true;
+            }}
+            on:closed={() => {
+              isDatePickerOpen = false;
+            }}
+          />
+        </div>
         <Button
           icon={isInlineContext
             ? "ph:arrow-right-light"
