@@ -70,6 +70,7 @@
   import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
   import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
+  import { dragSelection } from "$lib/client/actions/dragSelection.action";
   export let goalId: IRecordId | undefined = undefined;
   export let collectionId: IRecordId | undefined = undefined;
   export let accessPoint: ResourceAccessPoint | undefined = undefined;
@@ -92,7 +93,7 @@
   let dateSelectionPopoverRef: HTMLDivElement;
   let addNewTaskInlineRef: AddNewTaskInline | undefined;
   let isRefreshing = false;
-
+  let isInSelectionMode = false;
   $: multiSelectContext = {
     resource: Resource.task,
     accessPoint: resolveAccessPoint(),
@@ -255,10 +256,13 @@
     $multiSelectStore = tasks.map((x) => x.id);
   }
 
-  async function onBulkAction(e: CustomEvent<string>) {
+  async function onBulkAction(
+    e: CustomEvent<{ action: string; data?: unknown }>
+  ) {
     try {
       const editor = new BulkEditor(Resource.task, multiSelectStore);
-      await editor.run(e.detail);
+      await editor.run(e.detail.action, e.detail.data);
+      refresh();
     } catch (e) {
       toasts.error("Failed to perform bulk action");
     }
@@ -286,6 +290,21 @@
     "p-4": accessPoint === ResourceAccessPoint.LIBRARY,
     "px-4": accessPoint === ResourceAccessPoint.BROWSER
   })}
+  id="task-library"
+  use:dragSelection={{
+    selectableSelector: "div[id^='thumbnail-']",
+    containerId: "task-library",
+    onSelectionChange: (elements, ids) => {
+      if (isInSelectionMode) {
+        $multiSelectStore = [
+          ...new Set([...($multiSelectStore ?? []), ...ids])
+        ];
+      } else {
+        isInSelectionMode = true;
+        $multiSelectStore = ids;
+      }
+    }
+  }}
 >
   <LibrarySubTypeSwitcher
     resource={Resource.task}

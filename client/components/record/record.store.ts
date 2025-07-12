@@ -729,14 +729,14 @@ export class BulkEditor {
     return result;
   }
 
-  async run(action: string) {
+  async run(action: string, data?: unknown) {
     let isResetItems = false;
     try {
       if (this.resource === Resource.everything) return;
       const items = this.multiSelectStore.get();
       const accessPointId = this.multiSelectStore.context.accessPointId;
       const accessPoint = this.multiSelectStore.context.accessPoint;
-      logger.debug({
+      logger.log({
         at: "BulkEditor.run",
         action,
         items,
@@ -935,8 +935,30 @@ export class BulkEditor {
             );
             onSuccess(action, items.length, this.resource);
             break;
+          case "moveToToday":
+            const dateUnix = resolveUnixTimestamp(new Date());
+            await taskStore.bulkModify(
+              items,
+              {
+                dateUnix
+              },
+              additionalParams
+            );
+            onSuccess(action, items.length, this.resource);
+            break;
+          case "setDate":
+            const targetDateUnix = resolveUnixTimestamp(data as Date);
+            await taskStore.bulkModify(
+              items,
+              {
+                dateUnix: targetDateUnix
+              },
+              additionalParams
+            );
+            onSuccess(action, items.length, this.resource);
+            break;
           case "delete":
-            await goalStore.bulkTrash(items, additionalParams);
+            await taskStore.bulkTrash(items, additionalParams);
             onSuccess(action, items.length, this.resource);
             break;
         }
@@ -957,6 +979,7 @@ export class BulkEditor {
 
     function resolveMessage(action: string, count: number, resource: Resource) {
       let prefix = "";
+      const itemsLabel = `${count} ${resource}${count > 1 ? "s" : ""}`;
       switch (action) {
         case "star":
           prefix = "Starred";
@@ -976,8 +999,13 @@ export class BulkEditor {
         case "unlink":
           prefix = "Unlinked";
           break;
+        case "setDate":
+          return `Date changed for ${itemsLabel} successfully`;
+          break;
+        case "moveToToday":
+          return `Moved ${itemsLabel} to today`;
       }
-      return `${prefix} ${count} ${resource}${count > 1 ? "s" : ""} successfully`;
+      return `${prefix} ${itemsLabel} successfully`;
     }
   }
 }

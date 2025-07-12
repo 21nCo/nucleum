@@ -7,7 +7,7 @@
     ResourceActionType
   } from "../../flux/resourceStores/resource.type";
   import { Resource } from "../../flux/resourceStores/resource.enum";
-  import { SearchStore } from "../../record/record.store";
+  import { BulkEditor, SearchStore } from "../../record/record.store";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { resourceAction } from "../../flux/resourceStores/resource.utils";
@@ -29,12 +29,18 @@
     UIState,
     UIStateScope
   } from "$lib/client/stores/uiState/uiState.type";
+  import { resolveMultiSelectStore } from "../../flux/resourceStores/resource.store";
+  import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
+  import BulkEditBar from "../../record/BulkEditBar.svelte";
+  import { toasts } from "$lib/client/stores/notification.store";
+  import { dragSelection } from "$lib/client/actions/dragSelection.action";
   export let date: Date;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.CALENDAR;
   let isRefreshing = false;
   let tasks: ITaskThumb[] = [];
   let completedTasksCount = 0;
   let showCompletedTasks = refreshShowCompletedTasksState();
+  let isInSelectionMode = false;
   onMount(async () => {
     await refreshTimeline();
   });
@@ -47,6 +53,12 @@
       }) ?? false
     );
   }
+
+  $: multiSelectContext = {
+    resource: Resource.task,
+    accessPoint
+  };
+  $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
 
   async function refreshTimeline() {
     isRefreshing = true;
@@ -92,9 +104,42 @@
     });
     loadTasks();
   }
+
+  function onSelectAll() {
+    $multiSelectStore = tasks.map((x) => x.id);
+  }
+
+  async function onBulkAction(
+    e: CustomEvent<{ action: string; data?: unknown }>
+  ) {
+    try {
+      const editor = new BulkEditor(Resource.task, multiSelectStore);
+      await editor.run(e.detail.action, e.detail.data);
+      refreshTimeline();
+    } catch (e) {
+      toasts.error("Failed to perform bulk action");
+    }
+  }
 </script>
 
-<div class="relative w-full h-full overflow-y-auto">
+<div
+  class="relative w-full h-full overflow-y-auto"
+  id="calendar-tasks-panel"
+  use:dragSelection={{
+    selectableSelector: "div[id^='thumbnail-']",
+    containerId: "calendar-tasks-panel",
+    onSelectionChange: (elements, ids) => {
+      if (isInSelectionMode) {
+        $multiSelectStore = [
+          ...new Set([...($multiSelectStore ?? []), ...ids])
+        ];
+      } else {
+        isInSelectionMode = true;
+        $multiSelectStore = ids;
+      }
+    }
+  }}
+>
   {#if isRefreshing || tasks.length === 0}
     <EmptyStatusView
       isLoadingState={isRefreshing}
@@ -166,6 +211,16 @@
     /> -->
   {/if}
 </div>
+{#if $multiSelectStore.length > 0}
+  <BottomFloat zIndex="z-30">
+    <BulkEditBar
+      context={multiSelectContext}
+      subContext={date.toISOString()}
+      on:selectAll={onSelectAll}
+      on:action={onBulkAction}
+    />
+  </BottomFloat>
+{/if}
 <ComponentBaseLayer
   subscribeToResource={new Set([Resource.task])}
   subscriptionPropsForMergeAction={[
