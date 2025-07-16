@@ -32,6 +32,7 @@
     { label: "Outfit", value: "Outfit" },
     { label: "Oxygen", value: "Oxygen" },
     { label: "Parkinsans", value: "Parkinsans" },
+    { label: "Plus Jakarta Sans", value: "Plus Jakarta Sans" },
     { label: "Poppins", value: "Poppins" },
     { label: "Quicksand", value: "Quicksand" },
     { label: "Questrial", value: "Questrial" },
