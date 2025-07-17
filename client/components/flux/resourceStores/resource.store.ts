@@ -14,7 +14,8 @@ import {
   type IResourceSelectParams,
   type IRecordId,
   type IResourceSelectAdditionalParams,
-  type IResourceSelectFilters
+  type IResourceSelectFilters,
+  type IResourceSelectProperties
 } from "../../../types/data.type";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { ObservableStore } from "../../../stores/client.store";
@@ -678,20 +679,26 @@ export class ResourceStore<T extends IResource> implements IStore {
     else return result.filter(activeResourceFilter);
   }
 
-  select(resourceId: IRecordId, properties?: string[], signal?: AbortSignal) {
+  select(
+    resourceId: IRecordId,
+    properties?: IResourceSelectProperties,
+    params?: {
+      signal?: AbortSignal;
+    }
+  ) {
     if (this.isExtensionEnvironment) {
       return extensionFlux({
         method: FluxMethod.SELECT,
         args: {
           resourceId,
           properties,
-          signal
+          signal: params?.signal
         }
       });
     }
     return flux.select(resourceId, properties, {
       isCloudOnlyResource: this.isCloudOnlyResource,
-      signal
+      signal: params?.signal
     });
   }
 

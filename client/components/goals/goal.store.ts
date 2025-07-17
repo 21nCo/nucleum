@@ -54,10 +54,8 @@ class GoalStore extends ResourceStore<IGoal> {
     additionalParams?: IResourceSelectAdditionalParams
   ) {
     const expandedProps = ["*", "(select * from $parent.parent) as parent"];
-    const properties = [
-      ...(additionalParams?.isExpand ? expandedProps : []),
-      ...(params?.properties ?? [])
-    ];
+    const properties = [...(params?.properties ?? [])];
+    const expansionProps = additionalParams?.isExpand ? ["parent"] : [];
     const filters = {
       ...(params?.filters ?? {}),
       type:
@@ -76,6 +74,7 @@ class GoalStore extends ResourceStore<IGoal> {
     params = {
       ...(params ?? {}),
       properties,
+      expansionProps,
       filters
     };
     return super.selectMany(params, additionalParams);
@@ -391,15 +390,18 @@ export class ActiveGoalStore extends CollectibleStore<IActiveGoal, GoalStore> {
   ) {
     logger.log({ at: "ActiveGoalStore.init", id: this.id });
     try {
-      const result = await this.resourceStore.select(this.id, [
+      const oldProps = [
         "*",
         "(select * from $parent.children) as children",
         "(select * from $parent.parent) as parent",
         "(select id from task where goalId is $parent.id) as tasks",
         "->link.* as outlinks",
         "<-link.* as inlinks"
-      ]);
-
+      ];
+      const result = await this.resourceStore.select(this.id, {
+        expand: ["children", "parent"]
+      });
+      //TODO - tasks, links in afterInit
       if (!result) {
         this.set({
           id: this.id,
@@ -414,8 +416,8 @@ export class ActiveGoalStore extends CollectibleStore<IActiveGoal, GoalStore> {
         return;
       }
       const collections: IRecordId[] = result.outlinks
-        .filter((x: any) => x.out.tb === Resource.collection)
-        .map((x: any) => x.out);
+        ?.filter((x: any) => x.out.tb === Resource.collection)
+        ?.map((x: any) => x.out);
       const types = await collectionStore.resolveTypes(collections);
 
       console.log({

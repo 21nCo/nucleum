@@ -29,7 +29,8 @@ import {
   type IMutationParamsv2,
   type IPrimitiveDbDataType,
   type IRecordId,
-  type IResourceSelectParams
+  type IResourceSelectParams,
+  type IResourceSelectProperties
 } from "../../types/data.type";
 import { interceptSurrealResponse } from "../../utils/utils";
 import { LogType } from "$lib/client/components/debug/debug.type";
@@ -755,7 +756,7 @@ export class SurrealPersistence implements IPersistence {
    */
   async select(
     resourceId: IRecordId,
-    properties?: string[],
+    properties?: IResourceSelectProperties,
     signal?: AbortSignal
   ): Promise<any> {
     try {
@@ -772,7 +773,7 @@ export class SurrealPersistence implements IPersistence {
       }
 
       const query = resolveSelectQuery(resourceId, properties);
-      const logResource: Resource = Resource.everything;
+      const logResource: Resource = Resource.goal;
       if (resourceId.toString().includes(logResource)) {
         logger.debug({ at: "SurrealPersistence.select", query, resourceId });
         console.time(

@@ -13,7 +13,8 @@ import {
   type IMutation,
   type IRecordId,
   IResourceFilterOperator,
-  IResourceFilterDateGrouping
+  IResourceFilterDateGrouping,
+  type IResourceSelectProperties
 } from "$lib/client/types/data.type";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { generateRandomId } from "./crypto.utils";
@@ -353,22 +354,35 @@ export function resolveMutationQueryV2(mutation: IMutation) {
 
 export function resolveSelectQuery(
   resourceId: IRecordId,
-  properties?: string[]
+  properties?: IResourceSelectProperties
 ) {
-  const props = properties ?? [];
-  const selectClause =
-    props.length > 0 ? `SELECT ${props.join(", ")}` : "SELECT *";
-  return `${selectClause} FROM ONLY ${resourceId};`;
+  const props =
+    properties && properties?.select && properties?.select?.length > 0
+      ? properties.select
+      : ["*"];
+  const expansionProps = (properties?.expand ?? []).map(
+    (x) => `(select * from $parent.${x}) as ${x}`
+  );
+  const allProperties = [...props, ...expansionProps];
+  return `SELECT ${allProperties.join(", ")} FROM ONLY ${resourceId};`;
 }
 
 export function resolveSelectManyQuery(
   resource: Resource,
   params?: IResourceSelectParams
 ) {
-  const properties = params?.properties ?? [];
+  const properties =
+    params?.properties &&
+    params?.properties?.select &&
+    params?.properties?.select?.length > 0
+      ? params.properties.select
+      : ["*"];
+  const expansionProps = (params?.properties?.expand ?? []).map(
+    (x) => `${x}.* as ${x}`
+  );
+  const allProperties = [...properties, ...expansionProps];
   const whereClause = generateWhereClause(resource, params);
-  const selectClause =
-    properties.length > 0 ? `SELECT ${properties.join(", ")}` : "SELECT *";
+  const selectClause = `SELECT ${allProperties.join(", ")}`;
 
   let query = `${selectClause} FROM ${resource} ${whereClause}`;
   if (
@@ -453,12 +467,9 @@ function generateWhereClause(
     conditions.push(whereClause.join(" AND "));
   }
 
-  if (params?.searchType === SearchType.SEMANTIC && params?.search) {
+  if (params?.search?.type === SearchType.SEMANTIC && params?.search) {
     conditions.push(
-      generateSemanticSearchClause(
-        params.search.queryEmbedding,
-        params.semanticSearchTopK
-      )
+      generateSemanticSearchClause(params.search.queryEmbedding, params.limit)
     );
   } else if (params?.search) {
     conditions.push(generateSearchClause(params.search));

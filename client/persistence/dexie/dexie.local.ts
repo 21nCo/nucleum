@@ -15,7 +15,9 @@ import {
   type IRecordId,
   type IResourceFilter,
   type IResourceFilterGroup,
-  type IResourceSelectParams
+  type IResourceSearch,
+  type IResourceSelectParams,
+  type IResourceSelectProperties
 } from "$lib/client/types/data.type";
 import { LocalDexie } from "$local/local";
 import type { Collection, Table } from "dexie";
@@ -26,11 +28,8 @@ type QueryableType = Table | Collection;
 export class DexiePersistence implements IPersistence {
   instance: LocalDexie | undefined = undefined;
   userId: string = "";
-  remote: RemotePersistenceProvider;
 
-  constructor(remote: RemotePersistenceProvider) {
-    this.remote = remote;
-  }
+  constructor() {}
 
   async initialize(params: IPersistenceInitParams): Promise<number> {
     const user = params.userId ?? params.dapId;
@@ -299,7 +298,7 @@ export class DexiePersistence implements IPersistence {
 
   private applySearch(
     collection: Collection,
-    search: { query: string; properties?: string[]; isCaseSensitive?: boolean }
+    search: IResourceSearch
   ): Collection {
     const {
       query: searchQuery,
@@ -356,14 +355,8 @@ export class DexiePersistence implements IPersistence {
 
   select(
     resourceId: IRecordId,
-    properties?: string[],
-    signal?: AbortSignal
+    properties?: IResourceSelectProperties
   ): Promise<any> | undefined {
-    // Check if operation was aborted before starting
-    if (signal?.aborted) {
-      throw new Error("Operation aborted");
-    }
-
     const resource = this.resolveResource(resourceId);
     // const id = this.resolveId(resourceId);
     const id = resourceId.toString();

@@ -90,15 +90,16 @@ class NodeStore extends ResourceStore<INode> {
       "(select * from $parent.mdParent) as mdParent",
       "search::highlight('**', '**', 2, false) AS bodySearch"
     ];
-    const properties = [
-      ...(additionalParams?.isExpand ? expandedProps : []),
-      ...(params?.properties ?? [])
-    ];
+    const expansionProps = additionalParams?.isExpand
+      ? ["parent", "file", "mdParent"]
+      : [];
+    const properties = [...(params?.properties ?? [])];
     if (additionalParams?.isQueryAsIs) {
       return super.selectMany(
         {
           ...(params ?? {}),
-          properties
+          properties,
+          expansionProps
         },
         additionalParams
       );
@@ -137,6 +138,7 @@ class NodeStore extends ResourceStore<INode> {
     params = {
       ...(params ?? {}),
       properties,
+      expansionProps,
       filters
     };
     return super.selectMany(params, additionalParams);
@@ -160,12 +162,16 @@ class NodeStore extends ResourceStore<INode> {
   async fetch(nodeId: IRecordId) {
     // const query = `fn::memotron::node::fetch(${nodeId})`;
     // const response = await flux.selectByQuery(query);
-    const response = await super.select(nodeId, [
+    const oldProps = [
       "*",
       "parent.* as parent",
       "file.* as file",
       "(fn::memotron::node::children($parent.children)) as children"
-    ]);
+    ];
+    const response = await super.select(nodeId, {
+      expand: ["parent", "file"],
+      recurse: ["children"]
+    });
     logger.debug({ at: "fetch node", response });
     return response;
   }

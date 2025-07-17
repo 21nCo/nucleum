@@ -6,7 +6,8 @@ import type {
 import type {
   IMutationParamsv2,
   IRecordId,
-  IResourceSelectParams
+  IResourceSelectParams,
+  IResourceSelectProperties
 } from "../types/data.type";
 
 export enum ClientStorageKey {
@@ -91,8 +92,7 @@ export interface IPersistence {
 
   select(
     resourceId: IRecordId,
-    properties?: string[],
-    signal?: AbortSignal
+    properties?: IResourceSelectProperties
   ): Promise<any> | undefined;
 }
 
@@ -116,7 +116,11 @@ export enum PersistenceProvider {
   /**
    * RxDb supports many persistence layers and also replication
    */
-  RXDB = "RXDB"
+  RXDB = "RXDB",
+  /**
+   * Direct indexedDb implementation.
+   */
+  INDEXEDDB = "INDEXEDDB"
 }
 
 export enum RemotePersistenceProvider {

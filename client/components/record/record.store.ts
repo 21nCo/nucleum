@@ -234,7 +234,7 @@ export class SearchStore {
 
     let data: any;
     const selectParams = {
-      properties: params.properties ?? [labelSearchProp, "modifiedAt"],
+      properties: params.properties,
       filters: params.filters,
       search: isValidString(params.searchQuery)
         ? {

@@ -13,7 +13,8 @@ import {
   PersistenceActionType,
   type IMutationParamsv2,
   type IRecordId,
-  type IResourceSelectParams
+  type IResourceSelectParams,
+  type IResourceSelectProperties
 } from "../../types/data.type";
 import { LogType } from "$lib/client/components/debug/debug.type";
 import { compareVersions } from "$lib/shared/utils/utils";
@@ -497,23 +498,21 @@ export class SignalDBPersistence implements IPersistence {
 
   async select(
     resourceId: IRecordId,
-    properties?: string[],
-    signal?: AbortSignal
+    properties?: IResourceSelectProperties
   ): Promise<any> {
     try {
-      if (signal?.aborted) {
-        throw new Error("Operation aborted");
-      }
-
       const [resourceType, id] = resourceId.toString().split(":");
       const collection = await this.getCollection(resourceType);
 
       let result = await collection.findOne({ id });
-
-      // If properties are specified, project only those fields
-      if (result && properties && properties.length > 0) {
+      if (
+        result &&
+        properties &&
+        properties.select &&
+        properties.select.length > 0
+      ) {
         const projected: any = { id: result.id };
-        for (const prop of properties) {
+        for (const prop of properties.select) {
           if (result[prop] !== undefined) {
             projected[prop] = result[prop];
           }

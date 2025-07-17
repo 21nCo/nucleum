@@ -15,7 +15,8 @@ import {
   type IMutation,
   type IInsertMutation,
   type IMutationAdditionalParams,
-  SearchType
+  SearchType,
+  type IResourceSelectProperties
 } from "$lib/client/types/data.type";
 import {
   detectTimeZone,
@@ -364,33 +365,32 @@ class Flux {
 
   async select(
     resourceId: IRecordId,
-    properties?: string[],
-    additionalParams?: { isCloudOnlyResource?: boolean; signal?: AbortSignal }
+    properties?: IResourceSelectProperties,
+    params?: {
+      isCloudOnlyResource?: boolean;
+      signal?: AbortSignal;
+    }
   ) {
     try {
       logger.log({ at: "flux.select", resourceId });
 
       // Check if operation was aborted
-      if (additionalParams?.signal?.aborted) {
+      if (params?.signal?.aborted) {
         throw new Error("Operation aborted");
       }
 
       const isOffline = await determineIfOffline();
-      if (
-        !this.isLocalMode &&
-        additionalParams?.isCloudOnlyResource &&
-        !isOffline
-      ) {
+      if (!this.isLocalMode && params?.isCloudOnlyResource && !isOffline) {
         return this.remoteRelay({
           method: FluxMethod.SELECT,
-          args: { resourceId, properties, signal: additionalParams?.signal }
+          args: {
+            resourceId,
+            properties: properties ?? { select: [] },
+            signal: params?.signal
+          }
         });
       }
-      const result = await this.persistence.select(
-        resourceId,
-        properties,
-        additionalParams?.signal
-      );
+      const result = await this.persistence.select(resourceId, properties);
       logger.log({ at: "flux.select - result", result });
       return result;
     } catch (e) {
@@ -430,7 +430,7 @@ class Flux {
         !isOffline
       ) {
         if (
-          params?.searchType === SearchType.SEMANTIC &&
+          params?.search?.type === SearchType.SEMANTIC &&
           params?.search?.query
         ) {
           let queryEmbedding: Float32Array[] | undefined = undefined;

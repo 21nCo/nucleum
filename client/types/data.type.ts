@@ -375,40 +375,73 @@ export type IResourceFilterGroup = {
   condition: FilterCombinationMethod;
 };
 
-export type IResourceSelectFilters =
-  | {
-      [key: string]: IResourceFilterValue;
-    }
-  | IResourceFilterGroup;
+export type IResourceSelectFilters = {
+  [key: string]: IResourceFilterValue;
+};
 
 export enum SearchType {
   FULL_TEXT = "FULL_TEXT",
   SEMANTIC = "SEMANTIC"
 }
 
-export type IResourceSelectParams = {
+export type IResourceSearch = {
+  query: string;
+  queryEmbedding?: Float32Array[];
+  properties?: string[];
+  isCaseSensitive?: boolean;
+  type?: SearchType;
+};
+
+export type IResourceSelectProperties = {
   /**
+   * Properties to be selected, that is items to be present in select statement.
+   * Eg: SELECT properties[0], properties[1], properties[2] FROM table;
+   */
+  select?: string[];
+
+  /**
+   * Properties that needs to be expanded.
+   *
+   * Ex: parent.*, typeToExtend.* in Surreal provider
+   */
+  expand?: string[];
+
+  /**
+   * Properties that needs to be recursively expanded.
+   *
+   * Ex: children.*.chidren
+   */
+  recurse?: string[];
+  /**
+   * The fields to be omitted.
+   * This will use OMIT clause in case of Surreal provider.
+   */
+  omit?: string[];
+};
+
+export type IResourceSelectParams = {
+  properties?: IResourceSelectProperties;
+  /**
+   * @deprecated - use search.type instead
    * Should the searh be semantic or full text.
    */
   searchType?: SearchType;
   /**
+   * @deprecated - use limit instead
    * Number of top matches to be retireved for semantic search.
    */
   semanticSearchTopK?: number;
 
   /**
-   * Properties to be selected, that is items to be present in select statement.
-   * Eg: SELECT properties[0], properties[1], properties[2] FROM table;
-   */
-  properties?: string[];
-  /**
    * Filters to be applied on the resources.
    * This will be translated to the where clause in case of Surreal provider.
    *
-   * Use `IResourceFilterGroup` to combine multiple filters using AND or OR condition in cases of user facing filters. For rest of the application system cases, basic filters in combination with search can be used.
+   * Use filterGroup instead to combine multiple filters using AND or OR condition in cases of user facing filters. For rest of the application system cases, basic filters in combination with search can be used.
    *
    */
   filters?: IResourceSelectFilters;
+
+  filterGroup?: IResourceFilterGroup;
 
   /**
    * Search to be applied on the resources.
@@ -417,14 +450,9 @@ export type IResourceSelectParams = {
    * Note: This uses search index and search index should have been defined on the database provider.
    *
    */
-  search?: {
-    query: string;
-    queryEmbedding?: Float32Array[];
-    properties?: string[];
-    isCaseSensitive?: boolean;
-  };
+  search?: IResourceSearch;
   /**
-   *
+   * @deprecated - use filters instead
    * Use only if filters doesn't cover the use case.
    *
    * The raw `WHERE` clause to be used in case of Surreal provider if filters doesn't cover the use case. This will be appended to the filters if filters are also provided.
@@ -446,11 +474,6 @@ export type IResourceSelectParams = {
    * The fields to be ordered by.
    */
   orderBy?: IResourceSelectOrderBy;
-  /**
-   * The fields to be omitted.
-   * This will use OMIT clause in case of Surreal provider.
-   */
-  omit?: string[];
 };
 
 export type IRecordId = RecordId | string;

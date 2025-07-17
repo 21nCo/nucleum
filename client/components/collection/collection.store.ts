@@ -279,13 +279,16 @@ export class ActiveCollectionStore extends ActiveResourceStore<
         return val;
       });
       console.time("ActiveCollectionStore.init - select");
-      const result = await this.resourceStore.select(this.id, [
+      const oldProps = [
         "*",
         "(select * from $parent.views) as views",
         "(select * from $parent.properties) as properties",
         "typeToExtend.* as typeToExtend"
         // "(array::first(select out, count() from link where out is $parent.id group by out)).count as totalNodeCount"
-      ]);
+      ];
+      const result = await this.resourceStore.select(this.id, {
+        expand: ["views", "properties", "typeToExtend"]
+      });
       console.timeEnd("ActiveCollectionStore.init - select");
       logger.log({ at: "ActiveCollectionStore.init - select", result });
       let record = result;
@@ -322,10 +325,9 @@ export class ActiveCollectionStore extends ActiveResourceStore<
       id: this.id
     });
     try {
-      const result = await this.resourceStore.select(this.id, [
-        "(select * from $parent.properties) as properties",
-        "typeToExtend.* as typeToExtend"
-      ]);
+      const result = await this.resourceStore.select(this.id, {
+        expand: ["properties", "typeToExtend"]
+      });
       if (!result) return;
       this.update((val) => {
         val.properties = result.properties;

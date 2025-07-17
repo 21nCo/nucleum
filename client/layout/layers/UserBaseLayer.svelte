@@ -43,6 +43,7 @@
   import PageError from "$lib/client/components/error/PageError.svelte";
   import { SurrealPersistence } from "$lib/client/persistence/surreal/surreal.local";
   import { SignalDBPersistence } from "$lib/client/persistence/signaldb/signaldb.local";
+  import { IndexedDBPersistence } from "$lib/client/persistence/indexeddb/indexeddb.local";
   import posthog from "posthog-js";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
@@ -67,6 +68,7 @@
   import { UIStateScope } from "$lib/client/stores/uiState/uiState.type";
   import { RxDBPersistence } from "$lib/client/persistence/rxdb/rxdb.local";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { DexiePersistence } from "$lib/client/persistence/dexie/dexie.local";
 
   const loadingMessages = {
     cloneUp: {
@@ -353,6 +355,10 @@
           return new SignalDBPersistence();
         case PersistenceProvider.RXDB:
           return new RxDBPersistence();
+        case PersistenceProvider.INDEXEDDB:
+          return new IndexedDBPersistence();
+        case PersistenceProvider.DEXIE:
+          return new DexiePersistence();
         default:
           return new SurrealPersistence();
       }
