@@ -955,7 +955,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
         }
 
         if (result?.Items) {
-          const resourceData = this.mapResourceData(result.Items, isExtension);
+          const resourceData = this.mapResourceData(result.Items);
           results.push(resourceData);
         } else {
           results.push([]);
@@ -1036,7 +1036,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
         }
 
         if (result?.Items) {
-          const resourceData = this.mapResourceData(result.Items, isExtension);
+          const resourceData = this.mapResourceData(result.Items);
           results.push(resourceData);
         } else {
           results.push([]);
@@ -1105,7 +1105,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
           console.timeEnd("paginate");
           if (result.Items && result.Items.length > offset) {
             const items = result.Items.slice(offset, offset + limit);
-            const resourceData = this.mapResourceData(items, isExtension);
+            const resourceData = this.mapResourceData(items);
 
             // Include next cursor for efficient pagination
             const nextCursor =
@@ -1150,7 +1150,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       const result = await dynamoClient.send(new QueryCommand(params));
 
       if (result.Items) {
-        const resourceData = this.mapResourceData(result.Items, isExtension);
+        const resourceData = this.mapResourceData(result.Items);
 
         // Include next cursor for efficient pagination
         const nextCursor = result.LastEvaluatedKey
@@ -1670,11 +1670,11 @@ export class DynamoDBSyncProvider implements ISyncProvider {
     return resourceData;
   }
 
-  private mapResourceData(records: any[], isExtension: boolean) {
+  private mapResourceData(records: any[]) {
     return records.map((record) => {
       return {
         ...this.getResourceData(record),
-        id: isExtension ? record.SK : record.SK.split(":")[1]
+        id: record.SK
       };
     });
   }
@@ -1827,7 +1827,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
         };
       }
       console.time("map");
-      const processedItems = this.mapResourceData(result.Items, isExtension);
+      const processedItems = this.mapResourceData(result.Items);
       console.timeEnd("map");
 
       const nextCursor = result.LastEvaluatedKey
@@ -1900,7 +1900,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
           const endIndex = startIndex + limit;
           const items = skipResult.Items.slice(startIndex, endIndex);
 
-          const resourceData = this.mapResourceData(items, isExtension);
+          const resourceData = this.mapResourceData(items);
 
           const nextCursor = lastEvaluatedKey
             ? JSON.stringify(lastEvaluatedKey)
@@ -1942,7 +1942,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
 
         const result = await dynamoClient.send(new QueryCommand(finalParams));
         if (result.Items) {
-          const resourceData = this.mapResourceData(result.Items, isExtension);
+          const resourceData = this.mapResourceData(result.Items);
 
           const nextCursor = result.LastEvaluatedKey
             ? JSON.stringify(result.LastEvaluatedKey)
