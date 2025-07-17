@@ -7,14 +7,15 @@
   import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
   import type {
     DaySummary,
-    ISessionLogThumb,
     ISessionThumb
   } from "$lib/client/products/pointron/logs/log.type";
-  import type { ICalendarIndicatorData } from "../../calendar.type";
+  import {
+    CalendarTileIndicatorDisplayType,
+    type ICalendarIndicatorData
+  } from "../../calendar.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import YearTileIndicatorDot from "./YearTileIndicatorDot.svelte";
   import MonthTileIndicator from "./MonthTileIndicator.svelte";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { resolveSessionTimeSplit } from "$lib/client/products/pointron/pointron.utils";
   import { generateSummary } from "$lib/client/products/pointron/focus/session.utils";
   import { formatSeconds } from "$lib/client/utils/time.utils";
@@ -24,7 +25,8 @@
 
   export let date: Date;
   export let data: ICalendarIndicatorData[] = [];
-  export let view: "year" | "month" = "year";
+  export let type: CalendarTileIndicatorDisplayType =
+    CalendarTileIndicatorDisplayType.DOTS;
   export let isActive: boolean = false;
   export let indicatorRefreshId: number = 0;
 
@@ -116,7 +118,7 @@
   }
 </script>
 
-{#if view === "month"}
+{#if type === CalendarTileIndicatorDisplayType.METRICS}
   <div
     class={cn("flex flex-col items-start justify-center text-b3", {
       "text-fgs3": !isActive,
@@ -152,7 +154,7 @@
       />
     {/if}
   </div>
-{:else}
+{:else if type === CalendarTileIndicatorDisplayType.DOTS}
   <div class="flex items-center justify-center gap-0.5">
     {#if tasks.length > 0}
       <YearTileIndicatorDot color={getColor(Resource.task)} {isActive} />

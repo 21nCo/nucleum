@@ -2,13 +2,14 @@ export type ITopNavBar = {
   title?: string;
   icon: string;
   items: ITopNavBarItem[];
-  cta?: IButton;
+  cta?: IButton[];
 };
 
 export type ITopNavBarItem = {
   label: string;
   href: string;
   expandRender?: string;
+  callback?: () => void;
 };
 
 export type IHeroInputs = {
@@ -57,6 +58,8 @@ export type IFooter = {
   youtubeUrl?: string;
   discordUrl?: string;
   linkedinUrl?: string;
+  gitUrl?: string;
+  blogUrl?: string;
 };
 
 export type IHighlight = {
@@ -65,6 +68,7 @@ export type IHighlight = {
   desc: string;
   visualRenderComponent?: string;
   isVisualAtBottom?: boolean;
+  isJustifyEndOnCw?: boolean;
 };
 
 export type IFeature = {

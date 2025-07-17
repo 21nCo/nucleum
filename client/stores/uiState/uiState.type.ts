@@ -22,6 +22,7 @@ export enum UIState {
    */
   hideLeftNavMenuLabels = "hideLeftNavMenuLabels",
   arrangement = "arrangement",
+  universalPropertyRecents = "universalPropertyRecents",
 
   //Nucleus
   nucleusOverviewPanel = "nucleusOverviewPanel",

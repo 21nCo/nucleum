@@ -288,14 +288,16 @@
     applyFilters();
   }
 
-  async function onBulkAction(e: CustomEvent<string>) {
+  async function onBulkAction(
+    e: CustomEvent<{ action: string; data?: unknown }>
+  ) {
     try {
       logger.log({ at: "onBulkAction", e });
       const items = deepCopy($multiSelectStore);
       const editor = new BulkEditor(Resource.node, multiSelectStore);
-      const result = await editor.run(e.detail);
+      const result = await editor.run(e.detail.action, e.detail.data);
       if (result) {
-        if (e.detail === "unlink") {
+        if (e.detail.action === "unlink") {
           $node.links = $node.links?.filter(
             (x) => !items.some(resourceInList(x.linkedTo))
           );
@@ -452,7 +454,6 @@
   {#if $multiSelectStore.length > 0}
     <BottomFloat class="!mb-3" zIndex="z-30">
       <BulkEditBar
-        isConstrainedWidth={true}
         context={multiSelectContext}
         subContext={selectedLinkType}
         on:selectAll={onSelectAll}

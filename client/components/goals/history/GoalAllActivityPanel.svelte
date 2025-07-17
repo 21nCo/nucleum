@@ -1,6 +1,4 @@
 <script lang="ts">
-  import Badge from "$lib/client/elements/text/Badge.svelte";
-  import { Size } from "$lib/client/types/size.enum";
   import { onMount } from "svelte";
   import { accessLogStore } from "$lib/client/components/accessLogging/accesslog.store";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
@@ -151,13 +149,6 @@
 </script>
 
 <div class="flex flex-col gap-6 w-full h-full">
-  <span class="flex w-full justify-center items-center gap-2 text-b3">
-    <Badge text="soon" size={Size.sm} />
-    <span class="text-fgs3">
-      Granular activity details & version control will be available soon
-    </span>
-  </span>
-
   {#if isLoading || !accessLogs}
     <EmptyStatusView
       isLoadingState={isLoading}

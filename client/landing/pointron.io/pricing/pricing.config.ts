@@ -8,8 +8,10 @@ const syncPlan: PricingPlan = {
   subtitle: "Real-time sync across all devices",
   price: { monthly: 7, yearly: 60, lifetime: 225 },
   features: [
-    { text: "Unlimited cloud sync" },
-    { text: "20 GB of media storage" },
+    { text: "All features without limits" },
+    { text: "Sync across all your devices" },
+    { text: "Unlimited small file (< 25 MB) storage" },
+    { text: "20 GB of included large file storage" },
     { text: "Email and community support" }
   ],
   ctaText: "Get started for free"

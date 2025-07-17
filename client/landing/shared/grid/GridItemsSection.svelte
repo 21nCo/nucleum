@@ -18,8 +18,8 @@
     {/each}
   </div>
   <Button
-    label="White paper"
-    icon="long-arrow-right"
+    label="Read our white paper"
+    icon="ph:arrow-right"
     on:click={() => landing.openLink(whitePaperUrl)}
   />
 </Section>

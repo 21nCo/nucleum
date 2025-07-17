@@ -46,7 +46,6 @@
   import posthog from "posthog-js";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
-  import { initializeTaco } from "$lib/client/products/memotron/taco/taco.store";
   import { recentsStore } from "$lib/client/components/record/recent.store";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { Action } from "$lib/client/types/action.enum";
@@ -67,6 +66,7 @@
   import { compareVersions } from "$lib/shared/utils/utils";
   import { UIStateScope } from "$lib/client/stores/uiState/uiState.type";
   import { RxDBPersistence } from "$lib/client/persistence/rxdb/rxdb.local";
+  import { cn } from "$lib/client/utils/ui.utils";
 
   const loadingMessages = {
     cloneUp: {
@@ -85,6 +85,7 @@
     message: string;
     subMessage?: string;
     duration?: number;
+    percentage?: number;
   } = {
     message: ""
   };
@@ -95,6 +96,13 @@
   const isDebug = import.meta.env?.DEV;
   $: searcheableResources =
     resolveProductResources($appStore.product, "search") ?? [];
+  $: isOfflineBannerIsShown =
+    ($view.isPortrait &&
+      $account.dataMode !== UserDataMode.LOCAL &&
+      $context.isInOfflineMode) ||
+    (!$view.isPortrait &&
+      $account.dataMode === UserDataMode.LOCAL &&
+      !$context.isEmbed);
 
   onMount(async () => {
     postMessageToParent(EmbedMessage.MOUNT);
@@ -142,7 +150,6 @@
       }
       await recentsStore.refresh(searcheableResources);
       await syncAccountPaidPlanFromExternalProvider();
-      initializeTaco();
     });
   });
 
@@ -461,6 +468,9 @@
     if (detail.duration !== undefined) {
       loadingMessage.duration = detail.duration;
     }
+    if (detail.percentage !== undefined) {
+      loadingMessage.percentage = detail.percentage;
+    }
   }
 
   function handleAddToRecents(event: any) {
@@ -564,7 +574,7 @@
   });
 </script>
 
-{#if ($view.isPortrait && $account.dataMode !== UserDataMode.LOCAL && $context.isInOfflineMode) || (!$view.isPortrait && $account.dataMode === UserDataMode.LOCAL && !$context.isEmbed)}
+{#if isOfflineBannerIsShown}
   <div
     class="flex gap-2 w-full p-2 bg-ass2/30 text-ass1 items-center justify-center text-b2"
   >
@@ -580,12 +590,18 @@
 {#if $appStore?.appData?.isAnalyticsEnabled && $account?.dataMode === UserDataMode.CLOUD && !$context.isInOfflineMode}
   <AnalyticsLayer />
 {/if}
-<div class="flex flex-grow w-screen">
+<div
+  class={cn("flex w-screen", {
+    "h-screen": !isOfflineBannerIsShown,
+    "flex-grow": isOfflineBannerIsShown
+  })}
+>
   {#if !$appLoadingState.isBaseLoaded || !$appLoadingState.isLocalLoaded || isAppLoading}
     <AppLoadingView
       message={loadingMessage.message}
       subMessage={loadingMessage.subMessage}
       duration={loadingMessage.duration}
+      percentage={loadingMessage.percentage}
     />
   {:else if error}
     <PageError />

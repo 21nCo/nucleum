@@ -7,13 +7,15 @@ import {
 import { copyResourceLinkToClipboard } from "../../products/memotron/memotron.utils";
 import {
   ResourceAccessPoint,
-  ResourceAccessMode
+  ResourceAccessMode,
+  ResourceActionType
 } from "$lib/client/components/flux/resourceStores/resource.type";
 import { uiState } from "$lib/client/stores/uiState/uiState.store";
 import { get } from "svelte/store";
 import {
   determineResourceType,
   isSameResource,
+  resolveResourceActionIcon,
   resourceInList
 } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { linker } from "$lib/client/products/memotron/linking/link.store";
@@ -44,8 +46,8 @@ export class ResourceActions<T extends IMemotronItemBase> {
   copyLink(): IContextMenuItem {
     return {
       label: "Copy link",
-      value: "link",
-      icon: "copy",
+      value: ResourceActionType.COPY_LINK,
+      icon: resolveResourceActionIcon(ResourceActionType.COPY_LINK),
       callback: async () => {
         copyResourceLinkToClipboard(this.resource.id);
         toasts.success("Link copied to clipboard");
@@ -55,8 +57,8 @@ export class ResourceActions<T extends IMemotronItemBase> {
   copyContents(): IContextMenuItem {
     return {
       label: "Copy contents",
-      value: "copy-contents",
-      icon: "copy",
+      value: ResourceActionType.COPY_CONTENTS,
+      icon: resolveResourceActionIcon(ResourceActionType.COPY_CONTENTS),
       callback: async () => {
         this.store.copyContents(this.resource.id);
         toasts.success("Contents copied to clipboard");
@@ -67,7 +69,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
     return {
       label: this.resource.isStarred ? "Unstar" : "Star this resource",
       value: "star",
-      icon: "ph:star-light",
+      icon: resolveResourceActionIcon(ResourceActionType.STAR),
       callback: async () => {
         this.store.modify(
           this.resource.id,
@@ -86,7 +88,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
       value: "star",
       label: "Star",
       activeLabel: "Starred",
-      icon: "ph:star-light",
+      icon: resolveResourceActionIcon(ResourceActionType.STAR),
       activeIcon: "ph:star-fill",
       type: ContextMenuType.SWITCH,
       initialValue: this.resource.isStarred,
@@ -100,7 +102,11 @@ export class ResourceActions<T extends IMemotronItemBase> {
   archive(): IContextMenuItem {
     return {
       value: this.resource.isArchived ? "unarchive" : "archive",
-      icon: "ph:archive-light",
+      icon: resolveResourceActionIcon(
+        this.resource.isArchived
+          ? ResourceActionType.UNARCHIVE
+          : ResourceActionType.ARCHIVE
+      ),
       callback: async () => {
         if (this.resource.isArchived) {
           this.store.unarchive(this.resource.id, {
@@ -117,7 +123,11 @@ export class ResourceActions<T extends IMemotronItemBase> {
   trash(): IContextMenuItem {
     return {
       value: this.resource.trashInformation ? "restore" : "delete",
-      icon: "ph:trash-light",
+      icon: resolveResourceActionIcon(
+        this.resource.trashInformation
+          ? ResourceActionType.RESTORE
+          : ResourceActionType.DELETE
+      ),
       callback: async () => {
         if (this.resource.trashInformation) {
           this.store.restore(this.resource.id, {
@@ -149,7 +159,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
       label: get(multiSelectStore)?.some(resourceInList(this.resource.id))
         ? "Unselect"
         : "Select",
-      value: "select",
+      value: ResourceActionType.SELECT,
       icon: "check-circle",
       callback: async () => {
         if (get(multiSelectStore)?.some(resourceInList(this.resource.id))) {
@@ -165,7 +175,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
   edit(context: ResourceAccessPoint): IContextMenuItem {
     return {
       label: this.resource.isInEditMode ? "Exit edit mode" : "Edit",
-      value: "edit",
+      value: ResourceActionType.EDIT,
       icon: this.resource.isInEditMode
         ? "ph:pencil-simple-slash-light"
         : "ph:pencil-simple-line-light",
@@ -193,9 +203,9 @@ export class ResourceActions<T extends IMemotronItemBase> {
   }
   toggleReadMode(): IContextMenuItem {
     return {
-      value: "readMode",
+      value: ResourceActionType.TOGGLE_READ_MODE,
       label: "Read mode",
-      icon: "ph:book-open-light",
+      icon: resolveResourceActionIcon(ResourceActionType.TOGGLE_READ_MODE),
       activeIcon: "ph:eye-light",
       type: ContextMenuType.SWITCH,
       initialValue: this.resource.isInReadOnlyMode,
@@ -222,7 +232,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
   }
   toggleLock(): IContextMenuItem {
     return {
-      value: "lock",
+      value: ResourceActionType.LOCK,
       label: "Lock",
       activeLabel: "Locked",
       icon: "ph:lock-open-light",
@@ -318,8 +328,8 @@ export class ResourceActions<T extends IMemotronItemBase> {
       determineResourceType(contextId) === Resource.collection;
     return {
       label: isCollection ? "Remove from collection" : "Unlink",
-      value: "unlink",
-      icon: "ph:link-break-light",
+      value: ResourceActionType.UNLINK,
+      icon: resolveResourceActionIcon(ResourceActionType.UNLINK),
       callback: async () => {
         await linker.unlink(this.resource.id, contextId, {
           linkType: LinkType.DIRECT,
@@ -339,8 +349,8 @@ export class ResourceActions<T extends IMemotronItemBase> {
   link(): IContextMenuItem {
     return {
       label: "Add a link",
-      value: "link",
-      icon: "ph:link-light",
+      value: ResourceActionType.LINK,
+      icon: resolveResourceActionIcon(ResourceActionType.LINK),
       callback: async () => {
         appStore.runAction(Action.BULK_LINK, {
           componentParams: {
@@ -354,7 +364,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
     return {
       label: "Add to collection",
       value: "addToCollection",
-      icon: "ph:plus-light",
+      icon: resolveResourceActionIcon(ResourceActionType.ADD_TO),
       callback: async () => {
         appStore.runAction(Action.BULK_LINK, {
           componentParams: {

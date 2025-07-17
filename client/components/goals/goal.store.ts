@@ -8,7 +8,7 @@ import {
 } from "$lib/client/types/data.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import { logger } from "$lib/client/components/debug/logger.client";
-import type { IActiveGoal, IGoal } from "./goal.type";
+import type { IActiveGoal, IGoal, IGoalThumb } from "./goal.type";
 import { GoalType } from "./goal.type";
 import {
   ResourceAccessMode,
@@ -35,8 +35,14 @@ import view from "$lib/client/stores/view.store";
 import { collectionStore } from "../collection/collection.store";
 import { AppSearchParam } from "$lib/client/types/appStore.type";
 import { toasts } from "$lib/client/stores/notification.store";
-import { resourceAction } from "../flux/resourceStores/resource.utils";
+import {
+  isSameResource,
+  resourceAction,
+  resourceInList
+} from "../flux/resourceStores/resource.utils";
 import { taskStore } from "../tasks/task.store";
+import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
+import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 
 class GoalStore extends ResourceStore<IGoal> {
   constructor() {
@@ -263,6 +269,113 @@ class GoalStore extends ResourceStore<IGoal> {
   async onRestore(ids: IRecordId[]) {
     return this.onParentChange(ids, false);
   }
+
+  async convertToRoot(src: IGoalThumb) {
+    logger.log({ at: "GoalStore.convertToRoot", src });
+    await this.editParentChain(src);
+    await this.removeSubgoalFromCurrentParent(src);
+  }
+
+  async convertToSubGoal(src: IGoalThumb, parent: IGoal) {
+    logger.log({ at: "GoalStore.convertToSubGoal", src, parent });
+    const result = await this.editParentChain(src, parent);
+    if (!result) return;
+    await this.appendSubgoal(src, parent);
+  }
+
+  async moveSubgoal(src: IGoalThumb, parent: IGoal) {
+    logger.log({ at: "GoalStore.moveSubgoal", src, parent });
+    const result = await this.editParentChain(src, parent);
+    if (!result) return;
+    await this.appendSubgoal(src, parent);
+    await this.removeSubgoalFromCurrentParent(src);
+  }
+
+  /**
+   * Removes the sub goal (src) from the current parent (children array)
+   * @param src - the sub goal to remove
+   * @returns
+   */
+  private async removeSubgoalFromCurrentParent(src: IGoalThumb) {
+    if (!src) return;
+    const immediateParent = src.parent?.[src.parent.length - 1];
+    if (!immediateParent) return;
+    const currentChildren = immediateParent.children;
+    if (!currentChildren?.some(resourceInList(src))) {
+      toasts.error();
+      return;
+    }
+    const newChildren = currentChildren.filter((x) => !isSameResource(x, src));
+    await this.modify(immediateParent.id, {
+      children: newChildren
+    });
+  }
+
+  /**
+   * Adds the sub goal (src) to the new parent (children array)
+   * @param src - the sub goal to add
+   * @param newParent - the new parent to add the sub goal to
+   * @returns
+   */
+  private async appendSubgoal(src: IGoalThumb, newParent: IGoal) {
+    if (!src || !newParent) return;
+    const currentChildren = newParent.children;
+    if (currentChildren?.some(resourceInList(src.id))) {
+      toasts.error("Goal is already a subgoal of this parent");
+      return;
+    }
+    const newChildren = [...(currentChildren || []), src.id];
+    await this.modify(newParent.id, {
+      children: newChildren
+    });
+  }
+
+  /**
+   * Edits all the parent fields of deeply nested sub goals of the source goal (src) to prepend the new parent (newParent) and its parent hierarchy.
+   * @param src
+   * @param newParent
+   * @returns
+   */
+  private async editParentChain(src: IGoalThumb, newParent?: IGoal) {
+    const subGoals: IGoal[] = await this.selectMany(
+      {
+        filters: {
+          parent: {
+            contains: src.id.toString()
+          }
+        }
+      },
+      {
+        isIncludeInactiveItems: true
+      }
+    );
+    const newParentHierarchy = [
+      ...(newParent?.parent || []),
+      ...(newParent ? [newParent.id] : [])
+    ];
+    await this.modify(src.id, {
+      parent:
+        newParentHierarchy && newParentHierarchy.length > 0
+          ? newParentHierarchy
+          : undefined
+    });
+    if (!isValidArrayWithData(subGoals)) return true;
+    if (newParent && subGoals.some(resourceInList(newParent))) return false;
+    for (const subGoal of subGoals) {
+      const srcIndexInParentChain = subGoal.parent
+        ?.map((x) => x.toString())
+        .indexOf(src.id.toString());
+      const parentChainToRight = subGoal.parent?.slice(srcIndexInParentChain);
+      const newParentChainForSubGoal = [
+        ...newParentHierarchy,
+        ...(parentChainToRight || [])
+      ];
+      await this.modify(subGoal.id, {
+        parent: newParentChainForSubGoal
+      });
+    }
+    return true;
+  }
 }
 
 export const goalStore = new GoalStore();
@@ -358,9 +471,44 @@ class GoalActions {
     label: "Focus now",
     icon: "ph:circle-light",
     callback: async () => {
-      if (get(activeSession).isSessionRunning)
-        await activeSession.finishSession({ isQuickStartSwitch: true });
-      await activeSession.quickStart(this.goal.id);
+      await activeSession.focusGoal(this.goal.id);
+    }
+  };
+
+  convertToSubGoal = {
+    value: PointronAction.CONVERT_TO_SUBGOAL,
+    label: "Convert to sub goal",
+    icon: "ph:arrow-bend-down-right-light",
+    callback: async () => {
+      appStore.runAction(PointronAction.SELECT_PARENT_GOAL, {
+        componentParams: {
+          src: this.goal,
+          action: PointronAction.CONVERT_TO_SUBGOAL
+        }
+      });
+    }
+  };
+
+  moveSubgoal = {
+    value: ResourceActionType.MOVE,
+    label: "Move",
+    icon: "ph:arrow-bend-up-right-light",
+    callback: async () => {
+      appStore.runAction(PointronAction.SELECT_PARENT_GOAL, {
+        componentParams: {
+          src: this.goal,
+          action: ResourceActionType.MOVE
+        }
+      });
+    }
+  };
+
+  convertToRootGoal = {
+    value: PointronAction.CONVERT_TO_ROOT_GOAL,
+    label: "Convert to top level goal",
+    icon: "ph:arrow-fat-lines-up-light",
+    callback: async () => {
+      return goalStore.convertToRoot(this.goal);
     }
   };
 
@@ -424,6 +572,13 @@ export function resolveGoalContextMenu(
       resourceActions.copyLink()
     ];
   }
+  const isRootGoal =
+    !goal.parent || (Array.isArray(goal.parent) && goal.parent?.length === 0);
+  if (isRootGoal) {
+    primaryItems.push(goalActions.convertToSubGoal);
+  } else {
+    primaryItems.push(goalActions.convertToRootGoal, goalActions.moveSubgoal);
+  }
   const openingActionGroup = {
     group: "open",
     items: [
@@ -436,15 +591,20 @@ export function resolveGoalContextMenu(
   };
   const ctx = get(context);
   const viewStore = get(view);
+  const isCurrentlyFocusing = activeSession.isCurrentFocusItem(goal.id);
+  const focusGroup = {
+    group: "focus",
+    items: [
+      ...(isCurrentlyFocusing ? [] : [goalActions.focusNow]),
+      goalActions.pinToQuickFocus()
+    ]
+  };
   return [
     {
       group: "primary",
       items: [...primaryItems]
     },
-    {
-      group: "focus",
-      items: [goalActions.focusNow, goalActions.pinToQuickFocus()]
-    },
+    focusGroup,
     ...((ctx.isEmbed && ctx.embed === Embed.HANDSET) ||
     viewStore.isConstrainedWidth
       ? []

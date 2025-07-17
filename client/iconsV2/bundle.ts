@@ -1,9 +1,9 @@
 import { getIconData } from "@iconify/utils";
 import { readFile, unlink, writeFile } from "fs/promises";
 import { locate } from "@iconify/json";
-import { iconSets, phIcons } from "./icons-list";
+import { bundleNumber, iconSets, phIcons } from "./icons-list";
 
-const version = 28;
+const version = bundleNumber;
 const isExtension = false;
 
 const spriteContentStart =
@@ -75,18 +75,13 @@ function addIconsToSprite(
     if (iconData) {
       let iconBody = iconData.body;
 
-      if (
-        setName === "heroicons" ||
-        setName === "mynaui"
-      ) {
+      if (setName === "heroicons" || setName === "mynaui") {
         iconBody = iconBody.replace(
           /stroke-width="[^"]*"/g,
           'stroke-width="1.2"'
         );
       }
-      if (
-        setName === "hugeicons"
-      ) {
+      if (setName === "hugeicons") {
         iconBody = iconBody.replace(
           /stroke-width="[^"]*"/g,
           'stroke-width="1"'

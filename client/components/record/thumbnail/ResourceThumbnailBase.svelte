@@ -44,6 +44,7 @@
     "h-full": arrangement === Arrangement.MASONRY
   })}
   id={resourceIdToElementId("thumbnail", item.id, accessPoint, accessPointId)}
+  data-id={item.id}
   draggable={isDraggable}
   use:hoverable={{
     onHover: (e) => (isHovering = e)

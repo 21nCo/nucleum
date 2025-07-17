@@ -40,43 +40,67 @@
     renderGraph();
   }
 
+  function processNode(node: any) {
+    const isCurrentNode = node.id === centerNodeId;
+    return {
+      ...node,
+      style: {
+        size: isCurrentNode ? 40 : 30,
+        halo: isCurrentNode,
+        badge: isCurrentNode,
+        badges: [
+          { text: node.badge?.toString() ?? "", placement: "right-bottom" }
+        ],
+        // badgeFill: currentColors["fgs1"],
+        fill:
+          node.fill ??
+          (isCurrentNode ? currentColors["aps1"] : currentColors["fgs4"]),
+        labelText: truncateString(node.label ?? "", 40),
+        labelFill: isCurrentNode
+          ? currentColors["aps1"]
+          : currentColors["fgs2"],
+        icon: node.icon ? true : false,
+        iconSrc: node.icon,
+        iconFill: currentColors["aps1"]
+      }
+    };
+  }
+
+  function processEdge(edge: any) {
+    return {
+      source: edge.source,
+      target: edge.target,
+      linkType: edge.linkType,
+      type: "line"
+    } as EdgeData;
+  }
+
+  export function softUpdate(newData: { nodes?: any[]; edges?: any[] }) {
+    if (!graph) return;
+
+    graph.addData({
+      nodes: newData.nodes?.map(processNode) ?? [],
+      edges: newData.edges?.map(processEdge) ?? [],
+      combos: []
+    });
+
+    graph.draw();
+  }
+
+  export function removeData(data: { nodes?: string[]; edges?: string[] }) {
+    if (!graph) return;
+    graph.removeData({
+      nodes: data.nodes ?? [],
+      edges: data.edges ?? [],
+      combos: []
+    });
+    graph.draw();
+  }
+
   function preProcessData() {
-    _data.nodes = data.nodes.map((node) => {
-      const isCurrentNode = node.id === centerNodeId;
-      return {
-        ...node,
-        style: {
-          size: isCurrentNode ? 40 : 30,
-          halo: isCurrentNode,
-          badge: isCurrentNode,
-          badges: [
-            { text: node.badge?.toString() ?? "", placement: "right-bottom" }
-          ],
-          // badgeFill: currentColors["fgs1"],
-          fill:
-            node.fill ??
-            (isCurrentNode ? currentColors["aps1"] : currentColors["fgs4"]),
-          labelText: truncateString(node.label ?? "", 40),
-          labelFill: isCurrentNode
-            ? currentColors["aps1"]
-            : currentColors["fgs2"],
-          icon: node.icon ? true : false,
-          iconSrc: node.icon,
-          iconFill: currentColors["aps1"]
-        }
-      };
-    });
-    _data.edges = data.edges.map((edge) => {
-      return {
-        source: edge.source,
-        target: edge.target,
-        linkType: edge.linkType,
-        // type: "cubic"
-        type: "line"
-      } as EdgeData;
-    });
-    _data.combos = data.combos;
-    console.log({ at: "preProcessData", _data });
+    _data.nodes = data.nodes.map(processNode);
+    _data.edges = data.edges.map(processEdge);
+    _data.combos = data.combos ?? [];
   }
 
   function resolveLayout(method: string) {
@@ -176,7 +200,7 @@
       edge: {
         type: "line",
         style: {
-          labelText: (d) => d.linkType,
+          labelText: (d) => (d.linkType as string) ?? "",
           labelFill: currentColors["fgs3"],
           labelFontSize: 11,
           labelBackground: true,

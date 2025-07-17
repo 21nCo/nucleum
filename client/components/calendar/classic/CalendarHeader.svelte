@@ -6,14 +6,13 @@
   import { ButtonStyle } from "$lib/client/types/button.type";
   import { TimeScaleUnit } from "$lib/client/types/time.type";
   import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
-  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
+
   const dispatch = createEventDispatcher();
 
   export let selectedDate: Date;
   export let selectedView: TimeScaleUnit = TimeScaleUnit.MONTH;
   export let visibleWeekDates: Date[] | undefined = undefined;
   export let parentBgIndex: number = 2;
-  let dev_isEnableSettings: boolean = false;
 
   const monthNames = [
     "January",
@@ -68,22 +67,6 @@
           break;
       }
       selectedDate = date;
-      dispatch("dateChange");
-    }
-  }
-
-  /**
-   * TODO - test for bugs for setting selectedDate in year and week view
-   */
-  function goToToday() {
-    if (
-      selectedView === TimeScaleUnit.YEAR ||
-      selectedView === TimeScaleUnit.WEEK
-    ) {
-      dispatch("goToToday");
-      selectedDate = new Date();
-    } else {
-      selectedDate = new Date();
       dispatch("dateChange");
     }
   }
@@ -147,18 +130,4 @@
     {parentBgIndex}
     on:click={goToNext}
   />
-</div>
-<div class="flex items-center gap-2 justify-end">
-  <Button
-    type={ButtonVariant.SECONDARY}
-    style={ButtonStyle.OUTLINED}
-    size={Size.sm}
-    label="Go to today"
-    isPreventMinWidth={true}
-    {parentBgIndex}
-    on:click={goToToday}
-  />
-  {#if dev_isEnableSettings}
-    <Toggle icon="ph:sliders-light" bgSize={Size.sm} parentBgIndex={2} />
-  {/if}
 </div>

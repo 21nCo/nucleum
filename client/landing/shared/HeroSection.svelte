@@ -13,9 +13,14 @@
 </script>
 
 <div
-  class="relative flex justify-center min-h-[400px] 2k:min-h-[500px] w-full overflow-clip"
+  class={cn("relative flex justify-center w-full overflow-clip", {
+    "min-h-[90vh]": !$isProductPage,
+    "min-h-[400px] 2k:min-h-[500px]": $isProductPage
+  })}
 >
-  <!-- <HeroBackground /> -->
+  {#if !$isProductPage}
+    <HeroBackground />
+  {/if}
   <div
     class="w-[1110px] 2k:w-[1500px] max-w-full flex flex-col gap-8 justify-center items-center"
   >
@@ -28,7 +33,8 @@
           class={cn("leading-[73px] font-bold max-w-9/10", {
             "mo:text-[26px] tp:text-[56px] mo:leading-9 tp:leading-[60px] mo:w-[350px]":
               $isProductPage,
-            "mo:text-[36px] mo:leading-[50px] mo:w-[342px]": !$isProductPage
+            "mo:text-[36px] mo:leading-[50px] mo:w-[342px] text-[64px] tp:leading-loose":
+              !$isProductPage
           })}
         >
           {title}

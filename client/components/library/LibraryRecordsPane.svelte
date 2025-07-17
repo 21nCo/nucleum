@@ -52,11 +52,9 @@
   import { onDestroy, onMount, tick } from "svelte";
   import { page } from "$app/stores";
   import InlineSearchBar from "$lib/client/elements/InlineSearchBar.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
   import { InputStyle } from "$lib/client/types/input.type";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
-  import Badge from "$lib/client/elements/text/Badge.svelte";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
   import { fade, fly } from "svelte/transition";
@@ -79,6 +77,7 @@
   import { TextStyle } from "$lib/client/types/text.enum";
   import { cache } from "$lib/client/layout/layers/cache/cache.store";
   import { CacheKey } from "$lib/client/layout/layers/cache/cache.type";
+  import { dragSelection } from "$lib/client/actions/dragSelection.action";
   const dispatch = createEventDispatcher();
 
   enum CacheSubKey {
@@ -111,6 +110,7 @@
   let isRefineShown = false;
   let subTypeSwitcherRef: LibrarySubTypeSwitcher;
   let abortController: AbortController | null = null;
+  let isInSelectionMode = false;
 
   $: multiSelectContext = {
     resource,
@@ -165,10 +165,12 @@
     $multiSelectStore = data.map((x) => x.id);
   }
 
-  async function onBulkAction(e: CustomEvent<string>) {
+  async function onBulkAction(
+    e: CustomEvent<{ action: string; data?: unknown }>
+  ) {
     try {
       const editor = new BulkEditor(resource, multiSelectStore);
-      await editor.run(e.detail);
+      await editor.run(e.detail.action, e.detail.data);
     } catch (e) {
       toasts.error("Failed to perform bulk action");
     }
@@ -414,6 +416,10 @@
    *
    * For nodes, filters nodes if has isArchived or trashInformation i.e. deleted or archived irrespective of whether its a root node or md block node as md blocks are anyways not present in data. Currently does full refresh for unarchive or undelete which is optimal if the nodes are root nodes.
    *
+   *
+   * For goal merge - children is being listened to handle the cases of conversion of goal to sub goal and sub goal to a root goal etc.
+   *
+   *
    * TODO - undo delete for block nodes case in markdown node - to avoid flickering in the background when editing a markdown node in modal.
    * @param e
    */
@@ -425,7 +431,7 @@
   ) {
     const resource = e.detail.resource;
     const mutation = e.detail.params;
-    logger.debug({
+    logger.log({
       at: "LibraryRecordsPane - onResourceMutation",
       resource,
       ...mutation
@@ -468,7 +474,12 @@
       }
       return;
     }
-    if (mutation.action === PersistenceActionType.MERGE) return;
+    if (
+      mutation.action === PersistenceActionType.MERGE &&
+      resource === Resource.goal
+    ) {
+      if (!("children" in mutation.record)) return;
+    } else if (mutation.action === PersistenceActionType.MERGE) return;
 
     if (
       resource === Resource.node &&
@@ -583,12 +594,6 @@
           label={{ label: "Show archived items only" }}
           on:change={() => refresh()}
         />
-        <div class="flex gap-2 items-center w-full justify-center">
-          <Badge text="soon" />
-          <span class="text-b3 text-fgs3">
-            Filters & sorting will be available soon
-          </span>
-        </div>
       </div>
     {/if}
   {:else}
@@ -615,7 +620,10 @@
       bind:this={subTypeSwitcherRef}
     />
   {/if}
-  <div class="flex flex-col gap-4 px-4 overflow-auto grow">
+  <div
+    class="flex flex-col gap-4 px-4 overflow-auto grow"
+    id="records-container"
+  >
     <InlineSyncingFeedback {resource} isFullWidthVariant={true} />
     {#if isConstrainedWidth && !searchQuery && starredData && starredData.length > 0}
       <div class="flex flex-col gap-2">
@@ -642,7 +650,22 @@
     {#if isRefreshing}
       <LibraryLoadingPulse {isConstrainedWidth} {arrangement} />
     {:else if data && data.length > 0}
-      <div>
+      <div
+        use:dragSelection={{
+          selectableSelector: "div[id^='thumbnail-']",
+          containerId: "records-container",
+          onSelectionChange: (elements, ids) => {
+            if (isInSelectionMode) {
+              $multiSelectStore = [
+                ...new Set([...($multiSelectStore ?? []), ...ids])
+              ];
+            } else {
+              isInSelectionMode = true;
+              $multiSelectStore = ids;
+            }
+          }
+        }}
+      >
         <Records
           {data}
           {accessPoint}
@@ -702,8 +725,8 @@
   {#if $multiSelectStore.length > 0}
     <BottomFloat zIndex="z-30">
       <BulkEditBar
-        isConstrainedWidth={$view.isConstrainedWidth ||
-          accessPoint === ResourceAccessPoint.BROWSER}
+        isExpandedMode={!$view.isConstrainedWidth &&
+          accessPoint !== ResourceAccessPoint.BROWSER}
         context={multiSelectContext}
         subContext={selectedSubType +
           (isStarFilterSelected ? "starred" : "") +

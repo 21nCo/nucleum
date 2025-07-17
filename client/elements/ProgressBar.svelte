@@ -3,7 +3,12 @@
   import { onMount } from "svelte";
   import { tweened } from "svelte/motion";
   import { linear } from "svelte/easing";
+  /**
+   * @param duration - The duration of the progress bar animation in seconds
+   * @param percentage - Static percentage value (0-1 range, e.g., 0.5 = 50%)
+   */
   export let duration: number = 0;
+  export let percentage: number | undefined = undefined;
   export let size: Size = Size.md;
   export let label: string = "";
   export let showPercentage: boolean = false;
@@ -12,6 +17,12 @@
     duration: duration * 1000,
     easing: linear
   });
+
+  $: if (percentage !== undefined) {
+    progress.set(percentage * 100);
+  } else if (duration > 0) {
+    progress.set(100);
+  }
 
   onMount(() => {
     switch (size) {
@@ -28,10 +39,6 @@
       case Size.xxl:
         sizeClasses = "h-3";
         break;
-    }
-
-    if (duration > 0) {
-      progress.set(100);
     }
   });
 </script>

@@ -1,5 +1,6 @@
 <script lang="ts">
   import {
+    PanelSwitcherActiveItemStrength,
     PanelSwitcherStyle,
     type PanelSwitcherEditModeOptions
   } from "$lib/client/types/switcher.enum";
@@ -28,6 +29,8 @@
   export let isShowNumberShortcut: boolean = false;
   export let index: number = 0;
   export let parentBgIndex: number = 1;
+  export let activeItemStrength: PanelSwitcherActiveItemStrength =
+    PanelSwitcherActiveItemStrength.DEFAULT;
   $: isAddNewItem = item.value === "$add";
   let labelEditPopoverRef: any;
   let inputRef: any;
@@ -108,10 +111,28 @@
         icon={item.icon}
         {size}
         isFilled={isActive}
-        class={cn({
-          "fill-cbg": isActive && style === PanelSwitcherStyle.TRAIN,
-          "fill-ccs1": isActive && style !== PanelSwitcherStyle.TRAIN
-        })}
+        class={cn(
+          "transition-colors",
+          {
+            "text-ccs1": isActive && style !== PanelSwitcherStyle.TRAIN
+          },
+          style === PanelSwitcherStyle.TRAIN &&
+            !isActive && {
+              "group-hover:text-fgs1":
+                activeItemStrength !== PanelSwitcherActiveItemStrength.STRONG,
+              "text-fgs2":
+                activeItemStrength === PanelSwitcherActiveItemStrength.DEFAULT,
+              "text-fgs3":
+                activeItemStrength === PanelSwitcherActiveItemStrength.SUBTLE
+            },
+          style === PanelSwitcherStyle.TRAIN &&
+            isActive && {
+              "text-cbg":
+                activeItemStrength === PanelSwitcherActiveItemStrength.STRONG,
+              "text-ccs1":
+                activeItemStrength === PanelSwitcherActiveItemStrength.DEFAULT
+            }
+        )}
       />
     {/if}
     <div
@@ -121,7 +142,16 @@
           "group-hover:text-fgs2":
             style === PanelSwitcherStyle.BAR ||
             style === PanelSwitcherStyle.SNAKE
-        }
+        },
+        !isActive &&
+          style === PanelSwitcherStyle.TRAIN && {
+            "group-hover:text-fgs1":
+              activeItemStrength !== PanelSwitcherActiveItemStrength.STRONG,
+            "text-fgs2":
+              activeItemStrength === PanelSwitcherActiveItemStrength.DEFAULT,
+            "text-fgs3":
+              activeItemStrength === PanelSwitcherActiveItemStrength.SUBTLE
+          }
       )}
     >
       <span

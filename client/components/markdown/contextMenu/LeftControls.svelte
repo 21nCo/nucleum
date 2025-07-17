@@ -25,7 +25,10 @@
   import FocusRing from "./FocusRing.svelte";
   import BlockBrowser from "../blockBrowser/BlockBrowser.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { ResourceAccessMode } from "../../flux/resourceStores/resource.type";
+  import {
+    ResourceAccessMode,
+    ResourceActionType
+  } from "../../flux/resourceStores/resource.type";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { Action } from "$lib/client/types/action.enum";
   import { MemotronEvent } from "$lib/client/products/memotron/memotron.type";
@@ -37,6 +40,7 @@
   import { nodeStore } from "$lib/client/products/memotron/node/node.store";
   import { formatDate, formatDatetime } from "$lib/client/utils/time.utils";
   import { userPreferences } from "../../settings/userPreferences.store";
+  import { resolveResourceActionIcon } from "../../flux/resourceStores/resource.utils";
   const dispatch = createEventDispatcher();
   export let block: IBlock;
   export let isFocusing: boolean = false;
@@ -54,7 +58,7 @@
     [BlockAction.CONVERT]: {
       value: BlockAction.CONVERT,
       label: "Turn into",
-      icon: "sync",
+      icon: resolveResourceActionIcon(ResourceActionType.CONVERT),
       secondStepComponent: {
         component: BlockBrowser,
         props: {
@@ -73,14 +77,14 @@
     },
     [BlockAction.DUPLICATE]: {
       value: BlockAction.DUPLICATE,
-      icon: "ph:copy-light",
+      icon: resolveResourceActionIcon(ResourceActionType.DUPLICATE),
       callback: async () => {
         dispatch("action", { action: BlockAction.DUPLICATE });
       }
     },
     [BlockAction.LINK]: {
       value: BlockAction.LINK,
-      icon: "ph:link-light",
+      icon: resolveResourceActionIcon(ResourceActionType.LINK),
       callback: async () => {},
       secondStepComponent: {
         component: BlockBrowser
@@ -88,7 +92,7 @@
     },
     [BlockAction.COPY_LINK]: {
       value: BlockAction.COPY_LINK,
-      icon: "ph:clipboard-light",
+      icon: resolveResourceActionIcon(ResourceActionType.COPY_LINK),
       callback: async () => {}
     },
     [BlockAction.INSERT]: {
@@ -122,7 +126,7 @@
     },
     [BlockAction.COPY_BLOCK_TEXT]: {
       value: BlockAction.COPY_BLOCK_TEXT,
-      icon: "ph:clipboard-light",
+      icon: resolveResourceActionIcon(ResourceActionType.COPY_CONTENTS),
       callback: async () => {
         dispatch("action", { action: BlockAction.COPY_BLOCK_TEXT });
       }
@@ -136,7 +140,7 @@
     },
     [BlockAction.DELETE]: {
       value: BlockAction.DELETE,
-      icon: "ph:trash",
+      icon: resolveResourceActionIcon(ResourceActionType.DELETE),
       callback: async () => {
         dispatch("action", { action: BlockAction.DELETE });
       }
@@ -397,6 +401,7 @@
   }}
   on:change={(e) => {
     isPopoverVisible = e?.detail?.open;
+    dispatch("popoverVisibility", isPopoverVisible);
   }}
   bind:this={contextMenuRef}
   use:hoverable={{

@@ -491,10 +491,23 @@ export type IAudioMetadata = INodeMetadata & {
   codec?: string;
 };
 
+export interface IAudioBody {
+  transcription?: string;
+  mdBlocks?: any[];
+  initTranscription?: boolean;
+  transcriptionJobId?: string;
+  transcriptionUpdatedAt?: string;
+  summary?: string;
+}
+
 export type IImageNode = INodeInterface<NodeType.IMAGE, any, IImageMetadata> &
   INodeHasFile;
 
-export type IAudioNode = INodeInterface<NodeType.AUDIO, any, IAudioMetadata> &
+export type IAudioNode = INodeInterface<
+  NodeType.AUDIO,
+  IAudioBody,
+  IAudioMetadata
+> &
   INodeHasFile;
 
 export type IVideoNode = INodeInterface<NodeType.VIDEO, any, any> &
@@ -898,6 +911,6 @@ export type INodeThumb = INode & {
 };
 
 export enum NodeView {
-  CONTENT = "write",
-  BIRD_VIEW = "birdView"
+  CONTENT = "content",
+  BIRD = "bird"
 }

@@ -72,3 +72,9 @@ export type ICalendarIndicatorData = {
   data: any[];
   color?: string;
 };
+
+export enum CalendarTileIndicatorDisplayType {
+  DOTS = "dots",
+  METRICS = "metrics",
+  EXPANDED = "expanded"
+}

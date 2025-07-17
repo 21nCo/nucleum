@@ -10,7 +10,10 @@
   import LogIntervalBar from "./LogIntervalBar.svelte";
   import LogTotals from "./LogTotals.svelte";
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
-  import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
+  import {
+    PanelSwitcherActiveItemStrength,
+    PanelSwitcherStyle
+  } from "$lib/client/types/switcher.enum";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
   import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
@@ -132,6 +135,7 @@
           items={["Summary", "Notes"]}
           style={PanelSwitcherStyle.TRAIN}
           bind:value={selectedTab}
+          activeItemStrength={PanelSwitcherActiveItemStrength.SUBTLE}
         />
       </div>
       {#if selectedTab === "Notes" && isValidMarkdown(log.notes)}

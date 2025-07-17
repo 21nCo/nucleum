@@ -4,12 +4,10 @@
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import type { ITopNavBar } from "../landing.type";
-  import Button from "../elements/Button.svelte";
   import { isProductPage, isProductsPanelOpen } from "../store/shared.store";
   import DayAndNightToggle from "../DayAndNightToggle.svelte";
   import ButtonAsLink from "../ButtonAsLink.svelte";
   import StickyPart from "./StickyPart.svelte";
-  import { addAnimateClass } from "$lib/client/utils/ui.utils";
   import { onMount } from "svelte";
   import NavMenu from "./NavMenu.svelte";
   import NavBarCta from "./NavBarCta.svelte";
@@ -40,18 +38,16 @@
   onMount(() => {
     setIcon();
     // Initialize isStickied based on initial scroll position
-    isStickied = window.scrollY > 50;
+    if (typeof window !== "undefined") {
+      isStickied = window.scrollY > 50;
+    }
   });
 </script>
 
 <div class="relative">
   <div
     class={cn(
-      "flex w-full items-center justify-center bg-bgs2 mo:pt-3 mo:pb-2 lp:border-b border-brs3",
-      {
-        "py-3": $isProductPage,
-        "py-4": !$isProductPage
-      }
+      "flex w-full items-center justify-center bg-bgs2 mo:pt-3 mo:pb-2 lp:border-b border-brs3 py-3"
     )}
   >
     <div class="w-[1440px] mo:w-full">

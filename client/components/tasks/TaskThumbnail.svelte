@@ -23,7 +23,7 @@
   import ResourceThumbnailContextMenu from "../record/thumbnail/ResourceThumbnailContextMenu.svelte";
   import view from "$lib/client/stores/view.store";
   import { createEventDispatcher } from "svelte";
-  import { popover } from "$lib/client/actions/popover.action";
+  import { popover, tooltip } from "$lib/client/actions/popover.action";
   import AbsoluteTimeRangePopoverV2 from "$lib/client/elements/datetime/absolute/AbsoluteTimeRangePopoverV2.svelte";
   import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
   import { generateMiniRandomId } from "$lib/shared/utils/crypto.utils";
@@ -31,13 +31,14 @@
   import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
   import FocusItemPickOverlay from "$lib/client/products/pointron/focus/elements/focusitem/FocusItemPickOverlay.svelte";
   import {
-    currentFocusItem,
-    focusItemsStore
+    activeSession,
+    currentFocusItem
   } from "$lib/client/products/pointron/focus/session.store";
-  import { resolveIfCurrentFocusItem } from "$lib/client/products/pointron/focus/session.utils";
   import { movingBorder } from "$lib/client/actions/movingBorder.action";
   import { appStore } from "$lib/client/stores/app.store";
-  import { ButtonStyle } from "$lib/client/types/button.type";
+  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
+  import { Resource } from "../flux/resourceStores/resource.enum";
+  import { resolveMultiSelectStore } from "../flux/resourceStores/resource.store";
   const dispatch = createEventDispatcher();
   export let item: ITaskThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
@@ -56,11 +57,17 @@
     item.dateUnix &&
     compareDates(new Date(item.dateUnix), new Date(), "<");
 
-  $: isCurrentlyFocusing = resolveIfCurrentFocusItem(
-    $focusItemsStore,
+  $: isCurrentlyFocusing = activeSession.isCurrentFocusItem(
     item.id,
     $currentFocusItem
   );
+
+  $: multiSelectContext = {
+    resource: Resource.task,
+    accessPoint,
+    accessPointId
+  };
+  $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
 
   const instanceId = generateMiniRandomId();
 
@@ -140,7 +147,8 @@
   >
     <div
       class={cn("flex", {
-        "self-start": item.goal && accessPoint !== ResourceAccessPoint.GOAL
+        "self-start": item.goal && accessPoint !== ResourceAccessPoint.GOAL,
+        "opacity-0": $multiSelectStore.length > 0
       })}
     >
       <TaskCheckbox
@@ -211,17 +219,14 @@
     {#if accessPoint !== ResourceAccessPoint.PICKER}
       <div class="flex flex-col items-end">
         {#if item.dateUnix && !isHovering && !isCurrentlyFocusing}
-          <button
+          <div
             class={cn("text-b3 userdata", {
               "text-ars1": isOverdue,
               "text-fgs3": !isOverdue
             })}
-            on:click|stopPropagation={() => {
-              isShowDatePickerOnCw = true;
-            }}
           >
             Due: {formatDate(item.dateUnix)}
-          </button>
+          </div>
         {/if}
 
         {#if item.completedAtUnix && !isHovering && !$view.isConstrainedWidth}
@@ -243,12 +248,35 @@
         {/if}
       </div>
 
-      {#if isDatePickerOpen}
-        <div class="flex gap-2 shrink-0">
+      {#if isHovering || isDatePickerOpen}
+        {@const isInlineContext =
+          (accessPoint === ResourceAccessPoint.BROWSER ||
+            accessPoint === ResourceAccessPoint.GOAL) &&
+          !$view.isConstrainedWidth}
+        {#if !isCurrentlyFocusing}
+          <Button
+            icon="ph:circle-light"
+            tooltip="Focus now"
+            size={Size.sm}
+            type={ButtonVariant.PRIMARY}
+            style={ButtonStyle.OUTLINED}
+            on:click={() => {
+              activeSession.focusTask(item.id, item.goalId);
+            }}
+          />
+        {/if}
+        <div
+          class="flex gap-2 shrink-0"
+          use:tooltip={{
+            text: "Set date",
+            delay: 0
+          }}
+        >
           <DatePicker
             date={item.dateUnix ? new Date(item.dateUnix) : undefined}
             id={instanceId}
-            placeholder="Set date"
+            variant="icon-only"
+            size={Size.sm}
             on:change={(e) => {
               onDateChange(e.detail);
             }}
@@ -260,21 +288,23 @@
             }}
           />
         </div>
-      {/if}
-      {#if isHovering}
-        {@const isInlineContext =
-          accessPoint === ResourceAccessPoint.BROWSER &&
-          !$view.isConstrainedWidth}
         <Button
           icon={isInlineContext
             ? "ph:arrow-right-light"
             : "ph:arrows-out-light"}
           parentBgIndex={2}
-          label="Open"
+          tooltip="Open"
           size={Size.sm}
           style={ButtonStyle.OUTLINED}
           isPreventMinWidth={true}
           on:click={() => {
+            if (accessPoint === ResourceAccessPoint.GOAL) {
+              if (accessPointId)
+                appStore.toggleSearchParamRecordSpecific(accessPointId, {
+                  task: item.id.toString()
+                });
+              return;
+            }
             appStore.openResource(
               item.id,
               isInlineContext

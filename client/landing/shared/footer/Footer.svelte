@@ -15,12 +15,10 @@
   import { Theme } from "$lib/client/types/appearance.type";
   import QrElement from "../elements/QRElement.svelte";
   import {
-    companyName,
-    companyWebsite,
     isProductPage,
     isProductsPanelOpen,
     landing,
-    whitePaperUrl
+    org
   } from "../store/shared.store";
   import ButtonAsLink from "../ButtonAsLink.svelte";
   export let products: IListItem[];
@@ -48,6 +46,12 @@
   }
   let socials = [
     {
+      href: footerValues.gitUrl ?? "https://github.com/21nOrg",
+      icon: "gitfooter",
+      primary: "hsla(0, 0%, 0%, 1)",
+      isHovered: false
+    },
+    {
       href: footerValues.twitterUrl ?? "https://x.com/21nOrg",
       icon: "xfooter",
       primary: "hsla(0, 0%, 0%, 1)",
@@ -60,7 +64,7 @@
       isHovered: false
     },
     {
-      href: footerValues.youtubeUrl ?? "https://www.youtube.com/@blankfellow",
+      href: footerValues.youtubeUrl ?? "https://www.youtube.com/@21nOrg",
       icon: "youtubefooter",
       primary: "hsla(0, 100%, 50%, 1)",
       isHovered: false
@@ -74,7 +78,7 @@
   ];
   let joinUs = {
     title: "Read our white paper",
-    href: whitePaperUrl,
+    href: org.whitepaper,
     description:
       "Discover our mission to enable human progress by building technology with triple bottom line at its core."
   };
@@ -98,13 +102,13 @@
       href: "/refundpolicy"
     }
   ];
-  let information: any[] = [
-    { title: "Information" },
-    {
+  let information: any[] = [{ title: "Information" }];
+  if ($isProductPage) {
+    information.push({
       title: "Pricing",
       href: "/pricing"
-    }
-  ];
+    });
+  }
   if (footerValues.helpUrl) {
     information.push({
       title: "Help center",
@@ -133,6 +137,12 @@
     information.push({
       title: "Tutorials",
       href: footerValues.youtubeUrl
+    });
+  }
+  if (footerValues.blogUrl) {
+    information.push({
+      title: "Blog",
+      href: footerValues.blogUrl
     });
   }
   const combinedLI = [
@@ -211,7 +221,7 @@
           icon="21n-temp"
           size={Size.xl}
           on:click={() => {
-            window.location.href = companyWebsite;
+            landing.openLink(org.website);
           }}
         />
       </div>
@@ -238,6 +248,6 @@
         </button>
       {/each}
     </div>
-    <p class="text-fgs3">{companyName}</p>
+    <p class="text-fgs3">{org.incorporation}</p>
   </div>
 </div>

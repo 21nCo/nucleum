@@ -76,9 +76,10 @@ function initAppearanceStore() {
       } else if (!a.lightColorSchemeId) {
         a.lightColorSchemeId = defaultLightColorSchemeId;
       }
-      modified.colorScheme = colorSchemes.find(
-        (cs) => cs.id == a.lightColorSchemeId
-      ) as ColorScheme;
+      modified.colorScheme =
+        (colorSchemes.find(
+          (cs) => cs.id == a.lightColorSchemeId
+        ) as ColorScheme) ?? colorSchemes[0];
     }
     if (theme === Theme.DARK) {
       if (!a.darkColorSchemeId && a.lightColorSchemeId) {
@@ -89,9 +90,10 @@ function initAppearanceStore() {
       } else if (!a.darkColorSchemeId) {
         a.darkColorSchemeId = defaultDarkColorSchemeId;
       }
-      modified.colorScheme = colorSchemes.find(
-        (cs) => cs.id == a.darkColorSchemeId
-      ) as ColorScheme;
+      modified.colorScheme =
+        (colorSchemes.find(
+          (cs) => cs.id == a.darkColorSchemeId
+        ) as ColorScheme) ?? colorSchemes[0];
     }
     // console.log("switching theme", { x: theme, modified });
     return modified;
@@ -198,17 +200,6 @@ function initAppearanceStore() {
     switchTheme: (theme: Theme) => {
       update((a) => {
         const modified = switchTheme(theme, a);
-        persist(modified);
-        return modified;
-      });
-    },
-
-    setTypeface: (typeface: string) => {
-      update((a) => {
-        const modified = {
-          ...a,
-          typeface
-        };
         persist(modified);
         return modified;
       });

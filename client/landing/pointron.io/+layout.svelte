@@ -7,16 +7,12 @@
     ITopNavBar
   } from "../shared/landing.type";
   import type { IMetadata } from "$lib/client/layout/metadata.type";
-  import {
-    discordUrl,
-    landing,
-    youtubeUrl
-  } from "../shared/store/shared.store";
+  import { org, landing } from "../shared/store/shared.store";
 
   const urls: ILandingProductUrls = {
     web: "https://web.pointron.app",
     features: "https://docs.pointron.app/pointron/features",
-    tutorials: youtubeUrl,
+    tutorials: org.youtube,
     faqs: "https://docs.pointron.app/pointron/faqs",
     changelog: "https://docs.pointron.app/changelog/pointron/new",
     roadmap: "https://docs.pointron.app/pointron/roadmap",
@@ -39,29 +35,37 @@
       },
       // { label: "Compare", href: "/compare", expandRender: "compare" },
       { label: "Pricing", href: "pricing" },
-      { label: "Discord", href: discordUrl }
+      { label: "Discord", href: org.discord }
     ],
-    cta: {
-      label: "Go to web app",
-      href: "https://web.pointron.app",
-      type: "primary"
-    }
+    cta: [
+      {
+        label: "",
+        href: "https://github.com/21nOrg/tidigit",
+        icon: "ph:github-logo-light",
+        type: "secondary"
+      },
+      {
+        label: "Go to web app",
+        href: "https://web.pointron.app",
+        type: "primary"
+      }
+    ]
   };
   let footerValues: IFooter = {
-    appStoreUrl:
-      "https://apps.apple.com/in/app/pointron-focus-time-tracker/id6469411284",
+    appStoreUrl: urls.downloads?.ios,
     twitterUrl: urls.socials?.twitter,
     docsUrl: "https://docs.pointron.app",
-    youtubeUrl: youtubeUrl,
+    youtubeUrl: org.youtube,
     roadmapUrl: urls.roadmap,
     changelogUrl: urls.changelog
   };
   let metadata: IMetadata = {
-    title: "Pointron",
+    title: "Pointron - Open source wholesome time tracker for everyone",
     description:
       "Pointron is a focus time tracker that helps you stay focused and productive.",
     keywords: "pointron, focus, time, tracker, productivity",
-    url: "https://pointron.app"
+    url: "https://pointron.app",
+    image: "https://cdn.21n.co/pointron/ogImage.png"
   };
   landing.load(urls);
 </script>

@@ -26,6 +26,8 @@ import { Product } from "$lib/client/types/product.type";
 import { get } from "svelte/store";
 import view from "$lib/client/stores/view.store";
 import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
+import { resolveResourceIcon } from "../flux/resourceStores/resource.utils";
+import { activeSession } from "$lib/client/products/pointron/focus/session.store";
 class TaskStore extends ResourceStore<ITask> {
   constructor() {
     super(Resource.task);
@@ -98,6 +100,15 @@ class TaskActions {
     private accessPoint: ResourceAccessPoint
   ) {}
 
+  focusNow = {
+    value: "focusNow",
+    label: "Focus now",
+    icon: "ph:circle-light",
+    callback: async () => {
+      await activeSession.focusTask(this.task.id, this.task.goalId);
+    }
+  };
+
   toggle() {
     return {
       value: "toggle",
@@ -114,7 +125,7 @@ class TaskActions {
   editGoal() {
     return {
       value: "editGoal",
-      icon: "ph:circle-light",
+      icon: resolveResourceIcon(Resource.goal),
       label:
         this.accessPoint === ResourceAccessPoint.GOAL
           ? "Move to another goal"
@@ -151,28 +162,28 @@ class TaskActions {
 }
 
 export function resolveTaskContextMenu(
-  goal: ITask,
+  task: ITask,
   accessPoint: ResourceAccessPoint,
   params?: {
     accessPointId?: IRecordId;
   }
 ): IContextMenu {
-  const resourceActions = new ResourceActions(goal, taskStore, accessPoint);
-  const taskActions = new TaskActions(goal, taskStore, accessPoint);
+  const resourceActions = new ResourceActions(task, taskStore, accessPoint);
+  const taskActions = new TaskActions(task, taskStore, accessPoint);
   const product = get(appStore).product;
   const viewStore = get(view);
+  const isCurrentlyFocusing = activeSession.isCurrentFocusItem(task.id);
   let primaryItems: IContextMenuItem[] = [
     ...(accessPoint !== ResourceAccessPoint.SELF
       ? [taskActions.openTask()]
       : []),
-    ...(accessPoint !== ResourceAccessPoint.CALENDAR
-      ? [resourceActions.select(accessPoint, params?.accessPointId)]
-      : []),
+    resourceActions.select(accessPoint, params?.accessPointId),
     ...(product === Product.POINTRON || product === Product.NUCLEUS
       ? [taskActions.editGoal()]
       : []),
     ...(viewStore.isConstrainedWidth ? [taskActions.editDate] : []),
-    taskActions.toggle()
+    taskActions.toggle(),
+    ...(isCurrentlyFocusing ? [] : [taskActions.focusNow])
   ];
   return [
     {

@@ -2,14 +2,16 @@
   import Button from "$lib/client/landing/shared/elements/Button.svelte";
   import { renderMdAsHtml } from "../../../markdown/markdown.utils";
 
-  export let title: string;
+  export let title: string | undefined = undefined;
   export let content: string | undefined = undefined;
   export let learnMoreLink: string | undefined = undefined;
   export let image: string | undefined = undefined;
 </script>
 
 <div class="flex flex-col gap-2 p-4 bg-bgs2 rounded-md">
-  <div class="text-h5 font-medium">{title}</div>
+  {#if title}
+    <div class="text-h5 font-medium">{title}</div>
+  {/if}
   <slot>
     <div class="flex gap-2 justify-between">
       {#if content}

@@ -14,6 +14,9 @@
   import { createEventDispatcher } from "svelte";
   import Badge from "$lib/client/elements/text/Badge.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
+  import FooterInfo from "./FooterInfo.svelte";
+  import { mapValue } from "./table.utils";
+
   const dispatch = createEventDispatcher();
   export let product: string;
   export let features: IFwFeature[] = [];
@@ -126,7 +129,7 @@
       <!-- First render general comparison properties -->
       <tr class="text-b2">
         <td class="border border-brs3 p-2">Price *</td>
-        <td class="border border-brs3 p-2">Free</td>
+        <td class="border border-brs3 p-2">$5</td>
         {#each filteredContemporaries as contemporary}
           <td class="border border-brs3 p-2">
             {contemporary.price ? `$${contemporary.price}` : "Free"}
@@ -135,12 +138,10 @@
       </tr>
       <tr class="text-b2">
         <td class="border border-brs3 p-2">Source type</td>
-        <td class="border border-brs3 p-2">SOURCE AVAILABLE</td>
+        <td class="border border-brs3 p-2">Open source</td>
         {#each filteredContemporaries as contemporary}
           <td class="border border-brs3 p-2">
-            {contemporary.sourcingType
-              ? contemporary.sourcingType.replace(/_/g, " ")
-              : "-"}
+            {mapValue("sourcingType", contemporary.sourcingType)}
           </td>
         {/each}
       </tr>
@@ -195,6 +196,7 @@
                           feature,
                           contemporary.label
                         )}
+                        {contemporary}
                         isShort={true}
                       />
                     {/if}
@@ -209,5 +211,5 @@
       {/each}
     </tbody>
   </table>
-  <span class="text-fgs2 text-b2"> * Price is per month billed annually. </span>
+  <FooterInfo />
 </div>

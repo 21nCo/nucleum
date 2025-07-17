@@ -187,7 +187,7 @@ export const reorderList: Action<HTMLElement, DragDropOptions> = (
     " "
   );
   let listId = options?.listId || "default-list";
-
+  let dragImageString = options?.dragImage;
   function handleDragStart(e: DragEvent) {
     if (isTextElementFocused() || isResizeHandle(e.target as HTMLElement)) {
       e.preventDefault();
@@ -196,10 +196,18 @@ export const reorderList: Action<HTMLElement, DragDropOptions> = (
     if (!(e.target instanceof HTMLElement) || !e.dataTransfer) return;
 
     let dragImage: HTMLElement | null = null;
-    if (options.dragImage) {
+    if (dragImageString) {
       dragImage = document.createElement("div");
-      dragImage.style.width = "80px";
+      if (dragImageString !== "dragimage") {
+        dragImage.innerHTML = dragImageString;
+        dragImage.style.width = "max-content";
+        dragImage.style.height = "max-content";
+        dragImage.style.color = "white";
+      } else {
+        dragImage.style.width = "80px";
+      }
       dragImage.style.height = "30px";
+      dragImage.style.padding = "0 8px";
       dragImage.style.borderRadius = "4px";
       dragImage.classList.add("drag-image");
       dragImage.style.backgroundColor = "grey";
@@ -305,6 +313,7 @@ export const reorderList: Action<HTMLElement, DragDropOptions> = (
   return {
     update(newOptions: DragDropOptions) {
       draggedOverClasses = newOptions.draggedOverClass.split(" ");
+      dragImageString = newOptions.dragImage;
       listId = newOptions.listId;
     },
     destroy() {

@@ -1,7 +1,10 @@
 <script lang="ts">
   import view from "$lib/client/stores/view.store";
   import { Size } from "$lib/client/types/size.enum";
-  import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
+  import {
+    PanelSwitcherActiveItemStrength,
+    PanelSwitcherStyle
+  } from "$lib/client/types/switcher.enum";
   import { createEventDispatcher } from "svelte";
   import { bg, cn } from "$lib/client/utils/ui.utils";
   import type { ISelectItem } from "$lib/client/types/select.type";
@@ -13,6 +16,10 @@
   export let isDisabled: boolean = false;
   export let parentBgIndex: number = 1;
   export let index: number = 0;
+  export let activeItemStrength: PanelSwitcherActiveItemStrength =
+    PanelSwitcherActiveItemStrength.DEFAULT;
+
+  const dev_isApplyBorderForDefaultActive = false;
 
   function onClick() {
     dispatch("click", item.value);
@@ -20,13 +27,32 @@
 </script>
 
 <button
-  class={cn("relative min-w-fit w-fit", {
-    "rounded-full px-6 py-2": size === Size.lg,
-    "rounded-[5px] px-3 py-1 w-24": size === Size.md,
-    "rounded-[5px] px-3 py-1 w-16": size === Size.sm,
-    "bg-ccs1 text-abg": isActive,
-    [`hover:${bg(parentBgIndex + 1)}`]: !isActive
-  })}
+  class={cn(
+    "relative min-w-fit w-fit group",
+    {
+      "rounded-full px-6 py-2": size === Size.lg,
+      "rounded-[5px] px-3 py-1 w-24": size === Size.md,
+      "rounded-[5px] px-3 py-1 w-16": size === Size.sm,
+      "bg-ccs3 text-ccs1":
+        isActive &&
+        activeItemStrength === PanelSwitcherActiveItemStrength.DEFAULT,
+      "bg-bgs1 text-fgs1":
+        isActive &&
+        activeItemStrength === PanelSwitcherActiveItemStrength.SUBTLE,
+      "bg-ccs1 text-abg":
+        isActive &&
+        activeItemStrength === PanelSwitcherActiveItemStrength.STRONG,
+      [`hover:${bg(parentBgIndex + 1)}`]:
+        !isActive &&
+        activeItemStrength !== PanelSwitcherActiveItemStrength.SUBTLE
+    },
+    dev_isApplyBorderForDefaultActive &&
+      activeItemStrength === PanelSwitcherActiveItemStrength.DEFAULT && {
+        border: true,
+        "border-transparent": !isActive,
+        "border-ccs2": isActive
+      }
+  )}
   on:click={onClick}
   disabled={isDisabled}
 >
@@ -44,6 +70,7 @@
       {isDisabled}
       {index}
       {parentBgIndex}
+      {activeItemStrength}
       on:remove
       on:change
       on:debouncedChange

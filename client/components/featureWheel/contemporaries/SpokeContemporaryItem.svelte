@@ -44,7 +44,10 @@
       on:mouseout={toggleHoveringState}
       on:focus={toggleHoveringState}
       on:blur={toggleHoveringState}
-      class="flex bg-bgs2 rounded-md px-1 p-[1.5px] text-[0.33rem] border-[0.5px] border-brs3"
+      class={cn("flex bg-bgs2 rounded-md border-[0.5px] border-brs3", {
+        "text-[0.28rem] p-[1.5px] px-0.5": group.length > 9,
+        "text-[0.33rem] p-[1.5px] px-1": group.length <= 9
+      })}
     >
       {group.length}
     </button>

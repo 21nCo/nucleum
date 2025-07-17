@@ -29,6 +29,8 @@ import FeatureWheel from "$lib/client/components/featureWheel/FeatureWheel.svelt
 import ResourceCache from "$lib/client/components/record/ResourceCache.svelte";
 import MemotronOverview from "./overview/MemotronOverview.svelte";
 import { Action } from "$lib/client/types/action.enum";
+import ImportAppData from "./import/ImportAppData.svelte";
+import MemotronImportSettings from "./import/MemotronImportSettings.svelte";
 
 export const memotronActions: IAction[] = [
   {
@@ -264,6 +266,32 @@ export const memotronActions: IAction[] = [
     component: ResourceCache,
     componentParams: {
       resource: Resource.relation
+    }
+  },
+  {
+    action: MemotronAction.IMPORT_APP_DATA,
+    isMeta: true,
+    type: ActionType.MODAL,
+    component: ImportAppData,
+    modalParams: {
+      layout: {
+        size: Size.lg,
+        orientation: Orientation.Horizontal,
+        isShowCantileverClose: true
+      }
+    }
+  },
+  {
+    action: Action.IMPORT_FROM_OTHER_APPS,
+    label: "Import from other apps",
+    type: ActionType.MODAL,
+    component: MemotronImportSettings,
+    modalParams: {
+      layout: {
+        size: Size.xl,
+        orientation: Orientation.Horizontal,
+        isShowCantileverClose: true
+      }
     }
   }
 ];

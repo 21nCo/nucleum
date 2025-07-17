@@ -153,8 +153,10 @@ export const appConstants = {
 const recordSpecificSearchParams = [
   /-type$/,
   /-tab$/,
+  /-nodeView$/,
   AppSearchParam.EDIT,
   AppSearchParam.POP_AT,
+  AppSearchParam.SPLIT_AT,
   AppSearchParam.FSPLIT_AT,
   AppSearchParam.FULL_AT,
   AppSearchParam.LINK,
@@ -486,6 +488,39 @@ function initAppStore(seed: IAppStore) {
     window?.location?.reload();
   }
 
+  const resolveRecordSpecificSearchParamPrefix = (id: IRecordId) => {
+    return id.toString().slice(-5);
+  };
+
+  const resolveRecordSpecificSearchParam = (id: IRecordId, param: string) => {
+    const prefix = resolveRecordSpecificSearchParamPrefix(id);
+    return `${prefix}-${param}`;
+  };
+
+  const toggleSearchParamRecordSpecific = (
+    id: IRecordId,
+    params:
+      | Record<string, string | boolean | number | null>
+      | (string | RegExp)[],
+    additional?: {
+      isPreventRefresh?: boolean;
+      url?: URL;
+    }
+  ) => {
+    const prefix = resolveRecordSpecificSearchParamPrefix(id);
+    let modified:
+      | Record<string, string | boolean | number | null>
+      | (string | RegExp)[] = {};
+    if (Array.isArray(params)) {
+      modified = params.map((p) => `${prefix}-${p}`);
+    } else {
+      Object.entries(params).forEach(([key, value]) => {
+        modified[`${prefix}-${key}`] = value;
+      });
+    }
+    return toggleSearchParam(modified, additional);
+  };
+
   /**
    * Sets or deletes search params
    * @param params Send an object to set params, array of strings to delete
@@ -624,29 +659,24 @@ function initAppStore(seed: IAppStore) {
     if (accessMode === ResourceAccessMode.TAB) {
       if (params?.replaceId) tabs.replace(id, params.replaceId);
       else tabs.open(id);
-      return;
     } else if (accessMode === ResourceAccessMode.TAB_IN_BACKGROUND) {
       tabs.addInBackground(id);
-      return;
-    }
-    if (accessMode === ResourceAccessMode.SPLIT) {
+    } else if (accessMode === ResourceAccessMode.SPLIT) {
       const isFullOrPop = isOverlay(params?.replaceId);
       if (isFullOrPop) accessMode = ResourceAccessMode.FSPLIT;
       else accessMode = ResourceAccessMode.SPLIT;
     }
 
-    if (!params?.searchParams) {
-      url =
-        toggleSearchParam(recordSpecificSearchParams, {
-          isPreventRefresh: true,
-          url
-        }) ?? url;
-    }
+    url =
+      toggleSearchParam(recordSpecificSearchParams, {
+        isPreventRefresh: true,
+        url
+      }) ?? url;
     toggleSearchParam(
       {
         [accessMode]: id.toString(),
         [accessMode + "At"]: timestamp.getTime(),
-        ...params?.searchParams
+        ...(params?.searchParams ?? {})
       },
       {
         url: url
@@ -711,6 +741,7 @@ function initAppStore(seed: IAppStore) {
     params?: {
       defaultTo?: ResourceAccessMode;
       replaceId?: IRecordId;
+      searchParams?: Record<string, string | boolean | number | null>;
     }
   ) => {
     if (!id) return;
@@ -725,7 +756,8 @@ function initAppStore(seed: IAppStore) {
     if (!accessMode) accessMode = defaultTo;
     logger.log({ at: "resourceClickHandler", accessMode, defaultTo });
     openResource(id, accessMode, {
-      replaceId: params?.replaceId
+      replaceId: params?.replaceId,
+      searchParams: params?.searchParams
     });
     logger.log({
       at: "resourceClickHandler",
@@ -904,6 +936,8 @@ function initAppStore(seed: IAppStore) {
     runAction,
     initiateOAuth2Flow,
     toggleSearchParam,
+    toggleSearchParamRecordSpecific,
+    resolveRecordSpecificSearchParam,
     resourceClickHandler,
     resourceClickHandlerForGraph,
     openResource,

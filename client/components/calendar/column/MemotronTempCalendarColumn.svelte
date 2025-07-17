@@ -17,9 +17,10 @@
   import { setContext } from "svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { debouncer } from "$lib/client/utils/utils";
+  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 
   export let date: Date;
-
+  let mdId = generateSimpleRandomId();
   let feedback: IInlineStatus | undefined = undefined;
 
   function handleContentEvent(event: string, data: any) {
@@ -60,7 +61,10 @@
   setContext("calendar-content", calendarContentContext);
 </script>
 
-<div class="flex flex-col gap-2 h-full flex-grow w-full">
+<div
+  class="flex flex-col gap-2 h-full flex-grow w-full"
+  id="mdcontainer-{mdId}"
+>
   <div class="flex justify-between px-12 pt-3">
     <div class="flex items-center gap-2 whitespace-nowrap">
       <Text content={formatDate(date)} style={TextStyle.PANEL_HEADING_SMALL} />
@@ -78,6 +82,6 @@
     />
   </div>
   <div class="px-1 flex-grow">
-    <CalendarNotesPanel {date} scale={TimeScaleUnit.DAY} />
+    <CalendarNotesPanel {date} scale={TimeScaleUnit.DAY} {mdId} />
   </div>
 </div>

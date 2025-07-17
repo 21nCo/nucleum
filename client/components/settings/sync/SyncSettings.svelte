@@ -4,6 +4,7 @@
   import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
   import { clientStorage } from "$lib/client/persistence/persistence.utils";
   import context from "$lib/client/stores/context.store";
+  import { Size } from "$lib/client/types/size.enum";
   import SyncStatus from "./SyncStatus.svelte";
   let isInOfflineMode = $context.isInOfflineMode;
   let isInLowDataMode = $context.isInLowDataMode;
@@ -42,6 +43,7 @@
 
   <InlineInfoBanner
     content="Note: Offline mode will be automatically turned on when you are not connected to the internet."
+    size={Size.sm}
   />
   <div class="flex w-full justify-center mt-8">
     <!-- <span class="text-b3 text-fgs3">Sync status</span> -->

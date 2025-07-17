@@ -1,20 +1,19 @@
 <script lang="ts">
   import view from "$lib/client/stores/view.store";
-  import { cn } from "$lib/client/utils/ui.utils";
   import Button from "../elements/Button.svelte";
   import type { ITestimonial } from "../landing.type";
-  import { discordUrl, landing, twitterUrl } from "../store/shared.store";
+  import { landing, org } from "../store/shared.store";
   import Title from "../Title.svelte";
   import TestimonialItem from "./TestimonialItem.svelte";
   import TestimonialRow from "./TestimonialRow.svelte";
   export let title: string = "Testimonials";
   export let subtitle: string = "What our users are saying";
   export let testimonials: ITestimonial[] = [];
-  export let discord: string = discordUrl;
-  export let twitter: string = $landing.urls.socials?.twitter ?? twitterUrl;
+  export let discord: string = org.discord;
+  export let twitter: string = $landing.urls.socials?.twitter ?? org.twitter;
 </script>
 
-<div class="w-full flex flex-col gap-20 mo:gap-10 overflow-x-hidden relative">
+<div class="w-full flex flex-col gap-20 mo:gap-10 overflow--x-hidden relative">
   <div class="flex flex-col justify-center items-center">
     <Title {title} {subtitle} />
   </div>
@@ -47,17 +46,13 @@
       label="Join our Discord"
       type="secondary"
       icon="discord"
-      on:click={() => {
-        window.location.href = discord;
-      }}
+      href={discord}
     />
     <Button
       label="Follow us on X"
       type="secondary"
       icon="twitter"
-      on:click={() => {
-        window.location.href = twitter;
-      }}
+      href={twitter}
     />
   </div>
   <div

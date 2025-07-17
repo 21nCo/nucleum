@@ -1,7 +1,5 @@
 <script lang="ts">
   import BottomCta from "../shared/bottomCta/BottomCta.svelte";
-  import HeroVideo from "../shared/elements/HeroVideo.svelte";
-  import FeaturesExample from "../shared/features/FeaturesExample.svelte";
   import HeroSection from "../shared/HeroSection.svelte";
   import Highlights from "../shared/highlights/Highlights.svelte";
   import type {
@@ -71,13 +69,20 @@
 
   const pointronHighlights: IHighlight[] = [
     {
-      ...highlights.powerful,
-      desc: "Unlock next-level of focus, time and goal tracking with a powerhouse of features.",
+      ...highlights.wholesome,
+      desc: "Finally, a place where personal focus management feels complete.",
       visualRenderComponent: "pointronFeatures"
     },
+    // highlights.reliable,
+    {
+      ...highlights.powerful,
+      desc: "Unlock next-level of focus, time and goal tracking with a powerhouse of features.",
+      visualRenderComponent: ""
+    },
     highlights.offline,
-    highlights.intuitive,
-    highlights.laast
+    highlights.zerotrust,
+    highlights.laast,
+    highlights.intuitive
   ];
 
   const testimonials: ITestimonial[] = [

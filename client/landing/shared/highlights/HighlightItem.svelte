@@ -5,22 +5,24 @@
   import type { IHighlight } from "../landing.type";
   import VisualRender from "../VisualRender.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
+  import view from "$lib/client/stores/view.store";
   export let highlight: IHighlight;
   export let isFullWidth: boolean = false;
 </script>
 
 <div
   class={cn(
-    "flex mo:gap-6 bg-bgs1 mo:h-fit h-64 rounded-xl pt-6 pl-6 mo:flex-col mo:text-center overflow-hidden",
+    "flex cw:gap-6 bg-bgs1 mo:h-fit h-64 rounded-xl cw:p-4 pt-6 pl-6 mo:flex-col mo:text-center overflow-hidden",
     {
-      "flex-col gap-4 pr-6": highlight.isVisualAtBottom,
+      "flex-col gap-4 pr-6":
+        highlight.isVisualAtBottom || !highlight.visualRenderComponent,
       "gap-8": !highlight.isVisualAtBottom,
       "w-full": isFullWidth
     }
   )}
 >
-  <div class="flex flex-col gap-2 flex-1">
-    <div class="flex flex-col gap-3 mo:justify-center">
+  <div class="flex flex-col gap-2 flex-1 cw:items-start">
+    <div class="flex flex-col gap-3 cw:items-start">
       <div class="h-8">
         {#if highlight.icon.includes(":")}
           <span>
@@ -37,8 +39,12 @@
   {#if highlight.visualRenderComponent}
     <div
       class={cn("flex-1 flex items-center", {
-        "justify-center": highlight.isVisualAtBottom,
-        "justify-end": !highlight.isVisualAtBottom
+        "justify-center":
+          highlight.isVisualAtBottom ||
+          ($view.isConstrainedWidth && !highlight.isJustifyEndOnCw),
+        "justify-end":
+          (!$view.isConstrainedWidth && !highlight.isVisualAtBottom) ||
+          highlight.isJustifyEndOnCw
       })}
     >
       <VisualRender name={highlight.visualRenderComponent} />

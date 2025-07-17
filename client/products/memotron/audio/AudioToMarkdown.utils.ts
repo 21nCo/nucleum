@@ -1,6 +1,4 @@
 import { prefixTable } from "$lib/shared/utils/text.utils";
-import { generateUID } from "$lib/client/utils/utils";
-
 import { NodeType } from "../node/node.type";
 import {
   HeadingKeys,
@@ -10,6 +8,7 @@ import {
   BlockKeys
 } from "../audio/AudioToMarkdown.type";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { generateRandomIdv2 } from "$lib/shared/utils/crypto.utils";
 class AudioToMarkdown {
   words: string[] | undefined;
   word: string | undefined;
@@ -277,7 +276,7 @@ class AudioToMarkdown {
       this.ULOrder = 0;
       this.currentBlock.contentType = NodeType.CHECKLIST;
     }
-    this.currentBlock.id = prefixTable(generateUID(), Resource.node);
+    this.currentBlock.id = prefixTable(generateRandomIdv2(), Resource.node);
     this.currentBlock.body = {
       indent: indent,
       text: "",
@@ -390,7 +389,7 @@ class AudioToMarkdown {
           this.currentBlock.body
         );
 
-      this.currentBlock.id = prefixTable(generateUID(), Resource.node);
+      this.currentBlock.id = prefixTable(generateRandomIdv2(), Resource.node);
       this.blocks.push(this.currentBlock);
     }
     this.currentBlock = { ...this.defaultBlock };
@@ -455,7 +454,10 @@ class AudioToMarkdown {
           this.currentBlock.contentType =
             this.resolveHeadingContentType(currentWord);
           this.currentBlock.body = "";
-          this.currentBlock.id = prefixTable(generateUID(), Resource.node);
+          this.currentBlock.id = prefixTable(
+            generateRandomIdv2(),
+            Resource.node
+          );
           break;
 
         case this.olCase.includes(currentWord):
@@ -572,7 +574,10 @@ class AudioToMarkdown {
           this.pushCurrentBlockToBlocks();
           this.reetOrders();
           this.currentBlock = JSON.parse(JSON.stringify(this.defaultBlock));
-          this.currentBlock.id = prefixTable(generateUID(), Resource.node);
+          this.currentBlock.id = prefixTable(
+            generateRandomIdv2(),
+            Resource.node
+          );
           this.currentBlock.contentType = NodeType.QUOTE;
           break;
 
@@ -580,7 +585,10 @@ class AudioToMarkdown {
           this.pushCurrentBlockToBlocks();
           this.reetOrders();
           this.currentBlock = JSON.parse(JSON.stringify(this.defaultBlock));
-          this.currentBlock.id = prefixTable(generateUID(), Resource.node);
+          this.currentBlock.id = prefixTable(
+            generateRandomIdv2(),
+            Resource.node
+          );
           this.currentBlock.contentType = NodeType.DIVIDER;
           this.currentBlock.body = "";
           // this.pushCurrentBlockToBlocks();
@@ -590,7 +598,10 @@ class AudioToMarkdown {
           this.pushCurrentBlockToBlocks();
           this.reetOrders();
           this.currentBlock = JSON.parse(JSON.stringify(this.defaultBlock));
-          this.currentBlock.id = prefixTable(generateUID(), Resource.node);
+          this.currentBlock.id = prefixTable(
+            generateRandomIdv2(),
+            Resource.node
+          );
           this.currentBlock.contentType = NodeType.DOUBLE_DIVIDER;
           // this.pushCurrentBlockToBlocks();
           break;
@@ -599,7 +610,10 @@ class AudioToMarkdown {
           this.pushCurrentBlockToBlocks();
           this.reetOrders();
           this.currentBlock = JSON.parse(JSON.stringify(this.defaultBlock));
-          this.currentBlock.id = prefixTable(generateUID(), Resource.node);
+          this.currentBlock.id = prefixTable(
+            generateRandomIdv2(),
+            Resource.node
+          );
           this.currentBlock.contentType = NodeType.SIMPLE_TEXT;
           break;
 
@@ -653,11 +667,88 @@ class AudioToMarkdown {
 
   convertAudioToMarkdown(transcript: string) {
     this.resetInitialStates();
-    let words: string[] = transcript
+
+    let processedTranscript = transcript
+      .replace(/\[\d+(?:\.\d+)?\s*-\s*\d+(?:\.\d+)?\]/g, " ")
+      .replace(/\[[\d:]+\]/g, " ")
+      .replace(/\([\d:]+\)/g, " ")
+      .replace(/\d{1,2}:\d{2}:\d{2}[\s:]/g, " ")
+      .replace(/\d{1,2}:\d{2}[\s:]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    let words: string[] = processedTranscript
       .split(/[,. ]+/)
       .filter((word: string) => word.length > 0);
     this.loopThroughAndDecode(words);
+
+    if (this.blocks.length === 1) {
+      this.splitByTimestampsAndPunctuation(transcript);
+    }
+
     return this.blocks;
+  }
+
+  /**
+   * Splits text by timestamps and punctuation when only one block is parsed
+   * @param originalTranscript - The original transcript with timestamps
+   */
+  private splitByTimestampsAndPunctuation(originalTranscript: string) {
+    const cleanText = originalTranscript
+      .replace(/\[\d+(?:\.\d+)?\s*-\s*\d+(?:\.\d+)?\]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const sentences = cleanText.split(/\.(?!\w{2,4}(?:\s|$)|\d)(?=\s+[A-Z])/);
+
+    if (sentences.length > 1) {
+      const combined = this.combineShortSentences(sentences);
+
+      if (combined.length > 1) {
+        this.blocks = combined.map((sentence) => ({
+          id: prefixTable(generateRandomIdv2(), Resource.node),
+          contentType: NodeType.SIMPLE_TEXT,
+          body: sentence.trim()
+        }));
+      }
+    }
+  }
+
+  /**
+   * Combines sentences that are too short to stand alone
+   */
+  private combineShortSentences(sentences: string[]): string[] {
+    const minLength = 40;
+    const result: string[] = [];
+    let currentSentence = "";
+
+    for (let i = 0; i < sentences.length; i++) {
+      const sentence = sentences[i].trim();
+      if (!sentence) continue;
+
+      const sentenceWithPeriod =
+        i < sentences.length - 1 ? sentence + "." : sentence;
+
+      currentSentence += (currentSentence ? " " : "") + sentenceWithPeriod;
+
+      const shouldEnd =
+        currentSentence.length >= minLength || i === sentences.length - 1;
+
+      if (shouldEnd) {
+        result.push(currentSentence);
+        currentSentence = "";
+      }
+    }
+
+    if (currentSentence.trim()) {
+      if (result.length > 0) {
+        result[result.length - 1] += " " + currentSentence;
+      } else {
+        result.push(currentSentence);
+      }
+    }
+
+    return result.filter((s) => s.trim().length > 0);
   }
 }
 

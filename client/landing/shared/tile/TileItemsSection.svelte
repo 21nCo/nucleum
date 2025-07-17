@@ -12,6 +12,8 @@
   export let title: string;
   export let items: ITileItem[];
 
+  const dev_isShowSeeAllButton = false;
+
   let container: HTMLDivElement;
   let currentIndex = 0;
 
@@ -67,10 +69,15 @@
       {/each}
     </div>
   {/if}
-  <Button
-    label="More Products"
-    icon="long-arrow-right"
-    class="mo:-mt-14"
-    on:click={() => ($isProductsPanelOpen = true)}
-  />
+  {#if dev_isShowSeeAllButton}
+    <Button
+      label="See all products"
+      icon="ph:arrow-right"
+      on:click={() => {
+        setTimeout(() => {
+          $isProductsPanelOpen = true;
+        }, 100);
+      }}
+    />
+  {/if}
 </Section>

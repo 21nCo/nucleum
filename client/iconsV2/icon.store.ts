@@ -1,6 +1,7 @@
 import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
+import { bundleNumber } from "./icons-list";
 
-export const spriteVersion = 28;
+export const spriteVersion = bundleNumber;
 export const extensionSprites = new Map<string, string>();
 
 export function cleanExtensionSprites() {

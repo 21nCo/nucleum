@@ -51,7 +51,7 @@
   }
   function onTypefaceChange(e: CustomEvent) {
     const selectedTypeface = e.detail;
-    appearance.setTypeface(selectedTypeface);
+    $userPreferences.appearance.typeface = selectedTypeface;
   }
 
   //TODO - use change event on switchInput instead
@@ -143,8 +143,8 @@
 
   {#if $appearance.isSyncWithSystem}
     <InlineInfoBanner
-      content="Dark and light themes will be switched automatically according to the system
-setting on your device."
+      content="Dark and light themes will be switched automatically according to the system setting on your device."
+      size={Size.sm}
     />
   {/if}
 

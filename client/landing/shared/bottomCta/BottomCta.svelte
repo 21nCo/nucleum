@@ -40,7 +40,8 @@
       if (!deviceImagesContainer || !phoneImage || !tabImage) return;
 
       const rect = deviceImagesContainer.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
+      const viewportHeight =
+        typeof window !== "undefined" ? window.innerHeight : 0;
       const distanceFromBottom = rect.top - viewportHeight;
       const distanceFromCenter =
         (rect.top + rect.bottom) / 2 - viewportHeight / 2;

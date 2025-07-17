@@ -7,16 +7,12 @@
     ILandingProductUrls,
     ITopNavBar
   } from "../shared/landing.type";
-  import {
-    discordUrl,
-    landing,
-    youtubeUrl
-  } from "../shared/store/shared.store";
+  import { landing, org } from "../shared/store/shared.store";
 
   const urls: ILandingProductUrls = {
     web: "https://web.memotron.app",
     features: "https://docs.memotron.app/memotron/features",
-    tutorials: youtubeUrl,
+    tutorials: org.youtube,
     faqs: "https://docs.memotron.app/memotron/faqs",
     changelog: "https://docs.memotron.app/changelog/memotron/new",
     roadmap: "https://docs.memotron.app/memotron/roadmap",
@@ -42,30 +38,40 @@
         expandRender: "resources"
       },
       { label: "Pricing", href: "pricing" },
-      { label: "Compare", href: "compare" },
+      // { label: "Compare", href: "compare" },
       { label: "Extension", href: urls.downloads?.extension ?? "" },
-      { label: "Discord", href: discordUrl }
+      { label: "Discord", href: org.discord }
     ],
-    cta: {
-      label: "Go to web app",
-      href: "https://web.memotron.app",
-      type: "primary"
-    }
+    cta: [
+      {
+        label: "",
+        href: "https://github.com/21nOrg/tidigit",
+        icon: "ph:github-logo-light",
+        type: "secondary"
+      },
+      {
+        label: "Go to web app",
+        href: "https://web.memotron.app",
+        type: "primary"
+      }
+    ]
   };
   let footerValues: IFooter = {
     appStoreUrl: urls.downloads?.ios,
     twitterUrl: urls.socials?.twitter,
     docsUrl: "https://docs.memotron.app",
-    youtubeUrl: youtubeUrl,
+    youtubeUrl: org.youtube,
     roadmapUrl: urls.roadmap,
     changelogUrl: urls.changelog
   };
   let metadata: IMetadata = {
-    title: "Memotron",
+    title: "Memotron - Open source personal knowledge management for everyone",
     description:
-      "Memotron is a memory atlas that helps you remember everything.",
-    keywords: "memotron, memory, atlas, remember",
-    url: "https://memotron.app"
+      "Memotron is a memory atlas that helps you remember everything. Personal knowledge management redefined.",
+    keywords:
+      "memotron, memory, atlas, remember, knowledge management, PKM, NCCL PKM system",
+    url: "https://memotron.app",
+    image: "https://cdn.21n.co/memotron/ogImage.png"
   };
   landing.load(urls);
 </script>

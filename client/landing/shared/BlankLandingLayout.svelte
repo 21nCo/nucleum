@@ -30,7 +30,9 @@
   ];
 
   $: isShowGrid = !isComparePage && scrollY < 70;
-  $: isComparePage = window.location.pathname.includes("compare");
+  $: isComparePage =
+    typeof window !== "undefined" &&
+    window.location.pathname.includes("compare");
 
   function addEntryAnimation(id: string) {
     if (isProduct) addAnimateClass("animate-open-left", id);
@@ -39,7 +41,9 @@
 
   onMount(async () => {
     isProductPage.set(isProduct);
-    view?.refresh(window.innerWidth, window.innerHeight);
+    if (typeof window !== "undefined") {
+      view?.refresh(window.innerWidth, window.innerHeight);
+    }
     setTimeout(() => {
       isShowLoadingOverlay = false;
     }, 500);
@@ -47,7 +51,9 @@
     //   addEntryAnimation(id);
   });
   const windowResizeListener = (event: Event) => {
-    view.refresh(window.innerWidth, window.innerHeight);
+    if (typeof window !== "undefined") {
+      view.refresh(window.innerWidth, window.innerHeight);
+    }
   };
 
   afterNavigate(() => {

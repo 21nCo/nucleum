@@ -256,6 +256,10 @@ export function isTextElement(target: EventTarget | null) {
  * @returns
  */
 export function detectSystemOS() {
+  if (typeof navigator === "undefined") {
+    return OperatingSystem.UNDETERMINED;
+  }
+
   let os: OperatingSystem;
   const userAgent = navigator.userAgent.toLowerCase();
   const platform = userAgent ?? navigator.platform.toLowerCase();
@@ -283,6 +287,11 @@ const CACHE_DURATION = 2 * 60 * 60 * 1000;
 
 export function getGeoLocation() {
   return new Promise<GeolocationPosition>((resolve, reject) => {
+    if (typeof navigator === "undefined") {
+      reject("Geolocation is not available in server environment.");
+      return;
+    }
+
     const now = Date.now();
     if (cachedPosition && now - cacheTimestamp < CACHE_DURATION) {
       resolve(cachedPosition);
@@ -418,6 +427,10 @@ export function resolveModalOnFront() {
 
 export async function generateFingerprint() {
   try {
+    if (typeof navigator === "undefined" || typeof window === "undefined") {
+      return "server";
+    }
+
     if (isExtensionEnvironment()) {
       return "extension";
     }
@@ -426,7 +439,7 @@ export async function generateFingerprint() {
       navigator.language,
       new Date().getTimezoneOffset(),
       navigator.hardwareConcurrency,
-      navigator.deviceMemory,
+      (navigator as any).deviceMemory,
       screen.colorDepth,
       screen.pixelDepth,
       screen.width + "x" + screen.height,
@@ -435,11 +448,11 @@ export async function generateFingerprint() {
       !!window.localStorage,
       !!window.indexedDB,
       !!window.openDatabase,
-      navigator.cpuClass,
+      (navigator as any).cpuClass,
       navigator.platform,
       navigator.plugins.length,
       navigator.mimeTypes.length,
-      !!navigator.bluetooth
+      !!(navigator as any).bluetooth
     ];
 
     if (window.CanvasRenderingContext2D) {

@@ -114,18 +114,35 @@ export enum ResourceActionType {
   OPEN = "open",
   CREATE = "create",
   EDIT = "edit",
-  DELETE = "delete",
   ARCHIVE = "archive",
+  UNARCHIVE = "unarchive",
+  DELETE = "delete",
   RESTORE = "restore",
   SHARE = "share",
   EXPORT = "export",
   FOCUS = "focus",
   PIN = "pin",
   UNPIN = "unpin",
-  EDIT_TITLE = "editTitle",
-  EDIT_LINKS = "editLinks",
-  EDIT_NOTES = "editNotes",
-  EDIT_COVER = "editCover"
+  SELECT = "select",
+  STAR = "star",
+  UNSTAR = "unstar",
+  DUPLICATE = "duplicate",
+  LOCK = "lock",
+  UNLOCK = "unlock",
+  LINK = "link",
+  UNLINK = "unlink",
+  ADD_TO = "ADD_TO",
+  MOVE = "move",
+  CONVERT = "convert",
+  REMOVE_FROM = "REMOVE_FROM",
+  EDIT_TITLE = "EDIT_TITLE",
+  EDIT_LINKS = "EDIT_LINKS",
+  EDIT_NOTES = "EDIT_NOTES",
+  EDIT_COVER = "EDIT_COVER",
+  COPY_LINK = "COPY_LINK",
+  COPY_CONTENTS = "COPY_CONTENTS",
+  TOGGLE_READ_MODE = "TOGGLE_READ_MODE",
+  TOGGLE_FOCUS_MODE = "TOGGLE_FOCUS_MODE"
 }
 
 /**
@@ -176,6 +193,8 @@ export enum ResourceAccessPoint {
   MARKDOWN_EMBED = "markdownembed",
 
   MARKDOWN_MENTION = "markdownmention",
+
+  MARKDOWN = "markdown",
   /**
    * The resource is being accessed from the combination
    */

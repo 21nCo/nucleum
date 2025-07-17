@@ -1,23 +1,15 @@
 <script lang="ts">
-  import Image from "$lib/client/icons/Image.svelte";
-  import Footer from "../shared/footer/Footer.svelte";
   import GridItemsSection from "../shared/grid/GridItemsSection.svelte";
   import HeroSection from "../shared/HeroSection.svelte";
   import type {
     IHeroInputs,
     IGridItem,
-    ITileItem,
-    IListItem
+    ITileItem
   } from "../shared/landing.type";
-  import {
-    currentProductsStore,
-    upcomingProductsStore,
-    microToolsStore,
-    portalsStore
-  } from "../shared/store/shared.store";
+  import { currentProductsStore, org } from "../shared/store/shared.store";
   import TileItemsSection from "../shared/tile/TileItemsSection.svelte";
 
-  const whitePaperUrl = "https://papers.21n.org/soft";
+  const whitePaperUrl = org.whitepaper;
 
   let heroInputs: IHeroInputs = {
     tagline: "21st century native org",
@@ -85,11 +77,9 @@
 </script>
 
 <HeroSection {heroInputs} />
-
 <GridItemsSection
   items={corePrinciples}
   title="Our Core principles"
   {whitePaperUrl}
 />
-
 <TileItemsSection items={products} title="Our products" />

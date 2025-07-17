@@ -6,6 +6,7 @@ export enum Resource {
    */
   everything = "everything",
   globalPreferences = "globalPreferences",
+  preferences = "preferences",
   TailwindTheme = "TailwindTheme",
   appData = "appData",
   space = "space",
@@ -20,6 +21,7 @@ export enum Resource {
   mutation = "mutation",
   event = "event",
   tag = "tag",
+  import = "import",
   /**
    * @deprecated - use {@link task} instead
    */

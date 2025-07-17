@@ -17,6 +17,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import Badge from "$lib/client/elements/text/Badge.svelte";
   import HowToUse from "./HowToUse.svelte";
+  import { renderMdAsHtml } from "../../markdown/markdown.utils";
 
   export let product: string;
   export let features: IFwFeature[] = [];
@@ -101,16 +102,26 @@
             <CardListContent items={feature.ratingCriteria} />
           </TextCard>
         {/if}
+        {#if feature.notes}
+          <TextCard>
+            <div class="flex items-center">
+              <SvgIcon icon={product} />
+              <span class="font-medium">
+                {properCase(product)}
+              </span>
+            </div>
+            <span class="text-fgs2 text-b2"
+              >{@html renderMdAsHtml(feature.notes)}</span
+            >
+          </TextCard>
+        {/if}
         <div class="flex flex-col gap-2">
           {#key selectedCompare?.length}
             <ComparisonTable {feature} {selectedCompare} {contemporaries} />
           {/key}
         </div>
-        {#if feature.notes}
-          <TextCard title="Additional information" content={feature.notes} />
-        {/if}
       </div>
-    {:else if selectedCompare}
+    {:else if selectedCompare && selectedCompare.length > 0}
       <ComparisionTableWithAppsAsColumns
         {product}
         {features}
@@ -154,6 +165,11 @@
       {/if}
     {:else if isHowToUse}
       <HowToUse />
+    {:else}
+      <span class="text-fgs2 text-b2">
+        Please click on a feature from the wheel or select apps to compare from
+        the dropdown.
+      </span>
     {/if}
   </div>
 </div>

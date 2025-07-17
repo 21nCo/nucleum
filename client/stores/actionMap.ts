@@ -29,6 +29,7 @@ import CoverPicker from "../elements/coverPicker/CoverPicker.svelte";
 import SurrealLocalViewer from "../components/debug/SurrealLocalViewer.svelte";
 import SignalDBViewer from "../components/debug/SignalDBViewer.svelte";
 import PrivacyPolicy from "../landing/shared/PrivacyPolicy.svelte";
+import CalendarSettings from "../components/calendar/settings/CalendarSettings.svelte";
 import { Embed } from "../types/context.type";
 import {
   ResourceAccessMode,
@@ -824,12 +825,9 @@ export const globalActions: IAction[] = [
               ? "Adding to collection"
               : "Linking to node"
           );
-          const result = await linker.bulkLink(
-            items,
-            item.id,
-            resourceType,
-            context?.accessPoint
-          );
+          const result = await linker.bulkLink(items, item.id, resourceType, {
+            context: context?.accessPoint
+          });
           if (resourceType === Resource.collection) {
             const itemType = determineResourceType(items[0]);
             const store = resolveResourceStore(itemType);
@@ -985,6 +983,20 @@ export const globalActions: IAction[] = [
     hideContext: [Embed.HANDSET],
     modalParams: {
       title: "Data Settings",
+      layout: {
+        size: Size.lg,
+        orientation: Orientation.Horizontal
+      }
+    }
+  },
+  {
+    action: Action.CALENDAR_SETTINGS,
+    type: ActionType.MODAL,
+    label: "Calendar Settings",
+    icon: "ph:sliders-light",
+    component: CalendarSettings,
+    modalParams: {
+      title: "Calendar Settings",
       layout: {
         size: Size.lg,
         orientation: Orientation.Horizontal

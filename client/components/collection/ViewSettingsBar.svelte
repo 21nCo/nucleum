@@ -63,8 +63,7 @@
         selected={view.properties?.map((x) => x.toString()) ?? []}
         label={{
           ...dropdownLabelConfig,
-          label: "Properties shown",
-          badge: "beta"
+          label: "Properties shown"
         }}
         on:select={(e) => onSelect("properties", e)}
       />

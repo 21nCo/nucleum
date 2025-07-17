@@ -58,6 +58,7 @@
           .map((feature) => ({
             ...feature,
             label: feature.label,
+            shortLabel: feature.shortLabel,
             contemporaries:
               selectedCompare && selectedCompare.length > 0
                 ? feature.contemporaries.filter((contemporary) => {

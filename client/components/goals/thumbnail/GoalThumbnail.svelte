@@ -9,10 +9,9 @@
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import {
-    currentFocusItem,
-    focusItemsStore
+    activeSession,
+    currentFocusItem
   } from "$lib/client/products/pointron/focus/session.store";
-  import { resolveIfCurrentFocusItem } from "$lib/client/products/pointron/focus/session.utils";
 
   import GoalThumbnailSub from "./GoalThumbnailSub.svelte";
   import GoalThumbnailTitle from "./GoalThumbnailTitle.svelte";
@@ -27,8 +26,7 @@
   export let isDraggable: boolean = false;
   export let refreshId: number = new Date().getTime();
   $: color = resolveGoalColor(item);
-  $: isCurrentlyFocusing = resolveIfCurrentFocusItem(
-    $focusItemsStore,
+  $: isCurrentlyFocusing = activeSession.isCurrentFocusItem(
     item.id,
     $currentFocusItem
   );

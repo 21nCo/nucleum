@@ -5,7 +5,11 @@
 </script>
 
 {#if showJustAvailability}
-  <Icon icon="ph:check" class="text-ags1" />
+  {#if value <= 0.2}
+    <Icon icon="ph:x" class="text-ars1" />
+  {:else}
+    <Icon icon="ph:check" class="text-ags1" />
+  {/if}
 {:else if value >= 0 && value <= 0.2}
   <span class="text-ars1">Negative</span>
 {:else if value > 0.2 && value <= 0.6}

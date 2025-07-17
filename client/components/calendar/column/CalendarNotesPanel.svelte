@@ -6,42 +6,38 @@
     nodeStore,
     type IActiveNodeStore
   } from "$lib/client/products/memotron/node/node.store";
-  import {
-    NodeMetaType,
-    NodeType
-  } from "$lib/client/products/memotron/node/node.type";
+  import { NodeType } from "$lib/client/products/memotron/node/node.type";
   import type { TimeScaleUnit } from "$lib/client/types/time.type";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   import { setContext } from "svelte";
   import {
     ResourceAccessMode,
     ResourceAccessPoint
   } from "../../flux/resourceStores/resource.type";
   import { resolveCalendarNotesId } from "../calendar.utils";
-  import { getUtcSafeDay } from "$lib/client/elements/datetime/datetime.utils";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { LoadingAnimationType } from "$lib/client/types/feedback.type";
-
+  import { preferences } from "$lib/client/stores/preferences/preferences.store";
+  import { ActiveCaptureStore } from "$lib/client/products/memotron/capture/capture.store";
+  import { Preference } from "$lib/client/stores/preferences/preferences.type";
+  import type { IMarkdownTemplate } from "$lib/client/components/markdown/md.type";
   export let date: Date;
   export let scale: TimeScaleUnit;
-  let mdId = generateSimpleRandomId();
+  export let mdId: string;
   let node: IActiveNodeStore;
+  const captureStore = ActiveCaptureStore.resolve(mdId);
 
   async function initialize() {
     const id = resolveCalendarNotesId(date, scale);
     const result = await nodeStore.select(id);
+    const savedTemplate = preferences.resolve(Preference.NOTES_TEMPLATE, {
+      subVariables: [scale]
+    });
     if (!result?.id) {
-      const creationResult = await nodeStore.create([
-        {
-          id,
-          contentType: NodeType.NODULAR_MARKDOWN,
-          label: "Calendar Notes - " + formatDate(date, scale),
-          body: "",
-          metaType: NodeMetaType.CALENDAR_NOTES,
-          date: getUtcSafeDay(date),
-          children: []
-        }
-      ]);
+      await captureStore.saveCalendarNotes({
+        date,
+        scale,
+        template: savedTemplate as IMarkdownTemplate | undefined
+      });
     }
     node = ActiveNodeStore.resolve(id);
     await node.init({
@@ -57,14 +53,6 @@
   };
 
   setContext("node", nodeContext);
-
-  function formatDate(date: Date, scale: TimeScaleUnit) {
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric"
-    });
-  }
 </script>
 
 {#await initialize()}
@@ -77,7 +65,9 @@
 {:then _}
   <NodeContent {node} {mdId} />
 {:catch _}
-  <EmptyStatusView mainText="Error loading calendar notes" />
+  <EmptyStatusView
+    mainText="Error loading calendar notes. Please try again after sometime."
+  />
 {/await}
 
 <ComponentBaseLayer hasDragAndDrop={true} />

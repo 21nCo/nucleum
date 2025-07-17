@@ -21,6 +21,9 @@
   import Globe from "$lib/client/illustrations/Globe.svelte";
   import MatchNotFound from "$lib/client/illustrations/MatchNotFound.svelte";
   import PageNotFoundIllustration from "$lib/client/illustrations/PageNotFoundIllustration.svelte";
+  import OverviewCardsPulse from "./animations/DashboardPulse/OverviewCardsPulse.svelte";
+  import OnThisDayPulse from "./animations/DashboardPulse/OnThisDayPulse.svelte";
+  import AnalyticsChartPulse from "./animations/DashboardPulse/AnalyticsChartPulse.svelte";
   export let mainText: string | undefined = undefined;
   export let subText: string | undefined = undefined;
   export let size: Size.sm | Size.md | Size.lg = Size.md;
@@ -62,6 +65,12 @@
     <QuickFocusItemsGridPulse />
   {:else if isLoadingState && loadingAnimation === LoadingAnimationType.FOCUS_ITEMS_PULSE}
     <QuickFocusItemPulse />
+  {:else if isLoadingState && loadingAnimation === LoadingAnimationType.OVERVIEW_CARDS_PULSE}
+    <OverviewCardsPulse />
+  {:else if isLoadingState && loadingAnimation === LoadingAnimationType.ON_THIS_DAY_PULSE}
+    <OnThisDayPulse />
+  {:else if isLoadingState && loadingAnimation === LoadingAnimationType.ANALYTICS_CHART_PULSE}
+    <AnalyticsChartPulse />
   {:else}
     {#if isSearchContext}
       {@const random = Math.random()}
@@ -81,7 +90,7 @@
         {/if}
       </div>
     {:else if isNotAvailableContext}
-      <ComingSoon width={200} />
+      <ComingSoon width={size === Size.sm ? 120 : 200} />
     {:else if emptyIllustration === "inboxZero"}
       <InboxZero />
     {:else if emptyIllustration === "travel"}

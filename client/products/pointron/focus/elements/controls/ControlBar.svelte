@@ -9,27 +9,34 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { SessionUIContext } from "$lib/client/types/pointron/session.type";
   export let context: SessionUIContext = SessionUIContext.DEFAULT;
+  let isOperationInProgress = false;
   $: controlItemProps = { context };
   async function controlClickHandler(event: any) {
-    let control = event.detail.control;
-    if (control === Control.START) {
-      await activeSession.startSession();
-    } else if (control === Control.BREAK) {
-      await activeSession.startBreak();
-    } else if (control === Control.FINISH) {
-      if ($activeSession.state === SessionState.TIME_IS_UP) {
-        await activeSession.finishSession();
+    if (isOperationInProgress) return;
+    isOperationInProgress = true;
+    try {
+      let control = event.detail.control;
+      if (control === Control.START) {
+        await activeSession.startSession();
+      } else if (control === Control.BREAK) {
+        await activeSession.startBreak();
+      } else if (control === Control.FINISH) {
+        if ($activeSession.state === SessionState.TIME_IS_UP) {
+          await activeSession.finishSession();
+        } else {
+          await activeSession.finishSession();
+        }
+      } else if (control === Control.RESUME || control === Control.SKIPBREAK) {
+        await activeSession.resumeSession();
+      } else if (control === Control.EXTEND) {
+        await activeSession.extendSession();
+      } else if (control === Control.ABANDON) {
+        appStore.runAction(PointronAction.ABANDON_SESSION);
       } else {
-        await activeSession.finishSession();
+        $activeSession.state = SessionState.NOT_STARTED;
       }
-    } else if (control === Control.RESUME || control === Control.SKIPBREAK) {
-      await activeSession.resumeSession();
-    } else if (control === Control.EXTEND) {
-      await activeSession.extendSession();
-    } else if (control === Control.ABANDON) {
-      appStore.runAction(PointronAction.ABANDON_SESSION);
-    } else {
-      $activeSession.state = SessionState.NOT_STARTED;
+    } finally {
+      isOperationInProgress = false;
     }
   }
 </script>
@@ -47,6 +54,7 @@
       control={Control.START}
       isProminent={true}
       on:click={controlClickHandler}
+      {...controlItemProps}
     />
   {:else if $activeSession.type === SessionType.PREDEFINED_INTERVALS}
     <ControlItem

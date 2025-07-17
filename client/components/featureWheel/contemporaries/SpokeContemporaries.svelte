@@ -39,7 +39,7 @@
   function resolveYCoord(contemporary: IFeatureWheelContemporary) {
     return (
       radius *
-      (1 - (contemporary.value ?? 0)) *
+      (1 - (contemporary.value ? contemporary.value : 0.03)) *
       Math.sin(startAngles[i] + (j / groupSpokeLength) * groupAngles[i])
     );
   }
@@ -47,7 +47,7 @@
   function resolveXCoord(contemporary: IFeatureWheelContemporary) {
     return (
       radius *
-      (1 - (contemporary.value ?? 0)) *
+      (1 - (contemporary.value ? contemporary.value : 0.03)) *
       Math.cos(startAngles[i] + (j / groupSpokeLength) * groupAngles[i])
     );
   }

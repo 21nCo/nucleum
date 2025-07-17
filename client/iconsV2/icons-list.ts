@@ -13,7 +13,6 @@ const phosphorIcons = [
   "arrow-elbow-down-left",
   "arrow-elbow-right-up",
   "arrow-elbow-left-up",
-  "arrow-bend-down-left",
   "arrows-left-right",
   "arrows-out",
   "arrows-out-simple",
@@ -38,6 +37,20 @@ const phosphorIcons = [
   "arrow-square-out",
   "arrow-square-in",
   "arrow-square-up-right",
+  "flow-arrow",
+  "arrow-fat-up",
+  "arrow-fat-down",
+  "arrow-fat-line-up",
+  "arrow-fat-line-down",
+  "arrow-fat-lines-up",
+  "arrow-fat-lines-down",
+  "arrow-bend-down-left",
+  "arrow-bend-down-right",
+  "arrow-bend-up-right",
+  "arrow-bend-up-left",
+  "arrow-bend-left-up",
+  "arrow-bend-right-up",
+  "arrow-bend-double-up-right",
 
   //Carets
   "caret-down",
@@ -92,6 +105,8 @@ const phosphorIcons = [
   "file-doc",
   "file-ppt",
   "file-xls",
+  "file-text",
+  "file-audio",
 
   // Actions
   "crop",
@@ -243,7 +258,6 @@ const phosphorIcons = [
   "list-numbers",
   "tree-view",
   "timer",
-  "file",
   "math-operations",
   "check-square",
   "check-square-offset",
@@ -281,6 +295,7 @@ const phosphorIcons = [
   "currency-circle-dollar",
   "note-blank",
   "clipboard",
+  "clipboard-text",
   "command",
   "sidebar",
   "chalkboard-simple",
@@ -309,6 +324,9 @@ const phosphorIcons = [
   "paper-plane",
   "paper-plane-right",
   "paper-plane-tilt",
+  "waveform",
+  "waveform-slash",
+  "wave-sine",
 
   //Git
   "git-fork",
@@ -362,8 +380,6 @@ export const phosphorRatingIcons = [
 
   "thumbs-up",
   "thumbs-down",
-  "arrow-fat-up",
-  "arrow-fat-down",
   "plus-circle",
   "minus-circle",
 
@@ -470,7 +486,8 @@ const heroiconsIcons = [
   "cog",
   "rectangle-group",
   "rectangle-stack",
-  "bookmark"
+  "bookmark",
+  "copy"
 ];
 const heroiconsSolid = heroiconsIcons.map((icon) => icon + "-solid");
 
@@ -500,7 +517,14 @@ const tablerIcons = ["keyboard-show", "hexagon-plus"];
 
 const uilIcons = ["keyboard-hide"];
 
-const mynaUiIcons = ["plus-hexagon", "git-commit", "git-merge", "git-branch"];
+const mynaUiIcons = [
+  "plus-hexagon",
+  "git-commit",
+  "git-merge",
+  "git-branch",
+  "brand-pocket",
+  "brand-pocket-solid"
+];
 
 export const iconSets = {
   hugeicons: hugeiconsIcons,
@@ -531,3 +555,5 @@ export const phIcons = {
   //   (icon) => icon + "-duotone"
   // )
 };
+
+export const bundleNumber = 32;
