@@ -69,6 +69,7 @@
   import { RxDBPersistence } from "$lib/client/persistence/rxdb/rxdb.local";
   import { cn } from "$lib/client/utils/ui.utils";
   import { DexiePersistence } from "$lib/client/persistence/dexie/dexie.local";
+  import { parse } from "$lib/shared/utils/json.utils";
 
   const loadingMessages = {
     cloneUp: {
@@ -344,7 +345,7 @@
       product: $appStore.product
     };
     const stores = [...cacheableStores, ...localCacheableStores];
-    const provider: PersistenceProvider = PersistenceProvider.SURREAL;
+    const provider: PersistenceProvider = PersistenceProvider.DEXIE;
     return initFlux(stores, provider, resolveLocalPersistence(), initParams);
 
     function resolveLocalPersistence() {
@@ -491,7 +492,7 @@
   async function handleMessageFromParent(event: any) {
     try {
       if (event?.data?.type === "SWIFT_MESSAGE" && event?.data?.payload) {
-        const parsed = JSON.parse(event.data.payload);
+        const parsed = parse(event.data.payload);
         console.log({
           at: "handleMessageFromParent - SWIFT_MESSAGE",
           parsed

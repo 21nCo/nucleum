@@ -10,7 +10,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import { createEventDispatcher } from "svelte";
-  import { LinkType } from "../../products/memotron/node/node.type";
+  import { LinkType } from "$lib/client/products/memotron/linking/link.type";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import appearance from "$lib/client/stores/appearance.store";
   import { Theme } from "$lib/client/types/appearance.type";

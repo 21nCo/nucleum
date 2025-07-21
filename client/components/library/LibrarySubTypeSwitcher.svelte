@@ -8,7 +8,6 @@
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import Divider from "$lib/client/elements/Divider.svelte";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { resolveGoalSubTypesForSwitcher } from "../goals/goal.utils";
   import { resolveTaskSubTypesForSwitcher } from "../tasks/task.utils";
   import { resolveNodeSubTypesForSwitcher } from "$lib/client/products/memotron/node/node.utils";
@@ -56,7 +55,7 @@
     value: "starred",
     icon: "ph:star-light"
   };
-  let subTypeCounts: { count: number; type: NodeType | CollectionType }[] = [];
+  let subTypeCounts: Map<NodeType | CollectionType, number> = new Map();
   let isExpandableSubTypes: boolean = false;
   let isExpandSubTypes: boolean = false;
   let isStarFilterSelected: boolean = $page.url.searchParams.get(
@@ -136,12 +135,11 @@
             filters
           );
         }
-        if (isValidArrayWithData(subTypeCounts)) {
+        if (subTypeCounts) {
           allSubTypes = allSubTypes.map((x) => {
-            let count = subTypeCounts.find(
-              (y: { type: any; count: number }) =>
-                y.type?.toLowerCase() === x.value?.toLowerCase()
-            )?.count;
+            let count = subTypeCounts.get(
+              x.value.toString().toUpperCase() as NodeType | CollectionType
+            );
             return {
               ...x,
               badge: count ? count : undefined
@@ -154,8 +152,12 @@
         return;
       }
       renderedSubTypes = [...allSubTypes]
-        .filter((x) => x.value === "all" || (x.badge && x.badge > 0))
-        ?.sort((a, b) => (b.badge ?? 0) - (a.badge ?? 0));
+        .filter(
+          (x) =>
+            x.value === "all" ||
+            (x.badge && typeof x.badge === "number" && x.badge > 0)
+        )
+        ?.sort((a, b) => +(b.badge ?? 0) - +(a.badge ?? 0));
       renderedSubTypes.pop();
       renderedSubTypes.unshift(allSubTypeSwitcherItem);
     } catch (e) {

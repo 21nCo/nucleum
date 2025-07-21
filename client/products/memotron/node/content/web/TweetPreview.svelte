@@ -11,6 +11,7 @@
   import TweetPreviewUsingWidget from "./Twitter/TweetPreviewUsingWidget.svelte";
   import account from "$lib/client/stores/account.store";
   import { InfoTextType } from "$lib/client/types/text.type";
+  import { parse } from "$lib/shared/utils/json.utils";
   export let node: ITweet;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   const nodeContext = getContext<any>("node");
@@ -40,7 +41,7 @@
     const urlData = await new Persistence().retrieveUrlData(oEmbedUrl, {
       isReturnRawData: true
     });
-    const parsed = JSON.parse(urlData.text);
+    const parsed = parse(urlData.text);
     oembedHtml = parsed.html;
   }
 </script>

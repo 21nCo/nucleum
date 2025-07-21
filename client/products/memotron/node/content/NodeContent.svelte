@@ -312,6 +312,7 @@
 
     /**
      * TODO - copying text - if converting to and from code - text etc
+     * TODO - use undefined instead of $NONE for dexie and test
      * @param e
      */
     function onConvert(e: CustomEvent) {

@@ -43,7 +43,7 @@
 </script>
 
 {#if avatar && typeof avatar === "object"}
-  {#if "file" in avatar && avatar.file && avatar.file !== "$NONE"}
+  {#if "file" in avatar && avatar.file}
     <FileView
       id={avatar.file}
       class={cn(isHoverEnabled && "hover:scale-[1.2] transition-transform", {
@@ -58,7 +58,7 @@
     alt={avatar.name}
     class={cn(isHoverEnabled && "hover:scale-[1.2] transition-transform")}
   /> -->
-  {:else if "code" in avatar && avatar.code && avatar.code !== "$NONE"}
+  {:else if "code" in avatar && avatar.code}
     {#if avatar.type === AvatarType.ICON}
       {#if dev_iOSTempRatingFallback}
         <Icon icon={avatar.isFilled ? "ph:star-fill" : "ph:star"} />

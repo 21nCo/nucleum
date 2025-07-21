@@ -588,6 +588,8 @@ export function formatDate(
     | "yyyy" = "verbose"
 ) {
   if (typeof date === "number") date = new Date(date);
+  else if (typeof date === "string") date = new Date(date);
+  if (date.toString() === "Invalid Date") return "";
   if (format === "iso" || format === "iso-short") {
     let year = date.getFullYear();
     let month = (1 + date.getMonth()).toString().padStart(2, "0");

@@ -1,14 +1,18 @@
 import type { IResource } from "../../flux/resourceStores/resource.type";
 
-export interface ITimezone extends IResource {
+interface ITimezoneBase {
   offset: number;
   label: string;
   /**
    * @deprecated - use {@link dateUnix} instead
    */
-  date?: string;
+  date?: Date;
   /**
    * The unix timestamp of the date
    */
   dateUnix: number;
 }
+
+export interface ITimezoneCapture extends ITimezoneBase {}
+
+export interface ITimezone extends ITimezoneBase, IResource {}

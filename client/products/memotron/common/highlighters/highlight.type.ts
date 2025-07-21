@@ -1,5 +1,3 @@
-import type { IObservableStoreSubject } from "$lib/client/types/data.type";
-
 export type IHighlighter = {
   id: string;
   label: string;
@@ -7,6 +5,6 @@ export type IHighlighter = {
   isArchived?: boolean;
 };
 
-export type IHighlightStore = IObservableStoreSubject & {
+export type IHighlightStore = {
   highlighters: IHighlighter[];
 };

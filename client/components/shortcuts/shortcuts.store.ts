@@ -11,6 +11,7 @@ import { resolveModifiers } from "./shortcut.utils";
 import context from "$lib/client/stores/context.store";
 import { OperatingSystem } from "$lib/client/types/context.type";
 import { shortcutsConfig } from "./shortcuts.config";
+import { replacer } from "$lib/shared/utils/json.utils";
 
 export type KeyboardShortcutsStoreType = InstanceType<typeof KeyboardShortcuts>;
 
@@ -27,9 +28,7 @@ class KeyboardShortcuts extends KeyValueStore<IKeyboardShortcutsStore> {
     let defaultKeyMap = shortcutsConfig;
     const ctx = get(context);
     if (ctx.os === OperatingSystem.WINDOWS) {
-      defaultKeyMap = JSON.parse(
-        JSON.stringify(defaultKeyMap).replaceAll("Meta", "Control")
-      );
+      defaultKeyMap = replacer(defaultKeyMap, { Meta: "Control" });
     }
     return Object.entries({ ...defaultKeyMap, ...this.get() })
       .map(([action, shortcut]) => ({

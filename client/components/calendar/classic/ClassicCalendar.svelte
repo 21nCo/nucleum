@@ -213,7 +213,9 @@
             ? Resource.node
             : (resource as Resource);
         return new SearchStore(searchResource).select({
-          properties,
+          properties: {
+            select: properties
+          },
           filters,
           isExpand: false,
           isIncludeMetaItems: resource === MetaResource.calendarNotes

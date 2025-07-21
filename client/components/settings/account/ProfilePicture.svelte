@@ -46,7 +46,7 @@
 
   async function refresh(x: any) {
     if (fileId && renderFileBasedProfilePicture) return;
-    if (isValidString(x.userInfo?.profilePictureUrl)) {
+    if (isValidString(x.userInfo?.profilePictureUrl) && !import.meta.env.DEV) {
       try {
         let response = await fetch(x.userInfo?.profilePictureUrl!, {
           method: "GET"

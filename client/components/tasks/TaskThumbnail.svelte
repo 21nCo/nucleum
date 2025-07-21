@@ -160,7 +160,7 @@
     </div>
     <div class="flex-1 min-w-0 flex flex-col userdata whitespace-no-wrap">
       {#if item.goal && accessPoint !== ResourceAccessPoint.GOAL}
-        <TaskThumbnailGoalLabel goal={item.goal} />
+        <TaskThumbnailGoalLabel goal={item.goal} {accessPoint} />
       {/if}
       {#if item.isChecked}
         <span class="flex line-through whitespace-no-wrap w-full">

@@ -10,7 +10,7 @@
   import Divider from "$lib/client/elements/Divider.svelte";
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import type { SignalDBPersistence } from "$lib/client/persistence/signaldb/signaldb.local";
-
+  import { stringify } from "$lib/shared/utils/json.utils";
   interface CollectionInfo {
     name: string;
     count: number;
@@ -131,7 +131,7 @@
 
   function formatData(data: any): string {
     try {
-      return JSON.stringify(data, null, 2);
+      return stringify(data, { space: 2 });
     } catch (e) {
       return String(data);
     }

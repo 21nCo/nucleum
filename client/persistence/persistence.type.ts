@@ -133,7 +133,14 @@ export interface IPersistenceInitParams {
   dapId: string;
   product: string;
   userId?: string;
+  /**
+   * @deprecated
+   */
   dbo?: string[];
+  tables?: {
+    name: string;
+    indices: string[];
+  }[];
   appVersion?: string;
 }
 

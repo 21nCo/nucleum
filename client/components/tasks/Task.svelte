@@ -84,8 +84,11 @@
       if (!task) return;
       if (task.dateUnix) date = new Date(task.dateUnix);
       if (task.completedAtUnix) completedDate = new Date(task.completedAtUnix);
-      if (task.goalId) {
+      if (task.goalId && !task.goal) {
         goal = await goalStore.select(task.goalId as IRecordId);
+        isShowGoalPicker = false;
+      } else if (task.goal) {
+        goal = task.goal;
         isShowGoalPicker = false;
       }
       recentsStore.add(task, {
@@ -255,8 +258,8 @@
           {:else if goal}
             <TaskThumbnailGoalLabel
               {goal}
-              on:click={onGoalClear}
-              isCreateContext={true}
+              on:clearGoal={onGoalClear}
+              {accessPoint}
             />
           {/if}
           <div class="flex gap-2">

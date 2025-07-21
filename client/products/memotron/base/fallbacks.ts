@@ -1,3 +1,4 @@
+import type { ICollection } from "$lib/client/components/collection/collection.type";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { flux } from "$lib/client/components/flux/flux";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
@@ -125,11 +126,10 @@ export async function collectionResourceBackPropagation() {
   if (collections && isValidArrayWithData(collections)) {
     await flux.mutation(Resource.collection, {
       action: PersistenceActionType.BULK_MERGE,
-      records: collections.map((collection) => ({
-        id: collection.id,
-        resource: Resource.node,
-        modifiedAt: new Date().toISOString()
-      }))
+      recordIds: collections.map((collection: ICollection) => collection.id),
+      changes: {
+        resource: Resource.node
+      }
     });
     logger.info({
       at: "collectionResourceBackPropagation - completed ",
@@ -195,10 +195,10 @@ export async function headingNodeParentBackPropagation() {
     if (orphanNodes.length > 0) {
       await flux.mutation(Resource.node, {
         action: PersistenceActionType.BULK_MERGE,
-        records: orphanNodes.map((x) => ({
-          id: x,
+        recordIds: orphanNodes,
+        changes: {
           mdParent: []
-        }))
+        }
       });
     }
     if (!modifiedNodes || !modifiedNodes.length) return;
@@ -227,10 +227,10 @@ export async function collectionsListOnRecords() {
 
   await flux.mutation(Resource.node, {
     action: PersistenceActionType.BULK_MERGE,
-    records: nodesWithAvatars.map((x) => ({
-      id: x.id,
+    recordIds: nodesWithAvatars.map((x: INode) => x.id),
+    changes: {
       avatar: undefined
-    }))
+    }
   });
 
   const collections = await flux.selectMany(Resource.collection, {

@@ -1,5 +1,9 @@
-import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
+import {
+  EmbedDataMessage,
+  EmbedMessage
+} from "$lib/client/types/embedMessage.enum";
 import type { HapticFeedback } from "$lib/client/types/haptic.enum";
+import { stringify } from "$lib/shared/utils/json.utils";
 import { logger } from "../components/debug/logger.client";
 
 export function pingParent(isExtended: boolean = false) {
@@ -23,14 +27,24 @@ export function postMessageToParent(message: EmbedMessage) {
   });
 }
 
+export function postDataToParent(key: EmbedDataMessage, data: any) {
+  postToParent({
+    [key]: stringify(data, { isPreventReplacer: true })
+  });
+}
+
+export function setEmbedBg(bg: number) {
+  postDataToParent(EmbedDataMessage.BG, bg);
+}
+
 /**
  * TODO - security check
  * @param message
  */
-export function postToParent(message: any) {
+function postToParent(message: any) {
   logger.log({
     at: "posting message to parent",
-    message: JSON.stringify(message)
+    message
   });
   try {
     window?.parent?.postMessage(message, "*");
@@ -57,7 +71,7 @@ export function postNotificationToParent(message: {
 }) {
   logger.log({ context: "postNotificationToParent", message });
   postToParent({
-    notification: JSON.stringify(message)
+    notification: message
   });
 }
 

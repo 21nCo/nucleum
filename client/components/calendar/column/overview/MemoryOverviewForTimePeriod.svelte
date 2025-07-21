@@ -3,7 +3,6 @@
   import { nodeStore } from "$lib/client/products/memotron/node/node.store";
   import { linker } from "$lib/client/products/memotron/linking/link.store";
   import type { INodeThumb } from "$lib/client/products/memotron/node/node.type";
-  import type { INodeLink } from "$lib/client/products/memotron/node/node.type";
   import { formatDate } from "$lib/client/utils/time.utils";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
@@ -17,14 +16,15 @@
   import { Action } from "$lib/client/types/action.enum";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
   import { LoadingAnimationType } from "$lib/client/types/feedback.type";
+  import type { ILink } from "$lib/client/products/memotron/linking/link.type";
 
   export let date: Date;
   export let scale: TimeScale = TimeScale.DAYS;
   export let isRewind: boolean = false;
 
   async function fetchMemoryData(): Promise<{
-    today: { nodes: INodeThumb[]; links: INodeLink[] };
-    previousYears: { nodes: INodeThumb[]; links: INodeLink[]; year: number }[];
+    today: { nodes: INodeThumb[]; links: ILink[] };
+    previousYears: { nodes: INodeThumb[]; links: ILink[]; year: number }[];
   }> {
     const normalizedDate = new Date(
       date.getFullYear(),

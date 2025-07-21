@@ -11,14 +11,19 @@ import { logger } from "../debug/logger.client";
 import { Resource } from "../flux/resourceStores/resource.enum";
 import { ResourceStore } from "../flux/resourceStores/resource.store";
 import { isRecordId } from "../flux/resourceStores/resource.utils";
-import type { IFile } from "./file.type";
+import type { IFile, IFileCapture } from "./file.type";
 import { fileEmbedChannel } from "./fileEmbedChannel.store";
 import { OperatingSystem } from "$lib/client/types/context.type";
 import account from "$lib/client/stores/account.store";
 
-class FileStore extends ResourceStore<IFile> {
+class FileStore extends ResourceStore<IFile, IFileCapture> {
   constructor() {
-    super(Resource.file);
+    super(Resource.file, {
+      indices: ["type"],
+      defaultProps: {
+        type: ""
+      }
+    });
   }
 
   async download(file: IFile | IRecordId | string) {

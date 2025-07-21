@@ -10,7 +10,7 @@ import {
 } from "$lib/client/types/pointron/session.type";
 import type { ITag } from "$lib/client/types/pointron/tag.type";
 import { activeSession } from "./focus/session.store";
-import { type ISession, SessionType } from "./logs/log.type";
+import { type ISessionBase, SessionType } from "./logs/log.type";
 import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 
 export function getTotalsFromComposition(
@@ -29,12 +29,12 @@ export function getTotalsFromComposition(
   let duration = intervals.reduce((sum, item) => sum + (item.duration ?? 0), 0);
   let focus = intervals.reduce(
     (sum, item) =>
-      sum + (item.type === BlockType.FOCUS ? item.duration ?? 0 : 0),
+      sum + (item.type === BlockType.FOCUS ? (item.duration ?? 0) : 0),
     0
   );
   let brek = intervals.reduce(
     (sum, item) =>
-      sum + (item.type === BlockType.BREAK ? item.duration ?? 0 : 0),
+      sum + (item.type === BlockType.BREAK ? (item.duration ?? 0) : 0),
     0
   );
   return { duration, focus, brek };
@@ -208,7 +208,7 @@ export function resolveSessionSplitFromIntervals(
   return { focus, brek };
 }
 
-export function resolveSessionTimeSplit(x: ISession) {
+export function resolveSessionTimeSplit(x: ISessionBase) {
   let sessionTime = { focus: 0, brek: 0 };
   if (
     (x.type === SessionType.COUNTUP || x.type === SessionType.MANUAL_ENTRY) &&
@@ -222,7 +222,7 @@ export function resolveSessionTimeSplit(x: ISession) {
   return sessionTime;
 }
 
-export function resolveSessionTimeLegacy(session: ISession) {
+export function resolveSessionTimeLegacy(session: ISessionBase) {
   if (
     (session.type === SessionType.COUNTUP && session.blocks.length === 1) ||
     session.type === SessionType.MANUAL_ENTRY

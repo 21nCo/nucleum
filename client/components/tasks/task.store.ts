@@ -1,18 +1,12 @@
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
-import {
-  type IRecordId,
-  type IResourceSelectAdditionalParams,
-  type IResourceSelectParams
-} from "$lib/client/types/data.type";
+import { type IRecordId } from "$lib/client/types/data.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import { logger } from "$lib/client/components/debug/logger.client";
-import type { ITask } from "./task.type";
+import type { ITask, ITaskCapture } from "./task.type";
 import {
   ResourceAccessMode,
-  ResourceAccessPoint,
-  type OmitForCapture,
-  type OmitForCaptureWithId
+  ResourceAccessPoint
 } from "../flux/resourceStores/resource.type";
 import type {
   IContextMenu,
@@ -28,41 +22,33 @@ import view from "$lib/client/stores/view.store";
 import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
 import { resolveResourceIcon } from "../flux/resourceStores/resource.utils";
 import { activeSession } from "$lib/client/products/pointron/focus/session.store";
-class TaskStore extends ResourceStore<ITask> {
-  constructor() {
-    super(Resource.task);
-  }
 
-  selectMany(
-    params?: IResourceSelectParams,
-    additionalParams?: IResourceSelectAdditionalParams
-  ) {
-    const expandedProps = ["*", "goalId.* as goal"];
-    const properties = [
-      ...(additionalParams?.isExpand ? expandedProps : []),
-      ...(params?.properties ?? [])
-    ];
-    params = {
-      ...(params ?? {}),
-      properties
-    };
-    return super.selectMany(params, additionalParams);
+const defaults = {
+  dateUnix: 0,
+  goalId: "",
+  isChecked: false
+};
+class TaskStore extends ResourceStore<ITask, ITaskCapture> {
+  constructor() {
+    super(Resource.task, {
+      indices: ["dateUnix", "goalId"],
+      expandProps: ["goalId"],
+      defaultProps: defaults
+    });
   }
 
   async save(
-    form: OmitForCapture<ITask>,
+    form: ITaskCapture,
     params?: { id?: IRecordId; context?: string }
   ) {
     logger.log({ at: "TaskStore.save", form });
-    const resource: OmitForCaptureWithId<ITask> = {
+    const resource: ITaskCapture = {
       id: params?.id ?? generateResourceId(Resource.task),
       label: form.label,
-      isChecked: form.isChecked ?? false,
-      estimated: form.estimated,
       dateUnix: form.dateUnix
         ? resolveUnixTimestamp(getUtcSafeDay(new Date(form.dateUnix)))
-        : undefined,
-      goalId: form.goalId
+        : defaults.dateUnix,
+      ...(form.goalId && { goalId: form.goalId })
     };
     appStore.addToRecents({
       record: resource,

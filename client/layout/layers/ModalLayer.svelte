@@ -19,7 +19,7 @@
   import type { ModalEvent, ModalParams } from "$lib/client/types/popup.type";
   import { GlobalEvent } from "$lib/client/types/event.enum";
   import type { IEvent } from "$lib/client/types/event.type";
-  import { postToParent } from "$lib/client/utils/embed.utils";
+  import { postDataToParent } from "$lib/client/utils/embed.utils";
   import ToastNotification from "$lib/client/elements/feedback/ToastNotification.svelte";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import ModalLayout from "$lib/client/components/modal/ModalLayout.svelte";
@@ -39,7 +39,7 @@
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import Code from "$lib/client/icons/Code.svelte";
   import ConfirmationNotification from "$lib/client/components/notifications/ConfirmationNotification.svelte";
-
+  import { EmbedDataMessage } from "$lib/client/types/embedMessage.enum";
   let modals: ModalEvent[] = [];
   let dialogRef: HTMLDialogElement;
   let isShowAppearancePreview: boolean = false;
@@ -100,22 +100,18 @@
       logger.log({ context: "modal event - ModalLayer", event: x });
       if (!x.isShow) {
         modals = modals.filter((y) => y.path != x.path);
-        postToParent({
-          modal: JSON.stringify(x)
-        });
+        postDataToParent(EmbedDataMessage.MODAL, x);
       } else if (
         $context.isEmbed &&
         $context.embed === Embed.HANDSET &&
         x.isShowAsSheet
       ) {
-        postToParent({
-          modal: JSON.stringify({
-            isShow: x.isShow,
-            path: x.path,
-            title: x.title,
-            params: x.componentParams
-            // id: x.id TODO - send component params
-          })
+        postDataToParent(EmbedDataMessage.MODAL, {
+          isShow: x.isShow,
+          path: x.path,
+          title: x.title,
+          params: x.componentParams
+          // id: x.id TODO - send component params
         });
       } else if (x.path && x.isShow && !modals.find((y) => y.path == x.path)) {
         // modals = [x];

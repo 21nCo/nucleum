@@ -25,29 +25,9 @@ import {
   isContentScript,
   isExtensionEnvironment
 } from "../utils/browser.utils";
+import { parse } from "$lib/shared/utils/json.utils";
 
 export const cloudProvider = writable(Cloud.surreal);
-
-export const localStore = <T extends JsonValue>(key: string, initial: T) => {
-  const toString = (value: T) => JSON.stringify(value, null, 2);
-
-  if (localStorage.getItem(key) === null) {
-    localStorage.setItem(key, toString(initial));
-  }
-
-  const saved = JSON.parse(localStorage.getItem(key) ?? "");
-
-  const { subscribe, set, update } = writable<T>(saved);
-
-  return {
-    subscribe,
-    set: (value: T) => {
-      localStorage.setItem(key, toString(value));
-      return set(value);
-    },
-    update
-  };
-};
 
 export class Persistence {
   surrealDb = new SurrealDatabase();
@@ -63,7 +43,7 @@ export class Persistence {
       const data = await response.json();
       if (!data?.token) return;
       if (!data.userInfo)
-        data.userInfo = JSON.parse(localStorage.getItem("userInfo") ?? "");
+        data.userInfo = parse(localStorage.getItem("userInfo") ?? "");
       // TODO - perform singin at the source of the method - to remove circular dependency of persistance on account.store.
       // account.signIn(data, { isFromSignup: false, isIgnoreRefresh: false });
       return true;

@@ -74,7 +74,7 @@
       appStore.gotoPath("/library", {
         queryParams: {
           resource: Resource.goal,
-          type: $goal.type.toLowerCase()
+          type: $goal.type?.toLowerCase()
         }
       });
     }}

@@ -6,7 +6,7 @@ import {
   clientStorage,
   retrieveLocally
 } from "../persistence/persistence.utils";
-import { postToParent } from "./embed.utils";
+import { postDataToParent } from "./embed.utils";
 import { LicenseType, type IUserPlan } from "../types/account.type";
 import jwt_decode from "jwt-decode";
 import {
@@ -15,6 +15,8 @@ import {
 } from "../components/subscription/userPlan.type";
 import { formatDate } from "./time.utils";
 import { enumToString } from "$lib/shared/utils/text.utils";
+import { EmbedDataMessage } from "../types/embedMessage.enum";
+import { parse } from "$lib/shared/utils/json.utils";
 
 export function getBucketNameandKey(url: string) {
   const urlParts = url.split("/");
@@ -81,7 +83,7 @@ export async function resolveCurrentUserId() {
         if (chrome.runtime.lastError) {
           reject(chrome.runtime.lastError);
         } else if (data.userInfo) {
-          const id = JSON.parse(data.userInfo)?.id;
+          const id = parse(data.userInfo)?.id;
           resolve(id);
         } else {
           resolve(null);
@@ -93,7 +95,7 @@ export async function resolveCurrentUserId() {
       typeof window !== "undefined"
         ? localStorage.getItem("userInfo")
         : undefined;
-    if (userInfo) return JSON.parse(userInfo)?.id;
+    if (userInfo) return parse(userInfo)?.id;
   }
 }
 
@@ -102,10 +104,8 @@ export async function signout(
   ctx?: string
 ) {
   logger.log({ at: "signout", context: ctx, params });
-  postToParent({
-    account: JSON.stringify({
-      isLoggedIn: false
-    })
+  postDataToParent(EmbedDataMessage.ACCOUNT, {
+    isLoggedIn: false
   });
   await clearLocalStorage(params);
   if (!params?.isPreventRedirect) goto("/signup?msg=signedout");

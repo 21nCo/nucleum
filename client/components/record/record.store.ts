@@ -13,7 +13,9 @@ import {
   SearchType,
   type IRecordId,
   type IResourceSelectFilters,
-  type IResourceSelectOrderBy
+  type IResourceSelectOrderBy,
+  type IResourceSelectParams,
+  type IResourceSelectProperties
 } from "$lib/client/types/data.type";
 import { flux } from "$lib/client/components/flux/flux";
 import { logger } from "$lib/client/components/debug/logger.client";
@@ -54,6 +56,7 @@ import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
 import { resolveResourceStore } from "../flux/resourceStores/store.resolver";
 import { clientStorage } from "$lib/client/persistence/persistence.utils";
 import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
+import { parse } from "$lib/shared/utils/json.utils";
 
 export const MAX_FILE_SIZE_MB = 100;
 
@@ -217,7 +220,7 @@ export class SearchStore {
     isIncludeSubItems?: boolean;
     isIgnoreParentInactive?: boolean;
     isExpand?: boolean;
-    properties?: string[];
+    properties?: IResourceSelectProperties;
     isIncludeMetaItems?: boolean;
     signal?: AbortSignal;
   }) {
@@ -226,30 +229,28 @@ export class SearchStore {
       at: "SearchStore.refresh",
       params
     });
-    console.time("record.store.ts - select - " + this.resource);
+    // console.time("record.store.ts - select - " + this.resource);
     // Check if operation was aborted before starting
     if (params.signal?.aborted) {
       throw new Error("Operation aborted");
     }
 
     let data: any;
-    const selectParams = {
+    const selectParams: IResourceSelectParams = {
       properties: params.properties,
       filters: params.filters,
       search: isValidString(params.searchQuery)
         ? {
             query: params.searchQuery!,
-            properties: resolveSearchProperties(this.resource)
+            properties: resolveSearchProperties(this.resource),
+            type: params.searchType
           }
         : undefined,
-      limit: params.limit,
+      limit: params.limit ?? params.semanticSearchTopK,
       offset: params.offset,
       orderBy: params.orderBy ?? {
         modifiedAt: "desc"
-      },
-      searchType: params.searchType,
-      semanticSearchTopK: params.semanticSearchTopK,
-      signal: params.signal
+      }
     };
     if (this.resource === Resource.everything && this.searcheableResources) {
       data = (
@@ -262,6 +263,7 @@ export class SearchStore {
 
             if (isValidString(params.searchQuery)) {
               selectParams.search = {
+                ...(selectParams.search ?? {}),
                 query: params.searchQuery!,
                 properties: resolveSearchProperties(resource)
               };
@@ -281,31 +283,23 @@ export class SearchStore {
     } else {
       this.setResourceStore(this.resource);
       if (this.isPreFilterBeforeExpand && this.resource === Resource.node) {
-        // Check if operation was aborted before first query
-        if (params.signal?.aborted) {
-          throw new Error("Operation aborted");
-        }
-
         const allRecords = await this.resourceStore?.selectMany(
           {
-            properties: [
-              "id",
-              "isArchived",
-              "trashInformation",
-              "contentType",
-              "isStarred"
-            ]
+            properties: {
+              select: [
+                "id",
+                "isArchived",
+                "trashInformation",
+                "contentType",
+                "isStarred"
+              ]
+            }
           },
           {
             isQueryAsIs: true,
             signal: params.signal
           }
         );
-
-        // Check if operation was aborted after first query
-        if (params.signal?.aborted) {
-          throw new Error("Operation aborted");
-        }
 
         const activeRecords = allRecords
           .filter((x: any) => rootNodeTypeList.includes(x.contentType))
@@ -341,7 +335,8 @@ export class SearchStore {
         });
       }
     }
-    console.timeEnd("record.store.ts - select - " + this.resource);
+    // console.log({ at: "record.store.ts - select - " + this.resource, data });
+    // console.timeEnd("record.store.ts - select - " + this.resource);
     if (isValidArray(data)) {
       if (isValidString(params.searchQuery)) {
         if (!this.dev_isUseIndexSearch)
@@ -418,8 +413,11 @@ export class SearchStore {
     }
     let nodes = [];
     if (params?.resource === Resource.node || !params?.resource) {
+      //TODO - labelSearchProp
       nodes = await flux.selectMany(Resource.node, {
-        properties: ["*", "parent.* as parent", labelSearchProp],
+        properties: {
+          expand: ["parent"]
+        },
         filters: {
           contentType: params?.subType
             ? [params.subType]
@@ -443,7 +441,9 @@ export class SearchStore {
         try {
           const parentIds = nodes.map((x) => x.mdParent ?? [])?.flat();
           const parentItems = await nodeStore.selectMany({
-            properties: ["label", "id", "body"],
+            properties: {
+              select: ["label", "id", "body"]
+            },
             filters: {
               contentType: [...headingNodeTypes, NodeType.NODULAR_MARKDOWN],
               id: parentIds?.map((x) => x.toString())
@@ -541,7 +541,7 @@ export class SearchStore {
     if (!isValidSearchQuery) {
       try {
         const recentItems = await clientStorage.get(ClientStorageKey.RECENTS);
-        recentItemsArray = recentItems ? JSON.parse(recentItems) : [];
+        recentItemsArray = recentItems ? parse(recentItems) : [];
         if (recentItemsArray.length > 0 && resource) {
           recentItemsArray = recentItemsArray.filter((x: any) => {
             const itemResourceType = determineResourceType(x.id);
@@ -567,7 +567,6 @@ export class SearchStore {
     signal?: AbortSignal;
   }) {
     try {
-      // Check if operation was aborted before starting
       if (params?.signal?.aborted) {
         throw new Error("Operation aborted");
       }
@@ -581,7 +580,9 @@ export class SearchStore {
         const result = await flux.selectMany(
           resource,
           {
-            properties: ["count()"],
+            properties: {
+              select: ["#"]
+            },
             filters: {
               ...activeResourceFilterV2,
               ...(params?.filters ?? {}),
@@ -591,14 +592,13 @@ export class SearchStore {
                 : [...rootNodeTypeList],
               metaType: false,
               creationContext: params?.subType ? undefined : false
-            },
-            groupBy: ["all"]
+            }
           },
           {
             signal: params?.signal
           }
         );
-        return result?.[0]?.count;
+        return result && typeof result === "number" ? result : 0;
       } else if (
         resource === Resource.collection ||
         resource === Resource.combination ||
@@ -608,8 +608,10 @@ export class SearchStore {
       ) {
         if (resource === Resource.relation) resource = Resource.linkTag;
         this.setResourceStore(resource);
-        const selectParams = {
-          properties: ["count()"],
+        const selectParams: IResourceSelectParams = {
+          properties: {
+            select: ["#"]
+          },
           filters: {
             ...activeResourceFilterV2,
             ...(params?.filters ?? {}),
@@ -619,26 +621,27 @@ export class SearchStore {
                 }
               : {}),
             isArchived: params?.filters?.isArchived ?? false,
-            type:
-              params?.subType && resource === Resource.goal
-                ? params.subType
-                : params?.subType
-                  ? [params.subType]
-                  : undefined
-          },
-          groupBy: ["all"]
+            ...(params?.subType
+              ? {
+                  type:
+                    resource === Resource.goal
+                      ? params.subType
+                      : [params.subType]
+                }
+              : {})
+          }
         };
         const result = await this.resourceStore?.selectMany(selectParams, {
           signal: params?.signal
         });
-        console.log({
+        logger.log({
           at: "SearchStore.resolveCount",
           resource,
           result,
           resourceStore: this.resourceStore
         });
         // const resultOld = await flux.selectMany(resource, selectParams);
-        return result?.[0]?.count;
+        return result && typeof result === "number" ? result : 0;
       }
     } catch (e) {
       if (e instanceof Error && e.message === "Operation aborted") {
@@ -660,13 +663,15 @@ export class SearchStore {
         return flux.selectMany(
           resource,
           {
-            properties: ["count()", "contentType as type"],
+            properties: {
+              select: ["#"]
+            },
             filters: {
               ...activeResourceFilterV2,
               ...additionalFilters,
               metaType: false
             },
-            groupBy: ["type"]
+            groupBy: ["contentType"]
           },
           {
             signal
@@ -680,7 +685,9 @@ export class SearchStore {
         return flux.selectMany(
           resource,
           {
-            properties: ["count()", "type"],
+            properties: {
+              select: ["#"]
+            },
             filters: { ...activeResourceFilterV2, ...additionalFilters },
             groupBy: ["type"]
           },

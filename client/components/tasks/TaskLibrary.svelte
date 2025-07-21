@@ -226,7 +226,6 @@
     const task = await taskStore.save({
       label,
       dateUnix: resolveUnixTimestamp(resolveDateForNewTask()),
-      isChecked: false,
       goalId: goalId,
       collection: collectionId
     });

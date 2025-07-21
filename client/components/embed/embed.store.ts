@@ -1,6 +1,9 @@
 import { ObservableStore } from "$lib/client/stores/client.store";
-import type { EmbedMessage } from "$lib/client/types/embedMessage.enum";
-import { postToParent } from "$lib/client/utils/embed.utils";
+import {
+  EmbedDataMessage,
+  type EmbedMessage
+} from "$lib/client/types/embedMessage.enum";
+import { postDataToParent } from "$lib/client/utils/embed.utils";
 import { wait } from "$lib/client/utils/time.utils";
 import type { IEmbedChannel } from "./embed.type";
 
@@ -15,9 +18,7 @@ class EmbedBridge extends ObservableStore<IEmbedChannel> {
     let item = store[id];
     if (item) return item.data;
 
-    postToParent({
-      data: JSON.stringify({ id, type, body })
-    });
+    postDataToParent(EmbedDataMessage.DATA, { id, type, body });
 
     let isDataReceived = false;
     let timeElapsed = 0;

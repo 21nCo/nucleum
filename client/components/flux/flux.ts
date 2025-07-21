@@ -16,7 +16,8 @@ import {
   type IInsertMutation,
   type IMutationAdditionalParams,
   SearchType,
-  type IResourceSelectProperties
+  type IResourceSelectProperties,
+  type IResourceStore
 } from "$lib/client/types/data.type";
 import {
   detectTimeZone,
@@ -34,7 +35,10 @@ import {
   getEnvVal
 } from "$lib/client/utils/browser.utils";
 import { getDapId } from "$lib/client/persistence/persistence.utils";
-import { generateRandomId } from "$lib/shared/utils/crypto.utils";
+import {
+  generateRandomIdv2,
+  generateSimpleRandomId
+} from "$lib/shared/utils/crypto.utils";
 import { resolveCurrentUserId } from "$lib/client/utils/account.utils";
 import { GlobalEvent } from "$lib/client/types/event.enum";
 import {
@@ -57,12 +61,14 @@ import {
   isRecordId,
   removeDuplicatesFilter
 } from "./resourceStores/resource.utils";
-import { postToParent } from "$lib/client/utils/embed.utils";
+import { postDataToParent } from "$lib/client/utils/embed.utils";
+import { EmbedDataMessage } from "$lib/client/types/embedMessage.enum";
+import { reparse } from "$lib/shared/utils/json.utils";
 
 class Flux {
   static _instance: Flux | null = null;
-  stores: IStore[] = [];
-  remoteOnlyStores: IStore[] = [];
+  stores: IResourceStore<unknown>[] = [];
+  remoteOnlyStores: IResourceStore<unknown>[] = [];
   provider!: PersistenceProvider;
   persistence!: IPersistence;
   private isLocalMode: boolean = false;
@@ -76,7 +82,7 @@ class Flux {
     getEnvVal("CLONE_DOWN_LIMIT", "number") ?? 500;
 
   static initialize(
-    stores: IStore[],
+    stores: IResourceStore<unknown>[],
     provider: PersistenceProvider,
     persistence: IPersistence,
     params: {
@@ -84,7 +90,7 @@ class Flux {
       product: string;
       userId?: string;
       appVersion?: string;
-      remoteOnlyStores?: IStore[];
+      remoteOnlyStores?: IResourceStore<unknown>[];
     }
   ): Promise<number> {
     logger.log({ at: "flux.initialize", stores, params });
@@ -110,16 +116,31 @@ class Flux {
     appVersion?: string;
   }) {
     logger.log({ at: "flux.initializePersistence", params });
-    const dboDependencies = new Set(
-      this.stores
-        .map((x) => x.dboDependencies)
-        .filter((x) => x !== undefined)
-        .flat()
-    );
-    const dbo = [...dboDependencies];
+    const tables = [
+      ...this.stores
+        .filter(
+          (x) =>
+            x.dataType === StoreDataType.FIR || x.dataType === StoreDataType.IFR
+        )
+        .map((x) => {
+          return {
+            name: x.id,
+            indices: x.indices ?? ["id"]
+          };
+        }),
+      {
+        name: "kv",
+        indices: ["id"]
+      },
+      {
+        name: "mutation",
+        indices: ["id", "timestamp"]
+      }
+    ];
+    console.log({ tables });
     return this.persistence.initialize({
       ...params,
-      dbo
+      tables
     });
   }
 
@@ -220,7 +241,7 @@ class Flux {
   }
 
   sendReloadRequestToEmbed() {
-    postToParent({ reload: true });
+    postDataToParent(EmbedDataMessage.RELOAD, true);
   }
 
   async mutation<T extends IResource>(
@@ -233,6 +254,7 @@ class Flux {
       at: "flux.mutation",
       resource,
       params: {
+        ...params,
         action: params.action,
         recordCount:
           "records" in params ? (params.records?.length ?? "NA") : "NA",
@@ -281,8 +303,8 @@ class Flux {
         params,
         error: e
       });
+      throw e;
     }
-    const dependantStores = this.resolveDependantStores(resource);
     //TODO refresh stores
     logger.info({
       at: "flux.mutation - result",
@@ -310,7 +332,7 @@ class Flux {
     params: IMutationParamsv2<T>
   ) {
     logger.log({ at: "flux.insertMutation", resource, params });
-    const mutationId = generateRandomId();
+    const mutationId = generateRandomIdv2();
     const userId = await resolveCurrentUserId();
     const mutation: IMutation = {
       id: mutationId,
@@ -333,8 +355,8 @@ class Flux {
   private resolveResourceId<T extends IResource>(params: IMutationParamsv2<T>) {
     switch (params?.action) {
       case PersistenceActionType.INSERT:
-      case PersistenceActionType.BULK_MERGE:
         return params?.records.map((x) => x.id);
+      case PersistenceActionType.BULK_MERGE:
       case PersistenceActionType.BULK_DELETE:
         return params?.recordIds;
       case PersistenceActionType.REPLACE:
@@ -374,7 +396,6 @@ class Flux {
     try {
       logger.log({ at: "flux.select", resourceId });
 
-      // Check if operation was aborted
       if (params?.signal?.aborted) {
         throw new Error("Operation aborted");
       }
@@ -411,14 +432,19 @@ class Flux {
     additionalParams?: { isCloudOnlyResource?: boolean; signal?: AbortSignal }
   ) {
     try {
-      logger.log({
-        at: "flux.selectMany",
-        resource,
-        params,
-        additionalParams
-      });
+      const debugResource: Resource[] = [];
+      const randomId = generateSimpleRandomId();
+      if (debugResource.includes(resource)) {
+        console.time(`flux.selectMany - ${resource} - ${randomId}`);
+        logger.debug({
+          at: "flux.selectMany",
+          randomId,
+          resource,
+          params,
+          additionalParams
+        });
+      }
 
-      // Check if operation was aborted
       if (additionalParams?.signal?.aborted) {
         throw new Error("Operation aborted");
       }
@@ -429,32 +455,6 @@ class Flux {
         additionalParams?.isCloudOnlyResource &&
         !isOffline
       ) {
-        if (
-          params?.search?.type === SearchType.SEMANTIC &&
-          params?.search?.query
-        ) {
-          let queryEmbedding: Float32Array[] | undefined = undefined;
-          // queryEmbedding = await FeatureExtractor.generateVectorEmbeddings(
-          //   params.search.query
-          // );
-          tacoWorker.postMessage({
-            action: TacoActions.GET_EMBEDDINGS,
-            params: {
-              text: params.search.query
-            }
-          });
-          const result: any = await new Promise((resolve, reject) => {
-            tacoWorker.onmessage = (e) => {
-              resolve(e.data);
-            };
-          });
-          queryEmbedding = result?.data;
-          params.properties = [
-            ...(params?.properties ?? []),
-            `vector::similarity::cosine(embedding,[${queryEmbedding}]) AS dist`
-          ];
-          params.search.queryEmbedding = queryEmbedding;
-        }
         const result = await this.remoteRelay({
           method: FluxMethod.SELECT_MANY,
           args: {
@@ -470,7 +470,15 @@ class Flux {
         params,
         additionalParams?.signal
       );
-      logger.log({ at: "flux.selectMany - result", resource, params, result });
+      if (debugResource.includes(resource)) {
+        logger.log({
+          at: "flux.selectMany - result",
+          resource,
+          params,
+          result
+        });
+        console.timeEnd(`flux.selectMany - ${resource} - ${randomId}`);
+      }
       return result;
     } catch (e) {
       if (e instanceof Error && e.message === "Operation aborted") {
@@ -522,16 +530,6 @@ class Flux {
     return result;
   }
 
-  private resolveDependantStores(resource: Resource) {
-    const stores: string[] = [];
-    this.stores.filter((store) => {
-      if (store?.resourceDependencies?.includes(resource)) {
-        stores.push(store.id);
-      }
-    });
-    return stores;
-  }
-
   async refresh(storeId: string, isShowRefreshingState: boolean = false) {
     logger.log({ at: "flux.refresh", storeId });
   }
@@ -547,6 +545,7 @@ class Flux {
       let response;
       if (result?.ok) {
         response = await result.json();
+        response = reparse(response);
       }
       logger.log({
         at: "flux.performSync",
@@ -696,9 +695,10 @@ class Flux {
           this.isSyncUpPending = false;
           return;
         }
-        logger.info({
+        logger.log({
           at: "flux.sync",
           mutationsLength: mutations.length,
+          lastSyncUpMutations,
           lastSyncUp,
           mutations: mutations.map((x) => x.id)
         });
@@ -706,12 +706,13 @@ class Flux {
         mutations = mutations.filter(
           (x) => !lastSyncUpMutations?.includes(x.id.toString())
         );
-        response = await this.performSync(SyncMethod.SYNC_UP, {
-          mutations,
-          lastSyncDown,
-          resources,
-          dapId
-        });
+        if (mutations.length > 0)
+          response = await this.performSync(SyncMethod.SYNC_UP, {
+            mutations,
+            lastSyncDown,
+            resources,
+            dapId
+          });
         if (response && !response.response?.error) {
           await this.persistence.mutation(Resource.kv, {
             record: {
@@ -879,6 +880,7 @@ class Flux {
 
     for (let { resource, records } of data) {
       this.propagateSyncStatus(resource);
+      records = this.dataMapper(resource, records);
       const mutationResult = await this.persistence.mutation(
         resource as Resource,
         {
@@ -992,6 +994,22 @@ class Flux {
     }
   }
 
+  /**
+   * Data mapper for parsing dates, decryption
+   * @param resource
+   * @param records
+   */
+  private dataMapper(resource: Resource, records: any[]) {
+    return records.map((x) => ({
+      ...x,
+      ...(x.createdAt && { createdAt: new Date(x.createdAt) }),
+      ...(x.modifiedAt && { modifiedAt: new Date(x.modifiedAt) }),
+      ...(x.date && { date: new Date(x.date) }),
+      ...(x.startDate && { startDate: new Date(x.startDate) }),
+      ...(x.endDate && { endDate: new Date(x.endDate) })
+    }));
+  }
+
   private async processCloneDown(
     resource: Resource,
     records: any,
@@ -1020,6 +1038,7 @@ class Flux {
           .filter((x: any) => isRecordId(x.in) && isRecordId(x.out))
           .filter(removeDuplicatesFilter);
       }
+      records = this.dataMapper(resource, records);
       const mutationResult = await this.persistence.mutation(
         resource as Resource,
         {
@@ -1310,7 +1329,8 @@ class Flux {
     });
 
     if (isValidArrayWithData(result.data)) {
-      const records = result.data;
+      let records = result.data;
+      records = this.dataMapper(resource, records);
       const mutationResult = await this.persistence.mutation(
         resource as Resource,
         {

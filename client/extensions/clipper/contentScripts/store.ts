@@ -4,8 +4,6 @@ import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.sto
 import { appEvents } from "$lib/client/stores/notification.store";
 import {
   PersistenceActionType,
-  StoreDataType,
-  type IObservableStoreSubject,
   type IRecordId
 } from "$lib/client/types/data.type";
 import { Placement } from "$lib/client/types/direction.enum";
@@ -73,6 +71,7 @@ import {
   resolveUrlData
 } from "$lib/client/products/memotron/node/url.utils";
 import { Persistence } from "$lib/client/persistence/persistence";
+import { parse, stringify } from "$lib/shared/utils/json.utils";
 
 class WebpageStore extends ObservableStore<IWebpageStore> {
   previousValue: string = "";
@@ -392,7 +391,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       if (isFromTweetPage) n.id = tweet.id;
       return n;
     });
-    if (isFromTweetPage) { 
+    if (isFromTweetPage) {
       relayToSidePanel({
         event: ExtensionEvent.PAGE_STATE,
         data: {
@@ -590,7 +589,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
           clip: this.get().clips?.find(resourceInList(from))
         }
       });
-      if(resourceType === Resource.collection){
+      if (resourceType === Resource.collection) {
         relayToSidePanel({
           event: ClipperExtensionEvent.ON_COLLECTION_LINK_CHANGES,
           data: {
@@ -650,7 +649,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
           clip: this.get().clips?.find(resourceInList(from))
         }
       });
-      if(resourceType === Resource.collection){
+      if (resourceType === Resource.collection) {
         relayToSidePanel({
           event: ClipperExtensionEvent.ON_COLLECTION_LINK_CHANGES,
           data: {
@@ -734,24 +733,27 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
   set(newValue: IWebpageStore) {
     let changedProperties: any = {};
     if (this.previousValue) {
-      let differences = shallowDiff(newValue, JSON.parse(this.previousValue));
+      let differences = shallowDiff(newValue, parse(this.previousValue));
       differences.forEach((key: string) => {
         changedProperties[key] = newValue[key as keyof IWebpageStore];
       });
     }
     // console.log({
-    //   previousValue: this.previousValue ? JSON.parse(this.previousValue) : null,
+    //   previousValue: this.previousValue ? parse(this.previousValue) : null,
     //   newValue,
     //   changedProperties
     // });
     this._set(newValue);
-    this.previousValue = JSON.stringify(newValue);
+    this.previousValue = stringify(newValue);
     if (!objIsEmpty(changedProperties) && changedProperties.notes) {
       this._persistNotes(newValue.id, newValue.notes);
     }
   }
 
-  async persistPageNotes(notes: string, params?: { isFromSidePanel?: boolean }) {
+  async persistPageNotes(
+    notes: string,
+    params?: { isFromSidePanel?: boolean }
+  ) {
     const webpage = this.get();
     if (!webpage.id) return;
     const response = await this._persistNotes(webpage.id, notes);
@@ -767,7 +769,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
           page: this.get(),
           toolbar: toolbarState.get()
         }
-      }); 
+      });
     }
     return response;
   }
@@ -976,27 +978,22 @@ class FeedbackPaneStore extends ObservableStore<IFeedbackPaneStore> {
 
 export const feedbackPane = new FeedbackPaneStore();
 
-class ClipperToolbarState extends KeyValueStore<
-  {
-    /**
-     * Whether the toolbar is open or collapsed
-     */
-    isOpen: boolean;
-    /**
-     * Whether the toolbar is hidden
-     */
-    isHidden?: boolean;
-    position: Placement.Right | Placement.Left | Placement.Bottom;
-  } & IObservableStoreSubject
-> {
+class ClipperToolbarState extends KeyValueStore<{
+  /**
+   * Whether the toolbar is open or collapsed
+   */
+  isOpen: boolean;
+  /**
+   * Whether the toolbar is hidden
+   */
+  isHidden?: boolean;
+  position: Placement.Right | Placement.Left | Placement.Bottom;
+}> {
   constructor() {
-    super(
-      Resource.clipperToolbarState,
-      { isOpen: true, position: Placement.Right },
-      {
-        dboDependencies: ["fn::global::utils::resolveUrlParts::v2"]
-      }
-    );
+    super(Resource.clipperToolbarState, {
+      isOpen: true,
+      position: Placement.Right
+    });
   }
 
   toggle(isOpen?: boolean) {

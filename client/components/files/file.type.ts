@@ -1,7 +1,11 @@
-import type { IObservableStoreSubject } from "$lib/client/types/data.type";
-import type { IResource } from "../flux/resourceStores/resource.type";
+import type { IRecordId } from "$lib/client/types/data.type";
+import type {
+  IResource,
+  IResourceLabeled,
+  IResourceShareable
+} from "../flux/resourceStores/resource.type";
 
-export type IFile = IResource & {
+type IFileBase = IResourceLabeled & {
   type: string;
   size: number;
   duration?: number;
@@ -9,7 +13,14 @@ export type IFile = IResource & {
   data?: Uint8Array;
   thumbnailUrl?: string | null;
   thumbnailData?: Uint8Array;
+  isMeta?: boolean;
 };
+
+export type IFileCapture = IFileBase & {
+  id: IRecordId;
+};
+
+export type IFile = IResource & IResourceShareable & IFileBase;
 
 export enum FileType {
   IMAGE = "image",
@@ -25,6 +36,6 @@ export type IImageRepositionerOptions = {
   initialPosition?: number;
 };
 
-export type IFileEmbedChannel = IObservableStoreSubject & {
+export type IFileEmbedChannel = {
   files: { id: string; data: any }[];
 };

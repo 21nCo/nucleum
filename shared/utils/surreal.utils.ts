@@ -356,10 +356,11 @@ export function resolveSelectQuery(
   resourceId: IRecordId,
   properties?: IResourceSelectProperties
 ) {
-  const props =
+  let props =
     properties && properties?.select && properties?.select?.length > 0
       ? properties.select
       : ["*"];
+  props = props.map((x) => (x === "#" ? "count()" : x));
   const expansionProps = (properties?.expand ?? []).map(
     (x) => `(select * from $parent.${x}) as ${x}`
   );
@@ -371,12 +372,13 @@ export function resolveSelectManyQuery(
   resource: Resource,
   params?: IResourceSelectParams
 ) {
-  const properties =
+  let properties =
     params?.properties &&
     params?.properties?.select &&
     params?.properties?.select?.length > 0
       ? params.properties.select
       : ["*"];
+  properties = properties.map((x) => (x === "#" ? "count()" : x));
   const expansionProps = (params?.properties?.expand ?? []).map(
     (x) => `${x}.* as ${x}`
   );

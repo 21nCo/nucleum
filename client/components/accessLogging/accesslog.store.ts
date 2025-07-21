@@ -3,7 +3,7 @@ import { ResourceStore } from "$lib/client/components/flux/resourceStores/resour
 import type { IRecordId } from "$lib/client/types/data.type";
 import type { IAccessLog } from "./accessLog.type";
 
-class AccessLogStore extends ResourceStore<IAccessLog> {
+class AccessLogStore extends ResourceStore<IAccessLog, IAccessLog> {
   constructor() {
     super(Resource.accessLog, {
       isCloudOnlyResource: true

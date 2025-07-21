@@ -1,23 +1,18 @@
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
 import {
-  StoreDataType,
   type IRecordId,
   type IResourceSelectAdditionalParams,
   type IResourceSelectParams
 } from "$lib/client/types/data.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import { logger } from "$lib/client/components/debug/logger.client";
-import type { IActiveGoal, IGoal, IGoalThumb } from "./goal.type";
-import { GoalType } from "./goal.type";
+import type { IActiveGoal, IGoal, IGoalCapture, IGoalThumb } from "./goal.type";
+import { GoalStatus, GoalType } from "./goal.type";
 import {
   ResourceAccessMode,
   ResourceAccessPoint,
   ResourceActionType
-} from "../flux/resourceStores/resource.type";
-import type {
-  OmitForCapture,
-  OmitForCaptureWithId
 } from "../flux/resourceStores/resource.type";
 import { ResourceActions } from "../record/resource.actions";
 import {
@@ -44,23 +39,32 @@ import { taskStore } from "../tasks/task.store";
 import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 
-class GoalStore extends ResourceStore<IGoal> {
+const defaults: Partial<IGoal> = {
+  type: GoalType.INDEFINITE,
+  status: GoalStatus.NOT_STARTED,
+  parent: 0,
+  isPinnedForQuickFocus: false
+};
+class GoalStore extends ResourceStore<IGoal, IGoalCapture> {
   constructor() {
-    super(Resource.goal);
+    super(Resource.goal, {
+      indices: ["type", "status", "*parent"],
+      defaultProps: defaults,
+      expandProps: ["parent"]
+    });
   }
 
   selectMany(
     params?: IResourceSelectParams,
     additionalParams?: IResourceSelectAdditionalParams
   ) {
-    const expandedProps = ["*", "(select * from $parent.parent) as parent"];
-    const properties = [...(params?.properties ?? [])];
-    const expansionProps = additionalParams?.isExpand ? ["parent"] : [];
     const filters = {
       ...(params?.filters ?? {}),
       type:
         params?.filters && "type" in params.filters && params?.filters?.type
-          ? params.filters.type?.toUpperCase()
+          ? typeof params.filters.type === "string"
+            ? params.filters.type.toUpperCase()
+            : params.filters.type
           : undefined,
       parent: params?.filters?.parent
         ? params?.filters?.parent
@@ -73,132 +77,89 @@ class GoalStore extends ResourceStore<IGoal> {
     };
     params = {
       ...(params ?? {}),
-      properties,
-      expansionProps,
       filters
     };
     return super.selectMany(params, additionalParams);
   }
 
-  async save(
-    form: OmitForCapture<IGoal>,
-    additionalParams?: {
-      subGoals?: string[];
-      context?: string;
-    }
-  ) {
-    const id = generateResourceId(Resource.goal);
-    logger.log({ at: "GoalStore.save", form });
-
-    let subGoalIds: IRecordId[] = [];
-    let subGoals: OmitForCaptureWithId<IGoal>[] = [];
-    if (additionalParams?.subGoals && additionalParams.subGoals.length > 0) {
-      subGoals = additionalParams.subGoals.map((subGoal) => ({
-        id: generateResourceId(Resource.goal),
-        label: subGoal,
-        type: GoalType.INDEFINITE,
-        parent: [id],
-        isCompleted: false,
-        accessMode: ResourceAccessMode.POP
-      }));
-      subGoalIds = subGoals.map((subGoal) => subGoal.id);
-    }
-
-    const resource: OmitForCaptureWithId<IGoal> = {
-      id,
-      label: form.label || "",
-      type: form.type || GoalType.INDEFINITE,
-      description: form.description,
-      startDate: form.startDate,
-      endDate: form.endDate,
-      spanScale: form.spanScale,
-      parent: form.parent,
-      color: form.color,
-      children: subGoalIds,
-      subGoalsLayout: form.subGoalsLayout
-    };
-
-    appStore.addToRecents({
-      record: resource,
-      type: Resource.goal,
-      timestamp: new Date()
-    });
-
-    return this.create([resource, ...subGoals], additionalParams);
-  }
-
-  async createNew(params?: {
+  async save(params?: {
     isQuickFocus?: boolean;
     context?: string;
     label?: string;
     isPreventOpenAfterCreate?: boolean;
     linkSearchParam?: string;
   }) {
-    const id = generateResourceId(Resource.goal);
-    const goal: OmitForCaptureWithId<IGoal> = {
-      id,
+    const goal = {
       label: params?.label ?? "",
-      isPinnedForQuickFocus: params?.isQuickFocus,
-      type: GoalType.INDEFINITE
+      isPinnedForQuickFocus: params?.isQuickFocus ?? false
     };
     const result = await this.create([goal], {
       context:
         params?.context ??
         resourceAction(Resource.goal, ResourceActionType.CREATE)
     });
-    if (result) {
-      toasts.success("New goal created successfully");
+    if (!result || result.length === 0) {
+      toasts.error("Failed to create new goal");
+      return;
     }
-    if (params?.isPreventOpenAfterCreate) return;
-    appStore.openResource(id, ResourceAccessMode.POP, {
+    toasts.success("New goal created successfully");
+    if (params?.isPreventOpenAfterCreate) return result[0];
+    appStore.openResource(result[0].id, ResourceAccessMode.POP, {
       searchParams: {
         [AppSearchParam.EDIT]: true,
         [AppSearchParam.LINK]: params?.linkSearchParam ?? null
       }
     });
+    return result[0];
   }
 
-  async addSubGoalWithContext(
-    src: IRecordId[],
+  /**
+   * Adds a sub goal to the source goal
+   * @param subGoal - the sub goal to add
+   * @param srcId - the source goal id
+   * @param params - additional parameters
+   * @param params.srcExpanded - the source goal expanded data
+   * @returns the sub goal id
+   */
+  async addSubGoal(
     subGoal: {
       label: string;
       type?: GoalType;
     },
-    currentSubGoals?: IRecordId[]
+    srcId: IRecordId,
+    params?: {
+      srcExpanded?: IActiveGoal;
+    }
   ) {
-    const goal = {
+    let parent: IRecordId[] | undefined = undefined;
+    let children: IRecordId[] = [];
+    if (params?.srcExpanded === undefined) {
+      const goalData: IGoal = await this.select(srcId);
+      if (goalData) {
+        parent = [...(goalData.parent || []), srcId];
+        children = goalData.children || [];
+      }
+    } else {
+      parent = [...(params.srcExpanded?.parent || []).map((p) => p.id), srcId];
+      children = [...(params.srcExpanded?.children || [])].map((c) => c.id);
+    }
+    const goal: IGoalCapture = {
       id: generateResourceId(Resource.goal),
       label: subGoal.label,
-      type: subGoal.type ?? GoalType.INDEFINITE,
-      parent: [...src]
+      parent,
+      ...(subGoal.type && { type: subGoal.type })
     };
     await this.modify(
-      src[src.length - 1],
+      srcId,
       {
-        children: [...(currentSubGoals || []), goal.id]
+        children: [...(children || []), goal.id as IRecordId]
       },
       {
         isPreventBackPropagation: true
       }
     );
-    console.log({ at: "GoalStore.addSubGoalWithContext", goal });
+    console.log({ at: "GoalStore.addSubGoal", goal });
     return this.create([goal]);
-  }
-
-  async addSubGoal(
-    src: IRecordId,
-    subGoal: {
-      label: string;
-      type?: GoalType;
-    }
-  ) {
-    const goalData: IGoal = await this.select(src);
-    if (!goalData) return;
-    this.addSubGoalWithContext(
-      [...(goalData.parent || []), src],
-      subGoal,
-      goalData.children
-    );
   }
 
   private async resolveDependencies(ids: IRecordId[]) {
@@ -206,7 +167,9 @@ class GoalStore extends ResourceStore<IGoal> {
       ...ids.map((id) =>
         super.selectMany(
           {
-            properties: ["id"],
+            properties: {
+              select: ["id"]
+            },
             filters: {
               parent: {
                 contains: id.toString()
@@ -222,7 +185,9 @@ class GoalStore extends ResourceStore<IGoal> {
     const subGoals = subGoalsResult.flat();
     const tasks = await taskStore.selectMany(
       {
-        properties: ["id"],
+        properties: {
+          select: ["id"]
+        },
         filters: {
           goalId: [
             ...ids.map((id) => id.toString()),
@@ -304,7 +269,9 @@ class GoalStore extends ResourceStore<IGoal> {
       toasts.error();
       return;
     }
-    const newChildren = currentChildren.filter((x) => !isSameResource(x, src));
+    const newChildren = currentChildren
+      .filter((x) => !isSameResource(x, src))
+      .filter(Boolean);
     await this.modify(immediateParent.id, {
       children: newChildren
     });
@@ -335,7 +302,10 @@ class GoalStore extends ResourceStore<IGoal> {
    * @param newParent
    * @returns
    */
-  private async editParentChain(src: IGoalThumb, newParent?: IGoal) {
+  private async editParentChain(
+    src: IGoalThumb,
+    newParent?: IGoal | IGoalThumb
+  ) {
     const subGoals: IGoal[] = await this.selectMany(
       {
         filters: {
@@ -349,28 +319,38 @@ class GoalStore extends ResourceStore<IGoal> {
       }
     );
     const newParentHierarchy = [
-      ...(newParent?.parent || []),
+      ...(newParent?.parent
+        ? newParent.parent.map((x) =>
+            typeof x === "string" ? x : x.id?.toString()
+          )
+        : []),
       ...(newParent ? [newParent.id] : [])
-    ];
+    ].filter(Boolean);
     await this.modify(src.id, {
       parent:
         newParentHierarchy && newParentHierarchy.length > 0
           ? newParentHierarchy
-          : undefined
+          : defaults.parent
     });
     if (!isValidArrayWithData(subGoals)) return true;
     if (newParent && subGoals.some(resourceInList(newParent))) return false;
     for (const subGoal of subGoals) {
-      const srcIndexInParentChain = subGoal.parent
-        ?.map((x) => x.toString())
-        .indexOf(src.id.toString());
-      const parentChainToRight = subGoal.parent?.slice(srcIndexInParentChain);
+      let parentChainToRight: IRecordId[] | undefined = undefined;
+      if (subGoal.parent) {
+        const srcIndexInParentChain = subGoal.parent
+          ?.map((x) => x.toString())
+          .indexOf(src.id.toString());
+        parentChainToRight = subGoal.parent?.slice(srcIndexInParentChain);
+      }
       const newParentChainForSubGoal = [
         ...newParentHierarchy,
         ...(parentChainToRight || [])
-      ];
+      ].filter(Boolean);
       await this.modify(subGoal.id, {
-        parent: newParentChainForSubGoal
+        parent:
+          newParentChainForSubGoal && newParentChainForSubGoal.length > 0
+            ? newParentChainForSubGoal
+            : defaults.parent
       });
     }
     return true;
@@ -379,7 +359,11 @@ class GoalStore extends ResourceStore<IGoal> {
 
 export const goalStore = new GoalStore();
 
-export class ActiveGoalStore extends CollectibleStore<IActiveGoal, GoalStore> {
+export class ActiveGoalStore extends CollectibleStore<
+  IGoal,
+  GoalStore,
+  IActiveGoal
+> {
   constructor(goalId: IRecordId) {
     super(goalId, goalStore);
   }
@@ -407,8 +391,8 @@ export class ActiveGoalStore extends CollectibleStore<IActiveGoal, GoalStore> {
           id: this.id,
           label: "",
           type: GoalType.INDEFINITE,
-          modifiedAt: new Date().toISOString(),
-          createdAt: new Date().toISOString(),
+          modifiedAt: new Date(),
+          createdAt: new Date(),
           accessMode,
           ...(params?.isInEditMode && { isInEditMode: true }),
           isPageLoading: false
@@ -416,7 +400,7 @@ export class ActiveGoalStore extends CollectibleStore<IActiveGoal, GoalStore> {
         return;
       }
       const collections: IRecordId[] = result.outlinks
-        ?.filter((x: any) => x.out.tb === Resource.collection)
+        ?.filter((x: any) => x.out?.toString()?.includes(Resource.collection))
         ?.map((x: any) => x.out);
       const types = await collectionStore.resolveTypes(collections);
 
@@ -457,7 +441,7 @@ export type IActiveGoalStore = InstanceType<typeof ActiveGoalStore>;
 
 class GoalActions {
   constructor(
-    private goal: IGoal,
+    private goal: IGoalThumb,
     private store: GoalStore,
     private accessPoint: ResourceAccessPoint
   ) {}
@@ -521,7 +505,7 @@ class GoalActions {
       icon: "ph:circle-light",
       type: ContextMenuType.SWITCH,
       initialValue: this.goal.isPinnedForQuickFocus,
-      callback: async (checked) => {
+      callback: async (checked: boolean) => {
         return this.store.modify(
           this.goal.id,
           {
@@ -537,7 +521,7 @@ class GoalActions {
 }
 
 export function resolveGoalContextMenu(
-  goal: IGoal,
+  goal: IGoalThumb,
   accessPoint: ResourceAccessPoint,
   params?: {
     accessPointId?: IRecordId;

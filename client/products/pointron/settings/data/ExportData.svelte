@@ -3,10 +3,11 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import { formatDate } from "$lib/client/utils/time.utils";
   import { fileStore } from "$lib/client/components/files/file.store";
+  import { stringify } from "$lib/shared/utils/json.utils";
   async function exportData() {
     let response = await new PointronPersistence().exportData();
     if (response) {
-      const data = JSON.stringify(response);
+      const data = stringify(response, { isPreventReplacer: true });
       const blob = new Blob([data], { type: "application/json" });
       fileStore.downloadFromBlob(blob, {
         fileName: `pointron_export_${formatDate(new Date())}.json`,

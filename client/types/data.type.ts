@@ -1,33 +1,18 @@
 import type { Writable } from "svelte/store";
-import type { LocalDexie } from "$local/local";
-import type { ISurrealDatabase } from "./db.type";
-import type { RecordId } from "surrealdb";
 import type { ResourceActionType } from "../components/flux/resourceStores/resource.type";
+import type { Resource } from "../components/flux/resourceStores/resource.enum";
 
 /**
  * The operations which can be performed on a cacheable store
  */
-export interface IObservableStore<T extends IObservableStoreSubject>
-  extends IStore,
-    Writable<T> {}
-
-export interface IObservableStoreSubject {
-  /**
-   * The state of the store when it is refreshing
-   */
-  isRefreshing?: boolean;
-  /**
-   * The state of the store the page which this particular store is part of is refreshing - will be set when dataManager.refreshPage is triggered
-   */
-  isPageRefreshing?: boolean;
-}
+export interface IObservableStore<T> extends IStore, Writable<T> {}
 
 /**
  * Extensible interface for the store
  */
 export interface IStore {
   /**
-   * The unique identifier of the store which is used to cache and retrieve the store. see dataManager
+   * The unique identifier of the store which is used to cache and retrieve the store.
    */
   id: string;
   /**
@@ -49,72 +34,32 @@ export interface IStore {
   get: () => any;
 
   /**
-   * @deprecated - use ComponentLayer to listen to syncDown and change events
-   * The query to be used to refresh the store
-   */
-  refreshQuery?: string;
-
-  /**
-   * @deprecated - use resourceDependencies instead
-   * The resources on which the store depends on
-   */
-  dependencies?: ResourceDependency[];
-
-  /**
-   * @deprecated - use ComponentLayer to listen to syncDown and change events
-   * The resources on which the store depends on
-   */
-  resourceDependencies?: string[];
-
-  /**
-   * @deprecated - use ComponentLayer to listen to syncDown and change events
-   * The resources which will be mutated by the store
-   */
-  mutatingResources?: string[];
-  /**
-   * @deprecated
-   * The cache strategy to use for the store
-   */
-  cacheStrategy?: CacheStrategy;
-  /**
-   * @deprecated
-   * Setting this true will refresh the store when the app appears before even performing stale check
-   */
-  refreshOnAppear?: boolean;
-
-  /**
-   * @deprecated
-   * When this is turned on, local storage is used to cache the store.
-   */
-  isSynchronousCache?: boolean;
-  /**
    * Prevents the store from being persisted to remote database when the store is updated using $ syntax and therefore set method
    */
   isPreventAutoPersist?: boolean;
-  /**
-   * Dbo function dependencies that need to be defined on database before the store can be used
-   */
-  dboDependencies?: string[];
+
   loader?: (data: any) => void;
   search?: (query: string) => any;
+}
+
+export interface IResourceStore<T> extends IStore, Writable<T[]> {
   /**
+   * The indices to be created on the database for the store
    *
-   * @deprecated - use ComponentLayer to listen to syncDown and change events
-   *
+   * Follows dexie.js format
+   * simple index: "id", "text" etc
+   * compound index: "[isArchived+isStarred]"
    */
-  resolveRefreshQuery?: () => string;
+  indices?: string[];
   /**
-   *
-   * @deprecated - use ComponentLayer to listen to syncDown and change events
-   *
+   * The default properties to be set on the resource when it is created
    */
-  refresh?: (params?: any) => Promise<any>;
+  defaultProps?: Partial<T>;
+
   /**
-   *
-   * @deprecated - use ComponentLayer to listen to syncDown and change events
-   *
+   * Properties to be expanded by default when expand is set to true
    */
-  propagateDependencyChanges?: (params: any) => void;
+  expandProps?: string[];
 }
 
 /**
@@ -144,69 +89,6 @@ export enum StoreDataType {
    */
   NA = "NA"
 }
-
-/**
- * The cache strategy to use for the store.
- */
-export enum CacheStrategy {
-  /**
-   * The whole store is cached as key value pairs
-   */
-  WHOLE = "WHOLE",
-  /**
-   * Only the records are merged - using dexie.
-   */
-  MERGE_RECORDS = "MERGE_RECORDS",
-  /**
-   * Prevents local caching of the store when cacheStrategy is set to this value
-   */
-  NO_CACHE = "NO_CACHE"
-}
-
-/**
- * Data manager which is responsible for managing the cache and the stores in the application
- */
-export interface DataManager {
-  cacheSource: CacheSource;
-  db: ISurrealDatabase;
-  cacheableStoresTable: IStore[];
-}
-
-/**
- * The source of the cache which handles the caching and retrieval of the cache
- */
-export interface CacheSource {
-  dexie: LocalDexie;
-  initialize: () => void;
-  cacheKvStore: (id: string, data: any) => void;
-  retrieveKvCache: (storeId: string) => Promise<any>;
-  fetchClientMutationMap: () => Promise<any>;
-  updateClientMutationMap: (clientMutationMap: Record<string, number>) => void;
-  mergeClientMutationMap: (
-    newMap: Record<string, number>,
-    existingMap?: Record<string, number>
-  ) => Promise<Record<string, number>>;
-  clearCache: () => void;
-}
-
-/**
- * The type of the dependency sync
- */
-export enum DependencySyncType {
-  /**
-   *The stores which depend on a resource will be updated immediately after the dependant resource is updated before the mutations are posted to the server using propagateDependencyChanges method on Cacheable Store
-   */
-  EAGER = "EAGER",
-  /**
-   * The stores which depend on a resource will be updated after the mutations are posted to the server using DataManager mutationMap and refreshStale
-   */
-  DEFERRED = "DEFERRED"
-}
-
-export type ResourceDependency = {
-  resource: string;
-  syncType?: DependencySyncType;
-};
 
 export enum PersistenceActionType {
   CREATE = "CREATE",
@@ -240,25 +122,6 @@ export enum PersistenceActionType {
   CUSTOM = "CUSTOM"
 }
 
-export interface IMutationParams {
-  action: PersistenceActionType;
-  query?: string;
-  isMutatingSelfOnly?: boolean;
-  queueParams?: IMutationQueueParams;
-  cacheStrategy?: CacheStrategy;
-}
-
-/**
- * @deprecated - used with v1 flux - dataManager
- */
-export interface IMutationQueueParams {
-  /**
-   * If true, the mutation will be queued and will be persisted to the server at an interval usually 1-2 seconds - to combine multiple mutations into one.
-   */
-  isUseQueueFirstApproach: boolean;
-  mutationId: string;
-}
-
 export type IInsertMutation<T> = {
   action: PersistenceActionType.INSERT | PersistenceActionType.BULK_INSERT;
   records: T[];
@@ -281,7 +144,12 @@ export type IDeleteMutation = {
 
 export type IBulkEditMutation<T> = {
   action: PersistenceActionType.BULK_MERGE;
-  records: T[];
+  /**
+   * @deprecated - use ids and properties instead
+   */
+  records?: T[];
+  recordIds: IRecordId[];
+  changes: Partial<T>;
 };
 
 export type IBulkDeleteMutation = {
@@ -328,7 +196,8 @@ export enum IResourceFilterOperator {
   LESS_THAN = "lessThan",
   LESS_THAN_OR_EQUALS = "lessThanOrEqual",
   IN = "in",
-  NOT_IN = "notIn"
+  NOT_IN = "notIn",
+  CONTAINS = "contains"
 }
 
 export enum IResourceFilterDateGrouping {
@@ -396,6 +265,8 @@ export type IResourceSelectProperties = {
   /**
    * Properties to be selected, that is items to be present in select statement.
    * Eg: SELECT properties[0], properties[1], properties[2] FROM table;
+   *
+   * Use "#" for count()
    */
   select?: string[];
 
@@ -476,7 +347,7 @@ export type IResourceSelectParams = {
   orderBy?: IResourceSelectOrderBy;
 };
 
-export type IRecordId = RecordId | string;
+export type IRecordId = string;
 
 export type IMutation = {
   id: string;

@@ -1,9 +1,9 @@
 import { get, writable } from "svelte/store";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { LinkType } from "$lib/client/products/memotron/linking/link.type";
 import {
   NodeType,
-  LinkType,
-  type INodeItemCaptured,
+  type INodeCapture,
   type IMediaNode,
   type INodeThumb,
   type IMediaGridItem,
@@ -13,12 +13,16 @@ import {
   type IImageNode,
   headingNodeTypes,
   NodeMetaType,
-  type INodeStructure
+  type INodeStructure,
+  type INode,
+  type IWebNodeType,
+  type IClip
 } from "$lib/client/products/memotron/node/node.type";
 import {
   CaptureType,
   type IActiveCapture,
   type ICapture,
+  type ICaptureCapture,
   type IPasteCaptureData
 } from "$lib/client/products/memotron/capture/capture.type";
 import account from "$lib/client/stores/account.store";
@@ -26,22 +30,16 @@ import { toasts } from "$lib/client/stores/notification.store";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import {
   generateMarkdownText,
-  getMarkdownSymbolPrepended,
   resolveHeadingParent
 } from "$lib/client/products/memotron/node/node.utils";
-import {
-  hierarchyFactorLimit,
-  nodeStore,
-  vectorResourceStore
-} from "../node/node.store";
+import { hierarchyFactorLimit, nodeStore } from "../node/node.store";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { linker } from "$lib/client/products/memotron/linking/link.store";
 import { collectionStore } from "$lib/client/components/collection/collection.store";
 import { resolveContentTypeForFile } from "./capture.utils";
 import {
   ResourceAccessMode,
-  ResourceActionType,
-  type OmitForCapture
+  ResourceActionType
 } from "$lib/client/components/flux/resourceStores/resource.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 import {
@@ -65,15 +63,11 @@ import {
 import { appStore } from "$lib/client/stores/app.store";
 import { UserDataMode } from "$lib/client/types/account.type";
 import { MemotronAction } from "../memotronAction.enum";
-import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
 import { Persistence } from "$lib/client/persistence/persistence";
 import view from "$lib/client/stores/view.store";
 import context from "$lib/client/stores/context.store";
-import { Embed, OperatingSystem } from "$lib/client/types/context.type";
-import { TacoActions } from "../taco/taco.types";
+import { OperatingSystem } from "$lib/client/types/context.type";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-import { runVectorGeneration } from "../taco/taco.store";
 import { fetchYouTubeMetadata, resolveUrlData } from "../node/url.utils";
 import { getImageColorsFromFile } from "$lib/client/utils/ui.utils";
 import { parseBuffer } from "music-metadata";
@@ -127,7 +121,7 @@ function generateSeedStore(): IActiveCapture {
   };
 }
 
-class CaptureStore extends ResourceStore<ICapture> {
+class CaptureStore extends ResourceStore<ICapture, ICaptureCapture> {
   constructor() {
     super(Resource.capture);
   }
@@ -138,8 +132,9 @@ export const captureStore = new CaptureStore();
 export type IActiveCaptureStore = InstanceType<typeof ActiveCaptureStore>;
 
 export class ActiveCaptureStore extends ActiveResourceStore<
-  IActiveCapture,
-  CaptureStore
+  ICapture,
+  CaptureStore,
+  IActiveCapture
 > {
   private saveFeedbackTimeout: NodeJS.Timeout | null = null;
   /**
@@ -435,7 +430,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       creationContext: params?.isEmbedContext
         ? (params?.creationContext ?? this.get().nodeId)
         : undefined
-    } as OmitForCapture<IMediaNode>;
+    } as INodeCapture<IMediaNode>;
     const result = await nodeStore.create([node], {
       context: captureAction
     });
@@ -473,7 +468,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       rootStructure.some(resourceInList(b))
     );
     const mdText = generateMarkdownText(rootBlocks);
-    let root: INodeItemCaptured = {
+    let root: INodeCapture<INode> = {
       id,
       label: title ?? "",
       properties: [],
@@ -483,7 +478,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       contentType: NodeType.NODULAR_MARKDOWN,
       collections
     };
-    let remainingResources: INodeItemCaptured[] = [];
+    let remainingResources: INodeCapture<INode>[] = [];
     for (const block of structure) {
       const correspondingContent = blocks.find(resourceInList(block));
       let parent = undefined;
@@ -504,7 +499,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         id: block.id,
         contentType: correspondingContent?.contentType ?? NodeType.SIMPLE_TEXT,
         body: correspondingContent?.body,
-        label: correspondingContent?.label,
+        label: correspondingContent?.label ?? "",
         text: mdText,
         creationContext: id,
         children: block.children,
@@ -544,7 +539,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       });
       return result;
     }
-    let nodes: OmitForCapture<IMediaNode>[] = [];
+    let nodes: INodeCapture<IMediaNode>[] = [];
     let mdNodesResult: any[] = [];
     const captureStore = this.get();
     const collections = params?.isEmbedContext ? [] : this.resolveCollections();
@@ -592,7 +587,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         creationContext: params?.isEmbedContext
           ? (params?.creationContext ?? this.get().nodeId)
           : undefined
-      } as OmitForCapture<IMediaNode>;
+      } as INodeCapture<IMediaNode>;
       nodes.push(node);
     }
     const mediaNodesResult = await nodeStore.create(nodes, {
@@ -644,7 +639,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       new File([wavData], `${fileName}.wav`, { type: contentType })
     );
     const captureStore = this.get();
-    const node: OmitForCapture<IMediaNode> = {
+    const node: INodeCapture<IMediaNode> = {
       id,
       contentType: NodeType.AUDIO,
       file: fileId,
@@ -716,7 +711,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     const location = await this.resolveLocation();
     const captureStore = this.get();
     const collections = this.resolveCollections();
-    const node: OmitForCapture<IImageNode> = {
+    const node: INodeCapture<IImageNode> = {
       id,
       contentType: NodeType.IMAGE,
       file: fileId,
@@ -754,7 +749,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
   async saveWebpage(
     text: string,
     params?: {
-      contentType?: NodeType;
+      contentType?: IWebNodeType;
       isPreventOpenOnSave?: boolean;
       isEmbedContext?: boolean;
       creationContext?: IRecordId;
@@ -767,9 +762,9 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       }
     }
 
-    let node: OmitForCapture<IWebPage> = {
+    let node: INodeCapture<IWebPage | IClip> = {
       contentType: params?.contentType ?? NodeType.WEB_PAGE,
-      label: text.split("://").pop(),
+      label: text.split("://").pop() ?? "",
       url: text,
       creationContext: params?.isEmbedContext
         ? (params?.creationContext ?? this.get().nodeId)
@@ -963,7 +958,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     // const id = prefixTable(generateRandomId(), Resource.node);
     const id = val.nodeId ?? generateResourceId(Resource.node);
     const collections = this.resolveCollections();
-    let root: INodeItemCaptured = {
+    let root: INodeCapture<INode> = {
       id,
       label: val.label ?? "",
       properties: val.properties,
@@ -973,8 +968,8 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       collections
     };
 
-    let remainingResources: INodeItemCaptured[] = [];
-    if ("blocks" in val.body) {
+    let remainingResources: INodeCapture<INode>[] = [];
+    if (val.body && "blocks" in val.body) {
       let data;
       let contentType;
       let name;
@@ -998,7 +993,6 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         }
       }
       let mdText = "";
-      let vectorInsertionresult: any;
       if (val.rootStructure.length > 0) {
         const rootBlocks = val.body.blocks.filter((b) =>
           val.rootStructure.some(resourceInList(b))
@@ -1006,54 +1000,11 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         console.time("generateMarkdownText");
         mdText = generateMarkdownText(rootBlocks);
         console.timeEnd("generateMarkdownText");
-
-        if (
-          get(userPreferences).localAI.semanticSearch &&
-          ctx.embed !== Embed.HANDSET &&
-          this.dev_isEnableVectorGenOnSave
-        ) {
-          console.time("vector");
-          try {
-            console.time("tacoWorker");
-
-            const eventId = val.id.toString();
-            tacoWorker.postMessage({
-              action: TacoActions.GET_EMBEDDINGS,
-              params: {
-                text: val.label + " \n" + mdText,
-                eventId
-              }
-            });
-            const embedding: any = await new Promise((resolve, reject) => {
-              const handleMessage = (e) => {
-                const { eventId: recEventId, data } = e.data;
-                if (eventId == recEventId) {
-                  tacoWorker.removeEventListener("message", handleMessage);
-                  resolve(data);
-                }
-              };
-              tacoWorker.addEventListener("message", handleMessage);
-            });
-            console.timeEnd("tacoWorker");
-            vectorInsertionresult = await vectorResourceStore.create({
-              id: generateResourceId(Resource.vector),
-              embedding: embedding,
-              node: id
-            });
-            console.timeEnd("vector");
-          } catch (e) {
-            logger.error({
-              at: "CaptureStore.saveMarkdownCapture - vector generation error",
-              error: e
-            });
-          }
-        }
       }
       root = {
         ...root,
         children: val.rootStructure,
-        text: mdText,
-        vector: vectorInsertionresult?.[0]?.id
+        text: mdText
       };
 
       console.time("children");
@@ -1072,63 +1023,19 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         }
         //TODO - links for each block
         let mdText = "";
-        let vectorInsertionresult: any;
         if (block.children && block.children.length > 0) {
           const childrenNodes = val.body.blocks.filter((b) =>
             block.children?.includes(b.id)
           );
           mdText = generateMarkdownText(childrenNodes);
-
-          if (
-            get(userPreferences).localAI.semanticSearch &&
-            ctx.embed !== Embed.HANDSET &&
-            this.dev_isEnableVectorGenOnSave
-          ) {
-            try {
-              const eventId = block.id.toString();
-              tacoWorker.postMessage({
-                action: TacoActions.GET_EMBEDDINGS,
-                params: {
-                  text:
-                    getMarkdownSymbolPrepended(correspondingContent!) +
-                    " \n" +
-                    mdText,
-                  eventId
-                }
-              });
-              const embedding: any = await new Promise((resolve, reject) => {
-                const handleMessage = (e) => {
-                  const { eventId: recEventId, data } = e.data;
-                  if (eventId == recEventId) {
-                    tacoWorker.removeEventListener("message", handleMessage);
-                    resolve(data);
-                  }
-                };
-                tacoWorker.addEventListener("message", handleMessage);
-              });
-              vectorInsertionresult = await vectorResourceStore.create({
-                id: generateResourceId(Resource.vector),
-                embedding: embedding,
-                node: block.id
-              });
-            } catch (e) {
-              logger.error({
-                at: "CaptureStore.saveMarkdownCapture - vector generation error",
-                error: e
-              });
-            }
-          }
         }
         remainingResources.push({
           id: block.id,
-          contentType: correspondingContent?.contentType,
-          body: correspondingContent?.body,
-          label: correspondingContent?.label,
+          contentType:
+            correspondingContent?.contentType ?? NodeType.SIMPLE_TEXT,
+          body: correspondingContent?.body ?? "",
+          label: correspondingContent?.label ?? "",
           text: mdText,
-          vector:
-            vectorInsertionresult?.length > 0
-              ? vectorInsertionresult[0]?.id
-              : null,
           metadata: correspondingContent?.metadata,
           creationContext: id,
           children: block.children,
@@ -1143,7 +1050,6 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     });
     await this.saveLinks(id);
     this.postSave(result.slice(0, 1));
-    runVectorGeneration();
     console.timeEnd("saveMarkdownCapture");
     return result;
   }
@@ -1199,7 +1105,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         metadata
       });
       const id = resolveCalendarNotesId(params.date, params.scale);
-      let root: INodeItemCaptured = {
+      let root: INodeCapture<INode> = {
         id,
         contentType: NodeType.NODULAR_MARKDOWN,
         label: `Calendar ${params.scale.toLowerCase()} notes - ${formatDate(params.date, params.scale)}`,
@@ -1209,7 +1115,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         children: []
       };
 
-      let remainingResources: INodeItemCaptured[] = [];
+      let remainingResources: INodeCapture<INode>[] = [];
       if (blocks.length > 0) {
         let mdText = "";
         if (rootStructure.length > 0) {
@@ -1244,9 +1150,10 @@ export class ActiveCaptureStore extends ActiveResourceStore<
           }
           remainingResources.push({
             id: block.id,
-            contentType: correspondingContent?.contentType,
-            body: correspondingContent?.body,
-            label: correspondingContent?.label,
+            contentType:
+              correspondingContent?.contentType ?? NodeType.SIMPLE_TEXT,
+            body: correspondingContent?.body ?? "",
+            label: correspondingContent?.label ?? "",
             text: mdText,
             metadata: correspondingContent?.metadata,
             creationContext: id,

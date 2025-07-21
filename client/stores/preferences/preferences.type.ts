@@ -1,6 +1,4 @@
-import type { IObservableStoreSubject } from "$lib/client/types/data.type";
-
-export type IPreferencesStore = IObservableStoreSubject & {
+export type IPreferencesStore = {
   [key: string]: any;
 };
 

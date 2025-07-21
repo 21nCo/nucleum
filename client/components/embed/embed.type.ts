@@ -1,6 +1,5 @@
-import type { IObservableStoreSubject } from "$lib/client/types/data.type";
 import type { EmbedMessage } from "$lib/client/types/embedMessage.enum";
-export type IEmbedChannel = IObservableStoreSubject & {
+export type IEmbedChannel = {
   [key: string]: IEmbedChannelData;
 };
 

@@ -8,15 +8,15 @@ import {
   SessionType,
   type IManualSessionLogForm,
   type ISessionLog,
-  type ISessionLogStore,
-  type ISession
+  type IManualLogStore,
+  type ISessionCapture,
+  type ISessionLogCapture
 } from "./log.type";
 import { ObservableStore } from "$lib/client/stores/client.store";
 import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
 import { sessionStore } from "../focus/session.store";
 import { BlockType } from "$lib/client/types/pointron/session.type";
 import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
-import type { OmitForCaptureWithId } from "$lib/client/components/flux/resourceStores/resource.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import type {
   IResourceSelectParams,
@@ -25,9 +25,18 @@ import type {
 import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
 import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
 
-class SessionLogStore extends ResourceStore<ISessionLog> {
+const defaults = {
+  goalId: "",
+  sessionId: "",
+  taskId: ""
+};
+class SessionLogStore extends ResourceStore<ISessionLog, ISessionLogCapture> {
   constructor() {
-    super(Resource.sessionLog);
+    super(Resource.sessionLog, {
+      indices: ["startUnix", "goalId", "sessionId", "taskId"],
+      defaultProps: defaults,
+      expandProps: ["goalId", "sessionId"]
+    });
   }
 
   selectMany(
@@ -40,14 +49,10 @@ class SessionLogStore extends ResourceStore<ISessionLog> {
       // "(select * from $parent.goalId.parent) as topLevelGoal",
       "sessionId.* as session"
     ];
+    //TODO - check expansion testing
 
-    const properties = [
-      ...(additionalParams?.isExpand ? expandedProps : []),
-      ...(params?.properties ?? [])
-    ];
     params = {
-      ...(params ?? {}),
-      properties
+      ...(params ?? {})
     };
     return super.selectMany(params, additionalParams);
   }
@@ -55,7 +60,7 @@ class SessionLogStore extends ResourceStore<ISessionLog> {
 
 export const sessionLogStore = new SessionLogStore();
 
-class ManualLogStore extends ObservableStore<ISessionLogStore> {
+class ManualLogStore extends ObservableStore<IManualLogStore> {
   constructor() {
     super("manualLogStore");
   }
@@ -109,14 +114,14 @@ class ManualLogStore extends ObservableStore<ISessionLogStore> {
 
   async save() {
     let n = this.get();
-    let sessionEntries: OmitForCaptureWithId<ISession>[] = [];
-    let logEntries: OmitForCaptureWithId<ISessionLog>[] = [];
+    let sessionEntries: ISessionCapture[] = [];
+    let logEntries: ISessionLogCapture[] = [];
     n.manualLogs.forEach((entry) => {
       const duration = entry.duration;
       let start = attachTimeToDate(entry.startDate, entry.startTime);
       let end = attachTimeToDate(entry.endDate, entry.endTime);
       const sessionId = generateResourceId(Resource.session);
-      const log: OmitForCaptureWithId<ISessionLog> = {
+      const log: ISessionLogCapture = {
         startUnix: resolveUnixTimestamp(start),
         endUnix: resolveUnixTimestamp(end),
         id: generateResourceId(Resource.sessionLog),
@@ -127,7 +132,7 @@ class ManualLogStore extends ObservableStore<ISessionLogStore> {
         manualEntryId: entry.id
       };
 
-      const session: OmitForCaptureWithId<ISession> = {
+      const session: ISessionCapture = {
         startUnix: resolveUnixTimestamp(start),
         endUnix: resolveUnixTimestamp(end),
         elapsed: duration,

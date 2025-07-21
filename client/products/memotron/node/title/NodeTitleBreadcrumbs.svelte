@@ -44,17 +44,20 @@
       parentItems = mdParent;
     } else if (mdParent) {
       parentItems = await nodeStore.selectMany({
-        properties: ["label", "id", "body"],
+        properties: {
+          select: ["label", "id", "body"]
+        },
         filters: {
           contentType: [...headingNodeTypes, NodeType.NODULAR_MARKDOWN],
           id: mdParent?.map((x) => x.toString())
         }
       });
     } else if (!isExtensionEnvironment()) {
+      //TODO - mdParent expansion
       const result = await nodeStore.selectMany({
-        properties: [
-          "(select * from (fn::memotron::node::parent($parent.id))) as mdParent"
-        ],
+        // properties: [
+        //   "(select * from (fn::memotron::node::parent($parent.id))) as mdParent"
+        // ],
         filters: {
           id: id?.toString()
         }

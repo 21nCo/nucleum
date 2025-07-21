@@ -4,7 +4,7 @@
   import context from "$lib/client/stores/context.store";
   import { UserDataMode } from "$lib/client/types/account.type";
   import { onDestroy } from "svelte";
-
+  //TODO - sync on beforeunload as well
   let interval: any;
   interval = setInterval(() => {
     if ($account.dataMode !== UserDataMode.CLOUD || $context.isInOfflineMode)

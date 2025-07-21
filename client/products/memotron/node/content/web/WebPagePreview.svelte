@@ -13,6 +13,7 @@
   import ImagePreview from "../ImagePreview.svelte";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import { resolveUrlData } from "../../url.utils";
+  import { parse } from "$lib/shared/utils/json.utils";
 
   export let node: IWebPage;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -64,7 +65,7 @@
         isReturnRawData: true
       });
       if (isValidString(urlData?.headers)) {
-        const headers = JSON.parse(urlData.headers);
+        const headers = parse(urlData.headers);
         if (!headers) return false;
         return resolveIframabilityFromHeaders(headers);
       }

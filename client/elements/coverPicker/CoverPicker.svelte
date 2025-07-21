@@ -180,7 +180,7 @@
               <Icon icon="svg-spinners:90-ring-with-bg" class="stroke-fgs1" />
               <span>Uploading...</span>
             </span>
-          {:else if typeof _value !== "string" && _value?.tb === Resource.file}
+          {:else if _value?.toString()?.includes(Resource.file)}
             <div class="flex w-full h-full items-center gap-2">
               <div class="flex w-40 h-full">
                 {#key _value}

@@ -1,7 +1,6 @@
 import { Resource } from "./resource.enum";
 import { ResourceActionType, type ResourceAccessPoint } from "./resource.type";
 import type { IRecordId } from "$lib/client/types/data.type";
-import { RecordId } from "surrealdb";
 import { logger } from "../../debug/logger.client";
 import { properCase } from "$lib/shared/utils/text.utils";
 import type { IResourceSwitchItem } from "$lib/client/types/select.type";
@@ -115,11 +114,6 @@ export const removeDuplicatesFilter = (
 ) => {
   return self.findIndex((t) => isSameResource(t, item)) === index;
 };
-
-export function stringToRecordId(id: string): IRecordId {
-  const parts = id.split(":");
-  return new RecordId(parts[0], parts[1]);
-}
 
 export function isNoneResource(id: IRecordId | string | undefined) {
   if (!id) return false;

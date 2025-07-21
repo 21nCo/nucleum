@@ -8,21 +8,23 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import context from "$lib/client/stores/context.store";
   import { appStore } from "$lib/client/stores/app.store";
-  import { ResourceAccessMode } from "../flux/resourceStores/resource.type";
+  import {
+    ResourceAccessMode,
+    ResourceAccessPoint
+  } from "../flux/resourceStores/resource.type";
   import { createEventDispatcher } from "svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { logger } from "../debug/logger.client";
   export let goal: IGoal;
-  export let isCreateContext: boolean = false;
+  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   const dispatch = createEventDispatcher();
 
   function onGoalClick(e: MouseEvent) {
-    if (!$context.isEmbed && !isCreateContext) {
+    if (!$context.isEmbed && accessPoint !== ResourceAccessPoint.GOAL) {
       appStore.openResource(goal.id, ResourceAccessMode.POP);
       e.stopPropagation();
     }
-    dispatch("click");
   }
 
   function onGoalChange(e: CustomEvent) {
@@ -40,33 +42,42 @@
   }
 </script>
 
-<CustomColorPropagator
-  color={goal.color}
-  class={cn("flex items-center gap-1 text-ccs1 w-full", {
-    "text-b3 cursor-default notouch:hover:underline focus:underline":
-      !isCreateContext
-  })}
-  on:click={onGoalClick}
->
-  {#if isCreateContext}
-    <Icon
-      icon={resolveResourceIcon(Resource.goal)}
-      size={Size.sm}
-      class="text-ccs1"
-    />
-  {/if}
-  <div class="flex items-center gap-1 text-left truncate flex-1 min-w-0">
-    <div class="truncate">
-      {goal.label || "Untitled"}
-    </div>
-    {#if isCreateContext}
-      <Button
-        icon="ph:x-light"
-        tooltip="Clear goal"
+<div class="flex items-center gap-2 w-full">
+  <CustomColorPropagator
+    color={goal.color}
+    type={accessPoint !== ResourceAccessPoint.GOAL ? "button" : "div"}
+    class={cn("flex items-center gap-1 text-ccs1 w-fit", {
+      "text-b3 ": accessPoint !== ResourceAccessPoint.SELF,
+      "notouch:hover:underline focus:underline":
+        accessPoint !== ResourceAccessPoint.GOAL
+    })}
+    on:click={onGoalClick}
+  >
+    {#if accessPoint === ResourceAccessPoint.CAPTURE}
+      <Icon
+        icon={resolveResourceIcon(Resource.goal)}
         size={Size.sm}
-        parentBgIndex={2}
+        class="text-ccs1"
       />
     {/if}
-  </div>
-</CustomColorPropagator>
+    <div class="flex items-center gap-1 text-left truncate flex-1 min-w-0">
+      <div class="truncate">
+        {goal.label || "Untitled"}
+      </div>
+    </div>
+  </CustomColorPropagator>
+  {#if accessPoint === ResourceAccessPoint.SELF || accessPoint === ResourceAccessPoint.CAPTURE}
+    <Button
+      icon="ph:link-break-light"
+      tooltip="Clear goal"
+      size={Size.sm}
+      parentBgIndex={2}
+      on:click={(e) => {
+        e.stopPropagation();
+        dispatch("clearGoal");
+      }}
+    />
+  {/if}
+</div>
+
 <ComponentBaseLayer subscribeToRecords={[goal.id]} on:change={onGoalChange} />

@@ -23,15 +23,19 @@ export class RecentsStore extends ObservableStore<IRecentsStore> {
   async refresh(resources: Resource[]) {
     let recents: { type: Resource; record: any; timestamp: Date }[] = [];
     for (const resource of resources) {
-      const data = await this.recents(resource);
-      recents = [
-        ...recents,
-        ...data.map((x) => ({
-          type: resource,
-          record: x,
-          timestamp: x.modifiedAt
-        }))
-      ];
+      try {
+        const data = await this.recents(resource);
+        recents = [
+          ...recents,
+          ...data.map((x) => ({
+            type: resource,
+            record: x,
+            timestamp: x.modifiedAt
+          }))
+        ];
+      } catch (error) {
+        logger.error({ at: "recentsStore.refresh", error, resource });
+      }
     }
     // const accessLogs = await accessLogStore.selectMany({
     //   filters: {
@@ -48,15 +52,16 @@ export class RecentsStore extends ObservableStore<IRecentsStore> {
   }
 
   resolve(params?: { type?: Resource; exclude?: IRecordId[] }) {
+    const recents = this.get().recents;
     if (params?.type && params.type !== Resource.everything) {
-      return this.get()
-        .recents.filter((x) => x.type === params.type)
+      return recents
+        .filter((x) => x.type === params.type)
         .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
         .map((x) => x.record)
         .filter((x) => !params.exclude?.some(resourceInList(x.id)));
     }
-    return this.get()
-      .recents.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+    return recents
+      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
       .map((x) => x.record);
   }
 
@@ -107,7 +112,7 @@ export class RecentsStore extends ObservableStore<IRecentsStore> {
         isExpand: true
       }
     );
-    logger.log({ at: "recentResources", result });
+    logger.log({ at: "recentResources", resource, result });
     return result;
   }
 }

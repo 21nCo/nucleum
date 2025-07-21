@@ -12,10 +12,10 @@
   import PropertiesListView from "$lib/client/components/collection/properties/PropertiesListView.svelte";
   import NodeAvatar from "$lib/client/products/memotron/node/avatar/NodeAvatar.svelte";
   import {
-    LinkType,
     NodeType,
     type INodeThumb
   } from "$lib/client/products/memotron/node/node.type";
+  import { LinkType } from "$lib/client/products/memotron/linking/link.type";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { collectionStore } from "$lib/client/components/collection/collection.store";
   import { CaptureType, type ICaptureLink } from "./capture.type";

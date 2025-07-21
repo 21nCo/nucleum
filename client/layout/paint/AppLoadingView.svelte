@@ -7,6 +7,9 @@
   import ProgressBar from "$lib/client/elements/ProgressBar.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { fade } from "svelte/transition";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { Product } from "$lib/client/types/product.type";
+  import NucleusAnimation from "$lib/client/branding/NucleusAnimation.svelte";
   export let message: string | undefined = undefined;
   export let subMessage: string | undefined = undefined;
   export let duration: number | undefined = undefined;
@@ -26,7 +29,11 @@
       </div>
     {:else}
       <div class="relative flex flex-col gap-4 items-center">
-        <SubAtomLogo />
+        {#if $appStore.product === Product.NUCLEUS}
+          <NucleusAnimation />
+        {:else}
+          <SubAtomLogo />
+        {/if}
         {#if duration !== undefined || message || subMessage}
           <div
             class="absolute top-full w-fit flex flex-col gap-3 items-center whitespace-nowrap pt-4"

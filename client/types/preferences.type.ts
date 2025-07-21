@@ -1,10 +1,10 @@
 import type { AppSkin, Theme } from "$lib/client/types/appearance.type";
 import type { TimeScale } from "./time.type";
 import type { IAvatar } from "./avatar.type";
-import type { IObservableStoreSubject, IRecordId } from "./data.type";
+import type { IRecordId } from "./data.type";
 import type { TranscriptionModel } from "../products/memotron/taco/taco.types";
 
-export type IUserGlobalPreferences = IObservableStoreSubject & {
+export type IUserGlobalPreferences = {
   name: string;
   profilePicture?: IRecordId | undefined;
   // theme: AppSkin;

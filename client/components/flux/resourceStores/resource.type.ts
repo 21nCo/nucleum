@@ -7,47 +7,63 @@ import type { Resource } from "./resource.enum";
 
 export interface IResourceBase {
   id: IRecordId;
-  createdAt: string;
+  createdAt: Date;
 }
 
 export interface IResource extends IResourceBase {
   /**
-   * The label of the resource
-   */
-  label?: string;
-  /**
    * The last time the resource was modified
    */
-  modifiedAt: string;
-  /**
-   * @deprecated - use accessLog instead
-   * The last time user interacted with the resource
-   *
-   * This is almost same as modifiedAt but it is used to track the last time user interacted with the resource. For example, if user has opened a resource, interactedAt will be reset.
-   *
-   */
-  interactedAt?: string;
-  /**
-   * Whether the resource is archived or not
-   */
-  isArchived?: boolean;
+  modifiedAt: Date;
   /**
    * Trash information of the resource
    */
   trashInformation?: ITrashInformation;
+}
+
+export interface IResourceLabeled {
+  label: string;
+}
+
+export interface IResourceShareable {
+  createdBy: IRecordId;
+  modifiedBy: IRecordId;
+}
+
+export interface IResourceStarrable {
+  isStarred?: boolean;
+}
+
+export interface IResourceArchivable {
+  /**
+   * Whether the resource is archived or not
+   */
+  isArchived?: boolean;
+}
+
+export interface IResourceLockable {
   /**
    * Whether the resource is locked for editing or not
    */
   isLocked?: boolean;
+}
 
-  [key: string]: unknown;
+export interface IResourceInActivableFromParent {
+  /**
+   * Whether the resource is inactive because of parent is inactive
+   */
+  isParentInactive?: boolean;
+}
+
+export interface IResourceImportable {
+  importId?: string;
 }
 
 /**
  * Meta resource are created by system and are not meant to be created by the user. Ex: mutation, accessLog, etc.
  */
 export interface IMetaResource extends IResourceBase {
-  modifiedAt?: string;
+  modifiedAt: Date;
   [key: string]: unknown;
 }
 
@@ -72,13 +88,8 @@ export interface IActiveResource extends IResource {
 
 export type IUnlabeledResource = Omit<IResource, "label">;
 
-export interface IResourseShareable {
-  createdBy: IRecordId;
-  modifiedBy: IRecordId;
-}
-
 export interface ITrashInformation {
-  deletedAt: string;
+  deletedAt: Date;
   deletedBy: string;
 }
 
@@ -255,6 +266,8 @@ export type IResourceCapture<T extends IResource> = Omit<
   | "interactedAt"
   | "id"
 >;
+
+export type IResourceCaptureV2<T extends IResource> = Omit<T, keyof T>;
 
 /**
  * @deprecated - doesn't help with type inference if nested type intersections. Use {@link OmitForCaptureWithId} or {@link OmitFields} instead.

@@ -4,7 +4,6 @@ import {
   sessionStore,
   activeSession
 } from "$lib/client/products/pointron/focus/session.store";
-import { focusHeatmapStore } from "$lib/client/products/pointron/journal/journal.store";
 import { accessLogStore } from "$lib/client/components/accessLogging/accesslog.store";
 import {
   manualLogStore,
@@ -25,7 +24,6 @@ export const pointronCacheableStores: IStore[] = [
   focusItemsStore,
   activeSession,
   manualLogStore,
-  focusHeatmapStore,
   sessionLogStore,
   sessionStore,
   collectionStore,

@@ -18,14 +18,13 @@
   import { linkTagLabelMapper } from "../../linking/link.utils";
   import { nodeStore, type IActiveNodeStore } from "../node.store";
   import {
-    LinkType,
     NodeRightPaneType,
     NodeView,
     webNodeTypeList,
     type INode
   } from "../node.type";
   import type { DropdownItem } from "$lib/client/types/dropdownItem.type";
-  import type { ILinkTag } from "../../linking/link.type";
+  import { LinkType, type ILinkTag } from "../../linking/link.type";
   import { enumToString } from "$lib/shared/utils/text.utils";
   import type { IRecordId } from "$lib/client/types/data.type";
   import view from "$lib/client/stores/view.store";
@@ -126,15 +125,10 @@
   async function loadLinkedNodesData(links: any[]) {
     try {
       linkedNodes = await nodeStore.selectMany({
-        properties: [
-          "id",
-          "label",
-          "parent.* as parent",
-          "body",
-          "contentType",
-          "metadata",
-          "url"
-        ],
+        properties: {
+          select: ["id", "label", "body", "contentType", "metadata", "url"],
+          expand: ["parent"]
+        },
         filters: {
           id: links?.map((x) => x.linkedTo.toString())
         }
@@ -290,7 +284,9 @@
   }
 
   export async function fetchDepth(nodes: IRecordId[]) {
-    const linkProperties = ["id", "in", "out", "linkType", "tags"];
+    const linkProperties = {
+      select: ["id", "in", "out", "linkType", "tags"]
+    };
     const inLinks = await linker.selectMany({
       properties: linkProperties,
       filters: {
@@ -323,7 +319,10 @@
       new Set(edges.map((link: any) => [link.source, link.target]).flat())
     );
     let allNodes = await nodeStore.selectMany({
-      properties: ["id", "label", "parent.* as parent", "body", "contentType"],
+      properties: {
+        select: ["id", "label", "body", "contentType"],
+        expand: ["parent"]
+      },
       filters: {
         id: allNodesList
       }

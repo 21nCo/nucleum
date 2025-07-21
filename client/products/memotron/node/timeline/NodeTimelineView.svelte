@@ -30,16 +30,18 @@
         return;
       }
       linkedNodes = await nodeStore.selectMany({
-        properties: [
-          "id",
-          "label",
-          "parent.* as parent",
-          "body",
-          "contentType",
-          "metadata",
-          "url",
-          "createdAt"
-        ],
+        properties: {
+          select: [
+            "id",
+            "label",
+            "body",
+            "contentType",
+            "metadata",
+            "url",
+            "createdAt"
+          ],
+          expand: ["parent"]
+        },
         filters: {
           id: links.map((x: INodeLinkThumb) => x.linkedTo.toString())
         }

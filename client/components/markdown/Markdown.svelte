@@ -46,6 +46,7 @@
   import { generateResourceId } from "../flux/flux.utils";
   import { ErrorMessage } from "../error/error.type";
   import { resizeListener } from "$lib/client/actions/resize.action";
+  import { stringify } from "$lib/shared/utils/json.utils";
 
   /**
    * Propagates the event to the parent component.
@@ -336,7 +337,9 @@
             size={Size.xs}
             parentBgIndex={parentBackgroundIndex}
             on:click={() => {
-              const rawMdJson = JSON.stringify($mdStore.blocks);
+              const rawMdJson = stringify($mdStore.blocks, {
+                isPreventReplacer: true
+              });
               navigator.clipboard.writeText(rawMdJson);
               toasts.success("Copied to clipboard");
             }}

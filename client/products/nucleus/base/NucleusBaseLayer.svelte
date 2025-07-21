@@ -15,6 +15,10 @@
   import BackgroundSoundPlayer from "$lib/client/products/pointron/focus/backgroundMusic/BackgroundSoundPlayer.svelte";
   import SessionTitle from "../../pointron/base/SessionTitle.svelte";
   import MemoryBase from "../../memotron/base/MemoryBase.svelte";
+  import { FallbackTracker } from "$lib/client/utils/fallbackTracker.utils";
+  import { defaultsMigrationFocus } from "../../pointron/migrations";
+  import { defaultsMigrationTidy } from "$lib/client/components/migrations";
+  import { defaultsMigrationForNodes } from "../../memotron/base/migrations";
 
   let isLiteMode = $context.isEmbed && $context.isSheet;
   const isDebug = import.meta.env?.DEV;
@@ -43,7 +47,18 @@
   }
 
   async function runFallbacks() {
-    //TODO
+    await FallbackTracker.runIfNotCompleted(
+      "defaultsMigrationFocus",
+      defaultsMigrationFocus
+    );
+    await FallbackTracker.runIfNotCompleted(
+      "defaultsMigrationTidy",
+      defaultsMigrationTidy
+    );
+    await FallbackTracker.runIfNotCompleted(
+      "defaultsMigrationForNodes",
+      defaultsMigrationForNodes
+    );
   }
 </script>
 

@@ -6,7 +6,7 @@
   import LinkItems from "./LinkItems.svelte";
   import LinkSearch from "./LinkSearch.svelte";
   import { createEventDispatcher } from "svelte";
-  import { LinkType } from "../../node/node.type";
+  import { LinkType } from "$lib/client/products/memotron/linking/link.type";
   import type { IRecordId } from "$lib/client/types/data.type";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";

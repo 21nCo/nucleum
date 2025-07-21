@@ -1,7 +1,6 @@
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import {
-  activeResources,
   ActiveResourceStore,
   ResourceStore
 } from "$lib/client/components/flux/resourceStores/resource.store";
@@ -11,7 +10,10 @@ import {
   type ICollectionView,
   CollectionType,
   type ICollection,
-  type ICollectionExpanded
+  type ICollectionExpanded,
+  CollectionObjectKey,
+  type ICollectionCapture,
+  type ICollectionViewCapture
 } from "$lib/client/components/collection/collection.type";
 import {
   propertyEditorStore,
@@ -57,11 +59,19 @@ import { appStore } from "$lib/client/stores/app.store";
 import { resolveCollectionResource } from "./collection.utils";
 import { viewStore } from "./view.store";
 
-class CollectionStore extends ResourceStore<ICollection> {
+const defaults: Partial<ICollection> = {
+  type: CollectionType.UNTYPED,
+  typeToExtend: "",
+  resource: Resource.node
+};
+class CollectionStore extends ResourceStore<ICollection, ICollectionCapture> {
   collectibleResource: Resource[] | undefined;
   constructor() {
     super(Resource.collection, {
-      dataType: StoreDataType.FIR
+      dataType: StoreDataType.FIR,
+      defaultProps: defaults,
+      indices: ["type", "resource", CollectionObjectKey.typeToExtend],
+      expandProps: [CollectionObjectKey.typeToExtend]
     });
     this.refreshCollectibleResource();
   }
@@ -75,16 +85,11 @@ class CollectionStore extends ResourceStore<ICollection> {
     additionalParams?: IResourceSelectAdditionalParams
   ) {
     this.refreshCollectibleResource();
-    const expandedProps = ["*", "typeToExtend.* as typeToExtend"];
-    const properties = [
-      ...(additionalParams?.isExpand ? expandedProps : []),
-      ...(params?.properties ?? [])
-    ];
+
     if (additionalParams?.isQueryAsIs) {
       return super.selectMany(
         {
-          ...(params ?? {}),
-          properties
+          ...(params ?? {})
         },
         additionalParams
       );
@@ -103,36 +108,38 @@ class CollectionStore extends ResourceStore<ICollection> {
     };
     params = {
       ...(params ?? {}),
-      properties,
       filters
     };
     return super.selectMany(params, additionalParams);
   }
 
   async save(
-    form: Partial<ICollection> & { defaultLayout: CollectionLayout },
+    form: ICollectionCapture,
     additionalParams?: {
       context?: string;
       isIgnorePropertyEditor?: boolean;
     }
   ) {
     this.refreshCollectibleResource();
-    const id = generateResourceId(Resource.collection);
     const propertyEditor = additionalParams?.isIgnorePropertyEditor
       ? null
       : propertyEditorStore.get();
     logger.log({ at: "CollectionStore.save", propertyEditor, form });
     let properties: OmitForCaptureWithId<IProperty>[] =
       propertyEditor?.properties ?? [];
-    const record: OmitForCapture<ICollection> = {
-      ...form,
-      id,
+    const record: ICollectionCapture = {
+      label: form.label ?? "",
+      description: form.description,
+      isStarred: form.isStarred,
+      isCaptureShortcutEnabled: form.isCaptureShortcutEnabled,
       views: [],
       properties: [],
-      defaultLayout: undefined,
-      typeToExtend: propertyEditor?.typeToExtend?.id ?? undefined,
-      type: form.type ?? CollectionType.UNTYPED,
-      resource: form.resource ?? this.collectibleResource?.[0]
+      typeToExtend: propertyEditor?.typeToExtend?.id ?? defaults.typeToExtend,
+      type: form.type ?? defaults.type,
+      resource: form.resource ?? this.collectibleResource?.[0],
+      ...(form.avatar ? { avatar: form.avatar } : {}),
+      ...(form.cover ? { cover: form.cover } : {}),
+      ...(form.query ? { query: form.query } : {})
     };
     if (form.type === CollectionType.TYPED && properties?.length > 0) {
       properties = properties.map(assignDefaultLabelAsFallback);
@@ -142,11 +149,8 @@ class CollectionStore extends ResourceStore<ICollection> {
     const viewId = generateResourceId(Resource.view);
     await viewStore.create({
       id: viewId,
-      layout: form.defaultLayout,
-      label: "Default",
-      tabBy: "none",
-      groupBy: "none",
-      subGroupBy: "none"
+      layout: form.defaultLayout ?? CollectionLayout.BOARD,
+      label: "Default"
     });
     record.views = [viewId];
     appStore.addToRecents({
@@ -204,12 +208,16 @@ class CollectionStore extends ResourceStore<ICollection> {
         }
       ];
     }
+    const oldProps = [
+      "(select * from $parent.properties) as properties",
+      "(select * from $parent.typeToExtend.properties) as extendProperties"
+    ];
+    //TODO - extendProperties nested expansion
     const result = await this.selectMany(
       {
-        properties: [
-          "(select * from $parent.properties) as properties",
-          "(select * from $parent.typeToExtend.properties) as extendProperties"
-        ],
+        properties: {
+          expand: ["properties", "typeToExtend"]
+        },
         filters: {
           id: collections.map((x) => x.toString())
         }
@@ -237,30 +245,10 @@ export const collectionStore = new CollectionStore();
 
 export type IActiveCollectionStore = InstanceType<typeof ActiveCollectionStore>;
 
-/**
- *
- * @deprecated - use ActiveCollectionStore.resolve instead
- *
- * Resolves the active curation store for the given id. If the store does not exist, it will be initialized.
- * @param id - The id of the curation
- * @param context - The context from which the store is being accessed. This is used for debugging purposes.
- * @returns The active curation store
- */
-export function resolveActiveCollectionStore(
-  id: IRecordId,
-  context: string = ""
-) {
-  const idStr = id.toString();
-  if (!activeResources.has(idStr)) {
-    activeResources.set(idStr, new ActiveCollectionStore(id));
-  }
-  let val = activeResources.get(idStr);
-  return val!;
-}
-
 export class ActiveCollectionStore extends ActiveResourceStore<
-  IActiveCollection,
-  CollectionStore
+  ICollection,
+  CollectionStore,
+  IActiveCollection
 > {
   constructor(collectionId: IRecordId) {
     super(collectionId, collectionStore);
@@ -298,6 +286,7 @@ export class ActiveCollectionStore extends ActiveResourceStore<
         accessMode,
         isViewDataLoading: true,
         isPageLoading: false,
+        properties: record.properties ?? [],
         views: record.views.map((x) => {
           return { ...x, data: [] };
         })
@@ -341,7 +330,7 @@ export class ActiveCollectionStore extends ActiveResourceStore<
 
   async createView(viewToDuplicate?: IRecordId) {
     let viewToBeDuplicated: ICollectionView | undefined;
-    let view: OmitForCapture<ICollectionView> | undefined;
+    let view: ICollectionViewCapture | undefined;
     if (viewToDuplicate) {
       const collection = this.get();
       viewToBeDuplicated = collection.views.find(
@@ -350,12 +339,7 @@ export class ActiveCollectionStore extends ActiveResourceStore<
       view = viewToBeDuplicated as ICollectionView;
     } else {
       view = {
-        label: "New view",
-        layout: CollectionLayout.BOARD,
-        tabBy: "none",
-        groupBy: "none",
-        subGroupBy: "none",
-        arrangement: Arrangement.LIST
+        label: "New view"
       };
     }
     const response = await viewStore.create(view);
@@ -386,7 +370,7 @@ export class ActiveCollectionStore extends ActiveResourceStore<
       const viewToBeDeleted = val.views.find((v) => v.id == id);
       if (!viewToBeDeleted) return val;
       viewToBeDeleted.trashInformation = {
-        deletedAt: new Date().toISOString(),
+        deletedAt: new Date(),
         deletedBy: this.currentUserId ?? ""
       };
       return val;
@@ -415,7 +399,7 @@ export class ActiveCollectionStore extends ActiveResourceStore<
    */
   async loadViewData(
     viewId: IRecordId,
-    resourceStore: ResourceStore<any>,
+    resourceStore: ResourceStore<any, any>,
     isFirstLoad: boolean = false
   ) {
     try {

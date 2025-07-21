@@ -1,5 +1,6 @@
 import { ObservableStore } from "$lib/client/stores/client.store";
-import { postToParent } from "$lib/client/utils/embed.utils";
+import { EmbedDataMessage } from "$lib/client/types/embedMessage.enum";
+import { postDataToParent } from "$lib/client/utils/embed.utils";
 import { wait } from "$lib/client/utils/time.utils";
 import type { IFileEmbedChannel } from "./file.type";
 
@@ -13,8 +14,9 @@ class FileEmbedChannel extends ObservableStore<IFileEmbedChannel> {
     const store = this.get();
     let file = store.files.find((f) => f.id === id);
     if (file) return file.data;
-    postToParent({
-      fetch: JSON.stringify({ url: url.toString(), id })
+    postDataToParent(EmbedDataMessage.FETCH, {
+      url: url.toString(),
+      id
     });
     let isDataReceived = false;
     let timeElapsed = 0;
@@ -36,14 +38,16 @@ class FileEmbedChannel extends ObservableStore<IFileEmbedChannel> {
   }
 
   downloadFromUrl(url: string, fileName?: string) {
-    postToParent({
-      download: JSON.stringify({ url: url.toString(), filename: fileName })
+    postDataToParent(EmbedDataMessage.DOWNLOAD, {
+      url: url.toString(),
+      filename: fileName
     });
   }
 
   download(data: string, contentType: string) {
-    postToParent({
-      download: JSON.stringify({ data, contentType })
+    postDataToParent(EmbedDataMessage.DOWNLOAD, {
+      data,
+      contentType
     });
   }
 
@@ -64,7 +68,7 @@ class FileEmbedChannel extends ObservableStore<IFileEmbedChannel> {
     return bytes;
   }
   /**
-   * TODO - use ui.utils.ts base64ToBlob instead 
+   * TODO - use ui.utils.ts base64ToBlob instead
    * */
   base64ToBlob(base64: string, type: string): Blob {
     const uint8Array = this.base64ToUint8Array(base64);

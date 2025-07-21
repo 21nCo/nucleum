@@ -1,5 +1,4 @@
 import {
-  RemotePersistenceProvider,
   type IPersistence,
   type IPersistenceInitParams
 } from "../persistence.type";
@@ -10,23 +9,22 @@ import type {
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import {
   FilterCombinationMethod,
+  IResourceFilterOperator,
   PersistenceActionType,
   type IMutationParamsv2,
   type IRecordId,
-  type IResourceFilter,
   type IResourceFilterGroup,
   type IResourceSearch,
   type IResourceSelectParams,
   type IResourceSelectProperties
 } from "$lib/client/types/data.type";
-import { LocalDexie } from "$local/local";
-import type { Collection, Table } from "dexie";
+import { Dexie, type Collection, type Table, type WhereClause } from "dexie";
 import { logger } from "$lib/client/components/debug/logger.client";
 
-type QueryableType = Table | Collection;
-
+type QueryableType = Table | Collection<any, any> | WhereClause<any, any>;
+const version = 115;
 export class DexiePersistence implements IPersistence {
-  instance: LocalDexie | undefined = undefined;
+  instance: Dexie | undefined = undefined;
   userId: string = "";
 
   constructor() {}
@@ -34,7 +32,16 @@ export class DexiePersistence implements IPersistence {
   async initialize(params: IPersistenceInitParams): Promise<number> {
     const user = params.userId ?? params.dapId;
     if (this.userId === user && this.instance) return -1;
-    this.instance = new LocalDexie(user);
+    this.instance = new Dexie(user);
+    const stores =
+      params.tables?.reduce(
+        (acc, table) => {
+          acc[table.name] = table.indices.join(", ");
+          return acc;
+        },
+        {} as { [key: string]: string }
+      ) ?? {};
+    this.instance.version(version).stores(stores);
     this.userId = user;
     const initLog = await this.select("kv:local");
     logger.log({ at: "DexiePersistence.initialize", initLog });
@@ -65,25 +72,41 @@ export class DexiePersistence implements IPersistence {
     });
   }
 
-  mutation<T extends IResource | IMetaResource>(
+  async mutation<T extends IResource | IMetaResource>(
     resource: Resource,
     params: IMutationParamsv2<T>
   ) {
     switch (params.action) {
       case PersistenceActionType.INSERT:
-        return this.instance?.table(resource).bulkPut(params.records);
+        const records = params.records.map((record) => {
+          return {
+            ...record,
+            id: record.id?.toString()
+          };
+        });
+        return this.instance?.table(resource).bulkPut(records);
       case PersistenceActionType.REPLACE:
         return this.instance?.table(resource).put(params.record);
       case PersistenceActionType.MERGE:
+        if (!params.record.id) {
+          logger.error({
+            at: "DexiePersistence.mutation merge",
+            error: "Record id is required for merge"
+          });
+          return Promise.reject(new Error("Record id is required for merge"));
+        }
         return this.merge(resource, params.record.id, params.record);
       case PersistenceActionType.DELETE:
         logger.log({ at: "DexiePersistence.mutation delete", params });
-        return this.instance?.table(resource).delete(params.recordId);
+        return this.instance
+          ?.table(resource)
+          .delete(params.recordId.toString());
       case PersistenceActionType.BULK_DELETE:
-        return this.instance?.table(resource).bulkDelete(params.recordIds);
+        return this.instance
+          ?.table(resource)
+          .bulkDelete(params.recordIds.map((id) => id.toString()));
       case PersistenceActionType.BULK_MERGE:
-        //TODO
-        return;
+        return this.bulkMerge(resource, params.recordIds, params.changes);
       case PersistenceActionType.CUSTOM:
         //TODO
         return;
@@ -103,12 +126,51 @@ export class DexiePersistence implements IPersistence {
     }
   }
 
-  private resolveResource(id: IRecordId | Resource) {
-    return typeof id === "string" ? id.split(":")[0] : id?.tb;
+  async bulkMerge(resource: Resource, recordIds: IRecordId[], changes: any) {
+    try {
+      const table = this.instance?.table(resource);
+      if (!table) return;
+
+      const stringIds = recordIds.map((id) => id.toString());
+
+      const existingRecords = await table
+        .where("id")
+        .anyOf(stringIds)
+        .toArray();
+      const existingRecordsMap = new Map(
+        existingRecords.map((record) => [record.id, record])
+      );
+
+      const recordsToUpdate = stringIds.map((id) => {
+        const existing = existingRecordsMap.get(id);
+        return existing ? { ...existing, ...changes } : { ...changes, id };
+      });
+
+      const result = await table.bulkPut(recordsToUpdate);
+
+      logger.log({
+        at: "DexiePersistence.bulkMerge",
+        recordIds,
+        changes,
+        result,
+        resource
+      });
+
+      return result;
+    } catch (e) {
+      logger.error({
+        at: "DexiePersistence.bulkMerge",
+        recordIds,
+        changes,
+        e
+      });
+      throw e;
+    }
   }
 
-  private resolveId(id: IRecordId | Resource) {
-    return typeof id === "string" ? id.split(":")[1] : id?.id?.toString();
+  private resolveResource(id: IRecordId | Resource): Resource {
+    const idString = id.toString();
+    return idString.split(":")[0] as Resource;
   }
 
   /**
@@ -121,68 +183,111 @@ export class DexiePersistence implements IPersistence {
     return this.instance?.table(query).get(params);
   }
 
-  private translateToDexieQuery(
+  private async translateToDexieQuery(
     table: Table | undefined,
-    params: IResourceSelectParams | undefined
-  ): Collection | undefined {
+    params: {
+      selectParams?: IResourceSelectParams;
+      isReturnCount?: boolean;
+    }
+  ): Promise<Collection | undefined> {
     try {
       if (!table) return undefined;
       let query: QueryableType = table;
-
-      // Apply indexed filters first
-      if (params?.filters && !("condition" in params.filters)) {
-        query = this.applyIndexedFilters(
-          table,
-          params.filters as { [key: string]: any }
-        );
-      }
-
-      // Apply non-indexed filters and complex filter groups
-      if (params?.filters) {
-        if ("condition" in params.filters) {
-          query = this.applyFilterGroup(
-            query,
-            params.filters as IResourceFilterGroup
-          );
-        } else {
-          query = this.applyNonIndexedFilters(
-            query,
-            params.filters as { [key: string]: any }
-          );
+      const { orderBy, filters, search, offset, limit, groupBy } =
+        params.selectParams ?? {};
+      if (orderBy && (!filters || "condition" in filters)) {
+        const entries = Object.entries(orderBy);
+        if (entries.length > 0) {
+          const [key, order] = entries[0];
+          const tableQuery = table.orderBy(key);
+          query = order === "desc" ? tableQuery.reverse() : tableQuery;
         }
       }
 
-      // // Convert to Collection if still a Table or WhereClause
-      // if (query instanceof Table || query instanceof WhereClause) {
-      //   query = query.toCollection();
-      // }
+      if (filters) {
+        if ("condition" in filters) {
+          query = this.applyFilterGroup(query, filters as IResourceFilterGroup);
+        } else {
+          const filterObj = filters as { [key: string]: any };
+          query = this.applyIndexedFilters(table, filterObj);
 
-      // Apply search
-      if (params?.search) {
-        query = this.applySearch(query as Collection, params.search);
-      }
+          const indexedKeys = new Set(
+            table.schema.indexes
+              .map((index) => index.name)
+              .filter((key) => filterObj[key] !== undefined)
+          );
 
-      // Apply orderBy
-      if (params?.orderBy) {
-        for (const [key, order] of Object.entries(params.orderBy)) {
-          query = (query as Collection).sortBy(key);
-          if (order === "desc") {
-            query = (query as Collection).reverse();
+          const nonIndexedFilters = Object.fromEntries(
+            Object.entries(filterObj).filter(([key]) => !indexedKeys.has(key))
+          );
+
+          if (Object.keys(nonIndexedFilters).length > 0) {
+            query = this.applyNonIndexedFilters(query, nonIndexedFilters);
           }
         }
       }
 
-      // Apply offset and limit
-      if (params?.offset !== undefined) {
-        query = (query as Collection).offset(params.offset);
+      if (search) {
+        query = this.applySearch(query as Collection, search);
       }
-      if (params?.limit !== undefined) {
-        query = (query as Collection).limit(params.limit);
+
+      let orderByConfig: { key: string; order: string } | undefined;
+      if (orderBy && filters && !("condition" in filters)) {
+        const entries = Object.entries(orderBy);
+        if (entries.length > 0) {
+          orderByConfig = {
+            key: entries[0][0],
+            order: entries[0][1] as string
+          };
+        }
+      }
+
+      if (offset !== undefined) {
+        query = (query as Collection).offset(offset);
+      }
+      if (limit !== undefined) {
+        query = (query as Collection).limit(limit);
+      }
+
+      if (orderByConfig) {
+        const collection = query as Collection;
+        return {
+          toArray: async () => {
+            let result = await collection.sortBy(orderByConfig.key);
+            if (orderByConfig.order === "desc") {
+              result.reverse();
+            }
+            return result;
+          }
+        } as any;
+      }
+      if (params.isReturnCount) {
+        if (!groupBy || groupBy[0] === "all") {
+          return {
+            toArray: async () => {
+              return await (query as Collection).count();
+            }
+          } as any;
+        } else {
+          return {
+            toArray: async () => {
+              const arr = await (query as Collection).toArray();
+              const groupKey = groupBy[0];
+              const counts: { [key: string]: number } = {};
+              for (const item of arr) {
+                const key = item[groupKey] ?? "undefined";
+                counts[key] = (counts[key] || 0) + 1;
+              }
+              return new Map(Object.entries(counts));
+            }
+          } as any;
+        }
       }
 
       return query as Collection;
     } catch (e) {
       logger.error({ at: "DexiePersistence.translateToDexieQuery", e });
+      return undefined;
     }
   }
 
@@ -191,51 +296,114 @@ export class DexiePersistence implements IPersistence {
     filters: { [key: string]: any }
   ): QueryableType {
     let query: QueryableType = table;
-    const indexedFilters = Object.entries(filters).filter(([key]) =>
-      table.schema.indexes.some((index) => index.name === key)
-    );
-
-    if (indexedFilters.length > 0) {
-      const [firstKey, firstValue] = indexedFilters[0];
+    const validFilters = table.schema.indexes
+      .map((index) => index.name)
+      .filter((key) => filters[key] !== undefined)
+      .map((key) => [key, filters[key]]);
+    if (validFilters.length > 0) {
+      const [firstKey, firstValue] = validFilters[0];
       query = this.applyFilter(table, firstKey, firstValue);
 
-      for (let i = 1; i < indexedFilters.length; i++) {
-        const [key, value] = indexedFilters[i];
+      for (let i = 1; i < validFilters.length; i++) {
+        const [key, value] = validFilters[i];
         query = query.and((item) => this.checkFilter(item, key, value));
       }
     }
-
     return query;
   }
 
   private applyFilter(table: Table, key: string, value: any) {
+    if (value === undefined) {
+      return table.toCollection();
+    }
+
     if (Array.isArray(value)) {
       return table.where(key).anyOf(value);
-    } else if (
-      typeof value === "object" &&
-      value !== null &&
-      "from" in value &&
-      "to" in value
-    ) {
-      return table.where(key).between(value.from, value.to);
-    } else {
-      return table.where(key).equals(value);
+    } else if (typeof value === "object" && value) {
+      if (
+        IResourceFilterOperator.GREATER_THAN in value &&
+        IResourceFilterOperator.LESS_THAN in value
+      ) {
+        return table.where(key).between(value.greaterThan, value.lessThan);
+      }
+      if (IResourceFilterOperator.GREATER_THAN in value) {
+        return table.where(key).above(value.greaterThan);
+      }
+      if (IResourceFilterOperator.LESS_THAN in value) {
+        return table.where(key).below(value.lessThan);
+      }
+      if (IResourceFilterOperator.GREATER_THAN_OR_EQUALS in value) {
+        return table.where(key).aboveOrEqual(value.greaterThanOrEqual);
+      }
+      if (IResourceFilterOperator.LESS_THAN_OR_EQUALS in value) {
+        return table.where(key).belowOrEqual(value.lessThanOrEqual);
+      }
+      if (IResourceFilterOperator.NOT_IN in value) {
+        return table.where(key).noneOf(value.notIn);
+      } else if (IResourceFilterOperator.NOT_EQUALS in value) {
+        return table.where(key).notEqual(value.notEquals);
+      } else if (IResourceFilterOperator.CONTAINS in value) {
+        return table.where(key).equalsIgnoreCase(value.contains);
+      }
+    } else if (value === false) {
+      return table.where(key).anyOf(["$NONE", "false", "", [], 0]);
     }
+    return table.where(key).equalsIgnoreCase(value);
   }
 
   private checkFilter(item: any, key: string, value: any): boolean {
-    if (Array.isArray(value)) {
-      return value.includes(item[key]);
-    } else if (
-      typeof value === "object" &&
-      value !== null &&
-      "from" in value &&
-      "to" in value
-    ) {
-      return item[key] >= value.from && item[key] <= value.to;
-    } else {
-      return item[key] === value;
+    if (value === undefined) {
+      return true;
     }
+    if (Array.isArray(value)) {
+      if (!value.includes(item[key])) return false;
+    } else if (typeof value === "object" && value !== null) {
+      if (
+        IResourceFilterOperator.GREATER_THAN in value &&
+        item[key] <= value.greaterThan
+      ) {
+        return false;
+      }
+      if (
+        IResourceFilterOperator.LESS_THAN in value &&
+        item[key] >= value.lessThan
+      ) {
+        return false;
+      }
+      if (
+        IResourceFilterOperator.GREATER_THAN_OR_EQUALS in value &&
+        item[key] < value.greaterThanOrEqual
+      ) {
+        return false;
+      }
+      if (
+        IResourceFilterOperator.LESS_THAN_OR_EQUALS in value &&
+        item[key] > value.lessThanOrEqual
+      ) {
+        return false;
+      }
+      if (
+        IResourceFilterOperator.NOT_IN in value &&
+        value.notIn.includes(item[key])
+      ) {
+        return false;
+      } else if (
+        IResourceFilterOperator.CONTAINS in value &&
+        !item[key]?.includes(value.contains)
+      ) {
+        return false;
+      } else if (
+        IResourceFilterOperator.NOT_EQUALS in value &&
+        item[key] === value.notEquals
+      ) {
+        return false;
+      }
+    } else {
+      if (value === false) {
+        if (item[key] && item[key] !== "$NONE") return false;
+      } else if (item[key] !== value) return false;
+    }
+    return true;
   }
 
   private applyNonIndexedFilters(
@@ -244,26 +412,11 @@ export class DexiePersistence implements IPersistence {
   ): Collection {
     return (query as Collection).filter((item) => {
       for (const [key, value] of Object.entries(filters)) {
-        if (Array.isArray(value)) {
-          if (!value.includes(item[key])) return false;
-        } else if (typeof value === "object" && value !== null) {
-          // if ("from" in value && "to" in value) {
-          //   if (item[key] < value.from || item[key] > value.to) return false;
-          // }
-          if ("greaterThan" in value) {
-            if (item[key] <= value.greaterThan) return false;
-          }
-          if ("lessThan" in value) {
-            if (item[key] >= value.lessThan) return false;
-          }
-          if ("greaterThanOrEqual" in value) {
-            if (item[key] < value.greaterThanOrEqual) return false;
-          }
-          if ("lessThanOrEqual" in value) {
-            if (item[key] > value.lessThanOrEqual) return false;
-          }
-        } else {
-          if (item[key] !== value) return false;
+        if (value === undefined) {
+          continue;
+        }
+        if (!this.checkFilter(item, key, value)) {
+          return false;
         }
       }
       return true;
@@ -286,7 +439,9 @@ export class DexiePersistence implements IPersistence {
             filter as IResourceFilterGroup
           );
         } else {
-          return this.applyFilter(item, filter as IResourceFilter);
+          const resourceFilter = filter as { [key: string]: any };
+          const [[key, value]] = Object.entries(resourceFilter);
+          return this.checkFilter(item, key, value);
         }
       });
 
@@ -318,50 +473,129 @@ export class DexiePersistence implements IPersistence {
     });
   }
 
+  /**
+   *
+   * @param resource
+   * @param params
+   * @returns
+   */
   async selectMany(
     resource: Resource,
-    params?: IResourceSelectParams,
-    signal?: AbortSignal
-  ): Promise<any> | undefined {
-    // Check if operation was aborted before starting
-    if (signal?.aborted) {
-      throw new Error("Operation aborted");
+    params?: IResourceSelectParams
+  ): Promise<any[] | number> {
+    const debugResource: Resource[] = [];
+    if (debugResource.includes(resource)) {
+      logger.debug({
+        at: "DexiePersistence.selectMany",
+        resource,
+        params
+      });
     }
-
-    const query = this.translateToDexieQuery(
+    const isReturnCount =
+      params?.properties?.select?.length === 1 &&
+      params.properties.select[0] === "#";
+    const query = await this.translateToDexieQuery(
       this.instance?.table(resource),
-      params
+      {
+        selectParams: params,
+        isReturnCount
+      }
     );
-    if (!query) return;
-
-    // Check if operation was aborted before executing query
-    if (signal?.aborted) {
-      throw new Error("Operation aborted");
+    if (!query) return isReturnCount ? 0 : [];
+    let result = await query.toArray();
+    if (isReturnCount) return result;
+    if (
+      result &&
+      result.length > 0 &&
+      params?.properties?.expand &&
+      params.properties.expand.length > 0
+    ) {
+      result = await this.selectExpansion(result, params.properties.expand);
     }
-
-    const result = await query;
-    logger.log({
-      at: "DexiePersistence.selectMany",
-      resource,
-      params,
-      query,
-      result
-    });
-    if (Array.isArray(result)) {
-      return result;
+    if (debugResource.includes(resource)) {
+      logger.debug({
+        at: "DexiePersistence.selectMany - result",
+        resource,
+        params,
+        query,
+        result
+      });
     }
-    return result.toArray();
+    return result;
   }
 
-  select(
-    resourceId: IRecordId,
-    properties?: IResourceSelectProperties
-  ): Promise<any> | undefined {
+  async selectExpansion(result: any[], expandProps: string[]): Promise<any[]> {
+    for (const prop of expandProps) {
+      let allItems = result
+        .map((item) => item[prop])
+        .filter(Boolean)
+        .filter((x) => x !== "$NONE");
+      if (Array.isArray(allItems[0])) {
+        allItems = allItems.flat();
+      }
+      allItems = allItems.filter((x) => typeof x === "string");
+      if (allItems.length === 0) continue;
+      allItems = Array.from(new Set(allItems));
+      const resourceType = this.resolveResource(allItems[0]);
+      const expandedResult = await this.selectMany(resourceType as Resource, {
+        filters: {
+          id: [...allItems]
+        }
+      });
+      if (!Array.isArray(expandedResult)) continue;
+      result = result.map((item) => {
+        if (item[prop] && Array.isArray(item[prop])) {
+          item[prop] = item[prop].map((x) => {
+            const result = expandedResult.find((y) => y.id === x);
+            if (result) {
+              return result;
+            }
+            return x;
+          });
+        } else if (item[prop]) {
+          const result = expandedResult.find((y) => y.id === item[prop]);
+          if (result) {
+            item[prop] = result;
+            item[prop.split("Id")[0]] = result;
+          }
+        }
+        return item;
+      });
+    }
+    return result;
+  }
+
+  async select(resourceId: IRecordId, properties?: IResourceSelectProperties) {
     const resource = this.resolveResource(resourceId);
     // const id = this.resolveId(resourceId);
+    const debugResource: Resource[] = [];
+    if (debugResource.includes(resource)) {
+      logger.debug({
+        at: "DexiePersistence.select",
+        resourceId,
+        properties
+      });
+    }
     const id = resourceId.toString();
     logger.log({ at: "DexiePersistence.select", resource, resourceId, id });
     if (!resource || !id) return;
-    return this.instance?.table(resource).get(id);
+    const result = await this.instance?.table(resource).get(id);
+    if (result && properties?.expand && properties.expand.length > 0) {
+      const expandedResult = await this.selectExpansion(
+        [result],
+        properties.expand
+      );
+      if (debugResource.includes(resource)) {
+        logger.debug({
+          at: "DexiePersistence.select - expandedResult",
+          resourceId,
+          expandedResult
+        });
+      }
+      if (expandedResult && expandedResult.length > 0) {
+        return expandedResult[0];
+      }
+    }
+    return result;
   }
 }

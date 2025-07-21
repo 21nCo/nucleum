@@ -14,12 +14,13 @@
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import context from "$lib/client/stores/context.store";
   import { OperatingSystem } from "$lib/client/types/context.type";
-  import { postToParent } from "$lib/client/utils/embed.utils";
+  import { postDataToParent } from "$lib/client/utils/embed.utils";
   import { toasts } from "$lib/client/stores/notification.store";
   import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
   import { GlobalEvent } from "$lib/client/types/event.enum";
   import { PaymentProvider } from "$lib/shared/types/plan.type";
   import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
+  import { EmbedDataMessage } from "$lib/client/types/embedMessage.enum";
 
   let selectedCycle: BillingCycle = BillingCycle.YEARLY;
   let isBillingAddressCapture = false;
@@ -103,11 +104,9 @@
       toasts.error("Something went wrong. Please try again");
       return;
     }
-    postToParent({
-      purchase: JSON.stringify({
-        productId,
-        nonce: response.nonce
-      })
+    postDataToParent(EmbedDataMessage.PURCHASE, {
+      productId,
+      nonce: response.nonce
     });
     dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
       message: `Purchasing the plan...`,

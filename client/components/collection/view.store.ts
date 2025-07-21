@@ -1,13 +1,27 @@
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
-import { type ICollectionView } from "$lib/client/components/collection/collection.type";
+import {
+  CollectionLayout,
+  type ICollectionView,
+  type ICollectionViewCapture
+} from "$lib/client/components/collection/collection.type";
 import { flux } from "$lib/client/components/flux/flux";
 import { StoreDataType, type IRecordId } from "$lib/client/types/data.type";
 
-class CollectionViewStore extends ResourceStore<ICollectionView> {
+const defaults = {
+  layout: CollectionLayout.BOARD,
+  tabBy: "none",
+  groupBy: "none",
+  subGroupBy: "none"
+};
+class CollectionViewStore extends ResourceStore<
+  ICollectionView,
+  ICollectionViewCapture
+> {
   constructor() {
     super(Resource.view, {
-      dataType: StoreDataType.FIR
+      dataType: StoreDataType.FIR,
+      defaultProps: defaults
     });
   }
   /**
@@ -22,7 +36,7 @@ class CollectionViewStore extends ResourceStore<ICollectionView> {
    */
   async fetchViewData(
     collectionId: IRecordId,
-    resourceStore: ResourceStore<any>,
+    resourceStore: ResourceStore<any, any>,
     params?: {
       view?: ICollectionView;
       resource?: Resource;

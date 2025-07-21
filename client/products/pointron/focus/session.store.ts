@@ -42,34 +42,33 @@ import type {
 } from "$lib/client/types/data.type";
 import { logger } from "$lib/client/components/debug/logger.client";
 import {
-  type ISessionLog,
   type ISession,
-  SessionType
+  SessionType,
+  type ISessionCapture,
+  type ISessionLogCapture
 } from "$lib/client/products/pointron/logs/log.type";
 import { sessionLogStore } from "$lib/client/products/pointron/logs/log.store";
-import { NodeType } from "$lib/client/products/memotron/node/node.type";
 import context from "$lib/client/stores/context.store";
 import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
 import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
 import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
 import {
   determineResourceType,
-  isRecordId,
   isSameResource,
   resourceInList
 } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
 import { resolveTaskFocus, resolveTotalTaskTime } from "./session.utils";
-import { postToParent } from "$lib/client/utils/embed.utils";
+import { postDataToParent } from "$lib/client/utils/embed.utils";
 import { goalStore } from "$lib/client/components/goals/goal.store";
 import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
-import type { OmitForCaptureWithId } from "$lib/client/components/flux/resourceStores/resource.type";
 import { taskStore } from "$lib/client/components/tasks/task.store";
-import { GoalStatus, GoalType } from "$lib/client/components/goals/goal.type";
+import { GoalStatus } from "$lib/client/components/goals/goal.type";
 import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
 import { uiState } from "$lib/client/stores/uiState/uiState.store";
 import { UIState } from "$lib/client/stores/uiState/uiState.type";
 import { removeDuplicatesFilter } from "$lib/client/components/flux/resourceStores/resource.utils";
+import { EmbedDataMessage } from "$lib/client/types/embedMessage.enum";
 
 /** @deprecated */
 export const todayFocusStore = initTodayFocus();
@@ -336,9 +335,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
 
   private _postNotificationsToEmbed() {
     const notifications = get(scheduledNotifications);
-    postToParent({
-      notifications
-    });
+    postDataToParent(EmbedDataMessage.NOTIFICATIONS, notifications);
   }
 
   /**
@@ -1390,12 +1387,6 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
     if (goalId) lastActiveGoalIdForEditing.set(goalId);
   }
 
-  async addNewGoal(label: string) {
-    let goal = await goalStore.save({ label, type: GoalType.INDEFINITE });
-    if (!goal || !Array.isArray(goal) || goal.length === 0) return;
-    await this.addGoal(goal[0].id);
-  }
-
   async addGoal(id: IRecordId) {
     let n = this.get();
     if (n.items.some(resourceInList(id))) return;
@@ -1531,9 +1522,9 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
 
 export const focusItemsStore = new FocusItemsStore();
 
-class SessionStore extends ResourceStore<ISession> {
+class SessionStore extends ResourceStore<ISession, ISessionCapture> {
   constructor() {
-    super(Resource.session);
+    super(Resource.session, { indices: ["startUnix", "type"] });
   }
 
   selectMany(
@@ -1544,18 +1535,14 @@ class SessionStore extends ResourceStore<ISession> {
       "*",
       "select *, (select * from $parent.parent) as parent from (select value id from $parent.items) as expandedItems"
     ];
-    const properties = [
-      ...(additionalParams?.isExpand ? expandedProps : []),
-      ...(params?.properties ?? [])
-    ];
+    //TODO - nested expansion and items expansion
     params = {
-      ...(params ?? {}),
-      properties
+      ...(params ?? {})
     };
     return super.selectMany(params, additionalParams);
   }
 
-  addToRecentFocusItems(logs: OmitForCaptureWithId<ISessionLog>[]) {
+  addToRecentFocusItems(logs: ISessionLogCapture[]) {
     const newEntries = logs
       .filter((x) => x.goalId && !x.taskId)
       .map((log) => ({
@@ -1587,7 +1574,7 @@ class SessionStore extends ResourceStore<ISession> {
         ? plannedEndTime
         : new Date(params?.end ?? new Date().getTime());
 
-    const session: OmitForCaptureWithId<ISession> = {
+    const session: ISessionCapture = {
       elapsed: activeSessionVal.totalElapsed,
       extended: activeSessionVal.totalExtended,
       // start: activeSessionVal.start?.toISOString() ?? "",
@@ -1616,7 +1603,7 @@ class SessionStore extends ResourceStore<ISession> {
       items: focusItemStore.items,
       notes: activeSessionVal.notes
     };
-    const logs: OmitForCaptureWithId<ISessionLog>[] = [];
+    const logs: ISessionLogCapture[] = [];
 
     // Process both active items and removed items to preserve all focus data
     const allItems = [
@@ -1683,7 +1670,7 @@ class SessionStore extends ResourceStore<ISession> {
       goalId: IRecordId,
       taskId: IRecordId,
       block: { start: number; end: number }
-    ): OmitForCaptureWithId<ISessionLog> {
+    ): ISessionLogCapture {
       const total = resolveTotalTaskTime([block]);
       const focus = resolveTaskFocus(session.blocks, [block]);
       const breakTime = Number((total - focus).toFixed(1));
