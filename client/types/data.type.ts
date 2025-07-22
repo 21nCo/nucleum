@@ -51,6 +51,14 @@ export interface IResourceStore<T> extends IStore, Writable<T[]> {
    * compound index: "[isArchived+isStarred]"
    */
   indices?: string[];
+
+  /**
+   * The fields to be indexed by FlexSearch for full-text search
+   * These fields will be extracted and indexed for search operations
+   * Example: ["label", "text", "body"] for searchable text fields
+   */
+  searchIndices?: string[];
+
   /**
    * The default properties to be set on the resource when it is created
    */

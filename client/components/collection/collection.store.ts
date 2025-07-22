@@ -71,6 +71,7 @@ class CollectionStore extends ResourceStore<ICollection, ICollectionCapture> {
       dataType: StoreDataType.FIR,
       defaultProps: defaults,
       indices: ["type", "resource", CollectionObjectKey.typeToExtend],
+      searchIndices: ["label"],
       expandProps: [CollectionObjectKey.typeToExtend]
     });
     this.refreshCollectibleResource();

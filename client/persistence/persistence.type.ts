@@ -137,12 +137,15 @@ export interface IPersistenceInitParams {
    * @deprecated
    */
   dbo?: string[];
-  tables?: {
-    name: string;
-    indices: string[];
-  }[];
+  tables?: ITable[];
   appVersion?: string;
 }
+
+export type ITable = {
+  name: string;
+  indices: string[];
+  searchIndices?: string[];
+};
 
 export type ILocal = {
   id: string;

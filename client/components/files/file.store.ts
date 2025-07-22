@@ -20,6 +20,7 @@ class FileStore extends ResourceStore<IFile, IFileCapture> {
   constructor() {
     super(Resource.file, {
       indices: ["type"],
+      searchIndices: ["label"],
       defaultProps: {
         type: ""
       }

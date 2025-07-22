@@ -1,6 +1,7 @@
 import {
   type IPersistence,
-  type IPersistenceInitParams
+  type IPersistenceInitParams,
+  type ITable
 } from "../persistence.type";
 import type {
   IMetaResource,
@@ -20,19 +21,36 @@ import {
 } from "$lib/client/types/data.type";
 import { Dexie, type Collection, type Table, type WhereClause } from "dexie";
 import { logger } from "$lib/client/components/debug/logger.client";
-
+import { IndexedDB, Index, Document } from "flexsearch";
+// import {
+//   Worker as WorkerIndex,
+//   Document as DocumentWorkerIndex
+// } from "./dist/flexsearch.bundle.module.min.js";
 type QueryableType = Table | Collection<any, any> | WhereClause<any, any>;
+const dbVersion = 1;
+/**
+ * Stores version
+ */
 const version = 115;
 export class DexiePersistence implements IPersistence {
   instance: Dexie | undefined = undefined;
   userId: string = "";
+  searchIndices: Map<
+    string,
+    {
+      props: string[];
+      index: Index;
+    }
+  > = new Map();
+  documentSearchIndices: Map<string, Document> = new Map();
 
   constructor() {}
 
   async initialize(params: IPersistenceInitParams): Promise<number> {
     const user = params.userId ?? params.dapId;
     if (this.userId === user && this.instance) return -1;
-    this.instance = new Dexie(user);
+    const dbName = `${user}-${dbVersion}`;
+    this.instance = new Dexie(dbName);
     const stores =
       params.tables?.reduce(
         (acc, table) => {
@@ -42,6 +60,11 @@ export class DexiePersistence implements IPersistence {
         {} as { [key: string]: string }
       ) ?? {};
     this.instance.version(version).stores(stores);
+    if (params.tables) {
+      const name = `${dbName}-${version}-#tableName#-search`;
+      this.initializeFlatSearchIndexes(params.tables, name);
+      // this.initializeMultifieldSearchIndexes(params.tables);
+    }
     this.userId = user;
     const initLog = await this.select("kv:local");
     logger.log({ at: "DexiePersistence.initialize", initLog });
@@ -50,6 +73,48 @@ export class DexiePersistence implements IPersistence {
     }
     await this.addInitializationLog(params);
     return 0;
+  }
+
+  initializeFlatSearchIndexes(tables: ITable[], dbName: string) {
+    for (const table of tables ?? []) {
+      if (!table.searchIndices || table.searchIndices.length === 0) continue;
+      const flatSearchIndex = new Index({
+        preset: "performance",
+        tokenize: "tolerant"
+      });
+      flatSearchIndex.mount(
+        new IndexedDB(dbName.replace("#tableName#", table.name) + "-flat")
+      );
+      this.searchIndices.set(table.name, {
+        props: table.searchIndices ?? [],
+        index: flatSearchIndex
+      });
+    }
+  }
+
+  initializeMultifieldSearchIndexes(tables: ITable[], name: string) {
+    for (const table of tables ?? []) {
+      if (!table.searchIndices || table.searchIndices.length === 0) continue;
+      const hasLabel = table.searchIndices?.includes("label");
+      const documentSearchIndex = new Document({
+        preset: "performance", //TODO - preset based on table type
+        tokenize: "forward",
+        document: {
+          id: "id",
+          index: (table.searchIndices ?? []).map((x) => {
+            return {
+              field: x,
+              threshold: x === "label" ? 0 : 1
+            };
+          }),
+          store: hasLabel ? "label" : []
+        }
+      });
+      documentSearchIndex.mount(
+        new IndexedDB(name.replace("#tableName#", table.name))
+      );
+      this.documentSearchIndices.set(table.name, documentSearchIndex);
+    }
   }
 
   async reinitialize() {
@@ -72,6 +137,16 @@ export class DexiePersistence implements IPersistence {
     });
   }
 
+  private extractFlatText(record: any, resource: Resource) {
+    const searchIndices = this.searchIndices.get(resource);
+    if (!searchIndices) return "";
+    const text = Object.entries(record)
+      .filter(([key]) => searchIndices.props.includes(key))
+      .map(([key, value]) => String(value))
+      .join(" ");
+    return text;
+  }
+
   async mutation<T extends IResource | IMetaResource>(
     resource: Resource,
     params: IMutationParamsv2<T>
@@ -84,6 +159,21 @@ export class DexiePersistence implements IPersistence {
             id: record.id?.toString()
           };
         });
+        if (this.searchIndices.has(resource)) {
+          const searchIndex = this.searchIndices.get(resource);
+          if (searchIndex) {
+            records.forEach((x) => {
+              const text = this.extractFlatText(x, resource);
+              searchIndex.index.addAsync(x.id, text);
+            });
+          }
+        }
+        if (this.documentSearchIndices.has(resource)) {
+          const documentSearchIndex = this.documentSearchIndices.get(resource);
+          if (documentSearchIndex) {
+            documentSearchIndex.add(records as any);
+          }
+        }
         return this.instance?.table(resource).bulkPut(records);
       case PersistenceActionType.REPLACE:
         return this.instance?.table(resource).put(params.record);
@@ -93,11 +183,24 @@ export class DexiePersistence implements IPersistence {
             at: "DexiePersistence.mutation merge",
             error: "Record id is required for merge"
           });
+          if (this.searchIndices.has(resource) && params.record.id) {
+            const searchIndex = this.searchIndices.get(resource);
+            if (searchIndex) {
+              const text = this.extractFlatText(params.record, resource);
+              searchIndex.index.updateAsync(params.record.id, text);
+            }
+          }
           return Promise.reject(new Error("Record id is required for merge"));
         }
         return this.merge(resource, params.record.id, params.record);
       case PersistenceActionType.DELETE:
         logger.log({ at: "DexiePersistence.mutation delete", params });
+        if (this.searchIndices.has(resource) && params.recordId) {
+          const searchIndex = this.searchIndices.get(resource);
+          if (searchIndex) {
+            searchIndex.index.removeAsync(params.recordId.toString());
+          }
+        }
         return this.instance
           ?.table(resource)
           .delete(params.recordId.toString());
@@ -227,7 +330,7 @@ export class DexiePersistence implements IPersistence {
         }
       }
 
-      if (search) {
+      if (search && !filters?.id) {
         query = this.applySearch(query as Collection, search);
       }
 
@@ -473,6 +576,40 @@ export class DexiePersistence implements IPersistence {
     });
   }
 
+  async preSearchUsingIndex(
+    resource: Resource,
+    search: IResourceSearch,
+    params?: {
+      limit?: number;
+    }
+  ) {
+    const searchIndex = this.searchIndices.get(resource);
+    if (searchIndex) {
+      const result = await searchIndex.index.search(search.query, {
+        limit: params?.limit,
+        suggest: true
+      });
+      console.log({ at: "DexiePersistence.selectMany - search", result });
+      const ids = result;
+      if (Array.isArray(ids) && ids.length > 0) return ids;
+    }
+    const documentSearchIndex = this.documentSearchIndices.get(resource);
+    if (documentSearchIndex) {
+      const result = documentSearchIndex.search(search.query, {
+        field: search.properties,
+        limit: params?.limit,
+        suggest: true
+      });
+      const ids = result.map((x) => x.result.map((y) => y))?.flat();
+      console.log({
+        at: "DexiePersistence.selectMany - documentSearchIndex",
+        result,
+        ids
+      });
+      if (ids.length > 0) return ids;
+    }
+  }
+
   /**
    *
    * @param resource
@@ -491,6 +628,25 @@ export class DexiePersistence implements IPersistence {
         params
       });
     }
+
+    if (params?.search) {
+      const ids = await this.preSearchUsingIndex(
+        resource,
+        params.search,
+        params
+      );
+      console.log({
+        at: "DexiePersistence.selectMany - preSearchUsingIndex",
+        ids
+      });
+      if (ids) {
+        params.filters = {
+          id: ids,
+          ...params.filters
+        };
+      }
+    }
+
     const isReturnCount =
       params?.properties?.select?.length === 1 &&
       params.properties.select[0] === "#";

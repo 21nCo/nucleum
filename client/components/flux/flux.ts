@@ -27,6 +27,7 @@ import {
 import {
   type ILocal,
   type IPersistence,
+  type ITable,
   PersistenceProvider
 } from "$lib/client/persistence/persistence.type";
 import {
@@ -116,7 +117,7 @@ class Flux {
     appVersion?: string;
   }) {
     logger.log({ at: "flux.initializePersistence", params });
-    const tables = [
+    const tables: ITable[] = [
       ...this.stores
         .filter(
           (x) =>
@@ -125,7 +126,8 @@ class Flux {
         .map((x) => {
           return {
             name: x.id,
-            indices: x.indices ?? ["id"]
+            indices: x.indices ?? ["id"],
+            searchIndices: x.searchIndices
           };
         }),
       {
@@ -471,7 +473,7 @@ class Flux {
         additionalParams?.signal
       );
       if (debugResource.includes(resource)) {
-        logger.log({
+        logger.debug({
           at: "flux.selectMany - result",
           resource,
           params,

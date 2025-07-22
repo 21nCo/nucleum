@@ -32,6 +32,7 @@ class TaskStore extends ResourceStore<ITask, ITaskCapture> {
   constructor() {
     super(Resource.task, {
       indices: ["dateUnix", "goalId"],
+      searchIndices: ["label"],
       expandProps: ["goalId"],
       defaultProps: defaults
     });

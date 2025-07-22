@@ -68,6 +68,7 @@ class NodeStore extends ResourceStore<INode, INodeCapture<INode>> {
   constructor() {
     super(Resource.node, {
       indices: ["contentType", "metaType", "parent"],
+      searchIndices: ["label", "text"],
       expandProps: ["parent", "file", "mdParent"],
       defaultProps: defaults
     });

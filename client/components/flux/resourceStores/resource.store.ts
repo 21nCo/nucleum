@@ -192,6 +192,7 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
   dataType: StoreDataType = StoreDataType.IFR;
   currentUserId?: string;
   indices?: string[];
+  searchIndices?: string[];
   isInMemory?: boolean = false;
   isCloudOnlyResource?: boolean = false;
   defaultProps?: Partial<T> = {};
@@ -215,6 +216,7 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
       | "isInMemory"
       | "isCloudOnlyResource"
       | "indices"
+      | "searchIndices"
       | "defaultProps"
       | "expandProps"
     > &
@@ -230,6 +232,7 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
       "modifiedAt",
       ...(params?.indices ?? [])
     ];
+    this.searchIndices = params?.searchIndices;
     this.isInMemory = params?.isInMemory;
     this.isCloudOnlyResource = params?.isCloudOnlyResource;
     this.dataType = params?.dataType ?? StoreDataType.IFR;

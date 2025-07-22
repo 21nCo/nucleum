@@ -49,6 +49,7 @@ class GoalStore extends ResourceStore<IGoal, IGoalCapture> {
   constructor() {
     super(Resource.goal, {
       indices: ["type", "status", "*parent"],
+      searchIndices: ["label"],
       defaultProps: defaults,
       expandProps: ["parent"]
     });
