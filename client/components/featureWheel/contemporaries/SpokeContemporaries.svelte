@@ -6,6 +6,7 @@
   import type { Size } from "$lib/client/types/size.enum";
   import SpokeContemporaryItem from "./SpokeContemporaryItem.svelte";
   export let size: Size;
+  export let selectedSpoke: string | undefined = undefined;
   export let spoke: IFeatureWheelSpoke;
   export let contemporaries: IFeatureWheelContemporary[];
   export let radius: number;
@@ -53,21 +54,23 @@
   }
 </script>
 
-{#each singleContemporaries as contemporary}
-  <SpokeContemporaryItem
-    {size}
-    on:contemporary
-    xCoord={resolveXCoord(contemporary)}
-    yCoord={resolveYCoord(contemporary)}
-    {contemporary}
-  />
-{/each}
-{#each groupedContemporaries as contemporary}
-  <SpokeContemporaryItem
-    {size}
-    on:contemporary
-    xCoord={resolveXCoord(contemporary[0])}
-    yCoord={resolveYCoord(contemporary[0])}
-    group={contemporary}
-  />
-{/each}
+{#if !selectedSpoke || selectedSpoke === "howToUse" || selectedSpoke?.toLowerCase() === spoke.label.toLowerCase()}
+  {#each singleContemporaries as contemporary}
+    <SpokeContemporaryItem
+      {size}
+      on:contemporary
+      xCoord={resolveXCoord(contemporary)}
+      yCoord={resolveYCoord(contemporary)}
+      {contemporary}
+    />
+  {/each}
+  {#each groupedContemporaries as contemporary}
+    <SpokeContemporaryItem
+      {size}
+      on:contemporary
+      xCoord={resolveXCoord(contemporary[0])}
+      yCoord={resolveYCoord(contemporary[0])}
+      group={contemporary}
+    />
+  {/each}
+{/if}

@@ -38,7 +38,7 @@
         expandRender: "resources"
       },
       { label: "Pricing", href: "pricing" },
-      // { label: "Compare", href: "compare" },
+      { label: "Compare", href: "compare" },
       { label: "Extension", href: urls.downloads?.extension ?? "" },
       { label: "Discord", href: org.discord }
     ],

@@ -8,9 +8,11 @@
     ISelectValue
   } from "$lib/client/types/select.type";
   import { cn } from "$lib/client/utils/ui.utils";
+  import Divider from "$lib/client/elements/Divider.svelte";
 
   export let title: string;
   export let options: ISelectItem[] = [];
+  export let comingsoonOptions: ISelectItem[] = [];
   export let selected: ISelectValue[] | undefined = undefined;
   export let isUseExternalLogoForIcon: boolean = false;
   export let onSelect: (selected: ISelectValue[]) => void = () => {};
@@ -73,41 +75,52 @@
   {#if errorMessage}
     <InlineErrorMessage bind:error={errorMessage} />
   {/if}
-  <div
-    class="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-3 overflow-y-auto max-h-[30rem]"
-  >
-    {#each filteredOptions as option}
-      <button
-        class={cn(
-          "flex flex-col min-h-16 items-center justify-center gap-2 p-2 rounded-md border",
-          {
-            "border-aps1 bg-aps3 text-aps1": selected?.includes(option.value),
-            "border-brs3 hover:bg-bgs2": !selected?.includes(option.value)
-          }
-        )}
-        on:click={() => {
-          if (selected?.includes(option.value)) {
-            selected = selected?.filter((value) => value !== option.value);
-            errorMessage = null;
-          } else if ((selected ?? []).length >= MAX_SELECTIONS) {
-            errorMessage = `You can only select up to ${MAX_SELECTIONS} items`;
-          } else {
-            selected = [...(selected ?? []), option.value];
-          }
-          onSelect(selected ?? []);
-        }}
-      >
-        {#if isUseExternalLogoForIcon && typeof option.icon === "string"}
-          <ExternalLogo
-            provider={option.icon}
-            width={32}
-            class="border border-brs3 rounded-full"
-          />
-        {:else if typeof option.icon === "string"}
-          <SvgIcon icon={option.icon} />
-        {/if}
-        <span class="text-b2 text-fgs2">{option.label ?? option.value}</span>
-      </button>
-    {/each}
+  <div class="flex flex-col gap-12 overflow-y-auto max-h-[30rem]">
+    <div class="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-3">
+      {#each filteredOptions as option}
+        <button
+          class={cn(
+            "flex flex-col min-h-16 items-center justify-center gap-2 p-2 rounded-md border",
+            {
+              "border-aps1 bg-aps3 text-aps1": selected?.includes(option.value),
+              "border-brs3 hover:bg-bgs2": !selected?.includes(option.value)
+            }
+          )}
+          on:click={() => {
+            if (selected?.includes(option.value)) {
+              selected = selected?.filter((value) => value !== option.value);
+              errorMessage = null;
+            } else if ((selected ?? []).length >= MAX_SELECTIONS) {
+              errorMessage = `You can only select up to ${MAX_SELECTIONS} items`;
+            } else {
+              selected = [...(selected ?? []), option.value];
+            }
+            onSelect(selected ?? []);
+          }}
+        >
+          {#if isUseExternalLogoForIcon && typeof option.icon === "string"}
+            <ExternalLogo
+              provider={option.icon}
+              width={32}
+              class="border border-brs3 rounded-full"
+            />
+          {:else if typeof option.icon === "string"}
+            <SvgIcon icon={option.icon} />
+          {/if}
+          <span class="text-b2 text-fgs2">{option.label ?? option.value}</span>
+        </button>
+      {/each}
+    </div>
+    {#if comingsoonOptions && comingsoonOptions.length > 0}
+      <div class="flex flex-col gap-3">
+        <Divider />
+        <div class="text-b2 text-fgs2">Comparisions coming soon...</div>
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-3">
+          {#each comingsoonOptions as option}
+            <div class="text-b2 text-fgs3 font-light">{option.label}</div>
+          {/each}
+        </div>
+      </div>
+    {/if}
   </div>
 </div>

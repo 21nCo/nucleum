@@ -29,6 +29,7 @@
   // Toggle for showing planned features
   let showPlannedFeatures = false;
   let showJustAvailability = false;
+  const dev_isEnablePlannedFeaturesToggle = true;
   // Find the rating for a specific contemporary in a feature
   function getContemporaryRating(
     feature: IFwFeature,
@@ -56,15 +57,21 @@
     ? features.filter(
         (feature) =>
           selectedFeatures.includes(feature.label) &&
-          (showPlannedFeatures || !feature.isPlanned)
+          (showPlannedFeatures || !feature.isPlanned) &&
+          !feature.isHideForComparer
       )
     : selectedCategories?.length
       ? features.filter(
           (feature) =>
             selectedCategories.includes(feature.category) &&
-            (showPlannedFeatures || !feature.isPlanned)
+            (showPlannedFeatures || !feature.isPlanned) &&
+            !feature.isHideForComparer
         )
-      : features.filter((feature) => showPlannedFeatures || !feature.isPlanned);
+      : features.filter(
+          (feature) =>
+            !feature.isHideForComparer &&
+            (showPlannedFeatures || !feature.isPlanned)
+        );
 
   // Group features by category
   $: groupedFeatures = filteredFeatures.reduce(
@@ -100,14 +107,16 @@
         />
         <span class="text-fgs2 text-sm">Hide rating</span>
       </label>
-      <label class="flex items-center gap-2 cursor-pointer">
-        <input
-          type="checkbox"
-          bind:checked={showPlannedFeatures}
-          class="w-4 h-4"
-        />
-        <span class="text-fgs2 text-sm">Include planned features</span>
-      </label>
+      {#if dev_isEnablePlannedFeaturesToggle}
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            bind:checked={showPlannedFeatures}
+            class="w-4 h-4"
+          />
+          <span class="text-fgs2 text-sm">Include planned features</span>
+        </label>
+      {/if}
     </div>
   </div>
   <table class="w-full border-collapse table-fixed">
@@ -160,13 +169,14 @@
         {#each groupedFeatures[categoryLabel] as feature}
           <tr class="text-b2">
             <td
-              class={cn(
-                "border border-brs3 p-2 cursor-pointer hover:text-aps1",
-                {
-                  "text-fgs3": feature.isPlanned
-                }
-              )}
+              class={cn("border border-brs3 p-2 cursor-pointer", {
+                "text-fgs3": feature.isPlanned,
+                "hover:text-aps1": !feature.isPlanned
+              })}
               on:click={() => {
+                if (feature.isPlanned) {
+                  return;
+                }
                 dispatch("feature", feature.label);
               }}>{feature.label}</td
             >
@@ -183,13 +193,17 @@
               <td class="border border-brs3 p-2">
                 {#if getContemporaryRating(feature, contemporary.label) !== undefined}
                   <div class="flex items-center gap-2">
-                    <RatingCell
-                      value={getContemporaryRating(
-                        feature,
-                        contemporary.label
-                      ) ?? 0}
-                      {showJustAvailability}
-                    />
+                    {#if feature.isPlanned}
+                      -
+                    {:else}
+                      <RatingCell
+                        value={getContemporaryRating(
+                          feature,
+                          contemporary.label
+                        ) ?? 0}
+                        {showJustAvailability}
+                      />
+                    {/if}
                     {#if getContemporaryNotes(feature, contemporary.label)}
                       <NotesCell
                         notes={getContemporaryNotes(
@@ -201,6 +215,8 @@
                       />
                     {/if}
                   </div>
+                {:else if feature.isPlanned}
+                  -
                 {:else}
                   <Icon icon="ph:x" class="text-ars1" />
                 {/if}

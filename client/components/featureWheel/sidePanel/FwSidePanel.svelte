@@ -18,6 +18,7 @@
   import Badge from "$lib/client/elements/text/Badge.svelte";
   import HowToUse from "./HowToUse.svelte";
   import { renderMdAsHtml } from "../../markdown/markdown.utils";
+  import FooterInfo from "./comparisionTable/FooterInfo.svelte";
 
   export let product: string;
   export let features: IFwFeature[] = [];
@@ -51,17 +52,19 @@
   {/if}
   <div class="flex w-full justify-between">
     <div class="flex text-h4 text-fgs2">
-      {#if isHowToUse}
-        How to use this wheel?
-      {:else if featureView}
-        {featureView}
-        {#if feature?.isPlanned}
-          <div class="flex items-center p-1">
-            <Badge text="Planned" />
-          </div>
-        {/if}
-        <!-- {:else if selectedCategories?.length === 1}
+      {#if selectedCompare?.length === 0}
+        {#if isHowToUse}
+          How to use this wheel?
+        {:else if featureView}
+          {featureView}
+          {#if feature?.isPlanned}
+            <div class="flex items-center p-1">
+              <Badge text="Planned" />
+            </div>
+          {/if}
+          <!-- {:else if selectedCategories?.length === 1}
         {selectedCategories[0]} -->
+        {/if}
       {:else if selectedFeatures?.length === 1}
         {selectedFeatures[0]}
       {:else if selectedCompare?.length === 1}
@@ -88,13 +91,16 @@
       <SvgIcon icon="ph:x" phIconSize={Size.lg} />
     </button>
   </div>
-  <div class="overflow-y-auto flex flex-col gap-8">
+  <div class="overflow-y-auto flex flex-col flex-1 w-full gap-8">
     {#if featureView && feature}
-      <div class="flex flex-col gap-4 dp:gap-6 2k:gap-8">
+      <div class="flex flex-col gap-4 dp:gap-6 2k:gap-8 h-full w-full">
         <TextCard
           title="What is {feature.label}?"
           content={feature.description}
           image={feature.image}
+          icon={feature.icon ??
+            feature.shortLabel?.toLowerCase() ??
+            feature.label.toLowerCase().replaceAll(" ", "")}
           learnMoreLink={feature.learnMoreLink}
         />
         {#if feature.ratingCriteria}
@@ -120,6 +126,9 @@
             <ComparisonTable {feature} {selectedCompare} {contemporaries} />
           {/key}
         </div>
+        <div class="flex mt-auto">
+          <FooterInfo />
+        </div>
       </div>
     {:else if selectedCompare && selectedCompare.length > 0}
       <ComparisionTableWithAppsAsColumns
@@ -137,6 +146,21 @@
           (c) => c.label === selectedCompare[0]
         )}
         <div class="flex flex-col gap-8">
+          {#if contemporary?.distribution}
+            <TextCard
+              title="Availability of {selectedCompare[0]}"
+              content={contemporary.distribution.description}
+              learnMoreLink={contemporary.distribution.link}
+            >
+              <div slot="additional">
+                <CardListContent
+                  items={contemporary.distribution.available.map((d) => ({
+                    label: properCase(d)
+                  }))}
+                />
+              </div>
+            </TextCard>
+          {/if}
           {#if contemporary?.whenToChoose}
             <TextCard title="When to choose {selectedCompare[0]}?">
               <CardListContent items={contemporary?.whenToChoose} />
@@ -158,6 +182,13 @@
                 >
                   documentation
                 </a>
+              </span>
+            </div>
+          {/if}
+          {#if contemporary?.latestAnalysisDate}
+            <div class="flex w-full justify-center text-fgs3 text-b3">
+              <span>
+                Last updated: {contemporary?.latestAnalysisDate}
               </span>
             </div>
           {/if}

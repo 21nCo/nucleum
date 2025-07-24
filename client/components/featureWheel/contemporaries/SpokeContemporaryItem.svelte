@@ -9,7 +9,9 @@
   export let xCoord: number;
   export let yCoord: number;
   export let group: IFeatureWheelContemporary[] = [];
-  export let contemporary: IFeatureWheelContemporary | undefined = undefined;
+  export let contemporary:
+    | (IFeatureWheelContemporary & { icon: string })
+    | undefined = undefined;
   export let size: Size = Size.md;
   $: width = size === Size.sm ? 13 : size === Size.md ? 16 : 20;
   let isHovering = false;
@@ -58,7 +60,7 @@
       }}
       class="flex"
     >
-      <Contemporary {width} {contemporary} />
+      <Contemporary {width} icon={contemporary.icon} />
     </button>
   {/if}
 </foreignObject>
@@ -71,7 +73,7 @@
   >
     <div class="flex gap-2 bg-bgs1 rounded-md px-3 py-2">
       {#each group as item}
-        <Contemporary {width} contemporary={item} />
+        <Contemporary {width} icon={item.icon} />
       {/each}
     </div>
   </foreignObject>
