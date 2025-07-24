@@ -17,6 +17,9 @@ export enum Contemporary {
   AudioPen = "AudioPen",
   Liner = "Liner",
   Mymind = "Mymind",
+  /**
+   * @deprecated - Pocket no longer exists
+   */
   Pocket = "Pocket",
   Instapaper = "Instapaper",
   Raindrop = "Raindrop",
@@ -101,4 +104,18 @@ export enum Contemporary {
   WeavaHighlighter = "Weava highligher",
   Vivasnote = "Vivasnote",
   Lazy = "Lazy"
+}
+
+export enum Distribution {
+  WEB = "WEB",
+  MAC = "MAC",
+  WINDOWS = "WINDOWS",
+  ANDROID = "ANDROID",
+  IOS = "IOS",
+  WATCHOS = "WATCHOS",
+  TVOS = "TVOS",
+  LINUX = "LINUX",
+  CHROMIUM = "CHROMIUM",
+  FIREFOX = "FIREFOX",
+  SAFARI = "SAFARI"
 }

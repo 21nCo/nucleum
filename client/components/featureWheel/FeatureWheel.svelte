@@ -62,9 +62,20 @@
             contemporaries:
               selectedCompare && selectedCompare.length > 0
                 ? feature.contemporaries.filter((contemporary) => {
-                    return selectedCompare?.includes(contemporary.label);
+                    const contemporaryDetail = contemporaries.find(
+                      (c) => c.label === contemporary.label
+                    );
+                    return (
+                      !contemporaryDetail?.isHideForComparer &&
+                      selectedCompare?.includes(contemporary.label)
+                    );
                   })
-                : feature.contemporaries
+                : feature.contemporaries.filter((contemporary) => {
+                    const contemporaryDetail = contemporaries.find(
+                      (c) => c.label === contemporary.label
+                    );
+                    return !contemporaryDetail?.isHideForComparer;
+                  })
           }))
           .map((spoke) => ({
             ...spoke,
@@ -90,6 +101,14 @@
       if (!selectedCompare || selectedCompare.length < 1) {
         isShowSidePanel = false;
       }
+      return;
+    }
+    const featureDetail = features.find((f) => f.label === spoke);
+    if (
+      featureDetail?.isHideForComparer ||
+      !featureDetail ||
+      featureDetail.isPlanned
+    ) {
       return;
     }
     isShowSidePanel = true;
@@ -126,6 +145,7 @@
         }}
         on:howToUse={(e) => {
           featureView = "howToUse";
+          selectedCompare = undefined;
           isShowSidePanel = true;
         }}
         on:report={(e) => {

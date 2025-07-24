@@ -13,17 +13,26 @@
   export let isActive: boolean = false;
   export let groupColor: string = "fgs2";
   $: widthFactor = size === Size.lg ? 8 : size === Size.md ? 7 : 5;
+  $: label = spoke.shortLabel || spoke.label;
 </script>
 
-{#if mode !== FeatureWheelMode.COMPARER && (spoke.isProminent || spoke.isNovel)}
+{#if isActive || (mode !== FeatureWheelMode.COMPARER && (spoke.isProminent || spoke.isNovel))}
   <rect
-    x={xCoord -
-      (spoke.label.length <= 8 ? 25 : spoke.label.length * (widthFactor / 2))}
+    x={Math.abs(yCoord) > 200
+      ? xCoord - label.length * (widthFactor / 2)
+      : xCoord > 0
+        ? xCoord - 5
+        : xCoord - label.length * (widthFactor / 1.1)}
     y={yCoord - (size === Size.lg ? 10 : size === Size.md ? 8 : 5.5)}
-    width={spoke.label.length <= 8 ? 50 : spoke.label.length * widthFactor}
+    width={label.length * widthFactor}
     height={size === Size.lg ? 20 : size === Size.md ? 16 : 10}
-    class="{spoke.isNovel ? 'fill-ags1' : 'fill-bgs1'} stroke-aps1 rounded-md"
+    class={cn("rounded-md", {
+      "stroke-aps1": isActive && !groupColor,
+      "fill-ags1": spoke.isNovel && mode !== FeatureWheelMode.COMPARER,
+      "fill-bgs2": !spoke.isNovel || mode === FeatureWheelMode.COMPARER
+    })}
     stroke-width="0.4"
+    stroke={groupColor}
   />
 {/if}
 
@@ -35,8 +44,9 @@
   role="button"
   tabindex="0"
   class={cn("cursor-pointer select-none focus:outline-none", {
-    "fill-aps1 font-medium": isActive,
-    "hover:fill-aps1 hover:font-medium": !isActive,
+    "font-bold": isActive,
+    "fill-aps1": isActive && !groupColor,
+    "hover:font-bold transition-all duration-200": !isActive,
     "fill-fgs2": !isActive && !groupColor,
     "text-b2": size === Size.lg,
     "text-[10px]": size === Size.md,
@@ -53,5 +63,5 @@
   {#if spoke.isPlanned}
     ◌&nbsp;
   {/if}
-  {spoke.shortLabel || spoke.label}
+  {label}
 </text>

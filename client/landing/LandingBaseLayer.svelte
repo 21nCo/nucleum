@@ -11,6 +11,7 @@
   import { detectSystemOS, detectTouchDevice } from "../utils/browser.utils";
   import PosthogTelemetry from "../layout/layers/analytics/PosthogTelemetry.svelte";
   import BottomModal from "../components/bottomModal/BottomModal.svelte";
+  import { landing } from "./shared/store/shared.store";
   export let metadata: IMetadata;
   export let bgColor: string = "bg-bgs1";
 
@@ -24,6 +25,14 @@
     $context.isTouchDevice = detectTouchDevice();
     if (typeof window !== "undefined") {
       $context.protocol = window.location.protocol;
+    }
+  }
+
+  function handleInlineLinkClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    if (target.matches("placeholder.inline-link")) {
+      event.preventDefault();
+      landing.openLink(target.getAttribute("data-href") ?? "");
     }
   }
 </script>
@@ -47,3 +56,4 @@
   </LandingThemeLayer>
   <BottomModal />
 </div>
+<svelte:document on:click={handleInlineLinkClick} />
