@@ -1901,7 +1901,7 @@ export const features: IFwFeature[] = [
         label: Contemporary.Notion,
         value: 0.55,
         notes:
-          "While Notion does support triggering of native camera, it has to be done from markdown -> image -> Take a picture. This is not as frictionless as per our rating criteria. Also, this is only available mobile apps."
+          "While Notion does support triggering of native camera, it has to be done from markdown -> image -> Take a picture. This is not as frictionless as per our rating criteria. Also, this is only available on mobile apps."
       },
       {
         label: Contemporary.Evernote,
@@ -2166,7 +2166,7 @@ export const features: IFwFeature[] = [
         label: Contemporary.Capacities,
         value: 0.3,
         notes:
-          "Capacities has a basic clipper extension which can save web pages and has the ability to add notes. It doesn't support text highlighting, screenshot, etc."
+          "Capacities has a basic clipper extension which can save web pages and has the ability to add notes. It doesn't support text highlighting, screenshot, etc. Community integrations are available for improving the clipping experience but require additional app setup and purchases."
       },
       {
         label: Contemporary.Remnote,

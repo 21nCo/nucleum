@@ -3,7 +3,11 @@
   import TwoColumnList from "./TwoColumnList.svelte";
   const items: IListItem[] = [
     {
-      title: "Performant search",
+      title: "Highly performant search",
+      icon: "check"
+    },
+    {
+      title: "Full offline support",
       icon: "check"
     },
     {
@@ -11,8 +15,17 @@
       icon: "check"
     },
     {
-      title: "Graph & Bird views",
+      title: "Graph view",
       icon: "check"
+    },
+    {
+      title: "Map view",
+      icon: "check"
+    },
+    {
+      title: "Bird view",
+      icon: "check",
+      href: "https://docs.memotron.app/memotron/features/bird-view"
     },
     {
       title: "Calendar",

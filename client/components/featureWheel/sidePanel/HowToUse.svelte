@@ -66,7 +66,7 @@
         </div>
         <div class="flex items-center gap-2 text-fgs2">
           <div class="w-3 h-3 rounded-full bg-ass1"></div>
-          <span>Middle circle: Okay rating (1 to 5)</span>
+          <span>Middle circle: Okay rating (0 to 6)</span>
         </div>
         <div class="flex items-center gap-2 text-fgs2">
           <div class="w-3 h-3 rounded-full bg-ars1"></div>
