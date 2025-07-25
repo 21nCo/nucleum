@@ -68,7 +68,7 @@ class NodeStore extends ResourceStore<INode, INodeCapture<INode>> {
   constructor() {
     super(Resource.node, {
       indices: ["contentType", "metaType", "parent"],
-      searchIndices: ["label", "text"],
+      searchIndices: ["label", "text", "notes"],
       expandProps: ["parent", "file", "mdParent"],
       defaultProps: defaults
     });
@@ -157,7 +157,7 @@ class NodeStore extends ResourceStore<INode, INodeCapture<INode>> {
     ];
     const response = await super.select(nodeId, {
       expand: ["parent", "file"],
-      recurse: ["children"]
+      recurse: "children"
     });
     logger.debug({ at: "fetch node", response });
     return response;
@@ -383,38 +383,38 @@ export class ActiveNodeStore extends CollectibleStore<
     try {
       const node = this.get();
       console.time("ActiveNodeStore.afterInit - links");
-      //TODO - links
-      const linksResult = await nodeStore.selectMany({
-        // properties: ["array::concat(->link.*, <-link.*) as links"],
-        // properties: ["->link.* as outlinks", "<-link.* as inlinks"],
+      const inLinks = await linker.selectMany({
         filters: {
-          id: this.id.toString()
+          in: this.id.toString()
         }
       });
+      const outLinks = await linker.selectMany({
+        filters: {
+          out: this.id.toString()
+        }
+      });
+      const linksResult = [...(inLinks ?? []), ...(outLinks ?? [])].filter(
+        (x: ILink) => {
+          return (
+            (x.in.toString() === this.id &&
+              x.out.toString()?.includes(Resource.node)) ||
+            (x.out.toString() === this.id &&
+              x.in.toString()?.includes(Resource.node))
+          );
+        }
+      );
       console.timeEnd("ActiveNodeStore.afterInit - links");
       if (linksResult && isValidArrayWithData(linksResult)) {
-        const data = linksResult[0]?.links;
-        const rawLinks = [...(data ?? [])];
-        // const rawLinks = [...(data?.outlinks ?? []), ...(data?.inlinks ?? [])];
-        const links: INodeLinkThumb[] = rawLinks
-          .filter((x: ILink) => {
-            return (
-              (x.in.toString() === this.id &&
-                x.out.toString()?.includes(Resource.node)) ||
-              (x.out.toString() === this.id &&
-                x.in.toString()?.includes(Resource.node))
-            );
-          })
-          .map((x: ILink) => {
-            const id = x.in.toString() === this.id ? x.out : x.in;
-            return {
-              linkedTo: id,
-              linkType: x.linkType,
-              id: x.id,
-              tags: x.tags,
-              direction: x.in.toString() === this.id ? "outgoing" : "incoming"
-            } as INodeLinkThumb;
-          });
+        const links: INodeLinkThumb[] = linksResult.map((x: ILink) => {
+          const id = x.in.toString() === this.id ? x.out : x.in;
+          return {
+            linkedTo: id,
+            linkType: x.linkType,
+            id: x.id,
+            tags: x.tags,
+            direction: x.in.toString() === this.id ? "outgoing" : "incoming"
+          } as INodeLinkThumb;
+        });
         this.update((n) => {
           n.links = links;
           return n;

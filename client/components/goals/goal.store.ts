@@ -386,7 +386,6 @@ export class ActiveGoalStore extends CollectibleStore<
       const result = await this.resourceStore.select(this.id, {
         expand: ["children", "parent"]
       });
-      //TODO - tasks, links in afterInit
       if (!result) {
         this.set({
           id: this.id,
@@ -400,22 +399,13 @@ export class ActiveGoalStore extends CollectibleStore<
         });
         return;
       }
-      const collections: IRecordId[] = result.outlinks
-        ?.filter((x: any) => x.out?.toString()?.includes(Resource.collection))
-        ?.map((x: any) => x.out);
-      const types = await collectionStore.resolveTypes(collections);
-
-      console.log({
-        at: "ActiveGoalStore.init",
-        result,
-        collections,
-        types
-      });
+      let types = [];
+      if (result.collections && result.collections.length > 0)
+        types = await collectionStore.resolveTypes(result.collections);
 
       this.set({
         ...result,
         types,
-        collections,
         isPageLoading: false,
         accessMode,
         ...(params?.isInEditMode && { isInEditMode: true })
@@ -435,6 +425,24 @@ export class ActiveGoalStore extends CollectibleStore<
         error: e
       });
     }
+  }
+
+  async afterInit() {
+    const taskCount = await taskStore.selectMany({
+      properties: {
+        select: ["#"]
+      },
+      filters: {
+        goalId: this.id
+      }
+    });
+    if (!taskCount || typeof taskCount !== "number") return;
+    this.update((state) => {
+      return {
+        ...state,
+        taskCount: taskCount
+      };
+    });
   }
 }
 

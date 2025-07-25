@@ -73,6 +73,7 @@
       linkSearchParam: linkSearchParam ?? undefined
     });
     isReady = true;
+    goal.afterInit();
   }
 
   function resolveTabParam() {
@@ -105,7 +106,7 @@
         label: "Tasks",
         value: "tasks",
         icon: resolveResourceIcon(Resource.task),
-        badge: goal?.tasks?.length
+        badge: goal?.taskCount
       },
       {
         label: "Analytics",

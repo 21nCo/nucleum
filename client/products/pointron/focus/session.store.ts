@@ -1527,19 +1527,42 @@ class SessionStore extends ResourceStore<ISession, ISessionCapture> {
     super(Resource.session, { indices: ["startUnix", "type"] });
   }
 
-  selectMany(
+  async selectManyWithItemsExpansion(
     params?: IResourceSelectParams,
     additionalParams?: IResourceSelectAdditionalParams
   ) {
-    const expandedProps = [
-      "*",
-      "select *, (select * from $parent.parent) as parent from (select value id from $parent.items) as expandedItems"
-    ];
-    //TODO - nested expansion and items expansion
-    params = {
-      ...(params ?? {})
-    };
-    return super.selectMany(params, additionalParams);
+    const result = await this.selectMany(params, additionalParams);
+    if (!Array.isArray(result)) return;
+    const itemIds = result
+      .map((x) => x.items)
+      ?.flat()
+      ?.map((x) => x.id);
+    if (itemIds && itemIds.length > 0) {
+      const goalIds = itemIds.filter(
+        (x) => determineResourceType(x) === Resource.goal
+      );
+      const taskIds = itemIds.filter(
+        (x) => determineResourceType(x) === Resource.task
+      );
+      const goals = await goalStore.selectMany({
+        filters: {
+          id: goalIds
+        }
+      });
+      const tasks = await taskStore.selectMany({
+        filters: {
+          id: taskIds
+        }
+      });
+      result.map((x) => {
+        if (x.items) {
+          x.expandedItems = [...goals, ...tasks].filter((item) =>
+            x.items.some(resourceInList(item))
+          );
+        }
+      });
+    }
+    return result;
   }
 
   addToRecentFocusItems(logs: ISessionLogCapture[]) {

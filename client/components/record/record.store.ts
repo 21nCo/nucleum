@@ -64,13 +64,10 @@ export function resolveResource(id: IRecordId) {
   return flux.select(id);
 }
 
-const labelSearchProp =
-  "search::highlight('**', '**', 1, false) AS labelSearch";
-
 function resolveSearchProperties(resource: Resource) {
   switch (resource) {
     case Resource.node:
-      return ["label", "text"];
+      return ["label", "text", "notes"];
     default:
       return ["label"];
   }
@@ -78,10 +75,9 @@ function resolveSearchProperties(resource: Resource) {
 
 export class SearchStore {
   resource: Resource = Resource.everything;
-  dev_isUseIndexSearch: boolean = false;
   collectibleResource: Resource[] | undefined;
   searcheableResources: Resource[] | undefined;
-  resourceStore: ResourceStore<any> | undefined;
+  resourceStore: ResourceStore<any, any> | undefined;
   /**
    * Test run for pre filtering by loading all records first into memory - then querying only the filtered records for expansion like joins.
    */
@@ -128,86 +124,6 @@ export class SearchStore {
     return matrix[b.length][a.length];
   }
 
-  /**
-   *
-   * @deprecated - use nodeStore.selectMany or searchStore.select instead
-   * TODO - group by mdParent if searching
-   *
-   *
-   * this is causing extreme slowness for select query if there are 1000s of records on the table if used in select query prop
-   * "(fn::memotron::node::parent($parent.id)) as mdParent"
-   *
-   * @returns
-   */
-  async nodes(params: any) {
-    console.log("record.store.ts - nodes");
-    const result = await flux.selectMany(
-      params.searchType == SearchType.SEMANTIC && params.searchQuery
-        ? Resource.vector
-        : Resource.node,
-      {
-        properties:
-          params.searchType === SearchType.SEMANTIC && params.searchQuery
-            ? [
-                "node.body as body",
-                "node.children as children",
-                "node.contentType as contenType",
-                "node.createdAt as createdAt",
-                "node.createdBy as createdBy",
-                "node.id as id",
-                "node.isArchived as isArchived",
-                "node.isStarred as isStarred",
-                "node.label as label",
-                "node.text as text",
-                "node.metadata as metadata",
-                "node.modifiedAt as modifiedAt",
-                "node.modifiedBy as modifiedBy",
-                "node.properties as properties",
-                "node.parent.* as parent",
-                "node.file.* as file"
-              ]
-            : [
-                "*",
-                "parent.* as parent",
-                "file.* as file",
-                labelSearchProp,
-                "search::highlight('**', '**', 2, false) AS bodySearch"
-              ],
-        filters:
-          params.searchType == SearchType.SEMANTIC && params.searchQuery
-            ? {}
-            : {
-                creationContext:
-                  isValidString(params.searchQuery) ||
-                  params.filters.contentType
-                    ? undefined
-                    : false,
-                ...params.filters,
-                isArchived: params.filters.isArchived ?? false,
-                contentType:
-                  "contentType" in params.filters
-                    ? params.filters.contentType?.toUpperCase()
-                    : params.searchQuery
-                      ? undefined
-                      : rootNodeTypeList
-              }
-      },
-      {
-        isCloudOnlyResource:
-          params.searchType === SearchType.SEMANTIC &&
-          isValidString(params.searchQuery)
-            ? true
-            : false
-      }
-    );
-    console.log("record.store.ts - nodes - result");
-    logger.log({ at: "refreshNodes", result });
-
-    // const result2 = await flux.selectByQuery("select * from node;");
-    // logger.log({ at: "all nodes: ", result2 });
-    return result;
-  }
-
   async select(params: {
     resource?: Resource;
     searchQuery?: string;
@@ -223,6 +139,7 @@ export class SearchStore {
     properties?: IResourceSelectProperties;
     isIncludeMetaItems?: boolean;
     signal?: AbortSignal;
+    strictSearch?: boolean;
   }) {
     this.resource = params.resource ?? this.resource;
     logger.log({
@@ -339,8 +256,10 @@ export class SearchStore {
     // console.timeEnd("record.store.ts - select - " + this.resource);
     if (isValidArray(data)) {
       if (isValidString(params.searchQuery)) {
-        if (!this.dev_isUseIndexSearch)
-          data = highlightSearchQuery(data, params.searchQuery!);
+        data = highlightSearchQuery(data, params.searchQuery!);
+        if (params.strictSearch) {
+          data = data.filter((x) => x.labelSearch || x.bodySearch);
+        }
         data = data.sort(searchSort);
       }
       return data;
@@ -364,7 +283,6 @@ export class SearchStore {
 
   /**
    *
-   * TODO - test parent and mdParent
    * @param query
    * @returns
    */
@@ -413,7 +331,6 @@ export class SearchStore {
     }
     let nodes = [];
     if (params?.resource === Resource.node || !params?.resource) {
-      //TODO - labelSearchProp
       nodes = await flux.selectMany(Resource.node, {
         properties: {
           expand: ["parent"]
@@ -486,11 +403,12 @@ export class SearchStore {
     }
     let data = [...(nodes ?? []), ...(collections ?? [])];
     if (isValidString(query) && isValidArray(data)) {
-      if (!this.dev_isUseIndexSearch) data = highlightSearchQuery(data, query);
+      data = highlightSearchQuery(data, query);
+      data = data.filter((x) => x.labelSearch || x.bodySearch);
       data = data.sort(searchSort);
     }
     if (params?.exclude) {
-      data = data.filter((x) => !params.exclude.some(resourceInList(x.id)));
+      data = data.filter((x) => !params.exclude?.some(resourceInList(x.id)));
     }
     console.timeEnd("searchForLinking");
     return data;

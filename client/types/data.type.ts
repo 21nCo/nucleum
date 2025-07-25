@@ -286,11 +286,11 @@ export type IResourceSelectProperties = {
   expand?: string[];
 
   /**
-   * Properties that needs to be recursively expanded.
+   * Properties that needs to be recursively expanded. Only to be used with .select() and doesnot work with selectMany()
    *
    * Ex: children.*.chidren
    */
-  recurse?: string[];
+  recurse?: string;
   /**
    * The fields to be omitted.
    * This will use OMIT clause in case of Surreal provider.

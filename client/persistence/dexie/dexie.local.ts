@@ -34,6 +34,7 @@ const dbVersion = 1;
 const version = 115;
 export class DexiePersistence implements IPersistence {
   instance: Dexie | undefined = undefined;
+  tables: ITable[] = [];
   userId: string = "";
   searchIndices: Map<
     string,
@@ -60,12 +61,11 @@ export class DexiePersistence implements IPersistence {
         {} as { [key: string]: string }
       ) ?? {};
     this.instance.version(version).stores(stores);
-    if (params.tables) {
-      const name = `${dbName}-${version}-#tableName#-search`;
-      this.initializeFlatSearchIndexes(params.tables, name);
-      // this.initializeMultifieldSearchIndexes(params.tables);
-    }
     this.userId = user;
+    if (params.tables) {
+      this.tables = params.tables;
+      this.initializeSearchIndices();
+    }
     const initLog = await this.select("kv:local");
     logger.log({ at: "DexiePersistence.initialize", initLog });
     if (initLog) {
@@ -75,12 +75,38 @@ export class DexiePersistence implements IPersistence {
     return 0;
   }
 
-  initializeFlatSearchIndexes(tables: ITable[], dbName: string) {
-    for (const table of tables ?? []) {
+  async reindex() {
+    this.searchIndices.forEach((x) => {
+      x.index.clear();
+    });
+    this.documentSearchIndices.forEach((x) => {
+      x.clear();
+    });
+    this.searchIndices.clear();
+    this.documentSearchIndices.clear();
+    this.initializeSearchIndices();
+    for (const table of this.tables ?? []) {
+      const records = await this.instance?.table(table.name).toArray();
+      for (const record of records ?? []) {
+        const text = this.extractFlatText(record, table.name);
+        this.searchIndices.get(table.name)?.index.addAsync(record.id, text);
+      }
+    }
+  }
+
+  initializeSearchIndices() {
+    const dbName = `${this.userId}-${dbVersion}`;
+    const name = `${dbName}-${version}-#tableName#-search`;
+    this.initializeFlatSearchIndexes(name);
+    // this.initializeMultifieldSearchIndexes(name);
+  }
+
+  initializeFlatSearchIndexes(dbName: string) {
+    for (const table of this.tables ?? []) {
       if (!table.searchIndices || table.searchIndices.length === 0) continue;
       const flatSearchIndex = new Index({
         preset: "performance",
-        tokenize: "tolerant"
+        tokenize: "full"
       });
       flatSearchIndex.mount(
         new IndexedDB(dbName.replace("#tableName#", table.name) + "-flat")
@@ -92,8 +118,8 @@ export class DexiePersistence implements IPersistence {
     }
   }
 
-  initializeMultifieldSearchIndexes(tables: ITable[], name: string) {
-    for (const table of tables ?? []) {
+  initializeMultifieldSearchIndexes(dbName: string) {
+    for (const table of this.tables ?? []) {
       if (!table.searchIndices || table.searchIndices.length === 0) continue;
       const hasLabel = table.searchIndices?.includes("label");
       const documentSearchIndex = new Document({
@@ -111,7 +137,7 @@ export class DexiePersistence implements IPersistence {
         }
       });
       documentSearchIndex.mount(
-        new IndexedDB(name.replace("#tableName#", table.name))
+        new IndexedDB(dbName.replace("#tableName#", table.name))
       );
       this.documentSearchIndices.set(table.name, documentSearchIndex);
     }
@@ -589,7 +615,11 @@ export class DexiePersistence implements IPersistence {
         limit: params?.limit,
         suggest: true
       });
-      console.log({ at: "DexiePersistence.selectMany - search", result });
+      console.log({
+        at: "DexiePersistence.selectMany - search",
+        query: search.query,
+        result
+      });
       const ids = result;
       if (Array.isArray(ids) && ids.length > 0) return ids;
     }
@@ -601,11 +631,6 @@ export class DexiePersistence implements IPersistence {
         suggest: true
       });
       const ids = result.map((x) => x.result.map((y) => y))?.flat();
-      console.log({
-        at: "DexiePersistence.selectMany - documentSearchIndex",
-        result,
-        ids
-      });
       if (ids.length > 0) return ids;
     }
   }
@@ -637,6 +662,7 @@ export class DexiePersistence implements IPersistence {
       );
       console.log({
         at: "DexiePersistence.selectMany - preSearchUsingIndex",
+        resource,
         ids
       });
       if (ids) {
@@ -660,13 +686,9 @@ export class DexiePersistence implements IPersistence {
     if (!query) return isReturnCount ? 0 : [];
     let result = await query.toArray();
     if (isReturnCount) return result;
-    if (
-      result &&
-      result.length > 0 &&
-      params?.properties?.expand &&
-      params.properties.expand.length > 0
-    ) {
-      result = await this.selectExpansion(result, params.properties.expand);
+    if (result && result.length > 0) {
+      if (params?.properties?.expand && params.properties.expand.length > 0)
+        result = await this.selectExpansion(result, params.properties.expand);
     }
     if (debugResource.includes(resource)) {
       logger.debug({
@@ -721,10 +743,63 @@ export class DexiePersistence implements IPersistence {
     return result;
   }
 
+  async selectRecursion(
+    record: unknown,
+    recurse: string,
+    isFlatten: boolean = false
+  ): Promise<unknown[] | undefined> {
+    try {
+      let result: unknown[] | undefined = [];
+      if (!record || typeof record !== "object" || !(recurse in record)) return;
+      const recurseVal = record[recurse];
+      if (!recurseVal || !Array.isArray(recurseVal) || recurseVal.length === 0)
+        return;
+      const recordsResult = await this.selectMany(
+        this.resolveResource(recurseVal[0]),
+        {
+          filters: {
+            id: recurseVal
+          }
+        }
+      );
+      if (!Array.isArray(recordsResult)) return;
+      const records = recurseVal.map((x) =>
+        recordsResult.find((y) => y.id === x)
+      );
+      result.push(...records);
+      for (const record of records) {
+        const recurseResult = await this.selectRecursion(record, recurse);
+        if (recurseResult) {
+          if (isFlatten) {
+            const parentIndex = result.findIndex(
+              (x: unknown) =>
+                x && typeof x === "object" && "id" in x && x.id === record.id
+            );
+            result.splice(parentIndex + 1, 0, ...recurseResult);
+          } else {
+            result.map((x: unknown) => {
+              if (
+                x &&
+                typeof x === "object" &&
+                "id" in x &&
+                x.id === record.id
+              ) {
+                x[recurse] = recurseResult;
+              }
+              return x;
+            });
+          }
+        }
+      }
+      return result;
+    } catch (e) {
+      logger.error({ at: "DexiePersistence.selectRecursion", e });
+    }
+  }
+
   async select(resourceId: IRecordId, properties?: IResourceSelectProperties) {
     const resource = this.resolveResource(resourceId);
-    // const id = this.resolveId(resourceId);
-    const debugResource: Resource[] = [];
+    const debugResource: Resource[] = [Resource.node];
     if (debugResource.includes(resource)) {
       logger.debug({
         at: "DexiePersistence.select",
@@ -735,8 +810,17 @@ export class DexiePersistence implements IPersistence {
     const id = resourceId.toString();
     logger.log({ at: "DexiePersistence.select", resource, resourceId, id });
     if (!resource || !id) return;
-    const result = await this.instance?.table(resource).get(id);
-    if (result && properties?.expand && properties.expand.length > 0) {
+    let result = await this.instance?.table(resource).get(id);
+    if (!result) return;
+    if (properties?.recurse) {
+      const recurseResult = await this.selectRecursion(
+        result,
+        properties.recurse
+      );
+      console.log({ recurseResult });
+      result[properties.recurse] = recurseResult;
+    }
+    if (properties?.expand && properties.expand.length > 0) {
       const expandedResult = await this.selectExpansion(
         [result],
         properties.expand

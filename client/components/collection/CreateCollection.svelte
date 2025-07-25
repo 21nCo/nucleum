@@ -268,7 +268,6 @@
                   : "Title"
             }}
           />
-          <!-- TODO - avatar causing loading performance issues -->
           <div class="flex gap-2">
             {#if selectedType === CollectionType.TYPED}
               <span class="w-12 h-full">

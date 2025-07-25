@@ -18,10 +18,6 @@ import { sessionStore } from "../focus/session.store";
 import { BlockType } from "$lib/client/types/pointron/session.type";
 import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
-import type {
-  IResourceSelectParams,
-  IResourceSelectAdditionalParams
-} from "$lib/client/types/data.type";
 import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
 import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
 
@@ -37,24 +33,6 @@ class SessionLogStore extends ResourceStore<ISessionLog, ISessionLogCapture> {
       defaultProps: defaults,
       expandProps: ["goalId", "sessionId"]
     });
-  }
-
-  selectMany(
-    params?: IResourceSelectParams,
-    additionalParams?: IResourceSelectAdditionalParams
-  ) {
-    const expandedProps = [
-      "*",
-      "goalId.* as goal",
-      // "(select * from $parent.goalId.parent) as topLevelGoal",
-      "sessionId.* as session"
-    ];
-    //TODO - check expansion testing
-
-    params = {
-      ...(params ?? {})
-    };
-    return super.selectMany(params, additionalParams);
   }
 }
 

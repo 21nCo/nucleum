@@ -115,10 +115,6 @@
     {:else if selectedView === TimeScaleUnit.MONTH}
       {currentMonth} {currentYear}
     {:else}
-      <!-- TODO Date picker -->
-      <!-- {selectedDate.getDate()}
-          {currentMonth}
-          {currentYear} -->
       <DatePicker bind:date={selectedDate} variant="inline" />
     {/if}
   </h2>

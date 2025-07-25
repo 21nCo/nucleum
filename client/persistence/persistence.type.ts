@@ -142,7 +142,7 @@ export interface IPersistenceInitParams {
 }
 
 export type ITable = {
-  name: string;
+  name: Resource;
   indices: string[];
   searchIndices?: string[];
 };

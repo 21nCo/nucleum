@@ -163,7 +163,6 @@ class CollectionStore extends ResourceStore<ICollection, ICollectionCapture> {
   }
 
   /**
-   * TODO - testing extended properties
    * @param collections - ids of collections - can be any type of collection.
    * @returns
    */
@@ -213,22 +212,34 @@ class CollectionStore extends ResourceStore<ICollection, ICollectionCapture> {
       "(select * from $parent.properties) as properties",
       "(select * from $parent.typeToExtend.properties) as extendProperties"
     ];
-    //TODO - extendProperties nested expansion
-    const result = await this.selectMany(
-      {
-        properties: {
-          expand: ["properties", "typeToExtend"]
-        },
-        filters: {
-          id: collections.map((x) => x.toString())
-        }
+    const result = await this.selectMany({
+      properties: {
+        expand: ["properties", "typeToExtend"]
       },
-      {
-        isExpand: true
+      filters: {
+        id: collections.map((x) => x.toString())
       }
-    );
-    logger.log({ at: "resolveTypes", result });
+    });
     if (!result || !Array.isArray(result)) return types;
+    if (result.some((x) => x.typeToExtend)) {
+      const extendProperties = await propertyStore.selectMany({
+        filters: {
+          id: result
+            .map((x) => x.typeToExtend?.properties)
+            ?.flat()
+            ?.filter(Boolean)
+        }
+      });
+      if (extendProperties && Array.isArray(extendProperties)) {
+        result.map((x) => {
+          if (x.typeToExtend) {
+            x.extendProperties = extendProperties.filter((y) =>
+              x.typeToExtend?.properties?.includes(y.id)
+            );
+          }
+        });
+      }
+    }
     types = result.filter((x) => x.type === CollectionType.TYPED);
     return types;
   }

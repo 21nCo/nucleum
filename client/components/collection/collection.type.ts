@@ -166,7 +166,6 @@ export interface ICollectionViewArrangementConfig {
   density?: number;
 }
 
-//TODO - add more collectible items
 export type ICollectionItem = INodeThumb | IGoalThumb;
 
 export type ICollectionItemPropertyValue = {

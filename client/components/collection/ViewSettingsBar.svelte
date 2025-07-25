@@ -49,14 +49,6 @@
       bind:value={view.layout}
       on:select={(e) => onSelect("layout", e)}
     /> -->
-    <!-- TODO - properties selector - multi select -->
-    <!-- <DropDown
-      label={{ ...dropdownLabelConfig, label: "Properties shown" }}
-      {...dropdownSettings}
-      items={properties}
-      bind:value={view.layout}
-      on:select={(e) => onSelect("properties", e)}
-    /> -->
     <div class="w-60">
       <MultiselectDropdown
         options={properties}

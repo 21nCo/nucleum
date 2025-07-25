@@ -15,15 +15,10 @@ import {
   type IMutation,
   type IInsertMutation,
   type IMutationAdditionalParams,
-  SearchType,
   type IResourceSelectProperties,
   type IResourceStore
 } from "$lib/client/types/data.type";
-import {
-  detectTimeZone,
-  detectTimeZoneFallback,
-  wait
-} from "$lib/client/utils/time.utils";
+import { wait } from "$lib/client/utils/time.utils";
 import {
   type ILocal,
   type IPersistence,
@@ -54,8 +49,6 @@ import {
 import { SyncMethod } from "$lib/shared/types/sync.type";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { FluxMethod, type IFluxMethod } from "./flux.type";
-import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
-import { TacoActions } from "$lib/client/products/memotron/taco/taco.types";
 import { interceptSurrealResponse } from "$lib/client/utils/utils";
 import {
   determineResourceType,
@@ -307,7 +300,6 @@ class Flux {
       });
       throw e;
     }
-    //TODO refresh stores
     logger.info({
       at: "flux.mutation - result",
       resource,
@@ -425,9 +417,6 @@ class Flux {
     }
   }
 
-  /**
-   * TODO - remove tacoWorker
-   */
   async selectMany(
     resource: Resource,
     params?: IResourceSelectParams,

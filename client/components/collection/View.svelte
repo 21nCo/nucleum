@@ -24,7 +24,6 @@
   {#if view.layout === CollectionLayout.BOARD}
     <BoardView {view} {data} {isBoardOverflow} {collection} />
   {:else}
-    <!-- TODO -->
     <ComingSoonView subText="View not built yet. Stay tuned." />
   {/if}
 {:else}

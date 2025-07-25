@@ -91,7 +91,6 @@
     class={cn("flex justify-center items-center", className)}
     id={icon}
   >
-    <!-- TODO - later load logos from link dynamically -->
     {#if icon === "obsidian"}
       <Obsidian />
     {:else if icon === "notion"}

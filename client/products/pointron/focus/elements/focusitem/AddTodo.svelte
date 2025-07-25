@@ -44,7 +44,8 @@
       filters: {
         goalId: goalId.toString(),
         isChecked: false
-      }
+      },
+      strictSearch: true
     });
   }
 

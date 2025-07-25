@@ -69,7 +69,6 @@
           type={ButtonVariant.SECONDARY}
           style={ButtonStyle.OUTLINED}
           size={Size.sm}
-          icon="ph:sun-light"
           label="Go to today"
           isPreventMinWidth={true}
           parentBgIndex={2}

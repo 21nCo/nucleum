@@ -90,7 +90,7 @@
 
   async function refreshFocusEntries() {
     const dayFilter = tzStore.resolveTimePeriodFilterForDay(date);
-    const result = await sessionStore.selectMany(
+    const result = await sessionStore.selectManyWithItemsExpansion(
       {
         filters: {
           startUnix: dayFilter

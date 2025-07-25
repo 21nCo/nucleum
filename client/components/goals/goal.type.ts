@@ -96,7 +96,7 @@ export type IActiveGoal = IActiveResource &
     isPageLoading: boolean;
     collections?: IRecordId[];
     types?: ICollectionExpanded[];
-    tasks?: ITask[];
+    taskCount?: number;
   };
 
 export enum GoalStatus {
