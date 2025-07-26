@@ -4,7 +4,7 @@ import { StoreDataType } from "../../types/data.type";
 import type { Space, SpaceStore } from "../../types/space.type";
 import { performApiCall } from "$lib/client/utils/network.utils";
 
-const cachedSpaceInContext = {}; //retrieveLocally(Resource.spaceInContext);
+const cachedSpaceInContext = null; // TODO: re-enable retrieveLocally(Resource.spaceInContext) once Dexie is integrated
 export const spaceInContext = writable<Space>(cachedSpaceInContext ?? null);
 
 const seedSpaceStore = {
