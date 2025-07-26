@@ -5,7 +5,7 @@ export function mapValue(type: string, value: any) {
     return value === SourcingType.OPEN
       ? "Open source"
       : value === SourcingType.SOURCE_AVAILABLE
-        ? "Source available"
+        ? "Available"
         : value === SourcingType.PARTIAL
           ? "Partial"
           : value === SourcingType.CLOSED

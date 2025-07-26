@@ -168,6 +168,8 @@
       }}
     /> -->
       {#each group.spokes as spoke, j (spoke.label)}
+        {@const isActive =
+          selectedSpoke?.toLowerCase() === spoke.label.toLowerCase()}
         <line
           x1="0"
           y1="0"
@@ -181,17 +183,24 @@
             )}
           class={spoke.isDivider
             ? "stroke-bgs1"
-            : !group.color || mode === FeatureWheelMode.COMPARER
-              ? "stroke-fgs3"
-              : categoryColoringStyle === "bg"
-                ? "stroke-bgs2"
-                : ""}
+            : isActive
+              ? ""
+              : selectedSpoke !== "howToUse" && selectedSpoke
+                ? "stroke-bgs4"
+                : !group.color || mode === FeatureWheelMode.COMPARER
+                  ? "stroke-fgs4"
+                  : categoryColoringStyle === "bg"
+                    ? "stroke-bgs2"
+                    : ""}
           stroke={group.color &&
-          categoryColoringStyle === "spoke" &&
-          mode !== FeatureWheelMode.COMPARER
+          ((categoryColoringStyle === "spoke" &&
+            mode !== FeatureWheelMode.COMPARER) ||
+            isActive)
             ? `${group.color}`
             : ""}
-          stroke-width={mode === FeatureWheelMode.COMPARER ? 0.3 : 0.8}
+          stroke-width={mode !== FeatureWheelMode.COMPARER || isActive
+            ? 0.8
+            : 0.3}
           stroke-dasharray={spoke.isDivider ? "6 6" : ""}
           shape-rendering="geometricPrecision"
         />
@@ -239,6 +248,7 @@
             {i}
             {j}
             groupSpokeLength={group.spokes.length}
+            {selectedSpoke}
             on:contemporary={(e) => {
               dispatch("contemporary", {
                 spoke: spoke.label,
@@ -252,7 +262,7 @@
           {size}
           {spoke}
           groupColor={group.color}
-          isActive={selectedSpoke?.toLowerCase() === spoke.label.toLowerCase()}
+          {isActive}
           on:click={() => {
             dispatch("spokeClick", { spoke: spoke.label, group: group.label });
           }}

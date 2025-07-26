@@ -1,4 +1,7 @@
-import type { Contemporary } from "../components/featureWheel/comparer.type";
+import type {
+  Contemporary,
+  Distribution
+} from "../components/featureWheel/comparer.type";
 import type { IFaq } from "../landing/shared/landing.type";
 
 export type IFwCategory = {
@@ -15,6 +18,7 @@ export type IFwFeature = IFeatureWheelSpoke & {
   category: string;
   description: string;
   image?: string;
+  icon?: string;
   learnMoreLink?: string;
   ratingCriteria?: IListContentItem[];
   /**
@@ -73,6 +77,7 @@ export type IContemporaryBase = {
    * the same as the icon name - in cases like label having spaces or special characters
    */
   icon?: string;
+  isHideForComparer?: boolean;
 };
 
 export type IFeatureWheelContemporary = IContemporaryBase & {
@@ -90,14 +95,26 @@ export type IContemporary = IContemporaryBase & {
    * Whether the source code is open, available, or closed
    */
   sourcingType?: SourcingType;
+  /**
+   * Where the app is available
+   */
+  distribution?: {
+    available: Distribution[];
+    description?: string;
+    link?: string;
+  };
+  /**
+   * FAQs for the app
+   */
   faqs?: IFaq[];
   whenToChoose?: IListContentItem[];
   switchFromDocumentation?: string;
+  latestAnalysisDate?: string;
 };
 
 export enum SourcingType {
   OPEN = "OPEN",
-  SOURCE_AVAILABLE = "SOURCE_AVAILABLE",
+  SOURCE_AVAILABLE = "AVAILABLE",
   PARTIAL = "PARTIAL",
   CLOSED = "CLOSED"
 }

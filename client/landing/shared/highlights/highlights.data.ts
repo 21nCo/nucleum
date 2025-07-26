@@ -10,7 +10,7 @@ export const highlights: { [key: string]: IHighlight } = {
   ainative: {
     icon: "brain",
     title: "AI native",
-    desc: "Just the right amount of AI at the right place.",
+    desc: "We fundamentally designed the app to be AI native. Not the sprinkles or sparkles.",
     visualRenderComponent: "ainative",
     isVisualAtBottom: true
   },

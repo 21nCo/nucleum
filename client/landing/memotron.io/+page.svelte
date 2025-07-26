@@ -121,30 +121,30 @@
   const features: IFeature[] = [
     {
       image: "captureFeature.png",
-      feature: "Seamless capture",
+      feature: "Capture",
       title: "Capturing at its finest",
-      desc: "Capture in any format and from any device with our seamless capture experience.",
+      desc: "Capture in any format and from any device with our seamless capture experience - always one interaction away.",
       visualRenderComponent: "captureFeature"
     },
     {
       image: "clipFeature.png",
-      feature: "Most intuitive clipping",
+      feature: "Clipping",
       title: "Clip anything, anywhere",
-      desc: "Clip anything, anywhere with the most intuitive clipping experience using our chrome extension.",
+      desc: "Clip anything, anywhere with the most intuitive clipping experience using our browser extension.",
       visualRenderComponent: "clipFeature"
     },
     {
       image: "organizeFeature.png",
-      feature: "Organize",
-      title: "Organize your knowledge in a breeze",
-      desc: "Organize your knowledge in a breeze with collections.",
+      feature: "Curation",
+      title: "Organize like a breeze",
+      desc: "Organize your knowledge in a breeze with our link to curate capability, collections, properties and relations.",
       visualRenderComponent: "organizeFeature"
     },
     {
       image: "synthesizeFeature.png",
       feature: "Synthesize",
-      title: "Synthesize your knowledge",
-      desc: "Synthesize your knowledge with the most intuitive synthesizing experience.",
+      title: "Synthesize can't get any better",
+      desc: "Synthesize your memory at the right moments when you need it the most.",
       visualRenderComponent: "synthesizeFeature"
     }
   ];
@@ -173,7 +173,7 @@
 />
 <BottomCta
   {deviceImages}
-  body="Start using Memotron to simplify your knowledge management and take control of your learning journey. Empower yourself to think better, not harder"
+  body="Start using Memotron to simplify your knowledge management and take control of your scattered thoughts journey."
   primaryAction={{ isDownloadButton: true, type: "primary" }}
   secondaryAction={{
     label: "See all downloads",

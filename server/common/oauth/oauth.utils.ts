@@ -76,7 +76,6 @@ export async function fetchOAuthUserData(
   }
   let response = await retrieveAccessToken(config, code, redirectUri);
   let accessToken;
-  console.log({ accessTokenResponse: response, config, code, redirectUri });
   let parsedAccessToken = await response.json();
   try {
     //let parsedJson = await JSON.parse(parsedAccessToken);
