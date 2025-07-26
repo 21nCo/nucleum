@@ -43,7 +43,7 @@ export class Persistence {
       const data = await response.json();
       if (!data?.token) return;
       if (!data.userInfo)
-        data.userInfo = parse(localStorage.getItem("userInfo") ?? "");
+        data.userInfo = parse(localStorage.getItem("userInfo") ?? "{}");
       // TODO - perform singin at the source of the method - to remove circular dependency of persistance on account.store.
       // account.signIn(data, { isFromSignup: false, isIgnoreRefresh: false });
       return true;
