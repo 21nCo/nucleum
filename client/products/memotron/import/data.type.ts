@@ -12,7 +12,7 @@ export interface ImportHistoryItem {
   id: string;
   source: ImportSource;
   fileName: string;
-  createdAt: string;
+  createdAt: Date;
   totalRecords?: {
     nodes: number;
     collections?: number;

@@ -139,7 +139,7 @@ export class SearchStore {
     properties?: IResourceSelectProperties;
     isIncludeMetaItems?: boolean;
     signal?: AbortSignal;
-    strictSearch?: boolean;
+    isStrictSearch?: boolean;
   }) {
     this.resource = params.resource ?? this.resource;
     logger.log({
@@ -253,7 +253,7 @@ export class SearchStore {
     if (isValidArray(data)) {
       if (isValidString(params.searchQuery)) {
         data = highlightSearchQuery(data, params.searchQuery!);
-        if (params.strictSearch) {
+        if (params.isStrictSearch) {
           data = data.filter(
             (x: unknown) =>
               typeof x === "object" &&

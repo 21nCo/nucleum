@@ -233,7 +233,7 @@
           id: importId,
           source: importSource,
           fileName: file.name,
-          createdAt: new Date().toISOString(),
+          createdAt: new Date(),
           status: "IN_PROGRESS"
         };
         await saveImportHistory(importItem);
@@ -256,7 +256,7 @@
         id: importId,
         source: importSource,
         fileName: file.name,
-        createdAt: new Date().toISOString(),
+        createdAt: new Date(),
         totalRecords: {
           nodes: totalCreated,
           collections: collectionsCreated
@@ -288,7 +288,7 @@
         id: importId,
         source: importSource,
         fileName: file.name,
-        createdAt: new Date().toISOString(),
+        createdAt: new Date(),
         status: "FAILED"
       };
       await saveImportHistory(failedImportItem);

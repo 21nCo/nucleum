@@ -6,6 +6,7 @@
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { ResourceAccessPoint } from "../../flux/resourceStores/resource.type";
   import Records from "../../record/Records.svelte";
+  import { tzStore } from "../../settings/timezone/tz.store";
 
   export let date: Date;
   let isLoading: boolean;
@@ -17,11 +18,13 @@
   async function refresh(date: Date) {
     isLoading = true;
     try {
-      date = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const dateFilter = tzStore.resolveTimePeriodFilter(date, {
+        isReturnAsDateObjectFilter: true
+      });
       const result = await nodeStore.selectMany(
         {
           filters: {
-            createdAt: date
+            createdAt: dateFilter
           }
         },
         {

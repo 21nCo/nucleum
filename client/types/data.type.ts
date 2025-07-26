@@ -363,8 +363,8 @@ export type IRecordId = string;
 
 export type IMutation = {
   id: string;
-  createdAt: string;
-  modifiedAt: string;
+  createdAt: Date;
+  modifiedAt: Date;
   timestamp: number;
   /**
    * @deprecated - storing dapId on kv:local

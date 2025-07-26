@@ -48,7 +48,7 @@ class Logger {
     this._log(message, LogType.INFO);
   }
   error(message: any, error?: any) {
-    this._log(message, LogType.ERROR);
+    this._log({ message, error }, LogType.ERROR);
     if (typeof window !== undefined) {
       window.dispatchEvent(
         new CustomEvent("errorLog", {

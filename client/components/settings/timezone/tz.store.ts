@@ -1,7 +1,7 @@
 import { ResourceStore } from "../../flux/resourceStores/resource.store";
 import { Resource } from "../../flux/resourceStores/resource.enum";
 import type { ITimezone, ITimezoneCapture } from "./tz.type";
-import type { TimePeriod } from "$lib/client/types/time.type";
+import { TimeScaleUnit, type TimePeriod } from "$lib/client/types/time.type";
 import { determineTimePeriodv2 } from "$lib/client/utils/time.utils";
 import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
 
@@ -11,6 +11,31 @@ class TimezoneStore extends ResourceStore<ITimezone, ITimezoneCapture> {
       isInMemory: true,
       indices: ["dateUnix"]
     });
+  }
+
+  resolveTimePeriodFilter(
+    day: Date,
+    params?: {
+      scale?: TimeScaleUnit;
+      isReturnAsDateObjectFilter?: boolean;
+    }
+  ) {
+    const scale = params?.scale ?? TimeScaleUnit.DAY;
+    let result: any;
+    if (scale === TimeScaleUnit.DAY) {
+      result = this.resolveTimePeriodFilterForDay(day);
+    } else if (scale === TimeScaleUnit.MONTH) {
+      result = this.resolveTimePeriodFilterForMonth(day);
+    } else if (scale === TimeScaleUnit.YEAR) {
+      result = this.resolveTimePeriodFilterForYear(day);
+    }
+    if (!params?.isReturnAsDateObjectFilter) return result;
+    else {
+      return {
+        greaterThanOrEqual: new Date(result.greaterThanOrEqual),
+        lessThanOrEqual: new Date(result.lessThanOrEqual)
+      };
+    }
   }
 
   resolveTimePeriodFilterForDay(day: Date) {

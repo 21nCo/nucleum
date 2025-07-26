@@ -106,7 +106,8 @@ export class DexiePersistence implements IPersistence {
       if (!table.searchIndices || table.searchIndices.length === 0) continue;
       const flatSearchIndex = new Index({
         preset: "performance",
-        tokenize: "full"
+        tokenize: "forward",
+        cache: true
       });
       flatSearchIndex.mount(
         new IndexedDB(dbName.replace("#tableName#", table.name) + "-flat")
@@ -157,7 +158,7 @@ export class DexiePersistence implements IPersistence {
   private async addInitializationLog(params?: IPersistenceInitParams) {
     await this.instance?.table(Resource.kv).add({
       id: "kv:local",
-      createdAt: new Date().toISOString(),
+      createdAt: new Date(),
       isLocalMode: !params?.userId,
       dapId: params?.dapId
     });
@@ -371,13 +372,6 @@ export class DexiePersistence implements IPersistence {
         }
       }
 
-      if (offset !== undefined) {
-        query = (query as Collection).offset(offset);
-      }
-      if (limit !== undefined) {
-        query = (query as Collection).limit(limit);
-      }
-
       if (orderByConfig) {
         const collection = query as Collection;
         return {
@@ -386,9 +380,23 @@ export class DexiePersistence implements IPersistence {
             if (orderByConfig.order === "desc") {
               result.reverse();
             }
+            if (offset !== undefined && limit !== undefined) {
+              result = result.slice(offset, offset + limit);
+            } else if (offset !== undefined) {
+              result = result.slice(offset);
+            } else if (limit !== undefined) {
+              result = result.slice(0, limit);
+            }
             return result;
           }
         } as any;
+      }
+
+      if (offset !== undefined) {
+        query = (query as Collection).offset(offset);
+      }
+      if (limit !== undefined) {
+        query = (query as Collection).limit(limit);
       }
       if (params.isReturnCount) {
         if (!groupBy || groupBy[0] === "all") {
@@ -454,30 +462,32 @@ export class DexiePersistence implements IPersistence {
         IResourceFilterOperator.LESS_THAN in value
       ) {
         return table.where(key).between(value.greaterThan, value.lessThan);
-      }
-      if (IResourceFilterOperator.GREATER_THAN in value) {
+      } else if (
+        IResourceFilterOperator.GREATER_THAN_OR_EQUALS in value &&
+        IResourceFilterOperator.LESS_THAN_OR_EQUALS in value
+      ) {
+        return table
+          .where(key)
+          .between(value.greaterThanOrEqual, value.lessThanOrEqual, true, true);
+      } else if (IResourceFilterOperator.GREATER_THAN in value) {
         return table.where(key).above(value.greaterThan);
-      }
-      if (IResourceFilterOperator.LESS_THAN in value) {
+      } else if (IResourceFilterOperator.LESS_THAN in value) {
         return table.where(key).below(value.lessThan);
-      }
-      if (IResourceFilterOperator.GREATER_THAN_OR_EQUALS in value) {
+      } else if (IResourceFilterOperator.GREATER_THAN_OR_EQUALS in value) {
         return table.where(key).aboveOrEqual(value.greaterThanOrEqual);
-      }
-      if (IResourceFilterOperator.LESS_THAN_OR_EQUALS in value) {
+      } else if (IResourceFilterOperator.LESS_THAN_OR_EQUALS in value) {
         return table.where(key).belowOrEqual(value.lessThanOrEqual);
-      }
-      if (IResourceFilterOperator.NOT_IN in value) {
+      } else if (IResourceFilterOperator.NOT_IN in value) {
         return table.where(key).noneOf(value.notIn);
       } else if (IResourceFilterOperator.NOT_EQUALS in value) {
         return table.where(key).notEqual(value.notEquals);
       } else if (IResourceFilterOperator.CONTAINS in value) {
-        return table.where(key).equalsIgnoreCase(value.contains);
+        return table.where(key).equals(value.contains);
       }
     } else if (value === false) {
       return table.where(key).anyOf(["$NONE", "false", "", [], 0]);
     }
-    return table.where(key).equalsIgnoreCase(value);
+    return table.where(key).equals(value);
   }
 
   private checkFilter(item: any, key: string, value: any): boolean {
@@ -653,7 +663,6 @@ export class DexiePersistence implements IPersistence {
         params
       });
     }
-
     if (params?.search) {
       const ids = await this.preSearchUsingIndex(
         resource,
@@ -686,61 +695,77 @@ export class DexiePersistence implements IPersistence {
     if (!query) return isReturnCount ? 0 : [];
     let result = await query.toArray();
     if (isReturnCount) return result;
-    if (result && result.length > 0) {
-      if (params?.properties?.expand && params.properties.expand.length > 0)
-        result = await this.selectExpansion(result, params.properties.expand);
+    if (
+      result &&
+      result.length > 0 &&
+      params?.properties?.expand &&
+      params.properties.expand.length > 0
+    ) {
+      const expandedResult = await this.selectExpansion(
+        result,
+        params.properties.expand
+      );
+      if (expandedResult) {
+        result = expandedResult;
+      }
     }
     if (debugResource.includes(resource)) {
       logger.debug({
         at: "DexiePersistence.selectMany - result",
         resource,
         params,
-        query,
         result
       });
     }
     return result;
   }
 
-  async selectExpansion(result: any[], expandProps: string[]): Promise<any[]> {
-    for (const prop of expandProps) {
-      let allItems = result
-        .map((item) => item[prop])
-        .filter(Boolean)
-        .filter((x) => x !== "$NONE");
-      if (Array.isArray(allItems[0])) {
-        allItems = allItems.flat();
-      }
-      allItems = allItems.filter((x) => typeof x === "string");
-      if (allItems.length === 0) continue;
-      allItems = Array.from(new Set(allItems));
-      const resourceType = this.resolveResource(allItems[0]);
-      const expandedResult = await this.selectMany(resourceType as Resource, {
-        filters: {
-          id: [...allItems]
+  async selectExpansion(
+    result: any[],
+    expandProps: string[]
+  ): Promise<any[] | undefined> {
+    try {
+      for (const prop of expandProps) {
+        let allItems = result
+          .map((item) => item[prop])
+          .filter(Boolean)
+          .filter((x) => x !== "$NONE");
+        if (Array.isArray(allItems[0])) {
+          allItems = allItems.flat();
         }
-      });
-      if (!Array.isArray(expandedResult)) continue;
-      result = result.map((item) => {
-        if (item[prop] && Array.isArray(item[prop])) {
-          item[prop] = item[prop].map((x) => {
-            const result = expandedResult.find((y) => y.id === x);
-            if (result) {
-              return result;
-            }
-            return x;
-          });
-        } else if (item[prop]) {
-          const result = expandedResult.find((y) => y.id === item[prop]);
-          if (result) {
-            item[prop] = result;
-            item[prop.split("Id")[0]] = result;
+        allItems = allItems.filter((x) => typeof x === "string");
+        if (allItems.length === 0) continue;
+        allItems = Array.from(new Set(allItems));
+        const resourceType = this.resolveResource(allItems[0]);
+        const expandedResult = await this.selectMany(resourceType as Resource, {
+          filters: {
+            id: [...allItems]
           }
-        }
-        return item;
-      });
+        });
+        if (!Array.isArray(expandedResult)) continue;
+        result = result.map((item) => {
+          if (item[prop] && Array.isArray(item[prop])) {
+            item[prop] = item[prop].map((x) => {
+              const result = expandedResult.find((y) => y.id === x);
+              if (result) {
+                return result;
+              }
+              return x;
+            });
+          } else if (item[prop]) {
+            const result = expandedResult.find((y) => y.id === item[prop]);
+            if (result) {
+              item[prop] = result;
+              item[prop.split("Id")[0]] = result;
+            }
+          }
+          return item;
+        });
+      }
+      return result;
+    } catch (e) {
+      logger.error({ at: "DexiePersistence.selectExpansion", e });
     }
-    return result;
   }
 
   async selectRecursion(

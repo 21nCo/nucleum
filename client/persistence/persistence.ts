@@ -1,24 +1,10 @@
-import { Cloud } from "$lib/client/types/cloud.enum";
-import { get, writable } from "svelte/store";
-import type { JsonValue } from "$lib/client/types/json.type";
-import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { interceptSurrealResponse } from "$lib/client/utils/utils";
 import {
   performApiCall,
   performStaticDataOperation
 } from "$lib/client/utils/network.utils";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { logger } from "$lib/client/components/debug/logger.client";
-import {
-  clientStorage,
-  persistLocally,
-  retrieveLocally
-} from "./persistence.utils";
-import type {
-  IResource,
-  IResourceBase
-} from "../components/flux/resourceStores/resource.type";
+import { clientStorage } from "./persistence.utils";
 import { ClientStorageKey } from "./persistence.type";
 import { extractFullTabData } from "../extensions/clipper/clipper.utils";
 import {
@@ -27,10 +13,7 @@ import {
 } from "../utils/browser.utils";
 import { parse } from "$lib/shared/utils/json.utils";
 
-export const cloudProvider = writable(Cloud.surreal);
-
 export class Persistence {
-  surrealDb = new SurrealDatabase();
   refreshToken = async () => {
     try {
       const token = localStorage.getItem("refresh-token");
@@ -197,231 +180,7 @@ export class Persistence {
       throw err;
     }
   };
-  /**
-   * Creates a new Item. If Id is not provided, a new Id will be generated
-   * @param item Item to be created
-   * @param itemType ItemType
-   * @returns Id of the created Item
-   */
-  create(item: IResource, itemType: Resource) {
-    item = {
-      ...item,
-      createdAt: new Date().toISOString(),
-      modifiedAt: new Date().toISOString()
-    };
-    switch (get(cloudProvider)) {
-      case Cloud.local:
-        // let items = retrieveLocally(itemType);
-        // if (!items) {
-        //   items = [];
-        // }
-        // items.push(item);
-        // persistLocally(itemType, items);
-        break;
-      case Cloud.surreal:
-        if (item.id) {
-          const id = Resource[itemType] + `:${item.id}`;
-          item.id = id;
-          return this.surrealDb.create(id, item);
-        } else {
-          return this.surrealDb.create(Resource[itemType], item);
-        }
-    }
-    return item.id;
-  }
-  /**
-   * Creates a new Item. If Id is not provided, a new Id will be generated
-   * @param item Item to be created
-   * @param itemType ItemType
-   * @returns Id of the created Item
-   */
-  createMultiple<T extends IResourceBase>(items: T[], itemType: Resource) {
-    switch (get(cloudProvider)) {
-      case Cloud.local:
-        let allItems = retrieveLocally(itemType);
-        if (!allItems) {
-          allItems = [];
-        }
-        allItems.push(items);
-        persistLocally(itemType, allItems);
-        break;
-      case Cloud.surreal:
-        //todo - replace with surreal query for bulk create
-        items.forEach((item: T) => {
-          if (item.id) {
-            this.surrealDb.create(Resource[itemType] + `:${item.id}`, item);
-          } else {
-            this.surrealDb.create(Resource[itemType], item);
-          }
-        });
-        break;
-    }
-    return true;
-  }
-  /**
-   * Pass only the updated fields as item along with item ID
-   * @param item Item with updated fields and item Id
-   * @param itemType ItemType
-   * @returns complete modified item record
-   */
-  update(
-    item: Partial<IResource> & Required<Pick<IResource, "id">>,
-    itemType?: Resource
-  ) {
-    switch (get(cloudProvider)) {
-      case Cloud.local: {
-        if (!itemType) break;
-        let items: IResourceBase[] = retrieveLocally(itemType);
-        if (!items) {
-          items = [];
-        }
-        items = items.filter((x: IResourceBase) => x.id != item.id);
-        items.push(item);
-        persistLocally(itemType, items);
-        break;
-      }
-      case Cloud.surreal:
-        item.modifiedAt = new Date().toISOString();
-        return this.surrealDb.merge(
-          itemType
-            ? `${Resource[itemType]}:${item.id}`
-            : typeof item.id === "string"
-              ? item.id
-              : "",
-          item
-        );
-    }
-  }
-  /**
-   *
-   * @param itemId Id of the Item to be deleted
-   * @param itemType ItemType
-   * @returns true if deleted successfully else false
-   */
-  delete(itemId: string, itemType: Resource, userId?: string) {
-    switch (get(cloudProvider)) {
-      case Cloud.local: {
-        let items = retrieveLocally(itemType);
-        items = items.filter((x: IResourceBase) => x.id != itemId);
-        persistLocally(itemType, items);
-        break;
-      }
-      case Cloud.surreal:
-        return this.surrealDb.delete(itemId, userId);
-    }
-  }
-  retrieve(itemId: string, itemType: Resource | undefined = undefined) {
-    switch (get(cloudProvider)) {
-      case Cloud.local: {
-        if (!itemType) break;
-        let items = retrieveLocally(itemType);
-        if (!items) {
-          items = [];
-        }
-        let item = items.find((x: IResourceBase) => x.id == itemId);
-        return item;
-      }
-      case Cloud.surreal:
-        return this.surrealDb.select(itemId);
-    }
-  }
-  retrieveAll(itemType: Resource) {
-    try {
-      switch (get(cloudProvider)) {
-        case Cloud.local: {
-          let items = retrieveLocally(itemType);
-          return items;
-        }
-        case Cloud.surreal:
-          return this.surrealDb.select(Resource[itemType]);
-      }
-      return [];
-    } catch (error) {
-      logger.error(error);
-    }
-  }
-  async searchByLabel(
-    searchString: string,
-    itemType: Resource
-  ): Promise<IResource[]> {
-    let results: IResource[] = [];
-    switch (get(cloudProvider)) {
-      case Cloud.local:
-      // switch (itemType) {
-      //   case ItemEnum.ALL: {
-      //     const tagList = retrieveLocally(ItemEnum.PointTag);
-      //     const taskList = retrieveLocally(ItemEnum.PointTask);
-      //     if (tagList) {
-      //       const tagItems = tagList
-      //         .filter((item: DbRecordWithLabel) =>
-      //           item.label.toLowerCase().includes(searchString.toLowerCase())
-      //         )
-      //         .map((x: DbRecordWithLabel) => {
-      //           return { label: x.label, id: x.id };
-      //         });
-      //       results = [...results, ...tagItems];
-      //     }
-      //     if (taskList) {
-      //       const taskItems = taskList.filter((item: DbRecordWithLabel) =>
-      //         item.label.toLowerCase().includes(searchString.toLowerCase())
-      //       );
-      //       results = [...results, ...taskItems];
-      //     }
-      //     break;
-      //   }
-      //   default: {
-      //     let items = retrieveLocally(itemType);
-      //     if (!items) break;
-      //     items = items.filter((item: DbRecordWithLabel) =>
-      //       item.label.toLowerCase().includes(searchString.toLowerCase())
-      //     );
-      //     results = items.map((x: DbRecordWithLabel) => {
-      //       return { label: x.label, id: x.id };
-      //     });
-      //     break;
-      //   }
-      // }
-      // break;
-      case Cloud.surreal:
-        if (itemType != Resource.ALL) {
-          const response = await this.surrealDb.executeReadFn(
-            `select * from ${Resource[itemType]} where string::lowercase(label) CONTAINS $searchString and (isArchived is false or isArchived is none);`,
-            {
-              searchString: searchString.toLowerCase()
-            }
-          );
-          results = interceptSurrealResponse(response);
-        }
-        break;
-      default:
-        break;
-    }
-    return results;
-  }
-  async fetchDailyJournal(context: string, start: Date, end: Date) {
-    const query = "return fn::global::journal::daily($context, $start, $end)";
-    const response = await this.surrealDb.executeReadFn(query, {
-      context,
-      start: start.toISOString(),
-      end: end.toISOString()
-    });
-    return interceptSurrealResponse(response, query);
-  }
-  async fetchJournal(
-    context: string,
-    scale: "MONTHS" | "YEARS",
-    start: number,
-    end: number
-  ) {
-    const query = "return fn::global::journal($context, $scale, $start, $end)";
-    const response = await this.surrealDb.executeReadFn(query, {
-      context,
-      scale,
-      start,
-      end
-    });
-    return interceptSurrealResponse(response, query);
-  }
+
   async getSignedUrl(
     userId: string,
     contentType: string,

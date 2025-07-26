@@ -183,24 +183,6 @@ class Linker extends ResourceStore<ILink, ILinkCapture> {
     return response;
   }
 
-  /**
-   * @deprecated - using direct insert instead
-   * @param from
-   * @param to
-   * @param linkType
-   * @returns
-   */
-  private generateLinkQuery(from: IRecordId, to: IRecordId, linkType: string) {
-    return replaceParams(
-      `relate $from->link->$to content {toType: meta::tb($to), linkType: $linkType, createdAt: time::now()}`,
-      {
-        from,
-        to,
-        linkType
-      }
-    );
-  }
-
   get() {}
 }
 

@@ -341,8 +341,8 @@ class Flux {
     const userId = await resolveCurrentUserId();
     const mutation: IMutation = {
       id: mutationId,
-      createdAt: new Date().toISOString(),
-      modifiedAt: new Date().toISOString(),
+      createdAt: new Date(),
+      modifiedAt: new Date(),
       timestamp: new Date().getTime(),
       userId,
       resource,
@@ -487,12 +487,14 @@ class Flux {
         logger.log({ at: "flux.selectMany - aborted", e });
         throw e;
       } else {
-        logger.error({
-          at: "flux.select",
-          resource,
-          params,
-          error: e
-        });
+        logger.error(
+          {
+            at: "flux.select",
+            resource,
+            params
+          },
+          e
+        );
       }
     }
   }

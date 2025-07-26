@@ -45,7 +45,7 @@
         goalId: goalId.toString(),
         isChecked: false
       },
-      strictSearch: true
+      isStrictSearch: true
     });
   }
 
