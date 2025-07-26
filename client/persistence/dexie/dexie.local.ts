@@ -209,14 +209,14 @@ export class DexiePersistence implements IPersistence {
             at: "DexiePersistence.mutation merge",
             error: "Record id is required for merge"
           });
-          if (this.searchIndices.has(resource) && params.record.id) {
-            const searchIndex = this.searchIndices.get(resource);
-            if (searchIndex) {
-              const text = this.extractFlatText(params.record, resource);
-              searchIndex.index.updateAsync(params.record.id, text);
-            }
-          }
           return Promise.reject(new Error("Record id is required for merge"));
+        }
+        if (this.searchIndices.has(resource)) {
+          const searchIndex = this.searchIndices.get(resource);
+          if (searchIndex) {
+            const text = this.extractFlatText(params.record, resource);
+            searchIndex.index.updateAsync(params.record.id, text);
+          }
         }
         return this.merge(resource, params.record.id, params.record);
       case PersistenceActionType.DELETE:

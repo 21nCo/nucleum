@@ -39,7 +39,7 @@
   import { popover } from "$lib/client/actions/popover.action";
   import {
     compareDates,
-    formatDate,
+    parseAndFormatDate,
     isSameDay
   } from "$lib/client/utils/time.utils";
   import AddNewTaskInline from "./AddNewTaskInline.svelte";
@@ -226,8 +226,8 @@
     const task = await taskStore.save({
       label,
       dateUnix: resolveUnixTimestamp(resolveDateForNewTask()),
-      goalId: goalId,
-      collection: collectionId
+      goalId,
+      collectionId
     });
     if (isValidArrayWithData(task)) {
       tasks = [...tasks, task[0]];
@@ -381,12 +381,12 @@
           <!-- <Icon icon="ph:calendar" /> -->
           {selectedSubType === TaskSubTypeForSwitcher.BY_DATE &&
           isSameDay(viewDate, selectedDate)
-            ? formatDate(viewDate)
+            ? parseAndFormatDate(viewDate)
             : selectedSubType === TaskSubTypeForSwitcher.BY_DATE ||
                 (selectedSubType === TaskSubTypeForSwitcher.BY_MONTH &&
                   isSameDay(viewDate, selectedDate))
-              ? formatDate(viewDate, "mmm-yyyy")
-              : formatDate(viewDate, "yyyy")}
+              ? parseAndFormatDate(viewDate, "mmm-yyyy")
+              : parseAndFormatDate(viewDate, "yyyy")}
         </button>
       </div>
       <DatePickerRow

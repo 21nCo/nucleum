@@ -13,7 +13,7 @@ import {
   BillingCycle,
   PlanType
 } from "../components/subscription/userPlan.type";
-import { formatDate } from "./time.utils";
+import { parseAndFormatDate } from "./time.utils";
 import { enumToString } from "$lib/shared/utils/text.utils";
 import { EmbedDataMessage } from "../types/embedMessage.enum";
 import { parse } from "$lib/shared/utils/json.utils";

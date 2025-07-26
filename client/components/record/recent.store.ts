@@ -34,7 +34,7 @@ export class RecentsStore extends ObservableStore<IRecentsStore> {
           }))
         ];
       } catch (error) {
-        logger.error({ at: "recentsStore.refresh", error, resource });
+        logger.error({ at: "recentsStore.refresh", resource }, error);
       }
     }
     // const accessLogs = await accessLogStore.selectMany({

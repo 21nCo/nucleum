@@ -7,7 +7,7 @@
   import { AppSearchParam } from "$lib/client/types/appStore.type";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { TimeScaleUnit } from "$lib/client/types/time.type";
-  import { formatDate } from "$lib/client/utils/time.utils";
+  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
   import { ResourceAccessMode } from "../../flux/resourceStores/resource.type";
   import CalendarNotesPanel from "./CalendarNotesPanel.svelte";
   import {
@@ -67,7 +67,10 @@
 >
   <div class="flex justify-between px-12 pt-3">
     <div class="flex items-center gap-2 whitespace-nowrap">
-      <Text content={formatDate(date)} style={TextStyle.PANEL_HEADING_SMALL} />
+      <Text
+        content={parseAndFormatDate(date)}
+        style={TextStyle.PANEL_HEADING_SMALL}
+      />
       <span class="text-b2 text-fgs3">| Notes </span>
       <InlineFeedbackText {feedback} size={Size.sm} />
     </div>

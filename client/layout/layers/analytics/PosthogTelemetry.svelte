@@ -24,7 +24,9 @@
     try {
       posthog.captureException(
         error.detail?.message
-          ? stringify(error.detail.message)
+          ? typeof error.detail.message === "string"
+            ? error.detail.message
+            : stringify(error.detail.message)
           : (error.detail?.error ?? error.detail?.message?.error ?? "Error")
       );
     } catch (e) {

@@ -146,11 +146,6 @@ export class SearchStore {
       at: "SearchStore.refresh",
       params
     });
-    // console.time("record.store.ts - select - " + this.resource);
-    // Check if operation was aborted before starting
-    if (params.signal?.aborted) {
-      throw new Error("Operation aborted");
-    }
 
     let data: any;
     const selectParams: IResourceSelectParams = {
@@ -173,26 +168,27 @@ export class SearchStore {
       data = (
         await Promise.all(
           this.searcheableResources.map(async (resource) => {
-            // Check if operation was aborted before each resource
-            if (params.signal?.aborted) {
-              throw new Error("Operation aborted");
-            }
+            const resourceSelectParams: IResourceSelectParams = {
+              ...selectParams,
+              search: isValidString(params.searchQuery)
+                ? {
+                    ...(selectParams.search ?? {}),
+                    query: params.searchQuery!,
+                    properties: resolveSearchProperties(resource)
+                  }
+                : undefined
+            };
 
-            if (isValidString(params.searchQuery)) {
-              selectParams.search = {
-                ...(selectParams.search ?? {}),
-                query: params.searchQuery!,
-                properties: resolveSearchProperties(resource)
-              };
-            }
             this.setResourceStore(resource);
-            const result = await this.resourceStore?.selectMany(selectParams, {
-              isIncludeSubItems: params.isIncludeSubItems,
-              isExpand: params.isExpand ?? true,
-              isIgnoreParentInactive: params.isIgnoreParentInactive,
-              isIncludeMetaItems: params.isIncludeMetaItems,
-              signal: params.signal
-            });
+            const result = await this.resourceStore?.selectMany(
+              resourceSelectParams,
+              {
+                isIncludeSubItems: params.isIncludeSubItems,
+                isExpand: params.isExpand ?? true,
+                isIgnoreParentInactive: params.isIgnoreParentInactive,
+                isIncludeMetaItems: params.isIncludeMetaItems
+              }
+            );
             return Array.isArray(result) ? result : [];
           })
         )
@@ -213,8 +209,7 @@ export class SearchStore {
             }
           },
           {
-            isQueryAsIs: true,
-            signal: params.signal
+            isQueryAsIs: true
           }
         );
 
@@ -229,7 +224,10 @@ export class SearchStore {
             }
             return true;
           })
-          .slice(params.offset ?? 0, params.offset + (params.limit ?? 50));
+          .slice(
+            params.offset ?? 0,
+            (params.offset ?? 0) + (params.limit ?? 50)
+          );
         data = await this.resourceStore?.selectMany(
           {
             filters: {
@@ -238,8 +236,7 @@ export class SearchStore {
           },
           {
             isQueryAsIs: true,
-            isExpand: true,
-            signal: params.signal
+            isExpand: true
           }
         );
       } else {
@@ -247,8 +244,7 @@ export class SearchStore {
           isIncludeSubItems: params.isIncludeSubItems,
           isIgnoreParentInactive: params.isIgnoreParentInactive,
           isExpand: params.isExpand ?? true,
-          isIncludeMetaItems: params.isIncludeMetaItems,
-          signal: params.signal
+          isIncludeMetaItems: params.isIncludeMetaItems
         });
       }
     }
@@ -258,7 +254,13 @@ export class SearchStore {
       if (isValidString(params.searchQuery)) {
         data = highlightSearchQuery(data, params.searchQuery!);
         if (params.strictSearch) {
-          data = data.filter((x) => x.labelSearch || x.bodySearch);
+          data = data.filter(
+            (x: unknown) =>
+              typeof x === "object" &&
+              x &&
+              (("labelSearch" in x && x.labelSearch) ||
+                ("bodySearch" in x && x.bodySearch))
+          );
         }
         data = data.sort(searchSort);
       }

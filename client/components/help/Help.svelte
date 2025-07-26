@@ -9,7 +9,7 @@
   import type { IAction } from "$lib/client/types/action.type";
   import NavigationHeader from "$lib/client/elements/NavigationHeader.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { formatDate } from "$lib/client/utils/time.utils";
+  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
   import { Size } from "$lib/client/types/size.enum";
   import { Action } from "$lib/client/types/action.enum";
   import account from "$lib/client/stores/account.store";
@@ -35,7 +35,7 @@
     if (!release || !$appStore.version) return;
     const updated = release[$appStore.version];
     if (!updated) return;
-    return formatDate(new Date(updated));
+    return parseAndFormatDate(new Date(updated));
   }
 </script>
 

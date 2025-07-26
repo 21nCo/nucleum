@@ -5,7 +5,7 @@
     isSameResource,
     resourceInList
   } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { formatDate } from "$lib/client/utils/time.utils";
+  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
   import { resolveNodeLabelString } from "../node.utils";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "$lib/client/types/size.enum";
@@ -64,7 +64,7 @@
     const groups = new Map<string, INodeThumb[]>();
 
     nodes.forEach((node) => {
-      const date = formatDate(new Date(node.createdAt));
+      const date = parseAndFormatDate(new Date(node.createdAt));
       if (!groups.has(date)) {
         groups.set(date, []);
       }

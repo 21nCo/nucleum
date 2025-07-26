@@ -111,3 +111,7 @@ interface IFluxSearchArgs {
   storeId: string;
   query: string;
 }
+
+export interface IDataMapper {
+  parse(resource: Resource, records: any[]): any[];
+}

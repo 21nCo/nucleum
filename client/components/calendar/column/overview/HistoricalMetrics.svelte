@@ -5,7 +5,10 @@
   import { Action } from "$lib/client/types/action.enum";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
   import { TimeFormat } from "$lib/client/types/time.type";
-  import { formatDate, formatSeconds } from "$lib/client/utils/time.utils";
+  import {
+    parseAndFormatDate,
+    formatSeconds
+  } from "$lib/client/utils/time.utils";
 
   export let date: Date;
   export let title: string;
@@ -25,7 +28,7 @@
     <div class="flex items-center justify-between w-full">
       <div class="flex flex-col items-start text-left">
         <div class="text-h4">{title}</div>
-        <div class="text-fgs3 text-b2">{formatDate(date)}</div>
+        <div class="text-fgs3 text-b2">{parseAndFormatDate(date)}</div>
       </div>
       <div
         class="h-8 w-8 rounded-full bg-aps1 flex items-center justify-center"

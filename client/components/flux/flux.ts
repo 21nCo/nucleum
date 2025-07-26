@@ -48,7 +48,7 @@ import {
 } from "$lib/client/utils/extension.utils";
 import { SyncMethod } from "$lib/shared/types/sync.type";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-import { FluxMethod, type IFluxMethod } from "./flux.type";
+import { FluxMethod, type IDataMapper, type IFluxMethod } from "./flux.type";
 import { interceptSurrealResponse } from "$lib/client/utils/utils";
 import {
   determineResourceType,
@@ -58,6 +58,7 @@ import {
 import { postDataToParent } from "$lib/client/utils/embed.utils";
 import { EmbedDataMessage } from "$lib/client/types/embedMessage.enum";
 import { reparse } from "$lib/shared/utils/json.utils";
+import { DataMapper } from "./dataMapper";
 
 class Flux {
   static _instance: Flux | null = null;
@@ -65,6 +66,7 @@ class Flux {
   remoteOnlyStores: IResourceStore<unknown>[] = [];
   provider!: PersistenceProvider;
   persistence!: IPersistence;
+  dataMapper!: IDataMapper;
   private isLocalMode: boolean = false;
   private isExtensionEnvironment: boolean = false;
   private isSyncDownPending: boolean = false;
@@ -94,6 +96,7 @@ class Flux {
     Flux._instance.persistence = persistence;
     Flux._instance.stores = stores;
     Flux._instance.remoteOnlyStores = params.remoteOnlyStores ?? [];
+    Flux._instance.initializeDataMapper(stores);
     logger.log({ at: "flux.initialized", instance: Flux._instance });
     return Flux._instance.initializePersistence(params);
   }
@@ -118,17 +121,17 @@ class Flux {
         )
         .map((x) => {
           return {
-            name: x.id,
+            name: x.id as Resource,
             indices: x.indices ?? ["id"],
             searchIndices: x.searchIndices
           };
         }),
       {
-        name: "kv",
+        name: Resource.kv,
         indices: ["id"]
       },
       {
-        name: "mutation",
+        name: Resource.mutation,
         indices: ["id", "timestamp"]
       }
     ];
@@ -137,6 +140,14 @@ class Flux {
       ...params,
       tables
     });
+  }
+
+  private initializeDataMapper(stores: IResourceStore<unknown>[]) {
+    const encryptionFieldsMap: Record<string, string[]> = {};
+    for (const store of stores) {
+      encryptionFieldsMap[store.id] = store.encrypt ?? [];
+    }
+    this.dataMapper = new DataMapper(encryptionFieldsMap);
   }
 
   async loadInMemoryStores(params?: {
@@ -260,7 +271,7 @@ class Flux {
       if (!additionalParams?.isCloudOnlyResource || this.isLocalMode) {
         response = await this.persistence.mutation(resource, params);
       }
-      let mutation: IMutation;
+      let mutation: IMutation | undefined;
       if (
         !additionalParams?.isPreventCloudPersistence &&
         (!this.isLocalMode || this.isExtensionEnvironment)
@@ -871,7 +882,7 @@ class Flux {
 
     for (let { resource, records } of data) {
       this.propagateSyncStatus(resource);
-      records = this.dataMapper(resource, records);
+      records = this.dataMapper.parse(resource, records);
       const mutationResult = await this.persistence.mutation(
         resource as Resource,
         {
@@ -985,22 +996,6 @@ class Flux {
     }
   }
 
-  /**
-   * Data mapper for parsing dates, decryption
-   * @param resource
-   * @param records
-   */
-  private dataMapper(resource: Resource, records: any[]) {
-    return records.map((x) => ({
-      ...x,
-      ...(x.createdAt && { createdAt: new Date(x.createdAt) }),
-      ...(x.modifiedAt && { modifiedAt: new Date(x.modifiedAt) }),
-      ...(x.date && { date: new Date(x.date) }),
-      ...(x.startDate && { startDate: new Date(x.startDate) }),
-      ...(x.endDate && { endDate: new Date(x.endDate) })
-    }));
-  }
-
   private async processCloneDown(
     resource: Resource,
     records: any,
@@ -1029,7 +1024,7 @@ class Flux {
           .filter((x: any) => isRecordId(x.in) && isRecordId(x.out))
           .filter(removeDuplicatesFilter);
       }
-      records = this.dataMapper(resource, records);
+      records = this.dataMapper.parse(resource, records);
       const mutationResult = await this.persistence.mutation(
         resource as Resource,
         {
@@ -1321,7 +1316,7 @@ class Flux {
 
     if (isValidArrayWithData(result.data)) {
       let records = result.data;
-      records = this.dataMapper(resource, records);
+      records = this.dataMapper.parse(resource, records);
       const mutationResult = await this.persistence.mutation(
         resource as Resource,
         {

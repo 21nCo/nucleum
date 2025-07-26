@@ -52,7 +52,7 @@ export function resolveGoalColor(goal?: IGoalThumb) {
     Array.isArray(goal?.parent) &&
     goal?.parent?.length > 0 &&
     typeof goal.parent[0] === "object" &&
-    goal.parent[0].color
+    goal.parent[0]?.color
   ) {
     return goal.parent[0].color;
   }

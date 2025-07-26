@@ -4,7 +4,7 @@
   import {
     determineTimePeriod,
     determineTimePeriodv2,
-    formatDate,
+    parseAndFormatDate,
     formatSeconds
   } from "$lib/client/utils/time.utils";
   import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
@@ -89,9 +89,9 @@
   }
   function resolveXValueForStackedBarChart(begin: Date) {
     if (chart.period.scale === TimeScale.DAYS) {
-      return formatDate(begin, "mmm-dd");
+      return parseAndFormatDate(begin, "mmm-dd");
     } else if (chart.period.scale === TimeScale.MONTHS) {
-      return formatDate(begin, "mmm-yy");
+      return parseAndFormatDate(begin, "mmm-yy");
     } else if (chart.period.scale === TimeScale.YEARS) {
       return `${begin.getFullYear()}`;
     }

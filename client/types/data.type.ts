@@ -68,6 +68,10 @@ export interface IResourceStore<T> extends IStore, Writable<T[]> {
    * Properties to be expanded by default when expand is set to true
    */
   expandProps?: string[];
+  /**
+   * Properties to be encrypted
+   */
+  encrypt?: string[];
 }
 
 /**

@@ -3,7 +3,7 @@
   import { nodeStore } from "$lib/client/products/memotron/node/node.store";
   import { linker } from "$lib/client/products/memotron/linking/link.store";
   import type { INodeThumb } from "$lib/client/products/memotron/node/node.type";
-  import { formatDate } from "$lib/client/utils/time.utils";
+  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { appStore } from "$lib/client/stores/app.store";
@@ -127,7 +127,7 @@
   {#if today.nodes.length === 0 && today.links.length === 0 && previousYears.length === 0}
     <EmptyStatusView
       mainText="No nodes found"
-      subText={`No nodes found on ${formatDate(date, "verbose")}`}
+      subText={`No nodes found on ${parseAndFormatDate(date, "verbose")}`}
     />
   {:else}
     <div class="flex flex-col gap-6 w-full">

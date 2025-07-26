@@ -1334,7 +1334,6 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
     return taskStore.save(
       {
         label,
-        isChecked: false,
         goalId: goalId,
         dateUnix: new Date().getTime()
       },

@@ -7,7 +7,10 @@
     ResourceAccessPoint
   } from "$lib/client/components/flux/resourceStores/resource.type";
   import ResourceThumbnailBase from "../record/thumbnail/ResourceThumbnailBase.svelte";
-  import { compareDates, formatDate } from "$lib/client/utils/time.utils";
+  import {
+    compareDates,
+    parseAndFormatDate
+  } from "$lib/client/utils/time.utils";
   import TaskCheckbox from "./TaskCheckbox.svelte";
   import { hoverable } from "$lib/client/actions/hover.action";
   import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
@@ -225,7 +228,7 @@
               "text-fgs3": !isOverdue
             })}
           >
-            Due: {formatDate(item.dateUnix)}
+            Due: {parseAndFormatDate(item.dateUnix)}
           </div>
         {/if}
 
@@ -243,7 +246,7 @@
               "text-ars1": !isCompletedBeforeDue && item.dateUnix
             })}
           >
-            Completed: {formatDate(item.completedAtUnix)}
+            Completed: {parseAndFormatDate(item.completedAtUnix)}
           </span>
         {/if}
       </div>

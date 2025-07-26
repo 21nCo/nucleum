@@ -39,13 +39,18 @@ class TaskStore extends ResourceStore<ITask, ITaskCapture> {
   }
 
   async save(
-    form: ITaskCapture,
+    form: {
+      label?: string;
+      dateUnix?: number;
+      goalId?: IRecordId;
+      collectionId?: IRecordId;
+    },
     params?: { id?: IRecordId; context?: string }
   ) {
     logger.log({ at: "TaskStore.save", form });
     const resource: ITaskCapture = {
       id: params?.id ?? generateResourceId(Resource.task),
-      label: form.label,
+      label: form.label ?? "",
       dateUnix: form.dateUnix
         ? resolveUnixTimestamp(getUtcSafeDay(new Date(form.dateUnix)))
         : defaults.dateUnix,

@@ -298,6 +298,10 @@ export function resolveBulkMergeQuery(
 const noneReplacerFn = (key: string, value: any) =>
   value === undefined || value === null ? `$NONE` : value;
 
+function isValidIdentifier(identifier: string): boolean {
+  return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(identifier);
+}
+
 /**
  * Newer versions of Surreal SDK doesn't automatically convert the date to the surreal date format and record links. There d'format' is used for dates and removing quotes around record links to be detected as record links.
  */
@@ -361,9 +365,11 @@ export function resolveSelectQuery(
       ? properties.select
       : ["*"];
   props = props.map((x) => (x === "#" ? "count()" : x));
-  const expansionProps = (properties?.expand ?? []).map(
-    (x) => `(select * from $parent.${x}) as ${x}`
-  );
+  const expansionProps = (properties?.expand ?? [])
+    .filter(isValidIdentifier)
+    .map(
+      (x) => `(select * from $parent.${x}) as ${x}`
+    );
   const allProperties = [...props, ...expansionProps];
   return `SELECT ${allProperties.join(", ")} FROM ONLY ${resourceId};`;
 }
@@ -379,9 +385,11 @@ export function resolveSelectManyQuery(
       ? params.properties.select
       : ["*"];
   properties = properties.map((x) => (x === "#" ? "count()" : x));
-  const expansionProps = (params?.properties?.expand ?? []).map(
-    (x) => `${x}.* as ${x}`
-  );
+  const expansionProps = (params?.properties?.expand ?? [])
+    .filter(isValidIdentifier)
+    .map(
+      (x) => `${x}.* as ${x}`
+    );
   const allProperties = [...properties, ...expansionProps];
   const whereClause = generateWhereClause(resource, params);
   const selectClause = `SELECT ${allProperties.join(", ")}`;

@@ -7,7 +7,7 @@
   import { Action } from "$lib/client/types/action.enum";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";
-  import { formatDate } from "$lib/client/utils/time.utils";
+  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
   import { properCase } from "$lib/shared/utils/text.utils";
   import modalEvent from "../modal/modal.store";
   import RestorePurchaseAction from "./RestorePurchaseAction.svelte";
@@ -67,12 +67,12 @@
         {#if trialExpiry}
           {#if isTrialExpired}
             Your free trial ended on <b>
-              {formatDate(trialExpiry)}.
+              {parseAndFormatDate(trialExpiry)}.
             </b>
             Upgrade now to continue using all features.
           {:else}
-            Your free trial will expire on {formatDate(trialExpiry)}. Upgrade
-            now to ensure uninterrupted access.
+            Your free trial will expire on {parseAndFormatDate(trialExpiry)}.
+            Upgrade now to ensure uninterrupted access.
           {/if}
         {:else if isBillingIssue}
           Please update your billing information to continue using sync

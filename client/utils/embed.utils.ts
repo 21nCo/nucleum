@@ -37,17 +37,45 @@ export function setEmbedBg(bg: number) {
   postDataToParent(EmbedDataMessage.BG, bg);
 }
 
-/**
- * TODO - security check
- * @param message
- */
+const TRUSTED_PARENT_ORIGINS = [
+  "http://localhost:5555",
+  "http://localhost:5002",
+  "http://127.0.0.1:5555",
+  "http://127.0.0.1:5002"
+];
+
+function getParentOrigin(): string | null {
+  try {
+    return window.parent.location.origin;
+  } catch (error) {
+    return null;
+  }
+}
+
+function isParentOriginTrusted(origin: string): boolean {
+  if (TRUSTED_PARENT_ORIGINS.includes(origin)) {
+    return true;
+  }
+  
+  try {
+    const url = new URL(origin);
+    return url.hostname.endsWith('.memotron.app');
+  } catch {
+    return false;
+  }
+}
+
 function postToParent(message: any) {
   logger.log({
     at: "posting message to parent",
     message
   });
+  
+  const parentOrigin = getParentOrigin();
+  const targetOrigin = parentOrigin && isParentOriginTrusted(parentOrigin) ? parentOrigin : window.location.origin;
+  
   try {
-    window?.parent?.postMessage(message, "*");
+    window?.parent?.postMessage(message, targetOrigin);
   } catch (error) {
     logger.error({ at: "postToParent - parent", error });
   }
@@ -87,6 +115,6 @@ export function postTokenToExtension(json: any) {
       type: "signin",
       token: json
     },
-    "*"
+    window.location.origin
   );
 }
