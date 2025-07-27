@@ -38,7 +38,8 @@ export class DataMapper implements IDataMapper {
     //TODO - decrypt
     return {
       ...record,
-      ...this.mapDateFields(record)
+      ...this.mapDateFields(record),
+      id: record.id.includes(":") ? record.id : `${resource}:${record.id}`
     };
   }
 

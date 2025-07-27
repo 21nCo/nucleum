@@ -22,6 +22,8 @@ import {
 import { Dexie, type Collection, type Table, type WhereClause } from "dexie";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { IndexedDB, Index, Document } from "flexsearch";
+import { removeDuplicatesFilter } from "$lib/client/components/flux/resourceStores/resource.utils";
+import { isValidString } from "$lib/shared/utils/text.utils";
 // import {
 //   Worker as WorkerIndex,
 //   Document as DocumentWorkerIndex
@@ -39,8 +41,8 @@ export class DexiePersistence implements IPersistence {
   searchIndices: Map<
     string,
     {
-      props: string[];
       index: Index;
+      contextualIndex: Index;
     }
   > = new Map();
   documentSearchIndices: Map<string, Document> = new Map();
@@ -89,7 +91,11 @@ export class DexiePersistence implements IPersistence {
       const records = await this.instance?.table(table.name).toArray();
       for (const record of records ?? []) {
         const text = this.extractFlatText(record, table.name);
-        this.searchIndices.get(table.name)?.index.addAsync(record.id, text);
+        const searchIndex = this.searchIndices.get(table.name);
+        if (searchIndex && text) {
+          searchIndex.index.addAsync(record.id, text);
+          searchIndex.contextualIndex.addAsync(record.id, text);
+        }
       }
     }
   }
@@ -105,16 +111,20 @@ export class DexiePersistence implements IPersistence {
     for (const table of this.tables ?? []) {
       if (!table.searchIndices || table.searchIndices.length === 0) continue;
       const flatSearchIndex = new Index({
-        preset: "performance",
-        tokenize: "forward",
+        tokenize: "full",
         cache: true
       });
-      flatSearchIndex.mount(
-        new IndexedDB(dbName.replace("#tableName#", table.name) + "-flat")
-      );
+      const dbPrefix = dbName.replace("#tableName#", table.name);
+      flatSearchIndex.mount(new IndexedDB(dbPrefix + "-flat"));
+      const contextualIndex = new Index({
+        tokenize: "strict",
+        context: true,
+        cache: true
+      });
+      contextualIndex.mount(new IndexedDB(dbPrefix + "-contextual"));
       this.searchIndices.set(table.name, {
-        props: table.searchIndices ?? [],
-        index: flatSearchIndex
+        index: flatSearchIndex,
+        contextualIndex
       });
     }
   }
@@ -164,14 +174,17 @@ export class DexiePersistence implements IPersistence {
     });
   }
 
-  private extractFlatText(record: any, resource: Resource) {
-    const searchIndices = this.searchIndices.get(resource);
+  private extractFlatText(record: any, resource: Resource): string | undefined {
+    const searchIndices = this.tables.find(
+      (x) => x.name === resource
+    )?.searchIndices;
     if (!searchIndices) return "";
     const text = Object.entries(record)
-      .filter(([key]) => searchIndices.props.includes(key))
+      .filter(([key]) => searchIndices.includes(key))
       .map(([key, value]) => String(value))
-      .join(" ");
-    return text;
+      .join(" ")
+      .trim();
+    return isValidString(text) ? text : undefined;
   }
 
   async mutation<T extends IResource | IMetaResource>(
@@ -191,7 +204,10 @@ export class DexiePersistence implements IPersistence {
           if (searchIndex) {
             records.forEach((x) => {
               const text = this.extractFlatText(x, resource);
-              searchIndex.index.addAsync(x.id, text);
+              if (x.id && text) {
+                searchIndex.index.addAsync(x.id, text);
+                searchIndex.contextualIndex.addAsync(x.id, text);
+              }
             });
           }
         }
@@ -216,7 +232,10 @@ export class DexiePersistence implements IPersistence {
           const searchIndex = this.searchIndices.get(resource);
           if (searchIndex) {
             const text = this.extractFlatText(params.record, resource);
-            searchIndex.index.updateAsync(params.record.id, text);
+            if (params.record.id && text) {
+              searchIndex.index.updateAsync(params.record.id, text);
+              searchIndex.contextualIndex.updateAsync(params.record.id, text);
+            }
           }
         }
         return this.merge(resource, params.record.id, params.record);
@@ -226,6 +245,7 @@ export class DexiePersistence implements IPersistence {
           const searchIndex = this.searchIndices.get(resource);
           if (searchIndex) {
             searchIndex.index.removeAsync(params.recordId.toString());
+            searchIndex.contextualIndex.removeAsync(params.recordId.toString());
           }
         }
         return this.instance
@@ -621,17 +641,24 @@ export class DexiePersistence implements IPersistence {
   ) {
     const searchIndex = this.searchIndices.get(resource);
     if (searchIndex) {
-      const result = await searchIndex.index.search(search.query, {
-        limit: params?.limit,
-        suggest: true
-      });
-      console.log({
-        at: "DexiePersistence.selectMany - search",
-        query: search.query,
-        result
-      });
+      let result: any;
+      if (search.query.includes(" ")) {
+        result = await searchIndex.contextualIndex.searchCacheAsync(
+          search.query,
+          {
+            limit: params?.limit,
+            suggest: true
+          }
+        );
+      } else {
+        result = await searchIndex.index.searchCacheAsync(search.query, {
+          limit: params?.limit,
+          suggest: true
+        });
+      }
       const ids = result;
-      if (Array.isArray(ids) && ids.length > 0) return ids;
+      if (Array.isArray(ids) && ids.length > 0)
+        return ids.filter(removeDuplicatesFilter);
     }
     const documentSearchIndex = this.documentSearchIndices.get(resource);
     if (documentSearchIndex) {
@@ -670,7 +697,7 @@ export class DexiePersistence implements IPersistence {
         params
       );
       console.log({
-        at: "DexiePersistence.selectMany - preSearchUsingIndex",
+        at: "selectMany - preSearchUsingIndex",
         resource,
         ids
       });
