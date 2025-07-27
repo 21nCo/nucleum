@@ -11,7 +11,6 @@
   // import gapsvg from "./images/toolbarPageGap.svg?url";
   import "./pdfviewer.css";
   import context from "$lib/client/stores/context.store";
-  import { postToParent } from "$lib/client/utils/embed.utils";
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   import { fileEmbedChannel } from "$lib/client/components/files/fileEmbedChannel.store";
   import { OperatingSystem } from "$lib/client/types/context.type";
@@ -45,7 +44,8 @@
   const MIN_SCALE = 0.5;
   const MAX_SCALE = 2.3;
 
-  enum SpreadModes { //init display modes.
+  enum SpreadModes {
+    //init display modes.
     "NONE",
     "ODD",
     "EVEN"

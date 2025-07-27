@@ -1,6 +1,7 @@
 import { clientStorage } from "$lib/client/persistence/persistence.utils";
 import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
 import { logger } from "$lib/client/components/debug/logger.client";
+import { parse } from "$lib/shared/utils/json.utils";
 
 interface FallbackRunStatus {
   [fallbackName: string]: {
@@ -38,7 +39,7 @@ export class FallbackTracker {
       const status = await clientStorage.get(
         ClientStorageKey.FALLBACKS_RUN_STATUS
       );
-      return status ? JSON.parse(status) : {};
+      return status ? parse(status) : {};
     } catch (error) {
       logger.error({ at: "FallbackTracker.getFallbackStatus", error });
       return {};
@@ -49,10 +50,7 @@ export class FallbackTracker {
     status: FallbackRunStatus
   ): Promise<void> {
     try {
-      await clientStorage.set(
-        ClientStorageKey.FALLBACKS_RUN_STATUS,
-        JSON.stringify(status)
-      );
+      await clientStorage.set(ClientStorageKey.FALLBACKS_RUN_STATUS, status);
     } catch (error) {
       logger.error({ at: "FallbackTracker.saveFallbackStatus", error });
     }

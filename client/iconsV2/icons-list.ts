@@ -478,6 +478,11 @@ const logos = [
   "reddit-icon"
 ];
 
+const solarIcons = [
+  "rewind-10-seconds-back-linear",
+  "rewind-10-seconds-forward-linear"
+];
+
 const simpleIcons = ["wikipedia", "googledocs", "abstract", "mixpanel"];
 
 const svgSpinnersIcons = ["90-ring-with-bg", "3-dots-fade", "180-ring-with-bg"];
@@ -542,7 +547,8 @@ export const iconSets = {
   "fluent-emoji": fluentEmojiIcons,
   tabler: tablerIcons,
   uil: uilIcons,
-  mynaui: mynaUiIcons
+  mynaui: mynaUiIcons,
+  solar: solarIcons
 };
 
 export const phIcons = {
@@ -556,4 +562,4 @@ export const phIcons = {
   // )
 };
 
-export const bundleNumber = 32;
+export const bundleNumber = 35;

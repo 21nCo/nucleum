@@ -132,7 +132,9 @@
         }
       }
       const logsResult = await sessionLogStore.selectMany({
-        properties: ["id", "startUnix", "goalId", "focus", "breakTime"],
+        properties: {
+          select: ["id", "startUnix", "goalId", "focus", "breakTime"]
+        },
         filters: {
           startUnix: startFilter,
           goalId: goalIds.length > 0 ? goalIds : undefined

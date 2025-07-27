@@ -43,6 +43,7 @@
   import PageError from "$lib/client/components/error/PageError.svelte";
   import { SurrealPersistence } from "$lib/client/persistence/surreal/surreal.local";
   import { SignalDBPersistence } from "$lib/client/persistence/signaldb/signaldb.local";
+  import { IndexedDBPersistence } from "$lib/client/persistence/indexeddb/indexeddb.local";
   import posthog from "posthog-js";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
@@ -67,6 +68,8 @@
   import { UIStateScope } from "$lib/client/stores/uiState/uiState.type";
   import { RxDBPersistence } from "$lib/client/persistence/rxdb/rxdb.local";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { DexiePersistence } from "$lib/client/persistence/dexie/dexie.local";
+  import { parse } from "$lib/shared/utils/json.utils";
 
   const loadingMessages = {
     cloneUp: {
@@ -342,7 +345,7 @@
       product: $appStore.product
     };
     const stores = [...cacheableStores, ...localCacheableStores];
-    const provider: PersistenceProvider = PersistenceProvider.SURREAL;
+    const provider: PersistenceProvider = PersistenceProvider.DEXIE;
     return initFlux(stores, provider, resolveLocalPersistence(), initParams);
 
     function resolveLocalPersistence() {
@@ -353,6 +356,10 @@
           return new SignalDBPersistence();
         case PersistenceProvider.RXDB:
           return new RxDBPersistence();
+        case PersistenceProvider.INDEXEDDB:
+          return new IndexedDBPersistence();
+        case PersistenceProvider.DEXIE:
+          return new DexiePersistence();
         default:
           return new SurrealPersistence();
       }
@@ -485,7 +492,7 @@
   async function handleMessageFromParent(event: any) {
     try {
       if (event?.data?.type === "SWIFT_MESSAGE" && event?.data?.payload) {
-        const parsed = JSON.parse(event.data.payload);
+        const parsed = parse(event.data.payload);
         console.log({
           at: "handleMessageFromParent - SWIFT_MESSAGE",
           parsed

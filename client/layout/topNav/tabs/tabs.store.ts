@@ -29,7 +29,12 @@ class TabStore {
 
   activate(id: IRecordId) {
     appStore.closeResource({ isRestrictToModals: true });
-    const resource = typeof id === "string" ? id.split(":")[0] : id.tb;
+    const resource =
+      typeof id === "string"
+        ? id.split(":")[0]
+        : typeof id === "object" && "tb" in id
+          ? id.tb
+          : undefined;
     appStore.gotoPath(`/${resource}/tab`, {
       queryParams: {
         tab: id

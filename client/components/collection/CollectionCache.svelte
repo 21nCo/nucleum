@@ -1,14 +1,18 @@
 <script lang="ts">
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { linker } from "$lib/client/products/memotron/linking/link.store";
-  import { LinkType } from "$lib/client/products/memotron/node/node.type";
+  import { LinkType } from "$lib/client/products/memotron/linking/link.type";
   import { collectionStore } from "./collection.store";
   import { cache } from "$lib/client/layout/layers/cache/cache.store";
   import { logger } from "../debug/logger.client";
   import { onMount } from "svelte";
   import { Resource } from "../flux/resourceStores/resource.enum";
   import { CacheKey } from "$lib/client/layout/layers/cache/cache.type";
-  import { CollectionType, type ICollection } from "./collection.type";
+  import {
+    CollectionObjectKey,
+    CollectionType,
+    type ICollection
+  } from "./collection.type";
   import ResourceCache from "../record/ResourceCache.svelte";
   import { resourceCacheKey } from "../flux/resourceStores/resource.utils";
 
@@ -24,10 +28,15 @@
   async function refreshCollectionItemCounts() {
     try {
       const collections = await collectionStore.selectMany({
-        properties: ["id"]
+        properties: {
+          select: ["id"]
+        }
       });
       let links = await linker.selectMany({
-        properties: ["in.* as node", "out"],
+        properties: {
+          select: ["out"],
+          expand: ["in"]
+        },
         filters: {
           linkType: LinkType.DIRECT,
           out: collections.map((x: ICollection) => x.id.toString())
@@ -35,7 +44,7 @@
       });
       if (links && Array.isArray(links)) {
         links = links.filter((x: any) => {
-          return x && x.node && !x.node.isArchived && !x.node.trashInformation;
+          return x && x.in && !x.in.isArchived && !x.in.trashInformation;
         });
         const counts = links
           .map((x: any) => ({ ...x, out: x.out.toString() }))
@@ -57,7 +66,10 @@
   async function refreshTypedCollections() {
     const collections = await collectionStore.selectMany(
       {
-        properties: ["id", "avatar", "typeToExtend.* as typeToExtend"],
+        properties: {
+          select: ["id", "avatar"],
+          expand: [CollectionObjectKey.typeToExtend]
+        },
         filters: {
           type: CollectionType.TYPED
         }

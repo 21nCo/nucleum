@@ -3,7 +3,6 @@ import { writable } from "svelte/store";
 import { logger } from "../debug/logger.client";
 import { ObservableStore } from "$lib/client/stores/client.store";
 import { appStore } from "$lib/client/stores/app.store";
-import type { IObservableStoreSubject } from "$lib/client/types/data.type";
 import { ResourceAccessMode } from "../flux/resourceStores/resource.type";
 
 const defaultModal = {
@@ -85,9 +84,7 @@ class PlayerStore extends ObservableStore<IPlayer> {
 
 export const player = new PlayerStore();
 
-class FullScreenStore extends ObservableStore<
-  { path?: string } & IObservableStoreSubject
-> {
+class FullScreenStore extends ObservableStore<{ path?: string }> {
   constructor() {
     super("fullScreen");
     this.set({ path: undefined });

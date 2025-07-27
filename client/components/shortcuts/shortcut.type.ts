@@ -1,4 +1,3 @@
-import type { IObservableStoreSubject } from "$lib/client/types/data.type";
 import { ModifierKey } from "$lib/client/types/keyboard.type";
 
 export type IKeyboardShortcut = {
@@ -7,6 +6,6 @@ export type IKeyboardShortcut = {
   modifiers?: ModifierKey[];
 };
 
-export type IKeyboardShortcutsStore = IObservableStoreSubject & {
+export type IKeyboardShortcutsStore = {
   [key: string]: IKeyboardShortcut;
 };

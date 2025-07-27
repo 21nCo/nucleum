@@ -21,7 +21,6 @@ import {
   sessionStore,
   activeSession
 } from "$lib/client/products/pointron/focus/session.store";
-import { focusHeatmapStore } from "$lib/client/products/pointron/journal/journal.store";
 import {
   manualLogStore,
   sessionLogStore
@@ -45,11 +44,8 @@ export const nucleusCacheableStores: IStore[] = [
   focusItemsStore,
   activeSession,
   manualLogStore,
-  focusHeatmapStore,
   sessionLogStore,
-  sessionStore,
-  goalStore,
-  taskStore
+  sessionStore
 ];
 
 export const nucleusRemoteOnlyStores: IStore[] = [

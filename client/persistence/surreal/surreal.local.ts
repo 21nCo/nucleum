@@ -29,7 +29,8 @@ import {
   type IMutationParamsv2,
   type IPrimitiveDbDataType,
   type IRecordId,
-  type IResourceSelectParams
+  type IResourceSelectParams,
+  type IResourceSelectProperties
 } from "../../types/data.type";
 import { interceptSurrealResponse } from "../../utils/utils";
 import { LogType } from "$lib/client/components/debug/debug.type";
@@ -38,7 +39,8 @@ import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
 import { GlobalEvent } from "$lib/client/types/event.enum";
 import { generateMiniRandomId } from "$lib/shared/utils/crypto.utils";
 import { Product } from "$lib/client/types/product.type";
-import { postToParent } from "$lib/client/utils/embed.utils";
+import { postDataToParent } from "$lib/client/utils/embed.utils";
+import { EmbedDataMessage } from "$lib/client/types/embedMessage.enum";
 
 const loadSurrealDB = async () => {
   const Surreal = await import("@surrealdb/wasm");
@@ -274,7 +276,13 @@ export class SurrealPersistence implements IPersistence {
         break;
       case PersistenceActionType.BULK_MERGE:
         // response = await this.bulkEdit<T>(resource, params.records);
-        response = await this.bulkEditTemp<T>(resource, params.records);
+        const records = params.recordIds.map((id) => ({
+          id,
+          ...params.changes,
+          modifiedBy: params.changes?.modifiedBy ?? this.userId,
+          modifiedAt: new Date().toISOString()
+        }));
+        response = await this.bulkEditTemp<T>(resource, records);
         break;
     }
     return response;
@@ -406,7 +414,7 @@ export class SurrealPersistence implements IPersistence {
     );
     if (this.isReloadRequested) return;
     this.isReloadRequested = true;
-    postToParent({ reload: true });
+    postDataToParent(EmbedDataMessage.RELOAD, true);
   }
 
   async _query(query: string, params?: any) {
@@ -755,7 +763,7 @@ export class SurrealPersistence implements IPersistence {
    */
   async select(
     resourceId: IRecordId,
-    properties?: string[],
+    properties?: IResourceSelectProperties,
     signal?: AbortSignal
   ): Promise<any> {
     try {
@@ -772,7 +780,7 @@ export class SurrealPersistence implements IPersistence {
       }
 
       const query = resolveSelectQuery(resourceId, properties);
-      const logResource: Resource = Resource.everything;
+      const logResource: Resource = Resource.goal;
       if (resourceId.toString().includes(logResource)) {
         logger.debug({ at: "SurrealPersistence.select", query, resourceId });
         console.time(

@@ -13,6 +13,7 @@ import {
   NotFoundError,
   ValidationError
 } from "./common/errors";
+import { stringify, parse as parseJson } from "$lib/shared/utils/json.utils";
 
 export const accessControlHeaders = {
   "Access-Control-Allow-Origin": "*", //TODO - dynamic origin
@@ -63,19 +64,19 @@ export async function lambdaUsingNode(
         body = parse(event.body ?? "");
       } else {
         console.log("parsing json data", { body: event.body });
-        body = JSON.parse(event.body ?? "");
+        body = parseJson(event.body ?? "");
       }
     }
     const result = await callback(body, agent);
     if (result?.statusCode && result?.body) {
       statusCode = result.statusCode;
-      responseBody = JSON.stringify(result.body);
+      responseBody = stringify(result.body);
       responseHeaders = result.headers ?? {};
     } else if (result?.statusCode) {
       statusCode = result.statusCode;
       responseHeaders = result.headers ?? {};
     } else {
-      responseBody = JSON.stringify(result);
+      responseBody = stringify(result);
     }
   } catch (e) {
     console.error(e);
@@ -88,10 +89,10 @@ export async function lambdaUsingNode(
       e instanceof DatabaseError
     ) {
       statusCode = e.statusCode;
-      responseBody = JSON.stringify({ error: e.message });
+      responseBody = stringify({ error: e.message });
     } else {
       statusCode = 500;
-      responseBody = JSON.stringify(e);
+      responseBody = stringify(e);
     }
   }
   return {
@@ -132,14 +133,14 @@ export async function lamdbaUsingBun(
     console.log({ result });
     if (result.statusCode && result.body) {
       statusCode = result.statusCode;
-      responseBody = JSON.stringify(result.body);
+      responseBody = stringify(result.body);
     } else {
-      responseBody = JSON.stringify(result);
+      responseBody = stringify(result);
     }
   } catch (e) {
     console.error(e);
     statusCode = 500;
-    responseBody = JSON.stringify(e);
+    responseBody = stringify(e);
   }
   return new Response(responseBody, {
     status: statusCode,

@@ -43,7 +43,7 @@
   async function refresh() {
     isRefreshing = true;
     const dayFilter = tzStore.resolveTimePeriodFilterForDay(date);
-    const result = await sessionStore.selectMany(
+    const result = await sessionStore.selectManyWithItemsExpansion(
       {
         filters: {
           startUnix: dayFilter
@@ -56,9 +56,8 @@
         isExpand: true
       }
     );
-    console.log({ result });
     if (isValidArrayWithData(result)) {
-      sessions = result.map((session: ISessionThumb) => ({
+      sessions = result!.map((session: ISessionThumb) => ({
         ...session,
         splits: resolveSessionTimeSplit(session)
       }));

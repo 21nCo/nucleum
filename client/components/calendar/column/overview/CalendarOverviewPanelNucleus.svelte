@@ -3,12 +3,12 @@
   import Text from "$lib/client/elements/text/Text.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
-  import { TimeScale } from "$lib/client/types/time.type";
+  import { TimeScaleUnit } from "$lib/client/types/time.type";
   import CalendarOverviewPanelPointron from "./CalendarOverviewPanelPointron.svelte";
   import MemoryOverviewForTimePeriod from "./MemoryOverviewForTimePeriod.svelte";
 
   export let date: Date;
-  export let scale: TimeScale = TimeScale.DAYS;
+  export let scale: TimeScaleUnit = TimeScaleUnit.DAY;
   export let isRewind: boolean = false;
 </script>
 

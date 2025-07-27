@@ -15,7 +15,7 @@
       icon: "check"
     },
     {
-      title: "Twitter clipping",
+      title: "Tweet clipping",
       icon: "check"
     },
     {

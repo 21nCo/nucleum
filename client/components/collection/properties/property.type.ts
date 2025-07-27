@@ -1,16 +1,15 @@
 import type {
   IResource,
-  IResourseShareable,
+  IResourceShareable,
   OmitForCaptureWithId
 } from "$lib/client/components/flux/resourceStores/resource.type";
 import type { AvatarWithCode, IconAvatar } from "$lib/client/types/avatar.type";
-import type { IObservableStoreSubject } from "$lib/client/types/data.type";
 import type { ICollection } from "../collection.type";
 
 /**
  * @deprecated Use IProperty instead
  */
-export interface IPropertyv1 extends IResource, IResourseShareable {
+export interface IPropertyv1 extends IResource, IResourceShareable {
   label: string;
   type: PropertyType;
   default?: boolean | string | number | string[];
@@ -20,24 +19,28 @@ export interface IPropertyv1 extends IResource, IResourseShareable {
   isShowOnCapture?: boolean;
 }
 
-export type IProperty =
-  | ISelectProperty
-  | IUniversalProperty
-  | IRatingProperty
-  | IPropertyInterface<
-      Exclude<
-        PropertyType,
-        | PropertyType.SINGLE_SELECT
-        | PropertyType.MULTI_SELECT
-        | PropertyType.UNIVERSAL
-        | PropertyType.RATING
-      >,
-      IPropertyConfig
-    >;
+export type IPropertyCapture = OmitForCaptureWithId<IProperty>;
 
-interface IPropertyInterface<TType = PropertyType, TConfig = IPropertyConfig>
-  extends IResource,
-    IResourseShareable {
+type IResourcePropertiesForPropetyType = IResource & IResourceShareable;
+
+export type IProperty = IResourcePropertiesForPropetyType &
+  (
+    | ISelectProperty
+    | IUniversalProperty
+    | IRatingProperty
+    | IPropertyInterface<
+        Exclude<
+          PropertyType,
+          | PropertyType.SINGLE_SELECT
+          | PropertyType.MULTI_SELECT
+          | PropertyType.UNIVERSAL
+          | PropertyType.RATING
+        >,
+        IPropertyConfig
+      >
+  );
+
+interface IPropertyInterface<TType = PropertyType, TConfig = IPropertyConfig> {
   label: string;
   type: TType;
   config?: TConfig;
@@ -199,7 +202,7 @@ export type IPropertyValue =
   | boolean
   | { start: Date; end: Date };
 
-export type IPropertyEditorStore = IObservableStoreSubject & {
+export type IPropertyEditorStore = {
   properties: OmitForCaptureWithId<IProperty>[];
   typeToExtend?: ICollection;
 };

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { selectedTimePeriod } from "$lib/client/stores/app.store";
   import { Placement, Orientation } from "$lib/client/types/direction.enum";
-  import { formatDate } from "$lib/client/utils/time.utils";
+  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
   import {
     TileAppearance,
     type DailyData,
@@ -25,10 +25,10 @@
   $: tooltip = resolveToolTip(data.date);
   $: isActive =
     ("date" in data &&
-      data.date == formatDate($selectedTimePeriod, "iso-short")) ||
+      data.date == parseAndFormatDate($selectedTimePeriod, "iso-short")) ||
     ("month" in data &&
       data.month ==
-        formatDate($selectedTimePeriod, "iso-short")
+        parseAndFormatDate($selectedTimePeriod, "iso-short")
           .split("-")
           .slice(0, 2)
           .join("-"));
@@ -61,7 +61,7 @@
   function resolveToolTip(date: string | undefined) {
     if (!date) return;
     if ("date" in data) {
-      return formatDate(new Date(date), "verbose");
+      return parseAndFormatDate(new Date(date), "verbose");
     }
   }
 </script>

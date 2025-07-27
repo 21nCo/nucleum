@@ -2,11 +2,8 @@
   import { createEventDispatcher, onMount, onDestroy } from "svelte";
   import {
     type IBlock,
-    InlineType,
-    type SpanContent,
-    SpanType
+    InlineType
   } from "$lib/client/components/markdown/md.type";
-  import TextWithSpans from "./TextWithSpans.svelte";
   import { debouncer, generateUID } from "$lib/client/utils/utils";
   import {
     extractInlineMarkdownFromHtml,
@@ -91,15 +88,8 @@
     currentNodeIndex: number;
     offset: number;
   };
-  let caretPositionT1: number | undefined = undefined;
-  let markerId = "caret-marker";
   let isNewSpanInserted = false;
-  /**
-   * @deprecated
-   * @param text
-   */
-  let spans: SpanContent[] =
-    typeof content === "string" ? parseSpansFromText(content) : [];
+
   // replaceInlineStyling();
 
   let mutationObserver: MutationObserver;
@@ -388,77 +378,6 @@
     } catch (error) {
       logger.error({ at: "renderInlineLinks", error });
       return false;
-    }
-  }
-
-  /**
-   * ! Deprecated
-   * T1 method of inline fragment
-   */
-  function parseSpansFromText(text: string) {
-    let spans: SpanContent[] = [];
-    return spans;
-  }
-
-  /**
-   * ! Deprecated
-   * T1 of having fragments for inline formatting
-   * @param match
-   */
-  function getSpanType(match: string) {
-    let type: SpanType;
-    const startAndEndCharacter = match.slice(0, 2);
-    switch (startAndEndCharacter) {
-      case "**":
-        type = SpanType.BOLD;
-        break;
-      case "*":
-        type = SpanType.ITALIC;
-        break;
-      case "_":
-        type = SpanType.UNDERLINE;
-        break;
-      case "~~":
-        type = SpanType.STRIKE;
-        break;
-      case "`":
-        type = SpanType.CODE;
-        break;
-      default:
-        type = SpanType.COLOR;
-        break;
-    }
-    return type;
-  }
-
-  /**
-   * @deprecated
-   * T1 of saving caret position
-   */
-  function insertCaretMarker() {
-    const caretPosition = getCursorPosition(blockRef);
-    if (typeof content !== "string") return;
-    content =
-      content.slice(0, caretPosition) +
-      "<!--caret-->" +
-      content.slice(caretPosition);
-
-    function getCursorPosition(element: any) {
-      if (!element) return;
-      let caretOffset = 0;
-      const doc = element.ownerDocument || element.document;
-      const win = doc.defaultView || doc.parentWindow;
-      const sel = win.getSelection();
-
-      if (sel.rangeCount > 0) {
-        const range = sel.getRangeAt(0);
-        const preCaretRange = range.cloneRange();
-        preCaretRange.selectNodeContents(element);
-        preCaretRange.setEnd(range.endContainer, range.endOffset);
-        caretOffset = preCaretRange.toString().length;
-      }
-
-      return caretOffset;
     }
   }
 
@@ -1228,10 +1147,6 @@
     {/if}
   </div>
   <!-- {:else if Array.isArray(block.content)} -->
-{:else if spans.length > 0}
-  <div contenteditable class="outline-none">
-    <TextWithSpans content={spans} />
-  </div>
 {/if}
 
 {#if !isMarkdown}

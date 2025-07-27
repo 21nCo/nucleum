@@ -13,10 +13,6 @@
   import { nodeStore } from "../../node/node.store";
   import { NodeType } from "../../node/node.type";
   import { collectionStore } from "$lib/client/components/collection/collection.store";
-  import {
-    CollectionLayout,
-    CollectionType
-  } from "$lib/client/components/collection/collection.type";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { toasts } from "$lib/client/stores/notification.store";
   import type { IRecordId } from "$lib/client/types/data.type";
@@ -146,8 +142,6 @@
       result = await collectionStore.save(
         {
           label: val,
-          type: CollectionType.UNTYPED,
-          defaultLayout: CollectionLayout.BOARD,
           resource: ctx === "clipper" ? Resource.node : undefined
         },
         {

@@ -10,6 +10,7 @@
   import { generateUID } from "$lib/client/utils/utils";
   import { createEventDispatcher } from "svelte";
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
+  import { parse } from "$lib/shared/utils/json.utils";
   const dispatch = createEventDispatcher();
   let fileInput: HTMLInputElement;
   let isProcessingImport: boolean = false;
@@ -40,7 +41,7 @@
       try {
         const importedData = event.target?.result;
         if (!importedData) return;
-        jsonData = JSON.parse(importedData as string);
+        jsonData = parse(importedData as string);
         console.log({ jsonData });
         if (isValidImportData(jsonData)) {
           fileName = file.name;

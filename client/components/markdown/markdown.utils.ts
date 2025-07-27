@@ -1,8 +1,6 @@
 import {
   type IBlockInterface,
   type IMarkdownStore,
-  type ListBlockWithChildren,
-  type IMarkdown,
   type IBlock,
   type IEscapeShortcut,
   type IListBlockBody,
@@ -10,8 +8,6 @@ import {
   InlineType
 } from "$lib/client/components/markdown/md.type";
 import {
-  type ListChild,
-  type ListContent,
   type INode,
   type IActiveNode,
   NodeType,
@@ -107,35 +103,6 @@ export function handleNodeMarkdownChildHierarchyChanges(
     ];
   }
   return store;
-}
-
-/**
- * Iterator function to find the child that matches the childId to ultimately arrive at the deep nesting and insert the new block
- * @param block parent block
- * @param childId the id of the child to find
- * @returns blocks of the child that matches the childId
- */
-function getChild(block: ListBlockWithChildren, childId: string) {
-  return block.children.find((b) => b.id === childId) as ListChild<
-    Required<Pick<ListContent, "children">>
-  >;
-}
-
-export function resolveImmediateParent(
-  mdBlocks: IBlockInterface[],
-  parentHierarchy: string[]
-) {
-  const topMostParentId = parentHierarchy.shift();
-  const topMostParent = mdBlocks.find((b) => b.id === topMostParentId);
-  let iterParent: ListBlockWithChildren = topMostParent as IBlockInterface<
-    Required<Pick<ListContent, "children">>
-  >;
-  let parentOneAbove: ListBlockWithChildren | undefined;
-  parentHierarchy.forEach((item, index) => {
-    parentOneAbove = iterParent;
-    iterParent = getChild(iterParent, item);
-  });
-  return { parent: iterParent, parentOneAbove };
 }
 
 function encapsulateInlinePattern(

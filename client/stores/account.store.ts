@@ -7,7 +7,7 @@ import {
   type UserAccount,
   type UserInformation
 } from "../types/account.type";
-import { postToParent } from "$lib/client/utils/embed.utils";
+import { postDataToParent } from "$lib/client/utils/embed.utils";
 import { Persistence } from "../persistence/persistence";
 import { ButtonVariant } from "../types/button.type";
 import {
@@ -26,10 +26,7 @@ import {
   determineIfSubscriptionExpired
 } from "$lib/client/components/subscription/userPlan.utils";
 import { ObservableStore } from "./client.store";
-import {
-  StoreDataType,
-  type IObservableStoreSubject
-} from "$lib/client/types/data.type";
+import { StoreDataType } from "$lib/client/types/data.type";
 import { clientStorage } from "../persistence/persistence.utils";
 import { ClientStorageKey } from "../persistence/persistence.type";
 import { logger } from "../components/debug/logger.client";
@@ -45,12 +42,12 @@ import { compressImageToTargetSize } from "../utils/ui.utils";
 import { convertHeicToPng } from "../utils/ui.utils";
 import { generateImagePreviewFromPdf } from "../utils/pdf.utils";
 import { Action } from "../types/action.enum";
+import { EmbedDataMessage } from "../types/embedMessage.enum";
+import { parse } from "$lib/shared/utils/json.utils";
 
 export const isRefreshingToken = writable(false);
 
-class AccountStore extends ObservableStore<
-  UserAccount & IObservableStoreSubject
-> {
+class AccountStore extends ObservableStore<UserAccount> {
   persistence = new Persistence();
   constructor() {
     super("account", StoreDataType.NA);
@@ -75,7 +72,7 @@ class AccountStore extends ObservableStore<
     }
     const userInfo = await clientStorage.get(ClientStorageKey.USER_INFO);
     if (userInfo) {
-      seed.userInfo = JSON.parse(userInfo ?? "");
+      seed.userInfo = parse(userInfo ?? "");
       seed.userId = seed.userInfo?.id.split("user:")[1];
     }
     this.set(seed);
@@ -85,19 +82,17 @@ class AccountStore extends ObservableStore<
   async postToEmbed(data: any = null) {
     if (!data) {
       const token = await clientStorage.get(ClientStorageKey.STOKEN);
-      const userInfo = JSON.parse(
+      const userInfo = parse(
         (await clientStorage.get(ClientStorageKey.USER_INFO)) ?? ""
       );
       data = { token, userInfo };
     }
     if (!data) return;
-    postToParent({
-      account: JSON.stringify({
-        userId: data.userInfo?.id?.split("user:")[1],
-        token: data.token,
-        refreshToken: data.refreshToken,
-        isLoggedIn: true
-      })
+    postDataToParent(EmbedDataMessage.ACCOUNT, {
+      userId: data.userInfo?.id?.split("user:")[1],
+      token: data.token,
+      refreshToken: data.refreshToken,
+      isLoggedIn: true
     });
   }
 
@@ -112,10 +107,7 @@ class AccountStore extends ObservableStore<
     } = { isNewUser: false }
   ) {
     clientStorage.set(ClientStorageKey.STOKEN, data.token);
-    clientStorage.set(
-      ClientStorageKey.USER_INFO,
-      JSON.stringify(data.userInfo)
-    );
+    clientStorage.set(ClientStorageKey.USER_INFO, data.userInfo);
     // localStorage.setItem("refresh-token", data.refreshToken ?? "");
     this.postToEmbed(data);
     const isBootstrapped = data.userInfo.isBootstrapped;

@@ -14,7 +14,7 @@
     SUBSCRIPTION_PLANS
   } from "./userPlan.utils";
   import { appStore } from "$lib/client/stores/app.store";
-  import { formatDate } from "$lib/client/utils/time.utils";
+  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
   import { renderMdAsHtml } from "../markdown/markdown.utils";
   import PlanIcon from "./elements/PlanIcon.svelte";
   import modalEvent from "../modal/modal.store";
@@ -57,7 +57,7 @@
 
     {#if renewalDate}
       <p class="text-sm text-fgs3 mb-8">
-        Next payment: {formatDate(renewalDate)}
+        Next payment: {parseAndFormatDate(renewalDate)}
       </p>
     {/if}
 

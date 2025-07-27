@@ -67,12 +67,12 @@
   }
 
   async function loadTasks() {
+    const dateFilter = tzStore.resolveTimePeriodFilterForDay(date);
     const allTasks = await new SearchStore(Resource.task).select({
       filters: {
-        dateUnix: tzStore.resolveTimePeriodFilterForDay(date)
+        dateUnix: dateFilter
       }
     });
-
     completedTasksCount = allTasks.filter(
       (task: ITaskThumb) => task.isChecked
     ).length;

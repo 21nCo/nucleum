@@ -14,7 +14,6 @@ import { Size } from "../types/size.enum";
 import { Orientation } from "../types/direction.enum";
 import { appStore, intercomId, isInEditMode } from "./app.store";
 import Help from "../components/help/Help.svelte";
-import ManualRunDbo from "../components/settings/ManualRunDbo.svelte";
 import ExtensionLoginStatusPage from "../components/settings/ExtensionLoginStatusPage.svelte";
 import DebugPage from "../layout/layers/debug/DebugPage.svelte";
 import modalEvent from "../components/modal/modal.store";
@@ -82,6 +81,7 @@ import Credits from "$lib/client/components/help/Credits.svelte";
 import { resolveResourceStore } from "../components/flux/resourceStores/store.resolver";
 import CollectionCache from "../components/collection/CollectionCache.svelte";
 import DataSettings from "../components/settings/DataSettings.svelte";
+import DexieConsole from "../components/debug/DexieConsole.svelte";
 
 export const globalActions: IAction[] = [
   {
@@ -442,18 +442,6 @@ export const globalActions: IAction[] = [
     }
   },
   {
-    action: Action.MANUAL_RUN_DBO,
-    component: ManualRunDbo,
-    type: ActionType.MODAL,
-    isMeta: true,
-    isMenuHidden: true,
-    modalParams: {
-      layout: {
-        size: Size.sm
-      }
-    }
-  },
-  {
     action: Action.TOGGLE_SIDEBAR,
     type: ActionType.FUNCTION,
     label: "Toggle sidebar",
@@ -525,6 +513,18 @@ export const globalActions: IAction[] = [
     modalParams: {
       layout: {
         size: Size.lg
+      }
+    }
+  },
+  {
+    action: "dexie-console",
+    component: DexieConsole,
+    isMeta: true,
+    type: ActionType.MODAL,
+    modalParams: {
+      layout: {
+        size: Size.xxl,
+        orientation: Orientation.Horizontal
       }
     }
   },

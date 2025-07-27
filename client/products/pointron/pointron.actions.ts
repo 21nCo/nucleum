@@ -9,7 +9,6 @@ import {
   type IAction,
   type IActionFnParams
 } from "$lib/client/types/action.type";
-import Journal from "$lib/client/products/pointron/journal/Journal.svelte";
 import ImportAppData from "$lib/client/products/pointron/settings/ImportAppData/ImportAppData.svelte";
 import EditPresetView from "$lib/client/products/pointron/focus/advanced/presets/EditPresetModal.svelte";
 import PointronOnboarding from "$lib/client/products/pointron/base/PointronOnboarding.svelte";
@@ -307,14 +306,6 @@ export const pointronActions: IAction[] = [
     type: ActionType.PAGE,
     isMeta: true,
     icon: "history"
-  },
-  {
-    action: "journal",
-    component: Journal,
-    isInactive: true,
-    icon: "journal",
-    label: "Journal",
-    type: ActionType.PAGE
   },
   {
     action: PointronAction.FOCUS_PLAYER,
@@ -625,7 +616,9 @@ export const pointronActions: IAction[] = [
               }
             );
             const sessionLogs = await sessionLogStore.selectMany({
-              properties: ["id"],
+              properties: {
+                select: ["id"]
+              },
               filters: {
                 sessionId: params?.componentParams?.id?.toString()
               }
@@ -707,7 +700,7 @@ export const pointronActions: IAction[] = [
     label: "Create a new goal",
     type: ActionType.FUNCTION,
     fn: async (props?: IActionFnParams) => {
-      await goalStore.createNew({
+      await goalStore.save({
         ...props?.componentParams,
         linkSearchParam: props?.searchParams?.[AppSearchParam.LINK]
       });
@@ -805,8 +798,10 @@ export const pointronActions: IAction[] = [
         });
         return result.filter(
           (goal: IGoal) =>
-            !goal.parent?.some(resourceInList(componentParams.src)) &&
-            !isSameResource(goal, componentParams.src)
+            !(
+              goal.parent &&
+              goal.parent.some(resourceInList(componentParams.src))
+            ) && !isSameResource(goal, componentParams.src)
         );
       },
       placeholder: "Select a goal",

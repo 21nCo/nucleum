@@ -30,7 +30,7 @@
 
   let importHistoryData: (Omit<
     ImportHistoryItem,
-    "source" | "totalRecords" | "status"
+    "source" | "totalRecords" | "status" | "createdAt"
   > & {
     source: string;
     totalRecords: string;

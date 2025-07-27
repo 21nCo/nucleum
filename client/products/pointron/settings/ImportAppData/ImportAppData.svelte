@@ -25,6 +25,7 @@
   import { Display } from "$lib/client/types/view.type";
   import { enumToString, properCase } from "$lib/shared/utils/text.utils";
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
+  import { parse } from "$lib/shared/utils/json.utils";
 
   export let importSource: ImportSource = ImportSource.SELF;
   let checked: boolean = false;
@@ -250,7 +251,7 @@
           try {
             const importedData = event.target?.result;
             if (!importedData) return;
-            jsonData = JSON.parse(importedData as string);
+            jsonData = parse(importedData as string);
             if (isValidImportData(jsonData)) {
               fileName = file.name;
               fileSize = file.size;

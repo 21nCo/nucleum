@@ -16,6 +16,7 @@ import {
 } from "./extension.utils";
 import { ExtensionEvent } from "../types/extension.type";
 import { relayToSidePanel } from "./extension.utils";
+import { stringify } from "$lib/shared/utils/json.utils";
 
 export function resolveRegionalApiUrl() {
   try {
@@ -66,7 +67,7 @@ export async function performApiCall(
     url: baseUrl + "/" + endpoint,
     method,
     headers: {},
-    body: JSON.stringify({ ...body, context: await getAppLoadContext() })
+    body: stringify({ ...body, context: await getAppLoadContext() })
   });
   async function getAppLoadContext() {
     const deviceFingerprint = await generateFingerprint();

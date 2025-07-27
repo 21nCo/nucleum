@@ -1,4 +1,5 @@
 import { logger } from "$lib/client/components/debug/logger.client";
+import { parse } from "$lib/shared/utils/json.utils";
 import { textIsCode } from "$lib/shared/utils/text.utils";
 import { NodeType } from "../node/node.type";
 import { sanitizeAndResolve } from "../node/url.utils";
@@ -111,7 +112,7 @@ export async function resolvePasteContents(
     ]);
     let metadata;
     try {
-      metadata = metadataString ? JSON.parse(metadataString) : null;
+      metadata = metadataString ? parse(metadataString) : null;
     } catch (e) {
       metadata = null;
     }

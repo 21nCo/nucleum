@@ -42,6 +42,9 @@
   import ViennaScribe from "./logos/ViennaScribe.svelte";
   import MilaNote from "./logos/MilaNote.svelte";
   import Noted from "./logos/Noted.svelte";
+  import Raindrop from "./logos/Raindrop.svelte";
+
+  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
   export let provider: IdentityProvider | string | IContemporary;
   export let width = 20;
   let className = "";
@@ -74,7 +77,7 @@
   // $: console.log({ provider });
 </script>
 
-{#if icon.includes(":")}
+{#if icon.includes(":") && !icon.includes("svg:")}
   <Icon {icon} class={className} />
 {:else}
   <svg
@@ -91,8 +94,9 @@
     class={cn("flex justify-center items-center", className)}
     id={icon}
   >
-    <!-- TODO - later load logos from link dynamically -->
-    {#if icon === "obsidian"}
+    {#if icon.includes("svg:")}
+      <SvgIcon icon={icon.replace("svg:", "")} size="fit" />
+    {:else if icon === "obsidian"}
       <Obsidian />
     {:else if icon === "notion"}
       <Notion />
@@ -129,7 +133,7 @@
     {:else if icon === "instapaper"}
       <Instapaper />
     {:else if icon === "raindrop"}
-      <!-- <Raindrop /> -->
+      <Raindrop />
     {:else if icon === "thebrain"}
       <TheBrain />
     {:else if icon === "viennascribe"}

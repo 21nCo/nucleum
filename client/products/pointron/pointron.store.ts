@@ -15,6 +15,7 @@ import { Layout } from "$lib/client/types/layout.type";
 import type { IPointronPreferences } from "$lib/client/types/pointron/pointronPreferences.type";
 import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
 import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+import { parse } from "$lib/shared/utils/json.utils";
 
 /**
  * @deprecated
@@ -148,15 +149,7 @@ export const seedLocalPreferences: IPointronPreferences = {
 };
 class PointronPreferencesStore extends KeyValueStore<IPointronPreferences> {
   constructor() {
-    super(Resource.pointronPreferences, seedLocalPreferences, {
-      dboDependencies: [
-        "fn::pointron::import",
-        "fn::pointron::export",
-        "fn::pointron::importChunk",
-        "fn::pointron::revertImport",
-        "fn::pointron::iOS::currentSessionWidget"
-      ]
-    });
+    super(Resource.pointronPreferences, seedLocalPreferences);
   }
   loader(data: IPointronPreferences) {
     if (!data.id) return;
@@ -168,7 +161,7 @@ class PointronPreferencesStore extends KeyValueStore<IPointronPreferences> {
   async set(newValue: IPointronPreferences) {
     let changedProperties: any = {};
     if (this.previousValue) {
-      let differences = shallowDiff(newValue, JSON.parse(this.previousValue));
+      let differences = shallowDiff(newValue, parse(this.previousValue));
       differences.forEach((key: string) => {
         changedProperties[key] = newValue[key as keyof IPointronPreferences];
       });
@@ -318,7 +311,6 @@ export const seedTasks = [
   },
   { label: "third task", estimate: 35, workedFor: 45, checked: false }
 ];
-
 
 export const backgroundSoundStore = initBackgroundSoundStore();
 

@@ -41,6 +41,7 @@
     isRecordId,
     removeDuplicatesFilter
   } from "../components/flux/resourceStores/resource.utils";
+  import { parse } from "$lib/shared/utils/json.utils";
 
   const dispatch = createEventDispatcher();
   export let id: string;
@@ -266,7 +267,7 @@
       const currentRecents = await clientStorage.get(ClientStorageKey.RECENTS);
       const newRecents = [
         { ...record, id: record.id.toString() },
-        ...(currentRecents ? JSON.parse(currentRecents) : [])
+        ...(currentRecents ? parse(currentRecents) : [])
       ]
         .filter(removeDuplicatesFilter)
         .filter((x: any) => isRecordId(x.id));

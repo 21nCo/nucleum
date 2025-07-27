@@ -13,7 +13,8 @@ import {
   type IMutation,
   type IRecordId,
   IResourceFilterOperator,
-  IResourceFilterDateGrouping
+  IResourceFilterDateGrouping,
+  type IResourceSelectProperties
 } from "$lib/client/types/data.type";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { generateRandomId } from "./crypto.utils";
@@ -297,6 +298,10 @@ export function resolveBulkMergeQuery(
 const noneReplacerFn = (key: string, value: any) =>
   value === undefined || value === null ? `$NONE` : value;
 
+function isValidIdentifier(identifier: string): boolean {
+  return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(identifier);
+}
+
 /**
  * Newer versions of Surreal SDK doesn't automatically convert the date to the surreal date format and record links. There d'format' is used for dates and removing quotes around record links to be detected as record links.
  */
@@ -353,22 +358,41 @@ export function resolveMutationQueryV2(mutation: IMutation) {
 
 export function resolveSelectQuery(
   resourceId: IRecordId,
-  properties?: string[]
+  properties?: IResourceSelectProperties
 ) {
-  const props = properties ?? [];
-  const selectClause =
-    props.length > 0 ? `SELECT ${props.join(", ")}` : "SELECT *";
-  return `${selectClause} FROM ONLY ${resourceId};`;
+  let props =
+    properties && properties?.select && properties?.select?.length > 0
+      ? properties.select
+      : ["*"];
+  props = props.map((x) => (x === "#" ? "count()" : x));
+  const expansionProps = (properties?.expand ?? [])
+    .filter(isValidIdentifier)
+    .map(
+      (x) => `(select * from $parent.${x}) as ${x}`
+    );
+  const allProperties = [...props, ...expansionProps];
+  return `SELECT ${allProperties.join(", ")} FROM ONLY ${resourceId};`;
 }
 
 export function resolveSelectManyQuery(
   resource: Resource,
   params?: IResourceSelectParams
 ) {
-  const properties = params?.properties ?? [];
+  let properties =
+    params?.properties &&
+    params?.properties?.select &&
+    params?.properties?.select?.length > 0
+      ? params.properties.select
+      : ["*"];
+  properties = properties.map((x) => (x === "#" ? "count()" : x));
+  const expansionProps = (params?.properties?.expand ?? [])
+    .filter(isValidIdentifier)
+    .map(
+      (x) => `${x}.* as ${x}`
+    );
+  const allProperties = [...properties, ...expansionProps];
   const whereClause = generateWhereClause(resource, params);
-  const selectClause =
-    properties.length > 0 ? `SELECT ${properties.join(", ")}` : "SELECT *";
+  const selectClause = `SELECT ${allProperties.join(", ")}`;
 
   let query = `${selectClause} FROM ${resource} ${whereClause}`;
   if (
@@ -453,12 +477,9 @@ function generateWhereClause(
     conditions.push(whereClause.join(" AND "));
   }
 
-  if (params?.searchType === SearchType.SEMANTIC && params?.search) {
+  if (params?.search?.type === SearchType.SEMANTIC && params?.search) {
     conditions.push(
-      generateSemanticSearchClause(
-        params.search.queryEmbedding,
-        params.semanticSearchTopK
-      )
+      generateSemanticSearchClause(params.search.queryEmbedding, params.limit)
     );
   } else if (params?.search) {
     conditions.push(generateSearchClause(params.search));

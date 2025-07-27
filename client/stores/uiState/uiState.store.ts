@@ -21,6 +21,7 @@ import {
   resourceInList,
   isSameResource
 } from "$lib/client/components/flux/resourceStores/resource.utils";
+import { parse, stringify } from "$lib/shared/utils/json.utils";
 
 class UiStateStore extends KeyValueStore<IUIStateStore> {
   constructor() {
@@ -58,9 +59,9 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
     if (params?.scope === UIStateScope.DAP) {
       if (typeof window !== "undefined") {
         const savedState = window.localStorage.getItem("uiState");
-        const savedStateObj = savedState ? JSON.parse(savedState) : {};
+        const savedStateObj = savedState ? parse(savedState) : {};
         savedStateObj[key] = value;
-        window.localStorage.setItem("uiState", JSON.stringify(savedStateObj));
+        window.localStorage.setItem("uiState", stringify(savedStateObj));
         this.update((x) => {
           return {
             ...x,
@@ -86,7 +87,7 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
     if (params?.scope === UIStateScope.DAP) {
       const savedState = window.localStorage.getItem("uiState");
       if (!savedState) return undefined;
-      const savedStateObj = JSON.parse(savedState);
+      const savedStateObj = parse(savedState);
       return savedStateObj[key] ?? undefined;
     }
     return this.get()[key];

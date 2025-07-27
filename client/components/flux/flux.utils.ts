@@ -5,7 +5,6 @@ import {
   type IRecordId
 } from "$lib/client/types/data.type";
 import { generateRandomIdv2 } from "$lib/shared/utils/crypto.utils";
-import { RecordId } from "surrealdb";
 import { Resource } from "./resourceStores/resource.enum";
 import { NodeType } from "$lib/client/products/memotron/node/node.type";
 
@@ -18,12 +17,6 @@ export function generateResourceId(
   }
 ): IRecordId {
   const id = params?.id ?? generateRandomIdv2();
-  if (!params?.isAsString) {
-    return new RecordId(
-      itemType,
-      (params?.prefix ? params?.prefix + "_" : "") + id
-    );
-  }
   return `${itemType}:${params?.prefix ? params.prefix + "_" : ""}${id}`;
 }
 
@@ -37,8 +30,7 @@ export function resolveMutationAction(mutation: IMutation): string {
         : "↵ Unarchived";
     }
     if (RemovalProperty.TRASH_INFORMATION in mutationChangedProperties) {
-      return mutationChangedProperties.trashInformation &&
-        mutationChangedProperties.trashInformation !== "$NONE"
+      return mutationChangedProperties.trashInformation
         ? "⌫ Deleted"
         : "↵ Restored";
     }

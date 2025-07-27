@@ -2,6 +2,7 @@ import { getIconData } from "@iconify/utils";
 import { readFile, unlink, writeFile } from "fs/promises";
 import { locate } from "@iconify/json";
 import { bundleNumber, iconSets, phIcons } from "./icons-list";
+import { parse } from "$lib/shared/utils/json.utils";
 
 const version = bundleNumber;
 const isExtension = false;
@@ -18,7 +19,7 @@ async function buildIconSprite() {
 
   for (const setName of Object.keys(iconSets)) {
     const filename = locate(setName);
-    const icons = JSON.parse(await readFile(filename, "utf8"));
+    const icons = parse(await readFile(filename, "utf8"));
     spriteContent = addIconsToSprite(
       spriteContent,
       icons,
@@ -31,7 +32,7 @@ async function buildIconSprite() {
 
 async function buildPhSprite() {
   const filename = locate("ph");
-  const icons = JSON.parse(await readFile(filename, "utf8"));
+  const icons = parse(await readFile(filename, "utf8"));
   for (const [key, value] of Object.entries(phIcons)) {
     let spriteContent = spriteContentStart;
     spriteContent = addIconsToSprite(

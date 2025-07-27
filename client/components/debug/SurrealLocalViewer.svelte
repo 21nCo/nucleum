@@ -5,6 +5,7 @@
   import { onMount } from "svelte";
   import { flux } from "../flux/flux";
   import { Size } from "$lib/client/types/size.enum";
+  import { parse, stringify } from "$lib/shared/utils/json.utils";
 
   let query = "";
   let result: any;
@@ -12,7 +13,7 @@
   let recentQueries: any[] = [];
 
   onMount(() => {
-    recentQueries = JSON.parse(localStorage.getItem("recentQueries") || "[]");
+    recentQueries = parse(localStorage.getItem("recentQueries") || "[]");
   });
 
   async function executeQuery() {
@@ -25,7 +26,7 @@
   }
 
   function saveRecents() {
-    localStorage.setItem("recentQueries", JSON.stringify(recentQueries));
+    localStorage.setItem("recentQueries", stringify(recentQueries));
   }
 
   function renderResult() {}

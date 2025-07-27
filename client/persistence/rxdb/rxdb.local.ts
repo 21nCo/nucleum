@@ -13,7 +13,8 @@ import {
   PersistenceActionType,
   type IMutationParamsv2,
   type IRecordId,
-  type IResourceSelectParams
+  type IResourceSelectParams,
+  type IResourceSelectProperties
 } from "../../types/data.type";
 import { LogType } from "$lib/client/components/debug/debug.type";
 import { compareVersions } from "$lib/shared/utils/utils";
@@ -484,8 +485,7 @@ export class RxDBPersistence implements IPersistence {
 
   async select(
     resourceId: IRecordId,
-    properties?: string[],
-    signal?: AbortSignal
+    properties?: IResourceSelectProperties
   ): Promise<any> {
     try {
       const resourceName = this.resolveResource(resourceId);
@@ -496,9 +496,9 @@ export class RxDBPersistence implements IPersistence {
       if (!doc) return null;
 
       const result = doc.toJSON();
-      if (properties && properties.length > 0) {
+      if (properties && properties.select && properties.select.length > 0) {
         const filtered: any = {};
-        for (const prop of properties) {
+        for (const prop of properties.select) {
           if (result[prop] !== undefined) {
             filtered[prop] = result[prop];
           }

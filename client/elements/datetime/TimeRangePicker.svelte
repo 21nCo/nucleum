@@ -2,7 +2,7 @@
   import { createEventDispatcher } from "svelte";
   import Icon from "../Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import { formatDate } from "$lib/client/utils/time.utils";
+  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
   import { InputStyle, type InputLabel } from "$lib/client/types/input.type";
   import FormElement from "../FormElement.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
@@ -45,7 +45,9 @@
     <Icon icon="calendar" size={Size.md} />
     {#if isValidDate(initialStartDate) && isValidDate(initialEndDate)}
       <span class="text-fgs2 text-base">
-        {formatDate(initialStartDate)} - {formatDate(initialEndDate)}
+        {parseAndFormatDate(initialStartDate)} - {parseAndFormatDate(
+          initialEndDate
+        )}
       </span>
     {:else}
       <span class="text-fgs2 text-b2">Select start and end date</span>

@@ -103,7 +103,7 @@
       const isPresentInBulkMerge =
         mutation?.action === PersistenceActionType.BULK_MERGE &&
         subscribeToRecords.some((x) =>
-          mutation?.records?.some(resourceInList(x))
+          mutation?.recordIds?.some(resourceInList(x))
         );
       if (isPresentInMerge || isPresentInBulkMerge) {
         dispatch("change", data);
@@ -129,8 +129,8 @@
       subscriptionPropsForMergeAction?.some(
         (x) => mutation?.record?.[x] !== undefined
       ) ||
-      subscriptionPropsForMergeAction?.some((x) =>
-        mutation?.records?.some((y: unknown) => y?.[x] !== undefined)
+      subscriptionPropsForMergeAction?.some(
+        (x) => mutation?.changes?.[x] !== undefined
       );
     if (isSubscribedMergePropCase) {
       dispatch("change", data);

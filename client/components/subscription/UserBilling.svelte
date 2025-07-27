@@ -8,7 +8,7 @@
     SUBSCRIPTION_PLANS
   } from "./userPlan.utils";
   import { appStore } from "$lib/client/stores/app.store";
-  import { formatDate } from "$lib/client/utils/time.utils";
+  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
   import PlanFeatureList from "./elements/PlanFeatureList.svelte";
   import { Action } from "$lib/client/types/action.enum";
   import { BillingCycle, PlanType } from "./userPlan.type";
@@ -104,10 +104,10 @@
           <p class="text-sm text-fgs3">
             {#if renewalDate && $account.plan?.status === PlanStatus.ACTIVE}
               Next payment: <b>
-                {formatDate(renewalDate)}
+                {parseAndFormatDate(renewalDate)}
               </b>
             {:else if renewalDate && $account.plan?.status === PlanStatus.CANCELLED}
-              Expires: {formatDate(renewalDate)}
+              Expires: {parseAndFormatDate(renewalDate)}
             {/if}
           </p>
           {#if $account.plan?.provider && $account.plan?.provider !== PaymentProvider.SELF}

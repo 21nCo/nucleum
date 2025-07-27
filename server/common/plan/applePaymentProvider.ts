@@ -1,6 +1,7 @@
 import { default as jwt } from "jsonwebtoken";
 import { writeFileSync, mkdirSync, existsSync } from "fs";
-import { join, parse } from "path";
+import { join } from "path";
+import { parse as parseJson } from "$lib/shared/utils/json.utils";
 
 export interface AppleVerificationResponse {
   status:
@@ -114,7 +115,7 @@ export async function verifyAppleSubscription(
               payloadBase64,
               "base64"
             ).toString("utf8");
-            parsedTransaction = JSON.parse(decodedPayload);
+            parsedTransaction = parseJson(decodedPayload);
             // console.log("Parsed transaction:", parsedTransaction);
           } catch (error) {
             console.error("Error parsing signed transaction info:", error);
@@ -127,7 +128,7 @@ export async function verifyAppleSubscription(
               payloadBase64,
               "base64"
             ).toString("utf8");
-            parsedRenewalInfo = JSON.parse(decodedPayload);
+            parsedRenewalInfo = parseJson(decodedPayload);
           } catch (error) {
             console.error("Error parsing signed renewal info:", error);
           }
@@ -402,7 +403,7 @@ export async function getLatestSubscriptionPayment(transactionId: string) {
               payloadBase64,
               "base64"
             ).toString("utf8");
-            return JSON.parse(decodedPayload);
+            return parseJson(decodedPayload);
           } catch (error) {
             console.error("Error parsing signed transaction:", error);
             return null;
@@ -508,7 +509,7 @@ export async function verifyAppleNonConsumablePurchase(
               payloadBase64,
               "base64"
             ).toString("utf8");
-            return JSON.parse(decodedPayload);
+            return parseJson(decodedPayload);
           } catch (error) {
             console.error("Error parsing signed transaction:", error);
             return null;

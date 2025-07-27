@@ -65,9 +65,7 @@ export const seedUserPreferences: IUserGlobalPreferences = {
 
 class UserPreferencesStore extends KeyValueStore<IUserGlobalPreferences> {
   constructor() {
-    super(Resource.globalPreferences, seedUserPreferences, {
-      dboDependencies: []
-    });
+    super(Resource.globalPreferences, seedUserPreferences);
   }
 
   loader(data: IUserGlobalPreferences) {
@@ -108,7 +106,7 @@ class UserPreferencesStore extends KeyValueStore<IUserGlobalPreferences> {
     }
     await tzStore.create({
       offset,
-      date: new Date().toISOString(),
+      date: new Date(),
       dateUnix: resolveUnixTimestamp(),
       label: label ?? ""
     });

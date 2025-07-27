@@ -7,7 +7,7 @@
     frameEmailFromParts,
     isValidString
   } from "$lib/shared/utils/text.utils";
-  import { formatDate } from "$lib/client/utils/time.utils";
+  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
   import { bg, cn } from "$lib/client/utils/ui.utils";
   import ProfilePicture from "./ProfilePicture.svelte";
   import { Modes } from "../../calendar/birdView/Birdview.type";
@@ -51,7 +51,8 @@
     >
       <div class="flex w-full justify-end text-b4 text-fgs3 px-3 pt-2">
         {$account.userInfo?.joinDate
-          ? "Joined " + formatDate(new Date($account.userInfo?.joinDate))
+          ? "Joined " +
+            parseAndFormatDate(new Date($account.userInfo?.joinDate))
           : ""}
       </div>
       <div class="flex justify-between w-full px-3">

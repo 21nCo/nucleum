@@ -1,21 +1,19 @@
 import type { IProperty } from "$lib/client/components/collection/properties/property.type";
 import type { IAvatar } from "$lib/client/types/avatar.type";
-import type {
-  IObservableStoreSubject,
-  IRecordId
-} from "$lib/client/types/data.type";
+import type { IRecordId } from "$lib/client/types/data.type";
 import type { IMarkdown } from "$lib/client/components/markdown/md.type";
 import type {
   INodePropertyValue,
   INodeStructure,
-  LinkType,
   NodeType
 } from "$lib/client/products/memotron/node/node.type";
+import type { LinkType } from "$lib/client/products/memotron/linking/link.type";
 import type { CollectionType } from "$lib/client/components/collection/collection.type";
 import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import type {
   IActiveResource,
-  IResource
+  IResource,
+  IResourceShareable
 } from "$lib/client/components/flux/resourceStores/resource.type";
 
 export enum CaptureType {
@@ -26,7 +24,7 @@ export enum CaptureType {
   UPLOAD = "UPLOAD"
 }
 
-export type ICapture = IResource & {
+export type ICaptureBase = {
   label: string | null;
   /**
    * @deprecated
@@ -59,6 +57,11 @@ export type ICapture = IResource & {
    */
   clipboard?: IPasteCaptureData;
 };
+
+export type ICaptureCapture = ICaptureBase;
+
+type IResourcePropertiesForCapture = IResource & IResourceShareable;
+export type ICapture = ICaptureBase & IResourcePropertiesForCapture;
 
 export type IActiveCapture = IActiveResource & ICapture;
 

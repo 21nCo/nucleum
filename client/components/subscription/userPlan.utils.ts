@@ -3,7 +3,7 @@ import {
   PlanStatus,
   type IUserPlan
 } from "$lib/client/types/account.type";
-import { formatDate } from "$lib/client/utils/time.utils";
+import { parseAndFormatDate } from "$lib/client/utils/time.utils";
 import { enumToString } from "$lib/shared/utils/text.utils";
 import { BillingCycle, PlanType, type IPlan } from "./userPlan.type";
 
@@ -130,7 +130,7 @@ export function resolvePlanLabel(plan: IUserPlan | undefined) {
     if (!isActive) {
       return `Free trial expired - Please upgrade`;
     } else if (plan.trialPlan?.expiry) {
-      return `Sync free trial (Expires ${formatDate(
+      return `Sync free trial (Expires ${parseAndFormatDate(
         new Date(plan.trialPlan?.expiry)
       )})`;
     } else {

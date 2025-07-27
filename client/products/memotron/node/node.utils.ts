@@ -159,22 +159,41 @@ export function resolveFallbackIconForUrl(url: string | undefined) {
     logger.error({ at: "resolveFallbackIconForUrl", e });
     return "ph:globe";
   }
-  if (hostPart.includes("replit.com")) return "logos:replit-icon";
-  if (hostPart.includes("github.com")) return "ph:github-logo";
-  if (hostPart.includes("gitlab.com")) return "logos:gitlab";
-  if (hostPart.includes("pinterest.com")) return "logos:pinterest-icon";
-  if (hostPart.includes("youtube.com")) return "logos:youtube-icon";
-  if (hostPart.includes("twitter.com")) return "ph:x-logo";
-  if (hostPart.includes("instagram.com")) return "ph:instagram-logo";
-  if (hostPart.includes("linkedin.com")) return "logos:linkedin-icon";
-  if (hostPart.includes("facebook.com")) return "logos:facebook";
-  if (hostPart.includes("reddit.com")) return "logos:reddit-icon";
-  if (hostPart.includes("quora.com")) return "logos:quora";
-  if (hostPart.includes("wikipedia.org")) return "simple-icons:wikipedia";
-  if (hostPart.includes("medium.com")) return "logos:medium-icon";
-  if (hostPart.includes("stackoverflow.com")) return "logos:stackoverflow-icon";
-  if (hostPart.includes("dev.to")) return "ph:dev-to-logo";
-  if (hostPart.includes("drive.google.com")) return "logos:google-drive";
+  if (hostPart === "replit.com" || hostPart.endsWith(".replit.com"))
+    return "logos:replit-icon";
+  if (hostPart === "github.com" || hostPart.endsWith(".github.com"))
+    return "ph:github-logo";
+  if (hostPart === "gitlab.com" || hostPart.endsWith(".gitlab.com"))
+    return "logos:gitlab";
+  if (hostPart === "pinterest.com" || hostPart.endsWith(".pinterest.com"))
+    return "logos:pinterest-icon";
+  if (hostPart === "youtube.com" || hostPart.endsWith(".youtube.com"))
+    return "logos:youtube-icon";
+  if (hostPart === "twitter.com" || hostPart.endsWith(".twitter.com"))
+    return "ph:x-logo";
+  if (hostPart === "instagram.com" || hostPart.endsWith(".instagram.com"))
+    return "ph:instagram-logo";
+  if (hostPart === "linkedin.com" || hostPart.endsWith(".linkedin.com"))
+    return "logos:linkedin-icon";
+  if (hostPart === "facebook.com" || hostPart.endsWith(".facebook.com"))
+    return "logos:facebook";
+  if (hostPart === "reddit.com" || hostPart.endsWith(".reddit.com"))
+    return "logos:reddit-icon";
+  if (hostPart === "quora.com" || hostPart.endsWith(".quora.com"))
+    return "logos:quora";
+  if (hostPart === "wikipedia.org" || hostPart.endsWith(".wikipedia.org"))
+    return "simple-icons:wikipedia";
+  if (hostPart === "medium.com" || hostPart.endsWith(".medium.com"))
+    return "logos:medium-icon";
+  if (
+    hostPart === "stackoverflow.com" ||
+    hostPart.endsWith(".stackoverflow.com")
+  )
+    return "logos:stackoverflow-icon";
+  if (hostPart === "dev.to" || hostPart.endsWith(".dev.to"))
+    return "ph:dev-to-logo";
+  if (hostPart === "drive.google.com" || hostPart.endsWith(".drive.google.com"))
+    return "logos:google-drive";
   return "ph:globe";
 }
 

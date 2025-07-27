@@ -5,6 +5,7 @@ import {
 import { OAuthUserData } from "$lib/server/common/oauth/oauth.type";
 import { signup } from "$lib/server/common/account";
 import { retrieveAppConfig } from "$lib/server/utils";
+import { parse } from "$lib/shared/utils/json.utils";
 
 async function signinOauthUser(oAuthUserData: OAuthUserData, context: any) {
   return signup(
@@ -88,7 +89,7 @@ export async function processOAuthRedirection(
   };
   if (provider === "apple" && (body.id_token || body.user)) {
     if (body.user && typeof body.user === "string")
-      body.user = JSON.parse(body.user);
+      body.user = parse(body.user);
     const oAuthUserData = parseOAuthUserDataForApple(body);
     if (!oAuthUserData?.email)
       return {

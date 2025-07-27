@@ -7,7 +7,6 @@
     type IContemporary,
     type IFeatureWheelContemporary
   } from "$lib/client/types/featureWheel.type";
-  import { objIsEmpty } from "$lib/shared/utils/obj.utils";
   import { mapValue } from "./table.utils";
   export let contemporary: IFeatureWheelContemporary;
   export let contemporaryDetail: IContemporary;
@@ -16,11 +15,9 @@
 
 <tr>
   <td class="border-b border-l border-brs3 p-2 flex items-center gap-2">
-    <ExternalLogo
-      provider={objIsEmpty(contemporaryDetail)
-        ? contemporary
-        : contemporaryDetail}
-    />
+    {#if contemporaryDetail.icon}
+      <ExternalLogo provider={contemporaryDetail.icon} />
+    {/if}
     {properCase(contemporary.label)}</td
   >
   {#if additionalProperties}
@@ -31,7 +28,7 @@
     {/each}
   {/if}
   <td class="border border-brs3 p-2">
-    {contemporaryDetail.price ?? "-"}
+    {contemporaryDetail.price ? `$${contemporaryDetail.price}` : "-"}
   </td>
   <td class="border border-brs3 p-2">
     <RatingCell value={contemporary.value} />

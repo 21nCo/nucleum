@@ -5,7 +5,7 @@
   export let item: IListItem;
 </script>
 
-<div class="flex items-center gap-1.5 text-lb2">
+<a class="flex items-center gap-1.5 text-lb2" href={item.href} target="_blank">
   {#if item.icon}
     <SVGIcon
       icon={item.icon}
@@ -15,4 +15,4 @@
     />
   {/if}
   <p>{item.title}</p>
-</div>
+</a>

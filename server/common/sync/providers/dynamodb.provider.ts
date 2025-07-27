@@ -30,6 +30,7 @@ import {
   PutCommand
 } from "@aws-sdk/lib-dynamodb";
 import { Select } from "@aws-sdk/client-dynamodb";
+import { stringify, parse as parseJson } from "$lib/shared/utils/json.utils";
 
 /**
  * DynamoDB Sync Provider using Single Table Design Pattern
@@ -955,7 +956,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
         }
 
         if (result?.Items) {
-          const resourceData = this.mapResourceData(result.Items, isExtension);
+          const resourceData = this.mapResourceData(result.Items);
           results.push(resourceData);
         } else {
           results.push([]);
@@ -998,7 +999,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
             result,
             error: null,
             nextCursor: result.LastEvaluatedKey
-              ? JSON.stringify(result.LastEvaluatedKey)
+              ? stringify(result.LastEvaluatedKey)
               : null,
             hasMore: !!result.LastEvaluatedKey
           };
@@ -1036,7 +1037,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
         }
 
         if (result?.Items) {
-          const resourceData = this.mapResourceData(result.Items, isExtension);
+          const resourceData = this.mapResourceData(result.Items);
           results.push(resourceData);
         } else {
           results.push([]);
@@ -1091,7 +1092,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       // If cursor is provided, use it for efficient pagination
       if (cursor) {
         try {
-          params.ExclusiveStartKey = JSON.parse(cursor);
+          params.ExclusiveStartKey = parseJson(cursor);
         } catch (e) {
           console.error("Invalid cursor provided:", cursor);
           return { error: "Invalid cursor" };
@@ -1105,12 +1106,12 @@ export class DynamoDBSyncProvider implements ISyncProvider {
           console.timeEnd("paginate");
           if (result.Items && result.Items.length > offset) {
             const items = result.Items.slice(offset, offset + limit);
-            const resourceData = this.mapResourceData(items, isExtension);
+            const resourceData = this.mapResourceData(items);
 
             // Include next cursor for efficient pagination
             const nextCursor =
               result.Items.length >= offset + limit
-                ? JSON.stringify({
+                ? stringify({
                     PK: result.Items[offset + limit - 1].PK,
                     SK: result.Items[offset + limit - 1].SK
                   })
@@ -1150,11 +1151,11 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       const result = await dynamoClient.send(new QueryCommand(params));
 
       if (result.Items) {
-        const resourceData = this.mapResourceData(result.Items, isExtension);
+        const resourceData = this.mapResourceData(result.Items);
 
         // Include next cursor for efficient pagination
         const nextCursor = result.LastEvaluatedKey
-          ? JSON.stringify(result.LastEvaluatedKey)
+          ? stringify(result.LastEvaluatedKey)
           : null;
 
         const hasMore = !!result.LastEvaluatedKey;
@@ -1383,6 +1384,27 @@ export class DynamoDBSyncProvider implements ISyncProvider {
               const mergeResult = await this.performMergeOperation(
                 mergeData,
                 id.toString(),
+                commonAttributes.PK,
+                commonAttributes,
+                dynamoClient
+              );
+              if (mergeResult) {
+                items.push(mergeResult);
+              }
+            }
+          } else if (
+            params.action === PersistenceActionType.BULK_MERGE &&
+            "recordIds" in params &&
+            "changes" in params
+          ) {
+            const recordIds = params.recordIds;
+            if (!recordIds || recordIds.length < 1) return [];
+            for (const recordId of recordIds) {
+              if (!recordId) continue;
+
+              const mergeResult = await this.performMergeOperation(
+                params.changes,
+                recordId.toString(),
                 commonAttributes.PK,
                 commonAttributes,
                 dynamoClient
@@ -1670,11 +1692,11 @@ export class DynamoDBSyncProvider implements ISyncProvider {
     return resourceData;
   }
 
-  private mapResourceData(records: any[], isExtension: boolean) {
+  private mapResourceData(records: any[]) {
     return records.map((record) => {
       return {
         ...this.getResourceData(record),
-        id: isExtension ? record.SK : record.SK.split(":")[1]
+        id: record.SK
       };
     });
   }
@@ -1812,7 +1834,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       };
 
       if (cursor) {
-        params.ExclusiveStartKey = JSON.parse(cursor);
+        params.ExclusiveStartKey = parseJson(cursor);
       }
 
       console.time("queryResourceWithCursor");
@@ -1827,11 +1849,11 @@ export class DynamoDBSyncProvider implements ISyncProvider {
         };
       }
       console.time("map");
-      const processedItems = this.mapResourceData(result.Items, isExtension);
+      const processedItems = this.mapResourceData(result.Items);
       console.timeEnd("map");
 
       const nextCursor = result.LastEvaluatedKey
-        ? JSON.stringify(result.LastEvaluatedKey)
+        ? stringify(result.LastEvaluatedKey)
         : null;
 
       return {
@@ -1900,10 +1922,10 @@ export class DynamoDBSyncProvider implements ISyncProvider {
           const endIndex = startIndex + limit;
           const items = skipResult.Items.slice(startIndex, endIndex);
 
-          const resourceData = this.mapResourceData(items, isExtension);
+          const resourceData = this.mapResourceData(items);
 
           const nextCursor = lastEvaluatedKey
-            ? JSON.stringify(lastEvaluatedKey)
+            ? stringify(lastEvaluatedKey)
             : null;
 
           const hasMore = !!lastEvaluatedKey;
@@ -1942,10 +1964,10 @@ export class DynamoDBSyncProvider implements ISyncProvider {
 
         const result = await dynamoClient.send(new QueryCommand(finalParams));
         if (result.Items) {
-          const resourceData = this.mapResourceData(result.Items, isExtension);
+          const resourceData = this.mapResourceData(result.Items);
 
           const nextCursor = result.LastEvaluatedKey
-            ? JSON.stringify(result.LastEvaluatedKey)
+            ? stringify(result.LastEvaluatedKey)
             : null;
 
           const hasMore = !!result.LastEvaluatedKey;

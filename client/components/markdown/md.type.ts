@@ -1,37 +1,31 @@
 import type { IAvatar } from "$lib/client/types/avatar.type";
+import type { IRecordId } from "$lib/client/types/data.type";
 import type {
-  IObservableStoreSubject,
-  IRecordId
-} from "$lib/client/types/data.type";
-import type {
-  ListChild,
-  ListContent,
-  TextContent,
   NodeType,
   ListType,
   SimpleTextNodeType,
   ListNodeType,
-  INodeStructure
+  INodeStructure,
+  INodeMetadata
 } from "../../products/memotron/node/node.type";
 import type { IResourceBase } from "../flux/resourceStores/resource.type";
 
-export type IMarkdownStore = IMarkdown &
-  IObservableStoreSubject & {
-    /**
-     * @deprecated - use focus writable on MarkdownStore instead
-     */
-    blockToFocus?: string;
-    reRenderBlock?: string;
-    params?: IMarkdownParams;
-    /**
-     * Id of the heading that is currently focused - focus can be on any block under the heading
-     */
-    activeHeading?: IRecordId;
-    /**
-     * Headings that are visible in the viewport
-     */
-    headingsInView: IRecordId[];
-  };
+export type IMarkdownStore = IMarkdown & {
+  /**
+   * @deprecated - use focus writable on MarkdownStore instead
+   */
+  blockToFocus?: string;
+  reRenderBlock?: string;
+  params?: IMarkdownParams;
+  /**
+   * Id of the heading that is currently focused - focus can be on any block under the heading
+   */
+  activeHeading?: IRecordId;
+  /**
+   * Headings that are visible in the viewport
+   */
+  headingsInView: IRecordId[];
+};
 export type IMarkdown = { blocks: IBlock[] };
 export type DbBlock = IResourceBase & IBlockInterface;
 
@@ -43,6 +37,7 @@ export type IBlockInterface<TType = NodeType, TBody = IBlockBody> = {
    * label will be present if heading nodes
    */
   label?: string;
+  metadata?: INodeMetadata;
   childrenHierarchy?: IRecordId[];
 };
 
@@ -77,39 +72,6 @@ export enum BlockContext {
   DEFAULT = "DEFAULT",
   LIST_CHILD = "LIST_CHILD"
 }
-
-/**
- * @deprecated - use {@link IBlockInterface} instead
- */
-export type ListBlockWithChildren =
-  | ListChild<Required<Pick<ListContent, "children">>>
-  | IBlockInterface<Required<Pick<ListContent, "children">>>;
-
-/**
- * @deprecated - use {@link TextContent} instead
- */
-export type SpanContent = {
-  type: SpanType;
-  content: TextContent;
-  id: string;
-};
-
-export enum SpanType {
-  DEFAULT = "DEFAULT",
-  BOLD = "BOLD",
-  ITALIC = "ITALIC",
-  UNDERLINE = "UNDERLINE",
-  STRIKE = "STRIKE",
-  LINK = "LINK",
-  REFERENCE = "REFERENCE",
-  CODE = "CODE",
-  COLOR = "COLOR"
-}
-
-// export type BasicMarkdown = {
-//   id: string;
-//   blocks: Block[];
-// };
 
 export type IListOperation = {
   operation: "tab" | "shifttab";
@@ -169,7 +131,7 @@ export enum BlockAction {
   PASTE = "paste"
 }
 
-export type IMarkdownSettings = IObservableStoreSubject & {
+export type IMarkdownSettings = {
   callout: ICalloutSetting[];
 };
 export type ICalloutSetting = {

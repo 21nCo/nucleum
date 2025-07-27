@@ -54,6 +54,7 @@
           notEquals: GoalStatus.COMPLETED
         }
       },
+      isStrictSearch: true,
       isIncludeSubItems: true
     });
     const tasks = await searchStore.select({
@@ -61,7 +62,8 @@
       searchQuery,
       filters: {
         isChecked: false
-      }
+      },
+      isStrictSearch: true
     });
     return [...goals, ...tasks];
   }

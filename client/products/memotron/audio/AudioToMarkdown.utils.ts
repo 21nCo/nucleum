@@ -9,6 +9,7 @@ import {
 } from "../audio/AudioToMarkdown.type";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { generateRandomIdv2 } from "$lib/shared/utils/crypto.utils";
+import { reparse } from "$lib/shared/utils/json.utils";
 class AudioToMarkdown {
   words: string[] | undefined;
   word: string | undefined;
@@ -573,7 +574,7 @@ class AudioToMarkdown {
         case this.quoteCase.includes(currentWord):
           this.pushCurrentBlockToBlocks();
           this.reetOrders();
-          this.currentBlock = JSON.parse(JSON.stringify(this.defaultBlock));
+          this.currentBlock = reparse(this.defaultBlock);
           this.currentBlock.id = prefixTable(
             generateRandomIdv2(),
             Resource.node
@@ -584,7 +585,7 @@ class AudioToMarkdown {
         case this.dividerCase.includes(currentWord):
           this.pushCurrentBlockToBlocks();
           this.reetOrders();
-          this.currentBlock = JSON.parse(JSON.stringify(this.defaultBlock));
+          this.currentBlock = reparse(this.defaultBlock);
           this.currentBlock.id = prefixTable(
             generateRandomIdv2(),
             Resource.node
@@ -597,7 +598,7 @@ class AudioToMarkdown {
         case this.doubleDividerCase.includes(currentWord):
           this.pushCurrentBlockToBlocks();
           this.reetOrders();
-          this.currentBlock = JSON.parse(JSON.stringify(this.defaultBlock));
+          this.currentBlock = reparse(this.defaultBlock);
           this.currentBlock.id = prefixTable(
             generateRandomIdv2(),
             Resource.node
@@ -609,7 +610,7 @@ class AudioToMarkdown {
         case this.simpleTextCase.includes(currentWord):
           this.pushCurrentBlockToBlocks();
           this.reetOrders();
-          this.currentBlock = JSON.parse(JSON.stringify(this.defaultBlock));
+          this.currentBlock = reparse(this.defaultBlock);
           this.currentBlock.id = prefixTable(
             generateRandomIdv2(),
             Resource.node

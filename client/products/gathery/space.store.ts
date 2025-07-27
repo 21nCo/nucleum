@@ -1,12 +1,10 @@
 import { get, writable } from "svelte/store";
-import { dataManager } from "$lib/client/persistence/dataManager";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { StoreDataType } from "../../types/data.type";
 import type { Space, SpaceStore } from "../../types/space.type";
 import { performApiCall } from "$lib/client/utils/network.utils";
-import { retrieveLocally } from "../../utils/storage.utils";
 
-const cachedSpaceInContext = retrieveLocally(Resource.spaceInContext);
+const cachedSpaceInContext = null; // TODO: re-enable retrieveLocally(Resource.spaceInContext) once Dexie is integrated
 export const spaceInContext = writable<Space>(cachedSpaceInContext ?? null);
 
 const seedSpaceStore = {
@@ -19,18 +17,18 @@ const seedSpaceStore = {
 export const spaceStore = initSpaceStore();
 function initSpaceStore() {
   const { subscribe, set, update } = writable<SpaceStore>();
-  dataManager.retrieveCache(Resource.space).then((m) => {
-    if (!m) {
-      set(seedSpaceStore);
-    } else {
-      set(m);
-    }
-  });
+  // dataManager.retrieveCache(Resource.space).then((m) => {
+  //   if (!m) {
+  //     set(seedSpaceStore);
+  //   } else {
+  //     set(m);
+  //   }
+  // });
   const cache = async (n: SpaceStore) => {
-    dataManager.cache({
-      ...seedSpaceStore,
-      spaces: n.spaces
-    } as SpaceStore);
+    // dataManager.cache({
+    //   ...seedSpaceStore,
+    //   spaces: n.spaces
+    // } as SpaceStore);
   };
   const switchSpace = async (data: any, space: Space) => {
     if (data.id && data.token) {

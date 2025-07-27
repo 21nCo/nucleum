@@ -4,7 +4,7 @@
   import context from "$lib/client/stores/context.store";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";
-  import { formatDate } from "$lib/client/utils/time.utils";
+  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
   import type { ICapture } from "../capture.type";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
@@ -26,7 +26,7 @@
   </div>
   <div class="flex items-center gap-2">
     <div class="text-b3 text-fgs3 whitespace-nowrap">
-      {formatDate(new Date(draft.modifiedAt))}
+      {parseAndFormatDate(new Date(draft.modifiedAt))}
     </div>
     {#if isHovered || $context.isTouchDevice}
       <Button

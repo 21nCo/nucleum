@@ -24,6 +24,7 @@
   let labelEditVal = $goal.label;
   let inputRef: TextInput;
   function resolveBreadcrumbs() {
+    if (!$goal.parent) return [];
     const parentItems = $goal.parent?.map((p) => ({
       label: p.label,
       resourceId: p.id?.toString()

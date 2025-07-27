@@ -8,6 +8,7 @@ import {
   resourceInList
 } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+import type { IGoal } from "$lib/client/components/goals/goal.type";
 
 /**
  * Correction for incorrect migration of old goals to new goals in Pointron v0.82.0
@@ -61,11 +62,15 @@ export async function nestedGoalCorrection() {
  */
 export async function collectionsListOnRecords() {
   const collections = await flux.selectMany(Resource.collection, {
-    properties: ["id"]
+    properties: {
+      select: ["id"]
+    }
   });
 
   const records = await flux.selectMany(Resource.link, {
-    properties: ["in.* as in", "*"],
+    properties: {
+      expand: ["in"]
+    },
     filters: {
       out: collections.map((x) => x.id.toString())
     }
@@ -88,7 +93,7 @@ export async function collectionsListOnRecords() {
         ?.map((y) => y.out);
       console.log({ at: "collectionsListOnRecords", x, collections });
       promises.push(
-        flux.mutation(Resource.goal, {
+        flux.mutation<IGoal>(Resource.goal, {
           action: PersistenceActionType.MERGE,
           record: {
             id: x.id,

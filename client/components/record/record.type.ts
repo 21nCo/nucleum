@@ -1,7 +1,6 @@
-import type { IObservableStoreSubject } from "$lib/client/types/data.type";
 import type { Resource } from "../flux/resourceStores/resource.enum";
 
-export type IRecentsStore = IObservableStoreSubject & {
+export type IRecentsStore = {
   recents: {
     type: Resource;
     timestamp: Date;

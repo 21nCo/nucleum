@@ -141,12 +141,9 @@
         ? resourcesForIndicators.filter((r) => resource.includes(r))
         : resourcesForIndicators;
       if (filteredResourcesForIndicators.length === 0) return;
-      const dateFilter: any =
-        selectedView === TimeScaleUnit.MONTH
-          ? tzStore.resolveTimePeriodFilterForMonth(date)
-          : selectedView === TimeScaleUnit.YEAR
-            ? tzStore.resolveTimePeriodFilterForYear(date)
-            : {};
+      const dateFilter = tzStore.resolveTimePeriodFilter(date, {
+        scale: selectedView
+      });
       if (
         compareObjects(currentDateFilterForIndicatorData, dateFilter) &&
         (!resource || resource.length === 0)
@@ -184,13 +181,8 @@
           properties.push("createdAt");
           filters = {
             createdAt: {
-              type: "date",
-              greaterThanOrEqual: new Date(
-                dateFilter.greaterThanOrEqual
-              ).toISOString(),
-              lessThanOrEqual: new Date(
-                dateFilter.lessThanOrEqual
-              ).toISOString()
+              greaterThanOrEqual: new Date(dateFilter.greaterThanOrEqual),
+              lessThanOrEqual: new Date(dateFilter.lessThanOrEqual)
             }
           };
         } else if (resource === MetaResource.calendarNotes) {
@@ -198,13 +190,8 @@
           filters = {
             metaType: NodeMetaType.CALENDAR_NOTES,
             date: {
-              type: "date",
-              greaterThanOrEqual: new Date(
-                dateFilter.greaterThanOrEqual
-              ).toISOString(),
-              lessThanOrEqual: new Date(
-                dateFilter.lessThanOrEqual
-              ).toISOString()
+              greaterThanOrEqual: new Date(dateFilter.greaterThanOrEqual),
+              lessThanOrEqual: new Date(dateFilter.lessThanOrEqual)
             }
           };
         }
@@ -213,7 +200,9 @@
             ? Resource.node
             : (resource as Resource);
         return new SearchStore(searchResource).select({
-          properties,
+          properties: {
+            select: properties
+          },
           filters,
           isExpand: false,
           isIncludeMetaItems: resource === MetaResource.calendarNotes

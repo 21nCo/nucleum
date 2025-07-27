@@ -1,25 +1,31 @@
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
-import type { ILinkTag } from "./link.type";
-import { StoreDataType, type IRecordId } from "$lib/client/types/data.type";
-import { replaceParams } from "$lib/shared/utils/surreal.utils";
 import {
   LinkType,
-  type INodeLink
-} from "$lib/client/products/memotron/node/node.type";
+  type ILink,
+  type ILinkCapture,
+  type ILinkTag
+} from "./link.type";
+import { StoreDataType, type IRecordId } from "$lib/client/types/data.type";
+import { replaceParams } from "$lib/shared/utils/surreal.utils";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { activeResourceFilter } from "$lib/client/utils/utils";
 import { get } from "svelte/store";
 import { linkTagLabelMapper } from "./link.utils";
 import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-import type { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+import type {
+  IResourceCaptureV2,
+  ResourceAccessPoint
+} from "$lib/client/components/flux/resourceStores/resource.type";
 import { ResourceError } from "$lib/client/components/error/errors";
 import { ResourceErrorCode } from "$lib/client/components/error/error.type";
 
-class Linker extends ResourceStore<INodeLink> {
+class Linker extends ResourceStore<ILink, ILinkCapture> {
   constructor() {
-    super(Resource.link);
+    super(Resource.link, {
+      indices: ["in", "out", "linkType", "location", "tags"]
+    });
   }
 
   async link(
@@ -78,7 +84,7 @@ class Linker extends ResourceStore<INodeLink> {
         ...(params?.linkType ? { linkType: params.linkType } : {})
       }
     });
-    let reverseDirectionLinks: INodeLink[] = [];
+    let reverseDirectionLinks: ILink[] = [];
     if (params?.isIncludeReverseDirection) {
       reverseDirectionLinks = await this.selectMany({
         filters: {
@@ -118,7 +124,7 @@ class Linker extends ResourceStore<INodeLink> {
       }
     });
     const resourceType = determineResourceType(accessPointId);
-    let reverseDirectionLinks: INodeLink[] = [];
+    let reverseDirectionLinks: ILink[] = [];
     if (resourceType === Resource.node) {
       reverseDirectionLinks = await this.selectMany({
         filters: {
@@ -177,30 +183,15 @@ class Linker extends ResourceStore<INodeLink> {
     return response;
   }
 
-  /**
-   * @deprecated - using direct insert instead
-   * @param from
-   * @param to
-   * @param linkType
-   * @returns
-   */
-  private generateLinkQuery(from: IRecordId, to: IRecordId, linkType: string) {
-    return replaceParams(
-      `relate $from->link->$to content {toType: meta::tb($to), linkType: $linkType, createdAt: time::now()}`,
-      {
-        from,
-        to,
-        linkType
-      }
-    );
-  }
-
   get() {}
 }
 
 export const linker = new Linker();
 
-class LinkTagStore extends ResourceStore<ILinkTag> {
+class LinkTagStore extends ResourceStore<
+  ILinkTag,
+  IResourceCaptureV2<ILinkTag>
+> {
   constructor() {
     super(Resource.linkTag, {
       isInMemory: true,

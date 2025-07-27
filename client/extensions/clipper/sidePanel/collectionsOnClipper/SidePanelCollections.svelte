@@ -2,10 +2,7 @@
   import { extensionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
   import { FluxMethod } from "$lib/client/components/flux/flux.type";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import {
-    CollectionLayout,
-    CollectionType
-  } from "$lib/client/components/collection/collection.type";
+  import { CollectionType } from "$lib/client/components/collection/collection.type";
   import type { ICollection } from "$lib/client/components/collection/collection.type";
   import { NodeType } from "$lib/client/products/memotron/node/node.type";
   import { activeResourceFilter } from "$lib/client/utils/utils";
@@ -231,8 +228,6 @@
     newCollectionLabel = event.detail;
     const result = await collectionStore.save({
       label: newCollectionLabel,
-      type: CollectionType.UNTYPED,
-      defaultLayout: CollectionLayout.BOARD,
       resource: Resource.node
     });
     if (result) {

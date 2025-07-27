@@ -31,6 +31,7 @@
   let isFeatureSelectorOpen = false;
   let isCompareWithSelectorOpen = false;
   const dev_IsEnableFeatureSelector = false;
+  const dev_IsEnablePlannedFeaturesToggle = false;
   let ref: HTMLButtonElement | null = null;
   // $: contemporariesList = features
   //   .map((feature) => feature.contemporaries)
@@ -86,11 +87,19 @@
             componentProps: {
               title: "Select apps to compare",
               selected: selectedCompare,
-              options: contemporaries.map((item) => ({
-                label: properCase(item.label),
-                value: item.label,
-                icon: item.icon ?? item.label.toLowerCase()
-              })),
+              options: contemporaries
+                .filter((item) => !item.isHideForComparer)
+                .map((item) => ({
+                  label: properCase(item.label),
+                  value: item.label,
+                  icon: item.icon
+                })),
+              comingsoonOptions: contemporaries
+                .filter((item) => item.isHideForComparer)
+                .map((item) => ({
+                  label: properCase(item.label),
+                  value: item.label
+                })),
               isUseExternalLogoForIcon: true,
               onSelect: (selected) => {
                 selectedCompare = selected;
@@ -198,19 +207,21 @@
           />
         </div>
       {/if}
-      <div class="flex justify-center">
-        <label
-          class="flex items-center gap-2 text-b3 text-fgs2 p-2 rounded-md hover:bg-bgs3 cursor-pointer"
-        >
-          <input
-            type="checkbox"
-            bind:checked={includePlannedFeatures}
-            on:change={() => dispatch("change", includePlannedFeatures)}
-            class="accent-aps1"
-          />
-          <span>Include planned features</span>
-        </label>
-      </div>
+      {#if dev_IsEnablePlannedFeaturesToggle}
+        <div class="flex justify-center">
+          <label
+            class="flex items-center gap-2 text-b3 text-fgs2 p-2 rounded-md hover:bg-bgs3 cursor-pointer"
+          >
+            <input
+              type="checkbox"
+              bind:checked={includePlannedFeatures}
+              on:change={() => dispatch("change", includePlannedFeatures)}
+              class="accent-aps1"
+            />
+            <span>Include planned features</span>
+          </label>
+        </div>
+      {/if}
       <div class="flex justify-center">
         <button
           class="flex items-center gap-1 text-b3 text-fgs2 p-2 rounded-md hover:bg-bgs3"

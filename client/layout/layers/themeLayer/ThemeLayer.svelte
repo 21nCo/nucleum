@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import view from "$lib/client/stores/view.store";
   import { AppSkin } from "$lib/client/types/appearance.type";
-  import { postToParent } from "$lib/client/utils/embed.utils";
+  import { postDataToParent } from "$lib/client/utils/embed.utils";
   import appearance, {
     fallBackTypefaceString
   } from "$lib/client/stores/appearance.store";
@@ -16,6 +16,7 @@
   // Do not remove this import as it is required for the global css propagation in case of custom colors are absent - ex: PanelSwitcher
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
+  import { EmbedDataMessage } from "$lib/client/types/embedMessage.enum";
 
   export let extensionContext: string | undefined = undefined;
   let fontFamily: string = "Avenir";
@@ -115,33 +116,30 @@
       fontFamily
     );
     if ($appearance?.colorScheme)
-      postToParent({
-        colorscheme: JSON.stringify({
-          id: $appearance?.colorScheme?.id,
-          label: $appearance?.colorScheme?.label,
-          isDark: $appearance?.colorScheme?.isDark ?? false,
-          theme: $appearance?.colorScheme?.theme ?? "",
-          colors: {
-            bgs1: $appearance?.colorScheme?.colors.bgs1 ?? "",
-            bgs2: $appearance?.colorScheme?.colors.bgs2 ?? "",
-            bgs3: $appearance?.colorScheme?.colors.bgs3 ?? "",
-            bgs4: $appearance?.colorScheme?.colors.bgs4 ?? "",
-            fgs1: $appearance?.colorScheme?.colors.fgs1 ?? "",
-            fgs2: $appearance?.colorScheme?.colors.fgs2 ?? "",
-            fgs3: $appearance?.colorScheme?.colors.fgs3 ?? "",
-            fgs4: $appearance?.colorScheme?.colors.fgs4 ?? "",
-            aps1: $appearance?.colorScheme?.colors.aps1 ?? "",
-            aps2: $appearance?.colorScheme?.colors.aps2 ?? "",
-            aps3: $appearance?.colorScheme?.colors.aps3 ?? "",
-            ass1: $appearance?.colorScheme?.colors.ass1 ?? "",
-            ass2: $appearance?.colorScheme?.colors.ass2 ?? "",
-            ass3: $appearance?.colorScheme?.colors.ass3 ?? "",
-            brs1: $appearance?.colorScheme?.colors.brs1 ?? "",
-            brs2: $appearance?.colorScheme?.colors.brs2 ?? "",
-            brs3: $appearance?.colorScheme?.colors.brs3 ?? ""
-          }
-        }),
-        rootFontSize
+      postDataToParent(EmbedDataMessage.COLORS, {
+        id: $appearance?.colorScheme?.id,
+        label: $appearance?.colorScheme?.label,
+        isDark: $appearance?.colorScheme?.isDark ?? false,
+        theme: $appearance?.colorScheme?.theme ?? "",
+        colors: {
+          bgs1: $appearance?.colorScheme?.colors.bgs1 ?? "",
+          bgs2: $appearance?.colorScheme?.colors.bgs2 ?? "",
+          bgs3: $appearance?.colorScheme?.colors.bgs3 ?? "",
+          bgs4: $appearance?.colorScheme?.colors.bgs4 ?? "",
+          fgs1: $appearance?.colorScheme?.colors.fgs1 ?? "",
+          fgs2: $appearance?.colorScheme?.colors.fgs2 ?? "",
+          fgs3: $appearance?.colorScheme?.colors.fgs3 ?? "",
+          fgs4: $appearance?.colorScheme?.colors.fgs4 ?? "",
+          aps1: $appearance?.colorScheme?.colors.aps1 ?? "",
+          aps2: $appearance?.colorScheme?.colors.aps2 ?? "",
+          aps3: $appearance?.colorScheme?.colors.aps3 ?? "",
+          ass1: $appearance?.colorScheme?.colors.ass1 ?? "",
+          ass2: $appearance?.colorScheme?.colors.ass2 ?? "",
+          ass3: $appearance?.colorScheme?.colors.ass3 ?? "",
+          brs1: $appearance?.colorScheme?.colors.brs1 ?? "",
+          brs2: $appearance?.colorScheme?.colors.brs2 ?? "",
+          brs3: $appearance?.colorScheme?.colors.brs3 ?? ""
+        }
       });
   }
 </script>

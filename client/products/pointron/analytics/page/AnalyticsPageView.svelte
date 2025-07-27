@@ -61,7 +61,9 @@
     );
     if (!timeRangeForPage) return;
     logs = await sessionLogStore.selectMany({
-      properties: ["id", "startUnix", "goalId", "focus", "breakTime"],
+      properties: {
+        select: ["id", "startUnix", "goalId", "focus", "breakTime"]
+      },
       filters: {
         startUnix: {
           greaterThanOrEqual: timeRangeForPage.begin - 24 * 60 * 60,

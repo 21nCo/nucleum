@@ -18,7 +18,8 @@
   import { Size } from "$lib/client/types/size.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { InfoTextType } from "$lib/client/types/text.type";
-  import { formatDate } from "$lib/client/utils/time.utils";
+  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
+  import { parse, stringify } from "$lib/shared/utils/json.utils";
   import { logger } from "../debug/logger.client";
 
   let isBackupInProgress: boolean = false;
@@ -30,8 +31,8 @@
     try {
       const data = await flux.export();
       const product = $appStore.product;
-      const fileName = `${product}-backup-${formatDate(new Date())}.json`;
-      const blob = new Blob([JSON.stringify(data)], {
+      const fileName = `${product}-backup-${parseAndFormatDate(new Date())}.json`;
+      const blob = new Blob([stringify(data, { isPreventReplacer: true })], {
         type: "application/json"
       });
       fileStore.downloadFromBlob(blob, {
@@ -60,7 +61,7 @@
     try {
       const data = await all[0].text();
       if (data) {
-        await flux.import(JSON.parse(data));
+        await flux.import(parse(data));
         toasts.success("Data restored successfully");
       }
     } catch (e) {

@@ -1,12 +1,13 @@
-import type { IMemotronItemBase } from "$lib/client/products/memotron/memotron.type";
+import type { IRecordId } from "$lib/client/types/data.type";
 import type {
-  IObservableStoreSubject,
-  IRecordId
-} from "$lib/client/types/data.type";
+  IResource,
+  IResourceInActivableFromParent,
+  IResourceLabeled
+} from "../flux/resourceStores/resource.type";
 import type { IGoal } from "../goals/goal.type";
 
-interface ITaskBase extends IMemotronItemBase {
-  isChecked: boolean;
+interface ITaskBase extends IResourceLabeled {
+  isChecked?: boolean;
   /**
    * Estimated time in seconds
    */
@@ -34,13 +35,21 @@ interface ITaskBase extends IMemotronItemBase {
   completedAtUnix?: number;
 }
 
-export interface ITask extends ITaskBase {
+type IResourcePropertiesForTask = IResource & IResourceInActivableFromParent;
+
+export type ITaskCapture = ITaskBase & {
+  id?: IRecordId;
   goalId?: IRecordId;
-}
+};
 
-export interface ITaskStore extends IObservableStoreSubject {}
+export type ITask = IResourcePropertiesForTask &
+  ITaskBase & {
+    dateUnix: number;
+    goalId: IRecordId;
+  };
 
-export interface ITaskThumb extends ITaskBase {
+export interface ITaskThumb extends ITaskBase, IResourcePropertiesForTask {
+  goalId?: IRecordId;
   goal?: IGoal;
 }
 

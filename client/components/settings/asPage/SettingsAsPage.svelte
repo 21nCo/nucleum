@@ -9,16 +9,16 @@
   import { onMount } from "svelte";
   import context from "$lib/client/stores/context.store";
   import { Embed } from "$lib/client/types/context.type";
-  import { postToParent } from "$lib/client/utils/embed.utils";
+  import { setEmbedBg } from "$lib/client/utils/embed.utils";
   $: route = $page.url.searchParams.get(AppSearchParam.SETTING);
   $: if (route && $context.embed == Embed.HANDSET) {
-    postToParent({ bg: 1 });
+    setEmbedBg(1);
   } else if ($context.embed == Embed.HANDSET) {
-    postToParent({ bg: 2 });
+    setEmbedBg(2);
   }
   onMount(async () => {
     if ($context.embed == Embed.HANDSET) {
-      postToParent({ bg: 2 });
+      setEmbedBg(2);
     }
   });
 </script>

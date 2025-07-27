@@ -1,13 +1,10 @@
 import type { SessionComposition } from "$lib/client/types/pointron/sessionComposition.type";
 import type { SessionState } from "./sessionState.enum";
 import type { IMarkdown } from "$lib/client/components/markdown/md.type";
-import type {
-  IObservableStoreSubject,
-  IRecordId
-} from "$lib/client/types/data.type";
+import type { IRecordId } from "$lib/client/types/data.type";
 import type { SessionType } from "$lib/client/products/pointron/logs/log.type";
 
-export type IActiveSessionStore = IObservableStoreSubject & {
+export type IActiveSessionStore = {
   currentSessionId: IRecordId | undefined;
   type: SessionType;
   state: SessionState;
@@ -125,7 +122,7 @@ export enum SessionUIContext {
   GOAL_PAGE = "GOAL_PAGE"
 }
 
-export interface IFocusItemsStore extends IObservableStoreSubject {
+export interface IFocusItemsStore {
   /**
    * @deprecated - use items instead
    */

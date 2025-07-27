@@ -32,6 +32,7 @@
   import { Product } from "$lib/client/types/product.type";
   import { clipperCacheableStores } from "../clipper.config";
   import ClipperInMemoryCache from "../ClipperInMemoryCache.svelte";
+  import { parse } from "$lib/shared/utils/json.utils";
 
   export let id: string;
   let textClipperRef: TextClipper;
@@ -289,7 +290,7 @@
         ClientStorageKey.GUEST_TOOLBAR_STATE
       );
       if (guestToolbarState) {
-        const parsed = JSON.parse(guestToolbarState);
+        const parsed = parse(guestToolbarState);
         if (parsed.isCollapsed && $toolbarState.isOpen) {
           toolbarState.toggle(false);
         }

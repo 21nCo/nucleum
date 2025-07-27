@@ -24,7 +24,6 @@
   $: isMasonryAvailable = !resource || [Resource.node].includes(resource);
 </script>
 
-<!-- TODO - other collectible items -->
 {#if isMasonryAvailable}
   <NodeRecords
     nodes={items}
