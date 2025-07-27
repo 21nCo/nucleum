@@ -3,6 +3,7 @@ import type {
   IMutationParamsv2,
   IRecordId,
   IResourceSelectParams,
+  IResourceSelectProperties,
   IStore
 } from "$lib/client/types/data.type";
 import type { Resource } from "./resourceStores/resource.enum";
@@ -42,11 +43,11 @@ export type IFluxMethod =
     }
   | {
       method: FluxMethod.CLONE_DOWN;
-  }
+    }
   | {
-    method: FluxMethod.SYNC_DOWN;
-    args: IFluxSyncDownArgs;
-  }
+      method: FluxMethod.SYNC_DOWN;
+      args: IFluxSyncDownArgs;
+    }
   | {
       method: FluxMethod.RECONCILE;
       args: IFluxReconcileArgs;
@@ -74,7 +75,10 @@ interface IFluxSelectManyArgs {
 
 interface IFluxSelectArgs {
   resourceId: IRecordId;
-  properties?: string[];
+  properties?: IResourceSelectProperties;
+  /**
+   * @deprecated
+   */
   signal?: AbortSignal;
 }
 
@@ -106,4 +110,8 @@ interface IFluxKVMergeArgs {
 interface IFluxSearchArgs {
   storeId: string;
   query: string;
+}
+
+export interface IDataMapper {
+  parse(resource: Resource, records: any[]): any[];
 }

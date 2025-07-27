@@ -2,14 +2,13 @@ import type {
   IFocusItem,
   ISessionInterval
 } from "$lib/client/types/pointron/session.type";
-import type {
-  IObservableStoreSubject,
-  IRecordId
-} from "$lib/client/types/data.type";
+import type { IRecordId } from "$lib/client/types/data.type";
 import type { IMarkdown } from "$lib/client/components/markdown/md.type";
 import type { TimeScale } from "$lib/client/types/time.type";
-import type { IResource } from "$lib/client/components/flux/resourceStores/resource.type";
-import type { IMemotronItemBase } from "../../memotron/memotron.type";
+import type {
+  IResource,
+  IResourceShareable
+} from "$lib/client/components/flux/resourceStores/resource.type";
 import type { IGoal } from "$lib/client/components/goals/goal.type";
 import type { ITask } from "$lib/client/components/tasks/task.type";
 
@@ -20,16 +19,11 @@ export enum SessionType {
   MANUAL_ENTRY = "MANUAL_ENTRY"
 }
 
-export type ISessionBase = IMemotronItemBase & {
+export type ISessionBase = {
   type: SessionType;
   //TODO - check the need for below
   // logs: FocusLog[];
   blocks: ISessionInterval[];
-  elapsed: number;
-  extended: number;
-};
-
-export type ISession = ISessionBase & {
   elapsed: number;
   extended: number;
   /**
@@ -72,7 +66,12 @@ export type ISession = ISessionBase & {
   notes?: IMarkdown;
 };
 
-export type ISessionLog = IResource & {
+export type ISessionCapture = ISessionBase;
+
+type IResourcePropertiesForSession = IResource & IResourceShareable;
+export type ISession = ISessionBase & IResourcePropertiesForSession;
+
+export type ISessionLogBase = {
   /**
    * @deprecated - older UTC version datetime - use {@link startUnix} instead
    */
@@ -103,12 +102,20 @@ export type ISessionLog = IResource & {
   targets?: { scale: TimeScale; target: number }[];
 };
 
+export type ISessionLogCapture = ISessionLogBase & {
+  id: IRecordId;
+};
+
+type IResourcePropertiesForSessionLog = IResource & IResourceShareable;
+
+export type ISessionLog = ISessionLogBase & IResourcePropertiesForSessionLog;
+
 export type ISessionLogThumb = ISessionLog & {
   goal: IGoal;
   session: ISession;
 };
 
-export interface ISessionLogStore extends IObservableStoreSubject {
+export interface IManualLogStore {
   manualLogs: IManualSessionLogForm[];
   manualLogError?: string;
 }
@@ -127,7 +134,7 @@ export type IManualSessionLogForm = {
 /**
  * @deprecated - use sessionStore instead
  */
-export interface ILogsPaneStore extends IObservableStoreSubject {
+export interface ILogsPaneStore {
   logs: ISessionThumb[];
   summary: DaySummary;
   date: Date;

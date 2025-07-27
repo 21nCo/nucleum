@@ -3,6 +3,7 @@ import { Resource } from "$lib/client/components/flux/resourceStores/resource.en
 import { ClientStorageKey } from "./persistence.type";
 import { isExtensionEnvironment } from "../utils/browser.utils";
 import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+import { parse, stringify } from "$lib/shared/utils/json.utils";
 
 export function resetLocalStorage() {
   if (import.meta.env?.SSR || !import.meta.env || !window?.localStorage) {
@@ -19,7 +20,7 @@ export function persistLocally<T extends JsonValue>(
   if (import.meta.env?.SSR || !import.meta.env) {
     return;
   }
-  window?.localStorage.setItem(Resource[itemType], JSON.stringify(item));
+  window?.localStorage.setItem(Resource[itemType], stringify(item));
 }
 export function retrieveLocally(itemType: Resource) {
   try {
@@ -28,7 +29,7 @@ export function retrieveLocally(itemType: Resource) {
     }
     let value = window?.localStorage.getItem(Resource[itemType]);
     if (value) {
-      return JSON.parse(value);
+      return parse(value);
     } else {
       return null;
     }
@@ -58,7 +59,7 @@ class ClientKeyValueStorage {
 
   set(key: ClientStorageKey, value: any): Promise<any> {
     if (typeof value === "object") {
-      value = JSON.stringify(value);
+      value = stringify(value);
     }
     if (this.isExtensionEnvironment) {
       return new Promise((resolve, reject) => {

@@ -72,7 +72,7 @@
   }
 </script>
 
-{#if _avatars && _avatars.length > 0 && (!_avatars[0].file || _avatars[0].file === "$NONE")}
+{#if _avatars && _avatars.length > 0 && !_avatars[0].file}
   <span class="flex justify-center items-center">
     <!-- {#each _avatars as avatar, index (avatar)}
       <div

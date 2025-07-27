@@ -72,12 +72,14 @@
   }
 
   async function onAddSubGoal(e: any) {
-    const result = await goalStore.addSubGoalWithContext(
-      [...($goal.parent || []).map((p) => p.id), $goal.id],
+    const result = await goalStore.addSubGoal(
       {
         label: e.detail.label
       },
-      $goal.children?.map((t) => t.id)
+      $goal.id,
+      {
+        srcExpanded: $goal
+      }
     );
     if (result && Array.isArray(result)) {
       const newGoal = result[0];
@@ -85,15 +87,20 @@
     }
   }
   async function onAddSubGoalFromNestedList(e: any) {
-    const result = await goalStore.addSubGoal(e.detail.id, {
-      label: e.detail.label
-    });
+    await goalStore.addSubGoal(
+      {
+        label: e.detail.label
+      },
+      e.detail.id
+    );
   }
 
   async function resolveSubGoals(id: IRecordId) {
     const result = await goalStore.selectMany(
       {
-        properties: ["(select * from $parent.children) as children"],
+        properties: {
+          expand: ["children"]
+        },
         filters: {
           id: id.toString()
         }
@@ -166,9 +173,9 @@
     />
   </div>
 {/if}
-{#if $goal.children}
+{#if _subGoals}
   <div class="flex items-center justify-end gap-4 w-full">
-    {#if $goal.subGoalsLayout !== SubGoalsLayout.STEPS}
+    {#if $goal.subGoalsLayout !== SubGoalsLayout.STEPS && completedSubgoalsCount}
       <Button
         icon={isHideCompleted ? "ph:eye-light" : "ph:eye-slash-light"}
         label={`${isHideCompleted ? "Show" : "Hide"} completed (${completedSubgoalsCount})`}

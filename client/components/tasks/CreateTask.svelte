@@ -9,7 +9,10 @@
   import { Size } from "$lib/client/types/size.enum";
   import { onMount } from "svelte";
   import { Resource } from "../flux/resourceStores/resource.enum";
-  import { ResourceActionType } from "../flux/resourceStores/resource.type";
+  import {
+    ResourceAccessPoint,
+    ResourceActionType
+  } from "../flux/resourceStores/resource.type";
   import { resourceAction } from "../flux/resourceStores/resource.utils";
   import { GoalStatus, type IGoal } from "../goals/goal.type";
   import modalEvent from "../modal/modal.store";
@@ -51,8 +54,7 @@
       {
         label,
         dateUnix: date ? resolveUnixTimestamp(date) : undefined,
-        goalId: goalId ?? goal?.id,
-        isChecked: false
+        goalId: goalId ?? goal?.id
       },
       {
         context: action
@@ -112,10 +114,10 @@
       <div class="transition-all duration-200">
         <TaskThumbnailGoalLabel
           {goal}
-          on:click={() => {
+          on:clearGoal={() => {
             isShowGoalPicker = true;
           }}
-          isCreateContext={true}
+          accessPoint={ResourceAccessPoint.CAPTURE}
         />
       </div>
     {/if}

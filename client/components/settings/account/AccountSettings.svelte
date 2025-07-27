@@ -35,7 +35,7 @@
     resolvePlanLabel
   } from "$lib/client/components/subscription/userPlan.utils";
   import { BillingCycle, PlanType } from "../../subscription/userPlan.type";
-  import { formatDate } from "$lib/client/utils/time.utils";
+  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
   import RestorePurchaseAction from "../../subscription/RestorePurchaseAction.svelte";
   import view from "$lib/client/stores/view.store";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
@@ -233,9 +233,9 @@
             {@const nextPayment = resolveNextRenewalDate($account.plan)}
             <div class="text-fgs3 text-b3 mt-2">
               {#if nextPayment && $account.plan?.status === PlanStatus.ACTIVE}
-                Next renewal: {formatDate(nextPayment)}
+                Next renewal: {parseAndFormatDate(nextPayment)}
               {:else if nextPayment && $account.plan?.status === PlanStatus.CANCELLED}
-                Expires: {formatDate(nextPayment)}
+                Expires: {parseAndFormatDate(nextPayment)}
               {/if}
             </div>
           {/if}

@@ -13,3 +13,22 @@ export enum EmbedMessage {
   RETRIEVE_JOB = "RETRIEVE_JOB",
   DOWNLOAD_MODEL = "DOWNLOAD_MODEL"
 }
+
+export enum EmbedDataMessage {
+  BG = "bg",
+  COLORS = "colorscheme",
+  ROOT_FONT_SIZE = "rootFontSize",
+  MODAL = "modal",
+  PURCHASE = "purchase",
+  MESSAGE = "message",
+  DATA = "data",
+  FILE = "file",
+  FETCH = "fetch",
+  DOWNLOAD = "download",
+  RELOAD = "reload",
+  ERROR = "error",
+  NOTIFICATIONS = "notifications",
+  ACCOUNT = "account",
+  OAUTH = "oauth",
+  LINK = "link"
+}

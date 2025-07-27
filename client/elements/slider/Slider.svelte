@@ -1,3 +1,4 @@
+<!-- TODO - slider not supported on touch devices -->
 <script lang="ts">
   export let value: number;
   export let min = 0;

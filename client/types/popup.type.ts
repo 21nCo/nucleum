@@ -1,5 +1,4 @@
 import type { IButtonParams } from "./button.type";
-import { IObservableStoreSubject } from "./data.type";
 import type { Orientation } from "./direction.enum";
 import type { Size } from "./size.enum";
 
@@ -37,7 +36,7 @@ export type ModalLayoutParams = {
   isShowBackButton?: boolean;
 };
 
-export type IPlayer = IObservableStoreSubject & {
+export type IPlayer = {
   action?: string;
   isMiniOn: boolean;
   isPipOn: boolean;

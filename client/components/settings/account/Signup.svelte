@@ -18,6 +18,7 @@
   import account from "$lib/client/stores/account.store";
   import { toasts } from "$lib/client/stores/notification.store";
   import AppLoadingView from "$lib/client/layout/paint/AppLoadingView.svelte";
+  import { parse } from "$lib/shared/utils/json.utils";
   let isSignup = true;
   let message: string | undefined = undefined;
   let currentProgress: string | undefined = undefined;
@@ -54,7 +55,7 @@
   async function handleMessageFromParent(event: MessageEvent) {
     try {
       if (event?.data?.type === "SWIFT_MESSAGE" && event?.data?.payload) {
-        const parsed = JSON.parse(event.data.payload);
+        const parsed = parse(event.data.payload);
         console.log({
           at: "Signup - handleMessageFromParent - SWIFT_MESSAGE",
           parsed

@@ -1,7 +1,6 @@
-import type { IObservableStoreSubject } from "./data.type";
 import type { Event } from "./event.enum";
 
-export type IEvent = IObservableStoreSubject & {
+export type IEvent = {
   event: Event;
   value: any;
 };

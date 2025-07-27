@@ -55,14 +55,12 @@
       const allNodesList = Array.from(
         new Set(edges.map((link: any) => [link.source, link.target]).flat())
       ) as string[];
+      const properties = {
+        select: ["id", "label", "body", "contentType"],
+        expand: ["parent"]
+      };
       const nodesWithLinks = await nodeStore.selectMany({
-        properties: [
-          "id",
-          "label",
-          "parent.* as parent",
-          "body",
-          "contentType"
-        ],
+        properties,
         filters: {
           // contentType: [...rootNodeTypeList, ...headingNodeTypes]
           id: allNodesList,
@@ -70,13 +68,7 @@
         }
       });
       const allRootNodes = await nodeStore.selectMany({
-        properties: [
-          "id",
-          "label",
-          "parent.* as parent",
-          "body",
-          "contentType"
-        ],
+        properties,
         filters: {
           // contentType: [...rootNodeTypeList, ...headingNodeTypes],
           contentType: [...rootNodeTypeList],

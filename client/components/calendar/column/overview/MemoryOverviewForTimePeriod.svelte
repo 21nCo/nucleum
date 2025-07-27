@@ -1,10 +1,9 @@
 <script lang="ts">
-  import { TimeScale } from "$lib/client/types/time.type";
+  import { TimeScaleUnit } from "$lib/client/types/time.type";
   import { nodeStore } from "$lib/client/products/memotron/node/node.store";
   import { linker } from "$lib/client/products/memotron/linking/link.store";
   import type { INodeThumb } from "$lib/client/products/memotron/node/node.type";
-  import type { INodeLink } from "$lib/client/products/memotron/node/node.type";
-  import { formatDate } from "$lib/client/utils/time.utils";
+  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { appStore } from "$lib/client/stores/app.store";
@@ -17,26 +16,26 @@
   import { Action } from "$lib/client/types/action.enum";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
   import { LoadingAnimationType } from "$lib/client/types/feedback.type";
+  import type { ILink } from "$lib/client/products/memotron/linking/link.type";
+  import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
 
   export let date: Date;
-  export let scale: TimeScale = TimeScale.DAYS;
+  export let scale: TimeScaleUnit = TimeScaleUnit.DAY;
   export let isRewind: boolean = false;
 
   async function fetchMemoryData(): Promise<{
-    today: { nodes: INodeThumb[]; links: INodeLink[] };
-    previousYears: { nodes: INodeThumb[]; links: INodeLink[]; year: number }[];
+    today: { nodes: INodeThumb[]; links: ILink[] };
+    previousYears: { nodes: INodeThumb[]; links: ILink[]; year: number }[];
   }> {
-    const normalizedDate = new Date(
-      date.getFullYear(),
-      date.getMonth(),
-      date.getDate()
-    );
-
+    const dateFilter = tzStore.resolveTimePeriodFilter(date, {
+      scale,
+      isReturnAsDateObjectFilter: true
+    });
     const [todayNodesResult, todayLinksResult] = await Promise.all([
       nodeStore.selectMany(
         {
           filters: {
-            createdAt: normalizedDate
+            createdAt: dateFilter
           },
           orderBy: {
             createdAt: "desc"
@@ -49,7 +48,7 @@
       ),
       linker.selectMany({
         filters: {
-          createdAt: normalizedDate
+          createdAt: dateFilter
         },
         orderBy: {
           createdAt: "desc"
@@ -65,6 +64,13 @@
         date.getMonth(),
         date.getDate()
       );
+      const dateFilterForMemoryDate = tzStore.resolveTimePeriodFilter(
+        memoryDate,
+        {
+          scale,
+          isReturnAsDateObjectFilter: true
+        }
+      );
 
       if (memoryDate > new Date()) continue;
 
@@ -72,7 +78,7 @@
         nodeStore.selectMany(
           {
             filters: {
-              createdAt: memoryDate
+              createdAt: dateFilterForMemoryDate
             },
             orderBy: {
               createdAt: "desc"
@@ -85,7 +91,7 @@
         ),
         linker.selectMany({
           filters: {
-            createdAt: memoryDate
+            createdAt: dateFilterForMemoryDate
           },
           orderBy: {
             createdAt: "desc"
@@ -127,7 +133,7 @@
   {#if today.nodes.length === 0 && today.links.length === 0 && previousYears.length === 0}
     <EmptyStatusView
       mainText="No nodes found"
-      subText={`No nodes found on ${formatDate(date, "verbose")}`}
+      subText={`No nodes found on ${parseAndFormatDate(date, "verbose")}`}
     />
   {:else}
     <div class="flex flex-col gap-6 w-full">

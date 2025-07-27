@@ -13,7 +13,6 @@
     activeSession,
     currentFocusItem
   } from "$lib/client/products/pointron/focus/session.store";
-  import type { IMarkdown } from "$lib/client/components/markdown/md.type";
   import { isEmptyMd } from "../../markdown/markdown.utils";
   import GoalInfoEditControl from "./GoalInfoEditControl.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
@@ -163,7 +162,9 @@
     />
   {/if}
   <InlineFeedbackText bind:feedback={status} />
-  <div class="text-fgs3 text-b3 mx-auto mt-auto userdata">
-    Created: {formatDatetime($userPreferences, $goal.createdAt)}
-  </div>
+  {#if $goal.createdAt}
+    <div class="text-fgs3 text-b3 mx-auto mt-auto userdata">
+      Created: {formatDatetime($userPreferences, $goal.createdAt)}
+    </div>
+  {/if}
 </div>

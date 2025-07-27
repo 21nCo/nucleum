@@ -64,6 +64,7 @@
     resolveContentTypeForUrl,
     resolveContentTypeString
   } from "../clipper.utils";
+  import { parse } from "$lib/shared/utils/json.utils";
   let mainPanel: "page" | "collections" = "page";
   let mode: "clips" | "notes" | "history" = "clips";
   let title = "";
@@ -299,9 +300,7 @@
       const bootupStatus = await clientStorage.get(
         ClientStorageKey.EXTENSION_BOOTUP
       );
-      const parsed = bootupStatus
-        ? JSON.parse(bootupStatus)
-        : { inProgress: false };
+      const parsed = bootupStatus ? parse(bootupStatus) : { inProgress: false };
       console.log({ bootupStatus, parsed });
       isBootupSyncInProgress = parsed.inProgress;
     } catch (e) {

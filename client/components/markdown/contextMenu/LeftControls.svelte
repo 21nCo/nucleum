@@ -38,7 +38,10 @@
   import ContextMenu from "$lib/client/elements/contextMenu/ContextMenu.svelte";
   import { hoverable } from "$lib/client/actions/hover.action";
   import { nodeStore } from "$lib/client/products/memotron/node/node.store";
-  import { formatDate, formatDatetime } from "$lib/client/utils/time.utils";
+  import {
+    parseAndFormatDate,
+    formatDatetime
+  } from "$lib/client/utils/time.utils";
   import { userPreferences } from "../../settings/userPreferences.store";
   import { resolveResourceActionIcon } from "../../flux/resourceStores/resource.utils";
   const dispatch = createEventDispatcher();

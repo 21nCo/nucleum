@@ -1,34 +1,29 @@
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { LinkType } from "$lib/client/products/memotron/linking/link.type";
 import {
-  LinkType,
   type IActiveNode,
   type INode,
   NodeType,
   NodeRightPaneType,
   type INodeLinkThumb,
-  type INodeLink,
   canHaveTraces,
   NodeView,
   headingNodeTypes,
   mediaNodeTypeList,
-  rootNodeTypeList
+  rootNodeTypeList,
+  type INodeCapture
 } from "$lib/client/products/memotron/node/node.type";
-import {
-  activeResources,
-  ResourceStore
-} from "$lib/client/components/flux/resourceStores/resource.store";
+import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
 import {
   activeResourceFilterIgnoreParentInactive,
   debouncer
 } from "$lib/client/utils/utils";
-import { formatDate } from "$lib/client/utils/time.utils";
 import {
   ResourceAccessMode,
   ResourceAccessPoint,
   ResourceActionType
 } from "$lib/client/components/flux/resourceStores/resource.type";
 import { ResourceActions } from "$lib/client/components/record/resource.actions";
-import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
 import { get, writable } from "svelte/store";
 import { linker } from "$lib/client/products/memotron/linking/link.store";
 import {
@@ -52,30 +47,30 @@ import {
   isSameResource,
   isRecordId
 } from "$lib/client/components/flux/resourceStores/resource.utils";
-import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
 
 import context from "$lib/client/stores/context.store";
 import { Embed } from "$lib/client/types/context.type";
-import { TacoActions } from "../taco/taco.types";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-import { generateResourceId } from "$lib/shared/utils/surreal.utils";
 import { fileStore } from "$lib/client/components/files/file.store";
 import { recursivelyExtractAllChildrenIntoArray } from "$lib/client/components/markdown/markdown.utils";
 import view from "$lib/client/stores/view.store";
 import { CollectibleStore } from "$lib/client/components/collection/collectible.store";
 import { appStore } from "$lib/client/stores/app.store";
+import type { ILink } from "../linking/link.type";
 
 export const hierarchyFactorLimit = 5;
-
-class NodeStore extends ResourceStore<INode> {
+const defaults: Partial<INode> = {
+  metaType: "",
+  contentType: NodeType.UNKNOWN
+};
+class NodeStore extends ResourceStore<INode, INodeCapture<INode>> {
   searchStore: any;
   constructor() {
     super(Resource.node, {
-      dboDependencies: [
-        "fn::memotron::node::fetch",
-        "fn::memotron::node::children",
-        "fn::memotron::node::parent"
-      ]
+      indices: ["contentType", "metaType", "parent"],
+      searchIndices: ["label", "text", "notes"],
+      expandProps: ["parent", "file", "mdParent"],
+      defaultProps: defaults
     });
   }
 
@@ -90,15 +85,10 @@ class NodeStore extends ResourceStore<INode> {
       "(select * from $parent.mdParent) as mdParent",
       "search::highlight('**', '**', 2, false) AS bodySearch"
     ];
-    const properties = [
-      ...(additionalParams?.isExpand ? expandedProps : []),
-      ...(params?.properties ?? [])
-    ];
     if (additionalParams?.isQueryAsIs) {
       return super.selectMany(
         {
-          ...(params ?? {}),
-          properties
+          ...(params ?? {})
         },
         additionalParams
       );
@@ -136,7 +126,6 @@ class NodeStore extends ResourceStore<INode> {
     };
     params = {
       ...(params ?? {}),
-      properties,
       filters
     };
     return super.selectMany(params, additionalParams);
@@ -160,12 +149,16 @@ class NodeStore extends ResourceStore<INode> {
   async fetch(nodeId: IRecordId) {
     // const query = `fn::memotron::node::fetch(${nodeId})`;
     // const response = await flux.selectByQuery(query);
-    const response = await super.select(nodeId, [
+    const oldProps = [
       "*",
       "parent.* as parent",
       "file.* as file",
       "(fn::memotron::node::children($parent.children)) as children"
-    ]);
+    ];
+    const response = await super.select(nodeId, {
+      expand: ["parent", "file"],
+      recurse: "children"
+    });
     logger.debug({ at: "fetch node", response });
     return response;
   }
@@ -187,7 +180,7 @@ class NodeStore extends ResourceStore<INode> {
   async download(node: IRecordId | INode) {
     let file;
     if (isRecordId(node)) {
-      const result = await this.select(node);
+      const result = await this.select(node as IRecordId);
       if (result?.file) {
         file = result.file;
       }
@@ -202,7 +195,9 @@ class NodeStore extends ResourceStore<INode> {
   private async resolveDependencies(ids: IRecordId[]) {
     const childrenResult = await super.selectMany(
       {
-        properties: ["id"],
+        properties: {
+          select: ["id"]
+        },
         filters: {
           parent: ids.map((id) => id.toString())
         }
@@ -216,7 +211,9 @@ class NodeStore extends ResourceStore<INode> {
       ...ids.map((id) =>
         super.selectMany(
           {
-            properties: ["id"],
+            properties: {
+              select: ["id"]
+            },
             filters: {
               parent: {
                 contains: id.toString()
@@ -269,25 +266,11 @@ export const vectorResourceStore = new ResourceStore(Resource.vector, {
 
 export type IActiveNodeStore = InstanceType<typeof ActiveNodeStore>;
 
-/**
- *
- * @deprecated - use ActiveNodeStore.resolve instead
- *
- * Resolves the active node store for the given id. If the store does not exist, it will be initialized.
- * @param id - The id of the node
- * @param context - The context from which the store is being accessed. This is used for debugging purposes.
- * @returns The active node store
- */
-export function resolveActiveNodeStore(id: IRecordId, context: string = "") {
-  const idStr = id.toString();
-  if (!activeResources.has(idStr)) {
-    activeResources.set(idStr, new ActiveNodeStore(id));
-  }
-  let val = activeResources.get(idStr);
-  return val!;
-}
-
-export class ActiveNodeStore extends CollectibleStore<IActiveNode, NodeStore> {
+export class ActiveNodeStore extends CollectibleStore<
+  INode,
+  NodeStore,
+  IActiveNode
+> {
   eventStore: any;
   debouncers = new Map<string, any>();
   constructor(node: IRecordId) {
@@ -324,55 +307,6 @@ export class ActiveNodeStore extends CollectibleStore<IActiveNode, NodeStore> {
         parentValue = currentNode.label ?? currentNode.body;
       else parentValue = getMarkdownSymbolPrepended(currentNode);
       const mdText = generateMarkdownText(childrenNodes);
-      const dev_isEnableVectorGenOnSave = false;
-      try {
-        if (
-          dev_isEnableVectorGenOnSave &&
-          get(userPreferences).localAI.semanticSearch &&
-          get(context).embed !== Embed.HANDSET
-        ) {
-          const eventId = id.toString();
-          tacoWorker.postMessage({
-            action: TacoActions.GET_EMBEDDINGS,
-            params: {
-              text: parentValue + " \n" + mdText,
-              eventId: eventId
-            }
-          });
-          const embedding = await new Promise((resolve, reject) => {
-            const handleMessage = (e) => {
-              const { eventId: recEventId, data } = e.data;
-              if (eventId == recEventId) {
-                tacoWorker.removeEventListener("message", handleMessage);
-                resolve(data);
-              }
-            };
-            tacoWorker.addEventListener("message", handleMessage);
-          });
-          let vectorId;
-          if (currentNode.vector) {
-            vectorId = currentNode.vector;
-            const vectorUpdateresult = await vectorResourceStore.modify(
-              vectorId,
-              {
-                embedding: embedding
-              }
-            );
-          } else {
-            vectorId = generateResourceId(Resource.vector);
-            const vectorUpdateresult = await vectorResourceStore.create({
-              id: vectorId,
-              embedding: embedding,
-              currentNode: id
-            });
-          }
-        }
-      } catch (e) {
-        logger.error({
-          at: "ActiveNodeStore.updateBlockPropagator - vector generation error",
-          error: e
-        });
-      }
       logger.log({
         at: "ActiveNodeStore.updateBlockPropagator - end",
         changedProps,
@@ -449,35 +383,38 @@ export class ActiveNodeStore extends CollectibleStore<IActiveNode, NodeStore> {
     try {
       const node = this.get();
       console.time("ActiveNodeStore.afterInit - links");
-      const linksResult = await nodeStore.selectMany({
-        properties: ["array::concat(->link.*, <-link.*) as links"],
-        // properties: ["->link.* as outlinks", "<-link.* as inlinks"],
+      const inLinks = await linker.selectMany({
         filters: {
-          id: this.id.toString()
+          in: this.id.toString()
         }
       });
+      const outLinks = await linker.selectMany({
+        filters: {
+          out: this.id.toString()
+        }
+      });
+      const linksResult = [...(inLinks ?? []), ...(outLinks ?? [])].filter(
+        (x: ILink) => {
+          return (
+            (x.in.toString() === this.id &&
+              x.out.toString()?.includes(Resource.node)) ||
+            (x.out.toString() === this.id &&
+              x.in.toString()?.includes(Resource.node))
+          );
+        }
+      );
       console.timeEnd("ActiveNodeStore.afterInit - links");
       if (linksResult && isValidArrayWithData(linksResult)) {
-        const data = linksResult[0]?.links;
-        const rawLinks = [...(data ?? [])];
-        // const rawLinks = [...(data?.outlinks ?? []), ...(data?.inlinks ?? [])];
-        const links: INodeLinkThumb[] = rawLinks
-          .filter((x: INodeLink) => {
-            return (
-              (x.in.toString() === this.id && x.out.tb === Resource.node) ||
-              (x.out.toString() === this.id && x.in.tb === Resource.node)
-            );
-          })
-          .map((x: INodeLink) => {
-            const id = x.in.toString() === this.id ? x.out : x.in;
-            return {
-              linkedTo: id,
-              linkType: x.linkType,
-              id: x.id,
-              tags: x.tags,
-              direction: x.in.toString() === this.id ? "outgoing" : "incoming"
-            } as INodeLinkThumb;
-          });
+        const links: INodeLinkThumb[] = linksResult.map((x: ILink) => {
+          const id = x.in.toString() === this.id ? x.out : x.in;
+          return {
+            linkedTo: id,
+            linkType: x.linkType,
+            id: x.id,
+            tags: x.tags,
+            direction: x.in.toString() === this.id ? "outgoing" : "incoming"
+          } as INodeLinkThumb;
+        });
         this.update((n) => {
           n.links = links;
           return n;
@@ -537,7 +474,8 @@ export class ActiveNodeStore extends CollectibleStore<IActiveNode, NodeStore> {
         id,
         contentType,
         creationContext: this.id,
-        body: params?.body
+        body: params?.body,
+        label: ""
       }
     ]);
   };
@@ -556,7 +494,7 @@ export class ActiveNodeStore extends CollectibleStore<IActiveNode, NodeStore> {
         contentType: x.contentType,
         creationContext: this.id,
         body: x.body,
-        label: x.label
+        label: x.label ?? ""
       }))
     );
   };
@@ -817,7 +755,10 @@ class NodeActions {
       label: "Show links",
       tooltip: "Show links",
       count:
-        this.node.links && this.node.links.length > 0
+        "links" in this.node &&
+        this.node.links &&
+        Array.isArray(this.node.links) &&
+        this.node.links.length > 0
           ? this.node.links?.length
           : undefined
     };
@@ -830,7 +771,10 @@ class NodeActions {
       label: "Show traces",
       tooltip: "Show traces",
       count:
-        this.node.clips && this.node.clips.length > 0
+        "clips" in this.node &&
+        this.node.clips &&
+        Array.isArray(this.node.clips) &&
+        this.node.clips.length > 0
           ? this.node.clips?.length
           : undefined
     };
@@ -843,7 +787,7 @@ class NodeActions {
       icon: "ph:arrows-out-line-horizontal-light",
       type: ContextMenuType.SWITCH,
       initialValue: this.node.config?.isWidened,
-      callback: async (checked) => {
+      callback: async (checked: boolean) => {
         return this.store.modify(this.node.id, {
           config: {
             isWidened: checked

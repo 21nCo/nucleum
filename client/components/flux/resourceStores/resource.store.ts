@@ -14,7 +14,9 @@ import {
   type IResourceSelectParams,
   type IRecordId,
   type IResourceSelectAdditionalParams,
-  type IResourceSelectFilters
+  type IResourceSelectFilters,
+  type IResourceSelectProperties,
+  type IResourceStore
 } from "../../../types/data.type";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { ObservableStore } from "../../../stores/client.store";
@@ -24,8 +26,7 @@ import type {
   IMultiSelectStore,
   IResource,
   IResourceMutationParams,
-  OmitForCapture,
-  OmitForCaptureWithId
+  IResourceCaptureV2
 } from "./resource.type";
 import { flux } from "../flux";
 import {
@@ -41,13 +42,14 @@ import { isSameResource, resourceInList } from "./resource.utils";
 import { GlobalEvent } from "$lib/client/types/event.enum";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { AppSearchParam } from "$lib/client/types/appStore.type";
+import { stringify } from "$lib/shared/utils/json.utils";
 
-export const activeResources = new Map<string, ActiveResourceStore<any, any>>();
+const activeResources = new Map<string, ActiveResourceStore<any, any, any>>();
 
 const multiSelectStores = new Map<string, MultiSelectStore>();
 
 export function resolveMultiSelectStore(context: IMultiSelectContext) {
-  const contextStr = JSON.stringify(context);
+  const contextStr = stringify(context);
   if (!multiSelectStores.has(contextStr))
     multiSelectStores.set(contextStr, new MultiSelectStore(context));
   return multiSelectStores.get(contextStr)!;
@@ -59,7 +61,7 @@ export class MultiSelectStore
 {
   context: IMultiSelectContext;
   constructor(context: IMultiSelectContext) {
-    super(JSON.stringify(context), StoreDataType.NA);
+    super(stringify(context), StoreDataType.NA);
     this.context = context;
     this.set([]);
   }
@@ -87,10 +89,11 @@ export class MultiSelectStore
 
 export class ActiveResourceStore<
   T extends IResource,
-  U extends ResourceStore<T>
+  U extends ResourceStore<T, IResourceCaptureV2<T>>,
+  V extends IResource
 > {
   id: IRecordId;
-  protected subject = writable<T>();
+  protected subject = writable<V>();
   protected resourceStore: U;
   protected currentUserId?: string;
   subscribe = this.subject.subscribe;
@@ -162,7 +165,7 @@ export class ActiveResourceStore<
     return (this.get().content as string) ?? "";
   }
 
-  static resolve<T extends ActiveResourceStore<any, any>>(
+  static resolve<T extends ActiveResourceStore<any, any, any>>(
     this: new (id: IRecordId) => T,
     id: IRecordId
   ): T {
@@ -180,41 +183,61 @@ export class ActiveResourceStore<
 }
 
 /**
- * For IFR Resources
+ * For IFR & FIR resources
  */
-export class ResourceStore<T extends IResource> implements IStore {
+export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
+  implements IResourceStore<T>
+{
   id: Resource;
   dataType: StoreDataType = StoreDataType.IFR;
   currentUserId?: string;
-  dboDependencies?: string[];
+  indices?: string[];
+  searchIndices?: string[];
   isInMemory?: boolean = false;
   isCloudOnlyResource?: boolean = false;
+  defaultProps?: Partial<T> = {};
+  expandProps?: string[];
   /**
    * Can be subscribed only if the store is inMemory. Otherwise, data will be always empty.
    */
   protected items = writable<T[]>();
+  protected _setInMemoryItems = this.items.set;
   subscribe = this.items.subscribe;
   update = this.items.update;
-  protected _setInMemoryItems = this.items.set;
+  set = (data: T[]) => {
+    this._setInMemoryItems(data);
+  };
   protected debouncers = new Map<string, any>();
   private isExtensionEnvironment: boolean = false;
-
   constructor(
     resourceType: Resource,
     params?: Pick<
-      IStore,
-      "dboDependencies" | "isInMemory" | "isCloudOnlyResource"
+      IResourceStore<T>,
+      | "isInMemory"
+      | "isCloudOnlyResource"
+      | "indices"
+      | "searchIndices"
+      | "defaultProps"
+      | "expandProps"
     > &
-      Partial<Pick<IStore, "dataType">>
+      Partial<Pick<IResourceStore<T>, "dataType">>
   ) {
     this.id = resourceType;
     resolveCurrentUserId().then((x) => {
       this.currentUserId = x;
     });
-    this.dboDependencies = params?.dboDependencies;
+    this.indices = [
+      "id",
+      "createdAt",
+      "modifiedAt",
+      ...(params?.indices ?? [])
+    ];
+    this.searchIndices = params?.searchIndices;
     this.isInMemory = params?.isInMemory;
     this.isCloudOnlyResource = params?.isCloudOnlyResource;
     this.dataType = params?.dataType ?? StoreDataType.IFR;
+    this.defaultProps = params?.defaultProps ?? {};
+    this.expandProps = params?.expandProps;
     this.isExtensionEnvironment = isExtensionEnvironment();
   }
 
@@ -225,14 +248,8 @@ export class ResourceStore<T extends IResource> implements IStore {
    * @returns
    */
   async create(
-    input:
-      | OmitForCapture<T>
-      | OmitForCapture<T>[]
-      | OmitForCaptureWithId<T>
-      | OmitForCaptureWithId<T>[],
+    input: C | C[],
     params?: {
-      customQuery?: string;
-      customQueryAdditionalParams?: { [key: string]: any };
       context?: string;
     }
   ): Promise<T[] | undefined> {
@@ -242,39 +259,27 @@ export class ResourceStore<T extends IResource> implements IStore {
       createdBy: this.currentUserId,
       modifiedBy: this.currentUserId
     };
-
     let data: IMutationParamsv2<T>;
     let resources: T[] = [];
     if (Array.isArray(input)) {
-      resources = input?.map((r) => ({
+      resources = input.map((r) => ({
+        ...this.defaultProps,
         ...r,
         id: "id" in r && r.id ? r.id : generateResourceId(this.id),
         ...commonProps
-      }));
+      })) as unknown as T[];
     } else {
       resources = [
         {
+          ...this.defaultProps,
           ...input,
           id:
             "id" in input && input.id ? input.id : generateResourceId(this.id),
           ...commonProps
         }
-      ];
+      ] as unknown as T[];
     }
-
-    if (params?.customQuery) {
-      //TODO - use $resource in query
-      data = {
-        action: PersistenceActionType.CUSTOM,
-        query: params.customQuery,
-        data: {
-          resources,
-          ...params?.customQueryAdditionalParams
-        }
-      };
-    } else {
-      data = { action: PersistenceActionType.INSERT, records: resources };
-    }
+    data = { action: PersistenceActionType.INSERT, records: resources };
     if (this.isExtensionEnvironment) {
       const result = await extensionFlux({
         method: FluxMethod.MUTATION,
@@ -289,10 +294,11 @@ export class ResourceStore<T extends IResource> implements IStore {
       if (result) return resources;
       return result;
     }
-    return flux.mutation<T>(this.id, data, {
+    await flux.mutation<T>(this.id, data, {
       isCloudOnlyResource: this.isCloudOnlyResource,
       context: params?.context
     });
+    return resources;
   }
 
   private persistModification(
@@ -361,7 +367,7 @@ export class ResourceStore<T extends IResource> implements IStore {
       ? {}
       : {
           modifiedBy: this.currentUserId,
-          modifiedAt: new Date().toISOString()
+          modifiedAt: new Date()
         };
     const activeResource = activeResources.get(id.toString());
     if (activeResource && !additionalParams?.isPreventBackPropagation) {
@@ -426,9 +432,9 @@ export class ResourceStore<T extends IResource> implements IStore {
         {
           trashInformation: {
             deletedBy: this.currentUserId,
-            deletedAt: new Date().toISOString()
+            deletedAt: new Date()
           }
-        } as Partial<T>,
+        } as unknown as Partial<T>,
         additionalParams
       ),
       this.onTrash([id])
@@ -447,11 +453,16 @@ export class ResourceStore<T extends IResource> implements IStore {
           resource: this.id,
           params: {
             action: PersistenceActionType.BULK_MERGE,
+            recordIds: ids,
+            changes: {
+              ...data,
+              modifiedBy: this.currentUserId
+            },
             records: ids.map((id) => ({
               id,
               ...data,
               modifiedBy: this.currentUserId,
-              modifiedAt: new Date().toISOString()
+              modifiedAt: new Date()
             }))
           },
           additionalParams: {
@@ -464,12 +475,18 @@ export class ResourceStore<T extends IResource> implements IStore {
       this.id,
       {
         action: PersistenceActionType.BULK_MERGE,
+        recordIds: ids,
+        changes: {
+          ...data,
+          modifiedBy: this.currentUserId,
+          modifiedAt: new Date()
+        },
         records: ids.map((id) => ({
           id,
           ...data,
           modifiedBy: this.currentUserId,
-          modifiedAt: new Date().toISOString()
-        }))
+          modifiedAt: new Date()
+        })) as unknown as T[]
       },
       {
         ...additionalParams,
@@ -487,9 +504,9 @@ export class ResourceStore<T extends IResource> implements IStore {
       {
         trashInformation: {
           deletedBy: this.currentUserId,
-          deletedAt: new Date().toISOString()
+          deletedAt: new Date()
         }
-      } as Partial<T>,
+      } as unknown as Partial<T>,
       additionalParams
     );
   }
@@ -500,7 +517,7 @@ export class ResourceStore<T extends IResource> implements IStore {
         id,
         {
           isArchived: true
-        } as Partial<T>,
+        } as unknown as Partial<T>,
         additionalParams
       ),
       this.onArchive([id])
@@ -513,7 +530,7 @@ export class ResourceStore<T extends IResource> implements IStore {
         id,
         {
           isArchived: false
-        } as Partial<T>,
+        } as unknown as Partial<T>,
         additionalParams
       ),
       this.onUnarchive([id])
@@ -554,7 +571,11 @@ export class ResourceStore<T extends IResource> implements IStore {
     isLocked: boolean,
     additionalParams?: IResourceMutationParams
   ) {
-    return this.modify(id, { isLocked } as Partial<T>, additionalParams);
+    return this.modify(
+      id,
+      { isLocked } as unknown as Partial<T>,
+      additionalParams
+    );
   }
 
   /**
@@ -631,6 +652,14 @@ export class ResourceStore<T extends IResource> implements IStore {
     params?: IResourceSelectParams,
     additionalParams?: IResourceSelectAdditionalParams
   ) {
+    const expansionProps =
+      params?.properties?.expand && params.properties.expand.length > 0
+        ? params.properties.expand
+        : additionalParams?.isExpand
+          ? this.expandProps
+          : [];
+    const properties = [...(params?.properties?.select ?? [])];
+
     let filters: IResourceSelectFilters;
     if (params?.limit) {
       filters = {
@@ -646,7 +675,11 @@ export class ResourceStore<T extends IResource> implements IStore {
     }
     params = {
       ...params,
-      filters
+      filters,
+      properties: {
+        select: properties,
+        expand: expansionProps
+      }
     };
     if (this.isExtensionEnvironment) {
       return extensionFlux({
@@ -678,20 +711,26 @@ export class ResourceStore<T extends IResource> implements IStore {
     else return result.filter(activeResourceFilter);
   }
 
-  select(resourceId: IRecordId, properties?: string[], signal?: AbortSignal) {
+  select(
+    resourceId: IRecordId,
+    properties?: IResourceSelectProperties,
+    params?: {
+      signal?: AbortSignal;
+    }
+  ) {
     if (this.isExtensionEnvironment) {
       return extensionFlux({
         method: FluxMethod.SELECT,
         args: {
           resourceId,
           properties,
-          signal
+          signal: params?.signal
         }
       });
     }
     return flux.select(resourceId, properties, {
       isCloudOnlyResource: this.isCloudOnlyResource,
-      signal
+      signal: params?.signal
     });
   }
 

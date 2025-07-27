@@ -31,9 +31,7 @@
   async function fetchLocationData() {
     isLoading = true;
     try {
-      const allNodes = await nodeStore.selectMany({
-        properties: ["*", "metadata"]
-      });
+      const allNodes = await nodeStore.selectMany();
 
       mapData = (allNodes || [])
         .filter((node: INode) => {

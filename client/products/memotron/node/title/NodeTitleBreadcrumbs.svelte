@@ -3,7 +3,6 @@
   import { createEventDispatcher, onMount } from "svelte";
   import type { IRecordId } from "$lib/client/types/data.type";
   import { nodeStore } from "../node.store";
-  import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
   import Breadcrumbs from "$lib/client/elements/breadcrumbsV2/Breadcrumbs.svelte";
   import { headingNodeTypes, NodeType, type INode } from "../node.type";
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
@@ -29,11 +28,7 @@
       });
     }
   });
-  /**
-   * Note: Querying in this component instead of pre fetching for both thumbnails and node fetch due to latency for this query.
-   *
-   * "(fn::memotron::node::parent($parent.id)) as mdParent"
-   */
+
   async function refreshBreadcrumbs() {
     let parentItems = [];
     if (
@@ -44,22 +39,14 @@
       parentItems = mdParent;
     } else if (mdParent) {
       parentItems = await nodeStore.selectMany({
-        properties: ["label", "id", "body"],
+        properties: {
+          select: ["label", "id", "body"]
+        },
         filters: {
           contentType: [...headingNodeTypes, NodeType.NODULAR_MARKDOWN],
           id: mdParent?.map((x) => x.toString())
         }
       });
-    } else if (!isExtensionEnvironment()) {
-      const result = await nodeStore.selectMany({
-        properties: [
-          "(select * from (fn::memotron::node::parent($parent.id))) as mdParent"
-        ],
-        filters: {
-          id: id?.toString()
-        }
-      });
-      if (result) parentItems = result[0].mdParent;
     }
     if (!mdParent || !parentItems || parentItems.length === 0) return [];
     return mdParent

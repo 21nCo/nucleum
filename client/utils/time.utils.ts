@@ -546,7 +546,7 @@ export function formatDateRelativeToToday(date: UserDate | Date | number) {
     if (isArchiveFormat) {
       return formatUserDate(date as UserDate);
     }
-    return formatDate(inputDate);
+    return parseAndFormatDate(inputDate);
   }
 }
 
@@ -575,8 +575,8 @@ export function incrementTime(
   return new Date(dateTime.getTime() + numberOfHours * 60 * 60 * 1000);
 }
 
-export function formatDate(
-  date: Date | number,
+export function parseAndFormatDate(
+  date: Date | number | string,
   format:
     | "iso"
     | "iso-short"
@@ -588,6 +588,8 @@ export function formatDate(
     | "yyyy" = "verbose"
 ) {
   if (typeof date === "number") date = new Date(date);
+  else if (typeof date === "string") date = new Date(date);
+  if (date.toString() === "Invalid Date") return "";
   if (format === "iso" || format === "iso-short") {
     let year = date.getFullYear();
     let month = (1 + date.getMonth()).toString().padStart(2, "0");
@@ -625,6 +627,7 @@ export function formatDate(
       year: "numeric"
     });
   }
+  return "";
 }
 
 export function isSameDay(date1: Date, date2: Date) {
@@ -673,7 +676,7 @@ export function formatDatetime(
 ) {
   if (typeof date === "string") date = new Date(date);
   else if (typeof date === "number") date = new Date(date);
-  const formattedDate = formatDate(date);
+  const formattedDate = parseAndFormatDate(date);
   const formattedTime = formatTime(userPreferences, date);
   return `${formattedDate} ${formattedTime}`;
 }

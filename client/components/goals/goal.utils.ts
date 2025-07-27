@@ -47,7 +47,14 @@ export function resolveGoalStatusIcon(status: GoalStatus) {
 
 export function resolveGoalColor(goal?: IGoalThumb) {
   if (goal?.color) return goal.color;
-  else if (goal?.parent && goal?.parent?.length > 0)
+  else if (
+    goal?.parent &&
+    Array.isArray(goal?.parent) &&
+    goal?.parent?.length > 0 &&
+    typeof goal.parent[0] === "object" &&
+    goal.parent[0]?.color
+  ) {
     return goal.parent[0].color;
-  else return undefined;
+  }
+  return undefined;
 }

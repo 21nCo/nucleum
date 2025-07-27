@@ -687,7 +687,6 @@
         <Funnel {variant} />
       {:else if icon === "paper-clip"}
         <PaperClip {variant} />
-        <!-- TODO - TEMP - bird view icon is mapped to eye -->
       {:else if icon === "eye" || icon === "bird"}
         <Eye {variant} />
       {:else if icon === "alt-text"}
@@ -738,8 +737,6 @@
         />
       {/if}
     </svg>
-    <!-- TODO: abstract situations like these - remove classList and slot -->
-    <slot />
   {/if}
 </button>
 

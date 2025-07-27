@@ -321,12 +321,12 @@
           node.updateBlock(e.detail.source, {
             contentType: e.detail.toType,
             children: [],
-            body: "$NONE"
+            body: undefined
           });
         } else {
           node.updateBlock(e.detail.source, {
             contentType: e.detail.toType,
-            body: "$NONE"
+            body: undefined
           });
         }
       }

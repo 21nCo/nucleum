@@ -2,7 +2,7 @@
   import { createEventDispatcher } from "svelte";
   import Icon from "../Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import { formatDate } from "$lib/client/utils/time.utils";
+  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
   import { InputStyle, type InputLabel } from "$lib/client/types/input.type";
   import InputBaseElement from "../InputBaseElement.svelte";
   import AbsoluteTimeRangePopover from "./absolute/AbsoluteTimeRangePopover.svelte";
@@ -115,7 +115,7 @@
       <Icon icon="calendar" size={Size.md} />
       {#if date}
         <span class="text-fgs2 text-base">
-          {formatDate(date)}
+          {parseAndFormatDate(date)}
         </span>
       {:else}
         <span class="text-fgs2 text-b2">{placeholder}</span>
@@ -164,7 +164,7 @@
       <Icon icon="ph:calendar-light" />
     {/if}
     {#if variant === "inline" || variant === "inline-with-icon"}
-      {date ? formatDate(date) : placeholder}
+      {date ? parseAndFormatDate(date) : placeholder}
     {/if}
   </button>
 {:else}

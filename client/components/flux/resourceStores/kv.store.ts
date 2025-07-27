@@ -2,7 +2,6 @@ import { ObservableStore } from "$lib/client/stores/client.store";
 import { logger } from "$lib/client/components/debug/logger.client";
 import {
   type IObservableStore,
-  type IObservableStoreSubject,
   type IStore,
   StoreDataType
 } from "$lib/client/types/data.type";
@@ -13,13 +12,13 @@ import { flux } from "../flux";
 import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
 import { extensionFlux } from "../fluxExtentionMediator";
 import { FluxMethod } from "../flux.type";
+import { parse, stringify } from "$lib/shared/utils/json.utils";
 
-export class KeyValueStore<T extends IObservableStoreSubject>
+export class KeyValueStore<T>
   extends ObservableStore<T>
   implements IObservableStore<T>
 {
   declare id: Resource;
-  isSynchronousCache: boolean = false;
   isPreventAutoPersist: boolean = false;
   isInitialized: boolean = false;
   protected previousValue: string = "";
@@ -30,11 +29,10 @@ export class KeyValueStore<T extends IObservableStoreSubject>
     item: Resource,
     seed: T,
     params?: {
-      dboDependencies?: string[];
       isPreventAutoPersist?: boolean;
     }
   ) {
-    super(item, StoreDataType.KVO, params);
+    super(item, StoreDataType.KVO);
     this.id = item;
     this.seed = seed;
     this.isPreventAutoPersist = params?.isPreventAutoPersist || false;
@@ -48,7 +46,7 @@ export class KeyValueStore<T extends IObservableStoreSubject>
   private __set(x: T) {
     const newValue = { ...x };
     this._set(newValue);
-    this.previousValue = JSON.stringify(newValue);
+    this.previousValue = stringify(newValue);
   }
   /**
    * Persists the data to the server - uses MERGE action
@@ -69,7 +67,7 @@ export class KeyValueStore<T extends IObservableStoreSubject>
     return flux?.kvMerge(this.id, n);
   }
   /**
-   * This function gets triggered from dataManager when the data is fetched from the server.
+   * This function gets triggered from flux when the data is fetched from the server.
    * @param data
    */
   loader(data: T) {
@@ -96,13 +94,13 @@ export class KeyValueStore<T extends IObservableStoreSubject>
   set(newValue: T) {
     let changedProperties: any = {};
     if (this.previousValue) {
-      let differences = shallowDiff(newValue, JSON.parse(this.previousValue));
+      let differences = shallowDiff(newValue, parse(this.previousValue));
       differences.forEach((key: string) => {
         changedProperties[key] = newValue[key as keyof T];
       });
     }
     // console.log({
-    //   previousValue: this.previousValue ? JSON.parse(this.previousValue) : null,
+    //   previousValue: this.previousValue ? parse(this.previousValue) : null,
     //   newValue,
     //   changedProperties
     // });

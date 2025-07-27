@@ -15,16 +15,14 @@ import {
   type IMutation,
   type IInsertMutation,
   type IMutationAdditionalParams,
-  SearchType
+  type IResourceSelectProperties,
+  type IResourceStore
 } from "$lib/client/types/data.type";
-import {
-  detectTimeZone,
-  detectTimeZoneFallback,
-  wait
-} from "$lib/client/utils/time.utils";
+import { wait } from "$lib/client/utils/time.utils";
 import {
   type ILocal,
   type IPersistence,
+  type ITable,
   PersistenceProvider
 } from "$lib/client/persistence/persistence.type";
 import {
@@ -33,7 +31,10 @@ import {
   getEnvVal
 } from "$lib/client/utils/browser.utils";
 import { getDapId } from "$lib/client/persistence/persistence.utils";
-import { generateRandomId } from "$lib/shared/utils/crypto.utils";
+import {
+  generateRandomIdv2,
+  generateSimpleRandomId
+} from "$lib/shared/utils/crypto.utils";
 import { resolveCurrentUserId } from "$lib/client/utils/account.utils";
 import { GlobalEvent } from "$lib/client/types/event.enum";
 import {
@@ -47,23 +48,25 @@ import {
 } from "$lib/client/utils/extension.utils";
 import { SyncMethod } from "$lib/shared/types/sync.type";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-import { FluxMethod, type IFluxMethod } from "./flux.type";
-import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
-import { TacoActions } from "$lib/client/products/memotron/taco/taco.types";
+import { FluxMethod, type IDataMapper, type IFluxMethod } from "./flux.type";
 import { interceptSurrealResponse } from "$lib/client/utils/utils";
 import {
   determineResourceType,
   isRecordId,
   removeDuplicatesFilter
 } from "./resourceStores/resource.utils";
-import { postToParent } from "$lib/client/utils/embed.utils";
+import { postDataToParent } from "$lib/client/utils/embed.utils";
+import { EmbedDataMessage } from "$lib/client/types/embedMessage.enum";
+import { reparse } from "$lib/shared/utils/json.utils";
+import { DataMapper } from "./dataMapper";
 
 class Flux {
   static _instance: Flux | null = null;
-  stores: IStore[] = [];
-  remoteOnlyStores: IStore[] = [];
+  stores: IResourceStore<unknown>[] = [];
+  remoteOnlyStores: IResourceStore<unknown>[] = [];
   provider!: PersistenceProvider;
   persistence!: IPersistence;
+  dataMapper!: IDataMapper;
   private isLocalMode: boolean = false;
   private isExtensionEnvironment: boolean = false;
   private isSyncDownPending: boolean = false;
@@ -75,7 +78,7 @@ class Flux {
     getEnvVal("CLONE_DOWN_LIMIT", "number") ?? 500;
 
   static initialize(
-    stores: IStore[],
+    stores: IResourceStore<unknown>[],
     provider: PersistenceProvider,
     persistence: IPersistence,
     params: {
@@ -83,7 +86,7 @@ class Flux {
       product: string;
       userId?: string;
       appVersion?: string;
-      remoteOnlyStores?: IStore[];
+      remoteOnlyStores?: IResourceStore<unknown>[];
     }
   ): Promise<number> {
     logger.log({ at: "flux.initialize", stores, params });
@@ -93,6 +96,7 @@ class Flux {
     Flux._instance.persistence = persistence;
     Flux._instance.stores = stores;
     Flux._instance.remoteOnlyStores = params.remoteOnlyStores ?? [];
+    Flux._instance.initializeDataMapper(stores);
     logger.log({ at: "flux.initialized", instance: Flux._instance });
     return Flux._instance.initializePersistence(params);
   }
@@ -109,17 +113,41 @@ class Flux {
     appVersion?: string;
   }) {
     logger.log({ at: "flux.initializePersistence", params });
-    const dboDependencies = new Set(
-      this.stores
-        .map((x) => x.dboDependencies)
-        .filter((x) => x !== undefined)
-        .flat()
-    );
-    const dbo = [...dboDependencies];
+    const tables: ITable[] = [
+      ...this.stores
+        .filter(
+          (x) =>
+            x.dataType === StoreDataType.FIR || x.dataType === StoreDataType.IFR
+        )
+        .map((x) => {
+          return {
+            name: x.id as Resource,
+            indices: x.indices ?? ["id"],
+            searchIndices: x.searchIndices
+          };
+        }),
+      {
+        name: Resource.kv,
+        indices: ["id"]
+      },
+      {
+        name: Resource.mutation,
+        indices: ["id", "timestamp"]
+      }
+    ];
+    console.log({ tables });
     return this.persistence.initialize({
       ...params,
-      dbo
+      tables
     });
+  }
+
+  private initializeDataMapper(stores: IResourceStore<unknown>[]) {
+    const encryptionFieldsMap: Record<string, string[]> = {};
+    for (const store of stores) {
+      encryptionFieldsMap[store.id] = store.encrypt ?? [];
+    }
+    this.dataMapper = new DataMapper(encryptionFieldsMap);
   }
 
   async loadInMemoryStores(params?: {
@@ -219,7 +247,7 @@ class Flux {
   }
 
   sendReloadRequestToEmbed() {
-    postToParent({ reload: true });
+    postDataToParent(EmbedDataMessage.RELOAD, true);
   }
 
   async mutation<T extends IResource>(
@@ -232,6 +260,7 @@ class Flux {
       at: "flux.mutation",
       resource,
       params: {
+        ...params,
         action: params.action,
         recordCount:
           "records" in params ? (params.records?.length ?? "NA") : "NA",
@@ -242,7 +271,7 @@ class Flux {
       if (!additionalParams?.isCloudOnlyResource || this.isLocalMode) {
         response = await this.persistence.mutation(resource, params);
       }
-      let mutation: IMutation;
+      let mutation: IMutation | undefined;
       if (
         !additionalParams?.isPreventCloudPersistence &&
         (!this.isLocalMode || this.isExtensionEnvironment)
@@ -280,9 +309,8 @@ class Flux {
         params,
         error: e
       });
+      throw e;
     }
-    const dependantStores = this.resolveDependantStores(resource);
-    //TODO refresh stores
     logger.info({
       at: "flux.mutation - result",
       resource,
@@ -309,12 +337,12 @@ class Flux {
     params: IMutationParamsv2<T>
   ) {
     logger.log({ at: "flux.insertMutation", resource, params });
-    const mutationId = generateRandomId();
+    const mutationId = generateRandomIdv2();
     const userId = await resolveCurrentUserId();
     const mutation: IMutation = {
       id: mutationId,
-      createdAt: new Date().toISOString(),
-      modifiedAt: new Date().toISOString(),
+      createdAt: new Date(),
+      modifiedAt: new Date(),
       timestamp: new Date().getTime(),
       userId,
       resource,
@@ -332,8 +360,8 @@ class Flux {
   private resolveResourceId<T extends IResource>(params: IMutationParamsv2<T>) {
     switch (params?.action) {
       case PersistenceActionType.INSERT:
-      case PersistenceActionType.BULK_MERGE:
         return params?.records.map((x) => x.id);
+      case PersistenceActionType.BULK_MERGE:
       case PersistenceActionType.BULK_DELETE:
         return params?.recordIds;
       case PersistenceActionType.REPLACE:
@@ -364,33 +392,31 @@ class Flux {
 
   async select(
     resourceId: IRecordId,
-    properties?: string[],
-    additionalParams?: { isCloudOnlyResource?: boolean; signal?: AbortSignal }
+    properties?: IResourceSelectProperties,
+    params?: {
+      isCloudOnlyResource?: boolean;
+      signal?: AbortSignal;
+    }
   ) {
     try {
       logger.log({ at: "flux.select", resourceId });
 
-      // Check if operation was aborted
-      if (additionalParams?.signal?.aborted) {
+      if (params?.signal?.aborted) {
         throw new Error("Operation aborted");
       }
 
       const isOffline = await determineIfOffline();
-      if (
-        !this.isLocalMode &&
-        additionalParams?.isCloudOnlyResource &&
-        !isOffline
-      ) {
+      if (!this.isLocalMode && params?.isCloudOnlyResource && !isOffline) {
         return this.remoteRelay({
           method: FluxMethod.SELECT,
-          args: { resourceId, properties, signal: additionalParams?.signal }
+          args: {
+            resourceId,
+            properties: properties ?? { select: [] },
+            signal: params?.signal
+          }
         });
       }
-      const result = await this.persistence.select(
-        resourceId,
-        properties,
-        additionalParams?.signal
-      );
+      const result = await this.persistence.select(resourceId, properties);
       logger.log({ at: "flux.select - result", result });
       return result;
     } catch (e) {
@@ -402,23 +428,25 @@ class Flux {
     }
   }
 
-  /**
-   * TODO - remove tacoWorker
-   */
   async selectMany(
     resource: Resource,
     params?: IResourceSelectParams,
     additionalParams?: { isCloudOnlyResource?: boolean; signal?: AbortSignal }
   ) {
     try {
-      logger.log({
-        at: "flux.selectMany",
-        resource,
-        params,
-        additionalParams
-      });
+      const debugResource: Resource[] = [];
+      const randomId = generateSimpleRandomId();
+      if (debugResource.includes(resource)) {
+        console.time(`flux.selectMany - ${resource} - ${randomId}`);
+        logger.debug({
+          at: "flux.selectMany",
+          randomId,
+          resource,
+          params,
+          additionalParams
+        });
+      }
 
-      // Check if operation was aborted
       if (additionalParams?.signal?.aborted) {
         throw new Error("Operation aborted");
       }
@@ -429,32 +457,6 @@ class Flux {
         additionalParams?.isCloudOnlyResource &&
         !isOffline
       ) {
-        if (
-          params?.searchType === SearchType.SEMANTIC &&
-          params?.search?.query
-        ) {
-          let queryEmbedding: Float32Array[] | undefined = undefined;
-          // queryEmbedding = await FeatureExtractor.generateVectorEmbeddings(
-          //   params.search.query
-          // );
-          tacoWorker.postMessage({
-            action: TacoActions.GET_EMBEDDINGS,
-            params: {
-              text: params.search.query
-            }
-          });
-          const result: any = await new Promise((resolve, reject) => {
-            tacoWorker.onmessage = (e) => {
-              resolve(e.data);
-            };
-          });
-          queryEmbedding = result?.data;
-          params.properties = [
-            ...(params?.properties ?? []),
-            `vector::similarity::cosine(embedding,[${queryEmbedding}]) AS dist`
-          ];
-          params.search.queryEmbedding = queryEmbedding;
-        }
         const result = await this.remoteRelay({
           method: FluxMethod.SELECT_MANY,
           args: {
@@ -470,19 +472,29 @@ class Flux {
         params,
         additionalParams?.signal
       );
-      logger.log({ at: "flux.selectMany - result", resource, params, result });
+      if (debugResource.includes(resource)) {
+        logger.debug({
+          at: "flux.selectMany - result",
+          resource,
+          params,
+          result
+        });
+        console.timeEnd(`flux.selectMany - ${resource} - ${randomId}`);
+      }
       return result;
     } catch (e) {
       if (e instanceof Error && e.message === "Operation aborted") {
         logger.log({ at: "flux.selectMany - aborted", e });
         throw e;
       } else {
-        logger.error({
-          at: "flux.select",
-          resource,
-          params,
-          error: e
-        });
+        logger.error(
+          {
+            at: "flux.select",
+            resource,
+            params
+          },
+          e
+        );
       }
     }
   }
@@ -522,16 +534,6 @@ class Flux {
     return result;
   }
 
-  private resolveDependantStores(resource: Resource) {
-    const stores: string[] = [];
-    this.stores.filter((store) => {
-      if (store?.resourceDependencies?.includes(resource)) {
-        stores.push(store.id);
-      }
-    });
-    return stores;
-  }
-
   async refresh(storeId: string, isShowRefreshingState: boolean = false) {
     logger.log({ at: "flux.refresh", storeId });
   }
@@ -547,6 +549,7 @@ class Flux {
       let response;
       if (result?.ok) {
         response = await result.json();
+        response = reparse(response);
       }
       logger.log({
         at: "flux.performSync",
@@ -696,9 +699,10 @@ class Flux {
           this.isSyncUpPending = false;
           return;
         }
-        logger.info({
+        logger.log({
           at: "flux.sync",
           mutationsLength: mutations.length,
+          lastSyncUpMutations,
           lastSyncUp,
           mutations: mutations.map((x) => x.id)
         });
@@ -706,12 +710,13 @@ class Flux {
         mutations = mutations.filter(
           (x) => !lastSyncUpMutations?.includes(x.id.toString())
         );
-        response = await this.performSync(SyncMethod.SYNC_UP, {
-          mutations,
-          lastSyncDown,
-          resources,
-          dapId
-        });
+        if (mutations.length > 0)
+          response = await this.performSync(SyncMethod.SYNC_UP, {
+            mutations,
+            lastSyncDown,
+            resources,
+            dapId
+          });
         if (response && !response.response?.error) {
           await this.persistence.mutation(Resource.kv, {
             record: {
@@ -879,6 +884,7 @@ class Flux {
 
     for (let { resource, records } of data) {
       this.propagateSyncStatus(resource);
+      records = this.dataMapper.parse(resource, records);
       const mutationResult = await this.persistence.mutation(
         resource as Resource,
         {
@@ -1020,6 +1026,7 @@ class Flux {
           .filter((x: any) => isRecordId(x.in) && isRecordId(x.out))
           .filter(removeDuplicatesFilter);
       }
+      records = this.dataMapper.parse(resource, records);
       const mutationResult = await this.persistence.mutation(
         resource as Resource,
         {
@@ -1310,7 +1317,8 @@ class Flux {
     });
 
     if (isValidArrayWithData(result.data)) {
-      const records = result.data;
+      let records = result.data;
+      records = this.dataMapper.parse(resource, records);
       const mutationResult = await this.persistence.mutation(
         resource as Resource,
         {

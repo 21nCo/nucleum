@@ -1,12 +1,19 @@
 import type { IMarkdown } from "../markdown/md.type";
 import type { IRecordId } from "$lib/client/types/data.type";
-import type { IActiveResource } from "../flux/resourceStores/resource.type";
 import type {
-  ICollectionExpanded,
-  ICollectionItemPropertyValue
+  IActiveResource,
+  IResource,
+  IResourceArchivable,
+  IResourceInActivableFromParent,
+  IResourceLabeled,
+  IResourceStarrable,
+  IResourceShareable
+} from "../flux/resourceStores/resource.type";
+import type {
+  ICollectible,
+  ICollectionExpanded
 } from "../collection/collection.type";
 import type { TimeScale } from "$lib/client/types/time.type";
-import type { IMemotronItemBase } from "$lib/client/products/memotron/memotron.type";
 import type { ITask } from "../tasks/task.type";
 
 export enum GoalType {
@@ -24,9 +31,8 @@ export enum SubGoalsLayout {
   TABS = "TABS",
   BOARDS = "BOARDS"
 }
-export interface IGoalBase extends IMemotronItemBase {
-  label: string;
-  type: GoalType;
+export interface IGoalBase extends IResourceLabeled, ICollectible {
+  type?: GoalType;
   description?: IMarkdown;
   startDate?: Date;
   endDate?: Date;
@@ -35,7 +41,6 @@ export interface IGoalBase extends IMemotronItemBase {
   status?: GoalStatus;
   color?: number;
   isPinnedForQuickFocus?: boolean;
-  properties?: ICollectionItemPropertyValue[];
   /**
    * @deprecated - use uiState.tabsOrder instead
    */
@@ -48,25 +53,50 @@ export interface IGoalBase extends IMemotronItemBase {
     isHideCompleted?: boolean;
   };
 }
-
-export interface IGoal extends IGoalBase {
+export interface IGoalCapture extends IGoalBase {
+  id?: IRecordId;
   parent?: IRecordId[];
   children?: IRecordId[];
 }
 
-export type IGoalThumb = IGoalBase & {
-  parent?: IGoalThumb[];
-  children?: IRecordId[];
-};
+type IResourcePropertiesForGoal = IResource &
+  IResourceShareable &
+  IResourceStarrable &
+  IResourceArchivable &
+  IResourceInActivableFromParent;
+
+export type IGoal = IResourcePropertiesForGoal &
+  IGoalBase & {
+    /**
+     * Has index
+     */
+    type: GoalType;
+    /**
+     * Has index
+     */
+    status: GoalStatus;
+    /**
+     * Has index
+     */
+    parent: IRecordId[] | 0;
+    children?: IRecordId[];
+  };
+
+export type IGoalThumb = IResourcePropertiesForGoal &
+  IGoalBase & {
+    parent?: IGoal[];
+    children?: IRecordId[];
+  };
 
 export type IActiveGoal = IActiveResource &
   IGoalBase & {
+    type: GoalType;
     parent?: IGoalThumb[];
-    children?: IActiveGoal[];
+    children?: IGoal[];
     isPageLoading: boolean;
     collections?: IRecordId[];
     types?: ICollectionExpanded[];
-    tasks?: ITask[];
+    taskCount?: number;
   };
 
 export enum GoalStatus {

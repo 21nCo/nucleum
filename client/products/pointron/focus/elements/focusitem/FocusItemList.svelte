@@ -186,7 +186,12 @@
 
   async function onCreateGoal(event: any) {
     const label = event.detail;
-    await focusItemsStore.addNewGoal(label);
+    let goal = await goalStore.save({
+      label,
+      isPreventOpenAfterCreate: true
+    });
+    if (!goal) return;
+    await focusItemsStore.addGoal(goal.id);
     refresh();
   }
 

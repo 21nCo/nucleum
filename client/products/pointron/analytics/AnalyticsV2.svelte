@@ -22,7 +22,7 @@
   } from "./analytics.utils";
   import context from "$lib/client/stores/context.store";
   import { Embed } from "$lib/client/types/context.type";
-  import { postToParent } from "$lib/client/utils/embed.utils";
+  import { setEmbedBg } from "$lib/client/utils/embed.utils";
   import { confirmationNotification } from "$lib/client/stores/notification.store";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import {
@@ -41,7 +41,7 @@
   $selectedPageId = resolvePageSelection();
   onMount(async () => {
     if ($context.embed == Embed.HANDSET) {
-      postToParent({ bg: 2 });
+      setEmbedBg(2);
     }
     if (!$selectedPageId) {
       $selectedPageId = $analyticsConfigStore.pages[0]?.id;

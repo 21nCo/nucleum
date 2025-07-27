@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import { appLoadingState, appStore } from "$lib/client/stores/app.store";
   import { scheduledNotifications } from "$lib/client/stores/notification.store";
-  import { postToParent } from "$lib/client/utils/embed.utils";
+  import { postDataToParent } from "$lib/client/utils/embed.utils";
   import context from "$lib/client/stores/context.store";
   import view from "$lib/client/stores/view.store";
   import { InteractionMode } from "$lib/client/components/settings/interactionMode/interactionMode.type";
@@ -13,6 +13,7 @@
   import LeftNav from "$lib/client/layout/leftPanel/LeftNav.svelte";
   import AppSplitView from "$lib/client/layout/AppSplitView.svelte";
   import TopNav from "$lib/client/layout/topNav/TopNav.svelte";
+  import { EmbedDataMessage } from "$lib/client/types/embedMessage.enum";
 
   let isHideLeftNavBar: boolean = refreshSidebarState();
   onMount(() => {
@@ -37,9 +38,10 @@
           type: "SCHEDULE_NOTIFICATIONS",
           notifications: $scheduledNotifications
         });
-        postToParent({
-          notifications: $scheduledNotifications
-        });
+        postDataToParent(
+          EmbedDataMessage.NOTIFICATIONS,
+          $scheduledNotifications
+        );
       }
     } else {
       scheduledNotifications.reset();

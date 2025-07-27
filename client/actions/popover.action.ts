@@ -1,10 +1,9 @@
 import { tick } from "svelte";
 import { Placement } from "../types/direction.enum";
 import { PopoverTriggerMethod } from "../types/popover.type";
-import { deepCopy } from "$lib/shared/utils/obj.utils";
 import { detectTouchDevice, getEventPath } from "../utils/browser.utils";
 import { renderMdAsHtml } from "../components/markdown/markdown.utils";
-import { postToParent } from "../utils/embed.utils";
+import { setEmbedBg } from "../utils/embed.utils";
 
 interface TooltipReturn {
   update: (newParams: TooltipParams) => void;
@@ -428,7 +427,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
             element.style.height = "fit-content";
           }
           element.style.opacity = "1";
-          postToParent({ bg: 100 });
+          setEmbedBg(100);
           if (cwModalOverlay) cwModalOverlay.style.opacity = "1";
         }
       });
@@ -690,7 +689,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     if (cwModalOverlay) {
       cwModalOverlay.style.opacity = "0";
       cwModalOverlay.remove();
-      postToParent({ bg: 1 });
+      setEmbedBg(1);
     }
     isShown = false;
     triggerChangeEvent();

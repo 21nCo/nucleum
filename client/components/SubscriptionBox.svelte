@@ -2,6 +2,7 @@
   import Button from "../elements/button/Button.svelte";
   import TextInput from "../elements/input/TextInput.svelte";
   import { isValidEmail } from "$lib/shared/utils/text.utils";
+  import { stringify } from "$lib/shared/utils/json.utils";
 
   export let product: any;
   let emailEntered = "";
@@ -17,7 +18,7 @@
     }
     let response = await fetch(subscriptionUrl, {
       method: "POST",
-      body: JSON.stringify({
+      body: stringify({
         email: emailEntered,
         product
       })

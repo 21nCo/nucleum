@@ -28,7 +28,7 @@
     if (resource === Resource.collection) {
       return collectionStore.select(
         id,
-        isExtensionEnvironment() ? [] : ["*", "typeToExtend.* as typeToExtend"]
+        isExtensionEnvironment() ? { select: [] } : { expand: ["typeToExtend"] }
       );
     } else {
       return nodeStore.select(id);

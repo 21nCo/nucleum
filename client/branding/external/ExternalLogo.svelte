@@ -43,6 +43,7 @@
   import MilaNote from "./logos/MilaNote.svelte";
   import Noted from "./logos/Noted.svelte";
   import Raindrop from "./logos/Raindrop.svelte";
+
   import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
   export let provider: IdentityProvider | string | IContemporary;
   export let width = 20;
@@ -93,7 +94,6 @@
     class={cn("flex justify-center items-center", className)}
     id={icon}
   >
-    <!-- TODO - later load logos from link dynamically -->
     {#if icon.includes("svg:")}
       <SvgIcon icon={icon.replace("svg:", "")} size="fit" />
     {:else if icon === "obsidian"}

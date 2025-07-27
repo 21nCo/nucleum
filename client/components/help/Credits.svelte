@@ -124,6 +124,13 @@
       link: "https://heroicons.com/"
     },
     {
+      name: "Solar Icons (Unmodified)",
+      description:
+        "Solar is a large icon library consisting of pictograms that are modern in style",
+      creator: "480 Design (CC 4.0)",
+      link: "https://github.com/480-Design/Solar-Icon-Set"
+    },
+    {
       name: "Svg spinners",
       description: "Extremely useful set of SVG spinners",
       creator: "Utkarsh Verma",

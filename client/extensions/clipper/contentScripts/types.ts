@@ -1,11 +1,8 @@
-import type {
-  IObservableStoreSubject,
-  IRecordId
-} from "$lib/client/types/data.type";
+import type { IRecordId } from "$lib/client/types/data.type";
 import type { IClip } from "$lib/client/products/memotron/node/node.type";
 import type { AlertType } from "$lib/client/types/notification.type";
 import type { ICollectionItemPropertyValue } from "$lib/client/components/collection/collection.type";
-export interface IWebpageStore extends IObservableStoreSubject {
+export interface IWebpageStore {
   url: string;
   title: string;
   id?: IRecordId;
@@ -26,7 +23,7 @@ export interface IArea {
 
 export type IImageElement = { src: string; alt: string };
 
-export interface IFeedbackPaneStore extends IObservableStoreSubject {
+export interface IFeedbackPaneStore {
   isShown: boolean;
   feedback: string | { message: string; type: AlertType };
   /**
@@ -41,7 +38,7 @@ export interface IFeedbackPaneStore extends IObservableStoreSubject {
   isUserInitiated?: boolean;
 }
 
-export interface ISyncStore extends IObservableStoreSubject {
+export interface ISyncStore {
   id?: string;
   status?: SyncStatus;
   isShowSyncPane?: boolean;

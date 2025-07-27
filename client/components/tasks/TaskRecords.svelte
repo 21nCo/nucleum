@@ -3,7 +3,7 @@
   import { ResourceAccessPoint } from "../flux/resourceStores/resource.type";
   import { TaskSubTypeForSwitcher, type ITaskThumb } from "./task.type";
   import TaskThumbnail from "./TaskThumbnail.svelte";
-  import { formatDate } from "$lib/client/utils/time.utils";
+  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
   import { Size } from "$lib/client/types/size.enum";
   import type { IRecordId } from "$lib/client/types/data.type";
   import Button from "$lib/client/elements/button/Button.svelte";
@@ -19,7 +19,7 @@
     subType === TaskSubTypeForSwitcher.BY_MONTH ? groupTasksByDate(data) : null;
 
   export function scrollToDate(date: Date) {
-    const dateKey = formatDate(date);
+    const dateKey = parseAndFormatDate(date);
     let dateElement = document.querySelector(
       `[data-date="${dateKey}"]`
     ) as HTMLDivElement;
@@ -43,7 +43,7 @@
 
       if (closestDate) {
         dateElement = document.querySelector(
-          `[data-date="${formatDate(new Date(closestDate))}"]`
+          `[data-date="${parseAndFormatDate(new Date(closestDate))}"]`
         ) as HTMLDivElement;
       }
     }
@@ -56,7 +56,7 @@
 
     tasks.forEach((task) => {
       const dateKey = task.dateUnix
-        ? formatDate(new Date(task.dateUnix))!
+        ? parseAndFormatDate(new Date(task.dateUnix))!
         : "No Date";
       if (!groups.has(dateKey)) {
         groups.set(dateKey, []);
@@ -87,7 +87,10 @@
     {#each tasksByDate as [date, tasks]}
       <div class="flex flex-col gap-2">
         <div class="flex items-center gap-2">
-          <h3 class="text-fgs3 text-h5" data-date={formatDate(new Date(date))}>
+          <h3
+            class="text-fgs3 text-h5"
+            data-date={parseAndFormatDate(new Date(date))}
+          >
             {date}
           </h3>
           <!-- <Button icon="ph:plus" size={Size.sm} tooltip="Add task" /> -->

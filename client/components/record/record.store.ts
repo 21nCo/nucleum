@@ -13,7 +13,9 @@ import {
   SearchType,
   type IRecordId,
   type IResourceSelectFilters,
-  type IResourceSelectOrderBy
+  type IResourceSelectOrderBy,
+  type IResourceSelectParams,
+  type IResourceSelectProperties
 } from "$lib/client/types/data.type";
 import { flux } from "$lib/client/components/flux/flux";
 import { logger } from "$lib/client/components/debug/logger.client";
@@ -54,6 +56,7 @@ import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
 import { resolveResourceStore } from "../flux/resourceStores/store.resolver";
 import { clientStorage } from "$lib/client/persistence/persistence.utils";
 import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
+import { parse } from "$lib/shared/utils/json.utils";
 
 export const MAX_FILE_SIZE_MB = 100;
 
@@ -61,13 +64,10 @@ export function resolveResource(id: IRecordId) {
   return flux.select(id);
 }
 
-const labelSearchProp =
-  "search::highlight('**', '**', 1, false) AS labelSearch";
-
 function resolveSearchProperties(resource: Resource) {
   switch (resource) {
     case Resource.node:
-      return ["label", "text"];
+      return ["label", "text", "notes"];
     default:
       return ["label"];
   }
@@ -75,10 +75,9 @@ function resolveSearchProperties(resource: Resource) {
 
 export class SearchStore {
   resource: Resource = Resource.everything;
-  dev_isUseIndexSearch: boolean = false;
   collectibleResource: Resource[] | undefined;
   searcheableResources: Resource[] | undefined;
-  resourceStore: ResourceStore<any> | undefined;
+  resourceStore: ResourceStore<any, any> | undefined;
   /**
    * Test run for pre filtering by loading all records first into memory - then querying only the filtered records for expansion like joins.
    */
@@ -125,86 +124,6 @@ export class SearchStore {
     return matrix[b.length][a.length];
   }
 
-  /**
-   *
-   * @deprecated - use nodeStore.selectMany or searchStore.select instead
-   * TODO - group by mdParent if searching
-   *
-   *
-   * this is causing extreme slowness for select query if there are 1000s of records on the table if used in select query prop
-   * "(fn::memotron::node::parent($parent.id)) as mdParent"
-   *
-   * @returns
-   */
-  async nodes(params: any) {
-    console.log("record.store.ts - nodes");
-    const result = await flux.selectMany(
-      params.searchType == SearchType.SEMANTIC && params.searchQuery
-        ? Resource.vector
-        : Resource.node,
-      {
-        properties:
-          params.searchType === SearchType.SEMANTIC && params.searchQuery
-            ? [
-                "node.body as body",
-                "node.children as children",
-                "node.contentType as contenType",
-                "node.createdAt as createdAt",
-                "node.createdBy as createdBy",
-                "node.id as id",
-                "node.isArchived as isArchived",
-                "node.isStarred as isStarred",
-                "node.label as label",
-                "node.text as text",
-                "node.metadata as metadata",
-                "node.modifiedAt as modifiedAt",
-                "node.modifiedBy as modifiedBy",
-                "node.properties as properties",
-                "node.parent.* as parent",
-                "node.file.* as file"
-              ]
-            : [
-                "*",
-                "parent.* as parent",
-                "file.* as file",
-                labelSearchProp,
-                "search::highlight('**', '**', 2, false) AS bodySearch"
-              ],
-        filters:
-          params.searchType == SearchType.SEMANTIC && params.searchQuery
-            ? {}
-            : {
-                creationContext:
-                  isValidString(params.searchQuery) ||
-                  params.filters.contentType
-                    ? undefined
-                    : false,
-                ...params.filters,
-                isArchived: params.filters.isArchived ?? false,
-                contentType:
-                  "contentType" in params.filters
-                    ? params.filters.contentType?.toUpperCase()
-                    : params.searchQuery
-                      ? undefined
-                      : rootNodeTypeList
-              }
-      },
-      {
-        isCloudOnlyResource:
-          params.searchType === SearchType.SEMANTIC &&
-          isValidString(params.searchQuery)
-            ? true
-            : false
-      }
-    );
-    console.log("record.store.ts - nodes - result");
-    logger.log({ at: "refreshNodes", result });
-
-    // const result2 = await flux.selectByQuery("select * from node;");
-    // logger.log({ at: "all nodes: ", result2 });
-    return result;
-  }
-
   async select(params: {
     resource?: Resource;
     searchQuery?: string;
@@ -217,63 +136,59 @@ export class SearchStore {
     isIncludeSubItems?: boolean;
     isIgnoreParentInactive?: boolean;
     isExpand?: boolean;
-    properties?: string[];
+    properties?: IResourceSelectProperties;
     isIncludeMetaItems?: boolean;
     signal?: AbortSignal;
+    isStrictSearch?: boolean;
   }) {
     this.resource = params.resource ?? this.resource;
     logger.log({
       at: "SearchStore.refresh",
       params
     });
-    console.time("record.store.ts - select - " + this.resource);
-    // Check if operation was aborted before starting
-    if (params.signal?.aborted) {
-      throw new Error("Operation aborted");
-    }
 
     let data: any;
-    const selectParams = {
-      properties: params.properties ?? [labelSearchProp, "modifiedAt"],
+    const selectParams: IResourceSelectParams = {
+      properties: params.properties,
       filters: params.filters,
       search: isValidString(params.searchQuery)
         ? {
             query: params.searchQuery!,
-            properties: resolveSearchProperties(this.resource)
+            properties: resolveSearchProperties(this.resource),
+            type: params.searchType
           }
         : undefined,
-      limit: params.limit,
+      limit: params.limit ?? params.semanticSearchTopK,
       offset: params.offset,
       orderBy: params.orderBy ?? {
         modifiedAt: "desc"
-      },
-      searchType: params.searchType,
-      semanticSearchTopK: params.semanticSearchTopK,
-      signal: params.signal
+      }
     };
     if (this.resource === Resource.everything && this.searcheableResources) {
       data = (
         await Promise.all(
           this.searcheableResources.map(async (resource) => {
-            // Check if operation was aborted before each resource
-            if (params.signal?.aborted) {
-              throw new Error("Operation aborted");
-            }
+            const resourceSelectParams: IResourceSelectParams = {
+              ...selectParams,
+              search: isValidString(params.searchQuery)
+                ? {
+                    ...(selectParams.search ?? {}),
+                    query: params.searchQuery!,
+                    properties: resolveSearchProperties(resource)
+                  }
+                : undefined
+            };
 
-            if (isValidString(params.searchQuery)) {
-              selectParams.search = {
-                query: params.searchQuery!,
-                properties: resolveSearchProperties(resource)
-              };
-            }
             this.setResourceStore(resource);
-            const result = await this.resourceStore?.selectMany(selectParams, {
-              isIncludeSubItems: params.isIncludeSubItems,
-              isExpand: params.isExpand ?? true,
-              isIgnoreParentInactive: params.isIgnoreParentInactive,
-              isIncludeMetaItems: params.isIncludeMetaItems,
-              signal: params.signal
-            });
+            const result = await this.resourceStore?.selectMany(
+              resourceSelectParams,
+              {
+                isIncludeSubItems: params.isIncludeSubItems,
+                isExpand: params.isExpand ?? true,
+                isIgnoreParentInactive: params.isIgnoreParentInactive,
+                isIncludeMetaItems: params.isIncludeMetaItems
+              }
+            );
             return Array.isArray(result) ? result : [];
           })
         )
@@ -281,31 +196,22 @@ export class SearchStore {
     } else {
       this.setResourceStore(this.resource);
       if (this.isPreFilterBeforeExpand && this.resource === Resource.node) {
-        // Check if operation was aborted before first query
-        if (params.signal?.aborted) {
-          throw new Error("Operation aborted");
-        }
-
         const allRecords = await this.resourceStore?.selectMany(
           {
-            properties: [
-              "id",
-              "isArchived",
-              "trashInformation",
-              "contentType",
-              "isStarred"
-            ]
+            properties: {
+              select: [
+                "id",
+                "isArchived",
+                "trashInformation",
+                "contentType",
+                "isStarred"
+              ]
+            }
           },
           {
-            isQueryAsIs: true,
-            signal: params.signal
+            isQueryAsIs: true
           }
         );
-
-        // Check if operation was aborted after first query
-        if (params.signal?.aborted) {
-          throw new Error("Operation aborted");
-        }
 
         const activeRecords = allRecords
           .filter((x: any) => rootNodeTypeList.includes(x.contentType))
@@ -318,7 +224,10 @@ export class SearchStore {
             }
             return true;
           })
-          .slice(params.offset ?? 0, params.offset + (params.limit ?? 50));
+          .slice(
+            params.offset ?? 0,
+            (params.offset ?? 0) + (params.limit ?? 50)
+          );
         data = await this.resourceStore?.selectMany(
           {
             filters: {
@@ -327,8 +236,7 @@ export class SearchStore {
           },
           {
             isQueryAsIs: true,
-            isExpand: true,
-            signal: params.signal
+            isExpand: true
           }
         );
       } else {
@@ -336,16 +244,24 @@ export class SearchStore {
           isIncludeSubItems: params.isIncludeSubItems,
           isIgnoreParentInactive: params.isIgnoreParentInactive,
           isExpand: params.isExpand ?? true,
-          isIncludeMetaItems: params.isIncludeMetaItems,
-          signal: params.signal
+          isIncludeMetaItems: params.isIncludeMetaItems
         });
       }
     }
-    console.timeEnd("record.store.ts - select - " + this.resource);
+    // console.log({ at: "record.store.ts - select - " + this.resource, data });
+    // console.timeEnd("record.store.ts - select - " + this.resource);
     if (isValidArray(data)) {
       if (isValidString(params.searchQuery)) {
-        if (!this.dev_isUseIndexSearch)
-          data = highlightSearchQuery(data, params.searchQuery!);
+        data = highlightSearchQuery(data, params.searchQuery!);
+        if (params.isStrictSearch) {
+          data = data.filter(
+            (x: unknown) =>
+              typeof x === "object" &&
+              x &&
+              (("labelSearch" in x && x.labelSearch) ||
+                ("bodySearch" in x && x.bodySearch))
+          );
+        }
         data = data.sort(searchSort);
       }
       return data;
@@ -369,7 +285,6 @@ export class SearchStore {
 
   /**
    *
-   * TODO - test parent and mdParent
    * @param query
    * @returns
    */
@@ -419,7 +334,9 @@ export class SearchStore {
     let nodes = [];
     if (params?.resource === Resource.node || !params?.resource) {
       nodes = await flux.selectMany(Resource.node, {
-        properties: ["*", "parent.* as parent", labelSearchProp],
+        properties: {
+          expand: ["parent"]
+        },
         filters: {
           contentType: params?.subType
             ? [params.subType]
@@ -443,7 +360,9 @@ export class SearchStore {
         try {
           const parentIds = nodes.map((x) => x.mdParent ?? [])?.flat();
           const parentItems = await nodeStore.selectMany({
-            properties: ["label", "id", "body"],
+            properties: {
+              select: ["label", "id", "body"]
+            },
             filters: {
               contentType: [...headingNodeTypes, NodeType.NODULAR_MARKDOWN],
               id: parentIds?.map((x) => x.toString())
@@ -486,11 +405,12 @@ export class SearchStore {
     }
     let data = [...(nodes ?? []), ...(collections ?? [])];
     if (isValidString(query) && isValidArray(data)) {
-      if (!this.dev_isUseIndexSearch) data = highlightSearchQuery(data, query);
+      data = highlightSearchQuery(data, query);
+      data = data.filter((x) => x.labelSearch || x.bodySearch);
       data = data.sort(searchSort);
     }
     if (params?.exclude) {
-      data = data.filter((x) => !params.exclude.some(resourceInList(x.id)));
+      data = data.filter((x) => !params.exclude?.some(resourceInList(x.id)));
     }
     console.timeEnd("searchForLinking");
     return data;
@@ -541,7 +461,7 @@ export class SearchStore {
     if (!isValidSearchQuery) {
       try {
         const recentItems = await clientStorage.get(ClientStorageKey.RECENTS);
-        recentItemsArray = recentItems ? JSON.parse(recentItems) : [];
+        recentItemsArray = recentItems ? parse(recentItems) : [];
         if (recentItemsArray.length > 0 && resource) {
           recentItemsArray = recentItemsArray.filter((x: any) => {
             const itemResourceType = determineResourceType(x.id);
@@ -567,7 +487,6 @@ export class SearchStore {
     signal?: AbortSignal;
   }) {
     try {
-      // Check if operation was aborted before starting
       if (params?.signal?.aborted) {
         throw new Error("Operation aborted");
       }
@@ -581,7 +500,9 @@ export class SearchStore {
         const result = await flux.selectMany(
           resource,
           {
-            properties: ["count()"],
+            properties: {
+              select: ["#"]
+            },
             filters: {
               ...activeResourceFilterV2,
               ...(params?.filters ?? {}),
@@ -591,14 +512,13 @@ export class SearchStore {
                 : [...rootNodeTypeList],
               metaType: false,
               creationContext: params?.subType ? undefined : false
-            },
-            groupBy: ["all"]
+            }
           },
           {
             signal: params?.signal
           }
         );
-        return result?.[0]?.count;
+        return result && typeof result === "number" ? result : 0;
       } else if (
         resource === Resource.collection ||
         resource === Resource.combination ||
@@ -608,8 +528,10 @@ export class SearchStore {
       ) {
         if (resource === Resource.relation) resource = Resource.linkTag;
         this.setResourceStore(resource);
-        const selectParams = {
-          properties: ["count()"],
+        const selectParams: IResourceSelectParams = {
+          properties: {
+            select: ["#"]
+          },
           filters: {
             ...activeResourceFilterV2,
             ...(params?.filters ?? {}),
@@ -619,26 +541,27 @@ export class SearchStore {
                 }
               : {}),
             isArchived: params?.filters?.isArchived ?? false,
-            type:
-              params?.subType && resource === Resource.goal
-                ? params.subType
-                : params?.subType
-                  ? [params.subType]
-                  : undefined
-          },
-          groupBy: ["all"]
+            ...(params?.subType
+              ? {
+                  type:
+                    resource === Resource.goal
+                      ? params.subType
+                      : [params.subType]
+                }
+              : {})
+          }
         };
         const result = await this.resourceStore?.selectMany(selectParams, {
           signal: params?.signal
         });
-        console.log({
+        logger.log({
           at: "SearchStore.resolveCount",
           resource,
           result,
           resourceStore: this.resourceStore
         });
         // const resultOld = await flux.selectMany(resource, selectParams);
-        return result?.[0]?.count;
+        return result && typeof result === "number" ? result : 0;
       }
     } catch (e) {
       if (e instanceof Error && e.message === "Operation aborted") {
@@ -660,13 +583,15 @@ export class SearchStore {
         return flux.selectMany(
           resource,
           {
-            properties: ["count()", "contentType as type"],
+            properties: {
+              select: ["#"]
+            },
             filters: {
               ...activeResourceFilterV2,
               ...additionalFilters,
               metaType: false
             },
-            groupBy: ["type"]
+            groupBy: ["contentType"]
           },
           {
             signal
@@ -680,7 +605,9 @@ export class SearchStore {
         return flux.selectMany(
           resource,
           {
-            properties: ["count()", "type"],
+            properties: {
+              select: ["#"]
+            },
             filters: { ...activeResourceFilterV2, ...additionalFilters },
             groupBy: ["type"]
           },

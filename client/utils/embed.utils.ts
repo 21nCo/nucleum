@@ -1,5 +1,9 @@
-import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
+import {
+  EmbedDataMessage,
+  EmbedMessage
+} from "$lib/client/types/embedMessage.enum";
 import type { HapticFeedback } from "$lib/client/types/haptic.enum";
+import { stringify } from "$lib/shared/utils/json.utils";
 import { logger } from "../components/debug/logger.client";
 
 export function pingParent(isExtended: boolean = false) {
@@ -23,17 +27,55 @@ export function postMessageToParent(message: EmbedMessage) {
   });
 }
 
-/**
- * TODO - security check
- * @param message
- */
-export function postToParent(message: any) {
+export function postDataToParent(key: EmbedDataMessage, data: any) {
+  postToParent({
+    [key]: stringify(data, { isPreventReplacer: true })
+  });
+}
+
+export function setEmbedBg(bg: number) {
+  postDataToParent(EmbedDataMessage.BG, bg);
+}
+
+const TRUSTED_PARENT_ORIGINS = [
+  "http://localhost:5555",
+  "http://localhost:5002",
+  "http://127.0.0.1:5555",
+  "http://127.0.0.1:5002"
+];
+
+function getParentOrigin(): string | null {
+  try {
+    return window.parent.location.origin;
+  } catch (error) {
+    return null;
+  }
+}
+
+function isParentOriginTrusted(origin: string): boolean {
+  if (TRUSTED_PARENT_ORIGINS.includes(origin)) {
+    return true;
+  }
+  
+  try {
+    const url = new URL(origin);
+    return url.hostname.endsWith('.memotron.app');
+  } catch {
+    return false;
+  }
+}
+
+function postToParent(message: any) {
   logger.log({
     at: "posting message to parent",
-    message: JSON.stringify(message)
+    message
   });
+  
+  const parentOrigin = getParentOrigin();
+  const targetOrigin = parentOrigin && isParentOriginTrusted(parentOrigin) ? parentOrigin : window.location.origin;
+  
   try {
-    window?.parent?.postMessage(message, "*");
+    window?.parent?.postMessage(message, targetOrigin);
   } catch (error) {
     logger.error({ at: "postToParent - parent", error });
   }
@@ -57,7 +99,7 @@ export function postNotificationToParent(message: {
 }) {
   logger.log({ context: "postNotificationToParent", message });
   postToParent({
-    notification: JSON.stringify(message)
+    notification: message
   });
 }
 
@@ -73,6 +115,6 @@ export function postTokenToExtension(json: any) {
       type: "signin",
       token: json
     },
-    "*"
+    window.location.origin
   );
 }

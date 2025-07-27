@@ -1,7 +1,6 @@
-import type { IObservableStoreSubject } from "$lib/client/types/data.type";
 import type { TimePeriod } from "$lib/client/types/time.type";
 
-export type IAnalyticsConfigStore = IObservableStoreSubject & {
+export type IAnalyticsConfigStore = {
   pages: AnalyticsPage[];
 };
 export type AnalyticsPage = {

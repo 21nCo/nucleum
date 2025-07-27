@@ -52,7 +52,6 @@
       </span>
       <div class="flex flex-col gap-1 px-2">
         <span class="text-fgs3 text-b3">Sizing</span>
-        <!-- TODO: Slider not supported on touch devices - hence using switcher -->
         <OptionSelector
           size={Size.sm}
           options={[

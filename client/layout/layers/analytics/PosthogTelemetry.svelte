@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import posthog from "posthog-js";
+  import { stringify } from "$lib/shared/utils/json.utils";
   onMount(() => {
     initializePosthog(import.meta.env.VITE_POSTHOG_PROJECT_KEY);
     return () => {
@@ -23,7 +24,9 @@
     try {
       posthog.captureException(
         error.detail?.message
-          ? JSON.stringify(error.detail.message)
+          ? typeof error.detail.message === "string"
+            ? error.detail.message
+            : stringify(error.detail.message)
           : (error.detail?.error ?? error.detail?.message?.error ?? "Error")
       );
     } catch (e) {

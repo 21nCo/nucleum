@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { formatDate } from "$lib/client/utils/time.utils";
+  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
   import { selectedTimePeriod } from "$lib/client/stores/app.store";
   import Icon from "../Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
@@ -25,7 +25,7 @@
         "text-b2": size === Size.sm
       })}
     >
-      {formatDate($selectedTimePeriod)}
+      {parseAndFormatDate($selectedTimePeriod)}
     </span>
   </button>
   <slot:fragment slot="popover">

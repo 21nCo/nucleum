@@ -4,7 +4,11 @@
   import { goto } from "$app/navigation";
   import { GlobalEvent } from "$lib/client/types/event.enum";
   import { Embed } from "$lib/client/types/context.type";
-  import { pingParent, postToParent } from "$lib/client/utils/embed.utils";
+  import {
+    pingParent,
+    postDataToParent,
+    setEmbedBg
+  } from "$lib/client/utils/embed.utils";
   import account from "$lib/client/stores/account.store";
   import { appStore, currentTime } from "$lib/client/stores/app.store";
   import { toasts } from "$lib/client/stores/notification.store";
@@ -32,6 +36,8 @@
   import { globalActions } from "$lib/client/stores/actionMap";
   import { localActions } from "$local/localActionMap";
   import { version, build } from "$local/local";
+  import { EmbedDataMessage } from "$lib/client/types/embedMessage.enum";
+  import { parse } from "$lib/shared/utils/json.utils";
   let timer: any;
   let isMounted = false;
   pingParent();
@@ -39,7 +45,7 @@
 
   onMount(async () => {
     try {
-      postToParent({ bg: 1 });
+      setEmbedBg(1);
       await bootup();
     } catch (e) {
       logger.error({ at: "BaseLayer.onMount", error: e });
@@ -112,7 +118,7 @@
       );
       if (appDetails) appStore.initializeProductInformation(appDetails);
       const cachedAppData = await clientStorage.get(ClientStorageKey.APP_DATA);
-      const cachedAppDataJson = JSON.parse(cachedAppData ?? "{}");
+      const cachedAppDataJson = parse(cachedAppData ?? "{}");
       if (
         cachedAppDataJson &&
         cachedAppDataJson?.dataVersion >= productData?.dataVersion
@@ -169,7 +175,7 @@
       if (isInLowDataMode)
         $context.isInLowDataMode = isInLowDataMode === "true";
     } catch (e) {
-      postToParent({ type: "ERROR", message: e });
+      postDataToParent(EmbedDataMessage.ERROR, { type: "ERROR", message: e });
     }
   }
 

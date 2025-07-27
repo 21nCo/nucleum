@@ -1,7 +1,4 @@
-import type {
-  IObservableStoreSubject,
-  IStore
-} from "$lib/client/types/data.type";
+import type { IStore } from "$lib/client/types/data.type";
 import type { TimePeriod } from "$lib/client/types/time.type";
 import type {
   IResourceBase,
@@ -71,7 +68,7 @@ export interface GoalStore extends IStore {
   archivedGoals: IGoal[];
 }
 
-export interface IQuickFocusItemStore extends IObservableStoreSubject {
+export interface IQuickFocusItemStore {
   items: QuickFocusItem[];
   filteredItems: QuickFocusItem[];
   selectedTagId: string | TagId;

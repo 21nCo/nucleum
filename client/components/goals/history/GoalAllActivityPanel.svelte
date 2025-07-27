@@ -107,7 +107,9 @@
 
       // Get focus sessions and logs
       const sessionLogs = await sessionLogStore.selectMany({
-        properties: ["*", "taskId.* as task"],
+        properties: {
+          expand: ["taskId"]
+        },
         filters: {
           goalId: goalId.toString()
         }

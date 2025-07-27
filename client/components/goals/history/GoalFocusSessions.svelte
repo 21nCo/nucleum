@@ -27,7 +27,9 @@
     let subGoals: IRecordId[] = [];
     if (isIncludeSubGoals) {
       const subGoalsResult = await goalStore.selectMany({
-        properties: ["id"],
+        properties: {
+          select: ["id"]
+        },
         filters: {
           parent: {
             contains: id.toString()
@@ -41,7 +43,9 @@
       }
     }
     const result = await sessionLogStore.selectMany({
-      properties: ["*", "taskId.* as task"],
+      properties: {
+        expand: ["taskId"]
+      },
       filters: {
         goalId: [...subGoals, id.toString()]
       }

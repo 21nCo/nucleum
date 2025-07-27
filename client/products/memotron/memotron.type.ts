@@ -1,18 +1,13 @@
 import type {
   IResource,
-  IResourseShareable
+  IResourceShareable
 } from "$lib/client/components/flux/resourceStores/resource.type";
 
-export interface IMemotronItemBase extends IResource, IResourseShareable {
-  isStarred?: boolean;
-}
-
 /**
- * @deprecated - Use ITrashInformation from resource.type.ts instead
+ * @deprecated - directly extend IResource, IResourceShareable etc instead
  */
-export interface TrashInformation {
-  deletedAt: string;
-  deletedBy: string;
+export interface IMemotronItemBase extends IResource, IResourceShareable {
+  isStarred?: boolean;
 }
 
 export enum MemotronEvent {

@@ -1,6 +1,6 @@
 // import { env, pipeline } from "@xenova/transformers";
 import { env, pipeline } from "@huggingface/transformers";
-import type { INodeItemCaptured } from "../node/node.type";
+import type { INodeCapture } from "../node/node.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { resolveCurrentUserId } from "$lib/client/utils/account.utils";
@@ -126,7 +126,7 @@ class FeatureExtractor {
     }
   }
   static async generateVectorEmbeddingsAndReturnProcessedData(
-    nodes: INodeItemCaptured[]
+    nodes: INodeCapture[]
   ) {
     try {
       FeatureExtractor.isInternalCall = true;

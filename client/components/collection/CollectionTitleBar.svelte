@@ -77,8 +77,7 @@
 <div
   class="w-full flex gap-1 justify-between items-center sticky- top--0 py--6"
 >
-  <!-- TODO breadcrumbs - if launched as child from a combination i.e. if parent present -->
-  <!-- TODO - back button to previous resource - if launched from a mention or links -->
+  <!-- TODO breadcrumbs - if launched as child from a combination i.e. if parent present, back button to previous resource - if launched from a mention or links -->
   {#if isConstrainedWidth && accessPoint !== ResourceAccessPoint.MARKDOWN_EMBED}
     <button
       class="flex active:bg-bgs2 rounded-md p-1"

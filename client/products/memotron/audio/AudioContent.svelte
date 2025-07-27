@@ -319,8 +319,7 @@
             wavesurferPreview.setTime(previewCountDown - 10);
           }}
           style={ButtonStyle.OUTLINED}
-          size={Size.sm}
-          icon="ph:caret-double-left-light"
+          icon="solar:rewind-10-seconds-back-linear"
           tooltip="Backward (10 sec)"
         />
         {#if recordingState === PlayActionState.STOPPED}
@@ -368,8 +367,7 @@
             wavesurferPreview.setTime(previewCountDown + 10);
           }}
           style={ButtonStyle.OUTLINED}
-          size={Size.sm}
-          icon="ph:caret-double-right-light"
+          icon="solar:rewind-10-seconds-forward-linear"
           tooltip="Forward (10 sec)"
         />
       </div>

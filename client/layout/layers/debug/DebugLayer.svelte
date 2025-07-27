@@ -12,7 +12,6 @@
   import { Size } from "$lib/client/types/size.enum";
   import context from "$lib/client/stores/context.store";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { dataManager } from "$lib/client/persistence/dataManager";
   import account from "$lib/client/stores/account.store";
   import { Action } from "$lib/client/types/action.enum";
   import { FallbackTracker } from "$lib/client/utils/fallbackTracker.utils";
@@ -126,7 +125,7 @@
         <span class="text-sm font-semibold">Fallback Status</span>
         <Button
           size={Size.xs}
-          icon="refresh"
+          icon="ph:arrow-clockwise-light"
           on:click={loadFallbackStatuses}
           label="Refresh"
         />
@@ -134,7 +133,7 @@
           size={Size.xs}
           type={ButtonVariant.DANGER}
           style={ButtonStyle.OUTLINED}
-          icon="trash"
+          icon="ph:trash-light"
           on:click={resetAllFallbacks}
           label="Reset All"
         />
@@ -154,32 +153,36 @@
         <span class="text-xs text-fgs2">No fallbacks run yet</span>
       {/if}
     </div>
+    <Divider colorStrength={ColorStrength.Strong} />
     <div class="flex flex-wrap gap-2 w-full justify-center items-center">
       <Button
         type={ButtonVariant.PRIMARY}
         on:click={() => {
+          appStore.runAction("dexie-console");
+        }}
+        size={Size.sm}
+        icon="ph:terminal"
+        label="Dexie console"
+      />
+      <Button
+        on:click={() => {
           appStore.runAction("surreal-local");
         }}
+        size={Size.sm}
         icon="ph:terminal"
         label="Surreal console"
       />
       <Button
-        type={ButtonVariant.PRIMARY}
         on:click={() => {
           appStore.runAction("signaldb-console");
         }}
+        size={Size.sm}
         icon="ph:terminal"
         label="SignalDB console"
       />
       <Button
-        icon="play"
-        on:click={() => {
-          appStore.runAction(Action.MANUAL_RUN_DBO);
-        }}
-        label="Run manual dbo update"
-      />
-      <Button
         icon="trash"
+        size={Size.sm}
         type={ButtonVariant.DANGER}
         style={ButtonStyle.OUTLINED}
         on:click={clearCache}

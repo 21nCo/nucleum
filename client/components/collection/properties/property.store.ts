@@ -2,19 +2,16 @@ import { ResourceStore } from "$lib/client/components/flux/resourceStores/resour
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import {
   type IProperty,
+  type IPropertyCapture,
   type IPropertyEditorStore,
   PropertyType,
   UniversalPropertyType
 } from "$lib/client/components/collection/properties/property.type";
 import { ObservableStore } from "$lib/client/stores/client.store";
-import {
-  StoreDataType,
-  type IObservableStoreSubject
-} from "$lib/client/types/data.type";
-import type { OmitForCaptureWithId } from "$lib/client/components/flux/resourceStores/resource.type";
+import { StoreDataType } from "$lib/client/types/data.type";
 import { PropertyTypeGroup } from "./propertyTypeSelector/propertyTypeSelector.type";
 
-class PropertyStore extends ResourceStore<IProperty> {
+class PropertyStore extends ResourceStore<IProperty, IPropertyCapture> {
   constructor() {
     super(Resource.property, {
       dataType: StoreDataType.FIR

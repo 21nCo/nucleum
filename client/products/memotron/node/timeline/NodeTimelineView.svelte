@@ -5,7 +5,7 @@
     isSameResource,
     resourceInList
   } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { formatDate } from "$lib/client/utils/time.utils";
+  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
   import { resolveNodeLabelString } from "../node.utils";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "$lib/client/types/size.enum";
@@ -30,16 +30,18 @@
         return;
       }
       linkedNodes = await nodeStore.selectMany({
-        properties: [
-          "id",
-          "label",
-          "parent.* as parent",
-          "body",
-          "contentType",
-          "metadata",
-          "url",
-          "createdAt"
-        ],
+        properties: {
+          select: [
+            "id",
+            "label",
+            "body",
+            "contentType",
+            "metadata",
+            "url",
+            "createdAt"
+          ],
+          expand: ["parent"]
+        },
         filters: {
           id: links.map((x: INodeLinkThumb) => x.linkedTo.toString())
         }
@@ -62,7 +64,7 @@
     const groups = new Map<string, INodeThumb[]>();
 
     nodes.forEach((node) => {
-      const date = formatDate(new Date(node.createdAt));
+      const date = parseAndFormatDate(new Date(node.createdAt));
       if (!groups.has(date)) {
         groups.set(date, []);
       }

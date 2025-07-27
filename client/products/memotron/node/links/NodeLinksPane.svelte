@@ -20,9 +20,9 @@
   } from "$lib/client/products/memotron/node/node.store";
   import {
     type INode,
-    type INodeLinkThumb,
-    LinkType
+    type INodeLinkThumb
   } from "$lib/client/products/memotron/node/node.type";
+  import { LinkType } from "$lib/client/products/memotron/linking/link.type";
   import { linker } from "$lib/client/products/memotron/linking/link.store";
   import LinkSearch from "$lib/client/products/memotron/common/linkbox/LinkSearch.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";

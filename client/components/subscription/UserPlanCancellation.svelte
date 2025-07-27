@@ -5,7 +5,7 @@
   import modalEvent from "../modal/modal.store";
   import { Action } from "$lib/client/types/action.enum";
   import { resolveNextRenewalDate, SUBSCRIPTION_PLANS } from "./userPlan.utils";
-  import { formatDate } from "$lib/client/utils/time.utils";
+  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
   import PlanFeatureList from "./elements/PlanFeatureList.svelte";
   import { toasts } from "$lib/client/stores/notification.store";
   import { PaymentProvider } from "$lib/shared/types/plan.type";
@@ -75,7 +75,7 @@
       {:else if $account.plan}
         {@const nextPaymentDate = resolveNextRenewalDate($account.plan)}
         {#if nextPaymentDate}
-          Your plan will expire on {formatDate(nextPaymentDate)}.
+          Your plan will expire on {parseAndFormatDate(nextPaymentDate)}.
         {/if}
       {/if}
     </div>

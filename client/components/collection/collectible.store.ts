@@ -5,22 +5,23 @@ import { linker } from "$lib/client/products/memotron/linking/link.store";
 import { isSameResource } from "../flux/resourceStores/resource.utils";
 import { collectionStore } from "../collection/collection.store";
 import type {
+  ICollectible,
   ICollectionExpanded,
   ICollectionItemPropertyValue
 } from "./collection.type";
 import { logger } from "../debug/logger.client";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { resolveAvatar } from "./collection.utils";
+import type {
+  IResource,
+  IResourceCaptureV2
+} from "../flux/resourceStores/resource.type";
 
 export class CollectibleStore<
-  T extends {
-    id: IRecordId;
-    collections?: IRecordId[];
-    createdAt: string;
-    modifiedAt: string;
-  },
-  S extends ResourceStore<T>
-> extends ActiveResourceStore<T, S> {
+  T extends IResource & ICollectible,
+  S extends ResourceStore<T, IResourceCaptureV2<T>>,
+  V extends IResource & ICollectible
+> extends ActiveResourceStore<T, S, V> {
   async linkCollection(id: IRecordId, src?: IRecordId) {
     const resource = this.get();
     const result = await linker.link(src ?? resource.id, id);

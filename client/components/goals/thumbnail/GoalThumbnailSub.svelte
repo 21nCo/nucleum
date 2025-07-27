@@ -1,7 +1,7 @@
 <script lang="ts">
   import GoalThumbnailDates from "./GoalThumbnailDates.svelte";
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
-  import { formatDate } from "$lib/client/utils/time.utils";
+  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
   import { GoalType, type IGoalThumb } from "../goal.type";
   import GoalThumbnailSubBadge from "./GoalThumbnailSubBadge.svelte";
   import { ResourceAccessPoint } from "../../flux/resourceStores/resource.type";
@@ -11,7 +11,7 @@
 </script>
 
 <div class="flex justify-between items-center gap-1">
-  {#if isCurrentlyFocusing || (item.type === GoalType.DEFINITE && (item.startDate || item.endDate)) || item.description?.blocks?.[0]?.body}
+  {#if isCurrentlyFocusing || (item.type === GoalType.DEFINITE && (item.startDate || item.endDate)) || (item.description && item.description?.blocks?.[0]?.body)}
     <div class="text-b3 text-fgs3 truncate text-left max-h-5">
       {#if isCurrentlyFocusing}
         <span class="text-ccs1"> Currently focusing... </span>

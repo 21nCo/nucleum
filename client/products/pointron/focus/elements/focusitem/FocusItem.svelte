@@ -65,7 +65,9 @@
     ($currentFocusItem && isSameResource(focusItem, $currentFocusItem)) ??
     false;
 
-  $: parentHierarchy = goal?.parent?.map((x: any) => x.label) ?? [];
+  $: parentHierarchy = goal?.parent
+    ? goal.parent?.map((x: any) => x.label)
+    : [];
 
   onMount(() => {
     try {

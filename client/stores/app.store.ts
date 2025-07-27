@@ -17,7 +17,7 @@ import {
 } from "../types/oauth.type";
 import { dispatchCustomEvent, goto } from "../utils/browser.utils";
 import { persistLocally, getDapId } from "../persistence/persistence.utils";
-import { postToParent } from "$lib/client/utils/embed.utils";
+import { postDataToParent } from "$lib/client/utils/embed.utils";
 import modalEvent from "../components/modal/modal.store";
 import view from "$lib/client/stores/view.store";
 import context from "$lib/client/stores/context.store";
@@ -41,6 +41,7 @@ import account from "./account.store";
 import { tabs } from "../layout/topNav/tabs/tabs.store";
 import { resourceAction } from "../components/flux/resourceStores/resource.utils";
 import { Product } from "../types/product.type";
+import { EmbedDataMessage } from "../types/embedMessage.enum";
 
 // export const app = writable<{ product: string; env: string }>({
 //   product: "tidy",
@@ -153,6 +154,7 @@ export const appConstants = {
 const recordSpecificSearchParams = [
   /-type$/,
   /-tab$/,
+  /-task$/,
   /-nodeView$/,
   AppSearchParam.EDIT,
   AppSearchParam.POP_AT,
@@ -378,13 +380,9 @@ function initAppStore(seed: IAppStore) {
     }
     if (ctx.isEmbed) {
       if (isOauthFlow) {
-        postToParent({
-          oauth: url
-        });
+        postDataToParent(EmbedDataMessage.OAUTH, url);
       } else {
-        postToParent({
-          link: url
-        });
+        postDataToParent(EmbedDataMessage.LINK, url);
       }
     } else {
       let win = window?.open(url, "_blank");
@@ -651,7 +649,7 @@ function initAppStore(seed: IAppStore) {
     }
     const timestamp = new Date();
     accessLogStore.create({
-      resource: id.tb,
+      resource: id.toString()?.split(":")[0],
       action: ResourceActionType.OPEN,
       resourceId: id,
       timestamp: timestamp.toISOString()

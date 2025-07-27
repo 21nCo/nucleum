@@ -1,66 +1,48 @@
-import type { IMemotronItemBase } from "$lib/client/products/memotron/memotron.type";
-import type { IAvatar } from "../../../types/avatar.type";
+import type { IAvatar } from "$lib/client/types/avatar.type";
 import type {
   IBlockBody,
   IMarkdown
-} from "../../../components/markdown/md.type";
-import type { IRecordId, IStore } from "../../../types/data.type";
-import type {
-  IProperty,
-  IPropertyValue
-} from "$lib/client/components/collection/properties/property.type";
+} from "$lib/client/components/markdown/md.type";
+import type { IRecordId, IStore } from "$lib/client/types/data.type";
+import type { IPropertyValue } from "$lib/client/components/collection/properties/property.type";
 import {
   ResourceAccessMode,
   type CaptureOmittedFields,
   type IActiveResource,
+  type IResource,
+  type IResourceArchivable,
+  type IResourceInActivableFromParent,
+  type IResourceLabeled,
+  type IResourceLockable,
+  type IResourceShareable,
   type OmitFields,
   type OmitForCapture
 } from "$lib/client/components/flux/resourceStores/resource.type";
 import type { IFile } from "$lib/client/components/files/file.type";
 import type {
-  IActiveCollection,
-  ICollectionExpanded,
-  ICollectionItemPropertyValue
+  ICollectible,
+  ICollectionExpanded
 } from "$lib/client/components/collection/collection.type";
+import type { ILink, ILinkBase, LinkType } from "../linking/link.type";
 
-export type INodeItemCaptured = OmitForCapture<INodeInterface> & {
-  id: IRecordId;
-};
-
-/**
- * @deprecated - use {@link INodeThumb} instead
- */
-export type INodeThumbnail = INodeBaseV1 &
-  NodeContent & {
-    links: LinkThumbnail[];
-    children?: INodeThumbnail[];
-  };
-
-/**
- * @deprecated - use {@link INodeInterface} instead
- */
-type INodeBaseV1 = IMemotronItemBase & {
-  generatedLabel?: string;
-  /**
-   * @deprecated - avatar is dynamically resolved from typed collections
-   */
-  avatar?: IAvatar;
-  properties?: INodePropertyValue[];
-  parent?: string;
-  creationContext?: string;
-  notes?: string;
-};
+type IResourcePropertiesForNode = IResource &
+  IResourceLabeled &
+  IResourceShareable &
+  IResourceLockable &
+  IResourceArchivable &
+  IResourceInActivableFromParent &
+  ICollectible;
 
 type INodeInterface<
   TType = NodeType,
   TBody = any,
   TMetadata = any
-> = IMemotronItemBase & {
+> = IResourcePropertiesForNode & {
   body: TBody;
   contentType: TType;
   metadata?: TMetadata;
-  properties?: ICollectionItemPropertyValue[];
   parent?: IRecordId;
+  children?: IRecordId[];
   /**
    * Parent hierarchy for markdown heading nodes
    */
@@ -86,66 +68,15 @@ type INodeInterface<
   mdText?: string;
   text?: string;
   config?: any;
-  metaType?: NodeMetaType;
+  metaType?: NodeMetaType | "";
   /**
    * Used with meta types like Calendar notes as createdAt or modifiedAt can be different from date of the calendar notes.
    */
   date?: Date;
 };
 
-export type ILink = IMemotronItemBase & {
+export type INodeCapture<T extends INodeInterface> = OmitForCapture<T> & {
   id: IRecordId;
-  in: IRecordId;
-  out: IRecordId;
-  linkType: LinkType;
-};
-
-/**
- * TODO - refactor similar to {@link IClip} to use {@link INodeInterface} instead
- */
-export type NodeContent =
-  | TextContent
-  | ListContent
-  | LayoutContent
-  | NonNodularMarkdownContent
-  | StructuralContent
-  | OtherContent;
-
-export type TextContent = {
-  contentType: SimpleTextNodeType;
-  body: string; //| SpanContent[];
-};
-
-export type ListContent = {
-  contentType: NodeType.LIST;
-  listType: ListType;
-  body: string;
-  children?: ListChild[];
-};
-
-export type ListChild<T = NodeContent> = T & {
-  id: string;
-  // content: T;
-};
-
-export type StructuralContent = {
-  contentType: StructuralNodeType;
-};
-
-export type LayoutContent = {
-  contentType: LayoutNodeType;
-  body: any;
-};
-
-export type NonNodularMarkdownContent = {
-  contentType: NodeType.NON_NODULAR_MARKDOWN;
-  body: IMarkdown;
-};
-
-//TODO - temp
-export type OtherContent = {
-  contentType: OtherNodeType;
-  body: any;
 };
 
 export enum ListType {
@@ -359,28 +290,16 @@ type INodeLinkBase = {
   tags?: IRecordId[];
 };
 
-export type INodeLink = IMemotronItemBase &
-  INodeLinkBase & {
-    in: IRecordId;
-    out: IRecordId;
-  };
-
-export type INodeLinkThumb = INodeLinkBase & {
+export type INodeLinkThumb = ILinkBase & {
   id: IRecordId;
   linkedTo: IRecordId;
   direction: "incoming" | "outgoing";
 };
 
-export type LinkThumbnail = INodeLink & {
+export type LinkThumbnail = ILink & {
   title: string;
   icon: string;
 };
-
-export enum LinkType {
-  DIRECT = "DIRECT",
-  MENTION = "MENTION",
-  SUGGESTION = "SUGGESTION"
-}
 
 export type INodeMetadata = { location?: any };
 
@@ -494,6 +413,7 @@ export type IAudioMetadata = INodeMetadata & {
 export interface IAudioBody {
   transcription?: string;
   mdBlocks?: any[];
+  duration?: number;
   initTranscription?: boolean;
   transcriptionJobId?: string;
   transcriptionUpdatedAt?: string;
@@ -568,8 +488,8 @@ export const webNodeTypeList = [
   NodeType.GIST,
   NodeType.TEXT_CLIP,
   NodeType.IMAGE_CLIP,
-  NodeType.AUDIO_CLIP,
-  NodeType.VIDEO_CLIP,
+  // NodeType.AUDIO_CLIP,
+  // NodeType.VIDEO_CLIP,
   NodeType.WEB_SCREENSHOT_CLIP,
 
   NodeType.YOUTUBE_VIDEO,
@@ -580,6 +500,22 @@ export const webNodeTypeList = [
   NodeType.KINDLE_BOOK,
   NodeType.KINDLE_HIGHLIGHT
 ];
+
+export type IWebNodeType =
+  | NodeType.WEB_PAGE
+  | NodeType.GIST
+  | NodeType.TEXT_CLIP
+  | NodeType.IMAGE_CLIP
+  // | NodeType.AUDIO_CLIP
+  // | NodeType.VIDEO_CLIP
+  | NodeType.WEB_SCREENSHOT_CLIP
+  | NodeType.YOUTUBE_VIDEO
+  | NodeType.YOUTUBE_CHANNEL
+  | NodeType.YOUTUBE_TIMESTAMP_CLIP
+  | NodeType.TWEET
+  | NodeType.TWITTER_PROFILE
+  | NodeType.KINDLE_BOOK
+  | NodeType.KINDLE_HIGHLIGHT;
 
 type IGenericWebPageBody = {
   hash: string;
@@ -878,7 +814,7 @@ export const rootNodeTypeList = [
 ];
 
 export type INode =
-  | INodeInterface<NodeType, NodeContent, INodeMetadata>
+  | INodeInterface<NodeType, IBlockBody, INodeMetadata>
   | IMediaNode
   | IWebPage
   | IClip;

@@ -143,11 +143,9 @@
   });
 
   async function assignNodeMediaContent(id: IRecordId) {
-    const node = await nodeStore.select(id, [
-      "*",
-      "parent.* as parent",
-      "file.* as file"
-    ]);
+    const node = await nodeStore.select(id, {
+      expand: ["parent", "file"]
+    });
     if (node) {
       _mediaBlock = node;
       _mediaBlockFile = node.file as IFile;

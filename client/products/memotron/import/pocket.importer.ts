@@ -1,8 +1,8 @@
 import {
   CollectionType,
   CollectionLayout,
-  type ICollectionView,
-  type ICollection
+  type ICollectionViewCapture,
+  type ICollectionCapture
 } from "$lib/client/components/collection/collection.type";
 import { collectionStore } from "$lib/client/components/collection/collection.store";
 import { linker } from "$lib/client/products/memotron/linking/link.store";
@@ -15,11 +15,11 @@ import { generateResourceId } from "$lib/shared/utils/surreal.utils";
 import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
 import { GlobalEvent } from "$lib/client/types/event.enum";
 import { logger } from "$lib/client/components/debug/logger.client";
-import type { OmitForCaptureWithId } from "$lib/client/components/flux/resourceStores/resource.type";
 import { viewStore } from "$lib/client/components/collection/view.store";
 import { performApiCall } from "$lib/client/utils/network.utils";
 import { UserDataMode } from "$lib/client/types/account.type";
 import account from "$lib/client/stores/account.store";
+import { parse } from "$lib/shared/utils/json.utils";
 
 export class PocketImporter {
   private processedUrls: Map<string, string> = new Map();
@@ -142,7 +142,7 @@ export class PocketImporter {
         ) {
           const fileContent = await zipEntry.async("string");
           try {
-            const collectionData = JSON.parse(fileContent);
+            const collectionData = parse(fileContent);
             // Only process non-empty collections
             if (collectionData.items && collectionData.items.length > 0) {
               collectionFiles.push({
@@ -164,7 +164,7 @@ export class PocketImporter {
         ) {
           const fileContent = await zipEntry.async("string");
           try {
-            const annotationData = JSON.parse(fileContent);
+            const annotationData = parse(fileContent);
             if (Array.isArray(annotationData) && annotationData.length > 0) {
               annotationFiles.push({
                 fileName: zipEntry.name,
@@ -331,17 +331,14 @@ export class PocketImporter {
     return createdNodes;
   }
   private async createCollections(collections: any[]) {
-    let collectionsToCreate: OmitForCaptureWithId<ICollection>[] = [];
-    let views: OmitForCaptureWithId<ICollectionView>[] = [];
+    let collectionsToCreate: ICollectionCapture[] = [];
+    let views: ICollectionViewCapture[] = [];
     for (const collection of collections) {
       const viewId = generateResourceId(Resource.view);
       views.push({
         id: viewId,
         layout: CollectionLayout.BOARD,
         label: "Default",
-        tabBy: "none",
-        groupBy: "none",
-        subGroupBy: "none",
         importId: this.importId
       });
       collectionsToCreate.push({

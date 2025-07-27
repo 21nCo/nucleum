@@ -62,8 +62,7 @@
   import {
     isNoneResource,
     resourceAction,
-    resourceInList,
-    stringToRecordId
+    resourceInList
   } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import view from "$lib/client/stores/view.store";
@@ -213,11 +212,6 @@
     const key = e.detail.key;
     let value = e.detail.value;
     if (!key) return;
-    if (key === "tabBy" || key === "groupBy" || key === "subGroupBy") {
-      value = stringToRecordId(value);
-    } else if (key === "properties") {
-      value = value.map(stringToRecordId);
-    }
     activeView[key] = value;
     collection.updateView(
       activeView.id,
