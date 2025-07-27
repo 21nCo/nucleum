@@ -722,7 +722,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
    * @returns
    */
   function handleOutsideClickv2(event: MouseEvent): void {
-    console.log("handleOutsideClickv2", event);
+    // console.log("handleOutsideClickv2", event);
     if (!popoverElement || !node || event.target.nodeName === "PLASMO-CSUI")
       return;
 

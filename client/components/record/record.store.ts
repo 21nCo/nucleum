@@ -293,11 +293,14 @@ export class SearchStore {
     params?: {
       resource?: Resource;
       subType?: NodeType | CollectionType;
+      collectionResource?: Resource[];
       exclude?: IRecordId[];
     }
   ) {
     logger.log({ at: "searchForLinking", query, params });
     console.time("searchForLinking");
+    const collectionResource =
+      params?.collectionResource ?? this.collectibleResource;
     if (!isValidString(query)) {
       let items = [];
       if (params?.resource) {
@@ -321,13 +324,8 @@ export class SearchStore {
       } else if (params?.subType && params.resource === Resource.collection) {
         items = items.filter((x) => x.type === params.subType);
       }
-      if (
-        params?.resource === Resource.collection &&
-        this.collectibleResource
-      ) {
-        items = items.filter((x) =>
-          this.collectibleResource?.includes(x.resource)
-        );
+      if (params?.resource === Resource.collection && collectionResource) {
+        items = items.filter((x) => collectionResource.includes(x.resource));
       }
       return items;
     }
@@ -389,9 +387,9 @@ export class SearchStore {
       collections = await flux.selectMany(Resource.collection, {
         filters: {
           ...activeResourceFilterV2,
-          ...(this.collectibleResource
+          ...(params?.collectionResource || this.collectibleResource
             ? {
-                resource: this.collectibleResource
+                resource: params?.collectionResource ?? this.collectibleResource
               }
             : {})
         },

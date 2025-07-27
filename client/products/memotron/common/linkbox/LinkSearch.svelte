@@ -17,12 +17,15 @@
   import { toasts } from "$lib/client/stores/notification.store";
   import type { IRecordId } from "$lib/client/types/data.type";
   import context from "$lib/client/stores/context.store";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   const dispatch = createEventDispatcher();
-  export let ctx:
-    | "capture"
-    | "nodelinkspane"
-    | "clipper"
-    | "nodepageCollectionsLane" = "capture";
+  /**
+   * @deprecated - use accessPoint & isCollectionsLane instead
+   */
+  export let ctx: "capture" | "nodelinkspane" | "clipper" | "collectionsLane" =
+    "capture";
+  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.CAPTURE;
+  export let isCollectionsLane: boolean = false;
   export let resultsPlacement: Placement = Placement.BottomCenter;
   export let searchQuery: string;
   export let onSelectCallback: ((item: any) => void) | undefined = undefined;
@@ -37,7 +40,7 @@
   let searchInputRef: TextSearchInput;
   let isCreationInProgress = false;
 
-  resolveOptions(ctx);
+  resolveOptions();
 
   export function focus() {
     searchInputRef?.focus();
@@ -45,16 +48,14 @@
   }
 
   onMount(() => {
-    if (ctx === "nodepageCollectionsLane") {
+    if (isCollectionsLane) {
       focus();
     }
   });
 
-  function resolveOptions(
-    context: "capture" | "nodelinkspane" | "clipper" | "nodepageCollectionsLane"
-  ) {
-    switch (context) {
-      case "capture":
+  function resolveOptions() {
+    switch (accessPoint) {
+      case ResourceAccessPoint.CAPTURE:
         popoverOptions = {
           offsetInPx: 12,
           placement: Placement.TopCenter
@@ -62,7 +63,7 @@
         placeholder = "Link to a node or add to a collection";
         inputStyle = InputStyle.PLAIN;
         break;
-      case "nodelinkspane":
+      case ResourceAccessPoint.NODE_LINKS:
         popoverOptions = {
           placement: Placement.BottomCenter
         };
@@ -70,16 +71,7 @@
         icon = "ph:link-light";
         inputStyle = InputStyle.BORDERED;
         break;
-      case "nodepageCollectionsLane":
-        popoverOptions = {
-          offsetInPx: 4,
-          placement: Placement.TopCenter
-        };
-        placeholder = "Start searching to add to a collection";
-        // icon = "arrow-right-left";
-        inputStyle = InputStyle.BORDERED;
-        break;
-      case "clipper":
+      case ResourceAccessPoint.CLIPPER:
         popoverOptions = {
           offsetInPx: 6,
           isUseAbsolutePositioning: true,
@@ -90,16 +82,23 @@
         inputStyle = InputStyle.BORDERED;
         break;
     }
+    if (isCollectionsLane) {
+      popoverOptions = {
+        offsetInPx: 4,
+        placement: Placement.TopCenter
+      };
+      placeholder = "Start searching to add to a collection";
+      inputStyle = InputStyle.BORDERED;
+    }
   }
 
   function onsearch(searchQuery: string) {
     let query = searchQuery;
-    let resource =
-      ctx === "nodepageCollectionsLane"
-        ? Resource.collection
-        : ctx === "nodelinkspane"
-          ? Resource.node
-          : undefined;
+    let resource = isCollectionsLane
+      ? Resource.collection
+      : accessPoint === ResourceAccessPoint.NODE_LINKS
+        ? Resource.node
+        : undefined;
     if (searchQuery?.startsWith("@")) {
       resource = Resource.collection;
       query = searchQuery.slice(1);
@@ -109,7 +108,13 @@
     }
     return new SearchStore().searchForLinking(query, {
       resource,
-      exclude: excludeFromSearch
+      exclude: excludeFromSearch,
+      collectionResource:
+        accessPoint === ResourceAccessPoint.GOAL
+          ? [Resource.goal]
+          : accessPoint === ResourceAccessPoint.NODE
+            ? [Resource.node]
+            : undefined
     });
   }
 
@@ -131,8 +136,9 @@
     isCreationInProgress = true;
     let result: any;
     if (
-      ctx === "nodepageCollectionsLane" ||
-      ((ctx === "capture" || ctx === "clipper") &&
+      isCollectionsLane ||
+      ((accessPoint === ResourceAccessPoint.CAPTURE ||
+        accessPoint === ResourceAccessPoint.CLIPPER) &&
         (e.detail.event.shiftKey || e.detail.value.startsWith("@")))
     ) {
       let val = e.detail.value;
@@ -142,7 +148,14 @@
       result = await collectionStore.save(
         {
           label: val,
-          resource: ctx === "clipper" ? Resource.node : undefined
+          resource:
+            accessPoint === ResourceAccessPoint.CAPTURE ||
+            accessPoint === ResourceAccessPoint.CLIPPER ||
+            accessPoint === ResourceAccessPoint.NODE
+              ? Resource.node
+              : accessPoint === ResourceAccessPoint.GOAL
+                ? Resource.goal
+                : undefined
         },
         {
           isIgnorePropertyEditor: true
@@ -164,20 +177,13 @@
     isCreationInProgress = false;
   }
 
-  function resolveEmptyStateLabel(
-    ctxParam: string,
-    searchQuery: string,
-    isSaving: boolean
-  ) {
+  function resolveEmptyStateLabel(searchQuery: string, isSaving: boolean) {
     if (isSaving) {
       return `Creating...`;
     }
-    if (
-      ctxParam === "nodepageCollectionsLane" ||
-      searchQuery?.startsWith("@")
-    ) {
+    if (isCollectionsLane || searchQuery?.startsWith("@")) {
       return `No collections found. Press **Enter** to create a new collection`;
-    } else if (ctxParam === "nodelinkspane") {
+    } else if (accessPoint === ResourceAccessPoint.NODE_LINKS) {
       return `No nodes found. Press **Enter** to create a new node`;
     } else {
       return $context.isTouchDevice
@@ -186,10 +192,10 @@
     }
   }
 
-  function resolveBottomMessage(context: string) {
-    switch (context) {
-      case "capture":
-      case "clipper":
+  function resolveBottomMessage(accessPoint: ResourceAccessPoint) {
+    switch (accessPoint) {
+      case ResourceAccessPoint.CAPTURE:
+      case ResourceAccessPoint.CLIPPER:
         return "Use **@** prefix to search for collections";
       default:
         return undefined;
@@ -200,10 +206,10 @@
 <TextSearchInput
   bind:this={searchInputRef}
   bind:value={searchQuery}
-  isInline={ctx === "nodepageCollectionsLane"}
+  isInline={isCollectionsLane}
   width={$view.isConstrainedWidth
     ? "w-full"
-    : ctx === "nodepageCollectionsLane" && $view.isPortrait
+    : isCollectionsLane && $view.isPortrait
       ? "w-80"
       : undefined}
   style={inputStyle}
@@ -212,14 +218,10 @@
   searchResultComponent={LinkSearchResultItem}
   searchResultComponentProps={{
     isHideResourceType:
-      ctx === "nodepageCollectionsLane" || ctx === "nodelinkspane"
+      isCollectionsLane || accessPoint === ResourceAccessPoint.NODE_LINKS
   }}
   {popoverOptions}
-  emptyStateLabel={resolveEmptyStateLabel(
-    ctx,
-    searchQuery,
-    isCreationInProgress
-  )}
+  emptyStateLabel={resolveEmptyStateLabel(searchQuery, isCreationInProgress)}
   on:select={onSelect}
   on:hide={onHide}
   on:empty-enter={onEmptyEnter}
@@ -227,5 +229,5 @@
   searchCallback={onsearch}
   {placeholder}
   isShowPopoverOnFocus={true}
-  bottomMessage={resolveBottomMessage(ctx)}
+  bottomMessage={resolveBottomMessage(accessPoint)}
 />

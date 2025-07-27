@@ -183,7 +183,7 @@
     <EmptyStatusView
       mainText="No historical data found"
       subText="You don't have any focus sessions recorded for this day in previous periods"
-      size={Size.md}
+      size={Size.sm}
     />
   {:else}
     {#if lastMonthData.length > 0 && lastMonthDate}

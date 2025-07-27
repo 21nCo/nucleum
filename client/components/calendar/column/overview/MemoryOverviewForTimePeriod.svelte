@@ -18,6 +18,7 @@
   import { LoadingAnimationType } from "$lib/client/types/feedback.type";
   import type { ILink } from "$lib/client/products/memotron/linking/link.type";
   import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
+  import { Size } from "$lib/client/types/size.enum";
 
   export let date: Date;
   export let scale: TimeScaleUnit = TimeScaleUnit.DAY;
@@ -194,6 +195,7 @@
           {/each}
         {:else}
           <EmptyStatusView
+            size={Size.sm}
             mainText="No memories found"
             subText={`No memories found for this day in previous years`}
           />

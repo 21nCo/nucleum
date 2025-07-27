@@ -157,6 +157,7 @@ const recordSpecificSearchParams = [
   /-task$/,
   /-nodeView$/,
   AppSearchParam.EDIT,
+  AppSearchParam.VIEW,
   AppSearchParam.POP_AT,
   AppSearchParam.SPLIT_AT,
   AppSearchParam.FSPLIT_AT,

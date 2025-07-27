@@ -18,6 +18,7 @@
   import type { IActiveGoalStore } from "./goal.store";
   import { resolveGoalTypeIcon } from "./goal.utils";
   import { enumToString } from "$lib/shared/utils/text.utils";
+  import { ResourceAccessPoint } from "../flux/resourceStores/resource.type";
 
   export let goal: IActiveGoalStore;
   export let isReadOnlyMode: boolean = false;
@@ -121,7 +122,8 @@
           onHideCallback: () => {
             hidePopover();
           },
-          ctx: "nodepageCollectionsLane"
+          accessPoint: ResourceAccessPoint.GOAL,
+          isCollectionsLane: true
         }
       }}
     >

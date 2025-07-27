@@ -38,12 +38,13 @@
   import { Display } from "$lib/client/types/view.type";
   import { logger } from "../../debug/logger.client";
   import { RemovalProperty } from "$lib/client/types/data.type";
+  import YearViewV2 from "./YearViewV2.svelte";
   export let panel: CalendarLayout = CalendarLayout.Classic;
 
   let selectedDate = new Date();
   let selectedView: TimeScaleUnit = resolveSavedScaleSelection();
   let events: any[] = [];
-  let yearViewRef: YearView;
+  let yearViewRef: YearViewV2;
   let weekViewRef: WeekView;
   let visibleWeekDates: Date[] | undefined;
   let width = resolveSavedWidthSelection(selectedView);
@@ -53,9 +54,7 @@
   let isRefreshing = false;
 
   onMount(() => {
-    setTimeout(() => {
-      refreshIndicatorData(selectedDate);
-    }, 500);
+    refreshIndicatorDataWithDelay();
   });
 
   function resolveSavedScaleSelection() {
@@ -123,6 +122,14 @@
       default:
         return [];
     }
+  }
+
+  function refreshIndicatorDataWithDelay(
+    resource?: (Resource | MetaResource)[]
+  ) {
+    setTimeout(() => {
+      refreshIndicatorData(selectedDate, resource);
+    }, 500);
   }
 
   let isRefreshOperationInProgress = false;
@@ -248,6 +255,7 @@
   function handleScaleSelection(event: CustomEvent) {
     selectedView = event.detail;
     width = resolveSavedWidthSelection(selectedView);
+    refreshIndicatorDataWithDelay();
   }
 
   function setDate(date: Date) {
@@ -329,7 +337,7 @@
           on:visibleDatesChange={handleVisibleDatesChange}
         />
       {:else if selectedView === TimeScaleUnit.YEAR}
-        <YearView
+        <YearViewV2
           bind:this={yearViewRef}
           bind:selectedDate
           {indicatorData}
@@ -394,17 +402,13 @@
     "isChecked"
   ]}
   on:change={() => {
-    setTimeout(() => {
-      refreshIndicatorData(selectedDate, [Resource.task]);
-    }, 500);
+    refreshIndicatorDataWithDelay([Resource.task]);
   }}
 />
 <ComponentBaseLayer
   subscribeToResource={new Set([Resource.session])}
   on:change={() => {
-    setTimeout(() => {
-      refreshIndicatorData(selectedDate, [Resource.session]);
-    }, 500);
+    refreshIndicatorDataWithDelay([Resource.session]);
   }}
 />
 <ComponentBaseLayer
@@ -415,11 +419,6 @@
     "text"
   ]}
   on:change={() => {
-    setTimeout(() => {
-      refreshIndicatorData(selectedDate, [
-        Resource.node,
-        MetaResource.calendarNotes
-      ]);
-    }, 500);
+    refreshIndicatorDataWithDelay([Resource.node, MetaResource.calendarNotes]);
   }}
 />

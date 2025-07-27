@@ -315,7 +315,7 @@
 <div class="relative flex flex-col gap-3 pt-1 flex-grow w-full">
   <div class="flex flex-col w-full">
     <LinkSearch
-      ctx="nodelinkspane"
+      accessPoint={ResourceAccessPoint.NODE_LINKS}
       on:select={onSelect}
       bind:searchQuery
       excludeFromSearch={_links.map((x) => x.linkedTo).concat(node.id)}

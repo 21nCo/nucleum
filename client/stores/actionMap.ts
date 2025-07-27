@@ -803,8 +803,13 @@ export const globalActions: IAction[] = [
     isMeta: true,
     searchActionParams: {
       searchCallback: async (search: string, componentParams?: any) => {
+        const collectionResource = componentParams?.items?.[0]
+          ? [determineResourceType(componentParams.items[0])]
+          : [];
         const result = await new SearchStore().searchForLinking(search, {
-          resource: componentParams?.resource
+          resource: componentParams?.resource,
+          collectionResource:
+            componentParams?.collectionResource ?? collectionResource
         });
         return result;
       },
