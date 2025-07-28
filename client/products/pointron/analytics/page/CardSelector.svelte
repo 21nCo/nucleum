@@ -87,21 +87,21 @@
   function resolveChartIcon(chartType: AnalyticsCardType) {
     switch (chartType) {
       case AnalyticsCardType.PIE:
-        return "ph:chart-pie-light";
+        return "chart";
       case AnalyticsCardType.DONUT:
         return "ph:chart-donut-light";
       case AnalyticsCardType.LINE:
-        return "ph:chart-line-light";
+        return "chart-line";
       case AnalyticsCardType.BAR:
-        return "ph:chart-bar-light";
+        return "chart-bar";
       case AnalyticsCardType.AREA:
         return "areachart";
       case AnalyticsCardType.TOP_N:
-        return "ph:rocket-light";
+        return "rocket";
       case AnalyticsCardType.METRICS:
-        return "ph:squares-four-light";
+        return "grid";
       case AnalyticsCardType.TARGETS:
-        return "ph:target-light";
+        return "target";
     }
   }
 </script>

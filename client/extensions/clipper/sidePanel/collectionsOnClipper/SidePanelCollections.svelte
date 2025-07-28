@@ -273,7 +273,7 @@
           </div>
           <div class="flex items-center gap-2">
             <Toggle
-              icon={isShowNewCollectionWizard ? "ph:x-light" : "ph:plus-light"}
+              icon={isShowNewCollectionWizard ? "cross" : "plus"}
               parentBgIndex={2}
               bgSize={Size.sm}
               tooltip={isShowNewCollectionWizard
@@ -282,7 +282,7 @@
               bind:on={isShowNewCollectionWizard}
             />
             <Toggle
-              icon="ph:eye-slash-light"
+              icon="eye-slash"
               parentBgIndex={2}
               bgSize={Size.sm}
               tooltip={isHideEmptyCollections ? "Show empty" : "Hide empty"}

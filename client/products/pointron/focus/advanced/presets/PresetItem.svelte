@@ -96,7 +96,7 @@
         })}
       >
         <Button
-          icon="ph:trash-light"
+          icon="trash"
           on:click={deleteHandler}
           tooltip="Delete preset"
         />

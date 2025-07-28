@@ -187,7 +187,7 @@
       action={Resource.session + "-resource"}
       primaryAction={{
         label: "Delete session",
-        icon: "ph:trash-light",
+        icon: "trash",
         variant: ButtonVariant.DANGER,
         callback: async () => {
           appStore.runAction(PointronAction.DELETE_SESSION, {

@@ -51,7 +51,7 @@
     const removeItem = {
       label: "Remove",
       value: "delete",
-      icon: "ph:trash-light",
+      icon: "trash",
       callback: async () => {
         dispatch("remove", id);
       }
@@ -74,7 +74,7 @@
           {
             label: `Go to ${item?.label}`,
             value: "goToResource",
-            icon: "ph:arrow-right-light",
+            icon: "arrow-right",
             callback: async () => {
               dispatch("goToResource", id);
             }

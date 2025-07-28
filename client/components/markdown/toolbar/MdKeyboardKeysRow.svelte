@@ -21,31 +21,31 @@
   in:fly={{ y: 10 }}
 >
   <KeyboardToolbarKey
-    icon="ph:at"
+    icon="at"
     on:click={(e) => {
       dispatch("key", "@");
     }}
   />
   <KeyboardToolbarKey
-    icon="ph:hash"
+    icon="hash"
     on:click={(e) => {
       dispatch("key", "#");
     }}
   />
   <KeyboardToolbarKey
-    icon="ph:asterisk"
+    icon="asterisk"
     on:click={(e) => {
       dispatch("key", "*");
     }}
   />
   <KeyboardToolbarKey
-    icon="ph:quotes"
+    icon="quotes"
     on:click={(e) => {
       dispatch("key", '"');
     }}
   />
   <KeyboardToolbarKey
-    icon="ph:brackets-square-light"
+    icon="brackets-square"
     on:click={(e) => {
       dispatch("key", "[]");
     }}

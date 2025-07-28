@@ -327,7 +327,7 @@
       on:click|stopPropagation={onClick}
       class="bg-aps3 hover:bg-aps2 border border-aps2 flex w-12 justify-center items-center h-full rounded-r-md"
     >
-      <Icon icon={isClipInProgress ? "svg-spinners:3-dots-fade" : "ph:plus"} />
+      <Icon icon={isClipInProgress ? "svg-spinners:3-dots-fade" : "plus"} />
     </button>
   </button>
 </div>

@@ -88,7 +88,7 @@
   >
     {#if photoTaken}
       <Button
-        icon="ph:arrow-clockwise-light"
+        icon="arrow-path"
         label="Retake"
         type={ButtonVariant.DANGER}
         size={Size.sm}
@@ -104,7 +104,7 @@
         on:click={savePhoto}
       />
       <Button
-        icon="ph:x"
+        icon="cross"
         label="Cancel"
         size={Size.sm}
         isPreventMinWidth={true}
@@ -116,7 +116,7 @@
     {:else}
       <div class="col-span-2"></div>
       <Button
-        icon="ph:x"
+        icon="cross"
         label="Cancel"
         size={Size.sm}
         isPreventMinWidth={true}

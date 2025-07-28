@@ -158,7 +158,7 @@
       {#if completedTasksCount > 0}
         <div class="my-4">
           <Button
-            icon={showCompletedTasks ? "ph:eye-slash-light" : ""}
+            icon={showCompletedTasks ? "eye-slash" : ""}
             label={showCompletedTasks
               ? "Hide completed"
               : `Completed (${completedTasksCount})`}
@@ -177,7 +177,7 @@
     <div class="flex flex-col justify-center items-center gap-6">
       {#if completedTasksCount > 0}
         <Button
-          icon={showCompletedTasks ? "ph:eye-slash-light" : ""}
+          icon={showCompletedTasks ? "eye-slash" : ""}
           label={showCompletedTasks
             ? "Hide completed"
             : `Completed (${completedTasksCount})`}
@@ -188,7 +188,7 @@
         />
       {/if}
       <Button
-        icon="ph:plus-light"
+        icon="plus"
         label="New task"
         size={Size.sm}
         shortcut={shortcutsConfig.create}
@@ -201,7 +201,7 @@
     <!-- <FloatingButton
       params={[
         {
-          icon: "ph:plus-light",
+          icon: "plus",
           label: "Create new task",
           callback: handleCreateTask
           // variant: ButtonVariant.PRIMARY,

@@ -167,7 +167,7 @@
     const noneOption = {
       label: "None",
       value: "property:none",
-      icon: "ph:circle-dashed-light"
+      icon: "circle-dashed"
     };
     return $collection?.properties
       ? [
@@ -591,7 +591,7 @@
               collection.toggleEditMode(false);
             }}
           >
-            <Icon icon="ph:x-light" size={Size.sm} class="text-abg" />
+            <Icon icon="cross" size={Size.sm} class="text-abg" />
             <span> Close edit mode </span>
           </button>
         {/if}
@@ -671,22 +671,22 @@
               options={[
                 {
                   value: "birdView",
-                  icon: "ph:bird-light",
+                  icon: "bird",
                   label: "Bird view"
                 },
                 {
                   value: "flashcards",
-                  icon: "ph:cards-three-light",
+                  icon: "squares",
                   label: "Run Flashcards"
                 },
                 {
                   value: "slideshow",
-                  icon: "ph:slideshow-light",
+                  icon: "squares-2x2",
                   label: "Start slideshow"
                 },
                 {
                   value: "timemachine",
-                  icon: "ph:clock-counter-clockwise-light",
+                  icon: "clock",
                   label: "Time machine"
                 }
               ]}
@@ -729,7 +729,7 @@
                     items={[
                       {
                         value: "filter",
-                        icon: "ph:funnel-light"
+                        icon: "funnel"
                       },
                       {
                         value: "sort",

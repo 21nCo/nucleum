@@ -29,7 +29,7 @@
 >
   <div class={cn("flex", "gap-2")}>
     <div class="flex gap-1">
-      <Icon icon="ph:link-light" size={Size.sm} />
+      <Icon icon="link" size={Size.sm} />
     </div>
     <LinkSearch
       ctx="capture"

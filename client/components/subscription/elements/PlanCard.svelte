@@ -169,7 +169,7 @@
         <div class="space-y-2">
           <Button
             label="Cancel Subscription"
-            icon="ph:x-light"
+            icon="cross"
             type={ButtonVariant.DANGER}
             style={ButtonStyle.OUTLINED}
             isLoading={progressState === "cancelling"}
@@ -186,7 +186,7 @@
       {:else if isCurrentPlan && currentPlan?.cycle !== period && currentPlan?.status === PlanStatus.ACTIVE}
         <Button
           label={`Switch to ${period.toLowerCase()}`}
-          icon="ph:arrow-right-light"
+          icon="arrow-right"
           isLoading={progressState === "switching"}
           type={ButtonVariant.PRIMARY}
           style={ButtonStyle.OUTLINED}
@@ -199,7 +199,7 @@
       {:else if isUpgrade(plan)}
         <Button
           label="Upgrade"
-          icon="ph:arrow-up-light"
+          icon="arrow-up"
           isLoading={progressState === "upgrading"}
           type={ButtonVariant.PRIMARY}
           size={$view.isConstrainedWidth ? Size.md : Size.lg}
@@ -211,7 +211,7 @@
       {:else if isDowngrade(plan)}
         <Button
           label={`Switch to ${plan.name}`}
-          icon="ph:arrow-right-light"
+          icon="arrow-right"
           isLoading={progressState === "downgrading"}
           type={ButtonVariant.PRIMARY}
           style={ButtonStyle.OUTLINED}
@@ -224,7 +224,7 @@
       {:else}
         <Button
           label="Choose Plan"
-          icon="ph:arrow-right-light"
+          icon="arrow-right"
           type={ButtonVariant.PRIMARY}
           isLoading={progressState === "initiating"}
           style={plan.isPopular ? ButtonStyle.DEFAULT : ButtonStyle.OUTLINED}

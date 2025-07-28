@@ -22,7 +22,7 @@
 
   $: options = resources.map((x) => {
     const resource = resourceList.find((y) => y.value === x);
-    if (!resource) return { label: x, value: x, icon: "ph:circle-light" };
+    if (!resource) return { label: x, value: x, icon: "circle" };
     return resource;
   });
 

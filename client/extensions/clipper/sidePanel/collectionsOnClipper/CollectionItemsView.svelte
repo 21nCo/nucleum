@@ -43,7 +43,7 @@
   class="flex items-center gap-2 min-h-16 h-16 px-3 border-b border-bgs3 bg-bgs2"
 >
   <Button
-    icon="ph:caret-left-light"
+    icon="chevron-left"
     tooltip="Back"
     parentBgIndex={2}
     on:click={handleBackClick}
@@ -69,7 +69,7 @@
     </div>
   </div>
   <Button
-    icon="ph:arrow-square-out-light"
+    icon="link-arrow-left"
     tooltip="Open in app"
     parentBgIndex={2}
     on:click={handleOpenInAppClick}

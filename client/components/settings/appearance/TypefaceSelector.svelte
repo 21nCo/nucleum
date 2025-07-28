@@ -108,9 +108,6 @@
     <span style="font-family: '{selectedFont.value}'">
       {selectedFont.label}
     </span>
-    <Icon
-      icon={isOpen ? "ph:caret-up-light" : "ph:caret-down-light"}
-      size={Size.sm}
-    />
+    <Icon icon={isOpen ? "chevron-up" : "chevron-down"} size={Size.sm} />
   </button>
 </div>

@@ -133,7 +133,7 @@
     />
     {#if isConstrainedWidth}
       <Button
-        icon="ph:x-light"
+        icon="cross"
         parentBgIndex={2}
         on:click={() => {
           appStore.closeResource({ id: $goal.id });

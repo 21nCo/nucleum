@@ -10,7 +10,7 @@ const embedBrowserItem: IBlockBrowserItem = {
   label: "Embed anything",
   description: "Embed block",
   type: NodeType.EMBED,
-  icon: "ph:code-light"
+  icon: "code"
 };
 
 let embedSection: IBlockBrowserSection = {
@@ -21,56 +21,56 @@ let embedSection: IBlockBrowserSection = {
     //   label: "Embed node",
     //   description: "Embed node block",
     //   type: NodeType.NODE_AS_EMBED,
-    //   icon: "ph:circle-light",
+    //   icon: "circle",
     //   isDisabled: true
     // },
     {
       label: "Embed collection",
       description: "Embed Collection block",
       type: NodeType.COLLECTION_AS_EMBED,
-      icon: "ph:brackets-round-light"
+      icon: "brackets-round"
     },
     // {
     //   label: "Task",
     //   description: "Embed Task block",
     //   type: NodeType.TASK_AS_EMBED,
-    //   icon: "ph:check-square-light"
+    //   icon: "check-square"
     // },
     {
       label: "Web text clip",
       description: "Embed web text clip",
       type: NodeType.TEXT_CLIP,
-      icon: "ph:highlighter-circle-light"
+      icon: "highlighter-circle"
     },
     {
       label: "Youtube video",
       description: "Embed youtube video block",
       type: NodeType.YOUTUBE_VIDEO,
-      icon: "ph:youtube-logo-light"
+      icon: "youtube-logo"
     },
     {
       label: "Tweet",
       description: "Embed tweet block",
       type: NodeType.TWEET,
-      icon: "ph:x-logo-light"
+      icon: "x-logo"
     },
     {
       label: "Kindle book",
       description: "Embed kindle book block",
       type: NodeType.KINDLE_BOOK,
-      icon: "ph:amazon-logo-light"
+      icon: "amazon-logo"
     },
     {
       label: "Kindle highlight",
       description: "Embed kindle highlight block",
       type: NodeType.KINDLE_HIGHLIGHT,
-      icon: "ph:bookmark-simple-light"
+      icon: "bookmark"
     },
     {
       label: "Graph",
       description: "Embed node graph",
       type: NodeType.GRAPH_AS_EMBED,
-      icon: "ph:graph-light",
+      icon: "graph",
       isDisabled: true,
       badge: "planned"
     },
@@ -78,7 +78,7 @@ let embedSection: IBlockBrowserSection = {
       label: "Node links tree",
       description: "Embed node links tree",
       type: NodeType.TREE_OF_LINKS,
-      icon: "ph:tree-view-light",
+      icon: "tree-view",
       isDisabled: true,
       badge: "planned"
     },
@@ -86,7 +86,7 @@ let embedSection: IBlockBrowserSection = {
       label: "Calendar",
       description: "Embed calendar",
       type: NodeType.CALENDAR_AS_EMBED,
-      icon: "ph:calendar-light",
+      icon: "calendar",
       isDisabled: true,
       badge: "planned"
     },
@@ -94,7 +94,7 @@ let embedSection: IBlockBrowserSection = {
       label: "Table of contents",
       description: "Embed table of contents block",
       type: NodeType.TOC,
-      icon: "ph:list-bullets-light",
+      icon: "list",
       isDisabled: true,
       badge: "planned"
     }
@@ -132,7 +132,7 @@ let layoutSection: IBlockBrowserSection = {
       label: "Cards",
       description: "Cards block",
       type: NodeType.CARDS,
-      icon: "ph:squares-four-light",
+      icon: "grid",
       badge: "planned",
       isDisabled: true
     },
@@ -140,7 +140,7 @@ let layoutSection: IBlockBrowserSection = {
       label: "Tabs",
       description: "Tabs block",
       type: NodeType.TABS,
-      icon: "ph:tabs-light",
+      icon: "tabs",
       badge: "planned",
       isDisabled: true
     },
@@ -156,7 +156,7 @@ let layoutSection: IBlockBrowserSection = {
       label: "Table",
       description: "Table block",
       type: NodeType.TABLE,
-      icon: "ph:table-light",
+      icon: "table",
       badge: "planned",
       isDisabled: true
     },
@@ -164,7 +164,7 @@ let layoutSection: IBlockBrowserSection = {
       label: "Stack",
       description: "Stack block",
       type: NodeType.STACK,
-      icon: "ph:stack-light",
+      icon: "stack",
       badge: "planned",
       isDisabled: true
     }
@@ -175,7 +175,7 @@ const imageBrowserItem: IBlockBrowserItem = {
   label: "Image",
   description: "Image block",
   type: NodeType.IMAGE,
-  icon: "ph:image-light"
+  icon: "image"
 };
 
 let mediaSection: IBlockBrowserSection = {
@@ -186,25 +186,25 @@ let mediaSection: IBlockBrowserSection = {
       label: "Audio",
       description: "Audio block",
       type: NodeType.AUDIO,
-      icon: "ph:music-note-light"
+      icon: "music-note"
     },
     {
       label: "Video",
       description: "Video block",
       type: NodeType.VIDEO,
-      icon: "ph:video-light"
+      icon: "video"
     },
     {
       label: "PDF",
       description: "Pdf block",
       type: NodeType.PDF,
-      icon: "ph:file-pdf-light"
+      icon: "file-pdf"
     },
     {
       label: "File",
       description: "File block",
       type: NodeType.FILE,
-      icon: "ph:file-light"
+      icon: "file"
     },
     {
       label: "Sketch",
@@ -222,7 +222,7 @@ const orderedListBrowserItem: IBlockBrowserItem = {
   description: "Ordered List block",
   type: NodeType.ORDERED_LIST,
   // icon: "lucide:list-ordered"
-  icon: "ph:list-numbers-light",
+  icon: "list-ordered",
   isShowShortcut: true
 };
 let listsSection: IBlockBrowserSection = {
@@ -233,7 +233,7 @@ let listsSection: IBlockBrowserSection = {
       description: "Unordered List block",
       type: NodeType.LIST,
       // icon: "lucide:list"
-      icon: "ph:list-bullets-light",
+      icon: "list",
       isShowShortcut: true
     },
     orderedListBrowserItem,
@@ -242,7 +242,7 @@ let listsSection: IBlockBrowserSection = {
       description: "Checklist block",
       type: NodeType.CHECKLIST,
       // icon: "lucide:list-todo"
-      icon: "ph:list-checks-light",
+      icon: "list-check",
       isShowShortcut: true
     }
   ]
@@ -270,7 +270,7 @@ let inlineSection: IBlockBrowserSection = {
       label: "Mention link",
       description: "Mention a link",
       type: InlineType.LINK_MENTION,
-      icon: "ph:link",
+      icon: "link",
       badge: "planned",
       isDisabled: true
     }
@@ -281,34 +281,34 @@ export const paragraphBrowserItem: IBlockBrowserItem = {
   label: "Paragraph",
   description: "Paragraph block",
   type: NodeType.SIMPLE_TEXT,
-  icon: "ph:paragraph-light"
+  icon: "paragraph"
 };
 export const quoteBrowserItem: IBlockBrowserItem = {
   label: "Quote",
   description: "Quote block",
   type: NodeType.QUOTE,
-  icon: "ph:quotes-light",
+  icon: "quote",
   isShowShortcut: true
 };
 export const calloutBrowserItem: IBlockBrowserItem = {
   label: "Callout",
   description: "Callout block",
   type: NodeType.CALLOUT,
-  icon: "ph:info-light",
+  icon: "info",
   isShowShortcut: true
 };
 export const codeBrowserItem: IBlockBrowserItem = {
   label: "Code",
   description: "Code block",
   type: NodeType.CODE,
-  icon: "ph:code-block-light",
+  icon: "code-block",
   isShowShortcut: true
 };
 export const latexBrowserItem: IBlockBrowserItem = {
   label: "Latex",
   description: "Latex block",
   type: NodeType.LATEX,
-  icon: "ph:sigma-light",
+  icon: "sigma",
   badge: "planned",
   isDisabled: true
 };
@@ -346,7 +346,7 @@ function resolveHeadingSection(contentType: NodeType): IBlockBrowserSection {
         description: "Heading 1 block",
         type: NodeType.HEADING1,
         // icon: "lucide:heading-1"
-        icon: "ph:text-h-one-light",
+        icon: "text-h1",
         isShowShortcut: true,
         isDisabled: isHeading1Disabled,
         badge: isHeading1Disabled ? "NA" : undefined,
@@ -357,7 +357,7 @@ function resolveHeadingSection(contentType: NodeType): IBlockBrowserSection {
         description: "Heading 2 block",
         type: NodeType.HEADING2,
         // icon: "lucide:heading-2"
-        icon: "ph:text-h-two-light",
+        icon: "text-h2",
         isShowShortcut: true,
         isDisabled: isHeading2Disabled,
         badge: isHeading2Disabled ? "NA" : undefined,
@@ -368,7 +368,7 @@ function resolveHeadingSection(contentType: NodeType): IBlockBrowserSection {
         description: "Heading 3 block",
         type: NodeType.HEADING3,
         // icon: "lucide:heading-3"
-        icon: "ph:text-h-three-light",
+        icon: "text-h3",
         isShowShortcut: true,
         isDisabled: isHeading3Disabled,
         badge: isHeading3Disabled ? "NA" : undefined,
@@ -379,7 +379,7 @@ function resolveHeadingSection(contentType: NodeType): IBlockBrowserSection {
         description: "Heading 4 block",
         type: NodeType.HEADING4,
         // icon: "lucide:heading-4"
-        icon: "ph:text-h-four-light",
+        icon: "text-h4",
         isShowShortcut: true,
         isDisabled: isHeading4Disabled,
         badge: isHeading4Disabled ? "NA" : undefined,

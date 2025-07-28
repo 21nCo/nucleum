@@ -62,7 +62,7 @@
     >
       {#if node.url && !$view.isConstrainedWidth}
         {#if !isUrlOnIcon || (isUrlOnIcon && !isHoveringUrlIcon)}
-          <Icon icon="ph:arrow-up-right" class="fill-fgs3" size={Size.sm} />
+          <Icon icon="arrow-up-right" class="fill-fgs3" size={Size.sm} />
         {:else if isUrlOnIcon && isHoveringUrlIcon}
           <button
             on:click={() => {
@@ -73,7 +73,7 @@
               text: node.url
             }}
           >
-            <Icon icon="ph:arrow-up-right" class="fill-aps1" size={Size.md} />
+            <Icon icon="arrow-up-right" class="fill-aps1" size={Size.md} />
           </button>
         {/if}
       {/if}

@@ -350,7 +350,7 @@
             nodeStore.toggleFocusMode($node.id, false);
           }}
         >
-          <Icon icon="ph:x" />
+          <Icon icon="cross" />
           <span class="text-b2"> Close focus mode </span>
         </button>
       </BottomFloat>

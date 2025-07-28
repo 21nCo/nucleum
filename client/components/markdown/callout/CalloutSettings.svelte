@@ -25,7 +25,7 @@
   let error: string | undefined = undefined;
   const columns: TableColumn[] = [
     {
-      key: "ph:play-light",
+      key: "play",
       type: TableCellType.ACTION,
       actionTooltip: {
         body: "Preview"

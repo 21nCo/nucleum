@@ -26,7 +26,7 @@
     const tasks = {
       value: "tasks",
       label: "Tasks",
-      icon: "ph:check-square-light"
+      icon: "check-square"
     };
     const comments = {
       value: "comments",
@@ -57,7 +57,7 @@
         {
           value: "clips",
           label: "Tweets",
-          icon: "ph:x-logo"
+          icon: "x-logo"
         }
         // tasks
       ];

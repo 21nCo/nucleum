@@ -18,22 +18,22 @@
   const typeOptions: ISelectItem[] = [
     {
       label: "Side nav",
-      icon: "ph:sidebar-light",
+      icon: "sidebar",
       value: CombinationType.SIDENAV
     },
     {
       label: "Canvas",
-      icon: "ph:chalkboard-simple-light",
+      icon: "chalkboard-simple",
       value: CombinationType.WHITEBOARD
     },
     {
       label: "Mind map",
-      icon: "ph:tree-view-light",
+      icon: "tree-view",
       value: CombinationType.MINDMAP
     },
     {
       label: "Timeline",
-      icon: "ph:calendar-blank-light",
+      icon: "calendar",
       value: CombinationType.TIMELINE
     },
     {

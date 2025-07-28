@@ -258,7 +258,7 @@
           !$view.isConstrainedWidth}
         {#if !isCurrentlyFocusing}
           <Button
-            icon="ph:circle-light"
+            icon="circle"
             tooltip="Focus now"
             size={Size.sm}
             type={ButtonVariant.PRIMARY}
@@ -293,8 +293,8 @@
         </div>
         <Button
           icon={isInlineContext
-            ? "ph:arrow-right-light"
-            : "ph:arrows-out-light"}
+            ? "arrow-right"
+            : "arrows-out"}
           parentBgIndex={2}
           tooltip="Open"
           size={Size.sm}

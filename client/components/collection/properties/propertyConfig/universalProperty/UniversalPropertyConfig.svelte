@@ -31,7 +31,7 @@
   function resolvePropertyIcon(type: UniversalPropertyType) {
     return (
       universalPropertyOptions.find((x) => x.value === type)?.icon ??
-      "ph:caret-circle-down-light"
+      "caret-circle-down"
     );
   }
 </script>
@@ -73,7 +73,7 @@
     {/if}
   </span>
   <Icon
-    icon={isPopoverOpen ? "ph:caret-up-light" : "ph:caret-down-light"}
+    icon={isPopoverOpen ? "chevron-up" : "chevron-down"}
     size={Size.sm}
   />
   {#if property.config?.type && property.config?.type !== UniversalPropertyType.NONE}

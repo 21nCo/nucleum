@@ -61,7 +61,7 @@
   {:else if "code" in avatar && avatar.code}
     {#if avatar.type === AvatarType.ICON}
       {#if dev_iOSTempRatingFallback}
-        <Icon icon={avatar.isFilled ? "ph:star-fill" : "ph:star"} />
+        <Icon icon={avatar.isFilled ? "star-fill" : "star"} />
       {:else}
         <span
           class={cn(

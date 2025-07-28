@@ -169,7 +169,7 @@
   <div class="flex w-full pt-2 pb-4 justify-center">
     <InlineInfoBanner
       content="You can't add subgoals to this goal when it is archived/deleted/inactive."
-      icon="ph:warning-light"
+      icon="warning"
     />
   </div>
 {/if}
@@ -177,7 +177,7 @@
   <div class="flex items-center justify-end gap-4 w-full">
     {#if $goal.subGoalsLayout !== SubGoalsLayout.STEPS && completedSubgoalsCount}
       <Button
-        icon={isHideCompleted ? "ph:eye-light" : "ph:eye-slash-light"}
+        icon={isHideCompleted ? "eye" : "eye-slash"}
         label={`${isHideCompleted ? "Show" : "Hide"} completed (${completedSubgoalsCount})`}
         size={Size.sm}
         style={ButtonStyle.PLAIN}

@@ -85,7 +85,7 @@
           )}
         >
           {#if !isActivePlan}
-            <Icon icon="ph:clock-light" class="text-bgs1" size={Size.sm} />
+            <Icon icon="clock" class="text-bgs1" size={Size.sm} />
           {/if}
           {determineLicense()}
         </div>

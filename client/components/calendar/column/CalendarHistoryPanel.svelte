@@ -39,17 +39,17 @@
   function resolveTabs(product: Product) {
     const all = {
       label: "All",
-      icon: "ph:asterisk-light",
+      icon: "asterisk",
       value: CalendarHistoryTab.ALL
     };
     const nodes = {
       label: "Nodes",
-      icon: "ph:hexagon-light",
+      icon: "hexagon",
       value: CalendarHistoryTab.NODES
     };
     const focusSessions = {
       label: "Focus",
-      icon: "ph:circle-light",
+      icon: "circle",
       value: CalendarHistoryTab.FOCUS_SESSIONS
     };
 

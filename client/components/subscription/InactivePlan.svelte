@@ -31,15 +31,15 @@
 
   const primeFeatures: { icon: string; label: string }[] = [
     {
-      icon: "ph:arrows-left-right-light",
+      icon: "arrows-left-right",
       label: "Unlimited cloud sync across all your devices"
     },
     {
-      icon: "ph:sparkle-light",
+      icon: "sparkle",
       label: "Priority support and early access to new features"
     },
     {
-      icon: "ph:hand-heart-light",
+      icon: "heart",
       label: "Support independent team"
     }
   ];
@@ -103,7 +103,7 @@
       <RestorePurchaseAction />
       <Button
         label="Logout"
-        icon="ph:sign-out-light"
+        icon="log-out"
         size={Size.sm}
         style={ButtonStyle.PLAIN}
         type={ButtonVariant.DANGER}

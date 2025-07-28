@@ -80,7 +80,7 @@
           type={ButtonVariant.SECONDARY}
           style={ButtonStyle.OUTLINED}
           size={Size.sm}
-          icon="ph:sliders-light"
+          icon="sliders"
           tooltip="Calendar settings"
           parentBgIndex={2}
           on:click={() => {

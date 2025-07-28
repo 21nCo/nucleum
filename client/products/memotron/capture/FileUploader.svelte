@@ -188,20 +188,20 @@
               label="Save all"
               isLoading={isSaveInProgress}
               type={ButtonVariant.PRIMARY}
-              icon="ph:arrow-right-light"
+              icon="arrow-right"
               parentBgIndex={2}
               on:click={saveAll}
             />
             <Button
               label="Insert into markdown"
-              icon="ph:markdown-logo-light"
+              icon="markdown-logo"
               parentBgIndex={2}
               on:click={handleInsertIntoMd}
             />
           {:else}
             <Button
               label="Select file"
-              icon="ph:upload-light"
+              icon="upload"
               parentBgIndex={2}
             />
           {/if}

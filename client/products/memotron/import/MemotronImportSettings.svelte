@@ -136,7 +136,7 @@
     },
     {
       label: "Actions",
-      key: "ph:trash-light",
+      key: "trash",
       actionTooltip: {
         body: "Revert import"
       },

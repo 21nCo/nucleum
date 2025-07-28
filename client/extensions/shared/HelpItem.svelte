@@ -24,6 +24,6 @@
     <div class="text-left">{label}</div>
   </div>
   {#if isAwayAction && isHovered}
-    <Icon icon="ph:arrow-up-right-light" size={Size.sm} />
+    <Icon icon="arrow-up-right" size={Size.sm} />
   {/if}
 </button>

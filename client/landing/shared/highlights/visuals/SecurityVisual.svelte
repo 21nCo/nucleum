@@ -6,11 +6,11 @@
   const items: IListItem[] = [
     {
       title: "Open source",
-      icon: "ph:code-light"
+      icon: "code"
     },
     {
       title: "End-to-end encryption (soon)",
-      icon: "ph:lock-light"
+      icon: "lock"
     },
     {
       title: "Offline-only version",
@@ -18,7 +18,7 @@
     }
     // {
     //   title: "Plug your own database",
-    //   icon: "ph:database-light"
+    //   icon: "database"
     // }
   ];
 </script>

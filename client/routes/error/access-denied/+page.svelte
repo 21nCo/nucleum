@@ -16,7 +16,7 @@
       return [
         {
           label: "Upgrade now",
-          icon: "ph:sparkle-light",
+          icon: "sparkle",
           variant: ButtonVariant.PRIMARY,
           callback: async () => {
             appStore.runAction(Action.USER_PLAN);

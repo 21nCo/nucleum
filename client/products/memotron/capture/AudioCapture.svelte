@@ -192,7 +192,7 @@
       {#if recordingState === PlayActionState.NOT_STARTED}
         <PlayerControl
           on:click={startRecording}
-          icon="ph:microphone-light"
+          icon="microphone"
           type={ButtonVariant.PRIMARY}
           label="Start"
           size={Size.lg}
@@ -200,31 +200,31 @@
       {:else if recordingState === PlayActionState.RUNNING}
         <!-- <PlayerControl
           on:click={startRecording}
-          icon="ph:arrow-clockwise-light"
+          icon="arrow-path"
           type={ButtonVariant.DANGER}
           label="Restart"
         /> -->
         <PlayerControl
           on:click={toggleRecording}
-          icon="ph:pause-light"
+          icon="pause"
           label="Pause"
         />
         <PlayerControl
           on:click={stopRecording}
           type={ButtonVariant.PRIMARY}
-          icon="ph:stop-light"
+          icon="stop"
           label="Finish"
         />
       {:else if recordingState === PlayActionState.PAUSED}
         <PlayerControl
           on:click={toggleRecording}
-          icon="ph:play-light"
+          icon="play"
           label="Resume"
         />
         <PlayerControl
           on:click={stopRecording}
           type={ButtonVariant.PRIMARY}
-          icon="ph:stop-light"
+          icon="stop"
           label="Finish"
         />
       {/if}
@@ -234,7 +234,7 @@
             cleanup();
             dispatch("cancel");
           }}
-          icon="ph:x-light"
+          icon="cross"
           size={Size.sm}
           type={ButtonVariant.DANGER}
           style={ButtonStyle.OUTLINED}
@@ -246,31 +246,31 @@
       {#if recordingState === PlayActionState.RUNNING}
         <!-- <Button
           on:click={startRecording}
-          icon="ph:arrow-clockwise-light"
+          icon="arrow-path"
           type={ButtonVariant.DANGER}
           label="Restart"
         /> -->
         <Button
           on:click={toggleRecording}
-          icon="ph:pause-light"
+          icon="pause"
           label="Pause"
         />
         <Button
           on:click={stopRecording}
           type={ButtonVariant.PRIMARY}
-          icon="ph:stop-light"
+          icon="stop"
           label="Finish"
         />
       {:else if recordingState === PlayActionState.PAUSED}
         <Button
           on:click={toggleRecording}
-          icon="ph:play-light"
+          icon="play"
           label="Resume"
         />
         <Button
           on:click={stopRecording}
           type={ButtonVariant.PRIMARY}
-          icon="ph:stop-light"
+          icon="stop"
           label="Finish"
         />
       {/if}
@@ -279,7 +279,7 @@
           cleanup();
           dispatch("cancel");
         }}
-        icon="ph:x-light"
+        icon="cross"
         type={ButtonVariant.DANGER}
         style={ButtonStyle.OUTLINED}
         label="Cancel"

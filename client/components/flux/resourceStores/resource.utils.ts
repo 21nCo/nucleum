@@ -189,48 +189,45 @@ export function resourceIdToElementId(
 export function resolveResourceIcon(resource: Resource) {
   switch (resource) {
     case Resource.collection:
-      return "ph:brackets-round-light";
+      return "collection";
     case Resource.node:
-      return "ph:hexagon-light";
+      return "hexagon";
     case Resource.relation:
-      return "ph:link-simple-horizontal-light";
+      return "relation";
     case Resource.goal:
-      return "ph:target-light";
+      return "target";
     case Resource.task:
-      // return "ph:check-circle-light";
-      return "ph:check-square-light";
-    // return "ph:circle-light";
+      return "check-square";
     case Resource.todo:
-      // return "ph:check-circle-light";
-      return "ph:check-square-offset-light";
+      return "check-square-offset";
     case Resource.combination:
-      return "ph:bounding-box-light";
+      return "combination";
     case Resource.event:
-      return "ph:calendar-light";
+      return "calendar";
     case Resource.habit:
-      return "ph:caret-circle-up-light";
+      return "caret-circle-up";
     case Resource.quest:
-      return "ph:question-light";
+      return "question";
     case Resource.session:
-      return "ph:clock-light";
+      return "clock";
     case Resource.thing:
-      return "ph:bicycle-light";
+      return "bicycle";
     case Resource.feed:
-      return "ph:rss-light";
+      return "rss";
     case Resource.source:
-      return "ph:globe-light";
+      return "globe";
     case Resource.account:
-      return "ph:bank-light";
+      return "bank";
     case Resource.transaction:
-      return "ph:arrows-left-right-light";
+      return "arrows-left-right";
     case Resource.fellow:
-      return "ph:user-light";
+      return "user";
     case Resource.place:
-      return "ph:map-pin-light";
+      return "map-pin";
     case Resource.input:
-      return "ph:arrow-down-left-light";
+      return "arrow-down-left";
     default:
-      return "ph:question-fill";
+      return "question";
   }
 }
 
@@ -287,44 +284,44 @@ export function isShowStatusBanner(resource: any) {
 export function resolveResourceActionIcon(action: ResourceActionType) {
   switch (action) {
     case ResourceActionType.ARCHIVE:
-      return "ph:archive-light";
+      return "archive";
     case ResourceActionType.UNARCHIVE:
-      return "ph:archive-light";
+      return "archive";
     case ResourceActionType.DELETE:
-      return "ph:trash-light";
+      return "trash";
     case ResourceActionType.RESTORE:
-      return "ph:trash-light";
+      return "trash";
     case ResourceActionType.STAR:
-      return "ph:star-light";
+      return "star";
     case ResourceActionType.UNSTAR:
-      return "ph:star-light";
+      return "star";
     case ResourceActionType.ADD_TO:
-      return "ph:plus-light";
+      return "plus";
     case ResourceActionType.REMOVE_FROM:
-      return "ph:minus-circle-light";
+      return "minus-circle";
     case ResourceActionType.LINK:
-      return "ph:link-light";
+      return "link";
     case ResourceActionType.UNLINK:
-      return "ph:link-break-light";
+      return "link-break";
     case ResourceActionType.EDIT:
-      return "ph:pencil-simple-light";
+      return "edit";
     case ResourceActionType.DUPLICATE:
-      return "ph:copy-light";
+      return "copy";
     case ResourceActionType.COPY_LINK:
-      return "ph:clipboard-light";
+      return "copy"; // clipboard equivalent
     case ResourceActionType.COPY_CONTENTS:
       return "copy";
     case ResourceActionType.TOGGLE_READ_MODE:
-      return "ph:book-open-light";
+      return "eye"; // book-open equivalent
     case ResourceActionType.TOGGLE_FOCUS_MODE:
-      return "ph:focus-light";
+      return "circle"; // focus equivalent
     case ResourceActionType.LOCK:
-      return "ph:lock-light";
+      return "lock";
     case ResourceActionType.UNLOCK:
-      return "ph:lock-open-light";
+      return "lock-open";
     case ResourceActionType.CONVERT:
-      return "ph:arrows-clockwise-light";
+      return "arrow-path"; // arrows-clockwise equivalent
     default:
-      return "ph:question-light";
+      return "question";
   }
 }

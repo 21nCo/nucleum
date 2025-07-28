@@ -39,31 +39,31 @@ export const propertyEditorStore = new PropertyEditorStore();
 export const autoPropertyOptions = [
   {
     label: "Created time",
-    icon: "ph:clock-light",
+    icon: "clock",
     value: PropertyType.CREATED_TIME,
     groupId: PropertyTypeGroup.SYSTEM
   },
   {
     label: "Modified time",
-    icon: "ph:clock-light",
+    icon: "clock",
     value: PropertyType.MODIFIED_TIME,
     groupId: PropertyTypeGroup.SYSTEM
   },
   {
     label: "Location",
-    icon: "ph:map-pin-light",
+    icon: "map-pin",
     value: PropertyType.LOCATION,
     groupId: PropertyTypeGroup.SYSTEM
   },
   {
     label: "System ID",
-    icon: "ph:hash-light",
+    icon: "hash",
     value: PropertyType.SYSTEM_ID,
     groupId: PropertyTypeGroup.SYSTEM
   },
   // {
   //   label: "Number of visits",
-  //   icon: "ph:hash-light",
+  //   icon: "hash",
   //   value: PropertyType.NUMBER_OF_VISITS,
   //   groupId: PropertyTypeGroup.SYSTEM,
   //   badge: "Planned",
@@ -71,7 +71,7 @@ export const autoPropertyOptions = [
   // },
   {
     label: "Calendar events",
-    icon: "ph:calendar-light",
+    icon: "calendar",
     value: PropertyType.CALENDAR_EVENT,
     isDisabled: true,
     badge: "Planned",
@@ -79,7 +79,7 @@ export const autoPropertyOptions = [
   },
   {
     label: "Links count",
-    icon: "ph:link-light",
+    icon: "link",
     value: PropertyType.LINKS_COUNT,
     isDisabled: true,
     badge: "Planned",
@@ -87,35 +87,35 @@ export const autoPropertyOptions = [
   },
   {
     label: "Formula",
-    icon: "ph:math-operations-light",
+    icon: "math-operations",
     value: PropertyType.FORMULA,
     isDisabled: true,
     groupId: PropertyTypeGroup.RULE_BASED
   },
   {
     label: "Custom ID",
-    icon: "ph:hash-light",
+    icon: "hash",
     value: PropertyType.CUSTOM_ID,
     isDisabled: true,
     groupId: PropertyTypeGroup.RULE_BASED
   },
   {
     label: "AI autofill",
-    icon: "ph:magic-wand-light",
+    icon: "magic-wand",
     value: PropertyType.AI_AUTOFILL,
     isDisabled: true,
     groupId: PropertyTypeGroup.RULE_BASED
   },
   {
     label: "Colors",
-    icon: "ph:palette-light",
+    icon: "palette",
     value: PropertyType.COLORS,
     groupId: PropertyTypeGroup.DETECTION,
     tooltip: "Detects colors from an image node."
   },
   {
     label: "Scene",
-    icon: "ph:image-light",
+    icon: "image",
     value: PropertyType.SCENE,
     isDisabled: true,
     badge: "Planned",
@@ -123,21 +123,21 @@ export const autoPropertyOptions = [
   },
   {
     label: "Time tracking [Pointron]",
-    icon: "ph:timer-light",
+    icon: "timer",
     value: PropertyType.TIME_TRACKING,
     isDisabled: true,
     groupId: PropertyTypeGroup.INTEGRATION
   },
   {
     label: "Goal [Pointron]",
-    icon: "ph:target-light",
+    icon: "target",
     value: PropertyType.GOAL,
     isDisabled: true,
     groupId: PropertyTypeGroup.INTEGRATION
   },
   {
     label: "Git",
-    icon: "ph:git-branch-light",
+    icon: "git-branch",
     value: PropertyType.GIT,
     isDisabled: true,
     groupId: PropertyTypeGroup.INTEGRATION
@@ -147,17 +147,17 @@ export const autoPropertyOptions = [
 export const universalPropertyOptions = [
   {
     label: "Weather",
-    icon: "ph:cloud-sun-light",
+    icon: "cloud-sun",
     value: UniversalPropertyType.WEATHER
   },
   {
     label: "Mood log",
-    icon: "ph:smiley-light",
+    icon: "smiley",
     value: UniversalPropertyType.MOOD_LOG
   },
   {
     label: "Reaction",
-    icon: "ph:thumbs-up-light",
+    icon: "thumbs-up",
     value: UniversalPropertyType.REACTION
   },
   {
@@ -167,32 +167,32 @@ export const universalPropertyOptions = [
   },
   {
     label: "Language",
-    icon: "ph:translate-light",
+    icon: "globe",
     value: UniversalPropertyType.LANGUAGE
   },
   {
     label: "Currency",
-    icon: "ph:money-light",
+    icon: "currency-dollar",
     value: UniversalPropertyType.CURRENCY
   },
   {
     label: "Continent",
-    icon: "ph:map-trifold-light",
+    icon: "globe",
     value: UniversalPropertyType.CONTINENT
   },
   {
     label: "Timezone",
-    icon: "ph:clock-light",
+    icon: "clock",
     value: UniversalPropertyType.TIMEZONE
   },
   {
     label: "Day of week",
-    icon: "ph:calendar-light",
+    icon: "calendar",
     value: UniversalPropertyType.DAY_OF_WEEK
   },
   {
     label: "Month",
-    icon: "ph:calendar-light",
+    icon: "calendar",
     value: UniversalPropertyType.MONTH
   }
 ];
@@ -200,67 +200,67 @@ export const universalPropertyOptions = [
 export const propertyOptions = [
   {
     label: "Text",
-    icon: "ph:text-light",
+    icon: "text",
     value: PropertyType.TEXT,
     groupId: PropertyTypeGroup.TEXT
   },
   {
     label: "Number",
-    icon: "ph:hash-light",
+    icon: "hash",
     value: PropertyType.NUMBER,
     groupId: PropertyTypeGroup.TEXT
   },
   {
     label: "Email",
-    icon: "ph:envelope-light",
+    icon: "envelope",
     value: PropertyType.EMAIL,
     groupId: PropertyTypeGroup.TEXT
   },
   {
     label: "Link",
-    icon: "ph:link-light",
+    icon: "link",
     value: PropertyType.URL,
     groupId: PropertyTypeGroup.TEXT
   },
   {
     label: "Single select",
-    icon: "ph:caret-circle-down-light",
+    icon: "caret-circle-down",
     value: PropertyType.SINGLE_SELECT,
     groupId: PropertyTypeGroup.SELECT
   },
   {
     label: "Multi select",
-    icon: "ph:list-bullets-light",
+    icon: "list",
     value: PropertyType.MULTI_SELECT,
     groupId: PropertyTypeGroup.SELECT
   },
   {
     label: "Universal select",
-    icon: "ph:globe-light",
+    icon: "globe",
     value: PropertyType.UNIVERSAL,
     groupId: PropertyTypeGroup.SELECT
   },
   {
     label: "Rating",
-    icon: "ph:star-light",
+    icon: "star",
     value: PropertyType.RATING,
     groupId: PropertyTypeGroup.WIZARD
   },
   {
     label: "Date",
-    icon: "ph:calendar-light",
+    icon: "calendar",
     value: PropertyType.DATE,
     groupId: PropertyTypeGroup.WIZARD
   },
   {
     label: "Checkbox",
-    icon: "ph:check-square-offset-light",
+    icon: "check-square-offset",
     value: PropertyType.CHECKBOX,
     groupId: PropertyTypeGroup.WIZARD
   },
   {
     label: "Link list",
-    icon: "ph:tree-view-light",
+    icon: "tree-view",
     value: PropertyType.LINK_LIST,
     badge: "Planned",
     isDisabled: true,
@@ -268,7 +268,7 @@ export const propertyOptions = [
   },
   {
     label: "Attachement(s)",
-    icon: "ph:upload-light",
+    icon: "upload",
     value: PropertyType.FILE,
     badge: "Planned",
     isDisabled: true,

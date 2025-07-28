@@ -95,7 +95,7 @@ class TaskActions {
   focusNow = {
     value: "focusNow",
     label: "Focus now",
-    icon: "ph:circle-light",
+    icon: "circle",
     callback: async () => {
       await activeSession.focusTask(this.task.id, this.task.goalId);
     }
@@ -105,7 +105,7 @@ class TaskActions {
     return {
       value: "toggle",
       label: this.task.isChecked ? "Mark as incomplete" : "Mark as complete",
-      icon: this.task.isChecked ? "ph:square-light" : "ph:check-square-light",
+      icon: this.task.isChecked ? "square" : "check-square",
       callback: async () => {
         await this.store.toggle(this.task.id, {
           context: this.accessPoint
@@ -138,7 +138,7 @@ class TaskActions {
   openTask() {
     return {
       value: "openTask",
-      icon: "ph:arrow-up-right-light",
+      icon: "arrow-up-right",
       label: "Open task",
       callback: async () => {
         appStore.openResource(this.task.id, ResourceAccessMode.POP);
@@ -148,7 +148,7 @@ class TaskActions {
 
   editDate = {
     value: "editDate",
-    icon: "ph:calendar-blank-light",
+    icon: "calendar",
     label: "Edit due date"
   };
 }

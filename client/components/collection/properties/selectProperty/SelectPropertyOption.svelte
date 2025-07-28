@@ -28,6 +28,6 @@
     </CustomColorPropagator>
   {/if}
   {#if isSelected}
-    <Icon icon="ph:check" class="text-fgs3" />
+    <Icon icon="check" class="text-fgs3" />
   {/if}
 </button>

@@ -11,7 +11,7 @@
 {#if $appStore?.appData?.isCmdBarEnabled === true}
   {#if isInThinMode}
     <Icon
-      icon="ph:terminal-window-light"
+      icon="terminal-window"
       {size}
       class="text-fgs2 hover:text-aps1"
       on:click={() => appStore.runAction(Action.CMD)}

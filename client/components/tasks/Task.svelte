@@ -251,7 +251,7 @@
               bind:value={goalSearchQuery}
               searchCallback={goalSearchGoalCallback}
               placeholder="Assign to a goal"
-              icon="ph:plus-light"
+              icon="plus"
               on:select={onGoalSelect}
               style={InputStyle.PLAIN}
             />
@@ -315,7 +315,7 @@
             class="flex items-center gap-1 text-b3 text-aps1"
           >
             <Icon
-              icon="ph:hourglass-simple-light"
+              icon="hourglass-simple"
               size={Size.sm}
               class="text-aps1"
             />
@@ -337,7 +337,7 @@
         <InlineFeedbackText feedback={status} />
         <div class="flex gap-2 justify-center w-full">
           <Button
-            icon="ph:trash-light"
+            icon="trash"
             label="Delete"
             style={ButtonStyle.OUTLINED}
             type={ButtonVariant.DANGER}
@@ -352,7 +352,7 @@
           />
 
           <Button
-            icon="ph:x-circle-light"
+            icon="x-circle"
             label="Close"
             on:click={() => {
               if (accessPoint === ResourceAccessPoint.GOAL) {

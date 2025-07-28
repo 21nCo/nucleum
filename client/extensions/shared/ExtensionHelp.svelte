@@ -23,32 +23,32 @@
   }[] = [
     {
       label: "Resync data",
-      icon: "ph:arrow-counter-clockwise-light",
+      icon: "arrow-path",
       callback: () => {
         dispatch("resync");
       }
     },
     {
       label: "Go to docs",
-      icon: "ph:book-light",
+      icon: "book",
       isAwayAction: true,
       callback: () => openDocs("")
     },
     {
       label: "See what's new",
-      icon: "ph:sparkle-light",
+      icon: "sparkle",
       isAwayAction: true,
       callback: () => openDocs("changelog/memotron/tags/memotron-web-clipper")
     },
     {
       label: "Leave feedback",
-      icon: "ph:chat-light",
+      icon: "chat",
       isAwayAction: true,
       callback: openDiscord
     },
     {
       label: "Join our Discord",
-      icon: "ph:discord-logo-light",
+      icon: "discord-logo",
       isAwayAction: true,
       callback: openDiscord
     }
@@ -59,7 +59,7 @@
   <div class="flex justify-between w-full">
     <Text content="Help center" style={TextStyle.PANEL_HEADING} />
     <Button
-      icon="ph:x-light"
+      icon="cross"
       on:click={() => {
         dispatch("close");
       }}

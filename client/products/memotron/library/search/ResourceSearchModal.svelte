@@ -50,7 +50,7 @@
     {
       label: "Everything",
       value: Resource.everything,
-      icon: "ph:asterisk-light"
+      icon: "asterisk"
     },
     ...(resources ?? [])
       .filter((x) => !($view.isConstrainedWidth && x === Resource.task))
@@ -151,7 +151,7 @@
         {/if}
         {#if $view.isConstrainedWidth}
           <Button
-            icon="ph:x-light"
+            icon="cross"
             style={ButtonStyle.OUTLINED}
             on:click={() => {
               appStore.goBack();

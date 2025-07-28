@@ -300,7 +300,7 @@
           {#if isHovered || clip?.notes || clip?.links.length || isLinkboxOpened || isNotesOpened}
             {#if isHovered || clip?.notes || isNotesOpened}
               <Toggle
-                icon={clip?.notes ? "ph:note-light" : "ph:note-blank-light"}
+                icon={clip?.notes ? "note" : "note"}
                 tooltip={clip?.notes ? "View notes" : "Add notes"}
                 bind:on={isNotesOpened}
                 bgSize={Size.sm}

@@ -24,7 +24,7 @@
   }}
 >
   <Icon
-    icon={isLinkboxOpened ? "ph:link" : "ph:link-light"}
+    icon={isLinkboxOpened ? "ph:link" : "link"}
     isAccentBgContext={isLinkboxOpened}
     size={Size.sm}
   />
@@ -45,7 +45,7 @@
 </button> -->
 <Tag
   label="Links"
-  icon="ph:link-light"
+  icon="link"
   isActive={isLinkboxOpened}
   count={links?.length ?? 0}
   isShowExpandFeedbackOnActive={true}

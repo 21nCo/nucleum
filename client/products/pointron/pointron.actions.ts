@@ -322,14 +322,14 @@ export const pointronActions: IAction[] = [
   {
     action: PointronAction.FOCUS,
     component: Focus,
-    icon: "ph:circle-light",
+    icon: "circle",
     type: ActionType.PAGE,
     label: "Focus"
   },
   {
     action: PointronAction.FOCUS_MODAL,
     component: Focus,
-    icon: "ph:circle-light",
+    icon: "circle",
     type: ActionType.RESOURCE,
     isMeta: true,
     label: "Focus",
@@ -347,7 +347,7 @@ export const pointronActions: IAction[] = [
     component: AnalyticsV2,
     type: ActionType.PAGE,
     // icon: "ph:presentation-chart-light",
-    // icon: "ph:chart-line-up-light",
+    // icon: "chart-line-up",
     icon: "heroicons:rectangle-group",
     label: "Overview"
   },
@@ -606,7 +606,7 @@ export const pointronActions: IAction[] = [
         message: "Are you sure you want to delete this session log?",
         confirmAction: {
           label: "Delete",
-          icon: "ph:trash-light",
+          icon: "trash",
           variant: ButtonVariant.DANGER,
           callback: async () => {
             const response = await sessionStore.delete(
@@ -658,7 +658,7 @@ export const pointronActions: IAction[] = [
   {
     action: Action.LIBRARY,
     label: "Library",
-    icon: "ph:stack-light",
+    icon: "stack",
     component: PointronLibrary,
     type: ActionType.PAGE,
     modalParams: {

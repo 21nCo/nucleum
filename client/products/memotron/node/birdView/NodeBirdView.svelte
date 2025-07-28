@@ -396,7 +396,7 @@
               {
                 value: NodeBirdViewMode.Graph,
                 label: "Graph",
-                icon: "ph:graph-light"
+                icon: "graph"
               },
               {
                 value: NodeBirdViewMode.Timeline,
@@ -406,7 +406,7 @@
               {
                 value: NodeBirdViewMode.Serendipity,
                 label: "Serendipity",
-                icon: "ph:sparkle-light"
+                icon: "sparkle"
               }
             ]}
             bind:value={selectedView}
@@ -420,7 +420,7 @@
             {
               value: NodeBirdViewMode.Graph,
               label: "Graph",
-              icon: "ph:graph-light"
+              icon: "graph"
             },
             {
               value: NodeBirdViewMode.Timeline,
@@ -430,7 +430,7 @@
             // {
             //   value: NodeBirdViewMode.Serendipity,
             //   label: "Serendipity",
-            //   icon: "ph:sparkle-light"
+            //   icon: "sparkle"
             // }
           ]}
           style={PanelSwitcherStyle.TRAIN}
@@ -506,7 +506,7 @@
       <div class="flex gap-2 items-center">
         {#if selectedView === NodeBirdViewMode.Graph}
           <Toggle
-            icon="ph:flow-arrow-light"
+            icon="flow-arrow"
             tooltip={isTraverseMode
               ? "Switch to normal mode"
               : "Switch to traverse mode"}
@@ -524,7 +524,7 @@
           />
         {/if}
         <Toggle
-          icon="ph:link-light"
+          icon="link"
           tooltip="See all links"
           parentBgIndex={2}
           on:change={(e) => {

@@ -107,9 +107,7 @@
             />
           {:else if children?.length > 0}
             <Icon
-              icon={isCollapsed
-                ? "ph:caret-right-light"
-                : "ph:caret-down-light"}
+              icon={isCollapsed ? "chevron-right" : "chevron-down"}
               class={cn({
                 "stroke-cbg": isActive,
                 "stroke-fgs1": !isActive
@@ -166,7 +164,7 @@
           <TextInput
             bind:value={addTextInputValue}
             style={InputStyle.PLAIN}
-            icon="ph:plus-light"
+            icon="plus"
             placeholder="Add new item"
             isShowSaveControl={addTextInputValue !== ""}
             on:save={onAddSub}

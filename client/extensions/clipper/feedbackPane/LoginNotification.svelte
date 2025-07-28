@@ -33,13 +33,13 @@
     {#if code !== 1}
       <div class="flex gap-2 justify-center items-center">
         <Button
-          icon="ph:sign-in-light"
+          icon="log-in"
           label="Login"
           type={ButtonVariant.PRIMARY}
           on:click
         />
         <Button
-          icon="ph:arrow-counter-clockwise-light"
+          icon="arrow-path"
           label="I'll login later"
           on:click={() => {
             dispatch("later");

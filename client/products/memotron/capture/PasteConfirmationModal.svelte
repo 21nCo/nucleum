@@ -258,7 +258,7 @@
       {#if nodeType && !cannotSaveAsStandaloneNodeTypes.includes(nodeType)}
         <Button
           label="Save and open"
-          icon="ph:arrow-up-right-light"
+          icon="arrow-up-right"
           isLoading={isSaveInProgress && isOpenOnSave}
           isExpandToFullWidth={true}
           type={ButtonVariant.PRIMARY}
@@ -269,7 +269,7 @@
         />
         <Button
           label="Save and close"
-          icon="ph:arrow-right-light"
+          icon="arrow-right"
           isLoading={isSaveInProgress && !isOpenOnSave}
           isExpandToFullWidth={true}
           on:click={onSaveAsNode}
@@ -280,7 +280,7 @@
           label="Save {saveAsNodeFilesCount} as {saveAsNodeFilesCount === 1
             ? 'node'
             : 'nodes'}"
-          icon="ph:arrow-right-light"
+          icon="arrow-right"
           isLoading={isSaveInProgress && !isOpenOnSave}
           isExpandToFullWidth={true}
           type={ButtonVariant.PRIMARY}
@@ -289,7 +289,7 @@
       {/if}
       <Button
         label={resolveInsertIntoMdLabel(data)}
-        icon="ph:markdown-logo-light"
+        icon="markdown-logo"
         on:click={onInsertIntoMarkdown}
         isExpandToFullWidth={true}
       />

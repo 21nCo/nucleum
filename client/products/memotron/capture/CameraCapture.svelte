@@ -203,7 +203,7 @@
       </div>
     {:else if photoTaken}
       <Button
-        icon="ph:arrow-clockwise-light"
+        icon="arrow-path"
         label="Retake"
         type={ButtonVariant.DANGER}
         size={$view.isConstrainedWidth ? Size.sm : Size.md}
@@ -220,7 +220,7 @@
         on:click={savePhoto}
       />
       <Button
-        icon="ph:x"
+        icon="cross"
         label="Cancel"
         size={$view.isConstrainedWidth ? Size.sm : Size.md}
         isPreventMinWidth={true}
@@ -238,7 +238,7 @@
       </div>
       <div class="col-span-1 flex justify-center">
         <Button
-          icon="ph:x"
+          icon="cross"
           label="Cancel"
           size={$view.isConstrainedWidth ? Size.sm : Size.md}
           isPreventMinWidth={true}

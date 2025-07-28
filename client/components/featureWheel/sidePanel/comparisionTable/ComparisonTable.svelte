@@ -39,15 +39,15 @@
   <table class="w-full border-collapse table-fixed text-b2">
     <thead>
       <tr class="bg-bgs2">
-        <HeaderTitle icon="ph:squares-four-light" label="App" />
+        <HeaderTitle icon="grid" label="App" />
         {#if feature.comparisionProperties}
           {#each feature.comparisionProperties as property}
-            <HeaderTitle icon="ph:question-light" label={property} />
+            <HeaderTitle icon="question" label={property} />
           {/each}
         {/if}
-        <HeaderTitle icon="ph:currency-dollar-light" label="Price *" />
-        <HeaderTitle icon="ph:star-light" label="Rating" />
-        <HeaderTitle icon="ph:question-light" label="Notes" />
+        <HeaderTitle icon="currency-dollar" label="Price *" />
+        <HeaderTitle icon="star" label="Rating" />
+        <HeaderTitle icon="question" label="Notes" />
       </tr>
     </thead>
     <tbody>
@@ -76,7 +76,7 @@
   </table>
   <div class="flex gap-2 items-start mt-3">
     <div class="mt-0.5">
-      <Icon icon="ph:question-light" size={Size.sm} class="text-fgs2" />
+      <Icon icon="question" size={Size.sm} class="text-fgs2" />
     </div>
     <span class="text-fgs2 text-b3">
       {@html renderMdAsHtml(

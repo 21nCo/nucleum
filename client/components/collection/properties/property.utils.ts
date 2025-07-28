@@ -156,7 +156,7 @@ export function resolvePropertyIcon(property: IProperty) {
   }
   return (
     propertyOptions.find((x) => x.value === property.type)?.icon ??
-    "ph:circle-dashed-light"
+    "circle-dashed"
   );
 }
 

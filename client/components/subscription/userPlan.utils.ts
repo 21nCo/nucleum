@@ -25,15 +25,15 @@ export const SUBSCRIPTION_PLANS: IPlan[] = [
     },
     features: [
       {
-        icon: "ph:check-circle-light",
+        icon: "check-circle",
         label: "All core features"
       },
       {
-        icon: "ph:arrows-left-right-light",
+        icon: "arrows-left-right",
         label: "Sync across all devices"
       },
       {
-        icon: "ph:file-light",
+        icon: "file",
         label: "Unlimited storage for small files (< 25 MB)"
       },
       // {
@@ -41,11 +41,11 @@ export const SUBSCRIPTION_PLANS: IPlan[] = [
       //   label: "End-to-end encryption"
       // },
       {
-        icon: "ph:database-light",
+        icon: "database",
         label: "20 GB of included large file storage"
       },
       {
-        icon: "ph:at-light",
+        icon: "at",
         label: "Email and community support"
       }
     ]
@@ -61,15 +61,15 @@ export const SUBSCRIPTION_PLANS: IPlan[] = [
     },
     features: [
       {
-        icon: "ph:check-circle-light",
+        icon: "check-circle",
         label: "Everything in Sync plan"
       },
       {
-        icon: "ph:database-light",
+        icon: "database",
         label: "100 GB of included large file storage"
       },
       {
-        icon: "ph:sparkle-light",
+        icon: "sparkle",
         label: "Access to [Nucleus](https://nucleus.to) (Web app)"
       },
       // {
@@ -77,15 +77,15 @@ export const SUBSCRIPTION_PLANS: IPlan[] = [
       //   label: "Access to MCP server *(coming soon)*"
       // },
       {
-        icon: "ph:clock-light",
+        icon: "clock",
         label: "Early access to new products, features"
       },
       {
-        icon: "ph:chat-centered-dots-light",
+        icon: "chat-teardrop-text",
         label: "Priority chat support"
       },
       {
-        icon: "ph:hand-heart-light",
+        icon: "heart",
         label: "Support our [mission](https://21n.org)"
       }
     ],

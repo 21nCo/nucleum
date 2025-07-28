@@ -147,7 +147,7 @@
       /> -->
       <LinkActionOnClipper links={clip?.links} bind:isLinkboxOpened />
       <Toggle
-        icon={notes ? "ph:note-light" : "ph:note-blank-light"}
+        icon={notes ? "note" : "note"}
         tooltip={notes ? "View notes" : "Add notes"}
         bind:on={isNotesOpened}
         bgSize={Size.sm}
@@ -156,7 +156,7 @@
         }}
       />
       <Button
-        icon="ph:trash"
+        icon="trash"
         tooltip="Delete clip"
         type={ButtonVariant.DANGER}
         on:click={async () => {

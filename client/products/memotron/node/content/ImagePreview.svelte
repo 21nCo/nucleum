@@ -29,5 +29,5 @@
     "py-2": arrangement === Arrangement.MASONRY
   })}
 >
-  <Icon icon="ph:globe-light" />
+  <Icon icon="globe" />
 </div>

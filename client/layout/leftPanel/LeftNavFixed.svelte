@@ -60,7 +60,7 @@
         class="w-full flex justify-center opacity-30 hover:opacity--100 transition-opacity duration-200 py-2"
       >
         <!-- <Button
-          icon="ph:magnifying-glass-light"
+          icon="search"
           parentBgIndex={2}
           size={Size.lg}
           on:click={() => appStore.runAction(Action.GLOBAL_SEARCH)}

@@ -17,7 +17,7 @@
 <div>
   <TextInput
     placeholder="Add a task"
-    icon="ph:plus"
+    icon="plus"
     isShowSaveControl={taskName !== ""}
     bind:value={taskName}
     on:cancel={() => {

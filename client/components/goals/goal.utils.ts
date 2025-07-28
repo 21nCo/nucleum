@@ -4,9 +4,9 @@ import type { ISelectItem } from "$lib/client/types/select.type";
 export function resolveGoalTypeIcon(type: GoalType) {
   switch (type) {
     case GoalType.INDEFINITE:
-      return "ph:infinity-light";
+      return "infinity";
     case GoalType.DEFINITE:
-      return "ph:timer-light";
+      return "timer";
   }
 }
 
@@ -35,13 +35,13 @@ export function resolveGoalSubTypesForSwitcher(
 export function resolveGoalStatusIcon(status: GoalStatus) {
   switch (status) {
     case GoalStatus.NOT_STARTED:
-      return "ph:circle-light";
+      return "circle";
     case GoalStatus.IN_PROGRESS:
-      return "ph:hourglass-simple-light";
+      return "hourglass-simple";
     case GoalStatus.COMPLETED:
-      return "ph:check-circle-fill";
+      return "check-circle";
     default:
-      return "ph:circle-light";
+      return "circle";
   }
 }
 

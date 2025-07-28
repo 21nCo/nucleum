@@ -33,7 +33,7 @@
     cta: [
       {
         label: "Contribute",
-        icon: "ph:github-logo-light",
+        icon: "github-logo",
         href: org.github,
         type: "primary"
       }

@@ -30,7 +30,7 @@
     </div>
     {#if isHovered || $context.isTouchDevice}
       <Button
-        icon="ph:trash-light"
+        icon="trash"
         tooltip="Delete draft"
         size={Size.sm}
         type={ButtonVariant.DANGER}

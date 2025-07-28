@@ -75,7 +75,7 @@
     "logos:youtube-icon",
     "logos:figma",
     "logos:replit-icon",
-    "ph:github-logo",
+    "github-logo",
     "logos:gitlab",
     "logos:google-maps",
     "logos:google-drive",
@@ -219,19 +219,19 @@
       <div class="flex flex-col items-center mo:gap-3 gap-4 w-full">
         <span class="flex items-center justify-center gap-2">
           {#if subType === NodeType.IMAGE}
-            <Icon icon="ph:image" class="stroke-fgs3" />
+            <Icon icon="image" class="stroke-fgs3" />
           {:else if subType === NodeType.AUDIO}
-            <Icon icon="ph:music-note" class="stroke-fgs3" />
+            <Icon icon="music-note" class="stroke-fgs3" />
           {:else if subType === NodeType.FILE}
-            <Icon icon="ph:file-light" class="stroke-fgs3" />
+            <Icon icon="file" class="stroke-fgs3" />
           {:else if subType === NodeType.PDF}
-            <Icon icon="ph:file-pdf" class="stroke-fgs3" />
+            <Icon icon="file-pdf" class="stroke-fgs3" />
           {:else if subType === NodeType.TWEET || subType === NodeType.TWITTER_PROFILE}
-            <Icon icon="ph:x-logo" class="stroke-fgs3" />
+            <Icon icon="x-logo" class="stroke-fgs3" />
           {:else if subType === NodeType.KINDLE_BOOK || subType === NodeType.KINDLE_HIGHLIGHT}
-            <Icon icon="ph:book-light" class="stroke-fgs3" />
+            <Icon icon="book" class="stroke-fgs3" />
           {:else if subType === NodeType.YOUTUBE_VIDEO || subType === NodeType.YOUTUBE_CHANNEL}
-            <Icon icon="ph:youtube-logo" class="stroke-fgs3" />
+            <Icon icon="youtube-logo" class="stroke-fgs3" />
           {:else if !subType}
             <div class="flex items-center justify-center gap-3">
               {#each embedIcons as icon}
@@ -258,12 +258,12 @@
           >
             <TextInput
               bind:value={linkInputValue}
-              icon="ph:globe-light"
+              icon="globe"
               placeholder="Type or paste embed code/link here"
             />
             <Button
               label={$view.isConstrainedWidth ? "" : "Go"}
-              icon="ph:arrow-right-light"
+              icon="arrow-right"
               type={ButtonVariant.PRIMARY}
               style={ButtonStyle.OUTLINED}
               on:click={onLinkInput}
@@ -280,14 +280,14 @@
             {#if subType === NodeType.IMAGE && $context.embed === Embed.HANDSET}
               <!-- <Button
                 label="Capture"
-                icon="ph:camera-light"
+                icon="camera"
                 {...commonButtonParams}
                 type={ButtonVariant.PRIMARY}
               /> -->
             {:else if subType === NodeType.AUDIO}
               <Button
                 label={$view.isConstrainedWidth ? "" : "Record"}
-                icon="ph:microphone-light"
+                icon="microphone"
                 {...commonButtonParams}
                 type={ButtonVariant.PRIMARY}
                 on:click={() => (isAudioCaptureInProgress = true)}
@@ -297,7 +297,7 @@
               label={$view.isConstrainedWidth && subType === NodeType.AUDIO
                 ? ""
                 : "Upload"}
-              icon="ph:upload-light"
+              icon="upload"
               {...commonButtonParams}
               type={ButtonVariant.PRIMARY}
               on:click={() => {
@@ -308,7 +308,7 @@
           {#if subType === NodeType.TASK_AS_EMBED}
             <Button
               label="Create new task"
-              icon="ph:plus-light"
+              icon="plus"
               {...commonButtonParams}
               type={ButtonVariant.PRIMARY}
               on:click={onCreateNewTask}
@@ -332,7 +332,7 @@
           >
             <Button
               label="Choose from library"
-              icon="ph:globe-light"
+              icon="globe"
               {...commonButtonParams}
             />
           </button>

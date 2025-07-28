@@ -76,32 +76,32 @@
       label: "Default",
       // tooltip: "Timeline",
       value: CalendarColumnPanel.Timeline,
-      icon: "ph:clock-light"
+      icon: "clock"
     };
     const tempHistory = {
       label: "History",
       // tooltip: "History",
       value: CalendarColumnPanel.History,
-      icon: "ph:clock-counter-clockwise-light"
+      icon: "clock"
     };
     const overview = {
       label: "Overview",
       // tooltip: "Overview",
       value: CalendarColumnPanel.Overview,
       icon: "heroicons:rectangle-group"
-      // icon: "ph:squares-four-light"
+      // icon: "grid"
     };
     const notes = {
       label: "Notes",
       // tooltip: "Notes",
       value: CalendarColumnPanel.Notes,
-      icon: "ph:note-light"
+      icon: "note"
     };
     const tempTasksPanel = {
       label: "Tasks",
       // tooltip: "Tasks",
       value: CalendarColumnPanel.Tasks,
-      icon: "ph:check-square-light"
+      icon: "check-square"
     };
     let items = [overview];
     switch (product) {

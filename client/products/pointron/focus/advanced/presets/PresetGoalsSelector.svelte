@@ -74,7 +74,7 @@
         >
           <span>{goal.label || "Untitled"}</span>
           <Icon
-            icon="ph:x-light"
+            icon="cross"
             class="text-ccs1 hover:text-ccs2"
             on:click={() => removeGoal(goal.id)}
           />

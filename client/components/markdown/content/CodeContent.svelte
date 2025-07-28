@@ -202,7 +202,7 @@
             on:click={handleCopyCode}
           />
           <Button
-            icon="ph:trash"
+            icon="trash"
             size={Size.sm}
             type={ButtonVariant.DANGER}
             style={ButtonStyle.OUTLINED}

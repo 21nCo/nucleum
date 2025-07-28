@@ -207,7 +207,7 @@
     <Button
       on:click={handleSubmit}
       type={ButtonVariant.PRIMARY}
-      icon="ph:arrow-right-light"
+      icon="arrow-right"
     >
       Proceed to Payment
     </Button>

@@ -36,7 +36,7 @@
   }}
 >
   <Icon
-    icon="ph:x-light"
+    icon="cross"
     class={cn({
       "stroke-bgs1": style === ButtonVariant.DANGER,
       "stroke-fgs1": style === ButtonVariant.SECONDARY

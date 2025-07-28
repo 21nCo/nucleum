@@ -48,12 +48,12 @@
   const allSubTypeSwitcherItem = {
     label: "All",
     value: "all",
-    icon: "ph:asterisk-light"
+    icon: "asterisk"
   };
   const starredSubTypeSwitcherItem = {
     label: "Starred",
     value: "starred",
-    icon: "ph:star-light"
+    icon: "star"
   };
   let subTypeCounts: Map<NodeType | CollectionType, number> = new Map();
   let isExpandableSubTypes: boolean = false;
@@ -237,7 +237,7 @@
           {#if !isNonStarrable}
             <Toggle
               bind:on={isStarFilterSelected}
-              icon="ph:star-light"
+              icon="star"
               tooltip="Show starred items"
               bgSize={Size.sm}
               on:change={() => {
@@ -276,7 +276,7 @@
         {#if !isNonArchivable}
           <Toggle
             bind:on={isArchivedFilterSelected}
-            icon="ph:archive-light"
+            icon="archive"
             tooltip="Show archived items"
             on:change={() => {
               if (isArchivedFilterSelected) {
@@ -295,9 +295,7 @@
       {#if isExpandableSubTypes}
         <Toggle
           bind:on={isExpandSubTypes}
-          icon={isExpandSubTypes
-            ? "ph:caret-left-light"
-            : "ph:caret-down-light"}
+          icon={isExpandSubTypes ? "chevron-left" : "chevron-down"}
           tooltip="Show all sub types"
           bgSize={Size.sm}
           on:change={() => refreshSubTypeSwitcher()}

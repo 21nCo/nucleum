@@ -43,7 +43,7 @@
   <div class="flex w-full pt-2 pb-4 justify-center">
     <InlineInfoBanner
       content="You can't add tasks to this goal when it is archived/deleted/inactive."
-      icon="ph:warning-light"
+      icon="warning"
     />
   </div>
 {/if}

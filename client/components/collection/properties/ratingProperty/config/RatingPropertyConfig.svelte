@@ -54,7 +54,7 @@
     >
       <Icon icon={"ph:" + property.config.avatar} size={Size.md} />
       <Icon
-        icon={isPopoverOpen ? "ph:caret-up-light" : "ph:caret-down-light"}
+        icon={isPopoverOpen ? "chevron-up" : "chevron-down"}
         size={Size.sm}
       />
     </div>

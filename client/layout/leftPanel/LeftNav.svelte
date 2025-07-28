@@ -37,7 +37,7 @@
               on:click={() => appStore.runAction(Action.GLOBAL_SEARCH)}
             >
               <span class="flex gap-2 items-center">
-                <Icon icon="ph:magnifying-glass-light" size={Size.sm} />
+                <Icon icon="search" size={Size.sm} />
                 <span> Search </span>
               </span>
               <ShortcutText shortcut={Action.GLOBAL_SEARCH} parentBgIndex={2} />
@@ -48,7 +48,7 @@
       <slot name="header-thin" slot="header-thin">
         <div class="w-full flex justify-center">
           <Button
-            icon="ph:magnifying-glass-light"
+            icon="search"
             parentBgIndex={2}
             on:click={() => appStore.runAction(Action.GLOBAL_SEARCH)}
           />

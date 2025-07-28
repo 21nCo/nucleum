@@ -212,7 +212,7 @@
     {#if !isLoginFromExtension}
       <Button
         label="Continue offline"
-        icon="ph:arrow-right-light"
+        icon="arrow-right"
         style={ButtonStyle.OUTLINED}
         on:click={async () => {
           await account.startOfflineSession();

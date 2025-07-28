@@ -845,11 +845,11 @@ export const features: IFwFeature[] = [
       },
       {
         label: "Contributions from community are welcome",
-        icon: "ph:sparkle-light"
+        icon: "sparkle"
       },
       {
         label: "Transparent development process and regular public updates",
-        icon: "ph:eye-light"
+        icon: "eye"
       }
     ],
     comparisionProperties: ["sourcingType"],

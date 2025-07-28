@@ -104,7 +104,7 @@
       ></InlineSearchBar>
       {#if isSearchFocused}
         <Button
-          icon="ph:x"
+          icon="cross"
           on:click={() => {
             isSearchFocused = false;
           }}

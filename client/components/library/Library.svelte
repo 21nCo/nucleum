@@ -57,7 +57,7 @@
             callback: async () => {
               appStore.runAction(Action.GLOBAL_SEARCH);
             },
-            icon: "ph:magnifying-glass-light"
+            icon: "search"
           },
           {
             label: "Create",
@@ -72,7 +72,7 @@
                 size: Size.lg
               }
             },
-            icon: "ph:plus-circle-light"
+            icon: "plus-circle"
           }
         ]
       : !availableResourcesSet.has(selectedResource) ||
@@ -83,7 +83,7 @@
             callback: async () => {
               onCreateResource();
             },
-            icon: "ph:plus-light",
+            icon: "plus",
             variant: ButtonVariant.PRIMARY,
             shortcut: createShortcut,
             style: ButtonStyle.DEFAULT

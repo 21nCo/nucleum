@@ -28,7 +28,7 @@
     {#if collection.type === CollectionType.TYPED && collection.avatar}
       <AvatarRenderer avatar={collection.avatar} size={Size.md} />
     {:else}
-      <Icon icon="ph:brackets-round-light" />
+      <Icon icon="brackets-round" />
     {/if}
   </div>
 

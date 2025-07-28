@@ -32,20 +32,20 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
   {
     action: Action.PYOD,
     label: "Plug Your Own Database",
-    icon: "ph:database-light",
+    icon: "database",
     component: ModSettings
   },
   {
     action: Action.DEVELOPER,
     label: "Developer",
-    icon: "ph:code-light",
+    icon: "code",
     component: DeveloperSettings
   },
   {
     action: Action.ARTIFICIAL_INTELLIGENCE,
     cmdLabel: [{ variant: "aiSettings", label: "AI Settings" }],
     label: "Artificial Intelligence",
-    icon: "ph:head-circuit-light",
+    icon: "head-circuit",
     component: TacoSettings,
     modalParams: {
       title: "Artificial Intelligence",
@@ -57,7 +57,7 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
   {
     action: Action.MODE_OF_INTERACTION,
     label: "Mode of interaction",
-    icon: "ph:cursor-click-light",
+    icon: "cursor-click",
     component: InteractionModeSettings,
     modalParams: {
       title: "Mode of interaction",
@@ -76,7 +76,7 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
       { variant: "toggleDarkMode", label: "Toggle Dark Mode" },
       { variant: "toggleLightMode", label: "Toggle Light Mode" }
     ],
-    icon: "ph:palette-light",
+    icon: "palette",
     component: AppearanceSettings,
     modalParams: {
       title: "Appearance Settings",
@@ -92,7 +92,7 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
     },
     label: "Focus",
     path: "cp/session",
-    icon: "ph:circle-light",
+    icon: "circle",
     type: ActionType.MODAL,
     component: SessionSettings,
     modalParams: {
@@ -112,7 +112,7 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
     },
     label: "Analytics",
     path: "cp/analytic-settings",
-    icon: "ph:chart-line-up-light",
+    icon: "chart-line-up",
     type: ActionType.MODAL,
     component: AnalyticsSettings,
     modalParams: {
@@ -129,7 +129,7 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
   {
     action: "shortcuts",
     label: "Keyboard shortcuts",
-    icon: "ph:keyboard-light",
+    icon: "keyboard",
     component: ShortcutSettings,
     hideContext: [Embed.HANDSET]
   },
@@ -137,7 +137,7 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
     action: "datetime-settings",
     cmdLabel: "Date & Time Settings",
     label: "Date & Time",
-    icon: "ph:calendar-light",
+    icon: "calendar",
     component: DateTimeSettings
   },
   {
@@ -146,7 +146,7 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
       return this.modalParams?.title;
     },
     label: "Accessibility",
-    icon: "ph:person-simple-light",
+    icon: "person-simple",
     component: AccessibilitySettings,
     modalParams: {
       title: "Accessibility Settings"
@@ -155,19 +155,19 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
   {
     action: "share",
     label: "Refer a friend",
-    icon: "ph:share-light",
+    icon: "share",
     component: ShareToFriends
   },
   {
     action: "about",
     label: "About us",
-    icon: "ph:info-light",
+    icon: "info",
     component: AboutSettings
   },
   {
     action: "sync",
     label: "Sync",
-    icon: "ph:arrows-clockwise-light",
+    icon: "sync",
     component: SyncSettings,
     modalParams: {
       title: "Sync Settings"
@@ -194,7 +194,7 @@ export function getSettingsAsPages(): IAction[] {
       action: Action.SETTINGS,
       type: ActionType.PAGE,
       label: "Settings",
-      icon: "ph:gear-fine-light",
+      icon: "gear",
       component: SettingsAsPage
     });
 }
@@ -213,7 +213,7 @@ export function getSettingsAsModal(): IAction[] {
       action: Action.SETTINGS,
       type: ActionType.MODAL,
       label: "Settings",
-      icon: "ph:gear-fine-light",
+      icon: "gear",
       isRenderAsPageInPortrait: true,
       component: SettingsAsPage,
       modalParams: {

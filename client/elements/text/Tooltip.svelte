@@ -24,10 +24,10 @@
       {#if $view.isConstrainedWidth}
         <div class="flex justify-between items-center">
           <div class="flex items-center gap-1 text-fgs3">
-            <Icon icon="ph:info" size={Size.sm} class="text-fgs3" />
+            <Icon icon="info" size={Size.sm} class="text-fgs3" />
             <span class="text-b2 font-medium"> Information </span>
           </div>
-          <Button icon="ph:x" size={Size.sm} on:click={onClose} />
+          <Button icon="cross" size={Size.sm} on:click={onClose} />
         </div>
       {/if}
       <div>

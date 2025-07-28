@@ -550,7 +550,7 @@
                     <Icon
                       icon={$captureStore.isRefreshing
                         ? "svg-spinners:90-ring-with-bg"
-                        : "ph:check-circle-fill"}
+                        : "check-circle"}
                       size={Size.sm}
                       class="stroke-fgs3"
                     />
@@ -561,14 +561,14 @@
                 {/if}
                 {#if $view.isConstrainedWidth}
                   <Toggle
-                    icon="ph:link-light"
+                    icon="link"
                     bind:on={isLinksExpanded}
                     bgSize={Size.sm}
                   />
                 {:else}
                   <Tag
                     label="Links"
-                    icon="ph:link-light"
+                    icon="link"
                     isActive={isLinksExpanded}
                     count={resolveDirectLinksCount($captureStore.links)}
                     isShowExpandFeedbackOnActive={true}
@@ -600,7 +600,7 @@
                   style={ButtonStyle.OUTLINED}
                   isPreventMinWidth={true}
                   size={Size.sm}
-                  icon="ph:x-light"
+                  icon="cross"
                   on:click={reset}
                 />
               {/if}
@@ -700,7 +700,7 @@
             in:fly={{ y: -100, duration: 250 }}
           >
             <!-- <Button
-              icon="ph:x-light"
+              icon="cross"
               on:click={reset}
               style={ButtonStyle.OUTLINED}
               size={Size.lg}
@@ -709,7 +709,7 @@
               class="flex w-12 h-12 text-fgs3 hover:bg-bgs3 bg-bgs2 rounded-full items-center justify-center"
               on:click={reset}
             >
-              <Icon icon="ph:x-light" />
+              <Icon icon="cross" />
             </button>
           </div>
         {/if}

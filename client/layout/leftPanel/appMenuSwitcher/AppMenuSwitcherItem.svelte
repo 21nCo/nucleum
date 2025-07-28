@@ -115,7 +115,7 @@
     const pinAction = {
       label: "Unpin from App menu",
       value: "pin",
-      icon: "ph:minus-circle-light",
+      icon: "minus-circle",
       callback: async () => {
         appMenuStore.removeUserMenuItem(resource);
         popRef.dispatchEvent(new CustomEvent("hide"));

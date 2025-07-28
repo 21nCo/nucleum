@@ -74,7 +74,7 @@
     >
       <RightPaneOverviewMetricCard
         label="Links"
-        icon="ph:link-simple-light"
+        icon="link-simple"
         value={$node.links?.length || 0}
         on:click={() => (pane = NodeRightPaneType.LINKS)}
       />
@@ -98,7 +98,7 @@
           <span>
             <Button
               size={Size.xs}
-              icon="ph:arrow-right-light"
+              icon="arrow-right"
               label="View all"
               style={ButtonStyle.PLAIN}
               on:click={() => (pane = NodeRightPaneType.TRACES)}
@@ -137,7 +137,7 @@
         <span>
           <Button
             size={Size.xs}
-            icon="ph:arrow-right-light"
+            icon="arrow-right"
             label="View all"
             style={ButtonStyle.PLAIN}
             on:click={() => (pane = NodeRightPaneType.LINKS)}
@@ -173,7 +173,7 @@
       </span>
       <span>
         <Button
-          icon="ph:arrows-out-simple-light"
+          icon="arrows-out-simple"
           size={Size.sm}
           on:click={() => (pane = NodeRightPaneType.SIDENOTES)}
         />

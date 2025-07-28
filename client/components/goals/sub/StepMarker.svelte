@@ -39,7 +39,7 @@
   >
     {#if isHovering}
       <Icon
-        icon="ph:dots-six-vertical"
+        icon="dots-six-vertical"
         class={cn({
           "text-ccs1": accessPoint !== ResourceAccessPoint.FORM,
           "text-fgs3": accessPoint === ResourceAccessPoint.FORM
@@ -51,7 +51,7 @@
     {:else if item.status === GoalStatus.IN_PROGRESS}
       <Icon icon={statusIcon} class="text-ccs1" size={Size.sm} />
     {:else if item.type === "add"}
-      <Icon icon="ph:plus-light" class="text-fgs3" size={Size.sm} />
+      <Icon icon="plus" class="text-fgs3" size={Size.sm} />
     {:else}
       {index + 1}
     {/if}

@@ -110,7 +110,7 @@
           }}
         >
           <Button
-            icon="ph:magnifying-glass"
+            icon="search"
             tooltip="Search"
             style={ButtonStyle.PLAIN}
             shortcut={Action.GLOBAL_SEARCH}
@@ -121,7 +121,7 @@
       {/if}
       <slot name="topnav" />
       <Button
-        icon="ph:terminal"
+        icon="terminal"
         tooltip="Command bar"
         style={ButtonStyle.PLAIN}
         shortcut={Action.CMD}

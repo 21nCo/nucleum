@@ -52,7 +52,7 @@
   }}
 >
   <span class="cursor-move h-full flex flex-col items-center justify-center">
-    <Icon icon="ph:dots-six-vertical-bold" class="stroke-fgs3" />
+    <Icon icon="dots-six-vertical" class="stroke-fgs3" />
   </span>
   <Popover
     triggerClass="flex items-center w-6 h-full"
@@ -121,7 +121,7 @@
     {#if isHovering || isFocusing || $context.os === OperatingSystem.IOS}
       {#if !isFocusing && dev_isEnableDefaultSelection}
         <Button
-          icon={isDefault ? "ph:minus-circle-light" : "ph:circle-dashed-light"}
+          icon={isDefault ? "minus-circle" : "circle-dashed"}
           size={Size.sm}
           tooltip={isDefault ? "Remove default" : "Set as default"}
           on:click={(e) => {

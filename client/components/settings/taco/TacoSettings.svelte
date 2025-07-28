@@ -218,7 +218,7 @@
         {#if $embedBridge[transcriptionModelDownloadId] && $embedBridge[transcriptionModelDownloadId].type === EmbedMessage.DOWNLOAD_MODEL && $embedBridge[transcriptionModelDownloadId].data}
           {#if $embedBridge[transcriptionModelDownloadId].data.progress && $embedBridge[transcriptionModelDownloadId].data.progress === 1}
             <span class="text-fgs3 text-b2 flex items-center gap-1">
-              <Icon icon="ph:check-circle-light" size={Size.sm} />
+              <Icon icon="check-circle" size={Size.sm} />
               Model downloaded successfully.
             </span>
           {:else}

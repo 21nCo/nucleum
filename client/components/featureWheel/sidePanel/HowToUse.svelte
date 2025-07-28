@@ -15,28 +15,20 @@
       <div class="flex flex-col gap-2">
         <ul class="flex flex-col gap-2">
           <li class="flex items-start gap-2">
-            <Icon
-              icon="ph:cursor-click"
-              class="text-aps1 mt-0.5"
-              size={Size.sm}
-            />
+            <Icon icon="cursor-click" class="text-aps1 mt-0.5" size={Size.sm} />
             <span class="text-fgs2"
               >Click on any feature on the outer edge of the wheel to view
               detailed information, our rating criteria and comparison.</span
             >
           </li>
           <li class="flex items-start gap-2">
-            <Icon
-              icon="ph:squares-four"
-              class="text-aps1 mt-0.5"
-              size={Size.sm}
-            />
+            <Icon icon="grid" class="text-aps1 mt-0.5" size={Size.sm} />
             <span class="text-fgs2"
               >Click on one or multiple categories to filter by category.</span
             >
           </li>
           <li class="flex items-start gap-2">
-            <Icon icon="ph:sliders" class="text-aps1 mt-0.5" size={Size.sm} />
+            <Icon icon="sliders" class="text-aps1 mt-0.5" size={Size.sm} />
             <span class="text-fgs2"
               >Pick an app that you want to compare with from the comparision
               dropdown.</span
@@ -87,25 +79,21 @@
         <h3 class="text-b2 font-medium text-fgs1">How to Compare</h3>
         <ul class="flex flex-col gap-2">
           <li class="flex items-start gap-2">
-            <Icon
-              icon="ph:cursor-click"
-              class="text-aps1 mt-0.5"
-              size={Size.sm}
-            />
+            <Icon icon="cursor-click" class="text-aps1 mt-0.5" size={Size.sm} />
             <span class="text-fgs2"
               >Select competitors you want to compare using the dropdown on the
               left.</span
             >
           </li>
           <li class="flex items-start gap-2">
-            <Icon icon="ph:table" class="text-aps1 mt-0.5" size={Size.sm} />
+            <Icon icon="table" class="text-aps1 mt-0.5" size={Size.sm} />
             <span class="text-fgs2"
               >View the generated comparison table showing feature differences
               by clicking on "See report".</span
             >
           </li>
           <li class="flex items-start gap-2">
-            <Icon icon="ph:tag" class="text-aps1 mt-0.5" size={Size.sm} />
+            <Icon icon="tag" class="text-aps1 mt-0.5" size={Size.sm} />
             <span class="text-fgs2"
               >Look for the "Planned" badge to see upcoming features</span
             >

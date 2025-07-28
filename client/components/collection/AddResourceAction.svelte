@@ -12,17 +12,17 @@
   const options = [
     {
       label: "Add existing",
-      icon: "ph:arrow-arc-left-light",
+      icon: "arrow-arc-left",
       value: "addExisting"
     },
     {
       label: "Create new",
-      icon: "ph:plus-light",
+      icon: "plus",
       value: "createNew"
     }
     // {
     //   label: "Create multiple",
-    //   icon: "ph:rows-plus-bottom-light",
+    //   icon: "rows-plus-bottom",
     //   value: "createMultiple",
     //   isDisabled: true,
     //   badge: "soon"
@@ -35,11 +35,11 @@
     <button
       class="flex rounded-full p-2 hover:bg-aps2 hover:border-aps1 bg-aps3 text-aps1 border border-aps2"
     >
-      <Icon icon="ph:plus-light" size={Size.sm} class="stroke-aps1" />
+      <Icon icon="plus" size={Size.sm} class="stroke-aps1" />
     </button>
   {:else}
     <Button
-      icon="ph:plus-light"
+      icon="plus"
       label="Add"
       size={Size.sm}
       type={ButtonVariant.PRIMARY}

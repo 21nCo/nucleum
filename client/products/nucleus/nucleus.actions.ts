@@ -32,7 +32,7 @@ export const nucleusActions: IAction[] = [
   {
     action: Action.LIBRARY,
     label: "Library",
-    icon: "ph:stack-light",
+    icon: "stack",
     component: NucleusLibrary,
     type: ActionType.PAGE
   },

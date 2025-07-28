@@ -23,6 +23,6 @@
     }}
   />
   <div class={cn("hidden w-full h-full flex items-center justify-center", {})}>
-    <Icon icon="ph:x-logo" />
+    <Icon icon="x-logo" />
   </div>
 </div>

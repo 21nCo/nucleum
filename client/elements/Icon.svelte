@@ -129,8 +129,11 @@
   import PhArrowElbow from "../icons/PhArrowElbow.svelte";
   import {
     resolveSpriteSheetPath,
-    extensionSprites
+    extensionSprites,
+    resolveGenericIcon,
+    currentIconSet
   } from "../iconsV2/icon.store";
+  import { iconMappings } from "../iconsV2/icons.map";
   import EclipseHalf from "../iconsV2/svgSpinners/EclipseHalf.svelte";
   import One80RingWithBg from "../iconsV2/svgSpinners/One80RingWithBg.svelte";
   import NinetyRingWithBg from "../iconsV2/svgSpinners/NinetyRingWithBg.svelte";
@@ -160,7 +163,21 @@
    */
   export let isFilled: boolean = false;
 
-  $: renderedIconifyIcon = resolveRenderedIconForIconify(icon, isFilled);
+  $: resolvedIcon = icon ? resolveIconName(icon) : undefined;
+  $: renderedIconifyIcon = resolveRenderedIconForIconify(
+    resolvedIcon,
+    isFilled
+  );
+
+  function resolveIconName(iconName: string): string {
+    // If the icon name exists in our generic mappings, resolve it
+    if (iconMappings[iconName]) {
+      return resolveGenericIcon(iconName);
+    }
+
+    // Otherwise return the original icon name (for legacy support)
+    return iconName;
+  }
 
   let classListParam = "";
   let dev_useIconifyTailwind = false;
@@ -207,15 +224,16 @@
       classes = clParam;
     }
     if (
-      icon &&
-      (solidOnlyIcons.includes(icon) || icon?.includes("-mini")) &&
+      resolvedIcon &&
+      (solidOnlyIcons.includes(resolvedIcon) ||
+        resolvedIcon?.includes("-mini")) &&
       classes.includes("stroke-")
     ) {
       const color = classes.split("stroke-")[1];
       classes = `fill-${color}`;
     } else if (
-      icon &&
-      strokeOnlyIcons.includes(icon) &&
+      resolvedIcon &&
+      strokeOnlyIcons.includes(resolvedIcon) &&
       classes.includes("fill-")
     ) {
       const color = classes.split("fill-")[1];
@@ -230,14 +248,14 @@
     return classes;
 
     function appendIconfiyClasses(classes: string) {
-      if (icon?.includes(":")) {
+      if (resolvedIcon?.includes(":")) {
         const color = classes.split("stroke-")[1] || classes.split("fill-")[1];
         return ` text-${color}`;
       }
       return "";
     }
   }
-  $: variant = resolveVariant(icon, _classList, size);
+  $: variant = resolveVariant(resolvedIcon, _classList, size);
 
   function resolveVariant(icon: string | undefined, cls: string, size: Size) {
     if (
@@ -276,16 +294,16 @@
     return renderedIcon;
   }
 
-  function resolveSpriteIconPath(icon: string) {
+  function resolveSpriteIconPath(iconName: string) {
     let sheet = "sprite";
-    if (icon.startsWith("ph:")) {
-      if (icon.endsWith("-light")) {
+    if (iconName.startsWith("ph:")) {
+      if (iconName.endsWith("-light")) {
         sheet = "sprite-ph-light";
-      } else if (icon.endsWith("-fill")) {
+      } else if (iconName.endsWith("-fill")) {
         sheet = "sprite-ph-fill";
-      } else if (icon.endsWith("-thin")) {
+      } else if (iconName.endsWith("-thin")) {
         sheet = "sprite-ph-thin";
-      } else if (icon.endsWith("-duotone")) {
+      } else if (iconName.endsWith("-duotone")) {
         sheet = "sprite-ph-duotone";
       } else {
         sheet = "sprite-ph-base";
@@ -294,16 +312,16 @@
     const path = resolveSpriteSheetPath(sheet);
     if (isExtensionEnvironment()) {
       // if (!isContentScript()) {
-      //   const url = `${path}#${icon}`;
+      //   const url = `${path}#${iconName}`;
       //   return chrome.runtime.getURL(url);
       // }
       if (extensionSprites.has(sheet)) {
         const sprite = extensionSprites.get(sheet);
-        return `${sprite}#${icon}`;
+        return `${sprite}#${iconName}`;
       }
       return null;
     }
-    return `${path}#${icon}`;
+    return `${path}#${iconName}`;
   }
 </script>
 
@@ -312,7 +330,7 @@
   tabindex={isTabbable ? 0 : -1}
   on:click
 >
-  {#if icon?.includes(":") && renderedIconifyIcon}
+  {#if resolvedIcon?.includes(":") && renderedIconifyIcon}
     {@const sizeClass =
       size === Size.xxl
         ? "w-12 h-12"
@@ -323,15 +341,15 @@
             : size === Size.md
               ? "w-5 h-5"
               : "w-4 h-4"}
-    {#if icon.startsWith("svg-spinners")}
+    {#if resolvedIcon.startsWith("svg-spinners")}
       <div class={cn(_classList, "iconifysvg", sizeClass, renderedIconifyIcon)}>
-        {#if icon.includes("3-dots-fade")}
+        {#if resolvedIcon.includes("3-dots-fade")}
           <ThreeDotsFade />
-        {:else if icon.includes("90-ring-with-bg")}
+        {:else if resolvedIcon.includes("90-ring-with-bg")}
           <NinetyRingWithBg />
-        {:else if icon.includes("180-ring-with-bg")}
+        {:else if resolvedIcon.includes("180-ring-with-bg")}
           <One80RingWithBg />
-        {:else if icon.includes("eclipse-half")}
+        {:else if resolvedIcon.includes("eclipse-half")}
           <EclipseHalf />
         {/if}
       </div>
@@ -360,7 +378,7 @@
     />
       </div> -->
     {/if}
-  {:else if icon?.includes("text:")}
+  {:else if resolvedIcon?.includes("text:")}
     {@const sizeClass =
       size === Size.xxl
         ? "w-12 h-12"
@@ -378,23 +396,24 @@
         sizeClass
       )}
     >
-      {icon.split("text:")[1]}
+      {resolvedIcon.split("text:")[1]}
     </span>
-  {:else if icon}
+  {:else if resolvedIcon}
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox={icon.includes("-mini") && icon !== "capture2.0-mini"
+      viewBox={resolvedIcon.includes("-mini") &&
+      resolvedIcon !== "capture2.0-mini"
         ? "0 0 20 20"
-        : icon == "capture2.0" || icon === "capture2.0-mini"
+        : resolvedIcon == "capture2.0" || resolvedIcon === "capture2.0-mini"
           ? "0 0 52 52"
           : "0 0 24 24"}
       class={cn(
         "flex items-center justify-center",
         _classList,
         {
-          "w-3 h-3": icon.includes("-mini")
+          "w-3 h-3": resolvedIcon.includes("-mini")
         },
-        !icon.includes("-mini") && {
+        !resolvedIcon.includes("-mini") && {
           "w-8 h-8": size === Size.xl,
           "w-6 h-6": size === Size.lg,
           "w-[1.25rem] h-[1.25rem]": size === Size.md,
@@ -435,7 +454,7 @@
         <Link />
       {:else if icon === "link-mini"}
         <Link variant={IconVariant.Mini} />
-      {:else if icon === "tag" || icon === "ph:tag-thin"}
+      {:else if icon === "tag"}
         <Tag {variant} />
       {:else if icon === "share"}
         <Share {variant} />
@@ -693,19 +712,19 @@
         <AltText />
       {:else if icon === "gift"}
         <Gift {variant} />
-      {:else if icon === "ph:crop"}
+      {:else if icon === "crop"}
         <Crop {variant} />
-      {:else if icon === "ph:pencil-simple-line"}
+      {:else if icon === "edit"}
         <PencilSimpleLine {variant} />
-      {:else if icon === "ph:highlighter"}
+      {:else if icon === "highlighter"}
         <Highlighter {variant} />
-      {:else if icon === "ph:x-circle"}
+      {:else if icon === "x-circle"}
         <PhCrossCircled {variant} />
-      {:else if icon === "ph:bookmarks"}
+      {:else if icon === "bookmarks"}
         <PhBookmarks {variant} />
-      {:else if icon === "ph:arrow-elbow-down-left"}
+      {:else if icon === "arrow-elbow-down-left"}
         <PhArrowElbow variant="down-left" />
-      {:else if icon === "ph:arrow-elbow-right-up"}
+      {:else if icon === "arrow-elbow-right-up"}
         <PhArrowElbow variant="right-up" />
       {:else if icon === "magnifying-glass-plus"}
         <MagnifyingGlassPlus {variant} />

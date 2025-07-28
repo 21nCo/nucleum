@@ -34,7 +34,7 @@
   {/each}
   <div class="flex justify-center mt-8">
     <Button
-      icon="ph:pencil-simple-light"
+      icon="edit"
       label="Edit"
       size={Size.xs}
       isPreventMinWidth={true}

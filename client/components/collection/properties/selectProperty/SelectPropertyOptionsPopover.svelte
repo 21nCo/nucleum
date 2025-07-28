@@ -212,7 +212,7 @@
         bind:this={searchInputRef}
         bind:value={search}
         on:enter={onenter}
-        icon="ph:magnifying-glass"
+        icon="search"
         placeholder={property.type === PropertyType.UNIVERSAL
           ? "Search options"
           : "Search or type to create new"}
@@ -282,7 +282,7 @@
         <div class="flex gap-3 items-center justify-between w-full px-4">
           <Button
             label="Cancel"
-            icon="ph:x"
+            icon="cross"
             style={ButtonStyle.PLAIN}
             size={Size.xs}
             on:click={() => {

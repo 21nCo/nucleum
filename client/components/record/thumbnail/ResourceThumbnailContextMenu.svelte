@@ -25,7 +25,7 @@
   export let size: Size.sm | Size.md | Size.lg = Size.md;
   export let bgSize: Size.sm | Size.md | Size.lg = Size.md;
   export let isInline: boolean = false;
-  export let icon: string = "ph:dots-three-vertical";
+  export let icon: string = "dots-three-vertical";
   function onAction(e: CustomEvent<string>) {
     if (e.detail === "star") item.isStarred = !item.isStarred;
     dispatch("action", { action: e.detail, id: item.id });

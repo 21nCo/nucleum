@@ -25,7 +25,7 @@
     {#if $resource.isArchived}
       <InlineInfoBanner
         type={InfoTextType.INFO}
-        icon="ph:archive-light"
+        icon="archive"
         content={"This resource was archived on: *" +
           formatDatetime($userPreferences, new Date($resource.modifiedAt)) +
           "*"}
@@ -40,7 +40,7 @@
     {#if $resource.isParentInactive}
       <InlineInfoBanner
         type={InfoTextType.INFO}
-        icon="ph:x-light"
+        icon="cross"
         content={`This resource is inactive because its parent is either archived or deleted`}
       />
     {/if}
@@ -49,7 +49,7 @@
         class="flex justify-between gap-2 bg-aps3 border-2 border-dotted border-aps2 rounded-md p-2 px-4 text-b2 text-aps1"
       >
         <span class="flex items-center gap-2">
-          <Icon icon="ph:lock" class="stroke-aps1" size={Size.sm} />
+          <Icon icon="lock" class="stroke-aps1" size={Size.sm} />
           <span
             >Locked for editing -
             {@html renderMdAsHtml(
@@ -74,7 +74,7 @@
         class="flex justify-between gap-2 bg-bgs2 border-2 border-dotted border-brs3 rounded-md p-2 px-4 text-b2"
       >
         <span class="flex items-center gap-2">
-          <Icon icon="ph:book-open-light" size={Size.sm} />
+          <Icon icon="book-open" size={Size.sm} />
           <span>Read mode is turned on</span>
         </span>
         <button

@@ -61,7 +61,7 @@
         <TextInput
           bind:value={addTextInputValue}
           style={InputStyle.PLAIN}
-          icon="ph:plus-light"
+          icon="plus"
           placeholder={addPlaceholder}
           isShowSaveControl={addTextInputValue !== ""}
           on:save={onAdd}

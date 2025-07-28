@@ -448,10 +448,10 @@
         <div class="bg-bgs2 rounded-lg p-4">
           <div class="flex items-center gap-2 mb-3">
             {#if importResult.success}
-              <Icon icon="ph:check-circle-light" class="text-ags1" />
+              <Icon icon="check-circle" class="text-ags1" />
               <span class="font-medium text-ags1">Import Successful</span>
             {:else}
-              <Icon icon="ph:x-circle-light" class="text-ars1" />
+              <Icon icon="x-circle" class="text-ars1" />
               <span class="font-medium text-ars1">Import Failed</span>
             {/if}
           </div>

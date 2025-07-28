@@ -89,7 +89,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
       label: "Star",
       activeLabel: "Starred",
       icon: resolveResourceActionIcon(ResourceActionType.STAR),
-      activeIcon: "ph:star-fill",
+      activeIcon: "star-fill",
       type: ContextMenuType.SWITCH,
       initialValue: this.resource.isStarred,
       callback: async (checked) => {
@@ -177,8 +177,8 @@ export class ResourceActions<T extends IMemotronItemBase> {
       label: this.resource.isInEditMode ? "Exit edit mode" : "Edit",
       value: ResourceActionType.EDIT,
       icon: this.resource.isInEditMode
-        ? "ph:pencil-simple-slash-light"
-        : "ph:pencil-simple-line-light",
+        ? "pencil-simple-slash"
+        : "pencil-simple-line",
       callback: async () => {
         if (context != ResourceAccessPoint.SELF) {
           appStore.openResource(
@@ -206,7 +206,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
       value: ResourceActionType.TOGGLE_READ_MODE,
       label: "Read mode",
       icon: resolveResourceActionIcon(ResourceActionType.TOGGLE_READ_MODE),
-      activeIcon: "ph:eye-light",
+      activeIcon: "eye",
       type: ContextMenuType.SWITCH,
       initialValue: this.resource.isInReadOnlyMode,
       callback: async (checked) => {
@@ -220,8 +220,8 @@ export class ResourceActions<T extends IMemotronItemBase> {
       value: "focusMode",
       label: "Focus",
       activeLabel: "Focused",
-      icon: "ph:circle-light",
-      activeIcon: "ph:circle-fill",
+      icon: "circle",
+      activeIcon: "circle-fill",
       type: ContextMenuType.SWITCH,
       initialValue: this.resource.isInFocusMode,
       callback: async (checked) => {
@@ -235,8 +235,8 @@ export class ResourceActions<T extends IMemotronItemBase> {
       value: ResourceActionType.LOCK,
       label: "Lock",
       activeLabel: "Locked",
-      icon: "ph:lock-open-light",
-      activeIcon: "ph:lock-light",
+      icon: "lock-open",
+      activeIcon: "lock",
       type: ContextMenuType.SWITCH,
       initialValue: this.resource.isLocked,
       callback: async (checked) => {
@@ -253,7 +253,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
     const isAlreadyPinned = tabData?.some(resourceInList(this.resource.id));
     return {
       value: isAlreadyPinned ? "Remove from tabs" : "Open as tab",
-      icon: isAlreadyPinned ? "ph:minus-circle-light" : "ph:tabs-light",
+      icon: isAlreadyPinned ? "minus-circle" : "tabs",
       callback: async () => {
         if (isAlreadyPinned) {
           tabs.remove(this.resource.id);
@@ -269,7 +269,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
   openAsSplitv1(): IContextMenuItem {
     return {
       value: "open-as-split",
-      icon: "ph:square-split-horizontal-light",
+      icon: "square-split-horizontal",
       callback: async () => {
         appStore.openResource(this.resource.id, ResourceAccessMode.SPLIT);
       }
@@ -285,8 +285,8 @@ export class ResourceActions<T extends IMemotronItemBase> {
           : "Open in split screen",
       icon:
         currentMode === ResourceAccessMode.SPLIT
-          ? "ph:minus-circle-light"
-          : "ph:square-split-horizontal-light",
+          ? "minus-circle"
+          : "square-split-horizontal",
       callback: async () => {
         if (currentMode === ResourceAccessMode.SPLIT) {
           appStore.closeResource({
@@ -308,9 +308,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
           ? "Close full screen"
           : "Open in full screen",
       icon:
-        currentMode === ResourceAccessMode.FULL
-          ? "ph:minus-circle-light"
-          : "ph:arrows-out-light",
+        currentMode === ResourceAccessMode.FULL ? "minus-circle" : "arrows-out",
       callback: async () => {
         if (currentMode === ResourceAccessMode.FULL) {
           appStore.closeResource({

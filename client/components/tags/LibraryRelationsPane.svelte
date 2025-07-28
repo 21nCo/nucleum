@@ -27,12 +27,12 @@
       }}
     >
       {#if isLibraryNavContext}
-        <Icon icon="ph:caret-left-light" class="text-fgs3" />
+        <Icon icon="chevron-left" class="text-fgs3" />
       {/if}
       <Text content="Relations" style={TextStyle.PAGE_HEADING_SUBTLE} />
     </button>
     <FormLabelTooltip
-      icon="ph:question-light"
+      icon="question"
       info={{
         body: "Use relations to maintain relationship information between nodes.",
         size: Size.lg

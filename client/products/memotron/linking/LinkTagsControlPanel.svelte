@@ -107,11 +107,11 @@
         class="w-14 h-full flex justify-center items-center bg-bgs2 rounded-md"
         on:click={() => save()}
       >
-        <Icon icon="ph:plus" />
+        <Icon icon="plus" />
       </button>
     {:else}
       <Button
-        icon="ph:plus"
+        icon="plus"
         label="Add"
         type={ButtonVariant.PRIMARY}
         on:click={() => save()}

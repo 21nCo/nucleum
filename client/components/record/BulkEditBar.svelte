@@ -57,12 +57,12 @@
   const selectAllAction = {
     action: "selectAll",
     label: "Select all",
-    icon: "ph:check-circle-light"
+    icon: "check-circle"
   };
   const clearSelectionAction = {
     action: "clearSelection",
     label: "Clear selection",
-    icon: "ph:x-circle-light"
+    icon: "x-circle"
   };
   const linkAction = {
     action: ResourceActionType.LINK,
@@ -89,17 +89,17 @@
   const completeAction = {
     action: "complete",
     label: "Mark as completed",
-    icon: "ph:check-square-light"
+    icon: "check-square"
   };
   const moveToToday = {
     action: "moveToToday",
     label: "Move to today",
-    icon: "ph:arrow-bend-up-right-light"
+    icon: "arrow-bend-up-right"
   };
   const setDate = {
     action: "setDate",
     label: "Set date",
-    icon: "ph:calendar-blank-light"
+    icon: "calendar"
   };
   const convertAction = {
     action: ResourceActionType.CONVERT,

@@ -419,7 +419,7 @@
     />
     {#if !isPreventAddNew && ((!$view.isConstrainedWidth && accessPoint === ResourceAccessPoint.LIBRARY) || accessPoint === ResourceAccessPoint.GOAL)}
       <Button
-        icon="ph:plus-light"
+        icon="plus"
         type={ButtonVariant.PRIMARY}
         style={ButtonStyle.OUTLINED}
         size={Size.md}

@@ -212,14 +212,14 @@
           <Button
             label={isCoverPickerOpen ? "Close" : "Replace"}
             icon={isCoverPickerOpen
-              ? "ph:x-circle-light"
-              : "ph:arrows-clockwise-light"}
+              ? "x-circle"
+              : "sync"}
             size={Size.sm}
             on:click={isCoverPickerOpen ? onClose : onReplace}
           />
           <Button
             label="Remove"
-            icon="ph:trash-light"
+            icon="trash"
             type={ButtonVariant.DANGER}
             size={Size.sm}
             on:click={onRemove}
