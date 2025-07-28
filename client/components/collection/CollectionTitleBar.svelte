@@ -198,9 +198,9 @@
       >
         <span class="flex gap-2 items-center px-2 py-0.5">
           <Icon icon="ph:cube-light" size={Size.sm} class="stroke-fgs3" />
-          {$collection.properties?.length}
+          {$collection.properties?.length ?? 0}
           {#if !isConstrainedWidth && !isMiniSearch}
-            {$collection.properties?.length === 1 ? "property" : "properties"}
+            {($collection.properties?.length ?? 0) === 1 ? "property" : "properties"}
           {/if}
         </span>
         {#if $collection.typeToExtend}

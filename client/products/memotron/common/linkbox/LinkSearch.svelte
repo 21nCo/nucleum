@@ -19,11 +19,6 @@
   import context from "$lib/client/stores/context.store";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   const dispatch = createEventDispatcher();
-  /**
-   * @deprecated - use accessPoint & isCollectionsLane instead
-   */
-  export let ctx: "capture" | "nodelinkspane" | "clipper" | "collectionsLane" =
-    "capture";
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.CAPTURE;
   export let isCollectionsLane: boolean = false;
   export let resultsPlacement: Placement = Placement.BottomCenter;
@@ -40,7 +35,7 @@
   let searchInputRef: TextSearchInput;
   let isCreationInProgress = false;
 
-  resolveOptions();
+  $: resolveOptions(), [accessPoint, isCollectionsLane];
 
   export function focus() {
     searchInputRef?.focus();
@@ -129,6 +124,19 @@
     dispatch("hide");
   }
 
+  function resolveResourceForCreation(accessPoint: ResourceAccessPoint): Resource | undefined {
+    switch (accessPoint) {
+      case ResourceAccessPoint.CAPTURE:
+      case ResourceAccessPoint.CLIPPER:
+      case ResourceAccessPoint.NODE:
+        return Resource.node;
+      case ResourceAccessPoint.GOAL:
+        return Resource.goal;
+      default:
+        return undefined;
+    }
+  }
+
   async function onEmptyEnter(
     e: CustomEvent<{ event: KeyboardEvent; value: string }>
   ) {
@@ -148,14 +156,7 @@
       result = await collectionStore.save(
         {
           label: val,
-          resource:
-            accessPoint === ResourceAccessPoint.CAPTURE ||
-            accessPoint === ResourceAccessPoint.CLIPPER ||
-            accessPoint === ResourceAccessPoint.NODE
-              ? Resource.node
-              : accessPoint === ResourceAccessPoint.GOAL
-                ? Resource.goal
-                : undefined
+          resource: resolveResourceForCreation(accessPoint)
         },
         {
           isIgnorePropertyEditor: true

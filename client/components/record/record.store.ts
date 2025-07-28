@@ -387,9 +387,13 @@ export class SearchStore {
       collections = await flux.selectMany(Resource.collection, {
         filters: {
           ...activeResourceFilterV2,
-          ...(params?.collectionResource || this.collectibleResource
+          ...((params?.collectionResource?.length ?? 0) > 0 ||
+          (this.collectibleResource?.length ?? 0) > 0
             ? {
-                resource: params?.collectionResource ?? this.collectibleResource
+                resource:
+                  (params?.collectionResource?.length ?? 0) > 0
+                    ? params?.collectionResource
+                    : this.collectibleResource
               }
             : {})
         },

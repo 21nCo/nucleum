@@ -806,12 +806,11 @@ export const globalActions: IAction[] = [
         const collectionResource = componentParams?.items?.[0]
           ? [determineResourceType(componentParams.items[0])]
           : [];
-        const result = await new SearchStore().searchForLinking(search, {
+        return await new SearchStore().searchForLinking(search, {
           resource: componentParams?.resource,
           collectionResource:
             componentParams?.collectionResource ?? collectionResource
         });
-        return result;
       },
       placeholder: (componentParams?: any) => {
         return componentParams?.resource === Resource.collection

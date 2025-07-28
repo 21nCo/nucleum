@@ -264,7 +264,7 @@
   }
 
   function onDateChange() {
-    refreshIndicatorData(selectedDate);
+    refreshIndicatorDataWithDelay();
   }
 </script>
 

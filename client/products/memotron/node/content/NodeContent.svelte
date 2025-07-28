@@ -138,8 +138,8 @@
 
   function refreshCounts(e: any) {
     if (!e) return;
-    if (e.words) $node.wordCount = e.words;
-    if (e.characters) $node.charCount = e.characters;
+    if (typeof e.words === "number") $node.wordCount = e.words;
+    if (typeof e.characters === "number") $node.charCount = e.characters;
   }
 
   function onMarkdownContentChange(e: CustomEvent) {

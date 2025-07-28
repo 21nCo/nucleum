@@ -124,6 +124,13 @@
     return days;
   }
 
+  function createSafeDate(year: number, month: number, day: number): Date {
+    // Get the last day of the target month to clamp the day
+    const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
+    const clampedDay = Math.min(day, lastDayOfMonth);
+    return new Date(year, month, clampedDay);
+  }
+
   function getYearData(year: number) {
     return {
       year,
@@ -135,7 +142,7 @@
   }
 
   function updateSelectedDate(year: number) {
-    selectedDate = new Date(
+    selectedDate = createSafeDate(
       year,
       selectedDate.getMonth(),
       selectedDate.getDate()
@@ -185,17 +192,17 @@
 
     const targetYear = isScrollingDown ? currentYear + 1 : currentYear - 1;
 
-    const targetDate = new Date(targetYear, currentMonth, currentDay);
-    const dateButtons = Array.from(document.querySelectorAll("button")).filter(
-      (btn) => {
-        const btnText = btn.textContent?.trim();
-        if (btnText === currentDay.toString()) {
-          const monthContainer = btn.closest('[id^="month-"]');
-          return monthContainer?.id === `month-${targetYear}-${currentMonth}`;
-        }
-        return false;
+    const targetDate = createSafeDate(targetYear, currentMonth, currentDay);
+    const dateButtons = Array.from(
+      containerRef.querySelectorAll("button")
+    ).filter((btn) => {
+      const btnText = btn.textContent?.trim();
+      if (btnText === currentDay.toString()) {
+        const monthContainer = btn.closest('[id^="month-"]');
+        return monthContainer?.id === `month-${targetYear}-${currentMonth}`;
       }
-    );
+      return false;
+    });
 
     if (dateButtons.length > 0) {
       const containerRect = containerRef.getBoundingClientRect();
@@ -207,7 +214,7 @@
 
       if (isDateVisible && targetYear !== visibleYear) {
         visibleYear = targetYear;
-        selectedDate = new Date(targetYear, currentMonth, currentDay);
+        selectedDate = createSafeDate(targetYear, currentMonth, currentDay);
         dispatch("yearChange", { year: targetYear });
       }
     }
@@ -258,7 +265,7 @@
     }
   ) {
     isExplicitNavigation = true;
-    selectedDate = new Date(
+    selectedDate = createSafeDate(
       targetYear,
       props?.month ?? selectedDate.getMonth(),
       props?.day ?? selectedDate.getDate()
