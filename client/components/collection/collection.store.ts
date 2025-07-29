@@ -496,7 +496,7 @@ export class ActiveCollectionStore extends ActiveResourceStore<
 export const collectionLayoutOptions = [
   {
     value: CollectionLayout.BOARD,
-    icon: "grid"
+    icon: "lucide:layout-dashboard"
   },
   {
     value: CollectionLayout.TABLE,
@@ -512,7 +512,7 @@ export const collectionLayoutOptions = [
   },
   {
     value: CollectionLayout.MAP,
-    icon: "map-trifold",
+    icon: "map",
     // badge: "Planned",
     isDisabled: true
   }
@@ -599,7 +599,7 @@ export function resolveCollectionContextMenu(
           resourceActions.copyLink(),
           {
             value: "convert",
-            icon: "sync",
+            icon: "convert",
             label: "Convert as Simple",
             callback: async () => {
               const result = await collectionStore.modify(collection.id, {
@@ -643,7 +643,7 @@ export function resolveCollectionContextMenu(
         resourceActions.copyLink(),
         {
           value: "convert",
-          icon: "sync",
+          icon: "convert",
           label: "Convert to Typed",
           callback: async () => {
             console.log({ at: "resolveCollectionContextMenu.convert" });

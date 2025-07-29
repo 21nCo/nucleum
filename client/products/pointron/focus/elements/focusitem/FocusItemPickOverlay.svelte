@@ -76,7 +76,7 @@
         <span class="text-b3 text-fgs3"> Added </span>
       {:else}
         <Button
-          icon="play"
+          icon="circle"
           tooltip="Start focusing"
           style={ButtonStyle.OUTLINED}
           size={Size.sm}

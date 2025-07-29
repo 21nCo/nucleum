@@ -473,7 +473,7 @@ class GoalActions {
   convertToSubGoal = {
     value: PointronAction.CONVERT_TO_SUBGOAL,
     label: "Convert to sub goal",
-    icon: "arrow-bend-down-right",
+    icon: "to-sub",
     callback: async () => {
       appStore.runAction(PointronAction.SELECT_PARENT_GOAL, {
         componentParams: {
@@ -487,7 +487,7 @@ class GoalActions {
   moveSubgoal = {
     value: ResourceActionType.MOVE,
     label: "Move",
-    icon: "arrow-bend-up-right",
+    icon: "move",
     callback: async () => {
       appStore.runAction(PointronAction.SELECT_PARENT_GOAL, {
         componentParams: {
@@ -501,7 +501,7 @@ class GoalActions {
   convertToRootGoal = {
     value: PointronAction.CONVERT_TO_ROOT_GOAL,
     label: "Convert to top level goal",
-    icon: "arrow-fat-lines-up",
+    icon: "level-up",
     callback: async () => {
       return goalStore.convertToRoot(this.goal);
     }

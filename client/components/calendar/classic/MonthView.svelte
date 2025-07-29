@@ -124,7 +124,7 @@
           {/if}
         </span>
         {#if indicatorData.length > 0}
-          <div class="pl-1 pt-1">
+          <div class="pl-1 pt-1 w-full">
             <CalendarTileIndicator
               date={day}
               isActive={isSelected}

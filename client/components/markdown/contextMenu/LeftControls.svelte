@@ -100,7 +100,7 @@
     },
     [BlockAction.INSERT]: {
       value: BlockAction.INSERT,
-      icon: "arrow-elbow-down-right",
+      icon: "insert-down",
       secondStepComponent: {
         component: BlockBrowser,
         props: {
@@ -449,7 +449,7 @@
           )
         })}
       >
-        <Icon icon="dots-six-vertical" size={Size.lg} class="fill-fgs3" />
+        <Icon icon="rearrange" size={Size.lg} class="fill-fgs3" />
       </span>
     {/if}
   </button>

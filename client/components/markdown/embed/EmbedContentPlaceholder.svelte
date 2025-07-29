@@ -227,11 +227,11 @@
           {:else if subType === NodeType.PDF}
             <Icon icon="file-pdf" class="stroke-fgs3" />
           {:else if subType === NodeType.TWEET || subType === NodeType.TWITTER_PROFILE}
-            <Icon icon="x-logo" class="stroke-fgs3" />
+            <Icon icon="twitter" class="stroke-fgs3" />
           {:else if subType === NodeType.KINDLE_BOOK || subType === NodeType.KINDLE_HIGHLIGHT}
             <Icon icon="book" class="stroke-fgs3" />
           {:else if subType === NodeType.YOUTUBE_VIDEO || subType === NodeType.YOUTUBE_CHANNEL}
-            <Icon icon="youtube-logo" class="stroke-fgs3" />
+            <Icon icon="youtube" class="stroke-fgs3" />
           {:else if !subType}
             <div class="flex items-center justify-center gap-3">
               {#each embedIcons as icon}

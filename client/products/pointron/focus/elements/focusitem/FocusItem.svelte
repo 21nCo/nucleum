@@ -151,7 +151,7 @@
       >
         {#if isInEditMode}
           <span class="absolute left-2 top-3">
-            <Icon icon="dots-six-vertical" class="text-fgs2" />
+            <Icon icon="rearrange" class="text-fgs2" />
           </span>
         {/if}
         <div

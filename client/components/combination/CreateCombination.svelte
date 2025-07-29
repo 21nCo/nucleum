@@ -23,7 +23,7 @@
     },
     {
       label: "Canvas",
-      icon: "chalkboard-simple",
+      icon: "canvas",
       value: CombinationType.WHITEBOARD
     },
     {
@@ -33,7 +33,7 @@
     },
     {
       label: "Timeline",
-      icon: "calendar",
+      icon: "calendar-blank",
       value: CombinationType.TIMELINE
     },
     {

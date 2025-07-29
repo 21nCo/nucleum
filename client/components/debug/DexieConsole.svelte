@@ -267,7 +267,7 @@
     <h2 class="text-b1 font-semibold text-fgs1">Dexie Console</h2>
     <Button
       size={Size.sm}
-      icon="sync"
+      icon="refresh"
       on:click={loadDatabaseInfo}
       label="Refresh"
     />

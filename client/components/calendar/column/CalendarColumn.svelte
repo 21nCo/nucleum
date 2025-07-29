@@ -82,7 +82,7 @@
       label: "History",
       // tooltip: "History",
       value: CalendarColumnPanel.History,
-      icon: "clock"
+      icon: "history"
     };
     const overview = {
       label: "Overview",

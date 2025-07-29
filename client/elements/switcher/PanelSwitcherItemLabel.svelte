@@ -50,7 +50,7 @@
 {:else if isInEditMode}
   <span class="flex gap-2 items-center">
     <!-- TODO - rearrange - disabling until this feature is complete -->
-    <Icon icon="dots-six-vertical" class="text-fgs2" {size} />
+    <Icon icon="rearrange" class="text-fgs2" {size} />
     <Popover
       bind:this={labelEditPopoverRef}
       isPreventDefault={!isActive}

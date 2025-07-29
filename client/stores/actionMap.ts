@@ -194,7 +194,7 @@ export const globalActions: IAction[] = [
   {
     action: "tutorials",
     label: "Tutorials",
-    icon: "youtube-logo",
+    icon: "youtube",
     type: ActionType.LINK
   },
   {
@@ -274,7 +274,7 @@ export const globalActions: IAction[] = [
   {
     action: Action.ROADMAP,
     label: "Roadmap",
-    icon: "map-trifold",
+    icon: "map",
     type: ActionType.MODAL,
     handsetBehaviorType: ActionType.LINK,
     component: DocusaurusEmbed,
@@ -306,7 +306,7 @@ export const globalActions: IAction[] = [
   {
     action: "twitter",
     label: "Twitter",
-    icon: "x-logo",
+    icon: "twitter",
     type: ActionType.LINK
   },
   {

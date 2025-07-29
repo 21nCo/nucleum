@@ -45,7 +45,7 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
     action: Action.ARTIFICIAL_INTELLIGENCE,
     cmdLabel: [{ variant: "aiSettings", label: "AI Settings" }],
     label: "Artificial Intelligence",
-    icon: "head-circuit",
+    icon: "cpu",
     component: TacoSettings,
     modalParams: {
       title: "Artificial Intelligence",

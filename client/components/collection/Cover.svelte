@@ -34,18 +34,18 @@
 
   $: height = isConstrainedWidth ? 100 : (size?.height ?? $view.height / 5);
 
-  function onReplace(e: CustomEvent) {
+  function onReplace(e: MouseEvent) {
     isCoverPickerOpen = true;
     dispatch("pick");
     if (e instanceof MouseEvent) e.stopPropagation();
   }
 
-  function onClose(e: CustomEvent) {
+  function onClose(e: MouseEvent) {
     isCoverPickerOpen = false;
     if (e instanceof MouseEvent) e.stopPropagation();
   }
 
-  function onRemove(e: CustomEvent) {
+  function onRemove(e: MouseEvent) {
     cover = undefined;
     dispatch("change", cover);
     if (e instanceof MouseEvent) e.stopPropagation();
@@ -211,9 +211,7 @@
           {/if}
           <Button
             label={isCoverPickerOpen ? "Close" : "Replace"}
-            icon={isCoverPickerOpen
-              ? "x-circle"
-              : "sync"}
+            icon={isCoverPickerOpen ? "x-circle" : "reset"}
             size={Size.sm}
             on:click={isCoverPickerOpen ? onClose : onReplace}
           />
@@ -232,7 +230,8 @@
 
 <style>
   .custom-gradient {
-    background-image: linear-gradient(
+    background-image:
+      linear-gradient(
         to top,
         rgba(var(--colors-fgs1), 0.8) 0%,
         rgba(var(--colors-fgs1), 0.7) 10%,

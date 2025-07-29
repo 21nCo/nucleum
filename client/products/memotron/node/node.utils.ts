@@ -127,15 +127,14 @@ export function resolveNodeIcon(contentType: NodeType, url?: string) {
     case NodeType.FILE:
       return "ph:file-light";
     case NodeType.YOUTUBE_VIDEO:
-      return "youtube-logo";
+      return "youtube";
     case NodeType.YOUTUBE_CHANNEL:
-      return "youtube-logo";
+      return "youtube";
     case NodeType.YOUTUBE_TIMESTAMP_CLIP:
-      return "youtube-logo";
+      return "youtube";
     case NodeType.TWEET:
-      return "ph:x-logo-light";
     case NodeType.TWITTER_PROFILE:
-      return "ph:x-logo-light";
+      return "twitter";
     case NodeType.KINDLE_BOOK:
       return "amazon-logo";
     case NodeType.KINDLE_HIGHLIGHT:
@@ -144,9 +143,7 @@ export function resolveNodeIcon(contentType: NodeType, url?: string) {
     case NodeType.GIST:
       return "ph:code-light";
     default:
-      return url && isValidUrl(url)
-        ? resolveFallbackIconForUrl(url)
-        : "book";
+      return url && isValidUrl(url) ? resolveFallbackIconForUrl(url) : "book";
   }
 }
 
@@ -170,7 +167,7 @@ export function resolveFallbackIconForUrl(url: string | undefined) {
   if (hostPart === "youtube.com" || hostPart.endsWith(".youtube.com"))
     return "logos:youtube-icon";
   if (hostPart === "twitter.com" || hostPart.endsWith(".twitter.com"))
-    return "x-logo";
+    return "twitter";
   if (hostPart === "instagram.com" || hostPart.endsWith(".instagram.com"))
     return "ph:instagram-logo";
   if (hostPart === "linkedin.com" || hostPart.endsWith(".linkedin.com"))

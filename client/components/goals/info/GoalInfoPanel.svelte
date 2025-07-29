@@ -126,6 +126,7 @@
     {#if $goal.status === GoalStatus.COMPLETED}
       <InlineInfoBanner
         icon="check-circle"
+        isIconFilled={true}
         content="This goal is marked as completed. It will not appear in focus items search results."
       />
     {/if}

@@ -52,7 +52,7 @@
   }}
 >
   <span class="cursor-move h-full flex flex-col items-center justify-center">
-    <Icon icon="dots-six-vertical" class="stroke-fgs3" />
+    <Icon icon="rearrange" class="stroke-fgs3" />
   </span>
   <Popover
     triggerClass="flex items-center w-6 h-full"

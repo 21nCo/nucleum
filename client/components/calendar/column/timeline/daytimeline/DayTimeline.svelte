@@ -398,7 +398,7 @@
     {#if scale !== 1}
       <div class="px-2 flex items-center justify-center">
         <Button
-          icon="sync"
+          icon="reset"
           label="Reset"
           size={Size.sm}
           style={ButtonStyle.PLAIN}
@@ -407,11 +407,7 @@
         />
       </div>
     {/if}
-    <Button
-      icon="magnifying-glass-plus"
-      parentBgIndex={3}
-      on:click={zoomIn}
-    />
+    <Button icon="magnifying-glass-plus" parentBgIndex={3} on:click={zoomIn} />
     <Button
       icon="magnifying-glass-minus"
       parentBgIndex={3}

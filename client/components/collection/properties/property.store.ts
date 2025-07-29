@@ -87,7 +87,7 @@ export const autoPropertyOptions = [
   },
   {
     label: "Formula",
-    icon: "math-operations",
+    icon: "formula",
     value: PropertyType.FORMULA,
     isDisabled: true,
     groupId: PropertyTypeGroup.RULE_BASED
@@ -162,12 +162,12 @@ export const universalPropertyOptions = [
   },
   {
     label: "Country",
-    icon: "ph:globe-light",
+    icon: "globe",
     value: UniversalPropertyType.COUNTRY
   },
   {
     label: "Language",
-    icon: "globe",
+    icon: "translate",
     value: UniversalPropertyType.LANGUAGE
   },
   {
@@ -177,7 +177,7 @@ export const universalPropertyOptions = [
   },
   {
     label: "Continent",
-    icon: "globe",
+    icon: "map",
     value: UniversalPropertyType.CONTINENT
   },
   {
@@ -212,7 +212,7 @@ export const propertyOptions = [
   },
   {
     label: "Email",
-    icon: "envelope",
+    icon: "mail",
     value: PropertyType.EMAIL,
     groupId: PropertyTypeGroup.TEXT
   },
@@ -230,7 +230,7 @@ export const propertyOptions = [
   },
   {
     label: "Multi select",
-    icon: "list",
+    icon: "list-bullets",
     value: PropertyType.MULTI_SELECT,
     groupId: PropertyTypeGroup.SELECT
   },

@@ -713,6 +713,23 @@
             </button>
           </div>
         {/if}
+        {#if !$view.isConstrainedWidth && (isEmptyState || captureType === CaptureType.AUDIO)}
+          <div class="w-full flex justify-center mb-5">
+            <Button
+              icon="cross"
+              tooltip="Close"
+              shortcut={{
+                key: KeyboardKey.ESCAPE,
+                modifiers: []
+              }}
+              on:click={() => {
+                appStore.closeResource({ isRestrictToModals: true });
+              }}
+              style={ButtonStyle.OUTLINED}
+              size={Size.lg}
+            />
+          </div>
+        {/if}
       </div>
     </div>
   {/key}

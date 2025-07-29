@@ -140,8 +140,14 @@
   import ThreeDotsFade from "../iconsV2/svgSpinners/ThreeDotsFade.svelte";
 
   export let icon: string | undefined = undefined;
-  export let size: Size.xs | Size.sm | Size.md | Size.lg | Size.xl | Size.xxl =
-    Size.md;
+  export let size:
+    | Size.xs
+    | Size.sm
+    | Size.md
+    | Size.lg
+    | Size.xl
+    | Size.xxl
+    | Size.xxs = Size.md;
   /**
    * When an icon context switches between normal and accent bg as its parent.
    * If undefined, the icon will not change its appearance based on the context.
@@ -285,7 +291,15 @@
       renderedIcon = isFilled ? icon.replace("-light", "-fill") : icon;
     } else if (icon.includes("-thin")) {
       renderedIcon = isFilled ? icon.replace("-thin", "-fill") : icon;
+    } else if (icon.includes("-linear")) {
+      renderedIcon = isFilled ? icon.replace("-linear", "-bold") : icon;
+    } else if (icon.includes("-line-duotone")) {
+      renderedIcon = isFilled
+        ? icon.replace("-line-duotone", "-bold-duotone")
+        : icon;
     } else if (icon.includes("heroicons")) {
+      renderedIcon = isFilled ? icon + "-solid" : icon;
+    } else if (icon.includes("mynaui:")) {
       renderedIcon = isFilled ? icon + "-solid" : icon;
     }
     if (dev_useIconifyTailwind) {
@@ -307,6 +321,20 @@
         sheet = "sprite-ph-duotone";
       } else {
         sheet = "sprite-ph-base";
+      }
+    } else if (iconName.startsWith("lucide:")) {
+      sheet = "sprite-lucide-base";
+    } else if (iconName.startsWith("solar:")) {
+      if (iconName.endsWith("-linear")) {
+        sheet = "sprite-solar-linear";
+      } else if (iconName.endsWith("-bold")) {
+        sheet = "sprite-solar-bold";
+      } else if (iconName.endsWith("-line-duotone")) {
+        sheet = "sprite-solar-line-duotone";
+      } else if (iconName.endsWith("-bold-duotone")) {
+        sheet = "sprite-solar-bold-duotone";
+      } else {
+        sheet = "sprite-solar-base";
       }
     }
     const path = resolveSpriteSheetPath(sheet);
@@ -340,7 +368,11 @@
             ? "w-6 h-6"
             : size === Size.md
               ? "w-5 h-5"
-              : "w-4 h-4"}
+              : size === Size.sm
+                ? "w-4 h-4"
+                : size === Size.xs
+                  ? "w-3 h-3"
+                  : "w-2 h-2"}
     {#if resolvedIcon.startsWith("svg-spinners")}
       <div class={cn(_classList, "iconifysvg", sizeClass, renderedIconifyIcon)}>
         {#if resolvedIcon.includes("3-dots-fade")}

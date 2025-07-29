@@ -524,7 +524,7 @@
       >
         <Toggle
           bind:on={isRefineShown}
-          icon="sliders"
+          icon="sliders-horizontal"
           tooltip="Settings & filters"
           size={Size.lg}
           bgSize={Size.sm}

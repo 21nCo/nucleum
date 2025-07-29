@@ -300,6 +300,6 @@
     }}
     class="flex justify-center items-center"
   >
-    <Icon icon={isHovering ? "ph:dots-six" : "dots-six"} />
+    <Icon icon="rearrange-horizontal" />
   </button>
 </button>

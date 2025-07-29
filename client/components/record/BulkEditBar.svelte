@@ -94,7 +94,7 @@
   const moveToToday = {
     action: "moveToToday",
     label: "Move to today",
-    icon: "arrow-bend-up-right"
+    icon: "move"
   };
   const setDate = {
     action: "setDate",

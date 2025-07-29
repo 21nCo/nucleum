@@ -37,7 +37,7 @@
     switch (action) {
       case TableCellDefaultAction.REORDER:
         return {
-          key: "dots-six",
+          key: "rearrange-horizontal",
           type: TableCellType.ACTION
         };
       case TableCellDefaultAction.REMOVE:

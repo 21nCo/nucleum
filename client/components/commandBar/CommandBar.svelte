@@ -221,7 +221,7 @@
       on:mousedown={(e) => e.preventDefault()}
     />
     <Button
-      icon="chevron-down"
+      icon="ph:caret-line-down-light"
       label="cancel"
       parentBgIndex={2}
       size={Size.sm}

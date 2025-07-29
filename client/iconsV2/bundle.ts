@@ -1,7 +1,13 @@
 import { getIconData } from "@iconify/utils";
 import { readFile, unlink, writeFile } from "fs/promises";
 import { locate } from "@iconify/json";
-import { bundleNumber, iconSets, phIcons } from "./icons-list";
+import {
+  bundleNumber,
+  iconSets,
+  phIcons,
+  lucideIconsForBundling,
+  solarIconsForBundling
+} from "./icons-list";
 import { parse } from "$lib/shared/utils/json.utils";
 
 const version = bundleNumber;
@@ -42,6 +48,36 @@ async function buildPhSprite() {
       new Set(value)
     );
     await build(spriteContent, "sprite-ph-" + key);
+  }
+}
+
+async function buildLucideSprite() {
+  const filename = locate("lucide");
+  const icons = parse(await readFile(filename, "utf8"));
+  for (const [key, value] of Object.entries(lucideIconsForBundling)) {
+    let spriteContent = spriteContentStart;
+    spriteContent = addIconsToSprite(
+      spriteContent,
+      icons,
+      "lucide",
+      new Set(value)
+    );
+    await build(spriteContent, "sprite-lucide-" + key);
+  }
+}
+
+async function buildSolarSprite() {
+  const filename = locate("solar");
+  const icons = parse(await readFile(filename, "utf8"));
+  for (const [key, value] of Object.entries(solarIconsForBundling)) {
+    let spriteContent = spriteContentStart;
+    spriteContent = addIconsToSprite(
+      spriteContent,
+      icons,
+      "solar",
+      new Set(value)
+    );
+    await build(spriteContent, "sprite-solar-" + key);
   }
 }
 
@@ -88,6 +124,12 @@ function addIconsToSprite(
           'stroke-width="1"'
         );
       }
+      if (setName === "lucide") {
+        iconBody = iconBody.replace(
+          /stroke-width="[^"]*"/g,
+          'stroke-width="1.2"'
+        );
+      }
 
       spriteContent += `
         <symbol id="${setName}:${iconName}" viewBox="0 0 ${iconData.width} ${iconData.height}">
@@ -109,3 +151,5 @@ function resolveFullPath(prefix: string, versionParam?: number) {
 
 buildIconSprite();
 buildPhSprite();
+buildLucideSprite();
+buildSolarSprite();

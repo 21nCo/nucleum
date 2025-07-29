@@ -53,18 +53,14 @@ export const memotronActions: IAction[] = [
     action: resourceAction(Resource.node, ResourceActionType.CREATE),
     component: Capture,
     label: "Capture",
-    // icon: "ph:plus-circle-light",
     icon: "mynaui:plus-hexagon",
     type: ActionType.RESOURCE,
     accessMode: ResourceAccessMode.POP,
-    // isRenderAsPageInPortrait: true,
     modalParams: {
       layout: {
-        size: Size.xxl,
+        size: Size.full,
         orientation: Orientation.Horizontal,
-        ignoreSafeArea: true,
-        isShowCantileverClose: true,
-        isShowBackButton: false
+        ignoreSafeArea: true
       }
     }
   },

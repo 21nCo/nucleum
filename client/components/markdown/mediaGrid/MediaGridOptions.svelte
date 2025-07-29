@@ -172,7 +172,7 @@
             />
           </div>
         {/if}
-        <Icon icon="sliders" />
+        <Icon icon="sliders-horizontal" />
       </button>
       <Button
         icon="trash"

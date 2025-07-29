@@ -63,8 +63,8 @@ export async function lambdaUsingNode(
         console.log("parsing form data", { body: event.body });
         body = parse(event.body ?? "");
       } else {
-        console.log("parsing json data", { body: event.body });
         body = parseJson(event.body ?? "");
+        console.log("json data", { bodyRaw: event.body, body });
       }
     }
     const result = await callback(body, agent);

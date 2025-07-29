@@ -57,7 +57,7 @@
         {
           value: "clips",
           label: "Tweets",
-          icon: "x-logo"
+          icon: "twitter"
         }
         // tasks
       ];
@@ -66,7 +66,7 @@
         {
           value: "clips",
           label: "Clips",
-          icon: "ph:youtube-logo"
+          icon: "youtube"
         }
         // tasks
       ];

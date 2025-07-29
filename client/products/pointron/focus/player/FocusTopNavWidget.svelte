@@ -10,6 +10,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   import { Product } from "$lib/client/types/product.type";
+  import TopNavLeftMenuItem from "$lib/client/layout/topNav/TopNavLeftMenuItem.svelte";
   export let ctx: Product = Product.NUCLEUS;
   const action =
     ctx === Product.NUCLEUS ? PointronAction.FOCUS : PointronAction.FOCUS_MODAL;
@@ -37,12 +38,10 @@
     {formatSeconds($activeSession.timeElapsed, TimeFormat.CLOCK)}
   </button>
 {:else}
-  <Button
+  <TopNavLeftMenuItem
     icon="ph:circle"
     tooltip="Focus"
-    style={ButtonStyle.PLAIN}
     shortcut={action}
-    parentBgIndex={2}
     on:click={handleClick}
   />
 {/if}

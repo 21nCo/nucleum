@@ -676,17 +676,17 @@
                 },
                 {
                   value: "flashcards",
-                  icon: "squares",
+                  icon: "ph:cards-three-light",
                   label: "Run Flashcards"
                 },
                 {
                   value: "slideshow",
-                  icon: "squares-2x2",
+                  icon: "ph:slideshow-light",
                   label: "Start slideshow"
                 },
                 {
                   value: "timemachine",
-                  icon: "clock",
+                  icon: "history",
                   label: "Time machine"
                 }
               ]}

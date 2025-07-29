@@ -39,7 +39,7 @@
   >
     {#if isHovering}
       <Icon
-        icon="dots-six-vertical"
+        icon="rearrange"
         class={cn({
           "text-ccs1": accessPoint !== ResourceAccessPoint.FORM,
           "text-fgs3": accessPoint === ResourceAccessPoint.FORM

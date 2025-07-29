@@ -7,890 +7,975 @@ export interface IconMapping {
 export const iconMappings: Record<string, IconMapping> = {
   // Navigation and Actions
   home: {
-    phosphor: "house-light",
+    phosphor: "house",
     lucide: "home",
-    solar: "home-linear"
+    solar: "home"
   },
   bolt: {
-    phosphor: "lightning-light",
+    phosphor: "lightning",
     lucide: "zap",
-    solar: "bolt-linear"
+    solar: "bolt"
   },
   settings: {
-    phosphor: "gear-light",
+    phosphor: "gear",
     lucide: "settings",
-    solar: "settings-linear"
+    solar: "settings"
   },
   plus: {
-    phosphor: "plus-light",
+    phosphor: "plus",
     lucide: "plus",
-    solar: "add-linear"
+    solar: "add"
   },
   minus: {
-    phosphor: "minus-light",
+    phosphor: "minus",
     lucide: "minus",
-    solar: "minus-linear"
+    solar: "minus"
   },
   cross: {
-    phosphor: "x-light",
+    phosphor: "x",
     lucide: "x",
-    solar: "close-linear"
+    solar: "close"
   },
   check: {
-    phosphor: "check-light",
+    phosphor: "check",
     lucide: "check",
-    solar: "check-linear"
+    solar: "check"
+  },
+  funnel: {
+    phosphor: "funnel",
+    lucide: "funnel",
+    solar: "filter"
   },
 
   // Arrows
   "arrow-left": {
-    phosphor: "arrow-left-light",
+    phosphor: "arrow-left",
     lucide: "arrow-left",
-    solar: "arrow-left-linear"
+    solar: "arrow-left"
   },
   "arrow-right": {
-    phosphor: "arrow-right-light",
+    phosphor: "arrow-right",
     lucide: "arrow-right",
-    solar: "arrow-right-linear"
+    solar: "arrow-right"
   },
   "arrow-up": {
-    phosphor: "arrow-up-light",
+    phosphor: "arrow-up",
     lucide: "arrow-up",
-    solar: "arrow-up-linear"
+    solar: "arrow-up"
   },
   "arrow-down": {
-    phosphor: "arrow-down-light",
+    phosphor: "arrow-down",
     lucide: "arrow-down",
-    solar: "arrow-down-linear"
+    solar: "arrow-down"
   },
   "arrow-up-right": {
-    phosphor: "arrow-up-right-light",
+    phosphor: "arrow-up-right",
     lucide: "arrow-up-right",
-    solar: "arrow-up-right-linear"
+    solar: "arrow-up-right"
+  },
+  "arrow-arc-left": {
+    phosphor: "arrow-arc-left",
+    lucide: "arrow-up-left",
+    solar: "arrow-up-left"
   },
 
   // Chevrons
   "chevron-left": {
-    phosphor: "caret-left-light",
+    phosphor: "caret-left",
     lucide: "chevron-left",
-    solar: "alt-arrow-left-linear"
+    solar: "alt-arrow-left"
   },
   "chevron-right": {
-    phosphor: "caret-right-light",
+    phosphor: "caret-right",
     lucide: "chevron-right",
-    solar: "alt-arrow-right-linear"
+    solar: "alt-arrow-right"
   },
   "chevron-up": {
-    phosphor: "caret-up-light",
+    phosphor: "caret-up",
     lucide: "chevron-up",
-    solar: "alt-arrow-up-linear"
+    solar: "alt-arrow-up"
   },
   "chevron-down": {
-    phosphor: "caret-down-light",
+    phosphor: "caret-down",
     lucide: "chevron-down",
-    solar: "alt-arrow-down-linear"
+    solar: "alt-arrow-down"
   },
 
   // Core Shapes and Elements
   circle: {
-    phosphor: "circle-light",
+    phosphor: "circle",
     lucide: "circle",
-    solar: "circle-linear"
+    solar: "circle"
   },
   hexagon: {
-    phosphor: "hexagon-light",
+    phosphor: "hexagon",
     lucide: "hexagon",
-    solar: "hexagon-linear"
+    solar: "hexagon"
   },
   square: {
-    phosphor: "square-light",
+    phosphor: "square",
     lucide: "square",
-    solar: "square-linear"
+    solar: "square"
   },
 
   // Content and Media
   image: {
-    phosphor: "image-light",
+    phosphor: "image",
     lucide: "image",
-    solar: "gallery-linear"
+    solar: "gallery"
   },
   video: {
-    phosphor: "video-light",
+    phosphor: "video",
     lucide: "video",
-    solar: "video-library-linear"
+    solar: "video-library"
   },
   music: {
-    phosphor: "music-note-light",
+    phosphor: "music-note",
     lucide: "music",
-    solar: "music-note-linear"
+    solar: "music-note"
   },
   file: {
-    phosphor: "file-light",
+    phosphor: "file",
     lucide: "file",
-    solar: "file-linear"
+    solar: "file"
   },
   "file-pdf": {
-    phosphor: "file-pdf-light",
+    phosphor: "file-pdf",
     lucide: "file-text",
-    solar: "file-text-linear"
+    solar: "file-text"
   },
 
   // Actions
   edit: {
-    phosphor: "pencil-simple-light",
+    phosphor: "pencil-simple-line",
     lucide: "edit",
-    solar: "pen-new-square-linear"
+    solar: "pen-new-square"
   },
   trash: {
-    phosphor: "trash-light",
+    phosphor: "trash",
     lucide: "trash-2",
-    solar: "trash-bin-minimalistic-linear"
+    solar: "trash-bin-minimalistic"
   },
   copy: {
-    phosphor: "copy-light",
+    phosphor: "copy",
     lucide: "copy",
-    solar: "copy-linear"
+    solar: "copy"
   },
   share: {
-    phosphor: "share-light",
+    phosphor: "share",
     lucide: "share",
-    solar: "share-linear"
+    solar: "share"
   },
   archive: {
-    phosphor: "archive-light",
+    phosphor: "archive",
     lucide: "archive",
-    solar: "archive-linear"
+    solar: "archive"
   },
   star: {
-    phosphor: "star-light",
+    phosphor: "star",
     lucide: "star",
-    solar: "star-linear"
+    solar: "star"
   },
   bookmark: {
-    phosphor: "bookmark-simple-light",
+    phosphor: "bookmark-simple",
     lucide: "bookmark",
-    solar: "bookmark-linear"
+    solar: "bookmark"
+  },
+  heart: {
+    phosphor: "heart",
+    lucide: "heart",
+    solar: "heart"
   },
 
   // Interface Elements
   search: {
-    phosphor: "magnifying-glass-light",
+    phosphor: "magnifying-glass",
     lucide: "search",
-    solar: "minimalistic-magnifer-linear"
+    solar: "minimalistic-magnifer"
   },
   info: {
-    phosphor: "info-light",
+    phosphor: "info",
     lucide: "info",
-    solar: "info-circle-linear"
+    solar: "info-circle"
   },
   warning: {
-    phosphor: "warning-light",
+    phosphor: "warning",
     lucide: "alert-triangle",
-    solar: "danger-triangle-linear"
+    solar: "danger-triangle"
   },
   question: {
-    phosphor: "question-light",
+    phosphor: "question",
     lucide: "help-circle",
-    solar: "question-circle-linear"
+    solar: "question-circle"
   },
 
   // Data and Content
   list: {
-    phosphor: "list-bullets-light",
+    phosphor: "list",
     lucide: "list",
-    solar: "list-linear"
+    solar: "list"
+  },
+  "list-bullets": {
+    phosphor: "list-bullets",
+    lucide: "list",
+    solar: "list"
   },
   "list-ordered": {
-    phosphor: "list-numbers-light",
+    phosphor: "list-numbers",
     lucide: "list-ordered",
-    solar: "list-1-linear"
+    solar: "list-1"
   },
   "list-check": {
-    phosphor: "list-checks-light",
+    phosphor: "list-checks",
     lucide: "list-todo",
-    solar: "checklist-linear"
+    solar: "checklist"
   },
   table: {
-    phosphor: "table-light",
+    phosphor: "table",
     lucide: "table",
-    solar: "table-linear"
+    solar: "table"
   },
   calendar: {
-    phosphor: "calendar-light",
+    phosphor: "calendar-dots",
     lucide: "calendar",
-    solar: "calendar-linear"
+    solar: "calendar"
+  },
+  "calendar-blank": {
+    phosphor: "calendar-blank",
+    lucide: "calendar",
+    solar: "calendar"
   },
   clock: {
-    phosphor: "clock-light",
+    phosphor: "clock",
     lucide: "clock",
-    solar: "clock-circle-linear"
+    solar: "clock-circle"
+  },
+  history: {
+    phosphor: "clock-counter-clockwise",
+    lucide: "clock",
+    solar: "clock-circle"
   },
 
   // Media Controls
   play: {
-    phosphor: "play-light",
+    phosphor: "play",
     lucide: "play",
-    solar: "play-linear"
+    solar: "play"
   },
   pause: {
-    phosphor: "pause-light",
+    phosphor: "pause",
     lucide: "pause",
-    solar: "pause-linear"
+    solar: "pause"
   },
   stop: {
-    phosphor: "stop-light",
+    phosphor: "stop",
     lucide: "square",
-    solar: "stop-linear"
+    solar: "stop"
   },
 
   // Technology
   code: {
-    phosphor: "code-light",
+    phosphor: "code",
     lucide: "code",
-    solar: "code-linear"
+    solar: "code"
   },
   terminal: {
-    phosphor: "terminal-light",
+    phosphor: "terminal",
     lucide: "terminal",
-    solar: "terminal-linear"
+    solar: "command"
   },
   database: {
-    phosphor: "database-light",
+    phosphor: "database",
     lucide: "database",
-    solar: "database-linear"
+    solar: "database"
   },
 
   // Communication
   chat: {
-    phosphor: "chat-light",
+    phosphor: "chat",
     lucide: "message-circle",
-    solar: "chat-round-linear"
+    solar: "chat-round"
   },
   mail: {
-    phosphor: "envelope-light",
+    phosphor: "envelope",
     lucide: "mail",
-    solar: "letter-linear"
+    solar: "letter"
   },
   bell: {
-    phosphor: "bell-light",
+    phosphor: "bell",
     lucide: "bell",
-    solar: "bell-linear"
+    solar: "bell"
   },
 
   // Layout and Organization
   folder: {
-    phosphor: "folder-light",
+    phosphor: "folder",
     lucide: "folder",
-    solar: "folder-linear"
+    solar: "folder"
   },
   grid: {
-    phosphor: "squares-four-light",
+    phosphor: "squares-four",
     lucide: "grid-3x3",
-    solar: "widget-4-linear"
+    solar: "widget-4"
+  },
+  widget: {
+    phosphor: "squares-four",
+    lucide: "shapes",
+    solar: "widget-4"
   },
   tag: {
-    phosphor: "tag-light",
+    phosphor: "tag",
     lucide: "tag",
-    solar: "tag-linear"
+    solar: "tag"
   },
 
   // Status and State
   lock: {
-    phosphor: "lock-light",
+    phosphor: "lock",
     lucide: "lock",
-    solar: "lock-linear"
+    solar: "lock"
   },
   "lock-open": {
-    phosphor: "lock-open-light",
+    phosphor: "lock-open",
     lucide: "unlock",
-    solar: "lock-unlocked-linear"
+    solar: "lock-unlocked"
   },
   eye: {
-    phosphor: "eye-light",
+    phosphor: "eye",
     lucide: "eye",
-    solar: "eye-linear"
+    solar: "eye"
   },
   "eye-slash": {
-    phosphor: "eye-slash-light",
+    phosphor: "eye-slash",
     lucide: "eye-off",
-    solar: "eye-closed-linear"
+    solar: "eye-closed"
   },
 
   // Connectivity and Links
   link: {
-    phosphor: "link-light",
+    phosphor: "link",
     lucide: "link",
-    solar: "link-linear"
+    solar: "link"
   },
   "link-break": {
-    phosphor: "link-break-light",
+    phosphor: "link-break",
     lucide: "unlink",
-    solar: "link-broken-linear"
+    solar: "link-broken"
   },
   "link-simple": {
-    phosphor: "link-simple-light",
+    phosphor: "link-simple",
     lucide: "link-2",
-    solar: "link-minimalistic-linear"
+    solar: "link-minimalistic"
   },
 
   // Tools and Objects
   crop: {
-    phosphor: "crop-light",
+    phosphor: "crop",
     lucide: "crop",
-    solar: "crop-linear"
+    solar: "crop"
   },
   highlighter: {
-    phosphor: "highlighter-light",
+    phosphor: "highlighter",
     lucide: "highlighter",
-    solar: "pen-linear"
+    solar: "pen"
   },
 
   // Navigation UI
   "dots-vertical": {
-    phosphor: "dots-three-vertical-light",
+    phosphor: "dots-three-vertical",
     lucide: "more-vertical",
-    solar: "menu-dots-linear"
+    solar: "menu-dots"
   },
   "dots-horizontal": {
-    phosphor: "dots-three-light",
+    phosphor: "dots-three",
     lucide: "more-horizontal",
     solar: "menu-dots-bold"
   },
   bars: {
-    phosphor: "list-light",
+    phosphor: "list",
     lucide: "menu",
-    solar: "hamburger-menu-linear"
+    solar: "hamburger-menu"
   },
 
   // Special/Custom Icons
   target: {
-    phosphor: "target-light",
+    phosphor: "target",
     lucide: "target",
-    solar: "target-linear"
+    solar: "target"
   },
   sparkle: {
-    phosphor: "sparkle-light",
+    phosphor: "sparkle",
     lucide: "sparkles",
-    solar: "star-shine-linear"
+    solar: "star-shine"
   },
   rocket: {
-    phosphor: "rocket-light",
+    phosphor: "rocket",
     lucide: "rocket",
-    solar: "rocket-linear"
+    solar: "rocket"
+  },
+  cube: {
+    phosphor: "cube",
+    lucide: "cube",
+    solar: "cube"
   },
 
   // User and People
   user: {
-    phosphor: "user-light",
+    phosphor: "user",
     lucide: "user",
-    solar: "user-linear"
+    solar: "user"
   },
   users: {
-    phosphor: "users-light",
+    phosphor: "users",
     lucide: "users",
-    solar: "users-group-rounded-linear"
+    solar: "users-group-rounded"
   },
 
   // Device and Hardware
   camera: {
-    phosphor: "camera-light",
+    phosphor: "camera",
     lucide: "camera",
-    solar: "camera-linear"
+    solar: "camera"
   },
   microphone: {
-    phosphor: "microphone-light",
+    phosphor: "microphone",
     lucide: "mic",
-    solar: "microphone-linear"
+    solar: "microphone"
   },
   keyboard: {
-    phosphor: "keyboard-light",
+    phosphor: "keyboard",
     lucide: "keyboard",
-    solar: "keyboard-linear"
+    solar: "keyboard"
   },
 
   // Charts and Analytics
   chart: {
-    phosphor: "chart-pie-light",
+    phosphor: "chart-pie",
     lucide: "pie-chart",
-    solar: "chart-linear"
+    solar: "chart"
   },
   "chart-bar": {
-    phosphor: "chart-bar-light",
+    phosphor: "chart-bar",
     lucide: "bar-chart",
-    solar: "chart-2-linear"
+    solar: "chart-2"
   },
   "chart-line": {
-    phosphor: "chart-line-light",
+    phosphor: "chart-line",
     lucide: "line-chart",
-    solar: "chart-linear"
+    solar: "chart"
   },
 
   // Movement and Transfer
   upload: {
-    phosphor: "upload-light",
+    phosphor: "upload",
     lucide: "upload",
-    solar: "upload-linear"
+    solar: "upload"
   },
   download: {
-    phosphor: "download-light",
+    phosphor: "download-simple",
     lucide: "download",
-    solar: "download-linear"
+    solar: "download"
   },
 
   // Text and Typography
   "text-h1": {
-    phosphor: "text-h-one-light",
+    phosphor: "text-h-one",
     lucide: "heading-1",
-    solar: "text-linear"
+    solar: "text"
   },
   "text-h2": {
-    phosphor: "text-h-two-light",
+    phosphor: "text-h-two",
     lucide: "heading-2",
-    solar: "text-linear"
+    solar: "text"
   },
   "text-h3": {
-    phosphor: "text-h-three-light",
+    phosphor: "text-h-three",
     lucide: "heading-3",
-    solar: "text-linear"
+    solar: "text"
   },
   paragraph: {
-    phosphor: "paragraph-light",
+    phosphor: "paragraph",
     lucide: "type",
-    solar: "text-linear"
+    solar: "text"
   },
   quote: {
-    phosphor: "quotes-light",
+    phosphor: "quotes",
     lucide: "quote",
-    solar: "quote-linear"
+    solar: "quote"
   },
 
   // Social and Branding
-  "x-logo": {
-    phosphor: "x-logo-light",
+  twitter: {
+    phosphor: "x-logo",
     lucide: "twitter",
-    solar: "twitter-linear"
+    solar: "twitter"
   },
-  "youtube-logo": {
-    phosphor: "youtube-logo-light",
+  youtube: {
+    phosphor: "youtube-logo",
     lucide: "youtube",
-    solar: "video-frame-play-horizontal-linear"
+    solar: "video-frame-play-horizontal"
   },
 
   // Custom Compound Actions
   "check-circle": {
-    phosphor: "check-circle-light",
+    phosphor: "check-circle",
     lucide: "check-circle",
-    solar: "check-circle-linear"
+    solar: "check-circle"
   },
   "plus-circle": {
-    phosphor: "plus-circle-light",
+    phosphor: "plus-circle",
     lucide: "plus-circle",
-    solar: "add-circle-linear"
+    solar: "add-circle"
   },
   "minus-circle": {
-    phosphor: "minus-circle-light",
+    phosphor: "minus-circle",
     lucide: "minus-circle",
-    solar: "close-circle-linear"
+    solar: "close-circle"
   },
   "x-circle": {
-    phosphor: "x-circle-light",
+    phosphor: "x-circle",
     lucide: "x-circle",
-    solar: "close-circle-linear"
+    solar: "close-circle"
   },
 
   // Resource-specific icons used in resource.utils.ts
   "check-square": {
-    phosphor: "check-square-light",
+    phosphor: "check-square",
     lucide: "check-square",
-    solar: "checkbox-linear"
+    solar: "checkbox"
   },
   "check-square-offset": {
-    phosphor: "check-square-offset-light",
+    phosphor: "check-square-offset",
     lucide: "check-square",
-    solar: "checkbox-linear"
+    solar: "checkbox"
   },
   "bounding-box": {
-    phosphor: "bounding-box-light",
+    phosphor: "bounding-box",
     lucide: "box",
-    solar: "widget-linear"
+    solar: "widget"
   },
   "caret-circle-up": {
-    phosphor: "caret-circle-up-light",
+    phosphor: "caret-circle-up",
     lucide: "chevron-up-circle",
-    solar: "arrow-up-linear"
+    solar: "arrow-up"
   },
   bicycle: {
-    phosphor: "bicycle-light",
+    phosphor: "bicycle",
     lucide: "bike",
-    solar: "bicycle-linear"
+    solar: "bicycle"
   },
   rss: {
-    phosphor: "rss-light",
+    phosphor: "rss",
     lucide: "rss",
-    solar: "rss-linear"
+    solar: "rss"
   },
   globe: {
-    phosphor: "globe-light",
+    phosphor: "globe",
     lucide: "globe",
-    solar: "globe-linear"
+    solar: "globe"
   },
   bank: {
-    phosphor: "bank-light",
+    phosphor: "bank",
     lucide: "building",
-    solar: "bank-linear"
+    solar: "bank"
   },
   "arrows-left-right": {
-    phosphor: "arrows-left-right-light",
+    phosphor: "arrows-left-right",
     lucide: "arrow-left-right",
-    solar: "arrow-left-right-linear"
+    solar: "arrow-left-right"
   },
   "map-pin": {
-    phosphor: "map-pin-light",
+    phosphor: "map-pin",
     lucide: "map-pin",
-    solar: "map-point-linear"
+    solar: "map-point"
   },
   "arrow-down-left": {
-    phosphor: "arrow-down-left-light",
+    phosphor: "arrow-down-left",
     lucide: "arrow-down-left",
-    solar: "arrow-down-left-linear"
+    solar: "arrow-down-left"
+  },
+  "rows-plus-bottom": {
+    phosphor: "rows-plus-bottom",
+    lucide: "rows-plus-bottom",
+    solar: "rows-plus-bottom"
   },
 
   // Additional icons found in Icon.svelte
   bookmarks: {
-    phosphor: "bookmarks-light",
+    phosphor: "bookmarks",
     lucide: "bookmarks",
-    solar: "bookmark-opened-linear"
+    solar: "bookmark-opened"
+  },
+  pin: {
+    phosphor: "push-pin-simple",
+    lucide: "pin",
+    solar: "pin"
+  },
+  unpin: {
+    phosphor: "push-pin-simple-slash",
+    lucide: "pin-off",
+    solar: "pin"
   },
   "arrow-elbow-down-left": {
-    phosphor: "arrow-elbow-down-left-light",
+    phosphor: "arrow-elbow-down-left",
     lucide: "corner-down-left",
-    solar: "arrow-left-down-linear"
+    solar: "arrow-left-down"
   },
   "arrow-elbow-right-up": {
-    phosphor: "arrow-elbow-right-up-light",
+    phosphor: "arrow-elbow-right-up",
     lucide: "corner-up-right",
-    solar: "arrow-right-up-linear"
+    solar: "arrow-right-up"
+  },
+  "insert-down": {
+    phosphor: "arrow-elbow-down-right",
+    lucide: "corner-down-right",
+    solar: "arrow-right-down"
   },
   "magnifying-glass-plus": {
-    phosphor: "magnifying-glass-plus-light",
+    phosphor: "magnifying-glass-plus",
     lucide: "zoom-in",
-    solar: "magnifer-zoom-in-linear"
+    solar: "magnifer-zoom-in"
   },
   "magnifying-glass-minus": {
-    phosphor: "magnifying-glass-minus-light",
+    phosphor: "magnifying-glass-minus",
     lucide: "zoom-out",
-    solar: "magnifer-zoom-out-linear"
+    solar: "magnifer-zoom-out"
   },
   underline: {
-    phosphor: "text-underline-light",
+    phosphor: "text-underline",
     lucide: "underline",
-    solar: "text-underline-linear"
+    solar: "text-underline"
   },
   strikethrough: {
-    phosphor: "text-strikethrough-light",
+    phosphor: "text-strikethrough",
     lucide: "strikethrough",
-    solar: "text-cross-linear"
+    solar: "text-cross"
   },
   highlight: {
-    phosphor: "highlighter-light",
+    phosphor: "highlighter",
     lucide: "highlighter",
-    solar: "pen-linear"
+    solar: "pen"
   },
   "cursor-arrow-rays": {
-    phosphor: "cursor-click-light",
+    phosphor: "cursor-click",
     lucide: "mouse-pointer-click",
-    solar: "cursor-square-linear"
+    solar: "cursor-square"
   },
   "link-arrow-left": {
-    phosphor: "arrow-square-out-light",
+    phosphor: "arrow-square-out",
     lucide: "external-link",
-    solar: "link-round-angle-linear"
+    solar: "link-round-angle"
   },
   "link-arrow-down": {
-    phosphor: "arrow-square-down-light",
+    phosphor: "arrow-square-down",
     lucide: "corner-down-left",
-    solar: "link-round-linear"
+    solar: "link-round"
   },
 
   // More missing icons
   "arrow-path": {
-    phosphor: "arrow-clockwise-light",
+    phosphor: "arrow-clockwise",
     lucide: "refresh-cw",
-    solar: "restart-linear"
+    solar: "restart"
   },
   sync: {
-    phosphor: "arrow-clockwise-light",
+    phosphor: "arrow-clockwise",
     lucide: "refresh-cw",
-    solar: "restart-linear"
+    solar: "restart"
+  },
+  refresh: {
+    phosphor: "arrow-clockwise",
+    lucide: "refresh-cw",
+    solar: "restart"
+  },
+  convert: {
+    phosphor: "arrows-clockwise",
+    lucide: "rotate-ccw",
+    solar: "reset"
+  },
+  reset: {
+    phosphor: "arrows-clockwise",
+    lucide: "rotate-ccw",
+    solar: "reset"
   },
   "book-open": {
-    phosphor: "book-open-light",
+    phosphor: "book-open",
     lucide: "book-open",
-    solar: "book-2-linear"
+    solar: "book-2"
   },
   focus: {
-    phosphor: "crosshair-light",
+    phosphor: "crosshair",
     lucide: "focus",
-    solar: "target-linear"
-  },
-  clipboard: {
-    phosphor: "clipboard-light",
-    lucide: "clipboard",
-    solar: "clipboard-linear"
+    solar: "target"
   },
 
   // Resource-specific icons
   collection: {
-    phosphor: "brackets-round-light",
-    lucide: "folder",
-    solar: "folder-linear"
+    phosphor: "brackets-round",
+    lucide: "parentheses",
+    solar: "folder"
   },
   relation: {
-    phosphor: "link-simple-horizontal-light",
+    phosphor: "link-simple-horizontal",
     lucide: "link-2",
-    solar: "link-minimalistic-linear"
+    solar: "link-minimalistic"
   },
   combination: {
-    phosphor: "bounding-box-light",
+    phosphor: "bounding-box",
     lucide: "box",
-    solar: "widget-linear"
+    solar: "widget"
   },
 
   // Common icons found in codebase
   sliders: {
-    phosphor: "sliders-horizontal-light",
+    phosphor: "sliders",
+    lucide: "sliders",
+    solar: "settings"
+  },
+  "sliders-horizontal": {
+    phosphor: "sliders-horizontal",
     lucide: "sliders-horizontal",
-    solar: "settings-linear"
+    solar: "settings"
+  },
+  faders: {
+    phosphor: "faders",
+    lucide: "sliders",
+    solar: "faders"
+  },
+  "faders-horizontal": {
+    phosphor: "faders-horizontal",
+    lucide: "sliders-horizontal",
+    solar: "faders"
   },
   "picture-in-picture": {
-    phosphor: "picture-in-picture-light",
+    phosphor: "picture-in-picture",
     lucide: "picture-in-picture",
-    solar: "pip-linear"
+    solar: "pip"
   },
   "device-mobile": {
-    phosphor: "device-mobile-light",
+    phosphor: "device-mobile",
     lucide: "smartphone",
-    solar: "phone-linear"
+    solar: "phone"
   },
   "device-tablet": {
-    phosphor: "device-tablet-light",
+    phosphor: "device-tablet",
     lucide: "tablet",
-    solar: "tablet-linear"
+    solar: "tablet"
   },
   desktop: {
-    phosphor: "desktop-light",
+    phosphor: "desktop",
     lucide: "monitor",
-    solar: "monitor-linear"
+    solar: "monitor"
   },
   aperture: {
-    phosphor: "aperture-light",
+    phosphor: "aperture",
     lucide: "aperture",
-    solar: "camera-linear"
+    solar: "camera"
   },
   at: {
-    phosphor: "at-light",
+    phosphor: "at",
     lucide: "at-sign",
-    solar: "mention-linear"
+    solar: "mention"
   },
   lightbulb: {
-    phosphor: "lightbulb-light",
+    phosphor: "lightbulb",
     lucide: "lightbulb",
-    solar: "lightbulb-linear"
+    solar: "lightbulb"
   },
   "arrows-out": {
-    phosphor: "arrows-out-light",
+    phosphor: "arrows-out",
     lucide: "maximize",
-    solar: "maximize-linear"
+    solar: "maximize"
   },
   graph: {
-    phosphor: "graph-light",
+    phosphor: "graph",
     lucide: "activity",
-    solar: "graph-linear"
+    solar: "graph"
   },
   "tree-view": {
-    phosphor: "tree-view-light",
+    phosphor: "tree-view",
     lucide: "git-branch",
-    solar: "hierarchy-linear"
+    solar: "hierarchy"
   },
   "flow-arrow": {
-    phosphor: "flow-arrow-light",
+    phosphor: "flow-arrow",
     lucide: "arrow-right",
-    solar: "arrow-right-linear"
+    solar: "arrow-right"
   },
   "text-align-left": {
-    phosphor: "text-align-left-light",
+    phosphor: "text-align-left",
     lucide: "align-left",
-    solar: "text-align-left-linear"
+    solar: "text-align-left"
   },
   shapes: {
-    phosphor: "shapes-light",
+    phosphor: "shapes",
     lucide: "shapes",
-    solar: "widget-linear"
+    solar: "widget-2"
   },
   hash: {
-    phosphor: "hash-light",
+    phosphor: "hash",
     lucide: "hash",
-    solar: "hashtag-linear"
+    solar: "hashtag"
   },
-  "math-operations": {
-    phosphor: "math-operations-light",
+  formula: {
+    phosphor: "math-operations",
     lucide: "calculator",
-    solar: "calculator-linear"
+    solar: "calculator-minimalistic"
   },
   "magic-wand": {
-    phosphor: "magic-wand-light",
+    phosphor: "magic-wand",
     lucide: "wand",
-    solar: "magic-stick-linear"
+    solar: "magic-stick"
   },
   palette: {
-    phosphor: "palette-light",
+    phosphor: "palette",
     lucide: "palette",
-    solar: "palette-linear"
+    solar: "palette"
   },
   timer: {
-    phosphor: "timer-light",
+    phosphor: "timer",
     lucide: "timer",
-    solar: "stopwatch-linear"
+    solar: "stopwatch"
   },
   "git-branch": {
-    phosphor: "git-branch-light",
+    phosphor: "git-branch",
     lucide: "git-branch",
-    solar: "branch-linear"
+    solar: "branch"
   },
   "cloud-sun": {
-    phosphor: "cloud-sun-light",
+    phosphor: "cloud-sun",
     lucide: "cloud-sun",
-    solar: "weather-linear"
+    solar: "weather"
   },
   smiley: {
-    phosphor: "smiley-light",
+    phosphor: "smiley",
     lucide: "smile",
-    solar: "emoticon-linear"
+    solar: "emoticon"
   },
   "thumbs-up": {
-    phosphor: "thumbs-up-light",
+    phosphor: "thumbs-up",
     lucide: "thumbs-up",
-    solar: "like-linear"
+    solar: "like"
   },
   "text-h4": {
-    phosphor: "text-h-four-light",
+    phosphor: "text-h-four",
     lucide: "heading-4",
-    solar: "text-linear"
+    solar: "text"
   },
   "code-block": {
-    phosphor: "code-block-light",
+    phosphor: "code-block",
     lucide: "code",
-    solar: "code-linear"
+    solar: "code"
   },
   sigma: {
-    phosphor: "sigma-light",
+    phosphor: "sigma",
     lucide: "sigma",
-    solar: "sigma-linear"
+    solar: "sigma"
   },
   tabs: {
-    phosphor: "tabs-light",
+    phosphor: "tabs",
     lucide: "tabs",
-    solar: "widget-linear"
+    solar: "widget"
   },
   stack: {
-    phosphor: "stack-light",
+    phosphor: "stack",
     lucide: "layers",
-    solar: "layers-linear"
+    solar: "layers"
   },
   "music-note": {
-    phosphor: "music-note-light",
+    phosphor: "music-note",
     lucide: "music",
-    solar: "music-note-linear"
+    solar: "music-note"
   },
   "highlighter-circle": {
-    phosphor: "highlighter-circle-light",
+    phosphor: "highlighter-circle",
     lucide: "highlighter",
-    solar: "pen-linear"
+    solar: "pen"
   },
   bird: {
-    phosphor: "bird-light",
+    phosphor: "bird",
     lucide: "bird",
-    solar: "bird-linear"
+    solar: "bird"
   },
   "amazon-logo": {
-    phosphor: "amazon-logo-light",
+    phosphor: "amazon-logo",
     lucide: "package",
-    solar: "bag-4-linear"
+    solar: "bag-4"
   },
   "chat-teardrop-text": {
-    phosphor: "chat-teardrop-text-light",
+    phosphor: "chat-teardrop-text",
     lucide: "message-circle",
-    solar: "chat-round-linear"
+    solar: "chat-round"
   },
   "markdown-logo": {
-    phosphor: "markdown-logo-light",
+    phosphor: "markdown-logo",
     lucide: "file-text",
-    solar: "document-text-linear"
+    solar: "document-text"
   },
   "magnifying-glass": {
-    phosphor: "magnifying-glass-light",
+    phosphor: "magnifying-glass",
     lucide: "search",
-    solar: "minimalistic-magnifer-linear"
+    solar: "minimalistic-magnifer"
   },
   infinity: {
-    phosphor: "infinity-light",
+    phosphor: "infinity",
     lucide: "infinity",
-    solar: "infinity-linear"
+    solar: "infinity"
   },
   "hourglass-simple": {
-    phosphor: "hourglass-simple-light",
+    phosphor: "hourglass-simple",
     lucide: "hourglass",
-    solar: "hourglass-linear"
+    solar: "hourglass"
   },
   alarm: {
-    phosphor: "alarm-light",
+    phosphor: "alarm",
     lucide: "alarm-clock",
-    solar: "alarm-linear"
+    solar: "alarm"
   },
   asterisk: {
-    phosphor: "asterisk-light",
+    phosphor: "asterisk",
     lucide: "asterisk",
-    solar: "star-linear"
+    solar: "star"
   },
   "circle-dashed": {
-    phosphor: "circle-dashed-light",
+    phosphor: "circle-dashed",
     lucide: "circle-dashed",
-    solar: "circle-linear"
+    solar: "circle"
   },
   "arrows-in": {
-    phosphor: "arrows-in-line-horizontal-light",
+    phosphor: "arrows-in-line-horizontal",
     lucide: "minimize",
-    solar: "minimize-linear"
+    solar: "minimize"
   },
   "arrows-out-simple": {
-    phosphor: "arrows-out-simple-light",
+    phosphor: "arrows-out-simple",
     lucide: "maximize-2",
-    solar: "maximize-linear"
+    solar: "maximize"
   },
-  "arrow-bend-down-right": {
-    phosphor: "arrow-bend-down-right-light",
+  "to-sub": {
+    phosphor: "arrow-bend-down-right",
     lucide: "corner-down-right",
-    solar: "arrow-right-down-linear"
+    solar: "arrow-right-down"
   },
-  "arrow-bend-up-right": {
-    phosphor: "arrow-bend-up-right-light",
+  move: {
+    phosphor: "arrow-bend-up-right",
     lucide: "corner-up-right",
-    solar: "arrow-right-up-linear"
+    solar: "arrow-right-up"
   },
-  "arrow-fat-lines-up": {
-    phosphor: "arrow-fat-lines-up-light",
+  "level-up": {
+    phosphor: "arrow-fat-lines-up",
     lucide: "chevrons-up",
-    solar: "double-alt-arrow-up-linear"
+    solar: "double-alt-arrow-up"
   },
   "pencil-simple-slash": {
-    phosphor: "pencil-simple-slash-light",
+    phosphor: "pencil-simple-slash",
     lucide: "edit-off",
-    solar: "pen-new-square-linear"
+    solar: "pen-new-square"
   },
   "pencil-simple-line": {
-    phosphor: "pencil-simple-line-light",
+    phosphor: "pencil-simple-line",
     lucide: "edit",
-    solar: "pen-new-square-linear"
+    solar: "pen-new-square"
   },
   "star-fill": {
     phosphor: "star-fill",
@@ -903,226 +988,191 @@ export const iconMappings: Record<string, IconMapping> = {
     solar: "circle-bold"
   },
   "square-split-horizontal": {
-    phosphor: "square-split-horizontal-light",
+    phosphor: "square-split-horizontal",
     lucide: "columns",
-    solar: "widget-linear"
-  },
-  "brackets-round": {
-    phosphor: "brackets-round-light",
-    lucide: "parentheses",
-    solar: "widget-linear"
+    solar: "widget"
   },
 
   // Additional missing icons
   text: {
-    phosphor: "text-light",
+    phosphor: "text",
     lucide: "type",
-    solar: "text-linear"
+    solar: "text"
   },
   "caret-circle-down": {
-    phosphor: "caret-circle-down-light",
+    phosphor: "caret-circle-down",
     lucide: "chevron-down-circle",
-    solar: "arrow-down-linear"
+    solar: "arrow-down"
   },
   "currency-dollar": {
-    phosphor: "currency-dollar-light",
+    phosphor: "currency-dollar",
     lucide: "dollar-sign",
-    solar: "dollar-linear"
+    solar: "dollar"
   },
   translate: {
-    phosphor: "translate-light",
+    phosphor: "translate",
     lucide: "languages",
-    solar: "translation-linear"
+    solar: "translation"
   },
   money: {
-    phosphor: "money-light",
+    phosphor: "money",
     lucide: "banknote",
-    solar: "banknote-linear"
+    solar: "banknote"
   },
-  "map-trifold": {
-    phosphor: "map-trifold-light",
+  map: {
+    phosphor: "map-trifold",
     lucide: "map",
-    solar: "map-linear"
+    solar: "map"
   },
   "cursor-click": {
-    phosphor: "cursor-click-light",
+    phosphor: "cursor-click",
     lucide: "mouse-pointer-click",
-    solar: "cursor-square-linear"
+    solar: "cursor-square"
   },
   note: {
-    phosphor: "note-light",
+    phosphor: "note",
     lucide: "sticky-note",
-    solar: "notes-linear"
+    solar: "notes"
   },
   "log-out": {
-    phosphor: "sign-out-light",
+    phosphor: "sign-out",
     lucide: "log-out",
-    solar: "logout-linear"
+    solar: "logout"
   },
   "arrow-u-up-left": {
-    phosphor: "arrow-u-up-left-light",
+    phosphor: "arrow-u-up-left",
     lucide: "corner-up-left",
-    solar: "arrow-left-up-linear"
-  },
-  "x-circle": {
-    phosphor: "x-circle-light",
-    lucide: "x-circle",
-    solar: "close-circle-linear"
+    solar: "arrow-left-up"
   },
   "dice-three": {
-    phosphor: "dice-three-light",
+    phosphor: "dice-three",
     lucide: "dice-3",
-    solar: "dice-linear"
+    solar: "dice"
   },
   "paint-brush": {
-    phosphor: "paint-brush-light",
+    phosphor: "paint-brush",
     lucide: "paintbrush",
-    solar: "palette-linear"
-  },
-  "dots-six": {
-    phosphor: "dots-six-light",
-    lucide: "grip",
-    solar: "menu-dots-linear"
+    solar: "palette"
   },
   "floppy-disk": {
-    phosphor: "floppy-disk-light",
+    phosphor: "floppy-disk",
     lucide: "save",
-    solar: "diskette-linear"
+    solar: "diskette"
   },
   "arrow-u-up-right": {
-    phosphor: "arrow-u-up-right-light",
+    phosphor: "arrow-u-up-right",
     lucide: "corner-up-right",
-    solar: "arrow-right-up-linear"
+    solar: "arrow-right-up"
   },
-  "dots-six-vertical": {
-    phosphor: "dots-six-vertical-bold",
+  rearrange: {
+    phosphor: "dots-six-vertical",
     lucide: "grip-vertical",
-    solar: "menu-dots-bold"
+    solar: "menu-dots"
+  },
+  "rearrange-horizontal": {
+    phosphor: "dots-six",
+    lucide: "grip-horizontal",
+    solar: "menu-dots"
   },
   house: {
-    phosphor: "house-light",
+    phosphor: "house",
     lucide: "home",
-    solar: "home-linear"
+    solar: "home"
   },
   sidebar: {
-    phosphor: "sidebar-light",
+    phosphor: "sidebar",
     lucide: "panel-left",
-    solar: "sidebar-minimalistic-linear"
+    solar: "sidebar-minimalistic"
   },
-  "chalkboard-simple": {
-    phosphor: "chalkboard-simple-light",
+  canvas: {
+    phosphor: "chalkboard-simple",
     lucide: "presentation",
-    solar: "presentation-graph-linear"
+    solar: "presentation-graph"
   },
   clipboard: {
-    phosphor: "clipboard-light",
+    phosphor: "clipboard",
     lucide: "clipboard",
-    solar: "clipboard-linear"
+    solar: "clipboard"
   },
   command: {
-    phosphor: "command-light",
+    phosphor: "command",
     lucide: "command",
-    solar: "command-linear"
+    solar: "command"
   },
-  "head-circuit": {
-    phosphor: "head-circuit-light",
-    lucide: "brain-circuit",
-    solar: "cpu-linear"
+  cpu: {
+    phosphor: "cpu",
+    lucide: "cpu",
+    solar: "cpu"
   },
   "chart-line-up": {
-    phosphor: "chart-line-up-light",
+    phosphor: "chart-line-up",
     lucide: "trending-up",
-    solar: "chart-linear"
+    solar: "chart"
   },
   "person-simple": {
-    phosphor: "person-simple-light",
+    phosphor: "person-simple",
     lucide: "user",
-    solar: "user-linear"
+    solar: "user"
   },
   gear: {
-    phosphor: "gear-fine-light",
+    phosphor: "gear-fine",
     lucide: "settings",
-    solar: "settings-linear"
+    solar: "settings"
   },
   chats: {
-    phosphor: "chats-light",
+    phosphor: "chats",
     lucide: "messages-square",
-    solar: "chat-round-line-linear"
+    solar: "chat-round-line"
   },
   "video-camera": {
-    phosphor: "video-conference-light",
+    phosphor: "video-conference",
     lucide: "video",
-    solar: "videocamera-linear"
+    solar: "videocamera"
   },
   "discord-logo": {
-    phosphor: "discord-logo-light",
+    phosphor: "discord-logo",
     lucide: "gamepad-2",
-    solar: "gamepad-linear"
+    solar: "gamepad"
   },
   "reddit-logo": {
-    phosphor: "reddit-logo-light",
+    phosphor: "reddit-logo",
     lucide: "circle",
-    solar: "reddit-linear"
+    solar: "reddit"
   },
   "instagram-logo": {
-    phosphor: "instagram-logo-light",
+    phosphor: "instagram-logo",
     lucide: "instagram",
-    solar: "instagram-linear"
+    solar: "instagram"
   },
   butterfly: {
-    phosphor: "butterfly-light",
+    phosphor: "butterfly",
     lucide: "butterfly",
-    solar: "butterfly-linear"
+    solar: "butterfly"
   },
   flag: {
-    phosphor: "flag-light",
+    phosphor: "flag",
     lucide: "flag",
-    solar: "flag-linear"
-  },
-  lightbulb: {
-    phosphor: "lightbulb-light",
-    lucide: "lightbulb",
-    solar: "lightbulb-linear"
+    solar: "flag"
   },
   wallet: {
-    phosphor: "wallet-light",
+    phosphor: "wallet",
     lucide: "wallet",
-    solar: "wallet-linear"
+    solar: "wallet"
   },
   "github-logo": {
-    phosphor: "github-logo-light",
+    phosphor: "github-logo",
     lucide: "github",
-    solar: "github-linear"
+    solar: "github"
   },
   book: {
-    phosphor: "book-light",
+    phosphor: "book",
     lucide: "book",
-    solar: "book-linear"
-  },
-  camera: {
-    phosphor: "camera-light",
-    lucide: "camera",
-    solar: "camera-linear"
-  },
-  microphone: {
-    phosphor: "microphone-light",
-    lucide: "mic",
-    solar: "microphone-linear"
+    solar: "book"
   },
   "terminal-window": {
-    phosphor: "terminal-window-light",
+    phosphor: "terminal-window",
     lucide: "terminal",
-    solar: "programming-linear"
-  },
-  play: {
-    phosphor: "play-light",
-    lucide: "play",
-    solar: "play-linear"
-  },
-  "chevron-up": {
-    phosphor: "caret-up-light",
-    lucide: "chevron-up",
-    solar: "alt-arrow-up-linear"
+    solar: "programming"
   }
 };
 

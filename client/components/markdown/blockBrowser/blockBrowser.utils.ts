@@ -28,7 +28,7 @@ let embedSection: IBlockBrowserSection = {
       label: "Embed collection",
       description: "Embed Collection block",
       type: NodeType.COLLECTION_AS_EMBED,
-      icon: "brackets-round"
+      icon: "collection"
     },
     // {
     //   label: "Task",
@@ -46,13 +46,13 @@ let embedSection: IBlockBrowserSection = {
       label: "Youtube video",
       description: "Embed youtube video block",
       type: NodeType.YOUTUBE_VIDEO,
-      icon: "youtube-logo"
+      icon: "youtube"
     },
     {
       label: "Tweet",
       description: "Embed tweet block",
       type: NodeType.TWEET,
-      icon: "x-logo"
+      icon: "twitter"
     },
     {
       label: "Kindle book",
@@ -94,7 +94,7 @@ let embedSection: IBlockBrowserSection = {
       label: "Table of contents",
       description: "Embed table of contents block",
       type: NodeType.TOC,
-      icon: "list",
+      icon: "list-bullets",
       isDisabled: true,
       badge: "planned"
     }
@@ -233,7 +233,7 @@ let listsSection: IBlockBrowserSection = {
       description: "Unordered List block",
       type: NodeType.LIST,
       // icon: "lucide:list"
-      icon: "list",
+      icon: "list-bullets",
       isShowShortcut: true
     },
     orderedListBrowserItem,

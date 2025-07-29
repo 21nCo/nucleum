@@ -116,7 +116,7 @@
       {
         label: "History",
         value: "history",
-        icon: "clock"
+        icon: "history"
       }
     ];
     if (isConstrainedWidth) {
