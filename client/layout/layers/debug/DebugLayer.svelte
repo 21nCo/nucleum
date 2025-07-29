@@ -125,7 +125,7 @@
         <span class="text-sm font-semibold">Fallback Status</span>
         <Button
           size={Size.xs}
-          icon="arrow-path"
+          icon="reload"
           on:click={loadFallbackStatuses}
           label="Refresh"
         />

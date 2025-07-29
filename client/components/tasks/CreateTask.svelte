@@ -162,7 +162,7 @@
       {action}
       primaryAction={{
         label: "Create",
-        icon: "arrow-right",
+        icon: "proceed",
         callback: handleCreate,
         size: Size.sm
       }}

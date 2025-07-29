@@ -31,7 +31,7 @@
   </div>
   <div class="flex items-center justify-center gap-2">
     <Button
-      icon="floppy-disk"
+      icon="save"
       parentBgIndex={2}
       style={ButtonStyle.OUTLINED}
       type={ButtonVariant.PRIMARY}

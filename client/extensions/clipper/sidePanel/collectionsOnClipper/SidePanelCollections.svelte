@@ -282,7 +282,7 @@
               bind:on={isShowNewCollectionWizard}
             />
             <Toggle
-              icon="eye-slash"
+              icon="hide"
               parentBgIndex={2}
               bgSize={Size.sm}
               tooltip={isHideEmptyCollections ? "Show empty" : "Hide empty"}

@@ -27,7 +27,7 @@
         <div class="mr-3">
           <Button
             label="Go back"
-            icon="arrow-u-up-left"
+            icon="undo"
             style={ButtonStyle.PLAIN}
             size={Size.sm}
             on:click={() => {

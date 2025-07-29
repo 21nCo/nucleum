@@ -68,7 +68,7 @@
   </CustomColorPropagator>
   {#if accessPoint === ResourceAccessPoint.SELF || accessPoint === ResourceAccessPoint.CAPTURE}
     <Button
-      icon="link-break"
+      icon="unlink"
       tooltip="Clear goal"
       size={Size.sm}
       parentBgIndex={2}

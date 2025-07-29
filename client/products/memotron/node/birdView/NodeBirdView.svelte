@@ -506,7 +506,7 @@
       <div class="flex gap-2 items-center">
         {#if selectedView === NodeBirdViewMode.Graph}
           <Toggle
-            icon="flow-arrow"
+            icon="traverse"
             tooltip={isTraverseMode
               ? "Switch to normal mode"
               : "Switch to traverse mode"}

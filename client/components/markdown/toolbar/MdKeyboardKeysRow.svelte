@@ -39,7 +39,7 @@
     }}
   />
   <KeyboardToolbarKey
-    icon="quotes"
+    icon="quote"
     on:click={(e) => {
       dispatch("key", '"');
     }}

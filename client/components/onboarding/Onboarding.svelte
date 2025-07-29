@@ -57,7 +57,7 @@
         <div class="flex w-full cw:justify-center gap-4">
           <Button
             label="Get started"
-            icon="arrow-right"
+            icon="proceed"
             type={ButtonVariant.PRIMARY}
             on:click={() => appStore.gotoPath("/")}
           />

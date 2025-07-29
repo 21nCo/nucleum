@@ -23,7 +23,8 @@
           class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
         >
           <Icon
-            icon="check-circle-fill"
+            icon="check-circle"
+            isFilled={true}
             size={Size.lg}
             class="text-fgs1 shadow-md rounded-full border border-fgs1"
           />

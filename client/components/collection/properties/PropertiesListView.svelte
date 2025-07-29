@@ -154,7 +154,7 @@
               {#if context === "mainpanel"}
                 <Button
                   label="See all"
-                  icon="arrow-right"
+                  icon="proceed"
                   size={Size.sm}
                   style={ButtonStyle.PLAIN}
                   on:click={(e) => {

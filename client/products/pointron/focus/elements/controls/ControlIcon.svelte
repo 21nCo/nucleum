@@ -30,12 +30,13 @@
       "stroke-abg": context !== SessionUIContext.FOCUS_PLAYER
     },
     context === SessionUIContext.FOCUS_PLAYER && {
-      "fill-cbg":
-        $activeSession.state == SessionState.FOCUS_RUNNING &&
+      "text-cbg":
+        $activeSession.state === SessionState.FOCUS_RUNNING &&
         !isBreakReminderMode,
-      "fill-abg":
-        $activeSession.state != SessionState.FOCUS_RUNNING ||
+      "text-abg":
+        $activeSession.state !== SessionState.FOCUS_RUNNING ||
         isBreakReminderMode
     }
   )}
+  isFilled={context === SessionUIContext.FOCUS_PLAYER}
 />

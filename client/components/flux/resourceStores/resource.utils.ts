@@ -225,7 +225,7 @@ export function resolveResourceIcon(resource: Resource) {
     case Resource.place:
       return "map-pin";
     case Resource.input:
-      return "arrow-down-left";
+      return "incoming";
     default:
       return "question";
   }
@@ -302,7 +302,7 @@ export function resolveResourceActionIcon(action: ResourceActionType) {
     case ResourceActionType.LINK:
       return "link";
     case ResourceActionType.UNLINK:
-      return "link-break";
+      return "unlink";
     case ResourceActionType.EDIT:
       return "edit";
     case ResourceActionType.DUPLICATE:
@@ -312,7 +312,7 @@ export function resolveResourceActionIcon(action: ResourceActionType) {
     case ResourceActionType.COPY_CONTENTS:
       return "copy";
     case ResourceActionType.TOGGLE_READ_MODE:
-      return "eye"; // book-open equivalent
+      return "book-open";
     case ResourceActionType.TOGGLE_FOCUS_MODE:
       return "circle"; // focus equivalent
     case ResourceActionType.LOCK:
@@ -320,7 +320,7 @@ export function resolveResourceActionIcon(action: ResourceActionType) {
     case ResourceActionType.UNLOCK:
       return "lock-open";
     case ResourceActionType.CONVERT:
-      return "arrow-path"; // arrows-clockwise equivalent
+      return "convert";
     default:
       return "question";
   }

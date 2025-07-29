@@ -23,7 +23,7 @@
   }[] = [
     {
       label: "Resync data",
-      icon: "arrow-path",
+      icon: "reload",
       callback: () => {
         dispatch("resync");
       }
@@ -48,7 +48,7 @@
     },
     {
       label: "Join our Discord",
-      icon: "discord-logo",
+      icon: "discord",
       isAwayAction: true,
       callback: openDiscord
     }

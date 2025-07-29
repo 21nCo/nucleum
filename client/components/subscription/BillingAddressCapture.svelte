@@ -204,11 +204,7 @@
   </div>
   <InlineErrorMessage bind:error />
   <div class="flex mt-4">
-    <Button
-      on:click={handleSubmit}
-      type={ButtonVariant.PRIMARY}
-      icon="arrow-right"
-    >
+    <Button on:click={handleSubmit} type={ButtonVariant.PRIMARY} icon="proceed">
       Proceed to Payment
     </Button>
   </div>

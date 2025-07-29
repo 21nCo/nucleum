@@ -24,7 +24,7 @@
   }}
 >
   <Button
-    icon="sliders"
+    icon="sliders-horizontal"
     label={$view.isPortrait ? "" : "Options"}
     {parentBgIndex}
     isPreventMinWidth={true}

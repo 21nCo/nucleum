@@ -198,17 +198,7 @@
           size={Size.lg}
         />
       {:else if recordingState === PlayActionState.RUNNING}
-        <!-- <PlayerControl
-          on:click={startRecording}
-          icon="arrow-path"
-          type={ButtonVariant.DANGER}
-          label="Restart"
-        /> -->
-        <PlayerControl
-          on:click={toggleRecording}
-          icon="pause"
-          label="Pause"
-        />
+        <PlayerControl on:click={toggleRecording} icon="pause" label="Pause" />
         <PlayerControl
           on:click={stopRecording}
           type={ButtonVariant.PRIMARY}
@@ -216,11 +206,7 @@
           label="Finish"
         />
       {:else if recordingState === PlayActionState.PAUSED}
-        <PlayerControl
-          on:click={toggleRecording}
-          icon="play"
-          label="Resume"
-        />
+        <PlayerControl on:click={toggleRecording} icon="play" label="Resume" />
         <PlayerControl
           on:click={stopRecording}
           type={ButtonVariant.PRIMARY}
@@ -244,17 +230,7 @@
   {:else}
     <div class="flex w-full justify-center gap-6">
       {#if recordingState === PlayActionState.RUNNING}
-        <!-- <Button
-          on:click={startRecording}
-          icon="arrow-path"
-          type={ButtonVariant.DANGER}
-          label="Restart"
-        /> -->
-        <Button
-          on:click={toggleRecording}
-          icon="pause"
-          label="Pause"
-        />
+        <Button on:click={toggleRecording} icon="pause" label="Pause" />
         <Button
           on:click={stopRecording}
           type={ButtonVariant.PRIMARY}
@@ -262,11 +238,7 @@
           label="Finish"
         />
       {:else if recordingState === PlayActionState.PAUSED}
-        <Button
-          on:click={toggleRecording}
-          icon="play"
-          label="Resume"
-        />
+        <Button on:click={toggleRecording} icon="play" label="Resume" />
         <Button
           on:click={stopRecording}
           type={ButtonVariant.PRIMARY}

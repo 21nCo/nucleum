@@ -155,14 +155,6 @@ export const memotronActions: IAction[] = [
     }
   },
   {
-    action: "rewind",
-    type: ActionType.MODAL,
-    label: "Rewind",
-    isInactive: true,
-    icon: "sync",
-    component: ComingSoonView
-  },
-  {
     action: "serendipity",
     type: ActionType.MODAL,
     label: "Serendipity",

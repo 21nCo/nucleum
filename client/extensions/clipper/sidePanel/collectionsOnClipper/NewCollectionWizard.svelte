@@ -30,7 +30,7 @@
       on:enter={onSave}
     />
     <Button
-      icon={isSaving ? "svg-spinners:3-dots-fade" : "floppy-disk"}
+      icon={isSaving ? "svg-spinners:3-dots-fade" : "save"}
       tooltip="Save collection"
       style={ButtonStyle.OUTLINED}
       on:click={onSave}

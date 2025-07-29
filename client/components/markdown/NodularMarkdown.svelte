@@ -359,7 +359,7 @@
 {#key refreshId}
   {#if focusedBlock && !node}
     <Button
-      icon="arrow-left"
+      icon="back-sm"
       label="Back"
       style={ButtonStyle.PLAIN}
       on:click={() => {

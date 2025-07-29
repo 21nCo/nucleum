@@ -49,7 +49,7 @@ const activeResources = new Map<string, ActiveResourceStore<any, any, any>>();
 const multiSelectStores = new Map<string, MultiSelectStore>();
 
 export function resolveMultiSelectStore(context: IMultiSelectContext) {
-  const contextStr = stringify(context);
+  const contextStr = stringify(context, { isPreventReplacer: true });
   if (!multiSelectStores.has(contextStr))
     multiSelectStores.set(contextStr, new MultiSelectStore(context));
   return multiSelectStores.get(contextStr)!;
@@ -61,7 +61,7 @@ export class MultiSelectStore
 {
   context: IMultiSelectContext;
   constructor(context: IMultiSelectContext) {
-    super(stringify(context), StoreDataType.NA);
+    super(stringify(context, { isPreventReplacer: true }), StoreDataType.NA);
     this.context = context;
     this.set([]);
   }

@@ -30,9 +30,7 @@
     {#if $view.isPortrait}
       <Icon on:click={handleBack} icon="chevleft" />
     {:else}
-      <Button size={Size.sm} on:click={handleBack} icon="arrow-left"
-        >Back</Button
-      >
+      <Button size={Size.sm} on:click={handleBack} icon="back-sm">Back</Button>
     {/if}
   {/if}
   <!-- {#if !isLastStep} -->

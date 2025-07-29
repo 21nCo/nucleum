@@ -58,7 +58,7 @@
     },
     // {
     //   value: BlockAction.CONVERT,
-    //   icon: "arrow-right",
+    //   icon: "proceed",
     //   label: "Convert"
     // },
     {

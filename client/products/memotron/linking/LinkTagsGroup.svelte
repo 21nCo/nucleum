@@ -165,7 +165,7 @@
         >
           <Tag
             label={item.label}
-            icon="link-simple"
+            icon="relation"
             on:click={() => {
               inputValueWithinGroup = item.label ?? "";
             }}

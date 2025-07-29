@@ -186,7 +186,7 @@
       {:else if isCurrentPlan && currentPlan?.cycle !== period && currentPlan?.status === PlanStatus.ACTIVE}
         <Button
           label={`Switch to ${period.toLowerCase()}`}
-          icon="arrow-right"
+          icon="proceed"
           isLoading={progressState === "switching"}
           type={ButtonVariant.PRIMARY}
           style={ButtonStyle.OUTLINED}
@@ -211,7 +211,7 @@
       {:else if isDowngrade(plan)}
         <Button
           label={`Switch to ${plan.name}`}
-          icon="arrow-right"
+          icon="proceed"
           isLoading={progressState === "downgrading"}
           type={ButtonVariant.PRIMARY}
           style={ButtonStyle.OUTLINED}
@@ -224,7 +224,7 @@
       {:else}
         <Button
           label="Choose Plan"
-          icon="arrow-right"
+          icon="proceed"
           type={ButtonVariant.PRIMARY}
           isLoading={progressState === "initiating"}
           style={plan.isPopular ? ButtonStyle.DEFAULT : ButtonStyle.OUTLINED}

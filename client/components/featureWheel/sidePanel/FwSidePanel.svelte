@@ -46,7 +46,7 @@
         dispatch("goBack");
       }}
     >
-      <Icon icon="arrow-left" />
+      <Icon icon="back-sm" />
       Go back
     </button>
   {/if}

@@ -314,11 +314,7 @@
             }}
             class="flex items-center gap-1 text-b3 text-aps1"
           >
-            <Icon
-              icon="hourglass-simple"
-              size={Size.sm}
-              class="text-aps1"
-            />
+            <Icon icon="hourglass" size={Size.sm} class="text-aps1" />
             <span> Currently focusing... </span>
           </button>
         {/if}

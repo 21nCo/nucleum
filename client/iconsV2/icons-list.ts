@@ -29,6 +29,7 @@ const phosphorIcons = [
   "arrow-bend-left-up",
   "arrow-bend-right-up",
   "arrow-bend-double-up-right",
+  "arrow-u-down-left",
 
   //Carets
   "caret-circle-left",
@@ -306,13 +307,15 @@ const solarIconsFromMap = Object.values(iconMappings)
   .filter((mapping) => mapping.solar)
   .map((mapping) => mapping.solar!);
 
-export const allPhosphorIcons = [
-  ...phosphorIcons,
-  ...phosphorRatingIcons,
-  ...phosphorIconsFromMap
-];
-export const allLucideIcons = [...lucideIcons, ...lucideIconsFromMap];
-export const allSolarIcons = [...solarIconsNotInMap, ...solarIconsFromMap];
+export const allPhosphorIcons = Array.from(
+  new Set([...phosphorIcons, ...phosphorRatingIcons, ...phosphorIconsFromMap])
+);
+export const allLucideIcons = Array.from(
+  new Set([...lucideIcons, ...lucideIconsFromMap])
+);
+export const allSolarIcons = Array.from(
+  new Set([...solarIconsNotInMap, ...solarIconsFromMap])
+);
 
 export const solarLinearIcons = allSolarIcons.map((icon) => icon + "-linear");
 export const solarBoldIcons = allSolarIcons.map((icon) => icon + "-bold");
@@ -416,4 +419,4 @@ export const solarIconsForBundling = {
   "bold-duotone": solarBoldDuotoneIcons
 };
 
-export const bundleNumber = 44;
+export const bundleNumber = 46;

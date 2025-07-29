@@ -993,7 +993,7 @@
               delay: 500
             }}
           >
-            <Icon icon="ph:arrows-out-cardinal-light" />
+            <Icon icon="grab" />
           </div>
         {:else}
           <Icon

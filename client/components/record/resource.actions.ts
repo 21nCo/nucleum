@@ -89,7 +89,6 @@ export class ResourceActions<T extends IMemotronItemBase> {
       label: "Star",
       activeLabel: "Starred",
       icon: resolveResourceActionIcon(ResourceActionType.STAR),
-      activeIcon: "star-fill",
       type: ContextMenuType.SWITCH,
       initialValue: this.resource.isStarred,
       callback: async (checked) => {
@@ -176,9 +175,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
     return {
       label: this.resource.isInEditMode ? "Exit edit mode" : "Edit",
       value: ResourceActionType.EDIT,
-      icon: this.resource.isInEditMode
-        ? "pencil-simple-slash"
-        : "pencil-simple-line",
+      icon: this.resource.isInEditMode ? "exit-edit" : "edit",
       callback: async () => {
         if (context != ResourceAccessPoint.SELF) {
           appStore.openResource(
@@ -206,7 +203,6 @@ export class ResourceActions<T extends IMemotronItemBase> {
       value: ResourceActionType.TOGGLE_READ_MODE,
       label: "Read mode",
       icon: resolveResourceActionIcon(ResourceActionType.TOGGLE_READ_MODE),
-      activeIcon: "eye",
       type: ContextMenuType.SWITCH,
       initialValue: this.resource.isInReadOnlyMode,
       callback: async (checked) => {
@@ -221,7 +217,6 @@ export class ResourceActions<T extends IMemotronItemBase> {
       label: "Focus",
       activeLabel: "Focused",
       icon: "circle",
-      activeIcon: "circle-fill",
       type: ContextMenuType.SWITCH,
       initialValue: this.resource.isInFocusMode,
       callback: async (checked) => {
@@ -269,7 +264,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
   openAsSplitv1(): IContextMenuItem {
     return {
       value: "open-as-split",
-      icon: "square-split-horizontal",
+      icon: "split-screen",
       callback: async () => {
         appStore.openResource(this.resource.id, ResourceAccessMode.SPLIT);
       }
@@ -286,7 +281,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
       icon:
         currentMode === ResourceAccessMode.SPLIT
           ? "minus-circle"
-          : "square-split-horizontal",
+          : "split-screen",
       callback: async () => {
         if (currentMode === ResourceAccessMode.SPLIT) {
           appStore.closeResource({
@@ -308,7 +303,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
           ? "Close full screen"
           : "Open in full screen",
       icon:
-        currentMode === ResourceAccessMode.FULL ? "minus-circle" : "arrows-out",
+        currentMode === ResourceAccessMode.FULL ? "minus-circle" : "fullscreen",
       callback: async () => {
         if (currentMode === ResourceAccessMode.FULL) {
           appStore.closeResource({

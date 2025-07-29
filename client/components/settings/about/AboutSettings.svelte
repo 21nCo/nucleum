@@ -39,7 +39,7 @@
         label="Join us on discord"
         {size}
         type={ButtonVariant.PRIMARY}
-        icon="discord-logo"
+        icon="discord"
         on:click={() => {
           appStore.openLink($appStore.appData?.urls?.discord);
         }}
@@ -47,7 +47,7 @@
       <Button
         label="Read our white paper"
         {size}
-        icon="arrow-up-right"
+        icon="weblink"
         on:click={() => {
           appStore.openLink($appStore.appData?.urls?.soft);
         }}

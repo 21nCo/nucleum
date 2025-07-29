@@ -111,7 +111,7 @@
         <Button
           type={ButtonVariant.PRIMARY}
           label="Update"
-          icon="floppy-disk"
+          icon="save"
           on:click={saveTemplate}
         />
       </div>

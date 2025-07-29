@@ -140,14 +140,14 @@
     {#if id}
       <Divider orientation={Orientation.Vertical} />
       <!-- <Button
-        icon={isLinkboxOpened ? "link-arrow-down" : "link-arrow-left"}
+        icon={isLinkboxOpened ? "link-arrow-down" : "weblink-two"}
         type={isLinkboxOpened ? ButtonVariant.PRIMARY : ButtonVariant.SECONDARY}
         label="link"
         size={Size.xs}
       /> -->
       <LinkActionOnClipper links={clip?.links} bind:isLinkboxOpened />
       <Toggle
-        icon={notes ? "note" : "note"}
+        icon={notes ? "note" : "note-blank"}
         tooltip={notes ? "View notes" : "Add notes"}
         bind:on={isNotesOpened}
         bgSize={Size.sm}

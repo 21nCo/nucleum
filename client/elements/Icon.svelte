@@ -130,8 +130,7 @@
   import {
     resolveSpriteSheetPath,
     extensionSprites,
-    resolveGenericIcon,
-    currentIconSet
+    resolveGenericIcon
   } from "../iconsV2/icon.store";
   import { iconMappings } from "../iconsV2/icons.map";
   import EclipseHalf from "../iconsV2/svgSpinners/EclipseHalf.svelte";

@@ -131,7 +131,7 @@
         tooltip="Help"
         on:click={() => appStore.runAction(Action.HELP)}
       />
-      <span class="px-2" />
+      <span class="px-1" />
       <!-- <FocusPlayer /> -->
       <TrailLeftIndicator />
       <button

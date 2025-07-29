@@ -142,7 +142,7 @@
         <div class="flex gap-2">
           {#if $account.plan.status === PlanStatus.REFUNDED}
             <Button
-              icon="sync"
+              icon="reload"
               label="Reactivate"
               type={ButtonVariant.PRIMARY}
               on:click={() => {
@@ -161,7 +161,7 @@
             />
             <!-- {#if $account.plan?.cycle !== BillingCycle.LIFETIME}
             <Button
-              icon="arrow-right"
+              icon="proceed"
               parentBgIndex={2}
               label="Change Plan"
               on:click={() => {

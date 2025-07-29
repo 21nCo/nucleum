@@ -136,7 +136,7 @@
     },
     [BlockAction.GO_TO_EXTERNAL_LINK]: {
       value: BlockAction.GO_TO_EXTERNAL_LINK,
-      icon: "arrow-up-right",
+      icon: "weblink",
       callback: async () => {
         dispatch("action", { action: BlockAction.GO_TO_EXTERNAL_LINK });
       }
@@ -164,7 +164,7 @@
     },
     [BlockAction.OPEN_IN_FULL_SCREEN]: {
       value: BlockAction.OPEN_IN_FULL_SCREEN,
-      icon: "arrows-out",
+      icon: "fullscreen",
       callback: async () => {
         // appStore.closeResource({ isRestrictToModals: true });
         appStore.openResource(block.id, ResourceAccessMode.FULL);
@@ -210,7 +210,7 @@
   function resolveEmbedPreviewToggleAction() {
     return {
       value: BlockAction.EMBED_PREVIEW_TOGGLE,
-      icon: "eye-slash",
+      icon: "hide",
       label: "Hide preview",
       type: ContextMenuType.SWITCH,
       initialValue: block.body?.isHidePreview ?? false,

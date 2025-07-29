@@ -157,7 +157,7 @@
             >
               {#if isEnableTitleActionResolved}
                 <Icon
-                  icon="house"
+                  icon="home"
                   class={cn({
                     "text-aps1": value === titleValue
                   })}

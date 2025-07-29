@@ -157,11 +157,7 @@
         <span
           class="absolute flex gap-1 items-center text-fgs1 bg-bgs2 bg-opacity-60 dark:bg-opacity-50 py-1 px-2 rounded-md backdrop-blur-sm dark:backdrop-blur-none"
         >
-          <Icon
-            icon="ph:arrows-out-cardinal-light"
-            class="stroke-fgs1"
-            size={Size.sm}
-          />
+          <Icon icon="grab" class="stroke-fgs1" size={Size.sm} />
           Pan to reposition</span
         >
       {/if}

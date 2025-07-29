@@ -227,7 +227,7 @@ export const globalActions: IAction[] = [
   {
     action: "call",
     label: "Book a call",
-    icon: "video-camera",
+    icon: "video-conference",
     type: ActionType.MODAL,
     component: BookACall
   },
@@ -293,7 +293,7 @@ export const globalActions: IAction[] = [
   {
     action: "discord",
     label: "Join us on discord",
-    icon: "discord-logo",
+    icon: "discord",
     type: ActionType.LINK
   },
   {
@@ -312,7 +312,7 @@ export const globalActions: IAction[] = [
   {
     action: "reddit",
     label: "Reddit",
-    icon: "reddit-logo",
+    icon: "reddit",
     type: ActionType.LINK
   },
   {
@@ -324,7 +324,7 @@ export const globalActions: IAction[] = [
   {
     action: "instagram",
     label: "Instagram",
-    icon: "instagram-logo",
+    icon: "instagram",
     type: ActionType.LINK
   },
   {
@@ -374,7 +374,7 @@ export const globalActions: IAction[] = [
   {
     action: "feedback",
     label: "Give feedback",
-    icon: "chat-teardrop-text",
+    icon: "chat-three",
     isInactive: true,
     type: ActionType.LINK
   },
@@ -745,7 +745,7 @@ export const globalActions: IAction[] = [
         },
         secondaryAction: {
           label: "Chat with us",
-          icon: "chat-teardrop-text",
+          icon: "chat-three",
           variant: ButtonVariant.SECONDARY,
           callback: async () => {
             appStore.runAction("chat");
@@ -976,7 +976,7 @@ export const globalActions: IAction[] = [
   {
     action: Action.HISTORY,
     label: "History",
-    icon: "clock",
+    icon: "history",
     type: ActionType.RESOURCE,
     component: HistoryModal,
     modalParams: {

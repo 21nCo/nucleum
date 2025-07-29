@@ -218,7 +218,7 @@
         }}
       >
         <!-- <div slot="right">
-          <Button icon="dice-three" tooltip="Randomize" />
+          <Button icon="randomize" tooltip="Randomize" />
         </div> -->
       </PanelSwitcher>
       {#if selectedMethod === Method.COLOR}

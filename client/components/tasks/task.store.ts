@@ -138,7 +138,7 @@ class TaskActions {
   openTask() {
     return {
       value: "openTask",
-      icon: "arrow-up-right",
+      icon: "pop",
       label: "Open task",
       callback: async () => {
         appStore.openResource(this.task.id, ResourceAccessMode.POP);

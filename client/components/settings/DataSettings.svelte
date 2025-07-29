@@ -124,7 +124,7 @@
       <div use:fileDrop={{ accept: "application/json", onDrop: handleDrop }}>
         <Button
           label="Restore"
-          icon="arrow-u-up-left"
+          icon="restore"
           on:click
           isLoading={isRestoreInProgress}
         />
@@ -160,14 +160,14 @@
     <div class="flex items-center gap-4">
       <Button
         label="Resync data"
-        icon="arrow-path"
+        icon="reload"
         isLoading={isResyncInProgress}
         on:click={handleResync}
       />
       {#if !$context.isEmbed}
         <Button
           label="Reload"
-          icon="arrow-path"
+          icon="reload"
           on:click={() => window.location.reload()}
         />
       {/if}

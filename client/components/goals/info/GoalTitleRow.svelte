@@ -128,7 +128,7 @@
       position={Placement.BottomCenter}
       id="taskContextMenu"
       size={Size.lg}
-      icon={isConstrainedWidth ? "ph:dots-three-outline-light" : undefined}
+      icon={isConstrainedWidth ? "more-outline-horizontal" : undefined}
       actionBgSize={isConstrainedWidth ? Size.sm : undefined}
     />
     {#if isConstrainedWidth}

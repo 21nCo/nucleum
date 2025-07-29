@@ -284,14 +284,14 @@
   <KeyboardToolbar class="bg-bgs2 h-14 px-4 flex items-center justify-between">
     <div class="flex items-center justify-center gap-2">
       <!-- <Button
-        icon="arrow-u-up-left"
+        icon="undo"
         parentBgIndex={2}
         on:click={() => {
           // TODO: undo
         }}
       />
       <Button
-        icon="arrow-u-up-right"
+        icon="redo"
         parentBgIndex={2}
         on:click={() => {
           // TODO: redo

@@ -300,7 +300,7 @@
           {#if isHovered || clip?.notes || clip?.links.length || isLinkboxOpened || isNotesOpened}
             {#if isHovered || clip?.notes || isNotesOpened}
               <Toggle
-                icon={clip?.notes ? "note" : "note"}
+                icon={clip?.notes ? "note" : "note-blank"}
                 tooltip={clip?.notes ? "View notes" : "Add notes"}
                 bind:on={isNotesOpened}
                 bgSize={Size.sm}
@@ -325,7 +325,7 @@
             isInline={true}
             accessPoint={ResourceAccessPoint.CLIPPER}
             bgSize={Size.sm}
-            icon="ph:dots-three-outline-light"
+            icon="more-outline-horizontal"
             on:action={(e) => {
               const action = e?.detail?.action;
               if (action === ResourceActionType.DELETE) {

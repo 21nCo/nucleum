@@ -81,11 +81,11 @@ export const SUBSCRIPTION_PLANS: IPlan[] = [
         label: "Early access to new products, features"
       },
       {
-        icon: "chat-teardrop-text",
+        icon: "chat-three",
         label: "Priority chat support"
       },
       {
-        icon: "heart",
+        icon: "support",
         label: "Support our [mission](https://21n.org)"
       }
     ],

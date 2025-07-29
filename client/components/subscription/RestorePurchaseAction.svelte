@@ -40,7 +40,7 @@
 <div class="flex justify-center gap-2">
   <Button
     label="Restore purchase"
-    icon="arrow-u-up-left"
+    icon="restore"
     style={ButtonStyle.PLAIN}
     size={Size.sm}
     on:click={restore}

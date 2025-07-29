@@ -735,14 +735,14 @@ class NodeActions {
   goToResourceFromClipper = {
     value: ResourceActionType.OPEN,
     label: "Open in app",
-    icon: "ph:arrow-square-out-light",
+    icon: "weblink-two",
     callback: async () => {}
   };
 
   sideNotesPane() {
     return {
       value: NodeRightPaneType.SIDENOTES,
-      icon: this.node.notes ? "note" : "note",
+      icon: this.node.notes ? "note" : "note-blank",
       label: "Side notes",
       tooltip: "Side notes"
     };
@@ -767,7 +767,7 @@ class NodeActions {
   tracesPane() {
     return {
       value: NodeRightPaneType.TRACES,
-      icon: "heroicons:bookmark",
+      icon: "bookmark",
       label: "Show traces",
       tooltip: "Show traces",
       count:
@@ -784,7 +784,7 @@ class NodeActions {
     return {
       value: "toggleFullWidth",
       label: "Expand to full width",
-      icon: "ph:arrows-out-line-horizontal-light",
+      icon: "widen",
       type: ContextMenuType.SWITCH,
       initialValue: this.node.config?.isWidened,
       callback: async (checked: boolean) => {

@@ -53,7 +53,7 @@ export const iconMappings: Record<string, IconMapping> = {
     lucide: "arrow-left",
     solar: "arrow-left"
   },
-  "arrow-right": {
+  proceed: {
     phosphor: "arrow-right",
     lucide: "arrow-right",
     solar: "arrow-right"
@@ -68,7 +68,22 @@ export const iconMappings: Record<string, IconMapping> = {
     lucide: "arrow-down",
     solar: "arrow-down"
   },
-  "arrow-up-right": {
+  weblink: {
+    phosphor: "arrow-up-right",
+    lucide: "arrow-up-right",
+    solar: "arrow-up-right"
+  },
+  "weblink-two": {
+    phosphor: "arrow-square-out",
+    lucide: "external-link",
+    solar: "link-round-angle"
+  },
+  incoming: {
+    phosphor: "arrow-down-left",
+    lucide: "arrow-down-left",
+    solar: "arrow-down-left"
+  },
+  outgoing: {
     phosphor: "arrow-up-right",
     lucide: "arrow-up-right",
     solar: "arrow-up-right"
@@ -77,6 +92,11 @@ export const iconMappings: Record<string, IconMapping> = {
     phosphor: "arrow-arc-left",
     lucide: "arrow-up-left",
     solar: "arrow-up-left"
+  },
+  "arrow-circle-right": {
+    phosphor: "arrow-circle-right",
+    lucide: "arrow-right-circle",
+    solar: "arrow-right-circle"
   },
 
   // Chevrons
@@ -151,6 +171,11 @@ export const iconMappings: Record<string, IconMapping> = {
     lucide: "edit",
     solar: "pen-new-square"
   },
+  "exit-edit": {
+    phosphor: "pencil-simple-slash",
+    lucide: "edit-off",
+    solar: "pen-new-square"
+  },
   trash: {
     phosphor: "trash",
     lucide: "trash-2",
@@ -177,7 +202,7 @@ export const iconMappings: Record<string, IconMapping> = {
     solar: "star"
   },
   bookmark: {
-    phosphor: "bookmark-simple",
+    phosphor: "heroicons:bookmark",
     lucide: "bookmark",
     solar: "bookmark"
   },
@@ -262,6 +287,11 @@ export const iconMappings: Record<string, IconMapping> = {
     lucide: "play",
     solar: "play"
   },
+  "play-circle": {
+    phosphor: "play-circle",
+    lucide: "play-circle",
+    solar: "play-circle"
+  },
   pause: {
     phosphor: "pause",
     lucide: "pause",
@@ -295,6 +325,26 @@ export const iconMappings: Record<string, IconMapping> = {
     phosphor: "chat",
     lucide: "message-circle",
     solar: "chat-round"
+  },
+  chats: {
+    phosphor: "chats",
+    lucide: "messages-square",
+    solar: "chat-round-line"
+  },
+  "chat-two": {
+    phosphor: "chat-teardrop-text",
+    lucide: "message-circle",
+    solar: "chat-round"
+  },
+  "chat-three": {
+    phosphor: "chat-centered-dots",
+    lucide: "message-circle",
+    solar: "chat-round"
+  },
+  support: {
+    phosphor: "hand-heart",
+    lucide: "heart-handshake",
+    solar: "heart-handshake"
   },
   mail: {
     phosphor: "envelope",
@@ -340,12 +390,12 @@ export const iconMappings: Record<string, IconMapping> = {
     lucide: "unlock",
     solar: "lock-unlocked"
   },
-  eye: {
+  show: {
     phosphor: "eye",
     lucide: "eye",
     solar: "eye"
   },
-  "eye-slash": {
+  hide: {
     phosphor: "eye-slash",
     lucide: "eye-off",
     solar: "eye-closed"
@@ -357,7 +407,7 @@ export const iconMappings: Record<string, IconMapping> = {
     lucide: "link",
     solar: "link"
   },
-  "link-break": {
+  unlink: {
     phosphor: "link-break",
     lucide: "unlink",
     solar: "link-broken"
@@ -374,20 +424,20 @@ export const iconMappings: Record<string, IconMapping> = {
     lucide: "crop",
     solar: "crop"
   },
-  highlighter: {
-    phosphor: "highlighter",
-    lucide: "highlighter",
-    solar: "pen"
-  },
 
   // Navigation UI
-  "dots-vertical": {
+  more: {
     phosphor: "dots-three-vertical",
     lucide: "more-vertical",
     solar: "menu-dots"
   },
-  "dots-horizontal": {
+  "more-horizontal": {
     phosphor: "dots-three",
+    lucide: "more-horizontal",
+    solar: "menu-dots-bold"
+  },
+  "more-outline-horizontal": {
+    phosphor: "dots-three-outline",
     lucide: "more-horizontal",
     solar: "menu-dots-bold"
   },
@@ -589,11 +639,6 @@ export const iconMappings: Record<string, IconMapping> = {
     lucide: "map-pin",
     solar: "map-point"
   },
-  "arrow-down-left": {
-    phosphor: "arrow-down-left",
-    lucide: "arrow-down-left",
-    solar: "arrow-down-left"
-  },
   "rows-plus-bottom": {
     phosphor: "rows-plus-bottom",
     lucide: "rows-plus-bottom",
@@ -656,37 +701,45 @@ export const iconMappings: Record<string, IconMapping> = {
     lucide: "highlighter",
     solar: "pen"
   },
+  highlighter: {
+    phosphor: "highlighter",
+    lucide: "highlighter",
+    solar: "pen"
+  },
+  "highlighter-circle": {
+    phosphor: "highlighter-circle",
+    lucide: "highlighter",
+    solar: "pen"
+  },
   "cursor-arrow-rays": {
     phosphor: "cursor-click",
     lucide: "mouse-pointer-click",
     solar: "cursor-square"
-  },
-  "link-arrow-left": {
-    phosphor: "arrow-square-out",
-    lucide: "external-link",
-    solar: "link-round-angle"
   },
   "link-arrow-down": {
     phosphor: "arrow-square-down",
     lucide: "corner-down-left",
     solar: "link-round"
   },
-
-  // More missing icons
   "arrow-path": {
     phosphor: "arrow-clockwise",
     lucide: "refresh-cw",
     solar: "restart"
   },
+  reload: {
+    phosphor: "arrow-counter-clockwise",
+    lucide: "refresh-cw",
+    solar: "restart"
+  },
   sync: {
-    phosphor: "arrow-clockwise",
+    phosphor: "arrows-clockwise",
     lucide: "refresh-cw",
     solar: "restart"
   },
   refresh: {
     phosphor: "arrow-clockwise",
     lucide: "refresh-cw",
-    solar: "restart"
+    solar: "refresh"
   },
   convert: {
     phosphor: "arrows-clockwise",
@@ -708,6 +761,11 @@ export const iconMappings: Record<string, IconMapping> = {
     lucide: "focus",
     solar: "target"
   },
+  "brackets-square": {
+    phosphor: "brackets-square",
+    lucide: "parentheses",
+    solar: "folder"
+  },
 
   // Resource-specific icons
   collection: {
@@ -726,7 +784,6 @@ export const iconMappings: Record<string, IconMapping> = {
     solar: "widget"
   },
 
-  // Common icons found in codebase
   sliders: {
     phosphor: "sliders",
     lucide: "sliders",
@@ -782,10 +839,30 @@ export const iconMappings: Record<string, IconMapping> = {
     lucide: "lightbulb",
     solar: "lightbulb"
   },
-  "arrows-out": {
+  fullscreen: {
     phosphor: "arrows-out",
     lucide: "maximize",
     solar: "maximize"
+  },
+  pop: {
+    phosphor: "arrow-line-up-right",
+    lucide: "maximize",
+    solar: "maximize"
+  },
+  expand: {
+    phosphor: "arrows-out-simple",
+    lucide: "maximize-2",
+    solar: "maximize"
+  },
+  widen: {
+    phosphor: "arrows-out-line-horizontal",
+    lucide: "maximize-2",
+    solar: "maximize"
+  },
+  shrink: {
+    phosphor: "arrows-in-line-horizontal",
+    lucide: "minimize",
+    solar: "minimize"
   },
   graph: {
     phosphor: "graph",
@@ -797,7 +874,7 @@ export const iconMappings: Record<string, IconMapping> = {
     lucide: "git-branch",
     solar: "hierarchy"
   },
-  "flow-arrow": {
+  traverse: {
     phosphor: "flow-arrow",
     lucide: "arrow-right",
     solar: "arrow-right"
@@ -887,11 +964,6 @@ export const iconMappings: Record<string, IconMapping> = {
     lucide: "music",
     solar: "music-note"
   },
-  "highlighter-circle": {
-    phosphor: "highlighter-circle",
-    lucide: "highlighter",
-    solar: "pen"
-  },
   bird: {
     phosphor: "bird",
     lucide: "bird",
@@ -902,12 +974,7 @@ export const iconMappings: Record<string, IconMapping> = {
     lucide: "package",
     solar: "bag-4"
   },
-  "chat-teardrop-text": {
-    phosphor: "chat-teardrop-text",
-    lucide: "message-circle",
-    solar: "chat-round"
-  },
-  "markdown-logo": {
+  markdown: {
     phosphor: "markdown-logo",
     lucide: "file-text",
     solar: "document-text"
@@ -922,7 +989,7 @@ export const iconMappings: Record<string, IconMapping> = {
     lucide: "infinity",
     solar: "infinity"
   },
-  "hourglass-simple": {
+  hourglass: {
     phosphor: "hourglass-simple",
     lucide: "hourglass",
     solar: "hourglass"
@@ -942,16 +1009,7 @@ export const iconMappings: Record<string, IconMapping> = {
     lucide: "circle-dashed",
     solar: "circle"
   },
-  "arrows-in": {
-    phosphor: "arrows-in-line-horizontal",
-    lucide: "minimize",
-    solar: "minimize"
-  },
-  "arrows-out-simple": {
-    phosphor: "arrows-out-simple",
-    lucide: "maximize-2",
-    solar: "maximize"
-  },
+
   "to-sub": {
     phosphor: "arrow-bend-down-right",
     lucide: "corner-down-right",
@@ -962,20 +1020,20 @@ export const iconMappings: Record<string, IconMapping> = {
     lucide: "corner-up-right",
     solar: "arrow-right-up"
   },
+  back: {
+    phosphor: "arrow-bend-down-left",
+    lucide: "corner-down-left",
+    solar: "arrow-left-down"
+  },
+  "back-sm": {
+    phosphor: "arrow-left",
+    lucide: "arrow-left",
+    solar: "arrow-left"
+  },
   "level-up": {
     phosphor: "arrow-fat-lines-up",
     lucide: "chevrons-up",
     solar: "double-alt-arrow-up"
-  },
-  "pencil-simple-slash": {
-    phosphor: "pencil-simple-slash",
-    lucide: "edit-off",
-    solar: "pen-new-square"
-  },
-  "pencil-simple-line": {
-    phosphor: "pencil-simple-line",
-    lucide: "edit",
-    solar: "pen-new-square"
   },
   "star-fill": {
     phosphor: "star-fill",
@@ -987,7 +1045,7 @@ export const iconMappings: Record<string, IconMapping> = {
     lucide: "circle",
     solar: "circle-bold"
   },
-  "square-split-horizontal": {
+  "split-screen": {
     phosphor: "square-split-horizontal",
     lucide: "columns",
     solar: "widget"
@@ -1034,17 +1092,22 @@ export const iconMappings: Record<string, IconMapping> = {
     lucide: "sticky-note",
     solar: "notes"
   },
+  "note-blank": {
+    phosphor: "note-blank",
+    lucide: "sticky-note",
+    solar: "notes"
+  },
   "log-out": {
     phosphor: "sign-out",
     lucide: "log-out",
     solar: "logout"
   },
-  "arrow-u-up-left": {
+  undo: {
     phosphor: "arrow-u-up-left",
     lucide: "corner-up-left",
     solar: "arrow-left-up"
   },
-  "dice-three": {
+  randomize: {
     phosphor: "dice-three",
     lucide: "dice-3",
     solar: "dice"
@@ -1054,15 +1117,20 @@ export const iconMappings: Record<string, IconMapping> = {
     lucide: "paintbrush",
     solar: "palette"
   },
-  "floppy-disk": {
+  save: {
     phosphor: "floppy-disk",
     lucide: "save",
     solar: "diskette"
   },
-  "arrow-u-up-right": {
+  redo: {
     phosphor: "arrow-u-up-right",
     lucide: "corner-up-right",
     solar: "arrow-right-up"
+  },
+  restore: {
+    phosphor: "arrow-u-down-right",
+    lucide: "corner-down-right",
+    solar: "arrow-right-down"
   },
   rearrange: {
     phosphor: "dots-six-vertical",
@@ -1074,10 +1142,10 @@ export const iconMappings: Record<string, IconMapping> = {
     lucide: "grip-horizontal",
     solar: "menu-dots"
   },
-  house: {
-    phosphor: "house",
-    lucide: "home",
-    solar: "home"
+  grab: {
+    phosphor: "arrows-out-cardinal",
+    lucide: "grip-vertical",
+    solar: "menu-dots"
   },
   sidebar: {
     phosphor: "sidebar",
@@ -1119,27 +1187,27 @@ export const iconMappings: Record<string, IconMapping> = {
     lucide: "settings",
     solar: "settings"
   },
-  chats: {
-    phosphor: "chats",
-    lucide: "messages-square",
-    solar: "chat-round-line"
-  },
   "video-camera": {
+    phosphor: "video-camera",
+    lucide: "video",
+    solar: "videocamera"
+  },
+  "video-conference": {
     phosphor: "video-conference",
     lucide: "video",
     solar: "videocamera"
   },
-  "discord-logo": {
+  discord: {
     phosphor: "discord-logo",
     lucide: "gamepad-2",
     solar: "gamepad"
   },
-  "reddit-logo": {
+  reddit: {
     phosphor: "reddit-logo",
     lucide: "circle",
     solar: "reddit"
   },
-  "instagram-logo": {
+  instagram: {
     phosphor: "instagram-logo",
     lucide: "instagram",
     solar: "instagram"

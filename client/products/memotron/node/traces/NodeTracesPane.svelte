@@ -31,7 +31,7 @@
     const comments = {
       value: "comments",
       label: "Comments",
-      icon: "ph:chat-teardrop-text"
+      icon: "chat-two"
     };
 
     if (contentType === NodeType.PDF) {
@@ -39,7 +39,7 @@
         {
           value: "clips",
           label: "Highlights",
-          icon: "heroicons:bookmark"
+          icon: "bookmark"
         }
         // tasks
       ];
@@ -48,7 +48,7 @@
         {
           value: "clips",
           label: "Clips",
-          icon: "heroicons:bookmark"
+          icon: "bookmark"
         }
         // tasks
       ];
@@ -75,7 +75,7 @@
         {
           value: "clips",
           label: "Highlights",
-          icon: "heroicons:bookmark"
+          icon: "bookmark"
         }
         // tasks
       ];

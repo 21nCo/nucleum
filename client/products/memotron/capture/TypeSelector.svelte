@@ -30,7 +30,7 @@
   const contentTypes: (ISelectItem & { value: string })[] = [
     {
       value: CaptureType.MARKDOWN,
-      icon: "markdown-logo"
+      icon: "markdown"
     },
     {
       icon: "microphone",

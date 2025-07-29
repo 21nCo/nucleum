@@ -37,7 +37,7 @@ export function resolveGoalStatusIcon(status: GoalStatus) {
     case GoalStatus.NOT_STARTED:
       return "circle";
     case GoalStatus.IN_PROGRESS:
-      return "hourglass-simple";
+      return "hourglass";
     case GoalStatus.COMPLETED:
       return "check-circle";
     default:

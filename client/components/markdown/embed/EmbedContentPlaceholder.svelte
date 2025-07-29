@@ -263,7 +263,7 @@
             />
             <Button
               label={$view.isConstrainedWidth ? "" : "Go"}
-              icon="arrow-right"
+              icon="proceed"
               type={ButtonVariant.PRIMARY}
               style={ButtonStyle.OUTLINED}
               on:click={onLinkInput}

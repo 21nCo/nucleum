@@ -39,7 +39,7 @@
           on:click
         />
         <Button
-          icon="arrow-path"
+          icon="clock"
           label="I'll login later"
           on:click={() => {
             dispatch("later");

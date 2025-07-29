@@ -137,7 +137,7 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
     action: "datetime-settings",
     cmdLabel: "Date & Time Settings",
     label: "Date & Time",
-    icon: "calendar",
+    icon: "calendar-blank",
     component: DateTimeSettings
   },
   {

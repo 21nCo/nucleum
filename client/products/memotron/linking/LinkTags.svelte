@@ -30,7 +30,7 @@
     <Tag
       label={tag.label}
       size={Size.sm}
-      icon="link-simple"
+      icon="relation"
       on:click={(e) => onTagClick(tag.id, e)}
       on:remove={() => onRemove(tag.id)}
     />

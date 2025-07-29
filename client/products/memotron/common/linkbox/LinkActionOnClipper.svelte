@@ -24,7 +24,7 @@
   }}
 >
   <Icon
-    icon={isLinkboxOpened ? "ph:link" : "link"}
+    icon={isLinkboxOpened ? "ph:link" : "ph:link-light"}
     isAccentBgContext={isLinkboxOpened}
     size={Size.sm}
   />

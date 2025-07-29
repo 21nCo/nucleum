@@ -32,7 +32,7 @@
         {
           value: "open-link",
           label: "Open link",
-          icon: "arrow-up-right",
+          icon: "weblink",
           callback: async () => {
             appStore.openLink(node.url ?? "");
           }
@@ -90,7 +90,7 @@
         }}
       >
         <Button
-          icon="arrow-up-right"
+          icon="weblink"
           label={trimUrl(node.url, isLinkHovering)}
           bind:isHovering={isLinkHovering}
           size={Size.xs}

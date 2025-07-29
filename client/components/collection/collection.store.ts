@@ -569,7 +569,7 @@ export function resolveCollectionContextMenu(
   } else if (collection.type === CollectionType.TYPED) {
     const captureToggle = {
       value: "captureshortcut",
-      icon: "arrow-up-right",
+      icon: "command",
       label: "Capture shortcut",
       type: ContextMenuType.SWITCH,
       initialValue: collection.isCaptureShortcutEnabled,

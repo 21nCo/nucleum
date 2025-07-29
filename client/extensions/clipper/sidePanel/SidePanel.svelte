@@ -110,7 +110,7 @@
     {
       label: "Clips",
       value: "clips",
-      icon: "heroicons:bookmark"
+      icon: "bookmark"
     },
     {
       label: "Page notes",
@@ -398,7 +398,7 @@
                 <span> Toolbar is hidden </span>
                 <Button
                   label="Show toolbar"
-                  icon="eye"
+                  icon="show"
                   size={Size.sm}
                   isPreventMinWidth={true}
                   on:click={() => {

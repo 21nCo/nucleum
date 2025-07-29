@@ -22,7 +22,7 @@
 {#if $activeSession.isSessionRunning}
   <button
     class={cn(
-      "flex items-center tabular-nums text-b3 font-mono border hover:bg-bgs3 py-1 px-2 rounded-md",
+      "flex items-center tabular-nums text-b3 font-mono border hover:bg-bgs3 py-1 px-2 mx-2 rounded-md",
       {
         "text-aps1 border-aps1":
           $activeSession.state === SessionState.FOCUS_RUNNING,

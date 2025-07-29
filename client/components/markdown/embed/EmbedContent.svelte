@@ -362,7 +362,7 @@
               {/if}
               {#if _mediaBlock?.url}
                 <Button
-                  icon="arrow-up-right"
+                  icon="weblink"
                   tooltip="Go to external link"
                   size={Size.sm}
                   style={ButtonStyle.OUTLINED}

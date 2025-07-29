@@ -159,7 +159,7 @@
         on:click={() => appStore.goBack(resource)}
         use:tooltip={{ text: "Go back", direction: Placement.Left }}
       >
-        <Icon icon="arrow-elbow-down-left" size={Size.lg} class="stroke-fgs1" />
+        <Icon icon="back" size={Size.lg} class="stroke-fgs1" />
       </button>
     {/if}
   </div>

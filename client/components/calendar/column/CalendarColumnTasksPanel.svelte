@@ -158,7 +158,7 @@
       {#if completedTasksCount > 0}
         <div class="my-4">
           <Button
-            icon={showCompletedTasks ? "eye-slash" : ""}
+            icon={showCompletedTasks ? "hide" : ""}
             label={showCompletedTasks
               ? "Hide completed"
               : `Completed (${completedTasksCount})`}
@@ -177,7 +177,7 @@
     <div class="flex flex-col justify-center items-center gap-6">
       {#if completedTasksCount > 0}
         <Button
-          icon={showCompletedTasks ? "eye-slash" : ""}
+          icon={showCompletedTasks ? "hide" : ""}
           label={showCompletedTasks
             ? "Hide completed"
             : `Completed (${completedTasksCount})`}

@@ -74,7 +74,7 @@
           {
             label: `Go to ${item?.label}`,
             value: "goToResource",
-            icon: "arrow-right",
+            icon: "proceed",
             callback: async () => {
               dispatch("goToResource", id);
             }

@@ -69,7 +69,7 @@
     </div>
   </div>
   <Button
-    icon="link-arrow-left"
+    icon="weblink-two"
     tooltip="Open in app"
     parentBgIndex={2}
     on:click={handleOpenInAppClick}

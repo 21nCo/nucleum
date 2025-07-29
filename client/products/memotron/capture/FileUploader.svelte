@@ -188,22 +188,18 @@
               label="Save all"
               isLoading={isSaveInProgress}
               type={ButtonVariant.PRIMARY}
-              icon="arrow-right"
+              icon="proceed"
               parentBgIndex={2}
               on:click={saveAll}
             />
             <Button
               label="Insert into markdown"
-              icon="markdown-logo"
+              icon="markdown"
               parentBgIndex={2}
               on:click={handleInsertIntoMd}
             />
           {:else}
-            <Button
-              label="Select file"
-              icon="upload"
-              parentBgIndex={2}
-            />
+            <Button label="Select file" icon="upload" parentBgIndex={2} />
           {/if}
         </div>
         {#if error}

@@ -849,7 +849,7 @@ export const features: IFwFeature[] = [
       },
       {
         label: "Transparent development process and regular public updates",
-        icon: "eye"
+        icon: "show"
       }
     ],
     comparisionProperties: ["sourcingType"],

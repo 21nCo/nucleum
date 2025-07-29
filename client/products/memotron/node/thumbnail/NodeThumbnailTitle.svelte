@@ -37,7 +37,7 @@
       }}
     >
       <Icon
-        icon="arrow-up-right"
+        icon="weblink"
         size={Size.xs}
         class={cn({
           "fill-fgs3": !isHoveringUrl,
@@ -62,7 +62,7 @@
     >
       {#if node.url && !$view.isConstrainedWidth}
         {#if !isUrlOnIcon || (isUrlOnIcon && !isHoveringUrlIcon)}
-          <Icon icon="arrow-up-right" class="fill-fgs3" size={Size.sm} />
+          <Icon icon="weblink" class="fill-fgs3" size={Size.sm} />
         {:else if isUrlOnIcon && isHoveringUrlIcon}
           <button
             on:click={() => {
@@ -73,7 +73,7 @@
               text: node.url
             }}
           >
-            <Icon icon="arrow-up-right" class="fill-aps1" size={Size.md} />
+            <Icon icon="weblink" class="fill-aps1" size={Size.md} />
           </button>
         {/if}
       {/if}

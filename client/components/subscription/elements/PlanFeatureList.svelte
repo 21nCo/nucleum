@@ -19,7 +19,7 @@
   {/each}
   {#if moreLink}
     <li class="flex items-center gap-2 text-sm text-fgs2 py-3">
-      <Icon icon="arrow-right" class="text-aps1 shrink-0" />
+      <Icon icon="proceed" class="text-aps1 shrink-0" />
       <a href={moreLink} class="text-aps1">Learn more</a>
     </li>
   {/if}

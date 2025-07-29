@@ -525,7 +525,7 @@
           />
         </div>
       {/if}
-      <Button icon="dice-three" tooltip="Randomize" on:click={ShufflePick} />
+      <Button icon="randomize" tooltip="Randomize" on:click={ShufflePick} />
       <Button
         icon="trash"
         tooltip="Delete"

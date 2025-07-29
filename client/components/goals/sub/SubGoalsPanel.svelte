@@ -177,7 +177,7 @@
   <div class="flex items-center justify-end gap-4 w-full">
     {#if $goal.subGoalsLayout !== SubGoalsLayout.STEPS && completedSubgoalsCount}
       <Button
-        icon={isHideCompleted ? "eye" : "eye-slash"}
+        icon={isHideCompleted ? "show" : "hide"}
         label={`${isHideCompleted ? "Show" : "Hide"} completed (${completedSubgoalsCount})`}
         size={Size.sm}
         style={ButtonStyle.PLAIN}

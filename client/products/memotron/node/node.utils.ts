@@ -111,7 +111,7 @@ export function resolveNodeIcon(contentType: NodeType, url?: string) {
     case NodeType.WEB_SCREENSHOT_CLIP:
       return "crop";
     case NodeType.NODULAR_MARKDOWN:
-      return "ph:markdown-logo-light";
+      return "markdown";
     case NodeType.TEXT_CLIP:
       return "highlighter-circle";
     case NodeType.WEB_PAGE:
@@ -169,7 +169,7 @@ export function resolveFallbackIconForUrl(url: string | undefined) {
   if (hostPart === "twitter.com" || hostPart.endsWith(".twitter.com"))
     return "twitter";
   if (hostPart === "instagram.com" || hostPart.endsWith(".instagram.com"))
-    return "ph:instagram-logo";
+    return "instagram";
   if (hostPart === "linkedin.com" || hostPart.endsWith(".linkedin.com"))
     return "logos:linkedin-icon";
   if (hostPart === "facebook.com" || hostPart.endsWith(".facebook.com"))

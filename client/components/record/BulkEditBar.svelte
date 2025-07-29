@@ -99,7 +99,7 @@
   const setDate = {
     action: "setDate",
     label: "Set date",
-    icon: "calendar"
+    icon: "calendar-blank"
   };
   const convertAction = {
     action: ResourceActionType.CONVERT,

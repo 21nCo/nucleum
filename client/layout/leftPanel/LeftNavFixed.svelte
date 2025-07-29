@@ -93,7 +93,7 @@
             class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-bgs3 transition-colors duration-200"
           >
             <Icon
-              icon="ph:dots-three-outline"
+              icon="more-outline-horizontal"
               size={Size.md}
               class="text-fgs3"
             />

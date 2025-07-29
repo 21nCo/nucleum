@@ -34,7 +34,7 @@
    * If set to true, the context menu will be rendered as a sibling of the trigger button. By default, popovers are rendered in popovers container to avoid z-index issues with other elements in the DOM.
    */
   export let isRenderAsSibling = false;
-  export let icon: string = "dots-vertical";
+  export let icon: string = "more";
   let classList: string = "";
   export { classList as class };
   let contextMenuPopoverRef: any;
@@ -81,7 +81,7 @@
 >
   <slot>
     <Toggle
-      icon="dots-vertical"
+      icon="more"
       {tooltip}
       isPreventFillOnActive={true}
       on={isPopoverVisible}

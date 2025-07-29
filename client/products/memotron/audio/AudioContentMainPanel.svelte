@@ -122,7 +122,7 @@
       {
         value: AudioView.MARKDOWN,
         label: "Markdown",
-        icon: "markdown-logo"
+        icon: "markdown"
       }
     ];
     if (isEnableSummarization) {
@@ -175,11 +175,7 @@
               searchQuery = "";
             }}
           />
-          <Button
-            icon="cross"
-            tooltip="Close search"
-            on:click={toggleSearch}
-          />
+          <Button icon="cross" tooltip="Close search" on:click={toggleSearch} />
         </div>
       {:else if selectedView === AudioView.TRANSCRIPTION && body?.transcription}
         <Button
@@ -198,7 +194,7 @@
         {/if}
         {#if isTranscribeAvailable}
           <Button
-            icon="arrow-path"
+            icon="reload"
             tooltip="Retranscribe"
             on:click={() => {
               dispatch("retranscribe");

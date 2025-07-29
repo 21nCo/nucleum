@@ -292,9 +292,7 @@
           />
         </div>
         <Button
-          icon={isInlineContext
-            ? "arrow-right"
-            : "arrows-out"}
+          icon={isInlineContext ? "proceed" : "pop"}
           parentBgIndex={2}
           tooltip="Open"
           size={Size.sm}

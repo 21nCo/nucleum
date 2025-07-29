@@ -203,7 +203,7 @@
       </div>
     {:else if photoTaken}
       <Button
-        icon="arrow-path"
+        icon="reset"
         label="Retake"
         type={ButtonVariant.DANGER}
         size={$view.isConstrainedWidth ? Size.sm : Size.md}
@@ -211,7 +211,7 @@
         on:click={retakePhoto}
       />
       <Button
-        icon="ph:floppy-disk"
+        icon="save"
         label="Save"
         type={ButtonVariant.PRIMARY}
         size={$view.isConstrainedWidth ? Size.sm : Size.md}
