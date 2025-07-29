@@ -23,6 +23,9 @@ const memoryStores = {
   linkTag: "id, group, label"
 };
 
+/**
+ * @deprecated - no longer required with current dexie local persistence
+ */
 export class MemotronDexie extends AppDexie {
   node!: Table<INode>;
   collection!: Table<ICollection>;

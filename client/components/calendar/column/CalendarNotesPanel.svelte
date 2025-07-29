@@ -63,7 +63,9 @@
     />
   </div>
 {:then _}
-  <NodeContent {node} {mdId} />
+  <div class="flex w-full h-full overflow-y-auto">
+    <NodeContent {node} {mdId} />
+  </div>
 {:catch _}
   <EmptyStatusView
     mainText="Error loading calendar notes. Please try again after sometime."

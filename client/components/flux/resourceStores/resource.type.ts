@@ -182,6 +182,10 @@ export enum ResourceAccessPoint {
   SELF = "self",
   OTHER = "other",
   /**
+   * The resource is being accessed from the node page
+   */
+  NODE = "node",
+  /**
    * The resource is being accessed from the node links pane
    */
   NODE_LINKS = "nodelinks",

@@ -851,7 +851,7 @@ export class DexiePersistence implements IPersistence {
 
   async select(resourceId: IRecordId, properties?: IResourceSelectProperties) {
     const resource = this.resolveResource(resourceId);
-    const debugResource: Resource[] = [Resource.node];
+    const debugResource: Resource[] = [];
     if (debugResource.includes(resource)) {
       logger.debug({
         at: "DexiePersistence.select",

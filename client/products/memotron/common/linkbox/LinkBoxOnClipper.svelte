@@ -3,6 +3,7 @@
   import { Placement } from "$lib/client/types/direction.enum";
   import { createEventDispatcher } from "svelte";
   import LinkSearch from "./LinkSearch.svelte";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   const dispatch = createEventDispatcher();
   let searchQuery: string;
   let searchRef: LinkSearch;
@@ -13,7 +14,7 @@
 </script>
 
 <LinkSearch
-  ctx="clipper"
+  accessPoint={ResourceAccessPoint.CLIPPER}
   bind:searchQuery
   bind:this={searchRef}
   resultsPlacement={$toolbarState.position === Placement.Bottom

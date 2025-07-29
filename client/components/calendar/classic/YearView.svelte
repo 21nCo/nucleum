@@ -27,7 +27,7 @@
     "December"
   ];
 
-  const INITIAL_RANGE = 10;
+  const INITIAL_RANGE = 4;
   let years: ReturnType<typeof getYearData>[] = [];
   let visibleYear: number;
   let lastScrollTop = 0;
@@ -284,9 +284,12 @@
   on:scroll={onScroll}
 >
   {#each years as { year, months }}
+    {@const isFutureYear = year > new Date().getFullYear()}
     <div class="px-6 py-3" id="year-{year}">
       <div class="mb-2">
-        <h2 class="text-h2 font-bold ml-3">{year}</h2>
+        <h2 class="text-h2 font-bold ml-3" class:text-fgs4={isFutureYear}>
+          {year}
+        </h2>
       </div>
       <div
         class="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-x-16 gap-y-12 default-typeface"

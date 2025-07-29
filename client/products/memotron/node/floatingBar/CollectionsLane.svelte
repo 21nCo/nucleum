@@ -127,7 +127,8 @@
           onHideCallback: () => {
             hidePopover();
           },
-          ctx: "nodepageCollectionsLane"
+          accessPoint: ResourceAccessPoint.NODE,
+          isCollectionsLane: true
         }
       }}
     >
