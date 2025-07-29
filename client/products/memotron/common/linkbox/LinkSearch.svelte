@@ -35,7 +35,7 @@
   let searchInputRef: TextSearchInput;
   let isCreationInProgress = false;
 
-  $: resolveOptions(), [accessPoint, isCollectionsLane];
+  $: accessPoint, isCollectionsLane, resolveOptions();
 
   export function focus() {
     searchInputRef?.focus();
