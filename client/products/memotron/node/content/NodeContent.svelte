@@ -138,8 +138,8 @@
 
   function refreshCounts(e: any) {
     if (!e) return;
-    $node.wordCount = e.words;
-    $node.charCount = e.characters;
+    if (Number.isFinite(e.words)) $node.wordCount = e.words;
+    if (Number.isFinite(e.characters)) $node.charCount = e.characters;
   }
 
   function onMarkdownContentChange(e: CustomEvent) {
@@ -374,7 +374,6 @@
           on:change={onMarkdownContentChange}
           on:restructure={onReStructure}
           on:focus={onFocus}
-          on:ready={refreshCounts}
           on:action={onBlockAction}
         />
         {#if !$view.isConstrainedWidth && dev_isEnableBottomDivider}

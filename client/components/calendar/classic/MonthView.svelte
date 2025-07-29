@@ -18,6 +18,8 @@
   let isScrolling = false;
   let scrollTimeout: NodeJS.Timeout;
   let containerWidth: number = 0;
+  let today = new Date();
+
   $: isConstrainedWidth = containerWidth < 600;
   function handleWheel(event: WheelEvent) {
     if (isScrolling) return;
@@ -67,7 +69,6 @@
   }
 
   $: calendarDays = getDaysInMonth(selectedDate);
-  $: today = new Date();
 </script>
 
 <div
@@ -140,3 +141,8 @@
     {/each}
   </div>
 </div>
+<svelte:window
+  on:focus={() => {
+    today = new Date();
+  }}
+/>

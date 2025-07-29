@@ -32,7 +32,7 @@
       <Icon icon="link" size={Size.sm} />
     </div>
     <LinkSearch
-      ctx="capture"
+      accessPoint={ResourceAccessPoint.CAPTURE}
       searchQuery={link}
       on:select={async (e) => {
         if (!e.detail.item) return;

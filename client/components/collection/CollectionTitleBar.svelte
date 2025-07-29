@@ -46,6 +46,11 @@
   let searchBoxRef: TextInput;
   let rightPartWidth = 0;
 
+  $: isMiniSearch = rightPartWidth < 530;
+  $: isDetailsBesideTitleRenderable =
+    !isConstrainedWidth &&
+    (!isMiniSearch || (isMiniSearch && !isSearchFocused));
+
   function onLabelChange(e: any) {
     if ($collection.label) collection.modify({ label: $collection.label });
   }
@@ -141,7 +146,7 @@
         {$collection.label ?? "Untitled collection"}
       </div>
     {/if}
-    {#if ($collection.description && !isConstrainedWidth) || $collection.isInEditMode}
+    {#if ($collection.description && isDetailsBesideTitleRenderable) || $collection.isInEditMode}
       <span
         class="flex justify-center items-center"
         use:popover={{
@@ -167,7 +172,7 @@
         <Icon icon="info" size={Size.sm} />
       </span>
     {/if}
-    {#if $collection.isStarred}
+    {#if $collection.isStarred && isDetailsBesideTitleRenderable}
       <button
         class="flex items-center justify-center"
         use:tooltip={{
@@ -183,7 +188,7 @@
         />
       </button>
     {/if}
-    {#if !$collection.isInEditMode && $collection.type === CollectionType.TYPED && !isConstrainedWidth}
+    {#if !$collection.isInEditMode && $collection.type === CollectionType.TYPED && isDetailsBesideTitleRenderable}
       <button
         class="flex text-b3 text-fgs3 rounded-md border border-brs3"
         on:click={openPropertiesEditor}
@@ -193,9 +198,9 @@
       >
         <span class="flex gap-2 items-center px-2 py-0.5">
           <Icon icon="ph:cube-light" size={Size.sm} class="stroke-fgs3" />
-          {$collection.properties.length}
-          {#if !isConstrainedWidth}
-            {$collection.properties.length === 1 ? "property" : "properties"}
+          {$collection.properties?.length ?? 0}
+          {#if !isConstrainedWidth && !isMiniSearch}
+            {($collection.properties?.length ?? 0) === 1 ? "property" : "properties"}
           {/if}
         </span>
         {#if $collection.typeToExtend}
@@ -210,7 +215,7 @@
         on:click={openPropertiesEditor}
       >
         <Icon icon="ph:cube-light" size={Size.sm} class="stroke-fgs3" />
-        edit properties ({$collection.properties.length})
+        edit properties ({$collection.properties?.length ?? 0})
       </button>
     {/if}
   </span>
@@ -226,7 +231,8 @@
   {:else if accessPoint !== ResourceAccessPoint.MARKDOWN_EMBED}
     <span
       class={cn("flex gap-3 justify-end items-center", {
-        "w-1/2": !$collection.isInEditMode,
+        "w-1/2": !$collection.isInEditMode && !isMiniSearch,
+        "w-2/3": !$collection.isInEditMode && isMiniSearch && isSearchFocused,
         "w-1/3": $collection.isInEditMode
       })}
       use:resizeListener={(e) => {
@@ -234,7 +240,6 @@
       }}
     >
       {#if !$collection.isInEditMode && $collection.totalItemCount}
-        {@const isMiniSearch = rightPartWidth < 530}
         <div
           class={cn("flex rounded-full", {
             "border-aps1": isSearchFocused,

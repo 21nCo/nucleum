@@ -280,10 +280,15 @@
 
   async function onViewSwitch() {
     logger.log({ at: "onViewSwitch", selectedViewId });
+    resetViewSelections();
     const view = loadActiveView();
     if (!view) return;
     appStore.toggleSearchParam({ [AppSearchParam.VIEW]: view.id?.toString() });
     await refresh({ isNewView: true });
+  }
+
+  function resetViewSelections() {
+    selectedTab = undefined;
   }
 
   function onViewLabelChange(e: CustomEvent) {
