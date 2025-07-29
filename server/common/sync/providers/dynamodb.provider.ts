@@ -1512,18 +1512,39 @@ export class DynamoDBSyncProvider implements ISyncProvider {
     dynamoClient: DynamoDBDocumentClient
   ): Promise<DynamoDBItem | null> {
     try {
-      const updateExpressions = [];
+      const setExpressions: string[] = [];
+      const removeExpressions: string[] = [];
       const expressionAttributeNames: Record<string, string> = {};
       const expressionAttributeValues: Record<string, any> = {};
+      let attrIndex = 0;
 
-      // Build update expression for each field in the record
-      Object.keys(mergeData).forEach((key, index) => {
-        const attrName = `#attr${index}`;
-        const attrValue = `:val${index}`;
+      // Build update expressions - separate SET and REMOVE operations
+      Object.keys(mergeData).forEach((key) => {
+        const value = mergeData[key];
+        const attrName = `#attr${attrIndex}`;
         expressionAttributeNames[attrName] = key;
-        expressionAttributeValues[attrValue] = mergeData[key];
-        updateExpressions.push(`${attrName} = ${attrValue}`);
+
+        if (value === undefined || value === null) {
+          removeExpressions.push(attrName);
+        } else {
+          const attrValue = `:val${attrIndex}`;
+          expressionAttributeValues[attrValue] = value;
+          setExpressions.push(`${attrName} = ${attrValue}`);
+        }
+        attrIndex++;
       });
+
+      const updateExpressionParts: string[] = [];
+      if (setExpressions.length > 0) {
+        updateExpressionParts.push(`SET ${setExpressions.join(", ")}`);
+      }
+      if (removeExpressions.length > 0) {
+        updateExpressionParts.push(`REMOVE ${removeExpressions.join(", ")}`);
+      }
+
+      if (updateExpressionParts.length === 0) {
+        return null;
+      }
 
       const updateParams = {
         TableName: this.config.tableArn,
@@ -1531,11 +1552,14 @@ export class DynamoDBSyncProvider implements ISyncProvider {
           PK: partitionKey,
           SK: sortKey
         },
-        UpdateExpression: `SET ${updateExpressions.join(", ")}`,
+        UpdateExpression: updateExpressionParts.join(" "),
         ExpressionAttributeNames: expressionAttributeNames,
-        ExpressionAttributeValues: expressionAttributeValues,
         ConditionExpression: "attribute_exists(PK)"
       };
+
+      if (Object.keys(expressionAttributeValues).length > 0) {
+        updateParams.ExpressionAttributeValues = expressionAttributeValues;
+      }
 
       try {
         await dynamoClient.send(new UpdateCommand(updateParams));
