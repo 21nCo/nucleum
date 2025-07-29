@@ -16,7 +16,7 @@
   export let isShowDivider: boolean = false;
   export let isRoundedTop: boolean = false;
   export let isRoundedBottom: boolean = false;
-  let isOutlineStyle: boolean = false;
+  const dev_isOutlineStyle: boolean = true;
   let component = appStore.resolveAction(action);
   $: if (setActiveByPath)
     isActive = $view.currentPath === "/" + component?.path;
@@ -29,10 +29,11 @@
       "rounded-b-lg": isRoundedBottom,
       "flex px-4 py-3 w-full items-center justify-between":
         orientation === Orientation.Horizontal,
-      "border-y border-transparent": !isActive && isOutlineStyle,
-      "bg-aps3 border-y border-aps2 hover:bg-aps2 hover:bg-opacity-50 text-aps1":
-        isActive && isOutlineStyle,
-      [abg()]: !isOutlineStyle && isActive,
+      "border-y border-transparent": !isActive && dev_isOutlineStyle,
+      "notouch:hover:bg-bgs3": !isActive,
+      "bg-aps3 border-y border-aps3 hover:bg-aps2 hover:bg-opacity-50 text-aps1":
+        isActive && dev_isOutlineStyle,
+      [abg()]: !dev_isOutlineStyle && isActive,
       "px-2 py-3 rounded-md hover:bg-bgs3":
         orientation === Orientation.Vertical,
       [bg(
@@ -48,8 +49,8 @@
         <Icon
           icon={component.icon ?? "info"}
           class={cn({
-            "fill-aps1": isActive && isOutlineStyle,
-            "fill-abg": isActive && !isOutlineStyle
+            "fill-aps1": isActive && dev_isOutlineStyle,
+            "fill-abg": isActive && !dev_isOutlineStyle
           })}
         />
         <div>{component.label}</div>
@@ -57,8 +58,8 @@
       <Icon
         icon={component.type === ActionType.LINK ? "link" : "chevright"}
         class={cn({
-          "stroke-abg": isActive && !isOutlineStyle,
-          "stroke-aps1": isActive && isOutlineStyle
+          "stroke-abg": isActive && !dev_isOutlineStyle,
+          "stroke-aps1": isActive && dev_isOutlineStyle
         })}
       />
     {:else}
@@ -66,8 +67,8 @@
         <Icon
           icon={component.icon}
           class={cn({
-            "fill-aps1": isActive && isOutlineStyle,
-            "fill-abg": isActive && !isOutlineStyle
+            "fill-aps1": isActive && dev_isOutlineStyle,
+            "fill-abg": isActive && !dev_isOutlineStyle
           })}
         />
         <div class="text-b2">{component.label}</div>

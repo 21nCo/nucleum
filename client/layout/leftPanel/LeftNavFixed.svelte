@@ -68,7 +68,11 @@
         <SubAtomLogo size={isHideMenuLabels ? Size.sm : Size.md} />
       </div>
       <!-- <TrailLeftIndicator orientation={Orientation.Vertical} /> -->
-      <div class="flex flex-col gap-3 items-center w-full p-2 overflow-auto">
+      <div
+        class={cn("flex flex-col gap-3 items-center w-full overflow-auto", {
+          "p-2": !isHideMenuLabels
+        })}
+      >
         <AppMenuSwitcher
           parentBackgroundIndex={1}
           layoutContext={LayoutContext.THIN_WITH_LABEL}
