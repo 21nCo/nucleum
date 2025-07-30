@@ -622,6 +622,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
    */
   async syncUp(body: ISyncUpBody, agent: Agent): Promise<any> {
     try {
+      console.log({ at: "DynamoDB syncUp - body", body });
       const dynamoClient = this.getDynamoClient(agent);
       const { mutations, lastSyncDown, resources, dapId } = body;
       if (!mutations || !Array.isArray(mutations) || mutations.length < 1) {
@@ -1523,7 +1524,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
         const value = mergeData[key];
         const attrName = `#attr${attrIndex}`;
         expressionAttributeNames[attrName] = key;
-
+        console.log({ key, value });
         if (value === undefined || value === null) {
           removeExpressions.push(attrName);
         } else {
