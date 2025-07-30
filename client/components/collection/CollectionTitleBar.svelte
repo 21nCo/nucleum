@@ -32,6 +32,7 @@
   import { resourceAction } from "../flux/resourceStores/resource.utils";
   import { Resource } from "../flux/resourceStores/resource.enum";
   import CollectionDescriptionEditPopover from "./CollectionDescriptionEditPopover.svelte";
+  import RecordStarStatusFeedback from "../record/RecordStarStatusFeedback.svelte";
 
   const dispatch = createEventDispatcher();
   export let searchQuery: string = "";
@@ -179,9 +180,9 @@
           text: "Unstar collection"
         }}
       >
-        <Icon
-          icon="star"
-          class="fill-yellow-400"
+        <RecordStarStatusFeedback
+          isStarred={$collection.isStarred}
+          size={Size.md}
           on:click={() => {
             collection.modify({ isStarred: false });
           }}
@@ -200,7 +201,9 @@
           <Icon icon="ph:cube-light" size={Size.sm} class="stroke-fgs3" />
           {$collection.properties?.length ?? 0}
           {#if !isConstrainedWidth && !isMiniSearch}
-            {($collection.properties?.length ?? 0) === 1 ? "property" : "properties"}
+            {($collection.properties?.length ?? 0) === 1
+              ? "property"
+              : "properties"}
           {/if}
         </span>
         {#if $collection.typeToExtend}
