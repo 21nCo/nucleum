@@ -1541,6 +1541,13 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       if (removeExpressions.length > 0) {
         updateExpressionParts.push(`REMOVE ${removeExpressions.join(", ")}`);
       }
+      console.log({
+        updateExpressionParts,
+        setExpressions,
+        removeExpressions,
+        expressionAttributeNames,
+        expressionAttributeValues
+      });
 
       if (updateExpressionParts.length === 0) {
         return null;
@@ -1560,6 +1567,8 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       if (Object.keys(expressionAttributeValues).length > 0) {
         updateParams.ExpressionAttributeValues = expressionAttributeValues;
       }
+
+      console.log({ updateParams });
 
       try {
         await dynamoClient.send(new UpdateCommand(updateParams));
