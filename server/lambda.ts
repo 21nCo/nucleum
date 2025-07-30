@@ -13,7 +13,7 @@ import {
   NotFoundError,
   ValidationError
 } from "./common/errors";
-import { stringify, parse as parseJson } from "$lib/shared/utils/json.utils";
+import { stringify } from "$lib/shared/utils/json.utils";
 
 export const accessControlHeaders = {
   "Access-Control-Allow-Origin": "*", //TODO - dynamic origin
@@ -62,7 +62,7 @@ export async function lambdaUsingNode(
       } else if (contentType === "application/x-www-form-urlencoded") {
         body = parse(event.body ?? "");
       } else {
-        body = parseJson(event.body ?? "");
+        body = JSON.parse(event.body ?? "");
       }
     }
     const result = await callback(body, agent);
