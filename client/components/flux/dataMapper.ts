@@ -20,7 +20,9 @@ export class DataMapper implements IDataMapper {
    * @returns Transformed records with proper data types
    */
   parse(resource: Resource, records: any[]): any[] {
-    return records.map((record) => this.mapRecord(resource, record));
+    return records
+      .map((record) => this.mapRecord(resource, record))
+      .filter(Boolean);
   }
 
   encrypt(resource: Resource, records: any[]): any[] {
@@ -36,6 +38,9 @@ export class DataMapper implements IDataMapper {
    */
   private mapRecord(resource: Resource, record: any): any {
     //TODO - decrypt
+    if (!record.id) {
+      return;
+    }
     return {
       ...record,
       ...this.mapDateFields(record),
