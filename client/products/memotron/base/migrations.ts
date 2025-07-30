@@ -26,8 +26,8 @@ export async function defaultsMigrationForNodes() {
     nodesWithoutMetaTypeLength: nodesWithoutMetaType.length
   });
   if (nodesWithoutMetaType.length) {
-    for (let i = 0; i < nodesWithoutMetaType.length; i += 500) {
-      const batch = nodesWithoutMetaType.slice(i, i + 500);
+    for (let i = 0; i < nodesWithoutMetaType.length; i += 50) {
+      const batch = nodesWithoutMetaType.slice(i, i + 50);
       await flux.mutation<INode>(Resource.node, {
         action: PersistenceActionType.BULK_MERGE,
         recordIds: batch.map((x: INode) => x.id),

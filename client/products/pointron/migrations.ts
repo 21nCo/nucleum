@@ -23,13 +23,16 @@ async function defaultsMigrationForTasks() {
   );
   console.log({ at: "defaultsMigrationForTasks", tasksWithoutDate });
   if (tasksWithoutDate.length) {
-    await flux.mutation<ITask>(Resource.task, {
-      action: PersistenceActionType.BULK_MERGE,
-      recordIds: tasksWithoutDate.map((x: ITask) => x.id),
-      changes: {
-        dateUnix: 0
-      }
-    });
+    for (let i = 0; i < tasksWithoutDate.length; i += 50) {
+      const batch = tasksWithoutDate.slice(i, i + 50);
+      await flux.mutation<ITask>(Resource.task, {
+        action: PersistenceActionType.BULK_MERGE,
+        recordIds: batch.map((x: ITask) => x.id),
+        changes: {
+          dateUnix: 0
+        }
+      });
+    }
   }
   const tasksWithoutGoal = tasks.filter(
     (x: ITask) => !x.goalId && x.goalId !== ""

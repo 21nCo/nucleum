@@ -1377,21 +1377,22 @@ export class DynamoDBSyncProvider implements ISyncProvider {
           ) {
             const records = params.records;
             if (!records || records.length < 1) return [];
-            for (const record of records) {
-              if (!record.id) continue;
-              const { id, ...mergeData } = record;
 
-              const mergeResult = await this.performMergeOperation(
-                mergeData,
-                id.toString(),
-                commonAttributes.PK,
-                commonAttributes,
-                dynamoClient
-              );
-              if (mergeResult) {
-                items.push(mergeResult);
-              }
-            }
+            const mergePromises = records
+              .filter((record) => record.id)
+              .map(async (record) => {
+                const { id, ...mergeData } = record;
+                return await this.performMergeOperation(
+                  mergeData,
+                  id.toString(),
+                  commonAttributes.PK,
+                  commonAttributes,
+                  dynamoClient
+                );
+              });
+
+            const mergeResults = await Promise.all(mergePromises);
+            items.push(...mergeResults.filter((result) => result !== null));
           } else if (
             params.action === PersistenceActionType.BULK_MERGE &&
             "recordIds" in params &&
@@ -1399,20 +1400,21 @@ export class DynamoDBSyncProvider implements ISyncProvider {
           ) {
             const recordIds = params.recordIds;
             if (!recordIds || recordIds.length < 1) return [];
-            for (const recordId of recordIds) {
-              if (!recordId) continue;
 
-              const mergeResult = await this.performMergeOperation(
-                params.changes,
-                recordId.toString(),
-                commonAttributes.PK,
-                commonAttributes,
-                dynamoClient
-              );
-              if (mergeResult) {
-                items.push(mergeResult);
-              }
-            }
+            const mergePromises = recordIds
+              .filter((recordId) => recordId)
+              .map(async (recordId) => {
+                return await this.performMergeOperation(
+                  params.changes,
+                  recordId.toString(),
+                  commonAttributes.PK,
+                  commonAttributes,
+                  dynamoClient
+                );
+              });
+
+            const mergeResults = await Promise.all(mergePromises);
+            items.push(...mergeResults.filter((result) => result !== null));
           }
           break;
 
